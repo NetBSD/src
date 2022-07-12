@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.309 2022/05/07 17:49:47 rillig Exp $
+.\"	$NetBSD: make.1,v 1.310 2022/07/12 17:45:11 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 7, 2022
+.Dd July 12, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -580,23 +580,43 @@ to
 before executing any targets, each child process
 starts with that as its current working directory.
 .Sh VARIABLE ASSIGNMENTS
-Variables in make are much like variables in the shell, and, by tradition,
-consist of all upper-case letters.
-.Ss Variable assignment modifiers
-The five operators that can be used to assign values to variables are as
-follows:
+Variables in make behave much like macros in the C preprocessor.
+.Pp
+Variable assignments have the form
+.Ql Ar NAME No Ar op No Ar value ,
+where:
+.Bl -tag -width Ds
+.It Ar NAME
+is a single-word variable name,
+consisting, by tradition, of all upper-case letters,
+.It Ar op
+is one of the five variable assignment operators described below, and
+.It Ar value
+is interpreted according to the variable assignment operator.
+.El
+.Pp
+Whitespace around
+.Ar NAME ,
+.Ar op
+and
+.Ar value
+is discarded.
+.Ss Variable assignment operators
+The five operators that can be used to assign values to variables are:
 .Bl -tag -width Ds
 .It Ic \&=
 Assign the value to the variable.
-Any previous value is overridden.
+Any previous value is overwritten.
 .It Ic \&+=
-Append the value to the current value of the variable.
+Append the value to the current value of the variable,
+separating them by a single space.
 .It Ic \&?=
 Assign the value to the variable if it is not already defined.
 .It Ic \&:=
 Assign with expansion, i.e. expand the value before assigning it
 to the variable.
 Normally, expansion is not done until the variable is referenced.
+.Pp
 .Em NOTE :
 References to undefined variables are
 .Em not
@@ -607,45 +627,42 @@ Expand the value and pass it to the shell for execution and assign
 the result to the variable.
 Any newlines in the result are replaced with spaces.
 .El
-.Pp
-Any white-space before the assigned
-.Ar value
-is removed; if the value is being appended, a single space is inserted
-between the previous contents of the variable and the appended value.
-.Pp
-Variables are expanded by surrounding the variable name with either
-curly braces
-.Pq Ql {}
-or parentheses
-.Pq Ql ()
-and preceding it with
-a dollar sign
-.Pq Ql \&$ .
-If the variable name contains only a single letter, the surrounding
-braces or parentheses are not required.
+.Ss Expansion of variables
+In contexts where variables are expanded,
+.Ql \&$$
+expands to a single dollar sign.
+References to variables have the form
+.Ql \&${ Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns }
+or
+.Ql \&$( Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns ) .
+If the variable name contains only a single character,
+the surrounding curly braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
 If the variable name contains a dollar, then the name itself is expanded first.
 This allows almost arbitrary variable names, however names containing dollar,
-braces, parentheses, or whitespace are really best avoided!
+braces, parentheses, or whitespace are really best avoided.
 .Pp
 If the result of expanding a variable contains a dollar sign
-.Pq Ql \&$
+.Pq Ql \&$ ,
 the string is expanded again.
 .Pp
-Variable substitution occurs at three distinct times, depending on where
+Variable substitution occurs at four distinct times, depending on where
 the variable is being used.
 .Bl -enum
 .It
 Variables in dependency lines are expanded as the line is read.
+.It
+Variables in conditionals are expanded individually,
+but only as far as necessary to determine the result of the conditional.
 .It
 Variables in shell commands are expanded when the shell command is
 executed.
 .It
 .Dq .for
 loop index variables are expanded on each loop iteration.
-Note that other variables are not expanded inside loops so
-the following example code:
+Note that other variables are not expanded when composing the body of a loop,
+so the following example code:
 .Bd -literal -offset indent
 
 .Dv .for i in 1 2 3
@@ -776,7 +793,7 @@ Variants of these variables with the punctuation followed immediately by
 .Ql D
 or
 .Ql F ,
-e.g.
+e.g.\&
 .Ql Va $(@D) ,
 are legacy forms equivalent to using the
 .Ql :H
@@ -800,13 +817,6 @@ In addition,
 .Nm
 sets or knows about the following variables:
 .Bl -tag -width .MAKEOVERRIDES
-.It Va \&$
-A single dollar sign
-.Ql \&$ ,
-i.e.
-.Ql \&$$
-expands to a single dollar
-sign.
 .It Va .ALLTARGETS
 The list of all targets encountered in the Makefile.
 If evaluated during
