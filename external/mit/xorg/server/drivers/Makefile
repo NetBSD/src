@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2021/12/06 17:51:59 abs Exp $
+#	$NetBSD: Makefile,v 1.105 2022/07/12 02:42:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,8 +30,6 @@ SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
-	xf86-video-cirrus_laguna \
 	xf86-video-i128 \
 	xf86-video-i740 \
 	xf86-video-intel \
@@ -90,8 +88,6 @@ SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
-	xf86-video-cirrus_laguna \
 	xf86-video-i128 \
 	xf86-video-i740 \
 	xf86-video-mach64 \
@@ -127,7 +123,6 @@ SUBDIR+= \
 .if ${MACHINE} == "bebox"
 SUBDIR+= \
 	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
 	xf86-video-mga \
 	xf86-video-s3 \
 	xf86-video-s3virge
@@ -139,8 +134,6 @@ SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
-	xf86-video-cirrus_laguna \
 	xf86-video-i128 \
 	xf86-video-i740 \
 	xf86-video-mga \
@@ -278,7 +271,6 @@ SUBDIR+= \
 .if ${MACHINE} == "prep"
 SUBDIR+= \
 	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
 	xf86-video-mga \
 	xf86-video-s3
 .endif	# ${MACHINE} == "prep"
