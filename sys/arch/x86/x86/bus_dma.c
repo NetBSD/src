@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.84 2022/01/22 15:10:32 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.85 2022/07/13 00:12:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.84 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.85 2022/07/13 00:12:20 riastradh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -816,6 +816,16 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 
 	/*
+	 * The caller has been alerted to DMA completion by reading a
+	 * register or DMA descriptor, and is about to read out of the
+	 * DMA memory buffer that the device filled.  LFENCE ensures
+	 * that these happen in order, so that the caller doesn't
+	 * proceed to read any stale data from cache or speculation.
+	 */
+	if (ops & BUS_DMASYNC_POSTREAD)
+		x86_lfence();
+
+	/*
 	 * If we're not bouncing, just return; nothing to do.
 	 */
 	if (len == 0 || cookie == NULL ||
@@ -1339,9 +1349,6 @@ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
 		    l, ops);
 		return;
 	}
-
-	if (ops & BUS_DMASYNC_POSTREAD)
-		x86_lfence();
 
 	_bus_dmamap_sync(t, p, o, l, ops);
 }
