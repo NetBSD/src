@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.142 2022/07/13 03:23:07 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.143 2022/07/13 14:11:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.142 2022/07/13 03:23:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.143 2022/07/13 14:11:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2812,4 +2812,42 @@ knote_clear_eof(struct knote *kn)
 	mutex_spin_enter(&kq->kq_lock);
 	kn->kn_flags &= ~EV_EOF;
 	mutex_spin_exit(&kq->kq_lock);
+}
+
+/*
+ * Initialize a klist.
+ */
+void
+klist_init(struct klist *list)
+{
+	SLIST_INIT(list);
+}
+
+/*
+ * Finalize a klist.
+ */
+void
+klist_fini(struct klist *list)
+{
+	/* Nothing, for now. */
+}
+
+/*
+ * Insert a knote into a klist.
+ */
+void
+klist_insert(struct klist *list, struct knote *kn)
+{
+	SLIST_INSERT_HEAD(list, kn, kn_selnext);
+}
+
+/*
+ * Remove a knote from a klist.  Returns true if the last
+ * knote was removed and the list is now empty.
+ */
+bool
+klist_remove(struct klist *list, struct knote *kn)
+{
+	SLIST_REMOVE(list, kn, knote, kn_selnext);
+	return SLIST_EMPTY(list);
 }
