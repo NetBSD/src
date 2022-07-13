@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.141 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.142 2022/07/13 03:23:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.141 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.142 2022/07/13 03:23:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,6 +421,22 @@ knote_detach_quiesce(struct knote *kn)
 	mutex_spin_exit(&kq->kq_lock);
 
 	return false;
+}
+
+static inline struct knote *
+knote_alloc(bool sleepok)
+{
+	struct knote *kn;
+
+	kn = kmem_zalloc(sizeof(*kn), sleepok ? KM_SLEEP : KM_NOSLEEP);
+
+	return kn;
+}
+
+static inline void
+knote_free(struct knote *kn)
+{
+	kmem_free(kn, sizeof(*kn));
 }
 
 static int
@@ -952,8 +968,8 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 	struct knote *knchild, *kntrack;
 	int error = 0;
 
-	knchild = kmem_zalloc(sizeof(*knchild), KM_NOSLEEP);
-	kntrack = kmem_zalloc(sizeof(*knchild), KM_NOSLEEP);
+	knchild = knote_alloc(false);
+	kntrack = knote_alloc(false);
 	if (__predict_false(knchild == NULL || kntrack == NULL)) {
 		error = ENOMEM;
 		goto out;
@@ -1041,10 +1057,10 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 
  out:
 	if (__predict_false(knchild != NULL)) {
-		kmem_free(knchild, sizeof(*knchild));
+		knote_free(knchild);
 	}
 	if (__predict_false(kntrack != NULL)) {
-		kmem_free(kntrack, sizeof(*kntrack));
+		knote_free(kntrack);
 	}
 	mutex_enter(p1->p_lock);
 	mutex_spin_enter(&kq->kq_lock);
@@ -1756,14 +1772,14 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	error = 0;
 	fd = 0;
 
-	newkn = kmem_zalloc(sizeof(*newkn), KM_SLEEP);
+	newkn = knote_alloc(true);
 
 	rw_enter(&kqueue_filter_lock, RW_READER);
 	kfilter = kfilter_byfilter(kev->filter);
 	if (kfilter == NULL || kfilter->filtops == NULL) {
 		/* filter not found nor implemented */
 		rw_exit(&kqueue_filter_lock);
-		kmem_free(newkn, sizeof(*newkn));
+		knote_free(newkn);
 		return (EINVAL);
 	}
 
@@ -1774,7 +1790,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		if (kev->ident > INT_MAX
 		    || (fp = fd_getfile(fd = kev->ident)) == NULL) {
 			rw_exit(&kqueue_filter_lock);
-			kmem_free(newkn, sizeof(*newkn));
+			knote_free(newkn);
 			return EBADF;
 		}
 		mutex_enter(&fdp->fd_lock);
@@ -1986,7 +2002,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
  done:
 	rw_exit(&kqueue_filter_lock);
 	if (newkn != NULL)
-		kmem_free(newkn, sizeof(*newkn));
+		knote_free(newkn);
 	if (fp != NULL)
 		fd_putfile(fd);
 	return (error);
@@ -2680,7 +2696,7 @@ again:
 	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		fd_putfile(kn->kn_id);
 	atomic_dec_uint(&kn->kn_kfilter->refcnt);
-	kmem_free(kn, sizeof(*kn));
+	knote_free(kn);
 }
 
 /*
