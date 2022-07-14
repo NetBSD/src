@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2016/11/21 09:14:12 snj Exp $
+#	$NetBSD: Makefile,v 1.3 2022/07/14 07:42:11 mrg Exp $
 
-SUBDIR=	cvt gtf
+SUBDIR=	gtf
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 #SUBDIR+=ioport pcitweak scanpci
