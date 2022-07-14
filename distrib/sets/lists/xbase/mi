@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 2022/05/01 22:54:59 uwe Exp $
+# $NetBSD: mi,v 1.168 2022/07/14 06:53:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -275,6 +275,7 @@
 ./usr/X11R7/include/libdrm/nouveau			base-x11-root	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif			base-x11-root	xorg
 ./usr/X11R7/include/libkms				base-x11-root	xorg
+./usr/X11R7/include/libxcvt				base-x11-root	xorg
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
 ./usr/X11R7/include/vdpau				base-x11-root	xorg
 ./usr/X11R7/include/xcb					base-x11-root	xorg
