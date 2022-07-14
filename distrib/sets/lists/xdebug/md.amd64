@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.58 2022/07/12 23:19:53 mrg Exp $
+# $NetBSD: md.amd64,v 1.59 2022/07/14 23:55:53 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib,compatx11file
@@ -23,12 +23,8 @@
 ./usr/X11R7/lib/modules/libvgahw_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libxaa_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/ioport.debug		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		xdebug-obsolete	xorg,obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 2022/07/14 06:53:40 mrg Exp $
+# $NetBSD: mi,v 1.169 2022/07/14 23:55:53 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,6 +16,7 @@
 ./usr/X11R7/bin/ccmakedep				xbase-ccmakedep-bin	xorg
 ./usr/X11R7/bin/cleanlinks				xbase-cleanlinks-bin	xorg
 ./usr/X11R7/bin/ctwm					xbase-ctwm-bin	xorg
+./usr/X11R7/bin/cvt					xbase-cvt-bin	xorg
 ./usr/X11R7/bin/cxpm					xbase-cxpm-bin	xorg
 ./usr/X11R7/bin/dga					xbase-xf86dga-bin	xorg
 ./usr/X11R7/bin/editres					xbase-editres-bin	xorg

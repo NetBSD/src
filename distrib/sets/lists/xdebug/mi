@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2022/07/14 07:41:49 mrg Exp $
+# $NetBSD: mi,v 1.44 2022/07/14 23:55:53 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -115,6 +115,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/bitmap.debug		xdebug-bitmap-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/bmtoa.debug		xdebug-bitmap-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/ctwm.debug		xdebug-ctwm-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		xdebug-cvt-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cxpm.debug		xdebug-cxpm-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/dga.debug		xdebug-xf86dga-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/editres.debug		xdebug-editres-debug	xorg,debug

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.18 2022/07/12 23:19:53 mrg Exp $
+# $NetBSD: md.sparc,v 1.19 2022/07/14 23:55:53 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -27,7 +27,6 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		xdebug-obsolete	xorg,obsolete

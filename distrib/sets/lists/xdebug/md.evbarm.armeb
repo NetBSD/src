@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm.armeb,v 1.18 2022/07/12 23:19:53 mrg Exp $
+# $NetBSD: md.evbarm.armeb,v 1.19 2022/07/14 23:55:53 mrg Exp $
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib,xorg_server_ver=110
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
@@ -20,7 +20,6 @@
 ./usr/X11R7/lib/modules/libxaa_g.a			xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/lib/modules/libxf8_16bpp_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.1.debug	xdebug-libdrm_nouveau-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		xdebug-libvdpau-debug		xorg,debug
