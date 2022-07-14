@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.10 2022/07/12 23:19:53 mrg Exp $
+# $NetBSD: md.luna68k,v 1.11 2022/07/14 23:55:53 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete
@@ -15,11 +15,7 @@
 ./usr/X11R7/lib/modules/libxaa_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
