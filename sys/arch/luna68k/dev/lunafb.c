@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.44 2022/07/03 11:30:48 andvar Exp $ */
+/* $NetBSD: lunafb.c,v 1.45 2022/07/14 19:55:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.44 2022/07/03 11:30:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.45 2022/07/14 19:55:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ omfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wsd_fbip->width = dc->dc_wid;
 		wsd_fbip->depth = dc->dc_depth;
 		wsd_fbip->cmsize = dc->dc_cmsize;
-#undef fbt
+#undef wsd_fbip
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
