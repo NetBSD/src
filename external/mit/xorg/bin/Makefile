@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 2020/10/28 08:10:09 nia Exp $
+#	$NetBSD: Makefile,v 1.18 2022/07/14 18:52:23 mrg Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
-	cleanlinks cxpm editres \
+	cleanlinks cvt cxpm editres \
 	fc-cache fc-cat fc-conflist fc-list fc-match fc-pattern \
 	fc-query fc-scan fc-validate \
 	fonttosfnt fslsfonts fstobdf glxgears glxinfo \
