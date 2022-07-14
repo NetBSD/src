@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.439 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: bsd.README,v 1.440 2022/07/14 03:48:49 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1812,6 +1812,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXAW?=		${DESTDIR}/usr/X11R7/lib/libXaw.a
 		LIBXCB?=		${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXCOMPOSITE?=		${DESTDIR}/usr/X11R7/lib/libXcomposite.a
+		LIBXCVT?=		${DESTDIR}/usr/X11R7/lib/libxcvt.a
 		LIBXDAMAGE?=		${DESTDIR}/usr/X11R7/lib/libXdamage.a
 		LIBXDMCP?=		${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=		${DESTDIR}/usr/X11R7/lib/libXext.a

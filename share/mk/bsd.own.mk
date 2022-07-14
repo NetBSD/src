@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1285 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1286 2022/07/14 03:48:49 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1567,7 +1567,7 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	Xdmcp Xevie Xext Xfixes Xfont Xfont2 Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
 	epoxy fontenc vdpau xkbfile xkbui Xaw pciaccess xcb xshmfence \
-	pthread-stubs
+	pthread-stubs xcvt
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
 
