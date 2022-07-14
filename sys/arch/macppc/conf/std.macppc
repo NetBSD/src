@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.25 2020/08/29 23:00:10 macallan Exp $
+#	$NetBSD: std.macppc,v 1.26 2022/07/14 11:10:02 macallan Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -21,7 +21,10 @@ options 	INTSTK=0x2000
 # HID devices - for them to coexist on the same mux we tell the adbkbd driver
 # pose as a USB keyboard
 options 	ADBKBD_EMUL_USB
-options 	UKBD_LAYOUT="(KB_US | KB_APPLE)"  # for ukbd driver
+
+# default to console switching using Command-Fn, for tradition 
+options 	ADBKBD_LAYOUT="(KB_US | KB_APPLE)"
+options 	UKBD_LAYOUT="(KB_US | KB_APPLE)"
 
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"

@@ -16,5 +16,7 @@ options 	EXEC_SCRIPT	# shell script support
 
 options 	INTSTK=0x2000
 
+options 	UKBD_LAYOUT="(KB_US | KB_APPLE)"
+
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"
