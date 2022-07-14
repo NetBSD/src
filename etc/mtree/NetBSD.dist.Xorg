@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.29 2021/04/27 06:51:49 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.30 2022/07/14 06:53:40 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -32,6 +32,7 @@
 ./usr/X11R7/include/libdrm/nouveau
 ./usr/X11R7/include/libdrm/nouveau/nvif
 ./usr/X11R7/include/libkms
+./usr/X11R7/include/libxcvt
 ./usr/X11R7/include/pixman-1
 ./usr/X11R7/include/vdpau
 ./usr/X11R7/include/xcb
