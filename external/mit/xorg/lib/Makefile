@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2021/07/11 20:52:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.57 2022/07/14 07:41:49 mrg Exp $
 
 # build libraries for xorg
 
@@ -7,7 +7,8 @@
 .include "mesa-which.mk"
 
 SUBDIR=	libfontenc freetype libFS libICE libglapi${OLD_SUFFIX} \
-	libXau libXdmcp libdrm libpciaccess libpthread-stubs libxshmfence .WAIT
+	libXau libXdmcp libdrm libpciaccess libpthread-stubs \
+	libxcvt libxshmfence .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
 .endif
