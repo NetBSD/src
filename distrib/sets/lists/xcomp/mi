@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.235 2022/07/12 02:44:43 mrg Exp $
+#	 $NetBSD: mi,v 1.236 2022/07/14 07:41:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -698,6 +698,8 @@
 ./usr/X11R7/include/freetype2/ttunpat.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/ft2build.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/gbm.h				xcomp-MesaLib-include	xorg
+./usr/X11R7/include/libxcvt/libxcvt.h			xcomp-libxcvt-include	xorg
+./usr/X11R7/include/libxcvt/libxcvt_mode.h		xcomp-libxcvt-include	xorg
 ./usr/X11R7/include/libdrm/amdgpu.h			xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/amdgpu_drm.h			xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/drm.h			xcomp-libdrm-include	xorg
@@ -1312,6 +1314,8 @@
 ./usr/X11R7/lib/libxcb-xvmc_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb.a				xcomp-libxcb-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxcb_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libxcvt.a				xcomp-libxcvt-lib	xorg,compatx11file
+./usr/X11R7/lib/libxcvt_p.a				xcomp-libxcvt-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxkbfile.a				xcomp-libxkbfile-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxkbfile_p.a				xcomp-libxkbfile-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxkbui.a				xcomp-libxkbui-lib	xorg,compatx11file
@@ -1345,6 +1349,7 @@
 ./usr/X11R7/lib/pkgconfig/inputproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/kbproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/lbxutil.pc			xcomp-obsolete	obsolete
+./usr/X11R7/lib/pkgconfig/libxcvt.pc			xcomp-libxcvt-lib	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm.pc			xcomp-libdrm-lib	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_radeon.pc		xcomp-libdrm_radeon-lib	xorg
 ./usr/X11R7/lib/pkgconfig/libfs.pc			xcomp-libFS-lib	xorg
@@ -5937,6 +5942,7 @@
 ./usr/libdata/lint/llib-lgbm.ln				xcomp-libgbm-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lglut.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-llbxutil.ln			xcomp-obsolete	obsolete,xorg
+./usr/libdata/lint/llib-lxcvt.ln			xcomp-libxcvt-lintlib	lint,xorg
 ./usr/libdata/lint/llib-llisp.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lmp.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lpciaccess.ln			xcomp-libpciaccess-lintlib	lint,xorg

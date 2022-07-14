@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2022/07/14 03:48:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2022/07/14 07:41:49 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	cvt
 SRCS=	cvt.c
 
-LDADD+=	-llxcvt
-DPADD+=	${LIBXCVT}
+LDADD+=	-lxcvt -lm
+DPADD+=	${LIBXCVT} ${LIBM} 
 
 .PATH:	${X11SRCDIR.xcvt}/cvt
 .PATH:	${X11SRCDIR.xcvt}/man

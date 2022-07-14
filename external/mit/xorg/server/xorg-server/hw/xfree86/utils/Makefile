@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2016/11/21 09:14:12 snj Exp $
+#	$NetBSD: Makefile,v 1.18 2022/07/14 07:41:50 mrg Exp $
 
-SUBDIR=	cvt gtf
+SUBDIR=	gtf
 
 .include <bsd.subdir.mk>
