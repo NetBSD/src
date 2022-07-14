@@ -1,7 +1,6 @@
-# $NetBSD: md.amd64,v 1.121 2022/07/12 23:19:53 mrg Exp $
+# $NetBSD: md.amd64,v 1.122 2022/07/14 23:55:53 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
-./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/pcitweak				xserver-obsolete	obsolete
 ./usr/X11R7/bin/scanpci					xserver-obsolete	obsolete
