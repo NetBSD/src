@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2022/07/15 04:18:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.107 2022/07/15 04:53:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ SUBDIR+= \
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
+	xf86-video-amdgpu \
 	xf86-video-ast \
 	xf86-video-ati \
 	xf86-video-chips \
@@ -63,19 +64,11 @@ SUBDIR+= \
 #	xf86-video-trident
 
 # needs porting for xorg-server 1.18
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SUBDIR+= \
-	xf86-video-apm \
-	xf86-video-ark \
-	xf86-video-glint \
-	xf86-video-intel-old \
-	xf86-video-xgi
-.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-
-.if ${XORG_SERVER_SUBDIR} == "xorg-server"
-SUBDIR+= \
-	xf86-video-amdgpu
-.endif  # ${XORG_SERVER_SUBDIR} == "xorg-server"
+#	xf86-video-apm \
+#	xf86-video-ark \
+#	xf86-video-glint \
+#	xf86-video-intel-old \
+#	xf86-video-xgi
 
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+= \
@@ -108,7 +101,7 @@ SUBDIR+= \
 	xf86-video-tseng \
 	xf86-video-wsfb
 #	xf86-video-imstt
-# needs porting for xorg-server 1.18
+# needs porting for xorg-server 1.18, and 21.1
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-apm \
