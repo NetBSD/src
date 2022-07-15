@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.26 2022/07/15 06:39:06 mrg Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $
+ * $Id: m_netbsd.c,v 1.26 2022/07/15 06:39:06 mrg Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.26 2022/07/15 06:39:06 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -166,9 +166,9 @@ const char *memorynames[] = {
 	NULL
 };
 
-long swap_stats[4];
+long swap_stats[6];
 const char *swapnames[] = {
-	"K Total, ", "K Used, ", "K Free, ",
+	"K Total, ", "K Used, ", "K Free ", " Pools: ", "K Used, ",
 	NULL
 };
 
@@ -529,8 +529,10 @@ get_system_info(struct system_info *si)
 		swap_stats[2] = dbtob(totalsize) / 1024 - swap_stats[1];
 	} while (0);
 
+	swap_stats[4] = pagetok(uvmexp.poolpages);
+
 	memory_stats[6] = -1;
-	swap_stats[3] = -1;
+	swap_stats[3] = swap_stats[5] = -1;
 
 	/* set arrays and strings */
 	si->cpustates = cpu_states;
