@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.10 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.ibmnws,v 1.11 2022/07/15 10:44:21 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete
@@ -19,7 +19,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-xf86-video-s3-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
