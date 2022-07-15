@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169 2022/07/14 23:55:53 mrg Exp $
+# $NetBSD: mi,v 1.170 2022/07/15 00:16:04 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1284,6 +1284,7 @@
 ./usr/X11R7/man/cat1/ccmakedep.0			xbase-ccmakedep-catman	.cat,xorg
 ./usr/X11R7/man/cat1/cleanlinks.0			xbase-cleanlinks-catman	.cat,xorg
 ./usr/X11R7/man/cat1/ctwm.0				xbase-ctwm-catman	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				xbase-cvt-catman	.cat,xorg
 ./usr/X11R7/man/cat1/cxpm.0				xbase-cxpm-catman	.cat,xorg
 ./usr/X11R7/man/cat1/dga.0				xbase-xf86dga-catman	.cat,xorg
 ./usr/X11R7/man/cat1/editres.0				xbase-editres-catman	.cat,xorg
@@ -1434,6 +1435,7 @@
 ./usr/X11R7/man/html1/ccmakedep.html			xbase-ccmakedep-htmlman	html,xorg
 ./usr/X11R7/man/html1/cleanlinks.html			xbase-cleanlinks-htmlman	html,xorg
 ./usr/X11R7/man/html1/ctwm.html				xbase-ctwm-htmlman	html,xorg
+./usr/X11R7/man/html1/cvt.html				xbase-cvt-htmlman	html,xorg
 ./usr/X11R7/man/html1/cxpm.html				xbase-cxpm-htmlman	html,xorg
 ./usr/X11R7/man/html1/dga.html				xbase-xf86dga-htmlman	html,xorg
 ./usr/X11R7/man/html1/editres.html			xbase-editres-htmlman	html,xorg
@@ -1584,6 +1586,7 @@
 ./usr/X11R7/man/man1/ccmakedep.1			xbase-ccmakedep-man	.man,xorg
 ./usr/X11R7/man/man1/cleanlinks.1			xbase-cleanlinks-man	.man,xorg
 ./usr/X11R7/man/man1/ctwm.1				xbase-ctwm-man	.man,xorg
+./usr/X11R7/man/man1/cvt.1				xbase-cvt-man	.man,xorg
 ./usr/X11R7/man/man1/cxpm.1				xbase-cxpm-man	.man,xorg
 ./usr/X11R7/man/man1/dga.1				xbase-xf86dga-man	.man,xorg
 ./usr/X11R7/man/man1/editres.1				xbase-editres-man	.man,xorg
