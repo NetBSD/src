@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.19 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.cats,v 1.20 2022/07/15 10:44:21 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -78,7 +78,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	xdebug-xf86-video-nv-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	xdebug-obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-xf86-video-s3-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3virge_drv.so.1.debug	xdebug-xf86-video-s3virge-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	xdebug-xf86-video-savage-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	xdebug-xf86-video-siliconmotion-debug		xorg,debug
