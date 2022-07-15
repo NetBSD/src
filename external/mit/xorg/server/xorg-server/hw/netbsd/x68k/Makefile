@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2021/08/21 15:57:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2022/07/15 19:12:39 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,7 @@ CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT
 
 CPPFLAGS+=	-UHAVE_XORG_CONFIG_H
+CPPFLAGS+=	-D_OPENBSD_SOURCE
 
 CPPFLAGS.x68kConfig.c=	 -DX11_LIBDIR=\"${X11ETCDIR}\"
 
