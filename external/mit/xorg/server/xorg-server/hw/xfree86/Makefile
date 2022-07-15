@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.40 2021/03/07 10:42:27 rin Exp $
+#	$NetBSD: Makefile,v 1.41 2022/07/15 04:18:55 mrg Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=		common ddc dixmods doc dri dri2 i2c loader \
 		xf86modes exa \
-		xorgos ramdac shadowfb vbe vgahw \
+		xorgos ramdac shadowfb vgahw \
 		x86emu xf86config xkb \
 		drivers
 

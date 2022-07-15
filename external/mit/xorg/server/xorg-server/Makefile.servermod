@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.servermod,v 1.8 2021/11/16 09:25:52 nia Exp $
+#	$NetBSD: Makefile.servermod,v 1.9 2022/07/15 04:18:54 mrg Exp $
 
 NOFULLRELRO=	yes
 
@@ -28,7 +28,7 @@ moduleinstall::
 CPPFLAGS+=	${X11FLAGS.LOADABLE}
 .endif
 
-CPPFLAGS+=	${X11FLAGS.DIX}
+CPPFLAGS+=	${X11FLAGS.DIX} -D_OPENBSD_SOURCE
 
 # IOPortBase is particularly annoying to fix
 COPTS+=         ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -fcommon :}

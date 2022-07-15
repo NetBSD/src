@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.32 2021/12/15 16:27:10 christos Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.33 2022/07/15 04:18:54 mrg Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
@@ -47,6 +47,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 CPPFLAGS+=	-DHAVE_XAA_H
+.else
+CPPFLAGS+=	-D_OPENBSD_SOURCE
 .endif
 
 CPPFLAGS+=	-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}

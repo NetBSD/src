@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2021/12/06 17:51:59 abs Exp $
+#	$NetBSD: Makefile,v 1.51 2022/07/15 04:18:55 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -10,16 +10,10 @@ LIB=	xorgos
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
 SRCS.bsd=	\
 		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_pci.c \
-		kmod_noop.c \
+		kmod_noop.c pm_noop.c \
 		posix_tty.c sigio.c vidmem.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
-.if ${MACHINE_ARCH} == "x86_64"
-SRCS.bsd+=	pm_noop.c
-.endif
-.if ${MACHINE_ARCH} == "i386"
-SRCS.bsd+=	bsd_apm.c
-.endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS.bsd+=	i386_video.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
@@ -36,7 +30,7 @@ CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endif
 
 .if ${MACHINE_CPU} == "powerpc" || ${MACHINE} == "hppa"
-SRCS.bsd+=	ppc_video.c pm_noop.c
+SRCS.bsd+=	ppc_video.c
 .  if ${MACHINE} != "evbppc"
 SRCS.bsd+=	lnx_agp.c
 .  else
@@ -48,14 +42,14 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
-SRCS.bsd+=	alpha_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	alpha_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
 .endfor
 .endif
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
-SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c agp_noop.c
 SRCS.bus+=	netbsdSbus.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -67,7 +61,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
     ${MACHINE} == "newsmips" || \
     ${MACHINE} == "sgimips" || \
     ${MACHINE} == "evbmips"
-SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT  -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -80,7 +74,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT  -DUSESTDRES -DHAVE_SYSV_IPC
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || \
     ${MACHINE} == "zaurus"
-SRCS.bsd+=      ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=      ppc_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -92,7 +86,7 @@ CPPFLAGS.ppc_video.c += -DPCI_MAGIC_IO_RANGE=0xf0000000
 
 .if ${MACHINE} == "dreamcast" || \
     ${MACHINE} == "hpcsh"
-SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -102,7 +96,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
     ${MACHINE} == "hp300" || \
     ${MACHINE} == "luna68k" || \
     ${MACHINE} == "mac68k"
-SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -110,7 +104,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "pmax" || \
     ${MACHINE} == "vax"
-SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor

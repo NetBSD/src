@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2018/12/31 21:38:53 mrg Exp $
+# $NetBSD: Makefile,v 1.11 2022/07/15 04:18:55 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -9,7 +9,7 @@ LIB=		int10
 
 .PATH:          ${X11SRCDIR.xorg-server}/hw/xfree86/int10
 SRCS=		x86emu.c generic.c xf86x86emu.c xf86int10.c helper_mem.c \
-		helper_exec.c xf86int10module.c
+		helper_exec.c xf86int10module.c vbe.c vbeModes.c
 
 CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
 		-D_X86EMU
@@ -28,6 +28,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/x86emu \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/modes \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/parser \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \

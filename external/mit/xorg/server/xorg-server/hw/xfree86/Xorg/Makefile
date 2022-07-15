@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/11/16 09:25:52 nia Exp $
+#	$NetBSD: Makefile,v 1.22 2022/07/15 04:18:55 mrg Exp $
 
 USE_FORT?=	yes # network server *and* setuid
 
@@ -32,6 +32,7 @@ LDFLAGS+=	-rdynamic
 
 LDADD+=	-Wl,--whole-archive
 LDADD+=	${LDADD.dix}
+LDADD+=	${LDADD.fb}
 LDADD+=	${LDADD.config}
 LDADD+=	${LDADD.dbe}
 .if ${HAVE_XORG_GLAMOR} != "no"  
@@ -66,9 +67,8 @@ LDADD+=	${LDADD.present}
 LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dri2}
 LDADD+=	${LDADD.dri3}
-LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	-lpixman-1 -lXfont2 -lfreetype -lXau -lfontenc -lXdmcp
-LDADD+=	-lpciaccess -ldrm
+LDADD+=	-lpciaccess -ldrm -lxcvt
 LDADD+=	-Wl,--no-whole-archive
 
 .if ${MACHINE_ARCH} == "i386"
@@ -117,7 +117,6 @@ DPADD+=	\
 	${DPADD.hw/xfree86/dri} \
 	${DPADD.hw/xfree86/dri2} \
 	${DPADD.dri3} \
-	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/common} \
 	${DPADD.hw/xfree86/loader} \
@@ -131,7 +130,7 @@ DPADD+=	\
 	${LIBCWRAPPER} \
 	${LIBXFONT2} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
-	${LIBGL} ${LIBXV} ${LIBXSHMFENCE}
+	${LIBGL} ${LIBXV} ${LIBXSHMFENCE} ${LIBXCVT}
 
 .if ${HAVE_XORG_GLAMOR} != "no"  
 DPADD+= \

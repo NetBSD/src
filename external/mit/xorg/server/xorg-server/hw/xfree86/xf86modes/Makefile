@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2018/12/31 11:14:05 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2022/07/15 04:18:55 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -9,7 +9,6 @@ LIB=	xf86modes
 SRCS=\
 	xf86Crtc.c \
 	xf86Cursors.c \
-	xf86cvt.c \
 	xf86gtf.c \
 	xf86EdidModes.c \
 	xf86Modes.c \
