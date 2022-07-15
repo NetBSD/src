@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.60 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.amd64,v 1.61 2022/07/15 11:34:59 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib,compatx11file
@@ -90,7 +90,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-obsolete	obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	xdebug-xf86-video-i740-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv.so.2.debug	xdebug-xf86-video-intel-debug		xorg,debug
