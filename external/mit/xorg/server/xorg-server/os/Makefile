@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/01/22 12:45:25 tron Exp $
+#	$NetBSD: Makefile,v 1.18 2022/07/15 04:18:56 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -21,6 +21,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/render \
 		-I${X11SRCDIR.xorg-server}/present \
+		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/randr \
+		-I${X11SRCDIR.xorg-server}/miext/damage \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX} \

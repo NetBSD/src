@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/12/31 11:14:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2022/07/15 04:18:54 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -8,7 +8,7 @@ LIB=		dix
 
 .PATH:		${X11SRCDIR.xorg-server}/dix
 SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
-		dixutils.c events.c extension.c gc.c getevents.c \
+		dixutils.c events.c extension.c gc.c getevents.c gestures.c \
 		globals.c glyphcurs.c grabs.c initatoms.c main.c pixmap.c \
 		privates.c property.c resource.c swaprep.c swapreq.c \
 		tables.c window.c stubmain.c \
@@ -25,10 +25,8 @@ CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX}
 CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\"
 
 # XXX make user variables
-CPPFLAGS.dispatch.c=	-DVENDOR_NAME="\"The Xorg Foundation\""
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The Xorg Group\"" \
 			-DVENDOR_RELEASE=${XORG_VERSION_CURRENT} \
-			-DVENDOR_NAME="\"The Xorg Foundation\""
 
 FILES=		protocol.txt
 FILESDIR=	${X11ROOTDIR}/lib/xorg

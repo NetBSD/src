@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.23 2021/11/01 10:05:19 nia Exp $
+#	$NetBSD: Makefile.Xserver,v 1.24 2022/07/15 04:18:54 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -31,7 +31,6 @@
 	hw/xfree86/common \
 	hw/xfree86/ddc \
 	hw/xfree86/dixmods \
-	hw/xfree86/dixmods/fb \
 	hw/xfree86/dixmods/shadow \
 	hw/xfree86/dixmods/wfb \
 	hw/xfree86/doc \

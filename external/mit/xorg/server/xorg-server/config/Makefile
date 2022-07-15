@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/12/05 22:59:32 nia Exp $
+#	$NetBSD: Makefile,v 1.4 2022/07/15 04:18:54 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -18,6 +18,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	-DCONFIG_WSCONS
+
+CPPFLAGS+=	-Wno-error=deprecated-declarations
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

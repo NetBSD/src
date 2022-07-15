@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/12/31 11:14:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/07/15 04:18:56 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -15,8 +15,7 @@ SRCS=           present.c \
 		present_request.c \
 		present_scmd.c \
 		present_screen.c \
-		present_vblank.c \
-		present_wnmd.c
+		present_vblank.c
 
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg \
