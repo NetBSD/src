@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2018/12/31 11:14:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2022/07/15 04:18:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 .PATH: ${XORGSRC}/../include
 
 INCSDIR=${X11INCDIR}/xorg
-INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
+INCS=	XIstubs.h Xprintf.h \
 	callback.h client.h closestr.h closure.h colormap.h \
 	colormapst.h compiler.h compositeext.h cursor.h cursorstr.h \
 	damage.h damagestr.h \
@@ -50,7 +50,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	randrstr.h region.h regionstr.h registry.h resource.h rgb.h \
 	sarea.h screenint.h scrnintstr.h \
 	securitysrv.h selection.h servermd.h \
-	shadow.h shadowfb.h shmint.h site.h \
+	shadow.h shadowfb.h shmint.h \
 	validate.h vbe.h vbeModes.h vgaHW.h \
 	version-config.h \
 	vndserver.h \
@@ -62,7 +62,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	xf86MatchDrivers.h \
 	xf86Modes.h xf86Module.h xf86Optionstr.h xf86Opt.h xf86Optrec.h \
 	xf86Parser.h xf86Pci.h xf86PciInfo.h \
-	xf86Priv.h xf86Privstr.h xf86RamDac.h xf86RandR12.h \
+	xf86Priv.h xf86Privstr.h xf86RandR12.h \
 	xf86Xinput.h xf86_OSlib.h \
 	xf86_OSproc.h xf86cmap.h xf86fbman.h \
 	xf86i2c.h xf86int10.h xf86sbusBus.h xf86str.h xf86xv.h \

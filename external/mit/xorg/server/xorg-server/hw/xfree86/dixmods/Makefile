@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2018/12/31 11:14:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2022/07/15 04:18:55 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -22,7 +22,6 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/../include ${X11FLAGS.DIX}
 
 SUBDIR = \
-	fb \
 	glx \
 	shadow \
 	wfb

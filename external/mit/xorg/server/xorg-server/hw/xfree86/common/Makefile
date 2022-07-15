@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2021/12/05 22:59:32 nia Exp $
+#	$NetBSD: Makefile,v 1.35 2022/07/15 04:18:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -97,9 +97,7 @@ IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
 		mutouch penmount spaceorb summa wacom void \
 		magellan hyperpen jamstudio fpit palmax
 
-CPPFLAGS.xf86Bus.c=		-DBUILDERADDR='"xfree86@xfree86.org"'
-CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
-				-DBUILDERADDR='"xorg@xorg.org"' \
+CPPFLAGS.xf86Init.c+=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
 				-DOSVENDOR='"The NetBSD Foundation, Inc."' \
 				-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"' \
 				-DDEFAULT_LIBRARY_PATH='"${X11USRLIBDIR}"'
