@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.236 2022/07/14 07:41:49 mrg Exp $
+#	 $NetBSD: mi,v 1.237 2022/07/15 04:47:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -779,9 +779,9 @@
 ./usr/X11R7/include/xcb/xvmc.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xf86drm.h				xcomp-libdrm-include	xorg
 ./usr/X11R7/include/xf86drmMode.h			xcomp-libdrm-include	xorg
-./usr/X11R7/include/xorg/BT.h				xcomp-xorg-server-include	xorg
-./usr/X11R7/include/xorg/IBM.h				xcomp-xorg-server-include	xorg
-./usr/X11R7/include/xorg/TI.h				xcomp-xorg-server-include	xorg
+./usr/X11R7/include/xorg/BT.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/xorg/IBM.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/xorg/TI.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/XIstubs.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/Xprintf.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/afb.h				xcomp-obsolete	obsolete
@@ -923,7 +923,7 @@
 ./usr/X11R7/include/xorg/shadow.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/shadowfb.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/shmint.h			xcomp-xorg-server-include	xorg
-./usr/X11R7/include/xorg/site.h				xcomp-xorg-server-include	xorg
+./usr/X11R7/include/xorg/site.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/swaprep.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
 ./usr/X11R7/include/xorg/swaprep.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/include/xorg/swapreq.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
@@ -970,7 +970,7 @@
 ./usr/X11R7/include/xorg/xf86Priv.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86Privstr.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86RAC.h			xcomp-obsolete	obsolete
-./usr/X11R7/include/xorg/xf86RamDac.h			xcomp-xorg-server-include	xorg
+./usr/X11R7/include/xorg/xf86RamDac.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/xf86RandR12.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86Rename.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
 ./usr/X11R7/include/xorg/xf86Rename.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete

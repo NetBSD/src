@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.14 2022/07/14 23:55:53 mrg Exp $
+# $NetBSD: md.amiga,v 1.15 2022/07/15 04:47:56 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
@@ -16,9 +16,9 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	xdebug-shadow-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	xdebug-exa-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	xdebug-dixmods-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	xdebug-shadowfb-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	xdebug-vbe-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	xdebug-vgahw-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120

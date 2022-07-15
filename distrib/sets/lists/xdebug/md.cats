@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.18 2022/07/14 23:55:53 mrg Exp $
+# $NetBSD: md.cats,v 1.19 2022/07/15 04:47:56 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -13,13 +13,13 @@
 ./usr/X11R7/lib/modules/fonts/libfreetype_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/fonts/libtype1_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libexa_g.a			xdebug-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/libfb_g.a			xdebug-obsolete	xorg,obsolete
+./usr/X11R7/lib/modules/libfb_g.a			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libi2c_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libint10_g.a			xdebug-obsolete	xorg,obsolete,obsolete
 ./usr/X11R7/lib/modules/libpcidata_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libscanpci_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libshadowfb_g.a			xdebug-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/libvbe_g.a			xdebug-obsolete	xorg,obsolete
+./usr/X11R7/lib/modules/libvbe_g.a			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libvgahw_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libxaa_g.a			xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libxf1bpp_g.a			xdebug-obsolete	xorg,obsolete
@@ -39,8 +39,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-obsolete	obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	xdebug-xf86-video-i740-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
@@ -84,8 +83,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	xdebug-xf86-video-savage-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	xdebug-xf86-video-siliconmotion-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tdfx_drv.so.1.debug	xdebug-xf86-video-tdfx-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-xf86-video-tga-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-xf86-video-trident-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-obsolete	obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	xdebug-xf86-video-tseng-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vesa_drv.so.2.debug	xdebug-xf86-video-vesa-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug		xorg,debug
@@ -101,10 +100,10 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	xdebug-shadow-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug		xdebug-exa-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug		xdebug-dixmods-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug		xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug		xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	xdebug-shadowfb-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug		xdebug-vbe-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug		xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug		xdebug-vgahw-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
