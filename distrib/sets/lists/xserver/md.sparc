@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.79 2022/07/14 23:55:53 mrg Exp $
+# $NetBSD: md.sparc,v 1.80 2022/07/15 00:16:04 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -178,7 +178,6 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		xserver-obsolete	obsolete
 ./usr/X11R7/man/cat1/Xorg.0				xserver-xorg-server-catman	.cat,xorg
-./usr/X11R7/man/cat1/cvt.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0				xserver-obsolete	obsolete
 ./usr/X11R7/man/cat1/scanpci.0				xserver-obsolete	obsolete
@@ -204,7 +203,6 @@
 ./usr/X11R7/man/cat5/xorg.conf.0			xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.d.0			xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				xserver-xorg-server-htmlman	html,xorg
-./usr/X11R7/man/html1/cvt.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/gtf.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/pcitweak.html			xserver-obsolete	obsolete
 ./usr/X11R7/man/html1/scanpci.html			xserver-obsolete	obsolete
@@ -230,7 +228,6 @@
 ./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
-./usr/X11R7/man/man1/cvt.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				xserver-obsolete	obsolete
 ./usr/X11R7/man/man1/scanpci.1				xserver-obsolete	obsolete
