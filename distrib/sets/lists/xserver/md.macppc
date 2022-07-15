@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.88 2022/07/15 00:16:04 mrg Exp $
+# $NetBSD: md.macppc,v 1.89 2022/07/15 04:47:56 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -31,8 +31,8 @@
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-xf86-video-ati-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		xserver-xf86-video-chips-drivers	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so		xserver-xf86-video-glint-drivers	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so.1		xserver-xf86-video-glint-drivers	xorg
+./usr/X11R7/lib/modules/drivers/glint_drv.so		xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/glint_drv.so.1		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
@@ -123,10 +123,10 @@
 ./usr/X11R7/lib/modules/libexa.so			xserver-exa-modules	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			xserver-exa-modules	xorg
 ./usr/X11R7/lib/modules/libexa_pic.a			xserver-obsolete	xorg,picinstall,obsolete
-./usr/X11R7/lib/modules/libfb.a				xserver-dixmods-modules	xorg
-./usr/X11R7/lib/modules/libfb.so			xserver-dixmods-modules	xorg
-./usr/X11R7/lib/modules/libfb.so.0			xserver-dixmods-modules	xorg
-./usr/X11R7/lib/modules/libfb_pic.a			xserver-obsolete	xorg,picinstall,obsolete
+./usr/X11R7/lib/modules/libfb.a				xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.so			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.so.0			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb_pic.a			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libi2c.a			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c.so			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c.so.0			xserver-obsolete	xorg,obsolete
@@ -147,10 +147,10 @@
 ./usr/X11R7/lib/modules/libshadowfb.so			xserver-shadowfb-modules	xorg
 ./usr/X11R7/lib/modules/libshadowfb.so.0		xserver-shadowfb-modules	xorg
 ./usr/X11R7/lib/modules/libshadowfb_pic.a		xserver-obsolete	xorg,picinstall,obsolete
-./usr/X11R7/lib/modules/libvbe.a			xserver-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/libvbe.so			xserver-vbe-modules	xorg
-./usr/X11R7/lib/modules/libvbe.so.0			xserver-vbe-modules	xorg
-./usr/X11R7/lib/modules/libvbe_pic.a			xserver-obsolete	xorg,picinstall,obsolete
+./usr/X11R7/lib/modules/libvbe.a			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe.so			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe.so.0			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe_pic.a			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libvgahw.a			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libvgahw.so			xserver-vgahw-modules	xorg
 ./usr/X11R7/lib/modules/libvgahw.so.0			xserver-vgahw-modules	xorg
@@ -185,7 +185,7 @@
 ./usr/X11R7/man/cat4/ati.0				xserver-xf86-video-ati-catman	.cat,xorg
 ./usr/X11R7/man/cat4/chips.0				xserver-xf86-video-chips-catman	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				xserver-xf86-video-exa-catman	.cat,xorg
-./usr/X11R7/man/cat4/glint.0				xserver-xf86-video-glint-catman	.cat,xorg
+./usr/X11R7/man/cat4/glint.0				xserver-obsolete	obsolete
 ./usr/X11R7/man/cat4/imstt.0				xserver-obsolete	obsolete
 ./usr/X11R7/man/cat4/kbd.0				xserver-xf86-input-keyboard-catman	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				xserver-xf86-video-mga-catman	.cat,xorg
@@ -207,7 +207,7 @@
 ./usr/X11R7/man/html4/ati.html				xserver-xf86-video-ati-htmlman	html,xorg
 ./usr/X11R7/man/html4/chips.html			xserver-xf86-video-chips-htmlman	html,xorg
 ./usr/X11R7/man/html4/exa.html				xserver-xf86-video-exa-htmlman	html,xorg
-./usr/X11R7/man/html4/glint.html			xserver-xf86-video-glint-htmlman	html,xorg
+./usr/X11R7/man/html4/glint.html			xserver-obsolete	obsolete
 ./usr/X11R7/man/html4/imstt.html			xserver-obsolete	obsolete
 ./usr/X11R7/man/html4/kbd.html				xserver-xf86-input-keyboard-htmlman	html,xorg
 ./usr/X11R7/man/html4/mga.html				xserver-xf86-video-mga-htmlman	html,xorg
@@ -229,7 +229,7 @@
 ./usr/X11R7/man/man4/ati.4				xserver-xf86-video-ati-man	.man,xorg
 ./usr/X11R7/man/man4/chips.4				xserver-xf86-video-chips-man	.man,xorg
 ./usr/X11R7/man/man4/exa.4				xserver-xf86-video-exa-man	.man,xorg
-./usr/X11R7/man/man4/glint.4				xserver-xf86-video-glint-man	.man,xorg
+./usr/X11R7/man/man4/glint.4				xserver-obsolete	obsolete
 ./usr/X11R7/man/man4/imstt.4				xserver-obsolete	obsolete
 ./usr/X11R7/man/man4/kbd.4				xserver-xf86-input-keyboard-man	.man,xorg
 ./usr/X11R7/man/man4/mga.4				xserver-xf86-video-mga-man	.man,xorg

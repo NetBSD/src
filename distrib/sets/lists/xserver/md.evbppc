@@ -1,4 +1,4 @@
-#	$NetBSD: md.evbppc,v 1.8 2022/07/15 00:16:04 mrg Exp $
+#	$NetBSD: md.evbppc,v 1.9 2022/07/15 04:47:56 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -29,13 +29,13 @@
 ./usr/X11R7/lib/modules/extensions/libshadow.so.0	xserver-shadow-modules	xorg
 ./usr/X11R7/lib/modules/libexa.so			xserver-exa-modules	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			xserver-exa-modules	xorg
-./usr/X11R7/lib/modules/libfb.a				xserver-dixmods-modules	xorg
-./usr/X11R7/lib/modules/libfb.so			xserver-dixmods-modules	xorg
-./usr/X11R7/lib/modules/libfb.so.0			xserver-dixmods-modules	xorg
+./usr/X11R7/lib/modules/libfb.a				xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.so			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.so.0			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libshadowfb.so			xserver-shadowfb-modules	xorg
 ./usr/X11R7/lib/modules/libshadowfb.so.0		xserver-shadowfb-modules	xorg
-./usr/X11R7/lib/modules/libvbe.so			xserver-vbe-modules	xorg
-./usr/X11R7/lib/modules/libvbe.so.0			xserver-vbe-modules	xorg
+./usr/X11R7/lib/modules/libvbe.so			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe.so.0			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/libvgahw.so			xserver-vgahw-modules	xorg
 ./usr/X11R7/lib/modules/libvgahw.so.0			xserver-vgahw-modules	xorg
 ./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg,xorg_server_ver=110
