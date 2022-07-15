@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_btc_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_btc_dpm.c,v 1.3 2022/07/15 06:42:08 mrg Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_btc_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_btc_dpm.c,v 1.3 2022/07/15 06:42:08 mrg Exp $");
 
 #include <linux/pci.h>
 #include <linux/seq_file.h>
@@ -2316,7 +2316,7 @@ int btc_dpm_set_power_state(struct radeon_device *rdev)
 	btc_set_boot_state_timing(rdev);
 	ret = rv770_restrict_performance_levels_before_switch(rdev);
 	if (ret) {
-		DRM_ERROR("rv770_restrict_performance_levels_before_switch failed\n");
+		DRM_ERROR("rv770_restrict_performance_levels_before_switch failed: %d\n", ret);
 		return ret;
 	}
 	if (eg_pi->pcie_performance_request)
