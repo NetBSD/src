@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.109 2022/07/11 14:13:46 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.110 2022/07/15 17:18:23 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1863,4 +1863,13 @@ sys/dev/pci/if_wm.c				1.719-1.720,1.722-1.725,
 	  - Modify comment.
 	  - KNF.
 	[msaitoh, ticket #1477]
+
+xsrc-9/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
+
+	Cherry-pick upstream fixes for
+	 * CVE-2022-2319/ZDI-CAN-16062: X.Org Server ProcXkbSetGeometry
+	   Out-Of-Bounds Access
+	 * CVE-2022-2320/ZDI-CAN-16070: X.Org Server ProcXkbSetDeviceInfo
+	   Out-Of-Bounds Access
+	[mrg, ticket #1478]
 
