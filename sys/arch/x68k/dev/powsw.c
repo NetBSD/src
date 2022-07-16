@@ -1,4 +1,4 @@
-/*	$NetBSD: powsw.c,v 1.2 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: powsw.c,v 1.3 2022/07/16 04:49:07 isaki Exp $	*/
 
 /*
  * Copyright (c) 2011 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.2 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.3 2022/07/16 04:49:07 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ extern int power_switch_is_off;		/* XXX should be in .h */
 //#define POWSW_DEBUG
 
 #if defined(POWSW_DEBUG)
-#define DPRINTF(fmt...)	printf(fmt)
+#define DPRINTF(fmt...)		printf(fmt)
 #define DEBUG_LOG_ADD(c)	sc->sc_log[sc->sc_loglen++] = (c)
 #define DEBUG_LOG_PRINT()	do {	\
 	sc->sc_log[sc->sc_loglen] = '\0';	\
@@ -69,12 +69,12 @@ extern int power_switch_is_off;		/* XXX should be in .h */
 
 /* mask */
 #define POWSW_ALARM		(0x01)
-#define POWSW_EXTERNAL	(0x02)
+#define POWSW_EXTERNAL		(0x02)
 #define POWSW_FRONT		(0x04)
 
 /* parameter */
-#define POWSW_MAX_TICK	(30)
-#define POWSW_THRESHOLD	(10)
+#define POWSW_MAX_TICK		(30)
+#define POWSW_THRESHOLD		(10)
 
 struct powsw_softc {
 	device_t sc_dev;
@@ -111,7 +111,7 @@ typedef const struct {
 } powsw_desc_t;
 
 static powsw_desc_t powsw_desc[2] = {
-	{ 66, POWSW_FRONT,		"Front Switch", },
+	{ 66, POWSW_FRONT,	"Front Switch", },
 	{ 65, POWSW_EXTERNAL,	"External Power Switch", },
 	/* XXX I'm not sure about alarm bit */
 };
@@ -120,6 +120,7 @@ static powsw_desc_t powsw_desc[2] = {
 static int
 powsw_match(device_t parent, cfdata_t cf, void *aux)
 {
+
 	return 1;
 }
 
@@ -223,7 +224,8 @@ powsw_softintr(void *arg)
 
 		if (sc->sc_last_sw == sc->sc_prev) {
 			/* switch state is not changed, it was a noise */
-			DPRINTF(" ignore(sw=%d,prev=%d)\n", sc->sc_last_sw, sc->sc_prev);
+			DPRINTF(" ignore(sw=%d,prev=%d)\n",
+			    sc->sc_last_sw, sc->sc_prev);
 		} else {
 			/* switch state has been changed */
 			sc->sc_prev = sc->sc_last_sw;
@@ -231,7 +233,8 @@ powsw_softintr(void *arg)
 			sysmon_task_queue_sched(0, powsw_pswitch_event, sc);
 		}
 		powsw_reset_counter(sc);
-		mfp_bit_set_ierb(sc->sc_mask);	// enable interrupt
+		/* enable interrupt */
+		mfp_bit_set_ierb(sc->sc_mask);
 	}
 
 	splx(s);
@@ -249,7 +252,7 @@ powsw_pswitch_event(void *arg)
 	    poweroff ? "off(PRESS)" : "on(RELEASE)");
 
 	sysmon_pswitch_event(&sc->sc_smpsw,
-		poweroff ? PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
+	    poweroff ? PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 }
 
 static void
@@ -262,12 +265,13 @@ powsw_shutdown_check(void *arg)
 	if (poweroff)
 		power_switch_is_off = 1;
 	DPRINTF("powsw_shutdown_check %s = %d\n",
-		device_xname(sc->sc_dev), power_switch_is_off);
+	    device_xname(sc->sc_dev), power_switch_is_off);
 }
 
 static void
 powsw_reset_counter(struct powsw_softc *sc)
 {
+
 	sc->sc_last_sw = -1;
 	sc->sc_tick = 0;
 	sc->sc_count = 0;
@@ -279,6 +283,7 @@ powsw_reset_counter(struct powsw_softc *sc)
 static void
 powsw_set_aer(struct powsw_softc *sc, int aer)
 {
+
 	KASSERT(aer == 0 || aer == 1);
 
 	if (aer == 0) {
