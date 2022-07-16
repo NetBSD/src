@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.474 2022/07/08 21:19:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.475 2022/07/16 22:36:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.474 2022/07/08 21:19:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.475 2022/07/16 22:36:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2656,8 +2656,10 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp) &&
 	    ost != CHAR && ost != UCHAR &&
 	    !is_incomplete(ostp)) {
-		/* converting '%s' to '%s' may cause alignment problem */
-		warning(135, type_name(otp), type_name(ntp));
+		/* converting '%s' to '%s' increases alignment ... */
+		warning(135, type_name(otp), type_name(ntp),
+		    alignment_in_bits(ostp) / CHAR_SIZE,
+		    alignment_in_bits(nstp) / CHAR_SIZE);
 	}
 
 	if (cflag && should_warn_about_pointer_cast(nstp, nst, ostp, ost)) {
