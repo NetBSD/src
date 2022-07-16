@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.53 2021/05/16 08:46:38 mlelstv Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.54 2022/07/16 10:57:59 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.53 2021/05/16 08:46:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.54 2022/07/16 10:57:59 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1003,11 +1003,11 @@ vcons_erasecols_cached(void *cookie, int row, int startcol, int ncols, long fill
 	struct vcons_data *vd = scr->scr_vd;
 	int i, pos = row * ri->ri_cols + startcol;
 
-	for (i = pos; i < ncols; i++) {
-		vd->chars[i] = 0x20;
-		vd->attrs[i] = fillattr;
-	}
 	vd->erasecols(cookie, row, startcol, ncols, fillattr);
+	for (i = pos; i < ncols; i++) {
+		vd->chars[i] = scr->scr_chars[i];
+		vd->attrs[i] = scr->scr_attrs[i];
+	}
 }
 #endif
 
