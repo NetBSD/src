@@ -1,4 +1,4 @@
-/*	$NetBSD: powsw.c,v 1.3 2022/07/16 04:49:07 isaki Exp $	*/
+/*	$NetBSD: powsw.c,v 1.4 2022/07/16 04:55:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 2011 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.3 2022/07/16 04:49:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.4 2022/07/16 04:55:35 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.3 2022/07/16 04:49:07 isaki Exp $");
 #include <dev/sysmon/sysmon_taskq.h>
 
 #include "ioconf.h"
-
-extern int power_switch_is_off;		/* XXX should be in .h */
 
 //#define POWSW_DEBUG
 
@@ -96,7 +94,6 @@ static void powsw_attach(device_t, device_t, void *);
 static int  powsw_intr(void *);
 static void powsw_softintr(void *);
 static void powsw_pswitch_event(void *);
-static void powsw_shutdown_check(void *);
 static void powsw_reset_counter(struct powsw_softc *);
 static void powsw_set_aer(struct powsw_softc *, int);
 
@@ -151,9 +148,6 @@ powsw_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, powsw_softintr, sc);
-
-	if (shutdownhook_establish(powsw_shutdown_check, sc) == NULL)
-		panic("%s: can't establish shutdown hook", xname);
 
 	if (intio_intr_establish(desc->vector, xname, powsw_intr, sc) < 0)
 		panic("%s: can't establish interrupt", xname);
@@ -253,19 +247,6 @@ powsw_pswitch_event(void *arg)
 
 	sysmon_pswitch_event(&sc->sc_smpsw,
 	    poweroff ? PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
-}
-
-static void
-powsw_shutdown_check(void *arg)
-{
-	struct powsw_softc *sc = arg;
-	int poweroff;
-
-	poweroff = sc->sc_prev;
-	if (poweroff)
-		power_switch_is_off = 1;
-	DPRINTF("powsw_shutdown_check %s = %d\n",
-	    device_xname(sc->sc_dev), power_switch_is_off);
 }
 
 static void
