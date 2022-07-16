@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.253 2022/05/19 13:57:03 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.254 2022/07/16 09:32:27 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.253 2022/05/19 13:57:03 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.254 2022/07/16 09:32:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,11 +422,13 @@ main(int argc, char *argv[])
 		kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 	} else {
 		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
-		getnlist(todo);
 	}
 
 	if (kd == NULL)
 		errx(EXIT_FAILURE, "%s", errbuf);
+
+	if (memf != NULL)
+		getnlist(todo);	/* Only need this if a core is specified. */
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
