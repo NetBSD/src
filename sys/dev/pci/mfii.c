@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.25 2022/07/16 07:13:03 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.26 2022/07/16 07:23:51 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.25 2022/07/16 07:13:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.26 2022/07/16 07:23:51 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -608,7 +608,6 @@ static const struct mfii_iop mfii_iop_35 = {
 	0
 };
 
-#if 0
 static const struct mfii_iop mfii_iop_aero = {
 	MFII_BAR_35,
 	MFII_IOP_NUM_SGE_LOC_35,
@@ -619,7 +618,6 @@ static const struct mfii_iop mfii_iop_aero = {
 	MFII_SGE_END_OF_LIST,
 	MFII_IOP_QUIRK_REGREAD | MFII_IOP_HAS_32BITDESC_BIT
 };
-#endif
 
 struct mfii_device {
 	pcireg_t		mpd_vendor;
@@ -663,7 +661,6 @@ static const struct mfii_device mfii_devices[] = {
 	/* Harpoon */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
 	    &mfii_iop_35 },
-#if 0
 	/* Aero */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_39XX_2,
 	    &mfii_iop_aero },
@@ -673,7 +670,6 @@ static const struct mfii_device mfii_devices[] = {
 	    &mfii_iop_aero },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_38XX_3,
 	    &mfii_iop_aero }
-#endif
 };
 
 static const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
