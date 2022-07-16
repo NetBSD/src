@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2890 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2891 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -623,3 +623,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[yhardy 20220630]
 	installboot(8): Add -u option to set U-Boot search paths.
 		[brook 20220710]
+	mfii(4): Support Newer devices up to SAS39{08,16} (Aero).
+		[msaitoh 20220716]
