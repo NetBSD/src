@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_135.c,v 1.10 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.11 2022/07/16 22:36:06 rillig Exp $	*/
 # 3 "msg_135.c"
 
-// Test for message: converting '%s' to '%s' may cause alignment problem [135]
+// Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
 
 /* lint1-extra-flags: -h */
 
@@ -12,7 +12,7 @@ read_uint(const unsigned short **pp)
 {
 	unsigned val;
 
-	/* expect+1: warning: converting 'pointer to const unsigned short' to 'pointer to const unsigned int' may cause alignment problem [135] */
+	/* expect+1: warning: converting 'pointer to const unsigned short' to 'pointer to const unsigned int' increases alignment from 2 to 4 [135] */
 	val = *(const unsigned *)(*pp);
 	pp += sizeof(unsigned);
 	return val;
