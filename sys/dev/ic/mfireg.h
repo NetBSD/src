@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.23 2022/07/09 11:44:57 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.24 2022/07/16 06:52:40 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -809,7 +809,23 @@ struct mfi_ctrl_props {
 		uint32_t	allowBootWithPinnedCache	:1;
 		uint32_t	disableSpinDownHS		:1;
 		uint32_t	enableJBOD			:1;
-		uint32_t	reserved			:18;
+		uint32_t	disableCacheBypass		:1;
+		uint32_t	useDiskActivityForLocate	:1;
+		uint32_t	enablePI			:1;
+		uint32_t	preventPIImport			:1;
+		uint32_t	useGlobalSparesForEmergency	:1;
+		uint32_t	useUnconfGoodForEmergency	:1;
+		uint32_t	useEmergencySparesforSMARTer	:1;
+		uint32_t	forceSGPIOForQuadOnly		:1;
+		uint32_t	enableConfigAutoBalance		:1;
+		uint32_t	enableVirtualCache		:1;
+		uint32_t	enableAutoLockRecovery		:1;
+		uint32_t	disableImmediateIO		:1;
+		uint32_t	disableT10RebuildAssist		:1;
+		uint32_t	ignore64ldRestriction		:1;
+		uint32_t	enableSwZone			:1;
+		uint32_t	limitMaxRateSATA3G		:1;
+		uint32_t	reserved			:2;
 	} OnOffProperties;
 	/*
 	 * % of source LD to be reserved for auto snapshot in snapshot
@@ -967,7 +983,111 @@ struct mfi_ctrl_info {
 	uint8_t			mci_reserved2[11];
 	struct mfi_ctrl_props	mci_properties;
 	char			mci_package_version[0x60];
-	uint8_t			mci_pad[0x800 - 0x6a0];
+
+	uint64_t		mci_dev_iface_port_addr2[8];
+	uint8_t			mci_reserved3[128];
+
+	struct {
+		uint16_t raid_level_0;
+		uint16_t raid_level_1;
+		uint16_t raid_level_5;
+		uint16_t raid_level_1e;
+		uint16_t raid_level_6;
+		uint16_t raid_level_10;
+		uint16_t raid_level_50;
+		uint16_t raid_level_60;
+		uint16_t raid_level_1e_rlq0;
+		uint16_t raid_level_1e0_rlq0;
+		uint16_t reserved[6];
+	} __packed		mci_pds_for_raid_levels;
+
+	uint16_t		mci_max_pds;
+	uint16_t		mci_max_ded_hsps;
+	uint16_t		mci_max_global_hsps;
+	uint16_t		mci_ddf_size;
+	uint8_t			mci_max_lds_per_array;
+	uint8_t			mci_partitions_in_ddf;
+	uint8_t			mci_lock_key_binding;
+	uint8_t			mci_max_pits_per_ld;
+	uint8_t			mci_max_views_per_ld;
+	uint8_t			mci_max_target_id;
+	uint16_t		mci_max_bvl_vd_size;
+
+	uint16_t		mci_max_configurable_ssc_size;
+	uint16_t		mci_current_ssc_size;
+
+	char			mci_expander_fw_version[12];
+
+	uint16_t		mci_pfk_trial_time_remaining;
+	uint16_t		mci_cache_memory_size;
+
+	uint32_t		mci_adapter_ops2;
+#define MFI_INFO_AOPS2_SUPP_PI_CTRL	0x00000001
+#define MFI_INFO_AOPS2_SUPP_LD_PIT1	0x00000002
+#define MFI_INFO_AOPS2_SUPP_LD_PIT2	0x00000004
+#define MFI_INFO_AOPS2_SUPP_LD_PIT3	0x00000008
+#define MFI_INFO_AOPS2_SUPP_LD_BBMI	0x00000010
+#define MFI_INFO_AOPS2_SUPP_SHIELD_STAT	0x00000020
+#define MFI_INFO_AOPS2_BLK_SSD_WC_CNG	0x00000040
+#define MFI_INFO_AOPS2_SUPP_SUSPRES_BGO	0x00000080
+#define MFI_INFO_AOPS2_SUPP_EMERG_SPARE	0x00000100
+#define MFI_INFO_AOPS2_SUPP_SET_LNKSPD	0x00000200
+#define MFI_INFO_AOPS2_SUPP_BT_PFK_CNG	0x00000400
+#define MFI_INFO_AOPS2_SUPP_JBOD	0x00000800
+#define MFI_INFO_AOPS2_DIS_ONLN_PFK_CNG	0x00001000
+#define MFI_INFO_AOPS2_SUPP_PERF_TUNE	0x00002000
+#define MFI_INFO_AOPS2_SUPP_SSD_PREAD	0x00004000
+#define MFI_INFO_AOPS2_RT_SCHED		0x00008000
+#define MFI_INFO_AOPS2_SUPP_RESET_NOW	0x00010000
+#define MFI_INFO_AOPS2_SUPP_EMU_DRIVE	0x00020000
+#define MFI_INFO_AOPS2_HEADLESS_MODE	0x00040000
+#define MFI_INFO_AOPS2_DEDIC_HSPARE_LIM	0x00080000
+#define MFI_INFO_AOPS2_SUPP_UNEVEN_SPAN	0x00100000
+
+	uint8_t			mci_drv_version[32];
+	uint8_t			mci_max_da_pd_count_spinup_60;
+	uint8_t			mci_temperature_roc;
+	uint8_t			mci_temperature_ctrl;
+	uint8_t			mci_reserved4;
+	uint16_t		mci_max_configurable_pds;
+	uint8_t			mci_reserved5[2];
+
+	uint32_t		cluster;
+
+	char			cluster_id[16];
+	char			reserved6[4];
+
+	uint32_t		mci_adapter_ops3;
+#define MFI_INFO_AOPS3_SUPP_PERSONALTY_CHANGE	0x00000003
+#define MFI_INFO_AOPS3_SUPP_THERMAL_POLL_INTVL	0x00000004
+#define MFI_INFO_AOPS3_SUPP_DIS_IMMEDIATE_IO	0x00000008
+#define MFI_INFO_AOPS3_SUPP_T10_REBUILD_ASSIST	0x00000010
+#define MFI_INFO_AOPS3_SUPP_MAX_EXT_LDS		0x00000020
+#define MFI_INFO_AOPS3_SUPP_CRASH_DUMP		0x00000040
+#define MFI_INFO_AOPS3_SUPP_SW_SONE		0x00000080
+#define MFI_INFO_AOPS3_SUPP_DEBUG_QUEUE		0x00000100
+#define MFI_INFO_AOPS3_SUPP_NVCACHE_ERASE	0x00000200
+#define MFI_INFO_AOPS3_SUPP_FORCE_TO_512E	0x00000400
+#define MFI_INFO_AOPS3_SUPP_HOQ_REBUILD		0x00000800
+#define MFI_INFO_AOPS3_SUPP_ALLOWED_OPS_DRVRMVL	0x00001000
+#define MFI_INFO_AOPS3_SUPP_DRV_ACTIVITY_LEDSET	0x00002000
+#define MFI_INFO_AOPS3_SUPP_NVDRAM		0x00004000
+#define MFI_INFO_AOPS3_SUPP_FORCE_FLASH		0x00008000
+#define MFI_INFO_AOPS3_SUPP_DIS_SES_MONITOR	0x00010000
+#define MFI_INFO_AOPS3_SUPP_CACHE_BYPASS_MODE	0x00020000
+#define MFI_INFO_AOPS3_SUPP_SECURITY_ON_JBOD	0x00040000
+#define MFI_INFO_AOPS3_DISCARD_CACHE_DUR_LD_DEL	0x00080000
+#define MFI_INFO_AOPS3_SUPP_TTY_LOG_COMPRESS	0x00100000
+#define MFI_INFO_AOPS3_SUPP_CPLD_UPDATE		0x00200000
+#define MFI_INFO_AOPS3_SUPP_DISK_CACHE_SYS_PD	0x00400000
+#define MFI_INFO_AOPS3_SUPP_EXTENDED_SSC_SIZE	0x00800000
+#define MFI_INFO_AOPS3_USE_SEQNUM_JBOD_FP	0x01000000
+
+	uint8_t			mci_pad_cpld[16];
+
+	uint16_t		mci_adapter_ops4;
+
+	uint8_t			mci_pad[0x800 - 0x7fe];
 } __packed;
 
 /* logical disk info from MR_DCMD_LD_GET_LIST */
