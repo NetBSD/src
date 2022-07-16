@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.16 2021/01/28 01:57:31 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.17 2022/07/16 06:27:24 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.16 2021/01/28 01:57:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.17 2022/07/16 06:27:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -141,6 +141,12 @@ x86_genfb_init(void)
 	ri->ri_height = fbinfo->height;
 	ri->ri_depth = fbinfo->depth;
 	ri->ri_stride = fbinfo->stride;
+	ri->ri_rnum = fbinfo->rnum;
+	ri->ri_gnum = fbinfo->gnum;
+	ri->ri_bnum = fbinfo->bnum;
+	ri->ri_rpos = fbinfo->rpos;
+	ri->ri_gpos = fbinfo->gpos;
+	ri->ri_bpos = fbinfo->bpos;
 	if (x86_genfb_use_shadowfb && lookup_bootinfo(BTINFO_EFI) != NULL) {
 		/* XXX The allocated memory is never released... */
 		ri->ri_bits = kmem_alloc(ri->ri_stride * ri->ri_height,
