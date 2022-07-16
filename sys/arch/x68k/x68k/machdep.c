@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 2022/06/25 08:19:01 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.209 2022/07/16 04:55:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2022/06/25 08:19:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2022/07/16 04:55:35 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -482,7 +482,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 int	waittime = -1;
-int	power_switch_is_off = 0;
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -529,7 +528,6 @@ cpu_reboot(int howto, char *bootstr)
 	/* a) RB_POWERDOWN
 	 *  a1: the power switch is still on
 	 *	Power cannot be removed; simply halt the system (b)
-	 *	Power switch state is checked in shutdown hook
 	 *  a2: the power switch is off
 	 *	Remove the power
 	 * b) RB_HALT
@@ -537,7 +535,7 @@ cpu_reboot(int howto, char *bootstr)
 	 * c) otherwise
 	 *	Reboot
 	 */
-	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off) {
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		printf("powering off...\n");
 		delay(1000000);
 
@@ -548,10 +546,8 @@ cpu_reboot(int howto, char *bootstr)
 		intio_set_sysport_powoff(0x0f);
 		intio_set_sysport_powoff(0x0f);
 		delay(1000000);
-		printf("WARNING: powerdown failed\n");
-		delay(1000000);
-		/* PASSTHROUGH even if came back */
-	} else if ((howto & RB_HALT) == RB_HALT) {
+	}
+	if ((howto & RB_HALT) != 0) {
 		printf("System halted.  Hit any key to reboot.\n\n");
 		cnpollc(1);
 		(void)cngetc();
