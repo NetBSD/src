@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.22 2022/07/03 14:15:38 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.23 2022/07/16 22:23:38 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.22 2022/07/03 14:15:38 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.23 2022/07/16 22:23:38 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -422,7 +422,7 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 		    d->d_func_def_pos.p_uniq);
 	for (const sym_t *sym = d->d_func_proto_syms;
 	     sym != NULL; sym = sym->s_next)
-		debug_sym("func_proto_sym(", sym, ")");
+		debug_sym(" func_proto_sym(", sym, ")");
 	debug_printf("\n");
 
 	if (d->d_enclosing != NULL) {
