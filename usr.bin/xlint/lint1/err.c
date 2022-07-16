@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.181 2022/07/05 22:50:41 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.182 2022/07/16 22:36:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.181 2022/07/05 22:50:41 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.182 2022/07/16 22:36:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -190,7 +190,7 @@ static const char *const msgs[] = {
 	"conversion from '%s' to '%s' may lose accuracy",	      /* 132 */
 	"conversion of pointer to '%s' loses bits",		      /* 133 */
 	"conversion of pointer to '%s' may lose bits",		      /* 134 */
-	"converting '%s' to '%s' may cause alignment problem",	      /* 135 */
+	"converting '%s' to '%s' increases alignment from %u to %u",  /* 135 */
 	"cannot do pointer arithmetic on operand of unknown size",    /* 136 */
 	"",			/* unused */			      /* 137 */
 	"unknown operand size, op '%s'",			      /* 138 */
