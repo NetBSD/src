@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.24 2022/07/16 06:52:41 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.25 2022/07/16 07:13:03 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.24 2022/07/16 06:52:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.25 2022/07/16 07:13:03 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -355,6 +355,7 @@ struct mfii_softc {
 	struct {
 		bool		ld_present;
 		char		ld_dev[16];	/* device name sd? */
+		int		ld_target_id;
 	}			sc_ld[MFII_MAX_LD_EXT];
 	int			sc_target_lds[MFII_MAX_LD_EXT];
 	bool			sc_max256vd;
@@ -942,6 +943,7 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
 		int target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
 		sc->sc_target_lds[target] = i;
+		sc->sc_ld[i].ld_target_id = target;
 	}
 
 	/* enable interrupts */
@@ -1452,6 +1454,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 		DNPRINTF(MFII_D_MISC, "%s: target %d: state %d\n",
 		    DEVNAME(sc), target, sc->sc_ld_list.mll_list[i].mll_state);
 		newlds[target] = i;
+		sc->sc_ld[i].ld_target_id = target;
 	}
 
 	for (i = 0; i < MFII_MAX_LD_EXT; i++) {
@@ -2339,9 +2342,10 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
-	int segs;
+	int segs, target;
 
-	io->dev_handle = htole16(periph->periph_target);
+	target = sc->sc_ld[periph->periph_target].ld_target_id;
+	io->dev_handle = htole16(target);
 	io->function = MFII_FUNCTION_LDIO_REQUEST;
 	io->sense_buffer_low_address = htole32(ccb->ccb_sense_dva);
 	io->sgl_flags = htole16(0x02); /* XXX */
@@ -2368,7 +2372,7 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	ctx->type_nseg = sc->sc_iop->ldio_ctx_type_nseg;
 	ctx->timeout_value = htole16(0x14); /* XXX */
 	ctx->reg_lock_flags = htole16(sc->sc_iop->ldio_ctx_reg_lock_flags);
-	ctx->virtual_disk_target_id = htole16(periph->periph_target);
+	ctx->virtual_disk_target_id = htole16(target);
 
 	if (mfii_load_ccb(sc, ccb, ctx + 1,
 	    ISSET(xs->xs_control, XS_CTL_NOSLEEP)) != 0)
@@ -2399,8 +2403,10 @@ mfii_scsi_cmd_cdb(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	int target;
 
-	io->dev_handle = htole16(periph->periph_target);
+	target = sc->sc_ld[periph->periph_target].ld_target_id;
+	io->dev_handle = htole16(target);
 	io->function = MFII_FUNCTION_LDIO_REQUEST;
 	io->sense_buffer_low_address = htole32(ccb->ccb_sense_dva);
 	io->sgl_flags = htole16(0x02); /* XXX */
@@ -2425,7 +2431,7 @@ mfii_scsi_cmd_cdb(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	}
 	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
-	ctx->virtual_disk_target_id = htole16(periph->periph_target);
+	ctx->virtual_disk_target_id = htole16(target);
 
 	if (mfii_load_ccb(sc, ccb, ctx + 1,
 	    ISSET(xs->xs_control, XS_CTL_NOSLEEP)) != 0)
