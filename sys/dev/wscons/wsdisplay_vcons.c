@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.60 2022/07/17 11:31:47 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.61 2022/07/17 11:43:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.60 2022/07/17 11:31:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.61 2022/07/17 11:43:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1317,7 +1317,8 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	struct rasops_info *ri;
 	int error;
 
-	KASSERT(scr != NULL && wsc != NULL);
+	KASSERT(scr != NULL);
+	KASSERT(wsc != NULL);
 
 	ri = &scr->scr_ri;
 
@@ -1356,7 +1357,8 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	struct rasops_info *ri;
 	int fg, bg, ul;
 
-	KASSERT(scr != NULL && wsc != NULL);
+	KASSERT(scr != NULL);
+	KASSERT(wsc != NULL);
 
 	ri = &scr->scr_ri;
 
