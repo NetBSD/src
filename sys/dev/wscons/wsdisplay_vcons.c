@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.61 2022/07/17 11:43:11 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.61 2022/07/17 11:43:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1333,10 +1333,10 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	    	wsc->col = rem;
 	} else {
 		if (__predict_false(wsc->col < 0 || wsc->col >= ri->ri_cols))
-			return (EINVAL);
+			return EINVAL;
 
 		if (__predict_false(wsc->row < 0 || wsc->row >= ri->ri_rows))
-			return (EINVAL);
+			return EINVAL;
 	}
 
 	error = ri->ri_ops.allocattr(ri, wsc->foreground,
@@ -1373,10 +1373,10 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	    	wsc->col = rem;
 	} else {
 		if (__predict_false(wsc->col < 0 || wsc->col >= ri->ri_cols))
-			return (EINVAL);
+			return EINVAL;
 
 		if (__predict_false(wsc->row < 0 || wsc->row >= ri->ri_rows))
-			return (EINVAL);
+			return EINVAL;
 	}
 
 	offset = ri->ri_cols * wsc->row + wsc->col;
