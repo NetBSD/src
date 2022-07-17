@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2022/07/17 14:11:40 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.8 2022/07/17 15:05:09 riastradh Exp $
 
 # Common makefile cruft for drm2 code.
 
@@ -42,6 +42,9 @@ CPPFLAGS+=	-DCONFIG_LOCKDEP=0
 CPPFLAGS+=	-DCONFIG_PCI=1
 
 CWARNFLAGS+=	-Wno-missing-field-initializers
+
+# Needed for drmums modules.
+CPPFLAGS+=	-DCONFIG_DRM_LEGACY
 
 # XXX Is this the right place to set this?
 CPPFLAGS+=	-DDIAGNOSTIC
