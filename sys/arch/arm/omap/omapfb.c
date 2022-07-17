@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.30 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.31 2022/07/17 10:28:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.30 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.31 2022/07/17 10:28:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,9 +980,7 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 	int pos;
 
 	pos = col + row * ri->ri_cols;
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	pos += scr->scr_offset_to_zero;
-#endif
+	pos += vcons_offset_to_zero(scr);
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		if (ri->ri_flg & RI_CURSOR) {
 			omapfb_putchar(cookie, row, col, scr->scr_chars[pos],

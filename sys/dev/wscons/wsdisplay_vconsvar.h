@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.31 2021/01/21 21:45:42 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.32 2022/07/17 10:28:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -169,5 +169,15 @@ void	vcons_replay_msgbuf(struct vcons_screen *);
 void	vcons_enable_polling(struct vcons_data *);
 void	vcons_disable_polling(struct vcons_data *);
 void	vcons_hard_switch(struct vcons_screen *);
+
+static inline int
+vcons_offset_to_zero(const struct vcons_screen *scr)
+{
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	return scr->scr_offset_to_zero;
+#else
+	return 0;
+#endif
+}
 
 #endif /* _WSDISPLAY_VCONS_H_ */
