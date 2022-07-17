@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.227.2.1 2020/12/18 12:23:16 martin Exp $ */
+/* $NetBSD: vmstat.c,v 1.227.2.2 2022/07/17 12:54:56 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.227.2.1 2020/12/18 12:23:16 martin Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.227.2.2 2022/07/17 12:54:56 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1570,7 +1570,7 @@ dopool(int verbose, int wide)
 {
 	int first, ovflw;
 	void *addr;
-	long total, inuse, this_total, this_inuse;
+	uint64_t total, inuse, this_total, this_inuse;
 	struct {
 		uint64_t pt_nget;
 		uint64_t pt_nfail;
@@ -1664,8 +1664,8 @@ dopool(int verbose, int wide)
 			PRWORD(ovflw, " 0x%0*x", 5, 1,
 			    pp->pr_flags | pp->pr_roflags);
 
-		this_inuse = pp->pr_nout * pp->pr_size;
-		this_total = pp->pr_npages * pa.pa_pagesz;
+		this_inuse = (uint64_t)pp->pr_nout * pp->pr_size;
+		this_total = (uint64_t)pp->pr_npages * pa.pa_pagesz;
 		if (pp->pr_roflags & PR_RECURSIVE) {
 			/*
 			 * Don't count in-use memory, since it's part
@@ -1704,7 +1704,8 @@ dopool(int verbose, int wide)
 	inuse /= KILO;
 	total /= KILO;
 	(void)printf(
-	    "\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+	    "\nIn use %" PRIu64 "K, "
+	    "total allocated %" PRIu64 "K; utilization %.1f%%\n",
 	    inuse, total, (100.0 * inuse) / total);
 }
 
