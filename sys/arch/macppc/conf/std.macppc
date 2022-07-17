@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.26 2022/07/14 11:10:02 macallan Exp $
+#	$NetBSD: std.macppc,v 1.27 2022/07/17 10:01:18 riastradh Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -22,7 +22,7 @@ options 	INTSTK=0x2000
 # pose as a USB keyboard
 options 	ADBKBD_EMUL_USB
 
-# default to console switching using Command-Fn, for tradition 
+# default to console switching using Command-Fn, for tradition
 options 	ADBKBD_LAYOUT="(KB_US | KB_APPLE)"
 options 	UKBD_LAYOUT="(KB_US | KB_APPLE)"
 
