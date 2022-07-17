@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_module.c,v 1.1 2022/02/17 01:21:03 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_module.c,v 1.2 2022/07/17 15:37:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_module.c,v 1.1 2022/02/17 01:21:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_module.c,v 1.2 2022/07/17 15:37:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: vmwgfx_module.c,v 1.1 2022/02/17 01:21:03 riastradh 
 
 #include "vmwgfx_drv.h"
 
-MODULE(MODULE_CLASS_DRIVER, vmwgfx, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drmkms_ttm */
+MODULE(MODULE_CLASS_DRIVER, vmwgfx, "drmkms,drmkms_pci,drmkms_ttm"); /* XXX drmkms_i2c */
 
 #ifdef _MODULE
 #include "ioconf.c"
