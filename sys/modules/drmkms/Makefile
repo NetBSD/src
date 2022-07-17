@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2022/07/17 15:05:09 riastradh Exp $
+# $NetBSD: Makefile,v 1.18 2022/07/17 15:35:42 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -11,6 +11,7 @@ MKLDSCRIPT=yes
 .PATH:	${S}/external/bsd/drm2/pci
 
 .PATH:	${S}/external/bsd/drm2/dist/drm
+.PATH:	${S}/external/bsd/drm2/dist/drm/scheduler
 
 # NetBSD additions.
 SRCS+=	drm_agp_hook.c
@@ -50,6 +51,11 @@ SRCS+=	drm_dma.c
 SRCS+=	drm_legacy_misc.c
 SRCS+=	drm_lock.c
 SRCS+=	drm_scatter.c
+
+# GPU scheduler
+SRCS+=	sched_entity.c
+SRCS+=	sched_fence.c
+SRCS+=	sched_main.c
 
 # Upstream source files.
 #SRCS+=	drm_agpsupport.c
