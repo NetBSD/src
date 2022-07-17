@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.63 2022/07/17 20:23:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.63 2022/07/17 20:23:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastra
 #include <sys/kthread.h>
 #include <sys/tprintf.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -62,6 +63,40 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.62 2022/07/17 11:43:39 riastra
 #else
 #define DPRINTF if (0) printf
 #endif
+
+struct vcons_data_private {
+	/* accessops */
+	int (*ioctl)(void *, void *, u_long, void *, int, struct lwp *);
+
+	/* rasops */
+	void (*copycols)(void *, int, int, int, int);
+	void (*erasecols)(void *, int, int, int, long);
+	void (*copyrows)(void *, int, int, int);
+	void (*eraserows)(void *, int, int, long);
+	void (*cursor)(void *, int, int, int);
+
+	/* virtual screen management stuff */
+	void (*switch_cb)(void *, int, int);
+	void *switch_cb_arg;
+	struct callout switch_callout;
+	uint32_t switch_pending;
+	LIST_HEAD(, vcons_screen) screens;
+	struct vcons_screen *wanted;
+	const struct wsscreen_descr *currenttype;
+	struct wsscreen_descr *defaulttype;
+	int switch_poll_count;
+
+#ifdef VCONS_DRAW_INTR
+	int cells;
+	long *attrs;
+	uint32_t *chars;
+	int cursor_offset;
+	callout_t intr;
+	int intr_valid;
+	void *intr_softint;
+	int use_intr;		/* use intr drawing when non-zero */
+#endif
+};
 
 static void vcons_dummy_init_screen(void *, struct vcons_screen *, int,
 	    long *);
@@ -123,13 +158,14 @@ static void vcons_unlock(struct vcons_screen *);
 static void vcons_intr(void *);
 static void vcons_softintr(void *);
 static void vcons_init_thread(void *);
+static void vcons_invalidate_cache(struct vcons_data *);
 #endif
 
 static inline bool
 vcons_use_intr(const struct vcons_screen *scr)
 {
 #ifdef VCONS_DRAW_INTR
-	return scr->scr_vd->use_intr;
+	return scr->scr_vd->private->use_intr;
 #else
 	return false;
 #endif
@@ -149,10 +185,12 @@ vcons_init_common(struct vcons_data *vd, void *cookie,
     struct wsscreen_descr *def, struct wsdisplay_accessops *ao,
     int enable_intr)
 {
+	struct vcons_data_private *vdp;
 
 	/* zero out everything so we can rely on untouched fields being 0 */
 	memset(vd, 0, sizeof(struct vcons_data));
 
+	vd->private = vdp = kmem_zalloc(sizeof(*vdp), KM_SLEEP);
 	vd->cookie = cookie;
 
 	vd->init_screen = vcons_dummy_init_screen;
@@ -160,7 +198,7 @@ vcons_init_common(struct vcons_data *vd, void *cookie,
 
 	/* keep a copy of the accessops that we replace below with our
 	 * own wrappers */
-	vd->ioctl = ao->ioctl;
+	vdp->ioctl = ao->ioctl;
 
 	/* configure the accessops */
 	ao->ioctl = vcons_ioctl;
@@ -172,18 +210,18 @@ vcons_init_common(struct vcons_data *vd, void *cookie,
 	ao->scroll = vcons_scroll;
 #endif
 
-	LIST_INIT(&vd->screens);
+	LIST_INIT(&vdp->screens);
 	vd->active = NULL;
-	vd->wanted = NULL;
-	vd->currenttype = def;
-	vd->defaulttype = def;
-	callout_init(&vd->switch_callout, 0);
-	callout_setfunc(&vd->switch_callout, vcons_do_switch, vd);
+	vdp->wanted = NULL;
+	vdp->currenttype = def;
+	vdp->defaulttype = def;
+	callout_init(&vdp->switch_callout, 0);
+	callout_setfunc(&vdp->switch_callout, vcons_do_switch, vd);
 #ifdef VCONS_DRAW_INTR
-	vd->cells = 0;
-	vd->attrs = NULL;
-	vd->chars = NULL;
-	vd->cursor_offset = -1;
+	vdp->cells = 0;
+	vdp->attrs = NULL;
+	vdp->chars = NULL;
+	vdp->cursor_offset = -1;
 #endif
 
 	/*
@@ -192,15 +230,15 @@ vcons_init_common(struct vcons_data *vd, void *cookie,
 	 * operation in progress
 	 */
 #ifdef DIAGNOSTIC
-	vd->switch_poll_count = 0;
+	vdp->switch_poll_count = 0;
 #endif
 #ifdef VCONS_DRAW_INTR
 	if (enable_intr) {
-		vd->intr_softint = softint_establish(SOFTINT_SERIAL,
+		vdp->intr_softint = softint_establish(SOFTINT_SERIAL,
 		    vcons_softintr, vd);
-		callout_init(&vd->intr, CALLOUT_MPSAFE);
-		callout_setfunc(&vd->intr, vcons_intr, vd);
-		vd->intr_valid = 1;
+		callout_init(&vdp->intr, CALLOUT_MPSAFE);
+		callout_setfunc(&vdp->intr, vcons_intr, vd);
+		vdp->intr_valid = 1;
 
 		if (kthread_create(PRI_NONE, 0, NULL, vcons_init_thread, vd,
 		    NULL, "vcons_init") != 0) {
@@ -275,6 +313,7 @@ vcons_alloc_buffers(struct vcons_data *vd, struct vcons_screen *scr)
 	struct rasops_info *ri = &scr->scr_ri;
 	int cnt, i;
 #ifdef VCONS_DRAW_INTR
+	struct vcons_data_private *vdp = vd->private;
 	int size;
 #endif
 
@@ -314,13 +353,13 @@ vcons_alloc_buffers(struct vcons_data *vd, struct vcons_screen *scr)
 
 #ifdef VCONS_DRAW_INTR
 	size = ri->ri_cols * ri->ri_rows;
-	if (size > vd->cells) {
-		if (vd->chars != NULL) free(vd->chars, M_DEVBUF);
-		if (vd->attrs != NULL) free(vd->attrs, M_DEVBUF);
-		vd->cells = size;
-		vd->chars = malloc(size * sizeof(uint32_t), M_DEVBUF,
+	if (size > vdp->cells) {
+		if (vdp->chars != NULL) free(vdp->chars, M_DEVBUF);
+		if (vdp->attrs != NULL) free(vdp->attrs, M_DEVBUF);
+		vdp->cells = size;
+		vdp->chars = malloc(size * sizeof(uint32_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		vd->attrs = malloc(size * sizeof(long), M_DEVBUF,
+		vdp->attrs = malloc(size * sizeof(long), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
 		vcons_invalidate_cache(vd);
 	} else if (SCREEN_IS_VISIBLE(scr))
@@ -333,6 +372,7 @@ int
 vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
     int existing, long *defattr)
 {
+	struct vcons_data_private *vdp = vd->private;
 	struct rasops_info *ri = &scr->scr_ri;
 	int i;
 
@@ -341,7 +381,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	scr->scr_busy = 0;
 
 	if (scr->scr_type == NULL)
-		scr->scr_type = vd->defaulttype;
+		scr->scr_type = vdp->defaulttype;
 
 	/*
 	 * call the driver-supplied init_screen function which is expected
@@ -353,26 +393,26 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	 * save the non virtual console aware rasops and replace them with
 	 * our wrappers
 	 */
-	vd->eraserows = ri->ri_ops.eraserows;
-	vd->erasecols = ri->ri_ops.erasecols;
+	vdp->eraserows = ri->ri_ops.eraserows;
+	vdp->erasecols = ri->ri_ops.erasecols;
 	scr->putchar   = ri->ri_ops.putchar;
 
 	if (scr->scr_flags & VCONS_NO_COPYCOLS) {
-		vd->copycols  = vcons_copycols_noread;
+		vdp->copycols  = vcons_copycols_noread;
 	} else {
-		vd->copycols = ri->ri_ops.copycols;
+		vdp->copycols = ri->ri_ops.copycols;
 	}
 
 	if (scr->scr_flags & VCONS_NO_COPYROWS) {
-		vd->copyrows  = vcons_copyrows_noread;
+		vdp->copyrows  = vcons_copyrows_noread;
 	} else {
-		vd->copyrows = ri->ri_ops.copyrows;
+		vdp->copyrows = ri->ri_ops.copyrows;
 	}
 
 	if (scr->scr_flags & VCONS_NO_CURSOR) {
-		vd->cursor  = vcons_cursor_noread;
+		vdp->cursor  = vcons_cursor_noread;
 	} else {
-		vd->cursor = ri->ri_ops.cursor;
+		vdp->cursor = ri->ri_ops.cursor;
 	}
 
 	ri->ri_ops.eraserows = vcons_eraserows;
@@ -396,7 +436,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 
 	vcons_alloc_buffers(vd, scr);
 
-	if(vd->active == NULL) {
+	if (vd->active == NULL) {
 		vd->active = scr;
 		SCREEN_VISIBLE(scr);
 	}
@@ -408,7 +448,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 		SCREEN_INVISIBLE(scr);
 	}
 
-	LIST_INSERT_HEAD(&vd->screens, scr, next);
+	LIST_INSERT_HEAD(&vdp->screens, scr, next);
 	return 0;
 }
 
@@ -416,6 +456,7 @@ static int
 vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 {
 	struct vcons_data *vd = v;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr = cookie;
 	struct rasops_info *ri;
 	struct wsdisplay_font *font;
@@ -447,11 +488,11 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 
 	/* ok, we got a font. Now clear the screen with the old parameters */
 	if (SCREEN_IS_VISIBLE(scr))
-		vd->eraserows(ri, 0, ri->ri_rows, scr->scr_defattr);
+		vdp->eraserows(ri, 0, ri->ri_rows, scr->scr_defattr);
 
 	vcons_lock(vd->active);
 #ifdef VCONS_DRAW_INTR
-	callout_halt(&vd->intr, NULL);
+	callout_halt(&vdp->intr, NULL);
 #endif
 	/* set the new font and re-initialize things */
 	ri->ri_font = font;
@@ -474,27 +515,27 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	vcons_alloc_buffers(vd, scr);
 
 	/* save the potentially changed ri_ops */
-	vd->eraserows = ri->ri_ops.eraserows;
-	vd->erasecols = ri->ri_ops.erasecols;
+	vdp->eraserows = ri->ri_ops.eraserows;
+	vdp->erasecols = ri->ri_ops.erasecols;
 	scr->putchar   = ri->ri_ops.putchar;
-	vd->cursor    = ri->ri_ops.cursor;
+	vdp->cursor    = ri->ri_ops.cursor;
 
 	if (scr->scr_flags & VCONS_NO_COPYCOLS) {
-		vd->copycols  = vcons_copycols_noread;
+		vdp->copycols  = vcons_copycols_noread;
 	} else {
-		vd->copycols = ri->ri_ops.copycols;
+		vdp->copycols = ri->ri_ops.copycols;
 	}
 
 	if (scr->scr_flags & VCONS_NO_COPYROWS) {
-		vd->copyrows  = vcons_copyrows_noread;
+		vdp->copyrows  = vcons_copyrows_noread;
 	} else {
-		vd->copyrows = ri->ri_ops.copyrows;
+		vdp->copyrows = ri->ri_ops.copyrows;
 	}
 
 	if (scr->scr_flags & VCONS_NO_CURSOR) {
-		vd->cursor  = vcons_cursor_noread;
+		vdp->cursor  = vcons_cursor_noread;
 	} else {
-		vd->cursor = ri->ri_ops.cursor;
+		vdp->cursor = ri->ri_ops.cursor;
 	}
 
 	/* and put our wrappers back */
@@ -518,7 +559,7 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	 * redraw the screen for now.
 	 */
 	vcons_redraw_screen(vd->active);
-	callout_schedule(&vd->intr, mstohz(33));
+	callout_schedule(&vdp->intr, mstohz(33));
 #endif
 	/* no need to draw anything, wsdisplay should reset the terminal */
 
@@ -529,12 +570,13 @@ static void
 vcons_do_switch(void *arg)
 {
 	struct vcons_data *vd = arg;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr, *oldscr;
 
-	scr = vd->wanted;
+	scr = vdp->wanted;
 	if (!scr) {
 		printf("vcons_switch_screen: disappeared\n");
-		vd->switch_cb(vd->switch_cb_arg, EIO, 0);
+		vdp->switch_cb(vdp->switch_cb_arg, EIO, 0);
 		return;
 	}
 	oldscr = vd->active; /* can be NULL! */
@@ -546,11 +588,11 @@ vcons_do_switch(void *arg)
 	if (oldscr != NULL) {
 		SCREEN_INVISIBLE(oldscr);
 		if (SCREEN_IS_BUSY(oldscr)) {
-			callout_schedule(&vd->switch_callout, 1);
+			callout_schedule(&vdp->switch_callout, 1);
 #ifdef DIAGNOSTIC
 			/* bitch if we wait too long */
-			vd->switch_poll_count++;
-			if (vd->switch_poll_count > 100) {
+			vdp->switch_poll_count++;
+			if (vdp->switch_poll_count > 100) {
 				panic("vcons: screen still busy");
 			}
 #endif
@@ -559,7 +601,7 @@ vcons_do_switch(void *arg)
 		/* invisible screen -> no visible cursor image */
 		oldscr->scr_ri.ri_flg &= ~RI_CURSOR;
 #ifdef DIAGNOSTIC
-		vd->switch_poll_count = 0;
+		vdp->switch_poll_count = 0;
 #endif
 	}
 
@@ -572,15 +614,15 @@ vcons_do_switch(void *arg)
 #endif
 
 #ifdef notyet
-	if (vd->currenttype != type) {
+	if (vdp->currenttype != type) {
 		vcons_set_screentype(vd, type);
-		vd->currenttype = type;
+		vdp->currenttype = type;
 	}
 #endif
 
 	SCREEN_VISIBLE(scr);
 	vd->active = scr;
-	vd->wanted = NULL;
+	vdp->wanted = NULL;
 
 #ifdef VCONS_DRAW_INTR
 	vcons_invalidate_cache(vd);
@@ -592,8 +634,8 @@ vcons_do_switch(void *arg)
 	if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
 		vcons_redraw_screen(scr);
 
-	if (vd->switch_cb)
-		vd->switch_cb(vd->switch_cb_arg, 0, 0);
+	if (vdp->switch_cb)
+		vdp->switch_cb(vdp->switch_cb_arg, 0, 0);
 }
 
 void
@@ -603,6 +645,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 	long *attrptr = scr->scr_attrs, a, last_a = 0, mask, cmp, acmp;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	int i, j, offset, boffset = 0, start = -1;
 
 	mask = 0x00ff00ff;	/* background and flags */
@@ -615,7 +658,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 		 * going to overwrite every single character cell anyway
 		 */
 		if (ri->ri_flg & RI_FULLCLEAR) {
-			vd->eraserows(ri, 0, ri->ri_rows,
+			vdp->eraserows(ri, 0, ri->ri_rows,
 			    scr->scr_defattr);
 			cmp = scr->scr_defattr & mask;
 		}
@@ -661,14 +704,14 @@ vcons_redraw_screen(struct vcons_screen *scr)
 						 * different attr, need to
 						 * flush & restart
 						 */
-						vd->erasecols(ri, i, start,
+						vdp->erasecols(ri, i, start,
 						    j - start, last_a);
 						start = j;
 						last_a = acmp;
 					}
 				} else {
 					if (start != -1) {
-						vd->erasecols(ri, i, start,
+						vdp->erasecols(ri, i, start,
 						    j - start, last_a);
 						start = -1;
 					}
@@ -677,34 +720,35 @@ vcons_redraw_screen(struct vcons_screen *scr)
 				}
 next:
 #ifdef VCONS_DRAW_INTR
-				vd->chars[boffset] = charptr[offset];
-				vd->attrs[boffset] = attrptr[offset];
+				vdp->chars[boffset] = charptr[offset];
+				vdp->attrs[boffset] = attrptr[offset];
 #endif
 				offset++;
 				boffset++;
 			}
 			/* end of the line - draw all defered blanks, if any */
 			if (start != -1) {
-				vd->erasecols(ri, i, start, j - start, last_a);
+				vdp->erasecols(ri, i, start, j - start, last_a);
 			}
 		}
 		ri->ri_flg &= ~RI_CURSOR;
-		scr->scr_vd->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
+		scr->scr_vd->private->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
 #ifdef VCONS_DRAW_INTR
-		vd->cursor_offset = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		vdp->cursor_offset = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
 #endif
 	}
 	vcons_unlock(scr);
 }
 
-#ifdef VCONS_DRAW_INTR
 void
 vcons_update_screen(struct vcons_screen *scr)
 {
+#ifdef VCONS_DRAW_INTR
 	uint32_t *charptr = scr->scr_chars;
 	long *attrptr = scr->scr_attrs;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	int i, j, offset, boffset = 0;
 
 	vcons_lock(scr);
@@ -722,8 +766,8 @@ vcons_update_screen(struct vcons_screen *scr)
 		 * notice that this isn't necessarily the position where rasops
 		 * thinks it is, just where we drew it the last time
 		 */
-		if (vd->cursor_offset >= 0)
-			vd->attrs[vd->cursor_offset] = 0xffffffff;
+		if (vdp->cursor_offset >= 0)
+			vdp->attrs[vdp->cursor_offset] = 0xffffffff;
 
 		for (i = 0; i < ri->ri_rows; i++) {
 			for (j = 0; j < ri->ri_cols; j++) {
@@ -733,30 +777,33 @@ vcons_update_screen(struct vcons_screen *scr)
 				 * and we already made sure the screen we're
 				 * working on is visible
 				 */
-				if ((vd->chars[boffset] != charptr[offset]) ||
-				    (vd->attrs[boffset] != attrptr[offset])) {
+				if ((vdp->chars[boffset] != charptr[offset]) ||
+				    (vdp->attrs[boffset] != attrptr[offset])) {
 					scr->putchar(ri, i, j,
 				 	   charptr[offset], attrptr[offset]);
-					vd->chars[boffset] = charptr[offset];
-					vd->attrs[boffset] = attrptr[offset];
+					vdp->chars[boffset] = charptr[offset];
+					vdp->attrs[boffset] = attrptr[offset];
 				}
 				offset++;
 				boffset++;
 			}
 		}
 		ri->ri_flg &= ~RI_CURSOR;
-		scr->scr_vd->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
-		vd->cursor_offset = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		scr->scr_vd->private->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
+		vdp->cursor_offset = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
 	}
 	vcons_unlock(scr);
-}
+#else  /* !VCONS_DRAW_INTR */
+	vcons_redraw_screen(scr);
 #endif
+}
 
 static int
 vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;
+	struct vcons_data_private *vdp = vd->private;
 	int error = 0;
 
 
@@ -775,19 +822,19 @@ vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		int poll = *(int *)data;
 
 		/* first call the driver's ioctl handler */
-		if (vd->ioctl != NULL)
-			error = (*vd->ioctl)(v, vs, cmd, data, flag, l);
+		if (vdp->ioctl != NULL)
+			error = (*vdp->ioctl)(v, vs, cmd, data, flag, l);
 		if (poll) {
 			vcons_enable_polling(vd);
-			vcons_hard_switch(LIST_FIRST(&vd->screens));
+			vcons_hard_switch(LIST_FIRST(&vdp->screens));
 		} else
 			vcons_disable_polling(vd);
 		}
 		break;
 
 	default:
-		if (vd->ioctl != NULL)
-			error = (*vd->ioctl)(v, vs, cmd, data, flag, l);
+		if (vdp->ioctl != NULL)
+			error = (*vdp->ioctl)(v, vs, cmd, data, flag, l);
 		else
 			error = EPASSTHROUGH;
 	}
@@ -800,6 +847,7 @@ vcons_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *defattrp)
 {
 	struct vcons_data *vd = v;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr;
 	struct wsscreen_descr *t = __UNCONST(type);
 	int ret;
@@ -826,7 +874,7 @@ vcons_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	if (vd->active == NULL) {
 		SCREEN_VISIBLE(scr);
 		vd->active = scr;
-		vd->currenttype = type;
+		vdp->currenttype = type;
 	}
 
 	*cookiep = scr;
@@ -870,17 +918,18 @@ vcons_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cb_arg)
 {
 	struct vcons_data *vd = v;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr;
 
 	scr = cookie;
 	if (scr == vd->active)
 		return 0;
 
-	vd->wanted = scr;
-	vd->switch_cb = cb;
-	vd->switch_cb_arg = cb_arg;
+	vdp->wanted = scr;
+	vdp->switch_cb = cb;
+	vdp->switch_cb_arg = cb_arg;
 	if (cb) {
-		callout_schedule(&vd->switch_callout, 0);
+		callout_schedule(&vdp->switch_callout, 0);
 		return EAGAIN;
 	}
 
@@ -923,7 +972,8 @@ vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 #if defined(VCONS_DRAW_INTR)
 		vcons_update_screen(scr);
 #else
-		scr->scr_vd->copycols(cookie, row, srccol, dstcol, ncols);
+		scr->scr_vd->private->copycols(cookie, row, srccol, dstcol,
+		    ncols);
 #endif
 	}
 	vcons_unlock(scr);
@@ -936,6 +986,7 @@ vcons_copycols_noread(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 #ifdef VCONS_DRAW_INTR
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 #endif
 
 	vcons_lock(scr);
@@ -951,12 +1002,12 @@ vcons_copycols_noread(void *cookie, int row, int srccol, int dstcol, int ncols)
 		pos = ppos + offset;
 		for (c = dstcol; c < (dstcol + ncols); c++) {
 #ifdef VCONS_DRAW_INTR
-			if ((scr->scr_chars[pos] != vd->chars[ppos]) ||
-			    (scr->scr_attrs[pos] != vd->attrs[ppos])) {
+			if ((scr->scr_chars[pos] != vdp->chars[ppos]) ||
+			    (scr->scr_attrs[pos] != vdp->attrs[ppos])) {
 				scr->putchar(cookie, row, c,
 				   scr->scr_chars[pos], scr->scr_attrs[pos]);
-				vd->chars[ppos] = scr->scr_chars[pos];
-				vd->attrs[ppos] = scr->scr_attrs[pos];
+				vdp->chars[ppos] = scr->scr_chars[pos];
+				vdp->attrs[ppos] = scr->scr_attrs[pos];
 			}
 #else
 			scr->putchar(cookie, row, c, scr->scr_chars[pos],
@@ -996,12 +1047,13 @@ vcons_erasecols_cached(void *cookie, int row, int startcol, int ncols, long fill
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	int i, pos = row * ri->ri_cols + startcol;
 
-	vd->erasecols(cookie, row, startcol, ncols, fillattr);
+	vdp->erasecols(cookie, row, startcol, ncols, fillattr);
 	for (i = pos; i < ncols; i++) {
-		vd->chars[i] = scr->scr_chars[i];
-		vd->attrs[i] = scr->scr_attrs[i];
+		vdp->chars[i] = scr->scr_chars[i];
+		vdp->attrs[i] = scr->scr_attrs[i];
 	}
 }
 #endif
@@ -1023,7 +1075,8 @@ vcons_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 		vcons_erasecols_cached(cookie, row, startcol, ncols,
 		    fillattr);
 #else
-		scr->scr_vd->erasecols(cookie, row, startcol, ncols, fillattr);
+		scr->scr_vd->private->erasecols(cookie, row, startcol, ncols,
+		    fillattr);
 #endif
 	}
 	vcons_unlock(scr);
@@ -1075,7 +1128,7 @@ vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 #if defined(VCONS_DRAW_INTR)
 		vcons_update_screen(scr);
 #else
-		scr->scr_vd->copyrows(cookie, srcrow, dstrow, nrows);
+		scr->scr_vd->private->copyrows(cookie, srcrow, dstrow, nrows);
 #endif
 	}
 	vcons_unlock(scr);
@@ -1088,6 +1141,7 @@ vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 #ifdef VCONS_DRAW_INTR
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 #endif
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1103,12 +1157,12 @@ vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
 		for (l = dstrow; l < (dstrow + nrows); l++) {
 			for (c = 0; c < ri->ri_cols; c++) {
 #ifdef VCONS_DRAW_INTR
-				if ((scr->scr_chars[pos] != vd->chars[ppos]) ||
-				    (scr->scr_attrs[pos] != vd->attrs[ppos])) {
+				if ((scr->scr_chars[pos] != vdp->chars[ppos]) ||
+				    (scr->scr_attrs[pos] != vdp->attrs[ppos])) {
 					scr->putchar(cookie, l, c,
 					   scr->scr_chars[pos], scr->scr_attrs[pos]);
-					vd->chars[ppos] = scr->scr_chars[pos];
-					vd->attrs[ppos] = scr->scr_attrs[pos];
+					vdp->chars[ppos] = scr->scr_chars[pos];
+					vdp->attrs[ppos] = scr->scr_attrs[pos];
 				}
 #else
 				scr->putchar(cookie, l, c, scr->scr_chars[pos],
@@ -1150,13 +1204,14 @@ vcons_eraserows_cached(void *cookie, int row, int nrows, long fillattr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	int i, pos = row * ri->ri_cols, end = (row+nrows) * ri->ri_cols;
 
 	for (i = pos; i < end; i++) {
-		vd->chars[i] = 0x20;
-		vd->attrs[i] = fillattr;
+		vdp->chars[i] = 0x20;
+		vdp->attrs[i] = fillattr;
 	}
-	vd->eraserows(cookie, row, nrows, fillattr);
+	vdp->eraserows(cookie, row, nrows, fillattr);
 }
 #endif
 
@@ -1176,7 +1231,7 @@ vcons_eraserows(void *cookie, int row, int nrows, long fillattr)
 #ifdef VCONS_DRAW_INTR
 		vcons_eraserows_cached(cookie, row, nrows, fillattr);
 #else
-		scr->scr_vd->eraserows(cookie, row, nrows, fillattr);
+		scr->scr_vd->private->eraserows(cookie, row, nrows, fillattr);
 #endif
 	}
 	vcons_unlock(scr);
@@ -1207,15 +1262,16 @@ vcons_putchar_cached(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	int pos = row * ri->ri_cols + col;
 
-	if ((vd->chars == NULL) || (vd->attrs == NULL)) {
+	if ((vdp->chars == NULL) || (vdp->attrs == NULL)) {
 		scr->putchar(cookie, row, col, c, attr);
 		return;
 	}
-	if ((vd->chars[pos] != c) || (vd->attrs[pos] != attr)) {
-		vd->attrs[pos] = attr;
-		vd->chars[pos] = c;
+	if ((vdp->chars[pos] != c) || (vdp->attrs[pos] != attr)) {
+		vdp->attrs[pos] = attr;
+		vdp->chars[pos] = c;
 		scr->putchar(cookie, row, col, c, attr);
 	}
 }
@@ -1266,7 +1322,7 @@ vcons_cursor(void *cookie, int on, int row, int col)
 	vcons_lock(scr);
 
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
-		scr->scr_vd->cursor(cookie, on, row, col);
+		scr->scr_vd->private->cursor(cookie, on, row, col);
 	} else {
 		scr->scr_ri.ri_crow = row;
 		scr->scr_ri.ri_ccol = col;
@@ -1417,6 +1473,16 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	return 0;
 }
 
+int
+vcons_offset_to_zero(const struct vcons_screen *scr)
+{
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	return scr->scr_offset_to_zero;
+#else
+	return 0;
+#endif
+}
+
 #ifdef WSDISPLAY_SCROLLSUPPORT
 
 static void
@@ -1474,7 +1540,7 @@ vcons_do_scroll(struct vcons_screen *scr)
 		r_offset = scr->scr_current_offset + num * scr->scr_ri.ri_cols;
 		r_start = num;
 	}
-	scr->scr_vd->copyrows(scr, from, to, num);
+	scr->scr_vd->private->copyrows(scr, from, to, num);
 	for (i = 0; i < abs(dist); i++) {
 		for (j = 0; j < scr->scr_ri.ri_cols; j++) {
 #ifdef VCONS_DRAW_INTR
@@ -1493,7 +1559,7 @@ vcons_do_scroll(struct vcons_screen *scr)
 	if (scr->scr_line_wanted == 0) {
 		/* this was a reset - need to draw the cursor */
 		scr->scr_ri.ri_flg &= ~RI_CURSOR;
-		scr->scr_vd->cursor(scr, 1, scr->scr_ri.ri_crow,
+		scr->scr_vd->private->cursor(scr, 1, scr->scr_ri.ri_crow,
 		    scr->scr_ri.ri_ccol);
 	}
 }
@@ -1505,24 +1571,26 @@ static void
 vcons_intr(void *cookie)
 {
 	struct vcons_data *vd = cookie;
+	struct vcons_data_private *vdp = vd->private;
 
-	softint_schedule(vd->intr_softint);
+	softint_schedule(vdp->intr_softint);
 }
 
 static void
 vcons_softintr(void *cookie)
 {
 	struct vcons_data *vd = cookie;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr = vd->active;
 	unsigned int dirty;
 
-	if (scr && vd->use_intr) {
+	if (scr && vdp->use_intr) {
 		if (!SCREEN_IS_BUSY(scr)) {
 			dirty = atomic_swap_uint(&scr->scr_dirty, 0);
 			membar_acquire();
-			if (vd->use_intr == 2) {
+			if (vdp->use_intr == 2) {
 				if ((scr->scr_flags & VCONS_NO_REDRAW) == 0) {
-					vd->use_intr = 1;
+					vdp->use_intr = 1;
 					vcons_redraw_screen(scr);
 				}
 			} else if (dirty > 0) {
@@ -1532,16 +1600,17 @@ vcons_softintr(void *cookie)
 		}
 	}
 
-	callout_schedule(&vd->intr, mstohz(33));
+	callout_schedule(&vdp->intr, mstohz(33));
 }
 
 static void
 vcons_init_thread(void *cookie)
 {
 	struct vcons_data *vd = (struct vcons_data *)cookie;
+	struct vcons_data_private *vdp = vd->private;
 
-	vd->use_intr = 2;
-	callout_schedule(&vd->intr, mstohz(33));
+	vdp->use_intr = 2;
+	callout_schedule(&vdp->intr, mstohz(33));
 	kthread_exit(0);
 }
 #endif /* VCONS_DRAW_INTR */
@@ -1549,10 +1618,11 @@ vcons_init_thread(void *cookie)
 void
 vcons_enable_polling(struct vcons_data *vd)
 {
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr = vd->active;
 
 #ifdef VCONS_DRAW_INTR
-	vd->use_intr = 0;
+	vdp->use_intr = 0;
 #endif
 
 	if (scr && !SCREEN_IS_BUSY(scr)) {
@@ -1565,12 +1635,13 @@ void
 vcons_disable_polling(struct vcons_data *vd)
 {
 #ifdef VCONS_DRAW_INTR
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr = vd->active;
 
-	if (!vd->intr_valid)
+	if (!vdp->intr_valid)
 		return;
 
-	vd->use_intr = 2;
+	vdp->use_intr = 2;
 	if (scr)
 		vcons_dirty(scr);
 #endif
@@ -1580,6 +1651,7 @@ void
 vcons_hard_switch(struct vcons_screen *scr)
 {
 	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *oldscr = vd->active;
 
 	if (oldscr) {
@@ -1588,21 +1660,22 @@ vcons_hard_switch(struct vcons_screen *scr)
 	}
 	SCREEN_VISIBLE(scr);
 	vd->active = scr;
-	vd->wanted = NULL;
+	vdp->wanted = NULL;
 
 	if (vd->show_screen_cb != NULL)
 		vd->show_screen_cb(scr, vd->show_screen_cookie);
 }
 
 #ifdef VCONS_DRAW_INTR
-void
+static void
 vcons_invalidate_cache(struct vcons_data *vd)
 {
+	struct vcons_data_private *vdp = vd->private;
 	int i;
 
-	for (i = 0; i < vd->cells; i++) {
-		vd->chars[i] = -1;
-		vd->attrs[i] = -1;
+	for (i = 0; i < vdp->cells; i++) {
+		vdp->chars[i] = -1;
+		vdp->attrs[i] = -1;
 	}
 }
 #endif
