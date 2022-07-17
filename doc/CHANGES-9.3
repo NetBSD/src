@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.110 2022/07/15 17:18:23 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.111 2022/07/17 10:35:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1872,4 +1872,10 @@ xsrc-9/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
 	 * CVE-2022-2320/ZDI-CAN-16070: X.Org Server ProcXkbSetDeviceInfo
 	   Out-Of-Bounds Access
 	[mrg, ticket #1478]
+
+sys/kern/subr_pool.c				1.285
+
+	Fix overflow errors for pools larger than 4GB and
+	output for kernel pool pages in "vmstat -s" output.
+	[simonb, ticket #1479]
 
