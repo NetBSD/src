@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.111 2022/07/17 10:35:07 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.112 2022/07/17 12:56:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1878,4 +1878,10 @@ sys/kern/subr_pool.c				1.285
 	Fix overflow errors for pools larger than 4GB and
 	output for kernel pool pages in "vmstat -s" output.
 	[simonb, ticket #1479]
+
+usr.bin/vmstat/vmstat.c				1.255
+
+	Fix Fixes overflow errors for pools larger than 4GB
+	when operating on core files.
+	[simonb, ticket #1480]
 
