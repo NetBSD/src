@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.20 2022/07/15 10:44:21 mrg Exp $
+# $NetBSD: md.cats,v 1.21 2022/07/17 05:51:29 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -39,7 +39,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-obsolete	obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	xdebug-xf86-video-i740-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
