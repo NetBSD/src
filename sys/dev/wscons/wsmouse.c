@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.70 2021/09/28 06:14:27 nia Exp $ */
+/* $NetBSD: wsmouse.c,v 1.71 2022/07/17 11:42:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.70 2021/09/28 06:14:27 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.71 2022/07/17 11:42:55 riastradh Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -602,8 +602,8 @@ wsmouse_repeat(void *v)
 			newdelay = sc->sc_repeat.wr_delay_minimum;
 		else if (newdelay > sc->sc_repeat.wr_delay_minimum)
 			newdelay -= sc->sc_repeat.wr_delay_decrement;
-		KASSERT(newdelay >= sc->sc_repeat.wr_delay_minimum &&
-		    newdelay <= sc->sc_repeat.wr_delay_first);
+		KASSERT(newdelay >= sc->sc_repeat.wr_delay_minimum);
+		KASSERT(newdelay <= sc->sc_repeat.wr_delay_first);
 	}
 
 	/*
