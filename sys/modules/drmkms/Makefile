@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2022/07/17 14:11:40 riastradh Exp $
+# $NetBSD: Makefile,v 1.17 2022/07/17 15:05:09 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -16,19 +16,16 @@ MKLDSCRIPT=yes
 SRCS+=	drm_agp_hook.c
 SRCS+=	drm_cdevsw.c
 SRCS+=	drm_gem_vm.c
-SRCS+=	drm_hdcp.c
 SRCS+=	drm_module.c
 SRCS+=	drm_sysctl.c
 
+# pci bus ids -- doesn't depend on all of pci, just the header files
 SRCS+=	drm_pci_busid.c
 
 # Generic, unaccelerated kms framebuffer.
 SRCS+=	drmfb.c
 
 # XXX ttm
-
-# Code imported from Linux - expects signed overflow to be OK.
-COPTS+=	-fwrapv
 
 CPPFLAGS+=	-I.
 
@@ -46,8 +43,16 @@ COPTS.drm_ioctl.c+=		-Wno-shadow
 COPTS.drm_mm.c+=		${${ACTIVE_CC} == clang :? -Wno-unused-function :}
 COPTS.drm_modes.c+=		-Wno-shadow
 
+# Legacy user-mode setting
+SRCS+=	drm_bufs.c
+SRCS+=	drm_context.c
+SRCS+=	drm_dma.c
+SRCS+=	drm_legacy_misc.c
+SRCS+=	drm_lock.c
+SRCS+=	drm_scatter.c
+
 # Upstream source files.
-#SRCS+=	drm_agpsupport.c	# Moved to drmkms_pci module.
+#SRCS+=	drm_agpsupport.c
 SRCS+=	drm_atomic.c
 SRCS+=	drm_atomic_helper.c
 SRCS+=	drm_atomic_state_helper.c
@@ -73,6 +78,7 @@ SRCS+=	drm_edid.c
 SRCS+=	drm_encoder.c
 SRCS+=	drm_encoder_slave.c
 SRCS+=	drm_fb_helper.c
+SRCS+=	drm_file.c
 SRCS+=	drm_flip_work.c
 #SRCS+=	drm_format_helper.c
 SRCS+=	drm_fourcc.c
@@ -81,10 +87,9 @@ SRCS+=	drm_gem.c
 SRCS+=	drm_gem_cma_helper.c
 SRCS+=	drm_gem_framebuffer_helper.c
 SRCS+=	drm_hashtab.c
-#SRCS+=	drm_hdcp.c		# Local override.
+SRCS+=	drm_hdcp.c
 SRCS+=	drm_ioctl.c
 SRCS+=	drm_irq.c
-SRCS+=	drm_lock.c
 #SRCS+=	drm_kms_helper_common.c
 SRCS+=	drm_lease.c
 SRCS+=	drm_memory.c
@@ -96,7 +101,7 @@ SRCS+=	drm_modeset_helper.c
 SRCS+=	drm_modeset_lock.c
 SRCS+=	drm_panel.c
 SRCS+=	drm_panel_orientation_quirks.c
-#SRCS+=	drm_pci.c		# Moved to drmkms_pci module.
+#SRCS+=	drm_pci.c
 SRCS+=	drm_plane.c
 SRCS+=	drm_plane_helper.c
 SRCS+=	drm_prime.c
