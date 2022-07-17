@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.252.2.3 2020/03/08 11:04:43 martin Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.252.2.4 2022/07/17 10:34:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252.2.3 2020/03/08 11:04:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.252.2.4 2022/07/17 10:34:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1678,10 +1678,11 @@ pool_totalpages_locked(void)
 	uint64_t total = 0;
 
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
-		uint64_t bytes = pp->pr_npages * pp->pr_alloc->pa_pagesz;
+		uint64_t bytes =
+		    (uint64_t)pp->pr_npages * pp->pr_alloc->pa_pagesz;
 
 		if ((pp->pr_roflags & PR_RECURSIVE) != 0)
-			bytes -= (pp->pr_nout * pp->pr_size);
+			bytes -= ((uint64_t)pp->pr_nout * pp->pr_size);
 		total += bytes;
 	}
 
