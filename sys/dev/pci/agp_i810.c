@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.124 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.125 2022/07/17 10:10:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.124 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.125 2022/07/17 10:10:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,8 @@ agp_i810_post_gtt_entry(struct agp_i810_softc *isc, off_t off)
 	 * read, because I don't have enough time or hardware to
 	 * conduct conclusive tests.
 	 */
-	membar_producer();
+	bus_space_barrier(isc->gtt_bst, isc->gtt_bsh, 0, isc->gtt_size,
+	    BUS_SPACE_BARRIER_WRITE);
 	(void)bus_space_read_4(isc->gtt_bst, isc->gtt_bsh,
 	    4*(off >> AGP_PAGE_SHIFT));
 }
