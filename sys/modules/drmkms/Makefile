@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2021/12/19 11:54:24 riastradh Exp $
+# $NetBSD: Makefile,v 1.16 2022/07/17 14:11:40 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -41,9 +41,9 @@ COPTS.drm_crtc.c+=		-Wno-shadow
 COPTS.drm_client_modeset.c+=	-Wno-shadow
 COPTS.drm_dp_helper.c+=		-Wno-pointer-arith
 COPTS.drm_fb_helper.c+=		-Wno-shadow
-COPTS.drm_edid.c+=		-Wno-error=attributes
 COPTS.drm_edid.c+=		-Wno-shadow
 COPTS.drm_ioctl.c+=		-Wno-shadow
+COPTS.drm_mm.c+=		${${ACTIVE_CC} == clang :? -Wno-unused-function :}
 COPTS.drm_modes.c+=		-Wno-shadow
 
 # Upstream source files.

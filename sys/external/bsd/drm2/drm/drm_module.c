@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.29 2021/12/31 17:22:45 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.30 2022/07/17 14:11:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.29 2021/12/31 17:22:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.30 2022/07/17 14:11:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -206,9 +206,7 @@ drmkms_modcmd(modcmd_t cmd, void *arg __unused)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = devsw_detach(NULL, &drm_cdevsw);
-		if (error)
-			return error;
+		devsw_detach(NULL, &drm_cdevsw);
 #endif
 		drm_fini();
 		return 0;
