@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $ */
+/*	$NetBSD: wcfb.c,v 1.21 2022/07/17 10:28:09 riastradh Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.21 2022/07/17 10:28:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,9 +590,7 @@ wcfb_cursor(void *cookie, int on, int row, int col)
 		if (ri->ri_flg & RI_CURSOR) {
 			/* remove cursor */
 			coffset = ri->ri_ccol + (ri->ri_crow * ri->ri_cols);
-#ifdef WSDISPLAY_SCROLLSUPPORT
-			coffset += scr->scr_offset_to_zero;
-#endif
+			coffset += vcons_offset_to_zero(scr);
 			wcfb_putchar(cookie, ri->ri_crow,
 			    ri->ri_ccol, scr->scr_chars[coffset],
 			    scr->scr_attrs[coffset]);
