@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.55 2022/07/17 10:27:45 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.56 2022/07/17 10:28:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.55 2022/07/17 10:27:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.56 2022/07/17 10:28:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,21 +878,12 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	int from = srccol + row * ri->ri_cols;
 	int to = dstcol + row * ri->ri_cols;
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	int offset;
-	offset = scr->scr_offset_to_zero;
+	int offset = vcons_offset_to_zero(scr);
 
 	memmove(&scr->scr_attrs[offset + to], &scr->scr_attrs[offset + from],
 	    ncols * sizeof(long));
 	memmove(&scr->scr_chars[offset + to], &scr->scr_chars[offset + from],
 	    ncols * sizeof(uint32_t));
-#else
-	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
-	    ncols * sizeof(long));
-	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
-	    ncols * sizeof(uint32_t));
-#endif
 
 #ifdef VCONS_DRAW_INTR
 	atomic_inc_uint(&scr->scr_dirty);
@@ -973,21 +964,12 @@ vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fill
 	struct vcons_screen *scr = ri->ri_hw;
 	int start = startcol + row * ri->ri_cols;
 	int end = start + ncols, i;
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	int offset;
-	offset = scr->scr_offset_to_zero;
+	int offset = vcons_offset_to_zero(scr);
 
 	for (i = start; i < end; i++) {
 		scr->scr_attrs[offset + i] = fillattr;
 		scr->scr_chars[offset + i] = 0x20;
 	}
-#else
-	for (i = start; i < end; i++) {
-		scr->scr_attrs[i] = fillattr;
-		scr->scr_chars[i] = 0x20;
-	}
-#endif
 
 #ifdef VCONS_DRAW_INTR
 	atomic_inc_uint(&scr->scr_dirty);
@@ -1042,30 +1024,22 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	int from, to, len;
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	int offset;
-	offset = scr->scr_offset_to_zero;
+	int offset = vcons_offset_to_zero(scr);
 
 	/* do we need to scroll the back buffer? */
-	if (dstrow == 0) {
+	if (dstrow == 0 && offset != 0) {
 		from = ri->ri_cols * srcrow;
 		to = ri->ri_cols * dstrow;
 
 		memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
-		    scr->scr_offset_to_zero * sizeof(long));
+		    offset * sizeof(long));
 		memmove(&scr->scr_chars[to], &scr->scr_chars[from],
-		    scr->scr_offset_to_zero * sizeof(uint32_t));
+		    offset * sizeof(uint32_t));
 	}
 	from = ri->ri_cols * srcrow + offset;
 	to = ri->ri_cols * dstrow + offset;
 	len = ri->ri_cols * nrows;
 
-#else
-	from = ri->ri_cols * srcrow;
-	to = ri->ri_cols * dstrow;
-	len = ri->ri_cols * nrows;
-#endif
 	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 	    len * sizeof(long));
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
@@ -1148,18 +1122,11 @@ vcons_eraserows_buffer(void *cookie, int row, int nrows, long fillattr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
+	int offset = vcons_offset_to_zero(scr);
 	int start, end, i;
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	int offset;
-	offset = scr->scr_offset_to_zero;
 
 	start = ri->ri_cols * row + offset;
 	end = ri->ri_cols * (row + nrows) + offset;
-#else
-	start = ri->ri_cols * row;
-	end = ri->ri_cols * (row + nrows);
-#endif
 
 	for (i = start; i < end; i++) {
 		scr->scr_attrs[i] = fillattr;
@@ -1217,11 +1184,8 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
+	int offset = vcons_offset_to_zero(scr);
 	int pos;
-
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	int offset;
-	offset = scr->scr_offset_to_zero;
 
 	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) &&
 	     (col < ri->ri_cols)) {
@@ -1229,14 +1193,6 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 		scr->scr_attrs[pos + offset] = attr;
 		scr->scr_chars[pos + offset] = c;
 	}
-#else
-	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) &&
-	     (col < ri->ri_cols)) {
-		pos = col + row * ri->ri_cols;
-		scr->scr_attrs[pos] = attr;
-		scr->scr_chars[pos] = c;
-	}
-#endif
 
 #ifdef VCONS_DRAW_INTR
 	atomic_inc_uint(&scr->scr_dirty);
@@ -1428,9 +1384,7 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	}
 
 	offset = ri->ri_cols * wsc->row + wsc->col;
-#ifdef WSDISPLAY_SCROLLSUPPORT
-	offset += scr->scr_offset_to_zero;
-#endif
+	offset += vcons_offset_to_zero(scr);
 	wsc->letter = scr->scr_chars[offset];
 	attr = scr->scr_attrs[offset];
 
