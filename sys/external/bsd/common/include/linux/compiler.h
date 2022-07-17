@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.8 2022/04/09 23:43:31 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.9 2022/07/17 08:34:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 	BUILD_BUG_ON_ZERO(__same_type((X), &(X)[0]))
 
 #define	READ_ONCE(X)	({						      \
+	__insn_barrier();						      \
 	typeof(X) __read_once_tmp = (X);				      \
 	membar_datadep_consumer();					      \
 	__read_once_tmp;						      \
@@ -69,7 +70,9 @@
 
 #define	WRITE_ONCE(X, V)	({					      \
 	typeof(X) __write_once_tmp = (V);				      \
+	__insn_barrier();						      \
 	(X) = __write_once_tmp;						      \
+	__insn_barrier();						      \
 	__write_once_tmp;						      \
 })
 
