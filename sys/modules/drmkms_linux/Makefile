@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2021/12/19 11:54:24 riastradh Exp $
+# $NetBSD: Makefile,v 1.15 2022/07/17 14:11:40 riastradh Exp $
 
 #
 # At some point this needs to turn into linux.kmod and a proper home for it
@@ -46,7 +46,7 @@ SRCS+=	linux_notifier.c
 SRCS+=	linux_pci.c
 SRCS+=	linux_radixtree.c
 SRCS+=	linux_rwsem.c
-SRCS+=	linux_sg.c
+SRCS+=	linux_sgt.c
 SRCS+=	linux_stop_machine.c
 SRCS+=	linux_sync_file.c
 SRCS+=	linux_wait_bit.c
