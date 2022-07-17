@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.59 2022/07/17 11:31:07 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.60 2022/07/17 11:31:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.59 2022/07/17 11:31:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.60 2022/07/17 11:31:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1343,10 +1343,8 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	if (error)
 		return error;
 	vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
-#ifdef VCONS_DEBUG
-	printf("vcons_putwschar(%d, %d, %x, %lx\n", wsc->row, wsc->col,
+	DPRINTF("vcons_putwschar(%d, %d, %x, %lx\n", wsc->row, wsc->col,
 	    wsc->letter, attr);
-#endif
 	return 0;
 }
 
@@ -1384,10 +1382,8 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	wsc->letter = scr->scr_chars[offset];
 	attr = scr->scr_attrs[offset];
 
-#ifdef VCONS_DEBUG
-	printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
+	DPRINTF("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
 	    wsc->col, wsc->letter, attr);
-#endif
 
 	/*
 	 * this is ugly. We need to break up an attribute into colours and
