@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.87 2022/07/09 13:37:12 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.88 2022/07/17 13:10:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.87 2022/07/09 13:37:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.88 2022/07/17 13:10:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,8 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 			ri->ri_bpos = bits * 2;
 		} else if (is_swapped) {
 			/* byte-swapped, must be 32 bpp */
-			KASSERT(ri->ri_depth == 32 && bits == 8);
+			KASSERT(ri->ri_depth == 32);
+			KASSERT(bits == 8);
 			ri->ri_rpos = 8;
 			ri->ri_gpos = 16;
 			ri->ri_bpos = 24;
@@ -879,8 +880,8 @@ genfb_brightness_up(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	KASSERT(sc->sc_brightness != NULL &&
-		sc->sc_brightness->gpc_upd_parameter != NULL);
+	KASSERT(sc->sc_brightness != NULL);
+	KASSERT(sc->sc_brightness->gpc_upd_parameter != NULL);
 
 	(void)sc->sc_brightness->gpc_upd_parameter(
 	    sc->sc_brightness->gpc_cookie, GENFB_BRIGHTNESS_STEP);
@@ -891,8 +892,8 @@ genfb_brightness_down(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	KASSERT(sc->sc_brightness != NULL &&
-		sc->sc_brightness->gpc_upd_parameter != NULL);
+	KASSERT(sc->sc_brightness != NULL);
+	KASSERT(sc->sc_brightness->gpc_upd_parameter != NULL);
 
 	(void)sc->sc_brightness->gpc_upd_parameter(
 	    sc->sc_brightness->gpc_cookie, - GENFB_BRIGHTNESS_STEP);
