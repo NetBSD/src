@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.11 2022/07/17 15:36:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.11 2022/07/17 15:36:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.10 2021/12/19 10:32:59 riastrad
 
 #include <core/device.h>
 
-MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms"); /* XXX drmkms_i2c, drmkms_ttm */
+MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms,drmkms_ttm"); /* XXX drmkms_i2c */
 
 #ifdef _MODULE
 #include "ioconf.c"
