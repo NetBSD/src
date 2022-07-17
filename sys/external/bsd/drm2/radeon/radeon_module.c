@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_module.c,v 1.7 2021/12/19 10:33:00 riastradh Exp $	*/
+/*	$NetBSD: radeon_module.c,v 1.8 2022/07/17 15:36:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.7 2021/12/19 10:33:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.8 2022/07/17 15:36:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.7 2021/12/19 10:33:00 riastradh 
 
 #include "radeon_drv.h"
 
-MODULE(MODULE_CLASS_DRIVER, radeon, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drmkms_ttm */
+MODULE(MODULE_CLASS_DRIVER, radeon, "drmkms,drmkms_pci,drmkms_ttm"); /* XXX drmkms_i2c */
 
 #ifdef _MODULE
 #include "ioconf.c"
