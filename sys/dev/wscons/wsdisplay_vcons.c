@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.58 2022/07/17 11:30:27 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.59 2022/07/17 11:31:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.58 2022/07/17 11:30:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.59 2022/07/17 11:31:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ static inline void
 vcons_dirty(struct vcons_screen *scr)
 {
 #ifdef VCONS_DRAW_INTR
+	membar_release();
 	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
@@ -1520,6 +1521,7 @@ vcons_softintr(void *cookie)
 	if (scr && vd->use_intr) {
 		if (!SCREEN_IS_BUSY(scr)) {
 			dirty = atomic_swap_uint(&scr->scr_dirty, 0);
+			membar_acquire();
 			if (vd->use_intr == 2) {
 				if ((scr->scr_flags & VCONS_NO_REDRAW) == 0) {
 					vd->use_intr = 1;
