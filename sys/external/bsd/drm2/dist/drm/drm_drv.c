@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.22 2021/12/19 12:32:01 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.23 2022/07/17 14:11:18 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.22 2021/12/19 12:32:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.23 2022/07/17 14:11:18 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -767,6 +767,8 @@ err_pswitch:
 }
 EXPORT_SYMBOL(drm_dev_init);
 
+#ifndef __NetBSD__
+
 static void devm_drm_dev_init_release(void *data)
 {
 	drm_dev_put(data);
@@ -805,6 +807,8 @@ int devm_drm_dev_init(struct device *parent,
 	return ret;
 }
 EXPORT_SYMBOL(devm_drm_dev_init);
+
+#endif
 
 /**
  * drm_dev_fini - Finalize a dead DRM device
