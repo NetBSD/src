@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.56 2022/07/17 10:28:09 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.57 2022/07/17 11:20:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.56 2022/07/17 10:28:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.57 2022/07/17 11:20:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,16 @@ static void vcons_intr(void *);
 static void vcons_softintr(void *);
 static void vcons_init_thread(void *);
 #endif
+
+static inline bool
+vcons_use_intr(const struct vcons_screen *scr)
+{
+#ifdef VCONS_DRAW_INTR
+	return scr->scr_vd->use_intr;
+#else
+	return false;
+#endif
+}
 
 static int
 vcons_init_common(struct vcons_data *vd, void *cookie,
@@ -898,10 +908,8 @@ vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 
 	vcons_copycols_buffer(cookie, row, srccol, dstcol, ncols);
 
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr)
+	if (vcons_use_intr(scr))
 		return;
-#endif
 
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1001,10 +1009,8 @@ vcons_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 
 	vcons_erasecols_buffer(cookie, row, startcol, ncols, fillattr);
 
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr)
+	if (vcons_use_intr(scr))
 		return;
-#endif
 
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1058,10 +1064,8 @@ vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 
 	vcons_copyrows_buffer(cookie, srcrow, dstrow, nrows);
 
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr)
+	if (vcons_use_intr(scr))
 		return;
-#endif
 
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1163,10 +1167,8 @@ vcons_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 	vcons_eraserows_buffer(cookie, row, nrows, fillattr);
 
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr)
+	if (vcons_use_intr(scr))
 		return;
-#endif
 
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1228,10 +1230,8 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	vcons_putchar_buffer(cookie, row, col, c, attr);
 
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr)
+	if (vcons_use_intr(scr))
 		return;
-#endif
 
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
@@ -1253,19 +1253,18 @@ vcons_cursor(void *cookie, int on, int row, int col)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 
-
-#if defined(VCONS_DRAW_INTR)
-	if (scr->scr_vd->use_intr) {
+	if (vcons_use_intr(scr)) {
 		vcons_lock(scr);
 		if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
 			scr->scr_ri.ri_crow = row;
 			scr->scr_ri.ri_ccol = col;
+#if defined(VCONS_DRAW_INTR)
 			atomic_inc_uint(&scr->scr_dirty);
+#endif
 		}
 		vcons_unlock(scr);
 		return;
 	}
-#endif
 
 	vcons_lock(scr);
 
