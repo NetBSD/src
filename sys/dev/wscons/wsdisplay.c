@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.163 2021/12/31 14:19:57 riastradh Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.164 2022/07/17 11:43:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.163 2021/12/31 14:19:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.164 2022/07/17 11:43:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -790,12 +790,13 @@ static bool
 wsdisplay_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wsdisplay_softc *sc = device_private(dv);
-#ifdef DIAGNOSTIC
 	struct wsscreen *scr = sc->sc_focus;
+
 	if (sc->sc_flags & SC_XATTACHED) {
-		KASSERT(scr && scr->scr_syncops);
+		KASSERT(scr);
+		KASSERT(scr->scr_syncops);
 	}
-#endif
+
 #if 1
 	/*
 	 * XXX X servers should have been detached earlier.
