@@ -1,4 +1,4 @@
-#	$NetBSD: files.ttm,v 1.7 2021/12/19 10:55:38 riastradh Exp $
+#	$NetBSD: files.ttm,v 1.8 2022/07/17 15:36:05 riastradh Exp $
 
 # TTM, the texture and tiling manager.
 
@@ -17,8 +17,7 @@ file	external/bsd/drm2/dist/drm/ttm/ttm_tt.c			drmkms_ttm
 file	external/bsd/drm2/dist/drm/ttm/ttm_bo.c			drmkms_ttm
 file	external/bsd/drm2/dist/drm/ttm/ttm_bo_util.c		drmkms_ttm
 file	external/bsd/drm2/ttm/ttm_bo_vm.c			drmkms_ttm
-# Linux module goo.
-#file	external/bsd/drm2/dist/drm/ttm/ttm_module.c		drmkms_ttm
+file	external/bsd/drm2/ttm/ttm_module.c			drmkms_ttm
 # Used only by vmwgfx.  Needs porting for rcu -> pserialize.
 #file	external/bsd/drm2/dist/drm/ttm/ttm_object.c		drmkms_ttm
 # Used only by vmwgfx.  Needs porting.  Does silly things like SIGKILL.
