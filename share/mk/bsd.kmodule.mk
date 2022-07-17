@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.78 2022/07/17 13:38:06 riastradh Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.79 2022/07/17 14:10:55 riastradh Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -36,6 +36,8 @@ CWARNFLAGS.clang+=	-Wno-error=constant-conversion
 # XXX until the kernel is fixed again...
 CFLAGS+=	-fno-strict-aliasing
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 # XXX This is a workaround for platforms that have relative relocations
 # that, when relocated by the module loader, result in addresses that
