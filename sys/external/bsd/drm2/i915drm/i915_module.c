@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.18 2022/02/27 21:22:01 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.19 2022/07/17 14:10:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.18 2022/02/27 21:22:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.19 2022/07/17 14:10:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -57,8 +57,6 @@ struct drm_sysctl_def i915_def = DRM_SYSCTL_INIT();
 /* XXX use link sets for DEFINE_SPINLOCK */
 extern spinlock_t i915_sw_fence_lock;
 extern spinlock_t *const i915_schedule_lock;
-
-int i915_global_buddy_init(void); /* XXX */
 
 static int
 i915drmkms_init(void)
