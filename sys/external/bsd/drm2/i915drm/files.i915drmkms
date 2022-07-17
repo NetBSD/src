@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.86 2022/02/27 21:22:01 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.87 2022/07/17 14:10:32 riastradh Exp $
 
 version	20180827
 
@@ -66,7 +66,6 @@ file	external/bsd/drm2/i915drm/intelfb.c		intelfb
 # Local overrides
 file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_trace_points.c	i915drmkms
