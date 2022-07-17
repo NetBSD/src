@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.46 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.47 2022/07/17 08:33:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.46 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.47 2022/07/17 08:33:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,6 +899,14 @@ bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 	 * consulting the page tables), so just issue the fence
 	 * unconditionally.  Chances are either it's necessary or the
 	 * cost is small in comparison to device register I/O.
+	 *
+	 * Reference:
+	 *
+	 *	AMD64 Architecture Programmer's Manual, Volume 2:
+	 *	System Programming, 24593--Rev. 3.38--November 2021,
+	 *	Sec. 7.4.2 Memory Barrier Interaction with Memory
+	 *	Types, Table 7-3, p. 196.
+	 *	https://web.archive.org/web/20220625040004/https://www.amd.com/system/files/TechDocs/24593.pdf#page=256
 	 */
 	switch (flags) {
 	case 0:
