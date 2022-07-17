@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.57 2022/07/17 11:20:04 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.58 2022/07/17 11:30:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.57 2022/07/17 11:20:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.58 2022/07/17 11:30:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,14 @@ vcons_use_intr(const struct vcons_screen *scr)
 	return scr->scr_vd->use_intr;
 #else
 	return false;
+#endif
+}
+
+static inline void
+vcons_dirty(struct vcons_screen *scr)
+{
+#ifdef VCONS_DRAW_INTR
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -895,9 +903,7 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 	memmove(&scr->scr_chars[offset + to], &scr->scr_chars[offset + from],
 	    ncols * sizeof(uint32_t));
 
-#ifdef VCONS_DRAW_INTR
-	atomic_inc_uint(&scr->scr_dirty);
-#endif
+	vcons_dirty(scr);
 }
 
 static void
@@ -979,9 +985,7 @@ vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fill
 		scr->scr_chars[offset + i] = 0x20;
 	}
 
-#ifdef VCONS_DRAW_INTR
-	atomic_inc_uint(&scr->scr_dirty);
-#endif
+	vcons_dirty(scr);
 }
 
 #ifdef VCONS_DRAW_INTR
@@ -1051,9 +1055,7 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
 	    len * sizeof(uint32_t));
 
-#ifdef VCONS_DRAW_INTR
-	atomic_inc_uint(&scr->scr_dirty);
-#endif
+	vcons_dirty(scr);
 }
 
 static void
@@ -1137,9 +1139,7 @@ vcons_eraserows_buffer(void *cookie, int row, int nrows, long fillattr)
 		scr->scr_chars[i] = 0x20;
 	}
 
-#ifdef VCONS_DRAW_INTR
-	atomic_inc_uint(&scr->scr_dirty);
-#endif
+	vcons_dirty(scr);
 }
 
 #ifdef VCONS_DRAW_INTR
@@ -1196,9 +1196,7 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 		scr->scr_chars[pos + offset] = c;
 	}
 
-#ifdef VCONS_DRAW_INTR
-	atomic_inc_uint(&scr->scr_dirty);
-#endif
+	vcons_dirty(scr);
 }
 
 #ifdef VCONS_DRAW_INTR
@@ -1258,9 +1256,7 @@ vcons_cursor(void *cookie, int on, int row, int col)
 		if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
 			scr->scr_ri.ri_crow = row;
 			scr->scr_ri.ri_ccol = col;
-#if defined(VCONS_DRAW_INTR)
-			atomic_inc_uint(&scr->scr_dirty);
-#endif
+			vcons_dirty(scr);
 		}
 		vcons_unlock(scr);
 		return;
@@ -1576,7 +1572,7 @@ vcons_disable_polling(struct vcons_data *vd)
 
 	vd->use_intr = 2;
 	if (scr)
-		atomic_inc_uint(&scr->scr_dirty);
+		vcons_dirty(scr);
 #endif
 }
 
