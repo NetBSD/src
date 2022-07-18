@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.23 2022/07/18 23:33:53 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.24 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.23 2022/07/18 23:33:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.24 2022/07/18 23:34:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -90,7 +90,6 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct intelfb_softc *const sc = device_private(self);
 	const struct intelfb_attach_args *const ifa = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_ifa = *ifa;
@@ -100,12 +99,7 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	i915drmkms_task_init(&sc->sc_attach_task, &intelfb_attach_task);
-	error = i915drmkms_task_schedule(parent, &sc->sc_attach_task);
-	if (error) {
-		aprint_error_dev(self, "failed to schedule mode set: %d\n",
-		    error);
-		return;
-	}
+	i915drmkms_task_schedule(parent, &sc->sc_attach_task);
 	config_pending_incr(self);
 }
 

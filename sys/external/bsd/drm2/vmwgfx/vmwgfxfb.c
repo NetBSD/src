@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfxfb.c,v 1.2 2022/07/18 23:33:53 riastradh Exp $	*/
+/*	$NetBSD: vmwgfxfb.c,v 1.3 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfxfb.c,v 1.2 2022/07/18 23:33:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfxfb.c,v 1.3 2022/07/18 23:34:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -80,7 +80,6 @@ vmwgfxfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct vmwgfxfb_softc *const sc = device_private(self);
 	const struct vmwgfxfb_attach_args *const vfa = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_vfa = *vfa;
@@ -90,12 +89,7 @@ vmwgfxfb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	vmwgfx_task_init(&sc->sc_attach_task, &vmwgfxfb_attach_task);
-	error = vmwgfx_task_schedule(parent, &sc->sc_attach_task);
-	if (error) {
-		aprint_error_dev(self, "failed to schedule mode set: %d\n",
-		    error);
-		return;
-	}
+	vmwgfx_task_schedule(parent, &sc->sc_attach_task);
 	config_pending_incr(self);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.16 2022/07/18 23:33:53 riastradh Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.17 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.16 2022/07/18 23:33:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.17 2022/07/18 23:34:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -84,7 +84,6 @@ radeonfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct radeonfb_softc *const sc = device_private(self);
 	const struct radeonfb_attach_args *const rfa = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_rfa = *rfa;
@@ -94,12 +93,7 @@ radeonfb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	radeon_task_init(&sc->sc_attach_task, &radeonfb_attach_task);
-	error = radeon_task_schedule(parent, &sc->sc_attach_task);
-	if (error) {
-		aprint_error_dev(self, "failed to schedule mode set: %d\n",
-		    error);
-		return;
-	}
+	radeon_task_schedule(parent, &sc->sc_attach_task);
 	config_pending_incr(self);
 }
 

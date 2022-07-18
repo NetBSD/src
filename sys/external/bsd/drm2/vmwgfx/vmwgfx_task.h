@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_task.h,v 1.1 2022/02/17 01:21:03 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_task.h,v 1.2 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -47,6 +47,6 @@ vmwgfx_task_init(struct vmwgfx_task *task, void (*fn)(struct vmwgfx_task *))
 	task->vt_fn = fn;
 }
 
-int	vmwgfx_task_schedule(device_t, struct vmwgfx_task *);
+void	vmwgfx_task_schedule(device_t, struct vmwgfx_task *);
 
 #endif	/* _VMWGFX_VMWGFX_TASK_H_ */
