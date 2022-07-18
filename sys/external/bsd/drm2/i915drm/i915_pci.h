@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.h,v 1.1 2014/07/24 21:18:40 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.h,v 1.2 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,6 +51,6 @@ i915drmkms_task_init(struct i915drmkms_task *task,
 	task->ift_fn = fn;
 }
 
-int	i915drmkms_task_schedule(device_t, struct i915drmkms_task *);
+void	i915drmkms_task_schedule(device_t, struct i915drmkms_task *);
 
 #endif	/* _I915DRM_I915_PCI_H_ */

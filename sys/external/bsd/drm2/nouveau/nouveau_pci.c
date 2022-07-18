@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.35 2021/12/19 12:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.36 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.35 2021/12/19 12:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36 2022/07/18 23:34:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -313,7 +313,7 @@ nouveau_pci_task_work(struct work *work, void *cookie __unused)
 	(*task->nt_fn)(task);
 }
 
-int
+void
 nouveau_pci_task_schedule(device_t self, struct nouveau_pci_task *task)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
@@ -322,8 +322,6 @@ nouveau_pci_task_schedule(device_t self, struct nouveau_pci_task *task)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, nt_u.queue);
 	else
 		workqueue_enqueue(sc->sc_task_wq, &task->nt_u.work, NULL);
-
-	return 0;
 }
 
 extern struct drm_driver *const nouveau_drm_driver_stub; /* XXX */

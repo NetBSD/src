@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_task.h,v 1.1 2018/08/27 14:02:32 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_task.h,v 1.2 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,6 +50,6 @@ amdgpu_task_init(struct amdgpu_task *task, void (*fn)(struct amdgpu_task *))
 	task->rt_fn = fn;
 }
 
-int	amdgpu_task_schedule(device_t, struct amdgpu_task *);
+void	amdgpu_task_schedule(device_t, struct amdgpu_task *);
 
 #endif	/* _AMDGPU_AMDGPU_TASK_H_ */

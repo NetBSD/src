@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_pci.c,v 1.1 2022/02/17 01:21:03 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_pci.c,v 1.2 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_pci.c,v 1.1 2022/02/17 01:21:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_pci.c,v 1.2 2022/07/18 23:34:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -322,7 +322,7 @@ vmwgfx_task_work(struct work *work, void *cookie __unused)
 	(*task->vt_fn)(task);
 }
 
-int
+void
 vmwgfx_task_schedule(device_t self, struct vmwgfx_task *task)
 {
 	struct vmwgfx_softc *const sc = device_private(self);
@@ -331,6 +331,4 @@ vmwgfx_task_schedule(device_t self, struct vmwgfx_task *task)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, vt_u.queue);
 	else
 		workqueue_enqueue(sc->sc_task_wq, &task->vt_u.work, NULL);
-
-	return 0;
 }

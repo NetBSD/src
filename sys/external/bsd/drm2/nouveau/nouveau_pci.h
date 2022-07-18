@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.h,v 1.2 2015/10/17 12:02:44 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_pci.h,v 1.3 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -44,12 +44,13 @@ struct nouveau_pci_task {
 };
 
 static inline void
-nouveau_pci_task_init(struct nouveau_pci_task *task, void (*fn)(struct nouveau_pci_task *))
+nouveau_pci_task_init(struct nouveau_pci_task *task,
+    void (*fn)(struct nouveau_pci_task *))
 {
 
 	task->nt_fn = fn;
 }
 
-int	nouveau_pci_task_schedule(device_t, struct nouveau_pci_task *);
+void	nouveau_pci_task_schedule(device_t, struct nouveau_pci_task *);
 
 #endif	/* _NOUVEAU_NOUVEAU_PCI_H_ */
