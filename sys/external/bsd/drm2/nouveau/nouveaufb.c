@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.7 2021/12/19 10:51:59 riastradh Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.8 2022/07/18 23:33:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.7 2021/12/19 10:51:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.8 2022/07/18 23:33:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -63,7 +63,6 @@ struct nouveaufb_softc {
 	device_t			sc_dev;
 	struct nouveaufb_attach_args	sc_nfa;
 	struct nouveau_pci_task		sc_attach_task;
-	bool				sc_scheduled:1;
 	bool				sc_attached:1;
 };
 
@@ -93,7 +92,6 @@ nouveaufb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_nfa = *nfa;
-	sc->sc_scheduled = false;
 	sc->sc_attached = false;
 
 	aprint_naive("\n");
@@ -104,14 +102,9 @@ nouveaufb_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "failed to schedule mode set: %d\n",
 		    error);
-		goto fail0;
+		return;
 	}
-	sc->sc_scheduled = true;
-
-	/* Success!  */
-	return;
-
-fail0:	return;
+	config_pending_incr(self);
 }
 
 static int
@@ -119,9 +112,6 @@ nouveaufb_detach(device_t self, int flags)
 {
 	struct nouveaufb_softc *const sc = device_private(self);
 	int error;
-
-	if (sc->sc_scheduled)
-		return EBUSY;
 
 	if (sc->sc_attached) {
 		pmf_device_deregister(self);
@@ -158,7 +148,7 @@ nouveaufb_attach_task(struct nouveau_pci_task *task)
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "failed to attach drmfb: %d\n",
 		    error);
-		return;
+		goto out;
 	}
 
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, &nouveaufb_shutdown))
@@ -166,6 +156,8 @@ nouveaufb_attach_task(struct nouveau_pci_task *task)
 		    "failed to register shutdown handler\n");
 
 	sc->sc_attached = true;
+out:
+	config_pending_decr(sc->sc_dev);
 }
 
 static bool
