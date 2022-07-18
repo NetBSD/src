@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.10 2021/12/19 12:28:12 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.11 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.10 2021/12/19 12:28:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.11 2022/07/18 23:34:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -290,7 +290,7 @@ amdgpu_task_work(struct work *work, void *cookie __unused)
 	(*task->rt_fn)(task);
 }
 
-int
+void
 amdgpu_task_schedule(device_t self, struct amdgpu_task *task)
 {
 	struct amdgpu_softc *const sc = device_private(self);
@@ -299,6 +299,4 @@ amdgpu_task_schedule(device_t self, struct amdgpu_task *task)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, rt_u.queue);
 	else
 		workqueue_enqueue(sc->sc_task_wq, &task->rt_u.work, NULL);
-
-	return 0;
 }

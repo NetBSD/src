@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_task.h,v 1.1 2014/07/25 12:35:03 riastradh Exp $	*/
+/*	$NetBSD: radeon_task.h,v 1.2 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,6 +50,6 @@ radeon_task_init(struct radeon_task *task, void (*fn)(struct radeon_task *))
 	task->rt_fn = fn;
 }
 
-int	radeon_task_schedule(device_t, struct radeon_task *);
+void	radeon_task_schedule(device_t, struct radeon_task *);
 
 #endif	/* _RADEON_RADEON_TASK_H_ */

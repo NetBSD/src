@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.20 2021/12/19 12:28:12 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.21 2022/07/18 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.20 2021/12/19 12:28:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.21 2022/07/18 23:34:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -373,7 +373,7 @@ radeon_task_work(struct work *work, void *cookie __unused)
 	(*task->rt_fn)(task);
 }
 
-int
+void
 radeon_task_schedule(device_t self, struct radeon_task *task)
 {
 	struct radeon_softc *const sc = device_private(self);
@@ -382,6 +382,4 @@ radeon_task_schedule(device_t self, struct radeon_task *task)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, rt_u.queue);
 	else
 		workqueue_enqueue(sc->sc_task_wq, &task->rt_u.work, NULL);
-
-	return 0;
 }

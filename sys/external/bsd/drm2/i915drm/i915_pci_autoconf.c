@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.11 2021/12/20 14:52:25 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.12 2022/07/18 23:34:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.11 2021/12/20 14:52:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.12 2022/07/18 23:34:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -291,7 +291,7 @@ i915drmkms_task_work(struct work *work, void *cookie __unused)
 	(*task->ift_fn)(task);
 }
 
-int
+void
 i915drmkms_task_schedule(device_t self, struct i915drmkms_task *task)
 {
 	struct i915drmkms_softc *const sc = device_private(self);
@@ -300,6 +300,4 @@ i915drmkms_task_schedule(device_t self, struct i915drmkms_task *task)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, ift_u.queue);
 	else
 		workqueue_enqueue(sc->sc_task_wq, &task->ift_u.work, NULL);
-
-	return 0;
 }
