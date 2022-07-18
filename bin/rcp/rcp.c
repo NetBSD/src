@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.51 2022/06/26 09:29:59 rin Exp $	*/
+/*	$NetBSD: rcp.c,v 1.52 2022/07/18 13:01:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.51 2022/06/26 09:29:59 rin Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.52 2022/07/18 13:01:59 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,8 +335,10 @@ source(int argc, char *argv[])
 	BUF *bp;
 	off_t i;
 	off_t amt;
-	int fd, haderr, indx, result;
-	char *last, *name, buf[BUFSIZ];
+	size_t resid;
+	ssize_t result;
+	int fd, haderr, indx;
+	char *last, *name, *cp, buf[BUFSIZ];
 
 	for (indx = 0; indx < argc; ++indx) {
 		name = argv[indx];
@@ -396,19 +398,24 @@ next:			(void)close(fd);
 			amt = bp->cnt;
 			if (i + amt > stb.st_size)
 				amt = stb.st_size - i;
-			if (!haderr) {
-				result = read(fd, bp->buf, (size_t)amt);
-				if (result != amt)
-					haderr = result >= 0 ? EIO : errno;
+			for (resid = (size_t)amt, cp = bp->buf; resid > 0;
+			    resid -= result, cp += result) {
+				result = read(fd, cp, resid);
+				if (result == -1) {
+					haderr = errno;
+					goto error;
+				}
 			}
-			if (haderr)
-				(void)write(rem, bp->buf, (size_t)amt);
-			else {
-				result = write(rem, bp->buf, (size_t)amt);
-				if (result != amt)
-					haderr = result >= 0 ? EIO : errno;
+			for (resid = (size_t)amt, cp = bp->buf; resid > 0;
+			    resid -= result, cp += result) {
+				result = write(rem, cp, resid);
+				if (result == -1) {
+					haderr = errno;
+					goto error;
+				}
 			}
 		}
+ error:
 		if (close(fd) && !haderr)
 			haderr = errno;
 		if (!haderr)
@@ -479,10 +486,10 @@ sink(int argc, char *argv[])
 	struct stat stb;
 	struct timeval tv[2];
 	BUF *bp;
-	ssize_t j;
+	size_t resid;
+	ssize_t result;
 	off_t i;
 	off_t amt;
-	off_t count;
 	int exists, first, ofd;
 	mode_t mask;
 	mode_t mode;
@@ -649,7 +656,6 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			(void)close(ofd);
 			continue;
 		}
-		cp = bp->buf;
 		wrerr = 0;
 
 /*
@@ -664,44 +670,33 @@ bad:			run_err("%s: %s", np, strerror(errno));
 	}								\
 } while(0)
 
-		count = 0;
-		for (i = 0; i < size; i += BUFSIZ) {
+		for (i = 0; i < size; i += bp->cnt) {
 			if (print_info)
 				progress(np, i, size);
-			amt = BUFSIZ;
+			amt = bp->cnt;
 			if (i + amt > size)
 				amt = size - i;
-			count += amt;
-			do {
-				j = read(rem, cp, (size_t)amt);
-				if (j == -1) {
-					run_err("%s", j ? strerror(errno) :
-					    "dropped connection");
+			for (resid = (size_t)amt, cp = bp->buf; resid > 0;
+			    resid -= result, cp += result) {
+				result = read(rem, cp, resid);
+				if (result == -1) {
+					run_err("%s", strerror(errno));
 					exit(1);
 				}
-				amt -= j;
-				cp += j;
-			} while (amt > 0);
-			if (count == bp->cnt) {
+			}
+			for (resid = (size_t)amt, cp = bp->buf; resid > 0;
+			    resid -= result, cp += result) {
 				/* Keep reading so we stay sync'd up. */
 				if (!wrerr) {
-					j = write(ofd, bp->buf, (size_t)count);
-					if (j != count) {
-						if (j >= 0)
-							errno = EIO;
+					result = write(ofd, cp, resid);
+					if (result == -1) {
 						RUN_ERR("write");
+						goto error;
 					}
 				}
-				count = 0;
-				cp = bp->buf;
 			}
 		}
-		if (count != 0 && !wrerr &&
-		    (j = write(ofd, bp->buf, (size_t)count)) != count) {
-			if (j >= 0)
-				errno = EIO;
-			RUN_ERR("write");
-		}
+ error:
 		if (ftruncate(ofd, size))
 			RUN_ERR("truncate");
 
