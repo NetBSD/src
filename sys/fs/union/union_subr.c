@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.81 2022/03/19 13:53:32 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.82 2022/07/18 04:30:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.81 2022/03/19 13:53:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.82 2022/07/18 04:30:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,10 +232,11 @@ union_newupper(struct union_node *un, struct vnode *uppervp)
 	unlock_ap.a_desc = VDESC(vop_unlock);
 	unlock_ap.a_vp = UNIONTOV(un);
 	genfs_unlock(&unlock_ap);
-	/* Update union vnode interlock & vmobjlock. */
+	/* Update union vnode interlock, vmobjlock, & klist. */
 	vshareilock(UNIONTOV(un), uppervp);
 	rw_obj_hold(uppervp->v_uobj.vmobjlock);
 	uvm_obj_setlock(&UNIONTOV(un)->v_uobj, uppervp->v_uobj.vmobjlock);
+	vshareklist(UNIONTOV(un), uppervp);
 	mutex_exit(&un->un_lock);
 	if (ohash != nhash) {
 		LIST_INSERT_HEAD(&uhashtbl[nhash], un, un_cache);
@@ -577,6 +578,7 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 	vshareilock(vp, svp);
 	rw_obj_hold(svp->v_uobj.vmobjlock);
 	uvm_obj_setlock(&vp->v_uobj, svp->v_uobj.vmobjlock);
+	vshareklist(vp, svp);
 
 	/* detect the root vnode (and aliases) */
 	if ((un->un_uppervp == um->um_uppervp) &&

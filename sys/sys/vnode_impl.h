@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.23 2020/03/22 14:38:37 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.24 2022/07/18 04:30:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -75,6 +75,12 @@ struct vnode_impl {
 	 * Largely stable data.
 	 */
 	struct vcache_key vi_key;		/* c   vnode cache key */
+
+	/*
+	 * The vnode klist is accessed frequently, but rarely
+	 * modified.
+	 */
+	struct vnode_klist vi_klist;		/* i   kevent / knote state */
 
 	/*
 	 * vnode cache, LRU and syncer.  This all changes with some

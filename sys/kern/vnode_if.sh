@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.75 2022/05/03 13:54:18 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.76 2022/07/18 04:30:30 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -444,7 +444,7 @@ do {									\\
 	 */								\\
 	mutex_enter((thisvp)->v_interlock);				\\
 	if (__predict_true((e) == 0)) {					\\
-		knote(&(thisvp)->v_klist, (n));				\\
+		knote(&(thisvp)->v_klist->vk_klist, (n));		\\
 	}								\\
 	holdrelel((thisvp));						\\
 	mutex_exit((thisvp)->v_interlock);				\\
@@ -557,7 +557,7 @@ do {									\\
 		 * meaningless from the watcher's perspective.		\\
 		 */							\\
 		if (__predict_true(thisvp->v_op != dead_vnodeop_p)) {	\\
-			knote(&thisvp->v_klist,				\\
+			knote(&thisvp->v_klist->vk_klist,		\\
 			    ((ap)->a_fflag & FWRITE)			\\
 			    ? NOTE_CLOSE_WRITE : NOTE_CLOSE);		\\
 		}							\\
