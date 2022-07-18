@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.233 2022/07/06 13:52:24 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.234 2022/07/18 04:30:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.233 2022/07/06 13:52:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.234 2022/07/18 04:30:30 thorpej Exp $");
 
 #include "veriexec.h"
 
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.233 2022/07/06 13:52:24 riastradh Ex
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/poll.h>
@@ -1428,7 +1428,15 @@ vn_knote_to_interest(const struct knote *kn)
 void
 vn_knote_attach(struct vnode *vp, struct knote *kn)
 {
+	struct vnode_klist *vk = vp->v_klist;
 	long interest = 0;
+
+	/*
+	 * In the case of layered / stacked file systems, knotes
+	 * should only ever be associated with the base vnode.
+	 */
+	KASSERT(kn->kn_hook == vp);
+	KASSERT(vp->v_klist == &VNODE_TO_VIMPL(vp)->vi_klist);
 
 	/*
 	 * We maintain a bitmask of the kevents that there is interest in,
@@ -1439,18 +1447,23 @@ vn_knote_attach(struct vnode *vp, struct knote *kn)
 	 */
 
 	mutex_enter(vp->v_interlock);
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-	SLIST_FOREACH(kn, &vp->v_klist, kn_selnext) {
+	SLIST_INSERT_HEAD(&vk->vk_klist, kn, kn_selnext);
+	SLIST_FOREACH(kn, &vk->vk_klist, kn_selnext) {
 		interest |= vn_knote_to_interest(kn);
 	}
-	vp->v_klist_interest = interest;
+	vk->vk_interest = interest;
 	mutex_exit(vp->v_interlock);
 }
 
 void
 vn_knote_detach(struct vnode *vp, struct knote *kn)
 {
-	int interest = 0;
+	struct vnode_klist *vk = vp->v_klist;
+	long interest = 0;
+
+	/* See above. */
+	KASSERT(kn->kn_hook == vp);
+	KASSERT(vp->v_klist == &VNODE_TO_VIMPL(vp)->vi_klist);
 
 	/*
 	 * We special case removing the head of the list, because:
@@ -1464,16 +1477,16 @@ vn_knote_detach(struct vnode *vp, struct knote *kn)
 	 */
 
 	mutex_enter(vp->v_interlock);
-	if (__predict_true(kn == SLIST_FIRST(&vp->v_klist))) {
-		SLIST_REMOVE_HEAD(&vp->v_klist, kn_selnext);
-		SLIST_FOREACH(kn, &vp->v_klist, kn_selnext) {
+	if (__predict_true(kn == SLIST_FIRST(&vk->vk_klist))) {
+		SLIST_REMOVE_HEAD(&vk->vk_klist, kn_selnext);
+		SLIST_FOREACH(kn, &vk->vk_klist, kn_selnext) {
 			interest |= vn_knote_to_interest(kn);
 		}
-		vp->v_klist_interest = interest;
+		vk->vk_interest = interest;
 	} else {
 		struct knote *thiskn, *nextkn, *prevkn = NULL;
 
-		SLIST_FOREACH_SAFE(thiskn, &vp->v_klist, kn_selnext, nextkn) {
+		SLIST_FOREACH_SAFE(thiskn, &vk->vk_klist, kn_selnext, nextkn) {
 			if (thiskn == kn) {
 				KASSERT(kn != NULL);
 				KASSERT(prevkn != NULL);
@@ -1484,7 +1497,7 @@ vn_knote_detach(struct vnode *vp, struct knote *kn)
 				prevkn = thiskn;
 			}
 		}
-		vp->v_klist_interest = interest;
+		vk->vk_interest = interest;
 	}
 	mutex_exit(vp->v_interlock);
 }

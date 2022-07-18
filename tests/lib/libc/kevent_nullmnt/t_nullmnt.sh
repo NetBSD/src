@@ -33,7 +33,6 @@ nullmnt_upper_lower_head()
 }
 nullmnt_upper_lower_body()
 {
-	atf_expect_fail "PR kern/56713"
 	nullmnt_common lower_dir upper_dir
 } 
 nullmnt_upper_lower_cleanup()
@@ -48,7 +47,6 @@ nullmnt_upper_upper_head()
 }
 nullmnt_upper_upper_body()
 {
-	atf_expect_fail "PR kern/56713"
 	nullmnt_common upper_dir upper_dir
 } 
 nullmnt_upper_upper_cleanup()
