@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.63 2022/07/17 20:23:17 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.64 2022/07/18 11:09:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.63 2022/07/17 20:23:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.64 2022/07/18 11:09:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1618,10 +1618,11 @@ vcons_init_thread(void *cookie)
 void
 vcons_enable_polling(struct vcons_data *vd)
 {
-	struct vcons_data_private *vdp = vd->private;
 	struct vcons_screen *scr = vd->active;
 
 #ifdef VCONS_DRAW_INTR
+	struct vcons_data_private *vdp = vd->private;
+
 	vdp->use_intr = 0;
 #endif
 
