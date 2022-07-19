@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.73 2022/05/22 00:10:56 tnn Exp $
+#	$NetBSD: files.drmkms,v 1.74 2022/07/19 22:24:47 riastradh Exp $
 
 version	20180827
 
@@ -10,7 +10,7 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 # ARM SoC graphics drivers.
 define	drmkms_i2c: drmkms_linux
 
-define	drmkms: drmkms_linux, drmkms_i2c, linux
+define	drmkms: drmkms_linux, drmkms_i2c, linux, sysmon_power
 
 # This code comes from the Linux kernel, which assumes signed
 # overflow is OK.
