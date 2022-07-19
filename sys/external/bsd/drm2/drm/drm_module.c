@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.30 2022/07/17 14:11:40 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.31 2022/07/19 22:24:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.30 2022/07/17 14:11:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.31 2022/07/19 22:24:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.30 2022/07/17 14:11:40 riastradh Ex
 /*
  * XXX I2C stuff should be moved to a separate drmkms_i2c module.
  */
-MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
+MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux,sysmon_power");
 
 struct mutex	drm_global_mutex;
 
