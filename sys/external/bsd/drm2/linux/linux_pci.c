@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.21 2022/02/27 14:19:20 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.22 2022/07/19 22:24:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.21 2022/02/27 14:19:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.22 2022/07/19 22:24:34 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -639,7 +639,6 @@ pci_iomap(struct pci_dev *pdev, unsigned i, bus_size_t size)
 	    &pdev->pd_resources[i].bsh);
 	if (error)
 		return NULL;
-	/* XXX Synchronize with drm_agp_borrow_hook in drm_agpsupport.c.  */
 	pdev->pd_resources[i].bst = pdev->pd_pa.pa_memt;
 	pdev->pd_resources[i].kva = bus_space_vaddr(pdev->pd_resources[i].bst,
 	    pdev->pd_resources[i].bsh);

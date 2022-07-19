@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.c,v 1.12 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.c,v 1.13 2022/07/19 22:24:33 riastradh Exp $	*/
 
 /*
  * \file drm_agpsupport.c
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.12 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.13 2022/07/19 22:24:33 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
@@ -527,24 +527,8 @@ static void drm_agp_clear_hook(struct drm_device *dev)
 	dev->agp->acquired = 0;
 	dev->agp->enabled = 0;
 }
+
 #ifdef __NetBSD__
-
-static void __pci_iomem *
-drm_agp_borrow_hook(struct drm_device *dev, unsigned i, bus_size_t size)
-{
-	struct pci_dev *pdev = dev->pdev;
-
-	if (!agp_i810_borrow(pdev->pd_resources[i].addr, size,
-		&pdev->pd_resources[i].bsh))
-		return NULL;
-	/* XXX Synchronize with pci_iomap in linux_pci.c.  */
-	pdev->pd_resources[i].bst = pdev->pd_pa.pa_memt;
-	pdev->pd_resources[i].kva = bus_space_vaddr(pdev->pd_resources[i].bst,
-	    pdev->pd_resources[i].bsh);
-	pdev->pd_resources[i].mapped = true;
-
-	return pdev->pd_resources[i].kva;
-}
 
 static void
 drm_agp_flush_hook(void)
@@ -572,7 +556,6 @@ static const struct drm_agp_hooks agp_hooks = {
 	.agph_free_ioctl = drm_agp_free_ioctl_hook,
 	.agph_init = drm_agp_init_hook,
 	.agph_clear = drm_agp_clear_hook,
-	.agph_borrow = drm_agp_borrow_hook,
 	.agph_flush = drm_agp_flush_hook,
 };
 
@@ -622,6 +605,8 @@ drmkms_agp_modcmd(modcmd_t cmd, void *arg __unused)
 		if (error)
 			return error;
 		return 0;
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	case MODULE_CMD_FINI:
 		error = drmkms_agp_fini();
 		if (error)
