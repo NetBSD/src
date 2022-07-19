@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.743 2022/07/19 06:50:34 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.744 2022/07/19 08:21:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.743 2022/07/19 06:50:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.744 2022/07/19 08:21:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4918,8 +4918,8 @@ wm_flush_desc_rings(struct wm_softc *sc)
 	txd->wtx_fields.wtxu_options = 0;
 	txd->wtx_fields.wtxu_vlan = 0;
 
-	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
-	    BUS_SPACE_BARRIER_WRITE);
+	wm_cdtxsync(txq, 0, WM_NTXDESC(txq),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
