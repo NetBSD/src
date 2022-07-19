@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.18 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.19 2022/07/19 23:19:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.18 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.19 2022/07/19 23:19:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.18 2021/12/19 11:33:30 riastradh Exp
 
 #include <drm/drm_cache.h>
 
-#if !defined(__arm__) && !defined(__aarch64__)
+#if !defined(__arm__) && !defined(__aarch64__) && !defined(__alpha__)
 #define DRM_CLFLUSH	1
 #endif
 
