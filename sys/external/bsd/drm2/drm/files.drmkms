@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.75 2022/07/19 23:19:06 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.76 2022/07/19 23:19:17 riastradh Exp $
 
 version	20180827
 
@@ -17,38 +17,38 @@ define	drmkms: drmkms_linux, drmkms_i2c, linux, sysmon_power
 makeoptions 	drmkms	"COPTS.drmkms"+="-fwrapv"
 
 # Overrides first.
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include/drm"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/include"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/include/drm"
 
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/common/include"
 
 # Then upstream.
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/uapi"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include/drm"
+makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include/uapi"
 
-makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-D__KERNEL__"
 
 ifdef i386
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_PAT"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_X86"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_X86_PAT"
 elifdef amd64
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_64"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_PAT"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_X86"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_X86_64"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_X86_PAT"
 elifdef arm
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_ARM"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_ARM"
 elifdef aarch64
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_ARM64"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_ARM64"
 endif
 
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_OVERALLOC=100"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_LOCKDEP=0"
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_PCI=1"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_DRM_FBDEV_EMULATION=1"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_DRM_FBDEV_OVERALLOC=100"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_FB=0"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_LOCKDEP=0"
+makeoptions	drmkms	"CPPFLAGS.drmkms"+="-DCONFIG_PCI=1"
 
 makeoptions	drmkms	"CWARNFLAGS.drmkms"+="-Wno-missing-field-initializers"
 
