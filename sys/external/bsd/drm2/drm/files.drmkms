@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.74 2022/07/19 22:24:47 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.75 2022/07/19 23:19:06 riastradh Exp $
 
 version	20180827
 
@@ -67,6 +67,8 @@ file	external/bsd/drm2/pci/drm_pci_busid.c		drmkms
 define	drmfb: genfb
 file	external/bsd/drm2/drm/drmfb.c			drmfb
 
+makeoptions	drmfb	"CPPFLAGS.drmfb"+="${CPPFLAGS.drmkms}"
+
 include "external/bsd/drm2/ttm/files.ttm"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
@@ -84,7 +86,8 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_modes.c"+="-Wno-shadow"
 
 # Legacy user-mode setting
 define	drmums: drmkms
-makeoptions	drmums	CPPFLAGS+="-DCONFIG_DRM_LEGACY"
+makeoptions	drmums	"CPPFLAGS.drmkms"+="-DCONFIG_DRM_LEGACY"
+makeoptions	drmums	"CPPFLAGS.drmums"+="${CPPFLAGS.drmkms}"
 file	external/bsd/drm2/dist/drm/drm_bufs.c		drmums
 file	external/bsd/drm2/dist/drm/drm_context.c	drmums
 file	external/bsd/drm2/dist/drm/drm_dma.c		drmums

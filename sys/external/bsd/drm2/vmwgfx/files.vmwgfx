@@ -1,10 +1,11 @@
-#	$NetBSD: files.vmwgfx,v 1.1 2022/02/17 01:21:03 riastradh Exp $
+#	$NetBSD: files.vmwgfx,v 1.2 2022/07/19 23:19:07 riastradh Exp $
 
 version	20180827
 
 define	vmwgfxfbbus	{ }
 device	vmwgfx: drmkms, drmkms_pci, drmkms_ttm, vmwgfxfbbus
 attach	vmwgfx at pci
+makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="${CPPFLAGS.drmkms}"
 
 device	vmwgfxfb: vmwgfxfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	vmwgfxfb at vmwgfxfbbus

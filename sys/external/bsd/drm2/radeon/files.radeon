@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.36 2021/12/21 13:56:58 tnn Exp $
+#	$NetBSD: files.radeon,v 1.37 2022/07/19 23:19:07 riastradh Exp $
 
 version	20180827
 
@@ -13,6 +13,8 @@ attach	radeondrmkmsfb at radeonfbbus
 # This code comes from the Linux kernel, which assumes signed
 # overflow is OK.
 makeoptions 	radeon	"COPTS.radeon"+="-fwrapv"
+
+makeoptions	radeon	"CPPFLAGS.radeon"+="${CPPFLAGS.drmkms}"
 
 makeoptions	radeondrmkmsfb	"CPPFLAGS.radeondrmkmsfb"+="${CPPFLAGS.radeon}"
 

@@ -1,10 +1,11 @@
-#	$NetBSD: files.amdgpu,v 1.26 2021/12/19 12:39:48 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.27 2022/07/19 23:19:06 riastradh Exp $
 
 version	20180827
 
 define	amdgpufbbus	{ }
 device	amdgpu: drmkms, drmkms_pci, drmkms_ttm, amdgpufbbus, firmload
 attach	amdgpu at pci
+makeoptions	amdgpu		"CPPFLAGS.amdgpu"+="${CPPFLAGS.drmkms}"
 
 defflag	opt_amdgpu_cik.h AMDGPU_CIK
 
