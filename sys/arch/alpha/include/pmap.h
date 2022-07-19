@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.98 2021/05/31 17:22:44 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.99 2022/07/19 22:04:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -109,6 +109,9 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
+
+#include <sys/param.h>
+#include <sys/types.h>
 
 #include <sys/mutex.h>
 #include <sys/queue.h>
