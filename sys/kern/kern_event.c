@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.144 2022/07/19 00:46:00 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.145 2022/07/19 01:03:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.144 2022/07/19 00:46:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.145 2022/07/19 01:03:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ static int	filt_usertouch(struct knote *, struct kevent *, long type);
 struct knote_impl {
 	struct knote	ki_knote;
 	unsigned int	ki_influx;	/* q: in-flux counter */
+	kmutex_t	ki_foplock;	/* for kn_filterops */
 };
 
 #define	KIMPL_TO_KNOTE(kip)	(&(kip)->ki_knote)
@@ -142,6 +143,7 @@ knote_alloc(bool sleepok)
 	struct knote_impl *ki;
 
 	ki = kmem_zalloc(sizeof(*ki), sleepok ? KM_SLEEP : KM_NOSLEEP);
+	mutex_init(&ki->ki_foplock, MUTEX_DEFAULT, IPL_NONE);
 
 	return KIMPL_TO_KNOTE(ki);
 }
@@ -151,7 +153,26 @@ knote_free(struct knote *kn)
 {
 	struct knote_impl *ki = KNOTE_TO_KIMPL(kn);
 
+	mutex_destroy(&ki->ki_foplock);
 	kmem_free(ki, sizeof(*ki));
+}
+
+static inline void
+knote_foplock_enter(struct knote *kn)
+{
+	mutex_enter(&KNOTE_TO_KIMPL(kn)->ki_foplock);
+}
+
+static inline void
+knote_foplock_exit(struct knote *kn)
+{
+	mutex_exit(&KNOTE_TO_KIMPL(kn)->ki_foplock);
+}
+
+static inline bool
+knote_foplock_owned(struct knote *kn)
+{
+	return mutex_owned(&KNOTE_TO_KIMPL(kn)->ki_foplock);
 }
 
 static const struct fileops kqueueops = {
@@ -165,6 +186,31 @@ static const struct fileops kqueueops = {
 	.fo_close = kqueue_close,
 	.fo_kqfilter = kqueue_kqfilter,
 	.fo_restart = kqueue_restart,
+};
+
+static void
+filt_nopdetach(struct knote *kn __unused)
+{
+}
+
+static int
+filt_nopevent(struct knote *kn __unused, long hint __unused)
+{
+	return 0;
+}
+
+static const struct filterops nop_fd_filtops = {
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
+	.f_attach = NULL,
+	.f_detach = filt_nopdetach,
+	.f_event = filt_nopevent,
+};
+
+static const struct filterops nop_filtops = {
+	.f_flags = FILTEROP_MPSAFE,
+	.f_attach = NULL,
+	.f_detach = filt_nopdetach,
+	.f_event = filt_nopevent,
 };
 
 static const struct filterops kqread_filtops = {
@@ -263,18 +309,45 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
  *
  *	kqueue_filter_lock
  *	-> kn_kq->kq_fdp->fd_lock
+ *	-> knote foplock (if taken)
  *	-> object lock (e.g., device driver lock, &c.)
  *	-> kn_kq->kq_lock
  *
- * Locking rules:
+ * Locking rules.  ==> indicates the lock is acquired by the backing
+ * object, locks prior are acquired before calling filter ops:
  *
- *	f_attach: fdp->fd_lock, KERNEL_LOCK
- *	f_detach: fdp->fd_lock, KERNEL_LOCK
- *	f_event(!NOTE_SUBMIT) via kevent: fdp->fd_lock, _no_ object lock
- *	f_event via knote: whatever caller guarantees
- *		Typically,	f_event(NOTE_SUBMIT) via knote: object lock
- *				f_event(!NOTE_SUBMIT) via knote: nothing,
- *					acquires/releases object lock inside.
+ *	f_attach: fdp->fd_lock -> knote foplock ->
+ *	  (maybe) KERNEL_LOCK ==> backing object lock
+ *
+ *	f_detach: fdp->fd_lock -> knote foplock ->
+ *	   (maybe) KERNEL_LOCK ==> backing object lock
+ *
+ *	f_event via kevent: fdp->fd_lock -> knote foplock ->
+ *	   (maybe) KERNEL_LOCK ==> backing object lock
+ *	   N.B. NOTE_SUBMIT will never be set in the "hint" argument
+ *	   in this case.
+ *
+ *	f_event via knote (via backing object: Whatever caller guarantees.
+ *	Typically:
+ *		f_event(NOTE_SUBMIT): caller has already acquired backing
+ *		    object lock.
+ *		f_event(!NOTE_SUBMIT): caller has not acquired backing object,
+ *		    lock or has possibly acquired KERNEL_LOCK.  Backing object
+ *		    lock may or may not be acquired as-needed.
+ *	N.B. the knote foplock will **not** be acquired in this case.  The
+ *	caller guarantees that klist_fini() will not be called concurrently
+ *	with knote().
+ *
+ *	f_touch: fdp->fd_lock -> kn_kq->kq_lock (spin lock)
+ *	    N.B. knote foplock is **not** acquired in this case and
+ *	    the caller must guarantee that klist_fini() will never
+ *	    be called.  kevent_register() restricts filters that
+ *	    provide f_touch to known-safe cases.
+ *
+ *	klist_fini(): Caller must guarantee that no more knotes can
+ *	    be attached to the klist, and must **not** hold the backing
+ *	    object's lock; klist_fini() itself will acquire the foplock
+ *	    of each knote on the klist.
  *
  * Locking rules when detaching knotes:
  *
@@ -461,17 +534,31 @@ knote_detach_quiesce(struct knote *kn)
 	return false;
 }
 
+/*
+ * Calls into the filterops need to be resilient against things which
+ * destroy a klist, e.g. device detach, freeing a vnode, etc., to avoid
+ * chasing garbage pointers (to data, or even potentially code in a
+ * module about to be unloaded).  To that end, we acquire the
+ * knote foplock before calling into the filter ops.  When a driver
+ * (or anything else) is tearing down its klist, klist_fini() enumerates
+ * each knote, acquires its foplock, and replaces the filterops with a
+ * nop stub, allowing knote detach (when descriptors are closed) to safely
+ * proceed.
+ */
+
 static int
 filter_attach(struct knote *kn)
 {
 	int rv;
 
+	KASSERT(knote_foplock_owned(kn));
 	KASSERT(kn->kn_fop != NULL);
 	KASSERT(kn->kn_fop->f_attach != NULL);
 
 	/*
 	 * N.B. that kn->kn_fop may change as the result of calling
-	 * f_attach().
+	 * f_attach().  After f_attach() returns, kn->kn_fop may not
+	 * be modified by code outside of klist_fini().
 	 */
 	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
 		rv = kn->kn_fop->f_attach(kn);
@@ -487,6 +574,8 @@ filter_attach(struct knote *kn)
 static void
 filter_detach(struct knote *kn)
 {
+
+	KASSERT(knote_foplock_owned(kn));
 	KASSERT(kn->kn_fop != NULL);
 	KASSERT(kn->kn_fop->f_detach != NULL);
 
@@ -500,10 +589,12 @@ filter_detach(struct knote *kn)
 }
 
 static int
-filter_event(struct knote *kn, long hint)
+filter_event(struct knote *kn, long hint, bool submitting)
 {
 	int rv;
 
+	/* See knote(). */
+	KASSERT(submitting || knote_foplock_owned(kn));
 	KASSERT(kn->kn_fop != NULL);
 	KASSERT(kn->kn_fop->f_event != NULL);
 
@@ -521,6 +612,19 @@ filter_event(struct knote *kn, long hint)
 static int
 filter_touch(struct knote *kn, struct kevent *kev, long type)
 {
+
+	/*
+	 * XXX We cannot assert that the knote foplock is held here
+	 * XXX beause we cannot safely acquire it in all cases
+	 * XXX where "touch" will be used in kqueue_scan().  We just
+	 * XXX have to assume that f_touch will always be safe to call,
+	 * XXX and kqueue_register() allows only the two known-safe
+	 * XXX users of that op.
+	 */
+
+	KASSERT(kn->kn_fop != NULL);
+	KASSERT(kn->kn_fop->f_touch != NULL);
+
 	return kn->kn_fop->f_touch(kn, kev, type);
 }
 
@@ -1871,6 +1975,17 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 
 			KASSERT(kn->kn_fop != NULL);
 			/*
+			 * XXX Allow only known-safe users of f_touch.
+			 * XXX See filter_touch() for details.
+			 */
+			if (kn->kn_fop->f_touch != NULL &&
+			    kn->kn_fop != &timer_filtops &&
+			    kn->kn_fop != &user_filtops) {
+				error = ENOTSUP;
+				goto fail_ev_add;
+			}
+
+			/*
 			 * apply reference count to knote structure, and
 			 * do not release it at the end of this routine.
 			 */
@@ -1902,6 +2017,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			 * N.B. kn->kn_fop may change as the result
 			 * of filter_attach()!
 			 */
+			knote_foplock_enter(kn);
 			error = filter_attach(kn);
 			if (error != 0) {
 #ifdef DEBUG
@@ -1915,6 +2031,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				    ft ? ft->f_ops->fo_name : "?", error);
 #endif
 
+ fail_ev_add:
 				/*
 				 * N.B. no need to check for this note to
 				 * be in-flux, since it was never visible
@@ -1922,6 +2039,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				 *
 				 * knote_detach() drops fdp->fd_lock
 				 */
+				knote_foplock_exit(kn);
 				mutex_enter(&kq->kq_lock);
 				KNOTE_WILLDETACH(kn);
 				KASSERT(kn_in_flux(kn) == false);
@@ -1979,6 +2097,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	 * initial EV_ADD, but doing so will not reset any
 	 * filter which have already been triggered.
 	 */
+	knote_foplock_enter(kn);
 	kn->kn_kevent.udata = kev->udata;
 	KASSERT(kn->kn_fop != NULL);
 	if (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
@@ -1989,6 +2108,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		if (__predict_false(error != 0)) {
 			/* Never a new knote (which would consume newkn). */
 			KASSERT(newkn != NULL);
+			knote_foplock_exit(kn);
 			goto doneunlock;
 		}
 	} else {
@@ -2003,9 +2123,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	 * broken and does not return an error.
 	 */
  done_ev_add:
-	rv = filter_event(kn, 0);
+	rv = filter_event(kn, 0, false);
 	if (rv)
 		knote_activate(kn);
+
+	knote_foplock_exit(kn);
 
 	/* disable knote */
 	if ((kev->flags & EV_DISABLE)) {
@@ -2279,7 +2401,9 @@ relock:
 		if ((kn->kn_flags & EV_ONESHOT) == 0) {
 			mutex_spin_exit(&kq->kq_lock);
 			KASSERT(mutex_owned(&fdp->fd_lock));
-			rv = filter_event(kn, 0);
+			knote_foplock_enter(kn);
+			rv = filter_event(kn, 0, false);
+			knote_foplock_exit(kn);
 			mutex_spin_enter(&kq->kq_lock);
 			/* Re-poll if note was re-enqueued. */
 			if ((kn->kn_status & KN_QUEUED) != 0) {
@@ -2638,7 +2762,15 @@ knote(struct klist *list, long hint)
 	struct knote *kn, *tmpkn;
 
 	SLIST_FOREACH_SAFE(kn, list, kn_selnext, tmpkn) {
-		if (filter_event(kn, hint)) {
+		/*
+		 * We assume here that the backing object's lock is
+		 * already held if we're traversing the klist, and
+		 * so acquiring the knote foplock would create a
+		 * deadlock scenario.  But we also know that the klist
+		 * won't disappear on us while we're here, so not
+		 * acquiring it is safe.
+		 */
+		if (filter_event(kn, hint, true)) {
 			knote_activate(kn);
 		}
 	}
@@ -2687,7 +2819,9 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 
 	/* Remove from monitored object. */
 	if (dofop) {
+		knote_foplock_enter(kn);
 		filter_detach(kn);
+		knote_foplock_exit(kn);
 	}
 
 	/* Remove from descriptor table. */
@@ -2852,7 +2986,26 @@ klist_init(struct klist *list)
 void
 klist_fini(struct klist *list)
 {
-	/* Nothing, for now. */
+	struct knote *kn;
+
+	/*
+	 * Neuter all existing knotes on the klist because the list is
+	 * being destroyed.  The caller has guaranteed that no additional
+	 * knotes will be added to the list, that the backing object's
+	 * locks are not held (otherwise there is a locking order issue
+	 * with acquiring the knote foplock ), and that we can traverse
+	 * the list safely in this state.
+	 */
+	SLIST_FOREACH(kn, list, kn_selnext) {
+		knote_foplock_enter(kn);
+		KASSERT(kn->kn_fop != NULL);
+		if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
+			kn->kn_fop = &nop_fd_filtops;
+		} else {
+			kn->kn_fop = &nop_filtops;
+		}
+		knote_foplock_exit(kn);
+	}
 }
 
 /*
