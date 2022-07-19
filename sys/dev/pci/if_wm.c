@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.740 2022/07/11 06:16:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.741 2022/07/19 06:46:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.740 2022/07/11 06:16:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.741 2022/07/19 06:46:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8927,11 +8927,7 @@ wm_deferred_start_locked(struct wm_txqueue *txq)
 	int qid = wmq->wmq_id;
 
 	KASSERT(mutex_owned(txq->txq_lock));
-
-	if (txq->txq_stopping) {
-		mutex_exit(txq->txq_lock);
-		return;
-	}
+	KASSERT(!txq->txq_stopping);
 
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		/* XXX need for ALTQ or one CPU system */
