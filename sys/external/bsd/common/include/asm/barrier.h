@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.18 2022/07/19 16:40:26 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.19 2022/07/19 21:30:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,11 @@
 #include <mips/locore.h>
 #define	mb()	wbflush()
 #define	wmb()	mb()
+#define	rmb()	mb()
+#elif defined(__alpha__)
+#include <machine/alpha_cpu.h>
+#define	mb()	alpha_mb()
+#define	wmb()	alpha_wmb()
 #define	rmb()	mb()
 #else
 #error Missing Linux memory-mapped I/O barriers for this architecture.
