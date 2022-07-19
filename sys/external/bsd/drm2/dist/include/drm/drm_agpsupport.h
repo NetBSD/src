@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.h,v 1.9 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.h,v 1.10 2022/07/19 22:24:34 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _DRM_AGPSUPPORT_H_
@@ -20,8 +20,6 @@ struct drm_device;
 struct drm_file;
 
 struct drm_agp_hooks {
-	void __pci_iomem *
-		(*agph_borrow)(struct drm_device *, unsigned, bus_size_t);
 	void	(*agph_flush)(void);
 
 	struct drm_agp_head *
@@ -108,7 +106,6 @@ int drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 		       struct drm_file *file_priv);
 
 #ifdef __NetBSD__
-void __pci_iomem *drm_agp_borrow(struct drm_device *, unsigned, bus_size_t);
 void drm_agp_flush(void);
 void drm_agp_fini(struct drm_device *);
 int drm_agp_register(const struct drm_agp_hooks *);
