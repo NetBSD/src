@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.744 2022/07/19 08:21:02 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.745 2022/07/19 08:22:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.744 2022/07/19 08:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.745 2022/07/19 08:22:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4923,8 +4923,7 @@ wm_flush_desc_rings(struct wm_softc *sc)
 
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
-	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
-	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	CSR_WRITE_FLUSH(sc);
 	delay(250);
 
 	preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, WM_PCI_DESCRING_STATUS);
