@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.741 2022/07/19 06:46:29 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.742 2022/07/19 06:47:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.741 2022/07/19 06:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.742 2022/07/19 06:47:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.741 2022/07/19 06:46:29 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
