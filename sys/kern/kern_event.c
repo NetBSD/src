@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.143 2022/07/13 14:11:46 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.144 2022/07/19 00:46:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.143 2022/07/13 14:11:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.144 2022/07/19 00:46:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,40 @@ static int	filt_userattach(struct knote *);
 static void	filt_userdetach(struct knote *);
 static int	filt_user(struct knote *, long hint);
 static int	filt_usertouch(struct knote *, struct kevent *, long type);
+
+/*
+ * Private knote state that should never be exposed outside
+ * of kern_event.c
+ *
+ * Field locking:
+ *
+ * q	kn_kq->kq_lock
+ */
+struct knote_impl {
+	struct knote	ki_knote;
+	unsigned int	ki_influx;	/* q: in-flux counter */
+};
+
+#define	KIMPL_TO_KNOTE(kip)	(&(kip)->ki_knote)
+#define	KNOTE_TO_KIMPL(knp)	container_of((knp), struct knote_impl, ki_knote)
+
+static inline struct knote *
+knote_alloc(bool sleepok)
+{
+	struct knote_impl *ki;
+
+	ki = kmem_zalloc(sizeof(*ki), sleepok ? KM_SLEEP : KM_NOSLEEP);
+
+	return KIMPL_TO_KNOTE(ki);
+}
+
+static inline void
+knote_free(struct knote *kn)
+{
+	struct knote_impl *ki = KNOTE_TO_KIMPL(kn);
+
+	kmem_free(ki, sizeof(*ki));
+}
 
 static const struct fileops kqueueops = {
 	.fo_name = "kqueue",
@@ -286,7 +320,7 @@ static inline bool
 kn_in_flux(struct knote *kn)
 {
 	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
-	return kn->kn_influx != 0;
+	return KNOTE_TO_KIMPL(kn)->ki_influx != 0;
 }
 
 static inline bool
@@ -298,8 +332,9 @@ kn_enter_flux(struct knote *kn)
 		return false;
 	}
 
-	KASSERT(kn->kn_influx < UINT_MAX);
-	kn->kn_influx++;
+	struct knote_impl *ki = KNOTE_TO_KIMPL(kn);
+	KASSERT(ki->ki_influx < UINT_MAX);
+	ki->ki_influx++;
 
 	return true;
 }
@@ -308,14 +343,17 @@ static inline bool
 kn_leave_flux(struct knote *kn)
 {
 	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
-	KASSERT(kn->kn_influx > 0);
-	kn->kn_influx--;
-	return kn->kn_influx == 0;
+
+	struct knote_impl *ki = KNOTE_TO_KIMPL(kn);
+	KASSERT(ki->ki_influx > 0);
+	ki->ki_influx--;
+	return ki->ki_influx == 0;
 }
 
 static void
 kn_wait_flux(struct knote *kn, bool can_loop)
 {
+	struct knote_impl *ki = KNOTE_TO_KIMPL(kn);
 	bool loop;
 
 	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
@@ -325,7 +363,7 @@ kn_wait_flux(struct knote *kn, bool can_loop)
 	 * dropping the kq_lock.  The caller has let us know in
 	 * 'can_loop'.
 	 */
-	for (loop = true; loop && kn->kn_influx != 0; loop = can_loop) {
+	for (loop = true; loop && ki->ki_influx != 0; loop = can_loop) {
 		KQ_FLUX_WAIT(kn->kn_kq);
 	}
 }
@@ -421,22 +459,6 @@ knote_detach_quiesce(struct knote *kn)
 	mutex_spin_exit(&kq->kq_lock);
 
 	return false;
-}
-
-static inline struct knote *
-knote_alloc(bool sleepok)
-{
-	struct knote *kn;
-
-	kn = kmem_zalloc(sizeof(*kn), sleepok ? KM_SLEEP : KM_NOSLEEP);
-
-	return kn;
-}
-
-static inline void
-knote_free(struct knote *kn)
-{
-	kmem_free(kn, sizeof(*kn));
 }
 
 static int
@@ -2119,7 +2141,8 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timespec	ats, sleepts;
-	struct knote	*kn, *marker, morker;
+	struct knote	*kn, *marker;
+	struct knote_impl morker;
 	size_t		count, nkev, nevents;
 	int		timeout, error, touch, rv, influx;
 	filedesc_t	*fdp;
@@ -2148,7 +2171,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	memset(&morker, 0, sizeof(morker));
-	marker = &morker;
+	marker = &morker.ki_knote;
 	marker->kn_kq = kq;
 	marker->kn_status = KN_MARKER;
 	mutex_spin_enter(&kq->kq_lock);

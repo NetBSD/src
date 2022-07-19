@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.53 2022/07/13 14:11:46 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.54 2022/07/19 00:46:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -262,7 +262,6 @@ struct knote {
 	struct kfilter		*kn_kfilter;
 	void 			*kn_hook;
 	int			kn_hookid;
-	unsigned int		kn_influx;	/* q: in-flux counter */
 
 #define	KN_ACTIVE	0x01U			/* event has been triggered */
 #define	KN_QUEUED	0x02U			/* event is on queue */
