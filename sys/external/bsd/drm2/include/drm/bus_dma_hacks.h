@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.24 2021/12/19 12:03:21 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.25 2022/07/19 23:19:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -85,6 +85,11 @@ BUS_MEM_TO_PHYS(bus_dma_tag_t dmat, bus_addr_t ba)
 #  define	PHYS_TO_BUS_MEM(dmat, paddr)	((bus_addr_t)(paddr))
 #  define	BUS_MEM_TO_PHYS(dmat, baddr)	((paddr_t)(baddr))
 #elif defined(__powerpc__)
+#elif defined(__alpha__)
+#  define	PHYS_TO_BUS_MEM(dmat, paddr)				      \
+	((bus_addr_t)(paddr) | (dmat)->_wbase)
+#  define	BUS_MEM_TO_PHYS(dmat, baddr)				      \
+	((paddr_t)((baddr) & ~(bus_addr_t)(dmat)->_wbase))
 #else
 #  error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
 #endif
@@ -117,6 +122,8 @@ bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
 	return dmat->_bounce_thresh && pa >= dmat->_bounce_thresh;
 #elif defined(__sparc__) || defined(__sparc64__)
 	return false;		/* no bounce buffers ever */
+#elif defined(__alpha__)
+	return (dmat->_wsize == 0 ? false : pa >= dmat->_wsize);
 #endif
 }
 
