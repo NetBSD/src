@@ -1,7 +1,8 @@
-#	$NetBSD: files.via,v 1.5 2021/12/19 12:30:23 riastradh Exp $
+#	$NetBSD: files.via,v 1.6 2022/07/19 23:19:07 riastradh Exp $
 
 device	viadrmums: drmkms, drmkms_pci, drmums
 attach	viadrmums at drm
+makeoptions	viadrmums	"CPPFLAGS.viadrmums"+="${CPPFLAGS.drmums}"
 
 makeoptions	viadrmums	"CPPFLAGS.viadrmums"+="-I$S/external/bsd/drm2/dist/drm/via"
 makeoptions	viadrmums	"CPPFLAGS.viadrmums"+="-I$S/external/bsd/drm2/via"
