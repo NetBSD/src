@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.16 2022/07/19 16:38:22 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.17 2022/07/19 16:38:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -77,6 +77,11 @@
 #endif
 #define	wmb()	mb()		/* XXX could maybe be __insn_barrier in TSO */
 #define	rmb()	mb()		/* XXX could maybe be __insn_barrier in TSO */
+#elif defined(__mips__)
+#include <mips/locore.h>
+#define	mb()	wbflush()
+#define	wmb()	mb()
+#define	rmb()	mb()
 #else
 #error Define machine-dependent memory-mapped I/O barriers for drm.
 #endif
