@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.77 2022/07/19 23:19:35 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.78 2022/07/20 01:38:24 riastradh Exp $
 
 version	20180827
 
@@ -17,15 +17,15 @@ define	drmkms: drmkms_linux, drmkms_i2c, linux, sysmon_power
 makeoptions 	drmkms	"COPTS.drmkms"+="-fwrapv"
 
 # Overrides first.
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/include"
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/include/drm"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include/drm"
 
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/common/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
 
 # Then upstream.
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include"
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include/drm"
-makeoptions 	drmkms	"CPPFLAGS.drmkms"+="-I$S/external/bsd/drm2/dist/include/uapi"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/uapi"
 
 makeoptions	drmkms	"CPPFLAGS.drmkms"+="-D__KERNEL__"
 
