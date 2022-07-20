@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.6 2022/04/16 23:20:47 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.7 2022/07/20 18:48:41 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.6 2022/04/16 23:20:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.7 2022/07/20 18:48:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -510,7 +510,13 @@ eqos_reset(struct eqos_softc *sc)
 static void
 eqos_init_rings(struct eqos_softc *sc, int qid)
 {
-	sc->sc_tx.queued = 0;
+	/*
+	 * We reset the rings paddr, this implicitly resets
+	 * the hardwares current descriptor pointer.
+	 * Adjust our internal state accordingly.
+	 */
+	sc->sc_tx.cur = sc->sc_tx.next = sc->sc_tx.queued = 0;
+	sc->sc_rx.cur = sc->sc_rx.next = sc->sc_rx.queued = 0;
 
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR_HI,
 	    (uint32_t)(sc->sc_tx.desc_ring_paddr >> 32));
