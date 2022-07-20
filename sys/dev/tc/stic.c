@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.58 2022/05/18 13:56:32 andvar Exp $	*/
+/*	$NetBSD: stic.c,v 1.59 2022/07/20 15:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.58 2022/05/18 13:56:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.59 2022/07/20 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,6 @@ stic_init(struct stic_info *si)
 
 	/* Now reset the VDAC. */
 	*si->si_vdac_reset = 0;
-	tc_wmb();
 	tc_syncbus();
 	DELAY(1000);
 
@@ -358,13 +357,11 @@ stic_reset(struct stic_info *si)
 	 * Initialize the interface chip registers.
 	 */
 	sr->sr_sticsr = 0x00000030;	/* Get the STIC's attention. */
-	tc_wmb();
 	tc_syncbus();
 	DELAY(2000);			/* wait 2ms for STIC to respond. */
 	sr->sr_sticsr = 0x00000000;	/* Hit the STIC's csr again... */
 	tc_wmb();
 	sr->sr_buscsr = 0xffffffff;	/* and bash its bus-access csr. */
-	tc_wmb();
 	tc_syncbus();			/* Blam! */
 	DELAY(20000);			/* wait until the stic recovers... */
 
@@ -402,7 +399,6 @@ stic_reset(struct stic_info *si)
 	sr->sr_ipdvint =
 	    STIC_INT_WE | STIC_INT_P | STIC_INT_E_EN | STIC_INT_V_EN;
 	sr->sr_sticsr = 8;
-	tc_wmb();
 	tc_syncbus();
 }
 

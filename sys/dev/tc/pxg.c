@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.36 2019/11/10 21:16:37 chs Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.37 2022/07/20 15:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.36 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.37 2022/07/20 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ pxg_attach(device_t parent, device_t self, void *aux)
 
 	/* Start the i860. */
 	si->si_slotbase[PXG_I860_START_OFFSET >> 2] = 1;
-	tc_wmb();
 	tc_syncbus();
 	DELAY(40000);
 #endif
@@ -208,7 +207,6 @@ pxg_init(struct stic_info *si)
 	slot[PXG_I860_RESET_OFFSET >> 2] = 0;
 	tc_wmb();
 	slot[PXG_HOST_INTR_OFFSET >> 2] = 0;
-	tc_wmb();
 	tc_syncbus();
 	DELAY(40000);
 

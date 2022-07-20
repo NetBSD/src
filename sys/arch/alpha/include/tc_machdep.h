@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.7 2017/06/22 16:46:52 flxd Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.8 2022/07/20 15:45:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -71,6 +71,11 @@ typedef int32_t		tc_offset_t;
 #define	tc_syncbus()							\
     do {								\
 	volatile uint32_t no_optimize;					\
+	/*								\
+	 * WMB does not order reads with respect to writes, so a	\
+	 * MB is required here.						\
+	 */								\
+	alpha_mb();							\
 	no_optimize =	 						\
 	    *(volatile uint32_t *)ALPHA_PHYS_TO_K0SEG(0x00000001f0080220); \
 	__USE(no_optimize);						\
