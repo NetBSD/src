@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2022/07/17 15:05:09 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.9 2022/07/20 01:11:39 riastradh Exp $
 
 # Common makefile cruft for drm2 code.
 
@@ -31,6 +31,8 @@ CPPFLAGS+=	-DCONFIG_X86_PAT
 CPPFLAGS+=	-DCONFIG_ARM
 .elif ${MACHINE_ARCH} == "aarch64"
 CPPFLAGS+=	-DCONFIG_ARM64
+.elif ${MACHINE_ARCH} == "alpha"
+CPPFLAGS+=	-Ualpha
 .endif
 
 CPPFLAGS+=	-DCONFIG_BACKLIGHT_CLASS_DEVICE=0
