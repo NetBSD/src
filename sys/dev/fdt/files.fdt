@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.64 2022/03/25 21:23:51 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.65 2022/07/20 10:01:11 riastradh Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -55,10 +55,12 @@ file	dev/fdt/panel_fdt.c			fdt_panel
 
 attach	panel at fdt with panel_fdt: drmkms
 file	dev/fdt/fdt_panel.c			panel_fdt
+makeoptions	panel_fdt	"CPPFLAGS.panel_fdt"+="${CPPFLAGS.drmkms}"
 
 device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
+makeoptions	dispcon_hdmi	"CPPFLAGS.dispcon_hdmi"+="${CPPFLAGS.drmkms}"
 
 device	iicmux: i2cbus, i2cmux
 attach	iicmux at fdt with iicmux_fdt

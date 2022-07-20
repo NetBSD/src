@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx,v 1.1 2020/12/23 14:42:38 skrll Exp $
+#	$NetBSD: files.imx,v 1.2 2022/07/20 10:01:10 riastradh Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -150,3 +150,4 @@ file	arch/arm/nxp/imx6_pwm.c			imxpwm_fdt
 # HDMI TX (Designware based)
 attach	dwhdmi at fdt with imx6_dwhdmi
 file	arch/arm/nxp/imx6_dwhdmi.c		imx6_dwhdmi
+makeoptions	imx6_dwhdmi	"CPPFLAGS.imx6_dwhdmi"+="${CPPFLAGS.drmkms}"
