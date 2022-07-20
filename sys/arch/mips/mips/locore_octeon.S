@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.14 2022/07/20 10:07:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.14 2022/07/20 10:07:49 riastradh Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -37,7 +37,7 @@ RCSID("$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $")
 #include <mips/cpuregs.h>
 #include <arch/mips/cavium/dev/octeon_corereg.h>
 
-RCSID("$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.14 2022/07/20 10:07:49 riastradh Exp $")
 
 #include "assym.h"
 
@@ -141,8 +141,10 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	PTR_LA	a1, _C_LABEL(cpuid_infos)
 	dsll	v0, s0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_ADD	t0, a1, v0		# add to array start
-1:	sync
-	PTR_L	a1, (t0)		# get cpu_info pointer
+1:	PTR_L	a1, (t0)		# get cpu_info pointer
+	SYNC_ACQ			# PTR_L/SYNC_ACQ matches
+					#   atomic_store_release in
+					#   cpu_attach_common
 	beqz	a1, 1b			# loop until non-NULL
 	 nop
 
