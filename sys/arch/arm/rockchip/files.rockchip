@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.25 2021/11/12 22:02:08 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.26 2022/07/20 10:01:11 riastradh Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -116,27 +116,32 @@ define	rkfbbus { }
 device	rkdrm: drmkms, ddc_read_edid, rkfbbus
 attach	rkdrm at fdt with rk_drm
 file	arch/arm/rockchip/rk_drm.c		rk_drm
+makeoptions	rk_drm	"CPPFLAGS.rk_drm"+="${CPPFLAGS.drmkms}"
 
 # DRM framebuffer console
 device	rkfb: rkfbbus, drmfb, wsemuldisplaydev
 attach	rkfb at rkfbbus with rk_fb
 file	arch/arm/rockchip/rk_fb.c		rk_fb
+makeoptions	rk_fb	"CPPFLAGS.rk_fb"+="${CPPFLAGS.drmkms}"
 
 # Visual Output Processor
 device	rkvop: drmkms
 attach	rkvop at fdt with rk_vop
 file	arch/arm/rockchip/rk_vop.c		rk_vop
+makeoptions	rk_vop	"CPPFLAGS.rk_vop"+="${CPPFLAGS.drmkms}"
 
 # HDMI TX (Designware based)
 attach	dwhdmi at fdt with rk_dwhdmi
 file	arch/arm/rockchip/rk_dwhdmi.c		rk_dwhdmi
+makeoptions	rk_dwhdmi	"CPPFLAGS.rk_dwhdmi"+="${CPPFLAGS.drmkms}"
 
 # DP/eDP (Analogix-based)
 attach	anxdp at fdt with rk_anxdp
 file	arch/arm/rockchip/rk_anxdp.c		rk_anxdp
+makeoptions	rk_anxdp	"CPPFLAGS.rk_anxdp"+="${CPPFLAGS.drmkms}"
 
 # I2S/PCM controller
-device	rki2s	
+device	rki2s
 attach  rki2s at fdt with rk_i2s
 file    arch/arm/rockchip/rk_i2s.c		rk_i2s
 

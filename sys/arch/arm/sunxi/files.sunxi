@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.71 2022/06/28 05:19:03 skrll Exp $
+#	$NetBSD: files.sunxi,v 1.72 2022/07/20 10:01:11 riastradh Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -342,26 +342,31 @@ file	arch/arm/sunxi/sunxi_de2_ccu.c		sunxi_de2ccu
 device	sunximixer: drmkms
 attach	sunximixer at fdt with sunxi_mixer
 file	arch/arm/sunxi/sunxi_mixer.c		sunxi_mixer
+makeoptions	sunxi_mixer	"CPPFLAGS.sunxi_mixer"+="${CPPFLAGS.drmkms}"
 
 # DE2 timing controller
 device	sunxilcdc: drmkms
 attach	sunxilcdc at fdt with sunxi_lcdc
 file	arch/arm/sunxi/sunxi_lcdc.c		sunxi_lcdc
+makeoptions	sunxi_lcdc	"CPPFLAGS.sunxi_lcdc"+="${CPPFLAGS.drmkms}"
 
 # Display Pipeline
 define	sunxifbbus { }
 device	sunxidrm: drmkms, ddc_read_edid, sunxifbbus
 attach	sunxidrm at fdt with sunxi_drm
 file	arch/arm/sunxi/sunxi_drm.c		sunxi_drm
+makeoptions	sunxi_drm	"CPPFLAGS.sunxi_drm"+="${CPPFLAGS.drmkms}"
 
 # DRM framebuffer console
 device	sunxifb: sunxifbbus, drmfb, wsemuldisplaydev
 attach	sunxifb at sunxifbbus with sunxi_fb
 file	arch/arm/sunxi/sunxi_fb.c		sunxi_fb
+makeoptions	sunxi_fb	"CPPFLAGS.sunxi_fb"+="${CPPFLAGS.drmkms}"
 
 # Allwinner HDMI (Designware based)
 attach	dwhdmi at fdt with sunxi_dwhdmi
 file	arch/arm/sunxi/sunxi_dwhdmi.c		sunxi_dwhdmi
+makeoptions	sunxi_dwhdmi	"CPPFLAGS.sunxi_dwhdmi"+="${CPPFLAGS.drmkms}"
 
 # Allwinner HDMI TX PHY
 device	sunxihdmiphy: drmkms

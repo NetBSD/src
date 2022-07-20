@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.122 2022/01/17 16:31:23 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.123 2022/07/20 10:01:11 riastradh Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -368,6 +368,7 @@ file	dev/i2c/ssdfb_i2c.c			ssdfb_iic
 device	anxedp: edid, videomode, drmkms, drmkms_i2c
 attach	anxedp at iic
 file	dev/i2c/anxedp.c			anxedp
+makeoptions	anxedp	"CPPFLAGS.anxedp"+="${CPPFLAGS.drmkms}"
 
 # NXP PCA954x / PCA984x I2C switch / mux controllers
 device	pcaiicmux: i2cbus, i2cmux
@@ -388,6 +389,7 @@ file	dev/i2c/twl4030.c			twl
 device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
 attach	tdahdmi at iic
 file	dev/i2c/tda19988.c			tdahdmi
+makeoptions	tdahdmi	"CPPFLAGS.tdahdmi"+="${CPPFLAGS.drmkms}"
 
 # Everest Semi ES8316 Low Power Audio CODEC
 device	es8316ac

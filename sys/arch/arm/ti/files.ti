@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.21 2019/11/29 20:54:00 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.22 2022/07/20 10:01:11 riastradh Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -116,10 +116,12 @@ define	tilcdcfbbus { }
 device	tilcdc: drmkms, tilcdcfbbus
 attach	tilcdc at fdt with ti_lcdc
 file	arch/arm/ti/ti_lcdc.c		ti_lcdc
+makeoptions	ti_lcdc	"CPPFLAGS.ti_lcdc"+="${CPPFLAGS.drmkms}"
 
 device	tifb: tilcdcfbbus, drmfb, wsemuldisplaydev
 attach	tifb at tilcdcfbbus with ti_fb
 file	arch/arm/ti/ti_fb.c		ti_fb
+makeoptions	ti_fb	"CPPFLAGS.ti_fb"+="${CPPFLAGS.drmkms}"
 
 # Memory controller
 device	tigpmc { } : fdt
