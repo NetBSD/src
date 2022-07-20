@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci_busid.c,v 1.1 2021/12/19 11:09:48 riastradh Exp $	*/
+/*	$NetBSD: drm_pci_busid.c,v 1.2 2022/07/20 01:20:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci_busid.c,v 1.1 2021/12/19 11:09:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci_busid.c,v 1.2 2022/07/20 01:20:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 	KASSERT(dev_is_pci(dev->dev));
 
 	master->unique = kasprintf(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
-	    device_unit(device_parent(dev->dev)),
+	    pci_domain_nr(dev->pdev->bus),
 	    pa->pa_bus, pa->pa_device, pa->pa_function);
 	if (master->unique == NULL)
 		return -ENOMEM;

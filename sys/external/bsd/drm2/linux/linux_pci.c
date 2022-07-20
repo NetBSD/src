@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.22 2022/07/19 22:24:34 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.23 2022/07/20 01:20:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.22 2022/07/19 22:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.23 2022/07/20 01:20:20 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -724,7 +724,7 @@ int
 pci_domain_nr(struct pci_bus *bus)
 {
 
-	return device_unit(bus->pb_dev);
+	return pci_get_segment(bus->pb_pc);
 }
 
 /*
