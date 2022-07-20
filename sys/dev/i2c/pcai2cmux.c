@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.9 2022/07/20 22:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.9 2022/07/20 22:58:35 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -278,8 +278,14 @@ pcaiicmux_acquire_bus(struct iicmux_bus * const bus, int const flags)
 {
 	struct pcaiicmux_softc * const sc = bus->mux->sc_mux_data;
 	struct pcaiicmux_bus_info * const bus_info = bus->bus_data;
+	int error;
 
-	return pcaiicmux_write(sc, bus_info->enable_value, flags);
+	error = pcaiicmux_write(sc, bus_info->enable_value, flags);
+	if (error) {
+		printf("%s: %s: pcaiicmux_write failed (error = %d)\n",
+		    device_xname(sc->sc_iicmux.sc_dev), __func__, error);
+	}
+	return error;
 }
 
 static void
@@ -288,7 +294,14 @@ pcaiicmux_release_bus(struct iicmux_bus * const bus, int const flags)
 	struct pcaiicmux_softc * const sc = bus->mux->sc_mux_data;
 
 	if (sc->sc_idle_disconnect) {
-		(void) pcaiicmux_write(sc, 0, flags);
+		int error;
+
+		error = pcaiicmux_write(sc, 0, flags);
+		if (error) {
+			printf("%s: %s: pcaiicmux_write failed (error = %d)\n",
+			    device_xname(sc->sc_iicmux.sc_dev), __func__,
+			    error);
+		}
 	}
 }
 
@@ -371,14 +384,16 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cur_value = -1;
 	error = iic_acquire_bus(ia->ia_tag, 0);
 	if (error) {
-		aprint_error_dev(self, "failed to acquire I2C bus\n");
+		aprint_error_dev(self,
+		    "failed to acquire I2C bus (error = %d)\n", error);
 		return;
 	}
 	error = pcaiicmux_write(sc, 0, 0);
 	iic_release_bus(ia->ia_tag, 0);
 	if (error) {
 		aprint_error_dev(self,
-		    "failed to set mux to disconnected state\n");
+		    "failed to set mux to disconnected state (error = %d)\n",
+		    error);
 		return;
 	}
 
