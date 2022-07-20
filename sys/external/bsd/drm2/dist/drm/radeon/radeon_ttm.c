@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.25 2022/05/21 17:50:21 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.26 2022/07/20 01:22:38 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.25 2022/05/21 17:50:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.26 2022/07/20 01:22:38 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -453,6 +453,7 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 			return -EINVAL;
 		mem->bus.base = rdev->mc.aper_base;
 		mem->bus.is_iomem = true;
+#ifndef __NetBSD__		/* alpha hose handled through bus_space(9) */
 #ifdef __alpha__
 		/*
 		 * Alpha: use bus.addr to hold the ioremap() return,
@@ -477,6 +478,7 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 		 */
 		mem->bus.base = (mem->bus.base & 0x0ffffffffUL) +
 			rdev->ddev->hose->dense_mem_base;
+#endif
 #endif
 		KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
 		    "mc aperture is not page-aligned: %" PRIx64 "",
