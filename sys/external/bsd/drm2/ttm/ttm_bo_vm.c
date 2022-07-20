@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.20 2021/12/19 11:34:14 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.21 2022/07/20 01:12:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.20 2021/12/19 11:34:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.21 2022/07/20 01:12:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -192,14 +192,17 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		/* XXX PGO_ALLPAGES?  */
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-		if (bo->mem.bus.is_iomem) {
+		if (!bo->mem.bus.is_iomem) {
+			paddr = page_to_phys(u.ttm->pages[startpage + i]);
+		} else if (bdev->driver->io_mem_pfn) {
+			paddr = (*bdev->driver->io_mem_pfn)(bo, startpage + i)
+			    << PAGE_SHIFT;
+		} else {
 			const paddr_t cookie = bus_space_mmap(bdev->memt,
 			    u.base, ((startpage + i) << PAGE_SHIFT), vm_prot,
 			    0);
 
 			paddr = pmap_phys_address(cookie);
-		} else {
-			paddr = page_to_phys(u.ttm->pages[startpage + i]);
 		}
 		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
 		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
