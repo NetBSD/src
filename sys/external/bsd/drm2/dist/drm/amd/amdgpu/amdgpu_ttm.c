@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.11 2022/07/20 01:11:54 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.11 2022/07/20 01:11:54 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/iommu.h>
@@ -764,8 +764,24 @@ static unsigned long amdgpu_ttm_io_mem_pfn(struct ttm_buffer_object *bo,
 	unsigned long offset = (page_offset << PAGE_SHIFT);
 
 	mm = amdgpu_find_mm_node(&bo->mem, &offset);
+#ifdef __NetBSD__
+	/*
+	 * vm_prot and flags are encoded in the pmap cookie, but we
+	 * then discard them; the caller will reapply them as
+	 * appropriate before it gets to pmap_enter.
+	 *
+	 * XXX What if the flags determine not just extra bits in the
+	 * cookie, but the address itself, in case different mapping
+	 * types (like prefetchable) are exposed through different
+	 * ranges instead of different page table entry bit?
+	 */
+	const paddr_t cookie = bus_space_mmap(bo->bdev->memt, bo->mem.bus.base,
+	    (mm->start + page_offset) << PAGE_SHIFT, /*vm_prot*/0, /*flags*/0);
+	return pmap_phys_address(cookie);
+#else
 	return (bo->mem.bus.base >> PAGE_SHIFT) + mm->start +
 		(offset >> PAGE_SHIFT);
+#endif
 }
 
 /*
