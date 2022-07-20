@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.141 2021/07/22 15:48:40 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.142 2022/07/20 18:25:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.141 2021/07/22 15:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.142 2022/07/20 18:25:10 thorpej Exp $");
 
 #include "assym.h"
 
@@ -651,13 +651,10 @@ LEAF(restorefpstate, 1)
  * sanely be used for curlwp iff cpu_switchto won't be called again, e.g.
  * if called from boot().)
  *
+ * N.B. this is actually only used by dumpsys().
+ *
  * Arguments:
  *	a0	'struct pcb *' of the process that needs its context saved
- *
- * Return:
- *	v0	0.  (note that for child processes, it seems
- *		like savectx() returns 1, because the return address
- *		in the PCB is set to the return address from savectx().)
  */
 
 LEAF(savectx, 1)
@@ -672,10 +669,6 @@ LEAF(savectx, 1)
 	stq	s5, PCB_CONTEXT+(5 * 8)(a0)
 	stq	s6, PCB_CONTEXT+(6 * 8)(a0)
 	stq	ra, PCB_CONTEXT+(7 * 8)(a0)	/* store ra */
-	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
-	stq	v0, PCB_CONTEXT+(8 * 8)(a0)	/* store ps, for ipl */
-
-	mov	zero, v0
 	RET
 	END(savectx)
 
