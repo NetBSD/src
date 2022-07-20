@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.61 2022/03/28 12:38:58 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.61 2022/03/28 12:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -273,10 +273,12 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	if (ci != &cpu_info_store) {
 		/*
 		 * Tail insert this onto the list of cpu_info's.
+		 * atomic_store_release matches PTR_L/SYNC_ACQ in
+		 * locore_octeon.S (XXX what about non-Octeon?).
 		 */
 		KASSERT(cpuid_infos[ci->ci_cpuid] == NULL);
-		cpuid_infos[ci->ci_cpuid] = ci;
-		membar_producer();
+		atomic_store_release(&cpuid_infos[ci->ci_cpuid], ci);
+		membar_producer(); /* Cavium sync plunger */
 	}
 	KASSERT(cpuid_infos[ci->ci_cpuid] != NULL);
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
