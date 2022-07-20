@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.55 2021/11/02 11:26:03 ryo Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.56 2022/07/20 15:52:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -377,7 +377,7 @@ alpha_rpcc(void)
 }
 
 #define	alpha_mb()	__asm volatile("mb" : : : "memory")
-#define	alpha_wmb()	__asm volatile("mb" : : : "memory")	/* XXX */
+#define	alpha_wmb()	__asm volatile("wmb" : : : "memory")
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
