@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.23 2022/01/31 09:16:09 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.24 2022/07/20 01:35:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -34,6 +34,7 @@
 #include <arm/armreg.h>
 #include <sys/device_if.h>
 
+#include <sys/cpu.h>
 
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
