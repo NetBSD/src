@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.125 2021/12/22 07:28:34 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.126 2022/07/20 06:43:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1145,9 +1145,9 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_CRCERRS	0x4000	/* CRC Error Count */
 #define	WMREG_ALGNERRC	0x4004	/* Alignment Error Count */
 #define	WMREG_SYMERRC	0x4008	/* Symbol Error Count */
-#define	WMREG_RXERRC	0x400c	/* receive error Count - R/clr */
+#define	WMREG_RXERRC	0x400c	/* Receive error Count - R/clr */
 #define	WMREG_MPC	0x4010	/* Missed Packets Count - R/clr */
-#define	WMREG_COLC	0x4028	/* collision Count - R/clr */
+#define	WMREG_COLC	0x4028	/* Collision Count - R/clr */
 #define	WMREG_SEC	0x4038	/* Sequence Error Count */
 #define	WMREG_CEXTERR	0x403c	/* Carrier Extension Error Count */
 #define	WMREG_RLEC	0x4040	/* Receive Length Error Count */
@@ -1302,15 +1302,15 @@ struct livengood_tcpip_ctxdesc {
 #define	RSSRK_NUM_REGS		10
 
 #define	WMREG_MANC	0x5820	/* Management Control */
-#define	MANC_SMBUS_EN		0x00000001
-#define	MANC_ASF_EN		0x00000002
-#define	MANC_ARP_EN		0x00002000
-#define	MANC_RECV_TCO_RESET	0x00010000
-#define	MANC_RECV_TCO_EN	0x00020000
-#define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
-#define	MANC_RECV_ALL		0x00080000
-#define	MANC_EN_MAC_ADDR_FILTER	0x00100000
-#define	MANC_EN_MNG2HOST	0x00200000
+#define	MANC_SMBUS_EN		__BIT(0)
+#define	MANC_ASF_EN		__BIT(1)
+#define	MANC_ARP_EN		__BIT(13)
+#define	MANC_RECV_TCO_RESET	__BIT(16)
+#define	MANC_RECV_TCO_EN	__BIT(17)
+#define	MANC_BLK_PHY_RST_ON_IDE	__BIT(18)
+#define	MANC_RECV_ALL		__BIT(19)
+#define	MANC_EN_MAC_ADDR_FILTER	__BIT(20)
+#define	MANC_EN_MNG2HOST	__BIT(21)
 
 #define	WMREG_MANC2H	0x5860	/* Management Control To Host - RW */
 #define	MANC2H_PORT_623		(1 << 5)
