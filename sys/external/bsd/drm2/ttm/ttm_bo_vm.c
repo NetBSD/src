@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.21 2022/07/20 01:12:14 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.22 2022/07/21 08:07:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.21 2022/07/20 01:12:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.22 2022/07/21 08:07:56 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -163,7 +163,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 			.flags = TTM_OPT_FLAG_FORCE_ALLOC,
 		};
 		u.ttm = bo->ttm;
-		size = (bo->ttm->num_pages << PAGE_SHIFT);
+		size = (size_t)bo->ttm->num_pages << PAGE_SHIFT;
 		if (ISSET(bo->mem.placement, TTM_PL_FLAG_CACHED))
 			pgprot = vm_prot;
 		else
@@ -195,12 +195,12 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		if (!bo->mem.bus.is_iomem) {
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
 		} else if (bdev->driver->io_mem_pfn) {
-			paddr = (*bdev->driver->io_mem_pfn)(bo, startpage + i)
-			    << PAGE_SHIFT;
+			paddr = (paddr_t)(*bdev->driver->io_mem_pfn)(bo,
+			    startpage + i) << PAGE_SHIFT;
 		} else {
 			const paddr_t cookie = bus_space_mmap(bdev->memt,
-			    u.base, ((startpage + i) << PAGE_SHIFT), vm_prot,
-			    0);
+			    u.base, (off_t)(startpage + i) << PAGE_SHIFT,
+			    vm_prot, 0);
 
 			paddr = pmap_phys_address(cookie);
 		}
@@ -292,7 +292,7 @@ ttm_bo_mmap_object(struct ttm_bo_device *bdev, off_t offset, size_t size,
 	/* Success!  */
 	*uobjp = &bo->uvmobj;
 	*uoffsetp = (offset -
-	    (drm_vma_node_start(&bo->base.vma_node) << PAGE_SHIFT));
+	    ((off_t)drm_vma_node_start(&bo->base.vma_node) << PAGE_SHIFT));
 	return 0;
 
 fail1:	ttm_bo_put(bo);
