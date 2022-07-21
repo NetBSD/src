@@ -1,10 +1,17 @@
-#	$NetBSD: dot.shrc,v 1.8 2007/11/24 11:14:41 pavel Exp $
+#	$NetBSD: dot.shrc,v 1.9 2022/07/21 07:53:28 kre Exp $
 
 if [ -f /etc/shrc ]; then
 	. /etc/shrc
 fi
 
-hup(){ (read pid; kill -HUP $pid) </var/run/$1.pid; }
+hup()
+{
+	test -s "/var/run/$1.pid" || {
+		printf >&2 'No pid file for %s\n' "$1"
+		return 1
+	}
+	{ read pid; kill -HUP "$pid"; } <"/var/run/$1.pid"
+}
 
 case "$-" in *i*)
 	# interactive mode settings go here
