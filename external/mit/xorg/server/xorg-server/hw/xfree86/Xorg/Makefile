@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2022/07/15 04:18:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2022/07/21 22:51:23 mrg Exp $
 
 USE_FORT?=	yes # network server *and* setuid
 
@@ -35,9 +35,6 @@ LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.fb}
 LDADD+=	${LDADD.config}
 LDADD+=	${LDADD.dbe}
-.if ${HAVE_XORG_GLAMOR} != "no"  
-LDADD+=	${LDADD.glamor} -lgbm
-.endif
 LDADD+=	${LDADD.record}
 LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
@@ -131,12 +128,6 @@ DPADD+=	\
 	${LIBXFONT2} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
 	${LIBGL} ${LIBXV} ${LIBXSHMFENCE} ${LIBXCVT}
-
-.if ${HAVE_XORG_GLAMOR} != "no"  
-DPADD+= \
-	${DPADD.glamor} \
-	${LIBEPOXY}
-.endif
 
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
