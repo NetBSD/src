@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.7 2022/07/20 18:48:41 martin Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.8 2022/07/21 18:12:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.7 2022/07/20 18:48:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.8 2022/07/21 18:12:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,11 +60,20 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.7 2022/07/20 18:48:41 martin Exp $");
 #include <dev/ic/dwc_eqos_var.h>
 
 CTASSERT(MCLBYTES == 2048);
+
 #ifdef EQOS_DEBUG
-#define	DPRINTF(...)	printf(##__VA_ARGS__)
+unsigned int eqos_debug;
+#define	DPRINTF(FLAG, FORMAT, ...)	\
+	if (eqos_debug & FLAG) 		\
+		device_printf(sc->sc_dev, "%s: " FORMAT, \
+		    __func__, ##__VA_ARGS__)
 #else
-#define	DPRINTF(...)	((void)0)
+#define	DPRINTF(FLAG, FORMAT, ...)	((void)0)
 #endif
+#define	EDEB_NOTE		1U<<0
+#define	EDEB_INTR		1U<<1
+#define	EDEB_RXRING		1U<<2
+#define	EDEB_TXRING		1U<<3
 
 #ifdef NET_MPSAFE
 #define	EQOS_MPSAFE		1
@@ -105,9 +114,6 @@ CTASSERT(MCLBYTES == 2048);
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
-
-#define STUB(...)				\
-	printf("%s: TODO\n", __func__);	\
 
 static int
 eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -232,7 +238,7 @@ eqos_dma_sync(struct eqos_softc *sc, bus_dmamap_t map,
 	} else {
 		bus_dmamap_sync(sc->sc_dmat, map, DESC_OFF(start),
 		    DESC_OFF(total) - DESC_OFF(start), flags);
-		if (DESC_OFF(end) - DESC_OFF(0) > 0) {
+		if (end > 0) {
 			bus_dmamap_sync(sc->sc_dmat, map, DESC_OFF(0),
 			    DESC_OFF(end) - DESC_OFF(0), flags);
 		}
@@ -246,6 +252,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 	uint32_t tdes2, tdes3;
 
 	if (paddr == 0 || len == 0) {
+		DPRINTF(EDEB_TXRING,
+		    "tx for desc %u done!\n", index);
 		KASSERT(flags == 0);
 		tdes2 = 0;
 		tdes3 = 0;
@@ -262,6 +270,7 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 	sc->sc_tx.desc_ring[index].tdes1 = htole32((uint32_t)(paddr >> 32));
 	sc->sc_tx.desc_ring[index].tdes2 = htole32(tdes2 | len);
 	sc->sc_tx.desc_ring[index].tdes3 = htole32(tdes3 | total_len);
+	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
 }
 
 static int
@@ -329,6 +338,9 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
 	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
 	    BUS_DMASYNC_PREWRITE);
+	DPRINTF(EDEB_TXRING, "passing tx desc %u to hardware, cur: %u, "
+	    "next: %u, queued: %u\n",
+	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued);
 	sc->sc_tx.desc_ring[index].tdes3 |= htole32(EQOS_TDES3_OWN);
 
 	return nsegs;
@@ -484,6 +496,8 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG0, hash[1]);
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG1, hash[0]);
 
+	DPRINTF(EDEB_NOTE, "writing new packet filter config "
+	    "%08x, hash[1]=%08x, hash[0]=%08x\n", pfil, hash[1], hash[0]);
 	/* Packet filter config */
 	WR4(sc, GMAC_MAC_PACKET_FILTER, pfil);
 }
@@ -510,20 +524,17 @@ eqos_reset(struct eqos_softc *sc)
 static void
 eqos_init_rings(struct eqos_softc *sc, int qid)
 {
-	/*
-	 * We reset the rings paddr, this implicitly resets
-	 * the hardwares current descriptor pointer.
-	 * Adjust our internal state accordingly.
-	 */
 	sc->sc_tx.cur = sc->sc_tx.next = sc->sc_tx.queued = 0;
-	sc->sc_rx.cur = sc->sc_rx.next = sc->sc_rx.queued = 0;
 
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR_HI,
 	    (uint32_t)(sc->sc_tx.desc_ring_paddr >> 32));
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR,
 	    (uint32_t)sc->sc_tx.desc_ring_paddr);
 	WR4(sc, GMAC_DMA_CHAN0_TX_RING_LEN, TX_DESC_COUNT - 1);
+	DPRINTF(EDEB_TXRING, "tx ring paddr %lx with %u decriptors\n",
+	    sc->sc_tx.desc_ring_paddr, TX_DESC_COUNT);
 
+	sc->sc_rx.cur = sc->sc_rx.next = sc->sc_rx.queued = 0;
 	WR4(sc, GMAC_DMA_CHAN0_RX_BASE_ADDR_HI,
 	    (uint32_t)(sc->sc_rx.desc_ring_paddr >> 32));
 	WR4(sc, GMAC_DMA_CHAN0_RX_BASE_ADDR,
@@ -532,6 +543,8 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 	WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
 	    (uint32_t)sc->sc_rx.desc_ring_paddr +
 	    DESC_OFF((sc->sc_rx.cur - 1) % RX_DESC_COUNT));
+	DPRINTF(EDEB_RXRING, "rx ring paddr %lx with %u decriptors\n",
+	    sc->sc_rx.desc_ring_paddr, RX_DESC_COUNT);
 }
 
 static int
@@ -770,6 +783,8 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 	uint32_t tdes3;
 	int i, pkts = 0;
 
+	DPRINTF(EDEB_INTR, "qid: %u\n", qid);
+
 	EQOS_ASSERT_LOCKED(sc);
 
 	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0; i = TX_NEXT(i)) {
@@ -842,16 +857,19 @@ eqos_start_locked(struct eqos_softc *sc)
 	for (cnt = 0, start = sc->sc_tx.cur; ; cnt++) {
 		if (sc->sc_tx.queued >= TX_DESC_COUNT - TX_MAX_SEGS) {
 			ifp->if_flags |= IFF_OACTIVE;
+			DPRINTF(EDEB_TXRING, "%u sc_tx.queued, ring full\n",
+			    sc->sc_tx.queued);
 			break;
 		}
 
 		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL) {
+		if (m == NULL)
 			break;
-		}
 
 		nsegs = eqos_setup_txbuf(sc, sc->sc_tx.cur, m);
 		if (nsegs <= 0) {
+			DPRINTF(EDEB_TXRING, "eqos_setup_txbuf failed "
+			    "with %d\n", nsegs);
 			if (nsegs == -1) {
 				ifp->if_flags |= IFF_OACTIVE;
 			} else if (nsegs == -2) {
@@ -867,12 +885,24 @@ eqos_start_locked(struct eqos_softc *sc)
 		sc->sc_tx.cur = TX_SKIP(sc->sc_tx.cur, nsegs);
 	}
 
+	DPRINTF(EDEB_TXRING, "tx loop -> cnt = %u, cur: %u, next: %u, "
+	    "queued: %u\n", cnt, sc->sc_tx.cur, sc->sc_tx.next,
+	    sc->sc_tx.queued);
+
 	if (cnt != 0) {
 		eqos_dma_sync(sc, sc->sc_tx.desc_map,
 		    start, sc->sc_tx.cur, TX_DESC_COUNT,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start and run TX DMA */
+		DPRINTF(EDEB_TXRING, "sending desc %u at %lx upto "
+		    "%u-1 at %lx cur tx desc: %x cur tx buf: %x\n", start,
+		    (uint32_t)sc->sc_tx.desc_ring_paddr + DESC_OFF(start),
+		    sc->sc_tx.cur,
+		    (uint32_t)sc->sc_tx.desc_ring_paddr +
+		    DESC_OFF(sc->sc_tx.cur),
+		    RD4(sc, GMAC_DMA_CHAN0_CUR_TX_DESC),
+		    RD4(sc, GMAC_DMA_CHAN0_CUR_TX_BUF_ADDR));
 		WR4(sc, GMAC_DMA_CHAN0_TX_END_ADDR,
 		    (uint32_t)sc->sc_tx.desc_ring_paddr +
 		    DESC_OFF(sc->sc_tx.cur));
@@ -923,13 +953,11 @@ eqos_intr_mtl(struct eqos_softc *sc, uint32_t mtl_status)
 			WR4(sc, GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS, new_status);
 		}
 	}
-#ifdef DEBUG_LOUD
-	device_printf(sc->sc_dev,
+	DPRINTF(EDEB_INTR,
 	    "GMAC_MTL_INTERRUPT_STATUS = 0x%08X, "
 	    "GMAC_MTL_FIFO_DEBUG_DATA = 0x%08X, "
 	    "GMAC_MTL_INTERRUPT_STATUS_Q0IS = 0x%08X\n",
 	    mtl_status, debug_data, ictrl);
-#endif
 }
 
 int
@@ -946,10 +974,8 @@ eqos_intr(void *arg)
 
 	if (mac_status) {
 		sc->sc_ev_mac.ev_count++;
-#ifdef DEBUG_LOUD
-		device_printf(sc->sc_dev,
+		DPRINTF(EDEB_INTR,
 		    "GMAC_MAC_INTERRUPT_STATUS = 0x%08X\n", mac_status);
-#endif
 	}
 
 	mtl_status = RD4(sc, GMAC_MTL_INTERRUPT_STATUS);
@@ -974,11 +1000,9 @@ eqos_intr(void *arg)
 	}
 	EQOS_UNLOCK(sc);
 
-#ifdef DEBUG_LOUD
 	if ((mac_status | mtl_status | dma_status) == 0) {
-		device_printf(sc->sc_dev, "spurious interrupt?!\n");
+		DPRINTF(EDEB_NOTE, "spurious interrupt?!\n");
 	}
-#endif
 
 	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
 	if (rx_tx_status) {
@@ -997,10 +1021,9 @@ eqos_intr(void *arg)
 			sc->sc_ev_ncarr.ev_count++;
 		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_TJT) != 0)
 			sc->sc_ev_tjt.ev_count++;
-#ifdef DEBUG_LOUD
-		device_printf(sc->sc_dev, "GMAC_MAC_RX_TX_STATUS = 0x%08x\n",
+
+		DPRINTF(EDEB_INTR, "GMAC_MAC_RX_TX_STATUS = 0x%08x\n",
 		    rx_tx_status);
-#endif
 	}
 
 	return 1;
