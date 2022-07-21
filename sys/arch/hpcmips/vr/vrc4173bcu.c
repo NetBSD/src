@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.26 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.27 2022/07/21 10:09:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.26 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.27 2022/07/21 10:09:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,21 +97,21 @@ static struct vrc4173bcu_platdep {
 	{
 		&platid_mask_MACH_VICTOR_INTERLINK_MPC303,
 		USE_WINCE_CLKMASK,		/* clock mask */
-		(1 << VRC4173ICU_USBINTR)|	/* intrrupts */
+		(1 << VRC4173ICU_USBINTR)|	/* interrupts */
 		(1 << VRC4173ICU_PCMCIA1INTR)|
 		(1 << VRC4173ICU_PCMCIA2INTR),
 	},
 	{
 		&platid_mask_MACH_VICTOR_INTERLINK_MPC304,
 		USE_WINCE_CLKMASK,		/* clock mask */
-		(1 << VRC4173ICU_USBINTR)|	/* intrrupts */
+		(1 << VRC4173ICU_USBINTR)|	/* interrupts */
 		(1 << VRC4173ICU_PCMCIA1INTR)|
 		(1 << VRC4173ICU_PCMCIA2INTR),
 	},
 	{
 		&platid_mask_MACH_NEC_MCR_SIGMARION2,
 		USE_WINCE_CLKMASK,		/* clock mask */
-		(1 << VRC4173ICU_USBINTR),	/* intrrupts */
+		(1 << VRC4173ICU_USBINTR),	/* interrupts */
 	},
 	{
 		&platid_wild,

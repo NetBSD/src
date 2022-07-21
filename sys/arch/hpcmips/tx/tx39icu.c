@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.37 2020/11/21 21:23:48 thorpej Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.38 2022/07/21 10:09:21 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.37 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.38 2022/07/21 10:09:21 andvar Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -489,7 +489,7 @@ tx39_intr_decode(int intr, int *set, int *bit)
 	    || intr == 6
 #endif /* TX392X */
 	    ) {
-		panic("tx39icu_decode: bogus intrrupt line. %d", intr);
+		panic("tx39icu_decode: bogus interrupt line. %d", intr);
 	}
 	*set = intr / 32;
 	*bit = intr % 32;
