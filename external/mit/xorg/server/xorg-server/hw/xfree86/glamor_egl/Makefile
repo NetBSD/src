@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/07/14 06:34:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2022/07/21 22:51:23 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -7,11 +7,10 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 
 LIB=	glamoregl
 
-.PATH:	${X11SRCDIR.xorg-server}/glamor
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/glamor_egl
-SRCS=	glamor_egl.c \
-	glamor_eglmodule.c \
-	glamor_xf86_xv.c
+SRCS=	glamor_xf86_xv.c
+
+.include "../../../glamor/Makefile.glamor"
 
 CPPFLAGS+=	\
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
