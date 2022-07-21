@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.52 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.53 2022/07/21 14:41:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.52 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.53 2022/07/21 14:41:59 andvar Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -502,7 +502,7 @@ cs4231_sbus_intr(void *arg)
 	sbsc = arg;
 	sc = &sbsc->sc_cs4231;
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
-	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
+	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pending? */
 		return 0;
 
 	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
