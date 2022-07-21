@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcdreg.h,v 1.2 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: ipaq_lcdreg.h,v 1.3 2022/07/21 10:09:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 #define CR0_LEN		(1<<0)	/* LCD enable */
 #define CR0_CMS		(1<<1)	/* color op enable */
 #define CR0_SDS		(1<<2)	/* Single display or Double display */
-#define CR0_LDM		(1<<3)	/* LDD status bit ignore(dont intrrupt) */
+#define CR0_LDM		(1<<3)	/* LDD status bit ignore (don't interrupt) */
 #define CR0_BAM		(1<<4)	/* Base address update does not 
-						generate an intrrupt */
-#define CR0_ERM		(1<<5)	/* Bus error generate an intrrupt */
+						generate an interrupt */
+#define CR0_ERM		(1<<5)	/* Bus error generate an interrupt */
 #define CR0_PAS		(1<<7)	/* Passive / Active and TFT-LCD enable */
 #define CR0_BLE		(1<<8)	/* endian select 0=little */
 #define CR0_DPD		(1<<9)

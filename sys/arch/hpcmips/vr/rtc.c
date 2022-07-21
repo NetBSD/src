@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.35 2015/07/11 10:32:45 kamil Exp $	*/
+/*	$NetBSD: rtc.c,v 1.36 2022/07/21 10:09:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.35 2015/07/11 10:32:45 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.36 2022/07/21 10:09:21 andvar Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -193,7 +193,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, TCLK_L_REG_W, 0);
 	}
 	/*
-	 * Clear all rtc intrrupts.
+	 * Clear all rtc interrupts.
 	 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 

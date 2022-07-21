@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.12 2020/11/20 18:03:52 thorpej Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.12 2020/11/20 18:03:52 thorpej Exp $	*/
+/*	$Id: at91aic.c,v 1.13 2022/07/21 10:09:20 andvar Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.13 2022/07/21 10:09:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -244,7 +244,7 @@ at91aic_init(void)
 
 	aic_intr_enabled = 0;
 
-	// disable intrrupts:
+	// disable interrupts:
 	AICREG(AIC_IDCR)	= -1;
 
 	for (i = 0; i < NIRQ; i++) {
