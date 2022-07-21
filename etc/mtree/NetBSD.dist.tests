@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.192 2022/05/22 17:55:08 rillig Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.193 2022/07/21 09:52:48 kre Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -456,6 +456,7 @@
 ./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/printf
 ./usr/tests/usr.bin/pwhash
+./usr/tests/usr.bin/realpath
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/sdiff
 ./usr/tests/usr.bin/sed
