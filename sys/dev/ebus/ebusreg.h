@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.9 2011/03/16 02:34:10 mrg Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.10 2022/07/21 14:41:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -157,7 +157,7 @@ struct ebus_interrupt_map_mask {
 #define EBDMA_BURST_SIZE_16	    0x000c0000 /* 11 - 16 words */
 #define EBDMA_DIAG_EN		0x00100000 /* enable diag mode */
 #define EBDMA_DIS_ERR_PEND	0x00400000 /* disable stop/interrupt
-					      on error pedning */
+					      on error pending */
 #define EBDMA_TCI_DIS		0x00800000 /* disable interrupt on TC */
 #define EBDMA_EN_NEXT		0x01000000 /* enable next address autoload
 					      (must set EN_CNT too) */
