@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.49 2020/11/20 18:26:26 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.50 2022/07/21 10:09:20 andvar Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.49 2020/11/20 18:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.50 2022/07/21 10:09:20 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -122,7 +122,7 @@ void            ixpcomcnprobe(struct consdev *);
 void            ixpcomcninit(struct consdev *);
 
 uint32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
-uint32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
+uint32_t	ixpcom_imask = 0;	/* interrupt mask from *_intr.c */
 
 
 static struct ixpcom_cons_softc {

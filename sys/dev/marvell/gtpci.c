@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.36 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.37 2022/07/21 10:09:21 andvar Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.36 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.37 2022/07/21 10:09:21 andvar Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -207,7 +207,7 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "int2gpp not an array\n");
 			return;
 		}
-		aprint_normal_dev(self, "use intrrupt pin:");
+		aprint_normal_dev(self, "use interrupt pin:");
 		for (intr = PCI_INTERRUPT_PIN_A;
 		    intr <= PCI_INTERRUPT_PIN_D &&
 					intr < prop_array_count(int2gpp);

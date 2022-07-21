@@ -1,4 +1,4 @@
-/*	$NetBSD: dig64.h,v 1.2 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: dig64.h,v 1.3 2022/07/21 10:09:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -32,7 +32,7 @@
 #define	_MACHINE_DIG64_H_
 
 /*
- * This header file written refer to 'DIG64 Desriptions for Primary Console &
+ * This header file written refer to 'DIG64 Descriptions for Primary Console &
  * Debug Port Devices'.
  */
 
@@ -109,7 +109,7 @@ struct dig64_vga_spec {
 #define DIG64_FLAGS_TRANS_SPARSE	(1 << 3)	/* Sparse Transration */
 #define DIG64_FLAGS_TYPE_STATIC		(0 << 4)	/* Type Static */
 #define DIG64_FLAGS_TYPE_TRANS		(1 << 4)	/* Type Translation */
-#define DIG64_FLAGS_INTR_SUPP		(1 << 6)	/* Intrrupt supported */
+#define DIG64_FLAGS_INTR_SUPP		(1 << 6)	/* Interrupt supported */
 #define DIG64_FLAGS_MMIO_TRA_VALID	(1 << 8)
 #define DIG64_FLAGS_IOPORT_TRA_VALID	(1 << 9)
 

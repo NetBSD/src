@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.20 2014/03/26 17:53:36 christos Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.21 2022/07/21 10:09:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.20 2014/03/26 17:53:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.21 2022/07/21 10:09:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ vrpmuattach(device_t parent, device_t self, void *aux)
 	}
 
 	printf("\n");
-	/* dump current intrrupt states */
+	/* dump current interrupt states */
 	vrpmu_dump_intr(sc);
 	DDUMP_REGS(DEBUG_BOOT, sc);
 	/* clear interrupt status */
