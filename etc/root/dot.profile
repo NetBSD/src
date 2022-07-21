@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.33 2022/07/09 09:43:51 kre Exp $
+#	$NetBSD: dot.profile,v 1.34 2022/07/21 07:51:12 kre Exp $
 
 case "${PATH}" in
 /rescue:*)	;; # leave it alone, user can change manually (if required)
@@ -21,6 +21,6 @@ umask 022
 export ENV=/root/.shrc
 
 # Do not display in 'su -' case
-if [ -z "$SU_FROM" ]; then
+if [ -z "$SU_FROM" ] && [ "$PPID" -ne 1 ]; then
         echo "We recommend that you create a non-root account and use su(1) for root access."
 fi
