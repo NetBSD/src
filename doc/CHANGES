@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2891 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2892 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -625,3 +625,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[brook 20220710]
 	mfii(4): Support Newer devices up to SAS39{08,16} (Aero).
 		[msaitoh 20220716]
+	realpath(1): Added -e and -E options for compat with planned
+		posix requirement (made the default be -E).  [kre 20220721]
