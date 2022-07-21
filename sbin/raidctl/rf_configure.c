@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.36 2022/06/14 08:06:13 kre Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.37 2022/07/21 09:19:53 kre Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.36 2022/06/14 08:06:13 kre Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.37 2022/07/21 09:19:53 kre Exp $");
 #endif
 
 
@@ -278,7 +278,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 			warnx("Config file error: warning: unable to "
 			    "get device file for disk at col %d: %s",
 			    c, b1);
-			b = buf;
+			b = "absent";
 		}
 
 		strlcpy(cfgPtr->devnames[0][c], b,
