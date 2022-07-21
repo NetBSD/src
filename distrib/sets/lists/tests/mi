@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1216 2022/07/05 22:50:41 rillig Exp $
+# $NetBSD: mi,v 1.1217 2022/07/21 09:52:48 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6254,6 +6254,10 @@
 ./usr/tests/usr.bin/pwhash/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/pwhash/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/pwhash/t_pwhash			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/realpath				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/realpath/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/realpath/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/realpath/t_realpath			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/rump_server				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/rump_server/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/rump_server/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
