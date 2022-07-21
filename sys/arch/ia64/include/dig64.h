@@ -1,4 +1,4 @@
-/*	$NetBSD: dig64.h,v 1.3 2022/07/21 10:09:21 andvar Exp $	*/
+/*	$NetBSD: dig64.h,v 1.4 2022/07/21 14:27:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -105,8 +105,8 @@ struct dig64_vga_spec {
 #define DIG64_FLAGS_INTR_EDGE		(1 << 0)	/* Edge Triggered */
 #define DIG64_FLAGS_INTR_ACTH		(0 << 1)	/* Intr Active High */
 #define DIG64_FLAGS_INTR_ACTL		(1 << 1)	/* Intr Active Low */
-#define DIG64_FLAGS_TRANS_DENSE		(0 << 3)	/* Dense Transration */
-#define DIG64_FLAGS_TRANS_SPARSE	(1 << 3)	/* Sparse Transration */
+#define DIG64_FLAGS_TRANS_DENSE		(0 << 3)	/* Dense Translation */
+#define DIG64_FLAGS_TRANS_SPARSE	(1 << 3)	/* Sparse Translation */
 #define DIG64_FLAGS_TYPE_STATIC		(0 << 4)	/* Type Static */
 #define DIG64_FLAGS_TYPE_TRANS		(1 << 4)	/* Type Translation */
 #define DIG64_FLAGS_INTR_SUPP		(1 << 6)	/* Interrupt supported */
