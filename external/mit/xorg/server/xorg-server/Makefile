@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2021/08/19 11:03:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2022/07/21 22:51:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,6 @@ SUBDIR+=	dix fb mi Xext miext os randr render
 SUBDIR+=	present pseudoramiX
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
 SUBDIR+=	damageext composite config dri3 .WAIT
-
-.if ${HAVE_XORG_GLAMOR} != "no"
-SUBDIR+=	glamor
-.endif
 
 # And finally, build the servers.
 SUBDIR+=	.WAIT hw

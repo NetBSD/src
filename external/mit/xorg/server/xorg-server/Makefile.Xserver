@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.24 2022/07/15 04:18:54 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.25 2022/07/21 22:51:23 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -7,7 +7,6 @@
 	xfixes \
 	Xext \
 	dbe \
-	glamor \
 	present \
 	pseudoramiX \
 	record \
