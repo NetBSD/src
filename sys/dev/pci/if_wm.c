@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.745 2022/07/19 08:22:34 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.746 2022/07/22 05:23:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.745 2022/07/19 08:22:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.746 2022/07/22 05:23:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -595,12 +595,76 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_linkintr;	/* Link interrupts */
 
-	/* WM_T_82542_2_1 only */
+	/* >= WM_T_82542_2_1 */
 	struct evcnt sc_ev_tx_xoff;	/* Tx PAUSE(!0) frames */
 	struct evcnt sc_ev_tx_xon;	/* Tx PAUSE(0) frames */
 	struct evcnt sc_ev_rx_xoff;	/* Rx PAUSE(!0) frames */
 	struct evcnt sc_ev_rx_xon;	/* Rx PAUSE(0) frames */
 	struct evcnt sc_ev_rx_macctl;	/* Rx Unsupported */
+
+	struct evcnt sc_ev_crcerrs;	/* CRC Error */
+	struct evcnt sc_ev_algnerrc;	/* Alignment Error */
+	struct evcnt sc_ev_symerrc;	/* Symbol Error */
+	struct evcnt sc_ev_rxerrc;	/* Receive Error */
+	struct evcnt sc_ev_mpc;		/* Missed Packets */
+	struct evcnt sc_ev_colc;	/* Collision */
+	struct evcnt sc_ev_sec;		/* Sequence Error */
+	struct evcnt sc_ev_cexterr;	/* Carrier Extension Error */
+	struct evcnt sc_ev_rlec;	/* Receive Length Error */
+	struct evcnt sc_ev_scc;		/* Single Collision */
+	struct evcnt sc_ev_ecol;	/* Excessive Collision */
+	struct evcnt sc_ev_mcc;		/* Multiple Collision */
+	struct evcnt sc_ev_latecol;	/* Late Collision */
+	struct evcnt sc_ev_dc;		/* Defer */
+	struct evcnt sc_ev_gprc;	/* Good Packets Rx */
+	struct evcnt sc_ev_bprc;	/* Broadcast Packets Rx */
+	struct evcnt sc_ev_mprc;	/* Multicast Packets Rx */
+	struct evcnt sc_ev_gptc;	/* Good Packets Tx */
+	struct evcnt sc_ev_gorc;	/* Good Octets Rx */
+	struct evcnt sc_ev_gotc;	/* Good Octets Tx */
+	struct evcnt sc_ev_rnbc;	/* Rx No Buffers */
+	struct evcnt sc_ev_ruc;		/* Rx Undersize */
+	struct evcnt sc_ev_rfc;		/* Rx Fragment */
+	struct evcnt sc_ev_roc;		/* Rx Oversize */
+	struct evcnt sc_ev_rjc;		/* Rx Jabber */
+	struct evcnt sc_ev_tor;		/* Total Octets Rx */
+	struct evcnt sc_ev_tot;		/* Total Octets Tx */
+	struct evcnt sc_ev_tpr;		/* Total Packets Rx */
+	struct evcnt sc_ev_tpt;		/* Total Packets Tx */
+	struct evcnt sc_ev_mptc;	/* Multicast Packets Tx */
+	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx Count */
+	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
+	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
+	struct evcnt sc_ev_prc255;	/* Packets Rx (128-255 bytes) */
+	struct evcnt sc_ev_prc511;	/* Packets Rx (255-511 bytes) */
+	struct evcnt sc_ev_prc1023;	/* Packets Rx (512-1023 bytes) */
+	struct evcnt sc_ev_prc1522;	/* Packets Rx (1024-1522 bytes) */
+	struct evcnt sc_ev_ptc64;	/* Packets Tx (64 bytes) */
+	struct evcnt sc_ev_ptc127;	/* Packets Tx (65-127 bytes) */
+	struct evcnt sc_ev_ptc255;	/* Packets Tx (128-255 bytes) */
+	struct evcnt sc_ev_ptc511;	/* Packets Tx (256-511 bytes) */
+	struct evcnt sc_ev_ptc1023;	/* Packets Tx (512-1023 bytes) */
+	struct evcnt sc_ev_ptc1522;	/* Packets Tx (1024-1522 Bytes) */
+	struct evcnt sc_ev_iac;		/* Interrupt Assertion */
+	struct evcnt sc_ev_icrxptc;	/* Intr. Cause Rx Pkt Timer Expire */
+	struct evcnt sc_ev_icrxatc;	/* Intr. Cause Rx Abs Timer Expire */
+	struct evcnt sc_ev_ictxptc;	/* Intr. Cause Tx Pkt Timer Expire */
+	struct evcnt sc_ev_ictxact;	/* Intr. Cause Tx Abs Timer Expire */
+	struct evcnt sc_ev_ictxqec;	/* Intr. Cause Tx Queue Empty */
+	struct evcnt sc_ev_ictxqmtc;	/* Intr. Cause Tx Queue Min Thresh */
+	struct evcnt sc_ev_icrxdmtc;	/* Intr. Cause Rx Desc Min Thresh */
+	struct evcnt sc_ev_icrxoc;	/* Intr. Cause Receiver Overrun */
+	struct evcnt sc_ev_tncrs;	/* Tx-No CRS */
+	struct evcnt sc_ev_tsctc;	/* TCP Segmentation Context Tx */
+	struct evcnt sc_ev_tsctfc;	/* TCP Segmentation Context Tx Fail */
+	struct evcnt sc_ev_mgtprc;	/* Management Packets RX */
+	struct evcnt sc_ev_mgtpdc;	/* Management Packets Dropped */
+	struct evcnt sc_ev_mgtptc;	/* Management Packets TX */
+	struct evcnt sc_ev_b2ogprc;	/* BMC2OS pkts received by host */
+	struct evcnt sc_ev_o2bspc;	/* OS2BMC pkts transmitted by host */
+	struct evcnt sc_ev_b2ospc;	/* BMC2OS pkts sent by BMC */
+	struct evcnt sc_ev_o2bgptc;	/* OS2BMC pkts received by BMC */
+	
 #endif /* WM_EVENT_COUNTERS */
 
 	struct sysctllog *sc_sysctllog;
@@ -3138,16 +3202,153 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_linkintr, EVCNT_TYPE_INTR,
 	    NULL, xname, "linkintr");
 
-	evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
-	    NULL, xname, "tx_xoff");
-	evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
-	    NULL, xname, "tx_xon");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_xoff");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_xon");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_macctl");
+	if (sc->sc_type >= WM_T_82542_2_1) {
+		evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
+		    NULL, xname, "tx_xoff");
+		evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
+		    NULL, xname, "tx_xon");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_xoff");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_xon");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_macctl");
+	}
+
+	evcnt_attach_dynamic(&sc->sc_ev_crcerrs, EVCNT_TYPE_MISC,
+	    NULL, xname, "CRC Error");
+	evcnt_attach_dynamic(&sc->sc_ev_symerrc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Symbol Error");
+
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_attach_dynamic(&sc->sc_ev_algnerrc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Alignment Error");
+		evcnt_attach_dynamic(&sc->sc_ev_rxerrc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Receive Error");
+		evcnt_attach_dynamic(&sc->sc_ev_cexterr, EVCNT_TYPE_MISC,
+		    NULL, xname, "Carrier Extension Error");
+	}
+
+	evcnt_attach_dynamic(&sc->sc_ev_mpc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Missed Packets");
+	evcnt_attach_dynamic(&sc->sc_ev_colc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Collision");
+	evcnt_attach_dynamic(&sc->sc_ev_sec, EVCNT_TYPE_MISC,
+	    NULL, xname, "Sequence Error");
+	evcnt_attach_dynamic(&sc->sc_ev_rlec, EVCNT_TYPE_MISC,
+	    NULL, xname, "Receive Length Error");
+	evcnt_attach_dynamic(&sc->sc_ev_scc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Single Collision");
+	evcnt_attach_dynamic(&sc->sc_ev_ecol, EVCNT_TYPE_MISC,
+	    NULL, xname, "Excessive Collisions");
+	evcnt_attach_dynamic(&sc->sc_ev_mcc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Multiple Collision");
+	evcnt_attach_dynamic(&sc->sc_ev_latecol, EVCNT_TYPE_MISC,
+	    NULL, xname, "Late Collisions");
+	evcnt_attach_dynamic(&sc->sc_ev_dc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Defer");
+	evcnt_attach_dynamic(&sc->sc_ev_gprc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Good Packets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_bprc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Broadcast Packets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_mprc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Multicast Packets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_gptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Good Packets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_gorc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Good Octets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_gotc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Good Octets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_rnbc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Rx No Buffers");
+	evcnt_attach_dynamic(&sc->sc_ev_ruc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Rx Undersize");
+	evcnt_attach_dynamic(&sc->sc_ev_rfc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Rx Fragment");
+	evcnt_attach_dynamic(&sc->sc_ev_roc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Rx Oversize");
+	evcnt_attach_dynamic(&sc->sc_ev_rjc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Rx Jabber");
+	evcnt_attach_dynamic(&sc->sc_ev_tor, EVCNT_TYPE_MISC,
+	    NULL, xname, "Total Octets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_tot, EVCNT_TYPE_MISC,
+	    NULL, xname, "Total Octets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_tpr, EVCNT_TYPE_MISC,
+	    NULL, xname, "Total Packets Rx");
+	evcnt_attach_dynamic(&sc->sc_ev_tpt, EVCNT_TYPE_MISC,
+	    NULL, xname, "Total Packets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_mptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Multicast Packets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Broadcast Packets Tx Count");
+	evcnt_attach_dynamic(&sc->sc_ev_prc64, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (64 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc127, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (65-127 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc255, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (128-255 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc511, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (255-511 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc1023, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (512-1023 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc1522, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (1024-1522 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc64, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (64 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc127, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (65-127 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc255, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (128-255 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc511, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (256-511 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc1023, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (512-1023 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_ptc1522, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Tx (1024-1522 Bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
+	    NULL, xname, "Interrupt Assertion");
+	evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Rx Pkt Timer Expire");
+	evcnt_attach_dynamic(&sc->sc_ev_icrxatc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Rx Abs Timer Expire");
+	evcnt_attach_dynamic(&sc->sc_ev_ictxptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Tx Pkt Timer Expire");
+	evcnt_attach_dynamic(&sc->sc_ev_ictxact, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Tx Abs Timer Expire");
+	evcnt_attach_dynamic(&sc->sc_ev_ictxqec, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Tx Queue Empty");
+	evcnt_attach_dynamic(&sc->sc_ev_ictxqmtc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Tx Queue Min Thresh");
+	evcnt_attach_dynamic(&sc->sc_ev_icrxdmtc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Intr. Cause Rx Desc Min Thresh");
+	evcnt_attach_dynamic(&sc->sc_ev_icrxoc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Interrupt Cause Receiver Overrun");
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_attach_dynamic(&sc->sc_ev_tncrs, EVCNT_TYPE_MISC,
+		    NULL, xname, "Tx with No CRS");
+		evcnt_attach_dynamic(&sc->sc_ev_tsctc, EVCNT_TYPE_MISC,
+		    NULL, xname, "TCP Segmentation Context Tx");
+		evcnt_attach_dynamic(&sc->sc_ev_tsctfc, EVCNT_TYPE_MISC,
+		    NULL, xname, "TCP Segmentation Context Tx Fail");
+	}
+	if (sc->sc_type >= WM_T_82540) {
+		evcnt_attach_dynamic(&sc->sc_ev_mgtprc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets RX");
+		evcnt_attach_dynamic(&sc->sc_ev_mgtpdc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets Dropped");
+		evcnt_attach_dynamic(&sc->sc_ev_mgtptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets TX");
+	}
+	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+		evcnt_attach_dynamic(&sc->sc_ev_b2ogprc, EVCNT_TYPE_MISC,
+		    NULL, xname, "BMC2OS Packets received by host");
+		evcnt_attach_dynamic(&sc->sc_ev_o2bspc, EVCNT_TYPE_MISC,
+		    NULL, xname, "OS2BMC Packets transmitted by host");
+		evcnt_attach_dynamic(&sc->sc_ev_b2ospc, EVCNT_TYPE_MISC,
+		    NULL, xname, "BMC2OS Packets sent by BMC");
+		evcnt_attach_dynamic(&sc->sc_ev_o2bgptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "OS2BMC Packets received by BMC");
+	}
 #endif /* WM_EVENT_COUNTERS */
 
 	sc->sc_txrx_use_workqueue = false;
@@ -3192,11 +3393,85 @@ wm_detach(device_t self, int flags __unused)
 #ifdef WM_EVENT_COUNTERS
 	evcnt_detach(&sc->sc_ev_linkintr);
 
-	evcnt_detach(&sc->sc_ev_tx_xoff);
-	evcnt_detach(&sc->sc_ev_tx_xon);
-	evcnt_detach(&sc->sc_ev_rx_xoff);
-	evcnt_detach(&sc->sc_ev_rx_xon);
-	evcnt_detach(&sc->sc_ev_rx_macctl);
+	if (sc->sc_type >= WM_T_82542_2_1) {
+		evcnt_detach(&sc->sc_ev_tx_xoff);
+		evcnt_detach(&sc->sc_ev_tx_xon);
+		evcnt_detach(&sc->sc_ev_rx_xoff);
+		evcnt_detach(&sc->sc_ev_rx_xon);
+		evcnt_detach(&sc->sc_ev_rx_macctl);
+	}
+
+	evcnt_detach(&sc->sc_ev_crcerrs);
+	evcnt_detach(&sc->sc_ev_symerrc);
+
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_detach(&sc->sc_ev_algnerrc);
+		evcnt_detach(&sc->sc_ev_rxerrc);
+		evcnt_detach(&sc->sc_ev_cexterr);
+	}
+	evcnt_detach(&sc->sc_ev_mpc);
+	evcnt_detach(&sc->sc_ev_colc);
+	evcnt_detach(&sc->sc_ev_sec);
+	evcnt_detach(&sc->sc_ev_rlec);
+	evcnt_detach(&sc->sc_ev_scc);
+	evcnt_detach(&sc->sc_ev_ecol);
+	evcnt_detach(&sc->sc_ev_mcc);
+	evcnt_detach(&sc->sc_ev_latecol);
+	evcnt_detach(&sc->sc_ev_dc);
+	evcnt_detach(&sc->sc_ev_gprc);
+	evcnt_detach(&sc->sc_ev_bprc);
+	evcnt_detach(&sc->sc_ev_mprc);
+	evcnt_detach(&sc->sc_ev_gptc);
+	evcnt_detach(&sc->sc_ev_gorc);
+	evcnt_detach(&sc->sc_ev_gotc);
+	evcnt_detach(&sc->sc_ev_rnbc);
+	evcnt_detach(&sc->sc_ev_ruc);
+	evcnt_detach(&sc->sc_ev_rfc);
+	evcnt_detach(&sc->sc_ev_roc);
+	evcnt_detach(&sc->sc_ev_rjc);
+	evcnt_detach(&sc->sc_ev_tor);
+	evcnt_detach(&sc->sc_ev_tot);
+	evcnt_detach(&sc->sc_ev_tpr);
+	evcnt_detach(&sc->sc_ev_tpt);
+	evcnt_detach(&sc->sc_ev_mptc);
+	evcnt_detach(&sc->sc_ev_bptc);
+	evcnt_detach(&sc->sc_ev_prc64);
+	evcnt_detach(&sc->sc_ev_prc127);
+	evcnt_detach(&sc->sc_ev_prc255);
+	evcnt_detach(&sc->sc_ev_prc511);
+	evcnt_detach(&sc->sc_ev_prc1023);
+	evcnt_detach(&sc->sc_ev_prc1522);
+	evcnt_detach(&sc->sc_ev_ptc64);
+	evcnt_detach(&sc->sc_ev_ptc127);
+	evcnt_detach(&sc->sc_ev_ptc255);
+	evcnt_detach(&sc->sc_ev_ptc511);
+	evcnt_detach(&sc->sc_ev_ptc1023);
+	evcnt_detach(&sc->sc_ev_ptc1522);
+	evcnt_detach(&sc->sc_ev_iac);
+	evcnt_detach(&sc->sc_ev_icrxptc);
+	evcnt_detach(&sc->sc_ev_icrxatc);
+	evcnt_detach(&sc->sc_ev_ictxptc);
+	evcnt_detach(&sc->sc_ev_ictxact);
+	evcnt_detach(&sc->sc_ev_ictxqec);
+	evcnt_detach(&sc->sc_ev_ictxqmtc);
+	evcnt_detach(&sc->sc_ev_icrxdmtc);
+	evcnt_detach(&sc->sc_ev_icrxoc);
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_detach(&sc->sc_ev_tncrs);
+		evcnt_detach(&sc->sc_ev_tsctc);
+		evcnt_detach(&sc->sc_ev_tsctfc);
+	}
+	if (sc->sc_type >= WM_T_82540) {
+		evcnt_detach(&sc->sc_ev_mgtprc);
+		evcnt_detach(&sc->sc_ev_mgtpdc);
+		evcnt_detach(&sc->sc_ev_mgtptc);
+	}
+	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+		evcnt_detach(&sc->sc_ev_b2ogprc);
+		evcnt_detach(&sc->sc_ev_o2bspc);
+		evcnt_detach(&sc->sc_ev_b2ospc);
+		evcnt_detach(&sc->sc_ev_o2bgptc);
+	}
 #endif /* WM_EVENT_COUNTERS */
 
 	rnd_detach_source(&sc->rnd_source);
@@ -3435,6 +3710,8 @@ wm_tick(void *arg)
 {
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
+	    cexterr;
 #ifndef WM_MPSAFE
 	int s = splnet();
 #endif
@@ -3449,6 +3726,20 @@ wm_tick(void *arg)
 		return;
 	}
 
+	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
+	symerrc = CSR_READ(sc, WMREG_SYMERRC);
+	mpc = CSR_READ(sc, WMREG_MPC);
+	colc = CSR_READ(sc, WMREG_COLC);
+	sec = CSR_READ(sc, WMREG_SEC);
+	rlec = CSR_READ(sc, WMREG_RLEC);
+
+	WM_EVCNT_ADD(&sc->sc_ev_crcerrs, crcerrs);
+	WM_EVCNT_ADD(&sc->sc_ev_symerrc, symerrc);
+	WM_EVCNT_ADD(&sc->sc_ev_mpc, mpc);
+	WM_EVCNT_ADD(&sc->sc_ev_colc, colc);
+	WM_EVCNT_ADD(&sc->sc_ev_sec, sec);
+	WM_EVCNT_ADD(&sc->sc_ev_rlec, rlec);
+
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
 		WM_EVCNT_ADD(&sc->sc_ev_tx_xon, CSR_READ(sc, WMREG_XONTXC));
@@ -3456,17 +3747,88 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
 		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
 	}
+	WM_EVCNT_ADD(&sc->sc_ev_scc, CSR_READ(sc, WMREG_SCC));
+	WM_EVCNT_ADD(&sc->sc_ev_ecol, CSR_READ(sc, WMREG_ECOL));
+	WM_EVCNT_ADD(&sc->sc_ev_mcc, CSR_READ(sc, WMREG_MCC));
+	WM_EVCNT_ADD(&sc->sc_ev_latecol, CSR_READ(sc, WMREG_LATECOL));
+	WM_EVCNT_ADD(&sc->sc_ev_dc, CSR_READ(sc, WMREG_DC));
+	WM_EVCNT_ADD(&sc->sc_ev_gprc, CSR_READ(sc, WMREG_GPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_bprc, CSR_READ(sc, WMREG_BPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_mprc, CSR_READ(sc, WMREG_MPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_gptc, CSR_READ(sc, WMREG_GPTC));
 
+	WM_EVCNT_ADD(&sc->sc_ev_gorc,
+	    CSR_READ(sc, WMREG_GORCL) + CSR_READ(sc, WMREG_GORCH));
+	WM_EVCNT_ADD(&sc->sc_ev_gotc,
+	    CSR_READ(sc, WMREG_GOTCL) + CSR_READ(sc, WMREG_GOTCH));
+
+	WM_EVCNT_ADD(&sc->sc_ev_rnbc, CSR_READ(sc, WMREG_RNBC));
+	WM_EVCNT_ADD(&sc->sc_ev_ruc, CSR_READ(sc, WMREG_RUC));
+	WM_EVCNT_ADD(&sc->sc_ev_rfc, CSR_READ(sc, WMREG_RFC));
+	WM_EVCNT_ADD(&sc->sc_ev_roc, CSR_READ(sc, WMREG_ROC));
+	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
+
+	WM_EVCNT_ADD(&sc->sc_ev_tor,
+	    CSR_READ(sc, WMREG_TORL) + CSR_READ(sc, WMREG_TORH));
+	WM_EVCNT_ADD(&sc->sc_ev_tot,
+	    CSR_READ(sc, WMREG_TOTL) + CSR_READ(sc, WMREG_TOTH));
+
+	WM_EVCNT_ADD(&sc->sc_ev_tpr, CSR_READ(sc, WMREG_TPR));
+	WM_EVCNT_ADD(&sc->sc_ev_tpt, CSR_READ(sc, WMREG_TPT));
+	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
+	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
+	WM_EVCNT_ADD(&sc->sc_ev_prc255, CSR_READ(sc, WMREG_PRC255));
+	WM_EVCNT_ADD(&sc->sc_ev_prc511, CSR_READ(sc, WMREG_PRC511));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1023, CSR_READ(sc, WMREG_PRC1023));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1522, CSR_READ(sc, WMREG_PRC1522));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc64, CSR_READ(sc, WMREG_PTC64));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc127, CSR_READ(sc, WMREG_PTC127));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc255, CSR_READ(sc, WMREG_PTC255));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc511, CSR_READ(sc, WMREG_PTC511));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc1023, CSR_READ(sc, WMREG_PTC1023));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
+	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
+	WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
+	WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
+	WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
+	WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc, CSR_READ(sc, WMREG_ICTXQMTC));
+	WM_EVCNT_ADD(&sc->sc_ev_icrxdmtc, CSR_READ(sc, WMREG_ICRXDMTC));
+	WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
+
+	if (sc->sc_type >= WM_T_82543) {
+		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
+		rxerrc = CSR_READ(sc, WMREG_RXERRC);
+		cexterr = CSR_READ(sc, WMREG_CEXTERR);
+		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
+		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
+		WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
+
+		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
+		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
+		WM_EVCNT_ADD(&sc->sc_ev_tsctfc, CSR_READ(sc, WMREG_TSCTFC));
+	} else
+		algnerrc = rxerrc = cexterr = 0;
+
+	if (sc->sc_type >= WM_T_82540) {
+		WM_EVCNT_ADD(&sc->sc_ev_mgtprc, CSR_READ(sc, WMREG_MGTPRC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtpdc, CSR_READ(sc, WMREG_MGTPDC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtptc, CSR_READ(sc, WMREG_MGTPTC));
+	}
+	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
+	    && ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0)) {
+		WM_EVCNT_ADD(&sc->sc_ev_b2ogprc, CSR_READ(sc, WMREG_B2OGPRC));
+		WM_EVCNT_ADD(&sc->sc_ev_o2bspc, CSR_READ(sc, WMREG_O2BSPC));
+		WM_EVCNT_ADD(&sc->sc_ev_b2ospc, CSR_READ(sc, WMREG_B2OSPC));
+		WM_EVCNT_ADD(&sc->sc_ev_o2bgptc, CSR_READ(sc, WMREG_O2BGPTC));
+	}
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_collisions, CSR_READ(sc, WMREG_COLC));
-	if_statadd_ref(nsr, if_ierrors, 0ULL /* ensure quad_t */
-	    + CSR_READ(sc, WMREG_CRCERRS)
-	    + CSR_READ(sc, WMREG_ALGNERRC)
-	    + CSR_READ(sc, WMREG_SYMERRC)
-	    + CSR_READ(sc, WMREG_RXERRC)
-	    + CSR_READ(sc, WMREG_SEC)
-	    + CSR_READ(sc, WMREG_CEXTERR)
-	    + CSR_READ(sc, WMREG_RLEC));
+	if_statadd_ref(nsr, if_collisions, colc);
+	if_statadd_ref(nsr, if_ierrors,
+	    crcerrs + algnerrc + symerrc + rxerrc + sec + cexterr + rlec);
 	/*
 	 * WMREG_RNBC is incremented when there are no available buffers in host
 	 * memory. It does not mean the number of dropped packets, because an
@@ -3476,7 +3838,7 @@ wm_tick(void *arg)
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
 	 */
-	if_statadd_ref(nsr, if_iqdrops, CSR_READ(sc, WMREG_MPC));
+	if_statadd_ref(nsr, if_iqdrops, mpc);
 	IF_STAT_PUTREF(ifp);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
