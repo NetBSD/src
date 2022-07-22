@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_i2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $	*/
+/*	$NetBSD: imx51_i2c.c,v 1.3 2022/07/22 23:43:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_i2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_i2c.c,v 1.3 2022/07/22 23:43:23 thorpej Exp $");
 
 #include "opt_imx.h"
 
@@ -65,7 +65,7 @@ imxi2c_attach(device_t parent, device_t self, void *aux)
 	if (aa->aa_size <= 0)
 		aa->aa_size = I2C_SIZE;
 
-	imxi2c_set_freq(self, imx51_get_clock(IMX51CLK_PERCLK_ROOT), 400000);
-	imxi2c_attach_common(parent, self,
-	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
+	imxi2c_attach_common(self,
+	    aa->aa_iot, aa->aa_addr, aa->aa_size,
+	    imx51_get_clock(IMX51CLK_PERCLK_ROOT), 400000);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxi2c.c,v 1.3 2019/07/30 06:52:57 hkenken Exp $	*/
+/*	$NetBSD: imxi2c.c,v 1.4 2022/07/22 23:43:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxi2c.c,v 1.3 2019/07/30 06:52:57 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxi2c.c,v 1.4 2022/07/22 23:43:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,40 +78,9 @@ imxi2c_iowr1(struct motoi2c_softc *sc, bus_size_t off, uint8_t data)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, data);
 }
 
-int
-imxi2c_attach_common(device_t parent, device_t self,
-    bus_space_tag_t iot, paddr_t iobase, size_t size, int intr, int flags)
+static void
+imxi2c_set_freq(struct imxi2c_softc *imxsc, long freq, unsigned int speed)
 {
-	struct imxi2c_softc *sc = device_private(self);
-	struct motoi2c_softc *msc = &sc->sc_motoi2c;
-	int error;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	sc->sc_dev = self;
-	msc->sc_iot = iot;
-	error = bus_space_map(msc->sc_iot, iobase, size, 0, &msc->sc_ioh);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		        "failed to map registers (errno=%d)\n", error);
-		return 1;
-	}
-
-	sc->sc_motoi2c_settings.i2c_adr = MOTOI2C_ADR_DEFAULT;
-	sc->sc_motoi2c_settings.i2c_dfsrr = MOTOI2C_DFSRR_DEFAULT;
-	msc->sc_iord = imxi2c_iord1;
-	msc->sc_iowr = imxi2c_iowr1;
-
-	motoi2c_attach_common(self, msc, &sc->sc_motoi2c_settings);
-
-	return 0;
-}
-
-int
-imxi2c_set_freq(device_t self, long freq, int speed)
-{
-	struct imxi2c_softc *sc = device_private(self);
 	bool found = false;
 	int index;
 
@@ -122,10 +91,40 @@ imxi2c_set_freq(device_t self, long freq, int speed)
 		}
 	}
 
-	if (found == false)
-		sc->sc_motoi2c_settings.i2c_fdr = 0x1f;
-	else
-		sc->sc_motoi2c_settings.i2c_fdr = imxi2c_clk_div[index].ic_val;
+	if (found == false) {
+		imxsc->sc_motoi2c_settings.i2c_fdr = 0x1f;
+	} else {
+		imxsc->sc_motoi2c_settings.i2c_fdr =
+		    imxi2c_clk_div[index].ic_val;
+	}
+}
 
-	return 0;
+void
+imxi2c_attach_common(device_t self, bus_space_tag_t iot, paddr_t iobase,
+    size_t size, long freq, unsigned int speed)
+{
+	struct imxi2c_softc *imxsc = device_private(self);
+	struct motoi2c_softc *sc = &imxsc->sc_motoi2c;
+	int error;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	sc->sc_dev = self;
+	sc->sc_iot = iot;
+	error = bus_space_map(sc->sc_iot, iobase, size, 0, &sc->sc_ioh);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		        "failed to map registers (errno=%d)\n", error);
+		return;
+	}
+
+	imxsc->sc_motoi2c_settings.i2c_adr = MOTOI2C_ADR_DEFAULT;
+	imxsc->sc_motoi2c_settings.i2c_dfsrr = MOTOI2C_DFSRR_DEFAULT;
+	imxi2c_set_freq(imxsc, freq, speed);
+
+	sc->sc_iord = imxi2c_iord1;
+	sc->sc_iowr = imxi2c_iowr1;
+
+	motoi2c_attach(sc, &imxsc->sc_motoi2c_settings);
 }
