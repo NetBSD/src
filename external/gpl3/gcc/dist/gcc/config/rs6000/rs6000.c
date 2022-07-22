@@ -3815,6 +3815,15 @@ rs6000_option_override_internal (bool global_init_p)
   else if (TARGET_ALTIVEC)
     rs6000_isa_flags |= (OPTION_MASK_PPC_GFXOPT & ~ignore_masks);
 
+  /* Disable VSX and Altivec silently if the user switched cpus to power7 in a
+     target attribute or pragma which automatically enables both options,
+     unless the altivec ABI was set.  This is set by default for 64-bit, but
+     not for 32-bit.  Don't move this before the above code using ignore_masks,
+     since it can reset the cleared VSX/ALTIVEC flag again.  */
+  if (main_target_opt && !main_target_opt->x_rs6000_altivec_abi)
+    rs6000_isa_flags &= ~((OPTION_MASK_VSX | OPTION_MASK_ALTIVEC)
+			  & ~rs6000_isa_flags_explicit);
+
   if (TARGET_CRYPTO && !TARGET_ALTIVEC)
     {
       if (rs6000_isa_flags_explicit & OPTION_MASK_CRYPTO)
@@ -4032,13 +4041,6 @@ rs6000_option_override_internal (bool global_init_p)
     }
   else if (rs6000_long_double_type_size == 128)
     rs6000_long_double_type_size = FLOAT_PRECISION_TFmode;
-  else if (global_options_set.x_rs6000_ieeequad)
-    {
-      if (global_options.x_rs6000_ieeequad)
-	error ("%qs requires %qs", "-mabi=ieeelongdouble", "-mlong-double-128");
-      else
-	error ("%qs requires %qs", "-mabi=ibmlongdouble", "-mlong-double-128");
-    }
 
   /* Set -mabi=ieeelongdouble on some old targets.  In the future, power server
      systems will also set long double to be IEEE 128-bit.  AIX and Darwin
@@ -4048,13 +4050,13 @@ rs6000_option_override_internal (bool global_init_p)
   if (!global_options_set.x_rs6000_ieeequad)
     rs6000_ieeequad = TARGET_IEEEQUAD_DEFAULT;
 
-  else
+  else if (TARGET_LONG_DOUBLE_128)
     {
       if (global_options.x_rs6000_ieeequad
 	  && (!TARGET_POPCNTD || !TARGET_VSX))
 	error ("%qs requires full ISA 2.06 support", "-mabi=ieeelongdouble");
 
-      if (rs6000_ieeequad != TARGET_IEEEQUAD_DEFAULT && TARGET_LONG_DOUBLE_128)
+      if (rs6000_ieeequad != TARGET_IEEEQUAD_DEFAULT)
 	{
 	  static bool warned_change_long_double;
 	  if (!warned_change_long_double)
@@ -4209,18 +4211,6 @@ rs6000_option_override_internal (bool global_init_p)
 	}
     }
 
-  /* Disable VSX and Altivec silently if the user switched cpus to power7 in a
-     target attribute or pragma which automatically enables both options,
-     unless the altivec ABI was set.  This is set by default for 64-bit, but
-     not for 32-bit.  */
-  if (main_target_opt != NULL && !main_target_opt->x_rs6000_altivec_abi)
-    {
-      TARGET_FLOAT128_TYPE = 0;
-      rs6000_isa_flags &= ~((OPTION_MASK_VSX | OPTION_MASK_ALTIVEC
-			     | OPTION_MASK_FLOAT128_KEYWORD)
-			    & ~rs6000_isa_flags_explicit);
-    }
-
   /* Enable Altivec ABI for AIX -maltivec.  */
   if (TARGET_XCOFF && (TARGET_ALTIVEC || TARGET_VSX))
     {
@@ -4308,6 +4298,16 @@ rs6000_option_override_internal (bool global_init_p)
       if ((rs6000_isa_flags_explicit & OPTION_MASK_MMA) != 0)
 	error ("%qs requires %qs", "-mmma", "-mcpu=power10");
 
+      rs6000_isa_flags &= ~OPTION_MASK_MMA;
+    }
+
+  /* MMA requires SIMD support as ISA 3.1 claims and our implementation
+     such as "*movoo" uses vector pair access which use VSX registers.
+     So make MMA require VSX support here.  */
+  if (TARGET_MMA && !TARGET_VSX)
+    {
+      if ((rs6000_isa_flags_explicit & OPTION_MASK_MMA) != 0)
+	error ("%qs requires %qs", "-mmma", "-mvsx");
       rs6000_isa_flags &= ~OPTION_MASK_MMA;
     }
 
@@ -5547,6 +5547,69 @@ const char *rs6000_machine;
 const char *
 rs6000_machine_from_flags (void)
 {
+  /* e300 and e500 */
+  if (rs6000_cpu == PROCESSOR_PPCE300C2 || rs6000_cpu == PROCESSOR_PPCE300C3)
+    return "e300";
+  if (rs6000_cpu == PROCESSOR_PPC8540 || rs6000_cpu == PROCESSOR_PPC8548)
+    return "e500";
+  if (rs6000_cpu == PROCESSOR_PPCE500MC)
+    return "e500mc";
+  if (rs6000_cpu == PROCESSOR_PPCE500MC64)
+    return "e500mc64";
+  if (rs6000_cpu == PROCESSOR_PPCE5500)
+    return "e5500";
+  if (rs6000_cpu == PROCESSOR_PPCE6500)
+    return "e6500";
+
+  /* 400 series */
+  if (rs6000_cpu == PROCESSOR_PPC403)
+    return "\"403\"";
+  if (rs6000_cpu == PROCESSOR_PPC405)
+    return "\"405\"";
+  if (rs6000_cpu == PROCESSOR_PPC440)
+    return "\"440\"";
+  if (rs6000_cpu == PROCESSOR_PPC476)
+    return "\"476\"";
+
+  /* A2 */
+  if (rs6000_cpu == PROCESSOR_PPCA2)
+    return "a2";
+
+  /* Cell BE */
+  if (rs6000_cpu == PROCESSOR_CELL)
+    return "cell";
+
+  /* Titan */
+  if (rs6000_cpu == PROCESSOR_TITAN)
+    return "titan";
+
+  /* 500 series and 800 series */
+  if (rs6000_cpu == PROCESSOR_MPCCORE)
+    return "\"821\"";
+
+#if 0
+  /* This (and ppc64 below) are disabled here (for now at least) because
+     PROCESSOR_POWERPC, PROCESSOR_POWERPC64, and PROCESSOR_COMMON
+     are #define'd as some of these.  Untangling that is a job for later.  */
+
+  /* 600 series and 700 series, "classic" */
+  if (rs6000_cpu == PROCESSOR_PPC601 || rs6000_cpu == PROCESSOR_PPC603
+      || rs6000_cpu == PROCESSOR_PPC604 || rs6000_cpu == PROCESSOR_PPC604e
+      || rs6000_cpu == PROCESSOR_PPC750)
+    return "ppc";
+#endif
+
+  /* Classic with AltiVec, "G4" */
+  if (rs6000_cpu == PROCESSOR_PPC7400 || rs6000_cpu == PROCESSOR_PPC7450)
+    return "\"7450\"";
+
+#if 0
+  /* The older 64-bit CPUs */
+  if (rs6000_cpu == PROCESSOR_PPC620 || rs6000_cpu == PROCESSOR_PPC630
+      || rs6000_cpu == PROCESSOR_RS64A)
+    return "ppc64";
+#endif
+
   HOST_WIDE_INT flags = rs6000_isa_flags;
 
   /* Disable the flags that should never influence the .machine selection.  */
@@ -5913,7 +5976,7 @@ vspltis_constant (rtx op, unsigned step, unsigned copies)
 
   /* Also check if are loading up the most significant bit which can be done by
      loading up -1 and shifting the value left by -1.  */
-  else if (EASY_VECTOR_MSB (splat_val, inner))
+  else if (EASY_VECTOR_MSB (splat_val, inner) && step == 1 && copies == 1)
     ;
 
   else
@@ -5962,8 +6025,11 @@ vspltis_shifted (rtx op)
     return false;
 
   /* We need to create pseudo registers to do the shift, so don't recognize
-     shift vector constants after reload.  */
-  if (!can_create_pseudo_p ())
+     shift vector constants after reload.  Don't match it even before RA
+     after split1 is done, because there won't be further splitting pass
+     before RA to do the splitting.  */
+  if (!can_create_pseudo_p ()
+      || (cfun->curr_properties & PROP_rtl_split_insns))
     return false;
 
   nunits = GET_MODE_NUNITS (mode);
@@ -7553,8 +7619,14 @@ darwin_rs6000_legitimate_lo_sum_const_p (rtx x, machine_mode mode)
   if (GET_CODE (x) == CONST)
     x = XEXP (x, 0);
 
+  /* If we are building PIC code, then any symbol must be wrapped in an
+     UNSPEC_MACHOPIC_OFFSET so that it will get the picbase subtracted.  */
+  bool machopic_offs_p = false;
   if (GET_CODE (x) == UNSPEC && XINT (x, 1) == UNSPEC_MACHOPIC_OFFSET)
-    x =  XVECEXP (x, 0, 0);
+    {
+      x =  XVECEXP (x, 0, 0);
+      machopic_offs_p = true;
+    }
 
   rtx sym = NULL_RTX;
   unsigned HOST_WIDE_INT offset = 0;
@@ -7585,6 +7657,9 @@ darwin_rs6000_legitimate_lo_sum_const_p (rtx x, machine_mode mode)
   if (sym)
     {
       tree decl = SYMBOL_REF_DECL (sym);
+      /* As noted above, PIC code cannot use a bare SYMBOL_REF.  */
+      if (TARGET_MACHO && flag_pic && !machopic_offs_p)
+	return false;
 #if TARGET_MACHO
       if (MACHO_SYMBOL_INDIRECTION_P (sym))
       /* The decl in an indirection symbol is the original one, which might
@@ -8172,7 +8247,7 @@ legitimate_lo_sum_address_p (machine_mode mode, rtx x, int strict)
     return false;
   x = XEXP (x, 1);
 
-  if (TARGET_ELF || TARGET_MACHO)
+  if (TARGET_ELF)
     {
       bool large_toc_ok;
 
@@ -8198,7 +8273,32 @@ legitimate_lo_sum_address_p (machine_mode mode, rtx x, int strict)
 
       return CONSTANT_P (x) || large_toc_ok;
     }
+  else if (TARGET_MACHO)
+    {
+      if (GET_MODE_NUNITS (mode) != 1)
+	return false;
+      if (GET_MODE_SIZE (mode) > UNITS_PER_WORD
+	  && !(/* see above  */
+	       TARGET_HARD_FLOAT && (mode == DFmode || mode == DDmode)))
+	return false;
+#if TARGET_MACHO
+      if (MACHO_DYNAMIC_NO_PIC_P || !flag_pic)
+	return CONSTANT_P (x);
+#endif
+      /* Macho-O PIC code from here.  */
+      if (GET_CODE (x) == CONST)
+	x = XEXP (x, 0);
 
+      /* SYMBOL_REFs need to be wrapped in an UNSPEC_MACHOPIC_OFFSET.  */
+      if (SYMBOL_REF_P (x))
+	return false;
+
+      /* So this is OK if the wrapped object is const.  */
+      if (GET_CODE (x) == UNSPEC
+	  && XINT (x, 1) == UNSPEC_MACHOPIC_OFFSET)
+	return CONSTANT_P (XVECEXP (x, 0, 0));
+      return CONSTANT_P (x);
+    }
   return false;
 }
 
@@ -8252,7 +8352,7 @@ rs6000_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
       else
 	return force_reg (Pmode, x);
     }
-  if (SYMBOL_REF_P (x))
+  if (SYMBOL_REF_P (x) && !TARGET_MACHO)
     {
       enum tls_model model = SYMBOL_REF_TLS_MODEL (x);
       if (model != 0)
@@ -8928,15 +9028,21 @@ rs6000_legitimate_address_p (machine_mode mode, rtx x, bool reg_ok_strict)
   bool reg_offset_p = reg_offset_addressing_ok_p (mode);
   bool quad_offset_p = mode_supports_dq_form (mode);
 
-  /* If this is an unaligned stvx/ldvx type address, discard the outer AND.  */
+  if (TARGET_ELF && RS6000_SYMBOL_REF_TLS_P (x))
+    return 0;
+
+  /* Handle unaligned altivec lvx/stvx type addresses.  */
   if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode)
       && GET_CODE (x) == AND
       && CONST_INT_P (XEXP (x, 1))
       && INTVAL (XEXP (x, 1)) == -16)
-    x = XEXP (x, 0);
+    {
+      x = XEXP (x, 0);
+      return (legitimate_indirect_address_p (x, reg_ok_strict)
+	      || legitimate_indexed_address_p (x, reg_ok_strict)
+	      || virtual_stack_registers_memory_p (x));
+    }
 
-  if (TARGET_ELF && RS6000_SYMBOL_REF_TLS_P (x))
-    return 0;
   if (legitimate_indirect_address_p (x, reg_ok_strict))
     return 1;
   if (TARGET_UPDATE
@@ -10179,6 +10285,12 @@ init_float128_ibm (machine_mode mode)
       set_conv_libfunc (trunc_optab, SDmode, mode, "__dpd_trunctfsd");
       set_conv_libfunc (trunc_optab, DDmode, mode, "__dpd_trunctfdd");
       set_conv_libfunc (sext_optab, TDmode, mode, "__dpd_extendtftd");
+
+      set_conv_libfunc (sfix_optab, DImode, mode, "__fixtfdi");
+      set_conv_libfunc (ufix_optab, DImode, mode, "__fixunstfdi");
+
+      set_conv_libfunc (sfloat_optab, mode, DImode, "__floatditf");
+      set_conv_libfunc (ufloat_optab, mode, DImode, "__floatunditf");
 
       if (TARGET_POWERPC64)
 	{
@@ -16020,20 +16132,28 @@ rs6000_split_multireg_move (rtx dst, rtx src)
 
       if (GET_CODE (src) == UNSPEC)
 	{
-	  gcc_assert (REG_P (dst)
-		      && FP_REGNO_P (REGNO (dst))
-		      && XINT (src, 1) == UNSPEC_MMA_ASSEMBLE_ACC);
+	  gcc_assert (XINT (src, 1) == UNSPEC_VSX_ASSEMBLE
+		      || XINT (src, 1) == UNSPEC_MMA_ASSEMBLE_ACC);
+          gcc_assert (REG_P (dst));
+          if (GET_MODE (src) == PXImode)
+            gcc_assert (FP_REGNO_P (REGNO (dst)));
+          if (GET_MODE (src) == POImode)
+            gcc_assert (VSX_REGNO_P (REGNO (dst)));
 
 	  reg_mode = GET_MODE (XVECEXP (src, 0, 0));
-	  for (int i = 0; i < XVECLEN (src, 0); i++)
+	  int nvecs = XVECLEN (src, 0);
+	  for (int i = 0; i < nvecs; i++)
 	    {
-	      rtx dst_i = gen_rtx_REG (reg_mode, reg + i);
+	      int index = WORDS_BIG_ENDIAN ? i : nvecs - 1 - i;
+	      rtx dst_i = gen_rtx_REG (reg_mode, reg + index);
 	      emit_insn (gen_rtx_SET (dst_i, XVECEXP (src, 0, i)));
 	    }
 
 	  /* We are writing an accumulator register, so we have to
 	     prime it after we've written it.  */
-	  emit_insn (gen_mma_xxmtacc (dst, dst));
+	  if (TARGET_MMA
+	      && GET_MODE (dst) == PXImode && FP_REGNO_P (REGNO (dst)))
+	    emit_insn (gen_mma_xxmtacc (dst, dst));
 
 	  return;
 	}
@@ -21357,6 +21477,14 @@ rs6000_rtx_costs (rtx x, machine_mode mode, int outer_code,
 	}
       break;
 
+    case UNSPEC_VOLATILE:
+      if (XINT (x, 1) == UNSPECV_MMA_XXSETACCZ)
+        {
+          *total = 0;
+          return true;
+        }
+      break;
+
     default:
       break;
     }
@@ -24432,6 +24560,10 @@ rs6000_can_inline_p (tree caller, tree callee)
 	caller_isa = TREE_TARGET_OPTION (caller_tree)->x_rs6000_isa_flags;
       else
 	caller_isa = rs6000_isa_flags;
+
+      /* Ignore the -mpower8-fusion option for inlining purposes.  */
+      callee_isa &= ~OPTION_MASK_P8_FUSION;
+      explicit_isa &= ~OPTION_MASK_P8_FUSION;
 
       /* The callee's options must be a subset of the caller's options, i.e.
 	 a vsx function may inline an altivec function, but a no-vsx function

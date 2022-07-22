@@ -463,12 +463,17 @@ rtx_addr_can_trap_p_1 (const_rtx x, poly_int64 offset, poly_int64 size,
 		       machine_mode mode, bool unaligned_mems)
 {
   enum rtx_code code = GET_CODE (x);
-  gcc_checking_assert (mode == BLKmode || known_size_p (size));
+  gcc_checking_assert (mode == BLKmode
+		       || mode == VOIDmode
+		       || known_size_p (size));
   poly_int64 const_x1;
 
   /* The offset must be a multiple of the mode size if we are considering
      unaligned memory references on strict alignment machines.  */
-  if (STRICT_ALIGNMENT && unaligned_mems && mode != BLKmode)
+  if (STRICT_ALIGNMENT
+      && unaligned_mems
+      && mode != BLKmode
+      && mode != VOIDmode)
     {
       poly_int64 actual_offset = offset;
 
@@ -3061,7 +3066,7 @@ replace_rtx (rtx x, rtx from, rtx to, bool all_regs)
     {
       rtx new_rtx = replace_rtx (SUBREG_REG (x), from, to, all_regs);
 
-      if (CONST_INT_P (new_rtx))
+      if (CONST_SCALAR_INT_P (new_rtx))
 	{
 	  x = simplify_subreg (GET_MODE (x), new_rtx,
 			       GET_MODE (SUBREG_REG (x)),
@@ -3077,7 +3082,7 @@ replace_rtx (rtx x, rtx from, rtx to, bool all_regs)
     {
       rtx new_rtx = replace_rtx (XEXP (x, 0), from, to, all_regs);
 
-      if (CONST_INT_P (new_rtx))
+      if (CONST_SCALAR_INT_P (new_rtx))
 	{
 	  x = simplify_unary_operation (ZERO_EXTEND, GET_MODE (x),
 					new_rtx, GET_MODE (XEXP (x, 0)));

@@ -3223,7 +3223,7 @@ ix86_function_arg (cumulative_args_t cum_v, const function_arg_info &arg)
       if (POINTER_TYPE_P (arg.type))
 	{
 	  /* This is the pointer argument.  */
-	  gcc_assert (TYPE_MODE (arg.type) == Pmode);
+	  gcc_assert (TYPE_MODE (arg.type) == ptr_mode);
 	  /* It is at -WORD(AP) in the current frame in interrupt and
 	     exception handlers.  */
 	  reg = plus_constant (Pmode, arg_pointer_rtx, -UNITS_PER_WORD);
@@ -4649,7 +4649,8 @@ standard_80387_constant_p (rtx x)
   /* For XFmode constants, try to find a special 80387 instruction when
      optimizing for size or on those CPUs that benefit from them.  */
   if (mode == XFmode
-      && (optimize_function_for_size_p (cfun) || TARGET_EXT_80387_CONSTANTS))
+      && (optimize_function_for_size_p (cfun) || TARGET_EXT_80387_CONSTANTS)
+      && !flag_rounding_math)
     {
       int i;
 
@@ -6356,12 +6357,29 @@ ix86_compute_frame_layout (void)
 	 area, see the SEH code in config/i386/winnt.c for the rationale.  */
       frame->hard_frame_pointer_offset = frame->sse_reg_save_offset;
 
-      /* If we can leave the frame pointer where it is, do so.  Also, return
+      /* If we can leave the frame pointer where it is, do so; however return
 	 the establisher frame for __builtin_frame_address (0) or else if the
-	 frame overflows the SEH maximum frame size.  */
+	 frame overflows the SEH maximum frame size.
+
+	 Note that the value returned by __builtin_frame_address (0) is quite
+	 constrained, because setjmp is piggybacked on the SEH machinery with
+	 recent versions of MinGW:
+
+	  #    elif defined(__SEH__)
+	  #     if defined(__aarch64__) || defined(_ARM64_)
+	  #      define setjmp(BUF) _setjmp((BUF), __builtin_sponentry())
+	  #     elif (__MINGW_GCC_VERSION < 40702)
+	  #      define setjmp(BUF) _setjmp((BUF), mingw_getsp())
+	  #     else
+	  #      define setjmp(BUF) _setjmp((BUF), __builtin_frame_address (0))
+	  #     endif
+
+	 and the second argument passed to _setjmp, if not null, is forwarded
+	 to the TargetFrame parameter of RtlUnwindEx by longjmp (after it has
+	 built an ExceptionRecord on the fly describing the setjmp buffer).  */
       const HOST_WIDE_INT diff
 	= frame->stack_pointer_offset - frame->hard_frame_pointer_offset;
-      if (diff <= 255)
+      if (diff <= 255 && !crtl->accesses_prior_frames)
 	{
 	  /* The resulting diff will be a multiple of 16 lower than 255,
 	     i.e. at most 240 as required by the unwind data structure.  */
@@ -10318,23 +10336,18 @@ legitimate_pic_address_disp_p (rtx disp)
 	      if (is_imported_p (op0))
 		return true;
 
-	      if (SYMBOL_REF_FAR_ADDR_P (op0)
-		  || !SYMBOL_REF_LOCAL_P (op0))
+	      if (SYMBOL_REF_FAR_ADDR_P (op0) || !SYMBOL_REF_LOCAL_P (op0))
 		break;
 
-	      /* Function-symbols need to be resolved only for
-	         large-model.
-	         For the small-model we don't need to resolve anything
-	         here.  */
+	      /* Non-external-weak function symbols need to be resolved only
+		 for the large model.  Non-external symbols don't need to be
+		 resolved for large and medium models.  For the small model,
+		 we don't need to resolve anything here.  */
 	      if ((ix86_cmodel != CM_LARGE_PIC
-	           && SYMBOL_REF_FUNCTION_P (op0))
+		   && SYMBOL_REF_FUNCTION_P (op0)
+		   && !(SYMBOL_REF_EXTERNAL_P (op0) && SYMBOL_REF_WEAK (op0)))
+		  || !SYMBOL_REF_EXTERNAL_P (op0)
 		  || ix86_cmodel == CM_SMALL_PIC)
-		return true;
-	      /* Non-external symbols don't need to be resolved for
-	         large, and medium-model.  */
-	      if ((ix86_cmodel == CM_LARGE_PIC
-		   || ix86_cmodel == CM_MEDIUM_PIC)
-		  && !SYMBOL_REF_EXTERNAL_P (op0))
 		return true;
 	    }
 	  else if (!SYMBOL_REF_FAR_ADDR_P (op0)
@@ -13465,7 +13478,10 @@ ix86_print_operand_address_as (FILE *file, rtx addr,
 static void
 ix86_print_operand_address (FILE *file, machine_mode /*mode*/, rtx addr)
 {
-  ix86_print_operand_address_as (file, addr, ADDR_SPACE_GENERIC, false);
+  if (this_is_asm_operands && ! address_operand (addr, VOIDmode))
+    output_operand_lossage ("invalid constraints for operand");
+  else
+    ix86_print_operand_address_as (file, addr, ADDR_SPACE_GENERIC, false);
 }
 
 /* Implementation of TARGET_ASM_OUTPUT_ADDR_CONST_EXTRA.  */
@@ -15836,8 +15852,10 @@ ix86_output_call_insn (rtx_insn *insn, rtx call_op)
 	    break;
 
 	  /* If we get to the epilogue note, prevent a catch region from
-	     being adjacent to the standard epilogue sequence.  If non-
-	     call-exceptions, we'll have done this during epilogue emission. */
+	     being adjacent to the standard epilogue sequence.  Note that,
+	     if non-call exceptions are enabled, we already did it during
+	     epilogue expansion, or else, if the insn can throw internally,
+	     we already did it during the reorg pass.  */
 	  if (NOTE_P (i) && NOTE_KIND (i) == NOTE_INSN_EPILOGUE_BEG
 	      && !flag_non_call_exceptions
 	      && !can_throw_internal (insn))
@@ -17831,6 +17849,8 @@ ix86_gimple_fold_builtin (gimple_stmt_iterator *gsi)
 
     do_shift:
       gcc_assert (n_args >= 2);
+      if (!gimple_call_lhs (stmt))
+	break;
       arg0 = gimple_call_arg (stmt, 0);
       arg1 = gimple_call_arg (stmt, 1);
       if (n_args > 2)
@@ -17894,7 +17914,7 @@ ix86_gimple_fold_builtin (gimple_stmt_iterator *gsi)
 
     case IX86_BUILTIN_SHUFPD:
       arg2 = gimple_call_arg (stmt, 2);
-      if (TREE_CODE (arg2) == INTEGER_CST)
+      if (TREE_CODE (arg2) == INTEGER_CST && gimple_call_lhs (stmt))
 	{
 	  location_t loc = gimple_location (stmt);
 	  unsigned HOST_WIDE_INT imask = TREE_INT_CST_LOW (arg2);
@@ -21333,10 +21353,12 @@ ix86_stack_protect_fail (void)
    After all, the relocation needed is the same as for the call insn.
    Whether or not a particular assembler allows us to enter such, I
    guess we'll have to see.  */
+
 int
 asm_preferred_eh_data_format (int code, int global)
 {
-  if (flag_pic)
+  /* PE-COFF is effectively always -fPIC because of the .reloc section.  */
+  if (flag_pic || TARGET_PECOFF)
     {
       int type = DW_EH_PE_sdata8;
       if (!TARGET_64BIT
@@ -21345,9 +21367,11 @@ asm_preferred_eh_data_format (int code, int global)
 	type = DW_EH_PE_sdata4;
       return (global ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | type;
     }
+
   if (ix86_cmodel == CM_SMALL
       || (ix86_cmodel == CM_MEDIUM && code))
     return DW_EH_PE_udata4;
+
   return DW_EH_PE_absptr;
 }
 
