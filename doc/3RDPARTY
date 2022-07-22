@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1864 2022/07/22 12:30:56 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1865 2022/07/22 21:11:47 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -450,7 +450,7 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	10.3.0
+Version:	10.4.0
 Current Vers:	10.4.0/11.3.0/12.1.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
