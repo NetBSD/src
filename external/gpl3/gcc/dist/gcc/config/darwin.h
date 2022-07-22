@@ -54,6 +54,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define DO_GLOBAL_DTORS_BODY
 
+/* Register static destructors to run from __cxa_atexit instead of putting
+   them into a .mod_term_funcs section.  */
+
+#define TARGET_DTORS_FROM_CXA_ATEXIT true
+
 /* The string value for __SIZE_TYPE__.  */
 
 #ifndef SIZE_TYPE
@@ -118,24 +123,151 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* True if pragma ms_struct is in effect.  */
 extern GTY(()) int darwin_ms_struct;
 
-/* The majority of Darwin's special driver opts are direct access to ld flags
-   (to save the user typing -Wl,xxxxx or Xlinker xxxxx) but we can't process
-   them here, since doing so will make it appear that there are linker infiles
-   and the linker will invoked even when it is not necessary.
+/* Darwin has a user convenience feature where some linker options are exposed
+   at the driver level (so one can type "-all_load" instead of "-Wl,-all_load"
+   or "-Xlinker -all_load").  We retain this, but now these options are all
+   marked as 'Driver' and we process them as early as possible so that they
+   get allocated to the right toolchain command.  There are a couple of special
+   cases where these driver opts are used multiple times, or to control
+   operations on more than one command (e.g. dynamiclib).  These are handled
+   specially and we then add %<xxxx specs for the commands that _don't_ need
+   them.  NOTE: the order of 'shared' and 'dynamiclib' is significant, hence
+   they are placed out of alphabetical order at the start.  Likewise, we keep
+   a couple of cases where a negative option originally appeared after the
+   positive alternate, potentially overriding it.
+   When we report an error with %e, it seems necessary to strip the option
+   before doing so, otherwise it survives to the cc1 command line (%e doesn't
+   appear to abort the program before this).
+   Right now there's no mechanism to split up the "variable portion" (%*) of
+   the matched spec string, so where we have some driver specs that take 2
+   or 3 arguments, these cannot be processed here, but are deferred until the
+   LINK_SPEC, where they are copied verbatim.  */
 
-   However, a few can be handled and we can elide options that are silently-
-   ignored defaults, plus warn on obsolete ones that no longer function.  */
 #undef SUBTARGET_DRIVER_SELF_SPECS
 #define SUBTARGET_DRIVER_SELF_SPECS					\
-"%{fapple-kext|mkernel:-static}",					\
-"%{gfull:-g -fno-eliminate-unused-debug-symbols} %<gfull",		\
-"%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} \
-   %<gsplit-dwarf",							\
-"%{gused:-g -feliminate-unused-debug-symbols} %<gused",			\
-"%{shared:-Zdynamiclib} %<shared",					\
-"%{static:%{Zdynamic:%e conflicting code gen style switches are used}}",\
-"%{y*:%nthe y option is obsolete and ignored} %<y*",			\
-"%<Mach %<X"
+  "%{shared:%{!dynamiclib:-dynamiclib}} %<shared",			\
+  "%{static:%{dynamic|dynamiclib:%econflicting code generation switches}}",\
+  "%{dynamiclib:-Xlinker -dylib \
+     %{allowable_client*:-Xlinker -allowable_client -Xlinker %*} \
+       %<allowable_client* \
+     %{bundle_loader*: %<bundle_loader* \
+       %e-bundle_loader not allowed with -dynamiclib} \
+     %{client_name*: %<client_name* \
+       %e-client_name not allowed with -dynamiclib} \
+     %{compatibility_version*:\
+       -Xlinker -dylib_compatibility_version -Xlinker %*} \
+       %<compatibility_version* \
+     %{current_version*:-Xlinker -dylib_current_version -Xlinker %*} \
+       %<current_version* \
+     %{install_name*:-Xlinker -dylib_install_name -Xlinker %* } \
+       %<install_name* \
+     %{keep_private_externs: %<keep_private_externs \
+       %e-keep_private_externs not allowed with -dynamiclib} \
+     %{private_bundle: %<private_bundle \
+       %e-private_bundle not allowed with -dynamiclib} \
+    }",									\
+  "%{!dynamiclib: \
+     %{bundle_loader*:-Xlinker -bundle_loader -Xlinker %*} \
+       %<bundle_loader* \
+     %{client_name*:-Xlinker -client_name -Xlinker %*} \
+       %<client_name* \
+     %{compatibility_version*: %<compatibility_version* \
+       %e-compatibility_version only allowed with -dynamiclib} \
+     %{current_version*: %<current_version* \
+       %e-current_version only allowed with -dynamiclib} \
+     %{install_name*: %<install_name* \
+       %e-install_name only allowed with -dynamiclib} \
+     %{keep_private_externs:-Xlinker -keep_private_externs} \
+       %<keep_private_externs \
+     %{private_bundle:-Xlinker -private_bundle} \
+       %<private_bundle \
+    }",									\
+  "%{all_load:-Xlinker -all_load} %<all_load",				\
+  "%{arch_errors_fatal:-Xlinker -arch_errors_fatal} \
+    %<arch_errors_fatal",						\
+  "%{bind_at_load:-Xlinker -bind_at_load} %<bind_at_load",		\
+  "%{bundle:%{!dynamiclib:-Xlinker -bundle; \
+              :%e-bundle not allowed with -dynamiclib}}",	\
+  "%{dead_strip:-Xlinker -dead_strip} %<dead_strip",			\
+  "%{dylib_file*:-Xlinker -dylib_file -Xlinker %*} %<dylib_file*",	\
+  "%{dylinker:-Xlinker -dylinker} %<dylinker",				\
+  "%{dylinker_install_name*:-Xlinker -dylinker_install_name -Xlinker %*}\
+    %<dylinker_install_name*",						\
+  "%{exported_symbols_list*:-Xlinker -exported_symbols_list -Xlinker %*}\
+    %<exported_symbols_list",						\
+  "%{findirect-virtual-calls: -fapple-kext} %<findirect-virtual-calls", \
+  "%{fterminated-vtables: -fapple-kext} %<fterminated-vtables",		\
+  "%{fapple-kext|mkernel:-static}",					\
+  "%{filelist*:-Xlinker -filelist -Xlinker %*} %<filelist*",		\
+  "%{flat_namespace:-Xlinker -flat_namespace} %<flat_namespace",	\
+  "%{force_cpusubtype_ALL:-Xassembler -force_cpusubtype_ALL} ",		\
+  "%{force_flat_namespace: \
+     %{!dynamiclib:-Xlinker -force_flat_namespace; \
+       :%e-force_flat_namespace not allowed with -dynamiclib}} \
+    %<force_flat_namespace",						\
+  "%{framework*:-Xlinker -framework -Xlinker %*} %<framework*",		\
+  "%{gfull:-g -fno-eliminate-unused-debug-symbols} %<gfull",		\
+  "%{gused:-g -feliminate-unused-debug-symbols} %<gused",		\
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} \
+    %<gsplit-dwarf",							\
+  "%{headerpad_max_install_names:-Xlinker -headerpad_max_install_names}\
+    %<headerpad_max_install_names",					\
+  "%{image_base*:-Xlinker -image_base -Xlinker %*} %<image_base*",	\
+  "%{init*:-Xlinker -init -Xlinker %*} %<init*",			\
+  "%{multi_module:-Xlinker -multi_module} %<multi_module",		\
+  "%{multiply_defined*:-Xlinker -multiply_defined -Xlinker %*} \
+     %<multiply_defined* ",						\
+  "%{multiplydefinedunused*:\
+     -Xlinker -multiply_defined_unused -Xlinker %*} \
+     %<multiplydefinedunused* ",					\
+  "%{no_dead_strip_inits_and_terms:\
+     -Xlinker -no_dead_strip_inits_and_terms} \
+     %<no_dead_strip_inits_and_terms",					\
+  "%{nofixprebinding:-Xlinker -nofixprebinding} %<nofixprebinding",	\
+  "%{nomultidefs:-Xlinker -nomultidefs} %<nomultidefs",			\
+  "%{pagezero_size*:-Xlinker -pagezero_size -Xlinker %*} \
+    %<pagezero_size",							\
+  "%{prebind:-Xlinker -prebind} %<prebind",				\
+  "%{noprebind:-Xlinker -noprebind} %<noprebind",			\
+  "%{prebind_all_twolevel_modules:\
+     -Xlinker -prebind_all_twolevel_modules} \
+     %<prebind_all_twolevel_modules",					\
+  "%{preload:-Xlinker -preload} %<preload",				\
+  "%{read_only_relocs*:-Xlinker -read_only_relocs -Xlinker %*} \
+     %<read_only_relocs*",						\
+  "%{rpath*: -Xlinker -rpath -Xlinker %*}",				\
+  "%{seg_addr_table_filename*: \
+     -Xlinker -seg_addr_table_filename -Xlinker %*} \
+     %<seg_addr_table_filename*",					\
+  "%{seg_addr_table*:-Xlinker -seg_addr_table -Xlinker %*} \
+     %<seg_addr_table*",						\
+  "%{seg1addr*:-Xlinker -image_base -Xlinker %*} %<seg1addr*",		\
+  "%{seglinkedit:-Xlinker -seglinkedit} %<seglinkedit",			\
+  "%{noseglinkedit:-Xlinker -noseglinkedit} %<noseglinkedit",		\
+  "%{segs_read_only_addr*:-Xlinker -segs_read_only_addr -Xlinker %*} \
+    %<segs_read_only_addr*",						\
+  "%{segs_read_write_addr*:-Xlinker -segs_read_write_addr -Xlinker %*} \
+    %<segs_read_write_addr*",						\
+  "%{single_module:-Xlinker -single_module} %<single_module",		\
+  "%{sub_library*:-Xlinker -sub_library -Xlinker %*} %<sub_library*",	\
+  "%{sub_umbrella*:-Xlinker -sub_umbrella -Xlinker %*} %<sub_umbrella*",\
+  "%{twolevel_namespace:-Xlinker -twolevel_namespace} \
+     %<twolevel_namespace",						\
+  "%{twolevel_namespace_hints:-Xlinker -twolevel_namespace_hints} \
+     %<twolevel_namespace_hints",					\
+  "%{umbrella*:-Xlinker -umbrella -Xlinker %*} %<umbrella*",		\
+  "%{undefined*:-Xlinker -undefined -Xlinker %*} %<undefined*",		\
+  "%{unexported_symbols_list*:\
+     -Xlinker -unexported_symbols_list -Xlinker %*} \
+     %<unexported_symbols_list*",					\
+  "%{weak_reference_mismatches*:\
+    -Xlinker -weak_reference_mismatches -Xlinker %*} \
+    %<weak_reference_mismatches*",					\
+  "%{whyload:-Xlinker -whyload} %<whyload",				\
+  "%{whatsloaded:-Xlinker -whatsloaded} %<whatsloaded",			\
+  "%{w:-Xlinker -w}",							\
+  "%<y*",								\
+  "%<Mach "
 
 #if LD64_HAS_EXPORT_DYNAMIC
 #define DARWIN_RDYNAMIC "%{rdynamic:-export_dynamic}"
@@ -156,9 +288,7 @@ extern GTY(()) int darwin_ms_struct;
    %:version-compare(>= 10.7 mmacosx-version-min= -no_pie) }"
 
 #define DARWIN_CC1_SPEC							\
-  "%{findirect-virtual-calls: -fapple-kext} %<findirect-virtual-calls " \
-  "%{fterminated-vtables: -fapple-kext} %<fterminated-vtables "		\
-  "%<filelist* %<framework*"
+  "%<dynamic %<dynamiclib %<force_cpusubtype_ALL "
 
 #define SUBSUBTARGET_OVERRIDE_OPTIONS					\
   do {									\
@@ -183,7 +313,7 @@ extern GTY(()) int darwin_ms_struct;
 
 #undef	CPP_SPEC
 #define CPP_SPEC "%{static:%{!dynamic:-D__STATIC__}}%{!static:-D__DYNAMIC__}" \
-	" %{pthread:-D_REENTRANT}"
+	" %{pthread:-D_REENTRANT} "
 
 /* This is a fix for PR41260 by passing -no_compact_unwind on darwin10 and
    later until the assembler, linker and libunwind are able to deal with the
@@ -211,7 +341,7 @@ extern GTY(()) int darwin_ms_struct;
    linkers, and for positional arguments like libraries.  */
 
 #define LINK_COMMAND_SPEC_A \
-   "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+   "%{!c:%{!E:%{!S:%{!M:%{!MM:%{!fsyntax-only:%{!fdump=*: \
     %(linker)" \
     LINK_PLUGIN_SPEC \
     "%{flto*:%<fcompare-debug*} \
@@ -220,27 +350,38 @@ extern GTY(()) int darwin_ms_struct;
    "%X %{s} %{t} %{Z} %{u*} \
     %{e*} %{r} \
     %{o*}%{!o:-o a.out} \
-    %{!nostdlib:%{!r:%{!nostartfiles:%S}}} \
-    %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
-    %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
-      %{static|static-libgcc|static-libstdc++|static-libgfortran: libgomp.a%s; : -lgomp } } \
-    %{fgnu-tm: \
-      %{static|static-libgcc|static-libstdc++|static-libgfortran: libitm.a%s; : -litm } } \
-    %{!nostdlib:%{!r:%{!nodefaultlibs:\
+    %{!r:%{!nostdlib:%{!nostartfiles:%S}}} \
+    %{L*} %(link_libgcc) %o \
+    %{!r:%{!nostdlib:%{!nodefaultlibs:\
+      %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
+      %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
+	%{static|static-libgcc|static-libstdc++|static-libgfortran: \
+	  libgomp.a%s; : -lgomp }} \
+      %{fgnu-tm: \
+	%{static|static-libgcc|static-libstdc++|static-libgfortran: \
+	  libitm.a%s; : -litm }} \
       %{%:sanitize(address): -lasan } \
       %{%:sanitize(undefined): -lubsan } \
       %(link_ssp) \
-      %:version-compare(>< 10.6 10.7 mmacosx-version-min= -ld10-uwfef.o) \
+      %:version-compare(>< 10.6 10.7 mmacosx-version-min= -ld10-uwfef) \
       %(link_gcc_c_sequence) \
+      %{!nodefaultexport:%{dylib|dynamiclib|bundle: \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -U) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_get_address) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -exported_symbol) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_get_address) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -U) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_register_common) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= -exported_symbol) \
+	%:version-compare(>= 10.11 asm_macosx_version_min= ___emutls_register_common) \
+      }} \
     }}}\
-    %{!nostdlib:%{!r:%{!nostartfiles:%E}}} %{T*} %{F*} "\
+    %{!r:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} "\
     DARWIN_PIE_SPEC \
     DARWIN_NOPIE_SPEC \
     DARWIN_RDYNAMIC \
     DARWIN_NOCOMPACT_UNWIND \
     "}}}}}}} %<pie %<no-pie %<rdynamic "
-
-#define DSYMUTIL "\ndsymutil"
 
 /* Spec that controls whether the debug linker is run automatically for
    a link step.  This needs to be done if there is a source file on the
@@ -248,26 +389,23 @@ extern GTY(()) int darwin_ms_struct;
    enabled).  */
 
 #define DSYMUTIL_SPEC \
-   "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %{v} \
-    %{g*:%{!gstabs*:%{%:debug-level-gt(0): -idsym}}}\
-    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm|.s|.f|.f90|\
-      .f95|.f03|.f77|.for|.F|.F90|.F95|.F03: \
-    %{g*:%{!gstabs*:%{%:debug-level-gt(0): -dsym}}}}}}}}}}}"
+  "%{!c:%{!E:%{!S:%{!r:%{!M:%{!MM:%{!fsyntax-only:%{!fdump=*:\
+     %{g*:%{!gstabs*:%{%:debug-level-gt(0): -idsym \
+       %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm|.s|.f|.f90|\
+	 .f95|.f03|.f77|.for|.F|.F90|.F95|.F03|.d: -dsym }\
+      }}}\
+   }}}}}}}}"
 
 #define LINK_COMMAND_SPEC LINK_COMMAND_SPEC_A DSYMUTIL_SPEC
 
 /* Tell collect2 to run dsymutil for us as necessary.  */
 #define COLLECT_RUN_DSYMUTIL 1
 
-/* Fix PR47558 by linking against libSystem ahead of libgcc. See also
-   PR 80556 and the fallout from this.  */
-
+/* We only want one instance of %G, since libSystem (Darwin's -lc) does not
+   depend on libgcc. */
 #undef  LINK_GCC_C_SEQUENCE_SPEC
 #define LINK_GCC_C_SEQUENCE_SPEC \
-"%{!static:%{!static-libgcc: \
-    %:version-compare(>= 10.6 mmacosx-version-min= -lSystem) } } \
-  %G %{!nolibc:%L}"
+ "%G %{!nolibc:%L} "
 
 /* ld64 supports a sysroot, it just has a different name and there's no easy
    way to check for it at config time.  */
@@ -275,145 +413,110 @@ extern GTY(()) int darwin_ms_struct;
 #define HAVE_LD_SYSROOT 1
 /* It seems the only (working) way to get a space after %R is to append a
    dangling '/'.  */
-#define SYSROOT_SPEC "%{!isysroot*:-syslibroot %R/ }"
+#define SYSROOT_SPEC "%{!isysroot*:-syslibroot %R/ } "
 
 /* Do the same as clang, for now, and insert the sysroot for ld when an
    isysroot is specified.  */
-#define LINK_SYSROOT_SPEC "%{isysroot*:-syslibroot %*}"
+#define LINK_SYSROOT_SPEC "%{isysroot*:-syslibroot %*} "
 
 /* Suppress the addition of extra prefix paths when a sysroot is in use.  */
 #define STANDARD_STARTFILE_PREFIX_1 ""
 #define STANDARD_STARTFILE_PREFIX_2 ""
 
-/* Please keep the random linker options in alphabetical order (modulo
-   'Z' and 'no' prefixes). Note that options taking arguments may appear
-   multiple times on a command line with different arguments each time,
-   so put a * after their names so all of them get passed.  */
+
+/* Please keep the random linker options in alphabetical order.
+   Note that options taking arguments may appear multiple times on a command
+   line with different arguments each time, so put a * after their names so
+   all of them get passed.  */
 #define LINK_SPEC  \
-  "%{static}%{!static:-dynamic} \
+  "%{static}%{!static:%{!dynamic:-dynamic}} \
    %:remove-outfile(-ldl) \
    %:remove-outfile(-lm) \
    %:remove-outfile(-lpthread) \
    %{fgnu-runtime: %{static|static-libgcc: \
                      %:replace-outfile(-lobjc libobjc-gnu.a%s); \
-                    :%:replace-outfile(-lobjc -lobjc-gnu ) } }\
+                    :%:replace-outfile(-lobjc -lobjc-gnu )}}\
    %{static|static-libgcc|static-libgfortran:%:replace-outfile(-lgfortran libgfortran.a%s)}\
    %{static|static-libgcc|static-libstdc++|static-libgfortran:%:replace-outfile(-lgomp libgomp.a%s)}\
    %{static|static-libgcc|static-libstdc++:%:replace-outfile(-lstdc++ libstdc++.a%s)}\
-   %{!Zdynamiclib: \
-     %{Zforce_cpusubtype_ALL:-arch %(darwin_arch) -force_cpusubtype_ALL} \
-     %{!Zforce_cpusubtype_ALL:-arch %(darwin_subarch)} \
-     %{Zbundle:-bundle} \
-     %{Zbundle_loader*:-bundle_loader %*} \
-     %{client_name*} \
-     %{compatibility_version*:%e-compatibility_version only allowed with -dynamiclib\
-} \
-     %{current_version*:%e-current_version only allowed with -dynamiclib} \
-     %{Zforce_flat_namespace:-force_flat_namespace} \
-     %{Zinstall_name*:%e-install_name only allowed with -dynamiclib} \
-     %{keep_private_externs} \
-     %{private_bundle} \
-    } \
-   %{Zdynamiclib: -dylib \
-     %{Zbundle:%e-bundle not allowed with -dynamiclib} \
-     %{Zbundle_loader*:%e-bundle_loader not allowed with -dynamiclib} \
-     %{client_name*:%e-client_name not allowed with -dynamiclib} \
-     %{compatibility_version*:-dylib_compatibility_version %*} \
-     %{current_version*:-dylib_current_version %*} \
-     %{Zforce_cpusubtype_ALL:-arch %(darwin_arch)} \
-     %{!Zforce_cpusubtype_ALL: -arch %(darwin_subarch)} \
-     %{Zforce_flat_namespace:%e-force_flat_namespace not allowed with -dynamiclib} \
-     %{Zinstall_name*:-dylib_install_name %*} \
-     %{keep_private_externs:%e-keep_private_externs not allowed with -dynamiclib} \
-     %{private_bundle:%e-private_bundle not allowed with -dynamiclib} \
-    } \
-   %{Zall_load:-all_load} \
-   %{Zallowable_client*:-allowable_client %*} \
-   %{Zbind_at_load:-bind_at_load} \
-   %{Zarch_errors_fatal:-arch_errors_fatal} \
-   %{Zdead_strip:-dead_strip} \
-   %{Zno_dead_strip_inits_and_terms:-no_dead_strip_inits_and_terms} \
-   %{Zdylib_file*:-dylib_file %*} \
-   %{Zdynamic:-dynamic}\
-   %{Zexported_symbols_list*:-exported_symbols_list %*} \
-   %{Zflat_namespace:-flat_namespace} \
-   %{headerpad_max_install_names} \
-   %{Zimage_base*:-image_base %*} \
-   %{Zinit*:-init %*} \
-   %{mmacosx-version-min=*:-macosx_version_min %*} \
-   %{nomultidefs} \
-   %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
-   %{Zmultiply_defined*:-multiply_defined %*} \
-   %{!Zmultiply_defined*:%{shared-libgcc: \
+   %{force_cpusubtype_ALL:-arch %(darwin_arch)} \
+   %{!force_cpusubtype_ALL:-arch %(darwin_subarch)} "\
+   LINK_SYSROOT_SPEC \
+  "%{mmacosx-version-min=*:-macosx_version_min %*} \
+   %{!multiply_defined*:%{shared-libgcc: \
      %:version-compare(< 10.5 mmacosx-version-min= -multiply_defined) \
-     %:version-compare(< 10.5 mmacosx-version-min= suppress)}} \
-   %{Zmultiplydefinedunused*:-multiply_defined_unused %*} \
-   %{prebind} %{noprebind} %{nofixprebinding} %{prebind_all_twolevel_modules} \
-   %{read_only_relocs} \
-   %{sectcreate*} %{sectorder*} %{seg1addr*} %{segprot*} \
-   %{Zsegaddr*:-segaddr %*} \
-   %{Zsegs_read_only_addr*:-segs_read_only_addr %*} \
-   %{Zsegs_read_write_addr*:-segs_read_write_addr %*} \
-   %{Zseg_addr_table*: -seg_addr_table %*} \
-   %{Zfn_seg_addr_table_filename*:-seg_addr_table_filename %*} \
-   %{sub_library*} %{sub_umbrella*} \
-   " LINK_SYSROOT_SPEC " \
-   %{twolevel_namespace} %{twolevel_namespace_hints} \
-   %{Zumbrella*: -umbrella %*} \
-   %{undefined*} \
-   %{Zunexported_symbols_list*:-unexported_symbols_list %*} \
-   %{Zweak_reference_mismatches*:-weak_reference_mismatches %*} \
-   %{!Zweak_reference_mismatches*:-weak_reference_mismatches non-weak} \
-   %{w} \
-   %{pagezero_size*} %{segs_read_*} %{seglinkedit} %{noseglinkedit}  \
-   %{sectalign*} %{sectobjectsymbols*} %{segcreate*} %{whyload} \
-   %{whatsloaded} %{dylinker_install_name*} \
-   %{dylinker} "
-
+     %:version-compare(< 10.5 mmacosx-version-min= suppress) }} \
+   %{sectalign*} %{sectcreate*} %{sectobjectsymbols*}  %{sectorder*} \
+   %{segaddr*} %{segcreate*} %{segprot*} "
 
 /* Machine dependent libraries.  */
 
 #define LIB_SPEC "%{!static:-lSystem}"
 
-/* Support -mmacosx-version-min by supplying different (stub) libgcc_s.dylib
-   libraries to link against, and by not linking against libgcc_s on
-   earlier-than-10.3.9.  If we need exceptions, prior to 10.3.9, then we have
-   to link the static eh lib, since there's no shared version on the system.
-
-   Note that by default, except as above, -lgcc_eh is not linked against.
+/*
+   Note that by default, -lgcc_eh is not linked against.
    This is because,in general, we need to unwind through system libraries that
    are linked with the shared unwinder in libunwind (or libgcc_s for 10.4/5).
 
-   The static version of the current libgcc unwinder (which differs from the
-   implementation in libunwind.dylib on systems Darwin10 [10.6]+) can be used
-   by specifying -static-libgcc.
+   For -static-libgcc: < 10.6, use the unwinder in libgcc_eh (and find
+   the emultls impl. there too).
 
-   If libgcc_eh is linked against, it has to be before -lgcc, because it might
-   need symbols from -lgcc.  */
+   For -static-libgcc: >= 10.6, the unwinder *still* comes from libSystem and
+   we find the emutls impl from lemutls_w. In either case, the builtins etc.
+   are linked from -lgcc.
 
+   When we have specified shared-libgcc or any case that might require
+   exceptions, we pull the libgcc content (including emulated tls) from
+   -lgcc_s.1 in GCC and the unwinder from /usr/lib/libgcc_s.1 for < 10.6 and
+   libSystem for >= 10.6 respectively.
+   Otherwise, we just link the emutls/builtins from convenience libs.
+
+   If we need exceptions, prior to 10.3.9, then we have to link the static
+   eh lib, since there's no shared version on the system.
+
+   In all cases, libgcc_s.1 will be installed with the compiler, or any app
+   built using it, so we can link the builtins and emutls shared on all.
+
+   We have to work around that DYLD_XXXX are disabled in macOS 10.11+ which
+   means that any bootstrap trying to use a shared libgcc with a bumped SO-
+   name will fail.  This means that we do not accept shared libgcc for these
+   versions.
+
+   For -static-libgcc: >= 10.6, the unwinder *still* comes from libSystem and
+   we find the emutls impl from lemutls_w. In either case, the builtins etc.
+   are linked from -lgcc.
+>
+   Otherwise, we just link the shared version of gcc_s.1.1 and pick up
+   exceptions:
+     * Prior to 10.3.9, then we have to link the static eh lib, since there
+       is no shared version on the system.
+     * from 10.3.9 to 10.5, from /usr/lib/libgcc_s.1.dylib
+     * from 10.6 onwards, from libSystem.dylib
+
+   In all cases, libgcc_s.1.1 will be installed with the compiler, or any app
+   built using it, so we can link the builtins and emutls shared on all.
+*/
 #undef REAL_LIBGCC_SPEC
-#define REAL_LIBGCC_SPEC						   \
-   "%{static-libgcc|static: -lgcc_eh -lgcc;				   \
-      shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		   \
-       %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)	   \
-       %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4) \
-       %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)   \
-       %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_ext.10.4) \
-       %:version-compare(>= 10.5 mmacosx-version-min= -lgcc_ext.10.5)	   \
-       -lgcc ;								   \
-      :%:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4) \
-       %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)   \
-       %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_ext.10.4) \
-       %:version-compare(>= 10.5 mmacosx-version-min= -lgcc_ext.10.5)	   \
-       -lgcc }"
+#define REAL_LIBGCC_SPEC \
+"%{static-libgcc|static:						  \
+    %:version-compare(!> 10.6 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>= 10.6 mmacosx-version-min= -lemutls_w);		  \
+   shared-libgcc|fexceptions|fobjc-exceptions|fgnu-runtime:		  \
+    %:version-compare(!> 10.11 mmacosx-version-min= -lgcc_s.1.1)	  \
+    %:version-compare(>= 10.11 mmacosx-version-min= -lemutls_w)		  \
+    %:version-compare(!> 10.3.9 mmacosx-version-min= -lgcc_eh)		  \
+    %:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4)   \
+    %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5);	  \
+   : -lemutls_w								  \
+  } -lgcc "
 
 /* We specify crt0.o as -lcrt0.o so that ld will search the library path.  */
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC							    \
-"%{Zdynamiclib: %(darwin_dylib1) %{fgnu-tm: -lcrttms.o}}		    \
- %{!Zdynamiclib:%{Zbundle:%(darwin_bundle1)}				    \
-     %{!Zbundle:%{pg:%{static:-lgcrt0.o}				    \
+"%{dynamiclib: %(darwin_dylib1) %{fgnu-tm: -lcrttms.o}}			   \
+ %{!dynamiclib:%{bundle:%(darwin_bundle1)}				    \
+     %{!bundle:%{pg:%{static:-lgcrt0.o}					    \
                      %{!static:%{object:-lgcrt0.o}			    \
                                %{!object:%{preload:-lgcrt0.o}		    \
                                  %{!preload:-lgcrt1.o                       \
@@ -424,7 +527,7 @@ extern GTY(()) int darwin_ms_struct;
                                 %{!object:%{preload:-lcrt0.o}		    \
                                   %{!preload: %(darwin_crt1)		    \
 					      %(darwin_crt2)}}}}}}	    \
- %(darwin_crt3)"
+ %(darwin_crt3) %<dynamiclib "
 
 /* We want a destructor last in the list.  */
 #define TM_DESTRUCTOR "%{fgnu-tm: -lcrttme.o}"
@@ -464,24 +567,25 @@ extern GTY(()) int darwin_ms_struct;
 #ifdef HAVE_AS_MMACOSX_VERSION_MIN_OPTION
 /* Emit macosx version (but only major).  */
 #define ASM_MMACOSX_VERSION_MIN_SPEC \
-  " %{asm_macosx_version_min=*: -mmacosx-version-min=%*} %<asm_macosx_version_min=*"
+"%{asm_macosx_version_min=*: -mmacosx-version-min=%* } \
+   %<asm_macosx_version_min=* "
 #else
-#define ASM_MMACOSX_VERSION_MIN_SPEC " %<asm_macosx_version_min=*"
+#define ASM_MMACOSX_VERSION_MIN_SPEC " %<asm_macosx_version_min=* "
 #endif
 
-/* When we detect that we're cctools or llvm as, we need to insert the right
-   additional options.  */
 #if HAVE_GNU_AS
+/* The options are added in gcc.c for this case.  */
 #define ASM_OPTIONS ""
 #else
+/* When we detect that we're cctools or llvm as, we need to insert the right
+   additional options.  Actually, currently these are the same as GAS.  */
 #define ASM_OPTIONS "%{v} %{w:-W} %{I*}"
 #endif
 
 /* Default Darwin ASM_SPEC, very simple. */
-#define ASM_SPEC "-arch %(darwin_arch) \
-  " ASM_OPTIONS " \
-  %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL} \
-  %{static}" ASM_MMACOSX_VERSION_MIN_SPEC
+#define ASM_SPEC \
+"%{static} -arch %(darwin_arch) " \
+ASM_OPTIONS ASM_MMACOSX_VERSION_MIN_SPEC
 
 #ifdef HAVE_AS_STABS_DIRECTIVE
 /* We only pass a debug option to the assembler if that supports stabs, since
@@ -495,7 +599,8 @@ extern GTY(()) int darwin_ms_struct;
 #define ASM_DEBUG_OPTION_SPEC	""
 
 #define ASM_FINAL_SPEC \
-  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} %<gsplit-dwarf"
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} \
+     %<gsplit-dwarf"
 
 /* Since we bootstrap with C++ toolchains realistically require DWARF-2, even
    if stabs is supported by the assembler.  */
@@ -841,6 +946,8 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
       sprintf (LABEL, "*%s%ld", "lubsan_type", (long)(NUM));\
     else if (strcmp ("LASAN", PREFIX) == 0)	\
       sprintf (LABEL, "*%s%ld", "lASAN", (long)(NUM));\
+    else if (strcmp ("LTRAMP", PREFIX) == 0)	\
+      sprintf (LABEL, "*%s%ld", "lTRAMP", (long)(NUM));\
     else						\
       sprintf (LABEL, "*%s%ld", PREFIX, (long)(NUM));	\
   } while (0)
@@ -1096,16 +1203,23 @@ extern void darwin_driver_init (unsigned int *,struct cl_decoded_option **);
 /* Later versions of ld64 support coalescing weak code/data without requiring
    that they be placed in specially identified sections.  This is the earliest
    _tested_ version known to support this so far.  */
-#define MIN_LD64_NO_COAL_SECTS "236.4"
+#define MIN_LD64_NO_COAL_SECTS "236.3"
 
 /* From at least version 62.1, ld64 can build symbol indirection stubs as
    needed, and there is no need for the compiler to emit them.  */
 #define MIN_LD64_OMIT_STUBS "62.1"
 
+/* Emit start labels for init and term sections from this version.  */
+#define MIN_LD64_INIT_TERM_START_LABELS "136.0"
+
+/* If we have no definition for the linker version, pick the minimum version
+   that will bootstrap the compiler.  */
 #ifndef LD64_VERSION
-#define LD64_VERSION "62.1"
-#else
-#define DEF_LD64 LD64_VERSION
+# ifndef  DEF_LD64
+#  define LD64_VERSION "85.2.1"
+# else
+#  define LD64_VERSION DEF_LD64
+# endif
 #endif
 
 #endif /* CONFIG_DARWIN_H */

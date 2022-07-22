@@ -20,8 +20,7 @@ presence of the required flag.
 </para>
 
 <para>
-This section describes the C++20 and library TS support in mainline GCC,
-not in any particular release.
+This section describes the C++20 and library TS support in the GCC 10 release series.
 </para>
 
 <para>
@@ -548,6 +547,16 @@ or any notes about the implementation.
       <entry />
     </row>
 
+    <row>
+      <?dbhtml bgcolor="#C8B0B0" ?>
+      <entry> Avoid template bloat for <code>safe_ranges</code> in combination with ‘subrange-y’ view adaptors.</entry>
+      <entry>
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1739r4.html">
+        P1739R4 </link>
+      </entry>
+      <entry align="center"> </entry>
+      <entry />
+    </row>
 
 
     <row>
@@ -1388,7 +1397,7 @@ or any notes about the implementation.
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0553r4.html">
         P0553R4 </link>
       </entry>
-      <entry align="center"> 10.1 </entry>
+      <entry align="center"> 9.1 </entry>
       <entry> <code>__cpp_lib_bitops &gt;= 201907L</code> (since 9.4, see Note 1) </entry>
     </row>
 

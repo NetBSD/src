@@ -1253,6 +1253,9 @@ get_symbol_decl (Declaration *decl)
 	      DECL_VINDEX (decl->csym) = size_int (fd->vtblIndex);
 	      DECL_VIRTUAL_P (decl->csym) = 1;
 	    }
+
+	  /* Align method to the minimum boundary for target.  */
+	  SET_DECL_ALIGN (decl->csym, MINIMUM_METHOD_BOUNDARY);
 	}
       else if (fd->isMain () || fd->isCMain ())
 	{
@@ -1585,8 +1588,9 @@ d_finish_decl (tree decl)
   if (flag_checking && DECL_INITIAL (decl))
     {
       /* Initializer must never be bigger than symbol size.  */
-      dinteger_t tsize = int_size_in_bytes (TREE_TYPE (decl));
-      dinteger_t dtsize = int_size_in_bytes (TREE_TYPE (DECL_INITIAL (decl)));
+      HOST_WIDE_INT tsize = int_size_in_bytes (TREE_TYPE (decl));
+      HOST_WIDE_INT dtsize =
+	int_size_in_bytes (TREE_TYPE (DECL_INITIAL (decl)));
 
       if (tsize < dtsize)
 	{

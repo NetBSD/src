@@ -3236,6 +3236,17 @@ vect_is_simple_reduction (loop_vec_info loop_info, stmt_vec_info phi_info,
       return def_stmt_info;
     }
 
+  /* When the inner loop of a double reduction ends up with more than
+     one loop-closed PHI we have failed to classify alternate such
+     PHIs as double reduction, leading to wrong code.  See PR103237.  */
+  if (inner_loop_of_double_reduc && lcphis.length () != 1)
+    {
+      if (dump_enabled_p ())
+	dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+			 "unhandle double reduction\n");
+      return NULL;
+    }
+
   /* If this isn't a nested cycle or if the nested cycle reduction value
      is used ouside of the inner loop we cannot handle uses of the reduction
      value.  */
@@ -8415,6 +8426,7 @@ maybe_set_vectorized_backedge_value (loop_vec_info loop_vinfo,
     if (gphi *phi = dyn_cast <gphi *> (USE_STMT (use_p)))
       if (gimple_bb (phi)->loop_father->header == gimple_bb (phi)
 	  && (phi_info = loop_vinfo->lookup_stmt (phi))
+	  && STMT_VINFO_RELEVANT_P (phi_info)
 	  && VECTORIZABLE_CYCLE_DEF (STMT_VINFO_DEF_TYPE (phi_info))
 	  && STMT_VINFO_REDUC_TYPE (phi_info) != FOLD_LEFT_REDUCTION
 	  && STMT_VINFO_REDUC_TYPE (phi_info) != EXTRACT_LAST_REDUCTION)
@@ -8936,13 +8948,27 @@ vect_transform_loop (loop_vec_info loop_vinfo, gimple *loop_vectorized_call)
 	   !gsi_end_p (gsi); gsi_next (&gsi))
 	{
 	  gcall *call = dyn_cast <gcall *> (gsi_stmt (gsi));
-	  if (call && gimple_call_internal_p (call, IFN_MASK_LOAD))
+	  if (!call || !gimple_call_internal_p (call))
+	    continue;
+	  internal_fn ifn = gimple_call_internal_fn (call);
+	  if (ifn == IFN_MASK_LOAD)
 	    {
 	      tree lhs = gimple_get_lhs (call);
 	      if (!VECTOR_TYPE_P (TREE_TYPE (lhs)))
 		{
 		  tree zero = build_zero_cst (TREE_TYPE (lhs));
 		  gimple *new_stmt = gimple_build_assign (lhs, zero);
+		  gsi_replace (&gsi, new_stmt, true);
+		}
+	    }
+	  else if (conditional_internal_fn_code (ifn) != ERROR_MARK)
+	    {
+	      tree lhs = gimple_get_lhs (call);
+	      if (!VECTOR_TYPE_P (TREE_TYPE (lhs)))
+		{
+		  tree else_arg
+		    = gimple_call_arg (call, gimple_call_num_args (call) - 1);
+		  gimple *new_stmt = gimple_build_assign (lhs, else_arg);
 		  gsi_replace (&gsi, new_stmt, true);
 		}
 	    }

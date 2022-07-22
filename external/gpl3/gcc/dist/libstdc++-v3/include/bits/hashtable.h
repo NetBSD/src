@@ -33,6 +33,7 @@
 #pragma GCC system_header
 
 #include <bits/hashtable_policy.h>
+#include <bits/enable_special_members.h>
 #if __cplusplus > 201402L
 # include <bits/node_handle.h>
 #endif
@@ -47,6 +48,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		       __is_fast_hash<_Hash>,
 		       // Mandatory to have erase not throwing.
 		       __is_nothrow_invocable<const _Hash&, const _Tp&>>>;
+
+  // Helper to conditionally delete the default constructor.
+  // The _Hash_node_base type is used to distinguish this specialization
+  // from any other potentially-overlapping subobjects of the hashtable.
+  template<typename _Equal, typename _Hash, typename _Allocator>
+    using _Hashtable_enable_default_ctor
+      = _Enable_default_constructor<__and_<is_default_constructible<_Equal>,
+				       is_default_constructible<_Hash>,
+				       is_default_constructible<_Allocator>>{},
+				    __detail::_Hash_node_base>;
 
   /**
    *  Primary class template _Hashtable.
@@ -184,7 +195,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       private __detail::_Hashtable_alloc<
 	__alloc_rebind<_Alloc,
 		       __detail::_Hash_node<_Value,
-					    _Traits::__hash_cached::value>>>
+					    _Traits::__hash_cached::value>>>,
+      private _Hashtable_enable_default_ctor<_Equal, _H1, _Alloc>
     {
       static_assert(is_same<typename remove_cv<_Value>::type, _Value>::value,
 	  "unordered container must have a non-const, non-volatile value_type");
@@ -206,6 +218,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	typename __hashtable_alloc::__node_alloc_traits;
       using __node_base = typename __hashtable_alloc::__node_base;
       using __bucket_type = typename __hashtable_alloc::__bucket_type;
+      using __enable_default_ctor
+	= _Hashtable_enable_default_ctor<_Equal, _H1, _Alloc>;
 
     public:
       typedef _Key						key_type;
@@ -443,8 +457,33 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		 const _Equal& __eq, const _ExtractKey& __exk,
 		 const allocator_type& __a)
       : __hashtable_base(__exk, __h1, __h2, __h, __eq),
-	__hashtable_alloc(__node_alloc_type(__a))
+	__hashtable_alloc(__node_alloc_type(__a)),
+	__enable_default_ctor(_Enable_default_constructor_tag{})
       { }
+
+      template<bool _No_realloc = true>
+	static constexpr bool
+	_S_nothrow_move()
+	{
+#if __cplusplus <= 201402L
+	  return __and_<__bool_constant<_No_realloc>,
+			is_nothrow_copy_constructible<_H1>,
+			is_nothrow_copy_constructible<_Equal>>::value;
+#else
+	  if constexpr (_No_realloc)
+	    if constexpr (is_nothrow_copy_constructible<_H1>())
+	      return is_nothrow_copy_constructible<_Equal>();
+	  return false;
+#endif
+	}
+
+      _Hashtable(_Hashtable&& __ht, __node_alloc_type&& __a,
+		 true_type /* alloc always equal */)
+	noexcept(_S_nothrow_move());
+
+      _Hashtable(_Hashtable&&, __node_alloc_type&&,
+		 false_type /* alloc always equal */);
+
 
     public:
       // Constructor, destructor, assignment, swap
@@ -463,16 +502,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       _Hashtable(const _Hashtable&);
 
-      _Hashtable(_Hashtable&&) noexcept;
+      _Hashtable(_Hashtable&& __ht)
+	noexcept(_S_nothrow_move())
+      : _Hashtable(std::move(__ht), std::move(__ht._M_node_allocator()),
+		   true_type{})
+      { }
 
       _Hashtable(const _Hashtable&, const allocator_type&);
 
-      _Hashtable(_Hashtable&&, const allocator_type&);
+      _Hashtable(_Hashtable&& __ht, const allocator_type& __a)
+	noexcept(_S_nothrow_move<__node_alloc_traits::_S_always_equal()>())
+      : _Hashtable(std::move(__ht), __node_alloc_type(__a),
+		   typename __node_alloc_traits::is_always_equal{})
+      { }
 
       // Use delegating constructors.
       explicit
       _Hashtable(const allocator_type& __a)
-      : __hashtable_alloc(__node_alloc_type(__a))
+      : __hashtable_alloc(__node_alloc_type(__a)),
+	__enable_default_ctor(_Enable_default_constructor_tag{})
       { }
 
       explicit
@@ -1270,6 +1318,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __rehash_base(__ht),
       __hashtable_alloc(
 	__node_alloc_traits::_S_select_on_copy(__ht._M_node_allocator())),
+      __enable_default_ctor(__ht),
       _M_buckets(nullptr),
       _M_bucket_count(__ht._M_bucket_count),
       _M_element_count(__ht._M_element_count),
@@ -1285,18 +1334,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	   typename _Traits>
     _Hashtable<_Key, _Value, _Alloc, _ExtractKey, _Equal,
 	       _H1, _H2, _Hash, _RehashPolicy, _Traits>::
-    _Hashtable(_Hashtable&& __ht) noexcept
+    _Hashtable(_Hashtable&& __ht, __node_alloc_type&& __a,
+	       true_type /* alloc always equal */)
+    noexcept(_S_nothrow_move())
     : __hashtable_base(__ht),
       __map_base(__ht),
       __rehash_base(__ht),
-      __hashtable_alloc(std::move(__ht._M_base_alloc())),
+      __hashtable_alloc(std::move(__a)),
+      __enable_default_ctor(__ht),
       _M_buckets(__ht._M_buckets),
       _M_bucket_count(__ht._M_bucket_count),
       _M_before_begin(__ht._M_before_begin._M_nxt),
       _M_element_count(__ht._M_element_count),
       _M_rehash_policy(__ht._M_rehash_policy)
     {
-      // Update, if necessary, buckets if __ht is using its single bucket.
+      // Update buckets if __ht is using its single bucket.
       if (__ht._M_uses_single_bucket())
 	{
 	  _M_buckets = &_M_single_bucket;
@@ -1322,6 +1374,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __map_base(__ht),
       __rehash_base(__ht),
       __hashtable_alloc(__node_alloc_type(__a)),
+      __enable_default_ctor(__ht),
       _M_buckets(),
       _M_bucket_count(__ht._M_bucket_count),
       _M_element_count(__ht._M_element_count),
@@ -1337,11 +1390,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	   typename _Traits>
     _Hashtable<_Key, _Value, _Alloc, _ExtractKey, _Equal,
 	       _H1, _H2, _Hash, _RehashPolicy, _Traits>::
-    _Hashtable(_Hashtable&& __ht, const allocator_type& __a)
+    _Hashtable(_Hashtable&& __ht, __node_alloc_type&& __a,
+	       false_type /* alloc always equal */)
     : __hashtable_base(__ht),
       __map_base(__ht),
       __rehash_base(__ht),
-      __hashtable_alloc(__node_alloc_type(__a)),
+      __hashtable_alloc(std::move(__a)),
+      __enable_default_ctor(__ht),
       _M_buckets(nullptr),
       _M_bucket_count(__ht._M_bucket_count),
       _M_element_count(__ht._M_element_count),

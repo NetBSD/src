@@ -1980,6 +1980,13 @@ prune_clobbered_mems (bitmap_set_t set, basic_block block)
 			  && value_dies_in_block_x (expr, block))))
 		to_remove = i;
 	    }
+	  /* If the REFERENCE may trap make sure the block does not contain
+	     a possible exit point.
+	     ???  This is overly conservative if we translate AVAIL_OUT
+	     as the available expression might be after the exit point.  */
+	  if (BB_MAY_NOTRETURN (block)
+	      && vn_reference_may_trap (ref))
+	    to_remove = i;
 	}
       else if (expr->kind == NARY)
 	{
@@ -3312,7 +3319,11 @@ do_pre_regular_insertion (basic_block block, basic_block dom)
 	  /* If all edges produce the same value and that value is
 	     an invariant, then the PHI has the same value on all
 	     edges.  Note this.  */
-	  else if (!cant_insert && all_same)
+	  else if (!cant_insert
+		   && all_same
+		   && (edoubleprime->kind != NAME
+		       || !SSA_NAME_OCCURS_IN_ABNORMAL_PHI
+			     (PRE_EXPR_NAME (edoubleprime))))
 	    {
 	      gcc_assert (edoubleprime->kind == CONSTANT
 			  || edoubleprime->kind == NAME);
@@ -4034,6 +4045,16 @@ compute_avail (void)
 		      if (ref->set == set
 			  || alias_set_subset_of (set, ref->set))
 			;
+		      else if (ref1->opcode != ref2->opcode
+			       || (ref1->opcode != MEM_REF
+				   && ref1->opcode != TARGET_MEM_REF))
+			{
+			  /* With mismatching base opcodes or bases
+			     other than MEM_REF or TARGET_MEM_REF we
+			     can't do any easy TBAA adjustment.  */
+			  operands.release ();
+			  continue;
+			}
 		      else if (alias_set_subset_of (ref->set, set))
 			{
 			  ref->set = set;

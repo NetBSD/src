@@ -1129,7 +1129,8 @@
   (match_test "(mode == V16QImode
 		&& (vsx_register_operand (op, mode)
 		    || (MEM_P (op)
-			&& quad_address_p (XEXP (op, 0), mode, false))))"))
+			&& (indexed_or_indirect_address (XEXP (op, 0), mode)
+			    || quad_address_p (XEXP (op, 0), mode, false)))))"))
 
 ;; Return true if operand is an operator used in rotate-and-mask instructions.
 (define_predicate "rotate_mask_operator"
@@ -1862,4 +1863,18 @@
   (match_code "mem")
 {
   return address_is_prefixed (XEXP (op, 0), mode, NON_PREFIXED_DEFAULT);
+})
+
+;; Return true if the operand is a valid Mach-O pic address.
+;;
+(define_predicate "macho_pic_address"
+  (match_code "const,unspec")
+{
+  if (GET_CODE (op) == CONST)
+    op = XEXP (op, 0);
+
+  if (GET_CODE (op) == UNSPEC && XINT (op, 1) == UNSPEC_MACHOPIC_OFFSET)
+    return CONSTANT_P (XVECEXP (op, 0, 0));
+  else
+    return false;
 })

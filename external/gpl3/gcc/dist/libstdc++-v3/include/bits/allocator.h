@@ -60,6 +60,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @{
    */
 
+  // Since C++20 the primary template should be used for allocator<void>,
+  // but then it would have a non-trivial default ctor and dtor for C++20,
+  // but trivial for C++98-17, which would be an ABI incompatibiliy between
+  // different standard dialects. So C++20 still uses the allocator<void>
+  // explicit specialization, with the historical ABI properties, but with
+  // the same members that are present in the primary template.
+
   /// allocator<void> specialization.
   template<>
     class allocator<void>
@@ -68,44 +75,43 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef void        value_type;
       typedef size_t      size_type;
       typedef ptrdiff_t   difference_type;
+
 #if __cplusplus <= 201703L
+      // These were removed for C++20, allocator_traits does the right thing.
       typedef void*       pointer;
       typedef const void* const_pointer;
 
       template<typename _Tp1>
 	struct rebind
 	{ typedef allocator<_Tp1> other; };
-#else
-      allocator() = default;
+#endif
 
-      template<typename _Up>
-	constexpr
-	allocator(const allocator<_Up>&) { }
-#endif // ! C++20
-
-#if __cplusplus >= 201103L && __cplusplus <= 201703L
+#if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 2103. std::allocator propagate_on_container_move_assignment
       typedef true_type propagate_on_container_move_assignment;
 
       typedef true_type is_always_equal;
 
-      template<typename _Up, typename... _Args>
-	void
-	construct(_Up* __p, _Args&&... __args)
-	noexcept(std::is_nothrow_constructible<_Up, _Args...>::value)
-	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+#if __cplusplus > 201703L
+      // As noted above, these members are present for C++20 to provide the
+      // same API as the primary template, but still trivial as in pre-C++20.
+      allocator() = default;
+      ~allocator() = default;
 
       template<typename _Up>
-	void
-	destroy(_Up* __p)
-	noexcept(std::is_nothrow_destructible<_Up>::value)
-	{ __p->~_Up(); }
-#endif // C++11 to C++17
+	constexpr
+	allocator(const allocator<_Up>&) noexcept { }
+
+      // No allocate member because it's ill-formed by LWG 3307.
+      // No deallocate member because it would be undefined to call it
+      // with any pointer which wasn't obtained from allocate.
+#endif // C++20
+#endif // C++11
     };
 
   /**
-   * @brief  The @a standard allocator, as per [20.4].
+   * @brief  The @a standard allocator, as per C++03 [20.4.1].
    *
    *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/memory.html#std.util.memory.allocator
    *  for further details.
@@ -119,7 +125,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef _Tp        value_type;
       typedef size_t     size_type;
       typedef ptrdiff_t  difference_type;
+
 #if __cplusplus <= 201703L
+      // These were removed for C++20.
       typedef _Tp*       pointer;
       typedef const _Tp* const_pointer;
       typedef _Tp&       reference;
@@ -184,7 +192,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    return;
 	  }
 #endif
-	  __allocator_base<_Tp>::deallocate(__p, __n);
+	__allocator_base<_Tp>::deallocate(__p, __n);
       }
 #endif // C++20
 

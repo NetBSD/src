@@ -9434,12 +9434,23 @@ mma_expand_builtin (tree exp, rtx target, bool *expandedp)
       pat = GEN_FCN (icode) (op[0], op[1]);
       break;
     case 3:
+      /* The ASSEMBLE builtin source operands are reversed in little-endian
+	 mode, so reorder them.  */
+      if (fcode == VSX_BUILTIN_ASSEMBLE_PAIR_INTERNAL && !WORDS_BIG_ENDIAN)
+	std::swap (op[1], op[2]);
       pat = GEN_FCN (icode) (op[0], op[1], op[2]);
       break;
     case 4:
       pat = GEN_FCN (icode) (op[0], op[1], op[2], op[3]);
       break;
     case 5:
+      /* The ASSEMBLE builtin source operands are reversed in little-endian
+	 mode, so reorder them.  */
+      if (fcode == MMA_BUILTIN_ASSEMBLE_ACC_INTERNAL && !WORDS_BIG_ENDIAN)
+	{
+	  std::swap (op[1], op[4]);
+	  std::swap (op[2], op[3]);
+	}
       pat = GEN_FCN (icode) (op[0], op[1], op[2], op[3], op[4]);
       break;
     case 6:
@@ -10837,17 +10848,15 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
   gimple *new_call;
   tree new_decl;
 
-  if (rs6000_builtin_info[fncode + 1].icode == CODE_FOR_nothing)
+  if (fncode == MMA_BUILTIN_DISASSEMBLE_ACC
+      || fncode == VSX_BUILTIN_DISASSEMBLE_PAIR)
     {
       /* This is an MMA disassemble built-in function.  */
-      gcc_assert (fncode == MMA_BUILTIN_DISASSEMBLE_ACC
-		  || fncode == VSX_BUILTIN_DISASSEMBLE_PAIR);
-
       push_gimplify_context (true);
       tree dst_ptr = gimple_call_arg (stmt, 0);
       tree src_ptr = gimple_call_arg (stmt, 1);
       tree src_type = TREE_TYPE (src_ptr);
-      tree src = make_ssa_name (TREE_TYPE (src_type));
+      tree src = create_tmp_reg_or_ssa_name (TREE_TYPE (src_type));
       gimplify_assign (src, build_simple_mem_ref (src_ptr), &new_seq);
 
       /* If we are disassembling an accumulator/pair and our destination is
@@ -10871,7 +10880,7 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
 	{
 	  new_decl = rs6000_builtin_decls[MMA_BUILTIN_XXMFACC_INTERNAL];
 	  new_call = gimple_build_call (new_decl, 1, src);
-	  src = make_ssa_name (vector_quad_type_node);
+	  src = create_tmp_reg_or_ssa_name (vector_quad_type_node);
 	  gimple_call_set_lhs (new_call, src);
 	  gimple_seq_add_stmt (&new_seq, new_call);
 	}
@@ -10897,6 +10906,38 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
       gsi_replace_with_seq (gsi, new_seq, true);
       return true;
     }
+  else if (fncode == VSX_BUILTIN_LXVP)
+    {
+      push_gimplify_context (true);
+      tree offset = gimple_call_arg (stmt, 0);
+      tree ptr = gimple_call_arg (stmt, 1);
+      tree lhs = gimple_call_lhs (stmt);
+      if (TREE_TYPE (TREE_TYPE (ptr)) != vector_pair_type_node)
+	ptr = build1 (VIEW_CONVERT_EXPR,
+		      build_pointer_type (vector_pair_type_node), ptr);
+      tree mem = build_simple_mem_ref (build2 (POINTER_PLUS_EXPR,
+					       TREE_TYPE (ptr), ptr, offset));
+      gimplify_assign (lhs, mem, &new_seq);
+      pop_gimplify_context (NULL);
+      gsi_replace_with_seq (gsi, new_seq, true);
+      return true;
+    }
+  else if (fncode == VSX_BUILTIN_STXVP)
+    {
+      push_gimplify_context (true);
+      tree src = gimple_call_arg (stmt, 0);
+      tree offset = gimple_call_arg (stmt, 1);
+      tree ptr = gimple_call_arg (stmt, 2);
+      if (TREE_TYPE (TREE_TYPE (ptr)) != vector_pair_type_node)
+	ptr = build1 (VIEW_CONVERT_EXPR,
+		      build_pointer_type (vector_pair_type_node), ptr);
+      tree mem = build_simple_mem_ref (build2 (POINTER_PLUS_EXPR,
+					       TREE_TYPE (ptr), ptr, offset));
+      gimplify_assign (mem, src, &new_seq);
+      pop_gimplify_context (NULL);
+      gsi_replace_with_seq (gsi, new_seq, true);
+      return true;
+    }
 
   /* Convert this built-in into an internal version that uses pass-by-value
      arguments.  The internal built-in follows immediately after this one.  */
@@ -10909,7 +10950,7 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
     {
       /* This built-in has a pass-by-reference accumulator input, so load it
 	 into a temporary accumulator for use as a pass-by-value input.  */
-      op[0] = make_ssa_name (vector_quad_type_node);
+      op[0] = create_tmp_reg_or_ssa_name (vector_quad_type_node);
       for (unsigned i = 1; i < nopnds; i++)
 	op[i] = gimple_call_arg (stmt, i);
       gimplify_assign (op[0], build_simple_mem_ref (acc), &new_seq);
@@ -10956,10 +10997,10 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
       gcc_unreachable ();
     }
 
-  if (fncode == VSX_BUILTIN_ASSEMBLE_PAIR)
-    lhs = make_ssa_name (vector_pair_type_node);
+  if (fncode == VSX_BUILTIN_BUILD_PAIR || fncode == VSX_BUILTIN_ASSEMBLE_PAIR)
+    lhs = create_tmp_reg_or_ssa_name (vector_pair_type_node);
   else
-    lhs = make_ssa_name (vector_quad_type_node);
+    lhs = create_tmp_reg_or_ssa_name (vector_quad_type_node);
   gimple_call_set_lhs (new_call, lhs);
   gimple_seq_add_stmt (&new_seq, new_call);
   gimplify_assign (build_simple_mem_ref (acc), lhs, &new_seq);
@@ -12544,22 +12585,16 @@ rs6000_init_builtins (void)
     }
 }
 
-/* Returns the rs6000 builtin decl for CODE.  */
+/* Returns the rs6000 builtin decl for CODE.  Note that we don't check
+   the builtin mask here since there could be some #pragma/attribute
+   target functions and the rs6000_builtin_mask could be wrong when
+   this checking happens, though it will be updated properly later.  */
 
 tree
 rs6000_builtin_decl (unsigned code, bool initialize_p ATTRIBUTE_UNUSED)
 {
-  HOST_WIDE_INT fnmask;
-
   if (code >= RS6000_BUILTIN_COUNT)
     return error_mark_node;
-
-  fnmask = rs6000_builtin_info[code].mask;
-  if ((fnmask & rs6000_builtin_mask) != fnmask)
-    {
-      rs6000_invalid_builtin ((enum rs6000_builtins)code);
-      return error_mark_node;
-    }
 
   return rs6000_builtin_decls[code];
 }
@@ -13190,11 +13225,15 @@ mma_init_builtins (void)
       if (gimple_func)
 	{
 	  gcc_assert (icode == CODE_FOR_nothing);
-	  op[nopnds++] = void_type_node;
 	  /* Some MMA built-ins that are expanded into gimple are converted
 	     into internal MMA built-ins that are expanded into rtl.
 	     The internal built-in follows immediately after this built-in.  */
-	  icode = d[1].icode;
+	  if (d->code != VSX_BUILTIN_LXVP
+	      && d->code != VSX_BUILTIN_STXVP)
+	    {
+	      op[nopnds++] = void_type_node;
+	      icode = d[1].icode;
+	    }
 	}
       else
 	{
@@ -13205,17 +13244,29 @@ mma_init_builtins (void)
 	  gcc_assert (attr_args == insn_data[icode].n_operands - 1);
 	}
 
-      if (icode == CODE_FOR_nothing)
+      if (d->code == MMA_BUILTIN_DISASSEMBLE_ACC
+	  || d->code == VSX_BUILTIN_DISASSEMBLE_PAIR)
 	{
 	  /* This is a disassemble MMA built-in function.  */
-	  gcc_assert (attr_args == RS6000_BTC_BINARY
-		      && (d->code == MMA_BUILTIN_DISASSEMBLE_ACC
-			  || d->code == VSX_BUILTIN_DISASSEMBLE_PAIR));
+	  gcc_assert (attr_args == RS6000_BTC_BINARY);
 	  op[nopnds++] = build_pointer_type (void_type_node);
 	  if (attr & RS6000_BTC_QUAD)
 	    op[nopnds++] = build_pointer_type (vector_quad_type_node);
 	  else
 	    op[nopnds++] = build_pointer_type (vector_pair_type_node);
+	}
+      else if (d->code == VSX_BUILTIN_LXVP)
+	{
+	  op[nopnds++] = vector_pair_type_node;
+	  op[nopnds++] = sizetype;
+	  op[nopnds++] = build_pointer_type (vector_pair_type_node);
+	}
+      else if (d->code == VSX_BUILTIN_STXVP)
+	{
+	  op[nopnds++] = void_type_node;
+	  op[nopnds++] = vector_pair_type_node;
+	  op[nopnds++] = sizetype;
+	  op[nopnds++] = build_pointer_type (vector_pair_type_node);
 	}
       else
 	{
@@ -13226,8 +13277,10 @@ mma_init_builtins (void)
 	      machine_mode mode = insn_data[icode].operand[j].mode;
 	      if (gimple_func && mode == PXImode)
 		op[nopnds++] = build_pointer_type (vector_quad_type_node);
-	      else if (gimple_func && mode == POImode
-		       && d->code == VSX_BUILTIN_ASSEMBLE_PAIR)
+	      else if (gimple_func
+		       && mode == POImode
+		       && (d->code == VSX_BUILTIN_BUILD_PAIR
+			   || d->code == VSX_BUILTIN_ASSEMBLE_PAIR))
 		op[nopnds++] = build_pointer_type (vector_pair_type_node);
 	      else
 		/* MMA uses unsigned types.  */
@@ -13580,6 +13633,16 @@ builtin_function_type (machine_mode mode_ret, machine_mode mode_arg0,
     case ALTIVEC_BUILTIN_VSRW:
     case P8V_BUILTIN_VSRD:
       h.uns_p[2] = 1;
+      break;
+
+    case VSX_BUILTIN_LXVP:
+      h.uns_p[0] = 1;
+      h.uns_p[2] = 1;
+      break;
+
+    case VSX_BUILTIN_STXVP:
+      h.uns_p[1] = 1;
+      h.uns_p[3] = 1;
       break;
 
     default:
