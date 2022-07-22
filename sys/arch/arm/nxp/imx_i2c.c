@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_i2c.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx_i2c.c,v 1.3 2022/07/22 23:43:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.3 2022/07/22 23:43:24 thorpej Exp $");
 
 #include <sys/bus.h>
 
@@ -51,7 +51,7 @@ imxi2c_match(device_t parent, cfdata_t cf, void *aux)
 void
 imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 {
-	struct imxi2c_softc *sc = device_private(self);
+	struct imxi2c_softc *imxsc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
@@ -64,15 +64,15 @@ imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
-	if (sc->sc_clk == NULL) {
+	imxsc->sc_clk = fdtbus_clock_get_index(phandle, 0);
+	if (imxsc->sc_clk == NULL) {
 		aprint_error(": couldn't get clock\n");
 		return;
 	}
 
-	error = clk_enable(sc->sc_clk);
+	error = clk_enable(imxsc->sc_clk);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "couldn't enable: %d\n", error);
+		aprint_error_dev(self, "couldn't enable: %d\n", error);
 		return;
 	}
 
@@ -80,10 +80,8 @@ imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 	error = of_getprop_uint32(phandle, "clock-frequency", &freq);
 	if (error)
 		freq = 100000;
-	imxi2c_set_freq(self, clk_get_rate(sc->sc_clk), freq);
 
-	sc->sc_motoi2c.sc_phandle = phandle;
-
-	imxi2c_attach_common(parent, self, bst, addr, size, -1, 0);
+	imxsc->sc_motoi2c.sc_phandle = phandle;
+	imxi2c_attach_common(self, bst, addr, size,
+	    clk_get_rate(imxsc->sc_clk), freq);
 }
-

@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.12 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.12 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -62,6 +62,7 @@ static int  motoi2c_acquire_bus(void *, int);
 static void motoi2c_release_bus(void *, int);
 static int  motoi2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		void *, size_t, int);
+static void motoi2c_clear_status(struct motoi2c_softc *, uint8_t);
 static int  motoi2c_busy_wait(struct motoi2c_softc *, uint8_t);
 
 static const struct motoi2c_settings motoi2c_default_settings = {
@@ -88,23 +89,26 @@ motoi2c_iowr1(struct motoi2c_softc *sc, bus_size_t off, uint8_t data)
 }
 
 void
-motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
-	const struct motoi2c_settings *i2c)
+motoi2c_attach(struct motoi2c_softc *sc,
+    const struct motoi2c_settings *settings)
 {
 	struct i2cbus_attach_args iba;
 
-	if (i2c == NULL)
-		i2c = &motoi2c_default_settings;
+	if (settings == NULL) {
+		sc->sc_settings = motoi2c_default_settings;
+	} else {
+		sc->sc_settings = *settings;
+	}
+	if (sc->sc_iord == NULL)
+		sc->sc_iord = motoi2c_iord1;
+	if (sc->sc_iowr == NULL)
+		sc->sc_iowr = motoi2c_iowr1;
 
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = motoi2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = motoi2c_release_bus;
 	sc->sc_i2c.ic_exec = motoi2c_exec;
-	if (sc->sc_iord == NULL)
-		sc->sc_iord = motoi2c_iord1;
-	if (sc->sc_iowr == NULL)
-		sc->sc_iowr = motoi2c_iowr1;
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	iba.iba_child_devices = sc->sc_child_devices;
@@ -118,23 +122,19 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 	}
 
 	I2C_WRITE(I2CCR, sc->sc_disable_mask);	/* reset before config */
-	I2C_WRITE(I2CDFSRR, i2c->i2c_dfsrr);	/* sampling units */
-	I2C_WRITE(I2CFDR, i2c->i2c_fdr);	/* divider 3072 (0x31) */
-	I2C_WRITE(I2CADR, i2c->i2c_adr);	/* our slave address is 0x7f */
-	if ((sc->sc_flags & MOTOI2C_F_STATUS_W1C) != 0) {
-		I2C_WRITE(I2CSR, I2C_READ(I2CSR)); /* clear status flags */
-	} else {
-		I2C_WRITE(I2CSR, 0);		/* clear status flags */
-	}
+	I2C_WRITE(I2CDFSRR, sc->sc_settings.i2c_dfsrr);	/* sampling units */
+	I2C_WRITE(I2CFDR, sc->sc_settings.i2c_fdr);	/* divider 3072 */
+	I2C_WRITE(I2CADR, sc->sc_settings.i2c_adr);	/* our slave address */
+	motoi2c_clear_status(sc, I2C_READ(I2CSR));
 
 #ifdef FDT
 	if (sc->sc_phandle != 0) {
 		fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
-		fdtbus_attach_i2cbus(self, sc->sc_phandle, &sc->sc_i2c,
+		fdtbus_attach_i2cbus(sc->sc_dev, sc->sc_phandle, &sc->sc_i2c,
 		    iicbus_print);
 	} else
 #endif
-	config_found(self, &iba, iicbus_print,
+	config_found(sc->sc_dev, &iba, iicbus_print,
 	    CFARGS(.iattr = "i2cbus"));
 }
 

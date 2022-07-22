@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.19 2012/05/12 13:13:24 nisimura Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.20 2022/07/22 23:43:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.19 2012/05/12 13:13:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.20 2022/07/22 23:43:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,15 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.19 2012/05/12 13:13:24 nisimura Exp $
 #include <dev/i2c/motoi2cvar.h>
 #include <sandpoint/sandpoint/eumbvar.h>
 
-struct iic_eumb_softc {
-	device_t		sc_dev;
-	struct motoi2c_softc	sc_motoi2c;
-};
-
 static int  iic_eumb_match(device_t, cfdata_t, void *);
 static void iic_eumb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(iic_eumb, sizeof(struct iic_eumb_softc),
+CFATTACH_DECL_NEW(iic_eumb, sizeof(struct motoi2c_softc),
     iic_eumb_match, iic_eumb_attach, NULL, NULL);
 
 static int found;
@@ -61,13 +56,11 @@ iic_eumb_match(device_t parent, cfdata_t cf, void *aux)
 static void
 iic_eumb_attach(device_t parent, device_t self, void *aux)
 {
-	struct iic_eumb_softc *sc;
-	struct eumb_attach_args *eaa;
+	struct motoi2c_softc *sc = device_private(self);
+	struct eumb_attach_args *eaa = aux;
 	bus_space_handle_t ioh;
 
-	sc = device_private(self);
 	sc->sc_dev = self;
-	eaa = aux;
 	found = 1;
 
 	aprint_naive("\n");
@@ -77,7 +70,7 @@ iic_eumb_attach(device_t parent, device_t self, void *aux)
 	 * map EUMB registers and attach MI motoi2c with default settings
 	 */
 	bus_space_map(eaa->eumb_bt, 0x3000, 0x20, 0, &ioh);
-	sc->sc_motoi2c.sc_iot = eaa->eumb_bt;
-	sc->sc_motoi2c.sc_ioh = ioh;
-	motoi2c_attach_common(self, &sc->sc_motoi2c, NULL);
+	sc->sc_iot = eaa->eumb_bt;
+	sc->sc_ioh = ioh;
+	motoi2c_attach(sc, NULL);
 }

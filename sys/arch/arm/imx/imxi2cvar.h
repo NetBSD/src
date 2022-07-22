@@ -1,4 +1,4 @@
-/*	$NetBSD: imxi2cvar.h,v 1.3 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imxi2cvar.h,v 1.4 2022/07/22 23:43:23 thorpej Exp $	*/
 
 /*
 * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
@@ -33,22 +33,16 @@
 #include <dev/i2c/motoi2cvar.h>
 
 struct imxi2c_softc {
-	device_t sc_dev;
 	struct motoi2c_softc sc_motoi2c;
 	struct motoi2c_settings sc_motoi2c_settings;
 
 	struct clk *sc_clk;
 };
 
-int imxi2c_attach_common(device_t, device_t,
-    bus_space_tag_t, paddr_t, size_t, int, int);
-int imxi2c_set_freq(device_t, long, int);
+void	imxi2c_attach_common(device_t, bus_space_tag_t, paddr_t, size_t,
+	    long, unsigned int);
 
-/*
-* defined in imx51_i2c.c and imx31_i2c.c
-*/
-int imxi2c_match(device_t, cfdata_t, void *);
-void imxi2c_attach(device_t, device_t, void *);
+int	imxi2c_match(device_t, cfdata_t, void *);
+void	imxi2c_attach(device_t, device_t, void *);
 
 #endif /* _IMXI2CVAR_H_ */
-
