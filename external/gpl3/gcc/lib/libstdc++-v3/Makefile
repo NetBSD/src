@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2022/07/22 07:09:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.52 2022/07/22 21:28:32 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -145,7 +145,6 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CMONEY_CC} monetary_members.cc \
 	${GLIBCXX_SRCDIR}/${G_CNUMERIC_CC} numeric_members.cc \
 	${GLIBCXX_SRCDIR}/${G_CTIME_CC} time_members.cc \
-	${GLIBCXX_SRCDIR}/${G_ATOMICITY_SRCDIR}/atomicity.h atomicity.cc \
 	${GLIBCXX_SRCDIR}/${G_CLOCALE_CC} c++locale.cc \
 	${GLIBCXX_SRCDIR}/${G_BASIC_FILE_CC} basic_file.cc \
 	${DIST}/libiberty/cp-demangle.c cp-demangle.c \
