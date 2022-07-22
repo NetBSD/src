@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.365 2022/07/03 13:29:28 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.366 2022/07/22 06:31:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,14 +79,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.365 2022/07/03 13:29:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.366 2022/07/22 06:31:08 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/rndsource.h>
 #include <sys/socket.h>
@@ -1365,7 +1365,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	for (i = 0; i < BGE_JSLOTS; i++) {
 		sc->bge_cdata.bge_jslots[i] = ptr;
 		ptr += BGE_JLEN;
-		entry = malloc(sizeof(*entry), M_DEVBUF, M_WAITOK);
+		entry = kmem_alloc(sizeof(*entry), KM_SLEEP);
 		entry->slot = i;
 		SLIST_INSERT_HEAD(&sc->bge_jfree_listhead,
 				 entry, jpool_entries);
@@ -1702,7 +1702,7 @@ bge_free_tx_ring(struct bge_softc *sc, bool disable)
 				bus_dmamap_destroy(sc->bge_dmatag32,
 				    dma->dmamap32);
 			}
-			free(dma, M_DEVBUF);
+			kmem_free(dma, sizeof(*dma));
 		}
 		SLIST_INIT(&sc->txdma_list);
 	}
@@ -1769,7 +1769,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 				panic("dmamap32 NULL in bge_init_tx_ring");
 		} else
 			dmamap32 = dmamap;
-		dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT);
+		dma = kmem_alloc(sizeof(*dma), KM_NOSLEEP);
 		if (dma == NULL) {
 			aprint_error_dev(sc->bge_dev,
 			    "can't alloc txdmamap_pool_entry\n");
