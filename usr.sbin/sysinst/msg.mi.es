@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.36 2022/06/11 18:30:02 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.37 2022/07/22 16:51:14 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1104,6 +1104,7 @@ message Host {Máquina}
 message Base_dir {Directorio base}
 message Set_dir_src {Directorio de conjuntos binary} /* fix XLAT */
 message Set_dir_bin {Directorio de conjuntos source} /* fix XLAT */
+message Dist_postfix {Extensión de archivo}
 message Xfer_dir {Directorio a transferir a}
 message transfer_method {Download via}
 message User {Usuario}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.41 2022/06/11 18:30:02 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.42 2022/07/22 16:51:14 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1154,6 +1154,7 @@ message Host {Serveur FTP}
 message Base_dir {Répertoire de base}
 message Set_dir_bin {Répertoire des composants binaire}
 message Set_dir_src {Répertoire des composants source}
+message Dist_postfix {Extension de fichier}
 message Xfer_dir {Répertoire de transfert}
 message transfer_method {Download via}
 message User {Utilisateur}

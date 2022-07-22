@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.26 2022/07/10 10:52:40 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.27 2022/07/22 16:51:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -374,6 +374,8 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option {src_legend(menu, MSG_Dist_postfix, dist_postfix);},
+		action { src_prompt(MSG_Dist_postfix, dist_postfix, sizeof dist_postfix); };
 	option {src_legend(menu, MSG_User, ftp.user);},
 		action { src_prompt(MSG_User, ftp.user, sizeof ftp.user);
 			ftp.pass[0] = 0;
@@ -424,6 +426,8 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option {src_legend(menu, MSG_Dist_postfix, dist_postfix);},
+		action { src_prompt(MSG_Dist_postfix, dist_postfix, sizeof dist_postfix); };
 	option MSG_Configure_network,
 		action {
 			extern int network_up;
@@ -470,6 +474,8 @@ menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option {src_legend(menu, MSG_Dist_postfix, dist_postfix);},
+		action { src_prompt(MSG_Dist_postfix, dist_postfix, sizeof dist_postfix); };
 	option MSG_abort_install, exit, action { *((int*)arg) = SET_ABANDON; };
 	option MSG_source_sel_retry, exit, action { *((int*)arg) = SET_RETRY; };
 
@@ -486,6 +492,8 @@ menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
+	option {src_legend(menu, MSG_Dist_postfix, dist_postfix);},
+		action { src_prompt(MSG_Dist_postfix, dist_postfix, sizeof dist_postfix); };
 	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
@@ -497,6 +505,8 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, 60); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, 60); };
+	option {src_legend(menu, MSG_Dist_postfix, dist_postfix);},
+		action { src_prompt(MSG_Dist_postfix, dist_postfix, 60); };
 	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu namesrv6, title MSG_Select_DNS_server;

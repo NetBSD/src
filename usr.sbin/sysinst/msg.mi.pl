@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.42 2022/06/11 18:30:02 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.43 2022/07/22 16:51:14 christos Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1070,6 +1070,7 @@ message Host {Host}
 message Base_dir {Katalog}
 message Set_dir_src {Katalog pakietow binarych}
 message Set_dir_bin {Katalog pkgsrc}
+message Dist_postfix {Rozszerzenie pliku}
 message Xfer_dir {Katalog z plikami pobranymi}
 message transfer_method {Sposob pobierania}
 message User {Uzytkownik}
