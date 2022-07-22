@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: ctwm_app_menu,v 1.4 2022/05/09 15:05:18 nia Exp $
+#	$NetBSD: ctwm_app_menu,v 1.5 2022/07/22 17:06:46 nia Exp $
 #
 # Copyright (c) 2020-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,13 +98,18 @@ do_category()
 				Name=*)
 					if ! [ -n "$name" ];
 					then
-						name=$(printf '%s' "$line" | cut -c6- | tr -d '\r')
+						name=$(printf '%s' "$line" | cut -c6- | tr -d '\r' | tr -d '"')
 					fi
 				;;
 				Exec=*)
 					if ! [ -n "$exec" ];
 					then
 						exec=$(printf '%s' "$line" | cut -c6- | sed -e 's/ %.*//g' | tr -d '\r')
+						if printf '%s' "$exec" | grep -q '"'; then
+							# results in malformed config file, better way
+							# to handle this...?
+							nodisplay="true"
+						fi
 					fi
 				;;
 				Terminal=true)
