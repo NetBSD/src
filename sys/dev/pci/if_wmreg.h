@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.126 2022/07/20 06:43:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.127 2022/07/22 05:23:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1147,7 +1147,13 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_SYMERRC	0x4008	/* Symbol Error Count */
 #define	WMREG_RXERRC	0x400c	/* Receive error Count - R/clr */
 #define	WMREG_MPC	0x4010	/* Missed Packets Count - R/clr */
+#define	WMREG_SCC	0x4014	/* Single Collision Count - R/clr */
+#define	WMREG_ECOL	0x4018	/* Excessive Collisions Count - R/clr */
+#define	WMREG_MCC	0x401c	/* Multiple Collision Count - R/clr */
+#define	WMREG_LATECOL	0x4020	/* Late Collisions Count - R/clr */
 #define	WMREG_COLC	0x4028	/* Collision Count - R/clr */
+#define	WMREG_DC	0x4030	/* Defer Count - R/clr */
+#define	WMREG_TNCRS	0x4034	/* Tx with No CRS - R/clr */
 #define	WMREG_SEC	0x4038	/* Sequence Error Count */
 #define	WMREG_CEXTERR	0x403c	/* Carrier Extension Error Count */
 #define	WMREG_RLEC	0x4040	/* Receive Length Error Count */
@@ -1156,9 +1162,57 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
+#define	WMREG_PRC64	0x405c	/* Packets Rx (64 bytes) - R/clr */
+#define	WMREG_PRC127	0x4060	/* Packets Rx (65-127 bytes) - R/clr */
+#define	WMREG_PRC255	0x4064	/* Packets Rx (128-255 bytes) - R/clr */
+#define	WMREG_PRC511	0x4068	/* Packets Rx (255-511 bytes) - R/clr */
+#define	WMREG_PRC1023	0x406c	/* Packets Rx (512-1023 bytes) - R/clr */
+#define	WMREG_PRC1522	0x4070	/* Packets Rx (1024-1522 bytes) - R/clr */
+#define	WMREG_GPRC	0x4074	/* Good Packets Rx Count - R/clr */
+#define	WMREG_BPRC	0x4078	/* Broadcast Packets Rx Count - R/clr */
+#define	WMREG_MPRC	0x407c	/* Multicast Packets Rx Count - R/clr */
+#define	WMREG_GPTC	0x4080	/* Good Packets Tx Count - R/clr */
+#define	WMREG_GORCL	0x4088	/* Good Octets Rx Count Low - R/clr */
+#define	WMREG_GORCH	0x408c	/* Good Octets Rx Count High - R/clr */
+#define	WMREG_GOTCL	0x4090	/* Good Octets Tx Count Low - R/clr */
+#define	WMREG_GOTCH	0x4094	/* Good Octets Tx Count High - R/clr */
 #define	WMREG_RNBC	0x40a0	/* Receive No Buffers Count */
+#define	WMREG_RUC	0x40a4	/* Rx Undersize Count - R/clr */
+#define	WMREG_RFC	0x40a8	/* Rx Fragment Count - R/clr */
+#define	WMREG_ROC	0x40ac	/* Rx Oversize Count - R/clr */
+#define	WMREG_RJC	0x40b0	/* Rx Jabber Count - R/clr */
+#define	WMREG_MGTPRC	0x40b4	/* Management Packets RX Count - R/clr */
+#define	WMREG_MGTPDC	0x40b8	/* Management Packets Dropped Count - R/clr */
+#define	WMREG_MGTPTC	0x40bc	/* Management Packets TX Count - R/clr */
+#define	WMREG_TORL	0x40c0	/* Total Octets Rx Low - R/clr */
+#define	WMREG_TORH	0x40c4	/* Total Octets Rx High - R/clr */
+#define	WMREG_TOTL	0x40c8	/* Total Octets Tx Low - R/clr */
+#define	WMREG_TOTH	0x40cc	/* Total Octets Tx High - R/clr */
+#define	WMREG_TPR	0x40d0	/* Total Packets Rx - R/clr */
+#define	WMREG_TPT	0x40d4	/* Total Packets Tx - R/clr */
+#define	WMREG_PTC64	0x40d8	/* Packets Tx (64 bytes) - R/clr */
+#define	WMREG_PTC127	0x40dc	/* Packets Tx (65-127 bytes) - R/clr */
+#define	WMREG_PTC255	0x40e0	/* Packets Tx (128-255 bytes) - R/clr */
+#define	WMREG_PTC511	0x40e4	/* Packets Tx (256-511 bytes) - R/clr */
+#define	WMREG_PTC1023	0x40e8	/* Packets Tx (512-1023 bytes) - R/clr */
+#define	WMREG_PTC1522	0x40ec	/* Packets Tx (1024-1522 Bytes) - R/clr */
+#define	WMREG_MPTC	0x40f0	/* Multicast Packets Tx Count - R/clr */
+#define	WMREG_BPTC	0x40f4	/* Broadcast Packets Tx Count */
+#define	WMREG_TSCTC	0x40f8	/* TCP Segmentation Context Tx */
+#define	WMREG_TSCTFC	0x40fc	/* TCP Segmentation Context Tx Fail */
+#define	WMREG_IAC	0x4100	/* Interrupt Assertion Count */
+#define	WMREG_ICRXPTC	0x4104	/* Interrupt Cause Rx Pkt Timer Expire Count */
+#define	WMREG_ICRXATC	0x4108	/* Interrupt Cause Rx Abs Timer Expire Count */
+#define	WMREG_ICTXPTC	0x410c	/* Interrupt Cause Tx Pkt Timer Expire Count */
+#define	WMREG_ICTXATC	0x4110	/* Interrupt Cause Tx Abs Timer Expire Count */
+#define	WMREG_ICTXQEC	0x4118	/* Interrupt Cause Tx Queue Empty Count */
+#define	WMREG_ICTXQMTC	0x411c	/* Interrupt Cause Tx Queue Min Thresh Count */
+#define	WMREG_ICRXDMTC	0x4120	/* Interrupt Cause Rx Desc Min Thresh Count */
+#define	WMREG_ICRXOC	0x4124	/* Interrupt Cause Receiver Overrun Count */
 #define	WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
 #define	WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
+#define	WMREG_B2OGPRC	0x4158	/* BMC2OS packets received by host */
+#define	WMREG_O2BSPC	0x415c	/* OS2BMC packets transmitted by host */
 
 #define	WMREG_PCS_CFG	0x4200	/* PCS Configuration */
 #define	PCS_CFG_PCS_EN	__BIT(3)
@@ -1311,6 +1365,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_RECV_ALL		__BIT(19)
 #define	MANC_EN_MAC_ADDR_FILTER	__BIT(20)
 #define	MANC_EN_MNG2HOST	__BIT(21)
+#define	MANC_EN_BMC2OS		__BIT(28)
 
 #define	WMREG_MANC2H	0x5860	/* Management Control To Host - RW */
 #define	MANC2H_PORT_623		(1 << 5)
@@ -1386,6 +1441,9 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_CRC_OFFSET 0x5f50
 #define	WMREG_PCH_RAICC(x)	(WMREG_CRC_OFFSET + (x) * 4)
+
+#define	WMREG_B2OSPC	0x8fe0	/* BMC2OS packets sent by BMC */
+#define	WMREG_O2BGPTC	0x8fe4	/* OS2BMC packets received by BMC */
 
 #define	WMREG_EEC	0x12010
 #define	EEC_FLASH_DETECTED __BIT(19)	/* FLASH */
