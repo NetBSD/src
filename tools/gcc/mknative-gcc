@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.115 2021/08/16 06:25:45 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.116 2022/07/22 06:50:26 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -276,12 +276,10 @@ get_libstdcxx_v3 () {
 			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | \
-			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/' \
-			    -e 's/codecvt.cc/c11-codecvt.cc/'
+			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++98/Makefile \
 			GLIBCXX_ABI_FLAGS libc__98convenience_la_SOURCES | \
-			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/' \
-			    -e 's/codecvt.cc/c98-codecvt.cc/'
+			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/filesystem/Makefile \
 			libstdc__fs_la_SOURCES | \
 			sed -e 's/^G_libstdc__fs_la_SOURCES=/G_FILESYSTEM_SOURCES=/'
