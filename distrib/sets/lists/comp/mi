@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2416 2022/06/06 10:56:27 nia Exp $
+#	$NetBSD: mi,v 1.2417 2022/07/22 15:43:36 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4254,8 +4254,10 @@
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/lib/pkgconfig/expat.pc			comp-c-lib
 ./usr/lib/pkgconfig/kyua-testers.pc		comp-kyua-lib		kyua,share
+./usr/lib/pkgconfig/libarchive.pc		comp-c-lib		share
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		share
 ./usr/lib/pkgconfig/libfido2.pc			comp-c-lib		share
+./usr/lib/pkgconfig/liblzma.pc		comp-c-lib		share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/libuv.pc			comp-obsolete		share,obsolete
 ./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share

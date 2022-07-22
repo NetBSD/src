@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/04/12 06:08:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2022/07/22 15:43:37 wiz Exp $
 
 .include <bsd.init.mk>
 
@@ -457,4 +457,21 @@ COPTS.archive_read_support_format_rar5.c+=	${GCC_NO_MAYBE_UNINITIALIZED}
 COPTS.target.c+=				${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.archive_write_set_format_iso9660.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
+FILES+=				libarchive.pc
+FILESOWN_libarchive.pc=		${BINOWN}
+FILESGRP_libarchive.pc=		${BINGRP}
+FILESMODE_libarchive.pc=	${NONBINMODE}
+FILESDIR_libarchive.pc=		/usr/lib/pkgconfig
+
+CLEANFILES+=libarchive.pc
+
 .include <bsd.lib.mk>
+
+all: libarchive.pc
+dependall: all
+
+libarchive.pc: archive.h libarchive.pc.in
+	@(V=$$( (echo '#include <archive.h>'; echo ARCHIVE_VERSION_ONLY_STRING) | \
+	    ${CC} ${CPPFLAGS} -E -I${.CURDIR} - | tail -1 | tr -d '"') && \
+	    ${TOOL_SED} -e s/@VERSION@/$$V/ < ${.CURDIR}/libarchive.pc.in \
+	    > ${.TARGET})

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2018/09/25 05:42:08 joerg Exp $
+# $NetBSD: Makefile,v 1.11 2022/07/22 15:43:37 wiz Exp $
 
 .include <bsd.init.mk>
 
@@ -80,6 +80,9 @@ SRCS+=	price_table.c
 SRCS+=	simple_coder.c simple_encoder.c simple_decoder.c \
 	arm.c armthumb.c ia64.c powerpc.c sparc.c x86.c
 
+FILES+=			liblzma.pc
+FILESDIR_liblzma.pc=	/usr/lib/pkgconfig
+
 liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
@@ -88,9 +91,9 @@ liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 	    -e 's,@exec_prefix@,/usr,' \
 	    -e 's,@libdir@,/usr/lib,' \
 	    -e 's,@includedir@,/usr/include,' \
-	    -e 's,@PACKAGE_HOMEPAGE@,${XZHOMEPAGE:Q},' \
+	    -e 's,@PACKAGE_URL@,${XZHOMEPAGE:Q},' \
 	    -e 's,@PACKAGE_VERSION@,${XZVERSION:Q},' \
-	    -e 's,@PTHREAD_CFLAGS@ @PTHREAD_LIBS@,-lpthread,' \
+	    -e 's,@PTHREAD_CFLAGS@ @LIBS@,-lpthread,' \
 	    < ${XZSRCDIR}/src/liblzma/liblzma.pc.in \
 	    > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
@@ -109,3 +112,5 @@ LIBDPLIBS+=	pthread ${NETBSDSRCDIR}/lib/libpthread
 .include <bsd.lib.mk>
 .endif
 
+all: liblzma.pc
+dependall: all
