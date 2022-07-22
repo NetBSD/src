@@ -334,7 +334,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   // Operators:
-  //@{
+  ///@{
   ///  Return new complex value @a x plus @a y.
   template<typename _Tp>
     inline _GLIBCXX20_CONSTEXPR complex<_Tp>
@@ -362,9 +362,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __r += __x;
       return __r;
     }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   ///  Return new complex value @a x minus @a y.
   template<typename _Tp>
     inline _GLIBCXX20_CONSTEXPR complex<_Tp>
@@ -392,9 +392,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __r += __x;
       return __r;
     }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   ///  Return new complex value @a x times @a y.
   template<typename _Tp>
     inline _GLIBCXX20_CONSTEXPR complex<_Tp>
@@ -422,9 +422,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __r *= __x;
       return __r;
     }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   ///  Return new complex value @a x divided by @a y.
   template<typename _Tp>
     inline _GLIBCXX20_CONSTEXPR complex<_Tp>
@@ -452,7 +452,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __r /= __y;
       return __r;
     }
-  //@}
+  ///@}
 
   ///  Return @a x.
   template<typename _Tp>
@@ -466,7 +466,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator-(const complex<_Tp>& __x)
     { return complex<_Tp>(-__x.real(), -__x.imag()); }
 
-  //@{
+  ///@{
   ///  Return true if @a x is equal to @a y.
   template<typename _Tp>
     inline _GLIBCXX_CONSTEXPR bool
@@ -483,9 +483,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline _GLIBCXX_CONSTEXPR bool
     operator==(const _Tp& __x, const complex<_Tp>& __y)
     { return __x == __y.real() && _Tp() == __y.imag(); }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   ///  Return false if @a x is equal to @a y.
   template<typename _Tp>
     inline _GLIBCXX_CONSTEXPR bool
@@ -502,7 +502,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator!=(const _Tp& __x, const complex<_Tp>& __y)
     { return __x != __y.real() || _Tp() != __y.imag(); }
 #endif
-  //@}
+  ///@}
 
   ///  Extraction operator for complex values.
   template<typename _Tp, typename _CharT, class _Traits>
@@ -1559,7 +1559,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 #endif
 
-  // @} group complex_numbers
+  /// @} group complex_numbers
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

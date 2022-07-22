@@ -1,4 +1,4 @@
-This is gccinstall.info, produced by makeinfo version 6.7 from
+This is gccinstall.info, produced by makeinfo version 6.8 from
 install.texi.
 
 Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -839,6 +839,10 @@ option.
 
 '--with-ld=PATHNAME'
      Same as '--with-as' but for the linker.
+
+'--with-dsymutil=PATHNAME'
+     Same as '--with-as' but for the debug linker (only used on Darwin
+     platforms so far).
 
 '--with-stabs'
      Specify that stabs debugging information should be used instead of
@@ -4819,7 +4823,7 @@ Concept Index
 * Menu:
 
 * Binaries:                              Binaries.           (line    6)
-* build_configargs:                      Configuration.      (line 1699)
+* build_configargs:                      Configuration.      (line 1702)
 * Configuration:                         Configuration.      (line    6)
 * configurations supported by GCC:       Configurations.     (line    6)
 * Downloading GCC:                       Downloading the source.
@@ -4829,7 +4833,7 @@ Concept Index
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
                                                              (line    6)
 * Host specific installation:            Specific.           (line    6)
-* host_configargs:                       Configuration.      (line 1703)
+* host_configargs:                       Configuration.      (line 1706)
 * Installing GCC: Binaries:              Binaries.           (line    6)
 * Installing GCC: Building:              Building.           (line    6)
 * Installing GCC: Configuration:         Configuration.      (line    6)
@@ -4839,7 +4843,7 @@ Concept Index
 * Specific installation notes:           Specific.           (line    6)
 * Target specific installation:          Specific.           (line    6)
 * Target specific installation notes:    Specific.           (line    6)
-* target_configargs:                     Configuration.      (line 1707)
+* target_configargs:                     Configuration.      (line 1710)
 * Testing:                               Testing.            (line    6)
 * Testsuite:                             Testing.            (line    6)
 
@@ -4855,99 +4859,99 @@ Node: Configuration17158
 Ref: with-gnu-as33246
 Ref: with-as34141
 Ref: with-gnu-ld35550
-Ref: WithAixSoname58229
-Ref: AixLdCommand58890
-Node: Building100321
-Node: Testing116190
-Node: Final install124077
-Node: Binaries129377
-Node: Specific130484
-Ref: aarch64-x-x130991
-Ref: alpha-x-x133011
-Ref: amd64-x-solaris2133225
-Ref: amdgcn-x-amdhsa133307
-Ref: arc-x-elf32133833
-Ref: arc-linux-uclibc134009
-Ref: arm-x-eabi134150
-Ref: avr134403
-Ref: bfin134984
-Ref: cr16135247
-Ref: cris135663
-Ref: dos136361
-Ref: epiphany-x-elf136684
-Ref: x-x-freebsd136789
-Ref: ft32-x-elf138589
-Ref: h8300-hms138687
-Ref: hppa-hp-hpux139039
-Ref: hppa-hp-hpux10141411
-Ref: hppa-hp-hpux11141824
-Ref: x-x-linux-gnu147226
-Ref: ix86-x-linux147419
-Ref: ix86-x-solaris2147732
-Ref: ia64-x-linux148808
-Ref: ia64-x-hpux149578
-Ref: x-ibm-aix150133
-Ref: TransferAixShobj153795
-Ref: iq2000-x-elf157605
-Ref: lm32-x-elf157745
-Ref: lm32-x-uclinux157849
-Ref: m32c-x-elf157977
-Ref: m32r-x-elf158079
-Ref: m68k-x-x158181
-Ref: m68k-x-uclinux159219
-Ref: microblaze-x-elf159464
-Ref: mips-x-x159583
-Ref: moxie-x-elf161493
-Ref: msp430-x-elf161540
-Ref: nds32le-x-elf162097
-Ref: nds32be-x-elf162169
-Ref: nvptx-x-none162238
-Ref: or1k-x-elf162801
-Ref: or1k-x-linux162932
-Ref: powerpc-x-x163013
-Ref: powerpc-x-darwin163204
-Ref: powerpc-x-elf163698
-Ref: powerpc-x-linux-gnu163783
-Ref: powerpc-x-netbsd163878
-Ref: powerpc-x-eabisim163966
-Ref: powerpc-x-eabi164092
-Ref: powerpcle-x-elf164168
-Ref: powerpcle-x-eabisim164260
-Ref: powerpcle-x-eabi164393
-Ref: rl78-x-elf164476
-Ref: riscv32-x-elf164582
-Ref: riscv32-x-linux164771
-Ref: riscv64-x-elf164928
-Ref: riscv64-x-linux165117
-Ref: rx-x-elf165274
-Ref: s390-x-linux165320
-Ref: s390x-x-linux165392
-Ref: s390x-ibm-tpf165479
-Ref: x-x-solaris2165610
-Ref: sparc-x-x168717
-Ref: sparc-sun-solaris2169219
-Ref: sparc-x-linux170362
-Ref: sparc64-x-solaris2170393
-Ref: sparcv9-x-solaris2171111
-Ref: c6x-x-x171198
-Ref: tilegx-*-linux171290
-Ref: tilegxbe-*-linux171432
-Ref: tilepro-*-linux171575
-Ref: visium-x-elf171696
-Ref: x-x-vxworks171804
-Ref: x86-64-x-x173327
-Ref: x86-64-x-solaris2173655
-Ref: xtensa-x-elf174305
-Ref: xtensa-x-linux174976
-Ref: windows175317
-Ref: x-x-cygwin177158
-Ref: x-x-mingw32177711
-Ref: older177937
-Ref: elf180054
-Node: Old180312
-Node: Configurations183445
-Node: GNU Free Documentation License186983
-Node: Concept Index212111
+Ref: WithAixSoname58352
+Ref: AixLdCommand59013
+Node: Building100444
+Node: Testing116313
+Node: Final install124200
+Node: Binaries129500
+Node: Specific130607
+Ref: aarch64-x-x131114
+Ref: alpha-x-x133134
+Ref: amd64-x-solaris2133348
+Ref: amdgcn-x-amdhsa133430
+Ref: arc-x-elf32133956
+Ref: arc-linux-uclibc134132
+Ref: arm-x-eabi134273
+Ref: avr134526
+Ref: bfin135107
+Ref: cr16135370
+Ref: cris135786
+Ref: dos136484
+Ref: epiphany-x-elf136807
+Ref: x-x-freebsd136912
+Ref: ft32-x-elf138712
+Ref: h8300-hms138810
+Ref: hppa-hp-hpux139162
+Ref: hppa-hp-hpux10141534
+Ref: hppa-hp-hpux11141947
+Ref: x-x-linux-gnu147349
+Ref: ix86-x-linux147542
+Ref: ix86-x-solaris2147855
+Ref: ia64-x-linux148931
+Ref: ia64-x-hpux149701
+Ref: x-ibm-aix150256
+Ref: TransferAixShobj153918
+Ref: iq2000-x-elf157728
+Ref: lm32-x-elf157868
+Ref: lm32-x-uclinux157972
+Ref: m32c-x-elf158100
+Ref: m32r-x-elf158202
+Ref: m68k-x-x158304
+Ref: m68k-x-uclinux159342
+Ref: microblaze-x-elf159587
+Ref: mips-x-x159706
+Ref: moxie-x-elf161616
+Ref: msp430-x-elf161663
+Ref: nds32le-x-elf162220
+Ref: nds32be-x-elf162292
+Ref: nvptx-x-none162361
+Ref: or1k-x-elf162924
+Ref: or1k-x-linux163055
+Ref: powerpc-x-x163136
+Ref: powerpc-x-darwin163327
+Ref: powerpc-x-elf163821
+Ref: powerpc-x-linux-gnu163906
+Ref: powerpc-x-netbsd164001
+Ref: powerpc-x-eabisim164089
+Ref: powerpc-x-eabi164215
+Ref: powerpcle-x-elf164291
+Ref: powerpcle-x-eabisim164383
+Ref: powerpcle-x-eabi164516
+Ref: rl78-x-elf164599
+Ref: riscv32-x-elf164705
+Ref: riscv32-x-linux164894
+Ref: riscv64-x-elf165051
+Ref: riscv64-x-linux165240
+Ref: rx-x-elf165397
+Ref: s390-x-linux165443
+Ref: s390x-x-linux165515
+Ref: s390x-ibm-tpf165602
+Ref: x-x-solaris2165733
+Ref: sparc-x-x168840
+Ref: sparc-sun-solaris2169342
+Ref: sparc-x-linux170485
+Ref: sparc64-x-solaris2170516
+Ref: sparcv9-x-solaris2171234
+Ref: c6x-x-x171321
+Ref: tilegx-*-linux171413
+Ref: tilegxbe-*-linux171555
+Ref: tilepro-*-linux171698
+Ref: visium-x-elf171819
+Ref: x-x-vxworks171927
+Ref: x86-64-x-x173450
+Ref: x86-64-x-solaris2173778
+Ref: xtensa-x-elf174428
+Ref: xtensa-x-linux175099
+Ref: windows175440
+Ref: x-x-cygwin177281
+Ref: x-x-mingw32177834
+Ref: older178060
+Ref: elf180177
+Node: Old180435
+Node: Configurations183568
+Node: GNU Free Documentation License187106
+Node: Concept Index212234
 
 End Tag Table
 

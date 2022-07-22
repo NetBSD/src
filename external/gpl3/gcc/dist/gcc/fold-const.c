@@ -511,7 +511,7 @@ negate_expr_p (tree t)
       if (TREE_CODE (TREE_OPERAND (t, 1)) == INTEGER_CST)
 	{
 	  tree op1 = TREE_OPERAND (t, 1);
-	  if (wi::to_wide (op1) == TYPE_PRECISION (type) - 1)
+	  if (wi::to_wide (op1) == element_precision (type) - 1)
 	    return true;
 	}
       break;
@@ -704,7 +704,7 @@ fold_negate_expr_1 (location_t loc, tree t)
       if (TREE_CODE (TREE_OPERAND (t, 1)) == INTEGER_CST)
 	{
 	  tree op1 = TREE_OPERAND (t, 1);
-	  if (wi::to_wide (op1) == TYPE_PRECISION (type) - 1)
+	  if (wi::to_wide (op1) == element_precision (type) - 1)
 	    {
 	      tree ntype = TYPE_UNSIGNED (type)
 			   ? signed_type_for (type)
@@ -1308,6 +1308,17 @@ const_binop (enum tree_code code, tree arg1, tree arg2)
 
       inexact = real_arithmetic (&value, code, &d1, &d2);
       real_convert (&result, mode, &value);
+
+      /* Don't constant fold this floating point operation if
+	 both operands are not NaN but the result is NaN, and
+	 flag_trapping_math.  Such operations should raise an
+	 invalid operation exception.  */
+      if (flag_trapping_math
+	  && MODE_HAS_NANS (mode)
+	  && REAL_VALUE_ISNAN (result)
+	  && !REAL_VALUE_ISNAN (d1)
+	  && !REAL_VALUE_ISNAN (d2))
+	return NULL_TREE;
 
       /* Don't constant fold this floating point operation if
 	 the result has overflowed and flag_trapping_math.  */
@@ -2350,7 +2361,7 @@ build_zero_vector (tree type)
 bool
 fold_convertible_p (const_tree type, const_tree arg)
 {
-  tree orig = TREE_TYPE (arg);
+  const_tree orig = TREE_TYPE (arg);
 
   if (type == orig)
     return true;
@@ -2382,7 +2393,7 @@ fold_convertible_p (const_tree type, const_tree arg)
       return (VECTOR_TYPE_P (orig)
 	      && known_eq (TYPE_VECTOR_SUBPARTS (type),
 			   TYPE_VECTOR_SUBPARTS (orig))
-	      && fold_convertible_p (TREE_TYPE (type), TREE_TYPE (orig)));
+	      && tree_int_cst_equal (TYPE_SIZE (type), TYPE_SIZE (orig)));
 
     default:
       return false;
@@ -5108,7 +5119,7 @@ make_range_step (location_t loc, enum tree_code code, tree arg0, tree arg1,
 	n_high = fold_convert_loc (loc, arg0_type, n_high);
 
       /* If we're converting arg0 from an unsigned type, to exp,
-	 a signed type,  we will be doing the comparison as unsigned.
+	 a signed type, we will be doing the comparison as unsigned.
 	 The tests above have already verified that LOW and HIGH
 	 are both positive.
 
@@ -5167,6 +5178,32 @@ make_range_step (location_t loc, enum tree_code code, tree arg0, tree arg1,
 		return NULL_TREE;
 
 	      in_p = (in_p != n_in_p);
+	    }
+	}
+
+      /* Otherwise, if we are converting arg0 from signed type, to exp,
+	 an unsigned type, we will do the comparison as signed.  If
+	 high is non-NULL, we punt above if it doesn't fit in the signed
+	 type, so if we get through here, +[-, high] or +[low, high] are
+	 equivalent to +[-, n_high] or +[n_low, n_high].  Similarly,
+	 +[-, -] or -[-, -] are equivalent too.  But if low is specified and
+	 high is not, the +[low, -] range is equivalent to union of
+	 +[n_low, -] and +[-, -1] ranges, so +[low, -] is equivalent to
+	 -[0, n_low-1] and similarly -[low, -] to +[0, n_low-1], except for
+	 low being 0, which should be treated as [-, -].  */
+      else if (TYPE_UNSIGNED (exp_type)
+	       && !TYPE_UNSIGNED (arg0_type)
+	       && low
+	       && !high)
+	{
+	  if (integer_zerop (low))
+	    n_low = NULL_TREE;
+	  else
+	    {
+	      n_high = fold_build2_loc (loc, PLUS_EXPR, arg0_type,
+					n_low, build_int_cst (arg0_type, -1));
+	      n_low = build_zero_cst (arg0_type);
+	      in_p = !in_p;
 	    }
 	}
 
@@ -8852,8 +8889,18 @@ fold_unary_loc (location_t loc, enum tree_code code, tree type, tree op0)
 	  tree arg00 = TREE_OPERAND (arg0, 0);
 	  tree arg01 = TREE_OPERAND (arg0, 1);
 
-	  return fold_build_pointer_plus_loc
-		   (loc, fold_convert_loc (loc, type, arg00), arg01);
+	  /* Avoid this optimization in GENERIC for -fsanitize=null
+	     when type is a reference type and arg00's type is not,
+	     because arg00 could be validly nullptr and if arg01 doesn't return,
+	     we don't want false positive binding of reference to nullptr.  */
+	  if (TREE_CODE (type) == REFERENCE_TYPE
+	      && !in_gimple_form
+	      && (flag_sanitize & SANITIZE_NULL) != 0
+	      && TREE_CODE (TREE_TYPE (arg00)) != REFERENCE_TYPE)
+	    return NULL_TREE;
+
+	  arg00 = fold_convert_loc (loc, type, arg00);
+	  return fold_build_pointer_plus_loc (loc, arg00, arg01);
 	}
 
       /* Convert (T1)(~(T2)X) into ~(T1)X if T1 and T2 are integral types
@@ -14692,6 +14739,9 @@ fold_read_from_vector (tree arg, poly_uint64 idx)
 	return VECTOR_CST_ELT (arg, i);
       else if (TREE_CODE (arg) == CONSTRUCTOR)
 	{
+	  if (CONSTRUCTOR_NELTS (arg)
+	      && VECTOR_TYPE_P (TREE_TYPE (CONSTRUCTOR_ELT (arg, 0)->value)))
+	    return NULL_TREE;
 	  if (i >= CONSTRUCTOR_NELTS (arg))
 	    return build_zero_cst (TREE_TYPE (TREE_TYPE (arg)));
 	  return CONSTRUCTOR_ELT (arg, i)->value;

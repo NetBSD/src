@@ -10982,13 +10982,13 @@ build_opaque_vector_type (tree innertype, poly_int64 nunits)
 
 /* Return the value of element I of VECTOR_CST T as a wide_int.  */
 
-wide_int
+static poly_wide_int
 vector_cst_int_elt (const_tree t, unsigned int i)
 {
   /* First handle elements that are directly encoded.  */
   unsigned int encoded_nelts = vector_cst_encoded_nelts (t);
   if (i < encoded_nelts)
-    return wi::to_wide (VECTOR_CST_ENCODED_ELT (t, i));
+    return wi::to_poly_wide (VECTOR_CST_ENCODED_ELT (t, i));
 
   /* Identify the pattern that contains element I and work out the index of
      the last encoded element for that pattern.  */
@@ -10999,13 +10999,13 @@ vector_cst_int_elt (const_tree t, unsigned int i)
 
   /* If there are no steps, the final encoded value is the right one.  */
   if (!VECTOR_CST_STEPPED_P (t))
-    return wi::to_wide (VECTOR_CST_ENCODED_ELT (t, final_i));
+    return wi::to_poly_wide (VECTOR_CST_ENCODED_ELT (t, final_i));
 
   /* Otherwise work out the value from the last two encoded elements.  */
   tree v1 = VECTOR_CST_ENCODED_ELT (t, final_i - npatterns);
   tree v2 = VECTOR_CST_ENCODED_ELT (t, final_i);
-  wide_int diff = wi::to_wide (v2) - wi::to_wide (v1);
-  return wi::to_wide (v2) + (count - 2) * diff;
+  poly_wide_int diff = wi::to_poly_wide (v2) - wi::to_poly_wide (v1);
+  return wi::to_poly_wide (v2) + (count - 2) * diff;
 }
 
 /* Return the value of element I of VECTOR_CST T.  */
@@ -12191,7 +12191,6 @@ walk_tree_1 (tree *tp, walk_tree_fn func, void *data,
 	case OMP_CLAUSE_BIND:
 	case OMP_CLAUSE_AUTO:
 	case OMP_CLAUSE_SEQ:
-	case OMP_CLAUSE_TILE:
 	case OMP_CLAUSE__SIMT_:
 	case OMP_CLAUSE_IF_PRESENT:
 	case OMP_CLAUSE_FINALIZE:
@@ -12203,6 +12202,7 @@ walk_tree_1 (tree *tp, walk_tree_fn func, void *data,
 	  WALK_SUBTREE_TAIL (OMP_CLAUSE_CHAIN (*tp));
 
 	case OMP_CLAUSE_COLLAPSE:
+	case OMP_CLAUSE_TILE:
 	  {
 	    int i;
 	    for (i = 0; i < 3; i++)

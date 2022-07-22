@@ -1,5 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -19,9 +22,6 @@ A GNU Manual
 You have freedom to copy and modify this GNU Manual, like GNU
      software.  Copies published by the Free Software Foundation raise
      funds for GNU development. -->
-<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Host/Target specific installation notes for GCC</title>
 
 <meta name="description" content="Host/Target specific installation notes for GCC">
@@ -29,30 +29,24 @@ You have freedom to copy and modify this GNU Manual, like GNU
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
-blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
-blockquote.smallquotation {font-size: smaller}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
-div.smalldisplay {margin-left: 3.2em}
-div.smallexample {margin-left: 3.2em}
-div.smalllisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
 pre.menu-comment {font-family: serif}
 pre.menu-preformatted {font-family: serif}
-pre.smalldisplay {font-family: inherit; font-size: smaller}
-pre.smallexample {font-size: smaller}
-pre.smallformat {font-family: inherit; font-size: smaller}
-pre.smalllisp {font-size: smaller}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -86,11 +80,11 @@ ul.no-bullet {list-style: none}
 
 
 
-<a name="index-Specific"></a>
-<a name="index-Specific-installation-notes"></a>
-<a name="index-Target-specific-installation"></a>
-<a name="index-Host-specific-installation"></a>
-<a name="index-Target-specific-installation-notes"></a>
+<span id="index-Specific"></span>
+<span id="index-Specific-installation-notes"></span>
+<span id="index-Target-specific-installation"></span>
+<span id="index-Host-specific-installation"></span>
+<span id="index-Target-specific-installation-notes"></span>
 
 <p>Please read this document carefully <em>before</em> installing the
 GNU Compiler Collection on your machine.
@@ -180,8 +174,7 @@ information have to.
 
 <!-- -------- host/target specific issues start here ---------------- -->
 <hr />
-<a name="aarch64-x-x"></a><a name="aarch64*-*-*"></a>
-<h3 class="heading">aarch64*-*-*</h3>
+<span id="aarch64-x-x"></span><span id="aarch64*-*-*"></span><h3 class="heading">aarch64*-*-*</h3>
 <p>Binutils pre 2.24 does not have support for selecting <samp>-mabi</samp> and
 does not support ILP32.  If it is used to build GCC 4.9 or later, GCC will
 not support option <samp>-mabi=ilp32</samp>.
@@ -218,20 +211,17 @@ protections by default.  This mechanism is turned off by default if neither
 of the options are given at configure time.
 </p>
 <hr />
-<a name="alpha-x-x"></a><a name="alpha*-*-*"></a>
-<h3 class="heading">alpha*-*-*</h3>
+<span id="alpha-x-x"></span><span id="alpha*-*-*"></span><h3 class="heading">alpha*-*-*</h3>
 <p>This section contains general configuration information for all
 Alpha-based platforms using ELF.  In addition to reading this
 section, please read all other sections that match your target.
 </p>
 <hr />
-<a name="amd64-x-solaris2"></a><a name="amd64-*-solaris2*"></a>
-<h3 class="heading">amd64-*-solaris2*</h3>
+<span id="amd64-x-solaris2"></span><span id="amd64-*-solaris2*"></span><h3 class="heading">amd64-*-solaris2*</h3>
 <p>This is a synonym for &lsquo;<samp>x86_64-*-solaris2*</samp>&rsquo;.
 </p>
 <hr />
-<a name="amdgcn-x-amdhsa"></a><a name="amdgcn-*-amdhsa"></a>
-<h3 class="heading">amdgcn-*-amdhsa</h3>
+<span id="amdgcn-x-amdhsa"></span><span id="amdgcn-*-amdhsa"></span><h3 class="heading">amdgcn-*-amdhsa</h3>
 <p>AMD GCN GPU target.
 </p>
 <p>Instead of GNU Binutils, you will need to install LLVM 6, or later, and copy
@@ -249,22 +239,19 @@ section, please read all other sections that match your target.
 on the GPU.
 </p>
 <hr />
-<a name="arc-x-elf32"></a><a name="arc-*-elf32"></a>
-<h3 class="heading">arc-*-elf32</h3>
+<span id="arc-x-elf32"></span><span id="arc-*-elf32"></span><h3 class="heading">arc-*-elf32</h3>
 
 <p>Use &lsquo;<samp>configure --target=arc-elf32 --with-cpu=<var>cpu</var> --enable-languages=&quot;c,c++&quot;</samp>&rsquo;
 to configure GCC, with <var>cpu</var> being one of &lsquo;<samp>arc600</samp>&rsquo;, &lsquo;<samp>arc601</samp>&rsquo;,
 or &lsquo;<samp>arc700</samp>&rsquo;.
 </p>
 <hr />
-<a name="arc-linux-uclibc"></a><a name="arc-linux-uclibc-1"></a>
-<h3 class="heading">arc-linux-uclibc</h3>
+<span id="arc-linux-uclibc"></span><span id="arc-linux-uclibc-1"></span><h3 class="heading">arc-linux-uclibc</h3>
 
 <p>Use &lsquo;<samp>configure --target=arc-linux-uclibc --with-cpu=arc700 --enable-languages=&quot;c,c++&quot;</samp>&rsquo; to configure GCC.
 </p>
 <hr />
-<a name="arm-x-eabi"></a><a name="arm-*-eabi"></a>
-<h3 class="heading">arm-*-eabi</h3>
+<span id="arm-x-eabi"></span><span id="arm-*-eabi"></span><h3 class="heading">arm-*-eabi</h3>
 <p>ARM-family processors.
 </p>
 <p>Building the Ada frontend commonly fails (an infinite loop executing
@@ -272,8 +259,7 @@ or &lsquo;<samp>arc700</samp>&rsquo;.
 GNAT 4.6, 4.9 or 5 release branches are known to succeed.
 </p>
 <hr />
-<a name="avr"></a><a name="avr-1"></a>
-<h3 class="heading">avr</h3>
+<span id="avr"></span><span id="avr-1"></span><h3 class="heading">avr</h3>
 <p>ATMEL AVR-family micro controllers.  These are used in embedded
 applications.  There are no standard Unix configurations.
 See &ldquo;AVR Options&rdquo; in the main manual
@@ -290,15 +276,14 @@ can also be obtained from:
 </li></ul>
 
 <p>The following error:
-</p><div class="smallexample">
-<pre class="smallexample">Error: register required
+</p><div class="example">
+<pre class="example">Error: register required
 </pre></div>
 
 <p>indicates that you should upgrade to a newer version of the binutils.
 </p>
 <hr />
-<a name="bfin"></a><a name="Blackfin"></a>
-<h3 class="heading">Blackfin</h3>
+<span id="bfin"></span><span id="Blackfin"></span><h3 class="heading">Blackfin</h3>
 <p>The Blackfin processor, an Analog Devices DSP.
 See &ldquo;Blackfin Options&rdquo; in the main manual
 </p>
@@ -306,8 +291,7 @@ See &ldquo;Blackfin Options&rdquo; in the main manual
 are available at <a href="https://sourceforge.net/projects/adi-toolchain/">https://sourceforge.net/projects/adi-toolchain/</a>.
 </p>
 <hr />
-<a name="cr16"></a><a name="CR16"></a>
-<h3 class="heading">CR16</h3>
+<span id="cr16"></span><span id="CR16"></span><h3 class="heading">CR16</h3>
 <p>The CR16 CompactRISC architecture is a 16-bit architecture. This
 architecture is used in embedded applications.
 </p>
@@ -321,8 +305,7 @@ GCC&nbsp;for building a CR16 elf cross-compiler.
 configure GCC&nbsp;for building a CR16 uclinux cross-compiler.
 </p>
 <hr />
-<a name="cris"></a><a name="CRIS"></a>
-<h3 class="heading">CRIS</h3>
+<span id="cris"></span><span id="CRIS"></span><h3 class="heading">CRIS</h3>
 <p>CRIS is the CPU architecture in Axis Communications ETRAX system-on-a-chip
 series.  These are used in embedded applications.
 </p>
@@ -331,11 +314,11 @@ for a list of CRIS-specific options.
 </p>
 <p>There are a few different CRIS targets:
 </p><dl compact="compact">
-<dt><code>cris-axis-elf</code></dt>
+<dt><span><code>cris-axis-elf</code></span></dt>
 <dd><p>Mainly for monolithic embedded systems.  Includes a multilib for the
 &lsquo;<samp>v10</samp>&rsquo; core used in &lsquo;<samp>ETRAX 100 LX</samp>&rsquo;.
 </p></dd>
-<dt><code>cris-axis-linux-gnu</code></dt>
+<dt><span><code>cris-axis-linux-gnu</code></span></dt>
 <dd><p>A GNU/Linux port for the CRIS architecture, currently targeting
 &lsquo;<samp>ETRAX 100 LX</samp>&rsquo; by default.
 </p></dd>
@@ -347,8 +330,7 @@ information about this platform is available at
 <a href="http://developer.axis.com/">http://developer.axis.com/</a>.
 </p>
 <hr />
-<a name="dos"></a><a name="DOS"></a>
-<h3 class="heading">DOS</h3>
+<span id="dos"></span><span id="DOS"></span><h3 class="heading">DOS</h3>
 <p>Please have a look at the <a href="binaries.html">binaries page</a>.
 </p>
 <p>You cannot install GCC by itself on MSDOS; it will not compile under
@@ -357,14 +339,12 @@ compilation package DJGPP, which includes binaries as well as sources,
 and includes all the necessary compilation tools and libraries.
 </p>
 <hr />
-<a name="epiphany-x-elf"></a><a name="epiphany-*-elf"></a>
-<h3 class="heading">epiphany-*-elf</h3>
+<span id="epiphany-x-elf"></span><span id="epiphany-*-elf"></span><h3 class="heading">epiphany-*-elf</h3>
 <p>Adapteva Epiphany.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="x-x-freebsd"></a><a name="g_t*-*-freebsd*"></a>
-<h3 class="heading">*-*-freebsd*</h3>
+<span id="x-x-freebsd"></span><span id="g_t*-*-freebsd*"></span><h3 class="heading">*-*-freebsd*</h3>
 <p>Support for FreeBSD 1 was discontinued in GCC 3.2.  Support for
 FreeBSD 2 (and any mutant a.out variants of FreeBSD 3) was
 discontinued in GCC 4.0.
@@ -399,14 +379,12 @@ properly on FreeBSD prior to the FreeBSD 7.0 release with GNU binutils
 after 2.16.1.
 </p>
 <hr />
-<a name="ft32-x-elf"></a><a name="ft32-*-elf"></a>
-<h3 class="heading">ft32-*-elf</h3>
+<span id="ft32-x-elf"></span><span id="ft32-*-elf"></span><h3 class="heading">ft32-*-elf</h3>
 <p>The FT32 processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="h8300-hms"></a><a name="h8300-hms-1"></a>
-<h3 class="heading">h8300-hms</h3>
+<span id="h8300-hms"></span><span id="h8300-hms-1"></span><h3 class="heading">h8300-hms</h3>
 <p>Renesas H8/300 series of processors.
 </p>
 <p>Please have a look at the <a href="binaries.html">binaries page</a>.
@@ -417,8 +395,7 @@ first three arguments in function calls in registers.  Structures are no
 longer a multiple of 2 bytes.
 </p>
 <hr />
-<a name="hppa-hp-hpux"></a><a name="hppa*-hp-hpux*"></a>
-<h3 class="heading">hppa*-hp-hpux*</h3>
+<span id="hppa-hp-hpux"></span><span id="hppa*-hp-hpux*"></span><h3 class="heading">hppa*-hp-hpux*</h3>
 <p>Support for HP-UX version 9 and older was discontinued in GCC 3.4.
 </p>
 <p>We require using gas/binutils on all hppa platforms.  Version 2.19 or
@@ -468,8 +445,7 @@ a list of the predefines used with each standard.
 <p>More specific information to &lsquo;<samp>hppa*-hp-hpux*</samp>&rsquo; targets follows.
 </p>
 <hr />
-<a name="hppa-hp-hpux10"></a><a name="hppa*-hp-hpux10"></a>
-<h3 class="heading">hppa*-hp-hpux10</h3>
+<span id="hppa-hp-hpux10"></span><span id="hppa*-hp-hpux10"></span><h3 class="heading">hppa*-hp-hpux10</h3>
 <p>For hpux10.20, we <em>highly</em> recommend you pick up the latest sed patch
 <code>PHCO_19798</code> from HP.
 </p>
@@ -479,8 +455,7 @@ problems in using C++ on this target.  However, the ABI is not compatible
 with the one implemented under HP-UX 11 using secondary definitions.
 </p>
 <hr />
-<a name="hppa-hp-hpux11"></a><a name="hppa*-hp-hpux11"></a>
-<h3 class="heading">hppa*-hp-hpux11</h3>
+<span id="hppa-hp-hpux11"></span><span id="hppa*-hp-hpux11"></span><h3 class="heading">hppa*-hp-hpux11</h3>
 <p>GCC 3.0 and up support HP-UX 11.  GCC 2.95.x is not supported and cannot
 be used to compile GCC 3.0 and up.
 </p>
@@ -583,15 +558,13 @@ versioning with <samp>--disable-symvers</samp> when using GNU ld.
 supported, so <samp>--enable-threads=dce</samp> does not work.
 </p>
 <hr />
-<a name="x-x-linux-gnu"></a><a name="g_t*-*-linux-gnu"></a>
-<h3 class="heading">*-*-linux-gnu</h3>
+<span id="x-x-linux-gnu"></span><span id="g_t*-*-linux-gnu"></span><h3 class="heading">*-*-linux-gnu</h3>
 <p>Versions of libstdc++-v3 starting with 3.2.1 require bug fixes present
 in glibc 2.2.5 and later.  More information is available in the
 libstdc++-v3 documentation.
 </p>
 <hr />
-<a name="ix86-x-linux"></a><a name="i_003f86-*-linux*"></a>
-<h3 class="heading">i?86-*-linux*</h3>
+<span id="ix86-x-linux"></span><span id="i_003f86-*-linux*"></span><h3 class="heading">i?86-*-linux*</h3>
 <p>As of GCC 3.3, binutils 2.13.1 or later is required for this platform.
 See <a href="http://gcc.gnu.org/PR10877">bug 10877</a> for more information.
 </p>
@@ -600,8 +573,7 @@ possible you have a hardware problem.  Further information on this can be
 found on <a href="http://www.bitwizard.nl/sig11/">www.bitwizard.nl</a>.
 </p>
 <hr />
-<a name="ix86-x-solaris2"></a><a name="i_003f86-*-solaris2*"></a>
-<h3 class="heading">i?86-*-solaris2*</h3>
+<span id="ix86-x-solaris2"></span><span id="i_003f86-*-solaris2*"></span><h3 class="heading">i?86-*-solaris2*</h3>
 <p>Use this for Solaris 11.3 or later on x86 and x86-64 systems.  Starting
 with GCC 4.7, there is also a 64-bit &lsquo;<samp>amd64-*-solaris2*</samp>&rsquo; or
 &lsquo;<samp>x86_64-*-solaris2*</samp>&rsquo; configuration that corresponds to
@@ -625,8 +597,7 @@ to configure with <samp>--without-gnu-ld --with-ld=/usr/ccs/bin/ld</samp> to
 guarantee use of Solaris <code>ld</code>.
 </p>
 <hr />
-<a name="ia64-x-linux"></a><a name="ia64-*-linux"></a>
-<h3 class="heading">ia64-*-linux</h3>
+<span id="ia64-x-linux"></span><span id="ia64-*-linux"></span><h3 class="heading">ia64-*-linux</h3>
 <p>IA-64 processor (also known as IPF, or Itanium Processor Family)
 running GNU/Linux.
 </p>
@@ -644,8 +615,7 @@ As of version 3.1 GCC is believed to be fully ABI compliant, and hence no
 more major ABI changes are expected.
 </p>
 <hr />
-<a name="ia64-x-hpux"></a><a name="ia64-*-hpux*"></a>
-<h3 class="heading">ia64-*-hpux*</h3>
+<span id="ia64-x-hpux"></span><span id="ia64-*-hpux*"></span><h3 class="heading">ia64-*-hpux*</h3>
 <p>Building GCC on this target requires the GNU Assembler.  The bundled HP
 assembler will not work.  To prevent GCC from using the wrong assembler,
 the option <samp>--with-gnu-as</samp> may be necessary.
@@ -658,8 +628,7 @@ removed and the system libunwind library will always be used.
 </p>
 <hr />
 <!-- rs6000-ibm-aix*, powerpc-ibm-aix* -->
-<a name="x-ibm-aix"></a><a name="g_t*-ibm-aix*"></a>
-<h3 class="heading">*-ibm-aix*</h3>
+<span id="x-ibm-aix"></span><span id="g_t*-ibm-aix*"></span><h3 class="heading">*-ibm-aix*</h3>
 <p>Support for AIX version 3 and older was discontinued in GCC 3.4.
 Support for AIX version 4.2 and older was discontinued in GCC 4.5.
 </p>
@@ -676,8 +645,8 @@ with an earlier release of GCC is recommended.  Bootstrapping with XLC
 requires a larger data segment, which can be enabled through the
 <var>LDR_CNTRL</var> environment variable, e.g.,
 </p>
-<div class="smallexample">
-<pre class="smallexample">% LDR_CNTRL=MAXDATA=0x50000000
+<div class="example">
+<pre class="example">% LDR_CNTRL=MAXDATA=0x50000000
 % export LDR_CNTRL
 </pre></div>
 
@@ -688,8 +657,8 @@ with a version of GCC built for an earlier release of AIX.
 <p>To speed up the configuration phases of bootstrapping and installing GCC,
 one may use GNU Bash instead of AIX <code>/bin/sh</code>, e.g.,
 </p>
-<div class="smallexample">
-<pre class="smallexample">% CONFIG_SHELL=/opt/freeware/bin/bash
+<div class="example">
+<pre class="example">% CONFIG_SHELL=/opt/freeware/bin/bash
 % export CONFIG_SHELL
 </pre></div>
 
@@ -739,7 +708,7 @@ APAR IY26685 (AIX 4.3) or APAR IY25528 (AIX 5.1).  It also requires a
 fix for another AIX Assembler bug and a co-dependent AIX Archiver fix
 referenced as APAR IY53606 (AIX 5.2) or as APAR IY54774 (AIX 5.1)
 </p>
-<a name="TransferAixShobj"></a><p>&lsquo;<samp>libstdc++</samp>&rsquo; in GCC 3.4 increments the major version number of the
+<span id="TransferAixShobj"></span><p>&lsquo;<samp>libstdc++</samp>&rsquo; in GCC 3.4 increments the major version number of the
 shared object and GCC installation places the <samp>libstdc++.a</samp>
 shared library in a common location which will overwrite the and GCC
 3.3 version of the shared library.  Applications either need to be
@@ -753,20 +722,20 @@ multilib <samp>libstdc++.a</samp> installed:
 </p>
 <p>Extract the shared objects from the currently installed
 <samp>libstdc++.a</samp> archive:
-</p><div class="smallexample">
-<pre class="smallexample">% ar -x libstdc++.a libstdc++.so.4 libstdc++.so.5
+</p><div class="example">
+<pre class="example">% ar -x libstdc++.a libstdc++.so.4 libstdc++.so.5
 </pre></div>
 
 <p>Enable the &lsquo;<samp>F_LOADONLY</samp>&rsquo; flag so that the shared object will be
 available for runtime dynamic loading, but not linking:
-</p><div class="smallexample">
-<pre class="smallexample">% strip -e libstdc++.so.4 libstdc++.so.5
+</p><div class="example">
+<pre class="example">% strip -e libstdc++.so.4 libstdc++.so.5
 </pre></div>
 
 <p>Archive the runtime-only shared object in the GCC 3.4
 <samp>libstdc++.a</samp> archive:
-</p><div class="smallexample">
-<pre class="smallexample">% ar -q libstdc++.a libstdc++.so.4 libstdc++.so.5
+</p><div class="example">
+<pre class="example">% ar -q libstdc++.a libstdc++.so.4 libstdc++.so.5
 </pre></div>
 
 <p>Eventually, the
@@ -823,38 +792,32 @@ environment variable to &lsquo;<samp>C</samp>&rsquo; or &lsquo;<samp>En_US</samp
 switch and using the configure option <samp>--with-cpu-<var>cpu_type</var></samp>.
 </p>
 <hr />
-<a name="iq2000-x-elf"></a><a name="iq2000-*-elf"></a>
-<h3 class="heading">iq2000-*-elf</h3>
+<span id="iq2000-x-elf"></span><span id="iq2000-*-elf"></span><h3 class="heading">iq2000-*-elf</h3>
 <p>Vitesse IQ2000 processors.  These are used in embedded
 applications.  There are no standard Unix configurations.
 </p>
 <hr />
-<a name="lm32-x-elf"></a><a name="lm32-*-elf"></a>
-<h3 class="heading">lm32-*-elf</h3>
+<span id="lm32-x-elf"></span><span id="lm32-*-elf"></span><h3 class="heading">lm32-*-elf</h3>
 <p>Lattice Mico32 processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="lm32-x-uclinux"></a><a name="lm32-*-uclinux"></a>
-<h3 class="heading">lm32-*-uclinux</h3>
+<span id="lm32-x-uclinux"></span><span id="lm32-*-uclinux"></span><h3 class="heading">lm32-*-uclinux</h3>
 <p>Lattice Mico32 processor.
 This configuration is intended for embedded systems running uClinux.
 </p>
 <hr />
-<a name="m32c-x-elf"></a><a name="m32c-*-elf"></a>
-<h3 class="heading">m32c-*-elf</h3>
+<span id="m32c-x-elf"></span><span id="m32c-*-elf"></span><h3 class="heading">m32c-*-elf</h3>
 <p>Renesas M32C processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="m32r-x-elf"></a><a name="m32r-*-elf"></a>
-<h3 class="heading">m32r-*-elf</h3>
+<span id="m32r-x-elf"></span><span id="m32r-*-elf"></span><h3 class="heading">m32r-*-elf</h3>
 <p>Renesas M32R processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="m68k-x-x"></a><a name="m68k-*-*"></a>
-<h3 class="heading">m68k-*-*</h3>
+<span id="m68k-x-x"></span><span id="m68k-*-*"></span><h3 class="heading">m68k-*-*</h3>
 <p>By default,
 &lsquo;<samp>m68k-*-elf*</samp>&rsquo;, &lsquo;<samp>m68k-*-rtems</samp>&rsquo;,  &lsquo;<samp>m68k-*-uclinux</samp>&rsquo; and
 &lsquo;<samp>m68k-*-linux</samp>&rsquo;
@@ -880,22 +843,19 @@ be a <samp>-mcpu</samp> argument or one of the following values:
 <p>GCC requires at least binutils version 2.17 on these targets.
 </p>
 <hr />
-<a name="m68k-x-uclinux"></a><a name="m68k-*-uclinux"></a>
-<h3 class="heading">m68k-*-uclinux</h3>
+<span id="m68k-x-uclinux"></span><span id="m68k-*-uclinux"></span><h3 class="heading">m68k-*-uclinux</h3>
 <p>GCC 4.3 changed the uClinux configuration so that it uses the
 &lsquo;<samp>m68k-linux-gnu</samp>&rsquo; ABI rather than the &lsquo;<samp>m68k-elf</samp>&rsquo; ABI.
 It also added improved support for C++ and flat shared libraries,
 both of which were ABI changes.
 </p>
 <hr />
-<a name="microblaze-x-elf"></a><a name="microblaze-*-elf"></a>
-<h3 class="heading">microblaze-*-elf</h3>
+<span id="microblaze-x-elf"></span><span id="microblaze-*-elf"></span><h3 class="heading">microblaze-*-elf</h3>
 <p>Xilinx MicroBlaze processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="mips-x-x"></a><a name="mips-*-*"></a>
-<h3 class="heading">mips-*-*</h3>
+<span id="mips-x-x"></span><span id="mips-*-*"></span><h3 class="heading">mips-*-*</h3>
 <p>If on a MIPS system you get an error message saying &ldquo;does not have gp
 sections for all it&rsquo;s [sic] sectons [sic]&rdquo;, don&rsquo;t worry about it.  This
 happens whenever you use GAS with the MIPS linker, but there is not
@@ -935,13 +895,11 @@ the use of break, use the <samp>--with-divide=breaks</samp>
 use traps on systems that support them.
 </p>
 <hr />
-<a name="moxie-x-elf"></a><a name="moxie-*-elf"></a>
-<h3 class="heading">moxie-*-elf</h3>
+<span id="moxie-x-elf"></span><span id="moxie-*-elf"></span><h3 class="heading">moxie-*-elf</h3>
 <p>The moxie processor.
 </p>
 <hr />
-<a name="msp430-x-elf"></a><a name="msp430-*-elf*"></a>
-<h3 class="heading">msp430-*-elf*</h3>
+<span id="msp430-x-elf"></span><span id="msp430-*-elf*"></span><h3 class="heading">msp430-*-elf*</h3>
 <p>TI MSP430 processor.
 This configuration is intended for embedded systems.
 </p>
@@ -960,18 +918,15 @@ in a minimal run-time environment by default.
 </li></ul>
 
 <hr />
-<a name="nds32le-x-elf"></a><a name="nds32le-*-elf"></a>
-<h3 class="heading">nds32le-*-elf</h3>
+<span id="nds32le-x-elf"></span><span id="nds32le-*-elf"></span><h3 class="heading">nds32le-*-elf</h3>
 <p>Andes NDS32 target in little endian mode.
 </p>
 <hr />
-<a name="nds32be-x-elf"></a><a name="nds32be-*-elf"></a>
-<h3 class="heading">nds32be-*-elf</h3>
+<span id="nds32be-x-elf"></span><span id="nds32be-*-elf"></span><h3 class="heading">nds32be-*-elf</h3>
 <p>Andes NDS32 target in big endian mode.
 </p>
 <hr />
-<a name="nvptx-x-none"></a><a name="nvptx-*-none"></a>
-<h3 class="heading">nvptx-*-none</h3>
+<span id="nvptx-x-none"></span><span id="nvptx-*-none"></span><h3 class="heading">nvptx-*-none</h3>
 <p>Nvidia PTX target.
 </p>
 <p>Instead of GNU binutils, you will need to install
@@ -989,27 +944,23 @@ the GCC sources.
 <samp>--enable-newlib-io-long-long</samp> options when configuring.
 </p>
 <hr />
-<a name="or1k-x-elf"></a><a name="or1k-*-elf"></a>
-<h3 class="heading">or1k-*-elf</h3>
+<span id="or1k-x-elf"></span><span id="or1k-*-elf"></span><h3 class="heading">or1k-*-elf</h3>
 <p>The OpenRISC 1000 32-bit processor with delay slots.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="or1k-x-linux"></a><a name="or1k-*-linux"></a>
-<h3 class="heading">or1k-*-linux</h3>
+<span id="or1k-x-linux"></span><span id="or1k-*-linux"></span><h3 class="heading">or1k-*-linux</h3>
 <p>The OpenRISC 1000 32-bit processor with delay slots.
 </p>
 <hr />
-<a name="powerpc-x-x"></a><a name="powerpc-*-*"></a>
-<h3 class="heading">powerpc-*-*</h3>
+<span id="powerpc-x-x"></span><span id="powerpc-*-*"></span><h3 class="heading">powerpc-*-*</h3>
 <p>You can specify a default version for the <samp>-mcpu=<var>cpu_type</var></samp>
 switch by using the configure option <samp>--with-cpu-<var>cpu_type</var></samp>.
 </p>
 <p>You will need GNU binutils 2.20 or newer.
 </p>
 <hr />
-<a name="powerpc-x-darwin"></a><a name="powerpc-*-darwin*"></a>
-<h3 class="heading">powerpc-*-darwin*</h3>
+<span id="powerpc-x-darwin"></span><span id="powerpc-*-darwin*"></span><h3 class="heading">powerpc-*-darwin*</h3>
 <p>PowerPC running Darwin (Mac OS X kernel).
 </p>
 <p>Pre-installed versions of Mac OS X may not include any developer tools,
@@ -1023,103 +974,85 @@ cctools-590.36 package referenced from
 on systems older than 10.3.9 (aka darwin7.9.0).
 </p>
 <hr />
-<a name="powerpc-x-elf"></a><a name="powerpc-*-elf"></a>
-<h3 class="heading">powerpc-*-elf</h3>
+<span id="powerpc-x-elf"></span><span id="powerpc-*-elf"></span><h3 class="heading">powerpc-*-elf</h3>
 <p>PowerPC system in big endian mode, running System V.4.
 </p>
 <hr />
-<a name="powerpc-x-linux-gnu"></a><a name="powerpc*-*-linux-gnu*"></a>
-<h3 class="heading">powerpc*-*-linux-gnu*</h3>
+<span id="powerpc-x-linux-gnu"></span><span id="powerpc*-*-linux-gnu*"></span><h3 class="heading">powerpc*-*-linux-gnu*</h3>
 <p>PowerPC system in big endian mode running Linux.
 </p>
 <hr />
-<a name="powerpc-x-netbsd"></a><a name="powerpc-*-netbsd*"></a>
-<h3 class="heading">powerpc-*-netbsd*</h3>
+<span id="powerpc-x-netbsd"></span><span id="powerpc-*-netbsd*"></span><h3 class="heading">powerpc-*-netbsd*</h3>
 <p>PowerPC system in big endian mode running NetBSD.
 </p>
 <hr />
-<a name="powerpc-x-eabisim"></a><a name="powerpc-*-eabisim"></a>
-<h3 class="heading">powerpc-*-eabisim</h3>
+<span id="powerpc-x-eabisim"></span><span id="powerpc-*-eabisim"></span><h3 class="heading">powerpc-*-eabisim</h3>
 <p>Embedded PowerPC system in big endian mode for use in running under the
 PSIM simulator.
 </p>
 <hr />
-<a name="powerpc-x-eabi"></a><a name="powerpc-*-eabi"></a>
-<h3 class="heading">powerpc-*-eabi</h3>
+<span id="powerpc-x-eabi"></span><span id="powerpc-*-eabi"></span><h3 class="heading">powerpc-*-eabi</h3>
 <p>Embedded PowerPC system in big endian mode.
 </p>
 <hr />
-<a name="powerpcle-x-elf"></a><a name="powerpcle-*-elf"></a>
-<h3 class="heading">powerpcle-*-elf</h3>
+<span id="powerpcle-x-elf"></span><span id="powerpcle-*-elf"></span><h3 class="heading">powerpcle-*-elf</h3>
 <p>PowerPC system in little endian mode, running System V.4.
 </p>
 <hr />
-<a name="powerpcle-x-eabisim"></a><a name="powerpcle-*-eabisim"></a>
-<h3 class="heading">powerpcle-*-eabisim</h3>
+<span id="powerpcle-x-eabisim"></span><span id="powerpcle-*-eabisim"></span><h3 class="heading">powerpcle-*-eabisim</h3>
 <p>Embedded PowerPC system in little endian mode for use in running under
 the PSIM simulator.
 </p>
 <hr />
-<a name="powerpcle-x-eabi"></a><a name="powerpcle-*-eabi"></a>
-<h3 class="heading">powerpcle-*-eabi</h3>
+<span id="powerpcle-x-eabi"></span><span id="powerpcle-*-eabi"></span><h3 class="heading">powerpcle-*-eabi</h3>
 <p>Embedded PowerPC system in little endian mode.
 </p>
 <hr />
-<a name="rl78-x-elf"></a><a name="rl78-*-elf"></a>
-<h3 class="heading">rl78-*-elf</h3>
+<span id="rl78-x-elf"></span><span id="rl78-*-elf"></span><h3 class="heading">rl78-*-elf</h3>
 <p>The Renesas RL78 processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="riscv32-x-elf"></a><a name="riscv32-*-elf"></a>
-<h3 class="heading">riscv32-*-elf</h3>
+<span id="riscv32-x-elf"></span><span id="riscv32-*-elf"></span><h3 class="heading">riscv32-*-elf</h3>
 <p>The RISC-V RV32 instruction set.
 This configuration is intended for embedded systems.
 This (and all other RISC-V) targets require the binutils 2.30 release.
 </p>
 <hr />
-<a name="riscv32-x-linux"></a><a name="riscv32-*-linux"></a>
-<h3 class="heading">riscv32-*-linux</h3>
+<span id="riscv32-x-linux"></span><span id="riscv32-*-linux"></span><h3 class="heading">riscv32-*-linux</h3>
 <p>The RISC-V RV32 instruction set running GNU/Linux.
 This (and all other RISC-V) targets require the binutils 2.30 release.
 </p>
 <hr />
-<a name="riscv64-x-elf"></a><a name="riscv64-*-elf"></a>
-<h3 class="heading">riscv64-*-elf</h3>
+<span id="riscv64-x-elf"></span><span id="riscv64-*-elf"></span><h3 class="heading">riscv64-*-elf</h3>
 <p>The RISC-V RV64 instruction set.
 This configuration is intended for embedded systems.
 This (and all other RISC-V) targets require the binutils 2.30 release.
 </p>
 <hr />
-<a name="riscv64-x-linux"></a><a name="riscv64-*-linux"></a>
-<h3 class="heading">riscv64-*-linux</h3>
+<span id="riscv64-x-linux"></span><span id="riscv64-*-linux"></span><h3 class="heading">riscv64-*-linux</h3>
 <p>The RISC-V RV64 instruction set running GNU/Linux.
 This (and all other RISC-V) targets require the binutils 2.30 release.
 </p>
 <hr />
-<a name="rx-x-elf"></a><a name="rx-*-elf"></a>
-<h3 class="heading">rx-*-elf</h3>
+<span id="rx-x-elf"></span><span id="rx-*-elf"></span><h3 class="heading">rx-*-elf</h3>
 <p>The Renesas RX processor.
 </p>
 <hr />
-<a name="s390-x-linux"></a><a name="s390-*-linux*"></a>
-<h3 class="heading">s390-*-linux*</h3>
+<span id="s390-x-linux"></span><span id="s390-*-linux*"></span><h3 class="heading">s390-*-linux*</h3>
 <p>S/390 system running GNU/Linux for S/390.
 </p>
 <hr />
-<a name="s390x-x-linux"></a><a name="s390x-*-linux*"></a>
-<h3 class="heading">s390x-*-linux*</h3>
+<span id="s390x-x-linux"></span><span id="s390x-*-linux*"></span><h3 class="heading">s390x-*-linux*</h3>
 <p>zSeries system (64-bit) running GNU/Linux for zSeries.
 </p>
 <hr />
-<a name="s390x-ibm-tpf"></a><a name="s390x-ibm-tpf*"></a>
-<h3 class="heading">s390x-ibm-tpf*</h3>
+<span id="s390x-ibm-tpf"></span><span id="s390x-ibm-tpf*"></span><h3 class="heading">s390x-ibm-tpf*</h3>
 <p>zSeries system (64-bit) running TPF.  This platform is
 supported as cross-compilation target only.
 </p>
 <hr />
-<a name="x-x-solaris2"></a><a name="g_t*-*-solaris2*"></a>
-<h3 class="heading">*-*-solaris2*</h3>
+<span id="x-x-solaris2"></span><span id="g_t*-*-solaris2*"></span><h3 class="heading">*-*-solaris2*</h3>
 <p>Support for Solaris 10 has been removed in GCC 10.  Support for Solaris
 9 has been removed in GCC 5.  Support for Solaris 8 has been removed in
 GCC 4.8.  Support for Solaris 7 has been removed in GCC 4.6.
@@ -1134,8 +1067,8 @@ you can install a pre-built GCC to bootstrap and install GCC.  See the
 &lsquo;<samp>libstdc++-v3</samp>&rsquo;.  We therefore recommend using the
 following initial sequence of commands
 </p>
-<div class="smallexample">
-<pre class="smallexample">% CONFIG_SHELL=/bin/ksh
+<div class="example">
+<pre class="example">% CONFIG_SHELL=/bin/ksh
 % export CONFIG_SHELL
 </pre></div>
 
@@ -1192,8 +1125,7 @@ need to provide a more recent one.
 </li></ul>
 
 <hr />
-<a name="sparc-x-x"></a><a name="sparc*-*-*"></a>
-<h3 class="heading">sparc*-*-*</h3>
+<span id="sparc-x-x"></span><span id="sparc*-*-*"></span><h3 class="heading">sparc*-*-*</h3>
 <p>This section contains general configuration information for all
 SPARC-based platforms.  In addition to reading this section, please
 read all other sections that match your target.
@@ -1205,8 +1137,7 @@ of the exact versions of these libraries listed as minimal versions
 in <a href="prerequisites.html">the prerequisites</a>.
 </p>
 <hr />
-<a name="sparc-sun-solaris2"></a><a name="sparc-sun-solaris2*"></a>
-<h3 class="heading">sparc-sun-solaris2*</h3>
+<span id="sparc-sun-solaris2"></span><span id="sparc-sun-solaris2*"></span><h3 class="heading">sparc-sun-solaris2*</h3>
 <p>When GCC is configured to use GNU binutils 2.14 or later, the binaries
 produced are smaller than the ones produced using Solaris native tools;
 this difference is quite significant for binaries containing debugging
@@ -1226,17 +1157,15 @@ target triplet must be specified as the <code>build</code> parameter on the
 configure line.  This target triplet can be obtained by invoking <code>./config.guess</code> in the toplevel source directory of GCC (and
 not that of GMP or MPFR or MPC).  For example on a Solaris 11 system:
 </p>
-<div class="smallexample">
-<pre class="smallexample">% ./configure --build=sparc-sun-solaris2.11 --prefix=xxx
+<div class="example">
+<pre class="example">% ./configure --build=sparc-sun-solaris2.11 --prefix=xxx
 </pre></div>
 
 <hr />
-<a name="sparc-x-linux"></a><a name="sparc-*-linux*"></a>
-<h3 class="heading">sparc-*-linux*</h3>
+<span id="sparc-x-linux"></span><span id="sparc-*-linux*"></span><h3 class="heading">sparc-*-linux*</h3>
 
 <hr />
-<a name="sparc64-x-solaris2"></a><a name="sparc64-*-solaris2*"></a>
-<h3 class="heading">sparc64-*-solaris2*</h3>
+<span id="sparc64-x-solaris2"></span><span id="sparc64-*-solaris2*"></span><h3 class="heading">sparc64-*-solaris2*</h3>
 <p>When configuring a 64-bit-default GCC on Solaris/SPARC, you must use a
 build compiler that generates 64-bit code, either by default or by
 specifying &lsquo;<samp>CC='gcc -m64' CXX='gcc-m64'</samp>&rsquo; to <code>configure</code>.
@@ -1249,47 +1178,40 @@ library or the MPC library, the canonical target triplet must be specified
 as the <code>build</code> parameter on the configure line.  For example
 on a Solaris 11 system:
 </p>
-<div class="smallexample">
-<pre class="smallexample">% ./configure --build=sparc64-sun-solaris2.11 --prefix=xxx
+<div class="example">
+<pre class="example">% ./configure --build=sparc64-sun-solaris2.11 --prefix=xxx
 </pre></div>
 
 <hr />
-<a name="sparcv9-x-solaris2"></a><a name="sparcv9-*-solaris2*"></a>
-<h3 class="heading">sparcv9-*-solaris2*</h3>
+<span id="sparcv9-x-solaris2"></span><span id="sparcv9-*-solaris2*"></span><h3 class="heading">sparcv9-*-solaris2*</h3>
 <p>This is a synonym for &lsquo;<samp>sparc64-*-solaris2*</samp>&rsquo;.
 </p>
 <hr />
-<a name="c6x-x-x"></a><a name="c6x-*-*"></a>
-<h3 class="heading">c6x-*-*</h3>
+<span id="c6x-x-x"></span><span id="c6x-*-*"></span><h3 class="heading">c6x-*-*</h3>
 <p>The C6X family of processors. This port requires binutils-2.22 or newer.
 </p>
 <hr />
-<a name="tilegx-*-linux"></a><a name="tilegx-*-linux*"></a>
-<h3 class="heading">tilegx-*-linux*</h3>
+<span id="tilegx-*-linux"></span><span id="tilegx-*-linux*"></span><h3 class="heading">tilegx-*-linux*</h3>
 <p>The TILE-Gx processor in little endian mode, running GNU/Linux.  This
 port requires binutils-2.22 or newer.
 </p>
 <hr />
-<a name="tilegxbe-*-linux"></a><a name="tilegxbe-*-linux*"></a>
-<h3 class="heading">tilegxbe-*-linux*</h3>
+<span id="tilegxbe-*-linux"></span><span id="tilegxbe-*-linux*"></span><h3 class="heading">tilegxbe-*-linux*</h3>
 <p>The TILE-Gx processor in big endian mode, running GNU/Linux.  This
 port requires binutils-2.23 or newer.
 </p>
 <hr />
-<a name="tilepro-*-linux"></a><a name="tilepro-*-linux*"></a>
-<h3 class="heading">tilepro-*-linux*</h3>
+<span id="tilepro-*-linux"></span><span id="tilepro-*-linux*"></span><h3 class="heading">tilepro-*-linux*</h3>
 <p>The TILEPro processor running GNU/Linux.  This port requires
 binutils-2.22 or newer.
 </p>
 <hr />
-<a name="visium-x-elf"></a><a name="visium-*-elf"></a>
-<h3 class="heading">visium-*-elf</h3>
+<span id="visium-x-elf"></span><span id="visium-*-elf"></span><h3 class="heading">visium-*-elf</h3>
 <p>CDS VISIUMcore processor.
 This configuration is intended for embedded systems.
 </p>
 <hr />
-<a name="x-x-vxworks"></a><a name="g_t*-*-vxworks*"></a>
-<h3 class="heading">*-*-vxworks*</h3>
+<span id="x-x-vxworks"></span><span id="g_t*-*-vxworks*"></span><h3 class="heading">*-*-vxworks*</h3>
 <p>Support for VxWorks is in flux.  At present GCC supports <em>only</em> the
 very recent VxWorks 5.5 (aka Tornado 2.2) release, and only on PowerPC.
 We welcome patches for other architectures supported by VxWorks 5.5.
@@ -1322,16 +1244,14 @@ that file to add the module to your kernel build.  (Future versions of
 VxWorks will incorporate this module.)
 </p>
 <hr />
-<a name="x86-64-x-x"></a><a name="x86_005f64-*-*_002c-amd64-*-*"></a>
-<h3 class="heading">x86_64-*-*, amd64-*-*</h3>
+<span id="x86-64-x-x"></span><span id="x86_005f64-*-*_002c-amd64-*-*"></span><h3 class="heading">x86_64-*-*, amd64-*-*</h3>
 <p>GCC supports the x86-64 architecture implemented by the AMD64 processor
 (amd64-*-* is an alias for x86_64-*-*) on GNU/Linux, FreeBSD and NetBSD.
 On GNU/Linux the default is a bi-arch compiler which is able to generate
 both 64-bit x86-64 and 32-bit x86 code (via the <samp>-m32</samp> switch).
 </p>
 <hr />
-<a name="x86-64-x-solaris2"></a><a name="x86_005f64-*-solaris2*"></a>
-<h3 class="heading">x86_64-*-solaris2*</h3>
+<span id="x86-64-x-solaris2"></span><span id="x86_005f64-*-solaris2*"></span><h3 class="heading">x86_64-*-solaris2*</h3>
 <p>GCC also supports the x86-64 architecture implemented by the AMD64
 processor (&lsquo;<samp>amd64-*-*</samp>&rsquo; is an alias for &lsquo;<samp>x86_64-*-*</samp>&rsquo;) on
 Solaris 10 or later.  Unlike other systems, without special options a
@@ -1344,8 +1264,7 @@ as 64-bit code, configure with <samp>--target=x86_64-pc-solaris2.11</samp>
 and &lsquo;<samp>CC=gcc -m64</samp>&rsquo;.
 </p>
 <hr />
-<a name="xtensa-x-elf"></a><a name="xtensa*-*-elf"></a>
-<h3 class="heading">xtensa*-*-elf</h3>
+<span id="xtensa-x-elf"></span><span id="xtensa*-*-elf"></span><h3 class="heading">xtensa*-*-elf</h3>
 <p>This target is intended for embedded Xtensa systems using the
 &lsquo;<samp>newlib</samp>&rsquo; C library.  It uses ELF but does not support shared
 objects.  Designed-defined instructions specified via the
@@ -1360,8 +1279,7 @@ downloaded files include a customized copy of this header file,
 which you can use to replace the default header file.
 </p>
 <hr />
-<a name="xtensa-x-linux"></a><a name="xtensa*-*-linux*"></a>
-<h3 class="heading">xtensa*-*-linux*</h3>
+<span id="xtensa-x-linux"></span><span id="xtensa*-*-linux*"></span><h3 class="heading">xtensa*-*-linux*</h3>
 <p>This target is for Xtensa systems running GNU/Linux.  It supports ELF
 shared objects and the GNU C library (glibc).  It also generates
 position-independent code (PIC) regardless of whether the
@@ -1370,19 +1288,16 @@ respects, this target is the same as the
 <a href="#xtensa*-*-elf">&lsquo;<samp>xtensa*-*-elf</samp>&rsquo;</a> target.
 </p>
 <hr />
-<a name="windows"></a><a name="Microsoft-Windows"></a>
-<h3 class="heading">Microsoft Windows</h3>
+<span id="windows"></span><span id="Microsoft-Windows"></span><h3 class="heading">Microsoft Windows</h3>
 
-<a name="Intel-16-bit-versions"></a>
-<h4 class="subheading">Intel 16-bit versions</h4>
+<span id="Intel-16-bit-versions"></span><h4 class="subheading">Intel 16-bit versions</h4>
 <p>The 16-bit versions of Microsoft Windows, such as Windows 3.1, are not
 supported.
 </p>
 <p>However, the 32-bit port has limited support for Microsoft
 Windows 3.11 in the Win32s environment, as a target only.  See below.
 </p>
-<a name="Intel-32-bit-versions"></a>
-<h4 class="subheading">Intel 32-bit versions</h4>
+<span id="Intel-32-bit-versions"></span><h4 class="subheading">Intel 32-bit versions</h4>
 <p>The 32-bit versions of Windows, including Windows 95, Windows NT, Windows
 XP, and Windows Vista, are supported by several different target
 platforms.  These targets differ in which Windows subsystem they target
@@ -1397,21 +1312,18 @@ the Win32 subsystem that provides a subset of POSIX.
 <a href="https://www.mkssoftware.com">https://www.mkssoftware.com</a> for more information.
 </li></ul>
 
-<a name="Intel-64-bit-versions"></a>
-<h4 class="subheading">Intel 64-bit versions</h4>
+<span id="Intel-64-bit-versions"></span><h4 class="subheading">Intel 64-bit versions</h4>
 <p>GCC contains support for x86-64 using the mingw-w64
 runtime library, available from <a href="http://mingw-w64.org/doku.php">http://mingw-w64.org/doku.php</a>.
 This library should be used with the target triple x86_64-pc-mingw32.
 </p>
 <p>Presently Windows for Itanium is not supported.
 </p>
-<a name="Windows-CE"></a>
-<h4 class="subheading">Windows CE</h4>
+<span id="Windows-CE"></span><h4 class="subheading">Windows CE</h4>
 <p>Windows CE is supported as a target only on Hitachi
 SuperH (sh-wince-pe), and MIPS (mips-wince-pe).
 </p>
-<a name="Other-Windows-Platforms"></a>
-<h4 class="subheading">Other Windows Platforms</h4>
+<span id="Other-Windows-Platforms"></span><h4 class="subheading">Other Windows Platforms</h4>
 <p>GCC no longer supports Windows NT on the Alpha or PowerPC.
 </p>
 <p>GCC no longer supports the Windows POSIX subsystem.  However, it does
@@ -1425,8 +1337,7 @@ be inactive.  See <a href="http://pw32.sourceforge.net/">http://pw32.sourceforge
 <p>UWIN support has been removed due to a lack of maintenance.
 </p>
 <hr />
-<a name="x-x-cygwin"></a><a name="g_t*-*-cygwin"></a>
-<h3 class="heading">*-*-cygwin</h3>
+<span id="x-x-cygwin"></span><span id="g_t*-*-cygwin"></span><h3 class="heading">*-*-cygwin</h3>
 <p>Ports of GCC are included with the
 <a href="http://www.cygwin.com/">Cygwin environment</a>.
 </p>
@@ -1440,15 +1351,13 @@ the latest official GNU binutils release in the Cygwin distribution,
 or version 2.20 or above if building your own.
 </p>
 <hr />
-<a name="x-x-mingw32"></a><a name="g_t*-*-mingw32"></a>
-<h3 class="heading">*-*-mingw32</h3>
+<span id="x-x-mingw32"></span><span id="g_t*-*-mingw32"></span><h3 class="heading">*-*-mingw32</h3>
 <p>GCC will build with and support only MinGW runtime 3.12 and later.
 Earlier versions of headers are incompatible with the new default semantics
 of <code>extern inline</code> in <code>-std=c99</code> and <code>-std=gnu99</code> modes.
 </p>
 <hr />
-<a name="older"></a><a name="Older-systems"></a>
-<h3 class="heading">Older systems</h3>
+<span id="older"></span><span id="Older-systems"></span><h3 class="heading">Older systems</h3>
 <p>GCC contains support files for many older (1980s and early
 1990s) Unix variants.  For the most part, support for these systems
 has not been deliberately removed, but it has not been maintained for
@@ -1491,8 +1400,7 @@ about GCC on such systems (which may no longer be applicable to
 current GCC) is to be found in the GCC texinfo manual.
 </p>
 <hr />
-<a name="elf"></a><a name="all-ELF-targets-_0028SVR4_002c-Solaris-2_002c-etc_002e_0029"></a>
-<h3 class="heading">all ELF targets (SVR4, Solaris 2, etc.)</h3>
+<span id="elf"></span><span id="all-ELF-targets-_0028SVR4_002c-Solaris-2_002c-etc_002e_0029"></span><h3 class="heading">all ELF targets (SVR4, Solaris 2, etc.)</h3>
 <p>C++ support is significantly better on ELF targets if you use the
 <a href="./configure.html#with-gnu-ld">GNU linker</a>; duplicate copies of
 inlines, vtables and template instantiations will be discarded
