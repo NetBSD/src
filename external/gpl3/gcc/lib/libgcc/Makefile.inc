@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51 2021/04/25 23:12:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2022/07/22 21:59:11 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -175,7 +175,7 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 # XXX lse.S objects are placed directly into "libgcc-objects" for GCC, and
 # are not pulled out by mknative-gcc easily.
 . for s in 1 2 4 8 16
-.  for m in 1 2 3 4
+.  for m in 1 2 3 4 5
 .   for n in cas
 LSE_NAMES+=			${n}_${s}_${m}
 CPPFLAGS.${n}_${s}_${m}+=	-DL_${n} -DSIZE=${s} -DMODEL=${m}
@@ -184,7 +184,7 @@ CPPFLAGS.${n}_${s}_${m}+=	-DL_${n} -DSIZE=${s} -DMODEL=${m}
 . endfor
 
 . for s in 1 2 4 8
-.  for m in 1 2 3 4
+.  for m in 1 2 3 4 5
 .   for n in swp ldadd ldclr ldeor ldset
 LSE_NAMES+=			${n}_${s}_${m}
 CPPFLAGS.${n}_${s}_${m}+=	-DL_${n} -DSIZE=${s} -DMODEL=${m}
