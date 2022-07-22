@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2020/09/05 12:19:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.51 2022/07/22 07:09:21 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -122,6 +122,8 @@ CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility.cc+=	-I${DIST}/libstdc++-v3/config
+CPPFLAGS.c11-cow-string-inst.cc+=	-I${DIST}/libstdc++-v3/src/c++11
+CPPFLAGS.c17-cow-string-inst.cc+=	-I${DIST}/libstdc++-v3/src/c++17
 
 cp-demangle.d cp-demangle.o: cp-demangle.h
 
@@ -154,11 +156,25 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CNUMERIC_CC} numeric_members_cow.cc
 
 # both c++98 and c++11 have codecvt.cc files.
+# both c++11 and c++17 have cow-string-inst.cc, ostream-inst.cc,
+# and string-inst.cc.
+.for _N _V1 _V2 in \
+	codecvt 98 11 \
+	cow-string-inst 11 17 \
+	ostream-inst 11 17 \
+	string-inst 11 17
+
 BUILDSYMLINKS+=	\
-	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
+	${GLIBCXX_SRCDIR}/src/c++${_V1}/${_N}.cc c${_V1}-${_N}.cc
 BUILDSYMLINKS+=	\
-	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
-SRCS+=	c98-codecvt.cc c11-codecvt.cc
+	${GLIBCXX_SRCDIR}/src/c++${_V2}/${_N}.cc c${_V2}-${_N}.cc
+
+.endfor
+
+#BUILDSYMLINKS+=	\
+#	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
+#BUILDSYMLINKS+=	\
+#	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
 
 .include "../Makefile.gthr"
 
