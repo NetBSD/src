@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2022/07/22 20:05:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2022/07/22 20:09:47 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2022/07/22 20:05:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2022/07/22 20:09:47 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -305,7 +305,10 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_TSEC4),
 		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16 } },
 #endif
-	{ "diic", I2C1_BASE, 2*I2C_SIZE, 0,
+	{ "diic", I2C1_BASE, I2C_SIZE, 0,
+		1, { ISOURCE_I2C },
+		1 + ilog2(DEVDISR_I2C) },
+	{ "diic", I2C2_BASE, I2C_SIZE, 1,
 		1, { ISOURCE_I2C },
 		1 + ilog2(DEVDISR_I2C) },
 	/* MPC8572 doesn't have any GPIO */
