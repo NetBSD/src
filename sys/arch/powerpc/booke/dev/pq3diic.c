@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3diic.c,v 1.6 2022/07/22 20:09:47 thorpej Exp $	*/
+/*	$NetBSD: pq3diic.c,v 1.7 2022/07/22 23:43:24 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.6 2022/07/22 20:09:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.7 2022/07/22 23:43:24 thorpej Exp $");
 
 #include "ioconf.h"
 
@@ -56,15 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.6 2022/07/22 20:09:47 thorpej Exp $");
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/e500reg.h>
 
-struct pq3diic_softc {
-	device_t sc_dev;
-	struct motoi2c_softc sc_motoi2c;
-};
-
 static int pq3diic_match(device_t, cfdata_t, void *);
 static void pq3diic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(pq3diic, sizeof(struct pq3diic_softc),
+CFATTACH_DECL_NEW(pq3diic, sizeof(struct motoi2c_softc),
     pq3diic_match, pq3diic_attach, NULL, NULL);
 
 static int
@@ -91,8 +86,7 @@ static void
 pq3diic_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpunode_softc * const psc = device_private(parent);
-	struct pq3diic_softc * const sc = device_private(self);
-	struct motoi2c_softc * const msc = &sc->sc_motoi2c;
+	struct motoi2c_softc * const sc = device_private(self);
 	struct cpunode_attach_args * const cna = aux;
 	struct cpunode_locators * const cnl = &cna->cna_locs;
 	int error;
@@ -102,16 +96,16 @@ pq3diic_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	msc->sc_iot = cna->cna_memt;
-	error = bus_space_map(msc->sc_iot, cnl->cnl_addr, I2C_SIZE,
-	    0, &msc->sc_ioh);
+	sc->sc_iot = cna->cna_memt;
+	error = bus_space_map(sc->sc_iot, cnl->cnl_addr, I2C_SIZE,
+	    0, &sc->sc_ioh);
 	if (error) {
 		aprint_error_dev(self,
 		    "can't map registers (error = %d)\n", error);
 		return;
 	}
 
-	motoi2c_attach_common(self, msc, NULL);
+	motoi2c_attach(sc, NULL);
 
 #if 0
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $ */
+/* $NetBSD: nxpiic_acpi.c,v 1.5 2022/07/22 23:43:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.5 2022/07/22 23:43:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,18 +68,13 @@ static const struct clk_div {
 	{ 3840, 0x3f },	{ 4096, 0x7B },	{ 5120, 0x7d },	{ 6144, 0x7e },
 };
 
-struct nxpiic_softc {
-	device_t		sc_dev;
-	struct motoi2c_softc	sc_motoi2c;
-};
-
 static int	nxpiic_acpi_match(device_t, cfdata_t, void *);
 static void	nxpiic_acpi_attach(device_t, device_t, void *);
 
 static uint8_t	nxpiic_acpi_iord(struct motoi2c_softc *, bus_size_t);
 static void	nxpiic_acpi_iowr(struct motoi2c_softc *, bus_size_t, uint8_t);
 
-CFATTACH_DECL_NEW(nxpiic_acpi, sizeof(struct nxpiic_softc),
+CFATTACH_DECL_NEW(nxpiic_acpi, sizeof(struct motoi2c_softc),
     nxpiic_acpi_match, nxpiic_acpi_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
@@ -98,8 +93,7 @@ nxpiic_acpi_match(device_t parent, cfdata_t cf, void *aux)
 static void
 nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct nxpiic_softc * const sc = device_private(self);
-	struct motoi2c_softc * const msc = &sc->sc_motoi2c;
+	struct motoi2c_softc * const sc = device_private(self);
 	struct motoi2c_settings settings;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
@@ -109,7 +103,7 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 	int error, n;
 
 	sc->sc_dev = self;
-	msc->sc_iot = aa->aa_memt;
+	sc->sc_iot = aa->aa_memt;
 
 	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
@@ -130,8 +124,8 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_debug_dev(self, "bus clock %u Hz\n", (u_int)clock_freq);
 
-	error = bus_space_map(msc->sc_iot, mem->ar_base, mem->ar_length, 0,
-	    &msc->sc_ioh);
+	error = bus_space_map(sc->sc_iot, mem->ar_base, mem->ar_length, 0,
+	    &sc->sc_ioh);
 	if (error) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
@@ -145,12 +139,12 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 	settings.i2c_fdr = nxpiic_clk_div[n].ibc;
 
-	msc->sc_flags |= MOTOI2C_F_ENABLE_INV | MOTOI2C_F_STATUS_W1C;
-	msc->sc_iord = nxpiic_acpi_iord;
-	msc->sc_iowr = nxpiic_acpi_iowr;
-	msc->sc_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
+	sc->sc_flags |= MOTOI2C_F_ENABLE_INV | MOTOI2C_F_STATUS_W1C;
+	sc->sc_iord = nxpiic_acpi_iord;
+	sc->sc_iowr = nxpiic_acpi_iowr;
+	sc->sc_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
 
-	motoi2c_attach_common(self, msc, &settings);
+	motoi2c_attach(sc, &settings);
 
 done:
 	acpi_resource_cleanup(&res);

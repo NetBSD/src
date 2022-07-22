@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.8 2021/01/25 12:08:47 jmcneill Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.9 2022/07/22 23:43:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct motoi2c_settings {
 };
 
 struct motoi2c_softc {
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct i2c_controller	sc_i2c;
@@ -52,6 +53,7 @@ struct motoi2c_softc {
 	motoi2c_iowr_t		sc_iowr;
 	int			sc_phandle;
 	prop_array_t		sc_child_devices;
+	struct motoi2c_settings	sc_settings;
 	int			sc_flags;
 #define	MOTOI2C_F_ENABLE_INV	__BIT(0)
 #define	MOTOI2C_F_STATUS_W1C	__BIT(1)
@@ -64,7 +66,7 @@ struct motoi2c_softc {
 #define	MOTOI2C_DFSRR_DEFAULT	0x10
 
 #ifdef _KERNEL
-void	motoi2c_attach_common(device_t, struct motoi2c_softc *,
+void	motoi2c_attach(struct motoi2c_softc *,
 	    const struct motoi2c_settings *);
 int	motoi2c_intr(void *);
 #endif
