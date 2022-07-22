@@ -1,4 +1,4 @@
-/*	$NetBSD: board_prop.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: board_prop.c,v 1.3 2022/07/22 19:52:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.3 2022/07/22 19:52:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,7 @@ board_info_get_number(const char *name)
 	KASSERT(board_properties != NULL);
 	prop_number_t pn = prop_dictionary_get(board_properties, name);
 	KASSERT(pn != NULL);
-	const uint64_t number = prop_number_unsigned_integer_value(pn);
-	/* XXX -- do we need object release pn? */
+	const uint64_t number = prop_number_unsigned_value(pn);
 	return number;
 }
 
@@ -94,7 +93,7 @@ void
 board_info_add_number(const char *name, uint64_t number)
 {
 	KASSERT(board_properties != NULL);
-	prop_number_t pn = prop_number_create_integer(number);
+	prop_number_t pn = prop_number_create_unsigned(number);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, name, pn) == false)
 		panic("%s: setting %s failed", __func__, name);
@@ -105,7 +104,7 @@ void
 board_info_add_data(const char *name, const void *data, size_t len)
 {
 	KASSERT(board_properties != NULL);
-	prop_data_t pd = prop_data_create_data(data, len);
+	prop_data_t pd = prop_data_create_copy(data, len);
 	KASSERT(pd != NULL);
 	if (prop_dictionary_set(board_properties, name, pd) == false)
 		panic("%s: setting %s failed", __func__, name);
@@ -119,15 +118,14 @@ board_info_get_data(const char *name, size_t *lenp)
 	prop_data_t pd = prop_dictionary_get(board_properties, name);
 	KASSERT(pd != NULL);
 	*lenp = prop_data_size(pd);
-	/* XXX -- do we need object release pn? */
-	return prop_data_data(pd);
+	return prop_data_value(pd);
 }
 
 void
 board_info_add_string(const char *name, const char *data)
 {
 	KASSERT(board_properties != NULL);
-	prop_string_t ps = prop_string_create_cstring(data);
+	prop_string_t ps = prop_string_create_copy(data);
 	KASSERT(ps != NULL);
 	if (prop_dictionary_set(board_properties, name, ps) == false)
 		panic("%s: setting %s failed", __func__, name);
