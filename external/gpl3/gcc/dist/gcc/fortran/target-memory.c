@@ -486,7 +486,7 @@ gfc_interpret_character (unsigned char *buffer, size_t buffer_size,
 
   result->value.character.string[result->value.character.length] = '\0';
 
-  return result->value.character.length;
+  return size_character (result->value.character.length, result->ts.kind);
 }
 
 
@@ -533,6 +533,9 @@ gfc_interpret_derived (unsigned char *buffer, size_t buffer_size, gfc_expr *resu
       if (cmp->as && cmp->as->rank)
 	{
 	  int n;
+
+	  if (cmp->as->type != AS_EXPLICIT)
+	    return 0;
 
 	  e->expr_type = EXPR_ARRAY;
 	  e->rank = cmp->as->rank;

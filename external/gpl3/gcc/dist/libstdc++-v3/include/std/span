@@ -204,11 +204,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ }
 
       template<typename _Range>
-	requires ranges::contiguous_range<_Range> && ranges::sized_range<_Range>
-	  && (ranges::borrowed_range<_Range> || is_const_v<element_type>)
-	  && (!__detail::__is_std_span<remove_cvref_t<_Range>>::value)
+	requires (!__detail::__is_std_span<remove_cvref_t<_Range>>::value)
 	  && (!__detail::__is_std_array<remove_cvref_t<_Range>>::value)
 	  && (!is_array_v<remove_cvref_t<_Range>>)
+	  && ranges::contiguous_range<_Range> && ranges::sized_range<_Range>
+	  && (ranges::borrowed_range<_Range> || is_const_v<element_type>)
 	  && __is_compatible_ref<ranges::range_reference_t<_Range>>::value
 	constexpr explicit(extent != dynamic_extent)
 	span(_Range&& __range)
@@ -412,7 +412,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     span(_Iter, _End)
       -> span<remove_reference_t<iter_reference_t<_Iter>>>;
 
-  template<typename _Range>
+  template<ranges::contiguous_range _Range>
     span(_Range &&)
       -> span<remove_reference_t<ranges::range_reference_t<_Range&>>>;
 
@@ -430,6 +430,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   template<typename _Type, size_t _Extent>
+    requires (!is_const_v<_Type>)
     inline
     span<byte, _Extent == dynamic_extent
        ? dynamic_extent : _Extent * sizeof(_Type)>
@@ -452,8 +453,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     // Opt-in to view concept
     template<typename _ElementType, size_t _Extent>
       inline constexpr bool
-	enable_view<span<_ElementType, _Extent>>
-	  = _Extent == 0 || _Extent == dynamic_extent;
+	enable_view<span<_ElementType, _Extent>> = true;
   }
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std

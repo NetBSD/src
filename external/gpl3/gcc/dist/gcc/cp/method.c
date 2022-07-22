@@ -1877,6 +1877,7 @@ constructible_expr (tree to, tree from)
 static tree
 is_xible_helper (enum tree_code code, tree to, tree from, bool trivial)
 {
+  to = complete_type (to);
   deferring_access_check_sentinel acs (dk_no_deferred);
   if (VOID_TYPE_P (to) || ABSTRACT_CLASS_TYPE_P (to)
       || (from && FUNC_OR_METHOD_TYPE_P (from)
@@ -2934,7 +2935,12 @@ defaulted_late_check (tree fn)
       /* If the function was declared constexpr, check that the definition
 	 qualifies.  Otherwise we can define the function lazily.  */
       if (DECL_DECLARED_CONSTEXPR_P (fn) && !DECL_INITIAL (fn))
-	synthesize_method (fn);
+	{
+	  /* Prevent GC.  */
+	  function_depth++;
+	  synthesize_method (fn);
+	  function_depth--;
+	}
       return;
     }
 

@@ -698,7 +698,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  : _Node_allocator(__a), _Base_key_compare(__comp)
 	  { }
 #else
-	  _Rb_tree_impl(_Rb_tree_impl&&) = default;
+	  _Rb_tree_impl(_Rb_tree_impl&&)
+	    noexcept( is_nothrow_move_constructible<_Base_key_compare>::value )
+	  = default;
 
 	  explicit
 	  _Rb_tree_impl(_Node_allocator&& __a)
@@ -1667,6 +1669,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_move_data(__x, true_type());
       else
 	{
+	  constexpr bool __move = !__move_if_noexcept_cond<value_type>::value;
 	  _Alloc_node __an(*this);
 	  auto __lbd =
 	    [&__an](const value_type& __cval)
@@ -1675,6 +1678,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      return __an(std::move_if_noexcept(__val));
 	    };
 	  _M_root() = _M_copy(__x, __lbd);
+	  if _GLIBCXX17_CONSTEXPR (__move)
+	    __x.clear();
 	}
     }
 

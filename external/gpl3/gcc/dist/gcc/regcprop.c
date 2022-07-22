@@ -358,6 +358,27 @@ copy_value (rtx dest, rtx src, struct value_data *vd)
   else if (sn > hard_regno_nregs (sr, vd->e[sr].mode))
     return;
 
+  /* If a narrower value is copied using wider mode, the upper bits
+     are undefined (could be e.g. a former paradoxical subreg).  Signal
+     in that case we've only copied value using the narrower mode.
+     Consider:
+     (set (reg:DI r14) (mem:DI ...))
+     (set (reg:QI si) (reg:QI r14))
+     (set (reg:DI bp) (reg:DI r14))
+     (set (reg:DI r14) (const_int ...))
+     (set (reg:DI dx) (reg:DI si))
+     (set (reg:DI si) (const_int ...))
+     (set (reg:DI dx) (reg:DI bp))
+     The last set is not redundant, while the low 8 bits of dx are already
+     equal to low 8 bits of bp, the other bits are undefined.  */
+  else if (partial_subreg_p (vd->e[sr].mode, GET_MODE (src)))
+    {
+      if (!REG_CAN_CHANGE_MODE_P (sr, GET_MODE (src), vd->e[sr].mode)
+	  || !REG_CAN_CHANGE_MODE_P (dr, vd->e[sr].mode, GET_MODE (dest)))
+	return;
+      set_value_regno (dr, vd->e[sr].mode, vd);
+    }
+
   /* Link DR at the end of the value chain used by SR.  */
 
   vd->e[dr].oldest_regno = vd->e[sr].oldest_regno;

@@ -48,10 +48,18 @@
 # include <string_view>
 #endif
 
-
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+#ifdef __cpp_lib_is_constant_evaluated
+// Support P1032R1 in C++20 (but not P0980R1 yet).
+# define __cpp_lib_constexpr_string 201811L
+#elif __cplusplus >= 201703L
+// Support P0426R1 changes to char_traits in C++17.
+# define __cpp_lib_constexpr_string 201611L
+#elif __cplusplus > 201703L
+#endif
 
 #if _GLIBCXX_USE_CXX11_ABI
 _GLIBCXX_BEGIN_NAMESPACE_CXX11
@@ -524,7 +532,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #endif
       basic_string(const _CharT* __s, const _Alloc& __a = _Alloc())
       : _M_dataplus(_M_local_data(), __a)
-      { _M_construct(__s, __s ? __s + traits_type::length(__s) : __s+npos); }
+      {
+	const _CharT* __end = __s ? __s + traits_type::length(__s)
+	  // We just need a non-null pointer here to get an exception:
+	  : reinterpret_cast<const _CharT*>(__alignof__(_CharT));
+	_M_construct(__s, __end, random_access_iterator_tag());
+      }
 
       /**
        *  @brief  Construct string as multiple characters.
@@ -4672,10 +4685,9 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
       /**
        *  @brief  Insert a string_view.
-       *  @param __pos  Position in string to insert at.
-       *  @param __svt  The object convertible to string_view to insert from.
-       *  @param __pos  Position in string_view to insert
-       *  from.
+       *  @param __pos1  Position in string to insert at.
+       *  @param __svt   The object convertible to string_view to insert from.
+       *  @param __pos2  Position in string_view to insert from.
        *  @param __n    The number of characters to insert.
        *  @return  Reference to this string.
       */

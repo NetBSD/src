@@ -459,11 +459,6 @@ Expression *resolvePropertiesX(Scope *sc, Expression *e1, Expression *e2 = NULL)
             if (checkUnsafeAccess(sc, e1, true, true))
                 return new ErrorExp();
         }
-        else if (e1->op == TOKdot)
-        {
-            e1->error("expression has no value");
-            return new ErrorExp();
-        }
         else if (e1->op == TOKcall)
         {
             CallExp *ce = (CallExp *)e1;
@@ -2655,8 +2650,11 @@ bool Expression::checkPostblit(Scope *sc, Type *t)
     t = t->baseElemOf();
     if (t->ty == Tstruct)
     {
-        // Bugzilla 11395: Require TypeInfo generation for array concatenation
-        semanticTypeInfo(sc, t);
+        if (global.params.useTypeInfo && Type::dtypeinfo)
+        {
+            // Bugzilla 11395: Require TypeInfo generation for array concatenation
+            semanticTypeInfo(sc, t);
+        }
 
         StructDeclaration *sd = ((TypeStruct *)t)->sym;
         if (sd->postblit)
@@ -5250,6 +5248,18 @@ DotTemplateExp::DotTemplateExp(Loc loc, Expression *e, TemplateDeclaration *td)
     this->td = td;
 }
 
+bool DotTemplateExp::checkType()
+{
+    error("%s %s has no type", td->kind(), toChars());
+    return true;
+}
+
+bool DotTemplateExp::checkValue()
+{
+    error("%s %s has no value", td->kind(), toChars());
+    return true;
+}
+
 /************************************************************/
 
 DotVarExp::DotVarExp(Loc loc, Expression *e, Declaration *var, bool hasOverloads)
@@ -6729,7 +6739,7 @@ Expression *FuncInitExp::resolveLoc(Loc loc, Scope *sc)
         s = "";
     Expression *e = new StringExp(loc, const_cast<char *>(s));
     e = semantic(e, sc);
-    e = e->castTo(sc, type);
+    e->type = Type::tstring;
     return e;
 }
 
@@ -6763,7 +6773,7 @@ Expression *PrettyFuncInitExp::resolveLoc(Loc loc, Scope *sc)
 
     Expression *e = new StringExp(loc, const_cast<char *>(s));
     e = semantic(e, sc);
-    e = e->castTo(sc, type);
+    e->type = Type::tstring;
     return e;
 }
 

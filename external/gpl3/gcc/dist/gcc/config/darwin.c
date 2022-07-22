@@ -108,6 +108,9 @@ static bool ld_uses_coal_sects = false;
    each FDE.  */
 static bool ld_needs_eh_markers = false;
 
+/* Emit a section-start symbol for mod init and term sections.  */
+static bool ld_init_term_start_labels = false;
+
 /* Section names.  */
 section * darwin_sections[NUM_DARWIN_SECTIONS];
 
@@ -1843,6 +1846,11 @@ finalize_ctors ()
   else
     switch_to_section (darwin_sections[constructor_section]);
 
+  /* Where needed, provide a linker-visible section-start symbol so that we
+     have stable output between debug and non-debug.  */
+  if (ld_init_term_start_labels)
+    fputs (MACHOPIC_INDIRECT ? "_Mod.init:\n" : "_CTOR.sect:\n", asm_out_file);
+
   if (vec_safe_length (ctors) > 1)
     ctors->qsort (sort_cdtor_records);
   FOR_EACH_VEC_SAFE_ELT (ctors, i, elt)
@@ -1862,6 +1870,11 @@ finalize_dtors ()
     switch_to_section (darwin_sections[mod_term_section]);
   else
     switch_to_section (darwin_sections[destructor_section]);
+
+  /* Where needed, provide a linker-visible section-start symbol so that we
+     have stable output between debug and non-debug.  */
+  if (ld_init_term_start_labels)
+    fputs (MACHOPIC_INDIRECT ? "_Mod.term:\n" : "_DTOR.sect:\n", asm_out_file);
 
   if (vec_safe_length (dtors) > 1)
     dtors->qsort (sort_cdtor_records);
@@ -1925,6 +1938,8 @@ darwin_label_is_anonymous_local_objc_name (const char *name)
       return true;
     }
   else if (!strncmp ((const char *)p, "ClassMethods", 12))
+    return false;
+  else if (!strncmp ((const char *)p, "ClassProtocols", 14))
     return false;
   else if (!strncmp ((const char *)p, "Instance", 8))
     {
@@ -3124,6 +3139,14 @@ darwin_file_end (void)
      re-arranging data.  */
   if (!DARWIN_SECTION_ANCHORS || !flag_section_anchors)
     fprintf (asm_out_file, "\t.subsections_via_symbols\n");
+
+  /* We rely on this being NULL at the start of compilation; reset it here
+     so that JIT can reuse a context.  */
+  if (dwarf_sect_names_table != NULL)
+    {
+      dwarf_sect_names_table->truncate (0);
+      dwarf_sect_names_table = NULL;
+    }
 }
 
 /* TODO: Add a language hook for identifying if a decl is a vtable.  */
@@ -3215,11 +3238,25 @@ darwin_override_options (void)
       /* Earlier versions are not specifically accounted, until required.  */
     }
 
-  /* Older Darwin ld could not coalesce weak entities without them being
-     placed in special sections.  */
-  if (darwin_target_linker
-      && (strverscmp (darwin_target_linker, MIN_LD64_NO_COAL_SECTS) < 0))
-    ld_uses_coal_sects = true;
+  /* Some codegen needs to account for the capabilities of the target
+     linker.  */
+  if (darwin_target_linker)
+    {
+      /* Older Darwin ld could not coalesce weak entities without them being
+	 placed in special sections.  */
+      if (strverscmp (darwin_target_linker, MIN_LD64_NO_COAL_SECTS) < 0)
+	ld_uses_coal_sects = true;
+
+      /* Some newer assemblers emit section start temp symbols for mod init
+	 and term sections if there is no suitable symbol present already.
+	 The temp symbols are linker visible and therefore appear in the
+	 symbol tables.  Since the temp symbol number can vary when debug is
+	 enabled, that causes compare-debug fails.  The solution is to provide
+	 a stable linker-visible symbol.  */
+      if (strverscmp (darwin_target_linker,
+		      MIN_LD64_INIT_TERM_START_LABELS) >= 0)
+	ld_init_term_start_labels = true;
+    }
 
   /* In principle, this should be c-family only.  However, we really need to
      set sensible defaults for LTO as well, since the section selection stuff
@@ -3569,7 +3606,7 @@ tree
 darwin_fold_builtin (tree fndecl, int n_args, tree *argp,
 		     bool ARG_UNUSED (ignore))
 {
-  unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
+  int fcode = DECL_MD_FUNCTION_CODE (fndecl);
 
   if (fcode == darwin_builtin_cfstring)
     {
@@ -3595,30 +3632,6 @@ darwin_fold_builtin (tree fndecl, int n_args, tree *argp,
 void
 darwin_rename_builtins (void)
 {
-  /* The system ___divdc3 routine in libSystem on darwin10 is not
-     accurate to 1ulp, ours is, so we avoid ever using the system name
-     for this routine and instead install a non-conflicting name that
-     is accurate.
-
-     When -ffast-math or -funsafe-math-optimizations is given, we can
-     use the faster version.  */
-  if (!flag_unsafe_math_optimizations)
-    {
-      enum built_in_function dcode
-	= (enum built_in_function)(BUILT_IN_COMPLEX_DIV_MIN
-				   + DCmode - MIN_MODE_COMPLEX_FLOAT);
-      tree fn = builtin_decl_explicit (dcode);
-      /* Fortran and c call TARGET_INIT_BUILTINS and
-	 TARGET_INIT_LIBFUNCS at different times, so we have to put a
-	 call into each to ensure that at least one of them is called
-	 after build_common_builtin_nodes.  A better fix is to add a
-	 new hook to run after build_common_builtin_nodes runs.  */
-      if (fn)
-	set_user_assembler_name (fn, "___ieee_divdc3");
-      fn = builtin_decl_implicit (dcode);
-      if (fn)
-	set_user_assembler_name (fn, "___ieee_divdc3");
-    }
 }
 
 bool

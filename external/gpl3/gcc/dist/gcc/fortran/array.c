@@ -492,6 +492,8 @@ match_array_element_spec (gfc_array_spec *as)
   if (!gfc_expr_check_typed (*upper, gfc_current_ns, false))
     return AS_UNKNOWN;
 
+  gfc_try_simplify_expr (*upper, 0);
+
   if (((*upper)->expr_type == EXPR_CONSTANT
 	&& (*upper)->ts.type != BT_INTEGER) ||
       ((*upper)->expr_type == EXPR_FUNCTION
@@ -523,6 +525,8 @@ match_array_element_spec (gfc_array_spec *as)
     return AS_ASSUMED_SHAPE;
   if (!gfc_expr_check_typed (*upper, gfc_current_ns, false))
     return AS_UNKNOWN;
+
+  gfc_try_simplify_expr (*upper, 0);
 
   if (((*upper)->expr_type == EXPR_CONSTANT
 	&& (*upper)->ts.type != BT_INTEGER) ||
@@ -1798,8 +1802,17 @@ expand_constructor (gfc_constructor_base base)
 
       e = c->expr;
 
+      if (e == NULL)
+	return false;
+
       if (empty_constructor)
 	empty_ts = e->ts;
+
+      /* Simplify constant array expression/section within constructor.  */
+      if (e->expr_type == EXPR_VARIABLE && e->rank > 0 && e->ref
+	  && e->symtree && e->symtree->n.sym
+	  && e->symtree->n.sym->attr.flavor == FL_PARAMETER)
+	gfc_simplify_expr (e, 0);
 
       if (e->expr_type == EXPR_ARRAY)
 	{
@@ -1869,6 +1882,9 @@ gfc_expand_constructor (gfc_expr *e, bool fatal)
   expand_info expand_save;
   gfc_expr *f;
   bool rc;
+
+  if (gfc_is_size_zero_array (e))
+    return true;
 
   /* If we can successfully get an array element at the max array size then
      the array is too big to expand, so we just return.  */
@@ -2283,8 +2299,7 @@ gfc_copy_iterator (gfc_iterator *src)
 /********* Subroutines for determining the size of an array *********/
 
 /* These are needed just to accommodate RESHAPE().  There are no
-   diagnostics here, we just return a negative number if something
-   goes wrong.  */
+   diagnostics here, we just return false if something goes wrong.  */
 
 
 /* Get the size of single dimension of an array specification.  The
@@ -2316,6 +2331,9 @@ spec_dimen_size (gfc_array_spec *as, int dimen, mpz_t *result)
 	   as->lower[dimen]->value.integer);
 
   mpz_add_ui (*result, *result, 1);
+
+  if (mpz_cmp_si (*result, 0) < 0)
+    mpz_set_si (*result, 0);
 
   return true;
 }
@@ -2390,12 +2408,11 @@ gfc_ref_dimen_size (gfc_array_ref *ar, int dimen, mpz_t *result, mpz_t *end)
 	{
 	  stride_expr = gfc_copy_expr(ar->stride[dimen]); 
 
-	  if(!gfc_simplify_expr(stride_expr, 1))
-	    gfc_internal_error("Simplification error");
-
-	  if (stride_expr->expr_type != EXPR_CONSTANT
-	      || mpz_cmp_ui (stride_expr->value.integer, 0) == 0)
+	  if (!gfc_simplify_expr (stride_expr, 1)
+	     || stride_expr->expr_type != EXPR_CONSTANT
+	     || mpz_cmp_ui (stride_expr->value.integer, 0) == 0)
 	    {
+	      gfc_free_expr (stride_expr);
 	      mpz_clear (stride);
 	      return false;
 	    }

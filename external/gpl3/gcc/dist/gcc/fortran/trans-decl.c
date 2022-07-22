@@ -737,6 +737,8 @@ gfc_finish_var_decl (tree decl, gfc_symbol * sym)
   /* Keep variables larger than max-stack-var-size off stack.  */
   if (!(sym->ns->proc_name && sym->ns->proc_name->attr.recursive)
       && !sym->attr.automatic
+      && sym->attr.save != SAVE_EXPLICIT
+      && sym->attr.save != SAVE_IMPLICIT
       && INTEGER_CST_P (DECL_SIZE_UNIT (decl))
       && !gfc_can_put_var_on_stack (DECL_SIZE_UNIT (decl))
 	 /* Put variable length auto array pointers always into stack.  */
@@ -747,15 +749,21 @@ gfc_finish_var_decl (tree decl, gfc_symbol * sym)
 	  || sym->attr.allocatable)
       && !DECL_ARTIFICIAL (decl))
     {
-      if (flag_max_stack_var_size > 0)
+      if (flag_max_stack_var_size > 0
+	  && !(sym->ns->proc_name
+	       && sym->ns->proc_name->attr.is_main_program))
 	gfc_warning (OPT_Wsurprising,
-		     "Array %qs at %L is larger than limit set by"
-		     " %<-fmax-stack-var-size=%>, moved from stack to static"
-		     " storage. This makes the procedure unsafe when called"
-		     " recursively, or concurrently from multiple threads."
-		     " Consider using %<-frecursive%>, or increase the"
-		     " %<-fmax-stack-var-size=%> limit, or change the code to"
-		     " use an ALLOCATABLE array.",
+		     "Array %qs at %L is larger than limit set by "
+		     "%<-fmax-stack-var-size=%>, moved from stack to static "
+		     "storage. This makes the procedure unsafe when called "
+		     "recursively, or concurrently from multiple threads. "
+		     "Consider increasing the %<-fmax-stack-var-size=%> "
+		     "limit (or use %<-frecursive%>, which implies "
+		     "unlimited %<-fmax-stack-var-size%>) - or change the "
+		     "code to use an ALLOCATABLE array. If the variable is "
+		     "never accessed concurrently, this warning can be "
+		     "ignored, and the variable could also be declared with "
+		     "the SAVE attribute.",
 		     sym->name, &sym->declared_at);
 
       TREE_STATIC (decl) = 1;
@@ -1527,7 +1535,8 @@ gfc_get_symbol_decl (gfc_symbol * sym)
      declaration of the entity and memory allocated/deallocated.  */
   if ((sym->ts.type == BT_DERIVED || sym->ts.type == BT_CLASS)
       && sym->param_list != NULL
-      && !(sym->attr.host_assoc || sym->attr.use_assoc || sym->attr.dummy))
+      && gfc_current_ns == sym->ns
+      && !(sym->attr.use_assoc || sym->attr.dummy))
     gfc_defer_symbol_init (sym);
 
   /* Dummy PDT 'len' parameters should be checked when they are explicit.  */

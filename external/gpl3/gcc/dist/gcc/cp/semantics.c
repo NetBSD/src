@@ -476,7 +476,8 @@ do_pushlevel (scope_kind sk)
 
 /* Queue a cleanup.  CLEANUP is an expression/statement to be executed
    when the current scope is exited.  EH_ONLY is true when this is not
-   meant to apply to normal control flow transfer.  */
+   meant to apply to normal control flow transfer.  DECL is the VAR_DECL
+   being cleaned up, if any, or null for temporaries or subobjects.  */
 
 void
 push_cleanup (tree decl, tree cleanup, bool eh_only)
@@ -2945,13 +2946,9 @@ finish_compound_literal (tree type, tree compound_literal,
     return error_mark_node;
   compound_literal = reshape_init (type, compound_literal, complain);
   if (SCALAR_TYPE_P (type)
-      && !BRACE_ENCLOSED_INITIALIZER_P (compound_literal))
-    {
-      tree t = instantiate_non_dependent_expr_sfinae (compound_literal,
-						      complain);
-      if (!check_narrowing (type, t, complain))
-	return error_mark_node;
-    }
+      && !BRACE_ENCLOSED_INITIALIZER_P (compound_literal)
+      && !check_narrowing (type, compound_literal, complain))
+    return error_mark_node;
   if (TREE_CODE (type) == ARRAY_TYPE
       && TYPE_DOMAIN (type) == NULL_TREE)
     {
@@ -4497,6 +4494,17 @@ expand_or_defer_fn (tree fn)
       emit_associated_thunks (fn);
 
       function_depth--;
+
+      if (DECL_IMMEDIATE_FUNCTION_P (fn))
+	{
+	  if (cgraph_node *node = cgraph_node::get (fn))
+	    {
+	      node->body_removed = true;
+	      node->analyzed = false;
+	      node->definition = false;
+	      node->force_output = false;
+	    }
+	}
     }
 }
 
@@ -5810,7 +5818,8 @@ finish_omp_reduction_clause (tree c, bool *need_default_ctor, bool *need_dtor)
       if (!processing_template_decl)
 	{
 	  t = require_complete_type (t);
-	  if (t == error_mark_node)
+	  if (t == error_mark_node
+	      || !complete_type_or_else (oatype, NULL_TREE))
 	    return true;
 	  tree size = size_binop (EXACT_DIV_EXPR, TYPE_SIZE_UNIT (oatype),
 				  TYPE_SIZE_UNIT (type));
@@ -5840,6 +5849,8 @@ finish_omp_reduction_clause (tree c, bool *need_default_ctor, bool *need_dtor)
       case PLUS_EXPR:
       case MULT_EXPR:
       case MINUS_EXPR:
+      case TRUTH_ANDIF_EXPR:
+      case TRUTH_ORIF_EXPR:
 	predefined = true;
 	break;
       case MIN_EXPR:
@@ -5852,12 +5863,6 @@ finish_omp_reduction_clause (tree c, bool *need_default_ctor, bool *need_dtor)
       case BIT_IOR_EXPR:
       case BIT_XOR_EXPR:
 	if (FLOAT_TYPE_P (type) || TREE_CODE (type) == COMPLEX_TYPE)
-	  break;
-	predefined = true;
-	break;
-      case TRUTH_ANDIF_EXPR:
-      case TRUTH_ORIF_EXPR:
-	if (FLOAT_TYPE_P (type))
 	  break;
 	predefined = true;
 	break;

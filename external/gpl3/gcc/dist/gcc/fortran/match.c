@@ -1409,7 +1409,7 @@ gfc_match_pointer_assignment (void)
   gfc_matching_procptr_assignment = 0;
 
   m = gfc_match (" %v =>", &lvalue);
-  if (m != MATCH_YES)
+  if (m != MATCH_YES || !lvalue->symtree)
     {
       m = MATCH_NO;
       goto cleanup;
@@ -6338,7 +6338,8 @@ select_type_set_tmp (gfc_typespec *ts)
       sym = tmp->n.sym;
       gfc_add_type (sym, ts, NULL);
 
-      if (selector->ts.type == BT_CLASS && selector->attr.class_ok)
+      if (selector->ts.type == BT_CLASS && selector->attr.class_ok
+	  && selector->ts.u.derived && CLASS_DATA (selector))
 	{
 	  sym->attr.pointer
 		= CLASS_DATA (selector)->attr.class_pointer;

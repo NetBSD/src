@@ -921,15 +921,17 @@ i386_pe_seh_cold_init (FILE *f, const char *name)
 
   /* In the normal case, the frame pointer is near the bottom of the frame
      so we can do the full stack allocation and set it afterwards.  There
-     is an exception when the function accesses prior frames so, in this
-     case, we need to pre-allocate a small chunk before setting it.  */
-  if (crtl->accesses_prior_frames)
-    alloc_offset = seh->cfa_offset;
-  else
+     is an exception if the function overflows the SEH maximum frame size
+     or accesses prior frames so, in this case, we need to pre-allocate a
+     small chunk of stack before setting it.  */
+  offset = seh->sp_offset - INCOMING_FRAME_SP_OFFSET;
+  if (offset < SEH_MAX_FRAME_SIZE && !crtl->accesses_prior_frames)
     alloc_offset = seh->sp_offset;
+  else
+    alloc_offset = MIN (seh->cfa_offset + 240, seh->sp_offset);
 
   offset = alloc_offset - INCOMING_FRAME_SP_OFFSET;
-  if (offset > 0 && offset < SEH_MAX_FRAME_SIZE)
+  if (offset > 0)
     fprintf (f, "\t.seh_stackalloc\t" HOST_WIDE_INT_PRINT_DEC "\n", offset);
 
   for (int regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
@@ -958,7 +960,7 @@ i386_pe_seh_cold_init (FILE *f, const char *name)
       fprintf (f, ", " HOST_WIDE_INT_PRINT_DEC "\n", offset);
     }
 
-  if (crtl->accesses_prior_frames)
+  if (alloc_offset != seh->sp_offset)
     {
       offset = seh->sp_offset - alloc_offset;
       if (offset > 0 && offset < SEH_MAX_FRAME_SIZE)
@@ -1242,9 +1244,9 @@ i386_pe_seh_unwind_emit (FILE *asm_out_file, rtx_insn *insn)
   seh = cfun->machine->seh;
   if (NOTE_P (insn) && NOTE_KIND (insn) == NOTE_INSN_SWITCH_TEXT_SECTIONS)
     {
-      /* See ix86_seh_fixup_eh_fallthru for the rationale.  */
+      /* See ix86_output_call_insn/seh_fixup_eh_fallthru for the rationale.  */
       rtx_insn *prev = prev_active_insn (insn);
-      if (prev && !insn_nothrow_p (prev))
+      if (prev && (CALL_P (prev) || !insn_nothrow_p (prev)))
 	fputs ("\tnop\n", asm_out_file);
       fputs ("\t.seh_endproc\n", asm_out_file);
       seh->in_cold_section = true;

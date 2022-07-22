@@ -492,7 +492,7 @@ vuse_ssa_val (tree x)
   return x;
 }
 
-/* Similar to the above but used as callback for walk_non_aliases_vuses
+/* Similar to the above but used as callback for walk_non_aliased_vuses
    and thus should stop at unvisited VUSE to not walk across region
    boundaries.  */
 
@@ -738,6 +738,7 @@ vn_reference_eq (const_vn_reference_t const vr1, const_vn_reference_t const vr2)
       vn_reference_op_t vro1, vro2;
       vn_reference_op_s tem1, tem2;
       bool deref1 = false, deref2 = false;
+      bool reverse1 = false, reverse2 = false;
       for (; vr1->operands.iterate (i, &vro1); i++)
 	{
 	  if (vro1->opcode == MEM_REF)
@@ -745,6 +746,7 @@ vn_reference_eq (const_vn_reference_t const vr1, const_vn_reference_t const vr2)
 	  /* Do not look through a storage order barrier.  */
 	  else if (vro1->opcode == VIEW_CONVERT_EXPR && vro1->reverse)
 	    return false;
+	  reverse1 |= vro1->reverse;
 	  if (known_eq (vro1->off, -1))
 	    break;
 	  off1 += vro1->off;
@@ -756,11 +758,12 @@ vn_reference_eq (const_vn_reference_t const vr1, const_vn_reference_t const vr2)
 	  /* Do not look through a storage order barrier.  */
 	  else if (vro2->opcode == VIEW_CONVERT_EXPR && vro2->reverse)
 	    return false;
+	  reverse2 |= vro2->reverse;
 	  if (known_eq (vro2->off, -1))
 	    break;
 	  off2 += vro2->off;
 	}
-      if (maybe_ne (off1, off2))
+      if (maybe_ne (off1, off2) || reverse1 != reverse2)
 	return false;
       if (deref1 && vro1->opcode == ADDR_EXPR)
 	{
@@ -857,6 +860,9 @@ copy_reference_ops_from_ref (tree ref, vec<vn_reference_op_s> *result)
 	  temp.type = NULL_TREE;
 	  temp.op0 = TREE_OPERAND (ref, 1);
 	  temp.op1 = TREE_OPERAND (ref, 2);
+	  temp.reverse = (AGGREGATE_TYPE_P (TREE_TYPE (TREE_OPERAND (ref, 0)))
+			  && TYPE_REVERSE_STORAGE_ORDER
+			       (TREE_TYPE (TREE_OPERAND (ref, 0))));
 	  {
 	    tree this_offset = component_ref_field_offset (ref);
 	    if (this_offset
@@ -905,6 +911,9 @@ copy_reference_ops_from_ref (tree ref, vec<vn_reference_op_s> *result)
 				       * vn_ref_op_align_unit (&temp));
 		off.to_shwi (&temp.off);
 	      }
+	    temp.reverse = (AGGREGATE_TYPE_P (TREE_TYPE (TREE_OPERAND (ref, 0)))
+			    && TYPE_REVERSE_STORAGE_ORDER
+				 (TREE_TYPE (TREE_OPERAND (ref, 0))));
 	  }
 	  break;
 	case VAR_DECL:
@@ -1518,13 +1527,33 @@ contains_storage_order_barrier_p (vec<vn_reference_op_s> ops)
   return false;
 }
 
+/* Return true if OPS represent an access with reverse storage order.  */
+
+static bool
+reverse_storage_order_for_component_p (vec<vn_reference_op_s> ops)
+{
+  unsigned i = 0;
+  if (ops[i].opcode == REALPART_EXPR || ops[i].opcode == IMAGPART_EXPR)
+    ++i;
+  switch (ops[i].opcode)
+    {
+    case ARRAY_REF:
+    case COMPONENT_REF:
+    case BIT_FIELD_REF:
+    case MEM_REF:
+      return ops[i].reverse;
+    default:
+      return false;
+    }
+}
+
 /* Transform any SSA_NAME's in a vector of vn_reference_op_s
    structures into their value numbers.  This is done in-place, and
    the vector passed in is returned.  *VALUEIZED_ANYTHING will specify
    whether any operands were valueized.  */
 
-static vec<vn_reference_op_s> 
-valueize_refs_1 (vec<vn_reference_op_s> orig, bool *valueized_anything,
+static void
+valueize_refs_1 (vec<vn_reference_op_s> *orig, bool *valueized_anything,
 		 bool with_avail = false)
 {
   vn_reference_op_t vro;
@@ -1532,7 +1561,7 @@ valueize_refs_1 (vec<vn_reference_op_s> orig, bool *valueized_anything,
 
   *valueized_anything = false;
 
-  FOR_EACH_VEC_ELT (orig, i, vro)
+  FOR_EACH_VEC_ELT (*orig, i, vro)
     {
       if (vro->opcode == SSA_NAME
 	  || (vro->op0 && TREE_CODE (vro->op0) == SSA_NAME))
@@ -1571,16 +1600,16 @@ valueize_refs_1 (vec<vn_reference_op_s> orig, bool *valueized_anything,
       if (i > 0
 	  && vro->op0
 	  && TREE_CODE (vro->op0) == ADDR_EXPR
-	  && orig[i - 1].opcode == MEM_REF)
+	  && (*orig)[i - 1].opcode == MEM_REF)
 	{
-	  if (vn_reference_fold_indirect (&orig, &i))
+	  if (vn_reference_fold_indirect (orig, &i))
 	    *valueized_anything = true;
 	}
       else if (i > 0
 	       && vro->opcode == SSA_NAME
-	       && orig[i - 1].opcode == MEM_REF)
+	       && (*orig)[i - 1].opcode == MEM_REF)
 	{
-	  if (vn_reference_maybe_forwprop_address (&orig, &i))
+	  if (vn_reference_maybe_forwprop_address (orig, &i))
 	    *valueized_anything = true;
 	}
       /* If it transforms a non-constant ARRAY_REF into a constant
@@ -1598,15 +1627,13 @@ valueize_refs_1 (vec<vn_reference_op_s> orig, bool *valueized_anything,
 	  off.to_shwi (&vro->off);
 	}
     }
-
-  return orig;
 }
 
-static vec<vn_reference_op_s> 
-valueize_refs (vec<vn_reference_op_s> orig)
+static void
+valueize_refs (vec<vn_reference_op_s> *orig)
 {
   bool tem;
-  return valueize_refs_1 (orig, &tem);
+  valueize_refs_1 (orig, &tem);
 }
 
 static vec<vn_reference_op_s> shared_lookup_references;
@@ -1623,8 +1650,7 @@ valueize_shared_reference_ops_from_ref (tree ref, bool *valueized_anything)
     return vNULL;
   shared_lookup_references.truncate (0);
   copy_reference_ops_from_ref (ref, &shared_lookup_references);
-  shared_lookup_references = valueize_refs_1 (shared_lookup_references,
-					      valueized_anything);
+  valueize_refs_1 (&shared_lookup_references, valueized_anything);
   return shared_lookup_references;
 }
 
@@ -1639,7 +1665,7 @@ valueize_shared_reference_ops_from_call (gcall *call)
     return vNULL;
   shared_lookup_references.truncate (0);
   copy_reference_ops_from_call (call, &shared_lookup_references);
-  shared_lookup_references = valueize_refs (shared_lookup_references);
+  valueize_refs (&shared_lookup_references);
   return shared_lookup_references;
 }
 
@@ -2490,7 +2516,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *data_,
       if (*disambiguate_only <= TR_VALUEIZE_AND_DISAMBIGUATE)
 	{
 	  copy_reference_ops_from_ref (lhs, &lhs_ops);
-	  lhs_ops = valueize_refs_1 (lhs_ops, &valueized_anything, true);
+	  valueize_refs_1 (&lhs_ops, &valueized_anything, true);
 	}
       vn_context_bb = saved_rpo_bb;
       ao_ref_init (&lhs_ref, lhs);
@@ -2835,6 +2861,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *data_,
      routines to extract the assigned bits.  */
   else if (known_eq (ref->size, maxsize)
 	   && is_gimple_reg_type (vr->type)
+	   && !reverse_storage_order_for_component_p (vr->operands)
 	   && !contains_storage_order_barrier_p (vr->operands)
 	   && gimple_assign_single_p (def_stmt)
 	   && CHAR_BIT == 8
@@ -2986,6 +3013,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *data_,
      to access pieces from or we can combine to a larger entity.  */
   else if (known_eq (ref->size, maxsize)
 	   && is_gimple_reg_type (vr->type)
+	   && !reverse_storage_order_for_component_p (vr->operands)
 	   && !contains_storage_order_barrier_p (vr->operands)
 	   && gimple_assign_single_p (def_stmt)
 	   && TREE_CODE (gimple_assign_rhs1 (def_stmt)) == SSA_NAME)
@@ -3167,7 +3195,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *data_,
 	vr->operands.truncate (i + 1 + rhs.length ());
       FOR_EACH_VEC_ELT (rhs, j, vro)
 	vr->operands[i + 1 + j] = *vro;
-      vr->operands = valueize_refs (vr->operands);
+      valueize_refs (&vr->operands);
       if (old == shared_lookup_references)
 	shared_lookup_references = vr->operands;
       vr->hashcode = vn_reference_compute_hash (vr);
@@ -3460,8 +3488,9 @@ vn_reference_lookup_pieces (tree vuse, alias_set_type set,
 	  operands.address (),
 	  sizeof (vn_reference_op_s)
 	  * operands.length ());
-  vr1.operands = operands = shared_lookup_references
-    = valueize_refs (shared_lookup_references);
+  bool valueized_p;
+  valueize_refs_1 (&shared_lookup_references, &valueized_p);
+  vr1.operands = shared_lookup_references;
   vr1.type = type;
   vr1.set = set;
   vr1.base_set = base_set;
@@ -3477,13 +3506,31 @@ vn_reference_lookup_pieces (tree vuse, alias_set_type set,
       ao_ref r;
       unsigned limit = param_sccvn_max_alias_queries_per_access;
       vn_walk_cb_data data (&vr1, NULL_TREE, NULL, kind, true, NULL_TREE);
+      vec<vn_reference_op_s> ops_for_ref;
+      if (!valueized_p)
+	ops_for_ref = vr1.operands;
+      else
+	{
+	  /* For ao_ref_from_mem we have to ensure only available SSA names
+	     end up in base and the only convenient way to make this work
+	     for PRE is to re-valueize with that in mind.  */
+	  ops_for_ref.create (operands.length ());
+	  ops_for_ref.quick_grow (operands.length ());
+	  memcpy (ops_for_ref.address (),
+		  operands.address (),
+		  sizeof (vn_reference_op_s)
+		  * operands.length ());
+	  valueize_refs_1 (&ops_for_ref, &valueized_p, true);
+	}
       if (ao_ref_init_from_vn_reference (&r, set, base_set, type,
-					 vr1.operands))
+					 ops_for_ref))
 	*vnresult
 	  = ((vn_reference_t)
 	     walk_non_aliased_vuses (&r, vr1.vuse, true, vn_reference_lookup_2,
 				     vn_reference_lookup_3, vuse_valueize,
 				     limit, &data));
+      if (ops_for_ref != shared_lookup_references)
+	ops_for_ref.release ();
       gcc_checking_assert (vr1.operands == shared_lookup_references);
     }
 
@@ -3512,14 +3559,14 @@ vn_reference_lookup (tree op, tree vuse, vn_lookup_kind kind,
 {
   vec<vn_reference_op_s> operands;
   struct vn_reference_s vr1;
-  bool valuezied_anything;
+  bool valueized_anything;
 
   if (vnresult)
     *vnresult = NULL;
 
   vr1.vuse = vuse_ssa_val (vuse);
   vr1.operands = operands
-    = valueize_shared_reference_ops_from_ref (op, &valuezied_anything);
+    = valueize_shared_reference_ops_from_ref (op, &valueized_anything);
   vr1.type = TREE_TYPE (op);
   ao_ref op_ref;
   ao_ref_init (&op_ref, op);
@@ -3535,11 +3582,18 @@ vn_reference_lookup (tree op, tree vuse, vn_lookup_kind kind,
       vn_reference_t wvnresult;
       ao_ref r;
       unsigned limit = param_sccvn_max_alias_queries_per_access;
+      auto_vec<vn_reference_op_s> ops_for_ref;
+      if (valueized_anything)
+	{
+	  copy_reference_ops_from_ref (op, &ops_for_ref);
+	  bool tem;
+	  valueize_refs_1 (&ops_for_ref, &tem, true);
+	}
       /* Make sure to use a valueized reference if we valueized anything.
          Otherwise preserve the full reference for advanced TBAA.  */
-      if (!valuezied_anything
+      if (!valueized_anything
 	  || !ao_ref_init_from_vn_reference (&r, vr1.set, vr1.base_set,
-					     vr1.type, vr1.operands))
+					     vr1.type, ops_for_ref))
 	ao_ref_init (&r, op);
       vn_walk_cb_data data (&vr1, r.ref ? NULL_TREE : op,
 			    last_vuse_ptr, kind, tbaa_p, mask);
@@ -3667,7 +3721,8 @@ vn_reference_insert_pieces (tree vuse, alias_set_type set,
   vr1 = XOBNEW (&vn_tables_obstack, vn_reference_s);
   vr1->value_id = value_id;
   vr1->vuse = vuse_ssa_val (vuse);
-  vr1->operands = valueize_refs (operands);
+  vr1->operands = operands;
+  valueize_refs (&vr1->operands);
   vr1->type = type;
   vr1->punned = false;
   vr1->set = set;
@@ -4105,7 +4160,7 @@ vn_nary_op_insert_pieces_predicated (unsigned int length, enum tree_code code,
 }
 
 static bool
-dominated_by_p_w_unex (basic_block bb1, basic_block bb2);
+dominated_by_p_w_unex (basic_block bb1, basic_block bb2, bool);
 
 static tree
 vn_nary_op_get_predicated_value (vn_nary_op_t vno, basic_block bb)
@@ -4114,9 +4169,12 @@ vn_nary_op_get_predicated_value (vn_nary_op_t vno, basic_block bb)
     return vno->u.result;
   for (vn_pval *val = vno->u.values; val; val = val->next)
     for (unsigned i = 0; i < val->n; ++i)
-      if (dominated_by_p_w_unex (bb,
-			  BASIC_BLOCK_FOR_FN
-			    (cfun, val->valid_dominated_by_p[i])))
+      /* Do not handle backedge executability optimistically since
+	 when figuring out whether to iterate we do not consider
+	 changed predication.  */
+      if (dominated_by_p_w_unex
+	    (bb, BASIC_BLOCK_FOR_FN (cfun, val->valid_dominated_by_p[i]),
+	     false))
 	return val->result;
   return NULL_TREE;
 }
@@ -4401,10 +4459,11 @@ vn_phi_insert (gimple *phi, tree result, bool backedges_varying_p)
 
 
 /* Return true if BB1 is dominated by BB2 taking into account edges
-   that are not executable.  */
+   that are not executable.  When ALLOW_BACK is false consider not
+   executable backedges as executable.  */
 
 static bool
-dominated_by_p_w_unex (basic_block bb1, basic_block bb2)
+dominated_by_p_w_unex (basic_block bb1, basic_block bb2, bool allow_back)
 {
   edge_iterator ei;
   edge e;
@@ -4421,7 +4480,8 @@ dominated_by_p_w_unex (basic_block bb1, basic_block bb2)
     {
       edge prede = NULL;
       FOR_EACH_EDGE (e, ei, bb1->preds)
-	if (e->flags & EDGE_EXECUTABLE)
+	if ((e->flags & EDGE_EXECUTABLE)
+	    || (!allow_back && (e->flags & EDGE_DFS_BACK)))
 	  {
 	    if (prede)
 	      {
@@ -4443,7 +4503,8 @@ dominated_by_p_w_unex (basic_block bb1, basic_block bb2)
   /* Iterate to the single executable bb2 successor.  */
   edge succe = NULL;
   FOR_EACH_EDGE (e, ei, bb2->succs)
-    if (e->flags & EDGE_EXECUTABLE)
+    if ((e->flags & EDGE_EXECUTABLE)
+	|| (!allow_back && (e->flags & EDGE_DFS_BACK)))
       {
 	if (succe)
 	  {
@@ -4461,7 +4522,8 @@ dominated_by_p_w_unex (basic_block bb1, basic_block bb2)
 	{
 	  FOR_EACH_EDGE (e, ei, succe->dest->preds)
 	    if (e != succe
-		&& (e->flags & EDGE_EXECUTABLE))
+		&& ((e->flags & EDGE_EXECUTABLE)
+		    || (!allow_back && (e->flags & EDGE_DFS_BACK))))
 	      {
 		succe = NULL;
 		break;
@@ -6190,7 +6252,7 @@ eliminate_dom_walker::eliminate_stmt (basic_block b, gimple_stmt_iterator *gsi)
 	   at the definition are also available at uses.  */
 	sprime = eliminate_avail (gimple_bb (SSA_NAME_DEF_STMT (use)), use);
       if (sprime && sprime != use
-	  && may_propagate_copy (use, sprime)
+	  && may_propagate_copy (use, sprime, true)
 	  /* We substitute into debug stmts to avoid excessive
 	     debug temporaries created by removed stmts, but we need
 	     to avoid doing so for inserted sprimes as we never want
@@ -6758,7 +6820,7 @@ rpo_elim::eliminate_avail (basic_block bb, tree op)
 	     may also be able to "pre-compute" (bits of) the next immediate
 	     (non-)dominator during the RPO walk when marking edges as
 	     executable.  */
-	  if (dominated_by_p_w_unex (bb, abb))
+	  if (dominated_by_p_w_unex (bb, abb, true))
 	    {
 	      tree leader = ssa_name (av->leader);
 	      /* Prevent eliminations that break loop-closed SSA.  */
@@ -7351,11 +7413,9 @@ do_rpo_vn (function *fn, edge entry, bitmap exit_bbs,
     e->flags &= ~EDGE_DFS_BACK;
 
   int *rpo = XNEWVEC (int, n_basic_blocks_for_fn (fn) - NUM_FIXED_BLOCKS);
+  auto_vec<std::pair<int, int> > toplevel_scc_extents;
   int n = rev_post_order_and_mark_dfs_back_seme
-    (fn, entry, exit_bbs, !loops_state_satisfies_p (LOOPS_NEED_FIXUP), rpo);
-  /* rev_post_order_and_mark_dfs_back_seme fills RPO in reverse order.  */
-  for (int i = 0; i < n / 2; ++i)
-    std::swap (rpo[i], rpo[n-i-1]);
+    (fn, entry, exit_bbs, true, rpo, !iterate ? &toplevel_scc_extents : NULL);
 
   if (!do_region)
     BITMAP_FREE (exit_bbs);
@@ -7433,12 +7493,20 @@ do_rpo_vn (function *fn, edge entry, bitmap exit_bbs,
   vn_valueize = rpo_vn_valueize;
 
   /* Initialize the unwind state and edge/BB executable state.  */
-  bool need_max_rpo_iterate = false;
+  unsigned curr_scc = 0;
   for (int i = 0; i < n; ++i)
     {
       basic_block bb = BASIC_BLOCK_FOR_FN (fn, rpo[i]);
       rpo_state[i].visited = 0;
       rpo_state[i].max_rpo = i;
+      if (!iterate && curr_scc < toplevel_scc_extents.length ())
+	{
+	  if (i >= toplevel_scc_extents[curr_scc].first
+	      && i <= toplevel_scc_extents[curr_scc].second)
+	    rpo_state[i].max_rpo = toplevel_scc_extents[curr_scc].second;
+	  if (i == toplevel_scc_extents[curr_scc].second)
+	    curr_scc++;
+	}
       bb->flags &= ~BB_EXECUTABLE;
       bool has_backedges = false;
       edge e;
@@ -7450,50 +7518,11 @@ do_rpo_vn (function *fn, edge entry, bitmap exit_bbs,
 	  e->flags &= ~EDGE_EXECUTABLE;
 	  if (iterate || e == entry || (skip_entry_phis && bb == entry->dest))
 	    continue;
-	  if (bb_to_rpo[e->src->index] > i)
-	    {
-	      rpo_state[i].max_rpo = MAX (rpo_state[i].max_rpo,
-					  bb_to_rpo[e->src->index]);
-	      need_max_rpo_iterate = true;
-	    }
-	  else
-	    rpo_state[i].max_rpo
-	      = MAX (rpo_state[i].max_rpo,
-		     rpo_state[bb_to_rpo[e->src->index]].max_rpo);
 	}
       rpo_state[i].iterate = iterate && has_backedges;
     }
   entry->flags |= EDGE_EXECUTABLE;
   entry->dest->flags |= BB_EXECUTABLE;
-
-  /* When there are irreducible regions the simplistic max_rpo computation
-     above for the case of backedges doesn't work and we need to iterate
-     until there are no more changes.  */
-  unsigned nit = 0;
-  while (need_max_rpo_iterate)
-    {
-      nit++;
-      need_max_rpo_iterate = false;
-      for (int i = 0; i < n; ++i)
-	{
-	  basic_block bb = BASIC_BLOCK_FOR_FN (fn, rpo[i]);
-	  edge e;
-	  edge_iterator ei;
-	  FOR_EACH_EDGE (e, ei, bb->preds)
-	    {
-	      if (e == entry || (skip_entry_phis && bb == entry->dest))
-		continue;
-	      int max_rpo = MAX (rpo_state[i].max_rpo,
-				 rpo_state[bb_to_rpo[e->src->index]].max_rpo);
-	      if (rpo_state[i].max_rpo != max_rpo)
-		{
-		  rpo_state[i].max_rpo = max_rpo;
-		  need_max_rpo_iterate = true;
-		}
-	    }
-	}
-    }
-  statistics_histogram_event (cfun, "RPO max_rpo iterations", nit);
 
   /* As heuristic to improve compile-time we handle only the N innermost
      loops and the outermost one optimistically.  */

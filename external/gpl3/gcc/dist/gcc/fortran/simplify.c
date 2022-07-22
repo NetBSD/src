@@ -2077,6 +2077,9 @@ gfc_simplify_cshift (gfc_expr *array, gfc_expr *shift, gfc_expr *dim)
   else
     which = 0;
 
+  if (array->shape == NULL)
+    return NULL;
+
   gfc_array_size (array, &size);
   arraysize = mpz_get_ui (size);
   mpz_clear (size);
@@ -2535,6 +2538,9 @@ gfc_simplify_eoshift (gfc_expr *array, gfc_expr *shift, gfc_expr *boundary,
   result->ts = array->ts;
 
   if (arraysize == 0)
+    goto final;
+
+  if (array->shape == NULL)
     goto final;
 
   arrayvec = XCNEWVEC (gfc_expr *, arraysize);
@@ -4229,6 +4235,12 @@ simplify_bound (gfc_expr *array, gfc_expr *dim, gfc_expr *kind, int upper)
 
   if (as && (as->type == AS_DEFERRED || as->type == AS_ASSUMED_RANK
 	     || (as->type == AS_ASSUMED_SHAPE && upper)))
+    return NULL;
+
+  /* 'array' shall not be an unallocated allocatable variable or a pointer that
+     is not associated.  */
+  if (array->expr_type == EXPR_VARIABLE
+      && (gfc_expr_attr (array).allocatable || gfc_expr_attr (array).pointer))
     return NULL;
 
   gcc_assert (!as
@@ -6759,7 +6771,13 @@ gfc_simplify_reshape (gfc_expr *source, gfc_expr *shape_exp,
       gfc_extract_int (e, &shape[rank]);
 
       gcc_assert (rank >= 0 && rank < GFC_MAX_DIMENSIONS);
-      gcc_assert (shape[rank] >= 0);
+      if (shape[rank] < 0)
+	{
+	  gfc_error ("The SHAPE array for the RESHAPE intrinsic at %L has a "
+		     "negative value %d for dimension %d",
+		     &shape_exp->where, shape[rank], rank+1);
+	  return &gfc_bad_expr;
+	}
 
       rank++;
     }
@@ -7379,6 +7397,7 @@ simplify_size (gfc_expr *array, gfc_expr *dim, int k)
   mpz_t size;
   gfc_expr *return_value;
   int d;
+  gfc_ref *ref;
 
   /* For unary operations, the size of the result is given by the size
      of the operand.  For binary ones, it's the size of the first operand
@@ -7434,6 +7453,10 @@ simplify_size (gfc_expr *array, gfc_expr *dim, int k)
 	}
       return simplified;
     }
+
+  for (ref = array->ref; ref; ref = ref->next)
+    if (ref->type == REF_ARRAY && ref->u.ar.as)
+      gfc_resolve_array_spec (ref->u.ar.as, 0);
 
   if (dim == NULL)
     {
@@ -8031,7 +8054,18 @@ gfc_simplify_transfer (gfc_expr *source, gfc_expr *mold, gfc_expr *size)
      set even for array expressions, in order to pass this information into
      gfc_target_interpret_expr.  */
   if (result->ts.type == BT_CHARACTER && gfc_is_constant_expr (mold_element))
-    result->value.character.length = mold_element->value.character.length;
+    {
+      result->value.character.length = mold_element->value.character.length;
+
+      /* Let the typespec of the result inherit the string length.
+	 This is crucial if a resulting array has size zero.  */
+      if (mold_element->ts.u.cl->length)
+	result->ts.u.cl->length = gfc_copy_expr (mold_element->ts.u.cl->length);
+      else
+	result->ts.u.cl->length =
+	  gfc_get_int_expr (gfc_charlen_int_kind, NULL,
+			    mold_element->value.character.length);
+    }
 
   /* Set the number of elements in the result, and determine its size.  */
 
@@ -8070,6 +8104,9 @@ gfc_simplify_transpose (gfc_expr *matrix)
     return NULL;
 
   gcc_assert (matrix->rank == 2);
+
+  if (matrix->shape == NULL)
+    return NULL;
 
   result = gfc_get_array_expr (matrix->ts.type, matrix->ts.kind,
 			       &matrix->where);

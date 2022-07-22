@@ -1760,7 +1760,8 @@ vect_update_inits_of_drs (loop_vec_info loop_vinfo, tree niters,
   FOR_EACH_VEC_ELT (datarefs, i, dr)
     {
       dr_vec_info *dr_info = loop_vinfo->lookup_dr (dr);
-      if (!STMT_VINFO_GATHER_SCATTER_P (dr_info->stmt))
+      if (!STMT_VINFO_GATHER_SCATTER_P (dr_info->stmt)
+	  && !STMT_VINFO_SIMD_LANE_ACCESS_P (dr_info->stmt))
 	vect_update_init_of_dr (dr_info, niters, code);
     }
 }
@@ -3383,7 +3384,8 @@ vect_loop_versioning (loop_vec_info loop_vinfo,
 	outermost = superloop_at_depth (loop, 1);
       /* And avoid applying versioning on non-perfect nests.  */
       while (loop_to_version != outermost
-	     && single_exit (loop_outer (loop_to_version))
+	     && (e = single_exit (loop_outer (loop_to_version)))
+	     && !(e->flags & EDGE_COMPLEX)
 	     && (!loop_outer (loop_to_version)->inner->next
 		 || vect_loop_vectorized_call (loop_to_version))
 	     && (!loop_outer (loop_to_version)->inner->next

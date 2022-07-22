@@ -3123,7 +3123,7 @@ aarch64_load_symref_appropriately (rtx dest, rtx imm,
 	if (can_create_pseudo_p ())
 	  tmp_reg = gen_reg_rtx (mode);
 
-	emit_move_insn (tmp_reg, gen_rtx_HIGH (mode, imm));
+	emit_move_insn (tmp_reg, gen_rtx_HIGH (mode, copy_rtx (imm)));
 	emit_insn (gen_add_losym (dest, tmp_reg, imm));
 	return;
       }
@@ -4322,7 +4322,7 @@ aarch64_mov128_immediate (rtx imm)
 static unsigned int
 aarch64_add_offset_1_temporaries (HOST_WIDE_INT offset)
 {
-  return abs_hwi (offset) < 0x1000000 ? 0 : 1;
+  return absu_hwi (offset) < 0x1000000 ? 0 : 1;
 }
 
 /* A subroutine of aarch64_add_offset.  Set DEST to SRC + OFFSET for
@@ -4752,6 +4752,56 @@ aarch64_expand_sve_ld1rq (rtx dest, rtx src)
   return true;
 }
 
+/* SRC is an SVE CONST_VECTOR that contains N "foreground" values followed
+   by N "background" values.  Try to move it into TARGET using:
+
+      PTRUE PRED.<T>, VL<N>
+      MOV TRUE.<T>, #<foreground>
+      MOV FALSE.<T>, #<background>
+      SEL TARGET.<T>, PRED.<T>, TRUE.<T>, FALSE.<T>
+
+   The PTRUE is always a single instruction but the MOVs might need a
+   longer sequence.  If the background value is zero (as it often is),
+   the sequence can sometimes collapse to a PTRUE followed by a
+   zero-predicated move.
+
+   Return the target on success, otherwise return null.  */
+
+static rtx
+aarch64_expand_sve_const_vector_sel (rtx target, rtx src)
+{
+  gcc_assert (CONST_VECTOR_NELTS_PER_PATTERN (src) == 2);
+
+  /* Make sure that the PTRUE is valid.  */
+  machine_mode mode = GET_MODE (src);
+  machine_mode pred_mode = aarch64_sve_pred_mode (mode);
+  unsigned int npatterns = CONST_VECTOR_NPATTERNS (src);
+  if (aarch64_svpattern_for_vl (pred_mode, npatterns)
+      == AARCH64_NUM_SVPATTERNS)
+    return NULL_RTX;
+
+  rtx_vector_builder pred_builder (pred_mode, npatterns, 2);
+  rtx_vector_builder true_builder (mode, npatterns, 1);
+  rtx_vector_builder false_builder (mode, npatterns, 1);
+  for (unsigned int i = 0; i < npatterns; ++i)
+    {
+      true_builder.quick_push (CONST_VECTOR_ENCODED_ELT (src, i));
+      pred_builder.quick_push (CONST1_RTX (BImode));
+    }
+  for (unsigned int i = 0; i < npatterns; ++i)
+    {
+      false_builder.quick_push (CONST_VECTOR_ENCODED_ELT (src, i + npatterns));
+      pred_builder.quick_push (CONST0_RTX (BImode));
+    }
+  expand_operand ops[4];
+  create_output_operand (&ops[0], target, mode);
+  create_input_operand (&ops[1], true_builder.build (), mode);
+  create_input_operand (&ops[2], false_builder.build (), mode);
+  create_input_operand (&ops[3], pred_builder.build (), pred_mode);
+  expand_insn (code_for_vcond_mask (mode, mode), 4, ops);
+  return target;
+}
+
 /* Return a register containing CONST_VECTOR SRC, given that SRC has an
    SVE data mode and isn't a legitimate constant.  Use TARGET for the
    result if convenient.
@@ -4885,6 +4935,10 @@ aarch64_expand_sve_const_vector (rtx target, rtx src)
      if we can.  */
   if (GET_MODE_NUNITS (mode).is_constant ())
     return NULL_RTX;
+
+  if (nelts_per_pattern == 2)
+    if (rtx res = aarch64_expand_sve_const_vector_sel (target, src))
+      return res;
 
   /* Expand each pattern individually.  */
   gcc_assert (npatterns > 1);
@@ -5067,12 +5121,12 @@ aarch64_expand_sve_const_pred_trn (rtx target, rtx_vector_builder &builder,
 	}
     }
 
-  /* Emit the TRN1 itself.  */
+  /* Emit the TRN1 itself.  We emit a TRN that operates on VNx16BI
+     operands but permutes them as though they had mode MODE.  */
   machine_mode mode = aarch64_sve_pred_mode (permute_size).require ();
-  target = aarch64_target_reg (target, mode);
-  emit_insn (gen_aarch64_sve (UNSPEC_TRN1, mode, target,
-			      gen_lowpart (mode, a),
-			      gen_lowpart (mode, b)));
+  target = aarch64_target_reg (target, GET_MODE (a));
+  rtx type_reg = CONST0_RTX (mode);
+  emit_insn (gen_aarch64_sve_trn1_conv (mode, target, a, b, type_reg));
   return target;
 }
 
@@ -16271,9 +16325,21 @@ aarch64_legitimate_constant_p (machine_mode mode, rtx x)
 {
   /* Support CSE and rematerialization of common constants.  */
   if (CONST_INT_P (x)
-      || (CONST_DOUBLE_P (x) && GET_MODE_CLASS (mode) == MODE_FLOAT)
-      || GET_CODE (x) == CONST_VECTOR)
+      || (CONST_DOUBLE_P (x) && GET_MODE_CLASS (mode) == MODE_FLOAT))
     return true;
+
+  /* Only accept variable-length vector constants if they can be
+     handled directly.
+
+     ??? It would be possible (but complex) to handle rematerialization
+     of other constants via secondary reloads.  */
+  if (!GET_MODE_SIZE (mode).is_constant ())
+    return aarch64_simd_valid_immediate (x, NULL);
+
+  /* Otherwise, accept any CONST_VECTOR that, if all else fails, can at
+     least be forced to memory and loaded from there.  */
+  if (GET_CODE (x) == CONST_VECTOR)
+    return !targetm.cannot_force_const_mem (mode, x);
 
   /* Do not allow vector struct mode constants for Advanced SIMD.
      We could support 0 and -1 easily, but they need support in
@@ -16281,14 +16347,6 @@ aarch64_legitimate_constant_p (machine_mode mode, rtx x)
   unsigned int vec_flags = aarch64_classify_vector_mode (mode);
   if (vec_flags == (VEC_ADVSIMD | VEC_STRUCT))
     return false;
-
-  /* Only accept variable-length vector constants if they can be
-     handled directly.
-
-     ??? It would be possible to handle rematerialization of other
-     constants via secondary reloads.  */
-  if (vec_flags & VEC_ANY_SVE)
-    return aarch64_simd_valid_immediate (x, NULL);
 
   if (GET_CODE (x) == HIGH)
     x = XEXP (x, 0);
@@ -18621,10 +18679,11 @@ aarch64_vectorize_preferred_vector_alignment (const_tree type)
 {
   if (aarch64_sve_data_mode_p (TYPE_MODE (type)))
     {
-      /* If the length of the vector is fixed, try to align to that length,
-	 otherwise don't try to align at all.  */
+      /* If the length of the vector is a fixed power of 2, try to align
+	 to that length, otherwise don't try to align at all.  */
       HOST_WIDE_INT result;
-      if (!BITS_PER_SVE_VECTOR.is_constant (&result))
+      if (!GET_MODE_BITSIZE (TYPE_MODE (type)).is_constant (&result)
+	  || !pow2p_hwi (result))
 	result = TYPE_ALIGN (TREE_TYPE (type));
       return result;
     }
@@ -19558,14 +19617,14 @@ aarch64_emit_unlikely_jump (rtx insn)
   add_reg_br_prob_note (jump, profile_probability::very_unlikely ());
 }
 
-/* We store the names of the various atomic helpers in a 5x4 array.
+/* We store the names of the various atomic helpers in a 5x5 array.
    Return the libcall function given MODE, MODEL and NAMES.  */
 
 rtx
 aarch64_atomic_ool_func(machine_mode mode, rtx model_rtx,
 			const atomic_ool_names *names)
 {
-  memmodel model = memmodel_base (INTVAL (model_rtx));
+  memmodel model = memmodel_from_int (INTVAL (model_rtx));
   int mode_idx, model_idx;
 
   switch (mode)
@@ -19605,6 +19664,11 @@ aarch64_atomic_ool_func(machine_mode mode, rtx model_rtx,
     case MEMMODEL_SEQ_CST:
       model_idx = 3;
       break;
+    case MEMMODEL_SYNC_ACQUIRE:
+    case MEMMODEL_SYNC_RELEASE:
+    case MEMMODEL_SYNC_SEQ_CST:
+      model_idx = 4;
+      break;
     default:
       gcc_unreachable ();
     }
@@ -19617,7 +19681,8 @@ aarch64_atomic_ool_func(machine_mode mode, rtx model_rtx,
   { "__aarch64_" #B #N "_relax", \
     "__aarch64_" #B #N "_acq", \
     "__aarch64_" #B #N "_rel", \
-    "__aarch64_" #B #N "_acq_rel" }
+    "__aarch64_" #B #N "_acq_rel", \
+    "__aarch64_" #B #N "_sync" }
 
 #define DEF4(B)  DEF0(B, 1), DEF0(B, 2), DEF0(B, 4), DEF0(B, 8), \
 		 { NULL, NULL, NULL, NULL }

@@ -1838,12 +1838,12 @@ verify_tree (tree x, struct tlist **pbefore_sp, struct tlist **pno_sp,
   enum tree_code code;
   enum tree_code_class cl;
 
+ restart:
   /* X may be NULL if it is the operand of an empty statement expression
      ({ }).  */
   if (x == NULL)
     return;
 
- restart:
   code = TREE_CODE (x);
   cl = TREE_CODE_CLASS (code);
 
@@ -2980,7 +2980,11 @@ shorten_compare (location_t loc, tree *op0_ptr, tree *op1_ptr,
   else if (real1 && real2
 	   && (DECIMAL_FLOAT_MODE_P (TYPE_MODE (TREE_TYPE (primop0)))
 	       || DECIMAL_FLOAT_MODE_P (TYPE_MODE (TREE_TYPE (primop1)))))
-    return NULL_TREE;
+    {
+      type = *restype_ptr;
+      primop0 = op0;
+      primop1 = op1;
+    }
 
   else if (real1 && real2
 	   && (TYPE_PRECISION (TREE_TYPE (primop0))
@@ -4027,6 +4031,8 @@ c_common_nodes_and_builtins (void)
       sprintf (name, "__int%d__", int_n_data[i].bitsize);
       record_builtin_type ((enum rid)(RID_FIRST_INT_N + i), name,
 			   int_n_trees[i].signed_type);
+      ridpointers[RID_FIRST_INT_N + i]
+	= DECL_NAME (TYPE_NAME (int_n_trees[i].signed_type));
 
       sprintf (name, "__int%d unsigned", int_n_data[i].bitsize);
       record_builtin_type (RID_MAX, name, int_n_trees[i].unsigned_type);

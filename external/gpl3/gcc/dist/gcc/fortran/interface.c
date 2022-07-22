@@ -2326,6 +2326,7 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
   bool rank_check, is_pointer;
   char err[200];
   gfc_component *ppc;
+  bool codimension = false;
 
   /* If the formal arg has type BT_VOID, it's to one of the iso_c_binding
      procs c_f_pointer or c_f_procpointer, and we need to accept most
@@ -2489,7 +2490,12 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
       return false;
     }
 
-  if (formal->attr.codimension && !gfc_is_coarray (actual))
+  if (formal->ts.type == BT_CLASS && formal->attr.class_ok)
+    codimension = CLASS_DATA (formal)->attr.codimension;
+  else
+    codimension = formal->attr.codimension;
+
+  if (codimension && !gfc_is_coarray (actual))
     {
       if (where)
 	gfc_error ("Actual argument to %qs at %L must be a coarray",
@@ -2497,7 +2503,7 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
       return false;
     }
 
-  if (formal->attr.codimension && formal->attr.allocatable)
+  if (codimension && formal->attr.allocatable)
     {
       gfc_ref *last = NULL;
 
@@ -2519,7 +2525,7 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
 	}
     }
 
-  if (formal->attr.codimension)
+  if (codimension)
     {
       /* F2008, 12.5.2.8 + Corrig 2 (IR F08/0048).  */
       /* F2018, 12.5.2.8.  */
@@ -2585,7 +2591,7 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
       return false;
     }
 
-  if (formal->attr.allocatable && !formal->attr.codimension
+  if (formal->attr.allocatable && !codimension
       && actual_attr.codimension)
     {
       if (formal->attr.intent == INTENT_OUT)
@@ -3248,10 +3254,13 @@ gfc_compare_actual_formal (gfc_actual_arglist **ap, gfc_formal_arglist *formal,
 	  && f->sym->attr.flavor != FL_PROCEDURE)
 	{
 	  if (a->expr->ts.type == BT_CHARACTER && !f->sym->as && where)
-	    gfc_warning (0, "Character length of actual argument shorter "
-			 "than of dummy argument %qs (%lu/%lu) at %L",
-			 f->sym->name, actual_size, formal_size,
-			 &a->expr->where);
+	    {
+	      gfc_warning (0, "Character length of actual argument shorter "
+			   "than of dummy argument %qs (%lu/%lu) at %L",
+			   f->sym->name, actual_size, formal_size,
+			   &a->expr->where);
+	      goto skip_size_check;
+	    }
           else if (where)
 	    {
 	      /* Emit a warning for -std=legacy and an error otherwise. */

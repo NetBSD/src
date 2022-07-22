@@ -264,7 +264,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
 
   bool copy_file(const path& __from, const path& __to, copy_options __option);
   bool copy_file(const path& __from, const path& __to, copy_options __option,
-		 error_code&) noexcept;
+		 error_code&);
 
   path current_path();
 
@@ -279,7 +279,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
   bool is_regular_file(file_status) noexcept;
   bool is_symlink(file_status) noexcept;
 
-  // @} group filesystem-ts
+  /// @} group filesystem-ts
 } // namespace v1
 } // namespace filesystem
 } // namespace experimental

@@ -23,19 +23,18 @@ from git_repository import parse_git_revisions
 parser = argparse.ArgumentParser(description='Check git ChangeLog format '
                                  'of a commit')
 parser.add_argument('revisions', default='HEAD', nargs='?',
-                    help='Git revisions (e.g. hash~5..hash or just hash)')
+                    help='Git revisions (e.g. hash~5..hash or just hash) - '
+                    'if not specified: HEAD')
 parser.add_argument('-g', '--git-path', default='.',
                     help='Path to git repository')
 parser.add_argument('-p', '--print-changelog', action='store_true',
                     help='Print final changelog entires')
-parser.add_argument('-n', '--non-strict-mode', action='store_true',
-                    help='Use non-strict mode (allow changes in ChangeLog and '
-                    'other automatically updated files).')
+parser.add_argument('-v', '--verbose', action='store_true',
+                    help='Print verbose information')
 args = parser.parse_args()
 
 retval = 0
-for git_commit in parse_git_revisions(args.git_path, args.revisions,
-                                      not args.non_strict_mode):
+for git_commit in parse_git_revisions(args.git_path, args.revisions):
     res = 'OK' if git_commit.success else 'FAILED'
     print('Checking %s: %s' % (git_commit.original_info.hexsha, res))
     if git_commit.success:
@@ -44,6 +43,8 @@ for git_commit in parse_git_revisions(args.git_path, args.revisions,
     else:
         for error in git_commit.errors:
             print('ERR: %s' % error)
+            if args.verbose and error.details:
+                print(error.details)
         retval = 1
 
 exit(retval)
