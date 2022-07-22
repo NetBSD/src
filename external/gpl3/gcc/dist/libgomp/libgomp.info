@@ -1,4 +1,4 @@
-This is libgomp.info, produced by makeinfo version 6.5 from
+This is libgomp.info, produced by makeinfo version 6.8 from
 libgomp.texi.
 
 Copyright (C) 2006-2020 Free Software Foundation, Inc.
@@ -5118,3 +5118,8 @@ Node: Funding200734
 Node: Library Index203260
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
