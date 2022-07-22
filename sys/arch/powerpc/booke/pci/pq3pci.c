@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.31 2022/05/07 05:08:16 rin Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.32 2022/07/22 19:55:38 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.31 2022/05/07 05:08:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.32 2022/07/22 19:55:38 thorpej Exp $");
 
 #include "locators.h"
 
@@ -712,7 +712,7 @@ pq3pci_intrmap_setup(struct pq3pci_softc *sc,
 	prop_number_t pn = prop_dictionary_get(sc->sc_intrmap, "interrupt-mask");
 	KASSERT(pn != NULL);
 
-	sc->sc_intrmask = prop_number_unsigned_integer_value(pn);
+	sc->sc_intrmask = prop_number_unsigned_value(pn);
 
 	sc->sc_ih = intr_establish_xname(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
 	    pq3pci_onchip_intr, sc, device_xname(sc->sc_dev));
@@ -1393,11 +1393,11 @@ pq3pci_intr_handle_lookup(struct pq3pci_softc *sc,
 	prop_number_t pn_irq = prop_dictionary_get(entry, "interrupt");
 	KASSERT(pn_irq != NULL);
 	KASSERT(prop_object_type(pn_irq) == PROP_TYPE_NUMBER);
-	int irq = prop_number_unsigned_integer_value(pn_irq);
+	int irq = prop_number_unsigned_value(pn_irq);
 	prop_number_t pn_ist = prop_dictionary_get(entry, "type");
 	KASSERT(pn_ist != NULL);
 	KASSERT(prop_object_type(pn_ist) == PROP_TYPE_NUMBER);
-	int ist = prop_number_unsigned_integer_value(pn_ist);
+	int ist = prop_number_unsigned_value(pn_ist);
 
 	return PIH_MAKE(irq, ist, 0);
 }
