@@ -822,12 +822,18 @@ find_bswap_or_nop_finalize (struct symbolic_number *n, uint64_t *cmpxchg,
 	{
 	  mask = ((uint64_t) 1 << (rsize * BITS_PER_MARKER)) - 1;
 	  *cmpxchg &= mask;
-	  *cmpnop >>= (n->range - rsize) * BITS_PER_MARKER;
+	  if (n->range - rsize == sizeof (int64_t))
+	    *cmpnop = 0;
+	  else
+	    *cmpnop >>= (n->range - rsize) * BITS_PER_MARKER;
 	}
       else
 	{
 	  mask = ((uint64_t) 1 << (rsize * BITS_PER_MARKER)) - 1;
-	  *cmpxchg >>= (n->range - rsize) * BITS_PER_MARKER;
+	  if (n->range - rsize == sizeof (int64_t))
+	    *cmpxchg = 0;
+	  else
+	    *cmpxchg >>= (n->range - rsize) * BITS_PER_MARKER;
 	  *cmpnop &= mask;
 	}
       n->range = rsize;
@@ -4574,7 +4580,7 @@ mem_valid_for_store_merging (tree mem, poly_uint64 *pbitsize,
   tree base_addr = get_inner_reference (mem, &bitsize, &bitpos, &offset, &mode,
 					&unsignedp, &reversep, &volatilep);
   *pbitsize = bitsize;
-  if (known_eq (bitsize, 0))
+  if (known_le (bitsize, 0))
     return NULL_TREE;
 
   if (TREE_CODE (mem) == COMPONENT_REF
@@ -4957,6 +4963,7 @@ get_status_for_store_merging (basic_block bb)
   unsigned int num_statements = 0;
   gimple_stmt_iterator gsi;
   edge e;
+  gimple *last_stmt = NULL;
 
   for (gsi = gsi_after_labels (bb); !gsi_end_p (gsi); gsi_next (&gsi))
     {
@@ -4964,6 +4971,8 @@ get_status_for_store_merging (basic_block bb)
 
       if (is_gimple_debug (stmt))
 	continue;
+
+      last_stmt = stmt;
 
       if (store_valid_for_store_merging_p (stmt) && ++num_statements >= 2)
 	break;
@@ -4973,7 +4982,7 @@ get_status_for_store_merging (basic_block bb)
     return BB_INVALID;
 
   if (cfun->can_throw_non_call_exceptions && cfun->eh
-      && store_valid_for_store_merging_p (gimple_seq_last_stmt (bb_seq (bb)))
+      && store_valid_for_store_merging_p (last_stmt)
       && (e = find_fallthru_edge (bb->succs))
       && e->dest == bb->next_bb)
     return BB_EXTENDED_VALID;

@@ -1,3 +1,32 @@
+2022-06-28  Release Manager
+
+	* GCC 10.4.0 released.
+
+2022-06-09  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2021-08-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* docs/examples/tut04-toyvm/toyvm.c: Include jit-dejagnu.h.
+	* docs/examples/tut04-toyvm/toyvm.cc: Likewise.
+	* jit-dejagnu.h: New file, imported from dejagnu-1.6.2 and
+	patched for this application.
+
+2022-06-09  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR jit/100613
+	* Make-lang.in: Provide clauses for Darwin hosts.
+
+2021-11-24  Martin Liska  <mliska@suse.cz>
+
+	Backported from master:
+	2021-11-24  Martin Liska  <mliska@suse.cz>
+
+	* jit-playback.c (function): Initialize m_blocks vector.
+
 2021-04-08  Release Manager
 
 	* GCC 10.3.0 released.

@@ -36,7 +36,8 @@
 ;; Constants for creating unspecs
 
 (define_c_enum "unspec"
-  [UNSPEC_MMA_ASSEMBLE_ACC
+  [UNSPEC_VSX_ASSEMBLE
+   UNSPEC_MMA_ASSEMBLE_ACC
    UNSPEC_MMA_PMXVBF16GER2
    UNSPEC_MMA_PMXVBF16GER2NN
    UNSPEC_MMA_PMXVBF16GER2NP
@@ -97,6 +98,10 @@
    UNSPEC_MMA_XVI8GER4SPP
    UNSPEC_MMA_XXMFACC
    UNSPEC_MMA_XXMTACC
+  ])
+
+(define_c_enum "unspecv"
+  [UNSPECV_MMA_XXSETACCZ
   ])
 
 ;; MMA instructions with 1 accumulator argument
@@ -325,42 +330,55 @@
 })
 
 (define_insn_and_split "*movpxi"
-  [(set (match_operand:PXI 0 "nonimmediate_operand" "=d,m,d,d")
-	(match_operand:PXI 1 "input_operand" "m,d,d,O"))]
+  [(set (match_operand:PXI 0 "nonimmediate_operand" "=d,m,d")
+	(match_operand:PXI 1 "input_operand" "m,d,d"))]
   "TARGET_MMA
    && (gpc_reg_operand (operands[0], PXImode)
        || gpc_reg_operand (operands[1], PXImode))"
   "@
    #
    #
-   #
-   xxsetaccz %A0"
-  "&& reload_completed
-   && !(fpr_reg_operand (operands[0], PXImode) && operands[1] == const0_rtx)"
+   #"
+  "&& reload_completed"
   [(const_int 0)]
 {
   rs6000_split_multireg_move (operands[0], operands[1]);
   DONE;
 }
-  [(set_attr "type" "vecload,vecstore,veclogical,mma")
-   (set_attr "length" "8,8,16,*")
-   (set_attr "max_prefixed_insns" "2,2,*,*")])
+  [(set_attr "type" "vecload,vecstore,veclogical")
+   (set_attr "length" "8,8,16")
+   (set_attr "max_prefixed_insns" "2,2,*")])
 
 (define_expand "vsx_assemble_pair"
   [(match_operand:POI 0 "vsx_register_operand")
-   (match_operand:V16QI 1 "input_operand")
-   (match_operand:V16QI 2 "input_operand")]
+   (match_operand:V16QI 1 "mma_assemble_input_operand")
+   (match_operand:V16QI 2 "mma_assemble_input_operand")]
   "TARGET_MMA"
 {
-  rtx dst;
+  rtx src = gen_rtx_UNSPEC (POImode,
+                            gen_rtvec (2, operands[1], operands[2]),
+                            UNSPEC_VSX_ASSEMBLE);
+  emit_move_insn (operands[0], src);
+  DONE;
+})
 
-  /* Let the compiler know the code below fully defines our output value.  */
-  emit_clobber (operands[0]);
+;; We cannot update the two output registers atomically, so mark the output
+;; as an early clobber so we don't accidentally clobber the input operands.  */
 
-  dst = simplify_gen_subreg (V16QImode, operands[0], POImode, 0);
-  emit_move_insn (dst, operands[1]);
-  dst = simplify_gen_subreg (V16QImode, operands[0], POImode, 16);
-  emit_move_insn (dst, operands[2]);
+(define_insn_and_split "*vsx_assemble_pair"
+  [(set (match_operand:POI 0 "vsx_register_operand" "=&wa")
+        (unspec:POI [(match_operand:V16QI 1 "mma_assemble_input_operand" "mwa")
+		     (match_operand:V16QI 2 "mma_assemble_input_operand" "mwa")]
+                     UNSPEC_VSX_ASSEMBLE))]
+  "TARGET_MMA"
+  "#"
+  "&& reload_completed"
+  [(const_int 0)]
+{
+  rtx src = gen_rtx_UNSPEC (POImode,
+                            gen_rtvec (2, operands[1], operands[2]),
+                            UNSPEC_VSX_ASSEMBLE);
+  rs6000_split_multireg_move (operands[0], src);
   DONE;
 })
 
@@ -380,8 +398,11 @@
   DONE;
 })
 
+;; We cannot update the four output registers atomically, so mark the output
+;; as an early clobber so we don't accidentally clobber the input operands.  */
+
 (define_insn_and_split "*mma_assemble_acc"
-  [(set (match_operand:PXI 0 "fpr_reg_operand" "=d")
+  [(set (match_operand:PXI 0 "fpr_reg_operand" "=&d")
 	(unspec:PXI [(match_operand:V16QI 1 "mma_assemble_input_operand" "mwa")
 		     (match_operand:V16QI 2 "mma_assemble_input_operand" "mwa")
 		     (match_operand:V16QI 3 "mma_assemble_input_operand" "mwa")
@@ -413,14 +434,16 @@
   "<acc> %A0"
   [(set_attr "type" "mma")])
 
-(define_expand "mma_xxsetaccz"
-  [(set (match_operand:PXI 0 "fpr_reg_operand")
-	(const_int 0))]
+;; We can't have integer constants in PXImode so we wrap this in an
+;; UNSPEC_VOLATILE.
+
+(define_insn "mma_xxsetaccz"
+  [(set (match_operand:PXI 0 "fpr_reg_operand" "=d")
+	(unspec_volatile:PXI [(const_int 0)]
+			     UNSPECV_MMA_XXSETACCZ))]
   "TARGET_MMA"
-{
-  emit_insn (gen_movpxi (operands[0], const0_rtx));
-  DONE;
-})
+  "xxsetaccz %A0"
+  [(set_attr "type" "mma")])
 
 (define_insn "mma_<vv>"
   [(set (match_operand:PXI 0 "fpr_reg_operand" "=&d")

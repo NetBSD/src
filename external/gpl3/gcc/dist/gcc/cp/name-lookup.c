@@ -2762,6 +2762,10 @@ check_local_shadow (tree decl)
       enum opt_code warning_code;
       if (warn_shadow)
 	warning_code = OPT_Wshadow;
+      else if ((TREE_CODE (decl) == TYPE_DECL)
+	       ^ (TREE_CODE (old) == TYPE_DECL))
+	/* If exactly one is a type, they aren't compatible.  */
+	warning_code = OPT_Wshadow_local;
       else if ((TREE_TYPE (old)
 		&& TREE_TYPE (decl)
 		&& same_type_p (TREE_TYPE (old), TREE_TYPE (decl)))
@@ -2802,7 +2806,7 @@ check_local_shadow (tree decl)
   /* Don't warn for artificial things that are not implicit typedefs.  */
   if (DECL_ARTIFICIAL (decl) && !DECL_IMPLICIT_TYPEDEF_P (decl))
     return;
-  
+
   if (nonlambda_method_basetype ())
     if (tree member = lookup_member (current_nonlambda_class_type (),
 				     DECL_NAME (decl), /*protect=*/0,
@@ -2814,8 +2818,9 @@ check_local_shadow (tree decl)
 	   is a function or a pointer-to-function.  */
 	if (!OVL_P (member)
 	    || TREE_CODE (decl) == FUNCTION_DECL
-	    || TYPE_PTRFN_P (TREE_TYPE (decl))
-	    || TYPE_PTRMEMFUNC_P (TREE_TYPE (decl)))
+	    || (TREE_TYPE (decl)
+		&& (TYPE_PTRFN_P (TREE_TYPE (decl))
+		    || TYPE_PTRMEMFUNC_P (TREE_TYPE (decl)))))
 	  {
 	    auto_diagnostic_group d;
 	    if (warning_at (DECL_SOURCE_LOCATION (decl), OPT_Wshadow,

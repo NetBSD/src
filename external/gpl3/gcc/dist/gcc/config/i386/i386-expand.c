@@ -1140,6 +1140,9 @@ ix86_split_idivmod (machine_mode mode, rtx operands[],
   rtx scratch, tmp0, tmp1, tmp2;
   rtx (*gen_divmod4_1) (rtx, rtx, rtx, rtx);
 
+  operands[2] = force_reg (mode, operands[2]);
+  operands[3] = force_reg (mode, operands[3]);
+
   switch (mode)
     {
     case E_SImode:
@@ -7940,6 +7943,7 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
     pop = NULL;
   gcc_assert (!TARGET_64BIT || !pop);
 
+  rtx addr = XEXP (fnaddr, 0);
   if (TARGET_MACHO && !TARGET_64BIT)
     {
 #if TARGET_MACHO
@@ -7952,7 +7956,6 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
       /* Static functions and indirect calls don't need the pic register.  Also,
 	 check if PLT was explicitly avoided via no-plt or "noplt" attribute, making
 	 it an indirect call.  */
-      rtx addr = XEXP (fnaddr, 0);
       if (flag_pic
 	  && GET_CODE (addr) == SYMBOL_REF
 	  && !SYMBOL_REF_LOCAL_P (addr))
@@ -8113,6 +8116,20 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
 	      cfun->machine->call_ms2sysv = true;
 	    }
 	}
+    }
+
+  if (TARGET_MACHO && TARGET_64BIT && !sibcall
+      && ((GET_CODE (addr) == SYMBOL_REF && !SYMBOL_REF_LOCAL_P (addr))
+	  || !fndecl || TREE_PUBLIC (fndecl)))
+    {
+      /* We allow public functions defined in a TU to bind locally for PIC
+	 code (the default) on 64bit Mach-O.
+	 If such functions are not inlined, we cannot tell at compile-time if
+	 they will be called via the lazy symbol resolver (this can depend on
+	 options given at link-time).  Therefore, we must assume that the lazy
+	 resolver could be used which clobbers R11 and R10.  */
+      clobber_reg (&use, gen_rtx_REG (DImode, R11_REG));
+      clobber_reg (&use, gen_rtx_REG (DImode, R10_REG));
     }
 
   if (vec_len > 1)
@@ -11929,6 +11946,9 @@ rdseed_step:
       return target;
 
     case IX86_BUILTIN_READ_FLAGS:
+      if (ignore)
+	return const0_rtx;
+
       emit_insn (gen_push (gen_rtx_REG (word_mode, FLAGS_REG)));
 
       if (optimize
@@ -14059,9 +14079,9 @@ quarter:
 	      else
 		{
 		  word = expand_simple_binop (word_mode, ASHIFT, word, shift,
-					      word, 1, OPTAB_LIB_WIDEN);
+					      NULL_RTX, 1, OPTAB_LIB_WIDEN);
 		  word = expand_simple_binop (word_mode, IOR, word, elt,
-					      word, 1, OPTAB_LIB_WIDEN);
+					      NULL_RTX, 1, OPTAB_LIB_WIDEN);
 		}
 	    }
 
@@ -14114,11 +14134,15 @@ ix86_expand_vector_init (bool mmx_ok, rtx target, rtx vals)
       if (GET_MODE_NUNITS (GET_MODE (x)) * 2 == n_elts)
 	{
 	  rtx ops[2] = { XVECEXP (vals, 0, 0), XVECEXP (vals, 0, 1) };
-	  if (inner_mode == QImode || inner_mode == HImode)
+	  if (inner_mode == QImode
+	      || inner_mode == HImode
+	      || inner_mode == TImode)
 	    {
 	      unsigned int n_bits = n_elts * GET_MODE_SIZE (inner_mode);
-	      mode = mode_for_vector (SImode, n_bits / 4).require ();
-	      inner_mode = mode_for_vector (SImode, n_bits / 8).require ();
+	      scalar_mode elt_mode = inner_mode == TImode ? DImode : SImode;
+	      n_bits /= GET_MODE_SIZE (elt_mode);
+	      mode = mode_for_vector (elt_mode, n_bits).require ();
+	      inner_mode = mode_for_vector (elt_mode, n_bits / 2).require ();
 	      ops[0] = gen_lowpart (inner_mode, ops[0]);
 	      ops[1] = gen_lowpart (inner_mode, ops[1]);
 	      subtarget = gen_reg_rtx (mode);
@@ -15309,6 +15333,11 @@ void ix86_emit_i387_log1p (rtx op0, rtx op1)
   rtx res = gen_reg_rtx (XFmode);
   rtx cst, cstln2, cst1;
   rtx_insn *insn;
+
+  /* The emit_jump call emits pending stack adjust, make sure it is emitted
+     before the conditional jump, otherwise the stack adjustment will be
+     only conditional.  */
+  do_pending_stack_adjust ();
 
   cst = const_double_from_real_value
     (REAL_VALUE_ATOF ("0.29289321881345247561810596348408353", XFmode), XFmode);
