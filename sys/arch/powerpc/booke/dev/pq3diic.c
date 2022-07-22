@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3diic.c,v 1.5 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: pq3diic.c,v 1.6 2022/07/22 20:09:47 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.5 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.6 2022/07/22 20:09:47 thorpej Exp $");
 
 #include "ioconf.h"
 
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.5 2020/07/06 09:34:16 rin Exp $");
 
 struct pq3diic_softc {
 	device_t sc_dev;
-	void *sc_ih;
-	struct motoi2c_softc sc_motoi2c[2];
+	struct motoi2c_softc sc_motoi2c;
 };
 
 static int pq3diic_match(device_t, cfdata_t, void *);
@@ -78,48 +77,48 @@ pq3diic_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
+#if 0
 static int
 pq3diic_intr(void *arg)
 {
 	struct pq3diic_softc * const sc = arg;
-	int rv = 0;
 
-	rv += motoi2c_intr(&sc->sc_motoi2c[0]);
-	rv += motoi2c_intr(&sc->sc_motoi2c[1]);
-
-	return rv;
+	return motoi2c_intr(&sc->sc_motoi2c);
 }
+#endif
 
 static void
 pq3diic_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpunode_softc * const psc = device_private(parent);
 	struct pq3diic_softc * const sc = device_private(self);
+	struct motoi2c_softc * const msc = &sc->sc_motoi2c;
 	struct cpunode_attach_args * const cna = aux;
 	struct cpunode_locators * const cnl = &cna->cna_locs;
-	u_int nports = cnl->cnl_size / I2C_SIZE;
 	int error;
 
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc_dev = self;
 
-	aprint_normal(": %u port%s\n", nports, nports == 1 ? "" : "s");
+	aprint_normal("\n");
 
-	for (u_int port = 0; port <= uimin(1, nports); port++) {
-		struct motoi2c_softc * const msc = &sc->sc_motoi2c[port];
-		msc->sc_iot = cna->cna_memt;
-		error = bus_space_map(msc->sc_iot,
-		    cnl->cnl_addr + port * I2C_SIZE,
-		    I2C_SIZE, 0, &msc->sc_ioh);
-		if (error) {
-			aprint_error_dev(self,
-			    "can't map registers for i2c#%uL %d\n",
-			    port, error);
-		} else {
-			motoi2c_attach_common(self, msc, NULL);
-		}
+	msc->sc_iot = cna->cna_memt;
+	error = bus_space_map(msc->sc_iot, cnl->cnl_addr, I2C_SIZE,
+	    0, &msc->sc_ioh);
+	if (error) {
+		aprint_error_dev(self,
+		    "can't map registers (error = %d)\n", error);
+		return;
 	}
 
+	motoi2c_attach_common(self, msc, NULL);
+
+#if 0
+	/*
+	 * XXX e500_intr.c can't handle shared interrupts, but that's
+	 * XXX ok, because motoi2c doesn't support using interrupts
+	 * XXX at the moment anyway.
+	 */
 	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
 	    pq3diic_intr, sc);
 	if (sc->sc_ih == NULL)
@@ -128,4 +127,5 @@ pq3diic_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_normal_dev(self, "interrupting on irq %d\n",
 		     cnl->cnl_intrs[0]);
+#endif
 }
