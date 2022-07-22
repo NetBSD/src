@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2022/07/22 20:04:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2022/07/22 20:05:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2022/07/22 20:04:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2022/07/22 20:05:55 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -1352,7 +1352,7 @@ mpc85xx_extirq_setup(void)
 #endif
 	prop_array_t extirqs = prop_array_create_with_capacity(n);
 	for (u_int i = 0; i < n; i++) {
-		prop_string_t ps = prop_string_create_cstring_nocopy(names[i]);
+		prop_string_t ps = prop_string_create_nocopy(names[i]);
 		prop_array_set(extirqs, i, ps);
 		prop_object_release(ps);
 	}
@@ -1365,13 +1365,13 @@ mpc85xx_pci_setup(const char *name, uint32_t intmask, int ist, int inta, ...)
 {
 	prop_dictionary_t pci_intmap = prop_dictionary_create();
 	KASSERT(pci_intmap != NULL);
-	prop_number_t mask = prop_number_create_unsigned_integer(intmask);
+	prop_number_t mask = prop_number_create_unsigned(intmask);
 	KASSERT(mask != NULL);
 	prop_dictionary_set(pci_intmap, "interrupt-mask", mask);
 	prop_object_release(mask);
-	prop_number_t pn_ist = prop_number_create_unsigned_integer(ist);
+	prop_number_t pn_ist = prop_number_create_unsigned(ist);
 	KASSERT(pn_ist != NULL);
-	prop_number_t pn_intr = prop_number_create_unsigned_integer(inta);
+	prop_number_t pn_intr = prop_number_create_unsigned(inta);
 	KASSERT(pn_intr != NULL);
 	prop_dictionary_t entry = prop_dictionary_create();
 	KASSERT(entry != NULL);
@@ -1388,7 +1388,7 @@ mpc85xx_pci_setup(const char *name, uint32_t intmask, int ist, int inta, ...)
 		snprintf(prop_name, sizeof(prop_name), "%06x", i + intrinc);
 		entry = prop_dictionary_create();
 		KASSERT(entry != NULL);
-		pn_intr = prop_number_create_unsigned_integer(va_arg(ap, u_int));
+		pn_intr = prop_number_create_unsigned(va_arg(ap, u_int));
 		KASSERT(pn_intr != NULL);
 		prop_dictionary_set(entry, "interrupt", pn_intr);
 		prop_dictionary_set(entry, "type", pn_ist);
