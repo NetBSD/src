@@ -674,6 +674,47 @@ gimplify_to_rvalue (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
   return t;
 }
 
+/* Like gimplify_arg, but if ORDERED is set (which should be set if
+   any of the arguments this argument is sequenced before has
+   TREE_SIDE_EFFECTS set, make sure expressions with is_gimple_reg_type type
+   are gimplified into SSA_NAME or a fresh temporary and for
+   non-is_gimple_reg_type we don't optimize away TARGET_EXPRs.  */
+
+static enum gimplify_status
+cp_gimplify_arg (tree *arg_p, gimple_seq *pre_p, location_t call_location,
+		 bool ordered)
+{
+  enum gimplify_status t;
+  if (ordered
+      && !is_gimple_reg_type (TREE_TYPE (*arg_p))
+      && TREE_CODE (*arg_p) == TARGET_EXPR)
+    {
+      /* gimplify_arg would strip away the TARGET_EXPR, but
+	 that can mean we don't copy the argument and some following
+	 argument with side-effect could modify it.  */
+      protected_set_expr_location (*arg_p, call_location);
+      return gimplify_expr (arg_p, pre_p, NULL, is_gimple_lvalue, fb_either);
+    }
+  else
+    {
+      t = gimplify_arg (arg_p, pre_p, call_location);
+      if (t == GS_ERROR)
+	return GS_ERROR;
+      else if (ordered
+	       && is_gimple_reg_type (TREE_TYPE (*arg_p))
+	       && is_gimple_variable (*arg_p)
+	       && TREE_CODE (*arg_p) != SSA_NAME
+	       /* No need to force references into register, references
+		  can't be modified.  */
+	       && !TYPE_REF_P (TREE_TYPE (*arg_p))
+	       /* And this can't be modified either.  */
+	       && *arg_p != current_class_ptr)
+	*arg_p = get_initialized_tmp_var (*arg_p, pre_p);
+      return t;
+    }
+
+}
+
 /* Do C++-specific gimplification.  Args are as for gimplify_expr.  */
 
 int
@@ -888,7 +929,8 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 	  gcc_assert (call_expr_nargs (*expr_p) == 2);
 	  gcc_assert (!CALL_EXPR_ORDERED_ARGS (*expr_p));
 	  enum gimplify_status t
-	    = gimplify_arg (&CALL_EXPR_ARG (*expr_p, 1), pre_p, loc);
+	    = cp_gimplify_arg (&CALL_EXPR_ARG (*expr_p, 1), pre_p, loc,
+			       TREE_SIDE_EFFECTS (CALL_EXPR_ARG (*expr_p, 0)));
 	  if (t == GS_ERROR)
 	    ret = GS_ERROR;
 	}
@@ -897,10 +939,18 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 	  /* Leave the last argument for gimplify_call_expr, to avoid problems
 	     with __builtin_va_arg_pack().  */
 	  int nargs = call_expr_nargs (*expr_p) - 1;
+	  int last_side_effects_arg = -1;
+	  for (int i = nargs; i > 0; --i)
+	    if (TREE_SIDE_EFFECTS (CALL_EXPR_ARG (*expr_p, i)))
+	      {
+		last_side_effects_arg = i;
+		break;
+	      }
 	  for (int i = 0; i < nargs; ++i)
 	    {
 	      enum gimplify_status t
-		= gimplify_arg (&CALL_EXPR_ARG (*expr_p, i), pre_p, loc);
+		= cp_gimplify_arg (&CALL_EXPR_ARG (*expr_p, i), pre_p, loc,
+				   i < last_side_effects_arg);
 	      if (t == GS_ERROR)
 		ret = GS_ERROR;
 	    }
@@ -914,8 +964,17 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 	    fntype = TREE_TYPE (fntype);
 	  if (TREE_CODE (fntype) == METHOD_TYPE)
 	    {
+	      int nargs = call_expr_nargs (*expr_p);
+	      bool side_effects = false;
+	      for (int i = 1; i < nargs; ++i)
+		if (TREE_SIDE_EFFECTS (CALL_EXPR_ARG (*expr_p, i)))
+		  {
+		    side_effects = true;
+		    break;
+		  }
 	      enum gimplify_status t
-		= gimplify_arg (&CALL_EXPR_ARG (*expr_p, 0), pre_p, loc);
+		= cp_gimplify_arg (&CALL_EXPR_ARG (*expr_p, 0), pre_p, loc,
+				   side_effects);
 	      if (t == GS_ERROR)
 		ret = GS_ERROR;
 	    }
@@ -2722,6 +2781,32 @@ cp_fold (tree x)
       loc = EXPR_LOCATION (x);
       op0 = cp_fold_maybe_rvalue (TREE_OPERAND (x, 0), rval_ops);
       op1 = cp_fold_rvalue (TREE_OPERAND (x, 1));
+
+      /* decltype(nullptr) has only one value, so optimize away all comparisons
+	 with that type right away, keeping them in the IL causes troubles for
+	 various optimizations.  */
+      if (COMPARISON_CLASS_P (org_x)
+	  && TREE_CODE (TREE_TYPE (op0)) == NULLPTR_TYPE
+	  && TREE_CODE (TREE_TYPE (op1)) == NULLPTR_TYPE)
+	{
+	  switch (code)
+	    {
+	    case EQ_EXPR:
+	    case LE_EXPR:
+	    case GE_EXPR:
+	      x = constant_boolean_node (true, TREE_TYPE (x));
+	      break;
+	    case NE_EXPR:
+	    case LT_EXPR:
+	    case GT_EXPR:
+	      x = constant_boolean_node (false, TREE_TYPE (x));
+	      break;
+	    default:
+	      gcc_unreachable ();
+	    }
+	  return omit_two_operands_loc (loc, TREE_TYPE (x), x,
+					op0, op1);
+	}
 
       if (op0 != TREE_OPERAND (x, 0) || op1 != TREE_OPERAND (x, 1))
 	{

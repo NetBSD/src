@@ -1,3 +1,141 @@
+2022-06-28  Release Manager
+
+	* GCC 10.4.0 released.
+
+2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host: Add weak emutls crt to the extra_parts.
+	(*-*-darwin*): Add logic to build a shared unwinder library for
+	Darwin8-10.  Add shim declaration header to powerpc*-darwin builds.
+	* config/i386/darwin-lib.h (DECLARE_LIBRARY_RENAMES): Remove
+	workaround.
+	* config/libgcc-libsystem.ver: Add exclude list for the system-
+	provided unwinder.
+	* config/t-slibgcc-darwin: Bump SO version, remove stubs code.
+	Build a legacy libgcc_s.1 and the supporting pieces (all FAT libs).
+	* config/t-darwin-ehs: Add dependencies to the shared unwinder
+	objects.  Add dependency on unwind.h.
+	* config/t-darwin: Reorganise the EH fragments to place them for
+	inclusion in a shared EH lib.  Add libgcc_tm.h to the dependencies
+	for darwin10-unwind-find-enc-func.
+	* config/i386/libgcc-darwin.10.4.ver: Removed.
+	* config/i386/libgcc-darwin.10.5.ver: Removed.
+	* config/rs6000/libgcc-darwin.10.4.ver: Removed.
+	* config/rs6000/libgcc-darwin.10.5.ver: Removed.
+	* config/i386/t-darwin: Build legacy libgcc_s.1.
+	* config/rs6000/t-darwin: Likewise.
+	* config/rs6000/t-darwin-ehs: Remove dependency on the powerpc end
+	file.  Add darwin-fallback.o.
+	* config/darwin-unwind.ver: New file.
+	* config/i386/libgcc-darwin.ver: New file.
+
+2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2021-11-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/t-darwin: Build weak-defined emutls objects.
+	* emutls.c (__emutls_get_address): Add optional attributes.
+	(__emutls_register_common): Likewise.
+	(EMUTLS_ATTR): New.
+
+2022-05-29  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2021-09-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host: Use convenience library for Darwin10
+	unwinder shim.
+	* config/t-darwin: Build Darwin10 unwinder shim as a
+	convenience library.
+
+2022-05-16  Sebastian Pop  <spop@amazon.com>
+
+	PR target/105162
+	* config/aarch64/lse.S: Define BARRIER and handle memory MODEL 5.
+	* config/aarch64/t-lse: Add a 5th memory model for _sync functions.
+
+2022-02-13  Alan Modra  <amodra@gmail.com>
+
+	Backported from master:
+	2021-07-15  Alan Modra  <amodra@gmail.com>
+
+	* config/rs6000/morestack.S (R2_SAVE): Define.
+	(__morestack): Save and restore r2.  Set up r2 for called
+	functions.
+
+2022-02-13  Alan Modra  <amodra@gmail.com>
+
+	Backported from master:
+	2020-10-01  Alan Modra  <amodra@gmail.com>
+
+	* config/rs6000/morestack.S,
+	* config/rs6000/tramp.S: Support __PCREL__ code.
+
+2021-10-27  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config.host (hppa*64*-*-linux*): Don't add pa/t-linux to
+	tmake_file.
+	* config/pa/linux-atomic.c: Define u8, u16 and u64 types.
+	Use them in FETCH_AND_OP_2, OP_AND_FETCH_2, COMPARE_AND_SWAP_2,
+	SYNC_LOCK_TEST_AND_SET_2 and SYNC_LOCK_RELEASE_1 macros.
+	* config/pa/t-linux64 (LIB1ASMSRC): New define.
+	(LIB1ASMFUNCS): Revise.
+	(HOST_LIBGCC2_CFLAGS): Add "-DLINUX=1".
+
+2021-08-31  Richard Sandiford  <richard.sandiford@arm.com>
+
+	Backported from master:
+	2021-08-31  Richard Sandiford  <richard.sandiford@arm.com>
+
+	* config/aarch64/value-unwind.h: Add missing runtime exception
+	paragraph.
+	* config/frv/frv-abi.h: Likewise.
+	* config/i386/value-unwind.h: Likewise.
+	* config/pa/pa64-hpux-lib.h: Likewise.
+
+2021-08-24  Richard Earnshaw  <rearnsha@arm.com>
+
+	Backported from master:
+	2021-08-24  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/102035
+	* config/arm/cmse_nonsecure_call.S (__gnu_cmse_nonsecure_call):
+	Add vlldm erratum work-around.
+
+2021-06-18  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
+
+	Backported from master:
+	2021-06-11  Srinath Parvathaneni  <srinath.parvathaneni@arm.com>
+
+	PR target/99939
+	* config/arm/cmse_nonsecure_call.S: Add	__ARM_FEATURE_MVE
+	macro.
+	* config/arm/t-arm: To link cmse.o and cmse_nonsecure_call.o
+	on passing -mcmse option.
+
+2021-04-27  Michael Meissner  <meissner@linux.ibm.com>
+
+	PR target/98952
+	* config/rs6000/tramp.S (__trampoline_setup, elfv1 #ifdef): Fix
+	trampoline size comparison in 32-bit by reversing test and
+	combining load immediate with compare.  Fix backported from trunk
+	change on 4/23, 886b6c1e8af502b69e3f318b9830b73b88215878.
+	(__trampoline_setup, elfv2 #ifdef): Fix trampoline size comparison
+	in 32-bit by reversing test and combining load immediate with
+	compare.
+
+2021-04-20  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2021-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/97653
+	* config/rs6000/t-linux (IBM128_STATIC_OBJS): Fix spelling, use
+	$(objext) instead of $(object).  Use _floatunditf instead of
+	_floatunsditf.  Add tf <-> ti conversion objects.
+	(IBM128_SHARED_OBJS): Use proper substitution reference syntax.
+
 2021-04-08  Release Manager
 
 	* GCC 10.3.0 released.

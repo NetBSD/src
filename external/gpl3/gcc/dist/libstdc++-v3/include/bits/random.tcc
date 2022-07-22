@@ -1921,7 +1921,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       bool __saved_avail;
       if (__is >> __mean >> __stddev >> __saved_avail)
 	{
-	  if (__saved_avail && (__is >> __x._M_saved))
+	  if (!__saved_avail || (__is >> __x._M_saved))
 	    {
 	      __x._M_saved_available = __saved_avail;
 	      __x.param(param_type(__mean, __stddev));
@@ -3197,9 +3197,10 @@ namespace __detail
     }
 
 
-  template<typename _IntType>
+  template<typename _IntType, typename>
     seed_seq::seed_seq(std::initializer_list<_IntType> __il)
     {
+      _M_v.reserve(__il.size());
       for (auto __iter = __il.begin(); __iter != __il.end(); ++__iter)
 	_M_v.push_back(__detail::__mod<result_type,
 		       __detail::_Shift<result_type, 32>::__value>(*__iter));
@@ -3208,6 +3209,9 @@ namespace __detail
   template<typename _InputIterator>
     seed_seq::seed_seq(_InputIterator __begin, _InputIterator __end)
     {
+      if _GLIBCXX17_CONSTEXPR (__is_random_access_iter<_InputIterator>::value)
+	_M_v.reserve(std::distance(__begin, __end));
+
       for (_InputIterator __iter = __begin; __iter != __end; ++__iter)
 	_M_v.push_back(__detail::__mod<result_type,
 		       __detail::_Shift<result_type, 32>::__value>(*__iter));

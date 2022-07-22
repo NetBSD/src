@@ -352,12 +352,15 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
     { build_minus_one_cst (type); })))
 
 /* For unsigned integral types, FLOOR_DIV_EXPR is the same as
-   TRUNC_DIV_EXPR.  Rewrite into the latter in this case.  */
-(simplify
- (floor_div @0 @1)
- (if ((INTEGRAL_TYPE_P (type) || VECTOR_INTEGER_TYPE_P (type))
-      && TYPE_UNSIGNED (type))
-  (trunc_div @0 @1)))
+   TRUNC_DIV_EXPR.  Rewrite into the latter in this case.  Similarly
+   for MOD instead of DIV.  */
+(for floor_divmod (floor_div floor_mod)
+     trunc_divmod (trunc_div trunc_mod)
+ (simplify
+  (floor_divmod @0 @1)
+  (if ((INTEGRAL_TYPE_P (type) || VECTOR_INTEGER_TYPE_P (type))
+       && TYPE_UNSIGNED (type))
+   (trunc_divmod @0 @1))))
 
 /* Combine two successive divisions.  Note that combining ceil_div
    and floor_div is trickier and combining round_div even more so.  */
@@ -612,7 +615,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 /* Simplify (unsigned t * 2)/2 -> unsigned t & 0x7FFFFFFF.  */
 (simplify
  (trunc_div (mult @0 integer_pow2p@1) @1)
- (if (TYPE_UNSIGNED (TREE_TYPE (@0)))
+ (if (INTEGRAL_TYPE_P (TREE_TYPE (@0)) && TYPE_UNSIGNED (TREE_TYPE (@0)))
   (bit_and @0 { wide_int_to_tree
 		(type, wi::mask (TYPE_PRECISION (type)
 				 - wi::exact_log2 (wi::to_wide (@1)),
@@ -621,7 +624,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
 /* Simplify (unsigned t / 2) * 2 -> unsigned t & ~1.  */
 (simplify
  (mult (trunc_div @0 integer_pow2p@1) @1)
- (if (TYPE_UNSIGNED (TREE_TYPE (@0)))
+ (if (INTEGRAL_TYPE_P (TREE_TYPE (@0)) && TYPE_UNSIGNED (TREE_TYPE (@0)))
   (bit_and @0 (negate @1))))
 
 /* Simplify (t * 2) / 2) -> t.  */
@@ -2343,13 +2346,15 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (simplify
    (minus (convert? (negate @0)) integer_each_onep)
    (if (!TYPE_OVERFLOW_TRAPS (type)
+	&& TREE_CODE (type) != COMPLEX_TYPE
 	&& tree_nop_conversion_p (type, TREE_TYPE (@0)))
     (bit_not (convert @0))))
 
   /* -1 - A -> ~A */
   (simplify
    (minus integer_all_onesp @0)
-   (bit_not @0))
+   (if (TREE_CODE (type) != COMPLEX_TYPE)
+    (bit_not @0)))
 
   /* (T)(P + A) - (T)P -> (T) A */
   (simplify
@@ -4548,7 +4553,12 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (cmp (convert @0) INTEGER_CST@1)
   (if (((POINTER_TYPE_P (TREE_TYPE (@0))
 	 && !FUNC_OR_METHOD_TYPE_P (TREE_TYPE (TREE_TYPE (@0)))
-	 && INTEGRAL_TYPE_P (TREE_TYPE (@1)))
+	 && INTEGRAL_TYPE_P (TREE_TYPE (@1))
+	 /* Don't perform this optimization in GENERIC if @0 has reference
+	    type when sanitizing.  See PR101210.  */
+	 && !(GENERIC
+	      && TREE_CODE (TREE_TYPE (@0)) == REFERENCE_TYPE
+	      && (flag_sanitize & (SANITIZE_NULL | SANITIZE_ALIGNMENT))))
 	|| (INTEGRAL_TYPE_P (TREE_TYPE (@0))
 	    && POINTER_TYPE_P (TREE_TYPE (@1))
 	    && !FUNC_OR_METHOD_TYPE_P (TREE_TYPE (TREE_TYPE (@1)))))

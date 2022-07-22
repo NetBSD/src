@@ -41,44 +41,19 @@
 
   if (which_alternative == 4 || which_alternative == 7)
     {
-      rtx ops[2];
-      int regno = (which_alternative == 7)
-		  ? REGNO (operands[1]) : REGNO (operands[0]);
-
-      ops[0] = operands[0];
-      ops[1] = operands[1];
-      if (<MODE>mode == V2DFmode || <MODE>mode == V2DImode)
+      if (<MODE>mode == V2DFmode || <MODE>mode == V2DImode || <MODE>mode == TImode)
 	{
 	  if (which_alternative == 7)
-	    {
-	      ops[1] = gen_rtx_REG (DImode, regno);
-	      output_asm_insn ("vstr.64\t%P1, %E0",ops);
-	    }
+	    output_asm_insn ("vstrw.32\t%q1, %E0", operands);
 	  else
-	    {
-	      ops[0] = gen_rtx_REG (DImode, regno);
-	      output_asm_insn ("vldr.64\t%P0, %E1",ops);
-	    }
-	}
-      else if (<MODE>mode == TImode)
-	{
-	  if (which_alternative == 7)
-	    output_asm_insn ("vstr.64\t%q1, %E0",ops);
-	  else
-	    output_asm_insn ("vldr.64\t%q0, %E1",ops);
+	    output_asm_insn ("vldrw.u32\t%q0, %E1",operands);
 	}
       else
 	{
 	  if (which_alternative == 7)
-	    {
-	      ops[1] = gen_rtx_REG (TImode, regno);
-	      output_asm_insn ("vstr<V_sz_elem1>.<V_sz_elem>\t%q1, %E0",ops);
-	    }
+	    output_asm_insn ("vstr<V_sz_elem1>.<V_sz_elem>\t%q1, %E0", operands);
 	  else
-	    {
-	      ops[0] = gen_rtx_REG (TImode, regno);
-	      output_asm_insn ("vldr<V_sz_elem1>.<V_sz_elem>\t%q0, %E1",ops);
-	    }
+	    output_asm_insn ("vldr<V_sz_elem1>.<V_sz_elem>\t%q0, %E1", operands);
 	}
       return "";
     }
@@ -104,18 +79,14 @@
    (set_attr "thumb2_pool_range" "*,*,*,*,1018,*,*,*,*")
    (set_attr "neg_pool_range" "*,*,*,*,996,*,*,*,*")])
 
-(define_insn "*mve_mov<mode>"
-  [(set (match_operand:MVE_types 0 "s_register_operand" "=w,w")
-	(vec_duplicate:MVE_types
-	  (match_operand:SI 1 "nonmemory_operand" "r,i")))]
+(define_insn "*mve_vdup<mode>"
+  [(set (match_operand:MVE_vecs 0 "s_register_operand" "=w")
+	(vec_duplicate:MVE_vecs
+	  (match_operand:<V_elem> 1 "s_register_operand" "r")))]
   "TARGET_HAVE_MVE || TARGET_HAVE_MVE_FLOAT"
-{
-  if (which_alternative == 0)
-    return "vdup.<V_sz_elem>\t%q0, %1";
-  return "vmov.<V_sz_elem>\t%q0, %1";
-}
-  [(set_attr "length" "4,4")
-   (set_attr "type" "mve_move,mve_move")])
+  "vdup.<V_sz_elem>\t%q0, %1"
+  [(set_attr "length" "4")
+   (set_attr "type" "mve_move")])
 
 ;;
 ;; [vst4q])
@@ -10738,13 +10709,6 @@
  "vpst\;vshlct\t%q0, %1, %4"
  [(set_attr "type" "mve_move")
   (set_attr "length" "8")])
-
-(define_insn "*mve_vec_duplicate<mode>"
- [(set (match_operand:MVE_VLD_ST 0 "s_register_operand" "=w")
-       (vec_duplicate:MVE_VLD_ST (match_operand:<V_elem> 1 "general_operand" "r")))]
- "TARGET_HAVE_MVE || TARGET_HAVE_MVE_FLOAT"
- "vdup.<V_sz_elem>\t%q0, %1"
- [(set_attr "type" "mve_move")])
 
 ;; CDE instructions on MVE registers.
 

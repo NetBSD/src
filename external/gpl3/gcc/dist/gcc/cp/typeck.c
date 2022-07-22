@@ -4958,6 +4958,7 @@ cp_build_binary_op (const op_location_t &location,
 	  doing_shift = true;
 	  if (TREE_CODE (const_op0) == INTEGER_CST
 	      && tree_int_cst_sgn (const_op0) < 0
+	      && !TYPE_OVERFLOW_WRAPS (type0)
 	      && (complain & tf_warning)
 	      && c_inhibit_evaluation_warnings == 0)
 	    warning_at (location, OPT_Wshift_negative_value,
@@ -6939,9 +6940,14 @@ cxx_mark_addressable (tree exp, bool array_ref_p)
 	    && TREE_CODE (TREE_TYPE (x)) == ARRAY_TYPE
 	    && VECTOR_TYPE_P (TREE_TYPE (TREE_OPERAND (x, 0))))
 	  return true;
+	x = TREE_OPERAND (x, 0);
+	break;
+
+      case COMPONENT_REF:
+	if (bitfield_p (x))
+	  error ("attempt to take address of bit-field");
 	/* FALLTHRU */
       case ADDR_EXPR:
-      case COMPONENT_REF:
       case ARRAY_REF:
       case REALPART_EXPR:
       case IMAGPART_EXPR:
@@ -10037,6 +10043,9 @@ check_return_expr (tree retval, bool *no_warning)
     dependent:
       /* We should not have changed the return value.  */
       gcc_assert (retval == saved_retval);
+      /* We don't know if this is an lvalue or rvalue use, but
+	 either way we can mark it as read.  */
+      mark_exp_read (retval);
       return retval;
     }
 

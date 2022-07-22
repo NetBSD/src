@@ -4455,7 +4455,10 @@ narrowing_initializer_constant_valid_p (tree value, tree endtype, tree *cache)
     {
       tree inner = TREE_OPERAND (op0, 0);
       if (inner == error_mark_node
-	  || ! INTEGRAL_MODE_P (TYPE_MODE (TREE_TYPE (inner)))
+	  || ! INTEGRAL_TYPE_P (TREE_TYPE (op0))
+	  || ! SCALAR_INT_MODE_P (TYPE_MODE (TREE_TYPE (op0)))
+	  || ! INTEGRAL_TYPE_P (TREE_TYPE (inner))
+	  || ! SCALAR_INT_MODE_P (TYPE_MODE (TREE_TYPE (inner)))
 	  || (GET_MODE_SIZE (SCALAR_INT_TYPE_MODE (TREE_TYPE (op0)))
 	      > GET_MODE_SIZE (SCALAR_INT_TYPE_MODE (TREE_TYPE (inner)))))
 	break;
@@ -4467,7 +4470,10 @@ narrowing_initializer_constant_valid_p (tree value, tree endtype, tree *cache)
     {
       tree inner = TREE_OPERAND (op1, 0);
       if (inner == error_mark_node
-	  || ! INTEGRAL_MODE_P (TYPE_MODE (TREE_TYPE (inner)))
+	  || ! INTEGRAL_TYPE_P (TREE_TYPE (op1))
+	  || ! SCALAR_INT_MODE_P (TYPE_MODE (TREE_TYPE (op1)))
+	  || ! INTEGRAL_TYPE_P (TREE_TYPE (inner))
+	  || ! SCALAR_INT_MODE_P (TYPE_MODE (TREE_TYPE (inner)))
 	  || (GET_MODE_SIZE (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)))
 	      > GET_MODE_SIZE (SCALAR_INT_TYPE_MODE (TREE_TYPE (inner)))))
 	break;
@@ -5271,14 +5277,20 @@ output_constructor_regular_field (oc_local_state *local)
 	  && (!TYPE_DOMAIN (TREE_TYPE (local->field))
 	      || !TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (local->field)))))
 	{
-	  fieldsize = array_size_for_constructor (local->val);
+	  unsigned HOST_WIDE_INT fldsize
+	    = array_size_for_constructor (local->val);
+	  fieldsize = int_size_in_bytes (TREE_TYPE (local->val));
+	  /* In most cases fieldsize == fldsize as the size of the initializer
+	     determines how many elements the flexible array member has.  For
+	     C++ fldsize can be smaller though, if the last or several last or
+	     all initializers of the flexible array member have side-effects
+	     and the FE splits them into dynamic initialization.  */
+	  gcc_checking_assert (fieldsize >= fldsize);
 	  /* Given a non-empty initialization, this field had better
 	     be last.  Given a flexible array member, the next field
 	     on the chain is a TYPE_DECL of the enclosing struct.  */
 	  const_tree next = DECL_CHAIN (local->field);
 	  gcc_assert (!fieldsize || !next || TREE_CODE (next) != FIELD_DECL);
-	  tree size = TYPE_SIZE_UNIT (TREE_TYPE (local->val));
-	  gcc_checking_assert (compare_tree_int (size, fieldsize) == 0);
 	}
       else
 	fieldsize = tree_to_uhwi (DECL_SIZE_UNIT (local->field));

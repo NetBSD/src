@@ -162,7 +162,7 @@ class ExprVisitor : public Visitor
 	    eptype = type;
 	  }
 
-	ret = fold_build2 (code, eptype, arg0, arg1);
+	ret = build2 (code, eptype, arg0, arg1);
       }
 
     return d_convert (type, ret);
@@ -1468,7 +1468,7 @@ public:
     if (tbtype->ty == Tvoid)
       this->result_ = build_nop (build_ctype (tbtype), result);
     else
-      this->result_ = convert_expr (result, ebtype, tbtype);
+      this->result_ = convert_for_rvalue (result, ebtype, tbtype);
   }
 
   /* Build a delete expression.  */
@@ -1870,15 +1870,10 @@ public:
       exp = d_convert (build_ctype (e->type), exp);
 
     /* If this call was found to be a constructor for a temporary with a
-       cleanup, then move the call inside the TARGET_EXPR.  The original
-       initializer is turned into an assignment, to keep its side effect.  */
+       cleanup, then move the call inside the TARGET_EXPR.  */
     if (cleanup != NULL_TREE)
       {
 	tree init = TARGET_EXPR_INITIAL (cleanup);
-	tree slot = TARGET_EXPR_SLOT (cleanup);
-	d_mark_addressable (slot);
-	init = build_assign (INIT_EXPR, slot, init);
-
 	TARGET_EXPR_INITIAL (cleanup) = compound_expr (init, exp);
 	exp = cleanup;
       }
@@ -3144,11 +3139,14 @@ build_return_dtor (Expression *e, Type *type, TypeFunction *tf)
   tree result = build_expr (e);
 
   /* Convert for initializing the DECL_RESULT.  */
-  result = convert_expr (result, e->type, type);
-
-  /* If we are returning a reference, take the address.  */
   if (tf->isref)
-    result = build_address (result);
+    {
+      /* If we are returning a reference, take the address.  */
+      result = convert_expr (result, e->type, type);
+      result = build_address (result);
+    }
+  else
+    result = convert_for_rvalue (result, e->type, type);
 
   /* The decl to store the return expression.  */
   tree decl = DECL_RESULT (cfun->decl);

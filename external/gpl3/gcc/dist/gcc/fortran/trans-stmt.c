@@ -1757,7 +1757,7 @@ trans_associate_var (gfc_symbol *sym, gfc_wrapped_block *block)
       if (e->ts.type == BT_CLASS)
 	{
 	  /* Go straight to the class data.  */
-	  if (sym2->attr.dummy)
+	  if (sym2->attr.dummy && !sym2->attr.optional)
 	    {
 	      class_decl = DECL_LANG_SPECIFIC (sym2->backend_decl) ?
 			   GFC_DECL_SAVED_DESCRIPTOR (sym2->backend_decl) :
@@ -1890,7 +1890,7 @@ trans_associate_var (gfc_symbol *sym, gfc_wrapped_block *block)
       gfc_conv_expr_descriptor (&se, e);
 
       if (sym->ts.type == BT_CHARACTER
-	  && !se.direct_byref && sym->ts.deferred
+	  && sym->ts.deferred
 	  && !sym->attr.select_type_temporary
 	  && VAR_P (sym->ts.u.cl->backend_decl)
 	  && se.string_length != sym->ts.u.cl->backend_decl)
