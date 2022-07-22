@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.46 2022/03/16 20:31:01 andvar Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.47 2022/07/22 19:54:14 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.46 2022/03/16 20:31:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.47 2022/07/22 19:54:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -480,7 +480,7 @@ e500_intr_external_name_lookup(int irq)
 	KASSERT(irqname != NULL);
 	KASSERT(prop_object_type(irqname) == PROP_TYPE_STRING);
 
-	return prop_string_cstring_nocopy(irqname);
+	return prop_string_value(irqname);
 }
 
 static const char *
