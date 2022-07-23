@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.32 2022/01/22 11:49:17 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.33 2022/07/23 03:08:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.32 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.33 2022/07/23 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -395,25 +395,81 @@ acpi_name(ACPI_HANDLE handle)
  * string list.
  */
 char *
-acpi_pack_compat_list(ACPI_DEVICE_INFO *ad, size_t *sizep)
+acpi_pack_compat_list(struct acpi_devnode *ad, size_t *sizep)
 {
+	ACPI_DEVICE_INFO *devinfo = ad->ad_devinfo;
+
 	KASSERT(sizep != NULL);
 
 	char *sl = NULL;
 	size_t slsize = 0;
 	uint32_t i;
+	bool dtlink = false;
 
-	if ((ad->Valid & ACPI_VALID_HID) != 0) {
-		strlist_append(&sl, &slsize, ad->HardwareId.String);
-	}
+	ACPI_BUFFER buf;
+	ACPI_STATUS ret;
+	ACPI_OBJECT *obj;
+	char *compatible;
+	int n;
 
-	if ((ad->Valid & ACPI_VALID_CID) != 0) {
-		for (i = 0; i < ad->CompatibleIdList.Count; i++) {
-			strlist_append(&sl, &slsize,
-			    ad->CompatibleIdList.Ids[i].String);
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	if ((devinfo->Valid & ACPI_VALID_HID) != 0) {
+		const char *cp = devinfo->HardwareId.String;
+
+		if (device_compatible_pmatch_strlist(cp, strlen(cp) + 1,
+						     dtlink_compat_data)) {
+			dtlink = true;
+		} else {
+			strlist_append(&sl, &slsize, cp);
 		}
 	}
 
+	if ((devinfo->Valid & ACPI_VALID_CID) != 0) {
+		for (i = 0; i < devinfo->CompatibleIdList.Count; i++) {
+			const char *cp =
+			    devinfo->CompatibleIdList.Ids[i].String;
+
+			if (device_compatible_pmatch_strlist(cp, strlen(cp) + 1,
+							dtlink_compat_data)) {
+				dtlink = true;
+			} else {
+				strlist_append(&sl, &slsize, cp);
+			}
+		}
+	}
+
+	if (dtlink) {
+		ret = acpi_dsd_string(ad->ad_handle, "compatible",
+		    &compatible);
+		if (ACPI_SUCCESS(ret)) {
+			strlist_append(&sl, &slsize, compatible);
+			kmem_strfree(compatible);
+			goto done;
+		}
+
+		ret = acpi_dsd_property(ad->ad_handle, "compatible", &buf,
+		    ACPI_TYPE_PACKAGE, &obj);
+		if (ACPI_FAILURE(ret)) {
+			goto done;
+		}
+		if (obj->Package.Count == 0) {
+			goto done;
+		}
+		for (n = 0; n < obj->Package.Count; n++) {
+			if (obj->Package.Elements[n].Type != ACPI_TYPE_STRING) {
+				continue;
+			}
+			strlist_append(&sl, &slsize,
+			    obj->Package.Elements[n].String.Pointer);
+		}
+	}
+
+ done:
+	if (buf.Pointer != NULL) {
+		ACPI_FREE(buf.Pointer);
+	}
 	*sizep = slsize;
 	return sl;
 }
