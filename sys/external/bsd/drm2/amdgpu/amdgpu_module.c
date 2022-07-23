@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.10 2022/07/17 15:36:15 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.11 2022/07/23 12:52:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.10 2022/07/17 15:36:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.11 2022/07/23 12:52:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.10 2022/07/17 15:36:15 riastradh
 #include "amdgpu_amdkfd.h"
 #include "amdgpu_drv.h"
 
-MODULE(MODULE_CLASS_DRIVER, amdgpu, "drmkms,drmkms_pci,drmkms_ttm"); /* XXX drmkms_i2c */
+MODULE(MODULE_CLASS_DRIVER, amdgpu, "drmkms,drmkms_pci,drmkms_sched,drmkms_ttm"); /* XXX drmkms_i2c */
 
 #ifdef _MODULE
 #include "ioconf.c"
