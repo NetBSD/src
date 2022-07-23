@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.11 2021/01/26 01:23:08 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.12 2022/07/23 03:08:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.11 2021/01/26 01:23:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.12 2022/07/23 03:08:17 thorpej Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -75,7 +75,6 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	prop_dictionary_t dev;
 	struct acpi_i2c_context i2cc;
 	ACPI_STATUS rv;
-	const char *name;
 	char *clist;
 	size_t clist_size;
 
@@ -96,18 +95,14 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 		    ad->ad_name);
 		return;
 	}
-	clist = acpi_pack_compat_list(ad->ad_devinfo, &clist_size);
+	clist = acpi_pack_compat_list(ad, &clist_size);
 	if (clist == NULL) {
 		prop_object_release(dev);
 		aprint_error("ignoring device %s (no _HID or _CID)\n",
 		    ad->ad_name);
 		return;
 	}
-	if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
-		name = ad->ad_name;
-	else
-		name = ad->ad_devinfo->HardwareId.String;
-	prop_dictionary_set_string(dev, "name", name);
+	prop_dictionary_set_string(dev, "name", ad->ad_name);
 	prop_dictionary_set_uint32(dev, "addr", i2cc.i2c_addr);
 	prop_dictionary_set_uint64(dev, "cookie", (uintptr_t)ad->ad_handle);
 	prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_ACPI);
