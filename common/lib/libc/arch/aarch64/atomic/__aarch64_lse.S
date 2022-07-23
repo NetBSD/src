@@ -1,4 +1,4 @@
-/* $NetBSD: __aarch64_lse.S,v 1.5 2022/06/18 08:01:56 skrll Exp $ */
+/* $NetBSD: __aarch64_lse.S,v 1.6 2022/07/23 13:30:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -138,11 +138,11 @@ ENTRY_NP(SWP_FUNC)
 	ret
 99:
 #endif
-	mov	x4, x0			/* need x0 for return value	 */
-1:	LDXR	R0, [x1]		/* load old value		 */
-	STXR	w3, R4, [x1]		/* store new value		 */
-	cbnz	w3, 2f			/*   succeed?? no, try again	 */
-	ret				/* return old value		 */
+	mov	x4, x0			/* need x0 for return value	*/
+1:	LDXR	R0, [x1]		/* load old value		*/
+	STXR	w3, R4, [x1]		/* store new value		*/
+	cbnz	w3, 2f			/*   succeed?? no, try again	*/
+	ret				/* return old value		*/
 2:	b	1b
 END(SWP_FUNC)
 #endif
@@ -196,12 +196,12 @@ ENTRY_NP(INSN_FUNC)
 	ret
 99:
 #endif
-	mov	x4, x0			/* need x0 for return value	 */
-1:	LDXR	R0, [x1]		/* load old value		 */
+	mov	x4, x0			/* need x0 for return value	*/
+1:	LDXR	R0, [x1]		/* load old value		*/
 	INSNOP	R4, R0, R4
-	STXR	w3, R4, [x1]		/* store new value		 */
-	cbnz	w3, 2f			/*   succeed?? no, try again	 */
-	ret				/* return old value		 */
+	STXR	w3, R4, [x1]		/* store new value		*/
+	cbnz	w3, 2f			/*   succeed?? no, try again	*/
+	ret				/* return old value		*/
 2:	b	1b
 END(INSN_FUNC)
 #endif
