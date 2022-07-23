@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.216 2022/05/07 19:44:40 mrg Exp $	*/
+/*	$NetBSD: lwp.h,v 1.217 2022/07/23 19:15:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -57,6 +57,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #ifdef _KERNEL_OPT
 #include "opt_kcov.h"
 #include "opt_kmsan.h"
+#include "opt_maxlwp.h"
 #endif
 #endif
 

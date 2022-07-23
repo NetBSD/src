@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1299 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files,v 1.1300 2022/07/23 19:15:28 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -141,6 +141,8 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 defflag opt_rnd_printf.h	RND_PRINTF
 
 defflag opt_todr.h		TODR_DEBUG
+
+defopt opt_maxlwp.h		MAXLWP
 
 # compatibility options
 #
