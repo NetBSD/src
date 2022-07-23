@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.87 2022/06/29 15:33:45 mlelstv Exp $	*/
+/*	$NetBSD: i2c.c,v 1.88 2022/07/23 03:05:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.87 2022/06/29 15:33:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.88 2022/07/23 03:05:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,11 @@ iic_print_direct(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s at %s addr 0x%02x",
+		aprint_normal("%s%s%s%s at %s addr 0x%02x",
 			      ia->ia_name ? ia->ia_name : "(unknown)",
+			      ia->ia_ncompat ? " (" : "",
+			      ia->ia_ncompat ? ia->ia_compat[0] : "",
+			      ia->ia_ncompat ? ")" : "",
 			      pnp, ia->ia_addr);
 	else
 		aprint_normal(" addr 0x%02x", ia->ia_addr);
