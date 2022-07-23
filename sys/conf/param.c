@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.69 2020/11/12 07:44:01 simonb Exp $	*/
+/*	$NetBSD: param.c,v 1.70 2022/07/23 19:15:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.69 2020/11/12 07:44:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.70 2022/07/23 19:15:29 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hz.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.69 2020/11/12 07:44:01 simonb Exp $");
 #include "opt_sysv.h"
 #include "opt_sysvparam.h"
 #include "opt_multiprocessor.h"
+#include "opt_maxlwp.h"
 #endif
 
 #include <sys/param.h>
