@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.79 2022/07/20 10:01:01 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.80 2022/07/23 12:52:10 riastradh Exp $
 
 version	20180827
 
@@ -98,9 +98,13 @@ file	external/bsd/drm2/drm/drm_lock.c		drmums
 file	external/bsd/drm2/drm/drm_scatter.c		drmums
 
 # GPU scheduler
-file	external/bsd/drm2/dist/drm/scheduler/sched_entity.c	drmkms
-file	external/bsd/drm2/dist/drm/scheduler/sched_fence.c	drmkms
-file	external/bsd/drm2/dist/drm/scheduler/sched_main.c	drmkms
+define	drmkms_sched: drmkms
+makeoptions	drmkms_sched	"CPPFLAGS.drmsched"+="${CPPFLAGS.drmkms}"
+
+file	external/bsd/drm2/dist/drm/scheduler/sched_entity.c	drmkms_sched
+file	external/bsd/drm2/dist/drm/scheduler/sched_fence.c	drmkms_sched
+file	external/bsd/drm2/dist/drm/scheduler/sched_main.c	drmkms_sched
+file	external/bsd/drm2/drm/sched_module.c			drmkms_sched
 
 # Generated from drm2netbsd.
 #file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms	# drmkms_pci
