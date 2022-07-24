@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.680 2022/06/12 13:37:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.681 2022/07/24 20:25:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.680 2022/06/12 13:37:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.681 2022/07/24 20:25:23 rillig Exp $");
 
 /*
  * A file being read.
@@ -1104,10 +1104,12 @@ ParseDependencyOp(char **pp)
 {
 	if (**pp == '!')
 		return (*pp)++, OP_FORCE;
-	if ((*pp)[1] == ':')
+	if (**pp == ':' && (*pp)[1] == ':')
 		return *pp += 2, OP_DOUBLEDEP;
-	else
+	else if (**pp == ':')
 		return (*pp)++, OP_DEPENDS;
+	else
+		return OP_NONE;
 }
 
 static void
@@ -1562,6 +1564,7 @@ ParseDependency(char *line)
 	ParseSpecial special;	/* in special targets, the children are
 				 * linked as children of the parent but not
 				 * vice versa */
+	GNodeType op;
 
 	DEBUG1(PARSE, "ParseDependency(%s)\n", line);
 	p = line;
@@ -1575,7 +1578,12 @@ ParseDependency(char *line)
 	if (!Lst_IsEmpty(targets))
 		CheckSpecialMundaneMixture(special);
 
-	ApplyDependencyOperator(ParseDependencyOp(&p));
+	op = ParseDependencyOp(&p);
+	if (op == OP_NONE) {
+		InvalidLineType(line);
+		goto out;
+	}
+	ApplyDependencyOperator(op);
 
 	pp_skip_whitespace(&p);
 
