@@ -1,12 +1,13 @@
 #!/bin/sh
-#	$NetBSD: ctwm_app_menu,v 1.1.2.2 2020/10/08 16:04:07 martin Exp $
+#	$NetBSD: ctwm_app_menu,v 1.1.2.3 2022/07/24 11:51:22 martin Exp $
 OFS=$IFS
 IFS='
 '
 printf 'menu "appmenu"\n'
 printf '{\n'
 printf '\t"Applications"\tf.title\n'
-for app in $(find /usr/pkg/share/applications -name '*.desktop');
+LOCALBASE=$(pkg_info -Q LOCALBASE pkg_install 2>/dev/null || echo /usr/pkg)
+for app in $(find $LOCALBASE/share/applications -name '*.desktop')
 do
 	name=""
 	exec=""
@@ -18,13 +19,18 @@ do
 			Name=*)
 				if ! [ -n "$name" ];
 				then
-					name=$(printf '%s' "$line" | cut -c6- | tr -d '\r')
+					name=$(printf '%s' "$line" | cut -c6- | tr -d '\r"')
 				fi
 			;;
 			Exec=*)
 				if ! [ -n "$exec" ];
 				then
 					exec=$(printf '%s' "$line" | cut -c6- | sed -e 's/ %.*//g' | tr -d '\r')
+					if printf '%s' "$exec" | grep -q '"'; then
+						# results in malformed config file, better way
+						# to handle this...?
+						nodisplay="true"
+					fi
 				fi
 			;;
 			Terminal=true)
