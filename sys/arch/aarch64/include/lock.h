@@ -1,4 +1,9 @@
-/* $NetBSD: lock.h,v 1.4 2021/09/26 20:15:04 jmcneill Exp $ */
+/* $NetBSD: lock.h,v 1.5 2022/07/24 20:28:32 riastradh Exp $ */
+
+#ifndef	_AARCH64_LOCK_H_
+#define	_AARCH64_LOCK_H_
+
+#include <sys/param.h>
 
 #ifdef __aarch64__
 # ifdef _HARDKERNEL
@@ -11,3 +16,5 @@
 #elif defined(__arm__)
 # include <arm/lock.h>
 #endif
+
+#endif	/* _AARCH64_LOCK_H_ */
