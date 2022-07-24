@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.28 2022/07/23 12:52:09 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.29 2022/07/24 20:05:00 riastradh Exp $
 
 version	20180827
 
@@ -70,6 +70,7 @@ elifdef aarch64
 makeoptions	amdgpu	"COPTS.amdgpu_float"+="-march=armv8-a"
 endif
 
+makeoptions	amdgpu	"COPTS.amdgpu_dcn10_resource.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn20_resource.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn21_resource.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn_calc_auto.c"+="${COPTS.amdgpu_float}"
@@ -82,10 +83,12 @@ makeoptions	amdgpu	"COPTS.amdgpu_display_mode_vba_21.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_20.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_20v2.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_21.c"+="${COPTS.amdgpu_float}"
+makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_helpers.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_dml1_display_rq_dlg_calc.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_dml_common_defs.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_rc_calc.c"+="${COPTS.amdgpu_float}"
 makeoptions	amdgpu	"COPTS.amdgpu_rc_calc_dpi.c"+="${COPTS.amdgpu_float}"
+makeoptions	amdgpu	"COPTS.amdgpu_rn_clk_mgr.c"+="${COPTS.amdgpu_float}"
 
 # Local additions.
 file	external/bsd/drm2/amdgpu/amdgpu_module.c	amdgpu
