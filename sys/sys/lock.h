@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.91 2020/12/22 01:58:58 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.92 2022/07/24 20:28:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #define	SPINLOCK_SPIN_HOOK
 #endif
 #ifndef SPINLOCK_BACKOFF_HOOK
+#include <sys/systm.h>
 #define	SPINLOCK_BACKOFF_HOOK		nullop(NULL)
 #endif
 #ifndef	SPINLOCK_BACKOFF_MIN
