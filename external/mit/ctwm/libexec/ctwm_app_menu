@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: ctwm_app_menu,v 1.5 2022/07/22 17:06:46 nia Exp $
+#	$NetBSD: ctwm_app_menu,v 1.6 2022/07/24 07:38:15 nia Exp $
 #
 # Copyright (c) 2020-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,27 +96,27 @@ do_category()
 		do
 			case $line in
 				Name=*)
-					if ! [ -n "$name" ];
+					if [ -z "$name" ];
 					then
-						name=$(printf '%s' "$line" | cut -c6- | tr -d '\r' | tr -d '"')
+						name=$(printf '%s' "${line#Name=}" | tr -d '\r"')
 					fi
 				;;
 				Exec=*)
-					if ! [ -n "$exec" ];
+					if [ -z "$exec" ];
 					then
-						exec=$(printf '%s' "$line" | cut -c6- | sed -e 's/ %.*//g' | tr -d '\r')
+						exec=$(printf '%s' "${line#Exec=}" | sed -e 's/ %.*//g' | tr -d '\r')
+						# results in malformed config file, better way
+						# to handle this...?
 						if printf '%s' "$exec" | grep -q '"'; then
-							# results in malformed config file, better way
-							# to handle this...?
 							nodisplay="true"
 						fi
 					fi
 				;;
 				Terminal=true)
-					terminal="true"
+					terminal=true
 				;;
 				OnlyShowIn=*|NoDisplay=true)
-					nodisplay="true"
+					nodisplay=true
 				;;
 			esac
 		done < "$app"
