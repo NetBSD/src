@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.112 2022/07/17 12:56:05 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.113 2022/07/24 11:52:46 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1884,4 +1884,9 @@ usr.bin/vmstat/vmstat.c				1.255
 	Fix Fixes overflow errors for pools larger than 4GB
 	when operating on core files.
 	[simonb, ticket #1480]
+
+external/mit/ctwm/libexec/ctwm_app_menu		1.5 (patch)
+
+	Avoid generating an invalid ctwmrc when emacs is installed.
+	[nia, ticket #1481]
 
