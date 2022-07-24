@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.145 2022/07/19 01:03:05 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.146 2022/07/24 19:23:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.145 2022/07/19 01:03:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.146 2022/07/24 19:23:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ knote_foplock_exit(struct knote *kn)
 	mutex_exit(&KNOTE_TO_KIMPL(kn)->ki_foplock);
 }
 
-static inline bool
+static inline bool __diagused
 knote_foplock_owned(struct knote *kn)
 {
 	return mutex_owned(&KNOTE_TO_KIMPL(kn)->ki_foplock);
