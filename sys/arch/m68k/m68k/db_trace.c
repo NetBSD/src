@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.59 2015/10/18 17:13:32 maxv Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60 2022/07/25 01:59:26 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.59 2015/10/18 17:13:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2022/07/25 01:59:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -393,6 +393,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *	name;
 	struct stackpos pos;
 	struct pcb	*pcb;
+	struct lwp	*l;
 #ifdef _KERNEL
 	bool		kernel_only = true;
 #endif
@@ -417,12 +418,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	}
 
+	l = curlwp;
 	if (!have_addr)
 		stacktop(&ddb_regs, &pos, pr);
 	else {
 		if (trace_thread) {
 			struct proc *p;
-			struct lwp *l;
 
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -554,7 +555,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Stop tracing if frame ptr no longer points into kernel
 		 * stack.
 		 */
-		pcb = lwp_getpcb(curlwp);
+		pcb = lwp_getpcb(l);
 		if (kernel_only && !INKERNEL(pos.k_fp, pcb))
 			break;
 		if (nextframe(&pos, pcb, kernel_only, pr) == 0)
