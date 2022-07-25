@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.113 2022/07/24 11:52:46 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.114 2022/07/25 06:32:07 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1842,6 +1842,12 @@ sys/miscfs/procfs/procfs_vnops.c		1.229
 
 	procfs: add missing permission check.
 	[shm, ticket #1475]
+
+usr.sbin/sysinst/label.c			1.39
+
+	PR 56893: fix adding NetBSD partitions to some GPT formatted disks
+	with preexisting other partitions.
+	[martin, ticket #1476]
 
 sys/dev/pci/if_wmreg.h				1.122-1.125
 sys/dev/pci/if_wmvar.h				1.48
