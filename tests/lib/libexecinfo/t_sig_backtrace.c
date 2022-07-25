@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.4 2022/07/25 11:02:41 riastradh Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.5 2022/07/25 22:37:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.4 2022/07/25 11:02:41 riastradh Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.5 2022/07/25 22:37:37 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -224,6 +224,8 @@ ATF_TC_BODY(sig_backtrace_jump, tc)
 		.sa_flags = SA_ONSTACK,
 	};
 	ATF_REQUIRE(sigaction(SIGSEGV, &sa, NULL) == 0);
+
+	atf_tc_expect_fail("PR lib/56940");
 
 	if (setjmp(env) == 0) {
 		printf("%d\n", the_loop_jump(0));
