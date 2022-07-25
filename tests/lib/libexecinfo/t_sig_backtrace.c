@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.2 2021/11/23 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.3 2022/07/25 10:38:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.2 2021/11/23 23:29:55 thorpej Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.3 2022/07/25 10:38:17 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -48,8 +48,10 @@ __RCSID("$NetBSD: t_sig_backtrace.c,v 1.2 2021/11/23 23:29:55 thorpej Exp $");
 stack_t sig_stack;
 
 char *foo;
+char *(*bar)(void);
 
-static int the_loop(int);
+static int the_loop_deref(int);
+static int the_loop_jump(int);
 
 #ifdef NOINLINE_HACK
 volatile int noinline;
@@ -59,7 +61,7 @@ static int __noinline
 func1(int i)
 {
 	if (i > 100) {
-		return the_loop(i);
+		return the_loop_deref(i);
 	}
 	return i + 1;
 }
@@ -81,9 +83,26 @@ func3(int i)
 }
 
 static int __noinline
-the_loop(int i)
+the_loop_deref(int i)
 {
 	while (*foo != 0) {
+		i = func3(i);
+		i = func1(i);
+		i = func2(i);
+	}
+
+#ifdef NOINLINE_HACK
+	if (noinline)
+		vfork();
+#endif
+
+	return i;
+}
+
+static int __noinline
+the_loop_jump(int i)
+{
+	while ((*bar)() != 0) {
 		i = func3(i);
 		i = func1(i);
 		i = func2(i);
@@ -155,14 +174,14 @@ handler(int s)
 	longjmp(env, 1);
 }
 
-ATF_TC(sig_backtrace);
-ATF_TC_HEAD(sig_backtrace, tc)
+ATF_TC(sig_backtrace_deref);
+ATF_TC_HEAD(sig_backtrace_deref, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test backtrace(3) across signal handlers");
+	    "Test backtrace(3) across signal handlers, null pointer deref");
 }
 
-ATF_TC_BODY(sig_backtrace, tc)
+ATF_TC_BODY(sig_backtrace_deref, tc)
 {
 	sig_stack.ss_sp = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_STACK, -1, 0);
@@ -179,13 +198,42 @@ ATF_TC_BODY(sig_backtrace, tc)
 	ATF_REQUIRE(sigaction(SIGSEGV, &sa, NULL) == 0);
 
 	if (setjmp(env) == 0) {
-		printf("%d\n", the_loop(0));
+		printf("%d\n", the_loop_deref(0));
+	}
+}
+
+ATF_TC(sig_backtrace_jump);
+ATF_TC_HEAD(sig_backtrace_jump, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test backtrace(3) across signal handlers, null pointer jump");
+}
+
+ATF_TC_BODY(sig_backtrace_jump, tc)
+{
+	sig_stack.ss_sp = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
+	    MAP_ANON | MAP_STACK, -1, 0);
+	ATF_REQUIRE(sig_stack.ss_sp != MAP_FAILED);
+
+	sig_stack.ss_size = SIGSTKSZ;
+	sig_stack.ss_flags = 0;
+	ATF_REQUIRE(sigaltstack(&sig_stack, NULL) == 0);
+
+	struct sigaction sa = {
+		.sa_handler = handler,
+		.sa_flags = SA_ONSTACK,
+	};
+	ATF_REQUIRE(sigaction(SIGSEGV, &sa, NULL) == 0);
+
+	if (setjmp(env) == 0) {
+		printf("%d\n", the_loop_jump(0));
 	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, sig_backtrace);
+	ATF_TP_ADD_TC(tp, sig_backtrace_deref);
+	ATF_TP_ADD_TC(tp, sig_backtrace_jump);
 
 	return atf_no_error();
 }
