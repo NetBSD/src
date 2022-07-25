@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.29 2022/07/25 08:19:50 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.30 2022/07/25 08:29:14 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -314,9 +314,9 @@ struct bge_softc {
 	uint32_t		bge_tx_max_coal_bds;
 	uint32_t		bge_tx_buf_ratio;
 	uint32_t		bge_sts;
-#define BGE_STS_LINK		0x00000001	/* MAC link status */
-#define BGE_STS_LINK_EVT	0x00000002	/* pending link event */
-#define BGE_STS_AUTOPOLL	0x00000004	/* PHY auto-polling  */
+#define BGE_STS_LINK		__BIT(0)	/* MAC link status */
+#define BGE_STS_LINK_EVT	__BIT(1)	/* pending link event */
+#define BGE_STS_AUTOPOLL	__BIT(2)	/* PHY auto-polling  */
 #define BGE_STS_BIT(sc, x)	((sc)->bge_sts & (x))
 #define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
