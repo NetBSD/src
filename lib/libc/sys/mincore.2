@@ -1,4 +1,4 @@
-.\"	$NetBSD: mincore.2,v 1.19 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: mincore.2,v 1.20 2022/07/25 22:50:42 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,14 +44,16 @@
 .Sh DESCRIPTION
 The
 .Fn mincore
-system call
-allows a process to obtain information about whether pages are
-core resident.
+system call tells whether the pages covering
+.Fa len
+bytes of data starting at
+.Fa addr
+are core resident in the process.
 The status of the memory range is returned in the character-per-page array
-.Ar vec .
+.Fa vec .
 If the page is resident, the least significant bit of the corresponding
 character in
-.Ar vec
+.Fa vec
 will be set.
 Other bits are reserved for additional information
 which future implementations may return.
@@ -73,13 +75,13 @@ The
 call will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Ar vec
+.Fa vec
 points to an illegal address.
 .It Bq Er EINVAL
-.Ar addr
+.Fa addr
 is not a multiple of the system page size.
 .It Bq Er EINVAL
-.Ar len
+.Fa len
 is equal to 0.
 .It Bq Er ENOMEM
 The address range specified is invalid for the calling process,
