@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.5 2010/03/06 11:31:40 mlelstv Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.6 2022/07/25 05:15:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.5 2010/03/06 11:31:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.6 2022/07/25 05:15:08 dholland Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -92,7 +92,16 @@ replay_wapbl(void)
 {
 	int error;
 
-	if (!nflag) {
+	if (nflag) {
+		/*
+		 * XXX: we ought to have a mode where we can replay
+		 * the journal to memory, similar to what happens in
+		 * the kernel with a readonly mount. For now though
+		 * just print that we aren't doing it so as to avoid
+		 * lying to the user.
+		 */
+		pwarn("CANNOT REPLAY JOURNAL IN -n MODE; continuing anyway\n");
+	} else {
 		error = wapbl_replay_write(wapbl_replay, 0);
 		if (error) {
 			pfatal("UNABLE TO REPLAY JOURNAL BLOCKS");
