@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.5 2022/07/25 22:37:37 riastradh Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.6 2022/07/25 22:43:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.5 2022/07/25 22:37:37 riastradh Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.6 2022/07/25 22:43:01 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -83,8 +83,10 @@ func3(int i)
 }
 
 static int __noinline
-the_loop_deref(int i)
+the_loop_deref(int i0)
 {
+	volatile int i = i0;
+
 	while (*foo != 0) {
 		i = func3(i);
 		i = func1(i);
@@ -100,8 +102,10 @@ the_loop_deref(int i)
 }
 
 static int __noinline
-the_loop_jump(int i)
+the_loop_jump(int i0)
 {
+	volatile int i = i0;
+
 	while ((*bar)() != 0) {
 		i = func3(i);
 		i = func1(i);
