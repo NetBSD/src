@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.3 2022/07/25 10:38:17 riastradh Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.4 2022/07/25 11:02:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.3 2022/07/25 10:38:17 riastradh Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.4 2022/07/25 11:02:41 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -155,7 +155,7 @@ handler(int s)
 			continue;
 		}
 		if (found_sigtramp && !found_the_loop &&
-		    strcmp(strings[i], "the_loop") == 0) {
+		    strncmp(strings[i], "the_loop", strlen("the_loop")) == 0) {
 			found_the_loop = true;
 			continue;
 		}
