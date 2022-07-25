@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.28 2022/07/02 07:22:41 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.29 2022/07/25 08:19:50 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -216,7 +216,6 @@ struct bge_chain_data {
 	struct mbuf		*bge_tx_chain[BGE_TX_RING_CNT];
 	struct mbuf		*bge_rx_std_chain[BGE_STD_RX_RING_CNT];
 	struct mbuf		*bge_rx_jumbo_chain[BGE_JUMBO_RX_RING_CNT];
-	struct mbuf		*bge_rx_mini_chain[BGE_MINI_RX_RING_CNT];
 	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
 	bus_dmamap_t		bge_rx_jumbo_map;
 	/* Stick the jumbo mem management stuff here too. */
