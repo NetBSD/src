@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.318 2022/06/10 21:28:50 rillig Exp $
+# $NetBSD: Makefile,v 1.319 2022/07/26 19:32:25 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -469,6 +469,7 @@ TESTS:= ${TESTS:${BROKEN_TESTS:S,^,N,:ts:}}
 ENV.depsrc-optional+=   TZ=UTC
 ENV.directive-undef=	ENV_VAR=env-value
 ENV.envfirst=		FROM_ENV=value-from-env
+ENV.opt-m-include-dir=	${MAKEOBJDIR:DMAKEOBJDIR=${MAKEOBJDIR}}
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
