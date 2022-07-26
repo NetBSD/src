@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60 2022/07/25 01:59:26 chs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.61 2022/07/26 16:51:42 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2022/07/25 01:59:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.61 2022/07/26 16:51:42 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -418,7 +418,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	}
 
+#ifdef _KERNEL
 	l = curlwp;
+#endif
 	if (!have_addr)
 		stacktop(&ddb_regs, &pos, pr);
 	else {
@@ -550,7 +552,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		else
 			(*pr)(") + %lx\n", val);
 
-#if _KERNEL
+#ifdef _KERNEL
 		/*
 		 * Stop tracing if frame ptr no longer points into kernel
 		 * stack.
