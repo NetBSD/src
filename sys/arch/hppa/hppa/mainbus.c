@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2022/03/30 22:34:48 macallan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2022/07/26 20:08:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2022/03/30 22:34:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2022/07/26 20:08:55 andvar Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1204,7 +1204,7 @@ mbus_dmamem_unmap(void *v, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by bus-
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by bus-
  * specific DMA mmap(2)'ing functions.
  */
 paddr_t

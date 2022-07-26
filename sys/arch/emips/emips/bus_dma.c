@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2022/01/22 15:10:31 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2022/07/26 20:08:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2022/01/22 15:10:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2022/07/26 20:08:55 andvar Exp $");
 
 #include "opt_cputype.h"
 
@@ -724,7 +724,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
