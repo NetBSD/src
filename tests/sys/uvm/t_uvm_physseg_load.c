@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg_load.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
+/* $NetBSD: t_uvm_physseg_load.c,v 1.3 2022/07/26 19:49:32 andvar Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg_load.c,v 1.2 2016/12/22 08:15:20 cherry Exp $");
+__RCSID("$NetBSD: t_uvm_physseg_load.c,v 1.3 2022/07/26 19:49:32 andvar Exp $");
 
 /*
  * If this line is commented out tests related touvm_physseg_get_pmseg()
@@ -211,7 +211,7 @@ uvmpdpol_reinit(void)
 #define PF_STEP 8
 
 /*
- * A debug fucntion to print the content of upm.
+ * A debug function to print the content of upm.
  */
 	static inline void
 	uvm_physseg_dump_seg(uvm_physseg_t upm)

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.5 2006/10/26 23:54:28 uwe Exp $	*/
+/*	$NetBSD: profile.h,v 1.6 2022/07/26 19:49:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -58,7 +58,7 @@ __mcount:					\n\
 	mov.l	@r15+, r7			\n\
 	mov.l	@r15+, r6			\n\
 	mov.l	@r15+, r5			\n\
-	jmp	@r0		! real fucntion	\n\
+	jmp	@r0		! real function	\n\
 	 mov.l	@r15+, r4			\n\
 						\n\
 	.align	2				\n\
