@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.39 2021/12/05 04:54:21 msaitoh Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.40 2022/07/26 20:08:55 andvar Exp $	*/
 
 /*
  * This file was taken from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2021/12/05 04:54:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2022/07/26 20:08:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,7 +759,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t

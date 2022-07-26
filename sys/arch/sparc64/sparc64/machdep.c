@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.304 2021/12/26 21:33:48 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.305 2022/07/26 20:08:56 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2021/12/26 21:33:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2022/07/26 20:08:56 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1515,7 +1515,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t

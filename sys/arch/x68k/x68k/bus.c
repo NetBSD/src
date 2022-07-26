@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.37 2022/05/24 19:55:09 andvar Exp $	*/
+/*	$NetBSD: bus.c,v 1.38 2022/07/26 20:08:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.37 2022/05/24 19:55:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.38 2022/07/26 20:08:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,7 @@ x68k_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
