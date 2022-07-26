@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.33 2020/07/15 09:42:43 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.34 2022/07/26 16:07:55 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.33 2020/07/15 09:42:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.34 2022/07/26 16:07:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -808,7 +808,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		/* Isolate condition codes */
 		cond >>= 28;
 		/* Move fpu condition codes to cr[1] */
-		tf->tf_cr &= (0x0f000000);
+		tf->tf_cr &= ~(0x0f000000);
 		tf->tf_cr |= (cond<<24);
 		DPRINTF(FPE_INSN, ("fpu_execute: cr[1] <= %x\n", cond));
 	}
