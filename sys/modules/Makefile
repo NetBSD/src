@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.267 2022/07/17 15:36:05 riastradh Exp $
+#	$NetBSD: Makefile,v 1.268 2022/07/27 18:29:35 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -356,6 +356,7 @@ SUBDIR+=	drm
 #SUBDIR+=	drmkms_pci
 #SUBDIR+=	drmkms_ttm
 SUBDIR+=	i915drm
+SUBDIR+=	amdgpu
 #SUBDIR+=	i915drmkms
 #
 # ISA modules

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.93 2021/09/25 17:55:37 maya Exp $
+# $NetBSD: md.amd64,v 1.94 2022/07/27 18:29:35 maya Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -28,6 +28,8 @@
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/aibs				modules-base-kernel	kmod
 ./@MODULEDIR@/aibs/aibs.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/amdgpu				modules-base-kernel	kmod
+./@MODULEDIR@/amdgpu/amdgpu.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/amdsmn				modules-base-kernel	kmod
 ./@MODULEDIR@/amdsmn/amdsmn.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/amdtemp				modules-base-kernel	kmod
