@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.114 2022/07/25 06:32:07 msaitoh Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.115 2022/07/27 14:43:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1895,4 +1895,21 @@ external/mit/ctwm/libexec/ctwm_app_menu		1.5 (patch)
 
 	Avoid generating an invalid ctwmrc when emacs is installed.
 	[nia, ticket #1481]
+
+sys/dev/pci/pcidevs				1.1422,1.1445-1.1460 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/arch/x86/pci/amdsmn.c			1.13
+
+	Update pcidevs:
+	- Add Intel Alder Lake devices and Intel 600 Series PCH devices.
+	- Add some Intel Xeon Scalable / Skylake-E devices.
+	- Fix AMD F16_HB from 0x1568 to 0x1538.
+	- Add some devices for AMD and improve some descriptions to clarify.
+	- Add VMware AHCI and NVMe.
+	- Update Intel 700 series Ethernet devices.
+	- Add some Broadcom devices.
+	- Add some Broadcom / LSI RAID cards.
+	- Fix typos and whitespace.
+	[msaitoh, ticket #1482]
 
