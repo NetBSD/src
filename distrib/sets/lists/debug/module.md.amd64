@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.7 2022/07/27 20:28:41 pgoyette Exp $
+# $NetBSD: module.md.amd64,v 1.8 2022/07/27 20:34:30 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -27,8 +27,8 @@
 ./usr/libdata/debug/@MODULEDIR@/acpiwmi/acpiwmi.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/aibs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/aibs/aibs.kmod.debug			modules-base-kernel	kmod,debug
-./user/libdata/debug/@MODULEDIR@/amdgpu				modules-base-kernel     kmod,debug
-./user/libdata/debug/@MODULEDIR@/amdgpu/amdgpu.kmod.debug	modules-base-kernel     kmod,debug
+./usr/libdata/debug/@MODULEDIR@/amdgpu				modules-base-kernel     kmod,debug
+./usr/libdata/debug/@MODULEDIR@/amdgpu/amdgpu.kmod.debug	modules-base-kernel     kmod,debug
  ./usr/libdata/debug/@MODULEDIR@/amdsmn                         modules-base-kernel     kmod,debug
 
 ./usr/libdata/debug/@MODULEDIR@/amdsmn				modules-base-kernel	kmod,debug
