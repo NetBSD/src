@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.35 2022/07/26 16:08:33 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.36 2022/07/27 04:17:02 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.35 2022/07/26 16:08:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.36 2022/07/27 04:17:02 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -189,8 +189,8 @@ fpu_dumpfpn(struct fpn *fp)
 
 /*
  * Emulate a floating-point instruction.
- * Return zero for success, else signal number.
- * (Typically: zero, SIGFPE, SIGILL, SIGSEGV)
+ * Return true if insn is consumed anyway.
+ * Otherwise, the caller must take care of it.
  */
 bool
 fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
