@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.82 2022/07/28 10:43:35 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.83 2022/07/28 21:52:36 riastradh Exp $
 
 version	20180827
 
@@ -86,7 +86,17 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 makeoptions	drmkms	"CWARNFLAGS.drm_mm.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_modes.c"+="-Wno-shadow"
 
-# Legacy user-mode setting
+# Legacy user-mode setting -- for the following legacy drivers:
+#
+#       mach64*
+#       mga*
+#       savage*
+#       sis*
+#       tdfx*
+#       via
+#
+# * not yet adapted to current drm code base
+#
 define	drmums: drmkms
 makeoptions	drmums	"CPPFLAGS.drmkms"+="-DCONFIG_DRM_LEGACY"
 makeoptions	drmums	"CPPFLAGS.drmums"+="${CPPFLAGS.drmkms}"
@@ -96,6 +106,10 @@ file	external/bsd/drm2/dist/drm/drm_dma.c		drmums
 file	external/bsd/drm2/dist/drm/drm_legacy_misc.c	drmums
 file	external/bsd/drm2/drm/drm_lock.c		drmums
 file	external/bsd/drm2/drm/drm_scatter.c		drmums
+
+# Set `options DRM_LEGACY' to allow loading modules requiring drmums
+# even if none are statically linked into the kernel.
+defflag		DRM_LEGACY: drmums
 
 # GPU scheduler
 define	drmkms_sched: drmkms
