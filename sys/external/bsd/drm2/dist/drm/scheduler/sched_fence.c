@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_fence.c,v 1.6 2022/07/28 10:42:45 riastradh Exp $	*/
+/*	$NetBSD: sched_fence.c,v 1.7 2022/07/28 10:44:46 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.6 2022/07/28 10:42:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.7 2022/07/28 10:44:46 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/module.h>
@@ -197,7 +197,7 @@ MODULE_LICENSE("GPL and additional rights");
 MODULE(MODULE_CLASS_MISC, drmkms_sched, "drmkms,drmkms_linux");
 
 static int
-drmsched_modcmd(modcmd_t cmd, void *arg)
+drmkms_sched_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
