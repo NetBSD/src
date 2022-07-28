@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.12 2021/09/23 15:19:03 ryo Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.13 2022/07/28 09:14:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.12 2021/09/23 15:19:03 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.13 2022/07/28 09:14:12 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -114,8 +114,10 @@ dosoftints(void)
 	struct cpu_info * const ci = curcpu();
 	const int opl = ci->ci_cpl;
 	const uint32_t softiplmask = SOFTIPLMASK(opl);
+	int s;
 
-	splhigh();
+	s = splhigh();
+	KASSERT(s == opl);
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
 		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
@@ -130,8 +132,7 @@ dosoftints(void)
 				kpreempt(-2);
 			}
 #endif
-			splx(opl);
-			return;
+			break;
 		}
 #define DOSOFTINT(n) \
 		if (ci->ci_softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) {\
@@ -147,6 +148,7 @@ dosoftints(void)
 		DOSOFTINT(CLOCK);
 		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
 	}
+	splx(s);
 }
 #endif /* !__HAVE_PIC_FAST_SOFTINTS */
 #endif /* __HAVE_FAST_SOFTINTS */
