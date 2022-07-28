@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.6 2022/07/27 20:34:30 pgoyette Exp $
+# $NetBSD: module.md.i386,v 1.7 2022/07/28 22:00:23 riastradh Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -61,14 +61,18 @@
 ./usr/libdata/debug/@MODULEDIR@/cxdtv/cxdtv.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drm/drm.kmod.debug			modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/drmkms				modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms/drmkms.kmod.debug		modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_agp			modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_agp/drmkms_agp.kmod.debug	modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_linux			modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_linux/drmkms_linux.kmod.debug	modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_pci			modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/drmkms_pci/drmkms_pci.kmod.debug	modules-obsolete	obsolete
+./usr/libdata/debug/@MODULEDIR@/drmkms				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms/drmkms.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_agp			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_agp/drmkms_agp.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_linux/drmkms_linux.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_pci			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_pci/drmkms_pci.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_sched			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_sched/drmkms_sched.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_ttm			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/drmkms_ttm/drmkms_ttm.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/dtrace_syscall_linux		modules-base-kernel	kmod,dtrace,debug
 ./usr/libdata/debug/@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod.debug	modules-base-kernel	kmod,dtrace,debug
 ./usr/libdata/debug/@MODULEDIR@/emdtv				modules-base-kernel	kmod,debug
@@ -101,8 +105,8 @@
 ./usr/libdata/debug/@MODULEDIR@/hpqlb/hpqlb.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i915drm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i915drm/i915drm.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/i915drmkms			modules-obsolete	obsolete
-./usr/libdata/debug/@MODULEDIR@/i915drmkms/i915drmkms.kmod.debug	modules-obsolete	obsolete
+./usr/libdata/debug/@MODULEDIR@/i915drmkms			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/i915drmkms/i915drmkms.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ichsmb				modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ichsmb/ichsmb.kmod.debug		modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_iavf				modules-base-kernel	kmod,debug
