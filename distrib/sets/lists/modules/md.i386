@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.92 2022/07/27 18:29:35 maya Exp $
+# $NetBSD: md.i386,v 1.93 2022/07/28 22:00:23 riastradh Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -70,14 +70,18 @@
 ./@MODULEDIR@/cxdtv/cxdtv.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/drm				modules-base-kernel	kmod
 ./@MODULEDIR@/drm/drm.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms				modules-obsolete	obsolete
-./@MODULEDIR@/drmkms/drmkms.kmod		modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_agp			modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_linux			modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_pci			modules-obsolete	obsolete
-./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-obsolete	obsolete
+./@MODULEDIR@/drmkms				modules-base-kernel	kmod
+./@MODULEDIR@/drmkms/drmkms.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_agp			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_pci			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_sched			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_sched/drmkms_sched.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_ttm			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_ttm/drmkms_ttm.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/dtrace_syscall_linux		modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/emdtv				modules-base-kernel	kmod
