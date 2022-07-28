@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.82 2022/07/28 10:26:15 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.83 2022/07/28 10:26:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.82 2022/07/28 10:26:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.83 2022/07/28 10:26:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -298,7 +298,7 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	return ipl_mask;
 }
 
-uint32_t
+static uint32_t
 pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 	uint32_t pending, int ipl)
 {
@@ -369,7 +369,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 }
 
 #if defined(__HAVE_PIC_PENDING_INTRS)
-void
+static void
 pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
     void *frame)
 {
@@ -505,7 +505,7 @@ pic_list_unblock_irqs(struct cpu_info *ci)
 	}
 }
 
-struct pic_softc *
+static struct pic_softc *
 pic_list_find_pic_by_pending_ipl(struct cpu_info *ci, uint32_t ipl_mask)
 {
 	uint32_t pending_pics = ci->ci_pending_pics;
@@ -524,7 +524,7 @@ pic_list_find_pic_by_pending_ipl(struct cpu_info *ci, uint32_t ipl_mask)
 	}
 }
 
-void
+static void
 pic_list_deliver_irqs(struct cpu_info *ci, register_t psw, int ipl,
     void *frame)
 {
