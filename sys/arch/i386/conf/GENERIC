@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1238 2022/04/16 11:57:46 nia Exp $
+# $NetBSD: GENERIC,v 1.1239 2022/07/28 21:52:36 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1238 $"
+#ident		"GENERIC-$Revision: 1.1239 $"
 
 maxusers	64		# estimated number of users
 
@@ -554,7 +554,8 @@ radeondrmkmsfb* at radeonfbbus?
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
 
-# DRMUMS drivers
+# DRMUMS drivers -- make them loadable, but not statically linked in
+options 	DRM_LEGACY
 #viadrmums*	at drm?
 
 # Serial Devices
