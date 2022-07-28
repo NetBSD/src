@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.81 2022/07/28 07:15:27 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.82 2022/07/28 10:26:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.81 2022/07/28 07:15:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.82 2022/07/28 10:26:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -333,6 +333,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 {
 	int (*func)(void *) = is->is_func;
 	void *arg = is->is_arg;
+	int ocpl, ncpl;
 
 	if (__predict_false(arg == NULL)) {
 		if (__predict_false(frame == NULL)) {
@@ -342,6 +343,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 		arg = frame;
 	}
 
+	ocpl = curcpu()->ci_cpl;
 #ifdef MULTIPROCESSOR
 	if (!is->is_mpsafe) {
 		KERNEL_LOCK(1, NULL);
@@ -354,6 +356,11 @@ pic_dispatch(struct intrsource *is, void *frame)
 	} else
 #endif
 		(void)(*func)(arg);
+	ncpl = curcpu()->ci_cpl;
+	KASSERTMSG(ocpl <= ncpl, "pic %s irq %u intrsource %s:"
+	    " cpl slipped %d -> %d",
+	    is->is_pic->pic_name, is->is_irq, is->is_source,
+	    ocpl, ncpl);
 
 	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
