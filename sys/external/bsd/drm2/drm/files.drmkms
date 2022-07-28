@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.81 2022/07/24 19:23:59 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.82 2022/07/28 10:43:35 riastradh Exp $
 
 version	20180827
 
@@ -104,7 +104,6 @@ makeoptions	drmkms_sched	"CPPFLAGS.drmkms_sched"+="${CPPFLAGS.drmkms}"
 file	external/bsd/drm2/dist/drm/scheduler/sched_entity.c	drmkms_sched
 file	external/bsd/drm2/dist/drm/scheduler/sched_fence.c	drmkms_sched
 file	external/bsd/drm2/dist/drm/scheduler/sched_main.c	drmkms_sched
-file	external/bsd/drm2/drm/sched_module.c			drmkms_sched
 
 # Generated from drm2netbsd.
 #file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms	# drmkms_pci
