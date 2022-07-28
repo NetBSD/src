@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.143 2022/03/12 09:16:05 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.144 2022/07/28 09:14:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.143 2022/03/12 09:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.144 2022/07/28 09:14:23 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -663,15 +663,16 @@ dosoftints(void)
 	struct cpu_info * const ci = curcpu();
 	const int opl = ci->ci_cpl;
 	const uint32_t softiplmask = SOFTIPLMASK(opl);
+	int s;
 
-	splhigh();
+	s = splhigh();
+	KASSERT(s == opl);
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
 		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
 		KASSERT(opl == IPL_NONE || (softints & (1 << (opl - IPL_SOFTCLOCK))) == 0);
 		if (softints == 0) {
-			splx(opl);
-			return;
+			break;
 		}
 #define	DOSOFTINT(n) \
 		if (ci->ci_softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
@@ -687,6 +688,7 @@ dosoftints(void)
 		DOSOFTINT(CLOCK);
 		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
 	}
+	splx(s);
 }
 #endif /* !__HAVE_PIC_FAST_SOFTINTS */
 #endif /* __HAVE_FAST_SOFTINTS */
