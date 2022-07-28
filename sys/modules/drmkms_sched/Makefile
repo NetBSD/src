@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2022/07/28 10:41:07 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4 2022/07/28 10:42:46 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -11,7 +11,6 @@ KMOD=	drmkms_sched
 SRCS+=	sched_entity.c
 SRCS+=	sched_fence.c
 SRCS+=	sched_main.c
-SRCS+=	sched_module.c
 
 WARNS=	3
 
