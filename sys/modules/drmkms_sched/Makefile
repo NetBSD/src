@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2022/07/28 10:24:46 riastradh Exp $
+#	$NetBSD: Makefile,v 1.3 2022/07/28 10:41:07 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -7,7 +7,6 @@
 .PATH:	${S}/external/bsd/drm2/drm
 
 KMOD=	drmkms_sched
-MKLDSCRIPT=yes
 
 SRCS+=	sched_entity.c
 SRCS+=	sched_fence.c
