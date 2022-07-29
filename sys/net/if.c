@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.509 2022/07/11 07:40:58 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.510 2022/07/29 15:19:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.509 2022/07/11 07:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.510 2022/07/29 15:19:30 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2428,7 +2428,8 @@ if_link_state_change_work(struct work *work, void *arg)
 	 * Pop a link state change from the queue and process it.
 	 * If there is nothing to process then if_detach() has been called.
 	 * We keep if_link_scheduled = true so the queue can safely drain
-	 * without more work being queued. */
+	 * without more work being queued.
+	 */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
 	LQ_POP(ifp->if_link_queue, state);
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
