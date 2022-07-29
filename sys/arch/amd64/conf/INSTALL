@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.95 2019/04/18 17:13:00 maya Exp $
+# $NetBSD: INSTALL,v 1.96 2022/07/29 10:08:01 riastradh Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -8,7 +8,7 @@
 include	"arch/amd64/conf/GENERIC"
 
 options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
-#ident 		"INSTALL-$Revision: 1.95 $"
+#ident 		"INSTALL-$Revision: 1.96 $"
 
 no options	MEMORY_DISK_DYNAMIC
 no options	FONT_BOLD16x32
@@ -22,3 +22,4 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 no i915drmkms*     at pci?
 no radeon*         at pci?
 no nouveau*	   at pci?
+no options 	DRM_LEGACY
