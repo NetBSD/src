@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.11 2022/07/20 01:11:54 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.12 2022/07/29 12:43:15 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.11 2022/07/20 01:11:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.12 2022/07/29 12:43:15 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/iommu.h>
@@ -777,7 +777,7 @@ static unsigned long amdgpu_ttm_io_mem_pfn(struct ttm_buffer_object *bo,
 	 */
 	const paddr_t cookie = bus_space_mmap(bo->bdev->memt, bo->mem.bus.base,
 	    (mm->start + page_offset) << PAGE_SHIFT, /*vm_prot*/0, /*flags*/0);
-	return pmap_phys_address(cookie);
+	return pmap_phys_address(cookie) >> PAGE_SHIFT;
 #else
 	return (bo->mem.bus.base >> PAGE_SHIFT) + mm->start +
 		(offset >> PAGE_SHIFT);
