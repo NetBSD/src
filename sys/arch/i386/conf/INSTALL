@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.335 2018/12/11 16:52:49 maya Exp $
+# $NetBSD: INSTALL,v 1.336 2022/07/29 10:08:01 riastradh Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,7 +7,7 @@
 
 include	"arch/i386/conf/MONOLITHIC"
 
-#ident 		"INSTALL-$Revision: 1.335 $"
+#ident 		"INSTALL-$Revision: 1.336 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
@@ -19,6 +19,7 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 no i915drmkms*     at pci?
 no radeon*         at pci?
 no nouveau*	   at pci?
+no options 	DRM_LEGACY
 
 # pre-PCI graphics drivers, not enabled in GENERIC
 vga0		at isa?
