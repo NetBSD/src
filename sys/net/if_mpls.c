@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.37 2021/06/16 00:21:19 riastradh Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.38 2022/07/29 15:25:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.37 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.38 2022/07/29 15:25:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,13 +164,9 @@ mpls_clone_create(struct if_clone *ifc, int unit)
 static int
 mpls_clone_destroy(struct ifnet *ifp)
 {
-	int s;
 
 	bpf_detach(ifp);
-
-	s = splnet();
 	if_detach(ifp);
-	splx(s);
 
 	free(ifp->if_softc, M_DEVBUF);
 	atomic_dec_uint(&mpls_count);
