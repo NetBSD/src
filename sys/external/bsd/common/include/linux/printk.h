@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.12 2021/12/19 12:02:38 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.13 2022/07/29 23:50:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,14 +48,14 @@
 #define	pr_warn_once	printf	/* XXX */
 #define	pr_notice	printf	/* XXX */
 #define	pr_debug	printf	/* XXX */
-#define	KERN_EMERG	"kern emerg: "
-#define	KERN_ALERT	"kern alert: "
-#define	KERN_CRIT	"kern crit: "
-#define	KERN_ERR	"kern error: "
-#define	KERN_WARNING	"kern warning: "
-#define	KERN_NOTICE	"kern notice: "
-#define	KERN_INFO	"kern info: "
-#define	KERN_DEBUG	"kern debug: "
+#define	KERN_EMERG	"emerg: "
+#define	KERN_ALERT	"alert: "
+#define	KERN_CRIT	"crit: "
+#define	KERN_ERR	"error: "
+#define	KERN_WARNING	"warning: "
+#define	KERN_NOTICE	"notice: "
+#define	KERN_INFO	""
+#define	KERN_DEBUG	"debug: "
 #define	KERN_CONT	""
 
 #define	printk_ratelimit()	0 /* XXX */
