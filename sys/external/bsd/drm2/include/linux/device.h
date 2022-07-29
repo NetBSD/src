@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.16 2022/07/17 14:11:18 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.17 2022/07/29 23:50:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -72,9 +72,9 @@
 
 #define	dev_info(DEV, FMT, ...)	do {					      \
 	if (DEV)							      \
-		aprint_normal_dev((DEV), "info: " FMT, ##__VA_ARGS__);	      \
+		aprint_normal_dev((DEV), FMT, ##__VA_ARGS__);		      \
 	else								      \
-		aprint_normal("info: " FMT, ##__VA_ARGS__);		      \
+		aprint_normal(FMT, ##__VA_ARGS__);			      \
 } while (0)
 
 #define	dev_dbg(DEV, FMT, ...)	do {					      \
