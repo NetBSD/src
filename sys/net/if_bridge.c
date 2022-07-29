@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.188 2022/07/29 07:46:19 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.188 2022/07/29 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -526,7 +526,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	} args;
 	struct ifdrv *ifd = (struct ifdrv *) data;
 	const struct bridge_control *bc = NULL; /* XXXGCC */
-	int s, error = 0;
+	int error = 0;
 
 	/* Authorize command before calling splsoftnet(). */
 	switch (cmd) {
@@ -554,7 +554,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	s = splsoftnet();
+	const int s = splsoftnet();
 
 	switch (cmd) {
 	case SIOCGDRVSPEC:
@@ -1731,11 +1731,11 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				m_set_rcvif(mc, dst_if);
 				mc->m_flags &= ~M_PROMISC;
 
-				s = splsoftnet();
+				const int _s = splsoftnet();
 				KERNEL_LOCK_UNLESS_IFP_MPSAFE(dst_if);
 				ether_input(dst_if, mc);
 				KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(dst_if);
-				splx(s);
+				splx(_s);
 			}
 
 next:
