@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.748 2022/07/29 15:29:07 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.749 2022/07/29 15:30:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.748 2022/07/29 15:29:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.749 2022/07/29 15:30:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3510,7 +3510,7 @@ wm_detach(device_t self, int flags __unused)
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
 
-	/* wm_stop() ensure workqueue is stopped. */
+	/* wm_stop() ensured that the workqueue is stopped. */
 	workqueue_destroy(sc->sc_queue_wq);
 
 	for (i = 0; i < sc->sc_nqueues; i++)
@@ -7072,7 +7072,7 @@ wm_stop(struct ifnet *ifp, int disable)
 	WM_CORE_UNLOCK(sc);
 
 	/*
-	 * After wm_set_stopping_flags(), it is guaranteed
+	 * After wm_set_stopping_flags(), it is guaranteed that
 	 * wm_handle_queue_work() does not call workqueue_enqueue().
 	 * However, workqueue_wait() cannot call in wm_stop_locked()
 	 * because it can sleep...
