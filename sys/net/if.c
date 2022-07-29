@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.510 2022/07/29 15:19:30 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.511 2022/07/29 15:24:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.510 2022/07/29 15:19:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.511 2022/07/29 15:24:28 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3084,7 +3084,7 @@ void
 if_export_if_data(ifnet_t * const ifp, struct if_data *ifi, bool zero_stats)
 {
 
-	/* Collet the volatile stats first; this zeros *ifi. */
+	/* Collect the volatile stats first; this zeros *ifi. */
 	if_stats_to_if_data(ifp, ifi, zero_stats);
 
 	ifi->ifi_type = ifp->if_type;
