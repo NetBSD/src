@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.168 2022/06/09 07:01:27 knakahara Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.169 2022/07/29 07:35:16 knakahara Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.168 2022/06/09 07:01:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.169 2022/07/29 07:35:16 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -884,7 +884,6 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			}
 		}
 
-		/* IFNET_LOCK must be taken after solock */
 		in_purgeifmcast(in6p->in6p_v4moptions, ifp);
 
 		if (need_unlock)
