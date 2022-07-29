@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.747 2022/07/28 09:22:25 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.748 2022/07/29 15:29:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.747 2022/07/28 09:22:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.748 2022/07/29 15:29:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -664,7 +664,7 @@ struct wm_softc {
 	struct evcnt sc_ev_o2bspc;	/* OS2BMC pkts transmitted by host */
 	struct evcnt sc_ev_b2ospc;	/* BMC2OS pkts sent by BMC */
 	struct evcnt sc_ev_o2bgptc;	/* OS2BMC pkts received by BMC */
-	
+
 #endif /* WM_EVENT_COUNTERS */
 
 	struct sysctllog *sc_sysctllog;
