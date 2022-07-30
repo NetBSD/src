@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2022/07/30 03:26:45 tnn Exp $
+# $NetBSD: Makefile,v 1.5 2022/07/30 03:29:52 tnn Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -57,8 +57,8 @@ CWARNFLAGS.amdgpu_process_pptables_v1_0.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_rn_clk_mgr.c+=	-Wno-type-limits
 CWARNFLAGS.amdgpu_vega10_reg_init.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_vega20_reg_init.c+=	-Wno-cast-qual
-COPTS.amdgpu_uvd.c+=	-Wno-format
-COPTS.amdgpu_vcn.c+=	-Wno-format
+CWARNFLAGS.amdgpu_uvd.c+=	-Wno-format
+CWARNFLAGS.amdgpu_vcn.c+=	-Wno-format
 COPTS.amdgpu_dcn10_resource.c+=	${COPTS.amdgpu_float}
 COPTS.amdgpu_dcn20_resource.c+=	${COPTS.amdgpu_float}
 COPTS.amdgpu_dcn21_resource.c+=	${COPTS.amdgpu_float}
