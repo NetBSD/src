@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.24 2020/09/22 11:53:10 kardel Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.25 2022/07/30 12:48:17 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.24 2020/09/22 11:53:10 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.25 2022/07/30 12:48:17 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,14 +168,14 @@ ld_nvme_biodone(void *xc, struct buf *bp, uint16_t cmd_status, uint32_t cdw0)
 		if (status != NVME_CQE_SC_SUCCESS) {
 			bp->b_error = EIO;
 			bp->b_resid = bp->b_bcount;
-			aprint_error_dev(sc->sc_ld.sc_dv, "I/O error\n");
+			device_printf(sc->sc_ld.sc_dv, "I/O error\n");
 		} else {
 			bp->b_resid = 0;
 		}
 		lddone(&sc->sc_ld, bp);
 	} else {
 		if (status != NVME_CQE_SC_SUCCESS) {
-			aprint_error_dev(sc->sc_ld.sc_dv, "I/O error\n");
+			device_printf(sc->sc_ld.sc_dv, "I/O error\n");
 		}
 	}
 }
