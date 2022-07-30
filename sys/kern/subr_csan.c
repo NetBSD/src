@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.13 2021/09/11 10:09:55 riastradh Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.14 2022/07/30 14:13:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.13 2021/09/11 10:09:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.14 2022/07/30 14:13:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -615,12 +615,16 @@ void
 kcsan_atomic_store(volatile void *p, const void *v, int size)
 {
 	kcsan_access((uintptr_t)p, size, true, true, __RET_ADDR);
+#ifdef __HAVE_HASHLOCKED_ATOMICS
+	__do_atomic_store(p, v, size);
+#else
 	switch (size) {
 	case 1: *(volatile uint8_t *)p = *(const uint8_t *)v; break;
 	case 2: *(volatile uint16_t *)p = *(const uint16_t *)v; break;
 	case 4: *(volatile uint32_t *)p = *(const uint32_t *)v; break;
 	case 8: *(volatile uint64_t *)p = *(const uint64_t *)v; break;
 	}
+#endif
 }
 
 /* -------------------------------------------------------------------------- */

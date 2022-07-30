@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.71 2021/01/23 19:38:53 christos Exp $ */
+/*	$NetBSD: types.h,v 1.72 2022/07/30 14:13:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #endif
 
 #if defined(_KERNEL_OPT)
+#include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
 #endif
 
@@ -135,6 +136,9 @@ typedef unsigned long int	__register_t;
 #define	__HAVE_FAST_SOFTINTS
 #else
 #define	__HAVE_MM_MD_READWRITE
+#ifdef MULTIPROCESSOR
+#define	__HAVE_HASHLOCKED_ATOMICS
+#endif
 #endif
 
 #define	__HAVE_CPU_LWP_SETPRIVATE
