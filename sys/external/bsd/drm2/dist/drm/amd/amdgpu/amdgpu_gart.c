@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.9 2022/07/30 16:55:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.10 2022/07/30 17:12:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.9 2022/07/30 16:55:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.10 2022/07/30 17:12:39 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
@@ -104,6 +104,9 @@ static int amdgpu_gart_dummy_page_init(struct amdgpu_device *adev)
 	    &adev->dummy_page_seg, 1, PAGE_SIZE, BUS_DMA_WAITOK);
 	if (error)
 		goto fail2;
+
+	bus_dmamap_sync(adev->ddev->dmat, adev->dummy_page_map, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Success!  */
 	adev->dummy_page_addr = adev->dummy_page_map->dm_segs[0].ds_addr;
