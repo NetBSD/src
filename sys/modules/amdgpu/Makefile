@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2022/07/24 20:05:00 riastradh Exp $
+# $NetBSD: Makefile,v 1.3 2022/07/30 03:12:00 tnn Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -10,7 +10,7 @@ MKLDSCRIPT=yes
 WARNS=	3
 
 .if ${MACHINE_ARCH} == "x86_64"
-COPTS.amdgpu_float+=	-mhard-float -msse -msse2
+COPTS.amdgpu_float+=	${${ACTIVE_CC} == "gcc" :? -mhard-float :} -msse -msse2
 .elif !empty(MACHINE_ARCH:Maarch64*)
 COPTS.amdgpu_float+=	-march=armv8-a
 .endif
