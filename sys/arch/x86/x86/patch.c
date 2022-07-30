@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.50 2022/04/09 12:07:00 riastradh Exp $	*/
+/*	$NetBSD: patch.c,v 1.51 2022/07/30 14:11:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.50 2022/04/09 12:07:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.51 2022/07/30 14:11:00 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -116,19 +116,6 @@ static const struct x86_hotpatch_descriptor hp_nolock_desc = {
 	.srcs = { &hp_nolock_source }
 };
 __link_set_add_rodata(x86_hotpatch_descriptors, hp_nolock_desc);
-
-/* Use MFENCE if available, part of SSE2. */
-extern uint8_t sse2_mfence, sse2_mfence_end;
-static const struct x86_hotpatch_source hp_sse2_mfence_source = {
-	.saddr = &sse2_mfence,
-	.eaddr = &sse2_mfence_end
-};
-static const struct x86_hotpatch_descriptor hp_sse2_mfence_desc = {
-	.name = HP_NAME_SSE2_MFENCE,
-	.nsrc = 1,
-	.srcs = { &hp_sse2_mfence_source }
-};
-__link_set_add_rodata(x86_hotpatch_descriptors, hp_sse2_mfence_desc);
 
 #ifdef i386
 /* CAS_64. */
@@ -325,20 +312,6 @@ x86_patch(bool early)
 		 */
 		x86_hotpatch(HP_NAME_NOLOCK, 0);
 #endif
-	}
-
-	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
-		/*
-		 * Faster memory barriers.  The only barrier x86 ever
-		 * requires for MI synchronization between CPUs is
-		 * MFENCE for store-before-load ordering; all other
-		 * ordering is guaranteed already -- every load is a
-		 * load-acquire and every store is a store-release.
-		 *
-		 * LFENCE and SFENCE are relevant only for MD logic
-		 * involving I/O devices or non-temporal stores.
-		 */
-		x86_hotpatch(HP_NAME_SSE2_MFENCE, 0);
 	}
 
 #ifdef i386

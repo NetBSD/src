@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.35 2022/04/09 23:32:51 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.36 2022/07/30 14:11:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,11 +46,9 @@
 #include "opt_xen.h"
 #include <machine/frameasm.h>
 #define LOCK			HOTPATCH(HP_NAME_NOLOCK, 1); lock
-#define HOTPATCH_SSE2_MFENCE	HOTPATCH(HP_NAME_SSE2_MFENCE, 7);
 #define HOTPATCH_CAS_64		HOTPATCH(HP_NAME_CAS_64, 49);
 #else
 #define LOCK			lock
-#define HOTPATCH_SSE2_MFENCE	/* nothing */
 #define HOTPATCH_CAS_64		/* nothing */
 #endif
 
@@ -198,13 +196,22 @@ END(_membar_release)
 
 ENTRY(_membar_sync)
 	/*
-	 * MFENCE, or a serializing instruction like a locked addq,
+	 * MFENCE, or a serializing instruction like a locked ADDL,
 	 * is necessary to order store-before-load.  Every other
 	 * ordering -- load-before-anything, anything-before-store --
 	 * is already guaranteed without explicit barriers.
+	 *
+	 * Empirically it turns out locked ADDL is cheaper than MFENCE,
+	 * so we use that, with an offset below the return address on
+	 * the stack to avoid a false dependency with RET.  (It might
+	 * even be better to use a much lower offset, say -128, to
+	 * avoid false dependencies for subsequent callees of the
+	 * caller.)
+	 *
+	 * https://pvk.ca/Blog/2014/10/19/performance-optimisation-~-writing-an-essay/
+	 * https://shipilev.net/blog/2014/on-the-fence-with-dependencies/
+	 * https://www.agner.org/optimize/instruction_tables.pdf
 	 */
-	HOTPATCH_SSE2_MFENCE
-	/* 7 bytes of instructions */
 	LOCK
 	addl	$0, -4(%esp)
 	ret
@@ -406,13 +413,3 @@ STRONG_ALIAS(_membar_consumer,_membar_acquire)
 STRONG_ALIAS(_membar_producer,_membar_release)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_release)
-
-#ifdef _HARDKERNEL
-	.section .rodata
-
-LABEL(sse2_mfence)
-	mfence
-	ret
-	nop; nop; nop;
-LABEL(sse2_mfence_end)
-#endif	/* _HARDKERNEL */
