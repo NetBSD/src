@@ -1,4 +1,4 @@
-/*	$NetBSD: kcondvar.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: kcondvar.h,v 1.5 2022/07/30 12:59:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ typedef enum {
 	TR_CLOCK_TICK,
 } time_res_t;
 
-#define	cv_init(a, b, c, d)	cv_init(a, "zfscv")
+#define	cv_init(a, b, c, d)	cv_init(a, #a)
 
 static inline clock_t
 cv_timedwait_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim, hrtime_t res,
