@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.25 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: ams.c,v 1.26 2022/07/30 07:27:55 rin Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.25 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.26 2022/07/30 07:27:55 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -526,7 +526,7 @@ ams_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_ADB;
-		break;
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
