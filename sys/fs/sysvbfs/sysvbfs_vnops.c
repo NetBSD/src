@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.68 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.69 2022/07/31 13:08:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.68 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.69 2022/07/31 13:08:18 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -632,7 +632,9 @@ sysvbfs_readdir(void *v)
 	    uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
-	KDASSERT(uio->uio_offset >= 0);
+
+	if (uio->uio_offset < 0)
+		return EINVAL;
 
 	dp = malloc(sizeof(struct dirent), M_BFS, M_WAITOK | M_ZERO);
 
