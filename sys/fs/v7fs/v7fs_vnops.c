@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.37 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.38 2022/07/31 13:08:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.37 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.38 2022/07/31 13:08:19 mlelstv Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -996,8 +996,10 @@ v7fs_readdir(void *v)
 	DPRINTF("offset=%zu residue=%zu\n", uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
-	KDASSERT(uio->uio_offset >= 0);
 	KDASSERT(v7fs_inode_isdir(inode));
+
+	if (uio->uio_offset  < 0)
+		return EINVAL;
 
 	struct v7fs_readdir_arg arg;
 	arg.start = uio->uio_offset / sizeof(*dp);
