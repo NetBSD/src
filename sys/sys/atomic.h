@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.25 2022/07/30 14:13:27 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.26 2022/07/31 11:28:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -486,7 +486,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 })
 
 #ifdef __HAVE_HASHLOCKED_ATOMICS
-static void __inline __always_inline
+static __inline __always_inline void
 __do_atomic_store(volatile void *p, const void *q, size_t size)
 {
 	switch (size) {
