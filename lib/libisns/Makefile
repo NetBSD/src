@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2019/10/13 07:28:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2022/07/31 12:40:35 mlelstv Exp $
 
 .include <bsd.own.mk>
+
+USE_SHLIBDIR=   yes
 
 LIB=	isns
 SRCS=	isns.c isns_pdu.c isns_socketio.c isns_task.c isns_thread.c

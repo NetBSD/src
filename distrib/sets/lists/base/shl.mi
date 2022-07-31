@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.937 2022/06/06 10:56:27 nia Exp $
+# $NetBSD: shl.mi,v 1.938 2022/07/31 12:40:35 mlelstv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -51,6 +51,9 @@
 ./lib/libipsec.so				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
+./lib/libisns.so				base-isns-shlib		dynamicroot
+./lib/libisns.so.0				base-isns-shlib		dynamicroot
+./lib/libisns.so.0.0				base-isns-shlib		dynamicroot
 ./lib/libkvm.so					base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6				base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
@@ -388,9 +391,9 @@
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
-./usr/lib/libisns.so				base-isns-shlib		compatfile
-./usr/lib/libisns.so.0				base-isns-shlib		compatfile
-./usr/lib/libisns.so.0.0			base-isns-shlib		compatfile
+./usr/lib/libisns.so				base-isns-shlib		obsolete,compatfile
+./usr/lib/libisns.so.0				base-isns-shlib		obsolete,compatfile
+./usr/lib/libisns.so.0.0			base-isns-shlib		obsolete,compatfile
 ./usr/lib/libjemalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0.0			base-sys-shlib		compatfile
