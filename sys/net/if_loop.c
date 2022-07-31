@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.114 2022/07/31 13:14:54 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.114 2022/07/31 13:14:54 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -284,6 +284,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 		M_PREPEND(m, sizeof(uint32_t), M_DONTWAIT);
 		if (m == NULL) {
+			if_statinc(ifp, if_oerrors);
 			error = ENOBUFS;
 			goto out;
 		}
@@ -367,6 +368,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 		} else {
 			m_freem(m);
+			if_statinc(ifp, if_oerrors);
 			error = ENOBUFS;
 		}
 		splx(s);
@@ -377,6 +379,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_freem(m);
 		splx(s);
 		error = ENOBUFS;
+		if_statinc(ifp, if_oerrors);
 		goto out;
 	}
 	if_statadd2(ifp, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
