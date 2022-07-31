@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.76 2022/04/16 18:15:21 andvar Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.77 2022/07/31 17:11:41 chs Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.76 2022/04/16 18:15:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.77 2022/07/31 17:11:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2585,6 +2585,10 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
 			rw_exit(uvm_kernel_object->vmobjlock);
+			if (can_fail) {
+				pmap->pm_sref--;
+				return ENOMEM;
+			}
 			uvm_wait("ptpage");
 			rw_enter(uvm_kernel_object->vmobjlock, RW_WRITER);
 		}
