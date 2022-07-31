@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.9 2022/07/31 12:11:44 mlelstv Exp $	*/
+/*	$NetBSD: logpage.c,v 1.10 2022/07/31 13:49:23 mlelstv Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.9 2022/07/31 12:11:44 mlelstv Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.10 2022/07/31 13:49:23 mlelstv Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -124,9 +124,9 @@ read_logpage(int fd, uint8_t log_page, int nsid, void *payload,
 		err(1, "get log page request failed");
 
 	if (nvme_completion_is_error(&pt.cpl))
-		errx(1, "get log page request returned error 0x%lx/0x%02lx",
-			__SHIFTOUT(pt.cpl.flags, NVME_CQE_SCT_MASK),
-			__SHIFTOUT(pt.cpl.flags, NVME_CQE_SC_MASK));
+		errx(1, "get log page request returned error 0x%x/0x%02x",
+			(uint8_t)__SHIFTOUT(pt.cpl.flags, NVME_CQE_SCT_MASK),
+			(uint8_t)__SHIFTOUT(pt.cpl.flags, NVME_CQE_SC_MASK));
 }
 
 static void
