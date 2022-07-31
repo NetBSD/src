@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.35 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.36 2022/07/31 13:01:16 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.35 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.36 2022/07/31 13:01:16 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.35 2021/08/07 16:19:17 thorpej E
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -259,6 +260,15 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	ucaa->ucaa_device = sc->sc_udev;
 	ucaa->ucaa_iface = sc->sc_data_iface;
 	ucaa->ucaa_arg = sc;
+
+	/*
+	 * Each port takes two interfaces (control and data).
+	 *
+	 * If no port number is assigned by the specific driver,
+	 * use the interface to compute a logical port number.
+	 */
+	if (ucaa->ucaa_portno == UCOM_UNK_PORTNO)
+		ucaa->ucaa_portno = uiaa->uiaa_iface->ui_index / 2;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
