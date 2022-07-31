@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.60 2022/05/07 08:20:04 skrll Exp $	*/
+/*	$NetBSD: nvme.c,v 1.61 2022/07/31 12:02:28 mlelstv Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.60 2022/05/07 08:20:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.61 2022/07/31 12:02:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static void	nvme_pt_fill(struct nvme_queue *, struct nvme_ccb *,
 static void	nvme_pt_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
 static int	nvme_command_passthrough(struct nvme_softc *,
-		    struct nvme_pt_command *, uint16_t, struct lwp *, bool);
+		    struct nvme_pt_command *, uint32_t, struct lwp *, bool);
 
 static int	nvme_set_number_of_queues(struct nvme_softc *, u_int, u_int *,
 		    u_int *);
@@ -1264,7 +1264,7 @@ nvme_pt_finished(void *cookie)
 
 static int
 nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
-    uint16_t nsid, struct lwp *l, bool is_adminq)
+    uint32_t nsid, struct lwp *l, bool is_adminq)
 {
 	struct nvme_queue *q;
 	struct nvme_ccb *ccb;
@@ -2218,7 +2218,7 @@ nvmeioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case NVME_PASSTHROUGH_CMD:
 		pt = data;
 		return nvme_command_passthrough(sc, data,
-		    nsid == 0 ? pt->cmd.nsid : nsid, l, nsid == 0);
+		    nsid == 0 ? pt->cmd.nsid : (uint32_t)nsid, l, nsid == 0);
 	}
 
 	return ENOTTY;
