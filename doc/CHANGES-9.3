@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.115 2022/07/27 14:43:31 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.116 2022/08/01 09:37:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1912,4 +1912,10 @@ sys/arch/x86/pci/amdsmn.c			1.13
 	- Add some Broadcom / LSI RAID cards.
 	- Fix typos and whitespace.
 	[msaitoh, ticket #1482]
+
+sys/dev/usb/uslsa.c				1.32
+
+	uslsa(4): PR 56946: fix baud rate setting on big endian machines
+	[rin, ticket #1483]
+
 
