@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.12 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.13 2022/08/01 14:19:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,20 +59,26 @@ __END_DECLS
 #define sched_yield		__libc_thr_yield
 #endif /* __LIBPTHREAD_SOURCE__ */
 
-#if defined(_NETBSD_SOURCE)
-
 __BEGIN_DECLS
+
+#if defined(_NETBSD_SOURCE)
 
 /* Process affinity functions (not portable) */
 int	sched_getaffinity_np(pid_t, size_t, cpuset_t *);
 int	sched_setaffinity_np(pid_t, size_t, cpuset_t *);
 
+#endif /* _NETBSD_SOURCE */
+
+#if defined(_GNU_SOURCE)
+
 /* Historical functions, not defined in standard */
+/* Linux man page documents these functions as only available when
+ * _GNU_SOURCE is defined */
 pid_t	 clone(int (*)(void *), void *, int, void *);
 pid_t	__clone(int (*)(void *), void *, int, void *);
 
-__END_DECLS
+#endif /* _GNU_SOURCE */
 
-#endif /* _NETBSD_SOURCE */
+__END_DECLS
 
 #endif /* _SCHED_H_ */
