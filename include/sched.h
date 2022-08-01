@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.13 2022/08/01 14:19:40 wiz Exp $	*/
+/*	$NetBSD: sched.h,v 1.14 2022/08/01 14:34:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,9 +71,11 @@ int	sched_setaffinity_np(pid_t, size_t, cpuset_t *);
 
 #if defined(_GNU_SOURCE)
 
-/* Historical functions, not defined in standard */
-/* Linux man page documents these functions as only available when
- * _GNU_SOURCE is defined */
+/*
+ * Historical functions, not defined in standard
+ * Linux man page documents these functions as only available when
+ * _GNU_SOURCE is defined
+ */
 pid_t	 clone(int (*)(void *), void *, int, void *);
 pid_t	__clone(int (*)(void *), void *, int, void *);
 
