@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.71 2022/04/06 10:02:55 gson Exp $
+# $NetBSD: Makefile,v 1.72 2022/08/01 15:48:39 kre Exp $
 
 MKMAN=	no
 
@@ -120,6 +120,7 @@ CPPFLAGS.t_futex_robust.c	+= -I${.CURDIR}/../../../../lib
 
 CPPFLAGS.t_timerfd.c		+= -I${.CURDIR}/../gen
 
+CPPFLAGE.t_clone.c		+= -D_NETBSD_SOURCE -D_GNU_SOURCE
 CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
 CPPFLAGS.t_ptrace_sigchld.c	+= -D__TEST_FENV
 CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES -D__TEST_FENV
