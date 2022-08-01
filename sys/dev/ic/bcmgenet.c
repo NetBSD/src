@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.11 2021/12/31 14:25:22 riastradh Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.12 2022/08/01 07:34:28 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.11 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.12 2022/08/01 07:34:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -730,7 +730,8 @@ genet_rxintr(struct genet_softc *sc, int qid)
 			bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
 			    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
 			    BUS_DMASYNC_POSTREAD);
-		}
+		} else
+			device_printf(sc->sc_dev, "RXINTR empty %d\n",index);
 		bus_dmamap_unload(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map);
 		sc->sc_rx.buf_map[index].mbuf = NULL;
 
@@ -784,18 +785,19 @@ genet_txintr(struct genet_softc *sc, int qid)
 				bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
 				    0, bmap->map->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
-			}
+			} else
+				device_printf(sc->sc_dev, "TXINTR empty %d\n",i);
 			bus_dmamap_unload(sc->sc_tx.buf_tag, bmap->map);
 			m_freem(bmap->mbuf);
 			bmap->mbuf = NULL;
 			++pkts;
 		}
 
-		ifp->if_flags &= ~IFF_OACTIVE;
 		i = TX_NEXT(i);
 		sc->sc_tx.cidx = (sc->sc_tx.cidx + 1) & 0xffff;
 	}
 
+	ifp->if_flags &= ~IFF_OACTIVE;
 	if_statadd(ifp, if_opackets, pkts);
 
 	if (pkts != 0)
