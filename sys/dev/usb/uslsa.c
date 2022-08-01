@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.28 2019/05/09 02:43:35 mrg Exp $ */
+/* $NetBSD: uslsa.c,v 1.28.2.1 2022/08/01 09:36:06 martin Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.28 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.28.2.1 2022/08/01 09:36:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -388,7 +388,7 @@ uslsa_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wIndex, sc->sc_ifnum);
 	USETW(req.wLength, 4);
 
-	baud = t->c_ospeed;
+	baud = htole32(t->c_ospeed);
 	status = usbd_do_request(sc->sc_udev, &req, &baud);
 	if (status != USBD_NORMAL_COMPLETION) {
 		/* fallback method for devices that don't know SET_BAUDRATE */
