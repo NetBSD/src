@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.42 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.43 2022/08/01 01:32:15 rin Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.42 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.43 2022/08/01 01:32:15 rin Exp $");
 
 /*
  * Mouse driver.
@@ -554,7 +554,7 @@ ms_wscons_ioctl(void *cookie, u_long cmd, void *data, int flag,
 		return (0);
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static int
