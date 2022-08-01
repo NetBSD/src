@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.139 2022/07/15 17:20:56 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.140 2022/08/01 09:38:58 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2713,4 +2713,9 @@ xsrc-9/external/mit/xorg-server/dist/xkb/xkb.c		apply patch
 	 * CVE-2022-2320/ZDI-CAN-16070: X.Org Server ProcXkbSetDeviceInfo
 	   Out-Of-Bounds Access
 	[mrg, ticket #1752]
+
+sys/dev/usb/uslsa.c				1.32
+
+	uslsa(4): PR 56946: fix baud rate setting on big endian machines
+	[rin, ticket #1753]
 
