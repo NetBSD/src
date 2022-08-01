@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.24 2022/05/07 08:20:04 skrll Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.25 2022/08/01 07:34:28 mlelstv Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -23,7 +23,6 @@
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/buf.h>
 
 struct nvme_dmamem {
 	bus_dmamap_t		ndm_map;
@@ -199,18 +198,29 @@ void	nvme_softintr_msi(void *);
 static __inline struct nvme_queue *
 nvme_get_q(struct nvme_softc *sc, struct buf *bp, bool waitok)
 {
-	struct cpu_info *ci = (bp && bp->b_ci) ? bp->b_ci : curcpu();
+	struct nvme_queue *q;
+	u_int cpunum;
 
-	/*
-	 * Find a queue with available ccbs, preferring the originating CPU's queue.
-	 */
+	cpunum = cpu_index(curcpu());
 
-	for (u_int qoff = 0; qoff < sc->sc_nq; qoff++) {
-		struct nvme_queue *q = sc->sc_q[(cpu_index(ci) + qoff) % sc->sc_nq];
-		if (!SIMPLEQ_EMPTY(&q->q_ccb_list) || waitok)
-			return q;
+	/* try own queue */
+	q = sc->sc_q[cpunum % sc->sc_nq];
+	if (waitok)
+		return q;
+
+	/* if busy, search for an idle queue */
+	if (SIMPLEQ_EMPTY(&q->q_ccb_list)) {
+		for (u_int qoff = 1; qoff < sc->sc_nq; qoff++) {
+			struct nvme_queue *t;
+			t = sc->sc_q[(cpunum + qoff) % sc->sc_nq];
+			if (t->q_sq_tail == t->q_cq_head) {
+				q = t;
+				break;
+			}
+		}
 	}
-	return NULL;
+
+	return q;
 }
 
 /*

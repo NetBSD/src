@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.17 2022/07/31 11:58:37 mlelstv Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.18 2022/08/01 07:34:28 mlelstv Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -242,10 +242,10 @@ struct nvme_cqe {
 #define NVME_CQE_M		__BIT(14)
 #define NVME_CQE_SCT_MASK	__BITS(9, 11)
 #define NVME_CQE_SCT(_f)	((_f) & NVME_CQE_SCT_MASK)
-#define  NVME_CQE_SCT_GENERIC		(0x00 << 8)
-#define  NVME_CQE_SCT_COMMAND		(0x01 << 8)
-#define  NVME_CQE_SCT_MEDIAERR		(0x02 << 8)
-#define  NVME_CQE_SCT_VENDOR		(0x07 << 8)
+#define  NVME_CQE_SCT_GENERIC		(0x00 << 9)
+#define  NVME_CQE_SCT_COMMAND		(0x01 << 9)
+#define  NVME_CQE_SCT_MEDIAERR		(0x02 << 9)
+#define  NVME_CQE_SCT_VENDOR		(0x07 << 9)
 #define NVME_CQE_SC_MASK	__BITS(1, 8)
 #define NVME_CQE_SC(_f)		((_f) & NVME_CQE_SC_MASK)
 /* generic command status codes */
