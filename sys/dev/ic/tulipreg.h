@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.41 2021/08/19 20:43:58 andvar Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.42 2022/08/01 07:34:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -938,19 +938,19 @@ struct tulip_desc {
 
 
 /* SIA configuration for 10base-T (from the 21040 manual) */
-#define	SIACONN_21040_10BASET	0x0000ef01
+#define	SIACONN_21040_10BASET	0x00008f01
 #define	SIATXRX_21040_10BASET	0x0000ffff
 #define	SIAGEN_21040_10BASET	0x00000000
 
 
 /* SIA configuration for 10base-T full-duplex (from the 21040 manual) */
-#define	SIACONN_21040_10BASET_FDX 0x0000ef01
+#define	SIACONN_21040_10BASET_FDX 0x00008f01
 #define	SIATXRX_21040_10BASET_FDX 0x0000fffd
 #define	SIAGEN_21040_10BASET_FDX  0x00000000
 
 
 /* SIA configuration for 10base-5 (from the 21040 manual) */
-#define	SIACONN_21040_AUI	0x0000ef09
+#define	SIACONN_21040_AUI	0x00008f09
 #define	SIATXRX_21040_AUI	0x00000705
 #define	SIAGEN_21040_AUI	0x00000006
 

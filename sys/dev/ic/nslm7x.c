@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.74 2020/09/07 00:32:28 mrg Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.75 2022/08/01 07:34:28 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.74 2020/09/07 00:32:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.75 2022/08/01 07:34:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2247,6 +2247,7 @@ lm_attach(struct lm_softc *lmsc)
 		if ((rv = sysmon_envsys_sensor_attach(lmsc->sc_sme,
 			    &lmsc->sensors[i])) != 0) {
 			sysmon_envsys_destroy(lmsc->sc_sme);
+			lmsc->sc_sme = NULL;
 			aprint_error_dev(lmsc->sc_dev,
 			    "sysmon_envsys_sensor_attach() returned %d\n", rv);
 			return;
@@ -2270,6 +2271,7 @@ lm_attach(struct lm_softc *lmsc)
 		aprint_error_dev(lmsc->sc_dev,
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(lmsc->sc_sme);
+		lmsc->sc_sme = NULL;
 	}
 	if (!pmf_device_register(lmsc->sc_dev, NULL, NULL))
 		aprint_error_dev(lmsc->sc_dev,
@@ -2285,7 +2287,9 @@ lm_detach(struct lm_softc *lmsc)
 {
 	callout_halt(&lmsc->sc_callout, NULL);
 	callout_destroy(&lmsc->sc_callout);
-	sysmon_envsys_unregister(lmsc->sc_sme);
+
+	if (lmsc->sc_sme != NULL)
+		sysmon_envsys_unregister(lmsc->sc_sme);
 	pmf_device_deregister(lmsc->sc_dev);
 }
 

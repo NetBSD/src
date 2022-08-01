@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.205 2022/06/25 02:46:15 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.206 2022/08/01 07:34:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.205 2022/06/25 02:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.206 2022/08/01 07:34:28 mlelstv Exp $");
 
 
 #include <sys/param.h>
@@ -4394,7 +4394,7 @@ tlp_21040_tmsw_init(struct tulip_softc *sc)
 	 */
 
 	/* XXX This should be auto-sense. */
-	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_10_T);
+	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_10_5);
 
 	tlp_print_media(sc);
 }
