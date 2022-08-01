@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.25 2022/08/01 07:34:28 mlelstv Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.26 2022/08/01 07:37:18 mlelstv Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -78,8 +78,6 @@ struct nvme_queue {
 	kmutex_t		q_cq_mtx;
 	struct nvme_dmamem	*q_sq_dmamem;
 	struct nvme_dmamem	*q_cq_dmamem;
-	struct nvme_dmamem	*q_nvmmu_dmamem; /* for apple m1 nvme */
-
 	bus_size_t 		q_sqtdbl; /* submission queue tail doorbell */
 	bus_size_t 		q_cqhdbl; /* completion queue head doorbell */
 	uint16_t		q_id;
@@ -104,31 +102,8 @@ struct nvme_namespace {
 #define	NVME_NS_F_OPEN	__BIT(0)
 };
 
-struct nvme_ops {
-	void		(*op_enable)(struct nvme_softc *);
-
-	int		(*op_q_alloc)(struct nvme_softc *,
-			      struct nvme_queue *);
-	void		(*op_q_free)(struct nvme_softc *,
-			      struct nvme_queue *);
-
-	uint32_t	(*op_sq_enter)(struct nvme_softc *,
-			      struct nvme_queue *, struct nvme_ccb *);
-	void		(*op_sq_leave)(struct nvme_softc *,
-			      struct nvme_queue *, struct nvme_ccb *);
-	uint32_t	(*op_sq_enter_locked)(struct nvme_softc *,
-			      struct nvme_queue *, struct nvme_ccb *);
-	void		(*op_sq_leave_locked)(struct nvme_softc *,
-			      struct nvme_queue *, struct nvme_ccb *);
-
-	void		(*op_cq_done)(struct nvme_softc *,
-			      struct nvme_queue *, struct nvme_ccb *);
-};
-
 struct nvme_softc {
 	device_t		sc_dev;
-
-	const struct nvme_ops	*sc_ops;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -143,10 +118,9 @@ struct nvme_softc {
 	void			**sc_softih;	/* softintr handlers */
 
 	u_int			sc_rdy_to;	/* RDY timeout */
-	size_t			sc_mps;		/* memory page size */
+	size_t			sc_mps;		/* memory page size */  
 	size_t			sc_mdts;	/* max data trasfer size */
 	u_int			sc_max_sgl;	/* max S/G segments */
-	u_int			sc_dstrd;
 
 	struct nvm_identify_controller
 				sc_identify;
@@ -165,9 +139,6 @@ struct nvme_softc {
 
 	uint32_t		sc_quirks;
 #define	NVME_QUIRK_DELAY_B4_CHK_RDY	__BIT(0)
-#define	NVME_QUIRK_NOMSI		__BIT(1)
-
-	char			sc_modelname[81];
 };
 
 #define	lemtoh16(p)	le16toh(*((uint16_t *)(p)))
@@ -181,46 +152,21 @@ struct nvme_attach_args {
 	uint16_t	naa_nsid;
 	uint32_t	naa_qentries;	/* total number of queue slots */
 	uint32_t	naa_maxphys;	/* maximum device transfer size */
-	const char	*naa_typename;	/* identifier */
 };
 
 int	nvme_attach(struct nvme_softc *);
 int	nvme_detach(struct nvme_softc *, int flags);
 int	nvme_rescan(device_t, const char *, const int *);
 void	nvme_childdet(device_t, device_t);
-int	nvme_suspend(struct nvme_softc *);
-int	nvme_resume(struct nvme_softc *);
 int	nvme_intr(void *);
 void	nvme_softintr_intx(void *);
 int	nvme_intr_msi(void *);
 void	nvme_softintr_msi(void *);
 
 static __inline struct nvme_queue *
-nvme_get_q(struct nvme_softc *sc, struct buf *bp, bool waitok)
+nvme_get_q(struct nvme_softc *sc)
 {
-	struct nvme_queue *q;
-	u_int cpunum;
-
-	cpunum = cpu_index(curcpu());
-
-	/* try own queue */
-	q = sc->sc_q[cpunum % sc->sc_nq];
-	if (waitok)
-		return q;
-
-	/* if busy, search for an idle queue */
-	if (SIMPLEQ_EMPTY(&q->q_ccb_list)) {
-		for (u_int qoff = 1; qoff < sc->sc_nq; qoff++) {
-			struct nvme_queue *t;
-			t = sc->sc_q[(cpunum + qoff) % sc->sc_nq];
-			if (t->q_sq_tail == t->q_cq_head) {
-				q = t;
-				break;
-			}
-		}
-	}
-
-	return q;
+	return sc->sc_q[cpu_index(curcpu()) % sc->sc_nq];
 }
 
 /*
@@ -234,26 +180,9 @@ nvme_ns_get(struct nvme_softc *sc, uint16_t nsid)
 	return &sc->sc_namespaces[nsid - 1];
 }
 
-#define nvme_read4(_s, _r) \
-	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
-#define nvme_write4(_s, _r, _v) \
-	bus_space_write_4((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
-uint64_t
-	nvme_read8(struct nvme_softc *, bus_size_t);
-void	nvme_write8(struct nvme_softc *, bus_size_t, uint64_t);
-
-#define nvme_barrier(_s, _r, _l, _f) \
-	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
-
-struct nvme_dmamem *
-	nvme_dmamem_alloc(struct nvme_softc *, size_t);
-void	nvme_dmamem_free(struct nvme_softc *, struct nvme_dmamem *);
-void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *, int);
-
 int	nvme_ns_identify(struct nvme_softc *, uint16_t);
 void	nvme_ns_free(struct nvme_softc *, uint16_t);
 int	nvme_ns_dobio(struct nvme_softc *, uint16_t, void *,
     struct buf *, void *, size_t, int, daddr_t, int, nvme_nnc_done);
 int	nvme_ns_sync(struct nvme_softc *, uint16_t, int);
 int	nvme_admin_getcache(struct nvme_softc *, int *);
-int	nvme_admin_setcache(struct nvme_softc *, int);

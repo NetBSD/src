@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.106 2022/08/01 07:34:28 mlelstv Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.107 2022/08/01 07:37:18 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.106 2022/08/01 07:34:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.107 2022/08/01 07:37:18 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -828,8 +828,8 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 				 */
 				return ERROR;
 			}
-			aprint_debug("%s port %d: error 0x%x sending FIS, t %d\n",
-			    AHCINAME(sc), chp->ch_channel, is, timeout);
+			aprint_debug("%s port %d: error 0x%x sending FIS\n",
+			    AHCINAME(sc), chp->ch_channel, is);
 			return ERR_DF;
 		}
 		ata_delay(chp, 10, "ahcifis", flags);
@@ -1635,27 +1635,9 @@ ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 		/* XXX controller reset ? */
 		return;
 	}
+
 	if (sc->sc_channel_stop)
 		sc->sc_channel_stop(sc, chp);
-	if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_FRE) == 0)
-		return;
-
-	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
-	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & ~AHCI_P_CMD_FRE);
-	/* wait 1s for FIS receive to stop */
-	for (i = 0; i <100; i++) {
-		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_FR)
-		    == 0)
-			break;
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcistop", mstohz(10));
-		else
-			delay(10000);
-	}
-	if (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_FR) {
-		printf("%s: channel FIS receive wouldn't stop\n", AHCINAME(sc));
-		/* XXX controller reset ? */
-	}
 }
 
 static void
