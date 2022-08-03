@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.46.24.1 2020/01/31 11:17:32 martin Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.46.24.2 2022/08/03 15:44:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.46.24.1 2020/01/31 11:17:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.46.24.2 2022/08/03 15:44:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -702,6 +702,13 @@ thinkpad_fan_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 		return;
 	}
+
+	/*
+	 * Extract the low bytes from buffers
+	 */
+	lo = ((uint8_t *)&lo)[0];
+	hi = ((uint8_t *)&hi)[0];
+
 	rpm = ((((int)hi) << 8) | ((int)lo));
 	if (rpm < 0) {
 		edata->state = ENVSYS_SINVALID;
