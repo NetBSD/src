@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.116 2022/08/01 09:37:01 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.117 2022/08/03 11:17:36 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1918,4 +1918,107 @@ sys/dev/usb/uslsa.c				1.32
 	uslsa(4): PR 56946: fix baud rate setting on big endian machines
 	[rin, ticket #1483]
 
+include/sched.h					1.13-1.15
+lib/libc/sys/clone.2				1.14,1.15
+
+	clone(2): remove mentions of CLONE_PID and CLONE_STOPPED.
+	sched.h: restrict visibility of clone to GNU_SOURCE.
+	[wiz, ticket #1484]
+
+sys/dev/isa/mcd.c				1.121 (patch)
+sys/dev/pci/if_iwi.c				1.117 (patch)
+sys/dev/raidframe/rf_netbsdkintf.c		1.401 (patch)
+sys/dev/scsipi/ses.c				1.52 (patch)
+
+	sys/dev: memset zero before copyout.
+	[riastradh, ticket #1485]
+
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.7
+
+	compat_netbsd32: copy out 32-bit version in nfssvc32_nsd_out.
+	[riastradh, ticket #1486]
+
+sys/altq/altq_hfsc.c				1.29 (patch)
+sys/altq/altq_priq.c				1.27 (patch)
+
+	sys/altq: memset zero before copyout.
+	[riastradh, ticket #1488]
+
+sys/compat/netbsd32/netbsd32.h			1.137 (patch)
+sys/compat/netbsd32/netbsd32_conv.h		1.45 (patch)
+sys/compat/netbsd32/netbsd32_fs.c		1.92 (patch)
+sys/compat/netbsd32/netbsd32_netbsd.c		1.232 (patch)
+sys/compat/netbsd32/netbsd32_socket.c		1.56 (patch)
+
+	The read/write/send/recv system calls return ssize_t because -1 is
+	returned on error.  Therefore we must restrict the lengths of any
+	buffers to NETBSD32_SSIZE_MAX with compat32 to avoid garbage return
+	values.
+	[riastradh, ticket #1489]
+
+sys/compat/common/ieee80211_20.c		1.7 (patch)
+sys/compat/common/if_media_80.c			1.4 (patch)
+sys/compat/common/kern_info_09.c		1.22 (patch)
+sys/compat/common/kern_info_43.c		1.40 (patch)
+sys/compat/common/kern_resource_43.c		1.23 (patch)
+sys/compat/common/kern_sig_13.c			1.22 (patch)
+sys/compat/common/kern_sig_43.c			1.37 (patch)
+sys/compat/common/kern_time_50.c		1.37 (patch)
+sys/compat/common/vfs_syscalls_12.c		1.38 (patch)
+sys/compat/common/vfs_syscalls_20.c		(apply patch)
+sys/compat/common/vfs_syscalls_30.c		1.43 (patch)
+sys/compat/common/vfs_syscalls_43.c		1.68 (patch)
+sys/compat/freebsd/freebsd_machdep.c		1.5 (patch)
+sys/compat/freebsd/freebsd_misc.c		1.34 (patch)
+sys/compat/freebsd/freebsd_sched.c		1.23 (patch)
+sys/compat/linux/arch/alpha/linux_machdep.c	1.52 (patch)
+sys/compat/linux/arch/alpha/linux_osf1.c	1.5 (patch)
+sys/compat/linux/arch/amd64/linux_machdep.c	1.60 (patch)
+sys/compat/linux/arch/arm/linux_machdep.c	1.34 (patch)
+sys/compat/linux/arch/arm/linux_ptrace.c	1.23 (patch)
+sys/compat/linux/arch/i386/linux_machdep.c	1.168 (patch)
+sys/compat/linux/arch/i386/linux_ptrace.c	1.35 (patch)
+sys/compat/linux/arch/m68k/linux_machdep.c	1.43 (patch)
+sys/compat/linux/arch/mips/linux_machdep.c	1.44 (patch)
+sys/compat/linux/arch/powerpc/linux_exec_powerpc.c 1.25 (patch)
+sys/compat/linux/arch/powerpc/linux_machdep.c	1.51 (patch)
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.33 (patch)
+sys/compat/linux/common/linux_cdrom.c		1.28 (patch)
+sys/compat/linux/common/linux_fdio.c		1.14 (patch)
+sys/compat/linux/common/linux_file.c		1.119 (patch)
+sys/compat/linux/common/linux_hdio.c		1.19 (patch)
+sys/compat/linux/common/linux_misc.c		1.252 (patch)
+sys/compat/linux/common/linux_mtio.c		1.8 (patch)
+sys/compat/linux/common/linux_oldolduname.c	1.67 (patch)
+sys/compat/linux/common/linux_olduname.c	1.67 (patch)
+sys/compat/linux/common/linux_sched.c		1.79 (patch)
+sys/compat/linux/common/linux_signal.c		1.84 (patch)
+sys/compat/linux/common/linux_socket.c		1.153 (patch)
+sys/compat/linux/common/linux_time.c		1.40 (patch)
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.46 (patch)
+sys/compat/linux32/common/linux32_exec_elf32.c	1.20 (patch)
+sys/compat/linux32/common/linux32_resource.c	1.12 (patch)
+sys/compat/linux32/common/linux32_signal.c	1.21 (patch)
+sys/compat/linux32/common/linux32_time.c	1.38 (patch)
+sys/compat/netbsd32/netbsd32_compat_12.c	1.36 (patch)
+sys/compat/netbsd32/netbsd32_compat_20.c	1.42 (patch)
+sys/compat/netbsd32/netbsd32_compat_43.c	1.62 (patch)
+sys/compat/netbsd32/netbsd32_compat_50.c	1.52 (patch)
+sys/compat/netbsd32/netbsd32_conv.h		1.46 (patch)
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.8 (patch)
+sys/compat/netbsd32/netbsd32_ptrace.c		1.9 (patch)
+sys/compat/netbsd32/netbsd32_signal.c		1.52 (patch)
+sys/compat/netbsd32/netbsd32_time.c		1.56 (patch)
+sys/compat/netbsd32/netbsd32_wait.c		1.25 (patch)
+sys/compat/ossaudio/ossaudio.c			1.84 (patch)
+sys/compat/sunos/sunos_ioctl.c			1.71 (patch)
+sys/compat/sunos/sunos_misc.c			1.177 (patch)
+sys/compat/sunos32/sunos32_ioctl.c		1.36 (patch)
+sys/compat/sunos32/sunos32_misc.c		1.85 (patch)
+sys/compat/sys/time_types.h			1.6 (patch)
+sys/compat/ultrix/ultrix_ioctl.c		1.39 (patch)
+sys/compat/ultrix/ultrix_misc.c			1.126 (patch)
+
+	sys/compat: memset zero before copyout.
+	[riastradh, ticket #1487]
 
