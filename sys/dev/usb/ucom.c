@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.125.2.1 2020/12/12 12:56:40 martin Exp $	*/
+/*	$NetBSD: ucom.c,v 1.125.2.2 2022/08/03 16:21:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125.2.1 2020/12/12 12:56:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125.2.2 2022/08/03 16:21:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -414,11 +414,9 @@ ucom_detach(device_t self, int flags)
 
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
 	}
 
 	mutex_enter(&sc->sc_lock);
