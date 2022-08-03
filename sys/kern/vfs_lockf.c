@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.76 2022/07/01 01:04:01 riastradh Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.77 2022/08/03 11:09:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.76 2022/07/01 01:04:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.77 2022/08/03 11:09:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,7 +844,8 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		end = -1;
 	else {
 		if (fl->l_len >= 0) {
-			if (fl->l_len - 1 > __type_max(off_t) - start)
+			if (start >= 0 &&
+			    fl->l_len - 1 > __type_max(off_t) - start)
 				return EINVAL;
 			end = start + fl->l_len - 1;
 		} else {
