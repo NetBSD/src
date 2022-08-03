@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.376.4.1 2020/03/21 15:52:09 martin Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.376.4.2 2022/08/03 10:55:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376.4.1 2020/03/21 15:52:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376.4.2 2022/08/03 10:55:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3748,6 +3748,8 @@ void
 rf_check_recon_status_ext(RF_Raid_t *raidPtr, RF_ProgressInfo_t *info)
 {
 
+	memset(info, 0, sizeof(*info));
+
 	if (raidPtr->status != rf_rs_reconstructing) {
 		info->total = 100;
 		info->completed = 100;
@@ -3763,6 +3765,8 @@ void
 rf_check_parityrewrite_status_ext(RF_Raid_t *raidPtr, RF_ProgressInfo_t *info)
 {
 
+	memset(info, 0, sizeof(*info));
+
 	if (raidPtr->parity_rewrite_in_progress == 1) {
 		info->total = raidPtr->Layout.numStripe;
 		info->completed = raidPtr->parity_rewrite_stripes_done;
@@ -3777,6 +3781,8 @@ rf_check_parityrewrite_status_ext(RF_Raid_t *raidPtr, RF_ProgressInfo_t *info)
 void
 rf_check_copyback_status_ext(RF_Raid_t *raidPtr, RF_ProgressInfo_t *info)
 {
+
+	memset(info, 0, sizeof(*info));
 
 	if (raidPtr->copyback_in_progress == 1) {
 		info->total = raidPtr->Layout.numStripe;

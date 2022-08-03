@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.111 2019/02/03 03:19:27 mrg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.111.4.1 2022/08/03 10:55:44 martin Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.111 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.111.4.1 2022/08/03 10:55:44 martin Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1875,8 +1875,9 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 {
 	uint32_t size, buf[128];
 
+	memset(buf, 0, sizeof buf);
+
 	if (!(sc->flags & IWI_FLAG_FW_INITED)) {
-		memset(buf, 0, sizeof buf);
 		return copyout(buf, tbl, sizeof buf);
 	}
 
