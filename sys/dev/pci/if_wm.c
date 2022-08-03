@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.750 2022/08/03 05:23:30 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.751 2022/08/03 05:29:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.750 2022/08/03 05:23:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.751 2022/08/03 05:29:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3972,6 +3972,14 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
+
 #ifndef WM_MPSAFE
 	s = splnet();
 #endif
@@ -4040,15 +4048,15 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		if (cmd == SIOCSIFCAP)
 			error = if_init(ifp);
-		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
+		else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
 			WM_CORE_LOCK(sc);
-			wm_set_filter(sc);
+			if (sc->sc_if_flags & IFF_RUNNING) {
+				/*
+				 * Multicast list has changed; set the hardware filter
+				 * accordingly.
+				 */
+				wm_set_filter(sc);
+			}
 			WM_CORE_UNLOCK(sc);
 		}
 		break;
