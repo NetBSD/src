@@ -288,6 +288,7 @@ int arc_procfd;
 #define	freemem		uvm_availmem(false)
 #define	minfree		uvmexp.freemin
 #define	desfree		uvmexp.freetarg
+#define	zfs_arc_free_target desfree
 #define	lotsfree	(desfree * 2)
 #define	availrmem	desfree
 #define	swapfs_minfree	0
@@ -387,7 +388,6 @@ int zfs_arc_grow_retry = 0;
 int zfs_arc_shrink_shift = 0;
 int zfs_arc_p_min_shift = 0;
 uint64_t zfs_arc_average_blocksize = 8 * 1024; /* 8KB */
-u_int zfs_arc_free_target = 0;
 
 /* Absolute min for arc min / max is 16MB. */
 static uint64_t arc_abs_min = 16 << 20;
@@ -395,6 +395,8 @@ static uint64_t arc_abs_min = 16 << 20;
 boolean_t zfs_compressed_arc_enabled = B_TRUE;
 
 #if defined(__FreeBSD__) && defined(_KERNEL)
+u_int zfs_arc_free_target = 0;
+
 static int sysctl_vfs_zfs_arc_free_target(SYSCTL_HANDLER_ARGS);
 static int sysctl_vfs_zfs_arc_meta_limit(SYSCTL_HANDLER_ARGS);
 static int sysctl_vfs_zfs_arc_max(SYSCTL_HANDLER_ARGS);
