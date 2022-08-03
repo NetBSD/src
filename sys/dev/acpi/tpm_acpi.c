@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.8.2.1 2019/10/16 09:52:38 martin Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.8.2.2 2022/08/03 16:00:47 martin Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.8.2.1 2019/10/16 09:52:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.8.2.2 2022/08/03 16:00:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "cannot find mem\n");
 		goto out;
 	}
-	if (mem->ar_length != TPM_SPACE_SIZE) {
-		aprint_error_dev(self, "wrong size mem %"PRIu64" != %u\n",
+	if (mem->ar_length < TPM_SPACE_SIZE) {
+		aprint_error_dev(self, "wrong size mem %"PRIu64" < %u\n",
 		    (uint64_t)mem->ar_length, TPM_SPACE_SIZE);
 		goto out;
 	}
