@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.40 2019/12/14 16:58:25 riastradh Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.41 2022/08/03 09:40:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.40 2019/12/14 16:58:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.41 2022/08/03 09:40:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,14 +156,6 @@ ras_purgeall(void)
 
 #if defined(__HAVE_RAS)
 
-#if __GNUC_PREREQ__(4, 8)
-#define	__WARNING_PUSH_LESS_NULL_PTR	_Pragma("GCC diagnostic push") 	_Pragma("GCC diagnostic ignored \"-Wextra\"")
-#define	__WARNING_POP_LESS_NULL_PTR	_Pragma("GCC diagnostic pop")
-#else
-#define	__WARNING_PUSH_LESS_NULL_PTR
-#define	__WARNING_POP_LESS_NULL_PTR
-#endif
-
 /*
  * Install the new sequence.  If it already exists, return
  * an error.
@@ -180,17 +172,12 @@ ras_install(void *addr, size_t len)
 	if (len == 0)
 		return EINVAL;
 
+	if ((uintptr_t)addr < VM_MIN_ADDRESS ||
+	    (uintptr_t)addr > VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (len > VM_MAXUSER_ADDRESS - (uintptr_t)addr)
+		return EINVAL;
 	endaddr = (char *)addr + len;
-
-	/* Do not warn about < NULL pointer comparison */
-	__WARNING_PUSH_LESS_NULL_PTR
-	if (addr < (void *)VM_MIN_ADDRESS || addr > (void *)VM_MAXUSER_ADDRESS)
-		return EINVAL;
-	if (endaddr > (void *)VM_MAXUSER_ADDRESS)
-		return EINVAL;
-	if (endaddr < addr)
-		return EINVAL;
-	__WARNING_POP_LESS_NULL_PTR
 
 	newrp = kmem_alloc(sizeof(*newrp), KM_SLEEP);
 	newrp->ras_startaddr = addr;
