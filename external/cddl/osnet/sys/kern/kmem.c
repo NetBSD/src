@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.2 2019/05/23 08:32:30 hannken Exp $	*/
+/*	$NetBSD: kmem.c,v 1.2.2.1 2022/08/03 15:54:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 
 struct kmem_cache {
 	pool_cache_t km_pool;
+	char km_name[32];
 	void *km_private;
 	int (*km_constructor)(void *, void *, int);
 	void (*km_destructor)(void *, void *);
@@ -78,11 +79,12 @@ kmem_cache_create(char *name, size_t bufsize, size_t align,
 	KASSERT(vmp == NULL);
 
 	km = kmem_zalloc(sizeof(*km), KM_SLEEP);
+	strlcpy(km->km_name, name, sizeof(km->km_name));
 	km->km_private = private;
 	km->km_constructor = constructor;
 	km->km_destructor = destructor;
 	km->km_reclaim = reclaim;
-	km->km_pool = pool_cache_init(bufsize, align, 0, 0, name, NULL,
+	km->km_pool = pool_cache_init(bufsize, align, 0, 0, km->km_name, NULL,
 	    IPL_NONE, solaris_constructor, solaris_destructor, km);
 	if (km->km_pool == NULL) {
 		kmem_free(km, sizeof(*km));
