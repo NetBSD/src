@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media_80.c,v 1.4 2021/09/07 11:43:02 riastradh Exp $	*/
+/*	$NetBSD: if_media_80.c,v 1.5 2022/08/03 01:38:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_media_80.c,v 1.5 2022/08/03 01:38:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
