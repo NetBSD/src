@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $        */
+/*      $NetBSD: ukbd.c,v 1.142.2.1 2022/08/03 15:50:03 martin Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.142.2.1 2022/08/03 15:50:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -577,6 +577,10 @@ ukbd_detach(device_t self, int flags)
 	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev != NULL)
 		rv = config_detach(sc->sc_wskbddev, flags);
+
+	callout_halt(&sc->sc_delay, NULL);
+	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_ledtask,
+	    USB_TASKQ_DRIVER, NULL);
 
 	/* The console keyboard does not get a disable call, so check pipe. */
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
