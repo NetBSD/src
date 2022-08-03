@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.16 2021/09/07 13:24:45 andvar Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.17 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ _prop_string_init(void)
 	_PROP_MUTEX_INIT(_prop_string_tree_mutex);
 	rb_tree_init(&_prop_string_tree,
 		     &_prop_string_rb_tree_ops);
-	
+
 	return 0;
 }
 
@@ -181,7 +181,7 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	    					ps->ps_immutable) == false ||
 	    _prop_object_externalize_end_tag(ctx, "string") == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -388,7 +388,7 @@ prop_string_copy(prop_string_t ops)
 	cp = _PROP_MALLOC(ops->ps_size + 1, M_PROP_STRING);
 	if (cp == NULL)
 		return NULL;
-	
+
 	strcpy(cp, prop_string_contents(ops));
 
 	ps = _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
@@ -413,7 +413,7 @@ prop_string_copy_mutable(prop_string_t ops)
 	cp = _PROP_MALLOC(ops->ps_size + 1, M_PROP_STRING);
 	if (cp == NULL)
 		return NULL;
-	
+
 	strcpy(cp, prop_string_contents(ops));
 
 	ps = _prop_string_instantiate(PS_F_MUTABLE, cp, ops->ps_size);
@@ -451,7 +451,7 @@ prop_string_value(prop_string_t ps)
 
 	if ((ps->ps_flags & PS_F_MUTABLE) == 0)
 		return (ps->ps_immutable);
-	
+
 	return (prop_string_contents(ps));
 }
 
@@ -468,7 +468,7 @@ prop_string_copy_value(prop_string_t ps, void *buf, size_t buflen)
 
 	if (buf == NULL || buflen < ps->ps_size + 1)
 		return (false);
-	
+
 	strcpy(buf, prop_string_contents(ps));
 
 	return (true);
@@ -501,7 +501,7 @@ prop_string_cstring(prop_string_t ps)
 	cp = _PROP_MALLOC(ps->ps_size + 1, M_TEMP);
 	if (cp != NULL)
 		strcpy(cp, prop_string_contents(ps));
-	
+
 	return (cp);
 }
 
@@ -545,7 +545,7 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 	dst->ps_size = len;
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
-	
+
 	return (true);
 }
 
@@ -576,7 +576,7 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
 	dst->ps_size = len;
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
-	
+
 	return (true);
 }
 
@@ -663,7 +663,7 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 		*obj = prop_string_create();
 		return (true);
 	}
-	
+
 	/* No attributes recognized here. */
 	if (ctx->poic_tagattr != NULL)
 		return (true);
@@ -672,11 +672,11 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
 						   NULL) == false)
 		return (true);
-	
+
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (str == NULL)
 		return (true);
-	
+
 	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
 						   &ctx->poic_cp) == false ||
 	    alen != len) {
@@ -694,7 +694,7 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 	string = _prop_string_instantiate(0, str, len);
 	if (string == NULL)
 		_PROP_FREE(str, M_PROP_STRING);
-	
+
 	*obj = string;
 	return (true);
 }

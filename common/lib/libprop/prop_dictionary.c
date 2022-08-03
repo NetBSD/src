@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.44 2022/07/02 16:30:13 andvar Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.45 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_equals		=	_prop_dictionary_equals,
 	.pot_equals_finish	=	_prop_dictionary_equals_finish,
 	.pot_lock 	        =       _prop_dictionary_lock,
-	.pot_unlock 	        =       _prop_dictionary_unlock,		
+	.pot_unlock 	        =       _prop_dictionary_unlock,
 };
 
 static _prop_object_free_rv_t
@@ -257,7 +257,7 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 						pdk->pdk_key) == false ||
 	    _prop_object_externalize_end_tag(ctx, "string") == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -448,7 +448,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	pi = _prop_dictionary_iterator_locked(pd);
 	if (pi == NULL)
 		goto out;
-	
+
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
@@ -475,7 +475,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	}
 	if (_prop_object_externalize_end_tag(ctx, "dict") == false)
 		goto out;
-	
+
 	rv = true;
 
  out:
@@ -597,7 +597,7 @@ _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 
 	if (oarray != NULL)
 		_PROP_FREE(oarray, M_PROP_DICT);
-	
+
 	return (true);
 }
 
@@ -1356,7 +1356,7 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	if (_prop_object_internalize_find_tag(ctx, "key",
 				_PROP_TAG_TYPE_END) == false)
 		goto bad;
-   
+
 	/* ..and now the beginning of the value. */
 	if (_prop_object_internalize_find_tag(ctx, NULL,
 				_PROP_TAG_TYPE_START) == false)
