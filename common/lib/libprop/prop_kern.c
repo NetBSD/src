@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.24 2018/10/14 17:37:40 jdolecek Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.25 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 		error = errno;
 	else
 		error = 0;
-	
+
 	free(buf);
 
 	return (error);
@@ -162,7 +162,7 @@ prop_array_send_ioctl(prop_array_t array, int fd, unsigned long cmd)
 	if (rv != 0) {
 		errno = rv;	/* pass up error value in errno */
 		return rv;
-	} else 
+	} else
 		return 0;
 }
 
@@ -179,7 +179,7 @@ prop_dictionary_send_ioctl(prop_dictionary_t dict, int fd, unsigned long cmd)
 	if (rv != 0) {
 		errno = rv;	/* pass up error value in errno */
 		return rv;
-	} else 
+	} else
 		return 0;
 }
 
@@ -354,7 +354,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 		error = errno;
 	else
 		error = 0;
-	
+
 	free(buf);
 
 	if (error != 0)

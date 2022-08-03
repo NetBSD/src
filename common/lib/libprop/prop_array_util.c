@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.8 2020/06/14 21:31:01 christos Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.9 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ prop_array_get_bool(prop_array_t array, unsigned int indx, bool *valp)
 	b = prop_array_get(array, indx);
 	if (prop_object_type(b) != PROP_TYPE_BOOL)
 		return (false);
-	
+
 	*valp = prop_bool_true(b);
 
 	return (true);

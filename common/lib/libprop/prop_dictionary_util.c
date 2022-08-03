@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary_util.c,v 1.8 2020/06/15 00:46:00 christos Exp $	*/
+/*	$NetBSD: prop_dictionary_util.c,v 1.9 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ prop_dictionary_get_bool(prop_dictionary_t dict, const char *key, bool *valp)
 	b = prop_dictionary_get(dict, key);
 	if (prop_object_type(b) != PROP_TYPE_BOOL)
 		return (false);
-	
+
 	*valp = prop_bool_true(b);
 
 	return (true);
@@ -179,7 +179,7 @@ prop_dictionary_get_string(prop_dictionary_t dict, const char *key,
 	cp = prop_string_value(str);
 	if (cp == NULL)
 		return (false);
-	
+
 	*cpp = cp;
 	return (true);
 }
