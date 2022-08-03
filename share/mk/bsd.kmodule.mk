@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.79 2022/07/17 14:10:55 riastradh Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.80 2022/08/03 09:37:36 riastradh Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -36,6 +36,7 @@ CWARNFLAGS.clang+=	-Wno-error=constant-conversion
 # XXX until the kernel is fixed again...
 CFLAGS+=	-fno-strict-aliasing
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+CWARNFLAGS+=	-Wno-type-limits
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
