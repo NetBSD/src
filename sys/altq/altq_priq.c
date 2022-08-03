@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.26 2018/11/15 10:23:55 maxv Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.26.4.1 2022/08/03 11:01:51 martin Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.26 2018/11/15 10:23:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.26.4.1 2022/08/03 11:01:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -958,10 +958,9 @@ priqcmd_class_stats(struct priq_class_stats *ap)
 	usp = ap->stats;
 	for (pri = 0; pri <= pif->pif_maxpri; pri++) {
 		cl = pif->pif_classes[pri];
+		memset(&stats, 0, sizeof(stats));
 		if (cl != NULL)
 			get_class_stats(&stats, cl);
-		else
-			memset(&stats, 0, sizeof(stats));
 		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
 			return (error);
