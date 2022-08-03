@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.13 2012/01/29 11:44:54 wiz Exp $
+.\"	$NetBSD: clone.2,v 1.13.42.1 2022/08/03 10:42:02 martin Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 4, 2010
+.Dd August 1, 2022
 .Dt CLONE 2
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Fd #define _GNU_SOURCE
 .In sched.h
 .Ft pid_t
 .Fn clone "int (*func)(void *arg)" "void *stack" "int flags" "void *arg"
@@ -189,13 +190,9 @@ that are present in the Linux implementation:
 .It
 .Dv CLONE_PARENT_SETTID
 .It
-.Dv CLONE_PID
-.It
 .Dv CLONE_PTRACE
 .It
 .Dv CLONE_SETTLS
-.It
-.Dv CLONE_STOPPED
 .It
 .Dv CLONE_SYSVSEM
 .It
