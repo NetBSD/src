@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.28 2018/11/15 10:23:55 maxv Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.28.4.1 2022/08/03 11:01:51 martin Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.28 2018/11/15 10:23:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.28.4.1 2022/08/03 11:01:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -2182,6 +2182,7 @@ hfsccmd_class_stats(struct hfsc_class_stats *ap)
 	usp = ap->stats;
 	for (n = 0; cl != NULL && n < nclasses; cl = hfsc_nextclass(cl), n++) {
 
+		memset(&stats, 0, sizeof(stats));
 		get_class_stats(&stats, cl);
 
 		if ((error = copyout((void *)&stats, (void *)usp++,
