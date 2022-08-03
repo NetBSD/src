@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.117 2022/08/03 11:17:36 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.118 2022/08/03 16:02:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -2021,4 +2021,39 @@ sys/compat/ultrix/ultrix_misc.c			1.126 (patch)
 
 	sys/compat: memset zero before copyout.
 	[riastradh, ticket #1487]
+
+sys/dev/acpi/thinkpad_acpi.c			1.48
+
+	Fix thinkpad(4) fan sensor.
+	[riastradh, ticket #1490]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	(apply patch)
+
+	Fix newlines in i915 console messages.
+	[riastradh, ticket #1491]
+
+sys/dev/usb/ukbd.c				1.154
+
+	ukbd(4): Wait for callouts and blinking to complete in detach.
+	[riastradh, ticket #1492]
+
+sys/dev/usb/ucom.c				1.129
+
+	ucom(4): Fix earlier mistake causing pipes not to be closed.
+	[riastradh, ticket #1493]
+
+external/cddl/osnet/sys/kern/kmem.c		1.3
+
+	Fix stack garbage disclosure in solaris compat
+	(zfs, dtrace).
+	[riastradh, ticket #1494]
+
+share/man/man4/tpm.4				1.7
+sys/dev/acpi/tpm_acpi.c				1.14
+sys/dev/ic/tpm.c				1.17-1.25
+sys/dev/ic/tpmreg.h				1.7-1.11
+sys/dev/ic/tpmvar.h				1.8-1.10
+
+	tpm(4): HWRNG and fixed suspend/resume.
+	[riastradh, ticket #1495]
 
