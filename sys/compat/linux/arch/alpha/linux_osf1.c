@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $	*/
+/*	$NetBSD: linux_osf1.c,v 1.3.6.1 2022/08/03 11:11:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.3 2019/04/06 03:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.3.6.1 2022/08/03 11:11:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ static void
 osf1_cvt_rusage_from_native(const struct rusage *ru, struct osf1_rusage *oru)
 {
 
+	memset(oru, 0, sizeof(*oru));
+
 	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
 	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
 
@@ -135,7 +137,7 @@ static void
 osf1_cvt_statfs_from_native(const struct statvfs *bsfs, struct osf1_statfs *osfs)
 {
 
-	memset(osfs, 0, sizeof (struct osf1_statfs));
+	memset(osfs, 0, sizeof(*osfs));
 	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
 		osfs->f_type = OSF1_MOUNT_UFS;
 	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
@@ -663,6 +665,7 @@ linux_sys_osf1_usleep_thread(struct lwp *l, const struct linux_sys_osf1_usleep_t
 		if (endtv.tv_sec < 0 || endtv.tv_usec < 0)
 			endtv.tv_sec = endtv.tv_usec = 0;
 
+		memset(&endotv, 0, sizeof(endotv));
 		endotv.tv_sec = endtv.tv_sec;
 		endotv.tv_usec = endtv.tv_usec;
 		error = copyout(&endotv, SCARG(uap, slept), sizeof endotv);

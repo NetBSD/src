@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.4 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.4.10.1 2022/08/03 11:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.4 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.4.10.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf = l->l_md.md_regs;
 
 	fp--;
+
+	memset(&frame, 0, sizeof(frame));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;

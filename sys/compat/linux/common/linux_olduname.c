@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.66 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.66.92.1 2022/08/03 11:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.66 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.66.92.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ linux_sys_olduname(struct lwp *l, const struct linux_sys_olduname_args *uap, reg
 		syscallarg(struct linux_oldutsname *) up;
 	} */
 	struct linux_oldutsname luts;
+
+	memset(&luts, 0, sizeof(luts));
 
 	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
 	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));

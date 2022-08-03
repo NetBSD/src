@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.37 2012/10/02 01:44:28 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.37.42.1 2022/08/03 11:11:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.37 2012/10/02 01:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.37.42.1 2022/08/03 11:11:33 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,6 +166,8 @@ linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, regis
 		struct linux32_tms ltms32;
 		struct rusage ru;
 
+		memset(&ltms32, 0, sizeof(ltms32));
+
 		mutex_enter(p->p_lock);
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		ltms32.ltms32_utime = CONVTCK(ru.ru_utime);
@@ -237,6 +239,8 @@ linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, regis
 void
 native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
 {
+
+	memset(ltp, 0, sizeof(*ltp));
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
@@ -244,6 +248,8 @@ native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
 void
 linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
 {
+
+	memset(ntp, 0, sizeof(*ntp));
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
 }

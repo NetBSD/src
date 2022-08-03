@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.33 2014/11/09 18:30:38 maxv Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.33.24.1 2022/08/03 11:11:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.33 2014/11/09 18:30:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.33.24.1 2022/08/03 11:11:32 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -183,6 +183,7 @@ freebsd_sys_sigaction4(struct lwp *l, const struct freebsd_sys_sigaction4_args *
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
+		memset(&oesa, 0, sizeof(oesa));
 		oesa.freebsd_sa_handler = obsa.sa_handler;
 		oesa.freebsd_sa_mask    = obsa.sa_mask;
 		oesa.freebsd_sa_flags   = obsa.sa_flags;

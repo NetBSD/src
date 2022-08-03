@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.64.4.2 2021/08/15 09:27:50 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.64.4.3 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.4.2 2021/08/15 09:27:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.4.3 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -470,6 +470,7 @@ again:
 				off += reclen;
 			continue;
 		}
+		memset(&idb, 0, sizeof(idb));
 		if (bdp->d_namlen >= sizeof(idb.d_name))
 			idb.d_namlen = sizeof(idb.d_name) - 1;
 		else

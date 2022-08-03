@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.79.4.1 2022/08/03 11:11:33 martin Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79.4.1 2022/08/03 11:11:33 martin Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -161,6 +161,7 @@ sunos32_sigvec_from_sigaction(
 {
 /*XXX*/ extern void compat_43_sigset_to_sigmask(const sigset_t *, int *);
 
+	memset(sv, 0, sizeof(*sv));
 	NETBSD32PTR32(sv->sv_handler, sa->sa_handler);
 	compat_43_sigset_to_sigmask(&sa->sa_mask, &sv->sv_mask);
 	sv->sv_flags = sa->sa_flags ^ SA_RESTART;
@@ -541,6 +542,7 @@ void	sunos_to_native_sigset(const int, sigset_t *);
 inline void
 native_to_sunos_sigset(const sigset_t *ss, int *mask)
 {
+
 	*mask = ss->__bits[0];
 }
 
@@ -548,6 +550,7 @@ inline void
 sunos_to_native_sigset(const int mask, sigset_t *ss)
 {
 
+	memset(ss, 0, sizeof(*ss));
 	ss->__bits[0] = mask;
 	ss->__bits[1] = 0;
 	ss->__bits[2] = 0;
@@ -676,6 +679,7 @@ again:
 				off += reclen;
 			continue;
 		}
+		memset(&idb, 0, sizeof(idb));
 		sunos_reclen = SUNOS32_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < sunos_reclen) {
 			/* entry too big for buffer, so just stop */

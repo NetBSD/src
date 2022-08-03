@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.51 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.51.4.1 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.51 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.51.4.1 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -206,6 +206,7 @@ netbsd32___gettimeofday50(struct lwp *l, const struct netbsd32___gettimeofday50_
 		 * NetBSD has no kernel notion of time zone, so we just
 		 * fake up a timezone struct and return it if demanded.
 		 */
+		memset(&tzfake, 0, sizeof(tzfake));
 		tzfake.tz_minuteswest = 0;
 		tzfake.tz_dsttime = 0;
 		error = copyout(&tzfake, SCARG_P32(uap, tzp), sizeof(tzfake));
@@ -266,6 +267,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 		return (error);
 
 	if (SCARG_P32(uap, olddelta)) {
+		memset(&atv, 0, sizeof(atv));
 		atv.tv_sec = time_adjtime / 1000000;
 		atv.tv_usec = time_adjtime % 1000000;
 		if (atv.tv_usec < 0) {
@@ -477,6 +479,7 @@ netbsd32___timer_settime50(struct lwp *l, const struct netbsd32___timer_settime5
 		return error;
 
 	if (ovp) {
+		memset(&its32, 0, sizeof(its32));
 		netbsd32_from_timespec(&ovp->it_interval, &its32.it_interval);
 		netbsd32_from_timespec(&ovp->it_value, &its32.it_value);
 		return copyout(&its32, SCARG_P32(uap, ovalue), sizeof(its32));
@@ -499,6 +502,7 @@ netbsd32___timer_gettime50(struct lwp *l, const struct netbsd32___timer_gettime5
 	    &its)) != 0)
 		return error;
 
+	memset(&its32, 0, sizeof(its32));
 	netbsd32_from_timespec(&its.it_interval, &its32.it_interval);
 	netbsd32_from_timespec(&its.it_value, &its32.it_value);
 

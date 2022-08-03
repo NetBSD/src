@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.43 2014/11/09 17:48:07 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.43.24.1 2022/08/03 11:11:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.43 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.43.24.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,7 @@ linux_sys_new_uname(struct lwp *l, const struct linux_sys_new_uname_args *uap, r
         } */ *uap = v;
         struct linux_utsname luts;
 
+	memset(&luts, 0, sizeof(luts));
         strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
         strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
         strlcpy(luts.l_release, "2.4.0", sizeof(luts.l_release));

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.50.24.1 2022/08/03 11:11:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50.24.1 2022/08/03 11:11:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,8 @@ setup_linux_rt_sigframe(struct trapframe *tf, const ksiginfo_t *ksi,
 		    sig, &onstack, sfp);
 #endif /* DEBUG */
 
+	memset(&sigframe, 0, sizeof(sigframe));
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
@@ -231,6 +233,8 @@ void setup_linux_sigframe(struct trapframe *tf, const ksiginfo_t *ksi,
 		printf("linux_sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &onstack, sfp);
 #endif /* DEBUG */
+
+	memset(&sigframe, 0, sizeof(sigframe));
 
 	/*
 	 * Build the signal context to be used by sigreturn.

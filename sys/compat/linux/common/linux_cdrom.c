@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.27 2008/04/28 20:23:43 martin Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.27.92.1 2022/08/03 11:11:32 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.27 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.27.92.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ linux_ioctl_cdrom(struct lwp *l, const struct linux_sys_ioctl_args *uap, registe
 		if (error)
 			break;
 
+		memset(&l_tochdr, 0, sizeof(l_tochdr));
 		l_tochdr.cdth_trk0 = t_header.starting_track;
 		l_tochdr.cdth_trk1 = t_header.ending_track;
 
@@ -238,6 +239,7 @@ linux_ioctl_cdrom(struct lwp *l, const struct linux_sys_ioctl_args *uap, registe
 		if (error)
 			break;
 
+		memset(&l_volctrl, 0, sizeof(l_volctrl));
 		l_volctrl.channel0 = t_vol.vol[0];
 		l_volctrl.channel1 = t_vol.vol[1];
 		l_volctrl.channel2 = t_vol.vol[2];

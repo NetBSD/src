@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.35.4.1 2020/01/02 09:50:34 martin Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.35.4.2 2022/08/03 11:11:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.35.4.1 2020/01/02 09:50:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.35.4.2 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ void
 compat_43_sigmask_to_sigset(const int *sm, sigset_t *ss)
 {
 
+	memset(ss, 0, sizeof(*ss));
 	ss->__bits[0] = *sm;
 	ss->__bits[1] = 0;
 	ss->__bits[2] = 0;
@@ -102,6 +103,8 @@ compat_43_sigset_to_sigmask(const sigset_t *ss, int *sm)
 void
 compat_43_sigvec_to_sigaction(const struct sigvec *sv, struct sigaction *sa)
 {
+
+	memset(sa, 0, sizeof(*sa));
 	sa->sa_handler = sv->sv_handler;
 	compat_43_sigmask_to_sigset(&sv->sv_mask, &sa->sa_mask);
 	sa->sa_flags = sv->sv_flags ^ SA_RESTART;
@@ -110,6 +113,8 @@ compat_43_sigvec_to_sigaction(const struct sigvec *sv, struct sigaction *sa)
 void
 compat_43_sigaction_to_sigvec(const struct sigaction *sa, struct sigvec *sv)
 {
+
+	memset(sv, 0, sizeof(*sv));
 	sv->sv_handler = sa->sa_handler;
 	compat_43_sigset_to_sigmask(&sa->sa_mask, &sv->sv_mask);
 	sv->sv_flags = sa->sa_flags ^ SA_RESTART;
@@ -118,6 +123,7 @@ compat_43_sigaction_to_sigvec(const struct sigaction *sa, struct sigvec *sv)
 void
 compat_43_sigstack_to_sigaltstack(const struct sigstack *ss, struct sigaltstack *sa)
 {
+	memset(sa, 0, sizeof(*sa));
 	sa->ss_sp = ss->ss_sp;
 	sa->ss_size = SIGSTKSZ;	/* Use the recommended size */
 	sa->ss_flags = 0;

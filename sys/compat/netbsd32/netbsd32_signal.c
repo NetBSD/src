@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.45.8.1 2019/11/19 13:33:21 martin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.45.8.2 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.45.8.1 2019/11/19 13:33:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.45.8.2 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -86,6 +86,7 @@ netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, reg
 		return (error);
 
 	if (SCARG_P32(uap, osa)) {
+		memset(&sa32, 0, sizeof(sa32));
 		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask.__bits[0];
 		sa32.netbsd32_sa_flags = osa.sa_flags;
@@ -135,6 +136,7 @@ netbsd32___sigaction14(struct lwp *l, const struct netbsd32___sigaction14_args *
 	if (error)
 		return (error);
 	if (SCARG_P32(uap, osa)) {
+		memset(&sa32, 0, sizeof(sa32));
 		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
@@ -175,6 +177,7 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 	if (error)
 		return (error);
 	if (SCARG_P32(uap, osa)) {
+		memset(&sa32, 0, sizeof(sa32));
 		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
