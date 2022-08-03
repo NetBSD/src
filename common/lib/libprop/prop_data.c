@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.17 2020/06/08 21:31:56 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.18 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 
 	if (_prop_object_externalize_end_tag(ctx, "data") == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -377,7 +377,7 @@ prop_data_copy_value(prop_data_t pd, void *buf, size_t buflen)
 
 	if (! prop_object_is_data(pd))
 		return (false);
-	
+
 	if (buf == NULL || buflen < pd->pd_size)
 		return (false);
 
@@ -411,7 +411,7 @@ prop_data_data(prop_data_t pd)
 	v = _PROP_MALLOC(pd->pd_size, M_TEMP);
 	if (v != NULL)
 		memcpy(v, pd->pd_immutable, pd->pd_size);
-	
+
 	return (v);
 }
 
@@ -569,7 +569,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 				return (false);
 			ch = (unsigned char) *src;
 			/* FALLTHROUGH */
-		
+
 		case 3:		/* Valid, two bytes of info */
 			/*
 			 * We know this char is a =.  Is there anything but
@@ -662,7 +662,7 @@ _prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
 	buf = _PROP_MALLOC(len + 1, M_PROP_DATA);
 	if (buf == NULL)
 		return (true);
-	
+
 	if (_prop_data_internalize_decode(ctx, buf, len + 1, &alen,
 					  &ctx->poic_cp) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);

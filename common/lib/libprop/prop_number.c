@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.33 2020/06/06 22:23:31 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.34 2022/08/03 21:13:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ _prop_number_init(void)
 	return 0;
 }
 
-static void 
+static void
 _prop_number_lock(void)
 {
 	/* XXX: init necessary? */
@@ -189,7 +189,7 @@ _prop_number_unlock(void)
 {
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 }
-	
+
 static bool
 _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
@@ -212,7 +212,7 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	    _prop_object_externalize_append_cstring(ctx, tmpstr) == false ||
 	    _prop_object_externalize_end_tag(ctx, "integer") == false)
 		return (false);
-	
+
 	return (true);
 }
 
@@ -571,7 +571,7 @@ prop_number_equals_signed(prop_number_t pn, intmax_t val)
 	if (pn->pn_value.pnv_is_unsigned &&
 	    (pn->pn_value.pnv_unsigned > INTMAX_MAX || val < 0))
 		return (false);
-	
+
 	return (pn->pn_value.pnv_signed == val);
 }
 
@@ -595,11 +595,11 @@ prop_number_equals_unsigned(prop_number_t pn, uintmax_t val)
 
 	if (! prop_object_is_number(pn))
 		return (false);
-	
+
 	if (! pn->pn_value.pnv_is_unsigned &&
 	    (pn->pn_value.pnv_signed < 0 || val > INT64_MAX))
 		return (false);
-	
+
 	return (pn->pn_value.pnv_unsigned == val);
 }
 
