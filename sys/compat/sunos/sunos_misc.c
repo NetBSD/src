@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.173.2.1 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.173 2019/07/03 18:24:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.173.2.1 2022/08/03 11:11:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,6 +305,7 @@ void	sunos_to_native_sigset(const int, sigset_t *);
 inline void
 native_to_sunos_sigset(const sigset_t *ss, int *mask)
 {
+
 	*mask = ss->__bits[0];
 }
 
@@ -312,6 +313,7 @@ inline void
 sunos_to_native_sigset(const int mask, sigset_t *ss)
 {
 
+	memset(ss, 0, sizeof(*ss));
 	ss->__bits[0] = mask;
 	ss->__bits[1] = 0;
 	ss->__bits[2] = 0;
@@ -431,6 +433,7 @@ again:
 				off += reclen;
 			continue;
 		}
+		memset(&idb, 0, sizeof(idb));
 		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < sunos_reclen) {
 			/* entry too big for buffer, so just stop */

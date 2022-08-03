@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.22 2014/06/28 11:06:31 maxv Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.22.32.1 2022/08/03 11:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.22 2014/06/28 11:06:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.22.32.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -122,6 +122,7 @@ sched_native2freebsd(int native_policy, const struct sched_param *native_params,
 
 	if (native_params != NULL && freebsd_params != NULL) {
 		/* XXX: Needs adjustment to do a proper conversion. */
+		memset(freebsd_params, 0, sizeof(*freebsd_params));
 		freebsd_params->sched_priority = native_params->sched_priority;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.80.8.1 2019/09/13 06:25:25 martin Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.80.8.2 2022/08/03 11:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.80.8.1 2019/09/13 06:25:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.80.8.2 2022/08/03 11:11:32 martin Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -274,6 +274,8 @@ linux_to_native_sigflags(const unsigned long lsf)
 void
 linux_old_to_native_sigaction(struct sigaction *bsa, const struct linux_old_sigaction *lsa)
 {
+
+	memset(bsa, 0, sizeof(*bsa));
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
@@ -282,6 +284,8 @@ linux_old_to_native_sigaction(struct sigaction *bsa, const struct linux_old_siga
 void
 native_to_linux_old_sigaction(struct linux_old_sigaction *lsa, const struct sigaction *bsa)
 {
+
+	memset(lsa, 0, sizeof(*lsa));
 	lsa->linux_sa_handler = bsa->sa_handler;
 	native_to_linux_old_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
 	lsa->linux_sa_flags = native_to_linux_sigflags(bsa->sa_flags);
@@ -294,6 +298,8 @@ native_to_linux_old_sigaction(struct linux_old_sigaction *lsa, const struct siga
 void
 linux_to_native_sigaction(struct sigaction *bsa, const struct linux_sigaction *lsa)
 {
+
+	memset(bsa, 0, sizeof(*bsa));
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->linux_sa_flags);
@@ -302,6 +308,8 @@ linux_to_native_sigaction(struct sigaction *bsa, const struct linux_sigaction *l
 void
 native_to_linux_sigaction(struct linux_sigaction *lsa, const struct sigaction *bsa)
 {
+
+	memset(lsa, 0, sizeof(*lsa));
 	lsa->linux_sa_handler = bsa->sa_handler;
 	native_to_linux_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
 	lsa->linux_sa_flags = native_to_linux_sigflags(bsa->sa_flags);

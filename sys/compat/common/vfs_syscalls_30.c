@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.38.4.1 2021/08/15 09:27:50 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.38.4.2 2022/08/03 11:11:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.38.4.1 2021/08/15 09:27:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.38.4.2 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -275,6 +275,7 @@ again:
 			error = EINVAL;
 			goto out;
 		}
+		memset(&idb, 0, sizeof(idb));
 		if (bdp->d_namlen >= sizeof(idb.d_name))
 			idb.d_namlen = sizeof(idb.d_name) - 1;
 		else
@@ -365,6 +366,7 @@ compat_30_sys_getfh(struct lwp *l, const struct compat_30_sys_getfh_args *uap,
 	sz = sizeof(struct compat_30_fhandle);
 	error = vfs_composefh(vp, (void *)&fh, &sz);
 	vput(vp);
+	CTASSERT(FHANDLE_SIZE_COMPAT == sizeof(struct compat_30_fhandle));
 	if (sz != FHANDLE_SIZE_COMPAT) {
 		error = EINVAL;
 	}

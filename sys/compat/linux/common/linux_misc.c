@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.240.4.1 2019/09/13 06:25:25 martin Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.240.4.2 2022/08/03 11:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.240.4.1 2019/09/13 06:25:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.240.4.2 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,6 +627,8 @@ linux_sys_times(struct lwp *l, const struct linux_sys_times_args *uap, register_
 	if (SCARG(uap, tms)) {
 		struct linux_tms ltms;
 		struct rusage ru;
+
+		memset(&ltms, 0, sizeof(ltms));
 
 		mutex_enter(p->p_lock);
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
@@ -1392,6 +1394,7 @@ linux_sys_getrlimit(struct lwp *l, const struct linux_sys_getrlimit_args *uap, r
 	if (which < 0)
 		return -which;
 
+	memset(&orl, 0, sizeof(orl));
 	bsd_to_linux_rlimit(&orl, &l->l_proc->p_rlimit[which]);
 
 	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));

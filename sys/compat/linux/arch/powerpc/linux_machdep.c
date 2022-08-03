@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50 2017/05/03 00:23:42 chs Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.50.14.1 2022/08/03 11:11:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50 2017/05/03 00:23:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50.14.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 *
 	 * Save register context.
 	 */
+	memset(&linux_regs, 0, sizeof(linux_regs));
 	for (i = 0; i < 32; i++)
 		linux_regs.lgpr[i] = tf->tf_fixreg[i];
 	linux_regs.lnip = tf->tf_srr0;

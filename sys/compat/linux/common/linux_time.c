@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $ */
+/*	$NetBSD: linux_time.c,v 1.39.8.1 2022/08/03 11:11:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39.8.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -117,6 +117,7 @@ linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *
 void
 native_to_linux_timespec(struct linux_timespec *ltp, struct timespec *ntp)
 {
+	memset(ltp, 0, sizeof(*ltp));
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
@@ -124,6 +125,7 @@ native_to_linux_timespec(struct linux_timespec *ltp, struct timespec *ntp)
 void
 linux_to_native_timespec(struct timespec *ntp, struct linux_timespec *ltp)
 {
+	memset(ntp, 0, sizeof(*ntp));
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
 }

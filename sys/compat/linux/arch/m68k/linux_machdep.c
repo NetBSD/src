@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.42 2010/07/07 01:30:34 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.42.64.1 2022/08/03 11:11:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42 2010/07/07 01:30:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42.64.1 2022/08/03 11:11:33 martin Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -117,6 +117,8 @@ setup_linux_sigframe(struct frame *frame, int sig, const sigset_t *mask, void *u
 		printf("setup_linux_sigframe(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &ft, fp, &fp->sf_c.c_sc, ft);
 #endif
+
+	memset(&kf, 0, sizeof(kf));
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */
@@ -279,6 +281,8 @@ setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void
 		printf("setup_linux_rt_sigframe(%d): sig %d ssp %p usp %p ucp %p ft %d\n",
 		       p->p_pid, sig, &ft, fp, &fp->sf_uc, ft);
 #endif
+
+	memset(&kf, 0, sizeof(kf));
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.11 2012/09/22 22:34:03 joerg Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.11.42.1 2022/08/03 11:11:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.11 2012/09/22 22:34:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.11.42.1 2022/08/03 11:11:33 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,6 +87,7 @@ linux32_sys_getrlimit(struct lwp *l, const struct linux32_sys_getrlimit_args *ua
 	if (which < 0)
 		return -which;
 
+	memset(&orl, 0, sizeof(orl));
 	bsd_to_linux_rlimit(&orl, &l->l_proc->p_rlimit[which]);
 
 	return copyout(&orl, SCARG_P32(uap, rlp), sizeof(orl));

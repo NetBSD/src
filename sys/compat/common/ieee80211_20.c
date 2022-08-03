@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_20.c,v 1.5 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_20.c,v 1.5.6.1 2022/08/03 11:11:31 martin Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.5 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.5.6.1 2022/08/03 11:11:31 martin Exp $");
 #endif
 
 /*
@@ -76,6 +76,9 @@ static void
 ieee80211_get_ostats(struct ieee80211_ostats *ostats,
     struct ieee80211_stats *stats)
 {
+
+	memset(ostats, 0, sizeof(*ostats));
+
 #define	COPYSTATS1(__ostats, __nstats, __dstmemb, __srcmemb, __lastmemb)\
 	(void)memcpy(&(__ostats)->__dstmemb, &(__nstats)->__srcmemb,	\
 	    offsetof(struct ieee80211_stats, __lastmemb) -		\

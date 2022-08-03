@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.38.4.1 2020/01/02 09:50:34 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.38.4.2 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.38.4.1 2020/01/02 09:50:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.38.4.2 2022/08/03 11:11:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ static inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
 static inline void
 compat_20_netbsd32_from_statvfs(struct statvfs *sbp, struct netbsd32_statfs *sb32p)
 {
+
+	memset(sb32p, 0, sizeof(*sb32p));
 	sb32p->f_type = 0; /* XXX Put an actual value? */
 	sb32p->f_flags = sbp->f_flag;
 	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;

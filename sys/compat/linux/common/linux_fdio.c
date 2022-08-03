@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.c,v 1.13 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: linux_fdio.c,v 1.13.96.1 2022/08/03 11:11:32 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.13.96.1 2022/08/03 11:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ linux_ioctl_fdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		error = ioctlf(fp, FDIOCGETFORMAT, &fparams);
 		if (error != 0)
 			break;
+		memset(&lflop, 0, sizeof(lflop));
 		lflop.size = fparams.ncyl * fparams.nspt * fparams.ntrk;
 		lflop.sect = fparams.nspt;
 		lflop.head = fparams.ntrk;

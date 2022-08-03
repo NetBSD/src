@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.38 2019/04/23 07:45:06 msaitoh Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.38.2.1 2022/08/03 11:11:32 martin Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.38 2019/04/23 07:45:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.38.2.1 2022/08/03 11:11:32 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -144,6 +144,8 @@ static void
 stios2btios(struct emul_termios *st, struct termios *bt)
 {
 	uint32_t l, r;
+
+	memset(bt, 0, sizeof(*bt));
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -275,6 +277,8 @@ btios2stios(struct termios *bt, struct emul_termios *st)
 {
 	uint32_t l, r;
 	int speed;
+
+	memset(st, 0, sizeof(*st));
 
 	l = bt->c_iflag;
 	r = 	((l &  IGNBRK) ? 0x00000001	: 0);
@@ -419,6 +423,8 @@ btios2stios(struct termios *bt, struct emul_termios *st)
 static void
 stios2stio(struct emul_termios *ts, struct emul_termio *t)
 {
+
+	memset(t, 0, sizeof(*t));
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
 	t->c_cflag = ts->c_cflag;
@@ -433,6 +439,8 @@ stios2stio(struct emul_termios *ts, struct emul_termio *t)
 static void
 stio2stios(struct emul_termio *t, struct emul_termios *ts)
 {
+
+	memset(ts, 0, sizeof(*t));
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
 	ts->c_cflag = t->c_cflag;
@@ -534,6 +542,7 @@ ultrix_sys_ioctl(struct lwp *l, const struct ultrix_sys_ioctl_args *uap,
 		if (error != 0)
 			return error;
 
+		memset(&ss, 0, sizeof(ss));
 		ss.ts_row = ws.ws_row;
 		ss.ts_col = ws.ws_col;
 

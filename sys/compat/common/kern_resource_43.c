@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.22 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.22.4.1 2022/08/03 11:11:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.22 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.22.4.1 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,7 @@ compat_43_sys_getrlimit(struct lwp *l, const struct compat_43_sys_getrlimit_args
 
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
+	memset(&olim, 0, sizeof(olim));
 	olim.rlim_cur = p->p_rlimit[which].rlim_cur;
 	if (olim.rlim_cur == -1)
 		olim.rlim_cur = 0x7fffffff;

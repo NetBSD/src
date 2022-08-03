@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.21.4.1 2022/08/03 11:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.21.4.1 2022/08/03 11:11:31 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -120,6 +120,7 @@ compat_09_sys_uname(struct lwp *l,
 	const char *cp;
 	char *dp, *ep;
 
+	memset(&outsname, 0, sizeof(outsname));
 	strncpy(outsname.sysname, ostype, sizeof(outsname.sysname));
 	strncpy(outsname.nodename, hostname, sizeof(outsname.nodename));
 	strncpy(outsname.release, osrelease, sizeof(outsname.release));
