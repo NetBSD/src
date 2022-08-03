@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.29.2.2 2021/06/21 16:41:02 martin Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.29.2.3 2022/08/03 15:47:48 martin Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -84,11 +84,11 @@
 		BUILD_BUG_ON(__i915_warn_cond); \
 	WARN(__i915_warn_cond, "WARN_ON(" #x ")"); })
 #else
-#define WARN_ON(x) WARN((x), "WARN_ON(%s)", #x )
+#define WARN_ON(x) WARN((x), "WARN_ON(%s)\n", #x )
 #endif
 
 #undef WARN_ON_ONCE
-#define WARN_ON_ONCE(x) WARN_ONCE((x), "WARN_ON_ONCE(%s)", #x )
+#define WARN_ON_ONCE(x) WARN_ONCE((x), "WARN_ON_ONCE(%s)\n", #x )
 
 #define MISSING_CASE(x) WARN(1, "Missing switch case (%lu) in %s\n", \
 			     (long) (x), __func__);
