@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.13.2.1 2019/10/16 09:52:38 martin Exp $	*/
+/*	$NetBSD: tpm.c,v 1.13.2.2 2022/08/03 16:00:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,17 +48,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13.2.1 2019/10/16 09:52:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13.2.2 2022/08/03 16:00:47 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/bus.h>
 #include <sys/pmf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/workqueue.h>
 
 #include <dev/ic/tpmreg.h>
 #include <dev/ic/tpmvar.h>
@@ -137,14 +141,91 @@ tpm12_suspend(struct tpm_softc *sc)
 		0x00, 0x00, 0x00, 0x98	/* TPM_ORD_SaveState */
 	};
 	struct tpm_header response;
+	size_t nread;
+	bool endwrite = false, endread = false;
+	int error;
 
-	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
-		return false;
-	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
-		return false;
-	if (TPM_BE32(response.code) != 0)
-		return false;
+	/*
+	 * Write the command.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
+	if (error) {
+		device_printf(sc->sc_dev, "start write failed: %d", error);
+		goto out;
+	}
 
+	endwrite = true;
+
+	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
+	if (error) {
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
+		    error);
+		goto out;
+	}
+
+	endwrite = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end write failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Read the response -- just the header; we don't expect a
+	 * payload.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_READ);
+	if (error) {
+		device_printf(sc->sc_dev, "start read failed: %d", error);
+		goto out;
+	}
+
+	endread = true;
+
+	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
+	    0);
+	if (error) {
+		device_printf(sc->sc_dev, "read failed: %d", error);
+		goto out;
+	}
+	if (nread != sizeof(response)) {
+		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		goto out;
+	}
+
+	endread = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end read failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Verify the response looks reasonable.
+	 */
+	if (be16toh(response.tag) != TPM_TAG_RSP_COMMAND ||
+	    be32toh(response.length) != sizeof(response) ||
+	    be32toh(response.code) != 0) {
+		device_printf(sc->sc_dev,
+		    "TPM_ORD_SaveState failed: tag=0x%x length=0x%x code=0x%x",
+		    be16toh(response.tag),
+		    be32toh(response.length),
+		    be32toh(response.code));
+		error = EIO;
+		goto out;
+	}
+
+	/* Success!  */
+	error = 0;
+
+out:	if (endwrite)
+		error = (*sc->sc_intf->end)(sc, UIO_WRITE, error);
+	if (endread)
+		error = (*sc->sc_intf->end)(sc, UIO_READ, error);
+	if (error)
+		return false;
 	return true;
 }
 
@@ -158,14 +239,91 @@ tpm20_suspend(struct tpm_softc *sc)
 		0x00, 0x01		/* TPM_SU_STATE */
 	};
 	struct tpm_header response;
+	size_t nread;
+	bool endwrite = false, endread = false;
+	int error;
 
-	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
-		return false;
-	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
-		return false;
-	if (TPM_BE32(response.code) != 0)
-		return false;
+	/*
+	 * Write the command.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
+	if (error) {
+		device_printf(sc->sc_dev, "start write failed: %d", error);
+		goto out;
+	}
 
+	endwrite = true;
+
+	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
+	if (error) {
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
+		    error);
+		goto out;
+	}
+
+	endwrite = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end write failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Read the response -- just the header; we don't expect a
+	 * payload.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_READ);
+	if (error) {
+		device_printf(sc->sc_dev, "start read failed: %d", error);
+		goto out;
+	}
+
+	endread = true;
+
+	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
+	    0);
+	if (error) {
+		device_printf(sc->sc_dev, "read failed: %d", error);
+		goto out;
+	}
+	if (nread != sizeof(response)) {
+		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		goto out;
+	}
+
+	endread = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end read failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Verify the response looks reasonable.
+	 */
+	if (be16toh(response.tag) != TPM2_ST_NO_SESSIONS ||
+	    be32toh(response.length) != sizeof(response) ||
+	    be32toh(response.code) != TPM2_RC_SUCCESS) {
+		device_printf(sc->sc_dev,
+		    "TPM_CC_Shutdown failed: tag=0x%x length=0x%x code=0x%x",
+		    be16toh(response.tag),
+		    be32toh(response.length),
+		    be32toh(response.code));
+		error = EIO;
+		goto out;
+	}
+
+	/* Success!  */
+	error = 0;
+
+out:	if (endwrite)
+		error = (*sc->sc_intf->end)(sc, UIO_WRITE, error);
+	if (endread)
+		error = (*sc->sc_intf->end)(sc, UIO_READ, error);
+	if (error)
+		return false;
 	return true;
 }
 
@@ -324,9 +482,347 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 }
 
 static int
+tpm12_rng(struct tpm_softc *sc, unsigned *entropybitsp)
+{
+	/*
+	 * TPM Specification Version 1.2, Main Part 3: Commands,
+	 * Sec. 13.6 TPM_GetRandom
+	 */
+	struct {
+		struct tpm_header hdr;
+		uint32_t bytesRequested;
+	} __packed command;
+	struct response {
+		struct tpm_header hdr;
+		uint32_t randomBytesSize;
+		uint8_t	bytes[64];
+	} __packed response;
+	bool endwrite = false, endread = false;
+	size_t nread;
+	uint16_t tag;
+	uint32_t pktlen, code, nbytes, entropybits = 0;
+	int rv;
+
+	/* Encode the command.  */
+	memset(&command, 0, sizeof(command));
+	command.hdr.tag = htobe16(TPM_TAG_RQU_COMMAND);
+	command.hdr.length = htobe32(sizeof(command));
+	command.hdr.code = htobe32(TPM_ORD_GetRandom);
+	command.bytesRequested = htobe32(sizeof(response.bytes));
+
+	/* Write the command.   */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endwrite = true;
+	if ((rv = (*sc->sc_intf->write)(sc, &command, sizeof(command))) != 0) {
+		device_printf(sc->sc_dev, "write failed, error=%d\n", rv);
+		goto out;
+	}
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	endwrite = false;
+	if (rv) {
+		device_printf(sc->sc_dev, "end write failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Read the response header.  */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endread = true;
+	if ((rv = (*sc->sc_intf->read)(sc, &response.hdr, sizeof(response.hdr),
+		    &nread, 0)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the response header looks sensible.  */
+	if (nread != sizeof(response.hdr)) {
+		device_printf(sc->sc_dev, "read %zu bytes, expected %zu",
+		    nread, sizeof(response.hdr));
+		goto out;
+	}
+	tag = be16toh(response.hdr.tag);
+	pktlen = be32toh(response.hdr.length);
+	code = be32toh(response.hdr.code);
+	if (tag != TPM_TAG_RSP_COMMAND ||
+	    pktlen < offsetof(struct response, bytes) ||
+	    pktlen > sizeof(response) ||
+	    code != 0) {
+		/*
+		 * If the tpm itself is busy (e.g., it has yet to run a
+		 * self-test, or it's in a timeout period to defend
+		 * against brute force attacks), then we can try again
+		 * later.  Otherwise, give up.
+		 */
+		if (code & TPM_NON_FATAL) {
+			aprint_debug_dev(sc->sc_dev, "%s: tpm busy, code=%u\n",
+			    __func__, code & ~TPM_NON_FATAL);
+			rv = 0;
+		} else if (code == TPM_DEACTIVATED) {
+			device_printf(sc->sc_dev, "tpm is deactivated\n");
+			rv = ENXIO;
+		} else {
+			device_printf(sc->sc_dev, "bad tpm response:"
+			    " tag=%u len=%u code=%u\n", tag, pktlen, code);
+			hexdump(aprint_debug, "tpm response header",
+			    (const void *)&response.hdr,
+			    sizeof(response.hdr));
+			rv = EIO;
+		}
+		goto out;
+	}
+
+	/* Read the response payload.  */
+	if ((rv = (*sc->sc_intf->read)(sc,
+		    (char *)&response + nread, pktlen - nread,
+		    NULL, TPM_PARAM_SIZE)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+	endread = false;
+	if ((rv = (*sc->sc_intf->end)(sc, UIO_READ, 0)) != 0) {
+		device_printf(sc->sc_dev, "end read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the number of bytes read looks sensible.  */
+	nbytes = be32toh(response.randomBytesSize);
+	if (nbytes > pktlen - offsetof(struct response, bytes)) {
+		device_printf(sc->sc_dev, "overlong GetRandom length:"
+		    " %u, max %zu\n",
+		    nbytes, pktlen - offsetof(struct response, bytes));
+		nbytes = pktlen - offsetof(struct response, bytes);
+	}
+
+	/*
+	 * Enter the data into the entropy pool.  Conservatively (or,
+	 * perhaps, cargocultily) estimate half a bit of entropy per
+	 * bit of data.
+	 */
+	CTASSERT(sizeof(response.bytes) <= UINT_MAX/(NBBY/2));
+	entropybits = (NBBY/2)*nbytes;
+	rnd_add_data(&sc->sc_rnd, response.bytes, nbytes, entropybits);
+
+out:	/* End the read or write if still ongoing.  */
+	if (endread)
+		rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
+	if (endwrite)
+		rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+
+	*entropybitsp = entropybits;
+	return rv;
+}
+
+static int
+tpm20_rng(struct tpm_softc *sc, unsigned *entropybitsp)
+{
+	/*
+	 * Trusted Platform Module Library, Family "2.0", Level 00
+	 * Revision 01.38, Part 3: Commands, Sec. 16.1 `TPM2_GetRandom'
+	 *
+	 * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-3-Commands-01.38.pdf#page=133
+	 */
+	struct {
+		struct tpm_header hdr;
+		uint16_t bytesRequested;
+	} __packed command;
+	struct response {
+		struct tpm_header hdr;
+		uint16_t randomBytesSize;
+		uint8_t bytes[64];
+	} __packed response;
+	bool endwrite = false, endread = false;
+	size_t nread;
+	uint16_t tag;
+	uint32_t pktlen, code, nbytes, entropybits = 0;
+	int rv;
+
+	/* Encode the command.  */
+	memset(&command, 0, sizeof(command));
+	command.hdr.tag = htobe16(TPM2_ST_NO_SESSIONS);
+	command.hdr.length = htobe32(sizeof(command));
+	command.hdr.code = htobe32(TPM2_CC_GetRandom);
+	command.bytesRequested = htobe16(sizeof(response.bytes));
+
+	/* Write the command.   */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endwrite = true;
+	if ((rv = (*sc->sc_intf->write)(sc, &command, sizeof(command))) != 0) {
+		device_printf(sc->sc_dev, "write failed, error=%d\n", rv);
+		goto out;
+	}
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	endwrite = false;
+	if (rv) {
+		device_printf(sc->sc_dev, "end write failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Read the response header.  */
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)) != 0) {
+		device_printf(sc->sc_dev, "start write failed, error=%d\n",
+		    rv);
+		goto out;
+	}
+	endread = true;
+	if ((rv = (*sc->sc_intf->read)(sc, &response.hdr, sizeof(response.hdr),
+		    &nread, 0)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the response header looks sensible.  */
+	if (nread != sizeof(response.hdr)) {
+		device_printf(sc->sc_dev, "read %zu bytes, expected %zu",
+		    nread, sizeof(response.hdr));
+		goto out;
+	}
+	tag = be16toh(response.hdr.tag);
+	pktlen = be32toh(response.hdr.length);
+	code = be32toh(response.hdr.code);
+	if (tag != TPM2_ST_NO_SESSIONS ||
+	    pktlen < offsetof(struct response, bytes) ||
+	    pktlen > sizeof(response) ||
+	    code != 0) {
+		/*
+		 * If the tpm itself is busy (e.g., it has yet to run a
+		 * self-test, or it's in a timeout period to defend
+		 * against brute force attacks), then we can try again
+		 * later.  Otherwise, give up.
+		 */
+		if (code & TPM2_RC_WARN) {
+			aprint_debug_dev(sc->sc_dev, "%s: tpm busy,"
+			    " code=TPM_RC_WARN+0x%x\n",
+			    __func__, code & ~TPM2_RC_WARN);
+			rv = 0;
+		} else {
+			device_printf(sc->sc_dev, "bad tpm response:"
+			    " tag=%u len=%u code=0x%x\n", tag, pktlen, code);
+			hexdump(aprint_debug, "tpm response header",
+			    (const void *)&response.hdr,
+			    sizeof(response.hdr));
+			rv = EIO;
+		}
+		goto out;
+	}
+
+	/* Read the response payload.  */
+	if ((rv = (*sc->sc_intf->read)(sc,
+		    (char *)&response + nread, pktlen - nread,
+		    NULL, TPM_PARAM_SIZE)) != 0) {
+		device_printf(sc->sc_dev, "read failed, error=%d\n", rv);
+		goto out;
+	}
+	endread = false;
+	if ((rv = (*sc->sc_intf->end)(sc, UIO_READ, 0)) != 0) {
+		device_printf(sc->sc_dev, "end read failed, error=%d\n", rv);
+		goto out;
+	}
+
+	/* Verify the number of bytes read looks sensible.  */
+	nbytes = be16toh(response.randomBytesSize);
+	if (nbytes > pktlen - offsetof(struct response, bytes)) {
+		device_printf(sc->sc_dev, "overlong GetRandom length:"
+		    " %u, max %zu\n",
+		    nbytes, pktlen - offsetof(struct response, bytes));
+		nbytes = pktlen - offsetof(struct response, bytes);
+	}
+
+	/*
+	 * Enter the data into the entropy pool.  Conservatively (or,
+	 * perhaps, cargocultily) estimate half a bit of entropy per
+	 * bit of data.
+	 */
+	CTASSERT(sizeof(response.bytes) <= UINT_MAX/(NBBY/2));
+	entropybits = (NBBY/2)*nbytes;
+	rnd_add_data(&sc->sc_rnd, response.bytes, nbytes, entropybits);
+
+out:	/* End the read or write if still ongoing.  */
+	if (endread)
+		rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
+	if (endwrite)
+		rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+
+	*entropybitsp = entropybits;
+	return rv;
+}
+
+static void
+tpm_rng_work(struct work *wk, void *cookie)
+{
+	struct tpm_softc *sc = cookie;
+	unsigned nbytes, entropybits;
+	int rv;
+
+	/* Acknowledge the request.  */
+	nbytes = atomic_swap_uint(&sc->sc_rndpending, 0);
+
+	/* Lock the tpm while we do I/O transactions with it.  */
+	mutex_enter(&sc->sc_lock);
+
+	/*
+	 * Issue as many commands as needed to fulfill the request, but
+	 * stop if anything fails.
+	 */
+	for (; nbytes; nbytes -= MIN(nbytes, MAX(1, entropybits/NBBY))) {
+		switch (sc->sc_ver) {
+		case TPM_1_2:
+			rv = tpm12_rng(sc, &entropybits);
+			break;
+		case TPM_2_0:
+			rv = tpm20_rng(sc, &entropybits);
+			break;
+		default:
+			panic("bad tpm version: %d", sc->sc_ver);
+		}
+		if (rv)
+			break;
+	}
+
+	/*
+	 * If the tpm is busted, no sense in trying again -- most
+	 * likely, it is deactivated, and by the spec it cannot be
+	 * reactivated until after a reboot.
+	 */
+	if (rv) {
+		device_printf(sc->sc_dev, "deactivating entropy source\n");
+		atomic_store_relaxed(&sc->sc_rnddisabled, true);
+		/* XXX worker thread can't workqueue_destroy its own queue */
+	}
+
+	/* Relinquish the tpm.  */
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+tpm_rng_get(size_t nbytes, void *cookie)
+{
+	struct tpm_softc *sc = cookie;
+
+	if (atomic_load_relaxed(&sc->sc_rnddisabled))
+		return;		/* tough */
+	if (atomic_swap_uint(&sc->sc_rndpending, MIN(nbytes, UINT_MAX/NBBY))
+	    == 0)
+		workqueue_enqueue(sc->sc_rndwq, &sc->sc_rndwk, NULL);
+}
+
+static int
 tpm_tis12_init(struct tpm_softc *sc)
 {
 	int rv;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
 	    TPM_INTF_CAPABILITY);
@@ -341,6 +837,15 @@ tpm_tis12_init(struct tpm_softc *sc)
 
 	/* Abort whatever it thought it was doing. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
+
+	/* XXX Run this at higher priority?  */
+	if ((rv = workqueue_create(&sc->sc_rndwq, device_xname(sc->sc_dev),
+		    tpm_rng_work, sc, PRI_NONE, IPL_VM, WQ_MPSAFE)) != 0)
+		return rv;
+	rndsource_setcb(&sc->sc_rnd, tpm_rng_get, sc);
+	rnd_attach_source(&sc->sc_rnd, device_xname(sc->sc_dev),
+	    RND_TYPE_RNG,
+	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|RND_FLAG_HASCB);
 
 	return 0;
 }
@@ -454,7 +959,7 @@ tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 	if (rw == UIO_READ) {
 		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
-			return rv;
+			goto out;
 
 		/* Still more data? */
 		sc->sc_status = tpm_status(sc);
@@ -479,7 +984,7 @@ tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 		    err ? TPM_STS_CMD_READY : TPM_STS_GO);
 	}
 
-	return rv;
+out:	return err ? err : rv;
 }
 
 const struct tpm_intf tpm_intf_tis12 = {
@@ -561,46 +1066,60 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	struct tpm_header hdr;
 	uint8_t buf[TPM_BUFSIZ];
-	size_t cnt, len, n;
+	size_t cnt, len = 0/*XXXGCC*/;
+	bool end = false;
 	int rv;
 
 	if (sc == NULL)
 		return ENXIO;
 
+	mutex_enter(&sc->sc_lock);
+
 	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)))
-		return rv;
+		goto out;
+	end = true;
 
 	/* Get the header. */
 	if ((rv = (*sc->sc_intf->read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		goto out;
 	}
-	len = TPM_BE32(hdr.length);
-	if (len > uio->uio_resid || len < cnt) {
+	if (cnt != sizeof(hdr)) {
+		rv = EIO;
+		goto out;
+	}
+	len = be32toh(hdr.length);
+	if (len > MIN(sizeof(buf), uio->uio_resid) || len < sizeof(hdr)) {
 		rv = EIO;
 		goto out;
 	}
 
-	/* Copy out the header. */
-	if ((rv = uiomove(&hdr, cnt, uio))) {
+	/* Get the payload. */
+	len -= sizeof(hdr);
+	if ((rv = (*sc->sc_intf->read)(sc, buf, len, NULL, TPM_PARAM_SIZE))) {
 		goto out;
 	}
 
-	/* Process the rest. */
-	len -= cnt;
-	while (len > 0) {
-		n = MIN(sizeof(buf), len);
-		if ((rv = (*sc->sc_intf->read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
-			goto out;
-		}
-		if ((rv = uiomove(buf, n, uio))) {
-			goto out;
-		}
-		len -= n;
+out:	if (end)
+		rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
+
+	mutex_exit(&sc->sc_lock);
+
+	/* If anything went wrong, stop here -- nothing to copy out. */
+	if (rv)
+		return rv;
+
+	/* Copy out the header. */
+	if ((rv = uiomove(&hdr, sizeof(hdr), uio))) {
+		return rv;
 	}
 
-out:
-	rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
-	return rv;
+	/* Copy out the payload.  */
+	if ((rv = uiomove(buf, len, uio))) {
+		return rv;
+	}
+
+	/* Success! */
+	return 0;
 }
 
 static int
@@ -608,6 +1127,7 @@ tpmwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	uint8_t buf[TPM_BUFSIZ];
+	bool end = false;
 	int n, rv;
 
 	if (sc == NULL)
@@ -615,17 +1135,24 @@ tpmwrite(dev_t dev, struct uio *uio, int flags)
 
 	n = MIN(sizeof(buf), uio->uio_resid);
 	if ((rv = uiomove(buf, n, uio))) {
-		goto out;
+		return rv;
 	}
+
+	mutex_enter(&sc->sc_lock);
+
 	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE))) {
 		goto out;
 	}
+	end = true;
+
 	if ((rv = (*sc->sc_intf->write)(sc, buf, n))) {
 		goto out;
 	}
 
-	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
-out:
+out:	if (end)
+		rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+
+	mutex_exit(&sc->sc_lock);
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.4.2.1 2019/10/16 09:52:38 martin Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.4.2.2 2022/08/03 16:00:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-#define TPM_BE16(a)	bswap16(a)
-#define TPM_BE32(a)	bswap32(a)
-#else
-#define TPM_BE16(a)	(a)
-#define TPM_BE32(a)	(a)
-#endif
+#ifndef	DEV_IC_TPMREG_H
+#define	DEV_IC_TPMREG_H
+
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+#include <sys/endian.h>
 
 struct tpm_header {
 	uint16_t tag;
@@ -102,6 +102,63 @@ struct tpm_header {
 #define	TPM_REV				0x0f04	/* 8bit register */
 
 /*
- * Five localities, 4K per locality.
+ * Five localities, 4K per locality.  But we only use the registers for
+ * the first locality, so this is 0x1000 rather than 0x5000.
  */
-#define	TPM_SPACE_SIZE	0x5000
+#define	TPM_SPACE_SIZE	0x1000
+
+#define	TPM_TAG_RQU_COMMAND		0x00c1
+#define	TPM_TAG_RSP_COMMAND		0x00c4
+
+#define	TPM_ORD_GetRandom		0x00000046
+
+/* TPM_RESULT return codes */
+#define	TPM_AUTHFAIL			1
+#define	TPM_BADINDEX			2
+#define	TPM_BAD_PARAMETER		3
+#define	TPM_AUDITFAILURE		4
+#define	TPM_CLEAR_DISABLED		5
+#define	TPM_DEACTIVATED			6
+#define	TPM_DISABLED			7
+#define	TPM_DISABLED_CMD		8
+#define	TPM_FAIL			9
+#define	TPM_BAD_ORDINAL			10
+/* ... */
+
+#define	TPM_NON_FATAL			0x800
+
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Trusted Platform Module Library Specification, Family "2.0",
+ * Level 00, Revision 01.59 -- November 2019
+ *
+ * https://trustedcomputinggroup.org/resource/tpm-library-specification/
+ *
+ * Where this spec names things TPM_* that don't obviously coincide
+ * with the 1.2 things, we name them TPM2_*.
+ */
+
+/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-4-Supporting-Routines-01.38-code.pdf#page=172 */
+#define	TPM2_ST_RSP_COMMAND		0x00c4
+#define	TPM2_ST_NULL			0x8000
+#define	TPM2_ST_NO_SESSIONS		0x8001
+#define	TPM2_ST_SESSIONS		0x8002
+/* ... */
+
+/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=45 */
+#define	TPM2_CC_GetRandom		0x0000017b
+
+/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=53 */
+#define	TPM2_RC_SUCCESS			0x000
+#define	TPM2_RC_BAD_TAG			0x01e
+
+#define	TPM2_RC_VER1			0x100
+
+#define	TPM2_RC_FMT1			0x080
+
+#define	TPM2_RC_WARN			0x900
+#define	TPM2_RC_TESTING			(TPM2_RC_WARN + 0x00a)
+#define	TPM2_RC_RETRY			(TPM2_RC_WARN + 0x022)
+
+#endif	/* DEV_IC_TPMREG_H */
