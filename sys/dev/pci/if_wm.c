@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.749 2022/07/29 15:30:42 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.750 2022/08/03 05:23:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.749 2022/07/29 15:30:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.750 2022/08/03 05:23:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3872,6 +3872,7 @@ wm_ifflags_cb(struct ethercom *ec)
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	KASSERT(IFNET_LOCKED(ifp));
 	WM_CORE_LOCK(sc);
 
 	/*
@@ -6470,6 +6471,8 @@ wm_init(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	int ret;
 
+	KASSERT(IFNET_LOCKED(ifp));
+
 	WM_CORE_LOCK(sc);
 	ret = wm_init_locked(ifp);
 	WM_CORE_UNLOCK(sc);
@@ -6487,6 +6490,7 @@ wm_init_locked(struct ifnet *ifp)
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(IFNET_LOCKED(ifp));
 	KASSERT(WM_CORE_LOCKED(sc));
 
 	/*
@@ -7042,7 +7046,9 @@ wm_init_locked(struct ifnet *ifp)
 	/* Start the one second link check clock. */
 	callout_schedule(&sc->sc_tick_ch, hz);
 
-	/* ...all done! */
+	/*
+	 * ...all done! (IFNET_LOCKED asserted above.)
+	 */
 	ifp->if_flags |= IFF_RUNNING;
 
  out:
@@ -11299,7 +11305,10 @@ wm_gmii_mediachange(struct ifnet *ifp)
 
 	DPRINTF(sc, WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	if ((ifp->if_flags & IFF_UP) == 0)
+
+	KASSERT(WM_CORE_LOCKED(sc));
+
+	if ((sc->sc_if_flags & IFF_UP) == 0)
 		return 0;
 
 	/* XXX Not for I354? FreeBSD's e1000_82575.c doesn't include it */
@@ -11371,6 +11380,8 @@ static void
 wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
+
+	KASSERT(WM_CORE_LOCKED(sc));
 
 	ether_mediastatus(ifp, ifmr);
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
