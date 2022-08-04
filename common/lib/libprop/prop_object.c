@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.33 2022/08/03 21:20:21 riastradh Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.34 2022/08/04 09:02:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -735,7 +735,7 @@ _prop_object_internalize_context_alloc(const char *xml)
 		if (_PROP_EOF(*xml) || *xml != '<')
 			goto bad;
 
-#define	MATCH(str)	(strcmp(&xml[1], str) == 0)
+#define	MATCH(str)	(strncmp(&xml[1], str, strlen(str)) == 0)
 
 		/*
 		 * Skip over the XML preamble that Apple XML property
