@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.56 2022/05/13 09:40:02 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.57 2022/08/05 23:43:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.56 2022/05/13 09:40:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57 2022/08/05 23:43:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1291,7 +1291,7 @@ static int
 sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	int arg;
+	int arg = 0;
 	int error;
 
 	KASSERT(E->stage == ENTROPY_HOT);
@@ -1317,7 +1317,7 @@ static int
 sysctl_entropy_gather(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	int arg;
+	int arg = 0;
 	int error;
 
 	KASSERT(E->stage == ENTROPY_HOT);
