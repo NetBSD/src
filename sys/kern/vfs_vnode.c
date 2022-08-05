@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.144 2022/07/18 04:30:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.145 2022/08/05 05:20:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.144 2022/07/18 04:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.145 2022/08/05 05:20:39 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1455,8 +1455,7 @@ vcache_free(vnode_impl_t *vip)
 	mutex_obj_free(vp->v_interlock);
 	rw_destroy(&vip->vi_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
-	KASSERT(vp->v_klist == &vip->vi_klist ||
-		SLIST_EMPTY(&vip->vi_klist.vk_klist));
+	KASSERT(vp->v_klist == &vip->vi_klist);
 	klist_fini(&vip->vi_klist.vk_klist);
 	cv_destroy(&vp->v_cv);
 	cache_vnode_fini(vp);
@@ -1830,6 +1829,19 @@ vcache_reclaim(vnode_t *vp)
 	 * while we clean it out.
 	 */
 	VSTATE_CHANGE(vp, VS_BLOCKED, VS_RECLAIMING);
+
+	/*
+	 * Send NOTE_REVOKE now, before we call VOP_RECLAIM(),
+	 * because VOP_RECLAIM() could cause vp->v_klist to
+	 * become invalid.  Don't check for interest in NOTE_REVOKE
+	 * here; it's always posted because it sets EV_EOF.
+	 *
+	 * Once it's been posted, reset vp->v_klist to point to
+	 * our own local storage, in case we were sharing with
+	 * someone else.
+	 */
+	KNOTE(&vp->v_klist->vk_klist, NOTE_REVOKE);
+	vp->v_klist = &vip->vi_klist;
 	mutex_exit(vp->v_interlock);
 
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
@@ -1916,11 +1928,6 @@ vcache_reclaim(vnode_t *vp)
 	vp->v_op = dead_vnodeop_p;
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
-	/*
-	 * Don't check for interest in NOTE_REVOKE; it's always posted
-	 * because it sets EV_EOF.
-	 */
-	KNOTE(&vp->v_klist->vk_klist, NOTE_REVOKE);
 	mutex_exit(vp->v_interlock);
 
 	/*
