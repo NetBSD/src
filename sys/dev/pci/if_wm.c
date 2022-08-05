@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.751 2022/08/03 05:29:04 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.752 2022/08/05 05:50:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.751 2022/08/03 05:29:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.752 2022/08/05 05:50:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3967,7 +3967,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int s, error;
+	int error;
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -3981,7 +3981,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 #ifndef WM_MPSAFE
-	s = splnet();
+	const int s = splnet();
 #endif
 	switch (cmd) {
 	case SIOCSIFMEDIA:
@@ -4034,7 +4034,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 		}
 #ifdef WM_MPSAFE
-		s = splnet();
+		const int s = splnet();
 #endif
 		/* It may call wm_start, so unlock here */
 		error = ether_ioctl(ifp, cmd, data);
