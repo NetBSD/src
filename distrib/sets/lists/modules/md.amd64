@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.95 2022/07/28 22:00:23 riastradh Exp $
+# $NetBSD: md.amd64,v 1.96 2022/08/05 08:48:36 riastradh Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -162,8 +162,8 @@
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/i915drm				modules-base-kernel	kmod
 ./@MODULEDIR@/i915drm/i915drm.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/i915drmkms			modules-obsolete	obsolete
-./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-obsolete	obsolete
+./@MODULEDIR@/i915drmkms			modules-base-kernel	kmod
+./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb				modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb/ichsmb.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_iavf				modules-base-kernel	kmod
