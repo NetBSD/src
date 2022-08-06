@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.31 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.32 2022/08/06 18:26:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.31 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.32 2022/08/06 18:26:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -132,7 +132,7 @@ cd9660_lookup(void *v)
 	imp = dp->i_mnt;
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);

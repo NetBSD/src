@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.46 2020/09/05 02:55:38 riastradh Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.47 2022/08/06 18:26:42 andvar Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.46 2020/09/05 02:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.47 2022/08/06 18:26:42 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -162,7 +162,7 @@ ulfs_lookup(void *v)
 	endsearch = 0; /* silence compiler warning */
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);

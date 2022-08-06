@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.40 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.41 2022/08/06 18:26:42 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.40 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.41 2022/08/06 18:26:42 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -140,7 +140,7 @@ msdosfs_lookup(void *v)
 #endif
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred)) != 0)
 		return (error);

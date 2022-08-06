@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.39 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.40 2022/08/06 18:26:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.39 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.40 2022/08/06 18:26:42 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -343,7 +343,7 @@ hfs_vop_lookup(void *v)
 
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return error;
