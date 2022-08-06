@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.21 2014/10/04 13:27:24 hannken Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.22 2022/08/06 18:26:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.21 2014/10/04 13:27:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.22 2022/08/06 18:26:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -147,7 +147,7 @@ filecore_lookup(void *v)
 	dp = VTOI(vdp);
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);

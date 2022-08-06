@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.24 2021/11/10 16:42:47 msaitoh Exp $	*/
+/*	$NetBSD: complete.c,v 1.25 2022/08/06 18:26:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.24 2021/11/10 16:42:47 msaitoh Exp $");
+__RCSID("$NetBSD: complete.c,v 1.25 2022/08/06 18:26:43 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -200,7 +200,7 @@ mail_sl_add(StringList *sl, char *i)
  * return value. Can't control multiple values being expanded from the
  * expression, we return only the first.
  * Returns NULL on error, or a pointer to a buffer containing the filename
- * that's the caller's responsiblity to free(3) when finished with.
+ * that's the caller's responsibility to free(3) when finished with.
  */
 static char *
 globulize(const char *pattern)

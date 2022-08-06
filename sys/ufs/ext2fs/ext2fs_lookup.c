@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.91 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.92 2022/08/06 18:26:42 andvar Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.91 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.92 2022/08/06 18:26:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ ext2fs_lookup(void *v)
 	*vpp = NULL;
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.21 2020/01/17 20:08:07 ad Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.22 2022/08/06 18:26:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.21 2020/01/17 20:08:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.22 2022/08/06 18:26:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ adosfs_lookup(void *v)
 	nocache = 0;
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, ucp)) != 0)
 		return (error);

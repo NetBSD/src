@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.43 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.44 2022/08/06 18:26:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.43 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.44 2022/08/06 18:26:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ efs_check_possible(struct vnode *vp, struct efs_inode *eip, accmode_t accmode)
 }
 
 /*
- * Determine the accessiblity of a file based on the permissions allowed by the
+ * Determine the accessibility of a file based on the permissions allowed by the
  * specified credentials.
  *
  * Returns 0 on success.

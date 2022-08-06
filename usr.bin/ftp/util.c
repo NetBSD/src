@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.163 2021/08/27 17:35:03 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.164 2022/08/06 18:26:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.163 2021/08/27 17:35:03 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.164 2022/08/06 18:26:43 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -620,7 +620,7 @@ remglob(char *argv[], int doswitch, const char **errbuf)
  * return value. Can't control multiple values being expanded from the
  * expression, we return only the first.
  * Returns NULL on error, or a pointer to a buffer containing the filename
- * that's the caller's responsiblity to free(3) when finished with.
+ * that's the caller's responsibility to free(3) when finished with.
  */
 char *
 globulize(const char *pattern)
