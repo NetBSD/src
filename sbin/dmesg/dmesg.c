@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.48 2022/08/06 09:42:33 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.49 2022/08/06 10:16:18 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.48 2022/08/06 09:42:33 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.49 2022/08/06 10:16:18 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,8 +149,7 @@ main(int argc, char *argv[])
 	char *p, *bufdata;
 	char buf[5];
 #ifndef SMALL
-	size_t tbuflen;
-	char *tbuf;
+	char tbuf[64];
 	char *memf, *nlistf;
 	struct timespec boottime;
 	struct timespec lasttime;
@@ -265,11 +264,6 @@ main(int argc, char *argv[])
 	frac = false;
 	postts = false;
 	scale = 0;
-
-	tbuflen = 64;
-	tbuf = malloc(tbuflen);
-	if (tbuf == NULL)
-		err(1, "malloc");
 #endif
 	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
@@ -279,11 +273,14 @@ main(int argc, char *argv[])
 			p = bufdata;
 #define ADDC(c)								\
     do {								\
-	if (tstamp >= tbuflen - 1 &&					\
-	    reallocarr(&tbuf, tbuflen * 2, 1) == 0)			\
-		tbuflen *= 2;						\
-	if (tstamp < tbuflen - 1)					\
+	if (tstamp < sizeof(tbuf) - 1)					\
 		tbuf[tstamp++] = (c);					\
+	else {								\
+		/* Cannot be a timestamp. */				\
+		tstamp = 0;						\
+		tbuf[sizeof(tbuf) - 1] = '\0';				\
+		goto not_tstamp;					\
+	}								\
 	if (frac)							\
 		scale++;						\
     } while (0)
@@ -322,6 +319,8 @@ main(int argc, char *argv[])
 				continue;
 #ifndef SMALL
 			case ']':
+				if (tstamp == 0)
+					goto prchar;
 				frac = false;
 				ADDC(ch);
 				ADDC('\0');
@@ -330,7 +329,7 @@ main(int argc, char *argv[])
 				sec = fsec = 0;
 				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
 				case 0:
-					/* not a timestamp */
+ not_tstamp:				/* not a timestamp */
 					PRTBUF();
 					continue;
 				case 1:
@@ -361,14 +360,14 @@ main(int argc, char *argv[])
 							t++;
 
 					if (localtime_r(&t, &tm) != NULL) {
-						strftime(tbuf, tbuflen,
+						strftime(tbuf, sizeof(tbuf),
 						    "%a %b %e %H:%M:%S %Z %Y",
 						    &tm);
 						printf("%s", tbuf);
 					}
 				} else if (humantime > 1) {
 					const char *fp = fmtydhmsf(tbuf,
-					    tbuflen, sec, fsec, humantime);
+					    sizeof(tbuf), sec, fsec, humantime);
 					if (fp) {
 						printf("%s", fp);
 					}
@@ -410,6 +409,7 @@ main(int argc, char *argv[])
 						frac = true;
 					continue;
 				}
+ prchar:
 #endif
 				if (log)
 					continue;
