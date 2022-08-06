@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.50 2022/08/06 10:19:44 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.51 2022/08/06 10:22:22 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.50 2022/08/06 10:19:44 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.51 2022/08/06 10:22:22 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,6 @@ main(int argc, char *argv[])
 				ADDC(ch);
 				ADDC('\0');
 				tstamp = 0;
-				postts = true;
 				sec = fsec = 0;
 				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
 				case 0:
@@ -344,6 +343,7 @@ main(int argc, char *argv[])
 					/* Help */
 					continue;
 				}
+				postts = true;
 
 				for (nsec = fsec, j = 9 - scale; --j >= 0; )
 					nsec *= 10;
