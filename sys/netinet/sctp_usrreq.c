@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.21 2022/05/29 10:47:40 andvar Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.22 2022/08/06 18:26:42 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.21 2022/05/29 10:47:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.22 2022/08/06 18:26:42 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -370,7 +370,7 @@ sctp_notify(struct sctp_inpcb *inp,
 	    (errno == ENOPROTOOPT)	/* SCTP is not present on host */
 		) {
 		/*
-		 * Hmm reachablity problems we must examine closely.
+		 * Hmm reachability problems we must examine closely.
 		 * If its not reachable, we may have lost a network.
 		 * Or if there is NO protocol at the other end named SCTP.
 		 * well we consider it a OOTB abort.
