@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.234 2022/07/18 04:30:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.235 2022/08/06 21:21:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.234 2022/07/18 04:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.235 2022/08/06 21:21:10 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -647,7 +647,10 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fflag & FDIRECT)
 		ioflag |= IO_DIRECT;
-	vn_lock(vp, LK_SHARED | LK_RETRY);
+	if (offset == &fp->f_offset && (flags & FOF_UPDATE_OFFSET) != 0)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	else
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
@@ -1135,7 +1138,10 @@ vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
 	if (vp->v_type == VFIFO)
 		return ESPIPE;
 
-	vn_lock(vp, LK_SHARED | LK_RETRY);
+	if (flags & FOF_UPDATE_OFFSET)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	else
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 
 	/* Compute the old and new offsets.  */
 	oldoff = fp->f_offset;
