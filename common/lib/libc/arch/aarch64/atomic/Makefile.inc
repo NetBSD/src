@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2021/04/27 09:14:24 skrll Exp $
+# $NetBSD: Makefile.inc,v 1.5 2022/08/06 21:31:33 riastradh Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
@@ -14,7 +14,7 @@ SRCS.atomic+=	membar_ops.S
 #and cas nand or sub swap xor
 .for op in swp cas clr set eor add
 .for sz in 1 2 4 8
-.for ar in _relax _acq _rel _acq_rel
+.for ar in _relax _acq _rel _acq_rel _sync
 __aarch64_${op}${sz}${ar}.S: __aarch64_lse.S
 	${_MKTARGET_CREATE}
 	printf '#define OP ${op}\n#define OP_${op}\n#define SZ ${sz}\n#define AR ${ar}\n#define AR${ar}\n#include "__aarch64_lse.S"\n' > ${.TARGET}
@@ -23,7 +23,7 @@ SRCS.gen+=	__aarch64_${op}${sz}${ar}.S
 .endfor
 .endfor
 .for op in casp
-.for ar in _relax _acq _rel _acq_rel
+.for ar in _relax _acq _rel _acq_rel _sync
 __aarch64_${op}${ar}.S: __aarch64_lse.S
 	${_MKTARGET_CREATE}
 	printf '#define OP ${op}\n#define OP_${op}\n#define AR ${ar}\n#define AR${ar}\n#include "__aarch64_lse.S"\n' > ${.TARGET}
