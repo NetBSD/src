@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.8 2022/07/21 18:12:24 martin Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.9 2022/08/06 17:53:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.8 2022/07/21 18:12:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.9 2022/08/06 17:53:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -493,8 +493,8 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	WR4(sc, GMAC_MAC_ADDRESS0_LOW, val);
 
 	/* Multicast hash filters */
-	WR4(sc, GMAC_MAC_HASH_TABLE_REG0, hash[1]);
-	WR4(sc, GMAC_MAC_HASH_TABLE_REG1, hash[0]);
+	WR4(sc, GMAC_MAC_HASH_TABLE_REG0, hash[0]);
+	WR4(sc, GMAC_MAC_HASH_TABLE_REG1, hash[1]);
 
 	DPRINTF(EDEB_NOTE, "writing new packet filter config "
 	    "%08x, hash[1]=%08x, hash[0]=%08x\n", pfil, hash[1], hash[0]);
