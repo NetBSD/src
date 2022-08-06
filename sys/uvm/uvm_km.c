@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.161 2022/08/03 01:52:11 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.162 2022/08/06 05:55:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.161 2022/08/03 01:52:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.162 2022/08/06 05:55:37 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -226,20 +226,23 @@ kmeminit_nkmempages(void)
 		return;
 	}
 
-#ifdef NKMEMPAGES_MAX_UNLIMITED
+#if defined(NKMEMPAGES_MAX_UNLIMITED) && !defined(KMSAN)
 	npages = physmem;
 #else
 
 #if defined(KMSAN)
-	npages = (physmem / 8);
+	npages = (physmem / 4);
 #elif defined(PMAP_MAP_POOLPAGE)
 	npages = (physmem / 4);
 #else
 	npages = (physmem / 3) * 2;
 #endif /* defined(PMAP_MAP_POOLPAGE) */
 
+#if !defined(NKMEMPAGES_MAX_UNLIMITED)
 	if (npages > NKMEMPAGES_MAX)
 		npages = NKMEMPAGES_MAX;
+#endif
+
 #endif
 
 	if (npages < NKMEMPAGES_MIN)
