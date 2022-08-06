@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.45 2020/01/01 00:24:52 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.46 2022/08/06 09:33:56 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.45 2020/01/01 00:24:52 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.46 2022/08/06 09:33:56 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,15 +271,13 @@ main(int argc, char *argv[])
 #ifndef SMALL
 		if (p == bufdata + cur.msg_bufs)
 			p = bufdata;
-#define ADDC(c)				\
-    do {				\
-	if (tstamp < sizeof(tbuf) - 1)	\
-		tbuf[tstamp++] = (c);	\
-	if (frac)			\
-		scale++;		\
-    } while (/*CONSTCOND*/0)
-#else
-#define ADDC(c)
+#define ADDC(c)								\
+    do {								\
+	if (tstamp < sizeof(tbuf) - 1)					\
+		tbuf[tstamp++] = (c);					\
+	if (frac)							\
+		scale++;						\
+    } while (0)
 #endif
 		ch = *p;
 		if (ch == '\0')
@@ -389,10 +387,10 @@ main(int argc, char *argv[])
 			default:
 #ifndef SMALL
 				if (tstamp) {
-				    ADDC(ch);
-				    if (ch == '.')
-					frac = true;
-				    continue;
+					ADDC(ch);
+					if (ch == '.')
+						frac = true;
+					continue;
 				}
 #endif
 				if (log)
