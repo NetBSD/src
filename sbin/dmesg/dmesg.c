@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.46 2022/08/06 09:33:56 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.47 2022/08/06 09:39:32 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.46 2022/08/06 09:33:56 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.47 2022/08/06 09:39:32 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,8 @@ main(int argc, char *argv[])
 	char *p, *bufdata;
 	char buf[5];
 #ifndef SMALL
-	char tbuf[64];
+	size_t tbuflen;
+	char *tbuf;
 	char *memf, *nlistf;
 	struct timespec boottime;
 	struct timespec lasttime;
@@ -264,6 +265,11 @@ main(int argc, char *argv[])
 	frac = false;
 	postts = false;
 	scale = 0;
+
+	tbuflen = 64;
+	tbuf = malloc(tbuflen);
+	if (tbuf == NULL)
+		err(1, "malloc");
 #endif
 	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
@@ -273,11 +279,22 @@ main(int argc, char *argv[])
 			p = bufdata;
 #define ADDC(c)								\
     do {								\
-	if (tstamp < sizeof(tbuf) - 1)					\
+	if (tstamp >= tbuflen - 1 &&					\
+	    reallocarr(&tbuf, tstamp * 2, 1) == 0)			\
+		tbuflen *= 2;						\
+	if (tstamp < tbuflen - 1)					\
 		tbuf[tstamp++] = (c);					\
 	if (frac)							\
 		scale++;						\
     } while (0)
+#define	PRTBUF()							\
+    for (char *_p = tbuf; *_p != '\0'; _p++) {				\
+	(void)vis(buf, *_p, VIS_NOSLASH, 0);				\
+	if (buf[1] == 0)						\
+		(void)putchar(buf[0]);					\
+	else								\
+		(void)printf("%s", buf);				\
+    }
 #endif
 		ch = *p;
 		if (ch == '\0')
@@ -312,15 +329,16 @@ main(int argc, char *argv[])
 				postts = true;
 				sec = fsec = 0;
 				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
-				case EOF:
 				case 0:
-					/*???*/
+					/* not a timestamp */
+					PRTBUF();
 					continue;
 				case 1:
-					fsec = 0;
+					fsec = 0; /* XXX PRTBUF()? */
 					break;
 				case 2:
 					break;
+				case EOF:
 				default:
 					/* Help */
 					continue;
@@ -343,14 +361,14 @@ main(int argc, char *argv[])
 							t++;
 
 					if (localtime_r(&t, &tm) != NULL) {
-						strftime(tbuf, sizeof(tbuf),
+						strftime(tbuf, tbuflen,
 						    "%a %b %e %H:%M:%S %Z %Y",
 						    &tm);
 						printf("%s", tbuf);
 					}
 				} else if (humantime > 1) {
 					const char *fp = fmtydhmsf(tbuf,
-					    sizeof(tbuf), sec, fsec, humantime);
+					    tbuflen, sec, fsec, humantime);
 					if (fp) {
 						printf("%s", fp);
 					}
@@ -407,6 +425,13 @@ main(int argc, char *argv[])
 #endif
 			(void)printf("%s", buf);
 	}
+#ifndef SMALL
+	/* non-terminated [.*] */
+	if (tstamp) {
+		ADDC('\0');
+		PRTBUF();
+	}
+#endif
 	if (!newl)
 		(void)putchar('\n');
 	return EXIT_SUCCESS;
