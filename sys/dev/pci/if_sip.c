@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.186 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.187 2022/08/06 15:38:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.186 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.187 2022/08/06 15:38:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,7 +569,6 @@ sip_init_txdesc(struct sip_softc *sc, int x, bus_addr_t bufptr, uint32_t cmdsts)
 		sipd->sipd_words[sc->sc_bufptr_idx] = htole32(bufptr);
 	}
 	sipd->sipd_words[sc->sc_extsts_idx] = 0;
-	membar_producer();
 	sipd->sipd_words[sc->sc_cmdsts_idx] = htole32(cmdsts);
 	/* sip_cdtxsync() will be done later. */
 }
@@ -596,7 +595,7 @@ sip_init_rxdesc(struct sip_softc *sc, int x)
 		    htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
 	}
 	sipd->sipd_words[sc->sc_extsts_idx] = 0;
-	membar_producer();
+	sip_cdrxsync(sc, x, BUS_DMASYNC_PREWRITE);
 	sipd->sipd_words[sc->sc_cmdsts_idx] =
 	    htole32(CMDSTS_INTR | (sc->sc_parm->p_rxbuf_len &
 	    			   sc->sc_bits.b_cmdsts_size_mask));
@@ -2126,9 +2125,6 @@ gsip_rxintr(struct sip_softc *sc)
 
 		cmdsts =
 		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_cmdsts_idx]);
-		extsts =
-		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_extsts_idx]);
-		len = CMDSTS_SIZE(sc, cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -2141,6 +2137,12 @@ gsip_rxintr(struct sip_softc *sc)
 			 */
 			break;
 		}
+
+		sip_cdrxsync(sc, i, BUS_DMASYNC_POSTREAD);
+
+		extsts =
+		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_extsts_idx]);
+		len = CMDSTS_SIZE(sc, cmdsts);
 
 		if (__predict_false(sc->sc_rxdiscard)) {
 			sip_init_rxdesc(sc, i);
