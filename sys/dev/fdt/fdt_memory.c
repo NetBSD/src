@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.5 2022/08/04 11:58:55 ryo Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.6 2022/08/06 20:16:42 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.5 2022/08/04 11:58:55 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.6 2022/08/06 20:16:42 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -83,16 +83,16 @@ fdt_memory_get(uint64_t *pstart, uint64_t *pend)
 {
 	const int memory = OF_finddevice("/memory");
 	uint64_t cur_addr, cur_size;
-	int index;
+	int index, nadd;
 
-	for (index = 0;
+	for (index = 0, nadd = 0;
 	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
 	     index++) {
 		if (cur_size == 0)
 			continue;
 		fdt_memory_add_range(cur_addr, cur_size);
 
-		if (index == 0) {
+		if (nadd++ == 0) {
 			*pstart = cur_addr;
 			*pend = cur_addr + cur_size;
 			continue;
@@ -102,7 +102,7 @@ fdt_memory_get(uint64_t *pstart, uint64_t *pend)
 		if (cur_addr + cur_size > *pend)
 			*pend = cur_addr + cur_size;
 	}
-	if (index == 0)
+	if (nadd == 0)
 		panic("Cannot determine memory size");
 }
 
