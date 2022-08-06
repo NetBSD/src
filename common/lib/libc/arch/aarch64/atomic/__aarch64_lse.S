@@ -1,4 +1,4 @@
-/* $NetBSD: __aarch64_lse.S,v 1.6 2022/07/23 13:30:15 skrll Exp $ */
+/* $NetBSD: __aarch64_lse.S,v 1.7 2022/08/06 21:31:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -64,21 +64,31 @@
 #if defined(AR_relax)
 #define ACQ
 #define REL
+#define DMB
 #endif
 
 #if defined(AR_acq)
 #define ACQ	a
 #define REL
+#define DMB
 #endif
 
 #if defined(AR_rel)
 #define ACQ
 #define REL	l
+#define DMB
 #endif
 
 #if defined(AR_acq_rel)
 #define ACQ	a
 #define REL	l
+#define DMB
+#endif
+
+#if defined(AR_sync)
+#define ACQ
+#define REL
+#define DMB	dmb ish
 #endif
 
 #if defined(OP_clr)
@@ -134,14 +144,18 @@
 ENTRY_NP(SWP_FUNC)
 #ifdef _HAVE_LSE
 	DO_LSE_INSN_IF_SUPPORTED(99f)
+	DMB
 	SWP	R0, R0, [x1]
+	DMB
 	ret
 99:
 #endif
 	mov	x4, x0			/* need x0 for return value	*/
+	DMB				/* potential barrier		*/
 1:	LDXR	R0, [x1]		/* load old value		*/
 	STXR	w3, R4, [x1]		/* store new value		*/
 	cbnz	w3, 2f			/*   succeed?? no, try again	*/
+	DMB				/* potential barrier		*/
 	ret				/* return old value		*/
 2:	b	1b
 END(SWP_FUNC)
@@ -151,16 +165,20 @@ END(SWP_FUNC)
 ENTRY_NP(CAS_FUNC)
 #ifdef _HAVE_LSE
 	DO_LSE_INSN_IF_SUPPORTED(99f)
+	DMB
 	CAS	R0, R1, [x2]
+	DMB
 	ret
 99:
 #endif
 	mov	x4, x0			/* need x0 for return value	*/
+	DMB				/* potential barrier		*/
 1:	LDXR	R0, [x2]		/* load old value		*/
 	cmp	R0, R4			/* compare			*/
 	b.ne	2f			/*   not equal? return		*/
 	STXR	w3, R1, [x2]		/* store new value		*/
 	cbnz	w3, 3f			/*   succeed? nope, try again.	*/
+	DMB				/* potential barrier		*/
 2:	ret				/* return.			*/
 3:	b	1b
 END(CAS_FUNC)
@@ -170,12 +188,15 @@ END(CAS_FUNC)
 ENTRY_NP(CASP_FUNC)
 #ifdef _HAVE_LSE
 	DO_LSE_INSN_IF_SUPPORTED(99f)
+	DMB
 	CASP	x0, x1, x2, x3, [x4]
+	DMB
 	ret
 99:
 #endif
 	mov	x5, x0			/* need x0 for return value	*/
 	mov	x6, x1			/* need x1 for return value	*/
+	DMB				/* potential barrier		*/
 1:	LDXP	x0, x1, [x4]		/* load old value		*/
 	cmp	x0, x5			/* compare			*/
 	b.ne	2f			/*   not equal? return		*/
@@ -183,6 +204,7 @@ ENTRY_NP(CASP_FUNC)
 	b.ne	2f			/*   not equal? return		*/
 	STXP	w7, x2, x3, [x4]	/* store new value		*/
 	cbnz	w7, 3f			/*   succeed? nope, try again.	*/
+	DMB				/* potential barrier		*/
 2:	ret				/* return.			*/
 3:	b	1b
 END(CASP_FUNC)
@@ -192,15 +214,19 @@ END(CASP_FUNC)
 ENTRY_NP(INSN_FUNC)
 #ifdef _HAVE_LSE
 	DO_LSE_INSN_IF_SUPPORTED(99f)
+	DMB
 	INSN	R0, R0, [x1]
+	DMB
 	ret
 99:
 #endif
 	mov	x4, x0			/* need x0 for return value	*/
+	DMB				/* potential barrier		*/
 1:	LDXR	R0, [x1]		/* load old value		*/
 	INSNOP	R4, R0, R4
 	STXR	w3, R4, [x1]		/* store new value		*/
 	cbnz	w3, 2f			/*   succeed?? no, try again	*/
+	DMB				/* potential barrier		*/
 	ret				/* return old value		*/
 2:	b	1b
 END(INSN_FUNC)
