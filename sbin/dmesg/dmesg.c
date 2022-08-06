@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.47 2022/08/06 09:39:32 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.48 2022/08/06 09:42:33 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.47 2022/08/06 09:39:32 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.48 2022/08/06 09:42:33 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 #define ADDC(c)								\
     do {								\
 	if (tstamp >= tbuflen - 1 &&					\
-	    reallocarr(&tbuf, tstamp * 2, 1) == 0)			\
+	    reallocarr(&tbuf, tbuflen * 2, 1) == 0)			\
 		tbuflen *= 2;						\
 	if (tstamp < tbuflen - 1)					\
 		tbuf[tstamp++] = (c);					\
