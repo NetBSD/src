@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.49 2022/08/06 10:16:18 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.50 2022/08/06 10:19:44 rin Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.49 2022/08/06 10:16:18 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.50 2022/08/06 10:19:44 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,10 +145,11 @@ main(int argc, char *argv[])
 {
 	struct kern_msgbuf cur;
 	int ch, newl, log, i;
-	size_t tstamp, size;
+	size_t size;
 	char *p, *bufdata;
 	char buf[5];
 #ifndef SMALL
+	size_t tstamp;
 	char tbuf[64];
 	char *memf, *nlistf;
 	struct timespec boottime;
@@ -263,9 +264,10 @@ main(int argc, char *argv[])
 #ifndef SMALL
 	frac = false;
 	postts = false;
+	tstamp = 0;
 	scale = 0;
 #endif
-	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
+	for (newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
 	    i < cur.msg_bufs; i++, p++) {
 
 #ifndef SMALL
@@ -395,11 +397,9 @@ main(int argc, char *argv[])
 #ifndef SMALL
 				if (!tstamp && postts) {
 					postts = false;
-#else
-				if (!tstamp) {
-#endif
 					continue;
 				}
+#endif
 				/*FALLTHROUGH*/
 			default:
 #ifndef SMALL
