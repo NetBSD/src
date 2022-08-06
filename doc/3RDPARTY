@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1866 2022/07/29 12:49:16 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1867 2022/08/06 09:39:50 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -499,11 +499,11 @@ When updating GDB, it is imperative to test that:
 
 Package:	binutils
 Version:	2.34
-Current Vers:	2.38
+Current Vers:	2.39
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2022-02-09
+Date:		2022-08-06
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
