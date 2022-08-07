@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.370 2022/08/07 08:19:38 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.371 2022/08/07 08:24:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.370 2022/08/07 08:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.371 2022/08/07 08:24:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1424,17 +1424,15 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct bge_jpool_entry *entry;
 	struct bge_softc * const sc = arg;
-	int i, s;
+	int s;
 
 	if (sc == NULL)
 		panic("bge_jfree: can't find softc pointer!");
 
 	/* calculate the slot this buffer belongs to */
+	int i = ((char *)buf - (char *)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
 
-	i = ((char *)buf
-	     - (char *)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
-
-	if ((i < 0) || (i >= BGE_JSLOTS))
+	if (i < 0 || i >= BGE_JSLOTS)
 		panic("bge_jfree: asked to free buffer that we don't manage!");
 
 	s = splvm();
