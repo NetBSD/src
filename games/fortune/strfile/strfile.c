@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.43 2021/05/02 12:50:44 rillig Exp $	*/
+/*	$NetBSD: strfile.c,v 1.44 2022/08/07 11:06:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.43 2021/05/02 12:50:44 rillig Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.44 2022/08/07 11:06:18 andvar Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -457,7 +457,7 @@ randomize(void)
 
 /*
  * fwrite_be_offt:
- *	Write out the off paramater as a 64 bit big endian number
+ *	Write out the off parameter as a 64 bit big endian number
  */
 
 static void
