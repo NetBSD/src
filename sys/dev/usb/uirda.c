@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.52 2021/09/26 15:08:29 thorpej Exp $	*/
+/*	$NetBSD: uirda.c,v 1.53 2022/08/07 11:25:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.52 2021/09/26 15:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.53 2022/08/07 11:25:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -201,6 +201,10 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
+	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rd_sel);
+
 	if (sc->sc_hdszi == 0)
 		sc->sc_hdszi = UIRDA_INPUT_HEADER_SIZE;
 
@@ -279,10 +283,6 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(10, ("uirda_attach: %p\n", sc->sc_udev));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
-
-	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
-	selinit(&sc->sc_rd_sel);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
