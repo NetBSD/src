@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.98 2022/05/11 17:22:20 bouyer Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.99 2022/08/07 09:37:47 andvar Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.98 2022/05/11 17:22:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.99 2022/08/07 09:37:47 andvar Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -316,7 +316,7 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 #if __FreeBSD_version >= 1100036
 		/*
 		 * Since we're looking at the tx ring, we can check
-		 * to see if we're a VF by examing our tail register
+		 * to see if we're a VF by examining our tail register
 		 * address.
 		 */
 		if ((txr->adapter->feat_en & IXGBE_FEATURE_VF) &&
@@ -1964,7 +1964,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		 * not be fragmented across sequential
 		 * descriptors, rather the next descriptor
 		 * is indicated in bits of the descriptor.
-		 * This also means that we might proceses
+		 * This also means that we might process
 		 * more than one packet at a time, something
 		 * that has never been true before, it
 		 * required eliminating global chain pointers
