@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.367 2022/07/26 14:53:12 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.368 2022/08/07 07:48:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,9 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.367 2022/07/26 14:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.368 2022/08/07 07:48:19 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/type.h>
 
 #include <sys/callout.h>
 #include <sys/device.h>
