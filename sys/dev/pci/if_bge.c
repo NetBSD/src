@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.368 2022/08/07 07:48:19 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.369 2022/08/07 08:12:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.368 2022/08/07 07:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.369 2022/08/07 08:12:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/type.h>
@@ -279,7 +279,7 @@ static void bge_ape_driver_state_change(struct bge_softc *, int);
 #define BGE_TSO_PRINTF(x)  do { if (bge_tso_debug) printf x ;} while (0)
 int	bgedebug = 0;
 int	bge_tso_debug = 0;
-void		bge_debug_info(struct bge_softc *);
+void	bge_debug_info(struct bge_softc *);
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
