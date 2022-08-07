@@ -1,6 +1,6 @@
-#	$NetBSD: files.ixdp425,v 1.9 2013/01/23 14:24:14 skrll Exp $
+#	$NetBSD: files.ixdp425,v 1.10 2022/08/07 09:51:00 andvar Exp $
 #
-# Intel IXP425 networkproccesor board configuration info
+# Intel IXP425 network processor board configuration info
 #
 
 # IXP425 Network Processor CPU support
