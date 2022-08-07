@@ -1,4 +1,4 @@
-# $NetBSD: NEXTVOD,v 1.4 2020/09/27 13:48:51 roy Exp $
+# $NetBSD: NEXTVOD,v 1.5 2022/08/07 02:52:25 simonb Exp $
 
 # This config and related files are placeholders/boilerplate for work
 # in progress.  Not expected to compile.
@@ -6,7 +6,7 @@
 include "arch/evbsh3/conf/std.nextvod"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-#ident 		"NEXTVOD-$Revision: 1.4 $"
+#ident 		"NEXTVOD-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -48,9 +48,11 @@ file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	WAPBL		# File system journaling support
-#options 	UFS_ACL		# UFS Access Control Lists
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_ACL		# UFS Access Control Lists
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	WAPBL		# File system journaling support
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 

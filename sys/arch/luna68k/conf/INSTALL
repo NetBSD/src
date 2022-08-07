@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.34 2022/06/10 21:42:23 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.35 2022/08/07 02:52:27 simonb Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -50,7 +50,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	EXEC_AOUT	# support for a.out executables
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-# Filesystem options
+# File systems
 file-system 	FFS		# ufs file system
 #file-system	LFS		# log-structured file system
 file-system 	NFS		# nfs client support
@@ -68,13 +68,15 @@ file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-#options 	NFSSERVER	# nfs server support
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# ffs endian independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET		# IP protocol stack support

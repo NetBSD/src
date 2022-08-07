@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 2020/09/27 13:48:52 roy Exp $
+# $NetBSD: GENERIC,v 1.98 2022/08/07 02:52:27 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -60,7 +60,7 @@ include 	"conf/compat_netbsd13.config"
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 
-# Filesystem options
+# File systems
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
@@ -77,12 +77,14 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #
-options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# legacy UFS quotas
-options 	QUOTA2		# new, in-filesystem UFS quotas
+# File system options
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET		# Internet protocols

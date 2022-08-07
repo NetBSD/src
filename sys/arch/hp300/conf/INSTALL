@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.69 2021/05/29 22:52:35 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.70 2022/08/07 02:52:26 simonb Exp $
 #
 # INSTALL machine description file
 #
@@ -100,16 +100,18 @@ file-system	NFS		# Network filesystem client
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-# Filesystem options
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	NFSSERVER	# Network filesystem server
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
+#options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET		# Internet protocols

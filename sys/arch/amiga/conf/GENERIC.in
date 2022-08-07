@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.149 2022/05/29 10:43:19 andvar Exp $
+# $NetBSD: GENERIC.in,v 1.150 2022/08/07 02:52:23 simonb Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
@@ -160,12 +160,12 @@ file-system	TMPFS		# Efficient memory file-system
 options 	WAPBL		# File system journaling support
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER	# Network File System server side code
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	NFSSERVER	# Network File System server
 ')m4_dnl
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
