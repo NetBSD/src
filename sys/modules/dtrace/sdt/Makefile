@@ -11,5 +11,6 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
 
 CPPFLAGS+=	-Wno-unknown-pragmas
+CPPFLAGS+=	-Wno-sign-compare
 
 .include <bsd.kmodule.mk>

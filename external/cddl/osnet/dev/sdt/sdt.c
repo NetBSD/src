@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.21 2022/03/28 12:33:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.22 2022/08/07 20:47:05 riastradh Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.21 2022/03/28 12:33:20 riastradh Exp $");
 #endif
 #include <sys/kernel.h>
 #include <sys/syslimits.h>
+#ifdef __NetBSD__
+#include <sys/kobj.h>
+#endif
 #ifdef __FreeBSD__
 #include <sys/linker.h>
 #include <sys/linker_set.h>
@@ -113,6 +116,10 @@ static dtrace_pops_t sdt_pops = {
 };
 
 #ifdef __NetBSD__
+struct linker_file {
+	struct module	lf_mod;
+};
+
 static int
 sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
@@ -204,14 +211,19 @@ sdt_create_probe(struct sdt_probe *probe)
 
 	SDT_KASSERT(prov != NULL, ("probe defined without a provider"));
 
-#ifdef __FreeBSD__
 	/* If no module name was specified, use the module filename. */
 	if (*probe->mod == 0) {
+#ifdef __NetBSD__
+		const char *modname = (probe->sdtp_lf == NULL ? "netbsd" :
+		    module_name(&probe->sdtp_lf->lf_mod));
+		strlcpy(mod, modname, sizeof(mod));
+#endif
+#ifdef __FreeBSD__
 		len = strlcpy(mod, probe->sdtp_lf->filename, sizeof(mod));
 		if (len > 3 && strcmp(mod + len - 3, ".ko") == 0)
 			mod[len - 3] = '\0';
-	} else
 #endif
+	} else
 		strlcpy(mod, probe->mod, sizeof(mod));
 
 	/*
@@ -258,6 +270,9 @@ sdt_enable(void *arg __unused, dtrace_id_t id, void *parg)
 	struct sdt_probe *probe = parg;
 
 	probe->id = id;
+#ifdef __NetBSD__
+	module_hold(&probe->sdtp_lf->lf_mod);
+#endif
 #ifdef __FreeBSD__
 	probe->sdtp_lf->nenabled++;
 	if (strcmp(probe->prov->name, "lockstat") == 0)
@@ -271,6 +286,9 @@ sdt_disable(void *arg __unused, dtrace_id_t id, void *parg)
 {
 	struct sdt_probe *probe = parg;
 
+#ifdef __NetBSD__
+	module_rele(&probe->sdtp_lf->lf_mod);
+#endif
 #ifdef __FreeBSD__
 	SDT_KASSERT(probe->sdtp_lf->nenabled > 0, ("no probes enabled"));
 	if (strcmp(probe->prov->name, "lockstat") == 0)
@@ -411,12 +429,121 @@ __link_set_decl(sdt_providers_set, struct sdt_provider);
 __link_set_decl(sdt_probes_set, struct sdt_probe);
 __link_set_decl(sdt_argtypes_set, struct sdt_argtype);
 
-/*
- * Unfortunately we don't have linker set functions and event handlers
- * to support loading and unloading probes in modules... Currently if
- * modules have probes, if the modules are loaded when sdt is loaded
- * they will work, but they will crash unloading.
- */
+static struct module_callbacks *sdt_link_set_callbacks;
+
+static void
+sdt_link_set_load_provider(struct sdt_provider *const *provider)
+{
+
+	sdt_create_provider(*provider);
+}
+
+static void
+sdt_link_set_unload_provider(struct sdt_provider *const *curr)
+{
+	struct sdt_provider *prov, *tmp;
+
+	/*
+	 * Go through all the providers declared in this linker file and
+	 * unregister any that aren't declared in another loaded file.
+	 */
+	TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
+		if (strcmp(prov->name, (*curr)->name) != 0)
+			continue;
+
+		if (prov->sdt_refs == 1) {
+			if (dtrace_unregister(prov->id) != 0) {
+				return;
+			}
+			TAILQ_REMOVE(&sdt_prov_list, prov, prov_entry);
+			free(__UNCONST(prov->name), M_SDT);
+			free(prov, M_SDT);
+		} else
+			prov->sdt_refs--;
+		break;
+	}
+}
+
+static void
+sdt_link_set_load_probe(struct sdt_probe *const *probe, struct module *mod)
+{
+	struct linker_file *lf = mod == NULL ? NULL :
+	    container_of(mod, struct linker_file, lf_mod);
+
+	(*probe)->sdtp_lf = lf;
+	sdt_create_probe(*probe);
+	TAILQ_INIT(&(*probe)->argtype_list);
+}
+
+static void
+sdt_link_set_load_argtype(struct sdt_argtype *const *argtype)
+{
+
+	(*argtype)->probe->n_args++;
+	TAILQ_INSERT_TAIL(&(*argtype)->probe->argtype_list,
+	    *argtype, argtype_entry);
+}
+
+static void
+sdt_link_set_load_module(struct module *mod)
+{
+	struct sdt_provider * const *provider;
+	struct sdt_probe * const *probe;
+	struct sdt_argtype * const *argtype;
+	void *p;
+	size_t size, n;
+
+	/*
+	 * Skip builtin modules -- they are handled separately with
+	 * __link_set_foreach.
+	 */
+	if (module_source(mod) == MODULE_SOURCE_KERNEL)
+		return;
+
+	if (kobj_find_section(mod->mod_kobj, "link_set_sdt_providers_set",
+		&p, &size) == 0) {
+		n = size/sizeof(*provider);
+		for (provider = p; n --> 0; provider++)
+			sdt_link_set_load_provider(provider);
+	}
+
+	if (kobj_find_section(mod->mod_kobj, "link_set_sdt_probes_set",
+		&p, &size) == 0) {
+		n = size/sizeof(*probe);
+		for (probe = p; n --> 0; probe++)
+			sdt_link_set_load_probe(probe, mod);
+	}
+
+	if (kobj_find_section(mod->mod_kobj, "link_set_sdt_argtypes_set",
+		&p, &size) == 0) {
+		n = size/sizeof(*argtype);
+		for (argtype = p; n --> 0; argtype++)
+			sdt_link_set_load_argtype(argtype);
+	}
+}
+
+static void
+sdt_link_set_unload_module(struct module *mod)
+{
+	struct sdt_provider *const *curr;
+	void *p;
+	size_t size, n;
+
+	/*
+	 * Skip builtin modules -- they are handled separately with
+	 * __link_set_foreach.
+	 */
+	if (module_source(mod) == MODULE_SOURCE_KERNEL)
+		return;
+
+	if (kobj_find_section(mod->mod_kobj, "link_set_sdt_providers_set",
+		&p, &size) == 0) {
+		n = size/sizeof(*curr);
+		for (curr = p; n --> 0; curr++)
+			sdt_link_set_unload_provider(curr);
+	}
+}
+
 static void
 sdt_link_set_load(void)
 {
@@ -425,48 +552,30 @@ sdt_link_set_load(void)
 	struct sdt_argtype * const *argtype;
 
 	__link_set_foreach(provider, sdt_providers_set) {
-		sdt_create_provider(*provider);
+		sdt_link_set_load_provider(provider);
 	}
-
 	__link_set_foreach(probe, sdt_probes_set) {
-		(*probe)->sdtp_lf = NULL;	// XXX: we don't support it
-		sdt_create_probe(*probe);
-		TAILQ_INIT(&(*probe)->argtype_list);
+		sdt_link_set_load_probe(probe, NULL);
+	}
+	__link_set_foreach(argtype, sdt_argtypes_set) {
+		sdt_link_set_load_argtype(argtype);
 	}
 
-	__link_set_foreach(argtype, sdt_argtypes_set) {
-		(*argtype)->probe->n_args++;
-		TAILQ_INSERT_TAIL(&(*argtype)->probe->argtype_list,
-		    *argtype, argtype_entry);
-	}
+	sdt_link_set_callbacks = module_register_callbacks(
+	    sdt_link_set_load_module, sdt_link_set_unload_module);
 }
 
 static void
 sdt_link_set_unload(void)
 {
-	struct sdt_provider * const *curr, *prov, *tmp;
+	struct sdt_provider *const *curr;
 
-	/*
-	 * Go through all the providers declared in this linker file and
-	 * unregister any that aren't declared in another loaded file.
-	 */
-	__link_set_foreach(curr, sdt_providers_set) {
-		TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
-			if (strcmp(prov->name, (*curr)->name) != 0)
-				continue;
+	module_unregister_callbacks(sdt_link_set_callbacks);
+	sdt_link_set_callbacks = NULL;
 
-			if (prov->sdt_refs == 1) {
-				if (dtrace_unregister(prov->id) != 0) {
-					return;
-				}
-				TAILQ_REMOVE(&sdt_prov_list, prov, prov_entry);
-				free(__UNCONST(prov->name), M_SDT);
-				free(prov, M_SDT);
-			} else
-				prov->sdt_refs--;
-			break;
-		}
-	}
+       __link_set_foreach(curr, sdt_providers_set) {
+	       sdt_link_set_unload_provider(curr);
+       }
 }
 #endif
 
@@ -508,7 +617,6 @@ sdt_unload(void)
 
 #ifdef __NetBSD__
 	sdt_exit();
-
 	sdt_link_set_unload();
 #endif
 	TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
