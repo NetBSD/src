@@ -1,4 +1,4 @@
-/*	$NetBSD: opensolaris.c,v 1.3 2021/07/25 06:07:42 skrll Exp $	*/
+/*	$NetBSD: opensolaris.c,v 1.4 2022/08/07 23:42:09 riastradh Exp $	*/
 /*-
  * Copyright 2007 John Birrell <jb@FreeBSD.org>
  *
@@ -38,6 +38,7 @@
 #include <sys/misc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 
 cpu_core_t	cpu_core[MAXCPUS];
 solaris_cpu_t	solaris_cpu[MAXCPUS];
@@ -66,3 +67,5 @@ void
 opensolaris_fini(void *dummy)
 {
 }
+
+SDT_PROBE_DEFINE1(sdt, , , set__error, "int");
