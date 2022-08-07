@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.94 2022/03/05 06:55:49 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.95 2022/08/07 23:49:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.94 2022/03/05 06:55:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.95 2022/08/07 23:49:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -166,8 +166,7 @@ fail:
 static void
 uno_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
-	KASSERTMSG(!un->un_pri->unp_ifp_attached || IFNET_LOCKED(ifp),
-	    "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
 	if (un->un_ops->uno_stop)
 		(*un->un_ops->uno_stop)(ifp, disable);
@@ -835,8 +834,7 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	usbd_status err;
 	int error = 0;
 
-	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
-	    "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	usbnet_isowned_core(un);
 
@@ -868,9 +866,7 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	}
 
 	/* Indicate we are up and running. */
-	/* XXX urndis calls usbnet_init_rx_tx before usbnet_attach_ifp.  */
-	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
-	    "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 	ifp->if_flags |= IFF_RUNNING;
 
 	/*
@@ -1085,8 +1081,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
-	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
-	    "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
 
 	/*
@@ -1146,8 +1141,7 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	usbnet_ep_close_pipes(un);
 
 	/* Everything is quesced now. */
-	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
-	    "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
