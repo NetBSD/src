@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.83 2021/12/05 07:53:57 msaitoh Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.84 2022/08/07 09:37:46 andvar Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.83 2021/12/05 07:53:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.84 2022/08/07 09:37:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -420,7 +420,7 @@ oea_init(void (*handler)(void))
 	/*
 	 * If we are on a MPC601 processor, we need to zap any tlbsync
 	 * instructions into sync.  This differs from the above in
-	 * examing all kernel text, as opposed to just the exception handling.
+	 * examining all kernel text, as opposed to just the exception handling.
 	 * We sync the icache on every instruction found since there are
 	 * only very few of them.
 	 */
