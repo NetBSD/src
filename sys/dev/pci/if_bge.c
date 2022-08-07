@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.371 2022/08/07 08:24:23 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.372 2022/08/07 08:26:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.371 2022/08/07 08:24:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.372 2022/08/07 08:26:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5603,10 +5603,10 @@ bge_init(struct ifnet *ifp)
 	 * entry of the ring.
 	 */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5705_A0) {
-		uint32_t		v, i;
+		u_int i;
 		for (i = 0; i < 10; i++) {
 			DELAY(20);
-			v = bge_readmem_ind(sc, BGE_STD_RX_RINGS + 8);
+			uint32_t v = bge_readmem_ind(sc, BGE_STD_RX_RINGS + 8);
 			if (v == (MCLBYTES - ETHER_ALIGN))
 				break;
 		}
