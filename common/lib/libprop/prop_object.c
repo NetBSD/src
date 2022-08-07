@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.34 2022/08/04 09:02:29 riastradh Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.35 2022/08/07 23:49:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -718,8 +718,7 @@ _prop_object_internalize_context_alloc(const char *xml)
 {
 	struct _prop_object_internalize_context *ctx;
 
-	ctx = _PROP_MALLOC(sizeof(struct _prop_object_internalize_context),
-			   M_TEMP);
+	ctx = _PROP_MALLOC(sizeof(*ctx), M_TEMP);
 	if (ctx == NULL)
 		return (NULL);
 
