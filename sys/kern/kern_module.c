@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.154 2022/05/07 04:30:41 rin Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.155 2022/08/07 20:44:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.154 2022/05/07 04:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.155 2022/08/07 20:44:39 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1889,7 +1889,7 @@ module_register_callbacks(void (*load)(struct module *),
 
 	kernconfig_lock();
 	TAILQ_INSERT_TAIL(&modcblist, modcb, modcb_list);
-	TAILQ_FOREACH(mod, &module_list, mod_chain)
+	TAILQ_FOREACH_REVERSE(mod, &module_list, modlist, mod_chain)
 		load(mod);
 	kernconfig_unlock();
 
