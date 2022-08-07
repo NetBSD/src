@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.140 2022/05/29 10:51:42 rin Exp $
+# $NetBSD: INSTALL,v 1.141 2022/08/07 02:53:42 simonb Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.149 2022/05/29 10:43:19 andvar Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.150 2022/08/07 02:52:23 simonb Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
 
