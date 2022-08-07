@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.372 2022/08/07 08:26:18 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.373 2022/08/07 08:37:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.372 2022/08/07 08:26:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.373 2022/08/07 08:37:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -223,9 +223,7 @@ static void bge_setmulti(struct bge_softc *);
 
 static void bge_handle_events(struct bge_softc *);
 static int bge_alloc_jumbo_mem(struct bge_softc *);
-#if 0 /* XXX */
 static void bge_free_jumbo_mem(struct bge_softc *);
-#endif
 static void *bge_jalloc(struct bge_softc *);
 static void bge_jfree(struct mbuf *, void *, size_t, void *);
 static int bge_newbuf_std(struct bge_softc *, int, struct mbuf *,
@@ -1313,7 +1311,6 @@ static int
 bge_alloc_jumbo_mem(struct bge_softc *sc)
 {
 	char *ptr, *kva;
-	bus_dma_segment_t	seg;
 	int		i, rseg, state, error;
 	struct bge_jpool_entry	 *entry;
 
@@ -1321,13 +1318,14 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->bge_dmatag, BGE_JMEM, PAGE_SIZE, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    &sc->bge_cdata.bge_rx_jumbo_seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return ENOBUFS;
 	}
 
 	state = 1;
-	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, (void **)&kva,
+	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_cdata.bge_rx_jumbo_seg,
+	    rseg, BGE_JMEM, (void **)&kva,
 	    BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->bge_dev,
 		    "can't map DMA buffers (%d bytes)\n", (int)BGE_JMEM);
@@ -1386,7 +1384,8 @@ out:
 			bus_dmamem_unmap(sc->bge_dmatag, kva, BGE_JMEM);
 			/* FALLTHROUGH */
 		case 1:
-			bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+			bus_dmamem_free(sc->bge_dmatag,
+			    &sc->bge_cdata.bge_rx_jumbo_seg, rseg);
 			break;
 		default:
 			break;
@@ -1394,6 +1393,26 @@ out:
 	}
 
 	return error;
+}
+
+static void
+bge_free_jumbo_mem(struct bge_softc *sc)
+{
+	struct bge_jpool_entry *entry, *tmp;
+
+	KASSERT(SLIST_EMPTY(&sc->bge_jinuse_listhead));
+
+	SLIST_FOREACH_SAFE(entry, &sc->bge_jfree_listhead, jpool_entries, tmp) {
+		kmem_free(entry, sizeof(*entry));
+	}
+
+	bus_dmamap_unload(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map);
+
+	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map);
+
+	bus_dmamem_unmap(sc->bge_dmatag, sc->bge_cdata.bge_jumbo_buf, BGE_JMEM);
+
+	bus_dmamem_free(sc->bge_dmatag, &sc->bge_cdata.bge_rx_jumbo_seg, 1);
 }
 
 /*
@@ -4070,6 +4089,9 @@ bge_release_resources(struct bge_softc *sc)
 		pci_intr_release(sc->sc_pc, sc->bge_pihp, 1);
 		sc->bge_intrhand = NULL;
 	}
+
+	if (sc->bge_cdata.bge_jumbo_buf != NULL)
+		bge_free_jumbo_mem(sc);
 
 	if (sc->bge_dmatag != NULL) {
 		bus_dmamap_unload(sc->bge_dmatag, sc->bge_ring_map);
