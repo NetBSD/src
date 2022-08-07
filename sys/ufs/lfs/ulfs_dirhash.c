@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.18 2020/03/14 18:08:40 ad Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.19 2022/08/07 02:33:47 simonb Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.37 2014/12/20 00:28:05 christos Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.18 2020/03/14 18:08:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.19 2022/08/07 02:33:47 simonb Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -57,13 +57,25 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.18 2020/03/14 18:08:40 ad Exp $")
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
 
+/*
+ * Defaults for dirhash cache sizes:
+ *  - use up to 1/64th of system memory.
+ *  - disable dirhash (set the cache size to 0 bytes) if the
+ *    calculated value of hash is less than 2MB.
+ *  - cap maximum size of the dirhash cache at 32MB.
+ */
+#define	DIRHASH_DEFAULT_DIVIDER	64
+#define	MIN_DEFAULT_DIRHASH_MEM	(2 * 1024 * 1024)
+#define	MAX_DEFAULT_DIRHASH_MEM	(32 * 1024 * 1024)
+
+
 #define WRAPINCR(val, limit)	(((val) + 1 == (limit)) ? 0 : ((val) + 1))
 #define WRAPDECR(val, limit)	(((val) == 0) ? ((limit) - 1) : ((val) - 1))
 #define OFSFMT(ip)		((ip)->i_lfs->um_maxsymlinklen <= 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
 static u_int ulfs_dirhashminblks = 5;
-static u_int ulfs_dirhashmaxmem = 2 * 1024 * 1024;
+static u_int ulfs_dirhashmaxmem = 0;
 static u_int ulfs_dirhashmem;
 static u_int ulfs_dirhashcheck = 0;
 
@@ -125,7 +137,9 @@ ulfsdirhash_build(struct inode *ip)
 
 	/* Check if we can/should use dirhash. */
 	if (ip->i_dirhash == NULL) {
-		if (ip->i_size < (ulfs_dirhashminblks * dirblksiz) || OFSFMT(ip))
+		if (ulfs_dirhashmaxmem == 0 ||
+		    ip->i_size < (ulfs_dirhashminblks * dirblksiz) ||
+		    OFSFMT(ip))
 			return (-1);
 	} else {
 		/* Hash exists, but sysctls could have changed. */
@@ -1154,6 +1168,26 @@ ulfsdirhash_sysctl_init(void)
 void
 ulfsdirhash_init(void)
 {
+
+	/*
+	 * Only initialise defaults for the dirhash size if it hasn't
+	 * hasn't been set.
+	 */
+	if (ulfs_dirhashmaxmem == 0) {
+		/* Use 64-bit math to avoid overflows. */
+		uint64_t physmem_bytes, hash_bytes;
+
+		physmem_bytes = ctob((uint64_t)physmem);
+		hash_bytes = physmem_bytes / DIRHASH_DEFAULT_DIVIDER;
+
+		if (hash_bytes < MIN_DEFAULT_DIRHASH_MEM)
+			hash_bytes = 0;
+
+		if (hash_bytes > MAX_DEFAULT_DIRHASH_MEM)
+			hash_bytes = MAX_DEFAULT_DIRHASH_MEM;
+
+		ulfs_dirhashmaxmem = (u_int)hash_bytes;
+	}
 
 	mutex_init(&ulfsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
 	ulfsdirhashblk_cache = pool_cache_init(DH_NBLKOFF * sizeof(daddr_t), 0,
