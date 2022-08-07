@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.37 2021/03/26 10:35:08 rin Exp $	 */
+/*	$NetBSD: tftp.c,v 1.38 2022/08/07 05:51:55 rin Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -114,7 +114,7 @@ recvtftp(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	t = (struct tftphdr *)pkt;
 	switch (ntohs(t->th_opcode)) {
 	case DATA:
-		if (htons(t->th_block) != d->xid) {
+		if (ntohs(t->th_block) != d->xid) {
 			/*
 			 * Expected block?
 			 */
