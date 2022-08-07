@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.155 2022/08/07 20:44:39 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.156 2022/08/07 21:17:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.155 2022/08/07 20:44:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.156 2022/08/07 21:17:18 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -96,7 +96,7 @@ bool		module_autoload_on = false;
 #endif
 u_int		module_count;
 u_int		module_builtinlist;
-u_int		module_autotime = 10;
+u_int		module_autotime = 0;
 u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
