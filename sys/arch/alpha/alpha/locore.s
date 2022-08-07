@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.142 2022/07/20 18:25:10 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.143 2022/08/07 10:12:19 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.142 2022/07/20 18:25:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.143 2022/08/07 10:12:19 andvar Exp $");
 
 #include "assym.h"
 
@@ -164,7 +164,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	 * going to fake our return address as the kthread backstop.
 	 * Hitting the backstop will trigger a panic, and we want lwp0
 	 * to work like other kthreads in that regard.  We will still
-	 * leep the "main returned" backstop here in case something
+	 * keep the "main returned" backstop here in case something
 	 * goes horribly wrong.
 	 */
 	lda	ra, alpha_kthread_backstop
@@ -277,7 +277,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 2:	/*
 	 * Check to see if a soft interrupt is pending.  We need to only
 	 * check for soft ints eligible to run at the new IPL.  We generate
-	 * the mask of elible soft ints to run by masking the ssir with:
+	 * the mask of eligible soft ints to run by masking the ssir with:
 	 *
 	 *	(ALPHA_ALL_SOFTINTS << ((ipl) << 1))
 	 *
@@ -1155,7 +1155,7 @@ LEAF_NOPROFILE(_ufetch_8, 2)
 	ldq_u	t0, 0(a1)	/* load dest quad */
 	insbl	a0, a1, a0	/* a0 = byte in target position */
 	mskbl	t0, a1, t0	/* clear target byte in destination */
-	or	a0, t0, a0	/* or in byte to destionation */
+	or	a0, t0, a0	/* or in byte to destination */
 	stq_u	a0, 0(a1)	/* *a1 = fetched byte! */
 	mov	zero, v0
 	RET
@@ -1171,7 +1171,7 @@ LEAF_NOPROFILE(_ufetch_16, 2)
 	ldq_u	t0, 0(a1)	/* load dest quad */
 	inswl	a0, a1, a0	/* a0 = short in target position */
 	mskwl	t0, a1, t0	/* clear target short in destination */
-	or	a0, t0, a0	/* or in short to destionation */
+	or	a0, t0, a0	/* or in short to destination */
 	stq_u	a0, 0(a1)	/* *a1 = fetched short! */
 	mov	zero, v0
 	RET
