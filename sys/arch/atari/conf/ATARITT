@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.124 2022/06/25 13:20:30 tsutsui Exp $
+# $NetBSD: ATARITT,v 1.125 2022/08/07 02:55:46 simonb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.123 2022/06/25 13:17:04 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.124 2022/08/07 02:52:24 simonb Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
@@ -30,7 +30,7 @@ file-system PTYFS # /dev/pts/N support
 file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support
 options FFS_NO_SNAPSHOT # No FFS snapshot support
-options NFSSERVER # Network File System server side code
+options NFSSERVER # Network File System server
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
