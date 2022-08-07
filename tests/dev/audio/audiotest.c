@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.23 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.24 2022/08/07 10:12:19 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.23 2022/08/06 18:26:42 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.24 2022/08/07 10:12:19 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -2308,7 +2308,7 @@ DEF(rdwr_fallback_RDWR) {
 
 /*
  * On full-duplex hardware, the second descriptor's readability/writability
- * is not depend on the first descriptor('s open mode).
+ * does not depend on the first descriptor's open mode.
  * On half-duplex hardware, it depends on the first descriptor's open mode.
  */
 void

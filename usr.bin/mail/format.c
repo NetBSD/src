@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.16 2021/04/19 17:49:28 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.17 2022/08/07 10:12:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.16 2021/04/19 17:49:28 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.17 2022/08/07 10:12:19 andvar Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -726,7 +726,7 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	 * the "Date:" field.
 	 *
 	 * NOTE: The range for the time is 00:00 to 23:60 (to allow
-	 * for a leep second), but I have seen this violated making
+	 * for a leap second), but I have seen this violated making
 	 * strptime() fail, e.g.,
 	 *
 	 *   Date: Tue, 24 Oct 2006 24:07:58 +0400
