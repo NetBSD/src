@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.22 2022/08/07 20:47:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.23 2022/08/07 23:42:09 riastradh Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.22 2022/08/07 20:47:05 riastradh Exp $");
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#define KDTRACE_HOOKS
 #include <sys/sdt.h>
 
 #include <sys/dtrace.h>
