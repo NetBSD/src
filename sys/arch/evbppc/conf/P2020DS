@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.31 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: P2020DS,v 1.32 2022/08/07 02:52:25 simonb Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.31 $"
+ident 		"P2020DS-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -85,15 +85,18 @@ file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
+options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-options 	FFS_EI		# FFS Endian Independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+options 	NFSSERVER	# Network File System server
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 

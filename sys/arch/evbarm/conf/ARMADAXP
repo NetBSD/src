@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.28 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: ARMADAXP,v 1.29 2022/08/07 02:52:25 simonb Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -48,13 +48,15 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	PUFFS		# Pass-to-Userspace Framework File System
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	NFSSERVER
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	GATEWAY		# packet forwarding

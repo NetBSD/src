@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.32 2020/09/27 13:48:54 roy Exp $
+# $NetBSD: VAX780,v 1.33 2022/08/07 02:52:30 simonb Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -72,7 +72,7 @@ options 	CPU_IN_CKSUM	# optimized checksum routine
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-# All supported filesystem types
+# File systems
 file-system 	FFS
 #file-system 	LFS
 file-system 	MFS
@@ -89,16 +89,17 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	WAPBL		# File system journaling support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	NFSSERVER
+#options 	NFSSERVER	# Network File System server
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # WS console uses VT100 terminal emulation
 #options 	WSEMUL_VT100

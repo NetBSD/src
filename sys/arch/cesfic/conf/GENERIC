@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2020/09/27 13:48:50 roy Exp $
+# $NetBSD: GENERIC,v 1.76 2022/08/07 02:52:24 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -65,12 +65,12 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-# Filesystem options
-options 	FIFO		# POSIX fifo support (in all filesystems)
+# File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	NFSSERVER	# Network filesystem server
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET		# Internet protocols

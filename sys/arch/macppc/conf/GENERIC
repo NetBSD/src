@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.374 2022/02/16 23:20:38 riastradh Exp $
+# $NetBSD: GENERIC,v 1.375 2022/08/07 02:52:27 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.374 $"
+#ident 		"GENERIC-$Revision: 1.375 $"
 
 maxusers	32
 
@@ -83,17 +83,17 @@ options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
 include "conf/filesystems.config"
 
 # File system options
+options 	APPLE_UFS	# Apple UFS support in FFS
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options 	APPLE_UFS	# Apple UFS support in FFS
+options 	NFSSERVER	# Network File System server
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
