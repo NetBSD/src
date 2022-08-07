@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.27 2021/10/30 21:08:58 andvar Exp $
+.\" $NetBSD: ksh.Man,v 1.28 2022/08/07 11:06:18 andvar Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -3004,7 +3004,7 @@ If the entire remaining command
 or file name is unique a space is printed after its completion, unless
 it is a directory name in which case \fB/\fP is appended.
 If there is no command or file name with the current partial word as its
-prefix, a bell character is output (usually causing a audio beep).
+prefix, a bell character is output (usually causing an audio beep).
 .\"}}}
 .\"{{{  complete-command ^X^[
 .IP "\fBcomplete-command ^X^[\fP"

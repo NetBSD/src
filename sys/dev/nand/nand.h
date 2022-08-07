@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.20 2020/07/06 10:22:07 rin Exp $	*/
+/*	$NetBSD: nand.h,v 1.21 2022/08/07 11:06:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -101,7 +101,7 @@ struct nand_ecc {
 	size_t necc_offset;		/* offset of ecc data in oob */
 	size_t necc_size;		/* size of ecc data in oob */
 	size_t necc_block_size;		/* block size used in ecc calc */
-	size_t necc_code_size;		/* reduntant bytes per block */
+	size_t necc_code_size;		/* redundant bytes per block */
 	int necc_steps;			/* pagesize / code size */
 	int necc_type;			/* type of the ecc engine */
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.53 2022/04/16 18:15:22 andvar Exp $ */
+/* $NetBSD: udf.h,v 1.54 2022/08/07 11:06:19 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -276,7 +276,7 @@ struct udf_mount {
 	struct pri_vol_desc	*primary_vol;		/* identification    */
 	struct logvol_desc	*logical_vol;		/* main mapping v->p */
 	struct unalloc_sp_desc	*unallocated;		/* free UDF space    */
-	struct impvol_desc	*implementation;	/* likely reduntant  */
+	struct impvol_desc	*implementation;	/* likely redundant  */
 	struct logvol_int_desc	*logvol_integrity;	/* current integrity */
 	struct part_desc	*partitions[UDF_PARTITIONS]; /* partitions   */
 	/* logvol_info is derived; points *into* other structures */

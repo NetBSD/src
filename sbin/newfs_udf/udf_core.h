@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.h,v 1.2 2022/04/09 09:58:11 riastradh Exp $ */
+/* $NetBSD: udf_core.h,v 1.3 2022/08/07 11:06:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -164,7 +164,7 @@ struct udf_create_context {
 	int	 serialnum;		/* format serialno */
 
 	int	 gmtoff;		/* in minutes	             */
-	int	 meta_perc;		/* format paramter           */
+	int	 meta_perc;		/* format parameter          */
 	int	 check_surface;		/* for spareables            */
 	int	 create_new_session;	/* for non empty recordables */
 
@@ -192,7 +192,7 @@ struct udf_create_context {
 	struct pri_vol_desc	*primary_vol;		/* identification    */
 	struct logvol_desc	*logical_vol;		/* main mapping v->p */
 	struct unalloc_sp_desc	*unallocated;		/* free UDF space    */
-	struct impvol_desc	*implementation;	/* likely reduntant  */
+	struct impvol_desc	*implementation;	/* likely redundant  */
 	struct logvol_int_desc	*logvol_integrity;	/* current integrity */
 	struct part_desc	*partitions[UDF_PARTITIONS]; /* partitions   */
 

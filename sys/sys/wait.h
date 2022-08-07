@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.37 2021/12/08 20:50:03 andvar Exp $	*/
+/*	$NetBSD: wait.h,v 1.38 2022/08/07 11:06:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -101,7 +101,7 @@
  *	(changing their status to have been already waited for).
  */
 #define	WNOHANG		0x00000001	/* don't hang in wait */
-#define	WSTOPPED	0x00000002	/* include stopped/untraceed children */
+#define	WSTOPPED	0x00000002	/* include stopped/untraced children */
 #define	WUNTRACED	WSTOPPED	/* the original name for WSTOPPED */
 #define	WCONTINUED	0x00000010	/* include continued processes */
 #define	WEXITED		0x00000020	/* Wait for exited processes. */
