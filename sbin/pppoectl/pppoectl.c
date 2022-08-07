@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.30 2021/05/14 09:08:59 yamaguchi Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.31 2022/08/07 11:06:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.30 2021/05/14 09:08:59 yamaguchi Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.31 2022/08/07 11:06:18 andvar Exp $");
 #endif
 
 
@@ -521,7 +521,7 @@ usage(void)
             "                      [callin] [always] [{no}rechallenge]\n"
             "                      [query-dns=3] [{no}ipcp] [{no}ipv6cp]\n"
 	    "           to set authentication names, passwords\n"
-	    "           and (optional) paramaters\n"
+	    "           and (optional) parameters\n"
 	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|\n"
 	    "                      max-noreceive=s|max-alive-missed=cnt|\n"
 	    "                      max-auth-failure=count|clear-auth-failure\n"

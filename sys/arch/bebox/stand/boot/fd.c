@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 2014/12/12 15:57:30 phx Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 2022/08/07 11:06:18 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -93,7 +93,7 @@ int FDC_PORT[] = {				/* fdc base I/O port */
  *---------------------------------------------------------------------------*/
 struct	fdd_type {
 	int	seccount;	/* sector per track */
-	int	secsize;	/* byte per sector (uPD765 paramater) */
+	int	secsize;	/* byte per sector (uPD765 parameter) */
 	int	datalen;	/* data length */
 	int	gap;		/* gap */
 	int	gaplen;		/* gap length */
