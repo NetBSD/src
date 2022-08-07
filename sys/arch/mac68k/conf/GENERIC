@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.234 2021/02/26 10:54:12 rin Exp $
+# $NetBSD: GENERIC,v 1.235 2022/08/07 02:52:27 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.234 $"
+#ident 		"GENERIC-$Revision: 1.235 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -116,16 +116,17 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER	# Network File System server
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
+options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	GATEWAY		# packet forwarding

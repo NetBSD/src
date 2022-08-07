@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.34 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: CQREEKSH3,v 1.35 2022/08/07 02:52:25 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -55,6 +55,8 @@ options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
 # File systems
 file-system 	FFS		# UFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
 
 # Kernel root file system and dump configuration.

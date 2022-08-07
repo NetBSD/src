@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.66 2021/06/29 10:22:35 nia Exp $
+# $NetBSD: HDL_G,v 1.67 2022/08/07 02:52:25 simonb Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -48,16 +48,17 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
-options 	NFSSERVER
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 

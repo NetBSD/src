@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.42 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: TISDP2420,v 1.43 2022/08/07 02:52:25 simonb Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -44,13 +44,15 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	NFSSERVER
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 

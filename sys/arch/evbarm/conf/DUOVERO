@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.23 2021/01/20 01:20:26 nia Exp $
+#	$NetBSD: DUOVERO,v 1.24 2022/08/07 02:52:25 simonb Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -65,16 +65,17 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	NFSSERVER
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 

@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.30 2021/02/08 00:47:53 simonb Exp $
+#	$NetBSD: ADM5120-NB,v 1.31 2022/08/07 02:52:25 simonb Exp $
 #
 # Kernel config for the ADM5120 based boards and routers,
 # including the RouterBOARD 100 series.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -61,13 +61,15 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
-#options 	NFSSERVER	# Sun NFS-compatible filesystem server
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	NFSSERVER	# Network File System server
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.

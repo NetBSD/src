@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.33 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: PANDABOARD,v 1.34 2022/08/07 02:52:25 simonb Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -44,13 +44,15 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 

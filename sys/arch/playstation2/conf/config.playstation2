@@ -1,14 +1,14 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.26 2018/08/01 20:04:13 maxv Exp $
+# 	$NetBSD: config.playstation2,v 1.27 2022/08/07 02:52:28 simonb Exp $
 #
 
 maxusers	16
 
 options 	NTP		# NTP phase/frequency locked loop
 
-# Filesystem options
+# File systems
 file-system 	FFS		# fast filesystem with user and group quotas
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 file-system 	MFS		# memory-based filesystem
@@ -18,8 +18,11 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
-options 	WAPBL		# File system journaling support - Experimental
+# File system options
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

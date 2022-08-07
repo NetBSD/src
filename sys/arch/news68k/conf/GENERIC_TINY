@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.92 2021/01/21 06:51:55 nia Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.93 2022/08/07 02:52:28 simonb Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.92 $"
+#ident 		"GENERIC_TINY-$Revision: 1.93 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -50,7 +50,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
 #options 	COMPAT_OSSAUDIO		# binary compatibllity with Linux/m68k
 
-# Filesystem options
+# File systems
 file-system	FFS		# Berkeley Fast Filesystem
 #file-system	LFS		# log-structured file system
 file-system	NFS		# Sun NFS-compatible filesystem client
@@ -67,13 +67,15 @@ file-system	FDESC		# /dev/fd/*
 #file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
 
-options 	NFSSERVER	# nfs server support
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# ffs endian independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET		# Internet protocols

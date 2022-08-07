@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.58 2019/04/13 08:23:00 isaki Exp $
+# $NetBSD: MRCOFFEE,v 1.59 2022/08/07 02:52:29 simonb Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.58 $"
+#ident 		"MRCOFFEE-$Revision: 1.59 $"
 
 maxusers	32
 
@@ -168,12 +168,13 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
-#options 	NFSSERVER	# Sun NFS-compatible filesystem server
+#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	NFSSERVER	# Network File System server
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

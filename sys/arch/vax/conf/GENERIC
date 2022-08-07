@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214 2020/09/27 13:48:54 roy Exp $
+# $NetBSD: GENERIC,v 1.215 2022/08/07 02:52:30 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214 $"
+#ident 		"GENERIC-$Revision: 1.215 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -103,16 +103,18 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options 	NFSSERVER
+#options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
+options 	NFSSERVER	# Network File System server
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100

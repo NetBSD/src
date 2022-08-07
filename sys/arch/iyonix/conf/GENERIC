@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.113 2020/09/27 13:48:52 roy Exp $
+#	$NetBSD: GENERIC,v 1.114 2022/08/07 02:52:27 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	32		# estimated number of users
 
@@ -121,18 +121,16 @@ file-system	TMPFS		# Efficient memory file-system
 file-system     FILECORE        # Acorn filecore file system
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
-# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
-# It is not recommended for general use.
-#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	NFSSERVER	# Network File System server
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

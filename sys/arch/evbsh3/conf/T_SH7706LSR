@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.17 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: T_SH7706LSR,v 1.18 2022/08/07 02:52:25 simonb Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -59,6 +59,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
 
 # Networking options

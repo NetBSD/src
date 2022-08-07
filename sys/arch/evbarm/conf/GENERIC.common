@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.48 2022/03/25 21:24:20 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.49 2022/08/07 02:52:25 simonb Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -26,15 +26,16 @@ no file-system 	CODA
 no pseudo-device vcoda
 
 # File system options
+options 	FFS_EI		# FFS Endian Independent support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-options 	DISKLABEL_EI	# disklabel Endian Independent support
-options 	FFS_EI		# FFS Endian Independent support
-options 	NFSSERVER
-options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_ACL		# UFS Access Control Lists
-options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
+options 	DISKLABEL_EI	# disklabel Endian Independent support
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 

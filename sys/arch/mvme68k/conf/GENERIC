@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2021/01/21 06:51:55 nia Exp $
+# $NetBSD: GENERIC,v 1.104 2022/08/07 02:52:27 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -68,12 +68,13 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-options 	NFSSERVER
+# File system options
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	WAPBL		# File system journaling support
+options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET
