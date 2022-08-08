@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.1 2022/08/08 16:58:05 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.2 2022/08/08 17:19:03 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -10,4 +10,14 @@ doc/CHANGES-9.4					added
 
 	Welcome to 9.3_STABLE.
 	[martin]
+
+sys/netinet6/nd6.c				(apply patch)
+
+	PR 55680: avoid duplicate free of link layer entries.
+	[kim, ticket #1497]
+
+lib/libpthread/pthread.c			1.181 (via patch)
+
+	Fix pthread hangs on startup.
+	[riastradh, #1498]
 
