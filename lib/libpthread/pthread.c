@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.153.2.1 2020/01/26 10:55:16 martin Exp $	*/
+/*	$NetBSD: pthread.c,v 1.153.2.2 2022/08/08 17:16:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.153.2.1 2020/01/26 10:55:16 martin Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.153.2.2 2022/08/08 17:16:53 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -423,6 +423,34 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     		pthread__errorfunc(__FILE__, __LINE__, __func__,
 		    "pthread_create() requires linking with -lpthread");
 		return __libc_thr_create_stub(thread, attr, startfunc, arg);
+	}
+
+	if (!pthread__started) {
+		/*
+		 * Force the _lwp_park symbol to be resolved before we
+		 * begin any activity that might rely on concurrent
+		 * wakeups.
+		 *
+		 * This is necessary because rtld itself uses _lwp_park
+		 * and _lwp_unpark internally for its own locking: If
+		 * we wait to resolve _lwp_park until there is an
+		 * _lwp_unpark from another thread pending in the
+		 * current lwp (for example, pthread_mutex_unlock or
+		 * pthread_cond_signal), rtld's internal use of
+		 * _lwp_park might consume the pending unpark.  The
+		 * result is a deadlock where libpthread and rtld have
+		 * both correctly used _lwp_park and _lwp_unpark for
+		 * themselves, but rtld has consumed the wakeup meant
+		 * for libpthread so it is lost to libpthread.
+		 *
+		 * For the very first thread, before pthread__started
+		 * is set to true, pthread__self()->pt_lid should have
+		 * been initialized in pthread__init by the time we get
+		 * here to the correct lid so we go to sleep and wake
+		 * ourselves at the same time as a no-op.
+		 */
+		_lwp_park(CLOCK_REALTIME, 0, NULL, pthread__self()->pt_lid,
+		    NULL, NULL);
 	}
 
 	/*
