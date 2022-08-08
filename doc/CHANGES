@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2893 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2894 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -626,7 +626,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	mfii(4): Support Newer devices up to SAS39{08,16} (Aero).
 		[msaitoh 20220716]
 	realpath(1): Added -e and -E options for compat with planned
-		posix requirement (made the default be -E).  [kre 20220721]
+		POSIX requirement (made the default be -E).  [kre 20220721]
 	gcc(1): Import GCC 10.4.  [mrg 20220722]
 	kernel: Give threads created by the Solaris compatibility layer
 		(i.e. ZFS/DTrace) better names.  [riastradh 20220730]
