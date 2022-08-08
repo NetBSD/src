@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.41 2022/08/03 09:40:25 riastradh Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.42 2022/08/08 22:31:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.41 2022/08/03 09:40:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.42 2022/08/08 22:31:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,16 +218,15 @@ static int
 ras_purge(void *addr, size_t len)
 {
 	struct ras *rp, **link;
-	void *endaddr;
 	proc_t *p;
 
-	endaddr = (char *)addr + len;
 	p = curproc;
 
 	mutex_enter(&p->p_auxlock);
 	link = &p->p_raslist;
 	for (rp = *link; rp != NULL; link = &rp->ras_next, rp = *link) {
-		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr)
+		if (addr == rp->ras_startaddr &&
+		    (char *)rp->ras_endaddr - (char *)rp->ras_startaddr == len)
 			break;
 	}
 	if (rp != NULL) {
