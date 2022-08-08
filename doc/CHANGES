@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2892 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2893 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -627,3 +627,14 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[msaitoh 20220716]
 	realpath(1): Added -e and -E options for compat with planned
 		posix requirement (made the default be -E).  [kre 20220721]
+	gcc(1): Import GCC 10.4.  [mrg 20220722]
+	kernel: Give threads created by the Solaris compatibility layer
+		(i.e. ZFS/DTrace) better names.  [riastradh 20220730]
+	clone(2): Make clone and __clone only available when _GNU_SOURCE
+		is defined.  [wiz 20220801]
+	kernel: Enable UFS_DIRHASH optimization if the architecture or
+		machine-specific kernel config file can use 128MB of RAM or
+		more.  [simonb 20220807]
+	df(1): Add -b (set blocksize), -H (-h using SI units), -N
+		(suppress the header line), and -f (show only free space)
+		options.  [kre 20220808]
