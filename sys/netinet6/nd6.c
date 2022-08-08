@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.256.2.8 2021/08/20 19:32:49 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256.2.9 2022/08/08 17:09:20 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.8 2021/08/20 19:32:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.9 2022/08/08 17:09:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -483,7 +483,6 @@ nd6_llinfo_timer(void *arg)
 
 	switch (ln->ln_state) {
 	case ND6_LLINFO_WAITDELETE:
-		LLE_REMREF(ln);
 		nd6_free(ln, 0);
 		ln = NULL;
 		break;
@@ -537,7 +536,6 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_STALE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
-			LLE_REMREF(ln);
 			nd6_free(ln, 1);
 			ln = NULL;
 		}
@@ -561,7 +559,6 @@ nd6_llinfo_timer(void *arg)
 			daddr6 = &ln->r_l3addr.addr6;
 			send_ns = true;
 		} else {
-			LLE_REMREF(ln);
 			nd6_free(ln, 0);
 			ln = NULL;
 		}
@@ -1240,6 +1237,7 @@ nd6_free(struct llentry *ln, int gc)
 				    (ln->ln_expire - time_uptime) * hz);
 			else
 				nd6_llinfo_settimer(ln, nd6_gctimer * hz);
+			LLE_REMREF(ln);
 			LLE_WUNLOCK(ln);
 			return;
 		}
@@ -1317,6 +1315,7 @@ nd6_free(struct llentry *ln, int gc)
 	IF_AFDATA_LOCK(ifp);
 	LLE_WLOCK(ln);
 
+	LLE_REMREF(ln);
 	lltable_free_entry(LLTABLE6(ifp), ln);
 
 	IF_AFDATA_UNLOCK(ifp);
