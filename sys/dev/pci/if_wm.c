@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.755 2022/08/08 07:49:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.756 2022/08/08 08:52:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.755 2022/08/08 07:49:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.756 2022/08/08 08:52:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14567,7 +14567,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 	for (i = 0; i < NVM_SIZE; i++) {
 		if (wm_nvm_read(sc, i, 1, &eeprom_data))
-			return 1;
+			return -1;
 		checksum += eeprom_data;
 	}
 
@@ -14917,7 +14917,7 @@ retry:
 			goto retry;
 		}
 		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SMBI\n");
-		return 1;
+		return -1;
 	}
 
 	/* Get the FW semaphore. */
@@ -14940,7 +14940,7 @@ retry:
 		    "could not acquire SWSM SWESMBI\n");
 		/* Release semaphores */
 		wm_put_swsm_semaphore(sc);
-		return 1;
+		return -1;
 	}
 	return 0;
 }
@@ -14987,7 +14987,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n",
 			    __func__);
-			return 1;
+			return -1;
 		}
 		swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
 		if ((swfw_sync & (swmask | fwmask)) == 0) {
@@ -15003,7 +15003,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 	device_printf(sc->sc_dev,
 	    "failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
 	    mask, swfw_sync);
-	return 1;
+	return -1;
 }
 
 static void
@@ -15151,7 +15151,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 	device_printf(sc->sc_dev,
 	    "failed to get swfwhw semaphore ext_ctrl 0x%x\n", ext_ctrl);
 	mutex_exit(sc->sc_ich_phymtx); /* Use PHY mtx for both PHY and NVM */
-	return 1;
+	return -1;
 }
 
 static void
@@ -15208,7 +15208,7 @@ wm_get_swflag_ich8lan(struct wm_softc *sc)
 
 out:
 	mutex_exit(sc->sc_ich_phymtx);
-	return 1;
+	return -1;
 }
 
 static void
