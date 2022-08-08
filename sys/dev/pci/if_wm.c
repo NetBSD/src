@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.754 2022/08/08 07:44:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.755 2022/08/08 07:49:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.754 2022/08/08 07:44:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.755 2022/08/08 07:49:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -16399,9 +16399,10 @@ wm_set_eee_pchlan(struct wm_softc *sc)
 		return 0;
 	}
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return 0;
+		return rv;
 	}
 
 	rv = sc->phy.readreg_locked(dev, 1, I82579_LPI_CTRL, &lpi_ctrl);
