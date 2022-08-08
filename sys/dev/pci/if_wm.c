@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.752 2022/08/05 05:50:54 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.753 2022/08/08 05:45:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.752 2022/08/05 05:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.753 2022/08/08 05:45:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -15558,7 +15558,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 				break;
 
 		if (wm_phy_resetisblocked(sc) == true) {
-			device_printf(sc->sc_dev, "XXX reset is blocked(3)\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked(2)\n");
 			break;
 		}
 
@@ -15591,7 +15591,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 	if (rv == 0) {
 		/* Check to see if able to reset PHY.  Print error if not */
 		if (wm_phy_resetisblocked(sc)) {
-			device_printf(sc->sc_dev, "XXX reset is blocked(4)\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked(3)\n");
 			goto out;
 		}
 
