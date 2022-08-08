@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.30 2016/02/27 21:37:35 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.31 2022/08/08 18:55:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -120,7 +120,7 @@ __END_DECLS
 #define	HTONL(x)	(void) (x)
 #define	HTONS(x)	(void) (x)
 
-#else	/* LITTLE_ENDIAN || !defined(__lint__) */
+#else	/* LITTLE_ENDIAN || defined(__lint__) */
 
 #define	ntohl(x)	bswap32(__CAST(uint32_t, (x)))
 #define	ntohs(x)	bswap16(__CAST(uint16_t, (x)))
@@ -131,7 +131,7 @@ __END_DECLS
 #define	NTOHS(x)	(x) = ntohs(__CAST(uint16_t, (x)))
 #define	HTONL(x)	(x) = htonl(__CAST(uint32_t, (x)))
 #define	HTONS(x)	(x) = htons(__CAST(uint16_t, (x)))
-#endif	/* LITTLE_ENDIAN || !defined(__lint__) */
+#endif	/* LITTLE_ENDIAN || defined(__lint__) */
 
 /*
  * Macros to convert to a specific endianness.
