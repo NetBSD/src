@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1027 2022/08/05 20:59:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1028 2022/08/08 18:23:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1027 2022/08/05 20:59:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1028 2022/08/08 18:23:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2131,43 +2131,33 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
 	*pp = p;
 }
 
-/*
- * In a part of a modifier, parse a subexpression but don't evaluate it.
- *
- * XXX: This whole block is very similar to Var_Parse with VARE_PARSE_ONLY.
- * There may be subtle edge cases though that are not yet covered in the unit
- * tests and that are parsed differently, depending on whether they are
- * evaluated or not.
- *
- * This subtle difference is not documented in the manual page, neither is
- * the difference between parsing ':D' and ':M' documented.  No code should
- * ever depend on these details, but who knows.
- */
+/* In a part of a modifier, parse a subexpression but don't evaluate it. */
 static void
 ParseModifierPartDollar(const char **pp, LazyBuf *part)
 {
 	const char *p = *pp;
-	const char *start = *pp;
 
 	if (p[1] == '(' || p[1] == '{') {
-		char startc = p[1];
-		int endc = startc == '(' ? ')' : '}';
-		int depth = 1;
-
-		for (p += 2; *p != '\0' && depth > 0; p++) {
-			if (p[-1] != '\\') {
-				if (*p == startc)
-					depth++;
-				if (*p == endc)
-					depth--;
-			}
-		}
-		LazyBuf_AddBytesBetween(part, start, p);
-		*pp = p;
+		FStr unused;
+		Var_Parse(&p, SCOPE_GLOBAL, VARE_PARSE_ONLY, &unused);
+		/* TODO: handle errors */
+		FStr_Done(&unused);
 	} else {
-		LazyBuf_Add(part, *start);
-		*pp = p + 1;
+		/*
+		 * Only skip the '$' but not the next character; see
+		 * ParseModifierPartSubst, the case for "Unescaped '$' at
+		 * end", which also doesn't skip '$' + delimiter.  That is a
+		 * hack as well, but for now it's consistent in both cases.
+		 */
+		p++;
 	}
+
+	/*
+	 * XXX: There should be no need to add anything to the buffer, as it
+	 * will be discarded anyway.
+	 */
+	LazyBuf_AddBytesBetween(part, *pp, p);
+	*pp = p;
 }
 
 /* See ParseModifierPart for the documentation. */
@@ -4498,6 +4488,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	if (Var_Parse_FastLane(pp, emode, out_val))
 		return VPR_OK;
 
+	/* TODO: Reduce computations in parse-only mode. */
+
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start, VarEvalMode_Name[emode]);
 
 	*out_val = FStr_InitRefer(NULL);
@@ -4524,7 +4516,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	}
 
 	expr.name = v->name.str;
-	if (v->inUse) {
+	if (v->inUse && VarEvalMode_ShouldEval(emode)) {
 		if (scope->fname != NULL) {
 			fprintf(stderr, "In a command near ");
 			PrintLocation(stderr, false, scope);
