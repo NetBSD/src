@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.753 2022/08/08 05:45:29 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.754 2022/08/08 07:44:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.753 2022/08/08 05:45:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.754 2022/08/08 07:44:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4745,7 +4745,7 @@ wm_write_smbus_addr(struct wm_softc *sc)
 
 	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_SMB_ADDR, &phy_data);
 	if (rv != 0)
-		return -1;
+		return rv;
 
 	phy_data &= ~HV_SMB_ADDR_ADDR;
 	phy_data |= __SHIFTOUT(strap, STRAP_SMBUSADDR);
@@ -11627,9 +11627,10 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc); 
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_gmii_i82544_readreg_locked(dev, phy, reg, val);
@@ -11678,9 +11679,10 @@ wm_gmii_i82544_writereg(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_gmii_i82544_writereg_locked(dev, phy, reg & MII_ADDRMASK, val);
@@ -11730,14 +11732,15 @@ wm_gmii_i80003_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int page_select;
 	uint16_t temp, temp2;
-	int rv = 0;
+	int rv;
 
 	if (phy != 1) /* Only one PHY on kumeran bus */
 		return -1;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG)
@@ -11793,9 +11796,10 @@ wm_gmii_i80003_writereg(device_t dev, int phy, int reg, uint16_t val)
 	if (phy != 1) /* Only one PHY on kumeran bus */
 		return -1;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc); 
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG)
@@ -11848,9 +11852,10 @@ wm_gmii_bm_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 	int rv;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	if ((sc->sc_type != WM_T_82574) && (sc->sc_type != WM_T_82583))
@@ -11895,9 +11900,10 @@ wm_gmii_bm_writereg(device_t dev, int phy, int reg, uint16_t val)
 	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 	int rv;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	if ((sc->sc_type != WM_T_82574) && (sc->sc_type != WM_T_82583))
@@ -12113,9 +12119,11 @@ wm_gmii_hv_readreg(device_t dev, int phy, int reg, uint16_t *val)
 
 	DPRINTF(sc, WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(dev), __func__));
-	if (sc->phy.acquire(sc)) {
+
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_gmii_hv_readreg_locked(dev, phy, reg, val);
@@ -12178,9 +12186,10 @@ wm_gmii_hv_writereg(device_t dev, int phy, int reg, uint16_t val)
 	DPRINTF(sc, WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(dev), __func__));
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_gmii_hv_writereg_locked(dev, phy, reg, val);
@@ -12261,9 +12270,10 @@ wm_gmii_82580_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc) != 0) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 #ifdef DIAGNOSTIC
@@ -12292,9 +12302,10 @@ wm_gmii_82580_writereg(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc) != 0) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 #ifdef DIAGNOSTIC
@@ -12325,9 +12336,10 @@ wm_gmii_gs40g_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	int rv;
 
 	/* Acquire semaphore */
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	/* Page select */
@@ -12360,9 +12372,10 @@ wm_gmii_gs40g_writereg(device_t dev, int phy, int reg, uint16_t val)
 	int offset, rv;
 
 	/* Acquire semaphore */
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	/* Page select */
@@ -12645,9 +12658,10 @@ wm_sgmii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc)) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_sgmii_readreg_locked(dev, phy, reg, val);
@@ -12702,9 +12716,10 @@ wm_sgmii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	if (sc->phy.acquire(sc) != 0) {
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
-		return -1;
+		return rv;
 	}
 
 	rv = wm_sgmii_writereg_locked(dev, phy, reg, val);
@@ -13583,13 +13598,14 @@ static int
 wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg, val;
-	int i;
+	int i, rv;
 
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	for (i = 0; i < wordcnt; i++) {
 		/* Clear SK and DI. */
@@ -13747,13 +13763,14 @@ wm_nvm_read_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	uint32_t reg, val;
 	int i;
 	uint8_t opc;
-	int rv = 0;
+	int rv;
 
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	/* Clear SK and CS. */
 	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_CS);
@@ -13821,13 +13838,14 @@ static int
 wm_nvm_read_eerd(struct wm_softc *sc, int offset, int wordcnt, uint16_t *data)
 {
 	int i, eerd = 0;
-	int rv = 0;
+	int rv;
 
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	for (i = 0; i < wordcnt; i++) {
 		eerd = ((offset + i) << EERD_ADDR_SHIFT) | EERD_START;
@@ -14228,7 +14246,7 @@ wm_read_ich8_dword(struct wm_softc *sc, uint32_t index, uint32_t *data)
 static int
 wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-	int32_t	 rv = 0;
+	int rv;
 	uint32_t flash_bank = 0;
 	uint32_t act_offset = 0;
 	uint32_t bank_offset = 0;
@@ -14238,8 +14256,9 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	/*
 	 * We need to know which is the valid flash bank.  In the event
@@ -14288,7 +14307,7 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 static int
 wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-	int32_t	 rv = 0;
+	int	 rv;
 	uint32_t flash_bank = 0;
 	uint32_t act_offset = 0;
 	uint32_t bank_offset = 0;
@@ -14298,8 +14317,9 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	/*
 	 * We need to know which is the valid flash bank.  In the event
@@ -14380,14 +14400,14 @@ wm_nvm_read_word_invm(struct wm_softc *sc, uint16_t address, uint16_t *data)
 static int
 wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-	int rv = 0;
-	int i;
+	int i, rv;
 
 	DPRINTF(sc, WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->nvm.acquire(sc) != 0)
-		return -1;
+	rv = sc->nvm.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	for (i = 0; i < words; i++) {
 		switch (offset + i) {
@@ -15501,7 +15521,7 @@ static int
 wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 {
 	uint32_t fwsm, reg;
-	int rv = 0;
+	int rv;
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -15517,7 +15537,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 	if (rv != 0) {
 		DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s: failed\n",
 		device_xname(sc->sc_dev), __func__));
-		return -1;
+		return rv;
 	}
 
 	/* The MAC-PHY interconnect may be in SMBus mode.  If the PHY is
@@ -15724,7 +15744,7 @@ wm_ulp_disable(struct wm_softc *sc)
 {
 	uint32_t reg;
 	uint16_t phyreg;
-	int i = 0, rv = 0;
+	int i = 0, rv;
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -15764,7 +15784,7 @@ wm_ulp_disable(struct wm_softc *sc)
 	if (rv != 0) {
 		DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s: failed\n",
 		device_xname(sc->sc_dev), __func__));
-		return -1;
+		return rv;
 	}
 
 	/* Toggle LANPHYPC */
@@ -16086,7 +16106,7 @@ wm_resume_workarounds_pchlan(struct wm_softc *sc)
 
 	rv = wm_init_phy_workarounds_pchlan(sc);
 	if (rv != 0)
-		return -1;
+		return rv;
 
 	/* For i217 Intel Rapid Start Technology support when the system
 	 * is transitioning from Sx and no manageability engine is present
@@ -16096,8 +16116,9 @@ wm_resume_workarounds_pchlan(struct wm_softc *sc)
 	if (sc->sc_phytype == WMPHY_I217) {
 		uint16_t phy_reg;
 
-		if (sc->phy.acquire(sc) != 0)
-			return -1;
+		rv = sc->phy.acquire(sc);
+		if (rv != 0)
+			return rv;
 
 		/* Clear Auto Enable LPI after link up */
 		sc->phy.readreg_locked(dev, 1, I217_LPI_GPIO_CTRL, &phy_reg);
@@ -16361,7 +16382,7 @@ wm_set_eee_pchlan(struct wm_softc *sc)
 	device_t dev = sc->sc_dev;
 	struct ethercom *ec = &sc->sc_ethercom;
 	uint16_t lpa, pcs_status, adv_addr, adv, lpi_ctrl, data;
-	int rv = 0;
+	int rv;
 
 	switch (sc->sc_phytype) {
 	case WMPHY_82579:
@@ -16992,12 +17013,14 @@ static int
 wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 {
 	int k1_enable = sc->sc_nvm_k1_enabled;
+	int rv;
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if (sc->phy.acquire(sc) != 0)
-		return -1;
+	rv = sc->phy.acquire(sc);
+	if (rv != 0)
+		return rv;
 
 	if (link) {
 		k1_enable = 0;
