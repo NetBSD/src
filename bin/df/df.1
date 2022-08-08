@@ -1,5 +1,3 @@
-.\"	$NetBSD: df.1,v 1.56 2021/01/06 20:38:09 ginsbach Exp $
-.\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -29,7 +27,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd January 2, 2021
+.Dd August 8, 2022
 .Dt DF 1
 .Os
 .Sh NAME
@@ -37,10 +35,10 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl acglnW
-.Op Fl Ghkm | Fl ihkm | Fl Pk
+.Op Fl aclnW
+.Op Fl G | Fl Pbk | Fl bfgHhikmN
 .Op Fl t Ar type
-.Op Ar file | Ar file_system ...
+.Oo Ar file | Ar file_system Oc Ns ...
 .Sh DESCRIPTION
 .Nm
 displays statistics about the amount of free disk space on the specified
@@ -52,8 +50,12 @@ By default, all sizes are reported in 512-byte block counts.
 If neither a file or a
 .Ar file_system
 operand is specified,
-statistics for all mounted file systems are displayed
+statistics for all mounted,
+and not hidden (i.e.: not mounted with
+.Dv MNT_IGNORE ) ,
+file systems are displayed
 (subject to the
+.Fl a ,
 .Fl l
 and
 .Fl t
@@ -68,26 +70,68 @@ on the file system is less than
 The following options are available:
 .Bl -tag -width Ds
 .It Fl a
-Show all mount points,
+If no
+.Ar file ,
+or
+.Ar file_system
+arguments are givem, show all mount points,
 including those that were mounted with the
 .Dv MNT_IGNORE
 flag.
+Note that for file systems specified on the command
+line, that mount option is never considered.
+.It Fl b
+Show space as units of basic blocks (512 bytes).
+This is normally the default; this option can be used to
+override a conflicting setting in the environment variable
+.Ev BLOCKSIZE .
 .It Fl c
 Display a grand total for all shown mount points.
+When combined with
+.Fl f
+only the total for the mount points which otherwise
+would be included is shown, not the individual entries.
+.It Fl f
+Display only the available free space (or with
+.Fl i ,
+free inodes) in a minimal format.
+When there is to be only one line of output, only the value
+is shown, otherwise the value and the mount point,
+separated by a single space, are printed.
+For free space, the
+.Fl b ,
+.Fl g ,
+.Fl H ,
+.Fl h ,
+.Fl k
+and
+.Fl m
+options, and
+.Ev BLOCKSIZE
+are all used as normal.
+This option implies
+.Fl N
+and is incompatible with
+.Fl P
+and
+.Fl G .
 .It Fl G
 Display all the fields of the structure(s) returned by
 .Xr statvfs 2 .
 This option cannot be used with the
+.Fl f ,
 .Fl i
 or
 .Fl P
-options, and it is modelled after the Solaris
+options, and is modelled after the Solaris
 .Fl g
 option.
 This option will override the
+.Fl b ,
 .Fl g ,
+.Fl H ,
 .Fl h ,
-.Fl k ,
+.Fl k
 and
 .Fl m
 options, as well as any setting of
@@ -95,20 +139,32 @@ options, as well as any setting of
 .It Fl g
 The
 .Fl g
-option causes the numbers to be reported in gigabytes (1024*1024*1024
+option causes size numbers to be reported in gigabytes (1024*1024*1024
 bytes).
 .It Fl h
-"Human-readable" output.
+Use
+.Dq human-readable
+output for space data.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
 Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
+.It Fl H
+As with
+.Fl h
+but using powers of 10 (1000) rather than 2 (1024).
 .It Fl i
 Include statistics on the number of free inodes.
+When combined with
+.Fl f
+only the number of free inodes is shown.
 .It Fl k
-By default, all sizes are reported in 512-byte block counts.
+By default, all sizes are reported in 512-byte block counts,
+unless the
+.Ev BLOCKSIZE
+environment variable is set.
 The
 .Fl k
-option causes the numbers to be reported in kilobytes (1024 bytes).
+option causes the size numbers to be reported in kilobytes (1024 bytes).
 .It Fl l
 Display statistics only about mounted file systems with the
 .Dv MNT_LOCAL
@@ -118,7 +174,16 @@ warning is issued and no information is given on that file system.
 .It Fl m
 The
 .Fl m
-option causes the numbers to be reported in megabytes (1024*1024 bytes).
+option causes size numbers to be reported in megabytes (1024*1024 bytes).
+.It Fl N
+Suppress the header line normally output.
+This option is ignored with
+.Fl G
+which has no header line to ignore,
+and with
+.Fl P
+which requires the header line to maintain
+the portable format it is designed to emulate.
 .It Fl n
 Print out the previously obtained statistics from the file systems.
 This option should be used if it is possible that one or more
@@ -131,22 +196,7 @@ with the possibly stale statistics that were previously obtained.
 .It Fl P
 Produce output in the following portable format:
 .Pp
-If both the
-.Fl P
-and
-.Fl k
-option are specified, the output will be preceded by the following header
-line, formatted to match the data following it:
-.Bd -literal
-"Filesystem 1024-blocks Used Available Capacity Mounted on\en"
-.Ed
-.Pp
-If the
-.Fl P
-option is specified without the
-.Fl k
-options, the output will be preceded by the following header line,
-formatted to match the data following it:
+The output will be preceded by the following header line:
 .Bd -literal
 "Filesystem <blksize>-blocks Used Available Capacity Mounted on\en"
 .Ed
@@ -161,7 +211,10 @@ The header line is followed by data formatted as follows:
 Note that the
 .Fl i
 option may not be specified with
-.Fl P .
+.Fl P ,
+and the
+.Ar blksize
+is required to be 512 or 1024.
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
 file systems of the specified type.
@@ -185,19 +238,31 @@ file systems, the
 .Fl W
 option is silently ignored for those file systems.
 .El
+.Pp
+If more than one of
+.Fl b ,
+.Fl g ,
+.Fl H ,
+.Fl h ,
+.Fl k
+or
+.FL m
+is given, the last of those specified is used.
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 If the environment variable
 .Ev BLOCKSIZE
-is set, and the
+is set, and none of the
+.Fl b ,
 .Fl g ,
+.Fl H ,
 .Fl h ,
 .Fl k
 and
 .Fl m
-options are not specified, the block counts will be displayed in units of that
-size block.
+options are specified,
+the block counts will be displayed in units of that size block.
 .El
 .Sh SEE ALSO
 .Xr quota 1 ,
@@ -206,6 +271,7 @@ size block.
 .Xr statvfs 2 ,
 .Xr getbsize 3 ,
 .Xr getmntinfo 3 ,
+.Xr humanize_number 3 ,
 .Xr fs 5 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
@@ -216,3 +282,7 @@ A
 .Nm
 utility appeared in
 .At v1 .
+The
+.Fl f
+option was added in
+.Nx 10 .
