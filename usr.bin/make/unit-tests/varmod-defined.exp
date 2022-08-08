@@ -10,6 +10,7 @@ Global: VAR = $$$$$$$$
 Var_Parse: ${VAR:@var@${8_DOLLARS}@} (eval-keep-dollar-and-undefined)
 Evaluating modifier ${VAR:@...} on value "$$$$$$$$" (eval-keep-dollar-and-undefined, regular)
 Modifier part: "var"
+Var_Parse: ${8_DOLLARS}@} (parse-only)
 Modifier part: "${8_DOLLARS}"
 ModifyWords: split "$$$$$$$$" into 1 word
 Global: var = $$$$$$$$

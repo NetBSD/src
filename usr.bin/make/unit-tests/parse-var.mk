@@ -1,4 +1,4 @@
-# $NetBSD: parse-var.mk,v 1.2 2022/08/06 21:26:05 rillig Exp $
+# $NetBSD: parse-var.mk,v 1.3 2022/08/08 18:23:30 rillig Exp $
 #
 # Tests for parsing variable expressions.
 
@@ -14,18 +14,23 @@ VAR.${:U param }=	value
 .endif
 
 
-# As of var.c 1.1027 from 2022-08-05, the exact way of parsing an expression
-# depends on whether the expression is actually evaluated or merely parsed.
+# Before var.c 1.1028 from 2022-08-08, the exact way of parsing an expression
+# depended on whether the expression was actually evaluated or merely parsed.
 #
-# If it is evaluated, nested expressions are parsed correctly, parsing each
-# modifier according to its exact definition.  If the expression is merely
-# parsed but not evaluated (because its value would not influence the outcome
-# of the condition), and the expression contains a modifier, and that modifier
-# contains a nested expression, the nested expression is not parsed
-# correctly.  Instead, make only counts the opening and closing delimiters,
-# which fails for nested modifiers with unbalanced braces.
+# If it was evaluated, nested expressions were parsed correctly, parsing each
+# modifier according to its exact definition (see varmod.mk).
 #
-# See ParseModifierPartDollar.
+# If the expression was merely parsed but not evaluated (for example, because
+# its value would not influence the outcome of the condition, or during the
+# first pass of the ':@var@body@' modifier), and the expression contained a
+# modifier, and that modifier contained a nested expression, the nested
+# expression was not parsed correctly.  Instead, make only counted the opening
+# and closing delimiters, which failed for nested modifiers with unbalanced
+# braces.
+#
+# This naive brace counting was implemented in ParseModifierPartDollar.  As of
+# var.c 1., there are still several other places that merely count braces
+# instead of properly parsing subexpressions.
 
 #.MAKEFLAGS: -dcpv
 # Keep these braces outside the conditions below, to keep them simple to
@@ -41,9 +46,11 @@ BRACE_GROUP=	{{{{}}}}
 # In the first case, the outer expression is relevant and is parsed correctly.
 .if 1 && ${BRACE_GROUP:S,${BRACE_PAIR:S,{,{{,},<lbraces>,}
 .endif
-# In the second case, the outer expression is irrelevant.  In this case, in
-# the parts of the outer ':S' modifier, make only counts the braces, and since
-# the inner expression '${:U...}' contains more '{' than '}', parsing fails.
+# In the second case, the outer expression was irrelevant.  In this case, in
+# the parts of the outer ':S' modifier, make only counted the braces, and since
+# the inner expression '${BRACE_PAIR:...}' contains more '{' than '}', parsing
+# failed with the error message 'Unfinished modifier for "BRACE_GROUP"'.  Fixed
+# in var.c 1.1028 from 2022-08-08.
 .if 0 && ${BRACE_GROUP:S,${BRACE_PAIR:S,{,{{,},<lbraces>,}
 .endif
 #.MAKEFLAGS: -d0

@@ -24,6 +24,7 @@ Evaluating modifier ${1 2:L} on value "" (eval-defined, undefined)
 Result of ${1 2:L} is "1 2" (eval-defined, defined)
 Evaluating modifier ${1 2:@...} on value "1 2" (eval-defined, defined)
 Modifier part: ".SUFFIXES"
+Var_Parse: ${.SUFFIXES}@} != ".c .o .1 .err .tar.gz .c .o .1 .err .tar.gz" (parse-only)
 Modifier part: "${.SUFFIXES}"
 ModifyWords: split "1 2" into 2 words
 Command: .SUFFIXES = 1 ignored (read-only)
