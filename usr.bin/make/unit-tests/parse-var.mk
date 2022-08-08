@@ -1,4 +1,4 @@
-# $NetBSD: parse-var.mk,v 1.3 2022/08/08 18:23:30 rillig Exp $
+# $NetBSD: parse-var.mk,v 1.4 2022/08/08 19:53:28 rillig Exp $
 #
 # Tests for parsing variable expressions.
 
@@ -14,8 +14,9 @@ VAR.${:U param }=	value
 .endif
 
 
-# Before var.c 1.1028 from 2022-08-08, the exact way of parsing an expression
-# depended on whether the expression was actually evaluated or merely parsed.
+# Since var.c 1.323 from 202-07-26 18:11 and before var.c 1.1028 from
+# 2022-08-08, the exact way of parsing an expression depended on whether the
+# expression was actually evaluated or merely parsed.
 #
 # If it was evaluated, nested expressions were parsed correctly, parsing each
 # modifier according to its exact definition (see varmod.mk).
