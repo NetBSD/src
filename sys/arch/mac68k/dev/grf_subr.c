@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.24 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.25 2022/08/09 08:09:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.24 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.25 2022/08/09 08:09:44 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ grf_establish(struct grfbus_softc *sc, nubus_slot *sp,
 	if (gm->psize == 1)
 		printf("monochrome\n");
 	else
-		printf("%d color\n", 1 << gm->psize);
+		printf("%hu-bpp color\n", gm->psize);
 
 	/* Attach grf semantics to the hardware. */
 	ga.ga_name = "grf";
