@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.275 2022/05/24 20:50:20 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.276 2022/08/09 08:03:22 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.275 2022/05/24 20:50:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.276 2022/08/09 08:03:22 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -534,6 +534,7 @@ static const int maxsize[] = {
 static int ipsec_esp_keymin = 256;
 static int ipsec_esp_auth = 0;
 static int ipsec_ah_keymin = 128;
+static bool ipsec_allow_different_idtype = false;
 
 #ifdef SYSCTL_DECL
 SYSCTL_DECL(_net_key);
@@ -6171,7 +6172,14 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	if (idsrc->sadb_ident_type != iddst->sadb_ident_type) {
 		IPSECLOG(LOG_DEBUG, "ident type mismatched src %u, dst %u.\n",
 		    idsrc->sadb_ident_type, iddst->sadb_ident_type);
-		return EINVAL;
+		/*
+		 * Some VPN appliances(e.g. NetScreen) can send different
+		 * identifier types on IDii and IDir, so be able to allow
+		 * such message.
+		 */
+		if (!ipsec_allow_different_idtype) {
+			return EINVAL;
+		}
 	}
 
 	switch (idsrc->sadb_ident_type) {
@@ -9034,6 +9042,11 @@ sysctl_net_keyv2_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("PF_KEY statistics"),
 		       sysctl_net_key_stats, 0, NULL, 0,
 		       CTL_NET, IPSEC_PFKEY, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "allow_different_idtype", NULL,
+		       NULL, 0, &ipsec_allow_different_idtype, 0,
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_ALLOW_DIFFERENT_IDTYPE, CTL_EOL);
 }
 
 /*
