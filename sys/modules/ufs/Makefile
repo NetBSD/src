@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2022/01/08 02:00:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.8 2022/08/09 20:05:14 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	ufs
 
 CPPFLAGS+=	-DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
-CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL
-#CPPFLAGS+=	-DUFS_DIRHASH	# disabled - suspected of corrupting memory
+CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL -DUFS_DIRHASH
 
 CWARNFLAGS.clang=	-Wno-conversion
 
