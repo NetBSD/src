@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.55 2022/06/18 22:11:01 andvar Exp $	*/
+/*	$NetBSD: virtio.c,v 1.56 2022/08/09 12:42:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.55 2022/06/18 22:11:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.56 2022/08/09 12:42:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,13 +465,6 @@ vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 			ops);
 }
 
-/*
- * Can be used as sc_intrhand.
- */
-/*
- * Scan vq, bus_dmamap_sync for the vqs (not for the payload),
- * and calls (*vq_done)() if some entries are consumed.
- */
 bool
 virtio_vq_is_enqueued(struct virtio_softc *sc, struct virtqueue *vq)
 {
@@ -486,6 +479,12 @@ virtio_vq_is_enqueued(struct virtio_softc *sc, struct virtqueue *vq)
 	return (vq->vq_used_idx != virtio_rw16(sc, vq->vq_used->idx)) ? 1 : 0;
 }
 
+/*
+ * Scan vq, bus_dmamap_sync for the vqs (not for the payload),
+ * and calls (*vq_done)() if some entries are consumed.
+ *
+ * Can be used as sc_intrhand.
+ */
 int
 virtio_vq_intr(struct virtio_softc *sc)
 {
