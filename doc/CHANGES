@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2895 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2896 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -635,6 +635,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kernel: Enable UFS_DIRHASH optimization if the architecture or
 		machine-specific kernel config file can use 128MB of RAM or
 		more.  [simonb 20220807]
-	df(1): Add -b (set blocksize), -H (-h using SI units), -N
-		(suppress the header line), and -f (show only free space)
+	df(1): Add -b (output unit: blocks; 512), -H (-h using SI units),
+		-N (suppress the header line), and -f (show only free space)
 		options.  [kre 20220808]
