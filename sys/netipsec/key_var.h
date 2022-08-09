@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.5 2018/04/28 13:23:17 maxv Exp $	*/
+/*	$NetBSD: key_var.h,v 1.6 2022/08/09 08:03:22 knakahara Exp $	*/
 /*	$FreeBSD: key_var.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_var.h,v 1.11 2001/09/12 23:05:07 sakane Exp $	*/
 
@@ -49,7 +49,8 @@
 #define KEYCTL_PREFERED_OLDSA		12
 #define KEYCTL_DUMPSA			13
 #define KEYCTL_DUMPSP			14
-#define KEYCTL_MAXID			15
+#define KEYCTL_ALLOW_DIFFERENT_IDTYPE	15
+#define KEYCTL_MAXID			16
 
 #ifdef _KERNEL
 #define _ARRAYLEN(p) (sizeof(p)/sizeof(p[0]))
