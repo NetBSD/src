@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.27 2012/02/17 11:43:24 wiz Exp $
+.\" 	$NetBSD: db.1,v 1.28 2022/08/09 07:56:19 charlotte Exp $
 .\"
 .\" Copyright (c) 2002-2009,2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,7 +196,7 @@ options may be useful to encode the NUL terminator in a readable form.
 .
 .It Fl q
 Quiet operation.
-In read mode, missing keys are not considered to be an error.
+In read mode, missing keys are considered to be an error.
 In delete
 .Pq Fl d
 and write
