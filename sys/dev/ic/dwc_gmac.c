@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.76 2022/08/05 21:03:43 sekiya Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.77 2022/08/09 23:58:46 sekiya Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.76 2022/08/05 21:03:43 sekiya Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.77 2022/08/09 23:58:46 sekiya Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -803,7 +803,6 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	conf |= AWIN_GMAC_MAC_CONF_FRAMEBURST
 	    | AWIN_GMAC_MAC_CONF_DISABLERXOWN
 	    | AWIN_GMAC_MAC_CONF_DISABLEJABBER
-	    | AWIN_GMAC_MAC_CONF_ACS
 	    | AWIN_GMAC_MAC_CONF_RXENABLE
 	    | AWIN_GMAC_MAC_CONF_TXENABLE;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -1229,8 +1228,6 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 	struct mbuf *m, *mnew;
 	int i, len, error;
 
-	uint16_t etype;
-
 	mutex_enter(&sc->sc_rxq.r_mtx);
 	for (i = sc->sc_rxq.r_cur; ; i = RX_NEXT(i)) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
@@ -1313,29 +1310,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
 		m_set_rcvif(m, ifp);
+		m->m_flags |= M_HASFCS;
 
-#define ETYPE_OFFSET 20
-		etype = (m->m_data[ETYPE_OFFSET] << 8) + m->m_data[ETYPE_OFFSET+1];
-
-		/*
-		 * The hardware doesn't trim the four FCS bytes for us, so
-		 * we need to trim it ourselves.
-		 * Having the upper layer remove it by passing M_HASFCS breaks
-		 * protocols that don't have FCS bytes at the end of the packet
-		 * (AppleTalk, for example), so we do it here instead.
-		 */
-
-		switch (etype) {
-			case ETHERTYPE_ATALK:
-			case ETHERTYPE_AARP:
-				/* No FCS removal needed */
-				break;
-			default:
-				/* remove FCS */
-				m_adj(m, -ETHER_CRC_LEN);
-				break;
-		}
-	
 		if_percpuq_enqueue(sc->sc_ipq, m);
 
 skip:
