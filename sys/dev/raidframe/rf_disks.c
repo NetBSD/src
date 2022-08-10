@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.92 2019/12/08 12:14:40 mlelstv Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.93 2022/08/10 01:16:38 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.92 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.93 2022/08/10 01:16:38 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -318,11 +318,12 @@ static int
 rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 {
 	int ret;
+	size_t entries = raidPtr->numCol + RF_MAXSPARE;
 
 	/* We allocate RF_MAXSPARE on the first row so that we
 	   have room to do hot-swapping of spares */
-	raidPtr->Disks = RF_MallocAndAdd((raidPtr->numCol + RF_MAXSPARE) *
-	    sizeof(*raidPtr->Disks), raidPtr->cleanupList);
+	raidPtr->Disks = RF_MallocAndAdd(
+	    entries * sizeof(*raidPtr->Disks), raidPtr->cleanupList);
 	if (raidPtr->Disks == NULL) {
 		ret = ENOMEM;
 		goto fail;
@@ -330,9 +331,7 @@ rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 
 	/* get space for device specific stuff.. */
 	raidPtr->raid_cinfo = RF_MallocAndAdd(
-	    (raidPtr->numCol + RF_MAXSPARE) * sizeof(*raidPtr->raid_cinfo),
-	    raidPtr->cleanupList);
-
+	    entries * sizeof(*raidPtr->raid_cinfo), raidPtr->cleanupList);
 	if (raidPtr->raid_cinfo == NULL) {
 		ret = ENOMEM;
 		goto fail;
@@ -607,7 +606,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	error = vn_bdev_openpath(pb, &vp, curlwp);
 	pathbuf_destroy(pb);
 	if (error) {
-		printf("open device: %s failed!\n", diskPtr->devname);
+		printf("open device: '%s' failed: %d\n", diskPtr->devname, error);
 		if (error == ENXIO) {
 			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;
