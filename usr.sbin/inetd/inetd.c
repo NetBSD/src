@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.140 2022/08/10 03:35:38 dholland Exp $	*/
+/*	$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.140 2022/08/10 03:35:38 dholland Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,14 +192,6 @@ __RCSID("$NetBSD: inetd.c,v 1.140 2022/08/10 03:35:38 dholland Exp $");
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
-
-#include <net/if.h>
-
-#ifdef RPC
-#include <rpc/rpc.h>
-#include <rpc/rpcb_clnt.h>
-#include <netconfig.h>
-#endif
 
 #include <ctype.h>
 #include <err.h>
