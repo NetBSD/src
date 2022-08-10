@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.30 2021/10/12 19:08:04 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2022/08/10 03:35:38 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,9 @@ WARNS=	6
 
 # Enables debug printouts when in debug mode
 CPPFLAGS+=-DDEBUG_ENABLE
+
+# Enables SunRPC support
+CPPFLAGS+=-DRPC
 
 CPPFLAGS+=-DLIBWRAP
 # Use LIBWRAP_INTERNAL for libwrap checking of inetd's `internal' services.
