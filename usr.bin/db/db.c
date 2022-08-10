@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.27 2021/08/25 23:11:51 rillig Exp $	*/
+/*	$NetBSD: db.c,v 1.28 2022/08/10 00:28:00 charlotte Exp $	*/
 
 /*-
  * Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.27 2021/08/25 23:11:51 rillig Exp $");
+__RCSID("$NetBSD: db.c,v 1.28 2022/08/10 00:28:00 charlotte Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -741,7 +741,7 @@ usage(void)
 "   -N           don't NUL terminate key\n"
 "   -O outsep    output field separator string  [default: a tab]\n"
 "   -P pagesize  database page size  [default: 4096]\n"
-"   -q           quiet operation (missing keys aren't errors)\n"
+"   -q           quiet operation\n"
 "   -R           replace existing keys\n"
 "   -S visitem   items to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
 "   -T visspec   options to control -S and -U; like vis(1) options\n"
