@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 2022/08/10 03:35:38 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 2022/08/10 08:37:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.4 2022/08/10 03:35:38 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.5 2022/08/10 08:37:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,10 +90,6 @@ __RCSID("$NetBSD: parse.c,v 1.4 2022/08/10 03:35:38 dholland Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-
-#ifdef RPC
-#include <rpc/rpc.h>
-#endif
 
 #include "inetd.h"
 

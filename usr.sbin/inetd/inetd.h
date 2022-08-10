@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.5 2021/10/12 22:51:28 rillig Exp $	*/
+/*	$NetBSD: inetd.h,v 1.6 2022/08/10 08:37:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -72,6 +72,18 @@
 
 #include <netdb.h>
 #include <stdbool.h>
+
+#ifndef NO_RPC
+#define RPC
+#endif
+
+#include <net/if.h>
+
+#ifdef RPC
+#include <rpc/rpc.h>
+#include <rpc/rpcb_clnt.h>
+#include <netconfig.h>
+#endif
 
 
 #include "pathnames.h"
