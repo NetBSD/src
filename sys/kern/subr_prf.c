@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.188 2022/04/17 09:09:13 riastradh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.189 2022/08/11 23:53:03 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.188 2022/04/17 09:09:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.189 2022/08/11 23:53:03 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -223,7 +223,7 @@ vpanic(const char *fmt, va_list ap)
 
 	if (lwp0.l_cpu && curlwp) {
 		/*
-		 * Disable preemption.  If already panicing on another CPU, sit
+		 * Disable preemption.  If already panicking on another CPU, sit
 		 * here and spin until the system is rebooted.  Allow the CPU that
 		 * first panicked to panic again.
 		 */
