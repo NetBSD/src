@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.24 2021/11/04 21:31:30 jakllsch Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.25 2022/08/11 13:04:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.24 2021/11/04 21:31:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.25 2022/08/11 13:04:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -328,7 +328,7 @@ gic_fdt_disestablish(device_t dev, void *ih)
 
 	for (n = 0; n < GIC_MAXIRQ; n++) {
 		firq = sc->sc_irq[n];
-		if (firq->intr_ih != ih)
+		if (firq == NULL || firq->intr_ih != ih)
 			continue;
 
 		KASSERT(firq->intr_refcnt > 0);
