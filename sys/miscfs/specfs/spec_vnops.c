@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.210 2022/03/28 12:39:10 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.211 2022/08/11 12:52:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.210 2022/03/28 12:39:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.211 2022/08/11 12:52:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -603,7 +603,9 @@ spec_node_revoke(vnode_t *vp)
 	KASSERT(sn->sn_gone == false);
 
 	mutex_enter(&device_lock);
-	KASSERT(sn->sn_opencnt <= sd->sd_opencnt);
+	KASSERTMSG(sn->sn_opencnt <= sd->sd_opencnt,
+	    "sn_opencnt=%u > sd_opencnt=%u",
+	    sn->sn_opencnt, sd->sd_opencnt);
 	sn->sn_gone = true;
 	if (sn->sn_opencnt != 0) {
 		sd->sd_opencnt -= (sn->sn_opencnt - 1);
@@ -775,6 +777,9 @@ spec_open(void *v)
 			break;
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
+		KASSERTMSG(sn->sn_opencnt <= sd->sd_opencnt,
+		    "sn_opencnt=%u > sd_opencnt=%u",
+		    sn->sn_opencnt, sd->sd_opencnt);
 		break;
 	case VBLK:
 		/*
@@ -789,7 +794,8 @@ spec_open(void *v)
 			error = EBUSY;
 			break;
 		}
-		KASSERTMSG(sn->sn_opencnt == 0, "%u", sn->sn_opencnt);
+		KASSERTMSG(sn->sn_opencnt == 0, "sn_opencnt=%u",
+		    sn->sn_opencnt);
 		sn->sn_opencnt = 1;
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
@@ -963,6 +969,9 @@ spec_open(void *v)
 	} else {
 		KASSERT(sd->sd_opencnt);
 		KASSERT(sn->sn_opencnt);
+		KASSERTMSG(sn->sn_opencnt <= sd->sd_opencnt,
+		    "sn_opencnt=%u > sd_opencnt=%u",
+		    sn->sn_opencnt, sd->sd_opencnt);
 		sd->sd_opencnt--;
 		sn->sn_opencnt--;
 		if (vp->v_type == VBLK)
@@ -1664,6 +1673,9 @@ spec_close(void *v)
 	mutex_enter(&device_lock);
 	KASSERT(sn->sn_opencnt);
 	KASSERT(sd->sd_opencnt);
+	KASSERTMSG(sn->sn_opencnt <= sd->sd_opencnt,
+	    "sn_opencnt=%u > sd_opencnt=%u",
+	    sn->sn_opencnt, sd->sd_opencnt);
 	sn->sn_opencnt--;
 	count = --sd->sd_opencnt;
 	if (vp->v_type == VBLK) {
@@ -1672,6 +1684,9 @@ spec_close(void *v)
 		sd->sd_bdevvp = NULL;
 	}
 	if (count == 0) {
+		KASSERTMSG(sn->sn_opencnt == 0, "sn_opencnt=%u",
+		    sn->sn_opencnt);
+		KASSERT(!sd->sd_closing);
 		sd->sd_opened = false;
 		sd->sd_closing = true;
 	}
@@ -1722,6 +1737,7 @@ spec_close(void *v)
 	 * reacquiring the lock would deadlock.
 	 */
 	mutex_enter(&device_lock);
+	KASSERT(!sd->sd_opened);
 	KASSERT(sd->sd_closing);
 	sd->sd_closing = false;
 	cv_broadcast(&specfs_iocv);
