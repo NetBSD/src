@@ -1,4 +1,4 @@
-/*	$NetBSD: luasystm.c,v 1.5 2014/07/19 18:38:35 lneto Exp $ */
+/*	$NetBSD: luasystm.c,v 1.6 2022/08/11 23:53:04 gutteridge Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -141,7 +141,7 @@ systm_aprint_get_error_count(lua_State *L)
 	return 1;
 }
 
-/* panicing */
+/* panicking */
 
 static int
 systm_panic(lua_State *L)
@@ -172,7 +172,7 @@ luaopen_systm(lua_State *L)
 		{ "aprint_error",		systm_aprint_error },
 		{ "aprint_get_error_count",	systm_aprint_get_error_count },
 
-		/* panicing */
+		/* panicking */
 		{ "panic",			systm_panic },
 
 		/* callouts */
