@@ -1,3 +1,4 @@
+/*	$NetBSD: hilkbdmap.c,v 1.4 2022/08/11 23:38:45 gutteridge Exp $	*/
 /*	$OpenBSD: hilkbdmap.c,v 1.7 2005/05/07 22:42:30 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -581,7 +582,7 @@ const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT] = {
 	-1,	/* 00 Undefined or custom layout */
 	-1,	/* 01 Undefined */
 	-1,	/* 02 Japanese */
-	-1,	/* 03 Swiss french */
+	-1,	/* 03 Swiss French */
 	-1,	/* 04 Portuguese */
 	-1,	/* 05 Arabic */
 	-1,	/* 06 Hebrew */
