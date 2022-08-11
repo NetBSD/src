@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.66 2022/07/08 07:42:47 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.67 2022/08/11 10:17:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.66 2022/07/08 07:42:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.67 2022/08/11 10:17:44 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -87,6 +87,7 @@ struct fstrans_mount_info {
 	SLIST_ENTRY(fstrans_mount_info) fmi_hash;
 	LIST_HEAD(, fscow_handler) fmi_cow_handler;
 	struct mount *fmi_mount;
+	struct fstrans_mount_info *fmi_lower_info;
 	struct lwp *fmi_owner;
 };
 SLIST_HEAD(fstrans_mount_hashhead, fstrans_mount_info);
@@ -229,13 +230,29 @@ static inline struct fstrans_mount_info *
 fstrans_mount_get(struct mount *mp)
 {
 	uint32_t indx;
-	struct fstrans_mount_info *fmi;
+	struct fstrans_mount_info *fmi, *fmi_lower;
 
 	KASSERT(mutex_owned(&fstrans_lock));
 
 	indx = fstrans_mount_hash(mp);
 	SLIST_FOREACH(fmi, &fstrans_mount_hashtab[indx], fmi_hash) {
 		if (fmi->fmi_mount == mp) {
+			if (__predict_false(mp->mnt_lower != NULL &&
+			    fmi->fmi_lower_info == NULL)) {
+				/*
+				 * Intern the lower/lowest mount into
+				 * this mount info on first lookup.
+				 */
+				KASSERT(fmi->fmi_ref_cnt == 1);
+
+				fmi_lower = fstrans_mount_get(mp->mnt_lower);
+				if (fmi_lower && fmi_lower->fmi_lower_info)
+					fmi_lower = fmi_lower->fmi_lower_info;
+				if (fmi_lower == NULL)
+					return NULL;
+				fmi->fmi_lower_info = fmi_lower;
+				fmi->fmi_lower_info->fmi_ref_cnt += 1;
+			}
 			return fmi;
 		}
 	}
@@ -262,6 +279,9 @@ fstrans_mount_dtor(struct fstrans_mount_info *fmi)
 	KASSERT(LIST_FIRST(&fmi->fmi_cow_handler) == NULL);
 	KASSERT(fmi->fmi_owner == NULL);
 
+	if (fmi->fmi_lower_info)
+		fstrans_mount_dtor(fmi->fmi_lower_info);
+
 	KASSERT(fstrans_gone_count > 0);
 	fstrans_gone_count -= 1;
 
@@ -287,6 +307,7 @@ fstrans_mount(struct mount *mp)
 	LIST_INIT(&newfmi->fmi_cow_handler);
 	newfmi->fmi_cow_change = false;
 	newfmi->fmi_mount = mp;
+	newfmi->fmi_lower_info = NULL;
 	newfmi->fmi_owner = NULL;
 
 	mutex_enter(&fstrans_lock);
@@ -374,12 +395,38 @@ fstrans_clear_lwp_info(void)
 static struct fstrans_lwp_info *
 fstrans_alloc_lwp_info(struct mount *mp)
 {
-	struct fstrans_lwp_info *fli;
+	struct fstrans_lwp_info *fli, *fli_lower;
 	struct fstrans_mount_info *fmi;
 
 	for (fli = curlwp->l_fstrans; fli; fli = fli->fli_succ) {
 		if (fli->fli_mount == mp)
 			return fli;
+	}
+
+	/*
+	 * Lookup mount info and get lower mount per lwp info.
+	 */
+	mutex_enter(&fstrans_lock);
+	fmi = fstrans_mount_get(mp);
+	if (fmi == NULL) {
+		mutex_exit(&fstrans_lock);
+		return NULL;
+	}
+	fmi->fmi_ref_cnt += 1;
+	mutex_exit(&fstrans_lock);
+
+	if (fmi->fmi_lower_info) {
+		fli_lower =
+		    fstrans_alloc_lwp_info(fmi->fmi_lower_info->fmi_mount);
+		if (fli_lower == NULL) {
+			mutex_enter(&fstrans_lock);
+			fstrans_mount_dtor(fmi);
+			mutex_exit(&fstrans_lock);
+
+			return NULL;
+		}
+	} else {
+		fli_lower = NULL;
 	}
 
 	/*
@@ -395,30 +442,18 @@ fstrans_alloc_lwp_info(struct mount *mp)
 	KASSERT(fli->fli_self == NULL);
 
 	/*
-	 * Attach the mount info if it is valid.
+	 * Attach the mount info and alias.
 	 */
 
-	mutex_enter(&fstrans_lock);
-	fmi = fstrans_mount_get(mp);
-	if (fmi == NULL) {
-		mutex_exit(&fstrans_lock);
-		pool_cache_put(fstrans_lwp_cache, fli);
-		return NULL;
-	}
 	fli->fli_self = curlwp;
 	fli->fli_mount = mp;
 	fli->fli_mountinfo = fmi;
-	fmi->fmi_ref_cnt += 1;
-	do {
-		mp = mp->mnt_lower;
-	} while (mp && mp->mnt_lower);
-	mutex_exit(&fstrans_lock);
 
 	fli->fli_succ = curlwp->l_fstrans;
 	curlwp->l_fstrans = fli;
 
-	if (mp) {
-		fli->fli_alias = fstrans_alloc_lwp_info(mp);
+	if (fli_lower) {
+		fli->fli_alias = fli_lower;
 		fli->fli_alias->fli_alias_cnt++;
 		fli = fli->fli_alias;
 	}
@@ -499,9 +534,6 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 
 	s = pserialize_read_enter();
 	if (__predict_true(grant_lock(fmi, lock_type))) {
-
-		KASSERT(!fmi->fmi_gone);
-
 		fli->fli_trans_cnt = 1;
 		fli->fli_lock_type = lock_type;
 		pserialize_read_exit(s);
