@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.135 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.135.4.1 2022/08/12 15:18:13 martin Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.135 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.135.4.1 2022/08/12 15:18:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -349,6 +349,11 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	rf_ShutdownCreate(&raidPtr->shutdownList,
 			  (void (*) (void *)) rf_FreeAllocList,
 			  raidPtr->cleanupList);
+
+	KASSERT(cfgPtr->numCol < RF_MAXCOL);
+	KASSERT(cfgPtr->numCol >= 0);
+	KASSERT(cfgPtr->numSpare < RF_MAXSPARE);
+	KASSERT(cfgPtr->numSpare >= 0);
 
 	raidPtr->numCol = cfgPtr->numCol;
 	raidPtr->numSpare = cfgPtr->numSpare;
