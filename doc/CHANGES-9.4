@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.2 2022/08/08 17:19:03 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.3 2022/08/12 15:19:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -20,4 +20,19 @@ lib/libpthread/pthread.c			1.181 (via patch)
 
 	Fix pthread hangs on startup.
 	[riastradh, #1498]
+
+sys/dev/ic/dwc_gmac.c				1.76,1.77
+
+	Fix chip configuration so that stripping of the FCS is
+	consistent for all packet types.
+	[sekiya, ticket #1499]
+
+sys/dev/raidframe/rf_disks.c			1.93 (patch)
+sys/dev/raidframe/rf_driver.c			1.140(patch)
+sys/dev/raidframe/rf_netbsdkintf.c		1.408(patch)
+
+	raid(4): reject invalid values for numCol and numSpares.
+	Explicitly nul-terminate all strings coming from userland.
+	Avoids signed arithmetic in some ioctl commands.
+	[mrg, ticket #1500]
 
