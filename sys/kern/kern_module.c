@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.157 2022/08/07 23:03:59 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.158 2022/08/12 15:17:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.157 2022/08/07 23:03:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.158 2022/08/12 15:17:10 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -94,6 +94,7 @@ bool		module_autoload_on = true;
 #else
 bool		module_autoload_on = false;
 #endif
+bool		module_autounload_unsafe = 0;
 u_int		module_count;
 u_int		module_builtinlist;
 u_int		module_autotime = 10;
@@ -543,6 +544,12 @@ sysctl_module_setup(void)
 		CTLTYPE_BOOL, "autoload",
 		SYSCTL_DESCR("Enable automatic load of modules"),
 		NULL, 0, &module_autoload_on, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_BOOL, "autounload_unsafe",
+		SYSCTL_DESCR("Enable automatic unload of unaudited modules"),
+		NULL, 0, &module_autounload_unsafe, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(&module_sysctllog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -1672,14 +1679,28 @@ module_thread(void *cookie)
 			}
 
 			/*
-			 * If this module wants to avoid autounload then
-			 * skip it.  Some modules can ping-pong in and out
-			 * because their use is transient but often. 
-			 * Example: exec_script.
+			 * Ask the module if it can be safely unloaded.
+			 *
+			 * - Modules which have been audited to be OK
+			 *   with that will return 0.
+			 *
+			 * - Modules which have not been audited for
+			 *   safe autounload will return ENOTTY.
+			 *
+			 *   => With kern.module.autounload_unsafe=1,
+			 *      we treat ENOTTY as acceptance.
+			 *
+			 * - Some modules would ping-ping in and out
+			 *   because their use is transient but often.
+			 *   Example: exec_script.  Other modules may
+			 *   still be in use.  These modules can
+			 *   prevent autounload in all cases by
+			 *   returning EBUSY or some other error code.
 			 */
 			mi = mod->mod_info;
 			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
-			if (error == 0 || error == ENOTTY) {
+			if (error == 0 ||
+			    (error == ENOTTY && module_autounload_unsafe)) {
 				(void)module_do_unload(mi->mi_name, false);
 			} else
 				module_print("module `%s' declined to be "
