@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.95 2022/08/07 23:49:30 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.96 2022/08/12 11:25:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.95 2022/08/07 23:49:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.96 2022/08/12 11:25:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -263,7 +263,7 @@ usbnet_newbuf(size_t buflen)
 {
 	struct mbuf *m;
 
-	if (buflen > MCLBYTES)
+	if (buflen > MCLBYTES - ETHER_ALIGN)
 		return NULL;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -278,8 +278,8 @@ usbnet_newbuf(size_t buflen)
 		}
 	}
 
+	m->m_len = m->m_pkthdr.len = ETHER_ALIGN + buflen;
 	m_adj(m, ETHER_ALIGN);
-	m->m_len = m->m_pkthdr.len = buflen;
 
 	return m;
 }
