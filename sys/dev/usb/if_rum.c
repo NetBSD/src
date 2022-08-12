@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.69 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.70 2022/08/12 19:13:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.69 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.70 2022/08/12 19:13:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1407,6 +1407,7 @@ rum_eeprom_read(struct rum_softc *sc, uint16_t addr, void *buf, int len)
 	if (error != 0) {
 		printf("%s: could not read EEPROM: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(error));
+		memset(buf, 0, len);
 	}
 }
 
@@ -1436,6 +1437,7 @@ rum_read_multi(struct rum_softc *sc, uint16_t reg, void *buf, int len)
 	if (error != 0) {
 		printf("%s: could not multi read MAC register: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(error));
+		memset(buf, 0, len);
 	}
 }
 
