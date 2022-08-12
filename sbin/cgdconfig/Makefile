@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2022/05/17 18:56:29 christos Exp $
+# $NetBSD: Makefile,v 1.22 2022/08/12 10:49:17 riastradh Exp $
 
 RUMPPRG=cgdconfig
 MAN=	cgdconfig.8
@@ -8,6 +8,7 @@ MAN=	cgdconfig.8
 SRCS+=	cgdconfig.c		\
 	cgdlex.l		\
 	cgdparse.y		\
+	hkdf_hmac_sha256.c	\
 	pkcs5_pbkdf2.c		\
 	params.c		\
 	utils.c
