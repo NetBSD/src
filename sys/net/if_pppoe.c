@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.181 2022/05/23 21:46:12 andvar Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.182 2022/08/12 06:24:03 knakahara Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.181 2022/05/23 21:46:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.182 2022/08/12 06:24:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1615,7 +1615,6 @@ pppoe_timeout(struct pppoe_softc *sc)
 			return;
 		}
 		if ((err = pppoe_send_padr(sc)) != 0) {
-			sc->sc_padr_retried--;
 			pppoe_printf(sc,"failed to send PADR, error=%d", err);
 		}
 		callout_schedule(&sc->sc_timeout,
