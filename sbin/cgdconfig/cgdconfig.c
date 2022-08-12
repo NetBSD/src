@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.53 2021/11/22 14:34:35 nia Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.54 2022/08/12 10:48:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.53 2021/11/22 14:34:35 nia Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.54 2022/08/12 10:48:27 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -50,6 +50,11 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.53 2021/11/22 14:34:35 nia Exp $");
 #include <util.h>
 #include <paths.h>
 #include <dirent.h>
+
+/* base64 gunk */
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -83,7 +88,8 @@ enum action {
 	 ACTION_CONFIGALL,		/* configure all from config file */
 	 ACTION_UNCONFIGALL,		/* unconfigure all from config file */
 	 ACTION_CONFIGSTDIN,		/* configure, key from stdin */
-	 ACTION_LIST			/* list configured devices */
+	 ACTION_LIST,			/* list configured devices */
+	 ACTION_PRINTKEY,		/* print key to stdout */
 };
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
@@ -106,6 +112,7 @@ static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
 		       int (*)(int, char **, struct params *, int));
 static int	do_list(int, char **);
+static int	do_printkey(int, char **);
 
 #define CONFIG_FLAGS_FROMALL	1	/* called from configure_all() */
 #define CONFIG_FLAGS_FROMMAIN	2	/* called from main() */
@@ -155,6 +162,7 @@ usage(void)
 	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
+	(void)fprintf(stderr, "       %s -t paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n",
 	    getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
@@ -209,7 +217,7 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGUV:b:ef:gi:k:lno:spuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGUV:b:ef:gi:k:lno:sptuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
@@ -276,7 +284,9 @@ main(int argc, char **argv)
 		case 's':
 			set_action(&action, ACTION_CONFIGSTDIN);
 			break;
-
+		case 't':
+			set_action(&action, ACTION_PRINTKEY);
+			break;
 		case 'u':
 			set_action(&action, ACTION_UNCONFIGURE);
 			break;
@@ -319,6 +329,8 @@ main(int argc, char **argv)
 		return configure_stdin(p, argc, argv);
 	case ACTION_LIST:
 		return do_list(argc, argv);
+	case ACTION_PRINTKEY:
+		return do_printkey(argc, argv);
 	default:
 		errx(EXIT_FAILURE, "undefined action");
 		/* NOTREACHED */
@@ -1337,6 +1349,45 @@ do_list(int argc, char **argv)
 
 	closedir(dirp);
 	return 0;
+}
+
+static int
+do_printkey(int argc, char **argv)
+{
+	struct params *p;
+	const uint8_t *raw;
+	size_t nbits, nbytes;
+	size_t nb64;
+	char *b64;
+	int ret;
+
+	if (argc != 1)
+		usage();
+	p = params_cget(argv[0]);
+	if (p == NULL)
+		return -1;
+	if (!params_verify(p)) {
+		warnx("invalid parameters file \"%s\"", argv[0]);
+		return -1;
+	}
+	p->key = getkey("key", p->keygen, p->keylen);
+	raw = bits_getbuf(p->key);
+	nbits = bits_len(p->key);
+	assert(nbits <= INT_MAX - 7);
+	nbytes = BITS2BYTES(nbits);
+	assert(nbytes <= 3*(INT_MAX/4) - 2);
+
+	nb64 = 4*((nbytes + 2)/3);
+	b64 = emalloc(nb64 + 2);
+	ret = __b64_ntop(raw, nbytes, b64, nb64 + 1);
+	assert(ret == (int)nb64);
+	b64[nb64] = '\n';
+	b64[nb64 + 1] = '\0';
+
+	if (fwrite(b64, nb64 + 1, 1, stdout) != 1)
+		err(1, "fwrite");
+	fflush(stdout);
+	return ferror(stdout);
 }
 
 static void
