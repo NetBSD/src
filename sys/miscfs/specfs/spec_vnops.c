@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.211 2022/08/11 12:52:24 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.212 2022/08/12 17:05:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.211 2022/08/11 12:52:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.212 2022/08/12 17:05:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -956,6 +956,17 @@ spec_open(void *v)
 		if (error == 0)
 			error = EBADF;
 	} else if (error == 0) {
+		/*
+		 * Device has not been revoked, so our opencnt can't
+		 * have gone away at this point -- transition to
+		 * sn_gone=true happens before transition to
+		 * sn_opencnt=0 in spec_node_revoke.
+		 */
+		KASSERT(sd->sd_opencnt);
+		KASSERT(sn->sn_opencnt);
+		KASSERTMSG(sn->sn_opencnt <= sd->sd_opencnt,
+		    "sn_opencnt=%u > sd_opencnt=%u",
+		    sn->sn_opencnt, sd->sd_opencnt);
 		sd->sd_opened = true;
 	} else if (sd->sd_opencnt == 1 && sd->sd_opened) {
 		/*
