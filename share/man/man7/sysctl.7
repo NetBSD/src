@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.158 2022/08/09 08:03:22 knakahara Exp $
+.\"	$NetBSD: sysctl.7,v 1.159 2022/08/12 15:43:38 riastradh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -842,20 +842,27 @@ See
 .It Li kern.module
 Settings related to kernel modules.
 The third level names for the settings are described below.
-.Bl -column "kern.module.autoload" "integer" "Changeable" -offset indent
+.Bl -column "kern.module.autounload_unsafe" "integer" "Changeable" -offset indent
 .It Sy Third level name Ta Sy Type Ta Sy Changeable
 .It kern.module.autoload	integer	yes
+.It kern.module.autounload_unsafe	integer	yes
 .It kern.module.autotime	integer	yes
 .It kern.module.verbose	boolean	yes
 .El
 .Pp
 The variables are as follows:
-.Bl -tag -width "123456"
+.Bl -tag -width 6n
 .It Li kern.module.autoload
 A boolean that controls whether kernel modules are loaded automatically.
 See
 .Xr module 7
-for additional details.
+for details.
+.It Li kern.module.autounload_unsafe
+A boolean that controls whether the kernel will autounload modules that
+were automatically loaded and have not been audited for autounload.
+.Pp
+By default, only modules that have been audited will be autounloaded,
+and only if they were autoloaded to begin with.
 .It Li kern.module.autotime
 An integer that controls the delay before an attempt is made to
 automatically unload a module that was auto-loaded.
