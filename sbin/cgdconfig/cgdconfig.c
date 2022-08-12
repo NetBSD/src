@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.56 2022/08/12 10:49:17 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.57 2022/08/12 10:49:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.56 2022/08/12 10:49:17 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.57 2022/08/12 10:49:35 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -100,6 +100,10 @@ enum action {
 
 int	nflag = 0;
 
+/* if Sflag is set, generate shared keys */
+
+int	Sflag = 0;
+
 /* if pflag is set to PFLAG_STDIN read from stdin rather than getpass(3) */
 
 #define	PFLAG_GETPASS		0x01
@@ -123,7 +127,8 @@ LIST_HEAD(, sharedkey) sharedkeys;
 
 static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
-static int	generate(struct params *, int, char **, const char *);
+static int	generate(struct params *, int, char **, const char *,
+		    const char *);
 static int	generate_convert(struct params *, int, char **, const char *);
 static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
@@ -177,8 +182,8 @@ usage(void)
 	    getprogname());
 	(void)fprintf(stderr, "       %s -G [-enpv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
-	(void)fprintf(stderr, "       %s -g [-v] [-i ivmeth] [-k kgmeth] "
-	    "[-o outfile] alg [keylen]\n", getprogname());
+	(void)fprintf(stderr, "       %s -g [-Sv] [-i ivmeth] [-k kgmeth] "
+	    "[-P paramsfile] [-o outfile] alg [keylen]\n", getprogname());
 	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
@@ -230,6 +235,7 @@ main(int argc, char **argv)
 	int	ch;
 	const char	*cfile = NULL;
 	const char	*outfile = NULL;
+	const char	*Pfile = NULL;
 
 	setprogname(*argv);
 	if (hkdf_hmac_sha256_selftest())
@@ -240,13 +246,21 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGTUV:b:ef:gi:k:lno:sptuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGP:STUV:b:ef:gi:k:lno:sptuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
 			break;
 		case 'G':
 			set_action(&action, ACTION_GENERATE_CONVERT);
+			break;
+		case 'P':
+			if (Pfile)
+				usage();
+			Pfile = estrdup(optarg);
+			break;
+		case 'S':
+			Sflag = 1;
 			break;
 		case 'T':
 			set_action(&action, ACTION_PRINTALLKEYS);
@@ -336,6 +350,17 @@ main(int argc, char **argv)
 		err(1, "init failed");
 
 	/* validate the consistency of the arguments */
+	if (Pfile != NULL && action != ACTION_GENERATE) {
+		warnx("-P is only for use with -g action");
+		usage();
+	}
+	if (Pfile != NULL && !Sflag) {
+		warnx("-P only makes sense with -S flag");
+	}
+	if (Sflag && action != ACTION_GENERATE) {
+		warnx("-S is only for use with -g action");
+		usage();
+	}
 
 	switch (action) {
 	case ACTION_DEFAULT:	/* ACTION_CONFIGURE is the default */
@@ -344,7 +369,7 @@ main(int argc, char **argv)
 	case ACTION_UNCONFIGURE:
 		return unconfigure(argc, argv, NULL, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_GENERATE:
-		return generate(p, argc, argv, outfile);
+		return generate(p, argc, argv, outfile, Pfile);
 	case ACTION_GENERATE_CONVERT:
 		return generate_convert(p, argc, argv, outfile);
 	case ACTION_CONFIGALL:
@@ -1197,7 +1222,8 @@ verify_reenter(struct params *p)
 }
 
 static int
-generate(struct params *p, int argc, char **argv, const char *outfile)
+generate(struct params *p, int argc, char **argv, const char *outfile,
+    const char *Pfile)
 {
 	int	 ret;
 
@@ -1219,15 +1245,43 @@ generate(struct params *p, int argc, char **argv, const char *outfile)
 	if (ret)
 		return ret;
 
-	if (!p->keygen) {
-		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
-		if (!p->keygen)
+	if (Pfile) {
+		struct params *pp;
+
+		pp = params_cget(Pfile);
+		if (pp == NULL)
 			return -1;
+		if (!params_verify(pp)) {
+			params_free(pp);
+			warnx("invalid parameters file \"%s\"", Pfile);
+			return -1;
+		}
+		p = params_combine(pp, p);
+		keygen_stripstored(&p->keygen);
+		if (!p->keygen) {
+			warnx("no keygen in parameters file \"%s\"", Pfile);
+			return -1;
+		}
+	} else {
+		if (!p->keygen) {
+			p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
+			if (!p->keygen)
+				return -1;
+		}
+
+		if (keygen_filldefaults(p->keygen, p->keylen)) {
+			warnx("Failed to generate defaults for keygen");
+			return -1;
+		}
 	}
 
-	if (keygen_filldefaults(p->keygen, p->keylen)) {
-		warnx("Failed to generate defaults for keygen");
-		return -1;
+	if (Sflag) {
+		if (Pfile)
+			ret = keygen_tweakshared(p->keygen);
+		else
+			ret = keygen_makeshared(p->keygen);
+		if (ret)
+			return ret;
 	}
 
 	if (!params_verify(p)) {
