@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgdconfig.sh,v 1.2 2022/08/12 10:48:44 riastradh Exp $
+#	$NetBSD: t_cgdconfig.sh,v 1.3 2022/08/12 10:49:17 riastradh Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,6 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+COUNTKEY=$(atf_get_srcdir)/h_countkey
 
 atf_test_case storedkey
 storedkey_head()
@@ -120,8 +122,158 @@ EOF
 	    cgdconfig -t params
 }
 
+atf_test_case sharedstoredkey10
+sharedstoredkey10_head()
+{
+	atf_set descr "Test shared key generation from storedkey, 10-byte info"
+}
+sharedstoredkey10_body()
+{
+	cat <<EOF >params
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey {
+        key AAABAAd3CTYsLjLfDdw/DcR7umOQtsc7tQ+cMSLshErXwrPl;
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAAAUPDx8vP09fb3+Pk=;
+};
+EOF
+	atf_check -o inline:'PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=\n' \
+	    cgdconfig -t params
+}
+
+atf_test_case sharedstoredkey80
+sharedstoredkey80_head()
+{
+	atf_set descr "Test shared key generation from storedkey, 80-byte info"
+}
+sharedstoredkey80_body()
+{
+	cat <<EOF >params
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey {
+        key AAABAAamuIxYUzYaBhBMnOs1tFzvdgAUkEZxAUoZP0DBX8JE;
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAACgLCxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJ \
+                   ysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn \
+                   6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/;
+};
+EOF
+	atf_check -o inline:'sR45jcgDJ6HI5/eMWWpJNE8BLtotTvrYoFDMTBmvqXw=\n' \
+	    cgdconfig -t params
+}
+
+atf_test_case sharedstoredkeys
+sharedstoredkeys_head()
+{
+	atf_set descr "Test multiple shared key generations from stored keys"
+}
+sharedstoredkeys_body()
+{
+	cat <<EOF >wd0e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey {
+        key AAABAAd3CTYsLjLfDdw/DcR7umOQtsc7tQ+cMSLshErXwrPl;
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAAAUPDx8vP09fb3+Pk=;
+};
+EOF
+	cat <<EOF >ld1e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey {
+        key AAABAAd3CTYsLjLfDdw/DcR7umOQtsc7tQ+cMSLshErXwrPl;
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAAAQMxUtCBh7ha6mUU=;
+};
+EOF
+	cat <<EOF >cgd.conf0
+cgd0	/dev/wd0e	wd0e
+cgd1	/dev/ld1e	ld1e
+EOF
+	cat <<EOF >expected0
+/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+EOF
+	cat <<EOF >cgd.conf1
+cgd0	/dev/ld1e	ld1e
+cgd1	/dev/wd0e	wd0e
+EOF
+	cat <<EOF >expected1
+/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+EOF
+	atf_check -o file:expected0 cgdconfig -T -f cgd.conf0
+	atf_check -o file:expected1 cgdconfig -T -f cgd.conf1
+}
+
+atf_test_case sharedshellkeys
+sharedshellkeys_head()
+{
+	atf_set descr "Test multiple shared key generations from shell_cmd"
+}
+sharedshellkeys_body()
+{
+	cat <<EOF >wd0e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen shell_cmd {
+        cmd "${COUNTKEY} n B3cJNiwuMt8N3D8NxHu6Y5C2xzu1D5wxIuyEStfCs+U=";
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAAAUPDx8vP09fb3+Pk=;
+};
+EOF
+	cat <<EOF >ld1e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen shell_cmd {
+        cmd "${COUNTKEY} n B3cJNiwuMt8N3D8NxHu6Y5C2xzu1D5wxIuyEStfCs+U=";
+        shared "helloworld" algorithm hkdf-hmac-sha256 \
+            subkey AAAAQMxUtCBh7ha6mUU=;
+};
+EOF
+	cat <<EOF >cgd.conf0
+cgd0	/dev/wd0e	wd0e
+cgd1	/dev/ld1e	ld1e
+EOF
+	cat <<EOF >expected0
+/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+EOF
+	cat <<EOF >cgd.conf1
+cgd0	/dev/ld1e	ld1e
+cgd1	/dev/wd0e	wd0e
+EOF
+	cat <<EOF >expected1
+/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+EOF
+	atf_check -o file:expected0 cgdconfig -T -f cgd.conf0
+	atf_check -o inline:'1\n' cat n
+	atf_check -o file:expected1 cgdconfig -T -f cgd.conf1
+	atf_check -o inline:'2\n' cat n
+}
+
 atf_init_test_cases()
 {
+	atf_add_test_case sharedshellkeys
+	atf_add_test_case sharedstoredkey10
+	atf_add_test_case sharedstoredkey80
+	atf_add_test_case sharedstoredkeys
 	atf_add_test_case storedkey
 	atf_add_test_case storedkey2a
 	atf_add_test_case storedkey2b

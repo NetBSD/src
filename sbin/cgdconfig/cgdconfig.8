@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.54 2022/08/12 10:48:44 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.55 2022/08/12 10:49:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -395,6 +395,46 @@ Version of Argon2 to use.
 Should be the most recent version, currently
 .Dv 19 .
 Only used for argon2id.
+.It shared Ar name No algorithm Ar kdf No subkey Ar info
+Makes the key generation take an extra step to derive a subkey from the
+main key using the key derivation function
+.Ar kdf
+with input
+.Ar info .
+.Pp
+This enables a single password entry, for example, to decrypt multiple
+disks that use different keys, each derived as a subkey from the main
+key generated from the password.
+.Bl -tag -width 6n
+.It Ar name
+A string used to identify the same main key generation shared between
+parameters files for different disks listed in a single
+.Pa cgd.conf
+configuration file.
+.It Ar kdf
+The name of a key derivation function used to derive a subkey from the
+main key.
+Supported values:
+.Bl -tag -width 6n -offset indent
+.It Li hkdf-hmac-sha256
+The HKDF-Expand function of RFC 5869, instantiated with SHA-256.
+.El
+.It Ar info
+A base64 length-encoded string to distinguish different subkeys derived
+from a shared main key.
+Need not be secret.
+For example, it could be a nickname, or the disk's World-Wide Name, or
+a UUID generated for the disk, or just a random string.
+.El
+.Pp
+It is an error to reuse a shared key
+.Ar name
+with different keygen blocks, other than the
+.Ar info
+parameter,
+between parameters files used by a single
+.Pa cgd.conf
+configuration file.
 .El
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
@@ -474,6 +514,45 @@ An example parameters file which stores its key locally:
 			     ly2TdxkFqOkYYcbyUKu/f60L;
 .Ed
 .Pp
+An example pair of configuration files which use shared keys so they
+can be derived from a single passphrase entry, with the 64-bit
+World-Wide Name of each disk (base64 length-encoded) as its subkey
+info:
+.Bl -tag -offset indent -width 6n
+.It Pa /etc/cgd/wd0a
+.Bd -literal
+algorithm       adiantum;
+iv-method       encblkno1;
+keylength       256;
+verify_method	gpt;
+keygen argon2id {
+        iterations 32;
+        memory 5214;
+        parallelism 2;
+        version 19;
+        salt AAAAgLZ5QgleU2m/Ib6wiPYxz98=;
+        shared "my laptop" algorithm hkdf-hmac-sha256 \e
+            subkey AAAAQEGELNr3bj3I;
+};
+.Ed
+.It Pa /etc/cgd/wd1a
+.Bd -literal
+algorithm       adiantum;
+iv-method       encblkno1;
+keylength       256;
+verify_method	gpt;
+keygen argon2id {
+        iterations 32;
+        memory 5214;
+        parallelism 2;
+        version 19;
+        salt AAAAgLZ5QgleU2m/Ib6wiPYxz98=;
+        shared "my laptop" algorithm hkdf-hmac-sha256 \e
+            subkey AAAAQHSC15pr1Pe4;
+};
+.Ed
+.El
+.Pp
 An example
 .Pa /etc/cgd/cgd.conf :
 .Bd -literal
@@ -517,6 +596,15 @@ program's execution.
 .%I University of Luxembourg
 .%U https://www.password-hashing.net/
 .Re
+.Rs
+.%A H. Krawczyk
+.%A P. Eronen
+.%T HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
+.%I Internet Engineering Task Force
+.%U https://www.rfc-editor.org/rfc/rfc5869.html
+.%N RFC 5869
+.%D May 2010
+.Re
 .Pp
 .Dq PKCS #5 v2.0: Password-Based Cryptography Standard ,
 RSA Laboratories, March 25, 1999.
@@ -526,8 +614,9 @@ The
 utility appeared in
 .Nx 2.0 .
 .Pp
+Support for
 .Li argon2id
-support appeared in
+and for shared keys appeared in
 .Nx 10.0 .
 .Sh BUGS
 Pass phrases are limited to 1023 bytes.
