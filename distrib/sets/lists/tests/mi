@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1218 2022/08/12 10:48:27 riastradh Exp $
+# $NetBSD: mi,v 1.1219 2022/08/12 10:49:17 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1417,6 +1417,7 @@
 ./usr/tests/dev/cgd					tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/Atffile				tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/Kyuafile				tests-fs-tests		compattestfile,atf,kyua
+./usr/tests/dev/cgd/h_countkey				tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/h_img2cgd				tests-obsolete		obsolete
 ./usr/tests/dev/cgd/h_img2cgd/cgd.conf			tests-obsolete		obsolete
 ./usr/tests/dev/cgd/h_img2cgd/h_img2cgd			tests-obsolete		obsolete

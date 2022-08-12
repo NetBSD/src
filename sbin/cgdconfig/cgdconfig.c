@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.56 2022/08/12 10:49:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,12 +33,13 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.56 2022/08/12 10:49:17 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
 #include <argon2.h>
 #endif
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -66,6 +67,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $");
 #include <sys/resource.h>
 #include <sys/statvfs.h>
 #include <sys/bitops.h>
+#include <sys/queue.h>
 
 #include <dev/cgdvar.h>
 
@@ -76,6 +78,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $");
 #include "utils.h"
 #include "cgdconfig.h"
 #include "prog_ops.h"
+#include "hkdf_hmac_sha256.h"
 
 #define CGDCONFIG_CFILE		CGDCONFIG_DIR "/cgd.conf"
 
@@ -104,6 +107,19 @@ int	nflag = 0;
 #define	PFLAG_GETPASS_MASK	0x03
 #define	PFLAG_STDIN		0x04
 int	pflag = PFLAG_GETPASS;
+
+/*
+ * When configuring all cgds, save a cache of shared keys for key
+ * derivation.
+ */
+
+struct sharedkey {
+	int			 alg;
+	string_t		*id;
+	bits_t			*key;
+	LIST_ENTRY(sharedkey)	 list;
+};
+LIST_HEAD(, sharedkey) sharedkeys;
 
 static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
@@ -216,6 +232,8 @@ main(int argc, char **argv)
 	const char	*outfile = NULL;
 
 	setprogname(*argv);
+	if (hkdf_hmac_sha256_selftest())
+		err(EXIT_FAILURE, "Crypto self-test failed");
 	eliminate_cores();
 	if (mlockall(MCL_FUTURE))
 		err(EXIT_FAILURE, "Can't lock memory");
@@ -348,13 +366,69 @@ main(int argc, char **argv)
 }
 
 static bits_t *
-getkey(const char *dev, struct keygen *kg, size_t len)
+getsubkey_hkdf_hmac_sha256(bits_t *key, bits_t *info, size_t subkeylen)
+{
+	bits_t		*ret = NULL;
+	uint8_t		*tmp;
+
+	tmp = emalloc(BITS2BYTES(subkeylen));
+	if (hkdf_hmac_sha256(tmp, BITS2BYTES(subkeylen),
+		bits_getbuf(key), BITS2BYTES(bits_len(key)),
+		bits_getbuf(info), BITS2BYTES(bits_len(info)))) {
+		warnx("failed to derive HKDF-HMAC-SHA256 subkey");
+		goto out;
+	}
+
+	ret = bits_new(tmp, subkeylen);
+
+out:	free(tmp);
+	return ret;
+}
+
+static bits_t *
+getsubkey(int alg, bits_t *key, bits_t *info, size_t subkeylen)
+{
+
+	switch (alg) {
+	case SHARED_ALG_HKDF_HMAC_SHA256:
+		return getsubkey_hkdf_hmac_sha256(key, info, subkeylen);
+	default:
+		warnx("unrecognised shared key derivation method %d", alg);
+		return NULL;
+	}
+}
+
+static bits_t *
+getkey(const char *dev, struct keygen *kg, size_t len0)
 {
 	bits_t	*ret = NULL;
 	bits_t	*tmp;
 
-	VPRINTF(3, ("getkey(\"%s\", %p, %zu) called\n", dev, kg, len));
+	VPRINTF(3, ("getkey(\"%s\", %p, %zu) called\n", dev, kg, len0));
 	for (; kg; kg=kg->next) {
+		struct sharedkey *sk = NULL;
+		size_t len = len0;
+
+		/*
+		 * If shared, determine the shared key's length and
+		 * probe the cache of shared keys.
+		 */
+		if (kg->kg_sharedid) {
+			const char *id = string_tocharstar(kg->kg_sharedid);
+
+			len = kg->kg_sharedlen;
+			LIST_FOREACH(sk, &sharedkeys, list) {
+				if (kg->kg_sharedalg == sk->alg &&
+				    kg->kg_sharedlen == bits_len(sk->key) &&
+				    strcmp(id, string_tocharstar(sk->id)) == 0)
+					break;
+			}
+			if (sk) {
+				tmp = sk->key;
+				goto derive;
+			}
+		}
+
 		switch (kg->kg_method) {
 		case KEYGEN_STOREDKEY:
 			tmp = getkey_storedkey(dev, kg, len);
@@ -388,6 +462,32 @@ getkey(const char *dev, struct keygen *kg, size_t len)
 			return NULL;
 		}
 
+		/*
+		 * If shared, cache the key.
+		 */
+		if (kg->kg_sharedid) {
+			assert(sk == NULL);
+			sk = ecalloc(1, sizeof(*sk));
+			sk->alg = kg->kg_sharedalg;
+			sk->id = string_dup(kg->kg_sharedid);
+			sk->key = tmp;
+			LIST_INSERT_HEAD(&sharedkeys, sk, list);
+		}
+
+derive:		if (kg->kg_sharedid) {
+			/*
+			 * tmp holds the master key, owned by the
+			 * struct sharedkey record; replace it by the
+			 * derived subkey.
+			 */
+			tmp = getsubkey(kg->kg_sharedalg, tmp,
+			    kg->kg_sharedinfo, len0);
+			if (tmp == NULL) {
+				if (ret)
+					bits_free(ret);
+				return NULL;
+			}
+		}
 		if (ret)
 			ret = bits_xor_d(tmp, ret);
 		else

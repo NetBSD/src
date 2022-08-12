@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.12 2021/11/22 14:34:35 nia Exp $ */
+/* $NetBSD: params.h,v 1.13 2022/08/12 10:49:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@ struct keygen {
 	bits_t		*kg_salt;
 	bits_t		*kg_key;
 	string_t	*kg_cmd;
+	string_t	*kg_sharedid;
+	int		 kg_sharedalg;
+	size_t		 kg_sharedlen;
+	bits_t		*kg_sharedinfo;
 	struct keygen	*next;
 };
 
@@ -77,6 +81,11 @@ struct params {
 #define VERIFY_REENTER		0x4
 #define VERIFY_MBR      	0x5
 #define VERIFY_GPT      	0x6
+
+/* shared key derivation methods */
+
+#define	SHARED_ALG_UNKNOWN		0x0
+#define	SHARED_ALG_HKDF_HMAC_SHA256	0x1
 
 __BEGIN_DECLS
 struct params	*params_new(void);
@@ -117,6 +126,7 @@ struct keygen	*keygen_parallelism(size_t);
 struct keygen	*keygen_version(size_t);
 struct keygen	*keygen_key(bits_t *);
 struct keygen	*keygen_cmd(string_t *);
+struct keygen	*keygen_shared(string_t *, string_t *, bits_t *);
 
 int		 keygen_fput(struct keygen *, int, FILE *);
 __END_DECLS
