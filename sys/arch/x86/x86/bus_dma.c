@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.85 2022/07/13 00:12:20 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.86 2022/08/12 13:44:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.85 2022/07/13 00:12:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.86 2022/08/12 13:44:12 riastradh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -789,6 +789,13 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 
 /*
  * Synchronize a DMA map.
+ *
+ * Reference:
+ *
+ *	AMD64 Architecture Programmer's Manual, Volume 2: System
+ *	Programming, 24593--Rev. 3.38--November 2021, Sec. 7.4.2 Memory
+ *	Barrier Interaction with Memory Types, Table 7-3, p. 196.
+ *	https://web.archive.org/web/20220625040004/https://www.amd.com/system/files/TechDocs/24593.pdf#page=256
  */
 static void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
@@ -816,11 +823,17 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 
 	/*
-	 * The caller has been alerted to DMA completion by reading a
-	 * register or DMA descriptor, and is about to read out of the
-	 * DMA memory buffer that the device filled.  LFENCE ensures
-	 * that these happen in order, so that the caller doesn't
-	 * proceed to read any stale data from cache or speculation.
+	 * BUS_DMASYNC_POSTREAD: The caller has been alerted to DMA
+	 * completion by reading a register or DMA descriptor, and the
+	 * caller is about to read out of the DMA memory buffer that
+	 * the device just filled.
+	 *
+	 * => LFENCE ensures that these happen in order so that the
+	 *    caller, or the bounce buffer logic here, doesn't proceed
+	 *    to read any stale data from cache or speculation.  x86
+	 *    never reorders loads from wp/wt/wb or uc memory, but it
+	 *    may execute loads from wc/wc+ memory early, e.g. with
+	 *    BUS_SPACE_MAP_PREFETCHABLE.
 	 */
 	if (ops & BUS_DMASYNC_POSTREAD)
 		x86_lfence();
@@ -954,20 +967,46 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 	}
 end:
-	if (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE)) {
-		/*
-		 * from the memory POV a load can be reordered before a store
-		 * (a load can fetch data from the write buffers, before
-		 * data hits the cache or memory), a mfence avoids it.
-		 */
-		x86_mfence();
-	} else if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD)) {
-		/*
-		 * all past reads should have completed at before this point,
-		 * and future reads should not have started yet.
-		 */
-		x86_lfence();
-	}
+	/*
+	 * BUS_DMASYNC_PREREAD: The caller may have previously been
+	 * using a DMA memory buffer, with loads and stores, and is
+	 * about to trigger DMA by writing to a register or DMA
+	 * descriptor.
+	 *
+	 * => SFENCE ensures that the stores happen in order, in case
+	 *    the latter one is non-temporal or to wc/wc+ memory and
+	 *    thus may be executed early.  x86 never reorders
+	 *    load;store to store;load for any memory type, so no
+	 *    barrier is needed for prior loads.
+	 *
+	 * BUS_DMASYNC_PREWRITE: The caller has just written to a DMA
+	 * memory buffer, or we just wrote to to the bounce buffer,
+	 * data that the device needs to use, and the caller is about
+	 * to trigger DMA by writing to a register or DMA descriptor.
+	 *
+	 * => SFENCE ensures that these happen in order so that any
+	 *    buffered stores are visible to the device before the DMA
+	 *    is triggered.  x86 never reorders (non-temporal) stores
+	 *    to wp/wt/wb or uc memory, but it may reorder two stores
+	 *    if one is to wc/wc+ memory, e.g. if the DMA descriptor is
+	 *    mapped with BUS_SPACE_MAP_PREFETCHABLE.
+	 */
+	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE))
+		x86_sfence();
+
+	/*
+	 * BUS_DMASYNC_POSTWRITE: The caller has been alerted to DMA
+	 * completion by reading a register or DMA descriptor, and the
+	 * caller may proceed to reuse the DMA memory buffer, with
+	 * loads and stores.
+	 *
+	 * => No barrier is needed.  Since the DMA memory buffer is not
+	 *    changing (we're sending data to the device, not receiving
+	 *    data from the device), prefetched loads are safe.  x86
+	 *    never reoreders load;store to store;load for any memory
+	 *    type, so early execution of stores prior to witnessing
+	 *    the DMA completion is not possible.
+	 */
 }
 
 /*
