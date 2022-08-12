@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.56 2022/08/12 10:49:35 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.57 2022/08/12 10:49:47 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,7 +144,9 @@ With the
 .Fl S
 option for the
 .Fl g
-action, specify a parameters file with a shared key to reuse for
+or
+.Fl G
+actions, specify a parameters file with a shared key to reuse for
 deriving this one as a subkey.
 .It Fl p
 Read all passphrases from stdin rather than
@@ -157,7 +159,9 @@ in question to be unconfigured rather than prompting for the passphrase
 again.
 .It Fl S
 When generating a parameters file with
-.Fl g ,
+.Fl g
+or
+.Fl G ,
 arrange to use a subkey of a shared key.
 If
 .Fl P Ar paramsfile

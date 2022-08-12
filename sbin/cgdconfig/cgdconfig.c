@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.57 2022/08/12 10:49:35 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.58 2022/08/12 10:49:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.57 2022/08/12 10:49:35 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.58 2022/08/12 10:49:47 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -129,7 +129,8 @@ static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
 static int	generate(struct params *, int, char **, const char *,
 		    const char *);
-static int	generate_convert(struct params *, int, char **, const char *);
+static int	generate_convert(struct params *, int, char **, const char *,
+		    const char *);
 static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
 		       int (*)(int, char **, struct params *, int));
@@ -180,8 +181,8 @@ usage(void)
 	    "[paramsfile]\n", getprogname());
 	(void)fprintf(stderr, "       %s -C [-enpv] [-f configfile]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       %s -G [-enpv] [-i ivmeth] [-k kgmeth] "
-	    "[-o outfile] paramsfile\n", getprogname());
+	(void)fprintf(stderr, "       %s -G [-enpSv] [-i ivmeth] [-k kgmeth] "
+	    "[-P paramsfile] [-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-Sv] [-i ivmeth] [-k kgmeth] "
 	    "[-P paramsfile] [-o outfile] alg [keylen]\n", getprogname());
 	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
@@ -350,15 +351,19 @@ main(int argc, char **argv)
 		err(1, "init failed");
 
 	/* validate the consistency of the arguments */
-	if (Pfile != NULL && action != ACTION_GENERATE) {
-		warnx("-P is only for use with -g action");
+	if (Pfile != NULL &&
+	    action != ACTION_GENERATE &&
+	    action != ACTION_GENERATE_CONVERT) {
+		warnx("-P is only for use with -g/-G action");
 		usage();
 	}
 	if (Pfile != NULL && !Sflag) {
 		warnx("-P only makes sense with -S flag");
 	}
-	if (Sflag && action != ACTION_GENERATE) {
-		warnx("-S is only for use with -g action");
+	if (Sflag &&
+	    action != ACTION_GENERATE &&
+	    action != ACTION_GENERATE_CONVERT) {
+		warnx("-S is only for use with -g/-G action");
 		usage();
 	}
 
@@ -371,7 +376,7 @@ main(int argc, char **argv)
 	case ACTION_GENERATE:
 		return generate(p, argc, argv, outfile, Pfile);
 	case ACTION_GENERATE_CONVERT:
-		return generate_convert(p, argc, argv, outfile);
+		return generate_convert(p, argc, argv, outfile, Pfile);
 	case ACTION_CONFIGALL:
 		return do_all(cfile, argc, argv, configure);
 	case ACTION_UNCONFIGALL:
@@ -1293,10 +1298,12 @@ generate(struct params *p, int argc, char **argv, const char *outfile,
 }
 
 static int
-generate_convert(struct params *p, int argc, char **argv, const char *outfile)
+generate_convert(struct params *p, int argc, char **argv, const char *outfile,
+    const char *Pfile)
 {
 	struct params	*oldp;
 	struct keygen	*kg;
+	int		 ret;
 
 	if (argc != 1)
 		usage();
@@ -1340,13 +1347,42 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 
 	params_free(oldp);
 
-	if (!p->keygen) {
-		p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
-		if (!p->keygen)
+	if (Pfile) {
+		struct params *pp;
+
+		pp = params_cget(Pfile);
+		if (pp == NULL)
 			return -1;
+		if (!params_verify(pp)) {
+			params_free(pp);
+			warnx("invalid parameters file \"%s\"", Pfile);
+			return -1;
+		}
+		p = params_combine(pp, p);
+		keygen_stripstored(&p->keygen);
+		if (!p->keygen) {
+			warnx("no keygen in parameters file \"%s\"", Pfile);
+			return -1;
+		}
+	} else {
+		if (!p->keygen) {
+			p->keygen = keygen_generate(KEYGEN_PKCS5_PBKDF2_SHA1);
+			if (!p->keygen)
+				return -1;
+		}
+		(void)params_filldefaults(p);
+		(void)keygen_filldefaults(p->keygen, p->keylen);
 	}
-	(void)params_filldefaults(p);
-	(void)keygen_filldefaults(p->keygen, p->keylen);
+
+	if (Sflag) {
+		if (Pfile)
+			ret = keygen_tweakshared(p->keygen);
+		else
+			ret = keygen_makeshared(p->keygen);
+		if (ret)
+			return ret;
+	}
+
 	p->key = getkey("new file", p->keygen, p->keylen);
 
 	kg = keygen_generate(KEYGEN_STOREDKEY);
