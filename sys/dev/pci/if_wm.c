@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.761 2022/08/12 10:58:21 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.762 2022/08/12 10:58:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.761 2022/08/12 10:58:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.762 2022/08/12 10:58:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -495,7 +495,7 @@ struct wm_queue {
 };
 
 struct wm_phyop {
-	int (*acquire)(struct wm_softc *);
+	int (*acquire)(struct wm_softc *) __attribute__((warn_unused_result));
 	void (*release)(struct wm_softc *);
 	int (*readreg_locked)(device_t, int, int, uint16_t *);
 	int (*writereg_locked)(device_t, int, int, uint16_t);
@@ -504,7 +504,7 @@ struct wm_phyop {
 };
 
 struct wm_nvmop {
-	int (*acquire)(struct wm_softc *);
+	int (*acquire)(struct wm_softc *) __attribute__((warn_unused_result));
 	void (*release)(struct wm_softc *);
 	int (*read)(struct wm_softc *, int, int, uint16_t *);
 };
@@ -5266,13 +5266,19 @@ static int
 wm_reset_phy(struct wm_softc *sc)
 {
 	uint32_t reg;
+	int rv;
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	if (wm_phy_resetisblocked(sc))
 		return -1;
 
-	sc->phy.acquire(sc);
+	rv = sc->phy.acquire(sc);
+	if (rv) {
+		device_printf(sc->sc_dev, "%s: failed to acquire phy: %d\n",
+		    __func__, rv);
+		return rv;
+	}
 
 	reg = CSR_READ(sc, WMREG_CTRL);
 	CSR_WRITE(sc, WMREG_CTRL, reg | CTRL_PHY_RESET);
@@ -5582,7 +5588,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_80003:
 		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
-		sc->phy.acquire(sc);
+		if (sc->phy.acquire(sc) != 0)
+			break;
 		CSR_WRITE(sc, WMREG_CTRL, reg);
 		sc->phy.release(sc);
 		break;
@@ -5609,7 +5616,8 @@ wm_reset(struct wm_softc *sc)
 			phy_reset = 1;
 		} else
 			device_printf(sc->sc_dev, "XXX reset is blocked!!!\n");
-		sc->phy.acquire(sc);
+		if (sc->phy.acquire(sc) != 0)
+			break;
 		CSR_WRITE(sc, WMREG_CTRL, reg);
 		/* Don't insert a completion barrier when reset */
 		delay(20*1000);
@@ -11698,7 +11706,7 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
-	rv = sc->phy.acquire(sc); 
+	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return rv;
@@ -11867,7 +11875,7 @@ wm_gmii_i80003_writereg(device_t dev, int phy, int reg, uint16_t val)
 	if (phy != 1) /* Only one PHY on kumeran bus */
 		return -1;
 
-	rv = sc->phy.acquire(sc); 
+	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return rv;
@@ -17021,9 +17029,13 @@ wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
 	uint16_t phyreg;
 
 	if (link && (speed == STATUS_SPEED_1000)) {
-		sc->phy.acquire(sc);
-		int rv = wm_kmrn_readreg_locked(sc,
-		    KUMCTRLSTA_OFFSET_K1_CONFIG, &phyreg);
+		int rv;
+
+		rv = sc->phy.acquire(sc);
+		if (rv != 0)
+			return rv;
+		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    &phyreg);
 		if (rv != 0)
 			goto release;
 		rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
