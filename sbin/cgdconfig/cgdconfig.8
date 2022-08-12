@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.55 2022/08/12 10:49:17 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.56 2022/08/12 10:49:35 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,11 +52,12 @@
 .Ar paramsfile
 .Nm
 .Fl g
-.Op Fl v
+.Op Fl Sv
 .Op Fl V Ar vmeth
 .Op Fl i Ar ivmeth
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
+.Op Fl P Ar paramsfile
 .Ar alg
 .Op Ar keylen
 .Nm
@@ -138,6 +139,13 @@ store it in
 If
 .Fl o
 is not given, any paramsfile content is written to standard output.
+.It Fl P Ar paramsfile
+With the
+.Fl S
+option for the
+.Fl g
+action, specify a parameters file with a shared key to reuse for
+deriving this one as a subkey.
 .It Fl p
 Read all passphrases from stdin rather than
 .Pa /dev/tty .
@@ -147,6 +155,15 @@ are prompted.
 If this flag is specified then verification errors will cause the device
 in question to be unconfigured rather than prompting for the passphrase
 again.
+.It Fl S
+When generating a parameters file with
+.Fl g ,
+arrange to use a subkey of a shared key.
+If
+.Fl P Ar paramsfile
+is also specified, reuse the shared key of
+.Ar paramsfile ;
+otherwise a new one will be generated.
 .It Fl s
 Read the key (nb: not the passphrase) from stdin.
 .It Fl T
@@ -484,6 +501,19 @@ parameters file:
 	old file's passphrase:
 	new file's passphrase:
 .Ed
+.Pp
+To create parameters files for three disks with subkeys derived from a
+shared password-based key:
+.Bd -literal
+	# cgdconfig -g -S -k argon2id -o /etc/cgd/wd0 -V gpt adiantum
+	# cgdconfig -g -S -P /etc/cgd/wd0 -o /etc/cgd/ld1 \e
+	      -V disklabel aes-cbc 256
+.Ed
+.Pp
+Listing these in the same
+.Pa /etc/cgd/cgd.conf
+will allow you to enter a password once to decrypt both disks with
+.Cm cgdconfig -C .
 .Pp
 To configure a cgd that uses aes-cbc with a 192 bit key that it
 reads from stdin:
