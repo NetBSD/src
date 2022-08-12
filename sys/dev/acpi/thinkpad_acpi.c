@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.54 2021/12/31 17:22:35 riastradh Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.55 2022/08/12 16:21:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.54 2021/12/31 17:22:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.55 2022/08/12 16:21:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,7 +170,7 @@ static void	thinkpad_cmos(thinkpad_softc_t *, uint8_t);
 
 CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
     thinkpad_match, thinkpad_attach, thinkpad_detach, NULL, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    0);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "IBM0068" },
