@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.53 2017/11/13 09:10:37 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.54 2022/08/12 13:24:37 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 15, 2016
+.Dd August 12, 2022
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -466,49 +466,30 @@ that all of the data being accessed is in the mapped region that the
 handle describes.
 Trying to access data outside that region is an error.
 .Pp
-Because some architectures' memory systems use buffering to improve
-memory and device access performance, there is a mechanism which can be
-used to create
-.Dq barriers
-in the bus space read and write stream.
-.Pp
-There are two types of barriers: ordering barriers and completion
-barriers.
-.Pp
-Ordering barriers prevent some operations from bypassing other
-operations.
-They are relatively light weight and described in terms of the
-operations they are intended to order.
-The important thing to note is that they create specific ordering
-constraint surrounding bus accesses but do not necessarily force any
-synchronization themselves.
-So, if there is enough distance between the memory operations being
-ordered, the preceding ones could complete by themselves resulting
-in no performance penalty.
-.Pp
-For instance, a write before read barrier will force any writes
-issued before the barrier instruction to complete before any reads
-after the barrier are issued.
-This forces processors with write buffers to read data from memory rather
-than from the pending write in the write buffer.
-.Pp
-Ordering barriers are usually sufficient for most circumstances,
-and can be combined together.
-For instance a read before write barrier can be combined with a write
-before write barrier to force all memory operations to complete before
-the next write is started.
-.Pp
-Completion barriers force all memory operations and any pending
-exceptions to be completed before any instructions after the
-barrier may be issued.
-Completion barriers are extremely expensive and almost never required
-in device driver code.
-A single completion barrier can force the processor to stall on memory
-for hundreds of cycles on some machines.
-.Pp
-Correctly-written drivers will include all appropriate barriers,
-and assume only the read/write ordering imposed by the barrier
-operations.
+Bus space I/O operations on mappings made with
+.Dv BUS_SPACE_MAP_PREFETCHABLE
+or
+.Dv BUS_SPACE_MAP_CACHEABLE
+may be reordered or combined for performance on devices that support
+it, such as write-combining
+.Pq "a.k.a." Sq prefetchable
+graphics framebuffers or cacheable ROM images.
+The
+.Fn bus_space_barrier
+function orders reads and writes in prefetchable or cacheable mappings
+relative to other reads and writes in bus spaces.
+Barriers are needed
+.Em only
+when prefetchable or cacheable mappings are involved:
+.Bl -bullet
+.It
+Bus space reads and writes on non-prefetchable, non-cacheable mappings
+at a single device are totally ordered with one another.
+.It
+Ordering of memory operations on normal memory with bus space I/O
+for triggering DMA or being notified of DMA completion requires
+.Xr bus_dmamap_sync 9 .
+.El
 .Pp
 People trying to write portable drivers with the
 .Nm
@@ -1185,9 +1166,9 @@ be read, on others it may cause a system crash.
 .Pp
 Read operations done by the
 .Fn bus_space_read_N
-functions may be executed out
-of order with respect to other pending read and write operations unless
-order is enforced by use of the
+functions may be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
+unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
 .Pp
@@ -1223,8 +1204,8 @@ to be written, on others it may cause a system crash.
 .Pp
 Write operations done by the
 .Fn bus_space_write_N
-functions may be executed
-out of order with respect to other pending read and write operations
+functions may be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
 unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
@@ -1266,13 +1247,6 @@ functions also apply to
 .Fn bus_space_peek_N
 and
 .Fn bus_space_poke_N .
-.Pp
-In addition, explicit calls to the
-.Fn bus_space_barrier
-function are not required as the implementation will ensure all
-pending operations complete before the peek or poke operation starts.
-The implementation will also ensure that the peek or poke operations
-complete before returning.
 .Pp
 The return value indicates the outcome of the peek or poke operation.
 A return value of zero implies that a hardware device is
@@ -1334,12 +1308,19 @@ of the bus space specified by
 .Fa space .
 .El
 .Sh BARRIERS
-In order to allow high-performance buffering implementations to avoid bus
-activity on every operation, read and write ordering should be specified
-explicitly by drivers when necessary.
-The
+Devices that support prefetchable (also known as
+.Sq write-combining )
+or cacheable I/O may be mapped with
+.Dv BUS_SPACE_MAP_PREFETCHABLE
+or
+.Dv BUS_SPACE_MAP_CACHEABLE
+for higher performance by allowing bus space read and write operations
+to be reordered, fused, torn, and/or cached by the system.
+.Pp
+When a driver requires ordering, e.g. to write to a command ring in bus
+space and then update the command ring pointer, the
 .Fn bus_space_barrier
-function provides that ability.
+function enforces it.
 .Pp
 .Bl -ohang -compact
 .It Fn bus_space_barrier "space" "handle" "offset" "length" "flags"
@@ -1362,67 +1343,95 @@ argument controls what types of operations are to be ordered.
 Supported flags are:
 .Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
 .It Dv BUS_SPACE_BARRIER_READ
-Force all
-.Nm
-operations before the barrier to complete before any reads
-after the barrier may be issued.
+Guarantee that any program-prior bus space read on
+.Em any
+bus space has returned data from the device or memory before any
+program-later bus space read, bus space write, or memory access via
+.Fn bus_space_vaddr ,
+on the specified range in the given bus space.
+.Pp
+This functions similarly to
+.Xr membar_acquire 3 ,
+but additionally orders bus space I/O which
+.Xr membar_ops 3
+may not.
 .It Dv BUS_SPACE_BARRIER_WRITE
-Force all
-.Nm
-operations before the barrier to complete before any writes
-after the barrier may be issued.
+Guarantee that any program-prior bus space read, bus space write, or
+memory access via
+.Fn bus_space_vaddr ,
+on the specified range in the given bus space, has completed before any
+program-later bus space write on
+.Em any
+bus space.
+.Pp
+This functions similarly to
+.Xr membar_release 3 ,
+but additionally orders bus space I/O which
+.Xr membar_ops 3
+may not.
+.It Dv "BUS_SPACE_BARRIER_READ" Li "|" Dv "BUS_SPACE_BARRIER_WRITE"
+Guarantee that any program-prior bus space read, bus space write, or
+memory access via
+.Fn bus_space_vaddr
+on
+.Em any
+bus space has completed before any program-later bus space read, bus
+space write, or memory access via
+.Fn bus_space_vaddr
+on
+.Em any
+bus space.
+.Pp
+Note that this is independent of the specified bus space and range.
+.Pp
+This functions similarly to
+.Xr membar_sync 3 ,
+but additionally orders bus space I/O which
+.Xr membar_ops 3
+may not.
+This combination is very unusual, and often much more expensive; most
+drivers do not need it.
 .El
 .Pp
-Those flags can be combined (or-ed together) to enforce ordering on
-different combinations of read and write operations.
-.Pp
-All of the specified type(s) of operation which are done to the region
-before the barrier operation are guaranteed to complete before any of the
-specified type(s) of operation done after the barrier.
-.Pp
-Example: Consider a hypothetical device with two single-byte ports, one
-write-only input port (at offset 0) and a read-only output port (at
-offset 1).
-Operation of the device is as follows: data bytes are written to the
-input port, and are placed by the device on a stack, the top of
-which is read by reading from the output port.
-The sequence to correctly write two data bytes to the device then read
-those two data bytes back would be:
+Example: Consider a command ring in bus space with a command ring
+pointer register, and a response ring in bus space with a response ring
+pointer register.
 .Bd -literal
-/*
- * t and h are the tag and handle for the mapped device's
- * space.
- */
-bus_space_write_1(t, h, 0, data0);
-bus_space_barrier(t, h, 0, 1, BUS_SPACE_BARRIER_WRITE); /* 1 */
-bus_space_write_1(t, h, 0, data1);
-bus_space_barrier(t, h, 0, 2, BUS_SPACE_BARRIER_WRITE);  /* 2 */
-ndata1 = bus_space_read_1(t, h, 1);
-bus_space_barrier(t, h, 1, 1, BUS_SPACE_BARRIER_READ);   /* 3 */
-ndata0 = bus_space_read_1(t, h, 1);
-/* data0 == ndata0, data1 == ndata1 */
+error = bus_space_map(sc->sc_regt, ..., 0, &sc->sc_regh);
+if (error)
+	\&...
+error = bus_space_map(sc->sc_memt, ..., BUS_SPACE_MAP_PREFETCHABLE,
+    &sc->sc_memh);
+if (error)
+	\&...
 .Ed
 .Pp
-The first barrier makes sure that the first write finishes before the
-second write is issued, so that two writes to the input port are done
-in order and are not collapsed into a single write.
-This ensures that the data bytes are written to the device correctly and
-in order.
+To submit a command (assuming there is space in the ring), first write
+it out and then update the pointer:
+.Bd -literal
+i = sc->sc_nextcmdslot;
+bus_space_write_4(sc->sc_memt, sc->sc_memh, CMDSLOT(i), cmd);
+bus_space_write_4(sc->sc_memt, sc->sc_memh, CMDSLOT(i) + 4, arg1);
+bus_space_write_4(sc->sc_memt, sc->sc_memh, CMDSLOT(i) + 8, arg2);
+\&...
+bus_space_write_4(sc->sc_memt, sc->sc_memh, CMDSLOT(i) + 4*n, argn);
+bus_space_barrier(sc->sc_memt, sc->sc_memh, CMDSLOT(i), 4*n,
+    BUS_SPACE_BARRIER_WRITE);
+bus_space_write_4(sc->sc_regt, sc->sc_regh, CMDPTR, i);
+sc->sc_nextcmdslot = (i + n + 1) % sc->sc_ncmdslots;
+.Ed
 .Pp
-The second barrier forces the writes to the output port finish before
-any of the reads to the input port are issued, thereby making sure
-that all of the writes are finished before data is read.
-This ensures that the first byte read from the device really is the last
-one that was written.
-.Pp
-The third barrier makes sure that the first read finishes before the
-second read is issued, ensuring that data is read correctly and in order.
-.Pp
-The barriers in the example above are specified to cover the absolute
-minimum number of bus space locations.
-It is correct (and often easier) to make barrier operations cover the
-device's whole range of bus space, that is, to specify an offset of zero
-and the size of the whole region.
+To obtain a response, read the pointer first and then the ring data:
+.Bd -literal
+ptr = bus_space_read_4(sc->sc_regt, sc->sc_regh, RESPPTR);
+while ((i = sc->sc_nextrespslot) != ptr) {
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, RESPSLOT(i), 4,
+	    BUS_SPACE_BARRIER_READ);
+	status = bus_space_read_4(sc->sc_memt, sc->sc_memh, RESPSLOT(i));
+	handle_response(status);
+	sc->sc_nextrespslot = (i + 1) % sc->sc_nrespslots;
+}
+.Ed
 .El
 .Sh REGION OPERATIONS
 Some devices use buffers which are mapped as regions in bus space.
@@ -1479,8 +1488,9 @@ to be read, on others it may cause a system crash.
 Read operations done by the
 .Fn bus_space_read_region_N
 functions may be executed in any order.
-They may also be executed out of order with respect to other pending
-read and write operations unless order is enforced by use of the
+They may also be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
+unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
 There is no way to insert barriers between reads of individual bus
@@ -1529,8 +1539,9 @@ Write operations done by the
 .Fn bus_space_write_region_N
 functions may be
 executed in any order.
-They may also be executed out of order with respect to other pending read
-and write operations unless order is enforced by use of the
+They may also be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
+unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
 There is no way to insert barriers between writes of individual bus
@@ -1582,9 +1593,11 @@ to be copied, on others it may cause a system crash.
 Read and write operations done by the
 .Fn bus_space_copy_region_N
 functions may be executed in any order.
-They may also be executed out of order with respect to other pending
-read and write operations unless order is enforced by use of the
-.Fn bus_space_barrier function .
+They may also be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
+unless order is enforced by use of the
+.Fn bus_space_barrier
+function.
 There is no way to insert barriers between reads or writes of
 individual bus space locations executed by the
 .Fn bus_space_copy_region_N
@@ -1635,8 +1648,9 @@ Write operations done by the
 .Fn bus_space_set_region_N
 functions may be
 executed in any order.
-They may also be executed out of order with respect to other pending read
-and write operations unless order is enforced by use of the
+They may also be executed out of order with respect to other read and
+write operations if either are on prefetchable or cacheable mappings
+unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
 There is no way to insert barriers between writes of
@@ -1693,16 +1707,13 @@ to be read, on others it may cause a system crash.
 .Pp
 Read operations done by the
 .Fn bus_space_read_multi_N
-functions may be
-executed out of order with respect to other pending read and write
-operations unless order is enforced by use of the
+functions may be executed out of order with respect to other read and
+write operations if the latter are on prefetchable or cacheable
+mappings unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
-Because the
 .Fn bus_space_read_multi_N
-functions read the same bus space location multiple times, they
-place an implicit read barrier between each successive read of that bus
-space location.
+makes no sense itself on prefetchable or cacheable mappings.
 .Pp
 These functions will never fail.
 If they would fail (e.g., because of an argument error), that indicates
@@ -1741,15 +1752,13 @@ to be written, on others it may cause a system crash.
 .Pp
 Write operations done by the
 .Fn bus_space_write_multi_N
-functions may be executed out of order with respect to other pending
-read and write operations unless order is enforced by use of the
+functions may be executed out of order with respect to other read and
+write operations if the latter are on prefetchable or cacheable
+mappings unless order is enforced by use of the
 .Fn bus_space_barrier
 function.
-Because the
 .Fn bus_space_write_multi_N
-functions write the same bus space location multiple times, they
-place an implicit write barrier between each successive write of that
-bus space location.
+makes no sense itself on prefetchable or cacheable mappings.
 .Pp
 These functions will never fail.
 If they would fail (e.g., because of an argument error), that indicates
@@ -1899,22 +1908,6 @@ functions should not yet be considered finalized.
 There are several changes and improvements which should be explored,
 including:
 .Bl -bullet
-.It
-Providing a mechanism by which incorrectly-written drivers will be
-automatically given barriers and properly-written drivers won't be forced
-to use more barriers than they need.
-This should probably be done via a
-.Li #define
-in the incorrectly-written drivers.
-Unfortunately, at this time, few drivers actually use barriers correctly
-(or at all).
-Because of that,
-.Nm
-implementations on architectures which do buffering must always
-do the barriers inside the
-.Nm
-calls, to be safe.
-That has a potentially significant performance impact.
 .It
 Exporting the
 .Nm
