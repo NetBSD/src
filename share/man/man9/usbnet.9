@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.17 2022/03/05 06:55:58 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.18 2022/08/12 15:30:41 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -503,7 +503,7 @@ and
 must be set before calling
 .Fn usbnet_attach_ifp .
 .Sh RECEIVE AND SEND
-Receive and send routines are structured around a the
+Receive and send routines are structured around the
 .Va usbnet_cdata
 and
 .Va usbnet_chain
@@ -513,11 +513,11 @@ structures, the
 and
 .Dv un_tx_xfer_flags
 members, and the
-.Fn uno_stop ,
 .Fn uno_init ,
 .Fn uno_tx_prepare ,
+.Fn uno_rx_loop ,
 and
-.Fn uno_rx_loop
+.Fn uno_stop
 callbacks of
 .Va usbnet_ops .
 .Pp
@@ -535,19 +535,12 @@ array entries filled in, and optionally the
 .Dv USBNET_ENDPT_INTR
 entry filled in if applicable.
 .Pp
-The optional
-.Fn uno_stop
-callback performs device-specific operations to shutdown the
-transmit or receive handling.
-.Pp
 The
 .Fn uno_init
-callback both performs device-specific enablement and then calls
-.Fn usbnet_rx_tx_init ,
-which sets up the receive, transmit, and, optionally, the interrupt
-pipes, as well as starting the receive pipes.
-All USB transfer setup is handled internally to the framework, and
-the driver callbacks merely copy data in or out of a chain entry using
+callback enables the hardware, and if necessary reprograms the hardware
+multicast filter, before the framework initiates USB Tx/Rx transfers.
+All USB transfer setup is handled by the framework.
+The driver callbacks merely copy data in or out of a chain entry using
 what is typically a device-specific method.
 .Pp
 The
@@ -560,8 +553,7 @@ enqueued with the higher layers using either
 (for most devices) or
 .Fn usbnet_input
 for devices that use
-.Fn if_input
-.
+.Fn if_input .
 (This currently relies upon the
 .Va struct ifnet
 having the
@@ -593,6 +585,11 @@ It also contains pointers back to the owning
 and the
 .Va struct usbd_xfer
 associated with this transfer.
+.Pp
+After aborting all USB Tx/Rx transfers when bringing an interface down,
+the framework calls the optional
+.Fn uno_stop
+callback to disable the hardware.
 .Sh MII
 For devices that have MII support these callbacks in
 .Fa struct usbnet_ops
