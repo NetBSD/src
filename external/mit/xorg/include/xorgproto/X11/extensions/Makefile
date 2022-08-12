@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/12/05 21:36:21 nia Exp $
+#	$NetBSD: Makefile,v 1.4 2022/08/12 07:35:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -97,7 +97,8 @@ INCS=	EVI.h \
 	xtrapemacros.h \
 	xtraplib.h \
 	xtraplibp.h \
-	xtrapproto.h
+	xtrapproto.h \
+	xwaylandproto.h
 
 INCSDIR=${X11INCDIR}/X11/extensions
 

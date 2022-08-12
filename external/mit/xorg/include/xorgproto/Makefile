@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/08/30 04:51:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/08/12 07:35:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,8 @@ PKGCONFIG= bigreqsproto \
 	xf86vidmodeproto \
 	xineramaproto \
 	xproto \
-	xproxymngproto
+	xproxymngproto \
+	xwaylandproto
 PKGDIST=xorgproto
 
 .include <bsd.x11.mk>
