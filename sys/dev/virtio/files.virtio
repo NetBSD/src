@@ -1,6 +1,10 @@
-#	$NetBSD: files.virtio,v 1.4 2018/07/12 13:05:39 jakllsch Exp $
+#	$NetBSD: files.virtio,v 1.5 2022/08/12 11:15:42 riastradh Exp $
 
 # XXX the contents of the following included file should be moved here
 include "dev/pci/files.virtio"
 
 file	dev/virtio/virtio_mmio.c	virtio_mmio
+
+device	viocon
+attach	viocon at virtio
+file	dev/virtio/viocon.c		viocon

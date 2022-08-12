@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1752 2022/07/10 19:49:24 nia Exp $
+# $NetBSD: mi,v 1.1753 2022/08/12 11:15:40 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2047,6 +2047,7 @@
 ./usr/share/man/cat4/video.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vinum.0			man-obsolete		obsolete
 ./usr/share/man/cat4/vio9p.0			man-sys-catman		.cat
+./usr/share/man/cat4/viocon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vioif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viomb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viornd.0			man-sys-catman		.cat
@@ -5233,6 +5234,7 @@
 ./usr/share/man/html4/viaide.html		man-sys-htmlman		html
 ./usr/share/man/html4/video.html		man-sys-htmlman		html
 ./usr/share/man/html4/vio9p.html		man-sys-htmlman		html
+./usr/share/man/html4/viocon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vioif.html		man-sys-htmlman		html
 ./usr/share/man/html4/viomb.html		man-sys-htmlman		html
 ./usr/share/man/html4/viornd.html		man-sys-htmlman		html
@@ -8351,6 +8353,7 @@
 ./usr/share/man/man4/video.4			man-sys-man		.man
 ./usr/share/man/man4/vinum.4			man-obsolete		obsolete
 ./usr/share/man/man4/vio9p.4			man-sys-man		.man
+./usr/share/man/man4/viocon.4			man-sys-man		.man
 ./usr/share/man/man4/vioif.4			man-sys-man		.man
 ./usr/share/man/man4/viomb.4			man-sys-man		.man
 ./usr/share/man/man4/viornd.4			man-sys-man		.man
