@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.762 2022/08/12 10:58:45 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.763 2022/08/12 10:59:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,10 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.762 2022/08/12 10:58:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.763 2022/08/12 10:59:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_net_mpsafe.h"
 #include "opt_if_wm.h"
 #endif
 
@@ -172,17 +171,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.762 2022/08/12 10:58:45 riastradh Exp $"
 #else
 #define	DPRINTF(sc, x, y)	__nothing
 #endif /* WM_DEBUG */
-
-#ifdef NET_MPSAFE
-#define WM_MPSAFE	1
-#define WM_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define WM_SOFTINT_FLAGS	SOFTINT_MPSAFE
-#define WM_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
-#else
-#define WM_CALLOUT_FLAGS	0
-#define WM_SOFTINT_FLAGS	0
-#define WM_WORKQUEUE_FLAGS	WQ_PERCPU
-#endif
 
 #define WM_WORKQUEUE_PRI PRI_SOFTNET
 
@@ -717,13 +705,6 @@ struct wm_softc {
 	bool sc_trigger_reset;
 #endif
 };
-
-#define WM_CORE_LOCK(_sc)						\
-	if ((_sc)->sc_core_lock) mutex_enter((_sc)->sc_core_lock)
-#define WM_CORE_UNLOCK(_sc)						\
-	if ((_sc)->sc_core_lock) mutex_exit((_sc)->sc_core_lock)
-#define WM_CORE_LOCKED(_sc)						\
-	(!(_sc)->sc_core_lock || mutex_owned((_sc)->sc_core_lock))
 
 #define	WM_RXCHAIN_RESET(rxq)						\
 do {									\
@@ -1986,7 +1967,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_debug = WM_DEBUG_DEFAULT;
 #endif
 	sc->sc_dev = self;
-	callout_init(&sc->sc_tick_ch, WM_CALLOUT_FLAGS);
+	callout_init(&sc->sc_tick_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_tick_ch, wm_tick, sc);
 	sc->sc_core_stopping = false;
 
@@ -2225,7 +2206,7 @@ alloc_retry:
 	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
 	error = workqueue_create(&sc->sc_queue_wq, wqname,
 	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
-	    WM_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create TxRx workqueue\n");
@@ -2272,7 +2253,7 @@ alloc_retry:
 		aprint_verbose_dev(sc->sc_dev,
 		    "Communication Streaming Architecture\n");
 		if (sc->sc_type == WM_T_82547) {
-			callout_init(&sc->sc_txfifo_ch, WM_CALLOUT_FLAGS);
+			callout_init(&sc->sc_txfifo_ch, CALLOUT_MPSAFE);
 			callout_setfunc(&sc->sc_txfifo_ch,
 			    wm_82547_txfifo_stall, sc);
 			aprint_verbose_dev(sc->sc_dev,
@@ -3068,11 +3049,7 @@ alloc_retry:
 		aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 	}
 
-#ifdef WM_MPSAFE
 	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-	sc->sc_core_lock = NULL;
-#endif
 
 	/* Initialize the media structures accordingly. */
 	if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
@@ -3085,9 +3062,7 @@ alloc_retry:
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef WM_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
@@ -3501,11 +3476,11 @@ wm_detach(device_t self, int flags __unused)
 	rnd_detach_source(&sc->rnd_source);
 
 	/* Tell the firmware about the release */
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 	wm_release_manageability(sc);
 	wm_release_hw_control(sc);
 	wm_enable_wakeup(sc);
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -3770,17 +3745,11 @@ wm_tick(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
 	    cexterr;
-#ifndef WM_MPSAFE
-	int s = splnet();
-#endif
 
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 
 	if (sc->sc_core_stopping) {
-		WM_CORE_UNLOCK(sc);
-#ifndef WM_MPSAFE
-		splx(s);
-#endif
+		mutex_exit(sc->sc_core_lock);
 		return;
 	}
 
@@ -3907,10 +3876,7 @@ wm_tick(void *arg)
 	else
 		wm_tbi_tick(sc);
 
-	WM_CORE_UNLOCK(sc);
-#ifndef WM_MPSAFE
-	splx(s);
-#endif
+	mutex_exit(sc->sc_core_lock);
 
 	if (wm_watchdog(ifp))
 		callout_schedule(&sc->sc_tick_ch, hz);
@@ -3930,7 +3896,8 @@ wm_ifflags_cb(struct ethercom *ec)
 		device_xname(sc->sc_dev), __func__));
 
 	KASSERT(IFNET_LOCKED(ifp));
-	WM_CORE_LOCK(sc);
+
+	mutex_enter(sc->sc_core_lock);
 
 	/*
 	 * Check for if_flags.
@@ -3964,7 +3931,7 @@ ec:
 out:
 	if (needreset)
 		rc = ENETRESET;
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	return rc;
 }
@@ -4037,12 +4004,9 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		KASSERT(IFNET_LOCKED(ifp));
 	}
 
-#ifndef WM_MPSAFE
-	const int s = splnet();
-#endif
 	switch (cmd) {
 	case SIOCSIFMEDIA:
-		WM_CORE_LOCK(sc);
+		mutex_enter(sc->sc_core_lock);
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0)
@@ -4055,7 +4019,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		WM_CORE_UNLOCK(sc);
+		mutex_exit(sc->sc_core_lock);
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		if (error == 0 && wm_phy_need_linkdown_discard(sc)) {
 			if (IFM_SUBTYPE(ifr->ifr_media) == IFM_NONE) {
@@ -4067,7 +4031,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	case SIOCINITIFADDR:
-		WM_CORE_LOCK(sc);
+		mutex_enter(sc->sc_core_lock);
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			sdl = satosdl(ifp->if_dl->ifa_addr);
 			(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len,
@@ -4075,10 +4039,10 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* Unicast address is the first multicast entry */
 			wm_set_filter(sc);
 			error = 0;
-			WM_CORE_UNLOCK(sc);
+			mutex_exit(sc->sc_core_lock);
 			break;
 		}
-		WM_CORE_UNLOCK(sc);
+		mutex_exit(sc->sc_core_lock);
 		/*FALLTHROUGH*/
 	default:
 		if (cmd == SIOCSIFFLAGS && wm_phy_need_linkdown_discard(sc)) {
@@ -4090,14 +4054,10 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				wm_set_linkdown_discard(sc);
 			}
 		}
-#ifdef WM_MPSAFE
 		const int s = splnet();
-#endif
 		/* It may call wm_start, so unlock here */
 		error = ether_ioctl(ifp, cmd, data);
-#ifdef WM_MPSAFE
 		splx(s);
-#endif
 		if (error != ENETRESET)
 			break;
 
@@ -4106,7 +4066,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (cmd == SIOCSIFCAP)
 			error = if_init(ifp);
 		else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
-			WM_CORE_LOCK(sc);
+			mutex_enter(sc->sc_core_lock);
 			if (sc->sc_if_flags & IFF_RUNNING) {
 				/*
 				 * Multicast list has changed; set the hardware filter
@@ -4114,14 +4074,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				 */
 				wm_set_filter(sc);
 			}
-			WM_CORE_UNLOCK(sc);
+			mutex_exit(sc->sc_core_lock);
 		}
 		break;
 	}
 
-#ifndef WM_MPSAFE
-	splx(s);
-#endif
 	return error;
 }
 
@@ -4382,7 +4339,7 @@ wm_set_filter(struct wm_softc *sc)
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	if (sc->sc_type >= WM_T_82544)
 		mta_reg = WMREG_CORDOVA_MTA;
@@ -6083,7 +6040,7 @@ wm_softint_establish_queue(struct wm_softc *sc, int qidx, int intr_idx)
 
 	wmq->wmq_id = qidx;
 	wmq->wmq_intr_idx = intr_idx;
-	wmq->wmq_si = softint_establish(SOFTINT_NET | WM_SOFTINT_FLAGS,
+	wmq->wmq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    wm_handle_queue, wmq);
 	if (wmq->wmq_si != NULL)
 		return 0;
@@ -6114,9 +6071,7 @@ wm_setup_legacy(struct wm_softc *sc)
 	}
 	intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
 	    sizeof(intrbuf));
-#ifdef WM_MPSAFE
 	pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
-#endif
 	sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_intrs[0],
 	    IPL_NET, wm_intr_legacy, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[0] == NULL) {
@@ -6177,10 +6132,8 @@ wm_setup_msix(struct wm_softc *sc)
 
 		intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 		    sizeof(intrbuf));
-#ifdef WM_MPSAFE
 		pci_intr_setattr(pc, &sc->sc_intrs[intr_idx],
 		    PCI_INTR_MPSAFE, true);
-#endif
 		memset(intr_xname, 0, sizeof(intr_xname));
 		snprintf(intr_xname, sizeof(intr_xname), "%sTXRX%d",
 		    device_xname(sc->sc_dev), qidx);
@@ -6216,9 +6169,7 @@ wm_setup_msix(struct wm_softc *sc)
 	/* LINK */
 	intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 	    sizeof(intrbuf));
-#ifdef WM_MPSAFE
 	pci_intr_setattr(pc, &sc->sc_intrs[intr_idx], PCI_INTR_MPSAFE, true);
-#endif
 	memset(intr_xname, 0, sizeof(intr_xname));
 	snprintf(intr_xname, sizeof(intr_xname), "%sLINK",
 	    device_xname(sc->sc_dev));
@@ -6258,7 +6209,7 @@ wm_unset_stopping_flags(struct wm_softc *sc)
 {
 	int i;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	/* Must unset stopping flags in ascending order. */
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -6282,7 +6233,7 @@ wm_set_stopping_flags(struct wm_softc *sc)
 {
 	int i;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	sc->sc_core_stopping = true;
 
@@ -6558,9 +6509,9 @@ wm_init(struct ifnet *ifp)
 	if (sc->sc_dying)
 		return ENXIO;
 
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 	ret = wm_init_locked(ifp);
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	return ret;
 }
@@ -6576,7 +6527,7 @@ wm_init_locked(struct ifnet *ifp)
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(IFNET_LOCKED(ifp));
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	/*
 	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
@@ -7159,9 +7110,9 @@ wm_stop(struct ifnet *ifp, int disable)
 	ASSERT_SLEEPABLE();
 	KASSERT(IFNET_LOCKED(ifp));
 
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 	wm_stop_locked(ifp, disable ? true : false, true);
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	/*
 	 * After wm_set_stopping_flags(), it is guaranteed that
@@ -7185,7 +7136,7 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(IFNET_LOCKED(ifp));
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	wm_set_stopping_flags(sc);
 
@@ -8388,9 +8339,7 @@ wm_start(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
-#ifdef WM_MPSAFE
 	KASSERT(if_is_mpsafe(ifp));
-#endif
 	/*
 	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
@@ -8997,9 +8946,7 @@ wm_nq_start(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
-#ifdef WM_MPSAFE
 	KASSERT(if_is_mpsafe(ifp));
-#endif
 	/*
 	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
@@ -9937,7 +9884,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 	bool link;
 	int rv;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	DPRINTF(sc, WM_DEBUG_LINK, ("%s: %s:\n", device_xname(dev),
 		__func__));
@@ -10337,7 +10284,7 @@ static void
 wm_linkintr(struct wm_softc *sc, uint32_t icr)
 {
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_linkintr_gmii(sc, icr);
@@ -10451,10 +10398,10 @@ wm_intr_legacy(void *arg)
 
 	mutex_exit(rxq->rxq_lock);
 
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 
 	if (sc->sc_core_stopping) {
-		WM_CORE_UNLOCK(sc);
+		mutex_exit(sc->sc_core_lock);
 		return 1;
 	}
 
@@ -10465,7 +10412,7 @@ wm_intr_legacy(void *arg)
 	if ((icr & ICR_GPI(0)) != 0)
 		device_printf(sc->sc_dev, "got module interrupt\n");
 
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	if (icr & ICR_RXO) {
 #if defined(WM_DEBUG)
@@ -10656,7 +10603,7 @@ wm_linkintr_msix(void *arg)
 	bool has_rxo;
 
 	reg = CSR_READ(sc, WMREG_ICR);
-	WM_CORE_LOCK(sc);
+	mutex_enter(sc->sc_core_lock);
 	DPRINTF(sc, WM_DEBUG_LINK,
 	    ("%s: LINK: got link intr. ICR = %08x\n",
 		device_xname(sc->sc_dev), reg));
@@ -10701,7 +10648,7 @@ wm_linkintr_msix(void *arg)
 
 
 out:
-	WM_CORE_UNLOCK(sc);
+	mutex_exit(sc->sc_core_lock);
 
 	if (sc->sc_type == WM_T_82574) {
 		if (!has_rxo)
@@ -11393,7 +11340,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	DPRINTF(sc, WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	if ((sc->sc_if_flags & IFF_UP) == 0)
 		return 0;
@@ -11468,7 +11415,7 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	ether_mediastatus(ifp, ifmr);
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
@@ -13213,7 +13160,7 @@ wm_tbi_tick(struct wm_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t status;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
@@ -13475,7 +13422,7 @@ wm_serdes_tick(struct wm_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t reg;
 
-	KASSERT(WM_CORE_LOCKED(sc));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
