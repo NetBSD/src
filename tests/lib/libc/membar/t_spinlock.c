@@ -1,4 +1,4 @@
-/*	$NetBSD: t_spinlock.c,v 1.3 2022/04/10 11:36:32 riastradh Exp $	*/
+/*	$NetBSD: t_spinlock.c,v 1.4 2022/08/12 11:21:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spinlock.c,v 1.3 2022/04/10 11:36:32 riastradh Exp $");
+__RCSID("$NetBSD: t_spinlock.c,v 1.4 2022/08/12 11:21:44 riastradh Exp $");
+
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -76,7 +78,11 @@ unlock(void)
 {
 
 	membar_release();
+#ifdef __HAVE_HASHLOCKED_ATOMICS
+	(void)atomic_cas_uint(&lockbit, 1, 0);
+#else
 	lockbit = 0;
+#endif
 }
 
 static void *
