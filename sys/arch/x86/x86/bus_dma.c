@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.86 2022/08/12 13:44:12 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.87 2022/08/12 15:01:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.86 2022/08/12 13:44:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.87 2022/08/12 15:01:26 riastradh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -239,13 +239,12 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 
 	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
-			    " address %#" PRIxPADDR "\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
-		}
-#endif
+		KASSERTMSG(curaddr >= low, "curaddr=%#"PRIxPADDR
+		    " low=%#"PRIxBUSADDR" high=%#"PRIxBUSADDR,
+		    curaddr, low, high);
+		KASSERTMSG(curaddr < high, "curaddr=%#"PRIxPADDR
+		    " low=%#"PRIxBUSADDR" high=%#"PRIxBUSADDR,
+		    curaddr, low, high);
 		if (curaddr == (lastaddr + PAGE_SIZE) &&
 		    (lastaddr & boundary) == (curaddr & boundary)) {
 			segs[curseg].ds_len += PAGE_SIZE;
@@ -519,11 +518,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif
-
+	KASSERT(m0->m_flags & M_PKTHDR);
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
@@ -810,17 +805,15 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("%s: mix PRE and POST", __func__);
 
-#ifdef DIAGNOSTIC
 	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
-		if (offset >= map->dm_mapsize)
-			panic("%s: bad offset 0x%jx >= 0x%jx", __func__,
-			(intmax_t)offset, (intmax_t)map->dm_mapsize);
-		if ((offset + len) > map->dm_mapsize)
-			panic("%s: bad length 0x%jx + 0x%jx > 0x%jx", __func__,
-			    (intmax_t)offset, (intmax_t)len,
-			    (intmax_t)map->dm_mapsize);
+		KASSERTMSG(offset < map->dm_mapsize,
+		    "bad offset 0x%"PRIxBUSADDR" >= 0x%"PRIxBUSSIZE,
+		    offset, map->dm_mapsize);
+		KASSERTMSG(len <= map->dm_mapsize - offset,
+		    "bad length 0x%"PRIxBUSADDR" + %"PRIxBUSSIZE
+		    " > %"PRIxBUSSIZE,
+		    offset, len, map->dm_mapsize);
 	}
-#endif
 
 	/*
 	 * BUS_DMASYNC_POSTREAD: The caller has been alerted to DMA
@@ -1035,10 +1028,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error = 0;
 
-#ifdef DIAGNOSTIC
-	if (cookie == NULL)
-		panic("_bus_dma_alloc_bouncebuf: no cookie");
-#endif
+	KASSERT(cookie != NULL);
 
 	cookie->id_bouncebuflen = round_page(size);
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
@@ -1072,10 +1062,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
-#ifdef DIAGNOSTIC
-	if (cookie == NULL)
-		panic("_bus_dma_free_bouncebuf: no cookie");
-#endif
+	KASSERT(cookie != NULL);
 
 	STAT_DECR(nbouncebufs);
 
@@ -1211,10 +1198,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	pt_entry_t *pte, opte;
 	vaddr_t va, sva, eva;
 
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
-#endif
+	KASSERTMSG((uintptr_t)kva & PGOFSET, "kva=%p", kva);
 
 	size = round_page(size);
 	sva = (vaddr_t)kva;
@@ -1245,15 +1229,11 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif
+		KASSERTMSG((off & PGOFSET) == 0, "off=0x%jx", (uintmax_t)off);
+		KASSERTMSG((segs[i].ds_addr & PGOFSET) == 0,
+		    "segs[%u].ds_addr=%"PRIxBUSADDR, i, segs[i].ds_addr);
+		KASSERTMSG((segs[i].ds_len & PGOFSET) == 0,
+		    "segs[%u].ds_len=%"PRIxBUSSIZE, i, segs[i].ds_len);
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
