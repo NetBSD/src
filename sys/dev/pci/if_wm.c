@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.757 2022/08/08 08:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.758 2022/08/12 10:50:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.757 2022/08/08 08:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.758 2022/08/12 10:50:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3572,6 +3572,7 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 
 	if (sc->sc_type >= WM_T_PCH2)
 		wm_resume_workarounds_pchlan(sc);
+	IFNET_LOCK(ifp);
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		/* >= PCH_SPT hardware workaround before reset. */
 		if (sc->sc_type >= WM_T_PCH_SPT)
@@ -3590,6 +3591,7 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 		 * via wm_init().
 		 */
 	}
+	IFNET_UNLOCK(ifp);
 
 	return true;
 }
@@ -4326,6 +4328,7 @@ wm_set_filter(struct wm_softc *sc)
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(WM_CORE_LOCKED(sc));
 
 	if (sc->sc_type >= WM_T_82544)
 		mta_reg = WMREG_CORDOVA_MTA;
@@ -4334,9 +4337,9 @@ wm_set_filter(struct wm_softc *sc)
 
 	sc->sc_rctl &= ~(RCTL_BAM | RCTL_UPE | RCTL_MPE);
 
-	if (ifp->if_flags & IFF_BROADCAST)
+	if (sc->sc_if_flags & IFF_BROADCAST)
 		sc->sc_rctl |= RCTL_BAM;
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (sc->sc_if_flags & IFF_PROMISC) {
 		sc->sc_rctl |= RCTL_UPE;
 		ETHER_LOCK(ec);
 		ec->ec_flags |= ETHER_F_ALLMULTI;
@@ -5256,6 +5259,8 @@ wm_flush_desc_rings(struct wm_softc *sc)
 	wiseman_txdesc_t *txd;
 	int nexttx;
 	uint32_t rctl;
+
+	KASSERT(IFNET_LOCKED(&sc->sc_ethercom.ec_if));
 
 	/* First, disable MULR fix in FEXTNVM11 */
 	reg = CSR_READ(sc, WMREG_FEXTNVM11);
@@ -7081,6 +7086,7 @@ wm_stop(struct ifnet *ifp, int disable)
 	struct wm_softc *sc = ifp->if_softc;
 
 	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
 
 	WM_CORE_LOCK(sc);
 	wm_stop_locked(ifp, disable ? true : false, true);
@@ -7106,6 +7112,7 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(IFNET_LOCKED(ifp));
 	KASSERT(WM_CORE_LOCKED(sc));
 
 	wm_set_stopping_flags(sc);
@@ -7185,6 +7192,7 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~IFF_RUNNING;
+	sc->sc_if_flags = ifp->if_flags;
 
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
@@ -8384,9 +8392,8 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
+	KASSERT(!txq->txq_stopping);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -9002,9 +9009,8 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
+	KASSERT(!txq->txq_stopping);
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -13156,7 +13162,7 @@ wm_tbi_tick(struct wm_softc *sc)
 		sc->sc_tbi_serdes_ticks = 0;
 	}
 
-	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) == 0)
+	if ((sc->sc_if_flags & IFF_UP) == 0)
 		goto setled;
 
 	if ((status & STATUS_LU) == 0) {
@@ -15650,6 +15656,8 @@ wm_init_manageability(struct wm_softc *sc)
 
 	DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(IFNET_LOCKED(&sc->sc_ethercom.ec_if));
+
 	if (sc->sc_flags & WM_F_HAS_MANAGE) {
 		uint32_t manc2h = CSR_READ(sc, WMREG_MANC2H);
 		uint32_t manc = CSR_READ(sc, WMREG_MANC);
