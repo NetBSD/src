@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.13 2022/08/12 10:49:17 riastradh Exp $ */
+/* $NetBSD: params.h,v 1.14 2022/08/12 10:49:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -112,6 +112,9 @@ struct keygen	*keygen_new(void);
 void		 keygen_free(struct keygen *);
 
 int		 keygen_filldefaults(struct keygen *, size_t);
+void		 keygen_stripstored(struct keygen **);
+int		 keygen_makeshared(struct keygen *);
+int		 keygen_tweakshared(struct keygen *);
 int		 keygen_verify(const struct keygen *);
 void		 keygen_addlist(struct keygen **, struct keygen *);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.33 2022/08/12 10:49:17 riastradh Exp $ */
+/* $NetBSD: params.c,v 1.34 2022/08/12 10:49:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.33 2022/08/12 10:49:17 riastradh Exp $");
+__RCSID("$NetBSD: params.c,v 1.34 2022/08/12 10:49:35 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: params.c,v 1.33 2022/08/12 10:49:17 riastradh Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include <uuid.h>
 
 #ifdef HAVE_ARGON2
 #include <argon2.h>
@@ -522,6 +523,122 @@ keygen_filldefaults(struct keygen *kg, size_t keylen)
 	}
 
 	return keygen_filldefaults(kg->next, keylen);
+}
+
+/*
+ * Strip the storedkey entries in preparation for inserting a shared
+ * clause with a newly generated info string to derive this key from
+ * KDF.  The result is that the key generated here is independent of
+ * whatever storedkeys were involved in the old one, so there is no
+ * need to keep them around,
+ */
+void
+keygen_stripstored(struct keygen **kgp)
+{
+	struct keygen *kg, *to_free = NULL;
+
+	while ((kg = *kgp) != NULL) {
+		if (kg->kg_method == KEYGEN_STOREDKEY) {
+			*kgp = kg->next;
+			kg->next = to_free;
+			to_free = kg;
+		} else {
+			kgp = &kg->next;
+		}
+	}
+	keygen_free(to_free);
+}
+
+int
+keygen_makeshared(struct keygen *kg0)
+{
+	struct keygen *kg;
+
+	for (kg = kg0; kg != NULL; kg = kg->next) {
+		switch (kg->kg_method) {
+		case KEYGEN_RANDOMKEY:
+		case KEYGEN_URANDOMKEY:
+			warnx("(u)randomkey keygen cannot be shared");
+			return -1;
+		case KEYGEN_SHELL_CMD:
+#ifdef HAVE_ARGON2
+		case KEYGEN_ARGON2ID:
+#endif
+		case KEYGEN_PKCS5_PBKDF2_OLD:
+		case KEYGEN_PKCS5_PBKDF2_SHA1:
+			break;
+		case KEYGEN_STOREDKEY:
+			warnx("storedkey does not make sense as shared");
+			return -1;
+		default:
+			return -1;
+		}
+		if (kg->kg_sharedid != NULL) {
+			warnx("keygen already shared");
+			return -1;
+		}
+	}
+	for (kg = kg0; kg != NULL; kg = kg->next) {
+		struct uuid id;
+		char *idstr;
+		uint32_t status;
+
+		if (uuidgen(&id, 1) == -1) {
+			warn("uuidgen");
+			return -1;
+		}
+		uuid_to_string(&id, &idstr, &status);
+		if (status != uuid_s_ok) {
+			warnx("uuid_to_string: %"PRIu32, status);
+			return -1;
+		}
+
+		kg->kg_sharedid = string_fromcharstar(idstr);
+		kg->kg_sharedalg = SHARED_ALG_HKDF_HMAC_SHA256;
+		kg->kg_sharedlen = 8*SHA256_DIGEST_LENGTH;
+		kg->kg_sharedinfo = bits_getrandombits(DEFAULT_SALTLEN, 0);
+
+		free(idstr);
+	}
+	return 0;
+}
+
+int
+keygen_tweakshared(struct keygen *kg0)
+{
+	struct keygen *kg;
+
+	for (kg = kg0; kg != NULL; kg = kg->next) {
+		switch (kg->kg_method) {
+		case KEYGEN_RANDOMKEY:
+		case KEYGEN_URANDOMKEY:
+			warnx("(u)randomkey keygen cannot be shared");
+			return -1;
+		case KEYGEN_SHELL_CMD:
+#ifdef HAVE_ARGON2
+		case KEYGEN_ARGON2ID:
+#endif
+		case KEYGEN_PKCS5_PBKDF2_OLD:
+		case KEYGEN_PKCS5_PBKDF2_SHA1:
+			break;
+		case KEYGEN_STOREDKEY:
+			warnx("storedkey does not make sense as shared");
+			return -1;
+		default:
+			return -1;
+		}
+		if (kg->kg_sharedid == NULL) {
+			warnx("keygen not shared");
+			return -1;
+		}
+	}
+	for (kg = kg0; kg != NULL; kg = kg->next) {
+		if (kg->kg_method == KEYGEN_STOREDKEY)
+			continue;
+		bits_free(kg->kg_sharedinfo);
+		kg->kg_sharedinfo = bits_getrandombits(DEFAULT_SALTLEN, 0);
+	}
+	return 0;
 }
 
 struct keygen *
