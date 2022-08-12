@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.760 2022/08/12 10:57:06 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.761 2022/08/12 10:58:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.760 2022/08/12 10:57:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.761 2022/08/12 10:58:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -706,10 +706,15 @@ struct wm_softc {
 	struct wm_phyop phy;
 	struct wm_nvmop nvm;
 
+	struct workqueue *sc_reset_wq;
+	struct work sc_reset_work;
+	volatile unsigned sc_reset_pending;
+
 	bool sc_dying;
 
 #ifdef WM_DEBUG
 	uint32_t sc_debug;
+	bool sc_trigger_reset;
 #endif
 };
 
@@ -823,7 +828,7 @@ static void	wm_attach(device_t, device_t, void *);
 static int	wm_detach(device_t, int);
 static bool	wm_suspend(device_t, const pmf_qual_t *);
 static bool	wm_resume(device_t, const pmf_qual_t *);
-static void	wm_watchdog(struct ifnet *);
+static bool	wm_watchdog(struct ifnet *);
 static void	wm_watchdog_txq(struct ifnet *, struct wm_txqueue *,
     uint16_t *);
 static void	wm_watchdog_txq_locked(struct ifnet *, struct wm_txqueue *,
@@ -917,6 +922,7 @@ static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *,
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 static void	wm_handle_queue_work(struct work *, void *);
+static void	wm_handle_reset_work(struct work *, void *);
 /* Interrupt */
 static bool	wm_txeof(struct wm_txqueue *, u_int);
 static bool	wm_rxeof(struct wm_rxqueue *, u_int);
@@ -2222,7 +2228,18 @@ alloc_retry:
 	    WM_WORKQUEUE_FLAGS);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create workqueue\n");
+		    "unable to create TxRx workqueue\n");
+		goto out;
+	}
+
+	snprintf(wqname, sizeof(wqname), "%sReset", device_xname(sc->sc_dev));
+	error = workqueue_create(&sc->sc_reset_wq, wqname,
+	    wm_handle_reset_work, sc, WM_WORKQUEUE_PRI, IPL_SOFTCLOCK,
+	    WQ_MPSAFE);
+	if (error) {
+		workqueue_destroy(sc->sc_queue_wq);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create reset workqueue\n");
 		goto out;
 	}
 
@@ -3517,8 +3534,9 @@ wm_detach(device_t self, int flags __unused)
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
 
-	/* wm_stop() ensured that the workqueue is stopped. */
+	/* wm_stop() ensured that the workqueues are stopped. */
 	workqueue_destroy(sc->sc_queue_wq);
+	workqueue_destroy(sc->sc_reset_wq);
 
 	for (i = 0; i < sc->sc_nqueues; i++)
 		softint_disestablish(sc->sc_queue[i].wmq_si);
@@ -3603,11 +3621,11 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 }
 
 /*
- * wm_watchdog:		[ifnet interface function]
+ * wm_watchdog:
  *
- *	Watchdog timer handler.
+ *	Watchdog checker.
  */
-static void
+static bool
 wm_watchdog(struct ifnet *ifp)
 {
 	int qid;
@@ -3620,17 +3638,48 @@ wm_watchdog(struct ifnet *ifp)
 		wm_watchdog_txq(ifp, txq, &hang_queue);
 	}
 
-	/* IF any of queues hanged up, reset the interface. */
-	if (hang_queue != 0) {
-		(void)wm_init(ifp);
-
-		/*
-		 * There are still some upper layer processing which call
-		 * ifp->if_start(). e.g. ALTQ or one CPU system
-		 */
-		/* Try to get more packets going. */
-		ifp->if_start(ifp);
+#ifdef WM_DEBUG
+	if (sc->sc_trigger_reset) {
+		/* debug operation, no need for atomicity or reliability */
+		sc->sc_trigger_reset = 0;
+		hang_queue++;
 	}
+#endif
+
+	if (hang_queue == 0)
+		return true;
+
+	if (atomic_swap_uint(&sc->sc_reset_pending, 1) == 0)
+		workqueue_enqueue(sc->sc_reset_wq, &sc->sc_reset_work, NULL);
+
+	return false;
+}
+
+/*
+ * Perform an interface watchdog reset.
+ */
+static void
+wm_handle_reset_work(struct work *work, void *arg)
+{
+	struct wm_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+
+	/* Don't want ioctl operations to happen */
+	IFNET_LOCK(ifp);
+
+	/* reset the interface. */
+	wm_init(ifp);
+
+	IFNET_UNLOCK(ifp);
+
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ or one CPU system
+	 */
+	/* Try to get more packets going. */
+	ifp->if_start(ifp);
+
+	atomic_store_relaxed(&sc->sc_reset_pending, 0);
 }
 
 
@@ -3863,9 +3912,8 @@ wm_tick(void *arg)
 	splx(s);
 #endif
 
-	wm_watchdog(ifp);
-
-	callout_schedule(&sc->sc_tick_ch, hz);
+	if (wm_watchdog(ifp))
+		callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 static int
@@ -6468,6 +6516,12 @@ wm_init_sysctls(struct wm_softc *sc)
 	    wm_sysctl_debug, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (rv != 0)
 		goto teardown;
+	rv = sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "trigger_reset",
+	    SYSCTL_DESCR("Trigger an interface reset"),
+	    NULL, 0, &sc->sc_trigger_reset, 0, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		goto teardown;
 #endif
 
 	return;
@@ -7110,6 +7164,7 @@ wm_stop(struct ifnet *ifp, int disable)
 	 */
 	for (int i = 0; i < sc->sc_nqueues; i++)
 		workqueue_wait(sc->sc_queue_wq, &sc->sc_queue[i].wmq_cookie);
+	workqueue_wait(sc->sc_reset_wq, &sc->sc_reset_work);
 }
 
 static void
