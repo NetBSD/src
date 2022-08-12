@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.53 2022/08/12 10:48:27 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.54 2022/08/12 10:48:44 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,9 @@
 .Op Fl o Ar outfile
 .Ar alg
 .Op Ar keylen
+.Nm
+.Fl T
+.Op Fl f Ar configfile
 .Nm
 .Fl t
 .Ar paramsfile
@@ -146,6 +149,11 @@ in question to be unconfigured rather than prompting for the passphrase
 again.
 .It Fl s
 Read the key (nb: not the passphrase) from stdin.
+.It Fl T
+Generate all keys for all the devices listed in the
+.Nm
+configuration file and print them to standard output encoded in
+base64.
 .It Fl t
 Generate the key and print it to standard output encoded in base64.
 .It Fl U

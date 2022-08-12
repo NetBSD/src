@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.54 2022/08/12 10:48:27 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.54 2022/08/12 10:48:27 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.55 2022/08/12 10:48:44 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -90,6 +90,7 @@ enum action {
 	 ACTION_CONFIGSTDIN,		/* configure, key from stdin */
 	 ACTION_LIST,			/* list configured devices */
 	 ACTION_PRINTKEY,		/* print key to stdout */
+	 ACTION_PRINTALLKEYS,		/* print all keys to stdout */
 };
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
@@ -112,6 +113,9 @@ static int	unconfigure(int, char **, struct params *, int);
 static int	do_all(const char *, int, char **,
 		       int (*)(int, char **, struct params *, int));
 static int	do_list(int, char **);
+static int	printkey(const char *, const char *, const char *, ...)
+		    __printflike(3,4);
+static int	printkey1(int, char **, struct params *, int);
 static int	do_printkey(int, char **);
 
 #define CONFIG_FLAGS_FROMALL	1	/* called from configure_all() */
@@ -163,6 +167,7 @@ usage(void)
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
 	(void)fprintf(stderr, "       %s -t paramsfile\n", getprogname());
+	(void)fprintf(stderr, "       %s -T [-f configfile]\n", getprogname());
 	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n",
 	    getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
@@ -217,13 +222,16 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGUV:b:ef:gi:k:lno:sptuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGTUV:b:ef:gi:k:lno:sptuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
 			break;
 		case 'G':
 			set_action(&action, ACTION_GENERATE_CONVERT);
+			break;
+		case 'T':
+			set_action(&action, ACTION_PRINTALLKEYS);
 			break;
 		case 'U':
 			set_action(&action, ACTION_UNCONFIGALL);
@@ -331,6 +339,8 @@ main(int argc, char **argv)
 		return do_list(argc, argv);
 	case ACTION_PRINTKEY:
 		return do_printkey(argc, argv);
+	case ACTION_PRINTALLKEYS:
+		return do_all(cfile, argc, argv, printkey1);
 	default:
 		errx(EXIT_FAILURE, "undefined action");
 		/* NOTREACHED */
@@ -1352,8 +1362,9 @@ do_list(int argc, char **argv)
 }
 
 static int
-do_printkey(int argc, char **argv)
+printkey(const char *dev, const char *paramsfile, const char *fmt, ...)
 {
+	va_list va;
 	struct params *p;
 	const uint8_t *raw;
 	size_t nbits, nbytes;
@@ -1361,16 +1372,14 @@ do_printkey(int argc, char **argv)
 	char *b64;
 	int ret;
 
-	if (argc != 1)
-		usage();
-	p = params_cget(argv[0]);
+	p = params_cget(paramsfile);
 	if (p == NULL)
 		return -1;
 	if (!params_verify(p)) {
-		warnx("invalid parameters file \"%s\"", argv[0]);
+		warnx("invalid parameters file \"%s\"", paramsfile);
 		return -1;
 	}
-	p->key = getkey("key", p->keygen, p->keylen);
+	p->key = getkey(dev, p->keygen, p->keylen);
 	raw = bits_getbuf(p->key);
 	nbits = bits_len(p->key);
 	assert(nbits <= INT_MAX - 7);
@@ -1384,10 +1393,49 @@ do_printkey(int argc, char **argv)
 	b64[nb64] = '\n';
 	b64[nb64 + 1] = '\0';
 
+	va_start(va, fmt);
+	vprintf(fmt, va);
+	va_end(va);
 	if (fwrite(b64, nb64 + 1, 1, stdout) != 1)
 		err(1, "fwrite");
 	fflush(stdout);
 	return ferror(stdout);
+}
+
+static int
+printkey1(int argc, char **argv, struct params *inparams, int flags)
+{
+	char devicename[PATH_MAX], paramsfilebuf[PATH_MAX];
+	const char *dev, *paramsfile;
+
+	assert(flags == CONFIG_FLAGS_FROMALL);
+
+	if (argc < 2 || argc > 3)
+		return -1;
+
+	dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
+	if (dev == NULL) {
+		warnx("getfsspecname failed: %s", devicename);
+		return -1;
+	}
+
+	if (argc == 2) {
+		strlcpy(paramsfilebuf, dev, sizeof(paramsfilebuf));
+		paramsfile = basename(paramsfilebuf);
+	} else {
+		paramsfile = argv[2];
+	}
+
+	return printkey(dev, paramsfile, "%s: ", dev);
+}
+
+static int
+do_printkey(int argc, char **argv)
+{
+
+	if (argc != 1)
+		usage();
+	return printkey("key", argv[0], "");
 }
 
 static void
