@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.237 2022/07/15 04:47:55 mrg Exp $
+#	 $NetBSD: mi,v 1.238 2022/08/12 07:35:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -499,6 +499,7 @@
 ./usr/X11R7/include/X11/extensions/xtraplib.h		xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/X11/extensions/xtraplibp.h		xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/X11/extensions/xtrapproto.h		xcomp-xorgproto-include	xorg
+./usr/X11R7/include/X11/extensions/xwaylandproto.h	xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/X11/fonts/FS.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/X11/fonts/FSlib.h			xcomp-libFS-include	xorg
 ./usr/X11R7/include/X11/fonts/FSproto.h			xcomp-xorgproto-include	xorg
@@ -1454,6 +1455,7 @@
 ./usr/X11R7/lib/pkgconfig/xtst.pc			xcomp-libXtst-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xv.pc				xcomp-libXv-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xvmc.pc			xcomp-libXvMC-lib	xorg
+./usr/X11R7/lib/pkgconfig/xwaylandproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86dga.pc			xcomp-libXxf86dga-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86misc.pc			xcomp-libXxf86misc-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86vm.pc			xcomp-libXxf86vm-lib	xorg
