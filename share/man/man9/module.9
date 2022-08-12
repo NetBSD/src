@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.53 2021/07/22 01:38:45 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.54 2022/08/12 15:43:38 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -347,7 +347,7 @@ routine.
 The module subsystem uses a kernel thread to attempt to automatically
 unload modules a short time (currently, 10 seconds) after being loaded by
 .Fn module_autoload .
-Before the module is unloaded, its
+Before the module is unloaded by this thread, its
 .Fn modcmd
 is called with the
 .Fa cmd
@@ -355,6 +355,11 @@ argument specified as
 .Dv MODULE_CMD_AUTOUNLOAD .
 A module can prevent itself from being unloaded by returning a non-zero
 value.
+Exception: If
+.Li kern.module.autounload_unsafe
+is set, a module that returns
+.Er ENOTTY ,
+meaning it does not understand the command, may still be autounloaded.
 .Pp
 The
 .Fn module_autoload
