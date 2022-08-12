@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.213 2022/08/12 17:06:01 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.214 2022/08/12 21:25:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.213 2022/08/12 17:06:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.214 2022/08/12 21:25:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -789,8 +789,13 @@ spec_open(void *v)
 		 *
 		 * Treat zero opencnt with non-NULL mountpoint as open.
 		 * This may happen after forced detach of a mounted device.
+		 *
+		 * Also treat sd_closing, meaning there is a concurrent
+		 * close in progress, as still open.
 		 */
-		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
+		if (sd->sd_opencnt != 0 ||
+		    sd->sd_mountpoint != NULL ||
+		    sd->sd_closing) {
 			error = EBUSY;
 			break;
 		}
