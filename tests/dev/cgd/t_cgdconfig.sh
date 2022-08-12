@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgdconfig.sh,v 1.1 2022/08/12 10:48:28 riastradh Exp $
+#	$NetBSD: t_cgdconfig.sh,v 1.2 2022/08/12 10:48:44 riastradh Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,40 @@ keygen storedkey key AAABAJtnmp3XZspMBAFpCYnB8Hekn0 \
 EOF
 	atf_check -o inline:'m2eanddmykwEAWkJicHwd6SfSCPlwNWeCyV8YtKrBzI=\n' \
 	    cgdconfig -t params
+}
+
+atf_test_case storedkeys
+storedkeys_head()
+{
+	atf_set descr "Test multiple stored keys with cgd.conf"
+}
+storedkeys_body()
+{
+	cat <<EOF >wd0e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey key AAABAJtnmp3XZspMBAFpCYnB8Hekn0 \
+                     gj5cDVngslfGLSqwcy;
+EOF
+	cat <<EOF >ld1e
+algorithm adiantum;
+iv-method encblkno1;
+keylength 256;
+verify_method none;
+keygen storedkey key AAABAK1pbgIayXftX0RQ3AaMK4YEd/ \
+                     fowKwQbENxpu3o1k9m;
+EOF
+	cat <<EOF >cgd.conf
+cgd0	/dev/wd0e	wd0e
+cgd1	/dev/ld1e	ld1e
+EOF
+	cat <<EOF >expected
+/dev/wd0e: m2eanddmykwEAWkJicHwd6SfSCPlwNWeCyV8YtKrBzI=
+/dev/ld1e: rWluAhrJd+1fRFDcBowrhgR39+jArBBsQ3Gm7ejWT2Y=
+EOF
+	atf_check -o file:expected cgdconfig -T -f cgd.conf
 }
 
 atf_test_case storedkey2a
@@ -91,4 +125,5 @@ atf_init_test_cases()
 	atf_add_test_case storedkey
 	atf_add_test_case storedkey2a
 	atf_add_test_case storedkey2b
+	atf_add_test_case storedkeys
 }
