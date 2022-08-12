@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.56 2022/08/09 12:42:05 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.57 2022/08/12 10:49:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.56 2022/08/09 12:42:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.57 2022/08/12 10:49:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,47 +422,111 @@ virtio_soft_intr(void *arg)
 static inline void
 vq_sync_descs(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
+
 	/* availoffset == sizeof(vring_desc)*vq_num */
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, 0, vq->vq_availoffset,
-			ops);
+	    ops);
 }
 
 static inline void
-vq_sync_aring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+vq_sync_aring_all(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_avail, ring);
-	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
-		hdrlen += sizeof(uint16_t);
+	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+	size_t usedlen = 0;
 
+	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
+		usedlen = sizeof(uint16_t);
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			vq->vq_availoffset,
-			hdrlen + sc->sc_nvqs * sizeof(uint16_t),
-			ops);
+	    vq->vq_availoffset, hdrlen + payloadlen + usedlen, ops);
 }
 
 static inline void
-vq_sync_uring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+vq_sync_aring_header(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
-	uint16_t hdrlen = offsetof(struct vring_used, ring);
-	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
-		hdrlen += sizeof(uint16_t);
+	uint16_t hdrlen = offsetof(struct vring_avail, ring);
 
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			vq->vq_usedoffset,
-			hdrlen + sc->sc_nvqs * sizeof(struct vring_used_elem),
-			ops);
+	    vq->vq_availoffset, hdrlen, ops);
+}
+
+static inline void
+vq_sync_aring_payload(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_avail, ring);
+	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_availoffset + hdrlen, payloadlen, ops);
+}
+
+static inline void
+vq_sync_aring_used(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_avail, ring);
+	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+	size_t usedlen = sizeof(uint16_t);
+
+	if ((sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) == 0)
+		return;
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_availoffset + hdrlen + payloadlen, usedlen, ops);
+}
+
+static inline void
+vq_sync_uring_all(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_used, ring);
+	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+	size_t availlen = 0;
+
+	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
+		availlen = sizeof(uint16_t);
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_usedoffset, hdrlen + payloadlen + availlen, ops);
+}
+
+static inline void
+vq_sync_uring_header(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_used, ring);
+
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_usedoffset, hdrlen, ops);
+}
+
+static inline void
+vq_sync_uring_payload(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_used, ring);
+	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_usedoffset + hdrlen, payloadlen, ops);
+}
+
+static inline void
+vq_sync_uring_avail(struct virtio_softc *sc, struct virtqueue *vq, int ops)
+{
+	uint16_t hdrlen = offsetof(struct vring_used, ring);
+	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+	size_t availlen = sizeof(uint16_t);
+
+	if ((sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) == 0)
+		return;
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
+	    vq->vq_usedoffset + hdrlen + payloadlen, availlen, ops);
 }
 
 static inline void
 vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
-		     int ops)
+    int ops)
 {
-	int offset = vq->vq_indirectoffset
-		      + sizeof(struct vring_desc) * vq->vq_maxnsegs * slot;
+	int offset = vq->vq_indirectoffset +
+	    sizeof(struct vring_desc) * vq->vq_maxnsegs * slot;
 
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			offset, sizeof(struct vring_desc) * vq->vq_maxnsegs,
-			ops);
+	    offset, sizeof(struct vring_desc) * vq->vq_maxnsegs, ops);
 }
 
 bool
@@ -471,12 +535,14 @@ virtio_vq_is_enqueued(struct virtio_softc *sc, struct virtqueue *vq)
 
 	if (vq->vq_queued) {
 		vq->vq_queued = 0;
-		vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
+		vq_sync_aring_all(sc, vq, BUS_DMASYNC_POSTWRITE);
 	}
-	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
-	membar_consumer();
 
-	return (vq->vq_used_idx != virtio_rw16(sc, vq->vq_used->idx)) ? 1 : 0;
+	vq_sync_uring_header(sc, vq, BUS_DMASYNC_POSTREAD);
+	if (vq->vq_used_idx == virtio_rw16(sc, vq->vq_used->idx))
+		return 0;
+	vq_sync_uring_payload(sc, vq, BUS_DMASYNC_POSTREAD);
+	return 1;
 }
 
 /*
@@ -530,9 +596,7 @@ virtio_postpone_intr(struct virtio_softc *sc, struct virtqueue *vq,
 
 	/* set the new event index: avail_ring->used_event = idx */
 	*vq->vq_used_event = virtio_rw16(sc, idx);
-	membar_producer();
-
-	vq_sync_aring(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
+	vq_sync_aring_used(vq->vq_owner, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
 
 	nused = (uint16_t)
@@ -578,6 +642,7 @@ virtio_postpone_intr_far(struct virtio_softc *sc, struct virtqueue *vq)
 void
 virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 {
+
 	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) {
 		/*
 		 * No way to disable the interrupt completely with
@@ -586,16 +651,19 @@ virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * the past to not trigger a spurios interrupt.
 		 */
 		*vq->vq_used_event = virtio_rw16(sc, vq->vq_used_idx + 0x8000);
+		vq_sync_aring_used(sc, vq, BUS_DMASYNC_PREWRITE);
 	} else {
-		vq->vq_avail->flags |= virtio_rw16(sc, VRING_AVAIL_F_NO_INTERRUPT);
+		vq->vq_avail->flags |=
+		    virtio_rw16(sc, VRING_AVAIL_F_NO_INTERRUPT);
+		vq_sync_aring_header(sc, vq, BUS_DMASYNC_PREWRITE);
 	}
-	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
 }
 
 int
 virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 {
+
 	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) {
 		/*
 		 * If event index feature is negotiated, enabling interrupts
@@ -603,13 +671,19 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * used_event field
 		 */
 		*vq->vq_used_event = virtio_rw16(sc, vq->vq_used_idx);
+		vq_sync_aring_used(sc, vq, BUS_DMASYNC_PREWRITE);
 	} else {
-		vq->vq_avail->flags &= ~virtio_rw16(sc, VRING_AVAIL_F_NO_INTERRUPT);
+		vq->vq_avail->flags &=
+		    ~virtio_rw16(sc, VRING_AVAIL_F_NO_INTERRUPT);
+		vq_sync_aring_header(sc, vq, BUS_DMASYNC_PREWRITE);
 	}
-	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq->vq_queued++;
 
-	return vq->vq_used_idx != virtio_rw16(sc, vq->vq_used->idx);
+	vq_sync_uring_header(sc, vq, BUS_DMASYNC_POSTREAD);
+	if (vq->vq_used_idx == virtio_rw16(sc, vq->vq_used->idx))
+		return 0;
+	vq_sync_uring_payload(sc, vq, BUS_DMASYNC_POSTREAD);
+	return 1;
 }
 
 /*
@@ -655,8 +729,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 		mutex_init(&vq->vq_aring_lock, MUTEX_SPIN, sc->sc_ipl);
 		mutex_init(&vq->vq_uring_lock, MUTEX_SPIN, sc->sc_ipl);
 	}
-	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
-	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
+	vq_sync_uring_all(sc, vq, BUS_DMASYNC_PREREAD);
 	vq->vq_queued++;
 }
 
@@ -811,6 +884,8 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 
 	/* tell device that there's no virtqueue any longer */
 	sc->sc_ops->setup_queue(sc, vq->vq_index, 0);
+
+	vq_sync_aring_all(sc, vq, BUS_DMASYNC_POSTWRITE);
 
 	kmem_free(vq->vq_entries, sizeof(*vq->vq_entries) * vq->vq_num);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
@@ -1050,34 +1125,43 @@ virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 		vq_sync_indirect(sc, vq, slot, BUS_DMASYNC_PREWRITE);
 	mutex_enter(&vq->vq_aring_lock);
 	vq->vq_avail->ring[(vq->vq_avail_idx++) % vq->vq_num] =
-		virtio_rw16(sc, slot);
+	    virtio_rw16(sc, slot);
 
 notify:
 	if (notifynow) {
 		uint16_t o, n, t;
 		uint16_t flags;
+
 		o = virtio_rw16(sc, vq->vq_avail->idx);
 		n = vq->vq_avail_idx;
 
-		/* publish avail idx */
-		membar_producer();
+		/*
+		 * Prepare for `device->CPU' (host->guest) transfer
+		 * into the buffer.  This must happen before we commit
+		 * the vq->vq_avail->idx update to ensure we're not
+		 * still using the buffer in case program-prior loads
+		 * or stores in it get delayed past the store to
+		 * vq->vq_avail->idx.
+		 */
+		vq_sync_uring_all(sc, vq, BUS_DMASYNC_PREREAD);
+
+		/* ensure payload is published, then avail idx */
+		vq_sync_aring_payload(sc, vq, BUS_DMASYNC_PREWRITE);
 		vq->vq_avail->idx = virtio_rw16(sc, vq->vq_avail_idx);
-		vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
+		vq_sync_aring_header(sc, vq, BUS_DMASYNC_PREWRITE);
 		vq->vq_queued++;
 
-		membar_consumer();
-		vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
 		if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) {
+			vq_sync_uring_avail(sc, vq, BUS_DMASYNC_POSTREAD);
 			t = virtio_rw16(sc, *vq->vq_avail_event) + 1;
 			if ((uint16_t) (n - t) < (uint16_t) (n - o))
 				sc->sc_ops->kick(sc, vq->vq_index);
 		} else {
+			vq_sync_uring_header(sc, vq, BUS_DMASYNC_POSTREAD);
 			flags = virtio_rw16(sc, vq->vq_used->flags);
 			if (!(flags & VRING_USED_F_NO_NOTIFY))
 				sc->sc_ops->kick(sc, vq->vq_index);
 		}
-		vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
-		vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
 	}
 	mutex_exit(&vq->vq_aring_lock);
 
