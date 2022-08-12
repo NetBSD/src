@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.230 2022/05/17 11:41:41 uwe Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.231 2022/08/12 11:15:40 riastradh Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,6 +148,7 @@
 #	dmz*    UNIBUS DMZ32 (vax)
 #	dl*	UNIBUS DL11 (vax)
 #	xencons	Xen virtual console
+#	ttyVI??	viocon(4)
 #
 # Terminal multiplexors:
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
@@ -2270,6 +2271,17 @@ sht3xtemp[0-9]*)
 scmd[0-9]*)
 	unit=${i#scmd}
 	mkdev scmd$unit c %scmd_chr% $unit 666
+	;;
+
+ttyVI[0-9][0-9])
+	port=${i#ttyVI?}
+	devunit=${i%$port}
+	unit=${devunit#ttyVI}
+	mkdev ttyVI$unit$port c %viocon_chr% $((16*$unit + $port))
+	;;
+
+ttyVI)
+	makedev ttyVI00 ttyVI10 ttyVI20 ttyVI30
 	;;
 
 midevend)

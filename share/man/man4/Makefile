@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.727 2022/07/10 19:49:24 nia Exp $
+#	$NetBSD: Makefile,v 1.728 2022/08/12 11:15:41 riastradh Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -68,7 +68,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 umb.4 \
 	unix.4 userconf.4 \
 	vald.4 valz.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 \
-	vio9p.4 vioif.4 viomb.4 viornd.4 vioscsi.4 virt.4 virtio.4 \
+	vio9p.4 viocon.4 vioif.4 viomb.4 viornd.4 vioscsi.4 virt.4 virtio.4 \
 	vether.4 vlan.4 vmmon.4 vmnet.4 vmt.4 vmx.4 vnd.4 voodoofb.4 vr.4 \
 	vte.4 \
 	wapbl.4 wb.4 wbsio.4 wd.4 wdc.4 wg.4 wi.4 wm.4 wpi.4 \
