@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.26 2022/08/13 07:19:15 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.27 2022/08/13 07:22:40 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.26 2022/08/13 07:19:15 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.27 2022/08/13 07:22:40 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5870,6 +5870,102 @@ DEF(AUDIO_SETINFO_gain_balance)
 	XP_SYS_EQ(0, r);
 }
 
+/*
+ * Changing track formats after mmap should fail.
+ */
+DEF(AUDIO_SETINFO_mmap_enc)
+{
+	struct audio_info ai;
+	void *ptr;
+	int fd;
+	int r;
+
+	TEST("AUDIO_SETINFO_mmap");
+
+#if !defined(NO_RUMP)
+	if (use_rump) {
+		XP_SKIP("rump doesn't support mmap");
+		return;
+	}
+#endif
+
+	fd = OPEN(devaudio, O_WRONLY);
+	REQUIRED_SYS_OK(fd);
+
+	ptr = MMAP(NULL, 1, PROT_WRITE, MAP_FILE, fd, 0);
+	XP_SYS_PTR(0, ptr);
+
+	/*
+	 * SETINFO after mmap should fail.
+	 * NetBSD9 changes errno.
+	 */
+	AUDIO_INITINFO(&ai);
+	ai.play.channels = 2;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=2");
+	if (netbsd < 9) {
+		XP_SYS_NG(EINVAL, r);
+	} else {
+		XP_SYS_NG(EIO, r);
+	}
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+
+	reset_after_mmap();
+}
+
+/*
+ * Even after mmap, changing pause should succeed.
+ */
+DEF(AUDIO_SETINFO_mmap_pause)
+{
+	struct audio_info ai;
+	void *ptr;
+	int fd;
+	int r;
+
+	TEST("AUDIO_SETINFO_mmap");
+
+#if !defined(NO_RUMP)
+	if (use_rump) {
+		XP_SKIP("rump doesn't support mmap");
+		return;
+	}
+#endif
+
+	fd = OPEN(devaudio, O_WRONLY);
+	REQUIRED_SYS_OK(fd);
+
+	ptr = MMAP(NULL, 1, PROT_WRITE, MAP_FILE, fd, 0);
+	XP_SYS_PTR(0, ptr);
+
+	/* SETINFO after mmap should fail */
+	AUDIO_INITINFO(&ai);
+	ai.play.pause = 1;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "set pause");
+	XP_SYS_EQ(0, r);
+
+	AUDIO_INITINFO(&ai);
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "get pause");
+	XP_SYS_EQ(0, r);
+
+	XP_EQ(1, ai.play.pause);
+
+	/*
+	 * Unpause before close.  Unless, subsequent audioplay(1) which use
+	 * /dev/sound by default will pause...
+	 */
+	AUDIO_INITINFO(&ai);
+	ai.play.pause = 0;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "reset pause");
+	XP_SYS_EQ(0, r);
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+
+	reset_after_mmap();
+}
+
 #define NENC	(AUDIO_ENCODING_AC3 + 1)
 #define NPREC	(5)
 /*
@@ -7221,6 +7317,8 @@ struct testentry testtable[] = {
 	ENT(AUDIO_SETINFO_pause_RDWR_3),
 	ENT(AUDIO_SETINFO_gain),
 	ENT(AUDIO_SETINFO_gain_balance),
+/**/	ENT(AUDIO_SETINFO_mmap_enc),	// XXX rump doesn't support mmap
+/**/	ENT(AUDIO_SETINFO_mmap_pause),	// XXX rump doesn't support mmap
 	ENT(AUDIO_GETENC_range),
 	ENT(AUDIO_GETENC_error),
 	ENT(AUDIO_ERROR_RDONLY),
