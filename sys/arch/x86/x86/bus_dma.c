@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.87 2022/08/12 15:01:26 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.88 2022/08/13 06:59:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.87 2022/08/12 15:01:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.88 2022/08/13 06:59:56 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1198,7 +1198,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	pt_entry_t *pte, opte;
 	vaddr_t va, sva, eva;
 
-	KASSERTMSG((uintptr_t)kva & PGOFSET, "kva=%p", kva);
+	KASSERTMSG(((uintptr_t)kva & PGOFSET) == 0, "kva=%p", kva);
 
 	size = round_page(size);
 	sva = (vaddr_t)kva;
