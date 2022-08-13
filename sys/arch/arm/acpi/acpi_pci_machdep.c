@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.21 2021/12/21 11:02:38 skrll Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.22 2022/08/13 20:07:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.21 2021/12/21 11:02:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.22 2022/08/13 20:07:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.21 2021/12/21 11:02:38 skrll 
 struct acpi_pci_prt {
 	u_int				prt_segment;
 	u_int				prt_bus;
+	u_int				prt_bridge_dev;
+	bool				prt_derived;
 	ACPI_HANDLE			prt_handle;
 	TAILQ_ENTRY(acpi_pci_prt)	prt_list;
 };
@@ -210,6 +212,8 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 	struct acpi_devnode *ad;
 	ACPI_HANDLE handle;
 	int seg, bus, dev, func;
+	u_int bridge_dev = 0;
+	bool derived = false;
 
 	seg = ap->ap_seg;
 	handle = NULL;
@@ -225,10 +229,13 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 		if (ad != NULL) {
 			handle = ad->ad_handle;
 		} else {
-			/* No routes defined for this bus, copy from parent */
+			/* No routes defined for this bus, derive from parent */
 			TAILQ_FOREACH(prtp, &acpi_pci_irq_routes, prt_list)
-				if (prtp->prt_bus == bus) {
+				if (prtp->prt_bus == bus &&
+				    prtp->prt_segment == seg) {
 					handle = prtp->prt_handle;
+					bridge_dev = dev;
+					derived = true;
 					break;
 				}
 		}
@@ -244,8 +251,10 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 	if (handle != NULL) {
 		prt = kmem_alloc(sizeof(*prt), KM_SLEEP);
 		prt->prt_bus = pba->pba_bus;
-		prt->prt_segment = ap->ap_seg;
+		prt->prt_segment = seg;
 		prt->prt_handle = handle;
+		prt->prt_bridge_dev = bridge_dev;
+		prt->prt_derived = derived;
 		TAILQ_INSERT_TAIL(&acpi_pci_irq_routes, prt, prt_list);
 	}
 
@@ -375,6 +384,7 @@ acpi_pci_md_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	ACPI_HANDLE linksrc;
 	ACPI_BUFFER buf;
 	void *linkdev;
+	u_int pin;
 
 	if (pa->pa_intrpin == PCI_INTERRUPT_PIN_NONE)
 		return EINVAL;
@@ -386,6 +396,21 @@ acpi_pci_md_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	if (ACPI_FAILURE(acpi_get(prt->prt_handle, &buf, AcpiGetIrqRoutingTable)))
 		return EIO;
 
+	/*
+	 * For busses with no direct _PRT entry, derive the pin from the
+	 * parent bridge.
+	 */
+	if (prt->prt_derived) {
+		pin = (((pa->pa_rawintrpin + prt->prt_bridge_dev) - 1) % 4) + 1;
+	} else {
+		pin = pa->pa_intrpin;
+	}
+
+	aprint_debug("%s: bus=%u pin=%u pa_rawintrpin=%u pa_intrpin=%u "
+		     "pa_intrswiz=%u prt_bridge_dev=%u\n",
+       		     __func__, pa->pa_bus, pin, pa->pa_rawintrpin,
+		     pa->pa_intrpin, pa->pa_intrswiz, prt->prt_bridge_dev);
+
 	error = ENOENT;
 	for (char *p = buf.Pointer; ; p += tab->Length) {
 		tab = (ACPI_PCI_ROUTING_TABLE *)p;
@@ -393,7 +418,7 @@ acpi_pci_md_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 			break;
 
 		if (pa->pa_device == ACPI_HIWORD(tab->Address) &&
-		    (pa->pa_intrpin - 1) == (tab->Pin & 3)) {
+		    (pin - 1) == (tab->Pin & 3)) {
 			if (tab->Source[0] != 0) {
 				if (ACPI_FAILURE(AcpiGetHandle(ACPI_ROOT_OBJECT, tab->Source, &linksrc)))
 					goto done;
