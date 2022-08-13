@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.25 2022/08/13 07:14:40 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.26 2022/08/13 07:19:15 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.25 2022/08/13 07:14:40 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.26 2022/08/13 07:19:15 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -7106,29 +7106,29 @@ struct testentry testtable[] = {
 	ENT(drain_incomplete),
 	ENT(drain_pause),
 	ENT(drain_onrec),
-/**/	ENT(mmap_mode_RDONLY_NONE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDONLY_READ),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDONLY_WRITE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDONLY_READWRITE),// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_WRONLY_NONE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_WRONLY_READ),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_WRONLY_WRITE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_WRONLY_READWRITE),// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDWR_NONE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDWR_READ),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDWR_WRITE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_mode_RDWR_READWRITE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_0),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_1),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_2),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_3),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_4),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_5),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_6),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_7),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len_8),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_twice),		// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_multi),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_mode_RDONLY_NONE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDONLY_READ),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDONLY_WRITE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDONLY_READWRITE),// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_WRONLY_NONE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_WRONLY_READ),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_WRONLY_WRITE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_WRONLY_READWRITE),// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDWR_NONE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDWR_READ),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDWR_WRITE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_mode_RDWR_READWRITE),	// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_0),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_1),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_2),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_3),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_4),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_5),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_6),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_7),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_len_8),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_twice),		// XXX rump doesn't support mmap
+/**/	ENT(mmap_multi),		// XXX rump doesn't support mmap
 	ENT(poll_mode_RDONLY_IN),
 	ENT(poll_mode_RDONLY_OUT),
 	ENT(poll_mode_RDONLY_INOUT),
