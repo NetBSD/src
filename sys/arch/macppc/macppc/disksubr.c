@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.49 2014/03/14 21:59:41 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.50 2022/08/13 09:34:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.50 2022/08/13 09:34:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,6 +497,8 @@ read_dos_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 	bsdp = NULL;
 	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
 		switch (dp->mbrp_type) {
+		case MBR_PTYPE_PMBR:
+			goto done;	/* do not fake anything for GPT disks */
 		case MBR_PTYPE_NETBSD:
 			bsdp = dp;
 			break;
