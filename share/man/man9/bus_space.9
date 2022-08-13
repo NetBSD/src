@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.54 2022/08/12 13:24:37 riastradh Exp $
+.\" $NetBSD: bus_space.9,v 1.55 2022/08/13 17:06:55 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1369,7 +1369,7 @@ This functions similarly to
 but additionally orders bus space I/O which
 .Xr membar_ops 3
 may not.
-.It Dv "BUS_SPACE_BARRIER_READ" Li "|" Dv "BUS_SPACE_BARRIER_WRITE"
+.It Dv "BUS_SPACE_BARRIER_READ" | Dv "BUS_SPACE_BARRIER_WRITE"
 Guarantee that any program-prior bus space read, bus space write, or
 memory access via
 .Fn bus_space_vaddr
