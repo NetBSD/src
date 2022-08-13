@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $NetBSD: amidisplaycc.4,v 1.14 2021/10/09 08:25:33 jandberg Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.15 2022/08/13 10:53:38 jandberg Exp $
 .Dd November 12, 2003
 .Dt AMIDISPLAYCC 4 amiga
 .Os
@@ -42,10 +42,6 @@ interface and contains the necessary rendering functions to
 operate a text terminal with virtual screens.
 It uses the Amiga abstract graphic driver (grfabs) functions for
 the low-level display management.
-.Pp
-The X11 server works in monochrome mode using the
-.Xr wsfb 4
-driver.
 .Pp
 It supports foreground and background color, and the hilite (bold),
 underline, and reverse text attributes.
@@ -88,6 +84,10 @@ Fonts can be compiled into the kernel by specifying "options FONT_[fontname]"
 in the configuration file, or loaded with the
 .Xr wsfontload 8
 utility runtime.
+.Ss X11
+The X11 server works using the
+.Xr wsfb 4
+driver. The driver supports 256 color and monochrome modes.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
