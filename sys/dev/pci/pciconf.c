@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.53 2021/08/30 22:49:03 jmcneill Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.54 2022/08/13 21:51:33 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.53 2021/08/30 22:49:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.54 2022/08/13 21:51:33 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -1068,7 +1068,16 @@ setup_memwins(pciconf_bus_t *pb)
 		}
 
 		if (rsvd != NULL && rsvd->start != pm->address) {
-			rsvd->callback(rsvd->callback_arg, pm->address);
+			/*
+			 * Resource allocation will never reuse a reserved
+			 * address. Check to see if the BAR is still reserved
+			 * to cover the case where the new resource was not
+			 * applied. In this case, there is no need to notify
+			 * the device callback of a change.
+			 */
+			if (!pci_bar_is_reserved(pb, pd, pm->reg)) {
+				rsvd->callback(rsvd->callback_arg, pm->address);
+			}
 		}
 	}
 	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
