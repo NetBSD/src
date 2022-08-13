@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.134 2022/07/06 01:12:45 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.135 2022/08/13 06:47:41 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.134 2022/07/06 01:12:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135 2022/08/13 06:47:41 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -234,7 +234,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.134 2022/07/06 01:12:45 riastradh Exp $"
 
 /*
  * 0: No debug logs
- * 1: action changes like open/close/set_format...
+ * 1: action changes like open/close/set_format/mmap...
  * 2: + normal operations like read/write/ioctl...
  * 3: + TRACEs except interrupt
  * 4: + TRACEs including interrupt
@@ -645,7 +645,6 @@ static void audio_print_format2(const char *, const audio_format2_t *) __unused;
 #endif
 
 static void *audio_realloc(void *, size_t);
-static int audio_realloc_usrbuf(audio_track_t *, int);
 static void audio_free_usrbuf(audio_track_t *);
 
 static audio_track_t *audio_track_create(struct audio_softc *,
@@ -3559,10 +3558,13 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	audio_file_t *file)
 {
 	audio_track_t *track;
+	struct uvm_object *uobj;
+	vaddr_t vstart;
 	vsize_t vsize;
 	int error;
 
-	TRACEF(2, file, "off=%lld, prot=%d", (long long)(*offp), prot);
+	TRACEF(1, file, "off=%jd, len=%ju, prot=%d",
+	    (intmax_t)(*offp), (uintmax_t)len, prot);
 
 	KASSERT(len > 0);
 
@@ -3595,36 +3597,69 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	if (track == NULL)
 		return EACCES;
 
-	vsize = roundup2(MAX(track->usrbuf.capacity, PAGE_SIZE), PAGE_SIZE);
-	if (len > vsize)
-		return EOVERFLOW;
-	if (*offp > (uint)(vsize - len))
-		return EOVERFLOW;
-
 	/* XXX TODO: what happens when mmap twice. */
-	if (!track->mmapped) {
-		track->mmapped = true;
+	if (track->mmapped)
+		return EIO;
 
-		if (!track->is_pause) {
-			error = audio_exlock_mutex_enter(sc);
-			if (error)
-				return error;
-			if (sc->sc_pbusy == false)
-				audio_pmixer_start(sc, true);
-			audio_exlock_mutex_exit(sc);
-		}
-		/* XXX mmapping record buffer is not supported */
+	/* Create a uvm anonymous object */
+	vsize = roundup2(MAX(track->usrbuf.capacity, PAGE_SIZE), PAGE_SIZE);
+	if (*offp + len > vsize)
+		return EOVERFLOW;
+	uobj = uao_create(vsize, 0);
+
+	/* Map it into the kernel virtual address space */
+	vstart = 0;
+	error = uvm_map(kernel_map, &vstart, vsize, uobj, 0, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, 0));
+	if (error) {
+		device_printf(sc->sc_dev, "uvm_map failed: errno=%d\n", error);
+		uao_detach(uobj);	/* release reference */
+		return error;
 	}
 
-	/* get ringbuffer */
-	*uobjp = track->uobj;
+	error = uvm_map_pageable(kernel_map, vstart, vstart + vsize,
+	    false, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "uvm_map_pageable failed: errno=%d\n",
+		    error);
+		goto abort;
+	}
+
+	error = audio_exlock_mutex_enter(sc);
+	if (error)
+		goto abort;
+
+	/*
+	 * mmap() will start playing immediately.  XXX Maybe we lack API...
+	 * If no one has played yet, start pmixer here.
+	 */
+	if (sc->sc_pbusy == false)
+		audio_pmixer_start(sc, true);
+	audio_exlock_mutex_exit(sc);
+
+	/* Finally, replace the usrbuf from kmem to uvm. */
+	audio_track_lock_enter(track);
+	kmem_free(track->usrbuf.mem, track->usrbuf_allocsize);
+	track->usrbuf.mem = (void *)vstart;
+	track->usrbuf_allocsize = vsize;
+	memset(track->usrbuf.mem, 0, vsize);
+	track->mmapped = true;
+	audio_track_lock_exit(track);
 
 	/* Acquire a reference for the mmap.  munmap will release. */
-	uao_reference(*uobjp);
+	uao_reference(uobj);
+	*uobjp = uobj;
 	*maxprotp = prot;
 	*advicep = UVM_ADV_RANDOM;
 	*flagsp = MAP_SHARED;
+
 	return 0;
+
+abort:
+	uvm_unmap(kernel_map, vstart, vstart + vsize);
+	/* uvm_unmap also detach uobj */
+	return error;
 }
 
 /*
@@ -3698,80 +3733,6 @@ audio_realloc(void *memblock, size_t bytes)
 }
 
 /*
- * (Re)allocate usrbuf with 'newbufsize' bytes.
- * Use this function for usrbuf because only usrbuf can be mmapped.
- * If successful, it updates track->usrbuf.mem, track->usrbuf.capacity and
- * returns 0.  Otherwise, it clears track->usrbuf.mem, track->usrbuf.capacity
- * and returns errno.
- * It must be called before updating usrbuf.capacity.
- */
-static int
-audio_realloc_usrbuf(audio_track_t *track, int newbufsize)
-{
-	struct audio_softc *sc;
-	vaddr_t vstart;
-	vsize_t oldvsize;
-	vsize_t newvsize;
-	int error;
-
-	KASSERT(newbufsize > 0);
-	sc = track->mixer->sc;
-
-	/* Get a nonzero multiple of PAGE_SIZE */
-	newvsize = roundup2(MAX(newbufsize, PAGE_SIZE), PAGE_SIZE);
-
-	if (track->usrbuf.mem != NULL) {
-		oldvsize = roundup2(MAX(track->usrbuf.capacity, PAGE_SIZE),
-		    PAGE_SIZE);
-		if (oldvsize == newvsize) {
-			track->usrbuf.capacity = newbufsize;
-			return 0;
-		}
-		vstart = (vaddr_t)track->usrbuf.mem;
-		uvm_unmap(kernel_map, vstart, vstart + oldvsize);
-		/* uvm_unmap also detach uobj */
-		track->uobj = NULL;		/* paranoia */
-		track->usrbuf.mem = NULL;
-	}
-
-	/* Create a uvm anonymous object */
-	track->uobj = uao_create(newvsize, 0);
-
-	/* Map it into the kernel virtual address space */
-	vstart = 0;
-	error = uvm_map(kernel_map, &vstart, newvsize, track->uobj, 0, 0,
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, 0));
-	if (error) {
-		device_printf(sc->sc_dev, "uvm_map failed: errno=%d\n", error);
-		uao_detach(track->uobj);	/* release reference */
-		goto abort;
-	}
-
-	error = uvm_map_pageable(kernel_map, vstart, vstart + newvsize,
-	    false, 0);
-	if (error) {
-		device_printf(sc->sc_dev, "uvm_map_pageable failed: errno=%d\n",
-		    error);
-		uvm_unmap(kernel_map, vstart, vstart + newvsize);
-		/* uvm_unmap also detach uobj */
-		goto abort;
-	}
-
-	track->usrbuf.mem = (void *)vstart;
-	track->usrbuf.capacity = newbufsize;
-	memset(track->usrbuf.mem, 0, newvsize);
-	return 0;
-
-	/* failure */
-abort:
-	track->uobj = NULL;		/* paranoia */
-	track->usrbuf.mem = NULL;
-	track->usrbuf.capacity = 0;
-	return error;
-}
-
-/*
  * Free usrbuf (if available).
  */
 static void
@@ -3780,21 +3741,25 @@ audio_free_usrbuf(audio_track_t *track)
 	vaddr_t vstart;
 	vsize_t vsize;
 
-	vstart = (vaddr_t)track->usrbuf.mem;
-	vsize = roundup2(MAX(track->usrbuf.capacity, PAGE_SIZE), PAGE_SIZE);
-	if (track->usrbuf.mem != NULL) {
-		/*
-		 * Unmap the kernel mapping.  uvm_unmap releases the
-		 * reference to the uvm object, and this should be the
-		 * last virtual mapping of the uvm object, so no need
-		 * to explicitly release (`detach') the object.
-		 */
-		uvm_unmap(kernel_map, vstart, vstart + vsize);
-
-		track->uobj = NULL;
-		track->usrbuf.mem = NULL;
-		track->usrbuf.capacity = 0;
+	if (track->usrbuf_allocsize != 0) {
+		if (track->mmapped) {
+			/*
+			 * Unmap the kernel mapping.  uvm_unmap releases the
+			 * reference to the uvm object, and this should be the
+			 * last virtual mapping of the uvm object, so no need
+			 * to explicitly release (`detach') the object.
+			 */
+			vstart = (vaddr_t)track->usrbuf.mem;
+			vsize = track->usrbuf_allocsize;
+			uvm_unmap(kernel_map, vstart, vstart + vsize);
+			track->mmapped = false;
+		} else {
+			kmem_free(track->usrbuf.mem, track->usrbuf_allocsize);
+		}
 	}
+	track->usrbuf.mem = NULL;
+	track->usrbuf.capacity = 0;
+	track->usrbuf_allocsize = 0;
 }
 
 /*
@@ -4639,18 +4604,20 @@ audio_track_init_freq(audio_track_t *track, audio_ring_t **last_dstp)
 static int
 audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 {
-	struct audio_softc *sc;
 	audio_ring_t *last_dst;
 	int is_playback;
 	u_int newbufsize;
-	u_int oldblksize;
+	u_int newvsize;
 	u_int len;
 	int error;
 
 	KASSERT(track);
-	sc = track->mixer->sc;
 
 	is_playback = audio_track_is_playback(track);
+
+	/* Once mmap is called, the track format cannot be changed. */
+	if (track->mmapped)
+		return EIO;
 
 	/* usrbuf is the closest buffer to the userland. */
 	track->usrbuf.fmt = *usrfmt;
@@ -4682,27 +4649,34 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 	 *     newvsize = roundup2(61440, PAGE_SIZE) = 61440 (= 15 pages)
 	 *    Therefore it maps 15 * 4K pages and usrbuf->capacity = 61440.
 	 */
-	oldblksize = track->usrbuf_blksize;
 	track->usrbuf_blksize = frametobyte(&track->usrbuf.fmt,
 	    frame_per_block(track->mixer, &track->usrbuf.fmt));
 	track->usrbuf.head = 0;
 	track->usrbuf.used = 0;
 	if (is_playback) {
-		if (track->usrbuf_blksize * AUMINNOBLK > 65536)
-			newbufsize = track->usrbuf_blksize * AUMINNOBLK;
-		else
+		newbufsize = track->usrbuf_blksize * AUMINNOBLK;
+		if (newbufsize < 65536)
 			newbufsize = rounddown(65536, track->usrbuf_blksize);
+		newvsize = roundup2(newbufsize, PAGE_SIZE);
 	} else {
 		newbufsize = track->usrbuf_blksize;
+		newvsize = track->usrbuf_blksize;
 	}
-	if (track->usrbuf_blksize != oldblksize) {
-		error = audio_realloc_usrbuf(track, newbufsize);
-		if (error) {
-			device_printf(sc->sc_dev, "malloc usrbuf(%d) failed\n",
-			    newbufsize);
-			goto error;
+	/*
+	 * Reallocate only if the number of pages changes.
+	 * This is because we expect kmem to allocate memory on per page
+	 * basis if the request size is about 64KB.
+	 */
+	if (newvsize != track->usrbuf_allocsize) {
+		if (track->usrbuf_allocsize != 0) {
+			kmem_free(track->usrbuf.mem, track->usrbuf_allocsize);
 		}
+		TRACET(2, track, "usrbuf_allocsize %d -> %d",
+		    track->usrbuf_allocsize, newvsize);
+		track->usrbuf.mem = kmem_alloc(newvsize, KM_SLEEP);
+		track->usrbuf_allocsize = newvsize;
 	}
+	track->usrbuf.capacity = newbufsize;
 
 	/* Recalc water mark. */
 	if (is_playback) {
