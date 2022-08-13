@@ -1,4 +1,4 @@
-/*	$NetSBD$	*/
+/*	$NetBSD: viocon.c,v 1.3 2022/08/13 17:02:53 riastradh Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.2 2022/08/13 16:52:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.3 2022/08/13 17:02:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
