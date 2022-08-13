@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.1 2022/08/12 11:15:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.2 2022/08/13 16:52:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,8 @@ struct virtio_console_control_resize {
 
 #define	BUFSIZE		128
 
+#define	VIOCONDEV(u,p)	makedev(cdevsw_lookup_major(&viocon_cdevsw),	      \
+			    ((u) << 4) | (p))
 #define VIOCONUNIT(x)	(minor(x) >> 4)
 #define VIOCONPORT(x)	(minor(x) & 0x0f)
 
@@ -307,7 +309,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	tp->t_oproc = vioconstart;
 	tp->t_param = vioconparam;
 	tp->t_hwiflow = vioconhwiflow;
-	tp->t_dev = (device_unit(sc->sc_dev) << 4) | portidx;
+	tp->t_dev = VIOCONDEV(device_unit(sc->sc_dev), portidx);
 	vp->vp_tty = tp;
 	DPRINTF("%s: tty: %p\n", __func__, tp);
 
