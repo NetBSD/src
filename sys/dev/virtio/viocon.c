@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.4 2022/08/13 17:31:21 riastradh Exp $	*/
+/*	$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.4 2022/08/13 17:31:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -129,8 +129,6 @@ struct viocon_softc {
 
 	unsigned int		 sc_max_ports;
 	struct viocon_port	**sc_ports;
-
-	bus_dmamap_t		 sc_dmamap;
 };
 
 int	viocon_match(struct device *, struct cfdata *, void *);
