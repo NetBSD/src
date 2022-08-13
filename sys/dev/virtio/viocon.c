@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.3 2022/08/13 17:02:53 riastradh Exp $	*/
+/*	$NetBSD: viocon.c,v 1.4 2022/08/13 17:31:21 riastradh Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.3 2022/08/13 17:02:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.4 2022/08/13 17:31:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -332,7 +332,7 @@ viocon_tx_drain(struct viocon_port *vp, struct virtqueue *vq)
 	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
 		bus_dmamap_sync(virtio_dmat(vsc), vp->vp_dmamap,
 		    vp->vp_tx_buf - vp->vp_rx_buf + slot * BUFSIZE, BUFSIZE,
-		    BUS_DMASYNC_POSTREAD);
+		    BUS_DMASYNC_POSTWRITE);
 		virtio_dequeue_commit(vsc, vq, slot);
 		ndone++;
 	}
