@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.24 2022/08/07 10:12:19 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.25 2022/08/13 07:14:40 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.24 2022/08/07 10:12:19 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.25 2022/08/13 07:14:40 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1382,6 +1382,7 @@ void test_open_multiuser(bool);
 void test_rdwr_fallback(int, bool, bool);
 void test_rdwr_two(int, int);
 void test_mmap_mode(int, int);
+void test_mmap_len(size_t, off_t, int);
 void test_poll_mode(int, int, int);
 void test_poll_in_open(const char *);
 void test_kqueue_mode(int, int, int);
@@ -2688,20 +2689,25 @@ DEF(mmap_mode_RDWR_READWRITE)	{ test_mmap_mode(O_RDWR, PROT_READWRITE); }
 
 /*
  * Check mmap()'s length and offset.
+ *
+ * Actual len and offset cannot be determined before open.  So that,
+ * pass pre-defined constant as argument, and convert it after open.
  */
-DEF(mmap_len)
+#define LS	(100)	/* lsize     */
+#define LS1	(101)	/* lsize + 1 */
+void
+test_mmap_len(size_t len, off_t offset, int exp)
 {
 	struct audio_info ai;
 	int fd;
 	int r;
-	size_t len;
-	off_t offset;
+	size_t plen;
 	void *ptr;
 	int bufsize;
 	int pagesize;
 	int lsize;
 
-	TEST("mmap_len");
+	TEST("mmap_len(%zd, %jd, %d)", len, offset, exp);
 	if ((props & AUDIO_PROP_MMAP) == 0) {
 		XP_SKIP("This test is only for mmap-able device");
 		return;
@@ -2713,8 +2719,8 @@ DEF(mmap_len)
 	}
 #endif
 
-	len = sizeof(pagesize);
-	r = SYSCTLBYNAME("hw.pagesize", &pagesize, &len, NULL, 0);
+	plen = sizeof(pagesize);
+	r = SYSCTLBYNAME("hw.pagesize", &pagesize, &plen, NULL, 0);
 	REQUIRED_SYS_EQ(0, r);
 
 	fd = OPEN(devaudio, O_WRONLY);
@@ -2730,49 +2736,32 @@ DEF(mmap_len)
 	 * I'm not sure.
 	 */
 	lsize = roundup2(bufsize, pagesize);
-	struct {
-		size_t len;
-		off_t offset;
-		int exp;
-	} table[] = {
-		/* len offset	expected */
 
-		{ 0,	0,	0 },		/* len is 0  */
-		{ 1,	0,	0 },		/* len is smaller than lsize */
-		{ lsize, 0,	0 },		/* len is the same as lsize */
-		{ lsize + 1, 0,	EOVERFLOW },	/* len is larger */
+	/* Here, lsize can be assigned */
+	if (len == LS) {
+		len = lsize;
+	} else if (len == LS1) {
+		len = lsize + 1;
+	}
+	if (offset == LS) {
+		offset = lsize;
+	} else if (offset == LS1) {
+		offset = lsize + 1;
+	}
 
-		{ 0, -1,	EINVAL },	/* offset is negative */
-		{ 0, lsize,	0 },		/* pointless param but ok */
-		{ 0, lsize + 1,	EOVERFLOW },	/* exceed */
-		{ 1, lsize,	EOVERFLOW },	/* exceed */
+	ptr = MMAP(NULL, len, PROT_WRITE, MAP_FILE, fd, offset);
+	if (exp == 0) {
+		XP_SYS_PTR(0, ptr);
+	} else {
+		/* NetBSD8 introduces EOVERFLOW */
+		if (netbsd < 8 && exp == EOVERFLOW)
+			exp = EINVAL;
+		XP_SYS_PTR(exp, ptr);
+	}
 
-		/*
-		 * When you treat offset as 32bit, offset will be 0
-		 * and thus it incorrectly succeeds.
-		 */
-		{ lsize,	1ULL<<32,	EOVERFLOW },
-	};
-
-	for (int i = 0; i < (int)__arraycount(table); i++) {
-		len = table[i].len;
-		offset = table[i].offset;
-		int exp = table[i].exp;
-
-		ptr = MMAP(NULL, len, PROT_WRITE, MAP_FILE, fd, offset);
-		if (exp == 0) {
-			XP_SYS_PTR(0, ptr);
-		} else {
-			/* NetBSD8 introduces EOVERFLOW */
-			if (netbsd < 8 && exp == EOVERFLOW)
-				exp = EINVAL;
-			XP_SYS_PTR(exp, ptr);
-		}
-
-		if (ptr != MAP_FAILED) {
-			r = MUNMAP(ptr, len);
-			XP_SYS_EQ(0, r);
-		}
+	if (ptr != MAP_FAILED) {
+		r = MUNMAP(ptr, len);
+		XP_SYS_EQ(0, r);
 	}
 
 	r = CLOSE(fd);
@@ -2780,6 +2769,21 @@ DEF(mmap_len)
 
 	reset_after_mmap();
 }
+#define f(l, o, e)	test_mmap_len(l, o, e)
+DEF(mmap_len_0)	{ f(0,   0,   0); }		/* len is 0 */
+DEF(mmap_len_1)	{ f(1,   0,   0); }		/* len is smaller than lsize */
+DEF(mmap_len_2)	{ f(LS,  0,   0); }		/* len is the same as lsize */
+DEF(mmap_len_3)	{ f(LS1, 0,   EOVERFLOW); }	/* len is larger */
+DEF(mmap_len_4)	{ f(0,   -1,  EINVAL); }	/* offset is negative */
+DEF(mmap_len_5)	{ f(0,   LS,  0); }		/* pointless param but ok */
+DEF(mmap_len_6)	{ f(0,   LS1, EOVERFLOW); }	/* exceed */
+DEF(mmap_len_7)	{ f(1,   LS,  EOVERFLOW); }	/* exceed */
+/*
+ * When you treat the offset as 32bit, offset will be 0 and thus it
+ * incorrectly succeeds.
+ */
+DEF(mmap_len_8)	{ f(LS, 1ULL << 32, EOVERFLOW); }
+#undef f
 
 /*
  * mmap() the same descriptor twice.
@@ -7114,7 +7118,15 @@ struct testentry testtable[] = {
 /**/	ENT(mmap_mode_RDWR_READ),	// XXX rump doesn't supprot mmap
 /**/	ENT(mmap_mode_RDWR_WRITE),	// XXX rump doesn't supprot mmap
 /**/	ENT(mmap_mode_RDWR_READWRITE),	// XXX rump doesn't supprot mmap
-/**/	ENT(mmap_len),			// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_0),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_1),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_2),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_3),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_4),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_5),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_6),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_7),		// XXX rump doesn't supprot mmap
+/**/	ENT(mmap_len_8),		// XXX rump doesn't supprot mmap
 /**/	ENT(mmap_twice),		// XXX rump doesn't supprot mmap
 /**/	ENT(mmap_multi),		// XXX rump doesn't supprot mmap
 	ENT(poll_mode_RDONLY_IN),
