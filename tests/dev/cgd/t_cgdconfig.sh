@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgdconfig.sh,v 1.3 2022/08/12 10:49:17 riastradh Exp $
+#	$NetBSD: t_cgdconfig.sh,v 1.4 2022/08/13 17:46:26 hannken Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,7 +53,7 @@ storedkeys_head()
 }
 storedkeys_body()
 {
-	cat <<EOF >wd0e
+	cat <<EOF >dska
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -61,7 +61,7 @@ verify_method none;
 keygen storedkey key AAABAJtnmp3XZspMBAFpCYnB8Hekn0 \
                      gj5cDVngslfGLSqwcy;
 EOF
-	cat <<EOF >ld1e
+	cat <<EOF >dskb
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -70,12 +70,12 @@ keygen storedkey key AAABAK1pbgIayXftX0RQ3AaMK4YEd/ \
                      fowKwQbENxpu3o1k9m;
 EOF
 	cat <<EOF >cgd.conf
-cgd0	/dev/wd0e	wd0e
-cgd1	/dev/ld1e	ld1e
+cgd0	/dev/dska	dska
+cgd1	/dev/dskb	dskb
 EOF
 	cat <<EOF >expected
-/dev/wd0e: m2eanddmykwEAWkJicHwd6SfSCPlwNWeCyV8YtKrBzI=
-/dev/ld1e: rWluAhrJd+1fRFDcBowrhgR39+jArBBsQ3Gm7ejWT2Y=
+/dev/dska: m2eanddmykwEAWkJicHwd6SfSCPlwNWeCyV8YtKrBzI=
+/dev/dskb: rWluAhrJd+1fRFDcBowrhgR39+jArBBsQ3Gm7ejWT2Y=
 EOF
 	atf_check -o file:expected cgdconfig -T -f cgd.conf
 }
@@ -175,7 +175,7 @@ sharedstoredkeys_head()
 }
 sharedstoredkeys_body()
 {
-	cat <<EOF >wd0e
+	cat <<EOF >dska
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -186,7 +186,7 @@ keygen storedkey {
             subkey AAAAUPDx8vP09fb3+Pk=;
 };
 EOF
-	cat <<EOF >ld1e
+	cat <<EOF >dskb
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -198,20 +198,20 @@ keygen storedkey {
 };
 EOF
 	cat <<EOF >cgd.conf0
-cgd0	/dev/wd0e	wd0e
-cgd1	/dev/ld1e	ld1e
+cgd0	/dev/dska	dska
+cgd1	/dev/dskb	dskb
 EOF
 	cat <<EOF >expected0
-/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
-/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/dska: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/dskb: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
 EOF
 	cat <<EOF >cgd.conf1
-cgd0	/dev/ld1e	ld1e
-cgd1	/dev/wd0e	wd0e
+cgd0	/dev/dskb	dskb
+cgd1	/dev/dska	dska
 EOF
 	cat <<EOF >expected1
-/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
-/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/dskb: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/dska: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
 EOF
 	atf_check -o file:expected0 cgdconfig -T -f cgd.conf0
 	atf_check -o file:expected1 cgdconfig -T -f cgd.conf1
@@ -224,7 +224,7 @@ sharedshellkeys_head()
 }
 sharedshellkeys_body()
 {
-	cat <<EOF >wd0e
+	cat <<EOF >dska
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -235,7 +235,7 @@ keygen shell_cmd {
             subkey AAAAUPDx8vP09fb3+Pk=;
 };
 EOF
-	cat <<EOF >ld1e
+	cat <<EOF >dskb
 algorithm adiantum;
 iv-method encblkno1;
 keylength 256;
@@ -247,20 +247,20 @@ keygen shell_cmd {
 };
 EOF
 	cat <<EOF >cgd.conf0
-cgd0	/dev/wd0e	wd0e
-cgd1	/dev/ld1e	ld1e
+cgd0	/dev/dska	dska
+cgd1	/dev/dskb	dskb
 EOF
 	cat <<EOF >expected0
-/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
-/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/dska: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/dskb: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
 EOF
 	cat <<EOF >cgd.conf1
-cgd0	/dev/ld1e	ld1e
-cgd1	/dev/wd0e	wd0e
+cgd0	/dev/dskb	dskb
+cgd1	/dev/dska	dska
 EOF
 	cat <<EOF >expected1
-/dev/ld1e: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
-/dev/wd0e: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
+/dev/dskb: ADxn574yb7sVdxHphNRRdObZxntMJA/ssMuUX6SXgEY=
+/dev/dska: PLJfJfqs1XqQQ09k0DYvKi0tCpDPGlpMXbAtVuzExb8=
 EOF
 	atf_check -o file:expected0 cgdconfig -T -f cgd.conf0
 	atf_check -o inline:'1\n' cat n
