@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.27 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.28 2022/08/13 16:01:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.27 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.28 2022/08/13 16:01:34 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -250,8 +250,6 @@ pcihost_config(struct pcihost_softc *sc)
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen <= 0 || of_getprop_uint32(chosen, "linux,pci-probe-only", &probe_only))
 		probe_only = 0;
-	if (probe_only)
-		return 0;
 
 	if (sc->sc_pci_ranges != NULL) {
 		ranges = sc->sc_pci_ranges;
@@ -350,8 +348,12 @@ pcihost_config(struct pcihost_softc *sc)
 		}
 	}
 
-	error = pci_configure_bus(&sc->sc_pc, pcires, sc->sc_bus_min,
-	    PCIHOST_CACHELINE_SIZE);
+	if (probe_only) {
+		error = 0;
+	} else {
+		error = pci_configure_bus(&sc->sc_pc, pcires, sc->sc_bus_min,
+		    PCIHOST_CACHELINE_SIZE);
+	}
 
 	pciconf_resource_fini(pcires);
 
