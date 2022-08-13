@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.29 2022/08/13 16:44:11 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.30 2022/08/13 20:08:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.29 2022/08/13 16:44:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.30 2022/08/13 20:08:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,6 +127,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	ACPI_INTEGER seg, nomsi;
 	ACPI_STATUS rv;
 	uint16_t bus_start;
+	int val;
 
 	sc->sc_dev = self;
 	sc->sc_memt = aa->aa_memt;
@@ -152,6 +153,10 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_FAILURE(acpi_dsd_integer(sc->sc_handle, "linux,pcie-nomsi",
 	    &nomsi))) {
 		nomsi = 0;
+	}
+	if (get_bootconf_option(boot_args, "nopcimsi",
+				BOOTOPT_TYPE_BOOLEAN, &val) && val) {
+		nomsi = 1;
 	}
 
 	aprint_naive("\n");
