@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.19 2022/04/23 07:55:07 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.20 2022/08/13 06:47:41 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -119,7 +119,7 @@ struct audio_track {
 
 	audio_ring_t	usrbuf;		/* user i/o buffer */
 	u_int		usrbuf_blksize;	/* usrbuf block size in bytes */
-	struct uvm_object *uobj;
+	u_int		usrbuf_allocsize; /* allocation size in bytes */
 	bool		mmapped;	/* device is mmap()-ed */
 	u_int		usrbuf_usedhigh;/* high water mark in bytes */
 	u_int		usrbuf_usedlow;	/* low water mark in bytes */
