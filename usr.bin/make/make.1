@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.320 2022/08/14 09:11:33 uwe Exp $
+.\"	$NetBSD: make.1,v 1.321 2022/08/14 09:47:29 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -307,7 +307,7 @@ If a file or directory name in the
 argument (or the
 .Ev MAKESYSPATH
 environment variable) starts with the string
-.Qq \&.../
+.Ql \&.../
 then
 .Nm
 will search for the specified file or directory named in the remaining part
@@ -315,7 +315,7 @@ of the argument string.
 The search starts with the current directory of
 the Makefile and then works upward towards the root of the file system.
 If the search is successful, then the resulting directory replaces the
-.Qq \&.../
+.Ql \&.../
 specification in the
 .Fl m
 argument.
@@ -324,7 +324,7 @@ If used, this feature allows
 to easily search in the current source tree for customized
 .Pa sys.mk
 files (e.g., by using
-.Qq \&.../mk/sys.mk
+.Ql \&.../mk/sys.mk
 as an argument).
 .It Fl n
 Display the commands that would have been executed, but do not
