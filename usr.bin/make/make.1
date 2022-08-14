@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.324 2022/08/14 20:04:07 uwe Exp $
+.\"	$NetBSD: make.1,v 1.325 2022/08/14 20:07:18 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -739,7 +739,9 @@ ${OBJS}: .MAKE.META.CMP_FILTER=${COMPILER_WRAPPERS:S,^,N,}
 .Pp
 Only the targets
 .Ql ${OBJS}
-will be impacted by that filter (in "meta" mode) and
+will be impacted by that filter (in
+.Dq meta
+mode) and
 simply enabling/disabling any of the compiler wrappers will not render all
 of those targets out-of-date.
 .Pp
@@ -956,11 +958,15 @@ Like
 .Fl B ,
 puts
 .Nm
-into "compat" mode.
+into
+.Dq compat
+mode.
 .It Pa meta
 Puts
 .Nm
-into "meta" mode, where meta files are created for each target
+into
+.Dq meta
+mode, where meta files are created for each target
 to capture the command run, the output generated and if
 .Xr filemon 4
 is available, the system calls which are of interest to
@@ -989,14 +995,18 @@ Do not use
 For debugging, it can be useful to include the environment
 in the .meta file.
 .It Pa verbose
-If in "meta" mode, print a clue about the target being built.
+If in
+.Dq meta
+mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
 The message printed the value of:
 .Va .MAKE.META.PREFIX .
 .It Pa ignore-cmd
 Some makefiles have commands which are simply not stable.
 This keyword causes them to be ignored for
-determining whether a target is out of date in "meta" mode.
+determining whether a target is out of date in
+.Dq meta
+mode.
 See also
 .Ic .NOMETA_CMP .
 .It Pa silent= Ar bf
@@ -1010,7 +1020,9 @@ but instead randomize their order.
 This mode can be used to detect undeclared dependencies between files.
 .El
 .It Va .MAKE.META.BAILIWICK
-In "meta" mode, provides a list of prefixes which
+In
+.Dq meta
+mode, provides a list of prefixes which
 match the directories controlled by
 .Nm .
 If a file that was generated outside of
@@ -1018,18 +1030,24 @@ If a file that was generated outside of
 but within said bailiwick is missing,
 the current target is considered out-of-date.
 .It Va .MAKE.META.CMP_FILTER
-In "meta" mode, it can (very rarely!) be useful to filter command
+In
+.Dq meta
+mode, it can (very rarely!) be useful to filter command
 lines before comparison.
 This variable can be set to a set of modifiers that will be applied to
 each line of the old and new command that differ, if the filtered
 commands still differ, the target is considered out-of-date.
 .It Va .MAKE.META.CREATED
-In "meta" mode, this variable contains a list of all the meta files
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
 updated.
 If not empty, it can be used to trigger processing of
 .Va .MAKE.META.FILES .
 .It Va .MAKE.META.FILES
-In "meta" mode, this variable contains a list of all the meta files
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
 used (updated or not).
 This list can be used to process the meta files to extract dependency
 information.
@@ -1045,7 +1063,9 @@ Ignore any that match.
 Provides a list of variable modifiers to apply to each pathname.
 Ignore if the expansion is an empty string.
 .It Va .MAKE.META.PREFIX
-Defines the message printed for each meta file updated in "meta verbose" mode.
+Defines the message printed for each meta file updated in
+.Dq meta verbose
+mode.
 The default value is:
 .Dl Building ${.TARGET:H:tA}/${.TARGET:T}
 .It Va .MAKEOVERRIDES
@@ -1101,7 +1121,9 @@ stops due to an error, it sets
 to the name of the target that failed,
 .Sq Va .ERROR_CMD
 to the commands of the failed target,
-and in "meta" mode, it also sets
+and in
+.Dq meta
+mode, it also sets
 .Sq Va .ERROR_CWD
 to the
 .Xr getcwd 3 ,
@@ -2082,7 +2104,9 @@ or
 Usage in conjunction with
 .Ic .MAKE
 is the most likely case.
-In "meta" mode, the target is out-of-date if the meta file is missing.
+In
+.Dq meta
+mode, the target is out-of-date if the meta file is missing.
 .It Ic .NOMETA
 Do not create a meta file for the target.
 Meta files are also not created for
