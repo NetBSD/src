@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.74 2021/06/29 21:03:36 pgoyette Exp $	*/
+/*	$NetBSD: miivar.h,v 1.75 2022/08/14 20:34:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -150,7 +150,10 @@ struct mii_softc {
 	int mii_ticks;			/* m: MII_TICK counter */
 	int mii_anegticks;		/* m: ticks before retrying aneg */
 
-	struct callout mii_nway_ch;	/* m: NWAY callout */
+	union {
+		struct callout mii_nway_ch;	/* m: NWAY callout */
+		kcondvar_t mii_nway_cv;
+	};
 
 	u_int mii_media_active;		/* m: last active media */
 	int mii_media_status;		/* m: last active status */
