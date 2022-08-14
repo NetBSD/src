@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.98 2022/08/14 20:33:57 riastradh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.99 2022/08/14 20:34:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.98 2022/08/14 20:33:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.99 2022/08/14 20:34:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -282,6 +282,8 @@ mii_phy_auto(struct mii_softc *sc)
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		kpause("miiaut", false, hz >> 1, mii->mii_media.ifm_lock);
 		mii_phy_auto_timeout_locked(sc);
+		KASSERT((sc->mii_flags & MIIF_DOINGAUTO) == 0);
+		cv_broadcast(&sc->mii_nway_cv);
 	} else if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		callout_reset(&sc->mii_nway_ch, hz >> 1,
@@ -309,6 +311,7 @@ mii_phy_auto_timeout_locked(struct mii_softc *sc)
 {
 
 	KASSERT(mii_locked(sc->mii_pdata));
+	KASSERT(sc->mii_flags & MIIF_DOINGAUTO);
 
 	if (!device_is_active(sc->mii_dev))
 		return;
@@ -432,7 +435,8 @@ mii_phy_down(struct mii_softc *sc)
 
 	KASSERT(mii_locked(sc->mii_pdata));
 
-	if (sc->mii_flags & MIIF_DOINGAUTO) {
+	if ((sc->mii_flags & (MIIF_DOINGAUTO|MIIF_AUTOTSLEEP)) ==
+	    (MIIF_DOINGAUTO|MIIF_AUTOTSLEEP)) {
 		/*
 		 * Try to stop it.
 		 *
@@ -688,13 +692,23 @@ mii_phy_detach(device_t self, int flags)
 	struct mii_softc *sc = device_private(self);
 
 	mii_lock(sc->mii_pdata);
-	if (sc->mii_flags & MIIF_DOINGAUTO) {
-		callout_halt(&sc->mii_nway_ch,
-		    sc->mii_pdata->mii_media.ifm_lock);
+	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
+		while (sc->mii_flags & MIIF_DOINGAUTO) {
+			cv_wait(&sc->mii_nway_cv,
+			    sc->mii_pdata->mii_media.ifm_lock);
+		}
+	} else {
+		if (sc->mii_flags & MIIF_DOINGAUTO) {
+			callout_halt(&sc->mii_nway_ch,
+			    sc->mii_pdata->mii_media.ifm_lock);
+		}
 	}
 	mii_unlock(sc->mii_pdata);
 
-	callout_destroy(&sc->mii_nway_ch);
+	if (sc->mii_flags & MIIF_AUTOTSLEEP)
+		cv_destroy(&sc->mii_nway_cv);
+	else
+		callout_destroy(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
 
