@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.34 2022/03/25 21:23:00 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.35 2022/08/14 11:26:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -205,12 +205,14 @@ efi_fdt_show(void)
 	const char *model, *compat;
 	int n, ncompat;
 
-	if (fdt_data == NULL)
+	if (fdt_data == NULL) {
 		return;
+	}
 
 	model = fdt_getprop(fdt_data, fdt_path_offset(fdt_data, "/"), "model", NULL);
-	if (model)
-		printf("FDT: %s [", model);
+	if (model) {
+		command_printtab("FDT", "%s [", model);
+	}
 	ncompat = fdt_stringlist_count(fdt_data, fdt_path_offset(fdt_data, "/"), "compatible");
 	for (n = 0; n < ncompat; n++) {
 		compat = fdt_stringlist_get(fdt_data, fdt_path_offset(fdt_data, "/"),

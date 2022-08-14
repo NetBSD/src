@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.43 2022/03/25 21:23:00 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.44 2022/08/14 11:26:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -380,6 +380,18 @@ command_menu(char *arg)
 }
 
 void
+command_printtab(const char *key, const char *fmt, ...)
+{
+	va_list ap;
+
+	printf("%-16s: ", key);
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
 command_version(char *arg)
 {
 	char pathbuf[80];
@@ -387,23 +399,26 @@ command_version(char *arg)
 	const UINT64 *osindsup;
 	int rv;
 
-	printf("Version: %s (%s)\n", bootprog_rev, bootprog_kernrev);
-	printf("EFI: %d.%02d\n",
+	command_printtab("Version", "%s (%s)\n",
+	    bootprog_rev, bootprog_kernrev);
+	command_printtab("EFI", "%d.%02d\n",
 	    ST->Hdr.Revision >> 16, ST->Hdr.Revision & 0xffff);
+
 	ufirmware = NULL;
 	rv = ucs2_to_utf8(ST->FirmwareVendor, &ufirmware);
 	if (rv == 0) {
-		printf("Firmware: %s (rev 0x%x)\n", ufirmware,
+		command_printtab("Firmware", "%s (rev 0x%x)\n", ufirmware,
 		    ST->FirmwareRevision);
 		FreePool(ufirmware);
 	}
 	if (bootcfg_path(pathbuf, sizeof(pathbuf)) == 0) {
-		printf("Config path: %s\n", pathbuf);
+		command_printtab("Config path", "%s\n", pathbuf);
 	}
 
 	osindsup = LibGetVariable(L"OsIndicationsSupported", &EfiGlobalVariable);
 	if (osindsup != NULL) {
-		printf("UEFI OS indications supported: 0x%" PRIx64 "\n", *osindsup);
+		command_printtab("OS Indications", "0x%" PRIx64 "\n",
+		    *osindsup);
 	}
 
 #ifdef EFIBOOT_FDT

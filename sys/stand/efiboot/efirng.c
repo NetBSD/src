@@ -1,4 +1,4 @@
-/*	$NetBSD: efirng.c,v 1.3 2021/06/22 10:19:35 jmcneill Exp $	*/
+/*	$NetBSD: efirng.c,v 1.4 2022/08/14 11:26:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -85,10 +85,12 @@ efi_rng_show(void)
 	if (!efi_rng_available())
 		return;
 
+	command_printtab("RNG", "");
+
 	/* Query the list of supported algorithms.  */
 	status = uefi_call_wrapper(rng->GetInfo, 3, rng, &alglistsz, alglist);
 	if (EFI_ERROR(status)) {
-		Print(L"RNG: GetInfo: %r\n", status);
+		Print(L"GetInfo: %r\n", status);
 		return;
 	}
 
@@ -102,7 +104,7 @@ efi_rng_show(void)
 				break;
 			}
 		}
-		Print(L"RNG: %s (%g)\n", name, &alglist[i]);
+		Print(L"%s (%g)\n", name, &alglist[i]);
 	}
 }
 

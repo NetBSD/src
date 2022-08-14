@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.12 2021/11/03 22:02:36 skrll Exp $ */
+/* $NetBSD: efiacpi.c,v 1.13 2022/08/14 11:26:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -145,13 +145,15 @@ efi_acpi_show(void)
 {
 	struct acpi_rdsp *rsdp = acpi_root;
 
-	if (!efi_acpi_available())
+	if (!efi_acpi_available()) {
 		return;
+	}
 
-	printf("ACPI: v%02d %c%c%c%c%c%c\n", rsdp->revision,
+	command_printtab("ACPI", "v%02d %c%c%c%c%c%c\n", rsdp->revision,
 	    rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2],
 	    rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
 
-	if (smbios_table)
-		printf("SMBIOS: %s\n", efi_acpi_get_model());
+	if (smbios_table) {
+		command_printtab("SMBIOS", "%s\n", efi_acpi_get_model());
+	}
 }
