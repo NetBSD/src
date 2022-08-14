@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.97 2021/12/28 12:00:48 riastradh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.98 2022/08/14 20:33:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.97 2021/12/28 12:00:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.98 2022/08/14 20:33:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -308,6 +308,8 @@ static void
 mii_phy_auto_timeout_locked(struct mii_softc *sc)
 {
 
+	KASSERT(mii_locked(sc->mii_pdata));
+
 	if (!device_is_active(sc->mii_dev))
 		return;
 
@@ -321,6 +323,8 @@ static void
 mii_phy_auto_timeout(void *arg)
 {
 	struct mii_softc *sc = arg;
+
+	KASSERT((sc->mii_flags & MIIF_AUTOTSLEEP) == 0);
 
 	if (!device_is_active(sc->mii_dev))
 		return;
