@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.326 2022/08/14 20:19:27 uwe Exp $
+.\"	$NetBSD: make.1,v 1.327 2022/08/14 21:48:05 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -757,7 +757,7 @@ which have already been expanded.
 .El
 .Pp
 The seven built-in local variables are as follows:
-.Bl -tag -width ".ARCHIVE" -offset indent
+.Bl -tag -width ".Va .ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
 .Sq Va \&> .
@@ -789,19 +789,21 @@ or it will not be recognized.
 The name of the target; also known as
 .Sq Va @ .
 For compatibility with other makes this is an alias for
-.Ic .ARCHIVE
+.Va .ARCHIVE
 in archive member rules.
 .El
 .Pp
 The shorter forms
-.Ql ( Va > ,
+.Po
+.Sq Va \&> ,
 .Sq Va \&! ,
-.Sq Va < ,
-.Sq Va % ,
+.Sq Va \&< ,
+.Sq Va \&% ,
 .Sq Va \&? ,
-.Sq Va * ,
+.Sq Va \&* ,
 and
-.Sq Va @ )
+.Sq Va \&@
+.Pc
 are permitted for backward
 compatibility with historical makefiles and legacy POSIX make and are
 not recommended.
@@ -811,7 +813,7 @@ Variants of these variables with the punctuation followed immediately by
 or
 .Ql F ,
 e.g.\&
-.Sq Va $(@D) ,
+.Ql $(@D) ,
 are legacy forms equivalent to using the
 .Ql :H
 and
@@ -1096,7 +1098,7 @@ The process-id of
 The parent process-id of
 .Nm .
 .It Va .MAKE.SAVE_DOLLARS
-value should be a boolean that controls whether
+Value should be a boolean that controls whether
 .Ql $$
 are preserved when doing
 .Ql :=
