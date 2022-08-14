@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.321 2022/08/14 09:47:29 uwe Exp $
+.\"	$NetBSD: make.1,v 1.322 2022/08/14 10:14:58 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Op Fl T Ar file
 .Op Fl V Ar variable
 .Op Fl v Ar variable
-.Op Ar variable=value
+.Op Ar variable\| Ns Cm \&= Ns Ar value
 .Op Ar target ...
 .Sh DESCRIPTION
 .Nm
@@ -410,7 +410,7 @@ Variables passed on the command line are still exported via the
 environment variable.
 This option may be useful on systems which have a small limit on the
 size of command arguments.
-.It Ar variable=value
+.It Ar variable\| Ns Cm \&= Ns Ar value
 Set the value of the variable
 .Ar variable
 to
@@ -1356,11 +1356,11 @@ This is equivalent to:
 .Sq \&:S/\e\&$/&&/g:Q .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
-.It Cm \&:range Ns Oo = Ns Ar count Oc
+.It Cm \&:range Ns Oo Cm = Ns Ar count Oc
 The value is an integer sequence representing the words of the original
 value, or the supplied
-.Va count .
-.It Cm \&:gmtime Ns Oo = Ns Ar utc Oc
+.Ar count .
+.It Cm \&:gmtime Ns Oo Cm = Ns Ar utc Oc
 The value is a format string for
 .Xr strftime 3 ,
 using
@@ -1370,7 +1370,7 @@ If a
 value is not provided or is 0, the current time is used.
 .It Cm \&:hash
 Computes a 32-bit hash of the value and encode it as hex digits.
-.It Cm \&:localtime Ns Oo = Ns Ar utc Oc
+.It Cm \&:localtime Ns Oo Cm = Ns Ar utc Oc
 The value is a format string for
 .Xr strftime 3 ,
 using
@@ -1530,12 +1530,12 @@ If
 or
 .Ar new_string
 do not contain the pattern matching character
-.Ar %
+.Ql %
 then it is assumed that they are
 anchored at the end of each word, so only suffixes or entire
 words may be replaced.
 Otherwise
-.Ar %
+.Ql %
 is the substring of
 .Ar old_string
 to be replaced in
@@ -1543,7 +1543,7 @@ to be replaced in
 If only
 .Ar old_string
 contains the pattern matching character
-.Ar % ,
+.Ql % ,
 and
 .Ar old_string
 matches, then the result is the
@@ -1551,12 +1551,12 @@ matches, then the result is the
 If only the
 .Ar new_string
 contains the pattern matching character
-.Ar % ,
+.Ql % ,
 then it is not treated specially and it is printed as a literal
-.Ar %
+.Ql %
 on match.
 If there is more than one pattern matching character
-.Ar ( % )
+.Ql %
 in either the
 .Ar new_string
 or
@@ -1811,7 +1811,7 @@ flag, so should be used with caution.
 For compatibility with other
 .Nm
 programs
-.Ql export variable=value
+.Ar variable\| Ns Cm \&= Ns Ar value
 is also accepted.
 .Pp
 Appending a variable name to
@@ -2307,7 +2307,7 @@ If the source is the special
 .Ic .DOTLAST
 target, then the current working
 directory is searched last.
-.It Ic .PATH. Ns Va suffix
+.It Ic .PATH. Ns Ar suffix
 Like
 .Ic .PATH
 but applies only to files with a particular suffix.
@@ -2347,39 +2347,39 @@ Sets the shell that
 .Nm
 will use to execute commands.
 The sources are a set of
-.Ar field=value
+.Ar field\| Ns Cm \&= Ns Ar value
 pairs.
-.Bl -tag -width hasErrCtls
-.It Ar name
+.Bl -tag -width ".Li hasErrCtls"
+.It Li name
 This is the minimal specification, used to select one of the built-in
 shell specs;
-.Ar sh ,
-.Ar ksh ,
+.Li sh ,
+.Li ksh ,
 and
-.Ar csh .
-.It Ar path
+.Li csh .
+.It Li path
 Specifies the path to the shell.
-.It Ar hasErrCtl
+.It Li hasErrCtl
 Indicates whether the shell supports exit on error.
-.It Ar check
+.It Li check
 The command to turn on error checking.
-.It Ar ignore
+.It Li ignore
 The command to disable error checking.
-.It Ar echo
+.It Li echo
 The command to turn on echoing of commands executed.
-.It Ar quiet
+.It Li quiet
 The command to turn off echoing of commands executed.
-.It Ar filter
+.It Li filter
 The output to filter after issuing the
-.Ar quiet
+.Li quiet
 command.
 It is typically identical to
-.Ar quiet .
-.It Ar errFlag
+.Li quiet .
+.It Li errFlag
 The flag to pass the shell to enable error checking.
-.It Ar echoFlag
+.It Li echoFlag
 The flag to pass the shell to enable command echoing.
-.It Ar newline
+.It Li newline
 The string literal to pass the shell that results in a single newline
 character when used outside of any quoting characters.
 .El
