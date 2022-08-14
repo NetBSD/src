@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.361 2021/12/31 15:43:35 christos Exp $
+#	$NetBSD: build.sh,v 1.362 2022/08/14 08:51:41 lukem Exp $
 #
-# Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -360,6 +360,7 @@ warning()
 # Find a program in the PATH, and print the result.  If not found,
 # print a default.  If $2 is defined (even if it is an empty string),
 # then that is the default; otherwise, $1 is used as the default.
+#
 find_in_PATH()
 {
 	local prog="$1"
@@ -379,6 +380,7 @@ find_in_PATH()
 
 # Try to find a working POSIX shell, and set HOST_SH to refer to it.
 # Assumes that uname_s, uname_m, and PWD have been set.
+#
 set_HOST_SH()
 {
 	# Even if ${HOST_SH} is already defined, we still do the
@@ -948,6 +950,7 @@ setmakeenv()
 	eval "$1='$2'; export $1"
 	makeenv="${makeenv} $1"
 }
+
 safe_setmakeenv()
 {
 	case "$1" in
@@ -966,6 +969,7 @@ unsetmakeenv()
 	eval "unset $1"
 	makeenv="${makeenv} $1"
 }
+
 safe_unsetmakeenv()
 {
 	case "$1" in
@@ -980,6 +984,7 @@ safe_unsetmakeenv()
 
 # Given a variable name in $1, modify the variable in place as follows:
 # For each space-separated word in the variable, call resolvepath.
+#
 resolvepaths()
 {
 	local var="$1"
@@ -997,6 +1002,7 @@ resolvepaths()
 # Given a variable name in $1, modify the variable in place as follows:
 # Convert possibly-relative path to absolute path by prepending
 # ${TOP} if necessary.  Also delete trailing "/", if any.
+#
 resolvepath()
 {
 	local var="$1"
@@ -1015,12 +1021,10 @@ resolvepath()
 	eval ${var}=\"\${val}\"
 }
 
-usage()
+# Display help to stdout.
+#
+help()
 {
-	if [ -n "$*" ]; then
-		echo ""
-		echo "${progname}: $*"
-	fi
 	cat <<_usage_
 
 Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
@@ -1130,6 +1134,17 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     -Z var         Unset ("zap") variable \`var'.
 
 _usage_
+}
+
+# Display optional error message, help to stderr, and exit 1.
+#
+usage()
+{
+	if [ -n "$*" ]; then
+		echo ""
+		echo "${progname}: $*"
+	fi
+	help 1>&2
 	exit 1
 }
 
@@ -1349,7 +1364,8 @@ parseoptions()
 			;;
 
 		-'?'|-h)
-			usage
+			help
+			exit 0
 			;;
 
 		esac
@@ -1365,7 +1381,8 @@ parseoptions()
 		case "${op}" in
 
 		help)
-			usage
+			help
+			exit 0
 			;;
 
 		list-arch)
@@ -1974,7 +1991,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.361 2021/12/31 15:43:35 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.362 2022/08/14 08:51:41 lukem Exp $
 # with these arguments: ${_args}
 #
 
