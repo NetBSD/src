@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.61 2022/07/31 12:02:28 mlelstv Exp $	*/
+/*	$NetBSD: nvme.c,v 1.62 2022/08/14 12:08:57 jmcneill Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.61 2022/07/31 12:02:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.62 2022/08/14 12:08:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ static void	nvme_ccbs_free(struct nvme_queue *);
 
 static struct nvme_ccb *
 		nvme_ccb_get(struct nvme_queue *, bool);
+static struct nvme_ccb *
+		nvme_ccb_get_bio(struct nvme_softc *, struct buf *,
+		    struct nvme_queue **);
 static void	nvme_ccb_put(struct nvme_queue *, struct nvme_ccb *);
 
 static int	nvme_poll(struct nvme_softc *, struct nvme_queue *,
@@ -768,12 +771,12 @@ nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
     struct buf *bp, void *data, size_t datasize,
     int secsize, daddr_t blkno, int flags, nvme_nnc_done nnc_done)
 {
-	struct nvme_queue *q = nvme_get_q(sc, bp, false);
+	struct nvme_queue *q;
 	struct nvme_ccb *ccb;
 	bus_dmamap_t dmap;
 	int i, error;
 
-	ccb = nvme_ccb_get(q, false);
+	ccb = nvme_ccb_get_bio(sc, bp, &q);
 	if (ccb == NULL)
 		return EAGAIN;
 
@@ -910,7 +913,7 @@ nvme_ns_sync_finished(void *cookie)
 int
 nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, int flags)
 {
-	struct nvme_queue *q = nvme_get_q(sc, NULL, true);
+	struct nvme_queue *q = nvme_get_q(sc);
 	struct nvme_ccb *ccb;
 	int result = 0;
 
@@ -1277,7 +1280,7 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	    (pt->buf != NULL && (pt->len == 0 || pt->len > sc->sc_mdts)))
 		return EINVAL;
 
-	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc, NULL, true);
+	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc);
 	ccb = nvme_ccb_get(q, true);
 	KASSERT(ccb != NULL);
 
@@ -1850,6 +1853,40 @@ again:
 	mutex_exit(&q->q_ccb_mtx);
 
 	return ccb;
+}
+
+static struct nvme_ccb *
+nvme_ccb_get_bio(struct nvme_softc *sc, struct buf *bp,
+    struct nvme_queue **selq)
+{
+	u_int cpuindex = cpu_index(bp->b_ci);
+
+	/*
+	 * Find a queue with available ccbs, preferring the originating
+	 * CPU's queue.
+	 */
+
+	for (u_int qoff = 0; qoff < sc->sc_nq; qoff++) {
+		struct nvme_queue *q = sc->sc_q[(cpuindex + qoff) % sc->sc_nq];
+		struct nvme_ccb *ccb;
+
+		mutex_enter(&q->q_ccb_mtx);
+		ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
+		if (ccb != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
+#ifdef DEBUG
+			ccb->ccb_cookie = NULL;
+#endif
+		}
+		mutex_exit(&q->q_ccb_mtx);
+
+		if (ccb != NULL) {
+			*selq = q;
+			return ccb;
+		}
+	}
+
+	return NULL;
 }
 
 static void
