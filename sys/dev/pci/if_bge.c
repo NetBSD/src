@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.375 2022/08/14 09:01:25 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.376 2022/08/14 09:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.375 2022/08/14 09:01:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.376 2022/08/14 09:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,13 +230,15 @@ static int bge_alloc_jumbo_mem(struct bge_softc *);
 static void bge_free_jumbo_mem(struct bge_softc *);
 static void *bge_jalloc(struct bge_softc *);
 static void bge_jfree(struct mbuf *, void *, size_t, void *);
-static int bge_newbuf_std(struct bge_softc *, int, struct mbuf *,
-			       bus_dmamap_t);
 static int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
-static int bge_init_rx_ring_std(struct bge_softc *);
-static void bge_free_rx_ring_std(struct bge_softc *m, bool);
 static int bge_init_rx_ring_jumbo(struct bge_softc *);
 static void bge_free_rx_ring_jumbo(struct bge_softc *);
+
+static int bge_newbuf_std(struct bge_softc *, int);
+static int bge_init_rx_ring_std(struct bge_softc *);
+static void bge_fill_rx_ring_std(struct bge_softc *);
+static void bge_free_rx_ring_std(struct bge_softc *m);
+
 static void bge_free_tx_ring(struct bge_softc *m, bool);
 static int bge_init_tx_ring(struct bge_softc *);
 
@@ -1479,64 +1481,52 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
  * Initialize a standard receive ring descriptor.
  */
 static int
-bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
-    bus_dmamap_t dmamap)
+bge_newbuf_std(struct bge_softc *sc, int i)
 {
-	struct mbuf		*m_new = NULL;
-	struct bge_rx_bd	*r;
-	int			error;
+	const bus_dmamap_t dmamap = sc->bge_cdata.bge_rx_std_map[i];
+	struct mbuf *m;
 
-	if (dmamap == NULL)
-		dmamap = sc->bge_cdata.bge_rx_std_map[i];
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return ENOBUFS;
 
-	if (dmamap == NULL) {
-		error = bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap);
-		if (error != 0)
-			return error;
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return ENOBUFS;
 	}
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
-	sc->bge_cdata.bge_rx_std_map[i] = dmamap;
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return ENOBUFS;
-
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return ENOBUFS;
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
 	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
-	    m_adj(m_new, ETHER_ALIGN);
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
+	    m_adj(m, ETHER_ALIGN);
+	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m,
 	    BUS_DMA_READ | BUS_DMA_NOWAIT)) {
-		m_freem(m_new);
+		m_freem(m);
 		return ENOBUFS;
 	}
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
+	sc->bge_cdata.bge_rx_std_chain[i] = m;
 
-	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
-	r = &sc->bge_rdata->bge_rx_std_ring[i];
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
+		i * sizeof(struct bge_rx_bd),
+	    sizeof(struct bge_rx_bd),
+	    BUS_DMASYNC_POSTWRITE);
+
+	struct bge_rx_bd * const r = &sc->bge_rdata->bge_rx_std_ring[i];
 	BGE_HOSTADDR(r->bge_addr, dmamap->dm_segs[0].ds_addr);
 	r->bge_flags = BGE_RXBDFLAG_END;
-	r->bge_len = m_new->m_len;
+	r->bge_len = m->m_len;
 	r->bge_idx = i;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
 		i * sizeof(struct bge_rx_bd),
 	    sizeof(struct bge_rx_bd),
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->bge_std_cnt++;
 
 	return 0;
 }
@@ -1601,51 +1591,84 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	return 0;
 }
 
-/*
- * The standard receive ring has 512 entries in it. At 2K per mbuf cluster,
- * that's 1MB or memory, which is a lot. For now, we fill only the first
- * 256 ring entries and hope that our CPU is fast enough to keep up with
- * the NIC.
- */
 static int
 bge_init_rx_ring_std(struct bge_softc *sc)
 {
-	int i;
+	bus_dmamap_t dmamap;
+	int error = 0;
+	u_int i;
 
 	if (sc->bge_flags & BGEF_RXRING_VALID)
 		return 0;
 
-	for (i = 0; i < BGE_SSLOTS; i++) {
-		if (bge_newbuf_std(sc, i, NULL, 0) == ENOBUFS)
-			return ENOBUFS;
+	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
+		error = bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmamap);
+		if (error)
+			goto uncreate;
+
+		sc->bge_cdata.bge_rx_std_map[i] = dmamap;
+		memset(&sc->bge_rdata->bge_rx_std_ring[i], 0,
+		    sizeof(struct bge_rx_bd));
 	}
 
 	sc->bge_std = i - 1;
-	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+	sc->bge_std_cnt = 0;
+	bge_fill_rx_ring_std(sc);
 
 	sc->bge_flags |= BGEF_RXRING_VALID;
 
 	return 0;
+
+uncreate:
+	while (--i) {
+		bus_dmamap_destroy(sc->bge_dmatag,
+		    sc->bge_cdata.bge_rx_std_map[i]);
+	}
+	return error;
 }
 
 static void
-bge_free_rx_ring_std(struct bge_softc *sc, bool disable)
+bge_fill_rx_ring_std(struct bge_softc *sc)
 {
-	int i;
+	int i = sc->bge_std;
+	bool post = false;
+
+	while (sc->bge_std_cnt < BGE_STD_RX_RING_CNT) {
+		BGE_INC(i, BGE_STD_RX_RING_CNT);
+
+		if (bge_newbuf_std(sc, i) != 0)
+			break;
+
+		sc->bge_std = i;
+		post = true;
+	}
+
+	if (post)
+		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+}
+
+
+static void
+bge_free_rx_ring_std(struct bge_softc *sc)
+{
 
 	if (!(sc->bge_flags & BGEF_RXRING_VALID))
 		return;
 
-	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
-		if (sc->bge_cdata.bge_rx_std_chain[i] != NULL) {
-			m_freem(sc->bge_cdata.bge_rx_std_chain[i]);
+	for (u_int i = 0; i < BGE_STD_RX_RING_CNT; i++) {
+		const bus_dmamap_t dmap = sc->bge_cdata.bge_rx_std_map[i];
+		struct mbuf * const m = sc->bge_cdata.bge_rx_std_chain[i];
+		if (m != NULL) {
+			bus_dmamap_sync(sc->bge_dmatag, dmap, 0,
+			    dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmap);
+			m_freem(m);
 			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
-			if (disable) {
-				bus_dmamap_destroy(sc->bge_dmatag,
-				    sc->bge_cdata.bge_rx_std_map[i]);
-				sc->bge_cdata.bge_rx_std_map[i] = NULL;
-			}
 		}
+		bus_dmamap_destroy(sc->bge_dmatag,
+		    sc->bge_cdata.bge_rx_std_map[i]);
+		sc->bge_cdata.bge_rx_std_map[i] = NULL;
 		memset((char *)&sc->bge_rdata->bge_rx_std_ring[i], 0,
 		    sizeof(struct bge_rx_bd));
 	}
@@ -4503,30 +4526,20 @@ bge_rxeof(struct bge_softc *sc)
 				continue;
 			}
 		} else {
-			BGE_INC(sc->bge_std, BGE_STD_RX_RING_CNT);
 			m = sc->bge_cdata.bge_rx_std_chain[rxidx];
-
 			sc->bge_cdata.bge_rx_std_chain[rxidx] = NULL;
+
 			stdcnt++;
+			sc->bge_std_cnt--;
+
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
-			sc->bge_cdata.bge_rx_std_map[rxidx] = NULL;
-			if (dmamap == NULL) {
-				if_statinc(ifp, if_ierrors);
-				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
-				continue;
-			}
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
+				m_free(m);
 				if_statinc(ifp, if_ierrors);
-				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
-				continue;
-			}
-			if (bge_newbuf_std(sc, sc->bge_std,
-			    NULL, dmamap) == ENOBUFS) {
-				if_statinc(ifp, if_ierrors);
-				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
 				continue;
 			}
 		}
@@ -4562,7 +4575,7 @@ bge_rxeof(struct bge_softc *sc)
 	sc->bge_rx_saved_considx = rx_cons;
 	bge_writembx(sc, BGE_MBX_RX_CONS0_LO, sc->bge_rx_saved_considx);
 	if (stdcnt)
-		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+		bge_fill_rx_ring_std(sc);
 	if (jumbocnt)
 		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
 }
@@ -6197,7 +6210,7 @@ bge_stop_locked(struct ifnet *ifp, int disable)
 		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	/* Free the RX lists. */
-	bge_free_rx_ring_std(sc, disable);
+	bge_free_rx_ring_std(sc);
 
 	/* Free jumbo RX list. */
 	if (BGE_IS_JUMBO_CAPABLE(sc))
