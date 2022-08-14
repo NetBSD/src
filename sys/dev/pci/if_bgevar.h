@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.31 2022/08/07 08:37:48 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.32 2022/08/14 08:45:56 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -68,20 +68,22 @@
 
 #include <sys/bus.h>
 #include <sys/rndsource.h>
+
 #include <net/if_ether.h>
+
 #include <dev/pci/pcivar.h>
 
-#define BGE_HOSTADDR(x, y)						\
-	do {								\
-		(x).bge_addr_lo = BUS_ADDR_LO32(y);			\
-		if (sizeof (bus_addr_t) == 8)				\
-			(x).bge_addr_hi = BUS_ADDR_HI32(y);		\
-		else							\
-			(x).bge_addr_hi = 0;				\
+#define BGE_HOSTADDR(x, y)						      \
+	do {								      \
+		(x).bge_addr_lo = BUS_ADDR_LO32(y);			      \
+		if (sizeof (bus_addr_t) == 8)				      \
+			(x).bge_addr_hi = BUS_ADDR_HI32(y);		      \
+		else							      \
+			(x).bge_addr_hi = 0;				      \
 	} while(0)
 
-#define RCB_WRITE_4(sc, rcb, offset, val) \
-	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
+#define RCB_WRITE_4(sc, rcb, offset, val)				      \
+	bus_space_write_4(sc->bge_btag, sc->bge_bhandle,		      \
 			  rcb + offsetof(struct bge_rcb, offset), val)
 
 /*
@@ -178,8 +180,8 @@ struct bge_ring_data {
 	struct bge_gib		bge_info;
 };
 
-#define BGE_RING_DMA_ADDR(sc, offset) \
-	((sc)->bge_ring_map->dm_segs[0].ds_addr + \
+#define BGE_RING_DMA_ADDR(sc, offset)					      \
+	((sc)->bge_ring_map->dm_segs[0].ds_addr +			      \
 	offsetof(struct bge_ring_data, offset))
 
 /*
