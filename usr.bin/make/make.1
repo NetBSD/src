@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.328 2022/08/14 21:53:58 uwe Exp $
+.\"	$NetBSD: make.1,v 1.329 2022/08/14 21:57:26 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -895,7 +895,7 @@ If
 is run with
 .Fl j ,
 the output for each target is prefixed with a token
-.Ql --- target ---
+.Dl --- Ar target Li ---
 the first part of which can be controlled via
 .Va .MAKE.JOB.PREFIX .
 If
@@ -904,9 +904,9 @@ is empty, no token is printed.
 For example, setting
 .Va .MAKE.JOB.PREFIX
 to
-.Li ${.newline}---${.MAKE:T}[${.MAKE.PID}]
+.Ql ${.newline}---${.MAKE:T}[${.MAKE.PID}]
 would produce tokens like
-.Ql ---make[1234] target ---
+.Dl ---make[1234] Ar target Li ---
 making it easier to track the degree of parallelism being achieved.
 .It Va .MAKE.TARGET_LOCAL_VARIABLES
 If set to
