@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.57 2022/08/12 10:49:57 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.58 2022/08/14 10:06:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.57 2022/08/12 10:49:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.58 2022/08/14 10:06:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1418,9 +1418,10 @@ virtio_attach_failed(struct virtio_softc *sc)
 void
 virtio_print_device_type(device_t self, int id, int revision)
 {
-	aprint_normal_dev(self, "%s device (rev. 0x%02x)\n",
-		  (id < NDEVNAMES ? virtio_device_name[id] : "Unknown"),
-		  revision);
+	aprint_normal_dev(self, "%s device (id %d, rev. 0x%02x)\n",
+	    (id < NDEVNAMES ? virtio_device_name[id] : "Unknown"),
+	    id,
+	    revision);
 }
 
 
