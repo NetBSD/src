@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.5 2021/01/09 13:19:27 jmcneill Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.6 2022/08/14 11:26:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -79,5 +79,5 @@ efi_aarch64_current_el(void)
 void
 efi_md_show(void)
 {
-	printf("Current Exception Level: EL%u\n", efi_aarch64_current_el());
+	command_printtab("CurrentEL", "EL%u\n", efi_aarch64_current_el());
 }
