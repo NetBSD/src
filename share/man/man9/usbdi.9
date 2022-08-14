@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.36 2021/12/11 19:24:19 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.37 2022/08/14 19:12:23 skrll Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -133,7 +133,6 @@
 .Fn usbd_do_request_flags "struct usbd_device *dev" \
  "usb_device_request_t *req" "void *data" "uint16_t flags" "int *actlen" \
  "uint32_t timo"
-.\" usbd_do_request_async() not used outside of usbdi*
 .Ft usb_interface_descriptor_t *
 .Fn usbd_get_interface_descriptor "struct usbd_interface *iface"
 .Ft usb_config_descriptor_t *
