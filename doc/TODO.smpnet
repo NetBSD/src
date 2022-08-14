@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.46 2022/05/03 20:52:30 andvar Exp $
+$NetBSD: TODO.smpnet,v 1.47 2022/08/14 10:13:06 nia Exp $
 
 MP-safe components
 ==================
@@ -9,6 +9,7 @@ kernel option.  Some components scale up and some don't.
  - Device drivers
    - aq(4)
    - bcmgenet(4)
+   - bge(4)
    - iavf(4)
    - ixg(4)
    - ixl(4)
