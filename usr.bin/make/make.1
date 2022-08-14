@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.323 2022/08/14 19:26:39 rillig Exp $
+.\"	$NetBSD: make.1,v 1.324 2022/08/14 20:04:07 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -841,13 +841,13 @@ A path to the directory where
 .Nm
 was executed.
 Refer to the description of
-.Sq Ev PWD
+.Sq Va PWD
 for more details.
 .It Va .INCLUDEDFROMDIR
 The directory of the file this Makefile was included from.
 .It Va .INCLUDEDFROMFILE
 The filename of the file this Makefile was included from.
-.It Ev MAKE
+.It Va MAKE
 The name that
 .Nm
 was executed with
@@ -900,12 +900,12 @@ to
 would produce tokens like
 .Ql ---make[1234] target ---
 making it easier to track the degree of parallelism being achieved.
-.It .MAKE.TARGET_LOCAL_VARIABLES
+.It Va .MAKE.TARGET_LOCAL_VARIABLES
 If set to
 .Ql false ,
 apparent variable assignments in dependency lines are
 treated as normal sources.
-.It Ev MAKEFLAGS
+.It Va MAKEFLAGS
 The environment variable
 .Sq Ev MAKEFLAGS
 may contain anything that
@@ -915,7 +915,7 @@ command line.
 Anything specified on
 .Nm Ns 's
 command line is appended to the
-.Sq Ev MAKEFLAGS
+.Va MAKEFLAGS
 variable which is then
 entered into the environment for all programs which
 .Nm
@@ -1166,7 +1166,7 @@ will
 to the specified directory if it exists, and set
 .Sq Va .OBJDIR
 and
-.Sq Ev PWD
+.Sq Va PWD
 to that directory before executing any targets.
 .Pp
 Except in the case of an explicit
@@ -1199,9 +1199,9 @@ A variable that represents the list of directories that
 .Nm
 will search for files.
 The search list should be updated using the target
-.Sq Va .PATH
+.Sq Ic .PATH
 rather than the variable.
-.It Ev PWD
+.It Va PWD
 Alternate path to the current directory.
 .Nm
 normally sets
@@ -1222,21 +1222,21 @@ This behavior is disabled if
 is set or
 .Sq Ev MAKEOBJDIR
 contains a variable transform.
-.Sq Ev PWD
+.Sq Va PWD
 is set to the value of
 .Sq Va .OBJDIR
 for all programs which
 .Nm
 executes.
-.It Ev .SHELL
+.It Va .SHELL
 The pathname of the shell used to run target scripts.
 It is read-only.
-.It Ev .SUFFIXES
+.It Va .SUFFIXES
 The list of known suffixes.
 It is read-only.
-.It Ev .TARGETS
+.It Va .TARGETS
 The list of targets explicitly specified on the command line, if any.
-.It Ev VPATH
+.It Va VPATH
 Colon-separated
 .Pq Dq \&:
 lists of directories that
@@ -1869,7 +1869,7 @@ Would result in an environment containing only
 .Sq Ev PATH ,
 which is the minimal useful environment.
 Actually
-.Sq Ev .MAKE.LEVEL
+.Sq Va .MAKE.LEVEL
 will also be pushed into the new environment.
 .It Ic .warning Ar message
 The message prefixed by
@@ -2111,7 +2111,7 @@ The
 pattern suppresses any expansion of the unwanted variable.
 .It Ic .NOPATH
 Do not search for the target in the directories specified by
-.Ic .PATH .
+.Va .PATH .
 .It Ic .NOTMAIN
 Normally
 .Nm
@@ -2209,7 +2209,7 @@ source) that
 can't figure out any other way to create.
 Only the shell script is used.
 The
-.Ic .IMPSRC
+.Va .IMPSRC
 variable of a target that inherits
 .Ic .DEFAULT Ns 's
 commands is set
@@ -2228,10 +2228,10 @@ else is done.
 .It Ic .ERROR
 Any command lines attached to this target are executed when another target fails.
 The
-.Ic .ERROR_TARGET
+.Va .ERROR_TARGET
 variable is set to the target that failed.
 See also
-.Ic MAKE_PRINT_VAR_ON_ERROR .
+.Va MAKE_PRINT_VAR_ON_ERROR .
 .It Ic .IGNORE
 Mark each of the sources with the
 .Ic .IGNORE
@@ -2516,7 +2516,7 @@ Some features are somewhat more portable, such as assignment with
 and
 .Ic != .
 The
-.Ic .PATH
+.Va .PATH
 functionality is based on an older feature
 .Ic VPATH
 found in GNU make and many versions of SVR4 make; however,
