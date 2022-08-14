@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.376 2022/08/14 09:03:05 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.377 2022/08/14 09:04:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.376 2022/08/14 09:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.377 2022/08/14 09:04:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1329,14 +1329,14 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->bge_dmatag, BGE_JMEM, PAGE_SIZE, 0,
-	    &sc->bge_cdata.bge_rx_jumbo_seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    &sc->bge_cdata.bge_rx_jumbo_seg, 1, &rseg, BUS_DMA_WAITOK)) {
 		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return ENOBUFS;
 	}
 
 	state = 1;
 	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_cdata.bge_rx_jumbo_seg,
-	    rseg, BGE_JMEM, (void **)&kva, BUS_DMA_NOWAIT)) {
+	    rseg, BGE_JMEM, (void **)&kva, BUS_DMA_WAITOK)) {
 		aprint_error_dev(sc->bge_dev,
 		    "can't map DMA buffers (%d bytes)\n", (int)BGE_JMEM);
 		error = ENOBUFS;
@@ -1345,7 +1345,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 
 	state = 2;
 	if (bus_dmamap_create(sc->bge_dmatag, BGE_JMEM, 1, BGE_JMEM, 0,
-	    BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
+	    BUS_DMA_WAITOK, &sc->bge_cdata.bge_rx_jumbo_map)) {
 		aprint_error_dev(sc->bge_dev, "can't create DMA map\n");
 		error = ENOBUFS;
 		goto out;
@@ -1353,7 +1353,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 
 	state = 3;
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
-	    kva, BGE_JMEM, NULL, BUS_DMA_NOWAIT)) {
+	    kva, BGE_JMEM, NULL, BUS_DMA_WAITOK)) {
 		aprint_error_dev(sc->bge_dev, "can't load DMA map\n");
 		error = ENOBUFS;
 		goto out;
@@ -3791,7 +3791,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 			if (bus_dmatag_subregion(olddmatag, 0,
 			    (bus_addr_t)__MASK(40),
-			    &(sc->bge_dmatag), BUS_DMA_NOWAIT) != 0) {
+			    &(sc->bge_dmatag), BUS_DMA_WAITOK) != 0) {
 				aprint_error_dev(self,
 				    "WARNING: failed to restrict dma range,"
 				    " falling back to parent bus dma range\n");
@@ -3803,14 +3803,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &sc->bge_ring_seg, 1,
-		&sc->bge_ring_rseg, BUS_DMA_NOWAIT)) {
+		&sc->bge_ring_rseg, BUS_DMA_WAITOK)) {
 		aprint_error_dev(sc->bge_dev, "can't alloc rx buffers\n");
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_ring_seg,
 		sc->bge_ring_rseg, sizeof(struct bge_ring_data), &kva,
-			   BUS_DMA_NOWAIT)) {
+			   BUS_DMA_WAITOK)) {
 		aprint_error_dev(sc->bge_dev,
 		    "can't map DMA buffers (%zu bytes)\n",
 		    sizeof(struct bge_ring_data));
@@ -3821,7 +3821,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
-	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
+	    BUS_DMA_WAITOK, &sc->bge_ring_map)) {
 		aprint_error_dev(sc->bge_dev, "can't create DMA map\n");
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
@@ -3832,7 +3832,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_ring_map, kva,
 			    sizeof(struct bge_ring_data), NULL,
-			    BUS_DMA_NOWAIT)) {
+			    BUS_DMA_WAITOK)) {
 		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
