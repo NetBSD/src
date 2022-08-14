@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.203 2022/04/01 19:57:22 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.204 2022/08/14 07:49:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.203 2022/04/01 19:57:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.204 2022/08/14 07:49:33 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1336,9 +1336,16 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		 */
 		if (ci->ci_data.cpu_cc_freq == 0)
 			freq = freq_from_cpuid = cpu_tsc_freq_cpuid(ci);
+		if (freq != 0)
+			aprint_debug_dev(ci->ci_dev, "TSC freq "
+			    "from CPUID %" PRIu64 " Hz\n", freq);
 #if NHPET > 0
-		if (freq == 0)
+		if (freq == 0) {
 			freq = hpet_tsc_freq();
+			if (freq != 0)
+				aprint_debug_dev(ci->ci_dev, "TSC freq "
+				    "from HPET %" PRIu64 " Hz\n", freq);
+		}
 #endif
 		if (freq == 0) {
 			/*
@@ -1348,20 +1355,33 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 			 */
 			overhead = 0;
 			for (int i = 0; i <= 8; i++) {
+				const int s = splhigh();
 				t0 = cpu_counter();
 				delay_func(0);
 				t1 = cpu_counter();
+				splx(s);
 				if (i > 0) {
 					overhead += (t1 - t0);
 				}
 			}
 			overhead >>= 3;
 
-			/* Now do the calibration. */
-			t0 = cpu_counter();
-			delay_func(100000);
-			t1 = cpu_counter();
-			freq = (t1 - t0 - overhead) * 10;
+			/*
+			 * Now do the calibration.
+			 */
+			freq = 0;
+			for (int i = 0; i < 1000; i++) {
+				const int s = splhigh();
+				t0 = cpu_counter();
+				delay_func(100);
+				t1 = cpu_counter();
+				splx(s);
+				freq += t1 - t0 - overhead;
+			}
+			freq = freq * 10;
+
+			aprint_debug_dev(ci->ci_dev, "TSC freq "
+			    "from delay %" PRIu64 " Hz\n", freq);
 		}
 		if (ci->ci_data.cpu_cc_freq != 0) {
 			freq_from_cpuid = cpu_tsc_freq_cpuid(ci);
