@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.318 2022/08/14 08:49:00 uwe Exp $
+.\"	$NetBSD: make.1,v 1.319 2022/08/14 09:08:29 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,7 @@ is equivalent to
 Define
 .Ar variable
 to be 1, in the global scope.
-.It Fl d Ar [-]flags
+.It Fl d Oo Cm \- Oc Ns Ar flags
 Turn on debugging, and specify which portions of
 .Nm
 are to print debugging information.
@@ -112,7 +112,7 @@ they are added to the
 environment variable and will be processed by any child make processes.
 By default, debugging information is printed to standard error,
 but this can be changed using the
-.Ar F
+.Cm F
 debugging flag.
 The debugging output is always unbuffered; in addition, if debugging
 is enabled but debugging output is not directed to standard output,
@@ -121,25 +121,25 @@ The available
 .Ar flags
 are:
 .Bl -tag -width Ds
-.It Ar A
+.It Cm A
 Print all possible debugging information;
 equivalent to specifying all of the debugging flags.
-.It Ar a
+.It Cm a
 Print debugging information about archive searching and caching.
-.It Ar C
+.It Cm C
 Print debugging information about current working directory.
-.It Ar c
+.It Cm c
 Print debugging information about conditional evaluation.
-.It Ar d
+.It Cm d
 Print debugging information about directory searching and caching.
-.It Ar e
+.It Cm e
 Print debugging information about failed commands and targets.
-.It Ar F Ns Oo Sy \&+ Oc Ns Ar filename
+.It Cm F Ns Oo \&+ Oc Ns Ar filename
 Specify where debugging output is written.
 This must be the last flag, because it consumes the remainder of
 the argument.
 If the character immediately after the
-.Ql F
+.Cm F
 flag is
 .Ql \&+ ,
 then the file will be opened in append mode;
@@ -159,35 +159,41 @@ If the file name ends with
 then the
 .Ql %d
 is replaced by the pid.
-.It Ar f
+.It Cm f
 Print debugging information about loop evaluation.
-.It Ar "g1"
+.It Cm g1
 Print the input graph before making anything.
-.It Ar "g2"
+.It Cm g2
 Print the input graph after making everything, or before exiting
 on error.
-.It Ar "g3"
+.It Cm g3
 Print the input graph before exiting on error.
-.It Ar h
+.It Cm h
 Print debugging information about hash table operations.
-.It Ar j
+.It Cm j
 Print debugging information about running multiple shells.
-.It Ar L
+.It Cm L
 Turn on lint checks.
 This will throw errors for variable assignments that do not parse
 correctly, at the time of assignment so the file and line number
 are available.
-.It Ar l
+.It Cm l
 Print commands in Makefiles regardless of whether or not they are prefixed by
 .Ql @
-or other "quiet" flags.
-Also known as "loud" behavior.
-.It Ar M
-Print debugging information about "meta" mode decisions about targets.
-.It Ar m
+or other
+.Dq quiet
+flags.
+Also known as
+.Dq loud
+behavior.
+.It Cm M
+Print debugging information about
+.Dq meta
+mode decisions about targets.
+.It Cm m
 Print debugging information about making targets, including modification
 dates.
-.It Ar n
+.It Cm n
 Don't delete the temporary command scripts created when running commands.
 These temporary scripts are created in the directory
 referred to by the
@@ -207,21 +213,21 @@ This can create many files in
 or
 .Pa /tmp ,
 so use with care.
-.It Ar p
+.It Cm p
 Print debugging information about makefile parsing.
-.It Ar s
+.It Cm s
 Print debugging information about suffix-transformation rules.
-.It Ar t
+.It Cm t
 Print debugging information about target list maintenance.
-.It Ar V
+.It Cm V
 Force the
 .Fl V
 option to print raw values of variables, overriding the default behavior
 set via
 .Va .MAKE.EXPAND_VARIABLES .
-.It Ar v
+.It Cm v
 Print debugging information about variable assignment and expansion.
-.It Ar x
+.It Cm x
 Run shell commands with
 .Fl x
 so the actual commands are printed as they are executed.
