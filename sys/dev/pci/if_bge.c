@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.373 2022/08/07 08:37:48 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.374 2022/08/14 08:42:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.373 2022/08/07 08:37:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.374 2022/08/14 08:42:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4437,12 +4437,13 @@ bge_rxeof(struct bge_softc *sc)
 		    sizeof(struct bge_rx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD);
-		tosync = -tosync;
+		tosync = rx_prod;
+		toff = offset;
 	}
 
 	if (tosync != 0) {
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    offset, tosync * sizeof(struct bge_rx_bd),
+		    toff, tosync * sizeof(struct bge_rx_bd),
 		    BUS_DMASYNC_POSTREAD);
 	}
 
@@ -4596,9 +4597,10 @@ bge_txeof(struct bge_softc *sc)
 	    sizeof(struct bge_status_block),
 	    BUS_DMASYNC_POSTREAD);
 
+	const uint16_t hw_cons_idx =
+	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx;
 	offset = offsetof(struct bge_ring_data, bge_tx_ring);
-	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx -
-	    sc->bge_tx_saved_considx;
+	tosync = hw_cons_idx - sc->bge_tx_saved_considx;
 
 	if (tosync != 0)
 		rnd_add_uint32(&sc->rnd_source, tosync);
@@ -4610,12 +4612,13 @@ bge_txeof(struct bge_softc *sc)
 		    sizeof(struct bge_tx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		tosync = -tosync;
+		tosync = hw_cons_idx;
+		toff = offset;
 	}
 
 	if (tosync != 0) {
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    offset, tosync * sizeof(struct bge_tx_bd),
+		    toff, tosync * sizeof(struct bge_tx_bd),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -4623,8 +4626,7 @@ bge_txeof(struct bge_softc *sc)
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
-	while (sc->bge_tx_saved_considx !=
-	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx) {
+	while (sc->bge_tx_saved_considx != hw_cons_idx) {
 		uint32_t idx = sc->bge_tx_saved_considx;
 		cur_tx = &sc->bge_rdata->bge_tx_ring[idx];
 		if (cur_tx->bge_flags & BGE_TXBDFLAG_END)
