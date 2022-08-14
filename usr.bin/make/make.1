@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.316 2022/08/14 04:12:29 rillig Exp $
+.\"	$NetBSD: make.1,v 1.317 2022/08/14 04:17:09 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 12, 2022
+.Dd August 14, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -58,9 +58,9 @@ Its input is a list of specifications as to the files upon which programs
 and other files depend.
 If no
 .Fl f Ar makefile
-makefile option is given,
+option is given,
 .Nm
-will try to open
+tries to open
 .Sq Pa makefile
 then
 .Sq Pa Makefile
@@ -74,10 +74,11 @@ This manual page is intended as a reference document only.
 For a more thorough description of
 .Nm
 and makefiles, please refer to
-.%T "PMake \- A Tutorial" .
+.%T "PMake \- A Tutorial"
+(from 1993).
 .Pp
 .Nm
-will prepend the contents of the
+prepends the contents of the
 .Va MAKEFLAGS
 environment variable to the command line arguments before parsing them.
 .Pp
@@ -116,8 +117,9 @@ debugging flag.
 The debugging output is always unbuffered; in addition, if debugging
 is enabled but debugging output is not directed to standard output,
 then the standard output is line buffered.
-.Ar Flags
-is one or more of the following:
+The available
+.Ar flags
+are:
 .Bl -tag -width Ds
 .It Ar A
 Print all possible debugging information;
@@ -152,7 +154,7 @@ standard output or standard error output file descriptors respectively
 .Ql \&+
 option has no effect).
 Otherwise, the output will be written to the named file.
-If the file name ends
+If the file name ends with
 .Ql .%d
 then the
 .Ql %d
@@ -218,7 +220,7 @@ option to print raw values of variables, overriding the default behavior
 set via
 .Va .MAKE.EXPAND_VARIABLES .
 .It Ar v
-Print debugging information about variable assignment.
+Print debugging information about variable assignment and expansion.
 .It Ar x
 Run shell commands with
 .Fl x
@@ -277,14 +279,16 @@ compatibility on.
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
-Specify a directory in which to search for sys.mk and makefiles included
-via the
+Specify a directory in which to search for
+.Pa sys.mk
+and makefiles included via the
 .Li \&< Ns Ar file Ns Li \&> Ns -style
 include statement.
 The
 .Fl m
 option can be used multiple times to form a search path.
-This path will override the default system include path: /usr/share/mk.
+This path will override the default system include path
+.Pa /usr/share/mk .
 Furthermore the system include path will be appended to the search path used
 for
 .Li \*q Ns Ar file Ns Li \*q Ns -style
@@ -311,8 +315,9 @@ specification in the
 argument.
 If used, this feature allows
 .Nm
-to easily search in the current source tree for customized sys.mk files
-(e.g., by using
+to easily search in the current source tree for customized
+.Pa sys.mk
+files (e.g., by using
 .Qq \&.../mk/sys.mk
 as an argument).
 .It Fl n
@@ -326,7 +331,7 @@ actually execute any of them; useful for debugging top-level makefiles
 without descending into subdirectories.
 .It Fl q
 Do not execute any commands, but exit 0 if the specified targets are
-up-to-date and 1, otherwise.
+up-to-date, and 1 otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile.
 .It Fl S
@@ -380,8 +385,13 @@ debug mode can be used to see these at the cost of generating
 substantial extraneous output.
 .It Fl v Ar variable
 Like
+.Fl V ,
+but all printed variables are always expanded to their complete value.
+The last occurrence of
 .Fl V
-but the variable is always expanded to its complete value.
+or
+.Fl v
+decides whether all variables are expanded or not.
 .It Fl W
 Treat any warnings during makefile parsing as errors.
 .It Fl w
@@ -389,8 +399,7 @@ Print entering and leaving directory messages, pre and post processing.
 .It Fl X
 Don't export variables passed on the command line to the environment
 individually.
-Variables passed on the command line are still exported
-via the
+Variables passed on the command line are still exported via the
 .Va MAKEFLAGS
 environment variable.
 This option may be useful on systems which have a small limit on the
