@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.32 2022/08/14 08:45:56 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.33 2022/08/14 09:01:25 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -68,6 +68,7 @@
 
 #include <sys/bus.h>
 #include <sys/rndsource.h>
+#include <sys/time.h>
 
 #include <net/if_ether.h>
 
@@ -327,6 +328,9 @@ struct bge_softc {
 	uint32_t		bge_flags;
 	uint32_t		bge_phy_flags;
 	int			bge_flowflags;
+	time_t			bge_tx_lastsent;
+	bool			bge_tx_sending;
+
 #ifdef BGE_EVENT_COUNTERS
 	/*
 	 * Event counters.
@@ -352,6 +356,13 @@ struct bge_softc {
 	struct sysctllog	*bge_log;
 
 	krndsource_t	rnd_source;	/* random source */
+
+	kmutex_t *sc_core_lock;		/* lock for softc operations */
+	struct workqueue *sc_reset_wq;
+	struct work sc_reset_work;
+	volatile unsigned sc_reset_pending;
+
+	bool sc_triggerreset;
 };
 
 #endif /* _DEV_PCI_IF_BGEVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.374 2022/08/14 08:42:33 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.375 2022/08/14 09:01:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.374 2022/08/14 08:42:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.375 2022/08/14 09:01:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -206,13 +206,17 @@ static int bge_encap(struct bge_softc *, struct mbuf *, uint32_t *);
 
 static int bge_intr(void *);
 static void bge_start(struct ifnet *);
+static void bge_start_locked(struct ifnet *);
 static int bge_ifflags_cb(struct ethercom *);
 static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
+static int bge_init_locked(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
-static void bge_watchdog(struct ifnet *);
+static void bge_stop_locked(struct ifnet *, int);
+static bool bge_watchdog(struct ifnet *);
 static int bge_ifmedia_upd(struct ifnet *);
 static void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static void bge_handle_reset_work(struct work *, void *);
 
 static uint8_t bge_nvram_getbyte(struct bge_softc *, int, uint8_t *);
 static int bge_read_nvram(struct bge_softc *, uint8_t *, int, int);
@@ -528,6 +532,12 @@ static const struct bge_revision bge_majorrevs[] = {
 };
 
 static int bge_allow_asf = 1;
+
+#ifndef BGE_WATCHDOG_TIMEOUT
+#define BGE_WATCHDOG_TIMEOUT 5
+#endif
+static int bge_watchdog_timeout = BGE_WATCHDOG_TIMEOUT;
+
 
 CFATTACH_DECL3_NEW(bge, sizeof(struct bge_softc),
     bge_probe, bge_attach, bge_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1247,7 +1257,6 @@ static void
 bge_set_thresh(struct ifnet *ifp, int lvl)
 {
 	struct bge_softc * const sc = ifp->if_softc;
-	int s;
 
 	/*
 	 * For now, just save the new Rx-intr thresholds and record
@@ -1256,11 +1265,11 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	 * occasionally cause glitches where Rx-interrupts are not
 	 * honoured for up to 10 seconds. jonathan@NetBSD.org, 2003-04-05
 	 */
-	s = splnet();
+	mutex_enter(sc->sc_core_lock);
 	sc->bge_rx_coal_ticks = bge_rx_threshes[lvl].rx_ticks;
 	sc->bge_rx_max_coal_bds = bge_rx_threshes[lvl].rx_max_bds;
 	sc->bge_pending_rxintr_change = 1;
-	splx(s);
+	mutex_exit(sc->sc_core_lock);
 }
 
 
@@ -1311,8 +1320,8 @@ static int
 bge_alloc_jumbo_mem(struct bge_softc *sc)
 {
 	char *ptr, *kva;
-	int		i, rseg, state, error;
-	struct bge_jpool_entry	 *entry;
+	int i, rseg, state, error;
+	struct bge_jpool_entry *entry;
 
 	state = error = 0;
 
@@ -1325,8 +1334,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 
 	state = 1;
 	if (bus_dmamem_map(sc->bge_dmatag, &sc->bge_cdata.bge_rx_jumbo_seg,
-	    rseg, BGE_JMEM, (void **)&kva,
-	    BUS_DMA_NOWAIT)) {
+	    rseg, BGE_JMEM, (void **)&kva, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->bge_dev,
 		    "can't map DMA buffers (%d bytes)\n", (int)BGE_JMEM);
 		error = ENOBUFS;
@@ -1443,7 +1451,6 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct bge_jpool_entry *entry;
 	struct bge_softc * const sc = arg;
-	int s;
 
 	if (sc == NULL)
 		panic("bge_jfree: can't find softc pointer!");
@@ -1454,17 +1461,17 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	if (i < 0 || i >= BGE_JSLOTS)
 		panic("bge_jfree: asked to free buffer that we don't manage!");
 
-	s = splvm();
+	mutex_enter(sc->sc_core_lock);
 	entry = SLIST_FIRST(&sc->bge_jinuse_listhead);
 	if (entry == NULL)
 		panic("bge_jfree: buffer not in use!");
 	entry->slot = i;
 	SLIST_REMOVE_HEAD(&sc->bge_jinuse_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->bge_jfree_listhead, entry, jpool_entries);
+	mutex_exit(sc->sc_core_lock);
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
-	splx(s);
 }
 
 
@@ -1576,6 +1583,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
 	    mtod(m_new, char *) - (char *)sc->bge_cdata.bge_jumbo_buf,
 	    BGE_JLEN, BUS_DMASYNC_PREREAD);
+
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
@@ -1810,14 +1818,14 @@ static void
 bge_setmulti(struct bge_softc *sc)
 {
 	struct ethercom * const ec = &sc->ethercom;
-	struct ifnet * const ifp = &ec->ec_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	uint32_t		hashes[4] = { 0, 0, 0, 0 };
 	uint32_t		h;
 	int			i;
 
-	if (ifp->if_flags & IFF_PROMISC)
+	KASSERT(mutex_owned(sc->sc_core_lock));
+	if (sc->bge_if_flags & IFF_PROMISC)
 		goto allmulti;
 
 	/* Now program new ones. */
@@ -1845,13 +1853,15 @@ bge_setmulti(struct bge_softc *sc)
 		hashes[(h & 0x60) >> 5] |= 1U << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 
  allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
+	ETHER_LOCK(ec);
+	ec->ec_flags |= ETHER_F_ALLMULTI;
+	ETHER_UNLOCK(ec);
 	hashes[0] = hashes[1] = hashes[2] = hashes[3] = 0xffffffff;
 
  setit:
@@ -3631,6 +3641,18 @@ bge_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
+	char wqname[MAXCOMLEN];
+	snprintf(wqname, sizeof(wqname), "%sReset", device_xname(sc->bge_dev));
+	int error = workqueue_create(&sc->sc_reset_wq, wqname,
+	    bge_handle_reset_work, sc, PRI_NONE, IPL_SOFTCLOCK,
+	    WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(sc->bge_dev,
+		    "unable to create reset workqueue\n");
+		return;
+	}
+
+
 	/*
 	 * All controllers except BCM5700 supports tagged status but
 	 * we use tagged status only for MSI case on BCM5717. Otherwise
@@ -3830,15 +3852,17 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
 
+	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = bge_ioctl;
 	ifp->if_stop = bge_stop;
 	ifp->if_start = bge_start;
 	ifp->if_init = bge_init;
-	ifp->if_watchdog = bge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("strcpy if_xname\n"));
@@ -3986,12 +4010,16 @@ again:
 	/*
 	 * Call MI attach routine.
 	 */
-	DPRINTFN(5, ("if_attach\n"));
-	if_attach(ifp);
+	DPRINTFN(5, ("if_initialize\n"));
+	if_initialize(ifp);
+	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
+	if_register(ifp);
+
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
 	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
+
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
 		RND_TYPE_NET, RND_FLAG_DEFAULT);
 #ifdef BGE_EVENT_COUNTERS
@@ -4018,7 +4046,7 @@ again:
 	    NULL, device_xname(sc->bge_dev), "xoffentered");
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
-	callout_init(&sc->bge_timeout, 0);
+	callout_init(&sc->bge_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->bge_timeout, bge_tick, sc);
 
 	if (pmf_device_register(self, NULL, NULL))
@@ -4042,12 +4070,9 @@ bge_detach(device_t self, int flags __unused)
 {
 	struct bge_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->ethercom.ec_if;
-	int s;
 
-	s = splnet();
 	/* Stop the interface. Callouts are stopped in it. */
 	bge_stop(ifp, 1);
-	splx(s);
 
 	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -4654,11 +4679,8 @@ bge_txeof(struct bge_softc *sc)
 		}
 		sc->bge_txcnt--;
 		BGE_INC(sc->bge_tx_saved_considx, BGE_TX_RING_CNT);
-		ifp->if_timer = 0;
+		sc->bge_tx_sending = false;
 	}
-
-	if (cur_tx != NULL)
-		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 static int
@@ -4669,10 +4691,11 @@ bge_intr(void *xsc)
 	uint32_t pcistate, statusword, statustag;
 	uint32_t intrmask = BGE_PCISTATE_INTR_NOT_ACTIVE;
 
-
 	/* 5717 and newer chips have no BGE_PCISTATE_INTR_NOT_ACTIVE bit */
 	if (BGE_IS_5717_PLUS(sc))
 		intrmask = 0;
+
+	mutex_enter(sc->sc_core_lock);
 
 	/*
 	 * It is possible for the interrupt to arrive before
@@ -4694,6 +4717,7 @@ bge_intr(void *xsc)
 		if (sc->bge_lasttag == statustag &&
 		    (~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious);
+			mutex_exit(sc->sc_core_lock);
 			return 0;
 		}
 		sc->bge_lasttag = statustag;
@@ -4701,6 +4725,7 @@ bge_intr(void *xsc)
 		if (!(statusword & BGE_STATFLAG_UPDATED) &&
 		    !(~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious2);
+			mutex_exit(sc->sc_core_lock);
 			return 0;
 		}
 		statustag = 0;
@@ -4722,7 +4747,7 @@ bge_intr(void *xsc)
 	    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
 		bge_link_upd(sc);
 
-	if (ifp->if_flags & IFF_RUNNING) {
+	if (sc->bge_if_flags & IFF_RUNNING) {
 		/* Check RX return ring producer/consumer */
 		bge_rxeof(sc);
 
@@ -4749,8 +4774,10 @@ bge_intr(void *xsc)
 	/* Re-enable interrupts. */
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, statustag);
 
-	if (ifp->if_flags & IFF_RUNNING)
+	if (sc->bge_if_flags & IFF_RUNNING)
 		if_schedule_deferred_start(ifp);
+
+	mutex_exit(sc->sc_core_lock);
 
 	return 1;
 }
@@ -4783,10 +4810,10 @@ static void
 bge_tick(void *xsc)
 {
 	struct bge_softc * const sc = xsc;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	struct mii_data * const mii = &sc->bge_mii;
-	int s;
 
-	s = splnet();
+	mutex_enter(sc->sc_core_lock);
 
 	if (BGE_IS_5705_PLUS(sc))
 		bge_stats_update_regs(sc);
@@ -4813,16 +4840,18 @@ bge_tick(void *xsc)
 
 	bge_asf_driver_up(sc);
 
-	if (!sc->bge_detaching)
+	const bool ok = bge_watchdog(ifp);
+
+	if (ok && !sc->bge_detaching)
 		callout_schedule(&sc->bge_timeout, hz);
 
-	splx(s);
+	mutex_exit(sc->sc_core_lock);
 }
 
 static void
 bge_stats_update_regs(struct bge_softc *sc)
 {
-	struct ifnet *const ifp = &sc->ethercom.ec_if;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
@@ -5096,7 +5125,6 @@ bge_compact_dma_runt(struct mbuf *pkt)
 static int
 bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 {
-	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	struct bge_tx_bd	*f, *prev_f;
 	uint32_t		frag, cur;
 	uint16_t		csum_flags = 0;
@@ -5149,7 +5177,6 @@ check_dma_bug:
 doit:
 	dma = SLIST_FIRST(&sc->txdma_list);
 	if (dma == NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return ENOBUFS;
 	}
 	dmamap = dma->dmamap;
@@ -5420,9 +5447,19 @@ load_again:
 
 fail_unload:
 	bus_dmamap_unload(dmatag, dmamap);
-	ifp->if_flags |= IFF_OACTIVE;
 
 	return ENOBUFS;
+}
+
+
+static void
+bge_start(struct ifnet *ifp)
+{
+	struct bge_softc * const sc = ifp->if_softc;
+
+	mutex_enter(sc->sc_core_lock);
+	bge_start_locked(ifp);
+	mutex_exit(sc->sc_core_lock);
 }
 
 /*
@@ -5430,7 +5467,7 @@ fail_unload:
  * to the mbuf data regions directly in the transmit descriptors.
  */
 static void
-bge_start(struct ifnet *ifp)
+bge_start_locked(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
@@ -5439,7 +5476,7 @@ bge_start(struct ifnet *ifp)
 	int pkts = 0;
 	int error;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((sc->bge_if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
@@ -5475,7 +5512,7 @@ bge_start(struct ifnet *ifp)
 		 */
 		error = bge_encap(sc, m_head, &prodidx);
 		if (__predict_false(error)) {
-			if (ifp->if_flags & IFF_OACTIVE) {
+			if (SLIST_EMPTY(&sc->txdma_list)) {
 				/* just wait for the transmit ring to drain */
 				break;
 			}
@@ -5506,27 +5543,37 @@ bge_start(struct ifnet *ifp)
 		bge_writembx(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 
 	sc->bge_tx_prodidx = prodidx;
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
+	sc->bge_tx_lastsent = time_uptime;
+	sc->bge_tx_sending = true;
 }
 
 static int
 bge_init(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
+
+	mutex_enter(sc->sc_core_lock);
+	int ret = bge_init_locked(ifp);
+	mutex_exit(sc->sc_core_lock);
+
+	return ret;
+}
+
+
+static int
+bge_init_locked(struct ifnet *ifp)
+{
+	struct bge_softc * const sc = ifp->if_softc;
 	const uint16_t *m;
 	uint32_t mode, reg;
-	int s, error = 0;
+	int error = 0;
 
-	s = splnet();
-
+	KASSERT(IFNET_LOCKED(ifp));
+	KASSERT(mutex_owned(sc->sc_core_lock));
 	KASSERT(ifp == &sc->ethercom.ec_if);
 
 	/* Cancel pending I/O and flush buffers. */
-	bge_stop(ifp, 0);
+	bge_stop_locked(ifp, 0);
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -5593,7 +5640,6 @@ bge_init(struct ifnet *ifp)
 	if (error != 0) {
 		aprint_error_dev(sc->bge_dev, "initialization error %d\n",
 		    error);
-		splx(s);
 		return error;
 	}
 
@@ -5610,7 +5656,7 @@ bge_init(struct ifnet *ifp)
 	    ((uint32_t)htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
-	if (ifp->if_flags & IFF_PROMISC)
+	if (sc->bge_if_flags & IFF_PROMISC)
 		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 	else
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
@@ -5700,14 +5746,13 @@ bge_init(struct ifnet *ifp)
 	if ((error = bge_ifmedia_upd(ifp)) != 0)
 		goto out;
 
+	/* IFNET_LOCKED asserted above */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_schedule(&sc->bge_timeout, hz);
 
 out:
 	sc->bge_if_flags = ifp->if_flags;
-	splx(s);
 
 	return error;
 }
@@ -5846,22 +5891,28 @@ bge_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet * const ifp = &ec->ec_if;
 	struct bge_softc * const sc = ifp->if_softc;
+	int ret = 0;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	mutex_enter(sc->sc_core_lock);
+
 	u_short change = ifp->if_flags ^ sc->bge_if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
-		return ENETRESET;
-	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
-		return 0;
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+	} else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if ((ifp->if_flags & IFF_PROMISC) == 0)
+			BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+		else
+			BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 
-	if ((ifp->if_flags & IFF_PROMISC) == 0)
-		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	else
-		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-
-	bge_setmulti(sc);
+		bge_setmulti(sc);
+	}
 
 	sc->bge_if_flags = ifp->if_flags;
-	return 0;
+	mutex_exit(sc->sc_core_lock);
+
+	return ret;
 }
 
 static int
@@ -5869,13 +5920,21 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 	struct ifreq * const ifr = (struct ifreq *) data;
-	int s, error = 0;
-	struct mii_data *mii;
+	int error = 0;
 
-	s = splnet();
+	switch (command) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
+
+	const int s = splnet();
 
 	switch (command) {
 	case SIOCSIFMEDIA:
+		mutex_enter(sc->sc_core_lock);
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
@@ -5895,12 +5954,13 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 			}
 			sc->bge_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
+		mutex_exit(sc->sc_core_lock);
 
 		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
 			    command);
 		} else {
-			mii = &sc->bge_mii;
+			struct mii_data * const mii = &sc->bge_mii;
 			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media,
 			    command);
 		}
@@ -5911,10 +5971,13 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 		error = 0;
 
-		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING)
-			bge_setmulti(sc);
+		if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
+			mutex_enter(sc->sc_core_lock);
+			if (sc->bge_if_flags & IFF_RUNNING) {
+				bge_setmulti(sc);
+			}
+			mutex_exit(sc->sc_core_lock);
+		}
 		break;
 	}
 
@@ -5923,23 +5986,29 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	return error;
 }
 
-static void
-bge_watchdog(struct ifnet *ifp)
+static bool
+bge_watchdog_check(struct bge_softc * const sc)
 {
-	struct bge_softc * const sc = ifp->if_softc;
-	uint32_t status;
+
+	KASSERT(mutex_owned(sc->sc_core_lock));
+
+	if (!sc->bge_tx_sending)
+		return true;
+
+	if (time_uptime - sc->bge_tx_lastsent <= bge_watchdog_timeout)
+		return true;
 
 	/* If pause frames are active then don't reset the hardware. */
 	if ((CSR_READ_4(sc, BGE_RX_MODE) & BGE_RXMODE_FLOWCTL_ENABLE) != 0) {
-		status = CSR_READ_4(sc, BGE_RX_STS);
+		const uint32_t status = CSR_READ_4(sc, BGE_RX_STS);
 		if ((status & BGE_RXSTAT_REMOTE_XOFFED) != 0) {
 			/*
 			 * If link partner has us in XOFF state then wait for
 			 * the condition to clear.
 			 */
 			CSR_WRITE_4(sc, BGE_RX_STS, status);
-			ifp->if_timer = 5;
-			return;
+			sc->bge_tx_lastsent = time_uptime;
+			return true;
 		} else if ((status & BGE_RXSTAT_RCVD_XOFF) != 0 &&
 		    (status & BGE_RXSTAT_RCVD_XON) != 0) {
 			/*
@@ -5947,8 +6016,8 @@ bge_watchdog(struct ifnet *ifp)
 			 * the condition to clear.
 			 */
 			CSR_WRITE_4(sc, BGE_RX_STS, status);
-			ifp->if_timer = 5;
-			return;
+			sc->bge_tx_lastsent = time_uptime;
+			return true;
 		}
 		/*
 		 * Any other condition is unexpected and the controller
@@ -5956,12 +6025,52 @@ bge_watchdog(struct ifnet *ifp)
 		 */
 	}
 
+	return false;
+}
+
+static bool
+bge_watchdog(struct ifnet *ifp)
+{
+	struct bge_softc * const sc = ifp->if_softc;
+
+	KASSERT(mutex_owned(sc->sc_core_lock));
+
+	if (!sc->sc_triggerreset && bge_watchdog_check(sc))
+		return true;
+
 	aprint_error_dev(sc->bge_dev, "watchdog timeout -- resetting\n");
 
-	ifp->if_flags &= ~IFF_RUNNING;
+	if (atomic_swap_uint(&sc->sc_reset_pending, 1) == 0)
+		workqueue_enqueue(sc->sc_reset_wq, &sc->sc_reset_work, NULL);
+
+	return false;
+}
+
+/*
+ * Perform an interface watchdog reset.
+ */
+static void
+bge_handle_reset_work(struct work *work, void *arg)
+{
+	struct bge_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
+
+	/* Don't want ioctl operations to happen */
+	IFNET_LOCK(ifp);
+
+	/* reset the interface. */
 	bge_init(ifp);
 
-	if_statinc(ifp, if_oerrors);
+	IFNET_UNLOCK(ifp);
+
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ or one CPU system
+	 */
+	/* Try to get more packets going. */
+	ifp->if_start(ifp);
+
+	atomic_store_relaxed(&sc->sc_reset_pending, 0);
 }
 
 static void
@@ -5987,14 +6096,29 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		    (u_long)reg, bit);
 }
 
+
+static void
+bge_stop(struct ifnet *ifp, int disable)
+{
+	struct bge_softc * const sc = ifp->if_softc;
+
+	ASSERT_SLEEPABLE();
+
+	mutex_enter(sc->sc_core_lock);
+	bge_stop_locked(ifp, disable);
+	mutex_exit(sc->sc_core_lock);
+}
+
 /*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
 static void
-bge_stop(struct ifnet *ifp, int disable)
+bge_stop_locked(struct ifnet *ifp, int disable)
 {
 	struct bge_softc * const sc = ifp->if_softc;
+
+	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	if (disable) {
 		sc->bge_detaching = 1;
@@ -6093,7 +6217,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	/* Clear MAC's link state (PHY may still have link UP). */
 	BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static void
@@ -6277,6 +6401,16 @@ bge_sysctl_init(struct bge_softc *sc)
 
 	bge_rxthresh_nodenum = node->sysctl_num;
 
+#ifdef BGE_DEBUG
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "trigger_reset",
+	    SYSCTL_DESCR("Trigger an interface reset"),
+	    NULL, 0, &sc->sc_triggerreset, 0, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		goto out;
+	}
+#endif
 	return;
 
 out:
