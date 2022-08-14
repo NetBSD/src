@@ -1,4 +1,4 @@
-/* $NetBSD: efigop.c,v 1.2 2021/10/06 10:13:19 jmcneill Exp $ */
+/* $NetBSD: efigop.c,v 1.3 2022/08/14 11:26:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -87,8 +87,13 @@ efi_gop_show(void)
 		return;
 	}
 
-	printf("GOP: ");
+	command_printtab("GOP", "");
 	efi_gop_printmode(gop->Mode->Mode, gop->Mode->Info);
+	if (gop->Mode->FrameBufferBase != 0) {
+		printf(" (0x%lx,0x%lx)",
+		    (unsigned long)gop->Mode->FrameBufferBase,
+		    (unsigned long)gop->Mode->FrameBufferSize);
+	}
 	printf("\n");
 }
 
