@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.317 2022/08/14 04:17:09 rillig Exp $
+.\"	$NetBSD: make.1,v 1.318 2022/08/14 08:49:00 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,7 +79,7 @@ and makefiles, please refer to
 .Pp
 .Nm
 prepends the contents of the
-.Va MAKEFLAGS
+.Ev MAKEFLAGS
 environment variable to the command line arguments before parsing them.
 .Pp
 The options are as follows:
@@ -108,7 +108,7 @@ are to print debugging information.
 Unless the flags are preceded by
 .Ql \-
 they are added to the
-.Va MAKEFLAGS
+.Ev MAKEFLAGS
 environment variable and will be processed by any child make processes.
 By default, debugging information is printed to standard error,
 but this can be changed using the
@@ -400,7 +400,7 @@ Print entering and leaving directory messages, pre and post processing.
 Don't export variables passed on the command line to the environment
 individually.
 Variables passed on the command line are still exported via the
-.Va MAKEFLAGS
+.Ev MAKEFLAGS
 environment variable.
 This option may be useful on systems which have a small limit on the
 size of command arguments.
@@ -1360,7 +1360,7 @@ The value is a format string for
 using
 .Xr gmtime 3 .
 If a
-.Va utc
+.Ar utc
 value is not provided or is 0, the current time is used.
 .It Cm \&:hash
 Computes a 32-bit hash of the value and encode it as hex digits.
@@ -1370,7 +1370,7 @@ The value is a format string for
 using
 .Xr localtime 3 .
 If a
-.Va utc
+.Ar utc
 value is not provided or is 0, the current time is used.
 .It Cm \&:tA
 Attempts to convert variable to an absolute path using
@@ -1590,7 +1590,7 @@ However a single character variable is often more readable:
 Saves the current variable value in
 .Ql $_
 or the named
-.Va var
+.Ar var
 for later reference.
 Example usage:
 .Bd -literal -offset indent
@@ -1833,7 +1833,7 @@ Only global variables can be un-defined.
 The opposite of
 .Ql .export .
 The specified global
-.Va variable
+.Ar variable
 will be removed from
 .Va .MAKE.EXPORTED .
 If no variable list is provided, all globals are unexported,
