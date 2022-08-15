@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.29 2019/05/04 13:12:03 tsutsui Exp $
+#	$NetBSD: MILAN.in,v 1.30 2022/08/15 04:40:20 tsutsui Exp $
 #
 # Milan
 #
@@ -34,6 +34,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x25\""
+# use explicit WSDISPLAY_FONTENC_IBM font that MI vga(4) assumes
+options 	FONT_VT220L8x16
 
 #
 # The following sections describe various hardware options.
