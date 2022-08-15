@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.39 2020/09/08 17:02:18 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.40 2022/08/15 11:43:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.39 2020/09/08 17:02:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.40 2022/08/15 11:43:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -324,6 +324,8 @@ workqueue_wait(struct workqueue *wq, struct work *wk)
 	struct workqueue_queue *q;
 	bool found;
 
+	ASSERT_SLEEPABLE();
+
 	if (ISSET(wq->wq_flags, WQ_PERCPU)) {
 		struct cpu_info *ci;
 		CPU_INFO_ITERATOR cii;
@@ -345,6 +347,8 @@ workqueue_destroy(struct workqueue *wq)
 	struct workqueue_queue *q;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+
+	ASSERT_SLEEPABLE();
 
 	wq->wq_func = workqueue_exit;
 	for (CPU_INFO_FOREACH(cii, ci)) {
