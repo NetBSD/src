@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.62 2022/08/14 12:08:57 jmcneill Exp $	*/
+/*	$NetBSD: nvme.c,v 1.63 2022/08/15 10:15:59 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.62 2022/08/14 12:08:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.63 2022/08/15 10:15:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2069,8 +2069,10 @@ nvme_intr_msi(void *xq)
 {
 	struct nvme_queue *q = xq;
 
-	KASSERT(q && q->q_sc && q->q_sc->sc_softih
-	    && q->q_sc->sc_softih[q->q_id]);
+	KASSERT(q);
+	KASSERT(q->q_sc);
+	KASSERT(q->q_sc->sc_softih);
+	KASSERT(q->q_sc->sc_softih[q->q_id]);
 
 	/*
 	 * MSI/MSI-X are edge triggered, so can handover processing to softint
