@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.63 2022/08/15 11:29:53 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.64 2022/08/15 12:16:25 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.63 2022/08/15 11:29:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.64 2022/08/15 12:16:25 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,16 +123,14 @@ static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *,
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
 static int	esp_dma_isactive(struct ncr53c9x_softc *);
-static void	esp_quick_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static void	esp_dma_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	esp_quick_dma_intr(struct ncr53c9x_softc *);
 static int	esp_quick_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 			size_t *, int, size_t *);
 static void	esp_quick_dma_go(struct ncr53c9x_softc *);
 
-static void	esp_av_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static void	esp_av_dma_reset(struct ncr53c9x_softc *);
 static int	esp_av_dma_intr(struct ncr53c9x_softc *);
-static int	esp_av_pio_intr(struct ncr53c9x_softc *);
 static int	esp_av_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *,
 			int, size_t *);
 static void	esp_av_dma_go(struct ncr53c9x_softc *);
@@ -233,12 +231,12 @@ dafb_dreq:	bst = oa->oa_tag;
 	}
 
 	if (quick) {
-		esp_glue.gl_write_reg = esp_quick_write_reg;
+		esp_glue.gl_write_reg = esp_dma_write_reg;
 		esp_glue.gl_dma_intr = esp_quick_dma_intr;
 		esp_glue.gl_dma_setup = esp_quick_dma_setup;
 		esp_glue.gl_dma_go = esp_quick_dma_go;
 	} else if (avdma) {
-		esp_glue.gl_write_reg = esp_av_write_reg;
+		esp_glue.gl_write_reg = esp_dma_write_reg;
 		esp_glue.gl_dma_reset = esp_av_dma_reset;
 		esp_glue.gl_dma_intr = esp_av_dma_intr;
 		esp_glue.gl_dma_setup = esp_av_dma_setup;
@@ -260,11 +258,19 @@ dafb_dreq:	bst = oa->oa_tag;
 		esc->sc_reg = (volatile uint8_t *)SCSIBase;
 		via2_register_irq(VIA2_SCSIIRQ, esp_intr, esc);
 		irq_mask = V2IF_SCSIIRQ;
-		if (reg_offset == 0x10000) {
+		switch (reg_offset) {
+		case 0x10000:
 			/* From the Q650 developer's note */
 			sc->sc_freq = 16500000;
-		} else
+			break;
+		case 0x18000:
+			/* From Quadra 840AV Service Source */
+			sc->sc_freq = 20000000;
+			break;
+		default:
 			sc->sc_freq = 25000000;
+			break;
+		}
 	} else {
 		esp1 = esc;
 
@@ -322,20 +328,14 @@ dafb_dreq:	bst = oa->oa_tag;
 		break;
 	}
 
-	if (!quick) {
+	if (!quick && !avdma) {
 		/*
 		 * No synchronous xfers w/o DMA.
-		 *
-		 * XXXRO
-		 * Also disable synchronous xfers for AV Macs;
-		 * sync negotiation times out when drive advertises that
-		 * capability, even if avdma code is forcibly disabled.
 		 */
 		sc->sc_minsync = 0;
-	}
 
-	if (!quick && !avdma)
 		sc->sc_maxxfer = 8 * 1024;
+	}
 
 	/*
 	 * Configure interrupts.
@@ -354,7 +354,6 @@ dafb_dreq:	bst = oa->oa_tag;
 		int orsegs, irsegs;
 
 		esc->sc_rset = 0;
-		esc->sc_pio = 0;
 		esc->sc_dmat = oa->oa_dmat;
 
 		if (bus_dmamap_create(esc->sc_dmat, sc->sc_maxxfer, 1,
@@ -365,42 +364,49 @@ dafb_dreq:	bst = oa->oa_tag;
 		}
 
 		/*
-		 * Allocate memory which is friendly to the DMA engine
-		 * (16-byte aligned) for use as the SCSI message buffers.
-		 *
-		 * XXX
-		 * We need two buffers here. Since bus_dmamem_map(9) for
-		 * m68k round size into NBPG.
+		 * Allocate ``bounce'' buffers which satisfy constraints
+		 * required by PSC, see esp_av_dma_setup().
 		 */
 		if (bus_dmamem_alloc(esc->sc_dmat, NBPG, 16, NBPG,
 		    &osegs, 1, &orsegs, BUS_DMA_NOWAIT)) {
-			printf("failed to allocate omess buffer.\n");
+			printf("failed to allocate o-bounce buffer.\n");
 			goto out1;
 		}
 		if (bus_dmamem_map(esc->sc_dmat, &osegs, orsegs,
-		    NCR_MAX_MSG_LEN, (void **)&sc->sc_omess,
+		    NBPG, (void **)&esc->sc_obuf,
 		    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
-			printf("failed to map omess buffer.\n");
+			printf("failed to map o-bounce buffer.\n");
 			goto out2;
 		}
-
 		if (bus_dmamem_alloc(esc->sc_dmat, NBPG, 16, NBPG,
 		    &isegs, 1, &irsegs, BUS_DMA_NOWAIT)) {
-			printf("failed to allocate imess buffer.\n");
+			printf("failed to allocate i-bounce buffer.\n");
 			goto out3;
 		}
 		if (bus_dmamem_map(esc->sc_dmat, &isegs, irsegs,
-		    NCR_MAX_MSG_LEN + 1, (void **)&sc->sc_imess,
+		    NBPG, (void **)&esc->sc_ibuf,
 		    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
-			printf("failed to map imess buffer.\n");
+			printf("failed to map i-bounce buffer.\n");
 
 			bus_dmamem_free(esc->sc_dmat, &isegs, irsegs);
-		out3:	bus_dmamem_unmap(esc->sc_dmat, sc->sc_omess, NBPG);
-		out2:	bus_dmamem_free(esc->sc_dmat, &osegs, orsegs);
-		out1:	bus_dmamap_destroy(esc->sc_dmat, esc->sc_dmap);
+ out3:			bus_dmamem_unmap(esc->sc_dmat, sc->sc_omess,
+			    sc->sc_maxxfer);
+ out2:			bus_dmamem_free(esc->sc_dmat, &osegs, orsegs);
+ out1:			bus_dmamap_destroy(esc->sc_dmat, esc->sc_dmap);
 			return;
 		}
 	}
+
+#if 0
+	/*
+	 * This degrades performance; FIFO is better than bounce DMA for
+	 * short SCSI commands and their responses.
+	 */
+	if (avdma) {
+		/* Turn on target selection using the `DMA' method */
+		sc->sc_features |= NCR_F_DMASELECT;
+	}
+#endif
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -569,7 +575,7 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 }
 
 static void
-esp_quick_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
+esp_dma_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -984,29 +990,16 @@ esp_dualbus_intr(void *sc)
 }
 
 static void
-esp_av_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
-{
-	struct esp_softc *esc = (struct esp_softc *)sc;
-	uint8_t v;
-
-	if (esc->sc_pio && reg == NCR_CMD && val == (NCRCMD_TRANS|NCRCMD_DMA))
-		v = NCRCMD_TRANS;
-	else
-		v = val;
-	esc->sc_reg[reg * 16] = v;
-}
-
-static void
 esp_av_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	uint32_t res;
 
-	if(esc->sc_active && !esc->sc_pio)
+	if (esc->sc_active)
 		stop_psc_dma(PSC_DMA_CHANNEL_SCSI, esc->sc_rset, &res,
 		    esc->sc_datain);
 
-	esc->sc_active = esc->sc_tc = 0;
+	esc->sc_active = 0;
 }
 
 static int
@@ -1014,13 +1007,9 @@ esp_av_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	uint32_t resid;
-	int trans, fifo_count;
+	int trans;
 
 	KASSERT(esc->sc_active);
-
-	/* Deal with any PIO transfers */
-	if (esc->sc_pio)
-		return esp_av_pio_intr(sc);
 
 #if DEBUG
 	int tc_size;
@@ -1035,51 +1024,41 @@ esp_av_dma_intr(struct ncr53c9x_softc *sc)
 
 	if (esc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
+#if DEBUG
+		printf("%s: TRPAD done\n", __func__);
+#endif
 		return 0;
 	}
 
+#if 0
+	/*
+	 * XXXRO dead code
+	 * Left unremoved for reference how to use wait_psc_dma().
+	 */
 	if ((sc->sc_espintr & NCRINTR_BS) && (sc->sc_espstat & NCRSTAT_TC)) {
 		/* Wait for engine to finish the transfer */
 		wait_psc_dma(PSC_DMA_CHANNEL_SCSI, esc->sc_rset, &resid);
-#if DEBUG 
+#  if DEBUG
 		printf("[av_dma_intr: DMA %s done]\n", esc->sc_datain ?
 		    "read" : "write");
-#endif
+#  endif
 	}
+#endif
 
 	/* Halt the DMA engine */
 	stop_psc_dma(PSC_DMA_CHANNEL_SCSI, esc->sc_rset, &resid,
 	    esc->sc_datain);
+
+#if DEBUG
+	printf("[av_dma_intr: DMA resid %u]\n", resid);
+#endif
 	
 	bus_dmamap_sync(esc->sc_dmat, esc->sc_dmap, 0, esc->sc_dmasize,
 	    esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_dmap);
 
-	/* On read, bytes in the FIFO count as residual */
-	if (esc->sc_datain) {
-		fifo_count = (int)(NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
-		resid += fifo_count;
-		if (fifo_count) {
-			/*
-			 * Flush those bytes since we don't know
-			 * what state they were in.
-			 */
-			NCRCMD(sc, NCRCMD_FLUSH);
-#if DEBUG 
-			printf("[av_dma_intr: flushed %d bytes from FIFO]\n",
-			    fifo_count) ;
-#endif
-		}
-	}
-
 	trans = esc->sc_dmasize - resid;
-	if (trans < 0) {
-		/*
-		 * XXXRO
-		 * This situation can happen in perfectly normal operation
-		 * if the ESP is reselected while using DMA to select
-		 * another target.  As such, don't print the warning.
-		 */
+	if (__predict_false(trans < 0)) {
 #if DEBUG
 		printf("[av_dma_intr: xfer (%d) > req (%zu)]\n",
 		    trans, esc->sc_dmasize);
@@ -1092,102 +1071,13 @@ esp_av_dma_intr(struct ncr53c9x_softc *sc)
 	    esc->sc_datain ? "read" : "write", trans, resid);
 #endif
 
-	*esc->sc_dmalen -= trans;
+	if (__predict_false(esc->sc_ibuf_used)) {
+		memcpy(*esc->sc_dmaaddr, esc->sc_ibuf, trans);
+		esc->sc_ibuf_used = 0;
+	}
+
 	*esc->sc_dmaaddr += trans;
-
-	return 0;
-}
-
-static int
-esp_av_pio_intr(struct ncr53c9x_softc *sc)
-{
-	struct esp_softc *esc = (struct esp_softc *)sc;
-	int espphase, cnt, s;
-	uint8_t espstat, espintr;
-	volatile uint8_t *cmdreg, *intrreg, *statreg, *fiforeg;
-	uint8_t *p;
-
-#if DEBUG
-	printf("[av_pio_intr: intr 0x%x stat 0x%x]\n", sc->sc_espintr,
-	    sc->sc_espstat);
-#endif
-
-	if ((sc->sc_espintr & NCRINTR_BS) == 0) {
-		esc->sc_active = 0;
-		return 0;
-	}
-
-	cnt = esc->sc_dmasize;
-#if DEBUG
-	/*
-	 * XXXRO
-	 * Is this possible?
-	 */
-	if (cnt == 0)
-		printf("data interrupt, but no count left.\n");
-#endif
-
-	p = *esc->sc_dmaaddr;
-	espphase = sc->sc_phase;
-	espstat = sc->sc_espstat;
-	espintr = sc->sc_espintr;
-	cmdreg = esc->sc_reg + NCR_CMD * 16;
-	fiforeg = esc->sc_reg + NCR_FIFO * 16;
-	statreg = esc->sc_reg + NCR_STAT * 16;
-	intrreg = esc->sc_reg + NCR_INTR * 16;
-	do {
-		if (esc->sc_datain) {
-			*p++ = *fiforeg;
-			cnt--;
-			if (espphase == DATA_IN_PHASE)
-				*cmdreg = NCRCMD_TRANS;
-			else
-				esc->sc_active = 0;
-		} else {
-			if ((espphase == DATA_OUT_PHASE) ||
-			    (espphase == MESSAGE_OUT_PHASE)) {
-				*fiforeg = *p++;
-				cnt--;
-				*cmdreg = NCRCMD_TRANS;
-			} else
-				esc->sc_active = 0;
-		}
-
-		if (esc->sc_active) {
-			while (!(*statreg & NCRSTAT_INT));
-			s = splhigh();
-			espstat = *statreg;
-			espintr = *intrreg;
-			if (espintr & NCRINTR_DIS)
-				espphase = BUSFREE_PHASE; /* disconnected */
-			else
-				espphase = espstat & PHASE_MASK;
-			splx(s);
-		}
-	} while (cnt > 0 /* XXXRO not present in esp_dma_intr() */ &&
-	    esc->sc_active && (espintr & NCRINTR_BS));
-
-	/* XXXRO */
-	KASSERT(cnt >= 0);
-
-	sc->sc_phase = espphase;
-	sc->sc_espstat = espstat;
-	sc->sc_espintr = espintr;
-	*esc->sc_dmaaddr = p;
-	*esc->sc_dmalen -= esc->sc_dmasize - cnt;
-
-	if (cnt == 0) {
-		/* XXXRO */
-		esc->sc_active = 0;
-		esc->sc_tc = NCRSTAT_TC;
-	}
-
-	sc->sc_espstat |= esc->sc_tc;
-
-#if DEBUG 
-	printf("[av_pio_intr: PIO %s of %d bytes done %d residual]\n",
-	    esc->sc_datain ? "read" : "write", esc->sc_dmasize - cnt, cnt) ;
-#endif
+	*esc->sc_dmalen -= trans;
 
 	return 0;
 }
@@ -1197,9 +1087,9 @@ esp_av_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	size_t round_bytes;
+	uint8_t **dmaaddr;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = dmaaddr = addr;
 	esc->sc_dmalen = len;
 	esc->sc_datain = datain;
 
@@ -1213,68 +1103,47 @@ esp_av_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	}
 
 	/*
-	 * Do short transfers of 16 bytes or less using PIO.
+	 * According to analysis by Michael Zucca, PSC seems to
+	 * require that DMA buffer is
+	 *   (1) aligned to 16-byte boundares, and
+	 *   (2) multiple of 16 bytes in size.
+	 * If the buffer does not satisfy these constraints, use
+	 * ``bounce'' buffer instead.
+	 *
+	 * Note that this does not hurt I/O performance at all;
+	 * bounce buffer is not used by MI routines for data
+	 * transfer for filesystem nor swap operations. It is
+	 * used only
+	 *    (a) when disk is attached, and
+	 *    (b) for special utilities like fsck(8) or fdisk(8)
+	 * as far as we can tell.
+	 *
+	 * Also note that PSC seems to allow buffer which does not
+	 * satisfy constraint (2) above. However, we use bounce
+	 * buffer for safety. This cannot affect performance anyway.
+	 *
+	 * Further, we prefer bounce buffer over PIO:
+	 *    (A) NCR53C94/PSC do not seem to allow partial PIO.
+	 *	  (port-mac68k/56131)
+	 *    (B) Synchronous transfer fails with PIO.
 	 */
-	if (*dmasize <= 16) {
-		esc->sc_pio = 1;
-		esc->sc_tc = 0;
-		esc->sc_dmasize = *dmasize;
-#ifdef DEBUG
-		printf("[av_dma_setup: short PIO "
-		    "req %zu act %zu v %p p 0x%x %s]\n",
-		    *len, esc->sc_dmasize, *esc->sc_dmaaddr,
-		    kvtop(*esc->sc_dmaaddr), esc->sc_datain ?
-		    "read" : "write");
+	if (__predict_false(*dmasize % 16 || (uintptr_t)*addr & 0xf)) {
+#if 1 /* XXXRO */
+		printf("[avdma bounce DMA %s addr %p size %zu]\n",
+		    datain ? "read" : "write", *addr, *dmasize);
 #endif
-		return 0;
+		*dmasize = uimin(*dmasize, NBPG);
+		if (datain) {
+			dmaaddr = &esc->sc_ibuf;
+			esc->sc_ibuf_used = 1;
+		} else {
+			memset(esc->sc_obuf, 0, roundup2(*dmasize, 16));
+			memcpy(esc->sc_obuf, *addr, *dmasize);
+			dmaaddr = &esc->sc_obuf;
+		}
 	}
 
-	/*
-	 * Ensure the transfer is on a 16-byte aligned boundary for
-	 * the DMA engine by doing PIO to the next 16-byte boundary.
-	 */
-	if ((uintptr_t)*addr & 0xf) {
-		esc->sc_pio = 1;
-		esc->sc_tc = 0;
-
-		round_bytes = 16 - ((uintptr_t)*addr & 0xf);
-
-		/* Try to optimize for fewer interrrupts */
-		if (*dmasize > 16 + round_bytes)
-			esc->sc_dmasize = round_bytes;
-		else
-			esc->sc_dmasize = *dmasize;
-
-#ifdef DEBUG
-		printf("[av_dma_setup: round PIO "
-		    "req %zu act %zu v %p p 0x%x %s]\n",
-		    *len, esc->sc_dmasize, *esc->sc_dmaaddr,
-		    kvtop(*esc->sc_dmaaddr), esc->sc_datain ?
-		    "read" : "write");
-#endif
-
-		return 0;
-	}
-
-	/*
-	 * The DMA engine seems to like to move data in multiples of
-	 * 16 bytes. So if there are any trailing bytes, we move them
-	 * using PIO.
-	 */
-	if(*dmasize & 0xf) {
-#ifdef DEBUG
-		printf("[av_dma_setup: trimming %zu trailing bytes from DMA]\n",
-		    *dmasize & 0xf);
-#endif
-		*dmasize -= *dmasize & 0xf;
-	}
-
-	/*
-	 * At this point the data is acceptable for a DMA transaction.
-	 */
-	esc->sc_pio = 0;
-
-	bus_dmamap_load(esc->sc_dmat, esc->sc_dmap, *esc->sc_dmaaddr,
+	bus_dmamap_load(esc->sc_dmat, esc->sc_dmap, *dmaaddr,
 	    *dmasize, NULL, BUS_DMA_NOWAIT);
 
 	/*
@@ -1301,7 +1170,7 @@ esp_av_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 #endif
 	start_psc_dma(PSC_DMA_CHANNEL_SCSI, &esc->sc_rset,
 	    esc->sc_dmap->dm_segs[0].ds_addr,
-	    esc->sc_dmasize & ~0x1UL, esc->sc_datain);
+	    esc->sc_dmasize, esc->sc_datain);
 
 	return 0;
 }
@@ -1318,12 +1187,6 @@ esp_av_dma_go(struct ncr53c9x_softc *sc)
 	if (esc->sc_dmasize == 0)
 		return;
 
-	if (esc->sc_pio && esc->sc_datain == 0) {
-		NCR_WRITE_REG(sc, NCR_FIFO, **esc->sc_dmaaddr);
-		(*esc->sc_dmaaddr)++;
-		(*esc->sc_dmalen)--;
-		esc->sc_dmasize--;
-	}
 	esc->sc_active = 1;
 }
 
@@ -1333,11 +1196,11 @@ esp_av_dma_stop(struct ncr53c9x_softc *sc)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	uint32_t res;
 
-	if (esc->sc_active && !esc->sc_pio)
+	if (esc->sc_active)
 		stop_psc_dma(PSC_DMA_CHANNEL_SCSI, esc->sc_rset, &res,
 		    esc->sc_datain);
 
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_dmap);
 
-	esc->sc_active = esc->sc_tc = 0;
+	esc->sc_active = 0;
 }
