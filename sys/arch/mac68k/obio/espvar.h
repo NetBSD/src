@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.9 2019/07/23 15:19:07 rin Exp $	*/
+/*	$NetBSD: espvar.h,v 1.10 2022/08/15 12:16:25 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -46,7 +46,9 @@ struct esp_softc {
 
 	/* for avdma */
 	int		sc_rset;
-	int		sc_pio;
+	int		sc_ibuf_used;
+	uint8_t		*sc_obuf;
+	uint8_t		*sc_ibuf;
 	bus_dma_tag_t	sc_dmat;
 	bus_dmamap_t	sc_dmap;
 };
