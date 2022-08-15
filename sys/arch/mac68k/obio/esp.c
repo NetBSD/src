@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.62 2022/08/15 11:22:45 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.63 2022/08/15 11:29:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.62 2022/08/15 11:22:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.63 2022/08/15 11:29:53 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1341,4 +1341,3 @@ esp_av_dma_stop(struct ncr53c9x_softc *sc)
 
 	esc->sc_active = esc->sc_tc = 0;
 }
-
