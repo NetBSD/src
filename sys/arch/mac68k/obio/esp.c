@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.60 2021/02/22 05:23:36 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.61 2022/08/15 11:18:12 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.60 2021/02/22 05:23:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.61 2022/08/15 11:18:12 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,12 +202,15 @@ espattach(device_t parent, device_t self, void *aux)
 	 * pseudo-DMA timing.  The default value is 0x1d1.
 	 */
 	if (oa->oa_addr == 0) {
-		if (reg_offset == 0x10000) {
+		switch (reg_offset) {
+		case 0x10000:
 			quick = 1;
 			esp_have_dreq = esp_iosb_have_dreq;
-		} else if (reg_offset == 0x18000)
+			break;
+		case 0x18000:
 			avdma = 1;
-		else {
+			break;
+		default:
 			addr = 0xf9800024;
 			goto dafb_dreq;
 		}
@@ -262,11 +265,6 @@ dafb_dreq:	bst = oa->oa_tag;
 			sc->sc_freq = 16500000;
 		} else
 			sc->sc_freq = 25000000;
-
-		if (quick)
-			aprint_normal(" (quick)");
-		else if (avdma)
-			aprint_normal(" (avdma)");
 	} else {
 		esp1 = esc;
 
@@ -274,10 +272,12 @@ dafb_dreq:	bst = oa->oa_tag;
 		via2_register_irq(VIA2_SCSIIRQ, esp_dualbus_intr, NULL);
 		irq_mask = 0;
 		sc->sc_freq = 25000000;
-
-		if (quick)
-			printf(" (quick)");
 	}
+
+	if (quick)
+		aprint_normal(" (quick)");
+	else if (avdma)
+		aprint_normal(" (avdma)");
 
 	aprint_normal(": address %p", esc->sc_reg);
 
