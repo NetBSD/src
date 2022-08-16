@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1867 2022/08/06 09:39:50 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1868 2022/08/16 11:09:08 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1410,14 +1410,14 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2022a / tzdata2022agtz
-Current Vers:	tzcode2022a / tzdata2022a
+Version:	tzcode2022c / tzdata2022agtz
+Current Vers:	tzcode2022c / tzdata2022c
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
-Date:		2021-10-22
+Date:		2022-08-16
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
