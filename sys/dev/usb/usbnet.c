@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.96 2022/08/12 11:25:45 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.97 2022/08/16 00:44:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.96 2022/08/12 11:25:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.97 2022/08/16 00:44:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,16 +102,10 @@ volatile unsigned usbnet_number;
 static void usbnet_isowned_rx(struct usbnet *);
 static void usbnet_isowned_tx(struct usbnet *);
 
-static kmutex_t *
-usbnet_mutex_core(struct usbnet *un)
-{
-	return &un->un_pri->unp_core_lock;
-}
-
-static __inline__ void
+static inline void
 usbnet_isowned_core(struct usbnet *un)
 {
-	KASSERT(mutex_owned(usbnet_mutex_core(un)));
+	KASSERT(mutex_owned(&un->un_pri->unp_core_lock));
 }
 
 static int usbnet_modcmd(modcmd_t, void *);
@@ -1431,9 +1425,9 @@ usbnet_attach_mii(struct usbnet *un, const struct usbnet_mii *unm)
 
 	usbnet_ec(un)->ec_mii = mii;
 	ifmedia_init_with_lock(&mii->mii_media, 0,
-	    usbnet_media_upd, ether_mediastatus, usbnet_mutex_core(un));
+	    usbnet_media_upd, ether_mediastatus, &unp->unp_core_lock);
 	mii_attach(un->un_dev, mii, unm->un_mii_capmask, unm->un_mii_phyloc,
-		   unm->un_mii_offset, unm->un_mii_flags);
+	    unm->un_mii_offset, unm->un_mii_flags);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
