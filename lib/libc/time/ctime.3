@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.62 2021/09/28 06:45:08 kim Exp $
+.\" $NetBSD: ctime.3,v 1.63 2022/08/16 11:07:40 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd September 2, 2019
+.Dd August 16, 2022
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -358,8 +358,9 @@ so were made when the library containing these functions  was
 created.
 Similarly, the
 .Va tzname
-variable is optional.
-There is no guarantee that these fields and this variable will
+variable is optional; also, there is no guarantee that
+.Dv tzname
+will
 continue to exist in this form in future releases of this code.
 .Sh RETURN VALUES
 .Bl -bullet
