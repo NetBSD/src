@@ -53,6 +53,8 @@ struct hppa_pci_chipset_tag {
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
 			    char *, size_t);
+	int		(*pc_intr_setattr)(void *, pci_intr_handle_t *,
+			    int, uint64_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
@@ -85,6 +87,15 @@ struct hppa_pci_chipset_tag {
     (*(c)->pc_intr_establish)((c)->_cookie, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->_cookie, (iv))
+
+static inline int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ihp,
+    int attr, uint64_t data)
+{
+	if (!pc->pc_intr_setattr)
+		return ENODEV;
+	return pc->pc_intr_setattr(pc, ihp, attr, data);
+}
 
 #define	pciide_machdep_compat_intr_establish(a, b, c, d, e)	(NULL)
 #define	pciide_machdep_compat_intr_disestablish(a, b)	((void)(a), (void)(b))
