@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.19 2020/06/07 06:02:58 thorpej Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.20 2022/08/16 10:47:10 nat Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.19 2020/06/07 06:02:58 thorpej Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.20 2022/08/16 10:47:10 nat Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,11 +68,14 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
     const struct afparam *param)
 {
 	const char *ifname;
+	struct ifreq ifr;
 	int af, rc, s;
 	bool alias, delete, replace;
 	prop_data_t d;
 	const struct paddr_prefix *addr, *brd, *dst, *mask;
 	unsigned short flags;
+
+	addr = NULL;
 
 	if ((af = getaf(env)) == -1)
 		af = AF_INET;
@@ -89,8 +92,23 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) != NULL)
 		addr = prop_data_value(d);
 	else if (!prop_dictionary_get_bool(env, "alias", &alias) || alias ||
-	    param->gifaddr.cmd == 0)
-		return;
+	    param->gifaddr.cmd == 0) {
+		if (addr == NULL) {
+			static struct paddr_prefix existingaddr;
+
+			memset(&ifr, 0, sizeof(ifr));
+			estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+			if (prog_ioctl(s, SIOCGIFADDR, &ifr) == -1) {
+				if (errno == EADDRNOTAVAIL ||
+				    errno == EAFNOSUPPORT)
+					return;
+				err(EXIT_FAILURE,"SIOCGIFADDR");
+			}
+
+			existingaddr.pfx_addr = ifr.ifr_addr;
+			addr = &existingaddr;
+		}
+	}
 	else if (prog_ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
 		err(EXIT_FAILURE, "%s", param->gifaddr.desc);
 	else if (prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
