@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.10 2019/03/06 12:40:23 nakayama Exp $
+#	$NetBSD: Makefile.xdm,v 1.11 2022/08/16 22:44:06 mrg Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -6,12 +6,13 @@ XDMCHOOSERPATH=	${X11ROOTDIR}/libexec/chooser
 XDMGREETERLIB=	${X11ROOTDIR}/lib/libXdmGreet.so
 XDMLOGDIR=	/var/log
 XDMPIDDIR=	/var/run
+DEV_RANDOM=	/dev/urandom
 
 CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 		-DHASXDMAUTH ${X11FLAGS.CONNECTION} \
 		-DBSD44SOCKETS \
 		-DFRAGILE_DEV_MEM -DARC4_RANDOM \
-		-DDEV_RANDOM=\"dev/urandom\" \
+		-DDEV_RANDOM=\"${DEV_RANDOM}\" \
 		-DXPM -DUSE_XFT \
 		-DHAVE_GETIFADDRS \
 		-DHAVE_MKSTEMP \
