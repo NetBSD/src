@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.49 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.50 2022/08/16 10:56:21 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.49 2021/10/22 14:26:04 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.50 2022/08/16 10:56:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ static char *	_fmt(const timezone_t, const char *, const struct tm *, char *,
 static char *	_yconv(int, int, bool, bool, char *, const char *, locale_t);
 
 #ifndef YEAR_2000_NAME
-#define YEAR_2000_NAME	"CHECK_STRFTIME_FORMATS_FOR_TWO_DIGIT_YEARS"
+# define YEAR_2000_NAME "CHECK_STRFTIME_FORMATS_FOR_TWO_DIGIT_YEARS"
 #endif /* !defined YEAR_2000_NAME */
 
 #define	IN_NONE	0
@@ -376,23 +376,10 @@ label:
 
 					tm = *t;
 					mkt = mktime_z(sp, &tm);
-					if (mkt == (time_t) -1) {
-						/* Fail unless this -1
-						 * represents a valid time.
-						 */
-						struct tm tm_1;
-#define sametm(tm1, tm2) \
-	((tm1)->tm_year == (tm2)->tm_year && \
-	(tm1)->tm_yday == (tm2)->tm_yday && \
-	(tm1)->tm_hour == (tm2)->tm_hour && \
-	(tm1)->tm_min == (tm2)->tm_min && \
-	(tm1)->tm_sec == (tm2)->tm_sec)
-						if (!localtime_rz(sp, &mkt,
-						    &tm_1))
-							return NULL;
-						if (!sametm(&tm, &tm_1))
-							return NULL;
-					}
+					/* There is no portable, definitive
+					   test for whether whether mktime
+					   succeeded, so treat (time_t) -1 as
+					   the success that it might be.  */
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t)) {
 						intmax_t n = mkt;
@@ -667,15 +654,15 @@ label:
 # endif
 				negative = diff < 0;
 				if (diff == 0) {
-#ifdef TM_ZONE
+# ifdef TM_ZONE
 				  negative = t->TM_ZONE[0] == '-';
-#else
+# else
 				  negative = t->tm_isdst < 0;
-# if HAVE_TZNAME
+#  if HAVE_TZNAME
 				  if (tzname[t->tm_isdst != 0][0] == '-')
 				    negative = true;
+#  endif
 # endif
-#endif
 				}
 				if (negative) {
 					sign = "-";
@@ -793,7 +780,7 @@ _yconv(int a, int b, bool convert_top, bool convert_yy,
 	int	lead;
 	int	trail;
 
-#define DIVISOR	100
+	int DIVISOR = 100;
 	trail = a % DIVISOR + b % DIVISOR;
 	lead = a / DIVISOR + b / DIVISOR + trail / DIVISOR;
 	trail %= DIVISOR;

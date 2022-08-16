@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.133 2022/03/25 19:34:04 rillig Exp $	*/
+/*	$NetBSD: localtime.c,v 1.134 2022/08/16 10:56:21 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.133 2022/03/25 19:34:04 rillig Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.134 2022/08/16 10:56:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -37,28 +37,25 @@ __weak_alias(tzname,_tzname)
 #endif
 
 #ifndef TZ_ABBR_MAX_LEN
-#define TZ_ABBR_MAX_LEN	16
+# define TZ_ABBR_MAX_LEN 16
 #endif /* !defined TZ_ABBR_MAX_LEN */
 
 #ifndef TZ_ABBR_CHAR_SET
-#define TZ_ABBR_CHAR_SET \
+# define TZ_ABBR_CHAR_SET \
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 :+-._"
 #endif /* !defined TZ_ABBR_CHAR_SET */
 
 #ifndef TZ_ABBR_ERR_CHAR
-#define TZ_ABBR_ERR_CHAR	'_'
+# define TZ_ABBR_ERR_CHAR '_'
 #endif /* !defined TZ_ABBR_ERR_CHAR */
 
 /*
-** SunOS 4.1.1 headers lack O_BINARY.
+** Support non-POSIX platforms that distinguish between text and binary files.
 */
 
-#ifdef O_BINARY
-#define OPEN_MODE	(O_RDONLY | O_BINARY | O_CLOEXEC)
-#endif /* defined O_BINARY */
 #ifndef O_BINARY
-#define OPEN_MODE	(O_RDONLY | O_CLOEXEC)
-#endif /* !defined O_BINARY */
+# define O_BINARY 0
+#endif
 
 #ifndef WILDABBR
 /*
@@ -80,12 +77,13 @@ __weak_alias(tzname,_tzname)
 ** manual page of what this "time zone abbreviation" means (doing this so
 ** that tzname[0] has the "normal" length of three characters).
 */
-#define WILDABBR	"   "
+# define WILDABBR "   "
 #endif /* !defined WILDABBR */
 
 static const char	wildabbr[] = WILDABBR;
 
-static const char	gmt[] = "GMT";
+static char const etc_utc[] = "Etc/UTC";
+static char const *utc = etc_utc + sizeof "Etc/" - 1;
 
 /*
 ** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
@@ -94,7 +92,7 @@ static const char	gmt[] = "GMT";
 ** for historical reasons, US rules are a common default.
 */
 #ifndef TZDEFRULESTRING
-#define TZDEFRULESTRING ",M3.2.0,M11.1.0"
+# define TZDEFRULESTRING ",M3.2.0,M11.1.0"
 #endif
 
 typedef int_fast64_t __time_t;
@@ -112,9 +110,6 @@ struct lsinfo {				/* leap second information */
 	int_fast32_t	ls_corr;	/* correction to apply */
 };
 
-#define SMALLEST(a, b)	(((a) < (b)) ? (a) : (b))
-#define BIGGEST(a, b)	(((a) > (b)) ? (a) : (b))
-
 /* This abbreviation means local time is unspecified.  */
 static char const UNSPEC[] = "-00";
 
@@ -122,13 +117,13 @@ static char const UNSPEC[] = "-00";
    This needs to be at least 1 for null termination in case the input
    data isn't properly terminated, and it also needs to be big enough
    for ttunspecified to work without crashing.  */
-enum { CHARS_EXTRA = BIGGEST(sizeof UNSPEC, 2) - 1 };
+enum { CHARS_EXTRA = max(sizeof UNSPEC, 2) - 1 };
 
 #ifdef TZNAME_MAX
-#define MY_TZNAME_MAX	TZNAME_MAX
+# define MY_TZNAME_MAX TZNAME_MAX
 #endif /* defined TZNAME_MAX */
 #ifndef TZNAME_MAX
-#define MY_TZNAME_MAX	255
+# define MY_TZNAME_MAX 255
 #endif /* !defined TZNAME_MAX */
 
 #define state __state
@@ -142,9 +137,8 @@ struct state {
 	__time_t	ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[/*CONSTCOND*/
-			    BIGGEST(BIGGEST(TZ_MAX_CHARS + CHARS_EXTRA,
-			    sizeof gmt), (2 * (MY_TZNAME_MAX + 1)))];
+	char chars[max(max(TZ_MAX_CHARS + CHARS_EXTRA, sizeof "UTC"),
+		       2 * (MY_TZNAME_MAX + 1))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 
 	/* The time type to use for early times or if no transitions.
@@ -181,7 +175,7 @@ static bool tzparse(char const *, struct state *, struct state *);
 static timezone_t gmtptr;
 
 #ifndef TZ_STRLEN_MAX
-#define TZ_STRLEN_MAX 255
+# define TZ_STRLEN_MAX 255
 #endif /* !defined TZ_STRLEN_MAX */
 
 static char		lcl_TZname[TZ_STRLEN_MAX + 1];
@@ -351,42 +345,59 @@ update_tzname_etc(struct state const *sp, struct ttinfo const *ttisp)
 #endif
 }
 
+/* If STDDST_MASK indicates that SP's TYPE provides useful info,
+   update tzname, timezone, and/or altzone and return STDDST_MASK,
+   diminished by the provided info if it is a specified local time.
+   Otherwise, return STDDST_MASK.  See settzname for STDDST_MASK.  */
+static int
+may_update_tzname_etc(int stddst_mask, struct state *sp, int type)
+{
+  struct ttinfo *ttisp = &sp->ttis[type];
+  int this_bit = 1 << ttisp->tt_isdst;
+  if (stddst_mask & this_bit) {
+    update_tzname_etc(sp, ttisp);
+    if (!ttunspecified(sp, type))
+      return stddst_mask & ~this_bit;
+  }
+  return stddst_mask;
+}
+
 static void
 settzname(void)
 {
 	register timezone_t const	sp = __lclptr;
 	register int			i;
 
+	/* If STDDST_MASK & 1 we need info about a standard time.
+	   If STDDST_MASK & 2 we need info about a daylight saving time.
+	   When STDDST_MASK becomes zero we can stop looking.  */
+	int stddst_mask = 0;
+
 #if HAVE_TZNAME
-	tzname[0] = tzname[1] =
-	    (__aconst char *) __UNCONST(sp ? wildabbr : gmt);
+	tzname[0] = tzname[1] = __UNCONST(sp ? wildabbr : utc);
+	stddst_mask = 3;
 #endif
 #if USG_COMPAT
-	daylight = 0;
 	timezone = 0;
+	stddst_mask = 3;
 #endif
 #if ALTZONE
 	altzone = 0;
+	stddst_mask |= 2;
 #endif
-	if (sp == NULL) {
-		return;
-	}
 	/*
 	** And to get the latest time zone abbreviations into tzname. . .
 	*/
-	for (i = 0; i < sp->typecnt; ++i)
-		update_tzname_etc(sp, &sp->ttis[i]);
+	if (sp) {
+	  for (i = sp->timecnt - 1; stddst_mask && 0 <= i; i--)
+	    stddst_mask = may_update_tzname_etc(stddst_mask, sp, sp->types[i]);
+	  for (i = sp->typecnt - 1; stddst_mask && 0 <= i; i--)
+	    stddst_mask = may_update_tzname_etc(stddst_mask, sp, i);
+ 	}
 
-	for (i = 0; i < sp->timecnt; ++i) {
-		register const struct ttinfo * const	ttisp =
-							&sp->ttis[
-								sp->types[i]];
-		update_tzname_etc(sp, ttisp);
 #if USG_COMPAT
-		if (ttisp->tt_isdst)
-			daylight = 1;
+	daylight = stddst_mask >> 1 ^ 1;
 #endif
-	}
 }
 
 static void
@@ -437,8 +448,7 @@ union local_storage {
   } u;
 
   /* The file name to be opened.  */
-  char fullname[/*CONSTCOND*/BIGGEST(sizeof(struct file_analysis),
-			sizeof tzdirslash + 1024)];
+  char fullname[max(sizeof(struct file_analysis), sizeof tzdirslash + 1024)];
 };
 
 /* Load tz data from the file named NAME into *SP.  Read extended
@@ -499,7 +509,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 	}
 	if (doaccess && access(name, R_OK) != 0)
 	  return errno;
-	fid = open(name, OPEN_MODE);
+	fid = open(name, O_RDONLY | O_BINARY);
 	if (fid < 0)
 	  return errno;
 
@@ -1450,8 +1460,8 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 static void
 gmtload(struct state *const sp)
 {
-	if (tzload(gmt, sp, true) != 0)
-	  (void)tzparse("GMT0", sp, NULL);
+	if (tzload(etc_utc, sp, true) != 0)
+	  (void)tzparse("UTC0", sp, NULL);
 }
 
 /* Initialize *SP to a value appropriate for the TZ setting NAME.
@@ -1469,7 +1479,7 @@ zoneinit(struct state *sp, char const *name)
     sp->charcnt = 0;
     sp->goback = sp->goahead = false;
     init_ttinfo(&sp->ttis[0], 0, false, 0);
-    strcpy(sp->chars, gmt);
+    strcpy(sp->chars, utc);
     sp->defaulttype = 0;
     return 0;
   } else {
@@ -1588,7 +1598,7 @@ tzfree(timezone_t sp)
 ** set the applicable parts of tzname, timezone and altzone;
 ** however, it's OK to omit this step if the timezone is POSIX-compatible,
 ** since in that case tzset should have already done this step correctly.
-** SETNAME's type is intfast32_t for compatibility with gmtsub,
+** SETNAME's type is int_fast32_t for compatibility with gmtsub,
 ** but it is actually a boolean and its value should be 0 or 1.
 */
 
@@ -1735,7 +1745,7 @@ gmtsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 	*/
 	if (result)
 		result->TM_ZONE = offset ? __UNCONST(wildabbr) : gmtptr ?
-		    gmtptr->chars : __UNCONST(gmt);
+		    gmtptr->chars : __UNCONST(utc);
 #endif /* defined TM_ZONE */
 	return result;
 }
@@ -1983,7 +1993,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 */
 
 #ifndef WRONG
-#define WRONG	((time_t)-1)
+# define WRONG ((time_t)-1)
 #endif /* !defined WRONG */
 
 /*
@@ -2233,10 +2243,10 @@ again:
 		    && (yourtm.TM_GMTOFF < 0
 			? (-SECSPERDAY <= yourtm.TM_GMTOFF
 			   && (mytm.TM_GMTOFF <=
-			       (/*CONSTCOND*/SMALLEST(INT_FAST32_MAX, LONG_MAX)
+			       (min(INT_FAST32_MAX, LONG_MAX)
 				+ yourtm.TM_GMTOFF)))
 			: (yourtm.TM_GMTOFF <= SECSPERDAY
-			   && ((/*CONSTCOND*/BIGGEST(INT_FAST32_MIN, LONG_MIN)
+			   && ((max(INT_FAST32_MIN, LONG_MIN)
 				+ yourtm.TM_GMTOFF)
 			       <= mytm.TM_GMTOFF)))) {
 		  /* MYTM matches YOURTM except with the wrong UT offset.
