@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.5 2021/11/27 14:11:14 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.6 2022/08/16 10:24:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -63,6 +63,9 @@ static int crashme_null_jump(int);
 #ifdef DDB
 static int crashme_ddb(int);
 #endif
+#ifdef LOCKDEBUG
+static int crashme_kernel_lock_spinout(int);
+#endif
 
 #define CMNODE(name, lname, func)	\
     {					\
@@ -77,6 +80,10 @@ static crashme_node nodes[] = {
     CMNODE("null_jump", "jump to null", crashme_null_jump),
 #ifdef DDB
     CMNODE("ddb", "enter ddb directly", crashme_ddb),
+#endif
+#ifdef LOCKDEBUG
+    CMNODE("kernel_lock_spinout", "infinite kernel lock",
+	crashme_kernel_lock_spinout),
 #endif
 };
 static crashme_node *first_node;
@@ -267,6 +274,19 @@ crashme_ddb(int flags)
 {
 
 	Debugger();
+	return 0;
+}
+#endif
+
+#ifdef LOCKDEBUG
+static int
+crashme_kernel_lock_spinout(int flags)
+{
+
+	KERNEL_LOCK(1, NULL);
+	for (;;)
+		__insn_barrier();
+	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
 #endif
