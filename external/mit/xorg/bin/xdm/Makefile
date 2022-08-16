@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/03/06 12:40:23 nakayama Exp $
+#	$NetBSD: Makefile,v 1.18 2022/08/16 22:44:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,9 @@ SRCS+=		Login.c greet.c verify.c
 CPPFLAGS+=	-DSTATIC_GREETER_LIB
 .endif
 
+DEF_USER_PATH=	/bin:/usr/bin:/usr/pkg/bin:/usr/local/bin:${X11BINDIR}
+DEF_SYSTEM_PATH=/sbin:/usr/sbin:/bin:/usr/bin:${X11BINDIR}
+
 CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS.auth.c+=	-DBSD44SOCKETS
 CPPFLAGS.socket.c+=	-DBSD44SOCKETS
@@ -22,8 +25,8 @@ CPPFLAGS.resource.c+=	\
 	-DDEF_SERVER_LINE="\":0 local ${X11BINDIR}/X :0\"" \
 	-DXRDB_PROGRAM=\"${X11BINDIR}/xrdb\" \
 	-DDEF_SESSION="\"${X11BINDIR}/xterm -ls\"" \
-	-DDEF_USER_PATH=\"/bin:/usr/bin:/usr/pkg/bin:/usr/local/bin:${X11BINDIR}\" \
-	-DDEF_SYSTEM_PATH=\"/sbin:/usr/sbin:/bin:/usr/bin:${X11BINDIR}\" \
+	-DDEF_USER_PATH=\"${DEF_USER_PATH}\" \
+	-DDEF_SYSTEM_PATH=\"${DEF_SYSTEM_PATH}\" \
 	-DDEF_SYSTEM_SHELL=\"/bin/sh\" \
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
 	-DDEF_XDM_CONFIG=\"${XDMDIR}/xdm-config\" \
@@ -52,14 +55,17 @@ CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
 .include "../../xorg-pkg-ver.mk"
 
 X11EXTRAMANDEFS+= \
-		-e 's,ARC4_RANDOM,1,' \
-		-e 's,BINDIR,$(X11BINDIR),' \
-		-e 's,CHOOSERPATH,$(XDMCHOOSERPATH),' \
-		-e 's,DGREETERLIBPATH,$(XDMGREETERLIB),' \
-		-e 's,XDMDIR,$(XDMDIR),' \
-		-e 's,XDMXAUTHDIR,$(XDMVARDIR),' \
-		-e 's,XDMLOGDIR,$(XDMLOGDIR),' \
-		-e 's,XDMPIDDIR,$(XDMPIDDIR),'
+		-e 's,CHOOSERPATH,${XDMCHOOSERPATH},' \
+		-e 's,XDMLOGDIR,${XDMLOGDIR},' \
+		-e 's,XDMDIR,${XDMDIR},' \
+		-e 's,BINDIR,${X11BINDIR},' \
+		-e 's,XDMPIDDIR,${XDMPIDDIR},' \
+		-e 's,XDMXAUTHDIR,${XDMVARDIR},' \
+		-e 's,DEF_USER_PATH,${DEF_USER_PATH},' \
+		-e 's,DEF_SYSTEM_PATH,${DEF_SYSTEM_PATH},' \
+		-e 's,DEF_GREETER_LIB,${XDMGREETERLIB},' \
+		-e 's,DEV_RANDOM,${DEV_RANDOM},' \
+		-e 's,ARC4_RANDOM,1,'
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
