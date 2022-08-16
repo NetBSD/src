@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.13 2021/09/18 23:54:13 macallan Exp $ */
+/*	$NetBSD: dino.c,v 1.14 2022/08/16 08:35:38 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.13 2021/09/18 23:54:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.14 2022/08/16 08:35:38 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1652,7 +1652,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_regs = r = (volatile struct dino_regs *)sc->sc_bh;	
+	sc->sc_regs = r = (volatile struct dino_regs *)sc->sc_bh;
 #ifdef trust_the_firmware_to_proper_initialize_everything
 	r->io_addr_en = 0;
 	r->io_control = 0x80;
