@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.13 2022/08/16 13:19:41 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.14 2022/08/16 13:23:12 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -467,11 +467,11 @@ EOF
 				" ("date"):";
 		}
 		/^$/ { blankline = 1; havesentence = 0; }
-		/^  Changes affecting/ { goodsection = 0; }
-		/^  Changes affecting.*time/ { goodsection = 1; }
-		/^  Changes affecting.*data/ { goodsection = 1; }
-		/^  Changes affecting.*documentation/ || \
-		/^  Changes affecting.*commentary/ {
+		/^  Changes / { goodsection = 0; }
+		/^  Changes to future timestamps/ { goodsection = 1; }
+		/^  Changes to past timestamps/ { goodsection = 1; }
+		/^  Changes to documentation/ || \
+		/^  Changes to commentary/ {
 			t = gensub("^ *", "", 1, $0);
 			t = gensub("\\.*$", ".", 1, t);
 			print bullet t;
