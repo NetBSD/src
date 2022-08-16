@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.175 2022/08/16 16:25:16 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.176 2022/08/16 18:13:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.175 2022/08/16 16:25:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.176 2022/08/16 18:13:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -216,6 +216,7 @@ _kernel_lock(int nlocks)
 	    0);
 
 	if (__predict_true(__cpu_simple_lock_try(kernel_lock))) {
+		kernel_lock_holder = curcpu();
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
