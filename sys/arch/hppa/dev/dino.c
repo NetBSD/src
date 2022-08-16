@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.14 2022/08/16 08:35:38 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.15 2022/08/16 08:40:33 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.14 2022/08/16 08:35:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.15 2022/08/16 08:40:33 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1597,15 +1597,18 @@ const struct hppa_bus_dma_tag dino_dmat = {
 };
 
 const struct hppa_pci_chipset_tag dino_pc = {
-	NULL,
-	dino_attach_hook, dino_maxdevs, dino_make_tag, dino_decompose_tag,
-	dino_conf_read, dino_conf_write,
-	dino_intr_map, dino_intr_string,
-	dino_intr_establish, dino_intr_disestablish,
+	.pc_attach_hook = dino_attach_hook,
+	.pc_bus_maxdevs = dino_maxdevs,
+	.pc_make_tag = dino_make_tag,
+	.pc_decompose_tag = dino_decompose_tag,
+	.pc_conf_read = dino_conf_read,
+	.pc_conf_write = dino_conf_write,
+	.pc_intr_map = dino_intr_map,
+	.pc_intr_string = dino_intr_string,
+	.pc_intr_establish = dino_intr_establish,
+	.pc_intr_disestablish = dino_intr_disestablish,
 #if NCARDBUS > 0
-	dino_alloc_parent
-#else
-	NULL
+	.pc_alloc_parent = dino_alloc_parent,
 #endif
 };
 

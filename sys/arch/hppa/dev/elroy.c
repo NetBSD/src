@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: elroy.c,v 1.5 2022/08/16 08:40:33 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -1190,15 +1190,18 @@ const struct hppa_bus_dma_tag elroy_dmat = {
 };
 
 const struct hppa_pci_chipset_tag elroy_pc = {
-	NULL,
-	elroy_attach_hook, elroy_maxdevs, elroy_make_tag, elroy_decompose_tag,
-	elroy_conf_read, elroy_conf_write,
-	apic_intr_map, apic_intr_string,
-	apic_intr_establish, apic_intr_disestablish,
+	.pc_attach_hook = elroy_attach_hook,
+	.pc_bus_maxdevs = elroy_maxdevs,
+	.pc_make_tag = elroy_make_tag,
+	.pc_decompose_tag = elroy_decompose_tag,
+	.pc_conf_read = elroy_conf_read,
+	.pc_conf_write = elroy_conf_write,
+	.pc_intr_map = apic_intr_map,
+	.pc_intr_string = apic_intr_string,
+	.pc_intr_establish = apic_intr_establish,
+	.pc_intr_disestablish = apic_intr_disestablish,
 #if NCARDBUS > 0
-	elroy_alloc_parent
-#else
-	NULL
+	.pc_alloc_parent = elroy_alloc_parent
 #endif
 };
 
