@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.41 2022/05/17 10:28:08 riastradh Exp $	*/
+/*	$NetBSD: pfil.c,v 1.42 2022/08/16 04:35:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.41 2022/05/17 10:28:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.42 2022/08/16 04:35:57 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -425,6 +425,11 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	phlist = atomic_load_consume(&phlistset->active);
+	if (phlist->nhooks == 0) {
+		pserialize_read_exit(s);
+		curlwp_bindx(bound);
+		return ret;
+	}
 	psref_acquire(&psref, &phlist->psref, pfil_psref_class);
 	pserialize_read_exit(s);
 	for (u_int i = 0; i < phlist->nhooks; i++) {
