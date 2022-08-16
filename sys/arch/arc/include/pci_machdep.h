@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9.10.2 2022/08/16 13:55:15 skrll Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.10.3 2022/08/16 14:09:27 skrll Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -27,9 +27,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#ifndef	_MACHINE_PCI_MACHDEP_H_
-#define	_MACHINE_PCI_MACHDEP_H_
 
 /*
  * Machine-specific definitions for PCI autoconfiguration.
@@ -103,7 +100,5 @@ struct arc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c), (iv))
 #define	pci_conf_interrupt(c, b, d, f, s, i)				\
     (*(c)->pc_conf_interrupt)((c), (b), (d), (f), (s), (i))
-#define	pci_conf_hook(c, b, d, f, i)					\
+#define	pci_conf_hook(c, b, d, f, i)				\
     (*(c)->pc_conf_hook)((c), (b), (d), (f), (i))
-
-#endif /* _MACHINE_PCI_MACHDEP_H_ */
