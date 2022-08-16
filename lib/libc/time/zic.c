@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.82 2022/08/16 10:56:21 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.83 2022/08/16 11:07:40 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.82 2022/08/16 10:56:21 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.83 2022/08/16 11:07:40 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -3692,9 +3692,14 @@ mkdirs(char const *argname, bool ancestors)
 			   some other process might have made the directory
 			   in the meantime.  Likewise for ENOSYS, because
 			   Solaris 10 mkdir fails with ENOSYS if the
-			   directory is an automounted mount point.  */
+			   directory is an automounted mount point.
+			   Likewise for EACCES, since mkdir can fail
+			   with EACCES merely because the parent directory
+			   is unwritable.  Likewise for most other error
+			   numbers.  */
 			int err = errno;
-			if (err != EEXIST && err != ENOSYS) {
+			if (err == ELOOP || err == ENAMETOOLONG
+			    || err == ENOENT || err == ENOTDIR) {
 				error(_("%s: Can't create directory %s: %s"),
 				      progname, name, strerror(err));
 				exit(EXIT_FAILURE);
