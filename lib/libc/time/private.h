@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.59 2022/08/16 10:56:21 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.60 2022/08/16 11:07:40 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -184,6 +184,9 @@
 # define EINVAL ERANGE
 #endif
 
+#ifndef ELOOP
+# define ELOOP EINVAL
+#endif
 #ifndef ENAMETOOLONG
 # define ENAMETOOLONG EINVAL
 #endif
