@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2020/07/26 08:08:41 simonb Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.10 2022/08/16 13:50:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -68,6 +68,8 @@ struct mips_pci_chipset {
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
 			    char *, size_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
+	int		(*pc_intr_setattr)(void *, pci_intr_handle_t *,
+			    int, uint64_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
@@ -109,6 +111,15 @@ struct mips_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_conf_interrupt(c, b, d, p, s, lp)				\
     (*(c)->pc_conf_interrupt)((c)->pc_intr_v, (b), (d), (p), (s), (lp))
+
+static inline int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ihp,
+    int attr, uint64_t data)
+{
+	if (!pc->pc_intr_setattr)
+		return ENODEV;
+	return pc->pc_intr_setattr(pc, ihp, attr, data);
+}
 
 /*
  * mips-specific PCI functions.
