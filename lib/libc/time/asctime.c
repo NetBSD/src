@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.27 2019/01/27 02:40:49 dholland Exp $	*/
+/*	$NetBSD: asctime.c,v 1.28 2022/08/16 10:56:21 christos Exp $	*/
 
 /* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
 
@@ -18,7 +18,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.27 2019/01/27 02:40:49 dholland Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.28 2022/08/16 10:56:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -33,12 +33,6 @@ __weak_alias(asctime_r,_asctime_r)
 #endif
 
 /*
-** Some systems only handle "%.2d"; others only handle "%02d";
-** "%02.2d" makes (most) everybody happy.
-** At least some versions of gcc warn about the %02.2d;
-** we conditionalize below to avoid the warning.
-*/
-/*
 ** All years associated with 32-bit time_t values are exactly four digits long;
 ** some years associated with 64-bit time_t values are not.
 ** Vintage programs are coded for years that are always four digits long
@@ -50,24 +44,16 @@ __weak_alias(asctime_r,_asctime_r)
 ** The ISO C and POSIX standards prohibit padding the year,
 ** but many implementations pad anyway; most likely the standards are buggy.
 */
-#ifdef __GNUC__
-#define ASCTIME_FMT	"%s %s%3d %2.2d:%2.2d:%2.2d %-4s\n"
-#else /* !defined __GNUC__ */
-#define ASCTIME_FMT	"%s %s%3d %02.2d:%02.2d:%02.2d %-4s\n"
-#endif /* !defined __GNUC__ */
+static char const ASCTIME_FMT[] = "%s %s%3d %.2d:%.2d:%.2d %-4s\n";
 /*
 ** For years that are more than four digits we put extra spaces before the year
 ** so that code trying to overwrite the newline won't end up overwriting
 ** a digit within a year and truncating the year (operating on the assumption
 ** that no output is better than wrong output).
 */
-#ifdef __GNUC__
-#define ASCTIME_FMT_B	"%s %s%3d %2.2d:%2.2d:%2.2d     %s\n"
-#else /* !defined __GNUC__ */
-#define ASCTIME_FMT_B	"%s %s%3d %02.2d:%02.2d:%02.2d     %s\n"
-#endif /* !defined __GNUC__ */
+static char const ASCTIME_FMT_B[] = "%s %s%3d %.2d:%.2d:%.2d     %s\n";
 
-#define STD_ASCTIME_BUF_SIZE	26
+enum { STD_ASCTIME_BUF_SIZE = 26 };
 /*
 ** Big enough for something such as
 ** ??? ???-2147483648 -2147483648:-2147483648:-2147483648     -2147483648\n
@@ -75,12 +61,10 @@ __weak_alias(asctime_r,_asctime_r)
 ** seven explicit spaces, two explicit colons, a newline,
 ** and a trailing NUL byte).
 ** The values above are for systems where an int is 32 bits and are provided
-** as an example; the define below calculates the maximum for the system at
+** as an example; the size expression below is a bound for the system at
 ** hand.
 */
-#define MAX_ASCTIME_BUF_SIZE	(2*3+5*INT_STRLEN_MAXIMUM(int)+7+2+1+1)
-
-static char	buf_asctime[MAX_ASCTIME_BUF_SIZE];
+static char buf_asctime[2*3 + 5*INT_STRLEN_MAXIMUM(int) + 7 + 2 + 1 + 1];
 
 char *
 asctime_r(const struct tm *timeptr, char *buf)
@@ -95,7 +79,7 @@ asctime_r(const struct tm *timeptr, char *buf)
 	const char *	wn;
 	const char *	mn;
 	char			year[INT_STRLEN_MAXIMUM(int) + 2];
-	char			result[MAX_ASCTIME_BUF_SIZE];
+	char result[sizeof buf_asctime];
 
 	if (timeptr == NULL) {
 		errno = EINVAL;

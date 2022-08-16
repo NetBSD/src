@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.37 2021/10/22 14:26:04 christos Exp $
-.Dd Fabruary 28, 2021
+.\"	$NetBSD: zic.8,v 1.38 2022/08/16 10:56:21 christos Exp $
+.Dd August 16, 2022
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -116,27 +116,44 @@ are possibly-signed decimal counts of seconds since the Epoch
 Omitted counts default to extreme values.
 The output files use UT offset 0 and abbreviation
 .q "\*-00"
-in place of the omitted timestamp data;
-this typically reduces the files' sizes.
+in place of the omitted timestamp data.
 For example,
-.Bd literal
+.Bd -literal
 zic -r @0
 .Ed
 omits data intended for negative timestamps (i.e., before the Epoch), and
-.Bd literal
+.Bd -literal
 zic -r @0/@2147483648
 .Ed
 outputs data intended only for nonnegative timestamps that fit into
 31-bit signed integers.
 Or using 
 .Xr date 1 ,
-.Bd literal
+.Bd -literal
 zic -r @$(date +%s)
 .Ed
 omits data intended for past timestamps.
+Although this option typically reduces the output file's size,
+the size can increase due to the need to represent the timestamp range
+boundaries, particularly if
+.Ar hi
+causes a TZif file to contain explicit entries for
+.Ar pre- hi
+transitions rather than concisely representing them
+with an extended POSIX TZ string.
 Also see the
 .Fl b Ar slim
 option for another way to shrink output size.
+.It Fl R Ar @hi
+Generate redundant trailing explicit transitions for timestamps
+that occur less than
+Ar hi
+seconds since the Epoch, even though the transitions could be
+more concisely represented via the extended POSIX TZ string.
+This option does not affect the represented timestamps.
+Although it accommodates nonstandard TZif readers
+that ignore the extended POSIX TZ string,
+it increases the size of the altered output files.
 .It Fl t Ar file
 When creating local time information, put the configuration link in
 the named file rather than in the standard location.
@@ -237,7 +254,7 @@ or that starts with
 .Pp
 Input files should be text files, that is, they should be a series of
 zero or more lines, each ending in a newline byte and containing at
-most 511 bytes, and without any
+most 2048 bytes counting the newline, and without any
 .Dv NUL
 bytes.
 The input text's encoding
@@ -505,7 +522,7 @@ This field has the same format as the
 .Em AT
 and
 .Em SAVE
-fields of rule lines;
+fields of rule lines, except without suffix letters;
 begin the field with a minus sign if time must be subtracted from UT.
 .It RULES
 The name of the rules that apply in the timezone or,
@@ -711,13 +728,11 @@ The
 .Em DAY ,
 and
 .Em HH:MM:SS
-fields give the expiration timestamp in UTC for the leap second table;
+fields give the expiration timestamp in UTC for the leap second table.
 .Sh EXTENDED EXAMPLE
 Here is an extended example of
 .Ic zic
 input, intended to illustrate many of its features.
-In this example, the EU rules are for the European Union
-and for its predecessor organization, the European Communities.
 .Pp
 .Bl -column -compact -offset indent "# Rule" "Swiss" "FROM" "1995" "\&*" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
 .It # Rule	NAME	FROM	TO	\&-	IN	ON	AT	SAVE	LETTER/S
@@ -744,8 +759,9 @@ and for its predecessor organization, the European Communities.
 .It Link	Europe/Zurich	Europe/Vaduz
 .El
 .Pp
-In this example, the timezone is named Europe/Zurich but it has an alias
-as Europe/Vaduz.
+In this example, the EU rules are for the European Union
+and for its predecessor organization, the European Communities.
+The timezone is named Europe/Zurich and it has the alias Europe/Vaduz.
 This example says that Zurich was 34 minutes and 8
 seconds east of UT until 1853-07-16 at 00:00, when the legal offset
 was changed to 7\(de\|26\(fm\|22.50\(sd; which this works out to
