@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.174 2022/08/16 00:26:39 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.175 2022/08/16 16:25:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.174 2022/08/16 00:26:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.175 2022/08/16 16:25:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -255,8 +255,10 @@ _kernel_lock(int nlocks)
 				ipi_msg_t msg = {
 					.func = kernel_lock_trace_ipi,
 				};
+				kpreempt_disable();
 				ipi_unicast(&msg, kernel_lock_holder);
 				ipi_wait(&msg);
+				kpreempt_enable();
 				if (start_init_exec)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
