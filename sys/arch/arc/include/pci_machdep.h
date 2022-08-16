@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2011/04/04 20:37:45 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.10.1 2022/08/16 13:52:58 skrll Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -100,5 +100,5 @@ struct arc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c), (iv))
 #define	pci_conf_interrupt(c, b, d, f, s, i)				\
     (*(c)->pc_conf_interrupt)((c), (b), (d), (f), (s), (i))
-#define	pci_conf_hook(c, b, d, f, i)				\
+#define	pci_conf_hook(c, b, d, f, i)					\
     (*(c)->pc_conf_hook)((c), (b), (d), (f), (i))
