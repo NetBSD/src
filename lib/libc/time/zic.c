@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.81 2022/03/22 17:48:39 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.82 2022/08/16 10:56:21 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.81 2022/03/22 17:48:39 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.82 2022/08/16 10:56:21 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -39,7 +39,7 @@ typedef int_fast64_t	zic_t;
 #define SCNdZIC SCNdFAST64
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
-#define ZIC_MAX_ABBR_LEN_WO_WARN	6
+# define ZIC_MAX_ABBR_LEN_WO_WARN 6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
 #ifdef HAVE_DIRECT_H
@@ -50,12 +50,12 @@ typedef int_fast64_t	zic_t;
 #endif
 
 #if HAVE_SYS_STAT_H
-#include <sys/stat.h>
+# include <sys/stat.h>
 #endif
 #ifdef S_IRUSR
-#define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+# define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #else
-#define MKDIR_UMASK 0755
+# define MKDIR_UMASK 0755
 #endif
 
 /* The maximum ptrdiff_t value, for pre-C99 platforms.  */
@@ -66,6 +66,11 @@ static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 /* The minimum alignment of a type, for pre-C11 platforms.  */
 #if __STDC_VERSION__ < 201112
 # define _Alignof(type) offsetof(struct { char a; type b; }, b)
+#endif
+
+/* The maximum length of a text line, including the trailing newline.  */
+#ifndef _POSIX2_LINE_MAX
+# define _POSIX2_LINE_MAX 2048
 #endif
 
 /* The type for line numbers.  Use PRIdMAX to format them; formerly
@@ -101,12 +106,13 @@ struct rule {
 };
 
 /*
-**	r_dycode		r_dayofmonth	r_wday
+** r_dycode	r_dayofmonth	r_wday
 */
-
-#define DC_DOM		0	/* 1..31 */	/* unused */
-#define DC_DOWGEQ	1	/* 1..31 */	/* 0..6 (Sun..Sat) */
-#define DC_DOWLEQ	2	/* 1..31 */	/* 0..6 (Sun..Sat) */
+enum {
+  DC_DOM,	/* 1..31 */	/* unused */
+  DC_DOWGEQ,	/* 1..31 */	/* 0..6 (Sun..Sat) */
+  DC_DOWLEQ	/* 1..31 */	/* 0..6 (Sun..Sat) */
+};
 
 struct zone {
 	const char *	z_filename;
@@ -155,7 +161,7 @@ static void	leapadd(zic_t, int, int);
 static void	adjleap(void);
 static void	associate(void);
 static void	dolink(const char *, const char *, bool);
-static char **	getfields(char * buf);
+static int	getfields(char *, char **, int);
 static zic_t	gethms(const char * string, const char * errstring);
 static zic_t	getsave(char *, bool *);
 static void	inexpires(char **, int);
@@ -218,86 +224,107 @@ static int		unspecifiedtype;
 ** Line codes.
 */
 
-#define LC_RULE		0
-#define LC_ZONE		1
-#define LC_LINK		2
-#define LC_LEAP		3
-#define LC_EXPIRES	4
+enum {
+  LC_RULE,
+  LC_ZONE,
+  LC_LINK,
+  LC_LEAP,
+  LC_EXPIRES
+};
 
 /*
 ** Which fields are which on a Zone line.
 */
 
-#define ZF_NAME		1
-#define ZF_STDOFF	2
-#define ZF_RULE		3
-#define ZF_FORMAT	4
-#define ZF_TILYEAR	5
-#define ZF_TILMONTH	6
-#define ZF_TILDAY	7
-#define ZF_TILTIME	8
-#define ZONE_MINFIELDS	5
-#define ZONE_MAXFIELDS	9
+enum {
+  ZF_NAME = 1,
+  ZF_STDOFF,
+  ZF_RULE,
+  ZF_FORMAT,
+  ZF_TILYEAR,
+  ZF_TILMONTH,
+  ZF_TILDAY,
+  ZF_TILTIME,
+  ZONE_MAXFIELDS,
+  ZONE_MINFIELDS = ZF_TILYEAR
+};
 
 /*
 ** Which fields are which on a Zone continuation line.
 */
 
-#define ZFC_STDOFF	0
-#define ZFC_RULE	1
-#define ZFC_FORMAT	2
-#define ZFC_TILYEAR	3
-#define ZFC_TILMONTH	4
-#define ZFC_TILDAY	5
-#define ZFC_TILTIME	6
-#define ZONEC_MINFIELDS	3
-#define ZONEC_MAXFIELDS	7
+enum {
+  ZFC_STDOFF,
+  ZFC_RULE,
+  ZFC_FORMAT,
+  ZFC_TILYEAR,
+  ZFC_TILMONTH,
+  ZFC_TILDAY,
+  ZFC_TILTIME,
+  ZONEC_MAXFIELDS,
+  ZONEC_MINFIELDS = ZFC_TILYEAR
+};
 
 /*
 ** Which files are which on a Rule line.
 */
 
-#define RF_NAME		1
-#define RF_LOYEAR	2
-#define RF_HIYEAR	3
-#define RF_COMMAND	4
-#define RF_MONTH	5
-#define RF_DAY		6
-#define RF_TOD		7
-#define RF_SAVE		8
-#define RF_ABBRVAR	9
-#define RULE_FIELDS	10
+enum {
+  RF_NAME = 1,
+  RF_LOYEAR,
+  RF_HIYEAR,
+  RF_COMMAND,
+  RF_MONTH,
+  RF_DAY,
+  RF_TOD,
+  RF_SAVE,
+  RF_ABBRVAR,
+  RULE_FIELDS
+};
 
 /*
 ** Which fields are which on a Link line.
 */
 
-#define LF_TARGET	1
-#define LF_LINKNAME	2
-#define LINK_FIELDS	3
+enum {
+  LF_TARGET = 1,
+  LF_LINKNAME,
+  LINK_FIELDS
+};
 
 /*
 ** Which fields are which on a Leap line.
 */
 
-#define LP_YEAR		1
-#define LP_MONTH	2
-#define LP_DAY		3
-#define LP_TIME		4
-#define LP_CORR		5
-#define LP_ROLL		6
-#define LEAP_FIELDS	7
+enum {
+  LP_YEAR = 1,
+  LP_MONTH,
+  LP_DAY,
+  LP_TIME,
+  LP_CORR,
+  LP_ROLL,
+  LEAP_FIELDS,
 
-/* Expires lines are like Leap lines, except without CORR and ROLL fields.  */
-#define EXPIRES_FIELDS	5
+  /* Expires lines are like Leap lines, except without CORR and ROLL fields.  */
+  EXPIRES_FIELDS = LP_TIME + 1
+};
+
+/* The maximum number of fields on any of the above lines.
+   (The "+"s pacify gcc -Wenum-compare.)  */
+enum {
+  MAX_FIELDS = max(max(+RULE_FIELDS, +LINK_FIELDS),
+		   max(+LEAP_FIELDS, +EXPIRES_FIELDS))
+};
 
 /*
 ** Year synonyms.
 */
 
-#define YR_MINIMUM	0
-#define YR_MAXIMUM	1
-#define YR_ONLY		2
+enum {
+  YR_MINIMUM,
+  YR_MAXIMUM,
+  YR_ONLY
+};
 
 static struct rule *	rules;
 static ptrdiff_t	nrules;	/* number of rules */
@@ -490,8 +517,7 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 		return ptr;
 	else {
 		ptrdiff_t nitems_max = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
-		ptrdiff_t amax = (ptrdiff_t)((size_t)nitems_max < SIZE_MAX ?
-		    (size_t)nitems_max : SIZE_MAX);
+		ptrdiff_t amax = min((size_t)nitems_max, SIZE_MAX);
 		if ((amax - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("integer overflow"));
 		*nitems_alloc += (*nitems_alloc >> 1) + 1;
@@ -582,7 +608,8 @@ usage(FILE *stream, int status)
 	  _("%s: usage is %s [ --version ] [ --help ] [ -v ] \\\n"
 	    "\t[ -b {slim|fat} ] [ -d directory ] [ -l localtime ]"
 	    " [ -L leapseconds ] \\\n"
-	    "\t[ -p posixrules ] [ -r '[@lo][/@hi]' ] [ -t localtime-link ] \\\n"
+	    "\t[ -p posixrules ] [ -r '[@lo][/@hi]' ] [ -R '@hi' ] \\\n"
+	    "\t[ -t localtime-link ] \\\n"
 	    "\t[ filename ... ]\n\n"
 	    "Report bugs to %s.\n"),
 	  progname, progname, REPORT_BUGS_TO);
@@ -673,7 +700,7 @@ check_for_signal(void)
   }
 }
 
-#define TIME_T_BITS_IN_FILE 64
+enum { TIME_T_BITS_IN_FILE = 64 };
 
 /* The minimum and maximum values representable in a TZif file.  */
 static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
@@ -683,6 +710,9 @@ static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
    the -r option.  These default to MIN_TIME and MAX_TIME.  */
 static zic_t lo_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 static zic_t hi_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
+
+/* The time specified by the -R option, defaulting to MIN_TIME.  */
+static zic_t redundant_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 
 /* The time specified by an Expires line, or negative if no such line.  */
 static zic_t leapexpires = -1;
@@ -710,9 +740,25 @@ timerange_option(char *timerange)
   }
   if (*hi_end || hi < lo || max_time < lo || hi < min_time)
     return false;
-  lo_time = lo < min_time ? min_time : lo;
-  hi_time = max_time < hi ? max_time : hi;
+  lo_time = max(lo, min_time);
+  hi_time = min(hi, max_time);
   return true;
+}
+
+/* Generate redundant time stamps up to OPT.  Return true if successful.  */
+static bool
+redundant_time_option(char *opt)
+{
+  if (*opt == '@') {
+    intmax_t redundant;
+    char *opt_end;
+    redundant = strtoimax(opt + 1, &opt_end, 10);
+    if (opt_end != opt + 1 && !*opt_end) {
+      redundant_time = max(redundant_time, redundant);
+      return true;
+    }
+  }
+  return false;
 }
 
 static const char *	psxrules;
@@ -748,9 +794,9 @@ main(int argc, char **argv)
 #endif
 #if HAVE_GETTEXT
 	setlocale(LC_MESSAGES, "");
-#ifdef TZ_DOMAINDIR
+# ifdef TZ_DOMAINDIR
 	bindtextdomain(TZ_DOMAIN, TZ_DOMAINDIR);
-#endif /* defined TEXTDOMAINDIR */
+# endif /* defined TEXTDOMAINDIR */
 	textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT */
 	progname = argv[0];
@@ -767,7 +813,8 @@ main(int argc, char **argv)
 		} else if (strcmp(argv[k], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
 		}
-	while ((c = getopt(argc, argv, "b:d:l:L:p:r:st:vy:")) != EOF && c != -1)
+	while ((c = getopt(argc, argv, "b:d:l:L:p:r:R:st:vy:")) != EOF
+	       && c != -1)
 		switch (c) {
 			default:
 				usage(stderr, EXIT_FAILURE);
@@ -854,12 +901,23 @@ _("%s: invalid time range: %s\n"),
 				}
 				timerange_given = true;
 				break;
+			case 'R':
+				if (! redundant_time_option(optarg)) {
+				  fprintf(stderr, _("%s: invalid time: %s\n"),
+					  progname, optarg);
+				  return EXIT_FAILURE;
+				}
+				break;
 			case 's':
 				warning(_("-s ignored"));
 				break;
 		}
 	if (optind == argc - 1 && strcmp(argv[optind], "=") == 0)
 		usage(stderr, EXIT_FAILURE);	/* usage message by request */
+	if (hi_time + (hi_time < ZIC_MAX) < redundant_time) {
+	  fprintf(stderr, _("%s: -R time exceeds -r cutoff\n"), progname);
+	  return EXIT_FAILURE;
+	}
 	if (bloat == 0) {
 	  static char const bloat_default[] = ZIC_BLOAT_DEFAULT;
 	  if (strcmp(bloat_default, "slim") == 0)
@@ -1315,17 +1373,47 @@ associate(void)
 		exit(EXIT_FAILURE);
 }
 
+/* Read a text line from FP into BUF, which is of size BUFSIZE.
+   Terminate it with a NUL byte instead of a newline.
+   Return the line's length, not counting the NUL byte.
+   On EOF, return a negative number.
+   On error, report the error and exit.  */
+static ptrdiff_t
+inputline(FILE *fp, char *buf, ptrdiff_t bufsize)
+{
+  ptrdiff_t linelen = 0, ch;
+  while ((ch = getc(fp)) != '\n') {
+    if (ch < 0) {
+      if (ferror(fp)) {
+	error(_("input error"));
+	exit(EXIT_FAILURE);
+      }
+      if (linelen == 0)
+	return -1;
+      error(_("unterminated line"));
+      exit(EXIT_FAILURE);
+    }
+    if (!ch) {
+      error(_("NUL input byte"));
+      exit(EXIT_FAILURE);
+    }
+    buf[linelen++] = ch;
+    if (linelen == bufsize) {
+      error(_("line too long"));
+      exit(EXIT_FAILURE);
+    }
+  }
+  buf[linelen] = '\0';
+  return linelen;
+}
+
 static void
 infile(const char *name)
 {
 	FILE *			fp;
-	char **		fields;
-	char *			cp;
 	const struct lookup *	lp;
-	int			nfields;
 	bool			wantcont;
 	lineno			num;
-	char				buf[BUFSIZ];
 
 	if (strcmp(name, "-") == 0) {
 		name = _("standard input");
@@ -1339,24 +1427,16 @@ infile(const char *name)
 	}
 	wantcont = false;
 	for (num = 1; ; ++num) {
+		ptrdiff_t linelen;
+		char buf[_POSIX2_LINE_MAX];
+		int nfields;
+		char *fields[MAX_FIELDS];
 		eat(name, num);
-		if (fgets(buf, (int) sizeof buf, fp) != buf)
-			break;
-		cp = strchr(buf, '\n');
-		if (cp == NULL) {
-			error(_("line too long"));
-			exit(EXIT_FAILURE);
-		}
-		*cp = '\0';
-		fields = getfields(buf);
-		nfields = 0;
-		while (fields[nfields] != NULL) {
-			static char	nada;
-
-			if (strcmp(fields[nfields], "-") == 0)
-				fields[nfields] = &nada;
-			++nfields;
-		}
+		linelen = inputline(fp, buf, sizeof buf);
+		if (linelen < 0)
+		  break;
+		nfields = getfields(buf, fields,
+				    sizeof fields / sizeof *fields);
 		if (nfields == 0) {
 			/* nothing to do */
 		} else if (wantcont) {
@@ -1390,7 +1470,6 @@ infile(const char *name)
 				default: UNREACHABLE();
 			}
 		}
-		free(fields);
 	}
 	close_file(fp, NULL, filename, NULL);
 	if (wantcont)
@@ -1971,11 +2050,11 @@ struct timerange {
   int defaulttype;
   ptrdiff_t base, count;
   int leapbase, leapcount;
-  bool pretrans, leapexpiry;
+  bool leapexpiry;
 };
 
 static struct timerange
-limitrange(struct timerange r, bool locut, zic_t lo, zic_t hi,
+limitrange(struct timerange r, zic_t lo, zic_t hi,
 	   zic_t const *ats, unsigned char const *types)
 {
   /* Omit ordinary transitions < LO.  */
@@ -1984,10 +2063,6 @@ limitrange(struct timerange r, bool locut, zic_t lo, zic_t hi,
     r.count--;
     r.base++;
   }
-
-  /* "-00" before any -r low cutoff.  */
-  if (min_time < lo_time)
-    r.defaulttype = unspecifiedtype;
 
   /* Omit as many initial leap seconds as possible, such that the
      first leap second in the truncated list is <= LO, and is a
@@ -2014,14 +2089,6 @@ limitrange(struct timerange r, bool locut, zic_t lo, zic_t hi,
       r.leapcount--;
   }
 
-  /* Determine whether to keep the last too-low transition if no
-     transition is exactly at LO.  The kept transition will be output
-     as a LO "transition"; see "Output a LO_TIME transition" below.
-     This is needed when the output is truncated at the start, and is
-     also useful when catering to buggy 32-bit clients that do not use
-     time type 0 for timestamps before the first transition.  */
-  r.pretrans = locut && r.base && ! (r.count && ats[r.base] == lo);
-
   /* Determine whether to append an expiration to the leap second table.  */
   r.leapexpiry = 0 <= leapexpires && leapexpires - 1 <= hi;
 
@@ -2047,7 +2114,7 @@ writezone(const char *const name, const char *const string, char version,
 				_Alignof(zic_t)));
 	void *typesptr = ats + nats;
 	unsigned char *types = typesptr;
-	struct timerange rangeall, range32, range64;
+	struct timerange rangeall = {0}, range32, range64;
 
 	/*
 	** Sort.
@@ -2131,14 +2198,13 @@ writezone(const char *const name, const char *const string, char version,
 	}
 
 	rangeall.defaulttype = defaulttype;
-	rangeall.base = rangeall.leapbase = 0;
 	rangeall.count = timecnt;
 	rangeall.leapcount = leapcnt;
-	rangeall.pretrans = rangeall.leapexpiry = false;
-	range64 = limitrange(rangeall, min_time < lo_time,
-			     lo_time, hi_time, ats, types);
-	range32 = limitrange(range64, true,
-			     INT32_MIN, INT32_MAX, ats, types);
+	range64 = limitrange(rangeall, lo_time,
+			     max(hi_time,
+				 redundant_time - (ZIC_MIN < redundant_time)),
+			     ats, types);
+	range32 = limitrange(range64, INT32_MIN, INT32_MAX, ats, types);
 
 	/* TZif version 4 is needed if a no-op transition is appended to
 	   indicate the expiration of the leap second table, or if the first
@@ -2172,9 +2238,9 @@ writezone(const char *const name, const char *const string, char version,
 		ptrdiff_t	thistimei, thistimecnt, thistimelim;
 		int	thisleapi, thisleapcnt, thisleaplim;
 		struct tzhead tzh;
-		int thisdefaulttype;
-		bool hicut, pretrans, thisleapexpiry;
-		zic_t lo;
+		int pretranstype = -1, thisdefaulttype;
+		bool locut, hicut, thisleapexpiry;
+		zic_t lo, thismin, thismax;
 		int old0;
 		char		omittype[TZ_MAX_TYPES];
 		int		typemap[TZ_MAX_TYPES];
@@ -2185,28 +2251,15 @@ writezone(const char *const name, const char *const string, char version,
 		int		indmap[TZ_MAX_CHARS];
 
 		if (pass == 1) {
-			/* Arguably the default time type in the 32-bit data
-			   should be range32.defaulttype, which is suited for
-			   timestamps just before INT32_MIN.  However, zic
-			   traditionally used the time type of the indefinite
-			   past instead.  Internet RFC 8532 says readers should
-			   ignore 32-bit data, so this discrepancy matters only
-			   to obsolete readers where the traditional type might
-			   be more appropriate even if it's "wrong".  So, use
-			   the historical zic value, unless -r specifies a low
-			   cutoff that excludes some 32-bit timestamps.  */
-			thisdefaulttype = (lo_time <= INT32_MIN
-					   ? range64.defaulttype
-					   : range32.defaulttype);
-
+			thisdefaulttype = range32.defaulttype;
 			thistimei = range32.base;
 			thistimecnt = range32.count;
 			toomanytimes = thistimecnt >> 31 >> 1 != 0;
 			thisleapi = range32.leapbase;
 			thisleapcnt = range32.leapcount;
-			pretrans = range32.pretrans;
 			thisleapexpiry = range32.leapexpiry;
-			hicut = hi_time < INT32_MAX;
+			thismin = INT32_MIN;
+			thismax = INT32_MAX;
 		} else {
 			thisdefaulttype = range64.defaulttype;
 			thistimei = range64.base;
@@ -2214,17 +2267,46 @@ writezone(const char *const name, const char *const string, char version,
 			toomanytimes = thistimecnt >> 31 >> 31 >> 2 != 0;
 			thisleapi = range64.leapbase;
 			thisleapcnt = range64.leapcount;
-			pretrans = range64.pretrans;
 			thisleapexpiry = range64.leapexpiry;
-			hicut = hi_time < max_time;
+			thismin = min_time;
+			thismax = max_time;
 		}
 		if (toomanytimes)
 		  error(_("too many transition times"));
 
+		locut = thismin < lo_time && lo_time <= thismax;
+		hicut = thismin <= hi_time && hi_time < thismax;
 		thistimelim = thistimei + thistimecnt;
 		memset(omittype, true, typecnt);
+
+		/* Determine whether to output a transition before the first
+		   transition in range.  This is needed when the output is
+		   truncated at the start, and is also useful when catering to
+		   buggy 32-bit clients that do not use time type 0 for
+		   timestamps before the first transition.  */
+		if ((locut || (pass == 1 && thistimei))
+		    && ! (thistimecnt && ats[thistimei] == lo_time)) {
+		  pretranstype = thisdefaulttype;
+		  omittype[pretranstype] = false;
+		}
+
+		/* Arguably the default time type in the 32-bit data
+		   should be range32.defaulttype, which is suited for
+		   timestamps just before INT32_MIN.  However, zic
+		   traditionally used the time type of the indefinite
+		   past instead.  Internet RFC 8532 says readers should
+		   ignore 32-bit data, so this discrepancy matters only
+		   to obsolete readers where the traditional type might
+		   be more appropriate even if it's "wrong".  So, use
+		   the historical zic value, unless -r specifies a low
+		   cutoff that excludes some 32-bit timestamps.  */
+		if (pass == 1 && lo_time <= thismin)
+		  thisdefaulttype = range64.defaulttype;
+
+		if (locut)
+		  thisdefaulttype = unspecifiedtype;
 		omittype[thisdefaulttype] = false;
-		for (i = thistimei - pretrans; i < thistimelim; i++)
+		for (i = thistimei; i < thistimelim; i++)
 		  omittype[types[i]] = false;
 		if (hicut)
 		  omittype[unspecifiedtype] = false;
@@ -2248,7 +2330,13 @@ writezone(const char *const name, const char *const string, char version,
 			int	mrudst, mrustd, hidst, histd, type;
 
 			hidst = histd = mrudst = mrustd = -1;
-			for (i = thistimei - pretrans; i < thistimelim; ++i)
+			if (0 <= pretranstype) {
+			  if (isdsts[pretranstype])
+			    mrudst = pretranstype;
+			  else
+			    mrustd = pretranstype;
+			}
+			for (i = thistimei; i < thistimelim; i++)
 				if (isdsts[types[i]])
 					mrudst = types[i];
 				else	mrustd = types[i];
@@ -2318,7 +2406,8 @@ writezone(const char *const name, const char *const string, char version,
 			indmap[desigidx[i]] = j;
 		}
 		if (pass == 1 && !want_bloat()) {
-		  pretrans = hicut = thisleapexpiry = false;
+		  hicut = thisleapexpiry = false;
+		  pretranstype = -1;
 		  thistimecnt = thisleapcnt = 0;
 		  thistypecnt = thischarcnt = 1;
 		}
@@ -2329,7 +2418,8 @@ writezone(const char *const name, const char *const string, char version,
 		convert(utcnt, tzh.tzh_ttisutcnt);
 		convert(stdcnt, tzh.tzh_ttisstdcnt);
 		convert(thisleapcnt + thisleapexpiry, tzh.tzh_leapcnt);
-		convert(pretrans + thistimecnt + hicut, tzh.tzh_timecnt);
+		convert((0 <= pretranstype) + thistimecnt + hicut,
+			tzh.tzh_timecnt);
 		convert(thistypecnt, tzh.tzh_typecnt);
 		convert(thischarcnt, tzh.tzh_charcnt);
 		DO(tzh_magic);
@@ -2356,14 +2446,16 @@ writezone(const char *const name, const char *const string, char version,
 		   for this pass.  */
 		lo = pass == 1 && lo_time < INT32_MIN ? INT32_MIN : lo_time;
 
-		if (pretrans)
+		if (0 <= pretranstype)
 		  puttzcodepass(lo, fp, pass);
 		for (i = thistimei; i < thistimelim; ++i) {
 		  puttzcodepass(ats[i], fp, pass);
 		}
 		if (hicut)
 		  puttzcodepass(hi_time + 1, fp, pass);
-		for (i = thistimei - pretrans; i < thistimelim; ++i)
+		if (0 <= pretranstype)
+		  putc(typemap[pretranstype], fp);
+		for (i = thistimei; i < thistimelim; i++)
 		  putc(typemap[types[i]], fp);
 		if (hicut)
 		  putc(typemap[unspecifiedtype], fp);
@@ -2464,6 +2556,8 @@ abbroffset(char *buf, zic_t offset)
 	}
 }
 
+static char const disable_percent_s[] = "";
+
 static size_t
 doabbr(char *abbr, size_t abbrlen, struct zone const *zp, const char *letters,
     bool isdst, zic_t save, bool doquotes)
@@ -2480,6 +2574,8 @@ doabbr(char *abbr, size_t abbrlen, struct zone const *zp, const char *letters,
 			letters = abbroffset(letterbuf, zp->z_stdoff + save);
 		else if (!letters)
 			letters = "%s";
+		else if (letters == disable_percent_s)
+			return 0;
 		snprintf(abbr, abbrlen, format, letters);
 	} else if (isdst) {
 		strlcpy(abbr, slashp + 1, abbrlen);
@@ -2755,18 +2851,10 @@ stringzone(char *result, int resultlen, const struct zone *const zpfirst,
 static void
 outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 {
-	const struct zone *	zp;
-	struct rule *		rp;
 	ptrdiff_t		i, j;
-	bool			usestart, useuntil;
 	zic_t			starttime, untiltime;
-	zic_t			stdoff;
-	zic_t			save;
-	zic_t			year;
-	zic_t			startoff;
 	bool			startttisstd;
 	bool			startttisut;
-	int			type;
 	char *			startbuf;
 	char *			ab;
 	char *			envvar;
@@ -2777,8 +2865,6 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	bool			do_extend;
 	char			version;
 	ptrdiff_t lastatmax = -1;
-	zic_t one = 1;
-	zic_t y2038_boundary = one << 31;
 	zic_t max_year0;
 	int defaulttype = -1;
 
@@ -2810,11 +2896,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 		updateminmax(leapmaxyear + (leapmaxyear < ZIC_MAX));
 	}
 	for (i = 0; i < zonecount; ++i) {
-		zp = &zpfirst[i];
+		struct zone const *zp = &zpfirst[i];
 		if (i < zonecount - 1)
 			updateminmax(zp->z_untilrule.r_loyear);
 		for (j = 0; j < zp->z_nrules; ++j) {
-			rp = &zp->z_rules[j];
+			struct rule *rp = &zp->z_rules[j];
 			if (rp->r_lowasnum)
 				updateminmax(rp->r_loyear);
 			if (rp->r_hiwasnum)
@@ -2876,6 +2962,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			max_year = min_year + years_of_observations;
 		}
 	}
+	max_year = max(max_year, (redundant_time / (SECSPERDAY * DAYSPERNYEAR)
+				  + EPOCH_YEAR + 1));
 	max_year0 = max_year;
 	if (want_bloat()) {
 	  /* For the benefit of older systems,
@@ -2891,22 +2979,23 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 
 	for (i = 0; i < zonecount; ++i) {
 		struct rule *prevrp = NULL;
-		zic_t prevktime;
-		INITIALIZE(prevktime);
 		/*
 		** A guess that may well be corrected later.
 		*/
-		save = 0;
-		zp = &zpfirst[i];
-		usestart = i > 0 && (zp - 1)->z_untiltime > min_time;
-		useuntil = i < (zonecount - 1);
+		zic_t save = 0;
+		struct zone const *zp = &zpfirst[i];
+		bool usestart = i > 0 && (zp - 1)->z_untiltime > min_time;
+		bool useuntil = i < (zonecount - 1);
+		zic_t stdoff = zp->z_stdoff;
+		zic_t startoff = stdoff;
+		zic_t prevktime;
+		INITIALIZE(prevktime);
 		if (useuntil && zp->z_untiltime <= min_time)
 			continue;
-		stdoff = zp->z_stdoff;
 		eat(zp->z_filename, zp->z_linenum);
 		*startbuf = '\0';
-		startoff = zp->z_stdoff;
 		if (zp->z_nrules == 0) {
+			int type;
 			save = zp->z_save;
 			doabbr(startbuf, max_abbr_len + 1,
 			    zp, NULL, zp->z_isdst, save, false);
@@ -2918,7 +3007,9 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				usestart = false;
 			} else	
 				defaulttype = type;
-		} else for (year = min_year; year <= max_year; ++year) {
+		} else {
+		  zic_t year;
+		  for (year = min_year; year <= max_year; ++year) {
 			if (useuntil && year > zp->z_untilrule.r_hiyear)
 				break;
 			/*
@@ -2927,7 +3018,9 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			** The former TYPE field was also considered here.
 			*/
 			for (j = 0; j < zp->z_nrules; ++j) {
-				rp = &zp->z_rules[j];
+				zic_t one = 1;
+				zic_t y2038_boundary = one << 31;
+				struct rule *rp = &zp->z_rules[j];
 				eats(zp->z_filename, zp->z_linenum,
 					rp->r_filename, rp->r_linenum);
 				rp->r_todo = year >= rp->r_loyear &&
@@ -2943,6 +3036,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				ptrdiff_t	k;
 				zic_t	jtime, ktime;
 				zic_t	offset;
+				struct rule *rp;
+				int type;
 
 				INITIALIZE(ktime);
 				if (useuntil) {
@@ -2965,15 +3060,15 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				*/
 				k = -1;
 				for (j = 0; j < zp->z_nrules; ++j) {
-					rp = &zp->z_rules[j];
-					if (!rp->r_todo)
+					struct rule *r = &zp->z_rules[j];
+					if (!r->r_todo)
 						continue;
 					eats(zp->z_filename, zp->z_linenum,
-						rp->r_filename, rp->r_linenum);
-					offset = rp->r_todisut ? 0 : stdoff;
-					if (!rp->r_todisstd)
+						r->r_filename, r->r_linenum);
+					offset = r->r_todisut ? 0 : stdoff;
+					if (!r->r_todisstd)
 						offset = oadd(offset, save);
-					jtime = rp->r_temp;
+					jtime = r->r_temp;
 					if (jtime == min_time ||
 						jtime == max_time)
 							continue;
@@ -2985,11 +3080,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					  char const *dup_rules_msg =
 					    _("two rules for same instant");
 					  eats(zp->z_filename, zp->z_linenum,
-					       rp->r_filename, rp->r_linenum);
+					       r->r_filename, r->r_linenum);
 					  warning("%s", dup_rules_msg);
-					  rp = &zp->z_rules[k];
+					  r = &zp->z_rules[k];
 					  eats(zp->z_filename, zp->z_linenum,
-					       rp->r_filename, rp->r_linenum);
+					       r->r_filename, r->r_linenum);
 					  error("%s", dup_rules_msg);
 					}
 				}
@@ -2997,8 +3092,16 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					break;	/* go on to next year */
 				rp = &zp->z_rules[k];
 				rp->r_todo = false;
-				if (useuntil && ktime >= untiltime)
+				if (useuntil && ktime >= untiltime) {
+					if (!*startbuf
+					    && (oadd(zp->z_stdoff, rp->r_save)
+						== startoff))
+					  doabbr(startbuf, max_abbr_len + 1,
+						 zp, rp->r_abbrvar,
+						 rp->r_isdst, rp->r_save,
+						 false);
 					break;
+				}
 				save = rp->r_save;
 				if (usestart && ktime == starttime)
 					usestart = false;
@@ -3034,6 +3137,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				offset = oadd(zp->z_stdoff, rp->r_save);
 				if (!want_bloat() && !useuntil && !do_extend
 				    && prevrp && lo_time <= prevktime
+				    && redundant_time <= ktime
 				    && rp->r_hiyear == ZIC_MAX
 				    && prevrp->r_hiyear == ZIC_MAX)
 				  break;
@@ -3049,21 +3153,20 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				prevrp = rp;
 				prevktime = ktime;
 			}
+		  }
 		}
 		if (usestart) {
-			if (*startbuf == '\0' &&
-				zp->z_format != NULL &&
-				strchr(zp->z_format, '%') == NULL &&
-				strchr(zp->z_format, '/') == NULL)
-					strncpy(startbuf, zp->z_format,
-					    max_abbr_len + 1 - 1);
+			bool isdst = startoff != zp->z_stdoff;
+			if (*startbuf == '\0' && zp->z_format)
+			  doabbr(startbuf, max_abbr_len + 1, 
+				 zp, disable_percent_s,
+				 isdst, save, false);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
 error(_("can't determine time zone abbreviation to use just after until time"));
 			else {
-			  bool isdst = startoff != zp->z_stdoff;
-			  type = addtype(startoff, startbuf, isdst,
-					 startttisstd, startttisut);
+			  int type = addtype(startoff, startbuf, isdst,
+					     startttisstd, startttisut);
 			  if (defaulttype < 0 && !isdst)
 			    defaulttype = type;
 			  addtt(starttime, type);
@@ -3366,23 +3469,20 @@ byword(const char *word, const struct lookup *table)
 	return foundlp;
 }
 
-static char **
-getfields(char *cp)
+static int
+getfields(char *cp, char **array, int arrayelts)
 {
 	char *	dp;
-	char **	array;
 	int	nsubs;
 
-	if (cp == NULL)
-		return NULL;
-	array = zic_malloc(size_product(strlen(cp) + 1, sizeof *array));
 	nsubs = 0;
 	for ( ; ; ) {
+		char *dstart;
 		while (is_space(*cp))
 				++cp;
 		if (*cp == '\0' || *cp == '#')
 			break;
-		array[nsubs++] = dp = cp;
+		dstart = dp = cp;
 		do {
 			if ((*dp = *cp++) != '"')
 				++dp;
@@ -3397,9 +3497,13 @@ getfields(char *cp)
 		if (is_space(*cp))
 			++cp;
 		*dp = '\0';
+		if (nsubs == arrayelts) {
+		  error(_("Too many input fields"));
+		  exit(EXIT_FAILURE);
+		}
+		array[nsubs++] = dstart + (*dstart == '-' && dp == dstart + 1);
 	}
-	array[nsubs] = NULL;
-	return array;
+	return nsubs;
 }
 
 static _Noreturn void

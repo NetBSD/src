@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.58 2022/03/22 17:48:39 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.59 2022/08/16 10:56:21 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -48,7 +48,7 @@
 */
 
 #ifndef HAVE_DECL_ASCTIME_R
-#define HAVE_DECL_ASCTIME_R 1
+# define HAVE_DECL_ASCTIME_R 1
 #endif
 
 #if !defined HAVE_GENERIC && defined __has_extension
@@ -67,51 +67,51 @@
 #endif
 
 #ifndef HAVE_GETTEXT
-#define HAVE_GETTEXT		0
+# define HAVE_GETTEXT 0
 #endif /* !defined HAVE_GETTEXT */
 
 #ifndef HAVE_INCOMPATIBLE_CTIME_R
-#define HAVE_INCOMPATIBLE_CTIME_R	0
+# define HAVE_INCOMPATIBLE_CTIME_R 0
 #endif
 
 #ifndef HAVE_LINK
-#define HAVE_LINK		1
+# define HAVE_LINK 1
 #endif /* !defined HAVE_LINK */
 
 #ifndef HAVE_MALLOC_ERRNO
-#define HAVE_MALLOC_ERRNO 1
+# define HAVE_MALLOC_ERRNO 1
 #endif
 
 #ifndef HAVE_POSIX_DECLS
-#define HAVE_POSIX_DECLS 1
+# define HAVE_POSIX_DECLS 1
 #endif
 
 #ifndef HAVE_STDBOOL_H
-#define HAVE_STDBOOL_H (199901 <= __STDC_VERSION__)
+# define HAVE_STDBOOL_H (199901 <= __STDC_VERSION__)
 #endif
 
 #ifndef HAVE_STRDUP
-#define HAVE_STRDUP 1
+# define HAVE_STRDUP 1
 #endif
 
 #ifndef HAVE_STRTOLL
-#define HAVE_STRTOLL 1
+# define HAVE_STRTOLL 1
 #endif
 
 #ifndef HAVE_SYMLINK
-#define HAVE_SYMLINK		1
+# define HAVE_SYMLINK 1
 #endif /* !defined HAVE_SYMLINK */
 
 #ifndef HAVE_SYS_STAT_H
-#define HAVE_SYS_STAT_H		1
+# define HAVE_SYS_STAT_H 1
 #endif /* !defined HAVE_SYS_STAT_H */
 
 #ifndef HAVE_UNISTD_H
-#define HAVE_UNISTD_H		1
+# define HAVE_UNISTD_H 1
 #endif /* !defined HAVE_UNISTD_H */
 
 #ifndef HAVE_UTMPX_H
-#define HAVE_UTMPX_H		1
+# define HAVE_UTMPX_H 1
 #endif /* !defined HAVE_UTMPX_H */
 
 #ifndef NETBSD_INSPIRED
@@ -119,8 +119,8 @@
 #endif
 
 #if HAVE_INCOMPATIBLE_CTIME_R
-#define asctime_r _incompatible_asctime_r
-#define ctime_r _incompatible_ctime_r
+# define asctime_r _incompatible_asctime_r
+# define ctime_r _incompatible_ctime_r
 #endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /* Enable tm_gmtoff, tm_zone, and environ on GNUish systems.  */
@@ -198,11 +198,11 @@
 #endif
 
 #if HAVE_GETTEXT
-#include <libintl.h>
+# include <libintl.h>
 #endif /* HAVE_GETTEXT */
 
 #if HAVE_UNISTD_H
-#include <unistd.h>	/* for R_OK, and other POSIX goodness */
+# include <unistd.h> /* for R_OK, and other POSIX goodness */
 #endif /* HAVE_UNISTD_H */
 
 #ifndef HAVE_STRFTIME_L
@@ -238,7 +238,7 @@
 #endif
 
 #ifndef R_OK
-#define R_OK	4
+# define R_OK 4
 #endif /* !defined R_OK */
 
 /*
@@ -248,14 +248,14 @@
 ** stdint.h, even with pre-C99 compilers.
 */
 #ifndef HAVE_STDINT_H
-#define HAVE_STDINT_H \
+# define HAVE_STDINT_H \
    (199901 <= __STDC_VERSION__ \
-    || 2 < __GLIBC__ + (1 <= __GLIBC_MINOR__)	\
+    || 2 < __GLIBC__ + (1 <= __GLIBC_MINOR__) \
     || __CYGWIN__ || INTMAX_MAX)
 #endif /* !defined HAVE_STDINT_H */
 
 #if HAVE_STDINT_H
-#include <stdint.h>
+# include <stdint.h>
 #endif /* !HAVE_STDINT_H */
 
 #ifndef HAVE_INTTYPES_H
@@ -374,14 +374,14 @@ typedef unsigned long uintmax_t;
 #endif
 
 #ifndef INT32_MAX
-#define INT32_MAX 0x7fffffff
+# define INT32_MAX 0x7fffffff
 #endif /* !defined INT32_MAX */
 #ifndef INT32_MIN
-#define INT32_MIN (-1 - INT32_MAX)
+# define INT32_MIN (-1 - INT32_MAX)
 #endif /* !defined INT32_MIN */
 
 #ifndef SIZE_MAX
-#define SIZE_MAX ((size_t) -1)
+# define SIZE_MAX ((size_t) -1)
 #endif
 
 #if 3 <= __GNUC__
@@ -655,6 +655,11 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 #define TYPE_SIGNED(type) (/*CONSTCOND*/((type) -1) < 0)
 #define TWOS_COMPLEMENT(t) (/*CONSTCOND*/(t) ~ (t) 0 < 0)
 
+/* Minimum and maximum of two values.  Use lower case to avoid
+   naming clashes with standard include files.  */
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 /* Max and min values of the integer type T, of which only the bottom
    B bits are used, and where the highest-order used bit is considered
    to be a sign bit if T is signed.  */
@@ -760,47 +765,63 @@ char *ctime_r(time_t const *, char *);
 
 /* Handy macros that are independent of tzfile implementation.  */
 
-#define SECSPERMIN	60
-#define MINSPERHOUR	60
-#define HOURSPERDAY	24
-#define DAYSPERWEEK	7
-#define DAYSPERNYEAR	365
-#define DAYSPERLYEAR	366
-#define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
-#define MONSPERYEAR	12
+#ifndef SECSPERMIN
+enum {
+  SECSPERMIN = 60,
+  MINSPERHOUR = 60,
+  SECSPERHOUR = SECSPERMIN * MINSPERHOUR,
+  HOURSPERDAY = 24,
+  DAYSPERWEEK = 7,
+  DAYSPERNYEAR = 365,
+  DAYSPERLYEAR = DAYSPERNYEAR + 1,
+  MONSPERYEAR = 12,
+  YEARSPERREPEAT = 400	/* years before a Gregorian repeat */
+};
+#endif
 
-#define YEARSPERREPEAT		400	/* years before a Gregorian repeat */
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
+
 #define DAYSPERREPEAT		((int_fast32_t) 400 * 365 + 100 - 4 + 1)
 #define SECSPERREPEAT		((int_fast64_t) DAYSPERREPEAT * SECSPERDAY)
 #define AVGSECSPERYEAR		(SECSPERREPEAT / YEARSPERREPEAT)
 
-#define TM_SUNDAY	0
-#define TM_MONDAY	1
-#define TM_TUESDAY	2
-#define TM_WEDNESDAY	3
-#define TM_THURSDAY	4
-#define TM_FRIDAY	5
-#define TM_SATURDAY	6
+#ifndef TM_SUNDAY
+enum {
+  TM_SUNDAY,
+  TM_MONDAY,
+  TM_TUESDAY,
+  TM_WEDNESDAY,
+  TM_THURSDAY,
+  TM_FRIDAY,
+  TM_SATURDAY
+};
+#endif
 
-#define TM_JANUARY	0
-#define TM_FEBRUARY	1
-#define TM_MARCH	2
-#define TM_APRIL	3
-#define TM_MAY		4
-#define TM_JUNE		5
-#define TM_JULY		6
-#define TM_AUGUST	7
-#define TM_SEPTEMBER	8
-#define TM_OCTOBER	9
-#define TM_NOVEMBER	10
-#define TM_DECEMBER	11
+#ifndef TM_JANUARY
+enum {
+  TM_JANUARY,
+  TM_FEBRUARY,
+  TM_MARCH,
+  TM_APRIL,
+  TM_MAY,
+  TM_JUNE,
+  TM_JULY,
+  TM_AUGUST,
+  TM_SEPTEMBER,
+  TM_OCTOBER,
+  TM_NOVEMBER,
+  TM_DECEMBER
+};
+#endif
 
-#define TM_YEAR_BASE	1900
-#define TM_WDAY_BASE	TM_MONDAY
-
-#define EPOCH_YEAR	1970
-#define EPOCH_WDAY	TM_THURSDAY
+#ifndef TM_YEAR_BASE
+enum {
+  TM_YEAR_BASE = 1900,
+  TM_WDAY_BASE = TM_MONDAY,
+  EPOCH_YEAR = 1970,
+  EPOCH_WDAY = TM_THURSDAY
+};
+#endif
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
