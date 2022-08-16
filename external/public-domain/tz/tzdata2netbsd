@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.12 2018/03/24 01:54:48 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.13 2022/08/16 13:19:41 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -288,7 +288,7 @@ shell_quote()
 			# Finally, elide unnecessary '' pairs at the
 			# beginning and end of the result and as part of
 			# '\'''\'' sequences that result from multiple
-			# adjacent quotes in he input.
+			# adjacent quotes in the input.
 			qarg="$(printf '%s\n' "$arg" | \
 			    ${SED:-sed} -e "s/'/'\\\\''/g" \
 				-e "1s/^/'/" -e "\$s/\$/'/" \
