@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.511 2022/07/29 15:24:28 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.512 2022/08/17 19:56:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.511 2022/07/29 15:24:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.512 2022/08/17 19:56:28 rillig Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1867,7 +1867,7 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	KASSERT(ifa->ifa_ifp == ifp);
 	/*
 	 * Check MP-safety for IFEF_MPSAFE drivers.
-	 * if_is_deactivated indicates ifa_remove is called fromm if_detach
+	 * if_is_deactivated indicates ifa_remove is called from if_detach
 	 * where it is safe even if IFNET_LOCK isn't held.
 	 */
 	KASSERT(!if_is_mpsafe(ifp) || if_is_deactivated(ifp) || IFNET_LOCKED(ifp));
