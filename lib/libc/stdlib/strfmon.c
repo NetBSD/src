@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.16 2022/05/23 19:21:30 andvar Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.17 2022/08/17 09:32:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.16 2022/05/23 19:21:30 andvar Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.17 2022/08/17 09:32:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,7 +100,8 @@ __RCSID("$NetBSD: strfmon.c,v 1.16 2022/05/23 19:21:30 andvar Exp $");
 } while (0)
 
 #define GRPSEP do {						\
-	*--bufend = thousands_sep;				\
+	bufend -= thousands_sep_size;				\
+	memcpy(bufend, thousands_sep, thousands_sep_size);	\
 	groups++;						\
 } while (0)
 
@@ -215,6 +216,8 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			if (!isdigit((unsigned char)*++fmt))
 				goto format_error;
 			GET_NUMBER(left_prec);
+			if ((unsigned int)left_prec >= maxsize - (dst - s))
+				goto e2big_error;
 		}
 
 		/* Right precision */
@@ -222,6 +225,9 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			if (!isdigit((unsigned char)*++fmt))
 				goto format_error;
 			GET_NUMBER(right_prec);
+			if ((unsigned int)right_prec >= maxsize - (dst - s) -
+			    left_prec)
+				goto e2big_error;
 		}
 
 		/* Conversion Characters */
@@ -271,6 +277,8 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 				pad_size = 0;
 		}
 
+		if (asciivalue != NULL)
+			free(asciivalue);
 		asciivalue = __format_grouped_double(lc, value, &flags,
 				left_prec, right_prec, pad_char);
 		if (asciivalue == NULL)
@@ -422,7 +430,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->int_n_cs_precedes;
 		*sep_by_space = lc->int_n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->int_n_sign_posn;
-		*signstr = (*lc->negative_sign == '\0') ? "-"
+		*signstr = (lc->negative_sign[0] == '\0') ? "-"
 		    : lc->negative_sign;
 	} else if (flags & USE_INTL_CURRENCY) {
 		*cs_precedes = lc->int_p_cs_precedes;
@@ -433,7 +441,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 		*cs_precedes = lc->n_cs_precedes;
 		*sep_by_space = lc->n_sep_by_space;
 		*sign_posn = (flags & PARENTH_POSN) ? 0 : lc->n_sign_posn;
-		*signstr = (*lc->negative_sign == '\0') ? "-"
+		*signstr = (lc->negative_sign[0] == '\0') ? "-"
 		    : lc->negative_sign;
 	} else {
 		*cs_precedes = lc->p_cs_precedes;
@@ -446,7 +454,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 	if (*cs_precedes != 0)
 		*cs_precedes = 1;
 	if ((unsigned char)*sep_by_space == NBCHAR_MAX)
-		*sep_by_space = 1;
+		*sep_by_space = 0;
 	if ((unsigned char)*sign_posn == NBCHAR_MAX)
 		*sign_posn = 0;
 }
@@ -502,7 +510,7 @@ get_groups(int size, char *grouping) {
 	return (chars);
 }
 
-/* convert double to ASCII */
+/* convert double to locale-encoded string */
 static char *
 __format_grouped_double(struct lconv *lc, double value, int *flags,
 			int left_prec, int right_prec, int pad_char) {
@@ -517,18 +525,23 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 	int		padded;
 
 	char		*grouping;
-	char		decimal_point;
-	char		thousands_sep;
+	const char	*decimal_point;
+	const char	*thousands_sep;
+	size_t		decimal_point_size;
+	size_t		thousands_sep_size;
 
 	int groups = 0;
 
 	grouping = lc->mon_grouping;
-	decimal_point = *lc->mon_decimal_point;
-	if (decimal_point == '\0')
-		decimal_point = *lc->decimal_point;
-	thousands_sep = *lc->mon_thousands_sep;
-	if (thousands_sep == '\0')
-		thousands_sep = *lc->thousands_sep;
+	decimal_point = lc->mon_decimal_point;
+	if (*decimal_point == '\0')
+		decimal_point = lc->decimal_point;
+	thousands_sep = lc->mon_thousands_sep;
+	if (*thousands_sep == '\0')
+		thousands_sep = lc->thousands_sep;
+
+	decimal_point_size = strlen(decimal_point);
+	thousands_sep_size = strlen(thousands_sep);
 
 	/* fill left_prec with default value */
 	if (left_prec == -1)
@@ -555,7 +568,8 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 		return (NULL);
 
 	/* make sure that we've enough space for result string */
-	bufsize = avalue_size * 2 + 1;
+	bufsize = avalue_size * (1 + thousands_sep_size) + decimal_point_size +
+	    1;
 	rslt = calloc(1, bufsize);
 	if (rslt == NULL) {
 		free(avalue);
@@ -574,13 +588,13 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 		bufend -= right_prec;
 		memcpy(bufend, avalue + avalue_size+padded-right_prec,
 		    (size_t) right_prec);
-		*--bufend = decimal_point;
+		bufend -= decimal_point_size;
+		memcpy(bufend, decimal_point, decimal_point_size);
 		avalue_size -= (right_prec + 1);
 	}
 
-        /* XXX: Why not use %' instead? */
 	if ((*flags & NEED_GROUPING) &&
-	    thousands_sep != '\0' &&	/* XXX: need investigation */
+	    thousands_sep_size > 0 &&	/* XXX: need investigation */
 	    (unsigned char)*grouping != NBCHAR_MAX &&
 	    *grouping > 0) {
 		while (avalue_size > (int)*grouping) {
@@ -609,7 +623,7 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 		bufend -= avalue_size;
 		memcpy(bufend, avalue+padded, (size_t) avalue_size);
 		if (right_prec == 0)
-			padded--;	/* decrease assumed $decimal_point */
+			padded -= decimal_point_size;
 	}
 
 	/* do padding with pad_char */
@@ -618,7 +632,8 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 		memset(bufend, pad_char, (size_t) padded);
 	}
 
-	memmove(rslt, bufend, bufend - rslt + 1);
+	bufsize = rslt + bufsize - bufend;
+	memmove(rslt, bufend, bufsize);
 	free(avalue);
 	return (rslt);
 }
