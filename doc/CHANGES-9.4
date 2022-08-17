@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.3 2022/08/12 15:19:24 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.4 2022/08/17 16:43:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -35,4 +35,10 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.408(patch)
 	Explicitly nul-terminate all strings coming from userland.
 	Avoids signed arithmetic in some ioctl commands.
 	[mrg, ticket #1500]
+
+sys/kern/uipc_sem.c				1.60
+
+	PR 55509: fix per-uid "semcnt" bookeeping.
+	[chs, ticket #1501]
+
 
