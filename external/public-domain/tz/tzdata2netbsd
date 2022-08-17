@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.14 2022/08/16 13:23:12 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.15 2022/08/17 14:32:34 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -56,7 +56,9 @@ usage()
 	printf >&2 '%s\n'						\
 		"Usage: $0 [new-version-id [old-version-id]]"		\
 		"     where a version-id is of the form YYYYx (eg: 2018c)" \
-		"     or '' for new-version-id (to specify only the old)"
+		"     or '' for new-version-id (to specify only the old)"  \
+		"     and where new-version-id can have =fetch-version-id" \
+		"     appended to specify fetching that version instead"
 	exit 2
 }
 
@@ -71,7 +73,11 @@ fail()
 valid_vers()
 {
 	case "$2" in
+	# The IANA (Eggert) standard version names
 	${VERS_PATTERN} | ${VERS_PATTERN}[a-z] )
+		;;
+	# The alternate (more rational) fork "global timezone" version
+	${VERS_PATTERN}gtz | ${VERS_PATTERN}[a-z]gtz )
 		;;
 	*)	printf >&2 '%s: %s\n' \
 		    "Bad form for $1 version specifier '$2'" \
@@ -121,7 +127,7 @@ get_curvers()
 
 argparse()
 {
-	local OVF
+	local OVF OV NV OVy OVs NVy NVs
 
 	if OVF=$(find "${WORK_PFX}" -name "${UPDATE_FROM##*/}" -mtime +2 -print)
 	then
@@ -156,6 +162,14 @@ argparse()
 	case "$#:$1" in
 	0: | 1: | 2: )
 		;;
+	1:=?*|2:=?*)	
+		valid_vers fetch "${1#=}" && FETCHVER="${1#=}" || usage
+		;;
+	1:*=?*|2:*=?*)	
+		set -- "{$1%=*}" "${1#*=}"
+		valid_vers fetch "$2" && FETCHVER="$2" || usage
+		valid_vers new "$1" && NEWVER="$1" || usage
+		;;
 	1:?*|2:?*)	
 		valid_vers new "$1" && NEWVER="$1" || usage
 		;;
@@ -164,6 +178,13 @@ argparse()
 	esac
 
 	test -z "${NEWVER}" && get_curvers
+
+	test -z "${FETCHVER}" && FETCHVER=${NEWVER}
+
+	case "${FETCHVER}" in
+	*gtz)	GLOBAL=true;;
+	*)	GLOBAL=false;;
+	esac
 
 	test "${NEWVER}" = "${OLDVER}" && {
 		printf '%s\n' \
@@ -175,22 +196,50 @@ argparse()
 	printf '%s\n' "${OLDVER}" > "${UPDATE_FROM}" ||
 	    fail "Unable to preserve old version ${OLDVER} in ${UPDATE_FROM}"
 
-	test "${#NEWVER}" -gt "${#OLDVER}" ||
-		test "${NEWVER}" '>' "${OLDVER}" ||
-		{
-			local reply
+	# Do version upgrade test using base version names, ignoring
+	# the "gtz" in the "global timezone" versions, so we can
+	# switch back and forth between use of those as circumstances change
+	OV=${OLDVER%gtz}
+	NV=${NEWVER%gtz}
 
-			printf '%s\n' \
-			    "Update would revert ${OLDVER} to ${NEWVER}"
-			read -p "Is reversion intended? " reply
-			case "${reply}" in
-			[Yy]*)	;;
-			*)	printf '%s\n' OK. Aborted.
-				rm -f "${UPDATE_FROM}"
-				exit 1
-				;;
-			esac
+	OVy=${OV%%[!0-9]*}
+	OVs=${OV#${OVy}}
+	NVy=${NV%%[!0-9]*}
+	NVs=${NV#${NVy}}
+
+	# To get all the permutations correct, we need to separate
+	# the year and suffix parts of the version IDs (done just above)
+	# and then compare them separately.  The suffix is only relevant
+	# to the result when the years are the same.
+
+	# We compare the length of the suffix separately to the suffix
+	# itself, a multi-char suffix has never happened (and is never
+	# likely to) - but in the event that prediction is wrong, we don't
+	# know (yet) what is to come after 'z' - it might be 'za' 'zb'
+	# ... to 'zz" then 'zza' ... or it might be 'aa' 'ab' ... 'az' 'ba'...
+	# we need to handle both possibilities.  Two things stand out from
+	# those: 1. a longer suffix is always going to be for a newer version
+	# than a shorter one;  2. equal length suffixes can be compared as
+	# strings
+
+	if [ "${OVy}" -gt "${NVy}" ]			|| {
+		[ "${OVy}" -eq "${NVy}" ]	&& {
+			[ "${#OVs}" -gt "${#NVs}" ]		||
+			LC_COLLATE=C [ "${OVs}" '>' "${NVs}" ]
 		}
+        } then
+		local reply
+
+		printf '%s\n' "Update would revert ${OLDVER} to ${NEWVER}"
+		read -p "Is reversion intended? " reply
+		case "${reply}" in
+		[Yy]*)	;;
+		*)	printf '%s\n' OK. Aborted.
+			rm -f "${UPDATE_FROM}"
+			exit 1
+			;;
+		esac
+	fi
 
 	return 0
 }
@@ -207,10 +256,22 @@ setup_versions()
 	CVSBRANCHTAG="TZDATA"
 	GITHUBTAG="${NEWVER}"
 
+	if $GLOBAL && [ "${CVSNEWTAG%GTZ}" = "${CVSNEWTAG}" ]
+	then
+		CVSNEWTAG=${CVSNEWTAG}GTZ
+	fi
+
 	# URLs for fetching distribution files, etc.
-	DISTURL="ftp://${DIST_HOST}/${DIST_PATH}/${DIST_FILES}"
-	DISTURL="${DISTURL}/tzdata${NEWVER}.tar.gz"
-	SIGURL="${DISTURL}.asc"
+	if $GLOBAL
+	then
+		DISTURL=https://github.com/JodaOrg/global-tz/releases/download
+		DISTURL=${DISTURL}/${FETCHVER}/tzdata${FETCHVER}.tar.gz
+		unset SIGURL
+	else
+		DISTURL="ftp://${DIST_HOST}/${DIST_PATH}/${DIST_FILES}"
+		DISTURL="${DISTURL}/tzdata${NEWVER}.tar.gz"
+		SIGURL="${DISTURL}.asc"
+	fi
 	NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
 
 	# Directories
@@ -365,8 +426,13 @@ fetch()
 {
 	[ -f "${DISTFILE}" ] || ftp -o "${DISTFILE}" "${DISTURL}" ||
 		fail "fetch of ${DISTFILE} failed"
-	[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}" ||
-		fail "fetch of ${SIGFILE} failed"
+
+	if [ -n "${SIGURL}" ]
+	then
+		[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}" ||
+			fail "fetch of ${SIGFILE} failed"
+	fi
+
 	[ -f "${NEWSFILE}" ] || ftp -o "${NEWSFILE}" "${NEWSURL}" ||
 		fail "fetch of ${NEWSFILE} failed"
 }
@@ -604,7 +670,7 @@ main()
 	setup_versions
 	mkworkdir
 	fetch
-	checksig
+	$GLOBAL || checksig
 	extract
 	addnews
 	trimnews
