@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.140 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: GENERIC3X,v 1.141 2022/08/17 19:13:05 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.140 $"
+#ident		"GENERIC3X-$Revision: 1.141 $"
 
 makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
 	# Bootloader has size limit (~2MB). -fno-omit-frame-pointer is
@@ -203,6 +203,11 @@ xd* at xdc? drive ?
 
 # P4 Monochrome frame buffer.
 bwtwo0	at obmem0 addr 0x50300000
+# The bw2 driver can also run on a cg4 overlay plane,
+# and the 0x40 flag means "CG overlay plane" mode.
+# The low 4 bits of the flags (if set) are matched
+# against the same bits of the machine type ID code.
+bwtwo0	at obmem0 addr 0x50300000 flags 0x42	# 3/80 (P4 cgfour overlay)
 
 # P4 8-bit color frame buffer
 cgfour0 at obmem0 addr 0x50300000
