@@ -1,4 +1,4 @@
-# $NetBSD: opt-query.mk,v 1.5 2022/08/17 20:05:41 rillig Exp $
+# $NetBSD: opt-query.mk,v 1.6 2022/08/17 20:10:29 rillig Exp $
 #
 # Tests for the -q command line option.
 #
@@ -24,6 +24,7 @@ all: .PHONY variants cleanup
 _!=	touch -f opt-query-file.up-to-date
 
 variants: .PHONY
+
 .  for target in commands
 	@echo 'Making ${target}':
 	@${MAKE} -r -f ${MAKEFILE} -q ${mode:Mjobs:%=-j1} ${target} PART=commands \
@@ -31,6 +32,7 @@ variants: .PHONY
 	|| echo "${target}: query status $$?"
 	@echo
 .  endfor
+
 .  for mode in compat jobs
 .    for target in opt-query-file.out-of-date opt-query-file.up-to-date phony
 	@echo 'Making ${target} in ${mode} mode':
@@ -41,18 +43,14 @@ variants: .PHONY
 .    endfor
 .  endfor
 
+# Between 1994 and before 2022-08-17, the exit status for '-q' was always 1,
+# the cause for that exit code varied over time though.
+#
 # expect: opt-query-file.out-of-date in compat mode: query status 1
-
-# FIXME: must be 0, not 1.
-# expect: opt-query-file.up-to-date in compat mode: query status 1
-
+# expect: opt-query-file.up-to-date in compat mode: query status 0
 # expect: phony in compat mode: query status 1
-
 # expect: opt-query-file.out-of-date in jobs mode: query status 1
-
-# FIXME: must be 0, not 1.
-# expect: opt-query-file.up-to-date in jobs mode: query status 1
-
+# expect: opt-query-file.up-to-date in jobs mode: query status 0
 # expect: phony in jobs mode: query status 1
 
 cleanup: .PHONY
