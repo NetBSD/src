@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.315 2022/03/13 11:29:46 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.316 2022/08/17 20:03:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.315 2022/03/13 11:29:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.316 2022/08/17 20:03:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -761,7 +761,7 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	mutex_enter(&sc->sc_lock);
 	sc->sc_suspend = PWR_SUSPEND;
 	if (sc->sc_intr_xfer != NULL)
-		callout_halt(&sc->sc_poll_handle, &sc->sc_intr_lock);
+		callout_halt(&sc->sc_poll_handle, &sc->sc_lock);
 	mutex_exit(&sc->sc_lock);
 
 	cmd = UREAD2(sc, UHCI_CMD);
