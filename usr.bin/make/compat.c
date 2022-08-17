@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.240 2022/05/07 17:49:47 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.241 2022/08/17 20:10:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.240 2022/05/07 17:49:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.241 2022/08/17 20:10:29 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -570,7 +570,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	 * to tell him/her "yes".
 	 */
 	DEBUG0(MAKE, "out-of-date.\n");
-	if (opts.query)
+	if (opts.query && gn != Targ_GetEndNode())
 		exit(1);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.255 2022/05/07 17:49:47 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.256 2022/08/17 20:10:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.255 2022/05/07 17:49:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.256 2022/08/17 20:10:29 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1077,7 +1077,7 @@ MakeStartJobs(void)
 		if (GNode_IsOODate(gn)) {
 			DEBUG0(MAKE, "out-of-date\n");
 			if (opts.query)
-				return true;
+				return strcmp(gn->name, ".MAIN") != 0;
 			GNode_SetLocalVars(gn);
 			Job_Make(gn);
 			have_token = false;
