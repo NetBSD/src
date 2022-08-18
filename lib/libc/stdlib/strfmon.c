@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.17 2022/08/17 09:32:56 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.18 2022/08/18 11:05:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.17 2022/08/17 09:32:56 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.18 2022/08/18 11:05:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -454,7 +454,7 @@ __setup_vars(struct lconv *lc, int flags, char *cs_precedes, char *sep_by_space,
 	if (*cs_precedes != 0)
 		*cs_precedes = 1;
 	if ((unsigned char)*sep_by_space == NBCHAR_MAX)
-		*sep_by_space = 0;
+		*sep_by_space = 1;
 	if ((unsigned char)*sign_posn == NBCHAR_MAX)
 		*sign_posn = 0;
 }
