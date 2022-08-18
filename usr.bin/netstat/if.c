@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.96 2020/02/02 03:41:12 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.97 2022/08/18 12:25:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.96 2020/02/02 03:41:12 thorpej Exp $");
+__RCSID("$NetBSD: if.c,v 1.97 2022/08/18 12:25:32 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ intpr_sysctl(void)
 			else if (sdl->sdl_nlen > 0) 
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
-			if (interface != 0 && strcmp(name, interface) != 0)
+			if (interface != NULL && strcmp(name, interface) != 0)
 				continue;
 
 			ifindex = sdl->sdl_index;
@@ -254,7 +254,7 @@ intpr_sysctl(void)
 		case RTM_NEWADDR:
 			if (qflag && total == 0)
 				continue;
-			if (interface != 0 && strcmp(name, interface) != 0)
+			if (interface != NULL && strcmp(name, interface) != 0)
 				continue;
 			ifam = (struct ifa_msghdr *)next;
 			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
@@ -349,7 +349,7 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			memmove(name, ifnet.if_xname, IFNAMSIZ);
 			name[IFNAMSIZ - 1] = '\0';	/* sanity */
 			ifnetaddr = (u_long)ifnet.if_list.tqe_next;
-			if (interface != 0 && strcmp(name, interface) != 0)
+			if (interface != NULL && strcmp(name, interface) != 0)
 				continue;
 			cp = strchr(name, '\0');
 
@@ -1135,7 +1135,7 @@ fetchifs(void)
 			else if (sdl->sdl_nlen > 0) 
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
-			if (interface != 0 && !strcmp(name, interface)) {
+			if (interface != NULL && !strcmp(name, interface)) {
 				strlcpy(ip_cur.ift_name, name,
 				    sizeof(ip_cur.ift_name));
 				ip_cur.ift_ip = ifd->ifi_ipackets;
