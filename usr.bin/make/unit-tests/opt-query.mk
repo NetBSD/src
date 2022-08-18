@@ -1,4 +1,4 @@
-# $NetBSD: opt-query.mk,v 1.6 2022/08/17 20:10:29 rillig Exp $
+# $NetBSD: opt-query.mk,v 1.7 2022/08/18 05:37:05 rillig Exp $
 #
 # Tests for the -q command line option.
 #
@@ -76,8 +76,8 @@ commands:
 
 .elif ${PART} == "variants"
 
-opt-query-file.out-of-date: ${MAKE}
-opt-query-file.up-to-date: ${MAKE}
+opt-query-file.out-of-date: ${MAKEFILE}
+opt-query-file.up-to-date: ${MAKEFILE}
 phony: .PHONY
 
 .else
