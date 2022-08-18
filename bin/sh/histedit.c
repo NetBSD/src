@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.62 2022/08/17 22:27:17 nia Exp $	*/
+/*	$NetBSD: histedit.c,v 1.63 2022/08/18 14:10:05 nia Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.62 2022/08/17 22:27:17 nia Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.63 2022/08/18 14:10:05 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,11 +176,11 @@ bad:
 		}
 		if (el) {
 			INTOFF;
+			el_source(el, lookupvar("EDITRC"));
 			if (Vflag)
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
-			el_source(el, lookupvar("EDITRC"));
 			el_set(el, EL_BIND, "^I", 
 			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
 			INTON;
