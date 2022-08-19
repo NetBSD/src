@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.51 2022/08/19 12:17:18 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.52 2022/08/19 12:52:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.51 2022/08/19 12:17:18 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.52 2022/08/19 12:52:31 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,13 +111,14 @@ readcmd(int argc, char **argv)
 			rflag = 1;
 	}
 
+	if (*(ap = argptr) == NULL)
+		error("variable name required\n"
+			"Usage: read [-r] [-p prompt] var...");
+
 	if (prompt && isatty(0)) {
 		out2str(prompt);
 		flushall();
 	}
-
-	if (*(ap = argptr) == NULL)
-		error("arg count");
 
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
