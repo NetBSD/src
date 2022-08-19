@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.379 2022/08/19 07:48:43 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.380 2022/08/19 07:52:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.379 2022/08/19 07:48:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.380 2022/08/19 07:52:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6134,7 +6134,7 @@ bge_stop_locked(struct ifnet *ifp, int disable)
 	KASSERT(mutex_owned(sc->sc_core_lock));
 
 	if (disable) {
-		sc->bge_detaching = 1;
+		sc->bge_detaching = true;
 		callout_halt(&sc->bge_timeout, NULL);
 	} else
 		callout_stop(&sc->bge_timeout);
