@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.378 2022/08/19 07:43:54 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.379 2022/08/19 07:48:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.378 2022/08/19 07:43:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.379 2022/08/19 07:48:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6048,7 +6048,7 @@ bge_watchdog(struct ifnet *ifp)
 
 	KASSERT(mutex_owned(sc->sc_core_lock));
 
-	if (!sc->sc_triggerreset && bge_watchdog_check(sc))
+	if (!sc->sc_trigger_reset && bge_watchdog_check(sc))
 		return true;
 
 	aprint_error_dev(sc->bge_dev, "watchdog timeout -- resetting\n");
@@ -6419,7 +6419,7 @@ bge_sysctl_init(struct bge_softc *sc)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "trigger_reset",
 	    SYSCTL_DESCR("Trigger an interface reset"),
-	    NULL, 0, &sc->sc_triggerreset, 0, CTL_CREATE,
+	    NULL, 0, &sc->sc_trigger_reset, 0, CTL_CREATE,
 	    CTL_EOL)) != 0) {
 		goto out;
 	}

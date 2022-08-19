@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.34 2022/08/14 09:03:05 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.35 2022/08/19 07:48:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -363,7 +363,7 @@ struct bge_softc {
 	struct work sc_reset_work;
 	volatile unsigned sc_reset_pending;
 
-	bool sc_triggerreset;
+	bool sc_trigger_reset;
 };
 
 #endif /* _DEV_PCI_IF_BGEVAR_H_ */
