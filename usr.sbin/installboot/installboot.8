@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.103 2022/07/10 19:28:00 brook Exp $
+.\"	$NetBSD: installboot.8,v 1.104 2022/08/19 00:45:54 riastradh Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Op Fl m Ar machine
 .Op Fl o Ar options
 .Op Fl t Ar fstype
-.Op Fl u Ar U-boot-paths
+.Op Fl u Ar U-Boot-paths
 .Ar filesystem
 .Ar primary
 .Op Ar secondary
@@ -143,7 +143,7 @@ Information about known boards and their requirements is loaded from a
 database at run-time.
 Sometimes these platforms also require the use of 3rd-party boot loader
 software, such as
-.Sy U-boot .
+.Sy U-Boot .
 To support these platforms,
 .Nm
 scans known locations for these 3rd-party boot loader packages for
@@ -408,10 +408,10 @@ be provided with
 .Fl B Ar s2bno .
 .El
 .
-.It Fl u Ar U-boot-paths
-.Ar U-boot-paths
+.It Fl u Ar U-Boot-paths
+.Ar U-Boot-paths
 is a colon-separated list of search paths to scan for
-.Sy U-boot
+.Sy U-Boot
 packages with
 .Nm installboot
 installation overlays.
@@ -423,7 +423,7 @@ is used if defined; otherwise, the default path is
 .Pa /usr/pkg/share/u-boot .
 This option is only used on platforms that support
 using
-.Sy U-boot .
+.Sy U-Boot .
 .
 .It Fl v
 Verbose operation.
@@ -493,7 +493,7 @@ uses the following environment variables:
 .
 .It Ev INSTALLBOOT_UBOOT_PATHS
 A colon-separated list of search paths to scan for
-.Sy U-boot
+.Sy U-Boot
 packages with
 .Nm installboot
 installation overlays.
@@ -503,7 +503,7 @@ If not specified, the default path is
 .Pa /usr/pkg/share/u-boot .
 This environment variable is only used on platforms that support
 using
-.Sy U-boot .
+.Sy U-Boot .
 .
 .It Ev MACHINE
 Default value for
@@ -616,23 +616,23 @@ is not found.
 The
 .Nx Ns /evbarm
 platform covers a wide variety of board types, many of which use
-.Sy U-boot .
+.Sy U-Boot .
 Running
 .Nm
 with no options will display a list of known boards.
 Using the verbose option will also display information about which
-.Sy U-boot
+.Sy U-Boot
 package needs to be installed to support that board, and if the required
-.Sy U-boot
+.Sy U-Boot
 package is installed, the path at which it is located.
 .Bl -tag -width /usr/pkg/share/u-boot
 .It Pa /usr/pkg/share/u-boot
 The default location scanned for
-.Sy U-boot
+.Sy U-Boot
 packages with installation overlays.
 .It Pa /usr/share/installboot/evbarm/boards.plist
 Base board database, used to provide information about which
-.Sy U-boot
+.Sy U-Boot
 package is required for a given board.
 .El
 .
@@ -762,20 +762,20 @@ Modify the command line to change the default from "netbsd -ASn2" to
 .
 .Ss Nx Ns /evbarm
 Install the
-.Sy U-boot
+.Sy U-Boot
 boot loader for a Pinebook into an image that will be written to
 an SDMMC card:
 .Dl Ic installboot -m evbarm -o board=pine64,pinebook arm64.img
 .Pp
 Install / update the
-.Sy U-boot
+.Sy U-Boot
 boot loader for the current running system on the eMMC device
 .Sq ld0
 and display verbose information about the procedure:
 .Dl Ic installboot -v /dev/rld0c
 .Pp
 Install a specific
-.Sy U-boot
+.Sy U-Boot
 package for a BeagleBone Black into an image that will be written
 to an SDMMC card:
 .Dl Ic installboot -m evbarm -o board=ti,am335x-bone-black armv7.img \
