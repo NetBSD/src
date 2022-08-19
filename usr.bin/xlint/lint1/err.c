@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.182 2022/07/16 22:36:06 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.183 2022/08/19 19:40:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.182 2022/07/16 22:36:06 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.183 2022/08/19 19:40:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -322,7 +322,7 @@ static const char *const msgs[] = {
 	"\\v undefined in traditional C",			      /* 264 */
 	"%s does not support 'long long'",			      /* 265 */
 	"'long double' is illegal in traditional C",		      /* 266 */
-	"shift equal to size of object",			      /* 267 */
+	"shift amount %u equals bit-size of '%s'",		      /* 267 */
 	"variable '%s' declared inline",			      /* 268 */
 	"argument '%s' declared inline",			      /* 269 */
 	"function prototypes are illegal in traditional C",	      /* 270 */
