@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.104 2022/08/19 00:45:54 riastradh Exp $
+.\"	$NetBSD: installboot.8,v 1.105 2022/08/19 00:50:08 riastradh Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,12 +73,7 @@ into
 .Ar filesystem ,
 or disable an existing bootstrap in
 .Ar filesystem .
-.Pp
-On some architectures the options of an existing installed bootstrap,
-or those of a bootstrap file can be changed.
-Installing a new primary bootstrap will reset those options to default
-values.
-.Pp
+.Ss Traditional Nx boot
 Generally,
 .Nx
 disk bootstrap software consists of two parts: a
@@ -133,6 +128,11 @@ other platforms:
 .Sy next68k .
 .El
 .Pp
+On some architectures the options of an existing installed bootstrap,
+or those of a bootstrap file can be changed.
+Installing a new primary bootstrap will reset those options to default
+values.
+.Ss Embedded board types
 Some platforms, typically embedded system platforms, are umbrella platforms
 that support many different individual board types, each with their own
 boot loader binary and installation procedure requirements.
@@ -154,7 +154,27 @@ installation information in a file called
 The following platforms have this requirement and utilize this database
 overlay feature:
 .Sy evbarm .
+.Ss UEFI boot
+On platforms that boot with UEFI, there is a single boot loader in the
+EFI system partition at
+.Pa EFI/boot/boot Ns Va ARCH Ns Pa .efi
+where
+.Va ARCH
+is the UEFI name for the architecture, such as
+.Li ia32 Pq Nx Ns /i386 ,
+.Li x64 Pq Nx Ns /amd64 ,
+or
+.Li aa64 Pq Nx Ns /aarch64 .
 .Pp
+.Nm
+is not needed for UEFI boot.
+However, it may be used on a platform that supports UEFI boot to make a
+hybrid image that can be booted
+.Em either
+with UEFI boot or with, e.g., BIOS or U-Boot.
+Hybrid images may also require a special GPT for BIOS boot; see
+.Xr gpt 8 .
+.Ss Options
 The options and arguments recognized by
 .Nm
 are as follows:
@@ -984,6 +1004,7 @@ already present:
 .Xr disklabel 8 ,
 .Xr dumpfs 8 ,
 .Xr fdisk 8 ,
+.Xr gpt 8 ,
 .Xr x86/mbr 8 ,
 .Xr x86/pxeboot 8
 .
