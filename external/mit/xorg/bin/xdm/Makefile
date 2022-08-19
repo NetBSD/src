@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2022/08/16 22:44:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2022/08/19 15:55:36 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS+=		Login.c greet.c verify.c
 CPPFLAGS+=	-DSTATIC_GREETER_LIB
 .endif
 
-DEF_USER_PATH=	/bin:/usr/bin:/usr/pkg/bin:/usr/local/bin:${X11BINDIR}
+DEF_USER_PATH=	/sbin:/usr/sbin:/bin:/usr/bin:/usr/games:/usr/pkg/sbin:/usr/pkg/bin:/usr/local/sbin:/usr/local/bin:${X11BINDIR}
 DEF_SYSTEM_PATH=/sbin:/usr/sbin:/bin:/usr/bin:${X11BINDIR}
 
 CPPFLAGS+=		-DRETSIGTYPE=void
