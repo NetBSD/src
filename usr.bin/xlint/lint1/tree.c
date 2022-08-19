@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.475 2022/07/16 22:36:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.476 2022/08/19 19:40:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.475 2022/07/16 22:36:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.476 2022/08/19 19:40:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1224,7 +1224,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 }
 
 static void
-typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
+typeok_shift(const type_t *ltp, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	if (rn->tn_op != CON)
 		return;
@@ -1234,8 +1234,8 @@ typeok_shift(tspec_t lt, const tnode_t *rn, tspec_t rt)
 		warning(121);
 	} else if ((uint64_t)rn->tn_val->v_quad ==
 		   (uint64_t)size_in_bits(lt)) {
-		/* shift equal to size of object */
-		warning(267);
+		/* shift amount %u equals bit-size of '%s' */
+		warning(267, (unsigned)rn->tn_val->v_quad, type_name(ltp));
 	} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size_in_bits(lt)) {
 		/* shift amount %llu is greater than bit-size %llu of '%s' */
 		warning(122, (unsigned long long)rn->tn_val->v_quad,
@@ -1457,7 +1457,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case SHR:
 		typeok_shr(mp, ln, lt, rn, rt);
 	shift:
-		typeok_shift(lt, rn, rt);
+		typeok_shift(ltp, lt, rn, rt);
 		break;
 	case LT:
 	case LE:
