@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.243 2022/01/07 05:30:30 lukem Exp $
+.\"	$NetBSD: sh.1,v 1.244 2022/08/19 13:37:03 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3537,23 +3537,29 @@ and the built-in uses a separately cached value.
 .It Ic read Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
 The
 .Ar prompt
-is printed if the
+is printed on standard error if the
 .Fl p
 option is specified and the standard input is a terminal.
 Then a line is read from the standard input.
 The trailing newline is deleted from the
 line and the line is split as described in the field splitting section of the
 .Sx Word Expansions
-section above, and the pieces are assigned to the variables in order.
-If there are more pieces than variables, the remaining pieces
+section above.
+The pieces are assigned to the
+.Ar variable Ns s
+in order.
+If there are more pieces than variables,
+the remaining pieces
 (along with the characters in
 .Ev IFS
-that separated them) are assigned to the last variable.
+that separated them) are all assigned to the last
+.Ar variable .
 If there are more variables than pieces,
 the remaining variables are assigned the null string.
 The
 .Ic read
-built-in will indicate success unless EOF is encountered on input, in
+built-in will indicate success unless EOF, or a read error,
+is encountered on input, in
 which case failure is returned.
 .Pp
 By default, unless the
@@ -3562,8 +3568,14 @@ option is specified, the backslash
 .Dq \e
 acts as an escape character, causing the following character to be treated
 literally.
-If a backslash is followed by a newline, the backslash and the
-newline will be deleted.
+This is the only form of quoting that applies.
+If an unescaped backslash is followed by a newline,
+the backslash and the newline will be deleted,
+and replaced by the contents of the following line,
+which is processed as if it had been part of the original line.
+This includes reading yet more input if necessary, 
+until a line is read that is not terminated by
+an unescaped backslash immediately before the newline.
 .\"
 .Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
