@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2022/05/03 20:09:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2022/08/19 07:45:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2022/05/03 20:09:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2022/08/19 07:45:50 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1914,7 +1914,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	KASSERT_PM_ADDR(pm, va);
 	KASSERT(!IN_DIRECTMAP_ADDR(va));
-	KASSERT(prot & VM_PROT_READ);
+	KASSERT((prot & VM_PROT_ALL) != VM_PROT_NONE);
 
 #ifdef PMAPCOUNTERS
 	PMAP_COUNT(mappings);
