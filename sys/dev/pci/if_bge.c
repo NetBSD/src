@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.377 2022/08/14 09:04:17 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.378 2022/08/19 07:43:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.377 2022/08/14 09:04:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.378 2022/08/19 07:43:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5669,7 +5669,7 @@ bge_init_locked(struct ifnet *ifp)
 	    ((uint32_t)htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
-	if (sc->bge_if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC)
 		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 	else
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
