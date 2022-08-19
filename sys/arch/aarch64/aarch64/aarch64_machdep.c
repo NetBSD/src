@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.65 2022/03/12 09:16:05 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.66 2022/08/19 08:17:32 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.65 2022/03/12 09:16:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.66 2022/08/19 08:17:32 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -618,6 +618,9 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 	if (in_dram_p(pa, 0))
 		return 0;
+
+	if (pa >= AARCH64_MAX_PA)
+		return EFAULT;
 
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);

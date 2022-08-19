@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.13 2021/10/10 07:15:25 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.14 2022/08/19 08:17:32 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define L1_BLK_OA		__BITS(47, 30)	/* 1GB */
 #define L2_BLK_OA		__BITS(47, 21)	/* 2MB */
 #define L3_PAG_OA		__BITS(47, 12)	/* 4KB */
+#define AARCH64_MAX_PA		__BIT(48)
 
 
 /* L0 table, 512GB/entry * 512 */
