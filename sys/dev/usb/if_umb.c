@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.24 2022/04/17 13:17:56 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.24 2022/04/17 13:17:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25 2022/08/20 11:32:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2061,17 +2061,10 @@ fail:
 Static usbd_status
 umb_send_encap_command(struct umb_softc *sc, void *data, int len)
 {
-	struct usbd_xfer *xfer;
 	usb_device_request_t req;
-	char *buf;
 
 	if (len > sc->sc_ctrl_len)
 		return USBD_INVAL;
-
-	if (usbd_create_xfer(sc->sc_udev->ud_pipe0, len, 0, 0, &xfer) != 0)
-		return USBD_NOMEM;
-	buf = usbd_get_buffer(xfer);
-	memcpy(buf, data, len);
 
 	/* XXX FIXME: if (total len > sc->sc_ctrl_len) => must fragment */
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -2080,7 +2073,7 @@ umb_send_encap_command(struct umb_softc *sc, void *data, int len)
 	USETW(req.wIndex, sc->sc_ctrl_ifaceno);
 	USETW(req.wLength, len);
 	DELAY(umb_delay);
-	return usbd_request_async(sc->sc_udev, xfer, &req, NULL, NULL);
+	return usbd_do_request(sc->sc_udev, &req, data);
 }
 
 Static int
