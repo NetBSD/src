@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.131 2022/08/20 23:18:20 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.132 2022/08/20 23:18:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,47 +67,12 @@
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
 
-/*
- * pl*_pi: index in the ptp page for a pde mapping a VA.
- * (pl*_i below is the index in the virtual array of all pdes per level)
- */
-#define pl1_pi(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
-#define pl2_pi(VA)	(((VA_SIGN_POS(VA)) & L2_MASK) >> L2_SHIFT)
-#define pl3_pi(VA)	(((VA_SIGN_POS(VA)) & L3_MASK) >> L3_SHIFT)
-#define pl4_pi(VA)	(((VA_SIGN_POS(VA)) & L4_MASK) >> L4_SHIFT)
-#define pl_pi(va, lvl) \
-        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
-
-/*
- * pl*_i: generate index into pde/pte arrays in virtual space
- *
- * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
- */
-#define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
-#define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
-#define pl3_i(VA)	(((VA_SIGN_POS(VA)) & L3_FRAME) >> L3_SHIFT)
-#define pl4_i(VA)	(((VA_SIGN_POS(VA)) & L4_FRAME) >> L4_SHIFT)
-#define pl_i(va, lvl) \
-        (((VA_SIGN_POS(va)) & ptp_frames[(lvl)-1]) >> ptp_shifts[(lvl)-1])
-
-#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_frames[(lvl)-1], (lvl))
-
-/*
- * PTP macros:
- *   a PTP's index is the PD index of the PDE that points to it
- *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
- *   a PTP's VA is the first VA mapped by that PTP
- */
-
-#define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
-
 /* size of a PDP: usually one page, except for PAE */
 #ifdef PAE
 #define PDP_SIZE 4
 #else
 #define PDP_SIZE 1
 #endif
-
 
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>

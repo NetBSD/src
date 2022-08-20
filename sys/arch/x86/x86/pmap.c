@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.417 2022/08/20 23:15:37 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.418 2022/08/20 23:18:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.417 2022/08/20 23:15:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.418 2022/08/20 23:18:51 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -280,6 +280,23 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.417 2022/08/20 23:15:37 riastradh Exp $")
 static const struct uvm_pagerops pmap_pager = {
 	/* nothing */
 };
+
+/*
+ * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
+ */
+#define pl_i(va, lvl) \
+        (((VA_SIGN_POS(va)) & ptp_frames[(lvl)-1]) >> ptp_shifts[(lvl)-1])
+
+#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_frames[(lvl)-1], (lvl))
+
+/*
+ * PTP macros:
+ *   a PTP's index is the PD index of the PDE that points to it
+ *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
+ *   a PTP's VA is the first VA mapped by that PTP
+ */
+
+#define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
 const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
 const vaddr_t ptp_frames[] = PTP_FRAME_INITIALIZER;
