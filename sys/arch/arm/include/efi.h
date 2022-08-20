@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.5 2022/08/20 10:54:34 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.6 2022/08/20 10:54:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -164,6 +164,9 @@ struct efi_systbl {
 #define	EFI_SYSTBL_SIG	0x5453595320494249UL
 	efi_char	*st_fwvendor;
 	uint32_t	st_fwrev;
+#ifdef _LP64
+	uint32_t	__pad;
+#endif
 	void		*st_cin;
 	void		*st_cinif;
 	void		*st_cout;
