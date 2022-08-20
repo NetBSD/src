@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.2 2006/08/30 11:12:04 cherry Exp $	*/
+/*	$NetBSD: efi.c,v 1.3 2022/08/20 10:35:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -85,10 +85,10 @@ efi_boot_minimal(uint64_t systbl)
 		if (md->md_attr & EFI_MD_ATTR_RT) {
 			if (md->md_attr & EFI_MD_ATTR_WB)
 				md->md_virt =
-				    (void *)IA64_PHYS_TO_RR7(md->md_phys);
+				    (uint64_t)IA64_PHYS_TO_RR7(md->md_phys);
 			else if (md->md_attr & EFI_MD_ATTR_UC)
 				md->md_virt =
-				    (void *)IA64_PHYS_TO_RR6(md->md_phys);
+				    (uint64_t)IA64_PHYS_TO_RR6(md->md_phys);
 		}
 		md = efi_md_next(md);
 	}
