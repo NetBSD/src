@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_stub.c,v 1.4 2012/12/27 20:21:51 martin Exp $	*/
+/*	$NetBSD: efi_stub.c,v 1.5 2022/08/20 10:35:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -183,7 +183,7 @@ SetVirtualAddressMap(u_long mapsz, u_long descsz, uint32_t version,
 {
 	uint64_t delta;
 
-	delta = (uintptr_t)memmap->md_virt - memmap->md_phys;
+	delta = memmap->md_virt - memmap->md_phys;
 	Reloc(&efi_rttab.rt_gettime, delta);
 	Reloc(&efi_rttab.rt_settime, delta);
 	return (0);		/* Hah... */
@@ -246,25 +246,25 @@ ski_init_stubs(struct bootinfo *bi)
 
 	memp[0].md_type = EFI_MD_TYPE_PALCODE;
 	memp[0].md_phys = 0x100000;
-	memp[0].md_virt = NULL;
+	memp[0].md_virt = 0;
 	memp[0].md_pages = (4L*1024*1024)>>12;
 	memp[0].md_attr = EFI_MD_ATTR_WB | EFI_MD_ATTR_RT;
 
 	memp[1].md_type = EFI_MD_TYPE_FREE;
 	memp[1].md_phys = 5L*1024*1024;
-	memp[1].md_virt = NULL;
+	memp[1].md_virt = 0;
 	memp[1].md_pages = (128L*1024*1024)>>12;
 	memp[1].md_attr = EFI_MD_ATTR_WB;
 
 	memp[2].md_type = EFI_MD_TYPE_FREE;
 	memp[2].md_phys = 4L*1024*1024*1024;
-	memp[2].md_virt = NULL;
+	memp[2].md_virt = 0;
 	memp[2].md_pages = (64L*1024*1024)>>12;
 	memp[2].md_attr = EFI_MD_ATTR_WB;
 
 	memp[3].md_type = EFI_MD_TYPE_IOPORT;
 	memp[3].md_phys = 0xffffc000000;
-	memp[3].md_virt = NULL;
+	memp[3].md_virt = 0;
 	memp[3].md_pages = (64L*1024*1024)>>12;
 	memp[3].md_attr = EFI_MD_ATTR_UC;
 
