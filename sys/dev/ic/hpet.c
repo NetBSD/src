@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.17 2020/05/16 23:06:40 ad Exp $ */
+/* $NetBSD: hpet.c,v 1.18 2022/08/20 06:47:28 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.17 2020/05/16 23:06:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.18 2022/08/20 06:47:28 mlelstv Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -54,8 +54,6 @@ static u_int	hpet_get_timecount(struct timecounter *);
 static bool	hpet_resume(device_t, const pmf_qual_t *);
 
 static struct hpet_softc *hpet0 __read_mostly;
-static uint32_t hpet_attach_val;
-static uint64_t hpet_attach_tsc;
 
 int
 hpet_detach(device_t dv, int flags)
@@ -147,14 +145,6 @@ hpet_attach_subr(device_t dv)
 	eval = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 	val = eval - sval;
 	sc->sc_adj = (int64_t)val * sc->sc_period / 1000;
-
-	/* Store attach-time values for computing TSC frequency later. */
-	if (cpu_hascounter() && sc == hpet0) {
-		(void)cpu_counter();
-		val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
-		hpet_attach_tsc = cpu_counter();
-		hpet_attach_val = val;
-	}
 }
 
 static u_int
@@ -214,33 +204,45 @@ uint64_t
 hpet_tsc_freq(void)
 {
 	struct hpet_softc *sc;
-	uint64_t td, val, freq;
-	uint32_t hd;
+	uint64_t td0, td, val, freq;
+	uint32_t hd0, hd;
 	int s;
 
 	if (hpet0 == NULL || !cpu_hascounter())
 		return 0;
 
-	/* Slow down if we got here from attach in under 0.1s. */
 	sc = hpet0;
-	hd = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
-	hd -= hpet_attach_val;
-	if (hd < (uint64_t)100000 * 1000000000 / sc->sc_period)
-		hpet_delay(100000);
+
+	s = splhigh();
+	(void)cpu_counter();
+	(void)bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	hd0 = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
+	td0 = cpu_counter();
+	splx(s);
+
+	/*
+	 * Wait 1000000 HPET ticks (typically 50..100ms).
+	 *
+	 * This interval can produce an error of 1ppm (a few kHz
+	 * in estimated TSC frequency), however the HPET timer is
+	 * allowed to drift +/- 500ppm in that interval.
+	 *
+	 */
+	hpet_delay(sc->sc_period / 1000);
 
 	/*
 	 * Determine TSC freq by comparing how far the TSC and HPET have
-	 * advanced since attach time.  Take the cost of reading HPET
-	 * register into account and round result to the nearest 1000.
+	 * advanced and round result to the nearest 1000.
 	 */
 	s = splhigh();
 	(void)cpu_counter();
+	(void)bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 	hd = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);
 	td = cpu_counter();
 	splx(s);
-	hd -= hpet_attach_val;
-	val = ((uint64_t)hd * sc->sc_period - sc->sc_adj) / 100000000;
-	freq = (td - hpet_attach_tsc) * 10000000 / val;
+
+	val = (uint64_t)(hd - hd0) * sc->sc_period / 100000000;
+	freq = (td - td0) * 10000000 / val;
 	return rounddown(freq + 500, 1000);
 }
 
