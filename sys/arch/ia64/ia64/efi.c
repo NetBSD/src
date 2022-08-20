@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.4 2022/08/20 10:54:25 riastradh Exp $	*/
+/*	$NetBSD: efi.c,v 1.5 2022/08/20 10:55:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -68,12 +68,13 @@ efi_boot_minimal(uint64_t systbl)
 		efi_systbl = NULL;
 		return (EFAULT);
 	}
-	efi_cfgtbl = (efi_systbl->st_cfgtbl == 0) ? NULL :
-	    (struct efi_cfgtbl *)IA64_PHYS_TO_RR7(efi_systbl->st_cfgtbl);
+	efi_cfgtbl = (efi_systbl->st_cfgtbl == NULL) ? NULL :
+	    (struct efi_cfgtbl *)IA64_PHYS_TO_RR7(
+		(uint64_t)efi_systbl->st_cfgtbl);
 	if (efi_cfgtbl == NULL)
 		return (ENOENT);
-	efi_runtime = (efi_systbl->st_rt == 0) ? NULL :
-	    (struct efi_rt *)IA64_PHYS_TO_RR7(efi_systbl->st_rt);
+	efi_runtime = (efi_systbl->st_rt == NULL) ? NULL :
+	    (struct efi_rt *)IA64_PHYS_TO_RR7((uint64_t)efi_systbl->st_rt);
 	if (efi_runtime == NULL)
 		return (ENOENT);
 
