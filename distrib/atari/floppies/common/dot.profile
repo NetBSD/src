@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.8 2020/01/09 19:17:41 martin Exp $
+# $NetBSD: dot.profile,v 1.9 2022/08/20 20:50:41 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -95,7 +95,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		# Check if the answer is valid (in range). Note that an answer
 		# < 0 cannot happen because the sed(1) above also removes the
 		# sign.
-		if [ -z "$_ans" -o "$_ans" -ge $_num ]; then
+		if [ -z "$_ans" ] || [ "$_ans" -ge $_num ]; then
 		    echo "You entered an invalid response, please try again."
 		    continue
 		fi
