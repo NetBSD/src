@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.12 2022/04/01 19:57:22 riastradh Exp $ */
+/* $NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.12 2022/04/01 19:57:22 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -214,7 +214,14 @@ fpu_kern_enter(void)
 	 */
 	s = splvm();
 	ci = curcpu();
+#if 0
+	/*
+	 * Can't assert this because if the caller holds a spin lock at
+	 * IPL_VM, and previously held and released a spin lock at
+	 * higher IPL, the IPL remains raised above IPL_VM.
+	 */
 	KASSERTMSG(ci->ci_cpl <= IPL_VM || cold, "cpl=%d", ci->ci_cpl);
+#endif
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
@@ -242,7 +249,14 @@ fpu_kern_leave(void)
 
 	ci = curcpu();
 
+#if 0
+	/*
+	 * Can't assert this because if the caller holds a spin lock at
+	 * IPL_VM, and previously held and released a spin lock at
+	 * higher IPL, the IPL remains raised above IPL_VM.
+	 */
 	KASSERT(ci->ci_cpl == IPL_VM || cold);
+#endif
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*
