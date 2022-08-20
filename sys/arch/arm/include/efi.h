@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.4 2022/08/20 09:43:27 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.5 2022/08/20 10:54:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -175,5 +175,10 @@ struct efi_systbl {
 	u_long		st_entries;
 	struct efi_cfgtbl *st_cfgtbl;
 };
+#ifdef _LP64
+__CTASSERT(sizeof(struct efi_systbl) == 120);
+#else
+__CTASSERT(sizeof(struct efi_systbl) == 72);
+#endif
 
 #endif /* _ARM_EFI_H_ */
