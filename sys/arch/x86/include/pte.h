@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2022/08/20 23:18:51 riastradh Exp $	*/
+/*	$NetBSD: pte.h,v 1.7 2022/08/20 23:19:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _X86_PTE_H
 #define _X86_PTE_H
+
+#ifndef _MACHINE_PTE_H_X86
+#error Use machine/pte.h, not x86/pte.h directly.
+#endif
 
 /* Cacheability bits when we are using PAT */
 #define PGC_WB		0			/* The default */

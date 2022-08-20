@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.34 2022/08/20 23:18:40 riastradh Exp $	*/
+/*	$NetBSD: pte.h,v 1.35 2022/08/20 23:19:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -168,6 +168,8 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PTE_NX		0		/* Dummy */
 #endif
 
+#define	_MACHINE_PTE_H_X86
 #include <x86/pte.h>
+#undef	_MACHINE_PTE_H_X86
 
 #endif /* _I386_PTE_H_ */
