@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.96 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.97 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.96 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.97 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -433,7 +433,7 @@ url_uno_mcast(struct ifnet *ifp)
 	rcr &= ~(URL_RCR_AAP | URL_RCR_AAM | URL_RCR_AM);
 
 	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);
 		/* run promisc. mode */

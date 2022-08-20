@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.108 2022/08/20 14:08:47 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.109 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.108 2022/08/20 14:08:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.109 2022/08/20 14:08:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1013,14 +1013,40 @@ usbnet_ifflags_cb(struct ethercom *ec)
 
 	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
 	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
+		mutex_enter(&unp->unp_mcastlock);
 		unp->unp_if_flags = ifp->if_flags;
-		if ((changed & IFF_PROMISC) != 0)
+		mutex_exit(&unp->unp_mcastlock);
+		/*
+		 * XXX Can we just do uno_mcast synchronously here
+		 * instead of resetting the whole interface?
+		 *
+		 * Not yet, because some usbnet drivers (e.g., aue(4))
+		 * initialize the hardware differently in uno_init
+		 * depending on IFF_PROMISC.  But some (again, aue(4))
+		 * _also_ need to know whether IFF_PROMISC is set in
+		 * uno_mcast and do something different with it there.
+		 * Maybe the logic can be unified, but it will require
+		 * an audit and testing of all the usbnet drivers.
+		 */
+		if (changed & IFF_PROMISC)
 			rv = ENETRESET;
 	} else {
 		rv = ENETRESET;
 	}
 
 	return rv;
+}
+
+bool
+usbnet_ispromisc(struct usbnet *un)
+{
+	struct ifnet * const ifp = usbnet_ifp(un);
+	struct usbnet_private * const unp = un->un_pri;
+
+	KASSERTMSG(mutex_owned(&unp->unp_mcastlock) || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
+
+	return unp->unp_if_flags & IFF_PROMISC;
 }
 
 static int

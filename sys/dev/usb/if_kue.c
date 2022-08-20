@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.118 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.119 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.118 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.119 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -330,12 +330,12 @@ kue_uno_mcast(struct ifnet *ifp)
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
 	 /* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
+	if (usbnet_ispromisc(un))
 		sc->kue_rxfilt |= KUE_RXFILT_PROMISC;
 	else
 		sc->kue_rxfilt &= ~KUE_RXFILT_PROMISC;
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ETHER_LOCK(ec);
 allmulti:
 		ec->ec_flags |= ETHER_F_ALLMULTI;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.150 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.151 2022/08/20 14:08:59 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.150 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.151 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -452,7 +452,7 @@ axe_uno_mcast(struct ifnet *ifp)
 	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC | AXE_RXCMD_MULTICAST);
 
 	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);
 		/* run promisc. mode */
