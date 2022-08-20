@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.99 2022/08/20 12:30:00 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.100 2022/08/20 14:05:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.99 2022/08/20 12:30:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.100 2022/08/20 14:05:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -458,9 +458,9 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = priv;
 	struct usbnet_private * const unp = un->un_pri;
-	struct usbnet_intr * const uni = un->un_intr;
+	struct usbnet_intr * const uni __unused = un->un_intr;
 
-	if (uni == NULL || usbnet_isdying(un) || unp->unp_stopping ||
+	if (usbnet_isdying(un) || unp->unp_stopping ||
 	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
 	    status == USBD_CANCELLED) {
 		USBNETHIST_CALLARGS("%jd: uni %#jx d/s %#jx status %#jx",
