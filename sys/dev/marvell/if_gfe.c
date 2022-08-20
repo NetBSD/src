@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.59 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.60 2022/08/20 19:04:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.59 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.60 2022/08/20 19:04:07 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -691,7 +691,7 @@ gfe_ifstart(struct ifnet *ifp)
 	}
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IF_POLL(&ifp->if_snd, m);
 		if (m == NULL) {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			GE_FUNC_EXIT(sc, "");
@@ -703,6 +703,8 @@ gfe_ifstart(struct ifnet *ifp)
 		 */
 		if (IF_QFULL(&sc->sc_txq[GE_TXPRIO_HI].txq_pendq))
 			break;
+
+		IF_DEQUEUE(&ifp->if_snd, m);
 
 		/*
 		 * Try to enqueue a mbuf to the device. If that fails, we
@@ -718,7 +720,6 @@ gfe_ifstart(struct ifnet *ifp)
 	/*
 	 * Attempt to queue the mbuf for send failed.
 	 */
-	IF_PREPEND(&ifp->if_snd, m);
 	ifp->if_flags |= IFF_OACTIVE;
 	GE_FUNC_EXIT(sc, "%%");
 }
