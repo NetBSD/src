@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.63 2022/08/15 10:15:59 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.64 2022/08/20 11:31:38 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.63 2022/08/15 10:15:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.64 2022/08/20 11:31:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1507,6 +1507,14 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		flags = lemtoh16(&cqe->flags);
 		if ((flags & NVME_CQE_PHASE) != q->q_cq_phase)
 			break;
+
+		/*
+		 * Make sure we have read the flags _before_ we read
+		 * the cid.  Otherwise the CPU might speculatively read
+		 * the cid before the entry has been assigned to our
+		 * phase.
+		 */
+		nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
 
 		ccb = &q->q_ccbs[lemtoh16(&cqe->cid)];
 
