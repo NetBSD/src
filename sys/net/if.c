@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.512 2022/08/17 19:56:28 rillig Exp $	*/
+/*	$NetBSD: if.c,v 1.513 2022/08/20 11:09:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.512 2022/08/17 19:56:28 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.513 2022/08/20 11:09:24 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -197,6 +197,8 @@ static struct psref_class	*ifnet_psref_class __read_mostly;
 static pserialize_t		ifnet_psz;
 static struct workqueue		*ifnet_link_state_wq __read_mostly;
 
+static struct workqueue		*if_slowtimo_wq __read_mostly;
+
 static kmutex_t			if_clone_mtx;
 
 struct ifnet *lo0ifp;
@@ -221,7 +223,8 @@ static int doifioctl(struct socket *, u_long, void *, struct lwp *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
-static void if_slowtimo(void *);
+static void if_slowtimo_intr(void *);
+static void if_slowtimo_work(struct work *, void *);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
@@ -254,6 +257,15 @@ struct if_deferred_start {
 static void if_deferred_start_softint(void *);
 static void if_deferred_start_common(struct ifnet *);
 static void if_deferred_start_destroy(struct ifnet *);
+
+struct if_slowtimo_data {
+	kmutex_t		isd_lock;
+	struct callout		isd_ch;
+	struct work		isd_work;
+	struct ifnet		*isd_ifp;
+	bool			isd_queued;
+	bool			isd_dying;
+};
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -332,6 +344,10 @@ ifinit1(void)
 	    WQ_MPSAFE);
 	KASSERT(error == 0);
 	PSLIST_INIT(&ifnet_pslist);
+
+	error = workqueue_create(&if_slowtimo_wq, "ifwdog",
+	    if_slowtimo_work, NULL, PRI_SOFTNET, IPL_SOFTCLOCK, WQ_MPSAFE);
+	KASSERTMSG(error == 0, "error=%d", error);
 
 	if_indexlim = 8;
 
@@ -779,11 +795,17 @@ if_register(ifnet_t *ifp)
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 
 	if (ifp->if_slowtimo != NULL) {
-		ifp->if_slowtimo_ch =
-		    kmem_zalloc(sizeof(*ifp->if_slowtimo_ch), KM_SLEEP);
-		callout_init(ifp->if_slowtimo_ch, 0);
-		callout_setfunc(ifp->if_slowtimo_ch, if_slowtimo, ifp);
-		if_slowtimo(ifp);
+		struct if_slowtimo_data *isd;
+
+		isd = kmem_zalloc(sizeof(*isd), KM_SLEEP);
+		mutex_init(&isd->isd_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+		callout_init(&isd->isd_ch, CALLOUT_MPSAFE);
+		callout_setfunc(&isd->isd_ch, if_slowtimo_intr, ifp);
+		isd->isd_ifp = ifp;
+
+		ifp->if_slowtimo_data = isd;
+
+		if_slowtimo_intr(ifp);
 	}
 
 	if (ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit)
@@ -1350,11 +1372,20 @@ if_detach(struct ifnet *ifp)
 	pserialize_perform(ifnet_psz);
 	IFNET_GLOBAL_UNLOCK();
 
-	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
-		ifp->if_slowtimo = NULL;
-		callout_halt(ifp->if_slowtimo_ch, NULL);
-		callout_destroy(ifp->if_slowtimo_ch);
-		kmem_free(ifp->if_slowtimo_ch, sizeof(*ifp->if_slowtimo_ch));
+	if (ifp->if_slowtimo != NULL) {
+		struct if_slowtimo_data *isd = ifp->if_slowtimo_data;
+
+		mutex_enter(&isd->isd_lock);
+		isd->isd_dying = true;
+		mutex_exit(&isd->isd_lock);
+		callout_halt(&isd->isd_ch, NULL);
+		workqueue_wait(if_slowtimo_wq, &isd->isd_work);
+		callout_destroy(&isd->isd_ch);
+		mutex_destroy(&isd->isd_lock);
+		kmem_free(isd, sizeof(*isd));
+
+		ifp->if_slowtimo_data = NULL; /* paraonia */
+		ifp->if_slowtimo = NULL;      /* paranoia */
 	}
 	if_deferred_start_destroy(ifp);
 
@@ -2651,24 +2682,42 @@ if_up_locked(struct ifnet *ifp)
  * call the appropriate interface routine on expiration.
  */
 static void
-if_slowtimo(void *arg)
+if_slowtimo_intr(void *arg)
 {
-	void (*slowtimo)(struct ifnet *);
 	struct ifnet *ifp = arg;
-	int s;
+	struct if_slowtimo_data *isd = ifp->if_slowtimo_data;
 
-	slowtimo = ifp->if_slowtimo;
-	if (__predict_false(slowtimo == NULL))
-		return;
+	mutex_enter(&isd->isd_lock);
+	if (!isd->isd_dying) {
+		if (ifp->if_timer != 0 &&
+		    --ifp->if_timer == 0 &&
+		    !isd->isd_queued) {
+			isd->isd_queued = true;
+			workqueue_enqueue(if_slowtimo_wq, &isd->isd_work,
+			    NULL);
+		} else {
+			callout_schedule(&isd->isd_ch, hz / IFNET_SLOWHZ);
+		}
+	}
+	mutex_exit(&isd->isd_lock);
+}
 
-	s = splnet();
-	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
-		(*slowtimo)(ifp);
+static void
+if_slowtimo_work(struct work *work, void *arg)
+{
+	struct if_slowtimo_data *isd =
+	    container_of(work, struct if_slowtimo_data, isd_work);
+	struct ifnet *ifp = isd->isd_ifp;
 
-	splx(s);
+	KERNEL_LOCK(1, NULL);
+	(*ifp->if_slowtimo)(ifp);
+	KERNEL_UNLOCK_ONE(NULL);
 
-	if (__predict_true(ifp->if_slowtimo != NULL))
-		callout_schedule(ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
+	mutex_enter(&isd->isd_lock);
+	isd->isd_queued = false;
+	if (!isd->isd_dying)
+		callout_schedule(&isd->isd_ch, hz / IFNET_SLOWHZ);
+	mutex_exit(&isd->isd_lock);
 }
 
 /*
