@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.106 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.107 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.106 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.107 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -366,10 +366,10 @@ cue_uno_mcast(struct ifnet *ifp)
 	struct ether_multistep	step;
 	uint32_t		h, i;
 
-	DPRINTFN(2,("%s: cue_setiff if_flags=%#x\n",
-	    device_xname(un->un_dev), ifp->if_flags));
+	DPRINTFN(2,("%s: cue_setiff promisc=%d\n",
+	    device_xname(un->un_dev), usbnet_ispromisc(un)));
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ETHER_LOCK(ec);
 allmulti:
 		ec->ec_flags |= ETHER_F_ALLMULTI;
@@ -636,7 +636,7 @@ cue_uno_init(struct ifnet *ifp)
 
 	/* Enable RX logic. */
 	ctl = CUE_ETHCTL_RX_ON | CUE_ETHCTL_MCAST_ON;
-	if (ifp->if_flags & IFF_PROMISC)
+	if (usbnet_ispromisc(un))
 		ctl |= CUE_ETHCTL_PROMISC;
 	cue_csr_write_1(un, CUE_ETHCTL, ctl);
 

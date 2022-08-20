@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.22 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.23 2022/08/20 14:08:59 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.22 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.23 2022/08/20 14:08:59 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -477,7 +477,7 @@ mos_uno_mcast(struct ifnet *ifp)
 	rxmode &= ~(MOS_CTL_ALLMULTI | MOS_CTL_RX_PROMISC);
 
 	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);
 		/* run promisc. mode */

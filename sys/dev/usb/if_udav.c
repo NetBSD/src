@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.97 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.98 2022/08/20 14:08:59 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.97 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.98 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -482,7 +482,7 @@ udav_uno_init(struct ifnet *ifp)
 	UDAV_SETBIT(un, UDAV_RCR, UDAV_RCR_DIS_LONG | UDAV_RCR_DIS_CRC);
 
 	/* If we want promiscuous mode, accept all physical frames. */
-	if (ifp->if_flags & IFF_PROMISC)
+	if (usbnet_ispromisc(un))
 		UDAV_SETBIT(un, UDAV_RCR, UDAV_RCR_ALL | UDAV_RCR_PRMSC);
 	else
 		UDAV_CLRBIT(un, UDAV_RCR, UDAV_RCR_ALL | UDAV_RCR_PRMSC);
@@ -576,7 +576,7 @@ udav_uno_mcast(struct ifnet *ifp)
 		return;
 	}
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ETHER_LOCK(ec);
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);

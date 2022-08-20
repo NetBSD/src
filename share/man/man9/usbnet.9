@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.18 2022/08/12 15:30:41 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.19 2022/08/20 14:08:59 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -47,6 +47,8 @@
 .Fn usbnet_softc "struct usbnet *un"
 .Ft bool
 .Fn usbnet_havelink "struct usbnet *un"
+.Ft int
+.Fn usbnet_ispromisc "struct usbnet *un"
 .Ft bool
 .Fn usbnet_isdying "struct usbnet *un"
 .Ft void
@@ -243,6 +245,20 @@ Returns pointer to this
 device softc.
 .It Fn usbnet_havelink un
 Returns true if link is active.
+.It Fn usbnet_ispromisc un
+True if
+.Dv IFF_PROMISC
+is enabled, false if not.
+.Pp
+May be used only in
+.Dq uno_init
+and
+.Dq uno_mcast .
+.Pp
+Drivers must use this in
+.Dq uno_mcast
+instead of reading
+.Li ifp->if_flags .
 .It Fn usbnet_isdying un
 Returns true if device is dying (has been pulled or deactivated,
 pending detach).

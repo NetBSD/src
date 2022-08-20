@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.190 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.191 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.190 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.191 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -619,7 +619,7 @@ aue_uno_mcast(struct ifnet *ifp)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		ETHER_LOCK(ec);
 allmulti:
 		ec->ec_flags |= ETHER_F_ALLMULTI;
@@ -962,7 +962,7 @@ aue_uno_init(struct ifnet *ifp)
 		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
 
 	 /* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
+	if (usbnet_ispromisc(un))
 		AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 	else
 		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);

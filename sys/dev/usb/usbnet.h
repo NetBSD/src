@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.33 2022/03/03 05:56:51 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.34 2022/08/20 14:08:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -285,6 +285,7 @@ void *usbnet_softc(struct usbnet *);
 
 bool usbnet_havelink(struct usbnet *);
 bool usbnet_isdying(struct usbnet *);
+bool usbnet_ispromisc(struct usbnet *);
 
 /*
  * Endpoint / rx/tx chain management:
