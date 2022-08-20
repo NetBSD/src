@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.13 2020/02/01 21:46:49 thorpej Exp $ */
+/* $NetBSD: if_gmc.c,v 1.14 2022/08/20 18:35:50 thorpej Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.13 2020/02/01 21:46:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.14 2022/08/20 18:35:50 thorpej Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -393,14 +393,14 @@ gmc_ifstart(struct ifnet *ifp)
 
 	for (;;) {
 		struct mbuf *m;
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IF_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 		if (!gmc_txqueue(sc, sc->sc_txq[0], m)) {
-			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IF_DEQUEUE(&ifp->if_snd, m);
 	}
 }
 
