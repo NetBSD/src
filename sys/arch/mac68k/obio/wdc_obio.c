@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.31 2022/08/20 19:05:07 tsutsui Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.32 2022/08/20 20:02:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.31 2022/08/20 19:05:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.32 2022/08/20 20:02:22 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,21 +110,20 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 		for (i = 0; i < WDC_NREG; i++) {
 			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			    i * 4, 4, &wdr->cmd_iohs[i]) != 0)
-				goto out;
+				goto unmap;
 		}
 		wdc_init_shadow_regs(wdr);
 
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
 		    &wdr->ctl_ioh))
-			goto out;
+			goto unmap;
 
 		result = wdcprobe(wdr);
 
+ unmap:
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 		    WDC_OBIO_REG_NPORTS);
-
-		goto out;
 	}
  out:
 	kmem_free(wdr, sizeof(*wdr));
@@ -148,7 +147,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(wdr->cmd_iot, oa->oa_addr, WDC_OBIO_REG_NPORTS, 0,
 	    &wdr->cmd_baseioh)) {
-		aprint_error_dev(self, "couldn't map registers\n");
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
@@ -157,24 +156,24 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    i * 4, 4, &wdr->cmd_iohs[i]) != 0) {
-			aprint_error_dev(self,
-			    "unable to subregion control register\n");
-			return;
+			aprint_error(
+			    ": unable to subregion control register\n");
+			goto err;
 		}
 	}
 
 	if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 	    WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS, &wdr->ctl_ioh)) {
-		aprint_error_dev(self, "unable to subregion aux register\n");
-		return;
+		aprint_error(": unable to subregion aux register\n");
+		goto err;
 	}
 
 	wdc_obio_isr_tag = oa->oa_tag;
 
 	if (bus_space_map(wdc_obio_isr_tag, oa->oa_addr + WDC_OBIO_ISR_OFFSET,
 	    WDC_OBIO_ISR_NPORTS, 0, &wdc_obio_isr_hdl)) {
-		aprint_error_dev(self, " couldn't map intr status register\n");
-		return;
+		aprint_error(": couldn't map intr status register\n");
+		goto err;
 	}
 
 	switch (current_mac_model->machineid) {
@@ -218,6 +217,10 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	wdcattach(chp);
+	return;
+
+ err:
+	bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, WDC_OBIO_REG_NPORTS);
 }
 
 void
