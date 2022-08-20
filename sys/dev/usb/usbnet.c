@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.105 2022/08/20 14:08:17 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.106 2022/08/20 14:08:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.105 2022/08/20 14:08:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.106 2022/08/20 14:08:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1082,6 +1082,7 @@ static void
 usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
 	struct usbnet_private * const unp = un->un_pri;
+	struct mii_data * const mii = usbnet_mii(un);
 
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
@@ -1124,6 +1125,13 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
 	    &unp->unp_core_lock);
+
+	/*
+	 * Now that we have stopped calling mii_tick, bring the MII
+	 * state machine down.
+	 */
+	if (mii)
+		mii_down(mii);
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
