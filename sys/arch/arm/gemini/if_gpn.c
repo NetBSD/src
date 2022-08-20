@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.14 2020/02/01 21:45:11 thorpej Exp $ */
+/* $NetBSD: if_gpn.c,v 1.15 2022/08/20 18:36:16 thorpej Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.14 2020/02/01 21:45:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.15 2022/08/20 18:36:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -363,7 +363,7 @@ gpn_ifstart(struct ifnet *ifp)
 			break;
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IF_POLL(&ifp->if_snd, m);
 		if (!m)
 			break;
 
@@ -396,10 +396,10 @@ gpn_ifstart(struct ifnet *ifp)
 		 */
 		if (sc->sc_free < count
 		    || sc->sc_txactive + count > MAX_TXACTIVE) {
-			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
 		}
+		IF_DEQUEUE(&ifp->if_snd, m);
 
 		bpf_mtap(ifp, m, BPF_D_OUT);
 #ifdef GPNDEBUG
