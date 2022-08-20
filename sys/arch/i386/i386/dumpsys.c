@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.16 2011/12/12 19:03:09 mrg Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.17 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.16 2011/12/12 19:03:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.17 2022/08/20 23:48:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.16 2011/12/12 19:03:09 mrg Exp $");
 #include <sys/exec_aout.h>
 
 #include <machine/kcore.h>
+#include <machine/pmap_private.h>
 
 #include <uvm/uvm_extern.h>
 

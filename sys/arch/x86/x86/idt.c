@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.16 2022/02/13 19:21:21 riastradh Exp $	*/
+/*	$NetBSD: idt.c,v 1.17 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.16 2022/02/13 19:21:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.17 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_pcpu_idt.h"
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.16 2022/02/13 19:21:21 riastradh Exp $");
 
 #include <uvm/uvm.h>
 
+#include <machine/pmap_private.h>
 #include <machine/segments.h>
 
 /*

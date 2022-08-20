@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.13 2022/08/20 23:15:37 riastradh Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.14 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,13 +53,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.13 2022/08/20 23:15:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.14 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pmap_private.h>
 
 #include <x86/bootspace.h>
 

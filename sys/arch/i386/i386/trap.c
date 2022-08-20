@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.307 2020/09/05 07:26:37 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.308 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.307 2020/09/05 07:26:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.308 2022/08/20 23:48:50 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.307 2020/09/05 07:26:37 maxv Exp $");
 #include <machine/trap.h>
 #include <machine/userret.h>
 #include <machine/db_machdep.h>
+#include <machine/pmap_private.h>
 
 #include "mca.h"
 #if NMCA > 0
