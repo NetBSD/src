@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.97 2022/08/16 00:44:20 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.98 2022/08/20 12:28:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.97 2022/08/16 00:44:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.98 2022/08/20 12:28:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -986,6 +986,8 @@ usbnet_media_upd(struct ifnet *ifp)
 			mii_phy_reset(miisc);
 	}
 
+	if (unp->unp_stopping)
+		return 0;
 	return ether_mediachange(ifp);
 }
 
