@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.103 2022/08/20 14:07:53 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.104 2022/08/20 14:08:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.103 2022/08/20 14:07:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.104 2022/08/20 14:08:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1234,6 +1234,9 @@ usbnet_tick_task(void *arg)
 	if (timeout)
 		usbnet_watchdog(ifp);
 
+	/* Call driver if requested. */
+	uno_tick(un);
+
 	DPRINTFN(8, "mii %#jx ifp %#jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
 	if (mii) {
 		mutex_enter(&unp->unp_core_lock);
@@ -1242,9 +1245,6 @@ usbnet_tick_task(void *arg)
 			(*mii->mii_statchg)(ifp);
 		mutex_exit(&unp->unp_core_lock);
 	}
-
-	/* Call driver if requested. */
-	uno_tick(un);
 
 	mutex_enter(&unp->unp_core_lock);
 	if (!unp->unp_stopped && !usbnet_isdying(un))
