@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.299 2022/07/28 15:15:29 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.300 2022/08/20 11:09:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -414,7 +414,7 @@ typedef struct ifnet {
 	kmutex_t	*if_ioctl_lock;	/* :: */
 	char		*if_description;	/* i: interface description */
 #ifdef _KERNEL /* XXX kvm(3) */
-	struct callout	*if_slowtimo_ch;/* :: */
+	struct if_slowtimo_data *if_slowtimo_data; /* :: */
 	struct krwlock	*if_afdata_lock;/* :: */
 	struct if_percpuq
 			*if_percpuq;	/* :: we should remove it in the future */
