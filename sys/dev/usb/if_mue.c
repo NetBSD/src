@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.82 2022/08/20 14:08:59 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.82 2022/08/20 14:08:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1028,11 +1028,11 @@ mue_uno_mcast(struct ifnet *ifp)
 	rxfilt |= MUE_RFE_CTL_BROADCAST;
 
 	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (usbnet_ispromisc(un)) {
 		rxfilt |= MUE_RFE_CTL_UNICAST;
 allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+		if (usbnet_ispromisc(un))
 			DPRINTF(un, "promisc\n");
 		else
 			DPRINTF(un, "allmulti\n");
