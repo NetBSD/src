@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.30 2020/05/31 08:59:40 rin Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.31 2022/08/20 19:05:07 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.30 2020/05/31 08:59:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.31 2022/08/20 19:05:07 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 	struct wdc_regs *wdr;
 	int i, result = 0;
 
-	wdr = kmem_alloc(sizeof(struct wdc_regs), KM_SLEEP);
+	wdr = kmem_alloc(sizeof(*wdr), KM_SLEEP);
 
 	switch (current_mac_model->machineid) {
 	case MACH_MACPB150:
@@ -101,7 +101,7 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 		wdr->cmd_iot = wdr->ctl_iot = oa->oa_tag;
 
 		if (bus_space_map(wdr->cmd_iot, IDEBase, WDC_OBIO_REG_NPORTS,
-				0, &wdr->cmd_baseioh))
+		    0, &wdr->cmd_baseioh))
 			goto out;
 
 		mac68k_bus_space_handle_swapped(wdr->cmd_iot,
@@ -109,16 +109,14 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 
 		for (i = 0; i < WDC_NREG; i++) {
 			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-					    4 * i, 4, &wdr->cmd_iohs[i]) != 0)
+			    i * 4, 4, &wdr->cmd_iohs[i]) != 0)
 				goto out;
 		}
 		wdc_init_shadow_regs(wdr);
 
-
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-				        WDC_OBIO_AUXREG_OFFSET,
-					WDC_OBIO_AUXREG_NPORTS,
-					&wdr->ctl_ioh))
+		    WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
+		    &wdr->ctl_ioh))
 			goto out;
 
 		result = wdcprobe(wdr);
@@ -128,7 +126,8 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 
 		goto out;
 	}
-out:	kmem_free(wdr, sizeof(struct wdc_regs));
+ out:
+	kmem_free(wdr, sizeof(*wdr));
 	return result;
 }
 
@@ -147,38 +146,33 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	oa->oa_addr = IDEBase;
 	wdr->cmd_iot = wdr->ctl_iot = oa->oa_tag;
 
-	if (bus_space_map(wdr->cmd_iot, oa->oa_addr,
-		      WDC_OBIO_REG_NPORTS, 0, &wdr->cmd_baseioh)) {
+	if (bus_space_map(wdr->cmd_iot, oa->oa_addr, WDC_OBIO_REG_NPORTS, 0,
+	    &wdr->cmd_baseioh)) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 
-	mac68k_bus_space_handle_swapped(wdr->cmd_iot,
-				  &wdr->cmd_baseioh);
+	mac68k_bus_space_handle_swapped(wdr->cmd_iot, &wdr->cmd_baseioh);
 
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot,
-				    wdr->cmd_baseioh, 4 * i, 4,
-				    &wdr->cmd_iohs[i]) != 0) {
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+		    i * 4, 4, &wdr->cmd_iohs[i]) != 0) {
 			aprint_error_dev(self,
 			    "unable to subregion control register\n");
 			return;
 		}
 	}
 
-	if (bus_space_subregion(wdr->cmd_iot,
-				wdr->cmd_baseioh,
-				WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
-				&wdr->ctl_ioh)) {
+	if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+	    WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS, &wdr->ctl_ioh)) {
 		aprint_error_dev(self, "unable to subregion aux register\n");
 		return;
 	}
 
-    	wdc_obio_isr_tag = oa->oa_tag;
+	wdc_obio_isr_tag = oa->oa_tag;
 
-	if (bus_space_map(wdc_obio_isr_tag,
-			  oa->oa_addr+WDC_OBIO_ISR_OFFSET,
-			  WDC_OBIO_ISR_NPORTS, 0, &wdc_obio_isr_hdl)) {
+	if (bus_space_map(wdc_obio_isr_tag, oa->oa_addr + WDC_OBIO_ISR_OFFSET,
+	    WDC_OBIO_ISR_NPORTS, 0, &wdc_obio_isr_hdl)) {
 		aprint_error_dev(self, " couldn't map intr status register\n");
 		return;
 	}
@@ -191,7 +185,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 		 */
 		aprint_normal(" (Quadra/Performa series IDE interface)");
 
-		add_nubus_intr(0xf, (void (*)(void*))wdc_obio_intr, (void *)sc);
+		add_nubus_intr(0xf, wdc_obio_intr, sc);
 
 		break;
 	case MACH_MACPB150:
@@ -202,14 +196,13 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 		 */
 		aprint_normal(" (PowerBook series IDE interface)");
 
-		add_nubus_intr(0xc, (void (*)(void*))wdc_obio_intr, (void *)sc);
+		add_nubus_intr(0xc, wdc_obio_intr, sc);
 
 		break;
 	}
 
 	ch_sc = chp;
-	if (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
-	    ATAC_CAP_NOIRQ)
+	if ((device_cfdata(self)->cf_flags & ATAC_CAP_NOIRQ) != 0)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
@@ -230,13 +223,12 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 void
 wdc_obio_intr(void *arg)
 {
-	unsigned char status;
+	uint8_t status;
 
-	status = bus_space_read_1(wdc_obio_isr_tag,
-				  wdc_obio_isr_hdl, 0);
-	if (status & 0x20) {
+	status = bus_space_read_1(wdc_obio_isr_tag, wdc_obio_isr_hdl, 0);
+	if ((status & 0x20) != 0) {
 		wdcintr(ch_sc);
-		bus_space_write_1(wdc_obio_isr_tag,
-				  wdc_obio_isr_hdl, 0, status&~0x20);
+		bus_space_write_1(wdc_obio_isr_tag, wdc_obio_isr_hdl, 0,
+		    status & ~0x20);
 	}
 }
