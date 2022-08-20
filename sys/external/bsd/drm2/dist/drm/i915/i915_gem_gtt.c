@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.23 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.24 2022/08/20 23:19:09 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  * Copyright © 2020 Intel Corporation
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.23 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.24 2022/08/20 23:19:09 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -33,7 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.23 2021/12/19 11:33:30 riastradh 
 #ifdef __NetBSD__
 #include <drm/bus_dma_hacks.h>
 #include <x86/machdep.h>
-#include <x86/pte.h>
+#include <machine/pte.h>
 #define	_PAGE_PRESENT	PTE_P	/* 0x01 PTE is present */
 #define	_PAGE_RW	PTE_W	/* 0x02 read/write */
 #define	_PAGE_PWT	PTE_PWT	/* 0x08 page write-through */

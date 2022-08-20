@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.12 2021/12/19 11:39:55 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.13 2022/08/20 23:19:09 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -37,7 +37,7 @@
 #ifdef __NetBSD__
 #include <drm/bus_dma_hacks.h>
 #include <x86/machdep.h>
-#include <x86/pte.h>
+#include <machine/pte.h>
 #define	_PAGE_PRESENT	PTE_P	/* 0x01 PTE is present / valid */
 #define	_PAGE_RW	PTE_W	/* 0x02 read/write */
 #define	_PAGE_PWT	PTE_PWT	/* 0x08 write-through */
