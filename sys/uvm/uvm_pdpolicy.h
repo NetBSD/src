@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.8 2020/05/17 19:38:17 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.9 2022/08/20 23:26:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -29,8 +29,15 @@
 #ifndef _UVM_PDPOLICY_H_
 #define _UVM_PDPOLICY_H_
 
-struct vm_page;
+#include <sys/mutex.h>
+#include <sys/stdint.h>
+
+#include <uvm/uvm_page.h>
+
+struct krwlock;
+struct uvm_cpu;
 struct vm_anon;
+struct vm_page;
 
 /*
  * these API is for uvm internal use only.
@@ -56,7 +63,7 @@ void uvmpdpol_anfree(struct vm_anon *);
 void uvmpdpol_tune(void);
 void uvmpdpol_scaninit(void);
 void uvmpdpol_scanfini(void);
-struct vm_page *uvmpdpol_selectvictim(krwlock_t **lock);
+struct vm_page *uvmpdpol_selectvictim(struct krwlock **);
 void uvmpdpol_balancequeue(int);
 
 void uvmpdpol_sysctlsetup(void);
