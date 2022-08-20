@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.31 2017/12/09 16:00:19 wiz Exp $
+.\"	$NetBSD: mutex.9,v 1.32 2022/08/20 14:17:36 riastradh Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,6 +141,19 @@ try to acquire adaptive mutexes or other sleep locks.
 .Pp
 A processor will always busy-wait when attempting to acquire
 a spin mutex that is already held.
+.Pp
+.Sy Note :
+Releasing a spin mutex may not lower the IPL to what it was when
+entered.
+If other spin mutexes are held, the IPL will not be lowered until the
+last one is released.
+.Pp
+This is usually not a problem because spin mutexes should held only for
+very short durations anyway, so blocking higher-priority interrupts a
+little longer doesn't hurt much.
+But it interferes with writing assertions that the IPL is
+.Em no higher than
+a specified level.
 .El
 .Pp
 See
