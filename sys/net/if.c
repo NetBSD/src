@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.516 2022/08/20 14:05:22 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.517 2022/08/20 15:11:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.516 2022/08/20 14:05:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.517 2022/08/20 15:11:27 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2691,11 +2691,14 @@ static bool
 if_slowtimo_countdown(struct ifnet *ifp)
 {
 	bool fire = false;
+	int s;
 
-	KERNEL_LOCK(1, NULL); /* for ifp->ifp_timer */
+	s = splnet();
+	KERNEL_LOCK(1, NULL);
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		fire = true;
 	KERNEL_UNLOCK_ONE(NULL);
+	splx(s);
 
 	return fire;
 }
@@ -2727,10 +2730,13 @@ if_slowtimo_work(struct work *work, void *arg)
 	struct if_slowtimo_data *isd =
 	    container_of(work, struct if_slowtimo_data, isd_work);
 	struct ifnet *ifp = isd->isd_ifp;
+	int s;
 
+	s = splnet();
 	KERNEL_LOCK(1, NULL);
 	(*ifp->if_slowtimo)(ifp);
 	KERNEL_UNLOCK_ONE(NULL);
+	splx(s);
 
 	mutex_enter(&isd->isd_lock);
 	if (isd->isd_trigger) {
