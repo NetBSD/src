@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.2 2022/08/20 23:49:31 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.3 2022/08/20 23:49:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -260,6 +260,7 @@
 #undef	_MACHINE_PMAP_PRIVATE_H_X86
 
 #ifndef XENPV
+
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PTE_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
@@ -284,6 +285,7 @@
 #endif /* PAE */
 
 #else /* XENPV */
+
 extern kmutex_t pte_lock;
 
 static __inline pt_entry_t
@@ -297,6 +299,7 @@ pmap_pte2pa(pt_entry_t pte)
 {
 	return xpmap_mtop_masked(pte & PTE_FRAME);
 }
+
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
@@ -327,8 +330,7 @@ pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 
 	mutex_enter(&pte_lock);
 	opte = *pte;
-	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
-	    npte);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), npte);
 	xpq_flush_queue();
 	mutex_exit(&pte_lock);
 	return opte;
@@ -345,7 +347,7 @@ pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 
 static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
-{	
+{
 	mutex_enter(&pte_lock);
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
