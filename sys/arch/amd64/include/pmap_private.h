@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.2 2022/08/20 23:49:31 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.3 2022/08/20 23:49:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -202,6 +202,7 @@ extern bool svs_pcid;
 #undef	_MACHINE_PMAP_PRIVATE_H_X86
 
 #ifndef XENPV
+
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PTE_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
@@ -213,7 +214,9 @@ extern bool svs_pcid;
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_pte_flush()		/* nothing */
+
 #else
+
 extern kmutex_t pte_lock;
 
 static __inline pt_entry_t
@@ -247,7 +250,6 @@ pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 		xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(ptep)), n);
 		xpq_flush_queue();
 	}
-
 	mutex_exit(&pte_lock);
 	return opte;
 }
@@ -291,6 +293,7 @@ pmap_pte_flush(void)
 	xpq_flush_queue();
 	splx(s);
 }
+
 #endif
 
 #ifdef __HAVE_DIRECT_MAP
