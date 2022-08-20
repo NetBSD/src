@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.19 2022/08/20 14:08:59 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.20 2022/08/20 23:50:41 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -403,29 +403,29 @@ when bringing the interface up.
 .It Ft int Fn (*uno_read_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t *val"
 Read MII register.
 Required with MII.
-Serialized with other MII functions, and with
+Serialized with other MII functions, and only called after
 .Dq uno_init
-and
+and before
 .Dq uno_stop .
 .It Ft int Fn (*uno_write_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t val"
 Write MII register.
 Required with MII.
-Serialized with other MII functions, and with
+Serialized with other MII functions, and only called after
 .Dq uno_init
-and
+and before
 .Dq uno_stop .
 .It Ft usbd_status Fn (*uno_statchg) "struct ifnet *ifp"
 Handle MII status change.
 Required with MII.
-Serialized with other MII functions, and with
+Serialized with other MII functions, and only called after
 .Dq uno_init
-and
+and before
 .Dq uno_stop .
 .It Ft unsigned Fn (*uno_tx_prepare) "struct usbnet *un" "struct mbuf *m" "struct usbnet_chain *c"
 Prepare an mbuf for transmit.
 Required.
 Called sequentially between, and not during,
-.Dq uno_init .
+.Dq uno_init
 and
 .Dq uno_stop .
 .It Ft void Fn (*uno_rx_loop) "struct usbnet *un" "struct usbnet_chain *c" "uint32_t total_len"
