@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.1 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.2 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -174,6 +174,8 @@ extern pt_entry_t *pte_base;
 				  NKL3_MAX_ENTRIES, NKL4_MAX_ENTRIES }
 #define NBPD_INITIALIZER	{ NBPD_L1, NBPD_L2, NBPD_L3, NBPD_L4 }
 #define PDES_INITIALIZER	{ L2_BASE, L3_BASE, L4_BASE }
+
+#define PTP_LEVELS	4
 
 /*
  * PTE_AVL usage: we make use of the ignored bits of the PTE

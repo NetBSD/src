@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.57 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.58 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.57 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.58 2022/08/20 23:49:31 riastradh Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.57 2021/10/07 12:52:27 msaitoh Exp
 #include <machine/reg.h>
 #include <machine/sysarch.h>
 #include <machine/mtrr.h>
+#include <machine/pmap_private.h>
 
 #if defined(__x86_64__) || defined(XENPV)
 #undef	IOPERM	/* not implemented */

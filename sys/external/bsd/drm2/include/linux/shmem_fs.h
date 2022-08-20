@@ -1,4 +1,4 @@
-/*	$NetBSD: shmem_fs.h,v 1.4 2021/12/19 12:13:08 riastradh Exp $	*/
+/*	$NetBSD: shmem_fs.h,v 1.5 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 
 #include <linux/err.h>
 #include <linux/gfp.h>
