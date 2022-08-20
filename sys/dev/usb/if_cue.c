@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.107 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.108 2022/08/20 14:09:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.107 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.108 2022/08/20 14:09:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -405,10 +405,8 @@ allmulti:
 	 * Also include the broadcast address in the filter
 	 * so we can receive broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
-		h = cue_crc(etherbroadcastaddr);
-		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
-	}
+	h = cue_crc(etherbroadcastaddr);
+	sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 
 	cue_mem(un, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
 	    &sc->cue_mctab, CUE_MCAST_TABLE_LEN);
