@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.129 2022/08/20 23:13:51 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.130 2022/08/20 23:15:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -114,49 +114,6 @@
 #include <sys/rwlock.h>
 #include <x86/pmap_pv.h>
 #include <uvm/pmap/pmap_pvt.h>
-
-#define BTSEG_NONE	0
-#define BTSEG_TEXT	1
-#define BTSEG_RODATA	2
-#define BTSEG_DATA	3
-#define BTSPACE_NSEGS	64
-
-struct bootspace {
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} head;
-
-	/* Kernel segments. */
-	struct {
-		int type;
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} segs[BTSPACE_NSEGS];
-
-	/*
-	 * The area used by the early kernel bootstrap. It contains the kernel
-	 * symbols, the preloaded modules, the bootstrap tables, and the ISA I/O
-	 * mem.
-	 */
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} boot;
-
-	/* A magic VA usable by the bootstrap code. */
-	vaddr_t spareva;
-
-	/* Virtual address of the page directory. */
-	vaddr_t pdir;
-
-	/* Area dedicated to kernel modules (amd64 only). */
-	vaddr_t smodule;
-	vaddr_t emodule;
-};
 
 #define SLAREA_USER	0
 #define SLAREA_PTE	1
