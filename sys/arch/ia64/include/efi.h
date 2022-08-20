@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.5 2022/08/20 10:54:25 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.6 2022/08/20 10:55:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -152,10 +152,10 @@ struct efi_systbl {
 	void		*st_coutif;
 	void		*st_cerr;
 	void		*st_cerrif;
-	uint64_t	st_rt;
+	struct efi_rt	*st_rt;
 	void		*st_bs;
 	u_long		st_entries;
-	uint64_t	st_cfgtbl;
+	struct efi_cfgtbl *st_cfgtbl;
 };
 
 void efi_boot_finish(void);
