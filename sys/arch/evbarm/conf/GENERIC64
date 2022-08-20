@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.202 2022/08/13 16:55:10 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.203 2022/08/20 15:12:27 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -89,8 +89,8 @@ makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 
-options 	COMPAT_NETBSD32
-options 	EXEC_ELF32
+#options 	COMPAT_NETBSD32	# already defined in GENERIC.common (there
+options 	EXEC_ELF32	# for a.out, but here we need it for elf32)
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_LINUX32	# binary compatibility with Linux 32-bit
