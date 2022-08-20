@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.66 2020/05/15 22:17:45 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.67 2022/08/20 23:18:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -306,17 +306,6 @@ pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
 #endif /* __HAVE_DIRECT_MAP */
 
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
-
-#include <x86/pmap_pv.h>
-
-#define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg) \
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
-	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
-
-struct vm_page_md {
-	struct pmap_page mp_pp;
-};
 
 #else	/*	!__x86_64__	*/
 

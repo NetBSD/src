@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.130 2022/08/20 23:15:37 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.131 2022/08/20 23:18:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -556,6 +556,15 @@ extern vaddr_t pmap_direct_end;
 #endif /* __HAVE_DIRECT_MAP */
 
 void	svs_quad_copy(void *, void *, long);
+
+#define	__HAVE_VM_PAGE_MD
+#define	VM_MDPAGE_INIT(pg) \
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
+	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
+
+struct vm_page_md {
+	struct pmap_page mp_pp;
+};
 
 #endif /* _KERNEL */
 
