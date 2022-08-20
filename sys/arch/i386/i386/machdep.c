@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.835 2022/05/31 18:04:11 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.836 2022/08/20 23:15:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.835 2022/05/31 18:04:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.836 2022/08/20 23:15:36 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.835 2022/05/31 18:04:11 bouyer Exp $")
 #include <machine/mtrr.h>
 #include <x86/x86/tsc.h>
 
+#include <x86/bootspace.h>
 #include <x86/fpu.h>
 #include <x86/dbregs.h>
 #include <x86/machdep.h>
