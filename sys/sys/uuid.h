@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.h,v 1.7 2022/08/19 12:49:55 riastradh Exp $	*/
+/*	$NetBSD: uuid.h,v 1.8 2022/08/20 11:27:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -32,7 +32,7 @@
 #define	_SYS_UUID_H_
 
 #include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 /* Length of a node address (an IEEE 802 address). */
 #define	_UUID_NODE_LEN		6
