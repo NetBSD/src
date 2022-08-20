@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2020/09/27 11:57:28 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.48 2022/08/20 11:42:49 riastradh Exp $
 
 SUBDIR=	apm ata bluetooth dec dm dmover dtv hdaudio hdmicec hid hpc \
 	i2c i2o ic ieee1394 ir isa \
@@ -18,7 +18,15 @@ SUBDIR+= iscsi
 INCSDIR= /usr/include/dev
 
 # Only install includes which are used by userland
-INCS=	biovar.h ccdvar.h cgdvar.h fssvar.h keylock.h kttcpio.h lockstat.h \
-	md.h vndvar.h spkrio.h
+INCS+=	biovar.h
+INCS+=	ccdvar.h
+INCS+=	cgdvar.h
+INCS+=	fssvar.h
+INCS+=	keylock.h
+INCS+=	kttcpio.h
+INCS+=	lockstat.h
+INCS+=	md.h
+INCS+=	spkrio.h
+INCS+=	vndvar.h
 
 .include <bsd.kinc.mk>
