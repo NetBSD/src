@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.140 2021/11/06 20:42:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.141 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.140 2021/11/06 20:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.141 2022/08/20 23:49:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.140 2021/11/06 20:42:56 thorp
 #include <machine/sysarch.h>
 #include <machine/userret.h>
 #include <machine/gdt.h>
+#include <machine/pmap_private.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>

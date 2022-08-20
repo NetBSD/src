@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.419 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.420 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.419 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.420 2022/08/20 23:49:31 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -527,6 +527,20 @@ static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
 static void pmap_load1(struct lwp *, struct pmap *, struct pmap *);
 static void pmap_reactivate(struct pmap *);
+
+long
+pmap_resident_count(struct pmap *pmap)
+{
+
+	return pmap->pm_stats.resident_count;
+}
+
+long
+pmap_wired_count(struct pmap *pmap)
+{
+
+	return pmap->pm_stats.wired_count;
+}
 
 /*
  * p m a p   h e l p e r   f u n c t i o n s
