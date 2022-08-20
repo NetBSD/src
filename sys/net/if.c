@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.514 2022/08/20 11:09:41 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.515 2022/08/20 12:42:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.514 2022/08/20 11:09:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.515 2022/08/20 12:42:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2686,6 +2686,19 @@ if_up_locked(struct ifnet *ifp)
  * from softclock, we decrement timer (if set) and
  * call the appropriate interface routine on expiration.
  */
+static bool
+if_slowtimo_countdown(struct ifnet *ifp)
+{
+	bool fire = false;
+
+	KERNEL_LOCK(1, NULL); /* for ifp->ifp_timer */
+	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
+		fire = true;
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return fire;
+}
+
 static void
 if_slowtimo_intr(void *arg)
 {
@@ -2694,8 +2707,7 @@ if_slowtimo_intr(void *arg)
 
 	mutex_enter(&isd->isd_lock);
 	if (!isd->isd_dying) {
-		if (isd->isd_trigger ||
-		    (ifp->if_timer != 0 && --ifp->if_timer == 0)) {
+		if (isd->isd_trigger || if_slowtimo_countdown(ifp)) {
 			if (!isd->isd_queued) {
 				isd->isd_queued = true;
 				workqueue_enqueue(if_slowtimo_wq,
