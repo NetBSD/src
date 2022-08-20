@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.106 2022/08/20 14:08:27 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.107 2022/08/20 14:08:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.106 2022/08/20 14:08:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.107 2022/08/20 14:08:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,17 +52,15 @@ struct usbnet_cdata {
 
 struct usbnet_private {
 	/*
-	 * - unp_core_lock protects most of this structure, the public one,
-	 *   and the MII / media data.
+	 * - unp_core_lock protects the MII / media data and tick scheduling.
 	 * - unp_rxlock protects the rx path and its data
 	 * - unp_txlock protects the tx path and its data
 	 *
 	 * the lock ordering is:
-	 *	ifnet lock -> unp_core_lock -> unp_rxlock
-	 *				    -> unp_txlock
-	 *				    -> unp_mcastlock
-	 * - ifnet lock is not needed for unp_core_lock, but if ifnet lock is
-	 *   involved, it must be taken first
+	 *	ifnet lock -> unp_core_lock
+	 *		   -> unp_rxlock
+	 *		   -> unp_txlock
+	 *		   -> unp_mcastlock
 	 */
 	kmutex_t		unp_core_lock;
 	kmutex_t		unp_rxlock;
@@ -832,8 +830,6 @@ usbnet_init_rx_tx(struct usbnet * const un)
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
-	usbnet_isowned_core(un);
-
 	if (usbnet_isdying(un)) {
 		return EIO;
 	}
@@ -886,8 +882,10 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	usbnet_rx_start_pipes(un);
 
 	/* Kick off the watchdog/stats/mii tick.  */
+	mutex_enter(&unp->unp_core_lock);
 	unp->unp_stopped = false;
 	callout_schedule(&unp->unp_stat_ch, hz);
+	mutex_exit(&unp->unp_core_lock);
 
 out:
 	if (error) {
@@ -900,10 +898,11 @@ out:
 	 * For devices without any media autodetection, treat success
 	 * here as an active link.
 	 */
-	if (un->un_ops->uno_statchg == NULL)
+	if (un->un_ops->uno_statchg == NULL) {
+		mutex_enter(&unp->unp_core_lock);
 		usbnet_set_link(un, error == 0);
-
-	usbnet_isowned_core(un);
+		mutex_exit(&unp->unp_core_lock);
+	}
 
 	return error;
 }
@@ -1087,13 +1086,11 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
-	usbnet_isowned_core(un);
 
 	/*
 	 * For drivers with hardware multicast filter update callbacks:
 	 * Prevent concurrent access to the hardware registers by
-	 * multicast filter updates, which happens without IFNET_LOCK
-	 * or the usbnet core lock.
+	 * multicast filter updates, which happens without IFNET_LOCK.
 	 */
 	if (un->un_ops->uno_mcast) {
 		mutex_enter(&unp->unp_mcastlock);
@@ -1105,7 +1102,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 * Prevent new activity (rescheduling ticks, xfers, &c.) and
 	 * clear the watchdog timer.
 	 */
+	mutex_enter(&unp->unp_core_lock);
 	unp->unp_stopped = true;
+	mutex_exit(&unp->unp_core_lock);
 
 	mutex_enter(&unp->unp_rxlock);
 	unp->unp_rxstopped = true;
@@ -1119,19 +1118,22 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	/*
 	 * Stop the timer first, then the task -- if the timer was
 	 * already firing, we stop the task or wait for it complete
-	 * only after if last fired.  Setting unp_stopped prevents the
+	 * only after it last fired.  Setting unp_stopped prevents the
 	 * timer task from being scheduled again.
 	 */
-	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
+	callout_halt(&unp->unp_stat_ch, NULL);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
-	    &unp->unp_core_lock);
+	    NULL);
 
 	/*
 	 * Now that we have stopped calling mii_tick, bring the MII
 	 * state machine down.
 	 */
-	if (mii)
+	if (mii) {
+		mutex_enter(&unp->unp_core_lock);
 		mii_down(mii);
+		mutex_exit(&unp->unp_core_lock);
+	}
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
@@ -1165,7 +1167,6 @@ static void
 usbnet_if_stop(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
-	struct usbnet_private * const unp = un->un_pri;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
@@ -1179,9 +1180,7 @@ usbnet_if_stop(struct ifnet *ifp, int disable)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	mutex_enter(&unp->unp_core_lock);
 	usbnet_stop(un, ifp, disable);
-	mutex_exit(&unp->unp_core_lock);
 }
 
 /*
@@ -1284,16 +1283,14 @@ usbnet_if_init(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
 
-	mutex_enter(&un->un_pri->unp_core_lock);
 	error = uno_init(un, ifp);
 	if (error)
-		goto out;
+		return error;
 	error = usbnet_init_rx_tx(un);
 	if (error)
-		goto out;
-out:	mutex_exit(&un->un_pri->unp_core_lock);
+		return error;
 
-	return error;
+	return 0;
 }
 
 
