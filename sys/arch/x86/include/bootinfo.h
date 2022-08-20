@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.30 2019/06/21 02:08:55 nonaka Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.31 2022/08/20 23:12:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef	_X86_BOOTINFO_H_
+#define	_X86_BOOTINFO_H_
 
 #define BTINFO_BOOTPATH		0
 #define BTINFO_ROOTDEVICE	1
@@ -275,3 +278,5 @@ void  aprint_bootinfo(void);
 #endif /* _LOCORE */
 
 #endif /* _KERNEL */
+
+#endif	/* _X86_BOOTINFO_H_ */
