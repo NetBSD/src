@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.126 2020/07/19 13:55:09 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.127 2022/08/20 23:18:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -399,16 +399,5 @@ struct trapframe;
 struct pcb;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
-
-#include <x86/pmap_pv.h>
-
-#define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg) \
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
-	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
-
-struct vm_page_md {
-	struct pmap_page mp_pp;
-};
 
 #endif	/* _I386_PMAP_H_ */
