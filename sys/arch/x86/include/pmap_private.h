@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.1 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.2 2022/08/20 23:49:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,13 +74,16 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <sys/kcpuset.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
+#include <uvm/uvm_object.h>
 #include <uvm/uvm_pmap.h>
 
 struct pmap;
@@ -153,6 +156,67 @@ extern kmutex_t pmaps_lock;    /* protects pmaps */
  * pool_cache(9) that pmaps are allocated from
  */
 extern struct pool_cache pmap_cache;
+
+/*
+ * the pmap structure
+ *
+ * note that the pm_obj contains the lock pointer, the reference count,
+ * page list, and number of PTPs within the pmap.
+ *
+ * pm_lock is the same as the lock for vm object 0.  Changes to
+ * the other objects may only be made if that lock has been taken
+ * (the other object locks are only used when uvm_pagealloc is called)
+ */
+
+struct pv_page;
+
+struct pmap {
+	struct uvm_object pm_obj[PTP_LEVELS-1];/* objects for lvl >= 1) */
+	LIST_ENTRY(pmap) pm_list;	/* list of all pmaps */
+	pd_entry_t *pm_pdir;		/* VA of PD */
+	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
+	struct vm_page *pm_ptphint[PTP_LEVELS-1];
+					/* pointer to a PTP in our pmap */
+	struct pmap_statistics pm_stats;  /* pmap stats */
+	struct pv_entry *pm_pve;	/* spare pv_entry */
+	LIST_HEAD(, pv_page) pm_pvp_part;
+	LIST_HEAD(, pv_page) pm_pvp_empty;
+	LIST_HEAD(, pv_page) pm_pvp_full;
+
+#if !defined(__x86_64__)
+	vaddr_t pm_hiexec;		/* highest executable mapping */
+#endif /* !defined(__x86_64__) */
+
+	union descriptor *pm_ldt;	/* user-set LDT */
+	size_t pm_ldt_len;		/* XXX unused, remove */
+	int pm_ldt_sel;			/* LDT selector */
+
+	kcpuset_t *pm_cpus;		/* mask of CPUs using pmap */
+	kcpuset_t *pm_kernel_cpus;	/* mask of CPUs using kernel part
+					 of pmap */
+	kcpuset_t *pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
+					 ptp mapped */
+	uint64_t pm_ncsw;		/* for assertions */
+	LIST_HEAD(,vm_page) pm_gc_ptp;	/* PTPs queued for free */
+
+	/* Used by NVMM and Xen */
+	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
+	bool (*pm_extract)(struct pmap *, vaddr_t, paddr_t *);
+	void (*pm_remove)(struct pmap *, vaddr_t, vaddr_t);
+	int (*pm_sync_pv)(struct vm_page *, vaddr_t, paddr_t, int, uint8_t *,
+	    pt_entry_t *);
+	void (*pm_pp_remove_ent)(struct pmap *, struct vm_page *, pt_entry_t,
+	    vaddr_t);
+	void (*pm_write_protect)(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
+	void (*pm_unwire)(struct pmap *, vaddr_t);
+
+	void (*pm_tlb_flush)(struct pmap *);
+	void *pm_data;
+
+	kmutex_t pm_lock		/* locks for pm_objs */
+	    __aligned(64);		/* give lock own cache line */
+	krwlock_t pm_dummy_lock;	/* ugly hack for abusing uvm_object */
+};
 
 /* macro to access pm_pdirpa slots */
 #ifdef PAE
