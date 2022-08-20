@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.65 2020/03/15 23:04:51 thorpej Exp $ */
+/*	$NetBSD: if_ural.c,v 1.66 2022/08/20 19:11:08 thorpej Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.65 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.66 2022/08/20 19:11:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1376,14 +1376,14 @@ ural_start(struct ifnet *ifp)
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
 			if (sc->tx_queued >= RAL_TX_LIST_COUNT) {
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 			if (m0->m_len < sizeof(struct ether_header) &&
 			    !(m0 = m_pullup(m0, sizeof(struct ether_header))))
