@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.4 2022/08/20 10:35:50 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.5 2022/08/20 10:54:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -52,7 +52,7 @@ typedef unsigned long efi_status;
 
 struct efi_cfgtbl {
 	struct uuid	ct_uuid;
-	uint64_t	ct_data;
+	void		*ct_data;
 };
 
 struct efi_md {

@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.3 2022/08/20 10:35:50 riastradh Exp $	*/
+/*	$NetBSD: efi.c,v 1.4 2022/08/20 10:54:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -109,8 +109,10 @@ efi_get_table(struct uuid *uuid)
 	count = efi_systbl->st_entries;
 	ct = efi_cfgtbl;
 	while (count--) {
-		if (!memcmp(&ct->ct_uuid, uuid, sizeof(*uuid)))
-			return ((void *)IA64_PHYS_TO_RR7(ct->ct_data));
+		if (!memcmp(&ct->ct_uuid, uuid, sizeof(*uuid))) {
+			uint64_t data_pa = (uint64_t)(uintptr_t)ct->ct_data;
+			return ((void *)IA64_PHYS_TO_RR7(data_pa));
+		}
 		ct++;
 	}
 	return (NULL);
