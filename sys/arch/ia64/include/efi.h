@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.3 2022/08/20 09:40:22 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.4 2022/08/20 10:35:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -73,7 +73,7 @@ struct efi_md {
 #define	EFI_MD_TYPE_PALCODE	13	/* PAL */
 	uint32_t	__pad;
 	uint64_t	md_phys;
-	void		*md_virt;
+	uint64_t	md_virt;
 	uint64_t	md_pages;
 	uint64_t	md_attr;
 #define	EFI_MD_ATTR_UC		0x0000000000000001UL
