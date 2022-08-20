@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.513 2022/08/20 11:09:24 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.514 2022/08/20 11:09:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.513 2022/08/20 11:09:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.514 2022/08/20 11:09:41 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -225,6 +225,8 @@ static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo_intr(void *);
 static void if_slowtimo_work(struct work *, void *);
+static int sysctl_if_watchdog(SYSCTLFN_PROTO);
+static void sysctl_watchdog_setup(struct ifnet *);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
@@ -265,6 +267,7 @@ struct if_slowtimo_data {
 	struct ifnet		*isd_ifp;
 	bool			isd_queued;
 	bool			isd_dying;
+	bool			isd_trigger;
 };
 
 #if defined(INET) || defined(INET6)
@@ -806,6 +809,8 @@ if_register(ifnet_t *ifp)
 		ifp->if_slowtimo_data = isd;
 
 		if_slowtimo_intr(ifp);
+
+		sysctl_watchdog_setup(ifp);
 	}
 
 	if (ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit)
@@ -2689,12 +2694,13 @@ if_slowtimo_intr(void *arg)
 
 	mutex_enter(&isd->isd_lock);
 	if (!isd->isd_dying) {
-		if (ifp->if_timer != 0 &&
-		    --ifp->if_timer == 0 &&
-		    !isd->isd_queued) {
-			isd->isd_queued = true;
-			workqueue_enqueue(if_slowtimo_wq, &isd->isd_work,
-			    NULL);
+		if (isd->isd_trigger ||
+		    (ifp->if_timer != 0 && --ifp->if_timer == 0)) {
+			if (!isd->isd_queued) {
+				isd->isd_queued = true;
+				workqueue_enqueue(if_slowtimo_wq,
+				    &isd->isd_work, NULL);
+			}
 		} else {
 			callout_schedule(&isd->isd_ch, hz / IFNET_SLOWHZ);
 		}
@@ -2714,10 +2720,75 @@ if_slowtimo_work(struct work *work, void *arg)
 	KERNEL_UNLOCK_ONE(NULL);
 
 	mutex_enter(&isd->isd_lock);
+	if (isd->isd_trigger) {
+		isd->isd_trigger = false;
+		printf("%s: watchdog triggered\n", ifp->if_xname);
+	}
 	isd->isd_queued = false;
 	if (!isd->isd_dying)
 		callout_schedule(&isd->isd_ch, hz / IFNET_SLOWHZ);
 	mutex_exit(&isd->isd_lock);
+}
+
+static int
+sysctl_if_watchdog(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct ifnet *ifp = node.sysctl_data;
+	struct if_slowtimo_data *isd = ifp->if_slowtimo_data;
+	int arg = 0;
+	int error;
+
+	node.sysctl_data = &arg;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (arg) {
+		mutex_enter(&isd->isd_lock);
+		KASSERT(!isd->isd_dying);
+		isd->isd_trigger = true;
+		callout_schedule(&isd->isd_ch, 0);
+		mutex_exit(&isd->isd_lock);
+	}
+
+	return 0;
+}
+
+static void
+sysctl_watchdog_setup(struct ifnet *ifp)
+{
+	struct sysctllog **clog = &ifp->if_sysctl_log;
+	const struct sysctlnode *rnode;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+		CTLFLAG_PERMANENT, CTLTYPE_NODE, "interfaces",
+		SYSCTL_DESCR("Per-interface controls"),
+		NULL, 0, NULL, 0,
+		CTL_NET, CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		CTLFLAG_PERMANENT, CTLTYPE_NODE, ifp->if_xname,
+		SYSCTL_DESCR("Interface controls"),
+		NULL, 0, NULL, 0,
+		CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		CTLFLAG_PERMANENT, CTLTYPE_NODE, "watchdog",
+		SYSCTL_DESCR("Interface watchdog controls"),
+		NULL, 0, NULL, 0,
+		CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+	if (sysctl_createv(clog, 0, &rnode, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "trigger",
+		SYSCTL_DESCR("Trigger watchdog timeout"),
+		sysctl_if_watchdog, 0, (int *)ifp, 0,
+		CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+
+bad:
+	printf("%s: could not attach sysctl watchdog nodes\n", ifp->if_xname);
 }
 
 /*
