@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.102 2022/08/20 14:06:20 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.103 2022/08/20 14:07:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.102 2022/08/20 14:06:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.103 2022/08/20 14:07:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1296,6 +1296,7 @@ out:	mutex_exit(&un->un_pri->unp_core_lock);
 void
 usbnet_set_link(struct usbnet *un, bool link)
 {
+	usbnet_isowned_core(un);
 	un->un_pri->unp_link = link;
 }
 
