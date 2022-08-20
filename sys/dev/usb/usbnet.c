@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.101 2022/08/20 14:06:09 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.102 2022/08/20 14:06:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.101 2022/08/20 14:06:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.102 2022/08/20 14:06:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,8 @@ struct usbnet_private {
 	 * - unp_txlock protects the tx path and its data
 	 *
 	 * the lock ordering is:
-	 *	ifnet lock -> unp_core_lock -> unp_rxlock -> unp_txlock
+	 *	ifnet lock -> unp_core_lock -> unp_rxlock
+	 *				    -> unp_txlock
 	 *				    -> unp_mcastlock
 	 * - ifnet lock is not needed for unp_core_lock, but if ifnet lock is
 	 *   involved, it must be taken first
@@ -79,7 +80,9 @@ struct usbnet_private {
 	struct usbd_pipe	*unp_ep[USBNET_ENDPT_MAX];
 
 	volatile bool		unp_dying;
-	bool			unp_stopping;
+	bool			unp_stopped;
+	bool			unp_rxstopped;
+	bool			unp_txstopped;
 	bool			unp_attached;
 	bool			unp_ifp_attached;
 	bool			unp_link;
@@ -360,7 +363,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	mutex_enter(&unp->unp_rxlock);
 
-	if (usbnet_isdying(un) || unp->unp_stopping ||
+	if (usbnet_isdying(un) || unp->unp_rxstopped ||
 	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
 	    status == USBD_CANCELLED)
 		goto out;
@@ -387,7 +390,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbnet_isowned_rx(un);
 
 done:
-	if (usbnet_isdying(un) || unp->unp_stopping)
+	if (usbnet_isdying(un) || unp->unp_rxstopped)
 		goto out;
 
 	mutex_exit(&unp->unp_rxlock);
@@ -416,7 +419,7 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	    unp->unp_number, status, (uintptr_t)xfer, 0);
 
 	mutex_enter(&unp->unp_txlock);
-	if (unp->unp_stopping || usbnet_isdying(un)) {
+	if (unp->unp_txstopped || usbnet_isdying(un)) {
 		mutex_exit(&unp->unp_txlock);
 		return;
 	}
@@ -588,11 +591,11 @@ usbnet_if_start(struct ifnet *ifp)
 	struct usbnet_private * const unp = un->un_pri;
 
 	USBNETHIST_FUNC();
-	USBNETHIST_CALLARGS("%jd: stopping %jd",
-	    unp->unp_number, unp->unp_stopping, 0, 0);
+	USBNETHIST_CALLARGS("%jd: txstopped %jd",
+	    unp->unp_number, unp->unp_txstopped, 0, 0);
 
 	mutex_enter(&unp->unp_txlock);
-	if (!unp->unp_stopping)
+	if (!unp->unp_txstopped)
 		usbnet_start_locked(ifp);
 	mutex_exit(&unp->unp_txlock);
 }
@@ -678,8 +681,8 @@ usbnet_rx_start_pipes(struct usbnet * const un)
 	struct usbnet_private * const unp = un->un_pri;
 
 	mutex_enter(&unp->unp_rxlock);
-	mutex_enter(&unp->unp_txlock);
-	unp->unp_stopping = false;
+	KASSERT(unp->unp_rxstopped);
+	unp->unp_rxstopped = false;
 
 	for (size_t i = 0; i < un->un_rx_list_cnt; i++) {
 		struct usbnet_chain *c = &cd->uncd_rx_chain[i];
@@ -689,7 +692,6 @@ usbnet_rx_start_pipes(struct usbnet * const un)
 		usbd_transfer(c->unc_xfer);
 	}
 
-	mutex_exit(&unp->unp_txlock);
 	mutex_exit(&unp->unp_rxlock);
 }
 
@@ -874,9 +876,17 @@ usbnet_init_rx_tx(struct usbnet * const un)
 		mutex_exit(&unp->unp_mcastlock);
 	}
 
+	/* Allow transmit.  */
+	mutex_enter(&unp->unp_txlock);
+	KASSERT(unp->unp_txstopped);
+	unp->unp_txstopped = false;
+	mutex_exit(&unp->unp_txlock);
+
 	/* Start up the receive pipe(s). */
 	usbnet_rx_start_pipes(un);
 
+	/* Kick off the watchdog/stats/mii tick.  */
+	unp->unp_stopped = false;
 	callout_schedule(&unp->unp_stat_ch, hz);
 
 out:
@@ -1094,17 +1104,21 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 * Prevent new activity (rescheduling ticks, xfers, &c.) and
 	 * clear the watchdog timer.
 	 */
+	unp->unp_stopped = true;
+
 	mutex_enter(&unp->unp_rxlock);
+	unp->unp_rxstopped = true;
+	mutex_exit(&unp->unp_rxlock);
+
 	mutex_enter(&unp->unp_txlock);
-	unp->unp_stopping = true;
+	unp->unp_txstopped = true;
 	unp->unp_timer = 0;
 	mutex_exit(&unp->unp_txlock);
-	mutex_exit(&unp->unp_rxlock);
 
 	/*
 	 * Stop the timer first, then the task -- if the timer was
 	 * already firing, we stop the task or wait for it complete
-	 * only after if last fired.  Setting unp_stopping prevents the
+	 * only after if last fired.  Setting unp_stopped prevents the
 	 * timer task from being scheduled again.
 	 */
 	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
@@ -1233,7 +1247,7 @@ usbnet_tick_task(void *arg)
 	uno_tick(un);
 
 	mutex_enter(&unp->unp_core_lock);
-	if (!unp->unp_stopping && !usbnet_isdying(un))
+	if (!unp->unp_stopped && !usbnet_isdying(un))
 		callout_schedule(&unp->unp_stat_ch, hz);
 	mutex_exit(&unp->unp_core_lock);
 }
@@ -1402,6 +1416,9 @@ usbnet_attach(struct usbnet *un)
 
 	unp->unp_number = atomic_inc_uint_nv(&usbnet_number);
 
+	unp->unp_stopped = true;
+	unp->unp_rxstopped = true;
+	unp->unp_txstopped = true;
 	unp->unp_attached = true;
 }
 
@@ -1591,11 +1608,17 @@ usbnet_activate(device_t self, devact_t act)
 
 		atomic_store_relaxed(&unp->unp_dying, true);
 
+		mutex_enter(&unp->unp_core_lock);
+		unp->unp_stopped = true;
+		mutex_exit(&unp->unp_core_lock);
+
 		mutex_enter(&unp->unp_rxlock);
-		mutex_enter(&unp->unp_txlock);
-		unp->unp_stopping = true;
-		mutex_exit(&unp->unp_txlock);
+		unp->unp_rxstopped = true;
 		mutex_exit(&unp->unp_rxlock);
+
+		mutex_enter(&unp->unp_txlock);
+		unp->unp_txstopped = true;
+		mutex_exit(&unp->unp_txlock);
 
 		return 0;
 	default:
