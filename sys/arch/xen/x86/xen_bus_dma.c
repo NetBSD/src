@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.32 2020/05/06 19:50:26 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.33 2022/08/20 23:48:51 riastradh Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,16 +32,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.32 2020/05/06 19:50:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.33 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
-
 #include <sys/bus.h>
+
 #include <machine/bus_private.h>
+#include <machine/pmap_private.h>
 
 #include <uvm/uvm.h>
 

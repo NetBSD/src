@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.47 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.48 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.47 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.48 2022/08/20 23:48:50 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.47 2019/03/09 08:42:25 maxv Exp $");
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
+#include <machine/pmap_private.h>
 
 #ifdef XENPV
 #include <xen/hypervisor.h>

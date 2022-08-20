@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.19 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.20 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.19 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.20 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.19 2021/10/07 12:52:27 msaitoh Exp $")
 #include <uvm/uvm.h>
 
 #include <machine/cpuvar.h>
+#include <machine/pmap_private.h>
+
 #ifdef XENPV
 #include <xen/xenpmap.h>
 #endif /* XENPV */

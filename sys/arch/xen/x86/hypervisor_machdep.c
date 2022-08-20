@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.43 2022/05/31 18:01:22 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.44 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.43 2022/05/31 18:01:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.44 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.43 2022/05/31 18:01:22 bouy
 
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+#include <machine/pmap_private.h>
 
 #include <x86/machdep.h>
 #include <x86/cpuvar.h>

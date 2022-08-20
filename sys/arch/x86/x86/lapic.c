@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.87 2022/04/26 05:29:15 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.88 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.87 2022/04/26 05:29:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.88 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.87 2022/04/26 05:29:15 msaitoh Exp $");
 #include <machine/mpacpi.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pcb.h>
+#include <machine/pmap_private.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <x86/x86/tsc.h>

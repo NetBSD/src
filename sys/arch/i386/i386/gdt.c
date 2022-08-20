@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.72 2021/04/30 13:54:26 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.73 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.72 2021/04/30 13:54:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.73 2022/08/20 23:48:50 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.72 2021/04/30 13:54:26 christos Exp $");
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
+#include <machine/pmap_private.h>
 
 #define NSLOTS(sz)	\
 	(((sz) - DYNSEL_START) / sizeof(union descriptor))

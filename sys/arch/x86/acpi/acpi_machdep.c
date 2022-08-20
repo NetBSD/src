@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.32 2021/05/12 23:22:33 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.33 2022/08/20 23:48:50 riastradh Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.32 2021/05/12 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.33 2022/08/20 23:48:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.32 2021/05/12 23:22:33 thorpej Ex
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/pic.h>
+#include <machine/pmap_private.h>
 
 #include <x86/efi.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.39 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.40 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.39 2020/09/06 02:18:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.40 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.39 2020/09/06 02:18:53 riastradh Exp 
 #include <machine/gdt.h>
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
+#include <machine/pmap_private.h>
 
 #include <x86/pmap_pv.h>
 
