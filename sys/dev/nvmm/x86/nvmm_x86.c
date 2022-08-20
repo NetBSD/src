@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.21 2020/09/08 16:58:38 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.22 2022/08/20 23:13:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.21 2020/09/08 16:58:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.22 2022/08/20 23:13:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.21 2020/09/08 16:58:38 maxv Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <x86/cputypes.h>
+#include <x86/pat.h>
 #include <x86/specialreg.h>
 
 #include <dev/nvmm/nvmm.h>
