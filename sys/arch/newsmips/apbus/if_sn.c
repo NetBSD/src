@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.49 2020/02/05 13:08:19 martin Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.50 2022/08/20 18:42:03 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.49 2020/02/05 13:08:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.50 2022/08/20 18:42:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -320,7 +320,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IF_POLL(&ifp->if_snd, m);
 	if (m == 0)
 		return;
 
@@ -336,13 +336,13 @@ outloop:
 
 	/*
 	 * If there is nothing in the o/p queue, and there is room in
-	 * the Tx ring, then send the packet directly.  Otherwise append
-	 * it to the o/p queue.
+	 * the Tx ring, then send the packet directly.  Otherwise it
+	 * stays on the queue.
 	 */
 	if ((sonicput(sc, m, mtd_next)) == 0) {
-		IF_PREPEND(&ifp->if_snd, m);
 		return;
 	}
+	IF_DEQUEUE(&ifp->if_snd, m);
 
 	sc->mtd_prev = sc->mtd_free;
 	sc->mtd_free = mtd_next;
