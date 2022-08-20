@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.6 2022/08/20 10:54:44 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.7 2022/08/20 10:55:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -28,15 +28,12 @@
  * $FreeBSD$
  */
 
-/*
- * This file is mainly x86/include/efi.h, which in turn is mainly
- * ia64/include/efi.h with little modifications.
- */
-
 #ifndef _ARM_EFI_H_
 #define _ARM_EFI_H_
 
 #include <sys/uuid.h>
+
+#include <dev/efi/efi.h>
 
 #define	EFI_PAGE_SHIFT		12
 #define	EFI_PAGE_SIZE		(1 << EFI_PAGE_SHIFT)
@@ -57,131 +54,5 @@ extern const struct uuid EFI_UUID_SMBIOS;
 extern const struct uuid EFI_UUID_SMBIOS3;
 
 extern bool bootmethod_efi;
-
-enum efi_reset {
-	EFI_RESET_COLD,
-	EFI_RESET_WARM,
-	EFI_RESET_SHUTDOWN,
-	EFI_RESET_PLATFORM_SPECIFIC,
-};
-
-typedef uint16_t	efi_char;
-typedef unsigned long efi_status;
-
-struct efi_cfgtbl {
-	struct uuid	ct_uuid;
-	void		*ct_data;
-};
-
-struct efi_md {
-	uint32_t	md_type;
-#define	EFI_MD_TYPE_NULL	0
-#define	EFI_MD_TYPE_CODE	1	/* Loader text. */
-#define	EFI_MD_TYPE_DATA	2	/* Loader data. */
-#define	EFI_MD_TYPE_BS_CODE	3	/* Boot services text. */
-#define	EFI_MD_TYPE_BS_DATA	4	/* Boot services data. */
-#define	EFI_MD_TYPE_RT_CODE	5	/* Runtime services text. */
-#define	EFI_MD_TYPE_RT_DATA	6	/* Runtime services data. */
-#define	EFI_MD_TYPE_FREE	7	/* Unused/free memory. */
-#define	EFI_MD_TYPE_BAD		8	/* Bad memory */
-#define	EFI_MD_TYPE_RECLAIM	9	/* ACPI reclaimable memory. */
-#define	EFI_MD_TYPE_FIRMWARE	10	/* ACPI NV memory */
-#define	EFI_MD_TYPE_IOMEM	11	/* Memory-mapped I/O. */
-#define	EFI_MD_TYPE_IOPORT	12	/* I/O port space. */
-#define	EFI_MD_TYPE_PALCODE	13	/* PAL */
-#define	EFI_MD_TYPE_PMEM	14	/* Persistent memory. */
-	uint32_t	__pad;
-	uint64_t	md_phys;
-	uint64_t	md_virt;
-	uint64_t	md_pages;
-	uint64_t	md_attr;
-#define	EFI_MD_ATTR_UC		0x0000000000000001UL
-#define	EFI_MD_ATTR_WC		0x0000000000000002UL
-#define	EFI_MD_ATTR_WT		0x0000000000000004UL
-#define	EFI_MD_ATTR_WB		0x0000000000000008UL
-#define	EFI_MD_ATTR_UCE		0x0000000000000010UL
-#define	EFI_MD_ATTR_WP		0x0000000000001000UL
-#define	EFI_MD_ATTR_RP		0x0000000000002000UL
-#define	EFI_MD_ATTR_XP		0x0000000000004000UL
-#define	EFI_MD_ATTR_NV		0x0000000000008000UL
-#define	EFI_MD_ATTR_MORE_RELIABLE 0x0000000000010000UL
-#define	EFI_MD_ATTR_RO		0x0000000000020000UL
-#define	EFI_MD_ATTR_SP		0x0000000000040000UL
-#define	EFI_MD_ATTR_CPU_CRYPTO	0x0000000000080000UL
-#define	EFI_MD_ATTR_RT		0x8000000000000000UL
-};
-
-struct efi_tm {
-	uint16_t	tm_year;		/* 1998 - 20XX */
-	uint8_t		tm_mon;			/* 1 - 12 */
-	uint8_t		tm_mday;		/* 1 - 31 */
-	uint8_t		tm_hour;		/* 0 - 23 */
-	uint8_t		tm_min;			/* 0 - 59 */
-	uint8_t		tm_sec;			/* 0 - 59 */
-	uint8_t		__pad1;
-	uint32_t	tm_nsec;		/* 0 - 999,999,999 */
-	int16_t		tm_tz;			/* -1440 to 1440 or 2047 */
-	uint8_t		tm_dst;
-	uint8_t		__pad2;
-};
-
-struct efi_tmcap {
-	uint32_t	tc_res;		/* 1e-6 parts per million */
-	uint32_t	tc_prec;	/* hertz */
-	uint8_t		tc_stz;		/* Set clears sub-second time */
-};
-
-struct efi_tblhdr {
-	uint64_t	th_sig;
-	uint32_t	th_rev;
-	uint32_t	th_hdrsz;
-	uint32_t	th_crc32;
-	uint32_t	__res;
-};
-
-struct efi_rt {
-	struct efi_tblhdr rt_hdr;
-	efi_status	(*rt_gettime)(struct efi_tm *, struct efi_tmcap *);
-	efi_status	(*rt_settime)(struct efi_tm *);
-	efi_status	(*rt_getwaketime)(uint8_t *, uint8_t *,
-	    struct efi_tm *);
-	efi_status	(*rt_setwaketime)(uint8_t, struct efi_tm *);
-	efi_status	(*rt_setvirtual)(u_long, u_long, uint32_t,
-	    struct efi_md *);
-	efi_status	(*rt_cvtptr)(u_long, void **);
-	efi_status	(*rt_getvar)(efi_char *, struct uuid *, uint32_t *,
-	    u_long *, void *);
-	efi_status	(*rt_scanvar)(u_long *, efi_char *, struct uuid *);
-	efi_status	(*rt_setvar)(efi_char *, struct uuid *, uint32_t,
-	    u_long, void *);
-	efi_status	(*rt_gethicnt)(uint32_t *);
-	efi_status	(*rt_reset)(enum efi_reset, efi_status, u_long,
-	    efi_char *);
-};
-
-struct efi_systbl {
-	struct efi_tblhdr st_hdr;
-#define	EFI_SYSTBL_SIG	0x5453595320494249UL
-	efi_char	*st_fwvendor;
-	uint32_t	st_fwrev;
-#ifdef _LP64
-	uint32_t	__pad;
-#endif
-	void		*st_cin;
-	void		*st_cinif;
-	void		*st_cout;
-	void		*st_coutif;
-	void		*st_cerr;
-	void		*st_cerrif;
-	struct efi_rt	*st_rt;
-	void		*st_bs;
-	u_long		st_entries;
-	struct efi_cfgtbl *st_cfgtbl;
-};
-#ifdef _LP64
-__CTASSERT(sizeof(struct efi_systbl) == 120);
-#else
-__CTASSERT(sizeof(struct efi_systbl) == 72);
-#endif
 
 #endif /* _ARM_EFI_H_ */
