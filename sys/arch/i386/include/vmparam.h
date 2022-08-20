@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.86 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.87 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,6 +93,48 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE 	300
+
+/*
+ * See pmap_private.h for details.
+ */
+#ifdef PAE
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-4) /* 1532: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 1536: start of kernel space */
+#else /* PAE */
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1) /* 767: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
+#endif /* PAE */
+
+#define L2_SLOT_KERNBASE L2_SLOT_KERN
+
+#define PDIR_SLOT_KERN	L2_SLOT_KERN
+#define PDIR_SLOT_PTE	L2_SLOT_PTE
+
+/* size of a PDP: usually one page, except for PAE */
+#ifdef PAE
+#define PDP_SIZE 4
+#else
+#define PDP_SIZE 1
+#endif
+
+/* largest value (-1 for APTP space) */
+#define NKL2_MAX_ENTRIES	(NTOPLEVEL_PDES - (KERNBASE/NBPD_L2) - 1)
+#define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * NPDPG)
+
+#define NKL2_KIMG_ENTRIES	0	/* XXX unused */
+
+#define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
+#define NKL1_START_ENTRIES	0	/* XXX unused */
+
+#ifndef XENPV
+#define NTOPLEVEL_PDES		(PAGE_SIZE * PDP_SIZE / (sizeof (pd_entry_t)))
+#else	/* !XENPV */
+#ifdef  PAE
+#define NTOPLEVEL_PDES		1964	/* 1964-2047 reserved by Xen */
+#else	/* PAE */
+#define NTOPLEVEL_PDES		1008	/* 1008-1023 reserved by Xen */
+#endif	/* PAE */
+#endif  /* !XENPV */
 
 /*
  * Mach derived constants

@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.40 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: svs.c,v 1.41 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.40 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.41 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -45,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.40 2021/10/07 12:52:27 msaitoh Exp $");
 #include <sys/reboot.h>
 
 #include <x86/cputypes.h>
+
 #include <machine/cpuvar.h>
 #include <machine/frameasm.h>
 #include <machine/gdt.h>
+#include <machine/pmap_private.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>

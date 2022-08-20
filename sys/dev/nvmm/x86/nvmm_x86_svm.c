@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.83 2021/03/26 15:59:53 reinoud Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.84 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.83 2021/03/26 15:59:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.84 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.83 2021/03/26 15:59:53 reinoud Ex
 #include <x86/cpu_counter.h>
 
 #include <machine/cpuvar.h>
+#include <machine/pmap_private.h>
 
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_internal.h>

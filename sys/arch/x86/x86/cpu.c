@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.204 2022/08/14 07:49:33 mlelstv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.205 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.204 2022/08/14 07:49:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.205 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.204 2022/08/14 07:49:33 mlelstv Exp $");
 #include <machine/mtrr.h>
 #include <machine/pio.h>
 #include <machine/cpu_counter.h>
+#include <machine/pmap_private.h>
 
 #include <x86/fpu.h>
 

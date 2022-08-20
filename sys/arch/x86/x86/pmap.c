@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.418 2022/08/20 23:18:51 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.419 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.418 2022/08/20 23:18:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.419 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -166,6 +166,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.418 2022/08/20 23:18:51 riastradh Exp $")
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/cputypes.h>
+#include <machine/pmap_private.h>
 
 #include <x86/bootspace.h>
 #include <x86/pat.h>

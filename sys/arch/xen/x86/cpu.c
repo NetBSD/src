@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.141 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.142 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.141 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.142 2022/08/20 23:48:51 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.141 2021/08/07 16:19:08 thorpej Exp $");
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
+#include <machine/pmap_private.h>
 #include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pcb.h>

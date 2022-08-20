@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.54 2020/11/26 20:50:45 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.55 2022/08/20 23:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,6 +149,8 @@ extern vaddr_t vm_max_kernel_address;
 #define VM_MIN_KERNEL_ADDRESS	vm_min_kernel_address
 #define VM_MAX_KERNEL_ADDRESS	vm_max_kernel_address
 #endif
+
+#define	PDP_SIZE	1
 
 /*
  * The address to which unspecified mapping requests default

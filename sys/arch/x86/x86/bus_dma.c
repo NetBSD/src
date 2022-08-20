@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.88 2022/08/13 06:59:56 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.89 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.88 2022/08/13 06:59:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.89 2022/08/20 23:48:51 riastradh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.88 2022/08/13 06:59:56 skrll Exp $");
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>
 #endif
+#include <machine/pmap_private.h>
 
 #if NISA > 0
 #include <dev/isa/isareg.h>

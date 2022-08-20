@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.87 2022/06/12 11:36:42 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.88 2022/08/20 23:48:50 riastradh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ include <uvm/uvm.h>
 
 include <machine/trap.h>
 include <machine/pmap.h>
+include <machine/pmap_private.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.28 2020/05/06 19:47:05 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.29 2022/08/20 23:48:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.28 2020/05/06 19:47:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.29 2022/08/20 23:48:51 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.28 2020/05/06 19:47:05 bouyer Exp $");
 #include <machine/intr.h>
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+#include <machine/pmap_private.h>
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 //#include <xen/evtchn.h>
