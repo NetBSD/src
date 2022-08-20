@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.66 2022/05/24 20:50:18 andvar Exp $ */
+/*	$NetBSD: if_es.c,v 1.67 2022/08/20 16:47:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.66 2022/05/24 20:50:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.67 2022/08/20 16:47:01 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -780,7 +780,7 @@ esstart(struct ifnet *ifp)
 		 * Sneak a peek at the next packet to get the length
 		 * and see if the SMC 91C90 can accept it.
 		 */
-		m = sc->sc_ethercom.ec_if.if_snd.ifq_head;
+		IF_POLL(&sc->sc_ethercom.ec_if.if_snd, m);
 		if (!m)
 			break;
 #ifdef ESDEBUG
@@ -815,7 +815,6 @@ esstart(struct ifnet *ifp)
 			smc->b2.bsr = BSR_BANK2;
 		}
 #endif
-		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
 		data = (volatile u_short *)&smc->b2.data;
@@ -912,10 +911,10 @@ esstart(struct ifnet *ifp)
 			    start_ptr, end_ptr, SWAP(smc->b2.ptr));
 			--sc->sc_smcbusy;
 #endif
-			IF_PREPEND(&sc->sc_ethercom.ec_if.if_snd, m0);
 			esinit(sc);	/* It's really hosed - reset */
 			return;
 		}
+		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
 		smc->b2.mmucr = MMUCR_ENQ_TX;
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
