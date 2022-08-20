@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.30 2020/01/29 06:19:39 thorpej Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.31 2022/08/20 19:01:31 thorpej Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.30 2020/01/29 06:19:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.31 2022/08/20 19:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -552,7 +552,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 #endif
 			break;
 		}
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IF_POLL(&ifp->if_snd, m);
 		if (m == NULL) {
 			mutex_exit(&sc->sc_mtx);
 			break;
@@ -663,9 +663,9 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 			mutex_enter(&sc->sc_mtx);
 			STAILQ_INSERT_TAIL(&sc->sc_xferlist, xfer, link);
 			mutex_exit(&sc->sc_mtx);
-			IF_PREPEND(&ifp->if_snd, m);
 			break;
 		}
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (error) {
 			/* error */
 			if_statinc(ifp, if_oerrors);
