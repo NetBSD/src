@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.63 2021/12/05 07:21:59 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.64 2022/08/20 18:40:35 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.63 2021/12/05 07:21:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.64 2022/08/20 18:40:35 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1786,7 +1786,7 @@ sbmac_start(struct ifnet *ifp)
 
 	for (;;) {
 
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IF_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 		    break;
 
@@ -1803,6 +1803,7 @@ sbmac_start(struct ifnet *ifp)
 			 * If there's a BPF listener, bounce a copy of this
 			 * frame to it.
 			 */
+			IF_DEQUEUE(&ifp->if_snd, m_head);
 			bpf_mtap(ifp, m_head, BPF_D_OUT);
 			if (!sc->sbm_pass3_dma) {
 				/*
@@ -1813,7 +1814,6 @@ sbmac_start(struct ifnet *ifp)
 				m_freem(m_head);
 			}
 		} else {
-		    IF_PREPEND(&ifp->if_snd, m_head);
 		    ifp->if_flags |= IFF_OACTIVE;
 		    break;
 		}
