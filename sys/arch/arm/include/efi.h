@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.1 2018/10/28 10:21:42 jmcneill Exp $   */
+/*     $NetBSD: efi.h,v 1.2 2022/08/20 09:09:06 riastradh Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -103,6 +103,11 @@ struct efi_md {
 #define        EFI_MD_ATTR_WP          0x0000000000001000UL
 #define        EFI_MD_ATTR_RP          0x0000000000002000UL
 #define        EFI_MD_ATTR_XP          0x0000000000004000UL
+#define        EFI_MD_ATTR_NV          0x0000000000008000UL
+#define        EFI_MD_ATTR_MORE_RELIABLE 0x0000000000010000UL
+#define        EFI_MD_ATTR_RO          0x0000000000020000UL
+#define        EFI_MD_ATTR_SP          0x0000000000040000UL
+#define        EFI_MD_ATTR_CPU_CRYPTO  0x0000000000080000UL
 #define        EFI_MD_ATTR_RT          0x8000000000000000UL
 };
 
