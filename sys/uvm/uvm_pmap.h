@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.42 2022/02/16 20:13:58 riastradh Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.43 2022/08/20 23:08:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -68,7 +68,12 @@
 #ifndef	_PMAP_VM_
 #define	_PMAP_VM_
 
+#include <sys/types.h>
+
+#include <uvm/uvm_prot.h>
+
 struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
+struct vm_page;
 
 struct pmap;
 typedef struct pmap *pmap_t;
