@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.361 2021/12/26 21:33:48 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.362 2022/08/20 23:15:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.361 2021/12/26 21:33:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.362 2022/08/20 23:15:36 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -183,6 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.361 2021/12/26 21:33:48 riastradh Exp 
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
+#include <x86/bootspace.h>
 #include <x86/cputypes.h>
 #include <x86/cpuvar.h>
 #include <x86/machdep.h>

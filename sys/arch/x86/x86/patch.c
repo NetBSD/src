@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.51 2022/07/30 14:11:00 riastradh Exp $	*/
+/*	$NetBSD: patch.c,v 1.52 2022/08/20 23:15:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.51 2022/07/30 14:11:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.52 2022/08/20 23:15:37 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.51 2022/07/30 14:11:00 riastradh Exp $")
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
 
+#include <x86/bootspace.h>
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 
