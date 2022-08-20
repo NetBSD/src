@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.99 2022/08/14 20:34:26 riastradh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.100 2022/08/20 11:12:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.99 2022/08/14 20:34:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.100 2022/08/20 11:12:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -435,23 +435,18 @@ mii_phy_down(struct mii_softc *sc)
 
 	KASSERT(mii_locked(sc->mii_pdata));
 
-	if ((sc->mii_flags & (MIIF_DOINGAUTO|MIIF_AUTOTSLEEP)) ==
-	    (MIIF_DOINGAUTO|MIIF_AUTOTSLEEP)) {
-		/*
-		 * Try to stop it.
-		 *
-		 * - If we stopped it before it expired, callout_stop
-		 *   returns 0, and it is our responsibility to clear
-		 *   MIIF_DOINGAUTO.
-		 *
-		 * - Otherwise, we're too late -- the callout has
-		 *   already begun, and we must leave MIIF_DOINGAUTO
-		 *   set so mii_phy_detach will wait for it to
-		 *   complete.
-		 */
-		if (!callout_stop(&sc->mii_nway_ch))
-			sc->mii_flags &= ~MIIF_DOINGAUTO;
+	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
+		while (sc->mii_flags & MIIF_DOINGAUTO) {
+			cv_wait(&sc->mii_nway_cv,
+			    sc->mii_pdata->mii_media.ifm_lock);
+		}
+	} else {
+		if (sc->mii_flags & MIIF_DOINGAUTO) {
+			callout_halt(&sc->mii_nway_ch,
+			    sc->mii_pdata->mii_media.ifm_lock);
+		}
 	}
+	KASSERT((sc->mii_flags & MIIF_DOINGAUTO) == 0);
 }
 
 void
@@ -691,19 +686,8 @@ mii_phy_detach(device_t self, int flags)
 {
 	struct mii_softc *sc = device_private(self);
 
-	mii_lock(sc->mii_pdata);
-	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
-		while (sc->mii_flags & MIIF_DOINGAUTO) {
-			cv_wait(&sc->mii_nway_cv,
-			    sc->mii_pdata->mii_media.ifm_lock);
-		}
-	} else {
-		if (sc->mii_flags & MIIF_DOINGAUTO) {
-			callout_halt(&sc->mii_nway_ch,
-			    sc->mii_pdata->mii_media.ifm_lock);
-		}
-	}
-	mii_unlock(sc->mii_pdata);
+	/* No mii_lock because mii_flags should be stable by now.  */
+	KASSERT((sc->mii_flags & MIIF_DOINGAUTO) == 0);
 
 	if (sc->mii_flags & MIIF_AUTOTSLEEP)
 		cv_destroy(&sc->mii_nway_cv);
