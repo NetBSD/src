@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_pte_tester.c,v 1.2 2020/04/26 11:56:38 maxv Exp $	*/
+/*	$NetBSD: x86_pte_tester.c,v 1.3 2022/08/21 14:06:42 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #if defined(__x86_64__)
 # include <amd64/pmap.h>
+# include <amd64/pmap_private.h>
 # define NLEVEL 4
 #else
 # error "Unsupported configuration"
