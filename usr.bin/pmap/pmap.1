@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.19 2017/07/03 21:34:20 wiz Exp $
+.\"	$NetBSD: pmap.1,v 1.20 2022/08/21 07:46:52 mlelstv Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd display process memory map
 .Sh SYNOPSIS
 .Nm
-.Op Fl adlmPRsv
+.Op Fl adlmPRstv
 .Op Fl A Ar address
 .Op Fl D Ar number
 .Op Fl E Ar address
@@ -170,6 +170,9 @@ Dumps the vmspace structure found at
 The Solaris style output format, modeled after the Solaris command of
 the same name.
 This is the default output style.
+.It Fl t
+Print entries to the underlying RB tree, root first, followed by lower
+and higher subtree, indented similar to submaps.
 .It Fl V Ar address
 Dumps the vm_map structure found at
 .Ar address .

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2020/11/04 01:37:55 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.57 2022/08/21 07:46:52 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.56 2020/11/04 01:37:55 chs Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.57 2022/08/21 07:46:52 mlelstv Exp $");
 #endif
 
 #include <string.h>
@@ -45,9 +45,10 @@ static char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	struct kbit *, struct kbit *);
 static int search_cache(kvm_t *, struct vnode *, char **, char *, size_t);
 
-/* when recursing, output is indented */
-#define indent(n) ((n) * (recurse > 1 ? recurse - 1 : 0))
+/* when recursing or printing tree, output is indented */
+#define indent(n) ((n) * ((recurse > 1 ? recurse - 1 : 0)) + depth)
 #define rwx (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+static int depth;
 
 int heapfound;
 
@@ -95,9 +96,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 	struct kbit *vmspace, struct kbit *vm_map, const char *mname)
 {
 	struct kbit kbit[2], *header, *vm_map_entry;
-	struct vm_map_entry *last, *next;
 	size_t total;
-	u_long addr, end;
 
 	if (S(vm_map) == (size_t)-1) {
 		heapfound = 1;
@@ -214,6 +213,89 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 	}
 
 	/* these are the "sub entries" */
+	if (tree)
+		total = dump_vm_map_tree(kd, proc, vmspace,
+			    vm_map, vm_map_entry);
+	else
+		total = dump_vm_map_list(kd, proc, vmspace,
+			    header, vm_map_entry);
+
+	/*
+	 * we're not recursing into a submap, so print totals
+	 */
+	if (recurse < 2) {
+		if (print_solaris)
+			printf("%-*s %8luK\n",
+			       (int)sizeof(void *) * 2 - 2, " total",
+			       (unsigned long)total);
+		if (print_all)
+			printf("%-*s %9luk\n",
+			       (int)sizeof(void *) * 4 - 1, " total",
+			       (unsigned long)total);
+	}
+}
+
+size_t
+dump_vm_map_node(kvm_t *kd, int lvl, struct kinfo_proc2 *proc,
+	struct kbit *vmspace, struct kbit *vm_map_entry,
+	struct vm_map_entry *node)
+{
+	struct vm_map_entry *left, *right;
+	size_t total;
+	u_long addr;
+
+	if (node == NULL)
+		return 0;
+
+	total = 0;
+	addr = (u_long)node;
+	A(vm_map_entry) = addr;
+	S(vm_map_entry) = sizeof(struct vm_map_entry);
+	KDEREF(kd, vm_map_entry);
+
+	left = (struct vm_map_entry *)D(vm_map_entry, vm_map_entry)->rb_node.rb_left;
+	right = (struct vm_map_entry *)D(vm_map_entry, vm_map_entry)->rb_node.rb_right;
+
+	total += dump_vm_map_entry(kd, proc, vmspace, vm_map_entry, 0);
+
+	depth += 2;
+
+	total += dump_vm_map_node(kd, lvl+1, proc, vmspace, vm_map_entry, left);
+	total += dump_vm_map_node(kd, lvl+1, proc, vmspace, vm_map_entry, right);
+
+	depth -= 2;
+
+	return total;
+}
+
+size_t
+dump_vm_map_tree(kvm_t *kd, struct kinfo_proc2 *proc,
+	struct kbit *vmspace, struct kbit *vm_map, struct kbit *vm_map_entry)
+{
+	struct vm_map_entry *root;
+	u_long addr;
+
+	/* these are the "sub entries" */
+	root = (struct vm_map_entry *)D(vm_map, vm_map)->rb_tree.rbt_root;
+
+	addr = (u_long)root;
+	A(vm_map_entry) = addr;
+	S(vm_map_entry) = sizeof(struct vm_map_entry);
+	KDEREF(kd, vm_map_entry);
+
+	depth = 0;
+
+	return dump_vm_map_node(kd, 0, proc, vmspace, vm_map_entry, root);
+}
+
+size_t
+dump_vm_map_list(kvm_t *kd, struct kinfo_proc2 *proc,
+	struct kbit *vmspace, struct kbit *header, struct kbit *vm_map_entry)
+{
+	struct vm_map_entry *last, *next;
+	size_t total;
+	u_long addr, end;
+
 	total = 0;
 	next = D(header, vm_map_entry)->next;
 	last = P(header);
@@ -240,19 +322,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		end = D(vm_map_entry, vm_map_entry)->end;
 	}
 
-	/*
-	 * we're not recursing into a submap, so print totals
-	 */
-	if (recurse < 2) {
-		if (print_solaris)
-			printf("%-*s %8luK\n",
-			       (int)sizeof(void *) * 2 - 2, " total",
-			       (unsigned long)total);
-		if (print_all)
-			printf("%-*s %9luk\n",
-			       (int)sizeof(void *) * 4 - 1, " total",
-			       (unsigned long)total);
-	}
+	return total;
 }
 
 size_t
@@ -293,6 +363,8 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		printf("%*s    start = %#"PRIxVADDR",", indent(2), "", vme->start);
 		printf(" end = %#"PRIxVADDR",", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
+		printf("%*s    gap = %#"PRIxVSIZE",", indent(2), "", vme->gap);
+		printf(" maxgap = %#"PRIxVSIZE",\n", vme->maxgap);
 		printf("%*s    offset = %" PRIx64 ",", indent(2), "",
 		       vme->offset);
 		printf(" etype = %#x <%s%s%s%s >,", vme->etype,
@@ -782,6 +854,7 @@ search_cache(kvm_t *kd, struct vnode *vp, char **name, char *buf, size_t blen)
 	struct namecache nc;
 	struct vnode_impl vi;
 	u_long vip, ncp, ncp2;
+	size_t nlen;
 
 	vip = (u_long)vp;
 	e = &buf[blen - 1];
@@ -801,10 +874,14 @@ search_cache(kvm_t *kd, struct vnode *vp, char **name, char *buf, size_t blen)
 			    (vi.vi_vnode.v_vflag & VV_ROOT) != 0)
 				break;
 			/* Otherwise pull first NCHNAMLEN chars of name. */
+			nlen = MIN((size_t)nc.nc_nlen, NCHNAMLEN);
+			/* too small */
+			if ((size_t)(o - buf) < nlen + (o != e ? 1 : 0))
+				break;
 			if (o != e)
 				*(--o) = '/';
-			o -= MIN((size_t)nc.nc_nlen, NCHNAMLEN);
-			memcpy(o, nc.nc_name, (unsigned)nc.nc_nlen);
+			o -= nlen;
+			memcpy(o, nc.nc_name, nlen);
 			vip = (u_long)nc.nc_dvp;
 			ncp2 = ncp;
 		} else

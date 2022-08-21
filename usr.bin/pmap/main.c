@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2020/11/04 01:37:55 chs Exp $ */
+/*	$NetBSD: main.c,v 1.30 2022/08/21 07:46:52 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.29 2020/11/04 01:37:55 chs Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2022/08/21 07:46:52 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ struct vm_map *st_map, *pt_map, *module_map, *buf_map;
 u_long kernel_map_addr;
 int debug, verbose, recurse, page_size;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
+int tree;
 rlim_t maxssiz;
 
 struct nlist ksyms[] = {
@@ -133,12 +134,13 @@ main(int argc, char *argv[])
 	pid = -1;
 	which = verbose = debug = 0;
 	print_all = print_map = print_maps = print_solaris = print_ddb = 0;
+	tree = 0;
 	recurse = 0;
 	kmem = kernel = NULL;
 	address = 0;
 	vmspace = &kbit;
 
-	while ((ch = getopt(argc, argv, "A:aD:dE:lM:mN:Pp:RrS:sV:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "A:aD:dE:lM:mN:Pp:RrS:stV:vx")) != -1) {
 		switch (ch) {
 		case 'A':
 		case 'E':
@@ -204,6 +206,9 @@ main(int argc, char *argv[])
 		case 's':
 			print_solaris = 1;
 			break;
+		case 't':
+			tree = 1;
+			break;
 		case 'v':
 			verbose++;
 			break;
@@ -213,7 +218,7 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-adlmPRsv] [-A address] "
+			fprintf(stderr, "usage: %s [-adlmPRstv] [-A address] "
 				"[-D number] [-E address] [-M core]\n"
 				"\t[-N system] [-p pid] [-S address] "
 				"[-V address] [pid ...]\n",
