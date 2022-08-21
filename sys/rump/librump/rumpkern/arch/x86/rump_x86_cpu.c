@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_cpu.c,v 1.4 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rump_x86_cpu.c,v 1.5 2022/08/21 10:18:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,12 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.4 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.5 2022/08/21 10:18:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 
 #include <machine/cpu.h>
+
+#include <x86/cpufunc.h>
 
 #include <rump-sys/kern.h>
 
