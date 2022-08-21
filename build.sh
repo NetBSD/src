@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.364 2022/08/21 07:10:03 lukem Exp $
+#	$NetBSD: build.sh,v 1.365 2022/08/21 07:57:50 lukem Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1027,12 +1027,12 @@ synopsis()
 {
 	cat <<_usage_
 
-Usage: ${progname} [-EnoPRrUux] [-a arch] [-B buildid] [-C cdextras]
-                [-c compiler] [-D dest] [-j njob] [-M obj] [-m mach]
-                [-N noisy] [-O obj] [-R release] [-S seed] [-T tools]
-                [-V var=[value]] [-w wrapper] [-X x11src]
-                [-Z var]
-                operation [...]
+Usage: ${progname} [-EnoPRrUux] [-a ARCH] [-B BID] [-C EXTRAS]
+                [-c COMPILER] [-D DEST] [-j NJOB] [-M MOBJ] [-m MACH]
+                [-N NOISY] [-O OOBJ] [-R RELEASE] [-S SEED] [-T TOOLS]
+                [-V VAR=[VALUE]] [-w WRAPPER] [-X X11SRC]
+                [-Z VAR]
+                OPERATION ...
        ${progname} ( -h | -? )
 
 _usage_
@@ -1044,27 +1044,27 @@ help()
 {
 	synopsis
 	cat <<_usage_
- Build operations (all imply "obj" and "tools"):
+ Build OPERATIONs (all imply "obj" and "tools"):
     build               Run "make build".
     distribution        Run "make distribution" (includes DESTDIR/etc/ files).
     release             Run "make release" (includes kernels & distrib media).
 
- Other operations:
+ Other OPERATIONs:
     help                Show this message and exit.
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
                         Always performed.
     cleandir            Run "make cleandir".  [Default unless -u is used]
-    dtb			Build devicetree blobs.
+    dtb                 Build devicetree blobs.
     obj                 Run "make obj".  [Default unless -o is used]
     tools               Build and install tools.
-    install=idir        Run "make installworld" to 'idir' to install all sets
-                        except 'etc'.  Useful after "distribution" or "release"
-    kernel=conf         Build kernel with config file 'conf'
-    kernel.gdb=conf     Build kernel (including netbsd.gdb) with config
-                        file 'conf'
-    releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
-    kernels             Build all kernels
-    installmodules=idir Run "make installmodules" to 'idir' to install all
+    install=IDIR        Run "make installworld" to IDIR to install all sets
+                        except 'etc'.  Useful after "distribution" or "release".
+    kernel=CONF         Build kernel with config file CONF.
+    kernel.gdb=CONF     Build kernel (including netbsd.gdb) with config
+                        file CONF.
+    releasekernel=CONF  Install kernel built by kernel=CONF to RELEASEDIR.
+    kernels             Build all kernels.
+    installmodules=IDIR Run "make installmodules" to IDIR to install all
                         kernel modules.
     modules             Build kernel modules.
     rumptest            Do a linktest for rump (for developers).
@@ -1081,8 +1081,8 @@ help()
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
-    disk-image=target   Create bootable disk image in
-                        RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
+    disk-image=TARGET   Create bootable disk image in
+                        RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/TARGET.img.gz.
     params              Display various make(1) parameters.
     list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
@@ -1091,55 +1091,58 @@ help()
                         builds and exit.  Requires -P or -V MKREPRO=yes.
 
  Options:
-    -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
-    -B buildid     Set BUILDID to buildid.
-    -C cdextras    Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
-    -c compiler    Select compiler:
+    -a ARCH        Set MACHINE_ARCH=ARCH.  [Default: deduced from MACHINE]
+    -B BID         Set BUILDID=BID.
+    -C EXTRAS      Append EXTRAS to CDEXTRA for inclusion on CD-ROM.
+    -c COMPILER    Select compiler from COMPILER:
                        clang
                        gcc
                    [Default: gcc]
-    -D dest        Set DESTDIR to dest.  [Default: destdir.MACHINE]
+    -D DEST        Set DESTDIR=DEST.  [Default: destdir.\${MACHINE}]
     -E             Set "expert" mode; disables various safety checks.
                    Should not be used without expert knowledge of the build
                    system.
     -h             Print this help message, and exit.
-    -j njob        Run up to njob jobs in parallel; see make(1) -j.
-    -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
-                   Unsets MAKEOBJDIR.
-    -m mach        Set MACHINE to mach.  Some mach values are actually
+    -j NJOB        Run up to NJOB jobs in parallel; see make(1) -j.
+    -M MOBJ        Set obj root directory to MOBJ; sets MAKEOBJDIRPREFIX=MOBJ,
+                   unsets MAKEOBJDIR.
+    -m MACH        Set MACHINE=MACH.  Some MACH values are actually
                    aliases that set MACHINE/MACHINE_ARCH pairs.
                    [Default: deduced from the host system if the host
                    OS is NetBSD]
-    -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
-                       0   Minimal output ("quiet")
-                       1   Describe what is occurring
+    -N NOISY       Set the noisyness (MAKEVERBOSE) level of the build to NOISY:
+                       0   Minimal output ("quiet").
+                       1   Describe what is occurring.
                        2   Describe what is occurring and echo the actual
-                           command
-                       3   Ignore the effect of the "@" prefix in make commands
-                       4   Trace shell commands using the shell's -x flag
+                           command.
+                       3   Ignore the effect of the "@" prefix in make
+                           commands.
+                       4   Trace shell commands using the shell's -x flag.
                    [Default: 2]
-    -n             Show commands that would be executed, but do not execute them.
-    -O obj         Set obj root directory to obj; sets a MAKEOBJDIR pattern.
-                   Unsets MAKEOBJDIRPREFIX.
+    -n             Show commands that would be executed, but do not execute
+                   them.
+    -O OOBJ        Set obj root directory to OOBJ; sets a MAKEOBJDIR pattern
+                   using OOBJ, unsets MAKEOBJDIRPREFIX.
     -o             Set MKOBJDIRS=no; do not create objdirs at start of build.
     -P             Set MKREPRO and MKREPRO_TIMESTAMP to the latest source
                    CVS timestamp for reproducible builds.
-    -R release     Set RELEASEDIR to release.  [Default: releasedir]
+    -R RELEASE     Set RELEASEDIR=RELEASE.  [Default: releasedir]
     -r             Remove contents of TOOLDIR and DESTDIR before building.
-    -S seed        Set BUILDSEED to seed.  [Default: NetBSD-majorversion]
-    -T tools       Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
-                   the environment, ${toolprefix}make will be (re)built
+    -S SEED        Set BUILDSEED=SEED.  [Default: NetBSD-majorversion]
+    -T TOOLS       Set TOOLDIR=TOOLS.  If unset, and TOOLDIR is not set
+                   in the environment, ${toolprefix}make will be (re)built
                    unconditionally.
     -U             Set MKUNPRIVED=yes; build without requiring root privileges,
-                   install from an UNPRIVED build with proper file permissions.
+                   install from an unprivileged build with proper file
+                   permissions.
     -u             Set MKUPDATE=yes; do not run "make cleandir" first.
                    Without this, everything is rebuilt, including the tools.
-    -V var=[value] Set variable 'var' to 'value'.
-    -w wrapper     Create ${toolprefix}make script as wrapper.
+    -V VAR=[VALUE] Set variable VAR=VALUE.
+    -w WRAPPER     Create ${toolprefix}make script as WRAPPER.
                    [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
-    -X x11src      Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
-    -x             Set MKX11=yes; build X11 from X11SRCDIR
-    -Z var         Unset ("zap") variable 'var'.
+    -X X11SRC      Set X11SRCDIR=X11SRC.  [Default: /usr/xsrc]
+    -x             Set MKX11=yes; build X11 from X11SRCDIR.
+    -Z VAR         Unset ("zap") variable VAR.
     -?             Print this help message, and exit.
 
 _usage_
@@ -1334,7 +1337,7 @@ parseoptions()
 				safe_setmakeenv "${OPTARG}" ""
 				;;
 			*)
-				usage "-V argument must be of the form 'var[=value]'"
+				usage "-V argument must be of the form 'VAR[=VALUE]'"
 				;;
 			esac
 			;;
@@ -1463,7 +1466,7 @@ parseoptions()
 			;;
 
 		*)
-			usage "Unknown operation '${op}'"
+			usage "Unknown OPERATION '${op}'"
 			;;
 
 		esac
@@ -1472,7 +1475,7 @@ parseoptions()
 		op="$( echo "$op" | tr -s '.-' '__')"
 		eval do_${op}=true
 	done
-	[ -n "${operations}" ] || usage "Missing operation to perform"
+	[ -n "${operations}" ] || usage "Missing OPERATION to perform"
 
 	# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
 	#
@@ -2007,7 +2010,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.364 2022/08/21 07:10:03 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365 2022/08/21 07:57:50 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -2552,7 +2555,7 @@ main()
 			;;
 
 		*)
-			bomb "Unknown operation '${op}'"
+			bomb "Unknown OPERATION '${op}'"
 			;;
 
 		esac
