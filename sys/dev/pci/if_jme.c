@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.53 2022/08/21 14:36:15 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.53 2022/08/21 14:36:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1636,7 +1636,7 @@ jme_ifstart(struct ifnet *ifp)
 	for (enq = 0;; enq++) {
 nexttx:
 		/* Grab a paquet for output */
-		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
+		IFQ_POLL(&ifp->if_snd, mb_head);
 		if (mb_head == NULL) {
 #ifdef JMEDEBUG_TX
 			printf("%s: nothing to send\n", __func__);
@@ -1647,15 +1647,17 @@ nexttx:
 		if ((error = jme_encap(sc, mb_head)) != 0) {
 			if (error == EFBIG) {
 				/* This error is fatal to the packet. */
+				IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 				m_freem(mb_head);
 				if_statinc(ifp, if_oerrors);
 				goto nexttx;
 			}
 			/* resource shortage, try again later */
-			IF_PREPEND(&ifp->if_snd, mb_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
+
 		/* Pass packet to bpf if there is a listener */
 		bpf_mtap(ifp, mb_head, BPF_D_OUT);
 	}
