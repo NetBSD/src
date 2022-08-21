@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.52 2022/08/21 14:12:59 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.53 2022/08/21 14:36:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.52 2022/08/21 14:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.53 2022/08/21 14:36:15 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1320,10 +1320,9 @@ jme_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 }
 
 static int
-jme_encap(struct jme_softc *sc, struct mbuf **m_headp)
+jme_encap(struct jme_softc *sc, struct mbuf * const m)
 {
 	struct jme_desc *desc;
-	struct mbuf * const m = *m_headp;
 	int error, i, prod, headdsc, nsegs;
 	uint32_t cflags, tso_segsz;
 
@@ -1427,8 +1426,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_headp)
 			log(LOG_ERR, "%s: Tx packet consumes too many "
 			    "DMA segments, dropping...\n",
 			    device_xname(sc->jme_dev));
-			m_freem(m);
-			*m_headp = NULL;
+			/* Caller will free the packet. */
 		}
 		return (error);
 	}
@@ -1623,7 +1621,7 @@ jme_ifstart(struct ifnet *ifp)
 {
 	jme_softc_t *sc = ifp->if_softc;
 	struct mbuf *mb_head;
-	int enq;
+	int enq, error;
 
 	/*
 	 * check if we can free some desc.
@@ -1646,10 +1644,11 @@ nexttx:
 			break;
 		}
 		/* try to add this mbuf to the TX ring */
-		if (jme_encap(sc, &mb_head)) {
-			if (mb_head == NULL) {
+		if ((error = jme_encap(sc, mb_head)) != 0) {
+			if (error == EFBIG) {
+				/* This error is fatal to the packet. */
+				m_freem(mb_head);
 				if_statinc(ifp, if_oerrors);
-				/* packet dropped, try next one */
 				goto nexttx;
 			}
 			/* resource shortage, try again later */
