@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_pmap.c,v 1.4 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rump_x86_pmap.c,v 1.5 2022/08/21 12:08:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_pmap.c,v 1.4 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_pmap.c,v 1.5 2022/08/21 12:08:12 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -106,4 +106,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+}
+
+long
+pmap_resident_count(struct pmap *pmap)
+
+{
+	return 0;
+}
+
+long
+pmap_wired_count(struct pmap *pmap)
+{
+
+	return 0;
 }
