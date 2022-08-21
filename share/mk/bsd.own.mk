@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1287 2022/07/27 18:29:35 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1288 2022/08/21 07:10:03 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1300,7 +1300,6 @@ _MKVARS.no= \
 	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
 	MKDEBUG MKDEBUGLIB MKDTB MKDTRACE \
-	MKEXTSRC \
 	MKFIRMWARE \
 	MKGROFFHTMLDOC \
 	MKKYUA \
@@ -1666,25 +1665,6 @@ X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 X11DRI?=			yes
 X11LOADABLE?=			yes
 
-
-#
-# Where extsrc sources are and where it is installed to.
-#
-.if !defined(EXTSRCSRCDIR)
-.if exists(${NETBSDSRCDIR}/../extsrc)
-EXTSRCSRCDIR!=		cd "${NETBSDSRCDIR}/../extsrc" && pwd
-.else
-EXTSRCSRCDIR=		/usr/extsrc
-.endif
-.endif # !defined(EXTSRCSRCDIR)
-
-EXTSRCROOTDIR?=		/usr/ext
-EXTSRCBINDIR?=		${EXTSRCROOTDIR}/bin
-EXTSRCETCDIR?=		/etc/ext
-EXTSRCINCDIR?=		${EXTSRCROOTDIR}/include
-EXTSRCLIBDIR?=		${EXTSRCROOTDIR}/lib/ext
-EXTSRCMANDIR?=		${EXTSRCROOTDIR}/man
-EXTSRCUSRLIBDIR?=	${EXTSRCROOTDIR}/lib
 
 #
 # MAKEDIRTARGET dir target [extra make(1) params]

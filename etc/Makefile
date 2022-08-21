@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.465 2022/06/06 10:56:28 nia Exp $
+#	$NetBSD: Makefile,v 1.466 2022/08/21 07:10:03 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -163,9 +163,6 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} . install-etc-files
 . if ${MKX11} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
-. endif
-. if ${MKEXTSRC} != "no"
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/extsrc distribution
 . endif
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE

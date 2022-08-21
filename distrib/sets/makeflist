@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.77 2013/01/14 20:29:26 christos Exp $
+# $NetBSD: makeflist,v 1.78 2022/08/21 07:10:03 lukem Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -13,11 +13,10 @@ lists=
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${0##*/} [-L base,x,ext] [-bxyo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
-	-L base,x,ext	print specified lists
+Usage: ${0##*/} [-L base,x] [-bxo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
+	-L base,x	print specified lists
 	-b		print netbsd + x11 lists
 	-x		print make x11 lists
-	-y		print make extsrc lists
 	-l		just list the selected set names, not the contents
 	-o		only match obsolete files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
@@ -38,7 +37,6 @@ while getopts L:bxloa:m:s: ch; do
 			case $_list in
 			base)	lists="${lists} ${nlists}" ;;
 			x)	lists="${lists} ${xlists}" ;;
-			ext)	lists="${lists} ${extlists}" ;;
 			esac
 		done
 		IFS="${save_IFS}"
@@ -49,9 +47,6 @@ while getopts L:bxloa:m:s: ch; do
 		;;
 	x)
 		lists="${xlists}"
-		;;
-	y)
-		lists="${extlists}"
 		;;
 	l)
 		listonly=1

@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.45 2018/03/01 07:18:39 snj Exp $
+#	$NetBSD: checkflist,v 1.46 2022/08/21 07:10:03 lukem Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -51,15 +51,11 @@ allowextra=false
 allowmissing=false
 
 # handle args
-while getopts xybL:M:em ch; do
+while getopts xbL:M:em ch; do
 	case ${ch} in
 	x)
 		xargs="-x"
 		origin="./etc/X11 ./etc/fonts ./usr/X11R7"
-		;;
-	y)
-		xargs="-y"
-		origin="./etc/ext ./usr/ext"
 		;;
 	# backward compat
 	b)
@@ -79,9 +75,8 @@ while getopts xybL:M:em ch; do
 		;;
 	*)
 		cat 1>&2 <<USAGE
-Usage: ${prog} [-x|-y|-b|-L lists] [-M metalog] [-e] [-m]
+Usage: ${prog} [-x|-b|-L lists] [-M metalog] [-e] [-m]
 	-x		check only x11 lists
-	-y		check only extsrc lists
 	-b		check netbsd + x11 lists
 	-L base,x,ext	check specified lists
 	-M metalog	metalog file

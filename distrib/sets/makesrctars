@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.43 2021/09/07 18:02:46 martin Exp $
+#	$NetBSD: makesrctars,v 1.44 2022/08/21 07:10:03 lukem Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -20,12 +20,11 @@ export GZIP
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${prog} [-N password/group dir] [-q] [-x xsrcdir] [-y extsrcsrcdir] srcdir setdir
+Usage: ${prog} [-N password/group dir] [-q] [-x xsrcdir] srcdir setdir
 	-N dir		location which contains master.passwd and group files
 			(defaults to \${srcdir}/etc)
 	-q		quiet operation
 	-x xsrcdir	build xsrc.tgz from xsrcdir
-	-y extsrcsrcdir	build extsrc.tgz from extsrcsrcdir
 	srcdir		location of sources
 	setdir		where to write the .tgz files to
 USAGE
@@ -39,16 +38,13 @@ msg()
 
 
 # handle args
-while getopts N:qx:y: ch; do
+while getopts N:qx: ch; do
 	case ${ch} in
 	q)
 		quiet=true
 		;;
 	x)
 		xsrcdir="${OPTARG}"
-		;;
-	y)
-		extsrcsrcdir="${OPTARG}"
 		;;
 	N)
 		PASSWD="${OPTARG}"
@@ -135,18 +131,6 @@ if [ -n "${xsrcdir}" ]; then
 	fi
 	srcprefix=usr/xsrc
 	makeset xsrc .
-fi
-
-
-# create extsrc sets
-#
-if [ -n "${extsrcsrcdir}" ]; then
-	if ! cd "${extsrcsrcdir}"; then
-		echo >&2 "${prog}: can't chdir to ${extsrcsrcdir}"
-		exit 1
-	fi
-	srcprefix=usr/extsrc
-	makeset extsrc .
 fi
 
 
