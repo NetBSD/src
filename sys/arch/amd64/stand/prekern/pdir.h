@@ -1,4 +1,4 @@
-/*	$NetBSD: pdir.h,v 1.7 2020/05/23 08:25:32 maxv Exp $	*/
+/*	$NetBSD: pdir.h,v 1.8 2022/08/21 14:05:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -70,7 +70,3 @@
 #define VA_SIGN_MASK		0xffff000000000000
 #define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
 
-#define pl1_i(va)	(((va) & L1_FRAME) >> L1_SHIFT)
-#define pl2_i(va)	(((va) & L2_FRAME) >> L2_SHIFT)
-#define pl3_i(va)	(((va) & L3_FRAME) >> L3_SHIFT)
-#define pl4_i(va)	(((va) & L4_FRAME) >> L4_SHIFT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.24 2021/05/04 21:09:16 khorben Exp $	*/
+/*	$NetBSD: prekern.h,v 1.25 2022/08/21 14:05:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -32,7 +32,11 @@
 #include <sys/param.h>
 #include <sys/stdbool.h>
 #include <lib/libkern/libkern.h>
+
+#include <machine/pmap.h>
 #include <machine/pte.h>
+
+#include <x86/bootspace.h>
 
 #include "pdir.h"
 #include "redef.h"
@@ -58,34 +62,6 @@ typedef enum
 } state_t;
 
 /* -------------------------------------------------------------------------- */
-
-#define BTSEG_NONE	0
-#define BTSEG_TEXT	1
-#define BTSEG_RODATA	2
-#define BTSEG_DATA	3
-#define BTSPACE_NSEGS	64
-struct bootspace {
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} head;
-	struct {
-		int type;
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} segs[BTSPACE_NSEGS];
-	struct {
-		vaddr_t va;
-		paddr_t pa;
-		size_t sz;
-	} boot;
-	vaddr_t spareva;
-	vaddr_t pdir;
-	vaddr_t smodule;
-	vaddr_t emodule;
-};
 
 /* console.c */
 void init_cons(void);

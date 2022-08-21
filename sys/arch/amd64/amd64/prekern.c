@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.5 2018/08/12 15:31:01 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.6 2022/08/21 14:05:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -40,8 +40,11 @@
 
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
+#include <machine/pmap_private.h>
 #include <machine/bootinfo.h>
 #include <machine/cpufunc.h>
+
+#include <x86/bootspace.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
