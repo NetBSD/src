@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.3 2022/08/20 23:49:48 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.4 2022/08/21 09:12:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -85,14 +85,6 @@
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
 #endif
-
-/*
- * Mask to get rid of the sign-extended part of addresses.
- */
-#define VA_SIGN_MASK		0xffff000000000000
-#define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
-/* XXXfvdl this one's not right. */
-#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 #ifdef KASAN
 #define L4_SLOT_KASAN		256

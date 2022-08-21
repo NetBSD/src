@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16 2022/08/20 23:19:08 riastradh Exp $	*/
+/*	$NetBSD: pte.h,v 1.17 2022/08/21 09:12:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,6 +72,14 @@
 typedef uint64_t pd_entry_t;		/* PDE */
 typedef uint64_t pt_entry_t;		/* PTE */
 #endif
+
+/*
+ * Mask to get rid of the sign-extended part of addresses.
+ */
+#define VA_SIGN_MASK		0xffff000000000000
+#define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
+/* XXXfvdl this one's not right. */
+#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 /*
  * Now we define various constants for playing with virtual addresses.

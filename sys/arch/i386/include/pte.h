@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.35 2022/08/20 23:19:08 riastradh Exp $	*/
+/*	$NetBSD: pte.h,v 1.36 2022/08/21 09:12:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -96,6 +96,16 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #endif
 
 #endif
+
+/*
+ * Mask to get rid of the sign-extended part of addresses.
+ */
+#define VA_SIGN_MASK		0
+#define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
+/*
+ * XXXfvdl this one's not right.
+ */
+#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 #ifdef PAE
 #define L1_SHIFT	12
