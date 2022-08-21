@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.329 2022/07/15 05:26:08 mrg Exp $
+$NetBSD: UPDATING,v 1.330 2022/08/21 07:15:28 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20220821:
+	Support for building extsrc/ has been deprecated.
+	EXTSRCSRCDIR and MKEXTSRC have been deprecated.
 
 20220714:
 	Updates to xorg-server and associated drivers may cause builds to
