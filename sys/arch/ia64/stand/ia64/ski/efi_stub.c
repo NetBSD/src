@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_stub.c,v 1.5 2022/08/20 10:35:50 riastradh Exp $	*/
+/*	$NetBSD: efi_stub.c,v 1.6 2022/08/21 10:30:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -48,8 +48,8 @@ extern void acpi_stub_init(void);
 extern void sal_stub_init(void);
 
 struct efi_cfgtbl efi_cfgtab[] = {
-	{ EFI_TABLE_ACPI20,	(intptr_t)&acpi_root },
-	{ EFI_TABLE_SAL,	(intptr_t)&sal_systab }
+	{ EFI_TABLE_ACPI20,	&acpi_root },
+	{ EFI_TABLE_SAL,	&sal_systab }
 };
 
 static efi_status GetTime(struct efi_tm *, struct efi_tmcap *);
@@ -115,12 +115,12 @@ struct efi_systbl efi_systab = {
 	NULL, NULL,
 
 	/* Services (runtime first). */
-	(intptr_t)&efi_rttab,
+	&efi_rttab,
 	NULL,
 
 	/* Configuration tables. */
 	sizeof(efi_cfgtab)/sizeof(struct efi_cfgtbl),
-	(intptr_t)efi_cfgtab
+	efi_cfgtab
 };
 
 static efi_status
