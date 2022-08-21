@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.517 2022/08/20 15:11:27 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.518 2022/08/21 07:03:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.517 2022/08/20 15:11:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.518 2022/08/21 07:03:09 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3583,12 +3583,11 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		curlwp_bindx(bound);
 		return r;
 
-	case SIOCIFGCLONERS:
-		{
-			struct if_clonereq *req = (struct if_clonereq *)data;
-			return if_clone_list(req->ifcr_count, req->ifcr_buffer,
-			    &req->ifcr_total);
-		}
+	case SIOCIFGCLONERS: {
+		struct if_clonereq *req = (struct if_clonereq *)data;
+		return if_clone_list(req->ifcr_count, req->ifcr_buffer,
+		    &req->ifcr_total);
+	    }
 	}
 
 	if ((cmd & IOC_IN) == 0 || IOCPARM_LEN(cmd) < sizeof(ifr->ifr_name))
