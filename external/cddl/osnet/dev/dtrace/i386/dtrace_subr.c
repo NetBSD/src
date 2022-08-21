@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.13 2021/04/06 12:48:59 simonb Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.14 2022/08/21 18:58:45 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -45,6 +45,7 @@
 #include <sys/dtrace_impl.h>
 #include <sys/dtrace_bsd.h>
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/clock.h>
 #include <machine/frame.h>
 #include <uvm/uvm_pglist.h>
