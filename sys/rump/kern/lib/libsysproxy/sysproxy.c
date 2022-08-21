@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.8 2019/10/06 15:11:17 uwe Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.9 2022/08/21 10:24:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.8 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.9 2022/08/21 10:24:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -37,6 +37,19 @@ __KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.8 2019/10/06 15:11:17 uwe Exp $");
 #include <sys/xcall.h>
 #include <sys/lockdebug.h>
 #include <sys/psref.h>
+
+#if defined(__i386__) || defined(__x86_64__)
+/*
+ * This file abuses the pmap abstraction to create its own statically
+ * allocated struct pmap object, even though it can't do anything
+ * useful with such a thing from userland.  On x86 the struct pmap
+ * definition is private, so we have to go to extra effort to abuse it
+ * there.  This should be fixed -- all of the struct pmap definitions
+ * should be private, and then rump can furnish its own fake struct
+ * pmap without clashing with anything.
+ */
+#include <machine/pmap_private.h>
+#endif
 
 #define _RUMP_SYSPROXY
 #include <rump/rumpuser.h>
