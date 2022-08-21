@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_stub.c,v 1.6 2022/08/21 10:30:36 riastradh Exp $	*/
+/*	$NetBSD: efi_stub.c,v 1.7 2022/08/21 10:30:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -48,8 +48,8 @@ extern void acpi_stub_init(void);
 extern void sal_stub_init(void);
 
 struct efi_cfgtbl efi_cfgtab[] = {
-	{ EFI_TABLE_ACPI20,	&acpi_root },
-	{ EFI_TABLE_SAL,	&sal_systab }
+	{ .ct_uuid = EFI_TABLE_ACPI20,	.ct_data = &acpi_root },
+	{ .ct_uuid = EFI_TABLE_SAL,	.ct_data = &sal_systab },
 };
 
 static efi_status GetTime(struct efi_tm *, struct efi_tmcap *);
@@ -72,55 +72,57 @@ static efi_status ResetSystem(enum efi_reset, efi_status, u_long, efi_char *);
 
 struct efi_rt efi_rttab = {
 	/* Header. */
-	{	0,			/* XXX Signature */
-		0,			/* XXX Revision */
-		0,			/* XXX HeaderSize */
-		0,			/* XXX CRC32 */
+	.rt_hdr = {
+		.th_sig = 0,		/* XXX Signature */
+		.th_rev = 0,		/* XXX Revision */
+		.th_hdrsz = 0,		/* XXX HeaderSize */
+		.th_crc32 = 0,		/* XXX CRC32 */
 	},
 
 	/* Time services */
-	GetTime,
-	SetTime,
-	GetWakeupTime,
-	SetWakeupTime,
+	.rt_gettime = GetTime,
+	.rt_settime = SetTime,
+	.rt_getwaketime = GetWakeupTime,
+	.rt_setwaketime = SetWakeupTime,
 
 	/* Virtual memory services */
-	SetVirtualAddressMap,
-	ConvertPointer,
+	.rt_setvirtual = SetVirtualAddressMap,
+	.rt_cvtptr = ConvertPointer,
 
 	/* Variable services */
-	GetVariable,
-	GetNextVariableName,
-	SetVariable,
+	.rt_getvar = GetVariable,
+	.rt_scanvar = GetNextVariableName,
+	.rt_setvar = SetVariable,
 
 	/* Misc */
-	GetNextHighMonotonicCount,
-	ResetSystem
+	.rt_gethicnt = GetNextHighMonotonicCount,
+	.rt_reset = ResetSystem
 };
 
 struct efi_systbl efi_systab = {
 	/* Header. */
-	{	EFI_SYSTBL_SIG,
-		0,			/* XXX Revision */
-		0,			/* XXX HeaderSize */
-		0,			/* XXX CRC32 */
+	.st_hdr = {
+		.th_sig = EFI_SYSTBL_SIG,
+		.th_rev = 0,		/* XXX Revision */
+		.th_hdrsz = 0,		/* XXX HeaderSize */
+		.th_crc32 = 0,		/* XXX CRC32 */
 	},
 
 	/* Firmware info. */
-	L"FreeBSD", 0, 0,
+	.st_fwvendor = L"FreeBSD", .st_fwrev = 0, .__pad = 0,
 
 	/* Console stuff. */
-	NULL, NULL,
-	NULL, NULL,
-	NULL, NULL,
+	.st_cin = NULL, .st_cinif = NULL,
+	.st_cout = NULL, .st_coutif = NULL,
+	.st_cerr = NULL, .st_cerrif = NULL,
 
 	/* Services (runtime first). */
-	&efi_rttab,
-	NULL,
+	.st_rt = &efi_rttab,
+	.st_bs = NULL,
 
 	/* Configuration tables. */
-	sizeof(efi_cfgtab)/sizeof(struct efi_cfgtbl),
-	efi_cfgtab
+	.st_entries = sizeof(efi_cfgtab)/sizeof(struct efi_cfgtbl),
+	.st_cfgtbl = efi_cfgtab,
 };
 
 static efi_status
