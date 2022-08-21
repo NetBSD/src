@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.28 2022/08/07 11:06:18 andvar Exp $
+.\" $NetBSD: ksh.Man,v 1.29 2022/08/21 20:12:37 uwe Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -66,7 +66,6 @@ the shell executes the command(s) contained in \fIcommand-string\fP
 interactive mode \(em see below
 .IP \fB\-l\fP
 login shell \(em see below
-interactive mode \(em see below
 .IP \fB\-s\fP
 the shell reads commands from standard input; all non-option arguments
 are positional parameters
