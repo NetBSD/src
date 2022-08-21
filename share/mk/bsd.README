@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.440 2022/07/14 03:48:49 mrg Exp $
+#	$NetBSD: bsd.README,v 1.441 2022/08/21 07:10:03 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -216,11 +216,6 @@ MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't
 		install the shared linker into /libexec.
 		Default: yes
-
-MKEXTSRC        If not "no", 'make build' also descends into either src/extsrc
-		to cross-build programs and libraries externally added by
-		users, and automatically enables creation of those sets.
-		Default: no
 
 MKFIRMWARE      If not "no", install the /libdata/firmware directory,
 		which is necessary for several drivers: athn(4), bwfm(4),

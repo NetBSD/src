@@ -512,7 +512,6 @@ etc-cron-log	empty log file for cron(8)
 etc-cron-rc	startup script for cron(8) command scheduler
 etc-cron-root	root file system support for cron(8) command scheduler
 etc-dhcpd-rc	startup script for DHCP dynamic host configuration protocol daemon
-etc-extsrc-rc	startup scripts for externally added programs
 etc-games-etc	configuration file for games
 etc-games-scores	empty score files for games
 etc-ipf-rc	startup script for IP filter
