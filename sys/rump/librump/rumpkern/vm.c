@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.192 2021/09/16 21:29:42 andvar Exp $	*/
+/*	$NetBSD: vm.c,v 1.193 2022/08/21 10:18:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.192 2021/09/16 21:29:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.193 2022/08/21 10:18:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,6 +55,19 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.192 2021/09/16 21:29:42 andvar Exp $");
 #include <sys/radixtree.h>
 
 #include <machine/pmap.h>
+
+#if defined(__i386__) || defined(__x86_64__)
+/*
+ * This file abuses the pmap abstraction to create its own statically
+ * allocated struct pmap object, even though it can't do anything
+ * useful with such a thing from userland.  On x86 the struct pmap
+ * definition is private, so we have to go to extra effort to abuse it
+ * there.  This should be fixed -- all of the struct pmap definitions
+ * should be private, and then rump can furnish its own fake struct
+ * pmap without clashing with anything.
+ */
+#include <machine/pmap_private.h>
+#endif
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
