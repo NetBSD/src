@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.518 2022/08/21 07:03:09 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.519 2022/08/21 07:17:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.518 2022/08/21 07:03:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.519 2022/08/21 07:17:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -584,17 +584,16 @@ void
 if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
     const struct sockaddr_dl *sdl)
 {
-	int s, ss;
 	struct ifaddr *ifa;
-	int bound = curlwp_bind();
+	const int bound = curlwp_bind();
 
 	KASSERT(ifa_held(ifa0));
 
-	s = splsoftnet();
+	const int s = splsoftnet();
 
 	if_replace_sadl(ifp, ifa0);
 
-	ss = pserialize_read_enter();
+	int ss = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		struct psref psref;
 		ifa_acquire(ifa, &psref);
@@ -889,9 +888,8 @@ if_percpuq_dequeue(struct if_percpuq *ipq)
 {
 	struct mbuf *m;
 	struct ifqueue *ifq;
-	int s;
 
-	s = splnet();
+	const int s = splnet();
 	ifq = percpu_getref(ipq->ipq_ifqs);
 	IF_DEQUEUE(ifq, m);
 	percpu_putref(ipq->ipq_ifqs);
@@ -926,11 +924,10 @@ void
 if_percpuq_enqueue(struct if_percpuq *ipq, struct mbuf *m)
 {
 	struct ifqueue *ifq;
-	int s;
 
 	KASSERT(ipq != NULL);
 
-	s = splnet();
+	const int s = splnet();
 	ifq = percpu_getref(ipq->ipq_ifqs);
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
@@ -1064,9 +1061,7 @@ if_deferred_start_softint(void *arg)
 static void
 if_deferred_start_common(struct ifnet *ifp)
 {
-	int s;
-
-	s = splnet();
+	const int s = splnet();
 	if_start_lock(ifp);
 	splx(s);
 }
@@ -1170,10 +1165,9 @@ void
 if_attachdomain(void)
 {
 	struct ifnet *ifp;
-	int s;
-	int bound = curlwp_bind();
+	const int bound = curlwp_bind();
 
-	s = pserialize_read_enter();
+	int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -1333,7 +1327,7 @@ if_detach(struct ifnet *ifp)
 #endif
 	struct domain *dp;
 	const struct protosw *pr;
-	int s, i, family, purged;
+	int i, family, purged;
 
 #ifdef IFAREF_DEBUG
 	if_build_ifa_list(ifp);
@@ -1344,7 +1338,7 @@ if_detach(struct ifnet *ifp)
 	 */
 	memset(&so, 0, sizeof(so));
 
-	s = splnet();
+	const int s = splnet();
 
 	sysctl_teardown(&ifp->if_sysctl_log);
 
@@ -2387,7 +2381,7 @@ static void
 if_link_state_change_process(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
-	int s = splnet();
+	const int s = splnet();
 	bool notify;
 
 	KASSERT(!cpu_intr_p());
@@ -2455,11 +2449,10 @@ static void
 if_link_state_change_work(struct work *work, void *arg)
 {
 	struct ifnet *ifp = container_of(work, struct ifnet, if_link_work);
-	int s;
 	uint8_t state;
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	s = splnet();
+	const int s = splnet();
 
 	/*
 	 * Pop a link state change from the queue and process it.
@@ -2515,8 +2508,8 @@ void
 if_domain_link_state_change(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
-	int s = splnet();
 
+	const int s = splnet();
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	DOMAIN_FOREACH(dp) {
@@ -2588,14 +2581,13 @@ _if_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct domain *dp;
-	int s, bound;
 	struct psref psref;
 
 	ifp->if_flags &= ~IFF_UP;
 	nanotime(&ifp->if_lastchange);
 
-	bound = curlwp_bind();
-	s = pserialize_read_enter();
+	const int bound = curlwp_bind();
+	int s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		ifa_acquire(ifa, &psref);
 		pserialize_read_exit(s);
@@ -2691,9 +2683,7 @@ static bool
 if_slowtimo_countdown(struct ifnet *ifp)
 {
 	bool fire = false;
-	int s;
-
-	s = splnet();
+	const int s = splnet();
 	KERNEL_LOCK(1, NULL);
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		fire = true;
@@ -2730,9 +2720,7 @@ if_slowtimo_work(struct work *work, void *arg)
 	struct if_slowtimo_data *isd =
 	    container_of(work, struct if_slowtimo_data, isd_work);
 	struct ifnet *ifp = isd->isd_ifp;
-	int s;
-
-	s = splnet();
+	const int s = splnet();
 	KERNEL_LOCK(1, NULL);
 	(*ifp->if_slowtimo)(ifp);
 	KERNEL_UNLOCK_ONE(NULL);
@@ -3522,7 +3510,6 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct oifreq *oifr = NULL;
 	int r;
 	struct psref psref;
-	int bound;
 	bool do_if43_post = false;
 	bool do_ifm80_post = false;
 
@@ -3558,8 +3545,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	switch (cmd) {
 	case SIOCIFCREATE:
-	case SIOCIFDESTROY:
-		bound = curlwp_bind();
+	case SIOCIFDESTROY: {
+		const int bound = curlwp_bind();
 		if (l != NULL) {
 			ifp = if_get(ifr->ifr_name, &psref);
 			error = kauth_authorize_network(l->l_cred,
@@ -3582,7 +3569,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 		curlwp_bindx(bound);
 		return r;
-
+	    }
 	case SIOCIFGCLONERS: {
 		struct if_clonereq *req = (struct if_clonereq *)data;
 		return if_clone_list(req->ifcr_count, req->ifcr_buffer,
@@ -3593,7 +3580,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	if ((cmd & IOC_IN) == 0 || IOCPARM_LEN(cmd) < sizeof(ifr->ifr_name))
 		return EINVAL;
 
-	bound = curlwp_bind();
+	const int bound = curlwp_bind();
 	ifp = if_get(ifr->ifr_name, &psref);
 	if (ifp == NULL) {
 		curlwp_bindx(bound);
@@ -3721,7 +3708,6 @@ ifconf(u_long cmd, void *data)
 	const int sz = (int)sizeof(struct ifreq);
 	const bool docopy = ifc->ifc_req != NULL;
 	int s;
-	int bound;
 	struct psref psref;
 
 	if (docopy) {
@@ -3733,7 +3719,7 @@ ifconf(u_long cmd, void *data)
 	}
 	memset(&ifr, 0, sizeof(ifr));
 
-	bound = curlwp_bind();
+	const int bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -3842,11 +3828,11 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
-	int s, error;
+	int error;
 	size_t pktlen = m->m_pkthdr.len;
 	bool mcast = (m->m_flags & M_MCAST) != 0;
 
-	s = splnet();
+	const int s = splnet();
 
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0) {
@@ -4224,12 +4210,11 @@ if_sdl_sysctl(SYSCTLFN_ARGS)
 	const struct sockaddr_dl *sdl;
 	struct psref psref;
 	int error = 0;
-	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	bound = curlwp_bind();
+	const int bound = curlwp_bind();
 	ifp = if_get_byindex(name[0], &psref);
 	if (ifp == NULL) {
 		error = ENODEV;
