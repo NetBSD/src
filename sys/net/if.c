@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.519 2022/08/21 07:17:19 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.520 2022/08/21 12:34:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.519 2022/08/21 07:17:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.520 2022/08/21 12:34:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -618,7 +618,6 @@ void
 if_free_sadl(struct ifnet *ifp, int factory)
 {
 	struct ifaddr *ifa;
-	int s;
 
 	if (factory && ifp->if_hwdl != NULL) {
 		ifa = ifp->if_hwdl;
@@ -634,7 +633,7 @@ if_free_sadl(struct ifnet *ifp, int factory)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splsoftnet();
+	const int s = splsoftnet();
 	KASSERT(ifa->ifa_addr->sa_family == AF_LINK);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
@@ -1184,9 +1183,7 @@ static void
 if_attachdomain1(struct ifnet *ifp)
 {
 	struct domain *dp;
-	int s;
-
-	s = splsoftnet();
+	const int s = splsoftnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -1206,9 +1203,7 @@ if_attachdomain1(struct ifnet *ifp)
 void
 if_deactivate(struct ifnet *ifp)
 {
-	int s;
-
-	s = splsoftnet();
+	const int s = splsoftnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->_if_input	 = if_nullinput;
@@ -2940,7 +2935,6 @@ ifunit(const char *name)
 	const char *cp = name;
 	u_int unit = 0;
 	u_int i;
-	int s;
 
 	/*
 	 * If the entire name is a number, treat it as an ifindex.
@@ -2956,7 +2950,7 @@ ifunit(const char *name)
 		return if_byindex(unit);
 
 	ifp = NULL;
-	s = pserialize_read_enter();
+	const int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
@@ -2980,7 +2974,6 @@ if_get(const char *name, struct psref *psref)
 	const char *cp = name;
 	u_int unit = 0;
 	u_int i;
-	int s;
 
 	/*
 	 * If the entire name is a number, treat it as an ifindex.
@@ -2996,7 +2989,7 @@ if_get(const char *name, struct psref *psref)
 		return if_get_byindex(unit, psref);
 
 	ifp = NULL;
-	s = pserialize_read_enter();
+	const int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
@@ -3061,9 +3054,8 @@ ifnet_t *
 if_get_byindex(u_int idx, struct psref *psref)
 {
 	ifnet_t *ifp;
-	int s;
 
-	s = pserialize_read_enter();
+	const int s = pserialize_read_enter();
 	ifp = if_byindex(idx);
 	if (__predict_true(ifp != NULL)) {
 		PSREF_DEBUG_FILL_RETURN_ADDRESS(psref);
@@ -3078,9 +3070,8 @@ ifnet_t *
 if_get_bylla(const void *lla, unsigned char lla_len, struct psref *psref)
 {
 	ifnet_t *ifp;
-	int s;
 
-	s = pserialize_read_enter();
+	const int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
@@ -3228,7 +3219,6 @@ if_export_if_data(ifnet_t * const ifp, struct if_data *ifi, bool zero_stats)
 int
 ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int s;
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
@@ -3296,12 +3286,12 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			s = splsoftnet();
+			const int s = splsoftnet();
 			if_down_locked(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			s = splsoftnet();
+			const int s = splsoftnet();
 			if_up_locked(ifp);
 			splx(s);
 		}
@@ -3647,7 +3637,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splsoftnet();
+			const int s = splsoftnet();
 			if_up_locked(ifp);
 			splx(s);
 		}
@@ -3707,7 +3697,6 @@ ifconf(u_long cmd, void *data)
 	int space = 0, error = 0;
 	const int sz = (int)sizeof(struct ifreq);
 	const bool docopy = ifc->ifc_req != NULL;
-	int s;
 	struct psref psref;
 
 	if (docopy) {
@@ -3720,7 +3709,7 @@ ifconf(u_long cmd, void *data)
 	memset(&ifr, 0, sizeof(ifr));
 
 	const int bound = curlwp_bind();
-	s = pserialize_read_enter();
+	int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
 		pserialize_read_exit(s);
