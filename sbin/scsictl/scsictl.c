@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.39 2016/11/19 08:43:40 flxd Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.40 2022/08/21 12:44:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.39 2016/11/19 08:43:40 flxd Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.40 2022/08/21 12:44:16 mlelstv Exp $");
 #endif
 
 
@@ -93,6 +93,7 @@ static void	device_flushcache(int, char *[]);
 static void	device_setspeed(int, char *[]);
 static void	device_getrealloc(int, char *[]);
 static void	device_setrealloc(int, char *[]);
+static void	device_reportluns(int, char *[]);
 
 static struct command device_commands[] = {
 	{ "defects",	"[primary] [grown] [block|byte|physical]",
@@ -115,6 +116,7 @@ static struct command device_commands[] = {
 	{ "setspeed",	"[speed]",		device_setspeed },
 	{ "getrealloc",	"",			device_getrealloc },
 	{ "setrealloc",	"none|r|w|rw [save]",	device_setrealloc },
+	{ "reportluns",	"normal|wellknown|all|#",	device_reportluns },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -982,6 +984,88 @@ device_setspeed(int argc, char *argv[])
 	scsi_command(fd, &cmd, sizeof(cmd), pd, sizeof(pd), 10000, SCCMD_WRITE);
 
 	return;
+}
+
+/*
+ * device_reportluns:
+ *
+ *	Report the known LUNs to which the initiator can send commands
+ */
+static void
+device_reportluns(int argc, char *argv[])
+{
+	struct scsi_report_luns cmd;
+	struct {
+		struct scsi_report_luns_header header;
+		struct scsi_report_luns_lun desc[1];
+	} *data;
+	u_int32_t dlen, len;
+	u_int64_t lun;
+	size_t count, idx;
+	unsigned long sel;
+	char *endp;
+	int i;
+
+	dlen = USHRT_MAX; /* good for > 8000 LUNs */
+	data = malloc(dlen);
+	if (data == NULL)
+		errx(1, "unable to allocate lun report");
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = SCSI_REPORT_LUNS;
+	cmd.selectreport = SELECTREPORT_NORMAL;
+
+	/* determine which report to read. */
+	for (i = 0; i < argc; i++) {
+		if (strcmp("normal", argv[i]) == 0) {
+			cmd.selectreport = SELECTREPORT_NORMAL;
+			continue;
+		}
+		if (strcmp("wellknown", argv[i]) == 0) {
+			cmd.selectreport = SELECTREPORT_WELLKNOWN;
+			continue;
+		}
+		if (strcmp("all", argv[i]) == 0) {
+			cmd.selectreport = SELECTREPORT_ALL;
+			continue;
+		}
+		sel = strtoul(argv[i], &endp, 0);
+		if (*endp != '\0' || sel > 255)
+			errx(1, "Unknown select report '%s'", argv[i]);
+		cmd.selectreport = sel;
+	}
+
+	_lto4b(dlen, &cmd.alloclen[0]);
+	cmd.control = 0x00;
+
+	scsi_command(fd, &cmd, sizeof(cmd), data, dlen, 30000, SCCMD_READ);
+
+	len = _4btol(data->header.length);
+	if (len > dlen) {
+		/* XXX reallocate and retry */
+		printf("%s: report truncated %" PRIu32 "to %" PRIu32 "\n",
+		    dvname, len, dlen);
+		len = dlen;
+	}
+
+	count = len / sizeof(data->desc[0]);
+
+	for (idx=0; idx<count; ++idx) {
+		lun = _8btol(data->desc[idx].lun);
+
+		/*
+		 * swizzle bits so that LUNs 0..255 are
+		 * mapped to numbers 0..255
+		 */
+		lun = (lun & 0xffff000000000000ull) >> 48
+		    | (lun & 0x0000ffff00000000ull) >> 16
+		    | (lun & 0x00000000ffff0000ull) << 16
+		    | (lun & 0x000000000000ffffull) << 48;
+
+		printf("%s: lun %" PRIu64 "\n", dvname, lun);
+	}
+
+	free(data);
 }
 
 /*

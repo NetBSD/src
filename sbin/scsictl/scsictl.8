@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.31 2017/03/08 11:45:14 tsutsui Exp $
+.\"	$NetBSD: scsictl.8,v 1.32 2022/08/21 12:44:16 mlelstv Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,6 +196,27 @@ If the drive's automatic reallocation parameters are savable, specifying
 .Ar save
 after the automatic reallocation enable state will cause the parameters to be
 saved in non-volatile storage.
+.It Cm reportluns Ar normal|wellknown|all|#
+Report Logical Units provided by the drive.
+.Bl -hang -compact
+.It normal
+report all but well-known logical units.
+This is also the default.
+.It wellknown
+report the well known logical units instead. E.g.,
+.Bl -inset -compact
+.It 0xc101h
+Addressable objects
+.It 0xc102h
+Addressable objects associations
+.It 0xc103h
+SCSI target device identification
+.El
+.It all
+report all logical units.
+.It #
+Use the given numeric select report value (0-255).
+.El
 .El
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
