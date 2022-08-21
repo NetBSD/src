@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2019/03/10 11:04:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.108 2022/08/21 07:10:03 lukem Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -50,16 +50,10 @@ MAKETARS_FLAGS+= -T "${MKREPRO_TIMESTAMP}"
 .if ${MKX11} != "no"
 MAKESRCTARS_X11_FLAGS=	-x ${X11SRCDIR}
 .endif
-.if ${MKEXTSRC} != "no"
-MAKESRCTARS_EXTSRC_FLAGS=	-y ${EXTSRCSRCDIR}
-.endif
 .if ${MKX11} != "no"
 MAKEFLIST_X11_FLAGS=	,x
 .endif
-.if ${MKEXTSRC} != "no"
-MAKEFLIST_EXTSRC_FLAGS=	,ext
-.endif
-MAKEFLIST_FLAGS=	-L base${MAKEFLIST_X11_FLAGS}${MAKEFLIST_EXTSRC_FLAGS}
+MAKEFLIST_FLAGS=	-L base${MAKEFLIST_X11_FLAGS}
 MAKESRCTARS_FLAGS= 	-N ${NETBSDSRCDIR}/etc
 
 .if ${MAKEVERBOSE} < 2
@@ -185,9 +179,6 @@ checkflist: .PRECIOUS .PHONY check_DESTDIR sanitise_METALOG
 checkflist-x11: .PHONY check_DESTDIR
 	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
 
-checkflist-extsrc: .PHONY check_DESTDIR
-	${SETSCMD} ./checkflist -y ${CHECKFLIST_FLAGS}
-
 .if defined(DESTDIR) && ${DESTDIR} != ""
 checkflist_if_DESTDIR: checkflist
 .else
@@ -251,7 +242,7 @@ makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
 	${_MKMSG_CREATE} "source tar files"
 	mkdir -p ${SOURCETARDIR}
 	${SETSCMD} ./makesrctars ${MAKESRCTARS_FLAGS} \
-	    ${MAKESRCTARS_X11_FLAGS} ${MAKESRCTARS_EXTSRC_FLAGS} \
+	    ${MAKESRCTARS_X11_FLAGS} \
 	    ${NETBSDSRCDIR} ${SOURCETARDIR}
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.334 2022/03/19 14:35:13 rillig Exp $
+#	$NetBSD: Makefile,v 1.335 2022/08/21 07:10:03 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -99,7 +99,6 @@
 #   do-x11:          builds and installs X11 tools and libraries
 #                    from src/external/mit/xorg if ${MKX11} != "no".
 #   do-build:        builds and installs the entire system.
-#   do-extsrc:       builds and installs extsrc if ${MKEXTSRC} != "no".
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
 
@@ -251,9 +250,6 @@ BUILDTARGETS+=	do-x11
 .endif
 .if !defined(NOBINARIES)
 BUILDTARGETS+=	do-build
-.if ${MKEXTSRC} != "no"
-BUILDTARGETS+=	do-extsrc
-.endif
 BUILDTARGETS+=	do-obsolete
 .endif
 
@@ -511,14 +507,6 @@ do-x11: .PHONY .MAKE
 .endif
 .else
 	@echo "MKX11 is not enabled"
-	@false
-.endif
-
-do-extsrc: .PHONY .MAKE
-.if ${MKEXTSRC} != "no"
-	${MAKEDIRTARGET} extsrc build
-.else
-	@echo "MKEXTSRC is not enabled"
 	@false
 .endif
 

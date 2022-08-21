@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.40 2020/09/26 17:49:49 jmcneill Exp $
+# $NetBSD: mkvars.mk,v 1.41 2022/08/21 07:10:03 lukem Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -18,7 +18,6 @@ MKEXTRAVARS= \
 	HAVE_UEFI \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
-	EXTSRCS \
 	KERNEL_DIR \
 	MKMANZ \
 	MKBFD \

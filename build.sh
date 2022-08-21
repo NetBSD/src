@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.363 2022/08/15 10:06:00 lukem Exp $
+#	$NetBSD: build.sh,v 1.364 2022/08/21 07:10:03 lukem Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1027,10 +1027,10 @@ synopsis()
 {
 	cat <<_usage_
 
-Usage: ${progname} [-EnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
+Usage: ${progname} [-EnoPRrUux] [-a arch] [-B buildid] [-C cdextras]
                 [-c compiler] [-D dest] [-j njob] [-M obj] [-m mach]
                 [-N noisy] [-O obj] [-R release] [-S seed] [-T tools]
-                [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
+                [-V var=[value]] [-w wrapper] [-X x11src]
                 [-Z var]
                 operation [...]
        ${progname} ( -h | -? )
@@ -1139,8 +1139,6 @@ help()
                    [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
     -X x11src      Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
     -x             Set MKX11=yes; build X11 from X11SRCDIR
-    -Y extsrcsrc   Set EXTSRCSRCDIR to extsrcsrc.  [Default: /usr/extsrc]
-    -y             Set MKEXTSRC=yes; build extsrc from EXTSRCSRCDIR
     -Z var         Unset ("zap") variable 'var'.
     -?             Print this help message, and exit.
 
@@ -1161,7 +1159,7 @@ usage()
 
 parseoptions()
 {
-	opts='a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xY:yZ:'
+	opts='a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xZ:'
 	opt_a=false
 	opt_m=false
 
@@ -1353,15 +1351,6 @@ parseoptions()
 
 		-x)
 			setmakeenv MKX11 yes
-			;;
-
-		-Y)
-			eval ${optargcmd}; resolvepath OPTARG
-			setmakeenv EXTSRCSRCDIR "${OPTARG}"
-			;;
-
-		-y)
-			setmakeenv MKEXTSRC yes
 			;;
 
 		-Z)
@@ -2018,7 +2007,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.363 2022/08/15 10:06:00 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.364 2022/08/21 07:10:03 lukem Exp $
 # with these arguments: ${_args}
 #
 
