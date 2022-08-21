@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.87 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.88 2022/08/21 13:15:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,8 @@
 #define _I386_VMPARAM_H_
 
 #include <sys/mutex.h>
+
+#include <machine/pte.h>
 
 /*
  * Machine dependent constants for 386.
