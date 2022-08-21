@@ -153,6 +153,13 @@ CONFIGURATION
                        cannot usefully be set inside a Makefile, including
                        mk.conf or ${MAKECONF}.
 
+     INSTALLBOOT_UBOOT_PATHS
+                       A colon-separated list of search paths used by
+                       installboot to find U-Boot packages; see
+                       installboot(8).  If appropriate U-Boot packages
+                       are installed, bootable images are created as
+                       part of a release.
+
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless
      otherwise specified, these variables may be set in either the process

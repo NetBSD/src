@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.39 2020/07/13 07:26:27 jruoho Exp $
+.\"	$NetBSD: release.7,v 1.40 2022/08/21 15:01:08 brook Exp $
 .\"
 .\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,6 +261,16 @@ PostScript version
 .It Sy binary/
 system binaries
 .Bl -tag -width "SHA512/"
+.It Sy gzimg/
+compressed system images
+.Bl -tag -width "xserver.tgz"
+.It Ao Em machine Ac Ns Pa .tar.gz
+The primary system image on those platforms that provide them.  These
+images may not be bootable.
+.It Ao Em machine Ac Ns Pa - Ns Ao Em board Ac Ns Pa .tar.gz
+A bootable system image for a particular board, on platforms that
+provide them.
+.El
 .It Sy sets/
 installation sets
 .Bl -tag -width "xserver.tgz"
