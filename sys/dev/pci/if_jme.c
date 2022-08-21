@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.51 2022/03/16 10:08:02 andvar Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.52 2022/08/21 14:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.51 2022/03/16 10:08:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.52 2022/08/21 14:12:59 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1320,15 +1320,14 @@ jme_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 }
 
 static int
-jme_encap(struct jme_softc *sc, struct mbuf **m_head)
+jme_encap(struct jme_softc *sc, struct mbuf **m_headp)
 {
 	struct jme_desc *desc;
-	struct mbuf *m;
+	struct mbuf * const m = *m_headp;
 	int error, i, prod, headdsc, nsegs;
 	uint32_t cflags, tso_segsz;
 
-	if (((*m_head)->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6))
-	    != 0) {
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
 		/*
 		 * Due to the adherence to NDIS specification JMC250
 		 * assumes upper stack computed TCP pseudo checksum
@@ -1337,10 +1336,10 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 		 * pseudo checksum for JMC250. Hopefully this wouldn't
 		 * be much burden on modern CPUs.
 		 */
-		bool v4 = ((*m_head)->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+		bool v4 = (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
 		int iphl = v4 ?
-		    M_CSUM_DATA_IPv4_IPHL((*m_head)->m_pkthdr.csum_data) :
-		    M_CSUM_DATA_IPv6_IPHL((*m_head)->m_pkthdr.csum_data);
+		    M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) :
+		    M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
 		/*
 		 * note: we support vlan offloading, so we should never have
 		 * a ETHERTYPE_VLAN packet here - so ETHER_HDR_LEN is always
@@ -1348,90 +1347,88 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 		 */
 		int hlen = ETHER_HDR_LEN + iphl;
 
-		if (__predict_false((*m_head)->m_len <
+		if (__predict_false(m->m_len <
 		    (hlen + sizeof(struct tcphdr)))) {
-			   /*
-			    * TCP/IP headers are not in the first mbuf; we need
-			    * to do this the slow and painful way.  Let's just
-			    * hope this doesn't happen very often.
-			    */
-			   struct tcphdr th;
+			/*
+			 *
+			 * TCP/IP headers are not in the first mbuf; we need
+			 * to do this the slow and painful way.  Let's just
+			 * hope this doesn't happen very often.
+			 */
+			struct tcphdr th;
 
-			   m_copydata((*m_head), hlen, sizeof(th), &th);
-			   if (v4) {
-				    struct ip ip;
+			m_copydata(m, hlen, sizeof(th), &th);
+			if (v4) {
+				struct ip ip;
 
-				    m_copydata((*m_head), ETHER_HDR_LEN,
-				    sizeof(ip), &ip);
-				    ip.ip_len = 0;
-				    m_copyback((*m_head),
-					 ETHER_HDR_LEN + offsetof(struct ip, ip_len),
-					 sizeof(ip.ip_len), &ip.ip_len);
-				    th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
-					 ip.ip_dst.s_addr, htons(IPPROTO_TCP));
-			   } else {
+				m_copydata(m, ETHER_HDR_LEN, sizeof(ip), &ip);
+				ip.ip_len = 0;
+				m_copyback(m,
+				    ETHER_HDR_LEN + offsetof(struct ip, ip_len),
+				    sizeof(ip.ip_len), &ip.ip_len);
+				th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+				    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
 #if INET6
-				    struct ip6_hdr ip6;
+				struct ip6_hdr ip6;
 
-				    m_copydata((*m_head), ETHER_HDR_LEN,
+				m_copydata(m, ETHER_HDR_LEN,
 				    sizeof(ip6), &ip6);
-				    ip6.ip6_plen = 0;
-				    m_copyback((*m_head), ETHER_HDR_LEN +
+				ip6.ip6_plen = 0;
+				m_copyback(m, ETHER_HDR_LEN +
 				    offsetof(struct ip6_hdr, ip6_plen),
-					 sizeof(ip6.ip6_plen), &ip6.ip6_plen);
-				    th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
-					 &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
+				    sizeof(ip6.ip6_plen), &ip6.ip6_plen);
+				th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
+				    &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
 #endif /* INET6 */
-			   }
-			   m_copyback((*m_head),
-			    hlen + offsetof(struct tcphdr, th_sum),
-				sizeof(th.th_sum), &th.th_sum);
+			}
+			m_copyback(m, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
 
-			   hlen += th.th_off << 2;
+			hlen += th.th_off << 2;
 		} else {
-			   /*
-			    * TCP/IP headers are in the first mbuf; we can do
-			    * this the easy way.
-			    */
-			   struct tcphdr *th;
+			/*
+			 * TCP/IP headers are in the first mbuf; we can do
+			 * this the easy way.
+			 */
+			struct tcphdr *th;
 
-			   if (v4) {
-				    struct ip *ip =
-					 (void *)(mtod((*m_head), char *) +
-					ETHER_HDR_LEN);
-				    th = (void *)(mtod((*m_head), char *) + hlen);
-
-				    ip->ip_len = 0;
-				    th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
-					 ip->ip_dst.s_addr, htons(IPPROTO_TCP));
-			   } else {
-#if INET6
-				    struct ip6_hdr *ip6 =
-				    (void *)(mtod((*m_head), char *) +
+			if (v4) {
+				struct ip *ip =
+				    (void *)(mtod(m, char *) +
 				    ETHER_HDR_LEN);
-				    th = (void *)(mtod((*m_head), char *) + hlen);
+				th = (void *)(mtod(m, char *) + hlen);
 
-				    ip6->ip6_plen = 0;
-				    th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
-					 &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+				ip->ip_len = 0;
+				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+#if INET6
+				struct ip6_hdr *ip6 =
+				    (void *)(mtod(m, char *) +
+				    ETHER_HDR_LEN);
+				th = (void *)(mtod(m, char *) + hlen);
+
+				ip6->ip6_plen = 0;
+				th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
+				    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
 #endif /* INET6 */
-			   }
+			}
 			hlen += th->th_off << 2;
 		}
-
 	}
 
 	prod = sc->jme_tx_prod;
 
 	error = bus_dmamap_load_mbuf(sc->jme_dmatag, sc->jme_txmbufm[prod],
-	    *m_head, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	    m, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error) {
 		if (error == EFBIG) {
 			log(LOG_ERR, "%s: Tx packet consumes too many "
 			    "DMA segments, dropping...\n",
 			    device_xname(sc->jme_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
+			m_freem(m);
+			*m_headp = NULL;
 		}
 		return (error);
 	}
@@ -1451,7 +1448,6 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	bus_dmamap_sync(sc->jme_dmatag, sc->jme_txmbufm[prod],
 	    0, sc->jme_txmbufm[prod]->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-	m = *m_head;
 	cflags = 0;
 	tso_segsz = 0;
 	/* Configure checksum offload and TSO. */
