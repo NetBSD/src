@@ -83,9 +83,6 @@ FILES
                     "Reachover" build structure for modular Xorg; the source
                     is in X11SRCDIR.
 
-     extsrc/        "Reachover" build structure for externally added programs
-                    and libraries; the source is in EXTSRCSRCDIR.
-
    Build tree layout
      The NetBSD build tree is described in hier(7), and the release layout is
      described in release(7).
@@ -211,13 +208,6 @@ CONFIGURATION
                  Note: build.sh will provide a default of destdir.MACHINE (in
                  the top-level .OBJDIR) unless run in `expert' mode.
 
-     EXTSRCSRCDIR
-                 Directory containing sources of externally added programs and
-                 libraries.  If specified, must be an absolute path.
-
-                 Default: NETBSDSRCDIR/../extsrc, if that exists; otherwise
-                 /usr/extsrc.
-
      MAKECONF    The name of the make(1) configuration file.  Only settable in
                  the process environment.
 
@@ -264,25 +254,9 @@ CONFIGURATION
 
                  Default: "no"
 
-     MKDEBUGKERNEL
-                 Can be set to "yes" or "no".  Force generation of full-debug
-                 symbol versions of all kernels compiled.  Alongside of the
-                 netbsd kernel file, an unstripped version netbsd.gdb is
-                 created.  This is useful if a cross-gdb is built as well (see
-                 MKCROSSGDB).
-
-                 Default: "no"
-
      MKDEBUGLIB  Can be set to "yes" or "no".  Indicates whether debug
                  information (see MKDEBUG) should also be generated for all
                  libraries built.
-
-                 Default: "no"
-
-     MKDEBUGTOOLS 
-		 Can be set to "yes" or "no".  Indicates whether debug
-                 information (see MKDEBUG) should also be generated for all
-                 tools built.
 
                  Default: "no"
 
@@ -291,11 +265,6 @@ CONFIGURATION
                  installed during a build.
 
                  Default: "yes"
-
-     MKEXTSRC    Can be set to "yes" or "no".  Indicates whether extsrc is
-                 built from EXTSRCSRCDIR.
-
-                 Default: "no"
 
      MKHTML      Can be set to "yes" or "no".  Indicates whether preformatted
                  HTML manual pages will be built and installed
@@ -319,6 +288,14 @@ CONFIGURATION
                  compilation tools.
 
                  Default: "yes"
+
+     MKKDEBUG    Can be set to "yes" or "no".  Force generation of full-debug
+                 symbol versions of all kernels compiled.  Alongside of the
+                 netbsd kernel file, an unstripped version netbsd.gdb is
+                 created.  This is useful if a cross-gdb is built as well (see
+                 MKCROSSGDB).
+
+                 Default: "no"
 
      MKKMOD      Can be set to "yes" or "no".  Indicates whether kernel
                  modules are built and installed.
@@ -1069,13 +1046,6 @@ BUILDING
                being used.
 
      -x        Set MKX11=yes.
-
-     -Y extsrcdir
-               Set the value of EXTSRCSRCDIR to extsrcdir.  If a relative path
-               is specified, it will be converted to an absolute path before
-               being used.
-
-     -y        Set MKEXTSRC=yes.
 
      -Z var    Unset ("zap") the environment variable var.  This is propagated
                to the nbmake wrapper.
