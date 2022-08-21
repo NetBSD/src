@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_generic_pmap.c,v 1.6 2022/08/21 16:55:14 mlelstv Exp $	*/
+/*	$NetBSD: rump_generic_pmap.c,v 1.7 2022/08/21 22:28:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_generic_pmap.c,v 1.6 2022/08/21 16:55:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_pmap.c,v 1.7 2022/08/21 22:28:26 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -89,16 +89,20 @@ pmap_clear_modify(struct vm_page *pg)
 	return false;
 }
 
+#ifndef pmap_resident_count
 long
 pmap_resident_count(struct pmap *pmap)
 
 {
 	return 0;
 }
+#endif
 
+#ifndef pmap_wired_count
 long
 pmap_wired_count(struct pmap *pmap)
 {
 
 	return 0;
 }
+#endif
