@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2020/11/04 01:37:55 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.14 2022/08/21 07:46:52 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
@@ -146,9 +146,16 @@ struct kbit {
  */
 
 void process_map(kvm_t *, struct kinfo_proc2 *,
-				   struct kbit *, const char *);
+			   struct kbit *, const char *);
 void dump_vm_map(kvm_t *, struct kinfo_proc2 *,
-				   struct kbit *, struct kbit *, const char *);
+			   struct kbit *, struct kbit *, const char *);
+size_t dump_vm_map_list(kvm_t *, struct kinfo_proc2 *,
+			   struct kbit *, struct kbit *, struct kbit *);
+size_t dump_vm_map_tree(kvm_t *, struct kinfo_proc2 *,
+			   struct kbit *, struct kbit *, struct kbit *);
+size_t dump_vm_map_node(kvm_t *, int lvl, struct kinfo_proc2 *,
+			   struct kbit *, struct kbit *, struct vm_map_entry *);
 size_t dump_vm_map_entry(kvm_t *, struct kinfo_proc2 *,
-					   struct kbit *, struct kbit *, int);
+			   struct kbit *, struct kbit *, int);
+
 void dump_amap(kvm_t *, struct kbit *);
