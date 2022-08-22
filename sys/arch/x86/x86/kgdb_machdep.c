@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.5 2019/04/21 06:37:21 maxv Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6 2022/08/22 13:57:24 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997, 2017 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.5 2019/04/21 06:37:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6 2022/08/22 13:57:24 hannken Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.5 2019/04/21 06:37:21 maxv Exp $"
 #include <sys/kgdb.h>
 #include <sys/systm.h>
 
+#include <machine/pmap_private.h>
 #include <machine/pte.h>
 #include <machine/trap.h>
 

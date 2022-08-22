@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.10 2022/08/20 23:15:36 riastradh Exp $	*/
+/*	$NetBSD: asan.h,v 1.11 2022/08/22 13:57:24 hannken Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -36,6 +36,8 @@
 #include <amd64/vmparam.h>
 
 #include <x86/bootspace.h>
+
+#include <machine/pmap_private.h>
 
 #ifdef __HAVE_PCPU_AREA
 #error "PCPU area not allowed with KASAN"
