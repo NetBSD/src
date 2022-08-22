@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.116 2022/08/22 00:19:43 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.117 2022/08/22 00:19:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.116 2022/08/22 00:19:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.117 2022/08/22 00:19:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1199,14 +1199,14 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	return (error);
 }
 
-/*
- * Caller must hold sc->sc_dk.dk_openlock and sc->sc_parent->dk_rawlock.
- */
 static int
 dklastclose(struct dkwedge_softc *sc)
 {
 	struct vnode *vp;
 	int error = 0, mode;
+
+	KASSERT(mutex_owned(&sc->sc_dk.dk_openlock));
+	KASSERT(mutex_owned(&sc->sc_parent->dk_rawlock));
 
 	mode = sc->sc_mode;
 
