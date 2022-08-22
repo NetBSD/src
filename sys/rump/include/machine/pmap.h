@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2015/04/17 12:43:15 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2022/08/22 13:22:10 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -36,5 +36,6 @@ struct pmap {
 #define pmap_is_modified(a) (true)
 #define pmap_is_referenced(a) (true)
 #define pmap_resident_count(a) (0)
+#define pmap_wired_count(a) (0)
 
 #endif /* _SYS_RUMP_PMAP_H_ */
