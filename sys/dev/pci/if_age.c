@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.70 2022/05/31 08:43:15 andvar Exp $ */
+/*	$NetBSD: if_age.c,v 1.71 2022/08/22 16:14:31 thorpej Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.70 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.71 2022/08/22 16:14:31 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -98,7 +98,7 @@ static void	age_dma_free(struct age_softc *);
 static void	age_get_macaddr(struct age_softc *, uint8_t[]);
 static void	age_phy_reset(struct age_softc *);
 
-static int	age_encap(struct age_softc *, struct mbuf **);
+static int	age_encap(struct age_softc *, struct mbuf *);
 static void	age_init_tx_ring(struct age_softc *);
 static int	age_init_rx_ring(struct age_softc *);
 static void	age_init_rr_ring(struct age_softc *);
@@ -1056,7 +1056,7 @@ age_start(struct ifnet *ifp)
 {
 	struct age_softc *sc = ifp->if_softc;
 	struct mbuf *m_head;
-	int enq;
+	int enq, error;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1076,9 +1076,13 @@ age_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (age_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				break;
+		if ((error = age_encap(sc, m_head)) != 0) {
+			if (error == EFBIG) {
+				/* This is fatal for the packet. */
+				m_freem(m_head);
+				if_statinc(ifp, if_oerrors);
+				continue;
+			}
 			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1213,16 +1217,14 @@ age_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 static int
-age_encap(struct age_softc *sc, struct mbuf **m_head)
+age_encap(struct age_softc *sc, struct mbuf * const m)
 {
 	struct age_txdesc *txd, *txd_last;
 	struct tx_desc *desc;
-	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
 
-	m = *m_head;
 	cflags = vtag = 0;
 	poff = 0;
 
@@ -1231,40 +1233,31 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	txd_last = txd;
 	map = txd->tx_dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
-
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error == EFBIG) {
-		error = 0;
-
-		*m_head = m_pullup(*m_head, MHLEN);
-		if (*m_head == NULL) {
-			printf("%s: can't defrag TX mbuf\n",
-			    device_xname(sc->sc_dev));
-			return ENOBUFS;
-		}
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
+		struct mbuf *mnew = m_defrag(m, M_NOWAIT);
+		if (mnew != NULL) {
+			KASSERT(m == mnew);
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, map, mnew,
 			    BUS_DMA_NOWAIT);
-
-		if (error != 0) {
-			printf("%s: could not load defragged TX mbuf\n",
-			    device_xname(sc->sc_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
+		} else {
+			/* Just drop if we can't defrag. */
+			error = EFBIG;
+		}
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: Tx packet consumes too many "
+				    "DMA segments, dropping...\n",
+				    device_xname(sc->sc_dev));
+			}
 			return error;
 		}
 	} else if (error) {
-		printf("%s: could not load TX mbuf\n", device_xname(sc->sc_dev));
 		return error;
 	}
 
 	nsegs = map->dm_nsegs;
-
-	if (nsegs == 0) {
-		m_freem(*m_head);
-		*m_head = NULL;
-		return EIO;
-	}
+	KASSERT(nsegs != 0);
 
 	/* Check descriptor overrun. */
 	if (sc->age_cdata.age_tx_cnt + nsegs >= AGE_TX_RING_CNT - 2) {
@@ -1274,7 +1267,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	m = *m_head;
 	/* Configure Tx IP/TCP/UDP checksum offload. */
 	if ((m->m_pkthdr.csum_flags & AGE_CSUM_FEATURES) != 0) {
 		cflags |= AGE_TD_CSUM;
