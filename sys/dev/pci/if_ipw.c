@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.75 2022/08/22 17:07:40 thorpej Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.75 2022/08/22 17:07:40 thorpej Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1530,9 +1530,7 @@ ipw_start(struct ifnet *ifp)
 			break;
 		}
 
-		if (m0->m_len < sizeof (struct ether_header) &&
-		    (m0 = m_pullup(m0, sizeof (struct ether_header))) == NULL)
-			continue;
+		KASSERT(m0->m_len >= sizeof(struct ether_header));
 
 		eh = mtod(m0, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
