@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.67 2022/08/11 10:17:44 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.68 2022/08/22 09:13:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.67 2022/08/11 10:17:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.68 2022/08/22 09:13:08 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -631,7 +631,7 @@ fstrans_held(struct mount *mp)
 
 	KASSERT(mp != dead_rootmount);
 
-	fli = fstrans_get_lwp_info(mp, true);
+	fli = fstrans_get_lwp_info(mp, false);
 	if (fli == NULL)
 		return 0;
 	fmi = fli->fli_mountinfo;
@@ -650,7 +650,7 @@ fstrans_is_owner(struct mount *mp)
 
 	KASSERT(mp != dead_rootmount);
 
-	fli = fstrans_get_lwp_info(mp, true);
+	fli = fstrans_get_lwp_info(mp, false);
 	if (fli == NULL)
 		return 0;
 	fmi = fli->fli_mountinfo;
