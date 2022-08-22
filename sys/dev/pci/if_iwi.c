@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.119 2022/08/22 17:07:40 thorpej Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.120 2022/08/22 18:09:04 thorpej Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.119 2022/08/22 17:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.120 2022/08/22 18:09:04 thorpej Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1781,7 +1781,7 @@ iwi_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -1790,6 +1790,7 @@ iwi_start(struct ifnet *ifp)
 		eh = mtod(m0, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			if_statinc(ifp, if_oerrors);
 			continue;
@@ -1797,6 +1798,7 @@ iwi_start(struct ifnet *ifp)
 
 		/* classify mbuf so we can find which tx ring to use */
 		if (ieee80211_classify(ic, m0, ni) != 0) {
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			ieee80211_free_node(ni);
 			if_statinc(ifp, if_oerrors);
@@ -1809,12 +1811,10 @@ iwi_start(struct ifnet *ifp)
 
 		if (sc->txq[ac].queued > sc->txq[ac].count - 8) {
 			/* there is no place left in this ring */
-			IFQ_LOCK(&ifp->if_snd);
-			IF_PREPEND(&ifp->if_snd, m0);
-			IFQ_UNLOCK(&ifp->if_snd);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 
