@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.42 2022/08/22 15:43:49 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.43 2022/08/22 15:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.42 2022/08/22 15:43:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.43 2022/08/22 15:59:42 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -931,14 +931,19 @@ ale_encap(struct ale_softc *sc, struct mbuf * const m)
 			KASSERT(m == mnew);
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, map, mnew,
 			    BUS_DMA_NOWAIT);
+		} else {
+			/* Just drop if we can't defrag. */
+			error = EFBIG;
 		}
-		if (mnew == NULL || error == EFBIG) {
-			printf("%s: Tx packet consumes too many "
-			    "DMA segments, dropping...\n",
-			    device_xname(sc->sc_dev));
-			return EFBIG;
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: Tx packet consumes too many "
+				    "DMA segments, dropping...\n",
+				    device_xname(sc->sc_dev));
+			}
+			return error;
 		}
-	} else if (error != 0) {
+	} else if (error) {
 		return error;
 	}
 
