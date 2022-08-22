@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.71 2022/08/22 16:14:31 thorpej Exp $ */
+/*	$NetBSD: if_age.c,v 1.72 2022/08/22 16:18:44 thorpej Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.71 2022/08/22 16:14:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.72 2022/08/22 16:18:44 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -1067,7 +1067,7 @@ age_start(struct ifnet *ifp)
 
 	enq = 0;
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1079,14 +1079,15 @@ age_start(struct ifnet *ifp)
 		if ((error = age_encap(sc, m_head)) != 0) {
 			if (error == EFBIG) {
 				/* This is fatal for the packet. */
+				IFQ_DEQUEUE(&ifp->if_snd, m_head);
 				m_freem(m_head);
 				if_statinc(ifp, if_oerrors);
 				continue;
 			}
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		enq = 1;
 
 		/*
