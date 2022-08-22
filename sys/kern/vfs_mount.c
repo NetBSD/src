@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.94 2022/07/08 07:43:19 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.95 2022/08/22 09:14:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.94 2022/07/08 07:43:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.95 2022/08/22 09:14:24 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -929,14 +929,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * vfs_busy() from succeeding.
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+		coveredvp->v_mountedhere = NULL;
+	}
 	if (!was_suspended)
 		vfs_resume(mp);
 
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
-		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);
-		coveredvp->v_mountedhere = NULL;
-		VOP_UNLOCK(coveredvp);
-	}
 	mountlist_remove(mp);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
