@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.11 2021/12/19 09:45:10 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.12 2022/08/22 18:30:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.11 2021/12/19 09:45:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.12 2022/08/22 18:30:50 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -1193,16 +1193,9 @@ static int drm_dp_mst_wait_tx_reply(struct drm_dp_mst_branch *mstb,
 	struct drm_dp_mst_topology_mgr *mgr = mstb->mgr;
 	int ret;
 
-#ifdef __NetBSD__
 	mutex_lock(&mstb->mgr->qlock);
 	DRM_TIMED_WAIT_UNTIL(ret, &mgr->tx_waitq, &mstb->mgr->qlock, 4*HZ,
 	    check_txmsg_state(mgr, txmsg));
-#else
-	ret = wait_event_timeout(mgr->tx_waitq,
-				 check_txmsg_state(mgr, txmsg),
-				 (4 * HZ));
-	mutex_lock(&mstb->mgr->qlock);
-#endif
 	if (ret > 0) {
 		if (txmsg->state == DRM_DP_SIDEBAND_TX_TIMEOUT) {
 			ret = -EIO;
@@ -2827,11 +2820,7 @@ static void process_single_down_tx_qlock(struct drm_dp_mst_topology_mgr *mgr)
 		if (txmsg->seqno != -1)
 			txmsg->dst->tx_slots[txmsg->seqno] = NULL;
 		txmsg->state = DRM_DP_SIDEBAND_TX_TIMEOUT;
-#ifdef __NetBSD__
 		DRM_WAKEUP_ALL(&mgr->tx_waitq, &mgr->qlock);
-#else
-		wake_up_all(&mgr->tx_waitq);
-#endif
 	}
 }
 
@@ -3823,13 +3812,8 @@ static int drm_dp_mst_handle_down_rep(struct drm_dp_mst_topology_mgr *mgr)
 	txmsg->state = DRM_DP_SIDEBAND_TX_RX;
 	mstb->tx_slots[slot] = NULL;
 	mgr->is_waiting_for_dwn_reply = false;
-	mutex_unlock(&mgr->qlock);
-
-#ifdef __NetBSD__
 	DRM_WAKEUP_ALL(&mgr->tx_waitq, &mgr->qlock);
-#else
-	wake_up_all(&mgr->tx_waitq);
-#endif
+	mutex_unlock(&mgr->qlock);
 
 	return 0;
 
@@ -4717,16 +4701,9 @@ drm_dp_delayed_destroy_mstb(struct drm_dp_mst_branch *mstb)
 		mstb->tx_slots[1] = NULL;
 		wake_tx = true;
 	}
-	mutex_unlock(&mstb->mgr->qlock);
-
 	if (wake_tx)
-	{
-#ifdef __NetBSD__
 		DRM_WAKEUP_ALL(&mstb->mgr->tx_waitq, &mstb->mgr->qlock);
-#else
-		wake_up_all(&mstb->mgr->tx_waitq);
-#endif
-	}
+	mutex_unlock(&mstb->mgr->qlock);
 
 	drm_dp_mst_put_mstb_malloc(mstb);
 }
@@ -5164,11 +5141,7 @@ int drm_dp_mst_topology_mgr_init(struct drm_dp_mst_topology_mgr *mgr,
 	INIT_WORK(&mgr->tx_work, drm_dp_tx_work);
 	INIT_WORK(&mgr->delayed_destroy_work, drm_dp_delayed_destroy_work);
 	INIT_WORK(&mgr->up_req_work, drm_dp_mst_up_req_work);
-#ifdef __NetBSD__
 	DRM_INIT_WAITQUEUE(&mgr->tx_waitq, "dpmstwait");
-#else
-	init_waitqueue_head(&mgr->tx_waitq);
-#endif
 	mgr->dev = dev;
 	mgr->aux = aux;
 	mgr->max_dpcd_transaction_bytes = max_dpcd_transaction_bytes;
@@ -5220,9 +5193,7 @@ void drm_dp_mst_topology_mgr_destroy(struct drm_dp_mst_topology_mgr *mgr)
 	drm_atomic_private_obj_fini(&mgr->base);
 	mgr->funcs = NULL;
 
-#ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&mgr->tx_waitq);
-#endif
 	mutex_destroy(&mgr->delayed_destroy_lock);
 	mutex_destroy(&mgr->payload_lock);
 	mutex_destroy(&mgr->qlock);
