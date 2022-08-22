@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.118 2022/05/23 13:53:37 rin Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.119 2022/08/22 17:07:40 thorpej Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.118 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.119 2022/08/22 17:07:40 thorpej Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1785,11 +1785,7 @@ iwi_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (m0->m_len < sizeof (struct ether_header) &&
-		    (m0 = m_pullup(m0, sizeof (struct ether_header))) == NULL) {
-			if_statinc(ifp, if_oerrors);
-			continue;
-		}
+		KASSERT(m0->m_len >= sizeof(struct ether_header));
 
 		eh = mtod(m0, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
