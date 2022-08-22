@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.127 2022/08/21 15:01:08 brook Exp $
+#	$NetBSD: Makefile.inc,v 1.128 2022/08/22 16:50:25 brook Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -91,15 +91,6 @@ IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
 IMAGE.dir=	${IMAGE.rel}/binary/gzimg
 IMAGE.kern=	${IMAGE.rel}/binary/kernel
 IMAGE.instk=	${IMAGE.rel}/installation/instkernel
-
-# list of boards supported by installboot(8); a bootable image will be
-# created for each (if the corresponding U-Boot package is installed
-# in one of the directories listed in the environment variable
-# INSTALLBOOT_UBOOT_PATHS)
-#
-INSTALLBOOT_BOARDS!= \
-	${TOOL_INSTALLBOOT} -m ${MACHINE} 2>&1 \
-	| ${TOOL_AWK} 'BEGIN { FS=" " } { if (BOARDS) print $$1 } /^Known boards/{ BOARDS=1 }'
 
 __mkimage: .USE
 	TOOL_MAKE=${MAKE} \
