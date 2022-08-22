@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.120 2022/08/22 00:20:27 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.121 2022/08/22 00:20:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.120 2022/08/22 00:20:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.121 2022/08/22 00:20:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -98,7 +98,7 @@ static void	dkrestart(void *);
 static void	dkminphys(struct buf *);
 
 static int	dkfirstopen(struct dkwedge_softc *, int);
-static int	dklastclose(struct dkwedge_softc *);
+static void	dklastclose(struct dkwedge_softc *);
 static int	dkwedge_cleanup_parent(struct dkwedge_softc *, int);
 static int	dkwedge_detach(device_t, int);
 static void	dkwedge_delall1(struct disk *, bool);
@@ -588,7 +588,7 @@ dkwedge_cleanup_parent(struct dkwedge_softc *sc, int flags)
 		rc = EBUSY;
 	}  else {
 		mutex_enter(&sc->sc_parent->dk_rawlock);
-		rc = dklastclose(sc);
+		dklastclose(sc);
 		mutex_exit(&sc->sc_parent->dk_rawlock);
 	}
 	mutex_exit(&sc->sc_dk.dk_openlock);
@@ -1215,7 +1215,7 @@ dkfirstopen(struct dkwedge_softc *sc, int flags)
 	return 0;
 }
 
-static int
+static void
 dklastclose(struct dkwedge_softc *sc)
 {
 
@@ -1233,8 +1233,6 @@ dklastclose(struct dkwedge_softc *sc)
 
 		dk_close_parent(vp, mode);
 	}
-
-	return 0;
 }
 
 /*
@@ -1246,12 +1244,11 @@ static int
 dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
-	int error = 0;
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 
 	KASSERT(sc->sc_dk.dk_openmask != 0);
 
@@ -1266,13 +1263,13 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		mutex_enter(&sc->sc_parent->dk_rawlock);
-		error = dklastclose(sc);
+		dklastclose(sc);
 		mutex_exit(&sc->sc_parent->dk_rawlock);
 	}
 
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
-	return (error);
+	return 0;
 }
 
 /*
