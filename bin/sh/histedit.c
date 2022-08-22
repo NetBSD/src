@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.64 2022/08/21 21:35:36 nia Exp $	*/
+/*	$NetBSD: histedit.c,v 1.65 2022/08/22 17:33:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.64 2022/08/21 21:35:36 nia Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.65 2022/08/22 17:33:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: histedit.c,v 1.64 2022/08/21 21:35:36 nia Exp $");
 #ifndef SMALL
 #include "eval.h"
 #include "memalloc.h"
+#include "show.h"
 
 #define MAXHISTLOOPS	4	/* max recursions through fc */
 #define DEFEDITOR	"ed"	/* default editor *should* be $EDITOR */
@@ -96,6 +97,9 @@ histedit(void)
 	FILE *el_err;
 
 #define editing (Eflag || Vflag)
+
+	CTRACE(DBG_HISTORY, ("histedit: %cE%cV %sinteractive\n",
+	    Eflag ? '-' : '+',  Vflag ? '-' : '+', iflag ? "" : "not "));
 
 	if (iflag == 1) {
 		if (!hist) {
@@ -152,6 +156,8 @@ histedit(void)
 			else
 				unsetenv("TERM");
 			el = el_init("sh", el_in, el_out, el_err);
+			VTRACE(DBG_HISTORY, ("el_init() %sed\n",
+			    el != NULL ? "succeed" : "fail"));
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
@@ -172,6 +178,7 @@ bad:
 			INTOFF;
 			el_end(el);
 			el = NULL;
+			VTRACE(DBG_HISTORY, ("line editing disabled\n"));
 			INTON;
 		}
 		if (el) {
@@ -180,6 +187,7 @@ bad:
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
+			VTRACE(DBG_HISTORY, ("reading $EDITRC\n"));
 			el_source(el, lookupvar("EDITRC"));
 			el_set(el, EL_BIND, "^I", 
 			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
@@ -196,6 +204,7 @@ bad:
 			hist = NULL;
 		}
 		INTON;
+		VTRACE(DBG_HISTORY, ("line editing & history disabled\n"));
 	}
 }
 
@@ -263,10 +272,13 @@ setterm(const char *term)
 int
 inputrc(int argc, char **argv)
 {
+	CTRACE(DBG_HISTORY, ("inputrc (%d arg%s)", argc-1, argc==2?"":"s"));
 	if (argc != 2) {
+		CTRACE(DBG_HISTORY, (" -- bad\n"));
 		out2str("usage: inputrc file\n");
 		return 1;
 	}
+	CTRACE(DBG_HISTORY, (" file: \"%s\"\n", argv[1]));
 	if (el != NULL) {
 		INTOFF;
 		if (el_source(el, argv[1])) {
@@ -310,6 +322,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	if (hist == NULL)
 		error("history not active");
 
+	CTRACE(DBG_HISTORY, ("histcmd (fc) %d arg%s\n", argc, argc==1?"":"s"));
 	if (argc == 1)
 		error("missing history argument");
 
@@ -319,18 +332,23 @@ histcmd(volatile int argc, char ** volatile argv)
 		switch ((char)ch) {
 		case 'e':
 			editor = optarg;
+			VTRACE(DBG_HISTORY, ("histcmd -e %s\n", editor));
 			break;
 		case 'l':
 			lflg = 1;
+			VTRACE(DBG_HISTORY, ("histcmd -l\n"));
 			break;
 		case 'n':
 			nflg = 1;
+			VTRACE(DBG_HISTORY, ("histcmd -n\n"));
 			break;
 		case 'r':
 			rflg = 1;
+			VTRACE(DBG_HISTORY, ("histcmd -r\n"));
 			break;
 		case 's':
 			sflg = 1;
+			VTRACE(DBG_HISTORY, ("histcmd -s\n"));
 			break;
 		case ':':
 			error("option -%c expects argument", optopt);
@@ -355,12 +373,17 @@ histcmd(volatile int argc, char ** volatile argv)
 		savehandler = handler;
 		if (setjmp(jmploc.loc)) {
 			active = 0;
-			if (*editfile)
+			if (*editfile) {
+				VTRACE(DBG_HISTORY,
+				    ("histcmd err jump unlink temp \"%s\"\n",
+				    *editfile));
 				unlink(editfile);
+			}
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
 		handler = &jmploc;
+		VTRACE(DBG_HISTORY, ("histcmd was active %d (++)\n", active));
 		if (++active > MAXHISTLOOPS) {
 			active = 0;
 			displayhist = 0;
@@ -378,6 +401,8 @@ histcmd(volatile int argc, char ** volatile argv)
 				sflg = 1;	/* no edit */
 				editor = NULL;
 			}
+			VTRACE(DBG_HISTORY, ("histcmd using %s as editor\n",
+			    editor == NULL ? "-nothing-" : editor));
 		}
 	}
 
@@ -389,6 +414,8 @@ histcmd(volatile int argc, char ** volatile argv)
 		pat = argv[0];
 		*repl++ = '\0';
 		argc--, argv++;
+		VTRACE(DBG_HISTORY, ("histcmd replace old=\"%s\" new=\"%s\""
+		    " (%d args)\n", pat, repl, argc));
 	}
 
 	/*
@@ -428,6 +455,10 @@ histcmd(volatile int argc, char ** volatile argv)
 		last = first;
 		first = i;
 	}
+	VTRACE(DBG_HISTORY, ("histcmd%s first=\"%s\" (#%d) last=\"%s\" (#%d)\n",
+	    rflg ? " reversed" : "", rflg ? laststr : firststr, first,
+	    rflg ? firststr : laststr, last));
+
 	/*
 	 * XXX - this should not depend on the event numbers
 	 * always increasing.  Add sequence numbers or offset
@@ -448,6 +479,8 @@ histcmd(volatile int argc, char ** volatile argv)
 			close(fd);
 			error("can't allocate stdio buffer for temp");
 		}
+		VTRACE(DBG_HISTORY, ("histcmd created \"%s\" for edit buffer"
+		    " fd=%d\n", editfile, fd));
 	}
 
 	/*
@@ -470,6 +503,7 @@ histcmd(volatile int argc, char ** volatile argv)
 			   fc_replace(he.str, pat, repl) : he.str;
 
 			if (sflg) {
+				VTRACE(DBG_HISTORY, ("histcmd -s \"%s\"\n", s));
 				if (displayhist) {
 					out2str(s);
 				}
@@ -502,9 +536,12 @@ histcmd(volatile int argc, char ** volatile argv)
 		cmdlen = strlen(editor) + strlen(editfile) + 2;
 		editcmd = stalloc(cmdlen);
 		snprintf(editcmd, cmdlen, "%s %s", editor, editfile);
+		VTRACE(DBG_HISTORY, ("histcmd editing: \"%s\"\n", editcmd));
 		evalstring(editcmd, 0);	/* XXX - should use no JC command */
 		stunalloc(editcmd);
+		VTRACE(DBG_HISTORY, ("histcmd read cmds from %s\n", editfile));
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */
+		VTRACE(DBG_HISTORY, ("histcmd unlink %s\n", editfile));
 		unlink(editfile);
 		INTON;
 	}
@@ -522,6 +559,7 @@ fc_replace(const char *s, char *p, char *r)
 	char *dest;
 	int plen = strlen(p);
 
+	VTRACE(DBG_HISTORY, ("histcmd s/%s/%s/ in \"%s\" -> ", p, r, s));
 	STARTSTACKSTR(dest);
 	while (*s) {
 		if (*s == *p && strncmp(s, p, plen) == 0) {
@@ -534,6 +572,7 @@ fc_replace(const char *s, char *p, char *r)
 	}
 	STACKSTRNUL(dest);
 	dest = grabstackstr(dest);
+	VTRACE(DBG_HISTORY, ("\"%s\"\n", dest));
 
 	return dest;
 }
