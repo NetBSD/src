@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.114 2022/08/22 00:19:22 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.115 2022/08/22 00:19:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.114 2022/08/22 00:19:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.115 2022/08/22 00:19:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -581,18 +581,16 @@ dkwedge_cleanup_parent(struct dkwedge_softc *sc, int flags)
 
 	rc = 0;
 	mutex_enter(&dk->dk_openlock);
-	if (dk->dk_openmask == 0)
+	if (dk->dk_openmask == 0) {
 		/* nothing to do */
-		mutex_exit(&dk->dk_openlock);
-	else if ((flags & DETACH_FORCE) == 0) {
+	} else if ((flags & DETACH_FORCE) == 0) {
 		rc = EBUSY;
-		mutex_exit(&dk->dk_openlock);
 	}  else {
 		mutex_enter(&sc->sc_parent->dk_rawlock);
 		rc = dklastclose(sc);
 		mutex_exit(&sc->sc_parent->dk_rawlock);
-		mutex_exit(&sc->sc_dk.dk_openlock);
 	}
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return rc;
 }
@@ -1259,12 +1257,10 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		error = dklastclose(sc);
-		mutex_exit(&sc->sc_parent->dk_rawlock);
-		mutex_exit(&sc->sc_dk.dk_openlock);
-	} else {
-		mutex_exit(&sc->sc_parent->dk_rawlock);
-		mutex_exit(&sc->sc_dk.dk_openlock);
 	}
+
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return (error);
 }
