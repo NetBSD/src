@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.40 2020/03/01 02:28:14 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.41 2022/08/22 15:39:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.40 2020/03/01 02:28:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.41 2022/08/22 15:39:26 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -102,7 +102,7 @@ static void	ale_txeof(struct ale_softc *);
 
 static int	ale_dma_alloc(struct ale_softc *);
 static void	ale_dma_free(struct ale_softc *);
-static int	ale_encap(struct ale_softc *, struct mbuf **);
+static int	ale_encap(struct ale_softc *, struct mbuf *);
 static void	ale_init_rx_pages(struct ale_softc *);
 static void	ale_init_tx_ring(struct ale_softc *);
 
@@ -908,16 +908,14 @@ ale_dma_free(struct ale_softc *sc)
 }
 
 static int
-ale_encap(struct ale_softc *sc, struct mbuf **m_head)
+ale_encap(struct ale_softc *sc, struct mbuf * const m)
 {
 	struct ale_txdesc *txd, *txd_last;
 	struct tx_desc *desc;
-	struct mbuf *m;
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
 
-	m = *m_head;
 	cflags = vtag = 0;
 	poff = 0;
 
@@ -926,39 +924,26 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	txd_last = txd;
 	map = txd->tx_dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 	if (error == EFBIG) {
-		error = 0;
-
-		*m_head = m_pullup(*m_head, MHLEN);
-		if (*m_head == NULL) {
-			printf("%s: can't defrag TX mbuf\n",
-			    device_xname(sc->sc_dev));
-			return ENOBUFS;
+		struct mbuf *mnew = m_defrag(m, M_NOWAIT);
+		if (mnew != NULL) {
+			KASSERT(m == mnew);
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, map, mnew,
+			    BUS_DMA_NOWAIT);
 		}
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
-		    BUS_DMA_NOWAIT);
-
-		if (error != 0) {
-			printf("%s: could not load defragged TX mbuf\n",
+		if (mnew == NULL || error == EFBIG) {
+			printf("%s: Tx packet consumes too many "
+			    "DMA segments, dropping...\n",
 			    device_xname(sc->sc_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
-			return error;
+			return EFBIG;
 		}
-	} else if (error) {
-		printf("%s: could not load TX mbuf\n", device_xname(sc->sc_dev));
+	} else if (error != 0) {
 		return error;
 	}
 
 	nsegs = map->dm_nsegs;
-
-	if (nsegs == 0) {
-		m_freem(*m_head);
-		*m_head = NULL;
-		return EIO;
-	}
+	KASSERT(nsegs != 0);
 
 	/* Check descriptor overrun. */
 	if (sc->ale_cdata.ale_tx_cnt + nsegs >= ALE_TX_RING_CNT - 2) {
@@ -968,7 +953,6 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	m = *m_head;
 	/* Configure Tx checksum offload. */
 	if ((m->m_pkthdr.csum_flags & ALE_CSUM_FEATURES) != 0) {
 		/*
@@ -1044,7 +1028,7 @@ ale_start(struct ifnet *ifp)
 {
 	struct ale_softc *sc = ifp->if_softc;
 	struct mbuf *m_head;
-	int enq;
+	int enq, error;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1064,9 +1048,13 @@ ale_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (ale_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				break;
+		if ((error = ale_encap(sc, m_head)) != 0) {
+			if (error == EFBIG) {
+				/* This is fatal for the packet. */
+				m_freem(m_head);
+				if_statinc(ifp, if_oerrors);
+				continue;
+			}
 			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
