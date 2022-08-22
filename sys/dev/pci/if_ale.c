@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.41 2022/08/22 15:39:26 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.42 2022/08/22 15:43:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.41 2022/08/22 15:39:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.42 2022/08/22 15:43:49 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -1039,7 +1039,7 @@ ale_start(struct ifnet *ifp)
 
 	enq = 0;
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1051,14 +1051,15 @@ ale_start(struct ifnet *ifp)
 		if ((error = ale_encap(sc, m_head)) != 0) {
 			if (error == EFBIG) {
 				/* This is fatal for the packet. */
+				IFQ_DEQUEUE(&ifp->if_snd, m_head);
 				m_freem(m_head);
 				if_statinc(ifp, if_oerrors);
 				continue;
 			}
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		enq = 1;
 
 		/*
