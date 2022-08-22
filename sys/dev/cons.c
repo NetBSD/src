@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.78 2022/08/22 00:20:45 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.79 2022/08/22 00:20:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.78 2022/08/22 00:20:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.79 2022/08/22 00:20:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -131,8 +131,10 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	if (cn_devvp[unit] != NULLVP)
 		return 0;
-	if ((error = cdevvp(cndev, &cn_devvp[unit])) != 0)
+	if ((error = cdevvp(cndev, &cn_devvp[unit])) != 0) {
 		printf("cnopen: unable to get vnode reference\n");
+		return error;
+	}
 	vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
 	VOP_UNLOCK(cn_devvp[unit]);
