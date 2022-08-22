@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.119 2022/08/22 00:20:18 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.120 2022/08/22 00:20:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.119 2022/08/22 00:20:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.120 2022/08/22 00:20:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1218,30 +1218,23 @@ dkfirstopen(struct dkwedge_softc *sc, int flags)
 static int
 dklastclose(struct dkwedge_softc *sc)
 {
-	struct vnode *vp;
-	int error = 0, mode;
 
 	KASSERT(mutex_owned(&sc->sc_dk.dk_openlock));
 	KASSERT(mutex_owned(&sc->sc_parent->dk_rawlock));
 	KASSERT(sc->sc_parent->dk_rawopens > 0);
+	KASSERT(sc->sc_parent->dk_rawvp != NULL);
 
-	mode = sc->sc_mode;
+	if (--sc->sc_parent->dk_rawopens == 0) {
+		struct vnode *const vp = sc->sc_parent->dk_rawvp;
+		const int mode = sc->sc_mode;
 
-	vp = NULL;
-	if (sc->sc_parent->dk_rawopens > 0) {
-		if (--sc->sc_parent->dk_rawopens == 0) {
-			KASSERT(sc->sc_parent->dk_rawvp != NULL);
-			vp = sc->sc_parent->dk_rawvp;
-			sc->sc_parent->dk_rawvp = NULL;
-			sc->sc_mode = 0;
-		}
-	}
+		sc->sc_parent->dk_rawvp = NULL;
+		sc->sc_mode = 0;
 
-	if (vp) {
 		dk_close_parent(vp, mode);
 	}
 
-	return error;
+	return 0;
 }
 
 /*
