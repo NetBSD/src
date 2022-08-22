@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.77 2019/12/06 04:15:38 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.78 2022/08/22 00:20:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.77 2019/12/06 04:15:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.78 2022/08/22 00:20:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -133,11 +133,9 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return 0;
 	if ((error = cdevvp(cndev, &cn_devvp[unit])) != 0)
 		printf("cnopen: unable to get vnode reference\n");
-	error = vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
-	if (error == 0) {
-		error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
-		VOP_UNLOCK(cn_devvp[unit]);
-	}
+	vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
+	VOP_UNLOCK(cn_devvp[unit]);
 	return error;
 }
 
@@ -154,12 +152,10 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	vp = cn_devvp[unit];
 	cn_devvp[unit] = NULL;
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error == 0) {
-		error = VOP_CLOSE(vp, flag, kauth_cred_get());
-		VOP_UNLOCK(vp);
-		vrele(vp);
-	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_CLOSE(vp, flag, kauth_cred_get());
+	VOP_UNLOCK(vp);
+	vrele(vp);
 	return error;
 }
 
