@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.34 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.35 2022/08/22 08:37:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -157,13 +157,11 @@ typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
  * usbnet_ops functions are invoked:
  *
  * I -> IFNET_LOCK (if_ioctl_lock)
- * C -> CORE_LOCK (usbnet core_lock)
- * T -> TX_LOCK (usbnet tx_lock)
- * R -> RX_LOCK (usbnet rx_lock)
+ * C -> usbnet un_mcastlock
+ * M -> usbnet un_miilock
+ * T -> usbnet un_txlock
+ * R -> usbnet un_rxlock
  * n -> no locks held
- *
- * Note that when CORE_LOCK is held, IFNET_LOCK may or may not also
- * be held.
  *
  * Note that the IFNET_LOCK **may not be held** for the ioctl commands
  * SIOCADDMULTI/SIOCDELMULTI.  These commands are only passed
@@ -171,14 +169,14 @@ typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
  * handled by uno_mcast (also without IFNET_LOCK).
  */
 struct usbnet_ops {
-	usbnet_stop_cb		uno_stop;		/* C */
+	usbnet_stop_cb		uno_stop;		/* I */
 	usbnet_ioctl_cb		uno_ioctl;		/* I */
 	usbnet_ioctl_cb		uno_override_ioctl;	/* I (except mcast) */
-	usbnet_mcast_cb		uno_mcast;		/* I */
+	usbnet_mcast_cb		uno_mcast;		/* C */
 	usbnet_init_cb		uno_init;		/* I */
-	usbnet_mii_read_reg_cb	uno_read_reg;		/* C */
-	usbnet_mii_write_reg_cb uno_write_reg;		/* C */
-	usbnet_mii_statchg_cb	uno_statchg;		/* C */
+	usbnet_mii_read_reg_cb	uno_read_reg;		/* M */
+	usbnet_mii_write_reg_cb uno_write_reg;		/* M */
+	usbnet_mii_statchg_cb	uno_statchg;		/* M */
 	usbnet_tx_prepare_cb	uno_tx_prepare;		/* T */
 	usbnet_rx_loop_cb	uno_rx_loop;		/* R */
 	usbnet_tick_cb		uno_tick;		/* n */
