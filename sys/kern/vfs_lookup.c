@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.231 2022/02/10 10:59:12 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.232 2022/08/22 09:14:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.231 2022/02/10 10:59:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.232 2022/08/22 09:14:59 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.231 2022/02/10 10:59:12 hannken Exp
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/vnode_impl.h>
+#include <sys/fstrans.h>
 #include <sys/mount.h>
 #include <sys/errno.h>
 #include <sys/filedesc.h>
@@ -948,31 +949,16 @@ lookup_crossmount(struct namei_state *state,
 			vrele(foundobj);
 			foundobj = vp;
 		} else {
-			/* First get the vnode stable. */
-			error = vn_lock(foundobj, LK_SHARED);
-			if (error != 0) {
-				vrele(foundobj);
-				foundobj = NULL;
-				break;
+			/* First get the vnodes mount stable. */
+			while ((mp = foundobj->v_mountedhere) != NULL) {
+				fstrans_start(mp);
+				if (fstrans_held(mp) &&
+				    mp == foundobj->v_mountedhere) {
+					break;
+				}
+				fstrans_done(mp);
 			}
-
-			/*
-			 * Check to see if something is still mounted on it.
-			 */
-			if ((mp = foundobj->v_mountedhere) == NULL) {
-				VOP_UNLOCK(foundobj);
-				break;
-			}
-
-			/*
-			 * Get a reference to the mountpoint, and unlock
-			 * foundobj.
-			 */
-			error = vfs_busy(mp);
-			VOP_UNLOCK(foundobj);
-			if (error != 0) {
-				vrele(foundobj);
-				foundobj = NULL;
+			if (mp == NULL) {
 				break;
 			}
 
@@ -992,7 +978,7 @@ lookup_crossmount(struct namei_state *state,
 
 			/* Finally, drop references to foundobj & mountpoint. */
 			vrele(foundobj);
-			vfs_unbusy(mp);
+			fstrans_done(mp);
 			if (error) {
 				foundobj = NULL;
 				break;
