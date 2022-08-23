@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.9 2022/08/06 17:53:49 martin Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.10 2022/08/23 05:41:46 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.9 2022/08/06 17:53:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.10 2022/08/23 05:41:46 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -552,7 +552,7 @@ eqos_init_locked(struct eqos_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t val;
+	uint32_t val, tqs, rqs;
 
 	EQOS_ASSERT_LOCKED(sc);
 	EQOS_ASSERT_TXLOCKED(sc);
@@ -599,6 +599,24 @@ eqos_init_locked(struct eqos_softc *sc)
 	    GMAC_MTL_RXQ0_OPERATION_MODE_FEP |
 	    GMAC_MTL_RXQ0_OPERATION_MODE_FUP);
 
+	/*
+	 * TX/RX fifo size in hw_feature[1] are log2(n/128), and
+	 * TQS/RQS in TXQ0/RXQ0_OPERATION_MODE are n/256-1.
+	 */
+	tqs = (128 << __SHIFTOUT(sc->sc_hw_feature[1],
+	    GMAC_MAC_HW_FEATURE1_TXFIFOSIZE) / 256) - 1;
+	val = RD4(sc, GMAC_MTL_TXQ0_OPERATION_MODE);
+	val &= ~GMAC_MTL_TXQ0_OPERATION_MODE_TQS;
+	val |= __SHIFTIN(tqs, GMAC_MTL_TXQ0_OPERATION_MODE_TQS);
+	WR4(sc, GMAC_MTL_TXQ0_OPERATION_MODE, val);
+
+	rqs = (128 << __SHIFTOUT(sc->sc_hw_feature[1],
+	    GMAC_MAC_HW_FEATURE1_RXFIFOSIZE) / 256) - 1;
+	val = RD4(sc, GMAC_MTL_RXQ0_OPERATION_MODE);
+	val &= ~GMAC_MTL_RXQ0_OPERATION_MODE_RQS;
+	val |= __SHIFTIN(rqs, GMAC_MTL_RXQ0_OPERATION_MODE_RQS);
+	WR4(sc, GMAC_MTL_RXQ0_OPERATION_MODE, val);
+
 	/* Enable flow control */
 	val = RD4(sc, GMAC_MAC_Q0_TX_FLOW_CTRL);
 	val |= 0xFFFFU << GMAC_MAC_Q0_TX_FLOW_CTRL_PT_SHIFT;
@@ -607,6 +625,10 @@ eqos_init_locked(struct eqos_softc *sc)
 	val = RD4(sc, GMAC_MAC_RX_FLOW_CTRL);
 	val |= GMAC_MAC_RX_FLOW_CTRL_RFE;
 	WR4(sc, GMAC_MAC_RX_FLOW_CTRL, val);
+
+	/* set RX queue mode. must be in DCB mode. */
+	val = __SHIFTIN(GMAC_RXQ_CTRL0_EN_DCB, GMAC_RXQ_CTRL0_EN_MASK);
+	WR4(sc, GMAC_RXQ_CTRL0, val);
 
 	/* Enable transmitter and receiver */
 	val = RD4(sc, GMAC_MAC_CONFIGURATION);
