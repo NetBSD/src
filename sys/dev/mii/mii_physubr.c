@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.100 2022/08/20 11:12:46 riastradh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.101 2022/08/23 01:05:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.100 2022/08/20 11:12:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.101 2022/08/23 01:05:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -441,9 +441,15 @@ mii_phy_down(struct mii_softc *sc)
 			    sc->mii_pdata->mii_media.ifm_lock);
 		}
 	} else {
-		if (sc->mii_flags & MIIF_DOINGAUTO) {
-			callout_halt(&sc->mii_nway_ch,
-			    sc->mii_pdata->mii_media.ifm_lock);
+		if ((sc->mii_flags & MIIF_DOINGAUTO) != 0 &&
+		    callout_halt(&sc->mii_nway_ch,
+			sc->mii_pdata->mii_media.ifm_lock) == 0) {
+			/*
+			 * The callout was scheduled, and we prevented
+			 * it from running before it expired, so we are
+			 * now responsible for clearing the flag.
+			 */
+			sc->mii_flags &= ~MIIF_DOINGAUTO;
 		}
 	}
 	KASSERT((sc->mii_flags & MIIF_DOINGAUTO) == 0);
