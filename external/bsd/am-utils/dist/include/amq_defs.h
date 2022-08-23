@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_defs.h,v 1.1.1.3 2015/01/17 16:34:18 christos Exp $	*/
+/*	$NetBSD: amq_defs.h,v 1.2 2022/08/23 07:42:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -68,7 +68,7 @@
 /*
  * TYPEDEFS
  */
-typedef long *time_type;
+typedef long long time_type;
 typedef struct amq_mount_info amq_mount_info;
 typedef struct amq_map_info amq_map_info;
 typedef struct amq_mount_stats amq_mount_stats;

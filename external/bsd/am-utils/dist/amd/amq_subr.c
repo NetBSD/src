@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.3 2015/01/18 16:27:36 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.4 2022/08/23 07:42:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -331,7 +331,7 @@ bool_t
 xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
 {
   am_node *mp = (am_node *) objp;
-  long mtime;
+  longlong_t mtime;
 
   if (!xdr_amq_string(xdrs, &mp->am_al->al_mnt->mf_info)) {
     return (FALSE);
@@ -346,7 +346,7 @@ xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
     return (FALSE);
   }
   mtime = mp->am_stats.s_mtime;
-  if (!xdr_long(xdrs, &mtime)) {
+  if (!xdr_longlong_t(xdrs, &mtime)) {
     return (FALSE);
   }
   if (!xdr_u_short(xdrs, &mp->am_stats.s_uid)) {
@@ -530,7 +530,7 @@ xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
   u_int len = 0;
   int x;
   char *n;
-  long modify;
+  longlong_t modify;
 
   /*
    * Compute length of list
@@ -556,7 +556,7 @@ xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
     }
 
     modify = (long)m->modify;
-    if (!xdr_long(xdrs, &modify)) {
+    if (!xdr_longlong_t(xdrs, &modify)) {
       return (FALSE);
     }
 
