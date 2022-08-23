@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.10 2022/08/23 05:33:39 ryo Exp $ */
+/* $NetBSD: rk_cru.h,v 1.11 2022/08/23 05:39:06 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -51,13 +51,23 @@ enum rk_cru_clktype {
 /* PLL clocks */
 
 struct rk_cru_pll_rate {
-	u_int		rate;
-	u_int		refdiv;
-	u_int		fbdiv;
-	u_int		postdiv1;
-	u_int		postdiv2;
-	u_int		dsmpd;
-	u_int		fracdiv;
+	u_int			rate;
+	union {
+		struct { /* RK3328,3399 */
+			u_int	refdiv;
+			u_int	fbdiv;
+			u_int	postdiv1;
+			u_int	postdiv2;
+			u_int	dsmpd;
+			u_int	fracdiv;
+		};
+		struct { /* RK3588 */
+			u_int	p;
+			u_int	m;
+			u_int	s;
+			u_int	k;
+		};
+	};
 };
 
 #define	RK_PLL_RATE(_rate, _refdiv, _fbdiv, _postdiv1, _postdiv2, _dsmpd, _fracdiv) \
@@ -71,6 +81,15 @@ struct rk_cru_pll_rate {
 		.fracdiv = (_fracdiv),				\
 	}
 
+#define	RK3588_PLL_RATE(_rate, _p, _m, _s, _k) \
+	{							\
+		.rate = (_rate),				\
+		.p = (_p),					\
+		.m = (_m),					\
+		.s = (_s),					\
+		.k = (_k),					\
+	}
+
 struct rk_cru_pll {
 	bus_size_t	con_base;
 	bus_size_t	mode_reg;
@@ -82,6 +101,7 @@ struct rk_cru_pll {
 	u_int		nparents;
 	u_int		flags;
 #define	RK_PLL_RK3288	0x01
+#define	RK_PLL_RK3588	0x02
 };
 
 u_int	rk_cru_pll_get_rate(struct rk_cru_softc *, struct rk_cru_clk *);
@@ -114,6 +134,9 @@ const char *rk_cru_pll_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 #define	RK3288_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
 	RK_PLL_FLAGS(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates, RK_PLL_RK3288)
 
+#define	RK3588_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
+	RK_PLL_FLAGS(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates, RK_PLL_RK3588)
+
 /* ARM clocks */
 
 struct rk_cru_arm_rate {
@@ -135,7 +158,9 @@ struct rk_regmaskval {
 
 struct rk_cru_cpu_rate {
 	u_int			rate;
-	struct rk_regmaskval	divs[2];
+	struct rk_regmaskval	divs[4];
+	struct rk_regmaskval	pre_muxs[3];
+	struct rk_regmaskval	post_muxs[3];
 };
 
 struct rk_regmask {
@@ -148,7 +173,7 @@ struct rk_cru_arm {
 	uint32_t	mux_mask;
 	u_int		mux_main;
 	u_int		mux_alt;
-	struct rk_regmask divs[1];
+	struct rk_regmask divs[4];
 	const char	**parents;
 	u_int		nparents;
 	const struct rk_cru_arm_rate *rates;
@@ -212,6 +237,40 @@ int	rk_cru_arm_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char
 		.u.arm.divs[0].mask = (_div_mask),			\
 	}
 
+#define	RK_CPU_CORE2(_id, _name, _parents,				\
+    _mux_reg, _mux_mask, _mux_main, _mux_alt,				\
+    _div0_reg, _div0_mask,						\
+    _div1_reg, _div1_mask,						\
+    _cpurates)								\
+	{								\
+		_RK_CPU_COMMON_INITIALIZER(_id, _name, _parents,	\
+		    _mux_reg, _mux_mask, _mux_main, _mux_alt,_cpurates),\
+		.u.arm.divs[0].reg = (_div0_reg),			\
+		.u.arm.divs[0].mask = (_div0_mask),			\
+		.u.arm.divs[1].reg = (_div1_reg),			\
+		.u.arm.divs[1].mask = (_div1_mask),			\
+	}
+
+#define	RK_CPU_CORE4(_id, _name, _parents,				\
+    _mux_reg, _mux_mask, _mux_main, _mux_alt,				\
+    _div0_reg, _div0_mask,						\
+    _div1_reg, _div1_mask,						\
+    _div2_reg, _div2_mask,						\
+    _div3_reg, _div3_mask,						\
+    _cpurates)								\
+	{								\
+		_RK_CPU_COMMON_INITIALIZER(_id, _name, _parents,	\
+		    _mux_reg, _mux_mask, _mux_main, _mux_alt,_cpurates),\
+		.u.arm.divs[0].reg = (_div0_reg),			\
+		.u.arm.divs[0].mask = (_div0_mask),			\
+		.u.arm.divs[1].reg = (_div1_reg),			\
+		.u.arm.divs[1].mask = (_div1_mask),			\
+		.u.arm.divs[2].reg = (_div2_reg),			\
+		.u.arm.divs[2].mask = (_div2_mask),			\
+		.u.arm.divs[3].reg = (_div3_reg),			\
+		.u.arm.divs[3].mask = (_div3_mask),			\
+	}
+
 /* Composite clocks */
 
 struct rk_cru_composite {
@@ -228,6 +287,7 @@ struct rk_cru_composite {
 #define	RK_COMPOSITE_SET_RATE_PARENT	0x02
 #define	RK_COMPOSITE_FRACDIV		0x04
 #define	RK_COMPOSITE_POW2		0x08
+#define	RK_COMPOSITE_HALFDIV		0x10
 };
 
 int	rk_cru_composite_enable(struct rk_cru_softc *, struct rk_cru_clk *, int);
@@ -261,8 +321,14 @@ int	rk_cru_composite_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, cons
 #define	RK_COMPOSITE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, _flags) \
 	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, 0, _flags)
 
+#define	RK_COMPOSITE_HALF(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, _flags) \
+	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _gate_reg, _gate_mask, 0, (_flags) | RK_COMPOSITE_HALFDIV)
+
 #define	RK_COMPOSITE_NOMUX(_id, _name, _parent, _div_reg, _div_mask, _gate_reg, _gate_mask, _flags) \
 	_RK_COMPOSITE_INIT(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, _gate_reg, _gate_mask, 0, _flags)
+
+#define	RK_COMPOSITE_NODIV(_id, _name, _parents, _muxdiv_reg, _mux_mask, _gate_reg, _gate_mask, _flags) \
+	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask,         0, _gate_reg, _gate_mask, 0, _flags)
 
 #define	RK_COMPOSITE_NOGATE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _flags) \
 	_RK_COMPOSITE_INIT(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, 0, 0, 0, _flags)

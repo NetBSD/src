@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_composite.c,v 1.7 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk_cru_composite.c,v 1.8 2022/08/23 05:39:06 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.7 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.8 2022/08/23 05:39:06 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,9 @@ rk_cru_composite_get_rate(struct rk_cru_softc *sc,
 
 		if (composite->flags & RK_COMPOSITE_POW2) {
 			div = 1U << __SHIFTOUT(val, composite->div_mask);
+		} else if (composite->flags & RK_COMPOSITE_HALFDIV) {
+			div = __SHIFTOUT(val, composite->div_mask) * 2 + 3;
+			return ((uint64_t)prate * 2 + div - 1) / div;
 		} else {
 			div = (composite->div_mask != 0)
 			    ? __SHIFTOUT(val, composite->div_mask) + 1 : 1;
@@ -155,6 +158,9 @@ rk_cru_composite_set_rate(struct rk_cru_softc *sc,
 	}
 
 	if (composite->flags & RK_COMPOSITE_POW2) {
+		return ENXIO;	/* TODO */
+	}
+	if (composite->flags & RK_COMPOSITE_HALFDIV) {
 		return ENXIO;	/* TODO */
 	}
 
