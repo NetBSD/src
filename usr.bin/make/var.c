@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1028 2022/08/08 18:23:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1029 2022/08/23 19:22:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1028 2022/08/08 18:23:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1029 2022/08/23 19:22:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2131,33 +2131,49 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
 	*pp = p;
 }
 
-/* In a part of a modifier, parse a subexpression but don't evaluate it. */
+/*
+ * In a part of a modifier, parse a subexpression but don't evaluate it.
+ *
+ * XXX: This whole block is very similar to Var_Parse with VARE_PARSE_ONLY.
+ * There may be subtle edge cases though that are not yet covered in the unit
+ * tests and that are parsed differently, depending on whether they are
+ * evaluated or not.
+ *
+ * This subtle difference is not documented in the manual page, neither is
+ * the difference between parsing ':D' and ':M' documented.  No code should
+ * ever depend on these details, but who knows.
+ *
+ * TODO: Before trying to replace this code with Var_Parse, there need to be
+ * more unit tests in varmod-loop.mk.  The modifier ':@' uses Var_Subst
+ * internally, in which a '$' is escaped as '$$', not as '\$' like in other
+ * modifiers.  When parsing the body text '$${var}', skipping over the first
+ * '$' would treat '${var}' as a make expression, not as a shell variable.
+ */
 static void
 ParseModifierPartDollar(const char **pp, LazyBuf *part)
 {
 	const char *p = *pp;
+	const char *start = *pp;
 
 	if (p[1] == '(' || p[1] == '{') {
-		FStr unused;
-		Var_Parse(&p, SCOPE_GLOBAL, VARE_PARSE_ONLY, &unused);
-		/* TODO: handle errors */
-		FStr_Done(&unused);
-	} else {
-		/*
-		 * Only skip the '$' but not the next character; see
-		 * ParseModifierPartSubst, the case for "Unescaped '$' at
-		 * end", which also doesn't skip '$' + delimiter.  That is a
-		 * hack as well, but for now it's consistent in both cases.
-		 */
-		p++;
-	}
+		char startc = p[1];
+		int endc = startc == '(' ? ')' : '}';
+		int depth = 1;
 
-	/*
-	 * XXX: There should be no need to add anything to the buffer, as it
-	 * will be discarded anyway.
-	 */
-	LazyBuf_AddBytesBetween(part, *pp, p);
-	*pp = p;
+		for (p += 2; *p != '\0' && depth > 0; p++) {
+			if (p[-1] != '\\') {
+				if (*p == startc)
+					depth++;
+				if (*p == endc)
+					depth--;
+			}
+		}
+		LazyBuf_AddBytesBetween(part, start, p);
+		*pp = p;
+	} else {
+		LazyBuf_Add(part, *start);
+		*pp = p + 1;
+	}
 }
 
 /* See ParseModifierPart for the documentation. */
