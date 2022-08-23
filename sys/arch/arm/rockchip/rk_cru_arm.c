@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_arm.c,v 1.2 2018/09/01 19:35:53 jmcneill Exp $ */
+/* $NetBSD: rk_cru_arm.c,v 1.3 2022/08/23 05:32:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.2 2018/09/01 19:35:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.3 2022/08/23 05:32:18 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,13 +147,11 @@ rk_cru_arm_set_rate_cpurates(struct rk_cru_softc *sc,
 	if (error != 0)
 		goto done;
 
-	write_mask = cpu_rate->reg1_mask << 16;
-	write_val = cpu_rate->reg1_val;
-	CRU_WRITE(sc, cpu_rate->reg1, write_mask | write_val);
-
-	write_mask = cpu_rate->reg2_mask << 16;
-	write_val = cpu_rate->reg2_val;
-	CRU_WRITE(sc, cpu_rate->reg2, write_mask | write_val);
+	for (int i = 0; i < __arraycount(cpu_rate->divs); i++) {
+		write_mask = cpu_rate->divs[i].mask << 16;
+		write_val = cpu_rate->divs[i].val;
+		CRU_WRITE(sc, cpu_rate->divs[i].reg, write_mask | write_val);
+	}
 
 	write_mask = arm->div_mask << 16;
 	write_val = __SHIFTIN(0, arm->div_mask);

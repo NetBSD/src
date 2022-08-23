@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.23 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.24 2022/08/23 05:32:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.23 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.24 2022/08/23 05:32:18 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,15 +143,22 @@ static const struct rk_cru_pll_rate pll_norates[] = {
 #define	RK3399_ATCLK_MASK	__BITS(4,0)
 #define	RK3399_PDBG_MASK	__BITS(12,8)
 
+#define RK3399_CPU_RATE(_rate, _reg0, _reg0_mask, _reg0_val, _reg1, _reg1_mask, _reg1_val)\
+	{										\
+		.rate = (_rate),							\
+		.divs[0] = { .reg = (_reg0), .mask = (_reg0_mask), .val = (_reg0_val) },\
+		.divs[1] = { .reg = (_reg1), .mask = (_reg1_mask), .val = (_reg1_val) },\
+	}
+
 #define	RK3399_CPUL_RATE(_rate, _aclkm, _atclk, _pdbg)			\
-	RK_CPU_RATE(_rate,						\
+	RK3399_CPU_RATE(_rate,						\
 		    CLKSEL_CON(0), RK3399_ACLKM_MASK,			\
 		    __SHIFTIN((_aclkm), RK3399_ACLKM_MASK),		\
 		    CLKSEL_CON(1), RK3399_ATCLK_MASK|RK3399_PDBG_MASK,	\
 		    __SHIFTIN((_atclk), RK3399_ATCLK_MASK)|__SHIFTIN((_pdbg), RK3399_PDBG_MASK))
 
 #define	RK3399_CPUB_RATE(_rate, _aclkm, _atclk, _pdbg)			\
-	RK_CPU_RATE(_rate,						\
+	RK3399_CPU_RATE(_rate,						\
 		    CLKSEL_CON(2), RK3399_ACLKM_MASK,			\
 		    __SHIFTIN((_aclkm), RK3399_ACLKM_MASK),		\
 		    CLKSEL_CON(3), RK3399_ATCLK_MASK|RK3399_PDBG_MASK,	\

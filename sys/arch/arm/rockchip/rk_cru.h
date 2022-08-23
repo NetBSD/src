@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.8 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk_cru.h,v 1.9 2022/08/23 05:32:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -141,18 +141,16 @@ struct rk_cru_arm_rate {
 		.div = (_div),					\
 	}
 
-struct rk_cru_cpu_rate {
-	u_int		rate;
-	u_int		reg1, reg1_mask, reg1_val;
-	u_int		reg2, reg2_mask, reg2_val;
+struct rk_regmaskval {
+	bus_size_t	reg;
+	uint32_t	mask;
+	uint32_t	val;
 };
 
-#define	RK_CPU_RATE(_rate, _reg1, _reg1_mask, _reg1_val, _reg2, _reg2_mask, _reg2_val)	\
-	{										\
-		.rate = (_rate),							\
-		.reg1 = (_reg1), .reg1_mask = (_reg1_mask), .reg1_val = (_reg1_val),	\
-		.reg2 = (_reg2), .reg2_mask = (_reg2_mask), .reg2_val = (_reg2_val),	\
-	}
+struct rk_cru_cpu_rate {
+	u_int			rate;
+	struct rk_regmaskval	divs[2];
+};
 
 struct rk_cru_arm {
 	bus_size_t	reg;
