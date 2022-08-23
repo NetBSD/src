@@ -183,9 +183,9 @@ efi_aprintcfgtbl(void)
 		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
 
 		count = systbl32->st_entries;
-		aprint_normal("efi: %lu cfgtbl entries:\n", count);
+		aprint_normal("efi32: %lu cfgtbl entries:\n", count);
 		for (; count; count--, ct32++) {
-			aprint_normal("efi: %08" PRIx32, ct32->ct_data);
+			aprint_normal("efi32: %08" PRIx32, ct32->ct_data);
 			efi_aprintuuid(&ct32->ct_uuid);
 			aprint_normal("\n");
 		}
@@ -331,18 +331,18 @@ efi_getsystbl(void)
 		struct efi_systbl32 *systbl32 = (struct efi_systbl32 *) va;
 
 		/* XXX Check the signature and the CRC32 */
-		aprint_normal("efi: signature %" PRIx64 " revision %" PRIx32
+		aprint_normal("efi32: signature %" PRIx64 " revision %" PRIx32
 		    " crc32 %" PRIx32 "\n", systbl32->st_hdr.th_sig,
 		    systbl32->st_hdr.th_rev, systbl32->st_hdr.th_crc32);
-		aprint_normal("efi: firmware revision %" PRIx32 "\n",
+		aprint_normal("efi32: firmware revision %" PRIx32 "\n",
 		    systbl32->st_fwrev);
 		/*
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_normal("efi: runtime services at pa 0x%08" PRIx32 "\n",
+		aprint_normal("efi23: runtime services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_rt);
-		aprint_normal("efi: boot services at pa 0x%08" PRIx32 "\n",
+		aprint_normal("efi32: boot services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_bs);
 
 		efi_systbl_va = (struct efi_systbl *) systbl32;
@@ -424,11 +424,26 @@ efi_print_esrt(void)
 	struct efi_esrt_table *esrt;
 	struct efi_esrt_entry_v1 *esrt_entries;
 
-	void *esrt_va = efi_getcfgtbl(&esrt_uuid);
+	//void *esrt_va = (void *) efi_getcfgtbl(&esrt_uuid);
 
-	aprint_normal("ESRT address = %p\n", esrt_va);
+	esrt = (struct efi_esrt_table *) efi_getcfgtbl(&esrt_uuid);
+	//paddr_t esrt_pa = efi_getcfgtblpa(&esrt_uuid);
 
-	esrt = (struct efi_esrt_table*) esrt_va;
+
+	//esrt = (struct efi_esrt_table *) esrt_pa;
+	//esrt = (struct efi_esrt_table *) esrt_addr;
+
+	aprint_normal("ESRT address = %p\n", esrt);
+	
+	/*
+	 * Print memory byte by byte
+	 */
+	// aprint_normal("ESRT memory, %ld bytes\n", sizeof(struct efi_esrt_table));
+	// unsigned char *r = (unsigned char *)esrt_addr;
+	// for (int i = 0; i < sizeof(struct efi_esrt_table); ++i) {
+	// 	aprint_normal("%02x\n", r[i]);
+	// }
+	// aprint_normal("\n");
 
 	if (esrt == NULL) {
 		aprint_error("ESRT Couldn't find esrt on the system\n");
@@ -438,7 +453,7 @@ efi_print_esrt(void)
 	aprint_normal("ESRT Fw Resource Count = %d\n", esrt->fw_resource_count);
 	aprint_normal("ESRT Fw Resource Version = %ld\n", esrt->fw_resource_version);
 
-	esrt_entries = (void*) esrt->entries;
+	esrt_entries = (struct efi_esrt_entry_v1 *) esrt->entries;
 
 	for (int i = 0; i < esrt->fw_resource_count; ++i) {
 		const struct efi_esrt_entry_v1 *e = &esrt_entries[i];
