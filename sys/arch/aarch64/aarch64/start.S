@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.12 2022/08/23 05:29:44 ryo Exp $	*/
+/*	$NetBSD: start.S,v 1.13 2022/08/23 05:31:12 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.12 2022/08/23 05:29:44 ryo Exp $")
+RCSID("$NetBSD: start.S,v 1.13 2022/08/23 05:31:12 ryo Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
@@ -80,6 +80,19 @@ start:
 	add	x9, x9, #(start - .header)	/* skip header */
 	br	x9
 9:
+
+
+	/*
+	 * Zero the BSS
+	 */
+	adrl	x8, __bss_start__
+	adrl	x9, __bss_end__
+	/* while (x8 < x9) *(uint128_t *)x8++ = 0; */
+	b	2f
+1:	stp	xzr, xzr, [x8], #16
+2:	cmp	x8, x9
+	b.lo	1b
+
 
 	mrs	x8, CurrentEL
 	lsr	x8, x8, #2
