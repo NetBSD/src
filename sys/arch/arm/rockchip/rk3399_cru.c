@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.24 2022/08/23 05:32:18 ryo Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.25 2022/08/23 05:33:39 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.24 2022/08/23 05:32:18 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.25 2022/08/23 05:33:39 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -440,8 +440,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(0, "clk_core_l_gpll_src", "gpll", CLKGATE_CON(0), 3),
 
 	RK_CPU(RK3399_ARMCLKL, "armclkl", armclkl_parents,
-	       CLKSEL_CON(0),		/* reg */
+	       CLKSEL_CON(0),		/* mux_reg */
 	       __BITS(7,6), 0, 3,	/* mux_mask, mux_main, mux_alt */
+	       CLKSEL_CON(0),		/* div_reg */
 	       __BITS(4,0),		/* div_mask */
 	       armclkl_rates),
 
@@ -451,8 +452,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(0, "clk_core_b_gpll_src", "gpll", CLKGATE_CON(1), 3),
 
 	RK_CPU(RK3399_ARMCLKB, "armclkb", armclkb_parents,
-	       CLKSEL_CON(2),		/* reg */
+	       CLKSEL_CON(2),		/* mux_reg */
 	       __BITS(7,6), 1, 3,	/* mux_mask, mux_main, mux_alt */
+	       CLKSEL_CON(2),		/* div_reg */
 	       __BITS(4,0),		/* div_mask */
 	       armclkb_rates),
 

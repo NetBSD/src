@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_arm.c,v 1.3 2022/08/23 05:32:18 ryo Exp $ */
+/* $NetBSD: rk_cru_arm.c,v 1.4 2022/08/23 05:33:39 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.3 2022/08/23 05:32:18 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.4 2022/08/23 05:33:39 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,8 +54,8 @@ rk_cru_arm_get_rate(struct rk_cru_softc *sc,
 	if (fref == 0)
 		return 0;
 
-	const uint32_t val = CRU_READ(sc, arm->reg);
-	const u_int div = __SHIFTOUT(val, arm->div_mask) + 1;
+	const uint32_t val = CRU_READ(sc, arm->divs[0].reg);
+	const u_int div = __SHIFTOUT(val, arm->divs[0].mask) + 1;
 
 	return fref / div;
 }
@@ -99,10 +99,15 @@ rk_cru_arm_set_rate_rates(struct rk_cru_softc *sc,
 	if (error != 0)
 		goto done;
 
-	const uint32_t write_mask = arm->div_mask << 16;
-	const uint32_t write_val = __SHIFTIN(arm_rate->div - 1, arm->div_mask);
+	for (int i = 0; i < __arraycount(arm->divs); i++) {
+		if (arm->divs[i].reg == 0 && arm->divs[i].mask == 0)
+			break;
 
-	CRU_WRITE(sc, arm->reg, write_mask | write_val);
+		const uint32_t write_mask = arm->divs[i].mask << 16;
+		const uint32_t write_val = __SHIFTIN(arm_rate->div - 1,
+		    arm->divs[i].mask);
+		CRU_WRITE(sc, arm->divs[i].reg, write_mask | write_val);
+	}
 
 done:
 	rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
@@ -148,14 +153,23 @@ rk_cru_arm_set_rate_cpurates(struct rk_cru_softc *sc,
 		goto done;
 
 	for (int i = 0; i < __arraycount(cpu_rate->divs); i++) {
+		if (cpu_rate->divs[i].reg == 0 && cpu_rate->divs[i].mask == 0 &&
+		    cpu_rate->divs[i].val == 0)
+			break;
+
 		write_mask = cpu_rate->divs[i].mask << 16;
 		write_val = cpu_rate->divs[i].val;
 		CRU_WRITE(sc, cpu_rate->divs[i].reg, write_mask | write_val);
 	}
 
-	write_mask = arm->div_mask << 16;
-	write_val = __SHIFTIN(0, arm->div_mask);
-	CRU_WRITE(sc, arm->reg, write_mask | write_val);
+	for (int i = 0; i < __arraycount(arm->divs); i++) {
+		if (arm->divs[i].reg == 0 && arm->divs[i].mask == 0)
+			break;
+
+		write_mask = arm->divs[i].mask << 16;
+		write_val = __SHIFTIN(0, arm->divs[i].mask);
+		CRU_WRITE(sc, arm->divs[i].reg, write_mask | write_val);
+	}
 
 done:
 	rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
@@ -185,7 +199,7 @@ rk_cru_arm_get_parent(struct rk_cru_softc *sc,
 
 	KASSERT(clk->type == RK_CRU_ARM);
 
-	const uint32_t val = CRU_READ(sc, arm->reg);
+	const uint32_t val = CRU_READ(sc, arm->mux_reg);
 	const u_int mux = __SHIFTOUT(val, arm->mux_mask);
 
 	return arm->parents[mux];
@@ -204,7 +218,7 @@ rk_cru_arm_set_parent(struct rk_cru_softc *sc,
 			const uint32_t write_mask = arm->mux_mask << 16;
 			const uint32_t write_val = __SHIFTIN(mux, arm->mux_mask);
 
-			CRU_WRITE(sc, arm->reg, write_mask | write_val);
+			CRU_WRITE(sc, arm->mux_reg, write_mask | write_val);
 			return 0;
 		}
 
