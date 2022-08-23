@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.27 2022/08/23 05:39:06 ryo Exp $
+#	$NetBSD: files.rockchip,v 1.28 2022/08/23 05:40:46 ryo Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -91,6 +91,10 @@ file	arch/arm/rockchip/rk3288_usb.c		rk3288_usb | rk3288_usbphy
 # GMAC
 attach	awge at fdt with rk_gmac
 file	arch/arm/rockchip/rk_gmac.c		rk_gmac
+
+# EQOS
+attach	eqos at fdt with rk_eqos
+file	arch/arm/rockchip/rk_eqos.c		rk_eqos
 
 # PCIe PHY
 device	rkpciephy
