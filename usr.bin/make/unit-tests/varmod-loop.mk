@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.18 2021/12/05 15:20:13 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.19 2022/08/23 17:40:43 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -185,5 +185,17 @@ CMDLINE=	global		# needed for deleting the environment
 .if ${CMDLINE:Uundefined} != "undefined"
 .  error			# 'CMDLINE' is gone now from all scopes
 .endif
+
+
+# In the loop body text of the ':@' modifier, a literal '$' is written as '$$',
+# not '\$'.  In the following example, each '$$' turns into a single '$',
+# except for '$i', which is replaced with the then-current value '1' of the
+# iteration variable.
+#
+# FIXME: broken since var.c 1.1028 from 2022-08-08.
+all: varmod-loop-literal-dollar
+varmod-loop-literal-dollar: .PHONY
+	: ${:U1:@i@ t=$$(( $${t:-0} + $i ))@}
+
 
 all: .PHONY
