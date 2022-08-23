@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.109 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.110 2022/08/23 01:08:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.109 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.110 2022/08/23 01:08:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -503,10 +503,11 @@ usbnet_start_locked(struct ifnet *ifp)
 
 	usbnet_isowned_tx(un);
 	KASSERT(cd->uncd_tx_cnt <= un->un_tx_list_cnt);
+	KASSERT(!unp->unp_txstopped);
 
-	if (!unp->unp_link || (ifp->if_flags & IFF_RUNNING) == 0) {
-		DPRINTF("start called no link (%jx) or running (flags %jx)",
-		    unp->unp_link, ifp->if_flags, 0, 0);
+	if (!unp->unp_link) {
+		DPRINTF("start called no link (%jx)",
+		    unp->unp_link, 0, 0, 0);
 		return;
 	}
 
