@@ -47,6 +47,8 @@
 	{0xeb9d2d31,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
 #define	EFI_TABLE_SMBIOS3						\
 	{0xf2fd1544,0x9794,0x4a2c,0x99,0x2e,{0xe5,0xbb,0xcf,0x20,0xe3,0x94}}
+#define EFI_TABLE_ESRT							\
+	{0xb122a263,0x3661,0x4f68,0x99,0x29,{0x78,0xf8,0xb0,0xd6,0x21,0x80}}
 
 extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
@@ -349,12 +351,38 @@ struct efi_systbl64 {
 };
 #endif
 
+#define ESRT_FIRMWARE_RESOURCE_VERSION 1
+
+struct efi_esrt_table {
+	uint32_t	fw_resource_count;
+	uint32_t	fw_resource_count_max;
+	uint64_t	fw_resource_version;
+	uint8_t		entries[];
+};
+
+struct efi_esrt_entry_v1 {
+	struct uuid	fw_class;
+	uint32_t 	fw_type;
+	uint32_t	fw_version;
+	uint32_t	lowest_supported_fw_version;
+	uint32_t	capsule_flags;
+	uint32_t	last_attempt_version;
+	uint32_t	last_attempt_status;
+};
+
+struct efi_prop_table {
+	uint32_t	version;
+	uint32_t	length;
+	uint64_t	memory_protection_attribute;
+};
+
 void               efi_init(void);
 bool               efi_probe(void);
 paddr_t            efi_getsystblpa(void);
 struct efi_systbl *efi_getsystbl(void);
 paddr_t            efi_getcfgtblpa(const struct uuid*);
 void              *efi_getcfgtbl(const struct uuid*);
+void               efi_print_esrt(void);
 int                efi_getbiosmemtype(uint32_t, uint64_t);
 const char        *efi_getmemtype_str(uint32_t);
 struct btinfo_memmap;
