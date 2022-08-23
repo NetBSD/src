@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.86 2022/05/06 06:09:50 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.87 2022/08/23 05:31:12 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.86 2022/05/06 06:09:50 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.87 2022/08/23 05:31:12 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -92,8 +92,6 @@ ASENTRY_NP(aarch64_start)
 	/* set stack pointer for boot */
 	adrl	x0, bootstk
 	mov	sp, x0
-
-	bl	clear_bss
 
 	PRINT("boot NetBSD/aarch64\n")
 
@@ -236,18 +234,6 @@ ASEND(aarch64_start)
 .Lmainreturned:
 	.asciz	"main() returned"
 	.align 2
-
-
-ASENTRY_NP(clear_bss)
-	/* Zero the BSS. The size must be aligned 16, usually it should be. */
-	adrl	x14, __bss_start__
-	adrl	x15, __bss_end__
-	b	2f
-1:	stp	xzr, xzr, [x14], #16
-2:	cmp	x14, x15
-	b.lo	1b
-	ret
-ASEND(clear_bss)
 
 
 init_sysregs:
