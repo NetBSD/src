@@ -1,8 +1,11 @@
-/* $NetBSD: efivar.h,v 1.1 2021/10/10 13:03:09 jmcneill Exp $ */
+/* $NetBSD: efivar.h,v 1.1 2022/17/08 10:49:09 silentsky Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Pawel Cichowski of 3mdeb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +35,8 @@
 #include <machine/efi.h>
 
 struct efi_ops {
+	efi_status	(*efi_gettable)(struct uuid *, void **);
+	efi_status	(*efi_copytable)(struct uuid *, void **, size_t, size_t *);
 	efi_status	(*efi_gettime)(struct efi_tm *, struct efi_tmcap *);
 	efi_status	(*efi_settime)(struct efi_tm *);
 	efi_status	(*efi_getvar)(uint16_t *, struct uuid *, uint32_t *,
