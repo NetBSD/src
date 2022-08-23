@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.11 2020/09/15 09:28:20 ryo Exp $	*/
+/*	$NetBSD: start.S,v 1.12 2022/08/23 05:29:44 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -33,12 +33,13 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.11 2020/09/15 09:28:20 ryo Exp $")
+RCSID("$NetBSD: start.S,v 1.12 2022/08/23 05:29:44 ryo Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
  * (non-ELF booting)
  */
+.header:
 	.space	64, 0x0
 
 /*
@@ -46,6 +47,40 @@ RCSID("$NetBSD: start.S,v 1.11 2020/09/15 09:28:20 ryo Exp $")
  */
 	.global start
 start:
+	/* DON'T CLOBBER X0-X3 REGISTERS. THEY ARE UBOOT ARGUMENTS */
+
+	/*
+	 * Relocate to L2_SIZE(2Mbyte) align if necessary
+	 *
+	 * x8 = currently loaded address
+	 * x9 = (x8 + L2_SIZE - 1) & -L2_SIZE = new (aligned) loaded address
+	 */
+	adrl	x8, .header
+	mov	x9, #(L2_SIZE-1)
+	add	x9, x9, x8
+	and	x9, x9, #-L2_SIZE
+	cmp	x8, x9
+	b.eq	9f
+
+	/* x10 = size = (_edata - __kernel_text) */
+	adrl	x10, _edata
+	adrl	x11, __kernel_text
+	sub	x10, x10, x11
+
+	/* do memmove(x9, x8, x10) */
+	add	x8, x8, x10
+	add	x13, x9, x10
+1:
+	ldp	x11, x12, [x8, #-16]!
+	stp	x11, x12, [x13, #-16]!
+	cmp	x13, x9
+	b.hi	1b
+
+	/* jump to new (aligned) loaded address */
+	add	x9, x9, #(start - .header)	/* skip header */
+	br	x9
+9:
+
 	mrs	x8, CurrentEL
 	lsr	x8, x8, #2
 	cmp	x8, #0x2
