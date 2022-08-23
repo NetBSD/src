@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.9 2022/08/23 05:32:18 ryo Exp $ */
+/* $NetBSD: rk_cru.h,v 1.10 2022/08/23 05:33:39 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -88,7 +88,7 @@ u_int	rk_cru_pll_get_rate(struct rk_cru_softc *, struct rk_cru_clk *);
 int	rk_cru_pll_set_rate(struct rk_cru_softc *, struct rk_cru_clk *, u_int);
 const char *rk_cru_pll_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 
-#define	RK_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
+#define	RK_PLL_FLAGS(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates, _flags) \
 	{							\
 		.id = (_id),					\
 		.type = RK_CRU_PLL,				\
@@ -102,31 +102,17 @@ const char *rk_cru_pll_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 		.u.pll.lock_mask = (_lock_mask),		\
 		.u.pll.rates = (_rates),			\
 		.u.pll.nrates = __arraycount(_rates),		\
-		.u.pll.flags = 0,				\
+		.u.pll.flags = _flags,				\
 		.get_rate = rk_cru_pll_get_rate,		\
 		.set_rate = rk_cru_pll_set_rate,		\
 		.get_parent = rk_cru_pll_get_parent,		\
 	}
 
+#define	RK_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
+	RK_PLL_FLAGS(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates, 0)
+
 #define	RK3288_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
-	{							\
-		.id = (_id),					\
-		.type = RK_CRU_PLL,				\
-		.base.name = (_name),				\
-		.base.flags = 0,				\
-		.u.pll.parents = (_parents),			\
-		.u.pll.nparents = __arraycount(_parents),	\
-		.u.pll.con_base = (_con_base),			\
-		.u.pll.mode_reg = (_mode_reg),			\
-		.u.pll.mode_mask = (_mode_mask),		\
-		.u.pll.lock_mask = (_lock_mask),		\
-		.u.pll.rates = (_rates),			\
-		.u.pll.nrates = __arraycount(_rates),		\
-		.u.pll.flags = RK_PLL_RK3288,			\
-		.get_rate = rk_cru_pll_get_rate,		\
-		.set_rate = rk_cru_pll_set_rate,		\
-		.get_parent = rk_cru_pll_get_parent,		\
-	}
+	RK_PLL_FLAGS(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates, RK_PLL_RK3288)
 
 /* ARM clocks */
 
@@ -152,12 +138,17 @@ struct rk_cru_cpu_rate {
 	struct rk_regmaskval	divs[2];
 };
 
-struct rk_cru_arm {
+struct rk_regmask {
 	bus_size_t	reg;
+	uint32_t	mask;
+};
+
+struct rk_cru_arm {
+	bus_size_t	mux_reg;
 	uint32_t	mux_mask;
 	u_int		mux_main;
 	u_int		mux_alt;
-	uint32_t	div_mask;
+	struct rk_regmask divs[1];
 	const char	**parents;
 	u_int		nparents;
 	const struct rk_cru_arm_rate *rates;
@@ -179,11 +170,12 @@ int	rk_cru_arm_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char
 		.base.flags = 0,				\
 		.u.arm.parents = (_parents),			\
 		.u.arm.nparents = __arraycount(_parents),	\
-		.u.arm.reg = (_reg),				\
+		.u.arm.mux_reg = (_reg),			\
 		.u.arm.mux_mask = (_mux_mask),			\
 		.u.arm.mux_main = (_mux_main),			\
 		.u.arm.mux_alt = (_mux_alt),			\
-		.u.arm.div_mask = (_div_mask),			\
+		.u.arm.divs[0].reg = (_reg),			\
+		.u.arm.divs[0].mask = (_div_mask),		\
 		.u.arm.rates = (_rates),			\
 		.u.arm.nrates = __arraycount(_rates),		\
 		.get_rate = rk_cru_arm_get_rate,		\
@@ -192,25 +184,32 @@ int	rk_cru_arm_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char
 		.set_parent = rk_cru_arm_set_parent,		\
 	}
 
-#define	RK_CPU(_id, _name, _parents, _reg, _mux_mask, _mux_main, _mux_alt, _div_mask, _cpurates) \
-	{							\
-		.id = (_id),					\
-		.type = RK_CRU_ARM,				\
-		.base.name = (_name),				\
-		.base.flags = 0,				\
-		.u.arm.parents = (_parents),			\
-		.u.arm.nparents = __arraycount(_parents),	\
-		.u.arm.reg = (_reg),				\
-		.u.arm.mux_mask = (_mux_mask),			\
-		.u.arm.mux_main = (_mux_main),			\
-		.u.arm.mux_alt = (_mux_alt),			\
-		.u.arm.div_mask = (_div_mask),			\
-		.u.arm.cpurates = (_cpurates),			\
-		.u.arm.nrates = __arraycount(_cpurates),	\
-		.get_rate = rk_cru_arm_get_rate,		\
-		.set_rate = rk_cru_arm_set_rate,		\
-		.get_parent = rk_cru_arm_get_parent,		\
-		.set_parent = rk_cru_arm_set_parent,		\
+#define	_RK_CPU_COMMON_INITIALIZER(_id, _name, _parents,	\
+    _mux_reg, _mux_mask, _mux_main, _mux_alt, _cpurates)	\
+	.id = (_id),						\
+	.type = RK_CRU_ARM,					\
+	.base.name = (_name),					\
+	.base.flags = 0,					\
+	.u.arm.parents = (_parents),				\
+	.u.arm.nparents = __arraycount(_parents),		\
+	.u.arm.mux_reg = (_mux_reg),				\
+	.u.arm.mux_mask = (_mux_mask),				\
+	.u.arm.mux_main = (_mux_main),				\
+	.u.arm.mux_alt = (_mux_alt),				\
+	.u.arm.cpurates = (_cpurates),				\
+	.u.arm.nrates = __arraycount(_cpurates),		\
+	.get_rate = rk_cru_arm_get_rate,			\
+	.set_rate = rk_cru_arm_set_rate,			\
+	.get_parent = rk_cru_arm_get_parent,			\
+	.set_parent = rk_cru_arm_set_parent
+
+#define	RK_CPU(_id, _name, _parents, _mux_reg, _mux_mask, _mux_main, _mux_alt, \
+    _div_reg, _div_mask, _cpurates) \
+	{								\
+		_RK_CPU_COMMON_INITIALIZER(_id, _name, _parents,	\
+		    _mux_reg, _mux_mask, _mux_main, _mux_alt,_cpurates),\
+		.u.arm.divs[0].reg = (_div_reg),			\
+		.u.arm.divs[0].mask = (_div_mask),			\
 	}
 
 /* Composite clocks */
