@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_arm.c,v 1.4 2022/08/23 05:33:39 ryo Exp $ */
+/* $NetBSD: rk_cru_arm.c,v 1.5 2022/08/23 05:39:06 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.4 2022/08/23 05:33:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.5 2022/08/23 05:39:06 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,8 @@ rk_cru_arm_set_rate_cpurates(struct rk_cru_softc *sc,
 		return ENXIO;
 	}
 
+	/* XXX: TODO: apply cpu_rate->pre_muxs[] */
+
 	error = rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_alt]);
 	if (error != 0)
 		return error;
@@ -170,6 +172,8 @@ rk_cru_arm_set_rate_cpurates(struct rk_cru_softc *sc,
 		write_val = __SHIFTIN(0, arm->divs[i].mask);
 		CRU_WRITE(sc, arm->divs[i].reg, write_mask | write_val);
 	}
+
+	/* XXX: TODO: apply cpu_rate->post_muxs[] */
 
 done:
 	rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
