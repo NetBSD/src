@@ -1,4 +1,4 @@
-# $NetBSD: parse-var.mk,v 1.4 2022/08/08 19:53:28 rillig Exp $
+# $NetBSD: parse-var.mk,v 1.5 2022/08/23 19:22:01 rillig Exp $
 #
 # Tests for parsing variable expressions.
 
@@ -13,8 +13,10 @@ VAR.${:U param }=	value
 .  error
 .endif
 
+# XXX: The following paragraph already uses past tense, in the hope that the
+# parsing behavior can be cleaned up soon.
 
-# Since var.c 1.323 from 202-07-26 18:11 and before var.c 1.1028 from
+# Since var.c 1.323 from 2020-07-26 18:11 and except for var.c 1.1028 from
 # 2022-08-08, the exact way of parsing an expression depended on whether the
 # expression was actually evaluated or merely parsed.
 #
@@ -30,7 +32,7 @@ VAR.${:U param }=	value
 # braces.
 #
 # This naive brace counting was implemented in ParseModifierPartDollar.  As of
-# var.c 1., there are still several other places that merely count braces
+# var.c 1.1029, there are still several other places that merely count braces
 # instead of properly parsing subexpressions.
 
 #.MAKEFLAGS: -dcpv
@@ -51,7 +53,7 @@ BRACE_GROUP=	{{{{}}}}
 # the parts of the outer ':S' modifier, make only counted the braces, and since
 # the inner expression '${BRACE_PAIR:...}' contains more '{' than '}', parsing
 # failed with the error message 'Unfinished modifier for "BRACE_GROUP"'.  Fixed
-# in var.c 1.1028 from 2022-08-08.
+# in var.c 1.1028 from 2022-08-08, reverted in var.c 1.1029 from 2022-08-23.
 .if 0 && ${BRACE_GROUP:S,${BRACE_PAIR:S,{,{{,},<lbraces>,}
 .endif
 #.MAKEFLAGS: -d0
