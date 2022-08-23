@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.77 2022/05/24 20:50:20 andvar Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.78 2022/08/23 09:25:10 knakahara Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.77 2022/05/24 20:50:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.78 2022/08/23 09:25:10 knakahara Exp $");
 
 /*
  * IPsec input processing.
@@ -214,8 +214,8 @@ spi_get(struct mbuf *m, int sproto, int skip)
 static int
 ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
-	char buf[IPSEC_ADDRSTRLEN];
-	union sockaddr_union dst_address;
+	char buf[IPSEC_ADDRSTRLEN], buf2[IPSEC_ADDRSTRLEN];
+	union sockaddr_union src_address, dst_address;
 	struct secasvar *sav;
 	u_int32_t spi;
 	u_int16_t sport;
@@ -255,12 +255,18 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	 * kernel crypto routine. The resulting mbuf chain is a valid
 	 * IP packet ready to go through input processing.
 	 */
+	memset(&src_address, 0, sizeof (src_address));
 	memset(&dst_address, 0, sizeof(dst_address));
+	src_address.sa.sa_family = af;
 	dst_address.sa.sa_family = af;
 	switch (af) {
 #ifdef INET
 	case AF_INET:
+		src_address.sin.sin_len = sizeof(struct sockaddr_in);
 		dst_address.sin.sin_len = sizeof(struct sockaddr_in);
+		m_copydata(m, offsetof(struct ip, ip_src),
+		    sizeof(struct in_addr),
+		    &src_address.sin.sin_addr);
 		m_copydata(m, offsetof(struct ip, ip_dst),
 		    sizeof(struct in_addr),
 		    &dst_address.sin.sin_addr);
@@ -268,7 +274,11 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #endif
 #ifdef INET6
 	case AF_INET6:
+		src_address.sin6.sin6_len = sizeof(struct sockaddr_in6);
 		dst_address.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		    sizeof(struct in6_addr),
+		    &src_address.sin6.sin6_addr);
 		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 		    sizeof(struct in6_addr),
 		    &dst_address.sin6.sin6_addr);
@@ -291,10 +301,35 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	/* NB: only pass dst since key_lookup_sa follows RFC2401 */
 	sav = KEY_LOOKUP_SA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
-		IPSECLOG(LOG_DEBUG,
-		    "no key association found for SA %s/%08lx/%u/%u\n",
-		    ipsec_address(&dst_address, buf, sizeof(buf)),
-		    (u_long) ntohl(spi), sproto, ntohs(dport));
+		static struct timeval lasttime = {0, 0};
+		static int curpps = 0;
+
+		if (!ipsec_debug && ppsratecheck(&lasttime, &curpps, 1)) {
+			if (sport || dport) {
+				log(LOG_INFO,
+				    "no key association found for SA"
+				    " %s[%u]-%s[%u]/SPI 0x%08lx\n",
+				    ipsec_address(&src_address, buf, sizeof(buf)),
+				    ntohs(sport),
+				    ipsec_address(&dst_address, buf2, sizeof(buf2)),
+				    ntohs(dport),
+				    (u_long) ntohl(spi));
+			} else {
+				log(LOG_INFO,
+				    "no key association found for"
+				    " SA %s-%s/SPI 0x%08lx\n",
+				    ipsec_address(&src_address, buf, sizeof(buf)),
+				    ipsec_address(&src_address, buf2, sizeof(buf2)),
+				    (u_long) ntohl(spi));
+			}
+		} else if (ipsec_debug) {
+			IPSECLOG(LOG_DEBUG,
+			    "no key association found for SA "
+			    "%s-%s/SPI 0x%08lx/PROTO %u/PORT %u-%u\n",
+			    ipsec_address(&src_address, buf, sizeof(buf)),
+			    ipsec_address(&dst_address, buf2, sizeof(buf2)),
+			     (u_long) ntohl(spi), sproto, ntohs(dport), ntohs(sport));
+		}
 		IPSEC_ISTAT(sproto, ESP_STAT_NOTDB, AH_STAT_NOTDB,
 		    IPCOMP_STAT_NOTDB);
 		splx(s);
