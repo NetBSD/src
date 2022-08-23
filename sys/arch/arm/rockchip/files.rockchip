@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.26 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files.rockchip,v 1.27 2022/08/23 05:39:06 ryo Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -35,6 +35,10 @@ file	arch/arm/rockchip/rk3399_cru.c		rk3399_cru & soc_rk3399
 attach	rkcru at fdt with rk3399_pmucru
 file	arch/arm/rockchip/rk3399_pmucru.c	rk3399_pmucru & soc_rk3399
 
+# RK3588 clock and reset unit
+attach	rkcru at fdt with rk3588_cru
+file	arch/arm/rockchip/rk3588_cru.c		rk3588_cru & soc_rk3588
+
 endif
 
 # IOMUX control
@@ -51,6 +55,8 @@ attach	rkiomux at fdt with rk3328_iomux
 file	arch/arm/rockchip/rk3328_iomux.c	rk3328_iomux & soc_rk3328
 attach	rkiomux at fdt with rk3399_iomux
 file	arch/arm/rockchip/rk3399_iomux.c	rk3399_iomux & soc_rk3399
+attach	rkiomux at fdt with rk3588_iomux
+file	arch/arm/rockchip/rk3588_iomux.c	rk3588_iomux & soc_rk3588
 
 endif
 
@@ -155,3 +161,4 @@ defflag	opt_soc.h			SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3288: SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3328: SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3399: SOC_ROCKCHIP
+defflag	opt_soc.h			SOC_RK3588: SOC_ROCKCHIP

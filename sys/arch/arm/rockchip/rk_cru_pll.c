@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk_cru_pll.c,v 1.6 2022/08/23 05:39:06 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.6 2022/08/23 05:39:06 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp 
 #define	 PLL_FRACDIV		__BITS(23,0)
 
 #define	PLL_CON3		0x0c
+#define	PLL_CON6		0x18
 
 #define	PLL_WRITE_MASK		0xffff0000	/* for CON0 and CON1 */
 
@@ -71,6 +72,16 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp 
 #define	RK3288_BWADJ		__BITS(11,0)
 /* RK3288 CON3 */
 #define	RK3288_BYPASS		__BIT(0)
+
+#define RK3588_PLLCON0_M	__BITS(9,0)
+#define RK3588_PLLCON1_P	__BITS(5,0)
+#define RK3588_PLLCON1_S	__BITS(8,6)
+#define RK3588_PLLCON2_K	__BITS(15,0)
+#define RK3588_PLLCON1_PWRDOWN	__BIT(13)
+#define RK3588_PLLCON6_LOCK	__BIT(15)
+
+#define PLL_MODE_SLOW		0x0
+#define PLL_MODE_NORM		0x1
 
 u_int
 rk_cru_pll_get_rate(struct rk_cru_softc *sc,
@@ -107,6 +118,19 @@ rk_cru_pll_get_rate(struct rk_cru_softc *sc,
 
 		const uint64_t tmp = (uint64_t)fref * nf / nr / no;
 
+		return (u_int)tmp;
+	} else if ((pll->flags & RK_PLL_RK3588) != 0) {
+		const uint64_t m = __SHIFTOUT(con0, RK3588_PLLCON0_M);
+		const uint64_t p = __SHIFTOUT(con1, RK3588_PLLCON1_P);
+		const uint64_t s = __SHIFTOUT(con1, RK3588_PLLCON1_S);
+		const uint64_t k = __SHIFTOUT(con2, RK3588_PLLCON2_K);
+
+		uint64_t tmp = (uint64_t)fref * m;
+		if (p != 0)
+			tmp /= p;
+		if (k != 0 && p != 0)
+			tmp += ((uint64_t)fref * k) / (p * 65535);
+		tmp >>= s;
 		return (u_int)tmp;
 	} else {
 		const u_int postdiv1 = __SHIFTOUT(con0, PLL_POSTDIV1);
@@ -151,40 +175,97 @@ rk_cru_pll_set_rate(struct rk_cru_softc *sc,
 	if (pll_rate == NULL)
 		return EINVAL;
 
-	KASSERT((pll->flags & RK_PLL_RK3288) == 0);	/* XXX TODO */
+	if ((pll->flags & RK_PLL_RK3288) != 0) {
+		/* XXX TODO */
+		KASSERT(false);
+	} else if ((pll->flags & RK_PLL_RK3588) != 0) {
+		bool muxed = false;
 
-	CRU_WRITE(sc, pll->con_base + PLL_CON0,
-	    __SHIFTIN(pll_rate->postdiv1, PLL_POSTDIV1) |
-	    __SHIFTIN(pll_rate->fbdiv, PLL_FBDIV) |
-	    PLL_WRITE_MASK);
+		/* into SLOW mode */
+		if (__SHIFTOUT(CRU_READ(sc, pll->mode_reg), pll->mode_mask) ==
+		    PLL_MODE_NORM) {
+			CRU_WRITE(sc, pll->mode_reg,
+			    pll->mode_mask << 16 |
+			    __SHIFTIN(PLL_MODE_SLOW, pll->mode_mask));
+			muxed = true;
+		}
 
-	CRU_WRITE(sc, pll->con_base + PLL_CON1,
-	    __SHIFTIN(pll_rate->dsmpd, PLL_DSMPD) |
-	    __SHIFTIN(pll_rate->postdiv2, PLL_POSTDIV2) |
-	    __SHIFTIN(pll_rate->refdiv, PLL_REFDIV) |
-	    PLL_WRITE_MASK);
+		/* power down */
+		CRU_WRITE(sc, pll->con_base + PLL_CON1,
+		    RK3588_PLLCON1_PWRDOWN << 16 |
+		    __SHIFTIN(1, RK3588_PLLCON1_PWRDOWN));
 
-	val = CRU_READ(sc, pll->con_base + PLL_CON2);
-	val &= ~PLL_FRACDIV;
-	val |= __SHIFTIN(pll_rate->fracdiv, PLL_FRACDIV);
-	CRU_WRITE(sc, pll->con_base + PLL_CON2, val);
+		/* update m,p,s,k */
+		CRU_WRITE(sc, pll->con_base + PLL_CON0,
+		    RK3588_PLLCON0_M << 16 |
+		    __SHIFTIN(pll_rate->m, RK3588_PLLCON0_M));
+		CRU_WRITE(sc, pll->con_base + PLL_CON1,
+		    RK3588_PLLCON1_P << 16 |
+		    RK3588_PLLCON1_S << 16 |
+		    __SHIFTIN(pll_rate->p, RK3588_PLLCON1_P) |
+		    __SHIFTIN(pll_rate->s, RK3588_PLLCON1_S));
+		CRU_WRITE(sc, pll->con_base + PLL_CON2,
+		    RK3588_PLLCON2_K << 16 |
+		    __SHIFTIN(pll_rate->k, RK3588_PLLCON2_K));
 
-	/* Set PLL work mode to normal */
-	const uint32_t write_mask = pll->mode_mask << 16;
-	const uint32_t write_val = pll->mode_mask;
-	CRU_WRITE(sc, pll->mode_reg, write_mask | write_val);
+		/* power up */
+		CRU_WRITE(sc, pll->con_base + PLL_CON1,
+		    RK3588_PLLCON1_PWRDOWN << 16 |
+		    __SHIFTIN(0, RK3588_PLLCON1_PWRDOWN));
 
-	syscon_lock(sc->sc_grf);
-	for (retry = 1000; retry > 0; retry--) {
-		if (syscon_read_4(sc->sc_grf, sc->sc_grf_soc_status) & pll->lock_mask)
-			break;
-		delay(1);
+		/* wait */
+		for (retry = 1000; retry > 0; retry--) {
+			if (CRU_READ(sc, pll->con_base + PLL_CON6) &
+			    pll->lock_mask) {
+				break;
+			}
+			delay(1);
+		}
+		if (retry == 0)
+			device_printf(sc->sc_dev,
+			    "WARNING: %s failed to lock\n", clk->base.name);
+
+		/* into NORM mode */
+		if (muxed) {
+			CRU_WRITE(sc, pll->mode_reg,
+			    pll->mode_mask << 16 |
+			    __SHIFTIN(PLL_MODE_NORM, pll->mode_mask));
+		}
+	} else {
+		CRU_WRITE(sc, pll->con_base + PLL_CON0,
+		    __SHIFTIN(pll_rate->postdiv1, PLL_POSTDIV1) |
+		    __SHIFTIN(pll_rate->fbdiv, PLL_FBDIV) |
+		    PLL_WRITE_MASK);
+
+		CRU_WRITE(sc, pll->con_base + PLL_CON1,
+		    __SHIFTIN(pll_rate->dsmpd, PLL_DSMPD) |
+		    __SHIFTIN(pll_rate->postdiv2, PLL_POSTDIV2) |
+		    __SHIFTIN(pll_rate->refdiv, PLL_REFDIV) |
+		    PLL_WRITE_MASK);
+
+		val = CRU_READ(sc, pll->con_base + PLL_CON2);
+		val &= ~PLL_FRACDIV;
+		val |= __SHIFTIN(pll_rate->fracdiv, PLL_FRACDIV);
+		CRU_WRITE(sc, pll->con_base + PLL_CON2, val);
+
+		/* Set PLL work mode to normal */
+		const uint32_t write_mask = pll->mode_mask << 16;
+		const uint32_t write_val = pll->mode_mask;
+		CRU_WRITE(sc, pll->mode_reg, write_mask | write_val);
+
+		syscon_lock(sc->sc_grf);
+		for (retry = 1000; retry > 0; retry--) {
+			if (syscon_read_4(sc->sc_grf,
+			    sc->sc_grf_soc_status) & pll->lock_mask)
+				break;
+			delay(1);
+		}
+		syscon_unlock(sc->sc_grf);
+
+		if (retry == 0)
+			device_printf(sc->sc_dev,
+			    "WARNING: %s failed to lock\n", clk->base.name);
 	}
-	syscon_unlock(sc->sc_grf);
-
-	if (retry == 0)
-		device_printf(sc->sc_dev, "WARNING: %s failed to lock\n",
-		    clk->base.name);
 
 	return 0;
 }
