@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.50 2022/08/24 11:19:25 riastradh Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.51 2022/08/24 11:41:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.50 2022/08/24 11:19:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.51 2022/08/24 11:41:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,8 +112,8 @@ static struct pool pew_pl;
 static pmf_event_workitem_t *pmf_event_workitem_get(void);
 static void pmf_event_workitem_put(pmf_event_workitem_t *);
 
-bool pmf_device_resume_locked(device_t, const pmf_qual_t *);
-bool pmf_device_suspend_locked(device_t, const pmf_qual_t *);
+static bool pmf_device_resume_locked(device_t, const pmf_qual_t *);
+static bool pmf_device_suspend_locked(device_t, const pmf_qual_t *);
 static bool device_pmf_any_suspensor(device_t, devact_level_t);
 
 static bool
@@ -163,17 +163,17 @@ pmf_suspend_worker(struct work *wk, void *dummy)
 	switch (pmf_qual_depth(&psw->psw_qual)) {
 	case DEVACT_LEVEL_FULL:
 		if (!complete_suspension(dev, dev->dv_class_suspensors,
-		    &psw->psw_qual))
+			&psw->psw_qual))
 			break;
 		/*FALLTHROUGH*/
 	case DEVACT_LEVEL_DRIVER:
 		if (!complete_suspension(dev, dev->dv_driver_suspensors,
-		    &psw->psw_qual))
+			&psw->psw_qual))
 			break;
 		/*FALLTHROUGH*/
 	case DEVACT_LEVEL_BUS:
 		if (!complete_suspension(dev, dev->dv_bus_suspensors,
-		    &psw->psw_qual))
+			&psw->psw_qual))
 			break;
 	}
 	device_pmf_unlock(dev);
@@ -189,7 +189,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 	pew = (void *)wk;
 	KASSERT(wk == &pew->pew_work);
 	KASSERT(pew != NULL);
-	
+
 	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
 		if (event->pmf_event != pew->pew_event)
 			continue;
@@ -427,31 +427,32 @@ pmf_device_register1(device_t dev,
 void
 pmf_device_deregister(device_t dev)
 {
+
 	device_pmf_class_deregister(dev);
 	device_pmf_bus_deregister(dev);
 	device_pmf_driver_deregister(dev);
 }
 
 static const device_suspensor_t _device_suspensor_drvctl = {
-	  .ds_delegator = NULL
-	, .ds_name = "drvctl"
+	.ds_delegator = NULL,
+	.ds_name = "drvctl",
 };
 
 static const device_suspensor_t _device_suspensor_self = {
-	  .ds_delegator = NULL
-	, .ds_name = "self"
+	.ds_delegator = NULL,
+	.ds_name = "self",
 };
 
 #if 0
 static const device_suspensor_t _device_suspensor_self_delegate = {
-	  .ds_delegator = &_device_suspensor_self
-	, .ds_name = "self delegate"
+	.ds_delegator = &_device_suspensor_self,
+	.ds_name = "self delegate",
 };
 #endif
 
 static const device_suspensor_t _device_suspensor_system = {
-	  .ds_delegator = NULL
-	, .ds_name = "system"
+	.ds_delegator = NULL,
+	.ds_name = "system",
 };
 
 const device_suspensor_t
@@ -463,18 +464,18 @@ const device_suspensor_t
     * const device_suspensor_drvctl = &_device_suspensor_drvctl;
 
 static const pmf_qual_t _pmf_qual_system = {
-	  .pq_actlvl = DEVACT_LEVEL_FULL
-	, .pq_suspensor = &_device_suspensor_system
+	.pq_actlvl = DEVACT_LEVEL_FULL,
+	.pq_suspensor = &_device_suspensor_system,
 };
 
 static const pmf_qual_t _pmf_qual_drvctl = {
-	  .pq_actlvl = DEVACT_LEVEL_FULL
-	, .pq_suspensor = &_device_suspensor_drvctl
+	.pq_actlvl = DEVACT_LEVEL_FULL,
+	.pq_suspensor = &_device_suspensor_drvctl,
 };
 
 static const pmf_qual_t _pmf_qual_self = {
-	  .pq_actlvl = DEVACT_LEVEL_DRIVER
-	, .pq_suspensor = &_device_suspensor_self
+	.pq_actlvl = DEVACT_LEVEL_DRIVER,
+	.pq_suspensor = &_device_suspensor_self,
 };
 
 const pmf_qual_t
@@ -667,6 +668,7 @@ void
 pmf_self_suspensor_init(device_t dev, device_suspensor_t *ds,
     pmf_qual_t *pq)
 {
+
 	ds->ds_delegator = device_suspensor_self;
 	snprintf(ds->ds_name, sizeof(ds->ds_name), "%s-self",
 	    device_xname(dev));
@@ -697,6 +699,7 @@ pmf_device_suspend(device_t dev, const pmf_qual_t *qual)
 bool
 pmf_device_suspend_locked(device_t dev, const pmf_qual_t *qual)
 {
+
 	if (!device_pmf_add_suspensor(dev, qual))
 		return false;
 
@@ -738,6 +741,7 @@ pmf_device_resume(device_t dev, const pmf_qual_t *qual)
 bool
 pmf_device_resume_locked(device_t dev, const pmf_qual_t *qual)
 {
+
 	device_pmf_remove_suspensor(dev, qual);
 
 	if (device_pmf_any_suspensor(dev, DEVACT_LEVEL_FULL))
@@ -785,6 +789,7 @@ pmf_device_recursive_suspend(device_t dv, const pmf_qual_t *qual)
 void
 pmf_qual_recursive_copy(pmf_qual_t *dst, const pmf_qual_t *src)
 {
+
 	*dst = *src;
 	dst->pq_actlvl = DEVACT_LEVEL_FULL;
 }
@@ -926,6 +931,7 @@ pmf_class_network_resume(device_t dev, const pmf_qual_t *qual)
 void
 pmf_class_network_register(device_t dev, struct ifnet *ifp)
 {
+
 	device_pmf_class_register(dev, ifp, pmf_class_network_suspend,
 	    pmf_class_network_resume, NULL);
 }
@@ -957,7 +963,7 @@ pmf_event_register(device_t dv, pmf_generic_event_t ev,
     void (*handler)(device_t), bool global)
 {
 	pmf_event_handler_t *event;
-	
+
 	event = kmem_alloc(sizeof(*event), KM_SLEEP);
 	event->pmf_event = ev;
 	event->pmf_handler = handler;
@@ -1001,6 +1007,7 @@ static int idle_timeout = 30;
 static void
 input_idle(void *dummy)
 {
+
 	PMF_IDLE_PRINTF(("Input idle handler called\n"));
 	pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
 }
@@ -1008,6 +1015,7 @@ input_idle(void *dummy)
 static void
 input_activity_handler(device_t dv, devactive_t type)
 {
+
 	if (!TAILQ_EMPTY(&all_displays))
 		callout_schedule(&global_idle_counter, idle_timeout * hz);
 }
@@ -1015,15 +1023,17 @@ input_activity_handler(device_t dv, devactive_t type)
 static void
 pmf_class_input_deregister(device_t dv)
 {
+
 	device_active_deregister(dv, input_activity_handler);
 }
 
 bool
 pmf_class_input_register(device_t dv)
 {
+
 	if (!device_active_register(dv, input_activity_handler))
 		return false;
-	
+
 	device_pmf_class_register(dv, NULL, NULL, NULL,
 	    pmf_class_input_deregister);
 
@@ -1086,53 +1096,52 @@ SYSCTL_SETUP(sysctl_pmf_setup, "PMF subtree setup")
 	const struct sysctlnode *node = NULL;
 
 	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "pmf",
-		SYSCTL_DESCR("pmf controls"),
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "pmf",
+	    SYSCTL_DESCR("pmf controls"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
 
 #ifdef PMF_DEBUG
 	sysctl_createv(clog, 0, &node, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "debug",
-		SYSCTL_DESCR("debug levels"),
-		NULL, 0, NULL, 0,
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "debug",
+	    SYSCTL_DESCR("debug levels"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		CTLTYPE_INT, "event",
-		SYSCTL_DESCR("event"),
-		NULL, 0,  &pmf_debug_event, sizeof(pmf_debug_event),
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "event",
+	    SYSCTL_DESCR("event"),
+	    NULL, 0,  &pmf_debug_event, sizeof(pmf_debug_event),
+	    CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		CTLTYPE_INT, "suspend",
-		SYSCTL_DESCR("suspend"),
-		NULL, 0,  &pmf_debug_suspend, sizeof(pmf_debug_suspend),
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "suspend",
+	    SYSCTL_DESCR("suspend"),
+	    NULL, 0,  &pmf_debug_suspend, sizeof(pmf_debug_suspend),
+	    CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		CTLTYPE_INT, "suspensor",
-		SYSCTL_DESCR("suspensor"),
-		NULL, 0,  &pmf_debug_suspensor, sizeof(pmf_debug_suspensor),
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "suspensor",
+	    SYSCTL_DESCR("suspensor"),
+	    NULL, 0,  &pmf_debug_suspensor, sizeof(pmf_debug_suspensor),
+	    CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		CTLTYPE_INT, "idle",
-		SYSCTL_DESCR("idle"),
-		NULL, 0,  &pmf_debug_idle, sizeof(pmf_debug_idle),
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "idle",
+	    SYSCTL_DESCR("idle"),
+	    NULL, 0,  &pmf_debug_idle, sizeof(pmf_debug_idle),
+	    CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		CTLTYPE_INT, "transition",
-		SYSCTL_DESCR("event"),
-		NULL, 0,  &pmf_debug_transition, sizeof(pmf_debug_transition),
-		CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "transition",
+	    SYSCTL_DESCR("event"),
+	    NULL, 0,  &pmf_debug_transition, sizeof(pmf_debug_transition),
+	    CTL_CREATE, CTL_EOL);
 #endif
 }
-
 
 void
 pmf_init(void)
@@ -1155,7 +1164,6 @@ pmf_init(void)
 	    pmf_suspend_worker, NULL, PRI_NONE, IPL_VM, 0);
 	if (err)
 		panic("couldn't create pmfsuspend workqueue");
-
 
 	callout_init(&global_idle_counter, 0);
 	callout_setfunc(&global_idle_counter, input_idle, NULL);
