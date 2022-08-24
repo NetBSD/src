@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1030 2022/08/24 20:22:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1031 2022/08/24 21:03:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1030 2022/08/24 20:22:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1031 2022/08/24 21:03:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2740,7 +2740,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 	int nest = 0;
 	const char *p;
 	for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
-		if (*p == '\\' &&
+		if (*p == '\\' && p[1] != '\0' &&
 		    (IsDelimiter(p[1], ch) || p[1] == ch->startc)) {
 			if (!needSubst)
 				copy = true;
