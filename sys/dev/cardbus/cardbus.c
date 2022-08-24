@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.114 2022/03/26 13:41:16 martin Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.115 2022/08/24 11:19:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.114 2022/03/26 13:41:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.115 2022/08/24 11:19:24 riastradh Exp $");
 
 #include "opt_cardbus.h"
 
@@ -83,7 +83,7 @@ static int cardbus_read_tuples(struct cardbus_attach_args *,
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
-static bool cardbus_child_register(device_t);
+static void cardbus_child_register(device_t);
 
 CFATTACH_DECL3_NEW(cardbus, sizeof(struct cardbus_softc),
     cardbusmatch, cardbusattach, cardbusdetach, NULL,
@@ -1218,7 +1218,7 @@ cardbus_child_deregister(device_t dv)
 	free(priv, M_DEVBUF);
 }
 
-static bool
+static void
 cardbus_child_register(device_t child)
 {
 	device_t self = device_parent(child);
@@ -1250,6 +1250,4 @@ cardbus_child_register(device_t child)
 
 	device_pmf_bus_register(child, priv, cardbus_child_suspend,
 	    cardbus_child_resume, 0, cardbus_child_deregister);
-
-	return true;
 }

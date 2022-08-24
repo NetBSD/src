@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.184 2022/08/24 11:19:10 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.185 2022/08/24 11:19:25 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -669,9 +669,9 @@ const struct device_compatible_entry *
 		device_compatible_lookup_id(uintptr_t const, uintptr_t const,
 				const struct device_compatible_entry *);
 
-bool		device_pmf_driver_child_register(device_t);
+void		device_pmf_driver_child_register(device_t);
 void		device_pmf_driver_set_child_register(device_t,
-		    bool (*)(device_t));
+		    void (*)(device_t));
 
 void		*device_pmf_bus_private(device_t);
 bool		device_pmf_bus_suspend(device_t, const pmf_qual_t *);
