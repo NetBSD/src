@@ -427,31 +427,34 @@ efi_print_esrt(void)
 	//void *esrt_va = (void *) efi_getcfgtbl(&esrt_uuid);
 
 	esrt = (struct efi_esrt_table *) efi_getcfgtbl(&esrt_uuid);
-	//paddr_t esrt_pa = efi_getcfgtblpa(&esrt_uuid);
 
+	//paddr_t esrt_pa = efi_getcfgtblpa(&esrt_uuid);
+	//void *esrt_va = efi_getva(esrt_pa);
 
 	//esrt = (struct efi_esrt_table *) esrt_pa;
 	//esrt = (struct efi_esrt_table *) esrt_addr;
 
 	aprint_normal("ESRT address = %p\n", esrt);
-	
-	/*
-	 * Print memory byte by byte
-	 */
-	// aprint_normal("ESRT memory, %ld bytes\n", sizeof(struct efi_esrt_table));
-	// unsigned char *r = (unsigned char *)esrt_addr;
-	// for (int i = 0; i < sizeof(struct efi_esrt_table); ++i) {
-	// 	aprint_normal("%02x\n", r[i]);
-	// }
-	// aprint_normal("\n");
 
-	if (esrt == NULL) {
+	if (esrt == NULL || esrt == 0) {
 		aprint_error("ESRT Couldn't find esrt on the system\n");
 		return;
 	}
 
 	aprint_normal("ESRT Fw Resource Count = %d\n", esrt->fw_resource_count);
 	aprint_normal("ESRT Fw Resource Version = %ld\n", esrt->fw_resource_version);
+
+	/*
+	 * Print memory byte by byte
+	 */
+	aprint_normal("ESRT 64 bytes of memory from pointer");
+	unsigned char *r = (unsigned char *)esrt;
+	for (int i = 0; i < 64; ++i) {
+		aprint_normal("%p %02x\n", &r[i], r[i]);
+	}
+	aprint_normal("\n");
+
+
 
 	esrt_entries = (struct efi_esrt_entry_v1 *) esrt->entries;
 
@@ -467,6 +470,22 @@ efi_print_esrt(void)
 		aprint_normal("  Last Attempt Version: 0x%08x\n", e->last_attempt_version);
 		aprint_normal("  Last Attempt Status: 0x%08x\n", e->last_attempt_status);
 	}
+
+	/*
+	 * Print some other table
+	 */
+
+	const struct uuid acpi_uuid = EFI_TABLE_ACPI20;
+
+	void* acpi = efi_getcfgtbl(&acpi_uuid);
+
+	aprint_normal("ESRT print 64 bytes of ACPI table = %ld bytes\n", sizeof(struct efi_esrt_table));
+	unsigned char *q = (unsigned char *) acpi;
+	for (int i = 0; i < 64; ++i) {
+		aprint_normal("%02x\n", q[i]);
+	}
+	aprint_normal("\n");
+
 }
 
 bool
