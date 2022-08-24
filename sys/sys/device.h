@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.182 2022/03/28 12:38:59 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.183 2022/08/24 11:18:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -686,7 +686,7 @@ bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
 bool		device_pmf_driver_resume(device_t, const pmf_qual_t *);
 bool		device_pmf_driver_shutdown(device_t, int);
 
-bool		device_pmf_driver_register(device_t,
+void		device_pmf_driver_register(device_t,
 		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, int));
