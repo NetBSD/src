@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1029 2022/08/23 19:22:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1030 2022/08/24 20:22:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1029 2022/08/23 19:22:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1030 2022/08/24 20:22:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2465,7 +2465,8 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 		/* See Buf_AddEscaped in for.c. */
 		if (*p == '\\') {
 			char c = p[1];
-			if (IsDelimiter(c, ch) || c == '$' || c == '\\') {
+			if ((IsDelimiter(c, ch) && c != '\0') ||
+			    c == '$' || c == '\\') {
 				if (shouldEval)
 					LazyBuf_Add(buf, c);
 				p += 2;
