@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.24 2022/04/19 20:32:16 rillig Exp $
+ * $NetBSD: math_private.h,v 1.25 2022/08/24 13:51:19 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -311,7 +311,7 @@ extern double __kernel_standard __P((double,double,int));
 extern double __kernel_sin __P((double,double,int));
 extern double __kernel_cos __P((double,double));
 extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int32_t*));
+extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int));
 
 
 /* ieee style elementary float functions */
@@ -382,5 +382,115 @@ struct Double {
  */
 double	__exp__D(double, double);
 struct Double __log__D(double);
+
+/*
+ * The rnint() family rounds to the nearest integer for a restricted range
+ * range of args (up to about 2**MANT_DIG).  We assume that the current
+ * rounding mode is FE_TONEAREST so that this can be done efficiently.
+ * Extra precision causes more problems in practice, and we only centralize
+ * this here to reduce those problems, and have not solved the efficiency
+ * problems.  The exp2() family uses a more delicate version of this that
+ * requires extracting bits from the intermediate value, so it is not
+ * centralized here and should copy any solution of the efficiency problems.
+ */
+
+static inline double
+rnint(double x)
+{
+	/*
+	 * This casts to double to kill any extra precision.  This depends
+	 * on the cast being applied to a double_t to avoid compiler bugs
+	 * (this is a cleaner version of STRICT_ASSIGN()).  This is
+	 * inefficient if there actually is extra precision, but is hard
+	 * to improve on.  We use double_t in the API to minimise conversions
+	 * for just calling here.  Note that we cannot easily change the
+	 * magic number to the one that works directly with double_t, since
+	 * the rounding precision is variable at runtime on x86 so the
+	 * magic number would need to be variable.  Assuming that the
+	 * rounding precision is always the default is too fragile.  This
+	 * and many other complications will move when the default is
+	 * changed to FP_PE.
+	 */
+	return ((double)(x + 0x1.8p52) - 0x1.8p52);
+}
+
+static inline float
+rnintf(float x)
+{
+	/*
+	 * As for rnint(), except we could just call that to handle the
+	 * extra precision case, usually without losing efficiency.
+	 */
+	return ((float)(x + 0x1.8p23F) - 0x1.8p23F);
+}
+
+#ifdef LDBL_MANT_DIG
+/*
+ * The complications for extra precision are smaller for rnintl() since it
+ * can safely assume that the rounding precision has been increased from
+ * its default to FP_PE on x86.  We don't exploit that here to get small
+ * optimizations from limiting the rangle to double.  We just need it for
+ * the magic number to work with long doubles.  ld128 callers should use
+ * rnint() instead of this if possible.  ld80 callers should prefer
+ * rnintl() since for amd64 this avoids swapping the register set, while
+ * for i386 it makes no difference (assuming FP_PE), and for other arches
+ * it makes little difference.
+ */
+static inline long double
+rnintl(long double x)
+{
+	return (x + ___CONCAT(0x1.8p,LDBL_MANT_DIG) / 2 -
+	    ___CONCAT(0x1.8p,LDBL_MANT_DIG) / 2);
+}
+#endif /* LDBL_MANT_DIG */
+
+/*
+ * irint() and i64rint() give the same result as casting to their integer
+ * return type provided their arg is a floating point integer.  They can
+ * sometimes be more efficient because no rounding is required.
+ */
+#if (defined(amd64) || defined(__i386__)) && defined(__GNUCLIKE_ASM)
+#define	irint(x)						\
+    (sizeof(x) == sizeof(float) &&				\
+    sizeof(__float_t) == sizeof(long double) ? irintf(x) :	\
+    sizeof(x) == sizeof(double) &&				\
+    sizeof(__double_t) == sizeof(long double) ? irintd(x) :	\
+    sizeof(x) == sizeof(long double) ? irintl(x) : (int)(x))
+#else
+#define	irint(x)	((int)(x))
+#endif
+
+#define	i64rint(x)	((int64_t)(x))	/* only needed for ld128 so not opt. */
+
+#if defined(__i386__) && defined(__GNUCLIKE_ASM)
+static __inline int
+irintf(float x)
+{
+	int n;
+
+	__asm("fistl %0" : "=m" (n) : "t" (x));
+	return (n);
+}
+
+static __inline int
+irintd(double x)
+{
+	int n;
+
+	__asm("fistl %0" : "=m" (n) : "t" (x));
+	return (n);
+}
+#endif
+
+#if (defined(__amd64__) || defined(__i386__)) && defined(__GNUCLIKE_ASM)
+static __inline int
+irintl(long double x)
+{
+	int n;
+
+	__asm("fistl %0" : "=m" (n) : "t" (x));
+	return (n);
+}
+#endif
 
 #endif /* _MATH_PRIVATE_H_ */
