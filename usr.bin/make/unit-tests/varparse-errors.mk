@@ -1,4 +1,4 @@
-# $NetBSD: varparse-errors.mk,v 1.5 2022/01/24 22:59:49 rillig Exp $
+# $NetBSD: varparse-errors.mk,v 1.6 2022/08/24 21:38:06 rillig Exp $
 
 # Tests for parsing and evaluating all kinds of variable expressions.
 #
@@ -68,4 +68,31 @@ IND=	${:OX}
 _:=	${:U:OX:U${IND}} ${:U:OX:U${IND}}
 #.MAKEFLAGS: -d0
 
-all:
+# expect+1: Unknown modifier "Q"
+UNCLOSED:=	${:U:Q
+# expect+1: Unknown modifier "sh"
+UNCLOSED:=	${:U:sh
+# expect: make: Bad modifier ":tA" for variable ""
+UNCLOSED:=	${:U:tA
+# expect: make: Bad modifier ":tsX" for variable ""
+UNCLOSED:=	${:U:tsX
+# expect: make: Bad modifier ":ts" for variable ""
+UNCLOSED:=	${:U:ts
+# expect: make: Bad modifier ":ts\040" for variable ""
+UNCLOSED:=	${:U:ts\040
+# expect+1: Unknown modifier "u"
+UNCLOSED:=	${:U:u
+# expect+1: Unknown modifier "H"
+UNCLOSED:=	${:U:H
+# expect: make: Bad modifier ":[1]" for variable ""
+UNCLOSED:=	${:U:[1]
+# expect+1: Unknown modifier "hash"
+UNCLOSED:=	${:U:hash
+# expect+1: Unknown modifier "range"
+UNCLOSED:=	${:U:range
+# expect+1: Unknown modifier "_"
+UNCLOSED:=	${:U:_
+# expect+1: Unknown modifier "gmtime"
+UNCLOSED:=	${:U:gmtime
+# expect+1: Unknown modifier "localtime"
+UNCLOSED:=	${:U:localtime
