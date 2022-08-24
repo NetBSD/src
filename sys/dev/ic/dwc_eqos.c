@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.11 2022/08/24 03:03:58 ryo Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.12 2022/08/24 19:21:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.11 2022/08/24 03:03:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.12 2022/08/24 19:21:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -259,7 +259,7 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		tdes3 = 0;
 		--sc->sc_tx.queued;
 	} else {
-		tdes2 = (flags & EQOS_TDES3_LD) ? EQOS_TDES2_IOC : 0;
+		tdes2 = (flags & EQOS_TDES3_TX_LD) ? EQOS_TDES2_TX_IOC : 0;
 		tdes3 = flags;
 		++sc->sc_tx.queued;
 	}
@@ -315,18 +315,18 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	/* stored in same index as loaded map */
 	sc->sc_tx.buf_map[index].mbuf = m;
 
-	flags = EQOS_TDES3_FD;
+	flags = EQOS_TDES3_TX_FD;
 
 	for (cur = index, i = 0; i < nsegs; i++) {
 		if (i == nsegs - 1)
-			flags |= EQOS_TDES3_LD;
+			flags |= EQOS_TDES3_TX_LD;
 
 		eqos_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
 		    segs[i].ds_len, m->m_pkthdr.len);
-		flags &= ~EQOS_TDES3_FD;
+		flags &= ~EQOS_TDES3_TX_FD;
 		cur = TX_NEXT(cur);
 
-		flags |= EQOS_TDES3_OWN;
+		flags |= EQOS_TDES3_TX_OWN;
 	}
 
 	/*
@@ -341,7 +341,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	DPRINTF(EDEB_TXRING, "passing tx desc %u to hardware, cur: %u, "
 	    "next: %u, queued: %u\n",
 	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued);
-	sc->sc_tx.desc_ring[index].tdes3 |= htole32(EQOS_TDES3_OWN);
+	sc->sc_tx.desc_ring[index].tdes3 |= htole32(EQOS_TDES3_TX_OWN);
 
 	return nsegs;
 }
@@ -356,8 +356,8 @@ eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
 	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
 	    BUS_DMASYNC_PREWRITE);
-	sc->sc_rx.desc_ring[index].tdes3 =
-	    htole32(EQOS_TDES3_OWN | EQOS_TDES3_IOC | EQOS_TDES3_BUF1V);
+	sc->sc_rx.desc_ring[index].tdes3 = htole32(EQOS_TDES3_RX_OWN |
+	    EQOS_TDES3_RX_IOC | EQOS_TDES3_RX_BUF1V);
 }
 
 static int
@@ -747,7 +747,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		tdes3 = le32toh(sc->sc_rx.desc_ring[index].tdes3);
-		if ((tdes3 & EQOS_TDES3_OWN) != 0) {
+		if ((tdes3 & EQOS_TDES3_RX_OWN) != 0) {
 			break;
 		}
 
@@ -757,7 +757,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		bus_dmamap_unload(sc->sc_dmat,
 		    sc->sc_rx.buf_map[index].map);
 
-		len = tdes3 & EQOS_TDES3_LENGTH_MASK;
+		len = tdes3 & EQOS_TDES3_RX_LENGTH_MASK;
 		if (len != 0) {
 			m = sc->sc_rx.buf_map[index].mbuf;
 			m_set_rcvif(m, ifp);
@@ -815,7 +815,7 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		desc = &sc->sc_tx.desc_ring[i];
 		tdes3 = le32toh(desc->tdes3);
-		if ((tdes3 & EQOS_TDES3_OWN) != 0) {
+		if ((tdes3 & EQOS_TDES3_TX_OWN) != 0) {
 			break;
 		}
 		bmap = &sc->sc_tx.buf_map[i];
@@ -837,13 +837,13 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		/* Last descriptor in a packet contains DMA status */
-		if ((tdes3 & EQOS_TDES3_LD) != 0) {
-			if ((tdes3 & EQOS_TDES3_DE) != 0) {
+		if ((tdes3 & EQOS_TDES3_TX_LD) != 0) {
+			if ((tdes3 & EQOS_TDES3_TX_DE) != 0) {
 				device_printf(sc->sc_dev,
 				    "TX [%u] desc error: 0x%08x\n",
 				    i, tdes3);
 				if_statinc(ifp, if_oerrors);
-			} else if ((tdes3 & EQOS_TDES3_ES) != 0) {
+			} else if ((tdes3 & EQOS_TDES3_TX_ES) != 0) {
 				device_printf(sc->sc_dev,
 				    "TX [%u] tx error: 0x%08x\n",
 				    i, tdes3);
