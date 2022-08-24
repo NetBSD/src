@@ -1,4 +1,4 @@
-/*	$NetBSD: device_impl.h,v 1.3 2022/08/24 11:19:25 riastradh Exp $	*/
+/*	$NetBSD: device_impl.h,v 1.4 2022/08/24 11:47:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -191,7 +191,6 @@ struct device {
 #define	DVF_ATTACH_INPROGRESS	0x0040	/* device attach is in progress */
 
 bool		device_pmf_is_registered(device_t);
-bool		device_pmf_is_registered(device_t);
 
 bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
 bool		device_pmf_driver_resume(device_t, const pmf_qual_t *);
@@ -206,11 +205,6 @@ void		device_pmf_driver_deregister(device_t);
 device_lock_t	device_getlock(device_t);
 void		device_pmf_unlock(device_t);
 bool		device_pmf_lock(device_t);
-
-bool		device_is_self_suspended(device_t);
-void		device_pmf_self_suspend(device_t, const pmf_qual_t *);
-void		device_pmf_self_resume(device_t, const pmf_qual_t *);
-bool		device_pmf_self_wait(device_t, const pmf_qual_t *);
 
 void		*device_pmf_class_private(device_t);
 bool		device_pmf_class_suspend(device_t, const pmf_qual_t *);
