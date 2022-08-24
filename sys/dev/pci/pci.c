@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.164 2022/01/21 15:55:36 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.165 2022/08/24 11:19:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.164 2022/01/21 15:55:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.165 2022/08/24 11:19:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.164 2022/01/21 15:55:36 thorpej Exp $");
 
 #include "locators.h"
 
-static bool pci_child_register(device_t);
+static void pci_child_register(device_t);
 
 #ifdef PCI_CONFIG_DUMP
 int pci_config_dump = 1;
@@ -1321,7 +1321,7 @@ pci_child_deregister(device_t dv)
 	free(priv, M_DEVBUF);
 }
 
-static bool
+static void
 pci_child_register(device_t child)
 {
 	device_t self = device_parent(child);
@@ -1355,8 +1355,6 @@ pci_child_register(device_t child)
 
 	device_pmf_bus_register(child, priv, pci_child_suspend,
 	    pci_child_resume, pci_child_shutdown, pci_child_deregister);
-
-	return true;
 }
 
 MODULE(MODULE_CLASS_DRIVER, pci, NULL);

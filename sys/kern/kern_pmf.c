@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.49 2022/08/24 11:18:56 riastradh Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.50 2022/08/24 11:19:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.49 2022/08/24 11:18:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.50 2022/08/24 11:19:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,10 +419,7 @@ pmf_device_register1(device_t dev,
 {
 
 	device_pmf_driver_register(dev, suspend, resume, shutdown);
-	if (!device_pmf_driver_child_register(dev)) {
-		device_pmf_driver_deregister(dev);
-		return false;
-	}
+	device_pmf_driver_child_register(dev);
 
 	return true;
 }
