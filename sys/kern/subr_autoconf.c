@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.303 2022/08/24 11:18:56 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.304 2022/08/24 11:19:25 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.303 2022/08/24 11:18:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.304 2022/08/24 11:19:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3174,19 +3174,19 @@ device_pmf_driver_deregister(device_t dev)
 	mutex_exit(&dvl->dvl_mtx);
 }
 
-bool
+void
 device_pmf_driver_child_register(device_t dev)
 {
 	device_t parent = device_parent(dev);
 
 	if (parent == NULL || parent->dv_driver_child_register == NULL)
-		return true;
-	return (*parent->dv_driver_child_register)(dev);
+		return;
+	(*parent->dv_driver_child_register)(dev);
 }
 
 void
 device_pmf_driver_set_child_register(device_t dev,
-    bool (*child_register)(device_t))
+    void (*child_register)(device_t))
 {
 	dev->dv_driver_child_register = child_register;
 }

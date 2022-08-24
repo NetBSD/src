@@ -1,4 +1,4 @@
-/*	$NetBSD: device_impl.h,v 1.2 2022/08/24 11:19:10 riastradh Exp $	*/
+/*	$NetBSD: device_impl.h,v 1.3 2022/08/24 11:19:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct device {
 	bool		(*dv_driver_suspend)(device_t, const pmf_qual_t *);
 	bool		(*dv_driver_resume)(device_t, const pmf_qual_t *);
 	bool		(*dv_driver_shutdown)(device_t, int);
-	bool		(*dv_driver_child_register)(device_t);
+	void		(*dv_driver_child_register)(device_t);
 
 	void		*dv_bus_private;
 	bool		(*dv_bus_suspend)(device_t, const pmf_qual_t *);
