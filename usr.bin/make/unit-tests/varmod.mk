@@ -1,6 +1,9 @@
-# $NetBSD: varmod.mk,v 1.6 2022/08/06 07:06:58 rillig Exp $
+# $NetBSD: varmod.mk,v 1.7 2022/08/24 21:38:06 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
+#
+# See also:
+#	varparse-errors.mk
 
 # As of 2022-08-06, the possible behaviors during parsing are:
 #
