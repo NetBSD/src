@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.183 2022/08/24 11:18:56 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.184 2022/08/24 11:19:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -188,20 +188,10 @@ struct device_compatible_entry {
 
 #define	DEVICE_COMPAT_EOL	{ .compat = NULL }
 
-struct device_lock {
-	int		dvl_nwait;
-	int		dvl_nlock;
-	lwp_t		*dvl_holder;
-	kmutex_t	dvl_mtx;
-	kcondvar_t	dvl_cv;
-};
-
 struct device_suspensor {
 	const device_suspensor_t	*ds_delegator;
 	char				ds_name[32];
 };
-
-#define	DEVICE_SUSPENSORS_MAX	16
 
 struct device_garbage {
 	device_t	*dg_devs;
@@ -679,19 +669,6 @@ const struct device_compatible_entry *
 		device_compatible_lookup_id(uintptr_t const, uintptr_t const,
 				const struct device_compatible_entry *);
 
-bool		device_pmf_is_registered(device_t);
-bool		device_pmf_is_registered(device_t);
-
-bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
-bool		device_pmf_driver_resume(device_t, const pmf_qual_t *);
-bool		device_pmf_driver_shutdown(device_t, int);
-
-void		device_pmf_driver_register(device_t,
-		    bool (*)(device_t, const pmf_qual_t *),
-		    bool (*)(device_t, const pmf_qual_t *),
-		    bool (*)(device_t, int));
-void		device_pmf_driver_deregister(device_t);
-
 bool		device_pmf_driver_child_register(device_t);
 void		device_pmf_driver_set_child_register(device_t,
 		    bool (*)(device_t));
@@ -701,31 +678,12 @@ bool		device_pmf_bus_suspend(device_t, const pmf_qual_t *);
 bool		device_pmf_bus_resume(device_t, const pmf_qual_t *);
 bool		device_pmf_bus_shutdown(device_t, int);
 
-device_lock_t	device_getlock(device_t);
-void		device_pmf_unlock(device_t);
-bool		device_pmf_lock(device_t);
-
-bool		device_is_self_suspended(device_t);
-void		device_pmf_self_suspend(device_t, const pmf_qual_t *);
-void		device_pmf_self_resume(device_t, const pmf_qual_t *);
-bool		device_pmf_self_wait(device_t, const pmf_qual_t *);
-
 void		device_pmf_bus_register(device_t, void *,
 		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, int),
 		    void (*)(device_t));
 void		device_pmf_bus_deregister(device_t);
-
-void		*device_pmf_class_private(device_t);
-bool		device_pmf_class_suspend(device_t, const pmf_qual_t *);
-bool		device_pmf_class_resume(device_t, const pmf_qual_t *);
-
-void		device_pmf_class_register(device_t, void *,
-		    bool (*)(device_t, const pmf_qual_t *),
-		    bool (*)(device_t, const pmf_qual_t *),
-		    void (*)(device_t));
-void		device_pmf_class_deregister(device_t);
 
 device_t	shutdown_first(struct shutdown_state *);
 device_t	shutdown_next(struct shutdown_state *);

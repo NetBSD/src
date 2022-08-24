@@ -1,4 +1,4 @@
-/*	$NetBSD: device_impl.h,v 1.1 2022/03/28 12:38:59 riastradh Exp $	*/
+/*	$NetBSD: device_impl.h,v 1.2 2022/08/24 11:19:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -111,6 +111,16 @@
 
 #include <sys/device.h>
 
+struct device_lock {
+	int		dvl_nwait;
+	int		dvl_nlock;
+	lwp_t		*dvl_holder;
+	kmutex_t	dvl_mtx;
+	kcondvar_t	dvl_cv;
+};
+
+#define	DEVICE_SUSPENSORS_MAX	16
+
 struct device {
 	devhandle_t	dv_handle;	/* this device's handle;
 					   new device_t's get INVALID */
@@ -179,5 +189,37 @@ struct device {
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 #define	DVF_ATTACH_INPROGRESS	0x0040	/* device attach is in progress */
+
+bool		device_pmf_is_registered(device_t);
+bool		device_pmf_is_registered(device_t);
+
+bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
+bool		device_pmf_driver_resume(device_t, const pmf_qual_t *);
+bool		device_pmf_driver_shutdown(device_t, int);
+
+void		device_pmf_driver_register(device_t,
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, int));
+void		device_pmf_driver_deregister(device_t);
+
+device_lock_t	device_getlock(device_t);
+void		device_pmf_unlock(device_t);
+bool		device_pmf_lock(device_t);
+
+bool		device_is_self_suspended(device_t);
+void		device_pmf_self_suspend(device_t, const pmf_qual_t *);
+void		device_pmf_self_resume(device_t, const pmf_qual_t *);
+bool		device_pmf_self_wait(device_t, const pmf_qual_t *);
+
+void		*device_pmf_class_private(device_t);
+bool		device_pmf_class_suspend(device_t, const pmf_qual_t *);
+bool		device_pmf_class_resume(device_t, const pmf_qual_t *);
+
+void		device_pmf_class_register(device_t, void *,
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    void (*)(device_t));
+void		device_pmf_class_deregister(device_t);
 
 #endif	/* _SYS_DEVICE_IMPL_H_ */
