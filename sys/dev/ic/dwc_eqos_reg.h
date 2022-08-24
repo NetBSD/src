@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.5 2022/08/23 05:41:46 ryo Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.6 2022/08/24 19:21:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -287,16 +287,27 @@ struct eqos_dma_desc {
 	uint32_t	tdes0;
 	uint32_t	tdes1;
 	uint32_t	tdes2;
-#define	EQOS_TDES2_IOC				(1U << 31)	/* TX */
+#define	EQOS_TDES2_TX_IOC			(1U << 31)	/* TX */
 	uint32_t	tdes3;
-#define	EQOS_TDES3_OWN				(1U << 31)	/* TX and RX */
-#define	EQOS_TDES3_IOC				(1U << 30)	/* RX */
-#define	EQOS_TDES3_FD				(1U << 29)	/* TX */
-#define	EQOS_TDES3_LD				(1U << 28)	/* TX */
-#define	EQOS_TDES3_BUF1V			(1U << 24)	/* RX */
-#define	EQOS_TDES3_DE				(1U << 23)	/* TX (WB) */
-#define	EQOS_TDES3_ES				(1U << 15)	/* TX (WB) */
-#define	EQOS_TDES3_LENGTH_MASK			0x7FFFU		/* RX */
+#define	EQOS_TDES3_TX_OWN			(1U << 31)	/* TX */
+#define	EQOS_TDES3_TX_FD			(1U << 29)	/* TX */
+#define	EQOS_TDES3_TX_LD			(1U << 28)	/* TX */
+#define	EQOS_TDES3_TX_DE			(1U << 23)	/* TX (WB) */
+#define	EQOS_TDES3_TX_ES			(1U << 15)	/* TX (WB) */
+#define	EQOS_TDES3_RX_OWN			(1U << 31)	/* RX */
+#define	EQOS_TDES3_RX_IOC			(1U << 30)	/* RX */
+#define	EQOS_TDES3_RX_BUF1V			(1U << 24)	/* RX */
+#define	EQOS_TDES3_RX_CTXT			(1U << 30)	/* RX (WB) */
+#define	EQOS_TDES3_RX_FD			(1U << 29)	/* RX (WB) */
+#define	EQOS_TDES3_RX_LD			(1U << 28)	/* RX (WB) */
+#define	EQOS_TDES3_RX_CE			(1U << 24)	/* RX (WB) */
+#define	EQOS_TDES3_RX_GP			(1U << 23)	/* RX (WB) */
+#define	EQOS_TDES3_RX_RWT			(1U << 22)	/* RX (WB) */
+#define	EQOS_TDES3_RX_OE			(1U << 21)	/* RX (WB) */
+#define	EQOS_TDES3_RX_RE			(1U << 20)	/* RX (WB) */
+#define	EQOS_TDES3_RX_DE			(1U << 19)	/* RX (WB) */
+#define	EQOS_TDES3_RX_ES			(1U << 15)	/* RX (WB) */
+#define	EQOS_TDES3_RX_LENGTH_MASK		0x7FFFU		/* RX */
 } __aligned (64);
 
 #endif /* !_DWC_EQOS_REG_H */
