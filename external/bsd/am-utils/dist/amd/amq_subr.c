@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.4 2022/08/23 07:42:28 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.5 2022/08/24 05:01:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -555,7 +555,7 @@ xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
       return (FALSE);
     }
 
-    modify = (long)m->modify;
+    modify = m->modify;
     if (!xdr_longlong_t(xdrs, &modify)) {
       return (FALSE);
     }
