@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.10 2022/08/23 05:41:46 ryo Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.11 2022/08/24 03:03:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.10 2022/08/23 05:41:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.11 2022/08/24 03:03:58 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -364,8 +364,6 @@ static int
 eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 {
 	int error;
-
-	m_adj(m, ETHER_ALIGN);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat,
 	    sc->sc_rx.buf_map[index].map, m, BUS_DMA_READ | BUS_DMA_NOWAIT);
