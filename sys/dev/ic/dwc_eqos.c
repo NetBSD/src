@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.12 2022/08/24 19:21:41 ryo Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.13 2022/08/24 19:22:37 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.12 2022/08/24 19:21:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.13 2022/08/24 19:22:37 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.12 2022/08/24 19:21:41 ryo Exp $");
 #include <dev/ic/dwc_eqos_reg.h>
 #include <dev/ic/dwc_eqos_var.h>
 
-CTASSERT(MCLBYTES == 2048);
+#define	EQOS_MAX_MTU		9000	/* up to 16364? but not tested */
+#define	EQOS_TXDMA_SIZE		(EQOS_MAX_MTU + ETHER_HDR_LEN + ETHER_CRC_LEN)
+#define	EQOS_RXDMA_SIZE		2048	/* Fixed value by hardware */
+CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
 
 #ifdef EQOS_DEBUG
 unsigned int eqos_debug;
@@ -365,6 +368,10 @@ eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 {
 	int error;
 
+#if MCLBYTES >= (EQOS_RXDMA_SIZE + ETHER_ALIGN)
+	m_adj(m, ETHER_ALIGN);
+#endif
+
 	error = bus_dmamap_load_mbuf(sc->sc_dmat,
 	    sc->sc_rx.buf_map[index].map, m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0)
@@ -375,8 +382,6 @@ eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	    BUS_DMASYNC_PREREAD);
 
 	sc->sc_rx.buf_map[index].mbuf = m;
-	eqos_setup_rxdesc(sc, index,
-	    sc->sc_rx.buf_map[index].map->dm_segs[0].ds_addr);
 
 	return 0;
 }
@@ -523,6 +528,12 @@ static void
 eqos_init_rings(struct eqos_softc *sc, int qid)
 {
 	sc->sc_tx.cur = sc->sc_tx.next = sc->sc_tx.queued = 0;
+
+	sc->sc_rx_discarding = false;
+	if (sc->sc_rx_receiving_m != NULL)
+		m_freem(sc->sc_rx_receiving_m);
+	sc->sc_rx_receiving_m = NULL;
+	sc->sc_rx_receiving_m_last = NULL;
 
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR_HI,
 	    (uint32_t)(sc->sc_tx.desc_ring_paddr >> 32));
@@ -737,9 +748,15 @@ static void
 eqos_rxintr(struct eqos_softc *sc, int qid)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int error, index, len, pkts = 0;
-	struct mbuf *m, *m0;
+	int error, index, pkts = 0;
+	struct mbuf *m, *m0, *new_m, *mprev;
 	uint32_t tdes3;
+	bool discarding;
+
+	/* restore jumboframe context */
+	discarding = sc->sc_rx_discarding;
+	m0 = sc->sc_rx_receiving_m;
+	mprev = sc->sc_rx_receiving_m_last;
 
 	for (index = sc->sc_rx.cur; ; index = RX_NEXT(index)) {
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
@@ -751,33 +768,100 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			break;
 		}
 
+		/* now discarding untill the last packet */
+		if (discarding)
+			goto rx_next;
+
+		if ((tdes3 & EQOS_TDES3_RX_CTXT) != 0)
+			goto rx_next;	/* ignore receive context descriptor */
+
+		/* error packet? */
+		if ((tdes3 & (EQOS_TDES3_RX_CE | EQOS_TDES3_RX_RWT |
+		    EQOS_TDES3_RX_OE | EQOS_TDES3_RX_RE |
+		    EQOS_TDES3_RX_DE)) != 0) {
+#ifdef EQOS_DEBUG
+			char buf[128];
+			snprintb(buf, sizeof(buf),
+			    "\177\020"
+			    "b\x1e" "CTXT\0"	/* 30 */
+			    "b\x18" "CE\0"	/* 24 */
+			    "b\x17" "GP\0"	/* 23 */
+			    "b\x16" "WDT\0"	/* 22 */
+			    "b\x15" "OE\0"	/* 21 */
+			    "b\x14" "RE\0"	/* 20 */
+			    "b\x13" "DE\0"	/* 19 */
+			    "b\x0f" "ES\0"	/* 15 */
+			    "\0", tdes3);
+			DPRINTF(EDEB_NOTE, "rxdesc[%d].tdes3=%s\n", index, buf);
+#endif
+			if_statinc(ifp, if_ierrors);
+			if (m0 != NULL) {
+				m_freem(m0);
+				m0 = mprev = NULL;
+			}
+			discarding = true;
+			goto rx_next;
+		}
+
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.buf_map[index].map,
 		    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat,
-		    sc->sc_rx.buf_map[index].map);
+		m = sc->sc_rx.buf_map[index].mbuf;
+		new_m = eqos_alloc_mbufcl(sc);
+		if (new_m == NULL) {
+			/*
+			 * cannot allocate new mbuf. discard this received
+			 * packet, and reuse the mbuf for next.
+			 */
+			if_statinc(ifp, if_ierrors);
+			if (m0 != NULL) {
+				/* also discard the halfway jumbo packet */
+				m_freem(m0);
+				m0 = mprev = NULL;
+			}
+			discarding = true;
+			goto rx_next;
+		}
+		error = eqos_setup_rxbuf(sc, index, new_m);
+		if (error)
+			panic("%s: %s: unable to load RX mbuf. error=%d",
+			    device_xname(sc->sc_dev), __func__, error);
 
-		len = tdes3 & EQOS_TDES3_RX_LENGTH_MASK;
-		if (len != 0) {
-			m = sc->sc_rx.buf_map[index].mbuf;
-			m_set_rcvif(m, ifp);
-			m->m_flags |= M_HASFCS;
-			m->m_pkthdr.len = len;
-			m->m_len = len;
-			m->m_nextpkt = NULL;
+		if (m0 == NULL) {
+			m0 = m;
+		} else {
+			if (m->m_flags & M_PKTHDR)
+				m_remove_pkthdr(m);
+			mprev->m_next = m;
+		}
+		mprev = m;
 
-			if_percpuq_enqueue(ifp->if_percpuq, m);
+		if ((tdes3 & EQOS_TDES3_RX_LD) == 0) {
+			/* to be continued in the next segment */
+			m->m_len = EQOS_RXDMA_SIZE;
+		} else {
+			/* last segment */
+			uint32_t totallen = tdes3 & EQOS_TDES3_RX_LENGTH_MASK;
+			uint32_t mlen = totallen % EQOS_RXDMA_SIZE;
+			if (mlen == 0)
+				mlen = EQOS_RXDMA_SIZE;
+			m->m_len = mlen;
+			m0->m_pkthdr.len = totallen;
+			m_set_rcvif(m0, ifp);
+			m0->m_flags |= M_HASFCS;
+			m0->m_nextpkt = NULL;
+			if_percpuq_enqueue(ifp->if_percpuq, m0);
+			m0 = mprev = NULL;
+
 			++pkts;
 		}
 
-		if ((m0 = eqos_alloc_mbufcl(sc)) != NULL) {
-			error = eqos_setup_rxbuf(sc, index, m0);
-			if (error != 0) {
-				/* XXX hole in RX ring */
-			}
-		} else {
-			if_statinc(ifp, if_ierrors);
-		}
+ rx_next:
+		if (discarding && (tdes3 & EQOS_TDES3_RX_LD) != 0)
+			discarding = false;
+
+		eqos_setup_rxdesc(sc, index,
+		    sc->sc_rx.buf_map[index].map->dm_segs[0].ds_addr);
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
 		    index, index + 1, RX_DESC_COUNT,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -786,6 +870,10 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		    (uint32_t)sc->sc_rx.desc_ring_paddr +
 		    DESC_OFF(sc->sc_rx.cur));
 	}
+	/* save jumboframe context */
+	sc->sc_rx_discarding = discarding;
+	sc->sc_rx_receiving_m = m0;
+	sc->sc_rx_receiving_m_last = mprev;
 
 	sc->sc_rx.cur = index;
 
@@ -1053,6 +1141,7 @@ static int
 eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct eqos_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int error, s;
 
 #ifndef EQOS_MPSAFE
@@ -1060,6 +1149,14 @@ eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 
 	switch (cmd) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > EQOS_MAX_MTU) {
+			error = EINVAL;
+		} else {
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;	/* no need ENETRESET */
+		}
+		break;
 	default:
 #ifdef EQOS_MPSAFE
 		s = splnet();
@@ -1196,7 +1293,7 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 
 	sc->sc_tx.queued = TX_DESC_COUNT;
 	for (i = 0; i < TX_DESC_COUNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		error = bus_dmamap_create(sc->sc_dmat, EQOS_TXDMA_SIZE,
 		    TX_MAX_SEGS, MCLBYTES, 0, BUS_DMA_WAITOK,
 		    &sc->sc_tx.buf_map[i].map);
 		if (error != 0) {
@@ -1250,6 +1347,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 			device_printf(sc->sc_dev, "cannot create RX buffer\n");
 			return error;
 		}
+		eqos_setup_rxdesc(sc, i,
+		    sc->sc_rx.buf_map[i].map->dm_segs[0].ds_addr);
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
 	    0, sc->sc_rx.desc_map->dm_mapsize,
@@ -1369,8 +1468,9 @@ eqos_attach(struct eqos_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/* 802.1Q VLAN-sized frames are supported */
+	/* 802.1Q VLAN-sized frames, and jumbo frame are supported */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/* Attach MII driver */
 	sc->sc_ec.ec_mii = mii;

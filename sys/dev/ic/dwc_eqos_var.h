@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.3 2022/01/09 00:36:28 mrg Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.4 2022/08/24 19:22:37 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -70,6 +70,11 @@ struct eqos_softc {
 
 	struct eqos_ring	sc_tx;
 	struct eqos_ring	sc_rx;
+
+	/* receiving context for jumbo frame */
+	bool			sc_rx_discarding;
+	struct mbuf		*sc_rx_receiving_m;
+	struct mbuf		*sc_rx_receiving_m_last;
 
 	krndsource_t		sc_rndsource;
 
