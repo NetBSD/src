@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.302 2022/08/12 16:16:12 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.303 2022/08/24 11:18:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.302 2022/08/12 16:16:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.303 2022/08/24 11:18:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3137,17 +3137,17 @@ device_pmf_driver_shutdown(device_t dev, int how)
 	return true;
 }
 
-bool
+void
 device_pmf_driver_register(device_t dev,
     bool (*suspend)(device_t, const pmf_qual_t *),
     bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int))
 {
+
 	dev->dv_driver_suspend = suspend;
 	dev->dv_driver_resume = resume;
 	dev->dv_driver_shutdown = shutdown;
 	dev->dv_flags |= DVF_POWER_HANDLERS;
-	return true;
 }
 
 void
