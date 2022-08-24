@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1031 2022/08/24 21:03:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1032 2022/08/24 22:09:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1031 2022/08/24 21:03:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1032 2022/08/24 22:09:40 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2270,7 +2270,7 @@ ParseModifierPart(
 MAKE_INLINE bool
 IsDelimiter(char c, const ModChain *ch)
 {
-	return c == ':' || c == ch->endc;
+	return c == ':' || c == ch->endc || c == '\0';
 }
 
 /* Test whether mod starts with modname, followed by a delimiter. */
@@ -2453,7 +2453,7 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 
 	p = *pp + 1;
 	LazyBuf_Init(buf, p);
-	while (!IsDelimiter(*p, ch) && *p != '\0') {
+	while (!IsDelimiter(*p, ch)) {
 
 		/*
 		 * XXX: This code is similar to the one in Var_Parse. See if
@@ -3099,7 +3099,7 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 	const char *mod = *pp;
 	assert(mod[0] == 't');
 
-	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
+	if (IsDelimiter(mod[1], ch)) {
 		*pp = mod + 1;
 		return AMR_BAD;	/* Found ":t<endc>" or ":t:". */
 	}
@@ -3107,7 +3107,7 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 	if (mod[1] == 's')
 		return ApplyModifier_ToSep(pp, ch);
 
-	if (!IsDelimiter(mod[2], ch)) {			/* :t<unrecognized> */
+	if (!IsDelimiter(mod[2], ch)) {			/* :t<any><any> */
 		*pp = mod + 1;
 		return AMR_BAD;
 	}
@@ -3335,10 +3335,10 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	SubstringWords words;
 	int (*cmp)(const void *, const void *);
 
-	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
+	if (IsDelimiter(mod[1], ch)) {
 		cmp = SubStrAsc;
 		(*pp)++;
-	} else if (IsDelimiter(mod[2], ch) || mod[2] == '\0') {
+	} else if (IsDelimiter(mod[2], ch)) {
 		if (mod[1] == 'n')
 			cmp = SubNumAsc;
 		else if (mod[1] == 'r')
@@ -3348,7 +3348,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 		else
 			goto bad;
 		*pp += 2;
-	} else if (IsDelimiter(mod[3], ch) || mod[3] == '\0') {
+	} else if (IsDelimiter(mod[3], ch)) {
 		if ((mod[1] == 'n' && mod[2] == 'r') ||
 		    (mod[1] == 'r' && mod[2] == 'n'))
 			cmp = SubNumDesc;
@@ -3867,7 +3867,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	(void)Var_Parse(&p, expr->scope, expr->emode, &mods);
 	/* TODO: handle errors */
 
-	if (mods.str[0] != '\0' && *p != '\0' && !IsDelimiter(*p, ch)) {
+	if (mods.str[0] != '\0' && !IsDelimiter(*p, ch)) {
 		FStr_Done(&mods);
 		return AMIR_SYSV;
 	}
@@ -3926,7 +3926,7 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 		 * errors and leads to wrong results.
 		 * Parsing should rather stop here.
 		 */
-		for (p++; !IsDelimiter(*p, ch) && *p != '\0'; p++)
+		for (p++; !IsDelimiter(*p, ch); p++)
 			continue;
 		Parse_Error(PARSE_FATAL, "Unknown modifier \"%.*s\"",
 		    (int)(p - mod), mod);
