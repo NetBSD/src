@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.38 2022/08/16 10:56:21 christos Exp $
-.Dd August 16, 2022
+.\"	$NetBSD: zic.8,v 1.39 2022/08/24 06:39:14 christos Exp $
+.Dd August 24, 2022
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -56,6 +56,7 @@ and incompatibilities.
 The default is
 .Dv slim ,
 as software that mishandles 64-bit data typically
+mishandles timestamps after the year 2038 anyway.
 Also see the
 .Fl r
 option for another way to alter output size.
