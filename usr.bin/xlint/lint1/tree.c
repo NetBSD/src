@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.476 2022/08/19 19:40:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.477 2022/08/25 19:03:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.476 2022/08/19 19:40:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.477 2022/08/25 19:03:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -488,7 +488,7 @@ build_name(sym_t *sym, bool is_funcname)
 {
 	tnode_t	*n;
 
-	if (sym->s_scl == NOSCL) {
+	if (sym->s_scl == NOSCL && !in_gcc_attribute) {
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (is_funcname)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.5 2021/08/11 05:19:33 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.6 2022/08/25 19:03:48 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -71,5 +71,5 @@ attribute_after_array_brackets(
 }
 
 /* just to trigger _some_ error, to keep the .exp file */
-/* expect+1: error: syntax error 'syntax_error' [249] */
+/* expect+1: error: syntax error ';' [249] */
 __attribute__((syntax_error));

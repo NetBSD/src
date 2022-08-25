@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.11 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.12 2022/08/25 19:03:48 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -29,7 +29,10 @@ function_nonnull_list(void *, const void *, int);
 void __attribute__((nonnull(1, 2)))
 function_nonnull_list(void *, const void *, int);
 
-/* expect+1: error: syntax error 'unknown_attribute' [249] */
+/*
+ * Unknown attributes are skipped, as lint does not have a list of all known
+ * GCC attributes.
+ */
 void __attribute__((unknown_attribute))
 function_with_unknown_attribute(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_type.c,v 1.2 2021/07/25 19:05:27 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_type.c,v 1.3 2022/08/25 19:03:48 rillig Exp $	*/
 # 3 "gcc_attribute_type.c"
 
 /*
@@ -27,5 +27,5 @@ struct attribute_before_keyword {
 };
 
 /* just to trigger _some_ error, to keep the .exp file */
-/* expect+1: error: syntax error 'syntax_error' [249] */
+/* expect+1: error: syntax error ';' [249] */
 __attribute__((syntax_error));
