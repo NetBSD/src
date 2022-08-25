@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.380 2022/08/19 07:52:22 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.381 2022/08/25 06:43:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.380 2022/08/19 07:52:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.381 2022/08/25 06:43:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4953,15 +4953,6 @@ bge_stats_update(struct bge_softc *sc)
 		      READ_STAT(sc, stats, xoffStateEntered.bge_addr_lo));
 
 #undef READ_STAT
-
-#ifdef notdef
-	ifp->if_collisions +=
-	   (sc->bge_rdata->bge_info.bge_stats.dot3StatsSingleCollisionFrames +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsMultipleCollisionFrames +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsExcessiveCollisions +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsLateCollisions) -
-	   ifp->if_collisions;
-#endif
 }
 
 /*
