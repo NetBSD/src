@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135 2022/08/13 06:47:41 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.136 2022/08/25 11:16:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135 2022/08/13 06:47:41 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.136 2022/08/25 11:16:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1363,13 +1363,22 @@ audiodetach(device_t self, int flags)
 
 	/*
 	 * Prevent new opens and wait for existing opens to complete.
+	 *
+	 * At the moment there are only four bits in the minor for the
+	 * unit number, so we only revoke if the unit number could be
+	 * used in a device node.
+	 *
+	 * XXX If we want more audio units, we need to encode them
+	 * more elaborately in the minor space.
 	 */
 	maj = cdevsw_lookup_major(&audio_cdevsw);
 	mn = device_unit(self);
-	vdevgone(maj, mn|SOUND_DEVICE, mn|SOUND_DEVICE, VCHR);
-	vdevgone(maj, mn|AUDIO_DEVICE, mn|AUDIO_DEVICE, VCHR);
-	vdevgone(maj, mn|AUDIOCTL_DEVICE, mn|AUDIOCTL_DEVICE, VCHR);
-	vdevgone(maj, mn|MIXER_DEVICE, mn|MIXER_DEVICE, VCHR);
+	if (mn <= 0xf) {
+		vdevgone(maj, mn|SOUND_DEVICE, mn|SOUND_DEVICE, VCHR);
+		vdevgone(maj, mn|AUDIO_DEVICE, mn|AUDIO_DEVICE, VCHR);
+		vdevgone(maj, mn|AUDIOCTL_DEVICE, mn|AUDIOCTL_DEVICE, VCHR);
+		vdevgone(maj, mn|MIXER_DEVICE, mn|MIXER_DEVICE, VCHR);
+	}
 
 	/*
 	 * This waits currently running sysctls to finish if exists.
