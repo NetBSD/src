@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.85 2022/06/17 06:26:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.86 2022/08/25 09:15:14 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.85 2022/06/17 06:26:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.86 2022/08/25 09:15:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -718,7 +718,7 @@ static bool		 ixl_param_nomsix = false;
 static int		 ixl_param_stats_interval = IXL_STATS_INTERVAL_MSEC;
 static int		 ixl_param_nqps_limit = IXL_QUEUE_NUM;
 static unsigned int	 ixl_param_tx_ndescs = 512;
-static unsigned int	 ixl_param_rx_ndescs = 256;
+static unsigned int	 ixl_param_rx_ndescs = 512;
 
 static enum i40e_mac_type
 	    ixl_mactype(pci_product_id_t);
