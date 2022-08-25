@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.320 2022/08/24 22:09:41 rillig Exp $
+# $NetBSD: Makefile,v 1.321 2022/08/25 06:23:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -621,8 +621,10 @@ STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: ,,'
 STD_SED_CMDS.regex= \
 	-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 
+# Normalize timestamps from ':gmtime' or ':localtime' to '<timestamp>'.
+# See STD_SED_CMDS.dg2 for timestamps from the debug log.
 STD_SED_CMDS.timestamp= \
-	-e 's,[A-Z][a-z][a-z] [A-Z][a-z][a-z] [0-9][0-9]* [0-9][0-9]*:[0-9][0-9]:[0-9][0-9] 20[0-9][0-9],<timestamp>,'
+	-e 's,[A-Z][a-z][a-z] [A-Z][a-z][a-z] [ 0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [12][0-9][0-9][0-9],<timestamp>,'
 
 # End of the configuration helpers section.
 
