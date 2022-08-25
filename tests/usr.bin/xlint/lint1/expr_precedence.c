@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.9 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.10 2022/08/25 19:03:48 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -30,7 +30,6 @@ void __attribute__((format(printf,
      *
      * See lex.c, function 'search', keyword 'in_gcc_attribute'.
      */
-    /* expect+2: error: 'var' undefined [99] */
     /* expect+1: error: syntax error '=' [249] */
     var = 1,
     /* Syntactically ok, must be a constant expression though. */

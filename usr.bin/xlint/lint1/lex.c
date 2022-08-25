@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.132 2022/06/11 13:19:28 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.133 2022/08/25 19:03:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.132 2022/06/11 13:19:28 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.133 2022/08/25 19:03:47 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -75,26 +75,24 @@ bool in_system_header;
  * not defined, it would be interpreted as an implicit function call, leading
  * to a parse error.
  */
-#define kwdef(name, token, scl, tspec, tqual,	since, gcc, attr, deco) \
+#define kwdef(name, token, scl, tspec, tqual,	since, gcc, deco) \
 	{ \
 		name, token, scl, tspec, tqual, \
 		(since) == 90, \
 		/* CONSTCOND */ (since) == 99 || (since) == 11, \
-		(gcc) > 0, (attr) > 0, \
+		(gcc) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
 #define kwdef_token(name, token,		since, gcc, deco) \
-	kwdef(name, token, 0, 0, 0,		since, gcc, 0, deco)
+	kwdef(name, token, 0, 0, 0,		since, gcc, deco)
 #define kwdef_sclass(name, sclass,		since, gcc, deco) \
-	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, 0, deco)
+	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, deco)
 #define kwdef_type(name, tspec,			since) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	since, 0, 0, 1)
+	kwdef(name, T_TYPE, 0, tspec, 0,	since, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
-	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, 0, deco)
+	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, deco)
 #define kwdef_keyword(name, token) \
-	kwdef(name, token, 0, 0, 0,		78, 0, 0, 1)
-#define kwdef_gcc_attr(name, token) \
-	kwdef(name, token, 0, 0, 0,		78, 1, 1, 5)
+	kwdef(name, token, 0, 0, 0,		78, 0, 1)
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
@@ -107,7 +105,6 @@ static const struct keyword {
 	bool	kw_c90:1;	/* C90 keyword */
 	bool	kw_c99_or_c11:1; /* C99 or C11 keyword */
 	bool	kw_gcc:1;	/* GCC keyword */
-	bool	kw_attr:1;	/* GCC attribute */
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
@@ -151,13 +148,12 @@ static const struct keyword {
 	kwdef_sclass(	"register",	REG,			78,0,1),
 	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
-	kwdef(		"section",	T_AT_SECTION,	0,0,0,	78,1,1,7),
 	kwdef_type(	"short",	SHORT,			78),
-	kwdef(		"signed",	T_TYPE, 0, SIGNED, 0,	90,0,0,3),
+	kwdef(		"signed",	T_TYPE, 0, SIGNED, 0,	90,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			78,0,1),
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
-	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	78,0,0,1),
+	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	78,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
 	kwdef_tqual(	"__thread",	THREAD,			78,1,1),
@@ -167,73 +163,17 @@ static const struct keyword {
 #ifdef INT128_SIZE
 	kwdef_type(	"__uint128_t",	UINT128,		99),
 #endif
-	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,0,1),
+	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
 	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
-
-	kwdef_gcc_attr(	"alias",	T_AT_ALIAS),
-	kwdef_gcc_attr(	"aligned",	T_AT_ALIGNED),
-	kwdef_gcc_attr(	"alloc_size",	T_AT_ALLOC_SIZE),
-	kwdef_gcc_attr(	"always_inline",T_AT_ALWAYS_INLINE),
-	kwdef_gcc_attr(	"bounded",	T_AT_BOUNDED),
-	kwdef_gcc_attr(	"buffer",	T_AT_BUFFER),
-	kwdef_gcc_attr(	"cold",		T_AT_COLD),
-	kwdef_gcc_attr(	"common",	T_AT_COMMON),
-	kwdef_gcc_attr(	"constructor",	T_AT_CONSTRUCTOR),
-	kwdef_gcc_attr(	"deprecated",	T_AT_DEPRECATED),
-	kwdef_gcc_attr(	"destructor",	T_AT_DESTRUCTOR),
-	kwdef_gcc_attr(	"disable_sanitizer_instrumentation",
-	    T_AT_DISABLE_SANITIZER_INSTRUMENTATION),
-	kwdef_gcc_attr(	"fallthrough",	T_AT_FALLTHROUGH),
-	kwdef_gcc_attr(	"format",	T_AT_FORMAT),
-	kwdef_gcc_attr(	"format_arg",	T_AT_FORMAT_ARG),
-	kwdef_gcc_attr(	"gnu_inline",	T_AT_GNU_INLINE),
-	kwdef_gcc_attr(	"gnu_printf",	T_AT_FORMAT_GNU_PRINTF),
-	kwdef_gcc_attr(	"hot",		T_AT_HOT),
-	kwdef_gcc_attr(	"malloc",	T_AT_MALLOC),
-	kwdef_gcc_attr(	"may_alias",	T_AT_MAY_ALIAS),
-	kwdef_gcc_attr(	"minbytes",	T_AT_MINBYTES),
-	kwdef_gcc_attr(	"mode",		T_AT_MODE),
-	kwdef_gcc_attr("no_instrument_function", T_AT_NO_INSTRUMENT_FUNCTION),
-	kwdef_gcc_attr(	"no_sanitize",	T_AT_NO_SANITIZE),
-	kwdef_gcc_attr(	"no_sanitize_thread", T_AT_NO_SANITIZE_THREAD),
-	kwdef_gcc_attr(	"noinline",	T_AT_NOINLINE),
-	kwdef_gcc_attr(	"nonnull",	T_AT_NONNULL),
-	kwdef_gcc_attr(	"nonstring",	T_AT_NONSTRING),
-	kwdef_gcc_attr(	"noreturn",	T_AT_NORETURN),
-	kwdef_gcc_attr(	"nothrow",	T_AT_NOTHROW),
-	kwdef_gcc_attr(	"optimize",	T_AT_OPTIMIZE),
-	kwdef_gcc_attr(	"optnone",	T_AT_OPTNONE),
-	kwdef_gcc_attr(	"packed",	T_AT_PACKED),
-	kwdef_gcc_attr(	"pcs",		T_AT_PCS),
-	kwdef_gcc_attr(	"printf",	T_AT_FORMAT_PRINTF),
-	kwdef_gcc_attr(	"pure",		T_AT_PURE),
-	kwdef_gcc_attr(	"regparm",	T_AT_REGPARM),
-	kwdef_gcc_attr(	"returns_nonnull", T_AT_RETURNS_NONNULL),
-	kwdef_gcc_attr(	"returns_twice", T_AT_RETURNS_TWICE),
-	kwdef_gcc_attr(	"scanf",	T_AT_FORMAT_SCANF),
-	kwdef_gcc_attr(	"sentinel",	T_AT_SENTINEL),
-	kwdef_gcc_attr(	"strfmon",	T_AT_FORMAT_STRFMON),
-	kwdef_gcc_attr(	"strftime",	T_AT_FORMAT_STRFTIME),
-	kwdef_gcc_attr(	"string",	T_AT_STRING),
-	kwdef_gcc_attr(	"syslog",	T_AT_FORMAT_SYSLOG),
-	kwdef_gcc_attr(	"target",	T_AT_TARGET),
-	kwdef_gcc_attr(	"tls_model",	T_AT_TLS_MODEL),
-	kwdef_gcc_attr(	"transparent_union", T_AT_TUNION),
-	kwdef_gcc_attr(	"unused",	T_AT_UNUSED),
-	kwdef_gcc_attr(	"used",		T_AT_USED),
-	kwdef_gcc_attr(	"visibility",	T_AT_VISIBILITY),
-	kwdef_gcc_attr(	"warn_unused_result", T_AT_WARN_UNUSED_RESULT),
-	kwdef_gcc_attr(	"weak",		T_AT_WEAK),
 #undef kwdef
 #undef kwdef_token
 #undef kwdef_sclass
 #undef kwdef_type
 #undef kwdef_tqual
 #undef kwdef_keyword
-#undef kwdef_gcc_attr
 };
 
 /* Symbol table */
@@ -282,9 +222,7 @@ symtab_search(sbuf_t *sb)
 			continue;
 
 		const struct keyword *kw = sym->s_keyword;
-		if (kw != NULL && !kw->kw_attr)
-			return sym;
-		if (kw != NULL && in_gcc_attribute)
+		if (kw != NULL || in_gcc_attribute)
 			return sym;
 		if (kw == NULL && !in_gcc_attribute && sym->s_kind == symtyp)
 			return sym;
@@ -1464,10 +1402,12 @@ getsym(sbuf_t *sb)
 
 	symtyp = FVFT;
 
-	symtab_add(sym);
+	if (!in_gcc_attribute) {
+		symtab_add(sym);
 
-	*di->d_ldlsym = sym;
-	di->d_ldlsym = &sym->s_level_next;
+		*di->d_ldlsym = sym;
+		di->d_ldlsym = &sym->s_level_next;
+	}
 
 	free(sb);
 	return sym;
