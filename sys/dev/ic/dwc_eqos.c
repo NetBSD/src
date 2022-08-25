@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.13 2022/08/24 19:22:37 ryo Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.14 2022/08/25 01:58:48 ryo Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.13 2022/08/24 19:22:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.14 2022/08/25 01:58:48 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -822,6 +822,8 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			discarding = true;
 			goto rx_next;
 		}
+		bus_dmamap_unload(sc->sc_dmat,
+		    sc->sc_rx.buf_map[index].map);
 		error = eqos_setup_rxbuf(sc, index, new_m);
 		if (error)
 			panic("%s: %s: unable to load RX mbuf. error=%d",
