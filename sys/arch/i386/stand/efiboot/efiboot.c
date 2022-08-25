@@ -110,12 +110,14 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
     {0x99,0x29,0x78,0xf8,0xb0,0xd6,0x21,0x80}};
 
 	int found = 0;
+	int esrt_index;
 
 	for (int i = 0; i < systemTable->NumberOfTableEntries; ++i) {
 		Print(L"%d ", i);
 		efi_aprintuuid(&systemTable->ConfigurationTable[i].VendorGuid);
 		if (!memcmp(&EsrtGuid, &(systemTable->ConfigurationTable[i].VendorGuid), sizeof(EFI_GUID))) {
 			found = 1;
+			esrt_index = i;
 			Print(L"found ESRT!\n");
 			esrt_root = systemTable->ConfigurationTable[i].VendorTable;
 			break;
@@ -132,13 +134,11 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 		panic("ESRT not available\n");
 	}
 
-	struct EFI_SYSTEM_RESOURCE_TABLE **esrt_struct_pointer = (struct EFI_SYSTEM_RESOURCE_TABLE **) esrt_root;
-
-	struct EFI_SYSTEM_RESOURCE_TABLE *esrt = *esrt_struct_pointer;
-
-
+	struct EFI_SYSTEM_RESOURCE_TABLE *esrt = (struct EFI_SYSTEM_RESOURCE_TABLE *) esrt_root;
 
 	Print(L"Resource count = %d\n", esrt->FwResourceCount);
+	Print(L"Max resource count = %d\n", esrt->FwResourceCountMax);
+	Print(L"Resource version = %d\n", esrt->FwResourceVersion);
 
 	int esrt_size = sizeof(struct EFI_SYSTEM_RESOURCE_TABLE) + 2 * sizeof(struct EFI_SYSTEM_RESOURCE_ENTRY);
 
@@ -170,6 +170,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	// );
 
 	CopyMem(esrt_copy, esrt, esrt_size);
+	systemTable->ConfigurationTable[esrt_index].VendorTable = esrt_copy;
 
 	Print(L"Copying table successful\n");
 
