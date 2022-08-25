@@ -47,17 +47,6 @@ static struct btinfo_efi btinfo_efi;
 
 static void efi_heap_init(void);
 
-/*
- * Print an UUID in a human-readable manner.
- */
-void
-efi_aprintuuid(EFI_GUID *uuid)
-{
-	Print(L" %08x", uuid->Data1);
-	Print(L"-%04x", uuid->Data2);
-	Print(L"-%04x\n", uuid->Data3);
-}
-
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
 EFI_STATUS EFIAPI
 efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
@@ -72,6 +61,12 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	efi_main_sp = (uintptr_t)&status;
 	twiddle_toggle = 1;	/* no twiddling until we're ready */
 
+	void *esrt_root = NULL;
+	int esrt_cfgtbl_index = -1;
+
+	EFI_GUID EsrtGuid = \
+	{0xb122a263,0x3661,0x4f68,{0x99,0x29,0x78,0xf8,0xb0,0xd6,0x21,0x80}};
+	
 	cninit();
 	efi_heap_init();
 	efi_md_init();
@@ -105,44 +100,22 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	efi_pxe_probe();
 	efi_net_probe();
 
-	void *esrt_root = NULL;
-	EFI_GUID EsrtGuid = {0xb122a263,0x3661,0x4f68, \
-    {0x99,0x29,0x78,0xf8,0xb0,0xd6,0x21,0x80}};
-
-	int found = 0;
-	int esrt_index;
-
 	for (int i = 0; i < systemTable->NumberOfTableEntries; ++i) {
-		Print(L"%d ", i);
-		efi_aprintuuid(&systemTable->ConfigurationTable[i].VendorGuid);
 		if (!memcmp(&EsrtGuid, &(systemTable->ConfigurationTable[i].VendorGuid), sizeof(EFI_GUID))) {
-			found = 1;
-			esrt_index = i;
-			Print(L"found ESRT!\n");
+			esrt_cfgtbl_index = i;
 			esrt_root = systemTable->ConfigurationTable[i].VendorTable;
 			break;
 		}
 	}
-	if (!found) {
+	if (esrt_cfgtbl_index == -1 || esrt_root == NULL) {
 		panic("ESRT not found\n");
-	}
-
-	Print(L"Number of cfgtbl entries = %d\n", systemTable->NumberOfTableEntries);
-	Print(L"ESRT adress = %" PRIx32 "\n", esrt_root);
-
-	if (esrt_root == NULL) {
-		panic("ESRT not available\n");
 	}
 
 	struct EFI_SYSTEM_RESOURCE_TABLE *esrt = (struct EFI_SYSTEM_RESOURCE_TABLE *) esrt_root;
 
-	Print(L"Resource count = %d\n", esrt->FwResourceCount);
-	Print(L"Max resource count = %d\n", esrt->FwResourceCountMax);
-	Print(L"Resource version = %d\n", esrt->FwResourceVersion);
+	int esrt_size = sizeof(struct EFI_SYSTEM_RESOURCE_TABLE) + esrt->FwResourceCount * sizeof(struct EFI_SYSTEM_RESOURCE_ENTRY);
 
-	int esrt_size = sizeof(struct EFI_SYSTEM_RESOURCE_TABLE) + 2 * sizeof(struct EFI_SYSTEM_RESOURCE_ENTRY);
-
-	void *esrt_copy;
+	void *esrt_copy = NULL; 
 
 	status = uefi_call_wrapper(BS->AllocatePool,
 									3,
@@ -151,101 +124,12 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 									(void**) &esrt_copy
 									);
 	if (EFI_ERROR(status)) {
-		panic("BS->AllocatePool() error!\n");
+		panic("AllocatePool() in RuntimeServicesData failed: %d bytes\n", esrt_size);
 		return EIO;
 	}
 
-	// esrt_copy = AllocateRuntimePool(esrt_size);
-	// if (name == NULL) {
-	// 	printf("memory allocation failed: %" PRIuMAX" bytes\n",
-	// 	    (uintmax_t)esrt_size);
-	// 	return;
-	// }
-
-	// uefi_call_wrapper(BS->CopyMem,
-	// 						3,
-	// 						esrt_copy,
-	// 						esrt,
-	// 						esrt_size
-	// );
-
 	CopyMem(esrt_copy, esrt, esrt_size);
-	systemTable->ConfigurationTable[esrt_index].VendorTable = esrt_copy;
-
-	Print(L"Copying table successful\n");
-
-	// /*
-	//  * Print memory byte by byte
-	//  */
-	// Print(L"ESRT 16 bytes of memory starting from ESRT pointer\n");
-	// unsigned char *r = (unsigned char *)esrt;
-	// for (int i = 0; i < 16; ++i) {
-	// 	Print(L"%02x\n", r[i]);
-	// }
-	// Print(L"\n");
-
-	// /*
-	//  * Print memory byte by byte
-	//  */
-	// Print(L"ESRT copy 16 bytes of memory starting from ESRT pointer\n");
-	// unsigned char *q = (unsigned char *)esrt_copy;
-	// for (int i = 0; i < 16; ++i) {
-	// 	Print(L"%02x\n", q[i]);
-	// }
-	// Print(L"\n");
-
-	// status = uefi_call_wrapper(BS->InstallConfigurationTable,
-	// 								2,
-	// 								&EsrtGuid,
-	// 								&esrt_root
-	// );
-
-	panic("Stopping for debugging purposes\n");
-	return EIO;
-
-
-	// struct EFI_SYSTEM_RESOURCE_TABLE *esrt;
-
-	// int bufsize = sizeof (struct EFI_SYSTEM_RESOURCE_TABLE) + sizeof (struct EFI_SYSTEM_RESOURCE_ENTRY);
-
-	// status = uefi_call_wrapper(BS->AllocatePool,
-	// 								3,
-	// 								EfiRuntimeServicesData,
-	// 								bufsize,
-	// 								(void**) &esrt
-	// 								);
-	// if (EFI_ERROR(status)) {
-	// 	panic("BS->AllocatePool() error!\n");
-	// 	return EIO;
-	// }
-
-	// esrt->FwResourceVersion  = 1;
-  	// esrt->FwResourceCount    = 2;
-  	// esrt->FwResourceCountMax = 2;
-
-  	// struct EFI_SYSTEM_RESOURCE_ENTRY *Esre = (void *)&esrt[1];
-
-  	// EFI_GUID FwClass = {
-    // 	0x415f009f, 0xfb1d, 0x4cc3, {0x8a, 0x25, 0x57, 0x10, 0xa7, 0x70, 0x59, 0x18 }
-  	// };
-  	// CopyMem(&Esre[0].FwClass, &FwClass, sizeof (EFI_GUID));
-
-  	// Esre[0].FwType = 1; // 1
-  	// Esre[0].FwVersion = 5;
-  	// Esre[0].LowestSupportedFwVersion = 1;
-  	// Esre[0].CapsuleFlags = CAPSULE_FLAGS_INITIATE_RESET; // 0x00040000
-  	// Esre[0].LastAttemptVersion = 0;
-  	// Esre[0].LastAttemptStatus = 0; // 0
-
-	// EFI_GUID gESRTGuid = ESRT_TABLE_GUID;
-
-	// status = uefi_call_wrapper(BS->InstallConfigurationTable,
-	// 								2,
-	// 								&gESRTGuid,
-	// 								&esrt
-	// 								);
-
-  	//efi_bs->bs_installconfigurationtable(&gESRTGuid, &esrt);
+	systemTable->ConfigurationTable[esrt_cfgtbl_index].VendorTable = esrt_copy;
 
 	status = uefi_call_wrapper(BS->SetWatchdogTimer, 4, 0, 0, 0, NULL);
 	if (EFI_ERROR(status))
