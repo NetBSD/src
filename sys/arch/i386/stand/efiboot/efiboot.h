@@ -42,6 +42,39 @@ extern EFI_GUID GraphicsOutputProtocol;
 void boot(void);
 void clearit(void);
 
+/*
+ * 	BEGIN TEST ESRT DEFS
+ */
+
+#define ESRT_TABLE_GUID \
+  { 0xb122a263,0x3661,0x4f68,{ 0x99,0x29,0x78,0xf8,0xb0,0xd6,0x21,0x80}}
+
+struct EFI_SYSTEM_RESOURCE_ENTRY {
+  EFI_GUID      FwClass;
+  UINT32        FwType;
+  UINT32        FwVersion;
+  UINT32        LowestSupportedFwVersion;
+  UINT32        CapsuleFlags;
+  UINT32        LastAttemptVersion;
+  UINT32        LastAttemptStatus;
+};
+
+struct EFI_SYSTEM_RESOURCE_TABLE {
+  UINT32	FwResourceCount;
+  UINT32	FwResourceCountMax;
+  UINT64	FwResourceVersion;
+  struct EFI_SYSTEM_RESOURCE_ENTRY Entries[];
+};
+
+#define EFI_SYSTEM_RESOURCE_TABLE_FIRMWARE_RESOURCE_VERSION 1
+
+void
+efi_aprintuuid(EFI_GUID *uuid);
+
+/*
+ * 	END TEST ESRT DEFS
+ */
+
 /* efiboot.c */
 extern EFI_HANDLE IH;
 extern EFI_DEVICE_PATH *efi_bootdp;
