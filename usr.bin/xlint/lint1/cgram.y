@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.420 2022/06/20 21:13:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.421 2022/08/25 19:03:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.420 2022/06/20 21:13:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.421 2022/08/25 19:03:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,6 +126,12 @@ anonymize(sym_t *s)
 {
 	for ( ; s != NULL; s = s->s_next)
 		s->u.s_member.sm_sou_type = NULL;
+}
+
+static bool
+is_either(const char *s, const char *a, const char *b)
+{
+	return strcmp(s, a) == 0 || strcmp(s, b) == 0;
 }
 
 #if YYDEBUG && (YYBYACC || YYBISON)
@@ -226,60 +232,6 @@ anonymize(sym_t *s)
 %token			T_STATIC_ASSERT
 
 %token			T_ATTRIBUTE
-%token			T_AT_ALIAS
-%token			T_AT_ALIGNED
-%token			T_AT_ALLOC_SIZE
-%token			T_AT_ALWAYS_INLINE
-%token			T_AT_BOUNDED
-%token			T_AT_BUFFER
-%token			T_AT_COLD
-%token			T_AT_COMMON
-%token			T_AT_CONSTRUCTOR
-%token			T_AT_DEPRECATED
-%token			T_AT_DESTRUCTOR
-%token			T_AT_DISABLE_SANITIZER_INSTRUMENTATION
-%token			T_AT_FALLTHROUGH
-%token			T_AT_FORMAT
-%token			T_AT_FORMAT_ARG
-%token			T_AT_FORMAT_GNU_PRINTF
-%token			T_AT_FORMAT_PRINTF
-%token			T_AT_FORMAT_SCANF
-%token			T_AT_FORMAT_STRFMON
-%token			T_AT_FORMAT_STRFTIME
-%token			T_AT_FORMAT_SYSLOG
-%token			T_AT_GNU_INLINE
-%token			T_AT_HOT
-%token			T_AT_MALLOC
-%token			T_AT_MAY_ALIAS
-%token			T_AT_MINBYTES
-%token			T_AT_MODE
-%token			T_AT_NO_SANITIZE
-%token			T_AT_NO_SANITIZE_THREAD
-%token			T_AT_NOINLINE
-%token			T_AT_NONNULL
-%token			T_AT_NONSTRING
-%token			T_AT_NORETURN
-%token			T_AT_NOTHROW
-%token			T_AT_NO_INSTRUMENT_FUNCTION
-%token			T_AT_OPTIMIZE
-%token			T_AT_OPTNONE
-%token			T_AT_PACKED
-%token			T_AT_PCS
-%token			T_AT_PURE
-%token			T_AT_REGPARM
-%token			T_AT_RETURNS_NONNULL
-%token			T_AT_RETURNS_TWICE
-%token			T_AT_SECTION
-%token			T_AT_SENTINEL
-%token			T_AT_STRING
-%token			T_AT_TARGET
-%token			T_AT_TLS_MODEL
-%token			T_AT_TUNION
-%token			T_AT_UNUSED
-%token			T_AT_USED
-%token			T_AT_VISIBILITY
-%token			T_AT_WARN_UNUSED_RESULT
-%token			T_AT_WEAK
 
 %left	T_THEN
 %left	T_ELSE
@@ -734,16 +686,6 @@ expression:
 	  }
 	;
 
-constant_expr_list_opt:		/* helper for gcc_attribute */
-	  /* empty */
-	| constant_expr_list
-	;
-
-constant_expr_list:		/* helper for gcc_attribute */
-	  constant_expr
-	| constant_expr_list T_COMMA constant_expr
-	;
-
 constant_expr:			/* C99 6.6 */
 	  conditional_expression
 	;
@@ -875,7 +817,7 @@ type_attribute_opt:
 	;
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
-	  gcc_attribute
+	  gcc_attribute_specifier
 	| T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
 	| T_ALIGNAS T_LPAREN constant_expr T_RPAREN	/* C11 6.7.5 */
 	| T_PACKED {
@@ -1079,17 +1021,17 @@ type_struct_declarator:
 
 /* K&R ---, C90 6.5.2.2, C99 6.7.2.2, C11 6.7.2.2 */
 enum_specifier:			/* C99 6.7.2.2 */
-	  enum gcc_attribute_list_opt identifier_sym {
+	  enum gcc_attribute_specifier_list_opt identifier_sym {
 		$$ = mktag($3, ENUM, false, false);
 	  }
-	| enum gcc_attribute_list_opt identifier_sym {
+	| enum gcc_attribute_specifier_list_opt identifier_sym {
 		dcs->d_tagtyp = mktag($3, ENUM, true, false);
-	  } enum_declaration /*gcc_attribute_list_opt*/ {
+	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $5);
 	  }
-	| enum gcc_attribute_list_opt {
+	| enum gcc_attribute_specifier_list_opt {
 		dcs->d_tagtyp = mktag(NULL, ENUM, true, false);
-	  } enum_declaration /*gcc_attribute_list_opt*/ {
+	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
 	  }
 	| enum error {
@@ -1143,10 +1085,11 @@ enumerator_list:		/* C99 6.7.2.2 */
 	;
 
 enumerator:			/* C99 6.7.2.2 */
-	  identifier_sym gcc_attribute_list_opt {
+	  identifier_sym gcc_attribute_specifier_list_opt {
 		$$ = enumeration_constant($1, enumval, true);
 	  }
-	| identifier_sym gcc_attribute_list_opt T_ASSIGN constant_expr {
+	| identifier_sym gcc_attribute_specifier_list_opt
+	    T_ASSIGN constant_expr {
 		$$ = enumeration_constant($1, to_int_constant($4, true),
 		    false);
 	  }
@@ -1318,7 +1261,7 @@ direct_param_declarator:
 		$$ = $2;
 	  }
 	| direct_param_declarator T_LBRACK array_size_opt T_RBRACK
-	    gcc_attribute_list_opt {
+	    gcc_attribute_specifier_list_opt {
 		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| direct_param_declarator param_list asm_or_symbolrename_opt {
@@ -1645,11 +1588,12 @@ asm_or_symbolrename_opt:	/* GCC extensions */
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| T_ASM T_LPAREN T_STRING T_RPAREN gcc_attribute_list_opt {
+	| T_ASM T_LPAREN T_STRING T_RPAREN gcc_attribute_specifier_list_opt {
 		freeyyv(&$3, T_STRING);
 		$$ = NULL;
 	  }
-	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN gcc_attribute_list_opt {
+	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN
+	    gcc_attribute_specifier_list_opt {
 		$$ = $3;
 	  }
 	;
@@ -1660,7 +1604,7 @@ statement:			/* C99 6.8 */
 	;
 
 non_expr_statement:		/* helper for C99 6.8 */
-	  gcc_attribute /* ((__fallthrough__)) */ T_SEMI
+	  gcc_attribute_specifier /* ((__fallthrough__)) */ T_SEMI
 	| labeled_statement
 	| compound_statement
 	| selection_statement
@@ -1672,7 +1616,7 @@ non_expr_statement:		/* helper for C99 6.8 */
 	;
 
 labeled_statement:		/* C99 6.8.1 */
-	  label gcc_attribute_list_opt statement
+	  label gcc_attribute_specifier_list_opt statement
 	;
 
 label:
@@ -2072,112 +2016,54 @@ arg_declaration:
 	| begin_type_declaration_specifiers error
 	;
 
-gcc_attribute_list_opt:
+/* https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html */
+gcc_attribute_specifier_list_opt:
 	  /* empty */
-	| gcc_attribute_list
+	| gcc_attribute_specifier_list
 	;
 
-gcc_attribute_list:
-	  gcc_attribute
-	| gcc_attribute_list gcc_attribute
+gcc_attribute_specifier_list:
+	  gcc_attribute_specifier
+	| gcc_attribute_specifier_list gcc_attribute_specifier
 	;
 
-gcc_attribute:
+gcc_attribute_specifier:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
 	    in_gcc_attribute = true;
-	  } gcc_attribute_spec_list {
+	  } gcc_attribute_list {
 	    in_gcc_attribute = false;
 	  } T_RPAREN T_RPAREN
 	;
 
-gcc_attribute_spec_list:
-	  gcc_attribute_spec
-	| gcc_attribute_spec_list T_COMMA gcc_attribute_spec
+gcc_attribute_list:
+	  gcc_attribute
+	| gcc_attribute_list T_COMMA gcc_attribute
 	;
 
-gcc_attribute_spec:
+gcc_attribute:
 	  /* empty */
-	| T_AT_ALWAYS_INLINE
-	| T_AT_ALIAS T_LPAREN string T_RPAREN
-	| T_AT_ALIGNED T_LPAREN constant_expr T_RPAREN
-	| T_AT_ALIGNED
-	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_COMMA constant_expr T_RPAREN
-	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_RPAREN
-	| T_AT_BOUNDED T_LPAREN gcc_attribute_bounded
-	  T_COMMA constant_expr T_COMMA constant_expr T_RPAREN
-	| T_AT_COLD
-	| T_AT_COMMON
-	| T_AT_CONSTRUCTOR T_LPAREN constant_expr T_RPAREN
-	| T_AT_CONSTRUCTOR
-	| T_AT_DEPRECATED T_LPAREN string T_RPAREN
-	| T_AT_DEPRECATED
-	| T_AT_DESTRUCTOR T_LPAREN constant_expr T_RPAREN
-	| T_AT_DESTRUCTOR
-	| T_AT_DISABLE_SANITIZER_INSTRUMENTATION
-	| T_AT_FALLTHROUGH {
-		fallthru(1);
-	  }
-	| T_AT_FORMAT T_LPAREN gcc_attribute_format T_COMMA
-	    constant_expr T_COMMA constant_expr T_RPAREN
-	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
-	| T_AT_GNU_INLINE
-	| T_AT_HOT
-	| T_AT_MALLOC
-	| T_AT_MAY_ALIAS
-	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
-	| T_AT_NO_SANITIZE T_LPAREN T_NAME T_RPAREN
-	| T_AT_NO_SANITIZE_THREAD
-	| T_AT_NOINLINE
-	| T_AT_NONNULL T_LPAREN constant_expr_list_opt T_RPAREN
-	| T_AT_NONNULL
-	| T_AT_NONSTRING
-	| T_AT_NORETURN
-	| T_AT_NOTHROW
-	| T_AT_NO_INSTRUMENT_FUNCTION
-	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
-	| T_AT_OPTNONE
-	| T_AT_PACKED {
-		addpacked();
-	  }
-	| T_AT_PCS T_LPAREN string T_RPAREN
-	| T_AT_PURE
-	| T_AT_REGPARM T_LPAREN constant_expr T_RPAREN
-	| T_AT_RETURNS_NONNULL
-	| T_AT_RETURNS_TWICE
-	| T_AT_SECTION T_LPAREN string T_RPAREN
-	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
-	| T_AT_SENTINEL
-	| T_AT_TARGET T_LPAREN string T_RPAREN
-	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
-	| T_AT_TUNION
-	| T_AT_UNUSED {
-		add_attr_used();
-	  }
-	| T_AT_USED {
-		add_attr_used();
-	  }
-	| T_AT_VISIBILITY T_LPAREN constant_expr T_RPAREN
-	| T_AT_WARN_UNUSED_RESULT
-	| T_AT_WEAK
+	| T_NAME {
+		const char *name = $1->sb_name;
+		if (is_either(name, "packed", "__packed__"))
+			addpacked();
+		else if (is_either(name, "used", "__used__") ||
+		    is_either(name, "unused", "__unused__"))
+			add_attr_used();
+		else if (is_either(name, "fallthrough",
+		    "__fallthrough__"))
+			fallthru(1);
+	}
+	| T_NAME T_LPAREN T_RPAREN
+	| T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
 	  }
 	;
 
-gcc_attribute_bounded:
-	  T_AT_MINBYTES
-	| T_AT_STRING
-	| T_AT_BUFFER
-	;
-
-gcc_attribute_format:
-	  T_AT_FORMAT_GNU_PRINTF
-	| T_AT_FORMAT_PRINTF
-	| T_AT_FORMAT_SCANF
-	| T_AT_FORMAT_STRFMON
-	| T_AT_FORMAT_STRFTIME
-	| T_AT_FORMAT_SYSLOG
+gcc_attribute_parameters:
+	  constant_expr
+	| gcc_attribute_parameters T_COMMA constant_expr
 	;
 
 sys:
