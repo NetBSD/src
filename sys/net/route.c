@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.230 2021/12/05 04:57:38 msaitoh Exp $	*/
+/*	$NetBSD: route.c,v 1.231 2022/08/26 08:32:22 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.230 2021/12/05 04:57:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.231 2022/08/26 08:32:22 knakahara Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1053,35 +1053,6 @@ rtrequest(int req, const struct sockaddr *dst, const struct sockaddr *gateway,
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
 	return rtrequest1(req, &info, ret_nrt);
-}
-
-/*
- * It's a utility function to add/remove a route to/from the routing table
- * and tell user processes the addition/removal on success.
- */
-int
-rtrequest_newmsg(const int req, const struct sockaddr *dst,
-	const struct sockaddr *gateway, const struct sockaddr *netmask,
-	const int flags)
-{
-	int error;
-	struct rtentry *ret_nrt = NULL;
-
-	KASSERT(req == RTM_ADD || req == RTM_DELETE);
-
-	error = rtrequest(req, dst, gateway, netmask, flags, &ret_nrt);
-	if (error != 0)
-		return error;
-
-	KASSERT(ret_nrt != NULL);
-
-	rt_newmsg(req, ret_nrt); /* tell user process */
-	if (req == RTM_DELETE)
-		rt_free(ret_nrt);
-	else
-		rt_unref(ret_nrt);
-
-	return 0;
 }
 
 static struct ifnet *
