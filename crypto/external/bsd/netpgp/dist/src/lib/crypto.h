@@ -58,7 +58,9 @@
 #include "memory.h"
 #include "packet-parse.h"
 
+#include <openssl/evp.h>
 #include <openssl/dsa.h>
+#include <openssl/ecdsa.h>
 
 #define PGP_MIN_HASH_SIZE	16
 
@@ -118,6 +120,10 @@ void pgp_hash_add_int(pgp_hash_t *, unsigned, unsigned);
 unsigned pgp_dsa_verify(const uint8_t *, size_t,
 			const pgp_dsa_sig_t *,
 			const pgp_dsa_pubkey_t *);
+
+unsigned pgp_ecdsa_verify(const uint8_t *, size_t,
+			  const pgp_ecdsa_sig_t *,
+			  const pgp_ecdsa_pubkey_t *);
 
 int pgp_rsa_public_decrypt(uint8_t *, const uint8_t *, size_t,
 			const pgp_rsa_pubkey_t *);
@@ -213,6 +219,10 @@ int pgp_dsa_size(const pgp_dsa_pubkey_t *);
 DSA_SIG *pgp_dsa_sign(uint8_t *, unsigned,
 				const pgp_dsa_seckey_t *,
 				const pgp_dsa_pubkey_t *);
+
+ECDSA_SIG *pgp_ecdsa_sign(uint8_t *, unsigned,
+			  const pgp_ecdsa_seckey_t *,
+			  const pgp_ecdsa_pubkey_t *);
 
 int openssl_read_pem_seckey(const char *, pgp_key_t *, const char *, int);
 

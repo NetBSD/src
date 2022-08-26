@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.43 2021/07/28 22:31:45 jhigh Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.44 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #include <string.h>
@@ -325,6 +325,8 @@ numkeybits(const pgp_pubkey_t *pubkey)
 		default:
 			return 0;
 		}
+	case PGP_PKA_ECDSA:
+		return ecdsa_numbits(&pubkey->key.ecdsa);
 	case PGP_PKA_ELGAMAL:
 		return BN_num_bytes(pubkey->key.elgamal.y) * 8;
 	default:
@@ -659,7 +661,9 @@ pgp_print_pubkey(const pgp_pubkey_t *pubkey)
 		print_bn(0, "g", pubkey->key.dsa.g);
 		print_bn(0, "y", pubkey->key.dsa.y);
 		break;
-
+	case PGP_PKA_ECDSA:
+		print_bn(0, "p", pubkey->key.ecdsa.p);
+		break;
 	case PGP_PKA_RSA:
 	case PGP_PKA_RSA_ENCRYPT_ONLY:
 	case PGP_PKA_RSA_SIGN_ONLY:
@@ -973,6 +977,11 @@ pgp_print_packet(pgp_printstate_t *print, const pgp_packet_t *pkt)
 			print_bn(print->indent, "r", content->sig.info.sig.dsa.r);
 			print_bn(print->indent, "s", content->sig.info.sig.dsa.s);
 			break;
+
+		case PGP_PKA_ECDSA:
+			print_bn(print->indent, "r", content->sig.info.sig.ecdsa.r);
+			print_bn(print->indent, "s", content->sig.info.sig.ecdsa.s);
+			break; 
 
 		case PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
 			print_bn(print->indent, "r", content->sig.info.sig.elgamal.r);
