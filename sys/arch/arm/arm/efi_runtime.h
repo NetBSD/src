@@ -34,12 +34,7 @@
 
 #include <arm/efi.h>
 
-#define ESRT_FIRMWARE_RESOURCE_VERSION 1
-
 int		arm_efirt_init(paddr_t);
-efi_status	arm_efirt_gettable(struct uuid *uuid, void **ptr);
-efi_status	arm_efirt_copytable(struct uuid *uuid, void **buf, size_t buf_len, size_t *table_len);
-int	arm_efirt_gettablelength(enum efi_table_type type, size_t *table_len, void **taddr);
 efi_status	arm_efirt_gettime(struct efi_tm *, struct efi_tmcap *);
 efi_status	arm_efirt_settime(struct efi_tm *);
 efi_status	arm_efirt_getvar(uint16_t *, struct uuid *, uint32_t *,
