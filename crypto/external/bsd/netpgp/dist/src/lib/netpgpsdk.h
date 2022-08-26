@@ -74,5 +74,9 @@ void netpgp_log(const char *, ...) __printflike(1, 2);
 int netpgp_strcasecmp(const char *, const char *);
 char *netpgp_strdup(const char *);
 
+int ecdsa_numbits(const pgp_ecdsa_pubkey_t *);
+int ecdsa_nid(const pgp_ecdsa_pubkey_t *);
+pgp_hash_alg_t ecdsa_hashalg(const pgp_ecdsa_pubkey_t *);
+int ecdsa_hashsize(const pgp_ecdsa_pubkey_t *);
 
 #endif

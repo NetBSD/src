@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.38 2010/11/15 08:03:39 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.39 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -249,6 +249,11 @@ write_pubkey_body(const pgp_pubkey_t *key, pgp_output_t *output)
 			pgp_write_mpi(output, key->key.dsa.q) &&
 			pgp_write_mpi(output, key->key.dsa.g) &&
 			pgp_write_mpi(output, key->key.dsa.y);
+
+	case PGP_PKA_ECDSA:
+		return pgp_write(output, &key->key.ecdsa.len, 1) && 
+			pgp_write(output, key->key.ecdsa.oid, key->key.ecdsa.len) &&
+			pgp_write_mpi(output, key->key.ecdsa.p);
 
 	case PGP_PKA_RSA:
 	case PGP_PKA_RSA_ENCRYPT_ONLY:

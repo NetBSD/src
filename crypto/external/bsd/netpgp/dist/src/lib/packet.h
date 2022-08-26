@@ -348,7 +348,7 @@ typedef enum {
 	PGP_PKA_DSA = 17,	/* DSA (Digital Signature Algorithm) */
 	PGP_PKA_RESERVED_ELLIPTIC_CURVE = 18,	/* Reserved for Elliptic
 						 * Curve */
-	PGP_PKA_RESERVED_ECDSA = 19,	/* Reserved for ECDSA */
+	PGP_PKA_ECDSA = 19,			/* ECDSA */
 	PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN = 20,	/* Deprecated. */
 	PGP_PKA_RESERVED_DH = 21,	/* Reserved for Diffie-Hellman
 					 * (X9.42, as defined for
@@ -377,6 +377,16 @@ typedef struct {
 	BIGNUM         *y;	/* DSA public key value y (= g^x mod p
 				 * with x being the secret) */
 } pgp_dsa_pubkey_t;
+
+/** Structure to hold one ECDSA public key params.
+ *
+ * \see RFC6637 9
+ */
+typedef struct {
+	uint8_t		len;
+	uint8_t		oid[8];
+	BIGNUM		*p;
+} pgp_ecdsa_pubkey_t;
 
 /** Structure to hold an RSA public key.
  *
@@ -422,6 +432,7 @@ typedef struct {
 	pgp_pubkey_alg_t	alg;	/* Public Key Algorithm type */
 	union {
 		pgp_dsa_pubkey_t dsa;	/* A DSA public key */
+		pgp_ecdsa_pubkey_t ecdsa; /* An ECDSA public key */
 		pgp_rsa_pubkey_t rsa;	/* An RSA public key */
 		pgp_elgamal_pubkey_t elgamal;	/* An ElGamal public key */
 	}			key;	/* Public Key Parameters */
@@ -440,6 +451,11 @@ typedef struct {
 typedef struct {
 	BIGNUM         *x;
 } pgp_dsa_seckey_t;
+
+/** pgp_ecdsa_seckey_t */
+typedef struct {
+	BIGNUM         *x;
+} pgp_ecdsa_seckey_t;
 
 /** pgp_elgamal_seckey_t */
 typedef struct {
@@ -542,6 +558,7 @@ typedef struct pgp_seckey_t {
 	union {
 		pgp_rsa_seckey_t		rsa;
 		pgp_dsa_seckey_t		dsa;
+		pgp_ecdsa_seckey_t		ecdsa;
 		pgp_elgamal_seckey_t		elgamal;
 	}				key;
 	unsigned			checksum;
@@ -599,6 +616,12 @@ typedef struct pgp_dsa_sig_t {
 	BIGNUM         *s;	/* DSA value s */
 } pgp_dsa_sig_t;
 
+/** Struct to hold params of an ECDSA signature */
+typedef struct pgp_ecdsa_sig_t {
+	BIGNUM         *r;	/* ECDSA value r */
+	BIGNUM         *s;	/* ECDSA value s */
+} pgp_ecdsa_sig_t;
+
 /** pgp_elgamal_signature_t */
 typedef struct pgp_elgamal_sig_t {
 	BIGNUM         *r;
@@ -625,6 +648,7 @@ typedef struct pgp_sig_info_t {
 	union {
 		pgp_rsa_sig_t	rsa;	/* An RSA Signature */
 		pgp_dsa_sig_t	dsa;	/* A DSA Signature */
+		pgp_ecdsa_sig_t ecdsa; /* An ECDSA Signature */
 		pgp_elgamal_sig_t	elgamal;	/* deprecated */
 		pgp_data_t	unknown;	/* private or experimental */
 	}			sig;	/* signature params */
