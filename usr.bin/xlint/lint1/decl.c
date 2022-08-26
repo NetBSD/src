@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.294 2022/07/03 14:35:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.295 2022/08/26 19:44:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.294 2022/07/03 14:35:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.295 2022/08/26 19:44:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3374,12 +3374,10 @@ to_int_constant(tnode_t *tn, bool required)
 	tspec_t	t;
 	val_t	*v;
 
-	v = constant(tn, required);
+	if (tn == NULL)
+		return 1;
 
-	if (tn == NULL) {
-		i = 1;
-		goto done;
-	}
+	v = constant(tn, required);
 
 	/*
 	 * Abstract declarations are used inside expression. To free
@@ -3410,7 +3408,6 @@ to_int_constant(tnode_t *tn, bool required)
 		}
 	}
 
-done:
 	free(v);
 	return i;
 }
