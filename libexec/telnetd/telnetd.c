@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.57 2021/12/08 20:21:09 andvar Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.57 2021/12/08 20:21:09 andvar Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.58 2022/08/26 19:30:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -678,6 +678,11 @@ doit(struct sockaddr *who)
 	char user_name[256];
 
 	/*
+	 * Initialize the slc mapping table.
+	 */
+	get_slc_defaults();
+
+	/*
 	 * Find an available pty to use.
 	 */
 	pty = getpty(&ptynum);
@@ -742,11 +747,6 @@ telnet(int f, int p)
 	char *HE, *HN, *IF, *ptyibuf2ptr;
 	const char *IM;
 	struct pollfd set[2];
-
-	/*
-	 * Initialize the slc mapping table.
-	 */
-	get_slc_defaults();
 
 	/*
 	 * Do some tests where it is desirable to wait for a response.
