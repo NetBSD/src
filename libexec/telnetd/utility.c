@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.33 2019/02/04 04:36:41 mrg Exp $	*/
+/*	$NetBSD: utility.c,v 1.34 2022/08/26 22:01:20 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.33 2019/02/04 04:36:41 mrg Exp $");
+__RCSID("$NetBSD: utility.c,v 1.34 2022/08/26 22:01:20 hgutch Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: utility.c,v 1.33 2019/02/04 04:36:41 mrg Exp $");
 #define PRINTOPTIONS
 #include "telnetd.h"
 
-char *nextitem(char *);
+char *nextitem(char *, const char *);
 void putstr(char *);
 
 extern int not42;
@@ -143,31 +143,38 @@ ptyflush(void)
  * character.
  */
 char *
-nextitem(char *current)
+nextitem(char *current, const char *endp)
 {
+    if (current >= endp) {
+	return NULL;
+    }
     if ((*current&0xff) != IAC) {
 	return current+1;
+    }
+    if (current+1 >= endp) {
+	return NULL;
     }
     switch (*(current+1)&0xff) {
     case DO:
     case DONT:
     case WILL:
     case WONT:
-	return current+3;
+	return current+3 <= endp ? current+3 : NULL;
     case SB:		/* loop forever looking for the SE */
 	{
 	    char *look = current+2;
 
-	    for (;;) {
+	    while (look < endp) {
 		if ((*look++&0xff) == IAC) {
-		    if ((*look++&0xff) == SE) {
+		    if (look < endp && (*look++&0xff) == SE) {
 			return look;
 		    }
 		}
 	    }
+	    return NULL;
 	}
     default:
-	return current+2;
+	return current+2 <= endp ? current+2 : NULL;
     }
 }  /* end of nextitem */
 
@@ -194,7 +201,7 @@ netclear(void)
     char *thisitem, *next;
     char *good;
 #define	wewant(p)	((nfrontp > p) && ((*p&0xff) == IAC) && \
-				((*(p+1)&0xff) != EC) && ((*(p+1)&0xff) != EL))
+				(nfrontp > p+1) && ((*(p+1)&0xff) != EC) && ((*(p+1)&0xff) != EL))
 
 #ifdef	ENCRYPTION
     thisitem = nclearto > netobuf ? nclearto : netobuf;
@@ -202,7 +209,7 @@ netclear(void)
     thisitem = netobuf;
 #endif	/* ENCRYPTION */
 
-    while ((next = nextitem(thisitem)) <= nbackp) {
+    while ((next = nextitem(thisitem, nbackp)) != NULL && (next <= nbackp)) {
 	thisitem = next;
     }
 
@@ -214,20 +221,23 @@ netclear(void)
     good = netobuf;	/* where the good bytes go */
 #endif	/* ENCRYPTION */
 
-    while (nfrontp > thisitem) {
+    while ((thisitem != NULL) && (nfrontp > thisitem)) {
 	if (wewant(thisitem)) {
 	    int length;
 
 	    next = thisitem;
 	    do {
-		next = nextitem(next);
-	    } while (wewant(next) && (nfrontp > next));
+		next = nextitem(next, nfrontp);
+	    } while ((next != NULL) && wewant(next) && (nfrontp > next));
+	    if (next == NULL) {
+		next = nfrontp;
+	    }
 	    length = next-thisitem;
 	    memmove(good, thisitem, length);
 	    good += length;
 	    thisitem = next;
 	} else {
-	    thisitem = nextitem(thisitem);
+	    thisitem = nextitem(thisitem, nfrontp);
 	}
     }
 
