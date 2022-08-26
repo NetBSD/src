@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.43 2020/04/18 19:27:48 jhigh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.44 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -96,6 +96,18 @@ __RCSID("$NetBSD: misc.c,v 1.43 2020/04/18 19:27:48 jhigh Exp $");
 #define vsnprintf _vsnprintf
 #endif
 
+struct ecdsa_map {
+	char 	*sname;
+	int 	nid;
+	int 	bits;
+	int 	len;
+	uint8_t oid[8];
+} ecdsa_map[] = {
+	{ "P-256", NID_X9_62_prime256v1, 256, 8, {0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07} },
+	{ "P-384", NID_secp384r1, 384, 5, {0x2B, 0x81, 0x04,  0x00,  0x22} },
+	{ "P-521", NID_secp521r1, 521, 5, {0x2B, 0x81, 0x04, 0x00, 0x23} },
+	{ NULL, 0, 0, 0, {0} }
+};
 
 typedef struct {
 	pgp_keyring_t		*keyring;
@@ -1363,4 +1375,76 @@ netpgp_strcasecmp(const char *s1, const char *s2)
 	for (n = 0 ; *s1 && *s2 && (n = tolower((uint8_t)*s1) - tolower((uint8_t)*s2)) == 0 ; s1++, s2++) {
 	}
 	return n;
+}
+
+int
+ecdsa_nid(const pgp_ecdsa_pubkey_t * pub)
+{
+	int i;
+
+	for (i = 0; ecdsa_map[i].sname; i++ ) {
+		if (pub->len == ecdsa_map[i].len) {
+			if (memcmp(pub->oid, ecdsa_map[i].oid, pub->len) == 0) {
+				return ecdsa_map[i].nid;
+			}
+		}
+	}
+	return -1;
+}
+
+int
+ecdsa_numbits(const pgp_ecdsa_pubkey_t * pub)
+{
+	int i;
+
+	for (i = 0; ecdsa_map[i].sname; i++ ) {
+		if (pub->len == ecdsa_map[i].len) {
+			if (memcmp(pub->oid, ecdsa_map[i].oid, pub->len) == 0) {
+				return ecdsa_map[i].bits;
+			}
+		}
+	}
+	return -1;
+}
+
+int
+ecdsa_hashsize(const pgp_ecdsa_pubkey_t * pub)
+{
+	int bits;
+
+	bits = ecdsa_numbits(pub);
+
+	if (bits == -1) {
+		return -1;
+	}
+
+	return (bits/8) - (bits%8);
+}
+
+pgp_hash_alg_t
+ecdsa_hashalg(const pgp_ecdsa_pubkey_t * pub)
+{
+	int nid;
+
+	if (pub == NULL) {
+		return PGP_HASH_UNKNOWN;
+	}
+
+	nid = ecdsa_nid(pub);
+
+	switch (nid) {
+		case NID_X9_62_prime256v1:
+			return PGP_HASH_SHA256;
+
+		case NID_secp384r1:
+			return PGP_HASH_SHA384;
+
+		case NID_secp521r1:
+			return PGP_HASH_SHA512;
+
+		default:
+			(void) fprintf(stderr, "ecdsa_hashalg: unknown NID\n");
+	}
+
+	return PGP_HASH_UNKNOWN;
 }

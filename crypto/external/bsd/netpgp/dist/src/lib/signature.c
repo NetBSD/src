@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.38 2018/02/05 23:56:01 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.39 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -265,6 +265,56 @@ dsa_sign(pgp_hash_t *hash,
 	return 1;
 }
 
+static int
+ecdsa_sign(pgp_hash_t *hash,
+	   const pgp_ecdsa_pubkey_t *ecdsa,
+	   const pgp_ecdsa_seckey_t *secdsa,
+	   pgp_output_t *output)
+{
+	unsigned        hashsize;
+	unsigned        t;
+	uint8_t         hashbuf[NETPGP_BUFSIZ];
+	ECDSA_SIG        *ecdsasig;
+	const BIGNUM   *r, *s;
+ 
+	hashsize = ecdsa_hashsize(ecdsa); 
+ 
+	if (hashsize == -1) {
+		return 0;
+	}
+
+	t = hash->finish(hash, &hashbuf[0]);
+
+	if (t != hashsize) {
+		(void) fprintf(stderr, "ecdsa_sign: hashfinish %d not %d\n", t, hashsize);
+		return 0;
+	}
+
+	pgp_write(output, &hashbuf[0], 2);
+
+	/* write signature to buf */
+	ecdsasig = pgp_ecdsa_sign(hashbuf, hashsize, secdsa, ecdsa);
+
+	if (ecdsasig == NULL) {
+		(void) fprintf(stderr, "ecdsa_sign: invalid ecdsa sig\n");
+		return 0;
+	}
+
+	/* convert and write the sig out to memory */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+	ECDSA_SIG_get0(ecdsasig, &r, &s);
+#else
+	r = ecdsasig->r;
+	s = ecdsasig->s;
+#endif
+	pgp_write_mpi(output, r);
+	pgp_write_mpi(output, s);
+	
+	ECDSA_SIG_free(ecdsasig);
+
+	return 1;
+}
+
 static unsigned 
 rsa_verify(pgp_hash_alg_t type,
 	   const uint8_t *hash,
@@ -428,6 +478,12 @@ pgp_check_sig(const uint8_t *hash, unsigned length,
 	case PGP_PKA_DSA:
 		ret = pgp_dsa_verify(hash, length, &sig->info.sig.dsa,
 				&signer->key.dsa);
+		break;
+
+	case PGP_PKA_ECDSA:
+		ret = pgp_ecdsa_verify(hash, length,
+				&sig->info.sig.ecdsa,
+				&signer->key.ecdsa);
 		break;
 
 	case PGP_PKA_RSA:
@@ -764,6 +820,14 @@ pgp_write_sig(pgp_output_t *output,
 		}
 		break;
 
+	case PGP_PKA_ECDSA:
+		if (seckey->key.ecdsa.x == NULL) {
+			(void) fprintf(stderr, "pgp_write_sig: null ecdsa.x\n");
+			return 0;
+		}
+
+		break;
+
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
 				seckey->pubkey.alg);
@@ -813,6 +877,15 @@ pgp_write_sig(pgp_output_t *output,
 				sig->output)) {
 			(void) fprintf(stderr,
 				"pgp_write_sig: dsa_sign failure\n");
+			return 0;
+		}
+		break;
+
+	case PGP_PKA_ECDSA:
+		if (!ecdsa_sign(&sig->hash, &key->key.ecdsa, &seckey->key.ecdsa,
+				sig->output)) {
+			(void) fprintf(stderr,
+				"pgp_write_sig: ecdsa_sign failure\n");
 			return 0;
 		}
 		break;
@@ -972,7 +1045,14 @@ pgp_sign_file(pgp_io_t *io,
 	fd_out = 0;
 
 	/* find the hash algorithm */
-	hash_alg = pgp_str_to_hash_alg(hashname);
+	switch (seckey->pubkey.alg) {
+		case PGP_PKA_ECDSA:
+			hash_alg = ecdsa_hashalg(&seckey->pubkey.key.ecdsa);
+			break;
+		default:
+			hash_alg = pgp_str_to_hash_alg(hashname);
+	}
+
 	if (hash_alg == PGP_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,
 			"pgp_sign_file: unknown hash algorithm: \"%s\"\n",

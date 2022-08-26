@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.53 2020/10/14 05:19:41 jhigh Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.54 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -940,6 +940,11 @@ sig_free(pgp_sig_t *sig)
 		free_BN(&sig->info.sig.dsa.s);
 		break;
 
+	case PGP_PKA_ECDSA:
+		free_BN(&sig->info.sig.ecdsa.r);
+		free_BN(&sig->info.sig.ecdsa.s);
+		break;
+
 	case PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
 		free_BN(&sig->info.sig.elgamal.r);
 		free_BN(&sig->info.sig.elgamal.s);
@@ -1176,6 +1181,10 @@ pgp_pubkey_free(pgp_pubkey_t *p)
 		free_BN(&p->key.dsa.y);
 		break;
 
+	case PGP_PKA_ECDSA:
+		free_BN(&p->key.ecdsa.p);
+		break;
+
 	case PGP_PKA_ELGAMAL:
 	case PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
 		free_BN(&p->key.elgamal.p);
@@ -1241,6 +1250,14 @@ parse_pubkey_data(pgp_pubkey_t *key, pgp_region_t *region,
 		    !limread_mpi(&key->key.dsa.q, region, stream) ||
 		    !limread_mpi(&key->key.dsa.g, region, stream) ||
 		    !limread_mpi(&key->key.dsa.y, region, stream)) {
+			return 0;
+		}
+		break;
+
+	case PGP_PKA_ECDSA:
+		if (!limread(&key->key.ecdsa.len, 1, region, stream) ||
+		    !limread(key->key.ecdsa.oid, key->key.ecdsa.len, region, stream) ||
+		    !limread_mpi(&key->key.ecdsa.p, region, stream)) {
 			return 0;
 		}
 		break;
@@ -1492,6 +1509,13 @@ parse_v3_sig(pgp_region_t *region,
 	case PGP_PKA_DSA:
 		if (!limread_mpi(&pkt.u.sig.info.sig.dsa.r, region, stream) ||
 		    !limread_mpi(&pkt.u.sig.info.sig.dsa.s, region, stream)) {
+			return 0;
+		}
+		break;
+
+	case PGP_PKA_ECDSA:
+		if (!limread_mpi(&pkt.u.sig.info.sig.ecdsa.r, region, stream) || 
+		    !limread_mpi(&pkt.u.sig.info.sig.ecdsa.s, region, stream)) {
 			return 0;
 		}
 		break;
@@ -2035,6 +2059,13 @@ parse_v4_sig(pgp_region_t *region, pgp_stream_t *stream)
 		}
 		break;
 
+	case PGP_PKA_ECDSA:
+		if (!limread_mpi(&pkt.u.sig.info.sig.ecdsa.r, region, stream) ||
+		    !limread_mpi(&pkt.u.sig.info.sig.ecdsa.s, region, stream)) {
+			return 0;
+		}
+		break;
+
 	case PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
 		if (!limread_mpi(&pkt.u.sig.info.sig.elgamal.r, region,
 				stream) ||
@@ -2320,6 +2351,10 @@ pgp_seckey_free(pgp_seckey_t *key)
 
 	case PGP_PKA_DSA:
 		free_BN(&key->key.dsa.x);
+		break;
+
+	case PGP_PKA_ECDSA:
+		free_BN(&key->key.ecdsa.x);
 		break;
 
 	default:
@@ -2628,6 +2663,12 @@ parse_seckey(pgp_region_t *region, pgp_stream_t *stream)
 
 	case PGP_PKA_DSA:
 		if (!limread_mpi(&pkt.u.seckey.key.dsa.x, region, stream)) {
+			ret = 0;
+		}
+		break;
+
+	case PGP_PKA_ECDSA:
+		if (!limread_mpi(&pkt.u.seckey.key.ecdsa.x, region, stream)) {
 			ret = 0;
 		}
 		break;

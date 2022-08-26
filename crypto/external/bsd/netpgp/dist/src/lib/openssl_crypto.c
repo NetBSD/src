@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.34 2018/02/05 23:56:01 christos Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.35 2022/08/26 19:18:38 jhigh Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: openssl_crypto.c,v 1.34 2018/02/05 23:56:01 christos Exp $");
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "netpgpdigest.h"
+#include "netpgpsdk.h"
 #include "packet.h"
 
 static void
@@ -221,6 +222,103 @@ takeDSA(const DSA *odsa, pgp_dsa_seckey_t *sk)
 	x = odsa->priv_key;
 #endif
 	sk->x = BN_dup(x);
+}
+
+static ECDSA_SIG *
+makeECDSADSA_SIG(const pgp_ecdsa_sig_t *sig)
+{
+	ECDSA_SIG        *osig;
+	BIGNUM         *r, *s; 
+
+	osig = ECDSA_SIG_new();
+	r = BN_dup(sig->r);
+	s = BN_dup(sig->s);
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	ECDSA_SIG_set0(osig, r, s);
+#else 
+	BN_free(osig->r);
+	BN_free(osig->s);
+	osig->r = r;
+	osig->s = s;
+#endif
+
+	return osig;
+}
+
+static EC_KEY * 
+makeECDSA(const pgp_ecdsa_pubkey_t *ecdsa, const pgp_ecdsa_seckey_t *sececdsa)
+{
+	EC_KEY 		*key;
+	BIGNUM 		*x;
+	BIGNUM 		*y;
+	EC_GROUP 	*group;
+	EC_POINT 	*pub_key;
+	EC_POINT 	*point;
+	int nid;
+
+	key = EC_KEY_new();
+	x = BN_new();
+	y = BN_new();
+
+	nid = ecdsa_nid(ecdsa);
+	if (nid == -1) {
+		(void) fprintf(stderr,"makeECDSA: failed to determine NID\n");
+		return 0;
+	}
+
+	group = EC_GROUP_new_by_curve_name(nid);
+	if (group == NULL) {
+		(void) fprintf(stderr,"makeECDSA: failed to get group for specified NID\n");
+		return 0;
+	}
+
+	pub_key = EC_POINT_new(group);
+	if (pub_key == NULL) {
+		(void) fprintf(stderr,"makeECDSA: failed to alloc point\n");
+		return 0;
+	}
+
+	point = EC_POINT_bn2point(group, ecdsa->p, NULL, NULL);
+	if (point == NULL) {
+		(void) fprintf(stderr,"makeECDSA: failed to conv BN to point\n");
+		return 0;
+	}
+
+
+	if ((EC_POINT_get_affine_coordinates(group, point, x, y, NULL)) == 0) {
+		(void) fprintf(stderr,"makeECDSA: failed to get coordinates from point\n");
+		return 0;
+	}
+
+	if ((EC_POINT_set_affine_coordinates(group, pub_key, x, y, NULL)) == 0) {
+		(void) fprintf(stderr,"makeECDSA: failed to set coordinates from point\n");
+		return 0;
+	}
+
+	if ((EC_KEY_set_group(key, group)) == 0) {
+		(void) fprintf(stderr,"makeECDSA: failed to set group for key\n");
+		return 0;
+	}
+
+	if ((EC_KEY_set_public_key(key, pub_key)) == 0) {
+		(void) fprintf(stderr,"makeECDSA: failed to set pubkey for key\n");
+		return 0;
+	}
+
+	if (sececdsa) {
+		if ((EC_KEY_set_private_key(key, sececdsa->x)) == 0) {
+			(void) fprintf(stderr,"makeECDSA: failed to set seckey for key\n");
+			return 0;
+		}
+
+		if ((EC_POINT_mul(group, pub_key, sececdsa->x, NULL, NULL, NULL)) == 0) {
+			(void) fprintf(stderr,"makeECDSA: failed to calculate generator\n");
+			return 0;
+		}
+	}
+
+	return key;
 }
 
 static void 
@@ -587,6 +685,36 @@ pgp_dsa_verify(const uint8_t *hash, size_t hash_length,
 	return (unsigned)ret;
 }
 
+unsigned
+pgp_ecdsa_verify(const uint8_t *hash, size_t hash_length,
+		 const pgp_ecdsa_sig_t *sig,
+		 const pgp_ecdsa_pubkey_t *ecdsa)
+{
+	unsigned        qlen;
+	ECDSA_SIG        *osig = makeECDSADSA_SIG(sig);
+	EC_KEY          *oecdsa = makeECDSA(ecdsa, NULL);
+	int             ret;
+ 
+	if (pgp_get_debug_level(__FILE__)) {
+		hexdump(stderr, "input hash", hash, hash_length);
+	}
+
+	ret = ECDSA_do_verify(hash, (int)hash_length, osig, oecdsa);
+
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "ret=%d\n", ret);
+	}
+
+	if (ret <= 0) {
+		(void) fprintf(stderr, "pgp_ecdsa_verify: ECDSA verification failed\n");
+		return 0;
+	}
+
+	ECDSA_SIG_free(osig);
+
+	return (unsigned)ret;
+}
+
 /**
    \ingroup Core_Crypto
    \brief Recovers message digest from the signature
@@ -914,6 +1042,27 @@ pgp_dsa_sign(uint8_t *hashbuf,
 	DSA_free(odsa);
 
 	return dsasig;
+}
+
+ECDSA_SIG        *
+pgp_ecdsa_sign(uint8_t *hashbuf,
+	       unsigned hashsize,
+	       const pgp_ecdsa_seckey_t *sececdsa,
+	       const pgp_ecdsa_pubkey_t *pubecdsa)
+{ 
+	ECDSA_SIG * ecdsasig;
+	EC_KEY * eckey = makeECDSA(pubecdsa, sececdsa);
+
+	ecdsasig = ECDSA_do_sign(hashbuf, (int)hashsize, eckey);
+
+	if (ecdsasig == NULL) {
+		printf("do_sign returned null\n");
+		return 0;
+	}
+
+	EC_KEY_free(eckey);
+
+	return ecdsasig;
 }
 
 int
