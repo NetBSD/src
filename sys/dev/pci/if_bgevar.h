@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.36 2022/08/19 07:52:22 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.37 2022/08/26 07:22:45 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -285,7 +285,6 @@ struct bge_softc {
 	bool			bge_dma64;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
-	uint32_t		bge_msicap;
 	uint16_t		bge_mps;
 	int			bge_expmrq;
 	uint32_t		bge_lasttag;
@@ -306,7 +305,6 @@ struct bge_softc {
 	int			bge_ring_rseg;
 	uint16_t		bge_tx_saved_considx;
 	uint16_t		bge_rx_saved_considx;
-	uint16_t		bge_ev_saved_considx;
 	uint16_t		bge_std;	/* current std ring head */
 	uint16_t		bge_std_cnt;
 	uint16_t		bge_jumbo;	/* current jumo ring head */
@@ -317,7 +315,6 @@ struct bge_softc {
 	uint32_t		bge_tx_coal_ticks;
 	uint32_t		bge_rx_max_coal_bds;
 	uint32_t		bge_tx_max_coal_bds;
-	uint32_t		bge_tx_buf_ratio;
 	uint32_t		bge_sts;
 #define BGE_STS_LINK		__BIT(0)	/* MAC link status */
 #define BGE_STS_LINK_EVT	__BIT(1)	/* pending link event */
