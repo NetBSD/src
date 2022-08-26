@@ -1,11 +1,8 @@
-/* $NetBSD: efivar.h,v 1.1 2022/17/08 10:49:09 silentsky Exp $ */
+/* $NetBSD: efivar.h,v 1.1 2021/10/10 13:03:09 jmcneillExp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Pawel Cichowski of 3mdeb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

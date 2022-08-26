@@ -31,10 +31,6 @@
  * ioctls for using UEFI runtime time and variable services.
  */
 
-/*
- *  
- */
-
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.3 2022/04/01 06:51:12 skrll Exp $");
 
@@ -244,13 +240,7 @@ done:
 
 static int
 efi_ioctl_var_next(struct efi_var_ioc *var)
-{	
-	/*
-	* DEBUG
-	*/
-	aprint_normal("efi.c: efi_var_next is working\n");
-	
-
+{
 	efi_status status;
 	uint16_t *namebuf;
 	size_t namesize;
@@ -356,6 +346,7 @@ efi_register_ops(const struct efi_ops *ops)
 void
 efiattach(int count)
 {
+	// DEBUG
 	struct efi_table_ioc table = {
 		.buf = NULL,
 		.buf_len = 0,

@@ -186,9 +186,9 @@ efi_aprintcfgtbl(void)
 		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
 
 		count = systbl32->st_entries;
-		aprint_debug("efi32: %lu cfgtbl entries:\n", count);
+		aprint_debug("efi: %lu cfgtbl entries:\n", count);
 		for (; count; count--, ct32++) {
-			aprint_debug("efi32: %08" PRIx32, ct32->ct_data);
+			aprint_debug("efi: %08" PRIx32, ct32->ct_data);
 			efi_aprintuuid(&ct32->ct_uuid);
 			aprint_debug("\n");
 		}
@@ -324,7 +324,7 @@ efi_getsystbl(void)
 	if (pa == 0)
 		return NULL;
 
-	aprint_debug("efi: systbl at pa %" PRIxPADDR "\n", pa);
+	aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
 	efi_systbl_pa = pa;
 	va = efi_getva(pa);
 	aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
@@ -334,18 +334,18 @@ efi_getsystbl(void)
 		struct efi_systbl32 *systbl32 = (struct efi_systbl32 *) va;
 
 		/* XXX Check the signature and the CRC32 */
-		aprint_debug("efi32: signature %" PRIx64 " revision %" PRIx32
+		aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
 		    " crc32 %" PRIx32 "\n", systbl32->st_hdr.th_sig,
 		    systbl32->st_hdr.th_rev, systbl32->st_hdr.th_crc32);
-		aprint_debug("efi32: firmware revision %" PRIx32 "\n",
+		aprint_debug("efi: firmware revision %" PRIx32 "\n",
 		    systbl32->st_fwrev);
 		/*
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_debug("efi23: runtime services at pa 0x%08" PRIx32 "\n",
+		aprint_debug("efi: runtime services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_rt);
-		aprint_debug("efi32: boot services at pa 0x%08" PRIx32 "\n",
+		aprint_debug("efi: boot services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_bs);
 
 		efi_systbl_va = (struct efi_systbl *) systbl32;
@@ -416,6 +416,10 @@ efi_init(void)
 #endif
 }
 
+/*
+ * Prints ESRT contents to dmesg when booting in debug mode
+ * `boot -x` 
+ */
 void
 efi_print_esrt(void)
 {
