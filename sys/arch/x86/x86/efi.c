@@ -81,7 +81,7 @@ efi_getva(paddr_t pa)
 	rv = _x86_memio_map(x86_bus_space_mem, pa,
 	    PAGE_SIZE, 0, (bus_space_handle_t *)&va);
 	if (rv != 0) {
-		aprint_normal("efi: unable to allocate va\n");
+		aprint_debug("efi: unable to allocate va\n");
 		return 0;
 	}
 
@@ -115,26 +115,26 @@ efi_aprintuuid(const struct uuid * uuid)
 {
 	int i;
 
-	aprint_normal(" %08" PRIx32 "", uuid->time_low);
-	aprint_normal("-%04" PRIx16 "", uuid->time_mid);
-	aprint_normal("-%04" PRIx16 "", uuid->time_hi_and_version);
-	aprint_normal("-%02" PRIx8 "", uuid->clock_seq_hi_and_reserved);
-	aprint_normal("-%02" PRIx8 "", uuid->clock_seq_low);
-	aprint_normal("-");
+	aprint_debug(" %08" PRIx32 "", uuid->time_low);
+	aprint_debug("-%04" PRIx16 "", uuid->time_mid);
+	aprint_debug("-%04" PRIx16 "", uuid->time_hi_and_version);
+	aprint_debug("-%02" PRIx8 "", uuid->clock_seq_hi_and_reserved);
+	aprint_debug("-%02" PRIx8 "", uuid->clock_seq_low);
+	aprint_debug("-");
 	for (i = 0; i < _UUID_NODE_LEN; i++) {
-		aprint_normal("%02" PRIx8 "", uuid->node[i]);
+		aprint_debug("%02" PRIx8 "", uuid->node[i]);
 	}
 	/* If known, also print the human-readable name */
 	if (efi_uuideq(uuid, &EFI_UUID_ACPI20)) {
-		aprint_normal(" ACPI 2.0");
+		aprint_debug(" ACPI 2.0");
 	} else if (efi_uuideq(uuid, &EFI_UUID_ACPI10)) {
-		aprint_normal(" ACPI 1.0");
+		aprint_debug(" ACPI 1.0");
 	} else if (efi_uuideq(uuid, &EFI_UUID_SMBIOS)) {
-		aprint_normal(" SMBIOS");
+		aprint_debug(" SMBIOS");
 	} else if (efi_uuideq(uuid, &EFI_UUID_SMBIOS3)) {
-		aprint_normal(" SMBIOS3");
+		aprint_debug(" SMBIOS3");
 	} else if (efi_uuideq(uuid, &EFI_UUID_ESRT)) {
-		aprint_normal(" ESRT");
+		aprint_debug(" ESRT");
 	}
 }
 
@@ -162,9 +162,9 @@ efi_getcfgtblhead(void)
 #endif
 	} else
 		pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
-	aprint_normal("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
+	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
-	aprint_normal("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
+	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
 	efi_cfgtblhead_va = (struct efi_cfgtbl *) va;
 	efi_aprintcfgtbl();
 
@@ -186,22 +186,22 @@ efi_aprintcfgtbl(void)
 		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
 
 		count = systbl32->st_entries;
-		aprint_normal("efi32: %lu cfgtbl entries:\n", count);
+		aprint_debug("efi32: %lu cfgtbl entries:\n", count);
 		for (; count; count--, ct32++) {
-			aprint_normal("efi32: %08" PRIx32, ct32->ct_data);
+			aprint_debug("efi32: %08" PRIx32, ct32->ct_data);
 			efi_aprintuuid(&ct32->ct_uuid);
-			aprint_normal("\n");
+			aprint_debug("\n");
 		}
 #elif defined(__i386__)
 		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
 		struct efi_cfgtbl64 *ct64 = (void *) efi_cfgtblhead_va;
 		uint64_t count64 = systbl64->st_entries;
 
-		aprint_normal("efi: %" PRIu64 " cfgtbl entries:\n", count64);
+		aprint_debug("efi: %" PRIu64 " cfgtbl entries:\n", count64);
 		for (; count64; count64--, ct64++) {
-			aprint_normal("efi: %016" PRIx64, ct64->ct_data);
+			aprint_debug("efi: %016" PRIx64, ct64->ct_data);
 			efi_aprintuuid(&ct64->ct_uuid);
-			aprint_normal("\n");
+			aprint_debug("\n");
 		}
 #endif
 		return;
@@ -209,11 +209,11 @@ efi_aprintcfgtbl(void)
 
 	ct = efi_cfgtblhead_va;
 	count = efi_systbl_va->st_entries;
-	aprint_normal("efi: %lu cfgtbl entries:\n", count);
+	aprint_debug("efi: %lu cfgtbl entries:\n", count);
 	for (; count; count--, ct++) {
-		aprint_normal("efi: %p", ct->ct_data);
+		aprint_debug("efi: %p", ct->ct_data);
 		efi_aprintuuid(&ct->ct_uuid);
-		aprint_normal("\n");
+		aprint_debug("\n");
 	}
 }
 
@@ -324,28 +324,28 @@ efi_getsystbl(void)
 	if (pa == 0)
 		return NULL;
 
-	aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
+	aprint_debug("efi: systbl at pa %" PRIxPADDR "\n", pa);
 	efi_systbl_pa = pa;
 	va = efi_getva(pa);
-	aprint_normal("efi: systbl mapped at va %" PRIxVADDR "\n", va);
+	aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
 
 	if (efi_is32x64) {
 #if defined(__amd64__)
 		struct efi_systbl32 *systbl32 = (struct efi_systbl32 *) va;
 
 		/* XXX Check the signature and the CRC32 */
-		aprint_normal("efi32: signature %" PRIx64 " revision %" PRIx32
+		aprint_debug("efi32: signature %" PRIx64 " revision %" PRIx32
 		    " crc32 %" PRIx32 "\n", systbl32->st_hdr.th_sig,
 		    systbl32->st_hdr.th_rev, systbl32->st_hdr.th_crc32);
-		aprint_normal("efi32: firmware revision %" PRIx32 "\n",
+		aprint_debug("efi32: firmware revision %" PRIx32 "\n",
 		    systbl32->st_fwrev);
 		/*
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_normal("efi23: runtime services at pa 0x%08" PRIx32 "\n",
+		aprint_debug("efi23: runtime services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_rt);
-		aprint_normal("efi32: boot services at pa 0x%08" PRIx32 "\n",
+		aprint_debug("efi32: boot services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_bs);
 
 		efi_systbl_va = (struct efi_systbl *) systbl32;
@@ -353,18 +353,18 @@ efi_getsystbl(void)
 		struct efi_systbl64 *systbl64 = (struct efi_systbl64 *) va;
 
 		/* XXX Check the signature and the CRC32 */
-		aprint_normal("efi: signature %" PRIx64 " revision %" PRIx32
+		aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
 		    " crc32 %" PRIx32 "\n", systbl64->st_hdr.th_sig,
 		    systbl64->st_hdr.th_rev, systbl64->st_hdr.th_crc32);
-		aprint_normal("efi: firmware revision %" PRIx32 "\n",
+		aprint_debug("efi: firmware revision %" PRIx32 "\n",
 		    systbl64->st_fwrev);
 		/*
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_normal("efi: runtime services at pa 0x%016" PRIx64 "\n",
+		aprint_debug("efi: runtime services at pa 0x%016" PRIx64 "\n",
 		    systbl64->st_rt);
-		aprint_normal("efi: boot services at pa 0x%016" PRIx64 "\n",
+		aprint_debug("efi: boot services at pa 0x%016" PRIx64 "\n",
 		    systbl64->st_bs);
 
 		efi_systbl_va = (struct efi_systbl *) systbl64;
@@ -374,16 +374,16 @@ efi_getsystbl(void)
 
 	systbl = (struct efi_systbl *) va;
 	/* XXX Check the signature and the CRC32 */
-	aprint_normal("efi: signature %" PRIx64 " revision %" PRIx32
+	aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
 	    " crc32 %" PRIx32 "\n", systbl->st_hdr.th_sig,
 	    systbl->st_hdr.th_rev, systbl->st_hdr.th_crc32);
-	aprint_normal("efi: firmware revision %" PRIx32 "\n", systbl->st_fwrev);
+	aprint_debug("efi: firmware revision %" PRIx32 "\n", systbl->st_fwrev);
 	/*
 	 * XXX Also print fwvendor, which is an UCS-2 string (use
 	 * some UTF-16 routine?)
 	 */
-	aprint_normal("efi: runtime services at pa %p\n", systbl->st_rt);
-	aprint_normal("efi: boot services at pa %p\n", systbl->st_bs);
+	aprint_debug("efi: runtime services at pa %p\n", systbl->st_rt);
+	aprint_debug("efi: boot services at pa %p\n", systbl->st_bs);
 
 	efi_systbl_va = systbl;
 	return efi_systbl_va;
@@ -397,12 +397,12 @@ efi_init(void)
 {
 
 	if (efi_getsystbl() == NULL) {
-		aprint_normal("efi: missing or invalid systbl\n");
+		aprint_debug("efi: missing or invalid systbl\n");
 		bootmethod_efi = false;
 		return;
 	}
 	if (efi_getcfgtblhead() == NULL) {
-		aprint_normal("efi: missing or invalid cfgtbl\n");
+		aprint_debug("efi: missing or invalid cfgtbl\n");
 		efi_relva(efi_systbl_pa, (vaddr_t) efi_systbl_va);
 		bootmethod_efi = false;
 		return;
@@ -431,23 +431,25 @@ efi_print_esrt(void)
 		return;
 	}
 
-	aprint_normal("ESRT Fw Resource Count = %d\n", esrt->fw_resource_count);
-	aprint_normal("ESRT Fw Max Resource Count = %d\n", esrt->fw_resource_count_max);
-	aprint_normal("ESRT Fw Resource Version = %ld\n", esrt->fw_resource_version);
+	aprint_debug("ESRT Fw Resource Count = %d\n", esrt->fw_resource_count);
+	aprint_debug("ESRT Fw Max Resource Count = %d\n", esrt->fw_resource_count_max);
+	aprint_debug("ESRT Fw Resource Version = %ld\n", esrt->fw_resource_version);
 
 	esrt_entries = (struct efi_esrt_entry_v1 *) esrt->entries;
 
 	for (int i = 0; i < esrt->fw_resource_count; ++i) {
 		const struct efi_esrt_entry_v1 *e = &esrt_entries[i];
 
-		aprint_normal("ESRT[%d]:\n", i);
-		uuid_printf(&e->fw_class);
-		aprint_normal("  Fw Type: 0x%08x\n", e->fw_type);
-		aprint_normal("  Fw Version: 0x%08x\n", e->fw_version);
-		aprint_normal("  Lowest Supported Fw Version: 0x%08x\n", e->lowest_supported_fw_version);
-		aprint_normal("  Capsule Flags: 0x%08x\n", e->capsule_flags);
-		aprint_normal("  Last Attempt Version: 0x%08x\n", e->last_attempt_version);
-		aprint_normal("  Last Attempt Status: 0x%08x\n", e->last_attempt_status);
+		aprint_debug("ESRT[%d]:\n", i);
+		aprint_debug("	Fw Class:");
+		efi_aprintuuid(&e->fw_class);
+		aprint_debug("\n");
+		aprint_debug("  Fw Type: 0x%08x\n", e->fw_type);
+		aprint_debug("  Fw Version: 0x%08x\n", e->fw_version);
+		aprint_debug("  Lowest Supported Fw Version: 0x%08x\n", e->lowest_supported_fw_version);
+		aprint_debug("  Capsule Flags: 0x%08x\n", e->capsule_flags);
+		aprint_debug("  Last Attempt Version: 0x%08x\n", e->last_attempt_version);
+		aprint_debug("  Last Attempt Status: 0x%08x\n", e->last_attempt_status);
 	}
 }
 
