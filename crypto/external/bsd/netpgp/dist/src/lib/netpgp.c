@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.104 2022/08/27 08:30:06 rillig Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.105 2022/08/27 08:35:01 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -317,8 +317,8 @@ writekeyring(netpgp_t *netpgp, const char *name, pgp_keyring_t *keyring, uint8_t
 
 	filename = keyringfile(netpgp, name);
 	if (!pgp_keyring_filewrite(keyring, noarmor, filename, passphrase)) {
-		free(filename);
 		(void) fprintf(stderr, "Can't write %s %s\n", name, filename);
+		free(filename);
 		return 0;
 	}
 	netpgp_setvar(netpgp, name, filename);
