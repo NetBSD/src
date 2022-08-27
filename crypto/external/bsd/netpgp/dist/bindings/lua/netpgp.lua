@@ -50,7 +50,7 @@ if f then
 	extension = ".dylib"
 	io.close(f)
 end
-glupkg = package.loadlib("libluanetpgp" .. extension, "luaopen_netpgp")
+glupkg = assert(package.loadlib("libluanetpgp" .. extension, "luaopen_netpgp"))
 netpgp = glupkg()
 
 -- initialise
@@ -79,7 +79,6 @@ end
 -- initialise everything
 netpgp.init(pgp)
 
-local i
 for i = 1, #args do
 	if options.encrypt then
 		-- encrypt a file
