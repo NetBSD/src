@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.132 2020/01/29 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.133 2022/08/27 19:17:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.132 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.133 2022/08/27 19:17:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -269,7 +269,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_ioctl = slioctl;
 	sc->sc_if.if_output = sloutput;
 	sc->sc_if.if_dlt = DLT_SLIP;
-	sc->sc_fastq.ifq_maxlen = 32;
+	IFQ_SET_MAXLEN(&sc->sc_fastq, 32);
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
