@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -303,6 +303,7 @@ DtGetFieldType (
     case ACPI_DMT_FLAGS0:
     case ACPI_DMT_FLAGS1:
     case ACPI_DMT_FLAGS2:
+    case ACPI_DMT_FLAGS8_2:
     case ACPI_DMT_FLAGS4:
     case ACPI_DMT_FLAGS4_0:
     case ACPI_DMT_FLAGS4_4:
@@ -453,6 +454,7 @@ DtGetFieldLength (
     case ACPI_DMT_FLAGS0:
     case ACPI_DMT_FLAGS1:
     case ACPI_DMT_FLAGS2:
+    case ACPI_DMT_FLAGS8_2:
     case ACPI_DMT_FLAGS4:
     case ACPI_DMT_FLAGS4_0:
     case ACPI_DMT_FLAGS4_4:
