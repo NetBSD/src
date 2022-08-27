@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.383 2022/08/27 06:12:14 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.384 2022/08/27 06:32:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.383 2022/08/27 06:12:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.384 2022/08/27 06:32:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1263,7 +1263,7 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	mutex_enter(sc->sc_core_lock);
 	sc->bge_rx_coal_ticks = bge_rx_threshes[lvl].rx_ticks;
 	sc->bge_rx_max_coal_bds = bge_rx_threshes[lvl].rx_max_bds;
-	sc->bge_pending_rxintr_change = 1;
+	sc->bge_pending_rxintr_change = true;
 	mutex_exit(sc->sc_core_lock);
 }
 
@@ -4773,7 +4773,7 @@ bge_intr(void *xsc)
 		DELAY(10);
 		(void)CSR_READ_4(sc, BGE_HCC_RX_MAX_COAL_BDS);
 
-		sc->bge_pending_rxintr_change = 0;
+		sc->bge_pending_rxintr_change = false;
 	}
 	bge_handle_events(sc);
 
