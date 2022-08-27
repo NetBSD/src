@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1311 2022/08/17 14:03:05 kre Exp $
+# $NetBSD: mi,v 1.1312 2022/08/27 21:53:38 dholland Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -881,6 +881,7 @@
 ./usr/bin/tpm_version				base-tpm-bin		tpm
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
+./usr/bin/tradcpp				base-util-bin
 ./usr/bin/true					base-util-bin
 ./usr/bin/tset					base-util-bin
 ./usr/bin/tty					base-util-bin

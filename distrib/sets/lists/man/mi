@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1753 2022/08/12 11:15:40 riastradh Exp $
+# $NetBSD: mi,v 1.1754 2022/08/27 21:53:38 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -594,6 +594,7 @@
 ./usr/share/man/cat1/tpm_version.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat1/tput.0			man-util-catman		.cat
 ./usr/share/man/cat1/tr.0			man-util-catman		.cat
+./usr/share/man/cat1/tradcpp.0			man-util-catman		.cat
 ./usr/share/man/cat1/true.0			man-util-catman		.cat
 ./usr/share/man/cat1/tset.0			man-util-catman		.cat
 ./usr/share/man/cat1/tty.0			man-util-catman		.cat
@@ -3920,6 +3921,7 @@
 ./usr/share/man/html1/tpm_version.html		man-tpm-htmlman		tpm,html
 ./usr/share/man/html1/tput.html			man-util-htmlman	html
 ./usr/share/man/html1/tr.html			man-util-htmlman	html
+./usr/share/man/html1/tradcpp.html		man-util-htmlman	html
 ./usr/share/man/html1/true.html			man-util-htmlman	html
 ./usr/share/man/html1/tset.html			man-util-htmlman	html
 ./usr/share/man/html1/tty.html			man-util-htmlman	html
@@ -6900,6 +6902,7 @@
 ./usr/share/man/man1/tpm_version.1		man-tpm-man		tpm,.man
 ./usr/share/man/man1/tput.1			man-util-man		.man
 ./usr/share/man/man1/tr.1			man-util-man		.man
+./usr/share/man/man1/tradcpp.1			man-util-man		.man
 ./usr/share/man/man1/true.1			man-util-man		.man
 ./usr/share/man/man1/tset.1			man-util-man		.man
 ./usr/share/man/man1/tty.1			man-util-man		.man
