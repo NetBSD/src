@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.262 2022/03/07 04:06:20 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.263 2022/08/27 19:21:23 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.262 2022/03/07 04:06:20 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.263 2022/08/27 19:21:23 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1078,8 +1078,8 @@ sppp_attach(struct ifnet *ifp)
 
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
-	sp->pp_fastq.ifq_maxlen = 32;
-	sp->pp_cpq.ifq_maxlen = 20;
+	IFQ_SET_MAXLEN(&sp->pp_fastq, 32);
+	IFQ_SET_MAXLEN(&sp->pp_cpq, 20);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
 	sp->pp_alive_interval = SPPP_ALIVE_INTERVAL;
