@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.103 2020/03/21 01:07:21 jhigh Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.104 2022/08/27 08:30:06 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -297,9 +297,9 @@ readkeyring(netpgp_t *netpgp, const char *name)
 
 	filename = keyringfile(netpgp, name);
 	if (!pgp_keyring_fileread(keyring, noarmor, filename)) {
+		(void) fprintf(stderr, "Can't read %s %s\n", name, filename);
 		free(filename);
 		free(keyring);
-		(void) fprintf(stderr, "Can't read %s %s\n", name, filename);
 		return NULL;
 	}
 	netpgp_setvar(netpgp, name, filename);
