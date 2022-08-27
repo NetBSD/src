@@ -309,7 +309,7 @@ AslSignalHandler (
     }
 
     printf (ASL_PREFIX "Terminating\n");
-    _exit (0);
+    exit (0);
 }
 
 

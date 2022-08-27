@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -807,10 +807,11 @@ CmCleanupAndExit (
 
     if (AslGbl_ExceptionCount[ASL_ERROR] > ASL_MAX_ERROR_COUNT)
     {
-        printf ("\nMaximum error count (%d) exceeded\n",
+        printf ("\nMaximum error count (%d) exceeded (aslcompile.c)\n",
             ASL_MAX_ERROR_COUNT);
     }
 
+    AslGbl_ExceptionCount[ASL_ERROR] = 0;
     UtDisplaySummary (ASL_FILE_STDOUT);
 
     /*
