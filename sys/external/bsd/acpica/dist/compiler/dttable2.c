@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -265,8 +265,17 @@ DtCompileMadt (
 
         default:
 
-            DtFatal (ASL_MSG_UNKNOWN_SUBTABLE, SubtableStart, "MADT");
-            return (AE_ERROR);
+            if (MadtHeader->Type >= ACPI_MADT_TYPE_OEM_RESERVED)
+            {
+                InfoTable = AcpiDmTableInfoMadt17;
+            }
+            else
+            {
+                DtFatal (ASL_MSG_UNKNOWN_SUBTABLE, SubtableStart, "MADT");
+                return (AE_ERROR);
+            }
+
+            break;
         }
 
         Status = DtCompileTable (PFieldList, InfoTable, &Subtable);
@@ -699,7 +708,7 @@ DtCompileNhlt (
     UINT32                  CapabilitiesSize;
     UINT8                   ArrayType;
     UINT8                   ConfigType;
-    UINT8                   LinuxSpecificCount;
+    UINT8                   DeviceInfoCount;
     UINT32                  i;
     UINT32                  j;
     ACPI_TABLE_NHLT_ENDPOINT_COUNT      *MainTable;
@@ -707,7 +716,7 @@ DtCompileNhlt (
     ACPI_NHLT_VENDOR_MIC_COUNT          *MicCount;
     ACPI_NHLT_FORMATS_CONFIG            *FormatsConfig;
     ACPI_NHLT_DEVICE_SPECIFIC_CONFIG_D  *ConfigSpecific;
-    ACPI_NHLT_LINUX_SPECIFIC_COUNT      *LinuxSpecific;
+    ACPI_NHLT_DEVICE_INFO_COUNT         *DeviceInfo;
 
 
     /* Main table */
@@ -968,12 +977,12 @@ DtCompileNhlt (
 
             /*
              * If we are not done with the current Endpoint yet, then there must be
-             * some Linux-specific structure(s) yet to be processed. First, get
+             * some non documeneted structure(s) yet to be processed. First, get
              * the count of such structure(s).
              */
             if (*PFieldList && (strcmp ((const char *) (*PFieldList)->Name, "Descriptor Length")))
             {
-                /* Get the count of Linux-specific structures */
+                /* Get the count of non documented structures */
 
                 Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt7,
                     &Subtable);
@@ -985,13 +994,13 @@ DtCompileNhlt (
                 ParentTable = DtPeekSubtable ();
                 DtInsertSubtable (ParentTable, Subtable);
 
-                LinuxSpecific = ACPI_CAST_PTR (ACPI_NHLT_LINUX_SPECIFIC_COUNT, Subtable->Buffer);
-                LinuxSpecificCount = LinuxSpecific->StructureCount;
+                DeviceInfo = ACPI_CAST_PTR (ACPI_NHLT_DEVICE_INFO_COUNT, Subtable->Buffer);
+                DeviceInfoCount = DeviceInfo->StructureCount;
 
-                for (j = 0; j < LinuxSpecificCount; j++)
+                for (j = 0; j < DeviceInfoCount; j++)
                 {
                     /*
-                     * Compile the following Linux-specific fields:
+                     * Compile the following Device Info fields:
                      *  1) Device ID
                      *  2) Device Instance ID
                      *  3) Device Port ID
@@ -1005,28 +1014,22 @@ DtCompileNhlt (
 
                     ParentTable = DtPeekSubtable ();
                     DtInsertSubtable (ParentTable, Subtable);
+                } /* for (j = 0; j < LinuxSpecificCount; j++) */
 
-                    /*
-                     * To have a valid Linux-specific "Specific Data" at this
-                     * point, we need:
-                     * 1) The next field must be named "Specific Data"
-                     */
-                    if (!strcmp ((const char *) (*PFieldList)->Name, "Specific Data"))
+
+                /* Undocumented data at the end of endpoint */
+                if (*PFieldList && (strcmp ((const char *) (*PFieldList)->Name, "Descriptor Length")))
+                {
+                    Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt7b,
+                        &Subtable);
+                    if (ACPI_FAILURE (Status))
                     {
-                        /* Compile the "Specific Data" field */
-
-                        Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt7b,
-                            &Subtable);
-                        if (ACPI_FAILURE (Status))
-                        {
-                            return (Status);
-                        }
-
-                        ParentTable = DtPeekSubtable ();
-                        DtInsertSubtable (ParentTable, Subtable);
+                        return (Status);
                     }
 
-                } /* for (j = 0; j < LinuxSpecificCount; j++) */
+                    ParentTable = DtPeekSubtable ();
+                    DtInsertSubtable (ParentTable, Subtable);
+                }
             }
 
             DtPopSubtable ();
@@ -1035,11 +1038,21 @@ DtCompileNhlt (
 
         /*
          * All Endpoint Descriptors are completed.
-         * Do the table terminator structure (not in NHLT spec, optional)
+         * Do the table terminator specific config (not in NHLT spec, optional)
          */
         if (*PFieldList && (strcmp ((const char *) (*PFieldList)->Name, "Descriptor Length")))
         {
-            Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt8,
+            Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt5b,
+                &Subtable);
+            if (ACPI_FAILURE (Status))
+            {
+                return (Status);
+            }
+
+            ParentTable = DtPeekSubtable ();
+            DtInsertSubtable (ParentTable, Subtable);
+
+            Status = DtCompileTable (PFieldList, AcpiDmTableInfoNhlt3a,
                 &Subtable);
             if (ACPI_FAILURE (Status))
             {

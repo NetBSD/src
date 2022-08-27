@@ -8,7 +8,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -153,11 +153,11 @@ Target
     | ','                           {$$ = TrCreateNullTargetOp ();} /* Placeholder is a ZeroOp object */
     | ',' SuperName                 {$$ = TrSetOpFlags ($2, OP_IS_TARGET);}
     ;
-
+/*
 RequiredTarget
     : ',' SuperName                 {$$ = TrSetOpFlags ($2, OP_IS_TARGET);}
     ;
-
+*/
 TermArg
     : SimpleName                    {$$ = TrSetOpFlags ($1, OP_IS_TERM_ARG);}
     | Type2Opcode                   {$$ = TrSetOpFlags ($1, OP_IS_TERM_ARG);}
@@ -607,7 +607,6 @@ Type1Opcode
     | FatalTerm                     {}
     | ForTerm                       {}
     | ElseIfTerm                    {}
-    | LoadTerm                      {}
     | NoOpTerm                      {}
     | NotifyTerm                    {}
     | ReleaseTerm                   {}
@@ -626,6 +625,7 @@ Type2Opcode
     | CondRefOfTerm                 {}
     | CopyObjectTerm                {}
     | DerefOfTerm                   {}
+    | LoadTerm                      {} /* Moved from Type1 -- now returns an integer (ACPI 6.4) */
     | ObjectTypeTerm                {}
     | RefOfTerm                     {}
     | SizeOfTerm                    {}
