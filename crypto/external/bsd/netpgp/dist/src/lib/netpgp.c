@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.105 2022/08/27 08:35:01 rillig Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.106 2022/08/27 08:58:32 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -471,7 +471,7 @@ get_duration(char *s)
 {
 	uint64_t	 now;
 	int64_t	 	 t;
-	char		*mult;
+	const char	*mult;
 
 	if (s == NULL) {
 		return 0;
@@ -584,8 +584,6 @@ p(FILE *fp, const char *s, ...)
 static void
 pobj(FILE *fp, mj_t *obj, int depth)
 {
-	unsigned	 i;
-	char		*s;
 
 	if (obj == NULL) {
 		(void) fprintf(stderr, "No object found\n");

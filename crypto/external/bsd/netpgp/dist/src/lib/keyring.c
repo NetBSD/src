@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.57 2020/10/14 05:19:41 jhigh Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.58 2022/08/27 08:58:32 rillig Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -837,11 +837,8 @@ pgp_keyring_filewrite(pgp_keyring_t *keyring,
 	unsigned	 	res = 1;
 	pgp_key_t		*key;
 	unsigned	 	n;
-	unsigned	 	keyc = (keyring != NULL) ? keyring->keyc : 0;
-	char 			*cp;
 	pgp_content_enum	type;
 	pgp_armor_type_t	atype;
-	char			keyid[PGP_KEY_ID_SIZE * 3];
 
 	fd = pgp_setup_file_write(&output, filename, 1);
 	if (fd < 0) {
