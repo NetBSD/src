@@ -73,7 +73,7 @@ if options.homedir then
 	netpgp.homedir(pgp, options.homedir)
 end
 if options.decrypt or options.sign then
-netpgp.setvar(pgp, "need seckey", 1)
+	netpgp.setvar(pgp, "need seckey", 1)
 end
 
 -- initialise everything
