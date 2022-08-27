@@ -1,0 +1,37 @@
+not implemented:
+	- mode.input_allow_dollars.
+	- column counts do not take tabstops into account.
+	- mode.output_linenumbers.
+	- mode.do_depend.
+	- mode.do_macrolist.
+	- mode.do_trace.
+	- warns.endiflabels. (they cause errors)
+	- warns.unused.	
+	- the -iremap option.
+	- $CPP_RESTRICTED
+	- other environment variables
+
+tidy up:
+	- get rid of inlinedefs.h
+	- use of places in and below macro.c is pretty bogus.
+	- macro code should be reworked.
+	- place_changefile is manky and wastes memory. Also, in an ideal
+	  world we'd remember the place #line changed the name and refer
+	  to it when printing errors.
+
+fix:
+	- "#if 0 && 1/0" should not crash; fix eval method.
+	- quote characters and comment delimiters that are emitted by
+	  macros are not recognized. See:
+		t34 (should produce a quote and FOO Q)
+		t35 (similarly, this test may be redundant once it's fixed)
+		t36 (C(3) should produce nothing)
+		t37 (BC foo EC should produce nothing)
+	  Joerg says comments like in t36 should be stripped exactly
+	  twice, once when the macro is defined and again when it's
+	  expanded. Note that gcc's cpp -traditional is getting t37
+	  wrong, and it gets t36 wrong with -C.
+	- remove the intentionally undocumented -p option and generate
+	  proper linenumber output. (also, in this code what happens if
+	  a comment spans files? I bet currently it will emit the line
+	  number into the comment.)

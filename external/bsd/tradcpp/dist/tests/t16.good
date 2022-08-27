@@ -1,0 +1,11 @@
+x
+x
+x1x
+x1x
+xx
+x12x
+t16.c:10:1: Wrong number of arguments for macro c; found 1, expected 2
+x1x
+t16.c:11:1: Wrong number of arguments for macro c; found 0, expected 2
+xx
+FAILED
