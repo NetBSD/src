@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1871 2022/08/27 14:07:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1872 2022/08/27 21:53:38 dholland Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1408,6 +1408,18 @@ License:	BSD (4-clause)
 Location:	usr.sbin/traceroute
 Notes:
 Added changes from a5 -> a12 manually.
+
+Package:	tradcpp
+Version:	0.5.3
+Current Vers:	0.5.3
+Maintainer:	David A. Holland <dholland@NetBSD.org>
+Archive Site:	https://ftp.netbsd.org/pub/NetBSD/misc/dholland/
+Home Page:	https://www.netbsd.org/~dholland/tradcpp/
+Mailing List:	tech-toolchain
+Responsible:	dholland
+License:	BSD (2-clause)
+Location:	external/bsd/tradcpp
+Notes:
 
 Package:	tz
 Version:	tzcode2022c / tzdata2022bgtz (tzdata2022c)
