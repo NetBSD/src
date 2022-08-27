@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.61 2022/08/27 05:33:53 skrll Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.62 2022/08/27 05:35:17 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.61 2022/08/27 05:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.62 2022/08/27 05:35:17 skrll Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -2181,7 +2181,7 @@ ubsec_reset_board(struct ubsec_softc *sc)
 	WRITE_REG(sc, BS_CTRL, ctrl);
 
 	/*
-	* Wait aprox. 30 PCI clocks = 900 ns = 0.9 us
+	* Wait approx. 30 PCI clocks = 900 ns = 0.9 us
 	*/
 	DELAY(10);
 
