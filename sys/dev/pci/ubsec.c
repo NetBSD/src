@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.60 2022/05/23 13:53:37 rin Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.61 2022/08/27 05:33:53 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.60 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.61 2022/08/27 05:33:53 skrll Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -608,7 +608,7 @@ SYSCTL_SETUP(ubsec_sysctl_init, "ubsec sysctl")
 
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "ubsec", 
+		CTLTYPE_NODE, "ubsec",
 		SYSCTL_DESCR("ubsec opetions"),
 		NULL, 0, NULL, 0,
 		CTL_HW, CTL_CREATE, CTL_EOL);
@@ -1671,7 +1671,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			for (i = 0; i < 5; i++)
 				aes128->pc_hminner[i] = key.ses_hminner[i];
 			for (i = 0; i < 5; i++)
-				aes128->pc_hmouter[i] = key.ses_hmouter[i];   
+				aes128->pc_hmouter[i] = key.ses_hmouter[i];
 			for (i = 0; i < 4; i++)
 				aes128->pc_iv[i] = key.ses_iv[i];
 			break;
@@ -1684,7 +1684,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			for (i = 0; i < 5; i++)
 				aes192->pc_hminner[i] = key.ses_hminner[i];
 			for (i = 0; i < 5; i++)
-				aes192->pc_hmouter[i] = key.ses_hmouter[i];   
+				aes192->pc_hmouter[i] = key.ses_hmouter[i];
 			for (i = 0; i < 4; i++)
 				aes192->pc_iv[i] = key.ses_iv[i];
 			break;
@@ -1697,7 +1697,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			for (i = 0; i < 5; i++)
 				aes256->pc_hminner[i] = key.ses_hminner[i];
 			for (i = 0; i < 5; i++)
-				aes256->pc_hmouter[i] = key.ses_hmouter[i];   
+				aes256->pc_hmouter[i] = key.ses_hmouter[i];
 			for (i = 0; i < 4; i++)
 				aes256->pc_iv[i] = key.ses_iv[i];
 			break;
@@ -1736,7 +1736,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		for (i = 0; i < 5; i++)
 			ctx->pc_hminner[i] = key.ses_hminner[i];
 		for (i = 0; i < 5; i++)
-			ctx->pc_hmouter[i] = key.ses_hmouter[i];   
+			ctx->pc_hmouter[i] = key.ses_hmouter[i];
 		for (i = 0; i < 2; i++)
 			ctx->pc_iv[i] = key.ses_iv[i];
 	}
