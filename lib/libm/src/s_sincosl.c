@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/s_sincosl.c 319047 2017-05-28 06:13:38Z mmel $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sincosl.c,v 1.1 2022/08/27 08:31:59 christos Exp $");
+__RCSID("$NetBSD: s_sincosl.c,v 1.2 2022/08/27 17:15:52 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,9 +42,11 @@ __RCSID("$NetBSD: s_sincosl.c,v 1.1 2022/08/27 08:31:59 christos Exp $");
 
 #include "math.h"
 #include "math_private.h"
-#include "k_sincosl.h"
 
 #ifdef __HAVE_LONG_DOUBLE
+
+#include "k_sincosl.h"
+
 #if LDBL_MANT_DIG == 64
 #include "../ld80/e_rem_pio2l.h"
 #elif LDBL_MANT_DIG == 113
