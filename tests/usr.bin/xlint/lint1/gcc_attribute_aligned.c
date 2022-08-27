@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_aligned.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_aligned.c,v 1.4 2022/08/27 21:59:41 rillig Exp $	*/
 # 3 "gcc_attribute_aligned.c"
 
 /*
@@ -43,3 +43,17 @@ struct {
 	/* expect+1: error: illegal bit-field size: 255 [36] */
 	unsigned int sizeof_save87: sizeof(struct save87) == 108 ? 1 : -1;
 };
+
+
+void
+aligned_struct_member(void)
+{
+	struct aligned {
+		int first;
+		int second __attribute__((__aligned__(16)));
+	};
+
+	/* TODO: should be -20 instead of -8. */
+	/* expect+1: error: negative array dimension (-8) [20] */
+	typedef int ctassert[-(int)sizeof(struct aligned)];
+}
