@@ -1,0 +1,9 @@
+/*
+comment?
+*/
+/* comment? */
+abc /* def */ ghi
+abc /* def  ghi */ jkl
+/*
+*/
+baz

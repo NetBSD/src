@@ -1,0 +1,91 @@
+release 0.5.3 (20190121)
+   - Fix markup typo in the man page.
+   - Abort on line numbering or column numbering overflow. Line
+     numbers are limited to values that fit in "unsigned int". Also
+     reject input lines longer than 2^32-1 characters. It seems
+     reasonable to presume that any input that violates these
+     constraints is someone screwing around and not a serious attempt
+     to compile or preprocess anything useful. Done in response to
+     n2129, but without getting into any of the silliness found there.
+   - Recognize __ia64__ for IA64 builds.
+   - Recognize __aarch64__ for 64-bit ARM builds, as sent in by
+     various people.
+   - Recognize __riscv__ and __riscv64__ for risc-v builds.
+
+release 0.5.2 (20160904)
+   - Fix typo in -U usage message, noticed by Joerg.
+   - Add a -debuglog option to send an execution trace to a file.
+     Intended to be used when debugging imake templates and other
+     complex input, not for debugging tradcpp itself.
+
+release 0.5.1 (20150612)
+   - Fix a stupid regression in 0.5 that causes it to not recognize a
+     pile of options.
+   - Fix output corruption caused by mishandling which macros are
+     currently in use. In particular, "curmacro" is only valid while
+     we're parsing a macro name and arguments, and can change once we
+     start expanding, so don't use it to clear the in-use flag. This
+     problem has been around all along but was only just exposed.
+   - Also don't set curmacro to null after calling expand_domacro as
+     that can cause us to think a macro name we just read is defined().
+     This one was introduced in 0.5.
+   - Don't use "remove" as a local variable as gcc 4.1 gets upset
+     about it vs. remove(3) in stdio.h.
+
+release 0.5 (20150612)
+   - Don't report unclosed comments as "No newline at end of file".
+   - Don't rely on <stdbool.h> existing, as (predictably) it doesn't
+     work on Solaris.
+   - Similarly, don't rely on C11 anonymous unions as the Solaris
+     compiler vomits on them.
+   - Typo fix in man page from Jason McIntyre; and change "Usage" to
+     "usage" in usage for pedantic reasons, from Igor Sobrado.
+   - Accept "-" as either input or output file name to mean stdin or
+     stdout respectively. Suggested by Jonathan Gray.
+   - Fix output spacing behavior to match gcc when newlines appear in or
+     while looking for macro arguments. Partly from Joerg Sonnenberger.
+   - Implement __FILE__ and __LINE__ macros. Mostly from Joerg Sonnenberger.
+   - Implement #line. Partly from Joerg Sonnenberger.
+   - Declare usage() with PF(). From wiz.
+
+release 0.4 (20130713)
+   - Fix stupid build problem introduced in 0.3.1.
+   - Accept and ignore -m32, which imake issues willy-nilly on a bunch
+     of platforms. I thought this had already been done, but apparently
+     not.
+   - Don't use the <err.h> functions. There are still people out there
+     using legacy systems missing them.
+   - Sort out some more issues pertaining to handling quoted strings.
+   - Add some more tests.
+
+release 0.3.1 (20130709)
+   - Don't leak memory and assert if a bad command-line option comes
+     after a -D or a -include foo.
+   - Since imake is a principal application for tradcpp and imake carefully
+     hides what it's doing when you run it, when rejecting an invalid option
+     be sure to report *what* that option is.
+
+release 0.3 (20130616)
+   - Don't eval the control expression of the first #if of a block when
+     already in a false block; it might not be valid. Reported by
+     Baptiste Daroussin.
+   - Don't recognize comments within character constants.
+   - Don't recognize macro argument parentheses or commas within strings,
+     or within character constants either.
+
+release 0.2 (20130611)
+   - auto-recognize more builtin PowerPC and mips macros
+   - pass -Wunused (partly from Baptiste Daroussin)
+   - allow absolute paths in include files (partly from Baptiste Daroussin)
+   - don't use getprogname() in the name of portability
+   - add tests arising from December 2010 tech-toolchain thread (one
+     from der Mouse, one of mine)
+   - clean out usage of sys/cdefs.h macros and don't use the implementation
+     namespace
+   - make -Wcomment work again
+   - fix handling of relative includes
+   - provide a man page
+   - other minor improvements
+
+release 0.1 (20130610)
+   - first release, works with at least some imake templates
