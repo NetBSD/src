@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.36 2022/04/15 14:00:06 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.37 2022/08/27 10:04:45 mlelstv Exp $	*/
 /* $OpenBSD: channels.c,v 1.415 2022/03/30 21:10:25 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.36 2022/04/15 14:00:06 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.37 2022/08/27 10:04:45 mlelstv Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1117,9 +1117,9 @@ channel_tcpwinsz(struct ssh *ssh)
 	    return(128*1024);
 	ret = getsockopt(ssh_packet_get_connection_in(ssh),
 			 SOL_SOCKET, SO_RCVBUF, &tcpwinsz, &optsz);
-	/* return no more than 64MB */
-	if ((ret == 0) && tcpwinsz > BUFFER_MAX_LEN_HPN)
-	    tcpwinsz = BUFFER_MAX_LEN_HPN;
+	/* return no more than SSHBUF_SIZE_MAX (currently 256MB) */
+	if ((ret == 0) && tcpwinsz > SSHBUF_SIZE_MAX)
+	    tcpwinsz = SSHBUF_SIZE_MAX;
 	debug2("tcpwinsz: %d for connection: %d", tcpwinsz, 
 	       ssh_packet_get_connection_in(ssh));
 	return(tcpwinsz);
@@ -1128,10 +1128,6 @@ channel_tcpwinsz(struct ssh *ssh)
 static void
 channel_pre_open(struct ssh *ssh, Channel *c)
 {
-        /* check buffer limits */
-	if ((!c->tcpwinsz) || (c->dynamic_window > 0))
-    	    c->tcpwinsz = channel_tcpwinsz(ssh);
-	
 	c->io_want = 0;
 	if (c->istate == CHAN_INPUT_OPEN &&
 	    c->remote_window > 0 &&
@@ -2170,17 +2166,17 @@ channel_check_window(struct ssh *ssh, Channel *c)
 	    c->local_window < c->local_window_max/2) &&
 	    c->local_consumed > 0) {
 		u_int addition = 0;
-
-		if (!c->have_remote_id)
-			fatal_f("channel %d: no remote id", c->self);
-
+		u_int32_t tcpwinsz = channel_tcpwinsz(ssh);
 		/* adjust max window size if we are in a dynamic environment */
-		if (c->dynamic_window && (c->tcpwinsz > c->local_window_max)) {
+		if (c->dynamic_window && (tcpwinsz > c->local_window_max)) {
 			/* grow the window somewhat aggressively to maintain 
 			 * pressure */
-			addition = 1.5*(c->tcpwinsz - c->local_window_max);
+			addition = 1.5*(tcpwinsz - c->local_window_max);
 			c->local_window_max += addition;
+			debug("Channel: Window growth to %d by %d bytes", c->local_window_max, addition);
 		}
+		if (!c->have_remote_id)
+			fatal_f("channel %d: no remote id", c->self);
 		if ((r = sshpkt_start(ssh,
 		    SSH2_MSG_CHANNEL_WINDOW_ADJUST)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
@@ -2189,7 +2185,8 @@ channel_check_window(struct ssh *ssh, Channel *c)
 			fatal_fr(r, "channel %i", c->self);
 		}
 		debug2("channel %d: window %d sent adjust %d", c->self,
-		    c->local_window, c->local_consumed);
+		    c->local_window,
+		    c->local_consumed + addition);
 		c->local_window += c->local_consumed + addition;
 		c->local_consumed = 0;
 	}
