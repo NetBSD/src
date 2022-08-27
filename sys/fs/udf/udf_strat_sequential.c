@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.18 2022/08/27 05:31:59 skrll Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.19 2022/08/27 05:32:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.18 2022/08/27 05:31:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.19 2022/08/27 05:32:41 skrll Exp $");
 #endif /* not lint */
 
 
@@ -249,7 +249,7 @@ out:
  * kinds of side effects.
  *
  * This implementation uses a kernel thread to schedule the queued requests in
- * such a way that is semi-optimal for optical media; this means aproximately
+ * such a way that is semi-optimal for optical media; this means approximately
  * (R*|(Wr*|Ws*))* since switching between reading and writing is expensive in
  * time.
  */
