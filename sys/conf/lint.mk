@@ -1,4 +1,4 @@
-# $NetBSD: lint.mk,v 1.4 2021/05/02 20:11:43 rillig Exp $
+# $NetBSD: lint.mk,v 1.5 2022/08/27 21:49:33 rillig Exp $
 
 ##
 ## lint
@@ -7,22 +7,22 @@
 .if !target(lint)
 .PATH: $S
 ALLSFILES?=	${MD_SFILES} ${SFILES}
-LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
+LINTSTUBS?=	${ALLSFILES:T:R:%=LintStub_%.c}
 KERNLINTFLAGS?=	-bceghnxzFS
 NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -o $@ -i $<
 
-_lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
+_lsrc=		${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+LOBJS?=		${_lsrc:T:.c=.ln} ${LIBKERNLN} ${SYSLIBCOMPATLN}
 
-.for _sfile in ${ALLSFILES}
-LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
+.for sfile in ${ALLSFILES}
+LintStub_${sfile:T:R}.c: ${sfile} assym.h
 	${_MKTARGET_COMPILE}
-	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
+	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${sfile} | \
 	      ${TOOL_AWK} -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
 
-.for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-${_cfile:T:R}.ln: ${_cfile}
+.for cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+${cfile:T:R}.ln: ${cfile}
 	${_MKTARGET_COMPILE}
 	${NORMAL_LN}
 .endfor
