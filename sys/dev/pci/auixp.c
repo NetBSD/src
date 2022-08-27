@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.53 2022/01/25 22:01:35 andvar Exp $ */
+/* $NetBSD: auixp.c,v 1.54 2022/08/27 05:35:17 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.53 2022/01/25 22:01:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.54 2022/08/27 05:35:17 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1624,7 +1624,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 	value |= ATI_REG_CMD_AC_SOFT_RESET;
 	bus_space_write_4(iot, ioh, ATI_REG_CMD, value);
 
-	/* need to read the CMD reg and wait aprox. 10 usec to init */
+	/* need to read the CMD reg and wait approx. 10 usec to init */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	DELAY(20);
 
