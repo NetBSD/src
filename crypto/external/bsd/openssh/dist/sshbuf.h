@@ -1,4 +1,4 @@
-/*	$NetBSD: sshbuf.h,v 1.16 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: sshbuf.h,v 1.17 2022/08/27 10:04:45 mlelstv Exp $	*/
 /*	$OpenBSD: sshbuf.h,v 1.25 2022/01/22 00:43:43 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
@@ -34,10 +34,7 @@
 #define EC_POINT	void
 #endif /* WITH_OPENSSL */
 
-/* move the following to a more appropriate place and name */
-#define BUFFER_MAX_LEN_HPN	0x4000000	/* 64MB */
-
-#define SSHBUF_SIZE_MAX		0x8000000	/* Hard maximum size */
+#define SSHBUF_SIZE_MAX		0x10000000	/* Hard maximum size 256MB */
 #define SSHBUF_REFS_MAX		0x100000	/* Max child buffers */
 #define SSHBUF_MAX_BIGNUM	(16384 / 8)	/* Max bignum *bytes* */
 #define SSHBUF_MAX_ECPOINT	((528 * 2 / 8) + 1) /* Max EC point *bytes* */
