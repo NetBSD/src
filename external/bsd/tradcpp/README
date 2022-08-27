@@ -1,0 +1,28 @@
+$NetBSD: README,v 1.1 2022/08/27 21:53:38 dholland Exp $
+
+To update tradcpp to a new version:
+
+- Unpack the tradcpp distfile. Unless things have changed a lot
+  upstream, you can import the distribution directory directly as
+  external/bsd/tradcpp/dist without needing to munge or prepare it.
+- Update the build glue/reacharound makefile, if needed. For the
+  moment, we just include the distribution makefile as it's suitable,
+  and therefore things like source lists don't need to be synced. If
+  the distribution makefile becomes unsuitable, this will need to
+  change.
+- cvs import the new dist directory.
+- Merge. (As long as we're stuck using cvs, please avoid committing to
+  the default branch in the tradcpp/dist subtree so this step isn't
+  necessary, as it's a big headache.)
+- Fix any merge conflicts.
+- Commit the merge.
+- Commit any changes to the build glue.
+- Update doc/3RDPARTY with the new version.
+- Add a note to doc/CHANGES about the new version.
+
+Note that this is not the maintenance copy of tradcpp; it is
+maintained in its own hg repository.
+
+Please if possible avoid committing changes to this version; instead,
+please send them upstream. Issuing a new release only takes a few
+minutes and allows the fixes/updates to propagate to pkgsrc.
