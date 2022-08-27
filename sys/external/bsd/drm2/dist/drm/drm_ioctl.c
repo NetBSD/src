@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.22 2021/12/19 12:40:43 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.23 2022/08/27 21:24:15 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.22 2021/12/19 12:40:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.23 2022/08/27 21:24:15 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
@@ -836,7 +836,7 @@ EXPORT_SYMBOL(drm_ioctl_kernel);
 int
 drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 {
-	char stackbuf[128];
+	char stackbuf[128] __aligned(ALIGNBYTES + 1);
 	char *buf = stackbuf;
 	void *data0 = data;
 	struct drm_file *const file = fp->f_data;
