@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.263 2022/08/27 19:21:23 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.264 2022/08/27 19:25:35 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.263 2022/08/27 19:21:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.264 2022/08/27 19:25:35 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1079,6 +1079,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	IFQ_SET_MAXLEN(&sp->pp_fastq, 32);
+	IFQ_LOCK_INIT(&sp->pp_fastq);
 	IFQ_SET_MAXLEN(&sp->pp_cpq, 20);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
@@ -1161,6 +1162,8 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
+
+	IFQ_LOCK_DESTROY(&sp->pp_fastq);
 	rw_destroy(&sp->pp_lock);
 }
 
