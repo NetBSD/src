@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,9 @@ NoEcho('
 %type <n> ParameterTypePackageList
 %type <n> ParameterTypesPackage
 %type <n> ParameterTypesPackageList
+/*
 %type <n> RequiredTarget
+*/
 %type <n> SimpleName
 %type <n> StringData
 %type <n> StringLiteral
