@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.15 2022/08/27 20:39:54 riastradh Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.16 2022/08/27 20:40:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15 2022/08/27 20:39:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.16 2022/08/27 20:40:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +85,7 @@ db_validate_address(vaddr_t addr)
 /*
  * Read bytes from kernel address space for debugger.
  */
-void
+void __noubsan
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char *src;
@@ -205,7 +205,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 /*
  * Write bytes to kernel address space for debugger.
  */
-void
+void __noubsan
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	extern struct bootspace bootspace;
