@@ -1,9 +1,9 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.17 2022/04/16 18:15:22 andvar Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.18 2022/08/27 05:31:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,12 +23,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.17 2022/04/16 18:15:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.18 2022/08/27 05:31:59 skrll Exp $");
 #endif /* not lint */
 
 
@@ -205,7 +205,7 @@ udf_write_logvol_dscr_seq(struct udf_strat_args *args)
 	int error, vpart;
 
 	/*
-	 * we have to decide if we write it out sequential or at its fixed 
+	 * we have to decide if we write it out sequential or at its fixed
 	 * position by examining the partition its (to be) written on.
 	 */
 	vpart       = udf_rw16(udf_node->loc.loc.part_num);
@@ -712,5 +712,5 @@ struct udf_strategy udf_strat_sequential =
 	udf_discstrat_init_seq,
 	udf_discstrat_finish_seq
 };
-	
+
 
