@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.381 2022/08/25 06:43:30 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.382 2022/08/27 05:35:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.381 2022/08/25 06:43:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.382 2022/08/27 05:35:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4799,7 +4799,7 @@ static void
 bge_asf_driver_up(struct bge_softc *sc)
 {
 	if (sc->bge_asf_mode & ASF_STACKUP) {
-		/* Send ASF heartbeat aprox. every 2s */
+		/* Send ASF heartbeat approx. every 2s */
 		if (sc->bge_asf_count)
 			sc->bge_asf_count --;
 		else {
