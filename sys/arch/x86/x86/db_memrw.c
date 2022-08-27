@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.14 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.15 2022/08/27 20:39:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.14 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15 2022/08/27 20:39:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -100,17 +100,17 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 	}
 
 	if (size == 8) {
-		*((long *)data) = *((long *)src);
+		*((uint64_t *)data) = *((uint64_t *)src);
 		return;
 	}
 
 	if (size == 4) {
-		*((int *)data) = *((int *)src);
+		*((uint32_t *)data) = *((uint32_t *)src);
 		return;
 	}
 
 	if (size == 2) {
-		*((short *)data) = *((short *)src);
+		*((uint16_t *)data) = *((uint16_t *)src);
 		return;
 	}
 
@@ -230,17 +230,17 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	dst = (char *)addr;
 
 	if (size == 8) {
-		*((long *)dst) = *((const long *)data);
+		*((uint64_t *)dst) = *((const uint64_t *)data);
 		return;
 	}
 
 	if (size == 4) {
-		*((int *)dst) = *((const int *)data);
+		*((uint32_t *)dst) = *((const uint32_t *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short *)dst) = *((const short *)data);
+		*((uint16_t *)dst) = *((const uint16_t *)data);
 		return;
 	}
 
