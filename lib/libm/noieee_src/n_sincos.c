@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.8 2022/08/27 08:31:59 christos Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.9 2022/08/27 09:56:21 christos Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,6 @@ static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
 #ifdef __weak_alias
 __weak_alias(_sinl, sin);
 __weak_alias(_cosl, cos);
-__weak_alias(_sincosl, sincos);
 #endif
 
 double
