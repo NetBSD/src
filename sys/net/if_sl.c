@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.133 2022/08/27 19:17:08 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.134 2022/08/27 19:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.133 2022/08/27 19:17:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.134 2022/08/27 19:19:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,6 +270,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = sloutput;
 	sc->sc_if.if_dlt = DLT_SLIP;
 	IFQ_SET_MAXLEN(&sc->sc_fastq, 32);
+	IFQ_LOCK_INIT(&sc->sc_fastq);
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
@@ -290,6 +291,8 @@ sl_clone_destroy(struct ifnet *ifp)
 
 	bpf_detach(ifp);
 	if_detach(ifp);
+
+	IFQ_LOCK_DESTROY(&sc->sc_fastq);
 
 	free(sc, M_DEVBUF);
 	return 0;
