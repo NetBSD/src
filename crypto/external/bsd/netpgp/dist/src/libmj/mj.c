@@ -299,7 +299,6 @@ mj_snprint(char *buf, size_t size, mj_t *atom, int encoded)
 			*bp = 0x0;
 			return bp - buf;
 		}
-		break;
 	case MJ_ARRAY:
 		cc = snprintf(buf, size, "[ ");
 		for (i = 0 ; i < atom->c ; i++) {

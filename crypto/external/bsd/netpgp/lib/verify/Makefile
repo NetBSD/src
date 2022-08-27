@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/05/03 21:46:37 christos Exp $
+# $NetBSD: Makefile,v 1.14 2022/08/27 08:58:32 rillig Exp $
 
 LIB=netpgpverify
 SRCS+=b64.c
@@ -29,6 +29,10 @@ INCSDIR=/usr/include/netpgp
 
 COPTS+=			${${ACTIVE_CC} == "gcc":? -Wno-implicit-fallthrough :}
 COPTS.libverify.c+=	${GCC_NO_FORMAT_TRUNCATION}
+
+LINTFLAGS.bzlib.c+=	-X 161	# constant in conditional context
+LINTFLAGS.bzlib.c+=	-X 220	# fallthrough on case statement
+LINTFLAGS.zlib.c+=	-X 220	# fallthrough on case statement
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/verify.map
 
