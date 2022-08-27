@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1219 2022/08/12 10:49:17 riastradh Exp $
+# $NetBSD: mi,v 1.1220 2022/08/27 08:31:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3841,6 +3841,7 @@
 ./usr/tests/lib/libm/t_round				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_scalbn				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_sin				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_sincos				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_sinh				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_sqrt				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_tan				tests-lib-tests		compattestfile,atf
