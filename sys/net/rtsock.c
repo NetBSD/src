@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.255 2020/03/09 21:20:55 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.256 2022/08/27 08:36:41 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.255 2020/03/09 21:20:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.256 2022/08/27 08:36:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -403,7 +403,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 {
 	void 	*where = oldp;
 	size_t	*given = oldlenp;
-	int	i, s, error = EINVAL;
+	int	i, error = EINVAL;
 	u_char  af;
 	struct	rt_walkarg w;
 
@@ -432,7 +432,7 @@ again:
 	w.w_where = where;
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	s = splsoftnet();
+	const int s = splsoftnet();
 	switch (w.w_op) {
 
 	case NET_RT_DUMP:
