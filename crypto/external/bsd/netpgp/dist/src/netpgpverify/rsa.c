@@ -502,7 +502,7 @@ netpgpv_DSA_size(const NETPGPV_DSA *dsa)
 	return (dsa == NULL) ? 0 : PGPV_BN_num_bits(dsa->p);
 }
 
-unsigned 
+unsigned
 netpgpv_dsa_verify(const signature_t *signature,
 	const netpgpv_dsa_pubkey_t *pubdsa, const uint8_t *calculated,
 	size_t hash_length)
@@ -513,7 +513,7 @@ netpgpv_dsa_verify(const signature_t *signature,
 	int	             ret;
 
 	if (signature == NULL || pubdsa == NULL || calculated == NULL) {
-		return -1;
+		return (unsigned)-1;
 	}
 	(void) memset(&osig, 0x0, sizeof(osig));
 	(void) memset(&odsa, 0x0, sizeof(odsa));
