@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.66 2020/02/22 22:47:35 joerg Exp $	*/
+/*	$NetBSD: math.h,v 1.67 2022/08/27 08:31:59 christos Exp $	*/
 
 /*
  * ====================================================
@@ -553,6 +553,10 @@ float	significandf(float);
  * float versions of BSD math library entry points
  */
 float	dremf(float, float);
+
+void		sincos(double, double *, double *);
+void		sincosf(float, float *, float *);
+void		sincosl(long double, long double *, long double *);
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE) || defined(_REENTRANT)

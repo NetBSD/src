@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.7 2014/10/10 20:58:09 martin Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.8 2022/08/27 08:31:59 christos Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
 #ifdef __weak_alias
 __weak_alias(_sinl, sin);
 __weak_alias(_cosl, cos);
+__weak_alias(_sincosl, sincos);
 #endif
 
 double
@@ -112,4 +113,18 @@ float
 cosf(float x)
 {
 	return cos(x);
+}
+
+void
+sincos(double x, double *s, double *c)
+{
+	*s = sin(x);
+	*c = cos(x);
+}
+
+void
+sincosf(float x, float *s, float *c)
+{
+	*s = sinf(x);
+	*c = cosf(x);
 }

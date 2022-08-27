@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2417 2022/07/22 15:43:36 wiz Exp $
+#	$NetBSD: mi,v 1.2418 2022/08/27 08:31:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10280,6 +10280,7 @@
 ./usr/share/man/cat3/simpleq_next.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/simpleq_remove_head.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/sin.0			comp-c-catman		.cat
+./usr/share/man/cat3/sincos.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sinf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sinh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sinhf.0			comp-c-catman		.cat
@@ -18562,6 +18563,7 @@
 ./usr/share/man/html3/sigsetops.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigvec.html		comp-c-htmlman		html
 ./usr/share/man/html3/sin.html			comp-c-htmlman		html
+./usr/share/man/html3/sincos.html		comp-c-htmlman		html
 ./usr/share/man/html3/sinf.html			comp-c-htmlman		html
 ./usr/share/man/html3/sinh.html			comp-c-htmlman		html
 ./usr/share/man/html3/sinhf.html		comp-c-htmlman		html
@@ -26878,6 +26880,7 @@
 ./usr/share/man/man3/simpleq_next.3		comp-obsolete		obsolete
 ./usr/share/man/man3/simpleq_remove_head.3	comp-obsolete		obsolete
 ./usr/share/man/man3/sin.3			comp-c-man		.man
+./usr/share/man/man3/sincos.3			comp-c-man		.man
 ./usr/share/man/man3/sinf.3			comp-c-man		.man
 ./usr/share/man/man3/sinh.3			comp-c-man		.man
 ./usr/share/man/man3/sinhf.3			comp-c-man		.man
