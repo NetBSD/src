@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.382 2022/08/27 05:35:17 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.383 2022/08/27 06:12:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.382 2022/08/27 05:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.383 2022/08/27 06:12:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,13 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.382 2022/08/27 05:35:17 skrll Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/bpf.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
 
 /* Headers for TCP Segmentation Offload (TSO) */
 #include <netinet/in_systm.h>		/* n_time for <netinet/ip.h>... */
