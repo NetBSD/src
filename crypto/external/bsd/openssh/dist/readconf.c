@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.38 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.39 2022/08/27 10:04:45 mlelstv Exp $	*/
 /* $OpenBSD: readconf.c,v 1.366 2022/02/08 08:59:12 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.38 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.39 2022/08/27 10:04:45 mlelstv Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: readconf.c,v 1.38 2022/02/23 19:07:20 christos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
+#include "sshbuf.h"
 #include "ssherr.h"
 #include "compat.h"
 #include "cipher.h"
@@ -2711,13 +2712,14 @@ fill_default_options(Options * options)
 	{
 	  /* if a user tries to set the size to 0 set it to 1KB */
 		if (options->hpn_buffer_size == 0)
-		options->hpn_buffer_size = 1024;
+			options->hpn_buffer_size = 1;
 		/*limit the buffer to 64MB*/
-		if (options->hpn_buffer_size > 65536)
+		if (options->hpn_buffer_size > (SSHBUF_SIZE_MAX / 1024))
 		{
-			options->hpn_buffer_size = 65536*1024;
-			debug("User requested buffer larger than 64MB. Request reverted to 64MB");
-		}
+			options->hpn_buffer_size = SSHBUF_SIZE_MAX;
+			debug("User requested buffer larger than 256MB. Request reverted to 256MB");
+		} else
+			options->hpn_buffer_size *= 1024;
 		debug("hpn_buffer_size set to %d", options->hpn_buffer_size);
 	}
 	if (options->tcp_rcv_buf == 0)
