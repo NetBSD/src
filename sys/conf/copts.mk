@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.6 2021/04/12 06:08:31 mrg Exp $
+#	$NetBSD: copts.mk,v 1.7 2022/08/27 20:42:16 rillig Exp $
 
 # MI per-file compiler options required.
 
@@ -24,7 +24,7 @@ COPTS.linux_machdep.c+=	-Wno-error=unused-but-set-variable
 COPTS.ath.c+=		-Wno-error=enum-conversion
 COPTS.dpt.c+=		${GCC_NO_ADDR_OF_PACKED_MEMBER}
 COPTS.ffs_appleufs.c+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
-# These are wrong. The code explicitly avoids this ase.
+# These are wrong. The code explicitly avoids this case.
 COPTS.in_pcb.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
 COPTS.in6_pcb.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
 # Also seems wrong.
