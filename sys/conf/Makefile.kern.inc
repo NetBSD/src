@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.294 2022/08/03 09:37:37 riastradh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.295 2022/08/27 20:37:49 rillig Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -480,7 +480,7 @@ ${_v}.${_c:T}+=${OPT.${_c:T}:@.o.@${${_v}.${.o.}}@}
 all: .gdbinit
 .for k in ${KERNELS}
 all: .WAIT ${k}
-${k}: ${SYSTEM_DEP:O} swap${k}.o vers.o build_kernel
+${k}: ${SYSTEM_DEP:O} swap${k}.o vers.o build_kernel #${MKLINT:Myes:%=lint}
 .endfor
 
 .if !defined(COPY_SYMTAB)
