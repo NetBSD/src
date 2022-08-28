@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.14 2022/08/25 01:58:48 ryo Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.15 2022/08/28 08:40:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.14 2022/08/25 01:58:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.15 2022/08/28 08:40:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ unsigned int eqos_debug;
 static int
 eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
-	struct eqos_softc *sc = device_private(dev);
+	struct eqos_softc * const sc = device_private(dev);
 	uint32_t addr;
 	int retry;
 
@@ -154,7 +154,7 @@ eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 static int
 eqos_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
-	struct eqos_softc *sc = device_private(dev);
+	struct eqos_softc * const sc = device_private(dev);
 	uint32_t addr;
 	int retry;
 
@@ -188,7 +188,7 @@ eqos_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 static void
 eqos_update_link(struct eqos_softc *sc)
 {
-	struct mii_data *mii = &sc->sc_mii;
+	struct mii_data * const mii = &sc->sc_mii;
 	uint64_t baudrate;
 	uint32_t conf;
 
@@ -418,8 +418,8 @@ eqos_disable_intr(struct eqos_softc *sc)
 static void
 eqos_tick(void *softc)
 {
-	struct eqos_softc *sc = softc;
-	struct mii_data *mii = &sc->sc_mii;
+	struct eqos_softc * const sc = softc;
+	struct mii_data * const mii = &sc->sc_mii;
 #ifndef EQOS_MPSAFE
 	int s = splnet();
 #endif
@@ -559,8 +559,8 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 static int
 eqos_init_locked(struct eqos_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct mii_data *mii = &sc->sc_mii;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t val, tqs, rqs;
 
 	EQOS_ASSERT_LOCKED(sc);
@@ -664,7 +664,7 @@ eqos_init_locked(struct eqos_softc *sc)
 static int
 eqos_init(struct ifnet *ifp)
 {
-	struct eqos_softc *sc = ifp->if_softc;
+	struct eqos_softc * const sc = ifp->if_softc;
 	int error;
 
 	EQOS_LOCK(sc);
@@ -679,7 +679,7 @@ eqos_init(struct ifnet *ifp)
 static void
 eqos_stop_locked(struct eqos_softc *sc, int disable)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
 	int retry;
 
@@ -747,7 +747,7 @@ eqos_stop(struct ifnet *ifp, int disable)
 static void
 eqos_rxintr(struct eqos_softc *sc, int qid)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	int error, index, pkts = 0;
 	struct mbuf *m, *m0, *new_m, *mprev;
 	uint32_t tdes3;
@@ -887,7 +887,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 static void
 eqos_txintr(struct eqos_softc *sc, int qid)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct eqos_bufmap *bmap;
 	struct eqos_dma_desc *desc;
 	uint32_t tdes3;
@@ -955,7 +955,7 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 static void
 eqos_start_locked(struct eqos_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
 	int cnt, nsegs, start;
 
@@ -1022,7 +1022,7 @@ eqos_start_locked(struct eqos_softc *sc)
 static void
 eqos_start(struct ifnet *ifp)
 {
-	struct eqos_softc *sc = ifp->if_softc;
+	struct eqos_softc * const sc = ifp->if_softc;
 
 	EQOS_TXLOCK(sc);
 	eqos_start_locked(sc);
@@ -1073,8 +1073,8 @@ eqos_intr_mtl(struct eqos_softc *sc, uint32_t mtl_status)
 int
 eqos_intr(void *arg)
 {
-	struct eqos_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct eqos_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t mac_status, mtl_status, dma_status, rx_tx_status;
 
 	sc->sc_ev_intr.ev_count++;
@@ -1142,8 +1142,8 @@ eqos_intr(void *arg)
 static int
 eqos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct eqos_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct eqos_softc * const sc = ifp->if_softc;
+	struct ifreq * const ifr = (struct ifreq *)data;
 	int error, s;
 
 #ifndef EQOS_MPSAFE
@@ -1365,8 +1365,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 int
 eqos_attach(struct eqos_softc *sc)
 {
-	struct mii_data *mii = &sc->sc_mii;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	u_int userver, snpsver;
 	int mii_flags = 0;
