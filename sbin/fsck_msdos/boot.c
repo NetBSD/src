@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.25 2022/04/24 10:35:15 hannken Exp $");
+__RCSID("$NetBSD: boot.c,v 1.26 2022/08/28 10:20:25 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -147,7 +147,7 @@ readboot(int dosfs, struct bootblock *boot)
 		    || fsinfo[0x3fd]
 		    || fsinfo[0x3fe] != 0x55
 		    || fsinfo[0x3ff] != 0xaa) {
-			pwarn("Invalid signature in fsinfo block");
+			pwarn("Invalid signature in fsinfo block\n");
 			if (ask(0, "fix")) {
 				memcpy(fsinfo, "RRaA", 4);
 				memcpy(fsinfo + 0x1e4, "rrAa", 4);
@@ -159,8 +159,8 @@ readboot(int dosfs, struct bootblock *boot)
 				fsinfo[0x3ff] = 0xaa;
 				if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 				    != boot->FSInfo * boot->BytesPerSec
-				    || write(dosfs, fsinfo, sizeof fsinfo)
-				    != sizeof fsinfo) {
+				    || write(dosfs, fsinfo, 2 * secsize)
+				    != 2 * secsize) {
 					perr("Unable to write FSInfo");
 					free(fsinfo);
 					free(backup);
