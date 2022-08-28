@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rint.c,v 1.12 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: s_rint.c,v 1.13 2022/08/28 21:24:09 he Exp $");
 #endif
 
 /*
@@ -77,3 +77,7 @@ rint(double x)
 	w = TWO52[sx]+x;
 	return w-TWO52[sx];
 }
+
+#if !defined(__HAVE_LONG_DOUBLE)
+__weak_alias(rintl, rint)
+#endif
