@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2022/01/29 16:01:17 martin Exp $ */
+/*	$NetBSD: md.c,v 1.9 2022/08/28 13:56:56 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/utsname.h>
 
 #include "defs.h"
 #include "md.h"
@@ -53,7 +54,27 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
+	struct utsname instsys;
+
 	(void)flags;
+
+	/*
+	 * Get the name of the kernel we are running under and
+	 * enable the installation of the corresponding GENERIC-like kernel.
+	 */
+	uname(&instsys);
+	if (strstr(instsys.version, "(ATARITT"))
+		set_kernel_set(SET_KERNEL_1);
+	else if (strstr(instsys.version, "(FALCON"))
+		set_kernel_set(SET_KERNEL_2);
+	else if (strstr(instsys.version, "(SMALL030"))
+		set_kernel_set(SET_KERNEL_3);
+	else if (strstr(instsys.version, "(HADES"))
+		set_kernel_set(SET_KERNEL_4);
+	else if (strstr(instsys.version, "(MILAN-ISAIDE"))
+		set_kernel_set(SET_KERNEL_5);
+	else if (strstr(instsys.version, "(MILAN_PCIIDE"))
+		set_kernel_set(SET_KERNEL_6);
 }
 
 bool
