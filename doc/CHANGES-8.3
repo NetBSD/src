@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.142 2022/08/12 15:20:07 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.143 2022/08/28 13:32:34 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2740,4 +2740,9 @@ sys/dev/ic/dwc_gmac.c				1.76,1.77
 	Fix chip configuration so that stripping of the FCS is
 	consistent for all packet types.
 	[sekiya, ticket #1755]
+
+libexec/telnetd/utility.c			1.34
+
+	telnetd(8): fix CVE-2020-10188.
+	[hgutch, ticket #1756]
 
