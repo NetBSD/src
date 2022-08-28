@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.165 2022/07/05 22:50:41 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.166 2022/08/28 08:41:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -189,16 +189,16 @@ extern	type_t	*block_dup_type(const type_t *);
 extern	type_t	*expr_dup_type(const type_t *);
 extern	type_t	*expr_unqualified_type(const type_t *);
 extern	bool	is_incomplete(const type_t *);
-extern	void	add_storage_class(scl_t);
-extern	void	add_type(type_t *);
-extern	void	add_qualifier(tqual_t);
-extern	void	addpacked(void);
-extern	void	add_attr_used(void);
+extern	void	dcs_add_storage_class(scl_t);
+extern	void	dcs_add_type(type_t *);
+extern	void	dcs_add_qualifier(tqual_t);
+extern	void	dcs_add_packed(void);
+extern	void	dcs_set_used(void);
 extern	void	begin_declaration_level(declaration_kind);
 extern	void	end_declaration_level(void);
-extern	void	setasm(void);
-extern	void	begin_type(void);
-extern	void	end_type(void);
+extern	void	dcs_set_asm(void);
+extern	void	dcs_begin_type(void);
+extern	void	dcs_end_type(void);
 extern	int	length_in_bits(const type_t *, const char *);
 extern	unsigned int alignment_in_bits(const type_t *);
 extern	sym_t	*lnklst(sym_t *, sym_t *);

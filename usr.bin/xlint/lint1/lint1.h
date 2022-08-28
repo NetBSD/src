@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.156 2022/07/05 22:50:41 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.157 2022/08/28 08:41:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -346,7 +346,7 @@ typedef	struct dinfo {
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
 	tspec_t	d_rank_mod;	/* SHORT, LONG or QUAD */
 	scl_t	d_scl;		/* storage class */
-	type_t	*d_type;	/* after end_type() pointer to the type used
+	type_t	*d_type;	/* after dcs_end_type pointer to the type used
 				   for all declarators */
 	sym_t	*d_redeclared_symbol;
 	unsigned int d_offset_in_bits; /* offset of next structure member */
@@ -355,7 +355,7 @@ typedef	struct dinfo {
 	bool	d_const:1;	/* const in declaration specifiers */
 	bool	d_volatile:1;	/* volatile in declaration specifiers */
 	bool	d_inline:1;	/* inline in declaration specifiers */
-	bool	d_multiple_storage_classes:1; /* reported in end_type */
+	bool	d_multiple_storage_classes:1; /* reported in dcs_end_type */
 	bool	d_invalid_type_combination:1;
 	bool	d_nonempty_decl:1; /* if at least one tag is declared
 				 * ... in the current function decl. */
