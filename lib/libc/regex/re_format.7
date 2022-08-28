@@ -1,4 +1,4 @@
-.\" $NetBSD: re_format.7,v 1.14 2021/02/24 09:10:12 wiz Exp $
+.\" $NetBSD: re_format.7,v 1.15 2022/08/28 12:59:50 uwe Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -64,18 +64,19 @@ Obsolete REs mostly exist for backward compatibility in some old programs;
 they will be discussed at the end.
 .St -p1003.2
 leaves some aspects of RE syntax and semantics open;
-`\(dd' marks decisions on these aspects that
+.ds DG \\s-2\\v'-0.4m'\\(dg\\v'0.4m'\\s+2
+`\(dg' marks decisions on these aspects that
 may not be fully portable to other
 .St -p1003.2
 implementations.
 .Pp
-A (modern) RE is one\(dd or more non-empty\(dd
+A (modern) RE is one\*(DG or more non-empty\*(DG
 .Em branches ,
 separated by
 .Ql \&| .
 It matches anything that matches one of the branches.
 .Pp
-A branch is one\(dd or more
+A branch is one\*(DG or more
 .Em pieces ,
 concatenated.
 It matches a match for the first, followed by a match for the second, etc.
@@ -83,7 +84,7 @@ It matches a match for the first, followed by a match for the second, etc.
 A piece is an
 .Em atom
 possibly followed
-by a single\(dd
+by a single\*(DG
 .Ql \&* ,
 .Ql \&+ ,
 .Ql \&? ,
@@ -111,7 +112,7 @@ always followed by
 .Ql \&} .
 The integers must lie between 0 and
 .Dv RE_DUP_MAX
-(255\(dd) inclusive,
+(255\*(DG) inclusive,
 and if there are two of them, the first may not exceed the second.
 An atom followed by a bound containing one integer
 .Em i
@@ -144,7 +145,7 @@ An atom is a regular expression enclosed in
 regular expression),
 an empty set of
 .Ql ()
-(matching the null string)\(dd,
+(matching the null string)\*(DG,
 a
 .Em bracket expression
 (see below),
@@ -160,16 +161,16 @@ followed by one of the characters
 (matching that character taken as an ordinary character),
 a
 .Ql \e
-followed by any other character\(dd
+followed by any other character\*(DG
 (matching that character taken as an ordinary character,
 as if the
 .Ql \e
-had not been present\(dd),
+had not been present\*(DG),
 or a single character with no other significance (matching that character).
 A
 .Ql \&{
 followed by a character other than a digit is an ordinary
-character, not the beginning of a bound\(dd.
+character, not the beginning of a bound\*(DG.
 It is illegal to end an RE with
 .Ql \e .
 .Pp
@@ -193,7 +194,7 @@ of characters between those two (inclusive) in the
 collating sequence,
 .No e.g. Ql [0-9]
 in ASCII matches any decimal digit.
-It is illegal\(dd for two ranges to share an
+It is illegal\*(DG for two ranges to share an
 endpoint,
 .No e.g. Ql a-c-e .
 Ranges are very collating-sequence-dependent,
@@ -265,7 +266,7 @@ then
 and
 .Ql [xy]
 are all synonymous.
-An equivalence class may not\(dd be an endpoint
+An equivalence class may not\*(DG be an endpoint
 of a range.
 .Pp
 Within a bracket expression, the name of a
@@ -297,7 +298,7 @@ The reverse, matching any character that does not belong to a specific
 class, the negation operator of bracket expressions may be used:
 .Ql [^[:class:]] .
 .Pp
-There are two special cases\(dd of bracket expressions:
+There are two special cases\*(DG of bracket expressions:
 the bracket expressions
 .Ql [[:<:]]
 and
@@ -377,7 +378,7 @@ and
 becomes
 .Ql [^xX] .
 .Pp
-No particular limit is imposed on the length of REs\(dd.
+No particular limit is imposed on the length of REs\*(DG.
 Programs intended to be portable should not employ REs longer
 than 256 bytes,
 as an implementation can refuse to accept such REs and remain
@@ -424,10 +425,10 @@ and
 by themselves ordinary characters.
 .Ql \&^
 is an ordinary character except at the beginning of the
-RE or\(dd the beginning of a parenthesized subexpression,
+RE or\*(DG the beginning of a parenthesized subexpression,
 .Ql \&$
 is an ordinary character except at the end of the
-RE or\(dd the end of a parenthesized subexpression,
+RE or\*(DG the end of a parenthesized subexpression,
 and
 .Ql \&*
 is an ordinary character if it appears at the beginning of the
