@@ -1,4 +1,4 @@
-# $NetBSD: dot.commonutils,v 1.5 2003/07/26 17:07:41 salo Exp $
+# $NetBSD: dot.commonutils,v 1.6 2022/08/28 12:44:01 tsutsui Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,7 +39,7 @@
 Set_tmp_dir()
 {
 	def_tmp_dir=`pwd`
-	if [ "$def_tmp_dir" = "/" -o "$def_tmp_dir" = "/mnt" ]; then
+	if [ "$def_tmp_dir" = "/" ] || [ "$def_tmp_dir" = "/mnt" ]; then
 		def_tmp_dir=/mnt/usr/distrib
 	fi
 
@@ -68,7 +68,7 @@ Load_fd()
 {
 	Tmp_dir
 	which=
-	while [ "$which" != "a" -a "$which" != "b" ]; do
+	while [ "$which" != "a" ] && [ "$which" != "b" ]; do
 		echo -n	"Read from which floppy drive ('a' or 'b')? [a] "
 		read which
 		if [ "X$which" = "X" ]; then
