@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.27 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: cons.h,v 1.28 2022/08/28 09:52:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _SYS_DEV_CONS_H_
 #define _SYS_DEV_CONS_H_
+
+#include <sys/types.h>
 
 struct consdev {
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
