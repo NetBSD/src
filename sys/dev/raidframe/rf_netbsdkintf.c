@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.409 2022/08/28 00:26:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.410 2022/08/28 00:37:41 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.409 2022/08/28 00:26:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.410 2022/08/28 00:37:41 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1095,46 +1095,6 @@ raid_detach_unlocked(struct raid_softc *rs)
 	return 0;
 }
 
-static bool
-rf_must_be_initialized(const struct raid_softc *rs, u_long cmd)
-{
-	switch (cmd) {
-	case RAIDFRAME_ADD_HOT_SPARE:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
-	case RAIDFRAME_CHECK_PARITY:
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
-	case RAIDFRAME_CHECK_RECON_STATUS:
-	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
-	case RAIDFRAME_COPYBACK:
-	case RAIDFRAME_DELETE_COMPONENT:
-	case RAIDFRAME_FAIL_DISK:
-	case RAIDFRAME_GET_ACCTOTALS:
-	case RAIDFRAME_GET_COMPONENT_LABEL:
-	case RAIDFRAME_GET_INFO:
-	case RAIDFRAME_GET_SIZE:
-	case RAIDFRAME_INCORPORATE_HOT_SPARE:
-	case RAIDFRAME_INIT_LABELS:
-	case RAIDFRAME_KEEP_ACCTOTALS:
-	case RAIDFRAME_PARITYMAP_GET_DISABLE:
-	case RAIDFRAME_PARITYMAP_SET_DISABLE:
-	case RAIDFRAME_PARITYMAP_SET_PARAMS:
-	case RAIDFRAME_PARITYMAP_STATUS:
-	case RAIDFRAME_REBUILD_IN_PLACE:
-	case RAIDFRAME_REMOVE_HOT_SPARE:
-	case RAIDFRAME_RESET_ACCTOTALS:
-	case RAIDFRAME_REWRITEPARITY:
-	case RAIDFRAME_SET_AUTOCONFIG:
-	case RAIDFRAME_SET_COMPONENT_LABEL:
-	case RAIDFRAME_SET_LAST_UNIT:
-	case RAIDFRAME_SET_ROOT:
-	case RAIDFRAME_SHUTDOWN:
-		return (rs->sc_flags & RAIDF_INITED) == 0;
-	}
-	return false;
-}
-
 int
 rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 {
@@ -1514,9 +1474,15 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
 	    (int) DISKPART(dev), (int) unit, cmd));
 
-	/* Must be initialized for these... */
-	if (rf_must_be_initialized(rs, cmd))
-		return ENXIO;
+	/* Only CONFIGURE and RESCAN can be done without the RAID being initialized. */
+	switch (cmd) {
+	case RAIDFRAME_CONFIGURE:
+	case RAIDFRAME_RESCAN:
+		break;
+	default:
+		if (!rf_inited(rs))
+			return ENXIO;
+	}
 
 	switch (cmd) {
 		/* configure the system */
