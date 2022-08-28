@@ -1,4 +1,4 @@
-.\" $NetBSD: flex.1,v 1.4 2021/12/01 21:44:12 wiz Exp $
+.\" $NetBSD: flex.1,v 1.5 2022/08/28 10:48:16 hgutch Exp $
 .\"
 .TH FLEX 1 "December 2021" "Version 2.5"
 .SH NAME
@@ -939,7 +939,7 @@ to be rescanned enclosed in parentheses.
     /* Copy yytext because unput() trashes yytext */
     char *yycopy = strdup( yytext );
     unput( ')' );
-    for ( i = yyleng - 1; i \*[Ge] 0; --i )
+    for ( i = yyleng - 1; i >= 0; --i )
         unput( yycopy[i] );
     unput( '(' );
     free( yycopy );
@@ -1769,7 +1769,7 @@ feature is discussed below):
 
     \*[Lt]incl\*[Gt][ \\t]*      /* eat the whitespace */
     \*[Lt]incl\*[Gt][^ \\t\\n]+   { /* got the include file name */
-            if ( include_stack_ptr \*[Ge] MAX_INCLUDE_DEPTH )
+            if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
                 {
                 fprintf( stderr, "Includes nested too deeply" );
                 exit( 1 );

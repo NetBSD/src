@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.28 2022/06/28 20:12:52 rillig Exp $
+.\"	$NetBSD: unix.4,v 1.29 2022/08/28 10:48:16 hgutch Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -250,7 +250,7 @@ int ret;
 
 memset(&addr, 0, sizeof(addr));
 addr.sun_family = AF_LOCAL;
-if (strlen(pathname) \*[Ge] sizeof(addr.sun_path))
+if (strlen(pathname) >= sizeof(addr.sun_path))
 	goto too_long;
 strncpy(addr.sun_path, pathname, sizeof(addr.sun_path));
 ret = bind(s, (const struct sockaddr *)&addr, SUN_LEN(&addr));
