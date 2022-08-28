@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.7 2020/06/27 03:07:57 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.8 2022/08/28 22:22:41 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.7 2020/06/27 03:07:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.8 2022/08/28 22:22:41 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 u_int
 fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	u_int64_t i;
+	uint64_t i;
 	int sign, exp;
 
 	sign = fp->fp_sign;
@@ -271,8 +271,8 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 		/* NB: the following includes exp < 0 cases */
 		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
 			fe->fe_cx |= FPSCR_UX;
-		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
-		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
+		i = ((uint64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		if (i >= ((uint64_t)0x8000000000000000LL + sign))
 			break;
 		return (sign ? -i : i);
 

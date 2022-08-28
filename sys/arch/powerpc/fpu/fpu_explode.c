@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.9 2020/06/27 04:24:08 rin Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.10 2022/08/28 22:22:41 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.9 2020/06/27 04:24:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.10 2022/08/28 22:22:41 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ fpu_itof(struct fpn *fp, u_int i)
  * 64-bit int -> fpn.
  */
 int
-fpu_xtof(struct fpn *fp, u_int64_t i)
+fpu_xtof(struct fpn *fp, uint64_t i)
 {
 
 	if (i == 0)
@@ -209,9 +209,9 @@ void
 fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 {
 	u_int s, *space;
-	u_int64_t l, *xspace;
+	uint64_t l, *xspace;
 
-	xspace = (u_int64_t *)&fe->fe_fpstate->fpreg[reg];
+	xspace = (uint64_t *)&fe->fe_fpstate->fpreg[reg];
 	l = xspace[0];
 	space = (u_int *)&fe->fe_fpstate->fpreg[reg];
 	s = space[0];
