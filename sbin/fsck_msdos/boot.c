@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.26 2022/08/28 10:20:25 mlelstv Exp $");
+__RCSID("$NetBSD: boot.c,v 1.27 2022/08/28 11:32:19 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -159,7 +159,7 @@ readboot(int dosfs, struct bootblock *boot)
 				fsinfo[0x3ff] = 0xaa;
 				if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 				    != boot->FSInfo * boot->BytesPerSec
-				    || write(dosfs, fsinfo, 2 * secsize)
+				    || (size_t)write(dosfs, fsinfo, 2 * secsize)
 				    != 2 * secsize) {
 					perr("Unable to write FSInfo");
 					free(fsinfo);
