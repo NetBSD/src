@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.13 2010/04/14 13:07:51 wiz Exp $
+.\"	$NetBSD: strlcpy.3,v 1.14 2022/08/28 10:48:16 hgutch Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -160,9 +160,9 @@ char *dir, *file, pname[MAXPATHLEN];
 
 \&...
 
-if (strlcpy(pname, dir, sizeof(pname)) \*[Ge] sizeof(pname))
+if (strlcpy(pname, dir, sizeof(pname)) >= sizeof(pname))
 	goto toolong;
-if (strlcat(pname, file, sizeof(pname)) \*[Ge] sizeof(pname))
+if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
 	goto toolong;
 .Ed
 .Pp

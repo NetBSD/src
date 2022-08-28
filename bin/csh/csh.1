@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.56 2022/07/09 21:19:44 uwe Exp $
+.\"	$NetBSD: csh.1,v 1.57 2022/08/28 10:48:15 hgutch Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -476,7 +476,7 @@ nest.)
 This `!' may be preceded by a `\e' to prevent its special meaning; for
 convenience, an `!' is passed unchanged when it is followed by a blank,
 tab, newline, `=' or `('.
-(History substitutions also occur when an input line begins with `\*(ua'.
+(History substitutions also occur when an input line begins with `^'.
 This special abbreviation will be described later.)
 Any input line that contains history substitution is echoed on the terminal
 before it is executed as it would have been typed without history substitution.
@@ -530,7 +530,7 @@ first (command) word
 .It Ar n
 .Ar n Ns 'th
 argument
-.It \*(ua
+.It ^
 first argument,  i.e., `1'
 .It $
 last argument
@@ -544,7 +544,7 @@ range of words
 abbreviates
 .Ar `\&0\-y\'
 .It *
-abbreviates `\*(ua\-$', or nothing if only 1 word in event
+abbreviates `^\-$', or nothing if only 1 word in event
 .It Ar x*
 abbreviates
 .Ar `x\-$\'
@@ -555,7 +555,7 @@ but omitting word `$'
 .El
 .Pp
 The `:' separating the event specification from the word designator
-can be omitted if the argument selector begins with a `\*(ua', `$', `*',
+can be omitted if the argument selector begins with a `^', `$', `*',
 `\-' or `%'.
 After the optional word designator can be
 placed a sequence of modifiers, each preceded by a `:'.
@@ -624,14 +624,14 @@ A history reference may be given without an event specification, e.g., `!$'.
 Here, the reference is to the previous command unless a previous
 history reference occurred on the same line in which case this form repeats
 the previous reference.
-Thus `!?foo?\*(ua !$' gives the first and last arguments
+Thus `!?foo?^ !$' gives the first and last arguments
 from the command matching `?foo?'.
 .Pp
 A special abbreviation of a history reference occurs when the first
-non-blank character of an input line is a `\*(ua'.
-This is equivalent to `!:s\*(ua' providing a convenient
+non-blank character of an input line is a `^'.
+This is equivalent to `!:s^' providing a convenient
 shorthand for substitutions on the text of the previous line.
-Thus `\*(ualb\*(ualib' fixes the spelling of
+Thus `^lb^lib' fixes the spelling of
 `lib'
 in the previous command.
 Finally, a history substitution may be surrounded with `{' and `}'
@@ -669,7 +669,7 @@ left unchanged.
 .Pp
 Thus if the alias for `ls' is `ls \-l' the command `ls /usr' would map to
 `ls \-l /usr', the argument list here being undisturbed.
-Similarly if the alias for `lookup' was `grep !\*(ua /etc/passwd' then
+Similarly if the alias for `lookup' was `grep !^ /etc/passwd' then
 `lookup bill' would map to `grep bill /etc/passwd'.
 .Pp
 If an alias is found, the word transformation of the input text
@@ -987,12 +987,12 @@ and
 commands.
 The following operators are available:
 .Bd -ragged -offset indent
-\&|\&|  &&  \&| \*(ua  &  ==  !=  =~  !~  \*[Le]  \*[Ge]
+\&|\&|  &&  \&|  ^  &  ==  !=  =~  !~  <=  >=
 <  > <<  >>  +  \-  *  /  %  !  ~  (  )
 .Ed
 .Pp
 Here the precedence increases to the right,
-`==' `!=' `=~' and `!~', `\*[Le]' `\*[Ge]' `<'
+`==' `!=' `=~' and `!~', `<=' `>=' `<'
 and `>', `<<' and `>>', `+' and `\-',
 `*' `/' and `%' being, in groups, at the same level.
 The `==' `!=' `=~' and `!~' operators compare their arguments as strings;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.37 2017/07/03 21:33:23 wiz Exp $
+.\"	$NetBSD: expr.1,v 1.38 2022/08/28 10:48:16 hgutch Exp $
 .\"
 .\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ Returns the evaluation of
 .Ar expr1
 if neither expression evaluates to an empty string or zero;
 otherwise, returns zero.
-.It Ar expr1 Li "{=, >, \*[Ge], <, \*[Le], !=}" Ar expr2
+.It Ar expr1 Li "{=, >, >=, <, <=, !=}" Ar expr2
 Returns the results of integer comparison if both arguments are integers;
 otherwise, returns the results of string comparison using the locale-specific
 collation sequence.
