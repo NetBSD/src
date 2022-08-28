@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.143 2022/07/03 07:33:08 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.144 2022/08/28 19:09:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.143 2022/07/03 07:33:08 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.144 2022/08/28 19:09:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -315,7 +315,7 @@ funcdef(sym_t *fsym)
 				else
 					/* redeclaration of '%s' */
 					warning(27, fsym->s_name);
-				print_previous_declaration(-1, rdsym);
+				print_previous_declaration(rdsym);
 			}
 
 			copy_usage_info(fsym, rdsym);
