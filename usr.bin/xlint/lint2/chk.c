@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.49 2022/05/30 23:27:45 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.50 2022/08/28 10:43:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.49 2022/05/30 23:27:45 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.50 2022/08/28 10:43:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -66,8 +66,8 @@ static	void	inconarg(const hte_t *, fcall_t *, int);
 static	void	tofewarg(const hte_t *, fcall_t *);
 static	void	tomanyarg(const hte_t *, fcall_t *);
 static	bool	eqtype(type_t *, type_t *, bool, bool, bool, bool *);
-static	bool	eqargs(type_t *, type_t *, bool *);
-static	bool	mnoarg(type_t *, bool *);
+static	bool	eq_prototype_args(type_t *, type_t *, bool *);
+static	bool	matches_no_arg_function(type_t *, bool *);
 
 
 /*
@@ -1308,13 +1308,13 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 
 		if (t == FUNC) {
 			if (tp1->t_proto && tp2->t_proto) {
-				if (!eqargs(tp1, tp2, dowarn))
+				if (!eq_prototype_args(tp1, tp2, dowarn))
 					return false;
 			} else if (tp1->t_proto) {
-				if (!mnoarg(tp1, dowarn))
+				if (!matches_no_arg_function(tp1, dowarn))
 					return false;
 			} else if (tp2->t_proto) {
-				if (!mnoarg(tp2, dowarn))
+				if (!matches_no_arg_function(tp2, dowarn))
 					return false;
 			}
 		}
@@ -1334,7 +1334,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
  * Compares arguments of two prototypes
  */
 static bool
-eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
+eq_prototype_args(type_t *tp1, type_t *tp2, bool *dowarn)
 {
 	type_t	**a1, **a2;
 
@@ -1358,17 +1358,17 @@ eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
 }
 
 /*
- * mnoarg() (matches functions with no argument type information)
- * returns true if all parameters of a prototype are compatible with
- * and old style function declaration.
- * This is the case if following conditions are met:
+ * Returns whether all parameters of a prototype are compatible with an
+ * old-style function declaration.
+ *
+ * This is the case if the following conditions are met:
  *	1. the prototype must have a fixed number of parameters
  *	2. no parameter is of type float
  *	3. no parameter is converted to another type if integer promotion
  *	   is applied on it
  */
 static bool
-mnoarg(type_t *tp, bool *dowarn)
+matches_no_arg_function(type_t *tp, bool *dowarn)
 {
 	type_t	**arg;
 	tspec_t	t;
