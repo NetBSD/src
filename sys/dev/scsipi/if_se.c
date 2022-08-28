@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.116 2022/07/07 06:11:28 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.117 2022/08/28 09:48:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.116 2022/07/07 06:11:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.117 2022/08/28 09:48:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -359,7 +359,7 @@ seattach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_start = se_ifstart;
 	ifp->if_ioctl = se_ioctl;
-	ifp->if_watchdog = sewatchdog;
+	ifp->if_watchdog = NULL;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_extflags = IFEF_MPSAFE;
 	IFQ_SET_READY(&ifp->if_snd);
@@ -767,7 +767,7 @@ se_read(struct se_softc *sc, char *data, int datalen)
 	return (n);
 }
 
-
+#if 0
 static void
 sewatchdog(struct ifnet *ifp)
 {
@@ -778,6 +778,7 @@ sewatchdog(struct ifnet *ifp)
 
 	se_reset(sc);
 }
+#endif
 
 static void
 se_reset(struct se_softc *sc)
