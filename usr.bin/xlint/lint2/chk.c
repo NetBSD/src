@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.50 2022/08/28 10:43:19 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.51 2022/08/28 12:04:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.50 2022/08/28 10:43:19 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.51 2022/08/28 12:04:47 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -65,8 +65,8 @@ static	void	badfmt(const hte_t *, fcall_t *);
 static	void	inconarg(const hte_t *, fcall_t *, int);
 static	void	tofewarg(const hte_t *, fcall_t *);
 static	void	tomanyarg(const hte_t *, fcall_t *);
-static	bool	eqtype(type_t *, type_t *, bool, bool, bool, bool *);
-static	bool	eq_prototype_args(type_t *, type_t *, bool *);
+static	bool	types_compatible(type_t *, type_t *, bool, bool, bool, bool *);
+static	bool	prototypes_compatible(type_t *, type_t *, bool *);
 static	bool	matches_no_arg_function(type_t *, bool *);
 
 
@@ -253,7 +253,7 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 	t1 = (tp1 = TP(def->s_type)->t_subt)->t_tspec;
 	for (call = hte->h_calls; call != NULL; call = call->f_next) {
 		tp2 = TP(call->f_type)->t_subt;
-		eq = eqtype(tp1, tp2,
+		eq = types_compatible(tp1, tp2,
 		    true, false, false, (dowarn = false, &dowarn));
 		if (!call->f_rused) {
 			/* no return value used */
@@ -316,10 +316,10 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 		tp2 = TP(sym->s_type);
 		dowarn = false;
 		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
-			eq = eqtype(xt1 = tp1->t_subt, xt2 = tp2->t_subt,
-			    true, false, false, &dowarn);
+			eq = types_compatible(xt1 = tp1->t_subt,
+			    xt2 = tp2->t_subt, true, false, false, &dowarn);
 		} else {
-			eq = eqtype(xt1 = tp1, xt2 = tp2,
+			eq = types_compatible(xt1 = tp1, xt2 = tp2,
 			    false, false, false, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
@@ -478,7 +478,7 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	asgn = def != NULL || (decl != NULL && TP(decl->s_type)->t_proto);
 
 	dowarn = false;
-	if (eqtype(arg1, arg2, true, promote, asgn, &dowarn) &&
+	if (types_compatible(arg1, arg2, true, promote, asgn, &dowarn) &&
 	    (!sflag || !dowarn))
 		return;
 
@@ -1160,7 +1160,7 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
 		while (*ap1 != NULL && *ap2 != NULL) {
 			type_t *xt1, *xt2;
 			dowarn = false;
-			eq = eqtype(xt1 = *ap1, xt2 = *ap2,
+			eq = types_compatible(xt1 = *ap1, xt2 = *ap2,
 			    true, osdef, false, &dowarn);
 			if (!eq || dowarn) {
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
@@ -1207,8 +1207,8 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
  *		an incompatible prototype declaration
  */
 static bool
-eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
-       bool *dowarn)
+types_compatible(type_t *tp1, type_t *tp2,
+		 bool ignqual, bool promot, bool asgn, bool *dowarn)
 {
 	tspec_t	t, to;
 	int	indir;
@@ -1308,7 +1308,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
 
 		if (t == FUNC) {
 			if (tp1->t_proto && tp2->t_proto) {
-				if (!eq_prototype_args(tp1, tp2, dowarn))
+				if (!prototypes_compatible(tp1, tp2, dowarn))
 					return false;
 			} else if (tp1->t_proto) {
 				if (!matches_no_arg_function(tp1, dowarn))
@@ -1334,7 +1334,7 @@ eqtype(type_t *tp1, type_t *tp2, bool ignqual, bool promot, bool asgn,
  * Compares arguments of two prototypes
  */
 static bool
-eq_prototype_args(type_t *tp1, type_t *tp2, bool *dowarn)
+prototypes_compatible(type_t *tp1, type_t *tp2, bool *dowarn)
 {
 	type_t	**a1, **a2;
 
@@ -1346,7 +1346,7 @@ eq_prototype_args(type_t *tp1, type_t *tp2, bool *dowarn)
 
 	while (*a1 != NULL && *a2 != NULL) {
 
-		if (!eqtype(*a1, *a2, true, false, false, dowarn))
+		if (!types_compatible(*a1, *a2, true, false, false, dowarn))
 			return false;
 
 		a1++;

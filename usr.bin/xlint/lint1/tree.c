@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.478 2022/08/28 10:43:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.479 2022/08/28 12:04:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.478 2022/08/28 10:43:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.479 2022/08/28 12:04:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -642,7 +642,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 				break;
 			}
 			w = false;
-			eq = eqtype(csym->s_type, sym->s_type,
+			eq = types_compatible(csym->s_type, sym->s_type,
 			    false, false, &w) && !w;
 			if (!eq)
 				break;
@@ -727,7 +727,8 @@ build_generic_selection(const tnode_t *expr,
 
 	for (; sel != NULL; sel = sel->ga_prev) {
 		if (expr != NULL &&
-		    eqtype(sel->ga_arg, expr->tn_type, false, false, NULL))
+		    types_compatible(sel->ga_arg, expr->tn_type,
+			false, false, NULL))
 			return sel->ga_result;
 		else if (sel->ga_arg == NULL)
 			default_result = sel->ga_result;
@@ -1145,7 +1146,8 @@ typeok_minus(op_t op,
 		return false;
 	}
 	if (lt == PTR && rt == PTR) {
-		if (!eqtype(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
+		if (!types_compatible(ltp->t_subt, rtp->t_subt,
+		    true, false, NULL)) {
 			/* illegal pointer subtraction */
 			error(116);
 		}
@@ -1311,9 +1313,9 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 		return;
 	}
 
-	if (eq_pointer_type(lstp, rstp, true))
+	if (pointer_types_are_compatible(lstp, rstp, true))
 		return;
-	if (!eqtype(lstp, rstp, true, false, NULL))
+	if (!types_compatible(lstp, rstp, true, false, NULL))
 		warn_incompatible_pointers(mp, ltp, rtp);
 }
 
@@ -1589,7 +1591,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 		return;
 	}
 
-	if (!eqtype(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
+	if (!types_compatible(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
 		warn_incompatible_pointers(&modtab[op], ltp, rtp);
 		return;
 	}
@@ -1757,7 +1759,8 @@ check_assign_void_pointer_compat(op_t op, int arg,
 				 const type_t *const rstp, tspec_t const rst)
 {
 	if (!(lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
-					 eqtype(lstp, rstp, true, false, NULL))))
+					 types_compatible(lstp, rstp,
+					     true, false, NULL))))
 		return false;
 
 	/* compatible pointer types (qualifiers ignored) */
@@ -2564,8 +2567,8 @@ struct_starts_with(const type_t *struct_tp, const type_t *member_tp)
 {
 
 	return struct_tp->t_str->sou_first_member != NULL &&
-	       eqtype(struct_tp->t_str->sou_first_member->s_type, member_tp,
-		   true, false, NULL);
+	       types_compatible(struct_tp->t_str->sou_first_member->s_type,
+		   member_tp, true, false, NULL);
 }
 
 static bool
@@ -2606,7 +2609,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 		const sym_t *nmem = nstp->t_str->sou_first_member;
 		const sym_t *omem = ostp->t_str->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
-		       eqtype(nmem->s_type, omem->s_type, true, false, NULL))
+		       types_compatible(nmem->s_type, omem->s_type,
+			   true, false, NULL))
 			nmem = nmem->s_next, omem = omem->s_next;
 		if (nmem != NULL && is_byte_array(nmem->s_type))
 			return false;
@@ -3384,7 +3388,8 @@ is_cast_redundant(const tnode_t *tn)
 
 		if (ntp->t_subt->t_tspec == VOID ||
 		    otp->t_subt->t_tspec == VOID ||
-		    eqtype(ntp->t_subt, otp->t_subt, false, false, NULL))
+		    types_compatible(ntp->t_subt, otp->t_subt,
+			false, false, NULL))
 			return true;
 	}
 
@@ -3449,7 +3454,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
-	    eqtype(ln->tn_type, rn->tn_type, false, false, NULL) &&
+	    types_compatible(ln->tn_type, rn->tn_type, false, false, NULL) &&
 	    is_cast_redundant(rn)) {
 		/* redundant cast from '%s' to '%s' before assignment */
 		query_message(7,
@@ -3979,7 +3984,7 @@ cast(tnode_t *tn, type_t *tp)
 			return NULL;
 		}
 		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
-			if (eqtype(m->s_type, tn->tn_type,
+			if (types_compatible(m->s_type, tn->tn_type,
 			    false, false, NULL)) {
 				tn = expr_alloc_tnode();
 				tn->tn_op = CVT;
@@ -4017,9 +4022,11 @@ cast(tnode_t *tn, type_t *tp)
 	} else
 		goto invalid_cast;
 
-	if (any_query_enabled && eqtype(tp, tn->tn_type, false, false, NULL))
+	if (any_query_enabled && types_compatible(tp, tn->tn_type,
+	    false, false, NULL)) {
 		/* no-op cast from '%s' to '%s' */
 		query_message(6, type_name(tn->tn_type), type_name(tp));
+	}
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = true;
@@ -4189,7 +4196,7 @@ check_prototype_argument(
 	ln->tn_type = expr_unqualified_type(tp);
 	ln->tn_lvalue = true;
 	if (typeok(FARG, n, ln, tn)) {
-		if (!eqtype(tp, tn->tn_type,
+		if (!types_compatible(tp, tn->tn_type,
 		    true, false, (dowarn = false, &dowarn)) || dowarn)
 			tn = convert(FARG, n, tp, tn);
 	}
