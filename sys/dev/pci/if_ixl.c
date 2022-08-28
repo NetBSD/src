@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.86 2022/08/25 09:15:14 knakahara Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.87 2022/08/28 07:54:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.86 2022/08/25 09:15:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.87 2022/08/28 07:54:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -785,7 +785,6 @@ static int	ixl_detach(device_t, int);
 static void	ixl_media_add(struct ixl_softc *);
 static int	ixl_media_change(struct ifnet *);
 static void	ixl_media_status(struct ifnet *, struct ifmediareq *);
-static void	ixl_watchdog(struct ifnet *);
 static int	ixl_ioctl(struct ifnet *, u_long, void *);
 static void	ixl_start(struct ifnet *);
 static int	ixl_transmit(struct ifnet *, struct mbuf *);
@@ -1300,7 +1299,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = ixl_ioctl;
 	ifp->if_start = ixl_start;
 	ifp->if_transmit = ixl_transmit;
-	ifp->if_watchdog = ixl_watchdog;
 	ifp->if_init = ixl_init;
 	ifp->if_stop = ixl_stop;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_ndescs);
@@ -1675,11 +1673,6 @@ ixl_media_change(struct ifnet *ifp)
 	return ixl_set_phy_config(sc, link_speed, abilities, false);
 }
 
-static void
-ixl_watchdog(struct ifnet *ifp)
-{
-
-}
 
 static void
 ixl_del_all_multiaddr(struct ixl_softc *sc)
