@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.19 2014/07/10 21:06:20 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.20 2022/08/28 10:20:25 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.19 2014/07/10 21:06:20 christos Exp $");
+__RCSID("$NetBSD: check.c,v 1.20 2022/08/28 10:20:25 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,7 +72,8 @@ checkfilesys(const char *filename)
 		return FSCK_EXIT_CHECK_FAILED;
 	}
 
-	if (readboot(dosfs, &boot) != FSOK) {
+	mod = readboot(dosfs, &boot);
+	if (mod & FSFATAL) {
 		close(dosfs);
 		printf("\n");
 		return FSCK_EXIT_CHECK_FAILED;
