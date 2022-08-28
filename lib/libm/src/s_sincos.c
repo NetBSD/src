@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sincos.c,v 1.1 2022/08/27 08:31:59 christos Exp $");
+__RCSID("$NetBSD: s_sincos.c,v 1.2 2022/08/28 07:29:04 christos Exp $");
 #endif
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/s_sincos.c 319047 2017-05-28 06:13:38Z mmel $");
@@ -85,6 +85,6 @@ sincos(double x, double *sn, double *cs)
 	}
 }
 
-#if (LDBL_MANT_DIG == 53)
+#if !defined(__HAVE_LONG_DOUBLE)
 __weak_reference(sincos, sincosl);
 #endif
