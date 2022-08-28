@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.24 2022/07/07 06:11:19 skrll Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.25 2022/08/28 07:54:03 skrll Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.24 2022/07/07 06:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.25 2022/08/28 07:54:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2634,7 +2634,6 @@ static int	mcx_ioctl(struct ifnet *, u_long, void *);
 static void	mcx_start(struct ifnet *);
 static int	mcx_transmit(struct ifnet *, struct mbuf *);
 static void	mcx_deferred_transmit(void *);
-static void	mcx_watchdog(struct ifnet *);
 static void	mcx_media_add_types(struct mcx_softc *);
 static void	mcx_media_status(struct ifnet *, struct ifmediareq *);
 static int	mcx_media_change(struct ifnet *);
@@ -2975,7 +2974,6 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_nqueues > 1) {
 		ifp->if_transmit = mcx_transmit;
 	}
-	ifp->if_watchdog = mcx_watchdog;
 	ifp->if_mtu = sc->sc_hardmtu;
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx |
 	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx |
@@ -8005,10 +8003,6 @@ mcx_deferred_transmit(void *arg)
 	mutex_exit(&tx->tx_lock);
 }
 
-static void
-mcx_watchdog(struct ifnet *ifp)
-{
-}
 
 static void
 mcx_media_add_types(struct mcx_softc *sc)
