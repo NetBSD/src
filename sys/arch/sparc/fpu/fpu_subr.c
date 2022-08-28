@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.6 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.7 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.6 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.7 2022/08/28 22:09:26 rin Exp $");
 
 #include <sys/types.h>
 #ifdef DIAGNOSTIC
@@ -66,10 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.6 2005/12/11 12:19:05 christos Exp $"
  * sticky field is ignored anyway.
  */
 int
-fpu_shr(register struct fpn *fp, register int rsh)
+fpu_shr(struct fpn *fp, register int rsh)
 {
-	register u_int m0, m1, m2, m3, s;
-	register int lsh;
+	u_int m0, m1, m2, m3, s;
+	int lsh;
 
 #ifdef DIAGNOSTIC
 	if (rsh <= 0 || (fp->fp_class != FPC_NUM && !ISNAN(fp)))
@@ -140,10 +140,10 @@ fpu_shr(register struct fpn *fp, register int rsh)
  * a supernormal and it will fix it (provided fp->fp_mant[3] == 0).
  */
 void
-fpu_norm(register struct fpn *fp)
+fpu_norm(struct fpn *fp)
 {
-	register u_int m0, m1, m2, m3, top, sup, nrm;
-	register int lsh, rsh, exp;
+	u_int m0, m1, m2, m3, top, sup, nrm;
+	int lsh, rsh, exp;
 
 	exp = fp->fp_exp;
 	m0 = fp->fp_mant[0];
@@ -208,9 +208,9 @@ fpu_norm(register struct fpn *fp)
  * As a side effect, we set NV (invalid) for the current exceptions.
  */
 struct fpn *
-fpu_newnan(register struct fpemu *fe)
+fpu_newnan(struct fpemu *fe)
 {
-	register struct fpn *fp;
+	struct fpn *fp;
 
 	fe->fe_cx = FSR_NV;
 	fp = &fe->fe_f3;

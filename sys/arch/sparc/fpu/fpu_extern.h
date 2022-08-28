@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.9 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.10 2022/08/28 22:09:26 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -91,6 +91,6 @@ struct fpn *fpu_mul(struct fpemu *);
 struct fpn *fpu_sqrt(struct fpemu *);
 
 /* fpu_subr.c */
-int fpu_shr(register struct fpn *, register int);
-void fpu_norm(register struct fpn *);
-struct fpn *fpu_newnan(register struct fpemu *);
+int fpu_shr(struct fpn *, register int);
+void fpu_norm(struct fpn *);
+struct fpn *fpu_newnan(struct fpemu *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.7 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.8 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ struct fpn {
 		SWAP(x, y); \
 }
 #define	SWAP(x, y) { \
-	register struct fpn *swap; \
+	struct fpn *swap; \
 	swap = (x), (x) = (y), (y) = swap; \
 }
 
