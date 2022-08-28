@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.166 2022/08/28 08:41:06 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.167 2022/08/28 10:43:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -201,10 +201,10 @@ extern	void	dcs_begin_type(void);
 extern	void	dcs_end_type(void);
 extern	int	length_in_bits(const type_t *, const char *);
 extern	unsigned int alignment_in_bits(const type_t *);
-extern	sym_t	*lnklst(sym_t *, sym_t *);
+extern	sym_t	*concat_lists(sym_t *, sym_t *);
 extern	void	check_type(sym_t *);
 extern	sym_t	*declarator_1_struct_union(sym_t *);
-extern	sym_t	*bitfield(sym_t *, int);
+extern	sym_t	*set_bit_field_width(sym_t *, int);
 extern	qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
 extern	sym_t	*add_pointer(sym_t *, qual_ptr *);
 extern	sym_t	*add_array(sym_t *, bool, int);
@@ -212,7 +212,7 @@ extern	sym_t	*add_function(sym_t *, sym_t *);
 extern	void	check_function_definition(sym_t *, bool);
 extern	sym_t	*declarator_name(sym_t *);
 extern	sym_t	*old_style_function_name(sym_t *);
-extern	type_t	*mktag(sym_t *, tspec_t, bool, bool);
+extern	type_t	*make_tag_type(sym_t *, tspec_t, bool, bool);
 extern	const	char *storage_class_name(scl_t);
 extern	type_t	*complete_tag_struct_or_union(type_t *, sym_t *);
 extern	type_t	*complete_tag_enum(type_t *, sym_t *);
@@ -220,7 +220,7 @@ extern	sym_t	*enumeration_constant(sym_t *, int, bool);
 extern	void	declare(sym_t *, bool, sbuf_t *);
 extern	void	copy_usage_info(sym_t *, sym_t *);
 extern	bool	check_redeclaration(sym_t *, bool *);
-extern	bool	eqptrtype(const type_t *, const type_t *, bool);
+extern	bool	eq_pointer_type(const type_t *, const type_t *, bool);
 extern	bool	eqtype(const type_t *, const type_t *, bool, bool, bool *);
 extern	void	complete_type(sym_t *, sym_t *);
 extern	sym_t	*declare_argument(sym_t *, bool);

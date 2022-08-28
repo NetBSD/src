@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.296 2022/08/28 08:41:06 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.297 2022/08/28 10:43:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.296 2022/08/28 08:41:06 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.297 2022/08/28 10:43:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,17 +57,17 @@ static	type_t	typetab[NTSPEC];
 int	enumval;
 
 /*
- * pointer to top element of a stack which contains information local
+ * pointer to innermost element of a stack which contains information local
  * to nested declarations
  */
 dinfo_t	*dcs;
 
-static	type_t	*tdeferr(type_t *, tspec_t);
-static	void	settdsym(type_t *, sym_t *);
+static	type_t	*typedef_error(type_t *, tspec_t);
+static	void	set_first_typedef(type_t *, sym_t *);
 static	void	dcs_align(unsigned int, unsigned int);
-static	sym_t	*newtag(sym_t *, scl_t, bool, bool);
-static	bool	eqargs(const type_t *, const type_t *, bool *);
-static	bool	mnoarg(const type_t *, bool *);
+static	sym_t	*new_tag(sym_t *, scl_t, bool, bool);
+static	bool	eq_prototype_args(const type_t *, const type_t *, bool *);
+static	bool	matches_no_arg_function(const type_t *, bool *);
 static	bool	check_old_style_definition(sym_t *, sym_t *);
 static	bool	check_prototype_declaration(sym_t *, sym_t *);
 static	sym_t	*new_style_function(sym_t *);
@@ -219,8 +219,7 @@ is_incomplete(const type_t *tp)
 }
 
 /*
- * Remember the storage class of the current declaration in dcs->d_scl
- * (the top element of the declaration stack) and detect multiple
+ * Remember the storage class of the current declaration and detect multiple
  * storage classes.
  */
 void
@@ -327,7 +326,7 @@ dcs_add_type(type_t *tp)
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
 		/* something like "typedef int a; a long ..." */
-		dcs->d_type = tdeferr(dcs->d_type, t);
+		dcs->d_type = typedef_error(dcs->d_type, t);
 		return;
 	}
 
@@ -395,7 +394,7 @@ merge_signedness(tspec_t t, tspec_t s)
  * and other specifiers (except struct, union, enum, typedef name)
  */
 static type_t *
-tdeferr(type_t *td, tspec_t t)
+typedef_error(type_t *td, tspec_t t)
 {
 	tspec_t	t2;
 
@@ -460,7 +459,7 @@ tdeferr(type_t *td, tspec_t t)
  * if the tag is unnamed.
  */
 static void
-settdsym(type_t *tp, sym_t *sym)
+set_first_typedef(type_t *tp, sym_t *sym)
 {
 	tspec_t	t;
 
@@ -474,7 +473,7 @@ settdsym(type_t *tp, sym_t *sym)
 }
 
 static unsigned int
-bitfieldsize(sym_t **mem)
+bit_field_size(sym_t **mem)
 {
 	unsigned int len = (*mem)->s_type->t_flen;
 	while (*mem != NULL && (*mem)->s_type->t_bitfield) {
@@ -485,7 +484,7 @@ bitfieldsize(sym_t **mem)
 }
 
 static void
-setpackedsize(type_t *tp)
+set_packed_size(type_t *tp)
 {
 	struct_or_union *sp;
 	sym_t *mem;
@@ -500,7 +499,7 @@ setpackedsize(type_t *tp)
 			unsigned int x;
 
 			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bitfieldsize(&mem);
+				sp->sou_size_in_bits += bit_field_size(&mem);
 				if (mem == NULL)
 					break;
 			}
@@ -524,7 +523,7 @@ dcs_add_packed(void)
 	if (dcs->d_type == NULL)
 		dcs->d_packed = true;
 	else
-		setpackedsize(dcs->d_type);
+		set_packed_size(dcs->d_type);
 }
 
 void
@@ -915,7 +914,7 @@ alignment_in_bits(const type_t *tp)
  * struct/union/enum elements and parameters.
  */
 sym_t *
-lnklst(sym_t *l1, sym_t *l2)
+concat_lists(sym_t *l1, sym_t *l2)
 {
 	sym_t	*l;
 
@@ -1219,7 +1218,7 @@ dcs_align(unsigned int al, unsigned int len)
  * Remember the width of the field in its type structure.
  */
 sym_t *
-bitfield(sym_t *dsym, int len)
+set_bit_field_width(sym_t *dsym, int len)
 {
 
 	if (dsym == NULL) {
@@ -1682,7 +1681,7 @@ old_style_function_name(sym_t *sym)
  * semi is true if the following token is T_SEMI
  */
 type_t *
-mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
+make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 {
 	scl_t	scl;
 	type_t	*tp;
@@ -1698,7 +1697,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 
 	if (tag != NULL) {
 		if (tag->s_scl != NOSCL) {
-			tag = newtag(tag, scl, decl, semi);
+			tag = new_tag(tag, scl, decl, semi);
 		} else {
 			/* a new tag, no empty declaration */
 			dcs->d_enclosing->d_nonempty_decl = true;
@@ -1751,7 +1750,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
  * semi is true if T_SEMI follows
  */
 static sym_t *
-newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
+new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 {
 
 	if (tag->s_block_level < block_level) {
@@ -1848,7 +1847,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
 	sp->sou_first_member = fmem;
 	if (tp->t_packed)
-		setpackedsize(tp);
+		set_packed_size(tp);
 	else
 		sp->sou_size_in_bits = dcs->d_offset_in_bits;
 
@@ -1863,7 +1862,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		if (mem->u.s_member.sm_sou_type == NULL) {
 			mem->u.s_member.sm_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bitfieldsize(&mem);
+				sp->sou_size_in_bits += bit_field_size(&mem);
 				if (mem == NULL)
 					break;
 			}
@@ -2066,7 +2065,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 	if (dsym->s_scl == TYPEDEF) {
 		dsym->s_type = block_dup_type(dsym->s_type);
 		dsym->s_type->t_typedef = true;
-		settdsym(dsym->s_type, dsym);
+		set_first_typedef(dsym->s_type, dsym);
 	}
 
 }
@@ -2199,7 +2198,7 @@ qualifiers_correspond(const type_t *tp1, const type_t *tp2, bool ignqual)
 }
 
 bool
-eqptrtype(const type_t *tp1, const type_t *tp2, bool ignqual)
+eq_pointer_type(const type_t *tp1, const type_t *tp2, bool ignqual)
 {
 	if (tp1->t_tspec != VOID && tp2->t_tspec != VOID)
 		return false;
@@ -2265,13 +2264,13 @@ eqtype(const type_t *tp1, const type_t *tp2,
 		/* don't check prototypes for traditional */
 		if (t == FUNC && allow_c90) {
 			if (tp1->t_proto && tp2->t_proto) {
-				if (!eqargs(tp1, tp2, dowarn))
+				if (!eq_prototype_args(tp1, tp2, dowarn))
 					return false;
 			} else if (tp1->t_proto) {
-				if (!mnoarg(tp1, dowarn))
+				if (!matches_no_arg_function(tp1, dowarn))
 					return false;
 			} else if (tp2->t_proto) {
-				if (!mnoarg(tp2, dowarn))
+				if (!matches_no_arg_function(tp2, dowarn))
 					return false;
 			}
 		}
@@ -2289,7 +2288,7 @@ eqtype(const type_t *tp1, const type_t *tp2,
  * Compares the parameter types of two prototypes.
  */
 static bool
-eqargs(const type_t *tp1, const type_t *tp2, bool *dowarn)
+eq_prototype_args(const type_t *tp1, const type_t *tp2, bool *dowarn)
 {
 	sym_t	*a1, *a2;
 
@@ -2313,9 +2312,9 @@ eqargs(const type_t *tp1, const type_t *tp2, bool *dowarn)
 }
 
 /*
- * mnoarg() (matches functions with no argument type information)
- * returns whether all parameters of a prototype are compatible with
- * an old style function declaration.
+ * Returns whether all parameters of a prototype are compatible with an
+ * old-style function declaration.
+ *
  * This is the case if the following conditions are met:
  *	1. the prototype has a fixed number of parameters
  *	2. no parameter is of type float
@@ -2323,7 +2322,7 @@ eqargs(const type_t *tp1, const type_t *tp2, bool *dowarn)
  *	   is applied on it
  */
 static bool
-mnoarg(const type_t *tp, bool *dowarn)
+matches_no_arg_function(const type_t *tp, bool *dowarn)
 {
 	sym_t	*arg;
 	tspec_t	t;
@@ -2811,7 +2810,7 @@ declare_local(sym_t *dsym, bool initflg)
 	if (dsym->s_scl == TYPEDEF) {
 		dsym->s_type = block_dup_type(dsym->s_type);
 		dsym->s_type->t_typedef = true;
-		settdsym(dsym->s_type, dsym);
+		set_first_typedef(dsym->s_type, dsym);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.477 2022/08/25 19:03:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.478 2022/08/28 10:43:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.477 2022/08/25 19:03:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.478 2022/08/28 10:43:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1311,7 +1311,7 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 		return;
 	}
 
-	if (eqptrtype(lstp, rstp, true))
+	if (eq_pointer_type(lstp, rstp, true))
 		return;
 	if (!eqtype(lstp, rstp, true, false, NULL))
 		warn_incompatible_pointers(mp, ltp, rtp);

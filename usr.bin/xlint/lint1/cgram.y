@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.422 2022/08/28 08:41:06 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.423 2022/08/28 10:43:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.422 2022/08/28 08:41:06 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.423 2022/08/28 10:43:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -872,15 +872,15 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 		 * yychar is valid because otherwise the parser would not
 		 * have been able to decide if it must shift or reduce
 		 */
-		$$ = mktag($2, $1, false, yychar == T_SEMI);
+		$$ = make_tag_type($2, $1, false, yychar == T_SEMI);
 	  }
 	| struct_or_union identifier_sym {
-		dcs->d_tagtyp = mktag($2, $1, true, false);
+		dcs->d_tagtyp = make_tag_type($2, $1, true, false);
 	  } braced_struct_declaration_list {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
 	  }
 	| struct_or_union {
-		dcs->d_tagtyp = mktag(NULL, $1, true, false);
+		dcs->d_tagtyp = make_tag_type(NULL, $1, true, false);
 	  } braced_struct_declaration_list {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
 	  }
@@ -924,7 +924,7 @@ struct_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
 struct_declaration_list:	/* C99 6.7.2.1 */
 	  struct_declaration
 	| struct_declaration_list struct_declaration {
-		$$ = lnklst($1, $2);
+		$$ = concat_lists($1, $2);
 	  }
 	;
 
@@ -980,7 +980,7 @@ notype_struct_declarators:
 	| notype_struct_declarators {
 		symtyp = FMEMBER;
 	  } T_COMMA type_struct_declarator {
-		$$ = lnklst($1, declarator_1_struct_union($4));
+		$$ = concat_lists($1, declarator_1_struct_union($4));
 	  }
 	;
 
@@ -991,46 +991,46 @@ type_struct_declarators:
 	| type_struct_declarators {
 		symtyp = FMEMBER;
 	  } T_COMMA type_struct_declarator {
-		$$ = lnklst($1, declarator_1_struct_union($4));
+		$$ = concat_lists($1, declarator_1_struct_union($4));
 	  }
 	;
 
 notype_struct_declarator:
 	  notype_declarator
 	| notype_declarator T_COLON constant_expr {	/* C99 6.7.2.1 */
-		$$ = bitfield($1, to_int_constant($3, true));
+		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
-		$$ = bitfield(NULL, to_int_constant($3, true));
+		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
 	;
 
 type_struct_declarator:
 	  type_declarator
 	| type_declarator T_COLON constant_expr {
-		$$ = bitfield($1, to_int_constant($3, true));
+		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant_expr {
-		$$ = bitfield(NULL, to_int_constant($3, true));
+		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
 	;
 
 /* K&R ---, C90 6.5.2.2, C99 6.7.2.2, C11 6.7.2.2 */
 enum_specifier:			/* C99 6.7.2.2 */
 	  enum gcc_attribute_specifier_list_opt identifier_sym {
-		$$ = mktag($3, ENUM, false, false);
+		$$ = make_tag_type($3, ENUM, false, false);
 	  }
 	| enum gcc_attribute_specifier_list_opt identifier_sym {
-		dcs->d_tagtyp = mktag($3, ENUM, true, false);
+		dcs->d_tagtyp = make_tag_type($3, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $5);
 	  }
 	| enum gcc_attribute_specifier_list_opt {
-		dcs->d_tagtyp = mktag(NULL, ENUM, true, false);
+		dcs->d_tagtyp = make_tag_type(NULL, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
 	  }
@@ -1077,7 +1077,7 @@ enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 enumerator_list:		/* C99 6.7.2.2 */
 	  enumerator
 	| enumerator_list T_COMMA enumerator {
-		$$ = lnklst($1, $3);
+		$$ = concat_lists($1, $3);
 	  }
 	| error {
 		$$ = NULL;
@@ -1341,7 +1341,7 @@ identifier_list:		/* C99 6.7.5 */
 		$$ = old_style_function_name(getsym($1));
 	  }
 	| identifier_list T_COMMA T_NAME {
-		$$ = lnklst($1, old_style_function_name(getsym($3)));
+		$$ = concat_lists($1, old_style_function_name(getsym($3)));
 	  }
 	| identifier_list error
 	;
@@ -1460,7 +1460,7 @@ vararg_parameter_type_list:	/* specific to lint */
 parameter_type_list:
 	  parameter_declaration
 	| parameter_type_list T_COMMA parameter_declaration {
-		$$ = lnklst($1, $3);
+		$$ = concat_lists($1, $3);
 	  }
 	;
 
