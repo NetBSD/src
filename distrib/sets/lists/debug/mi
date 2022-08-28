@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.388 2022/08/27 08:31:58 christos Exp $
+# $NetBSD: mi,v 1.389 2022/08/28 07:30:41 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -848,6 +848,7 @@
 ./usr/libdata/debug/usr/bin/tpm_version.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tput.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tr.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tradcpp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/troff.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tset.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tsort.debug		comp-util-debug		debug
