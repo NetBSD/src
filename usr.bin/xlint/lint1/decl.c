@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.298 2022/08/28 12:04:47 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.299 2022/08/28 19:09:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.298 2022/08/28 12:04:47 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.299 2022/08/28 19:09:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1780,7 +1780,7 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			/* %s tag '%s' redeclared as %s */
 			error(46, storage_class_name(tag->s_scl),
 			    tag->s_name, storage_class_name(scl));
-			print_previous_declaration(-1, tag);
+			print_previous_declaration(tag);
 			tag = pushdown(tag);
 			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (semi || decl)
@@ -1896,7 +1896,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 				 * previous declaration
 				 */
 				if (block_level == 0)
-					print_previous_declaration(-1, sym);
+					print_previous_declaration(sym);
 			}
 		} else {
 			if (hflag)
@@ -1993,7 +1993,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 				else
 					/* redeclaration of '%s' */
 					warning(27, dsym->s_name);
-				print_previous_declaration(-1, rdsym);
+				print_previous_declaration(rdsym);
 			}
 
 			/*
@@ -2085,32 +2085,32 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	if (rsym->s_scl == ENUM_CONST) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (rsym->s_scl == TYPEDEF) {
 		/* typedef '%s' redeclared */
 		error(89, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (dsym->s_scl == TYPEDEF) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (rsym->s_def == DEF && dsym->s_def == DEF) {
 		/* redefinition of '%s' */
 		error(28, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (!types_compatible(rsym->s_type, dsym->s_type, false, false, dowarn)) {
 		/* redeclaration of '%s' with type '%s', expected '%s' */
 		error(347, dsym->s_name,
 		    type_name(dsym->s_type), type_name(rsym->s_type));
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (rsym->s_scl == EXTERN && dsym->s_scl == EXTERN)
@@ -2126,13 +2126,13 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		 */
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return true;
 	}
 	if (rsym->s_scl == EXTERN) {
 		/* '%s' was previously declared extern, becomes static */
 		warning(29, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 		return false;
 	}
 	/*
@@ -2143,7 +2143,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	if (!allow_trad && !allow_c99) {
 		/* redeclaration of '%s'; ANSI C requires static */
 		warning(30, dsym->s_name);
-		print_previous_declaration(-1, rsym);
+		print_previous_declaration(rsym);
 	}
 	dsym->s_scl = STATIC;
 	return false;
@@ -2337,9 +2337,10 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 	}
 
 end:
-	if (msg)
+	if (msg && rflag) {
 		/* old style definition */
-		print_previous_declaration(300, rdsym);
+		message_at(300, &rdsym->s_def_pos);
+	}
 
 	return msg;
 }
@@ -2577,10 +2578,9 @@ check_func_old_style_arguments(void)
 				arg = arg->s_next;
 			}
 		}
-		if (msg) {
+		if (msg && rflag) {
 			/* prototype declaration */
-			print_previous_declaration(285,
-			    dcs->d_redeclared_symbol);
+			message_at(285, &dcs->d_redeclared_symbol->s_def_pos);
 		}
 
 		/* from now on the prototype is valid */
@@ -2793,7 +2793,7 @@ declare_external_in_block(sym_t *dsym)
 		/* gcc accepts this without a warning, pcc prints an error. */
 		/* redeclaration of '%s' */
 		warning(27, dsym->s_name);
-		print_previous_declaration(-1, esym);
+		print_previous_declaration(esym);
 		return;
 	}
 
@@ -2805,11 +2805,11 @@ declare_external_in_block(sym_t *dsym)
 		if (esym->s_scl == EXTERN) {
 			/* inconsistent redeclaration of extern '%s' */
 			warning(90, dsym->s_name);
-			print_previous_declaration(-1, esym);
+			print_previous_declaration(esym);
 		} else {
 			/* inconsistent redeclaration of static '%s' */
 			warning(92, dsym->s_name);
-			print_previous_declaration(-1, esym);
+			print_previous_declaration(esym);
 		}
 	}
 
@@ -3280,16 +3280,13 @@ check_global_variable_size(const sym_t *sym)
  * Prints information about location of previous definition/declaration.
  */
 void
-print_previous_declaration(int msg, const sym_t *psym)
+print_previous_declaration(const sym_t *psym)
 {
 
 	if (!rflag)
 		return;
 
-	if (msg != -1) {
-		/* TODO: inline these cases. */
-		(message_at)(msg, &psym->s_def_pos);
-	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
+	if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of '%s' */
 		message_at(261, &psym->s_def_pos, psym->s_name);
 	} else {
