@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.6 2022/05/24 20:00:49 andvar Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.7 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.6 2022/05/24 20:00:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.7 2022/08/28 22:09:26 rin Exp $");
 
 #include <sys/types.h>
 
@@ -188,12 +188,12 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.6 2022/05/24 20:00:49 andvar Exp $");
 struct fpn *
 fpu_sqrt(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f1;
-	register u_int bit, q, tt;
-	register u_int x0, x1, x2, x3;
-	register u_int y0, y1, y2, y3;
-	register u_int d0, d1, d2, d3;
-	register int e;
+	struct fpn *x = &fe->fe_f1;
+	u_int bit, q, tt;
+	u_int x0, x1, x2, x3;
+	u_int y0, y1, y2, y3;
+	u_int d0, d1, d2, d3;
+	int e;
 
 	/*
 	 * Take care of special cases first.  In order:

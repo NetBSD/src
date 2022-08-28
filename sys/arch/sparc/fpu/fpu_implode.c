@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.13 2005/11/16 23:24:44 uwe Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.14 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.13 2005/11/16 23:24:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.14 2022/08/28 22:09:26 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -81,8 +81,8 @@ static int toinf(struct fpemu *, int);
 static int
 round(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int m0, m1, m2, m3;
-	register int gr, s;
+	u_int m0, m1, m2, m3;
+	int gr, s;
 
 	m0 = fp->fp_mant[0];
 	m1 = fp->fp_mant[1];
@@ -196,8 +196,8 @@ toinf(struct fpemu *fe, int sign)
 u_int
 fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int i;
-	register int sign, exp;
+	u_int i;
+	int sign, exp;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -244,8 +244,8 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 u_int
 fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register uint64_t i;
-	register int sign, exp;
+	uint64_t i;
+	int sign, exp;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -293,8 +293,8 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 u_int
 fpu_ftos(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	SNG_EXP(e)	((e) << SNG_FRACBITS)	/* makes e an exponent */
 #define	SNG_MASK	(SNG_EXP(1) - 1)	/* mask for fraction */
@@ -375,8 +375,8 @@ done:
 u_int
 fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	DBL_EXP(e)	((e) << (DBL_FRACBITS & 31))
 #define	DBL_MASK	(DBL_EXP(1) - 1)
@@ -433,8 +433,8 @@ done:
 u_int
 fpu_ftoq(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	EXT_EXP(e)	((e) << (EXT_FRACBITS & 31))
 #define	EXT_MASK	(EXT_EXP(1) - 1)

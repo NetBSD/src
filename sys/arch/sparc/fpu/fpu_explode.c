@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.12 2005/11/16 23:24:44 uwe Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.13 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.12 2005/11/16 23:24:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.13 2022/08/28 22:09:26 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -173,8 +173,8 @@ fpu_xtof(struct fpn *fp, uint64_t i)
 int
 fpu_stof(struct fpn *fp, u_int i)
 {
-	register int exp;
-	register u_int frac, f0, f1;
+	int exp;
+	u_int frac, f0, f1;
 #define SNG_SHIFT (SNG_FRACBITS - FP_LG)
 
 	exp = (i >> (32 - 1 - SNG_EXPBITS)) & mask(SNG_EXPBITS);
@@ -191,8 +191,8 @@ fpu_stof(struct fpn *fp, u_int i)
 int
 fpu_dtof(struct fpn *fp, u_int i, u_int j)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2;
+	int exp;
+	u_int frac, f0, f1, f2;
 #define DBL_SHIFT (DBL_FRACBITS - 32 - FP_LG)
 
 	exp = (i >> (32 - 1 - DBL_EXPBITS)) & mask(DBL_EXPBITS);
@@ -208,10 +208,10 @@ fpu_dtof(struct fpn *fp, u_int i, u_int j)
  * 128-bit extended -> fpn.
  */
 int
-fpu_qtof(register struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
+fpu_qtof(struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2, f3;
+	int exp;
+	u_int frac, f0, f1, f2, f3;
 #define EXT_SHIFT (-(EXT_FRACBITS - 3 * 32 - FP_LG))	/* left shift! */
 
 	/*
@@ -236,7 +236,7 @@ fpu_qtof(register struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
 void
 fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 {
-	register u_int s, *space;
+	u_int s, *space;
 #ifdef SUN4U
 	uint64_t l, *xspace;
 

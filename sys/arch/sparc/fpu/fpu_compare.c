@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_compare.c,v 1.6 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: fpu_compare.c,v 1.7 2022/08/28 22:09:26 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.6 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.7 2022/08/28 22:09:26 rin Exp $");
 
 #include <sys/types.h>
 
@@ -75,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.6 2005/12/11 12:19:05 christos Exp
 void
 fpu_compare(struct fpemu *fe, int cmpe)
 {
-	register struct fpn *a, *b;
-	register int cc;
+	struct fpn *a, *b;
+	int cc;
 	FPU_DECL_CARRY
 
 	a = &fe->fe_f1;
