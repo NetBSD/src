@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sincos.c,v 1.3 2022/08/28 14:30:41 he Exp $");
+__RCSID("$NetBSD: s_sincos.c,v 1.4 2022/08/28 16:07:58 he Exp $");
 #endif
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/s_sincos.c 319047 2017-05-28 06:13:38Z mmel $");
@@ -86,5 +86,5 @@ sincos(double x, double *sn, double *cs)
 }
 
 #if !defined(__HAVE_LONG_DOUBLE)
-__weak_alias(sincos, sincosl);
+__weak_alias(sincosl, sincos);
 #endif
