@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.334 2022/03/28 12:39:46 riastradh Exp $	*/
+/*	$NetBSD: sd.c,v 1.335 2022/08/28 10:26:37 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.334 2022/03/28 12:39:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.335 2022/08/28 10:26:37 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -258,9 +258,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
-	strncpy(sd->name, sa->sa_inqbuf.product, sizeof(sd->name));
-
-	strncpy(sd->typename, sa->sa_inqbuf.product, sizeof(sd->typename));
+	memcpy(sd->name, sa->sa_inqbuf.product, uimin(16, sizeof(sd->name)));
+	memcpy(sd->typename, sa->sa_inqbuf.product, uimin(16, sizeof(sd->typename)));
 
 	if (sd->type == T_SIMPLE_DIRECT)
 		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
