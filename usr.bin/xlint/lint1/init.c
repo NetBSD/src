@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.236 2022/06/22 19:23:17 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.237 2022/08/28 12:04:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.236 2022/06/22 19:23:17 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.237 2022/08/28 12:04:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -674,7 +674,7 @@ again:
 		return false;
 
 	ltp = brace_level_sub_type(bl);
-	if (eqtype(ltp, rn->tn_type, true, false, NULL))
+	if (types_compatible(ltp, rn->tn_type, true, false, NULL))
 		return true;
 
 	if (is_struct_or_union(ltp->t_tspec) || ltp->t_tspec == ARRAY) {

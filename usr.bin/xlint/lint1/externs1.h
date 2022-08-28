@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.167 2022/08/28 10:43:18 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.168 2022/08/28 12:04:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -220,8 +220,10 @@ extern	sym_t	*enumeration_constant(sym_t *, int, bool);
 extern	void	declare(sym_t *, bool, sbuf_t *);
 extern	void	copy_usage_info(sym_t *, sym_t *);
 extern	bool	check_redeclaration(sym_t *, bool *);
-extern	bool	eq_pointer_type(const type_t *, const type_t *, bool);
-extern	bool	eqtype(const type_t *, const type_t *, bool, bool, bool *);
+extern	bool	pointer_types_are_compatible(const type_t *, const type_t *,
+		    bool);
+extern	bool	types_compatible(const type_t *, const type_t *,
+		    bool, bool, bool *);
 extern	void	complete_type(sym_t *, sym_t *);
 extern	sym_t	*declare_argument(sym_t *, bool);
 extern	void	check_func_lint_directives(void);
