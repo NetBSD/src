@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.522 2022/05/07 04:35:20 rin Exp $
+.\"	$NetBSD: options.4,v 1.523 2022/08/28 14:29:05 riastradh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -669,7 +669,7 @@ See
 .Xr ktrace 1
 for details.
 .It Cd options MSGBUFSIZE=integer
-This option sets the size of the kernel message buffer.
+This option sets the size of the kernel message buffer in bytes.
 This buffer holds the kernel output of
 .Fn printf
 when not (yet) read by
