@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.46 2022/07/09 10:30:27 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.47 2022/08/28 11:17:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.46 2022/07/09 10:30:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.47 2022/08/28 11:17:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -194,8 +194,10 @@ devsw_attach(const char *devname,
 	 * If we already found a conv, we're done.  Otherwise, find an
 	 * empty slot or extend the table.
 	 */
-	if (i == max_devsw_convs)
+	if (i != max_devsw_convs) {
+		error = 0;
 		goto out;
+	}
 
 	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_name == NULL)
