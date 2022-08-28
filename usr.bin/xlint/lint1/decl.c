@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.295 2022/08/26 19:44:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.296 2022/08/28 08:41:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.295 2022/08/26 19:44:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.296 2022/08/28 08:41:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ dinfo_t	*dcs;
 
 static	type_t	*tdeferr(type_t *, tspec_t);
 static	void	settdsym(type_t *, sym_t *);
-static	void	align(unsigned int, unsigned int);
+static	void	dcs_align(unsigned int, unsigned int);
 static	sym_t	*newtag(sym_t *, scl_t, bool, bool);
 static	bool	eqargs(const type_t *, const type_t *, bool *);
 static	bool	mnoarg(const type_t *, bool *);
@@ -224,7 +224,7 @@ is_incomplete(const type_t *tp)
  * storage classes.
  */
 void
-add_storage_class(scl_t sc)
+dcs_add_storage_class(scl_t sc)
 {
 
 	if (sc == INLINE) {
@@ -249,7 +249,7 @@ add_storage_class(scl_t sc)
 /*
  * Remember the type, modifier or typedef name returned by the parser
  * in *dcs (top element of decl stack). This information is used in
- * end_type() to build the type used for all declarators in this
+ * dcs_end_type to build the type used for all declarators in this
  * declaration.
  *
  * If tp->t_typedef is 1, the type comes from a previously defined typename.
@@ -257,7 +257,7 @@ add_storage_class(scl_t sc)
  * struct/union/enum tag.
  */
 void
-add_type(type_t *tp)
+dcs_add_type(type_t *tp)
 {
 	tspec_t	t;
 
@@ -519,7 +519,7 @@ setpackedsize(type_t *tp)
 }
 
 void
-addpacked(void)
+dcs_add_packed(void)
 {
 	if (dcs->d_type == NULL)
 		dcs->d_packed = true;
@@ -528,21 +528,21 @@ addpacked(void)
 }
 
 void
-add_attr_used(void)
+dcs_set_used(void)
 {
 	dcs->d_used = true;
 }
 
 /*
  * Remember a qualifier which is part of the declaration specifiers
- * (and not the declarator) in the top element of the declaration stack.
+ * (and not the declarator).
  * Also detect multiple qualifiers of the same kind.
 
- * The remembered qualifier is used by end_type() to construct the type
+ * The remembered qualifier is used by dcs_end_type to construct the type
  * for all declarators.
  */
 void
-add_qualifier(tqual_t q)
+dcs_add_qualifier(tqual_t q)
 {
 
 	if (q == CONST) {
@@ -661,13 +661,13 @@ end_declaration_level(void)
  * There is no need to clear d_asm in dinfo structs with context AUTO,
  * because these structs are freed at the end of the compound statement.
  * But it must be cleared in the outermost dinfo struct, which has
- * context EXTERN. This could be done in begin_type() and would work for C90,
- * but not for C99 or C++ (due to mixed statements and declarations). Thus
- * we clear it in global_clean_up_decl(), which is used to do some cleanup
- * after global declarations/definitions.
+ * context EXTERN. This could be done in dcs_begin_type and would work for
+ * C90, but not for C99 or C++ (due to mixed statements and declarations).
+ * Thus we clear it in global_clean_up_decl(), which is used to do some
+ * cleanup after global declarations/definitions.
  */
 void
-setasm(void)
+dcs_set_asm(void)
 {
 	dinfo_t	*di;
 
@@ -680,7 +680,7 @@ setasm(void)
  * will be used by the next declaration
  */
 void
-begin_type(void)
+dcs_begin_type(void)
 {
 
 	dcs->d_abstract_type = NOTSPEC;
@@ -793,7 +793,7 @@ dcs_merge_declaration_specifiers(void)
  * context.
  */
 void
-end_type(void)
+dcs_end_type(void)
 {
 
 	dcs_merge_declaration_specifiers();
@@ -1165,14 +1165,14 @@ declarator_1_struct_union(sym_t *dsym)
 		dcs->d_offset_in_bits = 0;
 	}
 	if (dsym->s_bitfield) {
-		align(alignment_in_bits(tp), tp->t_flen);
+		dcs_align(alignment_in_bits(tp), tp->t_flen);
 		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits -
 		    dcs->d_offset_in_bits % size_in_bits(t);
 		tp->t_foffs = dcs->d_offset_in_bits -
 		    dsym->u.s_member.sm_offset_in_bits;
 		dcs->d_offset_in_bits += tp->t_flen;
 	} else {
-		align(alignment_in_bits(tp), 0);
+		dcs_align(alignment_in_bits(tp), 0);
 		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits;
 		dcs->d_offset_in_bits += sz;
 	}
@@ -1198,7 +1198,7 @@ declarator_1_struct_union(sym_t *dsym)
  * al contains the required alignment, len the length of a bit-field.
  */
 static void
-align(unsigned int al, unsigned int len)
+dcs_align(unsigned int al, unsigned int len)
 {
 	unsigned int no;
 
@@ -1293,7 +1293,7 @@ block_derive_pointer(type_t *stp, bool is_const, bool is_volatile)
  * The following 3 functions extend the type of a declarator with
  * pointer, function and array types.
  *
- * The current type is the type built by end_type() (dcs->d_type) and
+ * The current type is the type built by dcs_end_type (dcs->d_type) and
  * pointer, function and array types already added for this
  * declarator. The new type extension is inserted between both.
  */
@@ -1843,7 +1843,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		tp->t_str->sou_incomplete = false;
 
 	t = tp->t_tspec;
-	align((u_int)dcs->d_sou_align_in_bits, 0);
+	dcs_align((u_int)dcs->d_sou_align_in_bits, 0);
 	sp = tp->t_str;
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
 	sp->sou_first_member = fmem;

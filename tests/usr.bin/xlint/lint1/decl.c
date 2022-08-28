@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.18 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.19 2022/08/28 08:41:06 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -144,7 +144,7 @@ struct {
 
 /*
  * Before decl.c 1.201 from 2021-07-15, lint crashed with an internal error
- * in end_type.
+ * in dcs_end_type (named end_type back then).
  */
 unsigned long sizes =
     sizeof(const typeof(bool)) +

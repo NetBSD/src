@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.421 2022/08/25 19:03:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.422 2022/08/28 08:41:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.421 2022/08/25 19:03:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.422 2022/08/28 08:41:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -730,24 +730,24 @@ declaration:			/* C99 6.7 */
 
 begin_type_declaration_specifiers:	/* see C99 6.7 */
 	  begin_type_typespec {
-		add_type($1);
+		dcs_add_type($1);
 	  }
 	| begin_type_declmods type_specifier {
-		add_type($2);
+		dcs_add_type($2);
 	  }
 	| type_attribute begin_type_declaration_specifiers
 	| begin_type_declaration_specifiers declmod
 	| begin_type_declaration_specifiers notype_type_specifier {
-		add_type($2);
+		dcs_add_type($2);
 	  }
 	;
 
 begin_type_declmods:		/* see C99 6.7 */
 	  begin_type T_QUAL {
-		add_qualifier($2);
+		dcs_add_qualifier($2);
 	  }
 	| begin_type T_SCLASS {
-		add_storage_class($2);
+		dcs_add_storage_class($2);
 	  }
 	| begin_type_declmods declmod
 	;
@@ -759,16 +759,16 @@ begin_type_specifier_qualifier_list:	/* see C11 6.7.2.1 */
 
 begin_type_specifier_qualifier_list_postfix:
 	  begin_type_typespec {
-		add_type($1);
+		dcs_add_type($1);
 	  }
 	| begin_type_qualifier_list type_specifier {
-		add_type($2);
+		dcs_add_type($2);
 	  }
 	| begin_type_specifier_qualifier_list_postfix T_QUAL {
-		add_qualifier($2);
+		dcs_add_qualifier($2);
 	  }
 	| begin_type_specifier_qualifier_list_postfix notype_type_specifier {
-		add_type($2);
+		dcs_add_type($2);
 	  }
 	| begin_type_specifier_qualifier_list_postfix type_attribute
 	;
@@ -784,19 +784,19 @@ begin_type_typespec:
 
 begin_type_qualifier_list:
 	  begin_type T_QUAL {
-		add_qualifier($2);
+		dcs_add_qualifier($2);
 	  }
 	| begin_type_qualifier_list T_QUAL {
-		add_qualifier($2);
+		dcs_add_qualifier($2);
 	  }
 	;
 
 declmod:
 	  T_QUAL {
-		add_qualifier($1);
+		dcs_add_qualifier($1);
 	  }
 	| T_SCLASS {
-		add_storage_class($1);
+		dcs_add_storage_class($1);
 	  }
 	| type_attribute_list
 	;
@@ -821,20 +821,20 @@ type_attribute:			/* See C11 6.7 declaration-specifiers */
 	| T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
 	| T_ALIGNAS T_LPAREN constant_expr T_RPAREN	/* C11 6.7.5 */
 	| T_PACKED {
-		addpacked();
+		dcs_add_packed();
 	  }
 	| T_NORETURN
 	;
 
 begin_type:
 	  /* empty */ {
-		begin_type();
+		dcs_begin_type();
 	  }
 	;
 
 end_type:
 	  /* empty */ {
-		end_type();
+		dcs_end_type();
 	  }
 	;
 
@@ -1852,10 +1852,10 @@ goto:				/* see C99 6.8.6 */
 
 asm_statement:			/* GCC extension */
 	  T_ASM T_LPAREN read_until_rparen T_SEMI {
-		setasm();
+		dcs_set_asm();
 	  }
 	| T_ASM T_QUAL T_LPAREN read_until_rparen T_SEMI {
-		setasm();
+		dcs_set_asm();
 	  }
 	| T_ASM error
 	;
@@ -2045,10 +2045,10 @@ gcc_attribute:
 	| T_NAME {
 		const char *name = $1->sb_name;
 		if (is_either(name, "packed", "__packed__"))
-			addpacked();
+			dcs_add_packed();
 		else if (is_either(name, "used", "__used__") ||
 		    is_either(name, "unused", "__unused__"))
-			add_attr_used();
+			dcs_set_used();
 		else if (is_either(name, "fallthrough",
 		    "__fallthrough__"))
 			fallthru(1);

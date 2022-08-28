@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.3 2022/07/08 21:19:07 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.4 2022/08/28 08:41:06 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -173,7 +173,7 @@ Q7(void)
 	/*
 	 * Neither GCC nor Clang accept typeof(bit-field), as that would add
 	 * unnecessary complexity.  Lint accepts it but silently discards the
-	 * bit-field portion from the type; see add_type.
+	 * bit-field portion from the type; see dcs_add_type.
 	 */
 	/* expect+1: redundant cast from 'unsigned char' to 'unsigned int' before assignment [Q7] */
 	bits.u9 = (typeof(bits.u9))u8;
