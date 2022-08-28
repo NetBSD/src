@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.14 2020/05/18 05:47:54 msaitoh Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.15 2022/08/28 13:50:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -79,7 +79,7 @@ struct gpt_ent {
 	uint64_t	ent_lba_start;	/* start of partition */
 	uint64_t	ent_lba_end;	/* end of partition */
 	uint64_t	ent_attr;	/* partition attributes */
-	uint16_t	ent_name[36];	/* partition name in UNICODE-16 */
+	uint16_t	ent_name[36];	/* partition name in UCS-2 */
 };
 
 #define	GPT_ENT_ATTR_REQUIRED_PARTITION		(1ULL << 0)
