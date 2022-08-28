@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.30 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: disklabel.5,v 1.31 2022/08/28 10:48:16 hgutch Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,7 @@ is
 /*
  * The absolute maximum number of disk partitions allowed.
  * This is the maximum value of MAXPARTITIONS for which 'struct disklabel'
- * is \*[Le] DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
+ * is <= DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
  */
 #define MAXMAXPARTITIONS	22
 #if MAXPARTITIONS > MAXMAXPARTITIONS
