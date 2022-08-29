@@ -37,9 +37,11 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.22 2021/10/07 12:52:27 msaitoh Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootinfo.h>
+#include <machine/pmap.h>
 #include <x86/bus_defs.h>
 #include <x86/bus_funcs.h>
 #include <x86/efi.h>
+#include <x86/cpufunc.h>
 
 #include <dev/mm.h>
 #if NPCI > 0
@@ -59,9 +61,16 @@ void		efi_aprintcfgtbl(void);
 void		efi_aprintuuid(const struct uuid *);
 bool		efi_uuideq(const struct uuid *, const struct uuid *);
 
+
+static struct efi_systbl *ST = NULL;
+static struct efi_rt *RT = NULL;
+
+static kmutex_t efi_lock;
+struct pmap *efi_pm;
+u_long efi_psw;
+
 static bool efi_is32x64 = false;
 static paddr_t efi_systbl_pa;
-static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
 	struct btinfo_memmap bim;
@@ -152,16 +161,16 @@ efi_getcfgtblhead(void)
 
 	if (efi_is32x64) {
 #if defined(__amd64__)
-		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		struct efi_systbl32 *systbl32 = (void *) ST;
 		pa = systbl32->st_cfgtbl;
 #elif defined(__i386__)
-		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		struct efi_systbl64 *systbl64 = (void *) ST;
 		if (systbl64->st_cfgtbl & 0xffffffff00000000ULL)
 			return NULL;
 		pa = (paddr_t) systbl64->st_cfgtbl;
 #endif
 	} else
-		pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
+		pa = (paddr_t)(u_long) ST->st_cfgtbl;
 	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
 	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
@@ -182,7 +191,7 @@ efi_aprintcfgtbl(void)
 
 	if (efi_is32x64) {
 #if defined(__amd64__)
-		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		struct efi_systbl32 *systbl32 = (void *) ST;
 		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
 
 		count = systbl32->st_entries;
@@ -193,7 +202,7 @@ efi_aprintcfgtbl(void)
 			aprint_debug("\n");
 		}
 #elif defined(__i386__)
-		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		struct efi_systbl64 *systbl64 = (void *) ST;
 		struct efi_cfgtbl64 *ct64 = (void *) efi_cfgtblhead_va;
 		uint64_t count64 = systbl64->st_entries;
 
@@ -208,7 +217,7 @@ efi_aprintcfgtbl(void)
 	}
 
 	ct = efi_cfgtblhead_va;
-	count = efi_systbl_va->st_entries;
+	count = ST->st_entries;
 	aprint_debug("efi: %lu cfgtbl entries:\n", count);
 	for (; count; count--, ct++) {
 		aprint_debug("efi: %p", ct->ct_data);
@@ -245,7 +254,7 @@ efi_getcfgtblpa(const struct uuid * uuid)
 
 	if (efi_is32x64) {
 #if defined(__amd64__)
-		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		struct efi_systbl32 *systbl32 = (void *) ST;
 		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
 
 		count = systbl32->st_entries;
@@ -253,7 +262,7 @@ efi_getcfgtblpa(const struct uuid * uuid)
 			if (efi_uuideq(&ct32->ct_uuid, uuid))
 				return ct32->ct_data;
 #elif defined(__i386__)
-		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		struct efi_systbl64 *systbl64 = (void *) ST;
 		struct efi_cfgtbl64 *ct64 = (void *) efi_cfgtblhead_va;
 		uint64_t count64 = systbl64->st_entries;
 
@@ -266,7 +275,7 @@ efi_getcfgtblpa(const struct uuid * uuid)
 	}
 
 	ct = efi_cfgtblhead_va;
-	count = efi_systbl_va->st_entries;
+	count = ST->st_entries;
 	for (; count; count--, ct++)
 		if (efi_uuideq(&ct->ct_uuid, uuid))
 			return (paddr_t)(u_long) ct->ct_data;
@@ -317,8 +326,8 @@ efi_getsystbl(void)
 	vaddr_t va;
 	struct efi_systbl *systbl;
 
-	if (efi_systbl_va)
-		return efi_systbl_va;
+	if (ST)
+		return ST;
 
 	pa = efi_getsystblpa();
 	if (pa == 0)
@@ -348,7 +357,7 @@ efi_getsystbl(void)
 		aprint_debug("efi: boot services at pa 0x%08" PRIx32 "\n",
 		    systbl32->st_bs);
 
-		efi_systbl_va = (struct efi_systbl *) systbl32;
+		ST = (struct efi_systbl *) systbl32;
 #elif defined(__i386__)
 		struct efi_systbl64 *systbl64 = (struct efi_systbl64 *) va;
 
@@ -367,9 +376,9 @@ efi_getsystbl(void)
 		aprint_debug("efi: boot services at pa 0x%016" PRIx64 "\n",
 		    systbl64->st_bs);
 
-		efi_systbl_va = (struct efi_systbl *) systbl64;
+		ST = (struct efi_systbl *) systbl64;
 #endif
-		return efi_systbl_va;
+		return ST;
 	}
 
 	systbl = (struct efi_systbl *) va;
@@ -385,8 +394,8 @@ efi_getsystbl(void)
 	aprint_debug("efi: runtime services at pa %p\n", systbl->st_rt);
 	aprint_debug("efi: boot services at pa %p\n", systbl->st_bs);
 
-	efi_systbl_va = systbl;
-	return efi_systbl_va;
+	ST = systbl;
+	return ST;
 }
 
 /*
@@ -403,11 +412,63 @@ efi_init(void)
 	}
 	if (efi_getcfgtblhead() == NULL) {
 		aprint_debug("efi: missing or invalid cfgtbl\n");
-		efi_relva(efi_systbl_pa, (vaddr_t) efi_systbl_va);
+		efi_relva(efi_systbl_pa, (vaddr_t) ST);
+		bootmethod_efi = false;
+		return;
+	}
+	if (ST->st_rt == NULL) {
+		aprint_debug("efi: missing or invalid runtime services table\n");
+		efi_relva(efi_systbl_pa, (vaddr_t) ST);
 		bootmethod_efi = false;
 		return;
 	}
 	bootmethod_efi = true;
+
+	//mutex_init(&efi_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	aprint_normal("efi: systbl mapped at va %p\n", (void *)ST);
+
+	aprint_normal("RT services at: %p\n", (void *)RT);
+	aprint_normal("RT gettime address = %p\n", (void *)((uint64_t)RT + sizeof(struct efi_tblhdr)));
+
+	// if (efi_rt_init()) {
+	// 	aprint_error("efi: error initialising runtime services\n");
+	// 	return;
+	// }
+
+	// aprint_normal("\nafter efirt_init\n");
+	// aprint_normal("efi: systbl mapped at va %p\n", (void *)ST);
+	// aprint_normal("RT services at: %p\n", (void *)RT);
+	// aprint_normal("RT gettime = %p\n", (void *)((uint64_t)RT + sizeof(struct efi_tblhdr)));
+
+	RT = (void *) efi_getva((paddr_t) ST->st_rt);
+	ST->st_rt = RT;
+
+	aprint_normal("\nafter allocating virt memory\n");
+	aprint_normal("efi: systbl mapped at va %p\n", (void *)ST);
+	aprint_normal("RT services at: %p\n", (void *)RT);
+	aprint_normal("RT gettime = %p\n", (void *)RT->rt_gettime);
+
+	/*
+	 * DEBUG START
+	 */
+
+	efi_status status;
+
+	struct efi_tm *efi_debug_time = NULL;
+
+	//vaddr_t rt_pmap = PMAP_DIRECT_MAP((paddr_t) RT);
+
+	//aprint_normal("RT pmap = %p\n", (void *)rt_pmap);
+
+	status = efi_rt_gettime(efi_debug_time, NULL);
+
+	if (status == 0)
+		aprint_normal("EFI time: %04x-%01x-%01x\n", efi_debug_time->tm_year, efi_debug_time->tm_mon, efi_debug_time->tm_mday);
+
+	/*
+	 * DEBUG END
+	 */
 
 	efi_print_esrt();
 
@@ -462,6 +523,214 @@ efi_probe(void)
 {
 
 	return bootmethod_efi;
+}
+
+int
+efi_rt_init(void)
+{
+	const size_t sz = PAGE_SIZE * 2;
+	vaddr_t va, cva;
+	paddr_t cpa;
+
+	va = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
+	if (va == 0) {
+		aprint_error("%s: can't allocate VA\n", __func__);
+		return ENOMEM;
+	}
+
+	for (cva = va, cpa = trunc_page(efi_systbl_pa);
+		 cva < va + sz;
+		 cva += PAGE_SIZE, cpa += PAGE_SIZE) {
+		pmap_kenter_pa(cva, cpa, VM_PROT_READ, 0);
+	}
+	pmap_update(pmap_kernel());
+
+	ST = (void *)(va + (efi_systbl_pa - trunc_page(efi_systbl_pa)));
+	if (ST->st_hdr.th_sig != EFI_SYSTBL_SIG) {
+		aprint_error("EFI: signature mismatch (%#lx != %#lx)\n",
+		    ST->st_hdr.th_sig, EFI_SYSTBL_SIG);
+		return EINVAL;
+	}
+
+	RT = ST->st_rt;
+	mutex_init(&efi_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	return 0;
+}
+
+// void
+// efi_map_runtime(void)
+// {
+// 	EFI_STATUS status;
+// 	EFI_MEMORY_DESCRIPTOR *desc;
+// 	UINTN NoEntries, MapKey, DescriptorSize;
+// 	UINT32 DescriptorVersion;
+// 	size_t allocsz;
+
+// 	EFI_MEMORY_DESCRIPTOR *desc;
+// 	int i;
+
+// 	efi_get_e820memmap();
+
+// 	// desc = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
+// 	//     &DescriptorVersion, true);
+
+// 	// struct btinfo_memmap *mmap = efi_get_e820memmap();
+
+// 	// uint32_t mmap_desc_size = mmap->mmap_desc_size; //
+// 	// uint32_t mmap_size = bios_efiinfo->mmap_size; //
+// 	// uint64_t mmap_start = bios_efiinfo->mmap_start; // TODO
+// }
+
+void
+efi_rt_map_range(vaddr_t va, paddr_t pa, size_t sz, enum efi_rt_mem_type mem_type)
+{
+	int flags = 0;
+	int prot = 0;
+
+	switch (mem_type) {
+	case ARM_EFIRT_MEM_CODE:
+		/* need write permission because fw devs */
+		prot = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
+		break;
+	case ARM_EFIRT_MEM_DATA:
+		prot = VM_PROT_READ | VM_PROT_WRITE;
+		break;
+	case ARM_EFIRT_MEM_MMIO:
+		prot = VM_PROT_READ | VM_PROT_WRITE;
+		flags = 0x20000000;
+		break;
+	default:
+		panic("%s: unsupported type %d", __func__, mem_type);
+	}
+	if (va >= VM_MAXUSER_ADDRESS || va >= VM_MAXUSER_ADDRESS - sz) {
+		printf("Incorrect EFI mapping range %" PRIxVADDR
+		    "- %" PRIxVADDR "\n", va, va + sz);
+	}
+
+	while (sz != 0) {
+		pmap_enter(pmap_kernel(), va, pa, prot, flags | PMAP_WIRED);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+		sz -= PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+}
+
+int
+efi_rt_enter(void)
+{
+	if (RT == NULL)
+		return ENXIO;
+	
+	mutex_enter(&efi_lock);
+	x86_disable_intr();
+	//lcr3((register_t) efi_pm->pm_pdirpa);
+	fpu_kern_enter();
+	return 0;
+}
+
+void
+efi_rt_exit(void)
+{
+	mutex_exit(&efi_lock);
+	fpu_kern_leave();
+	x86_enable_intr();
+}
+
+efi_status
+efi_rt_gettime(struct efi_tm *tm, struct efi_tmcap *tmcap)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_gettime == NULL)
+		return ENXIO;
+
+	efi_rt_enter();
+	aprint_normal("efirt entered\n");
+	status = RT->rt_gettime(tm, tmcap);
+	efi_rt_exit();
+	aprint_normal("efirt exited\n");
+
+	return status;
+}
+
+efi_status
+efi_rt_settime(struct efi_tm *tm)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_settime == NULL)
+		return ENXIO;
+
+	efi_rt_enter();
+	status = RT->rt_settime(tm);
+	efi_rt_exit();
+
+	return status;
+}
+
+efi_status
+efi_rt_getvar(uint16_t *name, struct uuid *vendor, uint32_t *attrib, u_long *datasize, void *data)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_getvar == NULL) {
+		return ENXIO;
+	}
+
+	efi_rt_enter();
+	status = RT->rt_getvar(name, vendor, attrib, datasize, data);
+	efi_rt_exit();
+
+	return status;
+}
+
+efi_status
+efi_rt_nextvar(u_long *namesize, efi_char *name, struct uuid *vendor)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_scanvar == NULL) {
+		return ENXIO;
+	}
+
+	efi_rt_enter();
+	status = RT->rt_scanvar(namesize, name, vendor);
+	efi_rt_exit();
+
+	return status;
+}
+
+efi_status
+efi_rt_setvar(uint16_t *name, struct uuid *vendor, uint32_t attrib, u_long datasize, void *data)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_scanvar == NULL) {
+		return ENXIO;
+	}
+
+	efi_rt_enter();
+	status = RT->rt_setvar(name, vendor, attrib, datasize, data);
+	efi_rt_exit();
+
+	return status;
+}
+
+efi_status
+efi_rt_reset(enum efi_reset type)
+{
+	efi_status status;
+
+	if (RT == NULL || RT->rt_reset == NULL)
+		return ENXIO;
+
+	efi_rt_enter();
+	status = RT->rt_reset(type, 0, 0, NULL);
+	efi_rt_exit();
+
+	return status;
 }
 
 int

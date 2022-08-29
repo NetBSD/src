@@ -54,12 +54,19 @@ extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
 extern const struct uuid EFI_UUID_SMBIOS;
 extern const struct uuid EFI_UUID_SMBIOS3;
+extern const struct uuid EFI_UUID_ESRT;
 
 extern bool bootmethod_efi;
 
 enum efi_reset {
        EFI_RESET_COLD,
        EFI_RESET_WARM
+};
+
+enum efi_rt_mem_type {
+	ARM_EFIRT_MEM_CODE,
+	ARM_EFIRT_MEM_DATA,
+	ARM_EFIRT_MEM_MMIO,
 };
 
 typedef uint16_t       efi_char;
@@ -353,6 +360,15 @@ struct efi_systbl64 {
 
 #define ESRT_FIRMWARE_RESOURCE_VERSION 1
 
+// typedef struct {
+//     UINT32                          Type;           // Field size is 32 bits followed by 32 bit pad
+//     UINT32                          Pad;
+//     EFI_PHYSICAL_ADDRESS            PhysicalStart;  // Field size is 64 bits
+//     EFI_VIRTUAL_ADDRESS             VirtualStart;   // Field size is 64 bits
+//     UINT64                          NumberOfPages;  // Field size is 64 bits
+//     UINT64                          Attribute;      // Field size is 64 bits
+// } EFI_MEMORY_DESCRIPTOR;
+
 struct efi_esrt_table {
 	uint32_t	fw_resource_count;
 	uint32_t	fw_resource_count_max;
@@ -382,7 +398,21 @@ paddr_t            efi_getsystblpa(void);
 struct efi_systbl *efi_getsystbl(void);
 paddr_t            efi_getcfgtblpa(const struct uuid*);
 void              *efi_getcfgtbl(const struct uuid*);
+
 void               efi_print_esrt(void);
+
+int                efi_rt_init(void);
+int                efi_rt_enter(void);
+void               efi_rt_exit(void);
+void               efi_rt_map_range(vaddr_t, paddr_t, size_t, enum efi_rt_mem_type);
+
+efi_status         efi_rt_gettime(struct efi_tm *, struct efi_tmcap *);
+efi_status         efi_rt_settime(struct efi_tm *);
+efi_status         efi_rt_getvar(uint16_t *, struct uuid *, uint32_t *, u_long *, void *);
+efi_status         efi_rt_nextvar(u_long *, efi_char *, struct uuid *);
+efi_status         efi_rt_setvar(uint16_t *, struct uuid *, uint32_t, u_long, void *);
+efi_status         efi_rt_reset(enum efi_reset);
+
 int                efi_getbiosmemtype(uint32_t, uint64_t);
 const char        *efi_getmemtype_str(uint32_t);
 struct btinfo_memmap;
