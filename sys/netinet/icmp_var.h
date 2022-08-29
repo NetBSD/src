@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.31 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.32 2022/08/29 09:14:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,6 +72,7 @@
 #define ICMPCTL_REDIRTIMEOUT	6	/* Remove routes added via redirects */
 #define	ICMPCTL_STATS		7	/* ICMP statistics */
 #define ICMPCTL_BMCASTECHO	8	/* allow broad/mult-cast echo */
+#define ICMPCTL_DYNAMIC_RT_MSG	9	/* send routing message for RTM_DYNAMIC */
 
 #ifdef _KERNEL
 

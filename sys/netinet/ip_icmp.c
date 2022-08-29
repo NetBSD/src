@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.177 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.177 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -157,6 +157,8 @@ LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
 
 /* unused... */
 u_int ip_next_mtu(u_int, int);
+
+bool icmp_dynamic_rt_msg = false;
 
 static int icmperrppslim = 100;			/* 100pps */
 static int icmperrpps_count = 0;
@@ -1118,6 +1120,13 @@ sysctl_netinet_icmp_setup(struct sysctllog **clog)
 		       NULL, 0, &icmpbmcastecho, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_BMCASTECHO,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "dynamic_rt_msg",
+		       SYSCTL_DESCR("Send routing message for RTF_DYNAMIC"),
+		       NULL, 0, &icmp_dynamic_rt_msg, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_DYNAMIC_RT_MSG,
+		       CTL_EOL);
 }
 
 void
@@ -1158,6 +1167,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 			return;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
+		rt_newmsg_dynamic(RTM_ADD, nrt);
 		rt_unref(rt);
 		rt = nrt;
 	}
@@ -1271,6 +1281,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_newmsg_dynamic(RTM_DELETE, retrt);
 		rt_unref(rt);
 		rt_free(retrt);
 	} else {
@@ -1292,6 +1303,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_newmsg_dynamic(RTM_DELETE, retrt);
 		rt_unref(rt);
 		rt_free(retrt);
 	}
