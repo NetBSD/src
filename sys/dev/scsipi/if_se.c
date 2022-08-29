@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.117 2022/08/28 09:48:12 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.118 2022/08/29 07:32:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.117 2022/08/28 09:48:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.118 2022/08/29 07:32:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -207,7 +207,9 @@ static void	se_ifstart(struct ifnet *);
 
 static void	sedone(struct scsipi_xfer *, int);
 static int	se_ioctl(struct ifnet *, u_long, void *);
+#if 0
 static void	sewatchdog(struct ifnet *);
+#endif
 
 #if 0
 static inline uint16_t ether_cmp(void *, void *);
@@ -217,7 +219,9 @@ static void	se_recv_worker(struct work *wk, void *cookie);
 static void	se_recv(struct se_softc *);
 static struct mbuf *se_get(struct se_softc *, char *, int);
 static int	se_read(struct se_softc *, char *, int);
+#if 0
 static void	se_reset(struct se_softc *);
+#endif
 static int	se_add_proto(struct se_softc *, int);
 static int	se_get_addr(struct se_softc *, uint8_t *);
 static int	se_set_media(struct se_softc *, int);
@@ -778,7 +782,6 @@ sewatchdog(struct ifnet *ifp)
 
 	se_reset(sc);
 }
-#endif
 
 static void
 se_reset(struct se_softc *sc)
@@ -794,6 +797,7 @@ se_reset(struct se_softc *sc)
 #endif
 	se_init(sc);
 }
+#endif
 
 static int
 se_add_proto(struct se_softc *sc, int proto)
