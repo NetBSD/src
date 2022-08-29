@@ -5,7 +5,7 @@
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  *
@@ -17,7 +17,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/k_sincosl.h 354520 2019-11-07 23:57:48Z lwhsu $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_sincosl.h,v 1.1 2022/08/27 08:31:59 christos Exp $");
+__RCSID("$NetBSD: k_sincosl.h,v 1.2 2022/08/29 01:48:34 riastradh Exp $");
 #endif
 
 #if LDBL_MANT_DIG == 64		/* ld80 version of k_sincosl.c. */
@@ -108,7 +108,7 @@ S11 = -0.38680813379701966970673724299207480965452616911420e-22,
 S12 =  0.64038150078671872796678569586315881020659912139412e-25;
 
 static inline void
-__kernel_sincosl(long double x, long double y, int iy, long double *sn, 
+__kernel_sincosl(long double x, long double y, int iy, long double *sn,
     long double *cs)
 {
 	long double hz, r, v, w, z;
@@ -129,7 +129,7 @@ __kernel_sincosl(long double x, long double y, int iy, long double *sn,
 
 	hz = z / 2;
 	w = 1 - hz;
-	r = z * (C1 + z * (C2 + z * (C3 + z * (C4 + z * (C5 + z * (C6 + 
+	r = z * (C1 + z * (C2 + z * (C3 + z * (C4 + z * (C5 + z * (C6 +
 	    z * (C7 + z * (C8 + z * (C9 + z * (C10 + z * C11))))))))));
 
 	*cs =  w + (((1 - w) - hz) + (z * r - x * y));
