@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.71 2021/02/06 05:15:03 isaki Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.72 2022/08/29 09:04:27 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.71 2021/02/06 05:15:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.72 2022/08/29 09:04:27 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,8 +139,9 @@ struct emuxki_softc {
 		EMUXKI_SBLIVE = 0x00,
 		EMUXKI_AUDIGY = 0x01,
 		EMUXKI_AUDIGY2 = 0x02,
-		EMUXKI_LIVE_5_1 = 0x04,
-		EMUXKI_APS = 0x08
+		EMUXKI_AUDIGY2_VALUE = 0x04,
+		EMUXKI_LIVE_5_1 = 0x08,
+		EMUXKI_APS = 0x10
 	} sc_type;
 	audio_device_t		sc_audv;	/* for GETDEV */
 
@@ -475,6 +476,7 @@ emuxki_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_CREATIVELABS_SBLIVE:
 	case PCI_PRODUCT_CREATIVELABS_SBLIVE2:
 	case PCI_PRODUCT_CREATIVELABS_AUDIGY:
+	case PCI_PRODUCT_CREATIVELABS_SBAUDIGY4:
 		return 1;
 	default:
 		return 0;
@@ -534,7 +536,13 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* XXX it's unknown whether APS is made from Audigy as well */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBAUDIGY4) {
+		sc->sc_type = EMUXKI_AUDIGY;
+		sc->sc_type |= EMUXKI_AUDIGY2;
+		sc->sc_type |= EMUXKI_AUDIGY2_VALUE;
+		strlcpy(sc->sc_audv.name, "Audigy2 (value)",
+		    sizeof(sc->sc_audv.name));
+	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
 		sc->sc_type = EMUXKI_AUDIGY;
 		if (PCI_REVISION(pa->pa_class) == 0x04) {
 			sc->sc_type |= EMUXKI_AUDIGY2;
@@ -703,7 +711,27 @@ emuxki_init(struct emuxki_softc *sc)
 	emuxki_write(sc, 0, EMU_SPCS1, spcs);
 	emuxki_write(sc, 0, EMU_SPCS2, spcs);
 
-	if (sc->sc_type & EMUXKI_AUDIGY2) {
+	if (sc->sc_type & EMUXKI_AUDIGY2_VALUE) {
+		/* Setup SRCMulti_I2S SamplingRate */
+		emuxki_write(sc, 0, EMU_A2_SPDIF_SAMPLERATE,
+		    emuxki_read(sc, 0, EMU_A2_SPDIF_SAMPLERATE) & 0xfffff1ff);
+
+		/* Setup SRCSel (Enable SPDIF, I2S SRCMulti) */
+		emuxki_writeptr(sc, EMU_A2_PTR, EMU_A2_DATA, EMU_A2_SRCSEL,
+		    EMU_A2_SRCSEL_ENABLE_SPDIF | EMU_A2_SRCSEL_ENABLE_SRCMULTI);
+
+		/* Setup SRCMulti Input Audio Enable */
+		emuxki_writeptr(sc, EMU_A2_PTR, EMU_A2_DATA,
+		    0x7b0000, 0xff000000);
+
+		/* Setup SPDIF Out Audio Enable
+		 * The Audigy 2 Value has a separate SPDIF out,
+		 * so no need for a mixer switch */
+		emuxki_writeptr(sc, EMU_A2_PTR, EMU_A2_DATA,
+		    0x7a0000, 0xff000000);
+		emuxki_writeio_4(sc, EMU_A_IOCFG,
+		    emuxki_readio_4(sc, EMU_A_IOCFG) & ~0x8); /* clear bit 3 */
+	} else if (sc->sc_type & EMUXKI_AUDIGY2) {
 		emuxki_write(sc, 0, EMU_A2_SPDIF_SAMPLERATE,
 		    EMU_A2_SPDIF_UNKNOWN);
 
@@ -735,10 +763,12 @@ emuxki_init(struct emuxki_softc *sc)
 	    EMU_INTE_VOLDECRENABLE |
 	    EMU_INTE_MUTEENABLE);
 
-	if (sc->sc_type & EMUXKI_AUDIGY2) {
+	if (sc->sc_type & EMUXKI_AUDIGY2_VALUE) {
 		emuxki_writeio_4(sc, EMU_A_IOCFG,
-		    emuxki_readio_4(sc, EMU_A_IOCFG) |
-		        EMU_A_IOCFG_GPOUT0);
+		    0x0060 | emuxki_readio_4(sc, EMU_A_IOCFG));
+	} else if (sc->sc_type & EMUXKI_AUDIGY2) {
+		emuxki_writeio_4(sc, EMU_A_IOCFG,
+		    EMU_A_IOCFG_GPOUT0 | emuxki_readio_4(sc, EMU_A_IOCFG));
 	}
 
 	/* enable AUDIO bit */
