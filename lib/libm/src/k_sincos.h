@@ -4,10 +4,10 @@
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
- * 
+ *
  * k_sin.c and k_cos.c merged by Steven G. Kargl.
  */
 
@@ -16,7 +16,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/k_sincos.h 319047 2017-05-28 06:13:38Z mmel $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_sincos.h,v 1.1 2022/08/27 08:31:59 christos Exp $");
+__RCSID("$NetBSD: k_sincos.h,v 1.2 2022/08/29 01:48:34 riastradh Exp $");
 #endif
 
 static const double

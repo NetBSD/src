@@ -6,7 +6,7 @@
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  *
@@ -17,8 +17,8 @@
 __FBSDID("$FreeBSD: head/lib/msun/ld128/e_rem_pio2l.h 336545 2018-07-20 12:42:24Z bde $");
 
 /* ld128 version of __ieee754_rem_pio2l(x,y)
- * 
- * return the remainder of x rem pi/2 in y[0]+y[1] 
+ *
+ * return the remainder of x rem pi/2 in y[0]+y[1]
  * use __kernel_rem_pio2()
  */
 
@@ -83,32 +83,32 @@ __ieee754_rem_pio2l(long double x, long double *y)
 		union IEEEl2bits u2;
 	        int ex1;
 	        j  = ex;
-	        y[0] = r-w; 
+	        y[0] = r-w;
 		u2.e = y[0];
 		ex1 = u2.xbits.expsign & 0x7fff;
 	        i = j-ex1;
 	        if(i>51) {  /* 2nd iteration needed, good to 248 */
 		    t  = r;
-		    w  = fn*pio2_2;	
+		    w  = fn*pio2_2;
 		    r  = t-w;
-		    w  = fn*pio2_2t-((t-r)-w);	
+		    w  = fn*pio2_2t-((t-r)-w);
 		    y[0] = r-w;
 		    u2.e = y[0];
 		    ex1 = u2.xbits.expsign & 0x7fff;
 		    i = j-ex1;
 		    if(i>119) {	/* 3rd iteration need, 316 bits acc */
-		    	t  = r;	/* will cover all possible cases */
-		    	w  = fn*pio2_3;	
-		    	r  = t-w;
-		    	w  = fn*pio2_3t-((t-r)-w);	
-		    	y[0] = r-w;
+			t  = r;	/* will cover all possible cases */
+			w  = fn*pio2_3;
+			r  = t-w;
+			w  = fn*pio2_3t-((t-r)-w);
+			y[0] = r-w;
 		    }
 		}
 	    }
 	    y[1] = (r-y[0])-w;
 	    return n;
 	}
-    /* 
+    /*
      * all other (large) arguments
      */
 	if(ex==0x7fff) {		/* x is inf or NaN */
