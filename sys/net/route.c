@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.231 2022/08/26 08:32:22 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.232 2022/08/29 09:14:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.231 2022/08/26 08:32:22 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.232 2022/08/29 09:14:02 knakahara Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -884,6 +884,8 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			error = rtrequest1(RTM_ADD, &info, &rt);
 			if (rt != NULL)
 				flags = rt->rt_flags;
+			if (error == 0)
+				rt_newmsg_dynamic(RTM_ADD, rt);
 			stat = &rtstat.rts_dynamic;
 		} else {
 			/*
@@ -1536,6 +1538,45 @@ rt_newmsg(const int cmd, const struct rtentry *rt)
 	memset((void *)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	if (rt->rt_ifp) {
+		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+	}
+
+	rt_missmsg(cmd, &info, rt->rt_flags, 0);
+}
+
+/*
+ * Inform the routing socket of a route change for RTF_DYNAMIC.
+ */
+void
+rt_newmsg_dynamic(const int cmd, const struct rtentry *rt)
+{
+	extern bool icmp_dynamic_rt_msg;
+	extern bool icmp6_dynamic_rt_msg;
+	struct rt_addrinfo info;
+	struct sockaddr *gateway = rt->rt_gateway;
+
+	if (gateway == NULL)
+		return;
+
+	switch(gateway->sa_family){
+	case AF_INET:
+		if (!icmp_dynamic_rt_msg)
+			return;
+		break;
+	case AF_INET6:
+		if (!icmp6_dynamic_rt_msg)
+			return;
+		break;
+	default:
+		return;
+	}
+
+	memset((void *)&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_getkey(rt);
+	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
 		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;

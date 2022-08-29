@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.160 2022/08/22 09:25:55 knakahara Exp $
+.\"	$NetBSD: sysctl.7,v 1.161 2022/08/29 09:14:02 knakahara Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 9, 2022
+.Dd August 29, 2022
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1457,6 +1457,7 @@ The currently defined protocols and names are:
 .It icmp	rediraccept	integer	yes
 .It icmp	redirtimeout	integer	yes
 .It icmp	bmcastecho	integer	yes
+.It icmp	dynamic_rt_msg	boolean	yes
 .It ip	allowsrcrt	integer	yes
 .It ip 	anonportalgo.selected	string	yes
 .It ip 	anonportalgo.available	string	yes
@@ -1703,6 +1704,9 @@ Number of bytes to return in an ICMP error message.
 .It Li icmp.bmcastecho
 If set to 1, enables responding to ICMP echo or timestamp request to the
 broadcast address.
+.It Li icmp.dynamic_rt_msg
+A boolean that the kernel sends routing message for RTM_DYNAMIC or not.
+If set to true, sends such routing message.
 .It Li tcp.ack_on_push
 If set to 1, TCP is to immediately transmit an ACK upon reception of
 a packet with PUSH set.
@@ -1856,6 +1860,7 @@ The currently defined protocols and names are:
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It icmp6	reflect_pmtu	boolean	yes
+.It icmp6	dynamic_rt_msg	boolean	yes
 .It ip6	accept_rtadv	integer	yes
 .It ip6	addctlpolicy	struct in6_addrpolicy	no
 .It ip6	anonportalgo.selected	string	yes
@@ -2120,7 +2125,9 @@ ICMPv6 redirect.
 .It Li icmp6.reflect_pmtu
 A boolean that icmpv6 reflecting uses path MTU discovery or not.
 When not, icmpv6 reflecting uses IPV6_MINMTU.
-ICMPv6 redirect.
+.It Li icmp6.dynamic_rt_msg
+A boolean that the kernel sends routing message for RTM_DYNAMIC or not.
+If set to true, sends such routing message.
 .It Li udp6.do_loopback_cksum
 Perform UDP checksum on loopback.
 .It Li udp6.recvspace

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.251 2022/08/22 09:25:55 knakahara Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.252 2022/08/29 09:14:02 knakahara Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.251 2022/08/22 09:25:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.252 2022/08/29 09:14:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -150,6 +150,8 @@ extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
+
+bool icmp6_dynamic_rt_msg = false;
 
 /*
  * List of callbacks to notify when Path MTU changes are made.
@@ -2838,6 +2840,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 			return NULL;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
+		rt_newmsg_dynamic(RTM_ADD, nrt);
 		rt_unref(rt);
 		rt = nrt;
 	}
@@ -2867,6 +2870,7 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_newmsg_dynamic(RTM_DELETE, retrt);
 		rt_unref(rt);
 		rt_free(retrt);
 	} else {
@@ -2887,6 +2891,7 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
+		rt_newmsg_dynamic(RTM_DELETE, retrt);
 		rt_unref(rt);
 		rt_free(retrt);
 	}
@@ -3117,6 +3122,13 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       NULL, 0, &icmp6_reflect_pmtu, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_REFLECT_PMTU, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "dynamic_rt_msg",
+		       SYSCTL_DESCR("Send routing message for RTF_DYNAMIC"),
+		       NULL, 0, &icmp6_dynamic_rt_msg, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_DYNAMIC_RT_MSG, CTL_EOL);
 }
 
 void
