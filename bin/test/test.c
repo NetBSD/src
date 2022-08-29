@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $ */
+/* $NetBSD: test.c,v 1.43.2.1 2022/08/29 16:04:26 martin Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $");
+__RCSID("$NetBSD: test.c,v 1.43.2.1 2022/08/29 16:04:26 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -306,7 +306,7 @@ main(int argc, char *argv[])
 	 */
 
 #ifdef SMALL
-	error("SMALL test, no fallback usage");
+	error("unsupported expression when built with -DSMALL");
 #else
 
 	t_wp = &argv[1];
