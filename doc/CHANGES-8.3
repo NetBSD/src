@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.143 2022/08/28 13:32:34 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.144 2022/08/29 16:15:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2745,4 +2745,9 @@ libexec/telnetd/utility.c			1.34
 
 	telnetd(8): fix CVE-2020-10188.
 	[hgutch, ticket #1756]
+
+libexec/telnetd/telnetd.c			1.58 (patch)
+
+	telnetd(8): fix a crash accessing the slc table before initialization.
+	[dholland, ticket #1757]
 
