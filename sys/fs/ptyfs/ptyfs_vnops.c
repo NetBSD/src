@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.55 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.55.4.1 2022/08/29 15:45:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.55 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.55.4.1 2022/08/29 15:45:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -716,7 +716,7 @@ ptyfs_readdir(void *v)
 		*ap->a_cookies = cookies;
 	}
 
-	for (; i < 2; i++) {
+	for (; i < 2 && uio->uio_resid >= UIO_MX; i++) {
 		/* `.' and/or `..' */
 		dp->d_fileno = PTYFS_FILENO(0, PTYFSroot);
 		dp->d_namlen = i + 1;
