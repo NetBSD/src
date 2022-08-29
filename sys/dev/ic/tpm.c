@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.13.2.2 2022/08/03 16:00:47 martin Exp $	*/
+/*	$NetBSD: tpm.c,v 1.13.2.3 2022/08/29 15:48:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13.2.2 2022/08/03 16:00:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13.2.3 2022/08/29 15:48:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -820,9 +820,6 @@ static int
 tpm_tis12_init(struct tpm_softc *sc)
 {
 	int rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
 	    TPM_INTF_CAPABILITY);
