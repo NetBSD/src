@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.169 2022/07/29 07:35:16 knakahara Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.170 2022/08/29 09:14:02 knakahara Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.169 2022/07/29 07:35:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.170 2022/08/29 09:14:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -940,8 +940,10 @@ in6_losing(struct in6pcb *in6p)
 		error = rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &nrt);
 		rtcache_unref(rt, &in6p->in6p_route);
-		if (error == 0)
+		if (error == 0) {
+			rt_newmsg_dynamic(RTM_DELETE, nrt);
 			rt_free(nrt);
+		}
 	} else
 		rtcache_unref(rt, &in6p->in6p_route);
 	/*

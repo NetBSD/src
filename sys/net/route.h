@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.130 2022/08/26 08:32:22 knakahara Exp $	*/
+/*	$NetBSD: route.h,v 1.131 2022/08/29 09:14:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -437,6 +437,7 @@ int	rt_update_prepare(struct rtentry *);
 void	rt_update_finish(struct rtentry *);
 
 void	rt_newmsg(const int, const struct rtentry *);
+void	rt_newmsg_dynamic(const int, const struct rtentry *);
 struct rtentry *
 	rtalloc1(const struct sockaddr *, int);
 int	rtinit(struct ifaddr *, int, int);
