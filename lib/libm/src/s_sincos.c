@@ -7,14 +7,14 @@
  * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
- * 
+ *
  * s_sin.c and s_cos.c merged by Steven G. Kargl.  Descriptions of the
  * algorithms are contained in the original files.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sincos.c,v 1.4 2022/08/28 16:07:58 he Exp $");
+__RCSID("$NetBSD: s_sincos.c,v 1.5 2022/08/29 01:48:34 riastradh Exp $");
 #endif
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/s_sincos.c 319047 2017-05-28 06:13:38Z mmel $");
