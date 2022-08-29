@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.86 2022/06/24 22:05:24 tsutsui Exp $ */
+/*	$NetBSD: disks.c,v 1.87 2022/08/29 17:35:15 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,6 +140,29 @@ tmpfs_on_var_shm(void)
 		return false;
 
 	return ram > 16 * MEG;
+}
+
+/*
+ * like strncpy, but drop trailing whitespace
+ */
+static void
+trim_name(char *name, size_t len, const char *src)
+{
+	size_t i, last = ~0U;
+
+	for (i = 0; i < len && src[i]; i++) {
+		if (isspace((unsigned int)src[i]))
+			last = i;
+		else
+			last = ~0U;
+		name[i] = src[i];
+	}
+	if (i >= len)
+		i = len-1;
+	if (last < i)
+		name[last] = 0;
+	else
+		name[i] = 0;
 }
 
 /* from src/sbin/atactl/atactl.c
@@ -335,7 +358,7 @@ get_descr_drvctl(struct disk_desc *dd)
 	int8_t perr;
 	int error, fd;
 	bool rv;
-	char size[5];
+	char size[5], name[sizeof(dd->dd_descr)];
 	const char *model;
 
 	fd = open("/dev/drvctl", O_RDONLY);
@@ -377,13 +400,14 @@ get_descr_drvctl(struct disk_desc *dd)
 		prop_object_release(results_dict);
 		return 0;
 	}
+	trim_name(name, sizeof name, model);
 
 	humanize_number(size, sizeof(size),
 	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
 	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 
 	snprintf(dd->dd_descr, sizeof(dd->dd_descr), "%s (%s, %s)",
-	    dd->dd_name, size, model);
+	    dd->dd_name, size, name);
 
 	prop_object_release(results_dict);
 
