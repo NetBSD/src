@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.232 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.233 2022/08/29 23:48:18 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.232 2022/08/29 09:14:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.233 2022/08/29 23:48:18 knakahara Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1553,23 +1553,29 @@ rt_newmsg(const int cmd, const struct rtentry *rt)
 void
 rt_newmsg_dynamic(const int cmd, const struct rtentry *rt)
 {
-	extern bool icmp_dynamic_rt_msg;
-	extern bool icmp6_dynamic_rt_msg;
 	struct rt_addrinfo info;
 	struct sockaddr *gateway = rt->rt_gateway;
 
 	if (gateway == NULL)
 		return;
 
-	switch(gateway->sa_family){
-	case AF_INET:
+	switch(gateway->sa_family) {
+#ifdef INET
+	case AF_INET: {
+		extern bool icmp_dynamic_rt_msg;
 		if (!icmp_dynamic_rt_msg)
 			return;
 		break;
-	case AF_INET6:
+	}
+#endif
+#ifdef INET6
+	case AF_INET6: {
+		extern bool icmp6_dynamic_rt_msg;
 		if (!icmp6_dynamic_rt_msg)
 			return;
 		break;
+	}
+#endif
 	default:
 		return;
 	}
