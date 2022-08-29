@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.376.4.3 2022/08/12 15:18:13 martin Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.376.4.4 2022/08/29 16:02:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376.4.3 2022/08/12 15:18:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376.4.4 2022/08/29 16:02:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1066,7 +1066,9 @@ rf_must_be_initialized(const struct raid_softc *rs, u_long cmd)
 	case RAIDFRAME_REWRITEPARITY:
 	case RAIDFRAME_SET_AUTOCONFIG:
 	case RAIDFRAME_SET_COMPONENT_LABEL:
+	case RAIDFRAME_SET_LAST_UNIT:
 	case RAIDFRAME_SET_ROOT:
+	case RAIDFRAME_SHUTDOWN:
 		return (rs->sc_flags & RAIDF_INITED) == 0;
 	}
 	return false;
