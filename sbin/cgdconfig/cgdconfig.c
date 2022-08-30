@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.58 2022/08/12 10:49:47 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.59 2022/08/30 08:48:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.58 2022/08/12 10:49:47 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.59 2022/08/30 08:48:41 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -114,7 +114,9 @@ int	pflag = PFLAG_GETPASS;
 
 /*
  * When configuring all cgds, save a cache of shared keys for key
- * derivation.
+ * derivation.  If the _first_ verification with a shared key fails, we
+ * chuck it and start over; if _subsequent_ verifications fail, we
+ * assume the disk is wrong and give up on it immediately.
  */
 
 struct sharedkey {
@@ -122,8 +124,11 @@ struct sharedkey {
 	string_t		*id;
 	bits_t			*key;
 	LIST_ENTRY(sharedkey)	 list;
+	SLIST_ENTRY(sharedkey)	 used;
+	int			 verified;
 };
 LIST_HEAD(, sharedkey) sharedkeys;
+SLIST_HEAD(sharedkeyhits, sharedkey);
 
 static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
@@ -146,7 +151,8 @@ static int	do_printkey(int, char **);
 static int	 configure_params(int, const char *, const char *,
 				  struct params *);
 static void	 eliminate_cores(void);
-static bits_t	*getkey(const char *, struct keygen *, size_t);
+static bits_t	*getkey(const char *, struct keygen *, size_t,
+		     struct sharedkeyhits *);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, size_t);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, size_t, int);
 #ifdef HAVE_ARGON2
@@ -429,7 +435,8 @@ getsubkey(int alg, bits_t *key, bits_t *info, size_t subkeylen)
 }
 
 static bits_t *
-getkey(const char *dev, struct keygen *kg, size_t len0)
+getkey(const char *dev, struct keygen *kg, size_t len0,
+    struct sharedkeyhits *skh)
 {
 	bits_t	*ret = NULL;
 	bits_t	*tmp;
@@ -502,9 +509,11 @@ getkey(const char *dev, struct keygen *kg, size_t len0)
 			sk->id = string_dup(kg->kg_sharedid);
 			sk->key = tmp;
 			LIST_INSERT_HEAD(&sharedkeys, sk, list);
+			sk->verified = 0;
 		}
 
 derive:		if (kg->kg_sharedid) {
+			assert(sk != NULL);
 			/*
 			 * tmp holds the master key, owned by the
 			 * struct sharedkey record; replace it by the
@@ -517,6 +526,8 @@ derive:		if (kg->kg_sharedid) {
 					bits_free(ret);
 				return NULL;
 			}
+			if (skh)
+				SLIST_INSERT_HEAD(skh, sk, used);
 		}
 		if (ret)
 			ret = bits_xor_d(tmp, ret);
@@ -811,6 +822,12 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		}
 
 	for (;;) {
+		struct sharedkeyhits skh;
+		struct sharedkey *sk, *sk1;
+		int all_verified;
+
+		SLIST_INIT(&skh);
+
 		fd = opendisk_werror(argv[0], cgdname, sizeof(cgdname));
 		if (fd == -1)
 			return -1;
@@ -818,7 +835,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		if (p->key)
 			bits_free(p->key);
 
-		p->key = getkey(argv[1], p->keygen, p->keylen);
+		p->key = getkey(argv[1], p->keygen, p->keylen, &skh);
 		if (!p->key)
 			goto bail_err;
 
@@ -831,11 +848,32 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 			(void)unconfigure_fd(fd);
 			goto bail_err;
 		}
-		if (ret == 0)		/* success */
+		if (ret == 0) {		/* success */
+			SLIST_FOREACH(sk, &skh, used)
+				sk->verified = 1;
 			break;
+		}
 
 		(void)unconfigure_fd(fd);
 		(void)prog_close(fd);
+
+		/*
+		 * If the shared keys were all verified already, assume
+		 * something is wrong with the disk and give up.  If
+		 * not, flush the cache of the ones that have not been
+		 * verified in case we can try again with passphrase
+		 * re-entry.
+		 */
+		all_verified = 1;
+		SLIST_FOREACH_SAFE(sk, &skh, used, sk1) {
+			all_verified &= sk->verified;
+			if (!sk->verified) {
+				LIST_REMOVE(sk, list);
+				free(sk);
+			}
+		}
+		if (all_verified)
+			loop = 0;
 
 		if (!loop) {
 			warnx("verification failed permanently");
@@ -1331,7 +1369,7 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile,
 		return -1;
 	}
 
-	oldp->key = getkey("old file", oldp->keygen, oldp->keylen);
+	oldp->key = getkey("old file", oldp->keygen, oldp->keylen, NULL);
 
 	/* we copy across the non-keygen info, here. */
 
@@ -1383,7 +1421,7 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile,
 			return ret;
 	}
 
-	p->key = getkey("new file", p->keygen, p->keylen);
+	p->key = getkey("new file", p->keygen, p->keylen, NULL);
 
 	kg = keygen_generate(KEYGEN_STOREDKEY);
 	kg->kg_key = bits_xor(p->key, oldp->key);
@@ -1569,7 +1607,7 @@ printkey(const char *dev, const char *paramsfile, const char *fmt, ...)
 		warnx("invalid parameters file \"%s\"", paramsfile);
 		return -1;
 	}
-	p->key = getkey(dev, p->keygen, p->keylen);
+	p->key = getkey(dev, p->keygen, p->keylen, NULL);
 	raw = bits_getbuf(p->key);
 	nbits = bits_len(p->key);
 	assert(nbits <= INT_MAX - 7);
