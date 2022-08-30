@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/06/24 05:14:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/08/30 13:40:37 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@
 CONFIGFILES=    	auths targets
 FILESDIR=       	/etc/iscsi
 FILESMODE_auths=	0600
+FILESMODE_targets=	0644
 
 .endif
 
