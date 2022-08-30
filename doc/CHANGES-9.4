@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.7 2022/08/30 15:38:22 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.8 2022/08/30 18:36:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -97,4 +97,25 @@ external/mit/xorg/server/drivers/xf86-video-wsfb/Makefile 1.6
 
 	wsfb(4): disable broken DGA extension for xf86-video-wsfb.
 	[rin, ticket #1511]
+
+sys/dev/ata/ata.c				1.163
+
+	wd(4): fix verbose attach messages for ATA controllers w/o UltraDMA
+	support.
+	[tsutsui, ticket #1512]
+
+sys/arch/m68k/m68k/m68k_trap.c			1.3
+
+	m68k: make a DEBUG kernel compilable.
+	[tsutsui, ticket #1513]
+
+distrib/amiga/floppies/inst-common/dot.commonutils 1.9
+distrib/amiga/miniroot/dot.profile		1.11
+distrib/atari/floppies/common/dot.profile	1.9
+distrib/utils/script-installer/dot.commonutils	1.8
+distrib/vax/inst-common/dot.commonutils		1.6
+
+	PRs 54835, 54835, 56983: adapt install scripts to the shell
+	being compiled without support for depracated test expressions.
+	[tsutsui, ticket #1514]
 
