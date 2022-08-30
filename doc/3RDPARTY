@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1872 2022/08/27 21:53:38 dholland Exp $
+#	$NetBSD: 3RDPARTY,v 1.1873 2022/08/30 07:29:44 leot Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1413,8 +1413,8 @@ Package:	tradcpp
 Version:	0.5.3
 Current Vers:	0.5.3
 Maintainer:	David A. Holland <dholland@NetBSD.org>
-Archive Site:	https://ftp.netbsd.org/pub/NetBSD/misc/dholland/
-Home Page:	https://www.netbsd.org/~dholland/tradcpp/
+Archive Site:	https://ftp.NetBSD.org/pub/NetBSD/misc/dholland/
+Home Page:	https://www.NetBSD.org/~dholland/tradcpp/
 Mailing List:	tech-toolchain
 Responsible:	dholland
 License:	BSD (2-clause)
