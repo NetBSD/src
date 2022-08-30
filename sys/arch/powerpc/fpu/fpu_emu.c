@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.39 2022/08/30 10:50:56 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.40 2022/08/30 10:53:12 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.39 2022/08/30 10:50:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.40 2022/08/30 10:53:12 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -287,9 +287,9 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	int *a;
 	vaddr_t addr;
 	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr;
-	unsigned int cond;
+	unsigned int bits, cond;
 	struct fpreg *fs;
-	int mtfsf = 0, mtfsb1 = 0;
+	int i, mtfsb1 = 0;
 
 	/* Setup work. */
 	fp = NULL;
@@ -554,16 +554,13 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					sizeof(double));
 				break;
 			case	OPC63_MTFSFI:
-				mtfsf = 1;
 				FPU_EMU_EVCNT_INCR(mtfsfi);
 				DPRINTF(FPE_INSN, ("fpu_execute: MTFSFI\n"));
 				rb >>= 1;
 				rt &= 0x1c; /* Already left-shifted 4 */
-				fe->fe_cx = rb << (28 - rt);
-				mask = 0xf<<(28 - rt);
-				fe->fe_fpscr = (fe->fe_fpscr & ~mask) | 
-					fe->fe_cx;
-/* XXX weird stuff about OX, FX, FEX, and VX should be handled */
+				bits = rb << (28 - rt);
+				mask = 0xf << (28 - rt);
+				fe->fe_fpscr = (fe->fe_fpscr & ~mask) | bits;
 				break;
 			case	OPC63_FNABS:
 				FPU_EMU_EVCNT_INCR(fnabs);
@@ -588,32 +585,21 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					sizeof(fs->fpscr));
 				break;
 			case	OPC63_MTFSF:
-				mtfsf = 1;
 				FPU_EMU_EVCNT_INCR(mtfsf);
 				DPRINTF(FPE_INSN, ("fpu_execute: MTFSF\n"));
-				if ((rt = instr.i_xfl.i_flm) == -1)
+				if ((rt = instr.i_xfl.i_flm) == -1) {
 					mask = -1;
-				else {
+				} else {
 					mask = 0;
 					/* Convert 1 bit -> 4 bits */
-					for (ra = 0; ra < 8; ra ++)
-						if (rt & (1<<ra))
-							mask |= (0xf<<(4*ra));
+					for (i = 0; i < 8; i++)
+						if (rt & (1 << i))
+							mask |=
+							    (0xf << (4 * i));
 				}
 				a = (int *)&fs->fpreg[rb];
-				fe->fe_cx = mask & a[1];
-				fe->fe_fpscr = (fe->fe_fpscr&~mask) | 
-					(fe->fe_cx);
-				/*
-				 * XXX
-				 * Forbidden to set FEX and VX, also for
-				 * mcrfs, mtfsfi, and mtfsb[01].
-				 *
-				 * XXX
-				 * Handle invalid operation differently,
-				 * depending on VE.
-				 */
-/* XXX weird stuff about OX, FX, FEX, and VX should be handled */
+				bits = a[1] & mask;
+				fe->fe_fpscr = (fe->fe_fpscr & ~mask) | bits;
 				break;
 			case	OPC63_FCTID:
 			case	OPC63_FCTIDZ:
@@ -796,7 +782,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	mask = (fsr & FPSR_EX) << (25 - 3);
 	if (fsr & mask)
 		fsr |= FPSCR_FEX;
-	if (mtfsf == 0 && ((fsr ^ fe->fe_fpscr) & FPSR_EX_MSK))
+	if ((fsr ^ fe->fe_fpscr) & FPSR_EX_MSK)
 		fsr |= FPSCR_FX;
 
 	if (cond) {
