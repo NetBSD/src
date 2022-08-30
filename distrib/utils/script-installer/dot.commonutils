@@ -1,4 +1,4 @@
-# $NetBSD: dot.commonutils,v 1.7 2003/07/26 17:07:37 salo Exp $
+# $NetBSD: dot.commonutils,v 1.7.102.1 2022/08/30 18:35:19 martin Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -49,7 +49,7 @@ GUNZIP=/usr/bin/gunzip
 Set_tmp_dir()
 {
 	def_tmp_dir=`pwd`
-	if [ "$def_tmp_dir" = "/" -o "$def_tmp_dir" = "/mnt" ]; then
+	if [ "$def_tmp_dir" = "/" ] || [ "$def_tmp_dir" = "/mnt" ]; then
 		def_tmp_dir="$dest_dir"usr/distrib
 	fi
 
@@ -81,7 +81,7 @@ Load_fd()
 #	echo "Don't forget that you can't load from the drive you booted from."
 	echo ""
 
-	while [ "$which" != "0" -a "$which" != "1" ]; do
+	while [ "$which" != "0" ] && [ "$which" != "1" ]; do
 		echo -n	"Read from which floppy drive ('0' or '1')? [0] "
 		read which
 		if [ "X$which" = "X" ]; then
