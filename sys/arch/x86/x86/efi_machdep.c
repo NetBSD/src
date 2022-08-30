@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.22 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.1 2022/08/30 11:03:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.22 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2022/08/30 11:03:36 riastradh Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
