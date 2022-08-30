@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.88 2022/08/30 11:44:15 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.89 2022/08/30 11:45:28 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,7 +151,7 @@ trim_name(char *name, size_t len, const char *src)
 	size_t i, last = ~0;
 
 	for (i = 0; i < len && src[i]; i++) {
-		if (isspace((unsigned int)src[i]))
+		if (isspace((unsigned char)src[i]))
 			last = i;
 		else
 			last = ~0;
