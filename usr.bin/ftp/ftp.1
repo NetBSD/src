@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.146 2021/04/25 09:09:55 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.147 2022/08/30 08:51:28 christos Exp $
 .\"
 .\" Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd April 25, 2021
+.Dd August 29, 2022
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -2320,6 +2320,8 @@ file, if one exists.
 An alternate location of the
 .Pa .netrc
 file.
+.It Ev NO_CERT_VERIFY
+Don't verify SSL certificates.
 .It Ev PAGER
 Used by various commands to display files.
 Defaults to
