@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.8 2022/08/28 22:22:41 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.9 2022/08/30 11:00:49 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.8 2022/08/28 22:22:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.9 2022/08/30 11:00:49 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ zero:		res[1] = 0;
 	if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(2))
 		exp++;
 	if (exp >= DBL_EXP_INFNAN) {
-		fe->fe_cx |= FPSCR_OX | FPSCR_UX;
+		fe->fe_cx |= FPSCR_OX;
 		if (toinf(fe, sign)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
