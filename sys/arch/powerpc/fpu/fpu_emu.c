@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.36 2022/07/27 04:17:02 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.37 2022/08/30 10:43:38 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.36 2022/07/27 04:17:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.37 2022/08/30 10:43:38 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -583,8 +583,6 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			case	OPC63_MFFS:
 				FPU_EMU_EVCNT_INCR(mffs);
 				DPRINTF(FPE_INSN, ("fpu_execute: MFFS\n"));
-				/* XXX FEX is not sticky */
-				fs->fpscr &= ~FPSCR_FEX;
 				memcpy(&fs->fpreg[rt], &fs->fpscr,
 					sizeof(fs->fpscr));
 				break;
