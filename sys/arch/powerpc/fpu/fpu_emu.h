@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.5 2022/08/30 11:05:59 rin Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.6 2022/08/30 11:09:34 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,10 +136,12 @@ struct fpn {
 /*
  * FPU data types.
  */
-#define	FTYPE_LNG	-1	/* data = 64-bit signed long integer */
-#define	FTYPE_INT	0	/* data = 32-bit signed integer */
-#define	FTYPE_SNG	1	/* data = 32-bit float */
-#define	FTYPE_DBL	2	/* data = 64-bit double */
+#define	FTYPE_INT	0x0	/* data = 32-bit signed integer */
+#define	FTYPE_LNG	0x1	/* data = 64-bit signed long integer */
+#define	FTYPE_SNG	0x2	/* data = 32-bit float */
+#define	FTYPE_DBL	0x4	/* data = 64-bit double */
+#define	FTYPE_RD_RZ	0x8
+#define	FTYPE_RD_MASK	(FTYPE_RD_RZ)
 
 /*
  * Emulator state.

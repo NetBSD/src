@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.42 2022/08/30 10:59:43 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.43 2022/08/30 11:09:34 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.42 2022/08/30 10:59:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.43 2022/08/30 11:09:34 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -504,6 +504,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				DPRINTF(FPE_INSN, ("fpu_execute: FCTIW\n"));
 				fpu_explode(fe, fp = &fe->fe_f1, type, rb);
 				type = FTYPE_INT;
+				if (instr.i_x.i_xo == OPC63_FCTIWZ)
+					type |= FTYPE_RD_RZ;
 				break;
 			case	OPC63_FCMPO:
 				FPU_EMU_EVCNT_INCR(fcmpo);
@@ -614,6 +616,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				DPRINTF(FPE_INSN, ("fpu_execute: FCTID\n"));
 				fpu_explode(fe, fp = &fe->fe_f1, type, rb);
 				type = FTYPE_LNG;
+				if (instr.i_x.i_xo == OPC63_FCTIDZ)
+					type |= FTYPE_RD_RZ;
 				break;
 			case	OPC63_FCFID:
 				FPU_EMU_EVCNT_INCR(fcfid);

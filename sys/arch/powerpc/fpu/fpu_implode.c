@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.9 2022/08/30 11:00:49 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.10 2022/08/30 11:09:34 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.9 2022/08/30 11:00:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.10 2022/08/30 11:09:34 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -191,15 +191,12 @@ toinf(struct fpemu *fe, int sign)
 
 /*
  * fpn -> int (int value returned as return value).
- *
- * N.B.: this conversion always rounds towards zero (this is a peculiarity
- * of the SPARC instruction set).
  */
 u_int
-fpu_ftoi(struct fpemu *fe, struct fpn *fp)
+fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	u_int i;
-	int sign, exp;
+	int sign, exp, g, rs;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -221,9 +218,29 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 		if ((exp = fp->fp_exp) >= 32)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+		if (fpu_shr(fp, FP_NMANT - 32 - 1 - exp) != 0)
 			fe->fe_cx |= FPSCR_UX;
-		i = fp->fp_mant[3];
+		i = fp->fp_mant[2];
+
+		g  =  fp->fp_mant[3] & 0x80000000;
+		rs = (fp->fp_mant[3] & 0x7fffffff) | fp->fp_sticky;
+		switch (rn) {
+		case FSR_RD_RN:
+			if (g && (rs | (i & 1)))
+				i++;
+			break;
+		case FSR_RD_RZ:
+			break;
+		case FSR_RD_RP:
+			if (!sign && (g | rs))
+				i++;
+			break;
+		case FSR_RD_RM:
+			if (sign && (g | rs))
+				i++;
+			break;
+		}
+
 		if (i >= ((u_int)0x80000000 + sign))
 			break;
 		return (sign ? -i : i);
@@ -242,17 +259,16 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp)
  * N.B.: this conversion always rounds towards zero (this is a peculiarity
  * of the SPARC instruction set).
  */
-u_int
-fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
+uint64_t
+fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	uint64_t i;
-	int sign, exp;
+	int sign, exp, g, rs;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
 
 	case FPC_ZERO:
-		res[1] = 0;
 		return (0);
 
 	case FPC_NUM:
@@ -269,9 +285,29 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 		if ((exp = fp->fp_exp) >= 64)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+		if (fpu_shr(fp, FP_NMANT - 32 - 1 - exp) != 0)
 			fe->fe_cx |= FPSCR_UX;
-		i = ((uint64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		i = ((uint64_t)fp->fp_mant[1] << 32) | fp->fp_mant[2];
+
+		g  =  fp->fp_mant[3] & 0x80000000;
+		rs = (fp->fp_mant[3] & 0x7fffffff) | fp->fp_sticky;
+		switch (rn) {
+		case FSR_RD_RN:
+			if (g && (rs | (i & 1)))
+				i++;
+			break;
+		case FSR_RD_RZ:
+			break;
+		case FSR_RD_RP:
+			if (!sign && (g | rs))
+				i++;
+			break;
+		case FSR_RD_RM:
+			if (sign && (g | rs))
+				i++;
+			break;
+		}
+
 		if (i >= ((uint64_t)0x8000000000000000LL + sign))
 			break;
 		return (sign ? -i : i);
@@ -427,18 +463,25 @@ done:
 void
 fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 {
+	int rn;
+
+	if (type & FTYPE_RD_RZ)
+		rn = FSR_RD_RZ;
+	else
+		rn = fe->fe_fpscr & FPSCR_RN;
+	type &= ~FTYPE_RD_MASK;
 
 	switch (type) {
 
 	case FTYPE_LNG:
-		space[0] = fpu_ftox(fe, fp, space);
+		*(uint64_t *)space = fpu_ftox(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: long %x %x\n",
 			space[0], space[1]));
 		break;
 
 	case FTYPE_INT:
 		space[0] = 0;
-		space[1] = fpu_ftoi(fe, fp);
+		space[1] = fpu_ftoi(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: int %x\n",
 			space[1]));
 		break;
