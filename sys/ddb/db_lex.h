@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.16 2020/07/29 23:29:42 uwe Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.17 2022/08/30 22:37:03 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,6 +34,7 @@
  */
 void	db_flush_lex(void);
 char   *db_num_to_str(db_expr_t);
+void	db_num_to_strbuf(db_expr_t, char *, size_t);
 int	db_read_line(void);
 void	db_set_line(const char *, const char *);
 void	db_get_line(const char **, const char **);
