@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.26 2020/07/29 23:29:42 uwe Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.27 2022/08/30 22:37:03 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.26 2020/07/29 23:29:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.27 2022/08/30 22:37:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,14 +172,21 @@ db_num_to_str(db_expr_t val)
 	 */
 	static char buf[25];
 
-	if (db_radix == 16)
-		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "x", val);
-	else if (db_radix == 8)
-		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "o", val);
-	else
-		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "u", val);
+	db_num_to_strbuf(val, buf, sizeof(buf));
 
 	return (buf);
+}
+
+void
+db_num_to_strbuf(db_expr_t val, char *buf, size_t len)
+{
+
+	if (db_radix == 16)
+		snprintf(buf, len, "%" DDB_EXPR_FMT "x", val);
+	else if (db_radix == 8)
+		snprintf(buf, len, "%" DDB_EXPR_FMT "o", val);
+	else
+		snprintf(buf, len, "%" DDB_EXPR_FMT "u", val);
 }
 
 void
