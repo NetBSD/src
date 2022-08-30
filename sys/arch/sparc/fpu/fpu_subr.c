@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.7 2022/08/28 22:09:26 rin Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.8 2022/08/30 01:48:09 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.7 2022/08/28 22:09:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.8 2022/08/30 01:48:09 rin Exp $");
 
 #include <sys/types.h>
 #ifdef DIAGNOSTIC
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.7 2022/08/28 22:09:26 rin Exp $");
  * sticky field is ignored anyway.
  */
 int
-fpu_shr(struct fpn *fp, register int rsh)
+fpu_shr(struct fpn *fp, int rsh)
 {
 	u_int m0, m1, m2, m3, s;
 	int lsh;
