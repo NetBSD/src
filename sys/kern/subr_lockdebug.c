@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.80 2021/03/02 01:20:35 rin Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.81 2022/08/30 22:38:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.80 2021/03/02 01:20:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.81 2022/08/30 22:38:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -712,6 +712,7 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_access.h>
+#include <ddb/db_sym.h>
 #endif
 
 /*
@@ -725,12 +726,34 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
 	lockops_t *lo = ld->ld_lockops;
+	char locksym[128], initsym[128], lockedsym[128], unlockedsym[128];
+
+#ifdef DDB
+	db_symstr(locksym, sizeof(locksym), (db_expr_t)ld->ld_lock,
+	    DB_STGY_ANY);
+	db_symstr(initsym, sizeof(initsym), (db_expr_t)ld->ld_initaddr,
+	    DB_STGY_PROC);
+	db_symstr(lockedsym, sizeof(lockedsym), (db_expr_t)ld->ld_locked,
+	    DB_STGY_PROC);
+	db_symstr(unlockedsym, sizeof(unlockedsym), (db_expr_t)ld->ld_unlocked,
+	    DB_STGY_PROC);
+#else
+	snprintf(locksym, sizeof(locksym), "%#018lx",
+	    (unsigned long)ld->ld_lock);
+	snprintf(initsym, sizeof(initsym), "%#018lx",
+	    (unsigned long)ld->ld_initaddr);
+	snprintf(lockedsym, sizeof(lockedsym), "%#018lx",
+	    (unsigned long)ld->ld_locked);
+	snprintf(unlockedsym, sizeof(unlockedsym), "%#018lx",
+	    (unsigned long)ld->ld_unlocked);
+#endif
 
 	(*pr)(
-	    "lock address : %#018lx type     : %18s\n"
-	    "initialized  : %#018lx",
-	    (long)ld->ld_lock, (sleeper ? "sleep/adaptive" : "spin"),
-	    (long)ld->ld_initaddr);
+	    "lock address : %s\n"
+	    "type         : %s\n"
+	    "initialized  : %s",
+	    locksym, (sleeper ? "sleep/adaptive" : "spin"),
+	    initsym);
 
 #ifndef _KERNEL
 	lockops_t los;
@@ -742,15 +765,16 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 	    "shares wanted: %18u exclusive: %18u\n"
 	    "relevant cpu : %18u last held: %18u\n"
 	    "relevant lwp : %#018lx last held: %#018lx\n"
-	    "last locked%c : %#018lx unlocked%c: %#018lx\n",
+	    "last locked%c : %s\n"
+	    "unlocked%c    : %s\n",
 	    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 	    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
 	    (unsigned)cpu_index(l->l_cpu), (unsigned)ld->ld_cpu,
 	    (long)l, (long)ld->ld_lwp,
 	    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
-	    (long)ld->ld_locked,
+	    lockedsym,
 	    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
-	    (long)ld->ld_unlocked);
+	    unlockedsym);
 
 #ifdef _KERNEL
 	if (lo->lo_dump != NULL)
@@ -827,7 +851,14 @@ lockdebug_lock_print(void *addr,
 		    addr);
 	}
 #else
-	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
+	char sym[128];
+	uintptr_t word;
+
+	(*pr)("WARNING: lock print is unreliable without LOCKDEBUG\n");
+	db_symstr(sym, sizeof(sym), (db_expr_t)addr, DB_STGY_ANY);
+	db_read_bytes((db_addr_t)addr, sizeof(word), &word);
+	(*pr)("%s: possible owner: %p, bits: 0x%x\n", sym,
+	    (void *)(word & ~(uintptr_t)ALIGNBYTES), word & ALIGNBYTES);
 #endif	/* LOCKDEBUG */
 }
 
@@ -837,11 +868,12 @@ static void
 lockdebug_show_one(lwp_t *l, lockdebug_t *ld, int i,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
-	const char *sym;
+	char sym[128];
 
-#ifdef _KERNEL
-	ksyms_getname(NULL, &sym, (vaddr_t)ld->ld_initaddr,
-	    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+#ifdef DDB
+	db_symstr(sym, sizeof(sym), (db_expr_t)ld->ld_initaddr, DB_STGY_PROC);
+#else
+	snprintf(sym, sizeof(sym), "%p", (void *)ld->ld_initaddr);
 #endif
 	(*pr)("* Lock %d (initialized at %s)\n", i++, sym);
 	lockdebug_dump(l, ld, pr);
@@ -1040,11 +1072,19 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	if (atomic_inc_uint_nv(&ld_panic) > 1)
 		return;
 
+	char locksym[128];
+
+#ifdef DDB
+	db_symstr(locksym, sizeof(locksym), (db_expr_t)lock, DB_STGY_ANY);
+#else
+	snprintf(locksym, sizeof(locksym), "%#018lx", (unsigned long)lock);
+#endif
+
 	printf("%s error: %s,%zu: %s\n\n"
-	    "lock address : %#018lx\n"
+	    "lock address : %s\n"
 	    "current cpu  : %18d\n"
 	    "current lwp  : %#018lx\n",
-	    ops->lo_name, func, line, msg, (long)lock,
+	    ops->lo_name, func, line, msg, locksym,
 	    (int)cpu_index(curcpu()), (long)curlwp);
 	(*ops->lo_dump)(lock, printf);
 	printf("\n");
