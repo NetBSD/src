@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.4 2012/07/23 04:13:06 matt Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.5 2022/08/30 11:05:59 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,6 +132,14 @@ struct fpn {
 	struct fpn *swap; \
 	swap = (x), (x) = (y), (y) = swap; \
 }
+
+/*
+ * FPU data types.
+ */
+#define	FTYPE_LNG	-1	/* data = 64-bit signed long integer */
+#define	FTYPE_INT	0	/* data = 32-bit signed integer */
+#define	FTYPE_SNG	1	/* data = 32-bit float */
+#define	FTYPE_DBL	2	/* data = 64-bit double */
 
 /*
  * Emulator state.

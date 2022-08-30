@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.11 2022/05/30 13:58:51 rin Exp $ */
+/*	$NetBSD: instr.h,v 1.12 2022/08/30 11:05:59 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -425,14 +425,6 @@ union instr {
  * booke doesn't have lwsync even though gcc emits it so we have to emulate it.
  */
 #define	OPC_LWSYNC		0x7c2004ac
-
-/*
- * FPU data types.
- */
-#define FTYPE_LNG	-1	/* data = 64-bit signed long integer */		
-#define	FTYPE_INT	0	/* data = 32-bit signed integer */
-#define	FTYPE_SNG	1	/* data = 32-bit float */
-#define	FTYPE_DBL	2	/* data = 64-bit double */
 
 /*
  * FPCSR rounding modes.
