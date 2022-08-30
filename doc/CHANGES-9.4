@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.6 2022/08/29 16:22:05 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.7 2022/08/30 15:38:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -92,4 +92,9 @@ external/mit/xorg/bin/xdm/Makefile.xdm		1.11
 	PR 54851: xdm(8): fix the man page generation, and include
 	"sbin" directories (and games) in DEF_USER_PATH.
 	[nia, ticket #1510]
+
+external/mit/xorg/server/drivers/xf86-video-wsfb/Makefile 1.6
+
+	wsfb(4): disable broken DGA extension for xf86-video-wsfb.
+	[rin, ticket #1511]
 
