@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.64 2022/08/20 11:31:38 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.65 2022/08/30 01:13:10 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.64 2022/08/20 11:31:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.65 2022/08/30 01:13:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1867,7 +1867,7 @@ static struct nvme_ccb *
 nvme_ccb_get_bio(struct nvme_softc *sc, struct buf *bp,
     struct nvme_queue **selq)
 {
-	u_int cpuindex = cpu_index(bp->b_ci);
+	u_int cpuindex = cpu_index(bp->b_ci ? bp->b_ci : curcpu());
 
 	/*
 	 * Find a queue with available ccbs, preferring the originating
