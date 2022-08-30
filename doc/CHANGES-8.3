@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.144 2022/08/29 16:15:42 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.145 2022/08/30 15:40:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2750,4 +2750,9 @@ libexec/telnetd/telnetd.c			1.58 (patch)
 
 	telnetd(8): fix a crash accessing the slc table before initialization.
 	[dholland, ticket #1757]
+
+external/mit/xorg/server/drivers/xf86-video-wsfb/Makefile 1.6
+
+	wsfb(4): disable broken DGA extension for xf86-video-wsfb.
+	[rin, ticket #1758]
 
