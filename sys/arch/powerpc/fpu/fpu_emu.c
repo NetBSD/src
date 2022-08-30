@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.37 2022/08/30 10:43:38 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.38 2022/08/30 10:48:31 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.37 2022/08/30 10:43:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.38 2022/08/30 10:48:31 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -783,12 +783,6 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	cx = fe->fe_cx;
 	fsr = fe->fe_fpscr & ~(FPSCR_FEX|FPSCR_VX);
 	if (cx != 0) {
-		if (cx & FPSR_INV)
-			cx |= FPSCR_VX;
-		mask = fsr & FPSR_EX;
-		mask <<= (25-3);
-		if (cx & mask) 
-			fsr |= FPSCR_FEX;
 		if (cx & FPSCR_FPRF) {
 			/* Need to replace CC */
 			fsr &= ~FPSCR_FPRF;
@@ -798,6 +792,9 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	}
 	if (fsr & FPSR_INV)
 		fsr |= FPSCR_VX;
+	mask = (fsr & FPSR_EX) << (25 - 3);
+	if (fsr & mask)
+		fsr |= FPSCR_FEX;
 	if (mtfsf == 0 && ((fsr ^ fe->fe_fpscr) & FPSR_EX_MSK))
 		fsr |= FPSCR_FX;
 
