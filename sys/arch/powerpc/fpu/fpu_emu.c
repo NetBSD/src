@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.41 2022/08/30 10:55:06 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.42 2022/08/30 10:59:43 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.41 2022/08/30 10:55:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.42 2022/08/30 10:59:43 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -670,9 +670,13 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				FPU_EMU_EVCNT_INCR(fsel);
 				DPRINTF(FPE_INSN, ("fpu_execute: FSEL\n"));
 				a = (int *)&fe->fe_fpstate->fpreg[ra];
-				if ((*a & 0x80000000) && (*a & 0x7fffffff)) 
-					/* fra < 0 */
+				if ((( a[0] & 0x80000000) &&
+				     ((a[0] & 0x7fffffff) | a[1])) ||
+				    (( a[0] & 0x7ff00000) &&
+				     ((a[0] & 0x000fffff) | a[1]))) {
+					/* negative/NaN or NaN */
 					rc = rb;
+				}
 				DPRINTF(FPE_INSN, ("f%d => f%d\n", rc, rt));
 				memcpy(&fs->fpreg[rt], &fs->fpreg[rc],
 					sizeof(double));
