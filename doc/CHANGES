@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2902 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2903 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -654,6 +654,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		resource assignment.  [jmcneill 20220813]
 	bge(4): Allow the driver to work without the big kernel lock
 		(support for NET_MPSAFE).  [skrll 20220814]
+	mac68k: Add support for synchronous transfer to esp(4) on
+		Quadra/Centris AV models.  [rin 20220815]
 	tzcode: Updated to 2022c. [christos 20220816]
 	tzdata: updated to 2022c (using the 2022bgtz fork)
 		(tzdata2022b==tzdata2022c)  [kre 20220817]
