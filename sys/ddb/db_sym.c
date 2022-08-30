@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.70 2022/08/30 22:37:36 riastradh Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.71 2022/08/30 22:38:01 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.70 2022/08/30 22:37:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.71 2022/08/30 22:38:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.70 2022/08/30 22:37:36 riastradh Exp $"
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/ksyms.h>
+#include <sys/pserialize.h>
 
 #include <ddb/ddb.h>
 
@@ -344,13 +345,14 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 	}
 #endif
 #ifdef _KERNEL
+	const int s = pserialize_read_enter();
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval_unlocked(mod, name, NULL, &val, KSYMS_ANY);
 		if (strategy & KSYMS_PROC && val == off) {
 			if (ksyms_getname(&mod, &name, (vaddr_t)off - 1,
 					  strategy|KSYMS_CLOSEST) != 0)
-				goto out;
+				goto hex_fallback;
 			(void)ksyms_getval_unlocked(mod, name, NULL, &val, KSYMS_ANY);
 		}
 		if (((off - val) < db_maxoff) && val) {
@@ -368,11 +370,12 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 					    " [%s:%d]", filename, linenum);
 			}
 #endif
-			return;
+			goto out;
 		}
 	}
-out:
+hex_fallback:
 	db_num_to_strbuf(off, buf, buflen);
+out:	pserialize_read_exit(s);
 #endif
 }
 
