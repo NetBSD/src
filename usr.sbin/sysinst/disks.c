@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.87 2022/08/29 17:35:15 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.88 2022/08/30 11:44:15 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,13 +148,13 @@ tmpfs_on_var_shm(void)
 static void
 trim_name(char *name, size_t len, const char *src)
 {
-	size_t i, last = ~0U;
+	size_t i, last = ~0;
 
 	for (i = 0; i < len && src[i]; i++) {
 		if (isspace((unsigned int)src[i]))
 			last = i;
 		else
-			last = ~0U;
+			last = ~0;
 		name[i] = src[i];
 	}
 	if (i >= len)
