@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.10 2021/06/03 10:23:33 lukem Exp $	*/
+/*	$NetBSD: ssl.c,v 1.11 2022/08/30 08:51:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.10 2021/06/03 10:23:33 lukem Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.11 2022/08/30 08:51:28 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -587,7 +587,9 @@ fetch_start_ssl(int sock, const char *servername)
 {
 	SSL *ssl;
 	SSL_CTX *ctx;
+	X509_VERIFY_PARAM *param;
 	int ret, ssl_err;
+	int verify = getenv("NO_CERT_VERIFY") == NULL;
 
 	/* Init the SSL library and context */
 	if (!SSL_library_init()){
@@ -599,6 +601,10 @@ fetch_start_ssl(int sock, const char *servername)
 
 	ctx = SSL_CTX_new(SSLv23_client_method());
 	SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+	if (verify) {
+		SSL_CTX_set_default_verify_paths(ctx);
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	}
 
 	ssl = SSL_new(ctx);
 	if (ssl == NULL){
@@ -606,6 +612,19 @@ fetch_start_ssl(int sock, const char *servername)
 		SSL_CTX_free(ctx);
 		return NULL;
 	}
+
+	if (verify) {
+		param = SSL_get0_param(ssl);
+		if (!X509_VERIFY_PARAM_set1_host(param, servername,
+		    strlen(servername))) {
+			fprintf(ttyout, "SSL verification setup failed\n");
+			return NULL;
+		}
+
+		/* Enable peer verification, (using the default callback) */
+		SSL_set_verify(ssl, SSL_VERIFY_PEER, NULL);
+	}
+
 	SSL_set_fd(ssl, sock);
 	if (!SSL_set_tlsext_host_name(ssl, __UNCONST(servername))) {
 		fprintf(ttyout, "SSL hostname setting failed\n");
