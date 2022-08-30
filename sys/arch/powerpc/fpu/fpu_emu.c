@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.40 2022/08/30 10:53:12 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.41 2022/08/30 10:55:06 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.40 2022/08/30 10:53:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.41 2022/08/30 10:55:06 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -150,6 +150,14 @@ FPU_EMU_EVCNT_DECL(fnmadd);
 #define	FPSR_INV	(FPSCR_VXSNAN|FPSCR_VXISI|FPSCR_VXIDI|		\
 			FPSCR_VXZDZ|FPSCR_VXIMZ|FPSCR_VXVC|FPSCR_VXSOFT|\
 			FPSCR_VXSQRT|FPSCR_VXCVI)
+#define	MCRFS_MASK							\
+    (									\
+	FPSCR_FX     | FPSCR_OX     |					\
+	FPSCR_UX     | FPSCR_ZX     | FPSCR_XX    | FPSCR_VXSNAN |	\
+	FPSCR_VXISI  | FPSCR_VXIDI  | FPSCR_VXZDZ | FPSCR_VXIMZ  |	\
+	FPSCR_VXVC   |							\
+	FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI			\
+    )
 
 
 int fpe_debug = 0;
@@ -532,14 +540,13 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				rt &= 0x1c;
 				ra &= 0x1c;
 				/* Extract the bits we want */
-				mask = (fe->fe_fpscr >> (28 - ra)) & 0xf;
+				bits = (fe->fe_fpscr >> (28 - ra)) & 0xf;
 				/* Clear the bits we copied. */
-				fe->fe_cx =
-					(FPSR_EX_MSK | (0xf << (28 - ra)));
-				fe->fe_fpscr &= fe->fe_cx;
+				mask = (0xf << (28 - ra)) & MCRFS_MASK;
+				fe->fe_fpscr &= ~mask;
 				/* Now shove them in the right part of cr */
 				tf->tf_cr &= ~(0xf << (28 - rt));
-				tf->tf_cr |= (mask << (28 - rt));
+				tf->tf_cr |= bits << (28 - rt);
 				break;
 			case	OPC63_MTFSB0:
 				FPU_EMU_EVCNT_INCR(mtfsb0);
