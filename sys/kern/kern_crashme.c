@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.6 2022/08/16 10:24:17 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.7 2022/08/30 22:38:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -66,6 +66,7 @@ static int crashme_ddb(int);
 #ifdef LOCKDEBUG
 static int crashme_kernel_lock_spinout(int);
 #endif
+static int crashme_mutex_recursion(int);
 
 #define CMNODE(name, lname, func)	\
     {					\
@@ -85,6 +86,8 @@ static crashme_node nodes[] = {
     CMNODE("kernel_lock_spinout", "infinite kernel lock",
 	crashme_kernel_lock_spinout),
 #endif
+    CMNODE("mutex_recursion", "enter the same mutex twice",
+	crashme_mutex_recursion),
 };
 static crashme_node *first_node;
 static kmutex_t crashme_lock;
@@ -290,3 +293,36 @@ crashme_kernel_lock_spinout(int flags)
 	return 0;
 }
 #endif
+
+static int
+crashme_mutex_recursion(int flags)
+{
+	kmutex_t crashme_spinlock;
+
+	switch (flags) {
+	case 0:
+		return 0;
+	case 1:
+	default:
+		/*
+		 * printf makes the return address of the first
+		 * mutex_enter call a little more obvious, so the line
+		 * number of the _return address_ for the first
+		 * mutex_enter doesn't confusingly point at the second
+		 * mutex_enter.
+		 */
+		mutex_enter(&crashme_lock);
+		printf("%s: locked once\n", __func__);
+		mutex_enter(&crashme_lock);
+		printf("%s: locked twice\n", __func__);
+		return -1;
+	case 2:
+		mutex_init(&crashme_spinlock, MUTEX_DEFAULT, IPL_VM);
+		printf("%s: initialized\n", __func__);
+		mutex_enter(&crashme_spinlock);
+		printf("%s: locked once\n", __func__);
+		mutex_enter(&crashme_spinlock);
+		printf("%s: locked twice\n", __func__);
+		return -1;
+	}
+}
