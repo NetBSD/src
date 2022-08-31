@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.62 2022/08/31 12:51:56 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.63 2022/08/31 14:00:44 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.62 2022/08/31 12:51:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.63 2022/08/31 14:00:44 bouyer Exp $");
+
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
