@@ -1,4 +1,4 @@
-/* $NetBSD: xenmem.c,v 1.1 2022/08/31 12:51:56 bouyer Exp $ */
+/* $NetBSD: xenmem.c,v 1.2 2022/08/31 12:53:27 bouyer Exp $ */
 /*
  * Copyright (c) 2022 Manuel Bouyer.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.1 2022/08/31 12:51:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.2 2022/08/31 12:53:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,35 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.1 2022/08/31 12:51:56 bouyer Exp $");
  * we reuse the iomem_ex
  */
 
-#if 0 /* def XENPV */
-extern paddr_t pmap_pa_start; /* PA of first physical page for this domain */
-extern paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
-
-static long xenmem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
-struct  extent *xenmem_ex;
-#define XENMEM_EX xenmem_ex
-#else /* !XENPV */
 extern struct  extent *iomem_ex;
 #define XENMEM_EX iomem_ex
-#endif /* XENPV */
-
-#ifdef XENPV
-void
-xenmem_pa_register(paddr_t pa_start, paddr_t pa_end)
-{
-	int error;
-	uvm_page_physload(atop(pa_start), atop(pa_end),
-	    atop(pa_start), atop(pa_end), VM_FREELIST_DEFAULT);
-	xenmem_ex = extent_create("xenmem", 0x0, MAXIOMEM,
-	    (void *)xenmem_ex_storage, sizeof(xenmem_ex_storage),
-		EX_NOCOALESCE|EX_NOWAIT);
-	
-	error = extent_alloc_region(xenmem_ex, 0, pa_end, EX_NOWAIT);
-	if (error)
-		panic("xenmem_ex: can't reserve allocated RAM");
-
-}
-#endif /* XENPV */
 
 paddr_t
 xenmem_alloc_pa(u_long size, u_long align, bool waitok)
