@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.81 2022/08/30 22:38:17 riastradh Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.82 2022/08/31 05:24:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.81 2022/08/30 22:38:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.82 2022/08/31 05:24:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -55,6 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.81 2022/08/30 22:38:17 riastrad
 #include <sys/kcov.h>
 
 #include <machine/lock.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#endif
 
 unsigned int		ld_panic;
 
@@ -708,13 +715,6 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 }
 #endif /* _KERNEL */
 
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
-#endif
-
 /*
  * lockdebug_dump:
  *
@@ -856,8 +856,8 @@ lockdebug_lock_print(void *addr,
 
 	(*pr)("WARNING: lock print is unreliable without LOCKDEBUG\n");
 	db_symstr(sym, sizeof(sym), (db_expr_t)addr, DB_STGY_ANY);
-	db_read_bytes((db_addr_t)addr, sizeof(word), &word);
-	(*pr)("%s: possible owner: %p, bits: 0x%x\n", sym,
+	db_read_bytes((db_addr_t)addr, sizeof(word), (char *)&word);
+	(*pr)("%s: possible owner: %p, bits: 0x%" PRIxPTR "\n", sym,
 	    (void *)(word & ~(uintptr_t)ALIGNBYTES), word & ALIGNBYTES);
 #endif	/* LOCKDEBUG */
 }
