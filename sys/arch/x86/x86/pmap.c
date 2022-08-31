@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.420 2022/08/20 23:49:31 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.421 2022/08/31 12:51:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.420 2022/08/20 23:49:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.421 2022/08/31 12:51:56 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5229,6 +5229,9 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 {
 	struct pmap_data_gnt *pgnt;
 	pt_entry_t *ptes, opte;
+#ifndef XENPV
+	pt_entry_t npte;
+#endif
 	pt_entry_t *ptep;
 	pd_entry_t * const *pdes;
 	struct vm_page *ptp;
@@ -5305,8 +5308,13 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	idx = (va - pgnt->pd_gnt_sva) / PAGE_SIZE;
 	op = &pgnt->pd_gnt_ops[idx];
 
-#ifdef XENPV /* XXX */
+#ifdef XENPV
+	KASSERT(op->flags & GNTMAP_contains_pte);
 	op->host_addr = xpmap_ptetomach(ptep);
+#else
+	KASSERT((op->flags & GNTMAP_contains_pte) == 0);
+	KASSERT(op->flags != 0);
+	KASSERT(op->host_addr != 0);
 #endif
 	op->dev_bus_addr = 0;
 	op->status = GNTST_general_error;
@@ -5328,10 +5336,18 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	if (__predict_false(op->status != GNTST_okay)) {
 		printf("%s: GNTTABOP_map_grant_ref status: %d\n",
 		    __func__, op->status);
-		if (have_oldpa) {
+		if (have_oldpa) { /* XXX did the pte really change if XENPV  ?*/
 			ptp->wire_count--;
 		}
 	} else {
+#ifndef XENPV
+		npte = op->host_addr | pmap_pg_nx | PTE_U | PTE_P;
+		if ((op->flags & GNTMAP_readonly) == 0)
+			npte |= PTE_W;
+		do {
+			opte = *ptep;
+		} while (pmap_pte_cas(ptep, opte, npte) != opte);
+#endif
 		pgnt->pd_gnt_refs++;
 		if (!have_oldpa) {
 			ptp->wire_count++;
@@ -5417,7 +5433,6 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		idx = (va - pgnt->pd_gnt_sva) / PAGE_SIZE;
 		op = &pgnt->pd_gnt_ops[idx];
 		KASSERT(lvl == 1);
-		KASSERT(op->status == GNTST_okay);
 
 		/* Get PTP if non-kernel mapping. */
 		ptp = pmap_find_ptp(pmap, va, 1);
@@ -5426,11 +5441,14 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 		if (op->status == GNTST_okay)  {
 			KASSERT(pmap_valid_entry(ptes[pl1_i(va)]));
+#ifdef XENPV 
+			unmap_op.host_addr = xpmap_ptetomach(&ptes[pl1_i(va)]);
+#else
+			unmap_op.host_addr = op->host_addr;
+			pmap_pte_testset(&ptes[pl1_i(va)], 0);
+#endif
 			unmap_op.handle = op->handle;
 			unmap_op.dev_bus_addr = 0;
-#ifdef XENPV /* XXX */
-			unmap_op.host_addr = xpmap_ptetomach(&ptes[pl1_i(va)]);
-#endif
 			ret = HYPERVISOR_grant_table_op(
 			    GNTTABOP_unmap_grant_ref, &unmap_op, 1);
 			if (ret) {
@@ -5440,9 +5458,9 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 			ptp->wire_count--;
 			pgnt->pd_gnt_refs--;
-			if (pgnt->pd_gnt_refs == 0) {
-				pmap_free_gnt(pmap, pgnt);
-			}
+		}
+		if (pgnt->pd_gnt_refs == 0) {
+			pmap_free_gnt(pmap, pgnt);
 		}
 		/*
 		 * if mapping removed and the PTP is no longer
