@@ -1,4 +1,4 @@
-.\"	$NetBSD: reallocarr.3,v 1.5 2022/08/31 12:10:05 riastradh Exp $
+.\"	$NetBSD: reallocarr.3,v 1.6 2022/08/31 12:17:14 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd February 19, 2015
+.Dd August 31, 2022
 .Dt REALLOCARR 3
 .Os
 .Sh NAME
@@ -99,6 +99,20 @@ may be freed with
 which will always succeed and unconditionally set
 .Fa ptr
 to null.
+.Pp
+Like
+.Xr calloc 3 ,
+.Nm
+fails gracefully if the product of
+.Fa number
+and
+.Fa size
+would overflow the representable size of memory.
+Unlike
+.Xr calloc 3 ,
+new memory allocated by
+.Nm
+is not zero-initialized.
 .Pp
 The
 .Nm
