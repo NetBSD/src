@@ -1,4 +1,4 @@
-/* $NetBSD: xenmem.h,v 1.1 2022/08/31 12:51:56 bouyer Exp $ */
+/* $NetBSD: xenmem.h,v 1.2 2022/08/31 12:53:27 bouyer Exp $ */
 /*
  * Copyright (c) 2022 Manuel Bouyer.
  *
@@ -29,12 +29,6 @@
 #ifndef _XEN_XENMEM_H_
 #define _XEN_XENMEM_H_
 #include "opt_xen.h"
-#ifdef XENPV
-extern paddr_t pmap_pa_start; /* PA of first physical page for this domain */
-extern paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
-
-void xenmem_pa_register(paddr_t, paddr_t);
-#endif /* XENPV */
 
 paddr_t xenmem_alloc_pa(u_long, u_long, bool);
 void xenmem_free_pa(paddr_t, u_long);
