@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.23 2022/08/07 23:42:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.24 2022/08/31 12:34:04 riastradh Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -270,7 +270,8 @@ sdt_enable(void *arg __unused, dtrace_id_t id, void *parg)
 
 	probe->id = id;
 #ifdef __NetBSD__
-	module_hold(&probe->sdtp_lf->lf_mod);
+	if (probe->sdtp_lf)
+		module_hold(&probe->sdtp_lf->lf_mod);
 #endif
 #ifdef __FreeBSD__
 	probe->sdtp_lf->nenabled++;
@@ -286,7 +287,8 @@ sdt_disable(void *arg __unused, dtrace_id_t id, void *parg)
 	struct sdt_probe *probe = parg;
 
 #ifdef __NetBSD__
-	module_rele(&probe->sdtp_lf->lf_mod);
+	if (probe->sdtp_lf)
+		module_rele(&probe->sdtp_lf->lf_mod);
 #endif
 #ifdef __FreeBSD__
 	SDT_KASSERT(probe->sdtp_lf->nenabled > 0, ("no probes enabled"));
