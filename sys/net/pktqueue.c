@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.17 2022/09/01 02:35:06 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.18 2022/09/01 05:04:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.17 2022/09/01 02:35:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.18 2022/09/01 05:04:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -223,7 +223,7 @@ pktq_get_count(pktqueue_t *pq, pktq_count_t c)
 }
 
 uint32_t
-pktq_rps_hash(pktq_rps_hash_func_t *funcp, const struct mbuf *m)
+pktq_rps_hash(const pktq_rps_hash_func_t *funcp, const struct mbuf *m)
 {
 	pktq_rps_hash_func_t func = atomic_load_relaxed(funcp);
 
