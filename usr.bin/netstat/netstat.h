@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.52 2020/04/23 00:24:50 joerg Exp $	*/
+/*	$NetBSD: netstat.h,v 1.53 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,14 +57,14 @@ extern int	rflag;		/* show routing tables (or routing stats) */
 extern int	sflag;		/* show protocol statistics */
 extern int	tagflag;	/* show route tags */
 extern int	tflag;		/* show i/f watchdog timers */
-extern int	Vflag;		/* show Vestigial TIME_WAIT (VTW) information */
-extern int	vflag;		/* verbose route information or don't truncate names */
+extern int	Vflag;	       /* show Vestigial TIME_WAIT (VTW) information */
+extern int	vflag;	/* verbose route information or don't truncate names */
 
-extern char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
+extern char	*interface;   /* desired i/f for stats, or NULL for all i/fs */
 
 extern int	af;		/* address family */
 extern int	use_sysctl;	/* use sysctl instead of kmem */
-extern int	force_sysctl;	/* force use of sysctl (or exit) - for testing */
+extern int	force_sysctl; /* force use of sysctl (or exit) - for testing */
 
 
 int	kread(u_long addr, char *buf, int size);

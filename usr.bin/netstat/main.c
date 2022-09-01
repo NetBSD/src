@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.101 2021/03/10 00:32:15 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.102 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.101 2021/03/10 00:32:15 simonb Exp $");
+__RCSID("$NetBSD: main.c,v 1.102 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,8 +205,8 @@ struct protox {
 			(u_long, const char *);
 	void	(*pr_stats)		/* statistics printing routine */
 			(u_long, const char *);
-	void	(*pr_istats)
-			(const char *);	/* per/if statistics printing routine */
+	void	(*pr_istats)	       /* per/if statistics printing routine */
+			(const char *);
 	void	(*pr_dump)		/* PCB state dump routine */
 			(u_long, const char *, u_long);
 	const char *pr_name;		/* well-known name */
@@ -230,7 +230,7 @@ struct protox {
 	{ -1,		N_PIMSTAT,	1,	0,
 	  pim_stats,	NULL,		0,	"pim" },
 	{ -1,		N_PFSYNCSTAT,  1,  0,
-	  pfsync_stats,  NULL,		0,  "pfsync" },	
+	  pfsync_stats,  NULL,		0,  "pfsync" },
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0,	0 }
 };
@@ -491,7 +491,8 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			if ((tp = name2protox(optarg)) == NULL)
-				errx(1, "%s: unknown or uninstrumented protocol",
+				errx(1,
+				    "%s: unknown or uninstrumented protocol",
 				    optarg);
 			pflag = 1;
 			break;
@@ -586,7 +587,8 @@ main(int argc, char *argv[])
 	}
 	if (pflag) {
 		if (iflag && tp->pr_istats)
-			intpr(interval, nl[N_IFNET_LIST].n_value, tp->pr_istats);
+			intpr(interval, nl[N_IFNET_LIST].n_value,
+			    tp->pr_istats);
 		else if (tp->pr_stats)
 			(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
 				tp->pr_name);
@@ -645,7 +647,8 @@ main(int argc, char *argv[])
 		}
 		if (rflag) {
 			if (sflag)
-				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
+				rt_stats(use_sysctl ? 0 :
+				    nl[N_RTSTAT].n_value);
 			else {
 				if (use_sysctl)
 					p_rttables(af,
@@ -741,7 +744,7 @@ printproto(struct protox *tp, const char *name)
 		if (iflag) {
 			if (tp->pr_istats)
 				intpr(interval, nl[N_IFNET_LIST].n_value,
-				      tp->pr_istats);
+				    tp->pr_istats);
 			return;
 		}
 		else {
@@ -789,9 +792,9 @@ kread(u_long addr, char *buf, int size)
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
 		warnx("%s", kvm_geterr(kvmd));
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 const char *
@@ -815,7 +818,7 @@ get_hardticks(void)
 
 	kread(nl[N_HARDCLOCK_TICKS].n_value, (char *)&hardticks,
 	    sizeof(hardticks));
-	return (hardticks);
+	return hardticks;
 }
 
 /*
@@ -829,8 +832,8 @@ knownname(const char *name)
 	for (tpp = protoprotox; *tpp; tpp++)
 		for (tp = *tpp; tp->pr_name; tp++)
 			if (strcmp(tp->pr_name, name) == 0)
-				return (tp);
-	return (NULL);
+				return tp;
+	return NULL;
 }
 
 /*
@@ -848,7 +851,7 @@ name2protox(const char *name)
 	 * fails, check if name is an alias for an Internet protocol.
 	 */
 	if ((tp = knownname(name)) != NULL)
-		return (tp);
+		return tp;
 
 	setprotoent(1);			/* make protocol lookup cheaper */
 	while ((p = getprotoent()) != NULL) {
@@ -856,11 +859,11 @@ name2protox(const char *name)
 		for (alias = p->p_aliases; *alias; alias++)
 			if (strcmp(name, *alias) == 0) {
 				endprotoent();
-				return (knownname(p->p_name));
+				return knownname(p->p_name);
 			}
 	}
 	endprotoent();
-	return (NULL);
+	return NULL;
 }
 
 static void
@@ -871,7 +874,7 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family[,family ...]] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnqrsSv] [-f address_family[,family ...]] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family[,family ...]] [-M core] [-N system]\n",
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);

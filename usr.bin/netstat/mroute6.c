@@ -1,9 +1,9 @@
-/*	$NetBSD: mroute6.c,v 1.15 2014/11/06 21:30:09 christos Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.16 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -121,8 +121,10 @@
 
 #ifdef INET6
 
-#define	WID_ORG	(lflag ? 39 : (numeric_addr ? 29 : 18)) /* width of origin column */
-#define	WID_GRP	(lflag ? 18 : (numeric_addr ? 16 : 18)) /* width of group column */
+/* Width of origin column */
+#define	WID_ORG	(lflag ? 39 : (numeric_addr ? 29 : 18))
+/* Width of group column */
+#define	WID_GRP	(lflag ? 18 : (numeric_addr ? 16 : 18))
 
 void
 mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
@@ -201,7 +203,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 	banner_printed = 0;
 	for (i = 0; i < MF6CTBLSIZ; ++i) {
 		mfcp = mf6ctable[i];
-		while(mfcp) {
+		while (mfcp) {
 			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
 			if (!banner_printed) {
 				printf ("\nIPv6 Multicast Forwarding Cache\n");
@@ -211,7 +213,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 				    "  Packets Waits In-Mif  Out-Mifs\n");
 				banner_printed = 1;
 			}
-			
+
 			printf(" %-*.*s", WID_ORG, WID_ORG,
 			    routename6(&mfc.mf6c_origin, nflag));
 			printf(" %-*.*s", WID_GRP, WID_GRP,

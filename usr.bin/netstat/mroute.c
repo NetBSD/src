@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.26 2019/10/06 00:27:50 mrg Exp $	*/
+/*	$NetBSD: mroute.c,v 1.27 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.26 2019/10/06 00:27:50 mrg Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.27 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ pktscale(u_long n)
 	}
 
 	(void)snprintf(buf, sizeof buf, "%lu%c", n, t);
-	return (buf);
+	return buf;
 }
 
 void
@@ -230,7 +230,8 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
 			    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
 			for (vifi = 0; vifi <= numvifs; ++vifi)
 				if (mfc.mfc_ttls[vifi])
-					printf(" %u/%u", vifi, mfc.mfc_ttls[vifi]);
+					printf(" %u/%u", vifi,
+					    mfc.mfc_ttls[vifi]);
 
 			printf("\n");
 
@@ -241,12 +242,12 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
 
 				bwm = mfc.mfc_bw_meter;
 				while (bwm) {
-				kread((u_long)bwm,
-				      (char *)&bw_meter,
-				      sizeof bw_meter);
-				print_bw_meter(&bw_meter,
-					       &banner_printed2);
-				bwm = bw_meter.bm_mfc_next;
+					kread((u_long)bwm,
+					    (char *)&bw_meter,
+					    sizeof bw_meter);
+					print_bw_meter(&bw_meter,
+					    &banner_printed2);
+					bwm = bw_meter.bm_mfc_next;
 				}
 #if 0	/* Don't ever print it? */
 				if (! banner_printed2)
@@ -286,11 +287,13 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 
 	/* The measured values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		snprintf(s1, sizeof s1, "%llu", (unsigned long long)bw_meter->bm_measured.b_packets);
+		snprintf(s1, sizeof s1, "%llu",
+		    (unsigned long long)bw_meter->bm_measured.b_packets);
 	else
 		snprintf(s1, sizeof s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		snprintf(s2, sizeof s2, "%llu", (unsigned long long)bw_meter->bm_measured.b_bytes);
+		snprintf(s2, sizeof s2, "%llu",
+		    (unsigned long long)bw_meter->bm_measured.b_bytes);
 	else
 		snprintf(s2, sizeof s2, "?");
 	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
@@ -309,11 +312,13 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 
 	/* The threshold values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		snprintf(s1, sizeof s1, "%llu", (unsigned long long)bw_meter->bm_threshold.b_packets);
+		snprintf(s1, sizeof s1, "%llu",
+		    (unsigned long long)bw_meter->bm_threshold.b_packets);
 	else
 		snprintf(s1, sizeof s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		snprintf(s2, sizeof s2, "%llu", (unsigned long long)bw_meter->bm_threshold.b_bytes);
+		snprintf(s2, sizeof s2, "%llu",
+		    (unsigned long long)bw_meter->bm_threshold.b_bytes);
 	else
 		snprintf(s2, sizeof s2, "?");
 	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
