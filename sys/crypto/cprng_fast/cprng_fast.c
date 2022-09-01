@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.17 2022/06/01 15:44:37 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.18 2022/09/01 18:32:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.17 2022/06/01 15:44:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.18 2022/09/01 18:32:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.17 2022/06/01 15:44:37 riastradh Ex
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/percpu.h>
+#include <sys/pserialize.h>
 
 #include <crypto/chacha/chacha.h>
 
@@ -95,6 +96,7 @@ cprng_fast_get(struct cprng_fast **cprngp)
 	int s;
 
 	KASSERT(!cpu_intr_p());
+	KASSERT(pserialize_not_in_read_section());
 
 	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
 	s = splsoftserial();
