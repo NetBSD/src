@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.168 2022/08/23 15:16:44 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.169 2022/09/01 18:09:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.168 2022/08/23 15:16:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.169 2022/09/01 18:09:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -663,6 +663,7 @@ xhci_detach(struct xhci_softc *sc, int flags)
 		kmem_free(sc->sc_rhportmap[j], sc->sc_maxports * sizeof(int));
 	}
 
+	mutex_destroy(&sc->sc_rhlock);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 
