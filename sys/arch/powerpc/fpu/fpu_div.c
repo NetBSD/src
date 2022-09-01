@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.6 2020/07/15 07:47:27 rin Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.7 2022/09/01 06:10:58 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.6 2020/07/15 07:47:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.7 2022/09/01 06:10:58 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -183,7 +183,8 @@ fpu_div(struct fpemu *fe)
 	DPRINTF(FPE_REG, ("=>\n"));
 	if (ISNAN(x) || ISNAN(y)) {
 		ORDER(x, y);
-		fe->fe_cx |= FPSCR_VXSNAN;
+		if (ISSNAN(x) || ISSNAN(y))
+			fe->fe_cx |= FPSCR_VXSNAN;
 		DUMPFPN(FPE_REG, y);
 		return (y);
 	}

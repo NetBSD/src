@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.10 2022/05/24 20:00:49 andvar Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.11 2022/09/01 06:10:58 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.10 2022/05/24 20:00:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.11 2022/09/01 06:10:58 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -215,7 +215,8 @@ fpu_sqrt(struct fpemu *fe)
 	DUMPFPN(FPE_REG, x);
 	DPRINTF(FPE_REG, ("=>\n"));
 	if (ISNAN(x)) {
-		fe->fe_cx |= FPSCR_VXSNAN;
+		if (ISSNAN(x))
+			fe->fe_cx |= FPSCR_VXSNAN;
 		DUMPFPN(FPE_REG, x);
 		return (x);
 	}
