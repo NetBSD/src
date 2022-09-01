@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.97 2022/08/18 12:25:32 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.98 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.97 2022/08/18 12:25:32 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.98 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,9 +147,9 @@ intpr_header(void)
 	if (!sflag && !pflag) {
 		if (bflag) {
 			printf("%-5.5s %-5.5s %-13.13s %-17.17s "
-			       "%10.10s %10.10s",
-			       "Name", "Mtu", "Network", "Address", 
-			       "Ibytes", "Obytes");
+			    "%10.10s %10.10s",
+			    "Name", "Mtu", "Network", "Address",
+			    "Ibytes", "Obytes");
 		} else {
 			printf("%-5.5s %-5.5s %-13.13s %-17.17s "
 			    "%8.8s %5.5s",
@@ -220,7 +220,7 @@ intpr_sysctl(void)
 			bzero(name, sizeof(name));
 			if (sdl->sdl_nlen >= IFNAMSIZ)
 				memcpy(name, sdl->sdl_data, IFNAMSIZ - 1);
-			else if (sdl->sdl_nlen > 0) 
+			else if (sdl->sdl_nlen > 0)
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
 			if (interface != NULL && strcmp(name, interface) != 0)
@@ -375,7 +375,8 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 		} else {
 			struct sockaddr *sa;
 
-			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr)) {
+			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr))
+			{
 				ifaddraddr = 0;
 				continue;
 			}
@@ -505,7 +506,8 @@ print_addr(const int ifindex, struct sockaddr *sa,
 	case AF_INET:
 		sin = (struct sockaddr_in *)sa;
 		if (use_sysctl) {
-			netmask = *((struct sockaddr_in *)rtinfo[RTAX_NETMASK]);
+			netmask =
+			    *((struct sockaddr_in *)rtinfo[RTAX_NETMASK]);
 		} else {
 			struct in_ifaddr *ifaddr_in = (void *)rtinfo;
 			netmask.sin_addr.s_addr = ifaddr_in->ia_subnetmask;
@@ -575,13 +577,13 @@ print_addr(const int ifindex, struct sockaddr *sa,
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-		if (!aflag) 
+		if (!aflag)
 			break;
 		if (ifnet) {
 			u_long multiaddr;
 			struct in6_multi inm;
 			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
-		
+
 			multiaddr = (u_long)ifaddr->in6._ia6_multiaddrs.lh_first;
 			while (multiaddr != 0) {
 				kread(multiaddr, (char *)&inm, sizeof inm);
@@ -595,9 +597,8 @@ print_addr(const int ifindex, struct sockaddr *sa,
 #endif /*INET6*/
 #ifndef SMALL
 	case AF_APPLETALK:
-		printf("atalk:%-7.7s ",
-		       atalk_print(sa,0x10));
-		printf("%-17.17s ", atalk_print(sa,0x0b));
+		printf("atalk:%-7.7s ", atalk_print(sa, 0x10));
+		printf("%-17.17s ", atalk_print(sa, 0x0b));
 		break;
 #endif
 	case AF_LINK:
@@ -796,9 +797,9 @@ loop:
 	putchar('\n');
 	fflush(stdout);
 	line++;
-	if (signalled == 0) {
+	if (signalled == 0)
 		sigsuspend(&emptyset);
-	}
+
 	signalled = 0;
 	if (line == redraw_lines)
 		goto banner;
@@ -944,7 +945,7 @@ loop:
 				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 					printf("%10s %8.8s ", humbuf, " ");
 				else
-					printf("%10llu %8.8s ", 
+					printf("%10llu %8.8s ",
 					    (unsigned long long)
 					    (ifd.ifi_ibytes-ip->ift_ib), " ");
 
@@ -954,7 +955,7 @@ loop:
 				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 					printf("%10s %5.5s", humbuf, " ");
 				else
-					printf("%10llu %5.5s", 
+					printf("%10llu %5.5s",
 					    (unsigned long long)
 					    (ifd.ifi_obytes-ip->ift_ob), " ");
 			} else {
@@ -1001,7 +1002,7 @@ loop:
 			    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 				printf("  %10s %8.8s ", humbuf, " ");
 			else
-				printf("  %10llu %8.8s ", 
+				printf("  %10llu %8.8s ",
 				    (unsigned long long)
 				    (sum->ift_ib - total->ift_ib), " ");
 
@@ -1010,7 +1011,7 @@ loop:
 			    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 				printf("%10s %5.5s", humbuf, " ");
 			else
-				printf("%10llu %5.5s", 
+				printf("%10llu %5.5s",
 				    (unsigned long long)
 				    (sum->ift_ob - total->ift_ob), " ");
 		} else {
@@ -1034,9 +1035,9 @@ loop:
 	putchar('\n');
 	fflush(stdout);
 	line++;
-	if (signalled == 0) {
+	if (signalled == 0)
 		sigsuspend(&emptyset);
-	}
+
 	signalled = 0;
 	if (line == redraw_lines)
 		goto banner;
@@ -1054,11 +1055,10 @@ static void
 sidewaysintpr(unsigned int interval, u_long off)
 {
 
-	if (use_sysctl) {
+	if (use_sysctl)
 		sidewaysintpr_sysctl(interval);
-	} else {
+	else
 		sidewaysintpr_kvm(interval, off);
-	}
 }
 
 /*
@@ -1074,7 +1074,7 @@ catchalarm(int signo)
 
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
-{   
+{
 	int i;
 
 	for (i = 0; i < RTAX_MAX; i++) {
@@ -1082,7 +1082,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 			rti_info[i] = sa;
 			sa = (struct sockaddr *)((char *)(sa) +
 			    RT_ROUNDUP(sa->sa_len));
-		} else 
+		} else
 			rti_info[i] = NULL;
 	}
 }
@@ -1132,7 +1132,7 @@ fetchifs(void)
 			bzero(name, sizeof(name));
 			if (sdl->sdl_nlen >= IFNAMSIZ)
 				memcpy(name, sdl->sdl_data, IFNAMSIZ - 1);
-			else if (sdl->sdl_nlen > 0) 
+			else if (sdl->sdl_nlen > 0)
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
 			if (interface != NULL && !strcmp(name, interface)) {

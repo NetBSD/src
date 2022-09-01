@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.114 2021/10/30 11:23:07 nia Exp $	*/
+/*	$NetBSD: inet.c,v 1.115 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.114 2021/10/30 11:23:07 nia Exp $");
+__RCSID("$NetBSD: inet.c,v 1.115 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ __RCSID("$NetBSD: inet.c,v 1.114 2021/10/30 11:23:07 nia Exp $");
 #include "prog_ops.h"
 
 char	*inetname(struct in_addr *);
-void	inetprint(struct in_addr *, u_int16_t, const char *, int);
+void	inetprint(struct in_addr *, uint16_t, const char *, int);
 
 void	print_vtw_v4(const vtw_t *);
 
@@ -121,7 +121,7 @@ protoprhdr(void)
 		printf("%-8.8s ", "PCB");
 	printf(
 	    Vflag ? "%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %-13.13s Expires\n"
-	          : "%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
+		  : "%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
 		"Proto", "Recv-Q", "Send-Q", compact ? "" : " ",
 		width, width, "Local Address",
 		width, width, "Foreign Address",
@@ -130,25 +130,25 @@ protoprhdr(void)
 
 static void
 protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
-	 struct in_addr *laddr, u_int16_t lport,
-	 struct in_addr *faddr, u_int16_t fport,
+	 struct in_addr *laddr, uint16_t lport,
+	 struct in_addr *faddr, uint16_t fport,
 	 short t_state, const char *name, int inp_flags,
 	 const struct timeval *expires)
 {
 	static const char *shorttcpstates[] = {
 		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
 		"ESTABL",	"CLWAIT",	"FWAIT1",	"CLOSNG",
-		"LASTAK",	"FWAIT2",	"TMWAIT",
+		"LASTAK",	"FWAIT2",	"TMWAIT"
 	};
 	int istcp;
 
 	istcp = strcmp(name, "tcp") == 0;
 
-	if (Aflag) {
+	if (Aflag)
 		printf("%8" PRIxPTR " ", ppcb);
-	}
+
 	printf("%-5.5s %6ld %6ld%s", name, rcv_sb_cc, snd_sb_cc,
-	       compact ? "" : " ");
+	    compact ? "" : " ");
 	if (numeric_port) {
 		inetprint(laddr, lport, name, 1);
 		inetprint(faddr, fport, name, 1);
@@ -164,7 +164,7 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 			printf(" %d", t_state);
 		else
 			printf(" %s", compact ? shorttcpstates[t_state] :
-			       tcpstates[t_state]);
+			    tcpstates[t_state]);
 	}
 	if (Vflag && expires != NULL) {
 		if (expires->tv_sec == 0 && expires->tv_usec == -1)
@@ -186,7 +186,7 @@ dbg_printf(const char *fmt, ...)
 	return;
 }
 
-void 
+void
 print_vtw_v4(const vtw_t *vtw)
 {
 	const vtw_v4_t *v4 = (const vtw_v4_t *)vtw;
@@ -204,23 +204,23 @@ print_vtw_v4(const vtw_t *vtw)
 	timersub(&vtw->expire, &now, &delta);
 
 	if (vtw->expire.tv_sec == 0 && vtw->expire.tv_usec == -1) {
-		dbg_printf("%15.15s:%d %15.15s:%d reclaimed\n"
-		    ,buf[0], ntohs(v4->lport)
-		    ,buf[1], ntohs(v4->fport));
+		dbg_printf("%15.15s:%d %15.15s:%d reclaimed\n",
+		    buf[0], ntohs(v4->lport),
+		    buf[1], ntohs(v4->fport));
 		if (!(Vflag && vflag))
 			return;
 	} else if (vtw->expire.tv_sec == 0)
 		return;
 	else if (timercmp(&delta, &zero, <) && !(Vflag && vflag)) {
-		dbg_printf("%15.15s:%d %15.15s:%d expired\n"
-		    ,buf[0], ntohs(v4->lport)
-		    ,buf[1], ntohs(v4->fport));
+		dbg_printf("%15.15s:%d %15.15s:%d expired\n",
+		    buf[0], ntohs(v4->lport),
+		    buf[1], ntohs(v4->fport));
 		return;
 	} else {
-		dbg_printf("%15.15s:%d %15.15s:%d expires in %.3fms\n"
-		    ,buf[0], ntohs(v4->lport)
-		    ,buf[1], ntohs(v4->fport)
-		    ,delta.tv_sec * 1000.0 + delta.tv_usec / 1000.0);
+		dbg_printf("%15.15s:%d %15.15s:%d expires in %.3fms\n",
+		    buf[0], ntohs(v4->lport),
+		    buf[1], ntohs(v4->fport),
+		    delta.tv_sec * 1000.0 + delta.tv_usec / 1000.0);
 	}
 	protopr0(0, 0, 0,
 		 &la, v4->lport,
@@ -229,7 +229,8 @@ print_vtw_v4(const vtw_t *vtw)
 }
 
 struct kinfo_pcb *
-getpcblist_sysctl(const char *name, size_t *len) {
+getpcblist_sysctl(const char *name, size_t *len)
+{
 	int mib[8];
 	size_t namelen = 0, size = 0;
 	char *mibname = NULL;
@@ -246,7 +247,7 @@ getpcblist_sysctl(const char *name, size_t *len) {
 			*len = 0;
 			return NULL;
 		}
-			
+
 		err(1, "sysctlnametomib: %s", mibname);
 	}
 
@@ -271,7 +272,8 @@ getpcblist_sysctl(const char *name, size_t *len) {
 }
 
 static struct kinfo_pcb *
-getpcblist_kmem(u_long off, const char *name, size_t *len) {
+getpcblist_kmem(u_long off, const char *name, size_t *len)
+{
 	struct inpcbtable table;
 	struct inpcb_hdr *next, *prev;
 	struct inpcb inpcb;
@@ -280,7 +282,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	int istcp = strcmp(name, "tcp") == 0;
 	struct kinfo_pcb *pcblist;
 	size_t size = 100, i;
-	struct sockaddr_in sin; 
+	struct sockaddr_in sin;
 	struct inpcbqueue *head;
 
 	if (off == 0) {
@@ -355,7 +357,7 @@ protopr(u_long off, const char *name)
 	if (use_sysctl)
 		pcblist = getpcblist_sysctl(name, &len);
 	else
-		pcblist = getpcblist_kmem(off, name, &len);	
+		pcblist = getpcblist_kmem(off, name, &len);
 
 	for (i = 0; i < len; i++) {
 		struct sockaddr_in src, dst;
@@ -725,14 +727,14 @@ igmp_stats(u_long off, const char *name)
 #define	py(f, m) if (igmpstat[f] || sflag <= 1) \
     printf(m, igmpstat[f], igmpstat[f] != 1 ? "ies" : "y")
 	p(IGMP_STAT_RCV_TOTAL, "\t%" PRIu64 " message%s received\n");
-        p(IGMP_STAT_RCV_TOOSHORT, "\t%" PRIu64 " message%s received with too few bytes\n");
-        p(IGMP_STAT_RCV_BADSUM, "\t%" PRIu64 " message%s received with bad checksum\n");
-        py(IGMP_STAT_RCV_QUERIES, "\t%" PRIu64 " membership quer%s received\n");
-        py(IGMP_STAT_RCV_BADQUERIES, "\t%" PRIu64 " membership quer%s received with invalid field(s)\n");
-        p(IGMP_STAT_RCV_REPORTS, "\t%" PRIu64 " membership report%s received\n");
-        p(IGMP_STAT_RCV_BADREPORTS, "\t%" PRIu64 " membership report%s received with invalid field(s)\n");
-        p(IGMP_STAT_RCV_OURREPORTS, "\t%" PRIu64 " membership report%s received for groups to which we belong\n");
-        p(IGMP_STAT_SND_REPORTS, "\t%" PRIu64 " membership report%s sent\n");
+	p(IGMP_STAT_RCV_TOOSHORT, "\t%" PRIu64 " message%s received with too few bytes\n");
+	p(IGMP_STAT_RCV_BADSUM, "\t%" PRIu64 " message%s received with bad checksum\n");
+	py(IGMP_STAT_RCV_QUERIES, "\t%" PRIu64 " membership quer%s received\n");
+	py(IGMP_STAT_RCV_BADQUERIES, "\t%" PRIu64 " membership quer%s received with invalid field(s)\n");
+	p(IGMP_STAT_RCV_REPORTS, "\t%" PRIu64 " membership report%s received\n");
+	p(IGMP_STAT_RCV_BADREPORTS, "\t%" PRIu64 " membership report%s received with invalid field(s)\n");
+	p(IGMP_STAT_RCV_OURREPORTS, "\t%" PRIu64 " membership report%s received for groups to which we belong\n");
+	p(IGMP_STAT_SND_REPORTS, "\t%" PRIu64 " membership report%s sent\n");
 #undef p
 #undef py
 }
@@ -812,7 +814,7 @@ pim_stats(u_long off, const char *name)
 	p(pims_rcv_total_msgs, "\t%" PRIu64 " message%s received\n");
 	p(pims_rcv_total_bytes, "\t%" PRIu64 " byte%s received\n");
 	p(pims_rcv_tooshort, "\t%" PRIu64 " message%s received with too few bytes\n");
-        p(pims_rcv_badsum, "\t%" PRIu64 " message%s received with bad checksum\n");
+	p(pims_rcv_badsum, "\t%" PRIu64 " message%s received with bad checksum\n");
 	p(pims_rcv_badversion, "\t%" PRIu64 " message%s received with bad version\n");
 	p(pims_rcv_registers_msgs, "\t%" PRIu64 " data register message%s received\n");
 	p(pims_rcv_registers_bytes, "\t%" PRIu64 " data register byte%s received\n");
@@ -965,7 +967,7 @@ inetname(struct in_addr *inp)
 		    C(inp->s_addr >> 8), C(inp->s_addr));
 #undef C
 	}
-	return (line);
+	return line;
 }
 
 /*
@@ -981,9 +983,9 @@ tcp_dump(u_long off, const char *name, u_long pcbaddr)
 	size_t j, len;
 
 	if (use_sysctl)
-		pcblist = getpcblist_sysctl(name, &len);	
+		pcblist = getpcblist_sysctl(name, &len);
 	else
-		pcblist = getpcblist_kmem(off, name, &len);	
+		pcblist = getpcblist_kmem(off, name, &len);
 
 	for (j = 0; j < len; j++)
 		if (pcblist[j].ki_ppcbaddr == pcbaddr)
@@ -1020,7 +1022,7 @@ tcp_dump(u_long off, const char *name, u_long pcbaddr)
 
 	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcpcb.t_rxtshift,
 	    tcpcb.t_rxtcur, tcpcb.t_dupacks);
-        printf("peermss %u, ourmss %u, segsz %u, segqlen %u\n\n",
+	printf("peermss %u, ourmss %u, segsz %u, segqlen %u\n\n",
 	    tcpcb.t_peermss, tcpcb.t_ourmss, tcpcb.t_segsz, tcpcb.t_segqlen);
 
 	printf("snd_una %u, snd_nxt %u, snd_up %u\n",
