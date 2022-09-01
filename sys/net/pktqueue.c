@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.16 2021/12/21 04:09:32 knakahara Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.17 2022/09/01 02:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.16 2021/12/21 04:09:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.17 2022/09/01 02:35:06 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -410,7 +410,16 @@ pktq_dequeue(pktqueue_t *pq)
 	if (__predict_false(m == PKTQ_MARKER)) {
 		/* Note the marker entry. */
 		atomic_inc_uint(&pq->pq_barrier);
-		return NULL;
+
+		/* Get the next queue entry. */
+		m = pcq_get(pktq_pcq(pq, ci));
+
+		/*
+		 * There can only be one barrier operation pending
+		 * on a pktqueue at any given time, so we can assert
+		 * that the next item is not a marker.
+		 */
+		KASSERT(m != PKTQ_MARKER);
 	}
 	if (__predict_true(m != NULL)) {
 		pktq_inc_count(pq, PQCNT_DEQUEUE);
