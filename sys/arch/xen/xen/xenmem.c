@@ -1,4 +1,4 @@
-/* $NetBSD: xenmem.c,v 1.2 2022/08/31 12:53:27 bouyer Exp $ */
+/* $NetBSD: xenmem.c,v 1.3 2022/09/01 16:28:08 bouyer Exp $ */
 /*
  * Copyright (c) 2022 Manuel Bouyer.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.2 2022/08/31 12:53:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.3 2022/09/01 16:28:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,13 @@ xenmem_alloc_pa(u_long size, u_long align, bool waitok)
 #ifdef _LP64
 	/* allocate above the 4Gb range to not collide wit devices */
 	error = extent_alloc_subregion(XENMEM_EX, 0x100000000UL, MAXIOMEM,
-	    size, align, 0, waitok ? (EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT,
+	    size, align, 0,
+	    (waitok ? (EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT) | EX_MALLOCOK,
 	    &result);
 #else
 	error = extent_alloc(XENMEM_EX, size, align, 0,
-	    waitok ? (EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT, &result);
+	    waitok ? ((EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT) | EX_MALLOCOK,
+	    &result);
 #endif
 	if (error) {
 		printf("xenmem_alloc_pa: failed %d\n", error);
