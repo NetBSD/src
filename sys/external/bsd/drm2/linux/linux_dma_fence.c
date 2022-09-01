@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.41 2022/09/01 01:54:38 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.42 2022/09/01 09:37:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.41 2022/09/01 01:54:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.42 2022/09/01 09:37:06 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -95,13 +95,15 @@ SDT_PROBE_DEFINE2(sdt, drm, fence, wait_done,
  */
 int	linux_dma_fence_trace = 0;
 
-static spinlock_t dma_fence_stub_lock;
-static struct dma_fence dma_fence_stub;
+static struct {
+	spinlock_t		lock;
+	struct dma_fence	fence;
+} dma_fence_stub __cacheline_aligned;
 
 static const char *dma_fence_stub_name(struct dma_fence *f)
 {
 
-	KASSERT(f == &dma_fence_stub);
+	KASSERT(f == &dma_fence_stub.fence);
 	return "stub";
 }
 
@@ -109,7 +111,7 @@ static void
 dma_fence_stub_release(struct dma_fence *f)
 {
 
-	KASSERT(f == &dma_fence_stub);
+	KASSERT(f == &dma_fence_stub.fence);
 	dma_fence_destroy(f);
 }
 
@@ -129,9 +131,10 @@ linux_dma_fences_init(void)
 {
 	int error __diagused;
 
-	dma_fence_init(&dma_fence_stub, &dma_fence_stub_ops,
-	    &dma_fence_stub_lock, /*context*/0, /*seqno*/0);
-	error = dma_fence_signal(&dma_fence_stub);
+	spin_lock_init(&dma_fence_stub.lock);
+	dma_fence_init(&dma_fence_stub.fence, &dma_fence_stub_ops,
+	    &dma_fence_stub.lock, /*context*/0, /*seqno*/0);
+	error = dma_fence_signal(&dma_fence_stub.fence);
 	KASSERTMSG(error == 0, "error=%d", error);
 }
 
@@ -139,7 +142,8 @@ void
 linux_dma_fences_fini(void)
 {
 
-	dma_fence_put(&dma_fence_stub);
+	dma_fence_put(&dma_fence_stub.fence);
+	spin_lock_destroy(&dma_fence_stub.lock);
 }
 
 /*
@@ -361,7 +365,7 @@ struct dma_fence *
 dma_fence_get_stub(void)
 {
 
-	return dma_fence_get(&dma_fence_stub);
+	return dma_fence_get(&dma_fence_stub.fence);
 }
 
 /*
