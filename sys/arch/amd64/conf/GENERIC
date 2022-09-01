@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.596 2022/08/07 02:52:23 simonb Exp $
+# $NetBSD: GENERIC,v 1.597 2022/09/01 12:35:02 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.596 $"
+#ident		"GENERIC-$Revision: 1.597 $"
 
 maxusers	64		# estimated number of users
 
@@ -91,7 +91,7 @@ hyperv0 	at cpu0		# Microsoft Hyper-V
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
 
-#Xen PV support for HVM guests
+#Xen PV support for PVH and HVM guests
 options 	XENPVHVM
 options 	XEN
 hypervisor*	at mainbus?		# Xen hypervisor
@@ -99,6 +99,12 @@ xenbus*	 	at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
 xennet*  	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+# experimental: PVH dom0 support
+#options 	DOM0OPS
+#pseudo-device  xenevt
+#pseudo-device  xvif
+#pseudo-device  xbdback
+
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
