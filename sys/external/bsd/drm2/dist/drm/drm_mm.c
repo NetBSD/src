@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.18 2022/02/14 13:22:30 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.19 2022/09/01 01:54:28 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.18 2022/02/14 13:22:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.19 2022/09/01 01:54:28 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -170,10 +170,10 @@ __drm_mm_interval_first(const struct drm_mm *mm_const, u64 start, u64 last)
 #ifdef __NetBSD__
 	struct drm_mm_node *node;
 	list_for_each_entry(node, &mm->head_node.node_list, node_list) {
-		if (node->start <= start)
+		if (start <= LAST(node) && START(node) <= last)
 			return node;
 	}
-	return NULL;
+	return &mm->head_node;
 #else
 	return drm_mm_interval_tree_iter_first((struct rb_root_cached *)&mm->interval_tree,
 					       start, last) ?: (struct drm_mm_node *)&mm->head_node;
