@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.278 2021/12/31 12:41:50 andvar Exp $	*/
+/*	$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.278 2021/12/31 12:41:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279 2022/09/01 18:32:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1534,6 +1534,7 @@ nd6_slowtimo(void *ignored_arg)
 {
 	struct nd_kifinfo *ndi;
 	struct ifnet *ifp;
+	struct psref psref;
 	int s;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
@@ -1545,6 +1546,8 @@ nd6_slowtimo(void *ignored_arg)
 		ndi = ND_IFINFO(ifp);
 		if (ndi->basereachable && /* already initialized */
 		    (ndi->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
+			if_acquire(ifp, &psref);
+			pserialize_read_exit(s);
 			/*
 			 * Since reachable time rarely changes by router
 			 * advertisements, we SHOULD insure that a new random
@@ -1553,6 +1556,8 @@ nd6_slowtimo(void *ignored_arg)
 			 */
 			ndi->recalctm = nd6_recalc_reachtm_interval;
 			ndi->reachable = ND_COMPUTE_RTIME(ndi->basereachable);
+			s = pserialize_read_enter();
+			if_release(ifp, &psref);
 		}
 	}
 	pserialize_read_exit(s);
