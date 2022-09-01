@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.64 2022/09/01 12:26:00 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.65 2022/09/01 12:31:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.64 2022/09/01 12:26:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.65 2022/09/01 12:31:26 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -554,7 +554,6 @@ privcmd_mmapbatch_v2(struct vop_ioctl_args *ap)
 		set_xen_guest_handle(add.errs, &err2);
 		err = HYPERVISOR_memory_op(XENMEM_add_to_physmap_batch, &add);
 		if (err < 0) {
-			printf("privcmd_mmapbatch_v2: XENMEM_add_to_physmap_batch failed %d\n", err);
 			privpgop_detach(&obj->uobj);
 			return privcmd_xen2bsd_errno(err);
 		}
