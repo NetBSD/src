@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.40 2022/04/09 23:44:44 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.41 2022/09/01 01:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.40 2022/04/09 23:44:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.41 2022/09/01 01:54:38 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -94,6 +94,53 @@ SDT_PROBE_DEFINE2(sdt, drm, fence, wait_done,
  *	in boothowto.
  */
 int	linux_dma_fence_trace = 0;
+
+static spinlock_t dma_fence_stub_lock;
+static struct dma_fence dma_fence_stub;
+
+static const char *dma_fence_stub_name(struct dma_fence *f)
+{
+
+	KASSERT(f == &dma_fence_stub);
+	return "stub";
+}
+
+static void
+dma_fence_stub_release(struct dma_fence *f)
+{
+
+	KASSERT(f == &dma_fence_stub);
+	dma_fence_destroy(f);
+}
+
+static const struct dma_fence_ops dma_fence_stub_ops = {
+	.get_driver_name = dma_fence_stub_name,
+	.get_timeline_name = dma_fence_stub_name,
+	.release = dma_fence_stub_release,
+};
+
+/*
+ * linux_dma_fences_init(), linux_dma_fences_fini()
+ *
+ *	Set up and tear down module state.
+ */
+void
+linux_dma_fences_init(void)
+{
+	int error __diagused;
+
+	dma_fence_init(&dma_fence_stub, &dma_fence_stub_ops,
+	    &dma_fence_stub_lock, /*context*/0, /*seqno*/0);
+	error = dma_fence_signal(&dma_fence_stub);
+	KASSERTMSG(error == 0, "error=%d", error);
+}
+
+void
+linux_dma_fences_fini(void)
+{
+
+	dma_fence_put(&dma_fence_stub);
+}
 
 /*
  * dma_fence_referenced_p(fence)
@@ -305,17 +352,6 @@ dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 	return __dma_fence_is_later(a->seqno, b->seqno, a->ops);
 }
 
-static const char *dma_fence_stub_name(struct dma_fence *f)
-{
-
-	return "stub";
-}
-
-static const struct dma_fence_ops dma_fence_stub_ops = {
-	.get_driver_name = dma_fence_stub_name,
-	.get_timeline_name = dma_fence_stub_name,
-};
-
 /*
  * dma_fence_get_stub()
  *
@@ -324,22 +360,8 @@ static const struct dma_fence_ops dma_fence_stub_ops = {
 struct dma_fence *
 dma_fence_get_stub(void)
 {
-	/*
-	 * XXX This probably isn't good enough -- caller may try
-	 * operations on this that require the lock, which will
-	 * require us to create and destroy the lock on module
-	 * load/unload.
-	 */
-	static struct dma_fence fence = {
-		.refcount = {1}, /* always referenced */
-		.flags = 1u << DMA_FENCE_FLAG_SIGNALED_BIT,
-		.ops = &dma_fence_stub_ops,
-#ifdef DIAGNOSTIC
-		.f_magic = FENCE_MAGIC_GOOD,
-#endif
-	};
 
-	return dma_fence_get(&fence);
+	return dma_fence_get(&dma_fence_stub);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.13 2021/12/19 12:23:07 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.14 2022/09/01 01:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.13 2021/12/19 12:23:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.14 2022/09/01 01:54:38 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.13 2021/12/19 12:23:07 riastradh 
 #endif
 
 #include <linux/atomic.h>
+#include <linux/dma-fence.h>
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/io.h>
@@ -112,6 +113,7 @@ linux_init(void)
 	}
 
 	linux_irq_work_init();
+	linux_dma_fences_init();
 
 	return 0;
 
@@ -145,6 +147,7 @@ static void
 linux_fini(void)
 {
 
+	linux_dma_fences_fini();
 	linux_irq_work_fini();
 	linux_kthread_fini();
 	linux_wait_bit_fini();
