@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_mul.c,v 1.5 2020/06/27 03:07:57 rin Exp $ */
+/*	$NetBSD: fpu_mul.c,v 1.6 2022/09/01 06:10:58 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.5 2020/06/27 03:07:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.6 2022/09/01 06:10:58 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -134,7 +134,8 @@ fpu_mul(struct fpemu *fe)
 	ORDER(x, y);
 	if (ISNAN(y)) {
 		y->fp_sign ^= x->fp_sign;
-		fe->fe_cx |= FPSCR_VXSNAN;
+		if (ISSNAN(y))
+			fe->fe_cx |= FPSCR_VXSNAN;
 		DUMPFPN(FPE_REG, y);
 		return (y);
 	}
