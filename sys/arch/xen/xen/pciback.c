@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.21 2020/04/07 11:47:06 jdolecek Exp $      */
+/*      $NetBSD: pciback.c,v 1.22 2022/09/01 12:29:00 bouyer Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.21 2020/04/07 11:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.22 2022/09/01 12:29:00 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.21 2020/04/07 11:47:06 jdolecek Exp $"
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
+#include <xen/xenmem.h>
 #include <xen/include/public/io/pciif.h>
 #include <xen/xenbus.h>
 
@@ -188,6 +189,7 @@ struct pb_xenbus_instance {
 	/* communication with the domU */
         unsigned int pbx_evtchn; /* our even channel */
 	struct intrhand *pbx_ih;
+        paddr_t *pbx_sh_info_pa;
         struct xen_pci_sharedinfo *pbx_sh_info;
         struct xen_pci_op op;
         grant_handle_t pbx_shinfo_handle; /* to unmap shared page */
@@ -529,8 +531,13 @@ pciback_xenbus_destroy(void *arg)
 	    pbxi, pb_xenbus_instance, pbx_next);
 	mutex_exit(&pb_xenbus_lock);
 
+
 	if (pbxi->pbx_sh_info) {
+#ifndef XENPV
+		op.host_addr = pbxi->pbx_sh_info_pa;
+#else
 		op.host_addr = (vaddr_t)pbxi->pbx_sh_info;
+#endif
 		op.handle = pbxi->pbx_shinfo_handle;
 		op.dev_bus_addr = 0;
 		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
@@ -539,6 +546,12 @@ pciback_xenbus_destroy(void *arg)
 			aprint_error("pciback: unmap_grant_ref failed: %d\n",
 			    err);
 	}
+#ifndef XENPV
+	if (pbxi->pbx_sh_info_pa) {
+		pmap_kremove((vaddr_t)pbxi->pbx_sh_info, PAGE_SIZE);
+		xenmem_free_pa(pbxi->pbx_sh_info_pa, PAGE_SIZE);
+	}
+#endif
 	SLIST_FOREACH(pbd, &pbxi->pbx_pb_pci_dev, pb_guest_next) {
 		pbd->pbx_instance = NULL;
 	}
@@ -593,7 +606,20 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 			    xbusd->xbusd_otherend);
 			break;
 		}
+#ifndef XENPV
+		pbxi->pbx_sh_info_pa =
+		    xenmem_alloc_pa(PAGE_SIZE, PAGE_SIZE, false);
+		if (pbxi->pbx_sh_info_pa == 0) {
+			xenbus_dev_fatal(xbusd, ENOMEM,
+			    "can't get PA for ring", xbusd->xbusd_otherend);
+			goto err2;
+		}
+		pmap_kenter_pa((vaddr_t)pbxi->pbx_sh_info, pbxi->pbx_sh_info_pa,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
+		op.host_addr = pbxi->pbx_sh_info_pa;
+#else
 		op.host_addr = (vaddr_t)pbxi->pbx_sh_info;
+#endif
 		op.flags = GNTMAP_host_map;
 		op.ref = shared_ref;
 		op.dom = pbxi->pbx_domid;
@@ -640,6 +666,11 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 	}
 	return;
 err1:
+#ifndef XENPV
+	pmap_kremove((vaddr_t)pbxi->pbx_sh_info, PAGE_SIZE);
+	xenmem_free_pa(pbxi->pbx_sh_info_pa, PAGE_SIZE);
+err2:
+#endif
 	uvm_km_free(kernel_map, (vaddr_t)pbxi->pbx_sh_info,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
 }
