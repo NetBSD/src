@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.106 2022/09/01 12:29:00 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.107 2022/09/01 15:33:23 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,9 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.106 2022/09/01 12:29:00 bouyer Exp $");
-
-#include "opt_xen.h"
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.107 2022/09/01 15:33:23 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.106 2022/09/01 12:29:00 bouy
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
 #include <xen/xennet_checksum.h>
-#include <xen/xenmem.h>
 
 #include <uvm/uvm.h>
 
@@ -120,9 +117,7 @@ struct xnetback_instance {
 	netif_rx_back_ring_t xni_rxring;
 	grant_handle_t xni_tx_ring_handle; /* to unmap the ring */
 	grant_handle_t xni_rx_ring_handle;
-	paddr_t xni_tx_ring_pa; /* to unmap the ring */
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
-	paddr_t xni_rx_ring_pa; 
 	vaddr_t xni_rx_ring_va; 
 
 	/* arrays used in xennetback_ifstart(), used for both Rx and Tx */
@@ -358,8 +353,6 @@ int
 xennetback_xenbus_destroy(void *arg)
 {
 	struct xnetback_instance *xneti = arg;
-	struct gnttab_unmap_grant_ref op;
-	int err;
 
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 
@@ -390,45 +383,13 @@ xennetback_xenbus_destroy(void *arg)
 	}
 
 	if (xneti->xni_txring.sring) {
-#ifndef XENPV
-		op.host_addr = xneti->xni_tx_ring_pa;
-#else
-		op.host_addr = xneti->xni_tx_ring_va;
-#endif
-		op.handle = xneti->xni_tx_ring_handle;
-		op.dev_bus_addr = 0;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    &op, 1);
-		if (err)
-			aprint_error_ifnet(&xneti->xni_if,
-					"unmap_grant_ref failed: %d\n", err);
+		xen_shm_unmap(xneti->xni_tx_ring_va, 1,
+		    &xneti->xni_tx_ring_handle);
 	}
 	if (xneti->xni_rxring.sring) {
-#ifndef XENPV
-		op.host_addr = xneti->xni_rx_ring_pa;
-#else
-		op.host_addr = xneti->xni_rx_ring_va;
-#endif
-		op.handle = xneti->xni_rx_ring_handle;
-		op.dev_bus_addr = 0;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    &op, 1);
-		if (err)
-			aprint_error_ifnet(&xneti->xni_if,
-					"unmap_grant_ref failed: %d\n", err);
+		xen_shm_unmap(xneti->xni_rx_ring_va, 1,
+		    &xneti->xni_rx_ring_handle);
 	}
-#ifndef XENPV
-	if (xneti->xni_rx_ring_pa != 0) {
-		pmap_kremove(xneti->xni_rx_ring_va, PAGE_SIZE);
-		xenmem_free_pa(xneti->xni_rx_ring_pa, PAGE_SIZE);
-		xneti->xni_rx_ring_pa = 0;
-	}
-	if (xneti->xni_tx_ring_pa != 0) {
-		pmap_kremove(xneti->xni_tx_ring_va, PAGE_SIZE);
-		xenmem_free_pa(xneti->xni_tx_ring_pa, PAGE_SIZE);
-		xneti->xni_tx_ring_pa = 0;
-	}
-#endif
 	if (xneti->xni_tx_ring_va != 0) {
 		uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
 		    PAGE_SIZE, UVM_KMF_VAONLY);
@@ -449,10 +410,9 @@ xennetback_connect(struct xnetback_instance *xneti)
 	int err;
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
-	struct gnttab_map_grant_ref op;
-	struct gnttab_unmap_grant_ref uop;
 	evtchn_op_t evop;
 	u_long tx_ring_ref, rx_ring_ref;
+	grant_ref_t gtx_ring_ref, grx_ring_ref;
 	u_long revtchn, rx_copy;
 	struct xenbus_device *xbusd = xneti->xni_xbusd;
 
@@ -510,56 +470,22 @@ xennetback_connect(struct xnetback_instance *xneti)
 	}
 	rx_ring = (void *)xneti->xni_rx_ring_va;
 
-#ifndef XENPV
-	xneti->xni_tx_ring_pa = xenmem_alloc_pa(PAGE_SIZE, PAGE_SIZE, false);
-	if (xneti->xni_tx_ring_pa == 0) {
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't get PA for TX ring", xbusd->xbusd_otherend);
-			goto err2;
-	}
-	op.host_addr = xneti->xni_tx_ring_pa;
-        pmap_kenter_pa(xneti->xni_tx_ring_va, xneti->xni_tx_ring_pa,
-	    VM_PROT_READ | VM_PROT_WRITE, 0);
-#else
-	op.host_addr = xneti->xni_tx_ring_va;
-#endif
-	op.flags = GNTMAP_host_map;
-	op.ref = tx_ring_ref;
-	op.dom = xneti->xni_domid;
-	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-	if (err || op.status) {
+	gtx_ring_ref = tx_ring_ref;
+        if (xen_shm_map(1, xneti->xni_domid, &gtx_ring_ref,
+	    xneti->xni_tx_ring_va, &xneti->xni_tx_ring_handle, 0) != 0) {
 		aprint_error_ifnet(&xneti->xni_if,
-		    "can't map TX grant ref: err %d status %d\n",
-		    err, op.status);
+		    "can't map TX grant ref\n");
 		goto err2;
 	}
-	xneti->xni_tx_ring_handle = op.handle;
 	BACK_RING_INIT(&xneti->xni_txring, tx_ring, PAGE_SIZE);
 
-#ifndef XENPV
-	xneti->xni_rx_ring_pa = xenmem_alloc_pa(PAGE_SIZE, PAGE_SIZE, false);
-	if (xneti->xni_rx_ring_pa == 0) {
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't get PA for RX ring", xbusd->xbusd_otherend);
-			goto err2;
-	}
-	op.host_addr = xneti->xni_rx_ring_pa;
-        pmap_kenter_pa(xneti->xni_rx_ring_va, xneti->xni_rx_ring_pa,
-	    VM_PROT_READ | VM_PROT_WRITE, 0);
-#else
-	op.host_addr = xneti->xni_rx_ring_va;
-#endif
-	op.flags = GNTMAP_host_map;
-	op.ref = rx_ring_ref;
-	op.dom = xneti->xni_domid;
-	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-	if (err || op.status) {
+	grx_ring_ref = rx_ring_ref;
+        if (xen_shm_map(1, xneti->xni_domid, &grx_ring_ref,
+	    xneti->xni_rx_ring_va, &xneti->xni_rx_ring_handle, 0) != 0) {
 		aprint_error_ifnet(&xneti->xni_if,
-		    "can't map RX grant ref: err %d status %d\n",
-		    err, op.status);
+		    "can't map RX grant ref\n");
 		goto err2;
 	}
-	xneti->xni_rx_ring_handle = op.handle;
 	BACK_RING_INIT(&xneti->xni_rxring, rx_ring, PAGE_SIZE);
 
 	evop.cmd = EVTCHNOP_bind_interdomain;
@@ -588,44 +514,14 @@ xennetback_connect(struct xnetback_instance *xneti)
 err2:
 	/* unmap rings */
 	if (xneti->xni_tx_ring_handle != 0) {
-#ifndef XENPV
-		uop.host_addr = xneti->xni_tx_ring_pa;
-#else
-		uop.host_addr = xneti->xni_tx_ring_va;
-#endif
-		uop.handle = xneti->xni_tx_ring_handle;
-		uop.dev_bus_addr = 0;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    &uop, 1);
-		if (err)
-			aprint_error_ifnet(&xneti->xni_if,
-			    "unmap_grant_ref failed: %d\n", err);
+		xen_shm_unmap(xneti->xni_tx_ring_va, 1,
+		    &xneti->xni_tx_ring_handle);
 	}
 
 	if (xneti->xni_rx_ring_handle != 0) {
-#ifndef XENPV
-		uop.host_addr = xneti->xni_rx_ring_pa;
-#else
-		uop.host_addr = xneti->xni_rx_ring_va;
-#endif
-		uop.handle = xneti->xni_rx_ring_handle;
-		uop.dev_bus_addr = 0;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    &uop, 1);
-		if (err)
-			aprint_error_ifnet(&xneti->xni_if,
-			    "unmap_grant_ref failed: %d\n", err);
+		xen_shm_unmap(xneti->xni_rx_ring_va, 1,
+		    &xneti->xni_rx_ring_handle);
 	}
-#ifndef XENPV
-	if (xneti->xni_rx_ring_pa != 0) {
-		pmap_kremove(xneti->xni_rx_ring_va, PAGE_SIZE);
-		xenmem_free_pa(xneti->xni_rx_ring_pa, PAGE_SIZE);
-	}
-	if (xneti->xni_tx_ring_pa != 0) {
-		pmap_kremove(xneti->xni_tx_ring_va, PAGE_SIZE);
-		xenmem_free_pa(xneti->xni_tx_ring_pa, PAGE_SIZE);
-	}
-#endif
 err1:
 	/* free rings VA space */
 	if (xneti->xni_rx_ring_va != 0)
