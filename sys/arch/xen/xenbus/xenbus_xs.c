@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.27 2020/05/06 16:50:13 bouyer Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.28 2022/09/01 16:25:18 bouyer Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.27 2020/05/06 16:50:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.28 2022/09/01 16:25:18 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -719,7 +719,7 @@ process_msg(void)
 	char *body;
 	int err;
 
-	msg = malloc(sizeof(*msg), M_DEVBUF, M_NOWAIT);
+	msg = malloc(sizeof(*msg), M_DEVBUF, M_WAITOK);
 	if (msg == NULL)
 		return ENOMEM;
 
