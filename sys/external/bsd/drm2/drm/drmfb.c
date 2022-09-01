@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.14 2022/02/18 18:31:18 wiz Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.15 2022/09/01 12:01:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.14 2022/02/18 18:31:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.15 2022/09/01 12:01:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -87,6 +87,8 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *connector;
 	const prop_dictionary_t dict = device_properties(da->da_dev);
+	const device_t parent = device_parent(da->da_dev);
+	const prop_dictionary_t pdict = device_properties(parent);
 #if NVGA > 0
 	struct drm_device *const dev = da->da_fb_helper->dev;
 #endif
@@ -114,7 +116,10 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	prop_dictionary_set_uint64(dict, "mode_callback",
 	    (uint64_t)(uintptr_t)&drmfb_genfb_mode_callback);
 
-	if (!prop_dictionary_get_bool(dict, "is_console", &is_console)) {
+	if (prop_dictionary_get_bool(pdict, "is_console", &is_console)) {
+		what_was_cons = CONS_NONE;
+		prop_dictionary_set_bool(dict, "is_console", is_console);
+	} else {
 		/* XXX Whattakludge!  */
 #if NVGA > 0
 		if ((da->da_params->dp_is_vga_console != NULL) &&
@@ -133,8 +138,6 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 			what_was_cons = CONS_NONE;
 			prop_dictionary_set_bool(dict, "is_console", false);
 		}
-	} else {
-		what_was_cons = CONS_NONE;
 	}
 
 	/* Make the first EDID we find available to wsfb */
