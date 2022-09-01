@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.16 2021/12/19 12:39:24 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.17 2022/09/01 01:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -114,6 +114,9 @@ struct dma_fence_cb {
 #define	dma_fence_wait_timeout		linux_dma_fence_wait_timeout
 
 extern int	linux_dma_fence_trace;
+
+void	linux_dma_fences_init(void);
+void	linux_dma_fences_fini(void);
 
 void	dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
 	    spinlock_t *, uint64_t, uint64_t);
