@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.63 2022/08/31 14:00:44 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.64 2022/09/01 12:26:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.63 2022/08/31 14:00:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.64 2022/09/01 12:26:00 bouyer Exp $");
+
+#include "opt_xen.h"
 
 #include "opt_xen.h"
 
@@ -927,11 +929,19 @@ privcmd_notify(struct ioctl_gntdev_grant_notify *notify, vaddr_t va,
 		int i = notify->offset / PAGE_SIZE;
 		int o = notify->offset % PAGE_SIZE;
 		int err;
+#ifndef XENPV
+		paddr_t base_paddr;
+		base_paddr = xenmem_alloc_pa(PAGE_SIZE, PAGE_SIZE, true);
+#endif
 
 		KASSERT(gmops != NULL);
 		va = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
 		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+#ifndef XENPV
+		op.host_addr = base_paddr;
+#else
 		op.host_addr = va;
+#endif
 		op.dev_bus_addr = 0;
 		op.ref = gmops[i].ref;
 		op.dom = gmops[i].dom;
@@ -939,15 +949,27 @@ privcmd_notify(struct ioctl_gntdev_grant_notify *notify, vaddr_t va,
 		op.flags = GNTMAP_host_map;
 		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
 		if (err == 0 && op.status == GNTST_okay) {
+#ifndef XENPV
+			pmap_kenter_pa(va, base_paddr,
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
+#endif
 			char *n = (void *)(va + o);
 			*n = 0;
+#ifndef XENPV
+			pmap_kremove(va, PAGE_SIZE);
+			uop.host_addr = base_paddr;
+#else
 			uop.host_addr = va;
+#endif
 			uop.handle = op.handle;
 			uop.dev_bus_addr = 0;
 			(void)HYPERVISOR_grant_table_op(
 			    GNTTABOP_unmap_grant_ref, &uop, 1);
 		}
 		uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+#ifndef XENPV
+		xenmem_free_pa(base_paddr, PAGE_SIZE);
+#endif
 	} else {
 		KASSERT(gmops == NULL);
 		char *n = (void *)(va + notify->offset);
