@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.100 2022/09/01 12:29:00 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,9 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.100 2022/09/01 12:29:00 bouyer Exp $");
-
-#include "opt_xen.h"
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -51,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.100 2022/09/01 12:29:00 bouyer 
 #include <xen/intr.h>
 #include <xen/hypervisor.h>
 #include <xen/xen.h>
-#include <xen/xenmem.h>
 #include <xen/xen_shm.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
@@ -211,7 +208,6 @@ struct xbdback_instance {
 	enum xbdi_proto xbdi_proto;
 	grant_handle_t xbdi_ring_handle; /* to unmap the ring */
 	vaddr_t xbdi_ring_va; /* to unmap the ring */
-	paddr_t xbdi_ring_pa; /* to unmap the ring */
 	/* disconnection must be postponed until all I/O is done */
 	int xbdi_refcnt;
 	/* 
@@ -426,9 +422,6 @@ static int
 xbdback_xenbus_destroy(void *arg)
 {
 	struct xbdback_instance *xbdi = arg;
-	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
-	struct gnttab_unmap_grant_ref ungrop;
-	int err;
 
 	XENPRINTF(("xbdback_xenbus_destroy state %d\n", xbdi->xbdi_status));
 
@@ -438,27 +431,8 @@ xbdback_xenbus_destroy(void *arg)
 	if (xbdi->xbdi_watch.node)
 		xenbus_unwatch_path(&xbdi->xbdi_watch);
 	/* unmap ring */
-#ifndef XENPV
-	ungrop.host_addr = xbdi->xbdi_ring_pa;
-	if (xbdi->xbdi_ring_pa != 0) {
-		KASSERT(xbdi->xbdi_ring_va != 0);
-		pmap_kremove(xbdi->xbdi_ring_va, PAGE_SIZE);
-	}
-#else
-	ungrop.host_addr = xbdi->xbdi_ring_va;
-#endif
-	
-	if (ungrop.host_addr != 0) {
-		ungrop.handle = xbdi->xbdi_ring_handle;
-		ungrop.dev_bus_addr = 0;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-		    &ungrop, 1);
-		if (err)
-		    printf("xbdback %s: unmap_grant_ref failed: %d\n",
-			xbusd->xbusd_otherend, err);
-#ifndef XENPV
-		xenmem_free_pa(xbdi->xbdi_ring_pa, PAGE_SIZE);
-#endif
+	if (xbdi->xbdi_ring_handle) {
+		xen_shm_unmap(xbdi->xbdi_ring_va, 1, &xbdi->xbdi_ring_handle);
 	}
 
 	if (xbdi->xbdi_ring_va != 0) {
@@ -503,9 +477,8 @@ static int
 xbdback_connect(struct xbdback_instance *xbdi)
 {
 	int err;
-	struct gnttab_map_grant_ref grop;
-	struct gnttab_unmap_grant_ref ungrop;
 	evtchn_op_t evop;
+	grant_ref_t gring_ref;
 	u_long ring_ref, revtchn;
 	char xsproto[32];
 	const char *proto;
@@ -562,33 +535,17 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		return -1;
 	}
 	XENPRINTF(("xbdback %s: connect va 0x%" PRIxVADDR "\n", xbusd->xbusd_path, xbdi->xbdi_ring_va));
-#ifndef XENPV
-	xbdi->xbdi_ring_pa = xenmem_alloc_pa(PAGE_SIZE, PAGE_SIZE, false);
-	if (xbdi->xbdi_ring_pa == 0) {
-		xenbus_dev_fatal(xbusd, ENOMEM,
-		    "can't get PA for ring", xbusd->xbusd_otherend);
-		goto err;
-	}
-	pmap_kenter_pa(xbdi->xbdi_ring_va, xbdi->xbdi_ring_pa,
-		    VM_PROT_READ | VM_PROT_WRITE, 0);
-	grop.host_addr = xbdi->xbdi_ring_pa;
-#else
-	grop.host_addr = xbdi->xbdi_ring_va;
-#endif
-	grop.flags = GNTMAP_host_map;
-	grop.ref = ring_ref;
-	grop.dom = xbdi->xbdi_domid;
-	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref,
-	    &grop, 1);
-	if (err || grop.status) {
-		aprint_error("xbdback %s: can't map grant ref: %d/%d\n",
-		    xbusd->xbusd_path, err, grop.status);
+
+	gring_ref = ring_ref;
+	if (xen_shm_map(1, xbdi->xbdi_domid, &gring_ref, xbdi->xbdi_ring_va,
+	    &xbdi->xbdi_ring_handle, 0) != 0) {
+		aprint_error("xbdback %s: can't map grant ref\n",
+		    xbusd->xbusd_path);
 		xenbus_dev_fatal(xbusd, EINVAL,
 		    "can't map ring", xbusd->xbusd_otherend);
 		goto err1;
 	}
-	xbdi->xbdi_ring_handle = grop.handle;
-	XENPRINTF(("xbdback %s: connect grhandle %d\n", xbusd->xbusd_path, grop.handle));
+	XENPRINTF(("xbdback %s: connect grhandle %d\n", xbusd->xbusd_path, xbdi->xbdi_ring_handle));
 
 	switch(xbdi->xbdi_proto) {
 	case XBDIP_NATIVE:
@@ -645,25 +602,8 @@ xbdback_connect(struct xbdback_instance *xbdi)
 
 err2:
 	/* unmap ring */
-#ifndef XENPV
-	ungrop.host_addr = xbdi->xbdi_ring_pa;
-#else
-	ungrop.host_addr = xbdi->xbdi_ring_va;
-#endif
-	ungrop.handle = xbdi->xbdi_ring_handle;
-	ungrop.dev_bus_addr = 0;
-	err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-	    &ungrop, 1);
-	if (err)
-	    aprint_error("xbdback %s: unmap_grant_ref failed: %d\n",
-		xbusd->xbusd_path, err);
-
+	xen_shm_unmap(xbdi->xbdi_ring_va, 1, &xbdi->xbdi_ring_handle);
 err1:
-#ifndef XENPV
-	pmap_kremove(xbdi->xbdi_ring_va, PAGE_SIZE);
-	xenmem_free_pa(xbdi->xbdi_ring_pa, PAGE_SIZE);
-err:
-#endif
 	/* free ring VA space */
 	uvm_km_free(kernel_map, xbdi->xbdi_ring_va, PAGE_SIZE, UVM_KMF_VAONLY);
 	return -1;
