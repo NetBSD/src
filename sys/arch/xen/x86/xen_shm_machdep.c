@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.17 2021/02/21 20:11:59 jdolecek Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.18 2022/09/01 12:29:00 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.17 2021/02/21 20:11:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.18 2022/09/01 12:29:00 bouyer Exp $");
+
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.17 2021/02/21 20:11:59 jdolece
 #include <xen/hypervisor.h>
 #include <xen/xen.h>
 #include <xen/evtchn.h>
+#include <xen/xenmem.h>
 #include <xen/xen_shm.h>
 
 /*
@@ -58,15 +61,28 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 {
 	gnttab_map_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 	int ret, i;
+#ifndef XENPV
+	paddr_t base_paddr;
+#endif
+	
 
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
 		panic("xen_shm_map: %d entries", nentries);
 	}
 #endif
+#ifndef XENPV
+	base_paddr = xenmem_alloc_pa(nentries * PAGE_SIZE, PAGE_SIZE, false);
+	if (base_paddr == 0)
+		return ENOMEM;
+#endif
 
 	for (i = 0; i < nentries; i++) {
+#ifndef XENPV
+		op[i].host_addr = base_paddr + i * PAGE_SIZE;
+#else
 		op[i].host_addr = va + i * PAGE_SIZE;
+#endif
 		op[i].dom = domid;
 		op[i].ref = grefp[i];
 		op[i].flags = GNTMAP_host_map |
@@ -79,7 +95,8 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 		printf("%s: HYPERVISOR_grant_table_op failed %d\n", __func__,
 		    ret);
 #endif
-		return EINVAL;
+		ret = EINVAL;
+		goto err1;
 	}
 
 	/*
@@ -116,7 +133,12 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 		 */
 		for (i = uncnt = 0; i < nentries; i++) {
 			if (op[i].status == 0) {
+#ifndef XENPV
+				unop[uncnt].host_addr =
+				    base_paddr + i * PAGE_SIZE;
+#else
 				unop[uncnt].host_addr = va + i * PAGE_SIZE;
+#endif
 				unop[uncnt].dev_bus_addr = 0;
 				unop[uncnt].handle = handlep[i];
 				uncnt++;
@@ -134,10 +156,23 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 		printf("%s: HYPERVISOR_grant_table_op bad entry\n",
 		    __func__);
 #endif
-		return EINVAL;
+		ret =  EINVAL;
+		goto err1;
 	}
+#ifndef XENPV
+	for (i = 0; i < nentries; i++) {
+		pmap_kenter_pa(va + i * PAGE_SIZE,
+		    base_paddr + i * PAGE_SIZE,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
+#endif
 
 	return 0;
+err1:
+#ifndef XENPV
+	xenmem_free_pa(base_paddr, nentries * PAGE_SIZE);
+#endif
+	return ret;
 }
 
 void
@@ -145,6 +180,11 @@ xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 {
 	gnttab_unmap_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 	int ret, i;
+#ifndef XENPV
+	paddr_t base_paddr;
+	if (pmap_extract(pmap_kernel(), va, &base_paddr) != true)
+		panic("xen_shm_unmap: unmapped va");
+#endif
 
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
@@ -153,7 +193,12 @@ xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 #endif
 
 	for (i = 0; i < nentries; i++) {
+#ifndef XENPV
+		pmap_kremove(va + i * PAGE_SIZE, PAGE_SIZE);
+		op[i].host_addr = base_paddr + i * PAGE_SIZE;
+#else
 		op[i].host_addr = va + i * PAGE_SIZE;
+#endif
 		op[i].dev_bus_addr = 0;
 		op[i].handle = handlep[i];
 	}
@@ -163,4 +208,7 @@ xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
 	if (__predict_false(ret)) {
 		panic("xen_shm_unmap: unmap failed");
 	}
+#ifndef XENPV
+	xenmem_free_pa(base_paddr, PAGE_SIZE * nentries);
+#endif
 }
