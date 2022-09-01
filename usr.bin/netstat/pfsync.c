@@ -1,4 +1,4 @@
-/*	$NetBSD: pfsync.c,v 1.3 2020/08/28 07:23:48 ozaki-r Exp $	*/
+/*	$NetBSD: pfsync.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfsync.c,v 1.3 2020/08/28 07:23:48 ozaki-r Exp $");
+__RCSID("$NetBSD: pfsync.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $");
 #endif /* not lint */
 
 #define	_CALLOUT_PRIVATE	/* for defs in sys/callout.h */
@@ -82,8 +82,8 @@ pfsync_stats(u_long off, const char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(pfsyncstat);
 
-		if (prog_sysctlbyname("net.inet.pfsync.stats", pfsyncstat, &size,
-				 NULL, 0) == -1 && errno != ENOMEM)
+		if (prog_sysctlbyname("net.inet.pfsync.stats", pfsyncstat,
+		    &size, NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.86 2020/05/27 05:59:16 yamaguchi Exp $	*/
+/*	$NetBSD: route.c,v 1.87 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.86 2020/05/27 05:59:16 yamaguchi Exp $");
+__RCSID("$NetBSD: route.c,v 1.87 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ void
 routepr(u_long rtree)
 {
 	struct radix_node_head *rnh, head;
-	struct radix_node_head *rt_nodes[AF_MAX+1];
+	struct radix_node_head *rt_nodes[AF_MAX + 1];
 	int i;
 
 	printf("Routing tables\n");
@@ -159,8 +159,9 @@ again:
 			if (Aflag)
 				p_rtnode();
 		} else {
-			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_key),
-			    NULL, 0, 44, nflag);
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rnode.rn_key),
+				NULL, 0, 44, nflag);
 			putchar('\n');
 		}
 		if ((rn = rnode.rn_dupedkey) != NULL)
@@ -185,8 +186,9 @@ p_rtnode(void)
 	if (rnode.rn_b < 0) {
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
-			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_mask),
-				    NULL, 0, -1, nflag);
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rnode.rn_mask),
+				NULL, 0, -1, nflag);
 		} else if (rm == 0)
 			return;
 	} else {
@@ -204,10 +206,11 @@ p_rtnode(void)
 			printf(" <normal>, ");
 			kget(rmask.rm_leaf, rnode_aux);
 			p_sockaddr(kgetsa((const struct sockaddr *)rnode_aux.rn_mask),
-				    NULL, 0, -1, nflag);
-		} else
-			p_sockaddr(kgetsa((const struct sockaddr *)rmask.rm_mask),
 			    NULL, 0, -1, nflag);
+		} else
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rmask.rm_mask),
+				NULL, 0, -1, nflag);
 		putchar('}');
 		if ((rm = rmask.rm_mklist) != NULL)
 			printf(" ->");
@@ -250,11 +253,12 @@ p_krtentry(struct rtentry *rt)
 	else
 		mask = sockcopy(NULL, &mask_un);
 	p_addr(addr, mask, rt->rt_flags, nflag);
-	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family, nflag);
+	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family,
+	    nflag);
 	p_flags(rt->rt_flags);
 	printf("%6d %8"PRIu64" ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu); 
+		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
@@ -270,8 +274,7 @@ p_krtentry(struct rtentry *rt)
 					printf("%7s", tagstr);
 				else
 					printf("%s", tagstr);
-			}
-			else
+			} else
 				printf("%7s", "-");
 		} else
 #endif
@@ -306,7 +309,7 @@ rt_stats(u_long off)
 		if (sysctlbyname("net.rtable.stats", &rtstats, &rtsize,
 		    NULL, 0) == -1)
 			err(1, "rt_stats: sysctl");
-	} else 	if (off == 0) {
+	} else if (off == 0) {
 		printf("rtstat: symbol not in namelist\n");
 		return;
 	} else

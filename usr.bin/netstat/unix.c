@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.35 2017/01/13 04:22:51 christos Exp $	*/
+/*	$NetBSD: unix.c,v 1.36 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.35 2017/01/13 04:22:51 christos Exp $");
+__RCSID("$NetBSD: unix.c,v 1.36 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ unixdomainprhdr(void)
 {
 	printf("Active UNIX domain sockets\n");
 	printf("%-8.8s %-6.6s %-6.6s %-6.6s %8.8s %8.8s %8.8s %8.8s Addr\n",
-	       "Address", "Type", "Recv-Q", "Send-Q", "Inode", "Conn", "Refs",
-	       "Nextref");
+	    "Address", "Type", "Recv-Q", "Send-Q", "Inode", "Conn", "Refs",
+	    "Nextref");
 }
 
 static	const char * const socktype[] =
@@ -92,12 +92,12 @@ unixdomainpr0(u_long so_pcb, u_long so_type, u_long rcvq, u_long sndq,
 	      u_long addr, struct sockaddr_un *sun, int remote)
 {
 	printf("%8lx %-6.6s %6ld %6ld %8lx %8lx %8lx %8lx",
-	       so_pcb, socktype[so_type], rcvq, sndq, inode, conn, refs,
-	       nextref);
+	    so_pcb, socktype[so_type], rcvq, sndq, inode, conn, refs,
+	    nextref);
 	if (addr || remote)
 		printf((remote ? " -> %.*s" : " %.*s"),
-		       (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
-		       sun->sun_path);
+		    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+		    sun->sun_path);
 	putchar('\n');
 }
 
@@ -176,7 +176,7 @@ unixpr(u_long off)
 			mib[6] = sizeof(*pcblist);
 			mib[7] = size / sizeof(*pcblist);
 
-			if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib), 
+			if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
 					pcblist, &size, NULL, 0) == -1)
 				err(1, "sysctl (copy)");
 
@@ -197,10 +197,10 @@ unixpr(u_long off)
 					sun = (struct sockaddr_un *)&ki->ki_src;
 				}
 
-				unixdomainpr0(ki->ki_pcbaddr, ki->ki_type, 
+				unixdomainpr0(ki->ki_pcbaddr, ki->ki_type,
 					      ki->ki_rcvq, ki->ki_sndq,
-					      ki->ki_vnode, ki->ki_conn, 
-					      ki->ki_refs, ki->ki_nextref, 
+					      ki->ki_vnode, ki->ki_conn,
+					      ki->ki_refs, ki->ki_nextref,
 					      ki->ki_sockaddr, sun, remote);
 			}
 
@@ -208,10 +208,10 @@ unixpr(u_long off)
 		}
 
 	} else {
-		filebuf = (char *)kvm_getfiles(get_kvmd(), KERN_FILE, 
+		filebuf = (char *)kvm_getfiles(get_kvmd(), KERN_FILE,
 					       0, &ns_nfiles);
 		if (filebuf == 0) {
-			printf("file table read error: %s", 
+			printf("file table read error: %s",
 			       kvm_geterr(get_kvmd()));
 			return;
 		}
@@ -223,7 +223,8 @@ unixpr(u_long off)
 			if (kread((u_long)fp->f_data, (char *)so, sizeof (*so)))
 				continue;
 			/* kludge */
-			if (so->so_proto >= unixsw && so->so_proto <= unixsw + 2)
+			if (so->so_proto >= unixsw &&
+			    so->so_proto <= unixsw + 2)
 				if (so->so_pcb)
 					unixdomainpr(so, fp->f_data);
 		}

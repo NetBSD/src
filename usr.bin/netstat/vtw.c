@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.12 2021/10/30 11:23:07 nia Exp $	*/
+/*	$NetBSD: vtw.c,v 1.13 2022/09/01 10:10:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.12 2021/10/30 11:23:07 nia Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.13 2022/09/01 10:10:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,12 +132,11 @@ vtw_enabled(void)
 		    &enabled, &size, NULL, 0) == -1)
 			return true;
 		return enabled ? true : false;
-	} else {
+	} else
 		return true;
-	}
 }
 
-static void 
+static void
 snarf(const void *addr, void *buf, size_t len)
 {
 	size_t cc;
@@ -202,7 +201,7 @@ timebase(struct timeval *tv)
 	bintime2timeval(&timebasebin, tv);
 }
 
-static void 
+static void
 process_vtw(const vtw_ctl_t * ctl, void (*print)(const vtw_t *))
 {
 	vtw_t *vp;
@@ -262,7 +261,7 @@ show_vtw_stats(void)
 	printf("\t\t%" PRIu64 " max_loss\n", stats.max_loss[1]);
 }
 
-void 
+void
 show_vtw_v4(void (*print)(const vtw_t *))
 {
 	fatp_t *base, *lim;
@@ -309,9 +308,8 @@ show_vtw_v4(void (*print)(const vtw_t *))
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
 			mem += n * sizeof(*ubase);
-		} else {
+		} else
 			ubase = vtw_tcpv4[0].base.v4;
-		}
 
 		delta = ubase - kbase;
 
@@ -364,14 +362,14 @@ end:
 
 #if 0
 	if (Vflag && vflag) {
-		printf("total memory for VTW in current config: %d bytes %f MB\n"
-		    ,mem
-		    ,mem / (1024.0 * 1024));
+		printf("total memory for VTW in current config: "
+		    "%d bytes %f MB\n",
+		    mem, mem / (1024.0 * 1024));
 	}
 #endif
 }
 
-void 
+void
 show_vtw_v6(void (*print)(const vtw_t *))
 {
 	fatp_t *base, *lim;
@@ -417,9 +415,8 @@ show_vtw_v6(void (*print)(const vtw_t *))
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
 			mem += n * sizeof(*ubase);
-		} else {
+		} else
 			ubase = vtw_tcpv6[0].base.v6;
-		}
 
 		delta = ubase - kbase;
 
@@ -471,9 +468,9 @@ end:
 	process_vtw(&vtw_tcpv6[0], print);
 #if 0
 	if (Vflag && vflag) {
-		printf("total memory for VTW in current config: %d bytes %f MB\n"
-		    ,mem
-		    ,mem / (1024.0 * 1024));
+		printf("total memory for VTW in current config: "
+		    "%d bytes %f MB\n",
+		    mem, mem / (1024.0 * 1024));
 	}
 #endif
 }
