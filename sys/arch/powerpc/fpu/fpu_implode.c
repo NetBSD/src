@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.10 2022/08/30 11:09:34 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.11 2022/09/01 05:51:51 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.10 2022/08/30 11:09:34 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.11 2022/09/01 05:51:51 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -255,9 +255,6 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 
 /*
  * fpn -> extended int (high bits of int value returned as return value).
- *
- * N.B.: this conversion always rounds towards zero (this is a peculiarity
- * of the SPARC instruction set).
  */
 uint64_t
 fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
