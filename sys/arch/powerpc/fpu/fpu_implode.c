@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.11 2022/09/01 05:51:51 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.12 2022/09/01 05:56:52 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.11 2022/09/01 05:51:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2022/09/01 05:56:52 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.11 2022/09/01 05:51:51 rin Exp $")
 
 static int round(struct fpemu *, struct fpn *);
 static int toinf(struct fpemu *, int);
+static int round_int(struct fpn *, int *, int, int, int);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for
@@ -189,6 +190,40 @@ toinf(struct fpemu *fe, int sign)
 	return (inf);
 }
 
+static int
+round_int(struct fpn *fp, int *cx, int rn, int sign, int odd)
+{
+	int g, rs;
+
+	g =   fp->fp_mant[3] & 0x80000000;
+	rs = (fp->fp_mant[3] & 0x7fffffff) | fp->fp_sticky;
+
+	if ((g | rs) == 0)
+		return 0;	/* exact */
+
+	*cx |= FPSCR_XX | FPSCR_FI;
+
+	switch (rn) {
+	case FSR_RD_RN:
+		if (g && (rs | odd))
+			break;
+		return 0;
+	case FSR_RD_RZ:
+		return 0;
+	case FSR_RD_RP:
+		if (!sign)
+			break;
+		return 0;
+	case FSR_RD_RM:
+		if (sign)
+			break;
+		return 0;
+	}
+
+	*cx |= FPSCR_FR;
+	return 1;
+}
+
 /*
  * fpn -> int (int value returned as return value).
  */
@@ -196,10 +231,17 @@ u_int
 fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	u_int i;
-	int sign, exp, g, rs;
+	int sign, exp, cx;
 
 	sign = fp->fp_sign;
+	cx = 0;
 	switch (fp->fp_class) {
+	case FPC_SNAN:
+		fe->fe_cx |= FPSCR_VXSNAN;
+		/* FALLTHROUGH */
+	case FPC_QNAN:
+		sign = 1;
+		break;
 
 	case FPC_ZERO:
 		return (0);
@@ -218,34 +260,15 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 		if ((exp = fp->fp_exp) >= 32)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 32 - 1 - exp) != 0)
-			fe->fe_cx |= FPSCR_UX;
+		(void)fpu_shr(fp, FP_NMANT - 32 - 1 - exp);
 		i = fp->fp_mant[2];
-
-		g  =  fp->fp_mant[3] & 0x80000000;
-		rs = (fp->fp_mant[3] & 0x7fffffff) | fp->fp_sticky;
-		switch (rn) {
-		case FSR_RD_RN:
-			if (g && (rs | (i & 1)))
-				i++;
-			break;
-		case FSR_RD_RZ:
-			break;
-		case FSR_RD_RP:
-			if (!sign && (g | rs))
-				i++;
-			break;
-		case FSR_RD_RM:
-			if (sign && (g | rs))
-				i++;
-			break;
-		}
-
+		i += round_int(fp, &cx, rn, sign, i & 1);
 		if (i >= ((u_int)0x80000000 + sign))
 			break;
+		fe->fe_cx |= cx;
 		return (sign ? -i : i);
 
-	default:		/* Inf, qNaN, sNaN */
+	case FPC_INF:
 		break;
 	}
 	/* overflow: replace any inexact exception with invalid */
@@ -260,10 +283,17 @@ uint64_t
 fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	uint64_t i;
-	int sign, exp, g, rs;
+	int sign, exp, cx;
 
 	sign = fp->fp_sign;
+	cx = 0;
 	switch (fp->fp_class) {
+	case FPC_SNAN:
+		fe->fe_cx |= FPSCR_VXSNAN;
+		/* FALLTHROUGH */
+	case FPC_QNAN:
+		sign = 1;
+		break;
 
 	case FPC_ZERO:
 		return (0);
@@ -282,34 +312,15 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
 		if ((exp = fp->fp_exp) >= 64)
 			break;
 		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 32 - 1 - exp) != 0)
-			fe->fe_cx |= FPSCR_UX;
+		(void)fpu_shr(fp, FP_NMANT - 32 - 1 - exp);
 		i = ((uint64_t)fp->fp_mant[1] << 32) | fp->fp_mant[2];
-
-		g  =  fp->fp_mant[3] & 0x80000000;
-		rs = (fp->fp_mant[3] & 0x7fffffff) | fp->fp_sticky;
-		switch (rn) {
-		case FSR_RD_RN:
-			if (g && (rs | (i & 1)))
-				i++;
-			break;
-		case FSR_RD_RZ:
-			break;
-		case FSR_RD_RP:
-			if (!sign && (g | rs))
-				i++;
-			break;
-		case FSR_RD_RM:
-			if (sign && (g | rs))
-				i++;
-			break;
-		}
-
+		i += round_int(fp, &cx, rn, sign, i & 1);
 		if (i >= ((uint64_t)0x8000000000000000LL + sign))
 			break;
+		fe->fe_cx |= cx;
 		return (sign ? -i : i);
 
-	default:		/* Inf, qNaN, sNaN */
+	case FPC_INF:
 		break;
 	}
 	/* overflow: replace any inexact exception with invalid */
