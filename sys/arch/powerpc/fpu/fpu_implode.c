@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.12 2022/09/01 05:56:52 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.13 2022/09/01 05:58:19 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2022/09/01 05:56:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.13 2022/09/01 05:58:19 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -63,6 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.12 2022/09/01 05:56:52 rin Exp $")
 static int round(struct fpemu *, struct fpn *);
 static int toinf(struct fpemu *, int);
 static int round_int(struct fpn *, int *, int, int, int);
+
+static u_int fpu_ftoi(struct fpemu *, struct fpn *, int);
+static uint64_t fpu_ftox(struct fpemu *, struct fpn *, int);
+static u_int fpu_ftos(struct fpemu *, struct fpn *);
+static u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for
@@ -227,7 +232,7 @@ round_int(struct fpn *fp, int *cx, int rn, int sign, int odd)
 /*
  * fpn -> int (int value returned as return value).
  */
-u_int
+static u_int
 fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	u_int i;
@@ -279,7 +284,7 @@ fpu_ftoi(struct fpemu *fe, struct fpn *fp, int rn)
 /*
  * fpn -> extended int (high bits of int value returned as return value).
  */
-uint64_t
+static uint64_t
 fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
 {
 	uint64_t i;
@@ -332,7 +337,7 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
  * fpn -> single (32 bit single returned as return value).
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
-u_int
+static u_int
 fpu_ftos(struct fpemu *fe, struct fpn *fp)
 {
 	u_int sign = fp->fp_sign << 31;
@@ -413,7 +418,7 @@ done:
  *
  * This code mimics fpu_ftos; see it for comments.
  */
-u_int
+static u_int
 fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
 	u_int sign = fp->fp_sign << 31;
