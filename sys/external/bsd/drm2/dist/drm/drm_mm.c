@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.19 2022/09/01 01:54:28 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.20 2022/09/01 11:48:59 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.19 2022/09/01 01:54:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.20 2022/09/01 11:48:59 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -437,16 +437,10 @@ static struct drm_mm_node *best_hole(struct drm_mm *mm, u64 size)
 static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 {
 #ifdef __NetBSD__
-	struct drm_mm_node *node;
-
-	node = rb_tree_find_node(&mm->holes_addr.rbr_tree, &addr);
-	KASSERT(node == NULL || __drm_mm_hole_node_start(node) <= addr);
-	KASSERT(node == NULL || addr <
-	    __drm_mm_hole_node_start(node) + node->hole_size);
-
-	return node;
+	struct rb_node *rb = mm->holes_addr.rbr_tree.rbt_root;
 #else
 	struct rb_node *rb = mm->holes_addr.rb_node;
+#endif
 	struct drm_mm_node *node = NULL;
 
 	while (rb) {
@@ -464,7 +458,6 @@ static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 	}
 
 	return node;
-#endif
 }
 
 static struct drm_mm_node *
@@ -478,18 +471,10 @@ first_hole(struct drm_mm *mm,
 		return best_hole(mm, size);
 
 	case DRM_MM_INSERT_LOW:
-#ifdef __NetBSD__
-		return rb_tree_find_node_geq(&mm->holes_addr.rbr_tree, &start);
-#else
 		return find_hole(mm, start);
-#endif
 
 	case DRM_MM_INSERT_HIGH:
-#ifdef __NetBSD__
-		return rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &end);
-#else
 		return find_hole(mm, end);
-#endif
 
 	case DRM_MM_INSERT_EVICT:
 		return list_first_entry_or_null(&mm->hole_stack,
