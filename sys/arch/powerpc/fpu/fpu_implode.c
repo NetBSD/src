@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.13 2022/09/01 05:58:19 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.14 2022/09/01 06:08:16 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.13 2022/09/01 05:58:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.14 2022/09/01 06:08:16 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ static int round_int(struct fpn *, int *, int, int, int);
 
 static u_int fpu_ftoi(struct fpemu *, struct fpn *, int);
 static uint64_t fpu_ftox(struct fpemu *, struct fpn *, int);
-static u_int fpu_ftos(struct fpemu *, struct fpn *);
-static u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *);
+static u_int fpu_ftos(struct fpemu *, struct fpn *, bool);
+static u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *, bool);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for
@@ -333,12 +333,14 @@ fpu_ftox(struct fpemu *fe, struct fpn *fp, int rn)
 	return (0x7fffffffffffffffLL + sign);
 }
 
+#define	FPRF_SIGN(sign)	((sign) ? FPSCR_FL : FPSCR_FG)
+
 /*
  * fpn -> single (32 bit single returned as return value).
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
 static u_int
-fpu_ftos(struct fpemu *fe, struct fpn *fp)
+fpu_ftos(struct fpemu *fe, struct fpn *fp, bool fprf)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
@@ -348,6 +350,8 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 
 	/* Take care of non-numbers first. */
 	if (ISNAN(fp)) {
+		if (fprf)
+			fe->fe_cx |= FPSCR_C | FPSCR_FU;
 		/*
 		 * Preserve upper bits of NaN, per SPARC V8 appendix N.
 		 * Note that fp->fp_mant[0] has the quiet bit set,
@@ -357,10 +361,19 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 		exp = SNG_EXP_INFNAN;
 		goto done;
 	}
-	if (ISINF(fp))
+	if (ISINF(fp)) {
+		if (fprf)
+			fe->fe_cx |= FPRF_SIGN(sign) | FPSCR_FU;
 		return (sign | SNG_EXP(SNG_EXP_INFNAN));
-	if (ISZERO(fp))
+	}
+	if (ISZERO(fp)) {
+		if (fprf) {
+			fe->fe_cx |= FPSCR_FE;
+			if (sign)
+				fe->fe_cx |= FPSCR_C;
+		}
 		return (sign);
+	}
 
 	/*
 	 * Normals (including subnormals).  Drop all the fraction bits
@@ -386,8 +399,13 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 	if ((exp = fp->fp_exp + SNG_EXP_BIAS) <= 0) {	/* subnormal */
 		/* -NG for g,r; -SNG_FRACBITS-exp for fraction */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
+		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1)) {
+			if (fprf)
+				fe->fe_cx |= FPRF_SIGN(sign);
 			return (sign | SNG_EXP(1) | 0);
+		}
+		if (fprf)
+			fe->fe_cx |= FPSCR_C | FPRF_SIGN(sign);
 		if ((fe->fe_cx & FPSCR_FI) ||
 		    (fe->fe_fpscr & FPSCR_UX))
 			fe->fe_cx |= FPSCR_UX;
@@ -403,10 +421,17 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp)
 		exp++;
 	if (exp >= SNG_EXP_INFNAN) {
 		/* overflow to inf or to max single */
-		if (toinf(fe, sign))
+		if (toinf(fe, sign)) {
+			if (fprf)
+				fe->fe_cx |= FPRF_SIGN(sign) | FPSCR_FU;
 			return (sign | SNG_EXP(SNG_EXP_INFNAN));
+		}
+		if (fprf)
+			fe->fe_cx |= FPRF_SIGN(sign);
 		return (sign | SNG_EXP(SNG_EXP_INFNAN - 1) | SNG_MASK);
 	}
+	if (fprf)
+		fe->fe_cx |= FPRF_SIGN(sign);
 done:
 	/* phew, made it */
 	return (sign | SNG_EXP(exp) | (fp->fp_mant[3] & SNG_MASK));
@@ -419,7 +444,7 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 static u_int
-fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
+fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res, bool fprf)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
@@ -428,15 +453,24 @@ fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 #define	DBL_MASK	(DBL_EXP(1) - 1)
 
 	if (ISNAN(fp)) {
+		if (fprf)
+			fe->fe_cx |= FPSCR_C | FPSCR_FU;
 		(void) fpu_shr(fp, FP_NMANT - 1 - DBL_FRACBITS);
 		exp = DBL_EXP_INFNAN;
 		goto done;
 	}
 	if (ISINF(fp)) {
+		if (fprf)
+			fe->fe_cx |= FPRF_SIGN(sign) | FPSCR_FU;
 		sign |= DBL_EXP(DBL_EXP_INFNAN);
 		goto zero;
 	}
 	if (ISZERO(fp)) {
+		if (fprf) {
+			fe->fe_cx |= FPSCR_FE;
+			if (sign)
+				fe->fe_cx |= FPSCR_C;
+		}
 zero:		res[1] = 0;
 		return (sign);
 	}
@@ -444,9 +478,13 @@ zero:		res[1] = 0;
 	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - DBL_FRACBITS - exp);
 		if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
+			if (fprf)
+				fe->fe_cx |= FPRF_SIGN(sign);
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
+		if (fprf)
+			fe->fe_cx |= FPSCR_C | FPRF_SIGN(sign);
 		if ((fe->fe_cx & FPSCR_FI) ||
 		    (fe->fe_fpscr & FPSCR_UX))
 			fe->fe_cx |= FPSCR_UX;
@@ -459,12 +497,18 @@ zero:		res[1] = 0;
 	if (exp >= DBL_EXP_INFNAN) {
 		fe->fe_cx |= FPSCR_OX;
 		if (toinf(fe, sign)) {
+			if (fprf)
+				fe->fe_cx |= FPRF_SIGN(sign) | FPSCR_FU;
 			res[1] = 0;
 			return (sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
 		}
+		if (fprf)
+			fe->fe_cx |= FPRF_SIGN(sign);
 		res[1] = ~0;
 		return (sign | DBL_EXP(DBL_EXP_INFNAN) | DBL_MASK);
 	}
+	if (fprf)
+		fe->fe_cx |= FPRF_SIGN(sign);
 done:
 	res[1] = fp->fp_mant[3];
 	return (sign | DBL_EXP(exp) | (fp->fp_mant[2] & DBL_MASK));
@@ -477,22 +521,26 @@ void
 fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 {
 	int rn;
+	bool fprf;
 
 	if (type & FTYPE_RD_RZ)
 		rn = FSR_RD_RZ;
 	else
 		rn = fe->fe_fpscr & FPSCR_RN;
-	type &= ~FTYPE_RD_MASK;
+	fprf = type & FTYPE_FPRF;
+	type &= ~FTYPE_FLAG_MASK;
 
 	switch (type) {
 
 	case FTYPE_LNG:
+		/* FPRF is undefined. */
 		*(uint64_t *)space = fpu_ftox(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: long %x %x\n",
 			space[0], space[1]));
 		break;
 
 	case FTYPE_INT:
+		/* FPRF is undefined. */
 		space[0] = 0;
 		space[1] = fpu_ftoi(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: int %x\n",
@@ -500,13 +548,13 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 		break;
 
 	case FTYPE_SNG:
-		space[0] = fpu_ftos(fe, fp);
+		space[0] = fpu_ftos(fe, fp, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: single %x\n",
 			space[0]));
 		break;
 
 	case FTYPE_DBL:
-		space[0] = fpu_ftod(fe, fp, space);
+		space[0] = fpu_ftod(fe, fp, space, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: double %x %x\n",
 			space[0], space[1]));
 		break;		break;
