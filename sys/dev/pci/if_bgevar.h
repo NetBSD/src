@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.38 2022/08/27 06:32:53 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.39 2022/09/02 06:51:24 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -97,54 +97,54 @@
  * accesses and all registers must be accessed with 32 bit operations.
  */
 
-#define CSR_WRITE_4(sc, reg, val)	\
+#define CSR_WRITE_4(sc, reg, val)					      \
 	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, reg, val)
 
-#define CSR_READ_4(sc, reg)		\
+#define CSR_READ_4(sc, reg)						      \
 	bus_space_read_4(sc->bge_btag, sc->bge_bhandle, reg)
 
-#define CSR_WRITE_4_FLUSH(sc, reg, val)		\
-	do {					\
-		CSR_WRITE_4(sc, reg, val);	\
-		CSR_READ_4(sc, reg);		\
-	} while(0)
+#define CSR_WRITE_4_FLUSH(sc, reg, val)					      \
+	do {								      \
+		CSR_WRITE_4(sc, reg, val);				      \
+		CSR_READ_4(sc, reg);					      \
+	} while (0)
 
-#define BGE_SETBIT(sc, reg, x)	\
+#define BGE_SETBIT(sc, reg, x)						      \
 	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | (x)))
-#define BGE_SETBIT_FLUSH(sc, reg, x)	\
-	do {				\
-		BGE_SETBIT(sc, reg, x);	\
-		CSR_READ_4(sc, reg);	\
-	} while(0)
-#define BGE_CLRBIT(sc, reg, x)	\
+#define BGE_SETBIT_FLUSH(sc, reg, x)					      \
+	do {								      \
+		BGE_SETBIT(sc, reg, x);					      \
+		CSR_READ_4(sc, reg);					      \
+	} while (0)
+#define BGE_CLRBIT(sc, reg, x)						      \
 	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~(x)))
-#define BGE_CLRBIT_FLUSH(sc, reg, x)	\
-	do {				\
-		BGE_CLRBIT(sc, reg, x);	\
-		CSR_READ_4(sc, reg);	\
-	} while(0)
+#define BGE_CLRBIT_FLUSH(sc, reg, x)					      \
+	do {								      \
+		BGE_CLRBIT(sc, reg, x);					      \
+		CSR_READ_4(sc, reg);					      \
+	} while (0)
 
 /* BAR2 APE register access macros. */
-#define	APE_WRITE_4(sc, reg, val)	\
+#define	APE_WRITE_4(sc, reg, val)					      \
 	bus_space_write_4(sc->bge_apetag, sc->bge_apehandle, reg, val)
 
-#define	APE_READ_4(sc, reg)		\
+#define	APE_READ_4(sc, reg)						      \
 	bus_space_read_4(sc->bge_apetag, sc->bge_apehandle, reg)
 
-#define	APE_WRITE_4_FLUSH(sc, reg, val)		\
-	do {					\
-		APE_WRITE_4(sc, reg, val);	\
-		APE_READ_4(sc, reg);		\
-	} while(0)
+#define	APE_WRITE_4_FLUSH(sc, reg, val)					      \
+	do {								      \
+		APE_WRITE_4(sc, reg, val);				      \
+		APE_READ_4(sc, reg);					      \
+	} while (0)
 
 #define	APE_SETBIT(sc, reg, x)						      \
 	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) | (x)))
-#define	APE_CLRBIT(sc, reg, x)	\
+#define	APE_CLRBIT(sc, reg, x)						      \
 	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) & ~(x)))
 
 #define PCI_SETBIT(pc, tag, reg, x)					      \
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | (x)))
-#define PCI_CLRBIT(pc, tag, reg, x)	\
+#define PCI_CLRBIT(pc, tag, reg, x)					      \
 	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 /*
@@ -157,12 +157,12 @@
 #define BGE_MSLOTS	256
 #define BGE_JSLOTS	384
 
-#define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
-#define BGE_JLEN (BGE_JRAWLEN + (sizeof(uint64_t) - \
-	(BGE_JRAWLEN % sizeof(uint64_t))))
-#define BGE_JPAGESZ PAGE_SIZE
-#define BGE_RESID (BGE_JPAGESZ - (BGE_JLEN * BGE_JSLOTS) % BGE_JPAGESZ)
-#define BGE_JMEM ((BGE_JLEN * BGE_JSLOTS) + BGE_RESID)
+#define BGE_JRAWLEN	(BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
+#define BGE_JLEN	(BGE_JRAWLEN + (sizeof(uint64_t) - 		      \
+			    (BGE_JRAWLEN % sizeof(uint64_t))))
+#define BGE_JPAGESZ 	PAGE_SIZE
+#define BGE_RESID 	(BGE_JPAGESZ - (BGE_JLEN * BGE_JSLOTS) % BGE_JPAGESZ)
+#define BGE_JMEM 	((BGE_JLEN * BGE_JSLOTS) + BGE_RESID)
 
 /*
  * Ring structures. Most of these reside in host memory and we tell
