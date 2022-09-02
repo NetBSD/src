@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.10 2022/08/28 22:22:41 rin Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.11 2022/09/02 12:30:48 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.10 2022/08/28 22:22:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2022/09/02 12:30:48 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.10 2022/08/28 22:22:41 rin Exp $")
  * int -> fpn.
  */
 int
-fpu_itof(struct fpn *fp, u_int i)
+fpu_itof(struct fpn *fp, u_int lo)
 {
 
-	if (i == 0)
+	if (lo == 0)
 		return (FPC_ZERO);
 	/*
 	 * The value FP_1 represents 2^FP_LG, so set the exponent
@@ -95,7 +95,7 @@ fpu_itof(struct fpn *fp, u_int i)
 	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
 	 */
 	fp->fp_exp = FP_LG;
-	fp->fp_mant[0] = (int)i < 0 ? -i : i;
+	fp->fp_mant[0] = (int)lo < 0 ? -lo : lo;
 	fp->fp_mant[1] = 0;
 	fp->fp_mant[2] = 0;
 	fp->fp_mant[3] = 0;
@@ -166,14 +166,14 @@ fpu_xtof(struct fpn *fp, uint64_t i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 int
-fpu_stof(struct fpn *fp, u_int i)
+fpu_stof(struct fpn *fp, u_int hi)
 {
 	int exp;
 	u_int frac, f0, f1;
 #define SNG_SHIFT (SNG_FRACBITS - FP_LG)
 
-	exp = (i >> (32 - 1 - SNG_EXPBITS)) & mask(SNG_EXPBITS);
-	frac = i & mask(SNG_FRACBITS);
+	exp = (hi >> (32 - 1 - SNG_EXPBITS)) & mask(SNG_EXPBITS);
+	frac = hi & mask(SNG_FRACBITS);
 	f0 = frac >> SNG_SHIFT;
 	f1 = frac << (32 - SNG_SHIFT);
 	FP_TOF(exp, SNG_EXP_BIAS, frac, f0, f1, 0, 0);
@@ -184,18 +184,18 @@ fpu_stof(struct fpn *fp, u_int i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 int
-fpu_dtof(struct fpn *fp, u_int i, u_int j)
+fpu_dtof(struct fpn *fp, u_int hi, u_int lo)
 {
 	int exp;
 	u_int frac, f0, f1, f2;
 #define DBL_SHIFT (DBL_FRACBITS - 32 - FP_LG)
 
-	exp = (i >> (32 - 1 - DBL_EXPBITS)) & mask(DBL_EXPBITS);
-	frac = i & mask(DBL_FRACBITS - 32);
+	exp = (hi >> (32 - 1 - DBL_EXPBITS)) & mask(DBL_EXPBITS);
+	frac = hi & mask(DBL_FRACBITS - 32);
 	f0 = frac >> DBL_SHIFT;
-	f1 = (frac << (32 - DBL_SHIFT)) | (j >> DBL_SHIFT);
-	f2 = j << (32 - DBL_SHIFT);
-	frac |= j;
+	f1 = (frac << (32 - DBL_SHIFT)) | (lo >> DBL_SHIFT);
+	f2 = lo << (32 - DBL_SHIFT);
+	frac |= lo;
 	FP_TOF(exp, DBL_EXP_BIAS, frac, f0, f1, f2, 0);
 }
 
