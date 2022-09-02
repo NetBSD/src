@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.6 2022/09/01 06:10:58 rin Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.7 2022/09/02 12:29:58 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.6 2022/09/01 06:10:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.7 2022/09/02 12:29:58 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -72,10 +72,8 @@ fpu_shr(struct fpn *fp, int rsh)
 	u_int m0, m1, m2, m3, s;
 	int lsh;
 
-#ifdef DIAGNOSTIC
-	if (rsh <= 0 || (fp->fp_class != FPC_NUM && !ISNAN(fp)))
-		panic("fpu_rightshift 1");
-#endif
+	KASSERTMSG(rsh > 0 && (fp->fp_class == FPC_NUM || ISNAN(fp)),
+	    "rsh %d, class %d\n", rsh, fp->fp_class);
 
 	m0 = fp->fp_mant[0];
 	m1 = fp->fp_mant[1];
@@ -84,10 +82,7 @@ fpu_shr(struct fpn *fp, int rsh)
 
 	/* If shifting all the bits out, take a shortcut. */
 	if (rsh >= FP_NMANT) {
-#ifdef DIAGNOSTIC
-		if ((m0 | m1 | m2 | m3) == 0)
-			panic("fpu_rightshift 2");
-#endif
+		KASSERT((m0 | m1 | m2 | m3) != 0);
 		fp->fp_mant[0] = 0;
 		fp->fp_mant[1] = 0;
 		fp->fp_mant[2] = 0;
