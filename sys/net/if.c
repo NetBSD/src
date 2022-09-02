@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.521 2022/09/02 03:50:00 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.522 2022/09/02 04:34:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.521 2022/09/02 03:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.522 2022/09/02 04:34:58 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1399,6 +1399,33 @@ if_detach(struct ifnet *ifp)
 #endif
 
 	/*
+	 * remove packets that came from ifp, from software interrupt queues.
+	 */
+	DOMAIN_FOREACH(dp) {
+		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
+			struct ifqueue *iq = dp->dom_ifqueues[i];
+			if (iq == NULL)
+				break;
+			dp->dom_ifqueues[i] = NULL;
+			if_detach_queues(ifp, iq);
+		}
+	}
+
+	/*
+	 * IP queues have to be processed separately: net-queue barrier
+	 * ensures that the packets are dequeued while a cross-call will
+	 * ensure that the interrupts have completed. FIXME: not quite..
+	 */
+#ifdef INET
+	pktq_barrier(ip_pktq);
+#endif
+#ifdef INET6
+	if (in6_present)
+		pktq_barrier(ip6_pktq);
+#endif
+	xc_barrier(0);
+
+	/*
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
 	 *
@@ -1517,33 +1544,6 @@ restart:
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
-
-	/*
-	 * remove packets that came from ifp, from software interrupt queues.
-	 */
-	DOMAIN_FOREACH(dp) {
-		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
-			struct ifqueue *iq = dp->dom_ifqueues[i];
-			if (iq == NULL)
-				break;
-			dp->dom_ifqueues[i] = NULL;
-			if_detach_queues(ifp, iq);
-		}
-	}
-
-	/*
-	 * IP queues have to be processed separately: net-queue barrier
-	 * ensures that the packets are dequeued while a cross-call will
-	 * ensure that the interrupts have completed. FIXME: not quite..
-	 */
-#ifdef INET
-	pktq_barrier(ip_pktq);
-#endif
-#ifdef INET6
-	if (in6_present)
-		pktq_barrier(ip6_pktq);
-#endif
-	xc_barrier(0);
 
 	if (ifp->if_percpuq != NULL) {
 		if_percpuq_destroy(ifp->if_percpuq);
