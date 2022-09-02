@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.522 2022/09/02 04:34:58 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.523 2022/09/02 05:50:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.522 2022/09/02 04:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.523 2022/09/02 05:50:36 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1412,17 +1412,13 @@ if_detach(struct ifnet *ifp)
 	}
 
 	/*
-	 * IP queues have to be processed separately: net-queue barrier
-	 * ensures that the packets are dequeued while a cross-call will
-	 * ensure that the interrupts have completed. FIXME: not quite..
+	 * Ensure that all packets on protocol input pktqueues have been
+	 * processed, or, at least, removed from the queues.
+	 *
+	 * A cross-call will ensure that the interrupts have completed.
+	 * FIXME: not quite..
 	 */
-#ifdef INET
-	pktq_barrier(ip_pktq);
-#endif
-#ifdef INET6
-	if (in6_present)
-		pktq_barrier(ip6_pktq);
-#endif
+	pktq_ifdetach();
 	xc_barrier(0);
 
 	/*
