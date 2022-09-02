@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.26 2020/11/21 00:27:52 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2020/11/21 00:27:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2020/11/21 00:27:52 thorpej Exp $");
 #include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>

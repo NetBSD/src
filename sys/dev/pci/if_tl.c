@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.124 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.125 2022/09/02 23:48:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.124 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.125 2022/09/02 23:48:10 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.124 2022/02/23 21:54:41 andvar Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
 
 #include <sys/rndsource.h>
