@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.h,v 1.6 2022/09/01 05:04:22 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.h,v 1.7 2022/09/02 03:50:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,11 +60,9 @@ uint32_t	pktq_rps_hash(const pktq_rps_hash_func_t *,
 		    const struct mbuf *);
 extern const pktq_rps_hash_func_t	pktq_rps_hash_default;
 
-uint64_t	pktq_get_count(pktqueue_t *, pktq_count_t);
+void		pktq_sysctl_setup(pktqueue_t *, struct sysctllog **,
+		    const struct sysctlnode *, const int);
 
 int		sysctl_pktq_rps_hash_handler(SYSCTLFN_PROTO);
-
-int		sysctl_pktq_maxlen(SYSCTLFN_PROTO, pktqueue_t *);
-int		sysctl_pktq_count(SYSCTLFN_PROTO, pktqueue_t *, u_int);
 
 #endif

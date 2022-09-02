@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.18 2022/09/01 05:04:22 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.19 2022/09/02 03:50:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.18 2022/09/01 05:04:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.19 2022/09/02 03:50:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -201,7 +201,7 @@ pktq_collect_counts(void *mem, void *arg, struct cpu_info *ci)
 	splx(s);
 }
 
-uint64_t
+static uint64_t
 pktq_get_count(pktqueue_t *pq, pktq_count_t c)
 {
 	pktq_counters_t sum;
@@ -585,11 +585,12 @@ pktq_set_maxlen(pktqueue_t *pq, size_t maxlen)
 	return 0;
 }
 
-int
-sysctl_pktq_maxlen(SYSCTLFN_ARGS, pktqueue_t *pq)
+static int
+sysctl_pktq_maxlen(SYSCTLFN_ARGS)
 {
-	u_int nmaxlen = pktq_get_count(pq, PKTQ_MAXLEN);
 	struct sysctlnode node = *rnode;
+	pktqueue_t * const pq = node.sysctl_data;
+	u_int nmaxlen = pktq_get_count(pq, PKTQ_MAXLEN);
 	int error;
 
 	node.sysctl_data = &nmaxlen;
@@ -599,12 +600,71 @@ sysctl_pktq_maxlen(SYSCTLFN_ARGS, pktqueue_t *pq)
 	return pktq_set_maxlen(pq, nmaxlen);
 }
 
-int
-sysctl_pktq_count(SYSCTLFN_ARGS, pktqueue_t *pq, u_int count_id)
+static int
+sysctl_pktq_count(SYSCTLFN_ARGS, u_int count_id)
 {
-	uint64_t count = pktq_get_count(pq, count_id);
 	struct sysctlnode node = *rnode;
+	pktqueue_t * const pq = node.sysctl_data;
+	uint64_t count = pktq_get_count(pq, count_id);
 
 	node.sysctl_data = &count;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+sysctl_pktq_nitems(SYSCTLFN_ARGS)
+{
+	return sysctl_pktq_count(SYSCTLFN_CALL(rnode), PKTQ_NITEMS);
+}
+
+static int
+sysctl_pktq_drops(SYSCTLFN_ARGS)
+{
+	return sysctl_pktq_count(SYSCTLFN_CALL(rnode), PKTQ_DROPS);
+}
+
+/*
+ * pktqueue_sysctl_setup: set up the sysctl nodes for a pktqueue
+ * using standardized names at the specified parent node and
+ * node ID (or CTL_CREATE).
+ */
+void
+pktq_sysctl_setup(pktqueue_t * const pq, struct sysctllog ** const clog,
+		  const struct sysctlnode * const parent_node, const int qid)
+{
+	const struct sysctlnode *rnode = parent_node, *cnode;
+
+	KASSERT(pq != NULL);
+	KASSERT(parent_node != NULL);
+	KASSERT(qid == CTL_CREATE || qid >= 0);
+
+	/* Create the "ifq" node below the parent node. */
+	sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ifq",
+		       SYSCTL_DESCR("Protocol input queue controls"),
+		       NULL, 0, NULL, 0,
+		       qid, CTL_EOL);
+
+	/* Now create the standard child nodes below "ifq". */
+	rnode = cnode;
+
+	sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "len",
+		       SYSCTL_DESCR("Current input queue length"),
+		       sysctl_pktq_nitems, 0, (void *)pq, 0,
+		       IFQCTL_LEN, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxlen",
+		       SYSCTL_DESCR("Maximum allowed input queue length"),
+		       sysctl_pktq_maxlen, 0, (void *)pq, 0,
+		       IFQCTL_MAXLEN, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "drops",
+		       SYSCTL_DESCR("Packets dropped due to full input queue"),
+		       sysctl_pktq_drops, 0, (void *)pq, 0,
+		       IFQCTL_DROPS, CTL_EOL);
 }

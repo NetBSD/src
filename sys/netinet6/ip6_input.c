@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.224 2021/02/19 14:52:00 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.225 2022/09/02 03:50:00 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.224 2021/02/19 14:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.225 2022/09/02 03:50:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -182,6 +182,9 @@ ip6_init(void)
 
 	in6_init();
 
+	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr, NULL);
+	KASSERT(ip6_pktq != NULL);
+
 	sysctl_net_inet6_ip6_setup(NULL);
 	pr = (const struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -193,9 +196,6 @@ ip6_init(void)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
-
-	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr, NULL);
-	KASSERT(ip6_pktq != NULL);
 
 	scope6_init();
 	addrsel_policy_init();
@@ -1559,6 +1559,7 @@ sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 {
+	const struct sysctlnode *ip6_node;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1566,7 +1567,7 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("PF_INET6 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &ip6_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ip6",
 		       SYSCTL_DESCR("IPv6 related settings"),
@@ -1602,6 +1603,9 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_maxfragpackets, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_MAXFRAGPACKETS, CTL_EOL);
+
+	pktq_sysctl_setup(ip6_pktq, clog, ip6_node, IPV6CTL_IFQ);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepfaith",
