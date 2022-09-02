@@ -1,4 +1,4 @@
-/* $NetBSD: xenmem.c,v 1.3 2022/09/01 16:28:08 bouyer Exp $ */
+/* $NetBSD: xenmem.c,v 1.4 2022/09/02 05:09:49 kre Exp $ */
 /*
  * Copyright (c) 2022 Manuel Bouyer.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.3 2022/09/01 16:28:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenmem.c,v 1.4 2022/09/02 05:09:49 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ xenmem_alloc_pa(u_long size, u_long align, bool waitok)
 	    &result);
 #else
 	error = extent_alloc(XENMEM_EX, size, align, 0,
-	    waitok ? ((EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT) | EX_MALLOCOK,
+	    (waitok ? (EX_WAITSPACE | EX_WAITOK) : EX_NOWAIT) | EX_MALLOCOK,
 	    &result);
 #endif
 	if (error) {
