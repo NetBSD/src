@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.520 2022/08/21 12:34:39 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.521 2022/09/02 03:50:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.520 2022/08/21 12:34:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.521 2022/09/02 03:50:00 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -269,10 +269,6 @@ struct if_slowtimo_data {
 	bool			isd_dying;
 	bool			isd_trigger;
 };
-
-#if defined(INET) || defined(INET6)
-static void sysctl_net_pktq_setup(struct sysctllog **, int);
-#endif
 
 /*
  * Hook for if_vlan - needed by if_agr
@@ -4095,103 +4091,6 @@ bad:
 	return;
 }
 
-#if defined(INET) || defined(INET6)
-
-#define	SYSCTL_NET_PKTQ(q, cn, c)					\
-	static int							\
-	sysctl_net_##q##_##cn(SYSCTLFN_ARGS)				\
-	{								\
-		return sysctl_pktq_count(SYSCTLFN_CALL(rnode), q, c);	\
-	}
-
-#if defined(INET)
-static int
-sysctl_net_ip_pktq_maxlen(SYSCTLFN_ARGS)
-{
-	return sysctl_pktq_maxlen(SYSCTLFN_CALL(rnode), ip_pktq);
-}
-SYSCTL_NET_PKTQ(ip_pktq, items, PKTQ_NITEMS)
-SYSCTL_NET_PKTQ(ip_pktq, drops, PKTQ_DROPS)
-#endif
-
-#if defined(INET6)
-static int
-sysctl_net_ip6_pktq_maxlen(SYSCTLFN_ARGS)
-{
-	return sysctl_pktq_maxlen(SYSCTLFN_CALL(rnode), ip6_pktq);
-}
-SYSCTL_NET_PKTQ(ip6_pktq, items, PKTQ_NITEMS)
-SYSCTL_NET_PKTQ(ip6_pktq, drops, PKTQ_DROPS)
-#endif
-
-static void
-sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
-{
-	sysctlfn len_func = NULL, maxlen_func = NULL, drops_func = NULL;
-	const char *pfname = NULL, *ipname = NULL;
-	int ipn = 0, qid = 0;
-
-	switch (pf) {
-#if defined(INET)
-	case PF_INET:
-		len_func = sysctl_net_ip_pktq_items;
-		maxlen_func = sysctl_net_ip_pktq_maxlen;
-		drops_func = sysctl_net_ip_pktq_drops;
-		pfname = "inet", ipn = IPPROTO_IP;
-		ipname = "ip", qid = IPCTL_IFQ;
-		break;
-#endif
-#if defined(INET6)
-	case PF_INET6:
-		len_func = sysctl_net_ip6_pktq_items;
-		maxlen_func = sysctl_net_ip6_pktq_maxlen;
-		drops_func = sysctl_net_ip6_pktq_drops;
-		pfname = "inet6", ipn = IPPROTO_IPV6;
-		ipname = "ip6", qid = IPV6CTL_IFQ;
-		break;
-#endif
-	default:
-		KASSERT(false);
-	}
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, pfname, NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, pf, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, ipname, NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, pf, ipn, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ifq",
-		       SYSCTL_DESCR("Protocol input queue controls"),
-		       NULL, 0, NULL, 0,
-		       CTL_NET, pf, ipn, qid, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "len",
-		       SYSCTL_DESCR("Current input queue length"),
-		       len_func, 0, NULL, 0,
-		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxlen",
-		       SYSCTL_DESCR("Maximum allowed input queue length"),
-		       maxlen_func, 0, NULL, 0,
-		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "drops",
-		       SYSCTL_DESCR("Packets dropped due to full input queue"),
-		       drops_func, 0, NULL, 0,
-		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
-}
-#endif /* INET || INET6 */
-
 static int
 if_sdl_sysctl(SYSCTLFN_ARGS)
 {
@@ -4242,12 +4141,4 @@ if_sysctl_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("Get active link-layer address"),
 		       if_sdl_sysctl, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
-
-#if defined(INET)
-	sysctl_net_pktq_setup(NULL, PF_INET);
-#endif
-#ifdef INET6
-	if (in6_present)
-		sysctl_net_pktq_setup(NULL, PF_INET6);
-#endif
 }
