@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.14 2022/09/01 06:08:16 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.15 2022/09/02 12:22:49 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.14 2022/09/01 06:08:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.15 2022/09/02 12:22:49 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static int round_int(struct fpn *, int *, int, int, int);
 static u_int fpu_ftoi(struct fpemu *, struct fpn *, int);
 static uint64_t fpu_ftox(struct fpemu *, struct fpn *, int);
 static u_int fpu_ftos(struct fpemu *, struct fpn *, bool);
-static u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *, bool);
+static uint64_t fpu_ftod(struct fpemu *, struct fpn *, bool);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for
@@ -438,19 +438,20 @@ done:
 }
 
 /*
- * fpn -> double (32 bit high-order result returned; 32-bit low order result
- * left in res[1]).  Assumes <= 61 bits in double precision fraction.
+ * fpn -> double.  Assumes <= 61 bits in double precision fraction.
  *
  * This code mimics fpu_ftos; see it for comments.
  */
-static u_int
-fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res, bool fprf)
+static uint64_t
+fpu_ftod(struct fpemu *fe, struct fpn *fp, bool fprf)
 {
 	u_int sign = fp->fp_sign << 31;
 	int exp;
 
 #define	DBL_EXP(e)	((e) << (DBL_FRACBITS & 31))
 #define	DBL_MASK	(DBL_EXP(1) - 1)
+#define	HI_WORD(i)	((uint64_t)(i) << 32)
+#define	LO_WORD(i)	((uint32_t)(i))
 
 	if (ISNAN(fp)) {
 		if (fprf)
@@ -471,8 +472,7 @@ fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res, bool fprf)
 			if (sign)
 				fe->fe_cx |= FPSCR_C;
 		}
-zero:		res[1] = 0;
-		return (sign);
+zero:		return HI_WORD(sign);
 	}
 
 	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
@@ -480,8 +480,7 @@ zero:		res[1] = 0;
 		if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
 			if (fprf)
 				fe->fe_cx |= FPRF_SIGN(sign);
-			res[1] = 0;
-			return (sign | DBL_EXP(1) | 0);
+			return HI_WORD(sign | DBL_EXP(1) | 0);
 		}
 		if (fprf)
 			fe->fe_cx |= FPSCR_C | FPRF_SIGN(sign);
@@ -499,19 +498,18 @@ zero:		res[1] = 0;
 		if (toinf(fe, sign)) {
 			if (fprf)
 				fe->fe_cx |= FPRF_SIGN(sign) | FPSCR_FU;
-			res[1] = 0;
-			return (sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
+			return HI_WORD(sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
 		}
 		if (fprf)
 			fe->fe_cx |= FPRF_SIGN(sign);
-		res[1] = ~0;
-		return (sign | DBL_EXP(DBL_EXP_INFNAN) | DBL_MASK);
+		return HI_WORD(sign | DBL_EXP(DBL_EXP_INFNAN) | DBL_MASK) |
+		       LO_WORD(~0);
 	}
 	if (fprf)
 		fe->fe_cx |= FPRF_SIGN(sign);
 done:
-	res[1] = fp->fp_mant[3];
-	return (sign | DBL_EXP(exp) | (fp->fp_mant[2] & DBL_MASK));
+	return HI_WORD(sign | DBL_EXP(exp) | (fp->fp_mant[2] & DBL_MASK)) |
+	       LO_WORD(fp->fp_mant[3]);
 }
 
 /*
@@ -554,7 +552,7 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 		break;
 
 	case FTYPE_DBL:
-		space[0] = fpu_ftod(fe, fp, space, fprf);
+		*(uint64_t *)space = fpu_ftod(fe, fp, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: double %x %x\n",
 			space[0], space[1]));
 		break;		break;
