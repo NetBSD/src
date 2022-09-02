@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.401 2021/03/08 18:03:25 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.402 2022/09/02 03:50:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.401 2021/03/08 18:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.402 2022/09/02 03:50:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,14 +270,14 @@ ip_init(void)
 {
 	const struct protosw *pr;
 
+	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr, NULL);
+	KASSERT(ip_pktq != NULL);
+
 	in_init();
 	sysctl_net_inet_ip_setup(NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	KASSERT(pr != NULL);
-
-	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr, NULL);
-	KASSERT(ip_pktq != NULL);
 
 	for (u_int i = 0; i < IPPROTO_MAX; i++) {
 		ip_protox[i] = pr - inetsw;
@@ -1616,13 +1616,15 @@ sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_ip_setup(struct sysctllog **clog)
 {
+	const struct sysctlnode *ip_node;
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet",
 		       SYSCTL_DESCR("PF_INET related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &ip_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ip",
 		       SYSCTL_DESCR("IPv4 related settings"),
@@ -1736,6 +1738,9 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       NULL, 0, &ip_checkinterface, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_CHECKINTERFACE, CTL_EOL);
+
+	pktq_sysctl_setup(ip_pktq, clog, ip_node, IPCTL_IFQ);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "random_id",
