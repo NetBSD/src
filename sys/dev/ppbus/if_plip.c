@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.36 2020/02/04 20:46:51 jdolecek Exp $ */
+/* $NetBSD: if_plip.c,v 1.37 2022/09/02 23:48:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.36 2020/02/04 20:46:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.37 2022/09/02 23:48:10 thorpej Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.36 2020/02/04 20:46:51 jdolecek Exp $"
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #include <sys/time.h>
 #include <net/bpf.h>

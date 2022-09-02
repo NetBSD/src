@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.107 2022/09/01 15:33:23 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.108 2022/09/02 23:48:10 thorpej Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.107 2022/09/01 15:33:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.108 2022/09/02 23:48:10 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.107 2022/09/01 15:33:23 bouy
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
 
 #include <net/if_ether.h>

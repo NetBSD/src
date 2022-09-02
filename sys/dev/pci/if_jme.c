@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.55 2022/09/02 23:48:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.55 2022/09/02 23:48:10 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
 
 #include <sys/rndsource.h>
@@ -88,12 +87,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.54 2022/08/21 14:42:24 thorpej Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
+
+#include <netinet6/ip6_var.h>
 
 #ifdef INET
 #include <netinet/in_var.h>
 #endif
 
 #include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #include <net/if_ether.h>
 #if defined(INET)

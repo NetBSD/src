@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.26 2021/12/20 17:12:41 rhialto Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.26 2021/12/20 17:12:41 rhialto Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.26 2021/12/20 17:12:41 rhialto Exp $");
 
 #include <net/if.h>
 #include <net/if_ether.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
 

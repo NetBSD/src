@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.64 2019/08/02 02:17:46 ozaki-r Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.65 2022/09/02 23:48:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.64 2019/08/02 02:17:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.65 2022/09/02 23:48:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.64 2019/08/02 02:17:46 ozaki-r Exp 
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <net/raw_cb.h>
 
 static inline int
