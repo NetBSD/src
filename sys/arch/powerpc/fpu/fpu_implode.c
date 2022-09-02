@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.17 2022/09/02 12:40:49 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.18 2022/09/02 12:48:04 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.17 2022/09/02 12:40:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.18 2022/09/02 12:48:04 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -551,6 +551,7 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, uint64_t *p)
 
 	case FTYPE_SNG:
 		*hi = fpu_ftos(fe, fp, fprf);
+		*lo = 0;
 		DPRINTF(FPE_REG, ("fpu_implode: single %x\n",
 			space[0]));
 		break;
