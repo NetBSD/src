@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.168 2022/06/12 16:09:21 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.169 2022/09/02 16:24:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.168 2022/06/12 16:09:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.169 2022/09/02 16:24:31 sjg Exp $");
 
 
 typedef struct ForLoop {
@@ -504,3 +504,11 @@ For_Run(unsigned headLineno, unsigned bodyReadLines)
 	} else
 		ForLoop_Free(f);
 }
+
+/* Breaking out of a .for loop */
+void
+For_Break(ForLoop *f)
+{
+    f->nextItem = f->items.len;
+}
+     

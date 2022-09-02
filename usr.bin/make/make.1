@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.330 2022/08/14 22:11:20 uwe Exp $
+.\"	$NetBSD: make.1,v 1.331 2022/09/02 16:24:31 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 14, 2022
+.Dd September 2, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -2084,6 +2084,14 @@ inside the body of the for loop.
 The number of words must come out even; that is, if there are three
 iteration variables, the number of words provided must be a multiple
 of three.
+
+If
+.Sq Ic .break
+is encountered within a
+.Cm \&.for
+loop, it causes early termination of the loop,
+otherwise a parse error.
+
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
