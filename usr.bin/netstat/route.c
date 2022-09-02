@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: route.c,v 1.88 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.87 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: route.c,v 1.88 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,18 +317,18 @@ rt_stats(u_long off)
 
 	printf("routing:\n");
 	printf("\t%llu bad routing redirect%s\n",
-		(unsigned long long)rtstats.rts_badredirect,
-		plural(rtstats.rts_badredirect));
+	    (unsigned long long)rtstats.rts_badredirect,
+	    plural(rtstats.rts_badredirect));
 	printf("\t%llu dynamically created route%s\n",
-		(unsigned long long)rtstats.rts_dynamic,
-		plural(rtstats.rts_dynamic));
+	    (unsigned long long)rtstats.rts_dynamic,
+	    plural(rtstats.rts_dynamic));
 	printf("\t%llu new gateway%s due to redirects\n",
-		(unsigned long long)rtstats.rts_newgateway,
-		plural(rtstats.rts_newgateway));
+	    (unsigned long long)rtstats.rts_newgateway,
+	    plural(rtstats.rts_newgateway));
 	printf("\t%llu destination%s found unreachable\n",
-		(unsigned long long)rtstats.rts_unreach,
-		plural(rtstats.rts_unreach));
+	    (unsigned long long)rtstats.rts_unreach,
+	    plural(rtstats.rts_unreach));
 	printf("\t%llu use%s of a wildcard route\n",
-		(unsigned long long)rtstats.rts_wildcard,
-		plural(rtstats.rts_wildcard));
+	    (unsigned long long)rtstats.rts_wildcard,
+	    plural(rtstats.rts_wildcard));
 }

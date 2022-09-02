@@ -1,4 +1,4 @@
-/*	$NetBSD: pfsync.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: pfsync.c,v 1.5 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfsync.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: pfsync.c,v 1.5 2022/09/02 06:25:43 msaitoh Exp $");
 #endif /* not lint */
 
 #define	_CALLOUT_PRIVATE	/* for defs in sys/callout.h */
@@ -99,20 +99,34 @@ pfsync_stats(u_long off, const char *name)
 
 	p(PFSYNC_STAT_IPACKETS, "\t%" PRIu64 " packet%s received (IPv4)\n");
 	p(PFSYNC_STAT_IPACKETS6,"\t%" PRIu64 " packet%s received (IPv6)\n");
-	p(PFSYNC_STAT_BADIF, "\t\t%" PRIu64 " packet%s discarded for bad interface\n");
-	p(PFSYNC_STAT_BADTTL, "\t\t%" PRIu64 " packet%s discarded for bad ttl\n");
-	p(PFSYNC_STAT_HDROPS, "\t\t%" PRIu64 " packet%s shorter than header\n");
-	p(PFSYNC_STAT_BADVER, "\t\t%" PRIu64 " packet%s discarded for bad version\n");
-	p(PFSYNC_STAT_BADAUTH, "\t\t%" PRIu64 " packet%s discarded for bad HMAC\n");
-	p(PFSYNC_STAT_BADACT,"\t\t%" PRIu64 " packet%s discarded for bad action\n");
-	p(PFSYNC_STAT_BADLEN, "\t\t%" PRIu64 " packet%s discarded for short packet\n");
-	p(PFSYNC_STAT_BADVAL, "\t\t%" PRIu64 " state%s discarded for bad values\n");
-	p(PFSYNC_STAT_STALE, "\t\t%" PRIu64 " stale state%s\n");
-	p(PFSYNC_STAT_BADSTATE, "\t\t%" PRIu64 " failed state lookup/insert%s\n");
-	p(PFSYNC_STAT_OPACKETS, "\t%" PRIu64 " packet%s sent (IPv4)\n");
-	p(PFSYNC_STAT_OPACKETS6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
-	p2(PFSYNC_STAT_ONOMEM, "\t\t%" PRIu64 " send failed due to mbuf memory error\n");
-	p2(PFSYNC_STAT_OERRORS, "\t\t%" PRIu64 " send error\n");
+	p(PFSYNC_STAT_BADIF,
+	    "\t\t%" PRIu64 " packet%s discarded for bad interface\n");
+	p(PFSYNC_STAT_BADTTL,
+	    "\t\t%" PRIu64 " packet%s discarded for bad ttl\n");
+	p(PFSYNC_STAT_HDROPS,
+	    "\t\t%" PRIu64 " packet%s shorter than header\n");
+	p(PFSYNC_STAT_BADVER,
+	    "\t\t%" PRIu64 " packet%s discarded for bad version\n");
+	p(PFSYNC_STAT_BADAUTH,
+	    "\t\t%" PRIu64 " packet%s discarded for bad HMAC\n");
+	p(PFSYNC_STAT_BADACT,
+	    "\t\t%" PRIu64 " packet%s discarded for bad action\n");
+	p(PFSYNC_STAT_BADLEN,
+	    "\t\t%" PRIu64 " packet%s discarded for short packet\n");
+	p(PFSYNC_STAT_BADVAL,
+	    "\t\t%" PRIu64 " state%s discarded for bad values\n");
+	p(PFSYNC_STAT_STALE,
+	    "\t\t%" PRIu64 " stale state%s\n");
+	p(PFSYNC_STAT_BADSTATE,
+	    "\t\t%" PRIu64 " failed state lookup/insert%s\n");
+	p(PFSYNC_STAT_OPACKETS,
+	    "\t%" PRIu64 " packet%s sent (IPv4)\n");
+	p(PFSYNC_STAT_OPACKETS6,
+	    "\t%" PRIu64 " packet%s sent (IPv6)\n");
+	p2(PFSYNC_STAT_ONOMEM,
+	    "\t\t%" PRIu64 " send failed due to mbuf memory error\n");
+	p2(PFSYNC_STAT_OERRORS,
+	    "\t\t%" PRIu64 " send error\n");
 #undef p
 #undef p2
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.80 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: inet6.c,v 1.81 2022/09/02 06:25:43 msaitoh Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.80 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.81 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,47 +435,51 @@ tcp6_stats(u_long off, const char *name)
 
 	p(tcp6s_sndtotal, "\t%ld packet%s sent\n");
 	p2(tcp6s_sndpack,tcp6s_sndbyte,
-		"\t\t%ld data packet%s (%ld byte%s)\n");
+	    "\t\t%ld data packet%s (%ld byte%s)\n");
 	p2(tcp6s_sndrexmitpack, tcp6s_sndrexmitbyte,
-		"\t\t%ld data packet%s (%ld byte%s) retransmitted\n");
+	    "\t\t%ld data packet%s (%ld byte%s) retransmitted\n");
 	p2(tcp6s_sndacks, tcp6s_delack,
-		"\t\t%ld ack-only packet%s (%ld packet%s delayed)\n");
+	    "\t\t%ld ack-only packet%s (%ld packet%s delayed)\n");
 	p(tcp6s_sndurg, "\t\t%ld URG only packet%s\n");
 	p(tcp6s_sndprobe, "\t\t%ld window probe packet%s\n");
 	p(tcp6s_sndwinup, "\t\t%ld window update packet%s\n");
 	p(tcp6s_sndctrl, "\t\t%ld control packet%s\n");
 	p(tcp6s_rcvtotal, "\t%ld packet%s received\n");
-	p2(tcp6s_rcvackpack, tcp6s_rcvackbyte, "\t\t%ld ack%s (for %ld byte%s)\n");
+	p2(tcp6s_rcvackpack, tcp6s_rcvackbyte,
+	    "\t\t%ld ack%s (for %ld byte%s)\n");
 	p(tcp6s_rcvdupack, "\t\t%ld duplicate ack%s\n");
 	p(tcp6s_rcvacktoomuch, "\t\t%ld ack%s for unsent data\n");
 	p2(tcp6s_rcvpack, tcp6s_rcvbyte,
-		"\t\t%ld packet%s (%ld byte%s) received in-sequence\n");
+	    "\t\t%ld packet%s (%ld byte%s) received in-sequence\n");
 	p2(tcp6s_rcvduppack, tcp6s_rcvdupbyte,
-		"\t\t%ld completely duplicate packet%s (%ld byte%s)\n");
+	    "\t\t%ld completely duplicate packet%s (%ld byte%s)\n");
 	p(tcp6s_pawsdrop, "\t\t%ld old duplicate packet%s\n");
 	p2(tcp6s_rcvpartduppack, tcp6s_rcvpartdupbyte,
-		"\t\t%ld packet%s with some dup. data (%ld byte%s duped)\n");
+	    "\t\t%ld packet%s with some dup. data (%ld byte%s duped)\n");
 	p2(tcp6s_rcvoopack, tcp6s_rcvoobyte,
-		"\t\t%ld out-of-order packet%s (%ld byte%s)\n");
+	    "\t\t%ld out-of-order packet%s (%ld byte%s)\n");
 	p2(tcp6s_rcvpackafterwin, tcp6s_rcvbyteafterwin,
-		"\t\t%ld packet%s (%ld byte%s) of data after window\n");
+	    "\t\t%ld packet%s (%ld byte%s) of data after window\n");
 	p(tcp6s_rcvwinprobe, "\t\t%ld window probe%s\n");
 	p(tcp6s_rcvwinupd, "\t\t%ld window update packet%s\n");
 	p(tcp6s_rcvafterclose, "\t\t%ld packet%s received after close\n");
 	p(tcp6s_rcvbadsum, "\t\t%ld discarded for bad checksum%s\n");
-	p(tcp6s_rcvbadoff, "\t\t%ld discarded for bad header offset field%s\n");
+	p(tcp6s_rcvbadoff,
+	    "\t\t%ld discarded for bad header offset field%s\n");
 	p(tcp6s_rcvshort, "\t\t%ld discarded because packet%s too short\n");
 	p(tcp6s_connattempt, "\t%ld connection request%s\n");
 	p(tcp6s_accepts, "\t%ld connection accept%s\n");
 	p(tcp6s_badsyn, "\t%ld bad connection attempt%s\n");
-	p(tcp6s_connects, "\t%ld connection%s established (including accepts)\n");
+	p(tcp6s_connects,
+	    "\t%ld connection%s established (including accepts)\n");
 	p2(tcp6s_closed, tcp6s_drops,
-		"\t%ld connection%s closed (including %ld drop%s)\n");
+	    "\t%ld connection%s closed (including %ld drop%s)\n");
 	p(tcp6s_conndrops, "\t%ld embryonic connection%s dropped\n");
 	p2(tcp6s_rttupdated, tcp6s_segstimed,
-		"\t%ld segment%s updated rtt (of %ld attempt%s)\n");
+	    "\t%ld segment%s updated rtt (of %ld attempt%s)\n");
 	p(tcp6s_rexmttimeo, "\t%ld retransmit timeout%s\n");
-	p(tcp6s_timeoutdrop, "\t\t%ld connection%s dropped by rexmit timeout\n");
+	p(tcp6s_timeoutdrop,
+	    "\t\t%ld connection%s dropped by rexmit timeout\n");
 	p(tcp6s_persisttimeo, "\t%ld persist timeout%s\n");
 	p(tcp6s_persistdrop, "\t%ld connection%s timed out in persist\n");
 	p(tcp6s_keeptimeo, "\t%ld keepalive timeout%s\n");
@@ -681,7 +685,8 @@ ip6_stats(u_long off, const char *name)
 	p(IP6_STAT_RAWOUT, "\t%llu packet%s sent with fabricated ip header\n");
 	p(IP6_STAT_ODROPPED,
 	    "\t%llu output packet%s dropped due to no bufs, etc.\n");
-	p(IP6_STAT_NOROUTE, "\t%llu output packet%s discarded due to no route\n");
+	p(IP6_STAT_NOROUTE,
+	    "\t%llu output packet%s discarded due to no route\n");
 	p(IP6_STAT_FRAGMENTED, "\t%llu output datagram%s fragmented\n");
 	p(IP6_STAT_OFRAGMENTS, "\t%llu fragment%s created\n");
 	p(IP6_STAT_CANTFRAG, "\t%llu datagram%s that can't be fragmented\n");
@@ -724,7 +729,8 @@ ip6_stats(u_long off, const char *name)
 	p(IP6_STAT_EXTHDRTOOLONG,
 	    "\t%llu packet%s whose headers are not continuous\n");
 	p(IP6_STAT_NOGIF, "\t%llu tunneling packet%s that can't find gif\n");
-	p(IP6_STAT_NOIPSEC, "\t%llu tunneling packet%s that can't find ipsecif\n");
+	p(IP6_STAT_NOIPSEC,
+	    "\t%llu tunneling packet%s that can't find ipsecif\n");
 	p(IP6_STAT_TOOMANYHDR,
 	    "\t%llu packet%s discarded due to too many headers\n");
 
@@ -803,11 +809,15 @@ ip6_stats(u_long off, const char *name)
 	p(IP6_STAT_PFILDROP_OUT, "\t%llu output packet%s dropped by pfil\n");
 	p(IP6_STAT_IPSECDROP_IN, "\t%llu input packet%s dropped by IPsec\n");
 	p(IP6_STAT_IPSECDROP_OUT, "\t%llu output packet%s dropped by IPsec\n");
-	p(IP6_STAT_IFDROP, "\t%llu input packet%s dropped due to interface state\n");
-	p(IP6_STAT_IDROPPED, "\t%llu input packet%s dropped due to no bufs, etc.\n");
-	p(IP6_STAT_TIMXCEED, "\t%llu packet%s dropped due to hop limit exceeded\n");
+	p(IP6_STAT_IFDROP,
+	    "\t%llu input packet%s dropped due to interface state\n");
+	p(IP6_STAT_IDROPPED,
+	    "\t%llu input packet%s dropped due to no bufs, etc.\n");
+	p(IP6_STAT_TIMXCEED,
+	    "\t%llu packet%s dropped due to hop limit exceeded\n");
 	p(IP6_STAT_TOOBIG, "\t%llu packet%s dropped (too big)\n");
-	p(IP6_STAT_RTREJECT, "\t%llu output packet%s discarded due to reject route\n");
+	p(IP6_STAT_RTREJECT,
+	    "\t%llu output packet%s discarded due to reject route\n");
 #undef p
 #undef p1
 }
@@ -845,17 +855,19 @@ ip6_ifstats(const char *ifname)
 	p(ifs6_in_noroute, "\t%llu datagram%s with no route received\n");
 	p(ifs6_in_addrerr, "\t%llu datagram%s with invalid dst received\n");
 	p(ifs6_in_truncated, "\t%llu truncated datagram%s received\n");
-	p(ifs6_in_protounknown, "\t%llu datagram%s with unknown proto received\n");
+	p(ifs6_in_protounknown,
+	    "\t%llu datagram%s with unknown proto received\n");
 	p(ifs6_in_discard, "\t%llu input datagram%s discarded\n");
 	p(ifs6_in_deliver,
-	  "\t%llu datagram%s delivered to an upper layer protocol\n");
+	    "\t%llu datagram%s delivered to an upper layer protocol\n");
 	p(ifs6_out_forward, "\t%llu datagram%s forwarded to this interface\n");
 	p(ifs6_out_request,
-	  "\t%llu datagram%s sent from an upper layer protocol\n");
+	    "\t%llu datagram%s sent from an upper layer protocol\n");
 	p(ifs6_out_discard, "\t%llu total discarded output datagram%s\n");
 	p(ifs6_out_fragok, "\t%llu output datagram%s fragmented\n");
 	p(ifs6_out_fragfail, "\t%llu output datagram%s failed on fragment\n");
-	p(ifs6_out_fragcreat, "\t%llu output datagram%s succeeded on fragment\n");
+	p(ifs6_out_fragcreat,
+	    "\t%llu output datagram%s succeeded on fragment\n");
 	p(ifs6_reass_reqd, "\t%llu incoming datagram%s fragmented\n");
 	p(ifs6_reass_ok, "\t%llu datagram%s reassembled\n");
 	p(ifs6_reass_fail, "\t%llu datagram%s failed on reassembling\n");
@@ -1186,27 +1198,38 @@ icmp6_stats(u_long off, const char *name)
 		}
 	printf("\tHistogram of error messages to be generated:\n");
 	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_NOROUTE, "\t\t%llu no route\n");
-	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADMIN, "\t\t%llu administratively prohibited\n");
-	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE, "\t\t%llu beyond scope\n");
-	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADDR, "\t\t%llu address unreachable\n");
-	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_NOPORT, "\t\t%llu port unreachable\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADMIN,
+	    "\t\t%llu administratively prohibited\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE,
+	    "\t\t%llu beyond scope\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADDR,
+	    "\t\t%llu address unreachable\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_NOPORT,
+	    "\t\t%llu port unreachable\n");
 	p_oerr(ICMP6_ERRSTAT_PACKET_TOO_BIG, "\t\t%llu packet too big\n");
-	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT, "\t\t%llu time exceed transit\n");
-	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY, "\t\t%llu time exceed reassembly\n");
-	p_oerr(ICMP6_ERRSTAT_PARAMPROB_HEADER, "\t\t%llu erroneous header field\n");
-	p_oerr(ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER, "\t\t%llu unrecognized next header\n");
-	p_oerr(ICMP6_ERRSTAT_PARAMPROB_OPTION, "\t\t%llu unrecognized option\n");
+	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT,
+	    "\t\t%llu time exceed transit\n");
+	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY,
+	    "\t\t%llu time exceed reassembly\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_HEADER,
+	    "\t\t%llu erroneous header field\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER,
+	    "\t\t%llu unrecognized next header\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_OPTION,
+	    "\t\t%llu unrecognized option\n");
 	p_oerr(ICMP6_ERRSTAT_REDIRECT, "\t\t%llu redirect\n");
 	p_oerr(ICMP6_ERRSTAT_UNKNOWN, "\t\t%llu unknown\n");
 
 	p(ICMP6_STAT_REFLECT, "\t%llu message response%s generated\n");
-	p(ICMP6_STAT_ND_TOOMANYOPT, "\t%llu message%s with too many ND options\n");
+	p(ICMP6_STAT_ND_TOOMANYOPT,
+	    "\t%llu message%s with too many ND options\n");
 	p(ICMP6_STAT_ND_BADOPT, "\t%llu message%s with bad ND options\n");
 	p(ICMP6_STAT_BADNS, "\t%llu bad neighbor solicitation message%s\n");
 	p(ICMP6_STAT_BADNA, "\t%llu bad neighbor advertisement message%s\n");
 	p(ICMP6_STAT_BADRS, "\t%llu bad router solicitation message%s\n");
 	p(ICMP6_STAT_BADRA, "\t%llu bad router advertisement message%s\n");
-	p(ICMP6_STAT_DROPPED_RAROUTE, "\t%llu router advertisement route%s dropped\n");
+	p(ICMP6_STAT_DROPPED_RAROUTE,
+	    "\t%llu router advertisement route%s dropped\n");
 	p(ICMP6_STAT_BADREDIRECT, "\t%llu bad redirect message%s\n");
 	p(ICMP6_STAT_PMTUCHG, "\t%llu path MTU change%s\n");
 #undef p
@@ -1240,8 +1263,10 @@ icmp6_ifstats(const char *ifname)
 
 	p(ifs6_in_msg, "\t%llu total input message%s\n");
 	p(ifs6_in_error, "\t%llu total input error message%s\n");
-	p(ifs6_in_dstunreach, "\t%llu input destination unreachable error%s\n");
-	p(ifs6_in_adminprohib, "\t%llu input administratively prohibited error%s\n");
+	p(ifs6_in_dstunreach,
+	    "\t%llu input destination unreachable error%s\n");
+	p(ifs6_in_adminprohib,
+	    "\t%llu input administratively prohibited error%s\n");
 	p(ifs6_in_timeexceed, "\t%llu input time exceeded error%s\n");
 	p(ifs6_in_paramprob, "\t%llu input parameter problem error%s\n");
 	p(ifs6_in_pkttoobig, "\t%llu input packet too big error%s\n");
@@ -1258,8 +1283,10 @@ icmp6_ifstats(const char *ifname)
 
 	p(ifs6_out_msg, "\t%llu total output message%s\n");
 	p(ifs6_out_error, "\t%llu total output error message%s\n");
-	p(ifs6_out_dstunreach, "\t%llu output destination unreachable error%s\n");
-	p(ifs6_out_adminprohib, "\t%llu output administratively prohibited error%s\n");
+	p(ifs6_out_dstunreach,
+	    "\t%llu output destination unreachable error%s\n");
+	p(ifs6_out_adminprohib,
+	    "\t%llu output administratively prohibited error%s\n");
 	p(ifs6_out_timeexceed, "\t%llu output time exceeded error%s\n");
 	p(ifs6_out_paramprob, "\t%llu output parameter problem error%s\n");
 	p(ifs6_out_pkttoobig, "\t%llu output packet too big error%s\n");
@@ -1303,9 +1330,12 @@ pim6_stats(u_long off, const char *name)
 		printf(m, (unsigned long long)pim6stat[f], plural(pim6stat[f]))
 
 	p(PIM6_STAT_RCV_TOTAL, "\t%llu message%s received\n");
-	p(PIM6_STAT_RCV_TOOSHORT, "\t%llu message%s received with too few bytes\n");
-	p(PIM6_STAT_RCV_BADSUM, "\t%llu message%s received with bad checksum\n");
-	p(PIM6_STAT_RCV_BADVERSION, "\t%llu message%s received with bad version\n");
+	p(PIM6_STAT_RCV_TOOSHORT,
+	    "\t%llu message%s received with too few bytes\n");
+	p(PIM6_STAT_RCV_BADSUM,
+	    "\t%llu message%s received with bad checksum\n");
+	p(PIM6_STAT_RCV_BADVERSION,
+	    "\t%llu message%s received with bad version\n");
 	p(PIM6_STAT_RCV_REGISTERS, "\t%llu register%s received\n");
 	p(PIM6_STAT_RCV_BADREGISTERS, "\t%llu bad register%s received\n");
 	p(PIM6_STAT_SND_REGISTERS, "\t%llu register%s sent\n");
@@ -1361,15 +1391,16 @@ rip6_stats(u_long off, const char *name)
 void
 inet6print(const struct in6_addr *in6, int port, const char *proto)
 {
-#define GETSERVBYPORT6(port, proto, ret)\
-do {\
-	if (strcmp((proto), "tcp6") == 0)\
-		(ret) = getservbyport((int)(port), "tcp");\
-	else if (strcmp((proto), "udp6") == 0)\
-		(ret) = getservbyport((int)(port), "udp");\
-	else\
-		(ret) = getservbyport((int)(port), (proto));\
-} while (0)
+#define GETSERVBYPORT6(port, proto, ret)				\
+	do {								\
+		if (strcmp((proto), "tcp6") == 0)			\
+			(ret) = getservbyport((int)(port), "tcp");	\
+		else if (strcmp((proto), "udp6") == 0)			\
+			(ret) = getservbyport((int)(port), "udp");	\
+		else							\
+			(ret) = getservbyport((int)(port), (proto));	\
+	} while (0)
+
 	struct servent *sp = 0;
 	char line[80], *cp;
 	int lwidth;

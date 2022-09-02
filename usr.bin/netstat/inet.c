@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.115 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: inet.c,v 1.116 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.115 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: inet.c,v 1.116 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,8 +365,7 @@ protopr(u_long off, const char *name)
 		memcpy(&src, &pcblist[i].ki_s, sizeof(src));
 		memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
 
-		if (!aflag &&
-		    inet_lnaof(dst.sin_addr) == INADDR_ANY)
+		if (!aflag && (inet_lnaof(dst.sin_addr) == INADDR_ANY))
 			continue;
 
 		if (first) {
@@ -413,18 +412,18 @@ tcp_stats(u_long off, const char *name)
 
 	printf ("%s:\n", name);
 
-#define	ps(f, m) if (tcpstat[f] || sflag <= 1) \
-    printf(m, tcpstat[f])
-#define	p(f, m) if (tcpstat[f] || sflag <= 1) \
-    printf(m, tcpstat[f], plural(tcpstat[f]))
-#define	p2(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1) \
-    printf(m, tcpstat[f1], plural(tcpstat[f1]), \
-    tcpstat[f2], plural(tcpstat[f2]))
-#define	p2s(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1) \
-    printf(m, tcpstat[f1], plural(tcpstat[f1]), \
-    tcpstat[f2])
-#define	p3(f, m) if (tcpstat[f] || sflag <= 1) \
-    printf(m, tcpstat[f], plurales(tcpstat[f]))
+#define	ps(f, m) if (tcpstat[f] || sflag <= 1)	\
+		printf(m, tcpstat[f])
+#define	p(f, m) if (tcpstat[f] || sflag <= 1)			\
+		printf(m, tcpstat[f], plural(tcpstat[f]))
+#define	p2(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1)	\
+		printf(m, tcpstat[f1], plural(tcpstat[f1]),		\
+		    tcpstat[f2], plural(tcpstat[f2]))
+#define	p2s(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1)	\
+		printf(m, tcpstat[f1], plural(tcpstat[f1]),		\
+		    tcpstat[f2])
+#define	p3(f, m) if (tcpstat[f] || sflag <= 1)			\
+		printf(m, tcpstat[f], plurales(tcpstat[f]))
 
 	p(TCP_STAT_SNDTOTAL, "\t%" PRIu64 " packet%s sent\n");
 	p2(TCP_STAT_SNDPACK,TCP_STAT_SNDBYTE,
@@ -441,69 +440,84 @@ tcp_stats(u_long off, const char *name)
 	    "\t\t%" PRIu64 " send attempt%s resulted in self-quench\n");
 	p(TCP_STAT_RCVTOTAL, "\t%" PRIu64 " packet%s received\n");
 	p2(TCP_STAT_RCVACKPACK, TCP_STAT_RCVACKBYTE,
-		"\t\t%" PRIu64 " ack%s (for %" PRIu64 " byte%s)\n");
+	    "\t\t%" PRIu64 " ack%s (for %" PRIu64 " byte%s)\n");
 	p(TCP_STAT_RCVDUPACK, "\t\t%" PRIu64 " duplicate ack%s\n");
 	p(TCP_STAT_RCVACKTOOMUCH, "\t\t%" PRIu64 " ack%s for unsent data\n");
 	p2(TCP_STAT_RCVPACK, TCP_STAT_RCVBYTE,
-		"\t\t%" PRIu64 " packet%s (%" PRIu64 " byte%s) received in-sequence\n");
+	    "\t\t%" PRIu64 " packet%s (%" PRIu64 " byte%s) received in-sequence\n");
 	p2(TCP_STAT_RCVDUPPACK, TCP_STAT_RCVDUPBYTE,
-		"\t\t%" PRIu64 " completely duplicate packet%s (%" PRIu64 " byte%s)\n");
+	    "\t\t%" PRIu64 " completely duplicate packet%s (%" PRIu64 " byte%s)\n");
 	p(TCP_STAT_PAWSDROP, "\t\t%" PRIu64 " old duplicate packet%s\n");
 	p2(TCP_STAT_RCVPARTDUPPACK, TCP_STAT_RCVPARTDUPBYTE,
-		"\t\t%" PRIu64 " packet%s with some dup. data (%" PRIu64 " byte%s duped)\n");
+	    "\t\t%" PRIu64 " packet%s with some dup. data (%" PRIu64 " byte%s duped)\n");
 	p2(TCP_STAT_RCVOOPACK, TCP_STAT_RCVOOBYTE,
-		"\t\t%" PRIu64 " out-of-order packet%s (%" PRIu64 " byte%s)\n");
+	    "\t\t%" PRIu64 " out-of-order packet%s (%" PRIu64 " byte%s)\n");
 	p2(TCP_STAT_RCVPACKAFTERWIN, TCP_STAT_RCVBYTEAFTERWIN,
-		"\t\t%" PRIu64 " packet%s (%" PRIu64 " byte%s) of data after window\n");
+	    "\t\t%" PRIu64 " packet%s (%" PRIu64 " byte%s) of data after window\n");
 	p(TCP_STAT_RCVWINPROBE, "\t\t%" PRIu64 " window probe%s\n");
 	p(TCP_STAT_RCVWINUPD, "\t\t%" PRIu64 " window update packet%s\n");
-	p(TCP_STAT_RCVAFTERCLOSE, "\t\t%" PRIu64 " packet%s received after close\n");
-	p(TCP_STAT_RCVBADSUM, "\t\t%" PRIu64 " discarded for bad checksum%s\n");
-	p(TCP_STAT_RCVBADOFF, "\t\t%" PRIu64 " discarded for bad header offset field%s\n");
-	ps(TCP_STAT_RCVSHORT, "\t\t%" PRIu64 " discarded because packet too short\n");
+	p(TCP_STAT_RCVAFTERCLOSE,
+	    "\t\t%" PRIu64 " packet%s received after close\n");
+	p(TCP_STAT_RCVBADSUM,
+	    "\t\t%" PRIu64 " discarded for bad checksum%s\n");
+	p(TCP_STAT_RCVBADOFF,
+	    "\t\t%" PRIu64 " discarded for bad header offset field%s\n");
+	ps(TCP_STAT_RCVSHORT,
+	    "\t\t%" PRIu64 " discarded because packet too short\n");
 	p(TCP_STAT_CONNATTEMPT, "\t%" PRIu64 " connection request%s\n");
 	p(TCP_STAT_ACCEPTS, "\t%" PRIu64 " connection accept%s\n");
 	p(TCP_STAT_CONNECTS,
-		"\t%" PRIu64 " connection%s established (including accepts)\n");
+	    "\t%" PRIu64 " connection%s established (including accepts)\n");
 	p2(TCP_STAT_CLOSED, TCP_STAT_DROPS,
-		"\t%" PRIu64 " connection%s closed (including %" PRIu64 " drop%s)\n");
-	p(TCP_STAT_CONNDROPS, "\t%" PRIu64 " embryonic connection%s dropped\n");
+	    "\t%" PRIu64 " connection%s closed (including %" PRIu64 " drop%s)\n");
+	p(TCP_STAT_CONNDROPS,
+	    "\t%" PRIu64 " embryonic connection%s dropped\n");
 	p(TCP_STAT_DELAYED_FREE, "\t%" PRIu64 " delayed free%s of tcpcb\n");
 	p2(TCP_STAT_RTTUPDATED, TCP_STAT_SEGSTIMED,
-		"\t%" PRIu64 " segment%s updated rtt (of %" PRIu64 " attempt%s)\n");
+	    "\t%" PRIu64 " segment%s updated rtt (of %" PRIu64 " attempt%s)\n");
 	p(TCP_STAT_REXMTTIMEO, "\t%" PRIu64 " retransmit timeout%s\n");
 	p(TCP_STAT_TIMEOUTDROP,
-		"\t\t%" PRIu64 " connection%s dropped by rexmit timeout\n");
+	    "\t\t%" PRIu64 " connection%s dropped by rexmit timeout\n");
 	p2(TCP_STAT_PERSISTTIMEO, TCP_STAT_PERSISTDROPS,
 	   "\t%" PRIu64 " persist timeout%s (resulting in %" PRIu64 " dropped "
 		"connection%s)\n");
 	p(TCP_STAT_KEEPTIMEO, "\t%" PRIu64 " keepalive timeout%s\n");
 	p(TCP_STAT_KEEPPROBE, "\t\t%" PRIu64 " keepalive probe%s sent\n");
-	p(TCP_STAT_KEEPDROPS, "\t\t%" PRIu64 " connection%s dropped by keepalive\n");
+	p(TCP_STAT_KEEPDROPS,
+	    "\t\t%" PRIu64 " connection%s dropped by keepalive\n");
 	p(TCP_STAT_PREDACK, "\t%" PRIu64 " correct ACK header prediction%s\n");
-	p(TCP_STAT_PREDDAT, "\t%" PRIu64 " correct data packet header prediction%s\n");
+	p(TCP_STAT_PREDDAT,
+	    "\t%" PRIu64 " correct data packet header prediction%s\n");
 	p3(TCP_STAT_PCBHASHMISS, "\t%" PRIu64 " PCB hash miss%s\n");
 	ps(TCP_STAT_NOPORT, "\t%" PRIu64 " dropped due to no socket\n");
-	p(TCP_STAT_CONNSDRAINED, "\t%" PRIu64 " connection%s drained due to memory "
-		"shortage\n");
-	p(TCP_STAT_PMTUBLACKHOLE, "\t%" PRIu64 " PMTUD blackhole%s detected\n");
+	p(TCP_STAT_CONNSDRAINED,
+	    "\t%" PRIu64 " connection%s drained due to memory shortage\n");
+	p(TCP_STAT_PMTUBLACKHOLE,
+	    "\t%" PRIu64 " PMTUD blackhole%s detected\n");
 
 	p(TCP_STAT_BADSYN, "\t%" PRIu64 " bad connection attempt%s\n");
 	ps(TCP_STAT_SC_ADDED, "\t%" PRIu64 " SYN cache entries added\n");
 	p(TCP_STAT_SC_COLLISIONS, "\t\t%" PRIu64 " hash collision%s\n");
 	ps(TCP_STAT_SC_COMPLETED, "\t\t%" PRIu64 " completed\n");
-	ps(TCP_STAT_SC_ABORTED, "\t\t%" PRIu64 " aborted (no space to build PCB)\n");
+	ps(TCP_STAT_SC_ABORTED,
+	    "\t\t%" PRIu64 " aborted (no space to build PCB)\n");
 	ps(TCP_STAT_SC_TIMED_OUT, "\t\t%" PRIu64 " timed out\n");
-	ps(TCP_STAT_SC_OVERFLOWED, "\t\t%" PRIu64 " dropped due to overflow\n");
-	ps(TCP_STAT_SC_BUCKETOVERFLOW, "\t\t%" PRIu64 " dropped due to bucket overflow\n");
+	ps(TCP_STAT_SC_OVERFLOWED,
+	    "\t\t%" PRIu64 " dropped due to overflow\n");
+	ps(TCP_STAT_SC_BUCKETOVERFLOW,
+	    "\t\t%" PRIu64 " dropped due to bucket overflow\n");
 	ps(TCP_STAT_SC_RESET, "\t\t%" PRIu64 " dropped due to RST\n");
-	ps(TCP_STAT_SC_UNREACH, "\t\t%" PRIu64 " dropped due to ICMP unreachable\n");
-	ps(TCP_STAT_SC_DELAYED_FREE, "\t\t%" PRIu64 " delayed free of SYN cache "
-		"entries\n");
-	p(TCP_STAT_SC_RETRANSMITTED, "\t%" PRIu64 " SYN,ACK%s retransmitted\n");
-	p(TCP_STAT_SC_DUPESYN, "\t%" PRIu64 " duplicate SYN%s received for entries "
+	ps(TCP_STAT_SC_UNREACH,
+	    "\t\t%" PRIu64 " dropped due to ICMP unreachable\n");
+	ps(TCP_STAT_SC_DELAYED_FREE,
+	    "\t\t%" PRIu64 " delayed free of SYN cache entries\n");
+	p(TCP_STAT_SC_RETRANSMITTED,
+	    "\t%" PRIu64 " SYN,ACK%s retransmitted\n");
+	p(TCP_STAT_SC_DUPESYN,
+	    "\t%" PRIu64 " duplicate SYN%s received for entries "
 		"already in the cache\n");
-	p(TCP_STAT_SC_DROPPED, "\t%" PRIu64 " SYN%s dropped (no route or no space)\n");
+	p(TCP_STAT_SC_DROPPED,
+	    "\t%" PRIu64 " SYN%s dropped (no route or no space)\n");
 	p(TCP_STAT_BADSIG, "\t%" PRIu64 " packet%s with bad signature\n");
 	p(TCP_STAT_GOODSIG, "\t%" PRIu64 " packet%s with good signature\n");
 
@@ -540,21 +554,22 @@ udp_stats(u_long off, const char *name)
 
 	printf ("%s:\n", name);
 
-#define	ps(f, m) if (udpstat[f] || sflag <= 1) \
-    printf(m, udpstat[f])
-#define	p(f, m) if (udpstat[f] || sflag <= 1) \
-    printf(m, udpstat[f], plural(udpstat[f]))
-#define	p3(f, m) if (udpstat[f] || sflag <= 1) \
-    printf(m, udpstat[f], plurales(udpstat[f]))
+#define	ps(f, m) if (udpstat[f] || sflag <= 1)	\
+		printf(m, udpstat[f])
+#define	p(f, m) if (udpstat[f] || sflag <= 1)			\
+		printf(m, udpstat[f], plural(udpstat[f]))
+#define	p3(f, m) if (udpstat[f] || sflag <= 1)			\
+		printf(m, udpstat[f], plurales(udpstat[f]))
 
 	p(UDP_STAT_IPACKETS, "\t%" PRIu64 " datagram%s received\n");
 	ps(UDP_STAT_HDROPS, "\t%" PRIu64 " with incomplete header\n");
 	ps(UDP_STAT_BADLEN, "\t%" PRIu64 " with bad data length field\n");
 	ps(UDP_STAT_BADSUM, "\t%" PRIu64 " with bad checksum\n");
 	ps(UDP_STAT_NOPORT, "\t%" PRIu64 " dropped due to no socket\n");
-	p(UDP_STAT_NOPORTBCAST,
-	  "\t%" PRIu64 " broadcast/multicast datagram%s dropped due to no socket\n");
-	ps(UDP_STAT_FULLSOCK, "\t%" PRIu64 " dropped due to full socket buffers\n");
+	p(UDP_STAT_NOPORTBCAST, "\t%" PRIu64
+	    " broadcast/multicast datagram%s dropped due to no socket\n");
+	ps(UDP_STAT_FULLSOCK, "\t%" PRIu64
+	    " dropped due to full socket buffers\n");
 	delivered = udpstat[UDP_STAT_IPACKETS] -
 		    udpstat[UDP_STAT_HDROPS] -
 		    udpstat[UDP_STAT_BADLEN] -
@@ -584,7 +599,7 @@ ip_stats(u_long off, const char *name)
 		size_t size = sizeof(ipstat);
 
 		if (prog_sysctlbyname("net.inet.ip.stats", ipstat, &size,
-				 NULL, 0) == -1 && errno != ENOMEM)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -593,28 +608,33 @@ ip_stats(u_long off, const char *name)
 
 	printf("%s:\n", name);
 
-#define	ps(f, m) if (ipstat[f] || sflag <= 1) \
-    printf(m, ipstat[f])
-#define	p(f, m) if (ipstat[f] || sflag <= 1) \
-    printf(m, ipstat[f], plural(ipstat[f]))
+#define	ps(f, m) if (ipstat[f] || sflag <= 1)	\
+		printf(m, ipstat[f])
+#define	p(f, m) if (ipstat[f] || sflag <= 1)		\
+		printf(m, ipstat[f], plural(ipstat[f]))
 
 	p(IP_STAT_TOTAL, "\t%" PRIu64 " total packet%s received\n");
 	p(IP_STAT_BADSUM, "\t%" PRIu64 " bad header checksum%s\n");
 	ps(IP_STAT_TOOSMALL, "\t%" PRIu64 " with size smaller than minimum\n");
 	ps(IP_STAT_TOOSHORT, "\t%" PRIu64 " with data size < data length\n");
-	ps(IP_STAT_TOOLONG, "\t%" PRIu64 " with length > max ip packet size\n");
+	ps(IP_STAT_TOOLONG,
+	    "\t%" PRIu64 " with length > max ip packet size\n");
 	ps(IP_STAT_BADHLEN, "\t%" PRIu64 " with header length < data size\n");
 	ps(IP_STAT_BADLEN, "\t%" PRIu64 " with data length < header length\n");
 	ps(IP_STAT_BADOPTIONS, "\t%" PRIu64 " with bad options\n");
 	ps(IP_STAT_BADVERS, "\t%" PRIu64 " with incorrect version number\n");
 	p(IP_STAT_FRAGMENTS, "\t%" PRIu64 " fragment%s received\n");
-	p(IP_STAT_FRAGDROPPED, "\t%" PRIu64 " fragment%s dropped (dup or out of space)\n");
-	p(IP_STAT_RCVMEMDROP, "\t%" PRIu64 " fragment%s dropped (out of ipqent)\n");
+	p(IP_STAT_FRAGDROPPED,
+	    "\t%" PRIu64 " fragment%s dropped (dup or out of space)\n");
+	p(IP_STAT_RCVMEMDROP,
+	    "\t%" PRIu64 " fragment%s dropped (out of ipqent)\n");
 	p(IP_STAT_BADFRAGS, "\t%" PRIu64 " malformed fragment%s dropped\n");
-	p(IP_STAT_FRAGTIMEOUT, "\t%" PRIu64 " fragment%s dropped after timeout\n");
+	p(IP_STAT_FRAGTIMEOUT,
+	    "\t%" PRIu64 " fragment%s dropped after timeout\n");
 	p(IP_STAT_REASSEMBLED, "\t%" PRIu64 " packet%s reassembled ok\n");
 	p(IP_STAT_DELIVERED, "\t%" PRIu64 " packet%s for this host\n");
-	p(IP_STAT_NOPROTO, "\t%" PRIu64 " packet%s for unknown/unsupported protocol\n");
+	p(IP_STAT_NOPROTO,
+	    "\t%" PRIu64 " packet%s for unknown/unsupported protocol\n");
 	p(IP_STAT_FORWARD, "\t%" PRIu64 " packet%s forwarded");
 	p(IP_STAT_FASTFORWARD, " (%" PRIu64 " packet%s fast forwarded)");
 	if (ipstat[IP_STAT_FORWARD] || sflag <= 1)
@@ -622,24 +642,39 @@ ip_stats(u_long off, const char *name)
 	p(IP_STAT_CANTFORWARD, "\t%" PRIu64 " packet%s not forwardable\n");
 	p(IP_STAT_REDIRECTSENT, "\t%" PRIu64 " redirect%s sent\n");
 	p(IP_STAT_NOGIF, "\t%" PRIu64 " packet%s no matching gif found\n");
-	p(IP_STAT_NOIPSEC, "\t%" PRIu64 " packet%s no matching ipsecif found\n");
+	p(IP_STAT_NOIPSEC,
+	    "\t%" PRIu64 " packet%s no matching ipsecif found\n");
 	p(IP_STAT_LOCALOUT, "\t%" PRIu64 " packet%s sent from this host\n");
-	p(IP_STAT_RAWOUT, "\t%" PRIu64 " packet%s sent with fabricated ip header\n");
-	p(IP_STAT_ODROPPED, "\t%" PRIu64 " output packet%s dropped due to no bufs, etc.\n");
-	p(IP_STAT_NOROUTE, "\t%" PRIu64 " output packet%s discarded due to no route\n");
+	p(IP_STAT_RAWOUT,
+	    "\t%" PRIu64 " packet%s sent with fabricated ip header\n");
+	p(IP_STAT_ODROPPED,
+	    "\t%" PRIu64 " output packet%s dropped due to no bufs, etc.\n");
+	p(IP_STAT_NOROUTE,
+	    "\t%" PRIu64 " output packet%s discarded due to no route\n");
 	p(IP_STAT_FRAGMENTED, "\t%" PRIu64 " output datagram%s fragmented\n");
 	p(IP_STAT_OFRAGMENTS, "\t%" PRIu64 " fragment%s created\n");
-	p(IP_STAT_CANTFRAG, "\t%" PRIu64 " datagram%s that can't be fragmented\n");
-	p(IP_STAT_BADADDR, "\t%" PRIu64 " datagram%s with bad address in header\n");
-	p(IP_STAT_PFILDROP_IN, "\t%" PRIu64 " input packet%s dropped by pfil\n");
-	p(IP_STAT_PFILDROP_OUT, "\t%" PRIu64 " output packet%s dropped by pfil\n");
-	p(IP_STAT_IPSECDROP_IN, "\t%" PRIu64 " input packet%s dropped by IPsec\n");
-	p(IP_STAT_IPSECDROP_OUT, "\t%" PRIu64 " output packet%s dropped by IPsec\n");
-	p(IP_STAT_IFDROP, "\t%" PRIu64 " input packet%s dropped due to interface state\n");
-	p(IP_STAT_TIMXCEED, "\t%" PRIu64 " packet%s dropped due to TTL exceeded\n");
-	p(IP_STAT_IFNOADDR, "\t%" PRIu64 " output packet%s dropped (no IP address)\n");
-	p(IP_STAT_RTREJECT, "\t%" PRIu64 " output packet%s discarded due to reject route\n");
-	p(IP_STAT_BCASTDENIED, "\t%" PRIu64 " output packet%s dropped (broadcast prohibited)\n");
+	p(IP_STAT_CANTFRAG,
+	    "\t%" PRIu64 " datagram%s that can't be fragmented\n");
+	p(IP_STAT_BADADDR,
+	    "\t%" PRIu64 " datagram%s with bad address in header\n");
+	p(IP_STAT_PFILDROP_IN,
+	    "\t%" PRIu64 " input packet%s dropped by pfil\n");
+	p(IP_STAT_PFILDROP_OUT,
+	    "\t%" PRIu64 " output packet%s dropped by pfil\n");
+	p(IP_STAT_IPSECDROP_IN,
+	    "\t%" PRIu64 " input packet%s dropped by IPsec\n");
+	p(IP_STAT_IPSECDROP_OUT,
+	    "\t%" PRIu64 " output packet%s dropped by IPsec\n");
+	p(IP_STAT_IFDROP,
+	    "\t%" PRIu64 " input packet%s dropped due to interface state\n");
+	p(IP_STAT_TIMXCEED,
+	    "\t%" PRIu64 " packet%s dropped due to TTL exceeded\n");
+	p(IP_STAT_IFNOADDR,
+	    "\t%" PRIu64 " output packet%s dropped (no IP address)\n");
+	p(IP_STAT_RTREJECT,
+	    "\t%" PRIu64 " output packet%s discarded due to reject route\n");
+	p(IP_STAT_BCASTDENIED,
+	    "\t%" PRIu64 " output packet%s dropped (broadcast prohibited)\n");
 #undef ps
 #undef p
 }
@@ -670,8 +705,8 @@ icmp_stats(u_long off, const char *name)
     printf(m, icmpstat[f], plural(icmpstat[f]))
 
 	p(ICMP_STAT_ERROR, "\t%" PRIu64 " call%s to icmp_error\n");
-	p(ICMP_STAT_OLDICMP,
-	    "\t%" PRIu64 " error%s not generated because old message was icmp\n");
+	p(ICMP_STAT_OLDICMP, "\t%" PRIu64
+	    " error%s not generated because old message was icmp\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat[ICMP_STAT_OUTHIST + i] != 0) {
 			if (first) {
@@ -685,8 +720,10 @@ icmp_stats(u_long off, const char *name)
 	p(ICMP_STAT_TOOSHORT, "\t%" PRIu64 " message%s < minimum length\n");
 	p(ICMP_STAT_CHECKSUM, "\t%" PRIu64 " bad checksum%s\n");
 	p(ICMP_STAT_BADLEN, "\t%" PRIu64 " message%s with bad length\n");
-	p(ICMP_STAT_BMCASTECHO, "\t%" PRIu64 " multicast echo request%s ignored\n");
-	p(ICMP_STAT_BMCASTTSTAMP, "\t%" PRIu64 " multicast timestamp request%s ignored\n");
+	p(ICMP_STAT_BMCASTECHO,
+	    "\t%" PRIu64 " multicast echo request%s ignored\n");
+	p(ICMP_STAT_BMCASTTSTAMP,
+	    "\t%" PRIu64 " multicast timestamp request%s ignored\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat[ICMP_STAT_INHIST + i] != 0) {
 			if (first) {
@@ -713,7 +750,7 @@ igmp_stats(u_long off, const char *name)
 		size_t size = sizeof(igmpstat);
 
 		if (prog_sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
-				 NULL, 0) == -1 && errno != ENOMEM)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -722,19 +759,28 @@ igmp_stats(u_long off, const char *name)
 
 	printf("%s:\n", name);
 
-#define	p(f, m) if (igmpstat[f] || sflag <= 1) \
-    printf(m, igmpstat[f], plural(igmpstat[f]))
-#define	py(f, m) if (igmpstat[f] || sflag <= 1) \
-    printf(m, igmpstat[f], igmpstat[f] != 1 ? "ies" : "y")
+#define	p(f, m) if (igmpstat[f] || sflag <= 1)			\
+		printf(m, igmpstat[f], plural(igmpstat[f]))
+#define	py(f, m) if (igmpstat[f] || sflag <= 1)				\
+		printf(m, igmpstat[f], igmpstat[f] != 1 ? "ies" : "y")
+
 	p(IGMP_STAT_RCV_TOTAL, "\t%" PRIu64 " message%s received\n");
-	p(IGMP_STAT_RCV_TOOSHORT, "\t%" PRIu64 " message%s received with too few bytes\n");
-	p(IGMP_STAT_RCV_BADSUM, "\t%" PRIu64 " message%s received with bad checksum\n");
-	py(IGMP_STAT_RCV_QUERIES, "\t%" PRIu64 " membership quer%s received\n");
-	py(IGMP_STAT_RCV_BADQUERIES, "\t%" PRIu64 " membership quer%s received with invalid field(s)\n");
-	p(IGMP_STAT_RCV_REPORTS, "\t%" PRIu64 " membership report%s received\n");
-	p(IGMP_STAT_RCV_BADREPORTS, "\t%" PRIu64 " membership report%s received with invalid field(s)\n");
-	p(IGMP_STAT_RCV_OURREPORTS, "\t%" PRIu64 " membership report%s received for groups to which we belong\n");
-	p(IGMP_STAT_SND_REPORTS, "\t%" PRIu64 " membership report%s sent\n");
+	p(IGMP_STAT_RCV_TOOSHORT,
+	    "\t%" PRIu64 " message%s received with too few bytes\n");
+	p(IGMP_STAT_RCV_BADSUM,
+	    "\t%" PRIu64 " message%s received with bad checksum\n");
+	py(IGMP_STAT_RCV_QUERIES,
+	    "\t%" PRIu64 " membership quer%s received\n");
+	py(IGMP_STAT_RCV_BADQUERIES,
+	    "\t%" PRIu64 " membership quer%s received with invalid field(s)\n");
+	p(IGMP_STAT_RCV_REPORTS,
+	    "\t%" PRIu64 " membership report%s received\n");
+	p(IGMP_STAT_RCV_BADREPORTS, "\t%" PRIu64
+	    " membership report%s received with invalid field(s)\n");
+	p(IGMP_STAT_RCV_OURREPORTS, "\t%" PRIu64
+	    " membership report%s received for groups to which we belong\n");
+	p(IGMP_STAT_SND_REPORTS,
+	    "\t%" PRIu64 " membership report%s sent\n");
 #undef p
 #undef py
 }
@@ -772,17 +818,18 @@ carp_stats(u_long off, const char *name)
 	p(CARP_STAT_BADTTL,
 	    "\t\t%" PRIu64 " packet%s discarded for wrong TTL\n");
 	p(CARP_STAT_HDROPS, "\t\t%" PRIu64 " packet%s shorter than header\n");
-	p(CARP_STAT_BADSUM, "\t\t%" PRIu64
-		" packet%s discarded for bad checksum\n");
+	p(CARP_STAT_BADSUM,
+	    "\t\t%" PRIu64 " packet%s discarded for bad checksum\n");
 	p(CARP_STAT_BADVER,
 	    "\t\t%" PRIu64 " packet%s discarded with a bad version\n");
 	p2(CARP_STAT_BADLEN,
 	    "\t\t%" PRIu64 " discarded because packet was too short\n");
 	p(CARP_STAT_BADAUTH,
 	    "\t\t%" PRIu64 " packet%s discarded for bad authentication\n");
-	p(CARP_STAT_BADVHID, "\t\t%" PRIu64 " packet%s discarded for bad vhid\n");
+	p(CARP_STAT_BADVHID,
+	    "\t\t%" PRIu64 " packet%s discarded for bad vhid\n");
 	p(CARP_STAT_BADADDRS, "\t\t%" PRIu64
-		" packet%s discarded because of a bad address list\n");
+	    " packet%s discarded because of a bad address list\n");
 	p(CARP_STAT_OPACKETS, "\t%" PRIu64 " packet%s sent (IPv4)\n");
 	p(CARP_STAT_OPACKETS6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
 	p2(CARP_STAT_ONOMEM,
@@ -813,15 +860,24 @@ pim_stats(u_long off, const char *name)
 
 	p(pims_rcv_total_msgs, "\t%" PRIu64 " message%s received\n");
 	p(pims_rcv_total_bytes, "\t%" PRIu64 " byte%s received\n");
-	p(pims_rcv_tooshort, "\t%" PRIu64 " message%s received with too few bytes\n");
-	p(pims_rcv_badsum, "\t%" PRIu64 " message%s received with bad checksum\n");
-	p(pims_rcv_badversion, "\t%" PRIu64 " message%s received with bad version\n");
-	p(pims_rcv_registers_msgs, "\t%" PRIu64 " data register message%s received\n");
-	p(pims_rcv_registers_bytes, "\t%" PRIu64 " data register byte%s received\n");
-	p(pims_rcv_registers_wrongiif, "\t%" PRIu64 " data register message%s received on wrong iif\n");
-	p(pims_rcv_badregisters, "\t%" PRIu64 " bad register%s received\n");
-	p(pims_snd_registers_msgs, "\t%" PRIu64 " data register message%s sent\n");
-	p(pims_snd_registers_bytes, "\t%" PRIu64 " data register byte%s sent\n");
+	p(pims_rcv_tooshort,
+	    "\t%" PRIu64 " message%s received with too few bytes\n");
+	p(pims_rcv_badsum,
+	    "\t%" PRIu64 " message%s received with bad checksum\n");
+	p(pims_rcv_badversion,
+	    "\t%" PRIu64 " message%s received with bad version\n");
+	p(pims_rcv_registers_msgs,
+	    "\t%" PRIu64 " data register message%s received\n");
+	p(pims_rcv_registers_bytes,
+	    "\t%" PRIu64 " data register byte%s received\n");
+	p(pims_rcv_registers_wrongiif,
+	    "\t%" PRIu64 " data register message%s received on wrong iif\n");
+	p(pims_rcv_badregisters,
+	    "\t%" PRIu64 " bad register%s received\n");
+	p(pims_snd_registers_msgs,
+	    "\t%" PRIu64 " data register message%s sent\n");
+	p(pims_snd_registers_bytes,
+	    "\t%" PRIu64 " data register byte%s sent\n");
 #undef p
 }
 
@@ -859,22 +915,33 @@ arp_stats(u_long off, const char *name)
 	p(ARP_STAT_RCVREPLY, "\t\t%" PRIu64 " reply packet%s\n");
 	p(ARP_STAT_RCVREQUEST, "\t\t%" PRIu64 " valid request packet%s\n");
 	p(ARP_STAT_RCVMCAST, "\t\t%" PRIu64 " broadcast/multicast packet%s\n");
-	p(ARP_STAT_RCVBADPROTO, "\t\t%" PRIu64 " packet%s with unknown protocol type\n");
-	p(ARP_STAT_RCVBADLEN, "\t\t%" PRIu64 " packet%s with bad (short) length\n");
-	p(ARP_STAT_RCVZEROTPA, "\t\t%" PRIu64 " packet%s with null target IP address\n");
-	p(ARP_STAT_RCVZEROSPA, "\t\t%" PRIu64 " packet%s with null source IP address\n");
-	ps(ARP_STAT_RCVNOINT, "\t\t%" PRIu64 " could not be mapped to an interface\n");
-	p(ARP_STAT_RCVLOCALSHA, "\t\t%" PRIu64 " packet%s sourced from a local hardware "
+	p(ARP_STAT_RCVBADPROTO,
+	    "\t\t%" PRIu64 " packet%s with unknown protocol type\n");
+	p(ARP_STAT_RCVBADLEN,
+	    "\t\t%" PRIu64 " packet%s with bad (short) length\n");
+	p(ARP_STAT_RCVZEROTPA,
+	    "\t\t%" PRIu64 " packet%s with null target IP address\n");
+	p(ARP_STAT_RCVZEROSPA,
+	    "\t\t%" PRIu64 " packet%s with null source IP address\n");
+	ps(ARP_STAT_RCVNOINT,
+	    "\t\t%" PRIu64 " could not be mapped to an interface\n");
+	p(ARP_STAT_RCVLOCALSHA,
+	    "\t\t%" PRIu64 " packet%s sourced from a local hardware "
 	    "address\n");
 	p(ARP_STAT_RCVBCASTSHA, "\t\t%" PRIu64 " packet%s with a broadcast "
 	    "source hardware address\n");
-	p(ARP_STAT_RCVLOCALSPA, "\t\t%" PRIu64 " duplicate%s for a local IP address\n");
-	p(ARP_STAT_RCVOVERPERM, "\t\t%" PRIu64 " attempt%s to overwrite a static entry\n");
-	p(ARP_STAT_RCVOVERINT, "\t\t%" PRIu64 " packet%s received on wrong interface\n");
+	p(ARP_STAT_RCVLOCALSPA,
+	    "\t\t%" PRIu64 " duplicate%s for a local IP address\n");
+	p(ARP_STAT_RCVOVERPERM,
+	    "\t\t%" PRIu64 " attempt%s to overwrite a static entry\n");
+	p(ARP_STAT_RCVOVERINT,
+	    "\t\t%" PRIu64 " packet%s received on wrong interface\n");
 	p(ARP_STAT_RCVOVER, "\t\t%" PRIu64 " entry%s overwritten\n");
-	p(ARP_STAT_RCVLENCHG, "\t\t%" PRIu64 " change%s in hardware address length\n");
+	p(ARP_STAT_RCVLENCHG,
+	    "\t\t%" PRIu64 " change%s in hardware address length\n");
 
-	p(ARP_STAT_DFRTOTAL, "\t%" PRIu64 " packet%s deferred pending ARP resolution\n");
+	p(ARP_STAT_DFRTOTAL,
+	    "\t%" PRIu64 " packet%s deferred pending ARP resolution\n");
 	ps(ARP_STAT_DFRSENT, "\t\t%" PRIu64 " sent\n");
 	ps(ARP_STAT_DFRDROPPED, "\t\t%" PRIu64 " dropped\n");
 
