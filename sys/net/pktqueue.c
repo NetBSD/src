@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.19 2022/09/02 03:50:00 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.20 2022/09/02 05:50:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.19 2022/09/02 03:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.20 2022/09/02 05:50:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.19 2022/09/02 03:50:00 thorpej Exp $"
 #include <sys/proc.h>
 #include <sys/percpu.h>
 #include <sys/xcall.h>
+#include <sys/once.h>
+#include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <net/pktqueue.h>
 #include <net/rss_config.h>
@@ -80,8 +83,11 @@ struct pktqueue {
 	percpu_t *	pq_counters;
 	void *		pq_sih;
 
-	/* Finally, per-CPU queues. */
+	/* The per-CPU queues. */
 	struct percpu *	pq_pcq;	/* struct pcq * */
+
+	/* The linkage on the list of all pktqueues. */
+	LIST_ENTRY(pktqueue) pq_list;
 };
 
 /* The counters of the packet queue. */
@@ -96,6 +102,28 @@ typedef struct {
 
 /* Special marker value used by pktq_barrier() mechanism. */
 #define	PKTQ_MARKER	((void *)(~0ULL))
+
+/*
+ * This is a list of all pktqueues.  This list is used by
+ * pktq_ifdetach() to issue a barrier on every pktqueue.
+ *
+ * The r/w lock is acquired for writing in pktq_create() and
+ * pktq_destroy(), and for reading in pktq_ifdetach().
+ *
+ * This list is not performance critical, and will seldom be
+ * accessed.
+ */
+static LIST_HEAD(, pktqueue) pktqueue_list	__read_mostly;
+static krwlock_t pktqueue_list_lock		__read_mostly;
+static once_t pktqueue_list_init_once		__read_mostly;
+
+static int
+pktqueue_list_init(void)
+{
+	LIST_INIT(&pktqueue_list);
+	rw_init(&pktqueue_list_lock);
+	return 0;
+}
 
 static void
 pktq_init_cpu(void *vqp, void *vpq, struct cpu_info *ci)
@@ -141,6 +169,8 @@ pktq_create(size_t maxlen, void (*intrh)(void *), void *sc)
 	percpu_t *pc;
 	void *sih;
 
+	RUN_ONCE(&pktqueue_list_init_once, pktqueue_list_init);
+
 	pc = percpu_alloc(sizeof(pktq_counters_t));
 	if ((sih = softint_establish(sflags, intrh, sc)) == NULL) {
 		percpu_free(pc, sizeof(pktq_counters_t));
@@ -155,12 +185,22 @@ pktq_create(size_t maxlen, void (*intrh)(void *), void *sc)
 	pq->pq_pcq = percpu_create(sizeof(struct pcq *),
 	    pktq_init_cpu, pktq_fini_cpu, pq);
 
+	rw_enter(&pktqueue_list_lock, RW_WRITER);
+	LIST_INSERT_HEAD(&pktqueue_list, pq, pq_list);
+	rw_exit(&pktqueue_list_lock);
+
 	return pq;
 }
 
 void
 pktq_destroy(pktqueue_t *pq)
 {
+
+	KASSERT(pktqueue_list_init_once.o_status == ONCE_DONE);
+
+	rw_enter(&pktqueue_list_lock, RW_WRITER);
+	LIST_REMOVE(pq, pq_list);
+	rw_exit(&pktqueue_list_lock);
 
 	percpu_free(pq->pq_pcq, sizeof(struct pcq *));
 	percpu_free(pq->pq_counters, sizeof(pktq_counters_t));
@@ -469,6 +509,25 @@ pktq_barrier(pktqueue_t *pq)
 	}
 	pq->pq_barrier = 0;
 	mutex_exit(&pq->pq_lock);
+}
+
+/*
+ * pktq_ifdetach: issue a barrier on all pktqueues when a network
+ * interface is detached.
+ */
+void
+pktq_ifdetach(void)
+{
+	pktqueue_t *pq;
+
+	/* Just in case no pktqueues have been created yet... */
+	RUN_ONCE(&pktqueue_list_init_once, pktqueue_list_init);
+
+	rw_enter(&pktqueue_list_lock, RW_READER);
+	LIST_FOREACH(pq, &pktqueue_list, pq_list) {
+		pktq_barrier(pq);
+	}
+	rw_exit(&pktqueue_list_lock);
 }
 
 /*

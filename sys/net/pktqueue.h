@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.h,v 1.7 2022/09/02 03:50:00 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.h,v 1.8 2022/09/02 05:50:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ void		pktq_destroy(pktqueue_t *);
 bool		pktq_enqueue(pktqueue_t *, struct mbuf *, const u_int);
 struct mbuf *	pktq_dequeue(pktqueue_t *);
 void		pktq_barrier(pktqueue_t *);
+void		pktq_ifdetach(void);
 void		pktq_flush(pktqueue_t *);
 int		pktq_set_maxlen(pktqueue_t *, size_t);
 
