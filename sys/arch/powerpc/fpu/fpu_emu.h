@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.7 2022/09/01 06:08:16 rin Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.8 2022/09/02 12:40:49 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,8 +185,8 @@ struct	fpn *fpu_newnan(struct fpemu *);
  */
 int	fpu_shr(struct fpn *, int);
 
-void	fpu_explode(struct fpemu *, struct fpn *, int, int);
-void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
+void	fpu_explode(struct fpemu *, struct fpn *, int, uint64_t);
+void	fpu_implode(struct fpemu *, struct fpn *, int, uint64_t *);
 
 #ifdef DEBUG
 #define	FPE_EX		0x1
