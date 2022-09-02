@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.45 2022/09/02 12:40:49 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.46 2022/09/02 12:47:10 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.45 2022/09/02 12:40:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.46 2022/09/02 12:47:10 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -690,10 +690,9 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			case	OPC59_FRES:
 				FPU_EMU_EVCNT_INCR(fpres);
 				DPRINTF(FPE_INSN, ("fpu_execute: FPRES\n"));
-				fpu_explode(fe, &fe->fe_f2, type, FR(rb));
-				fp = fpu_sqrt(fe);
 				fpu_explode(fe, &fe->fe_f1, FTYPE_INT, 1);
-				fpu_div(fe);
+				fpu_explode(fe, &fe->fe_f2, type, FR(rb));
+				fp = fpu_div(fe);
 				break;
 			case	OPC59_FMULS:
 				FPU_EMU_EVCNT_INCR(fmul);
@@ -710,7 +709,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fp = fpu_sqrt(fe);
 				fe->fe_f2 = *fp;
 				fpu_explode(fe, &fe->fe_f1, FTYPE_INT, 1);
-				fpu_div(fe);
+				fp = fpu_div(fe);
 				break;
 			case	OPC59_FMSUBS:
 				FPU_EMU_EVCNT_INCR(fmulsub);
