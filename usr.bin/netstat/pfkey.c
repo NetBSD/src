@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.5 2022/09/02 06:25:43 msaitoh Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: pfkey.c,v 1.4 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.5 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -131,7 +131,7 @@ pfkey_stats(u_long off, const char *name)
 
 	printf ("%s:\n", name);
 
-#define	p(f, m) if (pfkeystat[f] || sflag <= 1) \
+#define	p(f, m) if (pfkeystat[f] || sflag <= 1)				\
     printf(m, (unsigned long long)pfkeystat[f], plural(pfkeystat[f]))
 
 	/* userland -> kernel */
@@ -147,15 +147,24 @@ pfkey_stats(u_long off, const char *name)
 		printf("\t\t%s: %llu\n", pfkey_msgtype_names(type),
 		    (unsigned long long)pfkeystat[PFKEY_STAT_OUT_MSGTYPE + type]);
 	}
-	p(PFKEY_STAT_OUT_INVLEN, "\t%llu message%s with invalid length field\n");
-	p(PFKEY_STAT_OUT_INVVER, "\t%llu message%s with invalid version field\n");
-	p(PFKEY_STAT_OUT_INVMSGTYPE, "\t%llu message%s with invalid message type field\n");
-	p(PFKEY_STAT_OUT_TOOSHORT, "\t%llu message%s too short\n");
-	p(PFKEY_STAT_OUT_NOMEM, "\t%llu message%s with memory allocation failure\n");
-	p(PFKEY_STAT_OUT_DUPEXT, "\t%llu message%s with duplicate extension\n");
-	p(PFKEY_STAT_OUT_INVEXTTYPE, "\t%llu message%s with invalid extension type\n");
-	p(PFKEY_STAT_OUT_INVSATYPE, "\t%llu message%s with invalid sa type\n");
-	p(PFKEY_STAT_OUT_INVADDR, "\t%llu message%s with invalid address extension\n");
+	p(PFKEY_STAT_OUT_INVLEN,
+	    "\t%llu message%s with invalid length field\n");
+	p(PFKEY_STAT_OUT_INVVER,
+	    "\t%llu message%s with invalid version field\n");
+	p(PFKEY_STAT_OUT_INVMSGTYPE,
+	    "\t%llu message%s with invalid message type field\n");
+	p(PFKEY_STAT_OUT_TOOSHORT,
+	    "\t%llu message%s too short\n");
+	p(PFKEY_STAT_OUT_NOMEM,
+	    "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_OUT_DUPEXT,
+	    "\t%llu message%s with duplicate extension\n");
+	p(PFKEY_STAT_OUT_INVEXTTYPE,
+	    "\t%llu message%s with invalid extension type\n");
+	p(PFKEY_STAT_OUT_INVSATYPE,
+	    "\t%llu message%s with invalid sa type\n");
+	p(PFKEY_STAT_OUT_INVADDR,
+	    "\t%llu message%s with invalid address extension\n");
 
 	/* kernel -> userland */
 	p(PFKEY_STAT_IN_TOTAL, "\t%llu request%s sent to userland\n");
@@ -176,7 +185,8 @@ pfkey_stats(u_long off, const char *name)
 	    "\t%llu message%s toward all sockets\n");
 	p(PFKEY_STAT_IN_MSGTARGET + KEY_SENDUP_REGISTERED,
 	    "\t%llu message%s toward registered sockets\n");
-	p(PFKEY_STAT_IN_NOMEM, "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_IN_NOMEM,
+	    "\t%llu message%s with memory allocation failure\n");
 #undef p
 }
 #endif /*IPSEC*/

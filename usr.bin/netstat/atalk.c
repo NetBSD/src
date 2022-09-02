@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.20 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: atalk.c,v 1.21 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.20 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.21 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,9 +244,8 @@ atalkprotopr(u_long off, const char *name)
 			return;
 		next = ddpcb.ddp_next;
 #if 0
-		if (!aflag && atalk_nullhost(ddpcb.ddp_lsat)) {
+		if (!aflag && atalk_nullhost(ddpcb.ddp_lsat))
 			continue;
-		}
 #endif
 		if (kread((u_long)ddpcb.ddp_socket,
 			  (char *)&sockb, sizeof(sockb)) < 0)
