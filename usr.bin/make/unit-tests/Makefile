@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.322 2022/09/02 16:24:31 sjg Exp $
+# $NetBSD: Makefile,v 1.323 2022/09/02 18:54:25 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -168,7 +168,7 @@ TESTS+=		directive-export-impl
 TESTS+=		directive-export-gmake
 TESTS+=		directive-export-literal
 TESTS+=		directive-for
-#TESTS+=		directive-for-break
+TESTS+=		directive-for-break
 TESTS+=		directive-for-empty
 TESTS+=		directive-for-errors
 TESTS+=		directive-for-escape
@@ -721,6 +721,7 @@ _SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g'
 _SED_CMDS+=	-e 's,${.CURDIR},<curdir>,g'
 _SED_CMDS+=	-e 's,<curdir>/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
+_SED_CMDS+=	-e '/MAKE_VERSION/d'
 
 .rawout.out:
 	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.PREFIX:T}} \
