@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.28 2022/03/28 12:33:20 riastradh Exp $	*/
+/*	$NetBSD: fbt.c,v 1.29 2022/09/02 11:03:50 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -168,9 +168,6 @@ fbt_excluded(const char *name)
 #endif
 
 #ifdef __NetBSD__
-	if (name[0] == '_' && name[1] == '_')
-		return (1);
-
 	if (strcmp(name, "cpu_index") == 0 ||
 	    strncmp(name, "db_", 3) == 0 ||
 	    strncmp(name, "ddb_", 4) == 0 ||
