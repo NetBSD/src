@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.15 2022/09/02 12:22:49 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.16 2022/09/02 12:24:54 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.15 2022/09/02 12:22:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.16 2022/09/02 12:24:54 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -502,7 +502,7 @@ zero:		return HI_WORD(sign);
 		}
 		if (fprf)
 			fe->fe_cx |= FPRF_SIGN(sign);
-		return HI_WORD(sign | DBL_EXP(DBL_EXP_INFNAN) | DBL_MASK) |
+		return HI_WORD(sign | DBL_EXP(DBL_EXP_INFNAN - 1) | DBL_MASK) |
 		       LO_WORD(~0);
 	}
 	if (fprf)
