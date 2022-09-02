@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.82 2022/08/31 05:24:41 msaitoh Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.83 2022/09/02 06:01:38 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.82 2022/08/31 05:24:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.83 2022/09/02 06:01:38 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -729,7 +729,7 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 	char locksym[128], initsym[128], lockedsym[128], unlockedsym[128];
 
 #ifdef DDB
-	db_symstr(locksym, sizeof(locksym), (db_expr_t)ld->ld_lock,
+	db_symstr(locksym, sizeof(locksym), (db_expr_t)(intptr_t)ld->ld_lock,
 	    DB_STGY_ANY);
 	db_symstr(initsym, sizeof(initsym), (db_expr_t)ld->ld_initaddr,
 	    DB_STGY_PROC);
@@ -855,7 +855,7 @@ lockdebug_lock_print(void *addr,
 	uintptr_t word;
 
 	(*pr)("WARNING: lock print is unreliable without LOCKDEBUG\n");
-	db_symstr(sym, sizeof(sym), (db_expr_t)addr, DB_STGY_ANY);
+	db_symstr(sym, sizeof(sym), (db_expr_t)(intptr_t)addr, DB_STGY_ANY);
 	db_read_bytes((db_addr_t)addr, sizeof(word), (char *)&word);
 	(*pr)("%s: possible owner: %p, bits: 0x%" PRIxPTR "\n", sym,
 	    (void *)(word & ~(uintptr_t)ALIGNBYTES), word & ALIGNBYTES);
@@ -1075,7 +1075,8 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	char locksym[128];
 
 #ifdef DDB
-	db_symstr(locksym, sizeof(locksym), (db_expr_t)lock, DB_STGY_ANY);
+	db_symstr(locksym, sizeof(locksym), (db_expr_t)(intptr_t)lock,
+	    DB_STGY_ANY);
 #else
 	snprintf(locksym, sizeof(locksym), "%#018lx", (unsigned long)lock);
 #endif
