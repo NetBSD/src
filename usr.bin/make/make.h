@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.303 2022/06/12 13:37:32 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.304 2022/09/02 16:24:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -800,6 +800,7 @@ void Compat_Make(GNode *, GNode *);
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
 void Cond_restore_depth(unsigned int);
+void Cond_reset_depth(unsigned int);
 unsigned int Cond_save_depth(void) MAKE_ATTR_USE;
 
 /* dir.c; see also dir.h */
@@ -829,6 +830,7 @@ void For_Run(unsigned, unsigned);
 bool For_NextIteration(struct ForLoop *, Buffer *);
 char *ForLoop_Details(struct ForLoop *);
 void ForLoop_Free(struct ForLoop *);
+void For_Break(struct ForLoop *);
 
 /* job.c */
 void JobReapChild(pid_t, int, bool);

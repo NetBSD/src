@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.681 2022/07/24 20:25:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.682 2022/09/02 16:24:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.681 2022/07/24 20:25:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.682 2022/09/02 16:24:31 sjg Exp $");
 
 /*
  * A file being read.
@@ -2689,7 +2689,17 @@ ParseDirective(char *line)
 	pp_skip_whitespace(&cp);
 	arg = cp;
 
-	if (Substring_Equals(dir, "undef"))
+	if (Substring_Equals(dir, "break")) {
+		IncludedFile *curFile = CurFile();
+
+		if (curFile->forLoop != NULL) {
+			/* pretend we reached EOF */
+			For_Break(curFile->forLoop);
+			Cond_reset_depth(curFile->cond_depth);
+			ParseEOF();
+		} else
+			Parse_Error(PARSE_FATAL, "break outside of for loop");
+	} else if (Substring_Equals(dir, "undef"))
 		Var_Undef(arg);
 	else if (Substring_Equals(dir, "export"))
 		Var_Export(VEM_PLAIN, arg);
