@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.102 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.103 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.102 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: main.c,v 1.103 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,6 +353,7 @@ void
 prepare(const char *nf, const char *mf, struct protox *tp)
 {
 	char buf[_POSIX2_LINE_MAX];
+
 	/*
 	 * Try to figure out if we can use sysctl or not.
 	 */
@@ -383,7 +384,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 
 	if (force_sysctl && !use_sysctl) {
 		/* Let the user know what's about to happen. */
-		warnx("forcing sysctl usage even though it might not be "\
+		warnx("forcing sysctl usage even though it might not be "
 		    "supported");
 		use_sysctl = 1;
 	}
@@ -485,8 +486,7 @@ main(int argc, char *argv[])
 			errno = 0;
 			pcbaddr = strtoul(optarg, &cp, 16);
 			if (*cp != '\0' || errno == ERANGE)
-				errx(1, "invalid PCB address %s",
-				    optarg);
+				errx(1, "invalid PCB address %s", optarg);
 			Pflag = 1;
 			break;
 		case 'p':
@@ -755,9 +755,8 @@ printproto(struct protox *tp, const char *name)
 		pr = tp->pr_cblocks;
 		off = nl[tp->pr_index].n_value;
 	}
-	if (pr != NULL && ((off || af != AF_UNSPEC) || use_sysctl)) {
+	if (pr != NULL && ((off || af != AF_UNSPEC) || use_sysctl))
 		(*pr)(off, name);
-	}
 }
 
 /*

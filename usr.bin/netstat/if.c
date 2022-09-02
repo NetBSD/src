@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.98 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.99 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.98 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.99 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,12 +132,10 @@ intpr(int interval, u_long ifnetaddr, void (*pfunc)(const char *))
 		return;
 	}
 
-	if (use_sysctl) {
+	if (use_sysctl)
 		intpr_sysctl();
-	} else {
+	else
 		intpr_kvm(ifnetaddr, pfunc);
-	}
-
 }
 
 static void
@@ -214,9 +212,9 @@ intpr_sysctl(void)
 			get_rtaddrs(ifm->ifm_addrs, sa, rti_info);
 
 			sdl = (struct sockaddr_dl *)rti_info[RTAX_IFP];
-			if (sdl == NULL || sdl->sdl_family != AF_LINK) {
+			if (sdl == NULL || sdl->sdl_family != AF_LINK)
 				continue;
-			}
+
 			bzero(name, sizeof(name));
 			if (sdl->sdl_nlen >= IFNAMSIZ)
 				memcpy(name, sdl->sdl_data, IFNAMSIZ - 1);
@@ -538,9 +536,8 @@ print_addr(const int ifindex, struct sockaddr *sa,
 				ia4_print(&inm.inm_addr);
 				multiaddr = (u_long)inm.inm_list.le_next;
 			}
-		} else {
+		} else
 			mc4_print(ifindex);
-		}
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -551,9 +548,9 @@ print_addr(const int ifindex, struct sockaddr *sa,
 			sin6->sin6_scope_id = 0;
 #endif
 
-		if (use_sysctl) {
+		if (use_sysctl)
 			netmask6 = (struct sockaddr_in6 *)rtinfo[RTAX_NETMASK];
-		} else {
+		else {
 			struct in6_ifaddr *ifaddr_in6 = (void *)rtinfo;
 			netmask6 = &ifaddr_in6->ia_prefixmask;
 		}
@@ -590,9 +587,8 @@ print_addr(const int ifindex, struct sockaddr *sa,
 				ia6_print(&inm.in6m_addr);
 				multiaddr = (u_long)inm.in6m_entry.le_next;
 			}
-		} else {
+		} else
 			mc6_print(ifindex);
-		}
 		break;
 #endif /*INET6*/
 #ifndef SMALL

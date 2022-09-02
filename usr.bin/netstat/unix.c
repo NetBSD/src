@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.36 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: unix.c,v 1.37 2022/09/02 06:25:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.36 2022/09/01 10:10:20 msaitoh Exp $");
+__RCSID("$NetBSD: unix.c,v 1.37 2022/09/02 06:25:43 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,8 +161,7 @@ unixpr(u_long off)
 		for (mibname = mibnames; *mibname; mibname++) {
 			memset(mib, 0, sizeof(mib));
 
-			if (sysctlnametomib(*mibname, mib,
-					    &namelen) == -1)
+			if (sysctlnametomib(*mibname, mib, &namelen) == -1)
 				err(1, "sysctlnametomib: %s", *mibname);
 
 			if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
@@ -212,7 +211,7 @@ unixpr(u_long off)
 					       0, &ns_nfiles);
 		if (filebuf == 0) {
 			printf("file table read error: %s",
-			       kvm_geterr(get_kvmd()));
+			    kvm_geterr(get_kvmd()));
 			return;
 		}
 		file = (struct file *)(filebuf + sizeof(fp));
