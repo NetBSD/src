@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2022/06/09 16:45:38 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.121 2022/09/02 23:48:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2022/06/09 16:45:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2022/09/02 23:48:10 thorpej Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2022/06/09 16:45:38 skrll Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/userret.h>
-
-#include <net/netisr.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>

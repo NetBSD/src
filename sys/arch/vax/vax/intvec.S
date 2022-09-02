@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.22 2017/05/22 16:46:15 ragge Exp $   */
+/*	$NetBSD: intvec.S,v 1.23 2022/09/02 23:48:10 thorpej Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,6 @@
 
 #include "assym.h"
 #include <sys/cdefs.h>
-#include <net/netisr.h>
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

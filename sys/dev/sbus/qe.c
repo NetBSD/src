@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.77 2020/03/19 02:58:54 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.78 2022/09/02 23:48:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.77 2020/03/19 02:58:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.78 2022/09/02 23:48:11 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.77 2020/03/19 02:58:54 thorpej Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/bpf.h>
