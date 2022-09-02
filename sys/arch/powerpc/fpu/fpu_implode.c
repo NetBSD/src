@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.16 2022/09/02 12:24:54 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.17 2022/09/02 12:40:49 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.16 2022/09/02 12:24:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.17 2022/09/02 12:40:49 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -516,10 +516,14 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
+fpu_implode(struct fpemu *fe, struct fpn *fp, int type, uint64_t *p)
 {
+	u_int *hi, *lo;
 	int rn;
 	bool fprf;
+
+	hi = (u_int *)p;
+	lo = hi + 1;
 
 	if (type & FTYPE_RD_RZ)
 		rn = FSR_RD_RZ;
@@ -532,27 +536,27 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 
 	case FTYPE_LNG:
 		/* FPRF is undefined. */
-		*(uint64_t *)space = fpu_ftox(fe, fp, rn);
+		*p = fpu_ftox(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: long %x %x\n",
 			space[0], space[1]));
 		break;
 
 	case FTYPE_INT:
 		/* FPRF is undefined. */
-		space[0] = 0;
-		space[1] = fpu_ftoi(fe, fp, rn);
+		*hi = 0;
+		*lo = fpu_ftoi(fe, fp, rn);
 		DPRINTF(FPE_REG, ("fpu_implode: int %x\n",
 			space[1]));
 		break;
 
 	case FTYPE_SNG:
-		space[0] = fpu_ftos(fe, fp, fprf);
+		*hi = fpu_ftos(fe, fp, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: single %x\n",
 			space[0]));
 		break;
 
 	case FTYPE_DBL:
-		*(uint64_t *)space = fpu_ftod(fe, fp, fprf);
+		*p = fpu_ftod(fe, fp, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: double %x %x\n",
 			space[0], space[1]));
 		break;		break;
