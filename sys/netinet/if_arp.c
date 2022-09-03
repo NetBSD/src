@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.307 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.308 2022/09/03 01:35:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.307 2021/02/19 14:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.308 2022/09/03 01:35:03 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -196,13 +196,9 @@ static void arp_dad_start(struct ifaddr *);
 static void arp_dad_stop(struct ifaddr *);
 static void arp_dad_duplicated(struct ifaddr *, const struct sockaddr_dl *);
 
-struct ifqueue arpintrq = {
-	.ifq_head = NULL,
-	.ifq_tail = NULL,
-	.ifq_len = 0,
-	.ifq_maxlen = 50,
-	.ifq_drops = 0,
-};
+#define	ARP_MAXQLEN	50
+pktqueue_t *		arp_pktq		__read_mostly;
+
 static int useloopback = 1;	/* use loopback interface for local traffic */
 
 static percpu_t *arpstat_percpu;
@@ -269,9 +265,11 @@ void
 arp_init(void)
 {
 
+	arp_pktq = pktq_create(ARP_MAXQLEN, arpintr, NULL);
+	KASSERT(arp_pktq != NULL);
+
 	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
-	IFQ_LOCK_INIT(&arpintrq);
 
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&arpdomain.dom_mowner);
@@ -678,7 +676,7 @@ bad:
  * then the protocol-specific routine is called.
  */
 void
-arpintr(void)
+arpintr(void *arg __unused)
 {
 	struct mbuf *m;
 	struct arphdr *ar;
@@ -688,13 +686,7 @@ arpintr(void)
 	bool badhrd;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	for (;;) {
-
-		IFQ_LOCK(&arpintrq);
-		IF_DEQUEUE(&arpintrq, m);
-		IFQ_UNLOCK(&arpintrq);
-		if (m == NULL)
-			goto out;
+	while ((m = pktq_dequeue(arp_pktq)) != NULL) {
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
 
@@ -753,8 +745,6 @@ badlen:
 free:
 		m_freem(m);
 	}
-
-out:
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 	return; /* XXX gcc */
 }
