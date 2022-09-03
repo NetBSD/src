@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.524 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.525 2022/09/03 02:53:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.524 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.525 2022/09/03 02:53:18 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -219,7 +219,6 @@ pfil_head_t *			if_pfil __read_mostly;
 static kauth_listener_t if_listener;
 
 static int doifioctl(struct socket *, u_long, void *, struct lwp *);
-static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo_intr(void *);
@@ -1398,19 +1397,6 @@ if_detach(struct ifnet *ifp)
 #endif
 
 	/*
-	 * remove packets that came from ifp, from software interrupt queues.
-	 */
-	DOMAIN_FOREACH(dp) {
-		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
-			struct ifqueue *iq = dp->dom_ifqueues[i];
-			if (iq == NULL)
-				break;
-			dp->dom_ifqueues[i] = NULL;
-			if_detach_queues(ifp, iq);
-		}
-	}
-
-	/*
 	 * Ensure that all packets on protocol input pktqueues have been
 	 * processed, or, at least, removed from the queues.
 	 *
@@ -1557,35 +1543,6 @@ restart:
 #ifdef IFAREF_DEBUG
 	if_check_and_free_ifa_list(ifp);
 #endif
-}
-
-static void
-if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
-{
-	struct mbuf *m, *prev, *next;
-
-	prev = NULL;
-	for (m = q->ifq_head; m != NULL; m = next) {
-		KASSERT((m->m_flags & M_PKTHDR) != 0);
-
-		next = m->m_nextpkt;
-		if (m->m_pkthdr.rcvif_index != ifp->if_index) {
-			prev = m;
-			continue;
-		}
-
-		if (prev != NULL)
-			prev->m_nextpkt = m->m_nextpkt;
-		else
-			q->ifq_head = m->m_nextpkt;
-		if (q->ifq_tail == m)
-			q->ifq_tail = prev;
-		q->ifq_len--;
-
-		m->m_nextpkt = NULL;
-		m_freem(m);
-		IF_DROP(q);
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.34 2018/01/10 02:50:26 ozaki-r Exp $	*/
+/*	$NetBSD: domain.h,v 1.35 2022/09/03 02:53:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -85,7 +85,7 @@ struct	domain {
 	                                             socklen_t,
 						     const struct sockaddr *);
 	const struct sockaddr *dom_sa_any;
-	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
+	struct ifqueue *dom_ifqueues[2]; /* XXX G/C ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
 	uint_fast8_t	dom_sa_cmpofs;
