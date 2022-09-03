@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.46 2022/09/02 12:47:10 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.47 2022/09/03 04:52:50 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.46 2022/09/02 12:47:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.47 2022/09/03 04:52:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -295,8 +295,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	union instr instr = *insn;
 	int *a;
 	vaddr_t addr;
-	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr;
-	unsigned int bits, cond;
+	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr, cond;
+	u_int bits;
 	struct fpreg *fs;
 	int i, mtfsb1 = 0;
 
@@ -800,23 +800,23 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		fsr |= FPSCR_FX;
 
 	if (cond) {
-		cond = fsr & 0xf0000000;
+		bits = fsr & 0xf0000000;
 		/* Isolate condition codes */
-		cond >>= 28;
+		bits >>= 28;
 		/* Move fpu condition codes to cr[1] */
 		tf->tf_cr &= ~(0x0f000000);
-		tf->tf_cr |= (cond<<24);
-		DPRINTF(FPE_INSN, ("fpu_execute: cr[1] <= %x\n", cond));
+		tf->tf_cr |= (bits << 24);
+		DPRINTF(FPE_INSN, ("fpu_execute: cr[1] <= %x\n", bits));
 	}
 
 	if (setcr) {
-		cond = fsr & FPSCR_FPCC;
+		bits = fsr & FPSCR_FPCC;
 		/* Isolate condition codes */
-		cond <<= 16;
+		bits <<= 16;
 		/* Move fpu condition codes to cr[bf/4] */
 		tf->tf_cr &= ~(0xf0000000>>bf);
-		tf->tf_cr |= (cond>>bf);
-		DPRINTF(FPE_INSN, ("fpu_execute: cr[%d] (cr=%x) <= %x\n", bf/4, tf->tf_cr, cond));
+		tf->tf_cr |= (bits >> bf);
+		DPRINTF(FPE_INSN, ("fpu_execute: cr[%d] (cr=%x) <= %x\n", bf/4, tf->tf_cr, bits));
 	}
 
 	((int *)&fs->fpscr)[1] = fsr;
