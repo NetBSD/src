@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.48 2022/09/03 04:54:08 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.49 2022/09/03 04:54:47 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.48 2022/09/03 04:54:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.49 2022/09/03 04:54:47 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -294,7 +294,6 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	struct fpn *fp;
 	union instr instr = *insn;
 	int *a;
-	vaddr_t addr;
 	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr, cond;
 	u_int bits;
 	struct fpreg *fs;
@@ -335,7 +334,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		 * Convert to/from single if needed, calculate addr,
 		 * and update index reg if needed.
 		 */
-		uint64_t buf;
+		vaddr_t addr;
 		size_t size = sizeof(double);
 		int store, update;
 
@@ -412,6 +411,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			/* Store */
 			FPU_EMU_EVCNT_INCR(fpstore);
 			if (type != FTYPE_DBL) {
+				uint64_t buf;
+
 				DPRINTF(FPE_INSN,
 					("fpu_execute: Store SNG at %p\n",
 						(void *)addr));
