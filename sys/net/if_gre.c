@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.182 2022/09/03 01:48:22 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.183 2022/09/03 02:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.182 2022/09/03 01:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.183 2022/09/03 02:24:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -790,10 +790,8 @@ static int
 gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 {
 	pktqueue_t *pktq = NULL;
-	struct ifqueue *ifq = NULL;
 	uint16_t flags;
 	uint32_t af;		/* af passed to BPF tap */
-	int isr = 0, s;
 	int hlen;
 
 	if_statadd2(&sc->sc_if, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
@@ -837,8 +835,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 #endif
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
-		ifq = &mplsintrq;
-		isr = NETISR_MPLS;
+		pktq = mpls_pktq;
 		af = AF_MPLS;
 		break;
 #endif
@@ -860,24 +857,10 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 
 	m_set_rcvif(m, &sc->sc_if);
 
-	if (__predict_true(pktq)) {
-		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
-			m_freem(m);
-		}
-		return 1;
-	}
-
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	KASSERT(pktq != NULL);
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
 	}
-	/* we need schednetisr since the address family may change */
-	schednetisr(isr);
-	splx(s);
-
 	return 1;	/* packet is done, no further processing needed */
 }
 
