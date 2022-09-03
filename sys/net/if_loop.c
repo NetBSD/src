@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.115 2022/09/03 01:48:22 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.115 2022/09/03 01:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,8 +242,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     const struct rtentry *rt)
 {
 	pktqueue_t *pktq = NULL;
-	struct ifqueue *ifq = NULL;
-	int s, isr = -1;
+	int s;
 	int csum_flags;
 	int error = 0;
 	size_t pktlen;
@@ -304,11 +303,10 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		union mpls_shim msh;
 		msh.s_addr = MPLS_GETSADDR(rt);
 		if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
-			ifq = &mplsintrq;
-			isr = NETISR_MPLS;
+			pktq = mpls_pktq;
 		}
 	}
-	if (isr != NETISR_MPLS)
+	if (pktq != mpls_pktq)
 #endif
 	switch (dst->sa_family) {
 
@@ -359,31 +357,17 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto out;
 	}
 
-	s = splnet();
-	if (__predict_true(pktq)) {
-		error = 0;
+	KASSERT(pktq != NULL);
 
-		if (__predict_true(pktq_enqueue(pktq, m, 0))) {
-			if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
-		} else {
-			m_freem(m);
-			if_statinc(ifp, if_oerrors);
-			error = ENOBUFS;
-		}
-		splx(s);
-		goto out;
-	}
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	error = 0;
+	s = splnet();
+	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
+	} else {
 		m_freem(m);
-		splx(s);
-		error = ENOBUFS;
 		if_statinc(ifp, if_oerrors);
-		goto out;
+		error = ENOBUFS;
 	}
-	if_statadd2(ifp, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
 	splx(s);
 out:
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();

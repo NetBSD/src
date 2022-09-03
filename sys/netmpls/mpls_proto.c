@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.32 2019/01/28 12:53:01 martin Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.33 2022/09/03 02:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.32 2019/01/28 12:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.33 2022/09/03 02:24:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.32 2019/01/28 12:53:01 martin Exp $
 #include <netmpls/mpls.h>
 #include <netmpls/mpls_var.h>
 
-struct ifqueue mplsintrq;
+#define	MPLS_MAXQLEN	256
+pktqueue_t *		mpls_pktq		__read_mostly;
 
 static int mpls_attach(struct socket *, int);
 static void sysctl_net_mpls_setup(struct sysctllog **);
@@ -73,9 +74,8 @@ void mpls_init(void)
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&mpls_owner);
 #endif
-	memset(&mplsintrq, 0, sizeof(mplsintrq));
-	mplsintrq.ifq_maxlen = 256;
-	IFQ_LOCK_INIT(&mplsintrq);
+	mpls_pktq = pktq_create(MPLS_MAXQLEN, mplsintr, NULL);
+	KASSERT(mpls_pktq != NULL);
 
 	sysctl_net_mpls_setup(NULL);
 }
@@ -240,8 +240,9 @@ mpls_purgeif(struct socket *so, struct ifnet *ifp)
 static void
 sysctl_net_mpls_setup(struct sysctllog **clog)
 {
+	const struct sysctlnode *mpls_node;
 
-        sysctl_createv(clog, 0, NULL, NULL,
+        sysctl_createv(clog, 0, NULL, &mpls_node,
                        CTLFLAG_PERMANENT,
                        CTLTYPE_NODE, "mpls", NULL,
                        NULL, 0, NULL, 0,
@@ -265,12 +266,9 @@ sysctl_net_mpls_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("Accept MPLS Frames"),
 		       NULL, 0, &mpls_frame_accept, 0,
 		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "ifq_len",
-		       SYSCTL_DESCR("MPLS queue length"),
-		       NULL, 0, &mplsintrq.ifq_maxlen, 0,
-		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
+
+	pktq_sysctl_setup(mpls_pktq, clog, mpls_node, CTL_CREATE);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rfc4182",
@@ -389,7 +387,6 @@ struct domain mplsdomain = {
 	.dom_maxrtkey = sizeof(union mpls_shim),
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
-	.dom_ifqueues = { &mplsintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("MPLS", ""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_mpls, smpls_addr),

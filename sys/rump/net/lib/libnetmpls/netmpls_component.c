@@ -1,4 +1,4 @@
-/* $NetBSD: netmpls_component.c,v 1.5 2016/08/07 17:42:18 christos Exp $ */
+/* $NetBSD: netmpls_component.c,v 1.6 2022/09/03 02:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.5 2016/08/07 17:42:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.6 2022/09/03 02:24:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -53,8 +53,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain mplsdomain;
 
 	domain_attach(&mplsdomain);
-
-	rump_netisr_register(NETISR_MPLS, mplsintr);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)

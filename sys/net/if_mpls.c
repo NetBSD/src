@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.38 2022/07/29 15:25:51 skrll Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.39 2022/09/03 02:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.38 2022/07/29 15:25:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.39 2022/09/03 02:24:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -189,18 +189,11 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 }
 
 void
-mplsintr(void)
+mplsintr(void *arg __unused)
 {
 	struct mbuf *m;
 
-	for (;;) {
-		IFQ_LOCK(&mplsintrq);
-		IF_DEQUEUE(&mplsintrq, m);
-		IFQ_UNLOCK(&mplsintrq);
-
-		if (!m)
-			return;
-
+	while ((m = pktq_dequeue(mpls_pktq)) != NULL) {
 		if (((m->m_flags & M_PKTHDR) == 0) ||
 		    (m->m_pkthdr.rcvif_index == 0))
 			panic("mplsintr(): no pkthdr or rcvif");
