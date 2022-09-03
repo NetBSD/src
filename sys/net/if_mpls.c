@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.40 2022/09/03 02:47:59 thorpej Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.41 2022/09/03 20:29:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.40 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.41 2022/09/03 20:29:31 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,6 +104,9 @@ extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
     mpls_rfc4182;
 
 static u_int mpls_count;
+
+void	mplsattach(int);
+
 /* ARGSUSED */
 void
 mplsattach(int count)
