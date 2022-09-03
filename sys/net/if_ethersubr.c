@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.315 2022/06/20 12:22:00 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.316 2022/09/03 00:31:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.315 2022/06/20 12:22:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.316 2022/09/03 00:31:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -655,6 +655,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	static int earlypkts;
 	int isr = 0;
 
+	/* No RPS for not-IP. */
+	pktq_rps_hash_func_t rps_hash = NULL;
+
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
@@ -897,6 +900,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 #endif
 		pktq = ip_pktq;
+		rps_hash = atomic_load_relaxed(&ether_pktq_rps_hash_p);
 		break;
 
 	case ETHERTYPE_ARP:
@@ -918,6 +922,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 #endif
 		pktq = ip6_pktq;
+		rps_hash = atomic_load_relaxed(&ether_pktq_rps_hash_p);
 		break;
 #endif
 
@@ -944,7 +949,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (__predict_true(pktq)) {
-		const uint32_t h = pktq_rps_hash(&ether_pktq_rps_hash_p, m);
+		const uint32_t h = rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
 		if (__predict_false(!pktq_enqueue(pktq, m, h))) {
 			m_freem(m);
 		}

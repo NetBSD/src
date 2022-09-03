@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.264 2022/08/27 19:25:35 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.265 2022/09/03 00:31:02 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.264 2022/08/27 19:25:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.265 2022/09/03 00:31:02 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -644,6 +644,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	struct sppp *sp = (struct sppp *)ifp;
 	int isr = 0;
 
+	/* No RPS for not-IP. */
+	pktq_rps_hash_func_t rps_hash = NULL;
+
 	SPPP_LOCK(sp, RW_READER);
 
 	if (ifp->if_flags & IFF_UP) {
@@ -747,6 +750,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip_pktq;
+			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
 		break;
 #endif
@@ -770,6 +774,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip6_pktq;
+			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
 		break;
 #endif
@@ -781,8 +786,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* Check queue. */
 	if (__predict_true(pktq)) {
-		uint32_t hash = pktq_rps_hash(&sppp_pktq_rps_hash_p, m);
-
+		const uint32_t hash =
+		    rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
 		if (__predict_false(!pktq_enqueue(pktq, m, hash))) {
 			goto drop;
 		}
