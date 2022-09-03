@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.18 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: utils.c,v 1.19 2022/09/03 07:45:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.18 2018/01/23 21:06:25 sevan Exp $");
+__RCSID("$NetBSD: utils.c,v 1.19 2022/09/03 07:45:08 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ NewClient(u_int8_t *addr)
 **		- This routine must be called with SIGHUP blocked.
 */
 void
-FreeClients()
+FreeClients(void)
 {
 	CLIENT *ctmp;
 
@@ -434,7 +434,7 @@ FreeConn(RMPCONN *rtmp)
 **		- This routine must be called with SIGHUP blocked.
 */
 void
-FreeConns()
+FreeConns(void)
 {
 	RMPCONN *rtmp;
 

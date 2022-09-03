@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.12 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.13 2022/09/03 07:45:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.12 2018/01/23 21:06:25 sevan Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.13 2022/09/03 07:45:08 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: parseconf.c,v 1.12 2018/01/23 21:06:25 sevan Exp $");
 **		  to create a linked list of default boot files.
 */
 int
-ParseConfig()
+ParseConfig(void)
 {
 	FILE *fp;
 	CLIENT *client;
@@ -309,7 +309,7 @@ ParseAddr(char *str)
 **		  called to re-order its list of boot file pointers.
 */
 int
-GetBootFiles()
+GetBootFiles(void)
 {
 	DIR *dfd;
 	struct stat statb;
