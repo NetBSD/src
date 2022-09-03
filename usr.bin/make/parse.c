@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.682 2022/09/02 16:24:31 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.683 2022/09/03 00:50:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.682 2022/09/02 16:24:31 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.683 2022/09/03 00:50:07 rillig Exp $");
 
 /*
  * A file being read.
@@ -2661,6 +2661,20 @@ ParseLine_ShellCommand(const char *p)
 	}
 }
 
+static void
+HandleBreak(void)
+{
+	IncludedFile *curFile = CurFile();
+
+	if (curFile->forLoop != NULL) {
+		/* pretend we reached EOF */
+		For_Break(curFile->forLoop);
+		Cond_reset_depth(curFile->cond_depth);
+		ParseEOF();
+	} else
+		Parse_Error(PARSE_FATAL, "break outside of for loop");
+}
+
 /*
  * See if the line starts with one of the known directives, and if so, handle
  * the directive.
@@ -2689,17 +2703,9 @@ ParseDirective(char *line)
 	pp_skip_whitespace(&cp);
 	arg = cp;
 
-	if (Substring_Equals(dir, "break")) {
-		IncludedFile *curFile = CurFile();
-
-		if (curFile->forLoop != NULL) {
-			/* pretend we reached EOF */
-			For_Break(curFile->forLoop);
-			Cond_reset_depth(curFile->cond_depth);
-			ParseEOF();
-		} else
-			Parse_Error(PARSE_FATAL, "break outside of for loop");
-	} else if (Substring_Equals(dir, "undef"))
+	if (Substring_Equals(dir, "break"))
+		HandleBreak();
+	else if (Substring_Equals(dir, "undef"))
 		Var_Undef(arg);
 	else if (Substring_Equals(dir, "export"))
 		Var_Export(VEM_PLAIN, arg);

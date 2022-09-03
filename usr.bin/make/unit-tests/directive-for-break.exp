@@ -1,5 +1,4 @@
-make: "directive-for-break.mk" line 16: I=3
-make: "directive-for-break.mk" line 24: break outside of for loop
+make: "directive-for-break.mk" line 45: break outside of for loop
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
