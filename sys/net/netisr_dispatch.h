@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.21 2022/09/03 01:35:03 thorpej Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.22 2022/09/03 01:48:22 thorpej Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -27,9 +27,6 @@
  * their prototypes in <net/netisr.h> (if necessary).
  */
 
-#ifdef NETATALK
-	DONETISR(NETISR_ATALK,atintr);
-#endif
 #ifdef MPLS
 	DONETISR(NETISR_MPLS,mplsintr);
 #endif

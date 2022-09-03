@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.317 2022/09/03 01:35:03 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.318 2022/09/03 01:48:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.317 2022/09/03 01:35:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.318 2022/09/03 01:48:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -574,8 +574,7 @@ bad:
 static void
 ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 {
-	struct ifqueue *inq = NULL;
-	int isr = 0;
+	pktqueue_t *pktq = NULL;
 	struct llc *l;
 
 	if (m->m_len < sizeof(*eh) + sizeof(struct llc))
@@ -594,10 +593,9 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 			    at_org_code, sizeof(at_org_code)) == 0 &&
 			    ntohs(l->llc_snap_ether_type) ==
 			    ETHERTYPE_ATALK) {
-				inq = &atintrq2;
+				pktq = at_pktq2;
 				m_adj(m, sizeof(struct ether_header)
 				    + sizeof(struct llc));
-				isr = NETISR_ATALK;
 				break;
 			}
 
@@ -621,8 +619,10 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 		goto noproto;
 	}
 
-	KASSERT(inq != NULL);
-	IFQ_ENQUEUE_ISR(inq, m, isr);
+	KASSERT(pktq != NULL);
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+		m_freem(m);
+	}
 	return;
 
 noproto:
@@ -927,8 +927,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef NETATALK
 	case ETHERTYPE_ATALK:
-		isr = NETISR_ATALK;
-		inq = &atintrq1;
+		pktq = at_pktq1;
 		break;
 
 	case ETHERTYPE_AARP:
