@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_var.h,v 1.2 2015/08/24 22:21:27 pooka Exp $ */
+/*	$NetBSD: mpls_var.h,v 1.3 2022/09/03 02:24:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include "opt_mbuftrace.h"
 #endif
 
+#include <net/pktqueue.h>
+
 #include "netmpls/mpls.h"
 
 #define MPLS_GETSADDR(rt) ntohl(((struct sockaddr_mpls*)rt_gettag(rt))->smpls_addr.s_addr)
@@ -51,14 +53,14 @@ extern int mpls_mapprec_inet;
 extern int mpls_mapclass_inet6;
 extern int mpls_icmp_respond;
 
-extern struct ifqueue mplsintrq;
+extern pktqueue_t *mpls_pktq;
 
 #ifdef MBUFTRACE
 extern struct mowner mpls_owner;
 #endif
 
 void	mpls_init(void);
-void	mplsintr(void);
+void	mplsintr(void *);
 
 struct mbuf *mpls_ttl_dec(struct mbuf *);
 

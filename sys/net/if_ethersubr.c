@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.318 2022/09/03 01:48:22 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.319 2022/09/03 02:24:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.318 2022/09/03 01:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.319 2022/09/03 02:24:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -648,12 +648,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct ethercom *ec = (struct ethercom *) ifp;
 #endif
 	pktqueue_t *pktq = NULL;
-	struct ifqueue *inq = NULL;
 	uint16_t etype;
 	struct ether_header *eh;
 	size_t ehlen;
 	static int earlypkts;
-	int isr = 0;
 
 	/* No RPS for not-IP. */
 	pktq_rps_hash_func_t rps_hash = NULL;
@@ -937,8 +935,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
-		isr = NETISR_MPLS;
-		inq = &mplsintrq;
+		pktq = mpls_pktq;
 		break;
 #endif
 
@@ -946,20 +943,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		goto noproto;
 	}
 
-	if (__predict_true(pktq)) {
-		const uint32_t h = rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
-		if (__predict_false(!pktq_enqueue(pktq, m, h))) {
-			m_freem(m);
-		}
-		return;
+	KASSERT(pktq != NULL);
+	const uint32_t h = rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
+	if (__predict_false(!pktq_enqueue(pktq, m, h))) {
+		m_freem(m);
 	}
-
-	if (__predict_false(!inq)) {
-		/* Should not happen. */
-		goto error;
-	}
-
-	IFQ_ENQUEUE_ISR(inq, m, isr);
 	return;
 
 drop:
