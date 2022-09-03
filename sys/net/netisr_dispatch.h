@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.20 2018/09/06 06:42:00 maxv Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.21 2022/09/03 01:35:03 thorpej Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -27,11 +27,6 @@
  * their prototypes in <net/netisr.h> (if necessary).
  */
 
-#ifdef INET
-#if NARP > 0
-	DONETISR(NETISR_ARP,arpintr);
-#endif
-#endif
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK,atintr);
 #endif

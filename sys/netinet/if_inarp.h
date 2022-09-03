@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.52 2020/09/11 15:16:00 roy Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.53 2022/09/03 01:35:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,6 +57,8 @@ struct sockaddr_inarp {
 
 #ifdef _KERNEL
 
+#include <net/pktqueue.h>
+
 /* ARP timings from RFC5227 */
 #define PROBE_WAIT               1
 #define PROBE_NUM                3
@@ -69,12 +71,12 @@ struct sockaddr_inarp {
 #define RATE_LIMIT_INTERVAL     60
 #define DEFEND_INTERVAL         10
 
-extern struct ifqueue arpintrq;
+extern pktqueue_t *arp_pktq;
 void arp_ifinit(struct ifnet *, struct ifaddr *);
 void arp_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 int arpresolve(struct ifnet *, const struct rtentry *, struct mbuf *,
     const struct sockaddr *, void *, size_t);
-void arpintr(void);
+void arpintr(void *);
 void arpannounce(struct ifnet *, struct ifaddr *, const uint8_t *);
 struct llentry *arplookup(struct ifnet *,
     const struct in_addr *, const struct sockaddr *, int);

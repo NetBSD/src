@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.316 2022/09/03 00:31:02 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.317 2022/09/03 01:35:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.316 2022/09/03 00:31:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.317 2022/09/03 01:35:03 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,8 +904,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 
 	case ETHERTYPE_ARP:
-		isr = NETISR_ARP;
-		inq = &arpintrq;
+		pktq = arp_pktq;
 		break;
 
 	case ETHERTYPE_REVARP:
