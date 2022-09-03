@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.117 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.117 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $"
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 
 #ifdef	INET
@@ -99,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.116 2022/09/03 02:24:59 thorpej Exp $"
 #include <netinet/in_var.h>
 #include <netinet/in_offload.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #endif
 
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.47 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.48 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.47 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.48 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.47 2021/06/16 00:21:19 riastradh Exp $
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
 #include <net/if_vlanvar.h>

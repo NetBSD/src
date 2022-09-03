@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.1 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: net.h,v 1.2 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,6 @@
 
 #ifndef _SYS_RUMP_NET_PRIVATE_H_
 #define _SYS_RUMP_NET_PRIVATE_H_
-
-void		rump_netisr_register(int, void (*)(void));
 
 #include <rump-sys/net_if.h>
 

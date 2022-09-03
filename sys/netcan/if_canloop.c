@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.9 2020/01/29 05:20:26 thorpej Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.10 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.9 2020/01/29 05:20:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.10 2022/09/03 02:48:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.9 2020/01/29 05:20:26 thorpej Exp $
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #ifdef	CAN
 #include <netcan/can.h>
+#include <netcan/can_var.h>
 #endif
 
 void canloopattach(int);

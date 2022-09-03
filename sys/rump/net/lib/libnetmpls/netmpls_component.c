@@ -1,4 +1,4 @@
-/* $NetBSD: netmpls_component.c,v 1.6 2022/09/03 02:24:59 thorpej Exp $ */
+/* $NetBSD: netmpls_component.c,v 1.7 2022/09/03 02:48:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.6 2022/09/03 02:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.7 2022/09/03 02:48:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/route.h>
 
 #include <netmpls/mpls_var.h>

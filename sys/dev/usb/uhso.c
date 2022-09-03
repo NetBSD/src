@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.35 2021/06/13 09:27:20 mlelstv Exp $	*/
+/*	$NetBSD: uhso.c,v 1.36 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.35 2021/06/13 09:27:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.36 2022/09/03 02:48:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.35 2021/06/13 09:27:20 mlelstv Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
+#include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>

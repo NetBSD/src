@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.56 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.56 2021/08/17 22:00:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.56 2021/08/17 22:00:31 andvar Exp $");
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #if defined(INET) || defined(INET6)
 #include <netinet/in.h>
@@ -1533,7 +1532,6 @@ static void
 sca_frame_process(sca_port_t *scp)
 {
 	pktqueue_t *pktq = NULL;
-	struct ifqueue *ifq = NULL;
 	struct hdlc_header *hdlc;
 	struct cisco_pkt *cisco;
 	sca_desc_t *desc;
@@ -1541,7 +1539,6 @@ sca_frame_process(sca_port_t *scp)
 	u_int8_t *bufp;
 	u_int16_t len;
 	u_int32_t t;
-	int isr = 0;
 
 	t = time_uptime * 1000;
 	desc = &scp->sp_rxdesc[scp->sp_rxstart];
@@ -1659,12 +1656,11 @@ sca_frame_process(sca_port_t *scp)
 			cisco->time0 = htons((u_int16_t)(t >> 16));
 			cisco->time1 = htons((u_int16_t)(t & 0x0000ffff));
 
-			ifq = &scp->linkq;
-			if (IF_QFULL(ifq)) {
-				IF_DROP(ifq);
+			if (IF_QFULL(&scp->linkq)) {
+				IF_DROP(&scp->linkq);
 				goto dropit;
 			}
-			IF_ENQUEUE(ifq, m);
+			IF_ENQUEUE(&scp->linkq, m);
 
 			sca_start(&scp->sp_if);
 
@@ -1693,18 +1689,8 @@ sca_frame_process(sca_port_t *scp)
 	}
 
 	/* Queue the packet */
-	if (__predict_true(pktq)) {
-		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
-			if_statinc(&scp->sp_if, if_iqdrops);
-			goto dropit;
-		}
-		return;
-	}
-	if (!IF_QFULL(ifq)) {
-		IF_ENQUEUE(ifq, m);
-		schednetisr(isr);
-	} else {
-		IF_DROP(ifq);
+	KASSERT(pktq != NULL);
+	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 		if_statinc(&scp->sp_if, if_iqdrops);
 		goto dropit;
 	}

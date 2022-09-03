@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.171 2022/08/27 19:15:00 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.171 2022/08/27 19:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.172 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.171 2022/08/27 19:15:00 thorpej Exp $")
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

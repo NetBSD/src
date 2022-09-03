@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.53 2021/10/06 20:42:44 andvar Exp $	*/
+/*	$NetBSD: if_media.c,v 1.54 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2020 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.53 2021/10/06 20:42:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.54 2022/09/03 02:47:59 thorpej Exp $");
 
 #define	__IFMEDIA_PRIVATE
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.53 2021/10/06 20:42:44 andvar Exp $")
 
 #include <net/if.h>
 #include <net/if_media.h>
-#include <net/netisr.h>
 
 static void	ifmedia_status(struct ifmedia *, struct ifnet *,
 		    struct ifmediareq *);

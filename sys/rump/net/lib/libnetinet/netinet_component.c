@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet_component.c,v 1.12 2022/09/03 01:35:03 thorpej Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.13 2022/09/03 02:48:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.12 2022/09/03 01:35:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.13 2022/09/03 02:48:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.12 2022/09/03 01:35:03 thorp
 #include <sys/socketvar.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>

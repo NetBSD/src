@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.523 2022/09/02 05:50:36 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.524 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.523 2022/09/02 05:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.524 2022/09/03 02:47:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.523 2022/09/02 05:50:36 thorpej Exp $");
 #include <net80211/ieee80211_ioctl.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <sys/module.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>

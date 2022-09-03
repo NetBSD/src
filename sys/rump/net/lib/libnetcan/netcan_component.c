@@ -1,4 +1,4 @@
-/*	$NetBSD: netcan_component.c,v 1.4 2022/09/03 02:07:33 thorpej Exp $	*/
+/*	$NetBSD: netcan_component.c,v 1.5 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netcan_component.c,v 1.4 2022/09/03 02:07:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netcan_component.c,v 1.5 2022/09/03 02:48:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: netcan_component.c,v 1.4 2022/09/03 02:07:33 thorpej
 
 #include <rump-sys/kern.h>
 #include <rump-sys/net.h>
-#include <net/netisr.h>
 #include <netcan/can_var.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
