@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.453 2022/05/07 08:01:20 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.454 2022/09/03 08:03:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.453 2022/05/07 08:01:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.454 2022/09/03 08:03:27 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1864,18 +1864,14 @@ again:
 	 * true.
 	 */
 	max = job->curPos + nr;
+	for (i = job->curPos; i < max; i++)
+		if (job->outBuf[i] == '\0')
+			job->outBuf[i] = ' ';
 	for (i = job->curPos + nr - 1;
 	     i >= job->curPos && i != (size_t)-1; i--) {
 		if (job->outBuf[i] == '\n') {
 			gotNL = true;
 			break;
-		} else if (job->outBuf[i] == '\0') {
-			/*
-			 * FIXME: The null characters are only replaced with
-			 * space _after_ the last '\n'.  Everywhere else they
-			 * hide the rest of the command output.
-			 */
-			job->outBuf[i] = ' ';
 		}
 	}
 
