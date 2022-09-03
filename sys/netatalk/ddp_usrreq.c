@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.75 2021/09/21 15:01:59 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.76 2022/09/03 01:48:22 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.75 2021/09/21 15:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.76 2022/09/03 01:48:22 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -63,7 +63,9 @@ static int at_pcbsetaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbconnect(struct ddpcb *, struct sockaddr_at *);
 static void ddp_detach(struct socket *);
 
-struct ifqueue atintrq1, atintrq2;
+pktqueue_t *		at_pktq1		__read_mostly;
+pktqueue_t *		at_pktq2		__read_mostly;
+
 struct ddpcb   *ddp_ports[ATPORT_LAST];
 struct ddpcb   *ddpcb = NULL;
 percpu_t *ddpstat_percpu;
@@ -603,10 +605,12 @@ ddp_init(void)
 	ddpstat_percpu = percpu_alloc(sizeof(uint64_t) * DDP_NSTATS);
 
 	TAILQ_INIT(&at_ifaddr);
-	atintrq1.ifq_maxlen = IFQ_MAXLEN;
-	atintrq2.ifq_maxlen = IFQ_MAXLEN;
-	IFQ_LOCK_INIT(&atintrq1);
-	IFQ_LOCK_INIT(&atintrq2);
+
+	at_pktq1 = pktq_create(IFQ_MAXLEN, atintr1, NULL);
+	KASSERT(at_pktq1 != NULL);
+
+	at_pktq2 = pktq_create(IFQ_MAXLEN, atintr2, NULL);
+	KASSERT(at_pktq2 != NULL);
 
 	MOWNER_ATTACH(&atalk_tx_mowner);
 	MOWNER_ATTACH(&atalk_rx_mowner);
