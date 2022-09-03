@@ -1,6 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2022/09/03 07:45:08 tsutsui Exp $
 
+WARNS?=	5
 USE_FORT?= yes	# network server
 
 PROG=	rbootd

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.21 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: bpf.c,v 1.22 2022/09/03 07:45:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.21 2018/01/23 21:06:25 sevan Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.22 2022/09/03 07:45:08 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ static u_int8_t *BpfPkt = NULL;
 **		If an error is encountered, the program terminates here.
 */
 int
-BpfOpen()
+BpfOpen(void)
 {
 	struct ifreq ifr;
 	u_int bufsize = 32768;
@@ -368,7 +368,7 @@ BpfWrite(RMPCONN *rconn)
 **		None.
 */
 void
-BpfClose()
+BpfClose(void)
 {
 	struct ifreq ifr;
 
