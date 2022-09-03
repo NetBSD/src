@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.22 2022/09/03 01:48:22 thorpej Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.23 2022/09/03 02:07:32 thorpej Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -29,9 +29,6 @@
 
 #ifdef MPLS
 	DONETISR(NETISR_MPLS,mplsintr);
-#endif
-#ifdef CAN
-	DONETISR(NETISR_CAN,canintr);
 #endif
 
 #endif /* !_NET_NETISR_DISPATCH_H_ */

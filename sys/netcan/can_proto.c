@@ -1,4 +1,4 @@
-/*	$NetBSD: can_proto.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: can_proto.c,v 1.3 2022/09/03 02:07:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_proto.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_proto.c,v 1.3 2022/09/03 02:07:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -68,7 +68,6 @@ struct domain candomain = {
 	.dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = cansw,
 	.dom_protoswNPROTOSW = &cansw[__arraycount(cansw)],
-	.dom_ifqueues = { &canintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_can, can_ifindex),

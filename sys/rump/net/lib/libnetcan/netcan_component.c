@@ -1,4 +1,4 @@
-/*	$NetBSD: netcan_component.c,v 1.3 2020/07/21 18:38:18 pgoyette Exp $	*/
+/*	$NetBSD: netcan_component.c,v 1.4 2022/09/03 02:07:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netcan_component.c,v 1.3 2020/07/21 18:38:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netcan_component.c,v 1.4 2022/09/03 02:07:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -42,5 +42,4 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain candomain;
 
 	domain_attach(&candomain);
-	rump_netisr_register(NETISR_CAN, canintr);
 }

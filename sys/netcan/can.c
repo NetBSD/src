@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.11 2021/12/31 14:24:51 riastradh Exp $	*/
+/*	$NetBSD: can.c,v 1.12 2022/09/03 02:07:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.11 2021/12/31 14:24:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.12 2022/09/03 02:07:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: can.c,v 1.11 2021/12/31 14:24:51 riastradh Exp $");
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+#include <net/pktqueue.h>
 #include <net/route.h>
 #include <net/bpf.h> 
 
@@ -61,7 +61,7 @@ struct canpcb canrawpcb;
 
 struct	canpcbtable cbtable;
 
-struct ifqueue	canintrq;
+pktqueue_t *		can_pktq		__read_mostly;
 int	canqmaxlen = IFQ_MAXLEN;
 
 int can_copy_output = 0;
@@ -86,11 +86,14 @@ static int can_output(struct mbuf *, struct canpcb *);
 
 static int can_control(struct socket *, u_long, void *, struct ifnet *);
 
+static void canintr(void *);
+
 void
 can_init(void)
 {
-	canintrq.ifq_maxlen = canqmaxlen;
-	IFQ_LOCK_INIT(&canintrq);
+	can_pktq = pktq_create(canqmaxlen, canintr, NULL);
+	KASSERT(can_pktq != NULL);
+
 	can_pcbinit(&cbtable, canhashsize, canhashsize);
 }
 
@@ -290,30 +293,21 @@ can_mbuf_tag_clean(struct mbuf *m)
 void
 can_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifqueue *inq;
-
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
 	}
 
-	inq = &canintrq;
-	
-	IFQ_LOCK(inq);
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
-		IFQ_UNLOCK(inq);
+	const int pktlen = m->m_pkthdr.len;
+	if (__predict_false(!pktq_enqueue(can_pktq, m, 0))) {
 		m_freem(m);
 	} else {
-		IF_ENQUEUE(inq, m);
-		IFQ_UNLOCK(inq);
-		if_statadd2(ifp, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
-		schednetisr(NETISR_CAN);
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 	}
 }
 
-void
-canintr(void)
+static void
+canintr(void *arg __unused)
 {
 	int		rcv_ifindex;
 	struct mbuf    *m;
@@ -324,14 +318,7 @@ canintr(void)
 	struct canpcb	*sender_canp;
 
 	mutex_enter(softnet_lock);
-	for (;;) {
-		IFQ_LOCK(&canintrq);
-		IF_DEQUEUE(&canintrq, m);
-		IFQ_UNLOCK(&canintrq);
-
-		if (m == NULL)	/* no more queued packets */
-			break;
-
+	while ((m = pktq_dequeue(can_pktq)) != NULL) {
 #if 0
 		m_claim(m, &can_rx_mowner);
 #endif
