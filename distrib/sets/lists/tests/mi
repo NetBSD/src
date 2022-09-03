@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1221 2022/09/02 18:54:25 sjg Exp $
+# $NetBSD: mi,v 1.1222 2022/09/03 03:33:37 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5742,7 +5742,6 @@
 ./usr/tests/usr.bin/make/unit-tests/jobs-error-nested.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/lint.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/lint.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/local.init.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/make-exported.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/make-exported.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/meta-cmd-cmp.exp				tests-usr.bin-tests	compattestfile,atf
