@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.454 2022/09/03 08:03:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.455 2022/09/03 08:41:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.454 2022/09/03 08:03:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.455 2022/09/03 08:41:07 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1836,37 +1836,31 @@ again:
 	if (nRead < 0) {
 		if (errno == EAGAIN)
 			return;
-		if (DEBUG(JOB)) {
+		if (DEBUG(JOB))
 			perror("CollectOutput(piperead)");
-		}
 		nr = 0;
-	} else {
+	} else
 		nr = (size_t)nRead;
-	}
+
+	if (nr == 0)
+		finish = false;	/* stop looping */
 
 	/*
 	 * If we hit the end-of-file (the job is dead), we must flush its
 	 * remaining output, so pretend we read a newline if there's any
 	 * output remaining in the buffer.
-	 * Also clear the 'finish' flag so we stop looping.
 	 */
 	if (nr == 0 && job->curPos != 0) {
 		job->outBuf[job->curPos] = '\n';
 		nr = 1;
-		finish = false;
-	} else if (nr == 0) {
-		finish = false;
 	}
 
-	/*
-	 * Look for the last newline in the bytes we just got. If there is
-	 * one, break out of the loop with 'i' as its index and gotNL set
-	 * true.
-	 */
 	max = job->curPos + nr;
 	for (i = job->curPos; i < max; i++)
 		if (job->outBuf[i] == '\0')
 			job->outBuf[i] = ' ';
+
+	/* Look for the last newline in the bytes we just got. */
 	for (i = job->curPos + nr - 1;
 	     i >= job->curPos && i != (size_t)-1; i--) {
 		if (job->outBuf[i] == '\n') {
