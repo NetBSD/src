@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.3 2022/09/03 02:07:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@ struct canif_softc {
 	uint32_t csc_linkmodes;
 };
 
-extern struct ifqueue canintrq;
 extern struct domain candomain;
 
 extern const struct pr_usrreqs can_usrreqs;
@@ -67,7 +66,6 @@ void can_input(struct ifnet *, struct mbuf *);
 void *can_ctlinput(int, struct sockaddr *, void *);
 int can_ctloutput(int, struct socket *, struct sockopt *);
 void can_init(void);
-void canintr(void);
 void can_bpf_mtap(struct ifnet *, struct mbuf *, bool);
 
 #endif
