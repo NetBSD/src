@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.68 2022/09/03 01:35:03 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.68 2022/09/03 01:35:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.68 2022/09/03 01:35:03 thorpej
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/ethertypes.h>
-#include <net/netisr.h>
 #include <net/route.h>
 
 #include <net/bpf.h>

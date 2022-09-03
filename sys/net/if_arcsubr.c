@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.84 2022/09/03 01:35:03 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.85 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.84 2022/09/03 01:35:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.85 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.84 2022/09/03 01:35:03 thorpej Exp 
 #include <sys/cpu.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>

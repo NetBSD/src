@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.265 2022/09/03 00:31:02 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.266 2022/09/03 02:47:59 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.265 2022/09/03 00:31:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.266 2022/09/03 02:47:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.265 2022/09/03 00:31:02 thorpej Ex
 #include <sys/cpu.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/ppp_defs.h>
@@ -639,10 +638,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header *h = NULL;
 	pktqueue_t *pktq = NULL;
-	struct ifqueue *inq = NULL;
 	uint16_t protocol;
 	struct sppp *sp = (struct sppp *)ifp;
-	int isr = 0;
 
 	/* No RPS for not-IP. */
 	pktq_rps_hash_func_t rps_hash = NULL;
@@ -780,35 +777,16 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 	}
 
-	if ((ifp->if_flags & IFF_UP) == 0 || (!inq && !pktq)) {
+	if ((ifp->if_flags & IFF_UP) == 0 || pktq == NULL) {
 		goto drop;
 	}
 
 	/* Check queue. */
-	if (__predict_true(pktq)) {
-		const uint32_t hash =
-		    rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
-		if (__predict_false(!pktq_enqueue(pktq, m, hash))) {
-			goto drop;
-		}
-		SPPP_UNLOCK(sp);
-		return;
-	}
-
-	SPPP_UNLOCK(sp);
-
-	IFQ_LOCK(inq);
-	if (IF_QFULL(inq)) {
-		/* Queue overflow. */
-		IF_DROP(inq);
-		IFQ_UNLOCK(inq);
-		SPPP_DLOG(sp,"protocol queue overflow\n");
-		SPPP_LOCK(sp, RW_READER);
+	const uint32_t hash = rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
+	if (__predict_false(!pktq_enqueue(pktq, m, hash))) {
 		goto drop;
 	}
-	IF_ENQUEUE(inq, m);
-	IFQ_UNLOCK(inq);
-	schednetisr(isr);
+	SPPP_UNLOCK(sp);
 	return;
 
 drop:

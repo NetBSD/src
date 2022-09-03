@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet6_component.c,v 1.6 2016/08/13 11:19:35 christos Exp $	*/
+/*	$NetBSD: netinet6_component.c,v 1.7 2022/09/03 02:48:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.6 2016/08/13 11:19:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.7 2022/09/03 02:48:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.6 2016/08/13 11:19:35 chris
 #include <sys/socketvar.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
