@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.70 2022/03/30 17:02:02 riastradh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.71 2022/09/03 02:48:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.70 2022/03/30 17:02:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.71 2022/09/03 02:48:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -183,8 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.70 2022/03/30 17:02:02 riastradh 
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
-
-#include <net/netisr.h>
+#include <sys/psref.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -223,7 +222,6 @@ u_int		softint_bytes = 32768;
 u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
-static void	*softint_netisrs[NETISR_MAX];
 
 /*
  * softint_init_isr:
@@ -317,15 +315,6 @@ softint_init(struct cpu_info *ci)
 			    &sc->sc_int[sh->sh_flags & SOFTINT_LVLMASK];
 		}
 		mutex_exit(&softint_lock);
-	} else {
-		/*
-		 * Establish handlers for legacy net interrupts.
-		 * XXX Needs to go away.
-		 */
-#define DONETISR(n, f)							\
-    softint_netisrs[(n)] = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,\
-        (void (*)(void *))(f), NULL)
-#include <net/netisr_dispatch.h>
 	}
 }
 
@@ -607,18 +596,6 @@ softint_block(lwp_t *l)
 
 	KASSERT((l->l_pflag & LP_INTR) != 0);
 	si->si_evcnt_block.ev_count++;
-}
-
-/*
- * schednetisr:
- *
- *	Trigger a legacy network interrupt.  XXX Needs to go away.
- */
-void
-schednetisr(int isr)
-{
-
-	softint_schedule(softint_netisrs[isr]);
 }
 
 #ifndef __HAVE_FAST_SOFTINTS

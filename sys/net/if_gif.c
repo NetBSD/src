@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.156 2021/10/11 05:13:11 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.156 2021/10/11 05:13:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.156 2021/10/11 05:13:11 knakahara Exp $
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
 

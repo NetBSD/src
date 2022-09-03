@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.183 2022/09/03 02:24:59 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.184 2022/09/03 02:47:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.183 2022/09/03 02:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.184 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.183 2022/09/03 02:24:59 thorpej Exp $")
 #include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <sys/device.h>
 #include <sys/module.h>

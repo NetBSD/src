@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.319 2022/09/03 02:24:59 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.320 2022/09/03 02:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.319 2022/09/03 02:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.320 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.319 2022/09/03 02:24:59 thorpej E
 #include <sys/hook.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/if_llc.h>
 #include <net/if_dl.h>

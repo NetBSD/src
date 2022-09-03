@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.32 2022/09/03 01:48:22 thorpej Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.32 2022/09/03 01:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $");
 #include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <net/netisr.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>

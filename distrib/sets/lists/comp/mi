@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2418 2022/08/27 08:31:58 christos Exp $
+#	$NetBSD: mi,v 1.2419 2022/09/03 02:47:59 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2638,7 +2638,7 @@
 ./usr/include/net/if_wg.h			comp-c-include
 ./usr/include/net/nd.h				comp-c-include
 ./usr/include/net/net_stats.h			comp-c-include
-./usr/include/net/netisr.h			comp-c-include
+./usr/include/net/netisr.h			comp-obsolete		obsolete
 ./usr/include/net/npf.h				comp-c-include
 ./usr/include/net/npf_ncode.h			comp-obsolete		obsolete
 ./usr/include/net/pfil.h			comp-c-include

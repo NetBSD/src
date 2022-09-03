@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.39 2022/09/03 02:24:59 thorpej Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.40 2022/09/03 02:47:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.39 2022/09/03 02:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.40 2022/09/03 02:47:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.39 2022/09/03 02:24:59 thorpej Exp $")
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <sys/device.h>
 #include <sys/module.h>
