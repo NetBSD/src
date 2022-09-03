@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.22 2017/09/21 07:15:34 ozaki-r Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.23 2022/09/03 01:48:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.22 2017/09/21 07:15:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.23 2022/09/03 01:48:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ struct domain atalkdomain = {
 	.dom_maxrtkey = sizeof(struct sockaddr_at),
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
-	.dom_ifqueues = { &atintrq1, &atintrq2 },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_at, sat_addr),

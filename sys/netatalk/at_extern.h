@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.20 2018/05/29 16:29:47 maxv Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.21 2022/09/03 01:48:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -44,7 +44,8 @@ extern struct mowner atalk_tx_mowner;
 
 extern const struct pr_usrreqs ddp_usrreqs;
 
-void	atintr(void);
+void	atintr1(void *);
+void	atintr2(void *);
 void	aarpprobe(void *);
 int	aarpresolve(struct ifnet *, struct mbuf *, const struct sockaddr_at *,
     u_char *);
@@ -65,6 +66,5 @@ struct ddpcb  *
     struct at_ifaddr *);
 int     ddp_route(struct mbuf *, struct route *);
 char *	prsockaddr(const void *);
-
 
 #endif /* !_NETATALK_AT_EXTERN_H_ */

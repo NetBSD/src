@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.31 2018/03/21 14:23:54 roy Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.32 2022/09/03 01:48:22 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.31 2018/03/21 14:23:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.32 2022/09/03 01:48:22 thorpej Exp $");
 #include "opt_atalk.h"
 
 #include <sys/param.h>
@@ -53,59 +53,57 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.31 2018/03/21 14:23:54 roy Exp $");
 int             ddp_forward = 1;
 int             ddp_firewall = 0;
 extern int      ddp_cksum;
-void            ddp_input(struct mbuf *, struct ifnet *,
-    struct elaphdr *, int);
+void            ddp_input(struct mbuf *, struct ifnet *, struct elaphdr *, int);
 
-/*
- * Could probably merge these two code segments a little better...
- */
-void
-atintr(void)
+static struct at_ifaddr *
+at_ifaddr_for_ifp(struct ifnet * const ifp, int phase_flag)
 {
-	struct elaphdr *elhp, elh;
-	struct ifnet   *ifp;
-	struct mbuf    *m;
 	struct at_ifaddr *aa;
 
-	mutex_enter(softnet_lock);
-	for (;;) {
-		IFQ_LOCK(&atintrq2);
-		IF_DEQUEUE(&atintrq2, m);
-		IFQ_UNLOCK(&atintrq2);
+	TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
+		if (aa->aa_ifp == ifp &&
+		    (aa->aa_flags & AFA_PHASE2) == phase_flag) {
+			return aa;
+		}
+	}
+	return NULL;
+}
 
-		if (m == 0)	/* no more queued packets */
-			break;
+void
+atintr2(void *arg __unused)
+{
+	struct mbuf *m;
+
+	mutex_enter(softnet_lock);
+	while ((m = pktq_dequeue(at_pktq2)) != NULL) {
+		struct ifnet *ifp;
 
 		m_claimm(m, &atalk_rx_mowner);
 		ifp = m_get_rcvif_NOMPSAFE(m);
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
-			if (aa->aa_ifp == ifp && (aa->aa_flags & AFA_PHASE2))
-				break;
-		}
-		if (aa == NULL) {	/* ifp not an appletalk interface */
+		if (at_ifaddr_for_ifp(ifp, AFA_PHASE2) == NULL) {
+			/* ifp not an appletalk interface */
 			m_freem(m);
 			continue;
 		}
 		ddp_input(m, ifp, NULL, 2);
 	}
+	mutex_exit(softnet_lock);
+}
 
-	for (;;) {
-		IFQ_LOCK(&atintrq1);
-		IF_DEQUEUE(&atintrq1, m);
-		IFQ_UNLOCK(&atintrq1);
+void
+atintr1(void *arg __unused)
+{
+	struct mbuf *m;
 
-		if (m == 0)	/* no more queued packets */
-
-			break;
+	mutex_enter(softnet_lock);
+	while ((m = pktq_dequeue(at_pktq1)) != NULL) {
+		struct ifnet *ifp;
+		struct elaphdr *elhp, elh;
 
 		m_claimm(m, &atalk_rx_mowner);
 		ifp = m_get_rcvif_NOMPSAFE(m);
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
-			if (aa->aa_ifp == ifp &&
-			    (aa->aa_flags & AFA_PHASE2) == 0)
-				break;
-		}
-		if (aa == NULL) {	/* ifp not an appletalk interface */
+		if (at_ifaddr_for_ifp(ifp, 0) == NULL) {
+			/* ifp not an appletalk interface */
 			m_freem(m);
 			continue;
 		}

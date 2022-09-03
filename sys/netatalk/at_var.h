@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.9 2019/10/09 14:15:40 maxv Exp $	 */
+/*	$NetBSD: at_var.h,v 1.10 2022/09/03 01:48:22 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -67,6 +67,9 @@ struct at_aliasreq {
 #define AFA_PHASE2	0x0004
 
 #ifdef _KERNEL
+
+#include <net/pktqueue.h>
+
 int sockaddr_at_cmp(const struct sockaddr *, const struct sockaddr *);
 
 static __inline void
@@ -104,7 +107,7 @@ sockaddr_at_alloc(const struct at_addr *addr, uint8_t port, int flags)
 }
 TAILQ_HEAD(at_ifaddrhead, at_ifaddr);
 extern struct at_ifaddrhead at_ifaddr;
-extern struct ifqueue atintrq1, atintrq2;
+extern pktqueue_t *at_pktq1, *at_pktq2;
 #endif
 
 #endif /* !_NETATALK_AT_VAR_H_ */

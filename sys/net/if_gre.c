@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.181 2021/09/21 14:59:14 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.182 2022/09/03 01:48:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.181 2021/09/21 14:59:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.182 2022/09/03 01:48:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -825,8 +825,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 #endif
 #ifdef NETATALK
 	case ETHERTYPE_ATALK:
-		ifq = &atintrq1;
-		isr = NETISR_ATALK;
+		pktq = at_pktq1;
 		af = AF_APPLETALK;
 		break;
 #endif

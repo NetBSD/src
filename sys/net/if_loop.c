@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.114 2022/07/31 13:14:54 mlelstv Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.115 2022/09/03 01:48:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.114 2022/07/31 13:14:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.115 2022/09/03 01:48:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -348,8 +348,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 #endif
 #ifdef NETATALK
 	case AF_APPLETALK:
-	        ifq = &atintrq2;
-		isr = NETISR_ATALK;
+		pktq = at_pktq2;
 		break;
 #endif
 	default:
@@ -397,11 +396,10 @@ lostart(struct ifnet *ifp)
 {
 	for (;;) {
 		pktqueue_t *pktq = NULL;
-		struct ifqueue *ifq = NULL;
 		struct mbuf *m;
 		size_t pktlen;
 		uint32_t af;
-		int s, isr = 0;
+		int s;
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
@@ -424,8 +422,7 @@ lostart(struct ifnet *ifp)
 #endif
 #ifdef NETATALK
 		case AF_APPLETALK:
-			ifq = &atintrq2;
-			isr = NETISR_ATALK;
+			pktq = at_pktq2;
 			break;
 #endif
 		default:
@@ -435,25 +432,14 @@ lostart(struct ifnet *ifp)
 		}
 		pktlen = m->m_pkthdr.len;
 
+		KASSERT(pktq != NULL);
+
 		s = splnet();
-		if (__predict_true(pktq)) {
-			if (__predict_false(pktq_enqueue(pktq, m, 0))) {
-				m_freem(m);
-				splx(s);
-				return;
-			}
-			if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
-			splx(s);
-			continue;
-		}
-		if (IF_QFULL(ifq)) {
-			IF_DROP(ifq);
-			splx(s);
+		if (__predict_false(pktq_enqueue(pktq, m, 0))) {
 			m_freem(m);
+			splx(s);
 			return;
 		}
-		IF_ENQUEUE(ifq, m);
-		schednetisr(isr);
 		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 		splx(s);
 	}
