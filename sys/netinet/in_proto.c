@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.130 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.131 2022/09/03 02:53:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.130 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.131 2022/09/03 02:53:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -486,7 +486,6 @@ struct domain inetdomain = {
 	.dom_ifattach = in_domifattach,
 	.dom_ifdetach = in_domifdetach,
 	.dom_if_link_state_change = in_if_link_state_change,
-	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
