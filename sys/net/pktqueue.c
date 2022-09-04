@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.20 2022/09/02 05:50:36 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.21 2022/09/04 17:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.20 2022/09/02 05:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.21 2022/09/04 17:34:43 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -540,7 +540,23 @@ pktq_flush(pktqueue_t *pq)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	struct mbuf *m;
+	struct mbuf *m, *m0 = NULL;
+
+	ASSERT_SLEEPABLE();
+
+	/*
+	 * Run a dummy softint at IPL_SOFTNET on all CPUs to ensure that any
+	 * already running handler for this pktqueue is no longer running.
+	 */
+	xc_barrier(XC_HIGHPRI_IPL(IPL_SOFTNET));
+
+	/*
+	 * Acquire the barrier lock.  While the caller ensures that
+	 * no explcit pktq_barrier() calls will be issued, this holds
+	 * off any implicit pktq_barrier() calls that would happen
+	 * as the result of pktq_ifdetach().
+	 */
+	mutex_enter(&pq->pq_lock);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		struct pcq *q;
@@ -550,13 +566,22 @@ pktq_flush(pktqueue_t *pq)
 		kpreempt_enable();
 
 		/*
-		 * XXX This can't be right -- if the softint is running
-		 * then pcq_get isn't safe here.
+		 * Pull the packets off the pcq and chain them into
+		 * a list to be freed later.
 		 */
 		while ((m = pcq_get(q)) != NULL) {
 			pktq_inc_count(pq, PQCNT_DEQUEUE);
-			m_freem(m);
+			m->m_nextpkt = m0;
+			m0 = m;
 		}
+	}
+
+	mutex_exit(&pq->pq_lock);
+
+	/* Free the packets now that the critical section is over. */
+	while ((m = m0) != NULL) {
+		m0 = m->m_nextpkt;
+		m_freem(m);
 	}
 }
 
