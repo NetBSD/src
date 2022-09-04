@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.117 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.118 2022/09/04 23:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.117 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.118 2022/09/04 23:34:51 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -297,16 +297,18 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m_tag_delete_chain(m);
 
 #ifdef MPLS
+	bool is_mpls = false;
 	if (rt != NULL && rt_gettag(rt) != NULL &&
 	    rt_gettag(rt)->sa_family == AF_MPLS &&
 	    (m->m_flags & (M_MCAST | M_BCAST)) == 0) {
 		union mpls_shim msh;
 		msh.s_addr = MPLS_GETSADDR(rt);
 		if (msh.shim.label != MPLS_LABEL_IMPLNULL) {
+			is_mpls = true;
 			pktq = mpls_pktq;
 		}
 	}
-	if (pktq != mpls_pktq)
+	if (!is_mpls)
 #endif
 	switch (dst->sa_family) {
 
