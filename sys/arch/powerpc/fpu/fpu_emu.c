@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.52 2022/09/04 13:18:33 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.53 2022/09/04 13:32:14 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.52 2022/09/04 13:18:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.53 2022/09/04 13:32:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -183,7 +183,7 @@ fpu_dumpfpn(struct fpn *fp)
 	printf("%s %c.%x %x %x %xE%d\n", class[fp->fp_class + 2],
 		fp->fp_sign ? '-' : ' ',
 		fp->fp_mant[0],	fp->fp_mant[1],
-		fp->fp_mant[2], fp->fp_mant[3], 
+		fp->fp_mant[2], fp->fp_mant[3],
 		fp->fp_exp);
 }
 #endif
@@ -376,7 +376,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				size = sizeof(float);
 			}
 			update = (instr.i_x.i_xo & 0x20);
-			
+
 			/* calculate EA of load/store */
 			ra = instr.i_x.i_ra;
 			rb = instr.i_x.i_rb;
@@ -424,7 +424,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					return (FAULT);
 				}
 			} else {
-				DPRINTF(FPE_INSN, 
+				DPRINTF(FPE_INSN,
 					("fpu_execute: Store DBL at %p\n",
 						(void *)addr));
 				if (copyout(&fs->fpreg[rt], (void *)addr, size)) {
@@ -446,7 +446,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fpu_implode(fe, fp, FTYPE_DBL, &FR(rt));
 			}
 		}
-		if (update) 
+		if (update)
 			tf->tf_fixreg[ra] = addr;
 		/* Complete. */
 		return (0);
@@ -485,11 +485,11 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 
 			case	OPC63_FRSP:
 				/*
-				 * Convert to single: 
+				 * Convert to single:
 				 *
 				 * PowerPC uses this to round a double
 				 * precision value to single precision,
-				 * but values in registers are always 
+				 * but values in registers are always
 				 * stored in double precision format.
 				 */
 				FPU_EMU_EVCNT_INCR(frsp);
