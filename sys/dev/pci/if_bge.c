@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.385 2022/09/04 08:42:02 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.386 2022/09/04 08:50:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.385 2022/09/04 08:42:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.386 2022/09/04 08:50:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,8 +205,8 @@ static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
 static int bge_init_locked(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
-static void bge_stop_locked(struct ifnet *, int);
-static bool bge_watchdog(struct ifnet *);
+static void bge_stop_locked(struct ifnet *, bool);
+static bool bge_watchdog_tick(struct ifnet *);
 static int bge_ifmedia_upd(struct ifnet *);
 static void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 static void bge_handle_reset_work(struct work *, void *);
@@ -1260,11 +1260,11 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	 * occasionally cause glitches where Rx-interrupts are not
 	 * honoured for up to 10 seconds. jonathan@NetBSD.org, 2003-04-05
 	 */
-	mutex_enter(sc->sc_core_lock);
+	mutex_enter(sc->sc_intr_lock);
 	sc->bge_rx_coal_ticks = bge_rx_threshes[lvl].rx_ticks;
 	sc->bge_rx_max_coal_bds = bge_rx_threshes[lvl].rx_max_bds;
 	sc->bge_pending_rxintr_change = true;
-	mutex_exit(sc->sc_core_lock);
+	mutex_exit(sc->sc_intr_lock);
 }
 
 
@@ -1456,14 +1456,14 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	if (i < 0 || i >= BGE_JSLOTS)
 		panic("bge_jfree: asked to free buffer that we don't manage!");
 
-	mutex_enter(sc->sc_core_lock);
+	mutex_enter(sc->sc_intr_lock);
 	entry = SLIST_FIRST(&sc->bge_jinuse_listhead);
 	if (entry == NULL)
 		panic("bge_jfree: buffer not in use!");
 	entry->slot = i;
 	SLIST_REMOVE_HEAD(&sc->bge_jinuse_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->bge_jfree_listhead, entry, jpool_entries);
-	mutex_exit(sc->sc_core_lock);
+	mutex_exit(sc->sc_intr_lock);
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
@@ -3297,6 +3297,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->bge_stopping = false;
+	sc->bge_txrx_stopping = false;
+
 	/* Save various chip information. */
 	sc->bge_chipid = bge_chipid(pa);
 	sc->bge_phy_addr = bge_phy_addr(sc);
@@ -3868,7 +3871,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
 
-	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_intr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
@@ -3943,8 +3947,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 		struct ifmedia * const ifm = &sc->bge_ifmedia;
 		sc->ethercom.ec_ifmedia = ifm;
-		ifmedia_init(ifm, IFM_IMASK, bge_ifmedia_upd,
-		    bge_ifmedia_sts);
+
+		ifmedia_init_with_lock(ifm, IFM_IMASK,
+		    bge_ifmedia_upd, bge_ifmedia_sts, sc->sc_intr_lock);
 		ifmedia_add(ifm, IFM_ETHER | IFM_1000_SX, 0, NULL);
 		ifmedia_add(ifm, IFM_ETHER | IFM_1000_SX | IFM_FDX, 0, NULL);
 		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -3978,8 +3983,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		trys = 0;
 		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 		sc->ethercom.ec_mii = mii;
-		ifmedia_init(&mii->mii_media, 0, bge_ifmedia_upd,
-			     bge_ifmedia_sts);
+		ifmedia_init_with_lock(&mii->mii_media, 0, bge_ifmedia_upd,
+		    bge_ifmedia_sts, sc->sc_intr_lock);
 		mii_flags = MIIF_DOPAUSE;
 		if (sc->bge_flags & BGEF_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
@@ -4087,8 +4092,13 @@ bge_detach(device_t self, int flags __unused)
 	struct bge_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->ethercom.ec_if;
 
+	IFNET_LOCK(ifp);
+
 	/* Stop the interface. Callouts are stopped in it. */
 	bge_stop(ifp, 1);
+	sc->bge_detaching = true;
+
+	IFNET_UNLOCK(ifp);
 
 	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -4701,7 +4711,11 @@ bge_intr(void *xsc)
 	if (BGE_IS_5717_PLUS(sc))
 		intrmask = 0;
 
-	mutex_enter(sc->sc_core_lock);
+	mutex_enter(sc->sc_intr_lock);
+	if (sc->bge_txrx_stopping) {
+		mutex_exit(sc->sc_intr_lock);
+		return 1;
+	}
 
 	/*
 	 * It is possible for the interrupt to arrive before
@@ -4723,7 +4737,7 @@ bge_intr(void *xsc)
 		if (sc->bge_lasttag == statustag &&
 		    (~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious);
-			mutex_exit(sc->sc_core_lock);
+			mutex_exit(sc->sc_intr_lock);
 			return 0;
 		}
 		sc->bge_lasttag = statustag;
@@ -4731,7 +4745,7 @@ bge_intr(void *xsc)
 		if (!(statusword & BGE_STATFLAG_UPDATED) &&
 		    !(~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious2);
-			mutex_exit(sc->sc_core_lock);
+			mutex_exit(sc->sc_intr_lock);
 			return 0;
 		}
 		statustag = 0;
@@ -4753,13 +4767,11 @@ bge_intr(void *xsc)
 	    BGE_STS_BIT(sc, BGE_STS_LINK_EVT))
 		bge_link_upd(sc);
 
-	if (sc->bge_if_flags & IFF_RUNNING) {
-		/* Check RX return ring producer/consumer */
-		bge_rxeof(sc);
+	/* Check RX return ring producer/consumer */
+	bge_rxeof(sc);
 
-		/* Check TX ring producer/consumer */
-		bge_txeof(sc);
-	}
+	/* Check TX ring producer/consumer */
+	bge_txeof(sc);
 
 	if (sc->bge_pending_rxintr_change) {
 		uint32_t rx_ticks = sc->bge_rx_coal_ticks;
@@ -4780,10 +4792,9 @@ bge_intr(void *xsc)
 	/* Re-enable interrupts. */
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, statustag);
 
-	if (sc->bge_if_flags & IFF_RUNNING)
-		if_schedule_deferred_start(ifp);
+	if_schedule_deferred_start(ifp);
 
-	mutex_exit(sc->sc_core_lock);
+	mutex_exit(sc->sc_intr_lock);
 
 	return 1;
 }
@@ -4820,6 +4831,10 @@ bge_tick(void *xsc)
 	struct mii_data * const mii = &sc->bge_mii;
 
 	mutex_enter(sc->sc_core_lock);
+	if (sc->bge_stopping) {
+		mutex_exit(sc->sc_core_lock);
+		return;
+	}
 
 	if (BGE_IS_5705_PLUS(sc))
 		bge_stats_update_regs(sc);
@@ -4840,15 +4855,17 @@ bge_tick(void *xsc)
 		 * IPMI/ASF mode or produce extra input errors.
 		 * (extra input errors was reported for bcm5701 & bcm5704).
 		 */
-		if (!BGE_STS_BIT(sc, BGE_STS_LINK))
+		if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
+			mutex_enter(sc->sc_intr_lock);
 			mii_tick(mii);
+			mutex_exit(sc->sc_intr_lock);
+		}
 	}
 
 	bge_asf_driver_up(sc);
 
-	const bool ok = bge_watchdog(ifp);
-
-	if (ok && !sc->bge_detaching)
+	const bool ok = bge_watchdog_tick(ifp);
+	if (ok)
 		callout_schedule(&sc->bge_timeout, hz);
 
 	mutex_exit(sc->sc_core_lock);
@@ -5454,9 +5471,10 @@ bge_start(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 
-	mutex_enter(sc->sc_core_lock);
-	bge_start_locked(ifp);
-	mutex_exit(sc->sc_core_lock);
+	mutex_enter(sc->sc_intr_lock);
+	if (!sc->bge_txrx_stopping)
+		bge_start_locked(ifp);
+	mutex_exit(sc->sc_intr_lock);
 }
 
 /*
@@ -5473,8 +5491,7 @@ bge_start_locked(struct ifnet *ifp)
 	int pkts = 0;
 	int error;
 
-	if ((sc->bge_if_flags & IFF_RUNNING) != IFF_RUNNING)
-		return;
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	prodidx = sc->bge_tx_prodidx;
 
@@ -5549,6 +5566,11 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 
+	KASSERT(IFNET_LOCKED(ifp));
+
+	if (sc->bge_detaching)
+		return ENXIO;
+
 	mutex_enter(sc->sc_core_lock);
 	int ret = bge_init_locked(ifp);
 	mutex_exit(sc->sc_core_lock);
@@ -5565,12 +5587,13 @@ bge_init_locked(struct ifnet *ifp)
 	uint32_t mode, reg;
 	int error = 0;
 
+	ASSERT_SLEEPABLE();
 	KASSERT(IFNET_LOCKED(ifp));
 	KASSERT(mutex_owned(sc->sc_core_lock));
 	KASSERT(ifp == &sc->ethercom.ec_if);
 
 	/* Cancel pending I/O and flush buffers. */
-	bge_stop_locked(ifp, 0);
+	bge_stop_locked(ifp, false);
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -5740,15 +5763,18 @@ bge_init_locked(struct ifnet *ifp)
 	BGE_CLRBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, 0);
 
-	if ((error = bge_ifmedia_upd(ifp)) != 0)
-		goto out;
+	mutex_enter(sc->sc_intr_lock);
+	if ((error = bge_ifmedia_upd(ifp)) == 0) {
+		sc->bge_stopping = false;
+		sc->bge_txrx_stopping = false;
 
-	/* IFNET_LOCKED asserted above */
-	ifp->if_flags |= IFF_RUNNING;
+		/* IFNET_LOCKED asserted above */
+		ifp->if_flags |= IFF_RUNNING;
 
-	callout_schedule(&sc->bge_timeout, hz);
+		callout_schedule(&sc->bge_timeout, hz);
+	}
+	mutex_exit(sc->sc_intr_lock);
 
-out:
 	sc->bge_if_flags = ifp->if_flags;
 
 	return error;
@@ -5764,6 +5790,8 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	struct mii_data * const mii = &sc->bge_mii;
 	struct ifmedia * const ifm = &sc->bge_ifmedia;
 	int rc;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
@@ -5862,6 +5890,8 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->bge_mii;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		ifmr->ifm_status = IFM_AVALID;
@@ -6026,7 +6056,7 @@ bge_watchdog_check(struct bge_softc * const sc)
 }
 
 static bool
-bge_watchdog(struct ifnet *ifp)
+bge_watchdog_tick(struct ifnet *ifp)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 
@@ -6034,8 +6064,6 @@ bge_watchdog(struct ifnet *ifp)
 
 	if (!sc->sc_trigger_reset && bge_watchdog_check(sc))
 		return true;
-
-	aprint_error_dev(sc->bge_dev, "watchdog timeout -- resetting\n");
 
 	if (atomic_swap_uint(&sc->sc_reset_pending, 1) == 0)
 		workqueue_enqueue(sc->sc_reset_wq, &sc->sc_reset_work, NULL);
@@ -6051,6 +6079,8 @@ bge_handle_reset_work(struct work *work, void *arg)
 {
 	struct bge_softc * const sc = arg;
 	struct ifnet * const ifp = &sc->ethercom.ec_if;
+
+	printf("%s: watchdog timeout -- resetting\n", ifp->if_xname);
 
 	/* Don't want ioctl operations to happen */
 	IFNET_LOCK(ifp);
@@ -6100,9 +6130,10 @@ bge_stop(struct ifnet *ifp, int disable)
 	struct bge_softc * const sc = ifp->if_softc;
 
 	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
 
 	mutex_enter(sc->sc_core_lock);
-	bge_stop_locked(ifp, disable);
+	bge_stop_locked(ifp, disable ? true : false);
 	mutex_exit(sc->sc_core_lock);
 }
 
@@ -6111,17 +6142,21 @@ bge_stop(struct ifnet *ifp, int disable)
  * RX and TX lists.
  */
 static void
-bge_stop_locked(struct ifnet *ifp, int disable)
+bge_stop_locked(struct ifnet *ifp, bool disable)
 {
 	struct bge_softc * const sc = ifp->if_softc;
 
+	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
 	KASSERT(mutex_owned(sc->sc_core_lock));
 
-	if (disable) {
-		sc->bge_detaching = true;
-		callout_halt(&sc->bge_timeout, NULL);
-	} else
-		callout_stop(&sc->bge_timeout);
+	sc->bge_stopping = true;
+
+	mutex_enter(sc->sc_intr_lock);
+	sc->bge_txrx_stopping = true;
+	mutex_exit(sc->sc_intr_lock);
+
+	callout_halt(&sc->bge_timeout, sc->sc_core_lock);
 
 	/* Disable host interrupts. */
 	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
@@ -6206,8 +6241,11 @@ bge_stop_locked(struct ifnet *ifp, int disable)
 	/*
 	 * Isolate/power down the PHY.
 	 */
-	if (!(sc->bge_flags & BGEF_FIBER_TBI))
+	if (!(sc->bge_flags & BGEF_FIBER_TBI)) {
+		mutex_enter(sc->sc_intr_lock);
 		mii_down(&sc->bge_mii);
+		mutex_exit(sc->sc_intr_lock);
+	}
 
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
 
@@ -6215,6 +6253,8 @@ bge_stop_locked(struct ifnet *ifp, int disable)
 	BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 
 	ifp->if_flags &= ~IFF_RUNNING;
+
+	sc->bge_if_flags = ifp->if_flags;
 }
 
 static void
@@ -6225,6 +6265,8 @@ bge_link_upd(struct bge_softc *sc)
 	uint32_t status;
 	uint16_t phyval;
 	int link;
+
+	KASSERT(sc->sc_intr_lock);
 
 	/* Clear 'pending link event' flag */
 	BGE_STS_CLRBIT(sc, BGE_STS_LINK_EVT);
