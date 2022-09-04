@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.37 2022/09/02 23:48:10 thorpej Exp $ */
+/* $NetBSD: if_plip.c,v 1.38 2022/09/04 15:59:08 rjs Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.37 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.38 2022/09/04 15:59:08 rjs Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -103,8 +103,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.37 2022/09/02 23:48:10 thorpej Exp $")
 #include <net/bpf.h>
 
 #ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-/* #include <netinet/in.h> */
+#include <netinet/ip.h>
 #else
 #error Cannot config lp/plip without inet
 #endif
