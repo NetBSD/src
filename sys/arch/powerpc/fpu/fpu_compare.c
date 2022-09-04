@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_compare.c,v 1.5 2020/06/27 03:07:57 rin Exp $ */
+/*	$NetBSD: fpu_compare.c,v 1.6 2022/09/04 13:14:57 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.5 2020/06/27 03:07:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_compare.c,v 1.6 2022/09/04 13:14:57 rin Exp $");
 
 #include <sys/types.h>
 
@@ -78,6 +78,8 @@ fpu_compare(struct fpemu *fe, int ordered)
 {
 	struct fpn *a, *b, *r;
 	int cc;
+
+	fe->fe_fpscr &= ~FPSCR_FPCC;
 
 	a = &fe->fe_f1;
 	b = &fe->fe_f2;
