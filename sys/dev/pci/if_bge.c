@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.386 2022/09/04 08:50:25 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.387 2022/09/04 08:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.386 2022/09/04 08:50:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.387 2022/09/04 08:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1596,7 +1596,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
 		error = bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmamap);
+		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmamap);
 		if (error)
 			goto uncreate;
 
@@ -1794,7 +1794,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_TXDMA_MAX,
-		    BGE_NTXSEG, maxsegsz, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    BGE_NTXSEG, maxsegsz, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &dmamap))
 			return ENOBUFS;
 		if (dmamap == NULL)
@@ -1802,7 +1802,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 		if (sc->bge_dma64) {
 			if (bus_dmamap_create(sc->bge_dmatag32, BGE_TXDMA_MAX,
 			    BGE_NTXSEG, maxsegsz, 0,
-			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 			    &dmamap32)) {
 				bus_dmamap_destroy(sc->bge_dmatag, dmamap);
 				return ENOBUFS;
