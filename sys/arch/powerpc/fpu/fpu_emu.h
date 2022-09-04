@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.8 2022/09/02 12:40:49 rin Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.9 2022/09/04 13:14:57 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,8 +141,8 @@ struct fpn {
 #define	FTYPE_SNG	0x02	/* data = 32-bit float */
 #define	FTYPE_DBL	0x04	/* data = 64-bit double */
 #define	FTYPE_RD_RZ	0x08
-#define	FTYPE_FPRF	0x10
-#define	FTYPE_FLAG_MASK	(FTYPE_RD_RZ | FTYPE_FPRF)
+#define	FTYPE_FPSCR	0x10
+#define	FTYPE_FLAG_MASK	(FTYPE_RD_RZ | FTYPE_FPSCR)
 
 /*
  * Emulator state.
