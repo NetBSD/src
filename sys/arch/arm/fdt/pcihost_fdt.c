@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.29 2022/09/04 10:20:33 skrll Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.30 2022/09/04 16:01:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.29 2022/09/04 10:20:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.30 2022/09/04 16:01:25 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -600,54 +600,32 @@ pcihost_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data)
 	}
 }
 
-struct pcihost_cookie {
-	pci_intr_handle_t phic_pih;
-	void *phic_ih;
-};
-
-
 static void *
-pcihost_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
+pcihost_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg, const char *xname)
 {
 	struct pcihost_softc *sc = v;
-	const int flags = (pih & ARM_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
+	const int flags = (ih & ARM_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 	const u_int *specifier;
 	int ihandle;
 
-	struct pcihost_cookie * const phic = kmem_alloc(sizeof(*phic), KM_SLEEP);
-	phic->phic_pih = pih;
-	if ((pih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0) {
-		phic->phic_ih = arm_pci_msi_intr_establish(&sc->sc_pc, pih, ipl,
-		    callback, arg, xname);
+	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
+		return arm_pci_msi_intr_establish(&sc->sc_pc, ih, ipl, callback, arg, xname);
 
-		return phic;
-	}
-
-	specifier = pcihost_find_intr(sc, pih & ARM_PCI_INTR_IRQ, &ihandle);
+	specifier = pcihost_find_intr(sc, ih & ARM_PCI_INTR_IRQ, &ihandle);
 	if (specifier == NULL)
 		return NULL;
 
-	phic->phic_ih = fdtbus_intr_establish_raw(ihandle, specifier, ipl, flags,
+	return fdtbus_intr_establish_raw(ihandle, specifier, ipl, flags,
 	    callback, arg, xname);
-
-	return phic;
 }
 
 static void
 pcihost_intr_disestablish(void *v, void *vih)
 {
 	struct pcihost_softc *sc = v;
-	struct pcihost_cookie * const phic = vih;
-	const pci_intr_handle_t pih = phic->phic_pih;
-	void * const ih = phic->phic_ih;
 
-	kmem_free(phic, sizeof(*phic));
-
-	if ((pih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
-		return;
-
-	fdtbus_intr_disestablish(sc->sc_phandle, ih);
+	fdtbus_intr_disestablish(sc->sc_phandle, vih);
 }
 
 static int
