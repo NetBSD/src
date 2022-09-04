@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.384 2022/08/27 06:32:53 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.385 2022/09/04 08:42:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.384 2022/08/27 06:32:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.385 2022/09/04 08:42:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3941,14 +3941,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    macmode | BGE_PORTMODE_TBI);
 		DELAY(40);
 
-		sc->ethercom.ec_ifmedia = &sc->bge_ifmedia;
-		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
+		struct ifmedia * const ifm = &sc->bge_ifmedia;
+		sc->ethercom.ec_ifmedia = ifm;
+		ifmedia_init(ifm, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
-		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER |IFM_1000_SX, 0, NULL);
-		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER | IFM_1000_SX |IFM_FDX,
-			    0, NULL);
-		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
-		ifmedia_set(&sc->bge_ifmedia, IFM_ETHER | IFM_AUTO);
+		ifmedia_add(ifm, IFM_ETHER | IFM_1000_SX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_1000_SX | IFM_FDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 		/* Pretend the user requested this setting */
 		sc->bge_ifmedia.ifm_media = sc->bge_ifmedia.ifm_cur->ifm_media;
 	} else {
