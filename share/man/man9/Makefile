@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.464 2022/02/15 22:46:29 riastradh Exp $
+#       $NetBSD: Makefile,v 1.465 2022/09/04 21:37:50 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -43,7 +43,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
 	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pci_msi.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
-	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmf.9 pool.9 \
+	percpu.9 pfil.9 physio.9 pktqueue.9 pmap.9 pmatch.9 pmf.9 pool.9 \
 	pool_cache.9 powerhook_establish.9 ppsratecheck.9 preempt.9 \
 	proc_find.9 pserialize.9 pslist.9 psref.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 \
@@ -703,6 +703,17 @@ MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_run_hooks.9 \
 	pfil.9 pfil_run_addrhooks.9 \
 	pfil.9 pfil_run_ifhooks.9
+MLINKS+=pktqueue.9 pktq_create.9 \
+	pktqueue.9 pktq_destroy.9 \
+	pktqueue.9 pktq_enqueue.9 \
+	pktqueue.9 pktq_dequeue.9 \
+	pktqueue.9 pktq_barrier.9 \
+	pktqueue.9 pktq_ifdetach.9 \
+	pktqueue.9 pktq_flush.9 \
+	pktqueue.9 pktq_set_maxlen.9 \
+	pktqueue.9 pktq_rps_hash.9 \
+	pktqueue.9 pktq_sysctl_setup.9 \
+	pktqueue.9 sysctl_pktq_rps_hash_handler.9
 MLINKS+=pmap.9 pmap_init.9 \
 	pmap.9 pmap_virtual_space.9 \
 	pmap.9 pmap_steal_memory.9 \

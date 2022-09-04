@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2420 2022/09/04 20:06:26 thorpej Exp $
+#	$NetBSD: mi,v 1.2421 2022/09/04 21:37:50 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12246,6 +12246,17 @@
 ./usr/share/man/cat9/pgrp_find.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pgsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/physio.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_barrier.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_dequeue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_enqueue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_flush.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_ifdetach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_rps_hash.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_set_maxlen.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pktq_sysctl_setup.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pktqueue.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap_activate.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap_clear_modify.0	comp-sys-catman		.cat
@@ -12577,6 +12588,7 @@
 ./usr/share/man/cat9/sysctl_needfunc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_notavail.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_null.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_pktq_rps_hash_handler.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/sysctl_query.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_teardown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_unlock.0		comp-sys-catman		.cat
@@ -20465,6 +20477,17 @@
 ./usr/share/man/html9/pgrp_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pgsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/physio.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_barrier.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_create.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_dequeue.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_destroy.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_enqueue.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_flush.html		comp-sys-htmlman	html
+./usr/share/man/html9/pktq_ifdetach.html	comp-sys-htmlman	html
+./usr/share/man/html9/pktq_rps_hash.html	comp-sys-htmlman	html
+./usr/share/man/html9/pktq_set_maxlen.html	comp-sys-htmlman	html
+./usr/share/man/html9/pktq_sysctl_setup.html	comp-sys-htmlman	html
+./usr/share/man/html9/pktqueue.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pmap.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pmap_activate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmap_clear_modify.html	comp-sys-htmlman	html
@@ -20777,6 +20800,7 @@
 ./usr/share/man/html9/sysctl_needfunc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysctl_notavail.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysctl_null.html		comp-sys-htmlman	html
+./usr/share/man/html9/sysctl_pktq_rps_hash_handler.html comp-sys-htmlman html
 ./usr/share/man/html9/sysctl_query.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sysctl_teardown.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysctl_unlock.html	comp-sys-htmlman	html
@@ -28845,6 +28869,17 @@
 ./usr/share/man/man9/pgrp_find.9		comp-sys-man		.man
 ./usr/share/man/man9/pgsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/physio.9			comp-sys-man		.man
+./usr/share/man/man9/pktq_barrier.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_create.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_dequeue.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_enqueue.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_flush.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_ifdetach.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_rps_hash.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_set_maxlen.9		comp-sys-man		.man
+./usr/share/man/man9/pktq_sysctl_setup.9	comp-sys-man		.man
+./usr/share/man/man9/pktqueue.9			comp-sys-man		.man
 ./usr/share/man/man9/pmap.9			comp-sys-man		.man
 ./usr/share/man/man9/pmap_activate.9		comp-sys-man		.man
 ./usr/share/man/man9/pmap_clear_modify.9	comp-sys-man		.man
@@ -29176,6 +29211,7 @@
 ./usr/share/man/man9/sysctl_needfunc.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_notavail.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_null.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_pktq_rps_hash_handler.9 comp-sys-man	.man
 ./usr/share/man/man9/sysctl_query.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_teardown.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_unlock.9		comp-sys-man		.man
