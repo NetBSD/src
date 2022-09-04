@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.335 2022/09/02 16:24:31 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.336 2022/09/04 22:55:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.335 2022/09/02 16:24:31 sjg Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.336 2022/09/04 22:55:00 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -583,7 +583,9 @@ EvalCompareStr(CondParser *par, const char *lhs,
 {
 	if (op != EQ && op != NE) {
 		Parse_Error(PARSE_FATAL,
-		    "String comparison operator must be either == or !=");
+		    "Comparison with '%s' requires both operands "
+		    "'%s' and '%s' to be numeric",
+		    opname[op], lhs, rhs);
 		par->printedError = true;
 		return TOK_ERROR;
 	}
