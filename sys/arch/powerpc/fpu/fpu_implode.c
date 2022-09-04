@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.18 2022/09/02 12:48:04 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.19 2022/09/04 09:20:55 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.18 2022/09/02 12:48:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.19 2022/09/04 09:20:55 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ fpu_implode(struct fpemu *fe, struct fpn *fp, int type, uint64_t *p)
 		*p = fpu_ftod(fe, fp, fprf);
 		DPRINTF(FPE_REG, ("fpu_implode: double %x %x\n",
 			space[0], space[1]));
-		break;		break;
+		break;
 
 	default:
 		panic("fpu_implode: invalid type %d", type);
