@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.21 2022/09/04 13:14:57 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.22 2022/09/04 13:17:33 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.21 2022/09/04 13:14:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.22 2022/09/04 13:17:33 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -451,14 +451,13 @@ fpu_ftod(struct fpemu *fe, struct fpn *fp, int *cx)
 	}
 	if (ISINF(fp)) {
 		*cx |= FPRF_SIGN(sign) | FPSCR_FU;
-		sign |= DBL_EXP(DBL_EXP_INFNAN);
-		goto zero;
+		return HI_WORD(sign | DBL_EXP(DBL_EXP_INFNAN));
 	}
 	if (ISZERO(fp)) {
 		*cx |= FPSCR_FE;
 		if (sign)
 			*cx |= FPSCR_C;
-zero:		return HI_WORD(sign);
+		return HI_WORD(sign);
 	}
 
 	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
