@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.7 2022/09/01 06:10:58 rin Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.8 2022/09/04 13:32:14 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.7 2022/09/01 06:10:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.8 2022/09/04 13:32:14 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -190,7 +190,7 @@ fpu_div(struct fpemu *fe)
 	}
 	/*
 	 * Need to split the following out cause they generate different
-	 * exceptions. 
+	 * exceptions.
 	 */
 	if (ISINF(x)) {
 		if (x->fp_class == y->fp_class) {
