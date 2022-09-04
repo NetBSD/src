@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.49 2022/09/03 04:54:47 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.50 2022/09/04 13:14:57 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.49 2022/09/03 04:54:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.50 2022/09/04 13:14:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -297,7 +297,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr, cond;
 	u_int bits;
 	struct fpreg *fs;
-	int i, mtfsb1 = 0;
+	int i;
 
 	/* Setup work. */
 	fp = NULL;
@@ -499,7 +499,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fpu_implode(fe, fp, FTYPE_SNG, &FR(rt));
 				fpu_explode(fe, fp = &fe->fe_f1, FTYPE_SNG,
 				    FR(rt));
-				type = FTYPE_DBL | FTYPE_FPRF;
+				type = FTYPE_DBL | FTYPE_FPSCR;
 				break;
 			case	OPC63_FCTIW:
 			case	OPC63_FCTIWZ:
@@ -526,7 +526,6 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			case	OPC63_MTFSB1:
 				FPU_EMU_EVCNT_INCR(mtfsb1);
 				DPRINTF(FPE_INSN, ("fpu_execute: MTFSB1\n"));
-				mtfsb1 = 1;
 				fe->fe_cx = (1 << (31 - rt)) &
 				    ~(FPSCR_FEX | FPSCR_VX);
 				break;
@@ -627,7 +626,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				DPRINTF(FPE_INSN, ("fpu_execute: FCFID\n"));
 				type = FTYPE_LNG;
 				fpu_explode(fe, fp = &fe->fe_f1, type, FR(rb));
-				type = FTYPE_DBL | FTYPE_FPRF;
+				type = FTYPE_DBL | FTYPE_FPSCR;
 				break;
 			default:
 				return (NOTFPU);
@@ -763,12 +762,12 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 
 			/* If the instruction was single precision, round */
 			if (!(instr.i_any.i_opcd & 0x4)) {
-				fpu_implode(fe, fp, FTYPE_SNG | FTYPE_FPRF,
+				fpu_implode(fe, fp, FTYPE_SNG | FTYPE_FPSCR,
 				    &FR(rt));
 				fpu_explode(fe, fp = &fe->fe_f1, FTYPE_SNG,
 				    FR(rt));
 			} else
-				type |= FTYPE_FPRF;
+				type |= FTYPE_FPSCR;
 		}
 	} else {
 		return (NOTFPU);
@@ -785,10 +784,6 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	cx = fe->fe_cx;
 	fsr = fe->fe_fpscr & ~(FPSCR_FEX|FPSCR_VX);
 	if (cx != 0) {
-		if (mtfsb1 == 0 && (cx & FPSCR_FPRF) != 0) {
-			/* Need to replace CC */
-			fsr &= ~FPSCR_FPRF;
-		}
 		fsr |= cx;
 		DPRINTF(FPE_INSN, ("fpu_execute: cx %x, fsr %x\n", cx, fsr));
 	}
