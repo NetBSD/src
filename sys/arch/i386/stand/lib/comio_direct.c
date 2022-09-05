@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.11 2014/01/05 20:49:20 jakllsch Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.12 2022/09/05 14:14:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -79,8 +79,6 @@ static u_char serbuf[SERBUFSIZE];
 static int serbuf_read = 0;
 static int serbuf_write = 0;
 static int stopped = 0;
-
-#define	ISSET(t,f)	((t) & (f))
 
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 #define RATE_9600 divrnd((COM_FREQ / 16), 9600)
