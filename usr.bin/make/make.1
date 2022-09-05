@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.332 2022/09/03 00:50:07 rillig Exp $
+.\"	$NetBSD: make.1,v 1.333 2022/09/05 17:13:36 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2011,23 +2011,28 @@ has been defined and has commands associated with it.
 .Pp
 .Ar Expression
 may also be an arithmetic or string comparison.
-Variable expansion is
-performed on both sides of the comparison, after which the numerical
-values are compared.
-A value is interpreted as hexadecimal if it is
-preceded by 0x, otherwise it is decimal; octal numbers are not supported.
-The standard C relational operators are all supported.
-If after
-variable expansion, either the left or right hand side of a
-.Sq Ic ==
-or
-.Sq Ic "!="
-operator is not a numerical value, then
-string comparison is performed between the expanded
-variables.
-If no relational operator is given, it is assumed that the expanded
-variable is being compared against 0, or an empty string in the case
-of a string comparison.
+Variable expansion is performed on both sides of the comparison.
+If both sides are numeric and neither is enclosed in quotes,
+the comparison is done numerically, otherwise lexicographically.
+A string is interpreted as hexadecimal integer if it is preceded by
+.Li 0x ,
+otherwise it is a decimal floating-point number;
+octal numbers are not supported.
+.Pp
+All comparisons may use the operators
+.Sq Ic \&==
+and
+.Sq Ic \&!= .
+Numeric comparisons may also use the operators
+.Sq Ic \&< ,
+.Sq Ic \&<= ,
+.Sq Ic \&>
+and
+.Sq Ic \&>= .
+.Pp
+If the comparison has neither a comparison operator nor a right side,
+the expression evaluates to true if it is nonempty
+and its numeric value (if any) is not zero.
 .Pp
 When
 .Nm
