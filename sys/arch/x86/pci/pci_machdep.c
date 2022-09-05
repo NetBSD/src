@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.91 2022/05/24 14:00:23 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.92 2022/09/05 14:18:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.91 2022/05/24 14:00:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.92 2022/09/05 14:18:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1228,14 +1228,29 @@ device_pci_register(device_t dev, void *aux)
 			 */
 			populate_fbinfo(dev, dict);
 
-#if 1 && NWSDISPLAY > 0 && NGENFB > 0
-			/* XXX */
-			if (device_is_a(dev, "genfb")) {
-				prop_dictionary_set_bool(dict, "is_console",
-				    genfb_is_console());
-			} else
-#endif
-			prop_dictionary_set_bool(dict, "is_console", true);
+			/*
+			 * If the bootloader requested console=pc and
+			 * specified a framebuffer, and if
+			 * x86_genfb_cnattach succeeded in setting it
+			 * up during consinit, then consinit will call
+			 * genfb_cnattach which makes genfb_is_console
+			 * return true.  In this case, if it's the
+			 * first genfb we've seen, we will instruct the
+			 * genfb driver via the is_console property
+			 * that it has been selected as the console.
+			 *
+			 * If not all of that happened, then consinit
+			 * can't have selected a genfb console, so this
+			 * device is definitely not the console.
+			 *
+			 * XXX What happens if there's more than one
+			 * PCI display device, and the bootloader picks
+			 * the second one's framebuffer as the console
+			 * framebuffer address?  Tough...but this has
+			 * probably never worked.
+			 */
+			prop_dictionary_set_bool(dict, "is_console",
+			    genfb_is_console());
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
