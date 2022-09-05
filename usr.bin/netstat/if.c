@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.99 2022/09/02 06:25:43 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.100 2022/09/05 00:18:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.99 2022/09/02 06:25:43 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.100 2022/09/05 00:18:25 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,27 +287,15 @@ union ifaddr_u {
 };
 
 static void
-ifnet_to_ifdata_kvm(const struct ifnet * const ifp, struct if_data * const ifd)
+ifname_to_ifdata(int s, const char *ifname, struct if_data * const ifd)
 {
+	struct ifdatareq ifdr;
 
-	/*
-	 * Interface statistics are no longer kept in struct ifnet,
-	 * and thus an if_data is no longer embedded in struct ifnet.
-	 * We cannot read stats via kvm without chasing per-cpu data,
-	 * and maybe someday we could do that.  But for now, this is
-	 * what we have.
-	 *
-	 * Just copy the fields that do exist.
-	 */
 	memset(ifd, 0, sizeof(*ifd));
-	ifd->ifi_type = ifp->if_type;
-	ifd->ifi_addrlen = ifp->if_addrlen;
-	ifd->ifi_hdrlen = ifp->if_hdrlen;
-	ifd->ifi_link_state = ifp->if_link_state;
-	ifd->ifi_mtu = ifp->if_mtu;
-	ifd->ifi_metric = ifp->if_metric;
-	ifd->ifi_baudrate = ifp->if_baudrate;
-	ifd->ifi_lastchange = ifp->if_lastchange;
+	strlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
+	if (ioctl(s, SIOCGIFDATA, &ifdr) != 0)
+		return;
+	memcpy(ifd, &ifdr.ifdr_data, sizeof(ifdr.ifdr_data));
 }
 
 static void
@@ -319,6 +307,7 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 	u_long ifaddraddr;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
+	int s;
 
 	if (ifnetaddr == 0) {
 		printf("ifnet: symbol not defined\n");
@@ -333,6 +322,9 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 	if (kread(ifnetaddr, (char *)&ifhead, sizeof ifhead))
 		return;
 	ifnetaddr = (u_long)ifhead.tqh_first;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return;
 
 	intpr_header();
 
@@ -382,13 +374,13 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
 			    CP(&ifaddr);
 			sa = (struct sockaddr *)cp;
-			ifnet_to_ifdata_kvm(&ifnet, &ifd);
+			ifname_to_ifdata(s, name, &ifd);
 			print_addr(ifnet.if_index, sa, (void *)&ifaddr,
 			    &ifd, &ifnet);
 		}
 		ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 	}
-
+	close(s);
 }
 
 static void
@@ -816,6 +808,7 @@ sidewaysintpr_kvm(unsigned interval, u_long off)
 	unsigned line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
+	int s;
 
 	set_lines();
 
@@ -827,6 +820,9 @@ sidewaysintpr_kvm(unsigned interval, u_long off)
 	if (kread(off, (char *)&ifhead, sizeof ifhead))
 		return;
 	firstifnet = (u_long)ifhead.tqh_first;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return;
 
 	lastif = iftot;
 	sum = iftot + MAXIF - 1;
@@ -930,7 +926,7 @@ loop:
 			off = 0;
 			continue;
 		}
-		ifnet_to_ifdata_kvm(&ifnet, &ifd);
+		ifname_to_ifdata(s, ip->ift_name, &ifd);
 		if (ip == interesting) {
 			if (bflag) {
 				char humbuf[HUMBUF_SIZE];
