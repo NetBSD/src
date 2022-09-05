@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.100 2022/09/05 00:18:25 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.101 2022/09/05 02:26:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.100 2022/09/05 00:18:25 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.101 2022/09/05 02:26:22 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,16 +76,21 @@ struct	iftot {
 	u_quad_t ift_ip;		/* input packets */
 	u_quad_t ift_ib;		/* input bytes */
 	u_quad_t ift_ie;		/* input errors */
+	u_quad_t ift_iq;		/* input drops */
 	u_quad_t ift_op;		/* output packets */
 	u_quad_t ift_ob;		/* output bytes */
 	u_quad_t ift_oe;		/* output errors */
+	u_quad_t ift_oq;		/* output drops */
 	u_quad_t ift_co;		/* collisions */
-	u_quad_t ift_dr;		/* drops */
+};
+
+struct if_data_ext {
+	uint64_t ifi_oqdrops;
 };
 
 static void set_lines(void);
 static void print_addr(const int, struct sockaddr *, struct sockaddr **,
-    struct if_data *, struct ifnet *);
+    struct if_data *, struct ifnet *, struct if_data_ext *);
 static void sidewaysintpr(u_int, u_long);
 
 static void iftot_banner(struct iftot *);
@@ -96,6 +101,7 @@ static void catchalarm(int);
 static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 static void fetchifs(void);
 
+static int if_data_ext_get(const char *, struct if_data_ext *);
 static void intpr_sysctl(void);
 static void intpr_kvm(u_long, void (*)(const char *));
 
@@ -165,6 +171,28 @@ intpr_header(void)
 	}
 }
 
+int
+if_data_ext_get(const char *ifname, struct if_data_ext *dext)
+{
+	char namebuf[1024];
+	size_t len;
+	int drops;
+
+	/* For sysctl */
+	snprintf(namebuf, sizeof(namebuf),
+	    "net.interfaces.%s.sndq.drops", ifname);
+	len = sizeof(drops);
+	if (sysctlbyname(namebuf, &drops, &len, NULL, 0)
+	    == -1) {
+		warnx("'%s' not found", namebuf);
+		dext->ifi_oqdrops = 0;
+		return -1;
+	} else
+		dext->ifi_oqdrops = drops;
+
+	return 0;
+}
+
 static void
 intpr_sysctl(void)
 {
@@ -182,6 +210,7 @@ intpr_sysctl(void)
 	size_t len;
 	int did = 1, rtax = 0, n;
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
+	char origname[IFNAMSIZ];	/* without `*' */
 	int ifindex = 0;
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
@@ -199,6 +228,8 @@ intpr_sysctl(void)
 
 	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		struct if_data_ext dext;
+
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
@@ -226,11 +257,15 @@ intpr_sysctl(void)
 
 			ifindex = sdl->sdl_index;
 
-			/* mark inactive interfaces with a '*' */
+			/* Keep the original name */
+			strcpy(origname, name);
+
+			/* Mark inactive interfaces with a '*' */
 			cp = strchr(name, '\0');
-			if ((ifm->ifm_flags & IFF_UP) == 0)
+			if ((ifm->ifm_flags & IFF_UP) == 0) {
 				*cp++ = '*';
-			*cp = '\0';
+				*cp = '\0';
+			}
 
 			if (qflag) {
 				total = ifd->ifi_ibytes + ifd->ifi_obytes +
@@ -274,7 +309,28 @@ intpr_sysctl(void)
 			n = 5;
 
 		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
-		print_addr(ifindex, rti_info[rtax], rti_info, ifd, NULL);
+		if (dflag) {
+#if 0
+			char namebuf[1024];
+			int drops;
+
+			/* For sysctl */
+			snprintf(namebuf, sizeof(namebuf),
+			    "net.interfaces.%s.sndq.drops", origname);
+			len = sizeof(drops);
+			if (sysctlbyname(namebuf, &drops, &len, NULL, 0)
+			    == -1) {
+				warnx("'%s' not found", namebuf);
+				dext.ifi_oqdrops = 0;
+			} else
+				dext.ifi_oqdrops = drops;
+#else
+			if_data_ext_get(origname, &dext);
+#endif
+		}
+
+		print_addr(ifindex, rti_info[rtax], rti_info, ifd,
+		    NULL, dflag ? &dext : NULL);
 	}
 }
 
@@ -376,7 +432,7 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			sa = (struct sockaddr *)cp;
 			ifname_to_ifdata(s, name, &ifd);
 			print_addr(ifnet.if_index, sa, (void *)&ifaddr,
-			    &ifd, &ifnet);
+			    &ifd, &ifnet, NULL);
 		}
 		ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 	}
@@ -473,8 +529,8 @@ mc4_print(const int ifindex)
 }
 
 static void
-print_addr(const int ifindex, struct sockaddr *sa,
-    struct sockaddr **rtinfo, struct if_data *ifd, struct ifnet *ifnet)
+print_addr(const int ifindex, struct sockaddr *sa, struct sockaddr **rtinfo,
+    struct if_data *ifd, struct ifnet *ifnet, struct if_data_ext *dext)
 {
 	char hexsep = '.';		/* for hexprint */
 	static const char hexfmt[] = "%02x%c";	/* for hexprint */
@@ -647,7 +703,8 @@ print_addr(const int ifindex, struct sockaddr *sa,
 	}
 	if (dflag)
 		printf(" %6lld", ifnet ?
-		    (unsigned long long)ifnet->if_snd.ifq_drops : 0);
+		    (unsigned long long)ifnet->if_snd.ifq_drops :
+			dext->ifi_oqdrops);
 	if (tflag)
 		printf(" %4d", ifnet ? ifnet->if_timer : 0);
 	putchar('\n');
@@ -712,7 +769,7 @@ iftot_print(struct iftot *cur, struct iftot *old)
 		    cur->ift_oe - old->ift_oe,
 		    cur->ift_co - old->ift_co);
 	if (dflag)
-		printf(" %5" PRIu64, cur->ift_dr - old->ift_dr);
+		printf(" %5" PRIu64, cur->ift_oq - old->ift_oq);
 }
 
 static void
@@ -731,7 +788,7 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 		    cur->ift_co - old->ift_co);
 
 	if (dflag)
-		printf(" %5" PRIu64, cur->ift_dr - old->ift_dr);
+		printf(" %5" PRIu64, cur->ift_oq - old->ift_oq);
 }
 
 __dead static void
@@ -888,7 +945,7 @@ banner:
 		ip->ift_ob = 0;
 		ip->ift_oe = 0;
 		ip->ift_co = 0;
-		ip->ift_dr = 0;
+		ip->ift_iq = 0;
 	}
 	putchar('\n');
 	if (bflag)
@@ -920,7 +977,7 @@ loop:
 	sum->ift_ob = 0;
 	sum->ift_oe = 0;
 	sum->ift_co = 0;
-	sum->ift_dr = 0;
+	sum->ift_iq = 0;
 	for (off = firstifnet, ip = iftot; off && ip < lastif; ip++) {
 		if (kread(off, (char *)&ifnet, sizeof ifnet)) {
 			off = 0;
@@ -965,7 +1022,7 @@ loop:
 			}
 			if (dflag)
 				printf(" %5" PRIu64,
-					ifnet.if_snd.ifq_drops - ip->ift_dr);
+					ifnet.if_snd.ifq_drops - ip->ift_oq);
 		}
 		ip->ift_ip = ifd.ifi_ipackets;
 		ip->ift_ib = ifd.ifi_ibytes;
@@ -974,7 +1031,7 @@ loop:
 		ip->ift_ob = ifd.ifi_obytes;
 		ip->ift_oe = ifd.ifi_oerrors;
 		ip->ift_co = ifd.ifi_collisions;
-		ip->ift_dr = ifnet.if_snd.ifq_drops;
+		ip->ift_oq = ifnet.if_snd.ifq_drops;
 		sum->ift_ip += ip->ift_ip;
 		sum->ift_ib += ip->ift_ib;
 		sum->ift_ie += ip->ift_ie;
@@ -982,7 +1039,7 @@ loop:
 		sum->ift_ob += ip->ift_ob;
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
-		sum->ift_dr += ip->ift_dr;
+		sum->ift_oq += ip->ift_oq;
 		off = (u_long)ifnet.if_list.tqe_next;
 	}
 	if (lastif - iftot > 0) {
@@ -1021,7 +1078,7 @@ loop:
 		}
 		if (dflag)
 			printf(" %5llu",
-			    (unsigned long long)(sum->ift_dr - total->ift_dr));
+			    (unsigned long long)(sum->ift_oq - total->ift_oq));
 	}
 	*total = *sum;
 	putchar('\n');
@@ -1090,6 +1147,7 @@ fetchifs(void)
 	struct sockaddr_dl *sdl;
 	static char *buf = NULL;
 	static size_t olen;
+	struct if_data_ext dext;
 	char *next, *lim;
 	char name[IFNAMSIZ];
 	size_t len;
@@ -1105,6 +1163,7 @@ fetchifs(void)
 	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
+	memset(&dext, 0, sizeof(dext));
 	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -1127,6 +1186,8 @@ fetchifs(void)
 			else if (sdl->sdl_nlen > 0)
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
+			if_data_ext_get(name, &dext);
+
 			if (interface != NULL && !strcmp(name, interface)) {
 				strlcpy(ip_cur.ift_name, name,
 				    sizeof(ip_cur.ift_name));
@@ -1137,7 +1198,8 @@ fetchifs(void)
 				ip_cur.ift_ob = ifd->ifi_obytes;
 				ip_cur.ift_oe = ifd->ifi_oerrors;
 				ip_cur.ift_co = ifd->ifi_collisions;
-				ip_cur.ift_dr = ifd->ifi_iqdrops;
+				ip_cur.ift_iq = ifd->ifi_iqdrops;
+				ip_cur.ift_oq = ifd->ifi_iqdrops; /* XXX */
 			}
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
@@ -1147,7 +1209,8 @@ fetchifs(void)
 			sum_cur.ift_ob += ifd->ifi_obytes;
 			sum_cur.ift_oe += ifd->ifi_oerrors;
 			sum_cur.ift_co += ifd->ifi_collisions;
-			sum_cur.ift_dr += ifd->ifi_iqdrops;
+			sum_cur.ift_iq += ifd->ifi_iqdrops;
+			sum_cur.ift_oq += dext.ifi_oqdrops;
 			break;
 		}
 	}
@@ -1161,6 +1224,7 @@ fetchifs(void)
 		ip_cur.ift_ob = ifd->ifi_obytes;
 		ip_cur.ift_oe = ifd->ifi_oerrors;
 		ip_cur.ift_co = ifd->ifi_collisions;
-		ip_cur.ift_dr = ifd->ifi_iqdrops;
+		ip_cur.ift_iq = ifd->ifi_iqdrops;
+		ip_cur.ift_oq = dext.ifi_oqdrops;
 	}
 }
