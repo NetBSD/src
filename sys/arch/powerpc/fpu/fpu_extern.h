@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.11 2022/09/05 00:25:18 rin Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.12 2022/09/05 00:27:16 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,40 +35,10 @@
 #include <sys/signal.h>
 #include <sys/siginfo.h>
 
-struct proc;
-struct fpreg;
 struct trapframe;
-union instr;
-struct fpemu;
-struct fpn;
+struct fpreg;
 
 /* fpu.c */
 bool fpu_emulate(struct trapframe *, struct fpreg *, ksiginfo_t *);
-
-/* fpu_add.c */
-struct fpn *fpu_add(struct fpemu *);
-
-/* fpu_compare.c */
-void fpu_compare(struct fpemu *, int);
-
-/* fpu_div.c */
-struct fpn *fpu_div(struct fpemu *);
-
-/* fpu_explode.c */
-void fpu_explode(struct fpemu *, struct fpn *, int, uint64_t);
-
-/* fpu_implode.c */
-void fpu_implode(struct fpemu *, struct fpn *, int, uint64_t *);
-
-/* fpu_mul.c */
-struct fpn *fpu_mul(struct fpemu *);
-
-/* fpu_sqrt.c */
-struct fpn *fpu_sqrt(struct fpemu *);
-
-/* fpu_subr.c */
-int fpu_shr(struct fpn *, int);
-void fpu_norm(struct fpn *);
-struct fpn *fpu_newnan(struct fpemu *);
 
 #endif /* _POWERPC_FPU_FPU_EXTERN_H_ */
