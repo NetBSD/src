@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.34 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.35 2022/09/05 14:18:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.34 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.35 2022/09/05 14:18:51 riastradh Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -195,6 +195,15 @@ consinit(void)
 		int error;
 #if (NGENFB > 0)
 		if (fbinfo && fbinfo->physaddr > 0) {
+			/*
+			 * If we have a framebuffer address, and
+			 * x86_genfb_cnattach can map it, then
+			 * genfb_cnattach causes genfb_is_console to
+			 * later return true.  device_pci_register will
+			 * use this to set up the device properties for
+			 * a PCI display-class device to notify it that
+			 * it has been selected as the console.
+			 */
 			if (x86_genfb_cnattach() == -1) {
 				initted = 0;	/* defer */
 				return;
