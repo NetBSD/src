@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.101 2022/09/05 02:26:22 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.102 2022/09/05 04:52:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.101 2022/09/05 02:26:22 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.102 2022/09/05 04:52:53 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,25 +309,8 @@ intpr_sysctl(void)
 			n = 5;
 
 		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
-		if (dflag) {
-#if 0
-			char namebuf[1024];
-			int drops;
-
-			/* For sysctl */
-			snprintf(namebuf, sizeof(namebuf),
-			    "net.interfaces.%s.sndq.drops", origname);
-			len = sizeof(drops);
-			if (sysctlbyname(namebuf, &drops, &len, NULL, 0)
-			    == -1) {
-				warnx("'%s' not found", namebuf);
-				dext.ifi_oqdrops = 0;
-			} else
-				dext.ifi_oqdrops = drops;
-#else
+		if (dflag)
 			if_data_ext_get(origname, &dext);
-#endif
-		}
 
 		print_addr(ifindex, rti_info[rtax], rti_info, ifd,
 		    NULL, dflag ? &dext : NULL);
