@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.9 2022/09/02 12:40:49 rin Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.10 2022/09/05 00:24:24 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -56,10 +56,6 @@ void fpu_compare(struct fpemu *, int);
 struct fpn *fpu_div(struct fpemu *);
 
 /* fpu_explode.c */
-int fpu_itof(struct fpn *, u_int);
-int fpu_xtof(struct fpn *, uint64_t);
-int fpu_stof(struct fpn *, u_int);
-int fpu_dtof(struct fpn *, u_int, u_int);
 void fpu_explode(struct fpemu *, struct fpn *, int, uint64_t);
 
 /* fpu_implode.c */
