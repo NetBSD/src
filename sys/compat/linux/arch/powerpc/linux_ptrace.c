@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.33 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.34 2022/09/05 14:14:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.33 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.34 2022/09/05 14:14:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -91,7 +91,6 @@ struct linux_user {
 
 #define LUSR_OFF(member) offsetof(struct linux_user, member)
 #define LUSR_REG_OFF(member) offsetof(struct linux_pt_regs, member)
-#define ISSET(t, f) ((t) & (f))
 
 int linux_ptrace_disabled = 1;	/* bitrotted */
 

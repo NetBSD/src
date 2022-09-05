@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.6 2013/11/04 21:57:26 christos Exp $ */
+/*	$NetBSD: sscom.c,v 1.7 2022/09/05 14:14:42 tsutsui Exp $ */
 
 
 /*
@@ -92,8 +92,6 @@
 #define	INW(x)		*((volatile uint32_t *) ((CONADDR) + (x)))
 #define	OUTB(x, v)	(*((volatile uint8_t *) ((CONADDR) + (x))) = (v))
 #define	OUTW(x, v)	(*((volatile uint32_t *) ((CONADDR) + (x))) = (v))
-
-#define	ISSET(t,f)	((t) & (f))
 
 static long get_com_freq(void);
 

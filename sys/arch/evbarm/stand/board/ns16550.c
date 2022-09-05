@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.4 2008/10/30 06:23:13 cliff Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.5 2022/09/05 14:14:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -53,8 +53,6 @@
 #define	INB(x)		*((volatile uint8_t *) (CONADDR + (x)))
 #define	OUTB(x, v)	*((volatile uint8_t *) (CONADDR + (x))) = (v)
 #endif
-
-#define	ISSET(t,f)	((t) & (f))
 
 #ifndef NS16550_FREQ
 #define	NS16550_FREQ	COM_FREQ

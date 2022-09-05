@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.4 2005/12/11 12:17:34 christos Exp $ */
+/* $NetBSD: extern.h,v 1.5 2022/09/05 14:14:42 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -79,8 +79,6 @@ struct boot_option {
 #define __REG_1(reg)	*((volatile u_int8_t*) (reg))
 #define __REG_2(reg)	*((volatile u_int16_t*) (reg))
 #define __REG_4(reg)	*((volatile u_int32_t*) (reg))
-
-#define ISSET(t, f)	((t) & (f))
 
 #define REGWRITE_1(base, off, val)	\
 		(__REG_1(MIPS_PHYS_TO_KSEG1((u_int32_t) (base) + (off))) \
