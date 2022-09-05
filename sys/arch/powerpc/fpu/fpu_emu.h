@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.9 2022/09/04 13:14:57 rin Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.10 2022/09/05 00:27:16 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,6 +184,8 @@ struct	fpn *fpu_newnan(struct fpemu *);
  * the normal 1-bit mant[0]&FP_1).
  */
 int	fpu_shr(struct fpn *, int);
+
+void	fpu_norm(struct fpn *);
 
 void	fpu_explode(struct fpemu *, struct fpn *, int, uint64_t);
 void	fpu_implode(struct fpemu *, struct fpn *, int, uint64_t *);
