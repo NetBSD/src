@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.5 2009/10/23 00:39:30 snj Exp $	*/
+/*	$NetBSD: epcom.c,v 1.6 2022/09/05 14:14:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -46,8 +46,6 @@
 					(SCADDR + (EP93XX_SYSCON_ ## x)))
 #define	SYSCON_WRITE(x, v)	*((volatile uint32_t *) \
 					(SCADDR + (EP93XX_SYSCON_ ## x))) = (v)
-
-#define	ISSET(t,f)	((t) & (f))
 
 void
 cons_init(void)
