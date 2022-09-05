@@ -1,4 +1,4 @@
-.\"	$NetBSD: pktqueue.9,v 1.1 2022/09/04 21:37:50 thorpej Exp $
+.\"	$NetBSD: pktqueue.9,v 1.2 2022/09/05 09:18:39 wiz Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd September 3, 2022
-.Dt pktqueue 9
+.Dt PKTQUEUE 9
 .Os
 .Sh NAME
 .Nm pktqueue ,
@@ -42,7 +42,7 @@
 .Nm pktq_set_maxlen ,
 .Nm pktq_rps_hash ,
 .Nm pktq_sysctl_setup ,
-.Nm sysctl_pktq_rps_hash_handler ,
+.Nm sysctl_pktq_rps_hash_handler
 .Nd Lockless network protocol input queues with integrated ISR scheduling
 .Sh SYNOPSIS
 .In net/pktqueue.h
@@ -96,7 +96,7 @@ will be established at
 .Dv SOFTINT_NET .
 .It Fn pktq_destroy "pq"
 Destroy the specified packet queue.
-The caller is reponsible for ensuring that no packets remain in the queue
+The caller is responsible for ensuring that no packets remain in the queue
 prior to calling this function.
 .It Fn pktq_enqueue "pq" "m" "hash"
 Enqueue the packet
@@ -127,7 +127,7 @@ It performs a
 operation on all packet queues.
 .It Fn pktq_flush "pq"
 This function removes and frees all packets in the specified queue.
-The caller is reponsible for ensuring that no calls to
+The caller is responsible for ensuring that no calls to
 .Fn pktq_enqueue
 or
 .Fn pktq_dequeue
@@ -204,8 +204,8 @@ cast to
 .Pc .
 .El
 .Sh CODE REFERENCES
-The 
-.Nm 
+The
+.Nm
 interface is implemented within the file
 .Pa net/pktqueue.c .
 .Pp
@@ -247,13 +247,13 @@ may result in re-ordering the delivery of packets currently in
 the queue.
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
+.Xr sysctl 8 ,
 .Xr kpreempt 9 ,
 .Xr pcq 9 ,
 .Xr softintr 9 ,
-.Xr sysctl 8 ,
 .Xr sysctl 9
 .Sh HISTORY
-The 
-.Nm 
+The
+.Nm
 interface first appeared in
 .Nx 7.0 .
