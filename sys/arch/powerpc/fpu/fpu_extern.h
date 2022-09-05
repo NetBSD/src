@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.10 2022/09/05 00:24:24 rin Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.11 2022/09/05 00:25:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ struct fpn;
 
 /* fpu.c */
 bool fpu_emulate(struct trapframe *, struct fpreg *, ksiginfo_t *);
-int fpu_execute(struct trapframe *, struct fpemu *, union instr *);
 
 /* fpu_add.c */
 struct fpn *fpu_add(struct fpemu *);

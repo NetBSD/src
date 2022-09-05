@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.53 2022/09/04 13:32:14 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.54 2022/09/05 00:25:18 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.53 2022/09/04 13:32:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.54 2022/09/05 00:25:18 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -166,6 +166,8 @@ int fpe_debug = 0;
 #ifdef DDB
 extern vaddr_t opc_disasm(vaddr_t loc, int opcode);
 #endif
+
+static int fpu_execute(struct trapframe *, struct fpemu *, union instr *);
 
 #ifdef DEBUG
 /*
@@ -288,7 +290,7 @@ success:
  * Note that we do not catch all illegal opcodes, so you can, for instance,
  * multiply two integers this way.
  */
-int
+static int
 fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 {
 	struct fpn *fp;
