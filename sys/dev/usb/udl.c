@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.31 2022/09/06 02:26:11 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.32 2022/09/06 02:28:35 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.31 2022/09/06 02:26:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.32 2022/09/06 02:28:35 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1869,7 +1869,9 @@ udl_startstop(struct udl_softc *sc, bool stop)
 {
 	mutex_enter(&sc->sc_thread_mtx);
 	sc->sc_thread_stop = stop;
-	if (!stop)
+	if (!stop) {
+		sc->sc_clear = true;
 		cv_broadcast(&sc->sc_thread_cv);
+	}
 	mutex_exit(&sc->sc_thread_mtx);
 }
