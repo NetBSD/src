@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_openpt.3,v 1.6 2011/05/05 07:36:44 wiz Exp $
+.\" $NetBSD: posix_openpt.3,v 1.7 2022/09/06 22:54:41 gutteridge Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 25, 2004
+.Dd September 6, 2022
 .Dt POSIX_OPENPT 3
 .Os
 .Sh NAME
@@ -51,6 +51,9 @@ The
 argument has the same meaning as in the
 .Xr open 2
 call.
+However, the value of
+.Fa oflag
+is ignored; it exists for compatibility reasons only.
 .Sh RETURN VALUES
 If successful,
 .Fn posix_openpt
@@ -59,6 +62,19 @@ pointing to the master pseudo-terminal device.
 Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
+.Pp
+Note that unlike implementations on some other operating systems,
+.Fn posix_openpt
+does not return
+.Er EINVAL
+if the value of
+.Fa oflag
+would be deemed invalid, instead it is simply ignored.
+This means it is not possible to dynamically test which
+.Xr open 2
+flags are possible to set, and apply a fallback if
+.Er EINVAL
+is received.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr open 2 ,
