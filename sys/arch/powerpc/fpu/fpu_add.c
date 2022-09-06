@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.6 2022/09/01 06:10:58 rin Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.7 2022/09/06 23:04:08 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.6 2022/09/01 06:10:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.7 2022/09/06 23:04:08 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -93,13 +93,15 @@ fpu_add(struct fpemu *fe)
 	DUMPFPN(FPE_REG, x);
 	DUMPFPN(FPE_REG, y);
 	DPRINTF(FPE_REG, ("=>\n"));
-	ORDER(x, y);
-	if (ISNAN(y)) {
-		if (ISSNAN(y))
+	if (ISNAN(x) || ISNAN(y)) {
+		if (ISSNAN(x) || ISSNAN(y))
 			fe->fe_cx |= FPSCR_VXSNAN;
+		if (ISNAN(x))
+			y = x;
 		DUMPFPN(FPE_REG, y);
 		return (y);
 	}
+	ORDER(x, y);
 	if (ISINF(y)) {
 		if (ISINF(x) && x->fp_sign != y->fp_sign) {
 			fe->fe_cx |= FPSCR_VXISI;
