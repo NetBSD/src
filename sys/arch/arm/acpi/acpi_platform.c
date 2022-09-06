@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.32 2021/10/24 11:58:23 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.33 2022/09/06 11:55:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.32 2021/10/24 11:58:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.33 2022/09/06 11:55:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.32 2021/10/24 11:58:23 jmcneill 
 #include <arm/acpi/acpi_table.h>
 
 #include <libfdt.h>
-
-#define	ACPI_DBG2_16550_GAS			0x0012
 
 #define	SPCR_BAUD_DEFAULT			0
 #define	SPCR_BAUD_9600				3
@@ -203,7 +201,7 @@ acpi_platform_attach_uart(ACPI_TABLE_SPCR *spcr)
 #if NCOM > 0
 	case ACPI_DBG2_16550_COMPATIBLE:
 	case ACPI_DBG2_16550_SUBSET:
-	case ACPI_DBG2_16550_GAS:
+	case ACPI_DBG2_16550_WITH_GAS:
 		memset(&dummy_bsh, 0, sizeof(dummy_bsh));
 		switch (spcr->SerialPort.BitWidth) {
 		case 8:
