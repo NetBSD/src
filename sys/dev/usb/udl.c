@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.32 2022/09/06 02:28:35 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.33 2022/09/06 02:31:08 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.32 2022/09/06 02:28:35 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.33 2022/09/06 02:31:08 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1541,7 +1541,9 @@ udl_cmd_send_async(struct udl_softc *sc)
 	mutex_enter(&sc->sc_mtx);
 	usbd_setup_xfer(cmdq->cq_xfer, cmdq, cmdq->cq_buf,
 	    len, 0, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
+	mutex_exit(&sc->sc_mtx);
 	error = usbd_transfer(cmdq->cq_xfer);
+	mutex_enter(&sc->sc_mtx);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
 		aprint_error_dev(sc->sc_dev, "%s: %s!\n", __func__,
 		    usbd_errstr(error));
