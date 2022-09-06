@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.5 2019/09/14 15:24:23 maxv Exp $	*/
+/*	$NetBSD: udl.h,v 1.6 2022/09/06 02:20:17 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -111,6 +111,7 @@ struct udl_softc {
 	device_t		 sc_wsdisplay;
 	u_int			 sc_mode;
 	u_int			 sc_blank;
+	bool			 sc_clear;
 	uint8_t			 sc_nscreens;
 
 	uint8_t			*sc_fbmem;	/* framebuffer for X11 */
