@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.92 2022/09/05 14:18:51 riastradh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.93 2022/09/06 01:44:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.92 2022/09/05 14:18:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.93 2022/09/06 01:44:24 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1249,8 +1249,13 @@ device_pci_register(device_t dev, void *aux)
 			 * framebuffer address?  Tough...but this has
 			 * probably never worked.
 			 */
+#if NGENFB > 0			    
 			prop_dictionary_set_bool(dict, "is_console",
 			    genfb_is_console());
+#else
+			prop_dictionary_set_bool(dict, "is_console",
+			    true);
+#endif
 
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
