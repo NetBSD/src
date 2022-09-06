@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.8 2022/09/04 22:34:58 rin Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.9 2022/09/06 23:02:36 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.8 2022/09/04 22:34:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.9 2022/09/06 23:02:36 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -209,8 +209,8 @@ fpu_newnan(struct fpemu *fe)
 	fp = &fe->fe_f3;
 	fp->fp_class = FPC_QNAN;
 	fp->fp_sign = 0;
-	fp->fp_mant[0] = FP_1 - 1;
-	fp->fp_mant[1] = fp->fp_mant[2] = fp->fp_mant[3] = ~0;
+	fp->fp_mant[0] = FP_QUIETBIT;
+	fp->fp_mant[1] = fp->fp_mant[2] = fp->fp_mant[3] = 0;
 	DUMPFPN(FPE_REG, fp);
 	return (fp);
 }
