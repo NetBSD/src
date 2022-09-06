@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.30 2022/09/06 02:23:50 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.31 2022/09/06 02:26:11 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.30 2022/09/06 02:23:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.31 2022/09/06 02:26:11 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1833,7 +1833,8 @@ udl_update_thread(void *v)
 			kthread_exit(0);
 		}
 
-		if (sc->sc_thread_stop == true || sc->sc_fbmem == NULL)
+		if (sc->sc_thread_stop == true || sc->sc_fbmem == NULL ||
+		    sc->sc_fbmem_prev == NULL || sc->sc_width <= 0)
 			goto thread_wait;
 
 		if (sc->sc_clear == true)
