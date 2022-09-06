@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.4 2022/04/04 19:33:45 andvar Exp $
+#	$NetBSD: README,v 1.5 2022/09/06 17:50:18 phx Exp $
 
 BUILD INSTRUCTIONS
 
@@ -9,7 +9,7 @@ the steps necessary to rebuild LoadBSD with an AmigaOS gcc. These instructions
 do only apply for LoadBSD versions using the loadfile() interface. Previous
 version do only require getopt.c and reboot.h.
 
-Note: Its not possible to build LoadBSD with the native NetBSD compiler!
+Note: It is not possible to build LoadBSD with the native NetBSD compiler!
       LoadBSD is an *AmigaOS* program and must be built with an AmigaOS
       compiler. Of course, a properly setup cross-compiler does work.
 
@@ -103,21 +103,6 @@ Good luck!
 +#endif /* ! false */
 +
  #endif /* ! _AMIGA_LOADFILE_MACHDEP_H_ */
---cut--
-
-      Makefile:
---cut--
-TARGET	= loadbsd
-
-CC	= gcc -m68020 -Wa,-m68030 -fbaserel
-CFLAGS	= -D_STANDALONE -I./include -O -fomit-frame-pointer -msmall-code
-LDFLAGS	= -noixemul
-LDLIBS	=
-
-OBJS	= loadbsd.o loadfile.o loadfile_aout.o loadfile_elf32.o getopt.o
-
-$(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 --cut--
 
       include/inttypes.h:

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.36 2019/05/29 02:34:18 msaitoh Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.37 2022/09/06 17:50:18 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <err.h>
 
 #include <exec/memory.h>
 #include <exec/execbase.h>
@@ -101,8 +100,12 @@
  *		Fixed printf() statements.
  *		Ansified.
  *	3.0	01/16/03 - ELF support through loadfile() interface.
+ *	3.1	07/10/11 - Added a serial console flag
+ *		11/18/15 - (gnikl) Added detection of A600.
+ *		Fix handling of multiple -n options.
+ *	3.2	09/02/22 - Make it compile with modern AmigaOS gcc ports.
  */
-static const char _version[] = "$VER: LoadBSD 3.0 (16.1.2003)";
+static const char _version[] = "$VER: LoadBSD 3.2 (02.09.2022)";
 
 /*
  * Kernel startup interface version
@@ -130,6 +133,7 @@ struct boot_memlist {
 struct boot_memlist memlist;
 struct boot_memlist *kmemlist;
 
+int getopt(int, char * const [], const char *);
 void get_mem_config (void **, u_long *, u_long *);
 void get_cpuid (void);
 void get_eclock (void);
@@ -159,6 +163,9 @@ long amiga_flags;
 char *program_name;
 u_char *kp;
 u_long kpsz;
+
+static void err(int, const char *fmt, ...);
+
 
 void
 exit_func(void)
@@ -246,8 +253,10 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			i = atoi(optarg);
-			if (i >= 0 && i <= 3)
+			if (i >= 0 && i <= 3) {
+				amiga_flags &= ~(3 << 1);
 				amiga_flags |= i << 1;
+			}
 			else
 				err(20, "-n option must be 0, 1, 2, or 3");
 			break;
@@ -621,8 +630,11 @@ get_cpuid(void)
 	else if (FindResident("A3000 Bonus") || FindResident("A3000 bonus"))
 		cpuid |= 3000 << 16;
 	else if (OpenResource("card.resource")) {
-		/* Test for AGA? */
-		cpuid |= 1200 << 16;
+		UBYTE alicerev = *((UBYTE *)0xdff004) & 0x6f;
+		if (alicerev == 0x22 || alicerev == 0x23)
+			cpuid |= 1200 << 16;	/* AGA + PCMCIA = A1200 */
+		else
+			cpuid |= 600 << 16;	/* noAGA + PCMCIA = A600 */
 	} else if (OpenResource("draco.resource")) {
 		cpuid |= (32000 | DRACOREVISION) << 16;
 	}
@@ -846,42 +858,42 @@ usage(void)
 void
 verbose_usage(void)
 {
-	fprintf(stderr, "
-NAME
-\t%s - loads NetBSD from amiga dos.
-SYNOPSIS
-\t%s [-abhkpstADSVZ] [-c machine] [-m mem] [-n flags] [-I sync-inhibit] kernel
-OPTIONS
-\t-a  Boot up to multiuser mode.
-\t-A  Use AGA display mode, if available.
-\t-b  Ask for which root device.
-\t    Its possible to have multiple roots and choose between them.
-\t-c  Set machine type. [e.g 3000; use 32000+N for DraCo rev. N]
-\t-C  Use Serial Console.
-\t-D  Enter debugger
-\t-h  This help message.
-\t-I  Inhibit sync negotiation. Option value is bit-encoded targets.
-\t-k  Reserve the first 4M of fast mem [Some one else
-\t    is going to have to answer what that it is used for].
-\t-m  Tweak amount of available memory, for finding minimum amount
-\t    of memory required to run. Sets fastmem size to specified
-\t    size in Kbytes.
-\t-n  Enable multiple non-contiguous memory: value = 0 (disabled),
-\t    1 (two segments), 2 (all avail segments), 3 (same as 2?).
-\t-p  Use highest priority fastmem segement instead of the largest
-\t    segment. The higher priority segment is usually faster
-\t    (i.e. 32 bit memory), but some people have smaller amounts
-\t    of 32 bit memory.
-\t-q  Boot up in quiet mode.
-\t-s  Boot up in singleuser mode (default).
-\t-S  Include kernel symbol table.
-\t-t  This is a *test* option.  It prints out the memory
-\t    list information being passed to the kernel and also
-\t    exits without actually starting NetBSD.
-\t-v  Boot up in verbose mode.
-\t-V  Version of loadbsd program.
-\t-Z  Force kernel load to chipmem.
-HISTORY
+	fprintf(stderr, "\n\
+NAME\n\
+\t%s - loads NetBSD from amiga dos.\n\
+SYNOPSIS\n\
+\t%s [-abhkpstADSVZ] [-c machine] [-m mem] [-n flags] [-I sync-inhibit] kernel\n\
+OPTIONS\n\
+\t-a  Boot up to multiuser mode.\n\
+\t-A  Use AGA display mode, if available.\n\
+\t-b  Ask for which root device.\n\
+\t    Its possible to have multiple roots and choose between them.\n\
+\t-c  Set machine type. [e.g 3000; use 32000+N for DraCo rev. N]\n\
+\t-C  Use Serial Console.\n\
+\t-D  Enter debugger\n\
+\t-h  This help message.\n\
+\t-I  Inhibit sync negotiation. Option value is bit-encoded targets.\n\
+\t-k  Reserve the first 4M of fast mem [Some one else\n\
+\t    is going to have to answer what that it is used for].\n\
+\t-m  Tweak amount of available memory, for finding minimum amount\n\
+\t    of memory required to run. Sets fastmem size to specified\n\
+\t    size in Kbytes.\n\
+\t-n  Enable multiple non-contiguous memory: value = 0 (disabled),\n\
+\t    1 (two segments), 2 (all avail segments), 3 (same as 2?).\n\
+\t-p  Use highest priority fastmem segement instead of the largest\n\
+\t    segment. The higher priority segment is usually faster\n\
+\t    (i.e. 32 bit memory), but some people have smaller amounts\n\
+\t    of 32 bit memory.\n\
+\t-q  Boot up in quiet mode.\n\
+\t-s  Boot up in singleuser mode (default).\n\
+\t-S  Include kernel symbol table.\n\
+\t-t  This is a *test* option.  It prints out the memory\n\
+\t    list information being passed to the kernel and also\n\
+\t    exits without actually starting NetBSD.\n\
+\t-v  Boot up in verbose mode.\n\
+\t-V  Version of loadbsd program.\n\
+\t-Z  Force kernel load to chipmem.\n\
+HISTORY\n\
 \tThis version supports Kernel version 720 +\n",
       program_name, program_name);
       exit(1);
@@ -895,7 +907,7 @@ _Vdomessage(int doerrno, const char *fmt, va_list args)
 		vfprintf(stderr, fmt, args);
 		fprintf(stderr, ": ");
 	}
-	if (doerrno && errno < sys_nerr) {
+	if (doerrno) {
 		fprintf(stderr, "%s", strerror(errno));
 	}
 	fprintf(stderr, "\n");

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2015/11/11 16:08:52 phx Exp $
+#	$NetBSD: Makefile,v 1.4 2022/09/06 17:50:18 phx Exp $
 #
 TARGET	= loadbsd
 
-CC	= gcc
-CFLAGS	= -D_STANDALONE -I./include -O -fomit-frame-pointer -msmall-code
+sdkprefix = 
+CC	= $(sdkprefix)gcc
+CFLAGS	= -D_STANDALONE -DNO_MID_CHECK -I./include -Os -fomit-frame-pointer -msmall-code -m68020
 LDFLAGS	= -noixemul
 LDLIBS	=
 
