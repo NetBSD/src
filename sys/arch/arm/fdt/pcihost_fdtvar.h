@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdtvar.h,v 1.4 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdtvar.h,v 1.5 2022/09/06 11:55:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -47,6 +47,8 @@ enum pcihost_type {
 	PCIHOST_ECAM,
 };
 
+struct pcihost_msi_handlers;
+
 struct pcih_bus_space {
 	struct bus_space	bst;
 
@@ -85,6 +87,10 @@ struct pcihost_softc {
 
 	const u_int		*sc_pci_ranges;
 	u_int			sc_pci_ranges_cells;
+
+	kmutex_t 		sc_msi_handlers_mutex;
+	LIST_HEAD(, pcihost_msi_handler)
+				sc_msi_handlers;
 };
 
 void	pcihost_init2(struct pcihost_softc *);
