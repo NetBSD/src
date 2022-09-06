@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.29 2022/09/06 02:20:17 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.30 2022/09/06 02:23:50 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.29 2022/09/06 02:20:17 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.30 2022/09/06 02:23:50 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1855,8 +1855,7 @@ udl_update_thread(void *v)
 		}
 		count++;
 
-
-		kpause("udlslp", false, (40 * hz)/1000 + 1, &sc->sc_thread_mtx);
+		kpause("udlslp", false, 1, &sc->sc_thread_mtx);
 		continue;
 
 thread_wait:
