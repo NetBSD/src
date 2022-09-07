@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.73 2022/09/07 00:29:23 khorben Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.74 2022/09/07 00:44:07 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.73 2022/09/07 00:29:23 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.74 2022/09/07 00:44:07 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -506,7 +506,15 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_index_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_pc   = pa->pa_pc;
-	sc->sc_dmat = pa->pa_dmat;
+
+	/* EMU10K1 can only address 31 bits (2GB) */
+	if (bus_dmatag_subregion(pa->pa_dmat, 0, ((uint32_t)1 << 31) - 1,
+	    &(sc->sc_dmat), BUS_DMA_NOWAIT) != 0) {
+		aprint_error_dev(self,
+		    "WARNING: failed to restrict dma range,"
+		    " falling back to parent bus dma range\n");
+		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE |
