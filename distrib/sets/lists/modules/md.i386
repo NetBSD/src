@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.95 2022/09/07 00:29:23 khorben Exp $
+# $NetBSD: md.i386,v 1.96 2022/09/07 11:37:25 martin Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -86,8 +86,8 @@
 ./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/emdtv				modules-base-kernel	kmod
 ./@MODULEDIR@/emdtv/emdtv.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/emuxki				modules-base-kernel	kmod
-./@MODULEDIR@/emuxki/emuxki.kmod		modules-base-kernel	kmod
+#./@MODULEDIR@/emuxki				modules-base-kernel	kmod
+#./@MODULEDIR@/emuxki/emuxki.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/est				modules-base-kernel	kmod
 ./@MODULEDIR@/est/est.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/exec_aout				modules-base-kernel	kmod
