@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.78 2022/05/24 15:55:19 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.79 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ IDTVEC(handle_x2apic_ipi)
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 	jmp	1f
@@ -131,7 +131,7 @@ IDTVEC_END(handle_x2apic_ipi)
 IDTVEC(handle_lapic_ipi)
 	movq	_C_LABEL(local_apic_va),%rbx
 	movl	$0,LAPIC_EOI(%rbx)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 	jmp	1f
@@ -139,13 +139,13 @@ IDTVEC_END(handle_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movb	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
 	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
+	btsq	$LIR_IPI,CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ipi)
 
@@ -223,7 +223,7 @@ IDTVEC(handle_x2apic_ltimer)
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
 	jmp	1f
@@ -231,7 +231,7 @@ IDTVEC_END(handle_x2apic_ltimer)
 IDTVEC(handle_lapic_ltimer)
 	movq	_C_LABEL(local_apic_va),%rbx
 	movl	$0,LAPIC_EOI(%rbx)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
 	jmp	1f
@@ -239,7 +239,7 @@ IDTVEC_END(handle_lapic_ltimer)
 IDTVEC(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
-	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
+	movb	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
 	pushq	%rbx
 	movq	%rsp,%rsi
@@ -247,7 +247,7 @@ IDTVEC(resume_lapic_ltimer)
 	call	_C_LABEL(lapic_clockintr)
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
+	btsq	$LIR_TIMER,CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ltimer)
 
@@ -279,7 +279,7 @@ IDTVEC(recurse_hyperv_hypercall)
 	jmp	1f
 IDTVEC_END(recurse_hyperv_hypercall)
 IDTVEC(handle_hyperv_hypercall)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
 	jmp	1f
@@ -287,14 +287,14 @@ IDTVEC_END(handle_hyperv_hypercall)
 IDTVEC(resume_hyperv_hypercall)
 1:
 	incl	CPUVAR(IDEPTH)
-	movl	$IPL_NET,CPUVAR(ILEVEL)
+	movb	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	pushq	%rbx
 	movq	%rsp,%rsi
 	call	_C_LABEL(hyperv_hypercall_intr)
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_HV),CPUVAR(IPENDING)
+	btsq	$LIR_HV,CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_hyperv_hypercall)
 
@@ -380,14 +380,14 @@ IDTVEC(handle_ ## name ## num)						;\
 	testq	%r14,%r14						;\
 	jz	9f			/* stray */			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
-	movl	CPUVAR(ILEVEL),%r13d					;\
+	movzbl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
 	incq	CPUVAR(NINTR)		/* statistical info */		;\
 	incq	IS_EVCNT(%r14)						;\
 1:									\
 	pushq	%r13			/* save for Xdoreti */		;\
-	movl	%ebx,CPUVAR(ILEVEL)					;\
+	movb	%bl,CPUVAR(ILEVEL)					;\
 	sti								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
@@ -399,7 +399,7 @@ IDTVEC(handle_ ## name ## num)						;\
 	jle	7f							;\
 	movq	%rsp,%rsi						;\
 	movq	IH_ARG(%rbx),%rdi					;\
-	movl	%r12d,CPUVAR(ILEVEL)					;\
+	movb	%r12b,CPUVAR(ILEVEL)					;\
 	call	*IH_FUN(%rbx)		/* call it */			;\
 	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
@@ -414,19 +414,19 @@ IDTVEC(handle_ ## name ## num)						;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
 	cli								;\
-	orl	$(1 << num),CPUVAR(IPENDING)				;\
+	btsq	$num,CPUVAR(IPENDING)					;\
 8:	level_mask(num)							;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 12:									\
 	cli								;\
-	orl	$(1 << num),CPUVAR(IMASKED)				;\
-	btrl	$(num),CPUVAR(IPENDING)					;\
+	btsq	$num,CPUVAR(IMASKED)					;\
+	btrq	$(num),CPUVAR(IPENDING)					;\
 	jmp	8b							;\
 10:									\
 	cli								;\
-	orl	$(1 << num),CPUVAR(IPENDING)				;\
+	btsq	$num,CPUVAR(IPENDING)					;\
 	level_mask(num)							;\
 	late_ack(num)							;\
 	INTRFASTEXIT							;\
@@ -484,137 +484,69 @@ INTRSTUB(legacy,15,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
 
 #if NIOAPIC > 0
 
-INTRSTUB(ioapic_edge,0,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,1,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,2,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,3,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,4,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,5,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,6,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,7,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,8,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,9,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,10,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,11,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,12,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,13,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,14,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,15,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,16,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,17,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,18,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,19,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,20,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,21,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,22,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,23,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,24,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,25,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,26,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,27,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,28,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,29,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,30,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,31,voidop,ioapic_asm_ack,voidop,voidop,voidop)
+#define INTRSTUB_56(name,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,0,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,1,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,2,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,3,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,4,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,5,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,6,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,7,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,8,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,9,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,10,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,11,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,12,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,13,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,14,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,15,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,16,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,17,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,18,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,19,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,20,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,21,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,22,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,23,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,24,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,25,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,26,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,27,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,28,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,29,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,30,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,31,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,32,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,33,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,34,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,35,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,36,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,37,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,38,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,39,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,40,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,41,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,42,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,43,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,44,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,45,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,46,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,47,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,48,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,49,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,50,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,51,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,52,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,53,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,54,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,55,early_ack,late_ack,mask,unmask,level_mask)
 
-INTRSTUB(ioapic_level,0,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,1,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,2,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,3,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,4,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,5,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,6,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,7,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,8,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,9,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,10,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,11,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,12,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,13,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,14,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,15,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,16,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,17,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,18,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,19,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,20,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,21,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,22,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,23,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,24,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,25,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,26,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,27,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,28,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,29,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,30,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,31,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
+INTRSTUB_56(ioapic_edge,voidop,ioapic_asm_ack,voidop,voidop,voidop)
+INTRSTUB_56(ioapic_level,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
-INTRSTUB(x2apic_edge,0,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,1,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,2,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,3,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,4,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,5,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,6,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,7,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,8,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,9,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,10,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,11,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,12,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,13,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,14,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,15,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,16,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,17,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,18,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,19,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,20,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,21,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,22,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,23,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,24,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,25,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,26,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,27,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,28,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,29,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,30,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,31,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-
-INTRSTUB(x2apic_level,0,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,1,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,2,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,3,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,4,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,5,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,6,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,7,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,8,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,9,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,10,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,11,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,12,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,13,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,14,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,15,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,16,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,17,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,18,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,19,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,20,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,21,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,22,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,23,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,24,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,25,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,26,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,27,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,28,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,29,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,30,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
+INTRSTUB_56(x2apic_edge,voidop,x2apic_asm_ack,voidop,voidop,voidop)
+INTRSTUB_56(x2apic_level,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
@@ -651,9 +583,9 @@ LABEL(name ## _stubs)				; \
 END(name ## _stubs)
 
 /*
- * Create an array of structs intrstub (32 entries).
+ * Create an array of structs intrstub (56 entries).
  */
-#define INTRSTUB_ARRAY_32(name) 		; \
+#define INTRSTUB_ARRAY_56(name) 		; \
 	.type _C_LABEL(name ## _stubs), @object	; \
 	.align 8				; \
 LABEL(name ## _stubs)				; \
@@ -689,6 +621,30 @@ LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 29)		; \
 	INTRSTUB_ENTRY(name ## 30)		; \
 	INTRSTUB_ENTRY(name ## 31)		; \
+	INTRSTUB_ENTRY(name ## 32)		; \
+	INTRSTUB_ENTRY(name ## 33)		; \
+	INTRSTUB_ENTRY(name ## 34)		; \
+	INTRSTUB_ENTRY(name ## 35)		; \
+	INTRSTUB_ENTRY(name ## 36)		; \
+	INTRSTUB_ENTRY(name ## 37)		; \
+	INTRSTUB_ENTRY(name ## 38)		; \
+	INTRSTUB_ENTRY(name ## 39)		; \
+	INTRSTUB_ENTRY(name ## 40)		; \
+	INTRSTUB_ENTRY(name ## 41)		; \
+	INTRSTUB_ENTRY(name ## 42)		; \
+	INTRSTUB_ENTRY(name ## 43)		; \
+	INTRSTUB_ENTRY(name ## 44)		; \
+	INTRSTUB_ENTRY(name ## 45)		; \
+	INTRSTUB_ENTRY(name ## 46)		; \
+	INTRSTUB_ENTRY(name ## 47)		; \
+	INTRSTUB_ENTRY(name ## 48)		; \
+	INTRSTUB_ENTRY(name ## 49)		; \
+	INTRSTUB_ENTRY(name ## 50)		; \
+	INTRSTUB_ENTRY(name ## 51)		; \
+	INTRSTUB_ENTRY(name ## 52)		; \
+	INTRSTUB_ENTRY(name ## 53)		; \
+	INTRSTUB_ENTRY(name ## 54)		; \
+	INTRSTUB_ENTRY(name ## 55)		; \
 END(name ## _stubs)
 
 #endif /* !XENPV */
@@ -707,7 +663,7 @@ IDTVEC(resume_ ## name ## sir)						\
 	movq	CPUVAR(ISOURCES) + (sir) * 8,%r14			;\
 1:									\
 	pushq	%r13							;\
-	movl	$level,CPUVAR(ILEVEL)					;\
+	movb	$level,CPUVAR(ILEVEL)					;\
 	STI(si)								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
@@ -772,7 +728,7 @@ ENTRY(hypervisor_callback)
 	pushq	$T_ASTFLT
 	INTRENTRY
 IDTVEC(handle_hypervisor_callback)
-	movl    CPUVAR(ILEVEL),%edi
+	movzbl	CPUVAR(ILEVEL),%rdi
 	pushq   %rdi /* for Xdoreti */
 	incl	CPUVAR(IDEPTH)
 	movq	%rsp,%rdi
@@ -822,10 +778,10 @@ END(failsafe_callback)
 INTRSTUB_ARRAY_16(legacy)
 
 #if NIOAPIC > 0
-INTRSTUB_ARRAY_32(ioapic_edge)
-INTRSTUB_ARRAY_32(ioapic_level)
+INTRSTUB_ARRAY_56(ioapic_edge)
+INTRSTUB_ARRAY_56(ioapic_level)
 
-INTRSTUB_ARRAY_32(x2apic_edge)
-INTRSTUB_ARRAY_32(x2apic_level)
+INTRSTUB_ARRAY_56(x2apic_edge)
+INTRSTUB_ARRAY_56(x2apic_level)
 #endif
 #endif /* !XENPV */

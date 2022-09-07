@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.88 2022/05/24 15:55:19 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.89 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.88 2022/05/24 15:55:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.89 2022/09/07 00:40:18 knakahara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -165,7 +165,7 @@ IDTVEC(intr_x2apic_ipi)
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 	jmp	1f
@@ -176,7 +176,7 @@ IDTVEC(intr_lapic_ipi)
 	INTRENTRY
 	movl	_C_LABEL(local_apic_va),%ebx
 	movl	$0,LAPIC_EOI(%ebx)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 IDTVEC_END(intr_lapic_ipi)
@@ -184,13 +184,13 @@ IDTVEC(resume_lapic_ipi)
 1:
 	pushl	%ebx
 	IDEPTH_INCR
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movb	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
 	call	_C_LABEL(x86_ipi_handler)
 	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
+	btsl	$(LIR_IPI - 32),CPUVAR(IPENDING)+4
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ipi)
 
@@ -290,7 +290,7 @@ IDTVEC(intr_x2apic_ltimer)
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
 	jmp	1f
@@ -301,7 +301,7 @@ IDTVEC(intr_lapic_ltimer)
 	INTRENTRY
 	movl	_C_LABEL(local_apic_va),%ebx
 	movl	$0,LAPIC_EOI(%ebx)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
 IDTVEC_END(intr_lapic_ltimer)
@@ -309,7 +309,7 @@ IDTVEC(resume_lapic_ltimer)
 1:
 	pushl	%ebx
 	IDEPTH_INCR
-	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
+	movb	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
 	pushl	$0
 	call	_C_LABEL(lapic_clockintr)
@@ -317,7 +317,7 @@ IDTVEC(resume_lapic_ltimer)
 	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
+	btsl	$(LIR_TIMER - 32),CPUVAR(IPENDING)+4
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ltimer)
 
@@ -337,7 +337,7 @@ IDTVEC(intr_hyperv_hypercall)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
 	jmp	1f
@@ -346,7 +346,7 @@ IDTVEC(resume_hyperv_hypercall)
 1:
 	pushl	%ebx
 	IDEPTH_INCR
-	movl	$IPL_NET,CPUVAR(ILEVEL)
+	movb	$IPL_NET,CPUVAR(ILEVEL)
 	sti
 	pushl	%esp
 	call	_C_LABEL(hyperv_hypercall_intr)
@@ -354,7 +354,7 @@ IDTVEC(resume_hyperv_hypercall)
 	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
-	orl	$(1 << LIR_HV),CPUVAR(IPENDING)
+	btsl	$(LIR_HV - 32),CPUVAR(IPENDING)+4
 	INTRFASTEXIT
 IDTVEC_END(resume_hyperv_hypercall)
 #endif	/* NHYPERV > 0 */
@@ -370,7 +370,7 @@ IDTVEC_END(resume_hyperv_hypercall)
  * for specific PICs.
  */
 
-#define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+#define	INTRSTUB1(name, num, sub, off, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subl	$4,%esp							;\
@@ -394,7 +394,7 @@ IDTVEC(intr_ ## name ## num)						;\
 	testl	%ebp,%ebp						;\
 	jz	9f			/* stray */			;\
 	movl	IS_MAXLEVEL(%ebp),%ebx					;\
-	movl	CPUVAR(ILEVEL),%esi					;\
+	movzbl	CPUVAR(ILEVEL),%esi					;\
 	cmpl	%ebx,%esi						;\
 	jae	10f			/* currently masked; hold it */	;\
 	addl	$1,CPUVAR(NINTR)	/* statistical info */		;\
@@ -403,7 +403,7 @@ IDTVEC(intr_ ## name ## num)						;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
 	pushl	%esi			/* if_ppi */			;\
-	movl	%ebx,CPUVAR(ILEVEL)					;\
+	movb	%bl,CPUVAR(ILEVEL)					;\
 	/* switch stack if necessary, and push a ptr to our intrframe */ \
 	IDEPTH_INCR							;\
 	sti								;\
@@ -411,14 +411,14 @@ IDTVEC(intr_ ## name ## num)						;\
 	cmpl	$0,IS_MASK_COUNT(%ebp)	/* source currently masked? */	;\
 	jne	12f			/* yes, hold it */		;\
 6:									\
-	movl	IH_LEVEL(%ebx),%edi					;\
-	cmpl	%esi,%edi						;\
+	movl	IH_LEVEL(%ebx),%eax					;\
+	cmpl	%esi,%eax						;\
 	jle	7f							;\
 	pushl	IH_ARG(%ebx)						;\
-	movl	IH_FUN(%ebx),%eax					;\
-	movl	%edi,CPUVAR(ILEVEL)					;\
+	movl	IH_FUN(%ebx),%edi					;\
+	movb	%al,CPUVAR(ILEVEL)					;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
-	call	*%eax			/* call it */			;\
+	call	*%edi			/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
@@ -430,17 +430,17 @@ IDTVEC(intr_ ## name ## num)						;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
 	cli								;\
-	orl	$(1 << num),CPUVAR(IPENDING)				;\
+	btsl	$(num - sub),CPUVAR(IPENDING) + off			;\
 8:	level_mask(num)							;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 12:									\
 	cli								;\
-	orl	$(1 << num),CPUVAR(IMASKED)				;\
-	btrl	$(num),CPUVAR(IPENDING)					;\
+	btsl	$(num - sub),CPUVAR(IMASKED) + off			;\
+	btrl	$(num - sub),CPUVAR(IPENDING) + off			;\
 	jmp	8b							;\
 10:									\
-	orl	$(1 << num),CPUVAR(IPENDING)				;\
+	btsl	$(num - sub),CPUVAR(IPENDING) + off			;\
 	level_mask(num)							;\
 	late_ack(num)							;\
 	INTRFASTEXIT							;\
@@ -451,6 +451,11 @@ IDTVEC(intr_ ## name ## num)						;\
 	addl	$4,%esp							;\
 	INTRFASTEXIT							;\
 IDTVEC_END(intr_ ## name ## num)
+
+#define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+    INTRSTUB1(name, num, 0, 0, early_ack, late_ack, mask, unmask, level_mask)
+#define	INTRSTUB32(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+    INTRSTUB1(name, num, 32, 4, early_ack, late_ack, mask, unmask, level_mask)
 
 #define ICUADDR IO_ICU1
 
@@ -492,449 +497,167 @@ INTRSTUB(legacy,15,i8259_asm_ack2,voidop,i8259_asm_mask,i8259_asm_unmask,
 
 #if NIOAPIC > 0
 
-INTRSTUB(ioapic_edge,0,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,1,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,2,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,3,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,4,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,5,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,6,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,7,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,8,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,9,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,10,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,11,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,12,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,13,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,14,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,15,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,16,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,17,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,18,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,19,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,20,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,21,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,22,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,23,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,24,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,25,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,26,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,27,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,28,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,29,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,30,voidop,ioapic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(ioapic_edge,31,voidop,ioapic_asm_ack,voidop,voidop,voidop)
+#define INTRSTUB_56(name,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,0,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,1,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,2,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,3,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,4,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,5,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,6,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,7,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,8,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,9,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,10,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,11,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,12,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,13,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,14,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,15,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,16,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,17,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,18,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,19,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,20,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,21,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,22,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,23,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,24,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,25,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,26,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,27,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,28,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,29,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,30,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB(name,31,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,32,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,33,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,34,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,35,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,36,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,37,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,38,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,39,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,40,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,41,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,42,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,43,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,44,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,45,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,46,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,47,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,48,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,49,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,50,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,51,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,52,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,53,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,54,early_ack,late_ack,mask,unmask,level_mask)	;\
+	INTRSTUB32(name,55,early_ack,late_ack,mask,unmask,level_mask)
 
-INTRSTUB(ioapic_level,0,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,1,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,2,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,3,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,4,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,5,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,6,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,7,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,8,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,9,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,10,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,11,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,12,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,13,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,14,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,15,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,16,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,17,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,18,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,19,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,20,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,21,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,22,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,23,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,24,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,25,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,26,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,27,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,28,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,29,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,30,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(ioapic_level,31,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
+INTRSTUB_56(ioapic_edge,voidop,ioapic_asm_ack,voidop,voidop,voidop)
+INTRSTUB_56(ioapic_level,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
-INTRSTUB(x2apic_edge,0,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,1,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,2,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,3,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,4,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,5,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,6,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,7,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,8,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,9,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,10,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,11,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,12,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,13,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,14,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,15,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,16,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,17,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,18,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,19,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,20,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,21,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,22,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,23,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,24,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,25,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,26,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,27,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,28,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,29,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,30,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-INTRSTUB(x2apic_edge,31,voidop,x2apic_asm_ack,voidop,voidop,voidop)
-
-INTRSTUB(x2apic_level,0,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,1,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,2,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,3,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,4,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,5,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,6,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,7,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,8,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,9,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,10,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,11,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,12,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,13,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,14,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,15,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,16,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,17,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,18,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,19,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,20,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,21,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,22,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,23,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,24,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,25,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,26,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,27,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,28,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,29,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,30,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
-INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
+INTRSTUB_56(x2apic_edge,voidop,x2apic_asm_ack,voidop,voidop,voidop)
+INTRSTUB_56(x2apic_level,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-	.type	_C_LABEL(legacy_stubs), @object
-LABEL(legacy_stubs)
-	.long _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
-	.long _C_LABEL(Xresume_legacy0)
-	.long _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
-	.long _C_LABEL(Xresume_legacy1)
-	.long _C_LABEL(Xintr_legacy2), _C_LABEL(Xrecurse_legacy2)
-	.long _C_LABEL(Xresume_legacy2)
-	.long _C_LABEL(Xintr_legacy3), _C_LABEL(Xrecurse_legacy3)
-	.long _C_LABEL(Xresume_legacy3)
-	.long _C_LABEL(Xintr_legacy4), _C_LABEL(Xrecurse_legacy4)
-	.long _C_LABEL(Xresume_legacy4)
-	.long _C_LABEL(Xintr_legacy5), _C_LABEL(Xrecurse_legacy5)
-	.long _C_LABEL(Xresume_legacy5)
-	.long _C_LABEL(Xintr_legacy6), _C_LABEL(Xrecurse_legacy6)
-	.long _C_LABEL(Xresume_legacy6)
-	.long _C_LABEL(Xintr_legacy7), _C_LABEL(Xrecurse_legacy7)
-	.long _C_LABEL(Xresume_legacy7)
-	.long _C_LABEL(Xintr_legacy8), _C_LABEL(Xrecurse_legacy8)
-	.long _C_LABEL(Xresume_legacy8)
-	.long _C_LABEL(Xintr_legacy9), _C_LABEL(Xrecurse_legacy9)
-	.long _C_LABEL(Xresume_legacy9)
-	.long _C_LABEL(Xintr_legacy10), _C_LABEL(Xrecurse_legacy10)
-	.long _C_LABEL(Xresume_legacy10)
-	.long _C_LABEL(Xintr_legacy11), _C_LABEL(Xrecurse_legacy11)
-	.long _C_LABEL(Xresume_legacy11)
-	.long _C_LABEL(Xintr_legacy12), _C_LABEL(Xrecurse_legacy12)
-	.long _C_LABEL(Xresume_legacy12)
-	.long _C_LABEL(Xintr_legacy13), _C_LABEL(Xrecurse_legacy13)
-	.long _C_LABEL(Xresume_legacy13)
-	.long _C_LABEL(Xintr_legacy14), _C_LABEL(Xrecurse_legacy14)
-	.long _C_LABEL(Xresume_legacy14)
-	.long _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
-	.long _C_LABEL(Xresume_legacy15)
-END(legacy_stubs)
+/*
+ * Create a struct intrstub.
+ */
+#define INTRSTUB_ENTRY(name) \
+	.long _C_LABEL(Xintr_ ## name ), _C_LABEL(Xrecurse_ ## name ) ; \
+	.long _C_LABEL(Xresume_ ## name ) ;
 
-#if NIOAPIC > 0
-	.type	_C_LABEL(ioapic_edge_stubs), @object
-LABEL(ioapic_edge_stubs)
-	.long _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
-	.long _C_LABEL(Xresume_ioapic_edge0)
-	.long _C_LABEL(Xintr_ioapic_edge1), _C_LABEL(Xrecurse_ioapic_edge1)
-	.long _C_LABEL(Xresume_ioapic_edge1)
-	.long _C_LABEL(Xintr_ioapic_edge2), _C_LABEL(Xrecurse_ioapic_edge2)
-	.long _C_LABEL(Xresume_ioapic_edge2)
-	.long _C_LABEL(Xintr_ioapic_edge3), _C_LABEL(Xrecurse_ioapic_edge3)
-	.long _C_LABEL(Xresume_ioapic_edge3)
-	.long _C_LABEL(Xintr_ioapic_edge4), _C_LABEL(Xrecurse_ioapic_edge4)
-	.long _C_LABEL(Xresume_ioapic_edge4)
-	.long _C_LABEL(Xintr_ioapic_edge5), _C_LABEL(Xrecurse_ioapic_edge5)
-	.long _C_LABEL(Xresume_ioapic_edge5)
-	.long _C_LABEL(Xintr_ioapic_edge6), _C_LABEL(Xrecurse_ioapic_edge6)
-	.long _C_LABEL(Xresume_ioapic_edge6)
-	.long _C_LABEL(Xintr_ioapic_edge7), _C_LABEL(Xrecurse_ioapic_edge7)
-	.long _C_LABEL(Xresume_ioapic_edge7)
-	.long _C_LABEL(Xintr_ioapic_edge8), _C_LABEL(Xrecurse_ioapic_edge8)
-	.long _C_LABEL(Xresume_ioapic_edge8)
-	.long _C_LABEL(Xintr_ioapic_edge9), _C_LABEL(Xrecurse_ioapic_edge9)
-	.long _C_LABEL(Xresume_ioapic_edge9)
-	.long _C_LABEL(Xintr_ioapic_edge10), _C_LABEL(Xrecurse_ioapic_edge10)
-	.long _C_LABEL(Xresume_ioapic_edge10)
-	.long _C_LABEL(Xintr_ioapic_edge11), _C_LABEL(Xrecurse_ioapic_edge11)
-	.long _C_LABEL(Xresume_ioapic_edge11)
-	.long _C_LABEL(Xintr_ioapic_edge12), _C_LABEL(Xrecurse_ioapic_edge12)
-	.long _C_LABEL(Xresume_ioapic_edge12)
-	.long _C_LABEL(Xintr_ioapic_edge13), _C_LABEL(Xrecurse_ioapic_edge13)
-	.long _C_LABEL(Xresume_ioapic_edge13)
-	.long _C_LABEL(Xintr_ioapic_edge14), _C_LABEL(Xrecurse_ioapic_edge14)
-	.long _C_LABEL(Xresume_ioapic_edge14)
-	.long _C_LABEL(Xintr_ioapic_edge15), _C_LABEL(Xrecurse_ioapic_edge15)
-	.long _C_LABEL(Xresume_ioapic_edge15)
-	.long _C_LABEL(Xintr_ioapic_edge16), _C_LABEL(Xrecurse_ioapic_edge16)
-	.long _C_LABEL(Xresume_ioapic_edge16)
-	.long _C_LABEL(Xintr_ioapic_edge17), _C_LABEL(Xrecurse_ioapic_edge17)
-	.long _C_LABEL(Xresume_ioapic_edge17)
-	.long _C_LABEL(Xintr_ioapic_edge18), _C_LABEL(Xrecurse_ioapic_edge18)
-	.long _C_LABEL(Xresume_ioapic_edge18)
-	.long _C_LABEL(Xintr_ioapic_edge19), _C_LABEL(Xrecurse_ioapic_edge19)
-	.long _C_LABEL(Xresume_ioapic_edge19)
-	.long _C_LABEL(Xintr_ioapic_edge20), _C_LABEL(Xrecurse_ioapic_edge20)
-	.long _C_LABEL(Xresume_ioapic_edge20)
-	.long _C_LABEL(Xintr_ioapic_edge21), _C_LABEL(Xrecurse_ioapic_edge21)
-	.long _C_LABEL(Xresume_ioapic_edge21)
-	.long _C_LABEL(Xintr_ioapic_edge22), _C_LABEL(Xrecurse_ioapic_edge22)
-	.long _C_LABEL(Xresume_ioapic_edge22)
-	.long _C_LABEL(Xintr_ioapic_edge23), _C_LABEL(Xrecurse_ioapic_edge23)
-	.long _C_LABEL(Xresume_ioapic_edge23)
-	.long _C_LABEL(Xintr_ioapic_edge24), _C_LABEL(Xrecurse_ioapic_edge24)
-	.long _C_LABEL(Xresume_ioapic_edge24)
-	.long _C_LABEL(Xintr_ioapic_edge25), _C_LABEL(Xrecurse_ioapic_edge25)
-	.long _C_LABEL(Xresume_ioapic_edge25)
-	.long _C_LABEL(Xintr_ioapic_edge26), _C_LABEL(Xrecurse_ioapic_edge26)
-	.long _C_LABEL(Xresume_ioapic_edge26)
-	.long _C_LABEL(Xintr_ioapic_edge27), _C_LABEL(Xrecurse_ioapic_edge27)
-	.long _C_LABEL(Xresume_ioapic_edge27)
-	.long _C_LABEL(Xintr_ioapic_edge28), _C_LABEL(Xrecurse_ioapic_edge28)
-	.long _C_LABEL(Xresume_ioapic_edge28)
-	.long _C_LABEL(Xintr_ioapic_edge29), _C_LABEL(Xrecurse_ioapic_edge29)
-	.long _C_LABEL(Xresume_ioapic_edge29)
-	.long _C_LABEL(Xintr_ioapic_edge30), _C_LABEL(Xrecurse_ioapic_edge30)
-	.long _C_LABEL(Xresume_ioapic_edge30)
-	.long _C_LABEL(Xintr_ioapic_edge31), _C_LABEL(Xrecurse_ioapic_edge31)
-	.long _C_LABEL(Xresume_ioapic_edge31)
-END(ioapic_edge_stubs)
+/*
+ * Create an array of structs intrstub (16 entries).
+ */
+#define INTRSTUB_ARRAY_16(name) 		; \
+	.type _C_LABEL(name ## _stubs), @object	; \
+LABEL(name ## _stubs)				; \
+	INTRSTUB_ENTRY(name ## 0)		; \
+	INTRSTUB_ENTRY(name ## 1)		; \
+	INTRSTUB_ENTRY(name ## 2)		; \
+	INTRSTUB_ENTRY(name ## 3)		; \
+	INTRSTUB_ENTRY(name ## 4)		; \
+	INTRSTUB_ENTRY(name ## 5)		; \
+	INTRSTUB_ENTRY(name ## 6)		; \
+	INTRSTUB_ENTRY(name ## 7)		; \
+	INTRSTUB_ENTRY(name ## 8)		; \
+	INTRSTUB_ENTRY(name ## 9)		; \
+	INTRSTUB_ENTRY(name ## 10)		; \
+	INTRSTUB_ENTRY(name ## 11)		; \
+	INTRSTUB_ENTRY(name ## 12)		; \
+	INTRSTUB_ENTRY(name ## 13)		; \
+	INTRSTUB_ENTRY(name ## 14)		; \
+	INTRSTUB_ENTRY(name ## 15)		; \
+END(name ## _stubs)
 
-	.type	_C_LABEL(ioapic_level_stubs), @object
-LABEL(ioapic_level_stubs)
-	.long _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
-	.long _C_LABEL(Xresume_ioapic_level0)
-	.long _C_LABEL(Xintr_ioapic_level1), _C_LABEL(Xrecurse_ioapic_level1)
-	.long _C_LABEL(Xresume_ioapic_level1)
-	.long _C_LABEL(Xintr_ioapic_level2), _C_LABEL(Xrecurse_ioapic_level2)
-	.long _C_LABEL(Xresume_ioapic_level2)
-	.long _C_LABEL(Xintr_ioapic_level3), _C_LABEL(Xrecurse_ioapic_level3)
-	.long _C_LABEL(Xresume_ioapic_level3)
-	.long _C_LABEL(Xintr_ioapic_level4), _C_LABEL(Xrecurse_ioapic_level4)
-	.long _C_LABEL(Xresume_ioapic_level4)
-	.long _C_LABEL(Xintr_ioapic_level5), _C_LABEL(Xrecurse_ioapic_level5)
-	.long _C_LABEL(Xresume_ioapic_level5)
-	.long _C_LABEL(Xintr_ioapic_level6), _C_LABEL(Xrecurse_ioapic_level6)
-	.long _C_LABEL(Xresume_ioapic_level6)
-	.long _C_LABEL(Xintr_ioapic_level7), _C_LABEL(Xrecurse_ioapic_level7)
-	.long _C_LABEL(Xresume_ioapic_level7)
-	.long _C_LABEL(Xintr_ioapic_level8), _C_LABEL(Xrecurse_ioapic_level8)
-	.long _C_LABEL(Xresume_ioapic_level8)
-	.long _C_LABEL(Xintr_ioapic_level9), _C_LABEL(Xrecurse_ioapic_level9)
-	.long _C_LABEL(Xresume_ioapic_level9)
-	.long _C_LABEL(Xintr_ioapic_level10), _C_LABEL(Xrecurse_ioapic_level10)
-	.long _C_LABEL(Xresume_ioapic_level10)
-	.long _C_LABEL(Xintr_ioapic_level11), _C_LABEL(Xrecurse_ioapic_level11)
-	.long _C_LABEL(Xresume_ioapic_level11)
-	.long _C_LABEL(Xintr_ioapic_level12), _C_LABEL(Xrecurse_ioapic_level12)
-	.long _C_LABEL(Xresume_ioapic_level12)
-	.long _C_LABEL(Xintr_ioapic_level13), _C_LABEL(Xrecurse_ioapic_level13)
-	.long _C_LABEL(Xresume_ioapic_level13)
-	.long _C_LABEL(Xintr_ioapic_level14), _C_LABEL(Xrecurse_ioapic_level14)
-	.long _C_LABEL(Xresume_ioapic_level14)
-	.long _C_LABEL(Xintr_ioapic_level15), _C_LABEL(Xrecurse_ioapic_level15)
-	.long _C_LABEL(Xresume_ioapic_level15)
-	.long _C_LABEL(Xintr_ioapic_level16), _C_LABEL(Xrecurse_ioapic_level16)
-	.long _C_LABEL(Xresume_ioapic_level16)
-	.long _C_LABEL(Xintr_ioapic_level17), _C_LABEL(Xrecurse_ioapic_level17)
-	.long _C_LABEL(Xresume_ioapic_level17)
-	.long _C_LABEL(Xintr_ioapic_level18), _C_LABEL(Xrecurse_ioapic_level18)
-	.long _C_LABEL(Xresume_ioapic_level18)
-	.long _C_LABEL(Xintr_ioapic_level19), _C_LABEL(Xrecurse_ioapic_level19)
-	.long _C_LABEL(Xresume_ioapic_level19)
-	.long _C_LABEL(Xintr_ioapic_level20), _C_LABEL(Xrecurse_ioapic_level20)
-	.long _C_LABEL(Xresume_ioapic_level20)
-	.long _C_LABEL(Xintr_ioapic_level21), _C_LABEL(Xrecurse_ioapic_level21)
-	.long _C_LABEL(Xresume_ioapic_level21)
-	.long _C_LABEL(Xintr_ioapic_level22), _C_LABEL(Xrecurse_ioapic_level22)
-	.long _C_LABEL(Xresume_ioapic_level22)
-	.long _C_LABEL(Xintr_ioapic_level23), _C_LABEL(Xrecurse_ioapic_level23)
-	.long _C_LABEL(Xresume_ioapic_level23)
-	.long _C_LABEL(Xintr_ioapic_level24), _C_LABEL(Xrecurse_ioapic_level24)
-	.long _C_LABEL(Xresume_ioapic_level24)
-	.long _C_LABEL(Xintr_ioapic_level25), _C_LABEL(Xrecurse_ioapic_level25)
-	.long _C_LABEL(Xresume_ioapic_level25)
-	.long _C_LABEL(Xintr_ioapic_level26), _C_LABEL(Xrecurse_ioapic_level26)
-	.long _C_LABEL(Xresume_ioapic_level26)
-	.long _C_LABEL(Xintr_ioapic_level27), _C_LABEL(Xrecurse_ioapic_level27)
-	.long _C_LABEL(Xresume_ioapic_level27)
-	.long _C_LABEL(Xintr_ioapic_level28), _C_LABEL(Xrecurse_ioapic_level28)
-	.long _C_LABEL(Xresume_ioapic_level28)
-	.long _C_LABEL(Xintr_ioapic_level29), _C_LABEL(Xrecurse_ioapic_level29)
-	.long _C_LABEL(Xresume_ioapic_level29)
-	.long _C_LABEL(Xintr_ioapic_level30), _C_LABEL(Xrecurse_ioapic_level30)
-	.long _C_LABEL(Xresume_ioapic_level30)
-	.long _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
-	.long _C_LABEL(Xresume_ioapic_level31)
-END(ioapic_level_stubs)
+/*
+ * Create an array of structs intrstub (56 entries).
+ */
+#define INTRSTUB_ARRAY_56(name) 		; \
+	.type _C_LABEL(name ## _stubs), @object	; \
+LABEL(name ## _stubs)				; \
+	INTRSTUB_ENTRY(name ## 0)		; \
+	INTRSTUB_ENTRY(name ## 1)		; \
+	INTRSTUB_ENTRY(name ## 2)		; \
+	INTRSTUB_ENTRY(name ## 3)		; \
+	INTRSTUB_ENTRY(name ## 4)		; \
+	INTRSTUB_ENTRY(name ## 5)		; \
+	INTRSTUB_ENTRY(name ## 6)		; \
+	INTRSTUB_ENTRY(name ## 7)		; \
+	INTRSTUB_ENTRY(name ## 8)		; \
+	INTRSTUB_ENTRY(name ## 9)		; \
+	INTRSTUB_ENTRY(name ## 10)		; \
+	INTRSTUB_ENTRY(name ## 11)		; \
+	INTRSTUB_ENTRY(name ## 12)		; \
+	INTRSTUB_ENTRY(name ## 13)		; \
+	INTRSTUB_ENTRY(name ## 14)		; \
+	INTRSTUB_ENTRY(name ## 15)		; \
+	INTRSTUB_ENTRY(name ## 16)		; \
+	INTRSTUB_ENTRY(name ## 17)		; \
+	INTRSTUB_ENTRY(name ## 18)		; \
+	INTRSTUB_ENTRY(name ## 19)		; \
+	INTRSTUB_ENTRY(name ## 20)		; \
+	INTRSTUB_ENTRY(name ## 21)		; \
+	INTRSTUB_ENTRY(name ## 22)		; \
+	INTRSTUB_ENTRY(name ## 23)		; \
+	INTRSTUB_ENTRY(name ## 24)		; \
+	INTRSTUB_ENTRY(name ## 25)		; \
+	INTRSTUB_ENTRY(name ## 26)		; \
+	INTRSTUB_ENTRY(name ## 27)		; \
+	INTRSTUB_ENTRY(name ## 28)		; \
+	INTRSTUB_ENTRY(name ## 29)		; \
+	INTRSTUB_ENTRY(name ## 30)		; \
+	INTRSTUB_ENTRY(name ## 31)		; \
+	INTRSTUB_ENTRY(name ## 32)		; \
+	INTRSTUB_ENTRY(name ## 33)		; \
+	INTRSTUB_ENTRY(name ## 34)		; \
+	INTRSTUB_ENTRY(name ## 35)		; \
+	INTRSTUB_ENTRY(name ## 36)		; \
+	INTRSTUB_ENTRY(name ## 37)		; \
+	INTRSTUB_ENTRY(name ## 38)		; \
+	INTRSTUB_ENTRY(name ## 39)		; \
+	INTRSTUB_ENTRY(name ## 40)		; \
+	INTRSTUB_ENTRY(name ## 41)		; \
+	INTRSTUB_ENTRY(name ## 42)		; \
+	INTRSTUB_ENTRY(name ## 43)		; \
+	INTRSTUB_ENTRY(name ## 44)		; \
+	INTRSTUB_ENTRY(name ## 45)		; \
+	INTRSTUB_ENTRY(name ## 46)		; \
+	INTRSTUB_ENTRY(name ## 47)		; \
+	INTRSTUB_ENTRY(name ## 48)		; \
+	INTRSTUB_ENTRY(name ## 49)		; \
+	INTRSTUB_ENTRY(name ## 50)		; \
+	INTRSTUB_ENTRY(name ## 51)		; \
+	INTRSTUB_ENTRY(name ## 52)		; \
+	INTRSTUB_ENTRY(name ## 53)		; \
+	INTRSTUB_ENTRY(name ## 54)		; \
+	INTRSTUB_ENTRY(name ## 55)		; \
+END(name ## _stubs)
 
-	.type	_C_LABEL(x2apic_edge_stubs), @object
-LABEL(x2apic_edge_stubs)
-	.long _C_LABEL(Xintr_x2apic_edge0), _C_LABEL(Xrecurse_x2apic_edge0)
-	.long _C_LABEL(Xresume_x2apic_edge0)
-	.long _C_LABEL(Xintr_x2apic_edge1), _C_LABEL(Xrecurse_x2apic_edge1)
-	.long _C_LABEL(Xresume_x2apic_edge1)
-	.long _C_LABEL(Xintr_x2apic_edge2), _C_LABEL(Xrecurse_x2apic_edge2)
-	.long _C_LABEL(Xresume_x2apic_edge2)
-	.long _C_LABEL(Xintr_x2apic_edge3), _C_LABEL(Xrecurse_x2apic_edge3)
-	.long _C_LABEL(Xresume_x2apic_edge3)
-	.long _C_LABEL(Xintr_x2apic_edge4), _C_LABEL(Xrecurse_x2apic_edge4)
-	.long _C_LABEL(Xresume_x2apic_edge4)
-	.long _C_LABEL(Xintr_x2apic_edge5), _C_LABEL(Xrecurse_x2apic_edge5)
-	.long _C_LABEL(Xresume_x2apic_edge5)
-	.long _C_LABEL(Xintr_x2apic_edge6), _C_LABEL(Xrecurse_x2apic_edge6)
-	.long _C_LABEL(Xresume_x2apic_edge6)
-	.long _C_LABEL(Xintr_x2apic_edge7), _C_LABEL(Xrecurse_x2apic_edge7)
-	.long _C_LABEL(Xresume_x2apic_edge7)
-	.long _C_LABEL(Xintr_x2apic_edge8), _C_LABEL(Xrecurse_x2apic_edge8)
-	.long _C_LABEL(Xresume_x2apic_edge8)
-	.long _C_LABEL(Xintr_x2apic_edge9), _C_LABEL(Xrecurse_x2apic_edge9)
-	.long _C_LABEL(Xresume_x2apic_edge9)
-	.long _C_LABEL(Xintr_x2apic_edge10), _C_LABEL(Xrecurse_x2apic_edge10)
-	.long _C_LABEL(Xresume_x2apic_edge10)
-	.long _C_LABEL(Xintr_x2apic_edge11), _C_LABEL(Xrecurse_x2apic_edge11)
-	.long _C_LABEL(Xresume_x2apic_edge11)
-	.long _C_LABEL(Xintr_x2apic_edge12), _C_LABEL(Xrecurse_x2apic_edge12)
-	.long _C_LABEL(Xresume_x2apic_edge12)
-	.long _C_LABEL(Xintr_x2apic_edge13), _C_LABEL(Xrecurse_x2apic_edge13)
-	.long _C_LABEL(Xresume_x2apic_edge13)
-	.long _C_LABEL(Xintr_x2apic_edge14), _C_LABEL(Xrecurse_x2apic_edge14)
-	.long _C_LABEL(Xresume_x2apic_edge14)
-	.long _C_LABEL(Xintr_x2apic_edge15), _C_LABEL(Xrecurse_x2apic_edge15)
-	.long _C_LABEL(Xresume_x2apic_edge15)
-	.long _C_LABEL(Xintr_x2apic_edge16), _C_LABEL(Xrecurse_x2apic_edge16)
-	.long _C_LABEL(Xresume_x2apic_edge16)
-	.long _C_LABEL(Xintr_x2apic_edge17), _C_LABEL(Xrecurse_x2apic_edge17)
-	.long _C_LABEL(Xresume_x2apic_edge17)
-	.long _C_LABEL(Xintr_x2apic_edge18), _C_LABEL(Xrecurse_x2apic_edge18)
-	.long _C_LABEL(Xresume_x2apic_edge18)
-	.long _C_LABEL(Xintr_x2apic_edge19), _C_LABEL(Xrecurse_x2apic_edge19)
-	.long _C_LABEL(Xresume_x2apic_edge19)
-	.long _C_LABEL(Xintr_x2apic_edge20), _C_LABEL(Xrecurse_x2apic_edge20)
-	.long _C_LABEL(Xresume_x2apic_edge20)
-	.long _C_LABEL(Xintr_x2apic_edge21), _C_LABEL(Xrecurse_x2apic_edge21)
-	.long _C_LABEL(Xresume_x2apic_edge21)
-	.long _C_LABEL(Xintr_x2apic_edge22), _C_LABEL(Xrecurse_x2apic_edge22)
-	.long _C_LABEL(Xresume_x2apic_edge22)
-	.long _C_LABEL(Xintr_x2apic_edge23), _C_LABEL(Xrecurse_x2apic_edge23)
-	.long _C_LABEL(Xresume_x2apic_edge23)
-	.long _C_LABEL(Xintr_x2apic_edge24), _C_LABEL(Xrecurse_x2apic_edge24)
-	.long _C_LABEL(Xresume_x2apic_edge24)
-	.long _C_LABEL(Xintr_x2apic_edge25), _C_LABEL(Xrecurse_x2apic_edge25)
-	.long _C_LABEL(Xresume_x2apic_edge25)
-	.long _C_LABEL(Xintr_x2apic_edge26), _C_LABEL(Xrecurse_x2apic_edge26)
-	.long _C_LABEL(Xresume_x2apic_edge26)
-	.long _C_LABEL(Xintr_x2apic_edge27), _C_LABEL(Xrecurse_x2apic_edge27)
-	.long _C_LABEL(Xresume_x2apic_edge27)
-	.long _C_LABEL(Xintr_x2apic_edge28), _C_LABEL(Xrecurse_x2apic_edge28)
-	.long _C_LABEL(Xresume_x2apic_edge28)
-	.long _C_LABEL(Xintr_x2apic_edge29), _C_LABEL(Xrecurse_x2apic_edge29)
-	.long _C_LABEL(Xresume_x2apic_edge29)
-	.long _C_LABEL(Xintr_x2apic_edge30), _C_LABEL(Xrecurse_x2apic_edge30)
-	.long _C_LABEL(Xresume_x2apic_edge30)
-	.long _C_LABEL(Xintr_x2apic_edge31), _C_LABEL(Xrecurse_x2apic_edge31)
-	.long _C_LABEL(Xresume_x2apic_edge31)
-END(x2apic_edge_stubs)
-
-	.type	_C_LABEL(x2apic_level_stubs), @object
-LABEL(x2apic_level_stubs)
-	.long _C_LABEL(Xintr_x2apic_level0), _C_LABEL(Xrecurse_x2apic_level0)
-	.long _C_LABEL(Xresume_x2apic_level0)
-	.long _C_LABEL(Xintr_x2apic_level1), _C_LABEL(Xrecurse_x2apic_level1)
-	.long _C_LABEL(Xresume_x2apic_level1)
-	.long _C_LABEL(Xintr_x2apic_level2), _C_LABEL(Xrecurse_x2apic_level2)
-	.long _C_LABEL(Xresume_x2apic_level2)
-	.long _C_LABEL(Xintr_x2apic_level3), _C_LABEL(Xrecurse_x2apic_level3)
-	.long _C_LABEL(Xresume_x2apic_level3)
-	.long _C_LABEL(Xintr_x2apic_level4), _C_LABEL(Xrecurse_x2apic_level4)
-	.long _C_LABEL(Xresume_x2apic_level4)
-	.long _C_LABEL(Xintr_x2apic_level5), _C_LABEL(Xrecurse_x2apic_level5)
-	.long _C_LABEL(Xresume_x2apic_level5)
-	.long _C_LABEL(Xintr_x2apic_level6), _C_LABEL(Xrecurse_x2apic_level6)
-	.long _C_LABEL(Xresume_x2apic_level6)
-	.long _C_LABEL(Xintr_x2apic_level7), _C_LABEL(Xrecurse_x2apic_level7)
-	.long _C_LABEL(Xresume_x2apic_level7)
-	.long _C_LABEL(Xintr_x2apic_level8), _C_LABEL(Xrecurse_x2apic_level8)
-	.long _C_LABEL(Xresume_x2apic_level8)
-	.long _C_LABEL(Xintr_x2apic_level9), _C_LABEL(Xrecurse_x2apic_level9)
-	.long _C_LABEL(Xresume_x2apic_level9)
-	.long _C_LABEL(Xintr_x2apic_level10), _C_LABEL(Xrecurse_x2apic_level10)
-	.long _C_LABEL(Xresume_x2apic_level10)
-	.long _C_LABEL(Xintr_x2apic_level11), _C_LABEL(Xrecurse_x2apic_level11)
-	.long _C_LABEL(Xresume_x2apic_level11)
-	.long _C_LABEL(Xintr_x2apic_level12), _C_LABEL(Xrecurse_x2apic_level12)
-	.long _C_LABEL(Xresume_x2apic_level12)
-	.long _C_LABEL(Xintr_x2apic_level13), _C_LABEL(Xrecurse_x2apic_level13)
-	.long _C_LABEL(Xresume_x2apic_level13)
-	.long _C_LABEL(Xintr_x2apic_level14), _C_LABEL(Xrecurse_x2apic_level14)
-	.long _C_LABEL(Xresume_x2apic_level14)
-	.long _C_LABEL(Xintr_x2apic_level15), _C_LABEL(Xrecurse_x2apic_level15)
-	.long _C_LABEL(Xresume_x2apic_level15)
-	.long _C_LABEL(Xintr_x2apic_level16), _C_LABEL(Xrecurse_x2apic_level16)
-	.long _C_LABEL(Xresume_x2apic_level16)
-	.long _C_LABEL(Xintr_x2apic_level17), _C_LABEL(Xrecurse_x2apic_level17)
-	.long _C_LABEL(Xresume_x2apic_level17)
-	.long _C_LABEL(Xintr_x2apic_level18), _C_LABEL(Xrecurse_x2apic_level18)
-	.long _C_LABEL(Xresume_x2apic_level18)
-	.long _C_LABEL(Xintr_x2apic_level19), _C_LABEL(Xrecurse_x2apic_level19)
-	.long _C_LABEL(Xresume_x2apic_level19)
-	.long _C_LABEL(Xintr_x2apic_level20), _C_LABEL(Xrecurse_x2apic_level20)
-	.long _C_LABEL(Xresume_x2apic_level20)
-	.long _C_LABEL(Xintr_x2apic_level21), _C_LABEL(Xrecurse_x2apic_level21)
-	.long _C_LABEL(Xresume_x2apic_level21)
-	.long _C_LABEL(Xintr_x2apic_level22), _C_LABEL(Xrecurse_x2apic_level22)
-	.long _C_LABEL(Xresume_x2apic_level22)
-	.long _C_LABEL(Xintr_x2apic_level23), _C_LABEL(Xrecurse_x2apic_level23)
-	.long _C_LABEL(Xresume_x2apic_level23)
-	.long _C_LABEL(Xintr_x2apic_level24), _C_LABEL(Xrecurse_x2apic_level24)
-	.long _C_LABEL(Xresume_x2apic_level24)
-	.long _C_LABEL(Xintr_x2apic_level25), _C_LABEL(Xrecurse_x2apic_level25)
-	.long _C_LABEL(Xresume_x2apic_level25)
-	.long _C_LABEL(Xintr_x2apic_level26), _C_LABEL(Xrecurse_x2apic_level26)
-	.long _C_LABEL(Xresume_x2apic_level26)
-	.long _C_LABEL(Xintr_x2apic_level27), _C_LABEL(Xrecurse_x2apic_level27)
-	.long _C_LABEL(Xresume_x2apic_level27)
-	.long _C_LABEL(Xintr_x2apic_level28), _C_LABEL(Xrecurse_x2apic_level28)
-	.long _C_LABEL(Xresume_x2apic_level28)
-	.long _C_LABEL(Xintr_x2apic_level29), _C_LABEL(Xrecurse_x2apic_level29)
-	.long _C_LABEL(Xresume_x2apic_level29)
-	.long _C_LABEL(Xintr_x2apic_level30), _C_LABEL(Xrecurse_x2apic_level30)
-	.long _C_LABEL(Xresume_x2apic_level30)
-	.long _C_LABEL(Xintr_x2apic_level31), _C_LABEL(Xrecurse_x2apic_level31)
-	.long _C_LABEL(Xresume_x2apic_level31)
-END(x2apic_level_stubs)
-#endif
 #endif /* XENPV */
 
 #if defined(XEN)
@@ -950,7 +673,7 @@ IDTVEC(resume_ ## name ## sir)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
 	movl	CPUVAR(ISOURCES) + (sir) * 4,%ebp			;\
-	movl	$level,CPUVAR(ILEVEL)					;\
+	movb	$level,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
@@ -1016,7 +739,8 @@ IDTVEC(hypervisor_pvhvm_callback)
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
-	pushl	CPUVAR(ILEVEL)
+	movzbl	CPUVAR(ILEVEL),%eax
+	pushl	%eax
 	IDEPTH_INCR
 	/* IDEPTH_INCR puts %esp on stack; we use it as argument to
 	 * do_hypervisor_callback. But don't restore the stack after,
@@ -1048,5 +772,19 @@ ENTRY(failsafe_callback)
 	call	_C_LABEL(xen_failsafe_handler)
 	iret
 END(failsafe_callback)
+
+#else	/* XENPV */
+
+	.section .rodata
+
+INTRSTUB_ARRAY_16(legacy)
+
+#if NIOAPIC > 0
+INTRSTUB_ARRAY_56(ioapic_edge)
+INTRSTUB_ARRAY_56(ioapic_level)
+
+INTRSTUB_ARRAY_56(x2apic_edge)
+INTRSTUB_ARRAY_56(x2apic_level)
+#endif
 
 #endif /* XENPV */
