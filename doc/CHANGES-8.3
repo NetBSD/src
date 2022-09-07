@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.145 2022/08/30 15:40:57 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.146 2022/09/07 10:10:55 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2755,4 +2755,22 @@ external/mit/xorg/server/drivers/xf86-video-wsfb/Makefile 1.6
 
 	wsfb(4): disable broken DGA extension for xf86-video-wsfb.
 	[rin, ticket #1758]
+
+sys/dev/pci/if_wm.c				1.741-1.749,1.753-1.757,
+						1.762 via patch
+sys/dev/pci/if_wmreg.h				1.126-1.127
+
+	- Fix I219 workaround in wm_flush_desc_rings().
+	- Add more statistics counters.
+	- To avoid releasing mutex temporally, use new
+	  wm_set_mdio_slow_mode_hv_locked().
+	- No functional changes:
+	  - Turn a locking botch (shouldn't drop lock on error) into a KASSERT
+	    in wm_deferred_start_locked().
+	  - Remove unneeded header inclusion.
+	  - Use __BIT() a little.
+	  - Modify comment and debug messages.
+	  - Consistency use -1 instead of 1 for some error code.
+	  - KNF.
+	[msaitoh, ticket #1759]
 
