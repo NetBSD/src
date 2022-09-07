@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.11 2022/09/06 23:07:53 rin Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.12 2022/09/07 02:41:39 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,11 +163,19 @@ struct fpemu {
  * Each returns a pointer to the result and/or sets exceptions.
  */
 struct	fpn *fpu_add(struct fpemu *);
-#define	fpu_sub(fe)							\
-    ((ISNAN(&(fe)->fe_f2) ? 0 : ((fe)->fe_f2.fp_sign ^= 1)), fpu_add(fe))
 struct	fpn *fpu_mul(struct fpemu *);
 struct	fpn *fpu_div(struct fpemu *);
 struct	fpn *fpu_sqrt(struct fpemu *);
+
+static inline struct fpn *
+fpu_sub(struct fpemu *fe)
+{
+	struct fpn *fp = &fe->fe_f2;
+
+	if (!ISNAN(fp))
+		fp->fp_sign ^= 1;
+	return fpu_add(fe);
+}
 
 /*
  * Other functions.
