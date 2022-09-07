@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.213 2022/06/12 11:36:42 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.214 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1266,7 +1266,7 @@ ENTRY(cpu_switchto)
 #ifndef XENPV
 	/* Raise the IPL to IPL_HIGH. Dropping the priority is deferred until
 	 * mi_switch(), when cpu_switchto() returns. XXX Still needed? */
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movb	$IPL_HIGH,CPUVAR(ILEVEL)
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
@@ -1376,7 +1376,7 @@ ENTRY(handle_syscall)
 	jnz	9f
 
 #ifdef DIAGNOSTIC
-	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpb	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	.Lspl_error
 #endif
 
@@ -1398,7 +1398,7 @@ ENTRY(handle_syscall)
 #ifdef DIAGNOSTIC
 .Lspl_error:
 	movabsq	$4f,%rdi
-	movl	CPUVAR(ILEVEL),%esi
+	movzbl	CPUVAR(ILEVEL),%esi
 	call	_C_LABEL(panic)
 4:	.asciz	"spl not lowered on syscall, ilevel=%x"
 #endif

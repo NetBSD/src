@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.59 2022/05/23 15:03:05 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.60 2022/09/07 00:40:19 knakahara Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -54,7 +54,7 @@ struct cpu_info;
 
 struct evtsource {
 	int ev_maxlevel;		/* max. IPL for this source */
-	uint32_t ev_imask;		/* interrupt mask */
+	uint64_t ev_imask;		/* interrupt mask */
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	struct cpu_info *ev_cpu;        /* cpu on which this event is bound */

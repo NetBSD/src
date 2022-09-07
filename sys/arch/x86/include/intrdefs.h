@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.25 2021/03/18 01:50:12 nonaka Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.26 2022/09/07 00:40:18 knakahara Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -25,8 +25,8 @@
  * Local APIC masks and software interrupt masks, in order
  * of priority.  Must not conflict with SIR_* below.
  */
-#define LIR_IPI		31
-#define LIR_TIMER	30
+#define LIR_IPI		55
+#define LIR_TIMER	54
 
 /*
  * XXX These should be lowest numbered, but right now would
@@ -47,12 +47,12 @@
 #define XEN_IPL2SIR(ipl) ((ipl) + (SIR_XENIPL_VM - IPL_VM))
 
 /*
- * Maximum # of interrupt sources per CPU. 32 to fit in one word.
+ * Maximum # of interrupt sources per CPU. Bitmask must still fit in one quad.
  * ioapics can theoretically produce more, but it's not likely to
  * happen. For multiple ioapics, things can be routed to different
  * CPUs.
  */
-#define MAX_INTR_SOURCES	32
+#define MAX_INTR_SOURCES	56
 #define NUM_LEGACY_IRQS		16
 
 /*

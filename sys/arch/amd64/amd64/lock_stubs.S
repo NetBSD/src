@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.36 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.37 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -91,11 +91,11 @@ END(mutex_exit)
  */
 ENTRY(mutex_spin_enter)
 	movl	$1, %eax
-	movl	CPUVAR(ILEVEL), %esi
+	movzbl	CPUVAR(ILEVEL), %esi
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
 	cmpl	%ecx, %esi			/* higher? */
 	cmovgl	%esi, %ecx
-	movl	%ecx, CPUVAR(ILEVEL)		/* splraiseipl() */
+	movb	%cl, CPUVAR(ILEVEL)		/* splraiseipl() */
 	subl	%eax, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
 	cmovncl	CPUVAR(MTX_OLDSPL), %esi
 	movl	%esi, CPUVAR(MTX_OLDSPL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.99 2022/05/25 14:35:15 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.100 2022/09/07 00:40:19 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.99 2022/05/25 14:35:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.100 2022/09/07 00:40:19 knakahara Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -320,7 +320,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	int ilevel;
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
-	uint32_t iplmask;
+	uint64_t iplmask;
 
 	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
 	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
@@ -381,7 +381,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 #if 0
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
-			iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
+			iplmask &= ~(1ULL << XEN_IPL2SIR(ih->ih_level));
 			ih = ih->ih_evt_next;
 			continue;
 		}
@@ -401,7 +401,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			}
 			goto splx;
 		}
-		iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
+		iplmask &= ~(1ULL << XEN_IPL2SIR(ih->ih_level));
 		ci->ci_ilevel = ih->ih_level;
 		ih->ih_pending = 0;
 		ih_fun = (void *)ih->ih_fun;

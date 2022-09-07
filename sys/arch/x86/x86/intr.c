@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.160 2022/03/12 15:50:45 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.161 2022/09/07 00:40:19 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.160 2022/03/12 15:50:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.161 2022/09/07 00:40:19 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -149,7 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.160 2022/03/12 15:50:45 riastradh Exp $")
 #include <sys/errno.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
-#include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
 #include <sys/reboot.h> /* for AB_VERBOSE */
@@ -1007,7 +1006,7 @@ intr_mask_xcall(void *arg1, void *arg2)
 			 * need to explicitly handle interrupts that
 			 * happened when when the source was masked.
 			 */
-			const uint32_t bit = (1U << ih->ih_slot);
+			const uint64_t bit = (1U << ih->ih_slot);
 			if (ci->ci_imasked & bit) {
 				ci->ci_imasked &= ~bit;
 				if (source->is_type != IST_LEVEL) {
@@ -1115,7 +1114,9 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	idtvec = source->is_idtvec;
 
 	(*pic->pic_hwmask)(pic, ih->ih_pin);
-	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
+	membar_sync();
+	ci->ci_ipending &= ~(1ULL << ih->ih_slot);
+	membar_sync();
 
 	/*
 	 * Remove the handler from the chain.
@@ -1421,8 +1422,8 @@ intr_printconfig(void)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		(*pr)("%s: interrupt masks:\n", device_xname(ci->ci_dev));
 		for (i = 0; i < NIPL; i++)
-			(*pr)("IPL %d mask %08lx unmask %08lx\n", i,
-			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
+			(*pr)("IPL %d mask %016"PRIx64" unmask %016"PRIx64"\n",
+			    i, ci->ci_imask[i], ci->ci_iunmask[i]);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
@@ -1922,8 +1923,10 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 
 	pin = isp->is_pin;
 	(*pic->pic_hwmask)(pic, pin); /* for ci_ipending check */
-	while (oldci->ci_ipending & (1 << oldslot)) {
+	membar_sync();
+	while (oldci->ci_ipending & (1ULL << oldslot)) {
 		(void)kpause("intrdist", false, 1, &cpu_lock);
+		membar_sync();
 	}
 
 	kpreempt_disable();

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_softintr.c,v 1.3 2020/05/08 21:43:54 ad Exp $	*/
+/*	$NetBSD: x86_softintr.c,v 1.4 2022/09/07 00:40:19 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.3 2020/05/08 21:43:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_softintr.c,v 1.4 2022/09/07 00:40:19 knakahara Exp $");
 
 #include <sys/kmem.h>
 #include <sys/proc.h>
@@ -162,11 +162,12 @@ struct pic softintr_pic = {
 void
 x86_intr_calculatemasks(struct cpu_info *ci)
 {
-	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
+	uint64_t unusedirqs, intrlevel[MAX_INTR_SOURCES];
+	int irq, level;
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
-	unusedirqs = 0xffffffff;
+	unusedirqs = UINT64_MAX;
 	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
 		int levels = 0;
 
@@ -175,18 +176,18 @@ x86_intr_calculatemasks(struct cpu_info *ci)
 			continue;
 		}
 		for (q = ci->ci_isources[irq]->is_handlers; q; q = q->ih_next)
-			levels |= 1U << q->ih_level;
+			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 		if (levels)
-			unusedirqs &= ~(1U << irq);
+			unusedirqs &= ~(1ULL << irq);
 	}
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
+		uint64_t irqs = 0;
 		for (irq = 0; irq < MAX_INTR_SOURCES; irq++)
-			if (intrlevel[irq] & (1U << level))
-				irqs |= 1U << irq;
+			if (intrlevel[irq] & (1ULL << level))
+				irqs |= 1ULL << irq;
 		ci->ci_imask[level] = irqs | unusedirqs;
 	}
 
