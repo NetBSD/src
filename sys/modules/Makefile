@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.269 2022/07/28 22:00:23 riastradh Exp $
+#	$NetBSD: Makefile,v 1.270 2022/09/07 00:29:23 khorben Exp $
 
 .include <bsd.own.mk>
 
@@ -225,6 +225,7 @@ SUBDIR+=	amdsmn
 SUBDIR+=	amdtemp
 SUBDIR+=	amdzentemp
 SUBDIR+=	coretemp
+SUBDIR+=	emuxki
 SUBDIR+=	est
 SUBDIR+=	hdafg
 SUBDIR+=	hdaudio
