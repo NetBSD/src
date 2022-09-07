@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.15 2022/09/07 01:00:37 khorben Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.16 2022/09/07 03:34:43 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _DEV_PCI_EMUXKIVAR_H_
 #define _DEV_PCI_EMUXKIVAR_H_
 
+#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
 #include <sys/mutex.h>
@@ -103,7 +104,7 @@ struct emuxki_softc {
 		EMUXKI_SBLIVE = 0x00,
 		EMUXKI_AUDIGY = 0x01,
 		EMUXKI_AUDIGY2 = 0x02,
-		EMUXKI_AUDIGY2_VALUE = 0x04,
+		EMUXKI_AUDIGY2_CA0108 = 0x04,
 		EMUXKI_LIVE_5_1 = 0x08,
 		EMUXKI_APS = 0x10
 	} sc_type;

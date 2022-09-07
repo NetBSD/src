@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.75 2022/09/07 01:00:37 khorben Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.76 2022/09/07 03:34:43 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.75 2022/09/07 01:00:37 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.76 2022/09/07 03:34:43 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.75 2022/09/07 01:00:37 khorben Exp $");
 
 #include <dev/pci/emuxkireg.h>
 #include <dev/pci/emuxkivar.h>
+#include <dev/pci/emuxki_boards.h>
 
 /* #define EMUXKI_DEBUG 1 */
 #ifdef EMUXKI_DEBUG
@@ -74,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.75 2022/09/07 01:00:37 khorben Exp $");
  */
 
 #define EMU_PCI_CBIO		(0x10)
-#define EMU_SUBSYS_APS		(0x40011102)
 
 /* blackmagic */
 #define X1(x)		((sc->sc_type & EMUXKI_AUDIGY) ? EMU_A_##x : EMU_##x)
@@ -357,20 +357,17 @@ static int
 emuxki_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
+	pcireg_t reg;
 
 	pa = aux;
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CREATIVELABS)
-		return 0;
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CREATIVELABS_SBLIVE:
-	case PCI_PRODUCT_CREATIVELABS_SBLIVE2:
-	case PCI_PRODUCT_CREATIVELABS_AUDIGY:
-	case PCI_PRODUCT_CREATIVELABS_SBAUDIGY4:
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (emuxki_board_lookup(PCI_VENDOR(pa->pa_id),
+				PCI_PRODUCT(pa->pa_id), reg,
+				PCI_REVISION(pa->pa_class)) != NULL)
 		return 1;
-	default:
-		return 0;
-	}
+
+	return 0;
 }
 
 static void
@@ -378,6 +375,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 {
 	struct emuxki_softc *sc;
 	struct pci_attach_args *pa;
+	const struct emuxki_board *sb;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -387,7 +385,14 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	pa = aux;
 
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	sb = emuxki_board_lookup(PCI_VENDOR(pa->pa_id),
+				      PCI_PRODUCT(pa->pa_id), reg,
+				      PCI_REVISION(pa->pa_class));
+	KASSERT(sb != NULL);
+
 	pci_aprint_devinfo(pa, "Audio controller");
+	aprint_normal_dev(self, "%s [%s]\n", sb->sb_name, sb->sb_board);
 	DPRINTF("dmat=%p\n", (char *)pa->pa_dmat);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -434,28 +439,17 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* XXX it's unknown whether APS is made from Audigy as well */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBAUDIGY4) {
-		sc->sc_type = EMUXKI_AUDIGY;
-		sc->sc_type |= EMUXKI_AUDIGY2;
-		sc->sc_type |= EMUXKI_AUDIGY2_VALUE;
-		strlcpy(sc->sc_audv.name, "Audigy2 (value)",
+	sc->sc_type = sb->sb_flags;
+	if (sc->sc_type & EMUXKI_AUDIGY2_CA0108) {
+		strlcpy(sc->sc_audv.name, "Audigy2+CA0108",
 		    sizeof(sc->sc_audv.name));
-	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
-		sc->sc_type = EMUXKI_AUDIGY;
-		if (PCI_REVISION(pa->pa_class) == 0x04) {
-			sc->sc_type |= EMUXKI_AUDIGY2;
-			strlcpy(sc->sc_audv.name, "Audigy2",
-			    sizeof(sc->sc_audv.name));
-		} else {
-			strlcpy(sc->sc_audv.name, "Audigy",
-			    sizeof(sc->sc_audv.name));
-		}
-	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
-	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
-		sc->sc_type = EMUXKI_APS;
+	} else if (sc->sc_type & EMUXKI_AUDIGY2) {
+		strlcpy(sc->sc_audv.name, "Audigy2", sizeof(sc->sc_audv.name));
+	} else if (sc->sc_type & EMUXKI_AUDIGY) {
+		strlcpy(sc->sc_audv.name, "Audigy", sizeof(sc->sc_audv.name));
+	} else if (sc->sc_type & EMUXKI_APS) {
 		strlcpy(sc->sc_audv.name, "E-mu APS", sizeof(sc->sc_audv.name));
 	} else {
-		sc->sc_type = EMUXKI_SBLIVE;
 		strlcpy(sc->sc_audv.name, "SB Live!", sizeof(sc->sc_audv.name));
 	}
 	snprintf(sc->sc_audv.version, sizeof(sc->sc_audv.version), "0x%02x",
@@ -609,7 +603,7 @@ emuxki_init(struct emuxki_softc *sc)
 	emuxki_write(sc, 0, EMU_SPCS1, spcs);
 	emuxki_write(sc, 0, EMU_SPCS2, spcs);
 
-	if (sc->sc_type & EMUXKI_AUDIGY2_VALUE) {
+	if (sc->sc_type & EMUXKI_AUDIGY2_CA0108) {
 		/* Setup SRCMulti_I2S SamplingRate */
 		emuxki_write(sc, 0, EMU_A2_SPDIF_SAMPLERATE,
 		    emuxki_read(sc, 0, EMU_A2_SPDIF_SAMPLERATE) & 0xfffff1ff);
@@ -661,7 +655,7 @@ emuxki_init(struct emuxki_softc *sc)
 	    EMU_INTE_VOLDECRENABLE |
 	    EMU_INTE_MUTEENABLE);
 
-	if (sc->sc_type & EMUXKI_AUDIGY2_VALUE) {
+	if (sc->sc_type & EMUXKI_AUDIGY2_CA0108) {
 		emuxki_writeio_4(sc, EMU_A_IOCFG,
 		    0x0060 | emuxki_readio_4(sc, EMU_A_IOCFG));
 	} else if (sc->sc_type & EMUXKI_AUDIGY2) {
