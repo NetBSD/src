@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.440 2021/12/17 08:27:06 knakahara Exp $
+#	$NetBSD: files.pci,v 1.441 2022/09/07 06:37:04 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -568,6 +568,7 @@ file	dev/pci/mpu_yds.c		mpu_yds
 device	emuxki: audiobus, ac97
 attach	emuxki at pci
 file	dev/pci/emuxki.c		emuxki
+file	dev/pci/emuxki_boards.c		emuxki
 
 # Trident 4DWAVE AC'97 audio (including SiS 7018,ALi M5451)
 device	autri: audiobus, ac97, midibus
