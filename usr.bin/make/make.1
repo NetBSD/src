@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.335 2022/09/07 22:57:43 rillig Exp $
+.\"	$NetBSD: make.1,v 1.336 2022/09/07 23:34:56 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl B
 Try to be backwards compatible by executing a single shell per command and
-by executing the commands to make the sources of a dependency line in sequence.
+by making the sources of a dependency line in sequence.
 .It Fl C Ar directory
 Change to
 .Ar directory
@@ -127,14 +127,14 @@ equivalent to specifying all of the debugging flags.
 .It Cm a
 Print debugging information about archive searching and caching.
 .It Cm C
-Print debugging information about current working directory.
+Print debugging information about the current working directory.
 .It Cm c
 Print debugging information about conditional evaluation.
 .It Cm d
 Print debugging information about directory searching and caching.
 .It Cm e
 Print debugging information about failed commands and targets.
-.It Cm F Ns Oo \&+ Oc Ns Ar filename
+.It Cm F Ns Oo Cm \&+ Oc Ns Ar filename
 Specify where debugging output is written.
 This must be the last flag, because it consumes the remainder of
 the argument.
@@ -221,8 +221,8 @@ Print debugging information about target list maintenance.
 .It Cm V
 Force the
 .Fl V
-option to print raw values of variables, overriding the default behavior
-set via
+option to print raw values of variables,
+overriding the default behavior set via
 .Va .MAKE.EXPAND_VARIABLES .
 .It Cm v
 Print debugging information about variable assignment and expansion.
@@ -232,8 +232,7 @@ Run shell commands with
 so the actual commands are printed as they are executed.
 .El
 .It Fl e
-Specify that environment variables override macro assignments within
-makefiles.
+Let environment variables override global variables within makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
 .Sq Pa makefile .
@@ -294,13 +293,13 @@ The
 option can be used multiple times to form a search path.
 This path overrides the default system include path
 .Pa /usr/share/mk .
-Furthermore the system include path is appended to the search path used for
+Furthermore, the system include path is appended to the search path used for
 .Li \*q Ns Ar file Ns Li \*q Ns -style
 include statements (see the
 .Fl I
 option).
 .Pp
-If a file or directory name in the
+If a directory name in the
 .Fl m
 argument (or the
 .Ev MAKESYSPATH
@@ -309,14 +308,14 @@ environment variable) starts with the string
 .Nm
 searches for the specified file or directory named in the remaining part
 of the argument string.
-The search starts with the current directory of
-the Makefile and then works upward towards the root of the file system.
+The search starts with the current directory
+and then works upward towards the root of the file system.
 If the search is successful, the resulting directory replaces the
 .Ql \&.../
 specification in the
 .Fl m
 argument.
-If used, this feature allows
+This feature allows
 .Nm
 to easily search in the current source tree for customized
 .Pa sys.mk
@@ -325,16 +324,18 @@ files (e.g., by using
 as an argument).
 .It Fl n
 Display the commands that would have been executed, but do not
-actually execute them unless the target depends on the .MAKE special
-source (see below) or the command is prefixed with
-.Sq Ic + .
+actually execute them unless the target depends on the
+.Va .MAKE
+special source (see below) or the command is prefixed with
+.Sq Cm + .
 .It Fl N
-Display the commands which would have been executed, but do not
-actually execute any of them; useful for debugging top-level makefiles
+Display the commands that would have been executed,
+but do not actually execute any of them;
+useful for debugging top-level makefiles
 without descending into subdirectories.
 .It Fl q
-Do not execute any commands, but exit 0 if the specified targets are
-up-to-date, and 1 otherwise.
+Do not execute any commands,
+instead exit 0 if the specified targets are up to date, and 1 otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile.
 .It Fl S
@@ -420,12 +421,12 @@ Variable assignments should follow options for POSIX compatibility
 but no ordering is enforced.
 .El
 .Pp
-There are seven different types of lines in a makefile: file dependency
+There are several different types of lines in a makefile: dependency
 specifications, shell commands, variable assignments, include statements,
-conditional directives, for loops, and comments.
+conditional directives, for loops, other directives, and comments.
 .Pp
-In general, lines may be continued from one line to the next by ending
-them with a backslash
+Lines may be continued from one line to the next
+by ending them with a backslash
 .Pq Ql \e .
 The trailing newline character and initial whitespace on the following
 line are compressed into a single space.
@@ -434,10 +435,9 @@ Dependency lines consist of one or more targets, an operator, and zero
 or more sources.
 This creates a relationship where the targets
 .Dq depend
-on the sources
-and are customarily created from them.
-A target is considered out-of-date if it does not exist, or if its
-modification time is less than that of any of its sources.
+on the sources and are customarily created from them.
+A target is considered out of date if it does not exist,
+or if its modification time is less than that of any of its sources.
 An out-of-date target is re-created, but not until all sources
 have been examined and themselves re-created as needed.
 Three operators may be used:
@@ -485,36 +485,30 @@ The values
 .Ql * ,
 and
 .Ql []
-may only be used as part of the final
-component of the target or source, and must be used to describe existing
-files.
+may only be used as part of the final component of the target or source,
+and only match existing files.
 The value
 .Ql {}
 need not necessarily be used to describe existing files.
 Expansion is in directory order, not alphabetically as done in the shell.
 .Sh SHELL COMMANDS
-Each target may have associated with it one or more lines of shell
-commands, normally
-used to create the target.
+Each target may have associated with it one or more lines of shell commands,
+normally used to create the target.
 Each of the lines in this script
 .Em must
 be preceded by a tab.
 (For historical reasons, spaces are not accepted.)
-While targets can appear in many dependency lines if desired, by
-default only one of these rules may be followed by a creation
-script.
+While targets can occur in many dependency lines if desired,
+by default only one of these rules may be followed by a creation script.
 If the
 .Sq Ic \&::
-operator is used, however, all rules may include scripts and the
-scripts are executed in the order found.
+operator is used, however,
+all rules may include scripts and the scripts are executed in the order found.
 .Pp
-Each line is treated as a separate shell command, unless the end of
-line is escaped with a backslash
-.Pq Ql \e
+Each line is treated as a separate shell command,
+unless the end of line is escaped with a backslash
+.Pq Ql \e ,
 in which case that line and the next are combined.
-.\" The escaped newline is retained and passed to the shell, which
-.\" normally ignores it.
-.\" However, the tab at the beginning of the following line is removed.
 If the first characters of the command are any combination of
 .Sq Ic @ ,
 .Sq Ic + ,
@@ -529,7 +523,9 @@ A
 causes the command to be executed even when
 .Fl n
 is given.
-This is similar to the effect of the .MAKE special source,
+This is similar to the effect of the
+.Va .MAKE
+special source,
 except that the effect can be limited to a single line of a script.
 A
 .Sq Ic \-
@@ -540,8 +536,7 @@ When
 .Nm
 is run in jobs mode with
 .Fl j Ar max_jobs ,
-the entire script for the target is fed to a
-single instance of the shell.
+the entire script for the target is fed to a single instance of the shell.
 In compatibility (non-jobs) mode, each command is run in a separate process.
 If the command contains any shell meta characters
 .Pq Ql #=|^(){};&<>*?[]:$`\e\en ,
@@ -550,8 +545,8 @@ it is passed to the shell; otherwise
 attempts direct execution.
 If a line starts with
 .Sq Ic \-
-and the shell has ErrCtl enabled, failure of the command line
-is ignored as in compatibility mode.
+and the shell has ErrCtl enabled,
+failure of the command line is ignored as in compatibility mode.
 Otherwise
 .Sq Ic \-
 affects the entire job;
@@ -561,13 +556,13 @@ but the target is not deemed to have failed.
 Makefiles should be written so that the mode of
 .Nm
 operation does not change their behavior.
-For example, any command which needs to use
+For example, any command which uses
 .Dq cd
 or
 .Dq chdir
-without potentially changing the directory for subsequent commands
+without the intention of changing the directory for subsequent commands
 should be put in parentheses so it executes in a subshell.
-To force the use of one shell, escape the line breaks so as to make
+To force the use of a single shell, escape the line breaks so as to make
 the whole script one command.
 For example:
 .Bd -literal -offset indent
@@ -611,7 +606,7 @@ and
 .Ar value
 is discarded.
 .Ss Variable assignment operators
-The five operators that can be used to assign values to variables are:
+The five operators that assign values to variables are:
 .Bl -tag -width Ds
 .It Ic \&=
 Assign the value to the variable.
@@ -632,8 +627,8 @@ References to undefined variables are
 expanded.
 This can cause problems when variable modifiers are used.
 .It Ic \&!=
-Expand the value and pass it to the shell for execution and assign
-the result to the variable.
+Expand the value and pass it to the shell for execution,
+then assign the output from the child's standard output to the variable.
 Any newlines in the result are replaced with spaces.
 .El
 .Ss Expansion of variables
@@ -644,13 +639,13 @@ References to variables have the form
 .Ql \&${ Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns }
 or
 .Ql \&$( Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns ) .
-If the variable name contains only a single character,
+If the variable name consists of only a single character,
 the surrounding curly braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
 If the variable name contains a dollar, the name itself is expanded first.
 This allows almost arbitrary variable names, however names containing dollar,
-braces, parentheses, or whitespace are really best avoided.
+braces, parentheses or whitespace are really best avoided.
 .Pp
 If the result of expanding a variable contains a dollar sign
 .Pq Ql \&$ ,
