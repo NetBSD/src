@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.333 2022/09/05 17:13:36 rillig Exp $
+.\"	$NetBSD: make.1,v 1.334 2022/09/07 22:36:48 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 2, 2022
+.Dd September 7, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -106,10 +106,10 @@ Turn on debugging, and specify which portions of
 .Nm
 are to print debugging information.
 Unless the flags are preceded by
-.Ql \-
+.Ql \- ,
 they are added to the
 .Ev MAKEFLAGS
-environment variable and will be processed by any child make processes.
+environment variable and are passed on to any child make processes.
 By default, debugging information is printed to standard error,
 but this can be changed using the
 .Cm F
@@ -142,21 +142,21 @@ If the character immediately after the
 .Cm F
 flag is
 .Ql \&+ ,
-then the file will be opened in append mode;
-otherwise the file will be overwritten.
+then the file is opened in append mode;
+otherwise the file is overwritten.
 If the file name is
 .Ql stdout
 or
-.Ql stderr
-then debugging output will be written to the
+.Ql stderr ,
+debugging output is written to the
 standard output or standard error output file descriptors respectively
 (and the
 .Ql \&+
 option has no effect).
-Otherwise, the output will be written to the named file.
+Otherwise, the output is written to the named file.
 If the file name ends with
-.Ql .%d
-then the
+.Ql .%d ,
+the
 .Ql %d
 is replaced by the pid.
 .It Cm f
@@ -174,9 +174,8 @@ Print debugging information about hash table operations.
 Print debugging information about running multiple shells.
 .It Cm L
 Turn on lint checks.
-This will throw errors for variable assignments that do not parse
-correctly, at the time of assignment so the file and line number
-are available.
+This throws errors for variable assignments that do not parse correctly,
+at the time of assignment, so the file and line number are available.
 .It Cm l
 Print commands in Makefiles regardless of whether or not they are prefixed by
 .Ql @
@@ -293,10 +292,9 @@ include statement.
 The
 .Fl m
 option can be used multiple times to form a search path.
-This path will override the default system include path
+This path overrides the default system include path
 .Pa /usr/share/mk .
-Furthermore the system include path will be appended to the search path used
-for
+Furthermore the system include path is appended to the search path used for
 .Li \*q Ns Ar file Ns Li \*q Ns -style
 include statements (see the
 .Fl I
@@ -307,14 +305,13 @@ If a file or directory name in the
 argument (or the
 .Ev MAKESYSPATH
 environment variable) starts with the string
-.Ql \&.../
-then
+.Ql \&.../ ,
 .Nm
-will search for the specified file or directory named in the remaining part
+searches for the specified file or directory named in the remaining part
 of the argument string.
 The search starts with the current directory of
 the Makefile and then works upward towards the root of the file system.
-If the search is successful, then the resulting directory replaces the
+If the search is successful, the resulting directory replaces the
 .Ql \&.../
 specification in the
 .Fl m
@@ -364,7 +361,7 @@ Print the value of
 .Ar variable .
 Do not build any targets.
 Multiple instances of this option may be specified;
-the variables will be printed one per line,
+the variables are printed one per line,
 with a blank line for each null or undefined variable.
 The value printed is extracted from the global scope after all
 makefiles have been read.
@@ -373,13 +370,12 @@ include additional unexpanded variable references) are shown.
 If
 .Ar variable
 contains a
-.Ql \&$
-then the value will be recursively expanded to its complete resultant
+.Ql \&$ ,
+the value is recursively expanded to its complete resultant
 text before printing.
-The expanded value will also be printed if
+The expanded value is also printed if
 .Va .MAKE.EXPAND_VARIABLES
-is set to true and
-the
+is set to true and the
 .Fl dV
 option has not been used to override it.
 Note that loop-local and target-local variables, as well as values
@@ -442,7 +438,7 @@ on the sources
 and are customarily created from them.
 A target is considered out-of-date if it does not exist, or if its
 modification time is less than that of any of its sources.
-An out-of-date target will be re-created, but not until all sources
+An out-of-date target is re-created, but not until all sources
 have been examined and themselves re-created as needed.
 Three operators may be used:
 .Bl -tag -width flag
@@ -471,7 +467,7 @@ for dependency lines with no sources, the attached shell
 commands are always run.
 Also unlike
 .Ic \&:,
-the target will not be removed if
+the target is not removed if
 .Nm
 is interrupted.
 .El
@@ -548,19 +544,19 @@ the entire script for the target is fed to a
 single instance of the shell.
 In compatibility (non-jobs) mode, each command is run in a separate process.
 If the command contains any shell meta characters
-.Pq Ql #=|^(){};&<>*?[]:$`\e\en
-it will be passed to the shell; otherwise
+.Pq Ql #=|^(){};&<>*?[]:$`\e\en ,
+it is passed to the shell; otherwise
 .Nm
-will attempt direct execution.
+attempts direct execution.
 If a line starts with
 .Sq Ic \-
-and the shell has ErrCtl enabled then failure of the command line
-will be ignored as in compatibility mode.
+and the shell has ErrCtl enabled, failure of the command line
+is ignored as in compatibility mode.
 Otherwise
 .Sq Ic \-
 affects the entire job;
-the script will stop at the first command line that fails,
-but the target will not be deemed to have failed.
+the script stops at the first command line that fails,
+but the target is not deemed to have failed.
 .Pp
 Makefiles should be written so that the mode of
 .Nm
@@ -588,12 +584,10 @@ ensure-one-shell-regardless-of-mode:
 .Pp
 Since
 .Nm
-will
-.Xr chdir 2
-to
+changes the current working directory to
 .Sq Va .OBJDIR
-before executing any targets, each child process
-starts with that as its current working directory.
+before executing any targets,
+each child process starts with that as its current working directory.
 .Sh VARIABLE ASSIGNMENTS
 Variables in make behave much like macros in the C preprocessor.
 .Pp
@@ -690,7 +684,7 @@ all:
 	@echo ${b}
 .Ed
 .Pp
-will print:
+prints:
 .Bd -literal -offset indent
 1 2 3
 3 3 3
@@ -732,7 +726,7 @@ Local variables can be set on a dependency line, if
 is not set to
 .Ql false .
 The rest of the line
-(which will already have had global variables expanded)
+(which already has had global variables expanded)
 is the variable value.
 For example:
 .Bd -literal -offset indent
@@ -743,10 +737,10 @@ ${OBJS}: .MAKE.META.CMP_FILTER=${COMPILER_WRAPPERS:S,^,N,}
 .Pp
 Only the targets
 .Ql ${OBJS}
-will be impacted by that filter (in
+are impacted by that filter (in
 .Dq meta
 mode) and
-simply enabling/disabling any of the compiler wrappers will not render all
+simply enabling/disabling any of the compiler wrappers does not render all
 of those targets out-of-date.
 .Pp
 .Em NOTE :
@@ -787,8 +781,8 @@ The file prefix of the target, containing only the file portion, no suffix
 or preceding directory components; also known as
 .Sq Va * .
 The suffix must be one of the known suffixes declared with
-.Ic .SUFFIXES
-or it will not be recognized.
+.Ic .SUFFIXES ,
+or it is not recognized.
 .It Va .TARGET
 The name of the target; also known as
 .Sq Va @ .
@@ -933,7 +927,7 @@ The recursion depth of
 .Nm .
 The initial instance of
 .Nm
-will be 0, and an incremented value is put into the environment
+is 0, and an incremented value is put into the environment
 to be seen by the next generation.
 This allows tests like:
 .Li .if ${.MAKE.LEVEL} == 0
@@ -946,7 +940,7 @@ The ordered list of makefile names
 .Sq Pa Makefile )
 that
 .Nm
-will look for.
+looks for.
 .It Va .MAKE.MAKEFILES
 The list of makefiles read by
 .Nm ,
@@ -981,7 +975,7 @@ The captured output can be very useful when diagnosing errors.
 .It Pa curdirOk= Ar bf
 Normally
 .Nm
-will not create .meta files in
+does not create .meta files in
 .Sq Va .CURDIR .
 This can be overridden by setting
 .Va bf
@@ -1040,7 +1034,7 @@ In
 .Dq meta
 mode, it can (very rarely!) be useful to filter command
 lines before comparison.
-This variable can be set to a set of modifiers that will be applied to
+This variable can be set to a set of modifiers that are applied to
 each line of the old and new command that differ, if the filtered
 commands still differ, the target is considered out-of-date.
 .It Va .MAKE.META.CREATED
@@ -1189,9 +1183,7 @@ may be modified in the makefile via the special target
 .Sq Ic .OBJDIR .
 In all cases,
 .Nm
-will
-.Xr chdir 2
-to the specified directory if it exists, and set
+changes to the specified directory if it exists, and sets
 .Sq Va .OBJDIR
 and
 .Sq Va PWD
@@ -1201,11 +1193,10 @@ Except in the case of an explicit
 .Sq Ic .OBJDIR
 target,
 .Nm
-will check that the specified directory is writable and ignore it if not.
+checks that the specified directory is writable and ignores it if not.
 This check can be skipped by setting the environment variable
 .Sq Ev MAKE_OBJDIR_CHECK_WRITABLE
 to "no".
-.
 .It Va .PARSEDIR
 A path to the directory of the current
 .Sq Pa Makefile
@@ -1225,7 +1216,7 @@ using assignment with expansion
 .It Va .PATH
 A variable that represents the list of directories that
 .Nm
-will search for files.
+searches for files.
 The search list should be updated using the target
 .Sq Ic .PATH
 rather than the variable.
@@ -1269,7 +1260,7 @@ Colon-separated
 .Pq Dq \&:
 lists of directories that
 .Nm
-will search for files.
+searches for files.
 The variable is supported for compatibility with old make programs only,
 use
 .Sq Va .PATH
@@ -1331,10 +1322,9 @@ The wildcard characters may be escaped with a backslash
 As a consequence of the way values are split into words, matched,
 and then joined, a construct like
 .Dl ${VAR:M*}
-will normalize the inter-word spacing, removing all leading and
-trailing space, and converting multiple consecutive spaces
-to single spaces.
-.
+normalizes the inter-word spacing,
+removing all leading and trailing space,
+and converting multiple consecutive spaces to single spaces.
 .It Cm \&:N\| Ns Ar pattern
 This is identical to
 .Sq Cm \&:M ,
@@ -1358,7 +1348,7 @@ Orders every word in variable in reverse alphabetical order.
 Orders every word in variable in reverse numerical order.
 .It Cm \&:Ox
 Shuffles the words in variable.
-The results will be different each time you are referring to the
+The results are different each time you are referring to the
 modified variable; use the assignment with expansion
 .Sq Cm \&:=
 to prevent such behavior.
@@ -1550,9 +1540,10 @@ expression, evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
-Since the variable name is used as the expression, \&:\&? must be the
-first modifier after the variable name itself - which will, of course,
-usually contain variable expansions.
+Since the variable name is used as the expression,
+\&:\&? must be the first modifier after the variable name
+.No itself Ns \^\(em\^ Ns
+which, of course, usually contains variable expansions.
 A common error is trying to use expressions like
 .Dl ${NUMBERS:M42:?match:no}
 which actually tests defined(NUMBERS),
@@ -1825,7 +1816,7 @@ then errors locating and/or opening include files are ignored.
 If the include statement is written as
 .Cm .dinclude
 not only are errors locating and/or opening include files ignored,
-but stale dependencies within the included file will be ignored
+but stale dependencies within the included file are ignored
 just like
 .Va .MAKE.DEPENDFILE .
 .Pp
@@ -1835,9 +1826,8 @@ The possible conditionals are as follows:
 .Bl -tag -width Ds
 .It Ic .error Ar message
 The message is printed along with the name of the makefile and line number,
-then
 .Nm
-will exit immediately.
+exits immediately.
 .It Ic .export Ar variable ...
 Export the specified global variable.
 If no variable list is provided, all globals are exported
@@ -1878,7 +1868,7 @@ The opposite of
 .Ql .export .
 The specified global
 .Ar variable
-will be removed from
+is removed from
 .Va .MAKE.EXPORTED .
 If no variable list is provided, all globals are unexported,
 and
@@ -1887,11 +1877,11 @@ deleted.
 .It Ic .unexport-env
 Unexport all globals previously exported and
 clear the environment inherited from the parent.
-This operation will cause a memory leak of the original environment,
+This operation causes a memory leak of the original environment,
 so should be used sparingly.
 Testing for
 .Va .MAKE.LEVEL
-being 0, would make sense.
+being 0 would make sense.
 Also note that any variables which originated in the parent environment
 should be explicitly preserved if desired.
 For example:
@@ -1906,9 +1896,10 @@ PATH := ${PATH}
 Would result in an environment containing only
 .Sq Ev PATH ,
 which is the minimal useful environment.
+.\" TODO: Check the below sentence, environment variables don't start with '.'.
 Actually
 .Sq Va .MAKE.LEVEL
-will also be pushed into the new environment.
+is also pushed into the new environment.
 .It Ic .warning Ar message
 The message prefixed by
 .Sq Pa warning:
@@ -1969,8 +1960,7 @@ of higher precedence than
 .Pp
 As in C,
 .Nm
-will only evaluate a conditional as far as is necessary to determine
-its value.
+only evaluates a conditional as far as is necessary to determine its value.
 Parentheses may be used to change the order of evaluation.
 The boolean operator
 .Sq Ic \&!
@@ -2145,16 +2135,17 @@ targets.
 .It Ic .NOMETA_CMP
 Ignore differences in commands when deciding if target is out of date.
 This is useful if the command contains a value which always changes.
-If the number of commands change, though, the target will still be out of date.
+If the number of commands change, though,
+the target is still considered out of date.
 The same effect applies to any command line that uses the variable
 .Va .OODATE ,
 which can be used for that purpose even when not otherwise needed or desired:
 .Bd -literal -offset indent
 
 skip-compare-for-some:
-	@echo this will be compared
-	@echo this will not ${.OODATE:M.NOMETA_CMP}
-	@echo this will also be compared
+	@echo this is compared
+	@echo this is not ${.OODATE:M.NOMETA_CMP}
+	@echo this is also compared
 
 .Ed
 The
@@ -2172,12 +2163,12 @@ This source prevents this target from being selected.
 .It Ic .OPTIONAL
 If a target is marked with this attribute and
 .Nm
-can't figure out how to create it, it will ignore this fact and assume
+can't figure out how to create it, it ignores this fact and assumes
 the file isn't needed or already exists.
 .It Ic .PHONY
-The target does not
-correspond to an actual file; it is always considered to be out of date,
-and will not be created with the
+The target does not correspond to an actual file;
+it is always considered to be out of date,
+and is not created with the
 .Fl t
 option.
 Suffix-transformation rules are not applied to
@@ -2293,18 +2284,18 @@ option.
 .It Ic .INTERRUPT
 If
 .Nm
-is interrupted, the commands for this target will be executed.
+is interrupted, the commands for this target are executed.
 .It Ic .MAIN
 If no target is specified when
 .Nm
-is invoked, this target will be built.
+is invoked, this target is built.
 .It Ic .MAKEFLAGS
 This target provides a way to specify flags for
 .Nm
 when the makefile is used.
 The flags are as if typed to the shell, though the
 .Fl f
-option will have
+option has
 no effect.
 .\" XXX: NOT YET!!!!
 .\" .It Ic .NOTPARALLEL
@@ -2326,9 +2317,7 @@ The source is a new value for
 .Sq Va .OBJDIR .
 If it exists,
 .Nm
-will
-.Xr chdir 2
-to it and update the value of
+changes the current working directory to it and updates the value of
 .Sq Va .OBJDIR .
 .It Ic .ORDER
 In parallel mode, the named targets are made in sequence.
@@ -2382,9 +2371,9 @@ If
 .Nm
 is run with the
 .Fl r
-flag, then only
+flag, only
 .Ql posix.mk
-will contribute to the default rules.
+contributes to the default rules.
 .It Ic .PRECIOUS
 Apply the
 .Ic .PRECIOUS
@@ -2396,7 +2385,7 @@ target in the file.
 .It Ic .SHELL
 Sets the shell that
 .Nm
-will use to execute commands.
+uses to execute commands.
 The sources are a set of
 .Ar field\| Ns Cm \&= Ns Ar value
 pairs.
