@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.334 2022/09/07 22:36:48 rillig Exp $
+.\"	$NetBSD: make.1,v 1.335 2022/09/07 22:57:43 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,7 @@ but this can be changed using the
 debugging flag.
 The debugging output is always unbuffered; in addition, if debugging
 is enabled but debugging output is not directed to standard output,
-then the standard output is line buffered.
+the standard output is line buffered.
 The available
 .Ar flags
 are:
@@ -142,7 +142,7 @@ If the character immediately after the
 .Cm F
 flag is
 .Ql \&+ ,
-then the file is opened in append mode;
+the file is opened in append mode;
 otherwise the file is overwritten.
 If the file name is
 .Ql stdout
@@ -648,7 +648,7 @@ If the variable name contains only a single character,
 the surrounding curly braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
-If the variable name contains a dollar, then the name itself is expanded first.
+If the variable name contains a dollar, the name itself is expanded first.
 This allows almost arbitrary variable names, however names containing dollar,
 braces, parentheses, or whitespace are really best avoided.
 .Pp
@@ -983,11 +983,13 @@ to a value which represents True.
 .It Pa missing-meta= Ar bf
 If
 .Va bf
-is True, then a missing .meta file makes the target out-of-date.
+is True, a missing
+.Pa .meta
+file makes the target out-of-date.
 .It Pa missing-filemon= Ar bf
 If
 .Va bf
-is True, then missing filemon data makes the target out-of-date.
+is True, missing filemon data makes the target out-of-date.
 .It Pa nofilemon
 Do not use
 .Xr filemon 4 .
@@ -1229,7 +1231,7 @@ to the canonical path given by
 .Xr getcwd 3 .
 However, if the environment variable
 .Sq Ev PWD
-is set and gives a path to the current directory, then
+is set and gives a path to the current directory,
 .Nm
 sets
 .Sq Va .CURDIR
@@ -1418,7 +1420,7 @@ This modifier sets the separator to the character
 .Ar c .
 If
 .Ar c
-is omitted, then no separator is used.
+is omitted, no separator is used.
 The common escapes (including octal numeric codes) work as expected.
 .It Cm \&:tu
 Converts variable to upper-case letters.
@@ -1450,7 +1452,7 @@ is affected.
 If a
 .Ql W
 is appended to the last delimiter of the pattern,
-then the value is treated as a single word
+the value is treated as a single word
 (possibly containing embedded white space).
 If
 .Ar old_string
@@ -1559,10 +1561,9 @@ If
 or
 .Ar new_string
 do not contain the pattern matching character
-.Ql %
-then it is assumed that they are
-anchored at the end of each word, so only suffixes or entire
-words may be replaced.
+.Ql % ,
+it is assumed that they are anchored at the end of each word,
+so only suffixes or entire words may be replaced.
 Otherwise
 .Ql %
 is the substring of
@@ -1575,13 +1576,13 @@ contains the pattern matching character
 .Ql % ,
 and
 .Ar old_string
-matches, then the result is the
+matches, the result is the
 .Ar new_string .
 If only the
 .Ar new_string
 contains the pattern matching character
 .Ql % ,
-then it is not treated specially and it is printed as a literal
+it is not treated specially and it is printed as a literal
 .Ql %
 on match.
 If there is more than one pattern matching character
@@ -1661,8 +1662,7 @@ The name of the variable is the value.
 .It Cm \&:P
 The path of the node which has the same name as the variable
 is the value.
-If no such node exists or its path is null, then the
-name of the variable is used.
+If no such node exists or its path is null, the name of the variable is used.
 In order for this modifier to work, the name (node) must at least have
 appeared on the rhs of a dependency.
 .Sm off
@@ -1749,12 +1749,13 @@ If
 .Ar start
 is greater than
 .Ar end ,
-then the words are output in reverse order.
+the words are output in reverse order.
 For example,
 .Sq Cm \&:[-1..1]
 selects all the words from last to first.
-If the list is already ordered, then this effectively reverses
-the list, but it is more efficient to use
+If the list is already ordered,
+this effectively reverses the list,
+but it is more efficient to use
 .Sq Cm \&:Or
 instead of
 .Sq Cm \&:O:[-1..1] .
@@ -1810,14 +1811,14 @@ is also accepted.
 If the include statement is written as
 .Cm .-include
 or as
-.Cm .sinclude
-then errors locating and/or opening include files are ignored.
+.Cm .sinclude ,
+errors locating and/or opening include files are ignored.
 .Pp
 If the include statement is written as
 .Cm .dinclude
 not only are errors locating and/or opening include files ignored,
 but stale dependencies within the included file are ignored
-just like
+just like in
 .Va .MAKE.DEPENDFILE .
 .Pp
 Conditional expressions are also preceded by a single dot as the first
@@ -2301,7 +2302,7 @@ no effect.
 .\" .It Ic .NOTPARALLEL
 .\" The named targets are executed in non parallel mode.
 .\" If no targets are
-.\" specified, then all targets are executed in non parallel mode.
+.\" specified, all targets are executed in non parallel mode.
 .It Ic .NOPATH
 Apply the
 .Ic .NOPATH
@@ -2337,7 +2338,7 @@ b: a
 .\" .It Ic .PARALLEL
 .\" The named targets are executed in parallel mode.
 .\" If no targets are
-.\" specified, then all targets are executed in parallel mode.
+.\" specified, all targets are executed in parallel mode.
 .It Ic .PATH
 The sources are directories which are to be searched for files not
 found in the current directory.
@@ -2345,8 +2346,7 @@ If no sources are specified, any previously specified directories are
 deleted.
 If the source is the special
 .Ic .DOTLAST
-target, then the current working
-directory is searched last.
+target, the current working directory is searched last.
 .It Ic .PATH. Ns Ar suffix
 Like
 .Ic .PATH
