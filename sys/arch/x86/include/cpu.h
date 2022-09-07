@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.132 2021/10/07 13:04:18 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,18 +139,19 @@ struct cpu_info {
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
 	/* The following must be aligned for cmpxchg8b. */
-	struct {
-		uint32_t	ipending;
-		int		ilevel;
-		uint32_t	imasked;
-	} ci_istate __aligned(8);
-#define ci_ipending	ci_istate.ipending
-#define	ci_ilevel	ci_istate.ilevel
-#define	ci_imasked	ci_istate.imasked
+	union {
+		uint64_t	ci_istate;
+		struct {
+			uint64_t	ci_ipending:56;
+			uint64_t	ci_ilevel:8;
+		};
+	} __aligned(8);
+	uint64_t	ci_imasked;
+
 	int		ci_idepth;
 	void *		ci_intrstack;
-	uint32_t	ci_imask[NIPL];
-	uint32_t	ci_iunmask[NIPL];
+	uint64_t	ci_imask[NIPL];
+	uint64_t	ci_iunmask[NIPL];
 
 	uint32_t	ci_signature;	/* X86 cpuid type (cpuid.1.%eax) */
 	uint32_t	ci_vendor[4];	/* vendor string */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.54 2022/05/25 14:35:15 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.55 2022/09/07 00:40:19 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -183,7 +183,7 @@ void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_enable_sir(unsigned int);
-void hypervisor_set_ipending(uint32_t, int, int);
+void hypervisor_set_ipending(uint64_t, int, int);
 void hypervisor_machdep_attach(void);
 void hypervisor_machdep_resume(void);
 

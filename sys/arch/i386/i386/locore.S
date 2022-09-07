@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.189 2022/06/12 11:36:42 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.190 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.189 2022/06/12 11:36:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.190 2022/09/07 00:40:18 knakahara Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1543,7 +1543,7 @@ IDTVEC(syscall)
 	STI(%eax)
 
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
 	pushl	$5f
@@ -1580,7 +1580,7 @@ IDTVEC(syscall)
 	jz	14f
 	/* process pending interrupts */
 	CLI(%eax)
-	movl	CPUVAR(ILEVEL), %ebx
+	movzbl	CPUVAR(ILEVEL), %ebx
 	movl	$.Lsyscall_resume, %esi /* address to resume loop at */
 .Lsyscall_resume:
 	movl	%ebx,%eax		/* get cpl */
@@ -1591,13 +1591,13 @@ IDTVEC(syscall)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
-17:	movl	%ebx, CPUVAR(ILEVEL)	/* restore cpl  */
+17:	movb	%bl, CPUVAR(ILEVEL)	/* restore cpl  */
 	jmp	.Lsyscall_checkast
 14:
 #endif /* XENPV */
 
 #ifdef DIAGNOSTIC
-	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpb	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.22 2020/05/02 18:49:57 bouyer Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.23 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.22 2020/05/02 18:49:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.23 2022/09/07 00:40:18 knakahara Exp $");
 #endif
 
 /*
@@ -215,7 +215,7 @@ IDTVEC(trap07)
 	pushl	$T_DNA
 	INTRENTRY
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	pushl	%esp
 	call	_C_LABEL(fpudna)
@@ -280,7 +280,7 @@ IDTVEC(trap0f)
 	INTRENTRY
 	STI(%eax)
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap0f)
@@ -296,7 +296,7 @@ IDTVEC(trap10)
 	pushl	$T_ARITHTRAP
 .Ldo_fputrap:
 	INTRENTRY
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	pushl	%esp
 	addl	$1,CPUVAR(NTRAP)	/* statistical info */
 	adcl	$0,CPUVAR(NTRAP)+4
@@ -404,7 +404,7 @@ ENTRY(alltraps)
 
 calltrap:
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	addl	$1,CPUVAR(NTRAP)	/* statistical info */
 	adcl	$0,CPUVAR(NTRAP)+4
@@ -444,7 +444,7 @@ calltrap:
 	jz	22f
 	/* process pending interrupts */
 	CLI(%eax)
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
 	movl	%ebx,%eax		/* get cpl */
@@ -455,14 +455,14 @@ calltrap:
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
-11:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
+11:	movb	%bl,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	.Lalltraps_checkusr
 22:
 #endif /* XEN */
 
 6:
 #ifdef DIAGNOSTIC
-	cmpl	CPUVAR(ILEVEL),%ebx
+	cmpb	CPUVAR(ILEVEL),%bl
 	jne	.Lspl_error
 #endif
 	INTRFASTEXIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.53 2020/06/29 23:04:56 riastradh Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.54 2022/09/07 00:40:18 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -347,7 +347,7 @@ IDTVEC(trap07)
 	ZTRAP_NJ(T_DNA)
 	INTRENTRY
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
@@ -439,7 +439,7 @@ IDTVEC(trap15)
 	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap15)
@@ -457,7 +457,7 @@ IDTVEC(trap16)
 	HANDLE_DEFERRED_FPU
 #endif /* XENPV */
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
@@ -508,7 +508,7 @@ IDTVEC(intrspurious)
 	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(intrspurious)
@@ -658,7 +658,7 @@ ENTRY(alltraps)
 
 calltrap:
 #ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
+	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
@@ -688,7 +688,7 @@ calltrap:
 
 6:
 #ifdef DIAGNOSTIC
-	cmpl	CPUVAR(ILEVEL),%ebx
+	cmpb	CPUVAR(ILEVEL),%bl
 	jne	.Lspl_error
 #endif
 	INTRFASTEXIT
@@ -701,7 +701,7 @@ calltrap:
 .Lspl_error:
 	STI(si)
 	movabsq	$4f,%rdi
-	movl	CPUVAR(ILEVEL),%esi
+	movzbl	CPUVAR(ILEVEL),%esi
 	call	_C_LABEL(panic)
 4:	.asciz	"spl not lowered on trap exit, ilevel=%x"
 #endif
