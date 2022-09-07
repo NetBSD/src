@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.72 2022/08/29 09:04:27 khorben Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.73 2022/09/07 00:29:23 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.72 2022/08/29 09:04:27 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.73 2022/09/07 00:29:23 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/audioio.h>
@@ -164,10 +165,10 @@ struct emuxki_softc {
 	void			(*pintr)(void *);
 	void			*pintrarg;
 	audio_params_t		play;
-	int			pframesize;
-	int			pblksize;
-	int			plength;
-	int			poffset;
+	uint32_t		pframesize;
+	uint32_t		pblksize;
+	uint32_t		plength;
+	uint32_t		poffset;
 
 	struct dmamem		*rmem;		/* rec internal memory */
 	void			(*rintr)(void *);
@@ -1430,4 +1431,33 @@ emuxki_ac97_flags(void *hdl)
 {
 
 	return AC97_HOST_SWAPPED_CHANNELS;
+}
+
+MODULE(MODULE_CLASS_DRIVER, emuxki, "pci,audio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+emuxki_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_emuxki,
+		    cfattach_ioconf_emuxki, cfdata_ioconf_emuxki);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_emuxki,
+		    cfattach_ioconf_emuxki, cfdata_ioconf_emuxki);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
