@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.54 2022/09/05 00:25:18 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.55 2022/09/07 06:53:03 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.54 2022/09/05 00:25:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.55 2022/09/07 06:53:03 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -136,8 +136,8 @@ FPU_EMU_EVCNT_DECL(fsel);
 FPU_EMU_EVCNT_DECL(fpres);
 FPU_EMU_EVCNT_DECL(fmul);
 FPU_EMU_EVCNT_DECL(frsqrte);
-FPU_EMU_EVCNT_DECL(fmulsub);
-FPU_EMU_EVCNT_DECL(fmuladd);
+FPU_EMU_EVCNT_DECL(fmsub);
+FPU_EMU_EVCNT_DECL(fmadd);
 FPU_EMU_EVCNT_DECL(fnmsub);
 FPU_EMU_EVCNT_DECL(fnmadd);
 
@@ -714,8 +714,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fp = fpu_div(fe);
 				break;
 			case	OPC59_FMSUBS:
-				FPU_EMU_EVCNT_INCR(fmulsub);
-				DPRINTF(FPE_INSN, ("fpu_execute: FMULSUB\n"));
+				FPU_EMU_EVCNT_INCR(fmsub);
+				DPRINTF(FPE_INSN, ("fpu_execute: FMSUB\n"));
 				fpu_explode(fe, &fe->fe_f1, type, FR(ra));
 				fpu_explode(fe, &fe->fe_f2, type, FR(rc));
 				fp = fpu_mul(fe);
@@ -724,8 +724,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fp = fpu_sub(fe);
 				break;
 			case	OPC59_FMADDS:
-				FPU_EMU_EVCNT_INCR(fmuladd);
-				DPRINTF(FPE_INSN, ("fpu_execute: FMULADD\n"));
+				FPU_EMU_EVCNT_INCR(fmadd);
+				DPRINTF(FPE_INSN, ("fpu_execute: FMADD\n"));
 				fpu_explode(fe, &fe->fe_f1, type, FR(ra));
 				fpu_explode(fe, &fe->fe_f2, type, FR(rc));
 				fp = fpu_mul(fe);
