@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.13 2022/09/05 00:24:24 rin Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.14 2022/09/07 06:51:58 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.13 2022/09/05 00:24:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.14 2022/09/07 06:51:58 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -227,6 +227,7 @@ fpu_explode(struct fpemu *fe, struct fpn *fp, int type, uint64_t i)
 		break;
 
 	case FTYPE_INT:
+		fp->fp_sign = lo >> 31;
 		class = fpu_itof(fp, lo);
 		break;
 
