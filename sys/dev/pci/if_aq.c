@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.31 2021/11/13 21:38:48 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.32 2022/09/08 07:05:42 skrll Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.31 2021/11/13 21:38:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.32 2022/09/08 07:05:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1231,7 +1231,7 @@ aq_lookup(const struct pci_attach_args *pa)
 static int
 aq_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct pci_attach_args * const pa = aux;
 
 	if (aq_lookup(pa) != NULL)
 		return 1;
@@ -1242,9 +1242,9 @@ aq_match(device_t parent, cfdata_t cf, void *aux)
 static void
 aq_attach(device_t parent, device_t self, void *aux)
 {
-	struct aq_softc *sc = device_private(self);
-	struct pci_attach_args *pa = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct aq_softc * const sc = device_private(self);
+	struct pci_attach_args * const pa = aux;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t command, memtype, bar;
@@ -1545,13 +1545,13 @@ aq_attach(device_t parent, device_t self, void *aux)
 static int
 aq_detach(device_t self, int flags __unused)
 {
-	struct aq_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, s;
+	struct aq_softc * const sc = device_private(self);
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+	int i;
 
 	if (sc->sc_iosize != 0) {
 		if (ifp->if_softc != NULL) {
-			s = splnet();
+			const int s = splnet();
 			aq_stop(ifp, 0);
 			splx(s);
 		}
@@ -2623,7 +2623,7 @@ aq_set_mac_addr(struct aq_softc *sc, int index, uint8_t *enaddr)
 static int
 aq_set_capability(struct aq_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	int ip4csum_tx =
 	    ((ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) == 0) ? 0 : 1;
 	int ip4csum_rx =
@@ -2689,8 +2689,8 @@ aq_set_capability(struct aq_softc *sc)
 static int
 aq_set_filter(struct aq_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom * const ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int idx, error = 0;
@@ -2752,7 +2752,7 @@ aq_set_filter(struct aq_softc *sc)
 static int
 aq_ifmedia_change(struct ifnet * const ifp)
 {
-	struct aq_softc *sc = ifp->if_softc;
+	struct aq_softc * const sc = ifp->if_softc;
 	aq_link_speed_t rate = AQ_LINK_NONE;
 	aq_link_fc_t fc = AQ_FC_NONE;
 	aq_link_eee_t eee = AQ_EEE_DISABLE;
@@ -2802,7 +2802,7 @@ aq_ifmedia_change(struct ifnet * const ifp)
 static void
 aq_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *ifmr)
 {
-	struct aq_softc *sc = ifp->if_softc;
+	struct aq_softc * const sc = ifp->if_softc;
 
 	/* update ifm_active */
 	ifmr->ifm_active = IFM_ETHER;
@@ -3246,8 +3246,8 @@ aq_hw_l3_filter_set(struct aq_softc *sc)
 static void
 aq_set_vlan_filters(struct aq_softc *sc)
 {
-	struct ethercom *ec = &sc->sc_ethercom;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ethercom * const ec = &sc->sc_ethercom;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct vlanid_list *vlanidp;
 	int i;
 
@@ -3352,7 +3352,7 @@ aq_hw_init(struct aq_softc *sc)
 static int
 aq_update_link_status(struct aq_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	aq_link_speed_t rate = AQ_LINK_NONE;
 	aq_link_fc_t fc = AQ_FC_NONE;
 	aq_link_eee_t eee = AQ_EEE_DISABLE;
@@ -4214,9 +4214,9 @@ aq_encap_txring(struct aq_softc *sc, struct aq_txring *txring, struct mbuf **mp)
 static int
 aq_tx_intr(void *arg)
 {
-	struct aq_txring *txring = arg;
-	struct aq_softc *sc = txring->txr_sc;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct aq_txring * const txring = arg;
+	struct aq_softc * const sc = txring->txr_sc;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	const int ringidx = txring->txr_index;
 	unsigned int idx, hw_head, n = 0;
@@ -4273,9 +4273,9 @@ aq_tx_intr(void *arg)
 static int
 aq_rx_intr(void *arg)
 {
-	struct aq_rxring *rxring = arg;
-	struct aq_softc *sc = rxring->rxr_sc;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct aq_rxring * const rxring = arg;
+	struct aq_softc * const sc = rxring->rxr_sc;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	const int ringidx = rxring->rxr_index;
 	aq_rx_desc_t *rxd;
 	struct mbuf *m, *m0, *mprev, *new_m;
@@ -4494,7 +4494,7 @@ static int
 aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 {
 	struct ifnet *ifp = &ec->ec_if;
-	struct aq_softc *sc = ifp->if_softc;
+	struct aq_softc * const sc = ifp->if_softc;
 
 	aq_set_vlan_filters(sc);
 	return 0;
@@ -4503,8 +4503,8 @@ aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 static int
 aq_ifflags_cb(struct ethercom *ec)
 {
-	struct ifnet *ifp = &ec->ec_if;
-	struct aq_softc *sc = ifp->if_softc;
+	struct ifnet * const ifp = &ec->ec_if;
+	struct aq_softc * const sc = ifp->if_softc;
 	int i, ecchange, error = 0;
 	unsigned short iffchange;
 
@@ -4539,7 +4539,7 @@ aq_ifflags_cb(struct ethercom *ec)
 static int
 aq_init(struct ifnet *ifp)
 {
-	struct aq_softc *sc = ifp->if_softc;
+	struct aq_softc * const sc = ifp->if_softc;
 	int i, error = 0;
 
 	aq_stop(ifp, false);
@@ -4651,11 +4651,9 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 static void
 aq_start(struct ifnet *ifp)
 {
-	struct aq_softc *sc;
-	struct aq_txring *txring;
-
-	sc = ifp->if_softc;
-	txring = &sc->sc_queue[0].txring; /* aq_start() always use TX ring[0] */
+	struct aq_softc * const sc = ifp->if_softc;
+	/* aq_start() always use TX ring[0] */
+	struct aq_txring * const txring = &sc->sc_queue[0].txring;
 
 	mutex_enter(&txring->txr_mutex);
 	if (txring->txr_active && !ISSET(ifp->if_flags, IFF_OACTIVE))
@@ -4672,12 +4670,9 @@ aq_select_txqueue(struct aq_softc *sc, struct mbuf *m)
 static int
 aq_transmit(struct ifnet *ifp, struct mbuf *m)
 {
-	struct aq_softc *sc = ifp->if_softc;
-	struct aq_txring *txring;
-	int ringidx;
-
-	ringidx = aq_select_txqueue(sc, m);
-	txring = &sc->sc_queue[ringidx].txring;
+	struct aq_softc * const sc = ifp->if_softc;
+	const int ringidx = aq_select_txqueue(sc, m);
+	struct aq_txring * const txring = &sc->sc_queue[ringidx].txring;
 
 	if (__predict_false(!pcq_put(txring->txr_pcq, m))) {
 		m_freem(m);
@@ -4696,9 +4691,9 @@ aq_transmit(struct ifnet *ifp, struct mbuf *m)
 static void
 aq_deferred_transmit(void *arg)
 {
-	struct aq_txring *txring = arg;
-	struct aq_softc *sc = txring->txr_sc;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct aq_txring * const txring = arg;
+	struct aq_softc * const sc = txring->txr_sc;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 
 	mutex_enter(&txring->txr_mutex);
 	if (pcq_peek(txring->txr_pcq) != NULL)
@@ -4709,7 +4704,7 @@ aq_deferred_transmit(void *arg)
 static void
 aq_stop(struct ifnet *ifp, int disable)
 {
-	struct aq_softc *sc = ifp->if_softc;
+	struct aq_softc * const sc = ifp->if_softc;
 	int i;
 
 	AQ_LOCK(sc);
@@ -4754,8 +4749,7 @@ aq_stop(struct ifnet *ifp, int disable)
 static void
 aq_watchdog(struct ifnet *ifp)
 {
-	struct aq_softc *sc = ifp->if_softc;
-	struct aq_txring *txring;
+	struct aq_softc * const sc = ifp->if_softc;
 	int n, head, tail;
 
 	AQ_LOCK(sc);
@@ -4765,7 +4759,7 @@ aq_watchdog(struct ifnet *ifp)
 	    AQ_READ_REG(sc, AQ_INTR_STATUS_REG));
 
 	for (n = 0; n < sc->sc_nqueues; n++) {
-		txring = &sc->sc_queue[n].txring;
+		struct aq_txring * const txring = &sc->sc_queue[n].txring;
 		head = AQ_READ_REG_BIT(sc,
 		    TX_DMA_DESC_HEAD_PTR_REG(txring->txr_index),
 		    TX_DMA_DESC_HEAD_PTR),
@@ -4786,15 +4780,11 @@ aq_watchdog(struct ifnet *ifp)
 static int
 aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
-	struct aq_softc *sc __unused;
-	struct ifreq *ifr __unused;
-	int error, s;
+	struct aq_softc * const sc = ifp->if_softc;
+	struct ifreq * const ifr = data;
+	int error = 0;
 
-	sc = (struct aq_softc *)ifp->if_softc;
-	ifr = (struct ifreq *)data;
-	error = 0;
-
-	s = splnet();
+	const int s = splnet();
 	switch (cmd) {
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > sc->sc_max_mtu) {
