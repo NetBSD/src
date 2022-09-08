@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.336 2022/09/07 23:34:56 rillig Exp $
+.\"	$NetBSD: make.1,v 1.337 2022/09/08 20:22:55 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 7, 2022
+.Dd September 8, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -626,15 +626,20 @@ References to undefined variables are
 .Em not
 expanded.
 This can cause problems when variable modifiers are used.
+.\" See var-op-expand.mk, the section with LATER and INDIRECT.
 .It Ic \&!=
 Expand the value and pass it to the shell for execution,
 then assign the output from the child's standard output to the variable.
 Any newlines in the result are replaced with spaces.
 .El
 .Ss Expansion of variables
-In contexts where variables are expanded,
+In most contexts where variables are expanded,
 .Ql \&$$
 expands to a single dollar sign.
+In other contexts (most variable modifiers, string literals in conditions),
+.Ql \&\e$
+expands to a single dollar sign.
+.Pp
 References to variables have the form
 .Ql \&${ Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns }
 or
@@ -647,9 +652,9 @@ If the variable name contains a dollar, the name itself is expanded first.
 This allows almost arbitrary variable names, however names containing dollar,
 braces, parentheses or whitespace are really best avoided.
 .Pp
-If the result of expanding a variable contains a dollar sign
+If the result of expanding a nested variable expression contains a dollar sign
 .Pq Ql \&$ ,
-the string is expanded again.
+the string is subject to further expansion.
 .Pp
 Variable substitution occurs at four distinct times, depending on where
 the variable is being used.
@@ -688,7 +693,7 @@ prints:
 Because while
 .Va a
 contains
-.Ql 1 2 3
+.Ql ${:U1} ${:U2} ${:U3}
 after the loop is executed,
 .Va b
 contains
@@ -698,7 +703,7 @@ which expands to
 since after the loop completes
 .Va j
 contains
-.Ql 3 .
+.Ql ${:U3} .
 .El
 .Ss Variable classes
 The four different classes of variables (in order of increasing precedence)
@@ -716,9 +721,9 @@ Variables defined as part of the command line.
 Variables that are defined specific to a certain target.
 .El
 .Pp
-Local variables can be set on a dependency line, if
+Local variables can be set on a dependency line, unless
 .Va .MAKE.TARGET_LOCAL_VARIABLES
-is not set to
+is set to
 .Ql false .
 The rest of the line
 (which already has had global variables expanded)
@@ -749,7 +754,7 @@ Is redundant with respect to global variables,
 which have already been expanded.
 .El
 .Pp
-The seven built-in local variables are as follows:
+The seven built-in local variables are:
 .Bl -tag -width ".Va .ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
@@ -830,9 +835,9 @@ In addition,
 sets or knows about the following variables:
 .Bl -tag -width .MAKEOVERRIDES
 .It Va .ALLTARGETS
-The list of all targets encountered in the Makefile.
-If evaluated during
-Makefile parsing, lists only those targets encountered thus far.
+The list of all targets encountered in the makefiles.
+If evaluated during makefile parsing,
+lists only those targets encountered thus far.
 .It Va .CURDIR
 A path to the directory where
 .Nm
@@ -967,36 +972,40 @@ to capture the command run, the output generated and if
 is available, the system calls which are of interest to
 .Nm .
 The captured output can be very useful when diagnosing errors.
-.It Pa curdirOk= Ar bf
+.It Pa curdirOk= Ns Ar bf
 Normally
 .Nm
-does not create .meta files in
+does not create
+.Pa .meta
+files in
 .Sq Va .CURDIR .
 This can be overridden by setting
 .Va bf
-to a value which represents True.
-.It Pa missing-meta= Ar bf
+to a value which represents true.
+.It Pa missing-meta= Ns Ar bf
 If
 .Va bf
-is True, a missing
+is true, a missing
 .Pa .meta
 file makes the target out-of-date.
-.It Pa missing-filemon= Ar bf
+.It Pa missing-filemon= Ns Ar bf
 If
 .Va bf
-is True, missing filemon data makes the target out-of-date.
+is true, missing filemon data makes the target out-of-date.
 .It Pa nofilemon
 Do not use
 .Xr filemon 4 .
 .It Pa env
 For debugging, it can be useful to include the environment
-in the .meta file.
+in the
+.Pa .meta
+file.
 .It Pa verbose
 If in
 .Dq meta
 mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
-The message printed the value of:
+The message printed is the expanded value of
 .Va .MAKE.META.PREFIX .
 .It Pa ignore-cmd
 Some makefiles have commands which are simply not stable.
@@ -1006,10 +1015,10 @@ determining whether a target is out of date in
 mode.
 See also
 .Ic .NOMETA_CMP .
-.It Pa silent= Ar bf
+.It Pa silent= Ns Ar bf
 If
 .Va bf
-is True, when a .meta file is created, mark the target
+is true, when a .meta file is created, mark the target
 .Ic .SILENT .
 .It Pa randomize-targets
 In both compat and parallel mode, do not make the targets in the usual order,
@@ -1087,13 +1096,13 @@ was built with
 support, this is set to the path of the device node.
 This allows makefiles to test for this support.
 .It Va .MAKE.PID
-The process-id of
+The process ID of
 .Nm .
 .It Va .MAKE.PPID
-The parent process-id of
+The parent process ID of
 .Nm .
 .It Va .MAKE.SAVE_DOLLARS
-Value should be a boolean that controls whether
+If true,
 .Ql $$
 are preserved when doing
 .Ql :=
@@ -1105,10 +1114,10 @@ becomes
 .Ql $
 per normal evaluation rules.
 .It Va .MAKE.UID
-The user-id running
+The numeric ID of the user running
 .Nm .
 .It Va .MAKE.GID
-The group-id running
+The numeric group ID of the user running
 .Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
@@ -1139,7 +1148,7 @@ modifier to put a newline between
 iterations of the loop rather than a space.
 For example, the printing of
 .Sq Va MAKE_PRINT_VAR_ON_ERROR
-could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}.
+could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v:Q}'${.newline}@}.
 .It Va .OBJDIR
 A path to the directory where the targets are built.
 Its value is determined by trying to
@@ -1159,16 +1168,16 @@ is set in the environment or on the command line.)
 .Sq Ev MAKEOBJDIR
 is set in the environment or on the command line.)
 .It
-.Ev ${.CURDIR} Ns Pa /obj. Ns Ev ${MACHINE}
+.Cm ${.CURDIR} Ns Pa /obj. Ns Ev ${MACHINE}
 .It
-.Ev ${.CURDIR} Ns Pa /obj
+.Cm ${.CURDIR} Ns Pa /obj
 .It
-.Pa /usr/obj/ Ns Ev ${.CURDIR}
+.Pa /usr/obj/ Ns Cm ${.CURDIR}
 .It
-.Ev ${.CURDIR}
+.Cm ${.CURDIR}
 .El
 .Pp
-Variable expansion is performed on the value before it's used,
+Variable expansion is performed on the value before it is used,
 so expressions such as
 .Dl ${.CURDIR:S,^/usr/src,/var/obj,}
 may be used.
@@ -1195,23 +1204,17 @@ This check can be skipped by setting the environment variable
 .Sq Ev MAKE_OBJDIR_CHECK_WRITABLE
 to "no".
 .It Va .PARSEDIR
-A path to the directory of the current
-.Sq Pa Makefile
-being parsed.
+A path to the directory of the current makefile being parsed.
 .It Va .PARSEFILE
-The basename of the current
-.Sq Pa Makefile
-being parsed.
+The basename of the current makefile being parsed.
 This variable and
 .Sq Va .PARSEDIR
-are both set only while the
-.Sq Pa Makefiles
-are being parsed.
+are both set only while the makefiles are being parsed.
 If you want to retain their current values, assign them to a variable
 using assignment with expansion
 .Sq Cm \&:= .
 .It Va .PATH
-A variable that represents the list of directories that
+The space-separated list of directories that
 .Nm
 searches for files.
 The search list should be updated using the target
@@ -1264,21 +1267,17 @@ use
 instead.
 .El
 .Ss Variable modifiers
-Variable expansion may be modified to select or modify each word of the
-variable (where a
-.Dq word
-is white-space delimited sequence of characters).
-The general format of a variable expansion is as follows:
+The general format of a variable expansion is:
 .Pp
 .Sm off
 .D1 Ic \&${ Ar variable\| Oo Ic \&: Ar modifier\| Oo Ic \&: Ar ... Oc Oc Ic \&}
 .Sm on
 .Pp
-Each modifier begins with a colon,
-which may be escaped with a backslash
+Each modifier begins with a colon.
+To escape a colon, precede it with a backslash
 .Pq Ql \e .
 .Pp
-A set of modifiers can be specified via a variable, as follows:
+A list of indirect modifiers can be specified via a variable, as follows:
 .Pp
 .Bd -literal -offset indent
 .Ar modifier_variable\^ Li \&= Ar modifier Ns Oo Ic \&: Ns Ar ... Oc
@@ -1287,23 +1286,30 @@ A set of modifiers can be specified via a variable, as follows:
 .Sm on
 .Ed
 .Pp
-In this case the first modifier in the
+In this case, the first modifier in the
 .Ar modifier_variable
-does not
-start with a colon, since that must appear in the referencing
-variable.
+does not start with a colon,
+since that colon already occurs in the referencing variable.
 If any of the modifiers in the
 .Ar modifier_variable
-contain a dollar sign
+contains a dollar sign
 .Pq Ql $ ,
 these must be doubled to avoid early expansion.
+.\" XXX: This is only close to the truth, see the table in varmod.mk.
+.Pp
+Some modifiers interpret the expression value as a single string,
+others treat the expression value as a whitespace-separated list of words.
+When splitting a string into words,
+whitespace can be escaped using double quotes, single quotes and backslashes,
+like in the shell.
+The quotes and backslashes are retained in the words.
 .Pp
 The supported modifiers are:
 .Bl -tag -width EEE
 .It Cm \&:E
 Replaces each word in the variable with its suffix.
 .It Cm \&:H
-Replaces each word in the variable with everything but the last component.
+Replaces each word in the variable with its dirname.
 .It Cm \&:M\| Ns Ar pattern
 Selects only those words that match
 .Ar pattern .
@@ -1317,34 +1323,39 @@ be used.
 The wildcard characters may be escaped with a backslash
 .Pq Ql \e .
 As a consequence of the way values are split into words, matched,
-and then joined, a construct like
+and then joined, the construct
 .Dl ${VAR:M*}
-normalizes the inter-word spacing,
-removing all leading and trailing space,
-and converting multiple consecutive spaces to single spaces.
+removes all leading and trailing whitespace
+and normalizes the inter-word spacing to a single space.
 .It Cm \&:N\| Ns Ar pattern
-This is identical to
+This is the opposite of
 .Sq Cm \&:M ,
-but selects all words which do not match
+selecting all words which do
+.Em not
+match
 .Ar pattern .
 .It Cm \&:O
-Orders every word in variable alphabetically.
+Orders the words alphabetically.
 .It Cm \&:On
-Orders every word in variable numerically.
+Orders the words numerically.
 A number followed by one of
 .Ql k ,
 .Ql M
 or
 .Ql G
-is multiplied by the appropriate factor (1024 (k), 1048576 (M), or
-1073741824 (G)).
+is multiplied by the appropriate factor, which is 1024 for
+.Ql k ,
+1048576 for
+.Ql M ,
+or 1073741824 for
+.Ql G .
 Both upper- and lower-case letters are accepted.
 .It Cm \&:Or
-Orders every word in variable in reverse alphabetical order.
+Orders the words in reverse alphabetical order.
 .It Cm \&:Orn
-Orders every word in variable in reverse numerical order.
+Orders the words in reverse numerical order.
 .It Cm \&:Ox
-Shuffles the words in variable.
+Shuffles the words.
 The results are different each time you are referring to the
 modified variable; use the assignment with expansion
 .Sq Cm \&:=
@@ -1369,48 +1380,51 @@ due uno quattro tre
 due uno quattro tre
 .Ed
 .It Cm \&:Q
-Quotes every shell meta-character in the variable, so that it can be passed
+Quotes every shell meta-character in the value, so that it can be passed
 safely to the shell.
 .It Cm \&:q
-Quotes every shell meta-character in the variable, and also doubles
+Quotes every shell meta-character in the value, and also doubles
 .Sq $
 characters so that it can be passed
 safely through recursive invocations of
 .Nm .
-This is equivalent to:
-.Sq \&:S/\e\&$/&&/g:Q .
+This is equivalent to
+.Sq Cm \&:S/\e\&$/&&/g:Q .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
 .It Cm \&:range Ns Oo Cm = Ns Ar count Oc
 The value is an integer sequence representing the words of the original
 value, or the supplied
 .Ar count .
-.It Cm \&:gmtime Ns Oo Cm = Ns Ar utc Oc
-The value is a format string for
+.It Cm \&:gmtime Ns Oo Cm = Ns Ar timestamp Oc
+The value is interpreted as a format string for
 .Xr strftime 3 ,
 using
-.Xr gmtime 3 .
+.Xr gmtime 3 ,
+producing the formatted timestamp.
 If a
-.Ar utc
+.Ar timestamp
 value is not provided or is 0, the current time is used.
 .It Cm \&:hash
-Computes a 32-bit hash of the value and encode it as hex digits.
-.It Cm \&:localtime Ns Oo Cm = Ns Ar utc Oc
-The value is a format string for
+Computes a 32-bit hash of the value and encodes it as 8 hex digits.
+.It Cm \&:localtime Ns Oo Cm = Ns Ar timestamp Oc
+The value is interpreted as a format string for
 .Xr strftime 3 ,
 using
-.Xr localtime 3 .
+.Xr localtime 3 ,
+producing the formatted timestamp.
 If a
-.Ar utc
+.Ar timestamp
 value is not provided or is 0, the current time is used.
 .It Cm \&:tA
-Attempts to convert variable to an absolute path using
+Attempts to convert the value to an absolute path using
 .Xr realpath 3 ,
 if that fails, the value is unchanged.
 .It Cm \&:tl
-Converts variable to lower-case letters.
+Converts the value to lower-case letters.
 .It Cm \&:ts Ns Ar c
-Words in the variable are normally separated by a space on expansion.
+When joining the words after a modifier that treats the value as words,
+the words are normally separated by a space.
 This modifier sets the separator to the character
 .Ar c .
 If
@@ -1418,15 +1432,14 @@ If
 is omitted, no separator is used.
 The common escapes (including octal numeric codes) work as expected.
 .It Cm \&:tu
-Converts variable to upper-case letters.
+Converts the value to upper-case letters.
 .It Cm \&:tW
-Causes the value to be treated as a single word
-(possibly containing embedded white space).
+Causes subsequent modifiers to treat the value as a single word
+(possibly containing embedded whitespace).
 See also
 .Sq Cm \&:[*] .
 .It Cm \&:tw
-Causes the value to be treated as a sequence of
-words delimited by white space.
+Causes the value to be treated as a list of words.
 See also
 .Sq Cm \&:[@] .
 .Sm off
@@ -1434,21 +1447,20 @@ See also
 .Sm on
 Modifies the first occurrence of
 .Ar old_string
-in each word of the variable's value, replacing it with
+in each word of the value, replacing it with
 .Ar new_string .
 If a
 .Ql g
-is appended to the last delimiter of the pattern, all occurrences
-in each word are replaced.
+is appended to the last delimiter of the pattern,
+all occurrences in each word are replaced.
 If a
 .Ql 1
-is appended to the last delimiter of the pattern, only the first occurrence
-is affected.
+is appended to the last delimiter of the pattern,
+only the first occurrence is affected.
 If a
 .Ql W
 is appended to the last delimiter of the pattern,
-the value is treated as a single word
-(possibly containing embedded white space).
+the value is treated as a single word.
 If
 .Ar old_string
 begins with a caret
@@ -1466,13 +1478,13 @@ an ampersand
 .Pq Ql &
 is replaced by
 .Ar old_string
-(without any
+(without the anchoring
 .Ql ^
 or
 .Ql \&$ ) .
-Any character may be used as a delimiter for the parts of the modifier
+Any character may be used as the delimiter for the parts of the modifier
 string.
-The anchoring, ampersand and delimiter characters may be escaped with a
+The anchoring, ampersand and delimiter characters can be escaped with a
 backslash
 .Pq Ql \e .
 .Pp
@@ -1489,16 +1501,15 @@ not a preceding dollar sign as is usual.
 .Sm on
 The
 .Cm \&:C
-modifier is just like the
+modifier works like the
 .Cm \&:S
 modifier except that the old and new strings, instead of being
-simple strings, are an extended regular expression (see
-.Xr regex 3 )
-string
+simple strings, are an extended regular expression
 .Ar pattern
+(see
+.Xr regex 3 )
 and an
 .Xr ed 1 Ns \-style
-string
 .Ar replacement .
 Normally, the first occurrence of the pattern
 .Ar pattern
@@ -1514,7 +1525,7 @@ search pattern
 as occur in the word or words it is found in; the
 .Ql W
 modifier causes the value to be treated as a single word
-(possibly containing embedded white space).
+(possibly containing embedded whitespace).
 .Pp
 As for the
 .Cm \&:S
@@ -1525,15 +1536,16 @@ and
 are subjected to variable expansion before being parsed as
 regular expressions.
 .It Cm \&:T
-Replaces each word in the variable with its last path component.
+Replaces each word in the variable with its last path component (basename).
 .It Cm \&:u
 Removes adjacent duplicate words (like
 .Xr uniq 1 ) .
 .Sm off
 .It Cm \&:\&?\| Ar true_string\| Cm \&: Ar false_string
 .Sm on
-If the variable name (not its value), when parsed as a .if conditional
-expression, evaluates to true, return as its value the
+If the variable name (not its value), when parsed as a
+.Cm .if
+conditional expression, evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
@@ -1543,8 +1555,10 @@ Since the variable name is used as the expression,
 which, of course, usually contains variable expansions.
 A common error is trying to use expressions like
 .Dl ${NUMBERS:M42:?match:no}
-which actually tests defined(NUMBERS),
-to determine if any words match "42" you need to use something like:
+which actually tests defined(NUMBERS).
+To determine if any words match
+.Dq 42 ,
+you need to use something like:
 .Dl ${"${NUMBERS:M42}" != \&"\&":?match:no} .
 .It Cm :\| Ns Ar old_string\| Ns Cm = Ns Ar new_string
 This is the
@@ -1598,25 +1612,24 @@ expansion of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm \&:@ Ar temp\| Cm @ Ar string\| Cm @
+.It Cm \&:@ Ar varname\| Cm @ Ar string\| Cm @
 .Sm on
 This is the loop expansion mechanism from the OSF Development
 Environment (ODE) make.
 Unlike
 .Cm \&.for
 loops, expansion occurs at the time of reference.
-Assigns
-.Ar temp
-to each word in the variable and evaluates
+For each word in the value, assign the word to the variable named
+.Ar varname
+and evaluate
 .Ar string .
 The ODE convention is that
-.Ar temp
-should start and end with a period.
-For example.
+.Ar varname
+should start and end with a period, for example:
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
 .Pp
-However a single character variable is often more readable:
-.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
+However, a single-character variable is often more readable:
+.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v:Q}'${.newline}@}
 .It Cm \&:_ Ns Oo Cm = Ns Ar var Oc
 Saves the current variable value in
 .Ql $_
@@ -1655,8 +1668,7 @@ is the value.
 .It Cm \&:L
 The name of the variable is the value.
 .It Cm \&:P
-The path of the node which has the same name as the variable
-is the value.
+The path of the node which has the same name as the variable is the value.
 If no such node exists or its path is null, the name of the variable is used.
 In order for this modifier to work, the name (node) must at least have
 appeared on the rhs of a dependency.
@@ -1667,18 +1679,18 @@ The output of running
 .Ar cmd
 is the value.
 .It Cm \&:sh
-If the variable is non-empty it is run as a command and the output
+If the variable is non-empty, it is run as a command and the output
 becomes the new value.
 .It Cm \&::= Ns Ar str
 The variable is assigned the value
 .Ar str
 after substitution.
-This modifier and its variations are useful in
-obscure situations such as wanting to set a variable when shell commands
-are being parsed.
-These assignment modifiers always expand to
-nothing, so if appearing in a rule line by themselves should be
-preceded with something to keep
+This modifier and its variations are useful in obscure situations
+such as wanting to set a variable when shell commands are being parsed.
+These assignment modifiers always expand to nothing,
+so if they appear in a rule line by themselves,
+they should be preceded with something,
+to keep
 .Nm
 happy.
 .Pp
@@ -1688,7 +1700,7 @@ helps avoid false matches with the
 .At V
 style
 .Cm \&:=
-modifier and since substitution always occurs the
+modifier and since substitution always occurs, the
 .Cm \&::=
 form is vaguely appropriate.
 .It Cm \&::?= Ns Ar str
@@ -1706,13 +1718,8 @@ to the variable.
 .It Cm \&:\&[ Ns Ar range Ns Cm \&]
 Selects one or more words from the value,
 or performs other operations related to the way in which the
-value is divided into words.
+value is split into words.
 .Pp
-Ordinarily, a value is treated as a sequence of words
-delimited by white space.
-Some modifiers suppress this behavior,
-causing a value to be treated as a single word
-(possibly containing embedded white space).
 An empty value, or a value that consists entirely of white-space,
 is treated as a single word.
 For the purposes of the
@@ -1757,9 +1764,9 @@ instead of
 .\" :[*]
 .It Cm \&*
 Causes subsequent modifiers to treat the value as a single word
-(possibly containing embedded white space).
+(possibly containing embedded whitespace).
 Analogous to the effect of
-\&"$*\&"
+.Li \&$*
 in Bourne shell.
 .\" :[0]
 .It 0
@@ -1768,9 +1775,9 @@ Means the same as
 .\" :[*]
 .It Cm \&@
 Causes subsequent modifiers to treat the value as a sequence of words
-delimited by white space.
+delimited by whitespace.
 Analogous to the effect of
-\&"$@\&"
+.Li \&$@
 in Bourne shell.
 .\" :[#]
 .It Cm \&#
@@ -1778,8 +1785,8 @@ Returns the number of words in the value.
 .El \" :[range]
 .El
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
-Makefile inclusion, conditional structures and for loops reminiscent
-of the C programming language are provided in
+.\" TODO: Split into multiple subsections.
+Makefile inclusion, conditional structures and for loops are provided in
 .Nm .
 All such structures are identified by a line beginning with a single
 dot
@@ -1796,11 +1803,10 @@ the system makefile directory.
 If double quotes are used, the including makefile's directory and any
 directories specified using the
 .Fl I
-option are searched before the system
-makefile directory.
-For compatibility with other versions of
-.Nm
+option are searched before the system makefile directory.
+For compatibility with other make variants,
 .Ql include file ...
+(without leading dot)
 is also accepted.
 .Pp
 If the include statement is written as
@@ -1810,16 +1816,16 @@ or as
 errors locating and/or opening include files are ignored.
 .Pp
 If the include statement is written as
-.Cm .dinclude
+.Cm .dinclude ,
 not only are errors locating and/or opening include files ignored,
-but stale dependencies within the included file are ignored
-just like in
+but stale dependencies within the included file are ignored just like in
 .Va .MAKE.DEPENDFILE .
 .Pp
 Conditional expressions are also preceded by a single dot as the first
 character of a line.
-The possible conditionals are as follows:
+The possible conditionals are:
 .Bl -tag -width Ds
+.\" FIXME: .error is not a conditional directive.
 .It Ic .error Ar message
 The message is printed along with the name of the makefile and line number,
 .Nm
@@ -1832,9 +1838,7 @@ except for internal variables (those that start with
 This is not affected by the
 .Fl X
 flag, so should be used with caution.
-For compatibility with other
-.Nm
-programs,
+For compatibility with other make programs,
 .Cm export Ar variable\| Ns Cm \&= Ns Ar value
 (without leading dot) is also accepted.
 .Pp
@@ -1898,7 +1902,7 @@ Actually
 is also pushed into the new environment.
 .It Ic .warning Ar message
 The message prefixed by
-.Sq Pa warning:
+.Sq Li warning:
 is printed along with the name of the makefile and line number.
 .It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
 Test the value of an expression.
@@ -1907,9 +1911,9 @@ Test the value of a variable.
 .It Ic .ifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 Test the value of a variable.
 .It Ic .ifmake Oo \&! Oc Ns Ar target Op Ar operator target ...
-Test the target being built.
+Test the target being requested.
 .It Ic .ifnmake Oo \&! Ns Oc Ar target Op Ar operator target ...
-Test the target being built.
+Test the target being requested.
 .It Ic .else
 Reverse the sense of the last conditional.
 .It Ic .elif Oo \&! Ns Oc Ar expression Op Ar operator expression ...
@@ -1948,16 +1952,14 @@ may be any one of the following:
 .It Cm \&|\&|
 Logical OR.
 .It Cm \&&&
-Logical
-.Tn AND ;
-of higher precedence than
+Logical AND; of higher precedence than
 .Dq \&|\&| .
 .El
 .Pp
 As in C,
 .Nm
 only evaluates a conditional as far as is necessary to determine its value.
-Parentheses may be used to change the order of evaluation.
+Parentheses can be used to override the operator precedence.
 The boolean operator
 .Sq Ic \&!
 may be used to logically negate an entire
@@ -1981,8 +1983,8 @@ explicitly, see
 .Va .MAIN )
 before the line containing the conditional.
 .It Ic empty
-Takes a variable, with possible modifiers, and evaluates to true if
-the expansion of the variable would result in an empty string.
+Takes a variable name, with possible modifiers, and evaluates to true if
+the expansion of the variable results in an empty string.
 .It Ic exists
 Takes a file name as an argument and evaluates to true if the file exists.
 The file is searched for on the system search path (see
@@ -2062,9 +2064,9 @@ The syntax of a for loop is:
 .It Ic \&.endfor
 .El
 .Pp
-After the for
+The
 .Ic expression
-is evaluated, it is split into words.
+is expanded and then split into words.
 On each iteration of the loop, one word is taken and assigned to each
 .Ic variable ,
 in order, and these
@@ -2081,6 +2083,7 @@ If
 is encountered within a
 .Cm \&.for
 loop, it causes early termination of the loop, otherwise a parse error.
+.\" TODO: Describe limitations with defined/empty.
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
@@ -2099,7 +2102,7 @@ as if they all were preceded by a dash
 .\" .It Ic .JOIN
 .\" XXX
 .It Ic .MADE
-Mark all sources of this target as being up-to-date.
+Mark all sources of this target as being up to date.
 .It Ic .MAKE
 Execute the commands associated with this target even if the
 .Fl n
@@ -2196,9 +2199,9 @@ If the target already has commands, the
 target's commands are appended
 to them.
 .It Ic .USEBEFORE
-Exactly like
+Like
 .Ic .USE ,
-but prepend the
+but instead of appending, prepend the
 .Ic .USEBEFORE
 target commands to the target.
 .It Ic .WAIT
@@ -2226,7 +2229,7 @@ the output is always
 .Ql b1 ,
 .Ql b ,
 .Ql x .
-.br
+.Pp
 The ordering imposed by
 .Ic .WAIT
 is only relevant for parallel makes.
@@ -2241,8 +2244,7 @@ else is done.
 .It Ic .DEFAULT
 This is sort of a
 .Ic .USE
-rule for any target (that was used only as a
-source) that
+rule for any target (that was used only as a source) that
 .Nm
 can't figure out any other way to create.
 Only the shell script is used.
@@ -2250,8 +2252,7 @@ The
 .Va .IMPSRC
 variable of a target that inherits
 .Ic .DEFAULT Ns 's
-commands is set
-to the target's own name.
+commands is set to the target's own name.
 .It Ic .DELETE_ON_ERROR
 If this target is present in the makefile, it globally causes make to
 delete targets whose commands fail.
@@ -2262,7 +2263,7 @@ This setting can be used to help prevent half-finished or malformed
 targets from being left around and corrupting future rebuilds.
 .It Ic .END
 Any command lines attached to this target are executed after everything
-else is done.
+else is done successfully.
 .It Ic .ERROR
 Any command lines attached to this target are executed when another target fails.
 The
@@ -2288,7 +2289,7 @@ is invoked, this target is built.
 .It Ic .MAKEFLAGS
 This target provides a way to specify flags for
 .Nm
-when the makefile is used.
+at the time when the makefiles are read.
 The flags are as if typed to the shell, though the
 .Fl f
 option has
@@ -2337,8 +2338,8 @@ b: a
 .It Ic .PATH
 The sources are directories which are to be searched for files not
 found in the current directory.
-If no sources are specified, any previously specified directories are
-deleted.
+If no sources are specified,
+any previously specified directories are removed from the search path.
 If the source is the special
 .Ic .DOTLAST
 target, the current working directory is searched last.
@@ -2375,8 +2376,7 @@ Apply the
 attribute to any specified sources.
 If no sources are specified, the
 .Ic .PRECIOUS
-attribute is applied to every
-target in the file.
+attribute is applied to every target in the file.
 .It Ic .SHELL
 Sets the shell that
 .Nm
@@ -2393,7 +2393,7 @@ shell specs;
 and
 .Li csh .
 .It Li path
-Specifies the path to the shell.
+Specifies the absolute path to the shell.
 .It Li hasErrCtl
 Indicates whether the shell supports exit on error.
 .It Li check
@@ -2487,7 +2487,7 @@ system makefile
 system makefile directory
 .El
 .Sh COMPATIBILITY
-The basic make syntax is compatible between different versions of make;
+The basic make syntax is compatible between different make variants;
 however the special variables, variable modifiers and conditionals are not.
 .Ss Older versions
 An incomplete list of changes in older versions of
@@ -2577,8 +2577,8 @@ command appeared in
 .At v7 .
 This
 .Nm
-implementation is based on Adam De Boor's pmake program which was written
-for Sprite at Berkeley.
+implementation is based on Adam de Boor's pmake program,
+which was written for Sprite at Berkeley.
 It was designed to be a parallel distributed make running jobs on different
 machines using a daemon called
 .Dq customs .
