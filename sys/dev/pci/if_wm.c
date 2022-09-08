@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.763 2022/08/12 10:59:42 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.764 2022/09/08 02:40:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.763 2022/08/12 10:59:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.764 2022/09/08 02:40:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -891,7 +891,7 @@ static void	wm_start_locked(struct ifnet *);
 static int	wm_transmit(struct ifnet *, struct mbuf *);
 static void	wm_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_send_common_locked(struct ifnet *, struct wm_txqueue *,
-		    bool);
+    bool);
 static void	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
@@ -899,7 +899,7 @@ static void	wm_nq_start_locked(struct ifnet *);
 static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *,
-		    bool);
+    bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 static void	wm_handle_queue_work(struct work *, void *);
@@ -2289,7 +2289,7 @@ alloc_retry:
 				aprint_error_dev(sc->sc_dev,
 				    "unable to find PCIX capability\n");
 			else if (sc->sc_type != WM_T_82545_3 &&
-				 sc->sc_type != WM_T_82546_3) {
+			    sc->sc_type != WM_T_82546_3) {
 				/*
 				 * Work around a problem caused by the BIOS
 				 * setting the max memory read byte count
@@ -3703,7 +3703,7 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		if_statinc(ifp, if_oerrors);
 #ifdef WM_DEBUG
 		for (i = txq->txq_sdirty; i != txq->txq_snext;
-		    i = WM_NEXTTXS(txq, i)) {
+		     i = WM_NEXTTXS(txq, i)) {
 			txs = &txq->txq_soft[i];
 			printf("txs %d tx %d -> %d\n",
 			    i, txs->txs_firstdesc, txs->txs_lastdesc);
@@ -3857,9 +3857,9 @@ wm_tick(void *arg)
 	if_statadd_ref(nsr, if_ierrors,
 	    crcerrs + algnerrc + symerrc + rxerrc + sec + cexterr + rlec);
 	/*
-	 * WMREG_RNBC is incremented when there are no available buffers in host
-	 * memory. It does not mean the number of dropped packets, because an
-	 * Ethernet controller can receive packets in such case if there is
+	 * WMREG_RNBC is incremented when there are no available buffers in
+	 * host memory. It does not mean the number of dropped packets, because
+	 * an Ethernet controller can receive packets in such case if there is
 	 * space in the phy's FIFO.
 	 *
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
@@ -4069,8 +4069,8 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			mutex_enter(sc->sc_core_lock);
 			if (sc->sc_if_flags & IFF_RUNNING) {
 				/*
-				 * Multicast list has changed; set the hardware filter
-				 * accordingly.
+				 * Multicast list has changed; set the
+				 * hardware filter accordingly.
 				 */
 				wm_set_filter(sc);
 			}
@@ -4168,7 +4168,7 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 
 	return 0;
 
- bad:
+bad:
 	return -1;
 }
 
@@ -4458,10 +4458,10 @@ wm_set_filter(struct wm_softc *sc)
 
 	goto setit;
 
- allmulti:
+allmulti:
 	sc->sc_rctl |= RCTL_MPE;
 
- setit:
+setit:
 	if (sc->sc_type >= WM_T_PCH2) {
 		if (((ec->ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
 		    && (ifp->if_mtu > ETHERMTU))
@@ -4852,7 +4852,8 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		 * LCD Write Enable bits are set in the NVM. When both NVM bits
 		 * are cleared, SW will configure them instead.
 		 */
-		DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s: Configure SMBus and LED\n",
+		DPRINTF(sc, WM_DEBUG_INIT,
+		    ("%s: %s: Configure SMBus and LED\n",
 			device_xname(sc->sc_dev), __func__));
 		if ((rv = wm_write_smbus_addr(sc)) != 0)
 			goto release;
@@ -5163,15 +5164,15 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_TARC0, tarc0);
 
 		switch (sc->sc_type) {
-		/*
-		 * 8257[12] Errata No.52, 82573 Errata No.43 and some others.
-		 * Avoid RSS Hash Value bug.
-		 */
 		case WM_T_82571:
 		case WM_T_82572:
 		case WM_T_82573:
 		case WM_T_80003:
 		case WM_T_ICH8:
+			/*
+			 * 8257[12] Errata No.52, 82573 Errata No.43 and some
+			 * others to avoid RSS Hash Value bug.
+			 */
 			reg = CSR_READ(sc, WMREG_RFCTL);
 			reg |= WMREG_RFCTL_NEWIPV6EXDIS |WMREG_RFCTL_IPV6EXDIS;
 			CSR_WRITE(sc, WMREG_RFCTL, reg);
@@ -6193,7 +6194,7 @@ wm_setup_msix(struct wm_softc *sc)
 	kcpuset_destroy(affinity);
 	return 0;
 
- fail:
+fail:
 	for (qidx = 0; qidx < txrx_established; qidx++) {
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
 		pci_intr_disestablish(sc->sc_pc,sc->sc_ihs[wmq->wmq_intr_idx]);
@@ -6270,7 +6271,8 @@ wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 		 * So, overwrite counter field by software.
 		 */
 		if (sc->sc_type == WM_T_82575)
-			eitr |= __SHIFTIN(wmq->wmq_itr, EITR_COUNTER_MASK_82575);
+			eitr |= __SHIFTIN(wmq->wmq_itr,
+			    EITR_COUNTER_MASK_82575);
 		else
 			eitr |= EITR_CNT_INGR;
 
@@ -6371,7 +6373,8 @@ wm_init_sysctls(struct wm_softc *sc)
 		goto err;
 
 	rv = sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
-	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
+	    CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
 	    NULL, 0, &sc->sc_txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL);
 	if (rv != 0)
 		goto teardown;
@@ -7087,7 +7090,7 @@ wm_init_locked(struct ifnet *ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 
- out:
+out:
 	/* Save last flags for the callback */
 	sc->sc_if_flags = ifp->if_flags;
 	sc->sc_ec_capenable = ec->ec_capenable;
@@ -7335,7 +7338,7 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 		return 1;
 	}
 
- send_packet:
+send_packet:
 	txq->txq_fifo_head += len;
 	if (txq->txq_fifo_head >= txq->txq_fifo_size)
 		txq->txq_fifo_head -= txq->txq_fifo_size;
@@ -7400,14 +7403,14 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 
 	return 0;
 
- fail_3:
+fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, txq->txq_desc_dmamap);
- fail_2:
+fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (void *)txq->txq_descs_u,
 	    WM_TXDESCS_SIZE(txq));
- fail_1:
+fail_1:
 	bus_dmamem_free(sc->sc_dmat, &txq->txq_desc_seg, txq->txq_desc_rseg);
- fail_0:
+fail_0:
 	return error;
 }
 
@@ -7525,7 +7528,7 @@ wm_alloc_tx_buffer(struct wm_softc *sc, struct wm_txqueue *txq)
 
 	return 0;
 
- fail:
+fail:
 	for (i = 0; i < WM_TXQUEUELEN(txq); i++) {
 		if (txq->txq_soft[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
@@ -7707,7 +7710,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 	return 0;
 
- fail_2:
+fail_2:
 	for (i = 0; i < rx_done; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 		wm_free_rx_buffer(sc, rxq);
@@ -7715,7 +7718,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		if (rxq->rxq_lock)
 			mutex_obj_free(rxq->rxq_lock);
 	}
- fail_1:
+fail_1:
 	for (i = 0; i < tx_done; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 		pcq_destroy(txq->txq_interq);
@@ -7727,7 +7730,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 	kmem_free(sc->sc_queue,
 	    sizeof(struct wm_queue) * sc->sc_nqueues);
- fail_0:
+fail_0:
 	return error;
 }
 
@@ -9083,7 +9086,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 		DPRINTF(sc, WM_DEBUG_TX,
 		    ("%s: TX: have packet to transmit: %p\n",
-		    device_xname(sc->sc_dev), m0));
+			device_xname(sc->sc_dev), m0));
 
 		txs = &txq->txq_soft[txq->txq_snext];
 		dmamap = txs->txs_dmamap;
@@ -12074,7 +12077,7 @@ wm_disable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
  */
 static int
 wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd,
-	bool page_set)
+    bool page_set)
 {
 	struct wm_softc *sc = device_private(dev);
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
@@ -12463,8 +12466,8 @@ wm_gmii_statchg(struct ifnet *ifp)
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
-	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
-						 : WMREG_FCRTL, sc->sc_fcrtl);
+	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
+	    WMREG_OLD_FCRTL : WMREG_FCRTL, sc->sc_fcrtl);
 	if (sc->sc_type == WM_T_80003) {
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_1000_T:
@@ -14574,7 +14577,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 			DPRINTF(sc, WM_DEBUG_NVM,
 			    ("%s: NVM need to be updated (%04x != %04x)\n",
 				device_xname(sc->sc_dev), eeprom_data,
-				    valid_checksum));
+				valid_checksum));
 	}
 
 	if ((sc->sc_debug & WM_DEBUG_NVM) != 0) {
@@ -15561,8 +15564,8 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 	/* Acquire PHY semaphore */
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
-		DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s: failed\n",
-		device_xname(sc->sc_dev), __func__));
+		DPRINTF(sc, WM_DEBUG_INIT,
+		    ("%s: %s: failed\n", device_xname(sc->sc_dev), __func__));
 		return rv;
 	}
 
@@ -15810,8 +15813,8 @@ wm_ulp_disable(struct wm_softc *sc)
 	/* Acquire semaphore */
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
-		DPRINTF(sc, WM_DEBUG_INIT, ("%s: %s: failed\n",
-		device_xname(sc->sc_dev), __func__));
+		DPRINTF(sc, WM_DEBUG_INIT,
+		    ("%s: %s: failed\n", device_xname(sc->sc_dev), __func__));
 		return rv;
 	}
 
@@ -15824,7 +15827,7 @@ wm_ulp_disable(struct wm_softc *sc)
 		uint32_t reg2;
 
 		aprint_debug_dev(sc->sc_dev, "%s: Force SMBus first.\n",
-			__func__);
+		    __func__);
 		reg2 = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg2 |= CTRL_EXT_FORCE_SMBUS;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg2);
@@ -15850,7 +15853,7 @@ wm_ulp_disable(struct wm_softc *sc)
 	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_PM_CTRL, phyreg);
 
 	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1,
-		&phyreg);
+	    &phyreg);
 	if (rv != 0)
 		goto release;
 	phyreg &= ~(I218_ULP_CONFIG1_IND
