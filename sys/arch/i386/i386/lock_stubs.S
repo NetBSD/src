@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.37 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.38 2022/09/08 06:57:44 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.37 2022/09/07 00:40:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.38 2022/09/08 06:57:44 knakahara Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -255,10 +255,10 @@ END(mutex_spin_enter)
 
 #ifndef XENPV
 /*
- * Release a spin mutex and post a store fence. Must occupy 96 bytes.
+ * Release a spin mutex and post a store fence. Must occupy 128 bytes.
  */
 ENTRY(mutex_spin_exit)
-	HOTPATCH(HP_NAME_MUTEX_EXIT, 96)
+	HOTPATCH(HP_NAME_MUTEX_EXIT, 128)
 	movl	4(%esp), %edx
 	movl	CPUVAR(MTX_OLDSPL), %ecx
 	incl	CPUVAR(MTX_COUNT)
@@ -284,7 +284,7 @@ STRONG_ALIAS(mutex_spin_exit, i686_mutex_spin_exit)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitively expensive.
- * Must be the same size as mutex_spin_exit(), that is, 96 bytes.
+ * Must be the same size as mutex_spin_exit(), that is, 128 bytes.
  */
 ENTRY(i686_mutex_spin_exit)
 	mov	4(%esp),%edx

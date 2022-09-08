@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.56 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.56 2022/09/07 00:40:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -72,11 +72,11 @@ END(splraise)
  * void spllower(int s);
  *
  * spllower() for i486 and Pentium. Must be the same size as cx8_spllower(),
- * that is, 64 bytes. This must use pushf/cli/popf as it is used early in boot
+ * that is, 96 bytes. This must use pushf/cli/popf as it is used early in boot
  * where interrupts are disabled via eflags/IE.
  */
 ENTRY(spllower)
-	HOTPATCH(HP_NAME_SPLLOWER, 64)
+	HOTPATCH(HP_NAME_SPLLOWER, 96)
 #ifdef SPLDEBUG
 	movl	4(%esp),%ecx
 	pushl	%ebp
@@ -115,7 +115,7 @@ STRONG_ALIAS(spllower, cx8_spllower)
  *
  * spllower() optimized for Pentium Pro and later, which have long pipelines
  * that will be stalled by pushf/cli/popf.  Must be the same size as
- * spllower(), ie 64 bytes.  Does not need to restore eflags/IE as is patched
+ * spllower(), ie 96 bytes.  Does not need to restore eflags/IE as is patched
  * in once autoconf is underway.
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
