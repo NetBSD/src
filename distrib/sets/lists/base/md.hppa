@@ -1,4 +1,4 @@
-# $NetBSD: md.hppa,v 1.4 2022/01/09 18:11:09 martin Exp $
+# $NetBSD: md.hppa,v 1.5 2022/09/08 05:16:45 rillig Exp $
 ./usr/mdec/boot				base-sysutil-bin
 ./usr/mdec/cdboot			base-sysutil-bin
 ./usr/mdec/mkboot			base-sysutil-bin
@@ -8,4 +8,3 @@
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
-
