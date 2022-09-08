@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.46 2022/09/07 10:09:20 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.47 2022/09/08 10:29:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.46 2022/09/07 10:09:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.47 2022/09/08 10:29:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3168,16 +3168,16 @@ alloc_retry:
 	    NULL, xname, "linkintr");
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
-	evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
-	    NULL, xname, "tx_xoff");
-	evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
-	    NULL, xname, "tx_xon");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_xoff");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_xon");
-	evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
-	    NULL, xname, "rx_macctl");
+		evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
+		    NULL, xname, "tx_xoff");
+		evcnt_attach_dynamic(&sc->sc_ev_tx_xon, EVCNT_TYPE_MISC,
+		    NULL, xname, "tx_xon");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_xoff, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_xoff");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_xon, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_xon");
+		evcnt_attach_dynamic(&sc->sc_ev_rx_macctl, EVCNT_TYPE_MISC,
+		    NULL, xname, "rx_macctl");
 	}
 
 	evcnt_attach_dynamic(&sc->sc_ev_crcerrs, EVCNT_TYPE_MISC,
@@ -3359,11 +3359,11 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_linkintr);
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
-	evcnt_detach(&sc->sc_ev_tx_xoff);
-	evcnt_detach(&sc->sc_ev_tx_xon);
-	evcnt_detach(&sc->sc_ev_rx_xoff);
-	evcnt_detach(&sc->sc_ev_rx_xon);
-	evcnt_detach(&sc->sc_ev_rx_macctl);
+		evcnt_detach(&sc->sc_ev_tx_xoff);
+		evcnt_detach(&sc->sc_ev_tx_xon);
+		evcnt_detach(&sc->sc_ev_rx_xoff);
+		evcnt_detach(&sc->sc_ev_rx_xon);
+		evcnt_detach(&sc->sc_ev_rx_macctl);
 	}
 
 	evcnt_detach(&sc->sc_ev_crcerrs);
