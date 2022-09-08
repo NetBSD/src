@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.47 2022/01/09 18:11:09 martin Exp $
+# $NetBSD: md.pmax,v 1.48 2022/09/08 05:16:45 rillig Exp $
 ./boot.pmax					base-sysutil-bin
 ./etc/ld.so.conf				base-obsolete		obsolete
 ./sbin/ldconfig					base-obsolete		obsolete
@@ -13,4 +13,3 @@
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
-
