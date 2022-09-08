@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.35 2022/01/09 18:11:09 martin Exp $
+# $NetBSD: md.macppc,v 1.36 2022/09/08 05:16:45 rillig Exp $
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
 ./usr/mdec/mbr					base-obsolete		obsolete
@@ -14,4 +14,3 @@
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
-
