@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.336 2022/09/04 22:55:00 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.337 2022/09/08 05:52:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.336 2022/09/04 22:55:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.337 2022/09/08 05:52:56 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -570,10 +570,10 @@ EvalCompareNum(double lhs, ComparisonOp op, double rhs)
 		return lhs > rhs;
 	case GE:
 		return lhs >= rhs;
-	case NE:
-		return lhs != rhs;
-	default:
+	case EQ:
 		return lhs == rhs;
+	default:
+		return lhs != rhs;
 	}
 }
 
