@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: fmt-list,v 1.5 2021/02/15 23:46:46 rillig Exp $
+-- $NetBSD: fmt-list,v 1.6 2022/09/08 05:05:08 rillig Exp $
 
 --[[
 
@@ -18,7 +18,7 @@ end
 
 local function assert_equals(got, expected)
   if got ~= expected then
-    assert(false, string.format("got %q, expected %q", got, expected))
+    assert(false, ("got %q, expected %q"):format(got, expected))
   end
 end
 
@@ -28,7 +28,7 @@ end
 local function tabwidth(str)
   local width = 0
   for i = 1, #str do
-    if string.sub(str, i, i) == "\t" then
+    if str:sub(i, i) == "\t" then
       width = width // 8 * 8 + 8
     else
       width = width + 1
@@ -51,9 +51,9 @@ end)
 -- of the string to the desired width.
 local function tabs(str, width)
   local strwidth = tabwidth(str)
-  local tabs = string.rep("\t", (width - strwidth + 7) // 8)
+  local tabs = ("\t"):rep((width - strwidth + 7) // 8)
   if tabs == "" then
-    error(string.format("%q\t%d\t%d", str, strwidth, width))
+    error(("%q\t%d\t%d"):format(str, strwidth, width))
   end
   assert(tabs ~= "")
   return tabs
@@ -96,7 +96,7 @@ test(function()
     items,
     function(item) return item[1] end,
     function(group, key)
-      result = result .. string.format("%d %s\n", #group, key)
+      result = result .. ("%d %s\n"):format(#group, key)
     end)
   assert_equals(result, "2 prime\n1 not prime\n2 prime\n")
 end)
@@ -294,8 +294,8 @@ local function add_tabs(entries)
     column(entries, width_before_category, "category_col")
   local flags_col = column(entries, width_before_flags, "flags_col")
 
-  -- To avoid horizontal jumps for the column, the minimum column is set
-  -- to 56.  This way, the third column is usually set to 72, which is
+  -- To avoid horizontal jumps for the category column, the minimum column is
+  -- set to 56.  This way, the third column is usually set to 72, which is
   -- still visible on an 80-column screen.
   if category_aligned == "unaligned" then
     category_col = max(category_col, 56)
@@ -378,8 +378,7 @@ local function read_list(fname)
     elseif line:match("^#") then
       table.insert(head, line)
     else
-      local msg = string.format(
-        "%s:%d: unknown line format %q", fname, lineno, line)
+      local msg = ("%s:%d: unknown line format %q"):format(fname, lineno, line)
       table.insert(errors, msg)
     end
   end
@@ -415,7 +414,7 @@ local function write_list(fname, head, entries)
       prev_line = line
       f:write(line, "\n")
     else
-      --print(string.format("%s: duplicate entry: %s", fname, line))
+      --print(("%s: duplicate entry: %s"):format(fname, line))
     end
   end
 
