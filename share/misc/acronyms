@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.312 2021/09/16 08:33:24 leot Exp $
+$NetBSD: acronyms,v 1.313 2022/09/09 14:16:16 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -651,6 +651,7 @@ YHBT	you have been trolled
 YHL	you have lost
 YKWIM	you know what I mean
 YMMV	your mileage may vary
+YMMD	you made my day
 YOLO	you only live once
 YW	you're welcome
 YWSYLS	you win some, you lose some
