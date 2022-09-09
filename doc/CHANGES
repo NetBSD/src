@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2904 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2905 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -665,3 +665,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[ryo 20220823]
 	acpi(4): Updated ACPICA to 20220331. [christos 20220827]
 	xen: Add experimental support for PVH dom0. [bouyer 20220901]
+	grep(1): with -r and no file argument, search current directory
+		[wiz 20220909]
