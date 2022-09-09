@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.337 2022/09/08 20:22:55 rillig Exp $
+.\"	$NetBSD: make.1,v 1.338 2022/09/09 05:27:32 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 8, 2022
+.Dd September 9, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -235,7 +235,9 @@ so the actual commands are printed as they are executed.
 Let environment variables override global variables within makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
-.Sq Pa makefile .
+.Pa makefile
+or
+.Pa Makefile.
 If
 .Ar makefile
 is
@@ -953,7 +955,7 @@ Can affect the mode that
 runs in.
 It can contain a number of keywords:
 .Bl -hang -width missing-filemon=bf.
-.It Pa compat
+.It Cm compat
 Like
 .Fl B ,
 puts
@@ -961,7 +963,7 @@ puts
 into
 .Dq compat
 mode.
-.It Pa meta
+.It Cm meta
 Puts
 .Nm
 into
@@ -972,7 +974,7 @@ to capture the command run, the output generated and if
 is available, the system calls which are of interest to
 .Nm .
 The captured output can be very useful when diagnosing errors.
-.It Pa curdirOk= Ns Ar bf
+.It Cm curdirOk= Ns Ar bf
 Normally
 .Nm
 does not create
@@ -982,32 +984,32 @@ files in
 This can be overridden by setting
 .Va bf
 to a value which represents true.
-.It Pa missing-meta= Ns Ar bf
+.It Cm missing-meta= Ns Ar bf
 If
 .Va bf
 is true, a missing
 .Pa .meta
 file makes the target out-of-date.
-.It Pa missing-filemon= Ns Ar bf
+.It Cm missing-filemon= Ns Ar bf
 If
 .Va bf
 is true, missing filemon data makes the target out-of-date.
-.It Pa nofilemon
+.It Cm nofilemon
 Do not use
 .Xr filemon 4 .
-.It Pa env
+.It Cm env
 For debugging, it can be useful to include the environment
 in the
 .Pa .meta
 file.
-.It Pa verbose
+.It Cm verbose
 If in
 .Dq meta
 mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
 The message printed is the expanded value of
 .Va .MAKE.META.PREFIX .
-.It Pa ignore-cmd
+.It Cm ignore-cmd
 Some makefiles have commands which are simply not stable.
 This keyword causes them to be ignored for
 determining whether a target is out of date in
@@ -1015,12 +1017,12 @@ determining whether a target is out of date in
 mode.
 See also
 .Ic .NOMETA_CMP .
-.It Pa silent= Ns Ar bf
+.It Cm silent= Ns Ar bf
 If
 .Va bf
 is true, when a .meta file is created, mark the target
 .Ic .SILENT .
-.It Pa randomize-targets
+.It Cm randomize-targets
 In both compat and parallel mode, do not make the targets in the usual order,
 but instead randomize their order.
 This mode can be used to detect undeclared dependencies between files.
@@ -1168,7 +1170,7 @@ is set in the environment or on the command line.)
 .Sq Ev MAKEOBJDIR
 is set in the environment or on the command line.)
 .It
-.Cm ${.CURDIR} Ns Pa /obj. Ns Ev ${MACHINE}
+.Cm ${.CURDIR} Ns Pa /obj. Ns Cm ${MACHINE}
 .It
 .Cm ${.CURDIR} Ns Pa /obj
 .It
