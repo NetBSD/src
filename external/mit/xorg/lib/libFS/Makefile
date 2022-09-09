@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/04/04 10:59:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/09/09 03:46:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,12 @@ CWARNFLAGS.clang+=	-Wno-string-plus-int
 INCS=	FSlib.h
 INCSDIR=${X11INCDIR}/X11/fonts
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
-CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/../include
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts \
+		-D_OPENBSD_SOURCE \
+		-DHAVE_REALLOCARRAY \
+		-DHAVE_STRNLEN \
+		-DHAVE_STRLCPY \
+		-DHAVE_SETENV
 
 CONN_DEFINES = ${X11FLAGS.CONNECTION} -DFS_t -DTRANS_CLIENT
 SOCK_DEFINES = -DBSD44SOCKETS
