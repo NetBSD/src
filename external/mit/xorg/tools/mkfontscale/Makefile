@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/07/20 03:54:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2022/09/09 19:15:20 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -12,7 +12,8 @@ SRCS.mkfontscale=	mkfontscale.c hash.c ident.c list.c constlist.c
 .PATH:	${FREETYPE}/src/base
 SRCS.freetype+=	ftbase.c ftbbox.c ftbdf.c ftdebug.c \
 		ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
-		ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c
+		ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c \
+		reallocarray.c
 
 .PATH: ${FREETYPE}/src/autofit
 SRCS.freetype+=	autofit.c
