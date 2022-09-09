@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1222 2022/09/03 03:33:37 rillig Exp $
+# $NetBSD: mi,v 1.1223 2022/09/09 22:14:28 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4750,6 +4750,7 @@
 ./usr/tests/usr.bin/grep/d_invert.in			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_invert.out			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/grep/d_recurse_noarg.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_symlink.err		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_symlink.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_whole_line.out		tests-usr.bin-tests	compattestfile,atf

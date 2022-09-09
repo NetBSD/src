@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.4 2021/12/28 19:22:58 christos Exp $	*/
+/*	$NetBSD: grep.c,v 1.5 2022/09/09 22:14:29 wiz Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -1764,10 +1764,8 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"))
     }
   else
     {
-      if (directories == RECURSE_DIRECTORIES) {
-	error (0, 0, _("warning: recursive search of stdin"));
-      }
-      status = grepfile ((char *) NULL, &stats_base);
+      status = grepfile(directories == RECURSE_DIRECTORIES ? "." : (char *) NULL,
+			&stats_base);
     }
 
   /* We register via atexit() to test stdout.  */
