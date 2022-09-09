@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.338 2022/09/09 05:27:32 rillig Exp $
+.\"	$NetBSD: make.1,v 1.339 2022/09/09 06:23:36 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -856,15 +856,14 @@ The name that
 .Nm
 was executed with
 .Pq Va argv[0] .
-For compatibility
+For compatibility,
 .Nm
 also sets
 .Va .MAKE
 with the same value.
 The preferred variable to use is the environment variable
 .Ev MAKE
-because it is more compatible with other versions of
-.Nm
+because it is more compatible with other make variants
 and cannot be confused with the special target with the same name.
 .It Va .MAKE.DEPENDFILE
 Names the makefile (default
@@ -920,20 +919,18 @@ Anything specified on
 .Nm Ns 's
 command line is appended to the
 .Va MAKEFLAGS
-variable which is then
-entered into the environment for all programs which
+variable, which is then added to the environment for all programs that
 .Nm
 executes.
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
-The initial instance of
+The top-level instance of
 .Nm
-is 0, and an incremented value is put into the environment
-to be seen by the next generation.
+has level 0, and each child make has its parent level plus 1.
 This allows tests like:
 .Li .if ${.MAKE.LEVEL} == 0
-to protect things which should only be evaluated in the initial instance of
+to protect things which should only be evaluated in the top-level instance of
 .Nm .
 .It Va .MAKE.MAKEFILE_PREFERENCE
 The ordered list of makefile names
@@ -950,7 +947,7 @@ which is useful for tracking dependencies.
 Each makefile is recorded only once, regardless of the number of times read.
 .It Va .MAKE.MODE
 Processed after reading all makefiles.
-Can affect the mode that
+Affects the mode that
 .Nm
 runs in.
 It can contain a number of keywords:
@@ -969,13 +966,13 @@ Puts
 into
 .Dq meta
 mode, where meta files are created for each target
-to capture the command run, the output generated and if
+to capture the command run, the output generated, and if
 .Xr filemon 4
 is available, the system calls which are of interest to
 .Nm .
-The captured output can be very useful when diagnosing errors.
+The captured output can be useful when diagnosing errors.
 .It Cm curdirOk= Ns Ar bf
-Normally
+By default,
 .Nm
 does not create
 .Pa .meta
@@ -1150,7 +1147,7 @@ modifier to put a newline between
 iterations of the loop rather than a space.
 For example, the printing of
 .Sq Va MAKE_PRINT_VAR_ON_ERROR
-could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v:Q}'${.newline}@}.
+could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}.
 .It Va .OBJDIR
 A path to the directory where the targets are built.
 Its value is determined by trying to
@@ -1206,22 +1203,22 @@ This check can be skipped by setting the environment variable
 .Sq Ev MAKE_OBJDIR_CHECK_WRITABLE
 to "no".
 .It Va .PARSEDIR
-A path to the directory of the current makefile being parsed.
+The directory name of the current makefile being parsed.
 .It Va .PARSEFILE
 The basename of the current makefile being parsed.
 This variable and
 .Sq Va .PARSEDIR
 are both set only while the makefiles are being parsed.
-If you want to retain their current values, assign them to a variable
-using assignment with expansion
+To retain their current values,
+assign them to a variable using assignment with expansion
 .Sq Cm \&:= .
 .It Va .PATH
 The space-separated list of directories that
 .Nm
 searches for files.
-The search list should be updated using the target
+To update this search list, use the special target
 .Sq Ic .PATH
-rather than the variable.
+rather than modifying the variable directly.
 .It Va PWD
 Alternate path to the current directory.
 .Nm
@@ -1258,9 +1255,9 @@ It is read-only.
 .It Va .TARGETS
 The list of targets explicitly specified on the command line, if any.
 .It Va VPATH
-Colon-separated
+The colon-separated
 .Pq Dq \&:
-lists of directories that
+list of directories that
 .Nm
 searches for files.
 The variable is supported for compatibility with old make programs only,
@@ -1297,7 +1294,6 @@ If any of the modifiers in the
 contains a dollar sign
 .Pq Ql $ ,
 these must be doubled to avoid early expansion.
-.\" XXX: This is only close to the truth, see the table in varmod.mk.
 .Pp
 Some modifiers interpret the expression value as a single string,
 others treat the expression value as a whitespace-separated list of words.
@@ -1420,14 +1416,14 @@ If a
 value is not provided or is 0, the current time is used.
 .It Cm \&:tA
 Attempts to convert the value to an absolute path using
-.Xr realpath 3 ,
-if that fails, the value is unchanged.
+.Xr realpath 3 .
+If that fails, the value is unchanged.
 .It Cm \&:tl
 Converts the value to lower-case letters.
 .It Cm \&:ts Ns Ar c
 When joining the words after a modifier that treats the value as words,
 the words are normally separated by a space.
-This modifier sets the separator to the character
+This modifier changes the separator to the character
 .Ar c .
 If
 .Ar c
@@ -1630,8 +1626,8 @@ The ODE convention is that
 should start and end with a period, for example:
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
 .Pp
-However, a single-character variable is often more readable:
-.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v:Q}'${.newline}@}
+However, a single-letter variable is often more readable:
+.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
 .It Cm \&:_ Ns Oo Cm = Ns Ar var Oc
 Saves the current variable value in
 .Ql $_
@@ -1673,7 +1669,7 @@ The name of the variable is the value.
 The path of the node which has the same name as the variable is the value.
 If no such node exists or its path is null, the name of the variable is used.
 In order for this modifier to work, the name (node) must at least have
-appeared on the rhs of a dependency.
+appeared on the right-hand side of a dependency.
 .Sm off
 .It Cm \&:\&! Ar cmd\| Cm \&!
 .Sm on
@@ -1681,20 +1677,15 @@ The output of running
 .Ar cmd
 is the value.
 .It Cm \&:sh
-If the variable is non-empty, it is run as a command and the output
-becomes the new value.
+The value is run as a command, and the output becomes the new value.
 .It Cm \&::= Ns Ar str
 The variable is assigned the value
 .Ar str
 after substitution.
 This modifier and its variations are useful in obscure situations
-such as wanting to set a variable when shell commands are being parsed.
-These assignment modifiers always expand to nothing,
-so if they appear in a rule line by themselves,
-they should be preceded with something,
-to keep
-.Nm
-happy.
+such as wanting to set a variable
+at a point where a target's shell commands are being parsed.
+These assignment modifiers always expand to nothing.
 .Pp
 The
 .Sq Cm \&::
@@ -1958,7 +1949,6 @@ Logical AND; of higher precedence than
 .Dq \&|\&| .
 .El
 .Pp
-As in C,
 .Nm
 only evaluates a conditional as far as is necessary to determine its value.
 Parentheses can be used to override the operator precedence.
@@ -2027,31 +2017,31 @@ and its numeric value (if any) is not zero.
 When
 .Nm
 is evaluating one of these conditional expressions, and it encounters
-a (white-space separated) word it doesn't recognize, either the
+a (whitespace separated) word it doesn't recognize, either the
 .Dq make
 or
 .Dq defined
-expression is applied to it, depending on the form of the conditional.
+function is applied to it, depending on the form of the conditional.
 If the form is
 .Sq Ic .ifdef ,
-.Sq Ic .ifndef ,
+.Sq Ic .ifndef
 or
-.Sq Ic .if
+.Sq Ic .if ,
 the
 .Dq defined
-expression is applied.
+function is applied.
 Similarly, if the form is
 .Sq Ic .ifmake
 or
 .Sq Ic .ifnmake ,
 the
 .Dq make
-expression is applied.
+function is applied.
 .Pp
-If the conditional evaluates to true the parsing of the makefile continues
-as before.
+If the conditional evaluates to true,
+parsing of the makefile continues as before.
 If it evaluates to false, the following lines are skipped.
-In both cases this continues until a
+In both cases, this continues until the corresponding
 .Sq Ic .else
 or
 .Sq Ic .endif
