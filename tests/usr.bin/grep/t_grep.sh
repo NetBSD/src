@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.6 2021/08/30 23:14:14 rillig Exp $
+# $NetBSD: t_grep.sh,v 1.7 2022/09/09 22:14:29 wiz Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@ basic_head()
 	atf_set "descr" "Checks basic functionality"
 }
 basic_body()
-{ 
+{
 	atf_check -o file:"$(atf_get_srcdir)/d_basic.out" -x \
 	    'jot 10000 | grep 123'
 }
@@ -60,6 +60,20 @@ recurse_body()
 	echo -e "cod\nhaddock\nplaice" > recurse/a/f/favourite-fish
 
 	atf_check -o file:"$(atf_get_srcdir)/d_recurse.out" -x "grep -r haddock recurse | sort"
+}
+
+atf_test_case recurse_noarg
+recurse_noarg_head()
+{
+	atf_set "descr" "Checks recursive searching without file argument"
+}
+recurse_noarg_body()
+{
+	mkdir -p recurse/a/f recurse/d
+	echo -e "cod\ndover sole\nhaddock\nhalibut\npilchard" > recurse/d/fish
+	echo -e "cod\nhaddock\nplaice" > recurse/a/f/favourite-fish
+
+	atf_check -o file:"$(atf_get_srcdir)/d_recurse_noarg.out" -x "cd recurse && grep -r haddock | sort"
 }
 
 atf_test_case recurse_symlink
@@ -329,9 +343,10 @@ context2_body()
 
 atf_init_test_cases()
 {
-	atf_add_test_case basic 
+	atf_add_test_case basic
 	atf_add_test_case binary
 	atf_add_test_case recurse
+	atf_add_test_case recurse_noarg
 	atf_add_test_case recurse_symlink
 	atf_add_test_case word_regexps
 	atf_add_test_case word_locale

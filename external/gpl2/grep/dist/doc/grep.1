@@ -1,8 +1,8 @@
-.\"	$NetBSD: grep.1,v 1.2 2016/01/10 22:16:40 christos Exp $
+.\"	$NetBSD: grep.1,v 1.3 2022/09/09 22:14:29 wiz Exp $
 .\"
 .\" grep man page
 .\"d Id: grep.1,v 1.23 2002/01/22 13:20:04 bero Exp 
-.TH GREP 1 "June 16 2003" "GNU Project"
+.TH GREP 1 "September 3 2022" "GNU Project"
 .SH NAME
 grep, egrep, fgrep \- print lines matching a pattern
 .SH SYNOPSIS
@@ -312,6 +312,11 @@ Read all files under each directory, recursively;
 this is equivalent to the
 .B "\-d recurse"
 option.
+If no
+.IR FILE
+is given,
+.BR grep
+searches the current working directory.
 .TP
 .BR "\fR \fP \-\^\-include=" PATTERN
 Recurse in directories only searching file matching
