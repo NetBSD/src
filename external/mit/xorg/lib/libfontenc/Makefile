@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/01/05 13:07:46 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2022/09/09 03:49:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ INCSDIR=${X11INCDIR}/X11/fonts
 CPPFLAGS+=	-DFONTENC_NO_LIBFONT
 CPPFLAGS+=	-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
+CPPFLAGS+=	-DHAVE_REALLOCARRAY -D_OPENBSD_SOURCE
 
 LIBDPLIBS+=	z ${NETBSDSRCDIR}/lib/libz
 
