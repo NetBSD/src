@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.13 2021/05/01 07:09:55 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.14 2022/09/10 09:28:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ riscvreg_asid_write(uint32_t asid)
 	uintptr_t satp;
 	__asm __volatile("csrr	%0, satp" : "=r" (satp));
 	satp &= ~SATP_ASID;
-	satp |= __SHIFTIN((uintptr_t)asid, SATP_ASID);
+	satp |= __SHIFTIN(asid, SATP_ASID);
 	__asm __volatile("csrw	satp, %0" :: "r" (satp));
 }
 
