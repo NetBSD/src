@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.4 2022/08/28 08:41:06 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.5 2022/09/10 13:13:22 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -93,10 +93,10 @@ Q3(int i, unsigned u)
 }
 
 unsigned long long
-Q4(char *ptr, int i, unsigned long long ull)
+Q4(signed char *ptr, int i, unsigned long long ull)
 {
 	/*
-	 * The conversion from 'char' to 'int' is done by the integer
+	 * The conversion from 'signed char' to 'int' is done by the integer
 	 * promotions (C11 6.3.1.1p2), not by the usual arithmetic
 	 * conversions (C11 6.3.1.8p1).
 	 */
