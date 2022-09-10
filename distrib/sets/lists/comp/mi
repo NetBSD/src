@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2421 2022/09/04 21:37:50 thorpej Exp $
+#	$NetBSD: mi,v 1.2422 2022/09/10 15:45:02 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3659,20 +3659,20 @@
 ./usr/lib/clang/7.0.0/include/xray/xray_records.h	comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/share/asan_blacklist.txt	comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/share/msan_blacklist.txt	comp-obsolete		obsolete
-./usr/lib/clang/9.0.0/include/sanitizer/allocator_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/asan_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/common_interface_defs.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/coverage_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/lsan_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/msan_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface_atomic.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_log_interface.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_records.h	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/share/asan_blacklist.txt	comp-obsolete	obsolete		llvm
-./usr/lib/clang/9.0.0/share/msan_blacklist.txt	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/allocator_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/asan_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/common_interface_defs.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/coverage_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/lsan_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/msan_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface_atomic.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/xray/xray_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/xray/xray_log_interface.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/include/xray/xray_records.h	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/share/asan_blacklist.txt	comp-obsolete	obsolete
+./usr/lib/clang/9.0.0/share/msan_blacklist.txt	comp-obsolete	obsolete
 ./usr/lib/crt0.o				comp-c-lib		compatfile
 ./usr/lib/gcrt0.o				comp-c-lib		compatfile
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
