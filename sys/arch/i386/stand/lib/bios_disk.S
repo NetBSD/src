@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.22 2014/07/19 14:50:21 erh Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.23 2022/09/10 12:14:17 rillig Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -197,7 +197,7 @@ ok:
 
 /*
  * int biosdisk_int13ext(int dev):
- *	check for availibility of int13 extensions.
+ *	check for availability of int13 extensions.
  */
 ENTRY(biosdisk_int13ext)
 	pusha

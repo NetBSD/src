@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.24 2022/07/20 01:35:25 riastradh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.25 2022/09/10 12:14:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -137,7 +137,7 @@ cpu_earlydevice_va_p(void)
 	if ((reg_sctlr_el1_read() & SCTLR_M) == 0)
 		return false;
 
-	/* device mapping will be availabled after pmap_devmap_bootstrap() */
+	/* device mapping will be available after pmap_devmap_bootstrap() */
 	if (!pmap_devmap_bootstrap_done)
 		return false;
 
