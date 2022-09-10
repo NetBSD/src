@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpf.c,v 1.8 2017/02/09 02:18:13 ozaki-r Exp $	*/
+/*	$NetBSD: t_bpf.c,v 1.9 2022/09/10 12:14:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpf.c,v 1.8 2017/02/09 02:18:13 ozaki-r Exp $");
+__RCSID("$NetBSD: t_bpf.c,v 1.9 2022/09/10 12:14:18 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -311,20 +311,20 @@ ATF_TC_BODY(bpf_ioctl_GDLTLIST, tc)
 
 	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
 
-	/* Get the size of an avaiable DLT list */
+	/* Get the size of an available DLT list */
 	dltlist.bfl_len = 0;
 	dltlist.bfl_list = NULL;
 	RL(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist));
 	ATF_REQUIRE(dltlist.bfl_len == 1);
 
-	/* Get an avaiable DLT list */
+	/* Get an available DLT list */
 	dltlist.bfl_list = calloc(sizeof(u_int), 1);
 	dltlist.bfl_len = 1;
 	RL(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist));
 	ATF_REQUIRE(dltlist.bfl_len == 1);
 	ATF_REQUIRE(dltlist.bfl_list[0] == DLT_EN10MB);
 
-	/* Get an avaiable DLT list with a less buffer (fake with bfl_len) */
+	/* Get an available DLT list with a less buffer (fake with bfl_len) */
 	dltlist.bfl_len = 0;
 	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist), -1,
 	    "This should fail with ENOMEM");

@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.12 2021/12/12 22:20:52 andvar Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.13 2022/09/10 12:14:18 rillig Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -68,7 +68,7 @@ bootp_print(struct bootp *bp, int length, u_short sport, u_short dport)
 	if (length != sizeof(struct bootp))
 		(void) printf(" [len=%d]", length);
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = (u_char *) snapend;
 
 	switch (bp->bp_op) {

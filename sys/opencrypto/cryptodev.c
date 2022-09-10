@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.124 2022/05/22 11:40:38 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.125 2022/09/10 12:14:17 rillig Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.124 2022/05/22 11:40:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.125 2022/09/10 12:14:17 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1727,8 +1727,8 @@ cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 }
 
 /*
- * collect as many completed requests as are availble, or count completed
- * requests whichever is less.
+ * collect as many completed requests as are available, or count completed
+ * requests, whichever is less.
  * return the number of requests.
  */
 static int
