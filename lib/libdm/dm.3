@@ -1,4 +1,4 @@
-.\"     $NetBSD: dm.3,v 1.6 2016/01/22 22:12:40 dholland Exp $
+.\"     $NetBSD: dm.3,v 1.7 2022/09/10 12:14:17 rillig Exp $
 .\"
 .\" Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,7 +171,7 @@ Sends created
 .Fa libdm_task
 to kernel and receives new one as reply.
 .Pp
-List of attributes avaialable in
+List of attributes available in
 .Vt libdm_task_t :
 .Bl -column -offset indent "DM_IOCTL_TARGET_COUNT" "Number of table entries" "XXX"
 .It Sy Attribute Ta Sy Description Ta Sy Mode
@@ -356,7 +356,7 @@ with libdm_cmd_iter iterator.
 .Fn libdm_target_get_name
 returns pointer to a string with available target name.
 .Pp
-.Fn lobdm_target_get_version
+.Fn libdm_target_get_version
 Sets argument
 .Fa ver[3]
 to a in-kernel loaded target version.
