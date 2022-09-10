@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.325 2022/09/09 18:36:15 sjg Exp $
+# $NetBSD: Makefile,v 1.326 2022/09/10 16:20:04 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -673,11 +673,13 @@ TMPDIR:=	/tmp/uid${.MAKE.UID}
 _!= mkdir -p ${TMPDIR}
 .endif
 
-# Some systems have deprecated egrep for grep -E
-# but not everyone supports that
+# Some Linux systems such as Fedora have deprecated egrep in favor of grep -E.
 .if ${.MAKE.OS:NLinux} == ""
 EGREP= grep -E
 .endif
+# Keep the classical definition for all other systems.  Just as the bmake code
+# is kept compatible with C90, the tests are kept compatible with systems that
+# are several decades old and don't follow modern POSIX standards.
 EGREP?= egrep
 
 MAKE_TEST_ENV=  EGREP="${EGREP}"
