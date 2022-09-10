@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.147 2022/09/09 18:25:13 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.148 2022/09/10 08:22:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2778,4 +2778,9 @@ sys/kern/kern_core.c				1.36
 
 	Fix kauth credential reference leak.
 	[christos, ticket #1760]
+
+sys/kern/kern_core.c				1.37
+
+	Avoid a GCC warning.
+	[mrg, ticket #1761]
 
