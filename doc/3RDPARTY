@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1873 2022/08/30 07:29:44 leot Exp $
+#	$NetBSD: 3RDPARTY,v 1.1874 2022/09/10 11:40:08 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1321,10 +1321,10 @@ original.
 
 Package:	sqlite
 Version:	3.26.0
-Current Vers:	3.38.0
+Current Vers:	3.39.3
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2022-02-28
+Date: 		2022-09-05
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
