@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.24.22.2 2022/09/09 18:20:51 martin Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.24.22.3 2022/09/10 08:19:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24.22.2 2022/09/09 18:20:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24.22.3 2022/09/10 08:19:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -104,7 +104,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct coredump_iostate	io;
 	struct plimit		*lim;
 	int			error, error1;
-	char			*name, *lastslash;
+	char			*name, *lastslash = NULL /* XXXgcc */;
 
 	name = PNBUF_GET();
 
