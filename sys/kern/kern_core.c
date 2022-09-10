@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.36 2022/09/09 14:30:17 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.37 2022/09/10 07:30:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.36 2022/09/09 14:30:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.37 2022/09/10 07:30:41 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -127,7 +127,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct coredump_iostate	io;
 	struct plimit		*lim;
 	int			error, error1;
-	char			*name, *lastslash;
+	char			*name, *lastslash = NULL /* XXXgcc */;
 
 	name = PNBUF_GET();
 
