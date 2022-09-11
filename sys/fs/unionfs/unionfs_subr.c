@@ -96,8 +96,7 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	 * unless layers are inverted.
 	 */
 	vnode_t *svp = (uppervp != NULLVP) ? uppervp : lowervp;
-	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p,
-	    svp->v_interlock, &vp);
+	error = vcache_get(mp, svp, sizeof(svp), &vp);
 	if (error != 0) {
 		return (error);
 	}
@@ -139,13 +138,10 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 void
 unionfs_noderem(struct vnode *vp)
 {
-	struct unionfs_mount *ump;
 	struct unionfs_node *unp;
 	struct unionfs_node_status *unsp;
 	struct vnode   *lvp;
 	struct vnode   *uvp;
-
-	ump = MOUNTTOUNIONFSMOUNT(vp->v_mount);
 
 	/*
 	 * Use the interlock to protect the clearing of v_data to
