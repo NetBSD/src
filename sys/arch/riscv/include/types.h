@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12 2021/05/03 20:07:57 skrll Exp $ */
+/* $NetBSD: types.h,v 1.13 2022/09/11 15:31:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -89,8 +89,7 @@ typedef __int32_t	__register_t;
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-//#define	__HAVE_NEW_STYLE_BUS_H
-#define	__HAVE_NO_BUS_DMA
+#define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_TLS_VARIANT_I
 /* XXX temporary */
