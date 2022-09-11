@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2022/05/30 14:09:01 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 2022/09/11 08:30:43 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2022/05/30 14:09:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2022/09/11 08:30:43 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -428,7 +428,7 @@ static int bigcopyin(const void *, void *, size_t );
 static int bigcopyout(const void *, void *, size_t );
 
 int
-copyin(const void *udaddr, void *kaddr, size_t len)
+copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int rv, msr, pid, tmp, ctx, count = 0;
@@ -436,7 +436,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 
 	/* For bigger buffers use the faster copy */
 	if (len > 1024)
-		return (bigcopyin(udaddr, kaddr, len));
+		return (bigcopyin(uaddr, kaddr, len));
 
 	if ((rv = setfault(&env))) {
 		curpcb->pcb_onfault = NULL;
@@ -461,11 +461,11 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   mtctr %[count];"
 		"1: mtpid %[ctx]; isync;"
 #ifdef PPC_IBM403
-		"   lswi %[tmp],%[udaddr],4;"	/* Load user word */
+		"   lswi %[tmp],%[uaddr],4;"	/* Load user word */
 #else
-		"   lwz %[tmp],0(%[udaddr]);"
+		"   lwz %[tmp],0(%[uaddr]);"
 #endif
-		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
+		"   addi %[uaddr],%[uaddr],0x4;" /* next uaddr word */
 		"   sync;"
 		"   mtpid %[pid]; isync;"
 #ifdef PPC_IBM403
@@ -474,7 +474,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   stw %[tmp],0(%[kaddr]);"
 #endif
 		"   dcbst 0,%[kaddr];"		/* flush cache */
-		"   addi %[kaddr],%[kaddr],0x4;" /* next udaddr word */
+		"   addi %[kaddr],%[kaddr],0x4;" /* next uaddr word */
 		"   sync;"
 		"   bdnz 1b;"			/* repeat */
 
@@ -483,8 +483,8 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   mtctr %[count];"
 		"3: bdz 10f;"			/* while count */
 		"   mtpid %[ctx]; isync;"
-		"   lbz %[tmp],0(%[udaddr]);"	/* Load user byte */
-		"   addi %[udaddr],%[udaddr],0x1;" /* next udaddr byte */
+		"   lbz %[tmp],0(%[uaddr]);"	/* Load user byte */
+		"   addi %[uaddr],%[uaddr],0x1;" /* next uaddr byte */
 		"   sync;"
 		"   mtpid %[pid]; isync;"
 		"   stb %[tmp],0(%[kaddr]);"	/* Store kernel byte */
@@ -495,7 +495,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"10:mtpid %[pid]; mtmsr %[msr]; isync;"
 						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
 		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
@@ -503,7 +503,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 }
 
 static int
-bigcopyin(const void *udaddr, void *kaddr, size_t len)
+bigcopyin(const void *uaddr, void *kaddr, size_t len)
 {
 	const char *up;
 	char *kp = kaddr;
@@ -517,11 +517,11 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
+	error = uvm_vslock(p->p_vmspace, __UNCONST(uaddr), len, VM_PROT_READ);
 	if (error) {
 		return error;
 	}
-	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
+	up = (char *)vmaprange(p, (vaddr_t)uaddr, len, VM_PROT_READ);
 
 	if ((error = setfault(&env)) == 0) {
 		memcpy(kp, up, len);
@@ -529,13 +529,13 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 
 	curpcb->pcb_onfault = NULL;
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
+	uvm_vsunlock(p->p_vmspace, __UNCONST(uaddr), len);
 
 	return error;
 }
 
 int
-copyout(const void *kaddr, void *udaddr, size_t len)
+copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int rv, msr, pid, tmp, ctx, count = 0;
@@ -543,7 +543,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 
 	/* For big copies use more efficient routine */
 	if (len > 1024)
-		return (bigcopyout(kaddr, udaddr, len));
+		return (bigcopyout(kaddr, uaddr, len));
 
 	if ((rv = setfault(&env))) {
 		curpcb->pcb_onfault = NULL;
@@ -576,12 +576,12 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   sync;"
 		"   mtpid %[ctx]; isync;"
 #ifdef PPC_IBM403
-		"   stswi %[tmp],%[udaddr],4;"	/* Store user word */
+		"   stswi %[tmp],%[uaddr],4;"	/* Store user word */
 #else
-		"   stw %[tmp],0(%[udaddr]);"
+		"   stw %[tmp],0(%[uaddr]);"
 #endif
-		"   dcbst 0,%[udaddr];"		/* flush cache */
-		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
+		"   dcbst 0,%[uaddr];"		/* flush cache */
+		"   addi %[uaddr],%[uaddr],0x4;" /* next uaddr word */
 		"   sync;"
 		"   bdnz 1b;"			/* repeat */
 
@@ -594,15 +594,15 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   addi %[kaddr],%[kaddr],0x1;" /* next kaddr byte */
 		"   sync;"
 		"   mtpid %[ctx]; isync;"
-		"   stb %[tmp],0(%[udaddr]);"	/* Store user byte */
-		"   dcbst 0,%[udaddr];"		/* flush cache */
-		"   addi %[udaddr],%[udaddr],0x1;"
+		"   stb %[tmp],0(%[uaddr]);"	/* Store user byte */
+		"   dcbst 0,%[uaddr];"		/* flush cache */
+		"   addi %[uaddr],%[uaddr],0x1;"
 		"   sync;"
 		"   b 3b;"
 		"10:mtpid %[pid]; mtmsr %[msr]; isync;"
 						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
 		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
@@ -610,7 +610,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 }
 
 static int
-bigcopyout(const void *kaddr, void *udaddr, size_t len)
+bigcopyout(const void *kaddr, void *uaddr, size_t len)
 {
 	char *up;
 	const char *kp = (const char *)kaddr;
@@ -624,11 +624,11 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
+	error = uvm_vslock(p->p_vmspace, uaddr, len, VM_PROT_WRITE);
 	if (error) {
 		return error;
 	}
-	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
+	up = (char *)vmaprange(p, (vaddr_t)uaddr, len,
 	    VM_PROT_READ | VM_PROT_WRITE);
 
 	if ((error = setfault(&env)) == 0) {
@@ -637,7 +637,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 
 	curpcb->pcb_onfault = NULL;
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p->p_vmspace, udaddr, len);
+	uvm_vsunlock(p->p_vmspace, uaddr, len);
 
 	return error;
 }
