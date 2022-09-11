@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.187 2022/08/06 15:38:42 riastradh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.188 2022/09/11 15:23:39 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.187 2022/08/06 15:38:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.188 2022/09/11 15:23:39 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2204,7 +2204,7 @@ gsip_rxintr(struct sip_softc *sc)
 		sip_rxchain_reset(sc);
 
 		/* If an error occurred, update stats and drop the packet. */
-		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_RUNT |
+		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_LONG | CMDSTS_Rx_RUNT |
 		    CMDSTS_Rx_ISE | CMDSTS_Rx_CRCE | CMDSTS_Rx_FAE)) {
 			if_statinc(ifp, if_ierrors);
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
@@ -2217,6 +2217,7 @@ gsip_rxintr(struct sip_softc *sc)
 			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
 			    (cmdsts & (bit)) != 0)			\
 				printf("%s: %s\n", device_xname(sc->sc_dev), str)
+			PRINTERR(CMDSTS_Rx_LONG, "Too long packet");
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
@@ -2363,7 +2364,7 @@ sip_rxintr(struct sip_softc *sc)
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
 		 */
-		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_RUNT |
+		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_LONG | CMDSTS_Rx_RUNT |
 		    CMDSTS_Rx_ISE | CMDSTS_Rx_CRCE | CMDSTS_Rx_FAE)) {
 			if_statinc(ifp, if_ierrors);
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
@@ -2376,6 +2377,7 @@ sip_rxintr(struct sip_softc *sc)
 			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
 			    (cmdsts & (bit)) != 0)			\
 				printf("%s: %s\n", device_xname(sc->sc_dev), str)
+			PRINTERR(CMDSTS_Rx_LONG, "Too long packet");
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
