@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 2022/09/11 09:03:25 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.94 2022/09/11 09:08:04 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2022/09/11 09:03:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2022/09/11 09:08:04 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -485,23 +485,18 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 
 	"2:"	"andi.	%[count],%[len],0x3;"	/* How many remaining bytes? */
 		"beq	10f;"
-		"addi	%[count],%[count],0x1;"
-		"mtctr	%[count];"
-	"3:"	"bdz	10f;"			/* while count */
+		"mtxer	%[count];"
 
 		"mtpid	%[ctx];"
 		"isync;"
-		"lbz	%[tmp],0(%[uaddr]);"	/* Load user byte */
-		"addi	%[uaddr],%[uaddr],0x1;"	/* next uaddr byte */
+		"lswx	%[tmp],0,%[uaddr];"	/* Load user bytes */
 		"sync;"
 
 		"mtpid	%[pid];"
 		"isync;"
-		"stb	%[tmp],0(%[kaddr]);"	/* Store kernel byte */
+		"stswx	%[tmp],0,%[kaddr];"	/* Store kernel byte */
 		"dcbst	0,%[kaddr];"		/* flush cache */
-		"addi	%[kaddr],%[kaddr],0x1;"
 		"sync;"
-		"b	3b;"
 
 	"10:"	"mtpid	%[pid];"		/* Restore PID and MSR */
 		"mtmsr	%[msr];"
@@ -510,7 +505,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
 		  [len] "b" (len), [count] "b" (count)
-		: "cr0", "ctr");
+		: "cr0", "ctr", "xer");
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
@@ -582,8 +577,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"beq-	2f;"			/* No words. Go do bytes */
 		"mtctr	%[count];"
 
-	"1:"	"mtpid	%[pid];"
-		"isync;"
+	"1:"
 #ifdef PPC_IBM403
 		"lswi	%[tmp],%[kaddr],4;"	/* Load kernel word */
 #else
@@ -602,36 +596,32 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"dcbst	0,%[uaddr];"		/* flush cache */
 		"addi	%[uaddr],%[uaddr],0x4;"	/* next uaddr word */
 		"sync;"
+
+		"mtpid	%[pid];"
+		"isync;"
 		"bdnz	1b;"			/* repeat */
 
 	"2:"	"andi.	%[count],%[len],0x3;"	/* How many remaining bytes? */
 		"beq	10f;"
-		"addi	%[count],%[count],0x1;"
-		"mtctr	%[count];"
-	"3:"	"bdz	10f;"			/* while count */
+		"mtxer	%[count];"
 
-		"mtpid	%[pid];"
-		"isync;"
-		"lbz	%[tmp],0(%[kaddr]);"	/* Load kernel byte */
-		"addi	%[kaddr],%[kaddr],0x1;"	/* next kaddr byte */
+		"lswx	%[tmp],0,%[kaddr];"	/* Load kernel bytes */
 		"sync;"
 
 		"mtpid	%[ctx];"
 		"isync;"
-		"stb	%[tmp],0(%[uaddr]);"	/* Store user byte */
+		"stswx	%[tmp],0,%[uaddr];"	/* Store user bytes */
 		"dcbst	0,%[uaddr];"		/* flush cache */
-		"addi	%[uaddr],%[uaddr],0x1;"
 		"sync;"
-		"b 3b;"
 
-	"10:"	"mtpid	%[pid];"		/* Restore PID and MSR */
-		"mtmsr	%[msr];"
+		"mtpid	%[pid];"		/* Restore PID and MSR */
+	"10:"	"mtmsr	%[msr];"
 		"isync;"
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
 		  [len] "b" (len), [count] "b" (count)
-		: "cr0", "ctr");
+		: "cr0", "ctr", "xer");
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
