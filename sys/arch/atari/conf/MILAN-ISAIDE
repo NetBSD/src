@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.93.2.1 2022/09/11 18:17:02 martin Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.93.2.2 2022/09/11 18:24:18 martin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.29 2019/05/04 13:12:03 tsutsui Exp $
+#		NetBSD: MILAN.in,v 1.29.2.1 2022/09/11 18:23:30 martin Exp $
 #		NetBSD: GENERIC.in,v 1.118.4.1 2022/09/11 18:14:55 martin Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -83,6 +83,7 @@ options WS_KERNEL_BG=WSCOL_BLACK
 options WSDISPLAY_COMPAT_USL # wsconscfg VT handling
 options WSDISPLAY_DEFAULTSCREENS=4
 options PCDISPLAY_SOFTCURSOR
+options FONT_VT220L8x16
 isab0 at mainbus0 # ISA-bus
 isa0 at isab0
 pcib0 at mainbus0 # PCI-bus
