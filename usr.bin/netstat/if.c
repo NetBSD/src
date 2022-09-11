@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.102 2022/09/05 04:52:53 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.103 2022/09/11 23:52:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.102 2022/09/05 04:52:53 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.103 2022/09/11 23:52:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1182,7 +1182,7 @@ fetchifs(void)
 				ip_cur.ift_oe = ifd->ifi_oerrors;
 				ip_cur.ift_co = ifd->ifi_collisions;
 				ip_cur.ift_iq = ifd->ifi_iqdrops;
-				ip_cur.ift_oq = ifd->ifi_iqdrops; /* XXX */
+				ip_cur.ift_oq = dext.ifi_oqdrops;
 			}
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
