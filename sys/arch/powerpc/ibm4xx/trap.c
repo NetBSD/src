@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 2022/09/11 09:00:02 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2022/09/11 09:03:25 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2022/09/11 09:00:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2022/09/11 09:03:25 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -509,7 +509,8 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
-		  [len] "b" (len), [count] "b" (count));
+		  [len] "b" (len), [count] "b" (count)
+		: "cr0", "ctr");
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
@@ -629,7 +630,8 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
-		  [len] "b" (len), [count] "b" (count));
+		  [len] "b" (len), [count] "b" (count)
+		: "cr0", "ctr");
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
