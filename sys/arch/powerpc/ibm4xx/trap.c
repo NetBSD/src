@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2022/09/11 08:49:54 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2022/09/11 08:56:23 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2022/09/11 08:49:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2022/09/11 08:56:23 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -479,7 +479,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"stw	%[tmp],0(%[kaddr]);"
 #endif
 		"dcbst	0,%[kaddr];"		/* flush cache */
-		"addi	%[kaddr],%[kaddr],0x4;" /* next uaddr word */
+		"addi	%[kaddr],%[kaddr],0x4;"	/* next kaddr word */
 		"sync;"
 		"bdnz	1b;"			/* repeat */
 
