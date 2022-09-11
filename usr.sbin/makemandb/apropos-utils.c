@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.49 2022/05/19 04:08:03 gutteridge Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.50 2022/09/11 20:32:37 gutteridge Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.49 2022/05/19 04:08:03 gutteridge Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.50 2022/09/11 20:32:37 gutteridge Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -241,7 +241,7 @@ out:
 
 /*
  * zip --
- *  User defined Sqlite function to compress the FTS table
+ *  User defined SQLite function to compress the FTS table
  */
 static void
 zip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
@@ -262,7 +262,7 @@ zip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 
 /*
  * unzip --
- *  User defined Sqlite function to uncompress the FTS table.
+ *  User defined SQLite function to uncompress the FTS table.
  */
 static void
 unzip(sqlite3_context *pctx, int nval, sqlite3_value **apval)
@@ -459,7 +459,7 @@ error:
 
 /*
  * rank_func --
- *  Sqlite user defined function for ranking the documents.
+ *  SQLite user defined function for ranking the documents.
  *  For each phrase of the query, it computes the tf and idf and adds them over.
  *  It computes the final rank, by multiplying tf and idf together.
  *  Weight of term t for document d = (term frequency of t in d *
