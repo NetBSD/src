@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.81 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.82 2022/09/11 15:42:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.81 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.82 2022/09/11 15:42:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_mount(mp = %p)\n", mp);
+	printf("%s(mp = %p)\n", __func__, mp);
 #endif
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -154,7 +154,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Find upper node.
 	 */
 	error = namei_simple_user(args->target,
-				NSM_FOLLOW_NOEMULROOT, &upperrootvp);
+	    NSM_FOLLOW_NOEMULROOT, &upperrootvp);
 	if (error != 0)
 		goto bad;
 
@@ -163,7 +163,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		goto bad;
 	}
 
-	um = kmem_zalloc(sizeof(struct union_mount), KM_SLEEP);
+	um = kmem_zalloc(sizeof(*um), KM_SLEEP);
 
 	/*
 	 * Keep a held reference to the target vnodes.
@@ -246,7 +246,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vfs_getnewfsid(mp);
 	mp->mnt_lower = um->um_uppervp->v_mount;
 
-	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
@@ -264,7 +264,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	default:
 		cp = "<invalid>:";
 #ifdef DIAGNOSTIC
-		panic("union_mount: bad um_op");
+		panic("%s: bad um_op", __func__);
 #endif
 		break;
 	}
@@ -278,7 +278,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	memset(xp + size, 0, len - size);
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_mount: from %s, on %s\n",
+	printf("%s: from %s, on %s\n", __func__,
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
 
@@ -286,16 +286,19 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (!vn_union_readdir_hook)
 		vn_union_readdir_hook = union_readdirhook;
 
-	return (0);
+	return 0;
 
 bad:
-	if (um)
-		kmem_free(um, sizeof(struct union_mount));
+	if (um) {
+		if (um->um_cred)
+			kauth_cred_free(um->um_cred);
+		kmem_free(um, sizeof(*um));
+	}
 	if (upperrootvp)
 		vrele(upperrootvp);
 	if (lowerrootvp)
 		vrele(lowerrootvp);
-	return (error);
+	return error;
 }
 
 /*
@@ -308,7 +311,7 @@ int
 union_start(struct mount *mp, int flags)
 {
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -333,7 +336,7 @@ union_unmount(struct mount *mp, int mntflags)
 	int error;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_unmount(mp = %p)\n", mp);
+	printf("%s(mp = %p)\n", __func__, mp);
 #endif
 
 	/*
@@ -383,7 +386,7 @@ union_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the union_mount structure
 	 */
-	kmem_free(um, sizeof(struct union_mount));
+	kmem_free(um, sizeof(*um));
 	mp->mnt_data = NULL;
 	return 0;
 }
@@ -401,7 +404,7 @@ union_root(struct mount *mp, int lktype, struct vnode **vpp)
 	if (um->um_lowervp)
 		vref(um->um_lowervp);
 	error = union_allocvp(vpp, mp, NULL, NULL, NULL,
-			      um->um_uppervp, um->um_lowervp, 1);
+	    um->um_uppervp, um->um_lowervp, 1);
 
 	if (error) {
 		vrele(um->um_uppervp);
@@ -420,11 +423,11 @@ union_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK | M_ZERO);
+	struct statvfs *sbuf = kmem_alloc(sizeof(*sbuf), KM_SLEEP);
 	unsigned long lbsize;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_statvfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
+	printf("%s(mp = %p, lvp = %p, uvp = %p)\n", __func__, mp,
 	    um->um_lowervp, um->um_uppervp);
 #endif
 
@@ -468,29 +471,27 @@ union_statvfs(struct mount *mp, struct statvfs *sbp)
 
 	copy_statvfs_info(sbp, mp);
 done:
-	free(sbuf, M_TEMP);
+	kmem_free(sbuf, sizeof(*sbuf));
 	return error;
 }
 
 /*ARGSUSED*/
 int
-union_sync(struct mount *mp, int waitfor,
-    kauth_cred_t cred)
+union_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 
 	/*
 	 * XXX - Assumes no data cached at union layer.
 	 */
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
 int
-union_vget(struct mount *mp, ino_t ino, int lktype,
-    struct vnode **vpp)
+union_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 static int
@@ -547,11 +548,11 @@ SYSCTL_SETUP(unionfs_sysctl_setup, "unionfs sysctl")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "union",
-		       SYSCTL_DESCR("Union file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 15, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "union",
+	    SYSCTL_DESCR("Union file system"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, 15, CTL_EOL);
 	/*
 	 * XXX the "15" above could be dynamic, thereby eliminating
 	 * one more instance of the "number to vfs" mapping problem,
@@ -562,23 +563,13 @@ SYSCTL_SETUP(unionfs_sysctl_setup, "unionfs sysctl")
 static int
 union_modcmd(modcmd_t cmd, void *arg)
 {
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = vfs_attach(&union_vfsops);
-		if (error != 0)
-			break;
-		break;
+		return vfs_attach(&union_vfsops);
 	case MODULE_CMD_FINI:
-		error = vfs_detach(&union_vfsops);
-		if (error != 0)
-			break;
-		break;
+		return vfs_detach(&union_vfsops);
 	default:
-		error = ENOTTY;
-		break;
+		return ENOTTY;
 	}
-
-	return (error);
 }
