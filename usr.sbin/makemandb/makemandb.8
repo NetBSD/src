@@ -1,4 +1,4 @@
-.\" $NetBSD: makemandb.8,v 1.10 2016/06/18 06:36:18 abhinav Exp $
+.\" $NetBSD: makemandb.8,v 1.11 2022/09/11 20:32:37 gutteridge Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -46,7 +46,7 @@ The
 utility traverses the directories containing man pages, parses the manual
 pages with the help of
 .Xr mandoc 3
-and builds an Sqlite database
+and builds an SQLite database
 to support full text searches by
 .Xr apropos 1 .
 It obtains the list of directories to traverse using the
@@ -112,7 +112,7 @@ page is relevant.
 .Sh FILES
 .Bl -hang -width /etc/man.conf -compact
 .It Pa /etc/man.conf
-The location of the Sqlite FTS database can be configured using the
+The location of the SQLite FTS database can be configured using the
 .Cd _mandb
 tag.
 .El

@@ -1,4 +1,4 @@
-.\" $NetBSD: init_db.3,v 1.3 2016/05/24 18:06:42 abhinav Exp $
+.\" $NetBSD: init_db.3,v 1.4 2022/09/11 20:32:37 gutteridge Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -45,7 +45,7 @@ The
 function will try to initialize a connection to
 .Pa man.db
 which is an
-Sqlite database and return a pointer to a sqlite3 structure.
+SQLite database and return a pointer to a sqlite3 structure.
 The connection should subsequentially be closed by calling
 .Fn close_db
 which will also release any resources being used by it.
@@ -88,7 +88,7 @@ will be returned.
 .Sh FILES
 .Bl -hang -width /etc/man.conf -compact
 .It Pa /etc/man.conf
-The location of the Sqlite FTS database can be configured using the
+The location of the SQLite FTS database can be configured using the
 .Cd _mandb
 tag.
 .El

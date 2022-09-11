@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos-utils.3,v 1.4 2016/05/24 18:06:42 abhinav Exp $
+.\" $NetBSD: apropos-utils.3,v 1.5 2022/09/11 20:32:37 gutteridge Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -49,7 +49,7 @@ These functions all live in the
 header file.
 They operate on
 .Pa /var/db/man.db
-which is an Sqlite database containing a full text search index of the manual
+which is an SQLite database containing a full text search index of the manual
 pages.
 The functions provide an easy to use interface to query the database and
 develop applications on top of it.

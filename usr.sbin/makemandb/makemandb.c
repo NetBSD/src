@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.63 2022/06/06 07:41:23 skrll Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.64 2022/09/11 20:32:37 gutteridge Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.63 2022/06/06 07:41:23 skrll Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.64 2022/09/11 20:32:37 gutteridge Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -696,7 +696,7 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
  *	Does an incremental updation of the database by checking the file_cache.
  *	It parses and adds the pages which are present in file_cache,
  *	but not in the database.
- *	It also removes the pages which are present in the databse,
+ *	It also removes the pages which are present in the database,
  *	but not in the file_cache.
  */
 static void
@@ -1454,7 +1454,7 @@ man_parse_section(enum man_sec sec, const struct roff_node *n, mandb_rec *rec)
 
 /*
  * insert_into_db --
- *  Inserts the parsed data of the man page in the Sqlite databse.
+ *  Inserts the parsed data of the man page in the SQLite database.
  *  If any of the values is NULL, then we cleanup and return -1 indicating
  *  an error.
  *  Otherwise, store the data in the database and return 0.
