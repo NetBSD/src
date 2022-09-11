@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2022/07/14 18:52:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2022/09/11 05:54:00 mrg Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cvt cxpm editres \
@@ -8,7 +8,7 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	iceauth ico imake listres lndir luit makedepend \
 	makeg makestrs mergelib mkdirhier mkfontdir \
 	mkfontscale mkhtmlindex oclock proxymngr revpath \
-	rgb setxkbmap smproxy sxpm \
+	rgb setxkbmap showfont smproxy sxpm \
 	transset twm ucs2any viewres x11perf xauth xbiff xcalc \
 	xclipboard xclock xcmsdb xconsole xcutsel xditview xdm \
 	xdpyinfo xedit xev xeyes xf86dga xfd xfindproxy xfontsel \
@@ -21,8 +21,5 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 
 SUBDIR+=ssh-askpass
 SUBDIR+=xsetwallpaper
-
-# bring back from xfree:
-#	lndir
 
 .include <bsd.subdir.mk>
