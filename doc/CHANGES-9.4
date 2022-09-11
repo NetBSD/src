@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.11 2022/09/10 08:21:01 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.12 2022/09/11 18:26:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -146,4 +146,45 @@ sys/kern/kern_core.c				1.37
 
 	Avoid a GCC warning.
 	[mrg, ticket #1517]
+
+sys/arch/atari/dev/ite.c			1.82
+sys/arch/atari/dev/ite_cc.c			1.45
+sys/arch/atari/dev/ite_et.c			1.36
+sys/arch/atari/dev/itevar.h			1.15
+
+	Add a minimum DEC special graphics character support
+	for atari ite(4).
+	[tsutsui, ticket #1518]
+
+sys/arch/atari/atari/atari_init.c		1.105
+sys/arch/atari/conf/GENERIC.in			1.123
+sys/arch/atari/conf/files.atari			1.124
+sys/arch/atari/conf/ATARITT			(regen)
+sys/arch/atari/conf/FALCON			(regen)
+sys/arch/atari/conf/HADES			(regen)
+sys/arch/atari/conf/MILAN-ISAIDE		(regen)
+sys/arch/atari/conf/MILAN-PCIIDE		(regen)
+sys/arch/atari/conf/SMALL030			(regen)
+
+	Improve the Atari ST-RAM reservation to make the old Xserver
+	work by default.
+	[tsutsui, ticket #1519]
+
+sys/arch/atari/vme/if_le_vme.c			1.32,1.33
+
+	le(4): fix a long-standing "leprobe: cannot map memory-area"
+	error during probe.
+	[tsutsui, ticket #1520]
+
+sys/arch/atari/conf/MILAN.in			1.30
+sys/arch/atari/pci/pci_vga.c			1.19
+sys/arch/atari/conf/ATARITT			(regen)
+sys/arch/atari/conf/FALCON			(regen)
+sys/arch/atari/conf/HADES			(regen)
+sys/arch/atari/conf/MILAN-ISAIDE		(regen)
+sys/arch/atari/conf/MILAN-PCIIDE		(regen)
+sys/arch/atari/conf/SMALL030			(regen)
+
+	Improve VGA console settings for Milan, especially for sysinst.
+	[tsutsui, ticket #1521]
 
