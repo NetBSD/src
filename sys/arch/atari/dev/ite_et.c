@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.31 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.31.2.1 2022/09/11 18:10:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.31 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.31.2.1 2022/09/11 18:10:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,6 +487,16 @@ et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 	view_t	*v   = viewview(ip->grf->g_viewdev);
 	u_char	attr;
 	u_short	*cp;
+
+	/*
+	 * Handle DEC special graphics character by 'ESC ( B' sequence.
+	 * Note we assume all font data (fontdata_8x8 and fontdata_8x16)
+	 * contain DEC graphics glyph (for 0x5f to 0x7e) at 0x00 to 0x1F.
+	 */
+	if (*ip->GL == CSET_DECGRAPH) {
+		if (ip->font.font_lo == 0 && c >= 0x5f && c <= 0x7e)
+			c -= 0x5f;
+	}
 
 	attr = (unsigned char) ((mode & ATTR_INV) ? (0x70) : (0x07));
 	if (mode & ATTR_UL)     attr |= 0x01;
