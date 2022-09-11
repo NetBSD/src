@@ -1,4 +1,5 @@
-#	$NetBSD: genassym.cf,v 1.10 2020/11/04 20:05:47 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.11 2022/09/11 15:31:12 skrll Exp $
+
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +36,7 @@ quote #define __PMAP_PRIVATE
 
 include <sys/param.h>
 include <sys/bitops.h>
+include <sys/bus.h>
 include <sys/cpu.h>
 include <sys/intr.h>
 include <sys/lwp.h>
@@ -205,3 +207,6 @@ define	PTE_V		PTE_V
 
 define	PM_MD_PDETAB	offsetof(struct pmap, pm_md.md_pdetab)
 define	PM_MD_PTBR	offsetof(struct pmap, pm_md.md_ptbr)
+
+# for bus_space_asm
+define	BS_STRIDE		offsetof(struct bus_space, bs_stride)

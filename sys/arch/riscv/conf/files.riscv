@@ -1,13 +1,24 @@
-#	$NetBSD: files.riscv,v 1.7 2020/11/04 06:56:56 skrll Exp $
+#	$NetBSD: files.riscv,v 1.8 2022/09/11 15:31:11 skrll Exp $
 #
 
 maxpartitions	16
 maxusers	8 32 64
 
+# Console options
+defparam opt_console.h		CONSADDR
+
+# RISC-V specific debug options
+defflag  opt_riscv_debug.h	VERBOSE_INIT_RISCV
+
 defflag	opt_ddb.h		DDB_TRACE
 
-#file	arch/riscv/riscv/locore.S
+file	arch/riscv/fdt/fdt_dma_machdep.c
+
 file	arch/riscv/riscv/spl.S
+
+file	arch/riscv/riscv/bus_space.c
+file	arch/riscv/riscv/bus_space_generic.S
+file	arch/riscv/riscv/bus_space_notimpl.S
 
 file	arch/riscv/riscv/autoconf.c
 file	arch/riscv/riscv/cpu_subr.c
@@ -50,25 +61,24 @@ file	arch/riscv/riscv/netbsd32_machdep.c	compat_netbsd32
 file	arch/riscv/riscv/sig32_machdep.c	compat_netbsd32
 include "compat/netbsd32/files.netbsd32"
 
-device	mainbus { [instance=-1] }
+device	mainbus {}: fdt
 attach	mainbus at root
+
 file	arch/riscv/riscv/mainbus.c		mainbus
 
-device	cpu
-attach	cpu at mainbus with cpu_mainbus
-file	arch/riscv/riscv/cpu_mainbus.c		cpu_mainbus
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
 
-device	htif { }
-attach	htif at mainbus with htif_mainbus
-file	arch/riscv/htif/htif.c			htif_mainbus
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
 
-device	htifcons { } : tty
-attach	htifcons at htif with htif_cons
-file	arch/riscv/htif/htif_cons.c		htif_cons
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
 
-device	htifdisk { } : disk
-attach	htifdisk at htif with htif_disk
-attach	ld at htifdisk with ld_htifdisk
-file	arch/riscv/htif/htif_disk.c		htif_disk
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+
+# Machine-independent PCI device support
+#include "dev/pci/files.pci"
 
 include "arch/riscv/conf/majors.riscv"

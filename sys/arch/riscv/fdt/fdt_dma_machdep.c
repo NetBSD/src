@@ -1,11 +1,11 @@
-/* $NetBSD: htif_var.h,v 1.2 2020/11/04 07:09:45 skrll Exp $ */
+/*	$NetBSD: fdt_dma_machdep.c,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,26 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RISCV_HTIF_HTIF_VAR_H_
-#define _RISCV_HTIF_HTIF_VAR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdt_dma_machdep.c,v 1.1 2022/09/11 15:31:12 skrll Exp $");
 
-#define	HTIF_CMD_READ_MEM		0
-#define	HTIF_CMD_WRITE_MEM		1
-#define	HTIF_CMD_READ_CONTROL_REG	2
-#define	HTIF_CMD_WRITE_CONTROL_REG	3
-#define	HTIF_CMD_ACK			4
-#define	HTIF_CMD_NACK			5
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/kmem.h>
 
-struct htif_packet_header {
-	uint64_t hphp_hdr;
-#define	HTIF_PHDR_CMD			__BITS(3,0)
-#define	HTIF_PHDR_DATA_DWORDS		__BITS(15,4)
-#define	HTIF_PHDR_SEQNO			__BITS(23,16)
-#define	HTIF_PHDR_ADDR			__BITS(63,24)
-};
+#include <dev/fdt/fdtvar.h>
 
-struct htif_attach_args {
-	const char *haa_name;
-};
-
-#endif /* _RISCV_HTIF_HTIF_VAR_H_ */
+bus_dma_tag_t
+fdtbus_dma_tag_create(int phandle, const struct fdt_dma_range *ranges,
+    u_int nranges)
+{
+	return NULL;
+}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2022/08/07 02:52:29 simonb Exp $
+# $NetBSD: GENERIC,v 1.14 2022/09/11 15:31:11 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,15 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	64		# estimated number of users
+
+options 	FDT
+
+#options 	EARLYCONS=com, CONSADDR=0x10000000
+#options 	EARLYCONS=com, CONSADDR=0x12440000
+options 	VERBOSE_INIT_RISCV
 
 # Standard system options
 #options 	FPE		# Floating-point extension support
@@ -51,8 +57,18 @@ options 	BUFQ_PRIOCSCAN
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
-#options 	DEBUG		# expensive debugging checks/support
-#options 	LOCKDEBUG	# expensive locking checks/support
+#options  	DEBUG		# expensive debugging checks/support
+#options  	LOCKDEBUG	# expensive locking checks/support
+#options  	KERNHIST
+#options  	KERNHIST_PRINT
+#options  	UVMHIST
+#options  	UVMHIST_PRINT
+#options  	PMAPHIST
+#options  	PMAPHIST_PRINT
+#options  	SYSCTL_DEBUG
+#options  	SYSCTL_DEBUG_SETUP
+#options  	SYSCTL_DEBUG_CREATE
+
 
 #
 # Because gcc omits the frame pointer for any -O level, the line below
@@ -62,7 +78,7 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 makeoptions	COPY_SYMTAB=1
 options 	DDB		# in-kernel debugger
 #options	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
-#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -135,13 +151,11 @@ config		netbsd	root on ? type ?
 #
 # Device configuration
 #
-mainbus0	at root
-cpu0		at mainbus0
-htif0		at mainbus0
-htifcons0	at htif0
-htifdisk0	at htif0
-ld0		at htifdisk0
+mainbus0 	at root
+simplebus* 	at fdt? pass 0
 
+# UART
+com* 		at fdt?			# UART
 
 # Pseudo-Devices
 

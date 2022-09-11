@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2021/08/07 16:19:03 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2022/09/11 15:31:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,47 +30,56 @@
  */
 
 #include "locators.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: mainbus.c,v 1.4 2021/08/07 16:19:03 thorpej Exp $");
+__RCSID("$NetBSD: mainbus.c,v 1.5 2022/09/11 15:31:12 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
-#include <riscv/locore.h>
+#include <dev/fdt/fdtvar.h>
 
 static int mainbus_match(device_t, cfdata_t, void *);
 static void mainbus_attach(device_t, device_t, void *);
 
+extern struct bus_space riscv_generic_bs_tag;
+
 CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
-
-static int
-mainbus_print(void *aux, const char *name)
-{
-	struct mainbus_attach_args * const maa = aux;
-
-	if (maa->maa_instance != MAINBUSCF_INSTANCE_DEFAULT)
-		printf(" instance %d", maa->maa_instance);
-
-	return QUIET;
-}
 
 int
 mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
+	static int once = 0;
+
+	if (once != 0)
+		return 0;
+	once = 1;
+
 	return 1;
 }
 
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_attach_args maa;
+	const struct fdt_console *cons = fdtbus_get_console();
+	struct fdt_attach_args faa;
 
-	maa.maa_name = "cpu";
-	maa.maa_instance = 0;
+	if (cons != NULL) {
+		faa.faa_phandle = fdtbus_get_stdout_phandle();
+	}
 
-	config_found(self, &maa, mainbus_print, CFARGS_NONE);
+	faa.faa_phandle = OF_peer(0);
+	config_found(self, &faa, NULL, CFARGS_NONE);
+}
+
+
+bus_space_tag_t
+fdtbus_bus_tag_create(int phandle, uint32_t flags)
+{
+        return &riscv_generic_bs_tag;
 }
