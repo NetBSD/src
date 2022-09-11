@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 06:24:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/09/11 05:50:41 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	oclock
 SRCS=	oclock.c Clock.c transform.c
+
+CPPFLAGS+=	-D_CONST_X_STRING
 
 APPDEFS=Clock-color
 
