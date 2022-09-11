@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2022/09/11 08:56:23 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.91 2022/09/11 08:57:39 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2022/09/11 08:56:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2022/09/11 08:57:39 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -451,9 +451,9 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 
 	__asm volatile(
 		"mfmsr	%[msr];"		/* Save MSR */
-		"li	%[pid],0x20;"		/* Disable IMMU */
-		"andc	%[pid],%[msr],%[pid];"
-		"mtmsr	%[pid];"
+		"li	%[tmp],0x20;"		/* Disable IMMU */
+		"andc	%[tmp],%[msr],%[tmp];"
+		"mtmsr	%[tmp];"
 		"isync;"
 		"mfpid	%[pid];"		/* Save old PID */
 
@@ -570,9 +570,9 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 
 	__asm volatile(
 		"mfmsr	%[msr];"		/* Save MSR */
-		"li	%[pid],0x20;"		/* Disable IMMU */
-		"andc	%[pid],%[msr],%[pid];"
-		"mtmsr	%[pid];"
+		"li	%[tmp],0x20;"		/* Disable IMMU */
+		"andc	%[tmp],%[msr],%[tmp];"
+		"mtmsr	%[tmp];"
 		"isync;"
 		"mfpid	%[pid];"		/* Save old PID */
 
