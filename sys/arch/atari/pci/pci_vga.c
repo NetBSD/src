@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.17.2.1 2022/09/11 18:23:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.17.2.1 2022/09/11 18:23:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -55,11 +55,51 @@ extern font_info	font_info_8x8;
 extern font_info	font_info_8x16;
 
 /* Console colors */
-static const uint8_t conscolors[3][3] = {
-	/* background, foreground, hilite */
-	{ 0x00, 0x00, 0x00 },
-	{ 0x30, 0x30, 0x30 },
-	{ 0x3f, 0x3f, 0x3f }
+/* attribute controller registers */
+static const uint8_t vga_atc[] = {
+	0x00,	/* 00: internal palette  0 */
+	0x01,	/* 01: internal palette  1 */
+	0x02,	/* 02: internal palette  2 */
+	0x03,	/* 03: internal palette  3 */
+	0x04,	/* 04: internal palette  4 */
+	0x05,	/* 05: internal palette  5 */
+	0x14,	/* 06: internal palette  6 */
+	0x07,	/* 07: internal palette  7 */
+	0x38,	/* 08: internal palette  8 */
+	0x39,	/* 09: internal palette  9 */
+	0x3a,	/* 0A: internal palette 10 */
+	0x3b,	/* 0B: internal palette 11 */
+	0x3c,	/* 0C: internal palette 12 */
+	0x3d,	/* 0D: internal palette 13 */
+	0x3e,	/* 0E: internal palette 14 */
+	0x3f,	/* 0F: internal palette 15 */
+	0x0c,	/* 10: attribute mode control */
+	0x00,	/* 11: overscan color */
+	0x0f,	/* 12: color plane enable */
+	0x08,	/* 13: horizontal PEL panning */
+	0x00	/* 14: color select */
+};
+
+/* video DAC palette registers */
+/* XXX only set up 16 colors used by internal palette in ATC regsters */
+static const uint8_t vga_dacpal[] = {
+	/* R     G     B */
+	0x00, 0x00, 0x00,	/* BLACK        */
+	0x00, 0x00, 0x2a,	/* BLUE	        */
+	0x00, 0x2a, 0x00,	/* GREEN        */
+	0x00, 0x2a, 0x2a,	/* CYAN         */
+	0x2a, 0x00, 0x00,	/* RED          */
+	0x2a, 0x00, 0x2a,	/* MAGENTA      */
+	0x2a, 0x15, 0x00,	/* BROWN        */
+	0x2a, 0x2a, 0x2a,	/* LIGHTGREY    */
+	0x15, 0x15, 0x15,	/* DARKGREY     */
+	0x15, 0x15, 0x3f,	/* LIGHTBLUE    */
+	0x15, 0x3f, 0x15,	/* LIGHTGREEN   */
+	0x15, 0x3f, 0x3f,	/* LIGHTCYAN    */
+	0x3f, 0x15, 0x15,	/* LIGHTRED     */
+	0x3f, 0x15, 0x3f,	/* LIGHTMAGENTA */
+	0x3f, 0x3f, 0x15,	/* YELLOW       */
+	0x3f, 0x3f, 0x3f	/* WHITE        */
 };
 
 static bus_space_tag_t	vga_iot, vga_memt;
@@ -79,7 +119,7 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	pci_chipset_tag_t	pc = NULL; /* XXX */
 	bus_space_handle_t	ioh_regs, memh_fb;
 	pcitag_t		tag;
-	int			device, found, maxndevs, i, j;
+	int			device, found, maxndevs, i;
 	int			got_ioh, got_memh, rv;
 	uint32_t		id, class;
 	volatile uint8_t	*regs;
@@ -176,16 +216,23 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	 * Generic parts of the initialization...
 	 */
 	
-	/* B&W colors */
-	vgaw(regs, VDAC_ADDRESS_W, 0);
-	for (i = 0; i < 256; i++) {
-		j = (i & 1) ? ((i > 7) ? 2 : 1) : 0;
-		vgaw(regs, VDAC_DATA, conscolors[j][0]);
-		vgaw(regs, VDAC_DATA, conscolors[j][1]);
-		vgaw(regs, VDAC_DATA, conscolors[j][2]);
+	/* set ATC registers */
+	for (i = 0; i < 21; i++)
+		WAttr(regs, i, vga_atc[i]);
+
+	/* set DAC palette */
+	for (i = 0; i < 16; i++) {
+		vgaw(regs, VDAC_ADDRESS_W, vga_atc[i]);
+		vgaw(regs, VDAC_DATA, vga_dacpal[i * 3 + 0]);
+		vgaw(regs, VDAC_DATA, vga_dacpal[i * 3 + 1]);
+		vgaw(regs, VDAC_DATA, vga_dacpal[i * 3 + 2]);
 	}
 
 	loadfont(regs, fb);
+#if NVGA_PCI > 0
+	/* use explicit WSDISPLAY_FONTENC_IBM font that MI vga(4) assumes */
+	vga_no_builtinfont = 1;
+#endif
 
 	/*
 	 * Clear the screen and print a message. The latter
