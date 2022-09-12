@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2022/09/12 06:19:14 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 2022/09/12 06:23:29 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2022/09/12 06:19:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2022/09/12 06:23:29 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -431,7 +431,7 @@ int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int rv, msr, pid, tmp, ctx, count = 0;
+	int rv, msr, pid, tmp, ctx;
 	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
@@ -457,9 +457,9 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"isync;"
 		"mfpid	%[pid];"		/* Save old PID */
 
-		"srwi.	%[count],%[len],0x2;"	/* How many words? */
+		"srwi.	%[tmp],%[len],0x2;"	/* How many words? */
 		"beq-	2f;"			/* No words. Go do bytes */
-		"mtctr	%[count];"
+		"mtctr	%[tmp];"
 
 	"1:"	"mtpid	%[ctx];"
 		"isync;"
@@ -483,9 +483,9 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"sync;"
 		"bdnz	1b;"			/* repeat */
 
-	"2:"	"andi.	%[count],%[len],0x3;"	/* How many remaining bytes? */
+	"2:"	"andi.	%[tmp],%[len],0x3;"	/* How many remaining bytes? */
 		"beq	10f;"
-		"mtxer	%[count];"
+		"mtxer	%[tmp];"
 
 		"mtpid	%[ctx];"
 		"isync;"
@@ -502,8 +502,8 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"isync;"
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
-		  [len] "b" (len), [count] "b" (count)
+		: [uaddr] "b" (uaddr), [kaddr] "b" (kaddr),
+		  [ctx] "r" (ctx), [len] "r" (len)
 		: "cr0", "ctr", "xer");
 
 	curpcb->pcb_onfault = NULL;
@@ -546,7 +546,7 @@ int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int rv, msr, pid, tmp, ctx, count = 0;
+	int rv, msr, pid, tmp, ctx;
 	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
@@ -572,9 +572,9 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"isync;"
 		"mfpid	%[pid];"		/* Save old PID */
 
-		"srwi.	%[count],%[len],0x2;"	/* How many words? */
+		"srwi.	%[tmp],%[len],0x2;"	/* How many words? */
 		"beq-	2f;"			/* No words. Go do bytes */
-		"mtctr	%[count];"
+		"mtctr	%[tmp];"
 
 	"1:"
 #ifdef PPC_IBM403
@@ -600,9 +600,9 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"isync;"
 		"bdnz	1b;"			/* repeat */
 
-	"2:"	"andi.	%[count],%[len],0x3;"	/* How many remaining bytes? */
+	"2:"	"andi.	%[tmp],%[len],0x3;"	/* How many remaining bytes? */
 		"beq	10f;"
-		"mtxer	%[count];"
+		"mtxer	%[tmp];"
 
 		"lswx	%[tmp],0,%[kaddr];"	/* Load kernel bytes */
 		"sync;"
@@ -618,8 +618,8 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"isync;"
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [uaddr] "b" (uaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
-		  [len] "b" (len), [count] "b" (count)
+		: [uaddr] "b" (uaddr), [kaddr] "b" (kaddr),
+		  [ctx] "r" (ctx), [len] "r" (len)
 		: "cr0", "ctr", "xer");
 
 	curpcb->pcb_onfault = NULL;
