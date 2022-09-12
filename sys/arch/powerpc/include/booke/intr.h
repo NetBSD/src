@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2022/09/12 08:14:55 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -77,7 +77,9 @@
 #define IPI_SUSPEND	0x0020
 #define IPI_AST		0x0040
 
+#if 0	/* PR port-powerpc/56922: fast softints are broken on powerpc */
 #define	__HAVE_FAST_SOFTINTS	1
+#endif
 #define	SOFTINT_KPREEMPT	SOFTINT_COUNT
 
 #ifndef _LOCORE
