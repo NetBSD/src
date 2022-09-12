@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.72 2022/05/18 00:37:11 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.73 2022/09/12 10:30:39 martin Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -103,6 +103,7 @@ typedef struct bozohttpd_t {
 	char		*virtbase;	/* virtual directory base */
 	int		 unknown_slash;	/* unknown vhosts go to normal slashdir */
 	int		 logstderr;	/* log to stderr (even if not tty) */
+	int		 nolog;		/* do not log anything */
 	int		 background;	/* drop into daemon mode */
 	int		 foreground;	/* keep daemon mode in foreground */
 	char		*pidfile;	/* path to the pid file, if any */
