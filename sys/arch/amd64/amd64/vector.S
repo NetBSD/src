@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.79 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: vector.S,v 1.80 2022/09/12 02:21:11 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -728,7 +728,7 @@ ENTRY(hypervisor_callback)
 	pushq	$T_ASTFLT
 	INTRENTRY
 IDTVEC(handle_hypervisor_callback)
-	movzbl	CPUVAR(ILEVEL),%rdi
+	movzbl	CPUVAR(ILEVEL),%edi
 	pushq   %rdi /* for Xdoreti */
 	incl	CPUVAR(IDEPTH)
 	movq	%rsp,%rdi
