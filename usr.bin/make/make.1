@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.340 2022/09/09 10:57:39 uwe Exp $
+.\"	$NetBSD: make.1,v 1.341 2022/09/12 07:10:59 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1777,14 +1777,17 @@ in Bourne shell.
 Returns the number of words in the value.
 .El \" :[range]
 .El
-.Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
-.\" TODO: Split into multiple subsections.
+.Sh DIRECTIVES
 Makefile inclusion, conditional structures and for loops are provided in
 .Nm .
 All such structures are identified by a line beginning with a single
 dot
 .Pq Ql \&.
-character.
+character, followed by the keyword of the directive, such as
+.Cm include
+or
+.Cm if .
+.Ss File inclusion
 Files are included with either
 .Cm \&.include \&< Ns Ar file Ns Cm \&>
 or
@@ -1797,8 +1800,9 @@ If double quotes are used, the including makefile's directory and any
 directories specified using the
 .Fl I
 option are searched before the system makefile directory.
+.Pp
 For compatibility with other make variants,
-.Ql include file ...
+.Sq Cm include Ar file ...
 (without leading dot)
 is also accepted.
 .Pp
@@ -1813,16 +1817,10 @@ If the include statement is written as
 not only are errors locating and/or opening include files ignored,
 but stale dependencies within the included file are ignored just like in
 .Va .MAKE.DEPENDFILE .
-.Pp
-Conditional expressions are also preceded by a single dot as the first
-character of a line.
-The possible conditionals are:
+.El
+.Ss Exporting variables
+The directives for exporting and unexporting variables are:
 .Bl -tag -width Ds
-.\" FIXME: .error is not a conditional directive.
-.It Ic .error Ar message
-The message is printed along with the name of the makefile and line number,
-.Nm
-exits immediately.
 .It Ic .export Ar variable ...
 Export the specified global variable.
 If no variable list is provided, all globals are exported
@@ -1851,11 +1849,6 @@ internally.
 The same as
 .Ql .export-env ,
 except that variables in the value are not expanded.
-.It Ic .info Ar message
-The message is printed along with the name of the makefile and line number.
-.It Ic .undef Ar variable ...
-Un-define the specified global variables.
-Only global variables can be un-defined.
 .It Ic .unexport Ar variable ...
 The opposite of
 .Ql .export .
@@ -1893,10 +1886,24 @@ which is the minimal useful environment.
 Actually
 .Sq Va .MAKE.LEVEL
 is also pushed into the new environment.
+.El
+.Ss Messages
+The directives for printing messages to the output are:
+.Bl -tag -width Ds
+.It Ic .info Ar message
+The message is printed along with the name of the makefile and line number.
 .It Ic .warning Ar message
 The message prefixed by
 .Sq Li warning:
 is printed along with the name of the makefile and line number.
+.It Ic .error Ar message
+The message is printed along with the name of the makefile and line number,
+.Nm
+exits immediately.
+.El
+.Ss Conditionals
+The directives for conditionals are:
+.Bl -tag -width Ds
 .It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
 Test the value of an expression.
 .It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
@@ -2046,7 +2053,7 @@ In both cases, this continues until the corresponding
 or
 .Sq Ic .endif
 is found.
-.Pp
+.Ss For loops
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
 .Pp
@@ -2076,6 +2083,12 @@ is encountered within a
 .Cm \&.for
 loop, it causes early termination of the loop, otherwise a parse error.
 .\" TODO: Describe limitations with defined/empty.
+.Ss Other directives
+.Bl -tag -width Ds
+.It Ic .undef Ar variable ...
+Un-define the specified global variables.
+Only global variables can be un-defined.
+.El
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
