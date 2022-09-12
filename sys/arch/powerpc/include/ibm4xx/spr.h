@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.4 2021/03/05 07:10:27 rin Exp $	*/
+/*	$NetBSD: spr.h,v 1.5 2022/09/12 08:02:44 rin Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
@@ -175,5 +175,13 @@
 #define	SPR_DAC2		0x3f7	/* .4.. Data Address Compare 2 */
 #define	SPR_DCCR		0x3fa	/* .4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* .4.. Instruction Cache Cachability Register */
+
+/*
+ * XXXclang
+ * clang cannot correctly assemble m[ft]pid for ibm4xx.
+ * Yes, this is ugly, but may not be ugliest...
+ */
+#define	MFPID(reg)	"mfspr "#reg","___STRING(SPR_PID)";"
+#define	MTPID(reg)	"mtspr "___STRING(SPR_PID)","#reg";"
 
 #endif /* !_POWERPC_IBM4XX_SPR_H_ */
