@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.12 2022/09/11 18:26:10 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.13 2022/09/12 14:44:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -188,3 +188,44 @@ sys/arch/atari/conf/SMALL030			(regen)
 	Improve VGA console settings for Milan, especially for sysinst.
 	[tsutsui, ticket #1521]
 
+usr.bin/netstat/atalk.c		1.18,1.20-1.21
+usr.bin/netstat/bpf.c		1.16 via patch
+usr.bin/netstat/fast_ipsec.c	1.24
+usr.bin/netstat/if.c		1.97-1.99,1.101-1.104 via patch
+usr.bin/netstat/inet.c		1.111,1.115-1.116 via patch
+usr.bin/netstat/inet6.c		1.74-1.75,1.80-1.81 via patch
+usr.bin/netstat/main.c		1.100-1.103
+usr.bin/netstat/mbuf.c		1.35
+usr.bin/netstat/mroute.c	1.26-1.27
+usr.bin/netstat/mroute6.c	1.16
+usr.bin/netstat/netstat.h	1.52-1.53
+usr.bin/netstat/pfkey.c		1.4-1.5 via patch
+usr.bin/netstat/pfsync.c	1.4-1.5 via patch
+usr.bin/netstat/route.c		1.86-1.88
+usr.bin/netstat/unix.c		1.36-1.37
+usr.bin/netstat/vtw.c		1.11,1.13
+
+	- sprintf() -> snprintf(), and adjust a buffer size to avoid any
+	  potential for overflow.
+	- Fix netstat -rs to print it correctly.
+	- Add missing {IP,IP6}_STAT_NOIPSEC to netstat.
+	- Don't show any of the completely and utterly undocumented VTW info
+	  if the feature isn't enabled.
+	- Print oqdrops correctly.
+	- Remove Network ATM soft intr queue reporting, we don't have that
+	  in the kernel anymore.
+	- netstat.1: Add various xrefs present in the body to "See Also".
+	- KNF. Style fixes.
+	[msaitoh, ticket #1522]
+
+usr.bin/ftp/Makefile                            up to 1.39
+usr.bin/ftp/fetch.c                             up to 1.235
+usr.bin/ftp/ftp.1                               up to 1.147
+usr.bin/ftp/ftp_var.h                           up to 1.86
+usr.bin/ftp/main.c                              up to 1.128
+usr.bin/ftp/ssl.c                               up to 1.11
+usr.bin/ftp/util.c                              up to 1.164
+usr.bin/ftp/version.h                           up to 1.94
+
+	ftp(1): PR 57003: Support relative redirects.
+	[christos, #1523]
