@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.85 2016/04/04 07:37:08 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.85.8.1 2022/09/12 14:29:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.85 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: route.c,v 1.85.8.1 2022/09/12 14:29:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ void
 routepr(u_long rtree)
 {
 	struct radix_node_head *rnh, head;
-	struct radix_node_head *rt_nodes[AF_MAX+1];
+	struct radix_node_head *rt_nodes[AF_MAX + 1];
 	int i;
 
 	printf("Routing tables\n");
@@ -159,8 +159,9 @@ again:
 			if (Aflag)
 				p_rtnode();
 		} else {
-			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_key),
-			    NULL, 0, 44, nflag);
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rnode.rn_key),
+				NULL, 0, 44, nflag);
 			putchar('\n');
 		}
 		if ((rn = rnode.rn_dupedkey) != NULL)
@@ -185,8 +186,9 @@ p_rtnode(void)
 	if (rnode.rn_b < 0) {
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
-			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_mask),
-				    NULL, 0, -1, nflag);
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rnode.rn_mask),
+				NULL, 0, -1, nflag);
 		} else if (rm == 0)
 			return;
 	} else {
@@ -204,10 +206,11 @@ p_rtnode(void)
 			printf(" <normal>, ");
 			kget(rmask.rm_leaf, rnode_aux);
 			p_sockaddr(kgetsa((const struct sockaddr *)rnode_aux.rn_mask),
-				    NULL, 0, -1, nflag);
-		} else
-			p_sockaddr(kgetsa((const struct sockaddr *)rmask.rm_mask),
 			    NULL, 0, -1, nflag);
+		} else
+			p_sockaddr(
+				kgetsa((const struct sockaddr *)rmask.rm_mask),
+				NULL, 0, -1, nflag);
 		putchar('}');
 		if ((rm = rmask.rm_mklist) != NULL)
 			printf(" ->");
@@ -250,11 +253,12 @@ p_krtentry(struct rtentry *rt)
 	else
 		mask = sockcopy(NULL, &mask_un);
 	p_addr(addr, mask, rt->rt_flags, nflag);
-	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family, nflag);
+	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family,
+	    nflag);
 	p_flags(rt->rt_flags);
 	printf("%6d %8"PRIu64" ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu); 
+		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
@@ -270,8 +274,7 @@ p_krtentry(struct rtentry *rt)
 					printf("%7s", tagstr);
 				else
 					printf("%s", tagstr);
-			}
-			else
+			} else
 				printf("%7s", "-");
 		} else
 #endif
@@ -306,7 +309,7 @@ rt_stats(u_long off)
 		if (sysctlbyname("net.route.stats", &rtstats, &rtsize,
 		    NULL, 0) == -1)
 			err(1, "rt_stats: sysctl");
-	} else 	if (off == 0) {
+	} else if (off == 0) {
 		printf("rtstat: symbol not in namelist\n");
 		return;
 	} else
@@ -314,18 +317,18 @@ rt_stats(u_long off)
 
 	printf("routing:\n");
 	printf("\t%llu bad routing redirect%s\n",
-		(unsigned long long)rtstats.rts_badredirect,
-		plural(rtstats.rts_badredirect));
+	    (unsigned long long)rtstats.rts_badredirect,
+	    plural(rtstats.rts_badredirect));
 	printf("\t%llu dynamically created route%s\n",
-		(unsigned long long)rtstats.rts_dynamic,
-		plural(rtstats.rts_dynamic));
+	    (unsigned long long)rtstats.rts_dynamic,
+	    plural(rtstats.rts_dynamic));
 	printf("\t%llu new gateway%s due to redirects\n",
-		(unsigned long long)rtstats.rts_newgateway,
-		plural(rtstats.rts_newgateway));
+	    (unsigned long long)rtstats.rts_newgateway,
+	    plural(rtstats.rts_newgateway));
 	printf("\t%llu destination%s found unreachable\n",
-		(unsigned long long)rtstats.rts_unreach,
-		plural(rtstats.rts_unreach));
+	    (unsigned long long)rtstats.rts_unreach,
+	    plural(rtstats.rts_unreach));
 	printf("\t%llu use%s of a wildcard route\n",
-		(unsigned long long)rtstats.rts_wildcard,
-		plural(rtstats.rts_wildcard));
+	    (unsigned long long)rtstats.rts_wildcard,
+	    plural(rtstats.rts_wildcard));
 }

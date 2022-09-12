@@ -1,10 +1,10 @@
-/*	$NetBSD: pfkey.c,v 1.1 2012/01/06 14:21:16 drochner Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.1.34.1 2022/09/12 14:29:19 martin Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: pfkey.c,v 1.1 2012/01/06 14:21:16 drochner Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.1.34.1 2022/09/12 14:29:19 martin Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: pfkey.c,v 1.1 2012/01/06 14:21:16 drochner Exp $");
 #include <unistd.h>
 #include "netstat.h"
 
-#ifdef IPSEC 
+#ifdef IPSEC
 
 static const char *pfkey_msgtypenames[] = {
 	"reserved", "getspi", "update", "add", "delete",
@@ -129,7 +129,7 @@ pfkey_stats(u_long off, const char *name)
 
 	printf ("%s:\n", name);
 
-#define	p(f, m) if (pfkeystat[f] || sflag <= 1) \
+#define	p(f, m) if (pfkeystat[f] || sflag <= 1)				\
     printf(m, (unsigned long long)pfkeystat[f], plural(pfkeystat[f]))
 
 	/* userland -> kernel */
@@ -145,15 +145,24 @@ pfkey_stats(u_long off, const char *name)
 		printf("\t\t%s: %llu\n", pfkey_msgtype_names(type),
 		    (unsigned long long)pfkeystat[PFKEY_STAT_OUT_MSGTYPE + type]);
 	}
-	p(PFKEY_STAT_OUT_INVLEN, "\t%llu message%s with invalid length field\n");
-	p(PFKEY_STAT_OUT_INVVER, "\t%llu message%s with invalid version field\n");
-	p(PFKEY_STAT_OUT_INVMSGTYPE, "\t%llu message%s with invalid message type field\n");
-	p(PFKEY_STAT_OUT_TOOSHORT, "\t%llu message%s too short\n");
-	p(PFKEY_STAT_OUT_NOMEM, "\t%llu message%s with memory allocation failure\n");
-	p(PFKEY_STAT_OUT_DUPEXT, "\t%llu message%s with duplicate extension\n");
-	p(PFKEY_STAT_OUT_INVEXTTYPE, "\t%llu message%s with invalid extension type\n");
-	p(PFKEY_STAT_OUT_INVSATYPE, "\t%llu message%s with invalid sa type\n");
-	p(PFKEY_STAT_OUT_INVADDR, "\t%llu message%s with invalid address extension\n");
+	p(PFKEY_STAT_OUT_INVLEN,
+	    "\t%llu message%s with invalid length field\n");
+	p(PFKEY_STAT_OUT_INVVER,
+	    "\t%llu message%s with invalid version field\n");
+	p(PFKEY_STAT_OUT_INVMSGTYPE,
+	    "\t%llu message%s with invalid message type field\n");
+	p(PFKEY_STAT_OUT_TOOSHORT,
+	    "\t%llu message%s too short\n");
+	p(PFKEY_STAT_OUT_NOMEM,
+	    "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_OUT_DUPEXT,
+	    "\t%llu message%s with duplicate extension\n");
+	p(PFKEY_STAT_OUT_INVEXTTYPE,
+	    "\t%llu message%s with invalid extension type\n");
+	p(PFKEY_STAT_OUT_INVSATYPE,
+	    "\t%llu message%s with invalid sa type\n");
+	p(PFKEY_STAT_OUT_INVADDR,
+	    "\t%llu message%s with invalid address extension\n");
 
 	/* kernel -> userland */
 	p(PFKEY_STAT_IN_TOTAL, "\t%llu request%s sent to userland\n");
@@ -174,7 +183,8 @@ pfkey_stats(u_long off, const char *name)
 	    "\t%llu message%s toward all sockets\n");
 	p(PFKEY_STAT_IN_MSGTARGET + KEY_SENDUP_REGISTERED,
 	    "\t%llu message%s toward registered sockets\n");
-	p(PFKEY_STAT_IN_NOMEM, "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_IN_NOMEM,
+	    "\t%llu message%s with memory allocation failure\n");
 #undef p
 }
 #endif /*IPSEC*/

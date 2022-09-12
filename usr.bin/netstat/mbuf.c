@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.33 2015/07/28 19:46:42 christos Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.33.8.1 2022/09/12 14:29:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.33 2015/07/28 19:46:42 christos Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.33.8.1 2022/09/12 14:29:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ mbpr(u_long mbaddr, u_long msizeaddr, u_long mclbaddr, u_long mbpooladdr,
 	if (nmbtypes != 256) {
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
-		        getprogname());
+		    getprogname());
 		return;
 	}
 
@@ -172,29 +172,29 @@ mbpr(u_long mbaddr, u_long msizeaddr, u_long mclbaddr, u_long mbpooladdr,
 		goto dump_drain;
 
 	printf("%lu/%lu mapped pages in use\n",
-	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
-	       ((u_long)mclpool.pr_npages * mclpool.pr_itemsperpage));
+	    (u_long)(mclpool.pr_nget - mclpool.pr_nput),
+	    ((u_long)mclpool.pr_npages * mclpool.pr_itemsperpage));
 	totmem = (mbpool.pr_npages << mbpa.pa_pageshift) +
 	    (mclpool.pr_npages << mclpa.pa_pageshift);
 	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size +
 	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
 	if (totmem == 0)
 		totpct = 0;
-	else if (totused < (ULONG_MAX/100))
+	else if (totused < (ULONG_MAX / 100))
 		totpct = (totused * 100)/totmem;
 	else {
-		u_long totmem1 = totmem/100;
-		u_long totused1 = totused/100;
-		totpct = (totused1 * 100)/totmem1;
+		u_long totmem1 = totmem / 100;
+		u_long totused1 = totused / 100;
+		totpct = (totused1 * 100) / totmem1;
 	}
-	
+
 	printf("%lu Kbytes allocated to network (%lu%% in use)\n",
 	    totmem / 1024, totpct);
 
 dump_drain:
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
 
- 	if (sflag < 2)
+	if (sflag < 2)
 		return;
 
 	if (!use_sysctl)
@@ -239,7 +239,7 @@ dump_drain:
 		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS] ==
 		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_RELEASES])
 			continue;
-		snprintf(buf, sizeof(buf), "%16s %-13s",
+		snprintf(buf, sizeof(buf), "%16.16s %-13s",
 		    mo->mo_name, mo->mo_descr);
 		if ((lines % 24) == 0 || lines > 24) {
 			printf("%30s %-8s %10s %10s %10s\n",
