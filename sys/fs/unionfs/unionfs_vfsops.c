@@ -392,7 +392,7 @@ unionfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	struct unionfs_mount *ump;
 	int		error;
 	uint64_t	lbsize;
-	struct statvfs *sbuf = kmem_alloc(sizeof(*sbuf), KM_SLEEP);
+	struct statvfs *sbuf = kmem_zalloc(sizeof(*sbuf), KM_SLEEP);
 
 	ump = MOUNTTOUNIONFSMOUNT(mp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.82 2022/09/11 15:42:29 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.83 2022/09/12 13:11:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.82 2022/09/11 15:42:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.83 2022/09/12 13:11:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ union_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct statvfs *sbuf = kmem_alloc(sizeof(*sbuf), KM_SLEEP);
+	struct statvfs *sbuf = kmem_zalloc(sizeof(*sbuf), KM_SLEEP);
 	unsigned long lbsize;
 
 #ifdef UNION_DIAGNOSTIC
