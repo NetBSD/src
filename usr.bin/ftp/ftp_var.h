@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.85 2017/11/20 21:11:36 kre Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.85.6.1 2022/09/12 14:42:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -341,7 +341,7 @@ extern	struct option	optiontab[];
 #define DPRINTF(...)	(void)0
 #define DWARN(...)	(void)0
 #else
-#define DWFTP(a)	do a; while (/*CONSTCOND*/0)
+#define DWFTP(a)	do a; while (0)
 #define DPRINTF(...)	DWFTP(if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__))
 #define DWARN(...)	DWFTP(if (ftp_debug) warn(__VA_ARGS__))
 #endif
