@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.99.18.1 2022/09/12 14:23:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.99.18.1 2022/09/12 14:23:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,38 @@ __RCSID("$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $");
 #include "netstat.h"
 #include "rtutil.h"
 #include "prog_ops.h"
+
+int	Aflag;
+int	aflag;
+int	Bflag;
+int	bflag;
+int	dflag;
+#ifndef SMALL
+int	gflag;
+#endif
+int	hflag;
+int	iflag;
+int	Lflag;
+int	lflag;
+int	mflag;
+int	numeric_addr;
+int	numeric_port;
+int	nflag;
+int	Pflag;
+int	pflag;
+int	qflag;
+int	rflag;
+int	sflag;
+int	tagflag;
+int	tflag;
+int	Vflag;
+int	vflag;
+
+char	*interface;
+
+int	af;
+int	use_sysctl;
+int	force_sysctl;
 
 struct nlist nl[] = {
 #define	N_MBSTAT	0
@@ -150,19 +182,17 @@ struct nlist nl[] = {
 	{ "_atintrq1", 0, 0, 0, 0 },
 #define	N_ATINTRQ2	40
 	{ "_atintrq2", 0, 0, 0, 0 },
-#define	N_NATMINTRQ	41
-	{ "_natmintrq", 0, 0, 0, 0 },
-#define	N_PPPOEDISCINQ	42
+#define	N_PPPOEDISCINQ	41
 	{ "_ppoediscinq", 0, 0, 0, 0 },
-#define	N_PPPOEINQ	43
+#define	N_PPPOEINQ	42
 	{ "_ppoeinq", 0, 0, 0, 0 },
-#define	N_HARDCLOCK_TICKS 44
+#define	N_HARDCLOCK_TICKS 43
 	{ "_hardclock_ticks", 0, 0, 0, 0 },
-#define N_PIMSTAT	45
+#define N_PIMSTAT	44
 	{ "_pimstat", 0, 0, 0, 0 },
-#define N_CARPSTAT	46
+#define N_CARPSTAT	45
 	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_PFSYNCSTAT	47
+#define N_PFSYNCSTAT	46
 	{ "_pfsyncstats", 0, 0, 0, 0},  /* not available via kvm */
 	{ "", 0, 0, 0, 0 },
 };
@@ -175,8 +205,8 @@ struct protox {
 			(u_long, const char *);
 	void	(*pr_stats)		/* statistics printing routine */
 			(u_long, const char *);
-	void	(*pr_istats)
-			(const char *);	/* per/if statistics printing routine */
+	void	(*pr_istats)	       /* per/if statistics printing routine */
+			(const char *);
 	void	(*pr_dump)		/* PCB state dump routine */
 			(u_long, const char *, u_long);
 	const char *pr_name;		/* well-known name */
@@ -200,7 +230,7 @@ struct protox {
 	{ -1,		N_PIMSTAT,	1,	0,
 	  pim_stats,	NULL,		0,	"pim" },
 	{ -1,		N_PFSYNCSTAT,  1,  0,
-	  pfsync_stats,  NULL,		0,  "pfsync" },	
+	  pfsync_stats,  NULL,		0,  "pfsync" },
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0,	0 }
 };
@@ -278,7 +308,6 @@ const struct softintrq {
 	{ "arpintrq", N_ARPINTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
-	{ "natmintrq", N_NATMINTRQ },
 	{ "ppoediscinq", N_PPPOEDISCINQ },
 	{ "ppoeinq", N_PPPOEINQ },
 	{ NULL, -1 },
@@ -324,6 +353,7 @@ void
 prepare(const char *nf, const char *mf, struct protox *tp)
 {
 	char buf[_POSIX2_LINE_MAX];
+
 	/*
 	 * Try to figure out if we can use sysctl or not.
 	 */
@@ -354,7 +384,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 
 	if (force_sysctl && !use_sysctl) {
 		/* Let the user know what's about to happen. */
-		warnx("forcing sysctl usage even though it might not be "\
+		warnx("forcing sysctl usage even though it might not be "
 		    "supported");
 		use_sysctl = 1;
 	}
@@ -456,13 +486,13 @@ main(int argc, char *argv[])
 			errno = 0;
 			pcbaddr = strtoul(optarg, &cp, 16);
 			if (*cp != '\0' || errno == ERANGE)
-				errx(1, "invalid PCB address %s",
-				    optarg);
+				errx(1, "invalid PCB address %s", optarg);
 			Pflag = 1;
 			break;
 		case 'p':
 			if ((tp = name2protox(optarg)) == NULL)
-				errx(1, "%s: unknown or uninstrumented protocol",
+				errx(1,
+				    "%s: unknown or uninstrumented protocol",
 				    optarg);
 			pflag = 1;
 			break;
@@ -557,7 +587,8 @@ main(int argc, char *argv[])
 	}
 	if (pflag) {
 		if (iflag && tp->pr_istats)
-			intpr(interval, nl[N_IFNET_LIST].n_value, tp->pr_istats);
+			intpr(interval, nl[N_IFNET_LIST].n_value,
+			    tp->pr_istats);
 		else if (tp->pr_stats)
 			(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
 				tp->pr_name);
@@ -616,7 +647,8 @@ main(int argc, char *argv[])
 		}
 		if (rflag) {
 			if (sflag)
-				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
+				rt_stats(use_sysctl ? 0 :
+				    nl[N_RTSTAT].n_value);
 			else {
 				if (use_sysctl)
 					p_rttables(af,
@@ -712,7 +744,7 @@ printproto(struct protox *tp, const char *name)
 		if (iflag) {
 			if (tp->pr_istats)
 				intpr(interval, nl[N_IFNET_LIST].n_value,
-				      tp->pr_istats);
+				    tp->pr_istats);
 			return;
 		}
 		else {
@@ -723,9 +755,8 @@ printproto(struct protox *tp, const char *name)
 		pr = tp->pr_cblocks;
 		off = nl[tp->pr_index].n_value;
 	}
-	if (pr != NULL && ((off || af != AF_UNSPEC) || use_sysctl)) {
+	if (pr != NULL && ((off || af != AF_UNSPEC) || use_sysctl))
 		(*pr)(off, name);
-	}
 }
 
 /*
@@ -760,9 +791,9 @@ kread(u_long addr, char *buf, int size)
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
 		warnx("%s", kvm_geterr(kvmd));
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }
 
 const char *
@@ -786,7 +817,7 @@ get_hardticks(void)
 
 	kread(nl[N_HARDCLOCK_TICKS].n_value, (char *)&hardticks,
 	    sizeof(hardticks));
-	return (hardticks);
+	return hardticks;
 }
 
 /*
@@ -800,8 +831,8 @@ knownname(const char *name)
 	for (tpp = protoprotox; *tpp; tpp++)
 		for (tp = *tpp; tp->pr_name; tp++)
 			if (strcmp(tp->pr_name, name) == 0)
-				return (tp);
-	return (NULL);
+				return tp;
+	return NULL;
 }
 
 /*
@@ -819,7 +850,7 @@ name2protox(const char *name)
 	 * fails, check if name is an alias for an Internet protocol.
 	 */
 	if ((tp = knownname(name)) != NULL)
-		return (tp);
+		return tp;
 
 	setprotoent(1);			/* make protocol lookup cheaper */
 	while ((p = getprotoent()) != NULL) {
@@ -827,11 +858,11 @@ name2protox(const char *name)
 		for (alias = p->p_aliases; *alias; alias++)
 			if (strcmp(name, *alias) == 0) {
 				endprotoent();
-				return (knownname(p->p_name));
+				return knownname(p->p_name);
 			}
 	}
 	endprotoent();
-	return (NULL);
+	return NULL;
 }
 
 static void
@@ -842,7 +873,7 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family[,family ...]] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnqrsSv] [-f address_family[,family ...]] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family[,family ...]] [-M core] [-N system]\n",
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);
