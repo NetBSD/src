@@ -1,7 +1,7 @@
-/*	$NetBSD: ssl.h,v 1.3.8.2 2022/09/12 15:05:21 martin Exp $	*/
+/*	$NetBSD: ssl.h,v 1.3.8.3 2022/09/12 17:08:13 martin Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef WITH_SSL
 
 #define FETCH struct fetch_connect
 struct fetch_connect;
@@ -38,26 +37,8 @@ int fetch_flush(struct fetch_connect *);
 struct fetch_connect *fetch_open(const char *, const char *);
 struct fetch_connect *fetch_fdopen(int, const char *);
 int fetch_close(struct fetch_connect *);
-ssize_t fetch_read(void *, size_t, size_t, struct fetch_connect *);
+size_t fetch_read(void *, size_t, size_t, struct fetch_connect *);
 char *fetch_getln(char *, int, struct fetch_connect *);
 int fetch_getline(struct fetch_connect *, char *, size_t, const char **);
 void fetch_set_ssl(struct fetch_connect *, void *);
 void *fetch_start_ssl(int, const char *);
-
-#else	/* !WITH_SSL */
-
-#define FETCH FILE
-
-#define	fetch_printf	fprintf
-#define	fetch_fileno	fileno
-#define	fetch_error	ferror
-#define	fetch_flush	fflush
-#define	fetch_open	fopen
-#define	fetch_fdopen	fdopen
-#define	fetch_close	fclose
-#define	fetch_read	fread
-#define	fetch_getln	fgets
-#define	fetch_getline	get_line
-#define	fetch_set_ssl(a, b)
-
-#endif	/* !WITH_SSL */
