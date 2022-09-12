@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2022/05/07 06:53:16 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2022/09/12 07:38:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2022/05/07 06:53:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2022/09/12 07:38:32 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -984,14 +984,14 @@ pmap_update(struct pmap *pmap)
 
 static bool
 pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
-	uintptr_t flags)
+    uintptr_t flags)
 {
 	const pt_entry_t npte = flags;
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx kernel=%jd va=%#jx..%#jx)",
-	    (uintptr_t)pmap, (pmap == pmap_kernel() ? 1 : 0), sva, eva);
+	    (uintptr_t)pmap, (is_kernel_pmap_p ? 1 : 0), sva, eva);
 	UVMHIST_LOG(pmaphist, "ptep=%#jx, flags(npte)=%#jx)",
 	    (uintptr_t)ptep, flags, 0, 0);
 
@@ -1626,7 +1626,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	    pmap, va);
 	pt_entry_t pte = *ptep;
 	KASSERTMSG(pte_valid_p(pte),
-	    "pmap %p va %#"PRIxVADDR" invalid PTE %#"PRIxPTE" @ %p",
+	    "pmap %p va %#" PRIxVADDR " invalid PTE %#" PRIxPTE " @ %p",
 	    pmap, va, pte_value(pte), ptep);
 
 	if (pte_wired_p(pte)) {
