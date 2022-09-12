@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.149 2022/09/12 14:49:03 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.150 2022/09/12 15:05:58 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2813,28 +2813,4 @@ usr.bin/netstat/vtw.c		1.11,1.13
 	- Limit maximum owner name to appease gcc.
 	- KNF. Style fixes.
 	[msaitoh, ticket #1762]
-
-usr.bin/ftp/Makefile                            up to 1.39
-usr.bin/ftp/cmds.c                              up to 1.141
-usr.bin/ftp/complete.c                          up to 1.47
-usr.bin/ftp/domacro.c                           up to 1.23
-usr.bin/ftp/extern.h                            up to 1.82
-usr.bin/ftp/fetch.c                             up to 1.235
-usr.bin/ftp/ftp.1                               up to 1.147
-usr.bin/ftp/ftp.c                               up to 1.174
-usr.bin/ftp/ftp_var.h                           up to 1.86
-usr.bin/ftp/main.c                              up to 1.128
-usr.bin/ftp/progressbar.c                       up to 1.24
-usr.bin/ftp/progressbar.h                       up to 1.9
-usr.bin/ftp/ssl.c                               up to 1.11
-usr.bin/ftp/ssl.h                               up to 1.5
-usr.bin/ftp/util.c                              up to 1.164
-usr.bin/ftp/version.h                           up to 1.94
-
-	ftp(1): validate address from PASV and LPSV response.
-	Use raw write(2) instead of fwrite(3) to avoid stream
-	corruption because of the progress bar interrupts.
-	Fixes for PR 56219 and PR 55857.
-	PR 57003: Support relative redirects.
-	[christos, #1763]
 
