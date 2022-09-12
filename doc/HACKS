@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.230 2022/08/10 13:38:26 rin Exp $
+# $NetBSD: HACKS,v 1.231 2022/09/12 08:11:51 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1053,4 +1053,14 @@ descr
 	gcc compiler error.
 
 	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105209
+kcah
+
+hack	compile copy{in,out}() for ibm4xx with -O0 for clang
+cdate	Mon Sep 12 08:06:36 UTC 2022
+who	rin
+port	evbppc
+file	sys/arch/powerpc/ibm4xx/trap.c: 1.99
+descr
+	clang 13.0.0 miscompiles copy{in,out}() with -O[12]. As a result,
+	kernel cannot execute /sbin/init.
 kcah
