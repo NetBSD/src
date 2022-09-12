@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.16.18.1 2019/08/19 15:56:49 martin Exp $	*/
+/*	$NetBSD: atalk.c,v 1.16.18.2 2022/09/12 14:23:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.16.18.1 2019/08/19 15:56:49 martin Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.16.18.2 2022/09/12 14:23:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,6 @@ __RCSID("$NetBSD: atalk.c,v 1.16.18.1 2019/08/19 15:56:49 martin Exp $");
 #include "netstat.h"
 #include "prog_ops.h"
 
-struct ddpcb    ddpcb;
-struct socket   sockb;
-
 static int first = 1;
 
 /*
@@ -85,11 +82,12 @@ at_pr_net(const struct sockaddr_at *sat, int numeric)
 		case 0xffff:
 			return "????";
 		case ATADDR_ANYNET:
-			return ("*");
+			return "*";
 		}
 	}
-	(void)snprintf(mybuf, sizeof(mybuf), "%hu", ntohs(sat->sat_addr.s_net));
-	return (mybuf);
+	(void)snprintf(mybuf, sizeof(mybuf), "%hu",
+	    ntohs(sat->sat_addr.s_net));
+	return mybuf;
 }
 
 static const char *
@@ -102,12 +100,12 @@ at_pr_host(const struct sockaddr_at *sat, int numeric)
 		case ATADDR_BCAST:
 			return "bcast";
 		case ATADDR_ANYNODE:
-			return ("*");
+			return "*";
 		}
 	}
-	(void)snprintf(mybuf, sizeof(mybuf), "%d", 
+	(void)snprintf(mybuf, sizeof(mybuf), "%d",
 	    (unsigned int)sat->sat_addr.s_node);
-	return (mybuf);
+	return mybuf;
 }
 
 static const char *
@@ -117,13 +115,13 @@ at_pr_port(const struct sockaddr_at *sat)
 
 	switch (sat->sat_port) {
 	case ATADDR_ANYPORT:
-		return ("*");
+		return "*";
 	case 0xff:
 		return "????";
 	default:
 		(void)snprintf(mybuf, sizeof(mybuf), "%d",
 		    (unsigned int)sat->sat_port);
-		return (mybuf);
+		return mybuf;
 	}
 }
 
@@ -141,7 +139,7 @@ at_pr_range(const struct sockaddr_at *sat)
 		(void)snprintf(mybuf, sizeof(mybuf), "%d",
 			ntohs(sat->sat_range.r_netrange.nr_firstnet));
 	}
-	return (mybuf);
+	return mybuf;
 }
 
 
@@ -183,7 +181,7 @@ atalk_print(const struct sockaddr *sa, int what)
 		(void)snprintf(mybuf + strlen(mybuf),
 		    sizeof(mybuf) - strlen(mybuf), ".%s", at_pr_port(sat));
 	}
-	return (mybuf);
+	return mybuf;
 }
 
 const char *
@@ -224,12 +222,14 @@ atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 		if (l > 0)
 			n += l;
 	}
-	return (buf);
+	return buf;
 }
 
 void
 atalkprotopr(u_long off, const char *name)
 {
+	struct ddpcb ddpcb;
+	struct socket sockb;
 	struct ddpcb *next;
 	struct ddpcb *initial;
 	int width = 22;
@@ -244,9 +244,8 @@ atalkprotopr(u_long off, const char *name)
 			return;
 		next = ddpcb.ddp_next;
 #if 0
-		if (!aflag && atalk_nullhost(ddpcb.ddp_lsat)) {
+		if (!aflag && atalk_nullhost(ddpcb.ddp_lsat))
 			continue;
-		}
 #endif
 		if (kread((u_long)ddpcb.ddp_socket,
 			  (char *)&sockb, sizeof(sockb)) < 0)
@@ -262,7 +261,7 @@ atalkprotopr(u_long off, const char *name)
 			}
 			printf("%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
 			       "Proto", "Recv-Q", "Send-Q",
-			       -width, width, "Local Address", 
+			       -width, width, "Local Address",
 			       -width, width, "Foreign Address", "(state)");
 			first = 0;
 		}
@@ -277,8 +276,9 @@ atalkprotopr(u_long off, const char *name)
 		putchar('\n');
 	}
 }
-#define ANY(x,y,z) \
-	((sflag==1 || (x)) ? printf("\t%llu %s%s%s\n",(unsigned long long)x,y,plural(x),z) : 0)
+#define ANY(x,y,z)							      \
+	((sflag==1 || (x)) ?						      \
+	    printf("\t%llu %s%s%s\n",(unsigned long long)x,y,plural(x),z) : 0)
 
 /*
  * Dump DDP statistics structure.
@@ -309,7 +309,9 @@ ddp_stats(u_long off, const char *name)
 	ANY(ddpstat[DDP_STAT_TOOSMALL], "packet", " with not enough data ");
 	ANY(ddpstat[DDP_STAT_FORWARD], "packet", " forwarded ");
 	ANY(ddpstat[DDP_STAT_ENCAP], "packet", " encapsulated ");
-	ANY(ddpstat[DDP_STAT_CANTFORWARD], "packet", " rcvd for unreachable dest ");
-	ANY(ddpstat[DDP_STAT_NOSOCKSPACE], "packet", " dropped due to no socket space ");
+	ANY(ddpstat[DDP_STAT_CANTFORWARD], "packet",
+	    " rcvd for unreachable dest ");
+	ANY(ddpstat[DDP_STAT_NOSOCKSPACE], "packet",
+	    " dropped due to no socket space ");
 }
 #undef ANY
