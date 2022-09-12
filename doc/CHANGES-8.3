@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.148 2022/09/10 08:22:38 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.149 2022/09/12 14:49:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2783,4 +2783,58 @@ sys/kern/kern_core.c				1.37
 
 	Avoid a GCC warning.
 	[mrg, ticket #1761]
+
+usr.bin/netstat/atalk.c		1.18,1.20-1.21
+usr.bin/netstat/bpf.c		1.16 via patch
+usr.bin/netstat/fast_ipsec.c	1.24 via patch
+usr.bin/netstat/if.c		1.97-1.99,1.101-1.104 via patch
+usr.bin/netstat/inet.c		1.111,1.115-1.116 via patch
+usr.bin/netstat/inet6.c		1.70,1.74-1.75,1.80-1.81 via patch
+usr.bin/netstat/main.c		1.100,1.102-1.103
+usr.bin/netstat/mbuf.c		1.34-1.35
+usr.bin/netstat/mroute.c	1.26-1.27
+usr.bin/netstat/mroute6.c	1.16
+usr.bin/netstat/netstat.h	1.52-1.53
+usr.bin/netstat/pfkey.c		1.4-1.5 via patch
+usr.bin/netstat/pfsync.c	1.4-1.5 via patch
+usr.bin/netstat/route.c		1.87-1.88
+usr.bin/netstat/unix.c		1.36-1.37
+usr.bin/netstat/vtw.c		1.11,1.13
+
+	- Add names of a few more ICMPv6 messages.
+	  Also make the array be explicitly 256 entries long.
+	- sprintf() -> snprintf(), and adjust a buffer size to avoid any
+	  potential for overflow.
+	- Add missing {IP,IP6}_STAT_NOIPSEC to netstat.
+	- Don't show any of the completely and utterly undocumented VTW info
+	  if the feature isn't enabled.
+	- Print oqdrops correctly.
+	- netstat.1: Add various xrefs present in the body to "See Also".
+	- Limit maximum owner name to appease gcc.
+	- KNF. Style fixes.
+	[msaitoh, ticket #1762]
+
+usr.bin/ftp/Makefile                            up to 1.39
+usr.bin/ftp/cmds.c                              up to 1.141
+usr.bin/ftp/complete.c                          up to 1.47
+usr.bin/ftp/domacro.c                           up to 1.23
+usr.bin/ftp/extern.h                            up to 1.82
+usr.bin/ftp/fetch.c                             up to 1.235
+usr.bin/ftp/ftp.1                               up to 1.147
+usr.bin/ftp/ftp.c                               up to 1.174
+usr.bin/ftp/ftp_var.h                           up to 1.86
+usr.bin/ftp/main.c                              up to 1.128
+usr.bin/ftp/progressbar.c                       up to 1.24
+usr.bin/ftp/progressbar.h                       up to 1.9
+usr.bin/ftp/ssl.c                               up to 1.11
+usr.bin/ftp/ssl.h                               up to 1.5
+usr.bin/ftp/util.c                              up to 1.164
+usr.bin/ftp/version.h                           up to 1.94
+
+	ftp(1): validate address from PASV and LPSV response.
+	Use raw write(2) instead of fwrite(3) to avoid stream
+	corruption because of the progress bar interrupts.
+	Fixes for PR 56219 and PR 55857.
+	PR 57003: Support relative redirects.
+	[christos, #1763]
 
