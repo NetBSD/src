@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.158.22.1 2022/09/12 14:46:51 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.158.22.2 2022/09/12 15:05:21 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.158.22.1 2022/09/12 14:46:51 martin Exp $");
+__RCSID("$NetBSD: util.c,v 1.158.22.2 2022/09/12 15:05:21 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -171,7 +171,7 @@ parse_feat(const char *fline)
 			 * work-around broken ProFTPd servers that can't
 			 * even obey RFC 2389.
 			 */
-	while (*fline && isspace((unsigned char)*fline))
+	while (*fline && isspace((int)*fline))
 		fline++;
 
 	if (strcasecmp(fline, "MDTM") == 0)
@@ -324,10 +324,9 @@ intr(int signo)
 /*
  * Signal handler for lost connections; cleanup various elements of
  * the connection state, and call cleanuppeer() to finish it off.
- * This function is not signal safe, so exit if called by a signal.
  */
 void
-lostpeer(int signo)
+lostpeer(int dummy)
 {
 	int oerrno = errno;
 
@@ -357,9 +356,6 @@ lostpeer(int signo)
 	proxflag = 0;
 	pswitch(0);
 	cleanuppeer();
-	if (signo) {
-		errx(1, "lostpeer due to signal %d", signo);
-	}
 	errno = oerrno;
 }
 
@@ -482,8 +478,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		}
 	}
 	updatelocalcwd();
-	remotecwd[0] = '\0';
-	remcwdvalid = 0;
+	updateremotecwd();
 
  cleanup_ftp_login:
 	FREEPTR(fuser);
@@ -620,7 +615,7 @@ remglob(char *argv[], int doswitch, const char **errbuf)
  * return value. Can't control multiple values being expanded from the
  * expression, we return only the first.
  * Returns NULL on error, or a pointer to a buffer containing the filename
- * that's the caller's responsibility to free(3) when finished with.
+ * that's the caller's responsiblity to free(3) when finished with.
  */
 char *
 globulize(const char *pattern)
@@ -731,7 +726,7 @@ remotemodtime(const char *file, int noisy)
 			*frac++ = '\0';
 		if (strlen(timestr) == 15 && strncmp(timestr, "191", 3) == 0) {
 			/*
-			 * XXX:	Workaround for buggy ftp servers that return
+			 * XXX:	Workaround for lame ftpd's that return
 			 *	`19100' instead of `2000'
 			 */
 			fprintf(ttyout,
@@ -840,7 +835,6 @@ updateremotecwd(void)
 	size_t	 i;
 	char	*cp;
 
-	remcwdvalid = 1;	/* whether it works or not, we are done */
 	overbose = verbose;
 	ocode = code;
 	if (ftp_debug == 0)
@@ -1180,8 +1174,6 @@ formatbuf(char *buf, size_t len, const char *src)
 		case '/':
 		case '.':
 		case 'c':
-			if (connected && !remcwdvalid)
-				updateremotecwd();
 			p2 = connected ? remotecwd : "";
 			updirs = pdirs = 0;
 
@@ -1495,7 +1487,6 @@ ftp_poll(struct pollfd *fds, int nfds, int timeout)
 	return poll(fds, nfds, timeout);
 }
 
-#ifndef SMALL
 /*
  * malloc() with inbuilt error checking
  */
@@ -1550,4 +1541,3 @@ ftp_strdup(const char *str)
 		err(1, "Unable to allocate memory for string copy");
 	return (s);
 }
-#endif

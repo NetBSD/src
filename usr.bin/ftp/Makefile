@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37.2.1 2022/09/12 14:46:51 martin Exp $
+#	$NetBSD: Makefile,v 1.37.2.2 2022/09/12 15:05:21 martin Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -8,7 +8,6 @@ USE_FORT?= yes	# network client
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
 	progressbar.c ruserpass.c util.c
-SRCS+=	ssl.c
 
 # Uncomment the following to provide defaults for gate-ftp operation
 #
@@ -20,6 +19,7 @@ CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS -DNO_DEBU
 LDADD+=	-ledit -lterminfo
 DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 CPPFLAGS+= -DWITH_SSL
+SRCS+=ssl.c
 LDADD+= -lssl -lcrypto
 DPADD+= ${LIBSSL} ${LIBCRYPTO}
 .endif
@@ -30,7 +30,5 @@ CPPFLAGS+= -DINET6
 
 cmds.o fetch.o: version.h
 main.o:	ftp_var.h
-
-CWARNFLAGS.gcc+=	${GCC_NO_FORMAT_OVERFLOW}
 
 .include <bsd.prog.mk>
