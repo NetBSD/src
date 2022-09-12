@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2022/09/12 08:06:36 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2022/09/12 08:02:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2022/09/12 08:06:36 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -427,6 +427,9 @@ extern void vunmaprange(vaddr_t, vsize_t);
 static int bigcopyin(const void *, void *, size_t );
 static int bigcopyout(const void *, void *, size_t );
 
+#ifdef __clang__
+#pragma clang optimize off
+#endif
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
@@ -509,6 +512,9 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	curpcb->pcb_onfault = NULL;
 	return 0;
 }
+#ifdef __clang__
+#pragma clang optimize on
+#endif
 
 static int
 bigcopyin(const void *uaddr, void *kaddr, size_t len)
@@ -542,6 +548,9 @@ bigcopyin(const void *uaddr, void *kaddr, size_t len)
 	return error;
 }
 
+#ifdef __clang__
+#pragma clang optimize off
+#endif
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
@@ -625,6 +634,9 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	curpcb->pcb_onfault = NULL;
 	return 0;
 }
+#ifdef __clang__
+#pragma clang optimize on
+#endif
 
 static int
 bigcopyout(const void *kaddr, void *uaddr, size_t len)
