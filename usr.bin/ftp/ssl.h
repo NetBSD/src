@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.h,v 1.4.2.1 2021/06/14 11:57:39 martin Exp $	*/
+/*	$NetBSD: ssl.h,v 1.4.2.2 2022/09/12 17:06:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012-2021 The NetBSD Foundation, Inc.

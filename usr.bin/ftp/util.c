@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.160.2.3 2022/09/12 15:02:47 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.160.2.4 2022/09/12 17:06:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.160.2.3 2022/09/12 15:02:47 martin Exp $");
+__RCSID("$NetBSD: util.c,v 1.160.2.4 2022/09/12 17:06:56 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -171,7 +171,7 @@ parse_feat(const char *fline)
 			 * work-around broken ProFTPd servers that can't
 			 * even obey RFC 2389.
 			 */
-	while (*fline && isspace((int)*fline))
+	while (*fline && isspace((unsigned char)*fline))
 		fline++;
 
 	if (strcasecmp(fline, "MDTM") == 0)
@@ -620,7 +620,7 @@ remglob(char *argv[], int doswitch, const char **errbuf)
  * return value. Can't control multiple values being expanded from the
  * expression, we return only the first.
  * Returns NULL on error, or a pointer to a buffer containing the filename
- * that's the caller's responsiblity to free(3) when finished with.
+ * that's the caller's responsibility to free(3) when finished with.
  */
 char *
 globulize(const char *pattern)
@@ -731,7 +731,7 @@ remotemodtime(const char *file, int noisy)
 			*frac++ = '\0';
 		if (strlen(timestr) == 15 && strncmp(timestr, "191", 3) == 0) {
 			/*
-			 * XXX:	Workaround for lame ftpd's that return
+			 * XXX:	Workaround for buggy ftp servers that return
 			 *	`19100' instead of `2000'
 			 */
 			fprintf(ttyout,

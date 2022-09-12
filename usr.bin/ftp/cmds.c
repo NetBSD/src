@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.140.2.1 2021/06/14 11:52:52 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.140.2.2 2022/09/12 17:06:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.140.2.1 2021/06/14 11:52:52 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.140.2.2 2022/09/12 17:06:56 martin Exp $");
 #endif
 #endif /* not lint */
 

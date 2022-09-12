@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.23.2.1 2021/01/29 20:58:19 martin Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.23.2.2 2022/09/12 17:06:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.23.2.1 2021/01/29 20:58:19 martin Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.23.2.2 2022/09/12 17:06:56 martin Exp $");
 #endif /* not lint */
 
 /*
