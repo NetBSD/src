@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.137.8.1 2022/09/12 14:46:51 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.137.8.2 2022/09/12 15:05:21 martin Exp $	*/
 
 /*-
- * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.137.8.1 2022/09/12 14:46:51 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.137.8.2 2022/09/12 15:05:21 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1131,7 +1131,7 @@ setdebug(int argc, char *argv[])
 		options |= SO_DEBUG;
 	else
 		options &= ~SO_DEBUG;
-	fprintf(ttyout, "Debugging %s (debug=%d).\n", onoff(ftp_debug), ftp_debug);
+	fprintf(ttyout, "Debugging %s (ftp_debug=%d).\n", onoff(ftp_debug), ftp_debug);
 	code = ftp_debug > 0;
 }
 
@@ -1158,8 +1158,7 @@ cd(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		remotecwd[0] = '\0';
-		remcwdvalid = 0;
+		updateremotecwd();
 	}
 }
 
@@ -1545,9 +1544,9 @@ pwd(int argc, char *argv[])
 		UPRINTF("usage: %s\n", argv[0]);
 		return;
 	}
-	if (!remcwdvalid || remotecwd[0] == '\0')
+	if (! remotecwd[0])
 		updateremotecwd();
-	if (remotecwd[0] == '\0')
+	if (! remotecwd[0])
 		fprintf(ttyout, "Unable to determine remote directory\n");
 	else {
 		fprintf(ttyout, "Remote directory: %s\n", remotecwd);
@@ -1773,18 +1772,6 @@ quit(int argc, char *argv[])
 	pswitch(1);
 	if (connected)
 		disconnect(0, NULL);
-	exit(0);
-}
-
-void __dead
-justquit(void)
-{
-
-	quit(0, NULL);
-	/*
-	 * quit is not __dead, but for our invocation it never will return,
-	 * but some compilers are not smart enough to find this out.
-	 */
 	exit(0);
 }
 
@@ -2197,7 +2184,7 @@ LOOP:
 					}
 					break;
 				}
-				/* FALLTHROUGH */
+				/* intentional drop through */
 			default:
 				*cp2++ = *cp1;
 				break;
@@ -2372,8 +2359,7 @@ cdup(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		remotecwd[0] = '\0';
-		remcwdvalid = 0;
+		updateremotecwd();
 	}
 }
 
