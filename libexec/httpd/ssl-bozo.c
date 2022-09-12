@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.31 2021/08/24 09:53:26 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.32 2022/09/12 10:30:39 martin Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -121,6 +121,9 @@ bozo_clear_ssl_queue(bozohttpd_t *httpd)
 	do {
 		static const char sslfmt[] = "SSL Error: %s:%s:%s";
 
+		if (httpd->nolog)
+			continue;
+
 		if (httpd->logstderr || isatty(STDERR_FILENO)) {
 			fprintf(stderr, sslfmt,
 			    ERR_lib_error_string(sslcode),
@@ -144,11 +147,13 @@ bozo_ssl_warn(bozohttpd_t *httpd, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (httpd->logstderr || isatty(STDERR_FILENO)) {
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_ERR, fmt, ap);
+	if (!httpd->nolog) {
+		if (httpd->logstderr || isatty(STDERR_FILENO)) {
+			vfprintf(stderr, fmt, ap);
+			fputs("\n", stderr);
+		} else
+			vsyslog(LOG_ERR, fmt, ap);
+	}
 	va_end(ap);
 
 	bozo_clear_ssl_queue(httpd);
@@ -164,11 +169,13 @@ bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (httpd->logstderr || isatty(STDERR_FILENO)) {
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_ERR, fmt, ap);
+	if (!httpd->nolog) {
+		if (httpd->logstderr || isatty(STDERR_FILENO)) {
+			vfprintf(stderr, fmt, ap);
+			fputs("\n", stderr);
+		} else
+			vsyslog(LOG_ERR, fmt, ap);
+	}
 	va_end(ap);
 
 	bozo_clear_ssl_queue(httpd);

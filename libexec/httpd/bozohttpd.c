@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.141 2022/05/18 00:37:11 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.142 2022/09/12 10:30:39 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2022,11 +2022,13 @@ debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 
 	savederrno = errno;
 	va_start(ap, fmt);
-	if (httpd->logstderr) {
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_DEBUG, fmt, ap);
+	if (!httpd->nolog) {
+		if (httpd->logstderr) {
+			vfprintf(stderr, fmt, ap);
+			fputs("\n", stderr);
+		} else
+			vsyslog(LOG_DEBUG, fmt, ap);
+	}
 	va_end(ap);
 	errno = savederrno;
 }
@@ -2039,12 +2041,14 @@ bozowarn(bozohttpd_t *httpd, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (httpd->logstderr || isatty(STDERR_FILENO)) {
-		//fputs("warning: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_INFO, fmt, ap);
+	if (!httpd->nolog) {
+		if (httpd->logstderr || isatty(STDERR_FILENO)) {
+			//fputs("warning: ", stderr);
+			vfprintf(stderr, fmt, ap);
+			fputs("\n", stderr);
+		} else
+			vsyslog(LOG_INFO, fmt, ap);
+	}
 	va_end(ap);
 }
 
@@ -2054,12 +2058,14 @@ bozoerr(bozohttpd_t *httpd, int code, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (httpd->logstderr || isatty(STDERR_FILENO)) {
-		//fputs("error: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_ERR, fmt, ap);
+	if (!httpd->nolog) {
+		if (httpd->logstderr || isatty(STDERR_FILENO)) {
+			//fputs("error: ", stderr);
+			vfprintf(stderr, fmt, ap);
+			fputs("\n", stderr);
+		} else
+			vsyslog(LOG_ERR, fmt, ap);
+	}
 	va_end(ap);
 	exit(code);
 }
@@ -2590,6 +2596,10 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((cp = bozo_get_pref(prefs, "log to stderr")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->logstderr = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "no log")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->nolog = 1;
 	}
 	if ((cp = bozo_get_pref(prefs, "bind address")) != NULL) {
 		httpd->bindaddress = bozostrdup(httpd, NULL, cp);

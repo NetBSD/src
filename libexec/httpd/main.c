@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2021/08/24 09:47:36 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2022/09/12 10:30:39 martin Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -102,6 +102,8 @@ usage(bozohttpd_t *httpd, char *progname)
 		bozowarn(httpd, "   -P pidfile\t\tpid file path");
 	if (have_user)
 		bozowarn(httpd, "   -p dir\t\t\"public_html\" directory name");
+	if (have_core)
+		bozowarn(httpd, "   -q\t\tquiet mode, no logging");
 	if (have_dirindex)
 		bozowarn(httpd, "   -R readme\t\tput readme file in footer "
 				"of directory index");
@@ -164,7 +166,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EGHI:L:M:m:P:R:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EGHI:L:M:m:P:R:S:T:U:VXZ:bc:defhi:np:qst:uv:x:z:")) != -1) {
 		switch (c) {
 
 		case 'b':
@@ -308,6 +310,10 @@ main(int argc, char **argv)
 				bozoerr(&httpd, 1, "User support not enabled");
 
 			bozo_set_pref(&httpd, &prefs, "public_html", optarg);
+			break;
+
+		case 'q':
+			bozo_set_pref(&httpd, &prefs, "no log", "true");
 			break;
 
 		case 'R':
