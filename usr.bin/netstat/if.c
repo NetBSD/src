@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.103 2022/09/11 23:52:20 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.104 2022/09/12 02:25:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.103 2022/09/11 23:52:20 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.104 2022/09/12 02:25:44 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -924,11 +924,12 @@ banner:
 		ip->ift_ip = 0;
 		ip->ift_ib = 0;
 		ip->ift_ie = 0;
+		ip->ift_iq = 0;
 		ip->ift_op = 0;
 		ip->ift_ob = 0;
 		ip->ift_oe = 0;
+		ip->ift_oq = 0;
 		ip->ift_co = 0;
-		ip->ift_iq = 0;
 	}
 	putchar('\n');
 	if (bflag)
@@ -956,11 +957,12 @@ loop:
 	sum->ift_ip = 0;
 	sum->ift_ib = 0;
 	sum->ift_ie = 0;
+	sum->ift_iq = 0;
 	sum->ift_op = 0;
 	sum->ift_ob = 0;
 	sum->ift_oe = 0;
+	sum->ift_oq = 0;
 	sum->ift_co = 0;
-	sum->ift_iq = 0;
 	for (off = firstifnet, ip = iftot; off && ip < lastif; ip++) {
 		if (kread(off, (char *)&ifnet, sizeof ifnet)) {
 			off = 0;
