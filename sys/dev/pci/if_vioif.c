@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.81 2022/05/04 02:38:27 simonb Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.82 2022/09/12 07:26:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.81 2022/05/04 02:38:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82 2022/09/12 07:26:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -319,7 +319,7 @@ struct vioif_softc {
 
 	uint8_t			sc_mac[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
-	bool			sc_link_active;
+	int			sc_link_state;
 
 	struct vioif_txqueue	*sc_txq;
 	struct vioif_rxqueue	*sc_rxq;
@@ -349,6 +349,8 @@ struct vioif_softc {
 #define VIOIF_RX_PROCESS_LIMIT		256
 
 #define VIOIF_WORKQUEUE_PRI		PRI_SOFTNET
+#define VIOIF_IS_LINK_ACTIVE(_sc)	((_sc)->sc_link_state == LINK_STATE_UP ? \
+					    true : false)
 
 /* cfattach interface functions */
 static int	vioif_match(device_t, cfdata_t, void *);
@@ -401,7 +403,7 @@ static void	vioif_work_add(struct workqueue *, struct vioif_work *);
 static void	vioif_work_wait(struct workqueue *, struct vioif_work *);
 
 /* other control */
-static bool	vioif_is_link_up(struct vioif_softc *);
+static int	vioif_get_link_status(struct vioif_softc *);
 static void	vioif_update_link_status(struct vioif_softc *);
 static int	vioif_ctrl_rx(struct vioif_softc *, int, bool);
 static int	vioif_set_promisc(struct vioif_softc *, bool);
@@ -830,7 +832,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
-	sc->sc_link_active = false;
+	sc->sc_link_state = LINK_STATE_UNKNOWN;
 
 	sc->sc_max_nvq_pairs = 1;
 	sc->sc_req_nvq_pairs = 1;
@@ -983,7 +985,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		nvqs++;
 		txq->txq_vq->vq_intrhand = vioif_tx_intr;
 		txq->txq_vq->vq_intrhand_arg = (void *)txq;
-		txq->txq_link_active = sc->sc_link_active;
+		txq->txq_link_active = VIOIF_IS_LINK_ACTIVE(sc);
 		txq->txq_stopping = false;
 		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_SLEEP);
 		vioif_work_set(&txq->txq_work, vioif_tx_handle, txq);
@@ -1257,13 +1259,10 @@ vioif_stop(struct ifnet *ifp, int disable)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	sc->sc_link_active = false;
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
-
-		txq->txq_link_active = false;
 
 		if (disable)
 			vioif_rx_drain(rxq);
@@ -2393,8 +2392,8 @@ set_ifflags:
 	return r;
 }
 
-static bool
-vioif_is_link_up(struct vioif_softc *sc)
+static int
+vioif_get_link_status(struct vioif_softc *sc)
 {
 	struct virtio_softc *vsc = sc->sc_virtio;
 	uint16_t status;
@@ -2405,7 +2404,10 @@ vioif_is_link_up(struct vioif_softc *sc)
 	else
 		status = VIRTIO_NET_S_LINK_UP;
 
-	return ((status & VIRTIO_NET_S_LINK_UP) != 0);
+	if ((status & VIRTIO_NET_S_LINK_UP) != 0)
+		return LINK_STATE_UP;
+
+	return LINK_STATE_DOWN;
 }
 
 /* change link status */
@@ -2414,40 +2416,30 @@ vioif_update_link_status(struct vioif_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct vioif_txqueue *txq;
-	bool active, changed;
+	bool active;
 	int link, i;
 
 	mutex_enter(&sc->sc_lock);
 
-	active = vioif_is_link_up(sc);
-	changed = false;
+	link = vioif_get_link_status(sc);
 
-	if (active) {
-		if (!sc->sc_link_active)
-			changed = true;
+	if (link == sc->sc_link_state)
+		goto done;
 
-		link = LINK_STATE_UP;
-		sc->sc_link_active = true;
-	} else {
-		if (sc->sc_link_active)
-			changed = true;
+	sc->sc_link_state = link;
 
-		link = LINK_STATE_DOWN;
-		sc->sc_link_active = false;
+	active = VIOIF_IS_LINK_ACTIVE(sc);
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+		txq = &sc->sc_txq[i];
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_link_active = active;
+		mutex_exit(txq->txq_lock);
 	}
 
-	if (changed) {
-		for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
-			txq = &sc->sc_txq[i];
+	if_link_state_change(ifp, sc->sc_link_state);
 
-			mutex_enter(txq->txq_lock);
-			txq->txq_link_active = sc->sc_link_active;
-			mutex_exit(txq->txq_lock);
-		}
-
-		if_link_state_change(ifp, link);
-	}
-
+done:
 	mutex_exit(&sc->sc_lock);
 }
 
