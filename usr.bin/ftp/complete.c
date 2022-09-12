@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.46.38.2 2022/09/12 15:05:21 martin Exp $	*/
+/*	$NetBSD: complete.c,v 1.46.38.3 2022/09/12 17:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.46.38.2 2022/09/12 15:05:21 martin Exp $");
+__RCSID("$NetBSD: complete.c,v 1.46.38.3 2022/09/12 17:08:13 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -99,11 +99,10 @@ complete_ambiguous(char *word, int list, StringList *words)
 	}
 
 	if (!list) {
-		matchlen = 0;
 		lastmatch = words->sl_str[0];
 		matchlen = strlen(lastmatch);
 		for (i = 1 ; i < words->sl_cur ; i++) {
-			for (j = wordlen ; j < strlen(words->sl_str[i]); j++)
+			for (j = wordlen; j < strlen(words->sl_str[i]); j++)
 				if (lastmatch[j] != words->sl_str[i][j])
 					break;
 			if (j < matchlen)
