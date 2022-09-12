@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.11 2022/08/30 08:51:28 christos Exp $	*/
+/*	$NetBSD: ssl.c,v 1.12 2022/09/12 15:10:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.11 2022/08/30 08:51:28 christos Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.12 2022/09/12 15:10:31 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -589,7 +589,7 @@ fetch_start_ssl(int sock, const char *servername)
 	SSL_CTX *ctx;
 	X509_VERIFY_PARAM *param;
 	int ret, ssl_err;
-	int verify = getenv("NO_CERT_VERIFY") == NULL;
+	int verify = 0;	// getenv("NO_CERT_VERIFY") == NULL;
 
 	/* Init the SSL library and context */
 	if (!SSL_library_init()){
