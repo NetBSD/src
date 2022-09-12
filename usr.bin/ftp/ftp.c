@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.168.2.6 2021/10/24 10:18:02 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.7 2022/09/12 17:06:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168.2.6 2021/10/24 10:18:02 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.7 2022/09/12 17:06:56 martin Exp $");
 #endif
 #endif /* not lint */
 
