@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $	*/
+/*	$NetBSD: vtw.c,v 1.9.8.1 2022/09/12 14:29:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.9.8.1 2022/09/12 14:29:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,11 +116,28 @@ __RCSID("$NetBSD: vtw.c,v 1.9 2016/02/29 18:19:46 christos Exp $");
 #include "vtw.h"
 #include "prog_ops.h"
 
+static bool	vtw_enabled(void);
 static void	snarf(const void *, void *, size_t);
 static void	*lookup(const char *);
 static void	process_vtw(const vtw_ctl_t *, void (*)(const vtw_t *));
 
-static void 
+static bool
+vtw_enabled(void)
+{
+
+	if (use_sysctl) {
+		int enabled;
+		size_t size = sizeof(enabled);
+
+		if (sysctlbyname("net.inet.tcp.vtw.enable",
+		    &enabled, &size, NULL, 0) == -1)
+			return true;
+		return enabled ? true : false;
+	} else
+		return true;
+}
+
+static void
 snarf(const void *addr, void *buf, size_t len)
 {
 	size_t cc;
@@ -173,6 +190,11 @@ timebase(struct timeval *tv)
 	void *p;
 	struct bintime timebasebin;
 
+	if (!vtw_enabled()) {
+		memset(tv, 0, sizeof(*tv));
+		return;
+	}
+
 	p = lookup("timebasebin");
 	if (!p)
 		return;
@@ -180,7 +202,7 @@ timebase(struct timeval *tv)
 	bintime2timeval(&timebasebin, tv);
 }
 
-static void 
+static void
 process_vtw(const vtw_ctl_t * ctl, void (*print)(const vtw_t *))
 {
 	vtw_t *vp;
@@ -210,6 +232,9 @@ show_vtw_stats(void)
 	if (!Vflag)
 		return;
 
+	if (!vtw_enabled())
+		return;
+
 	if ((p = lookup("vtw_stats")) == NULL)
 		return;
 	snarf(p, &stats, sizeof(stats));
@@ -237,7 +262,7 @@ show_vtw_stats(void)
 	printf("\t\t%" PRIu64 " max_loss\n", stats.max_loss[1]);
 }
 
-void 
+void
 show_vtw_v4(void (*print)(const vtw_t *))
 {
 	fatp_t *base, *lim;
@@ -248,6 +273,9 @@ show_vtw_v4(void (*print)(const vtw_t *))
 	int i;
 	int mem = 0;
 	void *p;
+
+	if (!vtw_enabled())
+		return;
 
 	if ((p = lookup("fat_tcpv4")) == NULL)
 		return;
@@ -280,9 +308,8 @@ show_vtw_v4(void (*print)(const vtw_t *))
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
 			mem += n * sizeof(*ubase);
-		} else {
+		} else
 			ubase = vtw_tcpv4[0].base.v4;
-		}
 
 		delta = ubase - kbase;
 
@@ -332,14 +359,14 @@ end:
 
 #if 0
 	if (Vflag && vflag) {
-		printf("total memory for VTW in current config: %d bytes %f MB\n"
-		    ,mem
-		    ,mem / (1024.0 * 1024));
+		printf("total memory for VTW in current config: "
+		    "%d bytes %f MB\n",
+		    mem, mem / (1024.0 * 1024));
 	}
 #endif
 }
 
-void 
+void
 show_vtw_v6(void (*print)(const vtw_t *))
 {
 	fatp_t *base, *lim;
@@ -350,6 +377,9 @@ show_vtw_v6(void (*print)(const vtw_t *))
 	int i;
 	int mem = 0;
 	void *p;
+
+	if (!vtw_enabled())
+		return;
 
 	if ((p = lookup("fat_tcpv6")) == NULL)
 		return;
@@ -381,9 +411,8 @@ show_vtw_v6(void (*print)(const vtw_t *))
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
 			mem += n * sizeof(*ubase);
-		} else {
+		} else
 			ubase = vtw_tcpv6[0].base.v6;
-		}
 
 		delta = ubase - kbase;
 
@@ -431,9 +460,9 @@ end:
 	process_vtw(&vtw_tcpv6[0], print);
 #if 0
 	if (Vflag && vflag) {
-		printf("total memory for VTW in current config: %d bytes %f MB\n"
-		    ,mem
-		    ,mem / (1024.0 * 1024));
+		printf("total memory for VTW in current config: "
+		    "%d bytes %f MB\n",
+		    mem, mem / (1024.0 * 1024));
 	}
 #endif
 }

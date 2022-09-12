@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.11 2012/12/14 08:15:44 msaitoh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.11.22.1 2022/09/12 14:29:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -55,17 +55,16 @@ bpf_stats(void)
 	if (use_sysctl) {
 		if (sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1)
 			err(1, "net.bpf.stats");
-	
+
 		printf("bpf:\n");
-		printf("\t%" PRIu64 " total packets received\n", 
+		printf("\t%" PRIu64 " total packets received\n",
 		    bpf_s.bs_recv);
-		printf("\t%" PRIu64 " total packets captured\n", 
+		printf("\t%" PRIu64 " total packets captured\n",
 		    bpf_s.bs_capt);
-		printf("\t%" PRIu64 " total packets dropped\n", 
+		printf("\t%" PRIu64 " total packets dropped\n",
 		    bpf_s.bs_drop);
-	} else {
+	} else
 		warnx("BPF stats not available via KVM.");
-	}
 }
 
 void
@@ -79,7 +78,7 @@ bpf_dump(const char *bpfif)
 		u_int	namelen;
 		void	*v;
 		struct kinfo_proc2 p;
-	
+
 		/* adapted from sockstat.c by Andrew Brown */
 
 		sz = CTL_MAXNAME;
@@ -89,7 +88,7 @@ bpf_dump(const char *bpfif)
 
 		name[namelen++] = sizeof(*dpe);
 		name[namelen++] = INT_MAX;
-		
+
 		v = NULL;
 		sz = 0;
 		do {
@@ -117,19 +116,19 @@ bpf_dump(const char *bpfif)
 #define BPFEXT(entry) dpe->entry
 
 		for (i = 0; i < (sz / sizeof(*dpe)); i++, dpe++) {
-			if (bpfif && 
+			if (bpfif &&
 			    strncmp(BPFEXT(bde_ifname), bpfif, IFNAMSIZ))
 				continue;
-			
+
 			printf("%-7d ", BPFEXT(bde_pid));
 			printf("%-7s ",
-			       (BPFEXT(bde_ifname)[0] == '\0') ? "-" : 
+			       (BPFEXT(bde_ifname)[0] == '\0') ? "-" :
 			       BPFEXT(bde_ifname));
 
-			printf("%-8" PRIu64 " %-8" PRIu64 " %-8" PRIu64 " ", 
-				BPFEXT(bde_rcount), BPFEXT(bde_dcount), 
+			printf("%-8" PRIu64 " %-8" PRIu64 " %-8" PRIu64 " ",
+				BPFEXT(bde_rcount), BPFEXT(bde_dcount),
 				BPFEXT(bde_ccount));
-			
+
 			switch (BPFEXT(bde_state)) {
 			case BPF_IDLE:
 				printf("I");
@@ -144,7 +143,7 @@ bpf_dump(const char *bpfif)
 				printf("-");
 				break;
 			}
-			
+
 			printf("%c", BPFEXT(bde_promisc) ? 'P' : '-');
 			printf("%c", BPFEXT(bde_immediate) ? 'R' : '-');
 			printf("%c", BPFEXT(bde_seesent) ? 'S' : '-');
@@ -160,7 +159,7 @@ bpf_dump(const char *bpfif)
 			name[namelen++] = szproc;
 			name[namelen++] = 1;
 
-			if (prog_sysctl(&name[0], namelen, &p, &szproc, 
+			if (prog_sysctl(&name[0], namelen, &p, &szproc,
 			    NULL, 0) == -1)
 				printf("-\n");
 			else
@@ -169,7 +168,7 @@ bpf_dump(const char *bpfif)
 		}
 		free(v);
 	} else {
-                /* XXX */
-                errx(1, "bpf_dump not implemented using kvm");
-        }
+		/* XXX */
+		errx(1, "bpf_dump not implemented using kvm");
+	}
 }
