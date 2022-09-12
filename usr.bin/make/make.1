@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.342 2022/09/12 07:13:02 rillig Exp $
+.\"	$NetBSD: make.1,v 1.343 2022/09/12 07:21:10 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Op Fl V Ar variable
 .Op Fl v Ar variable
 .Op Ar variable\| Ns Cm \&= Ns Ar value
-.Op Ar target ...
+.Op Ar target No ...
 .Sh DESCRIPTION
 .Nm
 is a program designed to simplify the maintenance of other programs.
@@ -1269,7 +1269,7 @@ instead.
 The general format of a variable expansion is:
 .Pp
 .Sm off
-.D1 Ic \&${ Ar variable\| Oo Ic \&: Ar modifier\| Oo Ic \&: Ar ... Oc Oc Ic \&}
+.D1 Ic \&${ Ar variable\| Oo Ic \&: Ar modifier\| Oo Ic \&: No ... Oc Oc Ic \&}
 .Sm on
 .Pp
 Each modifier begins with a colon.
@@ -1279,9 +1279,9 @@ To escape a colon, precede it with a backslash
 A list of indirect modifiers can be specified via a variable, as follows:
 .Pp
 .Bd -literal -offset indent
-.Ar modifier_variable\^ Li \&= Ar modifier Ns Oo Ic \&: Ns Ar ... Oc
+.Ar modifier_variable\^ Li \&= Ar modifier Ns Oo Ic \&: Ns No ... Oc
 .Sm off
-.Ic \&${ Ar variable Ic \&:${ Ar modifier_variable Ic \&} Oo Ic \&: Ar ... Oc Ic \&}
+.Ic \&${ Ar variable Ic \&:${ Ar modifier_variable Ic \&} Oo Ic \&: No ... Oc Ic \&}
 .Sm on
 .Ed
 .Pp
@@ -1802,7 +1802,7 @@ directories specified using the
 option are searched before the system makefile directory.
 .Pp
 For compatibility with other make variants,
-.Sq Cm include Ar file ...
+.Sq Cm include Ar file No ...
 (without leading dot)
 is also accepted.
 .Pp
@@ -1820,7 +1820,7 @@ but stale dependencies within the included file are ignored just like in
 .Ss Exporting variables
 The directives for exporting and unexporting variables are:
 .Bl -tag -width Ds
-.It Ic .export Ar variable ...
+.It Ic .export Ar variable No ...
 Export the specified global variable.
 If no variable list is provided, all globals are exported
 except for internal variables (those that start with
@@ -1835,7 +1835,7 @@ For compatibility with other make programs,
 Appending a variable name to
 .Va .MAKE.EXPORTED
 is equivalent to exporting a variable.
-.It Ic .export-env Ar variable ...
+.It Ic .export-env Ar variable No ...
 The same as
 .Ql .export ,
 except that the variable is not appended to
@@ -1844,11 +1844,11 @@ This allows exporting a value to the environment which is different from that
 used by
 .Nm
 internally.
-.It Ic .export-literal Ar variable ...
+.It Ic .export-literal Ar variable No ...
 The same as
 .Ql .export-env ,
 except that variables in the value are not expanded.
-.It Ic .unexport Ar variable ...
+.It Ic .unexport Ar variable No ...
 The opposite of
 .Ql .export .
 The specified global
@@ -1903,39 +1903,39 @@ exits immediately.
 .Ss Conditionals
 The directives for conditionals are:
 .Bl -tag -width Ds
-.It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
+.It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression No ...
 Test the value of an expression.
-.It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
+.It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable No ...
 Test the value of a variable.
-.It Ic .ifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
+.It Ic .ifndef Oo \&! Oc Ns Ar variable Op Ar operator variable No ...
 Test the value of a variable.
-.It Ic .ifmake Oo \&! Oc Ns Ar target Op Ar operator target ...
+.It Ic .ifmake Oo \&! Oc Ns Ar target Op Ar operator target No ...
 Test the target being requested.
-.It Ic .ifnmake Oo \&! Ns Oc Ar target Op Ar operator target ...
+.It Ic .ifnmake Oo \&! Ns Oc Ar target Op Ar operator target No ...
 Test the target being requested.
 .It Ic .else
 Reverse the sense of the last conditional.
-.It Ic .elif Oo \&! Ns Oc Ar expression Op Ar operator expression ...
+.It Ic .elif Oo \&! Ns Oc Ar expression Op Ar operator expression No ...
 A combination of
 .Sq Ic .else
 followed by
 .Sq Ic .if .
-.It Ic .elifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
+.It Ic .elifdef Oo \&! Oc Ns Ar variable Op Ar operator variable No ...
 A combination of
 .Sq Ic .else
 followed by
 .Sq Ic .ifdef .
-.It Ic .elifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
+.It Ic .elifndef Oo \&! Oc Ns Ar variable Op Ar operator variable No ...
 A combination of
 .Sq Ic .else
 followed by
 .Sq Ic .ifndef .
-.It Ic .elifmake Oo \&! Oc Ns Ar target Op Ar operator target ...
+.It Ic .elifmake Oo \&! Oc Ns Ar target Op Ar operator target No ...
 A combination of
 .Sq Ic .else
 followed by
 .Sq Ic .ifmake .
-.It Ic .elifnmake Oo \&! Oc Ns Ar target Op Ar operator target ...
+.It Ic .elifnmake Oo \&! Oc Ns Ar target Op Ar operator target No ...
 A combination of
 .Sq Ic .else
 followed by
@@ -2057,7 +2057,7 @@ For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
 .Pp
 .Bl -tag -compact -width Ds
-.It Ic \&.for Ar variable Oo Ar variable ... Oc Ic in Ar expression
+.It Ic \&.for Ar variable Oo Ar variable No ... Oc Ic in Ar expression
 .It Aq make-lines
 .It Ic \&.endfor
 .El
@@ -2084,7 +2084,7 @@ loop, it causes early termination of the loop, otherwise a parse error.
 .\" TODO: Describe limitations with defined/empty.
 .Ss Other directives
 .Bl -tag -width Ds
-.It Ic .undef Ar variable ...
+.It Ic .undef Ar variable No ...
 Un-define the specified global variables.
 Only global variables can be un-defined.
 .El
