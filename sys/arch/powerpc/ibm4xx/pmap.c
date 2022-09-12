@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2021/09/08 00:17:21 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2022/09/12 08:02:44 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/09/08 00:17:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2022/09/12 08:02:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1184,8 +1184,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			"ori	%1,%1,0x10;"	/* Turn on DMMU for sure */
 			"mtmsr	%1;"
 			"isync;"
-			"mfpid	%1;"
-			"mtpid	%2;"
+			MFPID(%1)
+			MTPID(%2)
 			"isync;"
 		"1:"
 			"dcbst	0,%3;"
@@ -1194,7 +1194,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			"sub.	%4,%4,%5;"
 			"bge	1b;"
 			"sync;"
-			"mtpid	%1;"
+			MTPID(%1)
 			"mtmsr	%0;"
 			"isync;"
 			: "=&r"(msr), "=&r"(opid)
@@ -1239,11 +1239,11 @@ tlb_invalidate_entry(int i)
 		"mfmsr	%0;"
 		"li	%1,0;"
 		"mtmsr	%1;"
-		"mfpid	%1;"
+		MFPID(%1)
 		"tlbre	%2,%3,0;"
 		"andc	%2,%2,%4;"
 		"tlbwe	%2,%3,0;"
-		"mtpid	%1;"
+		MTPID(%1)
 		"mtmsr	%0;"
 		"isync;"
 		: "=&r"(msr), "=&r"(pid), "=&r"(hi)
@@ -1273,16 +1273,16 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		return;
 
 	__asm volatile (
-		"mfpid	%1;"		/* Save PID */
+		MFPID(%1)		/* Save PID */
 		"mfmsr	%2;"		/* Save MSR */
 		"li	%0,0;"		/* Now clear MSR */
 		"mtmsr	%0;"
 		"isync;"
-		"mtpid	%4;"		/* Set PID */
+		MTPID(%4)		/* Set PID */
 		"isync;"
 		"tlbsx.	%0,0,%3;"	/* Search TLB */
 		"isync;"
-		"mtpid	%1;"		/* Restore PID */
+		MTPID(%1)		/* Restore PID */
 		"mtmsr	%2;"		/* Restore MSR */
 		"isync;"
 		"li	%1,1;"
@@ -1373,13 +1373,13 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		"mtmsr	%1;"			/* Clear MSR */
 		"isync;"
 		"tlbwe	%1,%3,0;"		/* Invalidate old entry. */
-		"mfpid	%1;"			/* Save old PID */
-		"mtpid	%2;"			/* Load translation ctx */
+		MFPID(%1)			/* Save old PID */
+		MTPID(%2)			/* Load translation ctx */
 		"isync;"
 		"tlbwe	%4,%3,1;"		/* Set TLB */
 		"tlbwe	%5,%3,0;"
 		"isync;"
-		"mtpid	%1;"			/* Restore PID */
+		MTPID(%1)			/* Restore PID */
 		"mtmsr	%0;"			/* and MSR */
 		"isync;"
 		: "=&r"(msr), "=&r"(pid)

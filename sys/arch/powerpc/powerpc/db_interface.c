@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.58 2021/11/10 16:02:48 msaitoh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.59 2022/09/12 08:02:44 rin Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2021/11/10 16:02:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2022/09/12 08:02:44 rin Exp $");
 
 #define USERACC
 
@@ -641,14 +641,14 @@ db_ppc4xx_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
 	zpr = mfspr(SPR_ZPR);
 	for (i = 0; i < NTLB; i++) {
 		__asm volatile("mfmsr %3;"
-			"mfpid %4;"
+			MFPID(%4)
 			"li %0,0;"
 			"mtmsr %0;"
 			"sync; isync;"
 			"tlbrelo %0,%5;"
 			"tlbrehi %1,%5;"
-			"mfpid %2;"
-			"mtpid %4;"
+			MFPID(%2)
+			MTPID(%4)
 			"mtmsr %3;"
 			"sync; isync"
 			: "=&r" (tlblo), "=&r" (tlbhi), "=r" (pid),
