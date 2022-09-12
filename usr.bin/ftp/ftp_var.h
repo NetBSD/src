@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.84 2015/12/16 23:00:39 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.84.8.1 2022/09/12 14:46:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -269,6 +269,7 @@ GLOBAL	int	unix_server;	/* server is unix, can use binary for ascii */
 GLOBAL	int	unix_proxy;	/* proxy is unix, can use binary for ascii */
 GLOBAL	char	localcwd[MAXPATHLEN];	/* local dir */
 GLOBAL	char	remotecwd[MAXPATHLEN];	/* remote dir */
+GLOBAL	int	remcwdvalid;		/* remotecwd has been updated */
 GLOBAL	char   *username;	/* name of user logged in as. (dynamic) */
 
 GLOBAL	sa_family_t family;	/* address family to use for connections */
@@ -340,7 +341,7 @@ extern	struct option	optiontab[];
 #define DPRINTF(...)	(void)0
 #define DWARN(...)	(void)0
 #else
-#define DWFTP(a)	do a; while (/*CONSTCOND*/0)
+#define DWFTP(a)	do a; while (0)
 #define DPRINTF(...)	DWFTP(if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__))
 #define DWARN(...)	DWFTP(if (ftp_debug) warn(__VA_ARGS__))
 #endif
