@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2022/09/12 06:23:29 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 2022/09/12 08:02:44 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2022/09/12 06:23:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2022/09/12 08:02:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -455,13 +455,13 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"andc	%[tmp],%[msr],%[tmp];"
 		"mtmsr	%[tmp];"
 		"isync;"
-		"mfpid	%[pid];"		/* Save old PID */
+		MFPID(%[pid])			/* Save old PID */
 
 		"srwi.	%[tmp],%[len],0x2;"	/* How many words? */
 		"beq-	2f;"			/* No words. Go do bytes */
 		"mtctr	%[tmp];"
 
-	"1:"	"mtpid	%[ctx];"
+	"1:"	MTPID(%[ctx])
 		"isync;"
 #ifdef PPC_IBM403
 		"lswi	%[tmp],%[uaddr],4;"	/* Load user word */
@@ -471,7 +471,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"addi	%[uaddr],%[uaddr],0x4;"	/* next uaddr word */
 		"sync;"
 
-		"mtpid	%[pid];"
+		MTPID(%[pid])
 		"isync;"
 #ifdef PPC_IBM403
 		"stswi	%[tmp],%[kaddr],4;"	/* Store kernel word */
@@ -487,12 +487,12 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		"beq	10f;"
 		"mtxer	%[tmp];"
 
-		"mtpid	%[ctx];"
+		MTPID(%[ctx])
 		"isync;"
 		"lswx	%[tmp],0,%[uaddr];"	/* Load user bytes */
 		"sync;"
 
-		"mtpid	%[pid];"
+		MTPID(%[pid])
 		"isync;"
 		"stswx	%[tmp],0,%[kaddr];"	/* Store kernel bytes */
 		"dcbst	0,%[kaddr];"		/* flush cache */
@@ -570,7 +570,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"andc	%[tmp],%[msr],%[tmp];"
 		"mtmsr	%[tmp];"
 		"isync;"
-		"mfpid	%[pid];"		/* Save old PID */
+		MFPID(%[pid])			/* Save old PID */
 
 		"srwi.	%[tmp],%[len],0x2;"	/* How many words? */
 		"beq-	2f;"			/* No words. Go do bytes */
@@ -585,7 +585,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"addi	%[kaddr],%[kaddr],0x4;"	/* next kaddr word */
 		"sync;"
 
-		"mtpid	%[ctx];"
+		MTPID(%[ctx])
 		"isync;"
 #ifdef PPC_IBM403
 		"stswi	%[tmp],%[uaddr],4;"	/* Store user word */
@@ -596,7 +596,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"addi	%[uaddr],%[uaddr],0x4;"	/* next uaddr word */
 		"sync;"
 
-		"mtpid	%[pid];"
+		MTPID(%[pid])
 		"isync;"
 		"bdnz	1b;"			/* repeat */
 
@@ -607,13 +607,13 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		"lswx	%[tmp],0,%[kaddr];"	/* Load kernel bytes */
 		"sync;"
 
-		"mtpid	%[ctx];"
+		MTPID(%[ctx])
 		"isync;"
 		"stswx	%[tmp],0,%[uaddr];"	/* Store user bytes */
 		"dcbst	0,%[uaddr];"		/* flush cache */
 		"sync;"
 
-		"mtpid	%[pid];"		/* Restore PID and MSR */
+		MTPID(%[pid])			/* Restore PID and MSR */
 	"10:"	"mtmsr	%[msr];"
 		"isync;"
 

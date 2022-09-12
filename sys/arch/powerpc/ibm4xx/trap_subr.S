@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.29 2020/07/06 10:42:21 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.30 2022/09/12 08:02:44 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -210,9 +210,9 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif
 
 #define	ENABLE_TRANSLATION(pidreg,tmpreg)				\
-	mfpid	pidreg;							\
+	mfspr	pidreg,SPR_PID;						\
 	li	tmpreg,KERNEL_PID;					\
-	mtpid	tmpreg;							\
+	mtspr	SPR_PID,tmpreg;						\
 	mfmsr	tmpreg;							\
 	ori	tmpreg,tmpreg,(PSL_DR|PSL_IR)@l;			\
 	mtmsr	tmpreg;							\
@@ -336,7 +336,7 @@ intrleave_to_kernel:
 	mfsprg1	%r1
 	mtmsr	%r30	/* disable translation */
 	isync
-	mtpid	%r31
+	mtspr	SPR_PID,%r31
 	mfsprg3	%r31
 	mfsprg2	%r30
 	IBM405_ERRATA77_SYNC
@@ -378,7 +378,7 @@ intrleave_to_user:
 	mfsprg1	%r1
 	mtmsr	%r30	/* disable translation */
 	isync
-	mtpid	%r31
+	mtspr	SPR_PID,%r31
 	mfsprg3	%r31
 	mfsprg2	%r30
 	IBM405_ERRATA77_SYNC

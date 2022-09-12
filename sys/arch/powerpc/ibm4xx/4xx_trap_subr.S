@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.9 2020/07/12 21:16:23 rin Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.10 2022/09/12 08:02:44 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -95,12 +95,12 @@ s4xx_miss:
 	.globl	_C_LABEL(pmap_tlbmiss)
 
 	/* If the kernel stack would fault, don't use it. */
-	mfpid	%r30
+	mfspr	%r30,SPR_PID
 	li	%r31,KERNEL_PID
-	mtpid	%r31
+	mtspr	SPR_PID,%r31
 	li	%r31,-FRAMELEN
 	tlbsx.	%r31,%r31,%r1
-	mtpid	%r30
+	mtspr	SPR_PID,%r30
 	beq	1f
 
 	/*
