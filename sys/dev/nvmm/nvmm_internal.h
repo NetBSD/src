@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.20 2021/03/26 15:59:53 reinoud Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.21 2022/09/13 20:10:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -107,6 +107,9 @@ struct nvmm_impl {
 	void (*init)(void);
 	void (*fini)(void);
 	void (*capability)(struct nvmm_capability *);
+	void (*suspend_interrupt)(void);
+	void (*suspend)(void);
+	void (*resume)(void);
 
 	size_t mach_conf_max;
 	const size_t *mach_conf_sizes;
@@ -119,6 +122,8 @@ struct nvmm_impl {
 	void (*machine_create)(struct nvmm_machine *);
 	void (*machine_destroy)(struct nvmm_machine *);
 	int (*machine_configure)(struct nvmm_machine *, uint64_t, void *);
+	void (*machine_suspend)(struct nvmm_machine *);
+	void (*machine_resume)(struct nvmm_machine *);
 
 	int (*vcpu_create)(struct nvmm_machine *, struct nvmm_cpu *);
 	void (*vcpu_destroy)(struct nvmm_machine *, struct nvmm_cpu *);
@@ -128,12 +133,16 @@ struct nvmm_impl {
 	int (*vcpu_inject)(struct nvmm_cpu *);
 	int (*vcpu_run)(struct nvmm_machine *, struct nvmm_cpu *,
 	    struct nvmm_vcpu_exit *);
+	void (*vcpu_suspend)(struct nvmm_machine *, struct nvmm_cpu *);
+	void (*vcpu_resume)(struct nvmm_machine *, struct nvmm_cpu *);
 };
 
 #if defined(__x86_64__)
 extern const struct nvmm_impl nvmm_x86_svm;
 extern const struct nvmm_impl nvmm_x86_vmx;
 #endif
+
+extern volatile bool nvmm_suspending;
 
 static inline bool
 nvmm_return_needed(struct nvmm_cpu *vcpu, struct nvmm_vcpu_exit *exit)
@@ -149,6 +158,10 @@ nvmm_return_needed(struct nvmm_cpu *vcpu, struct nvmm_vcpu_exit *exit)
 	}
 	if (vcpu->comm->stop) {
 		exit->reason = NVMM_VCPU_EXIT_STOPPED;
+		return true;
+	}
+	if (atomic_load_relaxed(&nvmm_suspending)) {
+		exit->reason = NVMM_VCPU_EXIT_NONE;
 		return true;
 	}
 
