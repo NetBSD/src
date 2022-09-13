@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.244 2022/09/07 10:41:34 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.245 2022/09/13 09:47:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.244 2022/09/07 10:41:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.245 2022/09/13 09:47:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -501,10 +501,10 @@ usbd_transfer(struct usbd_xfer *xfer)
 			break;
 		}
 	}
-	SDT_PROBE2(usb, device, xfer, done,  xfer, xfer->ux_status);
-	/* XXX Race to read xfer->ux_status?  */
+	err = xfer->ux_status;
+	SDT_PROBE2(usb, device, xfer, done,  xfer, err);
 	usbd_unlock_pipe(pipe);
-	return xfer->ux_status;
+	return err;
 }
 
 /* Like usbd_transfer(), but waits for completion. */
