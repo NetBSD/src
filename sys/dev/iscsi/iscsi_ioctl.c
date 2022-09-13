@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.32 2020/06/21 23:08:16 chs Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.33 2022/09/13 13:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -494,8 +494,8 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 	if (recover &&
 	    !conn->c_destroy &&
 	    conn->c_recover > MAX_RECOVERY_ATTEMPTS) {
-		DEBC(conn, 1,
-			  ("Kill_connection: Too many recovery attempts, destroying\n"));
+		DEBC(conn, 1, ("Kill_connection: Too many recovery attempts, "
+		               "destroying\n"));
 		conn->c_destroy = TRUE;
 	}
 
@@ -547,6 +547,8 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			}
 			mutex_exit(&iscsi_cleanup_mtx);
 
+			DEBC(conn, 1, ("Send_logout for reason %d\n", logout));
+
 			connection_timeout_start(conn, CONNECTION_TIMEOUT);
 
 			if (!send_logout(conn, conn, logout, FALSE)) {
@@ -591,14 +593,24 @@ done:
  */
 
 void
-kill_session(session_t *sess, uint32_t status, int logout, bool recover)
+kill_session(uint32_t sid, uint32_t status, int logout, bool recover)
 {
+	session_t *sess;
 	connection_t *conn;
 
 	DEB(1, ("ISCSI: kill_session %d, status %d, logout %d, recover %d\n",
-			sess->s_id, status, logout, recover));
+			sid, status, logout, recover));
 
 	mutex_enter(&iscsi_cleanup_mtx);
+
+	sess = find_session(sid);
+	if (sess == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		DEB(5, ("Session %u already gone\n", sid));
+		return;
+	}
+
 	if (sess->s_terminating) {
 		mutex_exit(&iscsi_cleanup_mtx);
 
@@ -648,6 +660,13 @@ kill_session(session_t *sess, uint32_t status, int logout, bool recover)
 	sess->s_sessions.tqe_next = NULL;
 	sess->s_sessions.tqe_prev = NULL;
 
+	/*
+	 * If all connections are already gone, trigger cleanup
+	 * otherwise, the last connection will do this
+	 */
+	if (sess->s_active_connections == 0)
+		iscsi_notify_cleanup();
+
 	mutex_exit(&iscsi_cleanup_mtx);
 
 	/* kill all connections */
@@ -661,6 +680,7 @@ kill_session(session_t *sess, uint32_t status, int logout, bool recover)
 /*
  * create_connection:
  *    Create and init the necessary framework for a connection:
+ *       Take over userland socket
  *       Alloc the connection structure itself
  *       Copy connection parameters
  *       Create the send and receive threads
@@ -689,6 +709,9 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 	    sess->s_active_connections >= sess->s_MaxConnections) {
 		DEBOUT(("Too many connections (max = %d, curr = %d)\n",
 				sess->s_MaxConnections, sess->s_active_connections));
+		/* Always close descriptor */
+		fd_close(par->socket);
+
 		par->status = ISCSI_STATUS_MAXED_CONNECTIONS;
 		return EIO;
 	}
@@ -696,9 +719,34 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 	conn = malloc(sizeof(*conn), M_DEVBUF, M_WAITOK | M_ZERO);
 	if (conn == NULL) {
 		DEBOUT(("No mem for connection\n"));
+
+		/* Always close descriptor */
+		fd_close(par->socket);
+
 		par->status = ISCSI_STATUS_NO_RESOURCES;
 		return EIO;
 	}
+
+	rc = get_socket(par->socket, &conn->c_sock);
+	fd_close(par->socket);
+
+	if (rc) {
+		DEBOUT(("Invalid socket %d\n", par->socket));
+
+		callout_destroy(&conn->c_timeout);
+		rw_destroy(&conn->c_sock_rw);
+		cv_destroy(&conn->c_idle_cv);
+		cv_destroy(&conn->c_ccb_cv);
+		cv_destroy(&conn->c_pdu_cv);
+		cv_destroy(&conn->c_conn_cv);
+		mutex_destroy(&conn->c_lock);
+		free(conn, M_DEVBUF);
+		par->status = ISCSI_STATUS_INVALID_SOCKET;
+		return rc;
+	}
+
+	DEBC(conn, 1, ("get_socket: par_sock=%d, fdesc=%p\n",
+			par->socket, conn->c_sock));
 
 	mutex_enter(&iscsi_cleanup_mtx);
 	/* create a unique ID */
@@ -721,6 +769,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 	cv_init(&conn->c_pdu_cv, "pdupool");
 	cv_init(&conn->c_ccb_cv, "ccbwait");
 	cv_init(&conn->c_idle_cv, "idle");
+	rw_init(&conn->c_sock_rw);
 
 	callout_init(&conn->c_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&conn->c_timeout, connection_timeout_co, conn);
@@ -728,25 +777,6 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 
 	init_sernum(&conn->c_StatSN_buf);
 	create_pdus(conn);
-
-	if ((rc = get_socket(par->socket, &conn->c_sock)) != 0) {
-		DEBOUT(("Invalid socket %d\n", par->socket));
-
-		callout_destroy(&conn->c_timeout);
-		cv_destroy(&conn->c_idle_cv);
-		cv_destroy(&conn->c_ccb_cv);
-		cv_destroy(&conn->c_pdu_cv);
-		cv_destroy(&conn->c_conn_cv);
-		mutex_destroy(&conn->c_lock);
-		free(conn, M_DEVBUF);
-		par->status = ISCSI_STATUS_INVALID_SOCKET;
-		return rc;
-	}
-	DEBC(conn, 1, ("get_socket: par_sock=%d, fdesc=%p\n",
-			par->socket, conn->c_sock));
-
-	/* close the file descriptor */
-	fd_close(par->socket);
 
 	conn->c_threadobj = l;
 	conn->c_login_par = par;
@@ -758,6 +788,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 		DEBOUT(("Can't create rcv thread (rc %d)\n", rc));
 
 		release_socket(conn->c_sock);
+		rw_destroy(&conn->c_sock_rw);
 		callout_destroy(&conn->c_timeout);
 		cv_destroy(&conn->c_idle_cv);
 		cv_destroy(&conn->c_ccb_cv);
@@ -791,6 +822,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *sess,
 
 		release_socket(conn->c_sock);
 		callout_destroy(&conn->c_timeout);
+		rw_destroy(&conn->c_sock_rw);
 		cv_destroy(&conn->c_idle_cv);
 		cv_destroy(&conn->c_ccb_cv);
 		cv_destroy(&conn->c_pdu_cv);
@@ -868,26 +900,31 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *sess,
 	    sess->s_active_connections >= sess->s_MaxConnections) {
 		DEBOUT(("Too many connections (max = %d, curr = %d)\n",
 			sess->s_MaxConnections, sess->s_active_connections));
+
+		/* Always close the desecriptor */
+		fd_close(par->socket);
+
 		par->status = ISCSI_STATUS_MAXED_CONNECTIONS;
 		return EIO;
 	}
 
-	/* close old socket */
+	rw_enter(&conn->c_sock_rw, RW_WRITER);
 	if (conn->c_sock != NULL) {
 		closef(conn->c_sock);
 		conn->c_sock = NULL;
 	}
+	rc = get_socket(par->socket, &conn->c_sock);
+	rw_exit(&conn->c_sock_rw);
+	fd_close(par->socket);
 
-	if ((rc = get_socket(par->socket, &conn->c_sock)) != 0) {
+	if (rc) {
 		DEBOUT(("Invalid socket %d\n", par->socket));
 		par->status = ISCSI_STATUS_INVALID_SOCKET;
 		return rc;
 	}
+
 	DEBC(conn, 1, ("get_socket: par_sock=%d, fdesc=%p\n",
 			par->socket, conn->c_sock));
-
-	/* close the file descriptor */
-	fd_close(par->socket);
 
 	conn->c_threadobj = l;
 	conn->c_login_par = par;
@@ -912,7 +949,7 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *sess,
 	mutex_exit(&conn->c_lock);
 
 	if ((rc = send_login(conn)) != 0) {
-		DEBOUT(("Login failed (rc %d)\n", rc));
+		DEBC(conn, 0, ("Re-Login failed (rc %d)\n", rc));
 		while ((ccb = TAILQ_FIRST(&old_waiting)) != NULL) {
 			TAILQ_REMOVE(&old_waiting, ccb, ccb_chain);
 			wake_ccb(ccb, rc);
@@ -1121,7 +1158,7 @@ login(iscsi_login_parameters_t *par, struct lwp *l, device_t dev)
 		DEB(1, ("Login: map session %d\n", sess->s_id));
 		if (!map_session(sess, dev)) {
 			DEB(1, ("Login: map session %d failed\n", sess->s_id));
-			kill_session(sess, ISCSI_STATUS_MAP_FAILED,
+			kill_session(par->session_id, ISCSI_STATUS_MAP_FAILED,
 					LOGOUT_SESSION, FALSE);
 			par->status = ISCSI_STATUS_MAP_FAILED;
 			return;
@@ -1156,7 +1193,9 @@ logout(iscsi_logout_parameters_t *par)
 	/* If the session exists, this always succeeds */
 	par->status = ISCSI_STATUS_SUCCESS;
 
-	kill_session(session, ISCSI_STATUS_LOGOUT, LOGOUT_SESSION, FALSE);
+	kill_session(par->session_id,
+	    ISCSI_STATUS_LOGOUT, LOGOUT_SESSION,
+	    FALSE);
 }
 
 
@@ -1169,7 +1208,7 @@ logout(iscsi_logout_parameters_t *par)
  *          l        IN: The lwp pointer of the caller
  */
 
-static void
+static int
 add_connection(iscsi_login_parameters_t *par, struct lwp *l)
 {
 	session_t *session;
@@ -1181,12 +1220,15 @@ add_connection(iscsi_login_parameters_t *par, struct lwp *l)
 		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
-		return;
+		return -1;
 	}
 	mutex_exit(&iscsi_cleanup_mtx);
-	if ((par->status = check_login_pars(par)) == 0) {
-		create_connection(par, session, l);
-	}
+
+	par->status = check_login_pars(par);
+	if (par->status)
+		return -1;
+
+	return create_connection(par, session, l);
 }
 
 
@@ -1255,12 +1297,17 @@ restore_connection(iscsi_login_parameters_t *par, struct lwp *l)
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
-
 	if ((conn = find_connection(sess, par->connection_id)) == NULL) {
 		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Connection %d not found in session %d\n",
 				par->connection_id, par->session_id));
 		par->status = ISCSI_STATUS_INVALID_CONNECTION_ID;
+		return;
+	}
+	if (!conn->c_terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
+		DEBC(conn, 0, ("Connection is alive\n"));
+		par->status = ISCSI_STATUS_SUCCESS;
 		return;
 	}
 	mutex_exit(&iscsi_cleanup_mtx);
@@ -1518,11 +1565,13 @@ kill_all_sessions(void)
 {
 	session_t *sess;
 	int rc = 0;
+	uint32_t sid;
 
 	mutex_enter(&iscsi_cleanup_mtx);
 	while ((sess = TAILQ_FIRST(&iscsi_sessions)) != NULL) {
+		sid = sess->s_id;
 		mutex_exit(&iscsi_cleanup_mtx);
-		kill_session(sess, ISCSI_STATUS_DRIVER_UNLOAD, LOGOUT_SESSION,
+		kill_session(sid, ISCSI_STATUS_DRIVER_UNLOAD, LOGOUT_SESSION,
 				FALSE);
 		mutex_enter(&iscsi_cleanup_mtx);
 	}
@@ -1548,7 +1597,6 @@ kill_all_sessions(void)
 void
 handle_connection_error(connection_t *conn, uint32_t status, int dologout)
 {
-
 	DEBC(conn, 0, ("*** Connection Error, status=%d, logout=%d, state=%d\n",
 				   status, dologout, conn->c_state));
 
@@ -1567,7 +1615,7 @@ handle_connection_error(connection_t *conn, uint32_t status, int dologout)
 void
 add_connection_cleanup(connection_t *conn)
 {
-	session_t *sess;
+	session_t *sess = NULL;
 
 	mutex_enter(&iscsi_cleanup_mtx);
 	if (conn->c_in_session) {
@@ -1622,7 +1670,7 @@ connection_timeout_stop(connection_t *conn)
 			kpause("connbusy", false, 1, &iscsi_cleanup_mtx);
 	}
 	mutex_exit(&iscsi_cleanup_mtx);
-}                        
+}
 
 void
 ccb_timeout_co(void *par)
@@ -1710,6 +1758,7 @@ iscsi_cleanup_thread(void *par)
 			callout_halt(&conn->c_timeout, NULL);
 			closef(conn->c_sock);
 			callout_destroy(&conn->c_timeout);
+			rw_destroy(&conn->c_sock_rw);
 			cv_destroy(&conn->c_idle_cv);
 			cv_destroy(&conn->c_ccb_cv);
 			cv_destroy(&conn->c_pdu_cv);

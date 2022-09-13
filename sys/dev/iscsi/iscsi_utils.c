@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.27 2019/04/21 11:45:08 maya Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.28 2022/09/13 13:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -203,21 +203,27 @@ get_ccb(connection_t *conn, bool waitok)
 	session_t *sess = conn->c_session;
 
 	mutex_enter(&sess->s_lock);
-	do {
+	for (;;) {
 		ccb = TAILQ_FIRST(&sess->s_ccb_pool);
+
 		DEB(100, ("get_ccb: ccb = %p, waitok = %d\n", ccb, waitok));
 
 		if (ccb != NULL) {
 			TAILQ_REMOVE(&sess->s_ccb_pool, ccb, ccb_chain);
-		} else {
-			if (!waitok || conn->c_terminating) {
-				mutex_exit(&sess->s_lock);
-				return NULL;
-			}
-			cv_wait(&sess->s_ccb_cv, &sess->s_lock);
+			break;
 		}
-	} while (ccb == NULL);
+
+		if (!waitok)
+			break;
+
+		cv_wait(&sess->s_ccb_cv, &sess->s_lock);
+	}
 	mutex_exit(&sess->s_lock);
+
+	if (ccb == NULL) {
+		DEB(15, ("get_ccb: failed"));
+		return NULL;
+	}
 
 	ccb->ccb_flags = 0;
 	ccb->ccb_timedout = TOUT_NONE;
@@ -454,22 +460,26 @@ get_pdu(connection_t *conn, bool waitok)
 	pdu_t *pdu;
 
 	mutex_enter(&conn->c_lock);
-	do {
+	for (;;) {
 		pdu = TAILQ_FIRST(&conn->c_pdu_pool);
-		if (pdu != NULL)
-			TAILQ_REMOVE(&conn->c_pdu_pool, pdu, pdu_chain);
 
-		if (pdu == NULL) {
-			if (!waitok || conn->c_terminating) {
-				mutex_exit(&conn->c_lock);
-				DEB(15, ("get_pdu: failed"));
-				return NULL;
-			}
-			cv_wait(&conn->c_pdu_cv, &conn->c_lock);
+		if (pdu != NULL) {
+			TAILQ_REMOVE(&conn->c_pdu_pool, pdu, pdu_chain);
+			conn->c_pducount++;
+			break;
 		}
-	} while (pdu == NULL);
-	atomic_inc_uint(&conn->c_pducount);
+
+		if (!waitok)
+			break;
+
+		cv_wait(&conn->c_pdu_cv, &conn->c_lock);
+	}
 	mutex_exit(&conn->c_lock);
+
+	if (pdu == NULL) {
+		DEB(15, ("get_pdu: failed"));
+		return NULL;
+	}
 
 	memset(pdu, 0, sizeof(pdu_t));
 	pdu->pdu_connection = conn;
@@ -497,8 +507,11 @@ free_pdu(pdu_t *pdu)
 
 	KASSERT((pdu->pdu_flags & PDUF_INQUEUE) == 0);
 
-	if (PDUDISP_UNUSED == (pdisp = pdu->pdu_disp))
+	if (PDUDISP_UNUSED == (pdisp = pdu->pdu_disp)) {
+		DEBC(conn, 0, ("freeing UNUSED pdu\n"));
 		return;
+	}
+
 	pdu->pdu_disp = PDUDISP_UNUSED;
 
 	/* free temporary data in this PDU */
@@ -506,7 +519,7 @@ free_pdu(pdu_t *pdu)
 		free(pdu->pdu_temp_data, M_TEMP);
 
 	mutex_enter(&conn->c_lock);
-	atomic_dec_uint(&conn->c_pducount);
+	conn->c_pducount--;
 	TAILQ_INSERT_TAIL(&conn->c_pdu_pool, pdu, pdu_chain);
 	cv_broadcast(&conn->c_pdu_cv);
 	mutex_exit(&conn->c_lock);
