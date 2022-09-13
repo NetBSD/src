@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.11 2022/08/22 13:57:24 hannken Exp $	*/
+/*	$NetBSD: asan.h,v 1.12 2022/09/13 09:39:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef	_AMD64_ASAN_H_
+#define	_AMD64_ASAN_H_
 
 #include <sys/ksyms.h>
 
@@ -294,3 +297,5 @@ kasan_md_unwind(void)
 		}
 	}
 }
+
+#endif	/* _AMD64_ASAN_H_ */
