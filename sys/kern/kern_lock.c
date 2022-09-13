@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.179 2022/09/13 09:14:26 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.180 2022/09/13 09:28:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.179 2022/09/13 09:14:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.180 2022/09/13 09:28:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -195,6 +195,7 @@ _kernel_lock(int nlocks)
 #ifdef LOCKDEBUG
 	static struct cpu_info *kernel_lock_holder;
 	u_int spins = 0;
+	u_int starttime = getticks();
 #endif
 	int s;
 	struct lwp *l = curlwp;
@@ -254,7 +255,8 @@ _kernel_lock(int nlocks)
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
 #ifdef LOCKDEBUG
 			extern int start_init_exec;
-			if (SPINLOCK_SPINOUT(spins) && start_init_exec) {
+			if (SPINLOCK_SPINOUT(spins) && start_init_exec &&
+			    (getticks() - starttime) > 10*hz) {
 				ipi_msg_t msg = {
 					.func = kernel_lock_trace_ipi,
 				};
