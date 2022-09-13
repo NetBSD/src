@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.304 2022/08/24 11:19:25 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.305 2022/09/13 09:40:38 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.304 2022/08/24 11:19:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.305 2022/09/13 09:40:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1949,11 +1949,13 @@ config_detach_enter(device_t dev)
 	 * all new attempts to acquire references to block.
 	 */
 	KASSERTMSG((l = dev->dv_attaching) == NULL,
-	    "lwp %ld [%s] @ %p attaching",
-	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l);
+	    "lwp %ld [%s] @ %p attaching %s",
+	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l,
+	    device_xname(dev));
 	KASSERTMSG((l = dev->dv_detaching) == NULL,
-	    "lwp %ld [%s] @ %p detaching",
-	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l);
+	    "lwp %ld [%s] @ %p detaching %s",
+	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l,
+	    device_xname(dev));
 	dev->dv_detaching = curlwp;
 
 out:	mutex_exit(&config_misc_lock);
@@ -1966,9 +1968,12 @@ config_detach_exit(device_t dev)
 	struct lwp *l __diagused;
 
 	mutex_enter(&config_misc_lock);
+	KASSERTMSG(dev->dv_detaching != NULL, "not detaching %s",
+	    device_xname(dev));
 	KASSERTMSG((l = dev->dv_detaching) == curlwp,
-	    "lwp %ld [%s] @ %p detaching",
-	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l);
+	    "lwp %ld [%s] @ %p detaching %s",
+	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l,
+	    device_xname(dev));
 	dev->dv_detaching = NULL;
 	cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
@@ -2182,9 +2187,12 @@ config_detach_commit(device_t dev)
 	struct lwp *l __diagused;
 
 	mutex_enter(&config_misc_lock);
+	KASSERTMSG(dev->dv_detaching != NULL, "not detaching %s",
+	    device_xname(dev));
 	KASSERTMSG((l = dev->dv_detaching) == curlwp,
-	    "lwp %ld [%s] @ %p detaching",
-	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l);
+	    "lwp %ld [%s] @ %p detaching %s",
+	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l,
+	    device_xname(dev));
 	dev->dv_detached = true;
 	cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
