@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.110 2022/08/23 01:08:04 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.111 2022/09/13 09:38:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.110 2022/08/23 01:08:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.111 2022/09/13 09:38:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1161,6 +1161,13 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 		mii_down(mii);
 		mutex_exit(&unp->unp_miilock);
 	}
+
+	/*
+	 * Now that we have stopped calling mii_tick, bring the MII
+	 * state machine down.
+	 */
+	if (mii)
+		mii_down(mii);
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
