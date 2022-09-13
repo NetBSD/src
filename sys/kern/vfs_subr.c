@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.494 2022/09/13 08:48:20 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.495 2022/09/13 09:13:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.494 2022/09/13 08:48:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.495 2022/09/13 09:13:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1385,11 +1385,24 @@ vtype2dt(enum vtype vt)
 int
 VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
 {
+	int mpsafe = mp->mnt_iflag & IMNT_MPSAFE;
 	int error;
 
-	KERNEL_LOCK(1, NULL);
+	/*
+	 * Note: The first time through, the vfs_mount function may set
+	 * IMNT_MPSAFE, so we have to cache it on entry in order to
+	 * avoid leaking a kernel lock.
+	 *
+	 * XXX Maybe the MPSAFE bit should be set in struct vfsops and
+	 * not in struct mount.
+	 */
+	if (mpsafe) {
+		KERNEL_LOCK(1, NULL);
+	}
 	error = (*(mp->mnt_op->vfs_mount))(mp, a, b, c);
-	KERNEL_UNLOCK_ONE(NULL);
+	if (mpsafe) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
 
 	return error;
 }
@@ -1415,9 +1428,13 @@ VFS_UNMOUNT(struct mount *mp, int a)
 {
 	int error;
 
-	KERNEL_LOCK(1, NULL);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
 	error = (*(mp->mnt_op->vfs_unmount))(mp, a);
-	KERNEL_UNLOCK_ONE(NULL);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
 
 	return error;
 }
