@@ -1,4 +1,4 @@
-/*	$NetBSD: device_impl.h,v 1.4 2022/08/24 11:47:52 riastradh Exp $	*/
+/*	$NetBSD: device_impl.h,v 1.5 2022/09/13 09:43:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ struct device {
 
 	struct lwp	*dv_attaching;	/* thread not yet finished in attach */
 	struct lwp	*dv_detaching;	/* detach lock (config_misc_lock/cv) */
-	bool		dv_detached;	/* config_misc_lock */
+	bool		dv_detach_committed;	/* config_misc_lock */
+	bool		dv_detach_done;		/* dv_detaching */
 
 	size_t		dv_activity_count;
 	void		(**dv_activity_handlers)(device_t, devactive_t);

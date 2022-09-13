@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.305 2022/09/13 09:40:38 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.306 2022/09/13 09:43:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.305 2022/09/13 09:40:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.306 2022/09/13 09:43:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2051,6 +2051,9 @@ config_detach(device_t dev, int flags)
 	} else
 		rv = EOPNOTSUPP;
 
+	KASSERTMSG(!dev->dv_detach_done, "%s detached twice, error=%d",
+	    device_xname(dev), rv);
+
 	/*
 	 * If it was not possible to detach the device, then we either
 	 * panic() (for the forced but failed case), or return an error.
@@ -2060,9 +2063,9 @@ config_detach(device_t dev, int flags)
 		 * Detach failed -- likely EOPNOTSUPP or EBUSY.  Driver
 		 * must not have called config_detach_commit.
 		 */
-		KASSERTMSG(!dev->dv_detached,
-		    "%s committed to detaching and then backed out",
-		    device_xname(dev));
+		KASSERTMSG(!dev->dv_detach_committed,
+		    "%s committed to detaching and then backed out, error=%d",
+		    device_xname(dev), rv);
 		if (flags & DETACH_FORCE) {
 			panic("config_detach: forced detach of %s failed (%d)",
 			    device_xname(dev), rv);
@@ -2073,6 +2076,7 @@ config_detach(device_t dev, int flags)
 	/*
 	 * The device has now been successfully detached.
 	 */
+	dev->dv_detach_done = true;
 
 	/*
 	 * If .ca_detach didn't commit to detach, then do that for it.
@@ -2193,7 +2197,7 @@ config_detach_commit(device_t dev)
 	    "lwp %ld [%s] @ %p detaching %s",
 	    (long)l->l_lid, (l->l_name ? l->l_name : l->l_proc->p_comm), l,
 	    device_xname(dev));
-	dev->dv_detached = true;
+	dev->dv_detach_committed = true;
 	cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
 }
@@ -2706,7 +2710,7 @@ device_lookup_acquire(cfdriver_t cd, int unit)
 retry:	if (unit < 0 || unit >= cd->cd_ndevs ||
 	    (dv = cd->cd_devs[unit]) == NULL ||
 	    dv->dv_del_gen != 0 ||
-	    dv->dv_detached) {
+	    dv->dv_detach_committed) {
 		dv = NULL;
 	} else {
 		/*
