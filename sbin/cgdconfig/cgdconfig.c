@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.59 2022/08/30 08:48:41 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.60 2022/09/13 10:14:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.59 2022/08/30 08:48:41 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.60 2022/09/13 10:14:32 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -858,22 +858,24 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		(void)prog_close(fd);
 
 		/*
-		 * If the shared keys were all verified already, assume
-		 * something is wrong with the disk and give up.  If
-		 * not, flush the cache of the ones that have not been
-		 * verified in case we can try again with passphrase
-		 * re-entry.
+		 * For shared keys: If the shared keys were all
+		 * verified already, assume something is wrong with the
+		 * disk and give up.  If not, flush the cache of the
+		 * ones that have not been verified in case we can try
+		 * again with passphrase re-entry.
 		 */
-		all_verified = 1;
-		SLIST_FOREACH_SAFE(sk, &skh, used, sk1) {
-			all_verified &= sk->verified;
-			if (!sk->verified) {
-				LIST_REMOVE(sk, list);
-				free(sk);
+		if (!SLIST_EMPTY(&skh)) {
+			all_verified = 1;
+			SLIST_FOREACH_SAFE(sk, &skh, used, sk1) {
+				all_verified &= sk->verified;
+				if (!sk->verified) {
+					LIST_REMOVE(sk, list);
+					free(sk);
+				}
 			}
+			if (all_verified)
+				loop = 0;
 		}
-		if (all_verified)
-			loop = 0;
 
 		if (!loop) {
 			warnx("verification failed permanently");
