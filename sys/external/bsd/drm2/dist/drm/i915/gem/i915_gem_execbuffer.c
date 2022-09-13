@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_execbuffer.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_execbuffer.c,v 1.5 2022/09/13 10:14:43 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.5 2022/09/13 10:14:43 riastradh Exp $");
 
 #include <linux/intel-iommu.h>
 #include <linux/dma-resv.h>
@@ -546,8 +546,12 @@ eb_add_vma(struct i915_execbuffer *eb,
 		list_add_tail(&vma->exec_link, &eb->unbound);
 		if (drm_mm_node_allocated(&vma->node))
 			err = i915_vma_unbind(vma);
-		if (unlikely(err))
+		if (unlikely(err)) {
 			vma->exec_flags = NULL;
+			if (i == batch_idx)
+				eb->batch = NULL;
+			eb->vma[i] = NULL;
+		}
 	}
 	return err;
 }
@@ -1906,6 +1910,8 @@ static int eb_move_to_gpu(struct i915_execbuffer *eb)
 
 		__eb_unreserve_vma(vma, flags);
 		vma->exec_flags = NULL;
+		if (err)
+			eb->vma[i] = NULL;
 
 		if (unlikely(flags & __EXEC_OBJECT_HAS_REF))
 			i915_vma_put(vma);
