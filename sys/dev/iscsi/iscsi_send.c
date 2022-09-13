@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.38 2021/06/06 10:39:10 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.39 2022/09/13 13:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 STATIC int
 my_soo_write(connection_t *conn, struct uio *u)
 {
-	struct socket *so = conn->c_sock->f_socket;
+	struct socket *so;
 	int ret;
 #ifdef ISCSI_DEBUG
 	size_t resid = u->uio_resid;
@@ -62,7 +62,15 @@ my_soo_write(connection_t *conn, struct uio *u)
 
 	KASSERT(u->uio_resid != 0);
 
-	ret = (*so->so_send)(so, NULL, u, NULL, NULL, 0, conn->c_threadobj);
+	rw_enter(&conn->c_sock_rw, RW_READER);
+	if (conn->c_sock == NULL) {
+		ret = EIO;
+	} else {
+		so = conn->c_sock->f_socket;
+		ret = (*so->so_send)(so, NULL, u,
+		   NULL, NULL, 0, conn->c_threadobj);
+	}
+	rw_exit(&conn->c_sock_rw);
 
 	DEB(99, ("soo_write done: len = %zu\n", u->uio_resid));
 
@@ -140,6 +148,7 @@ reassign_tasks(connection_t *oldconn)
 	session_t *sess = oldconn->c_session;
 	connection_t *conn;
 	ccb_t *ccb;
+	ccb_list_t old_waiting;
 	pdu_t *pdu = NULL;
 	pdu_t *opdu;
 	int no_tm = 1;
@@ -153,6 +162,10 @@ reassign_tasks(connection_t *oldconn)
 		/* XXX here we need to abort the waiting CCBs */
 		return;
 	}
+
+	TAILQ_INIT(&old_waiting);
+
+	mutex_enter(&oldconn->c_lock);
 
 	if (sess->s_ErrorRecoveryLevel >= 2) {
 		if (oldconn->c_loggedout == NOT_LOGGED_OUT) {
@@ -169,24 +182,34 @@ reassign_tasks(connection_t *oldconn)
 		if (!no_tm && oldconn->c_Time2Wait) {
 			DEBC(conn, 1, ("Time2Wait=%d, hz=%d, waiting...\n",
 						   oldconn->c_Time2Wait, hz));
-			kpause("Time2Wait", false, oldconn->c_Time2Wait * hz, NULL);
+			kpause("Time2Wait", false, oldconn->c_Time2Wait * hz, &oldconn->c_lock);
 		}
 	}
 
-	DEBC(conn, 1, ("Reassign_tasks: Session %d, conn %d -> conn %d, no_tm=%d\n",
-		sess->s_id, oldconn->c_id, conn->c_id, no_tm));
+	while ((ccb = TAILQ_FIRST(&oldconn->c_ccbs_waiting)) != NULL) {
+		suspend_ccb(ccb, FALSE);
+		TAILQ_INSERT_TAIL(&old_waiting, ccb, ccb_chain);
+	}
 
+	mutex_exit(&oldconn->c_lock);
+
+	DEBC(conn, 1, ("Reassign_tasks: S%dC%d -> S%dC%d, no_tm=%d, pdus old %d + new %d\n",
+		sess->s_id, oldconn->c_id, sess->s_id, conn->c_id, no_tm,
+		oldconn->c_pducount, conn->c_pducount));
 
 	/* XXX reassign waiting CCBs to new connection */
 
-	while ((ccb = TAILQ_FIRST(&oldconn->c_ccbs_waiting)) != NULL) {
+	while ((ccb = TAILQ_FIRST(&old_waiting)) != NULL) {
 		/* Copy PDU contents (PDUs are bound to connection) */
 		if ((pdu = get_pdu(conn, TRUE)) == NULL) {
+			DEBC(conn, 0, ("get_pdu failed, terminating=%d\n", conn->c_terminating));
+			/* new connection is terminating */
 			break;
 		}
 
+		TAILQ_REMOVE(&old_waiting, ccb, ccb_chain);
+
 		/* adjust CCB and clone PDU for new connection */
-		TAILQ_REMOVE(&oldconn->c_ccbs_waiting, ccb, ccb_chain);
 
 		opdu = ccb->ccb_pdu_waiting;
 		KASSERT((opdu->pdu_flags & PDUF_INQUEUE) == 0);
@@ -224,7 +247,7 @@ reassign_tasks(connection_t *oldconn)
 		atomic_inc_uint(&conn->c_usecount);
 
 		DEBC(conn, 1, ("CCB %p: Copied PDU %p to %p\n",
-					   ccb, opdu, pdu));
+		   ccb, opdu, pdu));
 
 		/* kill temp pointer that is now referenced by the new PDU */
 		opdu->pdu_temp_data = NULL;
@@ -238,14 +261,24 @@ reassign_tasks(connection_t *oldconn)
 		mutex_exit(&conn->c_lock);
 	}
 
-	if (pdu == NULL) {
-		DEBC(conn, 1, ("Error while copying PDUs in reassign_tasks!\n"));
-		/* give up recovering, the other connection is screwed up as well... */
-		while ((ccb = TAILQ_FIRST(&oldconn->c_ccbs_waiting)) != NULL) {
+	if (TAILQ_FIRST(&old_waiting) != NULL) {
+		DEBC(conn, 0, ("Error while copying PDUs in reassign_tasks!\n"));
+		/*
+		 * give up recovering, the other connection is screwed up
+		 * as well...
+		 */
+
+		while ((ccb = TAILQ_FIRST(&old_waiting)) != NULL) {
+			TAILQ_REMOVE(&old_waiting, ccb, ccb_chain);
+
+			DEBC(oldconn, 1, ("Wake CCB %p for connection %d, terminating %d\n",
+			   ccb, ccb->ccb_connection->c_id, oldconn->c_terminating));
+			mutex_enter(&oldconn->c_lock);
+			suspend_ccb(ccb, TRUE);
+			mutex_exit(&oldconn->c_lock);
 			wake_ccb(ccb, oldconn->c_terminating);
 		}
-		/* XXX some CCBs might have been moved to new connection, but how is the
-		 * new connection handled or killed ? */
+
 		return;
 	}
 
@@ -262,7 +295,7 @@ reassign_tasks(connection_t *oldconn)
 
 				/* update CmdSN */
 				DEBC(conn, 1, ("Resend Updating CmdSN - old %d, new %d\n",
-					   ccb->ccb_CmdSN, sn));
+				   ccb->ccb_CmdSN, sn));
 				ccb->ccb_CmdSN = sn;
 				pdu->pdu_hdr.pduh_p.command.CmdSN = htonl(ccb->ccb_CmdSN);
 			}
@@ -1637,10 +1670,10 @@ send_io_command(session_t *session, uint64_t lun, scsireq_t *req,
 void
 connection_timeout(connection_t *conn)
 {
-
-	if (++conn->c_num_timeouts > MAX_CONN_TIMEOUTS)
+	if (++conn->c_num_timeouts > MAX_CONN_TIMEOUTS) {
+		DEBC(conn, 1, ("connection timeout %d\n", conn->c_num_timeouts));
 		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT, NO_LOGOUT);
-	else {
+	} else {
 		if (conn->c_state == ST_FULL_FEATURE)
 			send_nop_out(conn, NULL);
 

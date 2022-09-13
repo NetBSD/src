@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.26 2020/06/21 23:08:16 chs Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.27 2022/09/13 13:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 /* Includes we need in all files */
 
 #include <sys/param.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
@@ -354,6 +356,8 @@ struct connection_s {
 
 	struct lwp			*c_threadobj;
 		/* proc/thread pointer of socket owner */
+
+	krwlock_t			c_sock_rw;
 	struct file			*c_sock;	/* the connection's socket */
 	session_t			*c_session;
 					/* back pointer to the owning session */
@@ -366,7 +370,7 @@ struct connection_s {
 	int				c_recover; /* recovery count */
 		/* (reset on first successful data transfer) */
 	volatile unsigned		c_usecount; /* number of active CCBs */
-	volatile unsigned		c_pducount; /* number of active PDUs */
+	unsigned			c_pducount; /* number of active PDUs */
 
 	bool				c_destroy; /* conn will be destroyed */
 	bool				c_in_session;
@@ -537,8 +541,8 @@ extern bool iscsi_hex_bignums;	/* Whether to encode parameters in hex or base64 
 #define DEBOUT(x) printf x
 #define DEB(lev,x) { if (iscsi_debug_level >= lev) printf x ;}
 #define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
-				conn ? conn->c_session->s_id : -1, \
-				conn ? conn->c_id : -1); printf x ;}}
+			conn && conn->c_session ? conn->c_session->s_id : -1, \
+			conn ? conn->c_id : -1); printf x ;}}
 
 #define STATIC static
 
@@ -646,7 +650,7 @@ void iscsi_notify_cleanup(void);
 void add_event(iscsi_event_t, uint32_t, uint32_t, uint32_t);
 
 void kill_connection(connection_t *, uint32_t, int, bool);
-void kill_session(session_t *, uint32_t, int, bool);
+void kill_session(uint32_t, uint32_t, int, bool);
 int kill_all_sessions(void);
 void handle_connection_error(connection_t *, uint32_t, int);
 void add_connection_cleanup(connection_t *);

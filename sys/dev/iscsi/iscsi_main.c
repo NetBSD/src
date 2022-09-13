@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.40 2022/04/14 16:50:26 pgoyette Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.41 2022/09/13 13:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -418,9 +418,10 @@ unmap_session(session_t *sess)
 	int rv = 1;
 
 	if ((dev = sess->s_child_dev) != NULL) {
-		sess->s_child_dev = NULL;
 		if (config_detach(dev, 0))
 			rv = 0;
+		if (rv)
+			sess->s_child_dev = NULL;
 	}
 
 	return rv;
