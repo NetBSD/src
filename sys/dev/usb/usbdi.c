@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.245 2022/09/13 09:47:17 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.246 2022/09/13 10:32:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.245 2022/09/13 09:47:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.246 2022/09/13 10:32:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1642,6 +1642,15 @@ usbd_xfer_timeout_task(void *cookie)
 		goto out;
 
 	/*
+	 * After this point, no further timeout probing will happen for
+	 * the current incarnation of the timeout, so make the next
+	 * usbd_xfer_schedule_timout schedule a new callout.
+	 * usbd_xfer_probe_timeout has already processed any reset.
+	 */
+	KASSERT(!xfer->ux_timeout_reset);
+	xfer->ux_timeout_set = false;
+
+	/*
 	 * May have completed or been aborted, but we're the only one
 	 * who can time it out.  If it has completed or been aborted,
 	 * no need to timeout.
@@ -1681,15 +1690,6 @@ usbd_xfer_probe_timeout(struct usbd_xfer *xfer)
 
 	/* The timeout must be set.  */
 	KASSERT(xfer->ux_timeout_set);
-
-	/*
-	 * After this point, no further timeout probing will happen for
-	 * the current incarnation of the timeout, so make the next
-	 * usbd_xfer_schedule_timout schedule a new callout.
-	 * usbd_xfer_probe_timeout has already processed any reset.
-	 */
-	KASSERT(!xfer->ux_timeout_reset);
-	xfer->ux_timeout_set = false;
 
 	/*
 	 * Neither callout nor task may be pending; they execute
