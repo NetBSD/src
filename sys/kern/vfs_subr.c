@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.493 2022/03/28 12:38:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.494 2022/09/13 08:48:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.493 2022/03/28 12:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.494 2022/09/13 08:48:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -827,11 +827,11 @@ sched_sync(void *arg)
 				 *
 				 * If we locked it yet arrive here, it's
 				 * likely that lazy sync is in progress and
-				 * so the vnode still has dirty metadata. 
+				 * so the vnode still has dirty metadata.
 				 * syncdelay is mainly to get this vnode out
 				 * of the way so we do not consider it again
 				 * "soon" in this loop, so the delay time is
-				 * not critical as long as it is not "soon". 
+				 * not critical as long as it is not "soon".
 				 * While write-back strategy is the file
 				 * system's domain, we expect write-back to
 				 * occur no later than syncdelay seconds
@@ -1393,7 +1393,7 @@ VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
 
 	return error;
 }
-	
+
 int
 VFS_START(struct mount *mp, int a)
 {
@@ -1409,7 +1409,7 @@ VFS_START(struct mount *mp, int a)
 
 	return error;
 }
-	
+
 int
 VFS_UNMOUNT(struct mount *mp, int a)
 {
