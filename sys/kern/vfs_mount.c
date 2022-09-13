@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.96 2022/08/26 11:03:53 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.97 2022/09/13 09:35:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.96 2022/08/26 11:03:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.97 2022/09/13 09:35:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -549,6 +549,7 @@ vflushnext(struct vnode_iterator *marker, int *when)
 		yield();
 		*when = getticks() + hz / 10;
 	}
+	preempt_point();
 	return vfs_vnode_iterator_next1(marker, NULL, NULL, true);
 }
 
