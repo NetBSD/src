@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.84 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.85 2022/09/13 20:10:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.84 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.85 2022/09/13 20:10:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3135,6 +3135,41 @@ vmx_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
 	}
 }
 
+static void
+vmx_vcpu_suspend(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	struct cpu_info *vmcs_ci;
+
+	KASSERT(cpudata->vmcs_refcnt == 0);
+
+	vmcs_ci = cpudata->vmcs_ci;
+	cpudata->vmcs_ci = (void *)0x00FFFFFFFFFFFFFF; /* clobber */
+
+	kpreempt_disable();
+	if (vmcs_ci == NULL) {
+		/* VMCS is inactive, nothing to do.  */
+	} else if (vmcs_ci != curcpu()) {
+		/* VMCS is active on a remote CPU; clear it there.  */
+		vmx_vmclear_remote(vmcs_ci, cpudata->vmcs_pa);
+	} else {
+		/* VMCS is active on this CPU; clear it here.  */
+		vmx_vmclear(&cpudata->vmcs_pa);
+	}
+	kpreempt_enable();
+}
+
+static void
+vmx_vcpu_resume(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+
+	KASSERT(cpudata->vmcs_refcnt == 0);
+
+	/* Mark VMCS as inactive.  */
+	cpudata->vmcs_ci = NULL;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static void
@@ -3463,11 +3498,41 @@ vmx_init_l1tf(void)
 }
 
 static void
+vmx_suspend_interrupt(void)
+{
+
+	/*
+	 * Generates IPIs, which cause #VMEXITs.  No other purpose for
+	 * the TLB business; the #VMEXIT triggered by IPI is the only
+	 * effect that matters here.
+	 */
+	pmap_tlb_shootdown(pmap_kernel(), -1, PTE_G, TLBSHOOT_NVMM);
+}
+
+static void
+vmx_suspend(void)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, vmx_change_cpu, (void *)false, NULL);
+	xc_wait(xc);
+}
+
+static void
+vmx_resume(void)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, vmx_change_cpu, (void *)true, NULL);
+	xc_wait(xc);
+}
+
+static void
 vmx_init(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	uint64_t xc, msr;
+	uint64_t msr;
 	struct vmxon *vmxon;
 	uint32_t revision;
 	u_int descs[4];
@@ -3524,8 +3589,7 @@ vmx_init(void)
 		vmxon->ident = __SHIFTIN(revision, VMXON_IDENT_REVISION);
 	}
 
-	xc = xc_broadcast(0, vmx_change_cpu, (void *)true, NULL);
-	xc_wait(xc);
+	vmx_resume();
 }
 
 static void
@@ -3542,11 +3606,9 @@ vmx_fini_asid(void)
 static void
 vmx_fini(void)
 {
-	uint64_t xc;
 	size_t i;
 
-	xc = xc_broadcast(0, vmx_change_cpu, (void *)false, NULL);
-	xc_wait(xc);
+	vmx_suspend();
 
 	for (i = 0; i < MAXCPUS; i++) {
 		if (vmxoncpu[i].pa != 0)
@@ -3573,6 +3635,9 @@ const struct nvmm_impl nvmm_x86_vmx = {
 	.ident = vmx_ident,
 	.init = vmx_init,
 	.fini = vmx_fini,
+	.suspend_interrupt = vmx_suspend_interrupt,
+	.suspend = vmx_suspend,
+	.resume = vmx_resume,
 	.capability = vmx_capability,
 	.mach_conf_max = NVMM_X86_MACH_NCONF,
 	.mach_conf_sizes = NULL,
@@ -3588,5 +3653,7 @@ const struct nvmm_impl nvmm_x86_vmx = {
 	.vcpu_setstate = vmx_vcpu_setstate,
 	.vcpu_getstate = vmx_vcpu_getstate,
 	.vcpu_inject = vmx_vcpu_inject,
-	.vcpu_run = vmx_vcpu_run
+	.vcpu_run = vmx_vcpu_run,
+	.vcpu_suspend = vmx_vcpu_suspend,
+	.vcpu_resume = vmx_vcpu_resume,
 };
