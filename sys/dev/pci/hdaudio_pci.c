@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.12 2022/03/21 09:12:09 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.13 2022/09/13 11:47:54 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.12 2022/03/21 09:12:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.13 2022/09/13 11:47:54 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,6 +95,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3HS_U_HDA) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_4HS_H_CAVS) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5HS_LP_HDA) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6HS_LP_HDA) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_CAVS) },
 
 	PCI_COMPAT_EOL
