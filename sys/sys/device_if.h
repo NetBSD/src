@@ -1,7 +1,9 @@
-/*	$NetBSD: device_if.h,v 1.6 2018/03/04 18:07:34 kre Exp $	*/
+/*	$NetBSD: device_if.h,v 1.7 2022/09/13 08:30:57 riastradh Exp $	*/
 
 #ifndef	_SYS_DEVICE_IF_H
 #define	_SYS_DEVICE_IF_H
+
+#include <sys/stdint.h>
 
 struct device;
 typedef struct device *device_t;
