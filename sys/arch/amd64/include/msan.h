@@ -1,4 +1,4 @@
-/*	$NetBSD: msan.h,v 1.7 2022/08/22 13:21:47 riastradh Exp $	*/
+/*	$NetBSD: msan.h,v 1.8 2022/09/13 09:39:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef	_AMD64_MSAN_H_
+#define	_AMD64_MSAN_H_
 
 #include <sys/ksyms.h>
 
@@ -275,3 +278,5 @@ kmsan_md_unwind(void)
 		}
 	}
 }
+
+#endif	/* _AMD64_MSAN_H_ */
