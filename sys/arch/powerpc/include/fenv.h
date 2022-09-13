@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.6 2019/10/30 02:44:29 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.7 2022/09/13 01:22:12 rin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -177,7 +177,7 @@ fesetexceptflag(const fexcept_t *__flagp, int __excepts)
 	union __fpscr __r;
 
 	if (__excepts & FE_INVALID)
-		__excepts |= FE_ALL_EXCEPT;
+		__excepts |= FE_ALL_INVALID;
 	__mffs(&__r.__d);
 	__r.__bits.__reg &= ~__excepts;
 	__r.__bits.__reg |= *__flagp & __excepts;
