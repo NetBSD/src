@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.66 2022/08/30 08:48:24 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.66 2022/08/30 08:48:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,8 +594,6 @@ nvme_suspend(struct nvme_softc *sc)
 int
 nvme_resume(struct nvme_softc *sc)
 {
-	int ioq_entries = nvme_ioq_size;
-	uint64_t cap;
 	int i, error;
 
 	error = nvme_disable(sc);
@@ -613,23 +611,12 @@ nvme_resume(struct nvme_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_nq; i++) {
-		cap = nvme_read8(sc, NVME_CAP);
-		if (ioq_entries > NVME_CAP_MQES(cap))
-			ioq_entries = NVME_CAP_MQES(cap);
-		sc->sc_q[i] = nvme_q_alloc(sc, i + 1, ioq_entries,
-		    sc->sc_dstrd);
-		if (sc->sc_q[i] == NULL) {
-			error = ENOMEM;
-			device_printf(sc->sc_dev, "unable to allocate io q %d"
-			    "\n", i);
-			goto disable;
-		}
+		nvme_q_reset(sc, sc->sc_q[i]);
 		if (nvme_q_create(sc, sc->sc_q[i]) != 0) {
 			error = EIO;
 			device_printf(sc->sc_dev, "unable to create io q %d"
 			    "\n", i);
-			nvme_q_free(sc, sc->sc_q[i]);
-			goto free_q;
+			goto disable;
 		}
 	}
 
@@ -637,9 +624,6 @@ nvme_resume(struct nvme_softc *sc)
 
 	return 0;
 
-free_q:
-	while (i --> 0)
-		nvme_q_free(sc, sc->sc_q[i]);
 disable:
 	(void)nvme_disable(sc);
 
