@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.40 2019/11/27 17:56:08 christos Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.41 2022/09/13 08:34:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,24 +31,25 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.40 2019/11/27 17:56:08 christos Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.41 2022/09/13 08:34:37 riastradh Exp $");
 #endif
 
 #include <sys/types.h>
+
 #include <sys/drvctlio.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <iconv.h>
+#include <inttypes.h>
+#include <langinfo.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
-#include <locale.h>
-#include <langinfo.h>
-#include <iconv.h>
-#include <ctype.h>
-#include <inttypes.h>
 
 #include <dev/usb/usb.h>
 
@@ -62,8 +63,9 @@ struct stringtable {
 	const char *string;
 };
 
-__dead static void usage(void);
-static void getstrings(const struct stringtable *, int, int, const char **, const char **);
+static void usage(void) __dead;
+static void getstrings(const struct stringtable *, int, int,
+    const char **, const char **);
 static void usbdev(int f, int a, int rec);
 static void usbdump(int f);
 static void dumpone(char *name, int f, int addr);
@@ -100,7 +102,7 @@ u2t(const char *utf8str, char *termstr)
 		insz = strlen(utf8str);
 		outsz = MAXLEN - 1;
 		icres = iconv(ic, __UNCONST(&utf8str), &insz, &termstr,
-			&outsz);
+		    &outsz);
 		if (icres != (size_t)-1) {
 			*termstr = '\0';
 			return;
@@ -184,8 +186,9 @@ struct stringtable class_strings[] = {
 };
 
 static void
-getstrings(const struct stringtable *table,
-           int row, int col, const char **rp, const char **cp) {
+getstrings(const struct stringtable *table, int row, int col,
+    const char **rp, const char **cp)
+{
 	static char rbuf[5], cbuf[5];
 
 	snprintf(rbuf, sizeof(rbuf), "0x%02x", row);
@@ -245,9 +248,9 @@ usbdev(int f, int a, int rec)
 	u2t(di.udi_serial, serial);
 	if (verbose) {
 		printf("%s(0x%04x), %s(0x%04x), rev %s(0x%04x)",
-		       product, di.udi_productNo,
-		       vendor, di.udi_vendorNo,
-			di.udi_release, di.udi_releaseNo);
+		    product, di.udi_productNo,
+		    vendor, di.udi_vendorNo,
+		    di.udi_release, di.udi_releaseNo);
 		if (di.udi_serial[0])
 			printf(", serial %s", serial);
 	} else
@@ -255,40 +258,43 @@ usbdev(int f, int a, int rec)
 	printf("\n");
 	if (verbose > 1 && di.udi_class != UICLASS_UNSPEC) {
 		const char *cstr, *sstr;
-		getstrings(class_strings, di.udi_class, di.udi_subclass, &cstr, &sstr);
+		getstrings(class_strings, di.udi_class, di.udi_subclass,
+		    &cstr, &sstr);
 		printf("%*s  %s(0x%02x), %s(0x%02x), proto %u\n", indent, "",
-			cstr, di.udi_class, sstr, di.udi_subclass,
-			di.udi_protocol);
+		    cstr, di.udi_class, sstr, di.udi_subclass,
+		    di.udi_protocol);
 	}
 	if (showdevs) {
-		for (i = 0; i < USB_MAX_DEVNAMES; i++)
-			if (di.udi_devnames[i][0])
+		for (i = 0; i < USB_MAX_DEVNAMES; i++) {
+			if (di.udi_devnames[i][0]) {
 				printf("%*s  %s\n", indent, "",
-				       di.udi_devnames[i]);
+				    di.udi_devnames[i]);
+			}
+		}
 	}
 	if (!rec)
 		return;
 
-	unsigned int nports = di.udi_nports;
+	unsigned int p, nports = di.udi_nports;
 
-	for (unsigned int p = 0; p < nports && p < __arraycount(di.udi_ports); p++) {
+	for (p = 0; p < nports && p < __arraycount(di.udi_ports); p++) {
 		int s = di.udi_ports[p];
 		if (s >= USB_MAX_DEVICES) {
 			if (verbose) {
-				printf("%*sport %d %s\n", indent+1, "", p+1,
-				       s == USB_PORT_ENABLED ? "enabled" :
-				       s == USB_PORT_SUSPENDED ? "suspended" : 
-				       s == USB_PORT_POWERED ? "powered" :
-				       s == USB_PORT_DISABLED ? "disabled" :
-				       "???");
-				
+				printf("%*sport %d %s\n", indent + 1, "",
+				    p + 1,
+				    s == USB_PORT_ENABLED ? "enabled" :
+				    s == USB_PORT_SUSPENDED ? "suspended" :
+				    s == USB_PORT_POWERED ? "powered" :
+				    s == USB_PORT_DISABLED ? "disabled" :
+				    "???");
 			}
 			continue;
 		}
 		indent++;
 		printf("%*s", indent, "");
 		if (verbose)
-			printf("port %d ", p+1);
+			printf("port %d ", p + 1);
 		if (s == 0)
 			printf("addr 0 should never happen!\n");
 		else
@@ -311,6 +317,7 @@ usbdump(int f)
 static void
 dumpone(char *name, int f, int addr)
 {
+
 	if (verbose)
 		printf("Controller %s:\n", name);
 	indent = 0;
@@ -325,8 +332,8 @@ static int
 getusbcount_device(int fd, const char *dev, int depth)
 {
 	struct devlistargs laa = {
-	    .l_childname = NULL,
-	    .l_children = 0,
+		.l_childname = NULL,
+		.l_children = 0,
 	};
 	size_t i;
 	size_t children;
@@ -350,7 +357,7 @@ getusbcount_device(int fd, const char *dev, int depth)
 		err(EXIT_FAILURE, "DRVLISTDEV");
 	children = laa.l_children;
 
-	laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
+	laa.l_childname = calloc(children, sizeof(laa.l_childname[0]));
 	if (laa.l_childname == NULL)
 		err(EXIT_FAILURE, "out of memory");
 	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
@@ -359,7 +366,8 @@ getusbcount_device(int fd, const char *dev, int depth)
 		err(EXIT_FAILURE, "DRVLISTDEV: number of children grew");
 
 	for (i = 0; i < laa.l_children; i++) {
-		nbusses += getusbcount_device(fd, laa.l_childname[i], depth+1);
+		nbusses += getusbcount_device(fd, laa.l_childname[i],
+		    depth + 1);
 	}
 
 	return nbusses;
@@ -375,7 +383,7 @@ main(int argc, char **argv)
 	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			addr = strtoi(optarg, NULL, 10, 0, USB_MAX_DEVICES - 1,
 			    &error);
@@ -426,9 +434,10 @@ main(int argc, char **argv)
 			}
 			ncont++;
 		}
-		if (verbose && ncont == 0)
+		if (verbose && ncont == 0) {
 			printf("%s: no USB controllers found\n",
 			    getprogname());
+		}
 	} else {
 		f = open(dev, O_RDONLY);
 		if (f >= 0)
