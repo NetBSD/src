@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.211 2022/04/09 23:39:07 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.212 2022/09/13 10:18:58 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.211 2022/04/09 23:39:07 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.212 2022/09/13 10:18:58 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1539,14 +1539,13 @@ pid_t __fork(void);
 __dso_public pid_t
 __locked_fork(int *my_errno)
 {
-	sigset_t mask;
 	pid_t result;
 
-	_rtld_exclusive_enter(&mask);
+	_rtld_shared_enter();
 	result = __fork();
 	if (result == -1)
 		*my_errno = errno;
-	_rtld_exclusive_exit(&mask);
+	_rtld_shared_exit();
 
 	return result;
 }
