@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.46 2020/08/01 02:04:55 riastradh Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.47 2022/09/13 09:37:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.46 2020/08/01 02:04:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.47 2022/09/13 09:37:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.46 2020/08/01 02:04:55 riastradh 
 #include <sys/mutex.h>
 #include <sys/sched.h>
 #include <sys/kmem.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -76,6 +77,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	if (uaddr == 0) {
 		return ENOMEM;
 	}
+	kmsan_orig((void *)uaddr, USPACE, KMSAN_TYPE_POOL, __RET_ADDR);
 	if ((flag & KTHREAD_TS) != 0) {
 		lc = SCHED_OTHER;
 	} else {
