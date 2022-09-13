@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.2 2022/08/20 23:49:31 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.3 2022/09/13 09:40:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,6 +80,7 @@
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 
+#include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
