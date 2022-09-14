@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.26 2022/07/16 07:23:51 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.27 2022/09/14 01:05:42 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.26 2022/07/16 07:23:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.27 2022/09/14 01:05:42 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -3982,6 +3982,8 @@ mfii_create_sensors(struct mfii_softc *sc)
 	if (rv) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to register with sysmon (rv = %d)\n", rv);
+		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 	}
 	return rv;
 
