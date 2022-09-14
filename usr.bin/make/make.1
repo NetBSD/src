@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.343 2022/09/12 07:21:10 rillig Exp $
+.\"	$NetBSD: make.1,v 1.344 2022/09/14 20:18:24 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -643,9 +643,9 @@ In other contexts (most variable modifiers, string literals in conditions),
 expands to a single dollar sign.
 .Pp
 References to variables have the form
-.Ql \&${ Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns }
+.Cm \&${ Ns Ar name Ns Oo Ns Cm \&: Ns Ar modifiers Oc Ns Cm \&}
 or
-.Ql \&$( Ns Ar name Ns Oo \&: Ns Ar modifiers Oc Ns ) .
+.Cm \&$( Ns Ar name Ns Oo Ns Cm \&: Ns Ar modifiers Oc Ns Cm \&) .
 If the variable name consists of only a single character,
 the surrounding curly braces or parentheses are not required.
 This shorter form is not recommended.
@@ -1911,11 +1911,11 @@ Test the value of a variable.
 Test the value of a variable.
 .It Ic .ifmake Oo \&! Oc Ns Ar target Op Ar operator target No ...
 Test the target being requested.
-.It Ic .ifnmake Oo \&! Ns Oc Ar target Op Ar operator target No ...
+.It Ic .ifnmake Oo \&! Oc Ns Ar target Op Ar operator target No ...
 Test the target being requested.
 .It Ic .else
 Reverse the sense of the last conditional.
-.It Ic .elif Oo \&! Ns Oc Ar expression Op Ar operator expression No ...
+.It Ic .elif Oo \&! Oc Ns Ar expression Op Ar operator expression No ...
 A combination of
 .Sq Ic .else
 followed by
@@ -1948,11 +1948,11 @@ The
 .Ar operator
 may be any one of the following:
 .Bl -tag -width "Cm XX"
-.It Cm \&|\&|
+.It Ic \&|\&|
 Logical OR.
-.It Cm \&&&
+.It Ic \&&&
 Logical AND; of higher precedence than
-.Dq \&|\&| .
+.Sq Ic \&|\&| .
 .El
 .Pp
 .Nm
@@ -1960,8 +1960,7 @@ only evaluates a conditional as far as is necessary to determine its value.
 Parentheses can be used to override the operator precedence.
 The boolean operator
 .Sq Ic \&!
-may be used to logically negate an entire
-conditional.
+may be used to logically negate an entire conditional.
 It is of higher precedence than
 .Sq Ic \&&& .
 .Pp
