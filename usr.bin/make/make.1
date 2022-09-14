@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.344 2022/09/14 20:18:24 rillig Exp $
+.\"	$NetBSD: make.1,v 1.345 2022/09/14 20:39:23 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1145,9 +1145,12 @@ This allows expansions using the
 .Cm \&:@
 modifier to put a newline between
 iterations of the loop rather than a space.
-For example, the printing of
-.Sq Va MAKE_PRINT_VAR_ON_ERROR
-could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}.
+For example, in case of an error,
+.Nm
+prints the variable names and their values using:
+.Bd -literal -offset indent
+${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
+.Ed
 .It Va .OBJDIR
 A path to the directory where the targets are built.
 Its value is determined by trying to
@@ -1155,13 +1158,13 @@ Its value is determined by trying to
 to the following directories in order and using the first match:
 .Bl -enum
 .It
-.Ev ${MAKEOBJDIRPREFIX}${.CURDIR}
+.Cm ${MAKEOBJDIRPREFIX} Ns Cm ${.CURDIR}
 .Pp
 (Only if
 .Sq Ev MAKEOBJDIRPREFIX
 is set in the environment or on the command line.)
 .It
-.Ev ${MAKEOBJDIR}
+.Cm ${MAKEOBJDIR}
 .Pp
 (Only if
 .Sq Ev MAKEOBJDIR
@@ -1178,7 +1181,7 @@ is set in the environment or on the command line.)
 .Pp
 Variable expansion is performed on the value before it is used,
 so expressions such as
-.Dl ${.CURDIR:S,^/usr/src,/var/obj,}
+.Cm ${.CURDIR:S,^/usr/src,/var/obj,}
 may be used.
 This is especially useful with
 .Sq Ev MAKEOBJDIR .
@@ -1260,8 +1263,7 @@ The colon-separated
 list of directories that
 .Nm
 searches for files.
-The variable is supported for compatibility with old make programs only,
-use
+This variable is supported for compatibility with old make programs only, use
 .Sq Va .PATH
 instead.
 .El
@@ -1274,12 +1276,13 @@ The general format of a variable expansion is:
 .Pp
 Each modifier begins with a colon.
 To escape a colon, precede it with a backslash
-.Pq Ql \e .
+.Ql \e .
 .Pp
 A list of indirect modifiers can be specified via a variable, as follows:
 .Pp
 .Bd -literal -offset indent
 .Ar modifier_variable\^ Li \&= Ar modifier Ns Oo Ic \&: Ns No ... Oc
+
 .Sm off
 .Ic \&${ Ar variable Ic \&:${ Ar modifier_variable Ic \&} Oo Ic \&: No ... Oc Ic \&}
 .Sm on
