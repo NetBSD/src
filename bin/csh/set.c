@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.38 2021/08/15 12:16:02 christos Exp $ */
+/* $NetBSD: set.c,v 1.39 2022/09/14 16:15:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.38 2021/08/15 12:16:02 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.39 2022/09/14 16:15:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,8 @@ static struct varent *madrof(Char *, struct varent *);
 static void unsetv1(struct varent *);
 static void exportpath(Char **);
 static void balance(struct varent *, int, int);
+
+static int wantediting;
 
 #ifdef EDIT
 static const char *
@@ -148,26 +150,8 @@ update_vars(Char *vp)
 	filec = 1;
 #endif
 #ifdef EDIT
-    else if (eq(vp, STRedit)) {
-	HistEvent ev;
-	Char *vn = value(STRhistchars);
-
-	editing = 1;
-	el = el_init_fd(getprogname(), cshin, cshout, csherr,
-	    SHIN, SHOUT, SHERR);
-	el_set(el, EL_EDITOR, *vn ? short2str(vn) : "emacs");
-	el_set(el, EL_PROMPT, printpromptstr);
-	el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
-	el_set(el, EL_SAFEREAD, 1);
-	el_set(el, EL_ADDFN, "rl-complete",
-	    "ReadLine compatible completion function", _el_fn_complete);
-	el_set(el, EL_BIND, "^I", adrof(STRfilec) ? "rl-complete" : "ed-insert",
-	    NULL);
-	hi = history_init();
-	history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
-	loadhist(Histlist.Hnext);
-	el_set(el, EL_HIST, history, hi);
-    }
+    else if (eq(vp, STRedit))
+	wantediting = 1;
 #endif
 }
 
@@ -566,16 +550,45 @@ unset(Char **v, struct command *t)
 	filec = 0;
 #endif
 #ifdef EDIT
-    if (adrof(STRedit) == 0) {
+    if (adrof(STRedit) == 0)
+	wantediting = 0;
+#endif
+}
+
+extern int insource;
+void
+updateediting(void)
+{
+    if (insource || wantediting == editing)
+	return;
+
+    if (wantediting) {
+	HistEvent ev;
+	Char *vn = value(STRhistchars);
+
+	el = el_init_fd(getprogname(), cshin, cshout, csherr,
+	    SHIN, SHOUT, SHERR);
+	el_set(el, EL_EDITOR, *vn ? short2str(vn) : "emacs");
+	el_set(el, EL_PROMPT, printpromptstr);
+	el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
+	el_set(el, EL_SAFEREAD, 1);
+	el_set(el, EL_ADDFN, "rl-complete",
+	    "ReadLine compatible completion function", _el_fn_complete);
+	el_set(el, EL_BIND, "^I", adrof(STRfilec) ? "rl-complete" : "ed-insert",
+	    NULL);
+	hi = history_init();
+	history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
+	loadhist(Histlist.Hnext);
+	el_set(el, EL_HIST, history, hi);
+    } else {
 	if (el)
 	    el_end(el);
 	if (hi)
 	    history_end(hi);
 	el = NULL;
 	hi = NULL;
-	editing = 0;
     }
-#endif
+    editing = wantediting;
 }
 
 void

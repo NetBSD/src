@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.53 2020/08/09 00:53:38 dholland Exp $ */
+/* $NetBSD: csh.c,v 1.54 2022/09/14 16:15:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.53 2020/08/09 00:53:38 dholland Exp $");
+__RCSID("$NetBSD: csh.c,v 1.54 2022/09/14 16:15:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1152,6 +1152,8 @@ process(int catch)
 	    free(seterr);
 	    seterr = NULL;
 	}
+
+	updateediting();
 
 	/*
 	 * Echo not only on VERBOSE, but also with history expansion. If there
