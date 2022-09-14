@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.23 2022/09/14 05:54:07 rin Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.24 2022/09/14 05:55:08 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.23 2022/09/14 05:54:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.24 2022/09/14 05:55:08 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ fpu_ftos(struct fpemu *fe, struct fpn *fp, int *cx)
 	if (round(fe, fp, cx) && fp->fp_mant[3] == SNG_EXP(2))
 		exp++;
 	if (exp >= SNG_EXP_INFNAN) {
-		*cx |= FPSCR_OX;
+		*cx |= FPSCR_OX | FPSCR_FI;
 		/* overflow to inf or to max single */
 		if (toinf(fe, sign)) {
 			*cx |= FPRF_SIGN(sign) | FPSCR_FU;
@@ -486,7 +486,7 @@ fpu_ftod(struct fpemu *fe, struct fpn *fp, int *cx)
 	if (round(fe, fp, cx) && fp->fp_mant[2] == DBL_EXP(2))
 		exp++;
 	if (exp >= DBL_EXP_INFNAN) {
-		*cx |= FPSCR_OX;
+		*cx |= FPSCR_OX | FPSCR_FI;
 		/* overflow to inf or to max double */
 		if (toinf(fe, sign)) {
 			*cx |= FPRF_SIGN(sign) | FPSCR_FU;
