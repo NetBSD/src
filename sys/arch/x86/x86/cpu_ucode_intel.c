@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.19 2022/09/15 01:30:56 msaitoh Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.20 2022/09/15 14:34:22 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.19 2022/09/15 01:30:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.20 2022/09/15 14:34:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -111,8 +111,10 @@ static int
 cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
     struct intel1_ucode_header *buf)
 {
+	struct intel1_ucode_ext_table *ehdr;
 	uint32_t data_size, total_size, payload_size, ext_size;
 	uint32_t sum;
+	uint32_t *p;
 	int i;
 
 	if ((buf->uh_header_ver != 1) || (buf->uh_loader_rev != 1))
@@ -143,21 +145,32 @@ cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
 	if (payload_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Verify checksum of update data and header. Exclude extended
-	 * signature.
-	 */
+	/* Verify checksum of update data and header(s). */
 	sum = 0;
-	for (i = 0; i < (payload_size / sizeof(uint32_t)); i++) {
-		sum += *((uint32_t *)buf + i);
-	}
+	p = (uint32_t *)buf;
+	for (i = 0; i < (payload_size / sizeof(uint32_t)); i++)
+		sum += p[i];
 	if (sum != 0)
 		return EINVAL;
 
-	/* Extended table size. Ignored for now. */
 	ext_size = total_size - payload_size;
-	if (ext_size > 0)
-		printf("This image has extended signature table.\n");
+	if (ext_size > 0) {
+		/* This image has extended signature table. */
+		ehdr = (struct intel1_ucode_ext_table *)
+		    ((uint8_t *)buf + sizeof(struct intel1_ucode_header) +
+			data_size);
+		payload_size =
+		    sizeof(struct intel1_ucode_ext_table) +
+		    sizeof(struct intel1_ucode_proc_signature) *
+		    ehdr->uet_count;
+		    
+		sum = 0;
+		p = (uint32_t *)ehdr;
+		for (i = 0; i < (payload_size / sizeof(uint32_t)); i++)
+			sum += p[i];
+		if (sum != 0)
+			return EINVAL;
+	}
 
 	return 0;
 }
