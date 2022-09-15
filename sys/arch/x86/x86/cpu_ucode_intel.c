@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.19 2022/09/15 01:30:56 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.19 2022/09/15 01:30:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -118,35 +118,27 @@ cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
 	if ((buf->uh_header_ver != 1) || (buf->uh_loader_rev != 1))
 		return EINVAL;
 
-	/*
-	 * Data size.
-	 */
-	if (buf->uh_data_size == 0) {
+	/* Data size. */
+	if (buf->uh_data_size == 0)
 		data_size = 2000;
-	} else {
+	else
 		data_size = buf->uh_data_size;
-	}
 	if ((data_size % 4) != 0)
 		return EINVAL;
 	if (data_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Total size.
-	 */
-	if (buf->uh_total_size == 0) {
+	/* Total size. */
+	if (buf->uh_total_size == 0)
 		total_size = data_size + 48;
-	} else {
+	else
 		total_size = buf->uh_total_size;
-	}
 	if ((total_size % 1024) != 0)
 		return EINVAL;
 	if (total_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Payload size.
-	 */
+	/* Payload size. */
 	payload_size = data_size + 48;
 	if (payload_size > sc->sc_blobsize)
 		return EINVAL;
@@ -162,13 +154,10 @@ cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
 	if (sum != 0)
 		return EINVAL;
 
-	/*
-	 * Extended table size. Ignored for now.
-	 */
+	/* Extended table size. Ignored for now. */
 	ext_size = total_size - payload_size;
-	if (ext_size > 0) {
-		printf("This image has extended signature table.");
-	}
+	if (ext_size > 0)
+		printf("This image has extended signature table.\n");
 
 	return 0;
 }
@@ -198,7 +187,8 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		/* Make the buffer 16 byte aligned. */
 		newbufsize = sc->sc_blobsize + 15;
 		uha = kmem_alloc(newbufsize, KM_SLEEP);
-		uh = (struct intel1_ucode_header *)roundup2((uintptr_t)uha, 16);
+		uh =
+		    (struct intel1_ucode_header *)roundup2((uintptr_t)uha, 16);
 		memcpy(uh, sc->sc_blob, sc->sc_blobsize);
 	}
 
