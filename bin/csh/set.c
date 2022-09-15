@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.39 2022/09/14 16:15:51 christos Exp $ */
+/* $NetBSD: set.c,v 1.40 2022/09/15 11:35:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.39 2022/09/14 16:15:51 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.40 2022/09/15 11:35:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,9 @@ static void unsetv1(struct varent *);
 static void exportpath(Char **);
 static void balance(struct varent *, int, int);
 
+#ifdef EDIT
 static int wantediting;
 
-#ifdef EDIT
 static const char *
 alias_text(void *dummy __unused, const char *name)
 {
@@ -555,6 +555,7 @@ unset(Char **v, struct command *t)
 #endif
 }
 
+#ifdef EDIT
 extern int insource;
 void
 updateediting(void)
@@ -590,6 +591,7 @@ updateediting(void)
     }
     editing = wantediting;
 }
+#endif
 
 void
 unset1(Char *v[], struct varent *head)
