@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2022/09/12 07:38:32 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2022/09/15 06:44:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2022/09/12 07:38:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2022/09/15 06:44:18 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -253,7 +253,7 @@ u_int	pmap_page_colormask;
 #define PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
 #define PMAP_IS_ACTIVE(pm)						\
-	((pm) == pmap_kernel() || 					\
+	((pm) == pmap_kernel() ||					\
 	 (pm) == curlwp->l_proc->p_vmspace->vm_map.pmap)
 
 /* Forward function declarations */
@@ -290,7 +290,7 @@ struct pool_allocator pmap_pv_page_allocator = {
 #define	pmap_tlb_miss_lock_enter()	pmap_md_tlb_miss_lock_enter()
 #define	pmap_tlb_miss_lock_exit()	pmap_md_tlb_miss_lock_exit()
 #else
-kmutex_t pmap_tlb_miss_lock 		__cacheline_aligned;
+kmutex_t pmap_tlb_miss_lock		__cacheline_aligned;
 
 static void
 pmap_tlb_miss_lock_init(void)
@@ -1369,7 +1369,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (resident) {
 		if (pte_to_paddr(opte) != pa) {
 			KASSERT(!is_kernel_pmap_p);
-		    	const pt_entry_t rpte = pte_nv_entry(false);
+			const pt_entry_t rpte = pte_nv_entry(false);
 
 			pmap_addr_range_check(pmap, va, va + NBPG, __func__);
 			pmap_pte_process(pmap, va, va + NBPG, pmap_pte_remove,
@@ -1870,7 +1870,7 @@ pmap_pvlist_check(struct vm_page_md *mdpg)
 		    colors, VM_PAGEMD_UNCACHED_P(mdpg));
 #endif
 	} else {
-    		KASSERT(pv->pv_next == NULL);
+		KASSERT(pv->pv_next == NULL);
 	}
 #endif /* DEBUG */
 }
