@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.56 2022/09/09 14:35:27 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.57 2022/09/15 14:24:00 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.56 2022/09/09 14:35:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.57 2022/09/15 14:24:00 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -429,7 +429,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				DPRINTF(FPE_INSN,
 					("fpu_execute: Store DBL at %p\n",
 						(void *)addr));
-				if (copyout(&fs->fpreg[rt], (void *)addr, size)) {
+				if (copyout(&FR(rt), (void *)addr, size)) {
 					fe->fe_addr = addr;
 					return (FAULT);
 				}
@@ -439,7 +439,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			FPU_EMU_EVCNT_INCR(fpload);
 			DPRINTF(FPE_INSN, ("fpu_execute: Load from %p\n",
 				(void *)addr));
-			if (copyin((const void *)addr, &fs->fpreg[rt], size)) {
+			if (copyin((const void *)addr, &FR(rt), size)) {
 				fe->fe_addr = addr;
 				return (FAULT);
 			}
