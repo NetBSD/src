@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.32 2022/09/08 07:05:42 skrll Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.33 2022/09/16 03:55:53 skrll Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.32 2022/09/08 07:05:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.33 2022/09/16 03:55:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -854,6 +854,9 @@ struct aq_txring {
 	int txr_index;
 	kmutex_t txr_mutex;
 	bool txr_active;
+	bool txr_stopping;
+	bool txr_sending;
+	time_t txr_lastsent;
 
 	pcq_t *txr_pcq;
 	void *txr_softint;
@@ -878,6 +881,7 @@ struct aq_rxring {
 	kmutex_t rxr_mutex;
 	bool rxr_active;
 	bool rxr_discarding;
+	bool rxr_stopping;
 	struct mbuf *rxr_receiving_m;		/* receiving jumboframe */
 	struct mbuf *rxr_receiving_m_last;	/* last mbuf of jumboframe */
 
@@ -934,10 +938,12 @@ struct aq_firmware_ops {
 
 #define AQ_LOCK(sc)		mutex_enter(&(sc)->sc_mutex);
 #define AQ_UNLOCK(sc)		mutex_exit(&(sc)->sc_mutex);
+#define AQ_LOCKED(sc)		KASSERT(mutex_owned(&(sc)->sc_mutex));
 
 /* lock for FW2X_MPI_{CONTROL,STATE]_REG read-modify-write */
 #define AQ_MPI_LOCK(sc)		mutex_enter(&(sc)->sc_mpi_mutex);
 #define AQ_MPI_UNLOCK(sc)	mutex_exit(&(sc)->sc_mpi_mutex);
+#define AQ_MPI_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_mpi_mutex));
 
 
 struct aq_softc {
@@ -1018,6 +1024,15 @@ struct aq_softc {
 	int sc_ec_capenable;		/* last ec_capenable */
 	unsigned short sc_if_flags;	/* last if_flags */
 
+	bool sc_tx_sending;
+	bool sc_stopping;
+
+	struct workqueue *sc_reset_wq;
+	struct work sc_reset_work;
+	volatile unsigned sc_reset_pending;
+
+	bool sc_trigger_reset;
+
 #ifdef AQ_EVENT_COUNTERS
 	aq_hw_stats_s_t sc_statistics[2];
 	int sc_statistics_idx;
@@ -1059,13 +1074,14 @@ static void aq_ifmedia_status(struct ifnet * const, struct ifmediareq *);
 static int aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set);
 static int aq_ifflags_cb(struct ethercom *);
 static int aq_init(struct ifnet *);
+static int aq_init_locked(struct ifnet *);
 static void aq_send_common_locked(struct ifnet *, struct aq_softc *,
     struct aq_txring *, bool);
 static int aq_transmit(struct ifnet *, struct mbuf *);
 static void aq_deferred_transmit(void *);
 static void aq_start(struct ifnet *);
 static void aq_stop(struct ifnet *, int);
-static void aq_watchdog(struct ifnet *);
+static void aq_stop_locked(struct ifnet *, bool);
 static int aq_ioctl(struct ifnet *, unsigned long, void *);
 
 static int aq_txrx_rings_alloc(struct aq_softc *);
@@ -1075,6 +1091,10 @@ static void aq_tx_pcq_free(struct aq_softc *, struct aq_txring *);
 
 static void aq_initmedia(struct aq_softc *);
 static void aq_enable_intr(struct aq_softc *, bool, bool);
+
+static void aq_handle_reset_work(struct work *, void *);
+static void aq_unset_stopping_flags(struct aq_softc *);
+static void aq_set_stopping_flags(struct aq_softc *);
 
 #if NSYSMON_ENVSYS > 0
 static void aq_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
@@ -1118,6 +1138,12 @@ static int fw2x_get_stats(struct aq_softc *, aq_hw_stats_s_t *);
 #if NSYSMON_ENVSYS > 0
 static int fw2x_get_temperature(struct aq_softc *, uint32_t *);
 #endif
+
+#ifndef AQ_WATCHDOG_TIMEOUT
+#define AQ_WATCHDOG_TIMEOUT 5
+#endif
+static int aq_watchdog_timeout = AQ_WATCHDOG_TIMEOUT;
+
 
 static const struct aq_firmware_ops aq_fw1x_ops = {
 	.reset = fw1x_reset,
@@ -1370,8 +1396,19 @@ aq_attach(device_t parent, device_t self, void *aux)
 	if (error != 0)
 		goto attach_failure;
 
-	callout_init(&sc->sc_tick_ch, 0);
+	callout_init(&sc->sc_tick_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_tick_ch, aq_tick, sc);
+
+	char wqname[MAXCOMLEN];
+	snprintf(wqname, sizeof(wqname), "%sReset", device_xname(sc->sc_dev));
+	error = workqueue_create(&sc->sc_reset_wq, wqname,
+	    aq_handle_reset_work, sc, PRI_SOFTNET, IPL_SOFTCLOCK,
+	    WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create reset workqueue\n");
+		goto attach_failure;
+	}
 
 	sc->sc_intr_moderation_enable = CONFIG_INTR_MODERATION_ENABLE;
 
@@ -1423,7 +1460,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 		ifp->if_transmit = aq_transmit;
 	ifp->if_start = aq_start;
 	ifp->if_stop = aq_stop;
-	ifp->if_watchdog = aq_watchdog;
+	ifp->if_watchdog = NULL;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* initialize capabilities */
@@ -1551,9 +1588,7 @@ aq_detach(device_t self, int flags __unused)
 
 	if (sc->sc_iosize != 0) {
 		if (ifp->if_softc != NULL) {
-			const int s = splnet();
 			aq_stop(ifp, 0);
-			splx(s);
 		}
 
 		for (i = 0; i < AQ_NINTR_MAX; i++) {
@@ -2753,6 +2788,7 @@ static int
 aq_ifmedia_change(struct ifnet * const ifp)
 {
 	struct aq_softc * const sc = ifp->if_softc;
+
 	aq_link_speed_t rate = AQ_LINK_NONE;
 	aq_link_fc_t fc = AQ_FC_NONE;
 	aq_link_eee_t eee = AQ_EEE_DISABLE;
@@ -3828,10 +3864,67 @@ aq_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 #endif
 
+
+
+static bool
+aq_watchdog_check(struct aq_softc * const sc)
+{
+
+	AQ_LOCKED(sc);
+
+	bool ok = true;
+	for (u_int n = 0; n < sc->sc_nqueues; n++) {
+		struct aq_txring *txring = &sc->sc_queue[n].txring;
+
+		mutex_enter(&txring->txr_mutex);
+		if (txring->txr_sending &&
+		    time_uptime - txring->txr_lastsent > aq_watchdog_timeout)
+			ok = false;
+
+		mutex_exit(&txring->txr_mutex);
+
+		if (!ok)
+			return false;
+	}
+
+	if (sc->sc_trigger_reset) {
+		/* debug operation, no need for atomicity or reliability */
+		sc->sc_trigger_reset = 0;
+		return false;
+	}
+
+	return true;
+}
+
+
+
+static bool
+aq_watchdog_tick(struct ifnet *ifp)
+{
+	struct aq_softc * const sc = ifp->if_softc;
+
+	AQ_LOCKED(sc);
+
+	if (!sc->sc_trigger_reset && aq_watchdog_check(sc))
+		return true;
+
+	if (atomic_swap_uint(&sc->sc_reset_pending, 1) == 0) {
+		workqueue_enqueue(sc->sc_reset_wq, &sc->sc_reset_work, NULL);
+	}
+
+	return false;
+}
+
 static void
 aq_tick(void *arg)
 {
-	struct aq_softc *sc = arg;
+	struct aq_softc * const sc = arg;
+
+	AQ_LOCK(sc);
+	if (sc->sc_stopping) {
+		AQ_UNLOCK(sc);
+		return;
+	}
 
 	if (sc->sc_poll_linkstat || sc->sc_detect_linkstat) {
 		sc->sc_detect_linkstat = false;
@@ -3843,13 +3936,12 @@ aq_tick(void *arg)
 		aq_update_statistics(sc);
 #endif
 
-	if (sc->sc_poll_linkstat
-#ifdef AQ_EVENT_COUNTERS
-	    || sc->sc_poll_statistics
-#endif
-	    ) {
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+	const bool ok = aq_watchdog_tick(ifp);
+	if (ok)
 		callout_schedule(&sc->sc_tick_ch, hz);
-	}
+
+	AQ_UNLOCK(sc);
 }
 
 /* interrupt enable/disable */
@@ -3931,7 +4023,7 @@ aq_txrx_intr(void *arg)
 static int
 aq_link_intr(void *arg)
 {
-	struct aq_softc *sc = arg;
+	struct aq_softc * const sc = arg;
 	uint32_t status;
 	int nintr = 0;
 
@@ -4229,6 +4321,7 @@ aq_tx_intr(void *arg)
 	hw_head = AQ_READ_REG_BIT(sc, TX_DMA_DESC_HEAD_PTR_REG(ringidx),
 	    TX_DMA_DESC_HEAD_PTR);
 	if (hw_head == txring->txr_considx) {
+		txring->txr_sending = false;
 		goto tx_intr_done;
 	}
 
@@ -4256,12 +4349,9 @@ aq_tx_intr(void *arg)
 
 	IF_STAT_PUTREF(ifp);
 
-	if (ringidx == 0 && txring->txr_nfree >= AQ_TXD_MIN)
-		ifp->if_flags &= ~IFF_OACTIVE;
-
 	/* no more pending TX packet, cancel watchdog */
 	if (txring->txr_nfree >= AQ_TXD_NUM)
-		ifp->if_timer = 0;
+		txring->txr_sending = false;
 
  tx_intr_done:
 	mutex_exit(&txring->txr_mutex);
@@ -4536,15 +4626,31 @@ aq_ifflags_cb(struct ethercom *ec)
 	return error;
 }
 
+
 static int
 aq_init(struct ifnet *ifp)
 {
 	struct aq_softc * const sc = ifp->if_softc;
-	int i, error = 0;
-
-	aq_stop(ifp, false);
 
 	AQ_LOCK(sc);
+
+	int ret = aq_init_locked(ifp);
+
+	AQ_UNLOCK(sc);
+
+	return ret;
+}
+
+static int
+aq_init_locked(struct ifnet *ifp)
+{
+	struct aq_softc * const sc = ifp->if_softc;
+	int i, error = 0;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	AQ_LOCKED(sc);
+
+	aq_stop_locked(ifp, false);
 
 	aq_set_vlan_filters(sc);
 	aq_set_capability(sc);
@@ -4570,18 +4676,13 @@ aq_init(struct ifnet *ifp)
 	aq_init_rss(sc);
 	aq_hw_l3_filter_set(sc);
 
-	/* need to start callout? */
-	if (sc->sc_poll_linkstat
-#ifdef AQ_EVENT_COUNTERS
-	    || sc->sc_poll_statistics
-#endif
-	    ) {
-		callout_schedule(&sc->sc_tick_ch, hz);
-	}
+	/* ring reset? */
+	aq_unset_stopping_flags(sc);
+
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/* ready */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* start TX and RX */
 	aq_enable_intr(sc, true, true);
@@ -4590,8 +4691,6 @@ aq_init(struct ifnet *ifp)
 
  aq_init_failure:
 	sc->sc_if_flags = ifp->if_flags;
-
-	AQ_UNLOCK(sc);
 
 	return error;
 }
@@ -4603,7 +4702,7 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 	struct mbuf *m;
 	int npkt, error;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (txring->txr_nfree < AQ_TXD_MIN)
 		return;
 
 	for (npkt = 0; ; npkt++) {
@@ -4613,9 +4712,6 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 			IFQ_POLL(&ifp->if_snd, m);
 
 		if (m == NULL)
-			break;
-
-		if (txring->txr_nfree < AQ_TXD_MIN)
 			break;
 
 		if (is_transmit)
@@ -4628,8 +4724,6 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 			/* too many mbuf chains? or not enough descriptors? */
 			m_freem(m);
 			if_statinc(ifp, if_oerrors);
-			if (txring->txr_index == 0 && error == ENOBUFS)
-				ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
@@ -4641,11 +4735,11 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
-	if (txring->txr_index == 0 && txring->txr_nfree < AQ_TXD_MIN)
-		ifp->if_flags |= IFF_OACTIVE;
-
-	if (npkt)
-		ifp->if_timer = 5;
+	if (npkt) {
+		/* Set a watchdog timer in case the chip flakes out. */
+		txring->txr_lastsent = time_uptime;
+		txring->txr_sending = true;
+	}
 }
 
 static void
@@ -4656,7 +4750,7 @@ aq_start(struct ifnet *ifp)
 	struct aq_txring * const txring = &sc->sc_queue[0].txring;
 
 	mutex_enter(&txring->txr_mutex);
-	if (txring->txr_active && !ISSET(ifp->if_flags, IFF_OACTIVE))
+	if (txring->txr_active && !txring->txr_stopping)
 		aq_send_common_locked(ifp, sc, txring, false);
 	mutex_exit(&txring->txr_mutex);
 }
@@ -4701,15 +4795,80 @@ aq_deferred_transmit(void *arg)
 	mutex_exit(&txring->txr_mutex);
 }
 
+
+static void
+aq_unset_stopping_flags(struct aq_softc *sc)
+{
+
+	AQ_LOCKED(sc);
+
+	/* Must unset stopping flags in ascending order. */
+	for (unsigned i = 0; i < sc->sc_nqueues; i++) {
+		struct aq_txring *txr = &sc->sc_queue[i].txring;
+		struct aq_rxring *rxr = &sc->sc_queue[i].rxring;
+
+		mutex_enter(&txr->txr_mutex);
+		txr->txr_stopping = false;
+		mutex_exit(&txr->txr_mutex);
+
+		mutex_enter(&rxr->rxr_mutex);
+		rxr->rxr_stopping = false;
+		mutex_exit(&rxr->rxr_mutex);
+	}
+
+	sc->sc_stopping = false;
+}
+
+static void
+aq_set_stopping_flags(struct aq_softc *sc)
+{
+
+	AQ_LOCKED(sc);
+
+	/* Must unset stopping flags in ascending order. */
+	for (unsigned i = 0; i < sc->sc_nqueues; i++) {
+		struct aq_txring *txr = &sc->sc_queue[i].txring;
+		struct aq_rxring *rxr = &sc->sc_queue[i].rxring;
+
+		mutex_enter(&txr->txr_mutex);
+		txr->txr_stopping = true;
+		mutex_exit(&txr->txr_mutex);
+
+		mutex_enter(&rxr->rxr_mutex);
+		rxr->rxr_stopping = true;
+		mutex_exit(&rxr->rxr_mutex);
+	}
+
+	sc->sc_stopping = true;
+}
+
+
 static void
 aq_stop(struct ifnet *ifp, int disable)
 {
 	struct aq_softc * const sc = ifp->if_softc;
-	int i;
+
+	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
 
 	AQ_LOCK(sc);
+	aq_stop_locked(ifp, disable ? true : false);
+	AQ_UNLOCK(sc);
+}
 
-	ifp->if_timer = 0;
+
+
+static void
+aq_stop_locked(struct ifnet *ifp, bool disable)
+{
+	struct aq_softc * const sc = ifp->if_softc;
+	int i;
+
+	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
+	AQ_LOCKED(sc);
+
+	aq_set_stopping_flags(sc);
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		goto already_stopped;
@@ -4732,25 +4891,25 @@ aq_stop(struct ifnet *ifp, int disable)
 	    AQ_READ_REG_BIT(sc,
 	    RX_DMA_DESC_CACHE_INIT_REG, RX_DMA_DESC_CACHE_INIT) ^ 1);
 
-	ifp->if_timer = 0;
-
  already_stopped:
 	if (!disable) {
 		/* when pmf stop, disable link status intr and callout */
 		aq_enable_intr(sc, false, false);
-		callout_stop(&sc->sc_tick_ch);
+		callout_halt(&sc->sc_tick_ch, &sc->sc_mutex);
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	AQ_UNLOCK(sc);
+	ifp->if_flags &= ~IFF_RUNNING;
+	sc->sc_if_flags = ifp->if_flags;
 }
 
+
 static void
-aq_watchdog(struct ifnet *ifp)
+aq_handle_reset_work(struct work *work, void *arg)
 {
-	struct aq_softc * const sc = ifp->if_softc;
-	int n, head, tail;
+	struct aq_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+
+	printf("%s: watchdog timeout -- resetting\n", ifp->if_xname);
 
 	AQ_LOCK(sc);
 
@@ -4758,15 +4917,15 @@ aq_watchdog(struct ifnet *ifp)
 	    __func__, AQ_READ_REG(sc, AQ_INTR_MASK_REG),
 	    AQ_READ_REG(sc, AQ_INTR_STATUS_REG));
 
-	for (n = 0; n < sc->sc_nqueues; n++) {
-		struct aq_txring * const txring = &sc->sc_queue[n].txring;
-		head = AQ_READ_REG_BIT(sc,
+	for (u_int n = 0; n < sc->sc_nqueues; n++) {
+		struct aq_txring *txring = &sc->sc_queue[n].txring;
+		u_int head = AQ_READ_REG_BIT(sc,
 		    TX_DMA_DESC_HEAD_PTR_REG(txring->txr_index),
-		    TX_DMA_DESC_HEAD_PTR),
-		tail = AQ_READ_REG(sc,
+		    TX_DMA_DESC_HEAD_PTR);
+		u_int tail = AQ_READ_REG(sc,
 		    TX_DMA_DESC_TAIL_PTR_REG(txring->txr_index));
 
-		device_printf(sc->sc_dev, "%s: TXring[%d] HEAD/TAIL=%d/%d\n",
+		device_printf(sc->sc_dev, "%s: TXring[%u] HEAD/TAIL=%u/%u\n",
 		    __func__, txring->txr_index, head, tail);
 
 		aq_tx_intr(txring);
@@ -4774,7 +4933,15 @@ aq_watchdog(struct ifnet *ifp)
 
 	AQ_UNLOCK(sc);
 
+	/* Don't want ioctl operations to happen */
+	IFNET_LOCK(ifp);
+
+	/* reset the interface. */
 	aq_init(ifp);
+
+	IFNET_UNLOCK(ifp);
+
+	atomic_store_relaxed(&sc->sc_reset_pending, 0);
 }
 
 static int
@@ -4783,6 +4950,14 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	struct aq_softc * const sc = ifp->if_softc;
 	struct ifreq * const ifr = data;
 	int error = 0;
+
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERT(IFNET_LOCKED(ifp));
+	}
 
 	const int s = splnet();
 	switch (cmd) {
@@ -4809,14 +4984,15 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			break;
-
-		/*
-		 * Multicast list has changed; set the hardware filter
-		 * accordingly.
-		 */
-		error = aq_set_filter(sc);
+		AQ_LOCK(sc);
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0) {
+		       /*
+			* Multicast list has changed; set the hardware filter
+			* accordingly.
+			*/
+			error = aq_set_filter(sc);
+		}
+		AQ_UNLOCK(sc);
 		break;
 	}
 
