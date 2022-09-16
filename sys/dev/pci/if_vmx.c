@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.10 2022/09/16 03:10:12 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.11 2022/09/16 07:55:34 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.10 2022/09/16 03:10:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.11 2022/09/16 07:55:34 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -185,11 +185,6 @@ struct vmxnet3_comp_ring {
 };
 
 struct vmxnet3_txq_stats {
-#if 0
-	uint64_t vmtxs_opackets;	/* if_opackets */
-	uint64_t vmtxs_obytes;		/* if_obytes */
-	uint64_t vmtxs_omcasts;		/* if_omcasts */
-#endif
 	uint64_t vmtxs_csum;
 	uint64_t vmtxs_tso;
 	uint64_t vmtxs_full;
@@ -219,14 +214,6 @@ struct vmxnet3_txqueue {
 	struct evcnt vxtxq_defrag_failed;
 };
 
-#if 0
-struct vmxnet3_rxq_stats {
-	uint64_t vmrxs_ipackets;	/* if_ipackets */
-	uint64_t vmrxs_ibytes;		/* if_ibytes */
-	uint64_t vmrxs_iqdrops;		/* if_iqdrops */
-	uint64_t vmrxs_ierrors;		/* if_ierrors */
-};
-#endif
 
 struct vmxnet3_rxqueue {
 	kmutex_t *vxrxq_mtx;
@@ -235,9 +222,6 @@ struct vmxnet3_rxqueue {
 	struct mbuf *vxrxq_mtail;
 	struct vmxnet3_rxring vxrxq_cmd_ring[VMXNET3_RXRINGS_PERQ];
 	struct vmxnet3_comp_ring vxrxq_comp_ring;
-#if 0
-	struct vmxnet3_rxq_stats vxrxq_stats;
-#endif
 	struct vmxnet3_rxq_shared *vxrxq_rs;
 	char vxrxq_name[16];
 
