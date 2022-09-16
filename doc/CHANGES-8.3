@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.151 2022/09/12 17:10:34 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.152 2022/09/16 18:40:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2837,4 +2837,27 @@ usr.bin/ftp/version.h                           up to 1.94
 	Fixes for PR 56219 and PR 55857.
 	PR 57003: Support relative redirects.
 	[christos, #1763]
+
+sys/dev/ic/mfireg.h				1.22
+sys/dev/pci/mfii.c				1.16-1.22,1.27 via patch
+share/man/man4/mfii.4				1.3 via patch
+
+	- Fix wrong access in mfii_start().
+	- Add SAS3216,SAS3224,SAS3316 and SAS3324 support.
+	- Add CVPM02 BBU support.
+	- Use bus_space_write_8() if available.
+	- Don't panic on detach if no any sensor device.
+	- Add comment. Sort entries. KNF.
+	[msaitoh, #1764]
+
+sys/dev/usb/xhci.c				1.154
+
+	Accept USB 3.2 in xhci_id_protocols().
+	[msaitoh, ticket #1765]
+
+sys/arch/x86/x86/procfs_machdep.c		1.45
+
+	procfs: on x86 add tdx_guest, brs, hfi, ibt, amx_bf16, amx_tile
+	and amx_int8.
+	[msaitoh, ticket #1766]
 
