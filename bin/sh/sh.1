@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.246 2022/09/16 17:25:09 kre Exp $
+.\"	$NetBSD: sh.1,v 1.247 2022/09/16 17:29:21 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -4798,7 +4798,6 @@ has not been set or unset.
 The default terminal setting for the shell.
 This is inherited by
 children of the shell, and is used in the history editing modes.
-.\" This is explicitly last, not in sort order - please leave!
 .It Ev ToD
 When referenced, uses the value of
 .Ev ToD_FORMAT
@@ -4834,6 +4833,9 @@ to use when formatting
 .Ev ToD
 and if exported, other utilities that deal with times.
 If unset, the system's local wall clock time zone is used.
+.\"
+.\" ==========================================================
+.\" This is explicitly last, not in sort order - please leave!
 .It Ev NETBSD_SHELL
 Unlike the variables previously mentioned,
 this variable is somewhat strange,
