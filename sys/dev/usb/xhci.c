@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.12 2019/11/16 16:30:09 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.13 2022/09/16 18:34:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.12 2019/11/16 16:30:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.13 2022/09/16 18:34:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -781,6 +781,7 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	case 0x0300:
 	case 0x0301:
 	case 0x0310:
+	case 0x0320:
 		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
 		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
 		break;
