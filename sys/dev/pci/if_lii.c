@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.28 2020/01/30 14:02:14 thorpej Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.29 2022/09/16 20:43:17 andvar Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.28 2020/01/30 14:02:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.29 2022/09/16 20:43:17 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -730,7 +730,7 @@ lii_init(struct ifnet *ifp)
 	AT_WRITE_2(sc, ATL2_RXD_NUM_ENTRIES, AT_RXD_NUM);
 
 	/*
-	 * Inter Paket Gap Time = 0x60 (IPGT)
+	 * Inter Packet Gap Time = 0x60 (IPGT)
 	 * Minimum inter-frame gap for RX = 0x50 (MIFG)
 	 * 64-bit Carrier-Sense window = 0x40 (IPGR1)
 	 * 96-bit IPG window = 0x60 (IPGR2)
