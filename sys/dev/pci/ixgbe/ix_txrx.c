@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.99 2022/08/07 09:37:47 andvar Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.100 2022/09/16 03:05:51 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.99 2022/08/07 09:37:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100 2022/09/16 03:05:51 knakahara Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -250,6 +250,11 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		IXGBE_EVC_ADD(&txr->pcq_drops, 1);
 		return ENOBUFS;
 	}
+#ifdef IXGBE_ALWAYS_TXDEFER
+	kpreempt_disable();
+	softint_schedule(txr->txr_si);
+	kpreempt_enable();
+#else
 	if (IXGBE_TX_TRYLOCK(txr)) {
 		ixgbe_mq_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
@@ -279,6 +284,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			kpreempt_enable();
 		}
 	}
+#endif
 
 	return (0);
 } /* ixgbe_mq_start */
