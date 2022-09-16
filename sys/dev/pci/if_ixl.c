@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.87 2022/08/28 07:54:03 skrll Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.88 2022/09/16 03:12:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.87 2022/08/28 07:54:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.88 2022/09/16 03:12:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2883,6 +2883,11 @@ ixl_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
+#ifdef IXL_ALWAYS_TXDEFER
+	kpreempt_disable();
+	softint_schedule(txr->txr_si);
+	kpreempt_enable();
+#else
 	if (mutex_tryenter(&txr->txr_lock)) {
 		ixl_tx_common_locked(ifp, txr, true);
 		mutex_exit(&txr->txr_lock);
@@ -2891,6 +2896,7 @@ ixl_transmit(struct ifnet *ifp, struct mbuf *m)
 		softint_schedule(txr->txr_si);
 		kpreempt_enable();
 	}
+#endif
 
 	return 0;
 }
