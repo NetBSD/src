@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.247 2022/09/16 17:29:21 kre Exp $
+.\"	$NetBSD: sh.1,v 1.248 2022/09/16 17:32:18 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -159,7 +159,7 @@ is correct, as desired, use:
 Otherwise if
 .Ev ENV
 appears to contain a command substitution,
-which is not performed here,
+which is never performed here,
 or if there were no expansions to expand, the value of
 .Ev ENV
 is used as the file name.
@@ -258,8 +258,7 @@ The
 .Ic set Fl o
 name is provided next to the single letter option in
 the description below.
-Some options have only a long name, they are described after
-the flag options, they are used with
+Some options have only a long name, and are used with
 .Fl o
 or
 .Cm +o
@@ -270,7 +269,7 @@ Those are listed in the table below after the options
 with a one letter, flag, equivalent.
 .Pp
 Other options described are for the command line only.
-Specifying a dash
+Specifying using a dash (or minus)
 .Dq Cm \-
 turns the option on, while using a plus
 .Dq Cm +
@@ -411,7 +410,8 @@ For more details see the section
 .Sx LINENO
 below.
 .It Fl m Em monitor
-Turn on job control (set automatically at shell startup when interactive).
+Turn on job control (set automatically at shell startup,
+if not mentioned on the command line, when interactive).
 .It Fl n Em noexec
 Read and parse commands, but do not execute them.
 This is useful for checking the syntax of shell scripts.
@@ -1780,7 +1780,7 @@ the two arguments:
 Expands to the number of positional parameters.
 .It Dv \&?
 Expands to the exit status of the most recent pipeline.
-.It Dv \- No (hyphen, or minus)
+.It Dv \- No (dash, hyphen, or minus)
 Expands to the current option flags (the single-letter
 option names concatenated into a string) as specified on
 invocation, by the set built-in command, or implicitly
