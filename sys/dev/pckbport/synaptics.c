@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.79 2022/05/31 08:43:16 andvar Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.80 2022/09/17 06:33:55 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.79 2022/05/31 08:43:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.80 2022/09/17 06:33:55 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,32 +296,33 @@ pms_synaptics_set_boundaries(void)
 	}
 
 	if (synaptics_button_pct != synaptics_old_button_pct) {
-		synaptics_button_boundary = synaptics_edge_bottom + 
-		    ((unsigned long) synaptics_button_pct * 
-		    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
 		synaptics_old_button_pct = synaptics_button_pct;
-		synaptics_old_button_boundary = synaptics_button_boundary;
 	}
 
 	if (synaptics_button_boundary != synaptics_old_button_boundary) {
 		if (synaptics_button_boundary <= synaptics_edge_bottom) {
 			synaptics_button_pct = 0;
-			synaptics_button_boundary = synaptics_edge_bottom;
+		} else if (synaptics_button_boundary >= synaptics_edge_top) {
+			synaptics_button_pct = 100;
 		} else {
-			synaptics_button_pct = 100 -
-			    ((unsigned long) 100 * synaptics_button_boundary) /
-			    (synaptics_edge_top - synaptics_edge_bottom);
+			synaptics_button_pct =
+			    (synaptics_button_boundary - synaptics_edge_bottom)
+			    * 100
+			    / (synaptics_edge_top - synaptics_edge_bottom);
 		}
-		synaptics_old_button_boundary = synaptics_button_boundary;
+		synaptics_old_button_pct = synaptics_button_pct;
 	}
 
 	/*
-	 * recalculate the button boundary yet again just in case the
-	 * bottom edge changed above.
+	 * calculate the button boundary
 	 */
-	synaptics_button_boundary = synaptics_edge_bottom + 
-	    ((unsigned long) synaptics_button_pct * 
-	    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
+	if (synaptics_edge_top > synaptics_edge_bottom) {
+		synaptics_button_boundary = synaptics_edge_bottom + 
+		    ((unsigned long) synaptics_button_pct * 
+		    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
+	} else {
+		synaptics_button_boundary = synaptics_edge_bottom;
+	}
 	synaptics_old_button_boundary = synaptics_button_boundary;
 
 	synaptics_button2 = synaptics_edge_left +
@@ -1231,7 +1232,7 @@ pms_synaptics_get_fingers(struct pms_softc *psc, u_char w, short z)
 		 * just punt with one finger, if this really is a palm
 		 * then it will be caught later.
 		 */
-		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER) {
+		if (sc->flags & (SYN_FLAG_HAS_MULTI_FINGER | SYN_FLAG_HAS_MULTI_FINGER_REPORT)) {
 			if (w == SYNAPTICS_WIDTH_TWO_FINGERS)
 				fingers = 2;
 			else if (w == SYNAPTICS_WIDTH_THREE_OR_MORE)
@@ -1636,75 +1637,13 @@ skip_position:
 	    nsp.sp_primary, nsp.sp_secondary, v, primary_finger,
 	    secondary_finger);
 
+	pms_synaptics_process_packet(psc, &nsp);
 
-	/* If no fingers and we at least saw the primary finger
-	 * or the buttons changed then process the last packet.
-	 */
-	if (pms_synaptics_get_fingers(psc, nsp.sp_w, nsp.sp_z) == 0 ||
-	    nsp.sp_left != packet.sp_left ||
-	    nsp.sp_right != packet.sp_right ||
-	    nsp.sp_middle != packet.sp_middle ||
-	    nsp.sp_up != packet.sp_up ||
-	    nsp.sp_down != packet.sp_down) {
-		if (nsp.sp_primary == 1) {
-			pms_synaptics_process_packet(psc, &nsp);
-			sc->packet_count[SYN_PRIMARY_FINGER] = 0;
-			sc->packet_count[SYN_SECONDARY_FINGER] = 0;
-		}
-
-		/* clear the fingers seen since we have processed */
+	/* Clear fingers */
+	if ((nsp.sp_primary && nsp.sp_finger_count <= 1) || nsp.sp_secondary) {
 		nsp.sp_primary = 0;
 		nsp.sp_secondary = 0;
 		nsp.sp_finger_status = 0;
-	} else if (nsp.sp_finger_count != packet.sp_finger_count) {
-		/*
-		 * If the number of fingers changes then send the current packet
-		 * for processing and restart the process.
-		 */
-		if (packet.sp_primary == 1) {
-			pms_synaptics_process_packet(psc, &packet);
-			sc->packet_count[SYN_PRIMARY_FINGER]++;
-		}
-
-		sc->packet_count[SYN_PRIMARY_FINGER] = 0;
-		sc->packet_count[SYN_SECONDARY_FINGER] = 0;
-	}
-
-	/* Only one finger, process the new packet */
-	if (nsp.sp_finger_count == 1) {
-		if (nsp.sp_finger_count != packet.sp_finger_count) {
-			sc->packet_count[SYN_PRIMARY_FINGER] = 0;
-			sc->packet_count[SYN_SECONDARY_FINGER] = 0;
-		}
-		pms_synaptics_process_packet(psc, &nsp);
-
-		/* clear the fingers seen since we have processed */
-		nsp.sp_primary = 0;
-		nsp.sp_secondary = 0;
-		nsp.sp_finger_status = 0;
-
-		sc->packet_count[SYN_PRIMARY_FINGER]++;
-	}
-
-	/*
-	 *  More than one finger and we have seen the primary and secondary
-	 * fingers then process the packet.
-	 */
-	if ((nsp.sp_finger_count > 1) && (nsp.sp_primary == 1) 
-	    && (nsp.sp_secondary == 1)) {
-		if (nsp.sp_finger_count != packet.sp_finger_count) {
-			sc->packet_count[SYN_PRIMARY_FINGER] = 0;
-			sc->packet_count[SYN_SECONDARY_FINGER] = 0;
-		}
-		pms_synaptics_process_packet(psc, &nsp);
-
-		/* clear the fingers seen since we have processed */
-		nsp.sp_primary = 0;
-		nsp.sp_secondary = 0;
-		nsp.sp_finger_status = 0;
-
-		sc->packet_count[SYN_PRIMARY_FINGER]++;
-		sc->packet_count[SYN_SECONDARY_FINGER]++;
 	}
 
 	memcpy(&packet, &nsp, sizeof(packet));
@@ -2095,10 +2034,10 @@ synaptics_filter_policy(struct synaptics_softc *sc, int finger, int *history,
 	 * tiny finger movements.
 	 */
 	if (count >= SYN_HIST_SIZE) {
-		a = (history[(count + 0) % SYN_HIST_SIZE] +
-		    history[(count + 1) % SYN_HIST_SIZE]) / 2;
+		a = (history[(count - 2) % SYN_HIST_SIZE] +
+		     history[(count - 1) % SYN_HIST_SIZE]) / 2;
 
-		b = (value + history[(count + 0) % SYN_HIST_SIZE]) / 2;
+		b = (value + history[(count - 1) % SYN_HIST_SIZE]) / 2;
 
 		rv = b - a;
 
@@ -2114,7 +2053,7 @@ synaptics_filter_policy(struct synaptics_softc *sc, int finger, int *history,
 	/*
 	 * Add the new value to the history buffer.
 	 */
-	history[(count + 1) % SYN_HIST_SIZE] = value;
+	history[(count + 0) % SYN_HIST_SIZE] = value;
 
 	return (rv);
 }
@@ -2201,6 +2140,7 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	dy = synaptics_filter_policy(sc, 0,
 	    sc->history_y[SYN_PRIMARY_FINGER], sp->sp_y,
 	    sc->packet_count[SYN_PRIMARY_FINGER]);
+	sc->packet_count[SYN_PRIMARY_FINGER]++;
 
 	if (sp->sp_finger_count > 1) {
 		sdx = synaptics_filter_policy(sc, 1,
@@ -2209,6 +2149,7 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 		sdy = synaptics_filter_policy(sc, 1,
 		    sc->history_y[SYN_SECONDARY_FINGER], sp->sp_sy,
 		    sc->packet_count[SYN_SECONDARY_FINGER]);
+		sc->packet_count[SYN_SECONDARY_FINGER]++;
 		DPRINTF(10, sc, "synaptics_movement: dx %d dy %d sdx %d sdy %d\n",
 		    dx, dy, sdx, sdy);
 	}
@@ -2419,6 +2360,9 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 			sc->rem_x[SYN_SECONDARY_FINGER] = 0;
 			sc->rem_y[SYN_SECONDARY_FINGER] = 0;
 			dx = dy = 0;
+
+			sc->packet_count[SYN_PRIMARY_FINGER] = 0;
+			sc->packet_count[SYN_SECONDARY_FINGER] = 0;
 		}
 	} else {
 		/*
