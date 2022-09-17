@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.99 2020/01/29 06:21:40 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.100 2022/09/17 17:05:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.99 2020/01/29 06:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.100 2022/09/17 17:05:12 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -79,20 +79,20 @@ struct el_softc {
 /*
  * prototypes
  */
-int elintr(void *);
-void elinit(struct el_softc *);
-int elioctl(struct ifnet *, u_long, void *);
-void elstart(struct ifnet *);
-void elwatchdog(struct ifnet *);
-void elreset(struct el_softc *);
-void elstop(struct el_softc *);
-static int el_xmit(struct el_softc *);
-void elread(struct el_softc *, int);
-struct mbuf *elget(struct el_softc *sc, int);
+static int	elintr(void *);
+static void	elinit(struct el_softc *);
+static int	elioctl(struct ifnet *, u_long, void *);
+static void	elstart(struct ifnet *);
+static void	elwatchdog(struct ifnet *);
+static void	elreset(struct el_softc *);
+static void	elstop(struct el_softc *);
+static int	el_xmit(struct el_softc *);
+static void	elread(struct el_softc *, int);
+static struct mbuf *elget(struct el_softc *sc, int);
 static inline void el_hardreset(struct el_softc *);
 
-int elprobe(device_t, cfdata_t, void *);
-void elattach(device_t, device_t, void *);
+static int	elprobe(device_t, cfdata_t, void *);
+static void	elattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(el, sizeof(struct el_softc),
     elprobe, elattach, NULL, NULL);
@@ -103,7 +103,7 @@ CFATTACH_DECL_NEW(el, sizeof(struct el_softc),
  * See if the card is there and at the right place.
  * (XXX - cgd -- needs help)
  */
-int
+static int
 elprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -190,7 +190,7 @@ elprobe(device_t parent, cfdata_t match, void *aux)
  * called, we know that the card exists at the given I/O address.  We still
  * assume that the IRQ given is correct.
  */
-void
+static void
 elattach(device_t parent, device_t self, void *aux)
 {
 	struct el_softc *sc = device_private(self);
@@ -260,7 +260,7 @@ elattach(device_t parent, device_t self, void *aux)
 /*
  * Reset interface.
  */
-void
+static void
 elreset(struct el_softc *sc)
 {
 	int s;
@@ -275,7 +275,7 @@ elreset(struct el_softc *sc)
 /*
  * Stop interface.
  */
-void
+static void
 elstop(struct el_softc *sc)
 {
 
@@ -305,7 +305,7 @@ el_hardreset(struct el_softc *sc)
 /*
  * Initialize interface.
  */
-void
+static void
 elinit(struct el_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -348,7 +348,7 @@ elinit(struct el_softc *sc)
  * giving the receiver a chance between datagrams.  Call only from splnet or
  * interrupt level!
  */
-void
+static void
 elstart(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
@@ -492,7 +492,7 @@ el_xmit(struct el_softc *sc)
 /*
  * Controller interrupt.
  */
-int
+static int
 elintr(void *arg)
 {
 	struct el_softc *sc = arg;
@@ -559,7 +559,7 @@ elintr(void *arg)
 /*
  * Pass a packet to the higher levels.
  */
-void
+static void
 elread(struct el_softc *sc, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -588,7 +588,7 @@ elread(struct el_softc *sc, int len)
  * header stripped.  We copy the data into mbufs.  When full cluster sized
  * units are present we copy into clusters.
  */
-struct mbuf *
+static struct mbuf *
 elget(struct el_softc *sc, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -642,7 +642,7 @@ bad:
 /*
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
-int
+static int
 elioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct el_softc *sc = ifp->if_softc;
@@ -710,7 +710,7 @@ elioctl(struct ifnet *ifp, u_long cmd, void *data)
 /*
  * Device timeout routine.
  */
-void
+static void
 elwatchdog(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
