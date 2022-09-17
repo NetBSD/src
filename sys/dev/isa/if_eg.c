@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.100 2022/09/17 16:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.101 2022/09/17 16:52:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.100 2022/09/17 16:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.101 2022/09/17 16:52:26 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -105,6 +105,7 @@ struct eg_softc {
 	short	 eg_ram;		/* Amount of RAM on the card */
 	uint8_t eg_pcb[EG_PCBLEN];	/* Primary Command Block buffer */
 	uint8_t eg_incount;		/* Number of buffers currently used */
+	bool	eg_txbusy;		/* transmitter is busy */
 	void *	eg_inbuf;		/* Incoming packet buffer */
 	void *	eg_outbuf;		/* Outgoing packet buffer */
 
@@ -520,7 +521,7 @@ eginit(struct eg_softc *sc)
 
 	/* Interface is now `running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->eg_txbusy = false;
 
 	/* Attempt to start output, if any. */
 	egstart(ifp);
@@ -559,7 +560,10 @@ egstart(struct ifnet *ifp)
 	uint16_t *ptr;
 
 	/* Don't transmit if interface is busy or not running */
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	if (sc->eg_txbusy)
 		return;
 
 loop:
@@ -568,7 +572,7 @@ loop:
 	if (m0 == 0)
 		return;
 
-	ifp->if_flags |= IFF_OACTIVE;
+	sc->eg_txbusy = true;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0) {
@@ -591,7 +595,7 @@ loop:
 		aprint_error_dev(sc->sc_dev,
 		    "can't send Send Packet command\n");
 		if_statinc(ifp, if_oerrors);
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->eg_txbusy = false;
 		m_freem(m0);
 		goto loop;
 	}
@@ -665,7 +669,7 @@ egintr(void *arg)
 			if (sc->eg_pcb[8] & 0xf)
 				if_statadd(ifp, if_collisions,
 				    sc->eg_pcb[8] & 0xf);
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			sc->eg_txbusy = false;
 			egstart(&sc->sc_ethercom.ec_if);
 			serviced = 1;
 			break;
