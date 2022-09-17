@@ -1,5 +1,5 @@
-/*	$Id: at91emacvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*      $NetBSD: at91emacvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91emacvar.h,v 1.4 2022/09/17 19:32:01 thorpej Exp $	*/
+/*      $NetBSD: at91emacvar.h,v 1.4 2022/09/17 19:32:01 thorpej Exp $	*/
 /*-
  * Copyright (c) 2007 Embedtronics Oy
  * All rights reserved
@@ -63,6 +63,7 @@ struct emac_softc {
 	int			txqi, txqc;
 	struct emac_qmeta	txq[TX_QLEN];
 	callout_t		emac_tick_ch;
+	bool			tx_busy;
 };
 
 #endif /* _AT91EMACVAR_H_ */

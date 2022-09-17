@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.52 2022/09/17 19:20:14 thorpej Exp $ */
+/*	$NetBSD: if_qn.c,v 1.53 2022/09/17 19:23:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.52 2022/09/17 19:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.53 2022/09/17 19:23:24 thorpej Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -276,7 +276,6 @@ qninit(struct qn_softc *sc)
 		    CLLADDR(ifp->if_sadl)[i]);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->transmit_pending = false;
 
 	qn_flush(sc);
@@ -386,7 +385,10 @@ qnstart(struct ifnet *ifp)
 	int timout = 60000;
 
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	if (sc->transmit_pending)
 		return;
 
 	IF_DEQUEUE(&ifp->if_snd, m);
@@ -426,7 +428,6 @@ qnstart(struct ifnet *ifp)
 	sc->transmit_pending = true;
 	*sc->nic_t_mask = INT_TMT_OK | INT_SIXTEEN_COL;
 
-	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 2;
 }
 
@@ -763,8 +764,6 @@ qnintr(void *arg)
 			/* Must return transmission interrupt mask. */
 			return_tintmask = 1;
 		} else {
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-
 			/* Clear watchdog timer. */
 			sc->sc_ethercom.ec_if.if_timer = 0;
 		}
@@ -777,7 +776,7 @@ qnintr(void *arg)
 	if (rint != 0)
 		qn_rint(sc, rint);
 
-	if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
+	if (!sc->transmit_pending)
 		if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 	else if (return_tintmask == 1)
 		*sc->nic_t_mask = tintmask;
