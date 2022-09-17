@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.90 2022/09/17 18:29:54 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.91 2022/09/17 18:41:26 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.90 2022/09/17 18:29:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.91 2022/09/17 18:41:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,24 +112,26 @@ struct tga_devconfig tga_console_dc;
  * XXX and the non-NULL ones will be overwritten; reset after calling it.
  */
 struct wsdisplay_emulops tga_emulops = {
-	NULL,
-	NULL,
-	tga_putchar,
-	tga_copycols,
-	tga_erasecols,
-	tga_copyrows,
-	tga_eraserows,
-	NULL,
+	.cursor    = NULL,
+	.mapchar   = NULL,
+	.putchar   = tga_putchar,
+	.copycols  = tga_copycols,
+	.erasecols = tga_erasecols,
+	.copyrows  = tga_copyrows,
+	.eraserows = tga_eraserows,
+	.allocattr = NULL,
 	NULL,
 };
 
 struct wsscreen_descr tga_stdscreen = {
-	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
-	&tga_emulops,
-	0, 0,
-	WSSCREEN_REVERSE,
-	NULL,
+	.name = "std",
+	.ncols = 0,
+	.nrows = 0,	/* will be filled in -- XXX shouldn't, it's global */
+	.textops = &tga_emulops,
+	.fontwidth = 0,
+	.fontheight = 0,
+	.capabilities = WSSCREEN_REVERSE,
+	.modecookie = NULL,
 };
 
 const struct wsscreen_descr *_tga_scrlist[] = {
@@ -142,14 +144,14 @@ struct wsscreen_list tga_screenlist = {
 };
 
 struct wsdisplay_accessops tga_accessops = {
-	tga_ioctl,
-	tga_mmap,
-	tga_alloc_screen,
-	tga_free_screen,
-	tga_show_screen,
-	NULL, /* load_font */
-	NULL,
-	NULL,
+	.ioctl        = tga_ioctl,
+	.mmap         = tga_mmap,
+	.alloc_screen = tga_alloc_screen,
+	.free_screen  = tga_free_screen,
+	.show_screen  = tga_show_screen,
+	.load_font    = NULL,
+	.pollc        = NULL,
+	.scroll       = NULL,
 };
 
 static void	tga_blank(struct tga_devconfig *);
