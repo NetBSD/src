@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.52 2022/04/08 10:17:53 andvar Exp $ */
+/* $NetBSD: if_ie.c,v 1.53 2022/09/17 18:58:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.52 2022/04/08 10:17:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.53 2022/09/17 18:58:49 thorpej Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -909,7 +909,6 @@ ieinit(struct ie_softc *sc)
     ptr = setup_rfa(sc, ptr);
 
     ifp->if_flags |= IFF_RUNNING;
-    ifp->if_flags &= ~IFF_OACTIVE;
 
     /* Setup transmit buffers */
 
@@ -1452,19 +1451,12 @@ iestart(struct ifnet *ifp)
 	char txbuf[IE_TXBUF_SIZE];
 	int safety_catch = 0;
 
-	if ((ifp->if_flags & IFF_OACTIVE) != 0)
-		return;
-
-	for (;;) {
+	while (sc->xmit_free != 0) {
 		if ( (safety_catch++)>100 )
 		{
 		    printf ( "ie: iestart safety catch tripped\n" );
 		    iereset(sc);
 		    return;
-		}
-		if (sc->xmit_free == 0) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
 		}
 
 		IF_DEQUEUE(&ifp->if_snd, m);
@@ -1520,7 +1512,6 @@ ietint(struct ie_softc *sc)
     int status;
 
     ifp->if_timer=0;
-    ifp->if_flags &= ~IFF_OACTIVE;
 
     READ_MEMBER(sc,struct ie_xmit_cmd, ie_xmit_status,
 	sc->xmit_cmds[sc->xctail], status );

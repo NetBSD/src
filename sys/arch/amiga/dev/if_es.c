@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.67 2022/08/20 16:47:01 thorpej Exp $ */
+/*	$NetBSD: if_es.c,v 1.68 2022/09/17 19:03:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.67 2022/08/20 16:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.68 2022/09/17 19:03:31 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -86,6 +86,7 @@ struct	es_softc {
 	void	*sc_base;		/* base address of board */
 	short	sc_iflags;
 	unsigned short sc_intctl;
+	bool	sc_txbusy;
 #ifdef ESDEBUG
 	int	sc_debug;
 	short	sc_intbusy;		/* counter for interrupt rentered */
@@ -289,7 +290,7 @@ esinit(struct es_softc *sc)
 
 	/* Interface is now 'running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	/* Attempt to start output, if any. */
 	if_schedule_deferred_start(ifp);
@@ -359,7 +360,7 @@ esintr(void *arg)
 			while (smc->b2.mmucr & MMUCR_BUSY)
 				;
 			smc->b2.pnr = save_pnr;
-			ifp->if_flags &= ~IFF_OACTIVE;
+			sc->sc_txbusy = false;
 			ifp->if_timer = 0;
 		}
 #ifdef ESDEBUG
@@ -757,8 +758,7 @@ esstart(struct ifnet *ifp)
 	int i;
 	u_char active_pnr;
 
-	if ((sc->sc_ethercom.ec_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING)
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
 #ifdef ESDEBUG
@@ -772,7 +772,7 @@ esstart(struct ifnet *ifp)
 		smc->b2.bsr = BSR_BANK2;
 	}
 #endif
-	for (;;) {
+	while (!sc->sc_txbusy) {
 #ifdef ESDEBUG
 		u_short start_ptr, end_ptr;
 #endif
@@ -801,7 +801,7 @@ esstart(struct ifnet *ifp)
 			if ((smc->b2.arr & ARR_FAILED) == 0)
 				break;
 		if (smc->b2.arr & ARR_FAILED) {
-			sc->sc_ethercom.ec_if.if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 			sc->sc_intctl |= MSK_ALLOC;
 			sc->sc_ethercom.ec_if.if_timer = 5;
 			break;
