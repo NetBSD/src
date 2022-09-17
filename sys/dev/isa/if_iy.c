@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.113 2020/01/29 06:21:40 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.114 2022/09/17 17:21:52 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.113 2020/01/29 06:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.114 2022/09/17 17:21:52 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -112,6 +112,8 @@ struct iy_softc {
 	int sram, tx_size, rx_size;
 
 	int tx_start, tx_end, tx_last;
+	bool tx_busy;
+
 	int rx_start;
 
 	int doing_mc_setup;
@@ -416,7 +418,8 @@ iystop(struct iy_softc *sc)
 #endif
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
+	sc->tx_busy = false;
 }
 
 void
@@ -615,7 +618,7 @@ iyinit(struct iy_softc *sc)
 	bus_space_write_1(iot, ioh, 0, RCV_ENABLE_CMD);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->tx_busy = false;
 }
 
 void
@@ -639,7 +642,10 @@ iystart(struct ifnet *ifp)
 #endif
 	sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	if (sc->tx_busy)
 		return;
 
 	iy_intr_tx(sc);
@@ -696,11 +702,11 @@ iystart(struct ifnet *ifp)
 
 		if ((len+pad+2*I595_XMT_HDRLEN) > avail) {
 #ifdef IYDEBUG
-			printf("%s: len = %d, avail = %d, setting OACTIVE\n",
+			printf("%s: len = %d, avail = %d, setting tx_busy\n",
 			    device_xname(sc->sc_dev), len, avail);
 #endif
 			/* mark interface as full ... */
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->tx_busy = true;
 
 			/* and wait for any transmission result */
 			bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
@@ -970,7 +976,7 @@ iyintr(void *arg)
 	}
 	if (status & TX_INT) {
 		/* Tell feeders we may be able to accept more data... */
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->tx_busy = false;
 		/* and get more data. */
 		iystart(ifp);
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
@@ -1147,7 +1153,7 @@ iy_intr_tx(struct iy_softc *sc)
 			sc->tx_start = txnext;
 		else
 			sc->tx_start = sc->tx_end;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->tx_busy = false;
 
 		if (txstat2 & 0x0020)
 			if_statadd(ifp, if_collisions, 16);
@@ -1371,8 +1377,7 @@ iy_mc_setup(struct iy_softc *sc)
 		break;
 	}
 	sc->tx_start = sc->tx_end;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
+	sc->tx_busy = false;
 }
 
 static void
@@ -1412,9 +1417,9 @@ iy_mc_reset(struct iy_softc *sc)
 		ETHER_UNLOCK(ecp);
 		/* OK, we really need to do it now: */
 #if 0
-		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE))
-		    != IFF_RUNNING) {
-			ifp->if_flags |= IFF_OACTIVE;
+		if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->tx_busy) {
+			/* XXX This logic is b0rk3n. */
+			sc->tx_busy = true;
 			sc->want_mc_setup = 1;
 			return;
 		}
