@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.102 2022/09/17 16:54:01 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.103 2022/09/17 17:00:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.102 2022/09/17 16:54:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.103 2022/09/17 17:00:02 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -554,8 +554,7 @@ egstart(struct ifnet *ifp)
 	struct eg_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct mbuf *m0, *m;
-	char *buffer;
+	struct mbuf *m0;
 	int len;
 	uint16_t *ptr;
 
@@ -597,13 +596,11 @@ loop:
 		goto loop;
 	}
 
-	buffer = sc->eg_outbuf;
-	for (m = m0; m != 0; m = m->m_next) {
-		memcpy(buffer, mtod(m, void *), m->m_len);
-		buffer += m->m_len;
+	m_copydata(m0, 0, m0->m_pkthdr.len, sc->eg_outbuf);
+	if (len > m0->m_pkthdr.len) {
+		memset((uint8_t *)sc->eg_outbuf + m0->m_pkthdr.len, 0,
+		    len - m0->m_pkthdr.len);
 	}
-	if (len > m0->m_pkthdr.len)
-		memset(buffer, 0, len - m0->m_pkthdr.len);
 
 	/* set direction bit: host -> adapter */
 	bus_space_write_1(iot, ioh, EG_CONTROL,
