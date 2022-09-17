@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.41 2021/06/16 00:21:17 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.42 2022/09/17 19:41:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1900,9 +1900,6 @@ bcmeth_soft_txintr(struct bcmeth_softc *sc)
 	if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 	    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
 		BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
-		sc->sc_if.if_flags |= IFF_OACTIVE;
-	} else {
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	}
 	if (sc->sc_if.if_flags & IFF_RUNNING) {
 		mutex_spin_enter(sc->sc_hwlock);
@@ -1936,9 +1933,6 @@ bcmeth_soft_intr(void *arg)
 		if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 		    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
 			BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
-			ifp->if_flags |= IFF_OACTIVE;
-		} else {
-			ifp->if_flags &= ~IFF_OACTIVE;
 		}
 		intmask |= XMTINT_0;
 	}
