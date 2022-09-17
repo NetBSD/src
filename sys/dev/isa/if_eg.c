@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.97 2020/01/29 06:21:40 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.98 2022/09/17 16:42:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.97 2020/01/29 06:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.98 2022/09/17 16:42:38 thorpej Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -496,7 +497,7 @@ eginit(struct eg_softc *sc)
 		aprint_error_dev(sc->sc_dev,"configure card command failed\n");
 
 	if (sc->eg_inbuf == NULL) {
-		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
+		sc->eg_inbuf = kmem_alloc(EG_BUFLEN, KM_NOSLEEP);
 		if (sc->eg_inbuf == NULL) {
 			aprint_error_dev(sc->sc_dev, "can't allocate inbuf\n");
 			panic("eginit");
@@ -505,7 +506,7 @@ eginit(struct eg_softc *sc)
 	sc->eg_incount = 0;
 
 	if (sc->eg_outbuf == NULL) {
-		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
+		sc->eg_outbuf = kmem_alloc(EG_BUFLEN, KM_NOSLEEP);
 		if (sc->eg_outbuf == NULL) {
 			aprint_error_dev(sc->sc_dev,"can't allocate outbuf\n");
 			panic("eginit");
