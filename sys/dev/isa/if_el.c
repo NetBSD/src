@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.101 2022/09/17 17:08:43 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.102 2022/09/17 17:15:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.101 2022/09/17 17:08:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.102 2022/09/17 17:15:02 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -72,6 +72,7 @@ struct el_softc {
 	struct ethercom sc_ethercom;	/* ethernet common */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
+	bool sc_txbusy;			/* transmitter is busy */
 
 	krndsource_t rnd_source;
 };
@@ -337,7 +338,7 @@ elinit(struct el_softc *sc)
 
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	/* And start output. */
 	elstart(ifp);
@@ -361,12 +362,12 @@ elstart(struct ifnet *ifp)
 	s = splnet();
 
 	/* Don't do anything if output is active. */
-	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
+	if (sc->sc_txbusy) {
 		splx(s);
 		return;
 	}
 
-	ifp->if_flags |= IFF_OACTIVE;
+	sc->sc_txbusy = true;
 
 	/*
 	 * The main loop.  They warned me against endless loops, but would I
@@ -448,13 +449,13 @@ elstart(struct ifnet *ifp)
 		(void)bus_space_read_1(iot, ioh, EL_AS);
 		bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 		splx(s);
-		/* Interrupt here. */
+		/* (Maybe) interrupt here. */
 		s = splnet();
 	}
 
 	(void)bus_space_read_1(iot, ioh, EL_AS);
 	bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	splx(s);
 }
 
