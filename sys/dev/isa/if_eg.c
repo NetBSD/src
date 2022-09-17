@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.101 2022/09/17 16:52:26 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.102 2022/09/17 16:54:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.101 2022/09/17 16:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.102 2022/09/17 16:54:01 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -575,10 +575,7 @@ loop:
 	sc->eg_txbusy = true;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
-	if ((m0->m_flags & M_PKTHDR) == 0) {
-		aprint_error_dev(sc->sc_dev, "no header mbuf\n");
-		panic("egstart");
-	}
+	KASSERT(m0->m_flags & M_PKTHDR);
 	len = uimax(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
