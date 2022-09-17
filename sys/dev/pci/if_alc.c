@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.52 2020/03/01 03:06:08 thorpej Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.53 2022/09/17 13:55:35 thorpej Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2023,8 +2023,6 @@ alc_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 	if ((sc->alc_flags & ALC_FLAG_LINK) == 0)
-		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
 	/* Reclaim transmitted frames. */
