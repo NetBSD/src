@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.89 2021/08/19 20:56:36 andvar Exp $ */
+/* $NetBSD: tga.c,v 1.90 2022/09/17 18:29:54 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.89 2021/08/19 20:56:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.90 2022/09/17 18:29:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.89 2021/08/19 20:56:36 andvar Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/pci/wsdisplay_pci.h>
 
-int	tgamatch(device_t, cfdata_t, void *);
-void	tgaattach(device_t, device_t, void *);
-int	tgaprint(void *, const char *);
+static int	tgamatch(device_t, cfdata_t, void *);
+static void	tgaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(tga, sizeof(struct tga_softc),
     tgamatch, tgaattach, NULL, NULL);
@@ -73,10 +72,10 @@ static void tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc,
 static int tga_matchcommon(bus_space_tag_t, pci_chipset_tag_t, pcitag_t);
 static void tga_mapaddrs(bus_space_tag_t memt, pci_chipset_tag_t pc,
     pcitag_t, bus_size_t *pcisize, struct tga_devconfig *dc);
-unsigned int tga_getdotclock(struct tga_devconfig *dc);
+static unsigned int tga_getdotclock(struct tga_devconfig *dc);
 
-int tga_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t tga_mmap(void *, void *, off_t, int);
+static int tga_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t tga_mmap(void *, void *, off_t, int);
 static void tga_copyrows(void *, int, int, int);
 static void tga_copycols(void *, int, int, int, int);
 static int tga_alloc_screen(void *, const struct wsscreen_descr *,
@@ -91,7 +90,7 @@ static int tga_rop_vtov(struct rasops_info *, int, int, int, int,
 static void tga_putchar(void *c, int row, int col, u_int uc, long attr);
 static void tga_eraserows(void *, int, int, long);
 static void tga_erasecols(void *, int, int, int, long);
-void tga2_init(struct tga_devconfig *);
+static void tga2_init(struct tga_devconfig *);
 
 static void tga_config_interrupts(device_t);
 
@@ -164,7 +163,7 @@ tga_cnmatch(bus_space_tag_t iot, bus_space_tag_t memt,
 	return tga_matchcommon(memt, pc, tag);
 }
 
-int
+static int
 tgamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -383,7 +382,7 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag,
 	dc->dc_intrenabled = 0;
 }
 
-void
+static void
 tgaattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -522,7 +521,7 @@ tga_config_interrupts(device_t self)
 	sc->sc_dc->dc_intrenabled = 1;
 }
 
-int
+static int
 tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tga_softc *sc = v;
@@ -666,7 +665,7 @@ tga_intr(void *v)
 	return 1;
 }
 
-paddr_t
+static paddr_t
 tga_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct tga_softc *sc = v;
@@ -1210,7 +1209,8 @@ tga_rop_vtov(struct rasops_info *dst, int dx, int dy, int w, int h, int rop,
 }
 
 
-void tga_putchar(void *c, int row, int col, u_int uc, long attr)
+static void
+tga_putchar(void *c, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1481,11 +1481,11 @@ tga2_ramdac_rd(void *v, u_int btreg)
 }
 
 #include <dev/ic/decmonitors.c>
-void tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock);
+static void tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock);
 
-struct monitor *tga_getmonitor(struct tga_devconfig *dc);
+static struct monitor *tga_getmonitor(struct tga_devconfig *dc);
 
-void
+static void
 tga2_init(struct tga_devconfig *dc)
 {
 	struct	monitor *m = tga_getmonitor(dc);
@@ -1605,14 +1605,14 @@ tga2_ics9110_wr(struct tga_devconfig *dc, int dotclock)
 	bus_space_barrier(dc->dc_memt, clock, 0, 0, BUS_SPACE_BARRIER_WRITE);
 }
 
-struct monitor *
+static struct monitor *
 tga_getmonitor(struct tga_devconfig *dc)
 {
 
 	return &decmonitors[(~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f];
 }
 
-unsigned int
+static unsigned int
 tga_getdotclock(struct tga_devconfig *dc)
 {
 
