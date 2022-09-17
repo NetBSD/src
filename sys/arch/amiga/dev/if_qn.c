@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.51 2022/09/17 19:18:04 thorpej Exp $ */
+/*	$NetBSD: if_qn.c,v 1.52 2022/09/17 19:20:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.51 2022/09/17 19:18:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.52 2022/09/17 19:20:14 thorpej Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -141,7 +141,7 @@ struct	qn_softc {
 	u_short	volatile *nic_t_mode;
 	u_short	volatile *nic_reset;
 	u_short	volatile *nic_len;
-	u_char	transmit_pending;
+	bool	transmit_pending;
 };
 
 int	qnmatch(device_t, cfdata_t, void *);
@@ -208,7 +208,7 @@ qnattach(device_t parent, device_t self, void *aux)
 	sc->nic_t_mode = (u_short volatile *)(sc->sc_nic_base + NIC_DLCR4);
 	sc->nic_r_mode = (u_short volatile *)(sc->sc_nic_base + NIC_DLCR5);
 	sc->nic_reset = (u_short volatile *)(sc->sc_nic_base + NIC_DLCR6);
-	sc->transmit_pending = 0;
+	sc->transmit_pending = false;
 
 	/*
 	 * The ethernet address of the board (1st three bytes are the vendor
@@ -277,7 +277,7 @@ qninit(struct qn_softc *sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->transmit_pending = 0;
+	sc->transmit_pending = false;
 
 	qn_flush(sc);
 
@@ -423,7 +423,7 @@ qnstart(struct ifnet *ifp)
 		/* But now, let's just fall thru and hope the best... */
 		log(LOG_INFO, "qn: transmit timeout (fatal?)\n");
 
-	sc->transmit_pending = 1;
+	sc->transmit_pending = true;
 	*sc->nic_t_mask = INT_TMT_OK | INT_SIXTEEN_COL;
 
 	ifp->if_flags |= IFF_OACTIVE;
@@ -736,7 +736,7 @@ qnintr(void *arg)
 		*sc->nic_t_status = CLEAR_T_ERR;
 
 		if (sc->transmit_pending && (tint & T_TMT_OK)) {
-			sc->transmit_pending = 0;
+			sc->transmit_pending = false;
 			/*
 			 * Update total number of successfully
 			 * transmitted packets.
@@ -754,7 +754,7 @@ qnintr(void *arg)
 #endif
 			if_statadd2(&sc->sc_ethercom.ec_if,
 			    if_oerrors, 1, if_collisions, 16);
-			sc->transmit_pending = 0;
+			sc->transmit_pending = false;
 		}
 
 		if (sc->transmit_pending) {
@@ -897,7 +897,7 @@ qn_dump(struct qn_softc *sc)
 	log(LOG_INFO, "r_status  : %04x\n", *sc->nic_r_status);
 	log(LOG_INFO, "r_mask    : %04x\n", *sc->nic_r_mask);
 	log(LOG_INFO, "r_mode    : %04x\n", *sc->nic_r_mode);
-	log(LOG_INFO, "pending   : %02x\n", sc->transmit_pending);
+	log(LOG_INFO, "pending   : %s\n", sc->transmit_pending ? "T" : "F");
 	log(LOG_INFO, "if_flags  : %04x\n", sc->sc_ethercom.ec_if.if_flags);
 }
 #endif
