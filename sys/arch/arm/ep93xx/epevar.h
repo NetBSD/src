@@ -1,4 +1,4 @@
-/*      $NetBSD: epevar.h,v 1.7 2012/11/12 18:00:36 skrll Exp $        */
+/*      $NetBSD: epevar.h,v 1.8 2022/09/17 19:44:13 thorpej Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  * All rights reserved
@@ -60,6 +60,7 @@ struct epe_softc {
 	struct epe_qmeta	rxq[RX_QLEN];
 	struct epe_qmeta	txq[TX_QLEN];
 	struct callout		epe_tick_ch;
+	bool			tx_busy;
 };
 
 #endif /* _EPEVAR_H_ */
