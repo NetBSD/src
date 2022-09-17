@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.34 2022/09/17 15:31:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.33 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.34 2022/09/17 15:31:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,23 +772,20 @@ vte_ifstart(struct ifnet *ifp)
 
 	DPRINTF(("vte_ifstart 0x%x 0x%x\n", ifp->if_flags, sc->vte_flags));
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING || (sc->vte_flags & VTE_FLAG_LINK) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		return;
+	}
+	if ((sc->vte_flags & VTE_FLAG_LINK) == 0) {
+		return;
+	}
 
-	for (enq = 0; !IFQ_IS_EMPTY(&ifp->if_snd); ) {
-		/* Reserve one free TX descriptor. */
-		if (sc->vte_cdata.vte_tx_cnt >= VTE_TX_RING_CNT - 1) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
+	/* Reserve one free TX descriptor. */
+	for (enq = 0; sc->vte_cdata.vte_tx_cnt < VTE_TX_RING_CNT - 1; ) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 		/*
-		 * Pack the data into the transmit ring. If we
-		 * don't have room, set the OACTIVE flag and wait
-		 * for the NIC to drain the ring.
+		 * Pack the data into the transmit ring.
 		 */
 		DPRINTF(("vte_encap:"));
 		if ((txd = vte_encap(sc, &m_head)) == NULL) {
@@ -1044,7 +1041,6 @@ vte_txeof(struct vte_softc *sc)
 	}
 
 	if (prog > 0) {
-		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->vte_cdata.vte_tx_cons = cons;
 		/*
 		 * Unarm watchdog timer only when there is no pending
@@ -1365,7 +1361,6 @@ vte_init(struct ifnet *ifp)
 
 	sc->vte_flags &= ~VTE_FLAG_LINK;
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* calling mii_mediachg will call back vte_start_mac() */
 	if ((error = mii_mediachg(&sc->vte_mii)) == ENXIO)
@@ -1398,7 +1393,7 @@ vte_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	sc->vte_flags &= ~VTE_FLAG_LINK;
 	callout_stop(&sc->vte_tick_ch);
 	sc->vte_watchdog_timer = 0;
