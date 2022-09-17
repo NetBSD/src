@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.50 2021/12/05 08:16:10 msaitoh Exp $ */
+/*	$NetBSD: if_qn.c,v 1.51 2022/09/17 19:18:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.50 2021/12/05 08:16:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.51 2022/09/17 19:18:04 thorpej Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -142,8 +142,7 @@ struct	qn_softc {
 	u_short	volatile *nic_reset;
 	u_short	volatile *nic_len;
 	u_char	transmit_pending;
-} qn_softc[NQN];
-
+};
 
 int	qnmatch(device_t, cfdata_t, void *);
 void	qnattach(device_t, device_t, void *);
