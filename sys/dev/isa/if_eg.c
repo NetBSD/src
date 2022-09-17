@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.99 2022/09/17 16:46:18 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.100 2022/09/17 16:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.99 2022/09/17 16:46:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.100 2022/09/17 16:48:33 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -100,11 +100,11 @@ struct eg_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
-	u_int8_t eg_rom_major;		/* Cards ROM version (major number) */
-	u_int8_t eg_rom_minor;		/* Cards ROM version (minor number) */
+	uint8_t eg_rom_major;		/* Cards ROM version (major number) */
+	uint8_t eg_rom_minor;		/* Cards ROM version (minor number) */
 	short	 eg_ram;		/* Amount of RAM on the card */
-	u_int8_t eg_pcb[EG_PCBLEN];	/* Primary Command Block buffer */
-	u_int8_t eg_incount;		/* Number of buffers currently used */
+	uint8_t eg_pcb[EG_PCBLEN];	/* Primary Command Block buffer */
+	uint8_t eg_incount;		/* Number of buffers currently used */
 	void *	eg_inbuf;		/* Incoming packet buffer */
 	void *	eg_outbuf;		/* Outgoing packet buffer */
 
@@ -128,19 +128,19 @@ static void	egread(struct eg_softc *, void *, int);
 static struct mbuf *egget(struct eg_softc *, void *, int);
 static void	egstop(struct eg_softc *);
 
-static inline void egprintpcb(u_int8_t *);
-static int egoutPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t);
-static int egreadPCBstat(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+static inline void egprintpcb(uint8_t *);
+static int egoutPCB(bus_space_tag_t, bus_space_handle_t, uint8_t);
+static int egreadPCBstat(bus_space_tag_t, bus_space_handle_t, uint8_t);
 static int egreadPCBready(bus_space_tag_t, bus_space_handle_t);
-static int egwritePCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
-static int egreadPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
+static int egwritePCB(bus_space_tag_t, bus_space_handle_t, uint8_t *);
+static int egreadPCB(bus_space_tag_t, bus_space_handle_t, uint8_t *);
 
 /*
  * Support stuff
  */
 
 static inline void
-egprintpcb(u_int8_t *pcb)
+egprintpcb(uint8_t *pcb)
 {
 	int i;
 
@@ -149,7 +149,7 @@ egprintpcb(u_int8_t *pcb)
 }
 
 static int
-egoutPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t b)
+egoutPCB(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t b)
 {
 	int i;
 
@@ -165,7 +165,7 @@ egoutPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t b)
 }
 
 static int
-egreadPCBstat(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t statb)
+egreadPCBstat(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t statb)
 {
 	int i;
 
@@ -195,10 +195,10 @@ egreadPCBready(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 static int
-egwritePCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
+egwritePCB(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *pcb)
 {
 	int i;
-	u_int8_t len;
+	uint8_t len;
 
 	bus_space_write_1(iot, ioh, EG_CONTROL,
 	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
@@ -224,7 +224,7 @@ egwritePCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
 }
 
 static int
-egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
+egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *pcb)
 {
 	int i;
 
@@ -279,7 +279,7 @@ egprobe(device_t parent, cfdata_t match, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int i, rval;
-	static u_int8_t pcb[EG_PCBLEN];
+	static uint8_t pcb[EG_PCBLEN];
 
 	rval = 0;
 
@@ -365,7 +365,7 @@ egattach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
 
@@ -556,7 +556,7 @@ egstart(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	char *buffer;
 	int len;
-	u_int16_t *ptr;
+	uint16_t *ptr;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -608,7 +608,7 @@ loop:
 	bus_space_write_1(iot, ioh, EG_CONTROL,
 	    bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_CTL_DIR);
 
-	for (ptr = (u_int16_t *) sc->eg_outbuf; len > 0; len -= 2) {
+	for (ptr = (uint16_t *) sc->eg_outbuf; len > 0; len -= 2) {
 		bus_space_write_2(iot, ioh, EG_DATA, *ptr++);
 		while (!(bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_HRDY))
 			; /* XXX need timeout here */
@@ -625,7 +625,7 @@ egintr(void *arg)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, len, serviced;
-	u_int16_t *ptr;
+	uint16_t *ptr;
 
 	serviced = 0;
 
@@ -639,7 +639,7 @@ egintr(void *arg)
 			bus_space_write_1(iot, ioh, EG_CONTROL,
 			    bus_space_read_1(iot, ioh, EG_CONTROL) | EG_CTL_DIR);
 
-			for (ptr = (u_int16_t *) sc->eg_inbuf;
+			for (ptr = (uint16_t *) sc->eg_inbuf;
 			    len > 0; len -= 2) {
 				while (!(bus_space_read_1(iot, ioh, EG_STATUS) &
 				    EG_STAT_HRDY))
