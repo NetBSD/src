@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.100 2022/09/17 17:05:12 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.101 2022/09/17 17:08:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.100 2022/09/17 17:05:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.101 2022/09/17 17:08:43 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -110,8 +110,8 @@ elprobe(device_t parent, cfdata_t match, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int iobase;
-	u_int8_t station_addr[ETHER_ADDR_LEN];
-	u_int8_t i;
+	uint8_t station_addr[ETHER_ADDR_LEN];
+	uint8_t i;
 	int rval;
 
 	rval = 0;
@@ -198,8 +198,8 @@ elattach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
-	u_int8_t i;
+	uint8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t i;
 
 	sc->sc_dev = self;
 
@@ -402,7 +402,7 @@ elstart(struct ifnet *ifp)
 		/* Copy the datagram to the buffer. */
 		for (m = m0; m != 0; m = m->m_next)
 			bus_space_write_multi_1(iot, ioh, EL_BUF,
-			    mtod(m, u_int8_t *), m->m_len);
+			    mtod(m, uint8_t *), m->m_len);
 		for (i = 0;
 		    i < ETHER_MIN_LEN - ETHER_CRC_LEN - m0->m_pkthdr.len; i++)
 			bus_space_write_1(iot, ioh, EL_BUF, 0);
@@ -498,7 +498,7 @@ elintr(void *arg)
 	struct el_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t rxstat;
+	uint8_t rxstat;
 	int len;
 
 	DPRINTF(("elintr: "));
@@ -617,7 +617,7 @@ elget(struct el_softc *sc, int totlen)
 		}
 
 		m->m_len = len = uimin(totlen, len);
-		bus_space_read_multi_1(iot, ioh, EL_BUF, mtod(m, u_int8_t *), len);
+		bus_space_read_multi_1(iot, ioh, EL_BUF, mtod(m, uint8_t *), len);
 
 		totlen -= len;
 		if (totlen > 0) {
