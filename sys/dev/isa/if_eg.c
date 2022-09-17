@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.98 2022/09/17 16:42:38 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.99 2022/09/17 16:46:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.98 2022/09/17 16:42:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.99 2022/09/17 16:46:18 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -111,22 +111,22 @@ struct eg_softc {
 	krndsource_t rnd_source;
 };
 
-int egprobe(device_t, cfdata_t, void *);
-void egattach(device_t, device_t, void *);
+static int	egprobe(device_t, cfdata_t, void *);
+static void	egattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(eg, sizeof(struct eg_softc),
     egprobe, egattach, NULL, NULL);
 
-int egintr(void *);
-void eginit(struct eg_softc *);
-int egioctl(struct ifnet *, u_long, void *);
-void egrecv(struct eg_softc *);
-void egstart(struct ifnet *);
-void egwatchdog(struct ifnet *);
-void egreset(struct eg_softc *);
-void egread(struct eg_softc *, void *, int);
-struct mbuf *egget(struct eg_softc *, void *, int);
-void egstop(struct eg_softc *);
+static int	egintr(void *);
+static void	eginit(struct eg_softc *);
+static int	egioctl(struct ifnet *, u_long, void *);
+static void	egrecv(struct eg_softc *);
+static void	egstart(struct ifnet *);
+static void	egwatchdog(struct ifnet *);
+static void	egreset(struct eg_softc *);
+static void	egread(struct eg_softc *, void *, int);
+static struct mbuf *egget(struct eg_softc *, void *, int);
+static void	egstop(struct eg_softc *);
 
 static inline void egprintpcb(u_int8_t *);
 static int egoutPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t);
@@ -272,7 +272,7 @@ egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
  * Real stuff
  */
 
-int
+static int
 egprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -357,7 +357,7 @@ egprobe(device_t parent, cfdata_t match, void *aux)
 	return rval;
 }
 
-void
+static void
 egattach(device_t parent, device_t self, void *aux)
 {
 	struct eg_softc *sc = device_private(self);
@@ -467,7 +467,7 @@ egattach(device_t parent, device_t self, void *aux)
 			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
-void
+static void
 eginit(struct eg_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -526,7 +526,7 @@ eginit(struct eg_softc *sc)
 	egstart(ifp);
 }
 
-void
+static void
 egrecv(struct eg_softc *sc)
 {
 
@@ -547,7 +547,7 @@ egrecv(struct eg_softc *sc)
 	}
 }
 
-void
+static void
 egstart(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
@@ -617,7 +617,7 @@ loop:
 	m_freem(m0);
 }
 
-int
+static int
 egintr(void *arg)
 {
 	struct eg_softc *sc = arg;
@@ -705,7 +705,7 @@ egintr(void *arg)
 /*
  * Pass a packet up to the higher levels.
  */
-void
+static void
 egread(struct eg_softc *sc, void *buf, int len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -732,7 +732,7 @@ egread(struct eg_softc *sc, void *buf, int len)
 /*
  * convert buf into mbufs
  */
-struct mbuf *
+static struct mbuf *
 egget(struct eg_softc *sc, void *buf, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -776,7 +776,7 @@ bad:
 	return (0);
 }
 
-int
+static int
 egioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct eg_softc *sc = ifp->if_softc;
@@ -846,7 +846,7 @@ egioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	return error;
 }
 
-void
+static void
 egreset(struct eg_softc *sc)
 {
 	int s;
@@ -858,7 +858,7 @@ egreset(struct eg_softc *sc)
 	splx(s);
 }
 
-void
+static void
 egwatchdog(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
@@ -869,7 +869,7 @@ egwatchdog(struct ifnet *ifp)
 	egreset(sc);
 }
 
-void
+static void
 egstop(struct eg_softc *sc)
 {
 
