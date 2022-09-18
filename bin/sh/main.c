@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2021/10/26 10:07:20 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2022/09/18 06:03:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2021/10/26 10:07:20 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2022/09/18 06:03:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ main(int argc, char **argv)
 	initpwd();
 	setstackmark(&smark);
 	procargs(argc, argv);
+	setvar_invocation(argc, argv);
 
 #if 0	/* This now happens (indirectly) in the procargs() just above */
 	/*
@@ -229,7 +230,7 @@ main(int argc, char **argv)
 		choose_ps1();
 #endif
 
-	if (argv[0] && argv[0][0] == '-') {
+	if (loginsh) {
 		state = 1;
 		read_profile("/etc/profile");
  state1:

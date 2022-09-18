@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.249 2022/09/16 19:25:09 kre Exp $
+.\"	$NetBSD: sh.1,v 1.250 2022/09/18 06:03:19 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,10 +31,11 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd January 7, 2022
+.\" RIP Noi, October 6, 1959 --
+.Dd August 26, 2022
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
-.ds flags abCEeFfhIiLmnpquVvXx
+.ds flags abCEeFfhIiLlmnpquVvXx
 .Os
 .Sh NAME
 .Nm sh
@@ -119,11 +120,20 @@ option is not present, the shell is considered an interactive shell.
 An interactive shell generally prompts before each command and handles
 programming and command errors differently (as described below).
 When first starting,
+if neither the
+.Fl l
+nor
+.Cm \+l
+options were given on the command line,
 the shell inspects argument 0, and if it begins with a dash
-.Sq - ,
+.Sq \- ,
+or if the
+.Fl l
+option was given,
 the shell is also considered
 a login shell.
-This is normally done automatically by the system
+Beginning argument 0 with a dash is normally done
+automatically by the system
 when the user first logs in.
 A login shell first reads commands
 (as if by using the
@@ -409,6 +419,23 @@ in this shell.
 For more details see the section
 .Sx LINENO
 below.
+.It Fl l Em login
+When set on the command line, the shell will be considered
+a login shell.
+When reset on the command line
+.Po Cm \&+l
+or
+.Cm Cm \&+o Em login Pc ,
+the shell will not be
+considered a login shell, even if the command name parameter
+.Po Va argv[0] Pc
+begins with a dash
+.Pq Sq \- .
+See
+.Sx Invocation
+for the effects of this.
+Changing the value of this option while the shell is
+running has no effect.
 .It Fl m Em monitor
 Turn on job control (set automatically at shell startup,
 if not mentioned on the command line, when interactive).
@@ -4660,6 +4687,144 @@ This environment setting overrides the
 .Ev MAIL
 setting.
 There is a maximum of 10 mailboxes that can be monitored at once.
+.It Ev NBSH_INVOCATION
+When
+.Nm
+starts, after it has processed its arguments,
+and imported variables from the environment,
+this variable is set to a string of one or more
+characters which indicate the way the command line
+was processed.
+This is intended to be used in the startup
+scripts
+.Pq see Sx Invocation
+to allow them to determine what actions are
+appropriate to take.
+.Ev NBSH_INVOCATION
+is marked
+.Dq not to be exported .
+Apart from the way it is initialized,
+and that it overrides any value that may
+have been set in the environment,
+there is nothing special about it.
+It can be unset, or altered,
+with no ramifications,
+other than whatever effect this might have
+on its use in the startup scripts.
+.Pp
+When the value of this variable remains as set at startup by
+.Nm
+the following characters may appear in the value,
+in the circumstances described.
+Any present will always appear in ASCII lexical
+order, as they appear below (to make testing the value easier to code).
+.Pp
+.Bl -compact -tag -width M__ -offset indent
+.It \&!
+Always present when set by
+.Nm ,
+and is always first.
+No specific meaning is attributed to this character.
+.It \&\-
+Set when the first character of
+.Va argv[0]
+as set when the shell was invoked was a dash
+.Pq Sq \&\- .
+.It \&0
+Set when at startup, the special parameter
+.Dv \&$#
+has the value 0.
+That is, no arguments were given to the script
+in the case that there is a script.
+.It \&c
+The
+.Fl c
+option was given on the command line.
+.It \&f
+Neither the
+.Fl c
+nor
+.Fl s
+options were present on the command line,
+but there is at least one non-option argument,
+which will then be interpreted as the name of the
+.Ar command_file
+to process.
+.It \&i
+The shell is interactive.
+At startup this indicates that
+.Sq i
+will appear in the value of the
+special parameter
+.Va \&$\- .
+However, the special parameter will
+alter as the
+.Fl i
+option is manipulated by the
+.Ic set
+built-in command, but
+.Ev NBSH_INVOCATION
+is never subsequently altered by the shell itself
+(unless manipulated by a regular variable operations).
+.It \&l
+The shell is a login shell.
+As with
+.Sq i
+(the same operational conditions apply)
+this character will be present if the
+.Sq l
+is present in
+.Va \&$-
+when the shell is starting.
+Note that if
+.Sq l
+is present, and
+.Sq \&\-
+is not, then the shell was invoked
+with the
+.Fl l
+option on the command line (or the
+equivalent
+.Fl o Em login ) .
+On the other hand, if
+.Sq \&\-
+appears, and
+.Sq l
+does not,
+then the shell was invoked with the
+.Cm +l
+option (or its equivalent) on the command line.
+If both
+.Sq \&\-
+and
+.Sq l
+appear, then the shell is a normal login
+shell, the
+.Fl l
+option might have been given, but had no effect.
+If neither
+.Sq \&\-
+nor
+.Sq l
+appear, then the shell is not a login shell,
+and was never intended to be.
+The
+.Cm +l
+option might have been given, but had no effect.
+.It \&p
+The shell was started as a privileged
+(set user id) process.
+This indicates that the
+.Fl p
+option must have been given on the command
+line, or privileges would have been dropped.
+.It \&s
+The shell will read commands from standard input.
+The
+.Fl s
+option was given, or implied.
+This does not imply that the shell is interactive.
+.El
 .It Ev PATH
 The default search path for executables.
 See the
