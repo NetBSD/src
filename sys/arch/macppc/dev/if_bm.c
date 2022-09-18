@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.64 2021/03/05 07:15:53 rin Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.65 2022/09/18 10:59:22 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.64 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.65 2022/09/18 10:59:22 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -90,6 +90,7 @@ struct bmac_softc {
 	void *sc_rxbuf;
 	int sc_rxlast;
 	int sc_flags;
+	bool sc_txbusy;
 	struct mii_data sc_mii;
 	u_char sc_enaddr[6];
 };
@@ -382,7 +383,7 @@ bmac_init(struct bmac_softc *sc)
 	bmac_write_reg(sc, INTDISABLE, NormalIntEvents);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 
 	data = sc->sc_txbuf;
@@ -440,7 +441,7 @@ bmac_intr(void *v)
 #endif
 
 	if (stat & IntFrameSent) {
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
+		sc->sc_txbusy = false;
 		sc->sc_if.if_timer = 0;
 		if_statinc(&sc->sc_if, if_opackets);
 		if_schedule_deferred_start(&sc->sc_if);
@@ -561,13 +562,10 @@ bmac_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int tlen;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	while (1) {
-		if (ifp->if_flags & IFF_OACTIVE)
-			return;
-
+	while (!sc->sc_txbusy) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
@@ -577,7 +575,7 @@ bmac_start(struct ifnet *ifp)
 		 */
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
-		ifp->if_flags |= IFF_OACTIVE;
+		sc->sc_txbusy = true;
 		tlen = bmac_put(sc, sc->sc_txbuf, m);
 
 		/* 5 seconds to watch for failing to transmit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmacvar.h,v 1.4 2020/06/23 05:17:13 simonb Exp $	*/
+/*	$NetBSD: if_cnmacvar.h,v 1.5 2022/09/18 11:38:48 thorpej Exp $	*/
 
 #undef DEBUG
 #ifdef DEBUG
@@ -64,6 +64,7 @@ struct cnmac_softc {
 	SIMPLEQ_HEAD(, _send_queue_entry)
 				sc_sendq;
 	uint64_t		sc_ext_callback_cnt;
+	bool			sc_txbusy;
 
 	uint32_t		sc_port;
 	uint32_t		sc_port_type;
