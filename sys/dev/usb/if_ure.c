@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.14.2.2 2019/10/17 18:53:25 martin Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.14.2.3 2022/09/18 13:32:27 martin Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.14.2.2 2019/10/17 18:53:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.14.2.3 2022/09/18 13:32:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -381,7 +381,7 @@ allmulti:
 			hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN)
 			    >> 26;
 			if (hash < 32)
-				hashes[0] |= (1 << hash);
+				hashes[0] |= (1U << hash);
 			else
 				hashes[1] |= (1 << (hash - 32));
 
