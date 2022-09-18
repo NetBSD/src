@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.16 2022/09/16 18:37:48 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.17 2022/09/18 00:12:43 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -253,3 +253,8 @@ sys/arch/x86/x86/procfs_machdep.c		1.45
 	and amx_int8.
 	[msaitoh, ticket #1526]
 
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.62
+
+	Fix copy & pasto: DTPREL relocations do not need to allocate a static
+	TLS index.
+	[martin, ticket #1531]
