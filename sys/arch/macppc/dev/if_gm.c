@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.58 2021/03/05 07:15:53 rin Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.59 2022/09/18 11:08:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.58 2021/03/05 07:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.59 2022/09/18 11:08:29 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -75,6 +75,7 @@ struct gmac_softc {
 	struct gmac_dma *sc_txlist;
 	struct gmac_dma *sc_rxlist;
 	int sc_txnext;
+	bool sc_txbusy;
 	int sc_rxlast;
 	void *sc_txbuf[NTXBUF];
 	void *sc_rxbuf[NRXBUF];
@@ -337,7 +338,7 @@ gmac_tint(struct gmac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 	if_schedule_deferred_start(ifp);
 }
@@ -446,13 +447,10 @@ gmac_start(struct ifnet *ifp)
 	int i, tlen;
 	volatile struct gmac_dma *dp;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	for (;;) {
-		if (ifp->if_flags & IFF_OACTIVE)
-			break;
-
+	while (!sc->sc_txbusy) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
@@ -489,7 +487,7 @@ gmac_start(struct ifnet *ifp)
 		if (i == NTXBUF)
 			i = 0;
 		if (i == gmac_read_reg(sc, GMAC_TXDMACOMPLETE)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 			break;
 		}
 	}
@@ -732,7 +730,7 @@ gmac_init(struct gmac_softc *sc)
 	gmac_write_reg(sc, GMAC_INTMASK, ~(GMAC_INT_TXEMPTY | GMAC_INT_RXDONE));
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 
 	callout_reset(&sc->sc_tick_ch, 1, gmac_mii_tick, sc);
