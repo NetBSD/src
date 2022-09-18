@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.50 2022/08/20 18:42:03 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.51 2022/09/18 12:48:03 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.50 2022/08/20 18:42:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.51 2022/09/18 12:48:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -307,7 +307,7 @@ snstart(struct ifnet *ifp)
 	struct mbuf	*m;
 	int		mtd_next;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 outloop:
@@ -316,7 +316,6 @@ outloop:
 		mtd_next = 0;
 
 	if (mtd_next == sc->mtd_hw) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
@@ -325,8 +324,7 @@ outloop:
 		return;
 
 	/* We need the header for m_pkthdr.len. */
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("%s: snstart: no header mbuf", device_xname(sc->sc_dev));
+	KASSERT(m->m_flags & M_PKTHDR);
 
 	/*
 	 * If bpf is listening on this interface, let it

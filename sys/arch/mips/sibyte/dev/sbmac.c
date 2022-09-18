@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.64 2022/08/20 18:40:35 thorpej Exp $ */
+/* $NetBSD: sbmac.c,v 1.65 2022/09/18 12:43:41 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.64 2022/08/20 18:40:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.65 2022/09/18 12:43:41 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1025,14 +1025,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 
 		d->sbdma_rem_index = SBDMA_NEXTBUF(d, d->sbdma_rem_index);
 	}
-
-	/*
-	 * Decide what to set the IFF_OACTIVE bit in the interface to.
-	 * It's supposed to reflect if the interface is actively
-	 * transmitting, but that's really hard to do quickly.
-	 */
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 /*
@@ -1779,7 +1771,7 @@ sbmac_start(struct ifnet *ifp)
 	struct mbuf		*m_head = NULL;
 	int			rv;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	sc = ifp->if_softc;
@@ -1792,8 +1784,8 @@ sbmac_start(struct ifnet *ifp)
 
 		/*
 		 * Put the buffer on the transmit ring.  If we
-		 * don't have room, set the OACTIVE flag and wait
-		 * for the NIC to drain the ring.
+		 * don't have room, we'll try to get things going
+		 * again after a transmit interrupt.
 		 */
 
 		rv = sbdma_add_txbuffer(&(sc->sbm_txdma), m_head);
@@ -1813,9 +1805,6 @@ sbmac_start(struct ifnet *ifp)
 				 */
 				m_freem(m_head);
 			}
-		} else {
-		    ifp->if_flags |= IFF_OACTIVE;
-		    break;
 		}
 	}
 }
