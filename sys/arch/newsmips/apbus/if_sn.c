@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.51 2022/09/18 12:48:03 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.52 2022/09/18 12:49:34 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.51 2022/09/18 12:48:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.52 2022/09/18 12:49:34 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -430,7 +430,6 @@ sninit(struct sn_softc *sc)
 
 	/* flag interface as "running" */
 	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
 	return 0;
@@ -903,8 +902,6 @@ sonictxint(struct sn_softc *sc)
 			printf(" (to %s)\n", ether_sprintf(eh->ether_dhost));
 		}
 #endif /* SNDEBUG */
-
-		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if (mtd->mtd_mbuf != 0) {
 			m_freem(mtd->mtd_mbuf);
