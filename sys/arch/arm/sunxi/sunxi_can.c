@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.9 2022/09/18 15:28:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.9 2022/09/18 15:28:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -313,7 +313,6 @@ sunxi_can_tx_intr(struct sunxi_can_softc *sc)
 		sc->sc_m_transmit = NULL;
 		ifp->if_timer = 0;
 	}
-	ifp->if_flags &= ~IFF_OACTIVE;
 	if_schedule_deferred_start(ifp);
 }
 
@@ -327,8 +326,7 @@ sunxi_can_tx_abort(struct sunxi_can_softc *sc)
 		sc->sc_ifp->if_timer = 0;
 		/*
 		 * the transmit abort will trigger a TX interrupt
-		 * which will restart the queue or cleae OACTIVE,
-		 * as appropriate
+		 * which will restart the queue as appropriate.
 		 */
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_ABT_REQ);
 		return 1;
@@ -418,7 +416,7 @@ sunxi_can_ifstart(struct ifnet *ifp)
 	int i;
 
 	mutex_enter(&sc->sc_intr_lock);
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (sc->sc_m_transmit != NULL)
 		goto out;
 
 	IF_DEQUEUE(&ifp->if_snd, m);
@@ -467,7 +465,6 @@ sunxi_can_ifstart(struct ifnet *ifp)
 	} else {
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_TANS_REQ);
 	}
-	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 5;
 	can_bpf_mtap(ifp, m, 0);
 out:
@@ -536,7 +533,7 @@ sunxi_can_ifup(struct sunxi_can_softc * const sc)
 static void
 sunxi_can_ifdown(struct sunxi_can_softc * const sc)
 {
-	sc->sc_ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_ifp->if_timer = 0;
 	sunxi_can_enter_reset(sc);
 	sunxi_can_write(sc, SUNXI_CAN_INTE_REG, 0);
