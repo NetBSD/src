@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.55 2022/06/20 08:02:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.56 2022/09/18 19:24:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.55 2022/06/20 08:02:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.56 2022/09/18 19:24:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -410,8 +410,6 @@ agr_start(struct ifnet *ifp)
 	}
 
 	AGR_UNLOCK(sc);
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 static int
