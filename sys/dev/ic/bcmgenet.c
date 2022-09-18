@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.13 2022/08/01 07:37:18 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.14 2022/09/18 17:18:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.13 2022/08/01 07:37:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.14 2022/09/18 17:18:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -600,7 +600,6 @@ genet_init_locked(struct genet_softc *sc)
 	genet_enable_intr(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	mii_mediachg(mii);
 	callout_schedule(&sc->sc_stat_ch, hz);
@@ -663,7 +662,7 @@ genet_stop_locked(struct genet_softc *sc, int disable)
 	/* Disable interrupts */
 	genet_disable_intr(sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static void
@@ -791,7 +790,6 @@ genet_txintr(struct genet_softc *sc, int qid)
 			++pkts;
 		}
 
-		ifp->if_flags &= ~IFF_OACTIVE;
 		i = TX_NEXT(i);
 		sc->sc_tx.cidx = (sc->sc_tx.cidx + 1) & 0xffff;
 	}
@@ -811,7 +809,7 @@ genet_start_locked(struct genet_softc *sc)
 
 	GENET_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
@@ -829,12 +827,10 @@ genet_start_locked(struct genet_softc *sc)
 
 		nsegs = genet_setup_txbuf(sc, index, m);
 		if (nsegs <= 0) {
-			if (nsegs == -1) {
-				ifp->if_flags |= IFF_OACTIVE;
-			}
-			else if (nsegs == -2) {
+			if (nsegs == -2) {
 				IFQ_DEQUEUE(&ifp->if_snd, m);
 				m_freem(m);
+				continue;
 			}
 			break;
 		}
