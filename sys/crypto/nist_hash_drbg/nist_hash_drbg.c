@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_hash_drbg.c,v 1.1.2.2 2019/09/03 07:47:59 martin Exp $	*/
+/*	$NetBSD: nist_hash_drbg.c,v 1.1.2.3 2022/09/18 13:36:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nist_hash_drbg.c,v 1.1.2.2 2019/09/03 07:47:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nist_hash_drbg.c,v 1.1.2.3 2022/09/18 13:36:29 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1087,7 +1087,9 @@ nist_hash_drbg_initialize(void)
 			    kat[i].reseed ? 0 : kat[i].additional[0]->hv_len);
 			reseed_counter++;
 			CHECK(i, "V[1]", D->V, kat[i].V[1], SEEDLEN_BYTES);
-			CHECK(i, "rnd_val[0]", rnd_val, kat[i].rnd_val[0],
+			ASSERT(sizeof(kat[i].rnd_val[0]) - trunc <=
+			    sizeof rnd_val);
+			check(i, "rnd_val[0]", rnd_val, kat[i].rnd_val[0],
 			    sizeof(kat[i].rnd_val[0]) - trunc);
 			if (D->reseed_counter != reseed_counter) {
 				DPRINTF("bad reseed counter: %u, expected %u",
@@ -1109,7 +1111,9 @@ nist_hash_drbg_initialize(void)
 			    kat[i].reseed ? 0 : kat[i].additional[1]->hv_len);
 			reseed_counter++;
 			CHECK(i, "V[2]", D->V, kat[i].V[2], SEEDLEN_BYTES);
-			CHECK(i, "rnd_val[1]", rnd_val, kat[i].rnd_val[1],
+			ASSERT(sizeof(kat[i].rnd_val[1]) - trunc <=
+			    sizeof rnd_val);
+			check(i, "rnd_val[1]", rnd_val, kat[i].rnd_val[1],
 			    sizeof(kat[i].rnd_val[1]) - trunc);
 			if (D->reseed_counter != reseed_counter) {
 				DPRINTF("bad reseed counter: %u, expected %u",
