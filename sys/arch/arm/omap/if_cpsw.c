@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.28 2020/02/04 07:35:34 skrll Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.29 2022/09/18 15:14:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.28 2020/02/04 07:35:34 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.29 2022/09/18 15:14:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,6 +129,7 @@ struct cpsw_softc {
 	volatile u_int sc_txnext;
 	volatile u_int sc_txhead;
 	volatile u_int sc_rxhead;
+	bool sc_txbusy;
 	void *sc_rxthih;
 	void *sc_rxih;
 	void *sc_txih;
@@ -596,8 +597,10 @@ cpsw_start(struct ifnet *ifp)
 	KERNHIST_FUNC(__func__);
 	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, 0, 0, 0);
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & IFF_RUNNING) == 0)) {
+		return;
+	}
+	if (__predict_false(sc->sc_txbusy)) {
 		return;
 	}
 
@@ -629,7 +632,7 @@ cpsw_start(struct ifnet *ifp)
 		}
 
 		if (dm->dm_nsegs + 1 >= txfree) {
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 			bus_dmamap_unload(sc->sc_bdt, dm);
 			break;
 		}
@@ -1007,7 +1010,7 @@ cpsw_init(struct ifnet *ifp)
 	sc->sc_txeoq = true;
 	callout_schedule(&sc->sc_tick_ch, hz);
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	return 0;
 }
@@ -1075,8 +1078,9 @@ cpsw_stop(struct ifnet *ifp, int disable)
 		rdp->tx_mb[i] = NULL;
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
+	sc->sc_txbusy = false;
 
 	if (!disable)
 		return;
@@ -1270,7 +1274,7 @@ cpsw_txintr(void *arg)
 
 		handled = true;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_txbusy = false;
 
 next:
 		if (ISSET(dw[3], CPDMA_BD_EOP) && ISSET(dw[3], CPDMA_BD_EOQ)) {
