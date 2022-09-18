@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.301 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.302 2022/09/18 16:58:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -393,7 +393,7 @@ typedef struct ifnet {
 	void		*if_pf_groups;	/* ?: pf interface groups */
 	/*
 	 * During an ifnet's lifetime, it has only one if_index, but
-	 * and if_index is not sufficient to identify an ifnet
+	 * an if_index is not sufficient to identify an ifnet
 	 * because during the lifetime of the system, many ifnets may occupy a
 	 * given if_index.  Let us tell different ifnets at the same
 	 * if_index apart by their if_index_gen, a unique number that each ifnet
