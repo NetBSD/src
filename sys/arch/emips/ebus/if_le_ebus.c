@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.23 2020/02/04 13:53:07 martin Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.24 2022/09/18 15:53:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.23 2020/02/04 13:53:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.24 2022/09/18 15:53:24 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -95,6 +95,7 @@ struct enic_softc {
 	/* BUGBUG really should be malloc-ed */
 #define SC_MAX_N_XMIT 16
 	struct bufmap sc_xmit[SC_MAX_N_XMIT];
+	bool sc_txbusy;
 
 #if DEBUG
 	int xhit;
@@ -530,7 +531,7 @@ enic_init(struct ifnet *ifp)
 
 	/* Start the eNIC */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 	ctl = sc->sc_regs->Control | EC_INTEN;
 	ctl &= ~EC_RXDIS;
@@ -776,7 +777,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	if (--sc->sc_no_td == 0)
 		ifp->if_timer = 0;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	if_schedule_deferred_start(ifp);
 #if DEBUG
 	sc->it = 1;
@@ -805,7 +806,7 @@ enic_start(struct ifnet *ifp)
 	printf("enic_start(%x)\n", ifp->if_flags);
 #endif
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	s = splnet();	/* I know, I dont trust people.. */
@@ -826,7 +827,7 @@ enic_start(struct ifnet *ifp)
 			if (sc->sc_xmit[ix].mbuf == NULL)
 				goto found;
 		/* oh well */
-		ifp->if_flags |= IFF_OACTIVE;
+		sc->sc_txbusy = true;
 #if DEBUG
 		sc->tfull++;
 #endif
@@ -869,7 +870,7 @@ enic_start(struct ifnet *ifp)
 		tpostone(phys, len);
 
 		if (sc->sc_regs->Control & EC_IF_FULL) {
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 #if DEBUG
 			sc->tfull2++;
 #endif

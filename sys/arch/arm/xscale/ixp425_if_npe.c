@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.51 2022/05/22 11:27:34 andvar Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.52 2022/09/18 15:49:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.51 2022/05/22 11:27:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.52 2022/09/18 15:49:42 thorpej Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -788,7 +788,6 @@ npe_txdone_finish(struct npe_softc *sc, const struct txdone *td)
 	 * start routine to xmit more packets.
 	 */
 	if_statadd(ifp, if_opackets, td->count);
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	if_schedule_deferred_start(ifp);
 }
@@ -1174,7 +1173,6 @@ npeinit_locked(void *xsc)
 	npe_startrecv(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;		/* just in case */
 
 	/* Enable transmitter and receiver in the MAC */
@@ -1244,7 +1242,7 @@ npestart(struct ifnet *ifp)
 	int nseg, len, error, i;
 	uint32_t next;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	while (sc->tx_free != NULL) {
@@ -1308,8 +1306,6 @@ npestart(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 	}
-	if (sc->tx_free == NULL)
-		ifp->if_flags |= IFF_OACTIVE;
 }
 
 static void
@@ -1380,7 +1376,7 @@ npestop(struct ifnet *ifp, int disable)
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_MDC_EN);
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 void
