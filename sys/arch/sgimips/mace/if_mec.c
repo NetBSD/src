@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.63 2020/01/29 05:37:08 thorpej Exp $ */
+/* $NetBSD: if_mec.c,v 1.64 2022/09/18 13:26:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.63 2020/01/29 05:37:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.64 2022/09/18 13:26:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -905,7 +905,6 @@ mec_init(struct ifnet *ifp)
 		return rc;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	mec_start(ifp);
 
 	return 0;
@@ -953,7 +952,7 @@ mec_start(struct ifnet *ifp)
 	int len, bufoff, buflen, nsegs, align, resid, pseg, nptr, slen, i;
 	uint32_t txdcmd;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	/*
@@ -1391,9 +1390,8 @@ mec_start(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txpending == MEC_NTXDESC - 1) {
-		/* No more slots; notify upper layer. */
+		/* No more slots. */
 		MEC_EVCNT_INCR(&sc->sc_ev_txdstall);
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	if (sc->sc_txpending != opending) {
@@ -1422,7 +1420,7 @@ mec_stop(struct ifnet *ifp, int disable)
 	DPRINTF(MEC_DEBUG_STOP, ("%s\n", __func__));
 
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	callout_stop(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
@@ -1900,8 +1898,6 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 	/* cancel the watchdog timer if there are no pending TX packets */
 	if (sc->sc_txpending == 0)
 		ifp->if_timer = 0;
-	if (sc->sc_txpending < MEC_NTXDESC - MEC_NTXDESC_RSVD)
-		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 static bool
