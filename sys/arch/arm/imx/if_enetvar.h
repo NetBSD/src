@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetvar.h,v 1.7 2020/01/15 01:09:56 jmcneill Exp $	*/
+/*	$NetBSD: if_enetvar.h,v 1.8 2022/09/18 13:53:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -81,6 +81,7 @@ struct enet_softc {
 	int sc_tx_considx;
 	int sc_tx_prodidx;
 	int sc_tx_free;
+	bool sc_txbusy;
 
 	/* RX */
 	struct enet_rxsoft sc_rxsoft[ENET_RX_RING_CNT];
