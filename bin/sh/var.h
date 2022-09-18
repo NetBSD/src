@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.38 2018/12/04 14:03:30 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.39 2022/09/18 06:03:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -144,6 +144,7 @@ void listmklocal(struct strlist *, int);
 void poplocalvars(void);
 int unsetvar(const char *, int);
 void choose_ps1(void);
+void setvar_invocation(int, char **);
 int setvarsafe(const char *, const char *, int);
 void print_quoted(const char *);
 int validname(const char *, int, int *);

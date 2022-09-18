@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.80 2021/08/09 11:29:30 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.81 2022/09/18 06:03:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.80 2021/08/09 11:29:30 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.81 2022/09/18 06:03:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,45 @@ setvareq(char *s, int flags)
 	VTRACE(DBG_VARS, ("new [%s] (%d) %#x\n", s, nlen, vp->flags));
 }
 
+void
+setvar_invocation(int argc, char **argv)
+{
+	char value[32];		/* if we ever get 30, HELP */
+	char *v;
 
+	/*
+	 * Keep the following in ascii lexical order ( ie: Z before a )
+	 */
+
+	v = value;
+	*v++ = '@';		/* never empty, and the '-' is not first */
+
+	if (argc > 0 && argv[0] != NULL && argv[0][0] == '-')
+		*v++ = '-';
+	if (shellparam.nparam == 0)
+		*v++ = '0';
+	if (minusc)
+		*v++ = 'c';
+	if (commandname)
+		*v++ = 'f';
+	if (iflag)
+		*v++ = 'i';
+	if (loginsh)
+		*v++ = 'l';
+	if (privileged)
+		*v++ = 'p';
+	if (sflag)
+		*v++ = 's';
+
+	*v++ = '\0';
+
+		/*
+		 * this cannot fail, the var name is OK,
+		 * there cannot be any (non special) read only
+		 * variables at this point, ...
+		 */
+	setvar("NBSH_INVOCATION", value, VNOEXPORT);
+}
 
 /*
  * Process a linked list of variable assignments.
