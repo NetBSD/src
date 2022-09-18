@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.33 2021/12/31 14:25:22 riastradh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.34 2022/09/18 17:54:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -401,7 +401,6 @@ dme_init(struct ifnet *ifp)
 	sc->txbusy = sc->txready = 0;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	callout_schedule(&sc->sc_link_callout, hz);
 
 	return 0;
@@ -591,7 +590,7 @@ dme_stop(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 	callout_stop(&sc->sc_link_callout);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 }
 
@@ -600,24 +599,23 @@ dme_start(struct ifnet *ifp)
 {
 	struct dme_softc *sc = ifp->if_softc;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
-		printf("No output\n");
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		return;
 	}
-	if (sc->txbusy && sc->txready)
-		panic("DM9000: Internal error, trying to send without"
-		    " any empty queue\n");
-
-	dme_prepare(ifp);
+	if (!sc->txready) {
+		dme_prepare(ifp);
+	}
 	if (sc->txbusy) {
-		/* We need to wait until the current frame has
+		/*
+		 * We need to wait until the current frame has
 		 * been transmitted.
 		 */
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	/* We are ready to transmit right away */
-	dme_transmit(ifp);
+	if (sc->txready) {
+		/* We are ready to transmit right away */
+		dme_transmit(ifp);
+	}
 	dme_prepare(ifp); /* Prepare next one */
 }
 
@@ -629,13 +627,11 @@ dme_prepare(struct ifnet *ifp)
 	uint16_t length;
 	struct mbuf *m;
 
-	if (sc->txready)
-		panic("dme_prepare: Someone called us with txready set\n");
+	KASSERT(!sc->txready);
 
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL) {
 		TX_DPRINTF(("dme_prepare: Nothing to transmit\n"));
-		ifp->if_flags &= ~IFF_OACTIVE; /* Clear OACTIVE bit */
 		return; /* Nothing to transmit */
 	}
 
