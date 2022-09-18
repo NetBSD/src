@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.58.2.1 2019/12/09 16:14:10 martin Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.58.2.2 2022/09/18 00:09:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.58.2.1 2019/12/09 16:14:10 martin Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.58.2.2 2022/09/18 00:09:52 msaitoh Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -311,9 +311,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(DTPREL):
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value + rela->r_addend
 			    - TLS_DTV_OFFSET);
 			rdbg(("DTPREL32 %s in %s --> %p in %s",
