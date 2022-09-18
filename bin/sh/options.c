@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.57 2022/04/16 14:20:45 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.58 2022/09/18 06:03:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.57 2022/04/16 14:20:45 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.58 2022/09/18 06:03:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,10 @@ procargs(int argc, char **argv)
 	if (debug == 2)
 		debug = 1;
 #endif
+	arg0 = argv[0];
+	if (loginsh == 2 && arg0 != NULL && arg0[0] == '-')
+		loginsh = 1;
+
 	/*
 	 * Any options not dealt with as special cases just above,
 	 * and which were not set on the command line, are set to
@@ -136,7 +140,6 @@ procargs(int argc, char **argv)
 		optlist[i].dflt = optlist[i].val;
 	}
 
-	arg0 = argv[0];
 	if (sflag == 0 && minusc == NULL) {
 		commandname = argv[0];
 		arg0 = *argptr++;
