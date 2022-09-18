@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.99 2021/07/01 20:39:15 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.100 2022/09/18 18:03:51 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.99 2021/07/01 20:39:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.100 2022/09/18 18:03:51 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -385,7 +385,6 @@ dp8390_init(struct dp8390_softc *sc)
 
 	/* Set 'running' flag, and clear output active flag. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* ...and attempt to start output. */
 	dp8390_start(ifp);
@@ -442,12 +441,10 @@ dp8390_xmit(struct dp8390_softc *sc)
 
 /*
  * Start output on interface.
- * We make two assumptions here:
+ * We make one assumption here:
  *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
- *  2) that the IFF_OACTIVE flag is checked before this code is called
- *     (i.e. that the output part of the interface is idle)
  */
 void
 dp8390_start(struct ifnet *ifp)
@@ -457,14 +454,13 @@ dp8390_start(struct ifnet *ifp)
 	int buffer;
 	int len;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
  outloop:
 	/* See if there is room to put another packet in the buffer. */
 	if (sc->txb_inuse == sc->txb_cnt) {
-		/* No room.  Indicate this to the outside world and exit. */
-		ifp->if_flags |= IFF_OACTIVE;
+		/* No room. */
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -472,8 +468,7 @@ dp8390_start(struct ifnet *ifp)
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("dp8390_start: no header mbuf");
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	/* Tap off here if there is a BPF listener. */
 	bpf_mtap(ifp, m0, BPF_D_OUT);
@@ -713,7 +708,6 @@ dp8390_intr(void *arg)
 
 			/* Clear watchdog timer. */
 			ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/*
 			 * Add in total number of collisions on last

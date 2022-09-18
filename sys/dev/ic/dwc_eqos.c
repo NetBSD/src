@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.15 2022/08/28 08:40:56 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.16 2022/09/18 18:20:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.15 2022/08/28 08:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.16 2022/09/18 18:20:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -653,7 +653,6 @@ eqos_init_locked(struct eqos_softc *sc)
 	eqos_enable_intr(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	mii_mediachg(mii);
 	callout_schedule(&sc->sc_stat_ch, hz);
@@ -731,7 +730,7 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 	/* Disable interrupts */
 	eqos_disable_intr(sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static void
@@ -924,8 +923,6 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 		    i, i + 1, TX_DESC_COUNT,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		ifp->if_flags &= ~IFF_OACTIVE;
-
 		/* Last descriptor in a packet contains DMA status */
 		if ((tdes3 & EQOS_TDES3_TX_LD) != 0) {
 			if ((tdes3 & EQOS_TDES3_TX_DE) != 0) {
@@ -961,12 +958,11 @@ eqos_start_locked(struct eqos_softc *sc)
 
 	EQOS_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	for (cnt = 0, start = sc->sc_tx.cur; ; cnt++) {
 		if (sc->sc_tx.queued >= TX_DESC_COUNT - TX_MAX_SEGS) {
-			ifp->if_flags |= IFF_OACTIVE;
 			DPRINTF(EDEB_TXRING, "%u sc_tx.queued, ring full\n",
 			    sc->sc_tx.queued);
 			break;
@@ -980,11 +976,10 @@ eqos_start_locked(struct eqos_softc *sc)
 		if (nsegs <= 0) {
 			DPRINTF(EDEB_TXRING, "eqos_setup_txbuf failed "
 			    "with %d\n", nsegs);
-			if (nsegs == -1) {
-				ifp->if_flags |= IFF_OACTIVE;
-			} else if (nsegs == -2) {
+			if (nsegs == -2) {
 				IFQ_DEQUEUE(&ifp->if_snd, m);
 				m_freem(m);
+				continue;
 			}
 			break;
 		}

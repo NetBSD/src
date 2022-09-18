@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.77 2022/08/09 23:58:46 sekiya Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.78 2022/09/18 18:26:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.77 2022/08/09 23:58:46 sekiya Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.78 2022/09/18 18:26:53 thorpej Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -915,7 +915,7 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 	sc->sc_stopping = false;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	return 0;
 }
@@ -945,7 +945,9 @@ dwc_gmac_start_locked(struct ifnet *ifp)
 	int start = sc->sc_txq.t_cur;
 	struct mbuf *m0;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+	if (sc->sc_txbusy)
 		return;
 
 	for (;;) {
@@ -953,13 +955,13 @@ dwc_gmac_start_locked(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 		if (dwc_gmac_queue(sc, m0) != 0) {
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 		if (sc->sc_txq.t_queued == AWGE_TX_RING_COUNT) {
-			ifp->if_flags |= IFF_OACTIVE;
+			sc->sc_txbusy = true;
 			break;
 		}
 	}
@@ -1008,7 +1010,8 @@ dwc_gmac_stop_locked(struct ifnet *ifp, int disable)
 	dwc_gmac_reset_tx_ring(sc, &sc->sc_txq);
 	dwc_gmac_reset_rx_ring(sc, &sc->sc_rxq);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
+	sc->sc_txbusy = false;
 }
 
 /*
@@ -1213,7 +1216,7 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 	sc->sc_txq.t_next = i;
 
 	if (sc->sc_txq.t_queued < AWGE_TX_RING_COUNT) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_txbusy = false;
 	}
 	mutex_exit(&sc->sc_txq.t_mtx);
 }
