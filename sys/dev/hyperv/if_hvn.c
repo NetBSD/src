@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.23 2022/05/29 10:43:45 rin Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.24 2022/09/18 16:59:35 thorpej Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.23 2022/05/29 10:43:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.24 2022/09/18 16:59:35 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -1063,9 +1063,6 @@ hvn_init_locked(struct ifnet *ifp)
 	if (error)
 		return error;
 
-	/* Clear OACTIVE bit. */
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	/* Clear TX 'suspended' bit. */
 	hvn_resume_tx(sc, sc->sc_ntxr_inuse);
 
@@ -1099,8 +1096,7 @@ hvn_stop_locked(struct ifnet *ifp)
 	/* Suspend data transfers. */
 	hvn_suspend_data(sc);
 
-	/* Clear OACTIVE bit. */
-	ifp->if_flags &= ~IFF_OACTIVE;
+	/* Clear OACTIVE state. */
 	for (i = 0; i < sc->sc_ntxr_inuse; i++)
 		sc->sc_txr[i].txr_oactive = 0;
 }
@@ -1117,8 +1113,6 @@ hvn_transmit_common(struct ifnet *ifp, struct hvn_tx_ring *txr,
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
-	if (!is_transmit && (ifp->if_flags & IFF_OACTIVE))
-		return;
 	if (txr->txr_oactive)
 		return;
 	if (txr->txr_suspended)
@@ -1127,8 +1121,6 @@ hvn_transmit_common(struct ifnet *ifp, struct hvn_tx_ring *txr,
 	for (;;) {
 		if (!hvn_txd_peek(txr)) {
 			/* transient */
-			if (!is_transmit)
-				ifp->if_flags |= IFF_OACTIVE;
 			txr->txr_oactive = 1;
 			txr->txr_evnodesc.ev_count++;
 			break;
@@ -3645,7 +3637,6 @@ hvn_nvs_intr1(struct hvn_rx_ring *rxr, int txlimit, int rxlimit)
 		mutex_enter(&txr->txr_lock);
 		/* ALTQ */
 		if (txr->txr_id == 0) {
-			ifp->if_flags &= ~IFF_OACTIVE;
 			if_schedule_deferred_start(ifp);
 		}
 		softint_schedule(txr->txr_si);
