@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.51 2021/07/31 20:29:37 andvar Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.52 2022/09/18 17:21:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.51 2021/07/31 20:29:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.52 2022/09/18 17:21:18 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1191,7 +1191,6 @@ cs_init(struct ifnet *ifp)
 
 		/* Mark the interface as running */
 		sc->sc_ethercom.ec_if.if_flags |= IFF_RUNNING;
-		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_ethercom.ec_if.if_timer = 0;
 
 		/* Assume we have carrier until we are told otherwise. */
@@ -1870,7 +1869,7 @@ cs_start_output(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	/* Check that the interface is up and running */
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	/* Don't interrupt a transmission in progress */
@@ -2131,7 +2130,7 @@ cs_stop(struct ifnet *ifp, int disable)
 	if (disable)
 		cs_disable(sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 int
