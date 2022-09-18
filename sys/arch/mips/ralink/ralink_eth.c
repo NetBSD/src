@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.24 2022/05/24 20:50:18 andvar Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.25 2022/09/18 12:39:26 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.24 2022/05/24 20:50:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.25 2022/09/18 12:39:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1057,7 +1057,6 @@ ralink_eth_init(struct ifnet *ifp)
 	if (!error) {
 		/* Note that the interface is now running. */
 		ifp->if_flags |= IFF_RUNNING;
-		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
 	return error;
@@ -1095,7 +1094,7 @@ ralink_eth_stop(struct ifnet *ifp, int disable)
 	ralink_eth_disable(sc);
 
 	/* Mark the interface down and cancel the watchdog timer.  */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 }
 
@@ -1162,7 +1161,7 @@ ralink_eth_start(struct ifnet *ifp)
 	int error;
 	int s;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	s = splnet();
@@ -1293,11 +1292,6 @@ ralink_eth_start(struct ifnet *ifp)
 
 		/* Write back the tx_cpu_idx */
 		fe_write(sc, RA_FE_PDMA_TX0_CPU_IDX, tx_cpu_idx);
-	}
-
-	if (txs == NULL) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	splx(s);
@@ -1625,7 +1619,6 @@ ralink_eth_txintr(ralink_eth_softc_t *sc)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
 		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-		ifp->if_flags &= ~IFF_OACTIVE;
 		if_statinc(ifp, if_opackets);
 		sc->sc_evcnt_output.ev_count++;
 
