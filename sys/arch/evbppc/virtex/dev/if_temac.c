@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.19 2022/02/27 11:49:28 riastradh Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.20 2022/09/18 15:57:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.19 2022/02/27 11:49:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.20 2022/09/18 15:57:13 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -635,7 +635,6 @@ temac_init(struct ifnet *ifp)
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return (0);
 }
@@ -684,15 +683,10 @@ temac_start(struct ifnet *ifp)
 	 *
 	 * We schedule one interrupt per Tx batch.
 	 */
-	while (1) {
+	while (sc->sc_txsfree) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-
-		if (sc->sc_txsfree == 0) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
 
 		txs = &sc->sc_txsoft[sc->sc_txscur];
 		dmap = txs->txs_dmap;
@@ -718,12 +712,11 @@ temac_start(struct ifnet *ifp)
 		}
 
 		/*
-		 * If we're short on DMA descriptors, notify upper layers
-		 * and leave this packet for later.
+		 * If we're short on DMA descriptors; leave this packet
+		 * for later.
 		 */
 		if (dmap->dm_nsegs > sc->sc_txfree) {
 			bus_dmamap_unload(sc->sc_dmat, dmap);
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
@@ -820,7 +813,7 @@ temac_stop(struct ifnet *ifp, int disable)
 	sc->sc_txbusy = 0;
 
 	/* Acknowledge we're down. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static int
@@ -1008,7 +1001,6 @@ temac_txreap(struct temac_softc *sc)
 {
 	struct temac_txsoft 	*txs;
 	bus_dmamap_t 		dmap;
-	int 			sent = 0;
 
 	/*
 	 * Transmit interrupts happen on the last descriptor of Tx jobs.
@@ -1030,7 +1022,6 @@ temac_txreap(struct temac_softc *sc)
 		txs->txs_mbuf = NULL;
 
 		if_statinc(&sc->sc_if, if_opackets);
-		sent = 1;
 
 		sc->sc_txsreap = TEMAC_TXSNEXT(sc->sc_txsreap);
 		sc->sc_txsfree++;
@@ -1043,9 +1034,6 @@ temac_txreap(struct temac_softc *sc)
 			break;
 		}
 	}
-
-	if (sent && (sc->sc_if.if_flags & IFF_OACTIVE))
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 }
 
 static int
