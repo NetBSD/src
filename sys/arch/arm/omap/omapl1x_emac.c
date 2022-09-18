@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.11 2019/05/30 02:32:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.12 2022/09/18 15:19:36 thorpej Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -713,13 +713,9 @@ emac_desc_dequeue (struct emac_softc *sc, struct emac_channel *chan)
 {
 	int ret;
 	struct emac_chain *entry;
-	struct ifnet * const ifp = &sc->sc_if;
 
 	if (chan->ch == TXCH) {
 		ret = emac_tx_desc_dequeue(sc, chan);
-		if (ret == 0) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-		}
 	} else {
 		/* Process the received packet */
 		ret = emac_rx_desc_process(sc, chan);
@@ -862,8 +858,7 @@ emac_ifstart (struct ifnet *ifp)
 	bus_dmamap_t map;
 	int error;
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-			    IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & IFF_RUNNING) == 0)) {
 		return;
 	}
 
@@ -943,9 +938,6 @@ remap:
 			goto unlock;
 	}
 
-	device_printf(sc->sc_dev, "TX desc's full, setting IFF_OACTIVE\n");
-	ifp->if_flags |= IFF_OACTIVE;
-
 unlock:
 	mutex_exit(chan->lock);
 }
@@ -1020,7 +1012,7 @@ emac_ifstop (struct ifnet *ifp, int disable)
 
 	mutex_exit(rx_chan->lock);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static int
@@ -1093,7 +1085,6 @@ emac_ifinit (struct ifnet *ifp)
 	rx_chan->run = true;
 	callout_schedule(&sc->sc_mii_callout, hz);
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	mutex_enter(sc->sc_hwlock);
 	emac_int_enable(sc);

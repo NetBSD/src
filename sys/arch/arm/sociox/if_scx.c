@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.37 2022/06/12 16:22:37 andvar Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.38 2022/09/18 15:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.37 2022/06/12 16:22:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.38 2022/09/18 15:22:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1133,7 +1133,6 @@ scx_init(struct ifnet *ifp)
 	mac_write(sc, GMACOMR, csr | OMR_SR | OMR_ST);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* start one second timer */
 	callout_schedule(&sc->sc_callout, hz);
@@ -1153,7 +1152,7 @@ scx_stop(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 
 	/* Mark the interface down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	CSR_WRITE(sc, xINTAE_CLR, ~0);
@@ -1318,7 +1317,7 @@ scx_start(struct ifnet *ifp)
 	int error, nexttx, lasttx, ofree, seg;
 	uint32_t tdes0;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	/* Remember the previous number of free descriptors. */
@@ -1362,10 +1361,8 @@ scx_start(struct ifnet *ifp)
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed anything yet,
 			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.	 Notify the upper
-			 * layer that there are not more slots left.
+			 * back on the queue, and punt.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			break;
 		}
@@ -1427,10 +1424,6 @@ scx_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
 	if (sc->sc_txfree != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1504,8 +1497,6 @@ txreap(struct scx_softc *sc)
 	struct scx_txsoft *txs;
 	uint32_t txstat;
 	int i;
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	for (i = sc->sc_txsdirty; sc->sc_txsfree != MD_TXQUEUELEN;
 	     i = MD_NEXTTXS(i), sc->sc_txsfree++) {
