@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.68 2022/03/17 08:08:03 andvar Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.69 2022/09/18 13:00:18 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.68 2022/03/17 08:08:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.69 2022/09/18 13:00:18 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -430,7 +430,7 @@ mb8795_reset(struct mb8795_softc *sc)
 
 	DPRINTF (("%s: mb8795_reset()\n", device_xname(sc->sc_dev)));
 
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
 	sc->sc_ethercom.ec_if.if_timer = 0;
 
 	MBDMA_RESET(sc);
@@ -526,7 +526,6 @@ mb8795_init(struct mb8795_softc *sc)
 			MBDMA_TX_SETUP(sc);
 
 			ifp->if_flags |= IFF_RUNNING;
-			ifp->if_flags &= ~IFF_OACTIVE;
 			ifp->if_timer = 0;
 
 			MBDMA_RX_GO(sc);
@@ -674,19 +673,15 @@ mb8795_start(struct ifnet *ifp)
 #endif
 
 	while (1) {
-		if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE))
-		    != IFF_RUNNING)
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			return;
 
 #if 0
 		return;	/* @@@ Turn off xmit for debugging */
 #endif
 
-		ifp->if_flags |= IFF_OACTIVE;
-
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0) {
-			ifp->if_flags &= ~IFF_OACTIVE;
 			return;
 		}
 
@@ -698,8 +693,6 @@ mb8795_start(struct ifnet *ifp)
 		if (!MBDMA_TX_ISACTIVE(sc))
 			mb8795_start_dma(sc);
 		splx(s);
-
-		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 }
 
