@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.17 2021/01/24 05:20:23 rin Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.18 2022/09/18 02:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -87,6 +87,7 @@ struct mc_softc {
 	int		sc_tail;
 	int		sc_rxset;
 	int		sc_txset, sc_txseti;
+	bool		sc_txbusy;
 
 	krndsource_t rnd_source;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.15 2022/09/18 02:32:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.15 2022/09/18 02:32:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -630,10 +630,7 @@ sun4i_emac_tx_enqueue(struct sun4i_emac_softc *sc, struct mbuf *m, u_int slot)
 static void
 sun4i_emac_tx_intr(struct sun4i_emac_softc *sc, u_int slot)
 {
-	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-
 	sc->sc_tx_active &= ~__BIT(slot);
-	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 int
@@ -697,9 +694,6 @@ sun4i_emac_ifstart(struct ifnet *ifp)
 		sc->sc_tx_active |= 2;
 	}
 
-	if (sc->sc_tx_active == 3)
-		ifp->if_flags |= IFF_OACTIVE;
-
 	ifp->if_timer = 5;
 
 	mutex_exit(&sc->sc_intr_lock);
@@ -753,7 +747,7 @@ sun4i_emac_ifstop(struct ifnet *ifp, int discard)
 	sun4i_emac_clear_set(sc, EMAC_CTL_REG,
 	    EMAC_CTL_RST | EMAC_CTL_TX_EN | EMAC_CTL_RX_EN, 0);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 }
 
@@ -812,7 +806,6 @@ sun4i_emac_ifinit(struct ifnet *ifp)
 	sun4i_emac_int_enable(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Enable RX/TX */
 	sun4i_emac_clear_set(sc, EMAC_CTL_REG,

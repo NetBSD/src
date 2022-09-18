@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.57 2021/01/24 05:20:23 rin Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.58 2022/09/18 02:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.57 2021/01/24 05:20:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.58 2022/09/18 02:41:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -248,13 +248,10 @@ mcstart(struct ifnet *ifp)
 	struct mc_softc	*sc = ifp->if_softc;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	while (1) {
-		if (ifp->if_flags & IFF_OACTIVE)
-			return;
-
+	while (!sc->sc_txbusy) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			return;
@@ -268,7 +265,7 @@ mcstart(struct ifnet *ifp)
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
 		 */
-		ifp->if_flags |= IFF_OACTIVE;
+		sc->sc_txbusy = true;
 		maceput(sc, m);
 
 		if_statinc(ifp, if_opackets);	/* # of pkts */
@@ -348,7 +345,7 @@ mcinit(struct mc_softc *sc)
 
 	/* flag interface as "running" */
 	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	splx(s);
 	return 0;
@@ -518,7 +515,7 @@ mc_tint(struct mc_softc *sc)
 
 	IF_STAT_PUTREF(&sc->sc_if);
 
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 	sc->sc_if.if_timer = 0;
 	if_schedule_deferred_start(&sc->sc_if);
 
