@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.9 2018/11/17 16:51:51 jakllsch Exp $ */
+/* $NetBSD: rk_cru.c,v 1.10 2022/09/18 21:33:57 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.9 2018/11/17 16:51:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.10 2022/09/18 21:33:57 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,7 +144,8 @@ rk_cru_clock_get_rate(void *priv, struct clk *clkp)
 
 	clkp_parent = clk_get_parent(clkp);
 	if (clkp_parent == NULL) {
-		aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
+		aprint_debug("%s: no parent for %s\n", __func__,
+		    clk->base.name);
 		return 0;
 	}
 
@@ -161,7 +162,8 @@ rk_cru_clock_set_rate(void *priv, struct clk *clkp, u_int rate)
 	if (clkp->flags & CLK_SET_RATE_PARENT) {
 		clkp_parent = clk_get_parent(clkp);
 		if (clkp_parent == NULL) {
-			aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+			aprint_error("%s: no parent for %s\n", __func__,
+			    clk->base.name);
 			return ENXIO;
 		}
 		return clk_set_rate(clkp_parent, rate);
@@ -183,7 +185,8 @@ rk_cru_clock_round_rate(void *priv, struct clk *clkp, u_int rate)
 	if (clkp->flags & CLK_SET_RATE_PARENT) {
 		clkp_parent = clk_get_parent(clkp);
 		if (clkp_parent == NULL) {
-			aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+			aprint_error("%s: no parent for %s\n", __func__,
+			    clk->base.name);
 			return 0;
 		}
 		return clk_round_rate(clkp_parent, rate);
@@ -230,8 +233,7 @@ rk_cru_clock_disable(void *priv, struct clk *clkp)
 }
 
 static int
-rk_cru_clock_set_parent(void *priv, struct clk *clkp,
-    struct clk *clkp_parent)
+rk_cru_clock_set_parent(void *priv, struct clk *clkp, struct clk *clkp_parent)
 {
 	struct rk_cru_softc * const sc = priv;
 	struct rk_cru_clk *clk = (struct rk_cru_clk *)clkp;
@@ -298,7 +300,8 @@ rk_cru_attach(struct rk_cru_softc *sc)
 	int i;
 
 	if (of_hasprop(sc->sc_phandle, "rockchip,grf")) {
-		sc->sc_grf = fdtbus_syscon_acquire(sc->sc_phandle, "rockchip,grf");
+		sc->sc_grf = fdtbus_syscon_acquire(sc->sc_phandle,
+		    "rockchip,grf");
 		if (sc->sc_grf == NULL) {
 			aprint_error(": couldn't get grf syscon\n");
 			return ENXIO;
@@ -355,13 +358,13 @@ rk_cru_print(struct rk_cru_softc *sc)
 		default:			type = "???"; break;
 		}
 
-        	aprint_debug_dev(sc->sc_dev,
+		aprint_debug_dev(sc->sc_dev,
 		    "%3d %-14s %2s %-14s %-7s ",
 		    clk->id,
-        	    clk->base.name,
-        	    clkp_parent ? "<-" : "",
-        	    clkp_parent ? clkp_parent->name : "",
-        	    type);
+		    clk->base.name,
+		    clkp_parent ? "<-" : "",
+		    clkp_parent ? clkp_parent->name : "",
+		    type);
 		aprint_debug("%10d Hz\n", clk_get_rate(&clk->base));
 	}
 }
