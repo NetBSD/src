@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.28 2020/01/29 05:30:14 thorpej Exp $ */
+/* $NetBSD: if_admsw.c,v 1.29 2022/09/18 11:17:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.28 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.29 2022/09/18 11:17:36 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -556,13 +556,12 @@ admsw_start(struct ifnet *ifp)
 		i = vlan;
 		for (;;) {
 			ifp = &sc->sc_ethercom[i].ec_if;
-			if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) ==
-			    IFF_RUNNING) {
-				/* Grab a packet off the queue. */
-				IFQ_POLL(&ifp->if_snd, m0);
-				if (m0 != NULL)
-					break;
-			}
+			if ((ifp->if_flags & IFF_RUNNING) == 0)
+				continue;
+			/* Grab a packet off the queue. */
+			IFQ_POLL(&ifp->if_snd, m0);
+			if (m0 != NULL)
+				break;
 			i++;
 			if (i == SW_DEVS)
 				i = 0;
@@ -574,8 +573,7 @@ admsw_start(struct ifnet *ifp)
 
 		/* Get a spare descriptor. */
 		if (sc->sc_txfree == 0) {
-			/* No more slots left; notify upper layer. */
-			ifp->if_flags |= IFF_OACTIVE;
+			/* No more slots left. */
 			ADMSW_EVCNT_INCR(&sc->sc_ev_txstall);
 			break;
 		}
@@ -881,9 +879,6 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 #ifdef ADMSW_EVENT_COUNTERS
 		ADMSW_EVCNT_INCR(&sc->sc_ev_txintr);
 #endif
-		for (vlan = 0; vlan < SW_DEVS; vlan++)
-			sc->sc_ethercom[vlan].ec_if.if_flags &= ~IFF_OACTIVE;
-
 		ifp = &sc->sc_ethercom[0].ec_if;
 
 		/* Try to queue more packets. */
@@ -1061,7 +1056,6 @@ admsw_init(struct ifnet *ifp)
 
 	/* Mark iface as running */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return 0;
 }
@@ -1098,7 +1092,7 @@ admsw_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	return;

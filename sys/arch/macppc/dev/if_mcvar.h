@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.13 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.14 2022/09/18 10:54:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -86,6 +86,7 @@ struct mc_softc {
 	u_char		*sc_txbuf, *sc_rxbuf;
 	int		sc_txbuf_phys, sc_rxbuf_phys;
 	int		sc_tail;
+	bool		sc_txbusy;
 
 	int		sc_node;
 	dbdma_regmap_t	*sc_txdma;

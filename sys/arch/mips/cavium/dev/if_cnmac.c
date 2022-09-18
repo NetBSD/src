@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.26 2021/05/27 03:23:29 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.27 2022/09/18 11:38:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.26 2021/05/27 03:23:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.27 2022/09/18 11:38:48 thorpej Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -546,7 +546,6 @@ cnmac_send_queue_flush_fetch(struct cnmac_softc *sc)
 static inline void
 cnmac_send_queue_flush(struct cnmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const int64_t sent_count = sc->sc_hard_done_cnt;
 	int i;
 
@@ -563,7 +562,7 @@ cnmac_send_queue_flush(struct cnmac_softc *sc)
 
 		m_freem(m);
 
-		CLR(ifp->if_flags, IFF_OACTIVE);
+		sc->sc_txbusy = false;
 	}
 
 	octfau_op_inc_fetch_8(&sc->sc_fau_done, i);
@@ -996,7 +995,10 @@ cnmac_start(struct ifnet *ifp)
 	 */
 	cnmac_send_queue_flush_prefetch(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		goto last;
+
+	if (sc->sc_txbusy)
 		goto last;
 
 	if (__predict_false(!octgmx_link_status(sc->sc_gmx_port)))
@@ -1015,7 +1017,7 @@ cnmac_start(struct ifnet *ifp)
 		 * buffers and bail out.
 		 */
 		if (cnmac_send_queue_is_full(sc)) {
-			SET(ifp->if_flags, IFF_OACTIVE);
+			sc->sc_txbusy = true;
 			if (wdc > 0)
 				octpko_op_doorbell_write(sc->sc_port,
 				    sc->sc_port, wdc);
@@ -1066,7 +1068,7 @@ cnmac_watchdog(struct ifnet *ifp)
 	cnmac_configure(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
-	CLR(ifp->if_flags, IFF_OACTIVE);
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 
 	cnmac_start(ifp);
@@ -1100,7 +1102,7 @@ cnmac_init(struct ifnet *ifp)
 	callout_schedule(&sc->sc_tick_free_ch, hz);
 
 	SET(ifp->if_flags, IFF_RUNNING);
-	CLR(ifp->if_flags, IFF_OACTIVE);
+	sc->sc_txbusy = false;
 
 	return 0;
 }
@@ -1118,7 +1120,8 @@ cnmac_stop(struct ifnet *ifp, int disable)
 	octgmx_port_enable(sc->sc_gmx_port, 0);
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
+	CLR(ifp->if_flags, IFF_RUNNING);
+	sc->sc_txbusy = false;
 	ifp->if_timer = 0;
 }
 
