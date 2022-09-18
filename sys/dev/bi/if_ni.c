@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.49 2019/05/28 07:41:48 msaitoh Exp $ */
+/*	$NetBSD: if_ni.c,v 1.50 2022/09/18 16:51:28 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.49 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.50 2022/09/18 16:51:28 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -482,7 +482,6 @@ niinit(struct ni_softc *sc)
 	 * Set flags (so ni_setup() do the right thing).
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Send setup messages so that the rx/tx locic starts.
@@ -503,8 +502,6 @@ nistart(struct ifnet *ifp)
 	struct mbuf *m, *m0;
 	int i, cnt, res, mlen;
 
-	if (ifp->if_flags & IFF_OACTIVE)
-		return;
 #ifdef DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: nistart\n", device_xname(sc->sc_dev));
@@ -517,7 +514,6 @@ nistart(struct ifnet *ifp)
 
 		data = REMQHI(&fqb->nf_dforw);
 		if ((int)data == Q_EMPTY) {
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
@@ -623,7 +619,6 @@ niintr(void *arg)
 
 		case BVP_DGRAM:
 			m = (struct mbuf *)data->nd_cmdref;
-			ifp->if_flags &= ~IFF_OACTIVE;
 			m_freem(m);
 			res = INSQTI(data, &fqb->nf_dforw);
 			if (res == Q_EMPTY) {

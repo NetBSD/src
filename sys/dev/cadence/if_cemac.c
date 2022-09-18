@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.24 2021/12/31 14:25:22 riastradh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.25 2022/09/18 16:54:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.24 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.25 2022/09/18 16:54:30 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +126,7 @@ struct cemac_softc {
 	int			txqi, txqc;
 	struct cemac_qmeta	txq[TX_QLEN];
 	callout_t		cemac_tick_ch;
+	bool			tx_busy;
 
 	int			cemac_flags;
 };
@@ -225,7 +226,6 @@ cemac_attach_common(device_t self, bus_space_tag_t iot,
 static int
 cemac_gctx(struct cemac_softc *sc)
 {
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	uint32_t tsr;
 
 	tsr = CEMAC_READ(ETH_TSR);
@@ -261,8 +261,8 @@ cemac_gctx(struct cemac_softc *sc)
 	}
 
 	// mark we're free
-	if (ifp->if_flags & IFF_OACTIVE) {
-		ifp->if_flags &= ~IFF_OACTIVE;
+	if (sc->tx_busy) {
+		sc->tx_busy = false;
 		/* Disable transmit-buffer-free interrupt */
 		/*CEMAC_WRITE(ETH_IDR, ETH_ISR_TBRE);*/
 	}
@@ -783,7 +783,7 @@ start:
 	if (cemac_gctx(sc) == 0) {
 		/* Enable transmit-buffer-free interrupt */
 		CEMAC_WRITE(ETH_IER, ETH_ISR_TBRE);
-		ifp->if_flags |= IFF_OACTIVE;
+		sc->tx_busy = true;
 		ifp->if_timer = 10;
 		splx(s);
 		return;
@@ -961,8 +961,9 @@ cemac_ifstop(struct ifnet *ifp, int disable)
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
+	sc->tx_busy = false;
 	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
