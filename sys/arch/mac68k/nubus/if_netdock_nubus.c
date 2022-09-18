@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.34 2020/02/04 07:40:53 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.35 2022/09/18 02:45:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.34 2020/02/04 07:40:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.35 2022/09/18 02:45:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -439,7 +439,7 @@ netdock_start(struct ifnet *ifp)
 	struct netdock_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	while (1) {
@@ -447,9 +447,7 @@ netdock_start(struct ifnet *ifp)
 		if (m == 0)
 			return;
 
-		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("%s: netdock_start: no header mbuf",
-			    device_xname(sc->sc_dev));
+		KASSERT(m->m_flags & M_PKTHDR);
 
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
@@ -460,7 +458,6 @@ netdock_start(struct ifnet *ifp)
 
 		if_statinc(ifp, if_opackets);
 	}
-
 }
 
 static void
@@ -524,7 +521,6 @@ netdock_init(struct netdock_softc *sc)
 
 
 	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
 	return (0);
@@ -663,7 +659,6 @@ netdock_txint(struct netdock_softc *sc)
 	int reg0004;
 	int regdata;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 
 	savereg0002 = NIC_GET_2(sc, REG_0002);
