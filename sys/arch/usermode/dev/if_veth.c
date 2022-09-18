@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.15 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: if_veth.c,v 1.16 2022/09/18 13:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.15 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.16 2022/09/18 13:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -181,7 +181,6 @@ veth_init(struct ifnet *ifp)
 	veth_stop(ifp, 0);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return 0;
 }
@@ -247,11 +246,6 @@ veth_softtx(void *priv)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int s;
 
-	if (ifp->if_flags & IFF_OACTIVE) {
-		if (thunk_pollout_tap(sc->sc_tapfd, 0) == 1)
-			ifp->if_flags &= ~IFF_OACTIVE;
-	}
-
 	s = splnet();
 	veth_start(ifp);
 	splx(s);
@@ -266,7 +260,7 @@ veth_start(struct ifnet *ifp)
 
 	vethprintf("%s: %s flags=%x\n", __func__, ifp->if_xname, ifp->if_flags);
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	for (;;) {
@@ -276,7 +270,6 @@ veth_start(struct ifnet *ifp)
 
 		if (thunk_pollout_tap(sc->sc_tapfd, 0) != 1) {
 			printf("queue full\n");
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
@@ -302,7 +295,7 @@ veth_stop(struct ifnet *ifp, int disable)
 {
 	vethprintf("%s: %s flags=%x\n", __func__, ifp->if_xname, ifp->if_flags);
 	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 static void
