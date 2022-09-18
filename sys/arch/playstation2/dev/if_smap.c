@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.34 2022/02/11 23:49:19 riastradh Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.35 2022/09/18 13:03:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.34 2022/02/11 23:49:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.35 2022/09/18 13:03:51 thorpej Exp $");
 
 #include "debug_playstation2.h"
 
@@ -158,7 +158,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	__sc = sc;
 #endif
 
-	sc->dev = self;
+	sc->emac3.dev = self;
 
 	printf(": %s\n", spa->spa_product_name);
 
@@ -448,9 +448,6 @@ smap_txeof(void *arg)
 	}
 	sc->tx_done_index = i;
 
-	/* OK to start transmit */
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	FUNC_EXIT();
 }
 
@@ -481,7 +478,6 @@ smap_start(struct ifnet *ifp)
 		if (sz > sc->tx_buf_freesize ||
 		    sc->tx_desc_cnt >= SMAP_DESC_MAX ||
 		    emac3_tx_done() != 0) {
-			ifp->if_flags |= IFF_OACTIVE;
 			goto end;
 		}
 
@@ -599,7 +595,7 @@ smap_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->emac3.mii);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (disable)
 		emac3_disable();

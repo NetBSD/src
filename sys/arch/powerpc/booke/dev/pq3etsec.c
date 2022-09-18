@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.57 2022/05/07 05:01:29 rin Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.58 2022/09/18 13:09:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.57 2022/05/07 05:01:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.58 2022/09/18 13:09:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2331,7 +2331,7 @@ pq3etsec_ifstart(struct ifnet *ifp)
 {
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 
-	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & IFF_RUNNING) == 0)) {
 		return;
 	}
 
@@ -2347,8 +2347,6 @@ pq3etsec_tx_error(
 
 	pq3etsec_txq_consume(sc, txq);
 
-	if (pq3etsec_txq_fillable_p(sc, txq))
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	if (sc->sc_txerrors
 	    & (IEVENT_LC | IEVENT_CRL | IEVENT_XFUN | IEVENT_BABT)) {
 	} else if (sc->sc_txerrors & IEVENT_EBERR) {
@@ -2358,7 +2356,6 @@ pq3etsec_tx_error(
 		etsec_write(sc, TSTAT, TSTAT_THLT & txq->txq_qmask);
 	if (!pq3etsec_txq_enqueue(sc, txq)) {
 		sc->sc_ev_tx_stall.ev_count++;
-		sc->sc_if.if_flags |= IFF_OACTIVE;
 	}
 
 	sc->sc_txerrors = 0;
@@ -2531,9 +2528,6 @@ pq3etsec_soft_intr(void *arg)
 		if (!pq3etsec_txq_consume(sc, &sc->sc_txq)
 		    || !pq3etsec_txq_enqueue(sc, &sc->sc_txq)) {
 			sc->sc_ev_tx_stall.ev_count++;
-			ifp->if_flags |= IFF_OACTIVE;
-		} else {
-			ifp->if_flags &= ~IFF_OACTIVE;
 		}
 		imask |= IEVENT_TXF;
 	}
