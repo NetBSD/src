@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.8 2022/09/11 15:31:11 skrll Exp $
+#	$NetBSD: files.riscv,v 1.9 2022/09/19 09:15:01 skrll Exp $
 #
 
 maxpartitions	16
@@ -14,27 +14,20 @@ defflag	opt_ddb.h		DDB_TRACE
 
 file	arch/riscv/fdt/fdt_dma_machdep.c
 
-file	arch/riscv/riscv/spl.S
-
+file	arch/riscv/riscv/autoconf.c
 file	arch/riscv/riscv/bus_space.c
 file	arch/riscv/riscv/bus_space_generic.S
 file	arch/riscv/riscv/bus_space_notimpl.S
-
-file	arch/riscv/riscv/autoconf.c
+file	arch/riscv/riscv/clock_machdep.c
+file	arch/riscv/riscv/core_machdep.c		coredump
 file	arch/riscv/riscv/cpu_subr.c
 file	arch/riscv/riscv/db_disasm.c		ddb
+file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
 file	arch/riscv/riscv/db_trace.c		ddb
+file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/fixup.c
 file	arch/riscv/riscv/fpu.c			fpe
 file	arch/riscv/riscv/ipifuncs.c		multiprocessor
-file	arch/riscv/riscv/stubs.c
-file	arch/riscv/riscv/syscall.c		# syscall handler
-file	arch/riscv/riscv/trap.c			# trap handlers
-
-file	arch/riscv/riscv/core_machdep.c		coredump
-file	arch/riscv/riscv/clock_machdep.c
-file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
-file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/kgdb_machdep.c		kgdb
 file	arch/riscv/riscv/kobj_machdep.c		modular
 file	arch/riscv/riscv/pmap_machdep.c
@@ -43,7 +36,11 @@ file	arch/riscv/riscv/procfs_machdep.c	procfs
 file	arch/riscv/riscv/riscv_machdep.c
 file	arch/riscv/riscv/sig_machdep.c		# signal delivery
 file	arch/riscv/riscv/softint_machdep.c
+file	arch/riscv/riscv/spl.S
+file	arch/riscv/riscv/stubs.c
+file	arch/riscv/riscv/syscall.c		# syscall handler
 file	arch/riscv/riscv/sys_machdep.c
+file	arch/riscv/riscv/trap.c			# trap handlers
 file	arch/riscv/riscv/vm_machdep.c
 
 file	dev/cons.c
