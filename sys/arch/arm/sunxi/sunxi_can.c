@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.9 2022/09/18 15:28:01 thorpej Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.10 2022/09/19 11:21:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.9 2022/09/18 15:28:01 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.10 2022/09/19 11:21:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -387,7 +387,8 @@ sunxi_can_intr(void *arg)
 		if (irq & SUNXI_CAN_INT_TX_FLAG) {
 			sunxi_can_tx_intr(sc);
 		}
-		if (irq & SUNXI_CAN_INT_RX_FLAG) {
+		if ((irq & (SUNXI_CAN_INT_RX_FLAG | SUNXI_CAN_INT_DATA_OR)) ==
+		    SUNXI_CAN_INT_RX_FLAG) {
 			while (sts & SUNXI_CAN_STA_RX_RDY) {
 				sunxi_can_rx_intr(sc);
 				sts = sunxi_can_read(sc, SUNXI_CAN_STA_REG);
