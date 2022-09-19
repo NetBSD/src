@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.53 2016/06/03 02:06:40 agc Exp $	*/
+/*	$NetBSD: calendar.c,v 1.54 2022/09/19 18:48:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.53 2016/06/03 02:06:40 agc Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.54 2022/09/19 18:48:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -459,7 +459,7 @@ opencal(FILE **in)
 			err(EXIT_FAILURE, "Cannot restrict cpp");
 		cpp_restricted = true;
 
-		(void)execl(_PATH_CPP, "cpp", "-traditional", "-P", "-I.",
+		(void)execl(_PATH_CPP, "tradcpp", "-nostdinc", "-I.",
 		    "-I" _PATH_CALENDARS, NULL);
 		err(EXIT_FAILURE, "Cannot exec `%s'", _PATH_CPP);
 		/*NOTREACHED*/
