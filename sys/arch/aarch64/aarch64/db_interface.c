@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.18 2022/05/29 16:39:22 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.19 2022/09/19 17:23:14 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2022/05/29 16:39:22 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2022/09/19 17:23:14 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -638,4 +638,10 @@ db_ttbrdump(bool countmode, vaddr_t va,
 
 	db_dump_l0table(countmode, pmap_l0table(pm),
 	    (pm == pmap_kernel()) ? 0xffff000000000000UL : 0, pr);
+}
+
+void
+cpu_Debugger(void)
+{
+	__asm __volatile ("brk #0xffff");
 }
