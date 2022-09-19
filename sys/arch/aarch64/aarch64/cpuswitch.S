@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.38 2022/06/07 08:08:31 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.39 2022/09/19 17:23:14 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.38 2022/06/07 08:08:31 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.39 2022/09/19 17:23:14 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -333,16 +333,6 @@ ENTRY_NP(lwp_trampoline)
 	br	x16			/* call function with arg */
 END(lwp_trampoline)
 
-
-#ifdef DDB
-ENTRY_NP(cpu_Debugger)
-	stp	fp, lr, [sp, #-16]!
-	mov	fp, sp
-	brk	#0xffff
-	ldp	fp, lr, [sp], #16
-	ret
-END(cpu_Debugger)
-#endif /* DDB */
 
 /*
  * int cpu_set_onfault(struct faultbuf *fb)
