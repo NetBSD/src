@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.13 2021/08/29 08:43:12 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.14 2022/09/19 22:30:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -82,7 +82,7 @@ static inline int64_t
 ddi_get_lbolt64(void)
 {
 	struct timespec ts;
-	const int hz = 100;
+	extern int hz;
 
 	getnanouptime(&ts);
 	return (int64_t)(SEC_TO_TICK(ts.tv_sec) + NSEC_TO_TICK(ts.tv_nsec));
