@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.19 2022/06/07 23:55:25 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.20 2022/09/19 17:24:23 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2022/06/07 23:55:25 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.20 2022/09/19 17:24:23 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -544,8 +544,8 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 				pc = aarch64_strip_pac(tf_buf.tf_lr);
 			if (pc == 0)
 				break;
-
-			pr_traceaddr("sp", sp, pc, flags, pr);
+			lr0 = aarch64_strip_pac(tf_buf.tf_lr);
+			allow_leaf_function = true;
 
 		} else {
 			db_sym_t sym;
