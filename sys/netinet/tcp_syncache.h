@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.h,v 1.1 2022/09/20 07:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.h,v 1.2 2022/09/20 10:12:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -207,15 +207,13 @@ int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct mbuf *, u_char *, int, struct tcp_opt_info *);
 void	 syn_cache_unreach(const struct sockaddr *, const struct sockaddr *,
 	   struct tcphdr *);
-struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
+struct socket
+	*syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, struct socket *so, struct mbuf *);
 void	 syn_cache_init(void);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
-struct syn_cache *syn_cache_lookup(const struct sockaddr *, const struct sockaddr *,
-		struct syn_cache_head **);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *);
-int	 syn_cache_respond(struct syn_cache *);
 void	 syn_cache_cleanup(struct tcpcb *);
 #endif
 

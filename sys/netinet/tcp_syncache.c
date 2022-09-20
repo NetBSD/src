@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.1 2022/09/20 07:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.2 2022/09/20 10:12:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.1 2022/09/20 07:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.2 2022/09/20 10:12:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -201,7 +201,11 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.1 2022/09/20 07:19:14 ozaki-r Exp
 #endif	/* IPSEC*/
 #endif
 
-static void syn_cache_timer(void *);
+static void	syn_cache_timer(void *);
+static struct syn_cache *
+		syn_cache_lookup(const struct sockaddr *, const struct sockaddr *,
+		struct syn_cache_head **);
+static int	syn_cache_respond(struct syn_cache *);
 
 /* syn hash parameters */
 #define	TCP_SYN_HASH_SIZE	293
@@ -497,7 +501,7 @@ syn_cache_cleanup(struct tcpcb *tp)
 /*
  * Find an entry in the syn cache.
  */
-struct syn_cache *
+static struct syn_cache *
 syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
     struct syn_cache_head **headp)
 {
@@ -1094,7 +1098,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
  * Returns 0 on success.
  */
 
-int
+static int
 syn_cache_respond(struct syn_cache *sc)
 {
 #ifdef INET6
