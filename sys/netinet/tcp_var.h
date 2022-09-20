@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.196 2021/07/31 20:29:37 andvar Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.197 2022/09/20 07:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,6 +204,8 @@ struct sackhole {
 
 	TAILQ_ENTRY(sackhole) sackhole_q;
 };
+
+struct syn_cache;
 
 /*
  * Tcp control block, one per tcp; fields:
@@ -520,57 +522,6 @@ struct tcp_opt_info {
 #define	TOF_SIGNATURE	0x0040		/* signature option present */
 #define	TOF_SIGLEN	0x0080		/* sigature length valid (RFC2385) */
 
-/*
- * Data for the TCP compressed state engine.
- */
-union syn_cache_sa {
-	struct sockaddr sa;
-	struct sockaddr_in sin;
-#if 1 /*def INET6*/
-	struct sockaddr_in6 sin6;
-#endif
-};
-
-struct syn_cache {
-	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
-	callout_t sc_timer;			/* rexmt timer */
-	struct route sc_route;
-	long sc_win;				/* advertised window */
-	int sc_bucketidx;			/* our bucket index */
-	u_int32_t sc_hash;
-	u_int32_t sc_timestamp;			/* timestamp from SYN */
-	u_int32_t sc_timebase;			/* our local timebase */
-	union syn_cache_sa sc_src;
-	union syn_cache_sa sc_dst;
-	tcp_seq sc_irs;
-	tcp_seq sc_iss;
-	u_int sc_rxtcur;			/* current rxt timeout */
-	u_int sc_rxttot;			/* total time spend on queues */
-	u_short sc_rxtshift;			/* for computing backoff */
-	u_short sc_flags;
-
-#define	SCF_UNREACH		0x0001		/* we've had an unreach error */
-#define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
-#define	SCF_DEAD		0x0004		/* this entry to be released */
-#define SCF_SACK_PERMIT		0x0008		/* peer will do SACK */
-#define SCF_ECN_PERMIT		0x0010		/* peer will do ECN */
-#define SCF_SIGNATURE	0x40			/* send MD5 digests */
-
-	struct mbuf *sc_ipopts;			/* IP options */
-	u_int16_t sc_peermaxseg;
-	u_int16_t sc_ourmaxseg;
-	u_int8_t sc_request_r_scale	: 4,
-		 sc_requested_s_scale	: 4;
-
-	struct tcpcb *sc_tp;			/* tcb for listening socket */
-	LIST_ENTRY(syn_cache) sc_tpq;		/* list of entries by same tp */
-};
-
-struct syn_cache_head {
-	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
-	u_short sch_length;			/* # entries in bucket */
-};
-
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
 #ifdef INET6
 #define	in6totcpcb(ip)	((struct tcpcb *)(ip)->in6p_ppcb)
@@ -803,8 +754,6 @@ extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
 extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
-extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
-extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 extern	int tcp_do_ecn;		/* TCP ECN enabled/disabled? */
 extern	int tcp_ecn_maxretries;	/* Max ECN setup retries */
@@ -828,10 +777,6 @@ extern int tcp_vtw_entries;
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
-
-extern	int tcp_syn_cache_size;
-extern	struct syn_cache_head tcp_syn_cache[];
-extern	u_long syn_cache_count;
 
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
@@ -940,24 +885,11 @@ int	 tcp_sack_numblks(const struct tcpcb *);
 void	 tcp_statinc(u_int);
 void	 tcp_statadd(u_int, uint64_t);
 
-int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *, unsigned int, struct socket *,
-		struct mbuf *, u_char *, int, struct tcp_opt_info *);
-void	 syn_cache_unreach(const struct sockaddr *, const struct sockaddr *,
-	   struct tcphdr *);
-struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *, struct socket *so, struct mbuf *);
-void	 syn_cache_init(void);
-void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
-struct syn_cache *syn_cache_lookup(const struct sockaddr *, const struct sockaddr *,
-		struct syn_cache_head **);
-void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
-		struct tcphdr *);
-int	 syn_cache_respond(struct syn_cache *);
-void	 syn_cache_cleanup(struct tcpcb *);
-
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);
+
+int	tcp_dooptions(struct tcpcb *, const u_char *, int,
+	    struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 #endif
 
 #endif /* !_NETINET_TCP_VAR_H_ */

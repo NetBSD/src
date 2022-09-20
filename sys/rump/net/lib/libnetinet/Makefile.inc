@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/03/08 20:43:22 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2022/09/20 07:19:14 ozaki-r Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet
@@ -15,7 +15,7 @@ SRCS+=	if_arp.c
 
 # TCP
 SRCS+=	tcp_congctl.c tcp_input.c tcp_output.c tcp_sack.c tcp_subr.c \
-	tcp_timer.c tcp_usrreq.c tcp_vtw.c
+	tcp_syncache.c tcp_timer.c tcp_usrreq.c tcp_vtw.c
 
 # UDP
 SRCS+=	udp_usrreq.c

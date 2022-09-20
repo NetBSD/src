@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.290 2022/06/27 01:29:51 knakahara Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.291 2022/09/20 07:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.290 2022/06/27 01:29:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.291 2022/09/20 07:19:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.290 2022/06/27 01:29:51 knakahara Exp
 #include <netinet/tcp_vtw.h>
 #include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
+#include <netinet/tcp_syncache.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -221,14 +222,6 @@ int	tcp_vtw_entries = 1 << 4;	/* 16 vestigial TIME_WAIT entries */
 #define	TCBHASHSIZE	128
 #endif
 int	tcbhashsize = TCBHASHSIZE;
-
-/* syn hash parameters */
-#define	TCP_SYN_HASH_SIZE	293
-#define	TCP_SYN_BUCKET_SIZE	35
-int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
-int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
-struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 
 int	tcp_freeq(struct tcpcb *);
 static int	tcp_iss_secret_init(void);

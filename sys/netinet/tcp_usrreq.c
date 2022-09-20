@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.231 2022/06/28 01:44:19 riastradh Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.232 2022/09/20 07:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.231 2022/06/28 01:44:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.232 2022/09/20 07:19:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.231 2022/06/28 01:44:19 riastradh E
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/tcp_vtw.h>
+#include <netinet/tcp_syncache.h>
 
 static int
 tcp_debug_capture(struct tcpcb *tp, int req)
