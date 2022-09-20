@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2905 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2906 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -664,6 +664,22 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add initial support for the Rockchip RK3588 SoC.
 		[ryo 20220823]
 	acpi(4): Updated ACPICA to 20220331. [christos 20220827]
+	ftp(1): Add TLS/SSL certificate verification. [christos 20220830]
 	xen: Add experimental support for PVH dom0. [bouyer 20220901]
+	make(1): Add .break to terminate .for loops early. [sjg 20220902]
+	udl(4): Improve performance of refreshing mostly static displays.
+		[nat 20220906]
+	amiga: Update loadbsd to version 3.2.  Add detection of A600, fix
+		handling of multiple -n options, fix compiling with recent
+		AmigaOS gcc. [phx 20220906]
 	grep(1): with -r and no file argument, search current directory
 		[wiz 20220909]
+	ftp(1): Support redirects to relative URLs.  [kim 20220911]
+	httpd(8): Add -q option to make httpd quiet.  [martin 20220912]
+	nvmm(4): Add suspend/resume support.  [riastradh 20220913]
+	aq(4): Various improvements to NET_MPSAFE support.  [skrll 20220916]
+	sh(1): Add -l option to create a login shell, overrides
+		the presence (or otherwise) of a '-' as argv[0][0].
+		[kre 20220918]
+	netinet: Remove routes on an address removal if the routes
+		reference the address. [ozaki-r 20220920]
