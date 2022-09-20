@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2906 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2907 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -664,6 +664,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add initial support for the Rockchip RK3588 SoC.
 		[ryo 20220823]
 	acpi(4): Updated ACPICA to 20220331. [christos 20220827]
+	tradcpp(1): Import tradcpp to base for programs that require a
+		C preprocessor to process their configuration but should
+		still work without the compiler set installed.
+		[dholland 20220827]
 	ftp(1): Add TLS/SSL certificate verification. [christos 20220830]
 	xen: Add experimental support for PVH dom0. [bouyer 20220901]
 	make(1): Add .break to terminate .for loops early. [sjg 20220902]
