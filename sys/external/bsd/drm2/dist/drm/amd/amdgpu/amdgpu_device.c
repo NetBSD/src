@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.16 2021/12/19 12:41:33 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.17 2022/09/20 23:01:42 mrg Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.16 2021/12/19 12:41:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.17 2022/09/20 23:01:42 mrg Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -4447,7 +4447,6 @@ skip_sched_resume:
  */
 static void amdgpu_device_get_pcie_info(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	struct pci_dev *pdev;
 	enum pci_bus_speed speed_cap, platform_speed_cap;
 	enum pcie_link_width platform_link_width;
@@ -4571,7 +4570,6 @@ static void amdgpu_device_get_pcie_info(struct amdgpu_device *adev)
 			}
 		}
 	}
-#endif
 }
 
 int amdgpu_device_baco_enter(struct drm_device *dev)

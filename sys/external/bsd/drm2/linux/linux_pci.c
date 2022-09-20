@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.23 2022/07/20 01:20:20 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.24 2022/09/20 23:01:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.23 2022/07/20 01:20:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.24 2022/09/20 23:01:42 mrg Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -716,8 +716,7 @@ bool
 pci_is_root_bus(struct pci_bus *bus)
 {
 
-	/* XXX Cop-out. */
-	return false;
+	return bus->number == 0;
 }
 
 int
@@ -799,4 +798,142 @@ linux_pci_dev_destroy(struct pci_dev *pdev)
 	/* There is no way these should be still in use.  */
 	KASSERT(pdev->pd_saved_state == NULL);
 	KASSERT(pdev->pd_intr_handles == NULL);
+}
+
+enum pci_bus_speed
+pcie_get_speed_cap(struct pci_dev *dev)
+{
+	pci_chipset_tag_t pc = dev->pd_pa.pa_pc;
+	pcitag_t tag = dev->pd_pa.pa_tag;
+	pcireg_t lcap, lcap2, xcap;
+	int off;
+
+	/* Must have capabilities. */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, &off, NULL) == 0)
+		return PCI_SPEED_UNKNOWN;
+
+	/* Only PCIe 3.x has LCAP2. */
+	xcap = pci_conf_read(pc, tag, off + PCIE_XCAP);
+	if (__SHIFTOUT(xcap, PCIE_XCAP_VER_MASK) >= 2) {
+		lcap2 = pci_conf_read(pc, tag, off + PCIE_LCAP2);
+		if (lcap2) {
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS64) != 0) {
+				return PCIE_SPEED_64_0GT;
+			}
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS32) != 0) {
+				return PCIE_SPEED_32_0GT;
+			}
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS16) != 0) {
+				return PCIE_SPEED_16_0GT;
+			}
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS8) != 0) {
+				return PCIE_SPEED_8_0GT;
+			}
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS5) != 0) {
+				return PCIE_SPEED_5_0GT;
+			}
+			if ((lcap2 & PCIE_LCAP2_SUP_LNKS2) != 0) {
+				return PCIE_SPEED_2_5GT;
+			}
+		}
+	}
+
+	lcap = pci_conf_read(pc, tag, off + PCIE_LCAP);
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_64) {
+		return PCIE_SPEED_64_0GT;
+	}
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_32) {
+		return PCIE_SPEED_32_0GT;
+	}
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_16) {
+		return PCIE_SPEED_16_0GT;
+	}
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_8) {
+		return PCIE_SPEED_8_0GT;
+	}
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_5) {
+		return PCIE_SPEED_5_0GT;
+	}
+	if ((lcap & PCIE_LCAP_MAX_SPEED) == PCIE_LCAP_MAX_SPEED_2) {
+		return PCIE_SPEED_2_5GT;
+	}
+
+	return PCI_SPEED_UNKNOWN;
+}
+
+/*
+ * This should walk the tree, it only checks this device currently.
+ * It also does not write to limiting_dev (the only caller in drm2
+ * currently does not use it.)
+ */
+unsigned
+pcie_bandwidth_available(struct pci_dev *dev,
+    struct pci_dev **limiting_dev,
+    enum pci_bus_speed *speed,
+    enum pcie_link_width *width)
+{
+	pci_chipset_tag_t pc = dev->pd_pa.pa_pc;
+	pcitag_t tag = dev->pd_pa.pa_tag;
+	pcireg_t lcsr;
+	unsigned per_line_speed, num_lanes;
+	int off;
+
+	/* Must have capabilities. */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, &off, NULL) == 0)
+		return 0;
+
+	if (speed)
+		*speed = PCI_SPEED_UNKNOWN;
+	if (width)
+		*width = 0;
+
+	lcsr = pci_conf_read(pc, tag, off + PCIE_LCSR);
+
+	switch (lcsr & PCIE_LCSR_NLW) {
+	case PCIE_LCSR_NLW_X1:
+	case PCIE_LCSR_NLW_X2:
+	case PCIE_LCSR_NLW_X4:
+	case PCIE_LCSR_NLW_X8:
+	case PCIE_LCSR_NLW_X12:
+	case PCIE_LCSR_NLW_X16:
+	case PCIE_LCSR_NLW_X32:
+		num_lanes = __SHIFTOUT(lcsr, PCIE_LCSR_NLW);
+		if (width)
+			*width = num_lanes;
+		break;
+	default:
+		num_lanes = 0;
+		break;
+	}
+
+	switch (__SHIFTOUT(lcsr, PCIE_LCSR_LINKSPEED)) {
+	case PCIE_LCSR_LINKSPEED_2:
+		*speed = PCIE_SPEED_2_5GT;
+		per_line_speed = 2500 * 8 / 10;
+		break;
+	case PCIE_LCSR_LINKSPEED_5:
+		*speed = PCIE_SPEED_5_0GT;
+		per_line_speed = 5000 * 8 / 10;
+		break;
+	case PCIE_LCSR_LINKSPEED_8:
+		*speed = PCIE_SPEED_8_0GT;
+		per_line_speed = 8000 * 128 / 130;
+		break;
+	case PCIE_LCSR_LINKSPEED_16:
+		*speed = PCIE_SPEED_16_0GT;
+		per_line_speed = 16000 * 128 / 130;
+		break;
+	case PCIE_LCSR_LINKSPEED_32:
+		*speed = PCIE_SPEED_32_0GT;
+		per_line_speed = 32000 * 128 / 130;
+		break;
+	case PCIE_LCSR_LINKSPEED_64:
+		*speed = PCIE_SPEED_64_0GT;
+		per_line_speed = 64000 * 128 / 130;
+		break;
+	default:
+		per_line_speed = 0;
+	}
+
+	return num_lanes * per_line_speed;
 }
