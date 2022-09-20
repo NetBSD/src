@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.712 2022/07/18 04:30:30 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.713 2022/09/20 02:24:18 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,7 +55,7 @@
  *
  *	M = major version
  *	m = minor version; a minor number of 99 indicates current.
- *	r = 0 (*)
+ *	r = 0 (*) or patchlevel in 9.99
  *	p = patchlevel
  *
  * When new releases are made, src/gnu/usr.bin/groff/tmac/mdoc.local
@@ -67,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	999009900	/* NetBSD 9.99.99 */
+#define	__NetBSD_Version__	999010000	/* NetBSD 9.99.100 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
