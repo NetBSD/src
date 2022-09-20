@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.165 2022/01/31 10:14:55 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.166 2022/09/20 23:01:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1063,7 +1063,20 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR_LABIE		__BIT(11)      /* Link Autonomous BW Intr En */
 #define	PCIE_LCSR_DRSSGNL	__BITS(15, 14) /* DRS Signaling */
 #define	PCIE_LCSR_LINKSPEED	__BITS(19, 16) /* Link Speed */
+#define  PCIE_LCSR_LINKSPEED_2	1	       /* 2.5GT/s */
+#define  PCIE_LCSR_LINKSPEED_5	2	       /* 5GT/s */
+#define  PCIE_LCSR_LINKSPEED_8	3	       /* 8GT/s */
+#define  PCIE_LCSR_LINKSPEED_16	4	       /* 16GT/s */
+#define  PCIE_LCSR_LINKSPEED_32	5	       /* 32GT/s */
+#define  PCIE_LCSR_LINKSPEED_64	6	       /* 64GT/s */
 #define	PCIE_LCSR_NLW		__BITS(25, 20) /* Negotiated Link Width */
+#define  PCIE_LCSR_NLW_X1	__BIT(20)	/* Negotiated x1 */
+#define  PCIE_LCSR_NLW_X2	__BIT(21)	/* Negotiated x2 */
+#define  PCIE_LCSR_NLW_X4	__BIT(22)	/* Negotiated x4 */
+#define  PCIE_LCSR_NLW_X8	__BIT(23)	/* Negotiated x8 */
+#define  PCIE_LCSR_NLW_X12	__BITS(22, 23)	/* Negotiated x12 */
+#define  PCIE_LCSR_NLW_X16	__BIT(24)	/* Negotiated x16 */
+#define  PCIE_LCSR_NLW_X32	__BIT(25)	/* Negotiated x32 */
 #define	PCIE_LCSR_LINKTRAIN_ERR	__BIT(10 + 16) /* Link Training Error */
 #define	PCIE_LCSR_LINKTRAIN	__BIT(11 + 16) /* Link Training */
 #define	PCIE_LCSR_SLOTCLKCFG	__BIT(12 + 16) /* Slot Clock Configuration */

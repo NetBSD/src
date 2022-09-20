@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.53 2022/02/27 14:23:08 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.54 2022/09/20 23:01:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -190,6 +190,24 @@ enum pci_bus_speed {
 	PCIE_SPEED_5_0GT,
 	PCIE_SPEED_8_0GT,
 	PCIE_SPEED_16_0GT,
+	PCIE_SPEED_32_0GT,
+	PCIE_SPEED_64_0GT,
+};
+
+/*
+ * Actually values from the Link Status register, bits 16-19.  Don't use
+ * these as a bit-mask -- these are the only known, valid values.
+ */
+enum pcie_link_width {
+	PCIE_LNK_WIDTH_RESRV   = 0,
+	PCIE_LNK_X1            = __BIT(0),
+	PCIE_LNK_X2            = __BIT(1),
+	PCIE_LNK_X4            = __BIT(2),
+	PCIE_LNK_X8            = __BIT(3),
+	PCIE_LNK_X12           = __BITS(2,3),
+	PCIE_LNK_X16           = __BIT(4),
+	PCIE_LNK_X32           = __BIT(5),
+	PCIE_LNK_WIDTH_UNKNOWN = __BITS(0, 7),
 };
 
 #define	PCIBIOS_MIN_MEM	0x100000	/* XXX bogus x86 kludge bollocks */
@@ -242,6 +260,8 @@ enum pci_bus_speed {
 #define	pci_write_config_dword		linux_pci_write_config_dword
 #define	pci_write_config_word		linux_pci_write_config_word
 #define	pcibios_align_resource		linux_pcibios_align_resource
+#define	pcie_get_speed_cap		linux_pcie_get_speed_cap
+#define	pcie_bandwidth_available	linux_pcie_bandwidth_available
 
 /* NetBSD local additions.  */
 void		linux_pci_dev_init(struct pci_dev *, device_t, device_t,
@@ -322,6 +342,12 @@ void		pci_iounmap(struct pci_dev *, void __pci_iomem *);
 
 void		pci_save_state(struct pci_dev *);
 void		pci_restore_state(struct pci_dev *);
+
+enum pci_bus_speed pcie_get_speed_cap(struct pci_dev *dev);
+unsigned	pcie_bandwidth_available(struct pci_dev *dev,
+					 struct pci_dev **limiting_dev,
+					 enum pci_bus_speed *speed,
+					 enum pcie_link_width *width);
 
 static inline bool
 dev_is_pci(struct device *dev)
