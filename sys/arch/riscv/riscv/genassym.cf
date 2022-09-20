@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2022/09/11 15:31:12 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.12 2022/09/20 07:18:23 skrll Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,18 +49,13 @@ include <uvm/uvm_extern.h>
 include <riscv/locore.h>
 include <riscv/sysreg.h>
 
-#define	SR_IM		SR_IM
-#define	SR_IM_LSHIFT	__SIZEOF_LONG__ * 8 - (ilog2(SR_IM) + 1)
-#define	SR_IM_RSHIFT	ilog2(__LOWEST_SET_BIT(SR_IM))
-#define	SR_VM		SR_VM
-#define	SR_U64		SR_U64
-#define	SR_S64		SR_S64
-#define	SR_EF		SR_EF
-#define	SR_PEI		SR_PEI
-#define	SR_EI		SR_EI
-#define	SR_PS		SR_PS
-#define	SR_S		SR_S
+
+define	SR_SPP		SR_SPP
 define	SR_SIE		SR_SIE
+define	SR_FS		SR_FS
+# define	SR_PS		SR_PS
+# define	SR_S		SR_S
+define	SR_SUM		SR_SUM
 
 define	CAUSE_SYSCALL	CAUSE_SYSCALL
 
@@ -161,6 +156,7 @@ define	FB_SR		offsetof(struct faultbuf, fb_sr)
 define	PAGE_SIZE	PAGE_SIZE
 define	PAGE_MASK	PAGE_MASK
 define	PAGE_SHIFT	PAGE_SHIFT
+define	UPAGES		UPAGES
 define	USRSTACK	USRSTACK
 
 ifdef	__HAVE_FAST_SOFTINTS
@@ -186,6 +182,8 @@ define	RW_READER	RW_READER
 
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
+define	VM_KERNEL_BASE		VM_KERNEL_BASE
+define	VM_KERNEL_SIZE		VM_KERNEL_SIZE
 
 define	USPACE		USPACE
 ifdef XSEGSHIFT
@@ -196,6 +194,7 @@ define	PGSHIFT		PGSHIFT
 define	NPDEPG		NPDEPG
 define	NBSEG		NBSEG
 
+# Constants from pte.h
 define	PTE_D		PTE_D
 define	PTE_A		PTE_A
 define	PTE_G		PTE_G
@@ -205,8 +204,29 @@ define	PTE_W		PTE_W
 define	PTE_R		PTE_R
 define	PTE_V		PTE_V
 
+define	PTE_KERN	PTE_KERN
+
+define	L0_SHIFT	L0_SHIFT
+define	L1_SHIFT	L1_SHIFT
+define	L1_SIZE		L1_SIZE
+define	L1_OFFSET	L1_OFFSET
+define	L2_SHIFT	L2_SHIFT
+define	L2_SIZE		L2_SIZE
+define	L2_OFFSET	L2_OFFSET
+#define	L3_SHIFT	L3_SHIFT
+#define	L3_SIZE		L3_SIZE
+#define	L3_OFFSET	L3_OFFSET
+define	Ln_ENTRIES	Ln_ENTRIES
+define	Ln_ADDR_MASK	Ln_ADDR_MASK
+#define	PTE_PPN0_S	PTE_PPN0_S
+#define	PTE_PPN1_S	PTE_PPN1_S
+#define	PTE_PPN2_S	PTE_PPN2_S
+#define	PTE_PPN3_S	PTE_PPN3_S
+#define	PTE_SIZE	PTE_SIZE
+define	PTE_PPN_SHIFT	PTE_PPN_SHIFT
+
 define	PM_MD_PDETAB	offsetof(struct pmap, pm_md.md_pdetab)
-define	PM_MD_PTBR	offsetof(struct pmap, pm_md.md_ptbr)
+define	PM_MD_PPN	offsetof(struct pmap, pm_md.md_ppn)
 
 # for bus_space_asm
 define	BS_STRIDE		offsetof(struct bus_space, bs_stride)

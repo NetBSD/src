@@ -1,11 +1,11 @@
-/*	$NetBSD: riscv_machdep.c,v 1.17 2022/09/20 06:53:36 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.18 2022/09/20 07:18:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas of 3am Software Foundry, and by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,31 +29,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #include "opt_modular.h"
-__RCSID("$NetBSD: riscv_machdep.c,v 1.17 2022/09/20 06:53:36 skrll Exp $");
+#include "opt_riscv_debug.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: riscv_machdep.c,v 1.18 2022/09/20 07:18:24 skrll Exp $");
 
 #include <sys/param.h>
 
+#include <sys/boot_flag.h>
 #include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/kmem.h>
 #include <sys/ktrace.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
 
+#include <dev/cons.h>
 #include <uvm/uvm_extern.h>
 
 #include <riscv/locore.h>
+#include <riscv/machdep.h>
+#include <riscv/pte.h>
 
 int cpu_printfataltraps;
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
+
+#include <libfdt.h>
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_memory.h>
+
+#ifdef VERBOSE_INIT_RISCV
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
+
+#ifndef FDT_MAX_BOOT_STRING
+#define FDT_MAX_BOOT_STRING 1024
+#endif
+
+char bootargs[FDT_MAX_BOOT_STRING] = "";
+char *boot_args = NULL;
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;
+}
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 struct vm_map *phys_map;
 
@@ -69,6 +110,12 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 	[PCU_FPU] = &pcu_fpu_ops,
 #endif
 };
+
+/*
+ * Used by PHYSTOV and VTOPHYS -- Will be set be BSS is zeroed so
+ * keep it in data
+ */
+unsigned long kern_vtopdiff __attribute__((__section__(".data")));
 
 void
 delay(unsigned long us)
@@ -338,10 +385,191 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 }
 
-void
-init_riscv(vaddr_t kernstart, vaddr_t kernend)
+static void
+riscv_init_lwp0_uarea(void)
+{
+	extern char lwp0uspace[];
+
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)lwp0uspace);
+	memset(&lwp0.l_md, 0, sizeof(lwp0.l_md));
+	memset(lwp_getpcb(&lwp0), 0, sizeof(struct pcb));
+
+	struct trapframe *tf = (struct trapframe *)(lwp0uspace + USPACE) - 1;
+	memset(tf, 0, sizeof(struct trapframe));
+
+	lwp0.l_md.md_utf = lwp0.l_md.md_ktf = tf;
+}
+
+
+static void
+riscv_print_memory(const struct fdt_memory *m, void *arg)
 {
 
-	/* Early VM bootstrap. */
-	pmap_bootstrap();
+	VPRINTF("FDT /memory @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+	    m->start, m->end - m->start);
+}
+
+
+static void
+parse_bi_bootargs(char *args)
+{
+	int howto;
+
+	for (char *cp = args; *cp; cp++) {
+		/* Ignore superfluous '-', if there is one */
+		if (*cp == '-')
+			continue;
+
+		howto = 0;
+		BOOT_FLAG(*cp, howto);
+		if (!howto)
+			printf("bootflag '%c' not recognised\n", *cp);
+		else
+			boothowto |= howto;
+	}
+}
+
+
+void
+init_riscv(register_t hartid, vaddr_t vdtb)
+{
+
+	/* set temporally to work printf()/panic() even before consinit() */
+	cn_tab = &earlycons;
+
+	/* Load FDT */
+	void *fdt_data = (void *)vdtb;
+	int error = fdt_check_header(fdt_data);
+	if (error != 0)
+	    panic("fdt_check_header failed: %s", fdt_strerror(error));
+
+	fdtbus_init(fdt_data);
+
+#if 0
+	/* Lookup platform specific backend */
+	plat = riscv_fdt_platform();
+	if (plat == NULL)
+		panic("Kernel does not support this device");
+
+#endif
+	/* Early console may be available, announce ourselves. */
+	VPRINTF("FDT<%p>\n", fdt_data);
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	boot_args = bootargs;
+
+#if 0
+	/*
+	 * If stdout-path is specified on the command line, override the
+	 * value in /chosen/stdout-path before initializing console.
+	 */
+	VPRINTF("stdout\n");
+	fdt_update_stdout_path();
+#endif
+
+	/*
+	 * Done making changes to the FDT.
+	 */
+	fdt_pack(fdt_data);
+
+	VPRINTF("consinit ");
+	consinit();
+	VPRINTF("ok\n");
+
+	/* Talk to the user */
+	printf("NetBSD/riscv (fdt) booting ...\n");
+
+#ifdef BOOT_ARGS
+	char mi_bootargs[] = BOOT_ARGS;
+	parse_bi_bootargs(mi_bootargs);
+#endif
+
+	/* SPAM me while testing */
+	boothowto |= AB_DEBUG;
+
+	uint64_t memory_start, memory_end;
+	fdt_memory_get(&memory_start, &memory_end);
+
+	fdt_memory_foreach(riscv_print_memory, NULL);
+
+	/* Cannot map memory above largest page number */
+	const uint64_t maxppn = __SHIFTOUT_MASK(PTE_PPN) - 1;
+	const uint64_t memory_limit = ptoa(maxppn);
+
+	if (memory_end > memory_limit) {
+		fdt_memory_remove_range(memory_limit, memory_end);
+		memory_end = memory_limit;
+	}
+
+	uint64_t memory_size __unused = memory_end - memory_start;
+
+	VPRINTF("%s: memory start %" PRIx64 " end %" PRIx64 " (len %"
+	    PRIx64 ")\n", __func__, memory_start, memory_end, memory_size);
+
+	/* Perform PT build and VM init */
+	//cpu_kernel_vm_init();
+
+	VPRINTF("bootargs: %s\n", bootargs);
+
+	parse_bi_bootargs(boot_args);
+
+
+	// initarm_common
+	extern char __kernel_text[];
+	extern char _end[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+	paddr_t kernstart_phys __unused = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys __unused = KERN_VTOPHYS(kernend);
+
+	vaddr_t kernelvmstart;
+
+	vaddr_t kernstart_mega __unused = MEGAPAGE_TRUNC(kernstart);
+	vaddr_t kernend_mega = MEGAPAGE_ROUND(kernend);
+
+	kernelvmstart = kernend_mega;
+
+#define DPRINTF(v)	VPRINTF("%24s = 0x%16lx\n", #v, (unsigned long)v);
+
+	VPRINTF("------------------------------------------\n");
+	DPRINTF(kern_vtopdiff);
+	DPRINTF(memory_start);
+	DPRINTF(memory_end);
+	DPRINTF(memory_size);
+	DPRINTF(kernstart_phys);
+	DPRINTF(kernend_phys)
+	DPRINTF(VM_MIN_KERNEL_ADDRESS);
+	DPRINTF(kernstart_mega);
+	DPRINTF(kernstart);
+	DPRINTF(kernend);
+	DPRINTF(kernend_mega);
+	DPRINTF(VM_MAX_KERNEL_ADDRESS);
+	VPRINTF("------------------------------------------\n");
+
+#undef DPRINTF
+
+	KASSERT(kernelvmstart < VM_KERNEL_VM_BASE);
+
+	kernelvmstart = VM_KERNEL_VM_BASE;
+
+	/*
+	 * msgbuf is allocated from the bottom of any one of memory blocks
+	 * to avoid corruption due to bootloader or changing kernel layout.
+	 */
+	paddr_t msgbufaddr = 0;
+
+	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
+#ifdef _LP64
+	initmsgbuf((void *)RISCV_PA_TO_KVA(msgbufaddr), MSGBUFSIZE);
+#endif
+
+	uvm_md_init();
+
+	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
+
+	/* Finish setting up lwp0 on our end before we call main() */
+	riscv_init_lwp0_uarea();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.9 2021/05/01 07:41:24 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.10 2022/09/20 07:18:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -117,11 +117,9 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 
 #define __HAVE_PMAP_MD
 struct pmap_md {
-	paddr_t md_ptbr;
+	paddr_t md_ppn;
 	pd_entry_t *md_pdetab;
 };
-
-void	pmap_bootstrap(void);
 
 struct vm_page *
 	pmap_md_alloc_poolpage(int flags);
@@ -132,12 +130,13 @@ bool	pmap_md_io_vaddr_p(vaddr_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
-bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
 void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
 void	pmap_md_xtab_deactivate(struct pmap *);
 void	pmap_md_pdetab_init(struct pmap *);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
+
+void	pmap_bootstrap(vaddr_t kstart, vaddr_t kend);
 
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
@@ -148,6 +147,14 @@ extern vaddr_t pmap_direct_end;
 #define MEGAPAGE_ROUND(x)	MEGAPAGE_TRUNC((x) + SEGOFSET)
 
 #ifdef __PMAP_PRIVATE
+
+static inline bool
+pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
+{
+        // TLB not walked and so not called.
+        return false;
+}
+
 static inline void
 pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *kc)
 {

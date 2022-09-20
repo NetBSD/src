@@ -1,11 +1,11 @@
-/* $NetBSD: locore.S,v 1.24 2022/04/10 09:50:45 andvar Exp $ */
+/* $NetBSD: locore.S,v 1.25 2022/09/20 07:18:23 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas of 3am Software Foundry, and by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,124 +29,523 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_console.h"
+#include "opt_riscv_debug.h"
+
 #include <machine/asm.h>
 #include "assym.h"
 
 	.globl	_C_LABEL(exception_userexit)
 	.globl	_C_LABEL(cpu_Debugger_insn)
 
-ENTRY_NP(start)
-	// We get loaded and starting running at or near 0, not where we
-	// should be. We need to construct an initial PDETAB
+#if defined(VERBOSE_INIT_RISCV)
 
-	li	s11, VM_MAX_KERNEL_ADDRESS
+#define VPRINTS(string)		\
+	call	locore_prints	; \
+	.asciz string		; \
+	.align 3		; \
+
+#define VPRINTX(regno)		\
+	mv	a0, regno	; \
+	call	locore_printx
+
+#define VPRINTXNL(regno)	\
+	mv	a0, regno	; \
+	call	locore_printxnl
+
+/* Need to turn relaxation off for VPRINTS */
+	.option norelax
+
+#else
+#define VPRINTS(string)		/* nothing */
+#define VPRINTX(regno)		/* nothing */
+#define VPRINTXNL(regno)	/* nothing */
+#endif
+
+#if VM_MIN_KERNEL_ADDRESS != VM_KERNEL_BASE
+#error VM_MIN_KERNEL_ADDRESS assumed to match VM_KERNEL_BASE
+#endif
+
+/*
+ * Entry point where.
+ *    a0 is hartid
+ *    a1 is pointer to dtb (PA)
+ */
+ENTRY_NP(start)
+	csrw	sie, zero		// disable interrupts
+	csrw	sip, zero		// clear any pending
+
+	li	s0, SR_FS
+	csrc	sstatus, s0		// disable FP
+
+	/*
+	 * atomically swap a non-zero value into hart_boot.  If we see zero
+	 * we won in race to become BP.
+	 */
+	li	s1, 1
+	la	s0, hart_boot
+
+	amoswap.w s0, s1, (s0)
+	bnez	s0, mpentry
+	/*
+	 * The BP only executes from here on.
+	 */
+	mv	s0, a0			// copy hartid
+	mv	s1, a1			// copy dtb PA
+
+	/* set the stack pointer for boot */
+	PTR_LA	s8, _C_LABEL(bootstk)
+	mv	sp, s8
+
+	VPRINTS("\n------------\nNetBSD start\n\n")
+	VPRINTS("sp:      ")
+	VPRINTXNL(sp)
+
+	VPRINTS("pc:      ")
+	auipc	a0, 0
+	VPRINTXNL(a0)
+
+	VPRINTS("hart:    ")
+	VPRINTXNL(s0)
+
+	VPRINTS("dtb:     ")
+	VPRINTXNL(s1)
+
+	/*
+	 * Calculate the difference between the VA and PA for start and
+	 * keep in s8.  Store this in kern_vtopdiff once the MMU is on.
+	 */
+	PTR_LA	s11, start
+	PTR_L	s8, .Lstart
+
+	sub	s8, s8, s11
+
+	/*
+	 * Our load address is not fixed, but our VA is.  We need to construct
+	 * an initial PDETAB.
+	 */
+
 	li	s10, PAGE_SIZE
 	li	s9, USPACE
 
-	/*
-	 * XXX XXX XXX: This is completely broken and wrong, we should map only
-	 * the kernel sections, and the direct map should be mapped later in C.
-	 */
-#if 0
-#if 0
-	// The kernel doesn't use gp/_gp since we'd have to reload it on
-	// each exception.
-	PTR_LA	gp, _C_LABEL(_gp)
-#endif
+	PTR_LA	s5, _C_LABEL(lwp0uspace)
+	PTR_LA	s6, _C_LABEL(bootstk)
 
-	PTR_LA	a0, _C_LABEL(__bss_start)
-	PTR_LA	s1, _C_LABEL(_end)
+	// The space for the inital page table is included in the kernel
+	// .bss size calculation so we know the space exists.
+
 	li	a1, 0
-
-	add	s1, s1, s10		// PAGE_SIZE
-	addi	s1, s1, -1		//   -1 == PAGE_MASK
-	neg	a1, s10			// -PAGE_SIZE
-	and	s1, s1, a1		// s1 is page aligned end of kernel
-					// s1 = uarea
-	add	s2, s1, s9		// s2 = first PDE page
+	PTR_LA	s2, _C_LABEL(l1_pte)
+	mv	s4, s2			// last page table
 #ifdef _LP64
-	add	s3, s2, s10		// s3 = second PDE page (RV64 only)
+	PTR_LA	s3, _C_LABEL(l2_pte)	// s3 = second PDE page (RV64 only)
+	mv	s4, s3			// last page table
+#ifdef notyet
+	PTR_LA	s4, _C_LABEL(l3_pte)
+#endif
+#endif
+	PTR_LA	s7, _C_LABEL(mmutables_end)
+
+
+	// s2	L1 PDE (SV32:4MiB megapages, SV{39,48}: 2MiB megapages)
+	// s3	L2 PDE (_LP64 SV39 only)
+	// s4	L3 PDE (_LP64 SV48 only)
+	// s5	lwp0uspace
+	// s6	bootstk
+	// s7   end of memory to clear
+
+	VPRINTS("l1:      ")
+	VPRINTXNL(s2)
+#ifdef _LP64
+	VPRINTS("l2:      ")
+	VPRINTXNL(s3)
+#ifdef notyet
+	VPRINTS("l3:      ")
+	VPRINTXNL(s4)
+#endif
+#endif
+
+	VPRINTS("uspace:  ")
+	VPRINTXNL(s5)
+	VPRINTS("bootstk: ")
+	VPRINTXNL(s6)
+
+	VPRINTS("vtopdiff:")
+	VPRINTXNL(s8)
+
+	VPRINTS("\n\r")
+
+	VPRINTS("bss:     ")
+	PTR_LA	a0, _C_LABEL(__bss_start)
+	VPRINTX(a0)
+	VPRINTS(" - ")
+	VPRINTXNL(s7)
+
+	VPRINTS("\n\r")
+
+	// a0	start of memory to clear
+	// a1	end of memory to clear
+	PTR_LA	a0, _C_LABEL(__bss_start)
+	mv	a1, s7
+
+	call	clear_bss		// zero through kernel_end (inc. stack)
+
+	li	s7, PTE_KERN		// for megapages
+
+	// We allocated the kernel first PDE page so let's insert in the
+	// page table.
+
+	// Need to setup tables so that for
+	// sv32 : s2
+	// sv39 : s3 -> s2
+	// sv48 : s4 -> s3 -> s2
+
+#ifdef _LP64
+	srli	t0, s2, (PGSHIFT - PTE_PPN_SHIFT)
+	or	t0, t0, s7		// Assumes s2[11:0] == 0
+#if ((VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) & (NPDEPG - 1)) * SZREG
+	li	t1, ((VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) & (NPDEPG - 1)) * SZREG
+#ifdef notyet
+	add	t1, t1, s4
 #else
-	mv	s3, s2
-#endif
-	add	s4, s3, s10		// s4 = first kernel PTE page
-	add	s5, s1, s9		// s5 = kernel_end
-	sub	a2, s5, a0
-	call	memset			// zero through kernel_end
-
-	// As a temporary hack, word 0 contains the amount of memory in MB
-	INT_L	a7, (zero)		// load memory size
-	slli	a7, a7, (20-PGSHIFT)	// convert MB to pages
-	PTR_LA	t0, physmem
-	INT_S	a7, (t0)		// store it in physmem
-
-	li	t4, PTE_V | PTE_SX | PTE_SW | PTE_SR | PTE_G
-#ifdef _LP64
-	REG_S	t4, 0(s2)		// keep a mapping for the first 8GB.
-	or	t0, s3, t4		// point to next page
-	or	t0, t0, PTE_T		// tranverse it.
-	REG_S	t0, -SZREG(s3)		// store in highest first level PDE
-#endif
-
-#if (VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) != (VM_MAX_KERNEL_ADDRESS >> XSEGSHIFT)
-#error VM_MIN_KERNEL_ADDRESS not in same first level PDE as VM_MAX_KERNEL_ADDRESS
-#endif
-	// We allocated the kernel first PTE page so let's insert in the
-	// page table.  For now, we assume it's in the same PDE page as the
-	// direct-mapped memory.
-	or	t0, s4, t4
-	or	t0, t0, PTE_T
-#if ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG-1)) * SZREG
-	li	t1, ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG-1)) * SZREG
 	add	t1, t1, s3
+#endif
 	REG_S	t0, 0(t1)
+
+	VPRINTX(t1)
+#else
+#ifdef notyet
+	REG_S	t0, 0(s4)
 #else
 	REG_S	t0, 0(s3)
 #endif
 
-	li	t0, ((VM_MAX_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG-1)) * SZREG
-	add	s3, s3, t0
-	srli	a7, a7, (SEGSHIFT-PGSHIFT) // pages to segments
-	li	t3, NBSEG		// load for ease
-
-	//
-	// Fill in the PDEs to direct map memory.
-	//
-.Lfill:	REG_S	t4, 0(s3)		// store PDE
-	add	t4, t4, t3		// advance PA in PDE to next segment
-	add	s3, s3, SZREG		// advance to next PDE slot
-	addi	a7, a7, -1		// count down segment
-	bgtz	a6, .Lfill		// loop if more
+	VPRINTX(s3)
+#endif
 #endif
 
-	// We should have a VM so let's start using our real addresses
-	PTR_LA	t0, .Lmmu_on
+	VPRINTS(": ")
+	VPRINTXNL(t0)
+	VPRINTS("\n\r")
 
+#if PGSHIFT < PTE_PPN_SHIFT
+#error Code assumes PGSHIFT is greater than PTE_PPN_SHIFT
+#endif
+
+	li	s5, (VM_KERNEL_SIZE >> SEGSHIFT)		// # of megapages
+	li	s6, (NBSEG >> (PGSHIFT - PTE_PPN_SHIFT))	// load for ease
+	li	s7, PTE_KERN | PTE_R | PTE_W | PTE_X
+
+	//
+	// Fill in the PDEs for kernel.
+	//
+	PTR_LA	s0, start
+	srli	s0, s0, (PGSHIFT - PTE_PPN_SHIFT)
+	or	s0, s0, s7
+.Lfill:
+	VPRINTS("kern ")
+	VPRINTX(s2)
+	VPRINTS(": ")
+	VPRINTXNL(s0)
+
+	REG_S	s0, 0(s2)		// store PDE
+	add	s0, s0, s6		// advance PA in PDE to next segment
+	add	s2, s2, SZREG		// advance to next PDE slot
+	addi	s5, s5, -1		// count down segment
+	bnez	s5, .Lfill		// loop if more
+
+	li	s7, PTE_KERN | PTE_R | PTE_W
+
+	// DTB physical address
+	mv	s0, s1
+	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
+	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
+	or	s0, s0, s7
+
+	VPRINTS("dtb  ")
+	VPRINTX(s2)
+	VPRINTS(": ")
+	VPRINTXNL(s0)
+
+	REG_S	s0, 0(s2)
+	add	s2, s2, SZREG		// advance to next PDE slot
+
+#ifdef CONSADDR
+	ld	s0, .Lconsaddr
+	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
+	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
+	or	s0, s0, s7
+
+	VPRINTS("cons ")
+	VPRINTX(s2)
+	VPRINTS(": ")
+	VPRINTXNL(s0)
+
+	REG_S	s0, 0(s2)
+	add	s2, s2, SZREG		// advance to next PDE slot
+#endif
+
+	li	a0, 'P'
+	call	_C_LABEL(uartputc)
+
+	/* Set supervisor trap vector base register */
+	PTR_LA	t0, .Lmmu_on
+	add	t0, t0, s8
+	csrw	stvec, t0
+
+	/* Set supervisor address translation and protection register */
+	srli	t1, s4, PGSHIFT
+#ifdef _LP64
+	li	t0, SATP_MODE_SV39
+#else
+	li	t0, SATP_MODE_SV32
+#endif
+	or	t0, t0, t1
+	sfence.vma
+	csrw	satp, t0
+
+	.align 2
 .Lmmu_on:
 	// MMU is on!
 	csrw	sscratch, zero		// zero in sscratch to mark kernel
 
+	li	a0, 'M'
+	call	_C_LABEL(uartputc)	// uartputs doesn't use stack
+	li	a0, '\n'
+	call	_C_LABEL(uartputc)	// uartputs doesn't use stack
+	li	a0, '\r'
+	call	_C_LABEL(uartputc)	// uartputs doesn't use stack
+
 	PTR_LA	tp, _C_LABEL(lwp0)	// put curlwp in tp
 
+	.global vstart
+vstart:
+
+	/* Set supervisor trap vector base register */
 	PTR_LA	a0, _C_LABEL(cpu_exception_handler)
 	csrw	stvec, a0
 
-	PTR_S	s1, L_PCB(tp)		// set uarea of lwp (already zeroed)
+	PTR_LA	s2, bootstk		// top of lwp0uspace
+	PTR_S	s2, L_PCB(tp)		// set uarea of lwp (already zeroed)
 	addi	sp, s2, -TF_LEN		// switch to new stack
 	PTR_S	sp, L_MD_UTF(tp)	// store pointer to empty trapframe
 
 	PTR_LA	t1, _C_LABEL(kernel_pmap_store)
-	add	t2, s2, s11 		// PA -> VA
+	add	t2, s4, s8 		// PA -> VA
+	srli	t3, s4, PGSHIFT
 	PTR_S	t2, PM_MD_PDETAB(t1)	// VA of kernel PDETAB
-	PTR_S	s2, PM_MD_PTBR(t1)	// PA of kernel PDETAB
+	PTR_S	t3, PM_MD_PPN(t1)	// PPN of kernel PDETAB
+
+	/*
+	 * Store kern_vtopdiff (the difference between the physical
+	 * and virtual address of the "start" symbol).
+	 */
+	PTR_LA	s11, _C_LABEL(kern_vtopdiff)
+	PTR_S	s8, 0(s11)	/* kern_vtopdiff = start(virt) - start(phys) */
+
+#if notyet
+	mv	a0, s1			// dtb
+	call	_C_LABEL(init_mmu)
+#endif
+
+	li	t0, VM_MIN_KERNEL_ADDRESS + VM_KERNEL_SIZE
+	li	t1, NBSEG - 1
+	and	t1, s1, t1
+	or	t0, t0, t1
+
+	/* Set the global pointer */
+	.option push
+	.option norelax
+	lla	gp, __global_pointer$
+	.option pop
 
 	// Now we should ready to start initializing the kernel.
-	PTR_LA	a0, _C_LABEL(start)	// kernel_start
-	add	a1, s5, s11		// kernel_end
+	mv	a0, s0			// hartid
+	mv	a1, t0			// vdtb
+	//mv	a1, s1			// dtb (physical)
 	call	_C_LABEL(init_riscv)	// do MD startup
 	tail	_C_LABEL(main)		// and transfer to main
-	// not reached
+	/* No return from main */
 END(start)
+
+
+ENTRY(mpentry)
+1:
+	wfi
+	j	1b
+END(mpentry)
+
+
+	.align 3
+.Lstart:
+#ifdef _LP64
+	.quad	start
+#else
+	.word	start
+#endif
+
+
+#ifdef CONSADDR
+	.align 3
+.Lconsaddr:
+#ifdef _LP64
+	.quad	CONSADDR
+#else
+	.word	CONSADDR
+#endif
+#endif
+
+
+ENTRY_NP(uartputc)
+#ifdef EARLYCONS
+	tail	___CONCAT(EARLYCONS, _platform_early_putchar)
+#else
+#define SBI_LEGACY_CONSOLE_PUTCHAR        1
+	li	a7, SBI_LEGACY_CONSOLE_PUTCHAR
+	ecall
+	ret
+#endif
+END(uartputc)
+
+
+ENTRY_NP(clear_bss)
+	bgeu	a0, a1, 1f
+2:
+	sb	zero, 0(a0)
+	addi	a0, a0, 1
+	bne	a1, a0, 2b
+1:
+	ret
+END(clear_bss)
+
+
+#if defined(VERBOSE_INIT_RISCV)
+ENTRY_NP(locore_prints)
+	addi	sp, sp, -(SZREG * 2)
+	REG_S	s0, (0 * SZREG)(sp)
+	mv	s0, ra
+1:
+	lbu	a0, 0(s0)
+	beqz	a0, 2f
+
+	call	uartputc
+
+	addi	s0, s0, 1
+	j	1b
+2:
+	addi	s0, s0, 8	// s0 points to the null terminator
+	andi	ra, s0, -8
+
+	REG_L	s0, (0 * SZREG)(sp)
+	addi	sp, sp, (SZREG * 2)
+	ret
+
+END(locore_prints)
+
+
+ENTRY_NP(locore_printx)
+	addi	sp, sp, -(SZREG * 4)
+	REG_S	s0, (0 * SZREG)(sp)
+	REG_S	s1, (1 * SZREG)(sp)
+	REG_S	s2, (2 * SZREG)(sp)
+	REG_S	ra, (3 * SZREG)(sp)
+
+	mv	s1, a0		// our print value
+	li	s2, 10
+
+	li	a0, '0'
+	call	uartputc
+	li	a0, 'x'
+	call	uartputc
+
+	// Word size in bits
+	li	s0, (SZREG * 8)
+1:
+	addi	s0, s0, -4	// nibble shift
+
+	srl	a0, s1, s0	// extract ...
+	andi	a0, a0, 0xf
+
+	bltu	a0, s2, 2f
+	addi	a0, a0, ('a' - '0' - 10)
+2:	addi	a0, a0, '0'
+
+	call	uartputc
+
+	beqz	s0, 3f
+
+	and	a0, s0, (16 - 1)
+	bnez	a0, 1b
+
+	li	a0, '_'
+	call	uartputc
+
+	j	1b
+
+3:
+	REG_L	s0, (0 * SZREG)(sp)
+	REG_L	s1, (1 * SZREG)(sp)
+	REG_L	s2, (2 * SZREG)(sp)
+	REG_L	ra, (3 * SZREG)(sp)
+	addi	sp, sp, (SZREG * 4)
+	ret
+END(locore_printx)
+
+
+ENTRY_NP(locore_printxnl)
+	addi	sp, sp, -(SZREG * 2)
+	REG_S	ra, (1 * SZREG)(sp)
+
+	call	locore_printx
+	li	a0, '\n'
+	call	uartputc
+
+	li	a0, '\r'
+	call	uartputc
+
+	REG_L	ra, (1 * SZREG)(sp)
+	addi	sp, sp, (SZREG * 2)
+
+	ret
+END(locore_printxnl)
+#endif	/* VERBOSE_INIT_RISCV */
+
+
+	.data
+	.align	2
+hart_boot:
+	.word	0
+
+	.section "_init_memory", "aw", %nobits
+	.align PGSHIFT
+	.global _C_LABEL(lwp0uspace)
+_C_LABEL(lwp0uspace):
+	.space	UPAGES * PAGE_SIZE
+bootstk:
+
+	/*
+	 * Allocate some memory after the kernel image for stacks and
+	 * bootstrap L1PT
+	 */
+	.align PGSHIFT
+
+	.section "_init_memory", "aw", %nobits
+	.align PGSHIFT
+mmutables_start:
+	.global _C_LABEL(l1_pte)
+l1_pte:
+	.space PAGE_SIZE
+#ifdef _LP64
+	.global _C_LABEL(l2_pte)
+l2_pte:
+	.space PAGE_SIZE
+#ifdef notyet
+l3_pte:
+	.space PAGE_SIZE
+#endif
+#endif
+mmutables_end:
+
 
 //
 // struct lwp *cpu_switchto(struct lwp *oldl, struct lwp *newl, bool returning);
