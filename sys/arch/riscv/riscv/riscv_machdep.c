@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.16 2022/09/20 06:48:29 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.17 2022/09/20 06:53:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #include "opt_modular.h"
-__RCSID("$NetBSD: riscv_machdep.c,v 1.16 2022/09/20 06:48:29 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.17 2022/09/20 06:53:36 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -258,10 +258,10 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
 		if ((flags & RESCHED_REMOTE) != 0) {
-                        cpu_send_ipi(ci, IPI_KPREEMPT);
+			cpu_send_ipi(ci, IPI_KPREEMPT);
 		} else {
 			softint_trigger(SOFTINT_KPREEMPT);
-                }
+		}
 #endif
 		return;
 	}
