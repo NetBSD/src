@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.15 2021/10/07 07:13:35 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.16 2022/09/20 06:48:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -32,20 +32,20 @@
 #include <sys/cdefs.h>
 
 #include "opt_modular.h"
-
-__RCSID("$NetBSD: riscv_machdep.c,v 1.15 2021/10/07 07:13:35 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.16 2022/09/20 06:48:29 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/cpu.h>
 #include <sys/exec.h>
-#include <sys/lwp.h>
 #include <sys/kmem.h>
 #include <sys/ktrace.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
