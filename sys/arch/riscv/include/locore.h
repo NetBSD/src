@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.10 2021/10/05 11:01:49 jmcneill Exp $ */
+/* $NetBSD: locore.h,v 1.11 2022/09/20 07:18:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -216,7 +216,6 @@ void	cpu_lwp_trampoline(void);
 
 void *	cpu_sendsig_getframe(struct lwp *, int, bool *);
 
-void	init_riscv(vaddr_t, vaddr_t);
 #endif
 
 #endif /* _RISCV_LOCORE_H_ */

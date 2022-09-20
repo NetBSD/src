@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.10 2021/10/30 07:18:46 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.11 2022/09/20 07:18:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -30,29 +30,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_riscv_debug.h"
+
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-
-__RCSID("$NetBSD: pmap_machdep.c,v 1.10 2021/10/30 07:18:46 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.11 2022/09/20 07:18:23 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm.h>
 
-#include <riscv/locore.h>
+#include <riscv/machdep.h>
+#include <riscv/sysreg.h>
+
+#ifdef VERBOSE_INIT_RISCV
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
 
 int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
 
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
-
-void
-pmap_bootstrap(void)
-{
-
-	pmap_bootstrap_common();
-}
 
 void
 pmap_zero_page(paddr_t pa)
@@ -124,7 +126,8 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 #ifdef PMAP_DIRECT_MAP
 	return PMAP_DIRECT_UNMAP(va);
 #else
-#error "no direct map"
+	KASSERT(false);
+	return 0;
 #endif
 #else
 	KASSERT(false);
@@ -150,29 +153,122 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 	return true;
 }
 
-bool
-pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
-{
-	return false;
-}
 
 void
 pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 {
-	__asm("csrw\tsptbr, %0" :: "r"(pmap->pm_md.md_ptbr));
+        struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
+
+	 uint64_t satp =
+#ifdef _LP64
+	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
+#else
+	    __SHIFTIN(SATP_MODE_SV32, SATP_MODE) |
+#endif
+	    __SHIFTIN(pai->pai_asid, SATP_ASID) |
+	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
+
+	riscvreg_satp_write(satp);
 }
 
 void
 pmap_md_xtab_deactivate(struct pmap *pmap)
 {
+
+	riscvreg_satp_write(0);
 }
 
 void
 pmap_md_pdetab_init(struct pmap *pmap)
 {
+	KASSERT(pmap != NULL);
+
+	const vaddr_t pdetabva = (vaddr_t)pmap->pm_md.md_pdetab;
+	const paddr_t pdetabpa = pmap_md_direct_mapped_vaddr_to_paddr(pdetabva);
 	pmap->pm_md.md_pdetab[NPDEPG-1] = pmap_kernel()->pm_md.md_pdetab[NPDEPG-1];
-	pmap->pm_md.md_ptbr =
-	    pmap_md_direct_mapped_vaddr_to_paddr((vaddr_t)pmap->pm_md.md_pdetab);
+	pmap->pm_md.md_ppn = pdetabpa >> PAGE_SHIFT;
+}
+
+void
+pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
+{
+	extern pd_entry_t l1_pte[512];
+	pmap_t pm = pmap_kernel();
+
+	pmap_bootstrap_common();
+
+	/* Use the tables we already built in init_mmu() */
+	pm->pm_md.md_pdetab = l1_pte;
+
+	/* Get the PPN for l1_pte */
+	pm->pm_md.md_ppn = atop(KERN_VTOPHYS((vaddr_t)l1_pte));
+
+	/* Setup basic info like pagesize=PAGE_SIZE */
+	uvm_md_init();
+
+	/* init the lock */
+	pmap_tlb_info_init(&pmap_tlb0_info);
+
+#ifdef MULTIPROCESSOR
+	VPRINTF("kcpusets ");
+
+	kcpuset_create(&pm->pm_onproc, true);
+	kcpuset_create(&pm->pm_active, true);
+	KASSERT(pm->pm_onproc != NULL);
+	KASSERT(pm->pm_active != NULL);
+	kcpuset_set(pm->pm_onproc, cpu_number());
+	kcpuset_set(pm->pm_active, cpu_number());
+#endif
+
+	VPRINTF("nkmempages ");
+	/*
+	 * Compute the number of pages kmem_arena will have.  This will also
+	 * be called by uvm_km_bootstrap later, but that doesn't matter
+	 */
+	kmeminit_nkmempages();
+
+	/* Get size of buffer cache and set an upper limit */
+	buf_setvalimit((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 8);
+	vsize_t bufsz = buf_memcalc();
+	buf_setvalimit(bufsz);
+
+	vsize_t kvmsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
+	    bufsz + 16 * NCARGS + pager_map_size) +
+	    /*(maxproc * UPAGES) + */nkmempages * NBPG;
+
+#ifdef SYSVSHM
+	kvmsize += shminfo.shmall;
+#endif
+
+	/* Calculate VA address space and roundup to NBSEG tables */
+	kvmsize = roundup(kvmsize, NBSEG);
+
+	/*
+	 * Initialize `FYI' variables.	Note we're relying on
+	 * the fact that BSEARCH sorts the vm_physmem[] array
+	 * for us.  Must do this before uvm_pageboot_alloc()
+	 * can be called.
+	 */
+	pmap_limits.avail_start = ptoa(uvm_physseg_get_start(uvm_physseg_get_first()));
+	pmap_limits.avail_end = ptoa(uvm_physseg_get_end(uvm_physseg_get_last()));
+
+	/*
+	 * Update the naive settings in pmap_limits to the actual KVA range.
+	 */
+	pmap_limits.virtual_start = vstart;
+	pmap_limits.virtual_end = vend;
+
+	VPRINTF("\nlimits: %" PRIxVADDR " - %" PRIxVADDR "\n", vstart, vend);
+
+	/*
+	 * Initialize the pools.
+	 */
+	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+	    &pmap_pv_page_allocator, IPL_NONE);
+
+	pmap_pvlist_lock_init(/*riscv_dcache_align*/ 64);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -196,18 +292,37 @@ void    tlb_invalidate_globals(void);
 void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
-	__asm __volatile("sfence.vm" ::: "memory");
+	for (; lo <= hi; lo++) {
+		__asm __volatile("sfence.vma zero, %[asid]"
+		    : /* output operands */
+		    : [asid] "r" (lo)
+		    : "memory");
+	}
 }
 void
 tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
-	__asm __volatile("sfence.vm" ::: "memory");
+	if (asid == KERNEL_PID) {
+		__asm __volatile("sfence.vma %[va]"
+		    : /* output operands */
+		    : [va] "r" (va)
+		    : "memory");
+	} else {
+		__asm __volatile("sfence.vma %[va], %[asid]"
+		    : /* output operands */
+		    : [va] "r" (va), [asid] "r" (asid)
+		    : "memory");
+	}
 }
 
 bool
 tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 {
-	__asm __volatile("sfence.vm" ::: "memory");
+	KASSERT(asid != KERNEL_PID);
+	__asm __volatile("sfence.vma %[va], %[asid]"
+	    : /* output operands */
+	    : [va] "r" (va), [asid] "r" (asid)
+	    : "memory");
 	return false;
 }
 
@@ -216,13 +331,19 @@ tlb_record_asids(u_long *ptr, tlb_asid_t asid_max)
 {
 	memset(ptr, 0xff, PMAP_TLB_NUM_PIDS / NBBY);
 	ptr[0] = -2UL;
+
 	return PMAP_TLB_NUM_PIDS - 1;
+}
+
+void
+tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, tlb_asid_t, pt_entry_t))
+{
+	/* no way to view the TLB */
 }
 
 #if 0
 void    tlb_enter_addr(size_t, const struct tlbmask *);
 void    tlb_read_entry(size_t, struct tlbmask *);
 void    tlb_write_entry(size_t, const struct tlbmask *);
-void    tlb_walk(void *, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
 void    tlb_dump(void (*)(const char *, ...));
 #endif
