@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.233 2022/08/29 23:48:18 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.234 2022/09/20 02:23:37 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.233 2022/08/29 23:48:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.234 2022/09/20 02:23:37 knakahara Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2291,7 +2291,7 @@ rt_check_reject_route(const struct rtentry *rt, const struct ifnet *ifp)
 
 void
 rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *),
-    void *v)
+    void *v, bool notify)
 {
 
 	for (;;) {
@@ -2308,6 +2308,7 @@ rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *)
 			return;
 		}
 		rt_ref(rt);
+		RT_REFCNT_TRACE(rt);
 		splx(s);
 		RT_UNLOCK();
 
@@ -2316,12 +2317,16 @@ rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *)
 		if (error == 0) {
 			KASSERT(retrt == rt);
 			KASSERT((retrt->rt_flags & RTF_UP) == 0);
+			if (notify)
+				rt_newmsg(RTM_DELETE, retrt);
 			retrt->rt_ifp = NULL;
 			rt_unref(rt);
+			RT_REFCNT_TRACE(rt);
 			rt_free(retrt);
 		} else if (error == ESRCH) {
 			/* Someone deleted the entry already. */
 			rt_unref(rt);
+			RT_REFCNT_TRACE(rt);
 		} else {
 			log(LOG_ERR, "%s: unable to delete rtentry @ %p, "
 			    "error = %d\n", rt->rt_ifp->if_xname, rt, error);
@@ -2336,6 +2341,53 @@ rt_walktree_locked(sa_family_t family, int (*f)(struct rtentry *, void *),
 {
 
 	return rtbl_walktree(family, f, v);
+}
+
+void
+rt_replace_ifa_matched_entries(sa_family_t family,
+    int (*f)(struct rtentry *, void *), void *v, struct ifaddr *ifa)
+{
+
+	for (;;) {
+		int s;
+#ifdef NET_MPSAFE
+		int error;
+#endif
+		struct rtentry *rt;
+
+		RT_RLOCK();
+		s = splsoftnet();
+		rt = rtbl_search_matched_entry(family, f, v);
+		if (rt == NULL) {
+			splx(s);
+			RT_UNLOCK();
+			return;
+		}
+		rt_ref(rt);
+		RT_REFCNT_TRACE(rt);
+		splx(s);
+		RT_UNLOCK();
+
+#ifdef NET_MPSAFE
+		error = rt_update_prepare(rt);
+		if (error == 0) {
+			rt_replace_ifa(rt, ifa);
+			rt_update_finish(rt);
+			rt_newmsg(RTM_CHANGE, rt);
+		} else {
+			/*
+			 * If error != 0, the rtentry is being
+			 * destroyed, so doing nothing doesn't
+			 * matter.
+			 */
+		}
+#else
+		rt_replace_ifa(rt, ifa);
+		rt_newmsg(RTM_CHANGE, rt);
+#endif
+		rt_unref(rt);
+		RT_REFCNT_TRACE(rt);
+	}
 }
 
 int

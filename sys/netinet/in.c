@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.242 2021/09/21 15:05:41 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.243 2022/09/20 02:23:37 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.242 2021/09/21 15:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.243 2022/09/20 02:23:37 knakahara Exp $");
 
 #include "arp.h"
 
@@ -1347,6 +1347,17 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	return error;
 }
 
+static int
+in_rt_ifa_matcher(struct rtentry *rt, void *v)
+{
+	struct ifaddr *ifa = v;
+
+	if (rt->rt_ifa == ifa)
+		return 1;
+	else
+		return 0;
+}
+
 /*
  * remove a route to prefix ("connected route" in cisco terminology).
  * re-installs the route by using another interface address, if there's one
@@ -1403,6 +1414,16 @@ in_scrubprefix(struct in_ifaddr *target)
 			if (error == 0)
 				ia->ia_flags |= IFA_ROUTE;
 
+			if (!ISSET(target->ia_ifa.ifa_flags, IFA_DESTROYING))
+				goto skip;
+			/*
+			 * Replace rt_ifa of routes that have the removing address
+			 * with the new address.
+			 */
+			rt_replace_ifa_matched_entries(AF_INET,
+			    in_rt_ifa_matcher, &target->ia_ifa, &ia->ia_ifa);
+
+		skip:
 			ia4_release(ia, &psref);
 			curlwp_bindx(bound);
 
@@ -1416,6 +1437,13 @@ in_scrubprefix(struct in_ifaddr *target)
 	 */
 	rtinit(&target->ia_ifa, RTM_DELETE, rtinitflags(target));
 	target->ia_flags &= ~IFA_ROUTE;
+
+	if (ISSET(target->ia_ifa.ifa_flags, IFA_DESTROYING)) {
+		/* Remove routes that have the removing address as rt_ifa. */
+		rt_delete_matched_entries(AF_INET, in_rt_ifa_matcher,
+		    &target->ia_ifa, true);
+	}
+
 	return 0;
 }
 
