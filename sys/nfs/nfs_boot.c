@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.88 2018/05/17 02:34:31 thorpej Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.89 2022/09/20 02:23:37 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.88 2018/05/17 02:34:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.89 2022/09/20 02:23:37 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -576,7 +576,7 @@ void
 nfs_boot_flushrt(struct ifnet *ifp)
 {
 
-	rt_delete_matched_entries(AF_INET, nfs_boot_delroute_matcher, ifp);
+	rt_delete_matched_entries(AF_INET, nfs_boot_delroute_matcher, ifp, false);
 }
 
 /*

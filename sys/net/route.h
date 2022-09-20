@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.131 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: route.h,v 1.132 2022/09/20 02:23:37 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -463,7 +463,9 @@ struct sockaddr *
 
 int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
 void	rt_delete_matched_entries(sa_family_t,
-	    int (*)(struct rtentry *, void *), void *);
+	    int (*)(struct rtentry *, void *), void *, bool);
+void	rt_replace_ifa_matched_entries(sa_family_t,
+	    int (*)(struct rtentry *, void *), void *, struct ifaddr *);
 int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 
 static __inline void

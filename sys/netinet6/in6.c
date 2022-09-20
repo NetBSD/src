@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.285 2021/12/05 04:42:55 msaitoh Exp $	*/
+/*	$NetBSD: in6.c,v 1.286 2022/09/20 02:23:37 knakahara Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.285 2021/12/05 04:42:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.286 2022/09/20 02:23:37 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -279,6 +279,17 @@ in6_ifaddprefix(struct in6_ifaddr *ia)
 	return error;
 }
 
+static int
+in6_rt_ifa_matcher(struct rtentry *rt, void *v)
+{
+	struct ifaddr *ifa = v;
+
+	if (rt->rt_ifa == ifa)
+		return 1;
+	else
+		return 0;
+}
+
 /* Delete network prefix route if present.
  * Re-add it to another address if the prefix matches. */
 static int
@@ -319,6 +330,16 @@ in6_ifremprefix(struct in6_ifaddr *target)
 
 			error = in6_ifaddprefix(ia);
 
+			if (!ISSET(target->ia_ifa.ifa_flags, IFA_DESTROYING))
+				goto skip;
+			/*
+			 * Replace rt_ifa of routes that have the removing address
+			 * with the new address.
+			 */
+			rt_replace_ifa_matched_entries(AF_INET6,
+			    in6_rt_ifa_matcher, &target->ia_ifa, &ia->ia_ifa);
+
+		skip:
 			ia6_release(ia, &psref);
 			curlwp_bindx(bound);
 
@@ -332,6 +353,13 @@ in6_ifremprefix(struct in6_ifaddr *target)
 	 */
 	rtinit(&target->ia_ifa, RTM_DELETE, 0);
 	target->ia_flags &= ~IFA_ROUTE;
+
+	if (ISSET(target->ia_ifa.ifa_flags, IFA_DESTROYING)) {
+		/* Remove routes that have the removing address as rt_ifa. */
+		rt_delete_matched_entries(AF_INET6, in6_rt_ifa_matcher,
+		    &target->ia_ifa, true);
+	}
+
 	return 0;
 }
 
