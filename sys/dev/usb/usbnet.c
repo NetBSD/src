@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.111 2022/09/13 09:38:19 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.112 2022/09/20 07:15:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.111 2022/09/13 09:38:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.112 2022/09/20 07:15:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1162,13 +1162,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 		mutex_exit(&unp->unp_miilock);
 	}
 
-	/*
-	 * Now that we have stopped calling mii_tick, bring the MII
-	 * state machine down.
-	 */
-	if (mii)
-		mii_down(mii);
-
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
 
@@ -1182,8 +1175,11 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 * it's been unplugged then there's no point in trying to touch
 	 * the registers.
 	 */
-	if (!usbnet_isdying(un))
+	if (!usbnet_isdying(un)) {
+		mutex_enter(&unp->unp_miilock);
 		uno_stop(un, ifp, disable);
+		mutex_exit(&unp->unp_miilock);
+	}
 
 	/* Free RX/TX resources. */
 	usbnet_rx_list_fini(un);
