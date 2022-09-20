@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.14 2017/12/18 04:11:46 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.15 2022/09/20 02:25:07 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -539,6 +539,156 @@ route_command_add6_cleanup()
 	cleanup
 }
 
+test_route_address_removal()
+{
+
+	rump_server_start $SOCKHOST netinet6
+
+	export RUMP_SERVER=${SOCKHOST}
+	rump_server_add_iface $SOCKHOST shmif0 $BUS
+
+	#
+	# 1. test auto removal of a route that depends a removing address
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1/$prefix
+	atf_check -s exit:0 -o match:"add net $alt_net(/$prefix)?: gateway $addrgw" \
+	    rump.route -n add -$af -net $alt_net/$prefix $addrgw
+	$DEBUG && rump.netstat -nr -f $af
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1 delete
+	$DEBUG && rump.netstat -nr -f $af
+
+	# The route should be deleted on the address removal
+	atf_check -s not-exit:0 -e match:"writing to routing socket: not in table" \
+	    rump.route -n get -$af $alt_addr
+
+	#
+	# 2. test auto update of a route that depends a removing address where
+	#    there is another address with the same prefix sharing a connected
+	#    route
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1/$prefix
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr2/$prefix alias
+	atf_check -s exit:0 -o match:"add net $alt_net(/$prefix)?: gateway $addrgw" \
+	    rump.route -n add -$af -net $alt_net/$prefix $addrgw
+	$DEBUG && rump.netstat -nr -f $af
+
+	atf_check -s exit:0 -o match:"local addr: $addr1" \
+	    rump.route -n get -$af $addrgw
+	atf_check -s exit:0 -o match:"local addr: $addr1" \
+	    rump.route -n get -$af $alt_addr
+
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1 delete
+	$DEBUG && rump.netstat -nr -f $af
+
+	# local addr (rt_ifa) of the connected route should be changed
+	# on the address removal
+	atf_check -s exit:0 -o match:"local addr: $addr2" \
+	    rump.route -n get -$af $addrgw
+	# local addr (rt_ifa) of the related route should be changed
+	# on the address removal too
+	atf_check -s exit:0 -o match:"local addr: $addr2" \
+	    rump.route -n get -$af $alt_addr
+
+	# cleanup
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr2 delete
+
+	#
+	# 3. test auto update of a route that depends a removing address where
+	#    there is another address with a different (short) prefix
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1/$prefix
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr2/$prefix_short alias
+	atf_check -s exit:0 -o match:"add net $alt_net(/$prefix)?: gateway $addrgw" \
+	    rump.route -n add -$af -net $alt_net/$prefix $addrgw
+	$DEBUG && rump.netstat -nr -f $af
+
+	atf_check -s exit:0 -o match:"local addr: $addr1" \
+	    rump.route -n get -$af $addrgw
+	atf_check -s exit:0 -o match:"local addr: $addr1" \
+	    rump.route -n get -$af $alt_addr
+
+	atf_check -s exit:0 rump.ifconfig shmif0 $af $addr1 delete
+	$DEBUG && rump.netstat -nr -f $af
+
+	# local addr (rt_ifa) of the connected route should be changed
+	# on the address removal
+	atf_check -s exit:0 -o match:"local addr: $addr2" \
+	    rump.route -n get -$af $addrgw
+	if [ $af = inet ]; then
+		# local addr (rt_ifa) of the related route should be changed
+		# on the address removal too
+		atf_check -s exit:0 -o match:"local addr: $addr2" \
+		    rump.route -n get -$af $alt_addr
+	else
+		# For IPv6, each address has its own connected route so the
+		# address removal just results in a removal of the related route
+		atf_check -s not-exit:0 \
+		    -e match:"writing to routing socket: not in table" \
+		    rump.route -n get -$af $alt_addr
+	fi
+
+	rump_server_destroy_ifaces
+}
+
+atf_test_case route_address_removal cleanup
+route_address_removal_head()
+{
+
+	atf_set "descr" "tests of auto removal/update of routes on address removal (IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+route_address_removal_body()
+{
+	local addr1=10.0.0.1
+	local addr2=10.0.0.2
+	local addrgw=10.0.0.3
+	local prefix=24
+	local prefix_short=16
+	local alt_net=10.0.1.0
+	local alt_addr=10.0.1.1
+	local af=inet
+
+	test_route_address_removal
+}
+
+route_address_removal_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case route_address_removal6 cleanup
+route_address_removal6_head()
+{
+
+	atf_set "descr" "tests of auto removal/update of routes on address removal (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+route_address_removal6_body()
+{
+	local addr1=fd00::1
+	local addr2=fd00::2
+	local addrgw=fd00::3
+	local prefix=64
+	local prefix_short=32
+	local alt_net=fd00:1::0
+	local alt_addr=fd00:1::1
+	local af=inet6
+
+	test_route_address_removal
+}
+
+route_address_removal6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+
 atf_init_test_cases()
 {
 
@@ -548,4 +698,6 @@ atf_init_test_cases()
 	atf_add_test_case route_default_reject
 	atf_add_test_case route_command_add
 	atf_add_test_case route_command_add6
+	atf_add_test_case route_address_removal
+	atf_add_test_case route_address_removal6
 }
