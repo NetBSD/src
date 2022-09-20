@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.59 2022/09/20 12:12:42 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.60 2022/09/20 12:25:01 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.59 2022/09/20 12:12:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.60 2022/09/20 12:25:01 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -298,7 +298,7 @@ success:
  *    format, it is stored as normalized double value in FRs;
  *    denormalization is required in this case.
  *  - When magnitude is smaller than the minimum denormalized number in
- *    float format, the result is undefined. For G5 (790MP Rev 1.1),
+ *    float format, the result is undefined. For G5 (970MP Rev 1.1),
  *    (sign | 0) seems to be stored. For G4 and prior, some ``random''
  *    garbage is stored in exponent. We mimic G5 for now.
  */
