@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.525 2022/09/03 02:53:18 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.526 2022/09/20 02:23:37 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.525 2022/09/03 02:53:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.526 2022/09/20 02:23:37 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1479,7 +1479,7 @@ restart:
 
 	/* Delete stray routes from the routing table. */
 	for (i = 0; i <= AF_MAX; i++)
-		rt_delete_matched_entries(i, if_delroute_matcher, ifp);
+		rt_delete_matched_entries(i, if_delroute_matcher, ifp, false);
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
