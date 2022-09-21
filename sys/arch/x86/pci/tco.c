@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.2 2015/08/30 07:50:34 christos Exp $	*/
+/*	$NetBSD: tco.c,v 1.3 2022/09/21 10:36:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.2 2015/08/30 07:50:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.3 2022/09/21 10:36:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.2 2015/08/30 07:50:34 christos Exp $");
 
 #include "pcibvar.h"
 
-struct tco_softc{
+struct tco_softc {
 	struct sysmon_wdog	sc_smw;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -125,7 +125,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
 
-	/* 
+	/*
 	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
@@ -139,7 +139,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	/* Reset the watchdog status registers. */
 	tcotimer_status_reset(sc);
 
-	/* 
+	/*
 	 * Register the driver with the sysmon watchdog framework.
 	 */
 	sc->sc_smw.smw_name = device_xname(self);
@@ -147,7 +147,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_setmode = tcotimer_setmode;
 	sc->sc_smw.smw_tickle = tcotimer_tickle;
 
-	/* 
+	/*
 	 * ICH6 or newer are limited to 2ticks min and 613ticks max.
 	 *                              1sec           367secs
 	 *
@@ -225,7 +225,7 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
 		if (period < sc->sc_min_t || period > sc->sc_max_t)
 			return EINVAL;
-		
+
 		/* Stop the TCO timer, */
 		tcotimer_stop(sc);
 
@@ -233,17 +233,17 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		if (sc->sc_has_rcba) {
 			/* ICH6 or newer */
 			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-						      LPCIB_TCO_TMR2);
+			    LPCIB_TCO_TMR2);
 			ich6period &= 0xfc00;
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO_TMR2, ich6period | period);
+			    LPCIB_TCO_TMR2, ich6period | period);
 		} else {
 			/* ICH5 or older */
 			ich5period = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-						   LPCIB_TCO_TMR);
+			    LPCIB_TCO_TMR);
 			ich5period &= 0xc0;
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO_TMR, ich5period | period);
+			    LPCIB_TCO_TMR, ich5period | period);
 		}
 
 		/* and start/reload the timer. */
@@ -292,11 +292,11 @@ static void
 tcotimer_status_reset(struct tco_softc *sc)
 {
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_STS,
-			  LPCIB_TCO1_STS_TIMEOUT);
+	    LPCIB_TCO1_STS_TIMEOUT);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
-			  LPCIB_TCO2_STS_BOOT_STS);
+	    LPCIB_TCO2_STS_BOOT_STS);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
-			  LPCIB_TCO2_STS_SECONDS_TO_STS);
+	    LPCIB_TCO2_STS_SECONDS_TO_STS);
 }
 
 /*
@@ -324,12 +324,12 @@ tcotimer_disable_noreboot(device_t self)
 		pcireg_t pcireg;
 
 		pcireg = pci_conf_read(sc->sc_pcib->sc_pc, sc->sc_pcib->sc_tag,
-				       LPCIB_PCI_GEN_STA);
+		    LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
 			/* TCO timeout reset is disabled; try to enable it */
 			pcireg &= ~LPCIB_PCI_GEN_STA_NO_REBOOT;
 			pci_conf_write(sc->sc_pcib->sc_pc, sc->sc_pcib->sc_tag,
-				       LPCIB_PCI_GEN_STA, pcireg);
+			    LPCIB_PCI_GEN_STA, pcireg);
 			if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
 				goto error;
 		}
@@ -345,7 +345,7 @@ error:
 MODULE(MODULE_CLASS_DRIVER, tco, "sysmon_wdog");
 
 #ifdef _MODULE
-#include "ioconf.c" 
+#include "ioconf.c"
 #endif
 
 static int
@@ -357,15 +357,15 @@ tco_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
 		ret = config_init_component(cfdriver_ioconf_tco,
-					    cfattach_ioconf_tco,
-					    cfdata_ioconf_tco);
+		    cfattach_ioconf_tco,
+		    cfdata_ioconf_tco);
 #endif
 		break;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		ret = config_fini_component(cfdriver_ioconf_tco,
-					    cfattach_ioconf_tco,
-					    cfdata_ioconf_tco);
+		    cfattach_ioconf_tco,
+		    cfdata_ioconf_tco);
 #endif
 		break;
 	default:
