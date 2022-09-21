@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.6 2021/05/01 07:41:24 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.7 2022/09/21 06:34:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -38,15 +38,15 @@
 #define	PTE_PPN0	__BITS(18, 10)
 #define	PTE_PPN1	__BITS(27, 19)
 #define	PTE_PPN2	__BITS(53, 28)
-typedef __uint64_t pt_entry_t;
-typedef __uint64_t pd_entry_t;
+typedef uint64_t pt_entry_t;
+typedef uint64_t pd_entry_t;
 #define atomic_cas_pte	atomic_cas_64
 #else		/* Sv32 */
 #define PTE_PPN		__BITS(31, 10)
 #define	PTE_PPN0	__BITS(19, 10)
 #define	PTE_PPN1	__BITS(31, 20)
-typedef __uint32_t pt_entry_t;
-typedef __uint32_t pd_entry_t;
+typedef uint32_t pt_entry_t;
+typedef uint32_t pd_entry_t;
 #define atomic_cas_pte	atomic_cas_32
 #endif
 
