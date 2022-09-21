@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.231 2022/08/12 11:15:40 riastradh Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.232 2022/09/21 18:55:21 wiz Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2227,7 +2227,7 @@ nvme[0-9]*)
 	;;
 
 nvmm)
-	mkdev nvmm c %nvmm_chr% 0 640 $g_nvmm
+	mkdev nvmm c %nvmm_chr% 0 660 $g_nvmm
 	;;
 
 autofs)
