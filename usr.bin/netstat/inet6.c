@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.81 2022/09/02 06:25:43 msaitoh Exp $	*/
+/*	$NetBSD: inet6.c,v 1.82 2022/09/21 07:59:19 msaitoh Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.81 2022/09/02 06:25:43 msaitoh Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.82 2022/09/21 07:59:19 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,7 +501,7 @@ void
 udp6_stats(u_long off, const char *name)
 {
 	uint64_t udp6stat[UDP6_NSTATS];
-	u_quad_t delivered;
+	uint64_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(udp6stat);
@@ -1349,7 +1349,7 @@ void
 rip6_stats(u_long off, const char *name)
 {
 	uint64_t rip6stat[RIP6_NSTATS];
-	u_quad_t delivered;
+	uint64_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(rip6stat);
