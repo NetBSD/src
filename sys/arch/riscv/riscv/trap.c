@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2021/10/07 07:13:35 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2022/09/21 07:07:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.16 2021/10/07 07:13:35 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.17 2022/09/21 07:07:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,28 @@ __RCSID("$NetBSD: trap.c,v 1.16 2021/10/07 07:13:35 skrll Exp $");
 
 #include <riscv/locore.h>
 
+#define	MACHINE_ECALL_TRAP_MASK	(__BIT(CAUSE_MACHINE_ECALL))
+
+#define	SUPERVISOR_ECALL_TRAP_MASK					\
+				(__BIT(CAUSE_SUPERVISOR_ECALL))
+
+#define	USER_ECALL_TRAP_MASK	(__BIT(CAUSE_USER_ECALL))
+
+#define	SYSCALL_TRAP_MASK	(__BIT(CAUSE_SYSCALL))
+
+#define	BREAKPOINT_TRAP_MASK	(__BIT(CAUSE_BREAKPOINT))
+
 #define	INSTRUCTION_TRAP_MASK	(__BIT(CAUSE_ILLEGAL_INSTRUCTION))
 
-#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FETCH_ACCESS) \
-				|__BIT(CAUSE_LOAD_ACCESS) \
-				|__BIT(CAUSE_STORE_ACCESS))
+#define	FAULT_TRAP_MASK		(__BIT(CAUSE_FETCH_ACCESS) 		\
+				|__BIT(CAUSE_LOAD_ACCESS) 		\
+				|__BIT(CAUSE_STORE_ACCESS)		\
+				|__BIT(CAUSE_FETCH_PAGE_FAULT) 		\
+				|__BIT(CAUSE_LOAD_PAGE_FAULT) 		\
+				|__BIT(CAUSE_STORE_PAGE_FAULT))
 
-#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_FETCH_MISALIGNED) \
-				|__BIT(CAUSE_LOAD_MISALIGNED) \
+#define	MISALIGNED_TRAP_MASK	(__BIT(CAUSE_FETCH_MISALIGNED)		\
+				|__BIT(CAUSE_LOAD_MISALIGNED)		\
 				|__BIT(CAUSE_STORE_MISALIGNED))
 
 static const char * const causenames[] = {
@@ -67,6 +81,10 @@ static const char * const causenames[] = {
 	[CAUSE_STORE_ACCESS] = "store",
 	[CAUSE_ILLEGAL_INSTRUCTION] = "illegal instruction",
 	[CAUSE_BREAKPOINT] = "breakpoint",
+	[CAUSE_SYSCALL] = "syscall",
+	[CAUSE_FETCH_PAGE_FAULT] = "instruction page fault",
+	[CAUSE_LOAD_PAGE_FAULT] = "load page fault",
+	[CAUSE_STORE_PAGE_FAULT] = "store page fault",
 };
 
 void
@@ -219,11 +237,11 @@ cpu_trapsignal(struct trapframe *tf, ksiginfo_t *ksi)
 static inline vm_prot_t
 get_faulttype(register_t cause)
 {
-	if (cause == CAUSE_LOAD_ACCESS)
+	if (cause == CAUSE_LOAD_ACCESS || cause == CAUSE_LOAD_PAGE_FAULT)
 		return VM_PROT_READ;
-	if (cause == CAUSE_STORE_ACCESS)
+	if (cause == CAUSE_STORE_ACCESS || cause == CAUSE_STORE_PAGE_FAULT)
 		return VM_PROT_READ | VM_PROT_WRITE;
-	KASSERT(cause == CAUSE_FETCH_ACCESS);
+	KASSERT(cause == CAUSE_FETCH_ACCESS || cause == CAUSE_FETCH_PAGE_FAULT);
 	return VM_PROT_READ | VM_PROT_EXECUTE;
 }
 
