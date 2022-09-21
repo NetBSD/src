@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.77 2021/05/30 05:59:23 mlelstv Exp $	 */
+/*	$NetBSD: exec.c,v 1.78 2022/09/21 14:29:45 riastradh Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -684,7 +684,7 @@ module_base_path(char *buf, size_t bufsize, const char *kernel_path)
 		    "/stand/%s/%d.%d.%d/modules", machine,
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100,
-		    netbsd_version / 100 % 100);
+		    netbsd_version / 100 % 10000);
 	} else if (netbsd_version != 0) {
 		/* release */
 		snprintf(buf, bufsize,
