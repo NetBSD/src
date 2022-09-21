@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.8 2022/09/21 10:50:11 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.9 2022/09/21 10:50:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -134,7 +134,7 @@ crashme_add(crashme_node *ncn)
 	}
 	mutex_exit(&crashme_lock);
 
-	return rv;
+	return rv == 0 ? 0 : -1;
 }
 
 /*
