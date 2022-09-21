@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.331 2022/09/21 14:32:26 riastradh Exp $
+$NetBSD: UPDATING,v 1.332 2022/09/21 22:01:56 gutteridge Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -26,7 +26,7 @@ Recent changes:
 
 	The kernel can still load modules at runtime with no bootloader
 	update.  This will not affect release branches because it only
-	applies to patch numbers >100.
+	applies to patch numbers >=100.
 
 20220821:
 	Support for building extsrc/ has been deprecated.
@@ -92,7 +92,7 @@ Recent changes:
 
 20200614:
 	blacklist* has been renamed to blocklist*. postinstall(8)
-	should handle the migration
+	should handle the migration.
 
 20200601:
 	Due to a mistake in LIBISPRIVATE handling, .so libraries were
