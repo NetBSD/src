@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.214 2022/08/12 21:25:39 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.215 2022/09/21 10:59:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.214 2022/08/12 21:25:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.215 2022/09/21 10:59:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1100,7 +1100,8 @@ spec_read(void *v)
 			goto out;
 		error = cdev_read(dev, uio, ap->a_ioflag);
 		spec_io_exit(vp, sn);
-out:		vn_lock(vp, LK_SHARED | LK_RETRY);
+out:		/* XXX What if the caller held an exclusive lock?  */
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
 	case VBLK:
