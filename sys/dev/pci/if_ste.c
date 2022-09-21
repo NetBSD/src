@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.63 2022/09/21 20:23:56 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.64 2022/09/21 20:24:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.63 2022/09/21 20:23:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.64 2022/09/21 20:24:42 thorpej Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
