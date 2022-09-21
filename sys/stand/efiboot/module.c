@@ -1,4 +1,4 @@
-/* $NetBSD: module.c,v 1.1 2020/06/21 17:24:26 jmcneill Exp $ */
+/* $NetBSD: module.c,v 1.2 2022/09/21 14:30:01 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ module_set_prefix(const char *kernel_path)
 #else
 	const u_int vmajor = netbsd_version / 100000000;
 	const u_int vminor = netbsd_version / 1000000 % 100;
-	const u_int vpatch = netbsd_version / 100 % 100;
+	const u_int vpatch = netbsd_version / 100 % 10000;
 
 	if (vminor == 99) {
 		snprintf(module_prefix, sizeof(module_prefix),
