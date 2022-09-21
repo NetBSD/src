@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.104 2022/09/12 02:25:44 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.105 2022/09/21 07:59:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.104 2022/09/12 02:25:44 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.105 2022/09/21 07:59:19 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,15 +73,15 @@ __RCSID("$NetBSD: if.c,v 1.104 2022/09/12 02:25:44 msaitoh Exp $");
 
 struct	iftot {
 	char ift_name[IFNAMSIZ];	/* interface name */
-	u_quad_t ift_ip;		/* input packets */
-	u_quad_t ift_ib;		/* input bytes */
-	u_quad_t ift_ie;		/* input errors */
-	u_quad_t ift_iq;		/* input drops */
-	u_quad_t ift_op;		/* output packets */
-	u_quad_t ift_ob;		/* output bytes */
-	u_quad_t ift_oe;		/* output errors */
-	u_quad_t ift_oq;		/* output drops */
-	u_quad_t ift_co;		/* collisions */
+	uint64_t ift_ip;		/* input packets */
+	uint64_t ift_ib;		/* input bytes */
+	uint64_t ift_ie;		/* input errors */
+	uint64_t ift_iq;		/* input drops */
+	uint64_t ift_op;		/* output packets */
+	uint64_t ift_ob;		/* output bytes */
+	uint64_t ift_oe;		/* output errors */
+	uint64_t ift_oq;		/* output drops */
+	uint64_t ift_co;		/* collisions */
 };
 
 struct if_data_ext {

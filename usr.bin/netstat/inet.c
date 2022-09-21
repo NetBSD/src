@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.116 2022/09/02 06:25:43 msaitoh Exp $	*/
+/*	$NetBSD: inet.c,v 1.117 2022/09/21 07:59:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.116 2022/09/02 06:25:43 msaitoh Exp $");
+__RCSID("$NetBSD: inet.c,v 1.117 2022/09/21 07:59:19 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -539,7 +539,7 @@ void
 udp_stats(u_long off, const char *name)
 {
 	uint64_t udpstat[UDP_NSTATS];
-	u_quad_t delivered;
+	uint64_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(udpstat);
