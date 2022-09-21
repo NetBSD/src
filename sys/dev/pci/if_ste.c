@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.62 2020/03/15 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.63 2022/09/21 20:23:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.62 2020/03/15 22:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.63 2022/09/21 20:23:56 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -722,6 +722,7 @@ ste_start(struct ifnet *ifp)
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
 				    error);
+				m_freem(m);
 				break;
 			}
 		}
