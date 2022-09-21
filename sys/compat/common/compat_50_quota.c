@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_quota.c,v 1.3 2020/03/09 00:42:36 pgoyette Exp $ */
+/*	$NetBSD: compat_50_quota.c,v 1.4 2022/09/21 07:15:24 dholland Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_quota.c,v 1.3 2020/03/09 00:42:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_quota.c,v 1.4 2022/09/21 07:15:24 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -83,6 +83,9 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	mp = vp->v_mount;
 	q1cmd = SCARG(uap, cmd);
 	idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
+	if (idtype == -1) {
+		return EINVAL;
+	}
 
 	switch ((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
 	case Q_QUOTAON:
