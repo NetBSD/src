@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1874 2022/09/10 11:40:08 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1875 2022/09/21 10:51:14 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -409,11 +409,11 @@ Notes:
 
 Package:	expat
 Version:	2.4.6
-Current Vers:	2.4.7
+Current Vers:	2.4.9
 Maintainer:	Expat Project
 Archive Site:	https://github.com/libexpat/libexpat/releases
 Home Page:	http://www.libexpat.org/
-Date:		2022-03-05
+Date:		2022-09-21
 Mailing List:	expat-discuss@libexpat.org
 Responsible:	mrg
 License:	MIT
