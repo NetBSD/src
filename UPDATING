@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.330 2022/08/21 07:15:28 lukem Exp $
+$NetBSD: UPDATING,v 1.331 2022/09/21 14:32:26 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,15 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20220921:
+	Since the kernel version was bumped to 9.99.100, the bootloader
+	must be updated on x86 and efiboot platforms in order to load
+	modules.
+
+	The kernel can still load modules at runtime with no bootloader
+	update.  This will not affect release branches because it only
+	applies to patch numbers >100.
 
 20220821:
 	Support for building extsrc/ has been deprecated.
