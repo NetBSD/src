@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.7 2022/08/30 22:38:26 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.8 2022/09/21 10:50:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -91,7 +91,7 @@ static crashme_node nodes[] = {
 };
 static crashme_node *first_node;
 static kmutex_t crashme_lock;
-static const struct sysctlnode *crashme_root = NULL;
+static int crashme_root = -1;
 static bool crashme_enable = 0;
 
 /*
@@ -103,8 +103,9 @@ crashme_add(crashme_node *ncn)
 	int rv = -1;
 	crashme_node *cn;
 	crashme_node *last = NULL;
+	const struct sysctlnode *cnode;
 
-	if (crashme_root == NULL)
+	if (crashme_root == -1)
 		return -1;
 
 	mutex_enter(&crashme_lock);
@@ -115,17 +116,16 @@ crashme_add(crashme_node *ncn)
 	if (!cn) {
 		ncn->cn_next = NULL;
 
-		rv = sysctl_createv(NULL, 0,
-				    &crashme_root, &ncn->cn_sysctl,
-				    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-				    CTLTYPE_INT, ncn->cn_name,
-				    SYSCTL_DESCR(ncn->cn_longname),
-				    crashme_sysctl_forwarder, 0,
-				    NULL, 0,
-				    CTL_CREATE, CTL_EOL);
+		rv = sysctl_createv(NULL, 0, NULL, &cnode,
+		    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		    CTLTYPE_INT, ncn->cn_name,
+		    SYSCTL_DESCR(ncn->cn_longname),
+		    crashme_sysctl_forwarder, 0, NULL, 0,
+		    CTL_DEBUG, crashme_root, CTL_CREATE, CTL_EOL);
 
 		/* don't insert upon failure */
 		if (rv == 0) {
+			ncn->cn_sysctl = cnode->sysctl_num;
 			if (last)
 				last->cn_next = ncn;
 			if (first_node == NULL)
@@ -158,9 +158,9 @@ crashme_remove(crashme_node *rcn)
 			prev->cn_next = cn->cn_next;
 
 		if ((rv = sysctl_destroyv(NULL, CTL_DEBUG, crashme_root,
-					  cn->cn_name, CTL_EOL)) == 0)
+			    cn->cn_sysctl, CTL_EOL)) == 0)
 			printf("%s: unable to remove %s from sysctl\n",
-			       __func__, cn->cn_name);
+			    __func__, cn->cn_name);
 		break;
 	}
 	mutex_exit(&crashme_lock);
@@ -182,7 +182,7 @@ crashme_sysctl_forwarder(SYSCTLFN_ARGS)
 	int error, arg = 0;
 
 	for (cn = first_node; cn; cn = cn->cn_next) {
-		if (cn->cn_sysctl == rnode)
+		if (cn->cn_sysctl == rnode->sysctl_num)
 			break;
 	}
 	if (!cn) {
@@ -209,20 +209,27 @@ crashme_sysctl_forwarder(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(selfdebug_crashme, "sysctl crashme setup")
 {
+	const struct sysctlnode *rnode;
 	int rv;
 	size_t n;
 
 	mutex_init(&crashme_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	rv = sysctl_createv(NULL, 0, NULL, &crashme_root,
+	KASSERT(crashme_root == -1);
+
+	rv = sysctl_createv(NULL, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "crashme",
 	    SYSCTL_DESCR("Crashme options"),
 	    NULL, 0, NULL, 0,
 	    CTL_DEBUG, CTL_CREATE, CTL_EOL);
 
-	if (rv != 0 || crashme_root == NULL)
+	if (rv != 0) {
+		printf("%s: failed to create sysctl debug.crashme: %d\n",
+		    __func__, rv);
 		return;
+	}
+	crashme_root = rnode->sysctl_num;
 
 	rv = sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -230,15 +237,14 @@ SYSCTL_SETUP(selfdebug_crashme, "sysctl crashme setup")
 	    SYSCTL_DESCR("Enable crashme"),
 	    NULL, 0, &crashme_enable, 0,
 	    CTL_DEBUG, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		printf("%s: failed to create sysctl debug.crashme_enable:"
+		    " %d\n", __func__, rv);
 
 	for (n = 0; n < __arraycount(nodes); n++) {
-		crashme_node *cn = &nodes[n];
-
-		rv = crashme_add(cn);
-
-		/* don't insert */
-		if (rv != 0)
-			continue;
+		if (crashme_add(&nodes[n]))
+			printf("%s: failed to create sysctl"
+			    " debug.crashme.%s\n", __func__, nodes[n].cn_name);
 	}
 }
 
