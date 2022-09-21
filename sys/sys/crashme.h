@@ -1,4 +1,4 @@
-/*	$NetBSD: crashme.h,v 1.1 2019/01/09 04:01:20 mrg Exp $	*/
+/*	$NetBSD: crashme.h,v 1.2 2022/09/21 10:50:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -47,7 +47,7 @@ typedef struct crashme_node {
 	const char		*cn_name;
 	const char		*cn_longname;
 	crashme_fn		 cn_fn;
-	const struct sysctlnode	*cn_sysctl;
+	int			 cn_sysctl;
 	struct crashme_node	*cn_next;
 } crashme_node;
 
