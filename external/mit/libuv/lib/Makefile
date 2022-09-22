@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/06/18 22:12:02 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2022/09/22 21:22:50 christos Exp $
 
 LIBISPRIVATE=pic
 
@@ -33,6 +33,7 @@ process.c \
 random-devurandom.c \
 signal.c \
 stream.c \
+strtok.c \
 tcp.c \
 thread.c \
 tty.c \
