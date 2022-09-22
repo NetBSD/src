@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.112 2022/09/20 07:15:46 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.112 2022/09/20 07:15:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,7 +162,6 @@ static void
 uno_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
-	usbnet_isowned_mii(un);
 	if (un->un_ops->uno_stop)
 		(*un->un_ops->uno_stop)(ifp, disable);
 }
@@ -1175,11 +1174,8 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 * it's been unplugged then there's no point in trying to touch
 	 * the registers.
 	 */
-	if (!usbnet_isdying(un)) {
-		mutex_enter(&unp->unp_miilock);
+	if (!usbnet_isdying(un))
 		uno_stop(un, ifp, disable);
-		mutex_exit(&unp->unp_miilock);
-	}
 
 	/* Free RX/TX resources. */
 	usbnet_rx_list_fini(un);
