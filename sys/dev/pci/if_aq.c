@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.33 2022/09/16 03:55:53 skrll Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.34 2022/09/22 05:50:52 riastradh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.33 2022/09/16 03:55:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.34 2022/09/22 05:50:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -3976,8 +3976,11 @@ aq_legacy_intr(void *arg)
 	AQ_WRITE_REG(sc, AQ_INTR_STATUS_CLR_REG, 0xffffffff);
 
 	if (status & __BIT(sc->sc_linkstat_irq)) {
+		AQ_LOCK(sc);
 		sc->sc_detect_linkstat = true;
-		callout_schedule(&sc->sc_tick_ch, 0);
+		if (!sc->sc_stopping)
+			callout_schedule(&sc->sc_tick_ch, 0);
+		AQ_UNLOCK(sc);
 		nintr++;
 	}
 
@@ -4029,8 +4032,11 @@ aq_link_intr(void *arg)
 
 	status = AQ_READ_REG(sc, AQ_INTR_STATUS_REG);
 	if (status & __BIT(sc->sc_linkstat_irq)) {
+		AQ_LOCK(sc);
 		sc->sc_detect_linkstat = true;
-		callout_schedule(&sc->sc_tick_ch, 0);
+		if (!sc->sc_stopping)
+			callout_schedule(&sc->sc_tick_ch, 0);
+		AQ_UNLOCK(sc);
 		AQ_WRITE_REG(sc, AQ_INTR_STATUS_CLR_REG,
 		    __BIT(sc->sc_linkstat_irq));
 		nintr++;
