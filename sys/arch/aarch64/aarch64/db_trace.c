@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.20 2022/09/19 17:24:23 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.21 2022/09/22 19:33:00 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.20 2022/09/19 17:24:23 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21 2022/09/22 19:33:00 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -512,7 +512,7 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 	if (tf_buf.tf_sp == 0) {
 		/* switchframe */
 		lr0 = 0;
-		pc = aarch64_strip_pac(tf_buf.tf_lr);
+		pc = aarch64_strip_pac(tf_buf.tf_lr) - 4;
 		sp = (uint64_t)(tf + 1);
 	} else {
 		/* trapframe */
@@ -527,10 +527,10 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 	TRACE_DEBUG("lr0=%016lx\n", lr0);
 
 	for (; (count > 0) && (sp != 0); count--) {
-		if (((pc - 4) == (db_addr_t)el0_trap) ||
-		    ((pc - 4) == (db_addr_t)el1_trap)) {
+		if ((pc == (db_addr_t)el0_trap) ||
+		    (pc == (db_addr_t)el1_trap)) {
 
-			pr_traceaddr("tf", sp, pc - 4, flags, pr);
+			pr_traceaddr("tf", sp, pc, flags, pr);
 
 			db_read_bytes((db_addr_t)sp, sizeof(tf_buf),
 			    (char *)&tf_buf);
@@ -541,7 +541,7 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 			sp = tf_buf.tf_sp;
 			pc = tf_buf.tf_pc;
 			if (pc == 0)
-				pc = aarch64_strip_pac(tf_buf.tf_lr);
+				pc = aarch64_strip_pac(tf_buf.tf_lr) - 4;
 			if (pc == 0)
 				break;
 			lr0 = aarch64_strip_pac(tf_buf.tf_lr);
@@ -593,7 +593,7 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 			}
 
 			sp += stacksize;
-			pc = lr;
+			pc = lr - 4;
 		}
 	}
 }
