@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.47 2022/02/27 14:22:29 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.48 2022/09/22 14:37:38 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1826,6 +1826,7 @@ void i915_driver_remove(struct drm_i915_private *i915);
 
 int i915_drm_resume(struct drm_device *);
 int i915_drm_resume_early(struct drm_device *);
+int i915_drm_prepare(struct drm_device *);
 int i915_drm_suspend(struct drm_device *);
 int i915_drm_suspend_late(struct drm_device *, bool);
 
