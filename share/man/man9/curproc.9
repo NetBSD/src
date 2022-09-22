@@ -1,4 +1,4 @@
-.\"     $NetBSD: curproc.9,v 1.5 2010/07/01 15:12:31 wiz Exp $
+.\"     $NetBSD: curproc.9,v 1.6 2022/09/22 14:02:24 riastradh Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,41 +40,68 @@
 .In sys/proc.h
 .Ft struct cpu_info *
 .Fn curcpu "void"
-.Ft struct proc *
-.Fn curproc "void"
-.Ft struct lwp *
-.Fn curlwp "void"
+.Vt struct proc *curproc ;
+.Vt struct lwp *curlwp ;
 .Sh DESCRIPTION
-The following macros can be used to retrieve
-the current processor, process, and light-weight process
-.Pq Tn LWP ,
+The following macros retrieve
+the current CPU, process, and thread
+.Pq lightweight process, or Tn LWP ,
 respectively:
-.Bl -enum -offset indent
-.It
-The machine-dependent
+.Bl -tag -width Dv
+.It Fn curcpu
+Returns a pointer to the
+.Vt "struct cpu_info"
+structure representing the CPU that the code calling it is running on.
+.Pp
+The value of
 .Fn curcpu
-macro returns a pointer to a
-.Em cpu_info
-structure containing information of the
-.Tn CPU
-that this thread is running on.
-.It
-The machine-independent
-.Fn curproc
-macro refers to a pointer to the process currently running on this
-.Tn CPU .
-.It
-The
-.Fn curlwp
-macro expands to a pointer to
-.Em lwp
-structure, containing information about the current
-.Tn LWP .
-This macro is machine-independent,
-but machine-dependent
-.In machine/cpu.h
-may redefine it.
+is unstable and may be stale as soon as it is read unless the caller
+prevents preemption by raising the IPL
+.Pq Xr spl 9 , Xr mutex 9 ,
+by disabling preemption
+.Pq Xr kpreempt_disable 9 ,
+or by binding the thread to its CPU
+.Pq Xr curlwp_bind 9 .
+.It Dv curproc
+Yields a pointer to the
+.Vt "struct proc"
+structure representing the currently running process.
+.Pp
+The value of
+.Dv curproc
+is stable and does not change during execution except in
+machine-dependent logic to perform context switches, so it works like a
+global constant, not like a stateful procedure.
+.It Dv curlwp
+Yields a pointer to the
+.Vt "struct lwp"
+structure representing the currently running thread.
+.Pp
+The value of
+.Dv curlwp
+is stable and does not change during execution except in
+machine-dependent logic to perform context switches, so it works like a
+global constant, not like a stateful procedure.
 .El
+.Sh SOURCE REFERENCES
+The
+.Fn curcpu
+macro is defined in the machine-independent
+.Pa machine/cpu.h .
+.Pp
+The
+.Dv curproc
+macro is defined in
+.Pa sys/lwp.h .
+.Pp
+The
+.Dv curlwp
+macro has a machine-independent definition in
+.Pa sys/lwp.h ,
+but it may be overridden by
+.Pa machine/cpu.h ,
+and must be overridden on architectures supporting multiprocessing and
+kernel preemption.
 .Sh SEE ALSO
 .Xr cpu_number 9 ,
 .Xr proc_find 9
