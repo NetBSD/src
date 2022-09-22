@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.56 2022/09/22 14:41:49 riastradh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.57 2022/09/22 14:42:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.56 2022/09/22 14:41:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.57 2022/09/22 14:42:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -607,7 +607,7 @@ pmtimer_configure(device_t self)
 
 	/* Attach our PM timer with the generic acpipmtimer function */
 	sc->sc_pmtimer = acpipmtimer_attach(self, sc->sc_iot, sc->sc_ioh,
-	    LPCIB_PM1_TMR, 0);
+	    PMC_PM1_TMR, 0);
 }
 
 static int
@@ -765,9 +765,9 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 	 * sysctl_lookup() which can both copyin and copyout.
 	 */
 	s = splserial();
-	state = SS_READ(sc, LPCIB_PM_SS_CNTL);
+	state = SS_READ(sc, PMC_PM_SS_CNTL);
 	splx(s);
-	if ((state & LPCIB_PM_SS_STATE_LOW) == 0)
+	if ((state & PMC_PM_SS_STATE_LOW) == 0)
 		ostate = 1;
 	else
 		ostate = 0;
@@ -787,8 +787,8 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 	}
 
 	s = splserial();
-	state2 = SS_READ(sc, LPCIB_PM_SS_CNTL);
-	if ((state2 & LPCIB_PM_SS_STATE_LOW) == 0)
+	state2 = SS_READ(sc, PMC_PM_SS_CNTL);
+	if ((state2 & PMC_PM_SS_STATE_LOW) == 0)
 		ostate = 1;
 	else
 		ostate = 0;
@@ -797,17 +797,17 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 		uint8_t cntl;
 
 		if (nstate == 0)
-			state2 |= LPCIB_PM_SS_STATE_LOW;
+			state2 |= PMC_PM_SS_STATE_LOW;
 		else
-			state2 &= ~LPCIB_PM_SS_STATE_LOW;
+			state2 &= ~PMC_PM_SS_STATE_LOW;
 
 		/*
 		 * Must disable bus master arbitration during the change.
 		 */
-		cntl = SS_READ(sc, LPCIB_PM_CTRL);
-		SS_WRITE(sc, LPCIB_PM_CTRL, cntl | LPCIB_PM_SS_CNTL_ARB_DIS);
-		SS_WRITE(sc, LPCIB_PM_SS_CNTL, state2);
-		SS_WRITE(sc, LPCIB_PM_CTRL, cntl);
+		cntl = SS_READ(sc, PMC_PM_CTRL);
+		SS_WRITE(sc, PMC_PM_CTRL, cntl | PMC_PM_SS_CNTL_ARB_DIS);
+		SS_WRITE(sc, PMC_PM_SS_CNTL, state2);
+		SS_WRITE(sc, PMC_PM_CTRL, cntl);
 	}
 	splx(s);
 out:

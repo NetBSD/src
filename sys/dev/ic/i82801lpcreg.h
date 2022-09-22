@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.12 2014/12/26 05:09:03 msaitoh Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.13 2022/09/22 14:42:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -111,40 +111,40 @@
  * Power management I/O registers
  *  (offset from PMBASE)
  */
-#define LPCIB_PM1_STS		0x00 /* ACPI PM1a_EVT_BLK fixed event status */
-#define LPCIB_PM1_EN		0x02 /* ACPI PM1a_EVT_BLK fixed event enable */
-#define LPCIB_PM1_CNT		0x04 /* ACPI PM1a_CNT_BLK */
-#define LPCIB_PM1_TMR		0x08 /* ACPI PMTMR_BLK power mgmt timer */
-#define LPCIB_PROC_CNT		0x10 /* ACPI P_BLK processor control */
-#define LPCIB_LV2		0x14 /* ACPI P_BLK processor C2 control */
-#define LPCIB_PM_CTRL		0x20 /* ACPI Power Management Control */
-# define LPCIB_PM_SS_STATE_LOW	0x01 /* SpeedStep Low Power State */
-#define LPCIB_GPE0_STS		0x28 /* ACPI GPE0_BLK GPE0 status */
-#define LPCIB_GPE0_EN		0x2c /* ACPI GPE0_BLK GPE0 enable */
-#define LPCIB_SMI_EN		0x30
-# define LPCIB_SMI_EN_INTEL_USB2_EN	(1 << 18)
-# define LPCIB_SMI_EN_LEGACY_USB2_EN	(1 << 17)
-# define LPCIB_SMI_EN_PERIODIC_EN	(1 << 14)
-# define LPCIB_SMI_EN_TCO_EN		(1 << 13)
-# define LPCIB_SMI_EN_MCSMI_EN		(1 << 11)
-# define LPCIB_SMI_EN_BIOS_RLS		(1 << 7)
-# define LPCIB_SMI_EN_SWSMI_TMR_EN	(1 << 6)
-# define LPCIB_SMI_EN_APMC_EN		(1 << 5)
-# define LPCIB_SMI_EN_SLP_SMI_EN	(1 << 4)
-# define LPCIB_SMI_EN_LEGACY_USB_EN	(1 << 3)
-# define LPCIB_SMI_EN_BIOS_EN		(1 << 2)
-# define LPCIB_SMI_EN_EOS		(1 << 1)
-# define LPCIB_SMI_EN_GBL_SMI_EN	(1 << 0)
-#define LPCIB_SMI_STS		0x34
-#define LPCIB_ALT_GP_SMI_EN	0x38
-#define LPCIB_ALT_GP_SMI_STS	0x3a
-#define LPCIB_MON_SMI		0x40
-#define LPCIB_DEVACT_STS	0x44
-#define LPCIB_DEVTRAP_EN	0x48
-#define LPCIB_BUS_ADDR_TRACK	0x4c
-#define LPCIB_BUS_CYC_TRACK	0x4e
-#define LPCIB_PM_SS_CNTL	0x50		/* SpeedStep control */
-# define LPCIB_PM_SS_CNTL_ARB_DIS	0x01	/* disable arbiter */
+#define PMC_PM1_STS		0x00 /* ACPI PM1a_EVT_BLK fixed event status */
+#define PMC_PM1_EN		0x02 /* ACPI PM1a_EVT_BLK fixed event enable */
+#define PMC_PM1_CNT		0x04 /* ACPI PM1a_CNT_BLK */
+#define PMC_PM1_TMR		0x08 /* ACPI PMTMR_BLK power mgmt timer */
+#define PMC_PROC_CNT		0x10 /* ACPI P_BLK processor control */
+#define PMC_LV2			0x14 /* ACPI P_BLK processor C2 control */
+#define PMC_PM_CTRL		0x20 /* ACPI Power Management Control */
+# define PMC_PM_SS_STATE_LOW		0x01 /* SpeedStep Low Power State */
+#define PMC_GPE0_STS		0x28 /* ACPI GPE0_BLK GPE0 status */
+#define PMC_GPE0_EN		0x2c /* ACPI GPE0_BLK GPE0 enable */
+#define PMC_SMI_EN		0x30
+# define PMC_SMI_EN_INTEL_USB2_EN	(1 << 18)
+# define PMC_SMI_EN_LEGACY_USB2_EN	(1 << 17)
+# define PMC_SMI_EN_PERIODIC_EN		(1 << 14)
+# define PMC_SMI_EN_TCO_EN		(1 << 13)
+# define PMC_SMI_EN_MCSMI_EN		(1 << 11)
+# define PMC_SMI_EN_BIOS_RLS		(1 << 7)
+# define PMC_SMI_EN_SWSMI_TMR_EN	(1 << 6)
+# define PMC_SMI_EN_APMC_EN		(1 << 5)
+# define PMC_SMI_EN_SLP_SMI_EN		(1 << 4)
+# define PMC_SMI_EN_LEGACY_USB_EN	(1 << 3)
+# define PMC_SMI_EN_BIOS_EN		(1 << 2)
+# define PMC_SMI_EN_EOS			(1 << 1)
+# define PMC_SMI_EN_GBL_SMI_EN		(1 << 0)
+#define PMC_SMI_STS		0x34
+#define PMC_ALT_GP_SMI_EN	0x38
+#define PMC_ALT_GP_SMI_STS	0x3a
+#define PMC_MON_SMI		0x40
+#define PMC_DEVACT_STS		0x44
+#define PMC_DEVTRAP_EN		0x48
+#define PMC_BUS_ADDR_TRACK	0x4c
+#define PMC_BUS_CYC_TRACK	0x4e
+#define PMC_PM_SS_CNTL		0x50		/* SpeedStep control */
+# define PMC_PM_SS_CNTL_ARB_DIS		0x01	/* disable arbiter */
 
 /*
  * General Purpose I/O Registers
@@ -255,29 +255,29 @@
  * System management TCO registers
  *  (offset from PMBASE)
  */
-#define LPCIB_TCO_BASE		0x60
-#define LPCIB_TCO_RLD		(LPCIB_TCO_BASE+0x00)
-#define LPCIB_TCO_TMR		(LPCIB_TCO_BASE+0x01)
-#define LPCIB_TCO_TMR2		(LPCIB_TCO_BASE+0x12) /* ICH6 and newer */
-# define LPCIB_TCO_TMR_MASK 		0x3f
-#define LPCIB_TCO_DAT_IN	(LPCIB_TCO_BASE+0x02)
-#define LPCIB_TCO_DAT_OUT	(LPCIB_TCO_BASE+0x03)
-#define LPCIB_TCO1_STS		(LPCIB_TCO_BASE+0x04)
-# define LPCIB_TCO1_STS_TIMEOUT 	0x08
-#define LPCIB_TCO2_STS		(LPCIB_TCO_BASE+0x06)
-# define LPCIB_TCO2_STS_BOOT_STS 	0x04
-# define LPCIB_TCO2_STS_SECONDS_TO_STS 	0x02
-#define LPCIB_TCO1_CNT		(LPCIB_TCO_BASE+0x08)
-# define LPCIB_TCO1_CNT_TCO_LOCK 	(1 << 12)
-# define LPCIB_TCO1_CNT_TCO_TMR_HLT	(1 << 11)
-# define LPCIB_TCO1_CNT_SEND_NOW	(1 << 10)
-# define LPCIB_TCO1_CNT_NMI2SMI_EN	(1 << 9)
-# define LPCIB_TCO1_CNT_NMI_NOW		(1 << 8)
-#define LPCIB_TCO2_CNT		(LPCIB_TCO_BASE+0x0a)
-#define LPCIB_TCO_MESSAGE1	(LPCIB_TCO_BASE+0x0c)
-#define LPCIB_TCO_MESSAGE2	(LPCIB_TCO_BASE+0x0d)
-#define LPCIB_TCO_WDSTATUS	(LPCIB_TCO_BASE+0x0e)
-#define LPCIB_SW_IRQ_GEN	(LPCIB_TCO_BASE+0x10)
+#define PMC_TCO_BASE		0x60
+#define PMC_TCO_RLD		(PMC_TCO_BASE+0x00)
+#define PMC_TCO_TMR		(PMC_TCO_BASE+0x01)
+#define PMC_TCO_TMR2		(PMC_TCO_BASE+0x12) /* ICH6 and newer */
+# define PMC_TCO_TMR_MASK 		0x3f
+#define PMC_TCO_DAT_IN		(PMC_TCO_BASE+0x02)
+#define PMC_TCO_DAT_OUT		(PMC_TCO_BASE+0x03)
+#define PMC_TCO1_STS		(PMC_TCO_BASE+0x04)
+# define PMC_TCO1_STS_TIMEOUT 		0x08
+#define PMC_TCO2_STS		(PMC_TCO_BASE+0x06)
+# define PMC_TCO2_STS_BOOT_STS 		0x04
+# define PMC_TCO2_STS_SECONDS_TO_STS 	0x02
+#define PMC_TCO1_CNT		(PMC_TCO_BASE+0x08)
+# define PMC_TCO1_CNT_TCO_LOCK 		(1 << 12)
+# define PMC_TCO1_CNT_TCO_TMR_HLT	(1 << 11)
+# define PMC_TCO1_CNT_SEND_NOW		(1 << 10)
+# define PMC_TCO1_CNT_NMI2SMI_EN	(1 << 9)
+# define PMC_TCO1_CNT_NMI_NOW		(1 << 8)
+#define PMC_TCO2_CNT		(PMC_TCO_BASE+0x0a)
+#define PMC_TCO_MESSAGE1	(PMC_TCO_BASE+0x0c)
+#define PMC_TCO_MESSAGE2	(PMC_TCO_BASE+0x0d)
+#define PMC_TCO_WDSTATUS	(PMC_TCO_BASE+0x0e)
+#define PMC_SW_IRQ_GEN		(PMC_TCO_BASE+0x10)
 
 /*
  * TCO timer tick.  ICH datasheets say:
@@ -285,20 +285,20 @@
  *  - 6 bit; values of 0-3 will be ignored and should not be attempted
  */
 static __inline int
-lpcib_tcotimer_tick_to_second(int ltick)
+tcotimer_tick_to_second(int ltick)
 {
 	return ltick * 6 / 10;
 }
 
 static __inline int
-lpcib_tcotimer_second_to_tick(int ltick)
+tcotimer_second_to_tick(int ltick)
 {
 	return ltick * 10 / 6;
 }
 
-#define LPCIB_TCOTIMER_MIN_TICK 	4
-#define LPCIB_TCOTIMER2_MIN_TICK	2
-#define LPCIB_TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
-#define LPCIB_TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */
+#define TCOTIMER_MIN_TICK 	4
+#define TCOTIMER2_MIN_TICK	2
+#define TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
+#define TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */
 
 #endif /*  _DEV_IC_I82801LPCREG_H_ */
