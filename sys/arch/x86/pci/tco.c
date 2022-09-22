@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.7 2022/09/22 14:42:29 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.8 2022/09/22 14:42:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.7 2022/09/22 14:42:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.8 2022/09/22 14:42:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,10 +60,13 @@ struct tco_softc {
 	bus_space_tag_t		sc_rcbat;
 	bus_space_handle_t	sc_rcbah;
 	struct pcib_softc *	sc_pcib;
+	bus_space_tag_t		sc_tcot;
+	bus_space_handle_t	sc_tcoh;
 	int			sc_armed;
 	unsigned int		sc_min_t;
 	unsigned int		sc_max_t;
 	int			sc_version;
+	bool			sc_attached;
 };
 
 static int tco_match(device_t, cfdata_t, void *);
@@ -121,6 +124,13 @@ tco_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": TCO (watchdog) timer configured.\n");
 	aprint_naive("\n");
+
+	sc->sc_tcot = sc->sc_pmt;
+	if (bus_space_subregion(sc->sc_pmt, sc->sc_pmh, PMC_TCO_BASE,
+		TCO_REGSIZE, &sc->sc_tcoh)) {
+		aprint_error_dev(self, "failed to map TCO registers\n");
+		return;
+	}
 
 	/* Explicitly stop the TCO timer. */
 	tcotimer_stop(sc);
@@ -183,6 +193,8 @@ tco_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, tco_suspend, NULL))
 		aprint_error_dev(self, "unable to register with pmf\n");
+
+	sc->sc_attached = true;
 }
 
 static int
@@ -190,6 +202,9 @@ tco_detach(device_t self, int flags)
 {
 	struct tco_softc *sc = device_private(self);
 	int rc;
+
+	if (!sc->sc_attached)
+		return 0;
 
 	if ((rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
 		if (rc == ERESTART)
@@ -243,19 +258,19 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		switch (sc->sc_version) {
 		case TCO_VERSION_RCBA:
 			/* ICH6 or newer */
-			ich6period = bus_space_read_2(sc->sc_pmt, sc->sc_pmh,
-			    PMC_TCO_TMR2);
+			ich6period = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
+			    PMC_TCO_TMR2 - PMC_TCO_BASE);
 			ich6period &= 0xfc00;
-			bus_space_write_2(sc->sc_pmt, sc->sc_pmh,
-			    PMC_TCO_TMR2, ich6period | period);
+			bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+			    PMC_TCO_TMR2 - PMC_TCO_BASE, ich6period | period);
 			break;
 		case TCO_VERSION_PCIB:
 			/* ICH5 or older */
-			ich5period = bus_space_read_1(sc->sc_pmt, sc->sc_pmh,
-			    PMC_TCO_TMR);
+			ich5period = bus_space_read_1(sc->sc_tcot, sc->sc_tcoh,
+			    PMC_TCO_TMR - PMC_TCO_BASE);
 			ich5period &= 0xc0;
-			bus_space_write_1(sc->sc_pmt, sc->sc_pmh,
-			    PMC_TCO_TMR, ich5period | period);
+			bus_space_write_1(sc->sc_tcot, sc->sc_tcoh,
+			    PMC_TCO_TMR - PMC_TCO_BASE, ich5period | period);
 			break;
 		}
 
@@ -275,10 +290,12 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	/* any value is allowed */
 	switch (sc->sc_version) {
 	case TCO_VERSION_RCBA:
-		bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO_RLD, 1);
+		bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+		    PMC_TCO_RLD - PMC_TCO_BASE, 1);
 		break;
 	case TCO_VERSION_PCIB:
-		bus_space_write_1(sc->sc_pmt, sc->sc_pmh, PMC_TCO_RLD, 1);
+		bus_space_write_1(sc->sc_tcot, sc->sc_tcoh,
+		    PMC_TCO_RLD - PMC_TCO_BASE, 1);
 		break;
 	}
 
@@ -290,9 +307,11 @@ tcotimer_stop(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT);
+	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO1_CNT - PMC_TCO_BASE);
 	ioreg |= PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT, ioreg);
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO1_CNT - PMC_TCO_BASE, ioreg);
 }
 
 static void
@@ -300,19 +319,24 @@ tcotimer_start(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT);
+	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO1_CNT - PMC_TCO_BASE);
 	ioreg &= ~PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT, ioreg);
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO1_CNT - PMC_TCO_BASE, ioreg);
 }
 
 static void
 tcotimer_status_reset(struct tco_softc *sc)
 {
-	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_STS,
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO1_STS - PMC_TCO_BASE,
 	    PMC_TCO1_STS_TIMEOUT);
-	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO2_STS,
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO2_STS - PMC_TCO_BASE,
 	    PMC_TCO2_STS_BOOT_STS);
-	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO2_STS,
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
+	    PMC_TCO2_STS - PMC_TCO_BASE,
 	    PMC_TCO2_STS_SECONDS_TO_STS);
 }
 
