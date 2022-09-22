@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.9 2022/09/21 10:50:29 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.10 2022/09/22 14:39:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -83,7 +83,7 @@ static crashme_node nodes[] = {
     CMNODE("ddb", "enter ddb directly", crashme_ddb),
 #endif
 #ifdef LOCKDEBUG
-    CMNODE("kernel_lock_spinout", "infinite kernel lock",
+    CMNODE("kernel_lock_spinout", "infinite loop under kernel lock",
 	crashme_kernel_lock_spinout),
 #endif
     CMNODE("mutex_recursion", "enter the same mutex twice",
