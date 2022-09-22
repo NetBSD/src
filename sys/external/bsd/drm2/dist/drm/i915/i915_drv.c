@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.47 2021/12/21 11:44:18 tnn Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.48 2022/09/22 14:37:38 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.47 2021/12/21 11:44:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.48 2022/09/22 14:37:38 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1747,8 +1747,7 @@ static bool suspend_to_idle(struct drm_i915_private *dev_priv)
 	return false;
 }
 
-#ifndef __NetBSD__		/* XXX runtime pm */
-static int i915_drm_prepare(struct drm_device *dev)
+int i915_drm_prepare(struct drm_device *dev)
 {
 	struct drm_i915_private *i915 = to_i915(dev);
 
@@ -1762,7 +1761,6 @@ static int i915_drm_prepare(struct drm_device *dev)
 
 	return 0;
 }
-#endif
 
 int i915_drm_suspend(struct drm_device *dev)
 {

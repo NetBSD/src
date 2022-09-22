@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.12 2022/07/18 23:34:02 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.13 2022/09/22 14:37:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.12 2022/07/18 23:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.13 2022/09/22 14:37:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -255,6 +255,9 @@ i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
 	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
 
+	ret = i915_drm_prepare(dev);
+	if (ret)
+		return false;
 	ret = i915_drm_suspend(dev);
 	if (ret)
 		return false;
