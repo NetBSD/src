@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.22 2022/09/22 21:00:46 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.23 2022/09/22 21:48:18 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.22 2022/09/22 21:00:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23 2022/09/22 21:48:18 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -497,6 +497,15 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 	db_addr_t pc, sp, lr0;
 	bool allow_leaf_function = false;
 
+	if (tf == NULL) {
+		/*
+		 * In the case of "trace/s <frame-address>",
+		 * the specified frame pointer address is considered
+		 * a trapframe (or a switchframe) address.
+		 */
+		tf = (struct trapframe *)fp;
+	}
+
 	pr_frame(tf, pr);
 
 	db_read_bytes((db_addr_t)tf, sizeof(tf_buf), (char *)&tf_buf);
@@ -800,15 +809,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (count > MAXBACKTRACE)
 		count = MAXBACKTRACE;
-
-	if (tf == NULL) {
-		/*
-		 * In the case of "trace <frame-address>",
-		 * the specified frame pointer address is considered
-		 * a trapframe (or a switchframe) address.
-		 */
-		tf = (struct trapframe *)fp;
-	}
 
 	if (trace_sp) {
 		/* trace $lr pushed to sp */
