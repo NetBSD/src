@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.4 2022/09/22 14:41:26 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.5 2022/09/22 14:41:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.4 2022/09/22 14:41:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.5 2022/09/22 14:41:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ CFATTACH_DECL3_NEW(tco, sizeof(struct tco_softc),
 static int
 tco_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct lpcib_tco_attach_args *ta = aux;
+	struct tco_attach_args *ta = aux;
 
 	if (ta->ta_iot == 0)
 		return 0;
@@ -108,7 +108,7 @@ static void
 tco_attach(device_t parent, device_t self, void *aux)
 {
 	struct tco_softc *sc = device_private(self);
-	struct lpcib_tco_attach_args *ta = aux;
+	struct tco_attach_args *ta = aux;
 	uint32_t ioreg;
 
 	/* Retrieve bus info shared with parent/siblings */
