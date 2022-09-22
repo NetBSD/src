@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.1 2022/08/20 10:55:28 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.2 2022/09/22 14:46:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -37,6 +37,12 @@
  *
  * https://uefi.org/sites/default/files/resources/UEFI_Spec_2_9_2021_03_18.pdf
  */
+
+#if defined(__i386__) || defined(__x86_64__)
+#define	EFIAPI	__attribute__((__ms_abi__))
+#else
+#define	EFIAPI	/* empty */
+#endif
 
 enum efi_reset {
 	EFI_RESET_COLD,
@@ -121,22 +127,24 @@ struct efi_tblhdr {
 
 struct efi_rt {
 	struct efi_tblhdr rt_hdr;
-	efi_status	(*rt_gettime)(struct efi_tm *, struct efi_tmcap *);
-	efi_status	(*rt_settime)(struct efi_tm *);
+	efi_status	(*rt_gettime)(struct efi_tm *, struct efi_tmcap *)
+			    EFIAPI;
+	efi_status	(*rt_settime)(struct efi_tm *) EFIAPI;
 	efi_status	(*rt_getwaketime)(uint8_t *, uint8_t *,
-	    struct efi_tm *);
-	efi_status	(*rt_setwaketime)(uint8_t, struct efi_tm *);
+			    struct efi_tm *) EFIAPI;
+	efi_status	(*rt_setwaketime)(uint8_t, struct efi_tm *) EFIAPI;
 	efi_status	(*rt_setvirtual)(u_long, u_long, uint32_t,
-	    struct efi_md *);
-	efi_status	(*rt_cvtptr)(u_long, void **);
+			    struct efi_md *) EFIAPI;
+	efi_status	(*rt_cvtptr)(u_long, void **) EFIAPI;
 	efi_status	(*rt_getvar)(efi_char *, struct uuid *, uint32_t *,
-	    u_long *, void *);
-	efi_status	(*rt_scanvar)(u_long *, efi_char *, struct uuid *);
+			    u_long *, void *) EFIAPI;
+	efi_status	(*rt_scanvar)(u_long *, efi_char *, struct uuid *)
+			    EFIAPI;
 	efi_status	(*rt_setvar)(efi_char *, struct uuid *, uint32_t,
-	    u_long, void *);
-	efi_status	(*rt_gethicnt)(uint32_t *);
+			    u_long, void *) EFIAPI;
+	efi_status	(*rt_gethicnt)(uint32_t *) EFIAPI;
 	efi_status	(*rt_reset)(enum efi_reset, efi_status, u_long,
-	    efi_char *);
+			    efi_char *) EFIAPI;
 };
 
 struct efi_systbl {
