@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.54 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.55 2022/09/22 14:41:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.54 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.55 2022/09/22 14:41:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -635,12 +635,15 @@ tcotimer_configure(device_t self)
 	struct lpcib_softc *sc = device_private(self);
 	struct lpcib_tco_attach_args arg;
 
+	if (sc->sc_has_rcba)
+		arg.ta_version = TCO_VERSION_RCBA;
+	else
+		arg.ta_version = TCO_VERSION_PCIB;
 	arg.ta_iot = sc->sc_iot;
 	arg.ta_ioh = sc->sc_ioh;
 	arg.ta_rcbat = sc->sc_rcbat;
 	arg.ta_rcbah = sc->sc_rcbah;
-	arg.ta_has_rcba = sc->sc_has_rcba;
-	arg.ta_pcib = &(sc->sc_pcib);
+	arg.ta_pcib = &sc->sc_pcib;
 
 	sc->sc_tco = config_found(self, &arg, NULL,
 	    CFARGS(.iattr = "tcoichbus"));
