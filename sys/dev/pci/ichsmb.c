@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.77 2022/09/13 11:47:54 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.78 2022/09/22 14:44:47 riastradh Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.77 2022/09/13 11:47:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.78 2022/09/22 14:44:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -222,6 +222,11 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 			aprint_normal_dev(self, "polling\n");
 	}
 
+	/* Attach I2C bus */
+	iic_tag_init(&sc->sc_i2c_tag);
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
+
 	sc->sc_i2c_device = NULL;
 	ichsmb_rescan(self, NULL, NULL);
 
@@ -237,11 +242,6 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *locators)
 
 	if (sc->sc_i2c_device != NULL)
 		return 0;
-
-	/* Attach I2C bus */
-	iic_tag_init(&sc->sc_i2c_tag);
-	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
