@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.57 2022/09/22 14:42:09 riastradh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.58 2022/09/22 14:42:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.57 2022/09/22 14:42:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.58 2022/09/22 14:42:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,8 +85,8 @@ struct lpcib_softc {
 	pcireg_t		sc_rcba_reg;
 
 	/* Power management variables. */
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
+	bus_space_tag_t		sc_pmt;
+	bus_space_handle_t	sc_pmh;
 	bus_size_t		sc_iosize;
 
 	/* HPET variables. */
@@ -339,10 +339,10 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	 * than LPCIB_PCI_PM_SIZE. It makes impossible to use
 	 * pci_mapreg_submap() because the function does range check.
 	 */
-	sc->sc_iot = pa->pa_iot;
+	sc->sc_pmt = pa->pa_iot;
 	pmbase = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_PMBASE);
-	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(pmbase),
-	    LPCIB_PCI_PM_SIZE, 0, &sc->sc_ioh) != 0) {
+	if (bus_space_map(sc->sc_pmt, PCI_MAPREG_IO_ADDR(pmbase),
+	    LPCIB_PCI_PM_SIZE, 0, &sc->sc_pmh) != 0) {
 		aprint_error_dev(self,
 	    	"can't map power management i/o space\n");
 		return;
@@ -517,7 +517,7 @@ lpcibdetach(device_t self, int flags)
 	if (sc->sc_has_rcba)
 		bus_space_unmap(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_SIZE);
 
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
+	bus_space_unmap(sc->sc_pmt, sc->sc_pmh, sc->sc_iosize);
 
 	return pcibdetach(self, flags);
 }
@@ -606,7 +606,7 @@ pmtimer_configure(device_t self)
 	}
 
 	/* Attach our PM timer with the generic acpipmtimer function */
-	sc->sc_pmtimer = acpipmtimer_attach(self, sc->sc_iot, sc->sc_ioh,
+	sc->sc_pmtimer = acpipmtimer_attach(self, sc->sc_pmt, sc->sc_pmh,
 	    PMC_PM1_TMR, 0);
 }
 
@@ -639,8 +639,8 @@ tcotimer_configure(device_t self)
 		arg.ta_version = TCO_VERSION_RCBA;
 	else
 		arg.ta_version = TCO_VERSION_PCIB;
-	arg.ta_iot = sc->sc_iot;
-	arg.ta_ioh = sc->sc_ioh;
+	arg.ta_pmt = sc->sc_pmt;
+	arg.ta_pmh = sc->sc_pmh;
 	arg.ta_rcbat = sc->sc_rcbat;
 	arg.ta_rcbah = sc->sc_rcbah;
 	arg.ta_pcib = &sc->sc_pcib;
@@ -667,9 +667,9 @@ tcotimer_unconfigure(device_t self, int flags)
  * Intel ICH SpeedStep support.
  */
 #define SS_READ(sc, reg) \
-	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (reg))
+	bus_space_read_1((sc)->sc_pmt, (sc)->sc_pmh, (reg))
 #define SS_WRITE(sc, reg, val) \
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+	bus_space_write_1((sc)->sc_pmt, (sc)->sc_pmh, (reg), (val))
 
 /*
  * Linux driver says that SpeedStep on older chipsets cause

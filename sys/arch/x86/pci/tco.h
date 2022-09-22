@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.h,v 1.3 2022/09/22 14:41:49 riastradh Exp $	*/
+/*	$NetBSD: tco.h,v 1.4 2022/09/22 14:42:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@ struct tco_attach_args {
 		TCO_VERSION_PCIB = 0,
 		TCO_VERSION_RCBA = 1,
 	}			ta_version;
-	bus_space_tag_t		ta_iot;
-	bus_space_handle_t	ta_ioh;
+	bus_space_tag_t		ta_pmt;
+	bus_space_handle_t	ta_pmh;
 	bus_space_tag_t		ta_rcbat;
 	bus_space_handle_t	ta_rcbah;
 	struct pcib_softc *	ta_pcib;

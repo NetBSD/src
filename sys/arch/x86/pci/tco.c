@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.6 2022/09/22 14:42:09 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.7 2022/09/22 14:42:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.6 2022/09/22 14:42:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.7 2022/09/22 14:42:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.6 2022/09/22 14:42:09 riastradh Exp $");
 
 struct tco_softc {
 	struct sysmon_wdog	sc_smw;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
+	bus_space_tag_t		sc_pmt;
+	bus_space_handle_t	sc_pmh;
 	bus_space_tag_t		sc_rcbat;
 	bus_space_handle_t	sc_rcbah;
 	struct pcib_softc *	sc_pcib;
@@ -90,7 +90,7 @@ tco_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tco_attach_args *ta = aux;
 
-	if (ta->ta_iot == 0)
+	if (ta->ta_pmt == 0)
 		return 0;
 
 	switch (ta->ta_version) {
@@ -113,8 +113,8 @@ tco_attach(device_t parent, device_t self, void *aux)
 
 	/* Retrieve bus info shared with parent/siblings */
 	sc->sc_version = ta->ta_version;
-	sc->sc_iot = ta->ta_iot;
-	sc->sc_ioh = ta->ta_ioh;
+	sc->sc_pmt = ta->ta_pmt;
+	sc->sc_pmh = ta->ta_pmh;
 	sc->sc_rcbat = ta->ta_rcbat;
 	sc->sc_rcbah = ta->ta_rcbah;
 	sc->sc_pcib = ta->ta_pcib;
@@ -129,7 +129,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	 * Enable TCO timeout SMI only if the hardware reset does not
 	 * work. We don't know what the SMBIOS does.
 	 */
-	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PMC_SMI_EN);
+	ioreg = bus_space_read_4(sc->sc_pmt, sc->sc_pmh, PMC_SMI_EN);
 	ioreg &= ~PMC_SMI_EN_TCO_EN;
 
 	/*
@@ -140,7 +140,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 		ioreg |= PMC_SMI_EN_TCO_EN;
 	}
 	if ((ioreg & PMC_SMI_EN_GBL_SMI_EN) != 0) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, PMC_SMI_EN, ioreg);
+		bus_space_write_4(sc->sc_pmt, sc->sc_pmh, PMC_SMI_EN, ioreg);
 	}
 
 	/* Reset the watchdog status registers. */
@@ -243,18 +243,18 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		switch (sc->sc_version) {
 		case TCO_VERSION_RCBA:
 			/* ICH6 or newer */
-			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			ich6period = bus_space_read_2(sc->sc_pmt, sc->sc_pmh,
 			    PMC_TCO_TMR2);
 			ich6period &= 0xfc00;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			bus_space_write_2(sc->sc_pmt, sc->sc_pmh,
 			    PMC_TCO_TMR2, ich6period | period);
 			break;
 		case TCO_VERSION_PCIB:
 			/* ICH5 or older */
-			ich5period = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			ich5period = bus_space_read_1(sc->sc_pmt, sc->sc_pmh,
 			    PMC_TCO_TMR);
 			ich5period &= 0xc0;
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			bus_space_write_1(sc->sc_pmt, sc->sc_pmh,
 			    PMC_TCO_TMR, ich5period | period);
 			break;
 		}
@@ -275,10 +275,10 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	/* any value is allowed */
 	switch (sc->sc_version) {
 	case TCO_VERSION_RCBA:
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO_RLD, 1);
+		bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO_RLD, 1);
 		break;
 	case TCO_VERSION_PCIB:
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PMC_TCO_RLD, 1);
+		bus_space_write_1(sc->sc_pmt, sc->sc_pmh, PMC_TCO_RLD, 1);
 		break;
 	}
 
@@ -290,9 +290,9 @@ tcotimer_stop(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, PMC_TCO1_CNT);
+	ioreg = bus_space_read_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT);
 	ioreg |= PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO1_CNT, ioreg);
+	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT, ioreg);
 }
 
 static void
@@ -300,19 +300,19 @@ tcotimer_start(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, PMC_TCO1_CNT);
+	ioreg = bus_space_read_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT);
 	ioreg &= ~PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO1_CNT, ioreg);
+	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_CNT, ioreg);
 }
 
 static void
 tcotimer_status_reset(struct tco_softc *sc)
 {
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO1_STS,
+	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO1_STS,
 	    PMC_TCO1_STS_TIMEOUT);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO2_STS,
+	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO2_STS,
 	    PMC_TCO2_STS_BOOT_STS);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PMC_TCO2_STS,
+	bus_space_write_2(sc->sc_pmt, sc->sc_pmh, PMC_TCO2_STS,
 	    PMC_TCO2_STS_SECONDS_TO_STS);
 }
 
