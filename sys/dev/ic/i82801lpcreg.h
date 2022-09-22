@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.14 2022/09/22 14:42:47 riastradh Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.15 2022/09/22 14:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@
 #define PMC_BUS_CYC_TRACK	0x4e
 #define PMC_PM_SS_CNTL		0x50		/* SpeedStep control */
 # define PMC_PM_SS_CNTL_ARB_DIS		0x01	/* disable arbiter */
+#define PMC_TCO_BASE		0x60
 
 /*
  * General Purpose I/O Registers
@@ -253,31 +254,29 @@
 
 /*
  * System management TCO registers
- *  (offset from PMBASE)
  */
-#define PMC_TCO_BASE		0x60
-#define PMC_TCO_RLD		(PMC_TCO_BASE+0x00)
-#define PMC_TCO_TMR		(PMC_TCO_BASE+0x01)
-#define PMC_TCO_TMR2		(PMC_TCO_BASE+0x12) /* ICH6 and newer */
-# define PMC_TCO_TMR_MASK 		0x3f
-#define PMC_TCO_DAT_IN		(PMC_TCO_BASE+0x02)
-#define PMC_TCO_DAT_OUT		(PMC_TCO_BASE+0x03)
-#define PMC_TCO1_STS		(PMC_TCO_BASE+0x04)
-# define PMC_TCO1_STS_TIMEOUT 		0x08
-#define PMC_TCO2_STS		(PMC_TCO_BASE+0x06)
-# define PMC_TCO2_STS_BOOT_STS 		0x04
-# define PMC_TCO2_STS_SECONDS_TO_STS 	0x02
-#define PMC_TCO1_CNT		(PMC_TCO_BASE+0x08)
-# define PMC_TCO1_CNT_TCO_LOCK 		(1 << 12)
-# define PMC_TCO1_CNT_TCO_TMR_HLT	(1 << 11)
-# define PMC_TCO1_CNT_SEND_NOW		(1 << 10)
-# define PMC_TCO1_CNT_NMI2SMI_EN	(1 << 9)
-# define PMC_TCO1_CNT_NMI_NOW		(1 << 8)
-#define PMC_TCO2_CNT		(PMC_TCO_BASE+0x0a)
-#define PMC_TCO_MESSAGE1	(PMC_TCO_BASE+0x0c)
-#define PMC_TCO_MESSAGE2	(PMC_TCO_BASE+0x0d)
-#define PMC_TCO_WDSTATUS	(PMC_TCO_BASE+0x0e)
-#define PMC_SW_IRQ_GEN		(PMC_TCO_BASE+0x10)
+#define TCO_RLD			0x00
+#define TCO_TMR			0x01 /* ICH5 and older */
+# define TCO_TMR_MASK 		0x3f
+#define TCO_DAT_IN		0x02
+#define TCO_DAT_OUT		0x03
+#define TCO1_STS		0x04
+# define TCO1_STS_TIMEOUT 		0x08
+#define TCO2_STS		0x06
+# define TCO2_STS_BOOT_STS 		0x04
+# define TCO2_STS_SECONDS_TO_STS 	0x02
+#define TCO1_CNT		0x08
+# define TCO1_CNT_TCO_LOCK 		(1 << 12)
+# define TCO1_CNT_TCO_TMR_HLT		(1 << 11)
+# define TCO1_CNT_SEND_NOW		(1 << 10)
+# define TCO1_CNT_NMI2SMI_EN		(1 << 9)
+# define TCO1_CNT_NMI_NOW		(1 << 8)
+#define TCO2_CNT		0x0a
+#define TCO_MESSAGE1		0x0c
+#define TCO_MESSAGE2		0x0d
+#define TCO_WDSTATUS		0x0e
+#define TCO_SW_IRQ_GEN		0x10
+#define TCO_TMR2		0x12 /* ICH6 and newer */
 #define	TCO_REGSIZE		0x20
 
 /*
