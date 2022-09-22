@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.8 2022/09/22 14:42:47 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.9 2022/09/22 14:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.8 2022/09/22 14:42:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.9 2022/09/22 14:43:04 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -259,18 +259,18 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		case TCO_VERSION_RCBA:
 			/* ICH6 or newer */
 			ich6period = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
-			    PMC_TCO_TMR2 - PMC_TCO_BASE);
+			    TCO_TMR2);
 			ich6period &= 0xfc00;
 			bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-			    PMC_TCO_TMR2 - PMC_TCO_BASE, ich6period | period);
+			    TCO_TMR2, ich6period | period);
 			break;
 		case TCO_VERSION_PCIB:
 			/* ICH5 or older */
 			ich5period = bus_space_read_1(sc->sc_tcot, sc->sc_tcoh,
-			    PMC_TCO_TMR - PMC_TCO_BASE);
+			    TCO_TMR);
 			ich5period &= 0xc0;
 			bus_space_write_1(sc->sc_tcot, sc->sc_tcoh,
-			    PMC_TCO_TMR - PMC_TCO_BASE, ich5period | period);
+			    TCO_TMR, ich5period | period);
 			break;
 		}
 
@@ -290,12 +290,10 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	/* any value is allowed */
 	switch (sc->sc_version) {
 	case TCO_VERSION_RCBA:
-		bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-		    PMC_TCO_RLD - PMC_TCO_BASE, 1);
+		bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO_RLD, 1);
 		break;
 	case TCO_VERSION_PCIB:
-		bus_space_write_1(sc->sc_tcot, sc->sc_tcoh,
-		    PMC_TCO_RLD - PMC_TCO_BASE, 1);
+		bus_space_write_1(sc->sc_tcot, sc->sc_tcoh, TCO_RLD, 1);
 		break;
 	}
 
@@ -307,11 +305,9 @@ tcotimer_stop(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO1_CNT - PMC_TCO_BASE);
-	ioreg |= PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO1_CNT - PMC_TCO_BASE, ioreg);
+	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh, TCO1_CNT);
+	ioreg |= TCO1_CNT_TCO_TMR_HLT;
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO1_CNT, ioreg);
 }
 
 static void
@@ -319,25 +315,20 @@ tcotimer_start(struct tco_softc *sc)
 {
 	uint16_t ioreg;
 
-	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO1_CNT - PMC_TCO_BASE);
-	ioreg &= ~PMC_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO1_CNT - PMC_TCO_BASE, ioreg);
+	ioreg = bus_space_read_2(sc->sc_tcot, sc->sc_tcoh, TCO1_CNT);
+	ioreg &= ~TCO1_CNT_TCO_TMR_HLT;
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO1_CNT, ioreg);
 }
 
 static void
 tcotimer_status_reset(struct tco_softc *sc)
 {
-	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO1_STS - PMC_TCO_BASE,
-	    PMC_TCO1_STS_TIMEOUT);
-	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO2_STS - PMC_TCO_BASE,
-	    PMC_TCO2_STS_BOOT_STS);
-	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh,
-	    PMC_TCO2_STS - PMC_TCO_BASE,
-	    PMC_TCO2_STS_SECONDS_TO_STS);
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO1_STS,
+	    TCO1_STS_TIMEOUT);
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO2_STS,
+	    TCO2_STS_BOOT_STS);
+	bus_space_write_2(sc->sc_tcot, sc->sc_tcoh, TCO2_STS,
+	    TCO2_STS_SECONDS_TO_STS);
 }
 
 /*
