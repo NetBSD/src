@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.13 2022/09/22 14:42:09 riastradh Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.14 2022/09/22 14:42:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -278,6 +278,7 @@
 #define PMC_TCO_MESSAGE2	(PMC_TCO_BASE+0x0d)
 #define PMC_TCO_WDSTATUS	(PMC_TCO_BASE+0x0e)
 #define PMC_SW_IRQ_GEN		(PMC_TCO_BASE+0x10)
+#define	TCO_REGSIZE		0x20
 
 /*
  * TCO timer tick.  ICH datasheets say:
