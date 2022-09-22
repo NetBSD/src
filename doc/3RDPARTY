@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1875 2022/09/21 10:51:14 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1876 2022/09/22 21:24:10 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -151,12 +151,12 @@ Location:	external/bsd/blocklist
 Notes:
 
 Package:	libuv
-Version:	1.38.0
-Current Vers:	1.38.0
+Version:	1.44.2
+Current Vers:	1.44.2
 Maintainer:	libuv
 Archive Site:	https://dist.libuv.org/dist/
 Home Page:	https://libuv.org
-Date:		2020-06-13
+Date:		2022-09-22
 Mailing List:	https://groups.google.com/forum/#!forum/libuv
 Responsible:	christos
 License:	mit
