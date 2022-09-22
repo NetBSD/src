@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.78 2022/09/22 14:44:47 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.79 2022/09/22 14:45:01 riastradh Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.78 2022/09/22 14:44:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.79 2022/09/22 14:45:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -256,11 +256,9 @@ ichsmb_detach(device_t self, int flags)
 	struct ichsmb_softc *sc = device_private(self);
 	int error;
 
-	if (sc->sc_i2c_device) {
-		error = config_detach(sc->sc_i2c_device, flags);
-		if (error)
-			return error;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	iic_tag_fini(&sc->sc_i2c_tag);
 
