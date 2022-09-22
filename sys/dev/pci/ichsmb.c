@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.79 2022/09/22 14:45:01 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.80 2022/09/22 14:45:18 riastradh Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.79 2022/09/22 14:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.80 2022/09/22 14:45:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -238,14 +238,15 @@ static int
 ichsmb_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct ichsmb_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
-	if (sc->sc_i2c_device != NULL)
-		return 0;
+	if (ifattr_match(ifattr, "i2cbus") && sc->sc_i2c_device == NULL) {
+		struct i2cbus_attach_args iba;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_device = config_found(self, &iba, iicbus_print, CFARGS_NONE);
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_tag = &sc->sc_i2c_tag;
+		sc->sc_i2c_device = config_found(self, &iba, iicbus_print,
+		    CFARGS_NONE);
+	}
 
 	return 0;
 }
