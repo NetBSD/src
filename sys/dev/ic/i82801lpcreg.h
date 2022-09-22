@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.15 2022/09/22 14:43:04 riastradh Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.16 2022/09/22 14:45:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -166,73 +166,73 @@
  */
 
 /* PCI configuration registers */
-#define LPCIB_SMB_BASE	0x20		/* SMBus base address */
-#define LPCIB_SMB_HOSTC	0x40		/* host configuration */
-#define LPCIB_SMB_HOSTC_HSTEN	(1 << 0)	/* enable host controller */
-#define LPCIB_SMB_HOSTC_SMIEN	(1 << 1)	/* generate SMI */
-#define LPCIB_SMB_HOSTC_I2CEN	(1 << 2)	/* enable I2C commands */
+#define SMB_BASE	0x20		/* SMBus base address */
+#define SMB_HOSTC	0x40		/* host configuration */
+#define SMB_HOSTC_HSTEN		(1 << 0)	/* enable host controller */
+#define SMB_HOSTC_SMIEN		(1 << 1)	/* generate SMI */
+#define SMB_HOSTC_I2CEN		(1 << 2)	/* enable I2C commands */
 
 /* SMBus I/O registers */
-#define LPCIB_SMB_HS	0x00		/* host status */
-#define LPCIB_SMB_HS_BUSY		(1 << 0)	/* running a command */
-#define LPCIB_SMB_HS_INTR		(1 << 1)	/* command completed */
-#define LPCIB_SMB_HS_DEVERR	(1 << 2)	/* command error */
-#define LPCIB_SMB_HS_BUSERR	(1 << 3)	/* transaction collision */
-#define LPCIB_SMB_HS_FAILED	(1 << 4)	/* failed bus transaction */
-#define LPCIB_SMB_HS_SMBAL	(1 << 5)	/* SMBALERT# asserted */
-#define LPCIB_SMB_HS_INUSE	(1 << 6)	/* bus semaphore */
-#define LPCIB_SMB_HS_BDONE	(1 << 7)	/* byte received/transmitted */
-#define LPCIB_SMB_HS_BITS		"\020\001BUSY\002INTR\003DEVERR\004BUSERR\005FAILED\006SMBAL\007INUSE\010BDONE"
-#define LPCIB_SMB_HC	0x02		/* host control */
-#define LPCIB_SMB_HC_INTREN	(1 << 0)	/* enable interrupts */
-#define LPCIB_SMB_HC_KILL		(1 << 1)	/* kill current transaction */
-#define LPCIB_SMB_HC_CMD_QUICK	(0 << 2)	/* QUICK command */
-#define LPCIB_SMB_HC_CMD_BYTE	(1 << 2)	/* BYTE command */
-#define LPCIB_SMB_HC_CMD_BDATA	(2 << 2)	/* BYTE DATA command */
-#define LPCIB_SMB_HC_CMD_WDATA	(3 << 2)	/* WORD DATA command */
-#define LPCIB_SMB_HC_CMD_PCALL	(4 << 2)	/* PROCESS CALL command */
-#define LPCIB_SMB_HC_CMD_BLOCK	(5 << 2)	/* BLOCK command */
-#define LPCIB_SMB_HC_CMD_I2CREAD	(6 << 2)	/* I2C READ command */
-#define LPCIB_SMB_HC_CMD_BLOCKP	(7 << 2)	/* BLOCK PROCESS command */
-#define LPCIB_SMB_HC_LASTB	(1 << 5)	/* last byte in block */
-#define LPCIB_SMB_HC_START	(1 << 6)	/* start transaction */
-#define LPCIB_SMB_HC_PECEN	(1 << 7)	/* enable PEC */
-#define LPCIB_SMB_HCMD	0x03		/* host command */
-#define LPCIB_SMB_TXSLVA	0x04		/* transmit slave address */
-#define LPCIB_SMB_TXSLVA_READ	(1 << 0)	/* read direction */
-#define LPCIB_SMB_TXSLVA_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
-#define LPCIB_SMB_HD0	0x05		/* host data 0 */
-#define LPCIB_SMB_HD1	0x06		/* host data 1 */
-#define LPCIB_SMB_HBDB	0x07		/* host block data byte */
-#define LPCIB_SMB_PEC	0x08		/* PEC data */
-#define LPCIB_SMB_RXSLVA	0x09		/* receive slave address */
-#define LPCIB_SMB_SD	0x0a		/* receive slave data */
-#define LPCIB_SMB_SD_MSG0(x)	((x) & 0xff)	/* data message byte 0 */
-#define LPCIB_SMB_SD_MSG1(x)	((x) >> 8)	/* data message byte 1 */
-#define LPCIB_SMB_AS	0x0c		/* auxiliary status */
-#define LPCIB_SMB_AS_CRCE		(1 << 0)	/* CRC error */
-#define LPCIB_SMB_AS_TCO		(1 << 1)	/* advanced TCO mode */
-#define LPCIB_SMB_AC	0x0d		/* auxiliary control */
-#define LPCIB_SMB_AC_AAC		(1 << 0)	/* automatically append CRC */
-#define LPCIB_SMB_AC_E32B		(1 << 1)	/* enable 32-byte buffer */
-#define LPCIB_SMB_SMLPC	0x0e		/* SMLink pin control */
-#define LPCIB_SMB_SMLPC_LINK0	(1 << 0)	/* SMLINK0 pin state */
-#define LPCIB_SMB_SMLPC_LINK1	(1 << 1)	/* SMLINK1 pin state */
-#define LPCIB_SMB_SMLPC_CLKC	(1 << 2)	/* SMLINK0 pin is untouched */
-#define LPCIB_SMB_SMBPC	0x0f		/* SMBus pin control */
-#define LPCIB_SMB_SMBPC_CLK	(1 << 0)	/* SMBCLK pin state */
-#define LPCIB_SMB_SMBPC_DATA	(1 << 1)	/* SMBDATA pin state */
-#define LPCIB_SMB_SMBPC_CLKC	(1 << 2)	/* SMBCLK pin is untouched */
-#define LPCIB_SMB_SS	0x10		/* slave status */
-#define LPCIB_SMB_SS_HN		(1 << 0)	/* Host Notify command */
-#define LPCIB_SMB_SCMD	0x11		/* slave command */
-#define LPCIB_SMB_SCMD_INTREN	(1 << 0)	/* enable interrupts on HN */
-#define LPCIB_SMB_SCMD_WKEN	(1 << 1)	/* wake on HN */
-#define LPCIB_SMB_SCMD_SMBALDS	(1 << 2)	/* disable SMBALERT# intr */
-#define LPCIB_SMB_NDADDR	0x14		/* notify device address */
-#define LPCIB_SMB_NDADDR_ADDR(x)	((x) >> 1)	/* 7-bit address */
-#define LPCIB_SMB_NDLOW	0x16		/* notify data low byte */
-#define LPCIB_SMB_NDHIGH	0x17		/* notify data high byte */
+#define SMB_HS		0x00		/* host status */
+#define SMB_HS_BUSY		(1 << 0)	/* running a command */
+#define SMB_HS_INTR		(1 << 1)	/* command completed */
+#define SMB_HS_DEVERR		(1 << 2)	/* command error */
+#define SMB_HS_BUSERR		(1 << 3)	/* transaction collision */
+#define SMB_HS_FAILED		(1 << 4)	/* failed bus transaction */
+#define SMB_HS_SMBAL		(1 << 5)	/* SMBALERT# asserted */
+#define SMB_HS_INUSE		(1 << 6)	/* bus semaphore */
+#define SMB_HS_BDONE		(1 << 7)	/* byte received/transmitted */
+#define SMB_HS_BITS		"\020\001BUSY\002INTR\003DEVERR\004BUSERR\005FAILED\006SMBAL\007INUSE\010BDONE"
+#define SMB_HC		0x02		/* host control */
+#define SMB_HC_INTREN		(1 << 0)	/* enable interrupts */
+#define SMB_HC_KILL		(1 << 1)	/* kill current transaction */
+#define SMB_HC_CMD_QUICK	(0 << 2)	/* QUICK command */
+#define SMB_HC_CMD_BYTE		(1 << 2)	/* BYTE command */
+#define SMB_HC_CMD_BDATA	(2 << 2)	/* BYTE DATA command */
+#define SMB_HC_CMD_WDATA	(3 << 2)	/* WORD DATA command */
+#define SMB_HC_CMD_PCALL	(4 << 2)	/* PROCESS CALL command */
+#define SMB_HC_CMD_BLOCK	(5 << 2)	/* BLOCK command */
+#define SMB_HC_CMD_I2CREAD	(6 << 2)	/* I2C READ command */
+#define SMB_HC_CMD_BLOCKP	(7 << 2)	/* BLOCK PROCESS command */
+#define SMB_HC_LASTB		(1 << 5)	/* last byte in block */
+#define SMB_HC_START		(1 << 6)	/* start transaction */
+#define SMB_HC_PECEN		(1 << 7)	/* enable PEC */
+#define SMB_HCMD	0x03		/* host command */
+#define SMB_TXSLVA	0x04		/* transmit slave address */
+#define SMB_TXSLVA_READ		(1 << 0)	/* read direction */
+#define SMB_TXSLVA_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
+#define SMB_HD0		0x05		/* host data 0 */
+#define SMB_HD1		0x06		/* host data 1 */
+#define SMB_HBDB	0x07		/* host block data byte */
+#define SMB_PEC		0x08		/* PEC data */
+#define SMB_RXSLVA	0x09		/* receive slave address */
+#define SMB_SD		0x0a		/* receive slave data */
+#define SMB_SD_MSG0(x)		((x) & 0xff)	/* data message byte 0 */
+#define SMB_SD_MSG1(x)		((x) >> 8)	/* data message byte 1 */
+#define SMB_AS		0x0c		/* auxiliary status */
+#define SMB_AS_CRCE		(1 << 0)	/* CRC error */
+#define SMB_AS_TCO		(1 << 1)	/* advanced TCO mode */
+#define SMB_AC		0x0d		/* auxiliary control */
+#define SMB_AC_AAC		(1 << 0)	/* automatically append CRC */
+#define SMB_AC_E32B		(1 << 1)	/* enable 32-byte buffer */
+#define SMB_SMLPC	0x0e		/* SMLink pin control */
+#define SMB_SMLPC_LINK0		(1 << 0)	/* SMLINK0 pin state */
+#define SMB_SMLPC_LINK1		(1 << 1)	/* SMLINK1 pin state */
+#define SMB_SMLPC_CLKC		(1 << 2)	/* SMLINK0 pin is untouched */
+#define SMB_SMBPC	0x0f		/* SMBus pin control */
+#define SMB_SMBPC_CLK		(1 << 0)	/* SMBCLK pin state */
+#define SMB_SMBPC_DATA		(1 << 1)	/* SMBDATA pin state */
+#define SMB_SMBPC_CLKC		(1 << 2)	/* SMBCLK pin is untouched */
+#define SMB_SS		0x10		/* slave status */
+#define SMB_SS_HN		(1 << 0)	/* Host Notify command */
+#define SMB_SCMD	0x11		/* slave command */
+#define SMB_SCMD_INTREN		(1 << 0)	/* enable interrupts on HN */
+#define SMB_SCMD_WKEN		(1 << 1)	/* wake on HN */
+#define SMB_SCMD_SMBALDS	(1 << 2)	/* disable SMBALERT# intr */
+#define SMB_NDADDR	0x14		/* notify device address */
+#define SMB_NDADDR_ADDR(x)	((x) >> 1)	/* 7-bit address */
+#define SMB_NDLOW	0x16		/* notify data low byte */
+#define SMB_NDHIGH	0x17		/* notify data high byte */
 
 /* ICH Chipset Configuration Registers (ICH6 and newer) */
 #define LPCIB_RCBA		0xf0
