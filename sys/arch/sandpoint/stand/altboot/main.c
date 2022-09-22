@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.33 2021/03/23 07:21:40 rin Exp $ */
+/* $NetBSD: main.c,v 1.34 2022/09/22 14:27:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -516,7 +516,7 @@ module_load(const char *kernel_path)
 		    "/stand/sandpoint/%d.%d.%d/modules",
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100,
-		    netbsd_version / 100 % 100);
+		    netbsd_version / 100 % 10000);
 	}
 	 else if (netbsd_version != 0) {
 		/* release */
