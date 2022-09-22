@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.3 2022/09/21 10:36:14 riastradh Exp $	*/
+/*	$NetBSD: tco.c,v 1.4 2022/09/22 14:41:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.3 2022/09/21 10:36:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.4 2022/09/22 14:41:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,7 @@ struct tco_softc {
 	int			sc_armed;
 	unsigned int		sc_min_t;
 	unsigned int		sc_max_t;
-	int			sc_has_rcba;
+	int			sc_version;
 };
 
 static int tco_match(device_t, cfdata_t, void *);
@@ -90,10 +90,18 @@ tco_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct lpcib_tco_attach_args *ta = aux;
 
-	if (ta->ta_iot != 0)
-		return 1;
+	if (ta->ta_iot == 0)
+		return 0;
 
-	return 0;
+	switch (ta->ta_version) {
+	case TCO_VERSION_RCBA:
+	case TCO_VERSION_PCIB:
+		break;
+	default:
+		return 0;
+	}
+
+	return 1;
 }
 
 static void
@@ -104,13 +112,12 @@ tco_attach(device_t parent, device_t self, void *aux)
 	uint32_t ioreg;
 
 	/* Retrieve bus info shared with parent/siblings */
-
+	sc->sc_version = ta->ta_version;
 	sc->sc_iot = ta->ta_iot;
 	sc->sc_ioh = ta->ta_ioh;
 	sc->sc_rcbat = ta->ta_rcbat;
 	sc->sc_rcbah = ta->ta_rcbah;
 	sc->sc_pcib = ta->ta_pcib;
-	sc->sc_has_rcba = ta->ta_has_rcba;
 
 	aprint_normal(": TCO (watchdog) timer configured.\n");
 	aprint_naive("\n");
@@ -154,12 +161,15 @@ tco_attach(device_t parent, device_t self, void *aux)
 	 * ICH5 or older are limited to 4ticks min and 39ticks max.
 	 *                              2secs          23secs
 	 */
-	if (sc->sc_has_rcba) {
+	switch (sc->sc_version) {
+	case TCO_VERSION_RCBA:
 		sc->sc_max_t = LPCIB_TCOTIMER2_MAX_TICK;
 		sc->sc_min_t = LPCIB_TCOTIMER2_MIN_TICK;
-	} else {
+		break;
+	case TCO_VERSION_PCIB:
 		sc->sc_max_t = LPCIB_TCOTIMER_MAX_TICK;
 		sc->sc_min_t = LPCIB_TCOTIMER_MIN_TICK;
+		break;
 	}
 	sc->sc_smw.smw_period = lpcib_tcotimer_tick_to_second(sc->sc_max_t);
 
@@ -230,20 +240,23 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		tcotimer_stop(sc);
 
 		/* set the timeout, */
-		if (sc->sc_has_rcba) {
+		switch (sc->sc_version) {
+		case TCO_VERSION_RCBA:
 			/* ICH6 or newer */
 			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 			    LPCIB_TCO_TMR2);
 			ich6period &= 0xfc00;
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 			    LPCIB_TCO_TMR2, ich6period | period);
-		} else {
+			break;
+		case TCO_VERSION_PCIB:
 			/* ICH5 or older */
 			ich5period = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    LPCIB_TCO_TMR);
 			ich5period &= 0xc0;
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    LPCIB_TCO_TMR, ich5period | period);
+			break;
 		}
 
 		/* and start/reload the timer. */
@@ -260,10 +273,14 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	struct tco_softc *sc = smw->smw_cookie;
 
 	/* any value is allowed */
-	if (sc->sc_has_rcba)
+	switch (sc->sc_version) {
+	case TCO_VERSION_RCBA:
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
-	else
+		break;
+	case TCO_VERSION_PCIB:
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
+		break;
+	}
 
 	return 0;
 }
@@ -308,7 +325,8 @@ tcotimer_disable_noreboot(device_t self)
 {
 	struct tco_softc *sc = device_private(self);
 
-	if (sc->sc_has_rcba) {
+	switch (sc->sc_version) {
+	case TCO_VERSION_RCBA: {
 		uint32_t status;
 
 		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
@@ -320,7 +338,9 @@ tcotimer_disable_noreboot(device_t self)
 		    LPCIB_GCS_OFFSET);
 		if (status & LPCIB_GCS_NO_REBOOT)
 			goto error;
-	} else {
+		break;
+	}
+	case TCO_VERSION_PCIB: {
 		pcireg_t pcireg;
 
 		pcireg = pci_conf_read(sc->sc_pcib->sc_pc, sc->sc_pcib->sc_tag,
@@ -333,6 +353,8 @@ tcotimer_disable_noreboot(device_t self)
 			if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
 				goto error;
 		}
+		break;
+	}
 	}
 
 	return 0;
