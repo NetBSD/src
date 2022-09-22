@@ -162,6 +162,8 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
   int count;
   int err;
   int fd;
+  int user_timeout;
+  int reset_timeout;
 
   if (loop->nfds == 0) {
     assert(QUEUE_EMPTY(&loop->watcher_queue));
@@ -199,7 +201,21 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
   base = loop->time;
   count = 48; /* Benchmarks suggest this gives the best throughput. */
 
+  if (uv__get_internal_fields(loop)->flags & UV_METRICS_IDLE_TIME) {
+    reset_timeout = 1;
+    user_timeout = timeout;
+    timeout = 0;
+  } else {
+    reset_timeout = 0;
+  }
+
   for (;;) {
+    /* Only need to set the provider_entry_time if timeout != 0. The function
+     * will return early if the loop isn't configured with UV_METRICS_IDLE_TIME.
+     */
+    if (timeout != 0)
+      uv__metrics_set_provider_entry_time(loop);
+
     if (timeout != -1) {
       spec.tv_sec = timeout / 1000;
       spec.tv_nsec = (timeout % 1000) * 1000000;
@@ -242,6 +258,11 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     SAVE_ERRNO(uv__update_time(loop));
 
     if (events[0].portev_source == 0) {
+      if (reset_timeout != 0) {
+        timeout = user_timeout;
+        reset_timeout = 0;
+      }
+
       if (timeout == 0)
         return;
 
@@ -282,10 +303,12 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       /* Run signal watchers last.  This also affects child process watchers
        * because those are implemented in terms of signal watchers.
        */
-      if (w == &loop->signal_io_watcher)
+      if (w == &loop->signal_io_watcher) {
         have_signals = 1;
-      else
+      } else {
+        uv__metrics_update_idle_time(loop);
         w->cb(loop, w, pe->portev_events);
+      }
 
       nevents++;
 
@@ -297,8 +320,15 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         QUEUE_INSERT_TAIL(&loop->watcher_queue, &w->watcher_queue);
     }
 
-    if (have_signals != 0)
+    if (reset_timeout != 0) {
+      timeout = user_timeout;
+      reset_timeout = 0;
+    }
+
+    if (have_signals != 0) {
+      uv__metrics_update_idle_time(loop);
       loop->signal_io_watcher.cb(loop, &loop->signal_io_watcher, POLLIN);
+    }
 
     loop->watchers[loop->nwatchers] = NULL;
     loop->watchers[loop->nwatchers + 1] = NULL;
@@ -393,7 +423,7 @@ void uv_loadavg(double avg[3]) {
 #if defined(PORT_SOURCE_FILE)
 
 static int uv__fs_event_rearm(uv_fs_event_t *handle) {
-  if (handle->fd == -1)
+  if (handle->fd == PORT_DELETED)
     return UV_EBADF;
 
   if (port_associate(handle->loop->fs_fd,
@@ -443,6 +473,12 @@ static void uv__fs_event_read(uv_loop_t* loop,
 
     handle = (uv_fs_event_t*) pe.portev_user;
     assert((r == 0) && "unexpected port_get() error");
+
+    if (uv__is_closing(handle)) {
+      uv__handle_stop(handle);
+      uv__make_close_pending((uv_handle_t*) handle);
+      break;
+    }
 
     events = 0;
     if (pe.portev_events & (FILE_ATTRIB | FILE_MODIFIED))
@@ -511,12 +547,14 @@ int uv_fs_event_start(uv_fs_event_t* handle,
 }
 
 
-int uv_fs_event_stop(uv_fs_event_t* handle) {
+static int uv__fs_event_stop(uv_fs_event_t* handle) {
+  int ret = 0;
+
   if (!uv__is_active(handle))
     return 0;
 
-  if (handle->fd == PORT_FIRED || handle->fd == PORT_LOADED) {
-    port_dissociate(handle->loop->fs_fd,
+  if (handle->fd == PORT_LOADED) {
+    ret = port_dissociate(handle->loop->fs_fd,
                     PORT_SOURCE_FILE,
                     (uintptr_t) &handle->fo);
   }
@@ -525,13 +563,28 @@ int uv_fs_event_stop(uv_fs_event_t* handle) {
   uv__free(handle->path);
   handle->path = NULL;
   handle->fo.fo_name = NULL;
-  uv__handle_stop(handle);
+  if (ret == 0)
+    uv__handle_stop(handle);
 
+  return ret;
+}
+
+int uv_fs_event_stop(uv_fs_event_t* handle) {
+  (void) uv__fs_event_stop(handle);
   return 0;
 }
 
 void uv__fs_event_close(uv_fs_event_t* handle) {
-  uv_fs_event_stop(handle);
+  /*
+   * If we were unable to dissociate the port here, then it is most likely
+   * that there is a pending queued event. When this happens, we don't want
+   * to complete the close as it will free the underlying memory for the
+   * handle, causing a use-after-free problem when the event is processed.
+   * We defer the final cleanup until after the event is consumed in
+   * uv__fs_event_read().
+   */
+  if (uv__fs_event_stop(handle) == 0)
+    uv__make_close_pending((uv_handle_t*) handle);
 }
 
 #else /* !defined(PORT_SOURCE_FILE) */
@@ -834,3 +887,14 @@ void uv_free_interface_addresses(uv_interface_address_t* addresses,
 
   uv__free(addresses);
 }
+
+
+#if !defined(_POSIX_VERSION) || _POSIX_VERSION < 200809L
+size_t strnlen(const char* s, size_t maxlen) {
+  const char* end;
+  end = memchr(s, '\0', maxlen);
+  if (end == NULL)
+    return maxlen;
+  return end - s;
+}
+#endif
