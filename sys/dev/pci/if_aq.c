@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.34 2022/09/22 05:50:52 riastradh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.35 2022/09/22 06:04:26 skrll Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.34 2022/09/22 05:50:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.35 2022/09/22 06:04:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1588,7 +1588,9 @@ aq_detach(device_t self, int flags __unused)
 
 	if (sc->sc_iosize != 0) {
 		if (ifp->if_softc != NULL) {
-			aq_stop(ifp, 0);
+			IFNET_LOCK(ifp);
+			aq_stop(ifp, 1);
+			IFNET_UNLOCK(ifp);
 		}
 
 		for (i = 0; i < AQ_NINTR_MAX; i++) {
@@ -1615,8 +1617,6 @@ aq_detach(device_t self, int flags __unused)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		sc->sc_iosize = 0;
 	}
-
-	callout_stop(&sc->sc_tick_ch);
 
 #if NSYSMON_ENVSYS > 0
 	if (sc->sc_sme != NULL) {
