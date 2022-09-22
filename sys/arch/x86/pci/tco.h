@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.h,v 1.2 2022/09/22 14:41:26 riastradh Exp $	*/
+/*	$NetBSD: tco.h,v 1.3 2022/09/22 14:41:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #ifndef _X86_PCI_TCO_H_
 #define _X86_PCI_TCO_H_
 
-struct lpcib_tco_attach_args {
+struct tco_attach_args {
 	enum {
 		TCO_VERSION_PCIB = 0,
 		TCO_VERSION_RCBA = 1,
