@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.25 2020/07/11 12:51:21 jruoho Exp $
+.\"	$NetBSD: wdogctl.8,v 1.26 2022/09/22 14:02:45 riastradh Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -66,28 +66,30 @@
 .Sh DESCRIPTION
 .Nm
 is used to manipulate watchdog timers.
-Watchdog timers provide a means of ensuring that a system
-continues to make progress.
-This is accomplished by use of a timer, provided by either hardware or
-software; when the timer expires, the watchdog resets the system.
-In this case of a hardware watchdog timer, this is accomplished by
-asserting the system's hardware reset signal.
-In the case of a software watchdog timer,
-this is accomplished by calling the kernel's normal reboot path.
-In order to prevent the system from rebooting,
-something must refresh the timer to prevent it from expiring.
+A watchdog timer is a hardware or software timer that resets the system
+if it fails to make progress within a prescribed period.
+To prevent the system from being reset, something must refresh the
+timer to prevent it from expiring.
+.Pp
+A hardware watchdog timer asserts system's hardware reset signal when
+it expires.
+A software watchdog timer calls the kernel's s normal reboot path.
 .Pp
 The
 .Nx
-kernel provides three basic modes in which watchdog timers may
+kernel provides three modes in which watchdog timers may
 operate: kernel tickle mode, user tickle mode, and external tickle mode.
-In kernel tickle mode, a timer in the kernel refreshes the watchdog timer.
-In user tickle mode,
+.Bl -tag -width "external tickle mode"
+.It kernel tickle mode
+A timer in the kernel refreshes the watchdog timer.
+This ensures kernel threads can make progress within the period of the
+watchdog timer.
+.It user tickle mode
 .Nm
 runs in the background and refreshes the watchdog timer.
-In kernel tickle mode, progress of the kernel is ensured.
-In user tickle mode, the ability for user programs to run within a known
-period of time is ensured.
+This ensures user programs can make progress within the period of the
+watchdog timer.
+.Pp
 Note that user tickle mode must be used with caution;
 on a heavily loaded system, the timer may
 expire accidentally, even though user programs may be making
@@ -96,17 +98,19 @@ A user-mode timer is disarmed (if possible) when the device is closed,
 unless the timer is activated with the
 .Fl x
 option.
-.Pp
-External-mode watchdogs are similar to user-mode watchdogs, except
-that the tickle must be done explicitly by a separate invocation of
-the program with the
+.It external tickle mode
+Similar to user tickle mode, except that the tickle must be done
+explicitly by a separate invocation of the program with the
 .Fl t
 option.
+This allows users to determine the activity whose progress the watchdog
+timer checks.
+.El
 .Pp
-In the first two modes, an attempt is made to refresh the watchdog timer
-in one half the timer's configured period.
-That is, if the watchdog timer has a period of 30 seconds, a refresh attempt
-is made every 15 seconds.
+In kernel and user tickle modes, an attempt is made to refresh the
+watchdog timer in one half the timer's configured period.
+For example, if the watchdog timer has a period of 30 seconds, a
+refresh attempt is made every 15 seconds.
 .Pp
 If called without arguments,
 .Nm
@@ -120,7 +124,7 @@ to arm a timer when one is already armed, an error message
 will be displayed and no action will be taken.
 .Pp
 The options are as follows:
-.Bl -tag -offset indent -width XpXperiodXX
+.Bl -tag -width Fl
 .It Fl A
 When arming a timer, this flag indicates that an audible alarm is
 to sound when the watchdog timer expires and resets the system.
@@ -159,8 +163,10 @@ in a modified user tickle mode: closing the device will not disarm
 the timer.
 .El
 .Sh FILES
-.Pa /dev/watchdog
--- the system monitor watchdog timer device
+.Bl -tag -width "Pa /dev/watchdog"
+.It Pa /dev/watchdog
+the system monitor watchdog timer device
+.El
 .Sh SEE ALSO
 .Xr acpiwdrt 4 ,
 .Xr evbarm/iopwdog 4 ,
