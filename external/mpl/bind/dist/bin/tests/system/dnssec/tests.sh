@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -938,7 +940,7 @@ if [ -x ${DELV} ] ; then
    ret=0
    echo_i "checking that validation fails when key record is missing using dns_client ($n)"
    delv_with_opts +cd @10.53.0.4 a a.b.keyless.example > delv.out$n 2>&1 || ret=1
-   grep "resolution failed: broken trust chain" delv.out$n > /dev/null || ret=1
+   grep "resolution failed: insecurity proof failed" delv.out$n > /dev/null || ret=1
    n=$((n+1))
    test "$ret" -eq 0 || echo_i "failed"
    status=$((status+ret))
@@ -1418,6 +1420,93 @@ n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
+get_rsasha1_key_ids_from_sigs() {
+	zone=$1
+
+	tr -d '\r' < signer/$zone.db.signed | \
+	awk '
+		NF < 8 { next }
+		$(NF-5) != "RRSIG" { next }
+		$(NF-3) != "5" { next }
+		$NF != "(" { next }
+		{
+			getline;
+			print $3;
+		}
+	' | \
+	sort -u
+}
+
+# Test dnssec-signzone ZSK prepublish smooth rollover.
+echo_i "check dnssec-signzone doesn't sign with prepublished zsk ($n)"
+ret=0
+zone=prepub
+# Generate keys.
+ksk=$("$KEYGEN" -K signer -f KSK -q -a RSASHA1 -b 1024 -n zone "$zone")
+zsk1=$("$KEYGEN" -K signer -q -a RSASHA1 -b 1024 -n zone "$zone")
+zsk2=$("$KEYGEN" -K signer -q -a RSASHA1 -b 1024 -n zone "$zone")
+zskid1=$(keyfile_to_key_id "$zsk1")
+zskid2=$(keyfile_to_key_id "$zsk2")
+(
+cd signer || exit 1
+# Set times such that the current set of keys are introduced 60 days ago and
+# start signing now. The successor key is prepublished now and will be active
+# next day.
+$SETTIME -P now-60d -A now $ksk > /dev/null
+$SETTIME -P now-60d -A now -I now+1d -D now+60d $zsk1 > /dev/null
+$SETTIME -S $zsk1 -i 1h $zsk2.key > /dev/null
+$SETTIME -P now -A now+1d $zsk2.key > /dev/null
+# Sign the zone with initial keys and prepublish successor. The zone signatures
+# are valid for 30 days and the DNSKEY signature is valid for 60 days.
+cp -f $zone.db.in $zone.db
+$SIGNER -SDx -e +2592000 -X +5184000 -o $zone $zone.db > /dev/null
+echo "\$INCLUDE \"$zone.db.signed\"" >> $zone.db
+)
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid1$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid2$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed: missing signatures from key $zskid1"
+status=$((status+ret))
+
+echo_i "check dnssec-signzone retains signatures of predecessor zsk ($n)"
+ret=0
+zone=prepub
+(
+cd signer || exit 1
+# Roll the ZSK. The predecessor is inactive from now on and the successor is
+# activated. The zone signatures are valid for 30 days and the DNSKEY
+# signature is valid for 60 days. Because of the predecessor/successor
+# relationship, the signatures of the predecessor are retained and no new
+# signatures with the successor should be generated.
+$SETTIME -A now-30d -I now -D now+30d $zsk1 > /dev/null
+$SETTIME -A now $zsk2 > /dev/null
+$SIGNER -SDx -e +2592000 -X +5184000 -o $zone $zone.db > /dev/null
+)
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid1$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid2$" > /dev/null && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "check dnssec-signzone swaps zone signatures after interval ($n)"
+ret=0
+zone=prepub
+(
+cd signer || exit 1
+# After some time the signatures should be replaced. When signing, set the
+# interval to 30 days plus one second, meaning all predecessor signatures
+# are within the refresh interval and should be replaced with successor
+# signatures.
+$SETTIME -A now-50d -I now-20d -D now+10d $zsk1 > /dev/null
+$SETTIME -A now-20d $zsk2 > /dev/null
+$SIGNER -SDx -e +2592000 -X +5184000 -i 2592001 -o $zone $zone.db > /dev/null
+)
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid1$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$zskid2$" > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
 echo_i "checking that a key using an unsupported algorithm cannot be generated ($n)"
 ret=0
 zone=example
@@ -1458,21 +1547,6 @@ grep -q "algorithm is unsupported" dnssectools.out.test$n || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
-
-get_rsasha1_key_ids_from_sigs() {
-	tr -d '\r' < signer/example.db.signed | \
-	awk '
-		NF < 8 { next }
-		$(NF-5) != "RRSIG" { next }
-		$(NF-3) != "5" { next }
-		$NF != "(" { next }
-		{
-			getline;
-			print $3;
-		}
-	' | \
-	sort -u
-}
 
 echo_i "checking that we can sign a zone with out-of-zone records ($n)"
 ret=0
@@ -1574,8 +1648,8 @@ cat example.db.in "$key1.key" "$key3.key" > example.db
 echo "\$INCLUDE \"example.db.signed\"" >> example.db
 $SIGNER -D -o example example.db > /dev/null
 ) || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1586,8 +1660,8 @@ ret=0
 cd signer || exit 1
 $SIGNER -RD -o example example.db > /dev/null
 ) || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1604,8 +1678,8 @@ echo "\$INCLUDE \"example.db.signed\"" >> example.db
 $SETTIME -I now "$key2" > /dev/null 2>&1
 $SIGNER -SD -o example example.db > /dev/null
 ) || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid2$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1616,8 +1690,8 @@ ret=0
 cd signer || exit 1
 $SIGNER -SDQ -o example example.db > /dev/null
 ) || ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid2$" > /dev/null && ret=1
-get_rsasha1_key_ids_from_sigs | grep "^$keyid3$" > /dev/null || ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid2$" > /dev/null && ret=1
+get_rsasha1_key_ids_from_sigs $zone | grep "^$keyid3$" > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -1720,8 +1794,12 @@ $SIGNER -O raw -f signer.out.5 -Sxt -o example example.db > /dev/null
 $SIGNER -O raw=0 -f signer.out.6 -Sxt -o example example.db > /dev/null
 $SIGNER -O raw -f - -Sxt -o example example.db > signer.out.7 2> /dev/null
 ) || ret=1
-awk '/IN *SOA/ {if (NF != 11) exit(1)}' signer/signer.out.3 || ret=1
-awk '/IN *SOA/ {if (NF != 7) exit(1)}' signer/signer.out.4 || ret=1
+awk 'BEGIN { found = 0; }
+     $1 == "example." && $3 == "IN" && $4 == "SOA" { found = 1; if (NF != 11) exit(1); }
+     END { if (!found) exit(1); }' signer/signer.out.3 || ret=1
+awk 'BEGIN { found = 0; }
+     $1 == "example." && $3 == "IN" && $4 == "SOA" { found = 1; if (NF != 7) exit(1); }
+     END { if (!found) exit(1); }' signer/signer.out.4 || ret=1
 israw1 signer/signer.out.5 || ret=1
 israw0 signer/signer.out.6 || ret=1
 israw1 signer/signer.out.7 || ret=1
@@ -2808,6 +2886,18 @@ grep "$key.key: file not found" dsfromkey.out.$n > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
+
+echo_i "check dnssec-dsfromkey with revoked key ($n)"
+ret=0
+dig_with_opts revkey.example dnskey @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "DNSKEY.256 3 13" dig.out.ns4.test$n > /dev/null || ret=1	# ZSK
+grep "DNSKEY.385 3 13" dig.out.ns4.test$n > /dev/null || ret=1	# revoked KSK
+grep "DNSKEY.257 3 13" dig.out.ns4.test$n > /dev/null || ret=1	# KSK
+test $(awk '$4 == "DNSKEY" { print }' dig.out.ns4.test$n | wc -l) -eq 3 || ret=1
+$DSFROMKEY -f dig.out.ns4.test$n revkey.example. > dsfromkey.out.test$n || ret=1
+test $(wc -l < dsfromkey.out.test$n) -eq 1 || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
 
 echo_i "testing soon-to-expire RRSIGs without a replacement private key ($n)"
 ret=0
@@ -4324,6 +4414,24 @@ grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
 grep "ANSWER: 0, AUTHORITY: 8" dig.out.ns4.test$n > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Check that a query against a validating resolver succeeds when there is
+# a negative cache entry with trust level "pending" for the DS.  Prime
+# with a +cd DS query to produce the negative cache entry, then send a
+# query that uses that entry as part of the validation process. [GL #3279]
+echo_i "check that pending negative DS cache entry validates ($n)"
+ret=0
+dig_with_opts @10.53.0.4 +cd insecure2.example. ds > dig.out.prime.ns4.test$n || ret=1
+grep "flags: qr rd ra cd;" dig.out.prime.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.prime.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4, " dig.out.prime.ns4.test$n > /dev/null || ret=1
+dig_with_opts @10.53.0.4 a.insecure2.example. a > dig.out.ns4.test$n || ret=1
+grep "ANSWER: 1, AUTHORITY: 1, " dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "exit status: $status"

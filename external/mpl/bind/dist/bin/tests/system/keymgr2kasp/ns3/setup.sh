@@ -1,9 +1,11 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -38,6 +40,25 @@ cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+
+# Set up Single-Type Signing Scheme zones with auto-dnssec maintain to
+# migrate to dnssec-policy. This is a zone that has 'update-check-ksk no;'
+# configured, meaning the zone is signed with a single CSK.
+setup csk.kasp
+echo "$zone" >> zones
+csktimes="-P now -A now -P sync now"
+CSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $csktimes $zone 2> keygen.out.$zone.1)
+cat template.db.in "${CSK}.key" > "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
+$SIGNER -S -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+
+setup csk-nosep.kasp
+echo "$zone" >> zones
+csktimes="-P now -A now -P sync now"
+CSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 $csktimes $zone 2> keygen.out.$zone.1)
+cat template.db.in "${CSK}.key" > "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
+$SIGNER -S -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 # Set up a zone with auto-dnssec maintain to migrate to dnssec-policy, but this
 # time the existing keys do not match the policy.  The existing keys are

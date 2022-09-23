@@ -1,7 +1,9 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -326,8 +328,8 @@ idna_enabled_test() {
     idna_test "$text" ""                   "√.com" "\226\136\154.com."
     idna_test "$text" "+noidnin +noidnout" "√.com" "\226\136\154.com."
     idna_test "$text" "+noidnin +idnout"   "√.com" "\226\136\154.com."
-    idna_fail "$text" "+idnin   +noidnout" "√.com"
-    idna_fail "$text" "+idnin   +idnout"   "√.com"
+    idna_test "$text" "+idnin   +noidnout" "√.com" "xn--19g.com."
+    idna_test "$text" "+idnin   +idnout"   "√.com" "√.com."
 
     # Tests of a valid unicode string but an invalid U-label (output)
     #
@@ -349,8 +351,8 @@ idna_enabled_test() {
     text="Checking invalid output U-label"
     idna_test "$text" ""                   "xn--19g" "xn--19g."
     idna_test "$text" "+noidnin +noidnout" "xn--19g" "xn--19g."
-    idna_fail "$text" "+noidnin +idnout"   "xn--19g"
-    idna_fail "$text" "+idnin   +idnout"   "xn--19g"
+    idna_test "$text" "+noidnin +idnout"   "xn--19g" "√."
+    idna_test "$text" "+idnin   +idnout"   "xn--19g" "√."
 }
 
 

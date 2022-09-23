@@ -1,23 +1,16 @@
 #!/usr/bin/python
-############################################################################
+
 # Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
+# SPDX-License-Identifier: MPL-2.0
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
-# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
-############################################################################
-# kasp2policy.py
-# This translates the Keys section of a KASP XML file into a dnssec.policy
-# file that can be used by dnssec-keymgr.
-############################################################################
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
 
 from xml.etree import cElementTree as ET
 from collections import defaultdict
@@ -35,19 +28,19 @@ class KaspTime:
     class KTLex:
         # pylint: disable=invalid-name
 
-        tokens = ('P', 'T', 'Y', 'M', 'D', 'H', 'S', 'NUM')
+        tokens = ("P", "T", "Y", "M", "D", "H", "S", "NUM")
 
-        t_P = r'(?i)P'
-        t_T = r'(?i)T'
-        t_Y = r'(?i)Y'
-        t_M = r'(?i)M'
-        t_D = r'(?i)D'
-        t_H = r'(?i)H'
-        t_S = r'(?i)S'
+        t_P = r"(?i)P"
+        t_T = r"(?i)T"
+        t_Y = r"(?i)Y"
+        t_M = r"(?i)M"
+        t_D = r"(?i)D"
+        t_H = r"(?i)H"
+        t_S = r"(?i)S"
 
         @staticmethod
         def t_NUM(t):
-            r'\d+'
+            r"\d+"
             t.value = int(t.value)
             return t
 
@@ -105,26 +98,26 @@ class KaspTime:
 
     @staticmethod
     def p_period(p):
-        '''period : NUM Y
-                  | NUM M
-                  | NUM D'''
-        if p[2].lower() == 'y':
+        """period : NUM Y
+        | NUM M
+        | NUM D"""
+        if p[2].lower() == "y":
             p[0] = int(p[1]) * 31536000
-        elif p[2].lower() == 'm':
+        elif p[2].lower() == "m":
             p[0] = int(p[1]) * 2592000
-        elif p[2].lower() == 'd':
+        elif p[2].lower() == "d":
             p[0] += int(p[1]) * 86400
 
     @staticmethod
     def p_time(p):
-        '''time : NUM H
-                | NUM M
-                | NUM S'''
-        if p[2].lower() == 'h':
+        """time : NUM H
+        | NUM M
+        | NUM S"""
+        if p[2].lower() == "h":
             p[0] = int(p[1]) * 3600
-        elif p[2].lower() == 'm':
+        elif p[2].lower() == "m":
             p[0] = int(p[1]) * 60
-        elif p[2].lower() == 's':
+        elif p[2].lower() == "s":
             p[0] = int(p[1])
 
     @staticmethod
@@ -135,7 +128,7 @@ class KaspTime:
 ############################################################################
 # Load the contents of a KASP XML file as a python dictionary
 ############################################################################
-class Kasp():
+class Kasp:
     # pylint: disable=invalid-name
 
     @staticmethod
@@ -150,12 +143,12 @@ class Kasp():
             k = {k: v[0] if len(v) == 1 else v for k, v in dd.items()}
             d = {t.tag: k}
         if t.attrib:
-            d[t.tag].update(('@' + k, v) for k, v in t.attrib.iteritems())
+            d[t.tag].update(("@" + k, v) for k, v in t.attrib.iteritems())
         if t.text:
             text = t.text.strip()
             if children or t.attrib:
                 if text:
-                    d[t.tag]['#text'] = text
+                    d[t.tag]["#text"] = text
             else:
                 d[t.tag] = text
         return d
@@ -196,35 +189,35 @@ if __name__ == "__main__":
     KT = KaspTime()
     FIRST = True
 
-    for policy in KINFO['KASP']['Policy']:
-        if not policy['@name'] or not policy['Keys']:
+    for policy in KINFO["KASP"]["Policy"]:
+        if not policy["@name"] or not policy["Keys"]:
             continue
         if not FIRST:
             print("")
         FIRST = False
-        if policy['Description']:
-            desc = policy['Description'].strip()
+        if policy["Description"]:
+            desc = policy["Description"].strip()
             print("# %s" % re.sub(r"\n\s*", "\n# ", desc))
-        print("policy %s {" % policy['@name'])
-        ksk = policy['Keys']['KSK']
-        zsk = policy['Keys']['ZSK']
-        kalg = ksk['Algorithm']
-        zalg = zsk['Algorithm']
-        algnum = kalg['#text'] or zalg['#text']
+        print("policy %s {" % policy["@name"])
+        ksk = policy["Keys"]["KSK"]
+        zsk = policy["Keys"]["ZSK"]
+        kalg = ksk["Algorithm"]
+        zalg = zsk["Algorithm"]
+        algnum = kalg["#text"] or zalg["#text"]
         if algnum:
             print("\talgorithm %s;" % dnskey.algstr(int(algnum)))
-        if policy['Keys']['TTL']:
-            print("\tkeyttl %d;" % KT.parse(policy['Keys']['TTL']))
-        if kalg['@length']:
-            print("\tkey-size ksk %d;" % int(kalg['@length']))
-        if zalg['@length']:
-            print("\tkey-size zsk %d;" % int(zalg['@length']))
-        if ksk['Lifetime']:
-            print("\troll-period ksk %d;" % KT.parse(ksk['Lifetime']))
-        if zsk['Lifetime']:
-            print("\troll-period zsk %d;" % KT.parse(zsk['Lifetime']))
-        if ksk['Standby']:
-            print("\tstandby ksk %d;" % int(ksk['Standby']))
-        if zsk['Standby']:
-            print("\tstandby zsk %d;" % int(zsk['Standby']))
+        if policy["Keys"]["TTL"]:
+            print("\tkeyttl %d;" % KT.parse(policy["Keys"]["TTL"]))
+        if kalg["@length"]:
+            print("\tkey-size ksk %d;" % int(kalg["@length"]))
+        if zalg["@length"]:
+            print("\tkey-size zsk %d;" % int(zalg["@length"]))
+        if ksk["Lifetime"]:
+            print("\troll-period ksk %d;" % KT.parse(ksk["Lifetime"]))
+        if zsk["Lifetime"]:
+            print("\troll-period zsk %d;" % KT.parse(zsk["Lifetime"]))
+        if ksk["Standby"]:
+            print("\tstandby ksk %d;" % int(ksk["Standby"]))
+        if zsk["Standby"]:
+            print("\tstandby zsk %d;" % int(zsk["Standby"]))
         print("};")

@@ -1,9 +1,11 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -18,7 +20,7 @@ infile=root.db.in
 
 (cd ../ns2 && $SHELL keygen.sh )
 
-cat $infile ../ns2/dsset-example$TP > $zonefile
+cat $infile ../ns2/dsset-example$TP ../ns2/dsset-bar$TP > $zonefile
 
 zskact=`$KEYGEN -3 -a RSASHA1 -q $zone`
 zskvanish=`$KEYGEN -3 -a RSASHA1 -q $zone`

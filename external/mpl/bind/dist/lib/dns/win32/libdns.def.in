@@ -339,6 +339,7 @@ dns_dnssec_verify
 dns_dnssec_verifymessage
 dns_dnsseckey_create
 dns_dnsseckey_destroy
+dns_dnssecsignstats_clear
 dns_dnssecsignstats_create
 dns_dnssecsignstats_dump
 dns_dnssecsignstats_increment
@@ -375,6 +376,7 @@ dns_dyndb_createctx
 dns_dyndb_destroyctx
 dns_ecdb_register
 dns_ecdb_unregister
+dns_ecs_equals
 dns_ecs_init
 dns_ecs_format
 dns_fixedname_init
@@ -884,6 +886,7 @@ dns_rdataslab_subtract
 dns_rdatatype_atcname
 dns_rdatatype_atparent
 dns_rdatatype_attributes
+dns_rdatatype_followadditional
 dns_rdatatype_format
 dns_rdatatype_fromtext
 dns_rdatatype_isdnssec
@@ -1171,8 +1174,10 @@ dns_xfrin_shutdown
 dns_zone_addnsec3chain
 dns_zone_asyncload
 dns_zone_attach
+dns_zone_catz_disable
 dns_zone_catz_enable
 dns_zone_catz_enable_db
+dns_zone_catz_is_enabled
 dns_zone_cdscheck
 dns_zone_checknames
 dns_zone_clearforwardacl
@@ -1486,6 +1491,7 @@ dst_key_is_signing
 dst_key_is_unused
 dst_key_inactive
 dst_key_isexternal
+dst_key_ismodified
 dst_key_isnullkey
 dst_key_isprivate
 dst_key_iszonekey
@@ -1505,6 +1511,7 @@ dst_key_setbool
 dst_key_setexternal
 dst_key_setflags
 dst_key_setinactive
+dst_key_setmodified
 dst_key_setnum
 dst_key_setprivateformat
 dst_key_setstate

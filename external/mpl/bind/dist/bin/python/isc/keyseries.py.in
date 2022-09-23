@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 from collections import defaultdict
 from .dnskey import *
@@ -35,10 +35,10 @@ class keyseries:
                 for k in keys.values():
                     if k.sep:
                         if not (k.delete() and k.delete() < now):
-                          self._K[zone][alg].append(k)
+                            self._K[zone][alg].append(k)
                     else:
                         if not (k.delete() and k.delete() < now):
-                          self._Z[zone][alg].append(k)
+                            self._Z[zone][alg].append(k)
 
                 self._K[zone][alg].sort()
                 self._Z[zone][alg].sort()
@@ -57,7 +57,7 @@ class keyseries:
             print("%s" % repr(k))
 
     def fixseries(self, keys, policy, now, **kwargs):
-        force = kwargs.get('force', False)
+        force = kwargs.get("force", False)
         if not keys:
             return
 
@@ -148,14 +148,16 @@ class keyseries:
             prev = key
 
         # if we haven't got sufficient coverage, create successor key(s)
-        while rp and prev.inactive() and \
-              prev.inactive() < now + policy.coverage:
+        while rp and prev.inactive() and prev.inactive() < now + policy.coverage:
             # commit changes to predecessor: a successor can only be
             # generated if Inactive has been set in the predecessor key
-            prev.commit(self._context['settime_path'], **kwargs)
-            key = prev.generate_successor(self._context['keygen_path'],
-                                          self._context['randomdev'],
-                                          prepub, **kwargs)
+            prev.commit(self._context["settime_path"], **kwargs)
+            key = prev.generate_successor(
+                self._context["keygen_path"],
+                self._context["randomdev"],
+                prepub,
+                **kwargs
+            )
 
             key.setinactive(key.activate() + rp, **kwargs)
             key.setdelete(key.inactive() + postpub, **kwargs)
@@ -171,41 +173,50 @@ class keyseries:
 
         # commit changes
         for key in keys:
-            key.commit(self._context['settime_path'], **kwargs)
-
+            key.commit(self._context["settime_path"], **kwargs)
 
     def enforce_policy(self, policies, now=time.time(), **kwargs):
         # If zones is provided as a parameter, use that list.
         # If not, use what we have in this object
-        zones = kwargs.get('zones', self._zones)
-        keys_dir = kwargs.get('dir', self._context.get('keys_path', None))
-        force = kwargs.get('force', False)
+        zones = kwargs.get("zones", self._zones)
+        keys_dir = kwargs.get("dir", self._context.get("keys_path", None))
+        force = kwargs.get("force", False)
 
         for zone in zones:
             collections = []
             policy = policies.policy(zone)
-            keys_dir = keys_dir or policy.directory or '.'
+            keys_dir = keys_dir or policy.directory or "."
             alg = policy.algorithm
             algnum = dnskey.algnum(alg)
-            if 'ksk' not in kwargs or not kwargs['ksk']:
+            if "ksk" not in kwargs or not kwargs["ksk"]:
                 if len(self._Z[zone][algnum]) == 0:
-                    k = dnskey.generate(self._context['keygen_path'],
-                                        self._context['randomdev'],
-                                        keys_dir, zone, alg,
-                                        policy.zsk_keysize, False,
-                                        policy.keyttl or 3600,
-                                        **kwargs)
+                    k = dnskey.generate(
+                        self._context["keygen_path"],
+                        self._context["randomdev"],
+                        keys_dir,
+                        zone,
+                        alg,
+                        policy.zsk_keysize,
+                        False,
+                        policy.keyttl or 3600,
+                        **kwargs
+                    )
                     self._Z[zone][algnum].append(k)
                 collections.append(self._Z[zone])
 
-            if 'zsk' not in kwargs or not kwargs['zsk']:
+            if "zsk" not in kwargs or not kwargs["zsk"]:
                 if len(self._K[zone][algnum]) == 0:
-                    k = dnskey.generate(self._context['keygen_path'],
-                                        self._context['randomdev'],
-                                        keys_dir, zone, alg,
-                                        policy.ksk_keysize, True,
-                                        policy.keyttl or 3600,
-                                        **kwargs)
+                    k = dnskey.generate(
+                        self._context["keygen_path"],
+                        self._context["randomdev"],
+                        keys_dir,
+                        zone,
+                        alg,
+                        policy.ksk_keysize,
+                        True,
+                        policy.keyttl or 3600,
+                        **kwargs
+                    )
                     self._K[zone][algnum].append(k)
                 collections.append(self._K[zone])
 
@@ -216,5 +227,6 @@ class keyseries:
                     try:
                         self.fixseries(keys, policy, now, **kwargs)
                     except Exception as e:
-                        raise Exception('%s/%s: %s' %
-                                        (zone, dnskey.algstr(algnum), str(e)))
+                        raise Exception(
+                            "%s/%s: %s" % (zone, dnskey.algstr(algnum), str(e))
+                        )

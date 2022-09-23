@@ -49,7 +49,6 @@ ns_hooktable_init
 ns_interface_attach
 ns_interface_detach
 ns_interface_shutdown
-ns_interfacemgr_adjust
 ns_interfacemgr_attach
 ns_interfacemgr_create
 ns_interfacemgr_detach
