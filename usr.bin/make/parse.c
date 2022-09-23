@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.683 2022/09/03 00:50:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.684 2022/09/23 22:58:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.683 2022/09/03 00:50:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.684 2022/09/23 22:58:15 sjg Exp $");
 
 /*
  * A file being read.
@@ -2669,7 +2669,7 @@ HandleBreak(void)
 	if (curFile->forLoop != NULL) {
 		/* pretend we reached EOF */
 		For_Break(curFile->forLoop);
-		Cond_reset_depth(curFile->cond_depth);
+		Cond_reset_depth();
 		ParseEOF();
 	} else
 		Parse_Error(PARSE_FATAL, "break outside of for loop");

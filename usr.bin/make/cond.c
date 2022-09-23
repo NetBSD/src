@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.337 2022/09/08 05:52:56 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.338 2022/09/23 22:58:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.337 2022/09/08 05:52:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.338 2022/09/23 22:58:15 sjg Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1284,7 +1284,7 @@ Cond_save_depth(void)
  * when the loop started.
  */
 void
-Cond_reset_depth(unsigned int depth)
+Cond_reset_depth(void)
 {
-    cond_depth = depth;
+    cond_depth = cond_min_depth;
 }
