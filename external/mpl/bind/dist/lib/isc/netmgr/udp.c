@@ -1,7 +1,9 @@
-/*	$NetBSD: udp.c,v 1.9 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.10 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +50,7 @@ static void
 udp_close_cb(uv_handle_t *handle);
 
 static void
-timer_close_cb(uv_handle_t *handle);
+read_timer_close_cb(uv_handle_t *handle);
 
 static void
 udp_close_direct(isc_nmsocket_t *sock);
@@ -59,7 +61,7 @@ static void
 stop_udp_child(isc_nmsocket_t *sock);
 
 static uv_os_sock_t
-isc__nm_udp_lb_socket(sa_family_t sa_family) {
+isc__nm_udp_lb_socket(isc_nm_t *mgr, sa_family_t sa_family) {
 	isc_result_t result;
 	uv_os_sock_t sock;
 
@@ -72,9 +74,11 @@ isc__nm_udp_lb_socket(sa_family_t sa_family) {
 	result = isc__nm_socket_reuse(sock);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
-#if HAVE_SO_REUSEPORT_LB
-	result = isc__nm_socket_reuse_lb(sock);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+#ifndef _WIN32
+	if (mgr->load_balance_sockets) {
+		result = isc__nm_socket_reuse_lb(sock);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	}
 #endif
 
 	return (sock);
@@ -97,11 +101,17 @@ start_udp_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 	csock->extrahandlesize = sock->extrahandlesize;
 	csock->tid = tid;
 
-#if HAVE_SO_REUSEPORT_LB || defined(WIN32)
+#ifdef _WIN32
 	UNUSED(fd);
-	csock->fd = isc__nm_udp_lb_socket(iface->type.sa.sa_family);
+	csock->fd = isc__nm_udp_lb_socket(mgr, iface->type.sa.sa_family);
 #else
-	csock->fd = dup(fd);
+	if (mgr->load_balance_sockets) {
+		UNUSED(fd);
+		csock->fd = isc__nm_udp_lb_socket(mgr,
+						  iface->type.sa.sa_family);
+	} else {
+		csock->fd = dup(fd);
+	}
 #endif
 	REQUIRE(csock->fd >= 0);
 
@@ -153,8 +163,10 @@ isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
 	sock->tid = 0;
 	sock->fd = -1;
 
-#if !HAVE_SO_REUSEPORT_LB && !defined(WIN32)
-	fd = isc__nm_udp_lb_socket(iface->type.sa.sa_family);
+#ifndef _WIN32
+	if (!mgr->load_balance_sockets) {
+		fd = isc__nm_udp_lb_socket(mgr, iface->type.sa.sa_family);
+	}
 #endif
 
 	isc_barrier_init(&sock->startlistening, sock->nchildren);
@@ -170,8 +182,10 @@ isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
 		start_udp_child(mgr, iface, sock, fd, isc_nm_tid());
 	}
 
-#if !HAVE_SO_REUSEPORT_LB && !defined(WIN32)
-	isc__nm_closesocket(fd);
+#ifndef _WIN32
+	if (!mgr->load_balance_sockets) {
+		isc__nm_closesocket(fd);
+	}
 #endif
 
 	LOCK(&sock->lock);
@@ -207,6 +221,7 @@ isc__nm_async_udplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 	int uv_init_flags = 0;
 	sa_family_t sa_family;
 	isc_result_t result = ISC_R_UNSET;
+	isc_nm_t *mgr = NULL;
 
 	REQUIRE(VALID_NMSOCK(ievent->sock));
 	REQUIRE(ievent->sock->tid == isc_nm_tid());
@@ -214,23 +229,24 @@ isc__nm_async_udplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 
 	sock = ievent->sock;
 	sa_family = sock->iface.type.sa.sa_family;
+	mgr = sock->mgr;
 
 	REQUIRE(sock->type == isc_nm_udpsocket);
 	REQUIRE(sock->parent != NULL);
 	REQUIRE(sock->tid == isc_nm_tid());
 
-#ifdef UV_UDP_RECVMMSG
+#if HAVE_DECL_UV_UDP_RECVMMSG
 	uv_init_flags |= UV_UDP_RECVMMSG;
 #endif
 	r = uv_udp_init_ex(&worker->loop, &sock->uv_handle.udp, uv_init_flags);
-	RUNTIME_CHECK(r == 0);
+	UV_RUNTIME_CHECK(uv_udp_init_ex, r);
 	uv_handle_set_data(&sock->uv_handle.handle, sock);
 	/* This keeps the socket alive after everything else is gone */
 	isc__nmsocket_attach(sock, &(isc_nmsocket_t *){ NULL });
 
-	r = uv_timer_init(&worker->loop, &sock->timer);
-	RUNTIME_CHECK(r == 0);
-	uv_handle_set_data((uv_handle_t *)&sock->timer, sock);
+	r = uv_timer_init(&worker->loop, &sock->read_timer);
+	UV_RUNTIME_CHECK(uv_timer_init, r);
+	uv_handle_set_data((uv_handle_t *)&sock->read_timer, sock);
 
 	LOCK(&sock->parent->lock);
 
@@ -246,7 +262,7 @@ isc__nm_async_udplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 		uv_bind_flags |= UV_UDP_IPV6ONLY;
 	}
 
-#if HAVE_SO_REUSEPORT_LB || defined(WIN32)
+#ifdef _WIN32
 	r = isc_uv_udp_freebind(&sock->uv_handle.udp,
 				&sock->parent->iface.type.sa, uv_bind_flags);
 	if (r < 0) {
@@ -254,8 +270,7 @@ isc__nm_async_udplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 		goto done;
 	}
 #else
-	if (sock->parent->fd == -1) {
-		/* This thread is first, bind the socket */
+	if (mgr->load_balance_sockets) {
 		r = isc_uv_udp_freebind(&sock->uv_handle.udp,
 					&sock->parent->iface.type.sa,
 					uv_bind_flags);
@@ -264,11 +279,24 @@ isc__nm_async_udplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 					 sock->statsindex[STATID_BINDFAIL]);
 			goto done;
 		}
-		sock->parent->uv_handle.udp.flags = sock->uv_handle.udp.flags;
-		sock->parent->fd = sock->fd;
 	} else {
-		/* The socket is already bound, just copy the flags */
-		sock->uv_handle.udp.flags = sock->parent->uv_handle.udp.flags;
+		if (sock->parent->fd == -1) {
+			/* This thread is first, bind the socket */
+			r = isc_uv_udp_freebind(&sock->uv_handle.udp,
+						&sock->parent->iface.type.sa,
+						uv_bind_flags);
+			if (r < 0) {
+				isc__nm_incstats(sock->mgr, STATID_BINDFAIL);
+				goto done;
+			}
+			sock->parent->uv_handle.udp.flags =
+				sock->uv_handle.udp.flags;
+			sock->parent->fd = sock->fd;
+		} else {
+			/* The socket is already bound, just copy the flags */
+			sock->uv_handle.udp.flags =
+				sock->parent->uv_handle.udp.flags;
+		}
 	}
 #endif
 
@@ -308,8 +336,7 @@ isc__nm_udp_stoplistening(isc_nmsocket_t *sock) {
 
 	if (!atomic_compare_exchange_strong(&sock->closing, &(bool){ false },
 					    true)) {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	if (!isc__nm_in_netthread()) {
@@ -351,7 +378,6 @@ udp_recv_cb(uv_udp_t *handle, ssize_t nrecv, const uv_buf_t *buf,
 	isc_nmsocket_t *sock = uv_handle_get_data((uv_handle_t *)handle);
 	isc__nm_uvreq_t *req = NULL;
 	uint32_t maxudp;
-	bool free_buf;
 	isc_sockaddr_t sockaddr;
 	isc_result_t result;
 
@@ -359,18 +385,21 @@ udp_recv_cb(uv_udp_t *handle, ssize_t nrecv, const uv_buf_t *buf,
 	REQUIRE(sock->tid == isc_nm_tid());
 	REQUIRE(sock->reading);
 
-#ifdef UV_UDP_MMSG_FREE
-	free_buf = ((flags & UV_UDP_MMSG_FREE) == UV_UDP_MMSG_FREE);
-#elif UV_UDP_MMSG_CHUNK
-	free_buf = ((flags & UV_UDP_MMSG_CHUNK) == 0);
+	/*
+	 * When using recvmmsg(2), if no errors occur, there will be a final
+	 * callback with nrecv set to 0, addr set to NULL and the buffer
+	 * pointing at the initially allocated data with the UV_UDP_MMSG_CHUNK
+	 * flag cleared and the UV_UDP_MMSG_FREE flag set.
+	 */
+#if HAVE_DECL_UV_UDP_MMSG_FREE
+	if ((flags & UV_UDP_MMSG_FREE) == UV_UDP_MMSG_FREE) {
+		INSIST(nrecv == 0);
+		INSIST(addr == NULL);
+		goto free;
+	}
 #else
-	free_buf = true;
 	UNUSED(flags);
 #endif
-
-	/*
-	 * Three possible reasons to return now without processing:
-	 */
 
 	/*
 	 * - If we're simulating a firewall blocking UDP packets
@@ -429,9 +458,31 @@ udp_recv_cb(uv_udp_t *handle, ssize_t nrecv, const uv_buf_t *buf,
 	sock->processing = false;
 
 free:
-	if (free_buf) {
-		isc__nm_free_uvbuf(sock, buf);
+#if HAVE_DECL_UV_UDP_MMSG_CHUNK
+	/*
+	 * When using recvmmsg(2), chunks will have the UV_UDP_MMSG_CHUNK flag
+	 * set, those must not be freed.
+	 */
+	if ((flags & UV_UDP_MMSG_CHUNK) == UV_UDP_MMSG_CHUNK) {
+		return;
 	}
+#endif
+
+	/*
+	 * When using recvmmsg(2), if a UDP socket error occurs, nrecv will be <
+	 * 0. In either scenario, the callee can now safely free the provided
+	 * buffer.
+	 */
+	if (nrecv < 0) {
+		/*
+		 * The buffer may be a null buffer on error.
+		 */
+		if (buf->base == NULL && buf->len == 0) {
+			return;
+		}
+	}
+
+	isc__nm_free_uvbuf(sock, buf);
 }
 
 /*
@@ -623,12 +674,12 @@ udp_connect_direct(isc_nmsocket_t *sock, isc__nm_uvreq_t *req) {
 	atomic_store(&sock->connecting, true);
 
 	r = uv_udp_init(&worker->loop, &sock->uv_handle.udp);
-	RUNTIME_CHECK(r == 0);
+	UV_RUNTIME_CHECK(uv_udp_init, r);
 	uv_handle_set_data(&sock->uv_handle.handle, sock);
 
-	r = uv_timer_init(&worker->loop, &sock->timer);
-	RUNTIME_CHECK(r == 0);
-	uv_handle_set_data((uv_handle_t *)&sock->timer, sock);
+	r = uv_timer_init(&worker->loop, &sock->read_timer);
+	UV_RUNTIME_CHECK(uv_timer_init, r);
+	uv_handle_set_data((uv_handle_t *)&sock->read_timer, sock);
 
 	r = uv_udp_open(&sock->uv_handle.udp, sock->fd);
 	if (r != 0) {
@@ -881,6 +932,7 @@ void
 isc__nm_async_udpread(isc__networker_t *worker, isc__netievent_t *ev0) {
 	isc__netievent_udpread_t *ievent = (isc__netievent_udpread_t *)ev0;
 	isc_nmsocket_t *sock = ievent->sock;
+	isc_result_t result;
 
 	UNUSED(worker);
 
@@ -888,12 +940,17 @@ isc__nm_async_udpread(isc__networker_t *worker, isc__netievent_t *ev0) {
 	REQUIRE(sock->tid == isc_nm_tid());
 
 	if (isc__nmsocket_closing(sock)) {
+		result = ISC_R_CANCELED;
+	} else {
+		result = isc__nm_start_reading(sock);
+	}
+
+	if (result != ISC_R_SUCCESS) {
 		sock->reading = true;
-		isc__nm_failed_read_cb(sock, ISC_R_CANCELED, false);
+		isc__nm_failed_read_cb(sock, result, false);
 		return;
 	}
 
-	isc__nm_start_reading(sock);
 	isc__nmsocket_timer_start(sock);
 }
 
@@ -935,8 +992,7 @@ udp_stop_cb(uv_handle_t *handle) {
 
 	if (!atomic_compare_exchange_strong(&sock->closed, &(bool){ false },
 					    true)) {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CLOSE]);
@@ -957,8 +1013,7 @@ udp_close_cb(uv_handle_t *handle) {
 
 	if (!atomic_compare_exchange_strong(&sock->closed, &(bool){ false },
 					    true)) {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CLOSE]);
@@ -974,7 +1029,7 @@ udp_close_cb(uv_handle_t *handle) {
 }
 
 static void
-timer_close_cb(uv_handle_t *handle) {
+read_timer_close_cb(uv_handle_t *handle) {
 	isc_nmsocket_t *sock = uv_handle_get_data(handle);
 	uv_handle_set_data(handle, NULL);
 
@@ -1040,7 +1095,8 @@ udp_close_direct(isc_nmsocket_t *sock) {
 	REQUIRE(VALID_NMSOCK(sock));
 	REQUIRE(sock->tid == isc_nm_tid());
 
-	uv_close((uv_handle_t *)&sock->timer, timer_close_cb);
+	uv_handle_set_data((uv_handle_t *)&sock->read_timer, sock);
+	uv_close((uv_handle_t *)&sock->read_timer, read_timer_close_cb);
 }
 
 void

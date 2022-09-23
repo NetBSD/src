@@ -1,7 +1,9 @@
-/*	$NetBSD: symtab.c,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +11,10 @@
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) 2001 Nominum, Inc.
+ */
+
+/*
+ * Copyright (C) 2001 Nominum, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -94,7 +98,7 @@ isccc_symtab_create(unsigned int size,
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 free_elt(isccc_symtab_t *symtab, unsigned int bucket, elt_t *elt) {
 	ISC_LIST_UNLINK(symtab->table[bucket], elt, link);
 	if (symtab->undefine_action != NULL) {
@@ -127,7 +131,7 @@ isccc_symtab_destroy(isccc_symtab_t **symtabp) {
 	free(symtab);
 }
 
-static inline unsigned int
+static unsigned int
 hash(const char *key, bool case_sensitive) {
 	const char *s;
 	unsigned int h = 0;

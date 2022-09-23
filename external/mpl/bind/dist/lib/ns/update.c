@@ -1,7 +1,9 @@
-/*	$NetBSD: update.c,v 1.11 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.12 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -316,7 +318,7 @@ update_log_cb(void *arg, dns_zone_t *zone, int level, const char *message) {
 /*%
  * Increment updated-related statistics counters.
  */
-static inline void
+static void
 inc_stats(ns_client_t *client, dns_zone_t *zone, isc_statscounter_t counter) {
 	ns_stats_increment(client->sctx->nsstats, counter);
 
@@ -591,7 +593,7 @@ foreach_rrset(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	 * different from the current version
 	 */
 	dns_db_currentversion(db, &oldver);
-	dns_clientinfo_init(&ci, NULL, (ver != oldver) ? ver : NULL);
+	dns_clientinfo_init(&ci, NULL, NULL, (ver != oldver) ? ver : NULL);
 	dns_db_closeversion(db, &oldver, false);
 
 	node = NULL;
@@ -682,7 +684,7 @@ foreach_rr(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	 * different from the current version
 	 */
 	dns_db_currentversion(db, &oldver);
-	dns_clientinfo_init(&ci, NULL, (ver != oldver) ? ver : NULL);
+	dns_clientinfo_init(&ci, NULL, NULL, (ver != oldver) ? ver : NULL);
 	dns_db_closeversion(db, &oldver, false);
 
 	if (type == dns_rdatatype_any) {
@@ -1636,7 +1638,15 @@ ns_update_start(ns_client_t *client, isc_nmhandle_t *handle,
 
 	result = dns_zt_find(client->view->zonetable, zonename, 0, NULL, &zone);
 	if (result != ISC_R_SUCCESS) {
-		FAILC(DNS_R_NOTAUTH, "not authoritative for update zone");
+		/*
+		 * If we found a zone that is a parent of the update zonename,
+		 * detach it so it isn't mentioned in log - it is irrelevant.
+		 */
+		if (zone != NULL) {
+			dns_zone_detach(&zone);
+		}
+		FAILN(DNS_R_NOTAUTH, zonename,
+		      "not authoritative for update zone");
 	}
 
 	/*
@@ -1651,7 +1661,7 @@ ns_update_start(ns_client_t *client, isc_nmhandle_t *handle,
 	}
 
 	switch (dns_zone_gettype(zone)) {
-	case dns_zone_master:
+	case dns_zone_primary:
 	case dns_zone_dlz:
 		/*
 		 * We can now fail due to a bad signature as we now know
@@ -1663,11 +1673,12 @@ ns_update_start(ns_client_t *client, isc_nmhandle_t *handle,
 		dns_message_clonebuffer(client->message);
 		CHECK(send_update_event(client, zone));
 		break;
-	case dns_zone_slave:
+	case dns_zone_secondary:
 	case dns_zone_mirror:
 		CHECK(checkupdateacl(client, dns_zone_getforwardacl(zone),
 				     "update forwarding", zonename, true,
 				     false));
+		dns_message_clonebuffer(client->message);
 		CHECK(send_forward_event(client, zone));
 		break;
 	default:
@@ -1679,7 +1690,7 @@ ns_update_start(ns_client_t *client, isc_nmhandle_t *handle,
 
 failure:
 	if (result == DNS_R_REFUSED) {
-		INSIST(dns_zone_gettype(zone) == dns_zone_slave ||
+		INSIST(dns_zone_gettype(zone) == dns_zone_secondary ||
 		       dns_zone_gettype(zone) == dns_zone_mirror);
 		inc_stats(client, zone, ns_statscounter_updaterej);
 	}

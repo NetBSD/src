@@ -1,7 +1,9 @@
-/*	$NetBSD: resolver.h,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,13 +71,13 @@ ISC_LANG_BEGINDECLS
  */
 typedef struct dns_fetchevent {
 	ISC_EVENT_COMMON(struct dns_fetchevent);
-	dns_fetch_t *	      fetch;
+	dns_fetch_t	     *fetch;
 	isc_result_t	      result;
 	dns_rdatatype_t	      qtype;
-	dns_db_t *	      db;
-	dns_dbnode_t *	      node;
-	dns_rdataset_t *      rdataset;
-	dns_rdataset_t *      sigrdataset;
+	dns_db_t	     *db;
+	dns_dbnode_t	     *node;
+	dns_rdataset_t	     *rdataset;
+	dns_rdataset_t	     *sigrdataset;
 	dns_fixedname_t	      foundname;
 	const isc_sockaddr_t *client;
 	dns_messageid_t	      id;
@@ -291,8 +293,8 @@ dns_resolver_detach(dns_resolver_t **resp);
 isc_result_t
 dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 			 dns_rdatatype_t type, const dns_name_t *domain,
-			 dns_rdataset_t *      nameservers,
-			 dns_forwarders_t *    forwarders,
+			 dns_rdataset_t	      *nameservers,
+			 dns_forwarders_t     *forwarders,
 			 const isc_sockaddr_t *client, dns_messageid_t id,
 			 unsigned int options, unsigned int depth,
 			 isc_counter_t *qc, isc_task_t *task,
@@ -504,7 +506,7 @@ dns_resolver_disable_ds_digest(dns_resolver_t *resolver, const dns_name_t *name,
  */
 
 bool
-dns_resolver_algorithm_supported(dns_resolver_t *  resolver,
+dns_resolver_algorithm_supported(dns_resolver_t	  *resolver,
 				 const dns_name_t *name, unsigned int alg);
 /*%<
  * Check if the given algorithm is supported by this resolver.
@@ -514,7 +516,7 @@ dns_resolver_algorithm_supported(dns_resolver_t *  resolver,
  */
 
 bool
-dns_resolver_ds_digest_supported(dns_resolver_t *  resolver,
+dns_resolver_ds_digest_supported(dns_resolver_t	  *resolver,
 				 const dns_name_t *name,
 				 unsigned int	   digest_type);
 /*%<

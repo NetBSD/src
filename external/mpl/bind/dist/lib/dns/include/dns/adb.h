@@ -1,7 +1,9 @@
-/*	$NetBSD: adb.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,7 +122,7 @@ struct dns_adbfind {
 	int	       name_bucket;
 	unsigned int   flags;
 	dns_adbname_t *adbname;
-	dns_adb_t *    adb;
+	dns_adb_t     *adb;
 	isc_event_t    event;
 	ISC_LINK(dns_adbfind_t) plink;
 };

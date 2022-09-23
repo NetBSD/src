@@ -1,7 +1,9 @@
-/*	$NetBSD: zt.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: zt.c,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +57,11 @@ struct dns_zt {
 
 	/* Locked by lock. */
 	dns_rbt_t *table;
+};
+
+struct zt_freeze_params {
+	dns_view_t *view;
+	bool freeze;
 };
 
 #define ZTMAGIC	     ISC_MAGIC('Z', 'T', 'b', 'l')
@@ -377,13 +384,14 @@ asyncload(dns_zone_t *zone, void *zt_) {
 }
 
 isc_result_t
-dns_zt_freezezones(dns_zt_t *zt, bool freeze) {
+dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze) {
 	isc_result_t result, tresult;
+	struct zt_freeze_params params = { view, freeze };
 
 	REQUIRE(VALID_ZT(zt));
 
 	RWLOCK(&zt->rwlock, isc_rwlocktype_read);
-	result = dns_zt_apply(zt, false, &tresult, freezezones, &freeze);
+	result = dns_zt_apply(zt, false, &tresult, freezezones, &params);
 	RWUNLOCK(&zt->rwlock, isc_rwlocktype_read);
 	if (tresult == ISC_R_NOTFOUND) {
 		tresult = ISC_R_SUCCESS;
@@ -393,7 +401,7 @@ dns_zt_freezezones(dns_zt_t *zt, bool freeze) {
 
 static isc_result_t
 freezezones(dns_zone_t *zone, void *uap) {
-	bool freeze = *(bool *)uap;
+	struct zt_freeze_params *params = uap;
 	bool frozen;
 	isc_result_t result = ISC_R_SUCCESS;
 	char classstr[DNS_RDATACLASS_FORMATSIZE];
@@ -408,7 +416,13 @@ freezezones(dns_zone_t *zone, void *uap) {
 	if (raw != NULL) {
 		zone = raw;
 	}
-	if (dns_zone_gettype(zone) != dns_zone_master) {
+	if (params->view != dns_zone_getview(zone)) {
+		if (raw != NULL) {
+			dns_zone_detach(&raw);
+		}
+		return (ISC_R_SUCCESS);
+	}
+	if (dns_zone_gettype(zone) != dns_zone_primary) {
 		if (raw != NULL) {
 			dns_zone_detach(&raw);
 		}
@@ -422,7 +436,7 @@ freezezones(dns_zone_t *zone, void *uap) {
 	}
 
 	frozen = dns_zone_getupdatedisabled(zone);
-	if (freeze) {
+	if (params->freeze) {
 		if (frozen) {
 			result = DNS_R_FROZEN;
 		}
@@ -430,7 +444,7 @@ freezezones(dns_zone_t *zone, void *uap) {
 			result = dns_zone_flush(zone);
 		}
 		if (result == ISC_R_SUCCESS) {
-			dns_zone_setupdatedisabled(zone, freeze);
+			dns_zone_setupdatedisabled(zone, params->freeze);
 		}
 	} else {
 		if (frozen) {
@@ -457,8 +471,8 @@ freezezones(dns_zone_t *zone, void *uap) {
 	level = (result != ISC_R_SUCCESS) ? ISC_LOG_ERROR : ISC_LOG_DEBUG(1);
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_ZONE,
 		      level, "%s zone '%s/%s'%s%s: %s",
-		      freeze ? "freezing" : "thawing", zonename, classstr, sep,
-		      vname, isc_result_totext(result));
+		      params->freeze ? "freezing" : "thawing", zonename,
+		      classstr, sep, vname, isc_result_totext(result));
 	if (raw != NULL) {
 		dns_zone_detach(&raw);
 	}

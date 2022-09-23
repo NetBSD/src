@@ -1,7 +1,9 @@
-/*	$NetBSD: dnssec.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -370,11 +372,14 @@ isc_result_t
 dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 		      dns_name_t *origin, dns_rdataclass_t zclass,
 		      dns_ttl_t ttl, dns_diff_t *diff, isc_mem_t *mctx,
-		      bool dnssec_insecure);
+		      bool expect_cds_delete, bool expect_cdnskey_delete);
 /*%<
  * Add or remove the CDS DELETE record and the CDNSKEY DELETE record.
- * If 'dnssec_insecure' is true, the DELETE records should be present.
- * Otherwise, the DELETE records must be removed from the RRsets (if present).
+ * If 'expect_cds_delete' is true, the CDS DELETE record should be present.
+ * Otherwise, the CDS DELETE record must be removed from the RRsets (if
+ * present). If 'expect_cdnskey_delete' is true, the CDNSKEY DELETE record
+ * should be present. Otherwise, the CDNSKEY DELETE record must be removed
+ * from the RRsets (if present).
  *
  * Returns:
  *\li   ISC_R_SUCCESS

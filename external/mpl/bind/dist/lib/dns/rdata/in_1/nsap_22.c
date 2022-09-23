@@ -1,7 +1,9 @@
-/*	$NetBSD: nsap_22.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +20,7 @@
 
 #define RRTYPE_NSAP_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_nsap(ARGS_FROMTEXT) {
 	isc_token_t token;
 	isc_textregion_t *sr;
@@ -71,7 +73,7 @@ fromtext_in_nsap(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_nsap(ARGS_TOTEXT) {
 	isc_region_t region;
 	char buf[sizeof("xx")];
@@ -92,7 +94,7 @@ totext_in_nsap(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_nsap(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -114,7 +116,7 @@ fromwire_in_nsap(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_nsap(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_nsap);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -125,7 +127,7 @@ towire_in_nsap(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_in_nsap(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -142,7 +144,7 @@ compare_in_nsap(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_nsap(ARGS_FROMSTRUCT) {
 	dns_rdata_in_nsap_t *nsap = source;
 
@@ -159,7 +161,7 @@ fromstruct_in_nsap(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, nsap->nsap, nsap->nsap_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_nsap(ARGS_TOSTRUCT) {
 	dns_rdata_in_nsap_t *nsap = target;
 	isc_region_t r;
@@ -184,7 +186,7 @@ tostruct_in_nsap(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_nsap(ARGS_FREESTRUCT) {
 	dns_rdata_in_nsap_t *nsap = source;
 
@@ -202,7 +204,7 @@ freestruct_in_nsap(ARGS_FREESTRUCT) {
 	nsap->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_nsap(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nsap);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -214,7 +216,7 @@ additionaldata_in_nsap(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_nsap(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -226,7 +228,7 @@ digest_in_nsap(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_nsap(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_nsap);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -239,7 +241,7 @@ checkowner_in_nsap(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_nsap(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_nsap);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -251,7 +253,7 @@ checknames_in_nsap(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_nsap(ARGS_COMPARE) {
 	return (compare_in_nsap(rdata1, rdata2));
 }

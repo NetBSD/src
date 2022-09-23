@@ -1,7 +1,9 @@
-/*	$NetBSD: view.c,v 1.11 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.12 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -348,7 +350,7 @@ cleanup_name:
 	return (result);
 }
 
-static inline void
+static void
 destroy(dns_view_t *view) {
 	dns_dns64_t *dns64;
 	dns_dlzdb_t *dlzdb;
@@ -1827,7 +1829,7 @@ dns_view_freezezones(dns_view_t *view, bool value) {
 	REQUIRE(DNS_VIEW_VALID(view));
 	REQUIRE(view->zonetable != NULL);
 
-	return (dns_zt_freezezones(view->zonetable, value));
+	return (dns_zt_freezezones(view->zonetable, view, value));
 }
 
 void

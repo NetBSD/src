@@ -1,7 +1,9 @@
-/*	$NetBSD: quota.h,v 1.8 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.9 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +51,7 @@ typedef void (*isc_quota_cb_func_t)(isc_quota_t *quota, void *data);
 struct isc_quota_cb {
 	int		    magic;
 	isc_quota_cb_func_t cb_func;
-	void *		    data;
+	void		   *data;
 	ISC_LINK(isc_quota_cb_t) link;
 };
 

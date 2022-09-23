@@ -1,7 +1,9 @@
-/*	$NetBSD: dispatch_test.c,v 1.8 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.9 2022/09/23 12:15:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -217,7 +219,7 @@ nameserver(isc_task_t *task, isc_event_t *event) {
 
 static dns_dispatch_t *dispatch = NULL;
 static dns_dispentry_t *dispentry = NULL;
-static atomic_bool first = ATOMIC_VAR_INIT(true);
+static atomic_bool first = true;
 static isc_sockaddr_t local;
 static atomic_uint_fast32_t responses;
 

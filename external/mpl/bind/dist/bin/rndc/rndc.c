@@ -1,7 +1,9 @@
-/*	$NetBSD: rndc.c,v 1.7 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.8 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,9 +80,9 @@ static isccc_region_t secret;
 static bool failed = false;
 static bool c_flag = false;
 static isc_mem_t *rndc_mctx;
-static atomic_uint_fast32_t sends = ATOMIC_VAR_INIT(0);
-static atomic_uint_fast32_t recvs = ATOMIC_VAR_INIT(0);
-static atomic_uint_fast32_t connects = ATOMIC_VAR_INIT(0);
+static atomic_uint_fast32_t sends = 0;
+static atomic_uint_fast32_t recvs = 0;
+static atomic_uint_fast32_t connects = 0;
 static char *command;
 static char *args;
 static char program[256];
@@ -292,8 +294,6 @@ static void
 rndc_senddone(isc_task_t *task, isc_event_t *event) {
 	isc_socketevent_t *sevent = (isc_socketevent_t *)event;
 
-	UNUSED(task);
-
 	if (sevent->result != ISC_R_SUCCESS) {
 		fatal("send failed: %s", isc_result_totext(sevent->result));
 	}
@@ -302,7 +302,7 @@ rndc_senddone(isc_task_t *task, isc_event_t *event) {
 	    atomic_load_acquire(&recvs) == 0)
 	{
 		isc_socket_detach(&sock);
-		isc_task_shutdown(task);
+		isc_task_detach(&task);
 		isc_app_shutdown();
 	}
 }
@@ -378,7 +378,7 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 	if (atomic_load_acquire(&sends) == 0 &&
 	    atomic_load_acquire(&recvs) == 0) {
 		isc_socket_detach(&sock);
-		isc_task_shutdown(task);
+		isc_task_detach(&task);
 		isc_app_shutdown();
 	}
 }
@@ -976,7 +976,7 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 				usage(1);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			usage(0);
 			break;
@@ -1058,6 +1058,7 @@ main(int argc, char **argv) {
 		get_addresses(servername, (in_port_t)remoteport);
 	}
 
+	isc_task_attach(task, &(isc_task_t *){ NULL });
 	DO("post event", isc_app_onrun(rndc_mctx, task, rndc_start, NULL));
 
 	result = isc_app_run();

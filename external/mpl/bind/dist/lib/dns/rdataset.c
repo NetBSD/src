@@ -1,7 +1,9 @@
-/*	$NetBSD: rdataset.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -297,7 +299,7 @@ towire_compare(const void *av, const void *bv) {
 	return (a->key - b->key);
 }
 
-static inline void
+static void
 swap_rdata(dns_rdata_t *in, unsigned int a, unsigned int b) {
 	dns_rdata_t rdata = in[a];
 	in[a] = in[b];

@@ -1,7 +1,9 @@
-/*	$NetBSD: aclconf.c,v 1.7 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.8 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -401,8 +403,7 @@ get_subtype(const cfg_obj_t *obj, isc_log_t *lctx, dns_geoip_subtype_t subtype,
 		}
 		return (subtype);
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
@@ -428,8 +429,8 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 		if (ctx->geoip->country != NULL) {
 			return (true);
 		}
-	/* city db can answer these too, so: */
-	/* FALLTHROUGH */
+		/* city db can answer these too, so: */
+		FALLTHROUGH;
 	case dns_geoip_region:
 	case dns_geoip_regionname:
 	case dns_geoip_city_countrycode:

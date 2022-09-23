@@ -1,7 +1,9 @@
-/*	$NetBSD: dst_test.c,v 1.9 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.10 2022/09/23 12:15:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -288,10 +290,204 @@ sig_test(void **state) {
 	}
 }
 
+#if !defined(USE_PKCS11)
+static void
+check_cmp(const char *key1_name, dns_keytag_t key1_id, const char *key2_name,
+	  dns_keytag_t key2_id, dns_secalg_t alg, int type, bool expect) {
+	isc_result_t result;
+	dst_key_t *key1 = NULL;
+	dst_key_t *key2 = NULL;
+	isc_buffer_t b1;
+	isc_buffer_t b2;
+	dns_fixedname_t fname1;
+	dns_fixedname_t fname2;
+	dns_name_t *name1;
+	dns_name_t *name2;
+
+	/*
+	 * Read key1 from the file.
+	 */
+	name1 = dns_fixedname_initname(&fname1);
+	isc_buffer_constinit(&b1, key1_name, strlen(key1_name));
+	isc_buffer_add(&b1, strlen(key1_name));
+	result = dns_name_fromtext(name1, &b1, dns_rootname, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dst_key_fromfile(name1, key1_id, alg, type, "comparekeys",
+				  dt_mctx, &key1);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/*
+	 * Read key2 from the file.
+	 */
+	name2 = dns_fixedname_initname(&fname2);
+	isc_buffer_constinit(&b2, key2_name, strlen(key2_name));
+	isc_buffer_add(&b2, strlen(key2_name));
+	result = dns_name_fromtext(name2, &b2, dns_rootname, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dst_key_fromfile(name2, key2_id, alg, type, "comparekeys",
+				  dt_mctx, &key2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/*
+	 * Compare the keys (for public-only keys).
+	 */
+	if ((type & DST_TYPE_PRIVATE) == 0) {
+		assert_true(dst_key_pubcompare(key1, key2, false) == expect);
+	}
+
+	/*
+	 * Compare the keys (for both public-only keys and keypairs).
+	 */
+	assert_true(dst_key_compare(key1, key2) == expect);
+
+	/*
+	 * Free the keys
+	 */
+	dst_key_free(&key2);
+	dst_key_free(&key1);
+
+	return;
+}
+
+static void
+cmp_test(void **state) {
+	UNUSED(state);
+
+	struct {
+		const char *key1_name;
+		dns_keytag_t key1_id;
+		const char *key2_name;
+		dns_keytag_t key2_id;
+		dns_secalg_t alg;
+		int type;
+		bool expect;
+	} testcases[] = {
+		/* RSA Keypair: self */
+		{ "example.", 53461, "example.", 53461, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, true },
+
+		/* RSA Keypair: different key */
+		{ "example.", 53461, "example2.", 37993, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Keypair: different PublicExponent (e) */
+		{ "example.", 53461, "example-e.", 53973, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Keypair: different Modulus (n) */
+		{ "example.", 53461, "example-n.", 37464, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Keypair: different PrivateExponent (d) */
+		{ "example.", 53461, "example-d.", 53461, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Keypair: different Prime1 (p) */
+		{ "example.", 53461, "example-p.", 53461, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Keypair: different Prime2 (q) */
+		{ "example.", 53461, "example-q.", 53461, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* RSA Public Key: self */
+		{ "example.", 53461, "example.", 53461, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC, true },
+
+		/* RSA Public Key: different key */
+		{ "example.", 53461, "example2.", 37993, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC, false },
+
+		/* RSA Public Key: different PublicExponent (e) */
+		{ "example.", 53461, "example-e.", 53973, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC, false },
+
+		/* RSA Public Key: different Modulus (n) */
+		{ "example.", 53461, "example-n.", 37464, DST_ALG_RSASHA256,
+		  DST_TYPE_PUBLIC, false },
+
+		/* ECDSA Keypair: self */
+		{ "example.", 19786, "example.", 19786, DST_ALG_ECDSA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, true },
+
+		/* ECDSA Keypair: different key */
+		{ "example.", 19786, "example2.", 16384, DST_ALG_ECDSA256,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* ECDSA Public Key: self */
+		{ "example.", 19786, "example.", 19786, DST_ALG_ECDSA256,
+		  DST_TYPE_PUBLIC, true },
+
+		/* ECDSA Public Key: different key */
+		{ "example.", 19786, "example2.", 16384, DST_ALG_ECDSA256,
+		  DST_TYPE_PUBLIC, false },
+
+		/* EdDSA Keypair: self */
+		{ "example.", 63663, "example.", 63663, DST_ALG_ED25519,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, true },
+
+		/* EdDSA Keypair: different key */
+		{ "example.", 63663, "example2.", 37529, DST_ALG_ED25519,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE, false },
+
+		/* EdDSA Public Key: self */
+		{ "example.", 63663, "example.", 63663, DST_ALG_ED25519,
+		  DST_TYPE_PUBLIC, true },
+
+		/* EdDSA Public Key: different key */
+		{ "example.", 63663, "example2.", 37529, DST_ALG_ED25519,
+		  DST_TYPE_PUBLIC, false },
+
+		/* DH Keypair: self */
+		{ "example.", 65316, "example.", 65316, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, true },
+
+		/* DH Keypair: different key */
+		{ "example.", 65316, "example2.", 19823, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
+
+		/* DH Keypair: different key (with generator=5) */
+		{ "example.", 65316, "example3.", 17187, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
+
+		/* DH Keypair: different private key */
+		{ "example.", 65316, "example-private.", 65316, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY, false },
+
+		/* DH Public Key: self */
+		{ "example.", 65316, "example.", 65316, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_KEY, true },
+
+		/* DH Public Key: different key */
+		{ "example.", 65316, "example2.", 19823, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_KEY, false },
+
+		/* DH Public Key: different key (with generator=5) */
+		{ "example.", 65316, "example3.", 17187, DST_ALG_DH,
+		  DST_TYPE_PUBLIC | DST_TYPE_KEY, false },
+	};
+	unsigned int i;
+
+	for (i = 0; i < (sizeof(testcases) / sizeof(testcases[0])); i++) {
+		if (!dst_algorithm_supported(testcases[i].alg)) {
+			continue;
+		}
+
+		check_cmp(testcases[i].key1_name, testcases[i].key1_id,
+			  testcases[i].key2_name, testcases[i].key2_id,
+			  testcases[i].alg, testcases[i].type,
+			  testcases[i].expect);
+	}
+}
+#endif /* #if !defined(USE_PKCS11) */
+
 int
 main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(sig_test, _setup, _teardown),
+#if !defined(USE_PKCS11)
+		cmocka_unit_test_setup_teardown(cmp_test, _setup, _teardown),
+#endif /* #if !defined(USE_PKCS11) */
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));

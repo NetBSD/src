@@ -1,7 +1,9 @@
-/*	$NetBSD: namedconf.c,v 1.12 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.13 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1237,6 +1239,7 @@ static cfg_clausedef_t options_clauses[] = {
 	{ "random-device", &cfg_type_qstringornone, 0 },
 	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
+	{ "reuseport", &cfg_type_boolean, 0 },
 	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "secroots-file", &cfg_type_qstring, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_ANCIENT },
@@ -1993,7 +1996,7 @@ static cfg_clausedef_t view_clauses[] = {
 	  CFG_CLAUSEFLAG_OBSOLETE },
 	{ "attach-cache", &cfg_type_astring, 0 },
 	{ "auth-nxdomain", &cfg_type_boolean, CFG_CLAUSEFLAG_NEWDEFAULT },
-	{ "cache-file", &cfg_type_qstring, 0 },
+	{ "cache-file", &cfg_type_qstring, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "catalog-zones", &cfg_type_catz, 0 },
 	{ "check-names", &cfg_type_checknames, CFG_CLAUSEFLAG_MULTI },
 	{ "cleaning-interval", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
@@ -2175,133 +2178,134 @@ static cfg_clausedef_t dnssecpolicy_clauses[] = {
  */
 static cfg_clausedef_t zone_clauses[] = {
 	{ "allow-notify", &cfg_type_bracketed_aml,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "allow-query", &cfg_type_bracketed_aml,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB },
 	{ "allow-query-on", &cfg_type_bracketed_aml,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB },
 	{ "allow-transfer", &cfg_type_bracketed_aml,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
-	{ "allow-update", &cfg_type_bracketed_aml, CFG_ZONE_MASTER },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
+	{ "allow-update", &cfg_type_bracketed_aml, CFG_ZONE_PRIMARY },
 	{ "allow-update-forwarding", &cfg_type_bracketed_aml,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "also-notify", &cfg_type_namesockaddrkeylist,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "auto-dnssec", &cfg_type_autodnssec,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
-	{ "check-dup-records", &cfg_type_checkmode, CFG_ZONE_MASTER },
-	{ "check-integrity", &cfg_type_boolean, CFG_ZONE_MASTER },
-	{ "check-mx", &cfg_type_checkmode, CFG_ZONE_MASTER },
-	{ "check-mx-cname", &cfg_type_checkmode, CFG_ZONE_MASTER },
-	{ "check-sibling", &cfg_type_boolean, CFG_ZONE_MASTER },
-	{ "check-spf", &cfg_type_warn, CFG_ZONE_MASTER },
-	{ "check-srv-cname", &cfg_type_checkmode, CFG_ZONE_MASTER },
-	{ "check-wildcard", &cfg_type_boolean, CFG_ZONE_MASTER },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
+	{ "check-dup-records", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
+	{ "check-integrity", &cfg_type_boolean, CFG_ZONE_PRIMARY },
+	{ "check-mx", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
+	{ "check-mx-cname", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
+	{ "check-sibling", &cfg_type_boolean, CFG_ZONE_PRIMARY },
+	{ "check-spf", &cfg_type_warn, CFG_ZONE_PRIMARY },
+	{ "check-srv-cname", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
+	{ "check-wildcard", &cfg_type_boolean, CFG_ZONE_PRIMARY },
 	{ "dialup", &cfg_type_dialuptype,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_STUB },
 	{ "dnssec-dnskey-kskonly", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "dnssec-loadkeys-interval", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "dnssec-policy", &cfg_type_astring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
-	{ "dnssec-secure-to-insecure", &cfg_type_boolean, CFG_ZONE_MASTER },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
+	{ "dnssec-secure-to-insecure", &cfg_type_boolean, CFG_ZONE_PRIMARY },
 	{ "dnssec-update-mode", &cfg_type_dnssecupdatemode,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "forward", &cfg_type_forwardtype,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_STUB |
 		  CFG_ZONE_STATICSTUB | CFG_ZONE_FORWARD },
 	{ "forwarders", &cfg_type_portiplist,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_STUB |
 		  CFG_ZONE_STATICSTUB | CFG_ZONE_FORWARD },
 	{ "key-directory", &cfg_type_qstring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "maintain-ixfr-base", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "masterfile-format", &cfg_type_masterformat,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_REDIRECT },
 	{ "masterfile-style", &cfg_type_masterstyle,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_REDIRECT },
 	{ "max-ixfr-log-size", &cfg_type_size, CFG_CLAUSEFLAG_ANCIENT },
 	{ "max-ixfr-ratio", &cfg_type_ixfrratio,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "max-journal-size", &cfg_type_size,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "max-records", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
 	{ "max-refresh-time", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-retry-time", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-transfer-idle-in", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-transfer-idle-out", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_MIRROR | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_MIRROR | CFG_ZONE_SECONDARY },
 	{ "max-transfer-time-in", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "max-transfer-time-out", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_MIRROR | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_MIRROR | CFG_ZONE_SECONDARY },
 	{ "max-zone-ttl", &cfg_type_maxduration,
-	  CFG_ZONE_MASTER | CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_REDIRECT },
 	{ "min-refresh-time", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "min-retry-time", &cfg_type_uint32,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "multi-master", &cfg_type_boolean,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "notify", &cfg_type_notifytype,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "notify-delay", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "notify-source", &cfg_type_sockaddr4wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "notify-source-v6", &cfg_type_sockaddr6wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "notify-to-soa", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "nsec3-test-zone", &cfg_type_boolean,
-	  CFG_CLAUSEFLAG_TESTONLY | CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_CLAUSEFLAG_TESTONLY | CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "parental-source", &cfg_type_sockaddr4wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "parental-source-v6", &cfg_type_sockaddr6wild,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "request-expire", &cfg_type_boolean,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
-	{ "request-ixfr", &cfg_type_boolean, CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
-	{ "serial-update-method", &cfg_type_updatemethod, CFG_ZONE_MASTER },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
+	{ "request-ixfr", &cfg_type_boolean,
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
+	{ "serial-update-method", &cfg_type_updatemethod, CFG_ZONE_PRIMARY },
 	{ "sig-signing-nodes", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "sig-signing-signatures", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "sig-signing-type", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "sig-validity-interval", &cfg_type_validityinterval,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "dnskey-sig-validity", &cfg_type_uint32,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "transfer-source", &cfg_type_sockaddr4wild,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "transfer-source-v6", &cfg_type_sockaddr6wild,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "try-tcp-refresh", &cfg_type_boolean,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "update-check-ksk", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "use-alt-transfer-source", &cfg_type_boolean,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
 	{ "zero-no-soa-ttl", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "zone-statistics", &cfg_type_zonestat,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT },
 	{ NULL, NULL, 0 }
 };
 
@@ -2317,43 +2321,44 @@ static cfg_clausedef_t zone_only_clauses[] = {
 	 * the zone options and the global/view options.  Ugh.
 	 */
 	{ "type", &cfg_type_zonetype,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_STATICSTUB | CFG_ZONE_DELEGATION | CFG_ZONE_HINT |
-		  CFG_ZONE_REDIRECT | CFG_ZONE_FORWARD },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_DELEGATION |
+		  CFG_ZONE_HINT | CFG_ZONE_REDIRECT | CFG_ZONE_FORWARD },
 	{ "check-names", &cfg_type_checkmode,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_HINT |
-		  CFG_ZONE_STUB },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_HINT | CFG_ZONE_STUB },
 	{ "database", &cfg_type_astring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB },
 	{ "delegation-only", &cfg_type_boolean,
 	  CFG_ZONE_HINT | CFG_ZONE_STUB | CFG_ZONE_FORWARD },
 	{ "dlz", &cfg_type_astring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_REDIRECT },
 	{ "file", &cfg_type_qstring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
-		  CFG_ZONE_HINT | CFG_ZONE_REDIRECT },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR |
+		  CFG_ZONE_STUB | CFG_ZONE_HINT | CFG_ZONE_REDIRECT },
 	{ "in-view", &cfg_type_astring, CFG_ZONE_INVIEW },
 	{ "inline-signing", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "ixfr-base", &cfg_type_qstring, CFG_CLAUSEFLAG_ANCIENT },
 	{ "ixfr-from-differences", &cfg_type_boolean,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "ixfr-tmp-file", &cfg_type_qstring, CFG_CLAUSEFLAG_ANCIENT },
 	{ "journal", &cfg_type_qstring,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "masters", &cfg_type_namesockaddrkeylist,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
 		  CFG_ZONE_REDIRECT },
 	{ "parental-agents", &cfg_type_namesockaddrkeylist,
-	  CFG_ZONE_MASTER | CFG_ZONE_SLAVE },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
 	{ "primaries", &cfg_type_namesockaddrkeylist,
-	  CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
+	  CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
 		  CFG_ZONE_REDIRECT },
 	{ "pubkey", &cfg_type_pubkey, CFG_CLAUSEFLAG_ANCIENT },
 	{ "server-addresses", &cfg_type_bracketed_netaddrlist,
 	  CFG_ZONE_STATICSTUB },
 	{ "server-names", &cfg_type_namelist, CFG_ZONE_STATICSTUB },
-	{ "update-policy", &cfg_type_updatepolicy, CFG_ZONE_MASTER },
+	{ "update-policy", &cfg_type_updatepolicy, CFG_ZONE_PRIMARY },
 	{ NULL, NULL, 0 }
 };
 
@@ -3124,8 +3129,7 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		isc_netaddr_any6(&netaddr);
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	for (;;) {
@@ -3210,8 +3214,7 @@ doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
 	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	cfg_print_cstr(pctx, " | * ) [ port ( <integer> | * ) ] ) | "
 			     "( [ [ address ] ( ");
@@ -3220,8 +3223,7 @@ doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
 	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	cfg_print_cstr(pctx, " | * ) ] port ( <integer> | * ) ) )"
 			     " [ dscp <integer> ]");
@@ -3808,11 +3810,11 @@ cfg_print_zonegrammar(const unsigned int zonetype, unsigned int flags,
 	pctx.indent++;
 
 	switch (zonetype) {
-	case CFG_ZONE_MASTER:
+	case CFG_ZONE_PRIMARY:
 		cfg_print_indent(&pctx);
 		cfg_print_cstr(&pctx, "type ( master | primary );\n");
 		break;
-	case CFG_ZONE_SLAVE:
+	case CFG_ZONE_SECONDARY:
 		cfg_print_indent(&pctx);
 		cfg_print_cstr(&pctx, "type ( slave | secondary );\n");
 		break;
@@ -3848,8 +3850,7 @@ cfg_print_zonegrammar(const unsigned int zonetype, unsigned int flags,
 		/* no zone type is specified for these */
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	for (clause = clauses; clause->name != NULL; clause++) {

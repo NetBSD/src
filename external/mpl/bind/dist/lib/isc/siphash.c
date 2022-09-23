@@ -1,7 +1,9 @@
-/*	$NetBSD: siphash.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: siphash.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -126,30 +128,29 @@ isc_siphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 	switch (left) {
 	case 7:
 		b |= ((uint64_t)in[6]) << 48;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 6:
 		b |= ((uint64_t)in[5]) << 40;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 5:
 		b |= ((uint64_t)in[4]) << 32;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 4:
 		b |= ((uint64_t)in[3]) << 24;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 3:
 		b |= ((uint64_t)in[2]) << 16;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 2:
 		b |= ((uint64_t)in[1]) << 8;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 1:
 		b |= ((uint64_t)in[0]);
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 0:
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	v3 ^= b;
@@ -204,18 +205,17 @@ isc_halfsiphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 	switch (left) {
 	case 3:
 		b |= ((uint32_t)in[2]) << 16;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 2:
 		b |= ((uint32_t)in[1]) << 8;
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 1:
 		b |= ((uint32_t)in[0]);
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case 0:
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	v3 ^= b;

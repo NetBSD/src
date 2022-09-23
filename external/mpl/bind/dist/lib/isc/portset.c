@@ -1,7 +1,9 @@
-/*	$NetBSD: portset.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: portset.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,12 +36,12 @@ struct isc_portset {
 	uint32_t buf[ISC_PORTSET_BUFSIZE];
 };
 
-static inline bool
+static bool
 portset_isset(isc_portset_t *portset, in_port_t port) {
 	return ((portset->buf[port >> 5] & ((uint32_t)1 << (port & 31))) != 0);
 }
 
-static inline void
+static void
 portset_add(isc_portset_t *portset, in_port_t port) {
 	if (!portset_isset(portset, port)) {
 		portset->nports++;
@@ -47,7 +49,7 @@ portset_add(isc_portset_t *portset, in_port_t port) {
 	}
 }
 
-static inline void
+static void
 portset_remove(isc_portset_t *portset, in_port_t port) {
 	if (portset_isset(portset, port)) {
 		portset->nports--;

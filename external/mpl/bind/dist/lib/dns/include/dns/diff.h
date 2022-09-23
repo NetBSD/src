@@ -1,7 +1,9 @@
-/*	$NetBSD: diff.h,v 1.5 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,7 +77,7 @@ typedef ISC_LIST(dns_difftuple_t) dns_difftuplelist_t;
 
 struct dns_difftuple {
 	unsigned int magic;
-	isc_mem_t *  mctx;
+	isc_mem_t   *mctx;
 	dns_diffop_t op;
 	dns_name_t   name;
 	dns_ttl_t    ttl;
@@ -96,7 +98,7 @@ typedef struct dns_diff dns_diff_t;
 
 struct dns_diff {
 	unsigned int	    magic;
-	isc_mem_t *	    mctx;
+	isc_mem_t	   *mctx;
 	dns_difftuplelist_t tuples;
 };
 

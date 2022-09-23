@@ -1,7 +1,9 @@
-/*	$NetBSD: log.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -706,8 +708,7 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 		break;
 
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	ISC_LIST_PREPEND(lcfg->channels, channel, link);
@@ -1811,7 +1812,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				}
 				channel->flags &= ~ISC_LOG_OPENERR;
 			}
-			/* FALLTHROUGH */
+			FALLTHROUGH;
 
 		case ISC_LOG_TOFILEDESC:
 			fprintf(FILE_STREAM(channel), "%s%s%s%s%s%s%s%s%s%s\n",

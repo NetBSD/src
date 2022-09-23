@@ -1,7 +1,9 @@
-/*	$NetBSD: smimea_53.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: smimea_53.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,14 +18,14 @@
 
 #define RRTYPE_SMIMEA_ATTRIBUTES 0
 
-static inline isc_result_t
+static isc_result_t
 fromtext_smimea(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromtext_tlsa(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_smimea(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
@@ -31,14 +33,14 @@ totext_smimea(ARGS_TOTEXT) {
 	return (generic_totext_tlsa(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_smimea(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromwire_tlsa(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_smimea(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -51,7 +53,7 @@ towire_smimea(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_smimea(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -67,14 +69,14 @@ compare_smimea(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_smimea(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_smimea);
 
 	return (generic_fromstruct_tlsa(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_smimea(ARGS_TOSTRUCT) {
 	dns_rdata_smimea_t *smimea = target;
 
@@ -89,7 +91,7 @@ tostruct_smimea(ARGS_TOSTRUCT) {
 	return (generic_tostruct_tlsa(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_smimea(ARGS_FREESTRUCT) {
 	dns_rdata_smimea_t *smimea = source;
 
@@ -99,7 +101,7 @@ freestruct_smimea(ARGS_FREESTRUCT) {
 	generic_freestruct_tlsa(source);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_smimea(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 
@@ -110,7 +112,7 @@ additionaldata_smimea(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_smimea(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -121,7 +123,7 @@ digest_smimea(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_smimea(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_smimea);
 
@@ -133,7 +135,7 @@ checkowner_smimea(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_smimea(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 
@@ -144,7 +146,7 @@ checknames_smimea(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_smimea(ARGS_COMPARE) {
 	return (compare_smimea(rdata1, rdata2));
 }

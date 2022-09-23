@@ -1,7 +1,9 @@
-/*	$NetBSD: xfrin.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -682,11 +684,9 @@ redo:
 	case XFRST_AXFR_END:
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
-	/* NOTREACHED */
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	result = ISC_R_SUCCESS;
 failure:
@@ -1469,7 +1469,7 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		break;
 	case XFRST_AXFR_END:
 		CHECK(axfr_finalize(xfr));
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case XFRST_IXFR_END:
 		/*
 		 * Close the journal.

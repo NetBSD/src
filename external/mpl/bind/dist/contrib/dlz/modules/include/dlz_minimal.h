@@ -1,21 +1,21 @@
-/*	$NetBSD: dlz_minimal.h,v 1.4 2020/05/24 19:46:21 christos Exp $	*/
+/*	$NetBSD: dlz_minimal.h,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * SPDX-License-Identifier: ISC
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Permission to use, copy, modify, and distribute this software for any purpose
+ * with or without fee is hereby granted, provided that the above copyright
+ * notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -30,6 +30,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -84,11 +85,29 @@ typedef uint32_t     dns_ttl_t;
 	do {                           \
 		union {                \
 			const void *k; \
-			void *	    v; \
+			void	   *v; \
 		} _u;                  \
 		_u.k = konst;          \
 		var = _u.v;            \
 	} while (0)
+
+#if !defined(__has_attribute)
+#define __has_attribute(x) 0
+#endif /* if !defined(__has_attribute) */
+
+#if __GNUC__ >= 7 || __has_attribute(fallthrough)
+#define FALLTHROUGH __attribute__((fallthrough))
+#else
+/* clang-format off */
+#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */
+/* clang-format on */
+#endif
+
+#ifdef __GNUC__
+#define UNREACHABLE() __builtin_unreachable()
+#else
+#define UNREACHABLE() abort()
+#endif
 
 /* opaque structures */
 typedef void *dns_sdlzlookup_t;
@@ -111,21 +130,40 @@ typedef struct isc_sockaddr {
 #endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	} type;
 	unsigned int length;
-	void *	     link;
+	void	    *link;
 } isc_sockaddr_t;
 
-#define DNS_CLIENTINFO_VERSION 2
+typedef struct isc_netaddr {
+	unsigned int family;
+	union {
+		struct in_addr	in;
+		struct in6_addr in6;
+#ifdef ISC_PLATFORM_HAVESYSUNH
+		char un[sizeof(((struct sockaddr_un *)0)->sun_path)];
+#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
+	} type;
+	uint32_t zone;
+} isc_netaddr_t;
+
+typedef struct dns_ecs {
+	isc_netaddr_t addr;
+	uint8_t	      source;
+	uint8_t	      scope;
+} dns_ecs_t;
+
+#define DNS_CLIENTINFO_VERSION 3
 typedef struct dns_clientinfo {
-	uint16_t version;
-	void *	 data;
-	void *	 dbversion;
+	uint16_t  version;
+	void	 *data;
+	void	 *dbversion;
+	dns_ecs_t ecs;
 } dns_clientinfo_t;
 
 typedef isc_result_t (*dns_clientinfo_sourceip_t)(dns_clientinfo_t *client,
-						  isc_sockaddr_t ** addrp);
+						  isc_sockaddr_t  **addrp);
 
 typedef isc_result_t (*dns_clientinfo_version_t)(dns_clientinfo_t *client,
-						 void **	   addrp);
+						 void		 **addrp);
 
 #define DNS_CLIENTINFOMETHODS_VERSION 2
 #define DNS_CLIENTINFOMETHODS_AGE     1
@@ -133,9 +171,12 @@ typedef struct dns_clientinfomethods {
 	uint16_t		  version;
 	uint16_t		  age;
 	dns_clientinfo_sourceip_t sourceip;
-	dns_clientinfo_version_t  dbversion;
 } dns_clientinfomethods_t;
 #endif /* DLZ_DLOPEN_VERSION > 1 */
+
+#define DNS_ECS_FORMATSIZE                                                \
+	sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX%SSSSSSSSSS" \
+	       "/NNN/NNN")
 
 /*
  * Method definitions for callbacks provided by the dlopen driver

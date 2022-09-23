@@ -1,7 +1,9 @@
-/*	$NetBSD: event.h,v 1.5 2021/04/05 11:27:03 rillig Exp $	*/
+/*	$NetBSD: event.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,13 +30,13 @@ typedef void (*isc_eventdestructor_t)(isc_event_t *);
 #define ISC_EVENT_COMMON(ltype)               \
 	size_t		      ev_size;        \
 	unsigned int	      ev_attributes;  \
-	void *		      ev_tag;         \
+	void		     *ev_tag;         \
 	isc_eventtype_t	      ev_type;        \
 	isc_taskaction_t      ev_action;      \
-	void *		      ev_arg;         \
-	void *		      ev_sender;      \
+	void		     *ev_arg;         \
+	void		     *ev_sender;      \
 	isc_eventdestructor_t ev_destroy;     \
-	void *		      ev_destroy_arg; \
+	void		     *ev_destroy_arg; \
 	ISC_LINK(ltype) ev_link;              \
 	ISC_LINK(ltype) ev_ratelink
 

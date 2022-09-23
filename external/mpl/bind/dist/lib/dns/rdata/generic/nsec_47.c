@@ -1,7 +1,9 @@
-/*	$NetBSD: nsec_47.c,v 1.7 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +26,7 @@
 	(DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
 	 DNS_RDATATYPEATTR_ATCNAME)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_nsec(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
@@ -51,7 +53,7 @@ fromtext_nsec(ARGS_FROMTEXT) {
 	return (typemap_fromtext(lexer, target, false));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_nsec(ARGS_TOTEXT) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -75,7 +77,7 @@ totext_nsec(ARGS_TOTEXT) {
 	return (typemap_totext(&sr, NULL, target));
 }
 
-static /* inline */ isc_result_t
+static isc_result_t
 fromwire_nsec(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -97,7 +99,7 @@ fromwire_nsec(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_nsec(ARGS_TOWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -116,7 +118,7 @@ towire_nsec(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_nsec(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -132,7 +134,7 @@ compare_nsec(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_nsec(ARGS_FROMSTRUCT) {
 	dns_rdata_nsec_t *nsec = source;
 	isc_region_t region;
@@ -155,7 +157,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, nsec->typebits, nsec->len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_nsec(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_nsec_t *nsec = target;
@@ -192,7 +194,7 @@ cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_nsec(ARGS_FREESTRUCT) {
 	dns_rdata_nsec_t *nsec = source;
 
@@ -210,7 +212,7 @@ freestruct_nsec(ARGS_FREESTRUCT) {
 	nsec->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_nsec(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
@@ -221,7 +223,7 @@ additionaldata_nsec(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_nsec(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -231,7 +233,7 @@ digest_nsec(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_nsec(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_nsec);
 
@@ -243,7 +245,7 @@ checkowner_nsec(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_nsec(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
@@ -254,7 +256,7 @@ checknames_nsec(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_nsec(ARGS_COMPARE) {
 	isc_region_t region1;
 	isc_region_t region2;

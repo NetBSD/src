@@ -1,7 +1,9 @@
-/*	$NetBSD: main.h,v 1.4 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.5 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +25,7 @@
 /*
  * Commandline arguments for named; also referenced in win32/ntservice.c
  */
-#define NAMED_MAIN_ARGS "46A:c:d:D:E:fFgL:M:m:n:N:p:sS:t:T:U:u:vVx:X:"
+#define NAMED_MAIN_ARGS "46A:c:Cd:D:E:fFgL:M:m:n:N:p:sS:t:T:U:u:vVx:X:"
 
 ISC_PLATFORM_NORETURN_PRE void
 named_main_earlyfatal(const char *format, ...)

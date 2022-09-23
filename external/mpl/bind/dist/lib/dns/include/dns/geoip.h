@@ -1,7 +1,9 @@
-/*	$NetBSD: geoip.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,7 +83,7 @@ typedef enum {
 
 typedef struct dns_geoip_elem {
 	dns_geoip_subtype_t subtype;
-	void *		    db;
+	void		   *db;
 	union {
 		char as_string[256];
 		int  as_int;
@@ -103,9 +105,9 @@ struct dns_geoip_databases {
 ISC_LANG_BEGINDECLS
 
 bool
-dns_geoip_match(const isc_netaddr_t *	     reqaddr,
+dns_geoip_match(const isc_netaddr_t	    *reqaddr,
 		const dns_geoip_databases_t *geoip,
-		const dns_geoip_elem_t *     elt);
+		const dns_geoip_elem_t	    *elt);
 
 ISC_LANG_ENDDECLS
 

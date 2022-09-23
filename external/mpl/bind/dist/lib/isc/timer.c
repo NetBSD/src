@@ -1,7 +1,9 @@
-/*	$NetBSD: timer.c,v 1.9 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.10 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,9 +100,8 @@ struct isc_timermgr {
 void
 isc_timermgr_poke(isc_timermgr_t *manager0);
 
-static inline isc_result_t
+static isc_result_t
 schedule(isc_timer_t *timer, isc_time_t *now, bool signal_ok) {
-	isc_result_t result;
 	isc_timermgr_t *manager;
 	isc_time_t due;
 	int cmp;
@@ -117,7 +118,7 @@ schedule(isc_timer_t *timer, isc_time_t *now, bool signal_ok) {
 	 * Compute the new due time.
 	 */
 	if (timer->type != isc_timertype_once) {
-		result = isc_time_add(now, &timer->interval, &due);
+		isc_result_t result = isc_time_add(now, &timer->interval, &due);
 		if (result != ISC_R_SUCCESS) {
 			return (result);
 		}
@@ -162,11 +163,7 @@ schedule(isc_timer_t *timer, isc_time_t *now, bool signal_ok) {
 		}
 	} else {
 		timer->due = due;
-		result = isc_heap_insert(manager->heap, timer);
-		if (result != ISC_R_SUCCESS) {
-			INSIST(result == ISC_R_NOMEMORY);
-			return (ISC_R_NOMEMORY);
-		}
+		isc_heap_insert(manager->heap, timer);
 		manager->nscheduled++;
 	}
 
@@ -187,7 +184,7 @@ schedule(isc_timer_t *timer, isc_time_t *now, bool signal_ok) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 deschedule(isc_timer_t *timer) {
 	bool need_wakeup = false;
 	isc_timermgr_t *manager;
@@ -671,7 +668,6 @@ set_index(void *what, unsigned int index) {
 isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	isc_timermgr_t *manager;
-	isc_result_t result;
 
 	/*
 	 * Create a timer manager.
@@ -688,12 +684,7 @@ isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	manager->nscheduled = 0;
 	isc_time_settoepoch(&manager->due);
 	manager->heap = NULL;
-	result = isc_heap_create(mctx, sooner, set_index, 0, &manager->heap);
-	if (result != ISC_R_SUCCESS) {
-		INSIST(result == ISC_R_NOMEMORY);
-		isc_mem_put(mctx, manager, sizeof(*manager));
-		return (ISC_R_NOMEMORY);
-	}
+	isc_heap_create(mctx, sooner, set_index, 0, &manager->heap);
 	isc_mutex_init(&manager->lock);
 	isc_mem_attach(mctx, &manager->mctx);
 	isc_condition_init(&manager->wakeup);

@@ -1,7 +1,9 @@
-/*	$NetBSD: named-checkzone.c,v 1.7 2021/04/05 11:26:59 rillig Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.8 2022/09/23 12:15:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +49,7 @@
 static int quiet = 0;
 static isc_mem_t *mctx = NULL;
 dns_zone_t *zone = NULL;
-dns_zonetype_t zonetype = dns_zone_master;
+dns_zonetype_t zonetype = dns_zone_primary;
 static int dumpzone = 0;
 static const char *output_filename;
 static const char *prog_name = NULL;
@@ -146,8 +148,7 @@ main(int argc, char **argv) {
 	} else if (PROGCMP("named-compilezone")) {
 		progmode = progmode_compile;
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	/* Compilation specific defaults */
@@ -425,7 +426,7 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					prog_name, isc_commandline_option);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			usage();
 

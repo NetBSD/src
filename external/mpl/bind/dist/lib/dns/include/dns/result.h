@@ -1,7 +1,9 @@
-/*	$NetBSD: result.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -164,8 +166,9 @@
 #define DNS_R_NSEC3SALTRANGE	(ISC_RESULTCLASS_DNS + 124)
 #define DNS_R_NSEC3BADALG	(ISC_RESULTCLASS_DNS + 125)
 #define DNS_R_NSEC3RESALT	(ISC_RESULTCLASS_DNS + 126)
+#define DNS_R_INCONSISTENTRR	(ISC_RESULTCLASS_DNS + 127)
 
-#define DNS_R_NRESULTS 127 /*%< Number of results */
+#define DNS_R_NRESULTS 128 /*%< Number of results */
 
 /*
  * DNS wire format rcodes.

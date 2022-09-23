@@ -1,7 +1,9 @@
-/*	$NetBSD: httpd.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -240,7 +242,7 @@ maybe_destroy_httpd(isc_httpd_t *httpd) {
 	}
 }
 
-static inline void
+static void
 free_buffer(isc_mem_t *mctx, isc_buffer_t *buffer) {
 	isc_region_t r;
 
@@ -286,7 +288,7 @@ destroy_httpd(isc_httpd_t *httpd) {
 	isc_httpdmgr_detach(&httpdmgr);
 }
 
-static inline isc_result_t
+static isc_result_t
 httpdmgr_socket_accept(isc_task_t *task, isc_httpdmgr_t *httpdmgr) {
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -300,7 +302,7 @@ httpdmgr_socket_accept(isc_task_t *task, isc_httpdmgr_t *httpdmgr) {
 	return (result);
 }
 
-static inline void
+static void
 httpd_socket_recv(isc_httpd_t *httpd, isc_region_t *region, isc_task_t *task) {
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -313,7 +315,7 @@ httpd_socket_recv(isc_httpd_t *httpd, isc_region_t *region, isc_task_t *task) {
 	}
 }
 
-static inline void
+static void
 httpd_socket_send(isc_httpd_t *httpd, isc_region_t *region, isc_task_t *task) {
 	isc_result_t result = ISC_R_SUCCESS;
 

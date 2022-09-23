@@ -1,7 +1,9 @@
-/*	$NetBSD: hex.c,v 1.7 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: hex.c,v 1.8 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,14 +79,14 @@ typedef struct {
 	int val[2];
 } hex_decode_ctx_t;
 
-static inline void
+static void
 hex_decode_init(hex_decode_ctx_t *ctx, int length, isc_buffer_t *target) {
 	ctx->digits = 0;
 	ctx->length = length;
 	ctx->target = target;
 }
 
-static inline isc_result_t
+static isc_result_t
 hex_decode_char(hex_decode_ctx_t *ctx, int c) {
 	const char *s;
 
@@ -109,7 +111,7 @@ hex_decode_char(hex_decode_ctx_t *ctx, int c) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 hex_decode_finish(hex_decode_ctx_t *ctx) {
 	if (ctx->length > 0) {
 		return (ISC_R_UNEXPECTEDEND);

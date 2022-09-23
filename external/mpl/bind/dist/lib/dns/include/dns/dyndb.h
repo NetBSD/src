@@ -1,7 +1,9 @@
-/*	$NetBSD: dyndb.h,v 1.6 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: dyndb.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,14 +37,14 @@ ISC_LANG_BEGINDECLS
  */
 struct dns_dyndbctx {
 	unsigned int	magic;
-	const void *	hashinit;
-	isc_mem_t *	mctx;
-	isc_log_t *	lctx;
-	dns_view_t *	view;
-	dns_zonemgr_t * zmgr;
-	isc_task_t *	task;
+	const void     *hashinit;
+	isc_mem_t      *mctx;
+	isc_log_t      *lctx;
+	dns_view_t     *view;
+	dns_zonemgr_t  *zmgr;
+	isc_task_t     *task;
 	isc_timermgr_t *timermgr;
-	unsigned int *	memdebug;
+	unsigned int   *memdebug;
 };
 
 #define DNS_DYNDBCTX_MAGIC    ISC_MAGIC('D', 'd', 'b', 'c')

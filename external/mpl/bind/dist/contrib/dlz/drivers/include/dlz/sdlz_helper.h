@@ -1,38 +1,17 @@
-/*	$NetBSD: sdlz_helper.h,v 1.5 2020/05/24 19:46:20 christos Exp $	*/
+/*	$NetBSD: sdlz_helper.h,v 1.6 2022/09/23 12:15:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * SPDX-License-Identifier: MPL-2.0
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * STICHTING NLNET BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * The development of Dynamically Loadable Zones (DLZ) for Bind 9 was
- * conceived and contributed by Rob Butler.
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ROB BUTLER
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * ROB BUTLER BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #ifndef SDLZHELPER_H
@@ -59,7 +38,7 @@ typedef struct driverinstance driverinstance_t;
  * special tokens are %zone%, %record%, %client%
  */
 struct query_segment {
-	void *	     sql;
+	void	    *sql;
 	unsigned int strlen;
 	bool	     direct;
 	ISC_LINK(query_segment_t) link;
@@ -73,18 +52,18 @@ struct query_segment {
  * make sure no two threads try to use the same DBI at a time.
  */
 struct dbinstance {
-	void *	      dbconn;
+	void	     *dbconn;
 	query_list_t *allnodes_q;
 	query_list_t *allowxfr_q;
 	query_list_t *authority_q;
 	query_list_t *findzone_q;
 	query_list_t *lookup_q;
 	query_list_t *countzone_q;
-	char *	      query_buf;
-	char *	      zone;
-	char *	      record;
-	char *	      client;
-	isc_mem_t *   mctx;
+	char	     *query_buf;
+	char	     *zone;
+	char	     *record;
+	char	     *client;
+	isc_mem_t    *mctx;
 	isc_mutex_t   instance_lock;
 	ISC_LINK(dbinstance_t) link;
 };

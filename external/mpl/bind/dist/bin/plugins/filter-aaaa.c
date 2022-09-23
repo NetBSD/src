@@ -1,7 +1,9 @@
-/*	$NetBSD: filter-aaaa.c,v 1.6 2021/02/19 16:42:11 christos Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.7 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,12 +78,6 @@ typedef struct filter_data {
 typedef struct filter_instance {
 	ns_plugin_t *module;
 	isc_mem_t *mctx;
-
-	/*
-	 * Memory pool for use with persistent data.
-	 */
-	isc_mempool_t *datapool;
-	isc_mutex_t plock;
 
 	/*
 	 * Hash table associating a client object with its persistent data.
@@ -339,7 +335,7 @@ plugin_register(const char *parameters, const void *cfg, const char *cfg_file,
 		unsigned long cfg_line, isc_mem_t *mctx, isc_log_t *lctx,
 		void *actx, ns_hooktable_t *hooktable, void **instp) {
 	filter_instance_t *inst = NULL;
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	isc_log_write(lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
 		      ISC_LOG_INFO,
@@ -356,24 +352,8 @@ plugin_register(const char *parameters, const void *cfg, const char *cfg_file,
 				       cfg_line, mctx, lctx, actx));
 	}
 
-	isc_mempool_create(mctx, sizeof(filter_data_t), &inst->datapool);
-	CHECK(isc_ht_init(&inst->ht, mctx, 16));
+	isc_ht_init(&inst->ht, mctx, 16);
 	isc_mutex_init(&inst->hlock);
-
-	/*
-	 * Fill the mempool with 1K filter_aaaa state objects at
-	 * a time; ideally after a single allocation, the mempool will
-	 * have enough to handle all the simultaneous queries the system
-	 * requires and it won't be necessary to allocate more.
-	 *
-	 * We don't set any limit on the number of free state objects
-	 * so that they'll always be returned to the pool and not
-	 * freed until the pool is destroyed on shutdown.
-	 */
-	isc_mempool_setfillcount(inst->datapool, 1024);
-	isc_mempool_setfreemax(inst->datapool, UINT_MAX);
-	isc_mutex_init(&inst->plock);
-	isc_mempool_associatelock(inst->datapool, &inst->plock);
 
 	/*
 	 * Set hook points in the view's hooktable.
@@ -429,10 +409,6 @@ plugin_destroy(void **instp) {
 	if (inst->ht != NULL) {
 		isc_ht_destroy(&inst->ht);
 		isc_mutex_destroy(&inst->hlock);
-	}
-	if (inst->datapool != NULL) {
-		isc_mempool_destroy(&inst->datapool);
-		isc_mutex_destroy(&inst->plock);
 	}
 	if (inst->aaaa_acl != NULL) {
 		dns_acl_detach(&inst->aaaa_acl);
@@ -515,10 +491,7 @@ client_state_create(const query_ctx_t *qctx, filter_instance_t *inst) {
 	filter_data_t *client_state;
 	isc_result_t result;
 
-	client_state = isc_mempool_get(inst->datapool);
-	if (client_state == NULL) {
-		return;
-	}
+	client_state = isc_mem_get(inst->mctx, sizeof(*client_state));
 
 	client_state->mode = NONE;
 	client_state->flags = 0;
@@ -545,7 +518,7 @@ client_state_destroy(const query_ctx_t *qctx, filter_instance_t *inst) {
 	UNLOCK(&inst->hlock);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
-	isc_mempool_put(inst->datapool, client_state);
+	isc_mem_put(inst->mctx, client_state, sizeof(*client_state));
 }
 
 /*%

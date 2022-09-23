@@ -1,7 +1,9 @@
-/*	$NetBSD: managers.c,v 1.2 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: managers.c,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +13,6 @@
  * information regarding copyright ownership.
  */
 
-#include <isc/hp.h>
 #include <isc/managers.h>
 #include <isc/util.h>
 
@@ -24,12 +25,6 @@ isc_managers_create(isc_mem_t *mctx, size_t workers, size_t quantum,
 	isc_result_t result;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_nm_t *netmgr = NULL;
-
-	/*
-	 * We have ncpus network threads, ncpus old network threads - make
-	 * it 4x just to be on the safe side.
-	 */
-	isc_hp_init(4 * workers);
 
 	REQUIRE(netmgrp != NULL && *netmgrp == NULL);
 	isc__netmgr_create(mctx, workers, &netmgr);

@@ -1,7 +1,9 @@
-/*	$NetBSD: gssapictx.c,v 1.8 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +97,7 @@ static gss_OID_desc __gss_spnego_mechanism_oid_desc = {
 			goto out;            \
 	} while (0)
 
-static inline void
+static void
 name_to_gbuffer(const dns_name_t *name, isc_buffer_t *buffer,
 		gss_buffer_desc *gbuffer) {
 	dns_name_t tname;

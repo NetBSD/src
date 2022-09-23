@@ -1,7 +1,9 @@
-/*	$NetBSD: tkey.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.12 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,6 +228,9 @@ free_namelist(dns_message_t *msg, dns_namelist_t *namelist) {
 		while (!ISC_LIST_EMPTY(name->list)) {
 			set = ISC_LIST_HEAD(name->list);
 			ISC_LIST_UNLINK(name->list, set, link);
+			if (dns_rdataset_isassociated(set)) {
+				dns_rdataset_disassociate(set);
+			}
 			dns_message_puttemprdataset(msg, &set);
 		}
 		dns_message_puttempname(msg, &name);
@@ -1015,6 +1020,18 @@ failure:
 	}
 	if (dynbuf != NULL) {
 		isc_buffer_free(&dynbuf);
+	}
+	if (rdata != NULL) {
+		dns_message_puttemprdata(msg, &rdata);
+	}
+	if (tkeylist != NULL) {
+		dns_message_puttemprdatalist(msg, &tkeylist);
+	}
+	if (tkeyset != NULL) {
+		if (dns_rdataset_isassociated(tkeyset)) {
+			dns_rdataset_disassociate(tkeyset);
+		}
+		dns_message_puttemprdataset(msg, &tkeyset);
 	}
 	return (result);
 }

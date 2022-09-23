@@ -1,36 +1,31 @@
-/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.5 2020/05/24 19:46:21 christos Exp $	*/
+/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.6 2022/09/23 12:15:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2014 Maui Systems Ltd, Scotland, contact@maui-systems.co.uk.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * SPDX-License-Identifier: MPL-2.0 and ISC
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND MAUI SYSTEMS LTD DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL MAUI SYSTEMS LTD  BE
- * LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR
- * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 /*
- * Copyright (C) 2011,2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * The development of Dynamically Loadable Zones (DLZ) for Bind 9 was
+ * conceived and contributed by Rob Butler.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * Permission to use, copy, modify, and distribute this software for any purpose
+ * with or without fee is hereby granted, provided that the above copyright
+ * notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
  * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
@@ -63,9 +58,9 @@
 #include <dlz_minimal.h>
 #include <dlz_pthread.h>
 
-#if !defined(LIBMARIADB) && MYSQL_VERSION_ID >= 80000
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000
 typedef bool my_bool;
-#endif /* !defined(LIBMARIADB) && MYSQL_VERSION_ID >= 80000 */
+#endif /* !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000 */
 
 /*
  * The SQL queries that will be used for lookups and updates are defined
@@ -501,7 +496,7 @@ isrelative(const char *s) {
 }
 
 /* Return a dot if 's' doesn't already end with one */
-static inline const char *
+static const char *
 dot(const char *s) {
 	return (isrelative(s) ? "." : "");
 }
@@ -713,8 +708,9 @@ make_notify(const char *zone, int *packetlen) {
 	/* Make the question into labels */
 	j = 12;
 	while (packet[j]) {
-		for (i = j + 1; packet[i] != '\0' && packet[i] != '.'; i++)
+		for (i = j + 1; packet[i] != '\0' && packet[i] != '.'; i++) {
 			;
+		}
 		packet[j] = i - j - 1;
 		j = i;
 	}
@@ -1135,8 +1131,7 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 	}
 
 	/* Are we okay to try to find the txn version?  */
-	if (clientinfo != NULL && clientinfo->version >= DNS_CLIENTINFO_VERSION)
-	{
+	if (clientinfo != NULL && clientinfo->version >= 2) {
 		txn = (mysql_transaction_t *)clientinfo->dbversion;
 		if (txn != NULL && validate_txn(state, txn) == ISC_R_SUCCESS) {
 			dbi = txn->dbi;

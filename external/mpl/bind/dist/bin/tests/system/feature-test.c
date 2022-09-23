@@ -1,7 +1,9 @@
-/*	$NetBSD: feature-test.c,v 1.8 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.9 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +13,7 @@
  * information regarding copyright ownership.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,13 +29,9 @@
 #include <Winsock2.h>
 #endif /* ifdef WIN32 */
 
-#ifndef MAXHOSTNAMELEN
-#ifdef HOST_NAME_MAX
-#define MAXHOSTNAMELEN HOST_NAME_MAX
-#else /* ifdef HOST_NAME_MAX */
-#define MAXHOSTNAMELEN 256
-#endif /* ifdef HOST_NAME_MAX */
-#endif /* ifndef MAXHOSTNAMELEN */
+#ifndef _POSIX_HOST_NAME_MAX
+#define _POSIX_HOST_NAME_MAX 255
+#endif
 
 static void
 usage() {
@@ -86,7 +85,7 @@ main(int argc, char **argv) {
 	}
 
 	if (strcmp(argv[1], "--gethostname") == 0) {
-		char hostname[MAXHOSTNAMELEN];
+		char hostname[_POSIX_HOST_NAME_MAX + 1];
 		int n;
 #ifdef WIN32
 		/* From InitSocket() */

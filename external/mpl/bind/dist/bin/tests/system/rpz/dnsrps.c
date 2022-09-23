@@ -1,7 +1,9 @@
-/*	$NetBSD: dnsrps.c,v 1.5 2021/02/19 16:42:14 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.6 2022/09/23 12:15:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,8 +85,7 @@ main(int argc, char **argv) {
 #ifdef USE_DNSRPS
 			printf("%s\n", librpz->dnsrpzd_path);
 #else  /* ifdef USE_DNSRPS */
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 #endif /* ifdef USE_DNSRPS */
 			return (0);
 
@@ -134,8 +135,7 @@ main(int argc, char **argv) {
 			librpz->client_detach(&client);
 			printf("%u\n", serial);
 #else  /* ifdef USE_DNSRPS */
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 #endif /* ifdef USE_DNSRPS */
 			return (0);
 
