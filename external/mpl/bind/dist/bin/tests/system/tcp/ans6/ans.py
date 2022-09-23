@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 ############################################################################
 #
@@ -42,10 +42,11 @@ import time
 
 # Timeout for establishing all connections requested by a single 'open' command.
 OPEN_TIMEOUT = 2
-VERSION_QUERY = b'\x00\x1e\xaf\xb8\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07version\x04bind\x00\x00\x10\x00\x03'
+VERSION_QUERY = b"\x00\x1e\xaf\xb8\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07version\x04bind\x00\x00\x10\x00\x03"
+
 
 def log(msg):
-    print(datetime.datetime.now().strftime('%d-%b-%Y %H:%M:%S.%f ') + msg)
+    print(datetime.datetime.now().strftime("%d-%b-%Y %H:%M:%S.%f ") + msg)
 
 
 def open_connections(active_conns, count, host, port):
@@ -58,14 +59,14 @@ def open_connections(active_conns, count, host, port):
     except socket.error:
         family = socket.AF_INET6
 
-    log('Opening %d connections...' % count)
+    log("Opening %d connections..." % count)
 
     for _ in range(count):
         sock = socket.socket(family, socket.SOCK_STREAM)
         sock.setblocking(0)
         err = sock.connect_ex((host, port))
         if err not in (0, errno.EINPROGRESS):
-            log('%s on connect for socket %s' % (errno.errorcode[err], sock))
+            log("%s on connect for socket %s" % (errno.errorcode[err], sock))
             errors.append(sock)
         else:
             queued.append(sock)
@@ -81,35 +82,35 @@ def open_connections(active_conns, count, host, port):
             queued.remove(sock)
             err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             if err:
-                log('%s for socket %s' % (errno.errorcode[err], sock))
+                log("%s for socket %s" % (errno.errorcode[err], sock))
                 errors.append(sock)
             else:
                 sock.send(VERSION_QUERY)
                 active_conns.append(sock)
 
     if errors:
-        log('result=FAIL: %d connection(s) failed' % len(errors))
+        log("result=FAIL: %d connection(s) failed" % len(errors))
     elif queued:
-        log('result=FAIL: Timed out, aborting %d pending connections' % len(queued))
+        log("result=FAIL: Timed out, aborting %d pending connections" % len(queued))
         for sock in queued:
             sock.close()
     else:
-        log('result=OK: Successfully opened %d connections' % count)
+        log("result=OK: Successfully opened %d connections" % count)
 
 
 def close_connections(active_conns, count):
-    log('Closing %s connections...' % "all" if count == 0 else str(count))
+    log("Closing %s connections..." % "all" if count == 0 else str(count))
     if count == 0:
         count = len(active_conns)
     for _ in range(count):
         sock = active_conns.pop(0)
         sock.close()
-    log('result=OK: Successfully closed %d connections' % count)
+    log("result=OK: Successfully closed %d connections" % count)
 
 
 def sigterm(*_):
-    log('SIGTERM received, shutting down')
-    os.remove('ans.pid')
+    log("SIGTERM received, shutting down")
+    os.remove("ans.pid")
     sys.exit(0)
 
 
@@ -118,16 +119,16 @@ def main():
 
     signal.signal(signal.SIGTERM, sigterm)
 
-    with open('ans.pid', 'w') as pidfile:
+    with open("ans.pid", "w") as pidfile:
         print(os.getpid(), file=pidfile)
 
-    listenip = '10.53.0.6'
+    listenip = "10.53.0.6"
     try:
-        port = int(os.environ['CONTROLPORT'])
+        port = int(os.environ["CONTROLPORT"])
     except KeyError:
         port = 5309
 
-    log('Listening on %s:%d' % (listenip, port))
+    log("Listening on %s:%d" % (listenip, port))
 
     ctlsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ctlsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -136,21 +137,21 @@ def main():
 
     while True:
         (clientsock, _) = ctlsock.accept()
-        log('Accepted control connection from %s' % clientsock)
-        cmdline = clientsock.recv(512).decode('ascii').strip()
+        log("Accepted control connection from %s" % clientsock)
+        cmdline = clientsock.recv(512).decode("ascii").strip()
         if cmdline:
-            log('Received command: %s' % cmdline)
+            log("Received command: %s" % cmdline)
             cmd = cmdline.split()
-            if cmd[0] == 'open':
+            if cmd[0] == "open":
                 count, host, port = cmd[1:]
                 open_connections(active_conns, int(count), host, int(port))
-            elif cmd[0] == 'close':
-                (count, ) = cmd[1:]
+            elif cmd[0] == "close":
+                (count,) = cmd[1:]
                 close_connections(active_conns, int(count))
             else:
-                log('result=FAIL: Unknown command')
+                log("result=FAIL: Unknown command")
         clientsock.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

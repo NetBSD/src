@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. _getting_started:
 
@@ -18,90 +19,11 @@ Getting Started
 Software Requirements
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. _bind_version:
+This guide assumes BIND 9.16.9 or newer, although the more elaborate manual
+procedures do work with all versions of BIND later than 9.9.
 
-BIND Version
-^^^^^^^^^^^^
-
-Most configuration examples given in this document require BIND version
-9.16.0 or newer (although many do work with all versions of BIND
-later than 9.9). To check the version of ``named`` you have installed,
-use the ``-v`` switch as shown below:
-
-::
-
-   # named -v
-   BIND 9.16.0 (Stable Release) <id:6270e602ea>
-
-Some configuration examples are added in BIND version 9.17 and backported
-to 9.16. For example, NSEC3 configuration requires BIND version 9.16.9.
-
-We recommend you run the latest stable version to get the most complete
-DNSSEC configuration, as well as the latest security fixes.
-
-.. _dnssec_support_in_bind:
-
-DNSSEC Support in BIND
-^^^^^^^^^^^^^^^^^^^^^^
-
-All versions of BIND 9 since BIND 9.7 can support DNSSEC, as currently
-deployed in the global DNS, so the BIND software you are running most
-likely already supports DNSSEC. Run the command ``named -V``
-to see what flags it was built with. If it was built with OpenSSL
-(``--with-openssl``), then it supports DNSSEC. Below is an example
-of the output from running ``named -V``:
-
-::
-
-   $ named -V
-   BIND 9.16.0 (Stable Release) <id:6270e602ea>
-   running on Linux x86_64 4.9.0-9-amd64 #1 SMP Debian 4.9.168-1+deb9u4 (2019-07-19)
-   built by make with defaults
-   compiled by GCC 6.3.0 20170516
-   compiled with OpenSSL version: OpenSSL 1.1.0l  10 Sep 2019
-   linked to OpenSSL version: OpenSSL 1.1.0l  10 Sep 2019
-   compiled with libxml2 version: 2.9.4
-   linked to libxml2 version: 20904
-   compiled with json-c version: 0.12.1
-   linked to json-c version: 0.12.1
-   compiled with zlib version: 1.2.8
-   linked to zlib version: 1.2.8
-   threads support is enabled
-
-   default paths:
-     named configuration:  /usr/local/etc/named.conf
-     rndc configuration:   /usr/local/etc/rndc.conf
-     DNSSEC root key:      /usr/local/etc/bind.keys
-     nsupdate session key: /usr/local/var/run/named/session.key
-     named PID file:       /usr/local/var/run/named/named.pid
-     named lock file:      /usr/local/var/run/named/named.lock
-
-If the BIND 9 software you have does not support DNSSEC, you should
-upgrade it. (It has not been possible to build BIND without DNSSEC
-support since BIND 9.13, released in 2018.) As well as missing out on
-DNSSEC support, you are also missing a number of security fixes
-made to the software in recent years.
-
-.. _system_entropy:
-
-System Entropy
-^^^^^^^^^^^^^^
-
-To deploy DNSSEC to your authoritative server, you
-need to generate cryptographic keys. The amount of time it takes to
-generate the keys depends on the source of randomness, or entropy, on
-your systems. On some systems (especially virtual machines) with
-insufficient entropy, it may take much longer than one cares to wait to
-generate keys.
-
-There are software packages, such as ``haveged`` for Linux, that
-provide additional entropy for a system. Once installed, they
-significantly reduce the time needed to generate keys.
-
-The more entropy there is, the better pseudo-random numbers you get, and
-the stronger the keys that are generated. If you want or need high-quality random
-numbers, take a look at :ref:`hardware_security_modules` for some of
-the hardware-based solutions.
+We recommend running the latest stable version to get the most
+complete DNSSEC configuration, as well as the latest security fixes.
 
 .. _hardware_requirements:
 
@@ -116,33 +38,22 @@ Recursive Server Hardware
 Enabling DNSSEC validation on a recursive server makes it a *validating
 resolver*. The job of a validating resolver is to fetch additional
 information that can be used to computationally verify the answer set.
-Below are the areas that should be considered for possible hardware
-enhancement for a validating resolver:
+Contrary to popular belief, the increase in resource consumption is very modest:
 
-1. *CPU*: a validating resolver executes cryptographic functions on many
-   of the answers returned, which usually leads to increased CPU usage,
-   unless your recursive server has built-in hardware to perform
-   cryptographic computations.
+1. *CPU*: a validating resolver executes cryptographic functions on cache-miss
+   answers, which leads to increased CPU usage. Thanks to standard DNS caching
+   and contemporary CPUs, the increase in CPU-time consumption in a steady
+   state is negligible - typically on the order of 5%. For a brief period (a few
+   minutes) after the resolver starts, the increase might be as much as 20%, but it
+   quickly decreases as the DNS cache fills in.
 
 2. *System memory*: DNSSEC leads to larger answer sets and occupies
-   more memory space.
+   more memory space. With typical ISP traffic and the state of the Internet as
+   of mid-2022, memory consumption for the cache increases by roughly 20%.
 
 3. *Network interfaces*: although DNSSEC does increase the amount of DNS
-   traffic overall, it is unlikely that you need to upgrade your network
-   interface card (NIC) on the name server unless you have some truly
-   outdated hardware.
-
-One factor to consider is the destinations of your current DNS
-traffic. If your current users spend a lot of time visiting ``.gov`` 
-websites, you should expect a jump in all of the above
-categories when validation is enabled, because ``.gov`` is more than 90%
-signed. This means that more than 90% of the time, your validating resolver
-will be doing what is described in
-:ref:`how_does_dnssec_change_dns_lookup`. However, if your users
-only care about resources in the ``.com`` domain, which, as of mid-2020,
-is under 1.5% signed [#]_, your recursive name server is unlikely
-to experience a significant load increase after enabling DNSSEC
-validation.
+   traffic overall, in practice this increase is often within measurement
+   error.
 
 .. _authoritative_server_hardware:
 
@@ -151,8 +62,8 @@ Authoritative Server Hardware
 
 On the authoritative server side, DNSSEC is enabled on a zone-by-zone
 basis. When a zone is DNSSEC-enabled, it is also known as "signed."
-Below are the areas to consider for possible hardware
-enhancements for an authoritative server with signed zones:
+Below are the expected changes to resource consumption caused by serving
+DNSSEC-signed zones:
 
 1. *CPU*: a DNSSEC-signed zone requires periodic re-signing, which is a
    cryptographic function that is CPU-intensive. If your DNS zone is
@@ -161,12 +72,17 @@ enhancements for an authoritative server with signed zones:
 2. *System storage*: A signed zone is definitely larger than an unsigned
    zone. How much larger? See
    :ref:`your_zone_before_and_after_dnssec` for a comparison
-   example. Roughly speaking, you should expect your zone file to grow by at
-   least three times, and frequently more.
+   example. The final size depends on the structure of the zone, the signing algorithm,
+   the number of keys, the choice of NSEC or NSEC3, the ratio of signed delegations, the zone file
+   format, etc. Usually, the size of a signed zone ranges from a negligible
+   increase to as much as three times the size of the unsigned zone.
 
 3. *System memory*: Larger DNS zone files take up not only more storage
    space on the file system, but also more space when they are loaded
-   into system memory.
+   into system memory. The final memory consumption also depends on all the
+   variables listed above: in the typical case the increase is around half of
+   the unsigned zone memory consumption, but it can be as high as three times
+   for some corner cases.
 
 4. *Network interfaces*: While your authoritative name servers will
    begin sending back larger responses, it is unlikely that you need to
@@ -174,17 +90,12 @@ enhancements for an authoritative server with signed zones:
    you have some truly outdated hardware.
 
 One factor to consider, but over which you really have no control, is
-the number of users who query your domain name who themselves have DNSSEC enabled. It was
-estimated in late 2014 that roughly 10% to 15% of the Internet DNS
-queries were DNSSEC-aware. Estimates by `APNIC <https://www.apnic.net/>`__
-suggest that in 2020 about `one-third <https://stats.labs.apnic.net/dnssec>`__ of all queries are
-validating queries, although the percentage varies widely on a
-per-country basis. This means that more DNS queries for your domain will
+the number of users who query your domain name who themselves have DNSSEC
+enabled. As of mid-2022, measurements by `APNIC
+<https://stats.labs.apnic.net/dnssec>`__ show 41% of Internet users send
+DNSSEC-aware queries. This means that more DNS queries for your domain will
 take advantage of the additional security features, which will result in
 increased system load and possibly network traffic.
-
-.. [#]
-   https://rick.eng.br/dnssecstat
 
 .. _network_requirements:
 

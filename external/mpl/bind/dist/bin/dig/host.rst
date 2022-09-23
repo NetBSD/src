@@ -1,23 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -77,7 +67,7 @@ Options
    This option prints debugging traces, and is equivalent to the ``-v`` verbose option.
 
 ``-l``
-   This option tells ``named` to list the zone, meaning the ``host`` command performs a zone transfer of zone
+   This option tells ``named`` to list the zone, meaning the ``host`` command performs a zone transfer of zone
    ``name`` and prints out the NS, PTR, and address records (A/AAAA).
 
    Together, the ``-l -a`` options print all records in the zone.

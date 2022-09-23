@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. _dnssec_advanced_discussions:
 
@@ -100,6 +101,7 @@ To solve this problem, two different solutions were created. We will
 look at the first one, NSEC, next.
 
 .. _advanced_discussions_nsec:
+.. _NSEC:
 
 NSEC
 ^^^^
@@ -123,7 +125,7 @@ So we end up with four NSEC records:
 
 ::
 
-   example.com.        300   IN  NSEC    alice.example.com.  A RRSIG NSEC
+   example.com.        300 IN  NSEC    alice.example.com.  A RRSIG NSEC
    alice.example.com.  300 IN  NSEC    edward.example.com. A RRSIG NSEC
    edward.example.com. 300 IN  NSEC    susan.example.com.  A RRSIG NSEC
    susan.example.com.  300 IN  NSEC    example.com.        A RRSIG NSEC
@@ -167,13 +169,15 @@ phone book: if you don't want a name to be known publicly, don't put it
 in DNS! Consider using DNS views (split DNS) and only display your
 sensitive names to a select audience.
 
-The second drawback of NSEC is actually increased operational
-overhead: there is no opt-out mechanism for insecure child zones. This generally
-is a problem for parent-zone operators dealing with a lot of insecure
-child zones, such as ``.com``. To learn more about opt-out, please see
-:ref:`advanced_discussions_nsec3_optout`.
+The second potential drawback of NSEC is a bigger zone file and memory consumption;
+there is no opt-out mechanism for insecure child zones, so each name
+in the zone will get an additional NSEC record and a RRSIG record to go with
+it. In practice this is a problem only for parent-zone operators dealing with
+mostly insecure child zones, such as ``com.``. To learn more about opt-out,
+please see :ref:`advanced_discussions_nsec3_optout`.
 
 .. _advanced_discussions_nsec3:
+.. _nsec3:
 
 NSEC3
 ^^^^^
@@ -203,7 +207,7 @@ back into the ribeye steak: that's what we call a one-way hash.
 
 NSEC3 basically runs the names through a one-way hash before giving them
 out, so the recipients can verify the non-existence without any
-knowledge of the actual names.
+knowledge of the other names in the zone.
 
 So let's tell our little story for the third time, this
 time with NSEC3. In this version, our intern is not given a list of actual
@@ -227,99 +231,129 @@ ease of display):
 
 ::
 
-   FSK5....example.com. 300 IN NSEC3 1 0 10 1234567890ABCDEF  JKMA... A RRSIG
-   JKMA....example.com. 300 IN NSEC3 1 0 10 1234567890ABCDEF  NTQ0... A RRSIG
-   NTQ0....example.com. 300 IN NSEC3 1 0 10 1234567890ABCDEF  FSK5... A RRSIG
+   FSK5....example.com. 300 IN NSEC3 1 0 0 -  JKMA... A RRSIG
+   JKMA....example.com. 300 IN NSEC3 1 0 0 -  NTQ0... A RRSIG
+   NTQ0....example.com. 300 IN NSEC3 1 0 0 -  FSK5... A RRSIG
 
 .. note::
 
    Just because we employed one-way hash functions does not mean there is
    no way for a determined individual to figure out our zone data.
-   Someone could still gather all of our NSEC3 records and hashed
-   names and perform an offline brute-force attack by trying all
-   possible combinations to figure out what the original name is. In our
-   meat-grinder analogy, this would be like someone
-   buying all available cuts of meat and grinding them up at home using
-   the same model of meat grinder, and comparing the output with the meat
-   you gave him. It is expensive and time-consuming (especially with
-   real meat), but like everything else in cryptography, if someone has
-   enough resources and time, nothing is truly private forever. If you
-   are concerned about someone performing this type of attack on your
-   zone data, read more about adding salt as described in
-   :ref:`advanced_discussions_nsec3_salt`.
+
+Most names published in the DNS are rarely secret or unpredictable. They are
+published to be memorable, used and consumed by humans. They are often recorded
+in many other network logs such as email logs, certificate transparency logs,
+web page links, intrusion detection systems, malware scanners, email archives,
+etc. Many times a simple dictionary of commonly used domain-name prefixes
+(www, mail, imap, login, database, etc.) can be used to quickly reveal a large
+number of labels within a zone. Additionally, if an adversary really wants to
+expend significant CPU resources to mount an offline dictionary attack on a
+zone's NSEC3 chain, they will likely be able to find most of the "guessable"
+names despite any level of hashing.
+
+Also, it is still possible to gather all of our NSEC3 records and hashed
+names and perform an offline brute-force attack by trying all
+possible combinations to figure out what the original name is. In our
+meat-grinder analogy, this would be like someone
+buying all available cuts of meat and grinding them up at home using
+the same model of meat grinder, and comparing the output with the meat
+you gave him. It is expensive and time-consuming (especially with
+real meat), but like everything else in cryptography, if someone has
+enough resources and time, nothing is truly private forever. If you
+are concerned about someone performing this type of attack on your
+zone data, use some of the special techniques described in :rfc:`4470`.
 
 .. _advanced_discussions_nsec3param:
 
 NSEC3PARAM
 ++++++++++
 
-The above NSEC3 examples used four parameters: 1, 0, 10, and
-1234567890ABCDEF. 1 represents the algorithm, 0 represents the opt-out
-flag, 10 represents the number of iterations, and 1234567890ABCDEF is the
+.. warning::
+   Before we dive into the details of NSEC3 parametrization, please note:
+   the defaults should not be changed without a strong justification and a full
+   understanding of the potential impact.
+
+The above NSEC3 examples used four parameters: 1, 0, 0, and
+zero-length salt. 1 represents the algorithm, 0 represents the opt-out
+flag, 0 represents the number of additional iterations, and - is the
 salt. Let's look at how each one can be configured:
 
--  *Algorithm*: The only currently defined value is 1 for SHA-1, so there
-   is no configuration field for it.
+.. glossary::
 
--  *Opt-out*: Set this to 1 for NSEC3 opt-out, which we
-   discuss in :ref:`advanced_discussions_nsec3_optout`.
+   Algorithm
+   NSEC3 Hashing Algorithm
+      The only currently defined value is 1 for SHA-1, so there
+      is no configuration field for it.
 
--  *Iterations*: Iterations defines the number of additional times to
-   apply the algorithm when generating an NSEC3 hash. More iterations
-   yield more secure results, but consume more resources for both
-   authoritative servers and validating resolvers. The considerations
-   here are similar to those seen in :ref:`key_sizes`, of
-   security versus resources.
+   Opt-out
+      Setting this bit to 1 enables NSEC3 opt-out, which is
+      discussed in :ref:`advanced_discussions_nsec3_optout`.
 
--  *Salt*: The salt cannot be configured explicitly, but you can provide
-   a salt length and ``named`` generates a random salt of the given length.
-   We learn more about salt in :ref:`advanced_discussions_nsec3_salt`.
+   Iterations
+      Iterations defines the number of _additional_ times to
+      apply the algorithm when generating an NSEC3 hash. More iterations
+      consume more resources for both authoritative servers and validating
+      resolvers. The considerations here are similar to those seen in
+      :ref:`key_sizes`, of security versus resources.
 
-If you want to use these NSEC3 parameters for a zone, you can add the
-following configuration to your ``dnssec-policy``. For example, to create an
-NSEC3 chain using the SHA-1 hash algorithm, with no opt-out flag,
-5 iterations, and a salt that is 8 characters long, use:
+      .. warning::
+         Do not use values higher than zero. A value of zero provides one round
+         of SHA-1 hashing and protects from non-determined attackers.
 
-::
+         A greater number of additional iterations causes interoperability problems
+         and opens servers to CPU-exhausting DoS attacks, while providing
+         only doubtful security benefits.
 
-   dnssec-policy "nsec3" {
-       ...
-       nsec3param iterations 5 optout no salt-length 8;
-   };
-
-To set the opt-out flag, 15 iterations, and no salt, use:
-
-::
-
-   dnssec-policy "nsec3" {
-       ...
-       nsec3param iterations 15 optout yes salt-length 0;
-   };
+   Salt
+      A salt value, which can be combined with an FQDN to influence the
+      resulting hash. Salt is discussed in more detail in
+      :ref:`advanced_discussions_nsec3_salt`.
 
 .. _advanced_discussions_nsec3_optout:
 
 NSEC3 Opt-Out
 +++++++++++++
 
-One of the advantages of NSEC3 over NSEC is the ability for a parent zone
-to publish less information about its child or delegated zones. Why
-would you ever want to do that? If a significant number of your
-delegations are not yet DNSSEC-aware, meaning they are still insecure or
-unsigned, generating DNSSEC-records for their NS and glue records is not
-a good use of your precious name server resources.
+First things first: For most DNS administrators who do not manage a huge number
+of insecure delegations, the NSEC3 opt-out featuere is not relevant.
 
-The resources may not seem like a lot, but imagine that you are the
-operator of busy top-level domains such as ``.com`` or ``.net``, with
-millions of insecure delegated domain names: it quickly
-adds up. As of mid-2020, less than 1.5% of all ``.com`` zones are
-signed. Basically, without opt-out, with 1,000,000 delegations,
-only 5 of which are secure, you still have to generate NSEC RRsets for
-the other 999,995 delegations; with NSEC3 opt-out, you will have saved
-yourself 999,995 sets of records.
+Opt-out allows for blocks of unsigned delegations to be covered by a single NSEC3
+record. In other words, use of the opt-out allows large registries to only sign as
+many NSEC3 records as there are signed DS or other RRsets in the zone; with
+opt-out, unsigned delegations do not require additional NSEC3 records. This
+sacrifices the tamper-resistance proof of non-existence offered by NSEC3 in
+order to reduce memory and CPU overheads, and decreases the effectiveness of the cache
+(:rfc:`8198`).
 
-For most DNS administrators who do not manage a large number of
-delegations, the decision whether to use NSEC3 opt-out is
-probably not relevant.
+Why would that ever be desirable? If a significant number of delegations
+are not yet securely delegated, meaning they lack DS records and are still
+insecure or unsigned, generating DNSSEC records for all their NS records
+might consume lots of memory and is not strictly required by the child zones.
+
+This resource-saving typically makes a difference only for *huge* zones like ``com.``.
+Imagine that you are the operator of busy top-level domains such as ``com.``,
+with millions of insecure delegated domain names.
+As of mid-2022, around 3% of all ``com.`` zones are signed. Basically,
+without opt-out, with 1,000,000 delegations, only 30,000 of which are secure, you
+still have to generate NSEC RRsets for the other 970,000 delegations; with
+NSEC3 opt-out, you will have saved yourself 970,000 sets of records.
+
+In contrast, for a small zone the difference is operationally negligible
+and the drawbacks outweigh the benefits.
+
+If NSEC3 opt-out is truly essential for a zone, the following
+configuration can be added to ``dnssec-policy``; for example, to create an
+NSEC3 chain using the SHA-1 hash algorithm, with the opt-out flag,
+no additional iterations, and no extra salt, use:
+
+.. code-block:: none
+
+   dnssec-policy "nsec3" {
+       ...
+       nsec3param iterations 0 optout yes salt-length 0;
+   };
+
+
 
 To learn more about how to configure NSEC3 opt-out, please see
 :ref:`recipes_nsec3_optout`.
@@ -329,50 +363,35 @@ To learn more about how to configure NSEC3 opt-out, please see
 NSEC3 Salt
 ++++++++++
 
-As described in :ref:`advanced_discussions_nsec3`, while NSEC3
-does not put your zone data in plain public display, it is still not
-difficult for an attacker to collect all the hashed names and perform
-an offline attack. All that is required is running through all the
-combinations to construct a database of plaintext names to hashed names,
-also known as a "rainbow table."
+.. warning::
+   Contrary to popular belief, adding salt provides little value.
+   Each DNS zone is always uniquely salted using the zone name. **Operators should
+   use a zero-length salt value.**
 
-There is one more feature NSEC3 gives us to provide additional
-protection: salt. Basically, salt gives us the ability to introduce further
-randomness into the hashed results. Whenever the salt is changed, any
-pre-computed rainbow table is rendered useless, and a new rainbow table
-must be re-computed. If the salt is changed periodically, it
-becomes difficult to construct a useful rainbow table, and thus difficult to
-walk the DNS zone data programmatically. How often you want to change
-your NSEC3 salt is up to you.
-
-To learn more about the steps to take to change NSEC3, please see
-:ref:`recipes_nsec3_salt`.
+The properties of this extra salt are complicated and beyond scope of this
+document. For detailed description why the salt in the context of DNSSEC
+provides little value please see `IETF draft ietf-dnsop-nsec3-guidance version
+10 section 2.4
+<https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-nsec3-guidance-10#section-2.4>`__.
 
 .. _advanced_discussions_nsec_or_nsec3:
 
 NSEC or NSEC3?
 ^^^^^^^^^^^^^^
 
-So which one should you choose: NSEC or NSEC3? There is not a
-single right answer here that fits everyone; it comes down to your
-network's needs or requirements.
+So which is better: NSEC or NSEC3? There is no single right
+answer here that fits everyone; it comes down to a given network's needs or
+requirements.
 
-If you prefer not to make your zone easily enumerable, implementing
-NSEC3 paired with a periodically changed salt provides a certain
-level of privacy protection. However, someone could still randomly guess
-the names in your zone (such as "ftp" or "www"), as in the traditional
-insecure DNS.
+In most cases, NSEC is a good choice for zone administrators. It
+relieves the authoritative servers and resolver of the additional cryptographic
+operations that NSEC3 requires, and NSEC is comparatively easier to
+troubleshoot than NSEC3.
 
-If you have many delegations and need to be able to opt-out to save
-resources, NSEC3 is for you.
-
-In other situations, NSEC is typically a good choice for most zone
-administrators, as it relieves the authoritative servers of the
-additional cryptographic operations that NSEC3 requires, and NSEC is
-comparatively easier to troubleshoot than NSEC3.
-
-NSEC3 in conjunction with ``dnssec-policy`` is supported in BIND
-as of version 9.16.9.
+NSEC3 comes with many drawbacks and should be implemented only if zone
+enumeration prevention is really needed, or when opt-out provides a
+significant reduction in memory and CPU overheads (in other words, with a
+huge zone with mostly insecure delegations).
 
 .. _advanced_discussions_key_generation:
 
@@ -1048,7 +1067,7 @@ Below are a few challenges and disadvantages that DNSSEC faces.
    actually signed. What this means is, even if your company's zone is
    signed today, fewer than 30% of the Internet's servers are taking
    advantage of this extra security. It gets worse: with less than 1.5%
-   of the ``.com`` domains signed, even if your DNSSEC validation is enabled today,
+   of the ``com.`` domains signed, even if your DNSSEC validation is enabled today,
    it's not likely to buy you or your users a whole lot more protection
    until these popular domain names decide to sign their zones.
 

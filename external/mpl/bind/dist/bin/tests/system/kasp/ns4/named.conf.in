@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -73,20 +75,22 @@ view "inherit" {
 	zone "inherit.inherit.signed" {
 		type primary;
 		file "inherit.inherit.signed.db";
+		inline-signing yes;
 	};
 
 	/* Override dnssec-policy */
 	zone "override.inherit.signed" {
 		type primary;
-		dnssec-policy "default";
 		file "override.inherit.signed.db";
+		inline-signing yes;
+		dnssec-policy "default";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.inherit.signed" {
 		type primary;
-		dnssec-policy "none";
 		file "none.inherit.signed.db";
+		dnssec-policy "none";
 	};
 };
 
@@ -98,20 +102,22 @@ view "override" {
 	zone "inherit.override.signed" {
 		type primary;
 		file "inherit.override.signed.db";
+		inline-signing yes;
 	};
 
 	/* Override dnssec-policy */
 	zone "override.override.signed" {
 		type primary;
-		dnssec-policy "test";
 		file "override.override.signed.db";
+		inline-signing yes;
+		dnssec-policy "test";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.override.signed" {
 		type primary;
-		dnssec-policy "none";
 		file "none.override.signed.db";
+		dnssec-policy "none";
 	};
 };
 
@@ -128,20 +134,23 @@ view "none" {
 	/* Override dnssec-policy */
 	zone "override.none.signed" {
 		type primary;
-		dnssec-policy "test";
 		file "override.none.signed.db";
+		inline-signing yes;
+		dnssec-policy "test";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.none.signed" {
 		type primary;
-		dnssec-policy "none";
 		file "none.none.signed.db";
+		dnssec-policy "none";
 	};
 };
 
 view "example1" {
 	match-clients { key "keyforview1"; };
+
+	allow-update { any; };
 
 	zone "example.net" {
 		type primary;
@@ -155,6 +164,7 @@ view "example2" {
 	zone "example.net" {
 		type primary;
 		file "example2.db";
+		inline-signing yes;
 	};
 };
 

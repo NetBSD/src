@@ -1,23 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -52,20 +42,16 @@ Options
    be one of RSASHA1, NSEC3RSASHA1, RSASHA256, RSASHA512,
    ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448.
 
-   If no algorithm is specified, RSASHA1 is used by default
-   unless the ``-3`` option is specified, in which case NSEC3RSASHA1
-   is used instead. (If ``-3`` is used and an algorithm is
-   specified, that algorithm is checked for compatibility with
-   NSEC3.)
-
    These values are case-insensitive. In some cases, abbreviations are
    supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
    ECDSAP384SHA384. If RSASHA1 is specified along with the ``-3``
    option, then NSEC3RSASHA1 is used instead.
 
-   Since BIND 9.12.0, this option is mandatory except when using the
+   This option is mandatory except when using the
    ``-S`` option, which copies the algorithm from the predecessory key.
-   Previously, the default for newly generated keys was RSASHA1.
+
+   .. versionchanged:: 9.12.0
+      The default value RSASHA1 for newly generated keys was removed.
 
 ``-3``
    This option uses an NSEC3-capable algorithm to generate a DNSSEC key. If this

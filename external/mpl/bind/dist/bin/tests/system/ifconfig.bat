@@ -1,10 +1,15 @@
 echo off
 rem
-rem Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+rem Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+rem 
+rem SPDX-License-Identifier: MPL-2.0
 rem 
 rem This Source Code Form is subject to the terms of the Mozilla Public
 rem License, v. 2.0. If a copy of the MPL was not distributed with this
-rem file, You can obtain one at http://mozilla.org/MPL/2.0/.
+rem file, you can obtain one at https://mozilla.org/MPL/2.0/.
+rem 
+rem See the COPYRIGHT file distributed with this work for additional
+rem information regarding copyright ownership.
 
 rem ifconfig.bat
 rem Set up interface aliases for bind9 system tests.

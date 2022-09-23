@@ -2,6 +2,8 @@
 #
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -192,19 +194,19 @@ then
 		printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
 	}
 	echo_i() {
-	    printf '%s\n' "$*" | while read -r __LINE ; do
+	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
 	       echoinfo "I:$SYSTESTDIR:$__LINE"
 	    done
 	}
 
 	echo_ic() {
-	    printf '%s\n' "$*" | while read -r __LINE ; do
+	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
 	       echoinfo "I:$SYSTESTDIR:  $__LINE"
 	    done
 	}
 
 	echo_d() {
-	    printf '%s\n' "$*" | while read -r __LINE ; do
+	    printf '%s\n' "$*" | while IFS= read -r __LINE ; do
 	       echoinfo "D:$SYSTESTDIR:$__LINE"
 	    done
 	}
@@ -229,32 +231,32 @@ else
 	}
 
 	echo_i() {
-	    echo "$@" | while read -r __LINE ; do
+	    echo "$@" | while IFS= read -r __LINE ; do
 	       echoinfo "I:$SYSTESTDIR:$__LINE"
 	    done
 	}
 
 	echo_ic() {
-	    echo "$@" | while read -r __LINE ; do
+	    echo "$@" | while IFS= read -r __LINE ; do
 	       echoinfo "I:$SYSTESTDIR:  $__LINE"
 	    done
 	}
 
 	echo_d() {
-	    echo "$@" | while read -r __LINE ; do
+	    echo "$@" | while IFS= read -r __LINE ; do
 	       echoinfo "D:$SYSTESTDIR:$__LINE"
 	    done
 	}
 fi
 
 cat_i() {
-    while read -r __LINE ; do
+    while IFS= read -r __LINE ; do
        echoinfo "I:$SYSTESTDIR:$__LINE"
     done
 }
 
 cat_d() {
-    while read -r __LINE ; do
+    while IFS= read -r __LINE ; do
        echoinfo "D:$SYSTESTDIR:$__LINE"
     done
 }
@@ -300,6 +302,9 @@ ALTERNATIVE_BITS=1280
 DISABLED_ALGORITHM=ECDSAP384SHA384
 DISABLED_ALGORITHM_NUMBER=14
 DISABLED_BITS=384
+
+# Default HMAC algorithm.
+DEFAULT_HMAC=hmac-sha256
 
 #
 # Useful functions in test scripts
@@ -710,6 +715,7 @@ copy_setports() {
         -e "s/${atsign}ALTERNATIVE_ALGORITHM${atsign}/${ALTERNATIVE_ALGORITHM}/g" \
         -e "s/${atsign}ALTERNATIVE_ALGORITHM_NUMBER${atsign}/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
         -e "s/${atsign}ALTERNATIVE_BITS${atsign}/${ALTERNATIVE_BITS}/g" \
+        -e "s/${atsign}DEFAULT_HMAC${atsign}/${DEFAULT_HMAC}/g" \
         -e "s/${atsign}DISABLED_ALGORITHM${atsign}/${DISABLED_ALGORITHM}/g" \
         -e "s/${atsign}DISABLED_ALGORITHM_NUMBER${atsign}/${DISABLED_ALGORITHM_NUMBER}/g" \
         -e "s/${atsign}DISABLED_BITS${atsign}/${DISABLED_BITS}/g" \

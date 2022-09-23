@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 import os
 import time
@@ -19,48 +19,73 @@ from subprocess import Popen, PIPE
 ########################################################################
 class TimePast(Exception):
     def __init__(self, key, prop, value):
-        super(TimePast, self).__init__('%s time for key %s (%d) is already past'
-                                       % (prop, key, value))
+        super(TimePast, self).__init__(
+            "%s time for key %s (%d) is already past" % (prop, key, value)
+        )
+
 
 class dnskey:
     """An individual DNSSEC key.  Identified by path, name, algorithm, keyid.
     Contains a dictionary of metadata events."""
 
-    _PROPS = ('Created', 'Publish', 'Activate', 'Inactive', 'Delete',
-              'Revoke', 'DSPublish', 'SyncPublish', 'SyncDelete')
-    _OPTS = (None, '-P', '-A', '-I', '-D', '-R', None, '-Psync', '-Dsync')
+    _PROPS = (
+        "Created",
+        "Publish",
+        "Activate",
+        "Inactive",
+        "Delete",
+        "Revoke",
+        "DSPublish",
+        "SyncPublish",
+        "SyncDelete",
+    )
+    _OPTS = (None, "-P", "-A", "-I", "-D", "-R", None, "-Psync", "-Dsync")
 
-    _ALGNAMES = (None, 'RSAMD5', 'DH', 'DSA', None, 'RSASHA1',
-                 'NSEC3DSA', 'NSEC3RSASHA1', 'RSASHA256', None,
-                 'RSASHA512', None, 'ECCGOST', 'ECDSAP256SHA256',
-                 'ECDSAP384SHA384', 'ED25519', 'ED448')
+    _ALGNAMES = (
+        None,
+        "RSAMD5",
+        "DH",
+        "DSA",
+        None,
+        "RSASHA1",
+        "NSEC3DSA",
+        "NSEC3RSASHA1",
+        "RSASHA256",
+        None,
+        "RSASHA512",
+        None,
+        "ECCGOST",
+        "ECDSAP256SHA256",
+        "ECDSAP384SHA384",
+        "ED25519",
+        "ED448",
+    )
 
     def __init__(self, key, directory=None, keyttl=None):
         # this makes it possible to use algname as a class or instance method
         if isinstance(key, tuple) and len(key) == 3:
-            self._dir = directory or '.'
+            self._dir = directory or "."
             (name, alg, keyid) = key
             self.fromtuple(name, alg, keyid, keyttl)
 
-        self._dir = directory or os.path.dirname(key) or '.'
+        self._dir = directory or os.path.dirname(key) or "."
         key = os.path.basename(key)
-        (name, alg, keyid) = key.split('+')
+        (name, alg, keyid) = key.split("+")
         name = name[1:-1]
         alg = int(alg)
-        keyid = int(keyid.split('.')[0])
+        keyid = int(keyid.split(".")[0])
         self.fromtuple(name, alg, keyid, keyttl)
 
     def fromtuple(self, name, alg, keyid, keyttl):
-        if name.endswith('.'):
+        if name.endswith("."):
             fullname = name
-            name = name.rstrip('.')
+            name = name.rstrip(".")
         else:
-            fullname = name + '.'
+            fullname = name + "."
 
         keystr = "K%s+%03d+%05d" % (fullname, alg, keyid)
-        key_file = self._dir + (self._dir and os.sep or '') + keystr + ".key"
-        private_file = (self._dir + (self._dir and os.sep or '') +
-                        keystr + ".private")
+        key_file = self._dir + (self._dir and os.sep or "") + keystr + ".key"
+        private_file = self._dir + (self._dir and os.sep or "") + keystr + ".private"
 
         self.keystr = keystr
 
@@ -71,13 +96,13 @@ class dnskey:
 
         kfp = open(key_file, "r")
         for line in kfp:
-            if line[0] == ';':
+            if line[0] == ";":
                 continue
             tokens = line.split()
             if not tokens:
                 continue
 
-            if tokens[1].lower() in ('in', 'ch', 'hs'):
+            if tokens[1].lower() in ("in", "ch", "hs"):
                 septoken = 3
                 self.ttl = keyttl
             else:
@@ -90,7 +115,7 @@ class dnskey:
                 self.sep = False
         kfp.close()
 
-        pfp = open(private_file, "rU")
+        pfp = open(private_file, "r")
 
         self.metadata = dict()
         self._changed = dict()
@@ -103,9 +128,9 @@ class dnskey:
 
         for line in pfp:
             line = line.strip()
-            if not line or line[0] in ('!#'):
+            if not line or line[0] in ("!#"):
                 continue
-            punctuation = [line.find(c) for c in ':= '] + [len(line)]
+            punctuation = [line.find(c) for c in ":= "] + [len(line)]
             found = min([pos for pos in punctuation if pos != -1])
             name = line[:found].rstrip()
             value = line[found:].lstrip(":= ").rstrip()
@@ -128,7 +153,7 @@ class dnskey:
         pfp.close()
 
     def commit(self, settime_bin, **kwargs):
-        quiet = kwargs.get('quiet', False)
+        quiet = kwargs.get("quiet", False)
         cmd = []
         first = True
 
@@ -143,31 +168,48 @@ class dnskey:
             if prop in self._delete and self._delete[prop]:
                 delete = True
 
-            when = 'none' if delete else self._fmttime[prop]
+            when = "none" if delete else self._fmttime[prop]
             cmd += [opt, when]
             first = False
 
         if cmd:
-            fullcmd = [settime_bin, "-K", self._dir] + cmd + [self.keystr,]
+            fullcmd = (
+                [settime_bin, "-K", self._dir]
+                + cmd
+                + [
+                    self.keystr,
+                ]
+            )
             if not quiet:
-                print('# ' + ' '.join(fullcmd))
+                print("# " + " ".join(fullcmd))
             try:
                 p = Popen(fullcmd, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = p.communicate()
                 if stderr:
                     raise Exception(str(stderr))
             except Exception as e:
-                raise Exception('unable to run %s: %s' %
-                                (settime_bin, str(e)))
+                raise Exception("unable to run %s: %s" % (settime_bin, str(e)))
             self._origttl = None
             for prop in dnskey._PROPS:
                 self._original[prop] = self._timestamps[prop]
                 self._changed[prop] = False
 
     @classmethod
-    def generate(cls, keygen_bin, randomdev, keys_dir, name, alg, keysize, sep,
-                 ttl, publish=None, activate=None, **kwargs):
-        quiet = kwargs.get('quiet', False)
+    def generate(
+        cls,
+        keygen_bin,
+        randomdev,
+        keys_dir,
+        name,
+        alg,
+        keysize,
+        sep,
+        ttl,
+        publish=None,
+        activate=None,
+        **kwargs
+    ):
+        quiet = kwargs.get("quiet", False)
 
         keygen_cmd = [keygen_bin, "-q", "-K", keys_dir, "-L", str(ttl)]
 
@@ -194,22 +236,22 @@ class dnskey:
         keygen_cmd.append(name)
 
         if not quiet:
-            print('# ' + ' '.join(keygen_cmd))
+            print("# " + " ".join(keygen_cmd))
 
         p = Popen(keygen_cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if stderr:
-            raise Exception('unable to generate key: ' + str(stderr))
+            raise Exception("unable to generate key: " + str(stderr))
 
         try:
-            keystr = stdout.splitlines()[0].decode('ascii')
+            keystr = stdout.splitlines()[0].decode("ascii")
             newkey = dnskey(keystr, keys_dir, ttl)
             return newkey
         except Exception as e:
-            raise Exception('unable to parse generated key: %s' % str(e))
+            raise Exception("unable to parse generated key: %s" % str(e))
 
     def generate_successor(self, keygen_bin, randomdev, prepublish, **kwargs):
-        quiet = kwargs.get('quiet', False)
+        quiet = kwargs.get("quiet", False)
 
         if not self.inactive():
             raise Exception("predecessor key %s has no inactive date" % self)
@@ -226,19 +268,19 @@ class dnskey:
             keygen_cmd += ["-i", str(prepublish)]
 
         if not quiet:
-            print('# ' + ' '.join(keygen_cmd))
+            print("# " + " ".join(keygen_cmd))
 
         p = Popen(keygen_cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if stderr:
-            raise Exception('unable to generate key: ' + stderr)
+            raise Exception("unable to generate key: " + stderr)
 
         try:
-            keystr = stdout.splitlines()[0].decode('ascii')
+            keystr = stdout.splitlines()[0].decode("ascii")
             newkey = dnskey(keystr, self._dir, self.ttl)
             return newkey
         except:
-            raise Exception('unable to generate successor for key %s' % self)
+            raise Exception("unable to generate successor for key %s" % self)
 
     @staticmethod
     def algstr(alg):
@@ -277,18 +319,20 @@ class dnskey:
         return time.strftime("%Y%m%d%H%M%S", t)
 
     def setmeta(self, prop, secs, now, **kwargs):
-        force = kwargs.get('force', False)
+        force = kwargs.get("force", False)
 
         if self._timestamps[prop] == secs:
             return
 
-        if self._original[prop] is not None and \
-           self._original[prop] < now and not force:
+        if (
+            self._original[prop] is not None
+            and self._original[prop] < now
+            and not force
+        ):
             raise TimePast(self, prop, self._original[prop])
 
         if secs is None:
-            self._changed[prop] = False \
-                if self._original[prop] is None else True
+            self._changed[prop] = False if self._original[prop] is None else True
 
             self._delete[prop] = True
             self._timestamps[prop] = None
@@ -300,8 +344,9 @@ class dnskey:
         self._timestamps[prop] = secs
         self._times[prop] = t
         self._fmttime[prop] = self.formattime(t)
-        self._changed[prop] = False if \
-            self._original[prop] == self._timestamps[prop] else True
+        self._changed[prop] = (
+            False if self._original[prop] == self._timestamps[prop] else True
+        )
 
     def gettime(self, prop):
         return self._times[prop]
@@ -370,19 +415,21 @@ class dnskey:
             self.ttl = ttl
 
     def keytype(self):
-        return ("KSK" if self.sep else "ZSK")
+        return "KSK" if self.sep else "ZSK"
 
     def __str__(self):
-        return ("%s/%s/%05d"
-                % (self.name, self.algname(), self.keyid))
+        return "%s/%s/%05d" % (self.name, self.algname(), self.keyid)
 
     def __repr__(self):
-        return ("%s/%s/%05d (%s)"
-                % (self.name, self.algname(), self.keyid,
-                   ("KSK" if self.sep else "ZSK")))
+        return "%s/%s/%05d (%s)" % (
+            self.name,
+            self.algname(),
+            self.keyid,
+            ("KSK" if self.sep else "ZSK"),
+        )
 
     def date(self):
-        return (self.activate() or self.publish() or self.created())
+        return self.activate() or self.publish() or self.created()
 
     # keys are sorted first by zone name, then by algorithm. within
     # the same name/algorithm, they are sorted according to their
@@ -396,7 +443,9 @@ class dnskey:
         return self.date() < other.date()
 
     def check_prepub(self, output=None):
-        def noop(*args, **kwargs): pass
+        def noop(*args, **kwargs):
+            pass
+
         if not output:
             output = noop
 
@@ -409,43 +458,47 @@ class dnskey:
 
         if not p:
             if a > now:
-                output("WARNING: Key %s is scheduled for\n"
-                       "\t activation but not for publication."
-                       % repr(self))
+                output(
+                    "WARNING: Key %s is scheduled for\n"
+                    "\t activation but not for publication." % repr(self)
+                )
             return False
 
         if p <= now and a <= now:
             return True
 
         if p == a:
-            output("WARNING: %s is scheduled to be\n"
-                   "\t published and activated at the same time. This\n"
-                   "\t could result in a coverage gap if the zone was\n"
-                   "\t previously signed. Activation should be at least\n"
-                   "\t %s after publication."
-                   % (repr(self),
-                       dnskey.duration(self.ttl) or 'one DNSKEY TTL'))
+            output(
+                "WARNING: %s is scheduled to be\n"
+                "\t published and activated at the same time. This\n"
+                "\t could result in a coverage gap if the zone was\n"
+                "\t previously signed. Activation should be at least\n"
+                "\t %s after publication."
+                % (repr(self), dnskey.duration(self.ttl) or "one DNSKEY TTL")
+            )
             return True
 
         if a < p:
-            output("WARNING: Key %s is active before it is published"
-                   % repr(self))
+            output("WARNING: Key %s is active before it is published" % repr(self))
             return False
 
         if self.ttl is not None and a - p < self.ttl:
-            output("WARNING: Key %s is activated too soon\n"
-                   "\t after publication; this could result in coverage \n"
-                   "\t gaps due to resolver caches containing old data.\n"
-                   "\t Activation should be at least %s after\n"
-                   "\t publication."
-                   % (repr(self),
-                      dnskey.duration(self.ttl) or 'one DNSKEY TTL'))
+            output(
+                "WARNING: Key %s is activated too soon\n"
+                "\t after publication; this could result in coverage \n"
+                "\t gaps due to resolver caches containing old data.\n"
+                "\t Activation should be at least %s after\n"
+                "\t publication."
+                % (repr(self), dnskey.duration(self.ttl) or "one DNSKEY TTL")
+            )
             return False
 
         return True
 
-    def check_postpub(self, output = None, timespan = None):
-        def noop(*args, **kwargs): pass
+    def check_postpub(self, output=None, timespan=None):
+        def noop(*args, **kwargs):
+            pass
+
         if output is None:
             output = noop
 
@@ -454,7 +507,7 @@ class dnskey:
 
         if timespan is None:
             output("WARNING: Key %s using default TTL." % repr(self))
-            timespan = (60*60*24)
+            timespan = 60 * 60 * 24
 
         now = time.time()
         d = self.delete()
@@ -465,26 +518,30 @@ class dnskey:
 
         if not i:
             if d > now:
-                output("WARNING: Key %s is scheduled for\n"
-                       "\t deletion but not for inactivation." % repr(self))
+                output(
+                    "WARNING: Key %s is scheduled for\n"
+                    "\t deletion but not for inactivation." % repr(self)
+                )
             return False
 
         if d < now and i < now:
             return True
 
         if d < i:
-            output("WARNING: Key %s is scheduled for\n"
-                   "\t deletion before inactivation."
-                   % repr(self))
+            output(
+                "WARNING: Key %s is scheduled for\n"
+                "\t deletion before inactivation." % repr(self)
+            )
             return False
 
         if d - i < timespan:
-            output("WARNING: Key %s scheduled for\n"
-                   "\t deletion too soon after deactivation; this may \n"
-                   "\t result in coverage gaps due to resolver caches\n"
-                   "\t containing old data.  Deletion should be at least\n"
-                   "\t %s after inactivation."
-                   % (repr(self), dnskey.duration(timespan)))
+            output(
+                "WARNING: Key %s scheduled for\n"
+                "\t deletion too soon after deactivation; this may \n"
+                "\t result in coverage gaps due to resolver caches\n"
+                "\t containing old data.  Deletion should be at least\n"
+                "\t %s after inactivation." % (repr(self), dnskey.duration(timespan))
+            )
             return False
 
         return True
@@ -494,12 +551,14 @@ class dnskey:
         if not secs:
             return None
 
-        units = [("year", 60*60*24*365),
-                 ("month", 60*60*24*30),
-                 ("day", 60*60*24),
-                 ("hour", 60*60),
-                 ("minute", 60),
-                 ("second", 1)]
+        units = [
+            ("year", 60 * 60 * 24 * 365),
+            ("month", 60 * 60 * 24 * 30),
+            ("day", 60 * 60 * 24),
+            ("hour", 60 * 60),
+            ("minute", 60),
+            ("second", 1),
+        ]
 
         output = []
         for unit in units:
@@ -508,4 +567,3 @@ class dnskey:
                 output.append("%d %s%s" % (v, unit[0], "s" if v > 1 else ""))
 
         return ", ".join(output)
-

@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -26,6 +28,8 @@ ns5=$ns.5		# another rewriting resolver
 ns6=$ns.6		# a forwarding server
 ns7=$ns.7		# another rewriting resolver
 ns8=$ns.8		# another rewriting resolver
+ns9=$ns.9		# another rewriting resolver
+ns10=$ns.10		# authoritative server
 
 HAVE_CORE=
 
@@ -404,6 +408,13 @@ nochange () {
     ckresult "$*" ${DIGNM}_OK && clean_result ${DIGNM}_OK
 }
 
+nochange_ns10 () {
+    make_dignm
+    digcmd $* >$DIGNM
+    digcmd $* @$ns10 >${DIGNM}_OK
+    ckresult "$*" ${DIGNM}_OK && clean_result ${DIGNM}_OK
+}
+
 # check against a 'here document'
 here () {
     make_dignm
@@ -616,6 +627,7 @@ EOF
 
   # these tests assume "min-ns-dots 0"
   start_group "NSDNAME rewrites" test3
+  nextpart ns3/named.run > /dev/null
   nochange a3-1.tld2				# 1
   nochange a3-1.tld2 +dnssec			# 2 this once caused problems
   nxdomain a3-1.sub1.tld2			# 3 NXDOMAIN *.sub1.tld2 by NSDNAME
@@ -628,25 +640,39 @@ EOF
   addr 127.0.0.1 a3-1.sub3.tld2			# 10 prefer policy for largest NSDNAME
   addr 127.0.0.2 a3-1.subsub.sub3.tld2		# 11
   nxdomain xxx.crash1.tld2			# 12 dns_db_detachnode() crash
+
+  nxdomain a3-1.stub				# 13
+  nxdomain a3-1.static-stub			# 14
+  nochange_ns10 a3-1.stub-nomatch		# 15
+  nochange_ns10 a3-1.static-stub-nomatch	# 16
   if [ "$mode" = dnsrps ]; then
-    addr 12.12.12.12 as-ns.tld5.		# 13 qname-as-ns
+    addr 12.12.12.12 as-ns.tld5.		# 17 qname-as-ns
   fi
+  nextpart ns3/named.run | grep -q "unrecognized NS rpz_rrset_find() failed: glue" &&
+  setret "seen: unrecognized NS rpz_rrset_find() failed: glue"
   end_group
   if [ "$mode" = dnsrps ]; then
-    ckstats $ns3 test3 ns3 8
+    ckstats $ns3 test3 ns3 10
   else
-    ckstats $ns3 test3 ns3 7
+    ckstats $ns3 test3 ns3 9
   fi
 
   # these tests assume "min-ns-dots 0"
   start_group "NSIP rewrites" test4
+  nextpart ns3/named.run > /dev/null
   nxdomain a3-1.tld2				# 1 NXDOMAIN for all of tld2
   nochange a3-2.tld2.				# 2 exempt rewrite by name
   nochange a0-1.tld2.				# 3 exempt rewrite by address block
   nochange a3-1.tld4				# 4 different NS IP address
+  nxdomain a4-1.stub				# 5
+  nxdomain a4-1.static-stub			# 6
+  nochange_ns10 a4-1.stub-nomatch		# 7
+  nochange_ns10 a4-1.static-stub-nomatch	# 8
   if [ "$mode" = dnsrps ]; then
-      addr 12.12.12.12 as-ns.tld5.		# 5 ip-as-ns
+      addr 12.12.12.12 as-ns.tld5.		# 9 ip-as-ns
   fi
+  nextpart ns3/named.run | grep -q "unrecognized NS rpz_rrset_find() failed: glue" &&
+  setret "seen: unrecognized NS rpz_rrset_find() failed: glue"
   end_group
 
   start_group "walled garden NSIP rewrites" test4a
@@ -658,9 +684,9 @@ EOF
 EOF
   end_group
   if [ "$mode" = dnsrps ]; then
-    ckstats $ns3 test4 ns3 5
+    ckstats $ns3 test4 ns3 7
   else
-    ckstats $ns3 test4 ns3 4
+    ckstats $ns3 test4 ns3 6
   fi
 
   # policies in ./test5 overridden by response-policy{} in ns3/named.conf
@@ -783,6 +809,7 @@ EOF
   fi
 
   # Ensure ns3 manages to transfer the fast-expire zone before shutdown.
+  nextpartreset ns3/named.run
   wait_for_log 20 "zone fast-expire/IN: transferred serial 1" ns3/named.run
 
   # reconfigure the ns5 primary server without the fast-expire zone, so

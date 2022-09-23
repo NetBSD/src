@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -213,6 +215,14 @@ grep "^long.name.*A.*100.100.100.3" dig.out.ns1.test$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns1.test$n > /dev/null || ret=1
 lookups=`grep "lookup #.*\.not\.there" ns1/named.run | wc -l`
 [ "$lookups" -eq 1 ] || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+newtest "checking ECS data is passed to driver in clientinfo"
+$DIG $DIGOPTS +short +subnet=192.0/16 source-addr.example.nil txt > dig.out.ns1.test$n.1 || ret=1
+grep "192.0.0.0/16/0" dig.out.ns1.test$n.1 > /dev/null || ret=1
+$DIG $DIGOPTS +short source-addr.example.nil txt > dig.out.ns1.test$n.2 || ret=1
+grep "not.*present" dig.out.ns1.test$n.2 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

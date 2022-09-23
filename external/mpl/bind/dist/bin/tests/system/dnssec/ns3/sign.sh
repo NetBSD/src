@@ -1,9 +1,11 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -119,12 +121,12 @@ cat "$infile" "$keyname.key" > "$zonefile"
 
 "$SIGNER" -P -o "$zone" "$zonefile" > /dev/null
 
-# Change the signer field of the a.b.keyless.example SIG A
-# to point to a provably nonexistent KEY record.
+# Change the signer field of the a.b.keyless.example RRSIG A
+# to point to a provably nonexistent DNSKEY record.
 zonefiletmp=$(mktemp "$zonefile.XXXXXX") || exit 1
 mv "$zonefile.signed" "$zonefiletmp"
 <"$zonefiletmp" "$PERL" -p -e 's/ keyless.example/ b.keyless.example/
-    if /^a.b.keyless.example/../NXT/;' > "$zonefile.signed"
+    if /^a.b.keyless.example/../A RRSIG NSEC/;' > "$zonefile.signed"
 rm -f "$zonefiletmp"
 
 #

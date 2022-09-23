@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -185,14 +187,11 @@ refresh_prefix="dnssec-refresh operations"
 ksk_id=`cat ns2/$zone.ksk.id`
 zsk_id=`cat ns2/$zone.zsk.id`
 
-# 1. Test sign operations for scheduled resigning.
+# Test sign operations for scheduled resigning.
 ret=0
 # The dnssec zone has 10 RRsets to sign (including NSEC) with the ZSK and one
 # RRset (DNSKEY) with the KSK. So starting named with signatures that expire
 # almost right away, this should trigger 10 zsk and 1 ksk sign operations.
-# However, the DNSSEC maintenance assumes when we see the SOA record we have
-# walked the whole zone, since the SOA record should always have the most
-# recent signature.
 echo "${refresh_prefix} ${zsk_id}: 10" > zones.expect
 echo "${refresh_prefix} ${ksk_id}: 1" >> zones.expect
 echo "${sign_prefix} ${zsk_id}: 10" >> zones.expect
@@ -200,20 +199,20 @@ echo "${sign_prefix} ${ksk_id}: 1" >> zones.expect
 cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
-echo_i "fetching zone stats data after zone maintenance at startup ($n)"
+echo_i "fetching zone '$zone' stats data after zone maintenance at startup ($n)"
 if [ $PERL_XML ]; then
     getzones xml $zone x$n || ret=1
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json $zone j$n || ret=1
+    getzones json 0 j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-# 2. Test sign operations after dynamic update.
+# Test sign operations after dynamic update.
 ret=0
 (
 # Update dnssec zone to trigger signature creation.
@@ -230,22 +229,22 @@ echo "${sign_prefix} ${ksk_id}: 1" >> zones.expect
 cat zones.expect | sort > zones.expect.$n
 rm -f zones.expect
 # Fetch and check the dnssec sign statistics.
-echo_i "fetching zone stats data after dynamic update ($n)"
+echo_i "fetching zone '$zone' stats data after dynamic update ($n)"
 if [ $PERL_XML ]; then
     getzones xml $zone x$n || ret=1
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json $zone j$n || ret=1
+    getzones json 0 j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-# 3. Test sign operations of KSK.
+# Test sign operations of KSK.
 ret=0
-echo_i "fetch zone stats data after updating DNSKEY RRset ($n)"
+echo_i "fetch zone '$zone' stats data after updating DNSKEY RRset ($n)"
 # Add a standby DNSKEY, this triggers resigning the DNSKEY RRset.
 zsk=$("$KEYGEN" -K ns2 -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
 $SETTIME -K ns2 -P now -A never $zsk.key > /dev/null
@@ -263,13 +262,117 @@ if [ $PERL_XML ]; then
     cmp zones.out.x$n zones.expect.$n || ret=1
 fi
 if [ $PERL_JSON ]; then
-    getzones json $zone j$n || ret=1
+    getzones json 0 j$n || ret=1
     cmp zones.out.j$n zones.expect.$n || ret=1
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
+# Test sign operations for scheduled resigning (many keys).
+ret=0
+zone="manykeys"
+ksk8_id=`cat ns2/$zone.ksk8.id`
+zsk8_id=`cat ns2/$zone.zsk8.id`
+ksk13_id=`cat ns2/$zone.ksk13.id`
+zsk13_id=`cat ns2/$zone.zsk13.id`
+ksk14_id=`cat ns2/$zone.ksk14.id`
+zsk14_id=`cat ns2/$zone.zsk14.id`
+# The dnssec zone has 10 RRsets to sign (including NSEC) with the ZSKs and one
+# RRset (DNSKEY) with the KSKs. So starting named with signatures that expire
+# almost right away, this should trigger 10 zsk and 1 ksk sign operations per
+# key.
+echo "${refresh_prefix} ${zsk8_id}: 10" > zones.expect
+echo "${refresh_prefix} ${zsk13_id}: 10" >> zones.expect
+echo "${refresh_prefix} ${zsk14_id}: 10" >> zones.expect
+echo "${refresh_prefix} ${ksk8_id}: 1" >> zones.expect
+echo "${refresh_prefix} ${ksk13_id}: 1" >> zones.expect
+echo "${refresh_prefix} ${ksk14_id}: 1" >> zones.expect
+echo "${sign_prefix} ${zsk8_id}: 10" >> zones.expect
+echo "${sign_prefix} ${zsk13_id}: 10" >> zones.expect
+echo "${sign_prefix} ${zsk14_id}: 10" >> zones.expect
+echo "${sign_prefix} ${ksk8_id}: 1" >> zones.expect
+echo "${sign_prefix} ${ksk13_id}: 1" >> zones.expect
+echo "${sign_prefix} ${ksk14_id}: 1" >> zones.expect
+cat zones.expect | sort > zones.expect.$n
+rm -f zones.expect
+# Fetch and check the dnssec sign statistics.
+echo_i "fetching zone '$zone' stats data after zone maintenance at startup ($n)"
+if [ $PERL_XML ]; then
+    getzones xml $zone x$n || ret=1
+    cmp zones.out.x$n zones.expect.$n || ret=1
+fi
+if [ $PERL_JSON ]; then
+    getzones json 2 j$n || ret=1
+    cmp zones.out.j$n zones.expect.$n || ret=1
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+# Test sign operations after dynamic update (many keys).
+ret=0
+(
+# Update dnssec zone to trigger signature creation.
+echo zone $zone
+echo server 10.53.0.2 "$PORT"
+echo update add $zone. 300 in txt "nsupdate added me"
+echo send
+) | $NSUPDATE
+# This should trigger the resign of SOA, TXT and NSEC (+3 zsk).
+echo "${refresh_prefix} ${zsk8_id}: 10" > zones.expect
+echo "${refresh_prefix} ${zsk13_id}: 10" >> zones.expect
+echo "${refresh_prefix} ${zsk14_id}: 10" >> zones.expect
+echo "${refresh_prefix} ${ksk8_id}: 1" >> zones.expect
+echo "${refresh_prefix} ${ksk13_id}: 1" >> zones.expect
+echo "${refresh_prefix} ${ksk14_id}: 1" >> zones.expect
+echo "${sign_prefix} ${zsk8_id}: 13" >> zones.expect
+echo "${sign_prefix} ${zsk13_id}: 13" >> zones.expect
+echo "${sign_prefix} ${zsk14_id}: 13" >> zones.expect
+echo "${sign_prefix} ${ksk8_id}: 1" >> zones.expect
+echo "${sign_prefix} ${ksk13_id}: 1" >> zones.expect
+echo "${sign_prefix} ${ksk14_id}: 1" >> zones.expect
+cat zones.expect | sort > zones.expect.$n
+rm -f zones.expect
+# Fetch and check the dnssec sign statistics.
+echo_i "fetching zone '$zone' stats data after dynamic update ($n)"
+if [ $PERL_XML ]; then
+    getzones xml $zone x$n || ret=1
+    cmp zones.out.x$n zones.expect.$n || ret=1
+fi
+if [ $PERL_JSON ]; then
+    getzones json 2 j$n || ret=1
+    cmp zones.out.j$n zones.expect.$n || ret=1
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+# Test sign operations after dnssec-policy change (removing keys).
+ret=0
+copy_setports ns2/named2.conf.in ns2/named.conf
+$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/I:ns2 /'
+# This should trigger the resign of DNSKEY (+1 ksk), and SOA, NSEC,
+# TYPE65534 (+3 zsk). The dnssec-sign statistics for the removed keys should
+# be cleared and thus no longer visible. But NSEC and SOA are (mistakenly)
+# counted double, one time because of zone_resigninc and one time because of
+# zone_nsec3chain. So +5 zsk in total.
+echo "${refresh_prefix} ${zsk8_id}: 15" > zones.expect
+echo "${refresh_prefix} ${ksk8_id}: 2" >> zones.expect
+echo "${sign_prefix} ${zsk8_id}: 18" >> zones.expect
+echo "${sign_prefix} ${ksk8_id}: 2" >> zones.expect
+cat zones.expect | sort > zones.expect.$n
+rm -f zones.expect
+# Fetch and check the dnssec sign statistics.
+echo_i "fetching zone '$zone' stats data after dnssec-policy change ($n)"
+if [ $PERL_XML ]; then
+    getzones xml $zone x$n || ret=1
+    cmp zones.out.x$n zones.expect.$n || ret=1
+fi
+if [ $PERL_JSON ]; then
+    getzones json 2 j$n || ret=1
+    cmp zones.out.j$n zones.expect.$n || ret=1
+fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

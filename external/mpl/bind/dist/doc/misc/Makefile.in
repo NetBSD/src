@@ -1,8 +1,10 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -55,7 +57,7 @@ options: FORCE
 		rm -f $@.new $@.raw $@.sorted ; \
 	fi
 
-rst: options
+rst: options rst-options.pl rst-zoneopt.pl rst-grammars.pl
 	${PERL} rst-options.pl options.active > ${top_srcdir}/bin/named/named.conf.rst
 	${PERL} rst-zoneopt.pl master.zoneopt > master.zoneopt.rst
 	${PERL} rst-zoneopt.pl slave.zoneopt > slave.zoneopt.rst
@@ -71,7 +73,7 @@ rst: options
 	${PERL} rst-grammars.pl options.active controls > controls.grammar.rst
 	${PERL} rst-grammars.pl options.active key > key.grammar.rst
 	${PERL} rst-grammars.pl options.active logging > logging.grammar.rst
-	${PERL} rst-grammars.pl options.active parental-agents > parentals.grammar.rst
+	${PERL} rst-grammars.pl options.active parental-agents > parental-agents.grammar.rst
 	${PERL} rst-grammars.pl options.active primaries > primaries.grammar.rst
 	${PERL} rst-grammars.pl options.active options > options.grammar.rst
 	${PERL} rst-grammars.pl options.active server > server.grammar.rst

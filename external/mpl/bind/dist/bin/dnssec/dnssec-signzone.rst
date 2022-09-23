@@ -1,23 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -338,13 +328,22 @@ Options
    (-) can be used to indicate that no salt is to be used when
    generating the NSEC3 chain.
 
+   .. note::
+      ``-3 -`` is the recommended configuration. Adding salt provides no practical benefits.
+
 ``-H iterations``
    This option indicates that, when generating an NSEC3 chain, BIND 9 should use this many iterations. The default
    is 10.
 
+   .. warning::
+      Values greater than 0 cause interoperability issues and also increase the risk of CPU-exhausting DoS attacks. The default value has not been changed because the best practices has changed only after BIND 9.16 reached Extended Support Version status.
+
 ``-A``
    This option indicates that, when generating an NSEC3 chain, BIND 9 should set the OPTOUT flag on all NSEC3
    records and should not generate NSEC3 records for insecure delegations.
+
+   .. warning::
+      Do not use this option unless all its implications are fully understood. This option is intended only for extremely large zones (comparable to ``com.``) with sparse secure delegations.
 
    Using this option twice (i.e., ``-AA``) turns the OPTOUT flag off for
    all records. This is useful when using the ``-u`` option to modify an

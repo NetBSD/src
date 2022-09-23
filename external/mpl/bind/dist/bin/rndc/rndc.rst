@@ -1,23 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -171,14 +161,16 @@ Currently supported commands are:
    ``rndc dnssec -rollover`` allows you to schedule key rollover for a
    specific key (overriding the original key lifetime).
 
-   ``rndc dnssec -checkds`` will let ``named`` know that the DS for the given
-   key has been seen published into or withdrawn from the parent.  This is
-   required in order to complete a KSK rollover.  If the ``-key id`` argument
-   is specified, look for the key with the given identifier, otherwise if there
-   is only one key acting as a KSK in the zone, assume the DS of that key (if
-   there are multiple keys with the same tag, use ``-alg algorithm`` to
-   select the correct algorithm).  The time that the DS has been published or
-   withdrawn is set to now, unless otherwise specified with the argument ``-when time``.
+   ``rndc dnssec -checkds`` informs :iscman:`named` that the DS for
+   a specified zone's key-signing key has been confirmed to be published
+   in, or withdrawn from, the parent zone. This is required in order to
+   complete a KSK rollover.  The ``-key id`` and ``-alg algorithm`` arguments
+   can be used to specify a particular KSK, if necessary; if there is only
+   one key acting as a KSK for the zone, these arguments can be omitted.
+   The time of publication or withdrawal for the DS is set to the current
+   time by default, but can be overridden to a specific time with the
+   argument ``-when time``, where ``time`` is expressed in YYYYMMDDHHMMSS
+   notation.
 
 ``dnstap`` ( **-reopen** | **-roll** [*number*] )
    This command closes and re-opens DNSTAP output files. ``rndc dnstap -reopen`` allows
@@ -370,11 +362,24 @@ Currently supported commands are:
    avoids the need to examine the modification times of the zone files.
 
 ``recursing``
-   This command dumps the list of queries ``named`` is currently recursing on, and the
-   list of domains to which iterative queries are currently being sent.
-   The second list includes the number of fetches currently active for
-   the given domain, and how many have been passed or dropped because of
-   the ``fetches-per-zone`` option.
+   This command dumps the list of queries ``named`` is currently
+   recursing on, and the list of domains to which iterative queries
+   are currently being sent.
+
+   The first list includes all unique clients that are waiting for
+   recursion to complete, including the query that is awaiting a
+   response and the timestamp (seconds since the Unix epoch) of
+   when named started processing this client query.
+
+   The second list comprises of domains for which there are active
+   (or recently active) fetches in progress.  It reports the number
+   of active fetches for each domain and the number of queries that
+   have been passed (allowed) or dropped (spilled) as a result of
+   the ``fetches-per-zone`` limit.  (Note: these counters are not
+   cumulative over time; whenever the number of active fetches for
+   a domain drops to zero, the counter for that domain is deleted,
+   and the next time a fetch is sent to that domain, it is recreated
+   with the counters set to zero).
 
 ``refresh`` *zone* [*class* [*view*]]
    This command schedules zone maintenance for the given zone.
@@ -476,15 +481,17 @@ Currently supported commands are:
    depending on whether the opt-out bit in the NSEC3
    chain should be set. ``iterations`` defines the number of additional times to apply
    the algorithm when generating an NSEC3 hash. The ``salt`` is a string
-   of data expressed in hexadecimal, a hyphen (`-') if no salt is to be
+   of data expressed in hexadecimal, a hyphen (``-``) if no salt is to be
    used, or the keyword ``auto``, which causes ``named`` to generate a
    random 64-bit salt.
 
-   So, for example, to create an NSEC3 chain using the SHA-1 hash
-   algorithm, no opt-out flag, 10 iterations, and a salt value of
-   "FFFF", use: ``rndc signing -nsec3param 1 0 10 FFFF zone``. To set
-   the opt-out flag, 15 iterations, and no salt, use:
-   ``rndc signing -nsec3param 1 1 15 - zone``.
+   The only recommended configuration is ``rndc signing -nsec3param 1 0 0 - zone``,
+   i.e. no salt, no additional iterations, no opt-out.
+
+   .. warning::
+      Do not use extra iterations, salt, or opt-out unless all their implications
+      are fully understood. A higher number of iterations causes interoperability
+      problems and opens servers to CPU-exhausting DoS attacks.
 
    ``rndc signing -nsec3param none`` removes an existing NSEC3 chain and
    replaces it with NSEC.

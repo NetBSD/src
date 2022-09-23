@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 from __future__ import print_function
 import os
@@ -29,6 +29,7 @@ from dns.name import *
 def logquery(type, qname):
     with open("qlog", "a") as f:
         f.write("%s %s\n", type, qname)
+
 
 ############################################################################
 # Respond to a DNS query.
@@ -54,10 +55,16 @@ def create_response(msg):
         now = datetime.today()
         expire = now + timedelta(days=30)
         inception = now - timedelta(days=1)
-        rrsig = "A 13 2 60 " + expire.strftime("%Y%m%d%H%M%S") + " " + \
-            inception.strftime("%Y%m%d%H%M%S") + " 12345 " + qname + \
-            " gB+eISXAhSPZU2i/II0W9ZUhC2SCIrb94mlNvP5092WAeXxqN/vG43/1nmDl" + \
-	    "y2Qs7y5VCjSMOGn85bnaMoAc7w=="
+        rrsig = (
+            "A 13 2 60 "
+            + expire.strftime("%Y%m%d%H%M%S")
+            + " "
+            + inception.strftime("%Y%m%d%H%M%S")
+            + " 12345 "
+            + qname
+            + " gB+eISXAhSPZU2i/II0W9ZUhC2SCIrb94mlNvP5092WAeXxqN/vG43/1nmDl"
+            + "y2Qs7y5VCjSMOGn85bnaMoAc7w=="
+        )
         r.answer.append(dns.rrset.from_text(qname, 1, IN, A, "10.53.0.10"))
         r.answer.append(dns.rrset.from_text(qname, 1, IN, RRSIG, rrsig))
     elif rrtype == NS:
@@ -69,11 +76,13 @@ def create_response(msg):
     r.flags |= dns.flags.AA
     return r
 
+
 def sigterm(signum, frame):
-    print ("Shutting down now...")
-    os.remove('ans.pid')
+    print("Shutting down now...")
+    os.remove("ans.pid")
     running = False
     sys.exit(0)
+
 
 ############################################################################
 # Main
@@ -85,8 +94,10 @@ def sigterm(signum, frame):
 ip4 = "10.53.0.10"
 ip6 = "fd92:7065:b8e:ffff::10"
 
-try: port=int(os.environ['PORT'])
-except: port=5300
+try:
+    port = int(os.environ["PORT"])
+except:
+    port = 5300
 
 query4_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 query4_socket.bind((ip4, port))
@@ -102,17 +113,17 @@ except:
     havev6 = False
 signal.signal(signal.SIGTERM, sigterm)
 
-f = open('ans.pid', 'w')
+f = open("ans.pid", "w")
 pid = os.getpid()
-print (pid, file=f)
+print(pid, file=f)
 f.close()
 
 running = True
 
-print ("Listening on %s port %d" % (ip4, port))
+print("Listening on %s port %d" % (ip4, port))
 if havev6:
-    print ("Listening on %s port %d" % (ip6, port))
-print ("Ctrl-c to quit")
+    print("Listening on %s port %d" % (ip6, port))
+print("Ctrl-c to quit")
 
 if havev6:
     input = [query4_socket, query6_socket]
@@ -131,8 +142,9 @@ while running:
 
     for s in inputready:
         if s == query4_socket or s == query6_socket:
-            print ("Query received on %s" %
-                    (ip4 if s == query4_socket else ip6), end=" ")
+            print(
+                "Query received on %s" % (ip4 if s == query4_socket else ip6), end=" "
+            )
             # Handle incoming queries
             msg = s.recvfrom(65535)
             rsp = create_response(msg[0])

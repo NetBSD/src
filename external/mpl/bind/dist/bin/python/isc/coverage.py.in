@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 from __future__ import print_function
 import os
@@ -20,7 +20,7 @@ import calendar
 import pprint
 from collections import defaultdict
 
-prog = 'dnssec-coverage'
+prog = "dnssec-coverage"
 
 from isc import dnskey, eventlist, keydict, keyevent, keyzone, utils
 
@@ -36,19 +36,21 @@ def fatal(*args, **kwargs):
 # output:
 ############################################################################
 _firstline = True
+
+
 def output(*args, **kwargs):
     """output text, adding a vertical space this is *not* the first
     first section being printed since a call to vreset()"""
     global _firstline
-    if 'skip' in kwargs:
-        skip = kwargs['skip']
-        kwargs.pop('skip', None)
+    if "skip" in kwargs:
+        skip = kwargs["skip"]
+        kwargs.pop("skip", None)
     else:
         skip = True
     if _firstline:
         _firstline = False
     elif skip:
-        print('')
+        print("")
     if args:
         print(*args, **kwargs)
 
@@ -63,7 +65,7 @@ def vreset():
 # parse_time
 ############################################################################
 def parse_time(s):
-    """ convert a formatted time (e.g., 1y, 6mo, 15mi, etc) into seconds
+    """convert a formatted time (e.g., 1y, 6mo, 15mi, etc) into seconds
     :param s: String with some text representing a time interval
     :return: Integer with the number of seconds in the time interval
     """
@@ -76,26 +78,26 @@ def parse_time(s):
         pass
 
     # try to parse as a number with a suffix indicating unit of time
-    r = re.compile(r'([0-9][0-9]*)\s*([A-Za-z]*)')
+    r = re.compile(r"([0-9][0-9]*)\s*([A-Za-z]*)")
     m = r.match(s)
     if not m:
         raise ValueError("Cannot parse %s" % s)
     n, unit = m.groups()
     n = int(n)
     unit = unit.lower()
-    if unit.startswith('y'):
+    if unit.startswith("y"):
         return n * 31536000
-    elif unit.startswith('mo'):
+    elif unit.startswith("mo"):
         return n * 2592000
-    elif unit.startswith('w'):
+    elif unit.startswith("w"):
         return n * 604800
-    elif unit.startswith('d'):
+    elif unit.startswith("d"):
         return n * 86400
-    elif unit.startswith('h'):
+    elif unit.startswith("h"):
         return n * 3600
-    elif unit.startswith('mi'):
+    elif unit.startswith("mi"):
         return n * 60
-    elif unit.startswith('s'):
+    elif unit.startswith("s"):
         return n
     else:
         raise ValueError("Invalid suffix %s" % unit)
@@ -105,7 +107,7 @@ def parse_time(s):
 # set_path:
 ############################################################################
 def set_path(command, default=None):
-    """ find the location of a specified command.  if a default is supplied
+    """find the location of a specified command.  if a default is supplied
     and it works, we use it; otherwise we search PATH for a match.
     :param command: string with a command to look for in the path
     :param default: default location to use
@@ -131,50 +133,89 @@ def set_path(command, default=None):
 ############################################################################
 def parse_args():
     """Read command line arguments, set global 'args' structure"""
-    compilezone = set_path('named-compilezone',
-                           os.path.join(utils.prefix('sbin'),
-                           'named-compilezone'))
+    compilezone = set_path(
+        "named-compilezone", os.path.join(utils.prefix("sbin"), "named-compilezone")
+    )
 
-    parser = argparse.ArgumentParser(description=prog + ': checks future ' +
-                                     'DNSKEY coverage for a zone')
+    parser = argparse.ArgumentParser(
+        description=prog + ": checks future " + "DNSKEY coverage for a zone"
+    )
 
-    parser.add_argument('zone', type=str, nargs='*', default=None,
-                        help='zone(s) to check' +
-                        '(default: all zones in the directory)')
-    parser.add_argument('-K', dest='path', default='.', type=str,
-                        help='a directory containing keys to process',
-                        metavar='dir')
-    parser.add_argument('-f', dest='filename', type=str,
-                        help='zone master file', metavar='file')
-    parser.add_argument('-m', dest='maxttl', type=str,
-                        help='the longest TTL in the zone(s)',
-                        metavar='time')
-    parser.add_argument('-d', dest='keyttl', type=str,
-                        help='the DNSKEY TTL', metavar='time')
-    parser.add_argument('-r', dest='resign', default='1944000',
-                        type=str, help='the RRSIG refresh interval '
-                                       'in seconds [default: 22.5 days]',
-                        metavar='time')
-    parser.add_argument('-c', dest='compilezone',
-                        default=compilezone, type=str,
-                        help='path to \'named-compilezone\'',
-                        metavar='path')
-    parser.add_argument('-l', dest='checklimit',
-                        type=str, default='0',
-                        help='Length of time to check for '
-                             'DNSSEC coverage [default: 0 (unlimited)]',
-                        metavar='time')
-    parser.add_argument('-z', dest='no_ksk',
-                        action='store_true', default=False,
-                        help='Only check zone-signing keys (ZSKs)')
-    parser.add_argument('-k', dest='no_zsk',
-                        action='store_true', default=False,
-                        help='Only check key-signing keys (KSKs)')
-    parser.add_argument('-D', '--debug', dest='debug_mode',
-                        action='store_true', default=False,
-                        help='Turn on debugging output')
-    parser.add_argument('-v', '--version', action='version',
-                        version=utils.version)
+    parser.add_argument(
+        "zone",
+        type=str,
+        nargs="*",
+        default=None,
+        help="zone(s) to check" + "(default: all zones in the directory)",
+    )
+    parser.add_argument(
+        "-K",
+        dest="path",
+        default=".",
+        type=str,
+        help="a directory containing keys to process",
+        metavar="dir",
+    )
+    parser.add_argument(
+        "-f", dest="filename", type=str, help="zone master file", metavar="file"
+    )
+    parser.add_argument(
+        "-m",
+        dest="maxttl",
+        type=str,
+        help="the longest TTL in the zone(s)",
+        metavar="time",
+    )
+    parser.add_argument(
+        "-d", dest="keyttl", type=str, help="the DNSKEY TTL", metavar="time"
+    )
+    parser.add_argument(
+        "-r",
+        dest="resign",
+        default="1944000",
+        type=str,
+        help="the RRSIG refresh interval " "in seconds [default: 22.5 days]",
+        metavar="time",
+    )
+    parser.add_argument(
+        "-c",
+        dest="compilezone",
+        default=compilezone,
+        type=str,
+        help="path to 'named-compilezone'",
+        metavar="path",
+    )
+    parser.add_argument(
+        "-l",
+        dest="checklimit",
+        type=str,
+        default="0",
+        help="Length of time to check for " "DNSSEC coverage [default: 0 (unlimited)]",
+        metavar="time",
+    )
+    parser.add_argument(
+        "-z",
+        dest="no_ksk",
+        action="store_true",
+        default=False,
+        help="Only check zone-signing keys (ZSKs)",
+    )
+    parser.add_argument(
+        "-k",
+        dest="no_zsk",
+        action="store_true",
+        default=False,
+        help="Only check key-signing keys (KSKs)",
+    )
+    parser.add_argument(
+        "-D",
+        "--debug",
+        dest="debug_mode",
+        action="store_true",
+        default=False,
+        help="Turn on debugging output",
+    )
+    parser.add_argument("-v", "--version", action="version", version=utils.version)
 
     args = parser.parse_args()
 
@@ -189,8 +230,7 @@ def parse_args():
         fatal("ERROR: -f can only be used with one zone.")
 
     # strip trailing dots if any
-    args.zone = [x[:-1] if (len(x) > 1 and x[-1] == '.') else x
-                        for x in args.zone]
+    args.zone = [x[:-1] if (len(x) > 1 and x[-1] == ".") else x for x in args.zone]
 
     # convert from time arguments to seconds
     try:
@@ -239,12 +279,15 @@ def parse_args():
             print("Unable to load zone data from %s: " % args.filename, e)
 
     if not args.maxttl:
-        output("WARNING: Maximum TTL value was not specified.  Using 1 week\n"
-               "\t (604800 seconds); re-run with the -m option to get more\n"
-               "\t accurate results.")
+        output(
+            "WARNING: Maximum TTL value was not specified.  Using 1 week\n"
+            "\t (604800 seconds); re-run with the -m option to get more\n"
+            "\t accurate results."
+        )
         args.maxttl = 604800
 
     return args
+
 
 ############################################################################
 # Main
@@ -257,7 +300,7 @@ def main():
     try:
         kd = keydict(path=args.path, zones=args.zone, keyttl=args.keyttl)
     except Exception as e:
-        fatal('ERROR: Unable to build key dictionary: ' + str(e))
+        fatal("ERROR: Unable to build key dictionary: " + str(e))
 
     for key in kd:
         key.check_prepub(output)
@@ -272,7 +315,7 @@ def main():
     try:
         elist = eventlist(kd)
     except Exception as e:
-        fatal('ERROR: Unable to build event list: ' + str(e))
+        fatal("ERROR: Unable to build event list: " + str(e))
 
     errors = False
     if not args.zone:
@@ -281,10 +324,9 @@ def main():
     else:
         for zone in args.zone:
             try:
-                if not elist.coverage(zone, args.keytype,
-                                      args.checklimit, output):
+                if not elist.coverage(zone, args.keytype, args.checklimit, output):
                     errors = True
             except:
-                output('ERROR: Coverage check failed for zone ' + zone)
+                output("ERROR: Coverage check failed for zone " + zone)
 
     sys.exit(1 if errors else 0)

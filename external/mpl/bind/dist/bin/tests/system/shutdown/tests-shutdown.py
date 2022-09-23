@@ -1,14 +1,15 @@
 #!/usr/bin/python3
-############################################################################
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
@@ -18,46 +19,49 @@ import subprocess
 from string import ascii_lowercase as letters
 import time
 
-import dns.resolver
 import pytest
+
+pytest.importorskip("dns")
+import dns.exception
+import dns.resolver
 
 
 def do_work(named_proc, resolver, rndc_cmd, kill_method, n_workers, n_queries):
     """Creates a number of A queries to run in parallel
-       in order simulate a slightly more realistic test scenario.
+    in order simulate a slightly more realistic test scenario.
 
-       The main idea of this function is to create and send a bunch
-       of A queries to a target named instance and during this process
-       a request for shutting down named will be issued.
+    The main idea of this function is to create and send a bunch
+    of A queries to a target named instance and during this process
+    a request for shutting down named will be issued.
 
-       In the process of shutting down named, a couple control connections
-       are created (by launching rndc) to ensure that the crash was fixed.
+    In the process of shutting down named, a couple control connections
+    are created (by launching rndc) to ensure that the crash was fixed.
 
-       if kill_method=="rndc" named will be asked to shutdown by
-       means of rndc stop.
-       if kill_method=="sigterm" named will be killed by SIGTERM on
-       POSIX systems or by TerminateProcess() on Windows systems.
+    if kill_method=="rndc" named will be asked to shutdown by
+    means of rndc stop.
+    if kill_method=="sigterm" named will be killed by SIGTERM on
+    POSIX systems or by TerminateProcess() on Windows systems.
 
-       :param named_proc: named process instance
-       :type named_proc: subprocess.Popen
+    :param named_proc: named process instance
+    :type named_proc: subprocess.Popen
 
-       :param resolver: target resolver
-       :type resolver: dns.resolver.Resolver
+    :param resolver: target resolver
+    :type resolver: dns.resolver.Resolver
 
-       :param rndc_cmd: rndc command with default arguments
-       :type rndc_cmd: list of strings, e.g. ["rndc", "-p", "23750"]
+    :param rndc_cmd: rndc command with default arguments
+    :type rndc_cmd: list of strings, e.g. ["rndc", "-p", "23750"]
 
-       :kill_method: "rndc" or "sigterm"
-       :type kill_method: str
+    :kill_method: "rndc" or "sigterm"
+    :type kill_method: str
 
-       :param n_workers: Number of worker threads to create
-       :type n_workers: int
+    :param n_workers: Number of worker threads to create
+    :type n_workers: int
 
-       :param n_queries: Total number of queries to send
-       :type n_queries: int
+    :param n_queries: Total number of queries to send
+    :type n_queries: int
     """
-# pylint: disable-msg=too-many-arguments
-# pylint: disable-msg=too-many-locals
+    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
 
     # helper function, args must be a list or tuple with arguments to rndc.
     def launch_rndc(args):
@@ -87,21 +91,22 @@ def do_work(named_proc, resolver, rndc_cmd, kill_method, n_workers, n_queries):
                 else:
                     tag = "bad"
                     length = random.randint(4, 10)
-                    relname = "".join(letters[
-                        random.randrange(len(letters))] for i in range(length))
+                    relname = "".join(
+                        letters[random.randrange(len(letters))] for i in range(length)
+                    )
 
                 qname = relname + ".test"
-                futures[executor.submit(resolver.query, qname, 'A')] = tag
+                futures[executor.submit(resolver.query, qname, "A")] = tag
             elif shutdown:  # We attempt to stop named in the middle
                 shutdown = False
                 if kill_method == "rndc":
-                    futures[executor.submit(launch_rndc, ['stop'])] = 'stop'
+                    futures[executor.submit(launch_rndc, ["stop"])] = "stop"
                 else:
-                    futures[executor.submit(named_proc.terminate)] = 'kill'
+                    futures[executor.submit(named_proc.terminate)] = "kill"
             else:
                 # We attempt to send couple rndc commands while named is
                 # being shutdown
-                futures[executor.submit(launch_rndc, ['status'])] = 'status'
+                futures[executor.submit(launch_rndc, ["status"])] = "status"
 
         ret_code = -1
         for future in as_completed(futures):
@@ -116,16 +121,17 @@ def do_work(named_proc, resolver, rndc_cmd, kill_method, n_workers, n_queries):
                 if futures[future] == "stop":
                     ret_code = result
 
-            except (dns.resolver.NXDOMAIN,
-                    dns.resolver.NoNameservers,
-                    dns.exception.Timeout):
+            except (
+                dns.resolver.NXDOMAIN,
+                dns.resolver.NoNameservers,
+                dns.exception.Timeout,
+            ):
                 pass
 
         if kill_method == "rndc":
             assert ret_code == 0
 
 
-@pytest.mark.dnspython
 def test_named_shutdown(named_port, control_port):
     # pylint: disable-msg=too-many-locals
     cfg_dir = os.path.join(os.getcwd(), "resolver")
@@ -148,12 +154,11 @@ def test_named_shutdown(named_port, control_port):
     assert os.path.isfile(rndc_cfg)
 
     # rndc command with default arguments.
-    rndc_cmd = [rndc, "-c", rndc_cfg, "-p", str(control_port),
-                "-s", "10.53.0.3"]
+    rndc_cmd = [rndc, "-c", rndc_cfg, "-p", str(control_port), "-s", "10.53.0.3"]
 
     # We create a resolver instance that will be used to send queries.
     resolver = dns.resolver.Resolver()
-    resolver.nameservers = ['10.53.0.3']
+    resolver.nameservers = ["10.53.0.3"]
     resolver.port = named_port
 
     # We test named shutting down using two methods:
@@ -168,13 +173,14 @@ def test_named_shutdown(named_port, control_port):
             # wait for named to finish loading
             for _ in range(10):
                 try:
-                    resolver.query('version.bind', 'TXT', 'CH')
+                    resolver.query("version.bind", "TXT", "CH")
                     break
                 except (dns.resolver.NoNameservers, dns.exception.Timeout):
                     time.sleep(1)
 
-            do_work(named_proc, resolver, rndc_cmd,
-                    kill_method, n_workers=12, n_queries=16)
+            do_work(
+                named_proc, resolver, rndc_cmd, kill_method, n_workers=12, n_queries=16
+            )
 
             # Wait named to exit for a maximum of MAX_TIMEOUT seconds.
             MAX_TIMEOUT = 10

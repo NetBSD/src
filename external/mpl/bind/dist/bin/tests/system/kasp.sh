@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -42,6 +44,7 @@ VIEW3="C1Azf+gGPMmxrUg/WQINP6eV9Y0="
 # ROLE
 # KSK
 # ZSK
+# FLAGS
 # LIFETIME
 # ALG_NUM
 # ALG_STR
@@ -61,6 +64,9 @@ VIEW3="C1Azf+gGPMmxrUg/WQINP6eV9Y0="
 # EXPECT_KRRSIG
 # LEGACY
 # PRIVATE
+# PRIVKEY_STAT
+# PUBKEY_STAT
+# STATE_STAT
 
 key_key() {
 	echo "${1}__${2}"
@@ -74,6 +80,10 @@ key_set() {
 	eval "$(key_key "$1" "$2")='$3'"
 }
 
+key_stat() {
+	$PERL -e 'print((stat @ARGV[0])[9] . "\n");' "$1"
+}
+
 # Save certain values in the KEY array.
 key_save()
 {
@@ -83,6 +93,10 @@ key_save()
 	key_set "$1" BASEFILE "$BASE_FILE"
 	# Save creation date.
 	key_set "$1" CREATED "${KEY_CREATED}"
+	# Save key change time.
+	key_set "$1" PRIVKEY_STAT $(key_stat "${BASE_FILE}.private")
+	key_set "$1" PUBKEY_STAT $(key_stat "${BASE_FILE}.key")
+	key_set "$1" STATE_STAT $(key_stat "${BASE_FILE}.state")
 }
 
 # Clear key state.
@@ -95,6 +109,7 @@ key_clear() {
 	key_set "$1" "ROLE" 'none'
 	key_set "$1" "KSK" 'no'
 	key_set "$1" "ZSK" 'no'
+	key_set "$1" "FLAGS" '0'
 	key_set "$1" "LIFETIME" 'none'
 	key_set "$1" "ALG_NUM" '0'
 	key_set "$1" "ALG_STR" 'none'
@@ -115,6 +130,9 @@ key_clear() {
 	key_set "$1" "EXPECT_KRRSIG" 'no'
 	key_set "$1" "LEGACY" 'no'
 	key_set "$1" "PRIVATE" 'yes'
+	key_set "$1" "PRIVKEY_STAT" '0'
+	key_set "$1" "PUBKEY_STAT" '0'
+	key_set "$1" "STATE_STAT" '0'
 }
 
 # Start clear.
@@ -213,10 +231,17 @@ set_keyrole() {
 	key_set "$1" "ROLE" "$2"
 	key_set "$1" "KSK" "no"
 	key_set "$1" "ZSK" "no"
+	key_set "$1" "FLAGS" "0"
+
 	test "$2" = "ksk" && key_set "$1" "KSK" "yes"
+	test "$2" = "ksk" && key_set "$1" "FLAGS" "257"
+
 	test "$2" = "zsk" && key_set "$1" "ZSK" "yes"
+	test "$2" = "zsk" && key_set "$1" "FLAGS" "256"
+
 	test "$2" = "csk" && key_set "$1" "KSK" "yes"
 	test "$2" = "csk" && key_set "$1" "ZSK" "yes"
+	test "$2" = "csk" && key_set "$1" "FLAGS" "257"
 }
 set_keylifetime() {
 	key_set "$1" "EXPECT" "yes"
@@ -307,6 +332,7 @@ check_key() {
 	_lifetime=$(key_get "$1" LIFETIME)
 	_legacy=$(key_get "$1" LEGACY)
 	_private=$(key_get "$1" PRIVATE)
+	_flags=$(key_get "$1" FLAGS)
 
 	_published=$(key_get "$1" PUBLISHED)
 	_active=$(key_get "$1" ACTIVE)
@@ -323,18 +349,19 @@ check_key() {
 	_ksk="no"
 	_zsk="no"
 	if [ "$_role" = "ksk" ]; then
-		_role2="key-signing"
 		_ksk="yes"
-		_flags="257"
 	elif [ "$_role" = "zsk" ]; then
-		_role2="zone-signing"
 		_zsk="yes"
-		_flags="256"
 	elif [ "$_role" = "csk" ]; then
-		_role2="key-signing"
 		_zsk="yes"
 		_ksk="yes"
-		_flags="257"
+	fi
+
+	_role2="none"
+	if [ "$_flags" = "257" ]; then
+		_role2="key-signing"
+	elif [ "$_flags" = "256" ]; then
+		_role2="zone-signing"
 	fi
 
 	BASE_FILE="${_dir}/K${_zone}.+${_alg_numpad}+${_key_idpad}"
@@ -796,9 +823,9 @@ check_keys() {
 	status=$((status+ret))
 }
 
-# Call rndc dnssec -status on server $1 for zone $2 and check output.
-# This is a loose verification, it just tests if the right policy
-# name is returned, and if all expected keys are listed.  The rndc
+# Call rndc dnssec -status on server $1 for zone $3 in view $4 with policy $2
+# and check output. This is a loose verification, it just tests if the right
+# policy name is returned, and if all expected keys are listed.  The rndc
 # dnssec -status output also lists whether a key is published,
 # used for signing, is retired, or is removed, and if not when
 # it is scheduled to do so, and it shows the states for the various
@@ -835,6 +862,28 @@ check_dnssecstatus() {
 
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
+}
+
+# Call rndc zonestatus on server $1 for zone $2 in view $3 and check output if
+# inline-signing is enabled.
+check_inlinesigning() {
+	_server=$1
+	_zone=$2
+	_view=$3
+
+	_rndccmd $_server zonestatus $_zone in $_view > rndc.zonestatus.out.$_zone.$n || return 1
+	grep "inline signing: yes" rndc.zonestatus.out.$_zone.$n > /dev/null || return 1
+}
+
+# Call rndc zonestatus on server $1 for zone $2 in view $3 and check output if
+# the zone is dynamic.
+check_isdynamic() {
+	_server=$1
+	_zone=$2
+	_view=$3
+
+	_rndccmd $_server zonestatus $_zone in $_view > rndc.zonestatus.out.$_zone.$n || return 1
+	grep "dynamic: yes" rndc.zonestatus.out.$_zone.$n > /dev/null || return 1
 }
 
 # Check if RRset of type $1 in file $2 is signed with the right keys.
@@ -904,10 +953,11 @@ response_has_cds_for_key() (
 )
 
 response_has_cdnskey_for_key() (
+
 	awk -v zone="${ZONE%%.}." \
 	    -v ttl="${DNSKEY_TTL}" \
 	    -v qtype="CDNSKEY" \
-	    -v flags="257" \
+	    -v flags="$(key_get "${1}" FLAGS)" \
 	    -v keyalg="$(key_get "${1}" ALG_NUM)" \
 	    'BEGIN { ret=1; }
 	     $1 == zone && $2 == ttl && $4 == qtype && $5 == flags && $7 == keyalg { ret=0; exit; }
@@ -994,6 +1044,15 @@ check_cds() {
 	status=$((status+ret))
 }
 
+_find_dnskey() {
+	_owner="${ZONE}."
+	_alg="$(key_get $1 ALG_NUM)"
+	_flags="$(key_get $1 FLAGS)"
+	_key_file="$(key_get $1 BASEFILE).key"
+
+	awk '$1 == "'"$_owner"'" && $2 == "'"$DNSKEY_TTL"'" && $3 == "IN" && $4 == "DNSKEY" && $5 == "'"$_flags"'" && $6 == "3" && $7 == "'"$_alg"'" { print $8 }' < "$_key_file"
+}
+
 
 # Test DNSKEY query.
 _check_apex_dnskey() {
@@ -1003,31 +1062,47 @@ _check_apex_dnskey() {
 	_checksig=0
 
 	if [ "$(key_get KEY1 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY1 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_pubkey=$(_find_dnskey KEY1)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null || return 1
 		_checksig=1
 	elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+		_pubkey=$(_find_dnskey KEY1)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY2 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY2 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_pubkey=$(_find_dnskey KEY2)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null || return 1
 		_checksig=1
 	elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+		_pubkey=$(_find_dnskey KEY2)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY3 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY3 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_pubkey=$(_find_dnskey KEY3)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null || return 1
 		_checksig=1
 	elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+		_pubkey=$(_find_dnskey KEY3)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY4 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY4 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_pubkey=$(_find_dnskey KEY4)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null || return 1
 		_checksig=1
 	elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+		_pubkey=$(_find_dnskey KEY4)
+		test -z "$_pubkey" && return 1
+		grep -F "$_pubkey" "dig.out.$DIR.test$n" > /dev/null && return 1
 	fi
 
 	test "$_checksig" -eq 0 && return 0

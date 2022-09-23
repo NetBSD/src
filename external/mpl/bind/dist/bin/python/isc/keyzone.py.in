@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 import os
 import sys
@@ -19,6 +19,7 @@ from subprocess import Popen, PIPE
 ########################################################################
 class KeyZoneException(Exception):
     pass
+
 
 ########################################################################
 # class keyzone
@@ -33,19 +34,19 @@ class keyzone:
         if not name:
             return
 
-        if not czpath or not os.path.isfile(czpath) \
-                or not os.access(czpath, os.X_OK):
+        if not czpath or not os.path.isfile(czpath) or not os.access(czpath, os.X_OK):
             raise KeyZoneException('"named-compilezone" not found')
             return
 
         maxttl = keyttl = None
 
-        fp, _ = Popen([czpath, "-o", "-", name, filename],
-                      stdout=PIPE, stderr=PIPE).communicate()
+        fp, _ = Popen(
+            [czpath, "-o", "-", name, filename], stdout=PIPE, stderr=PIPE
+        ).communicate()
         for line in fp.splitlines():
             if type(line) is not str:
-                line = line.decode('ascii')
-            if re.search('^[:space:]*;', line):
+                line = line.decode("ascii")
+            if re.search("^[:space:]*;", line):
                 continue
             fields = line.split()
             if not maxttl or int(fields[1]) > maxttl:

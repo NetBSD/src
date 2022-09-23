@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -16,6 +18,12 @@ status=0
 n=1
 
 DIGOPTS="+tcp +noadd +nosea +nostat +nocmd -p ${PORT}"
+
+wait_for_record () {
+	$DIG $DIGOPTS "$1" "$2" "$3" > "$4" || return 1
+	grep NOERROR "$4" > /dev/null || return 1
+	return 0
+}
 
 # Entry should exist.
 echo_i "check for failure from on zone load for 'check-names fail;' ($n)"
@@ -133,16 +141,51 @@ not=1
 $NSUPDATE -d <<END > nsupdate.out.test$n 2>&1 || ret=1
 check-names off
 server 10.53.0.4 ${PORT}
-update add xxx_xxx.master-ignore.update. 600 A 10.10.10.1
+update add xxx_xxx.primary-ignore.update. 600 A 10.10.10.1
 send
 END
-grep "xxx_xxx.master-ignore.update/A.*(check-names)" ns1/named.run > /dev/null || not=0
+grep "xxx_xxx.primary-ignore.update/A.*(check-names)" ns4/named.run > /dev/null || not=0
 if [ $not != 0 ]; then ret=1; fi
-$DIG $DIGOPTS xxx_xxx.master-ignore.update @10.53.0.4 A > dig.out.ns4.test$n || ret=1
+$DIG $DIGOPTS xxx_xxx.primary-ignore.update @10.53.0.4 A > dig.out.ns4.test$n || ret=1
 grep NOERROR dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
+
+echo_i "check that updates to 'check-names master ignore;' succeed and are not logged ($n)"
+ret=0
+not=1
+$NSUPDATE -d <<END > nsupdate.out.test$n 2>&1 || ret=1
+check-names off
+server 10.53.0.5 ${PORT}
+update add xxx_xxx.master-ignore.update. 600 A 10.10.10.1
+send
+END
+grep "xxx_xxx.master-ignore.update/A.*(check-names)" ns5/named.run > /dev/null || not=0
+if [ $not != 0 ]; then ret=1; fi
+$DIG $DIGOPTS xxx_xxx.master-ignore.update @10.53.0.5 A > dig.out.ns5.test$n || ret=1
+grep NOERROR dig.out.ns5.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+n=$((n+1))
+
+echo_i "check that updates to 'check-names secondary ignore;' succeed and are not logged ($n)"
+ret=0
+# takes a while for the transfer to succeed as ns5 (primary) is started after ns4 (secondary)
+# and the zone is still loading when we get to this point.
+retry_quiet 35 wait_for_record xxx_xxx.master-ignore.update @10.53.0.4 A dig.out.ns4.test$n || ret=1
+grep "xxx_xxx.master-ignore.update/A.*(check-names)" ns4/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo_i "check that updates to 'check-names master ignore;' succeed and are not logged ($n)"
+ret=0
+retry_quiet 35 wait_for_record xxx_xxx.primary-ignore.update @10.53.0.5 A dig.out.ns5.test$n || ret=1
+grep "xxx_xxx.primary-ignore.update/A.*(check-names)" ns5/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+n=$((n+1))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

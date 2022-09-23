@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -120,9 +122,13 @@ export CONTROLPORT
 export LOWPORT
 export HIGHPORT
 
+# Start all servers used by the system test.  Ensure all log files written
+# during a system test (tests.sh + potentially multiple *.py scripts) are
+# retained for each run by calling start.pl with the --restart command-line
+# option for all invocations except the first one.
 start_servers() {
     echoinfo "I:$systest:starting servers"
-    if $restart; then
+    if $restart || [ "$run" -gt 0 ]; then
         restart_opt="--restart"
     fi
     if ! $PERL start.pl ${restart_opt} --port "$PORT" "$systest"; then
@@ -226,23 +232,27 @@ fi
 
 if [ $status -eq 0 ]; then
     if [ -n "$PYTEST" ]; then
-        run=$((run+1))
         for test in $(cd "${systest}" && find . -name "tests*.py"); do
+            rm -f "$systest/$test.status"
             if start_servers; then
-                rm -f "$systest/$test.status"
+                run=$((run+1))
                 test_status=0
-                (cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
+                (cd "$systest" && "$PYTEST" -rsxX -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
                 if [ -f "$systest/$test.status" ]; then
-                    echo_i "FAILED"
-                    test_status=$(cat "$systest/$test.status")
+                    if [ "$(cat "$systest/$test.status")" != "5" ]; then
+                        test_status=$(cat "$systest/$test.status")
+                    fi
                 fi
                 status=$((status+test_status))
                 stop_servers || status=1
             else
                 status=1
+            fi
+            if [ $status -ne 0 ]; then
                 break
             fi
         done
+        rm -f "$systest/$test.status"
     else
         echoinfo "I:$systest:pytest not installed, skipping python tests"
     fi
@@ -266,7 +276,7 @@ get_core_dumps() {
 }
 
 core_dumps=$(get_core_dumps | tr '\n' ' ')
-assertion_failures=$(find "$systest/" -name named.run -print0 | xargs -0 grep "assertion failure" | wc -l)
+assertion_failures=$(find "$systest/" -name named.run -exec grep "assertion failure" {} + | wc -l)
 sanitizer_summaries=$(find "$systest/" -name 'tsan.*' | wc -l)
 if [ -n "$core_dumps" ]; then
     echoinfo "I:$systest:Core dump(s) found: $core_dumps"
@@ -301,7 +311,7 @@ if [ -n "$core_dumps" ]; then
 elif [ "$assertion_failures" -ne 0 ]; then
     SYSTESTDIR="$systest"
     echoinfo "I:$systest:$assertion_failures assertion failure(s) found"
-    find "$systest/" -name 'tsan.*' -print0 | xargs -0 grep "SUMMARY: " | sort -u | cat_d
+    find "$systest/" -name 'tsan.*' -exec grep "SUMMARY: " {} + | sort -u | cat_d
     echofail "R:$systest:FAIL"
     status=$((status+1))
 elif [ "$sanitizer_summaries" -ne 0 ]; then

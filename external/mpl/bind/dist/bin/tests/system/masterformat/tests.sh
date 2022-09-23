@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -330,6 +332,26 @@ grep 'next resign' rndc.out > /dev/null 2>&1 || ret=1
 n=$((n+1))
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status+ret))
+
+# The following test is disabled by default because it is very slow.
+# It fails on Windows, because a single read() call (specifically
+# the one in isc_file_mmap()) cannot process more than INT_MAX (2^31)
+# bytes of data.
+if [ -n "${TEST_LARGE_MAP}" ]; then
+    echo_i "checking map file size > 2GB can be loaded ($n)"
+    ret=0
+    $PERL ../../startperf/mkzonefile.pl test 9000000 > text.$n
+    # convert to map
+    $CHECKZONE -D -f text -F map -o map.$n test text.$n > /dev/null || ret=1
+    # check map file size is over 2GB to ensure the test is valid
+    size=$(ls -l map.$n | awk '{print $5}')
+    [ "$size" -gt 2147483648 ] || ret=1
+    # convert back to text
+    $CHECKZONE -f map test map.$n > /dev/null || ret=1
+    n=$((n+1))
+    [ $ret -eq 0 ] || echo_i "failed"
+    status=$((status+ret))
+fi
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

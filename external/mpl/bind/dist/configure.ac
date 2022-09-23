@@ -1,13 +1,15 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-AC_INIT(BIND, [9.16], [info@isc.org], [], [https://www.isc.org/downloads/])
+AC_INIT(BIND, [9.16], [https://gitlab.isc.org/isc-projects/bind9/-/issues/new?issuable_template=Bug], [], [https://www.isc.org/downloads/])
 AC_PREREQ([2.60])
 
 #
@@ -143,28 +145,6 @@ AS_IF([test "$enable_fuzzing" = "afl"],
 			 [AC_MSG_ERROR([set CC=afl-<gcc|clang> when --enable-fuzzing=afl is used])])
       ])
 
-# [pairwise: --enable-mutex-atomics, --disable-mutex-atomics]
-AC_ARG_ENABLE(mutex_atomics,
-	      AS_HELP_STRING([--enable-mutex-atomics],
-		             [emulate atomics by mutex-locked variables, useful for debugging
-				[default=no]]),
-	      [],
-	      [enable_mutex_atomics=no])
-
-AC_MSG_CHECKING([whether to emulate atomics with mutexes])
-case "$enable_mutex_atomics" in
-yes)
-        AC_MSG_RESULT(yes)
-        AC_DEFINE(ISC_MUTEX_ATOMICS, 1, [Define to emulate atomic variables with mutexes.])
-        ;;
-no)
-        AC_MSG_RESULT(no)
-        ;;
-*)
-        AC_MSG_ERROR("--enable-mutex-atomics requires yes or no")
-        ;;
-esac
-
 #
 # Make very sure that these are the first files processed by
 # config.status, since we use the processed output as the input for
@@ -226,10 +206,13 @@ except: exit(1)'
 testply='try: import ply
 except: exit(1)'
 
-testsetup='try: from distutils.core import setup
+testsetuptools='try: from setuptools import setup
 except: exit(1)'
 
-default_with_python="python python3 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
+testdistutils='try: from distutils.core import setup
+except: exit(1)'
+
+default_with_python="python python3 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3 python3.2 python2 python2.7"
 
 AC_ARG_VAR([PYTHON], [path to python executable])
 
@@ -288,12 +271,16 @@ AS_IF([test "$with_python" = "no"],
 		unset PYTHON
 		continue])
 
-	 AC_MSG_CHECKING([Python module 'distutils.core setup'])
-	 AS_IF(["$PYTHON" -c "$testsetup" 2>/dev/null],
+	 AC_MSG_CHECKING([Python module 'setuptools'])
+	 AS_IF(["$PYTHON" -c "$testsetuptools" 2>/dev/null],
 	       [AC_MSG_RESULT([yes])],
 	       [AC_MSG_RESULT([no])
-		unset PYTHON
-		continue])
+		AC_MSG_CHECKING([Python module 'distutils'])
+		AS_IF(["$PYTHON" -c "$testdistutils" 2>/dev/null],
+		      [AC_MSG_RESULT([yes])],
+		      [AC_MSG_RESULT([no])
+		       unset PYTHON
+		       continue])])
 
 	 # Stop looking any further once we find a Python interpreter
 	 # satisfying all requirements.
@@ -653,7 +640,7 @@ AS_IF([test "$enable_geoip" = "yes"],
 				   GEOIP2LINKOBJS='${GEOIP2LINKOBJS}'
 				   MAXMINDDB_LIBS="$MAXMINDDB_LIBS $ac_cv_search_MMDB_open"
 				   AC_MSG_NOTICE([GeoIP2 default database path set to $with_maxminddb/share/GeoIP])
-				   AS_VAR_COPY([MAXMINDDB_PREFIX], [$with_maxminddb])
+				   AS_VAR_COPY([MAXMINDDB_PREFIX], [with_maxminddb])
 				  ],
 				  [AC_MSG_ERROR([GeoIP2 requested, but libmaxminddb not found])])
 		   AX_RESTORE_FLAGS([maxminddb])
@@ -715,10 +702,6 @@ AC_CHECK_HEADERS([sched.h])
 AC_SEARCH_LIBS([sched_yield],[rt])
 AC_CHECK_FUNCS([sched_yield pthread_yield pthread_yield_np])
 
-AC_CHECK_HEADERS([sys/cpuset.h])
-AC_CHECK_HEADERS([sys/procset.h])
-AC_CHECK_FUNCS([pthread_setaffinity_np cpuset_setaffinity processor_bind sched_setaffinity])
-
 # Look for functions relating to thread naming
 AC_CHECK_FUNCS([pthread_setname_np pthread_set_name_np])
 AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
@@ -727,6 +710,23 @@ AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
 AC_MSG_CHECKING(for libuv)
 PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0], [],
 		  [AC_MSG_ERROR([libuv not found])])
+
+AX_SAVE_FLAGS([libuv])
+CFLAGS="$CFLAGS $LIBUV_CFLAGS"
+LIBS="$LIBS $LIBUV_LIBS"
+
+# libuv recvmmsg support
+AC_CHECK_DECLS([UV_UDP_MMSG_FREE, UV_UDP_MMSG_CHUNK], [], [], [[#include <uv.h>]])
+AC_MSG_CHECKING([whether struct msghdr uses padding for alignment])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/socket.h>],
+				   [const struct msghdr h = { .__pad1 = 0, .__pad2 = 0 };])],
+		  [AC_MSG_RESULT([yes])
+		   AC_DEFINE([HAVE_DECL_UV_UDP_RECVMMSG],
+			     [0], [Disable recvmmsg support on systems with MUSL glibc])],
+		  [AC_MSG_RESULT([no])
+		   AC_CHECK_DECLS([UV_UDP_RECVMMSG], [], [], [[#include <uv.h>]])])
+
+AX_RESTORE_FLAGS([libuv])
 
 #
 # flockfile is usually provided by pthreads
@@ -806,6 +806,14 @@ PKG_CHECK_MODULES([OPENSSL], [libssl libcrypto], [],
 
 AX_SAVE_FLAGS([openssl])
 
+#
+# This maintenance branch of BIND 9 does not support new OpenSSL APIs
+# introduced in version 3.0.0.  Suppress compiler warnings about using
+# functions deprecated in newer OpenSSL versions as they will not be
+# addressed in BIND 9.16.
+#
+OPENSSL_CFLAGS="$OPENSSL_CFLAGS -DOPENSSL_SUPPRESS_DEPRECATED"
+
 CFLAGS="$CFLAGS $OPENSSL_CFLAGS"
 LIBS="$LIBS $OPENSSL_LIBS"
 
@@ -824,13 +832,14 @@ AC_COMPILE_IFELSE(
 # Check for functions added in OpenSSL or LibreSSL
 #
 
-AC_CHECK_FUNCS([OPENSSL_init_ssl OPENSSL_init_crypto])
+AC_CHECK_FUNCS([OPENSSL_init_ssl OPENSSL_init_crypto OPENSSL_cleanup])
 AC_CHECK_FUNCS([CRYPTO_zalloc])
 AC_CHECK_FUNCS([EVP_CIPHER_CTX_new EVP_CIPHER_CTX_free])
 AC_CHECK_FUNCS([EVP_MD_CTX_new EVP_MD_CTX_free EVP_MD_CTX_reset])
 AC_CHECK_FUNCS([HMAC_CTX_new HMAC_CTX_free HMAC_CTX_reset HMAC_CTX_get_md])
 AC_CHECK_FUNCS([SSL_read_ex SSL_peek_ex SSL_write_ex])
 AC_CHECK_FUNCS([BIO_read_ex BIO_write_ex])
+AC_CHECK_FUNCS([BN_GENCB_new])
 AC_CHECK_FUNCS([SSL_CTX_up_ref])
 AC_CHECK_FUNCS([SSL_CTX_set_min_proto_version])
 
@@ -1011,10 +1020,12 @@ case "$use_gssapi" in
     else
 	KRB5_CONFIG="$use_gssapi"
     fi
-    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi krb5`
-    gssapi_libs=`$KRB5_CONFIG --libs gssapi krb5`
+    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi`
+    gssapi_libs=`$KRB5_CONFIG --libs gssapi`
+    krb5_cflags=`$KRB5_CONFIG --cflags krb5`
+    krb5_libs=`$KRB5_CONFIG --libs krb5`
     saved_cppflags="$CPPFLAGS"
-    CPPFLAGS="$gssapi_cflags $CPPFLAGS"
+    CPPFLAGS="$gssapi_cflags $krb5_cflags $CPPFLAGS"
     AC_CHECK_HEADERS(gssapi.h gssapi/gssapi.h,
 	[ISC_PLATFORM_GSSAPIHEADER="#define ISC_PLATFORM_GSSAPIHEADER <$ac_header>"])
     if test "" = "$ISC_PLATFORM_GSSAPIHEADER"; then
@@ -1031,7 +1042,7 @@ case "$use_gssapi" in
 	else
 	    CPPFLAGS="$saved_cppflags"
 	    saved_libs="$LIBS"
-	    LIBS=$gssapi_libs
+	    LIBS="$gssapi_libs $krb5_libs $LIBS"
 	    AC_MSG_CHECKING([krb5-config linking as $LIBS])
 	    AC_TRY_LINK( , [gss_acquire_cred();krb5_init_context()],
 		gssapi_linked=yes, gssapi_linked=no)
@@ -1107,8 +1118,8 @@ case "$use_gssapi" in
 		;;
 	*/krb5-config|krb5-config)
 		USE_GSSAPI='-DGSSAPI'
-		DST_GSSAPI_INC="$gssapi_cflags"
-		DNS_GSSAPI_LIBS="$gssapi_libs"
+		DST_GSSAPI_INC="$gssapi_cflags $krb5_cflags"
+		DNS_GSSAPI_LIBS="$gssapi_libs $krb5_libs"
 		;;
 	framework)
 		USE_GSSAPI='-DGSSAPI'
@@ -2146,7 +2157,7 @@ AM_CONDITIONAL([HAVE_XELATEX], [test "$XELATEX" != ":" && test "$LATEXMK" != ":"
 # Pull release date from CHANGES file last modification date
 # for reproducible builds
 #
-release_date=`date -r CHANGES +%Y-%m-%d`
+release_date=`date -u -r CHANGES +%Y-%m-%d`
 AC_SUBST([RELEASE_DATE], $release_date)
 
 # Don't build the documentation if the sphinx-build is not present
@@ -2178,6 +2189,13 @@ AC_SUBST(DOXYGEN)
 
 AC_PATH_PROG(CURL, curl, curl)
 AC_SUBST(CURL)
+
+#
+# Look for xsltproc
+#
+
+AC_PATH_PROG(XSLTPROC, xsltproc, xsltproc)
+AC_SUBST(XSLTPROC)
 
 #
 # IDN support using libidn2
@@ -2991,24 +3009,59 @@ report() {
     test "$CRYPTO" = "pkcs11" && (
 	echo "    Using PKCS#11 for Public-Key Cryptography (--with-native-pkcs11)"
 	echo "    PKCS#11 module (--with-pkcs11): $with_pkcs11"
+	echo "    +--------------------------------------------+"
+	echo "    |             ==== WARNING ====              |"
+	echo "    |                                            |"
+	echo "    | The use of native PKCS#11 for Public-Key   |"
+	echo "    | Cryptography in BIND 9 has been deprecated |"
+	echo "    | in favor of OpenSSL engine_pkcs11 from the |"
+	echo "    | OpenSC project. The --with-native-pkcs11   |"
+	echo "    | configuration option will be removed from  |"
+	echo "    | the next major BIND 9 release. The option  |"
+	echo "    | to use the engine_pkcs11 OpenSSL engine is |"
+	echo "    | already available in BIND 9; please see    |"
+	echo "    | the ARM section on PKCS#11 for details.    |"
+	echo "    +--------------------------------------------+"
     )
 
+    dlz_enabled=no
+
     echo "    Dynamically loadable zone (DLZ) drivers:"
-    test "no" = "$use_dlz_bdb" || \
-	echo "        Berkeley DB (--with-dlz-bdb)"
-    test "no" = "$use_dlz_ldap" || \
-	echo "        LDAP (--with-dlz-ldap)"
-    test "no" = "$use_dlz_mysql" || \
-	echo "        MySQL (--with-dlz-mysql)"
-    test "no" = "$use_dlz_odbc" || \
-	echo "        ODBC (--with-dlz-odbc)"
-    test "no" = "$use_dlz_postgres" || \
-	echo "        Postgres (--with-dlz-postgres)"
-    test "no" = "$use_dlz_filesystem" || \
-	echo "        Filesystem (--with-dlz-filesystem)"
-    test "no" = "$use_dlz_stub" || \
-	echo "        Stub (--with-dlz-stub)"
-    test "$use_dlz_bdb $use_dlz_ldap $use_dlz_mysql $use_dlz_odbc $use_dlz_postgres $use_dlz_filesystem $use_dlz_stub" = "no no no no no no no" && echo "        None"
+    AS_IF([test "$use_dlz_bdb" != "no"],
+	  [AS_ECHO(["        Berkeley DB (--with-dlz-bdb)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_ldap" != "no"],
+	  [AS_ECHO(["        LDAP (--with-dlz-ldap)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_mysql" != "no"],
+	  [AS_ECHO(["        MySQL (--with-dlz-mysql)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_odbc" != "no"],
+	  [AS_ECHO(["        ODBC (--with-dlz-odbc)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_postgres" != "no"],
+	  [AS_ECHO(["        Postgres (--with-dlz-postgres)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_filesystem" != "no"],
+	  [AS_ECHO(["        Filesystem (--with-dlz-filesystem)"])
+	   dlz_enabled=yes])
+    AS_IF([test "$use_dlz_stub" != "no"],
+	  [AS_ECHO(["        Stub (--with-dlz-stub)"])
+	   dlz_enabled=yes])
+
+    AS_IF([test "$dlz_enabled" = "no"],
+	  [AS_ECHO(["        None"])],
+	  [AS_ECHO(["    +--------------------------------------------------------+"])
+	   AS_ECHO(["    |             ==== DEPRECATION WARNING ====              |"])
+	   AS_ECHO(["    +--------------------------------------------------------+"])
+	   AS_ECHO(["    | Old-style DLZ drivers have been deprecated in favor of |"])
+	   AS_ECHO(["    | DLZ modules. The DLZ drivers configuration option will |"])
+	   AS_ECHO(["    | be removed from the next major BIND 9 release.         |"])
+	   AS_ECHO(["    |                                                        |"])
+	   AS_ECHO(["    | The option to use the DLZ modules is already available |"])
+	   AS_ECHO(["    | in BIND 9; please see the ARM section on DLZ modules.  |"])
+	   AS_ECHO(["    +--------------------------------------------------------+"])
+	  ])
 
     echo "-------------------------------------------------------------------------------"
 
@@ -3055,7 +3108,11 @@ report() {
     echo "    localstatedir: $localstatedir"
     echo "-------------------------------------------------------------------------------"
     echo "Compiler: $CC"
-    $CC --version 2>&1 | sed 's/^/    /'
+    AS_IF([test "$GCC" = "yes"],
+	  [$CC --version 2>&1 | sed 's/^/    /'],
+	  [AS_CASE([$host],
+		   [*-solaris*],[$CC -V 2>&1 | sed 's/^/    /'],
+		   [$CC --version 2>&1 | sed 's/^/    /'])])
 
     if test "X$ac_unrecognized_opts" != "X"; then
 	echo "Unrecognized options:"

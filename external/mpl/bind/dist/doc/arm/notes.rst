@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 Release Notes
 =============
@@ -33,23 +34,7 @@ proceed in the unstable 9.17 branch.
 Supported Platforms
 -------------------
 
-To build on Unix-like systems, BIND requires support for POSIX.1c
-threads (IEEE Std 1003.1c-1995), the Advanced Sockets API for IPv6
-(:rfc:`3542`), and standard atomic operations provided by the C
-compiler.
-
-The libuv asynchronous I/O library and the OpenSSL cryptography library
-must be available for the target platform. A PKCS#11 provider can be
-used instead of OpenSSL for Public Key cryptography (i.e., DNSSEC
-signing and validation), but OpenSSL is still required for general
-cryptography operations such as hashing and random number generation.
-
-More information can be found in the ``PLATFORMS.md`` file that is
-included in the source distribution of BIND 9. If your compiler and
-system libraries provide the above features, BIND 9 should compile and
-run. If that is not the case, the BIND development team will generally
-accept patches that add support for systems that are still supported by
-their respective vendors.
+See the :ref:`supported_os` section in the :ref:`Requirements` chapter.
 
 Download
 --------
@@ -59,6 +44,19 @@ https://www.isc.org/download/. There you will find additional
 information about each release, source code, and pre-compiled versions
 for Microsoft Windows operating systems.
 
+.. include:: ../notes/notes-9.16.33.rst
+.. include:: ../notes/notes-9.16.32.rst
+.. include:: ../notes/notes-9.16.31.rst
+.. include:: ../notes/notes-9.16.30.rst
+.. include:: ../notes/notes-9.16.29.rst
+.. include:: ../notes/notes-9.16.28.rst
+.. include:: ../notes/notes-9.16.27.rst
+.. include:: ../notes/notes-9.16.26.rst
+.. include:: ../notes/notes-9.16.25.rst
+.. include:: ../notes/notes-9.16.24.rst
+.. include:: ../notes/notes-9.16.23.rst
+.. include:: ../notes/notes-9.16.22.rst
+.. include:: ../notes/notes-9.16.21.rst
 .. include:: ../notes/notes-9.16.20.rst
 .. include:: ../notes/notes-9.16.19.rst
 .. include:: ../notes/notes-9.16.18.rst
@@ -86,17 +84,8 @@ for Microsoft Windows operating systems.
 License
 -------
 
-BIND 9 is open source software licensed under the terms of the Mozilla
-Public License, version 2.0 (see the ``LICENSE`` file for the full
-text).
-
-The license requires that if you make changes to BIND and distribute
-them outside your organization, those changes must be published under
-the same license. It does not require that you publish or disclose
-anything other than the changes you have made to our software. This
-requirement does not affect anyone who is using BIND, with or without
-modifications, without redistributing it, nor anyone redistributing BIND
-without changes.
+BIND 9 is open source software licensed under the terms of the Mozilla Public
+License, version 2.0 (see the ``COPYING`` file for the full text).
 
 Those wishing to discuss license compliance may contact ISC at
 https://www.isc.org/contact/.

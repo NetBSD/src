@@ -1,0 +1,17 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 86400
+net.			SOA	. . 0 0 0 0 0
+net.			NS	attackSecureDomain.net.
+attackSecureDomain.net.	A	10.53.0.10
+didItWork.net.		TXT	"if you can see this record the attack worked"
+ns.spoofed.net.		A	10.53.0.10

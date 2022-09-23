@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -63,15 +65,16 @@ view "inherit" {
 	/* Override dnssec-policy */
 	zone "override.inherit.unsigned" {
 		type primary;
-		dnssec-policy "default";
 		file "override.inherit.unsigned.db";
+		inline-signing yes;
+		dnssec-policy "default";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.inherit.unsigned" {
 		type primary;
-		dnssec-policy "none";
 		file "none.inherit.unsigned.db";
+		dnssec-policy "none";
 	};
 };
 
@@ -83,20 +86,22 @@ view "override" {
 	zone "inherit.override.unsigned" {
 		type primary;
 		file "inherit.override.unsigned.db";
+		inline-signing yes;
 	};
 
 	/* Override dnssec-policy */
 	zone "override.override.unsigned" {
 		type primary;
-		dnssec-policy "test";
 		file "override.override.unsigned.db";
+		inline-signing yes;
+		dnssec-policy "test";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.override.unsigned" {
 		type primary;
-		dnssec-policy "none";
 		file "none.override.unsigned.db";
+		dnssec-policy "none";
 	};
 };
 
@@ -113,14 +118,15 @@ view "none" {
 	/* Override dnssec-policy */
 	zone "override.none.unsigned" {
 		type primary;
-		dnssec-policy "test";
 		file "override.none.unsigned.db";
+		inline-signing yes;
+		dnssec-policy "test";
 	};
 
 	/* Unset dnssec-policy */
 	zone "none.none.unsigned" {
 		type primary;
-		dnssec-policy "none";
 		file "none.none.unsigned.db";
+		dnssec-policy "none";
 	};
 };

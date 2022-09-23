@@ -1,25 +1,25 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 import os
 
 # These routines permit platform-independent location of BIND 9 tools
-if os.name == 'nt':
+if os.name == "nt":
     import win32con
     import win32api
 
 
-def prefix(bindir=''):
-    if os.name != 'nt':
-        return os.path.join('@prefix@', bindir)
+def prefix(bindir=""):
+    if os.name != "nt":
+        return os.path.join("@prefix@", bindir)
 
     hklm = win32con.HKEY_LOCAL_MACHINE
     bind_subkey = "Software\\ISC\\BIND"
@@ -59,13 +59,13 @@ def prefix(bindir=''):
 
 
 def shellquote(s):
-    if os.name == 'nt':
+    if os.name == "nt":
         return '"' + s.replace('"', '"\\"') + '"'
     return "'" + s.replace("'", "'\\''") + "'"
 
 
-version = '@BIND9_VERSION@'
-if os.name != 'nt':
-    sysconfdir = '@expanded_sysconfdir@'
+version = "@BIND9_VERSION@"
+if os.name != "nt":
+    sysconfdir = "@expanded_sysconfdir@"
 else:
-    sysconfdir = prefix('etc')
+    sysconfdir = prefix("etc")

@@ -110,9 +110,6 @@
     <ClInclude Include="..\include\isc\hmac.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\isc\hp.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\isc\ht.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -183,9 +180,6 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\print.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\isc\queue.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\quota.h">
@@ -527,9 +521,6 @@
     <ClCompile Include="..\hmac.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\hp.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\ht.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -597,9 +588,6 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\portset.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\queue.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\quota.c">

@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -53,6 +55,7 @@ controls {
 zone "nsec-to-nsec3.kasp" {
 	type primary;
 	file "nsec-to-nsec3.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec";
 };
 
@@ -60,6 +63,7 @@ zone "nsec-to-nsec3.kasp" {
 zone "nsec3.kasp" {
 	type primary;
 	file "nsec3.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec3";
 };
 
@@ -74,6 +78,7 @@ zone "nsec3-dynamic.kasp" {
 zone "nsec3-other.kasp" {
 	type primary;
 	file "nsec3-other.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec3-other";
 };
 
@@ -81,6 +86,7 @@ zone "nsec3-other.kasp" {
 zone "nsec3-change.kasp" {
 	type primary;
 	file "nsec3-change.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec3";
 };
 
@@ -95,6 +101,7 @@ zone "nsec3-dynamic-change.kasp" {
 zone "nsec3-to-optout.kasp" {
 	type primary;
 	file "nsec3-to-optout.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec3";
 };
 
@@ -102,6 +109,7 @@ zone "nsec3-to-optout.kasp" {
 zone "nsec3-from-optout.kasp" {
 	type primary;
 	file "nsec3-from-optout.kasp.db";
+	inline-signing yes;
 	dnssec-policy "optout";
 };
 
@@ -109,6 +117,7 @@ zone "nsec3-from-optout.kasp" {
 zone "nsec3-to-nsec.kasp" {
 	type primary;
 	file "nsec3-to-nsec.kasp.db";
+	inline-signing yes;
 	dnssec-policy "nsec3";
 };
 

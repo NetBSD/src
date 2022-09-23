@@ -1,0 +1,20 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@		SOA	ns hostmaster 2011012708 3600 1200 604800 1200
+		NS	ns
+ns		A	192.0.2.1
+
+$GENERATE 0-7   host$	A 1.2.3.${1,0,d}
+$GENERATE 8-9   host$	A 1.2.3.${1,0}
+$GENERATE 10-11 host$	A 1.2.3.${1}
+$GENERATE 1024-1026 ${0,3,n}	AAAA 2001:db8::${0,4,x}

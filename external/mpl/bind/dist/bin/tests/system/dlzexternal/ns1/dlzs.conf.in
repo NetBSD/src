@@ -1,6 +1,8 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -19,6 +21,11 @@ dlz "example two" {
 
 dlz "example three" {
 	database "dlopen ../driver.@SO@ example.org";
+};
+
+dlz "example four" {
+        // Long zone name to trigger ISC_R_NOSPACE in dns_sdlz_putrr.
+        database "dlopen ../driver.@SO@ 123456789.123456789.123456789.123456789.123456789.example.foo";
 };
 
 dlz "unsearched1" {

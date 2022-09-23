@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. _catz-info:
 
@@ -65,7 +66,7 @@ The change to the catalog zone is propagated from the primary to all
 secondaries using the normal AXFR/IXFR mechanism. When the secondary receives the
 update to the catalog zone, it detects the entry for the new member
 zone, creates an instance of that zone on the secondary server, and points
-that instance to the ``primaries`` specified in the catalog zone data. The
+that instance to the ``masters`` specified in the catalog zone data. The
 newly created member zone is a normal secondary zone, so BIND
 immediately initiates a transfer of zone contents from the primary. Once
 complete, the secondary starts serving the member zone.
@@ -90,7 +91,7 @@ Catalog zones are configured with a ``catalog-zones`` statement in the
 
    catalog-zones {
        zone "catalog.example"
-            default-primaries { 10.53.0.1; }
+            default-masters { 10.53.0.1; }
             in-memory no
             zone-directory "catzones"
             min-update-interval 10;
@@ -167,27 +168,27 @@ Global options are set at the apex of the catalog zone, e.g.:
 
 ::
 
-    primaries.catalog.example.    IN AAAA 2001:db8::1
+    masters.catalog.example.    IN AAAA 2001:db8::1
 
 BIND currently supports the following options:
 
--  A simple ``primaries`` definition:
+-  A simple ``masters`` definition:
 
    ::
 
-           primaries.catalog.example.    IN A 192.0.2.1
+           masters.catalog.example.    IN A 192.0.2.1
 
 
    This option defines a primary server for the member zones, which can be
    either an A or AAAA record. If multiple primaries are set, the order in
    which they are used is random.
 
--  A ``primaries`` with a TSIG key defined:
+-  A ``masters`` with a TSIG key defined:
 
    ::
 
-               label.primaries.catalog.example.     IN A 192.0.2.2
-               label.primaries.catalog.example.     IN TXT "tsig_key_name"
+               label.masters.catalog.example.     IN A 192.0.2.2
+               label.masters.catalog.example.     IN TXT "tsig_key_name"
 
 
    This option defines a primary server for the member zone with a TSIG
@@ -224,9 +225,9 @@ options, but in the member zone subdomain:
 
 ::
 
-   primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN A 192.0.2.2
-   label.primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN AAAA 2001:db8::2
-   label.primaries.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN TXT "tsig_key"
+   masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN A 192.0.2.2
+   label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN AAAA 2001:db8::2
+   label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN TXT "tsig_key"
    allow-query.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN APL 1:10.0.0.0/24
 
 Options defined for a specific zone override the

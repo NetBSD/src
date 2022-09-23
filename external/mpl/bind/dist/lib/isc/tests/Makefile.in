@@ -1,8 +1,10 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -36,7 +38,7 @@ SRCS =		isctest.c aes_test.c buffer_test.c \
 		parse_test.c pool_test.c \
 		quota_test.c radix_test.c random_test.c \
 		regex_test.c result_test.c safe_test.c siphash_test.c sockaddr_test.c \
-		socket_test.c symtab_test.c task_test.c \
+		socket_test.c stats_test.c symtab_test.c task_test.c \
 		taskpool_test.c time_test.c timer_test.c
 
 SUBDIRS =
@@ -51,8 +53,9 @@ TARGETS =	aes_test@EXEEXT@ buffer_test@EXEEXT@ \
 		quota_test@EXEEXT@ radix_test@EXEEXT@ \
 		random_test@EXEEXT@ regex_test@EXEEXT@ result_test@EXEEXT@ \
 		safe_test@EXEEXT@ siphash_test@EXEEXT@ sockaddr_test@EXEEXT@ \
-		socket_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
-		taskpool_test@EXEEXT@ time_test@EXEEXT@ timer_test@EXEEXT@
+		socket_test@EXEEXT@ stats_test@EXEEXT@ symtab_test@EXEEXT@ \
+		task_test@EXEEXT@ taskpool_test@EXEEXT@ time_test@EXEEXT@ \
+		timer_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -179,6 +182,11 @@ socket_test@EXEEXT@: socket_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 sockaddr_test@EXEEXT@: sockaddr_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ sockaddr_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS}
+
+stats_test@EXEEXT@: stats_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ stats_test.@O@ isctest.@O@ \
 		${ISCLIBS} ${LIBS}
 
 symtab_test@EXEEXT@: symtab_test.@O@ isctest.@O@ ${ISCDEPLIBS}

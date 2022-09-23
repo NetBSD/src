@@ -1,13 +1,13 @@
-############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-############################################################################
 
 from __future__ import print_function
 import os
@@ -40,20 +40,17 @@ def logquery(type, qname):
     with open("qlog", "a") as f:
         f.write("%s %s\n", type, qname)
 
+
 # DNS 2.0 keyring specifies the algorithm
 try:
-    keyring = dns.tsigkeyring.from_text({ "foo" : {
-                                                   "hmac-sha256",
-                                                   "aaaaaaaaaaaa"
-                                                  } ,
-                                          "fake" : {
-                                                   "hmac-sha256",
-                                                   "aaaaaaaaaaaa"
-                                                  }
-                                         })
+    keyring = dns.tsigkeyring.from_text(
+        {
+            "foo": {"hmac-sha256", "aaaaaaaaaaaa"},
+            "fake": {"hmac-sha256", "aaaaaaaaaaaa"},
+        }
+    )
 except:
-    keyring = dns.tsigkeyring.from_text({ "foo" : "aaaaaaaaaaaa",
-                                           "fake" : "aaaaaaaaaaaa" })
+    keyring = dns.tsigkeyring.from_text({"foo": "aaaaaaaaaaaa", "fake": "aaaaaaaaaaaa"})
 
 dopass2 = False
 
@@ -81,7 +78,7 @@ def create_response(msg, tcp, first, ns10):
     m = dns.message.from_wire(msg, keyring=keyring)
     qname = m.question[0].name.to_text()
     lqname = qname.lower()
-    labels = lqname.split('.')
+    labels = lqname.split(".")
     rrtype = m.question[0].rdtype
     typename = dns.rdatatype.to_text(rrtype)
 
@@ -113,26 +110,30 @@ def create_response(msg, tcp, first, ns10):
     # Add a server cookie to the response
     if labels[0] != "nocookie":
         for o in m.options:
-            if o.otype == 10: # Use 10 instead of COOKIE
-                 if first and labels[0] == "withtsig" and not tcp:
-                     r.use_tsig(keyring = keyring,
-                                keyname = dns.name.from_text("fake"),
-                                algorithm = HMAC_SHA256)
-                 elif labels[0] != "tcponly" or tcp:
-                     cookie = o
-                     if len(o.data) == 8:
-                         cookie.data = o.data + o.data
-                     else:
-                         cookie.data = o.data
-                     r.use_edns(options=[cookie])
+            if o.otype == 10:  # Use 10 instead of COOKIE
+                if first and labels[0] == "withtsig" and not tcp:
+                    r.use_tsig(
+                        keyring=keyring,
+                        keyname=dns.name.from_text("fake"),
+                        algorithm=HMAC_SHA256,
+                    )
+                elif labels[0] != "tcponly" or tcp:
+                    cookie = o
+                    if len(o.data) == 8:
+                        cookie.data = o.data + o.data
+                    else:
+                        cookie.data = o.data
+                    r.use_edns(options=[cookie])
     r.flags |= dns.flags.AA
     return r
 
+
 def sigterm(signum, frame):
-    print ("Shutting down now...")
-    os.remove('ans.pid')
+    print("Shutting down now...")
+    os.remove("ans.pid")
     running = False
     sys.exit(0)
+
 
 ############################################################################
 # Main
@@ -146,8 +147,10 @@ ip4_addr2 = "10.53.0.10"
 ip6_addr1 = "fd92:7065:b8e:ffff::9"
 ip6_addr2 = "fd92:7065:b8e:ffff::10"
 
-try: port=int(os.environ['PORT'])
-except: port=5300
+try:
+    port = int(os.environ["PORT"])
+except:
+    port = 5300
 
 query4_udp1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 query4_udp1.bind((ip4_addr1, port))
@@ -195,24 +198,32 @@ except:
 
 signal.signal(signal.SIGTERM, sigterm)
 
-f = open('ans.pid', 'w')
+f = open("ans.pid", "w")
 pid = os.getpid()
-print (pid, file=f)
+print(pid, file=f)
 f.close()
 
 running = True
 
-print ("Using DNS version %s" % dns.version.version)
-print ("Listening on %s port %d" % (ip4_addr1, port))
-print ("Listening on %s port %d" % (ip4_addr2, port))
+print("Using DNS version %s" % dns.version.version)
+print("Listening on %s port %d" % (ip4_addr1, port))
+print("Listening on %s port %d" % (ip4_addr2, port))
 if havev6:
-    print ("Listening on %s port %d" % (ip6_addr1, port))
-    print ("Listening on %s port %d" % (ip6_addr2, port))
-print ("Ctrl-c to quit")
+    print("Listening on %s port %d" % (ip6_addr1, port))
+    print("Listening on %s port %d" % (ip6_addr2, port))
+print("Ctrl-c to quit")
 
 if havev6:
-    input = [query4_udp1, query6_udp1, query4_tcp1, query6_tcp1,
-             query4_udp2, query6_udp2, query4_tcp2, query6_tcp2]
+    input = [
+        query4_udp1,
+        query6_udp1,
+        query4_tcp1,
+        query6_tcp1,
+        query4_udp2,
+        query6_udp2,
+        query4_tcp2,
+        query6_tcp2,
+    ]
 else:
     input = [query4_udp1, query4_tcp1, query4_udp2, query4_tcp2]
 
@@ -228,14 +239,19 @@ while running:
 
     for s in inputready:
         ns10 = False
-        if s == query4_udp1 or s == query6_udp1 or \
-           s == query4_udp2 or s == query6_udp2:
+        if s == query4_udp1 or s == query6_udp1 or s == query4_udp2 or s == query6_udp2:
             if s == query4_udp1 or s == query6_udp1:
-                print ("UDP Query received on %s" %
-                       (ip4_addr1 if s == query4_udp1 else ip6_addr1), end=" ")
+                print(
+                    "UDP Query received on %s"
+                    % (ip4_addr1 if s == query4_udp1 else ip6_addr1),
+                    end=" ",
+                )
             if s == query4_udp2 or s == query6_udp2:
-                print ("UDP Query received on %s" %
-                       (ip4_addr2 if s == query4_udp2 else ip6_addr2), end=" ")
+                print(
+                    "UDP Query received on %s"
+                    % (ip4_addr2 if s == query4_udp2 else ip6_addr2),
+                    end=" ",
+                )
                 ns10 = True
             # Handle incoming queries
             msg = s.recvfrom(65535)
@@ -244,31 +260,36 @@ while running:
             print(dns.rcode.to_text(rsp.rcode()))
             s.sendto(rsp.to_wire(), msg[1])
             if dopass2:
-                print ("Sending second UDP response without TSIG", end=" ")
+                print("Sending second UDP response without TSIG", end=" ")
                 rsp = create_response(msg[0], False, False, ns10)
                 s.sendto(rsp.to_wire(), msg[1])
                 print(dns.rcode.to_text(rsp.rcode()))
 
-        if s == query4_tcp1 or s == query6_tcp1 or \
-           s == query4_tcp2 or s == query6_tcp2:
+        if s == query4_tcp1 or s == query6_tcp1 or s == query4_tcp2 or s == query6_tcp2:
             try:
                 (cs, _) = s.accept()
                 if s == query4_tcp1 or s == query6_tcp1:
-                    print ("TCP Query received on %s" %
-                           (ip4_addr1 if s == query4_tcp1 else ip6_addr1), end=" ")
+                    print(
+                        "TCP Query received on %s"
+                        % (ip4_addr1 if s == query4_tcp1 else ip6_addr1),
+                        end=" ",
+                    )
                 if s == query4_tcp2 or s == query6_tcp2:
-                    print ("TCP Query received on %s" %
-                           (ip4_addr2 if s == query4_tcp2 else ip6_addr2), end=" ")
+                    print(
+                        "TCP Query received on %s"
+                        % (ip4_addr2 if s == query4_tcp2 else ip6_addr2),
+                        end=" ",
+                    )
                     ns10 = True
                 # get TCP message length
                 buf = cs.recv(2)
-                length = struct.unpack('>H', buf[:2])[0]
+                length = struct.unpack(">H", buf[:2])[0]
                 # grep DNS message
                 msg = cs.recv(length)
                 rsp = create_response(msg, True, True, ns10)
                 print(dns.rcode.to_text(rsp.rcode()))
                 wire = rsp.to_wire()
-                cs.send(struct.pack('>H', len(wire)))
+                cs.send(struct.pack(">H", len(wire)))
                 cs.send(wire)
                 cs.close()
             except s.timeout:

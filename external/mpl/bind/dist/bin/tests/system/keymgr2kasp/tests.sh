@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -142,6 +144,92 @@ dnssec_verify
 # Remember legacy key tags.
 _migrate_ksk=$(key_get KEY1 ID)
 _migrate_zsk=$(key_get KEY2 ID)
+
+#
+# Testing a good migration (CSK).
+#
+set_zone "csk.kasp"
+set_policy "none" "1" "7200"
+set_server "ns3" "10.53.0.3"
+
+key_clear        "KEY1"
+key_set          "KEY1" "LEGACY" "yes"
+set_keyrole      "KEY1" "ksk"
+# This key also acts as a ZSK.
+key_set          "KEY1" "ZSK" "yes"
+set_keylifetime  "KEY1" "none"
+set_keyalgorithm "KEY1" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS" "$DEFAULT_BITS"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "rumoured"
+
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# Make sure the zone is signed with legacy key.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+# The key is immediately published and activated.
+_created=$(key_get KEY1 CREATED)
+set_keytime "KEY1" "PUBLISHED"   "${_created}"
+set_keytime "KEY1" "SYNCPUBLISH" "${_created}"
+set_keytime "KEY1" "ACTIVE"      "${_created}"
+
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+# Remember legacy key tags.
+_migrate_csk=$(key_get KEY1 ID)
+
+#
+# Testing a good migration (CSK, no SEP).
+#
+set_zone "csk-nosep.kasp"
+set_policy "none" "1" "7200"
+set_server "ns3" "10.53.0.3"
+
+key_clear        "KEY1"
+key_set          "KEY1" "LEGACY" "yes"
+set_keyrole      "KEY1" "zsk"
+# Despite the missing SEP bit, this key also acts as a KSK.
+key_set          "KEY1" "KSK" "yes"
+set_keylifetime  "KEY1" "none"
+set_keyalgorithm "KEY1" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS" "$DEFAULT_BITS"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "rumoured"
+
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# Make sure the zone is signed with legacy key.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+# The key is immediately published and activated.
+_created=$(key_get KEY1 CREATED)
+set_keytime "KEY1" "PUBLISHED"   "${_created}"
+set_keytime "KEY1" "SYNCPUBLISH" "${_created}"
+set_keytime "KEY1" "ACTIVE"      "${_created}"
+
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+# Remember legacy key tags.
+_migrate_csk_nosep=$(key_get KEY1 ID)
 
 #
 # Testing key states derived from key timing metadata (rumoured).
@@ -367,6 +455,107 @@ echo_i "check that of zone ${ZONE} migration to dnssec-policy uses the same keys
 ret=0
 [ $_migrate_ksk = $(key_get KEY1 ID) ] || log_error "mismatch ksk tag"
 [ $_migrate_zsk = $(key_get KEY2 ID) ] || log_error "mismatch zsk tag"
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+#
+# Testing a good migration (CSK).
+#
+set_zone "csk.kasp"
+set_policy "default" "1" "7200"
+set_server "ns3" "10.53.0.3"
+
+key_clear        "KEY1"
+key_set          "KEY1" "LEGACY" "no"
+set_keyrole      "KEY1" "csk"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS" "$DEFAULT_BITS"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "rumoured"
+
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# Various signing policy checks.
+check_keys
+wait_for_done_signing
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+
+# The key was immediately published and activated.
+_created=$(key_get KEY1 CREATED)
+set_keytime "KEY1" "PUBLISHED"   "${_created}"
+set_keytime "KEY1" "SYNCPUBLISH" "${_created}"
+set_keytime "KEY1" "ACTIVE"      "${_created}"
+
+# Continue signing policy checks.
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+
+# Check key tags, should be the same.
+n=$((n+1))
+echo_i "check that of zone ${ZONE} migration to dnssec-policy uses the same key ($n)"
+ret=0
+[ $_migrate_csk = $(key_get KEY1 ID) ] || log_error "mismatch csk tag"
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+#
+# Testing a good migration (CSK, no SEP).
+#
+set_zone "csk-nosep.kasp"
+set_policy "default" "1" "7200"
+set_server "ns3" "10.53.0.3"
+
+key_clear        "KEY1"
+key_set          "KEY1" "LEGACY" "no"
+set_keyrole      "KEY1" "csk"
+key_set          "KEY1" "FLAGS" "256"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "$DEFAULT_ALGORITHM_NUMBER" "$DEFAULT_ALGORITHM" "$DEFAULT_BITS" "$DEFAULT_BITS"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "rumoured"
+
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# Various signing policy checks.
+check_keys
+wait_for_done_signing
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+
+# The key was immediately published and activated.
+_created=$(key_get KEY1 CREATED)
+set_keytime "KEY1" "PUBLISHED"   "${_created}"
+set_keytime "KEY1" "SYNCPUBLISH" "${_created}"
+set_keytime "KEY1" "ACTIVE"      "${_created}"
+
+# Continue signing policy checks.
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+
+# Check key tags, should be the same.
+n=$((n+1))
+echo_i "check that of zone ${ZONE} migration to dnssec-policy uses the same key ($n)"
+ret=0
+[ $_migrate_csk_nosep = $(key_get KEY1 ID) ] || log_error "mismatch csk tag"
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 

@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -184,7 +185,7 @@ OPTIONS
   	avoid-v6-udp-ports { portrange; ... };
   	bindkeys-file quoted_string;
   	blackhole { address_match_element; ... };
-  	cache-file quoted_string;
+  	cache-file quoted_string;// deprecated
   	catalog-zones { zone string [ default-masters [ port integer ]
   	    [ dscp integer ] { ( remote-servers | ipv4_address [ port
   	    integer ] | ipv6_address [ port integer ] ) [ key
@@ -395,6 +396,7 @@ OPTIONS
   	    [ recursive-only boolean ] [ nsip-enable boolean ] [
   	    nsdname-enable boolean ] [ dnsrps-enable boolean ] [
   	    dnsrps-options { unspecified-text } ];
+  	reuseport boolean;
   	root-delegation-only [ exclude { string; ... } ];
   	root-key-sentinel boolean;
   	rrset-order { [ class string ] [ type string ] [ name
@@ -583,7 +585,7 @@ VIEW
   	attach-cache string;
   	auth-nxdomain boolean; // default changed
   	auto-dnssec ( allow | maintain | off );
-  	cache-file quoted_string;
+  	cache-file quoted_string;// deprecated
   	catalog-zones { zone string [ default-masters [ port integer ]
   	    [ dscp integer ] { ( remote-servers | ipv4_address [ port
   	    integer ] | ipv6_address [ port integer ] ) [ key

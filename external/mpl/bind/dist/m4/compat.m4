@@ -1,3 +1,7 @@
+# Copyright (c) 2021 Internet Systems Consortium
+#
+# SPDX-License-Identifier: FSFAP
+#
 # backwards compat with older pkg-config
 # - pull in AC_DEFUN from pkg.m4
 m4_ifndef([PKG_CHECK_VAR], [

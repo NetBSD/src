@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -1076,7 +1078,7 @@ if [ -x "$MDIG" ] ; then
     n=$((n+1))
     echo_i "check mdig +yaml output ($n)"
     ret=0
-    mdig_with_opts +yaml @10.53.0.3 -t any ns2.example > dig.out.test$n 2>&1 || ret=1
+    mdig_with_opts +yaml @10.53.0.3 -t any ns2.example > dig.out.test$n || ret=1
     value=$($PYTHON yamlget.py dig.out.test$n 0 message response_message_data status || ret=1)
     [ "$value" = "NOERROR" ] || ret=1
     value=$($PYTHON yamlget.py dig.out.test$n 0 message response_message_data QUESTION_SECTION 0 || ret=1)
@@ -1326,7 +1328,7 @@ if [ -x "$DELV" ] ; then
     n=$((n+1))
     echo_i "check delv +yaml output ($n)"
     ret=0
-    delv_with_opts +yaml @10.53.0.3 any ns2.example > delv.out.test$n 2>&1 || ret=1
+    delv_with_opts +yaml @10.53.0.3 any ns2.example > delv.out.test$n || ret=1
     value=$($PYTHON yamlget.py delv.out.test$n status || ret=1)
     [ "$value" = "success" ] || ret=1
     value=$($PYTHON yamlget.py delv.out.test$n query_name || ret=1)

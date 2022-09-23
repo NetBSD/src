@@ -1,9 +1,11 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -16,7 +18,7 @@ status=0
 n=0
 fail() {
 	echo_i "failed"
-	status=`expr $status + 1`
+	status=$((status + 1))
 }
 
 runcmd() {
@@ -25,11 +27,11 @@ runcmd() {
 }
 
 testcase() {
-	n=`expr $n + 1`
+	n=$((n + 1))
 	echo_i "$name ($n)"
 	expect=$1
 	shift
-	result=`runcmd "$@"`
+	result=$(runcmd "$@")
 	check_stdout
 	check_stderr
 	if [ "$expect" -ne "$result" ]; then
@@ -42,10 +44,10 @@ testcase() {
 check_stderr() {
 	if [ -n "${err:=}" ]; then
 		egrep "$err" err.$n >/dev/null && return 0
+		echo_d "stderr did not match '$err'"
 	else
 		[ -s err.$n ] || return 0
 	fi
-	echo_d "stderr did not match '$err'"
 	cat err.$n | cat_d
 	fail
 }

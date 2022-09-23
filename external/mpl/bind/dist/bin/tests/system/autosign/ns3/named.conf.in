@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -249,6 +251,13 @@ zone "inaczsk.example" {
 	auto-dnssec maintain;
 };
 
+zone "noksk.example" {
+	type primary;
+	file "noksk.example.db";
+	allow-update { any; };
+	auto-dnssec maintain;
+};
+
 zone "sync.example" {
 	type primary;
 	file "sync.example.db";
@@ -304,6 +313,20 @@ zone "delzsk.example." {
 zone "dname-at-apex-nsec3.example" {
 	type primary;
 	file "dname-at-apex-nsec3.example.db";
+	allow-update { any; };
+	auto-dnssec maintain;
+};
+
+zone "cds-delete.example" {
+	type primary;
+	file "cds-delete.example.db";
+	allow-update { any; };
+	auto-dnssec maintain;
+};
+
+zone "cdnskey-delete.example" {
+	type primary;
+	file "cdnskey-delete.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
 };

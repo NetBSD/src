@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -22,7 +24,7 @@ rm -f delayksk.key delayzsk.key autoksk.key autozsk.key
 rm -f dig.out.*
 rm -f digcomp.out.test*
 rm -f digcomp.out.test*
-rm -f missingzsk.key inactivezsk.key
+rm -f noksk-ksk.key nozsk-ksk.key nozsk-zsk.key inaczsk-zsk.key inaczsk-ksk.key
 rm -f nopriv.key vanishing.key del1.key del2.key
 rm -f ns*/managed-keys.bind*
 rm -f ns*/named.lock
@@ -33,6 +35,8 @@ rm -f ns2/private.secure.example.db ns2/bar.db
 rm -f ns3/*.nzd ns3/*.nzd-lock ns3/*.nzf
 rm -f ns3/*.nzf
 rm -f ns3/autonsec3.example.db
+rm -f ns3/cdnskey-delete.example.db
+rm -f ns3/cds-delete.example.db
 rm -f ns3/delzsk.example.db
 rm -f ns3/dname-at-apex-nsec3.example.db
 rm -f ns3/inacksk2.example.db
@@ -43,6 +47,7 @@ rm -f ns3/jitter.nsec3.example.db
 rm -f ns3/kg.out ns3/s.out ns3/st.out
 rm -f ns3/kskonly.example.db
 rm -f ns3/named.ns3.prev
+rm -f ns3/noksk.example.db
 rm -f ns3/nozsk.example.db ns3/inaczsk.example.db
 rm -f ns3/nsec.example.db
 rm -f ns3/nsec3-to-nsec.example.db

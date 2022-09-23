@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -26,7 +28,7 @@ rm -f ./ns2/formerly-text.db
 rm -f ./ns2/db-*
 rm -f ./ns2/large.bk
 rm -f ./ns3/example.db.map ./ns3/dynamic.db.map
-rm -f ./baseline.txt ./text.1 ./text.2 ./raw.1 ./raw.2 ./map.1 ./map.2 ./map.5 ./text.5 ./badmap
+rm -f ./baseline.txt ./text.* ./raw.* ./map.* ./badmap
 rm -f ./ns1/Ksigned.* ./ns1/dsset-signed. ./ns1/signed.db.signed
 rm -f ./rndc.out
 rm -f ./ns*/named.lock

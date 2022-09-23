@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -14,7 +16,7 @@ SYSTEMTESTTOP=..
 
 if test -n "$PYTHON"
 then
-    if $PYTHON -c "from dns.query import send_tcp" 2> /dev/null
+    if [ "$($PYTHON -c "import dns.version; print(dns.version.MAJOR)" 2> /dev/null)" -ge 2 ]
     then
         :
     else

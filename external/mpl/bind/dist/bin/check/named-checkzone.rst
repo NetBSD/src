@@ -1,37 +1,27 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
+.. BEWARE: Do not forget to edit also named-compilezone.rst!
+
 .. _man_named-checkzone:
 
-named-checkzone, named-compilezone - zone file validity checking or converting tool
------------------------------------------------------------------------------------
+named-checkzone - zone file validation tool
+-------------------------------------------
 
 Synopsis
 ~~~~~~~~
 
 :program:`named-checkzone` [**-d**] [**-h**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-M** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-o** filename] [**-r** mode] [**-s** style] [**-S** mode] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {zonename} {filename}
-
-:program:`named-compilezone` [**-d**] [**-j**] [**-q**] [**-v**] [**-c** class] [**-C** mode] [**-f** format] [**-F** format] [**-J** filename] [**-i** mode] [**-k** mode] [**-m** mode] [**-n** mode] [**-l** ttl] [**-L** serial] [**-r** mode] [**-s** style] [**-t** directory] [**-T** mode] [**-w** directory] [**-D**] [**-W** mode] {**-o** filename} {zonename} {filename}
 
 Description
 ~~~~~~~~~~~
@@ -40,13 +30,6 @@ Description
 performs the same checks as ``named`` does when loading a zone. This
 makes ``named-checkzone`` useful for checking zone files before
 configuring them into a name server.
-
-``named-compilezone`` is similar to ``named-checkzone``, but it always
-dumps the zone contents to a specified file in a specified format.
-It also applies stricter check levels by default, since the
-dump output is used as an actual zone file loaded by ``named``.
-When manually specified otherwise, the check levels must at least be as
-strict as those specified in the ``named`` configuration file.
 
 Options
 ~~~~~~~
@@ -103,8 +86,8 @@ Options
    Mode ``none`` disables the checks.
 
 ``-f format``
-   This option specifies the format of the zone file. Possible formats are ``text``
-   (the default), ``raw``, and ``map``.
+   This option specifies the format of the zone file. Possible formats are
+   ``text`` (the default), ``raw``, and ``map``.
 
 ``-F format``
    This option specifies the format of the output file specified. For
@@ -112,17 +95,15 @@ Options
    the zone contents.
 
    Possible formats are ``text`` (the default), which is the standard
-   textual representation of the zone, and ``map``, ``raw``, and
-   ``raw=N``, which store the zone in a binary format for rapid
-   loading by ``named``. ``raw=N`` specifies the format version of the
-   raw zone file: if ``N`` is 0, the raw file can be read by any version of
-   ``named``; if N is 1, the file can only be read by release 9.9.0 or
-   higher. The default is 1.
+   textual representation of the zone, and ``map``, ``raw``, and ``raw=N``, which
+   store the zone in a binary format for rapid loading by ``named``.
+   ``raw=N`` specifies the format version of the raw zone file: if ``N`` is
+   0, the raw file can be read by any version of ``named``; if N is 1, the
+   file can only be read by release 9.9.0 or higher. The default is 1.
 
 ``-k mode``
    This option performs ``check-names`` checks with the specified failure mode.
-   Possible modes are ``fail`` (the default for ``named-compilezone``),
-   ``warn`` (the default for ``named-checkzone``), and ``ignore``.
+   Possible modes are ``fail``, ``warn`` (the default), and ``ignore``.
 
 ``-l ttl``
    This option sets a maximum permissible TTL for the input file. Any record with a
@@ -145,13 +126,11 @@ Options
 
 ``-n mode``
    This option specifies whether NS records should be checked to see if they are
-   addresses. Possible modes are ``fail`` (the default for
-   ``named-compilezone``), ``warn`` (the default for ``named-checkzone``),
-   and ``ignore``.
+   addresses. Possible modes are ``fail``, ``warn`` (the default), and ``ignore``.
 
 ``-o filename``
    This option writes the zone output to ``filename``. If ``filename`` is ``-``, then
-   the zone output is written to standard output. This is mandatory for ``named-compilezone``.
+   the zone output is written to standard output.
 
 ``-r mode``
    This option checks for records that are treated as different by DNSSEC but are
@@ -163,9 +142,9 @@ Options
    ``full`` (the default) and ``relative``. The ``full`` format is most
    suitable for processing automatically by a separate script.
    The relative format is more human-readable and is thus
-   suitable for editing by hand. For ``named-checkzone``, this does not
-   have any effect unless it dumps the zone contents. It also does not
-   have any meaning if the output format is not text.
+   suitable for editing by hand. This does not have any effect unless it dumps
+   the zone contents. It also does not have any meaning if the output format
+   is not text.
 
 ``-S mode``
    This option checks whether an SRV record refers to a CNAME. Possible modes are
@@ -187,13 +166,12 @@ Options
    ``named.conf``.
 
 ``-D``
-   This option dumps the zone file in canonical format. This is always enabled for
-   ``named-compilezone``.
+   This option dumps the zone file in canonical format.
 
 ``-W mode``
    This option specifies whether to check for non-terminal wildcards. Non-terminal
    wildcards are almost always the result of a failure to understand the
-   wildcard matching algorithm (:rfc:`1034`). Possible modes are ``warn``
+   wildcard matching algorithm (:rfc:`4592`). Possible modes are ``warn``
    (the default) and ``ignore``.
 
 ``zonename``
@@ -211,5 +189,5 @@ and 0 otherwise.
 See Also
 ~~~~~~~~
 
-:manpage:`named(8)`, :manpage:`named-checkconf(8)`, :rfc:`1035`, BIND 9 Administrator Reference
-Manual.
+:manpage:`named(8)`, :manpage:`named-checkconf(8)`, :manpage:`named-compilezone(8)`,
+:rfc:`1035`, BIND 9 Administrator Reference Manual.

@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. _dnssec_signing:
 
@@ -761,9 +762,10 @@ The policy has multiple parts:
 -  The ``keys`` clause lists all keys that should be in the zone, along
    with their associated parameters. In this example, we are using the
    conventional KSK/ZSK split, with the KSK changed every year and the
-   ZSK changed every two months. We have used one of the two mandatory
-   algorithms for the keys. (The ``default`` DNSSEC policy sets a CSK
-   that is never changed.)
+   ZSK changed every two months (the ``default`` DNSSEC policy sets a
+   CSK that is never changed). Keys are created using the
+   ECDSAPS256SHA256 algorithm; each KSK/ZSK pair must have the same
+   algorithm. A CSK combines the functionality of a ZSK and a KSK.
 
 -  The parameters ending in ``-ttl`` are, as expected, the TTLs of the
    associated records. Remember that during a key rollover,
@@ -896,7 +898,7 @@ presence. Let's look at the following configuration excerpt:
 ::
 
    parental-agents "net" {
-       10.53.0.11, 10.53.0.12;
+       10.53.0.11; 10.53.0.12;
    };
 
    zone "example.net" in {
@@ -1097,25 +1099,25 @@ Generate Keys
 Everything in DNSSEC centers around keys, so we begin by
 generating our own keys.
 
-::
+.. code-block:: console
 
-   # cd /etc/bind
-   # dnssec-keygen -a RSASHA256 -b 1024 example.com
-   Generating key pair...........................+++++ ......................+++++ 
-   Kexample.com.+008+34371
-   # dnssec-keygen -a RSASHA256 -b 2048 -f KSK example.com
-   Generating key pair........................+++ ..................................+++ 
-   Kexample.com.+008+00472
+   # cd /etc/bind/keys
+   # dnssec-keygen -a ECDSAP256SHA256 example.com
+   Generating key pair...........................+++++ ......................+++++
+   Kexample.com.+013+34371
+   # dnssec-keygen -a ECDSAP256SHA256 -f KSK example.com
+   Generating key pair........................+++ ..................................+++
+   Kexample.com.+013+00472
 
 This command generates four key files in ``/etc/bind/keys``:
 
--  Kexample.com.+008+34371.key
+-  Kexample.com.+013+34371.key
 
--  Kexample.com.+008+34371.private
+-  Kexample.com.+013+34371.private
 
--  Kexample.com.+008+00472.key
+-  Kexample.com.+013+00472.key
 
--  Kexample.com.+008+00472.private
+-  Kexample.com.+013+00472.private
 
 The two files ending in ``.key`` are the public keys. These contain the
 DNSKEY resource records that appear in the zone. The two files
@@ -1126,44 +1128,34 @@ Of the two pairs, one is the zone-signing key (ZSK), and one is the
 key-signing key (KSK). We can tell which is which by looking at the file
 contents (the actual keys are shortened here for ease of display):
 
-::
+.. code-block:: console
 
-   # cat Kexample.com.+008+34371.key
+   # cat Kexample.com.+013+34371.key
    ; This is a zone-signing key, keyid 34371, for example.com.
    ; Created: 20200616104249 (Tue Jun 16 11:42:49 2020)
    ; Publish: 20200616104249 (Tue Jun 16 11:42:49 2020)
    ; Activate: 20200616104249 (Tue Jun 16 11:42:49 2020)
-   example.com. IN DNSKEY 256 3 8 AwEAAfel66...LqkA7cvn8=
-   # cat Kexample.com.+008+00472.key
+   example.com. IN DNSKEY 256 3 13 AwEAAfel66...LqkA7cvn8=
+   # cat Kexample.com.+013+00472.key
    ; This is a key-signing key, keyid 472, for example.com.
    ; Created: 20200616104254 (Tue Jun 16 11:42:54 2020)
    ; Publish: 20200616104254 (Tue Jun 16 11:42:54 2020)
    ; Activate: 20200616104254 (Tue Jun 16 11:42:54 2020)
-   example.com. IN DNSKEY 257 3 8 AwEAAbCR6U...l8xPjokVU=
+   example.com. IN DNSKEY 257 3 13 AwEAAbCR6U...l8xPjokVU=
 
 The first line of each file tells us what type of key it is. Also, by
 looking at the actual DNSKEY record, we can tell them apart: 256 is
 ZSK, and 257 is KSK.
 
 The name of the file also tells us something
-about the contents. The file names are of the form:
+about the contents. See chapter :ref:`zone_keys` for more details.
 
-::
-
-   K<zone-name>+<algorithm-id>+<keyid>
-
-The "zone name" is self-explanatory. The "algorithm ID" is a number assigned
-to the algorithm used to construct the key: the number appears in the
-DNSKEY resource record. In
-our example, 8 means the algorithm RSASHA256. Finally, the "keyid" is
-essentially a hash of the key itself.
-
-Make sure these files are readable by ``named`` and make sure that the
+Make sure that these files are readable by ``named`` and that the
 ``.private`` files are not readable by anyone else.
 
-Refer to :ref:`system_entropy` for information on how to
-speed up the key generation process if your random number generator has
-insufficient entropy.
+Alternativelly, the ``dnssec-keyfromlabel`` program is used to get a key
+pair from a crypto hardware device and build the key files. Its usage is
+similar to ``dnssec-keygen``.
 
 Setting Key Timing Information
 ++++++++++++++++++++++++++++++
@@ -1182,15 +1174,15 @@ the zone on 1 July 2020, use it to sign records for a year starting on
 15 July 2020, and remove it from the zone at the end of July 2021, we
 can use the following command:
 
-::
+.. code-block:: console
 
-   # dnssec-settime -P 20200701 -A 20200715 -I 20210715 -D 20210731 Kexample.com.+008+34371.key
-   ./Kexample.com.+008+34371.key
-   ./Kexample.com.+008+34371.private
+   # dnssec-settime -P 20200701 -A 20200715 -I 20210715 -D 20210731 Kexample.com.+013+34371.key
+   ./Kexample.com.+013+34371.key
+   ./Kexample.com.+013+34371.private
 
 which would set the contents of the key file to:
 
-::
+.. code-block:: none
 
    ; This is a zone-signing key, keyid 34371, for example.com.
    ; Created: 20200616104249 (Tue Jun 16 11:42:49 2020)
@@ -1198,7 +1190,7 @@ which would set the contents of the key file to:
    ; Activate: 20200715000000 (Wed Jul 15 01:00:00 2020)
    ; Inactive: 20210715000000 (Thu Jul 15 01:00:00 2021)
    ; Delete: 20210731000000 (Sat Jul 31 01:00:00 2021)
-   example.com. IN DNSKEY 256 3 8 AwEAAfel66...LqkA7cvn8=
+   example.com. IN DNSKEY 256 3 13 AwEAAfel66...LqkA7cvn8=
 
 (The actual key is truncated here to improve readability.)
 
@@ -1556,20 +1548,39 @@ including interaction with the parent. A user certainly can do all this,
 but why not use one of the automated methods? Nevertheless, it may
 be useful for test purposes, so we cover it briefly here.
 
-The first step is to create the keys as described in :ref:`generate_keys`.
-Then, edit the zone file to make sure
-the proper DNSKEY entries are included in your zone file. Finally, use the
-command ``dnssec-signzone``:
+BIND 9 ships with several tools that are used in
+this process, which are explained in more detail below. In all cases,
+the ``-h`` option prints a full list of parameters. Note that the DNSSEC
+tools require the keyset files to be in the working directory or the
+directory specified by the ``-d`` option.
 
-::
+The first step is to create the keys as described in :ref:`generate_keys`.
+
+Then, edit the zone file to make sure the proper DNSKEY entries are included.
+The public keys should be inserted into the zone file by
+including the ``.key`` files using ``$INCLUDE`` statements.
+
+Finally, use the command ``dnssec-signzone``.
+Any ``keyset`` files corresponding to secure sub-zones should be
+present. The zone signer generates ``NSEC``, ``NSEC3``, and ``RRSIG``
+records for the zone, as well as ``DS`` for the child zones if
+``-g`` is specified. If
+``-g`` is not specified, then DS RRsets for the
+secure child zones need to be added manually.
+
+By default, all zone keys which have an available private key are used
+to generate signatures. The following command signs the zone, assuming
+it is in a file called ``zone.child.example``, using manually specified keys:
+
+.. code-block:: console
 
    # cd /etc/bind/keys/example.com/
-   # dnssec-signzone -A -t -N INCREMENT -o example.com -f /etc/bind/db/example.com.signed.db \
-   > /etc/bind/db/example.com.db Kexample.com.+008+17694.key Kexample.com.+008+06817.key
-   Verifying the zone using the following algorithms: RSASHA256.
+   # dnssec-signzone -t -N INCREMENT -o example.com -f /etc/bind/db/example.com.signed.db \
+       /etc/bind/db/example.com.db Kexample.com.+013+17694.key Kexample.com.+013+06817.key
+   Verifying the zone using the following algorithms: ECDSAP256SHA256.
    Zone fully signed:
-   Algorithm: RSASHA256: KSKs: 1 active, 0 stand-by, 0 revoked
-                         ZSKs: 1 active, 0 stand-by, 0 revoked
+   Algorithm: ECDSAP256SHA256: KSKs: 1 active, 0 stand-by, 0 revoked
+                               ZSKs: 1 active, 0 stand-by, 0 revoked
    /etc/bind/db/example.com.signed.db
    Signatures generated:                       17
    Signatures retained:                         0
@@ -1585,12 +1596,16 @@ this case), while the -f switch specifies the output file name. The second line
 has three parameters: the unsigned zone name
 (``/etc/bind/db/example.com.db``), the ZSK file name, and the KSK file name. This
 also generates a plain text file ``/etc/bind/db/example.com.signed.db``,
-which you can verify for correctness.
+which can be manually verified for correctness.
+
+``dnssec-signzone`` also produces keyset and dsset files. These are used
+to provide the parent zone administrators with the ``DNSKEY`` records (or their
+corresponding ``DS`` records) that are the secure entry point to the zone.
 
 Finally, you'll need to update ``named.conf`` to load the signed version
 of the zone, which looks something like this:
 
-::
+.. code-block:: none
 
    zone "example.com" IN {
        type primary;
