@@ -1,7 +1,9 @@
-/*	$NetBSD: private.c,v 1.6 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: private.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -383,7 +385,8 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 	} else if (private->length == 5) {
 		unsigned char alg = private->data[0];
 		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
-		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
+		char keybuf[DNS_SECALG_FORMATSIZE + BUFSIZ],
+			algbuf[DNS_SECALG_FORMATSIZE];
 		bool del = private->data[3];
 		bool complete = private->data[4];
 

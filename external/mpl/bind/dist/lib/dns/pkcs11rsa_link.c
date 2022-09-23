@@ -1,10 +1,12 @@
-/*	$NetBSD: pkcs11rsa_link.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: pkcs11rsa_link.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -113,8 +115,7 @@ pkcs11rsa_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	rsa = key->keydata.pkey;
@@ -140,6 +141,7 @@ pkcs11rsa_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 
 	for (attr = pk11_attribute_first(rsa); attr != NULL;
 	     attr = pk11_attribute_next(rsa, attr))
+	{
 		switch (attr->type) {
 		case CKA_MODULUS:
 			INSIST(keyTemplate[6].type == attr->type);
@@ -206,6 +208,7 @@ pkcs11rsa_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 			keyTemplate[13].ulValueLen = attr->ulValueLen;
 			break;
 		}
+	}
 	pk11_ctx->object = CK_INVALID_HANDLE;
 	pk11_ctx->ontoken = false;
 	PK11_RET(pkcs_C_CreateObject,
@@ -227,8 +230,7 @@ token_key:
 		mech.mechanism = CKM_SHA512_RSA_PKCS;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	PK11_RET(pkcs_C_SignInit, (pk11_ctx->session, &mech, pk11_ctx->object),
@@ -324,8 +326,7 @@ pkcs11rsa_createctx_verify(dst_key_t *key, unsigned int maxbits,
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	rsa = key->keydata.pkey;
@@ -386,8 +387,7 @@ pkcs11rsa_createctx_verify(dst_key_t *key, unsigned int maxbits,
 		mech.mechanism = CKM_SHA512_RSA_PKCS;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	PK11_RET(pkcs_C_VerifyInit,
@@ -586,8 +586,7 @@ pkcs11rsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	switch (key->key_alg) {
@@ -602,8 +601,7 @@ pkcs11rsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		mech.mechanism = CKM_SHA512;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	pk11_ctx = isc_mem_get(dctx->mctx, sizeof(*pk11_ctx));
@@ -730,8 +728,7 @@ pkcs11rsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	switch (key->key_alg) {
@@ -752,8 +749,7 @@ pkcs11rsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		hashlen = ISC_SHA512_DIGESTLENGTH;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	dgstlen = derlen + hashlen;
 	INSIST(dgstlen <= sizeof(digest));
@@ -776,6 +772,7 @@ pkcs11rsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 	for (attr = pk11_attribute_first(rsa); attr != NULL;
 	     attr = pk11_attribute_next(rsa, attr))
+	{
 		switch (attr->type) {
 		case CKA_MODULUS:
 			INSIST(keyTemplate[6].type == attr->type);
@@ -842,6 +839,7 @@ pkcs11rsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 			keyTemplate[13].ulValueLen = attr->ulValueLen;
 			break;
 		}
+	}
 	pk11_ctx->object = CK_INVALID_HANDLE;
 	pk11_ctx->ontoken = false;
 	PK11_RET(pkcs_C_CreateObject,
@@ -944,8 +942,7 @@ pkcs11rsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		hashlen = ISC_SHA512_DIGESTLENGTH;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	dgstlen = derlen + hashlen;
 	INSIST(dgstlen <= sizeof(digest));
@@ -1142,8 +1139,7 @@ pkcs11rsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	pk11_ctx = isc_mem_get(key->mctx, sizeof(*pk11_ctx));
@@ -1259,6 +1255,7 @@ pkcs11rsa_destroy(dst_key_t *key) {
 
 	for (attr = pk11_attribute_first(rsa); attr != NULL;
 	     attr = pk11_attribute_next(rsa, attr))
+	{
 		switch (attr->type) {
 		case CKA_LABEL:
 		case CKA_ID:
@@ -1278,6 +1275,7 @@ pkcs11rsa_destroy(dst_key_t *key) {
 			}
 			break;
 		}
+	}
 	if (rsa->repr != NULL) {
 		isc_safe_memwipe(rsa->repr, rsa->attrcnt * sizeof(*attr));
 		isc_mem_put(key->mctx, rsa->repr, rsa->attrcnt * sizeof(*attr));
@@ -1301,6 +1299,7 @@ pkcs11rsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 	for (attr = pk11_attribute_first(rsa); attr != NULL;
 	     attr = pk11_attribute_next(rsa, attr))
+	{
 		switch (attr->type) {
 		case CKA_PUBLIC_EXPONENT:
 			exponent = (CK_BYTE *)attr->pValue;
@@ -1311,6 +1310,7 @@ pkcs11rsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 			mod_bytes = (unsigned int)attr->ulValueLen;
 			break;
 		}
+	}
 	REQUIRE((exponent != NULL) && (modulus != NULL));
 
 	isc_buffer_availableregion(data, &r);
@@ -1440,6 +1440,7 @@ pkcs11rsa_tofile(const dst_key_t *key, const char *directory) {
 
 	for (attr = pk11_attribute_first(rsa); attr != NULL;
 	     attr = pk11_attribute_next(rsa, attr))
+	{
 		switch (attr->type) {
 		case CKA_MODULUS:
 			modulus = attr;
@@ -1466,6 +1467,7 @@ pkcs11rsa_tofile(const dst_key_t *key, const char *directory) {
 			iqmp = attr;
 			break;
 		}
+	}
 	if ((modulus == NULL) || (exponent == NULL)) {
 		return (DST_R_NULLKEY);
 	}

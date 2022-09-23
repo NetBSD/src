@@ -1,7 +1,9 @@
-/*	$NetBSD: openssl_link.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +11,10 @@
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) Network Associates, Inc.
+ */
+
+/*
+ * Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

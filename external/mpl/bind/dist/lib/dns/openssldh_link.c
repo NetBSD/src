@@ -1,7 +1,9 @@
-/*	$NetBSD: openssldh_link.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +11,10 @@
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) Network Associates, Inc.
+ */
+
+/*
+ * Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -261,10 +265,9 @@ static isc_result_t
 openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 	DH *dh = NULL;
 	BN_GENCB *cb;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if !HAVE_BN_GENCB_NEW
 	BN_GENCB _cb;
-#endif /* if OPENSSL_VERSION_NUMBER < 0x10100000L || \
-	* defined(LIBRESSL_VERSION_NUMBER) */
+#endif /* !HAVE_BN_GENCB_NEW */
 	union {
 		void *dptr;
 		void (*fptr)(int);

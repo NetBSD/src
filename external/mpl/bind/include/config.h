@@ -52,6 +52,9 @@
 /* Define to 1 if you have the `BIO_write_ex' function. */
 #define HAVE_BIO_WRITE_EX 1
 
+/* Define to 1 if you have the `BN_GENCB_new' function. */
+#define HAVE_BN_GENCB_NEW 1
+
 /* Define to 1 if the compiler supports __builtin_clz. */
 #define HAVE_BUILTIN_CLZ 1
 
@@ -73,8 +76,23 @@
 /* Define to 1 if you have the `cpuset_setaffinity' function. */
 /* #undef HAVE_CPUSET_SETAFFINITY */
 
+/* Define to 1 if you have the `cpuset_setaffinity' function. */
+/* #undef HAVE_CPUSET_SETAFFINITY */
+
 /* Define to 1 if you have the `CRYPTO_zalloc' function. */
 #define HAVE_CRYPTO_ZALLOC 1
+
+/* Define to 1 if you have the declaration of `UV_UDP_MMSG_CHUNK', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_MMSG_CHUNK 1
+
+/* Define to 1 if you have the declaration of `UV_UDP_MMSG_FREE', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_MMSG_FREE 1
+
+/* Define to 1 if you have the declaration of `UV_UDP_RECVMMSG', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_RECVMMSG 1
 
 /* Define to 1 if you have the <devpoll.h> header file. */
 /* #undef HAVE_DEVPOLL_H */
@@ -289,6 +307,9 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #define HAVE_NET_ROUTE_H 1
 
+/* Define to 1 if you have the `OPENSSL_cleanup' function. */
+#define HAVE_OPENSSL_CLEANUP 1
+
 /* define if OpenSSL supports Ed25519 */
 #define HAVE_OPENSSL_ED25519 1
 
@@ -300,9 +321,6 @@
 
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #define HAVE_OPENSSL_INIT_SSL 1
-
-/* Define to 1 if you have the `processor_bind' function. */
-/* #undef HAVE_PROCESSOR_BIND */
 
 /* Define if you have POSIX threads libraries and header files. */
 #define HAVE_PTHREAD 1
@@ -324,9 +342,6 @@
 
 /* Define to 1 if you have the `pthread_rwlock_rdlock' function. */
 /* #undef HAVE_PTHREAD_RWLOCK_RDLOCK */
-
-/* Define to 1 if you have the `pthread_setaffinity_np' function. */
-#define HAVE_PTHREAD_SETAFFINITY_NP 1
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
 #define HAVE_PTHREAD_SETNAME_NP 1
@@ -357,9 +372,6 @@
 
 /* Define to 1 if you have the <sched.h> header file. */
 #define HAVE_SCHED_H 1
-
-/* Define to 1 if you have the `sched_setaffinity' function. */
-/* #undef HAVE_SCHED_SETAFFINITY */
 
 /* Define to 1 if you have the `sched_yield' function. */
 #define HAVE_SCHED_YIELD 1
@@ -436,9 +448,6 @@
 /* Define to 1 if you have the <sys/capability.h> header file. */
 /* #undef HAVE_SYS_CAPABILITY_H */
 
-/* Define to 1 if you have the <sys/cpuset.h> header file. */
-/* #undef HAVE_SYS_CPUSET_H */
-
 /* Define to 1 if you have the <sys/devpoll.h> header file. */
 /* #undef HAVE_SYS_DEVPOLL_H */
 
@@ -447,9 +456,6 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
-
-/* Define to 1 if you have the <sys/procset.h> header file. */
-/* #undef HAVE_SYS_PROCSET_H */
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1
@@ -523,9 +529,6 @@
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
 
-/* Define to emulate atomic variables with mutexes. */
-/* #undef ISC_MUTEX_ATOMICS */
-
 /* define if the linker supports --wrap option */
 #define LD_WRAP 1
 
@@ -543,7 +546,7 @@
 /* #undef NEED_SECURE_DIRECTORY */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "info@isc.org"
+#define PACKAGE_BUGREPORT "https://gitlab.isc.org/isc-projects/bind9/-/issues/new?issuable_template=Bug"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "BIND"

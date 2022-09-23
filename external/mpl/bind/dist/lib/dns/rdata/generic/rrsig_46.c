@@ -1,7 +1,9 @@
-/*	$NetBSD: rrsig_46.c,v 1.7 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +22,7 @@
 	(DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
 	 DNS_RDATATYPEATTR_ATCNAME)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_rrsig(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
@@ -157,7 +159,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_rrsig(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("4294967295")]; /* Also TYPE65000. */
@@ -274,7 +276,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_rrsig(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -320,7 +322,7 @@ fromwire_rrsig(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_rrsig(ARGS_TOWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -357,7 +359,7 @@ towire_rrsig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_rrsig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -373,7 +375,7 @@ compare_rrsig(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_rrsig(ARGS_FROMSTRUCT) {
 	dns_rdata_rrsig_t *sig = source;
 
@@ -432,7 +434,7 @@ fromstruct_rrsig(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sig->signature, sig->siglen));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_rrsig(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 	dns_rdata_rrsig_t *sig = target;
@@ -515,7 +517,7 @@ cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_rrsig(ARGS_FREESTRUCT) {
 	dns_rdata_rrsig_t *sig = (dns_rdata_rrsig_t *)source;
 
@@ -533,7 +535,7 @@ freestruct_rrsig(ARGS_FREESTRUCT) {
 	sig->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_rrsig(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
@@ -544,7 +546,7 @@ additionaldata_rrsig(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_rrsig(ARGS_DIGEST) {
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
@@ -555,7 +557,7 @@ digest_rrsig(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline dns_rdatatype_t
+static dns_rdatatype_t
 covers_rrsig(dns_rdata_t *rdata) {
 	dns_rdatatype_t type;
 	isc_region_t r;
@@ -568,7 +570,7 @@ covers_rrsig(dns_rdata_t *rdata) {
 	return (type);
 }
 
-static inline bool
+static bool
 checkowner_rrsig(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_rrsig);
 
@@ -580,7 +582,7 @@ checkowner_rrsig(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_rrsig(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
@@ -591,7 +593,7 @@ checknames_rrsig(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_rrsig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;

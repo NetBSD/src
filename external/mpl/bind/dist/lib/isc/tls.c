@@ -1,7 +1,9 @@
-/*	$NetBSD: tls.c,v 1.2 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +17,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 #include <openssl/rand.h>
@@ -33,8 +36,8 @@
 
 static isc_once_t init_once = ISC_ONCE_INIT;
 static isc_once_t shut_once = ISC_ONCE_INIT;
-static atomic_bool init_done = ATOMIC_VAR_INIT(false);
-static atomic_bool shut_done = ATOMIC_VAR_INIT(false);
+static atomic_bool init_done = false;
+static atomic_bool shut_done = false;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 static isc_mutex_t *locks = NULL;
@@ -125,8 +128,9 @@ tls_shutdown(void) {
 	REQUIRE(atomic_load(&init_done));
 	REQUIRE(!atomic_load(&shut_done));
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	OPENSSL_cleanup();
+#else
 	CONF_modules_unload(1);
 	OBJ_cleanup();
 	EVP_cleanup();

@@ -1,7 +1,9 @@
-/*	$NetBSD: gen.c,v 1.9 2021/04/05 11:36:55 rillig Exp $	*/
+/*	$NetBSD: gen.c,v 1.10 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -125,8 +127,8 @@ static const char copyright[] = "/*\n"
 				"terms of the Mozilla Public\n"
 				" * License, v. 2.0. If a copy of the MPL was "
 				"not distributed with this\n"
-				" * file, You can obtain one at "
-				"http://mozilla.org/MPL/2.0/.\n"
+				" * file, you can obtain one at "
+				"https://mozilla.org/MPL/2.0/.\n"
 				" */\n"
 				"\n"
 				"/***************\n"

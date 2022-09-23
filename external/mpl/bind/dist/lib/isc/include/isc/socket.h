@@ -1,10 +1,12 @@
-/*	$NetBSD: socket.h,v 1.8 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.9 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -135,7 +137,7 @@ struct isc_socketevent {
 typedef struct isc_socket_newconnev isc_socket_newconnev_t;
 struct isc_socket_newconnev {
 	ISC_EVENT_COMMON(isc_socket_newconnev_t);
-	isc_socket_t * newsocket;
+	isc_socket_t  *newsocket;
 	isc_result_t   result;	/*%< OK, EOF, whatever else */
 	isc_sockaddr_t address; /*%< source address */
 };
@@ -922,7 +924,7 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager,
 /*%<
  * See isc_socketmgr_create() above.
  */
-typedef isc_result_t (*isc_socketmgrcreatefunc_t)(isc_mem_t *	    mctx,
+typedef isc_result_t (*isc_socketmgrcreatefunc_t)(isc_mem_t	   *mctx,
 						  isc_socketmgr_t **managerp);
 
 isc_result_t

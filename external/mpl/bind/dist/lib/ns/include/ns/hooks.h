@@ -1,7 +1,9 @@
-/*	$NetBSD: hooks.h,v 1.6 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: hooks.h,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -236,9 +238,9 @@ typedef ns_hookresult_t (*ns_hook_action_t)(void *arg, void *data,
 					    isc_result_t *resultp);
 
 typedef struct ns_hook {
-	isc_mem_t *	 mctx;
+	isc_mem_t	*mctx;
 	ns_hook_action_t action;
-	void *		 action_data;
+	void		*action_data;
 	ISC_LINK(struct ns_hook) link;
 } ns_hook_t;
 

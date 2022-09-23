@@ -1,7 +1,9 @@
-/*	$NetBSD: trampoline_p.h,v 1.2 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: trampoline_p.h,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +65,17 @@ isc__trampoline_get(isc_threadfunc_t start_routine, isc_threadarg_t arg);
  *
  * Requires:
  *\li	'start_routine' is a valid non-NULL thread start_routine
+ */
+
+void
+isc__trampoline_attach(isc__trampoline_t *trampoline);
+void
+isc__trampoline_detach(isc__trampoline_t *trampoline);
+/*%<
+ * Attach/detach the trampoline to/from the current thread.
+ *
+ * Requires:
+ * \li  'trampoline' is a valid isc__trampoline_t
  */
 
 isc_threadresult_t

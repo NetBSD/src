@@ -1,7 +1,9 @@
-/*	$NetBSD: assertions.h,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,6 +70,11 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 		((isc_assertion_failed)(__FILE__, __LINE__,                  \
 					isc_assertiontype_invariant, #cond), \
 		 0)))
+
+#define ISC_UNREACHABLE()                                                   \
+	(isc_assertion_failed(__FILE__, __LINE__, isc_assertiontype_insist, \
+			      "unreachable"),                               \
+	 __builtin_unreachable())
 
 ISC_LANG_ENDDECLS
 

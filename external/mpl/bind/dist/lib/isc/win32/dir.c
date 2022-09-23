@@ -1,10 +1,12 @@
-/*	$NetBSD: dir.c,v 1.6 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.7 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -256,7 +258,9 @@ isc_dir_createunique(char *templet) {
 	 */
 	for (x = templet + strlen(templet) - 1; *x == 'X' && x >= templet;
 	     x--, pid /= 10)
+	{
 		*x = pid % 10 + '0';
+	}
 
 	x++; /* Set x to start of ex-Xs. */
 

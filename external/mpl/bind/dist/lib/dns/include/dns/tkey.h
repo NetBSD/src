@@ -1,7 +1,9 @@
-/*	$NetBSD: tkey.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,11 +38,11 @@ ISC_LANG_BEGINDECLS
 #define DNS_TKEYMODE_DELETE	      5
 
 struct dns_tkeyctx {
-	dst_key_t *	  dhkey;
-	dns_name_t *	  domain;
+	dst_key_t	 *dhkey;
+	dns_name_t	 *domain;
 	dns_gss_cred_id_t gsscred;
-	isc_mem_t *	  mctx;
-	char *		  gssapi_keytab;
+	isc_mem_t	 *mctx;
+	char		 *gssapi_keytab;
 };
 
 isc_result_t

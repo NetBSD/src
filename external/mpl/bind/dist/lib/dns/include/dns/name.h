@@ -1,7 +1,9 @@
-/*	$NetBSD: name.h,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.9 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +111,7 @@ struct dns_name {
 	unsigned int   labels;
 	unsigned int   attributes;
 	unsigned char *offsets;
-	isc_buffer_t * buffer;
+	isc_buffer_t  *buffer;
 	ISC_LINK(dns_name_t) link;
 	ISC_LIST(dns_rdataset_t) list;
 };
@@ -1384,9 +1386,9 @@ ISC_LANG_ENDDECLS
 
 #define DNS_NAME_SPLIT(n, l, p, s)                                             \
 	do {                                                                   \
-		dns_name_t * _n = (n);                                         \
-		dns_name_t * _p = (p);                                         \
-		dns_name_t * _s = (s);                                         \
+		dns_name_t  *_n = (n);                                         \
+		dns_name_t  *_p = (p);                                         \
+		dns_name_t  *_s = (s);                                         \
 		unsigned int _l = (l);                                         \
 		if (_p != NULL)                                                \
 			dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \

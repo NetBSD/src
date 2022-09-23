@@ -1,7 +1,9 @@
-/*	$NetBSD: uv-compat.h,v 1.4 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: uv-compat.h,v 1.5 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +24,27 @@
  */
 
 #define UV_VERSION(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+
+/*
+ * Copied verbatim from libuv/src/version.c
+ */
+
+#define UV_STRINGIFY(v)	       UV_STRINGIFY_HELPER(v)
+#define UV_STRINGIFY_HELPER(v) #v
+
+#define UV_VERSION_STRING_BASE         \
+	UV_STRINGIFY(UV_VERSION_MAJOR) \
+	"." UV_STRINGIFY(UV_VERSION_MINOR) "." UV_STRINGIFY(UV_VERSION_PATCH)
+
+#if UV_VERSION_IS_RELEASE
+#define UV_VERSION_STRING UV_VERSION_STRING_BASE
+#else
+#define UV_VERSION_STRING UV_VERSION_STRING_BASE "-" UV_VERSION_SUFFIX
+#endif
+
+#if !defined(UV__ERR)
+#define UV__ERR(x) (-(x))
+#endif
 
 #if UV_VERSION_HEX < UV_VERSION(1, 19, 0)
 static inline void *
@@ -44,6 +67,11 @@ uv_req_set_data(uv_req_t *req, void *data) {
 	req->data = data;
 }
 #endif /* UV_VERSION_HEX < UV_VERSION(1, 19, 0) */
+
+#if UV_VERSION_HEX < UV_VERSION(1, 32, 0)
+int
+uv_tcp_close_reset(uv_tcp_t *handle, uv_close_cb close_cb);
+#endif
 
 #if UV_VERSION_HEX < UV_VERSION(1, 34, 0)
 #define uv_sleep(msec) usleep(msec * 1000)

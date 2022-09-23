@@ -1,7 +1,9 @@
-/*	$NetBSD: rdata.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.12 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,6 +164,13 @@ static isc_result_t
 txt_fromwire(isc_buffer_t *source, isc_buffer_t *target);
 
 static isc_result_t
+commatxt_fromtext(isc_textregion_t *source, bool comma, isc_buffer_t *target);
+
+static isc_result_t
+commatxt_totext(isc_region_t *source, bool quote, bool comma,
+		isc_buffer_t *target);
+
+static isc_result_t
 multitxt_totext(isc_region_t *source, isc_buffer_t *target);
 
 static isc_result_t
@@ -249,17 +258,17 @@ static isc_result_t
 unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	       isc_buffer_t *target);
 
-static inline isc_result_t generic_fromtext_key(ARGS_FROMTEXT);
+static isc_result_t generic_fromtext_key(ARGS_FROMTEXT);
 
-static inline isc_result_t generic_totext_key(ARGS_TOTEXT);
+static isc_result_t generic_totext_key(ARGS_TOTEXT);
 
-static inline isc_result_t generic_fromwire_key(ARGS_FROMWIRE);
+static isc_result_t generic_fromwire_key(ARGS_FROMWIRE);
 
-static inline isc_result_t generic_fromstruct_key(ARGS_FROMSTRUCT);
+static isc_result_t generic_fromstruct_key(ARGS_FROMSTRUCT);
 
-static inline isc_result_t generic_tostruct_key(ARGS_TOSTRUCT);
+static isc_result_t generic_tostruct_key(ARGS_TOSTRUCT);
 
-static inline void generic_freestruct_key(ARGS_FREESTRUCT);
+static void generic_freestruct_key(ARGS_FREESTRUCT);
 
 static isc_result_t generic_fromtext_txt(ARGS_FROMTEXT);
 
@@ -304,6 +313,22 @@ static isc_result_t generic_tostruct_tlsa(ARGS_TOSTRUCT);
 
 static void generic_freestruct_tlsa(ARGS_FREESTRUCT);
 
+static isc_result_t generic_fromtext_in_svcb(ARGS_FROMTEXT);
+static isc_result_t generic_totext_in_svcb(ARGS_TOTEXT);
+static isc_result_t generic_fromwire_in_svcb(ARGS_FROMWIRE);
+static isc_result_t generic_towire_in_svcb(ARGS_TOWIRE);
+static isc_result_t generic_fromstruct_in_svcb(ARGS_FROMSTRUCT);
+static isc_result_t generic_tostruct_in_svcb(ARGS_TOSTRUCT);
+static void generic_freestruct_in_svcb(ARGS_FREESTRUCT);
+static isc_result_t generic_additionaldata_in_svcb(ARGS_ADDLDATA);
+static bool generic_checknames_in_svcb(ARGS_CHECKNAMES);
+static isc_result_t
+generic_rdata_in_svcb_first(dns_rdata_in_svcb_t *);
+static isc_result_t
+generic_rdata_in_svcb_next(dns_rdata_in_svcb_t *);
+static void
+generic_rdata_in_svcb_current(dns_rdata_in_svcb_t *, isc_region_t *);
+
 /*% INT16 Size */
 #define NS_INT16SZ 2
 /*% IPv6 Address Size */
@@ -325,7 +350,7 @@ static dns_name_t const gc_msdcs = DNS_NAME_INITNONABSOLUTE(gc_msdcs_data,
  * \note
  *	(1) does not touch `dst' unless it's returning 1.
  */
-static inline int
+static int
 locator_pton(const char *src, unsigned char *dst) {
 	static const char xdigits_l[] = "0123456789abcdef",
 			  xdigits_u[] = "0123456789ABCDEF";
@@ -383,7 +408,7 @@ locator_pton(const char *src, unsigned char *dst) {
 	return (1);
 }
 
-static inline isc_result_t
+static isc_result_t
 name_duporclone(const dns_name_t *source, isc_mem_t *mctx, dns_name_t *target) {
 	if (mctx != NULL) {
 		dns_name_dup(source, mctx, target);
@@ -393,7 +418,7 @@ name_duporclone(const dns_name_t *source, isc_mem_t *mctx, dns_name_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void *
+static void *
 mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
 	void *copy;
 
@@ -406,7 +431,7 @@ mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
 	return (copy);
 }
 
-static inline isc_result_t
+static isc_result_t
 typemap_fromtext(isc_lex_t *lexer, isc_buffer_t *target, bool allow_empty) {
 	isc_token_t token;
 	unsigned char bm[8 * 1024]; /* 64k bits */
@@ -474,7 +499,7 @@ typemap_fromtext(isc_lex_t *lexer, isc_buffer_t *target, bool allow_empty) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 	       isc_buffer_t *target) {
 	unsigned int i, j, k;
@@ -1417,7 +1442,8 @@ name_length(const dns_name_t *name) {
 }
 
 static isc_result_t
-txt_totext(isc_region_t *source, bool quote, isc_buffer_t *target) {
+commatxt_totext(isc_region_t *source, bool quote, bool comma,
+		isc_buffer_t *target) {
 	unsigned int tl;
 	unsigned int n;
 	unsigned char *sp;
@@ -1447,30 +1473,48 @@ txt_totext(isc_region_t *source, bool quote, isc_buffer_t *target) {
 		/*
 		 * \DDD space (0x20) if not quoting.
 		 */
-		if (*sp < (quote ? 0x20 : 0x21) || *sp >= 0x7f) {
+		if (*sp < (quote ? ' ' : '!') || *sp >= 0x7f) {
 			if (tl < 4) {
 				return (ISC_R_NOSPACE);
 			}
-			*tp++ = 0x5c;
-			*tp++ = 0x30 + ((*sp / 100) % 10);
-			*tp++ = 0x30 + ((*sp / 10) % 10);
-			*tp++ = 0x30 + (*sp % 10);
+			*tp++ = '\\';
+			*tp++ = '0' + ((*sp / 100) % 10);
+			*tp++ = '0' + ((*sp / 10) % 10);
+			*tp++ = '0' + (*sp % 10);
 			sp++;
 			tl -= 4;
 			continue;
 		}
 		/*
 		 * Escape double quote and backslash.  If we are not
-		 * enclosing the string in double quotes also escape
-		 * at sign and semicolon.
+		 * enclosing the string in double quotes, also escape
+		 * at sign (@) and semicolon (;) unless comma is set.
+		 * If comma is set, then only escape commas (,).
 		 */
-		if (*sp == 0x22 || *sp == 0x5c ||
-		    (!quote && (*sp == 0x40 || *sp == 0x3b))) {
+		if (*sp == '"' || *sp == '\\' || (comma && *sp == ',') ||
+		    (!comma && !quote && (*sp == '@' || *sp == ';')))
+		{
 			if (tl < 2) {
 				return (ISC_R_NOSPACE);
 			}
 			*tp++ = '\\';
 			tl--;
+			/*
+			 * Perform comma escape processing.
+			 * ',' => '\\,'
+			 * '\' => '\\\\'
+			 */
+			if (comma && (*sp == ',' || *sp == '\\')) {
+				if (tl < ((*sp == '\\') ? 3 : 2)) {
+					return (ISC_R_NOSPACE);
+				}
+				*tp++ = '\\';
+				tl--;
+				if (*sp == '\\') {
+					*tp++ = '\\';
+					tl--;
+				}
+			}
 		}
 		if (tl < 1) {
 			return (ISC_R_NOSPACE);
@@ -1492,9 +1536,14 @@ txt_totext(isc_region_t *source, bool quote, isc_buffer_t *target) {
 }
 
 static isc_result_t
-txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
+txt_totext(isc_region_t *source, bool quote, isc_buffer_t *target) {
+	return (commatxt_totext(source, quote, false, target));
+}
+
+static isc_result_t
+commatxt_fromtext(isc_textregion_t *source, bool comma, isc_buffer_t *target) {
 	isc_region_t tregion;
-	bool escape;
+	bool escape = false, comma_escape = false, seen_comma = false;
 	unsigned int n, nrem;
 	char *s;
 	unsigned char *t;
@@ -1506,7 +1555,6 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 	n = source->length;
 	t = tregion.base;
 	nrem = tregion.length;
-	escape = false;
 	if (nrem < 1) {
 		return (ISC_R_NOSPACE);
 	}
@@ -1551,6 +1599,25 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 			continue;
 		}
 		escape = false;
+		/*
+		 * Level 1 escape processing complete.
+		 * If comma is set perform comma escape processing.
+		 *
+		 * Level 1	Level 2		ALPN's
+		 * h1\,h2   =>	h1,h2   =>	h1 and h2
+		 * h1\\,h2  =>	h1\,h2  =>	h1,h2
+		 * h1\\h2   =>	h1\h2   =>	h1h2
+		 * h1\\\\h2 =>	h1\\h2  =>	h1\h2
+		 */
+		if (comma && !comma_escape && c == ',') {
+			seen_comma = true;
+			break;
+		}
+		if (comma && !comma_escape && c == '\\') {
+			comma_escape = true;
+			continue;
+		}
+		comma_escape = false;
 		if (nrem == 0) {
 			return ((tregion.length <= 256U) ? ISC_R_NOSPACE
 							 : DNS_R_SYNTAX);
@@ -1558,12 +1625,39 @@ txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 		*t++ = c;
 		nrem--;
 	}
-	if (escape) {
+
+	/*
+	 * Incomplete escape processing?
+	 */
+	if (escape || (comma && comma_escape)) {
 		return (DNS_R_SYNTAX);
+	}
+
+	if (comma) {
+		/*
+		 * Disallow empty ALPN at start (",h1") or in the
+		 * middle ("h1,,h2").
+		 */
+		if (s == source->base || (seen_comma && s == source->base + 1))
+		{
+			return (DNS_R_SYNTAX);
+		}
+		isc_textregion_consume(source, s - source->base);
+		/*
+		 * Disallow empty ALPN at end ("h1,").
+		 */
+		if (seen_comma && source->length == 0) {
+			return (DNS_R_SYNTAX);
+		}
 	}
 	*tregion.base = (unsigned char)(t - tregion.base - 1);
 	isc_buffer_add(target, *tregion.base + 1);
 	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+txt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
+	return (commatxt_fromtext(source, false, target));
 }
 
 static isc_result_t
@@ -1620,20 +1714,20 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 		n0 = source->length - 1;
 
 		while (n--) {
-			if (*sp < 0x20 || *sp >= 0x7f) {
+			if (*sp < ' ' || *sp >= 0x7f) {
 				if (tl < 4) {
 					return (ISC_R_NOSPACE);
 				}
-				*tp++ = 0x5c;
-				*tp++ = 0x30 + ((*sp / 100) % 10);
-				*tp++ = 0x30 + ((*sp / 10) % 10);
-				*tp++ = 0x30 + (*sp % 10);
+				*tp++ = '\\';
+				*tp++ = '0' + ((*sp / 100) % 10);
+				*tp++ = '0' + ((*sp / 10) % 10);
+				*tp++ = '0' + (*sp % 10);
 				sp++;
 				tl -= 4;
 				continue;
 			}
 			/* double quote, backslash */
-			if (*sp == 0x22 || *sp == 0x5c) {
+			if (*sp == '"' || *sp == '\\') {
 				if (tl < 2) {
 					return (ISC_R_NOSPACE);
 				}
@@ -1798,9 +1892,9 @@ inet_totext(int af, uint32_t flags, isc_region_t *src, isc_buffer_t *target) {
 	 * parsing, so append 0 in that case.
 	 */
 	if (af == AF_INET6 && (flags & DNS_STYLEFLAG_YAML) != 0) {
-		isc_region_t tr;
-		isc_buffer_usedregion(target, &tr);
-		if (tr.base[tr.length - 1] == ':') {
+		isc_region_t r;
+		isc_buffer_usedregion(target, &r);
+		if (r.length > 0 && r.base[r.length - 1] == ':') {
 			if (isc_buffer_availablelength(target) == 0) {
 				return (ISC_R_NOSPACE);
 			}
@@ -2128,6 +2222,15 @@ bool
 dns_rdatatype_atparent(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATPARENT) != 0)
 	{
+		return (true);
+	}
+	return (false);
+}
+
+bool
+dns_rdatatype_followadditional(dns_rdatatype_t type) {
+	if ((dns_rdatatype_attributes(type) &
+	     DNS_RDATATYPEATTR_FOLLOWADDITIONAL) != 0) {
 		return (true);
 	}
 	return (false);

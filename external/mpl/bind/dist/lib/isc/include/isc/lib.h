@@ -1,10 +1,12 @@
-/*	$NetBSD: lib.h,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -29,10 +31,19 @@ isc_lib_register(void);
  * function very early in main().
  */
 
+#ifdef WIN32
+int
+isc_lib_ntservice(int(WINAPI *mainfunc)(int argc, char *argv[]), int argc,
+		  char *argv[]);
+/*!<
+ * \brief Execute a special routine needed when running as a Windows Service.
+ */
+#endif /* ifdef WIN32 */
+
 extern void
 isc_enable_constructors(void);
 /*!<
- * \bried Enable constructor linkage in non-libtool static builds
+ * \brief Enable constructor linkage in non-libtool static builds.
  */
 
 ISC_LANG_ENDDECLS

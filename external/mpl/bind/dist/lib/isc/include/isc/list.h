@@ -1,7 +1,9 @@
-/*	$NetBSD: list.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
+/*	$NetBSD: list.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_LIST_H
-#define ISC_LIST_H 1
+#pragma once
 
 #include <isc/assertions.h>
 
@@ -200,4 +201,16 @@
 #define __ISC_LIST_DEQUEUEUNSAFE_TYPE(list, elt, link, type) \
 	__ISC_LIST_UNLINKUNSAFE_TYPE(list, elt, link, type)
 
-#endif /* ISC_LIST_H */
+#define ISC_LIST_MOVEUNSAFE(dest, src)    \
+	{                                 \
+		(dest).head = (src).head; \
+		(dest).tail = (src).tail; \
+		(src).head = NULL;        \
+		(src).tail = NULL;        \
+	}
+
+#define ISC_LIST_MOVE(dest, src)                \
+	{                                       \
+		INSIST(ISC_LIST_EMPTY(dest));   \
+		ISC_LIST_MOVEUNSAFE(dest, src); \
+	}

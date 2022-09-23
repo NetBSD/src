@@ -1,7 +1,9 @@
-/*	$NetBSD: quota_test.c,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: quota_test.c,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,7 +141,7 @@ isc_quota_soft_test(void **state) {
 	isc_quota_destroy(&quota);
 }
 
-static atomic_uint_fast32_t cb_calls = ATOMIC_VAR_INIT(0);
+static atomic_uint_fast32_t cb_calls = 0;
 static isc_quota_cb_t cbs[30];
 static isc_quota_t *qp;
 
@@ -253,7 +255,7 @@ typedef struct qthreadinfo {
 	isc_quota_cb_t callbacks[100];
 } qthreadinfo_t;
 
-static atomic_uint_fast32_t g_tnum = ATOMIC_VAR_INIT(0);
+static atomic_uint_fast32_t g_tnum = 0;
 /* at most 10 * 100 quota_detach threads */
 isc_thread_t g_threads[10 * 100];
 

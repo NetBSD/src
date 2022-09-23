@@ -1,7 +1,9 @@
-/*	$NetBSD: cache.c,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,7 +171,7 @@ cleaner_shutdown_action(isc_task_t *task, isc_event_t *event);
 static void
 overmem_cleaning_action(isc_task_t *task, isc_event_t *event);
 
-static inline isc_result_t
+static isc_result_t
 cache_create_db(dns_cache_t *cache, dns_db_t **db) {
 	isc_result_t result;
 	result = dns_db_create(cache->mctx, cache->db_type, dns_rootname,

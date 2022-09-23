@@ -1,7 +1,9 @@
-/*	$NetBSD: mdig.c,v 1.9 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.10 2022/09/23 12:15:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +29,7 @@
 #include <isc/net.h>
 #include <isc/nonce.h>
 #include <isc/parseint.h>
+#include <isc/portset.h>
 #include <isc/print.h>
 #include <isc/random.h>
 #include <isc/sockaddr.h>
@@ -331,7 +334,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 			if (hash != NULL) {
 				*hash = '\0';
 			}
-			printf("    response_address: %s\n", sockstr);
+			printf("    response_address: \"%s\"\n", sockstr);
 			printf("    response_port: %u\n", sport);
 		}
 
@@ -342,7 +345,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 			if (hash != NULL) {
 				*hash = '\0';
 			}
-			printf("    query_address: %s\n", sockstr);
+			printf("    query_address: \"%s\"\n", sockstr);
 			printf("    query_port: %u\n", sport);
 		}
 
@@ -1700,7 +1703,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 				have_ipv6 = false;
 			} else {
 				fatal("can't find IPv4 networking");
-				/* NOTREACHED */
+				UNREACHABLE();
 				return (false);
 			}
 			break;
@@ -1711,7 +1714,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 				have_ipv4 = false;
 			} else {
 				fatal("can't find IPv6 networking");
-				/* NOTREACHED */
+				UNREACHABLE();
 				return (false);
 			}
 			break;
@@ -1819,7 +1822,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 		fprintf(stderr, "Invalid option: -%s\n", option);
 		usage();
 	}
-	/* NOTREACHED */
+	UNREACHABLE();
 	return (false);
 }
 
@@ -2059,6 +2062,47 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 	}
 }
 
+/*
+ * Try honoring the operating system's preferred ephemeral port range.
+ */
+static void
+set_source_ports(dns_dispatchmgr_t *manager) {
+	isc_portset_t *v4portset = NULL, *v6portset = NULL;
+	in_port_t udpport_low, udpport_high;
+	isc_result_t result;
+
+	result = isc_portset_create(mctx, &v4portset);
+	if (result != ISC_R_SUCCESS) {
+		fatal("isc_portset_create (v4) failed");
+	}
+
+	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		fatal("isc_net_getudpportrange (v4) failed");
+	}
+
+	isc_portset_addrange(v4portset, udpport_low, udpport_high);
+
+	result = isc_portset_create(mctx, &v6portset);
+	if (result != ISC_R_SUCCESS) {
+		fatal("isc_portset_create (v6) failed");
+	}
+	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
+	if (result != ISC_R_SUCCESS) {
+		fatal("isc_net_getudpportrange (v6) failed");
+	}
+
+	isc_portset_addrange(v6portset, udpport_low, udpport_high);
+
+	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);
+	if (result != ISC_R_SUCCESS) {
+		fatal("dns_dispatchmgr_setavailports failed");
+	}
+
+	isc_portset_destroy(mctx, &v4portset);
+	isc_portset_destroy(mctx, &v6portset);
+}
+
 /*% Main processing routine for mdig */
 int
 main(int argc, char *argv[]) {
@@ -2128,12 +2172,14 @@ main(int argc, char *argv[]) {
 
 	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
-
 	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 
+	set_source_ports(dispatchmgr);
+
 	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY;
+
 	if (have_ipv4) {
 		isc_sockaddr_any(&bind_any);
 		attrs |= DNS_DISPATCHATTR_IPV4;

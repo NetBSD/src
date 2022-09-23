@@ -1,10 +1,12 @@
-/*	$NetBSD: thread.h,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -68,7 +70,7 @@ WaitAbandonedIndex(DWORD dwWaitResult) {
 
 typedef HANDLE isc_thread_t;
 typedef DWORD  isc_threadresult_t;
-typedef void * isc_threadarg_t;
+typedef void  *isc_threadarg_t;
 typedef isc_threadresult_t(WINAPI *isc_threadfunc_t)(isc_threadarg_t);
 
 #define isc_thread_self (uintptr_t) GetCurrentThreadId

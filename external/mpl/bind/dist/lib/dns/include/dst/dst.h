@@ -1,7 +1,9 @@
-/*	$NetBSD: dst.h,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.9 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1102,6 +1104,26 @@ bool
 dst_key_isexternal(dst_key_t *key);
 /*%<
  * Check if this is an external key.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+void
+dst_key_setmodified(dst_key_t *key, bool value);
+/*%<
+ * If 'value' is true, this marks the key to indicate that key file metadata
+ * has been modified. If 'value' is false, this resets the value, for example
+ * after you have written the key to file.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+bool
+dst_key_ismodified(const dst_key_t *key);
+/*%<
+ * Check if the key file has been modified.
  *
  * Requires:
  *	'key' to be valid.

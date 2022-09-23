@@ -1,7 +1,9 @@
-/*	$NetBSD: masterdump.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.12 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -706,7 +708,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 				isc_buffer_putstr(target, KEYDATA);
 				break;
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		default:
 			if ((ctx->style.flags & DNS_STYLEFLAG_UNKNOWNFORMAT) !=
 			    0) {
@@ -1600,8 +1602,7 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		dctx->dumpsets = dump_rdatasets_map;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	result = totext_ctx_init(style, NULL, &dctx->tctx);
@@ -1722,8 +1723,7 @@ writeheader(dns_dumpctx_t *dctx) {
 
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	isc_mem_put(dctx->mctx, buffer.base, buffer.length);

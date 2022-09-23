@@ -1,7 +1,9 @@
-/*	$NetBSD: dst_internal.h,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +11,9 @@
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
+ */
+
+/*
  * Portions Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -145,6 +149,7 @@ struct dst_key {
 	bool inactive; /*%< private key not present as it is
 			* inactive */
 	bool external; /*%< external key */
+	bool modified; /*%< set to true if key file metadata has changed */
 
 	int fmt_major; /*%< private key format, major version
 			* */

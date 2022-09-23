@@ -1,7 +1,9 @@
-/*	$NetBSD: message.c,v 1.13 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.14 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,12 +108,14 @@ hexdump(const char *msg, const char *msg2, void *base, size_t len) {
  * of various block allocations used within the server.
  * XXXMLG These should come from a config setting.
  */
-#define SCRATCHPAD_SIZE 512
-#define NAME_COUNT	64
-#define OFFSET_COUNT	4
-#define RDATA_COUNT	8
-#define RDATALIST_COUNT 8
-#define RDATASET_COUNT	64
+#define SCRATCHPAD_SIZE	   1232
+#define NAME_FILLCOUNT	   4
+#define NAME_FREEMAX	   8 * NAME_FILLCOUNT
+#define OFFSET_COUNT	   4
+#define RDATA_COUNT	   8
+#define RDATALIST_COUNT	   8
+#define RDATASET_FILLCOUNT 4
+#define RDATASET_FREEMAX   8 * RDATASET_FILLCOUNT
 
 /*%
  * Text representation of the different items, for message_totext
@@ -167,19 +171,19 @@ struct dns_msgblock {
 	ISC_LINK(dns_msgblock_t) link;
 }; /* dynamically sized */
 
-static inline dns_msgblock_t *
+static dns_msgblock_t *
 msgblock_allocate(isc_mem_t *, unsigned int, unsigned int);
 
 #define msgblock_get(block, type) \
 	((type *)msgblock_internalget(block, sizeof(type)))
 
-static inline void *
+static void *
 msgblock_internalget(dns_msgblock_t *, unsigned int);
 
-static inline void
+static void
 msgblock_reset(dns_msgblock_t *);
 
-static inline void
+static void
 msgblock_free(isc_mem_t *, dns_msgblock_t *, unsigned int);
 
 static void
@@ -192,7 +196,7 @@ logfmtpacket(dns_message_t *message, const char *description,
  * Allocate a new dns_msgblock_t, and return a pointer to it.  If no memory
  * is free, return NULL.
  */
-static inline dns_msgblock_t *
+static dns_msgblock_t *
 msgblock_allocate(isc_mem_t *mctx, unsigned int sizeof_type,
 		  unsigned int count) {
 	dns_msgblock_t *block;
@@ -214,7 +218,7 @@ msgblock_allocate(isc_mem_t *mctx, unsigned int sizeof_type,
  * Return an element from the msgblock.  If no more are available, return
  * NULL.
  */
-static inline void *
+static void *
 msgblock_internalget(dns_msgblock_t *block, unsigned int sizeof_type) {
 	void *ptr;
 
@@ -230,7 +234,7 @@ msgblock_internalget(dns_msgblock_t *block, unsigned int sizeof_type) {
 	return (ptr);
 }
 
-static inline void
+static void
 msgblock_reset(dns_msgblock_t *block) {
 	block->remaining = block->count;
 }
@@ -238,7 +242,7 @@ msgblock_reset(dns_msgblock_t *block) {
 /*
  * Release memory associated with a message block.
  */
-static inline void
+static void
 msgblock_free(isc_mem_t *mctx, dns_msgblock_t *block,
 	      unsigned int sizeof_type) {
 	unsigned int length;
@@ -253,7 +257,7 @@ msgblock_free(isc_mem_t *mctx, dns_msgblock_t *block,
  * "current" buffer.  (which is always the last on the list, for our
  * uses)
  */
-static inline isc_result_t
+static isc_result_t
 newbuffer(dns_message_t *msg, unsigned int size) {
 	isc_buffer_t *dynbuf;
 
@@ -264,7 +268,7 @@ newbuffer(dns_message_t *msg, unsigned int size) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_buffer_t *
+static isc_buffer_t *
 currentbuffer(dns_message_t *msg) {
 	isc_buffer_t *dynbuf;
 
@@ -274,12 +278,12 @@ currentbuffer(dns_message_t *msg) {
 	return (dynbuf);
 }
 
-static inline void
+static void
 releaserdata(dns_message_t *msg, dns_rdata_t *rdata) {
 	ISC_LIST_PREPEND(msg->freerdata, rdata, link);
 }
 
-static inline dns_rdata_t *
+static dns_rdata_t *
 newrdata(dns_message_t *msg) {
 	dns_msgblock_t *msgblock;
 	dns_rdata_t *rdata;
@@ -308,12 +312,12 @@ newrdata(dns_message_t *msg) {
 	return (rdata);
 }
 
-static inline void
+static void
 releaserdatalist(dns_message_t *msg, dns_rdatalist_t *rdatalist) {
 	ISC_LIST_PREPEND(msg->freerdatalist, rdatalist, link);
 }
 
-static inline dns_rdatalist_t *
+static dns_rdatalist_t *
 newrdatalist(dns_message_t *msg) {
 	dns_msgblock_t *msgblock;
 	dns_rdatalist_t *rdatalist;
@@ -345,7 +349,7 @@ out:
 	return (rdatalist);
 }
 
-static inline dns_offsets_t *
+static dns_offsets_t *
 newoffsets(dns_message_t *msg) {
 	dns_msgblock_t *msgblock;
 	dns_offsets_t *offsets;
@@ -367,7 +371,7 @@ newoffsets(dns_message_t *msg) {
 	return (offsets);
 }
 
-static inline void
+static void
 msginitheader(dns_message_t *m) {
 	m->id = 0;
 	m->flags = 0;
@@ -376,7 +380,7 @@ msginitheader(dns_message_t *m) {
 	m->rdclass = 0;
 }
 
-static inline void
+static void
 msginitprivate(dns_message_t *m) {
 	unsigned int i;
 
@@ -398,7 +402,7 @@ msginitprivate(dns_message_t *m) {
 	m->buffer = NULL;
 }
 
-static inline void
+static void
 msginittsig(dns_message_t *m) {
 	m->tsigstatus = dns_rcode_noerror;
 	m->querytsigstatus = dns_rcode_noerror;
@@ -414,7 +418,7 @@ msginittsig(dns_message_t *m) {
  * Init elements to default state.  Used both when allocating a new element
  * and when resetting one.
  */
-static inline void
+static void
 msginit(dns_message_t *m) {
 	msginitheader(m);
 	msginitprivate(m);
@@ -443,7 +447,7 @@ msginit(dns_message_t *m) {
 	m->indent.count = 0;
 }
 
-static inline void
+static void
 msgresetnames(dns_message_t *msg, unsigned int first_section) {
 	unsigned int i;
 	dns_name_t *name, *next_name;
@@ -736,13 +740,13 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 	ISC_LIST_INIT(m->freerdatalist);
 
 	isc_mempool_create(m->mctx, sizeof(dns_fixedname_t), &m->namepool);
-	isc_mempool_setfillcount(m->namepool, NAME_COUNT);
-	isc_mempool_setfreemax(m->namepool, NAME_COUNT);
+	isc_mempool_setfillcount(m->namepool, NAME_FILLCOUNT);
+	isc_mempool_setfreemax(m->namepool, NAME_FREEMAX);
 	isc_mempool_setname(m->namepool, "msg:names");
 
 	isc_mempool_create(m->mctx, sizeof(dns_rdataset_t), &m->rdspool);
-	isc_mempool_setfillcount(m->rdspool, RDATASET_COUNT);
-	isc_mempool_setfreemax(m->rdspool, RDATASET_COUNT);
+	isc_mempool_setfillcount(m->rdspool, RDATASET_FILLCOUNT);
+	isc_mempool_setfreemax(m->rdspool, RDATASET_FREEMAX);
 	isc_mempool_setname(m->rdspool, "msg:rdataset");
 
 	isc_buffer_allocate(mctx, &dynbuf, SCRATCHPAD_SIZE);
@@ -896,8 +900,7 @@ getname(dns_name_t *name, isc_buffer_t *source, dns_message_t *msg,
 		}
 	}
 
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 static isc_result_t
@@ -1868,7 +1871,7 @@ dns_message_renderreserve(dns_message_t *msg, unsigned int space) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline bool
+static bool
 wrong_priority(dns_rdataset_t *rds, int pass, dns_rdatatype_t preferred_glue) {
 	int pass_needed;
 
@@ -4295,6 +4298,7 @@ dns_message_headertotext(dns_message_t *msg, const dns_master_style_t *style,
 			INDENT(style);
 			ADD_STRING(target, "QUESTION: ");
 		} else {
+			INDENT(style);
 			ADD_STRING(target, "ZONE: ");
 		}
 		snprintf(buf, sizeof(buf), "%1u",

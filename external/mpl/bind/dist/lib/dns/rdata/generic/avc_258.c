@@ -1,7 +1,9 @@
-/*	$NetBSD: avc_258.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: avc_258.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,14 +18,14 @@
 
 #define RRTYPE_AVC_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_avc(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_avc);
 
 	return (generic_fromtext_txt(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_avc(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_avc);
@@ -31,14 +33,14 @@ totext_avc(ARGS_TOTEXT) {
 	return (generic_totext_txt(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_avc(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_avc);
 
 	return (generic_fromwire_txt(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_avc(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
@@ -47,7 +49,7 @@ towire_avc(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_avc(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -61,14 +63,14 @@ compare_avc(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_avc(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_avc);
 
 	return (generic_fromstruct_txt(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_avc(ARGS_TOSTRUCT) {
 	dns_rdata_avc_t *avc = target;
 
@@ -82,7 +84,7 @@ tostruct_avc(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_avc(ARGS_FREESTRUCT) {
 	dns_rdata_avc_t *avc = source;
 
@@ -92,7 +94,7 @@ freestruct_avc(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_avc(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
@@ -103,7 +105,7 @@ additionaldata_avc(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_avc(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -114,7 +116,7 @@ digest_avc(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_avc(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_avc);
 
@@ -126,7 +128,7 @@ checkowner_avc(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_avc(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
@@ -137,7 +139,7 @@ checknames_avc(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_avc(ARGS_COMPARE) {
 	return (compare_avc(rdata1, rdata2));
 }

@@ -1,10 +1,12 @@
-/*	$NetBSD: ntservice.c,v 1.6 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.7 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -32,10 +34,21 @@ static char ConsoleTitle[128];
 /*
  * Forward declarations
  */
+static int
+bindmain_service_wrapper(int argc, char *argv[]);
 void
 ServiceControl(DWORD dwCtrlCode);
 int
 bindmain(int, char *[]); /* From main.c */
+
+/*
+ * Initialize the ISC library running as a Windows Service before calling
+ * bindmain()
+ */
+static int
+bindmain_service_wrapper(int argc, char *argv[]) {
+	return (isc_lib_ntservice(bindmain, argc, argv));
+}
 
 /*
  * Initialize the Service by registering it.
@@ -62,6 +75,7 @@ void
 ntservice_shutdown(void) {
 	UpdateSCM(SERVICE_STOPPED);
 }
+
 /*
  * Routine to check if this is a service or a foreground program
  */
@@ -69,6 +83,7 @@ BOOL
 ntservice_isservice(void) {
 	return (!foreground);
 }
+
 /*
  * ServiceControl(): Handles requests from the SCM and passes them on
  * to named.
@@ -161,7 +176,7 @@ main(int argc, char *argv[]) {
 
 		SERVICE_TABLE_ENTRY dispatchTable[] = {
 			{ TEXT(SERVICE_NAME),
-			  (LPSERVICE_MAIN_FUNCTION)bindmain },
+			  (LPSERVICE_MAIN_FUNCTION)bindmain_service_wrapper },
 			{ NULL, NULL }
 		};
 

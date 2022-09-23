@@ -1,7 +1,9 @@
-/*	$NetBSD: dnstest.c,v 1.10 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.11 2022/09/23 12:15:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,7 +256,7 @@ dns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
 	/*
 	 * Set zone type and origin.
 	 */
-	dns_zone_settype(zone, dns_zone_master);
+	dns_zone_settype(zone, dns_zone_primary);
 	origin = dns_fixedname_initname(&fixed_origin);
 	result = dns_name_fromstring(origin, name, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
@@ -383,7 +385,6 @@ fromhex(char c) {
 
 	printf("bad input format: %02x\n", c);
 	exit(3);
-	/* NOTREACHED */
 }
 
 /*

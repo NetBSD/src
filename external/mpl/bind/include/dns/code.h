@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 1998-2021  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2022  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 /***************
@@ -87,6 +87,8 @@
 #include "rdata/generic/openpgpkey_61.c"
 #include "rdata/generic/csync_62.c"
 #include "rdata/generic/zonemd_63.c"
+#include "rdata/in_1/svcb_64.c"
+#include "rdata/in_1/https_65.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/nid_104.c"
 #include "rdata/generic/l32_105.c"
@@ -229,6 +231,16 @@
 	case 61: result = fromtext_openpgpkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 62: result = fromtext_csync(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 63: result = fromtext_zonemd(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromtext_in_svcb(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromtext_in_https(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 105: result = fromtext_l32(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -375,6 +387,16 @@
 	case 61: result = totext_openpgpkey(rdata, tctx, target); break; \
 	case 62: result = totext_csync(rdata, tctx, target); break; \
 	case 63: result = totext_zonemd(rdata, tctx, target); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = totext_in_svcb(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = totext_in_https(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 104: result = totext_nid(rdata, tctx, target); break; \
 	case 105: result = totext_l32(rdata, tctx, target); break; \
@@ -521,6 +543,16 @@
 	case 61: result = fromwire_openpgpkey(rdclass, type, source, dctx, options, target); break; \
 	case 62: result = fromwire_csync(rdclass, type, source, dctx, options, target); break; \
 	case 63: result = fromwire_zonemd(rdclass, type, source, dctx, options, target); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromwire_in_svcb(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromwire_in_https(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
 	case 104: result = fromwire_nid(rdclass, type, source, dctx, options, target); break; \
 	case 105: result = fromwire_l32(rdclass, type, source, dctx, options, target); break; \
@@ -667,6 +699,16 @@
 	case 61: result = towire_openpgpkey(rdata, cctx, target); break; \
 	case 62: result = towire_csync(rdata, cctx, target); break; \
 	case 63: result = towire_zonemd(rdata, cctx, target); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = towire_in_svcb(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = towire_in_https(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 104: result = towire_nid(rdata, cctx, target); break; \
 	case 105: result = towire_l32(rdata, cctx, target); break; \
@@ -813,6 +855,16 @@
 	case 61: result = compare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = compare_csync(rdata1, rdata2); break; \
 	case 63: result = compare_zonemd(rdata1, rdata2); break; \
+	case 64: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_svcb(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_https(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 104: result = compare_nid(rdata1, rdata2); break; \
 	case 105: result = compare_l32(rdata1, rdata2); break; \
@@ -959,6 +1011,16 @@
 	case 61: result = casecompare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = casecompare_csync(rdata1, rdata2); break; \
 	case 63: result = casecompare_zonemd(rdata1, rdata2); break; \
+	case 64: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_svcb(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_https(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
 	case 104: result = casecompare_nid(rdata1, rdata2); break; \
 	case 105: result = casecompare_l32(rdata1, rdata2); break; \
@@ -1105,6 +1167,16 @@
 	case 61: result = fromstruct_openpgpkey(rdclass, type, source, target); break; \
 	case 62: result = fromstruct_csync(rdclass, type, source, target); break; \
 	case 63: result = fromstruct_zonemd(rdclass, type, source, target); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromstruct_in_svcb(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromstruct_in_https(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
 	case 105: result = fromstruct_l32(rdclass, type, source, target); break; \
@@ -1251,6 +1323,16 @@
 	case 61: result = tostruct_openpgpkey(rdata, target, mctx); break; \
 	case 62: result = tostruct_csync(rdata, target, mctx); break; \
 	case 63: result = tostruct_zonemd(rdata, target, mctx); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_svcb(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_https(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 104: result = tostruct_nid(rdata, target, mctx); break; \
 	case 105: result = tostruct_l32(rdata, target, mctx); break; \
@@ -1397,6 +1479,16 @@
 	case 61: freestruct_openpgpkey(source); break; \
 	case 62: freestruct_csync(source); break; \
 	case 63: freestruct_zonemd(source); break; \
+	case 64: switch (common->rdclass) { \
+		case 1: freestruct_in_svcb(source); break; \
+		default: break; \
+		} \
+		break; \
+	case 65: switch (common->rdclass) { \
+		case 1: freestruct_in_https(source); break; \
+		default: break; \
+		} \
+		break; \
 	case 99: freestruct_spf(source); break; \
 	case 104: freestruct_nid(source); break; \
 	case 105: freestruct_l32(source); break; \
@@ -1543,6 +1635,16 @@
 	case 61: result = additionaldata_openpgpkey(rdata, add, arg); break; \
 	case 62: result = additionaldata_csync(rdata, add, arg); break; \
 	case 63: result = additionaldata_zonemd(rdata, add, arg); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_svcb(rdata, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_https(rdata, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = additionaldata_spf(rdata, add, arg); break; \
 	case 104: result = additionaldata_nid(rdata, add, arg); break; \
 	case 105: result = additionaldata_l32(rdata, add, arg); break; \
@@ -1689,6 +1791,16 @@
 	case 61: result = digest_openpgpkey(rdata, digest, arg); break; \
 	case 62: result = digest_csync(rdata, digest, arg); break; \
 	case 63: result = digest_zonemd(rdata, digest, arg); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = digest_in_svcb(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = digest_in_https(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 104: result = digest_nid(rdata, digest, arg); break; \
 	case 105: result = digest_l32(rdata, digest, arg); break; \
@@ -1835,6 +1947,16 @@
 	case 61: result = checkowner_openpgpkey(name, rdclass, type, wildcard); break; \
 	case 62: result = checkowner_csync(name, rdclass, type, wildcard); break; \
 	case 63: result = checkowner_zonemd(name, rdclass, type, wildcard); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = checkowner_in_svcb(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = checkowner_in_https(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
 	case 105: result = checkowner_l32(name, rdclass, type, wildcard); break; \
@@ -1981,6 +2103,16 @@
 	case 61: result = checknames_openpgpkey(rdata, owner, bad); break; \
 	case 62: result = checknames_csync(rdata, owner, bad); break; \
 	case 63: result = checknames_zonemd(rdata, owner, bad); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_svcb(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_https(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 104: result = checknames_nid(rdata, owner, bad); break; \
 	case 105: result = checknames_l32(rdata, owner, bad); break; \
@@ -2193,6 +2325,12 @@
 		case 0: \
 			RDATATYPE_COMPARE("zonemd", 63, _typename,  _length, _typep); \
 			break; \
+		case 142: \
+			RDATATYPE_COMPARE("svcb", 64, _typename,  _length, _typep); \
+			break; \
+		case 247: \
+			RDATATYPE_COMPARE("https", 65, _typename,  _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename,  _length, _typep); \
 			break; \
@@ -2310,6 +2448,8 @@
 	case 61: return (RRTYPE_OPENPGPKEY_ATTRIBUTES); \
 	case 62: return (RRTYPE_CSYNC_ATTRIBUTES); \
 	case 63: return (RRTYPE_ZONEMD_ATTRIBUTES); \
+	case 64: return (RRTYPE_SVCB_ATTRIBUTES); \
+	case 65: return (RRTYPE_HTTPS_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
 	case 100: return (0); \
 	case 101: return (0); \
@@ -2401,6 +2541,8 @@
 	case 61: return (str_totext("OPENPGPKEY", target)); \
 	case 62: return (str_totext("CSYNC", target)); \
 	case 63: return (str_totext("ZONEMD", target)); \
+	case 64: return (str_totext("SVCB", target)); \
+	case 65: return (str_totext("HTTPS", target)); \
 	case 99: return (str_totext("SPF", target)); \
 	case 100: return (str_totext("UINFO", target)); \
 	case 101: return (str_totext("UID", target)); \

@@ -1,7 +1,9 @@
-/*	$NetBSD: librpz.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -375,7 +377,7 @@ typedef struct librpz_client librpz_client_t;
  * @param mutex: pointer to the lock for the client handle
  * @param log_ctx: NULL or resolver's context log messages
  */
-typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t * emsg,
+typedef librpz_clist_t *(librpz_clist_create_t)(librpz_emsg_t  *emsg,
 						librpz_mutex_t *lock,
 						librpz_mutex_t *unlock,
 						librpz_mutex_t *mutex_destroy,
@@ -396,9 +398,9 @@ LIBDEF_F(clist_detach)
  * @param use_expired: true to not ignore expired zones
  * @return client handle or NULL if the handle could not be created
  */
-typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t * emsg,
+typedef librpz_client_t *(librpz_client_create_t)(librpz_emsg_t	 *emsg,
 						  librpz_clist_t *clist,
-						  const char *	  cstr,
+						  const char	 *cstr,
 						  bool		  use_expired);
 LIBDEF_F(client_create)
 
@@ -495,9 +497,9 @@ LIBDEF_F(have_ns_trig)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool(librpz_rsp_clientip_prefix_t)(librpz_emsg_t *  emsg,
+typedef bool(librpz_rsp_clientip_prefix_t)(librpz_emsg_t   *emsg,
 					   librpz_prefix_t *prefix,
-					   librpz_rsp_t *   rsp);
+					   librpz_rsp_t	   *rsp);
 LIBDEF_F(rsp_clientip_prefix)
 
 /**
@@ -510,9 +512,9 @@ LIBDEF_F(rsp_clientip_prefix)
  * @param[in,out] rsp state from librpz_itr_start()
  * @return false on error
  */
-typedef bool(librpz_rsp_domain_t)(librpz_emsg_t *      emsg,
+typedef bool(librpz_rsp_domain_t)(librpz_emsg_t	      *emsg,
 				  librpz_domain_buf_t *owner,
-				  librpz_rsp_t *       rsp);
+				  librpz_rsp_t	      *rsp);
 LIBDEF_F(rsp_domain)
 
 /**
@@ -768,7 +770,7 @@ typedef socku_t *(librpz_mk_inet_su_t)(socku_t *su, const struct in_addr *addrp,
 				       in_port_t port);
 LIBDEF_F(mk_inet_su)
 
-typedef socku_t *(librpz_mk_inet6_su_t)(socku_t *	       su,
+typedef socku_t *(librpz_mk_inet6_su_t)(socku_t		      *su,
 					const struct in6_addr *addrp,
 					uint32_t scope_id, in_port_t port);
 LIBDEF_F(mk_inet6_su)
@@ -791,57 +793,57 @@ LIBDEF(const char *, librpz_dnsrpzd_path)
  * This is the dlopen() interface to librpz.
  */
 typedef const struct {
-	const char *			  dnsrpzd_path;
-	const char *			  version;
-	librpz_parse_log_opt_t *	  parse_log_opt;
-	librpz_log_level_val_t *	  log_level_val;
-	librpz_set_log_t *		  set_log;
-	librpz_vpemsg_t *		  vpemsg;
-	librpz_pemsg_t *		  pemsg;
-	librpz_vlog_t *			  vlog;
-	librpz_log_t *			  log;
+	const char			 *dnsrpzd_path;
+	const char			 *version;
+	librpz_parse_log_opt_t		 *parse_log_opt;
+	librpz_log_level_val_t		 *log_level_val;
+	librpz_set_log_t		 *set_log;
+	librpz_vpemsg_t			 *vpemsg;
+	librpz_pemsg_t			 *pemsg;
+	librpz_vlog_t			 *vlog;
+	librpz_log_t			 *log;
 	librpz_fatal_t *fatal		  LIBRPZ_NORET;
 	librpz_rpz_assert_t *rpz_assert	  LIBRPZ_NORET;
 	librpz_rpz_vassert_t *rpz_vassert LIBRPZ_NORET;
-	librpz_clist_create_t *		  clist_create;
-	librpz_clist_detach_t *		  clist_detach;
-	librpz_client_create_t *	  client_create;
-	librpz_connect_t *		  connect;
-	librpz_client_detach_t *	  client_detach;
-	librpz_rsp_create_t *		  rsp_create;
-	librpz_rsp_detach_t *		  rsp_detach;
-	librpz_rsp_result_t *		  rsp_result;
-	librpz_have_trig_t *		  have_trig;
-	librpz_have_ns_trig_t *		  have_ns_trig;
-	librpz_rsp_clientip_prefix_t *	  rsp_clientip_prefix;
-	librpz_rsp_domain_t *		  rsp_domain;
-	librpz_rsp_rr_t *		  rsp_rr;
-	librpz_rsp_soa_t *		  rsp_soa;
-	librpz_soa_serial_t *		  soa_serial;
-	librpz_rsp_push_t *		  rsp_push;
-	librpz_rsp_pop_t *		  rsp_pop;
-	librpz_rsp_pop_discard_t *	  rsp_pop_discard;
-	librpz_rsp_forget_zone_t *	  rsp_forget_zone;
-	librpz_ck_ip_t *		  ck_ip;
-	librpz_ck_domain_t *		  ck_domain;
-	librpz_zone_refresh_t *		  zone_refresh;
-	librpz_db_info_t *		  db_info;
-	librpz_itr_start_t *		  itr_start;
-	librpz_mf_stats_t *		  mf_stats;
-	librpz_vers_stats_t *		  vers_stats;
-	librpz_itr_zone_t *		  itr_zone;
-	librpz_itr_node_t *		  itr_node;
-	librpz_policy2str_t *		  policy2str;
-	librpz_trig2str_t *		  trig2str;
-	librpz_secs2str_t *		  secs2str;
-	librpz_str2secs_t *		  str2secs;
-	librpz_rtype2str_t *		  rtype2str;
-	librpz_domain_ntop_t *		  domain_ntop;
-	librpz_domain_pton2_t *		  domain_pton2;
-	librpz_mk_inet_su_t *		  mk_inet_su;
-	librpz_mk_inet6_su_t *		  mk_inet6_su;
-	librpz_str2su_t *		  str2su;
-	librpz_su2str_t *		  su2str;
+	librpz_clist_create_t		 *clist_create;
+	librpz_clist_detach_t		 *clist_detach;
+	librpz_client_create_t		 *client_create;
+	librpz_connect_t		 *connect;
+	librpz_client_detach_t		 *client_detach;
+	librpz_rsp_create_t		 *rsp_create;
+	librpz_rsp_detach_t		 *rsp_detach;
+	librpz_rsp_result_t		 *rsp_result;
+	librpz_have_trig_t		 *have_trig;
+	librpz_have_ns_trig_t		 *have_ns_trig;
+	librpz_rsp_clientip_prefix_t	 *rsp_clientip_prefix;
+	librpz_rsp_domain_t		 *rsp_domain;
+	librpz_rsp_rr_t			 *rsp_rr;
+	librpz_rsp_soa_t		 *rsp_soa;
+	librpz_soa_serial_t		 *soa_serial;
+	librpz_rsp_push_t		 *rsp_push;
+	librpz_rsp_pop_t		 *rsp_pop;
+	librpz_rsp_pop_discard_t	 *rsp_pop_discard;
+	librpz_rsp_forget_zone_t	 *rsp_forget_zone;
+	librpz_ck_ip_t			 *ck_ip;
+	librpz_ck_domain_t		 *ck_domain;
+	librpz_zone_refresh_t		 *zone_refresh;
+	librpz_db_info_t		 *db_info;
+	librpz_itr_start_t		 *itr_start;
+	librpz_mf_stats_t		 *mf_stats;
+	librpz_vers_stats_t		 *vers_stats;
+	librpz_itr_zone_t		 *itr_zone;
+	librpz_itr_node_t		 *itr_node;
+	librpz_policy2str_t		 *policy2str;
+	librpz_trig2str_t		 *trig2str;
+	librpz_secs2str_t		 *secs2str;
+	librpz_str2secs_t		 *str2secs;
+	librpz_rtype2str_t		 *rtype2str;
+	librpz_domain_ntop_t		 *domain_ntop;
+	librpz_domain_pton2_t		 *domain_pton2;
+	librpz_mk_inet_su_t		 *mk_inet_su;
+	librpz_mk_inet6_su_t		 *mk_inet6_su;
+	librpz_str2su_t			 *str2su;
+	librpz_su2str_t			 *su2str;
 } librpz_0_t;
 extern librpz_0_t librpz_def_0;
 
@@ -853,7 +855,7 @@ extern librpz_0_t librpz_def_0;
 #define LIBRPZ_DEF_STR "librpz_def_0"
 
 typedef librpz_0_t librpz_t;
-extern librpz_t *  librpz;
+extern librpz_t	  *librpz;
 
 #if LIBRPZ_LIB_OPEN == 2
 #include <dlfcn.h>
@@ -867,7 +869,7 @@ extern librpz_t *  librpz;
  */
 static inline librpz_t *
 librpz_lib_open(librpz_emsg_t *emsg, void **dl_handle, const char *path) {
-	void *	  handle;
+	void	 *handle;
 	librpz_t *new_librpz;
 
 	emsg->c[0] = '\0';

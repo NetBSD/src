@@ -1,7 +1,9 @@
-/*	$NetBSD: config.c,v 1.12 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.13 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +22,7 @@
 #include <isc/buffer.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/parseint.h>
 #include <isc/region.h>
 #include <isc/result.h>
@@ -50,33 +53,28 @@ options {\n\
 	answer-cookie true;\n\
 	automatic-interface-scan yes;\n\
 	bindkeys-file \"" NAMED_SYSCONFDIR "/bind.keys\";\n\
-#	blackhole {none;};\n"
-			    "	cookie-algorithm siphash24;\n"
+#	blackhole {none;};\n\
+	cookie-algorithm siphash24;\n"
 #ifndef WIN32
 			    "	coresize default;\n\
 	datasize default;\n"
 #endif /* ifndef WIN32 */
 			    "\
-#	deallocate-on-exit <obsolete>;\n\
 #	directory <none>\n\
 	dnssec-policy \"none\";\n\
 	dump-file \"named_dump.db\";\n\
-	edns-udp-size 1232;\n\
-#	fake-iquery <obsolete>;\n"
+	edns-udp-size 1232;\n"
 #ifndef WIN32
 			    "	files unlimited;\n"
 #endif /* ifndef WIN32 */
 #if defined(HAVE_GEOIP2) && !defined(WIN32)
-			    "	geoip-directory \"" MAXMINDDB_PREFIX "/share/"
-			    "GeoIP\";"
-			    "\n"
+			    "	geoip-directory \"" MAXMINDDB_PREFIX
+			    "/share/GeoIP\";\n"
 #elif defined(HAVE_GEOIP2)
 			    "	geoip-directory \".\";\n"
 #endif /* if defined(HAVE_GEOIP2) && !defined(WIN32) */
 			    "\
-#	has-old-clients <obsolete>;\n\
 	heartbeat-interval 60;\n\
-#	host-statistics <obsolete>;\n\
 	interface-interval 60;\n\
 #	keep-response-order {none;};\n\
 	listen-on {any;};\n\
@@ -87,14 +85,20 @@ options {\n\
 	max-rsa-exponent-size 0; /* no limit */\n\
 	max-udp-size 1232;\n\
 	memstatistics-file \"named.memstats\";\n\
-#	multiple-cnames <obsolete>;\n\
-#	named-xfer <obsolete>;\n\
 	nocookie-udp-size 4096;\n\
 	notify-rate 20;\n\
 	nta-lifetime 3600;\n\
 	nta-recheck 300;\n\
 #	pid-file \"" NAMED_LOCALSTATEDIR "/run/named/named.pid\"; \n\
-	port 53;\n\
+	port 53;\n"
+#if HAVE_SO_REUSEPORT_LB
+			    "\
+	reuseport yes;\n"
+#else
+			    "\
+	reuseport no;\n"
+#endif
+			    "\
 	prefetch 2 9;\n\
 	recursing-file \"named.recursing\";\n\
 	recursive-clients 1000;\n\
@@ -104,7 +108,6 @@ options {\n\
 	rrset-order { order random; };\n\
 	secroots-file \"named.secroots\";\n\
 	send-cookie true;\n\
-#	serial-queries <obsolete>;\n\
 	serial-query-rate 20;\n\
 	server-id none;\n\
 	session-keyalg hmac-sha256;\n\
@@ -115,7 +118,6 @@ options {\n\
 #endif /* ifndef WIN32 */
 			    "	startup-notify-rate 20;\n\
 	statistics-file \"named.stats\";\n\
-#	statistics-interval <obsolete>;\n\
 	tcp-advertised-timeout 300;\n\
 	tcp-clients 150;\n\
 	tcp-idle-timeout 300;\n\
@@ -129,10 +131,7 @@ options {\n\
 	transfers-in 10;\n\
 	transfers-out 10;\n\
 	transfers-per-ns 2;\n\
-#	treat-cr-as-space <obsolete>;\n\
 	trust-anchor-telemetry yes;\n\
-#	use-id-pool <obsolete>;\n\
-#	use-ixfr <obsolete>;\n\
 \n\
 	/* view */\n\
 	allow-new-zones no;\n\
@@ -142,13 +141,12 @@ options {\n\
 	allow-recursion { localnets; localhost; };\n\
 	allow-recursion-on { any; };\n\
 	allow-update-forwarding {none;};\n\
-#	allow-v6-synthesis <obsolete>;\n\
 	auth-nxdomain false;\n\
 	check-dup-records warn;\n\
 	check-mx warn;\n\
-	check-names master fail;\n\
+	check-names primary fail;\n\
 	check-names response ignore;\n\
-	check-names slave warn;\n\
+	check-names secondary warn;\n\
 	check-spf warn;\n\
 	clients-per-query 10;\n\
 	dnssec-accept-expired no;\n\
@@ -157,12 +155,11 @@ options {\n\
 			    "	dnstap-identity hostname;\n"
 #endif /* ifdef HAVE_DNSTAP */
 			    "\
-#	fetch-glue <obsolete>;\n\
 	fetch-quota-params 100 0.1 0.3 0.7;\n\
 	fetches-per-server 0;\n\
 	fetches-per-zone 0;\n\
 	glue-cache yes;\n\
-	lame-ttl 600;\n"
+	lame-ttl 0;\n"
 #ifdef HAVE_LMDB
 			    "	lmdb-mapsize 32M;\n"
 #endif /* ifdef HAVE_LMDB */
@@ -176,7 +173,6 @@ options {\n\
 	message-compression yes;\n\
 	min-ncache-ttl 0; /* 0 hours */\n\
 	min-cache-ttl 0; /* 0 seconds */\n\
-#	min-roots <obsolete>;\n\
 	minimal-any false;\n\
 	minimal-responses no-auth-recursive;\n\
 	notify-source *;\n\
@@ -194,7 +190,6 @@ options {\n\
 	require-server-cookie no;\n\
 	resolver-nonbackoff-tries 3;\n\
 	resolver-retry-interval 800; /* in milliseconds */\n\
-#	rfc2308-type1 <obsolete>;\n\
 	root-key-sentinel yes;\n\
 	servfail-ttl 1;\n\
 #	sortlist <none>\n\
@@ -230,8 +225,6 @@ options {\n\
 #	forwarders <none>\n\
 #	inline-signing no;\n\
 	ixfr-from-differences false;\n\
-#	maintain-ixfr-base <obsolete>;\n\
-#	max-ixfr-log-size <obsolete>\n\
 	max-journal-size default;\n\
 	max-records 0;\n\
 	max-refresh-time 2419200; /* 4 weeks */\n\
@@ -278,22 +271,22 @@ view \"_bind\" chaos {\n\
 	};\n\
 \n\
 	zone \"version.bind\" chaos {\n\
-		type master;\n\
+		type primary;\n\
 		database \"_builtin version\";\n\
 	};\n\
 \n\
 	zone \"hostname.bind\" chaos {\n\
-		type master;\n\
+		type primary;\n\
 		database \"_builtin hostname\";\n\
 	};\n\
 \n\
 	zone \"authors.bind\" chaos {\n\
-		type master;\n\
+		type primary;\n\
 		database \"_builtin authors\";\n\
 	};\n\
 \n\
 	zone \"id.server\" chaos {\n\
-		type master;\n\
+		type primary;\n\
 		database \"_builtin id\";\n\
 	};\n\
 };\n\
@@ -301,22 +294,24 @@ view \"_bind\" chaos {\n\
 			    "#\n\
 #  Default trusted key(s), used if \n\
 # \"dnssec-validation auto;\" is set and\n\
-#  sysconfdir/bind.keys doesn't exist).\n\
+#  " NAMED_SYSCONFDIR "/bind.keys doesn't exist).\n\
 #\n\
-# BEGIN DNSSEC KEYS\n"
+# BEGIN TRUST ANCHORS\n"
 
 	/* Imported from bind.keys.h: */
 	TRUST_ANCHORS
 
-			    "# END MANAGED KEYS\n\
+			    "# END TRUST ANCHORS\n\
 \n\
 primaries " DEFAULT_IANA_ROOT_ZONE_PRIMARIES " {\n\
-	2001:500:84::b;		# b.root-servers.net\n\
+	2001:500:200::b;	# b.root-servers.net\n\
+	2001:500:2::c;		# c.root-servers.net\n\
 	2001:500:2f::f;		# f.root-servers.net\n\
+	2001:500:12::d0d;	# g.root-servers.net\n\
 	2001:7fd::1;		# k.root-servers.net\n\
 	2620:0:2830:202::132;	# xfr.cjr.dns.icann.org\n\
 	2620:0:2d0:202::132;	# xfr.lax.dns.icann.org\n\
-	192.228.79.201;		# b.root-servers.net\n\
+	199.9.14.201;		# b.root-servers.net\n\
 	192.33.4.12;		# c.root-servers.net\n\
 	192.5.5.241;		# f.root-servers.net\n\
 	192.112.36.4;		# g.root-servers.net\n\
@@ -336,23 +331,26 @@ named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf) {
 				 CFG_PCTX_NODEPRECATED, conf));
 }
 
+const char *
+named_config_getdefault(void) {
+	return (defaultconf);
+}
+
 isc_result_t
 named_config_get(cfg_obj_t const *const *maps, const char *name,
 		 const cfg_obj_t **obj) {
 	int i;
 
-	for (i = 0;; i++) {
-		if (maps[i] == NULL) {
-			return (ISC_R_NOTFOUND);
-		}
+	for (i = 0; maps[i] != NULL; i++) {
 		if (cfg_map_get(maps[i], name, obj) == ISC_R_SUCCESS) {
 			return (ISC_R_SUCCESS);
 		}
 	}
+	return (ISC_R_NOTFOUND);
 }
 
 isc_result_t
-named_checknames_get(const cfg_obj_t **maps, const char *which,
+named_checknames_get(const cfg_obj_t **maps, const char *const names[],
 		     const cfg_obj_t **obj) {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *checknames;
@@ -361,13 +359,10 @@ named_checknames_get(const cfg_obj_t **maps, const char *which,
 	int i;
 
 	REQUIRE(maps != NULL);
-	REQUIRE(which != NULL);
+	REQUIRE(names != NULL);
 	REQUIRE(obj != NULL && *obj == NULL);
 
-	for (i = 0;; i++) {
-		if (maps[i] == NULL) {
-			return (ISC_R_NOTFOUND);
-		}
+	for (i = 0; maps[i] != NULL; i++) {
 		checknames = NULL;
 		if (cfg_map_get(maps[i], "check-names", &checknames) ==
 		    ISC_R_SUCCESS) {
@@ -383,14 +378,19 @@ named_checknames_get(const cfg_obj_t **maps, const char *which,
 			{
 				value = cfg_listelt_value(element);
 				type = cfg_tuple_get(value, "type");
-				if (strcasecmp(cfg_obj_asstring(type), which) ==
-				    0) {
-					*obj = cfg_tuple_get(value, "mode");
-					return (ISC_R_SUCCESS);
+
+				for (size_t j = 0; names[j] != NULL; j++) {
+					if (strcasecmp(cfg_obj_asstring(type),
+						       names[j]) == 0) {
+						*obj = cfg_tuple_get(value,
+								     "mode");
+						return (ISC_R_SUCCESS);
+					}
 				}
 			}
 		}
 	}
+	return (ISC_R_NOTFOUND);
 }
 
 int
@@ -452,10 +452,10 @@ named_config_getzonetype(const cfg_obj_t *zonetypeobj) {
 
 	str = cfg_obj_asstring(zonetypeobj);
 	if (strcasecmp(str, "primary") == 0 || strcasecmp(str, "master") == 0) {
-		ztype = dns_zone_master;
+		ztype = dns_zone_primary;
 	} else if (strcasecmp(str, "secondary") == 0 ||
 		   strcasecmp(str, "slave") == 0) {
-		ztype = dns_zone_slave;
+		ztype = dns_zone_secondary;
 	} else if (strcasecmp(str, "mirror") == 0) {
 		ztype = dns_zone_mirror;
 	} else if (strcasecmp(str, "stub") == 0) {
@@ -465,8 +465,7 @@ named_config_getzonetype(const cfg_obj_t *zonetypeobj) {
 	} else if (strcasecmp(str, "redirect") == 0) {
 		ztype = dns_zone_redirect;
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	return (ztype);
 }
@@ -1075,8 +1074,7 @@ named_config_getkeyalgorithm2(const char *str, const dns_name_t **name,
 			*name = dns_tsig_hmacsha512_name;
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	}
 	if (typep != NULL) {

@@ -1,7 +1,9 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.9 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.10 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -264,6 +266,10 @@ emit(dns_dsdigest_t dt, bool showall, bool cds, dns_rdata_t *rdata) {
 		fatal("can't convert DNSKEY");
 	}
 
+	if ((dnskey.flags & DNS_KEYFLAG_REVOKE) != 0) {
+		return;
+	}
+
 	if ((dnskey.flags & DNS_KEYFLAG_KSK) == 0 && !showall) {
 		return;
 	}
@@ -437,14 +443,14 @@ main(int argc, char **argv) {
 			}
 			break;
 		case 'F':
-		/* Reserved for FIPS mode */
-		/* FALLTHROUGH */
+			/* Reserved for FIPS mode */
+			FALLTHROUGH;
 		case '?':
 			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			/* Does not return. */
 			usage();

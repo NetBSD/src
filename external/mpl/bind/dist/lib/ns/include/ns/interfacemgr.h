@@ -1,7 +1,9 @@
-/*	$NetBSD: interfacemgr.h,v 1.8 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.9 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,9 +79,9 @@ struct ns_interface {
 	isc_sockaddr_t	   addr;       /*%< Address and port. */
 	unsigned int	   flags;      /*%< Interface flags */
 	char		   name[32];   /*%< Null terminated. */
-	dns_dispatch_t *   udpdispatch[MAX_UDP_DISPATCH];
+	dns_dispatch_t	  *udpdispatch[MAX_UDP_DISPATCH];
 	/*%< UDP dispatchers. */
-	isc_socket_t *	tcpsocket; /*%< TCP socket. */
+	isc_socket_t   *tcpsocket; /*%< TCP socket. */
 	isc_nmsocket_t *udplistensocket;
 	isc_nmsocket_t *tcplistensocket;
 	isc_dscp_t	dscp;	       /*%< "listen-on" DSCP value */
@@ -147,20 +149,6 @@ ns_interfacemgr_scan(ns_interfacemgr_t *mgr, bool verbose);
  * This should be called once on server startup and then
  * periodically according to the 'interface-interval' option
  * in named.conf.
- */
-
-isc_result_t
-ns_interfacemgr_adjust(ns_interfacemgr_t *mgr, ns_listenlist_t *list,
-		       bool verbose);
-/*%<
- * Similar to ns_interfacemgr_scan(), but this function also tries to see the
- * need for an explicit listen-on when a list element in 'list' is going to
- * override an already-listening a wildcard interface.
- *
- * This function does not update localhost and localnets ACLs.
- *
- * This should be called once on server startup, after configuring views and
- * zones.
  */
 
 void

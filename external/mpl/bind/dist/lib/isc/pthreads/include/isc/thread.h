@@ -1,7 +1,9 @@
-/*	$NetBSD: thread.h,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.7 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,8 +37,8 @@ extern __thread size_t isc_tid_v;
 ISC_LANG_BEGINDECLS
 
 typedef pthread_t isc_thread_t;
-typedef void *	  isc_threadresult_t;
-typedef void *	  isc_threadarg_t;
+typedef void	 *isc_threadresult_t;
+typedef void	 *isc_threadarg_t;
 typedef isc_threadresult_t (*isc_threadfunc_t)(isc_threadarg_t);
 
 void
@@ -46,16 +48,10 @@ void
 isc_thread_join(isc_thread_t thread, isc_threadresult_t *result);
 
 void
-isc_thread_setconcurrency(unsigned int level);
-
-void
 isc_thread_yield(void);
 
 void
 isc_thread_setname(isc_thread_t thread, const char *name);
-
-isc_result_t
-isc_thread_setaffinity(int cpu);
 
 #define isc_thread_self (uintptr_t) pthread_self
 

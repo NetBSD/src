@@ -1,7 +1,9 @@
-/*	$NetBSD: wire_test.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.7 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,7 +39,7 @@ process_message(isc_buffer_t *source);
 static isc_result_t
 printmessage(dns_message_t *msg);
 
-static inline void
+static void
 CHECKRESULT(isc_result_t result, const char *msg) {
 	if (result != ISC_R_SUCCESS) {
 		printf("%s: %s\n", msg, dns_result_totext(result));
@@ -58,7 +60,6 @@ fromhex(char c) {
 
 	fprintf(stderr, "bad input format: %02x\n", c);
 	exit(3);
-	/* NOTREACHED */
 }
 
 static void

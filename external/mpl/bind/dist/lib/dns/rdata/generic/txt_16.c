@@ -1,7 +1,9 @@
-/*	$NetBSD: txt_16.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +18,7 @@
 
 #define RRTYPE_TXT_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 generic_fromtext_txt(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int strings;
@@ -50,7 +52,7 @@ generic_fromtext_txt(ARGS_FROMTEXT) {
 	return (strings == 0 ? ISC_R_UNEXPECTEDEND : ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_totext_txt(ARGS_TOTEXT) {
 	isc_region_t region;
 
@@ -68,7 +70,7 @@ generic_totext_txt(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromwire_txt(ARGS_FROMWIRE) {
 	isc_result_t result;
 
@@ -86,14 +88,14 @@ generic_fromwire_txt(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromtext_txt(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_txt);
 
 	return (generic_fromtext_txt(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_txt(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_txt);
@@ -101,14 +103,14 @@ totext_txt(ARGS_TOTEXT) {
 	return (generic_totext_txt(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_txt(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_txt);
 
 	return (generic_fromwire_txt(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_txt(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_txt);
 
@@ -117,7 +119,7 @@ towire_txt(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_txt(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -131,7 +133,7 @@ compare_txt(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromstruct_txt(ARGS_FROMSTRUCT) {
 	dns_rdata_txt_t *txt = source;
 	isc_region_t region;
@@ -159,7 +161,7 @@ generic_fromstruct_txt(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, txt->txt, txt->txt_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_tostruct_txt(ARGS_TOSTRUCT) {
 	dns_rdata_txt_t *txt = target;
 	isc_region_t r;
@@ -181,7 +183,7 @@ generic_tostruct_txt(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 generic_freestruct_txt(ARGS_FREESTRUCT) {
 	dns_rdata_txt_t *txt = source;
 
@@ -197,14 +199,14 @@ generic_freestruct_txt(ARGS_FREESTRUCT) {
 	txt->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_txt(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_txt);
 
 	return (generic_fromstruct_txt(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_txt(ARGS_TOSTRUCT) {
 	dns_rdata_txt_t *txt = target;
 
@@ -218,7 +220,7 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_txt(ARGS_FREESTRUCT) {
 	dns_rdata_txt_t *txt = source;
 
@@ -228,7 +230,7 @@ freestruct_txt(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_txt(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_txt);
 
@@ -239,7 +241,7 @@ additionaldata_txt(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_txt(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -250,7 +252,7 @@ digest_txt(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_txt(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_txt);
 
@@ -262,7 +264,7 @@ checkowner_txt(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_txt(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_txt);
 
@@ -273,7 +275,7 @@ checknames_txt(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_txt(ARGS_COMPARE) {
 	return (compare_txt(rdata1, rdata2));
 }

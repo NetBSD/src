@@ -1,7 +1,9 @@
-/*	$NetBSD: clientinfo.c,v 1.5 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: clientinfo.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +16,7 @@
 /*! \file */
 
 #include <dns/clientinfo.h>
+#include <dns/ecs.h>
 
 void
 dns_clientinfomethods_init(dns_clientinfomethods_t *methods,
@@ -24,8 +27,14 @@ dns_clientinfomethods_init(dns_clientinfomethods_t *methods,
 }
 
 void
-dns_clientinfo_init(dns_clientinfo_t *ci, void *data, void *versionp) {
+dns_clientinfo_init(dns_clientinfo_t *ci, void *data, dns_ecs_t *ecs,
+		    void *versionp) {
 	ci->version = DNS_CLIENTINFO_VERSION;
 	ci->data = data;
 	ci->dbversion = versionp;
+	if (ecs != NULL) {
+		ci->ecs = *ecs;
+	} else {
+		dns_ecs_init(&ci->ecs);
+	}
 }

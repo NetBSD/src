@@ -1,7 +1,9 @@
-/*	$NetBSD: db.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +82,7 @@ initialize(void) {
 	ISC_LIST_APPEND(implementations, &rbtimp, link);
 }
 
-static inline dns_dbimplementation_t *
+static dns_dbimplementation_t *
 impfind(const char *name) {
 	dns_dbimplementation_t *imp;
 

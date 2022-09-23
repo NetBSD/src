@@ -1,7 +1,9 @@
-/*	$NetBSD: ht_test.c,v 1.8 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: ht_test.c,v 1.9 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,8 +63,7 @@ test_ht_full(int bits, uintptr_t count) {
 	isc_result_t result;
 	uintptr_t i;
 
-	result = isc_ht_init(&ht, test_mctx, bits);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_ht_init(&ht, test_mctx, bits);
 	assert_non_null(ht);
 
 	for (i = 1; i < count; i++) {
@@ -207,8 +208,7 @@ test_ht_iterator() {
 	unsigned char key[16];
 	size_t tksize;
 
-	result = isc_ht_init(&ht, test_mctx, 16);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_ht_init(&ht, test_mctx, 16);
 	assert_non_null(ht);
 	for (i = 1; i <= count; i++) {
 		/*
@@ -222,8 +222,7 @@ test_ht_iterator() {
 	}
 
 	walked = 0;
-	result = isc_ht_iter_create(ht, &iter);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_ht_iter_create(ht, &iter);
 
 	for (result = isc_ht_iter_first(iter); result == ISC_R_SUCCESS;
 	     result = isc_ht_iter_next(iter))

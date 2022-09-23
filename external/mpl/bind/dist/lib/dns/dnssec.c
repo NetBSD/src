@@ -1,7 +1,9 @@
-/*	$NetBSD: dnssec.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.12 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,7 +79,7 @@ digest_callback(void *arg, isc_region_t *data) {
 	return (dst_context_adddata(ctx, data));
 }
 
-static inline void
+static void
 inc_stat(isc_statscounter_t counter) {
 	if (dns_dnssec_stats != NULL) {
 		isc_stats_increment(dns_dnssec_stats, counter);
@@ -445,7 +447,7 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGINVALID);
 		}
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	default:
 		if (!dns_name_issubdomain(name, &sig.signer)) {
 			inc_stat(dns_dnssecstats_fail);
@@ -949,7 +951,6 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 	dst_context_t *ctx = NULL;
 	isc_mem_t *mctx;
 	isc_result_t result;
-	bool signeedsfree = true;
 
 	REQUIRE(msg != NULL);
 	REQUIRE(key != NULL);
@@ -1038,7 +1039,6 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 				    dynbuf));
 
 	isc_mem_put(mctx, sig.signature, sig.siglen);
-	signeedsfree = false;
 
 	dns_message_takebuffer(msg, &dynbuf);
 
@@ -1059,7 +1059,7 @@ failure:
 	if (dynbuf != NULL) {
 		isc_buffer_free(&dynbuf);
 	}
-	if (signeedsfree) {
+	if (sig.signature != NULL) {
 		isc_mem_put(mctx, sig.signature, sig.siglen);
 	}
 	if (ctx != NULL) {
@@ -2149,7 +2149,7 @@ isc_result_t
 dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 		      dns_name_t *origin, dns_rdataclass_t zclass,
 		      dns_ttl_t ttl, dns_diff_t *diff, isc_mem_t *mctx,
-		      bool dnssec_insecure) {
+		      bool expect_cds_delete, bool expect_cdnskey_delete) {
 	unsigned char dsbuf[5] = { 0, 0, 0, 0, 0 };  /* CDS DELETE rdata */
 	unsigned char keybuf[5] = { 0, 0, 3, 0, 0 }; /* CDNSKEY DELETE rdata */
 	char namebuf[DNS_NAME_FORMATSIZE];
@@ -2169,7 +2169,30 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 
 	dns_name_format(origin, namebuf, sizeof(namebuf));
 
-	if (dnssec_insecure) {
+	if (expect_cds_delete) {
+		if (!dns_rdataset_isassociated(cds) ||
+		    !exists(cds, &cds_delete)) {
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
+				      "CDS (DELETE) for zone %s is now "
+				      "published",
+				      namebuf);
+			RETERR(addrdata(&cds_delete, diff, origin, ttl, mctx));
+		}
+	} else {
+		if (dns_rdataset_isassociated(cds) && exists(cds, &cds_delete))
+		{
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
+				      "CDS (DELETE) for zone %s is now "
+				      "deleted",
+				      namebuf);
+			RETERR(delrdata(&cds_delete, diff, origin, cds->ttl,
+					mctx));
+		}
+	}
+
+	if (expect_cdnskey_delete) {
 		if (!dns_rdataset_isassociated(cdnskey) ||
 		    !exists(cdnskey, &cdnskey_delete)) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
@@ -2179,16 +2202,6 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      namebuf);
 			RETERR(addrdata(&cdnskey_delete, diff, origin, ttl,
 					mctx));
-		}
-
-		if (!dns_rdataset_isassociated(cds) ||
-		    !exists(cds, &cds_delete)) {
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
-				      "CDS (DELETE) for zone %s is now "
-				      "published",
-				      namebuf);
-			RETERR(addrdata(&cds_delete, diff, origin, ttl, mctx));
 		}
 	} else {
 		if (dns_rdataset_isassociated(cdnskey) &&
@@ -2200,17 +2213,6 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      namebuf);
 			RETERR(delrdata(&cdnskey_delete, diff, origin,
 					cdnskey->ttl, mctx));
-		}
-
-		if (dns_rdataset_isassociated(cds) && exists(cds, &cds_delete))
-		{
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
-				      "CDS (DELETE) for zone %s is now "
-				      "deleted",
-				      namebuf);
-			RETERR(delrdata(&cds_delete, diff, origin, cds->ttl,
-					mctx));
 		}
 	}
 

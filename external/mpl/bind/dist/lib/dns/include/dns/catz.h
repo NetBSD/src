@@ -1,7 +1,9 @@
-/*	$NetBSD: catz.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: catz.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -323,15 +325,15 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 /* Methods provided by named to dynamically modify the member zones */
 /* xxxwpk TODO config! */
 typedef isc_result_t (*dns_catz_zoneop_fn_t)(dns_catz_entry_t *entry,
-					     dns_catz_zone_t * origin,
-					     dns_view_t *      view,
-					     isc_taskmgr_t *   taskmgr,
-					     void *	       udata);
+					     dns_catz_zone_t  *origin,
+					     dns_view_t	      *view,
+					     isc_taskmgr_t    *taskmgr,
+					     void	      *udata);
 struct dns_catz_zonemodmethods {
 	dns_catz_zoneop_fn_t addzone;
 	dns_catz_zoneop_fn_t modzone;
 	dns_catz_zoneop_fn_t delzone;
-	void *		     udata;
+	void		    *udata;
 };
 
 isc_result_t
@@ -457,7 +459,7 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs);
  * \li	'catzs' is a valid dns_catz_zones_t.
  */
 
-isc_result_t
+void
 dns_catz_get_iterator(dns_catz_zone_t *catz, isc_ht_iter_t **itp);
 /*%<
  * Get the hashtable iterator on catalog zone members, point '*itp' to it.
@@ -466,9 +468,6 @@ dns_catz_get_iterator(dns_catz_zone_t *catz, isc_ht_iter_t **itp);
  * \li	'catzs' is a valid dns_catz_zones_t.
  * \li	'itp' is not NULL and '*itp' is NULL.
  *
- * Returns:
- * \li #ISC_R_SUCCESS		-- success
- * \li Any other value		-- failure
  */
 
 ISC_LANG_ENDDECLS

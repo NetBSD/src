@@ -1,7 +1,9 @@
-/*	$NetBSD: tsig.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1149,18 +1151,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 			return (ret);
 		}
 	}
-#if defined(__clang__) && (__clang_major__ < 3 ||                           \
-			   (__clang_major__ == 3 && __clang_minor__ < 2) || \
-			   (__clang_major__ == 4 && __clang_minor__ < 2))
-	/* false positive: http://llvm.org/bugs/show_bug.cgi?id=14461 */
-	else
-	{
-		memset(&querytsig, 0, sizeof(querytsig));
-	}
-#endif /* if defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == \
-	* 3                                                                    \
-	* && __clang_minor__ < 2) || (__clang_major__ == 4 && __clang_minor__  \
-	* < 2)) */
 
 	/*
 	 * Do the key name and algorithm match that of the query?
