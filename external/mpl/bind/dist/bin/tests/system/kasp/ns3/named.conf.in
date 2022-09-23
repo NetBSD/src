@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -42,6 +44,7 @@ controls {
 zone "default.kasp" {
 	type primary;
 	file "default.kasp.db";
+	inline-signing yes;
 	dnssec-policy "default";
 };
 
@@ -49,6 +52,7 @@ zone "default.kasp" {
 zone "checkds-ksk.kasp" {
 	type primary;
 	file "checkds-ksk.kasp.db";
+	inline-signing yes;
 	dnssec-policy "checkds-ksk";
 };
 
@@ -56,6 +60,7 @@ zone "checkds-ksk.kasp" {
 zone "checkds-doubleksk.kasp" {
 	type primary;
 	file "checkds-doubleksk.kasp.db";
+	inline-signing yes;
 	dnssec-policy "checkds-doubleksk";
 };
 
@@ -63,6 +68,7 @@ zone "checkds-doubleksk.kasp" {
 zone "checkds-csk.kasp" {
 	type primary;
 	file "checkds-csk.kasp.db";
+	inline-signing yes;
 	dnssec-policy "checkds-csk";
 };
 
@@ -70,6 +76,7 @@ zone "checkds-csk.kasp" {
 zone "unlimited.kasp" {
 	type primary;
 	file "unlimited.kasp.db";
+	inline-signing yes;
 	dnssec-policy "unlimited";
 };
 
@@ -77,6 +84,7 @@ zone "unlimited.kasp" {
 zone "manual-rollover.kasp" {
 	type primary;
 	file "manual-rollover.kasp.db";
+	inline-signing yes;
 	dnssec-policy "manual-rollover";
 };
 
@@ -84,12 +92,14 @@ zone "manual-rollover.kasp" {
 zone "rsasha1.kasp" {
 	type primary;
 	file "rsasha1.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
 /* A zone that inherits dnssec-policy. */
 zone "inherit.kasp" {
 	type primary;
+	inline-signing yes;
 	file "inherit.kasp.db";
 };
 
@@ -97,6 +107,7 @@ zone "inherit.kasp" {
 zone "unsigned.kasp" {
 	type primary;
 	file "unsigned.kasp.db";
+	inline-signing yes;
 	dnssec-policy "none";
 };
 
@@ -104,6 +115,7 @@ zone "unsigned.kasp" {
 zone "insecure.kasp" {
 	type primary;
 	file "insecure.kasp.db";
+	inline-signing yes;
 	dnssec-policy "insecure";
 };
 
@@ -111,6 +123,7 @@ zone "insecure.kasp" {
 zone "dnssec-keygen.kasp" {
 	type primary;
 	file "dnssec-keygen.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
@@ -119,6 +132,7 @@ zone "secondary.kasp" {
 	type secondary;
 	primaries { 10.53.0.2; };
 	file "secondary.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
@@ -153,6 +167,7 @@ zone "inline-signing.kasp" {
 zone "some-keys.kasp" {
 	type primary;
 	file "some-keys.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
@@ -162,6 +177,7 @@ zone "some-keys.kasp" {
 zone "legacy-keys.kasp" {
 	type primary;
 	file "legacy-keys.kasp.db";
+	inline-signing yes;
 	dnssec-policy "migrate-to-dnssec-policy";
 };
 
@@ -171,6 +187,7 @@ zone "legacy-keys.kasp" {
 zone "pregenerated.kasp" {
 	type primary;
 	file "pregenerated.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
@@ -181,6 +198,7 @@ zone "pregenerated.kasp" {
 zone "rumoured.kasp" {
 	type primary;
 	file "rumoured.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
@@ -198,27 +216,42 @@ zone "multisigner-model2.kasp" {
 zone "rsasha1-nsec3.kasp" {
 	type primary;
 	file "rsasha1-nsec3.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1-nsec3";
 };
 zone "rsasha256.kasp" {
 	type primary;
 	file "rsasha256.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha256";
 };
 zone "rsasha512.kasp" {
 	type primary;
 	file "rsasha512.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha512";
 };
 zone "ecdsa256.kasp" {
 	type primary;
 	file "ecdsa256.kasp.db";
+	inline-signing yes;
 	dnssec-policy "ecdsa256";
 };
 zone "ecdsa384.kasp" {
 	type primary;
 	file "ecdsa384.kasp.db";
+	inline-signing yes;
 	dnssec-policy "ecdsa384";
+};
+
+/*
+ * Zone with too high TTL.
+ */
+zone "max-zone-ttl.kasp" {
+	type primary;
+	file "max-zone-ttl.kasp.db";
+	inline-signing yes;
+	dnssec-policy "ttl";
 };
 
 /*
@@ -231,6 +264,7 @@ zone "ecdsa384.kasp" {
 zone "expired-sigs.autosign" {
 	type primary;
 	file "expired-sigs.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -240,6 +274,7 @@ zone "expired-sigs.autosign" {
 zone "fresh-sigs.autosign" {
 	type primary;
 	file "fresh-sigs.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -249,6 +284,7 @@ zone "fresh-sigs.autosign" {
 zone "unfresh-sigs.autosign" {
 	type primary;
 	file "unfresh-sigs.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -258,6 +294,7 @@ zone "unfresh-sigs.autosign" {
 zone "ksk-missing.autosign" {
 	type primary;
 	file "ksk-missing.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -267,6 +304,7 @@ zone "ksk-missing.autosign" {
 zone "zsk-missing.autosign" {
 	type primary;
 	file "zsk-missing.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -276,6 +314,7 @@ zone "zsk-missing.autosign" {
 zone "zsk-retired.autosign" {
 	type primary;
 	file "zsk-retired.autosign.db";
+	inline-signing yes;
 	dnssec-policy "autosign";
 };
 
@@ -285,21 +324,25 @@ zone "zsk-retired.autosign" {
 zone "step1.enable-dnssec.autosign" {
 	type primary;
 	file "step1.enable-dnssec.autosign.db";
+	inline-signing yes;
 	dnssec-policy "enable-dnssec";
 };
 zone "step2.enable-dnssec.autosign" {
 	type primary;
 	file "step2.enable-dnssec.autosign.db";
+	inline-signing yes;
 	dnssec-policy "enable-dnssec";
 };
 zone "step3.enable-dnssec.autosign" {
 	type primary;
 	file "step3.enable-dnssec.autosign.db";
+	inline-signing yes;
 	dnssec-policy "enable-dnssec";
 };
 zone "step4.enable-dnssec.autosign" {
 	type primary;
 	file "step4.enable-dnssec.autosign.db";
+	inline-signing yes;
 	dnssec-policy "enable-dnssec";
 };
 
@@ -309,31 +352,37 @@ zone "step4.enable-dnssec.autosign" {
 zone "step1.zsk-prepub.autosign" {
 	type primary;
 	file "step1.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 zone "step2.zsk-prepub.autosign" {
 	type primary;
 	file "step2.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 zone "step3.zsk-prepub.autosign" {
 	type primary;
 	file "step3.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 zone "step4.zsk-prepub.autosign" {
 	type primary;
 	file "step4.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 zone "step5.zsk-prepub.autosign" {
 	type primary;
 	file "step5.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 zone "step6.zsk-prepub.autosign" {
 	type primary;
 	file "step6.zsk-prepub.autosign.db";
+	inline-signing yes;
 	dnssec-policy "zsk-prepub";
 };
 
@@ -343,31 +392,37 @@ zone "step6.zsk-prepub.autosign" {
 zone "step1.ksk-doubleksk.autosign" {
 	type primary;
 	file "step1.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step2.ksk-doubleksk.autosign" {
 	type primary;
 	file "step2.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step3.ksk-doubleksk.autosign" {
 	type primary;
 	file "step3.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step4.ksk-doubleksk.autosign" {
 	type primary;
 	file "step4.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step5.ksk-doubleksk.autosign" {
 	type primary;
 	file "step5.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 zone "step6.ksk-doubleksk.autosign" {
 	type primary;
 	file "step6.ksk-doubleksk.autosign.db";
+	inline-signing yes;
 	dnssec-policy "ksk-doubleksk";
 };
 
@@ -377,76 +432,91 @@ zone "step6.ksk-doubleksk.autosign" {
 zone "step1.csk-roll.autosign" {
 	type primary;
 	file "step1.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step2.csk-roll.autosign" {
 	type primary;
 	file "step2.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step3.csk-roll.autosign" {
 	type primary;
 	file "step3.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step4.csk-roll.autosign" {
 	type primary;
 	file "step4.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step5.csk-roll.autosign" {
 	type primary;
 	file "step5.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step6.csk-roll.autosign" {
 	type primary;
 	file "step6.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step7.csk-roll.autosign" {
 	type primary;
 	file "step7.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 zone "step8.csk-roll.autosign" {
 	type primary;
 	file "step8.csk-roll.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll";
 };
 
 zone "step1.csk-roll2.autosign" {
 	type primary;
 	file "step1.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step2.csk-roll2.autosign" {
 	type primary;
 	file "step2.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step3.csk-roll2.autosign" {
 	type primary;
 	file "step3.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step4.csk-roll2.autosign" {
 	type primary;
 	file "step4.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step5.csk-roll2.autosign" {
 	type primary;
 	file "step5.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step6.csk-roll2.autosign" {
 	type primary;
 	file "step6.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };
 zone "step7.csk-roll2.autosign" {
 	type primary;
 	file "step7.csk-roll2.autosign.db";
+	inline-signing yes;
 	dnssec-policy "csk-roll2";
 };

@@ -1,7 +1,9 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -173,9 +175,7 @@ burst 3 a1.tld2
 sleep 1
 burst 10 a1.tld2
 # Request 30 different qnames to try a wildcard.
-burst 30 'x$CNT.a2.tld2'
-# These should be counted and limited but are not.  See RT33138.
-burst 10 'y.x$CNT.a2.tld2'
+burst 30 'y.x$CNT.a2.tld2'
 
 #					IP      TC      drop  NXDOMAIN SERVFAIL NOERROR
 # referrals to "."
@@ -183,12 +183,9 @@ ck_result   a1.tld3	x		0	1	2	0	0	2
 # check 13 results including 1 second delay that allows an additional response
 ck_result   a1.tld2	192.0.2.1	3	4	6	0	0	8
 
-# Check the wild card answers.
-# The parent name of the 30 requests is counted.
-ck_result 'x*.a2.tld2'	192.0.2.2	2	10	18	0	0	12
-
-# These should be limited but are not.  See RT33138.
-ck_result 'y.x*.a2.tld2' 192.0.2.2	10	0	0	0	0	10
+# Check the wildcard answers.
+# The zone origin name of the 30 requests is counted.
+ck_result 'y.x*.a2.tld2'	192.0.2.2	2	10	18	0	0	12
 
 #########
 sec_start
@@ -271,6 +268,10 @@ $DIG $DIGOPTS @$ns4 A a7.tld4 > /dev/null 2>&1
 $DIG $DIGOPTS @$ns4 A a7.tld4 > /dev/null 2>&1
 $DIG $DIGOPTS @$ns4 A a7.tld4 > /dev/null 2>&1
 $DIG $DIGOPTS @$ns4 A a7.tld4 > /dev/null 2>&1
+
+# regression test for GL #2839
+DIGOPTS="+bufsize=4096 +ignore -p ${PORT}"
+$DIG $DIGOPTS @$ns4 TXT big.tld4 > /dev/null 2>&1
 
 grep "would limit" ns4/named.run >/dev/null 2>&1 ||
 setret "\"would limit\" not found in log file."

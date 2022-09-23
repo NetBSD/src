@@ -1,8 +1,10 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -47,11 +49,13 @@ man8_MANS =			\
 	filter-aaaa.8		\
 	named-checkconf.8	\
 	named-checkzone.8	\
+	named-compilezone.8	\
 	named-journalprint.8	\
 	named.8			\
 	nsec3hash.8		\
 	rndc-confgen.8		\
-	rndc.8
+	rndc.8			\
+	tsig-keygen.8
 
 MANPAGES_RST =			\
 	arpaname.rst		\
@@ -76,6 +80,7 @@ MANPAGES_RST =			\
 	mdig.rst		\
 	named-checkconf.rst	\
 	named-checkzone.rst	\
+	named-compilezone.rst	\
 	named-journalprint.rst	\
 	named-nzd2nzf.rst	\
 	named-rrchecker.rst	\
@@ -87,6 +92,7 @@ MANPAGES_RST =			\
 	rndc-confgen.rst	\
 	rndc.conf.rst		\
 	rndc.rst		\
+	tsig-keygen.rst		\
 	pkcs11-destroy.rst	\
 	pkcs11-keygen.rst	\
 	pkcs11-list.rst		\
@@ -115,6 +121,7 @@ MANPAGES_IN = \
 	mdig.1in		\
 	named-checkconf.8in	\
 	named-checkzone.8in	\
+	named-compilezone.8in	\
 	named-journalprint.8in	\
 	named-nzd2nzf.8in	\
 	named-rrchecker.1in	\
@@ -126,6 +133,7 @@ MANPAGES_IN = \
 	rndc-confgen.8in	\
 	rndc.conf.5in		\
 	rndc.8in		\
+	tsig-keygen.8in		\
 	pkcs11-destroy.8in	\
 	pkcs11-keygen.8in	\
 	pkcs11-list.8in		\
@@ -246,8 +254,6 @@ install:: installdirs
 	for m in $(man1_MANS); do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man1/; done
 	for m in $(man5_MANS); do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man5/; done
 	for m in $(man8_MANS); do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man8/; done
-	( cd ${DESTDIR}${mandir}/man8/; rm -f named-compilezone.8; ${LINK_PROGRAM} named-checkzone.8 named-compilezone.8 )
-	( cd ${DESTDIR}${mandir}/man8/; rm -f tsig-keygen.8; ${LINK_PROGRAM} ddns-confgen.8 tsig-keygen.8 )
 	for m in @DNSTAP_MANS@; do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man1/; done
 	for m in @NZD_MANS@; do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man8/; done
 	for m in @PKCS11_MANS@; do ${INSTALL_DATA} $$m ${DESTDIR}${mandir}/man8/; done
@@ -256,8 +262,6 @@ uninstall::
 	for m in $(man1_MANS); do rm -f ${DESTDIR}${mandir}/man1/$$m; done
 	for m in $(man5_MANS); do rm -f ${DESTDIR}${mandir}/man5/$$m; done
 	for m in $(man8_MANS); do rm -f ${DESTDIR}${mandir}/man8/$$m; done
-	rm -f ${DESTDIR}${mandir}/man8/named-compilezone.8
-	rm -f ${DESTDIR}${mandir}/man8/tsig-keygen.8
 	for m in @DNSTAP_MANS@; do rm -f ${DESTDIR}${mandir}/man1/$$m; done
 	for m in @NZD_MANS@; do rm -f ${DESTDIR}${mandir}/man8/$$m; done
 	for m in @PKCS11_MANS@; do rm -f ${DESTDIR}${mandir}/man8/$$m; done

@@ -1,6 +1,19 @@
 @@
 @@
 
-    INSIST(0);
-+   ISC_UNREACHABLE();
-    ... when != ISC_UNREACHABLE();
+-   INSIST(0);
++   UNREACHABLE();
+    ... when != UNREACHABLE();
+
+@@
+@@
+
+-   INSIST(0);
+-   ISC_UNREACHABLE();
++   UNREACHABLE();
+
+@@
+@@
+
+- UNREACHABLE();
+  UNREACHABLE();

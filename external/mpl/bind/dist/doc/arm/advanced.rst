@@ -1,12 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. Advanced:
 
@@ -116,7 +117,7 @@ Incremental Zone Transfers (IXFR)
 
 The incremental zone transfer (IXFR) protocol is a way for secondary servers
 to transfer only changed data, instead of having to transfer an entire
-zone. The IXFR protocol is specified in :rfc:`1995`. See :ref:`proposed_standards`.
+zone. The IXFR protocol is specified in :rfc:`1995`.
 
 When acting as a primary server, BIND 9 supports IXFR for those zones where the
 necessary change history information is available. These include primary
@@ -569,216 +570,6 @@ SIG(0) signing of multiple-message TCP streams is not supported.
 The only tool shipped with BIND 9 that generates SIG(0) signed messages
 is ``nsupdate``.
 
-.. _DNSSEC:
-
-DNSSEC
-------
-
-Cryptographic authentication of DNS information is possible through the
-DNS Security ("DNSSEC-bis") extensions, defined in :rfc:`4033`, :rfc:`4034`,
-and :rfc:`4035`. This section describes the creation and use of DNSSEC
-signed zones.
-
-In order to set up a DNSSEC secure zone, there are a series of steps
-which must be followed. BIND 9 ships with several tools that are used in
-this process, which are explained in more detail below. In all cases,
-the ``-h`` option prints a full list of parameters. Note that the DNSSEC
-tools require the keyset files to be in the working directory or the
-directory specified by the ``-d`` option.
-
-There must also be communication with the administrators of the parent
-and/or child zone to transmit keys. A zone's security status must be
-indicated by the parent zone for a DNSSEC-capable resolver to trust its
-data. This is done through the presence or absence of a ``DS`` record at
-the delegation point.
-
-For other servers to trust data in this zone, they must be
-statically configured with either this zone's zone key or the zone key of
-another zone above this one in the DNS tree.
-
-.. _generating_dnssec_keys:
-
-Generating Keys
-~~~~~~~~~~~~~~~
-
-The ``dnssec-keygen`` program is used to generate keys.
-
-A secure zone must contain one or more zone keys. The zone keys
-sign all other records in the zone, as well as the zone keys of any
-secure delegated zones. Zone keys must have the same name as the zone, have a
-name type of ``ZONE``, and be usable for authentication. It is
-recommended that zone keys use a cryptographic algorithm designated as
-"mandatory to implement" by the IETF. Currently there are two algorithms,
-RSASHA256 and ECDSAP256SHA256; ECDSAP256SHA256 is recommended for
-current and future deployments.
-
-The following command generates an ECDSAP256SHA256 key for the
-``child.example`` zone:
-
-``dnssec-keygen -a ECDSAP256SHA256 -n ZONE child.example.``
-
-Two output files are produced: ``Kchild.example.+013+12345.key`` and
-``Kchild.example.+013+12345.private`` (where 12345 is an example of a
-key tag). The key filenames contain the key name (``child.example.``),
-the algorithm (5 is RSASHA1, 8 is RSASHA256, 13 is ECDSAP256SHA256, 15 is
-ED25519, etc.), and the key tag (12345 in this case). The private key (in
-the ``.private`` file) is used to generate signatures, and the public
-key (in the ``.key`` file) is used for signature verification.
-
-To generate another key with the same properties but with a different
-key tag, repeat the above command.
-
-The ``dnssec-keyfromlabel`` program is used to get a key pair from a
-crypto hardware device and build the key files. Its usage is similar to
-``dnssec-keygen``.
-
-The public keys should be inserted into the zone file by including the
-``.key`` files using ``$INCLUDE`` statements.
-
-.. _dnssec_zone_signing:
-
-Signing the Zone
-~~~~~~~~~~~~~~~~
-
-The ``dnssec-signzone`` program is used to sign a zone.
-
-Any ``keyset`` files corresponding to secure sub-zones should be
-present. The zone signer generates ``NSEC``, ``NSEC3``, and ``RRSIG``
-records for the zone, as well as ``DS`` for the child zones if ``-g``
-is specified. If ``-g`` is not specified, then DS RRsets for the
-secure child zones need to be added manually.
-
-By default, all zone keys which have an available private key are used
-to generate signatures. The following command signs the zone, assuming
-it is in a file called ``zone.child.example``:
-
-``dnssec-signzone -o child.example zone.child.example``
-
-One output file is produced: ``zone.child.example.signed``. This file
-should be referenced by ``named.conf`` as the input file for the zone.
-
-``dnssec-signzone`` also produces keyset and dsset files. These are used
-to provide the parent zone administrators with the ``DNSKEYs`` (or their
-corresponding ``DS`` records) that are the secure entry point to the zone.
-
-.. _dnssec_config:
-
-Configuring Servers for DNSSEC
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To enable ``named`` to validate answers received from other servers, the
-``dnssec-validation`` option must be set to either ``yes`` or ``auto``.
-
-When ``dnssec-validation`` is set to ``auto``, a trust anchor for the
-DNS root zone is automatically used. This trust anchor is provided
-as part of BIND and is kept up to date using :rfc:`5011` key management.
-
-When ``dnssec-validation`` is set to ``yes``, DNSSEC validation
-only occurs if at least one trust anchor has been explicitly configured
-in ``named.conf``, using a ``trust-anchors`` statement (or the
-``managed-keys`` and ``trusted-keys`` statements, both deprecated).
-
-When ``dnssec-validation`` is set to ``no``, DNSSEC validation does not
-occur.
-
-The default is ``auto`` unless BIND is built with
-``configure --disable-auto-validation``, in which case the default is
-``yes``.
-
-The keys specified in ``trust-anchors`` are copies of DNSKEY RRs for zones that are
-used to form the first link in the cryptographic chain of trust. Keys configured
-with the keyword ``static-key`` or ``static-ds`` are loaded directly into the
-table of trust anchors, and can only be changed by altering the
-configuration. Keys configured with ``initial-key`` or ``initial-ds`` are used
-to initialize :rfc:`5011` trust anchor maintenance, and are kept up-to-date
-automatically after the first time ``named`` runs.
-
-``trust-anchors`` is described in more detail later in this document.
-
-BIND 9 does not verify signatures on load, so zone keys
-for authoritative zones do not need to be specified in the configuration
-file.
-
-After DNSSEC is established, a typical DNSSEC configuration looks
-something like the following. It has one or more public keys for the
-root, which allows answers from outside the organization to be validated.
-It also has several keys for parts of the namespace that the
-organization controls. These are here to ensure that ``named`` is immune
-to compromised security in the DNSSEC components of parent zones.
-
-::
-
-   trust-anchors {
-       /* Root Key */
-       "." initial-key 257 3 3 "BNY4wrWM1nCfJ+CXd0rVXyYmobt7sEEfK3clRbGaTwS
-                    JxrGkxJWoZu6I7PzJu/E9gx4UC1zGAHlXKdE4zYIpRh
-                    aBKnvcC2U9mZhkdUpd1Vso/HAdjNe8LmMlnzY3zy2Xy
-                    4klWOADTPzSv9eamj8V18PHGjBLaVtYvk/ln5ZApjYg
-                    hf+6fElrmLkdaz MQ2OCnACR817DF4BBa7UR/beDHyp
-                    5iWTXWSi6XmoJLbG9Scqc7l70KDqlvXR3M/lUUVRbke
-                    g1IPJSidmK3ZyCllh4XSKbje/45SKucHgnwU5jefMtq
-                    66gKodQj+MiA21AfUVe7u99WzTLzY3qlxDhxYQQ20FQ
-                    97S+LKUTpQcq27R7AT3/V5hRQxScINqwcz4jYqZD2fQ
-                    dgxbcDTClU0CRBdiieyLMNzXG3";
-       /* Key for our organization's forward zone */
-       example.com. static-ds 54135 5 2 "8EF922C97F1D07B23134440F19682E7519ADDAE180E20B1B1EC52E7F58B2831D"
-
-       /* Key for our reverse zone. */
-       2.0.192.IN-ADDRPA.NET. static-key 257 3 5 "AQOnS4xn/IgOUpBPJ3bogzwc
-                          xOdNax071L18QqZnQQQAVVr+i
-                          LhGTnNGp3HoWQLUIzKrJVZ3zg
-                          gy3WwNT6kZo6c0tszYqbtvchm
-                          gQC8CzKojM/W16i6MG/eafGU3
-                          siaOdS0yOI6BgPsw+YZdzlYMa
-                          IJGf4M4dyoKIhzdZyQ2bYQrjy
-                          Q4LB0lC7aOnsMyYKHHYeRvPxj
-                          IQXmdqgOJGq+vsevG06zW+1xg
-                          YJh9rCIfnm1GX/KMgxLPG2vXT
-                          D/RnLX+D3T3UL7HJYHJhAZD5L
-                          59VvjSPsZJHeDCUyWYrvPZesZ
-                          DIRvhDD52SKvbheeTJUm6Ehkz
-                          ytNN2SN96QRk8j/iI8ib";
-   };
-
-   options {
-       ...
-       dnssec-validation yes;
-   };
-
-..
-
-.. note::
-
-   None of the keys listed in this example are valid. In particular, the
-   root key is not valid.
-
-When DNSSEC validation is enabled and properly configured, the resolver
-rejects any answers from signed, secure zones which fail to
-validate, and returns SERVFAIL to the client.
-
-Responses may fail to validate for any of several reasons, including
-missing, expired, or invalid signatures, a key which does not match the
-DS RRset in the parent zone, or an insecure response from a zone which,
-according to its parent, should have been secure.
-
-.. note::
-
-   When the validator receives a response from an unsigned zone that has
-   a signed parent, it must confirm with the parent that the zone was
-   intentionally left unsigned. It does this by verifying, via signed
-   and validated NSEC/NSEC3 records, that the parent zone contains no DS
-   records for the child.
-
-   If the validator *can* prove that the zone is insecure, then the
-   response is accepted. However, if it cannot, the validator must assume an
-   insecure response to be a forgery; it rejects the response and logs
-   an error.
-
-   The logged error reads "insecurity proof failed" and "got insecure
-   response; parent indicates it should be secure."
-
-
-.. include:: dnssec.rst
 .. include:: managed-keys.rst
 .. include:: pkcs11.rst
 .. include:: dlz.rst
@@ -809,9 +600,6 @@ been completely removed per :rfc:`3363`. Many applications in BIND 9 do not
 understand the binary label format at all anymore, and return an
 error if one is given. In particular, an authoritative BIND 9 name server will
 not load a zone file containing binary labels.
-
-For an overview of the format and structure of IPv6 addresses, see
-:ref:`ipv6addresses`.
 
 Address Lookups Using AAAA Records
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
