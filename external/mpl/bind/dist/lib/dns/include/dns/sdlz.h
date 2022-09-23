@@ -1,7 +1,9 @@
-/*	$NetBSD: sdlz.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -148,9 +150,9 @@ typedef void (*dns_sdlzdestroy_t)(void *driverarg, void *dbdata);
  */
 
 typedef isc_result_t (*dns_sdlzfindzone_t)(void *driverarg, void *dbdata,
-					   const char *		    name,
+					   const char		   *name,
 					   dns_clientinfomethods_t *methods,
-					   dns_clientinfo_t *	    clientinfo);
+					   dns_clientinfo_t	   *clientinfo);
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface MUST
  * supply a find zone method.  This method is called when the DNS
@@ -180,7 +182,7 @@ typedef isc_result_t (*dns_sdlzfindzone_t)(void *driverarg, void *dbdata,
 
 typedef isc_result_t (*dns_sdlzlookupfunc_t)(const char *zone, const char *name,
 					     void *driverarg, void *dbdata,
-					     dns_sdlzlookup_t *	      lookup,
+					     dns_sdlzlookup_t	     *lookup,
 					     dns_clientinfomethods_t *methods,
 					     dns_clientinfo_t *clientinfo);
 
@@ -223,7 +225,7 @@ typedef void (*dns_sdlzcloseversion_t)(const char *zone, bool commit,
  * If the call is successful then *versionp should be set to NULL
  */
 
-typedef isc_result_t (*dns_sdlzconfigure_t)(dns_view_t * view,
+typedef isc_result_t (*dns_sdlzconfigure_t)(dns_view_t	*view,
 					    dns_dlzdb_t *dlzdb, void *driverarg,
 					    void *dbdata);
 /*%<

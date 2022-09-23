@@ -1,10 +1,12 @@
-/*	$NetBSD: zone_test.c,v 1.7 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.8 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -46,7 +48,7 @@ isc_taskmgr_t *taskmgr = NULL;
 isc_timermgr_t *timermgr = NULL;
 isc_socketmgr_t *socketmgr = NULL;
 dns_zonemgr_t *zonemgr = NULL;
-dns_zonetype_t zonetype = dns_zone_master;
+dns_zonetype_t zonetype = dns_zone_primary;
 isc_sockaddr_t addr;
 
 #define ERRRET(result, function)                                        \
@@ -117,7 +119,7 @@ setup(const char *zonename, const char *filename, const char *classname) {
 
 	dns_zone_setclass(zone, rdclass);
 
-	if (zonetype == dns_zone_slave) {
+	if (zonetype == dns_zone_secondary) {
 		dns_zone_setprimaries(zone, &addr, 1);
 	}
 
@@ -273,10 +275,10 @@ main(int argc, char **argv) {
 			stats++;
 			break;
 		case 'S':
-			zonetype = dns_zone_slave;
+			zonetype = dns_zone_secondary;
 			break;
 		case 'M':
-			zonetype = dns_zone_master;
+			zonetype = dns_zone_primary;
 			break;
 		default:
 			usage();

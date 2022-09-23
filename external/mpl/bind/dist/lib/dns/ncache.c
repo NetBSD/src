@@ -1,7 +1,9 @@
-/*	$NetBSD: ncache.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: ncache.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +50,7 @@ addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	  dns_ttl_t maxttl, bool optout, bool secure,
 	  dns_rdataset_t *addedrdataset);
 
-static inline isc_result_t
+static isc_result_t
 copy_rdataset(dns_rdataset_t *rdataset, isc_buffer_t *buffer) {
 	isc_result_t result;
 	unsigned int count;
@@ -504,6 +506,7 @@ rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
 	unsigned char *raw = rdataset->private3;
 
 	raw[-1] = (unsigned char)trust;
+	rdataset->trust = trust;
 }
 
 static dns_rdatasetmethods_t rdataset_methods = {

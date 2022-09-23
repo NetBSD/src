@@ -1,7 +1,9 @@
-/*	$NetBSD: cfg.h,v 1.6 2021/02/19 16:42:22 christos Exp $	*/
+/*	$NetBSD: cfg.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,7 +74,7 @@ typedef struct cfg_listelt cfg_listelt_t;
  * that needs to be interpreted at parsing time, like
  * "directory".
  */
-typedef isc_result_t (*cfg_parsecallback_t)(const char *     clausename,
+typedef isc_result_t (*cfg_parsecallback_t)(const char	    *clausename,
 					    const cfg_obj_t *obj, void *arg);
 
 /***
@@ -581,9 +583,9 @@ cfg_map_nextclause(const cfg_type_t *map, const void **clauses,
 
 typedef isc_result_t(pluginlist_cb_t)(const cfg_obj_t *config,
 				      const cfg_obj_t *obj,
-				      const char *     plugin_path,
-				      const char *     parameters,
-				      void *	       callback_data);
+				      const char      *plugin_path,
+				      const char      *parameters,
+				      void	      *callback_data);
 /*%<
  * Function prototype for the callback used with cfg_pluginlist_foreach().
  * Called once for each element of the list passed to cfg_pluginlist_foreach().

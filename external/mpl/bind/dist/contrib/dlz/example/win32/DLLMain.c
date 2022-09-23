@@ -1,12 +1,17 @@
-/*	$NetBSD: DLLMain.c,v 1.3 2020/05/24 19:46:20 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.4 2022/09/23 12:15:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2001, 2004, 2007, 2016  Internet Systems Consortium, Inc.
- * ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
  */
 
 #include <signal.h>

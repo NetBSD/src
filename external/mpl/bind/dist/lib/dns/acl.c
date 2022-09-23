@@ -1,7 +1,9 @@
-/*	$NetBSD: acl.c,v 1.7 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -405,8 +407,7 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,
 		return (dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem));
 #endif /* if defined(HAVE_GEOIP2) */
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	result = dns_acl_match(reqaddr, reqsigner, inner, env, &indirectmatch,
@@ -587,8 +588,7 @@ dns_acl_isinsecure(const dns_acl_t *a) {
 			return (true);
 
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	}
 

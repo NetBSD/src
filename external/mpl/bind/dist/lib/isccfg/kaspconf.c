@@ -1,7 +1,9 @@
-/*	$NetBSD: kaspconf.c,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -262,7 +264,7 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 	const cfg_listelt_t *element = NULL;
 	const char *kaspname = NULL;
 	dns_kasp_t *kasp = NULL;
-	int i = 0;
+	size_t i = 0;
 
 	REQUIRE(kaspp != NULL && *kaspp == NULL);
 
@@ -274,6 +276,11 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 	result = dns_kasplist_find(kasplist, kaspname, &kasp);
 
 	if (result == ISC_R_SUCCESS) {
+		cfg_obj_log(
+			config, logctx, ISC_LOG_ERROR,
+			"dnssec-policy: duplicately named policy found '%s'",
+			kaspname);
+		dns_kasp_detach(&kasp);
 		return (ISC_R_EXISTS);
 	}
 	if (result != ISC_R_NOTFOUND) {
@@ -318,6 +325,9 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 
 	(void)confget(maps, "keys", &keys);
 	if (keys != NULL) {
+		char role[256] = { 0 };
+		dns_kasp_key_t *kkey = NULL;
+
 		for (element = cfg_list_first(keys); element != NULL;
 		     element = cfg_list_next(element))
 		{
@@ -328,6 +338,36 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 			}
 		}
 		INSIST(!(dns_kasp_keylist_empty(kasp)));
+		dns_kasp_freeze(kasp);
+		for (kkey = ISC_LIST_HEAD(dns_kasp_keys(kasp)); kkey != NULL;
+		     kkey = ISC_LIST_NEXT(kkey, link))
+		{
+			uint32_t keyalg = dns_kasp_key_algorithm(kkey);
+			INSIST(keyalg < ARRAY_SIZE(role));
+
+			if (dns_kasp_key_zsk(kkey)) {
+				role[keyalg] |= DNS_KASP_KEY_ROLE_ZSK;
+			}
+
+			if (dns_kasp_key_ksk(kkey)) {
+				role[keyalg] |= DNS_KASP_KEY_ROLE_KSK;
+			}
+		}
+		dns_kasp_thaw(kasp);
+		for (i = 0; i < ARRAY_SIZE(role); i++) {
+			if (role[i] != 0 && role[i] != (DNS_KASP_KEY_ROLE_ZSK |
+							DNS_KASP_KEY_ROLE_KSK))
+			{
+				cfg_obj_log(keys, logctx, ISC_LOG_ERROR,
+					    "dnssec-policy: algorithm %zu "
+					    "requires both KSK and ZSK roles",
+					    i);
+				result = ISC_R_FAILURE;
+			}
+		}
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup;
+		}
 	} else if (strcmp(kaspname, "insecure") == 0) {
 		/* "dnssec-policy insecure": key list must be empty */
 		INSIST(strcmp(kaspname, "insecure") == 0);

@@ -1,7 +1,9 @@
-/*	$NetBSD: ds_43.c,v 1.9 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.10 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +26,7 @@
 
 #include <dns/ds.h>
 
-static inline isc_result_t
+static isc_result_t
 generic_fromtext_ds(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
@@ -82,14 +84,14 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromtext_ds(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromtext_ds(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_totext_ds(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -148,7 +150,7 @@ generic_totext_ds(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_ds(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ds);
@@ -156,7 +158,7 @@ totext_ds(ARGS_TOTEXT) {
 	return (generic_totext_ds(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromwire_ds(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -198,14 +200,14 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_ds(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromwire_ds(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_ds(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -218,7 +220,7 @@ towire_ds(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_ds(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -234,7 +236,7 @@ compare_ds(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	dns_rdata_ds_t *ds = source;
 
@@ -264,14 +266,14 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, ds->digest, ds->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_ds(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_ds);
 
 	return (generic_fromstruct_ds(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 generic_tostruct_ds(ARGS_TOSTRUCT) {
 	dns_rdata_ds_t *ds = target;
 	isc_region_t region;
@@ -301,7 +303,7 @@ generic_tostruct_ds(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_ds(ARGS_TOSTRUCT) {
 	dns_rdata_ds_t *ds = target;
 
@@ -315,7 +317,7 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_ds(ARGS_FREESTRUCT) {
 	dns_rdata_ds_t *ds = source;
 
@@ -332,7 +334,7 @@ freestruct_ds(ARGS_FREESTRUCT) {
 	ds->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_ds(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
@@ -343,7 +345,7 @@ additionaldata_ds(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_ds(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -354,7 +356,7 @@ digest_ds(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_ds(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_ds);
 
@@ -366,7 +368,7 @@ checkowner_ds(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_ds(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
@@ -377,7 +379,7 @@ checknames_ds(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_ds(ARGS_COMPARE) {
 	return (compare_ds(rdata1, rdata2));
 }

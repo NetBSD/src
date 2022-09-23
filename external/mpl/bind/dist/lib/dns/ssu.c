@@ -1,7 +1,9 @@
-/*	$NetBSD: ssu.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,7 +79,7 @@ dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **tablep) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 destroy(dns_ssutable_t *table) {
 	isc_mem_t *mctx;
 
@@ -184,7 +186,7 @@ dns_ssutable_addrule(dns_ssutable_t *table, bool grant,
 	return (ISC_R_SUCCESS);
 }
 
-static inline bool
+static bool
 isusertype(dns_rdatatype_t type) {
 	return (type != dns_rdatatype_ns && type != dns_rdatatype_soa &&
 		type != dns_rdatatype_rrsig);
@@ -231,8 +233,7 @@ reverse_from_address(dns_name_t *tcpself, const isc_netaddr_t *tcpaddr) {
 		RUNTIME_CHECK(result < sizeof(buf));
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	isc_buffer_init(&b, buf, strlen(buf));
 	isc_buffer_add(&b, strlen(buf));
@@ -273,8 +274,7 @@ stf_from_address(dns_name_t *stfself, const isc_netaddr_t *tcpaddr) {
 		RUNTIME_CHECK(result < sizeof(buf));
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	isc_buffer_init(&b, buf, strlen(buf));
 	isc_buffer_add(&b, strlen(buf));

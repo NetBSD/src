@@ -1,10 +1,12 @@
-/*	$NetBSD: rwlock_test.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.7 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional

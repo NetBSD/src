@@ -1,7 +1,9 @@
-/*	$NetBSD: journal.c,v 1.9 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.10 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,12 +111,13 @@
 static isc_result_t
 index_to_disk(dns_journal_t *);
 
-static inline uint32_t
+static uint32_t
 decode_uint32(unsigned char *p) {
-	return ((p[0] << 24) + (p[1] << 16) + (p[2] << 8) + (p[3] << 0));
+	return (((uint32_t)p[0] << 24) + ((uint32_t)p[1] << 16) +
+		((uint32_t)p[2] << 8) + ((uint32_t)p[3] << 0));
 }
 
-static inline void
+static void
 encode_uint32(uint32_t val, unsigned char *p) {
 	p[0] = (uint8_t)(val >> 24);
 	p[1] = (uint8_t)(val >> 16);
@@ -823,8 +826,7 @@ ixfr_order(const void *av, const void *bv) {
 		aop = 0;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	switch (b->op) {
@@ -837,8 +839,7 @@ ixfr_order(const void *av, const void *bv) {
 		bop = 0;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	r = bop - aop;

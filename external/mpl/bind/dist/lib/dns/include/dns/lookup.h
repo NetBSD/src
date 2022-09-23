@@ -1,7 +1,9 @@
-/*	$NetBSD: lookup.h,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: lookup.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,11 +61,11 @@ ISC_LANG_BEGINDECLS
 typedef struct dns_lookupevent {
 	ISC_EVENT_COMMON(struct dns_lookupevent);
 	isc_result_t	result;
-	dns_name_t *	name;
+	dns_name_t     *name;
 	dns_rdataset_t *rdataset;
 	dns_rdataset_t *sigrdataset;
-	dns_db_t *	db;
-	dns_dbnode_t *	node;
+	dns_db_t       *db;
+	dns_dbnode_t   *node;
 } dns_lookupevent_t;
 
 isc_result_t

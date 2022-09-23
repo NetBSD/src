@@ -1,7 +1,9 @@
-/*	$NetBSD: host.c,v 1.8 2021/08/19 11:50:14 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.9 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,15 +210,9 @@ printsection(dns_message_t *msg, dns_section_t sectionid,
 	isc_result_t result, loopresult;
 	isc_region_t r;
 	dns_name_t empty_name;
-	char tbuf[4096];
+	char tbuf[4096] = { 0 };
 	bool first;
-	bool no_rdata;
-
-	if (sectionid == DNS_SECTION_QUESTION) {
-		no_rdata = true;
-	} else {
-		no_rdata = false;
-	}
+	bool no_rdata = (sectionid == DNS_SECTION_QUESTION);
 
 	if (headers) {
 		printf(";; %s SECTION:\n", section_name);
@@ -773,7 +769,7 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 			break;
 		case 'A':
 			list_almost_all = true;
-		/* FALL THROUGH */
+			FALLTHROUGH;
 		case 'a':
 			if (!lookup->rdtypeset ||
 			    lookup->rdtype != dns_rdatatype_axfr) {

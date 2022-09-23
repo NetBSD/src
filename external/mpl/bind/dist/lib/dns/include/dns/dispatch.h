@@ -1,7 +1,9 @@
-/*	$NetBSD: dispatch.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +93,7 @@ struct dns_dispatchevent {
  * round-robin fashion.
  */
 struct dns_dispatchset {
-	isc_mem_t *	 mctx;
+	isc_mem_t	*mctx;
 	dns_dispatch_t **dispatches;
 	int		 ndisp;
 	int		 cur;
@@ -200,7 +202,7 @@ dns_dispatchmgr_getblackhole(dns_dispatchmgr_t *mgr);
 
 void
 dns_dispatchmgr_setblackportlist(dns_dispatchmgr_t *mgr,
-				 dns_portlist_t *   portlist);
+				 dns_portlist_t	   *portlist);
 /*%<
  * This function is deprecated.  Use dns_dispatchmgr_setavailports() instead.
  *
@@ -414,7 +416,7 @@ dns_dispatch_addresponse(dns_dispatch_t *disp, unsigned int options,
  */
 
 void
-dns_dispatch_removeresponse(dns_dispentry_t **	  resp,
+dns_dispatch_removeresponse(dns_dispentry_t	**resp,
 			    dns_dispatchevent_t **sockevent);
 /*%<
  * Stops the flow of responses for the provided id and destination.

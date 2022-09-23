@@ -1,7 +1,9 @@
-/*	$NetBSD: nsec3.c,v 1.9 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.10 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1833,6 +1835,7 @@ dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version, bool complete,
 
 try_private:
 	if (privatetype == 0 || complete) {
+		dns_db_detachnode(db, &node);
 		*answer = false;
 		return (ISC_R_SUCCESS);
 	}

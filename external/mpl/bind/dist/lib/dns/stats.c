@@ -1,7 +1,9 @@
-/*	$NetBSD: stats.c,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +107,7 @@ typedef enum {
  */
 
 /* Maximum number of keys to keep track of for DNSSEC signing statistics. */
-static int dnssecsign_max_keys = 4;
+static int dnssecsign_num_keys = 4;
 static int dnssecsign_block_size = 3;
 /* Key id mask */
 #define DNSSECSIGNSTATS_KEY_ID_MASK 0x0000FFFF
@@ -247,7 +249,8 @@ dns_dnssecsignstats_create(isc_mem_t *mctx, dns_stats_t **statsp) {
 	 * the actual counters for creating and refreshing signatures.
 	 */
 	return (create_stats(mctx, dns_statstype_dnssec,
-			     dnssecsign_max_keys * 3, statsp));
+			     dnssecsign_num_keys * dnssecsign_block_size,
+			     statsp));
 }
 
 /*%
@@ -260,7 +263,7 @@ dns_generalstats_increment(dns_stats_t *stats, isc_statscounter_t counter) {
 	isc_stats_increment(stats->counters, counter);
 }
 
-inline static isc_statscounter_t
+static isc_statscounter_t
 rdatatype2counter(dns_rdatatype_t type) {
 	if (type > (dns_rdatatype_t)RDTYPECOUNTER_MAXTYPE) {
 		return (0);
@@ -278,7 +281,7 @@ dns_rdatatypestats_increment(dns_stats_t *stats, dns_rdatatype_t type) {
 	isc_stats_increment(stats->counters, counter);
 }
 
-static inline void
+static void
 update_rdatasetstats(dns_stats_t *stats, dns_rdatastatstype_t rrsettype,
 		     bool increment) {
 	isc_statscounter_t counter;
@@ -363,6 +366,8 @@ void
 dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 			      dnssecsignstats_type_t operation) {
 	uint32_t kval;
+	int num_keys = isc_stats_ncounters(stats->counters) /
+		       dnssecsign_block_size;
 
 	REQUIRE(DNS_STATS_VALID(stats) && stats->type == dns_statstype_dnssec);
 
@@ -370,7 +375,7 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 	kval = (uint32_t)(alg << 16 | id);
 
 	/* Look up correct counter. */
-	for (int i = 0; i < dnssecsign_max_keys; i++) {
+	for (int i = 0; i < num_keys; i++) {
 		int idx = i * dnssecsign_block_size;
 		uint32_t counter = isc_stats_get_counter(stats->counters, idx);
 		if (counter == kval) {
@@ -381,7 +386,7 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 	}
 
 	/* No match found. Store key in unused slot. */
-	for (int i = 0; i < dnssecsign_max_keys; i++) {
+	for (int i = 0; i < num_keys; i++) {
 		int idx = i * dnssecsign_block_size;
 		uint32_t counter = isc_stats_get_counter(stats->counters, idx);
 		if (counter == 0) {
@@ -391,33 +396,45 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 		}
 	}
 
-	/* No room, rotate keys. */
-	for (int i = 1; i < dnssecsign_max_keys; i++) {
-		int gidx = i * dnssecsign_block_size; /* Get key (get index,
-							 gidx) */
-		uint32_t keyv = isc_stats_get_counter(stats->counters, gidx);
-		uint32_t sign = isc_stats_get_counter(
-			stats->counters, (gidx + dns_dnssecsignstats_sign));
-		uint32_t refr = isc_stats_get_counter(
-			stats->counters, (gidx + dns_dnssecsignstats_refresh));
-
-		int sidx = (i - 1) * dnssecsign_block_size; /* Set key, (set
-							       index, sidx) */
-		isc_stats_set(stats->counters, keyv, sidx);
-		isc_stats_set(stats->counters, sign,
-			      (sidx + dns_dnssecsignstats_sign));
-		isc_stats_set(stats->counters, refr,
-			      (sidx + dns_dnssecsignstats_refresh));
-	}
+	/* No room, grow stats storage. */
+	isc_stats_resize(&stats->counters,
+			 (num_keys * dnssecsign_block_size * 2));
 
 	/* Reset counters for new key (new index, nidx). */
-	int nidx = (dnssecsign_max_keys - 1) * dnssecsign_block_size;
+	int nidx = num_keys * dnssecsign_block_size;
 	isc_stats_set(stats->counters, kval, nidx);
 	isc_stats_set(stats->counters, 0, (nidx + dns_dnssecsignstats_sign));
 	isc_stats_set(stats->counters, 0, (nidx + dns_dnssecsignstats_refresh));
 
 	/* And increment the counter for the given operation. */
 	isc_stats_increment(stats->counters, (nidx + operation));
+}
+
+void
+dns_dnssecsignstats_clear(dns_stats_t *stats, dns_keytag_t id, uint8_t alg) {
+	uint32_t kval;
+	int num_keys = isc_stats_ncounters(stats->counters) /
+		       dnssecsign_block_size;
+
+	REQUIRE(DNS_STATS_VALID(stats) && stats->type == dns_statstype_dnssec);
+
+	/* Shift algorithm in front of key tag, which is 16 bits */
+	kval = (uint32_t)(alg << 16 | id);
+
+	/* Look up correct counter. */
+	for (int i = 0; i < num_keys; i++) {
+		int idx = i * dnssecsign_block_size;
+		uint32_t counter = isc_stats_get_counter(stats->counters, idx);
+		if (counter == kval) {
+			/* Match */
+			isc_stats_set(stats->counters, 0, idx);
+			isc_stats_set(stats->counters, 0,
+				      (idx + dns_dnssecsignstats_sign));
+			isc_stats_set(stats->counters, 0,
+				      (idx + dns_dnssecsignstats_refresh));
+			return;
+		}
+	}
 }
 
 /*%
@@ -527,9 +544,10 @@ dnssec_dumpcb(isc_statscounter_t counter, uint64_t value, void *arg) {
 static void
 dnssec_statsdump(isc_stats_t *stats, dnssecsignstats_type_t operation,
 		 isc_stats_dumper_t dump_fn, void *arg, unsigned int options) {
-	int i;
+	int i, num_keys;
 
-	for (i = 0; i < dnssecsign_max_keys; i++) {
+	num_keys = isc_stats_ncounters(stats) / dnssecsign_block_size;
+	for (i = 0; i < num_keys; i++) {
 		int idx = dnssecsign_block_size * i;
 		uint32_t kval, val;
 		dns_keytag_t id;

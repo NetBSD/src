@@ -1,7 +1,9 @@
-/*	$NetBSD: name.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -853,12 +855,6 @@ dns_name_matcheswildcard(const dns_name_t *name, const dns_name_t *wname) {
 	REQUIRE(labels > 0);
 	REQUIRE(dns_name_iswildcard(wname));
 
-#if defined(__clang__) && \
-	(__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 2))
-	memset(&tname, 0, sizeof(tname));
-#endif /* if defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == \
-	* 3                                                                    \
-	* && __clang_minor__ < 2)) */
 	DNS_NAME_INIT(&tname, NULL);
 	dns_name_getlabelsequence(wname, 1, labels - 1, &tname);
 	if (dns_name_fullcompare(name, &tname, &order, &nlabels) ==
@@ -1145,7 +1141,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				break;
 			}
 
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case ft_start:
 			label = ndata;
 			ndata++;
@@ -1160,7 +1156,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			if (nrem == 0) {
 				return (ISC_R_NOSPACE);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case ft_ordinary:
 			if (c == '.') {
 				if (count == 0) {
@@ -1204,7 +1200,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			}
 			state = ft_escape;
 			POST(state);
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case ft_escape:
 			if (!isdigit((unsigned char)c)) {
 				if (count >= 63) {
@@ -1224,7 +1220,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			digits = 0;
 			value = 0;
 			state = ft_escdecimal;
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case ft_escdecimal:
 			if (!isdigit((unsigned char)c)) {
 				return (DNS_R_BADESCAPE);
@@ -1427,7 +1423,7 @@ dns_name_totext2(const dns_name_t *name, unsigned int options,
 					    0) {
 						goto no_escape;
 					}
-				/* FALLTHROUGH */
+					FALLTHROUGH;
 				case 0x22: /* '"' */
 				case 0x28: /* '(' */
 				case 0x29: /* ')' */
@@ -1475,7 +1471,7 @@ dns_name_totext2(const dns_name_t *name, unsigned int options,
 		} else {
 			FATAL_ERROR(__FILE__, __LINE__,
 				    "Unexpected label type %02x", count);
-			/* NOTREACHED */
+			UNREACHABLE();
 		}
 
 		/*
@@ -1599,7 +1595,7 @@ dns_name_tofilenametext(const dns_name_t *name, bool omit_final_dot,
 		} else {
 			FATAL_ERROR(__FILE__, __LINE__,
 				    "Unexpected label type %02x", count);
-			/* NOTREACHED */
+			UNREACHABLE();
 		}
 
 		/*
@@ -1977,12 +1973,6 @@ dns_name_towire2(const dns_name_t *name, dns_compress_t *cctx,
 	 * has one.
 	 */
 	if (name->offsets == NULL) {
-#if defined(__clang__) && \
-	(__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 2))
-		memset(&clname, 0, sizeof(clname));
-#endif /* if defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == \
-	* 3                                                                    \
-	* && __clang_minor__ < 2)) */
 		DNS_NAME_INIT(&clname, clo);
 		dns_name_clone(name, &clname);
 		name = &clname;
@@ -2301,12 +2291,6 @@ dns_name_digest(const dns_name_t *name, dns_digestfunc_t digest, void *arg) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(digest != NULL);
 
-#if defined(__clang__) && \
-	(__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 2))
-	memset(&downname, 0, sizeof(downname));
-#endif /* if defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == \
-	* 3                                                                    \
-	* && __clang_minor__ < 2)) */
 	DNS_NAME_INIT(&downname, NULL);
 
 	isc_buffer_init(&buffer, data, sizeof(data));

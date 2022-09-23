@@ -1,7 +1,9 @@
-/*	$NetBSD: types.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -164,7 +166,7 @@ typedef struct dns_ipkeylist dns_ipkeylist_t;
  */
 #ifndef GSSAPI
 typedef struct not_defined_gss_cred_id *gss_cred_id_t;
-typedef struct not_defined_gss_ctx *	gss_ctx_id_t;
+typedef struct not_defined_gss_ctx     *gss_ctx_id_t;
 #endif /* ifndef GSSAPI */
 typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
 

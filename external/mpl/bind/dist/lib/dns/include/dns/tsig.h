@@ -1,7 +1,9 @@
-/*	$NetBSD: tsig.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,10 +58,10 @@ LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha512_name;
 #define DNS_TSIG_FUDGE 300
 
 struct dns_tsig_keyring {
-	dns_rbt_t *  keys;
+	dns_rbt_t   *keys;
 	unsigned int writecount;
 	isc_rwlock_t lock;
-	isc_mem_t *  mctx;
+	isc_mem_t   *mctx;
 	/*
 	 * LRU list of generated key along with a count of the keys on the
 	 * list and a maximum size.
@@ -73,11 +75,11 @@ struct dns_tsig_keyring {
 struct dns_tsigkey {
 	/* Unlocked */
 	unsigned int	    magic; /*%< Magic number. */
-	isc_mem_t *	    mctx;
-	dst_key_t *	    key;       /*%< Key */
+	isc_mem_t	   *mctx;
+	dst_key_t	   *key;       /*%< Key */
 	dns_name_t	    name;      /*%< Key name */
-	const dns_name_t *  algorithm; /*%< Algorithm name */
-	dns_name_t *	    creator;   /*%< name that created secret */
+	const dns_name_t   *algorithm; /*%< Algorithm name */
+	dns_name_t	   *creator;   /*%< name that created secret */
 	bool		    generated; /*%< was this generated? */
 	isc_stdtime_t	    inception; /*%< start of validity period */
 	isc_stdtime_t	    expire;    /*%< end of validity period */

@@ -1,7 +1,9 @@
-/*	$NetBSD: uv-compat.c,v 1.5 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: uv-compat.c,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,6 +51,24 @@ isc_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr) {
 	return (0);
 }
 #endif /* UV_VERSION_HEX < UV_VERSION(1, 27, 0) */
+
+#if UV_VERSION_HEX < UV_VERSION(1, 32, 0)
+int
+uv_tcp_close_reset(uv_tcp_t *handle, uv_close_cb close_cb) {
+	if (setsockopt(handle->io_watcher.fd, SOL_SOCKET, SO_LINGER,
+		       &(struct linger){ 1, 0 }, sizeof(struct linger)) == -1)
+	{
+#if UV_VERSION_HEX >= UV_VERSION(1, 10, 0)
+		return (uv_translate_sys_error(errno));
+#else
+		return (-errno);
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 10, 0) */
+	}
+
+	uv_close((uv_handle_t *)handle, close_cb);
+	return (0);
+}
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 32, 0) */
 
 int
 isc_uv_udp_freebind(uv_udp_t *handle, const struct sockaddr *addr,

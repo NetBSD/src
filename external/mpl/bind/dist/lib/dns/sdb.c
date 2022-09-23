@@ -1,7 +1,9 @@
-/*	$NetBSD: sdb.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: sdb.c,v 1.10 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -256,7 +258,7 @@ dns_sdb_unregister(dns_sdbimplementation_t **sdbimp) {
 	isc_mem_putanddetach(&imp->mctx, imp, sizeof(dns_sdbimplementation_t));
 }
 
-static inline unsigned int
+static unsigned int
 initial_size(unsigned int len) {
 	unsigned int size;
 
@@ -1069,8 +1071,7 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 	UNUSED(db);
 	UNUSED(node);
 	UNUSED(now);
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 static void

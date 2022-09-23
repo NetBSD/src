@@ -1,7 +1,9 @@
-/*	$NetBSD: config.h,v 1.6 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,12 +30,15 @@
 isc_result_t
 named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf);
 
+const char *
+named_config_getdefault(void);
+
 isc_result_t
 named_config_get(cfg_obj_t const *const *maps, const char *name,
 		 const cfg_obj_t **obj);
 
 isc_result_t
-named_checknames_get(const cfg_obj_t **maps, const char *name,
+named_checknames_get(const cfg_obj_t **maps, const char *const names[],
 		     const cfg_obj_t **obj);
 
 int

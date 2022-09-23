@@ -1,7 +1,9 @@
-/*	$NetBSD: gssapi_link.c,v 1.8 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,15 +179,11 @@ gssapi_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 static isc_result_t
 gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	dst_gssapi_signverifyctx_t *ctx = dctx->ctxdata.gssctx;
-	isc_region_t message, r;
+	isc_region_t message;
 	gss_buffer_desc gmessage, gsig;
 	OM_uint32 minor, gret;
 	gss_ctx_id_t gssctx = dctx->key->keydata.gssctx;
-	unsigned char buf[4096];
 	char err[1024];
-
-	if (sizeof(buf) < sig->length)
-		abort();
 
 	/*
 	 * Convert the data we wish to sign into a structure gssapi can
@@ -193,11 +191,7 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	 */
 	isc_buffer_usedregion(ctx->buffer, &message);
 	REGION_TO_GBUFFER(message, gmessage);
-
-	memmove(buf, sig->base, sig->length);
-	r.base = buf;
-	r.length = sig->length;
-	REGION_TO_GBUFFER(r, gsig);
+	REGION_TO_GBUFFER(*sig, gsig);
 
 	/*
 	 * Verify the data.

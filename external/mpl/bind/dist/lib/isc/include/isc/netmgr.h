@@ -1,7 +1,9 @@
-/*	$NetBSD: netmgr.h,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,10 +15,21 @@
 
 #pragma once
 
+#include <unistd.h>
+
 #include <isc/mem.h>
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/types.h>
+
+#ifndef _WIN32
+#include <sys/socket.h>
+#include <sys/types.h>
+#endif
+
+#if defined(SO_REUSEPORT_LB) || (defined(SO_REUSEPORT) && defined(__linux__))
+#define HAVE_SO_REUSEPORT_LB 1
+#endif
 
 /*
  * Replacement for isc_sockettype_t provided by socket.h.
@@ -163,6 +176,18 @@ isc_nmhandle_cleartimeout(isc_nmhandle_t *handle);
  * When this is called on a 'wrapper' socket handle (for example,
  * a TCPDNS socket wrapping a TCP connection), the timer is set for
  * both socket layers.
+ */
+
+void
+isc_nmhandle_keepalive(isc_nmhandle_t *handle, bool value);
+/*%<
+ * Enable/disable keepalive on this connection by setting it to 'value'.
+ *
+ * When keepalive is active, we switch to using the keepalive timeout
+ * to determine when to close a connection, rather than the idle timeout.
+ *
+ * This applies only to TCP-based DNS connections (i.e., TCPDNS).
+ * On other types of connection it has no effect.
  */
 
 isc_sockaddr_t
@@ -391,7 +416,18 @@ isc_nm_settimeouts(isc_nm_t *mgr, uint32_t init, uint32_t idle,
  * Sets the initial, idle, and keepalive timeout values (in milliseconds) to use
  * for TCP connections, and the timeout value to advertise in responses using
  * the EDNS TCP Keepalive option (which should ordinarily be the same
- * as 'keepalive').
+ * as 'keepalive'), in milliseconds.
+ *
+ * Requires:
+ * \li	'mgr' is a valid netmgr.
+ */
+
+bool
+isc_nm_getloadbalancesockets(isc_nm_t *mgr);
+void
+isc_nm_setloadbalancesockets(isc_nm_t *mgr, bool enabled);
+/*%<
+ * Get and set value of load balancing of the sockets.
  *
  * Requires:
  * \li	'mgr' is a valid netmgr.
@@ -480,3 +516,30 @@ isc__nm_force_tid(int tid);
  * Force the thread ID to 'tid'. This is STRICTLY for use in unit
  * tests and should not be used in any production code.
  */
+
+void
+isc_nmhandle_setwritetimeout(isc_nmhandle_t *handle, uint64_t write_timeout);
+
+/*
+ * Timer related functions
+ */
+
+typedef struct isc_nm_timer isc_nm_timer_t;
+
+typedef void (*isc_nm_timer_cb)(void *, isc_result_t);
+
+void
+isc_nm_timer_create(isc_nmhandle_t *, isc_nm_timer_cb, void *,
+		    isc_nm_timer_t **);
+
+void
+isc_nm_timer_attach(isc_nm_timer_t *, isc_nm_timer_t **);
+
+void
+isc_nm_timer_detach(isc_nm_timer_t **);
+
+void
+isc_nm_timer_start(isc_nm_timer_t *, uint64_t);
+
+void
+isc_nm_timer_stop(isc_nm_timer_t *);

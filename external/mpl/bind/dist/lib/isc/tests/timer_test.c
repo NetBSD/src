@@ -1,7 +1,9 @@
-/*	$NetBSD: timer_test.c,v 1.8 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.9 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,7 +84,7 @@ _teardown(void **state) {
 }
 
 static void
-shutdown(isc_task_t *task, isc_event_t *event) {
+test_shutdown(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 
 	UNUSED(task);
@@ -123,7 +125,7 @@ setup_test(isc_timertype_t timertype, isc_time_t *expires,
 	result = isc_task_create(taskmgr, 0, &task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_task_onshutdown(task, shutdown, NULL);
+	result = isc_task_onshutdown(task, test_shutdown, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_mutex_lock(&lasttime_mx);
@@ -149,6 +151,7 @@ setup_test(isc_timertype_t timertype, isc_time_t *expires,
 
 	isc_task_detach(&task);
 	isc_mutex_destroy(&mx);
+	isc_mutex_destroy(&lasttime_mx);
 	(void)isc_condition_destroy(&cv);
 }
 

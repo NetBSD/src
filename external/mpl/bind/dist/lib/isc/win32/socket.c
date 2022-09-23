@@ -1,10 +1,12 @@
-/*	$NetBSD: socket.c,v 1.11 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.12 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -791,7 +793,7 @@ retry:
 				need_retry = true;
 				break;
 			}
-			/* FALLTHROUGH */
+			FALLTHROUGH;
 
 		default:
 			isc_result = isc__errno2result(Error);
@@ -1028,9 +1030,10 @@ dump_msg(struct msghdr *msg, isc_socket_t *sock) {
 	printf("MSGHDR %p, Socket #: %Iu\n", msg, sock->fd);
 	printf("\tname %p, namelen %d\n", msg->msg_name, msg->msg_namelen);
 	printf("\tiov %p, iovlen %d\n", msg->msg_iov, msg->msg_iovlen);
-	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
+	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++) {
 		printf("\t\t%u\tbase %p, len %u\n", i, msg->msg_iov[i].buf,
 		       msg->msg_iov[i].len);
+	}
 }
 #endif /* if defined(ISC_SOCKET_DEBUG) */
 

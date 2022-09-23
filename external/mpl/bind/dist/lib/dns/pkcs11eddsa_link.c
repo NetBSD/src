@@ -1,10 +1,12 @@
-/*	$NetBSD: pkcs11eddsa_link.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: pkcs11eddsa_link.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -150,8 +152,7 @@ pkcs11eddsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		siglen = DNS_SIG_ED448SIZE;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	pk11_ctx = isc_mem_get(dctx->mctx, sizeof(*pk11_ctx));
@@ -180,6 +181,7 @@ pkcs11eddsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 	for (attr = pk11_attribute_first(ec); attr != NULL;
 	     attr = pk11_attribute_next(ec, attr))
+	{
 		switch (attr->type) {
 		case CKA_EC_PARAMS:
 			INSIST(keyTemplate[5].type == attr->type);
@@ -198,6 +200,7 @@ pkcs11eddsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 			keyTemplate[6].ulValueLen = attr->ulValueLen;
 			break;
 		}
+	}
 	pk11_ctx->object = CK_INVALID_HANDLE;
 	pk11_ctx->ontoken = false;
 	PK11_RET(pkcs_C_CreateObject,
@@ -289,6 +292,7 @@ pkcs11eddsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 	for (attr = pk11_attribute_first(ec); attr != NULL;
 	     attr = pk11_attribute_next(ec, attr))
+	{
 		switch (attr->type) {
 		case CKA_EC_PARAMS:
 			INSIST(keyTemplate[5].type == attr->type);
@@ -307,6 +311,7 @@ pkcs11eddsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 			keyTemplate[6].ulValueLen = attr->ulValueLen;
 			break;
 		}
+	}
 	pk11_ctx->object = CK_INVALID_HANDLE;
 	pk11_ctx->ontoken = false;
 	PK11_RET(pkcs_C_CreateObject,
@@ -421,8 +426,7 @@ pkcs11eddsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		attr->ulValueLen = sizeof(PK11_ECX_ED448);                     \
 		break;                                                         \
 	default:                                                               \
-		INSIST(0);                                                     \
-		ISC_UNREACHABLE();                                             \
+		UNREACHABLE();                                                 \
 	}
 
 #define FREECURVE()                                                     \
@@ -531,8 +535,7 @@ pkcs11eddsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 		key->key_size = DNS_KEY_ED448SIZE * 8;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	return (ISC_R_SUCCESS);
@@ -577,6 +580,7 @@ pkcs11eddsa_destroy(dst_key_t *key) {
 
 	for (attr = pk11_attribute_first(ec); attr != NULL;
 	     attr = pk11_attribute_next(ec, attr))
+	{
 		switch (attr->type) {
 		case CKA_LABEL:
 		case CKA_ID:
@@ -586,6 +590,7 @@ pkcs11eddsa_destroy(dst_key_t *key) {
 			FREECURVE();
 			break;
 		}
+	}
 	if (ec->repr != NULL) {
 		memset(ec->repr, 0, ec->attrcnt * sizeof(*attr));
 		isc_mem_put(key->mctx, ec->repr, ec->attrcnt * sizeof(*attr));
@@ -612,8 +617,7 @@ pkcs11eddsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 		len = DNS_KEY_ED448SIZE;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	ec = key->keydata.pkey;
@@ -653,8 +657,7 @@ pkcs11eddsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		len = DNS_KEY_ED448SIZE;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	isc_buffer_remainingregion(data, &r);
@@ -948,8 +951,7 @@ pkcs11eddsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		key->key_size = DNS_KEY_ED448SIZE * 8;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	return (ISC_R_SUCCESS);
@@ -1070,8 +1072,7 @@ pkcs11eddsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		key->key_size = DNS_KEY_ED448SIZE * 8;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	pk11_return_session(pk11_ctx);

@@ -1,7 +1,9 @@
-/*	$NetBSD: ninfo_56.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: ninfo_56.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,14 +18,14 @@
 
 #define RRTYPE_NINFO_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_ninfo(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
 	return (generic_fromtext_txt(CALL_FROMTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_ninfo(ARGS_TOTEXT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
@@ -31,14 +33,14 @@ totext_ninfo(ARGS_TOTEXT) {
 	return (generic_totext_txt(CALL_TOTEXT));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_ninfo(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
 	return (generic_fromwire_txt(CALL_FROMWIRE));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_ninfo(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 
@@ -47,7 +49,7 @@ towire_ninfo(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_ninfo(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -61,14 +63,14 @@ compare_ninfo(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_ninfo(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
 	return (generic_fromstruct_txt(CALL_FROMSTRUCT));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_ninfo(ARGS_TOSTRUCT) {
 	dns_rdata_ninfo_t *ninfo = target;
 
@@ -82,7 +84,7 @@ tostruct_ninfo(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(CALL_TOSTRUCT));
 }
 
-static inline void
+static void
 freestruct_ninfo(ARGS_FREESTRUCT) {
 	dns_rdata_ninfo_t *ninfo = source;
 
@@ -92,7 +94,7 @@ freestruct_ninfo(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_ninfo(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 
@@ -103,7 +105,7 @@ additionaldata_ninfo(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_ninfo(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -114,7 +116,7 @@ digest_ninfo(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_ninfo(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
@@ -126,7 +128,7 @@ checkowner_ninfo(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_ninfo(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 
@@ -137,7 +139,7 @@ checknames_ninfo(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_ninfo(ARGS_COMPARE) {
 	return (compare_ninfo(rdata1, rdata2));
 }

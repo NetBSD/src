@@ -1,7 +1,9 @@
-/*	$NetBSD: nimloc_32.c,v 1.7 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: nimloc_32.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +20,7 @@
 
 #define RRTYPE_NIMLOC_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_nimloc(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_nimloc);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -32,7 +34,7 @@ fromtext_in_nimloc(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_nimloc(ARGS_TOTEXT) {
 	isc_region_t region;
 
@@ -57,7 +59,7 @@ totext_in_nimloc(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_nimloc(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -79,7 +81,7 @@ fromwire_in_nimloc(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_nimloc(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_nimloc);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -90,7 +92,7 @@ towire_in_nimloc(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_in_nimloc(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -107,7 +109,7 @@ compare_in_nimloc(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_nimloc(ARGS_FROMSTRUCT) {
 	dns_rdata_in_nimloc_t *nimloc = source;
 
@@ -124,7 +126,7 @@ fromstruct_in_nimloc(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, nimloc->nimloc, nimloc->nimloc_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_nimloc(ARGS_TOSTRUCT) {
 	dns_rdata_in_nimloc_t *nimloc = target;
 	isc_region_t r;
@@ -149,7 +151,7 @@ tostruct_in_nimloc(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_nimloc(ARGS_FREESTRUCT) {
 	dns_rdata_in_nimloc_t *nimloc = source;
 
@@ -167,7 +169,7 @@ freestruct_in_nimloc(ARGS_FREESTRUCT) {
 	nimloc->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_nimloc(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nimloc);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -179,7 +181,7 @@ additionaldata_in_nimloc(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_nimloc(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -191,7 +193,7 @@ digest_in_nimloc(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_nimloc(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_nimloc);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -204,7 +206,7 @@ checkowner_in_nimloc(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_nimloc(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_nimloc);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -216,7 +218,7 @@ checknames_in_nimloc(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_nimloc(ARGS_COMPARE) {
 	return (compare_in_nimloc(rdata1, rdata2));
 }

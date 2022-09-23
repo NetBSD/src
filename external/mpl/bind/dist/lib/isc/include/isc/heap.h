@@ -1,7 +1,9 @@
-/*	$NetBSD: heap.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +49,7 @@ typedef void (*isc_heapaction_t)(void *, void *);
 
 typedef struct isc_heap isc_heap_t;
 
-isc_result_t
+void
 isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
 		isc_heapindex_t index, unsigned int size_increment,
 		isc_heap_t **heapp);
@@ -72,10 +74,6 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
  *	used, which is currently 1024, allowing space for an additional 1024
  *	heap elements to be inserted before adding more space.
  *\li	"heapp" is not NULL, and "*heap" is NULL.
- *
- * Returns:
- *\li	ISC_R_SUCCESS		- success
- *\li	ISC_R_NOMEMORY		- insufficient memory
  */
 
 void
@@ -87,7 +85,7 @@ isc_heap_destroy(isc_heap_t **heapp);
  *\li	"heapp" is not NULL and "*heap" points to a valid isc_heap_t.
  */
 
-isc_result_t
+void
 isc_heap_insert(isc_heap_t *heap, void *elt);
 /*!<
  * \brief Inserts a new element into a heap.

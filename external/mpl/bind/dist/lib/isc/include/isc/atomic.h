@@ -1,7 +1,9 @@
-/*	$NetBSD: atomic.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,15 +15,11 @@
 
 #pragma once
 
-#ifdef ISC_MUTEX_ATOMICS
-#include <isc/mutexatomic.h>
-#else /* ifdef ISC_MUTEX_ATOMICS */
 #if HAVE_STDATOMIC_H
 #include <stdatomic.h>
 #else /* if HAVE_STDATOMIC_H */
 #include <isc/stdatomic.h>
 #endif /* if HAVE_STDATOMIC_H */
-#endif /* ifdef ISC_MUTEX_ATOMICS */
 
 /*
  * We define a few additional macros to make things easier

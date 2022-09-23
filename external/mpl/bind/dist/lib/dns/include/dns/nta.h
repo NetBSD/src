@@ -1,7 +1,9 @@
-/*	$NetBSD: nta.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: nta.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,11 +49,11 @@ ISC_LANG_BEGINDECLS
 struct dns_ntatable {
 	/* Unlocked. */
 	unsigned int	magic;
-	dns_view_t *	view;
+	dns_view_t     *view;
 	isc_rwlock_t	rwlock;
-	isc_taskmgr_t * taskmgr;
+	isc_taskmgr_t  *taskmgr;
 	isc_timermgr_t *timermgr;
-	isc_task_t *	task;
+	isc_task_t     *task;
 	/* Protected by atomics */
 	isc_refcount_t references;
 	/* Locked by rwlock. */

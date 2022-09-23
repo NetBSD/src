@@ -1,7 +1,9 @@
-/*	$NetBSD: ipkeylist.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: ipkeylist.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,9 +28,9 @@
  */
 struct dns_ipkeylist {
 	isc_sockaddr_t *addrs;
-	isc_dscp_t *	dscps;
-	dns_name_t **	keys;
-	dns_name_t **	labels;
+	isc_dscp_t     *dscps;
+	dns_name_t    **keys;
+	dns_name_t    **labels;
 	uint32_t	count;
 	uint32_t	allocated;
 };

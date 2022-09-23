@@ -1,7 +1,9 @@
-/*	$NetBSD: netmgr-int.h,v 1.7 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.8 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +29,6 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netmgr.h>
-#include <isc/queue.h>
 #include <isc/quota.h>
 #include <isc/random.h>
 #include <isc/refcount.h>
@@ -46,19 +47,37 @@
 /* Must be different from ISC_NETMGR_TID_UNKNOWN */
 #define ISC_NETMGR_NON_INTERLOCKED -2
 
-#if !defined(WIN32)
 /*
- * New versions of libuv support recvmmsg on unices.
- * Since recvbuf is only allocated per worker allocating a bigger one is not
- * that wasteful.
- * 20 here is UV__MMSG_MAXWIDTH taken from the current libuv source, nothing
- * will break if the original value changes.
+ * Receive buffers
  */
-#define ISC_NETMGR_RECVBUF_SIZE (20 * 65536)
+#if HAVE_DECL_UV_UDP_MMSG_CHUNK
+/*
+ * The value 20 here is UV__MMSG_MAXWIDTH taken from the current libuv source,
+ * libuv will not receive more that 20 datagrams in a single recvmmsg call.
+ */
+#define ISC_NETMGR_UDP_RECVBUF_SIZE (20 * UINT16_MAX)
 #else
-#define ISC_NETMGR_RECVBUF_SIZE (65536)
+/*
+ * A single DNS message size
+ */
+#define ISC_NETMGR_UDP_RECVBUF_SIZE UINT16_MAX
 #endif
 
+/*
+ * The TCP receive buffer can fit one maximum sized DNS message plus its size,
+ * the receive buffer here affects TCP, DoT and DoH.
+ */
+#define ISC_NETMGR_TCP_RECVBUF_SIZE (sizeof(uint16_t) + UINT16_MAX)
+
+/* Pick the larger buffer */
+#define ISC_NETMGR_RECVBUF_SIZE                                     \
+	(ISC_NETMGR_UDP_RECVBUF_SIZE >= ISC_NETMGR_TCP_RECVBUF_SIZE \
+		 ? ISC_NETMGR_UDP_RECVBUF_SIZE                      \
+		 : ISC_NETMGR_TCP_RECVBUF_SIZE)
+
+/*
+ * Send buffer
+ */
 #define ISC_NETMGR_SENDBUF_SIZE (sizeof(uint16_t) + UINT16_MAX)
 
 /*%
@@ -72,11 +91,7 @@
  * most in TCPDNS connections, so there's no risk of overrun
  * when using a buffer this size.
  */
-#define NM_BIG_BUF (65535 + 2) * 2
-
-#if defined(SO_REUSEPORT_LB) || (defined(SO_REUSEPORT) && defined(__linux__))
-#define HAVE_SO_REUSEPORT_LB 1
-#endif
+#define NM_BIG_BUF ISC_NETMGR_TCP_RECVBUF_SIZE * 2
 
 /*
  * Define NETMGR_TRACE to activate tracing of handles and sockets.
@@ -173,6 +188,17 @@ typedef enum {
 	NETIEVENT_MAX = 4,
 } netievent_type_t;
 
+typedef struct isc__nm_uvreq isc__nm_uvreq_t;
+typedef struct isc__netievent isc__netievent_t;
+
+typedef ISC_LIST(isc__netievent_t) isc__netievent_list_t;
+
+typedef struct ievent {
+	isc_mutex_t lock;
+	isc_condition_t cond;
+	isc__netievent_list_t list;
+} ievent_t;
+
 /*
  * Single network event loop worker.
  */
@@ -182,13 +208,10 @@ typedef struct isc__networker {
 	uv_loop_t loop;	  /* libuv loop structure */
 	uv_async_t async; /* async channel to send
 			   * data to this networker */
-	isc_mutex_t lock;
 	bool paused;
 	bool finished;
 	isc_thread_t thread;
-	isc_queue_t *ievents[NETIEVENT_MAX];
-	atomic_uint_fast32_t nievents[NETIEVENT_MAX];
-	isc_condition_t cond_prio;
+	ievent_t ievents[NETIEVENT_MAX];
 
 	isc_refcount_t references;
 	atomic_int_fast64_t pktcount;
@@ -221,7 +244,6 @@ struct isc_nmhandle {
 	 * the socket.
 	 */
 	isc_nmsocket_t *sock;
-	size_t ah_pos; /* Position in the socket's 'active handles' array */
 
 	isc_sockaddr_t peer;
 	isc_sockaddr_t local;
@@ -303,20 +325,19 @@ typedef union {
 #define UVREQ_MAGIC    ISC_MAGIC('N', 'M', 'U', 'R')
 #define VALID_UVREQ(t) ISC_MAGIC_VALID(t, UVREQ_MAGIC)
 
-typedef struct isc__nm_uvreq isc__nm_uvreq_t;
 struct isc__nm_uvreq {
 	int magic;
 	isc_nmsocket_t *sock;
 	isc_nmhandle_t *handle;
-	char tcplen[2];	      /* The TCP DNS message length */
-	uv_buf_t uvbuf;	      /* translated isc_region_t, to be
-			       * sent or received */
-	isc_sockaddr_t local; /* local address */
-	isc_sockaddr_t peer;  /* peer address */
-	isc__nm_cb_t cb;      /* callback */
-	void *cbarg;	      /* callback argument */
-	uv_pipe_t ipc;	      /* used for sending socket
-			       * uv_handles to other threads */
+	char tcplen[2];	       /* The TCP DNS message length */
+	uv_buf_t uvbuf;	       /* translated isc_region_t, to be
+				* sent or received */
+	isc_sockaddr_t local;  /* local address */
+	isc_sockaddr_t peer;   /* peer address */
+	isc__nm_cb_t cb;       /* callback */
+	void *cbarg;	       /* callback argument */
+	isc_nm_timer_t *timer; /* TCP write timer */
+
 	union {
 		uv_handle_t handle;
 		uv_req_t req;
@@ -330,6 +351,14 @@ struct isc__nm_uvreq {
 		uv_work_t work;
 	} uv_req;
 	ISC_LINK(isc__nm_uvreq_t) link;
+};
+
+struct isc_nm_timer {
+	isc_refcount_t references;
+	uv_timer_t timer;
+	isc_nmhandle_t *handle;
+	isc_nm_timer_cb cb;
+	void *cbarg;
 };
 
 void *
@@ -367,11 +396,12 @@ isc__nm_put_netievent(isc_nm_t *mgr, void *ievent);
  *   either in netmgr.c or matching protocol file (e.g. udp.c, tcp.c, etc.)
  */
 
-#define NETIEVENT__SOCKET         \
-	isc__netievent_type type; \
-	isc_nmsocket_t *sock;     \
-	const char *file;         \
-	unsigned int line;        \
+#define NETIEVENT__SOCKET                \
+	isc__netievent_type type;        \
+	ISC_LINK(isc__netievent_t) link; \
+	isc_nmsocket_t *sock;            \
+	const char *file;                \
+	unsigned int line;               \
 	const char *func
 
 typedef struct isc__netievent__socket {
@@ -435,8 +465,7 @@ typedef struct isc__netievent__socket_req {
 	}
 
 typedef struct isc__netievent__socket_req_result {
-	isc__netievent_type type;
-	isc_nmsocket_t *sock;
+	NETIEVENT__SOCKET;
 	isc__nm_uvreq_t *req;
 	isc_result_t result;
 } isc__netievent__socket_req_result_t;
@@ -535,6 +564,7 @@ typedef struct isc__netievent__socket_quota {
 
 typedef struct isc__netievent__task {
 	isc__netievent_type type;
+	ISC_LINK(isc__netievent_t) link;
 	isc_task_t *task;
 } isc__netievent__task_t;
 
@@ -569,9 +599,10 @@ typedef struct isc__netievent_udpsend {
 	isc__nm_uvreq_t *req;
 } isc__netievent_udpsend_t;
 
-typedef struct isc__netievent {
+struct isc__netievent {
 	isc__netievent_type type;
-} isc__netievent_t;
+	ISC_LINK(isc__netievent_t) link;
+};
 
 #define NETIEVENT_TYPE(type) typedef isc__netievent_t isc__netievent_##type##_t
 
@@ -631,15 +662,11 @@ struct isc_nm {
 
 	isc_stats_t *stats;
 
-	isc_mempool_t *reqpool;
-	isc_mutex_t reqlock;
-
-	isc_mempool_t *evpool;
-	isc_mutex_t evlock;
-
 	uint_fast32_t workers_running;
 	atomic_uint_fast32_t workers_paused;
 	atomic_uint_fast32_t maxudp;
+
+	bool load_balance_sockets;
 
 	atomic_bool paused;
 
@@ -751,9 +778,14 @@ struct isc_nmsocket {
 	/*%
 	 * TCP read/connect timeout timers.
 	 */
-	uv_timer_t timer;
+	uv_timer_t read_timer;
 	uint64_t read_timeout;
 	uint64_t connect_timeout;
+
+	/*%
+	 * TCP write timeout timer.
+	 */
+	uint64_t write_timeout;
 
 	/*% outer socket is for 'wrapped' sockets - e.g. tcpdns in tcp */
 	isc_nmsocket_t *outer;
@@ -806,6 +838,7 @@ struct isc_nmsocket {
 	atomic_bool connected;
 	bool accepting;
 	bool reading;
+	atomic_bool timedout;
 	isc_refcount_t references;
 
 	/*%
@@ -883,30 +916,9 @@ struct isc_nmsocket {
 	isc_result_t result;
 
 	/*%
-	 * List of active handles.
-	 * ah - current position in 'ah_frees'; this represents the
-	 *	current number of active handles;
-	 * ah_size - size of the 'ah_frees' and 'ah_handles' arrays
-	 * ah_handles - array pointers to active handles
-	 *
-	 * Adding a handle
-	 *  - if ah == ah_size, reallocate
-	 *  - x = ah_frees[ah]
-	 *  - ah_frees[ah++] = 0;
-	 *  - ah_handles[x] = handle
-	 *  - x must be stored with the handle!
-	 * Removing a handle:
-	 *  - ah_frees[--ah] = x
-	 *  - ah_handles[x] = NULL;
-	 *
-	 * XXX: for now this is locked with socket->lock, but we
-	 * might want to change it to something lockless in the
-	 * future.
+	 * Current number of active handles.
 	 */
 	atomic_int_fast32_t ah;
-	size_t ah_size;
-	size_t *ah_frees;
-	isc_nmhandle_t **ah_handles;
 
 	/*% Buffer for TCPDNS processing */
 	size_t buf_size;
@@ -1272,6 +1284,7 @@ void
 isc__nm_async_tcpdnsconnect(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcpdnslisten(isc__networker_t *worker, isc__netievent_t *ev0);
+
 void
 isc__nm_tcpdns_send(isc_nmhandle_t *handle, isc_region_t *region,
 		    isc_nm_cb_t cb, void *cbarg);
@@ -1302,9 +1315,11 @@ isc__nm_tcpdns_settimeout(isc_nmhandle_t *handle, uint32_t timeout);
  */
 
 void
-isc__nm_async_tcpdnslisten(isc__networker_t *worker, isc__netievent_t *ev0);
-void
 isc__nm_async_tcpdnsaccept(isc__networker_t *worker, isc__netievent_t *ev0);
+void
+isc__nm_async_tcpdnsconnect(isc__networker_t *worker, isc__netievent_t *ev0);
+void
+isc__nm_async_tcpdnslisten(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcpdnscancel(isc__networker_t *worker, isc__netievent_t *ev0);
 void
@@ -1313,12 +1328,17 @@ void
 isc__nm_async_tcpdnssend(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcpdnsstop(isc__networker_t *worker, isc__netievent_t *ev0);
-
 void
 isc__nm_async_tcpdnsread(isc__networker_t *worker, isc__netievent_t *ev0);
+/*%<
+ * Callback handlers for asynchronous TCPDNS events.
+ */
 
 void
 isc__nm_tcpdns_read(isc_nmhandle_t *handle, isc_nm_recv_cb_t cb, void *cbarg);
+/*
+ * Back-end implementation of isc_nm_read() for TCPDNS handles.
+ */
 
 void
 isc__nm_tcpdns_cancelread(isc_nmhandle_t *handle);
@@ -1540,11 +1560,11 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 void
 isc__nm_tcpdns_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
-void
+isc_result_t
 isc__nm_start_reading(isc_nmsocket_t *sock);
 void
 isc__nm_stop_reading(isc_nmsocket_t *sock);
-void
+isc_result_t
 isc__nm_process_sock_buffer(isc_nmsocket_t *sock);
 void
 isc__nm_resume_processing(void *arg);
@@ -1568,6 +1588,28 @@ void
 isc__nm_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result, bool async);
 
 void
-isc__nmsocket_connecttimeout_cb(uv_timer_t *timer);
+isc__nm_accept_connection_log(isc_result_t result, bool can_log_quota);
 
+/*
+ * Timeout callbacks
+ */
+void
+isc__nmsocket_connecttimeout_cb(uv_timer_t *timer);
+void
+isc__nmsocket_readtimeout_cb(uv_timer_t *timer);
+void
+isc__nmsocket_writetimeout_cb(void *data, isc_result_t eresult);
+
+/*%<
+ *
+ * Maximum number of simultaneous handles in flight supported for a single
+ * connected TCPDNS socket. This value was chosen arbitrarily, and may be
+ * changed in the future.
+ */
 #define STREAM_CLIENTS_PER_CONN 23
+
+#define UV_RUNTIME_CHECK(func, ret)                                           \
+	if (ret != 0) {                                                       \
+		isc_error_fatal(__FILE__, __LINE__, "%s failed: %s\n", #func, \
+				uv_strerror(ret));                            \
+	}

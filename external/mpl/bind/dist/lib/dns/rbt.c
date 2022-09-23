@@ -1,7 +1,9 @@
-/*	$NetBSD: rbt.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,7 +78,7 @@
 
 #define HASHSIZE(bits) (UINT64_C(1) << (bits))
 
-static inline uint32_t
+static uint32_t
 hash_32(uint32_t val, unsigned int bits) {
 	REQUIRE(bits <= RBT_HASH_MAX_BITS);
 	/* High bits are more random. */
@@ -173,7 +175,7 @@ serialize_nodes(FILE *file, dns_rbtnode_t *node, uintptr_t parent,
  * without having to use an if statement to check to see if that address is
  * relative or not
  */
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 getparent(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->parent);
 	adjusted_address += node->parent_is_relative * (uintptr_t)header;
@@ -181,7 +183,7 @@ getparent(dns_rbtnode_t *node, file_header_t *header) {
 	return ((dns_rbtnode_t *)adjusted_address);
 }
 
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 getleft(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->left);
 	adjusted_address += node->left_is_relative * (uintptr_t)header;
@@ -189,7 +191,7 @@ getleft(dns_rbtnode_t *node, file_header_t *header) {
 	return ((dns_rbtnode_t *)adjusted_address);
 }
 
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 getright(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->right);
 	adjusted_address += node->right_is_relative * (uintptr_t)header;
@@ -197,7 +199,7 @@ getright(dns_rbtnode_t *node, file_header_t *header) {
 	return ((dns_rbtnode_t *)adjusted_address);
 }
 
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 getdown(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->down);
 	adjusted_address += node->down_is_relative * (uintptr_t)header;
@@ -205,7 +207,7 @@ getdown(dns_rbtnode_t *node, file_header_t *header) {
 	return ((dns_rbtnode_t *)adjusted_address);
 }
 
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 getdata(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->data);
 	adjusted_address += node->data_is_relative * (uintptr_t)header;
@@ -291,7 +293,7 @@ getdata(dns_rbtnode_t *node, file_header_t *header) {
  * path of the tree traversal code.
  */
 
-static inline void
+static void
 NODENAME(dns_rbtnode_t *node, dns_name_t *name) {
 	name->length = NAMELEN(node);
 	name->labels = OFFSETLEN(node);
@@ -349,7 +351,7 @@ hexdump(const char *desc, void *blob, size_t size) {
  * Upper node is the parent of the root of the passed node's
  * subtree. The passed node must not be NULL.
  */
-static inline dns_rbtnode_t *
+static dns_rbtnode_t *
 get_upper_node(dns_rbtnode_t *node) {
 	return (UPPERNODE(node));
 }
@@ -400,10 +402,10 @@ create_node(isc_mem_t *mctx, const dns_name_t *name, dns_rbtnode_t **nodep);
 static isc_result_t
 inithash(dns_rbt_t *rbt);
 
-static inline void
+static void
 hash_node(dns_rbt_t *rbt, dns_rbtnode_t *node, const dns_name_t *name);
 
-static inline void
+static void
 unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node);
 
 static uint32_t
@@ -413,9 +415,9 @@ rehash(dns_rbt_t *rbt, uint32_t newbits);
 static void
 maybe_rehash(dns_rbt_t *rbt, size_t size);
 
-static inline void
+static void
 rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp);
-static inline void
+static void
 rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp);
 
 static void
@@ -780,17 +782,18 @@ treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
 	uint64_t *crc) {
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_fixedname_t fixed;
-	dns_name_t nodename, *fullname;
-	unsigned char *node_data;
+	dns_name_t nodename, *fullname = NULL;
+	unsigned char *node_data = NULL;
 	dns_rbtnode_t header;
-	size_t datasize, nodemax = filesize - sizeof(dns_rbtnode_t);
+	size_t nodemax = filesize - sizeof(dns_rbtnode_t);
+	size_t datasize;
 
 	if (n == NULL) {
 		return (ISC_R_SUCCESS);
 	}
 
 	CONFIRM((void *)n >= base);
-	CONFIRM((char *)n - (char *)base <= (int)nodemax);
+	CONFIRM((size_t)((char *)n - (char *)base) <= nodemax);
 	CONFIRM(DNS_RBTNODE_VALID(n));
 
 	dns_name_init(&nodename, NULL);
@@ -1110,7 +1113,7 @@ dns_rbt_adjusthashsize(dns_rbt_t *rbt, size_t size) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 chain_name(dns_rbtnodechain_t *chain, dns_name_t *name,
 	   bool include_chain_end) {
 	dns_name_t nodename;
@@ -1137,7 +1140,7 @@ chain_name(dns_rbtnodechain_t *chain, dns_name_t *name,
 	return (result);
 }
 
-static inline isc_result_t
+static isc_result_t
 move_chain_to_last(dns_rbtnodechain_t *chain, dns_rbtnode_t *node) {
 	do {
 		/*
@@ -2325,7 +2328,7 @@ create_node(isc_mem_t *mctx, const dns_name_t *name, dns_rbtnode_t **nodep) {
 /*
  * Add a node to the hash table
  */
-static inline void
+static void
 hash_add_node(dns_rbt_t *rbt, dns_rbtnode_t *node, const dns_name_t *name) {
 	uint32_t hash;
 
@@ -2414,7 +2417,7 @@ maybe_rehash(dns_rbt_t *rbt, size_t newcount) {
  * Add a node to the hash table. Rehash the hashtable if the node count
  * rises above a critical level.
  */
-static inline void
+static void
 hash_node(dns_rbt_t *rbt, dns_rbtnode_t *node, const dns_name_t *name) {
 	REQUIRE(DNS_RBTNODE_VALID(node));
 
@@ -2428,7 +2431,7 @@ hash_node(dns_rbt_t *rbt, dns_rbtnode_t *node, const dns_name_t *name) {
 /*
  * Remove a node from the hash table
  */
-static inline void
+static void
 unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node) {
 	uint32_t bucket;
 	dns_rbtnode_t *bucket_node;
@@ -2449,7 +2452,7 @@ unhash_node(dns_rbt_t *rbt, dns_rbtnode_t *node) {
 	}
 }
 
-static inline void
+static void
 rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 
@@ -2482,7 +2485,7 @@ rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	PARENT(node) = child;
 }
 
-static inline void
+static void
 rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 	dns_rbtnode_t *child;
 

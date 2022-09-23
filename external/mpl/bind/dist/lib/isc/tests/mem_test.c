@@ -1,7 +1,9 @@
-/*	$NetBSD: mem_test.c,v 1.8 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.9 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -426,70 +428,6 @@ isc_mem_benchmark(void **state) {
 	       (nthreads * ITERS * NUM_ITEMS) / (t / 1000000.0));
 }
 
-static isc_threadresult_t
-mempool_thread(isc_threadarg_t arg) {
-	isc_mempool_t *mp = (isc_mempool_t *)arg;
-	void *items[NUM_ITEMS];
-
-	for (int i = 0; i < ITERS; i++) {
-		for (int j = 0; j < NUM_ITEMS; j++) {
-			items[j] = isc_mempool_get(mp);
-		}
-		for (int j = 0; j < NUM_ITEMS; j++) {
-			isc_mempool_put(mp, items[j]);
-		}
-	}
-
-	return ((isc_threadresult_t)0);
-}
-
-static void
-isc_mempool_benchmark(void **state) {
-	int nthreads = ISC_MAX(ISC_MIN(isc_os_ncpus(), 32), 1);
-	isc_thread_t threads[32];
-	isc_time_t ts1, ts2;
-	double t;
-	isc_result_t result;
-	size_t size = ITEM_SIZE;
-	isc_mempool_t *mp = NULL;
-	isc_mutex_t mplock;
-
-	isc_mutex_init(&mplock);
-
-	isc_mempool_create(test_mctx, ITEM_SIZE, &mp);
-
-	isc_mempool_associatelock(mp, &mplock);
-
-	isc_mempool_setfreemax(mp, 32768);
-	isc_mempool_setfillcount(mp, ISC_MAX(NUM_ITEMS / nthreads, 1));
-
-	UNUSED(state);
-
-	result = isc_time_now(&ts1);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	for (int i = 0; i < nthreads; i++) {
-		isc_thread_create(mempool_thread, mp, &threads[i]);
-		size = size / 2;
-	}
-	for (int i = 0; i < nthreads; i++) {
-		isc_thread_join(threads[i], NULL);
-	}
-
-	result = isc_time_now(&ts2);
-	assert_int_equal(result, ISC_R_SUCCESS);
-
-	t = isc_time_microdiff(&ts2, &ts1);
-
-	printf("[ TIME     ] isc_mempool_benchmark: "
-	       "%d isc_mempool_{get,put} calls, %f seconds, %f calls/second\n",
-	       nthreads * ITERS * NUM_ITEMS, t / 1000000.0,
-	       (nthreads * ITERS * NUM_ITEMS) / (t / 1000000.0));
-
-	isc_mempool_destroy(&mp);
-	isc_mutex_destroy(&mplock);
-}
-
 #endif /* __SANITIZE_THREAD */
 
 /*
@@ -508,8 +446,6 @@ main(void) {
 
 #if !defined(__SANITIZE_THREAD__)
 		cmocka_unit_test_setup_teardown(isc_mem_benchmark, _setup,
-						_teardown),
-		cmocka_unit_test_setup_teardown(isc_mempool_benchmark, _setup,
 						_teardown),
 #endif /* __SANITIZE_THREAD__ */
 #if ISC_MEM_TRACKLINES

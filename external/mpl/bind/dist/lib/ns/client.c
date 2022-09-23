@@ -1,7 +1,9 @@
-/*	$NetBSD: client.c,v 1.16 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.17 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +14,7 @@
  */
 
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 
 #include <isc/aes.h>
@@ -63,6 +66,10 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/update.h>
+
+#ifndef _POSIX_HOST_NAME_MAX
+#define _POSIX_HOST_NAME_MAX 255
+#endif
 
 /***
  *** Client
@@ -129,11 +136,9 @@
  */
 
 #if defined(_WIN32) && !defined(_WIN64) || !defined(_LP64)
-LIBNS_EXTERNAL_DATA atomic_uint_fast32_t ns_client_requests =
-	ATOMIC_VAR_INIT(0);
+LIBNS_EXTERNAL_DATA atomic_uint_fast32_t ns_client_requests = 0;
 #else  /* if defined(_WIN32) && !defined(_WIN64) */
-LIBNS_EXTERNAL_DATA atomic_uint_fast64_t ns_client_requests =
-	ATOMIC_VAR_INIT(0);
+LIBNS_EXTERNAL_DATA atomic_uint_fast64_t ns_client_requests = 0;
 #endif /* if defined(_WIN32) && !defined(_WIN64) */
 
 static void
@@ -640,8 +645,7 @@ renderend:
 					    ISC_MIN((int)respsize / 16, 256));
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 #ifdef HAVE_DNSTAP
@@ -670,8 +674,7 @@ renderend:
 					    ISC_MIN((int)respsize / 16, 256));
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	}
 
@@ -802,10 +805,11 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 			loglevel = ISC_LOG_DEBUG(1);
 		}
 		wouldlog = isc_log_wouldlog(ns_lctx, loglevel);
-		rrl_result = dns_rrl(
-			client->view, &client->peeraddr, TCP_CLIENT(client),
-			dns_rdataclass_in, dns_rdatatype_none, NULL, result,
-			client->now, wouldlog, log_buf, sizeof(log_buf));
+		rrl_result = dns_rrl(client->view, NULL, &client->peeraddr,
+				     TCP_CLIENT(client), dns_rdataclass_in,
+				     dns_rdatatype_none, NULL, result,
+				     client->now, wouldlog, log_buf,
+				     sizeof(log_buf));
 		if (rrl_result != DNS_RRL_RESULT_OK) {
 			/*
 			 * Log dropped errors in the query category
@@ -922,7 +926,7 @@ isc_result_t
 ns_client_addopt(ns_client_t *client, dns_message_t *message,
 		 dns_rdataset_t **opt) {
 	unsigned char ecs[ECS_SIZE];
-	char nsid[BUFSIZ], *nsidp;
+	char nsid[_POSIX_HOST_NAME_MAX + 1], *nsidp = NULL;
 	unsigned char cookie[COOKIE_SIZE];
 	isc_result_t result;
 	dns_view_t *view;
@@ -1034,8 +1038,7 @@ no_nsid:
 			memmove(addr, &client->ecs.addr.type, addrl);
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 
 		isc_buffer_init(&buf, ecs, sizeof(ecs));
@@ -1147,8 +1150,7 @@ compute_cookie(ns_client_t *client, uint32_t when, uint32_t nonce,
 			inputlen = 32;
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 
 		isc_siphash24(secret, input, inputlen, digest);
@@ -1189,8 +1191,7 @@ compute_cookie(ns_client_t *client, uint32_t when, uint32_t nonce,
 					 digest);
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 		for (i = 0; i < 8; i++) {
 			digest[i] ^= digest[i + 8];
@@ -1200,8 +1201,7 @@ compute_cookie(ns_client_t *client, uint32_t when, uint32_t nonce,
 	}
 
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
@@ -1531,6 +1531,7 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 				}
 				client->attributes |=
 					NS_CLIENTATTR_USEKEEPALIVE;
+				isc_nmhandle_keepalive(client->handle, true);
 				isc_buffer_forward(&optbuf, optlen);
 				break;
 			case DNS_OPT_PAD:
@@ -1808,8 +1809,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 					    ISC_MIN((int)reqsize / 16, 18));
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		switch (isc_sockaddr_pf(&client->peeraddr)) {
@@ -1822,8 +1822,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 					    ISC_MIN((int)reqsize / 16, 18));
 			break;
 		default:
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	}
 
@@ -1969,28 +1968,13 @@ ns__client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 		return;
 	}
 
-	/*
-	 * Determine the destination address.  If the receiving interface is
-	 * bound to a specific address, we simply use it regardless of the
-	 * address family.  All IPv4 queries should fall into this case.
-	 * Otherwise, if this is a TCP query, get the address from the
-	 * receiving socket (this needs a system call and can be heavy).
-	 * For IPv6 UDP queries, we get this from the pktinfo structure (if
-	 * supported).
-	 *
-	 * If all the attempts fail (this can happen due to memory shortage,
-	 * etc), we regard this as an error for safety.
-	 */
 	if ((client->manager->interface->flags & NS_INTERFACEFLAG_ANYADDR) == 0)
 	{
-		isc_netaddr_fromsockaddr(&client->destaddr,
-					 &client->manager->interface->addr);
+		client->destsockaddr = client->manager->interface->addr;
 	} else {
-		isc_sockaddr_t sockaddr = isc_nmhandle_localaddr(handle);
-		isc_netaddr_fromsockaddr(&client->destaddr, &sockaddr);
+		client->destsockaddr = isc_nmhandle_localaddr(handle);
 	}
-
-	isc_sockaddr_fromnetaddr(&client->destsockaddr, &client->destaddr, 0);
+	isc_netaddr_fromsockaddr(&client->destaddr, &client->destsockaddr);
 
 	result = client->sctx->matchingview(&netaddr, &client->destaddr,
 					    client->message, env, &sigresult,
@@ -3014,7 +2998,7 @@ ns_client_newdbversion(ns_client_t *client, unsigned int n) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline ns_dbversion_t *
+static ns_dbversion_t *
 client_getdbversion(ns_client_t *client) {
 	ns_dbversion_t *dbversion = NULL;
 

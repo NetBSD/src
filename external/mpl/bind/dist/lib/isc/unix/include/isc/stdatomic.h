@@ -1,7 +1,9 @@
-/*	$NetBSD: stdatomic.h,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
+/*	$NetBSD: stdatomic.h,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,8 +48,6 @@
 #error "isc/stdatomic.h does not support your compiler"
 #endif /* if __has_extension(c_atomic) || __has_extension(cxx_atomic) */
 #endif /* if !defined(__CLANG_ATOMICS) && !defined(__GNUC_ATOMICS) */
-
-#define ATOMIC_VAR_INIT(x) x
 
 #ifndef __ATOMIC_RELAXED
 #define __ATOMIC_RELAXED 0

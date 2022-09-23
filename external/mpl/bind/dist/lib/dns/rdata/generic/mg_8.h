@@ -1,7 +1,9 @@
-/*	$NetBSD: mg_8.h,v 1.4 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: mg_8.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

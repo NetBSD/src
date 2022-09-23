@@ -1,7 +1,9 @@
-/*	$NetBSD: clientinfo.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: clientinfo.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,25 +45,36 @@
 #include <isc/sockaddr.h>
 #include <isc/types.h>
 
+#include <dns/ecs.h>
+
 ISC_LANG_BEGINDECLS
 
 /*****
 ***** Types
 *****/
 
-#define DNS_CLIENTINFO_VERSION 2
+#define DNS_CLIENTINFO_VERSION 3
+/*
+ * Any updates to this structure should also be applied in
+ * contrib/modules/dlz/dlz_minmal.h.
+ */
 typedef struct dns_clientinfo {
-	uint16_t version;
-	void *	 data;
-	void *	 dbversion;
+	uint16_t  version;
+	void	 *data;
+	void	 *dbversion;
+	dns_ecs_t ecs;
 } dns_clientinfo_t;
 
 typedef isc_result_t (*dns_clientinfo_sourceip_t)(dns_clientinfo_t *client,
-						  isc_sockaddr_t ** addrp);
+						  isc_sockaddr_t  **addrp);
 
 #define DNS_CLIENTINFOMETHODS_VERSION 2
 #define DNS_CLIENTINFOMETHODS_AGE     1
 
+/*
+ * Any updates to this structure should also be applied in
+ * contrib/modules/dlz/dlz_minmal.h.
+ */
 typedef struct dns_clientinfomethods {
 	uint16_t		  version;
 	uint16_t		  age;
@@ -72,11 +85,12 @@ typedef struct dns_clientinfomethods {
 ***** Methods
 *****/
 void
-dns_clientinfomethods_init(dns_clientinfomethods_t * methods,
+dns_clientinfomethods_init(dns_clientinfomethods_t  *methods,
 			   dns_clientinfo_sourceip_t sourceip);
 
 void
-dns_clientinfo_init(dns_clientinfo_t *ci, void *data, void *versionp);
+dns_clientinfo_init(dns_clientinfo_t *ci, void *data, dns_ecs_t *ecs,
+		    void *versionp);
 
 ISC_LANG_ENDDECLS
 

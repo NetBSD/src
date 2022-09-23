@@ -1,7 +1,9 @@
-/*	$NetBSD: callbacks.h,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: callbacks.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,7 +55,7 @@ struct dns_rdatacallbacks {
 	 * to pass back information obtained from the file header
 	 */
 	dns_rawdatafunc_t rawdata;
-	dns_zone_t *	  zone;
+	dns_zone_t	 *zone;
 
 	/*%
 	 * dns_load_master / dns_rdata_fromtext call this to issue a error.

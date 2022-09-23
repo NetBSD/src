@@ -1,7 +1,9 @@
-/*	$NetBSD: server.h,v 1.7 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.8 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +50,7 @@
  */
 struct named_server {
 	unsigned int magic;
-	isc_mem_t *  mctx;
+	isc_mem_t   *mctx;
 
 	ns_server_t *sctx;
 
@@ -69,12 +71,12 @@ struct named_server {
 			     * */
 
 	/* Server data structures. */
-	dns_loadmgr_t *	   loadmgr;
-	dns_zonemgr_t *	   zonemgr;
+	dns_loadmgr_t	  *loadmgr;
+	dns_zonemgr_t	  *zonemgr;
 	dns_viewlist_t	   viewlist;
 	dns_kasplist_t	   kasplist;
 	ns_interfacemgr_t *interfacemgr;
-	dns_db_t *	   in_roothints;
+	dns_db_t	  *in_roothints;
 
 	isc_timer_t *interface_timer;
 	isc_timer_t *heartbeat_timer;
@@ -96,15 +98,15 @@ struct named_server {
 	isc_stats_t *resolverstats;  /*% Resolver stats */
 	isc_stats_t *sockstats;	     /*%< Socket stats */
 
-	named_controls_t *   controls; /*%< Control channels */
+	named_controls_t    *controls; /*%< Control channels */
 	unsigned int	     dispatchgen;
 	named_dispatchlist_t dispatches;
 
 	named_statschannellist_t statschannels;
 
 	dns_tsigkey_t *sessionkey;
-	char *	       session_keyfile;
-	dns_name_t *   session_keyname;
+	char	      *session_keyfile;
+	dns_name_t    *session_keyname;
 	unsigned int   session_keyalg;
 	uint16_t       session_keybits;
 	bool	       interface_auto;

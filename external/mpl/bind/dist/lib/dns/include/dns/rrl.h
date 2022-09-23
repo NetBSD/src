@@ -1,7 +1,9 @@
-/*	$NetBSD: rrl.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rrl.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -199,7 +201,7 @@ struct dns_rrl_rate {
 typedef struct dns_rrl dns_rrl_t;
 struct dns_rrl {
 	isc_mutex_t lock;
-	isc_mem_t * mctx;
+	isc_mem_t  *mctx;
 
 	bool	       log_only;
 	dns_rrl_rate_t responses_per_second;
@@ -256,8 +258,8 @@ typedef enum {
 } dns_rrl_result_t;
 
 dns_rrl_result_t
-dns_rrl(dns_view_t *view, const isc_sockaddr_t *client_addr, bool is_tcp,
-	dns_rdataclass_t rdclass, dns_rdatatype_t qtype,
+dns_rrl(dns_view_t *view, dns_zone_t *zone, const isc_sockaddr_t *client_addr,
+	bool is_tcp, dns_rdataclass_t rdclass, dns_rdatatype_t qtype,
 	const dns_name_t *qname, isc_result_t resp_result, isc_stdtime_t now,
 	bool wouldlog, char *log_buf, unsigned int log_buf_len);
 

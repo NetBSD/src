@@ -1,8 +1,10 @@
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -21,7 +23,7 @@ SUBDIRS =	make lib fuzz bin doc
 TARGETS =
 PREREQS =	bind.keys.h
 
-MANOBJS =	README HISTORY OPTIONS CONTRIBUTING PLATFORMS CODE_OF_CONDUCT
+MANOBJS =	README HISTORY OPTIONS CONTRIBUTING CODE_OF_CONDUCT
 
 @BIND9_MAKE_RULES@
 
@@ -95,11 +97,6 @@ OPTIONS: OPTIONS.md
 
 CONTRIBUTING: CONTRIBUTING.md
 	${PANDOC} --email-obfuscation=none -s --metadata title="CONTRIBUTING" -f markdown-smart -t html CONTRIBUTING.md | \
-		${W3M} -dump -cols 75 -O ascii -T text/html | \
-		sed -e '$${/^$$/d;}' > $@
-
-PLATFORMS: PLATFORMS.md
-	${PANDOC} --email-obfuscation=none -s --metadata title="PLATFORMS" -f markdown-smart -t html PLATFORMS.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 

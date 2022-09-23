@@ -1,7 +1,9 @@
-/*	$NetBSD: tsec.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: tsec.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,8 +95,7 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 		tsec->ukey.key = key;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	tsec->magic = DNS_TSEC_MAGIC;
@@ -120,8 +121,7 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 		dst_key_free(&tsec->ukey.key);
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	tsec->magic = 0;
@@ -148,7 +148,6 @@ dns_tsec_getkey(dns_tsec_t *tsec, void *keyp) {
 		*(dst_key_t **)keyp = tsec->ukey.key;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }

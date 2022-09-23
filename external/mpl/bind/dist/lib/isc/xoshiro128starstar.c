@@ -1,10 +1,12 @@
-/*	$NetBSD: xoshiro128starstar.c,v 1.4 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: xoshiro128starstar.c,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -38,12 +40,12 @@
  */
 ISC_THREAD_LOCAL uint32_t seed[4] = { 0 };
 
-static inline uint32_t
+static uint32_t
 rotl(const uint32_t x, int k) {
 	return ((x << k) | (x >> (32 - k)));
 }
 
-static inline uint32_t
+static uint32_t
 next(void) {
 	uint32_t result_starstar, t;
 

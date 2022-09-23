@@ -1,7 +1,9 @@
-/*	$NetBSD: client.h,v 1.12 2021/04/29 17:26:14 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.13 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -146,11 +148,11 @@ struct ns_clientmgr {
 	/* Unlocked. */
 	unsigned int magic;
 
-	isc_mem_t *	mctx;
-	ns_server_t *	sctx;
-	isc_taskmgr_t * taskmgr;
+	isc_mem_t      *mctx;
+	ns_server_t    *sctx;
+	isc_taskmgr_t  *taskmgr;
 	isc_timermgr_t *timermgr;
-	isc_task_t *	excl;
+	isc_task_t     *excl;
 	isc_refcount_t	references;
 	int		ncpus;
 
@@ -174,43 +176,41 @@ struct ns_clientmgr {
 /*% nameserver client structure */
 struct ns_client {
 	unsigned int	 magic;
-	isc_mem_t *	 mctx;
+	isc_mem_t	*mctx;
 	bool		 allocated; /* Do we need to free it? */
-	ns_server_t *	 sctx;
-	ns_clientmgr_t * manager;
+	ns_server_t	*sctx;
+	ns_clientmgr_t	*manager;
 	ns_clientstate_t state;
 	int		 nupdates;
 	bool		 nodetach;
 	bool		 shuttingdown;
 	unsigned int	 attributes;
-	isc_task_t *	 task;
-	dns_view_t *	 view;
-	dns_dispatch_t * dispatch;
-	isc_nmhandle_t * handle;	/* Permanent pointer to handle */
-	isc_nmhandle_t * sendhandle;	/* Waiting for send callback */
-	isc_nmhandle_t * reqhandle;	/* Waiting for request callback
+	isc_task_t	*task;
+	dns_view_t	*view;
+	dns_dispatch_t	*dispatch;
+	isc_nmhandle_t	*handle;	/* Permanent pointer to handle */
+	isc_nmhandle_t	*sendhandle;	/* Waiting for send callback */
+	isc_nmhandle_t	*reqhandle;	/* Waiting for request callback
 					   (query, update, notify) */
 	isc_nmhandle_t *fetchhandle;	/* Waiting for recursive fetch */
 	isc_nmhandle_t *prefetchhandle; /* Waiting for prefetch / rpzfetch */
 	isc_nmhandle_t *updatehandle;	/* Waiting for update callback */
-	unsigned char * tcpbuf;
-	dns_message_t * message;
-	unsigned char * sendbuf;
+	unsigned char  *tcpbuf;
+	dns_message_t  *message;
+	unsigned char  *sendbuf;
 	dns_rdataset_t *opt;
 	uint16_t	udpsize;
 	uint16_t	extflags;
 	int16_t		ednsversion; /* -1 noedns */
 	void (*cleanup)(ns_client_t *);
-	void (*shutdown)(void *arg, isc_result_t result);
-	void *	      shutdown_arg;
 	ns_query_t    query;
 	isc_time_t    requesttime;
 	isc_stdtime_t now;
 	isc_time_t    tnow;
 	dns_name_t    signername; /*%< [T]SIG key name */
-	dns_name_t *  signer;	  /*%< NULL if not valid sig */
+	dns_name_t   *signer;	  /*%< NULL if not valid sig */
 	bool	      mortal;	  /*%< Die after handling request */
-	isc_quota_t * recursionquota;
+	isc_quota_t  *recursionquota;
 
 	isc_sockaddr_t peeraddr;
 	bool	       peeraddr_valid;
@@ -272,8 +272,7 @@ struct ns_client {
 #define NS_CLIENTATTR_WANTPAD	   0x08000 /*%< pad reply */
 #define NS_CLIENTATTR_USEKEEPALIVE 0x10000 /*%< use TCP keepalive */
 
-#define NS_CLIENTATTR_NOSETFC	0x20000 /*%< don't set servfail cache */
-#define NS_CLIENTATTR_RECURSING 0x40000 /*%< client is recursing */
+#define NS_CLIENTATTR_NOSETFC 0x20000 /*%< don't set servfail cache */
 
 /*
  * Flag to use with the SERVFAIL cache to indicate

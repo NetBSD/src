@@ -1,7 +1,9 @@
-/*	$NetBSD: client.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.11 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -327,8 +329,7 @@ getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 		attrs |= DNS_DISPATCHATTR_IPV6;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	attrmask = 0;
 	attrmask |= DNS_DISPATCHATTR_UDP;
@@ -678,7 +679,7 @@ fetch_done(isc_task_t *task, isc_event_t *event) {
 	client_resfind(rctx, fevent);
 }
 
-static inline isc_result_t
+static isc_result_t
 start_fetch(resctx_t *rctx) {
 	isc_result_t result;
 	int fopts = 0;

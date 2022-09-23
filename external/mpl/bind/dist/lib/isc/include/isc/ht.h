@@ -1,7 +1,9 @@
-/*	$NetBSD: ht.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: ht.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,11 +35,8 @@ typedef struct isc_ht_iter isc_ht_iter_t;
  *\li	'mctx' is a valid memory context.
  *\li	'bits' >=1 and 'bits' <=32
  *
- * Returns:
- *\li	#ISC_R_NOMEMORY		-- not enough memory to create pool
- *\li	#ISC_R_SUCCESS		-- all is well.
  */
-isc_result_t
+void
 isc_ht_init(isc_ht_t **htp, isc_mem_t *mctx, uint8_t bits);
 
 /*%
@@ -102,7 +101,7 @@ isc_ht_delete(isc_ht_t *ht, const unsigned char *key, uint32_t keysize);
  *\li	'ht' is a valid hashtable
  *\li	'itp' is non NULL and '*itp' is NULL.
  */
-isc_result_t
+void
 isc_ht_iter_create(isc_ht_t *ht, isc_ht_iter_t **itp);
 
 /*%
@@ -121,7 +120,7 @@ isc_ht_iter_destroy(isc_ht_iter_t **itp);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- no data in the hashtable
  */
 isc_result_t
@@ -134,7 +133,7 @@ isc_ht_iter_first(isc_ht_iter_t *it);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- end of hashtable reached
  */
 isc_result_t
@@ -147,7 +146,7 @@ isc_ht_iter_next(isc_ht_iter_t *it);
  *\li	'it' is non NULL.
  *
  * Returns:
- * \li 	#ISC_R_SUCCESS	-- success
+ * \li	#ISC_R_SUCCESS	-- success
  * \li	#ISC_R_NOMORE	-- end of hashtable reached
  */
 isc_result_t

@@ -1,7 +1,9 @@
-/*	$NetBSD: nstest.c,v 1.6 2021/08/19 11:50:20 christos Exp $	*/
+/*	$NetBSD: nstest.c,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,6 +32,7 @@
 #include <isc/os.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/resource.h>
 #include <isc/socket.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -67,7 +70,7 @@ ns_server_t *sctx = NULL;
 bool app_running = false;
 int ncpus;
 bool debug_mem_record = true;
-static atomic_bool run_managers = ATOMIC_VAR_INIT(false);
+static atomic_bool run_managers = false;
 
 static bool dst_active = false;
 static bool test_running = false;
@@ -171,7 +174,7 @@ matchview(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
 /*
  * These need to be shut down from a running task.
  */
-static atomic_bool shutdown_done = ATOMIC_VAR_INIT(false);
+static atomic_bool shutdown_done = false;
 static void
 shutdown_managers(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
@@ -297,6 +300,22 @@ ns_test_begin(FILE *logfile, bool start_managers) {
 	test_running = true;
 
 	if (start_managers) {
+		isc_resourcevalue_t files;
+
+		/*
+		 * The 'listenlist_test', 'notify_test', and 'query_test'
+		 * tests need more than 256 descriptors with 8 cpus.
+		 * Bump up to at least 1024.
+		 */
+		result = isc_resource_getcurlimit(isc_resource_openfiles,
+						  &files);
+		if (result == ISC_R_SUCCESS) {
+			if (files < 1024) {
+				files = 1024;
+				(void)isc_resource_setlimit(
+					isc_resource_openfiles, files);
+			}
+		}
 		CHECK(isc_app_start());
 	}
 	if (debug_mem_record) {
@@ -440,7 +459,7 @@ ns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
 	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
 	CHECK(dns_zone_setorigin(zone, origin));
 	dns_zone_setview(zone, view);
-	dns_zone_settype(zone, dns_zone_master);
+	dns_zone_settype(zone, dns_zone_primary);
 	dns_zone_setclass(zone, view->rdclass);
 	dns_view_addzone(view, zone);
 
@@ -938,7 +957,6 @@ fromhex(char c) {
 
 	printf("bad input format: %02x\n", c);
 	exit(3);
-	/* NOTREACHED */
 }
 
 isc_result_t

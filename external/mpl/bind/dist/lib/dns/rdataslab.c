@@ -1,7 +1,9 @@
-/*	$NetBSD: rdataslab.c,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -410,7 +412,7 @@ dns_rdataslab_count(unsigned char *slab, unsigned int reservelen) {
  * 'type' and class 'rdclass', and advance '*current' to
  * point to the next item in the slab.
  */
-static inline void
+static void
 rdata_from_slab(unsigned char **current, dns_rdataclass_t rdclass,
 		dns_rdatatype_t type, dns_rdata_t *rdata) {
 	unsigned char *tcurrent = *current;
@@ -446,7 +448,7 @@ rdata_from_slab(unsigned char **current, dns_rdataclass_t rdclass,
  * contains an rdata identical to 'rdata'.  This does case insensitive
  * comparisons per DNSSEC.
  */
-static inline bool
+static bool
 rdata_in_slab(unsigned char *slab, unsigned int reservelen,
 	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
 	      dns_rdata_t *rdata) {

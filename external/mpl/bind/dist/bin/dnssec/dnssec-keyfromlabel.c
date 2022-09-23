@@ -1,7 +1,9 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.6 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -332,14 +334,14 @@ main(int argc, char **argv) {
 			prepub = strtottl(isc_commandline_argument);
 			break;
 		case 'F':
-		/* Reserved for FIPS mode */
-		/* FALLTHROUGH */
+			/* Reserved for FIPS mode */
+			FALLTHROUGH;
 		case '?':
 			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			/* Does not return. */
 			usage();
@@ -638,7 +640,7 @@ main(int argc, char **argv) {
 		dns_secalg_format(alg, algstr, sizeof(algstr));
 		fatal("failed to get key %s/%s: %s", namestr, algstr,
 		      isc_result_totext(ret));
-		/* NOTREACHED */
+		UNREACHABLE();
 		exit(-1);
 	}
 

@@ -1,7 +1,9 @@
-/*	$NetBSD: dnstap-read.c,v 1.7 2021/02/19 16:42:14 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.8 2022/09/23 12:15:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -265,7 +267,7 @@ print_yaml(dns_dtdata_t *dt) {
 
 		(void)inet_ntop(ip->len == 4 ? AF_INET : AF_INET6, ip->data,
 				buf, sizeof(buf));
-		printf("  query_address: %s\n", buf);
+		printf("  query_address: \"%s\"\n", buf);
 	}
 
 	if (m->has_response_address) {
@@ -274,7 +276,7 @@ print_yaml(dns_dtdata_t *dt) {
 
 		(void)inet_ntop(ip->len == 4 ? AF_INET : AF_INET6, ip->data,
 				buf, sizeof(buf));
-		printf("  response_address: %s\n", buf);
+		printf("  response_address: \"%s\"\n", buf);
 	}
 
 	if (m->has_query_port) {

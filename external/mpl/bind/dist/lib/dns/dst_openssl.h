@@ -1,7 +1,9 @@
-/*	$NetBSD: dst_openssl.h,v 1.4 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,20 +27,19 @@
 #include <isc/log.h>
 #include <isc/result.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if !HAVE_BN_GENCB_NEW
 /*
  * These are new in OpenSSL 1.1.0.  BN_GENCB _cb needs to be declared in
  * the function like this before the BN_GENCB_new call:
  *
- * #if OPENSSL_VERSION_NUMBER < 0x10100000L
+ * #if !HAVE_BN_GENCB_NEW
  *     	 _cb;
  * #endif
  */
 #define BN_GENCB_free(x)    ((void)0)
 #define BN_GENCB_new()	    (&_cb)
 #define BN_GENCB_get_arg(x) ((x)->arg)
-#endif /* if OPENSSL_VERSION_NUMBER < 0x10100000L || \
-	* defined(LIBRESSL_VERSION_NUMBER) */
+#endif /* !HAVE_BN_GENCB_NEW */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 /*

@@ -1,7 +1,9 @@
-/*	$NetBSD: symtab.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,7 +109,7 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 	isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 }
 
-static inline unsigned int
+static unsigned int
 hash(const char *key, bool case_sensitive) {
 	const char *s;
 	unsigned int h = 0;

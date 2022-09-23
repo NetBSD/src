@@ -1,10 +1,12 @@
-/*	$NetBSD: interfaceiter.c,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -92,8 +94,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src) {
 		dst->zone = ((struct sockaddr_in6 *)src)->sin6_scope_id;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
@@ -387,8 +388,9 @@ internal_current6(isc_interfaceiter_t *iter) {
 		snprintf(iter->current.name, sizeof(iter->current.name),
 			 "TCP/IPv6 Interface %u", iter->pos6 + 1);
 
-		for (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++) {
 			iter->current.netmask.type.in6.s6_addr[i] = 0xff;
+		}
 		iter->current.netmask.family = AF_INET6;
 		if (IN6_IS_ADDR_LOOPBACK(&iter->current.address.type.in6)) {
 			iter->v6loop = true;

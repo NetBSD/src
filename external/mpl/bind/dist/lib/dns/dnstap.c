@@ -1,7 +1,9 @@
-/*	$NetBSD: dnstap.c,v 1.11 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.12 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -635,8 +637,7 @@ dnstap_type(dns_dtmsgtype_t msgtype) {
 	case DNS_DTTYPE_UR:
 		return (DNSTAP__MESSAGE__TYPE__UPDATE_RESPONSE);
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
@@ -809,14 +810,15 @@ dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
 		dm.m.response_time_nsec = isc_time_nanoseconds(t);
 		dm.m.has_response_time_nsec = 1;
 
-		cpbuf(buf, &dm.m.response_message, &dm.m.has_response_message);
-
-		/* Types RR and FR get both query and response times */
-		if (msgtype == DNS_DTTYPE_CR || msgtype == DNS_DTTYPE_AR) {
+		/*
+		 * Types RR and FR can fall through and get the query
+		 * time set as well. Any other response type, break.
+		 */
+		if (msgtype != DNS_DTTYPE_RR && msgtype != DNS_DTTYPE_FR) {
 			break;
 		}
 
-	/* FALLTHROUGH */
+		FALLTHROUGH;
 	case DNS_DTTYPE_AQ:
 	case DNS_DTTYPE_CQ:
 	case DNS_DTTYPE_FQ:
@@ -832,14 +834,19 @@ dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
 		dm.m.has_query_time_sec = 1;
 		dm.m.query_time_nsec = isc_time_nanoseconds(t);
 		dm.m.has_query_time_nsec = 1;
-
-		cpbuf(buf, &dm.m.query_message, &dm.m.has_query_message);
 		break;
 	default:
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSTAP,
 			      DNS_LOGMODULE_DNSTAP, ISC_LOG_ERROR,
 			      "invalid dnstap message type %d", msgtype);
 		return;
+	}
+
+	/* Query and response messages */
+	if ((msgtype & DNS_DTTYPE_QUERY) != 0) {
+		cpbuf(buf, &dm.m.query_message, &dm.m.has_query_message);
+	} else if ((msgtype & DNS_DTTYPE_RESPONSE) != 0) {
+		cpbuf(buf, &dm.m.response_message, &dm.m.has_response_message);
 	}
 
 	/* Zone/bailiwick */
@@ -985,8 +992,7 @@ dns_dt_open(const char *filename, dns_dtmode_t mode, isc_mem_t *mctx,
 		result = ISC_R_NOTIMPLEMENTED;
 		goto cleanup;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	isc_mem_attach(mctx, &handle->mctx);

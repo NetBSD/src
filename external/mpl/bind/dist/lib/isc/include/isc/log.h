@@ -1,7 +1,9 @@
-/*	$NetBSD: log.h,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,7 +105,7 @@ typedef enum {
  * isc_log_registercategories.
  */
 struct isc_logcategory {
-	const char * name;
+	const char  *name;
 	unsigned int id;
 };
 
@@ -111,7 +113,7 @@ struct isc_logcategory {
  * Similar to isc_logcategory, but for all the modules a library defines.
  */
 struct isc_logmodule {
-	const char * name;
+	const char  *name;
 	unsigned int id;
 };
 
@@ -162,7 +164,7 @@ typedef union isc_logdestination {
  * the order of the names.
  */
 LIBISC_EXTERNAL_DATA extern isc_logcategory_t isc_categories[];
-LIBISC_EXTERNAL_DATA extern isc_log_t *	      isc_lctx;
+LIBISC_EXTERNAL_DATA extern isc_log_t	     *isc_lctx;
 LIBISC_EXTERNAL_DATA extern isc_logmodule_t   isc_modules[];
 /*@}*/
 
@@ -444,7 +446,7 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 isc_result_t
 isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
 		   const isc_logcategory_t *category,
-		   const isc_logmodule_t *  module);
+		   const isc_logmodule_t   *module);
 /*%<
  * Associate a named logging channel with a category and module that
  * will use it.

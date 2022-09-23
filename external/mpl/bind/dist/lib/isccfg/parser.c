@@ -1,7 +1,9 @@
-/*	$NetBSD: parser.c,v 1.11 2021/04/05 11:27:04 rillig Exp $	*/
+/*	$NetBSD: parser.c,v 1.12 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND BSD-2-Clause
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +11,35 @@
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
+ */
+
+/*
+ * duration_fromtext initially taken from OpenDNSSEC code base.
+ * Modified to fit the BIND 9 code.
+ *
+ * Copyright (c) 2009-2018 NLNet Labs.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*! \file */
@@ -392,8 +423,7 @@ cfg_tuple_get(const cfg_obj_t *tupleobj, const char *name) {
 			return (tupleobj->value.tuple[i]);
 		}
 	}
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 isc_result_t
@@ -1133,34 +1163,6 @@ cfg_obj_asduration(const cfg_obj_t *obj) {
 	return (duration);
 }
 
-/*
- * duration_fromtext initially taken from OpenDNSSEC code base.
- * Modified to fit the BIND 9 code.
- *
- * Copyright (c) 2009-2018 NLNet Labs.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 static isc_result_t
 duration_fromtext(isc_textregion_t *source, cfg_duration_t *duration) {
 	char buf[CFG_DURATION_MAXLEN];
@@ -2266,11 +2268,13 @@ cleanup:
 
 void
 cfg_print_spacelist(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	const cfg_list_t *list = &obj->value.list;
-	const cfg_listelt_t *elt;
+	const cfg_list_t *list = NULL;
+	const cfg_listelt_t *elt = NULL;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(obj != NULL);
+
+	list = &obj->value.list;
 
 	for (elt = ISC_LIST_HEAD(*list); elt != NULL;
 	     elt = ISC_LIST_NEXT(elt, link)) {
@@ -2699,8 +2703,7 @@ cfg_print_mapbody(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 			} else if (result == ISC_R_NOTFOUND) {
 				/* do nothing */
 			} else {
-				INSIST(0);
-				ISC_UNREACHABLE();
+				UNREACHABLE();
 			}
 		}
 	}
@@ -3035,8 +3038,7 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 			isc_netaddr_any6(na);
 			return (ISC_R_SUCCESS);
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		if ((flags & (CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK)) != 0) {
@@ -3319,8 +3321,7 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 		addrlen = 128;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 	expectprefix = (result == ISC_R_IPV4PREFIX);
 	CHECK(cfg_peektoken(pctx, 0));

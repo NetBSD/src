@@ -1,10 +1,12 @@
-/*	$NetBSD: nsecify.c,v 1.6 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.7 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -28,16 +30,16 @@
 
 static isc_mem_t *mctx = NULL;
 
-ISC_PLATFORM_NORETURN_PRE static inline void
+ISC_PLATFORM_NORETURN_PRE static void
 fatal(const char *message) ISC_PLATFORM_NORETURN_POST;
 
-static inline void
+static void
 fatal(const char *message) {
 	fprintf(stderr, "%s\n", message);
 	exit(1);
 }
 
-static inline void
+static void
 check_result(isc_result_t result, const char *message) {
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "%s: %s\n", message, isc_result_totext(result));
@@ -45,7 +47,7 @@ check_result(isc_result_t result, const char *message) {
 	}
 }
 
-static inline bool
+static bool
 active_node(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node) {
 	dns_rdatasetiter_t *rdsiter;
 	bool active = false;
@@ -89,7 +91,7 @@ active_node(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node) {
 	return (active);
 }
 
-static inline isc_result_t
+static isc_result_t
 next_active(dns_db_t *db, dns_dbversion_t *version, dns_dbiterator_t *dbiter,
 	    dns_name_t *name, dns_dbnode_t **nodep) {
 	isc_result_t result;

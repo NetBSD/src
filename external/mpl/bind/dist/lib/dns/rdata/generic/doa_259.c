@@ -1,7 +1,9 @@
-/*	$NetBSD: doa_259.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +18,7 @@
 
 #define RRTYPE_DOA_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_doa(ARGS_FROMTEXT) {
 	isc_token_t token;
 
@@ -71,7 +73,7 @@ fromtext_doa(ARGS_FROMTEXT) {
 	}
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_doa(ARGS_TOTEXT) {
 	char buf[sizeof("4294967295 ")];
 	isc_region_t region;
@@ -125,7 +127,7 @@ totext_doa(ARGS_TOTEXT) {
 	}
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_doa(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -156,7 +158,7 @@ fromwire_doa(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_doa(ARGS_TOWIRE) {
 	isc_region_t region;
 
@@ -170,7 +172,7 @@ towire_doa(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-static inline int
+static int
 compare_doa(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -188,7 +190,7 @@ compare_doa(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_doa(ARGS_FROMSTRUCT) {
 	dns_rdata_doa_t *doa = source;
 
@@ -205,7 +207,7 @@ fromstruct_doa(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, doa->data, doa->data_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_doa(ARGS_TOSTRUCT) {
 	dns_rdata_doa_t *doa = target;
 	isc_region_t region;
@@ -287,7 +289,7 @@ cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_doa(ARGS_FREESTRUCT) {
 	dns_rdata_doa_t *doa = source;
 
@@ -308,7 +310,7 @@ freestruct_doa(ARGS_FREESTRUCT) {
 	doa->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_doa(ARGS_ADDLDATA) {
 	UNUSED(rdata);
 	UNUSED(add);
@@ -319,7 +321,7 @@ additionaldata_doa(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_doa(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -330,7 +332,7 @@ digest_doa(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_doa(ARGS_CHECKOWNER) {
 	UNUSED(name);
 	UNUSED(type);
@@ -342,7 +344,7 @@ checkowner_doa(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_doa(ARGS_CHECKNAMES) {
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -353,7 +355,7 @@ checknames_doa(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_doa(ARGS_COMPARE) {
 	return (compare_doa(rdata1, rdata2));
 }

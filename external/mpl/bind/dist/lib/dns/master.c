@@ -1,7 +1,9 @@
-/*	$NetBSD: master.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: master.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -341,14 +343,14 @@ static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
 static dns_name_t const ip6_arpa = DNS_NAME_INITABSOLUTE(ip6_arpa_data,
 							 ip6_arpa_offsets);
 
-static inline bool
+static bool
 dns_master_isprimary(dns_loadctx_t *lctx) {
 	return ((lctx->options & DNS_MASTER_ZONE) != 0 &&
 		(lctx->options & DNS_MASTER_SLAVE) == 0 &&
 		(lctx->options & DNS_MASTER_KEY) == 0);
 }
 
-static inline isc_result_t
+static isc_result_t
 gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token, bool eol,
 	 dns_rdatacallbacks_t *callbacks) {
 	isc_result_t result;
@@ -550,8 +552,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx, unsigned int options,
 		lctx->load = load_map;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	if (lex != NULL) {
@@ -684,7 +685,10 @@ genname(char *name, int it, char *buffer, size_t length) {
 	char fmt[sizeof("%04000000000d")];
 	char numbuf[128];
 	char *cp;
-	char mode[2];
+	char mode[2] = { 0 };
+	char brace[2] = { 0 };
+	char comma1[2] = { 0 };
+	char comma2[2] = { 0 };
 	int delta = 0;
 	isc_textregion_t r;
 	unsigned int n;
@@ -709,23 +713,31 @@ genname(char *name, int it, char *buffer, size_t length) {
 			strlcpy(fmt, "%d", sizeof(fmt));
 			/* Get format specifier. */
 			if (*name == '{') {
-				n = sscanf(name, "{%d,%u,%1[doxXnN]}", &delta,
-					   &width, mode);
-				switch (n) {
-				case 1:
-					break;
-				case 2:
+				n = sscanf(name,
+					   "{%d%1[,}]%u%1[,}]%1[doxXnN]%1[}]",
+					   &delta, comma1, &width, comma2, mode,
+					   brace);
+				if (n < 2 || n > 6) {
+					return (DNS_R_SYNTAX);
+				}
+				if (comma1[0] == '}') {
+					/* %{delta} */
+				} else if (comma1[0] == ',' && comma2[0] == '}')
+				{
+					/* %{delta,width} */
 					n = snprintf(fmt, sizeof(fmt), "%%0%ud",
 						     width);
-					break;
-				case 3:
+				} else if (comma1[0] == ',' &&
+					   comma2[0] == ',' && mode[0] != 0 &&
+					   brace[0] == '}')
+				{
+					/* %{delta,width,format} */
 					if (mode[0] == 'n' || mode[0] == 'N') {
 						nibblemode = true;
 					}
 					n = snprintf(fmt, sizeof(fmt),
 						     "%%0%u%c", width, mode[0]);
-					break;
-				default:
+				} else {
 					return (DNS_R_SYNTAX);
 				}
 				if (n >= sizeof(fmt)) {
@@ -735,6 +747,13 @@ genname(char *name, int it, char *buffer, size_t length) {
 				while (*name != '\0' && *name++ != '}') {
 					continue;
 				}
+			}
+			/*
+			 * 'it' is >= 0 so we don't need to check for
+			 * underflow.
+			 */
+			if ((it > 0 && delta > INT_MAX - it)) {
+				return (ISC_R_RANGE);
 			}
 			if (nibblemode) {
 				n = nibbles(numbuf, sizeof(numbuf), width,
@@ -801,7 +820,8 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	isc_buffer_t target;
 	isc_result_t result;
 	isc_textregion_t r;
-	int i, n, start, stop, step = 0;
+	int n, start, stop, step = 0;
+	unsigned int i;
 	dns_incctx_t *ictx;
 	char dummy[2];
 
@@ -856,7 +876,7 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 		goto insist_cleanup;
 	}
 
-	for (i = start; i <= stop; i += step) {
+	for (i = start; i <= (unsigned int)stop; i += step) {
 		result = genname(lhs, i, lhsbuf, DNS_MASTER_LHS);
 		if (result != ISC_R_SUCCESS) {
 			goto error_cleanup;
@@ -2215,7 +2235,7 @@ cleanup:
  * Fill/check exists buffer with 'len' bytes.  Track remaining bytes to be
  * read when incrementally filling the buffer.
  */
-static inline isc_result_t
+static isc_result_t
 read_and_check(bool do_read, isc_buffer_t *buffer, size_t len, FILE *f,
 	       uint32_t *totallen) {
 	isc_result_t result;

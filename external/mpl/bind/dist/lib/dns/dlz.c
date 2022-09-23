@@ -1,7 +1,9 @@
-/*	$NetBSD: dlz.c,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dlz.c,v 1.7 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +90,7 @@ dlz_initialize(void) {
 /*%
  * Searches the dlz_implementations list for a driver matching name.
  */
-static inline dns_dlzimplementation_t *
+static dns_dlzimplementation_t *
 dlz_impfind(const char *name) {
 	dns_dlzimplementation_t *imp;
 
@@ -230,6 +232,7 @@ dns_dlzcreate(isc_mem_t *mctx, const char *dlzname, const char *drivername,
 
 	/* impinfo->methods->create failed. */
 	RWUNLOCK(&dlz_implock, isc_rwlocktype_read);
+	isc_mem_free(mctx, db->dlzname);
 	isc_mem_put(mctx, db, sizeof(dns_dlzdb_t));
 	return (result);
 }

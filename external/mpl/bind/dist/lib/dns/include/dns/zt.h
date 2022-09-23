@@ -1,7 +1,9 @@
-/*	$NetBSD: zt.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: zt.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,7 +164,7 @@ dns_zt_asyncload(dns_zt_t *zt, bool newonly, dns_zt_allloaded_t alldone,
  */
 
 isc_result_t
-dns_zt_freezezones(dns_zt_t *zt, bool freeze);
+dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze);
 /*%<
  * Freeze/thaw updates to master zones.
  * Any pending updates will be flushed.

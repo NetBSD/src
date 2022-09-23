@@ -1,7 +1,9 @@
-/*	$NetBSD: query.h,v 1.6 2021/08/19 11:50:20 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +33,7 @@
 
 /*% nameserver database version structure */
 typedef struct ns_dbversion {
-	dns_db_t *	 db;
+	dns_db_t	*db;
 	dns_dbversion_t *version;
 	bool		 acl_checked;
 	bool		 queryok;
@@ -44,9 +46,9 @@ typedef struct ns_dbversion {
  */
 typedef struct ns_query_recparam {
 	dns_rdatatype_t qtype;
-	dns_name_t *	qname;
+	dns_name_t     *qname;
 	dns_fixedname_t fqname;
-	dns_name_t *	qdomain;
+	dns_name_t     *qdomain;
 	dns_fixedname_t fqdomain;
 } ns_query_recparam_t;
 
@@ -55,36 +57,36 @@ struct ns_query {
 	unsigned int	 attributes;
 	unsigned int	 restarts;
 	bool		 timerset;
-	dns_name_t *	 qname;
-	dns_name_t *	 origqname;
+	dns_name_t	*qname;
+	dns_name_t	*origqname;
 	dns_rdatatype_t	 qtype;
 	unsigned int	 dboptions;
 	unsigned int	 fetchoptions;
-	dns_db_t *	 gluedb;
-	dns_db_t *	 authdb;
-	dns_zone_t *	 authzone;
+	dns_db_t	*gluedb;
+	dns_db_t	*authdb;
+	dns_zone_t	*authzone;
 	bool		 authdbset;
 	bool		 isreferral;
 	isc_mutex_t	 fetchlock;
-	dns_fetch_t *	 fetch;
-	dns_fetch_t *	 prefetch;
-	dns_rpz_st_t *	 rpz_st;
+	dns_fetch_t	*fetch;
+	dns_fetch_t	*prefetch;
+	dns_rpz_st_t	*rpz_st;
 	isc_bufferlist_t namebufs;
 	ISC_LIST(ns_dbversion_t) activeversions;
 	ISC_LIST(ns_dbversion_t) freeversions;
 	dns_rdataset_t *dns64_aaaa;
 	dns_rdataset_t *dns64_sigaaaa;
-	bool *		dns64_aaaaok;
+	bool	       *dns64_aaaaok;
 	unsigned int	dns64_aaaaoklen;
 	unsigned int	dns64_options;
 	unsigned int	dns64_ttl;
 
 	struct {
-		dns_db_t *	db;
-		dns_zone_t *	zone;
-		dns_dbnode_t *	node;
+		dns_db_t       *db;
+		dns_zone_t     *zone;
+		dns_dbnode_t   *node;
 		dns_rdatatype_t qtype;
-		dns_name_t *	fname;
+		dns_name_t     *fname;
 		dns_fixedname_t fixed;
 		isc_result_t	result;
 		dns_rdataset_t *rdataset;
@@ -126,8 +128,8 @@ typedef struct query_ctx query_ctx_t;
 /* query context structure */
 struct query_ctx {
 	isc_buffer_t *dbuf;	     /* name buffer */
-	dns_name_t *  fname;	     /* found name from DB lookup */
-	dns_name_t *  tname;	     /* temporary name, used
+	dns_name_t   *fname;	     /* found name from DB lookup */
+	dns_name_t   *tname;	     /* temporary name, used
 				      * when processing ANY
 				      * queries */
 	dns_rdataset_t *rdataset;    /* found rdataset */
@@ -147,6 +149,7 @@ struct query_ctx {
 	bool authoritative;		    /* authoritative query? */
 	bool want_restart;		    /* CNAME chain or other
 					     * restart needed */
+	bool		refresh_rrset;	    /* stale RRset refresh needed */
 	bool		need_wildcardproof; /* wildcard proof needed */
 	bool		nxrewrite;	    /* negative answer from RPZ */
 	bool		findcoveringnsec;   /* lookup covering NSEC */
@@ -159,19 +162,19 @@ struct query_ctx {
 
 	dns_fetchevent_t *event; /* recursion event */
 
-	dns_db_t *	 db;	  /* zone or cache database */
+	dns_db_t	*db;	  /* zone or cache database */
 	dns_dbversion_t *version; /* DB version */
-	dns_dbnode_t *	 node;	  /* DB node */
+	dns_dbnode_t	*node;	  /* DB node */
 
-	dns_db_t *	 zdb;	 /* zone DB values, saved */
-	dns_dbnode_t *	 znode;	 /* while searching cache */
-	dns_name_t *	 zfname; /* for a better answer */
+	dns_db_t	*zdb;	 /* zone DB values, saved */
+	dns_dbnode_t	*znode;	 /* while searching cache */
+	dns_name_t	*zfname; /* for a better answer */
 	dns_dbversion_t *zversion;
-	dns_rdataset_t * zrdataset;
-	dns_rdataset_t * zsigrdataset;
+	dns_rdataset_t	*zrdataset;
+	dns_rdataset_t	*zsigrdataset;
 
 	dns_rpz_st_t *rpz_st; /* RPZ state */
-	dns_zone_t *  zone;   /* zone to search */
+	dns_zone_t   *zone;   /* zone to search */
 
 	dns_view_t *view; /* client view */
 

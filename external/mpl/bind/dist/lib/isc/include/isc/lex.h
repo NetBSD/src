@@ -1,7 +1,9 @@
-/*	$NetBSD: lex.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,11 +65,11 @@ ISC_LANG_BEGINDECLS
  * Various options for isc_lex_gettoken().
  */
 
-#define ISC_LEXOPT_EOL	     0x01 /*%< Want end-of-line token. */
-#define ISC_LEXOPT_EOF	     0x02 /*%< Want end-of-file token. */
-#define ISC_LEXOPT_INITIALWS 0x04 /*%< Want initial whitespace. */
-#define ISC_LEXOPT_NUMBER    0x08 /*%< Recognize numbers. */
-#define ISC_LEXOPT_QSTRING   0x10 /*%< Recognize qstrings. */
+#define ISC_LEXOPT_EOL	     0x0001 /*%< Want end-of-line token. */
+#define ISC_LEXOPT_EOF	     0x0002 /*%< Want end-of-file token. */
+#define ISC_LEXOPT_INITIALWS 0x0004 /*%< Want initial whitespace. */
+#define ISC_LEXOPT_NUMBER    0x0008 /*%< Recognize numbers. */
+#define ISC_LEXOPT_QSTRING   0x0010 /*%< Recognize qstrings. */
 /*@}*/
 
 /*@{*/
@@ -78,14 +80,16 @@ ISC_LANG_BEGINDECLS
  * the paren count is > 0.  To use this option, '(' and ')' must be special
  * characters.
  */
-#define ISC_LEXOPT_DNSMULTILINE 0x20 /*%< Handle '(' and ')'. */
-#define ISC_LEXOPT_NOMORE	0x40 /*%< Want "no more" token. */
+#define ISC_LEXOPT_DNSMULTILINE 0x0020 /*%< Handle '(' and ')'. */
+#define ISC_LEXOPT_NOMORE	0x0040 /*%< Want "no more" token. */
 
-#define ISC_LEXOPT_CNUMBER	    0x80  /*%< Recognize octal and hex. */
-#define ISC_LEXOPT_ESCAPE	    0x100 /*%< Recognize escapes. */
-#define ISC_LEXOPT_QSTRINGMULTILINE 0x200 /*%< Allow multiline "" strings */
-#define ISC_LEXOPT_OCTAL	    0x400 /*%< Expect a octal number. */
-#define ISC_LEXOPT_BTEXT	    0x800 /*%< Bracketed text. */
+#define ISC_LEXOPT_CNUMBER	    0x0080 /*%< Recognize octal and hex. */
+#define ISC_LEXOPT_ESCAPE	    0x0100 /*%< Recognize escapes. */
+#define ISC_LEXOPT_QSTRINGMULTILINE 0x0200 /*%< Allow multiline "" strings */
+#define ISC_LEXOPT_OCTAL	    0x0400 /*%< Expect a octal number. */
+#define ISC_LEXOPT_BTEXT	    0x0800 /*%< Bracketed text. */
+#define ISC_LEXOPT_VPAIR	    0x1000 /*%< Recognize value pair. */
+#define ISC_LEXOPT_QVPAIR	    0x2000 /*%< Recognize quoted value pair. */
 /*@}*/
 /*@{*/
 /*!
@@ -119,7 +123,9 @@ typedef enum {
 	isc_tokentype_initialws = 6,
 	isc_tokentype_special = 7,
 	isc_tokentype_nomore = 8,
-	isc_tokentype_btext = 8
+	isc_tokentype_btext = 9,
+	isc_tokentype_vpair = 10,
+	isc_tokentype_qvpair = 11,
 } isc_tokentype_t;
 
 typedef union {
@@ -127,7 +133,7 @@ typedef union {
 	unsigned long	 as_ulong;
 	isc_region_t	 as_region;
 	isc_textregion_t as_textregion;
-	void *		 as_pointer;
+	void		*as_pointer;
 } isc_tokenvalue_t;
 
 typedef struct isc_token {

@@ -1,7 +1,9 @@
-/*	$NetBSD: sshfp_44.c,v 1.8 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.9 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +20,7 @@
 
 #define RRTYPE_SSHFP_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_sshfp(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int len = -1;
@@ -71,7 +73,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, len));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_sshfp(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -123,7 +125,7 @@ totext_sshfp(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_sshfp(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -149,7 +151,7 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_sshfp(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -162,7 +164,7 @@ towire_sshfp(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_sshfp(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -178,7 +180,7 @@ compare_sshfp(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	dns_rdata_sshfp_t *sshfp = source;
 
@@ -196,7 +198,7 @@ fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sshfp->digest, sshfp->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_sshfp(ARGS_TOSTRUCT) {
 	dns_rdata_sshfp_t *sshfp = target;
 	isc_region_t region;
@@ -226,7 +228,7 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_sshfp(ARGS_FREESTRUCT) {
 	dns_rdata_sshfp_t *sshfp = source;
 
@@ -243,7 +245,7 @@ freestruct_sshfp(ARGS_FREESTRUCT) {
 	sshfp->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_sshfp(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
 
@@ -254,7 +256,7 @@ additionaldata_sshfp(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_sshfp(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -265,7 +267,7 @@ digest_sshfp(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_sshfp(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_sshfp);
 
@@ -277,7 +279,7 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_sshfp(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
 
@@ -288,7 +290,7 @@ checknames_sshfp(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_sshfp(ARGS_COMPARE) {
 	return (compare_sshfp(rdata1, rdata2));
 }

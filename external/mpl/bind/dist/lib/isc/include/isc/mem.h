@@ -1,7 +1,9 @@
-/*	$NetBSD: mem.h,v 1.8 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.9 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -119,7 +121,7 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
  */
 
 #if !defined(ISC_MEM_USE_INTERNAL_MALLOC) && !__SANITIZE_ADDRESS__
-#define ISC_MEM_USE_INTERNAL_MALLOC 1
+#define ISC_MEM_USE_INTERNAL_MALLOC 0
 #endif /* ifndef ISC_MEM_USE_INTERNAL_MALLOC */
 
 /*
@@ -130,10 +132,26 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
 #define ISC_MEMFLAG_FILL \
 	0x00000004 /* fill with pattern after alloc and frees */
 
+/*%
+ * Define ISC_MEM_DEFAULTFILL=1 to turn filling the memory with pattern
+ * after alloc and free.
+ */
 #if !ISC_MEM_USE_INTERNAL_MALLOC
+
+#if ISC_MEM_DEFAULTFILL
+#define ISC_MEMFLAG_DEFAULT ISC_MEMFLAG_FILL
+#else /* if ISC_MEM_DEFAULTFILL */
 #define ISC_MEMFLAG_DEFAULT 0
+#endif /* if ISC_MEM_DEFAULTFILL */
+
 #else /* if !ISC_MEM_USE_INTERNAL_MALLOC */
+
+#if ISC_MEM_DEFAULTFILL
 #define ISC_MEMFLAG_DEFAULT ISC_MEMFLAG_INTERNAL | ISC_MEMFLAG_FILL
+#else /* if ISC_MEM_DEFAULTFILL */
+#define ISC_MEMFLAG_DEFAULT ISC_MEMFLAG_INTERNAL
+#endif /* if ISC_MEM_DEFAULTFILL */
+
 #endif /* if !ISC_MEM_USE_INTERNAL_MALLOC */
 
 /*%
@@ -495,33 +513,6 @@ isc_mempool_setname(isc_mempool_t *mpctx, const char *name);
  * Requires:
  *\li	mpctx is a valid pool.
  *\li	name != NULL;
- */
-
-void
-isc_mempool_associatelock(isc_mempool_t *mpctx, isc_mutex_t *lock);
-/*%<
- * Associate a lock with this memory pool.
- *
- * This lock is used when getting or putting items using this memory pool,
- * and it is also used to set or get internal state via the isc_mempool_get*()
- * and isc_mempool_set*() set of functions.
- *
- * Multiple pools can each share a single lock.  For instance, if "manager"
- * type object contained pools for various sizes of events, and each of
- * these pools used a common lock.  Note that this lock must NEVER be used
- * by other than mempool routines once it is given to a pool, since that can
- * easily cause double locking.
- *
- * Requires:
- *
- *\li	mpctpx is a valid pool.
- *
- *\li	lock != NULL.
- *
- *\li	No previous lock is assigned to this pool.
- *
- *\li	The lock is initialized before calling this function via the normal
- *	means of doing that.
  */
 
 /*

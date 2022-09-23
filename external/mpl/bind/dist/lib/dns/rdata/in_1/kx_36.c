@@ -1,7 +1,9 @@
-/*	$NetBSD: kx_36.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: kx_36.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +20,7 @@
 
 #define RRTYPE_KX_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_kx(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
@@ -49,7 +51,7 @@ fromtext_in_kx(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_kx(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
@@ -78,7 +80,7 @@ totext_in_kx(ARGS_TOTEXT) {
 	return (dns_name_totext(&prefix, sub, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_kx(ARGS_FROMWIRE) {
 	dns_name_t name;
 	isc_region_t sregion;
@@ -102,7 +104,7 @@ fromwire_in_kx(ARGS_FROMWIRE) {
 	return (dns_name_fromwire(&name, source, dctx, options, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_kx(ARGS_TOWIRE) {
 	dns_name_t name;
 	dns_offsets_t offsets;
@@ -123,7 +125,7 @@ towire_in_kx(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
+static int
 compare_in_kx(ARGS_COMPARE) {
 	dns_name_t name1;
 	dns_name_t name2;
@@ -158,7 +160,7 @@ compare_in_kx(ARGS_COMPARE) {
 	return (dns_name_rdatacompare(&name1, &name2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_kx(ARGS_FROMSTRUCT) {
 	dns_rdata_in_kx_t *kx = source;
 	isc_region_t region;
@@ -177,7 +179,7 @@ fromstruct_in_kx(ARGS_FROMSTRUCT) {
 	return (isc_buffer_copyregion(target, &region));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_kx(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_in_kx_t *kx = target;
@@ -205,7 +207,7 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_kx(ARGS_FREESTRUCT) {
 	dns_rdata_in_kx_t *kx = source;
 
@@ -221,7 +223,7 @@ freestruct_in_kx(ARGS_FREESTRUCT) {
 	kx->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_kx(ARGS_ADDLDATA) {
 	dns_name_t name;
 	dns_offsets_t offsets;
@@ -238,7 +240,7 @@ additionaldata_in_kx(ARGS_ADDLDATA) {
 	return ((add)(arg, &name, dns_rdatatype_a));
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_kx(ARGS_DIGEST) {
 	isc_region_t r1, r2;
 	dns_name_t name;
@@ -256,7 +258,7 @@ digest_in_kx(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline bool
+static bool
 checkowner_in_kx(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_kx);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -269,7 +271,7 @@ checkowner_in_kx(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_kx(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_kx);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -281,7 +283,7 @@ checknames_in_kx(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_kx(ARGS_COMPARE) {
 	return (compare_in_kx(rdata1, rdata2));
 }

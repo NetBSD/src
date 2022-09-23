@@ -1,38 +1,25 @@
-/*	$NetBSD: dlz_dbi.h,v 1.4 2020/05/24 19:46:21 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.h,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * STICHTING NLNET BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * SPDX-License-Identifier: MPL-2.0 and ISC
  *
  * The development of Dynamically Loadable Zones (DLZ) for Bind 9 was
  * conceived and contributed by Rob Butler.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and distribute this software for any purpose
+ * with or without fee is hereby granted, provided that the above copyright
+ * notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ROB BUTLER
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * ROB BUTLER BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL STICHTING NLNET BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <stdbool.h>
@@ -63,7 +50,7 @@ typedef struct driverinstance driverinstance_t;
  * special tokens are %zone%, %record%, %client%
  */
 struct query_segment {
-	void *	     cmd;
+	void	    *cmd;
 	unsigned int strlen;
 	bool	     direct;
 	DLZ_LINK(query_segment_t) link;
@@ -77,17 +64,17 @@ struct query_segment {
  * make sure no two threads try to use the same DBI at a time.
  */
 struct dbinstance {
-	void *	      dbconn;
+	void	     *dbconn;
 	query_list_t *allnodes_q;
 	query_list_t *allowxfr_q;
 	query_list_t *authority_q;
 	query_list_t *findzone_q;
 	query_list_t *lookup_q;
 	query_list_t *countzone_q;
-	char *	      query_buf;
-	char *	      zone;
-	char *	      record;
-	char *	      client;
+	char	     *query_buf;
+	char	     *zone;
+	char	     *record;
+	char	     *client;
 	dlz_mutex_t   lock;
 	DLZ_LINK(dbinstance_t) link;
 };

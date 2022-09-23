@@ -1,7 +1,9 @@
-/*	$NetBSD: statschannel.c,v 1.11 2021/04/05 11:29:49 rillig Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.12 2022/09/23 12:15:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,8 +101,8 @@ user_zonetype(dns_zone_t *zone) {
 		const dns_zonetype_t type;
 		const char *const string;
 	} typemap[] = { { dns_zone_none, "none" },
-			{ dns_zone_master, "master" },
-			{ dns_zone_slave, "slave" },
+			{ dns_zone_primary, "master" },
+			{ dns_zone_secondary, "slave" },
 			{ dns_zone_mirror, "mirror" },
 			{ dns_zone_stub, "stub" },
 			{ dns_zone_staticstub, "static-stub" },
@@ -197,7 +199,7 @@ static int tcpoutsizestats_index[dns_sizecounter_out_max];
 static int dnstapstats_index[dns_dnstapcounter_max];
 static int gluecachestats_index[dns_gluecachestatscounter_max];
 
-static inline void
+static void
 set_desc(int counter, int maxcounter, const char *fdesc, const char **fdescs,
 	 const char *xdesc, const char **xdescs) {
 	REQUIRE(counter < maxcounter);
@@ -1828,7 +1830,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
 	TRY0(xmlTextWriterEndElement(writer));
 
-	if (dns_zone_gettype(zone) == dns_zone_slave) {
+	if (dns_zone_gettype(zone) == dns_zone_secondary) {
 		result = dns_zone_getexpiretime(zone, &timestamp);
 		if (result != ISC_R_SUCCESS) {
 			goto error;
@@ -2674,7 +2676,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	isc_time_formatISO8601(&timestamp, buf, 64);
 	json_object_object_add(zoneobj, "loaded", json_object_new_string(buf));
 
-	if (dns_zone_gettype(zone) == dns_zone_slave) {
+	if (dns_zone_gettype(zone) == dns_zone_secondary) {
 		result = dns_zone_getexpiretime(zone, &timestamp);
 		if (result != ISC_R_SUCCESS) {
 			goto error;

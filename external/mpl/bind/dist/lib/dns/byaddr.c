@@ -1,7 +1,9 @@
-/*	$NetBSD: byaddr.c,v 1.6 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.7 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +110,7 @@ struct dns_byaddr {
 
 #define MAX_RESTARTS 16
 
-static inline isc_result_t
+static isc_result_t
 copy_ptr_targets(dns_byaddr_t *byaddr, dns_rdataset_t *rdataset) {
 	isc_result_t result;
 	dns_name_t *name;

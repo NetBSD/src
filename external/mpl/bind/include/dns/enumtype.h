@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 1998-2021  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2022  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 /***************
@@ -82,6 +82,8 @@ enum {
 	dns_rdatatype_openpgpkey = 61,
 	dns_rdatatype_csync = 62,
 	dns_rdatatype_zonemd = 63,
+	dns_rdatatype_svcb = 64,
+	dns_rdatatype_https = 65,
 	dns_rdatatype_spf = 99,
 	dns_rdatatype_nid = 104,
 	dns_rdatatype_l32 = 105,
@@ -169,6 +171,8 @@ enum {
 #define dns_rdatatype_openpgpkey	((dns_rdatatype_t)dns_rdatatype_openpgpkey)
 #define dns_rdatatype_csync	((dns_rdatatype_t)dns_rdatatype_csync)
 #define dns_rdatatype_zonemd	((dns_rdatatype_t)dns_rdatatype_zonemd)
+#define dns_rdatatype_svcb	((dns_rdatatype_t)dns_rdatatype_svcb)
+#define dns_rdatatype_https	((dns_rdatatype_t)dns_rdatatype_https)
 #define dns_rdatatype_spf	((dns_rdatatype_t)dns_rdatatype_spf)
 #define dns_rdatatype_nid	((dns_rdatatype_t)dns_rdatatype_nid)
 #define dns_rdatatype_l32	((dns_rdatatype_t)dns_rdatatype_l32)

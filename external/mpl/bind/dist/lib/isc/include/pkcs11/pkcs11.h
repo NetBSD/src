@@ -1,18 +1,20 @@
-/*	$NetBSD: pkcs11.h,v 1.3 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: pkcs11.h,v 1.4 2022/09/23 12:15:33 christos Exp $	*/
 
-/* pkcs11.h
- * Copyright 2006, 2007 g10 Code GmbH
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  * Copyright 2006 Andreas Jellinghaus
+ * Copyright 2006, 2007 g10 Code GmbH
  * Copyright 2017 Red Hat, Inc.
  *
- * This file is free software; as a special exception the author gives
- * unlimited permission to copy and/or distribute it, with or without
- * modifications, as long as this notice is preserved.
+ * SPDX-License-Identifier: MPL-2.0
  *
- * This file is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY, to the extent permitted by law; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
 
 /* Please submit any changes back to the p11-kit project at
  * https://github.com/p11-glue/p11-kit/, so that
@@ -503,7 +505,7 @@ typedef unsigned long ck_attribute_type_t;
 
 struct ck_attribute {
 	ck_attribute_type_t type;
-	void *		    value;
+	void		   *value;
 	unsigned long	    value_len;
 };
 
@@ -888,7 +890,7 @@ typedef unsigned long ck_mechanism_type_t;
 
 struct ck_mechanism {
 	ck_mechanism_type_t mechanism;
-	void *		    parameter;
+	void		   *parameter;
 	unsigned long	    parameter_len;
 };
 
@@ -902,7 +904,7 @@ typedef unsigned long ck_param_type;
 
 typedef struct ck_otp_param {
 	ck_param_type type;
-	void *	      value;
+	void	     *value;
 	unsigned long value_len;
 } ck_otp_param;
 
@@ -936,7 +938,7 @@ struct ck_rsa_pkcs_oaep_params {
 	ck_mechanism_type_t	       hash_alg;
 	ck_rsa_pkcs_mgf_type_t	       mgf;
 	ck_rsa_pkcs_oaep_source_type_t source;
-	void *			       source_data;
+	void			      *source_data;
 	unsigned long		       source_data_len;
 };
 
@@ -1067,11 +1069,11 @@ _CK_DECLARE_FUNCTION(C_CloseAllSessions, (ck_slot_id_t slot_id));
 _CK_DECLARE_FUNCTION(C_GetSessionInfo, (ck_session_handle_t	session,
 					struct ck_session_info *info));
 _CK_DECLARE_FUNCTION(C_GetOperationState, (ck_session_handle_t session,
-					   unsigned char *     operation_state,
+					   unsigned char      *operation_state,
 					   unsigned long *operation_state_len));
 _CK_DECLARE_FUNCTION(C_SetOperationState,
 		     (ck_session_handle_t session,
-		      unsigned char *	  operation_state,
+		      unsigned char	 *operation_state,
 		      unsigned long	  operation_state_len,
 		      ck_object_handle_t  encryption_key,
 		      ck_object_handle_t  authentiation_key));
@@ -1119,19 +1121,19 @@ _CK_DECLARE_FUNCTION(C_EncryptUpdate,
 		      unsigned long part_len, unsigned char *encrypted_part,
 		      unsigned long *encrypted_part_len));
 _CK_DECLARE_FUNCTION(C_EncryptFinal, (ck_session_handle_t session,
-				      unsigned char *	  last_encrypted_part,
+				      unsigned char	 *last_encrypted_part,
 				      unsigned long *last_encrypted_part_len));
 
 _CK_DECLARE_FUNCTION(C_DecryptInit,
 		     (ck_session_handle_t  session,
 		      struct ck_mechanism *mechanism, ck_object_handle_t key));
 _CK_DECLARE_FUNCTION(C_Decrypt, (ck_session_handle_t session,
-				 unsigned char *     encrypted_data,
+				 unsigned char	    *encrypted_data,
 				 unsigned long	     encrypted_data_len,
 				 unsigned char *data, unsigned long *data_len));
 _CK_DECLARE_FUNCTION(C_DecryptUpdate,
 		     (ck_session_handle_t session,
-		      unsigned char *	  encrypted_part,
+		      unsigned char	 *encrypted_part,
 		      unsigned long encrypted_part_len, unsigned char *part,
 		      unsigned long *part_len));
 _CK_DECLARE_FUNCTION(C_DecryptFinal,
@@ -1200,7 +1202,7 @@ _CK_DECLARE_FUNCTION(C_DigestEncryptUpdate,
 		      unsigned long *encrypted_part_len));
 _CK_DECLARE_FUNCTION(C_DecryptDigestUpdate,
 		     (ck_session_handle_t session,
-		      unsigned char *	  encrypted_part,
+		      unsigned char	 *encrypted_part,
 		      unsigned long encrypted_part_len, unsigned char *part,
 		      unsigned long *part_len));
 _CK_DECLARE_FUNCTION(C_SignEncryptUpdate,
@@ -1209,7 +1211,7 @@ _CK_DECLARE_FUNCTION(C_SignEncryptUpdate,
 		      unsigned long *encrypted_part_len));
 _CK_DECLARE_FUNCTION(C_DecryptVerifyUpdate,
 		     (ck_session_handle_t session,
-		      unsigned char *	  encrypted_part,
+		      unsigned char	 *encrypted_part,
 		      unsigned long encrypted_part_len, unsigned char *part,
 		      unsigned long *part_len));
 
@@ -1225,8 +1227,8 @@ _CK_DECLARE_FUNCTION(C_GenerateKeyPair,
 		      unsigned long	   public_key_attribute_count,
 		      struct ck_attribute *private_key_template,
 		      unsigned long	   private_key_attribute_count,
-		      ck_object_handle_t * public_key,
-		      ck_object_handle_t * private_key));
+		      ck_object_handle_t  *public_key,
+		      ck_object_handle_t  *private_key));
 _CK_DECLARE_FUNCTION(C_WrapKey,
 		     (ck_session_handle_t  session,
 		      struct ck_mechanism *mechanism,
@@ -1339,7 +1341,7 @@ struct ck_c_initialize_args {
 	ck_lockmutex_t	  lock_mutex;
 	ck_unlockmutex_t  unlock_mutex;
 	ck_flags_t	  flags;
-	void *		  reserved;
+	void		 *reserved;
 };
 
 #define CKF_LIBRARY_CANT_CREATE_OS_THREADS (1UL << 0)
@@ -1458,12 +1460,12 @@ typedef unsigned char	  CK_UTF8CHAR;
 typedef unsigned char	  CK_BBOOL;
 typedef unsigned long int CK_ULONG;
 typedef long int	  CK_LONG;
-typedef CK_BYTE *	  CK_BYTE_PTR;
-typedef CK_CHAR *	  CK_CHAR_PTR;
-typedef CK_UTF8CHAR *	  CK_UTF8CHAR_PTR;
-typedef CK_ULONG *	  CK_ULONG_PTR;
-typedef void *		  CK_VOID_PTR;
-typedef void **		  CK_VOID_PTR_PTR;
+typedef CK_BYTE		 *CK_BYTE_PTR;
+typedef CK_CHAR		 *CK_CHAR_PTR;
+typedef CK_UTF8CHAR	 *CK_UTF8CHAR_PTR;
+typedef CK_ULONG	 *CK_ULONG_PTR;
+typedef void		 *CK_VOID_PTR;
+typedef void		**CK_VOID_PTR_PTR;
 #define CK_FALSE 0
 #define CK_TRUE	 1
 #ifndef CK_DISABLE_TRUE_FALSE
@@ -1516,7 +1518,7 @@ typedef struct ck_otp_mechanism_info  CK_OTP_MECHANISM_INFO;
 typedef struct ck_otp_mechanism_info *CK_OTP_MECHANISM_INFO_PTR;
 
 typedef struct ck_function_list	  CK_FUNCTION_LIST;
-typedef struct ck_function_list * CK_FUNCTION_LIST_PTR;
+typedef struct ck_function_list	 *CK_FUNCTION_LIST_PTR;
 typedef struct ck_function_list **CK_FUNCTION_LIST_PTR_PTR;
 
 typedef struct ck_c_initialize_args  CK_C_INITIALIZE_ARGS;

@@ -1,7 +1,9 @@
-/*	$NetBSD: tkey_249.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: tkey_249.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +20,7 @@
 
 #define RRTYPE_TKEY_ATTRIBUTES (DNS_RDATATYPEATTR_META)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_tkey(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_rcode_t rcode;
@@ -118,7 +120,7 @@ fromtext_tkey(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, (int)token.value.as_ulong));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_tkey(ARGS_TOTEXT) {
 	isc_region_t sr, dr;
 	char buf[sizeof("4294967295 ")];
@@ -242,7 +244,7 @@ totext_tkey(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_tkey(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	unsigned long n;
@@ -303,7 +305,7 @@ fromwire_tkey(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, n + 2));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_tkey(ARGS_TOWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -325,7 +327,7 @@ towire_tkey(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_tkey(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -356,7 +358,7 @@ compare_tkey(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_tkey(ARGS_FROMSTRUCT) {
 	dns_rdata_tkey_t *tkey = source;
 
@@ -414,7 +416,7 @@ fromstruct_tkey(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, tkey->other, tkey->otherlen));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_tkey(ARGS_TOSTRUCT) {
 	dns_rdata_tkey_t *tkey = target;
 	dns_name_t alg;
@@ -507,7 +509,7 @@ cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_tkey(ARGS_FREESTRUCT) {
 	dns_rdata_tkey_t *tkey = (dns_rdata_tkey_t *)source;
 
@@ -527,7 +529,7 @@ freestruct_tkey(ARGS_FREESTRUCT) {
 	tkey->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_tkey(ARGS_ADDLDATA) {
 	UNUSED(rdata);
 	UNUSED(add);
@@ -538,7 +540,7 @@ additionaldata_tkey(ARGS_ADDLDATA) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_tkey(ARGS_DIGEST) {
 	UNUSED(rdata);
 	UNUSED(digest);
@@ -549,7 +551,7 @@ digest_tkey(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline bool
+static bool
 checkowner_tkey(ARGS_CHECKOWNER) {
 	REQUIRE(type == dns_rdatatype_tkey);
 
@@ -561,7 +563,7 @@ checkowner_tkey(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_tkey(ARGS_CHECKNAMES) {
 	REQUIRE(rdata->type == dns_rdatatype_tkey);
 
@@ -572,7 +574,7 @@ checknames_tkey(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_tkey(ARGS_COMPARE) {
 	return (compare_tkey(rdata1, rdata2));
 }

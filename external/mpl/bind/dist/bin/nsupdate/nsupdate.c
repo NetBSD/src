@@ -1,7 +1,9 @@
-/*	$NetBSD: nsupdate.c,v 1.10 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.11 2022/09/23 12:15:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -322,7 +324,7 @@ ddebug(const char *format, ...) {
 	}
 }
 
-static inline void
+static void
 check_result(isc_result_t result, const char *msg) {
 	if (result != ISC_R_SUCCESS) {
 		fatal("%s: %s", msg, isc_result_totext(result));
@@ -761,8 +763,9 @@ doshutdown(void) {
 static void
 maybeshutdown(void) {
 	/* when called from getinput, doshutdown might be already finished */
-	if (requestmgr == NULL)
+	if (requestmgr == NULL) {
 		return;
+	}
 
 	ddebug("Shutting down request manager");
 	dns_requestmgr_shutdown(requestmgr);
@@ -2257,9 +2260,9 @@ do_next_command(char *cmdline) {
 				"answer                    (show the answer to "
 				"the last request)\n"
 				"quit                      (quit, any pending "
-				"update is not sent\n"
+				"update is not sent)\n"
 				"help                      (display this "
-				"message_\n"
+				"message)\n"
 				"key [hmac:]keyname secret (use TSIG to sign "
 				"the request)\n"
 				"gsstsig                   (use GSS_TSIG to "

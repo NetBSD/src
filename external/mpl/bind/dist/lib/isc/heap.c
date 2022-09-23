@@ -1,7 +1,9 @@
-/*	$NetBSD: heap.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,7 +80,7 @@ heap_check(isc_heap_t *heap) {
 #define heap_check(x) (void)0
 #endif /* ifdef ISC_HEAP_CHECK */
 
-isc_result_t
+void
 isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare, isc_heapindex_t idx,
 		unsigned int size_increment, isc_heap_t **heapp) {
 	isc_heap_t *heap;
@@ -102,8 +104,6 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare, isc_heapindex_t idx,
 	heap->index = idx;
 
 	*heapp = heap;
-
-	return (ISC_R_SUCCESS);
 }
 
 void
@@ -123,7 +123,7 @@ isc_heap_destroy(isc_heap_t **heapp) {
 	isc_mem_putanddetach(&heap->mctx, heap, sizeof(*heap));
 }
 
-static bool
+static void
 resize(isc_heap_t *heap) {
 	void **new_array;
 	unsigned int new_size;
@@ -139,8 +139,6 @@ resize(isc_heap_t *heap) {
 	}
 	heap->size = new_size;
 	heap->array = new_array;
-
-	return (true);
 }
 
 static void
@@ -194,7 +192,7 @@ sink_down(isc_heap_t *heap, unsigned int i, void *elt) {
 	heap_check(heap);
 }
 
-isc_result_t
+void
 isc_heap_insert(isc_heap_t *heap, void *elt) {
 	unsigned int new_last;
 
@@ -203,14 +201,12 @@ isc_heap_insert(isc_heap_t *heap, void *elt) {
 	heap_check(heap);
 	new_last = heap->last + 1;
 	RUNTIME_CHECK(new_last > 0); /* overflow check */
-	if (new_last >= heap->size && !resize(heap)) {
-		return (ISC_R_NOMEMORY);
+	if (new_last >= heap->size) {
+		resize(heap);
 	}
 	heap->last = new_last;
 
 	float_up(heap, new_last, elt);
-
-	return (ISC_R_SUCCESS);
 }
 
 void

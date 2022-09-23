@@ -1,10 +1,12 @@
-/*	$NetBSD: stdatomic.h,v 1.6 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: stdatomic.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -30,8 +32,6 @@
 #pragma intrinsic(_InterlockedCompareExchange8, _InterlockedExchangeAdd8)
 
 #include <isc/util.h>
-
-#define ATOMIC_VAR_INIT(x) x
 
 #ifndef __ATOMIC_RELAXED
 #define __ATOMIC_RELAXED 0
@@ -148,8 +148,7 @@ typedef uintmax_t volatile atomic_uintmax_t;
 
 static inline void
 atomic_store_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_store_explicit(obj, desired, order)                             \
@@ -209,28 +208,27 @@ atomic_store_abort() {
 
 static inline int8_t
 atomic_load_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_load_explicit(obj, order)                                       \
-	((sizeof(*(obj)) == 8                                                  \
+	(((sizeof(*(obj)) == 8)                                                \
 		  ? atomic_load_explicit64(obj, order)                         \
-		  : (sizeof(*(obj) == 4)                                       \
+		  : ((sizeof(*(obj)) == 4)                                     \
 			     ? atomic_load_explicit32(obj, order)              \
-			     : (sizeof(*(obj) == 2)                            \
+			     : ((sizeof(*(obj)) == 2)                          \
 					? atomic_load_explicit16(obj, order)   \
-					: (sizeof(*(obj) == 1)                 \
+					: ((sizeof(*(obj)) == 1)               \
 						   ? atomic_load_explicit8(    \
 							     obj, order)       \
 						   : atomic_load_abort())))) & \
-	 (sizeof(*(obj)) == 8                                                  \
+	 ((sizeof(*(obj)) == 8)                                                \
 		  ? 0xffffffffffffffffULL                                      \
-		  : (sizeof(*(obj)) == 4                                       \
+		  : ((sizeof(*(obj)) == 4)                                     \
 			     ? 0xffffffffULL                                   \
-			     : (sizeof(*(obj)) == 2                            \
+			     : ((sizeof(*(obj)) == 2)                          \
 					? 0xffffULL                            \
-					: (sizeof(*(obj)) == 1                 \
+					: ((sizeof(*(obj)) == 1)               \
 						   ? 0xffULL                   \
 						   : atomic_load_abort())))))
 
@@ -279,8 +277,7 @@ atomic_load_abort() {
 
 static inline int8_t
 atomic_add_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_fetch_add_explicit(obj, arg, order)                              \
@@ -346,8 +343,7 @@ atomic_add_abort() {
 
 static inline int8_t
 atomic_and_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_fetch_and_explicit(obj, arg, order)                              \
@@ -407,8 +403,7 @@ atomic_and_abort() {
 
 static inline int8_t
 atomic_or_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_fetch_or_explicit(obj, arg, order)                              \
@@ -544,8 +539,7 @@ atomic_compare_exchange_strong_explicit64(atomic_int_fast64_t *obj,
 
 static inline bool
 atomic_compare_exchange_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_compare_exchange_strong_explicit(obj, expected, desired, succ,                 \
@@ -584,8 +578,7 @@ atomic_compare_exchange_abort() {
 
 static inline bool
 atomic_exchange_abort() {
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 #define atomic_exchange_explicit(obj, desired, order)                        \

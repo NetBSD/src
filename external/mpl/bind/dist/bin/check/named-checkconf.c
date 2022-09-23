@@ -1,7 +1,9 @@
-/*	$NetBSD: named-checkconf.c,v 1.7 2021/04/05 11:26:59 rillig Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.8 2022/09/23 12:15:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -306,8 +308,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 			zone_options &= ~DNS_ZONEOPT_CHECKDUPRR;
 			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
@@ -326,8 +327,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 			zone_options &= ~DNS_ZONEOPT_CHECKMX;
 			zone_options &= ~DNS_ZONEOPT_CHECKMXFAIL;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKMX;
@@ -357,8 +357,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 			zone_options |= DNS_ZONEOPT_WARNMXCNAME;
 			zone_options |= DNS_ZONEOPT_IGNOREMXCNAME;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_WARNMXCNAME;
@@ -377,8 +376,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 			zone_options |= DNS_ZONEOPT_WARNSRVCNAME;
 			zone_options |= DNS_ZONEOPT_IGNORESRVCNAME;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_WARNSRVCNAME;
@@ -401,8 +399,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options &= ~DNS_ZONEOPT_CHECKSPF;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKSPF;
@@ -420,8 +417,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 			zone_options &= ~DNS_ZONEOPT_CHECKNAMES;
 			zone_options &= ~DNS_ZONEOPT_CHECKNAMESFAIL;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKNAMES;
@@ -439,8 +435,7 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 		} else if (strcasecmp(masterformatstr, "map") == 0) {
 			masterformat = dns_masterformat_map;
 		} else {
-			INSIST(0);
-			ISC_UNREACHABLE();
+			UNREACHABLE();
 		}
 	}
 
@@ -685,7 +680,7 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			usage();
 

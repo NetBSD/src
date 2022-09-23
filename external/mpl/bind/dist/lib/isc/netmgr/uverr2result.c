@@ -1,7 +1,9 @@
-/*	$NetBSD: uverr2result.c,v 1.4 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: uverr2result.c,v 1.5 2022/09/23 12:15:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,6 +91,8 @@ isc___nm_uverr2result(int uverr, bool dolog, const char *file,
 		return (ISC_R_EOF);
 	case UV_EMSGSIZE:
 		return (ISC_R_MAXSIZE);
+	case UV_ENOTSUP:
+		return (ISC_R_FAMILYNOSUPPORT);
 	default:
 		if (dolog) {
 			UNEXPECTED_ERROR(

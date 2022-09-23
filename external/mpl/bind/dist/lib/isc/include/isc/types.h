@@ -1,7 +1,9 @@
-/*	$NetBSD: types.h,v 1.9 2021/08/19 11:50:18 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2022/09/23 12:15:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,11 +48,9 @@ typedef struct isc_counter isc_counter_t;		  /*%< Counter */
 typedef int16_t		   isc_dscp_t;	       /*%< Diffserv code point */
 typedef struct isc_event   isc_event_t;	       /*%< Event */
 typedef ISC_LIST(isc_event_t) isc_eventlist_t; /*%< Event List */
-typedef unsigned int	isc_eventtype_t;       /*%< Event Type */
-typedef uint32_t	isc_fsaccess_t;	       /*%< FS Access */
-typedef struct isc_hash isc_hash_t;	       /*%< Hash */
-typedef struct isc_hp	isc_hp_t;	       /*%< Hazard
-						*   pointer */
+typedef unsigned int	 isc_eventtype_t;      /*%< Event Type */
+typedef uint32_t	 isc_fsaccess_t;       /*%< FS Access */
+typedef struct isc_hash	 isc_hash_t;	       /*%< Hash */
 typedef struct isc_httpd isc_httpd_t;	       /*%< HTTP client */
 typedef void(isc_httpdfree_t)(isc_buffer_t *, void *); /*%< HTTP free function
 							*/

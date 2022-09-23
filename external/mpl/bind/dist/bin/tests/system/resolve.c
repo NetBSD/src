@@ -1,7 +1,9 @@
-/*	$NetBSD: resolve.c,v 1.2 2021/08/19 11:50:15 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.3 2022/09/23 12:15:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

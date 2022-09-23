@@ -1,7 +1,9 @@
-/*	$NetBSD: kasp.c,v 1.4 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: kasp.c,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +82,7 @@ dns_kasp_attach(dns_kasp_t *source, dns_kasp_t **targetp) {
 	*targetp = source;
 }
 
-static inline void
+static void
 destroy(dns_kasp_t *kasp) {
 	dns_kasp_key_t *key;
 	dns_kasp_key_t *key_next;
