@@ -6394,6 +6394,7 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_bwrite_desc,		spec_bwrite },
 	{ &vop_print_desc,		zfs_netbsd_print },
 	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ &vop_bmap_desc,		spec_bmap },
 	{ NULL, NULL }
 };
 
