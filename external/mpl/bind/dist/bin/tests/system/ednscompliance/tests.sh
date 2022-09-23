@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -48,7 +50,7 @@ ret=0 reason=
 $DIG $DIGOPTS  @10.53.0.1 +edns=100 +noednsnegotiation soa $zone > dig.out$n
 grep "status: BADVERS," dig.out$n > /dev/null || { ret=1; reason="status"; }
 grep "EDNS: version: 0," dig.out$n > /dev/null || { ret=1; reason="version"; }
-grep "IN.SOA." dig.out$n > /dev/null && { ret=1; reasons="soa"; }
+grep "IN.SOA." dig.out$n > /dev/null && { ret=1; reason="soa"; }
 if [ $ret != 0 ]; then echo_i "failed $reason"; fi
 status=`expr $status + $ret`
 

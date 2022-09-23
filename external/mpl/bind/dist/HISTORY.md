@@ -47,7 +47,7 @@ Cryptography is now mandatory: building BIND without DNSSEC is no
 longer supported.
 
 Special code to support certain legacy operating systems has also
-been removed; see the file [PLATFORMS.md](PLATFORMS.md) for details
+been removed; see the [doc/arm/platforms.rst](platforms) file for details
 of supported platforms. In addition to OpenSSL, BIND now requires
 support for IPv6, threads, and standard atomic operations provided
 by the C compiler.

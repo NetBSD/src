@@ -1,7 +1,9 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.8 2021/08/19 11:45:29 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.9 2022/09/23 12:09:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +18,7 @@
 
 #include <isc/formatcheck.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/print.h>
 #include <isc/stats.h>
 #include <isc/util.h>
@@ -107,7 +110,7 @@
 
 /**************************************************************************/
 
-static inline void
+static void
 inc_stats(ns_client_t *client, dns_zone_t *zone, isc_statscounter_t counter) {
 	ns_stats_increment(client->sctx->nsstats, counter);
 	if (zone != NULL) {
@@ -668,6 +671,12 @@ typedef struct {
 	const char *mnemonic;	/* Style of transfer */
 	uint32_t end_serial;	/* Serial number after XFR is done */
 	struct xfr_stats stats; /*%< Transfer statistics */
+
+	/* Timeouts */
+	uint64_t maxtime; /*%< Maximum XFR timeout (in ms) */
+	isc_nm_timer_t *maxtime_timer;
+
+	uint64_t idletime; /*%< XFR idle timeout (in ms) */
 } xfrout_ctx_t;
 
 static void
@@ -696,7 +705,7 @@ static void
 xfrout_ctx_destroy(xfrout_ctx_t **xfrp);
 
 static void
-xfrout_client_shutdown(void *arg, isc_result_t result);
+xfrout_client_timeout(void *arg, isc_result_t result);
 
 static void
 xfrout_log1(ns_client_t *client, dns_name_t *zonename, dns_rdataclass_t rdclass,
@@ -751,8 +760,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		mnemonic = "IXFR";
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	ns_client_log(client, DNS_LOGCATEGORY_XFER_OUT, NS_LOGMODULE_XFER_OUT,
@@ -843,8 +851,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		/*
 		 * Master, slave, and mirror zones are OK for transfer.
 		 */
-		case dns_zone_master:
-		case dns_zone_slave:
+		case dns_zone_primary:
+		case dns_zone_secondary:
 		case dns_zone_mirror:
 		case dns_zone_dlz:
 			break;
@@ -1040,7 +1048,7 @@ got_soa:
 		}
 		if (result == ISC_R_NOTFOUND || result == ISC_R_RANGE) {
 			xfrout_log1(client, question_name, question_class,
-				    ISC_LOG_DEBUG(4),
+				    ISC_LOG_INFO,
 				    "IXFR version not in journal, "
 				    "falling back to AXFR");
 			mnemonic = "AXFR-style IXFR";
@@ -1055,7 +1063,7 @@ got_soa:
 				data_stream->methods->destroy(&data_stream);
 				data_stream = NULL;
 				xfrout_log1(client, question_name,
-					    question_class, ISC_LOG_DEBUG(4),
+					    question_class, ISC_LOG_INFO,
 					    "IXFR delta size (%zu bytes) "
 					    "exceeds the maximum ratio to "
 					    "database size "
@@ -1146,7 +1154,7 @@ have_stream:
 		dns_zone_getraw(zone, &raw);
 		mayberaw = (raw != NULL) ? raw : zone;
 		if ((client->attributes & NS_CLIENTATTR_WANTEXPIRE) != 0 &&
-		    (dns_zone_gettype(mayberaw) == dns_zone_slave ||
+		    (dns_zone_gettype(mayberaw) == dns_zone_secondary ||
 		     dns_zone_gettype(mayberaw) == dns_zone_mirror))
 		{
 			isc_time_t expiretime;
@@ -1161,6 +1169,14 @@ have_stream:
 		if (raw != NULL) {
 			dns_zone_detach(&raw);
 		}
+	}
+
+	/* Start the timers */
+	if (xfr->maxtime > 0) {
+		xfrout_log(xfr, ISC_LOG_DEBUG(1),
+			   "starting maxtime timer %" PRIu64 " ms",
+			   xfr->maxtime);
+		isc_nm_timer_start(xfr->maxtime_timer, xfr->maxtime);
 	}
 
 	/*
@@ -1222,64 +1238,52 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 		  bool verified_tsig, unsigned int maxtime,
 		  unsigned int idletime, bool many_answers,
 		  xfrout_ctx_t **xfrp) {
-	xfrout_ctx_t *xfr;
-	unsigned int len;
-	void *mem;
+	xfrout_ctx_t *xfr = NULL;
+	unsigned int len = NS_CLIENT_TCP_BUFFER_SIZE;
+	void *mem = NULL;
 
 	REQUIRE(xfrp != NULL && *xfrp == NULL);
 
-	UNUSED(maxtime);
-	UNUSED(idletime);
-
 	xfr = isc_mem_get(mctx, sizeof(*xfr));
-	xfr->mctx = NULL;
+	*xfr = (xfrout_ctx_t){
+		.client = client,
+		.id = id,
+		.qname = qname,
+		.qtype = qtype,
+		.qclass = qclass,
+		.maxtime = maxtime * 1000,   /* in milliseconds */
+		.idletime = idletime * 1000, /* In milliseconds */
+		.tsigkey = tsigkey,
+		.lasttsig = lasttsig,
+		.verified_tsig = verified_tsig,
+		.many_answers = many_answers,
+	};
+
 	isc_mem_attach(mctx, &xfr->mctx);
-	xfr->client = client;
-	xfr->id = id;
-	xfr->qname = qname;
-	xfr->qtype = qtype;
-	xfr->qclass = qclass;
-	xfr->zone = NULL;
-	xfr->db = NULL;
-	xfr->ver = NULL;
+
 	if (zone != NULL) { /* zone will be NULL if it's DLZ */
 		dns_zone_attach(zone, &xfr->zone);
 	}
 	dns_db_attach(db, &xfr->db);
 	dns_db_attachversion(db, ver, &xfr->ver);
-	xfr->question_added = false;
-	xfr->end_of_stream = false;
-	xfr->tsigkey = tsigkey;
-	xfr->lasttsig = lasttsig;
-	xfr->verified_tsig = verified_tsig;
-	xfr->many_answers = many_answers;
-	xfr->sends = 0;
-	xfr->shuttingdown = false;
-	xfr->poll = false;
-	xfr->mnemonic = NULL;
-	xfr->buf.base = NULL;
-	xfr->buf.length = 0;
-	xfr->txmem = NULL;
-	xfr->txmemlen = 0;
-	xfr->stream = NULL;
-	xfr->quota = NULL;
 
-	xfr->stats.nmsg = 0;
-	xfr->stats.nrecs = 0;
-	xfr->stats.nbytes = 0;
 	isc_time_now(&xfr->stats.start);
+
+	isc_nm_timer_create(xfr->client->handle, xfrout_client_timeout, xfr,
+			    &xfr->maxtime_timer);
 
 	/*
 	 * Allocate a temporary buffer for the uncompressed response
-	 * message data.  The size should be no more than 65535 bytes
-	 * so that the compressed data will fit in a TCP message,
-	 * and no less than 65535 bytes so that an almost maximum-sized
-	 * RR will fit.  Note that although 65535-byte RRs are allowed
-	 * in principle, they cannot be zone-transferred (at least not
-	 * if uncompressible), because the message and RR headers would
-	 * push the size of the TCP message over the 65536 byte limit.
+	 * message data.  The buffer size must be 65535 bytes
+	 * (NS_CLIENT_TCP_BUFFER_SIZE): small enough that compressed
+	 * data will fit in a single TCP message, and big enough to
+	 * hold a maximum-sized RR.
+	 *
+	 * Note that although 65535-byte RRs are allowed in principle, they
+	 * cannot be zone-transferred (at least not if uncompressible),
+	 * because the message and RR headers would push the size of the
+	 * TCP message over the 65536 byte limit.
 	 */
-	len = 65535;
 	mem = isc_mem_get(mctx, len);
 	isc_buffer_init(&xfr->buf, mem, len);
 
@@ -1287,19 +1291,11 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	 * Allocate another temporary buffer for the compressed
 	 * response message.
 	 */
-	len = NS_CLIENT_TCP_BUFFER_SIZE;
 	mem = isc_mem_get(mctx, len);
 	isc_buffer_init(&xfr->txbuf, (char *)mem, len);
 	xfr->txmem = mem;
 	xfr->txmemlen = len;
 
-	/*
-	 * Register a shutdown callback with the client, so that we
-	 * can stop the transfer immediately when the client task
-	 * gets a shutdown event.
-	 */
-	xfr->client->shutdown = xfrout_client_shutdown;
-	xfr->client->shutdown_arg = xfr;
 	/*
 	 * These MUST be after the last "goto failure;" / CHECK to
 	 * prevent a double free by the caller.
@@ -1584,6 +1580,10 @@ sendstream(xfrout_ctx_t *xfr) {
 
 		isc_nmhandle_attach(xfr->client->handle,
 				    &xfr->client->sendhandle);
+		if (xfr->idletime > 0) {
+			isc_nmhandle_setwritetimeout(xfr->client->sendhandle,
+						     xfr->idletime);
+		}
 		isc_nm_send(xfr->client->sendhandle, &used, xfrout_senddone,
 			    xfr);
 		xfr->sends++;
@@ -1649,8 +1649,8 @@ xfrout_ctx_destroy(xfrout_ctx_t **xfrp) {
 
 	INSIST(xfr->sends == 0);
 
-	xfr->client->shutdown = NULL;
-	xfr->client->shutdown_arg = NULL;
+	isc_nm_timer_stop(xfr->maxtime_timer);
+	isc_nm_timer_detach(&xfr->maxtime_timer);
 
 	if (xfr->stream != NULL) {
 		xfr->stream->methods->destroy(&xfr->stream);
@@ -1757,9 +1757,12 @@ xfrout_maybe_destroy(xfrout_ctx_t *xfr) {
 }
 
 static void
-xfrout_client_shutdown(void *arg, isc_result_t result) {
+xfrout_client_timeout(void *arg, isc_result_t result) {
 	xfrout_ctx_t *xfr = (xfrout_ctx_t *)arg;
-	xfrout_fail(xfr, result, "aborted");
+
+	xfr->shuttingdown = true;
+	xfrout_log(xfr, ISC_LOG_ERROR, "%s: %s", "aborted",
+		   isc_result_totext(result));
 }
 
 /*

@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -91,7 +93,11 @@ $DIGCMD +tries=2 +time=1 +recurse @10.53.0.3 foo.info. any > /dev/null 2>&1
 
 ret=0
 echo_i "dumping updated stats for ns3 ($n)"
-rndc_stats ns3 10.53.0.3 || ret=1
+getstats() {
+    rndc_stats ns3 10.53.0.3 || return 1
+    grep "2 recursing clients" $last_stats > /dev/null || return 1
+}
+retry_quiet 5 getstats || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
@@ -133,6 +139,13 @@ n=`expr $n + 1`
 ret=0
 echo_i "verifying bucket size output ($n)"
 grep "bucket size" $last_stats > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+ret=0
+echo_i "checking priming queries are counted ($n)"
+grep "priming queries" $last_stats > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
@@ -235,13 +248,6 @@ if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XSLTPROC}" ]  ; th
 else
     echo_i "skipping test as libxml2 and/or curl and/or xsltproc was not found"
 fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
-ret=0
-echo_i "checking priming queries are counted ($n)"
-grep "1 priming queries" $last_stats
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

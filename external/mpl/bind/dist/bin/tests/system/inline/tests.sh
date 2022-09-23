@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -795,22 +797,16 @@ mv ns2/named.conf.new ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig || ret=1
 # Request ns3 to retransfer the "retransfer3" zone.
 $RNDCCMD 10.53.0.3 retransfer retransfer3 || ret=1
-# Wait until ns3 finishes building the NSEC3 chain for "retransfer3".  There is
-# no need to immediately set ret=1 if building the NSEC3 chain is not finished
-# within the time limit because the query we will send shortly will detect any
-# problems anyway.
+# Check whether "retransfer3" uses NSEC3 as requested.
 for i in 0 1 2 3 4 5 6 7 8 9
 do
-	$RNDCCMD 10.53.0.3 signing -list retransfer3 > signing.out.test$n.$i 2>&1
-	keys_done=`grep "Done signing" signing.out.test$n.$i | wc -l`
-	nsec3_pending=`grep "NSEC3 chain" signing.out.test$n.$i | wc -l`
-	test $keys_done -eq 2 -a $nsec3_pending -eq 0 && break
+	ret=0
+	$DIG $DIGOPTS @10.53.0.3 nonexist.retransfer3 A > dig.out.ns3.post.test$n.$i
+	grep "status: NXDOMAIN" dig.out.ns3.post.test$n.$i > /dev/null || ret=1
+	grep "NSEC3" dig.out.ns3.post.test$n.$i > /dev/null || ret=1
+	test $ret -eq 0 && break
 	sleep 1
 done
-# Check whether "retransfer3" uses NSEC3 as requested.
-$DIG $DIGOPTS @10.53.0.3 nonexist.retransfer3 A > dig.out.ns3.post.test$n
-grep "status: NXDOMAIN" dig.out.ns3.post.test$n > /dev/null || ret=1
-grep "NSEC3" dig.out.ns3.post.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

@@ -319,6 +319,18 @@ typedef __int64 off_t;
 /* Define to 1 if you have the `CRYPTO_zalloc' function. */
 #define HAVE_CRYPTO_ZALLOC 1
 
+/* Define to 1 if you have the declaration of `UV_UDP_MMSG_CHUNK', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_MMSG_CHUNK 0
+
+/* Define to 1 if you have the declaration of `UV_UDP_MMSG_FREE', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_MMSG_FREE 0
+
+/* Define to 1 if you have the declaration of `UV_UDP_RECVMMSG', and to 0 if
+   you don't. */
+#define HAVE_DECL_UV_UDP_RECVMMSG 0
+
 /* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
 #define HAVE_EVP_CIPHER_CTX_FREE 1
 
@@ -360,6 +372,9 @@ typedef __int64 off_t;
 
 /* Define to 1 if you have the `BIO_write_ex' function. */
 #define HAVE_BIO_WRITE_EX 1
+
+/* Define to 1 if you have the `BN_GENCB_new' function. */
+#define HAVE_BN_GENCB_NEW 1
 
 /* Define to 1 if you have the `OPENSSL_init_crypto' function. */
 #define HAVE_OPENSSL_INIT_CRYPTO 1

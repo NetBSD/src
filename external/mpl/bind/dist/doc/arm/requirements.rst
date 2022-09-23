@@ -1,14 +1,15 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+..
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
-.. Requirements:
+.. _Requirements:
 
 BIND Resource Requirements
 ==========================
@@ -69,12 +70,5 @@ much memory or CPU power as in the first alternative, but this has the
 disadvantage of making many more external queries, as none of the name
 servers share their cached data.
 
-.. _supported_os:
-
-Supported Operating Systems
----------------------------
-
-ISC BIND 9 compiles and runs on many Unix-like operating
-systems and on Microsoft Windows Server 2012 R2, 2016, and Windows 10.
-For an up-to-date list of supported systems, see the PLATFORMS.md file
-in the top-level directory of the BIND 9 source distribution.
+.. include:: platforms.rst
+.. include:: build.rst

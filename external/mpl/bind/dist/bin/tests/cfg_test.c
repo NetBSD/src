@@ -1,7 +1,9 @@
-/*	$NetBSD: cfg_test.c,v 1.1.1.4 2021/02/19 16:37:04 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.1.1.5 2022/09/23 12:09:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,10 +113,10 @@ main(int argc, char **argv) {
 			}
 			if (strcmp(argv[1], "master") == 0 ||
 			    strcmp(argv[1], "primary") == 0) {
-				zonetype = CFG_ZONE_MASTER;
+				zonetype = CFG_ZONE_PRIMARY;
 			} else if (strcmp(argv[1], "slave") == 0 ||
 				   strcmp(argv[1], "seconary") == 0) {
-				zonetype = CFG_ZONE_SLAVE;
+				zonetype = CFG_ZONE_SECONDARY;
 			} else if (strcmp(argv[1], "mirror") == 0) {
 				zonetype = CFG_ZONE_MIRROR;
 			} else if (strcmp(argv[1], "stub") == 0) {

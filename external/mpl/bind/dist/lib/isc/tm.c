@@ -1,7 +1,9 @@
-/*	$NetBSD: tm.c,v 1.1.1.5 2021/08/19 11:45:27 christos Exp $	*/
+/*	$NetBSD: tm.c,v 1.1.1.6 2022/09/23 12:09:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND BSD-2-Clause
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -322,7 +324,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 
 		case 'k': /* The hour (24-hour clock representation). */
 			LEGAL_ALT(0);
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'H':
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_hour, 0, 23))) {
@@ -332,7 +334,7 @@ isc_tm_strptime(const char *buf, const char *fmt, struct tm *tm) {
 
 		case 'l': /* The hour (12-hour clock representation). */
 			LEGAL_ALT(0);
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'I':
 			LEGAL_ALT(ALT_O);
 			if (!(conv_num(&bp, &tm->tm_hour, 1, 12))) {

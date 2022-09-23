@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "RNDC" "8" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
-.SH NAME
-rndc \- name server control utility
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "RNDC" "8" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.SH NAME
+rndc \- name server control utility
 .SH SYNOPSIS
 .sp
 \fBrndc\fP [\fB\-b\fP source\-address] [\fB\-c\fP config\-file] [\fB\-k\fP key\-file] [\fB\-s\fP server] [\fB\-p\fP port] [\fB\-q\fP] [\fB\-r\fP] [\fB\-V\fP] [\fB\-y\fP key_id] [[\fB\-4\fP] | [\fB\-6\fP]] {command}
@@ -171,14 +171,16 @@ zone.
 \fBrndc dnssec \-rollover\fP allows you to schedule key rollover for a
 specific key (overriding the original key lifetime).
 .sp
-\fBrndc dnssec \-checkds\fP will let \fBnamed\fP know that the DS for the given
-key has been seen published into or withdrawn from the parent.  This is
-required in order to complete a KSK rollover.  If the \fB\-key id\fP argument
-is specified, look for the key with the given identifier, otherwise if there
-is only one key acting as a KSK in the zone, assume the DS of that key (if
-there are multiple keys with the same tag, use \fB\-alg algorithm\fP to
-select the correct algorithm).  The time that the DS has been published or
-withdrawn is set to now, unless otherwise specified with the argument \fB\-when time\fP\&.
+\fBrndc dnssec \-checkds\fP informs \fBnamed\fP that the DS for
+a specified zone\(aqs key\-signing key has been confirmed to be published
+in, or withdrawn from, the parent zone. This is required in order to
+complete a KSK rollover.  The \fB\-key id\fP and \fB\-alg algorithm\fP arguments
+can be used to specify a particular KSK, if necessary; if there is only
+one key acting as a KSK for the zone, these arguments can be omitted.
+The time of publication or withdrawal for the DS is set to the current
+time by default, but can be overridden to a specific time with the
+argument \fB\-when time\fP, where \fBtime\fP is expressed in YYYYMMDDHHMMSS
+notation.
 .TP
 \fBdnstap\fP ( \fB\-reopen\fP | \fB\-roll\fP [\fInumber\fP] )
 This command closes and re\-opens DNSTAP output files. \fBrndc dnstap \-reopen\fP allows
@@ -372,11 +374,24 @@ full \fBreload\fP when there is a large number of zones, because it
 avoids the need to examine the modification times of the zone files.
 .TP
 .B \fBrecursing\fP
-This command dumps the list of queries \fBnamed\fP is currently recursing on, and the
-list of domains to which iterative queries are currently being sent.
-The second list includes the number of fetches currently active for
-the given domain, and how many have been passed or dropped because of
-the \fBfetches\-per\-zone\fP option.
+This command dumps the list of queries \fBnamed\fP is currently
+recursing on, and the list of domains to which iterative queries
+are currently being sent.
+.sp
+The first list includes all unique clients that are waiting for
+recursion to complete, including the query that is awaiting a
+response and the timestamp (seconds since the Unix epoch) of
+when named started processing this client query.
+.sp
+The second list comprises of domains for which there are active
+(or recently active) fetches in progress.  It reports the number
+of active fetches for each domain and the number of queries that
+have been passed (allowed) or dropped (spilled) as a result of
+the \fBfetches\-per\-zone\fP limit.  (Note: these counters are not
+cumulative over time; whenever the number of active fetches for
+a domain drops to zero, the counter for that domain is deleted,
+and the next time a fetch is sent to that domain, it is recreated
+with the counters set to zero).
 .TP
 .B \fBrefresh\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
 This command schedules zone maintenance for the given zone.
@@ -478,15 +493,21 @@ representing SHA\-1. The \fBflags\fP may be set to \fB0\fP or \fB1\fP,
 depending on whether the opt\-out bit in the NSEC3
 chain should be set. \fBiterations\fP defines the number of additional times to apply
 the algorithm when generating an NSEC3 hash. The \fBsalt\fP is a string
-of data expressed in hexadecimal, a hyphen (\fI\-\(aq) if no salt is to be
-used, or the keyword \(ga\(gaauto\(ga\fP, which causes \fBnamed\fP to generate a
+of data expressed in hexadecimal, a hyphen (\fB\-\fP) if no salt is to be
+used, or the keyword \fBauto\fP, which causes \fBnamed\fP to generate a
 random 64\-bit salt.
 .sp
-So, for example, to create an NSEC3 chain using the SHA\-1 hash
-algorithm, no opt\-out flag, 10 iterations, and a salt value of
-"FFFF", use: \fBrndc signing \-nsec3param 1 0 10 FFFF zone\fP\&. To set
-the opt\-out flag, 15 iterations, and no salt, use:
-\fBrndc signing \-nsec3param 1 1 15 \- zone\fP\&.
+The only recommended configuration is \fBrndc signing \-nsec3param 1 0 0 \- zone\fP,
+i.e. no salt, no additional iterations, no opt\-out.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+Do not use extra iterations, salt, or opt\-out unless all their implications
+are fully understood. A higher number of iterations causes interoperability
+problems and opens servers to CPU\-exhausting DoS attacks.
+.UNINDENT
+.UNINDENT
 .sp
 \fBrndc signing \-nsec3param none\fP removes an existing NSEC3 chain and
 replaces it with NSEC.
@@ -597,6 +618,6 @@ Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2021, Internet Systems Consortium
+2022, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

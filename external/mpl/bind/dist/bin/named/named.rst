@@ -1,23 +1,13 @@
-.. 
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-   
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, you can obtain one at https://mozilla.org/MPL/2.0/.
-   
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ..
-   Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-   This Source Code Form is subject to the terms of the Mozilla Public
-   License, v. 2.0. If a copy of the MPL was not distributed with this
-   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-   See the COPYRIGHT file distributed with this work for additional
-   information regarding copyright ownership.
-
+.. SPDX-License-Identifier: MPL-2.0
+..
+.. This Source Code Form is subject to the terms of the Mozilla Public
+.. License, v. 2.0.  If a copy of the MPL was not distributed with this
+.. file, you can obtain one at https://mozilla.org/MPL/2.0/.
+..
+.. See the COPYRIGHT file distributed with this work for additional
+.. information regarding copyright ownership.
 
 .. highlight: console
 
@@ -29,7 +19,7 @@ named - Internet domain name server
 Synopsis
 ~~~~~~~~
 
-:program:`named` [ [**-4**] | [**-6**] ] [**-c** config-file] [**-d** debug-level] [**-D** string] [**-E** engine-name] [**-f**] [**-g**] [**-L** logfile] [**-M** option] [**-m** flag] [**-n** #cpus] [**-p** port] [**-s**] [**-S** #max-socks] [**-t** directory] [**-U** #listeners] [**-u** user] [**-v**] [**-V**] [**-X** lock-file] [**-x** cache-file]
+:program:`named` [ [**-4**] | [**-6**] ] [**-c** config-file] [**-C**] [**-d** debug-level] [**-D** string] [**-E** engine-name] [**-f**] [**-g**] [**-L** logfile] [**-M** option] [**-m** flag] [**-n** #cpus] [**-p** port] [**-s**] [**-S** #max-socks] [**-t** directory] [**-U** #listeners] [**-u** user] [**-v**] [**-V**] [**-X** lock-file] [**-x** cache-file]
 
 Description
 ~~~~~~~~~~~
@@ -60,6 +50,14 @@ Options
    due to to a possible ``directory`` option in the configuration file,
    ``config-file`` should be an absolute pathname.
 
+``-C``
+
+   This option prints out the default built-in configuration and exits.
+
+   NOTE: This is for debugging purposes only and is not an
+   accurate representation of the actual configuration used by :iscman:`named`
+   at runtime.
+
 ``-d debug-level``
    This option sets the daemon's debug level to ``debug-level``. Debugging traces from
    ``named`` become more verbose as the debug level increases.
@@ -89,13 +87,23 @@ Options
    This option sets the log to the file ``logfile`` by default, instead of the system log.
 
 ``-M option``
-   This option sets the default memory context options. If set to ``external``,
-   the internal memory manager is bypassed in favor of
-   system-provided memory allocation functions. If set to ``fill``, blocks
-   of memory are filled with tag values when allocated or freed, to
-   assist debugging of memory problems. ``nofill`` disables this behavior,
-   and is the default unless ``named`` has been compiled with developer
-   options.
+
+   This option sets the default (comma-separated) memory context
+   options. The possible flags are:
+
+   - ``external``: use system-provided memory allocation functions; this
+     is the implicit default.
+
+   - ``internal``: use the internal memory manager.
+
+   - ``fill``: fill blocks of memory with tag values when they are
+     allocated or freed, to assist debugging of memory problems; this is
+     the implicit default if ``named`` has been compiled with
+     ``--enable-developer``.
+
+   - ``nofill``: disable the behavior enabled by ``fill``; this is the
+     implicit default unless ``named`` has been compiled with
+     ``--enable-developer``.
 
 ``-m flag``
    This option turns on memory usage debugging flags. Possible flags are ``usage``,

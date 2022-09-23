@@ -1,7 +1,9 @@
-/*	$NetBSD: hooks.c,v 1.1.1.5 2021/02/19 16:37:18 christos Exp $	*/
+/*	$NetBSD: hooks.c,v 1.1.1.6 2022/09/23 12:09:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,9 +149,10 @@ load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
 	REQUIRE(pluginp != NULL && *pluginp == NULL);
 
 	flags = RTLD_LAZY | RTLD_LOCAL;
-#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
+#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__
 	flags |= RTLD_DEEPBIND;
-#endif /* if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ */
+#endif /* if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ && \
+	  !__SANITIZE_THREAD__ */
 
 	handle = dlopen(modpath, flags);
 	if (handle == NULL) {

@@ -1,7 +1,9 @@
-/*	$NetBSD: geoip_test.c,v 1.1.1.6 2021/04/29 16:46:31 christos Exp $	*/
+/*	$NetBSD: geoip_test.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,8 +124,7 @@ entry_exists(dns_geoip_subtype_t subtype, const char *addr) {
 	} else if (inet_pton(AF_INET, addr, &in4) == 1) {
 		isc_netaddr_fromin(&na, &in4);
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	db = geoip2_database(&geoip, fix_subtype(&geoip, subtype));

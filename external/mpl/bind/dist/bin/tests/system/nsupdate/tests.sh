@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -79,6 +81,32 @@ ret=0
 echo_i "comparing pre-update copies to known good data"
 digcomp knowngood.ns1.before dig.out.ns1 || ret=1
 digcomp knowngood.ns1.before dig.out.ns2 || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+ret=0
+echo_i "ensure an unrelated zone is mentioned in its NOTAUTH log"
+$NSUPDATE -k ns1/ddns.key > nsupdate.out 2>&1 << END && ret=1
+server 10.53.0.1 ${PORT}
+zone unconfigured.test
+update add unconfigured.test 600 IN A 10.53.0.1
+send
+END
+grep NOTAUTH nsupdate.out > /dev/null 2>&1 || ret=1
+grep ' unconfigured.test: not authoritative' ns1/named.run \
+     > /dev/null 2>&1 || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+ret=0
+echo_i "ensure a subdomain is mentioned in its NOTAUTH log"
+$NSUPDATE -k ns1/ddns.key > nsupdate.out 2>&1 << END && ret=1
+server 10.53.0.1 ${PORT}
+zone sub.sub.example.nil
+update add sub.sub.sub.example.nil 600 IN A 10.53.0.1
+send
+END
+grep NOTAUTH nsupdate.out > /dev/null 2>&1 || ret=1
+grep ' sub.sub.example.nil: not authoritative' ns1/named.run \
+     > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 ret=0
@@ -751,9 +779,10 @@ ret=0
 echo_i "check that changes to the DNSKEY RRset TTL do not have side effects ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
         @10.53.0.3 dnskey | \
-	sed -n 's/\(.*\)10.IN/update add \1600 IN/p' |
-	(echo server 10.53.0.3 ${PORT}; cat - ; echo send ) |
-$NSUPDATE
+	awk -v port="${PORT}" 'BEGIN { print "server 10.53.0.3", port; }
+	$2 == 10 && $3 == "IN" && $4 == "DNSKEY" { $2 = 600; print "update add", $0 }
+	END { print "send" }' > update.in.$n
+$NSUPDATE update.in.$n
 
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
 	@10.53.0.3 any > dig.out.ns3.$n

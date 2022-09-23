@@ -1,7 +1,9 @@
-/*	$NetBSD: notify.c,v 1.1.1.4 2021/02/19 16:37:18 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.1.1.5 2022/09/23 12:09:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -150,8 +152,8 @@ ns_notify_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	if (result == ISC_R_SUCCESS) {
 		dns_zonetype_t zonetype = dns_zone_gettype(zone);
 
-		if ((zonetype == dns_zone_master) ||
-		    (zonetype == dns_zone_slave) ||
+		if ((zonetype == dns_zone_primary) ||
+		    (zonetype == dns_zone_secondary) ||
 		    (zonetype == dns_zone_mirror) ||
 		    (zonetype == dns_zone_stub))
 		{

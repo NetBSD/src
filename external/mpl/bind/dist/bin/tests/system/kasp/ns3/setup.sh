@@ -1,9 +1,11 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -62,30 +64,29 @@ if [ -f ../ed448-supported.file ]; then
 	cat ed448.conf >> named.conf
 fi
 
-# Set up zone that stays unsigned.
-zone="unsigned.kasp"
-echo_i "setting up zone: $zone"
-zonefile="${zone}.db"
-infile="${zone}.db.infile"
-cp template.db.in $infile
-cp template.db.in $zonefile
-
-# Set up zone that stays unsigned.
-zone="insecure.kasp"
-echo_i "setting up zone: $zone"
-zonefile="${zone}.db"
-infile="${zone}.db.infile"
-cp template.db.in $zonefile
+# Set up zones that stay unsigned.
+for zn in unsigned insecure max-zone-ttl
+do
+	zone="${zn}.kasp"
+	echo_i "setting up zone: $zone"
+	zonefile="${zone}.db"
+	infile="${zone}.db.infile"
+	cp template.db.in $infile
+	cp template.db.in $zonefile
+done
 
 # Some of these zones already have keys.
 zone="dnssec-keygen.kasp"
+echo_i "setting up zone: $zone"
 $KEYGEN -k rsasha1 -l policies/kasp.conf $zone > keygen.out.$zone.1 2>&1
 
 zone="some-keys.kasp"
+echo_i "setting up zone: $zone"
 $KEYGEN -G -a RSASHA1 -b 2000 -L 1234 $zone > keygen.out.$zone.1 2>&1
 $KEYGEN -G -a RSASHA1 -f KSK  -L 1234 $zone > keygen.out.$zone.2 2>&1
 
 zone="legacy-keys.kasp"
+echo_i "setting up zone: $zone"
 ZSK=$($KEYGEN -a RSASHA1 -b 2048 -L 1234 $zone 2> keygen.out.$zone.1)
 KSK=$($KEYGEN -a RSASHA1 -f KSK  -L 1234 $zone 2> keygen.out.$zone.2)
 echo $ZSK > legacy-keys.kasp.zsk
@@ -99,10 +100,12 @@ $SETTIME -P $Tact -A $Tact -I $Tret -D $Tret "$ZSK"  > settime.out.$zone.1 2>&1
 $SETTIME -P $Tact -A $Tact -I $Tret -D $Tret "$KSK"  > settime.out.$zone.2 2>&1
 
 zone="pregenerated.kasp"
+echo_i "setting up zone: $zone"
 $KEYGEN -G -k rsasha1 -l policies/kasp.conf $zone > keygen.out.$zone.1 2>&1
 $KEYGEN -G -k rsasha1 -l policies/kasp.conf $zone > keygen.out.$zone.2 2>&1
 
 zone="multisigner-model2.kasp"
+echo_i "setting up zone: $zone"
 # Import the ZSK sets of the other providers into their DNSKEY RRset.
 ZSK1=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2> keygen.out.$zone.1)
 ZSK2=$($KEYGEN -K ../ -a $DEFAULT_ALGORITHM -L 3600 $zone 2> keygen.out.$zone.2)
@@ -115,6 +118,7 @@ cat "../${ZSK2}.key" | grep -v ";.*" > "${zone}.zsk2"
 rm -f "../${ZSK2}.*"
 
 zone="rumoured.kasp"
+echo_i "setting up zone: $zone"
 Tpub="now"
 Tact="now+1d"
 keytimes="-P ${Tpub} -A ${Tact}"

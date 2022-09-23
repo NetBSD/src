@@ -1,7 +1,9 @@
-/*	$NetBSD: dnssec-cds.c,v 1.1.1.6 2021/02/19 16:37:03 christos Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.1.1.7 2022/09/23 12:09:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -853,7 +855,7 @@ make_new_ds_set(ds_maker_func_t *ds_from_rdata, uint32_t ttl,
 	}
 }
 
-static inline int
+static int
 rdata_cmp(const void *rdata1, const void *rdata2) {
 	return (dns_rdata_compare((const dns_rdata_t *)rdata1,
 				  (const dns_rdata_t *)rdata2));

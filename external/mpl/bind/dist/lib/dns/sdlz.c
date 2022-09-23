@@ -1,7 +1,9 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.7 2021/02/19 16:37:13 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.8 2022/09/23 12:09:19 christos Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -251,7 +253,7 @@ dns_sdlz_tolower(char *str) {
 	}
 }
 
-static inline unsigned int
+static unsigned int
 initial_size(const char *data) {
 	unsigned int len = (strlen(data) / 64) + 1;
 	return (len * 64 + 64);
@@ -736,8 +738,7 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 	UNUSED(db);
 	UNUSED(node);
 	UNUSED(now);
-	INSIST(0);
-	ISC_UNREACHABLE();
+	UNREACHABLE();
 }
 
 static void
@@ -1877,7 +1878,6 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 					    mctx, rdatabuf, &lookup->callbacks);
 		if (result != ISC_R_SUCCESS) {
 			isc_buffer_free(&rdatabuf);
-			result = DNS_R_SERVFAIL;
 		}
 		if (size >= 65535) {
 			break;
@@ -1889,6 +1889,7 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 	} while (result == ISC_R_NOSPACE);
 
 	if (result != ISC_R_SUCCESS) {
+		result = DNS_R_SERVFAIL;
 		goto failure;
 	}
 

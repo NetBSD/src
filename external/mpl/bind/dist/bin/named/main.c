@@ -1,7 +1,9 @@
-/*	$NetBSD: main.c,v 1.1.1.10 2021/08/19 11:45:14 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.11 2022/09/23 12:09:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,7 +36,6 @@
 #include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/hash.h>
-#include <isc/hp.h>
 #include <isc/httpd.h>
 #include <isc/managers.h>
 #include <isc/netmgr.h>
@@ -351,8 +352,8 @@ usage(void) {
 			"username] [-U listeners]\n"
 			"             [-X lockfile] [-m "
 			"{usage|trace|record|size|mctx}]\n"
-			"             [-M fill|nofill]\n"
-			"usage: named [-v|-V]\n");
+			"             [-M external|internal|fill|nofill]\n"
+			"usage: named [-v|-V|-C]\n");
 }
 
 static void
@@ -458,6 +459,7 @@ static struct flag_def {
 			{ "mctx", ISC_MEM_DEBUGCTX, false },
 			{ NULL, 0, false } },
   mem_context_flags[] = { { "external", ISC_MEMFLAG_INTERNAL, true },
+			  { "internal", ISC_MEMFLAG_INTERNAL, false },
 			  { "fill", ISC_MEMFLAG_FILL, false },
 			  { "nofill", ISC_MEMFLAG_FILL, true },
 			  { NULL, 0, false } };
@@ -773,6 +775,11 @@ parse_command_line(int argc, char *argv[]) {
 			named_g_conffile = isc_commandline_argument;
 			named_g_conffileset = true;
 			break;
+		case 'C':
+			printf("# Built-in default values. "
+			       "This is NOT the run-time configuration!\n");
+			printf("%s", named_config_getdefault());
+			exit(0);
 		case 'd':
 			named_g_debuglevel = parse_int(isc_commandline_argument,
 						       "debug "
@@ -860,8 +867,8 @@ parse_command_line(int argc, char *argv[]) {
 			}
 			break;
 		case 'F':
-		/* Reserved for FIPS mode */
-		/* FALLTHROUGH */
+			/* Reserved for FIPS mode */
+			FALLTHROUGH;
 		case '?':
 			usage();
 			if (isc_commandline_option == '?') {
@@ -876,7 +883,7 @@ parse_command_line(int argc, char *argv[]) {
 						      "an argument",
 						      isc_commandline_option);
 			}
-		/* FALLTHROUGH */
+			FALLTHROUGH;
 		default:
 			named_main_earlyfatal("parsing options returned %d",
 					      ch);
@@ -1478,7 +1485,7 @@ main(int argc, char *argv[]) {
 #endif /* ifdef WIN32 */
 
 #ifdef HAVE_LIBXML2
-	xmlInitThreads();
+	xmlInitParser();
 #endif /* HAVE_LIBXML2 */
 
 	/*
@@ -1523,15 +1530,6 @@ main(int argc, char *argv[]) {
 #if USE_PKCS11
 	pk11_result_register();
 #endif /* if USE_PKCS11 */
-
-#if !ISC_MEM_DEFAULTFILL
-	/*
-	 * Update the default flags to remove ISC_MEMFLAG_FILL
-	 * before we parse the command line. If disabled here,
-	 * it can be turned back on with -M fill.
-	 */
-	isc_mem_defaultflags &= ~ISC_MEMFLAG_FILL;
-#endif /* if !ISC_MEM_DEFAULTFILL */
 
 	parse_command_line(argc, argv);
 
@@ -1633,7 +1631,7 @@ main(int argc, char *argv[]) {
 	named_os_shutdown();
 
 #ifdef HAVE_LIBXML2
-	xmlCleanupThreads();
+	xmlCleanupParser();
 #endif /* HAVE_LIBXML2 */
 
 #ifdef HAVE_GPERFTOOLS_PROFILER

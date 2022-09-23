@@ -1,10 +1,12 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.7 2021/02/19 16:37:04 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.8 2022/09/23 12:09:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -233,7 +235,7 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	/* Open the library */
 	dlopen_flags = RTLD_NOW | RTLD_GLOBAL;
 
-#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
+#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__
 	/*
 	 * If RTLD_DEEPBIND is available then use it. This can avoid
 	 * issues with a module using a different version of a system
@@ -244,7 +246,8 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	 * a segfault).
 	 */
 	dlopen_flags |= RTLD_DEEPBIND;
-#endif /* if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ */
+#endif /* if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__ && \
+	  !__SANITIZE_THREAD__ */
 
 	cd->dl_handle = dlopen(cd->dl_path, dlopen_flags);
 	if (cd->dl_handle == NULL) {

@@ -110,7 +110,7 @@ options {
         avoid-v6-udp-ports { <portrange>; ... };
         bindkeys-file <quoted_string>;
         blackhole { <address_match_element>; ... };
-        cache-file <quoted_string>;
+        cache-file <quoted_string>; // deprecated
         catalog-zones { zone <string> [ default-masters [ port <integer> ]
             [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port
             <integer> ] | <ipv6_address> [ port <integer> ] ) [ key
@@ -347,6 +347,7 @@ options {
             [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [
             nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [
             dnsrps-options { <unspecified-text> } ];
+        reuseport <boolean>;
         rfc2308-type1 <boolean>; // ancient
         root-delegation-only [ exclude { <string>; ... } ];
         root-key-sentinel <boolean>;
@@ -510,7 +511,7 @@ view <string> [ <class> ] {
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
         auto-dnssec ( allow | maintain | off );
-        cache-file <quoted_string>;
+        cache-file <quoted_string>; // deprecated
         catalog-zones { zone <string> [ default-masters [ port <integer> ]
             [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port
             <integer> ] | <ipv6_address> [ port <integer> ] ) [ key

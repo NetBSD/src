@@ -1,7 +1,9 @@
-/*	$NetBSD: query_test.c,v 1.1.1.7 2021/04/29 16:46:34 christos Exp $	*/
+/*	$NetBSD: query_test.c,v 1.1.1.8 2022/09/23 12:09:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -418,8 +420,7 @@ run_start_test(const ns__query_start_test_params_t *test) {
 			 test->id.description, test->id.lineno);
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	/*

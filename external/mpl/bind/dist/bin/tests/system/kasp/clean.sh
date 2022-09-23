@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -27,7 +29,7 @@ rm -f ns*/zones ns*/*.db.infile
 rm -f ns*/*.zsk1 ns*/*.zsk2
 rm -f ns3/legacy-keys.*
 rm -f *.created published.test* retired.test*
-rm -f rndc.dnssec.*.out.*
+rm -f rndc.dnssec.*.out.* rndc.zonestatus.out.*
 rm -f python.out.*
 rm -f *-supported.file
 rm -f created.key-* unused.key-*

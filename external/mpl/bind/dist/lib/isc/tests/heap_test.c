@@ -1,7 +1,9 @@
-/*	$NetBSD: heap_test.c,v 1.1.1.6 2021/04/29 16:46:32 christos Exp $	*/
+/*	$NetBSD: heap_test.c,v 1.1.1.7 2022/09/23 12:09:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,17 +78,14 @@ idx(void *p, unsigned int i) {
 static void
 isc_heap_delete_test(void **state) {
 	isc_heap_t *heap = NULL;
-	isc_result_t result;
 	struct e e1 = { 100, 0 };
 
 	UNUSED(state);
 
-	result = isc_heap_create(test_mctx, compare, idx, 0, &heap);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	isc_heap_create(test_mctx, compare, idx, 0, &heap);
 	assert_non_null(heap);
 
 	isc_heap_insert(heap, &e1);
-	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(e1.index, 1);
 
 	isc_heap_delete(heap, e1.index);

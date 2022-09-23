@@ -1,7 +1,9 @@
-/*	$NetBSD: peer.c,v 1.1.1.4 2021/02/19 16:37:12 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.1.1.5 2022/09/23 12:09:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -200,8 +202,7 @@ dns_peer_new(isc_mem_t *mem, const isc_netaddr_t *addr, dns_peer_t **peerptr) {
 		prefixlen = 128;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	return (dns_peer_newprefix(mem, addr, prefixlen, peerptr));

@@ -1,9 +1,11 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -19,7 +21,7 @@ burst() {
     num=${3:-20}
     rm -f burst.input.$$
     while [ $num -gt 0 ]; do
-        num=`expr $num - 1`
+        num=$((num-1))
         echo "${num}${1}${2}.lamesub.example A" >> burst.input.$$
     done
     $PERL ../ditch.pl -p ${PORT} -s 10.53.0.3 burst.input.$$
@@ -31,7 +33,9 @@ stat() {
             sed 's;.*: \([^/][^/]*\)/.*;\1;'`
     echo_i "clients: $clients"
     [ "$clients" = "" ] && return 1
-    [ "$clients" -le $1 ]
+    [ "$clients" -ge $1 ] || return 1
+    [ "$clients" -le $2 ] || return 1
+    return 0
 }
 
 status=0
@@ -45,13 +49,14 @@ for try in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     burst a $try
     # fetches-per-server is at 400, but at 20qps against a lame server,
     # we'll reach 200 at the tenth second, and the quota should have been
-    # tuned to less than that by then
-    stat 200 || ret=1
+    # tuned to less than that by then.
+    [ $try -le 5 ] && low=$((try*10))
+    stat 20 200 || ret=1
     [ $ret -eq 1 ] && break
     sleep 1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "dumping ADB data"
 $RNDCCMD dumpdb -adb
@@ -75,14 +80,14 @@ fails=`grep 'queries resulted in SERVFAIL' ns3/named.stats | sed 's/\([0-9][0-9]
 [ -z "$fails" ] && fails=0
 [ "$fails" -ge "$sspill" ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "checking lame server recovery"
 ret=0
 rm -f ans4/norespond
 for try in 1 2 3 4 5; do
     burst b $try
-    stat 200 || ret=1
+    stat 0 200 || ret=1
     [ $ret -eq 1 ] && break
     sleep 1
 done
@@ -97,7 +102,7 @@ quota=$5
 
 for try in 1 2 3 4 5 6 7 8 9 10; do
     burst c $try
-    stat 20 || ret=1
+    stat 0 20 || ret=1
     [ $ret -eq 1 ] && break
     sleep 1
 done
@@ -110,7 +115,7 @@ set -- $info
 [ ${5:-${quota}} -gt $quota ] || ret=1
 quota=$5
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 copy_setports ns3/named2.conf.in ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
@@ -124,17 +129,17 @@ for try in 1 2 3 4 5; do
     burst b $try 300
     $DIGCMD a ${try}.example > dig.out.ns3.$try
     grep "status: NOERROR" dig.out.ns3.$try > /dev/null 2>&1 && \
-            success=`expr $success + 1`
+            success=$((success+1))
     grep "status: SERVFAIL" dig.out.ns3.$try > /dev/null 2>&1 && \
-            fail=`expr $fail + 1`
-    stat 50 || ret=1
+            fail=$(($fail+1))
+    stat 30 50 || ret=1
     [ $ret -eq 1 ] && break
     $RNDCCMD recursing 2>&1 | sed 's/^/ns3 /' | cat_i
     sleep 1
 done
 echo_i "$success successful valid queries, $fail SERVFAIL"
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "checking drop statistics"
 rm -f ns3/named.stats
@@ -149,7 +154,7 @@ drops=`grep 'queries dropped' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*
 [ -z "$drops" ] && drops=0
 [ "$drops" -ge "$zspill" ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 copy_setports ns3/named3.conf.in ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
@@ -162,12 +167,12 @@ success=0
 touch ans4/norespond
 for try in 1 2 3 4 5; do
     burst b $try 400
-    $DIGCMD a ${try}.example > dig.out.ns3.$try
-    stat 400 || exceeded=`expr $exceeded + 1`
+    $DIGCMD +time=2 a ${try}.example > dig.out.ns3.$try
+    stat 100 400 || exceeded=$((exceeded + 1))
     grep "status: NOERROR" dig.out.ns3.$try > /dev/null 2>&1 && \
-            success=`expr $success + 1`
+            success=$((success+1))
     grep "status: SERVFAIL" dig.out.ns3.$try > /dev/null 2>&1 && \
-            fail=`expr $fail + 1`
+            fail=$(($fail+1))
     sleep 1
 done
 echo_i "$success successful valid queries (expected 5)"
@@ -177,7 +182,7 @@ echo_i "$fail SERVFAIL responses (expected 0)"
 echo_i "clients count exceeded 400 on $exceeded trials (expected 0)"
 [ "$exceeded" -eq 0 ] || { echo_i "failed"; ret=1; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "checking drop statistics"
 rm -f ns3/named.stats
@@ -189,7 +194,7 @@ done
 drops=`grep 'queries dropped due to recursive client limit' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/'`
 [ "${drops:-0}" -ne 0 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

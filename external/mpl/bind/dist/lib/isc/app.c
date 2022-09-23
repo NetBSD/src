@@ -1,7 +1,9 @@
-/*	$NetBSD: app.c,v 1.1.1.4 2021/08/19 11:45:27 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.5 2022/09/23 12:09:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +54,7 @@
  */
 
 static isc_thread_t blockedthread;
-static atomic_bool is_running = ATOMIC_VAR_INIT(0);
+static atomic_bool is_running = 0;
 
 #ifdef WIN32
 /*
@@ -323,8 +325,7 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 							     true);
 					break;
 				default:
-					INSIST(0);
-					ISC_UNREACHABLE();
+					UNREACHABLE();
 				}
 			}
 		} else {

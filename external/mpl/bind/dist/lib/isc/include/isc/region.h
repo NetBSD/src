@@ -1,7 +1,9 @@
-/*	$NetBSD: region.h,v 1.1.1.3 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +27,7 @@ struct isc_region {
 };
 
 struct isc_textregion {
-	char *	     base;
+	char	    *base;
 	unsigned int length;
 };
 
@@ -33,12 +35,12 @@ struct isc_textregion {
  * discussing the region api.
  */
 struct isc_constregion {
-	const void * base;
+	const void  *base;
 	unsigned int length;
 };
 
 struct isc_consttextregion {
-	const char * base;
+	const char  *base;
 	unsigned int length;
 };
 

@@ -1,7 +1,9 @@
-/*	$NetBSD: zone.h,v 1.1.1.6 2021/08/19 11:45:26 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,8 +40,8 @@
 
 typedef enum {
 	dns_zone_none,
-	dns_zone_master,
-	dns_zone_slave,
+	dns_zone_primary,
+	dns_zone_secondary,
 	dns_zone_mirror,
 	dns_zone_stub,
 	dns_zone_staticstub,
@@ -47,6 +49,14 @@ typedef enum {
 	dns_zone_dlz,
 	dns_zone_redirect
 } dns_zonetype_t;
+
+#ifndef dns_zone_master
+#define dns_zone_master dns_zone_primary
+#endif /* dns_zone_master */
+
+#ifndef dns_zone_slave
+#define dns_zone_slave dns_zone_secondary
+#endif /* dns_zone_slave */
 
 typedef enum {
 	dns_zonestat_none = 0,
@@ -1436,8 +1446,8 @@ dns_zone_getredirecttype(dns_zone_t *zone);
  *\li	'zone' to be a redirect zone.
  *
  * Returns:
- *\li	'dns_zone_master'
- *\li	'dns_zone_slave'
+ *\li	'dns_zone_primary'
+ *\li	'dns_zone_secondary'
  */
 
 void
@@ -2597,6 +2607,26 @@ dns_zone_catz_enable(dns_zone_t *zone, dns_catz_zones_t *catzs);
  * \li	'zone' is a valid zone object
  * \li	'catzs' is not NULL
  * \li	prior to calling, zone->catzs is NULL or is equal to 'catzs'
+ */
+
+void
+dns_zone_catz_disable(dns_zone_t *zone);
+/*%<
+ * Disable zone as catalog zone, if it is one.
+ *
+ * Requires:
+ *
+ * \li	'zone' is a valid zone object
+ */
+
+bool
+dns_zone_catz_is_enabled(dns_zone_t *zone);
+/*%<
+ * Return a boolean indicating whether the zone is enabled as catalog zone.
+ *
+ * Requires:
+ *
+ * \li	'zone' is a valid zone object
  */
 
 void

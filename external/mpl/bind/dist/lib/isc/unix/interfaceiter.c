@@ -1,7 +1,9 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.5 2021/02/19 16:37:17 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.6 2022/09/23 12:09:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -123,8 +125,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 		}
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 

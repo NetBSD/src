@@ -1,7 +1,9 @@
-/*	$NetBSD: base32.c,v 1.1.1.5 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: base32.c,v 1.1.1.6 2022/09/23 12:09:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,7 +151,7 @@ typedef struct {
 	bool pad;	  /*%< Expect padding */
 } base32_decode_ctx_t;
 
-static inline void
+static void
 base32_decode_init(base32_decode_ctx_t *ctx, int length, const char base[],
 		   bool pad, isc_buffer_t *target) {
 	ctx->digits = 0;
@@ -161,7 +163,7 @@ base32_decode_init(base32_decode_ctx_t *ctx, int length, const char base[],
 	ctx->pad = pad;
 }
 
-static inline isc_result_t
+static isc_result_t
 base32_decode_char(base32_decode_ctx_t *ctx, int c) {
 	const char *s;
 	unsigned int last;
@@ -269,7 +271,7 @@ base32_decode_char(base32_decode_ctx_t *ctx, int c) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 base32_decode_finish(base32_decode_ctx_t *ctx) {
 	if (ctx->length > 0) {
 		return (ISC_R_UNEXPECTEDEND);

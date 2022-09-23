@@ -285,7 +285,6 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\heap.h" />
     <ClInclude Include="..\include\isc\hex.h" />
     <ClInclude Include="..\include\isc\hmac.h" />
-    <ClInclude Include="..\include\isc\hp.h" />
     <ClInclude Include="..\include\isc\ht.h" />
     <ClInclude Include="..\include\isc\httpd.h" />
     <ClInclude Include="..\include\isc\interfaceiter.h" />
@@ -311,7 +310,6 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\pool.h" />
     <ClInclude Include="..\include\isc\portset.h" />
     <ClInclude Include="..\include\isc\print.h" />
-    <ClInclude Include="..\include\isc\queue.h" />
     <ClInclude Include="..\include\isc\quota.h" />
     <ClInclude Include="..\include\isc\radix.h" />
     <ClInclude Include="..\include\isc\random.h" />
@@ -401,7 +399,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\heap.c" />
     <ClCompile Include="..\hex.c" />
     <ClCompile Include="..\hmac.c" />
-    <ClCompile Include="..\hp.c" />
     <ClCompile Include="..\ht.c" />
     <ClCompile Include="..\httpd.c" />
     <ClCompile Include="..\iterated_hash.c" />
@@ -426,7 +423,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\parseint.c" />
     <ClCompile Include="..\pool.c" />
     <ClCompile Include="..\portset.c" />
-    <ClCompile Include="..\queue.c" />
     <ClCompile Include="..\quota.c" />
     <ClCompile Include="..\radix.c" />
     <ClCompile Include="..\random.c" />

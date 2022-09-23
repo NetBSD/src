@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -40,6 +42,7 @@ controls {
 zone "step1.going-insecure.kasp" {
 	type master;
 	file "step1.going-insecure.kasp.db";
+	inline-signing yes;
 	dnssec-policy "unsigning";
 };
 
@@ -53,6 +56,7 @@ zone "step1.going-insecure-dynamic.kasp" {
 zone "step1.going-straight-to-none.kasp" {
 	type master;
 	file "step1.going-straight-to-none.kasp.db";
+	inline-signing yes;
 	dnssec-policy "default";
 };
 
@@ -60,12 +64,14 @@ zone "step1.going-straight-to-none.kasp" {
 zone "step1.algorithm-roll.kasp" {
 	type primary;
 	file "step1.algorithm-roll.kasp.db";
+	inline-signing yes;
 	dnssec-policy "rsasha1";
 };
 
 zone "step1.csk-algorithm-roll.kasp" {
 	type primary;
 	file "step1.csk-algorithm-roll.kasp.db";
+	inline-signing yes;
 	dnssec-policy "csk-algoroll";
 };
 
@@ -77,6 +83,7 @@ dnssec-policy "modified" {
 
 zone example {
 	type primary;
-	dnssec-policy modified;
 	file "example.db";
+	inline-signing yes;
+	dnssec-policy modified;
 };

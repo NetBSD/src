@@ -1,7 +1,9 @@
-/*	$NetBSD: backtrace.h,v 1.1.1.3 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: backtrace.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,7 +47,7 @@
  *** Types
  ***/
 struct isc_backtrace_symmap {
-	void *	    addr;
+	void	   *addr;
 	const char *symbol;
 };
 

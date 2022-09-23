@@ -1,10 +1,12 @@
-/*	$NetBSD: socket.c,v 1.1.1.11 2021/08/19 11:45:28 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.12 2022/09/23 12:09:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
@@ -646,7 +648,7 @@ socket_log(isc_socket_t *sock, const isc_sockaddr_t *address,
 /*%
  * Increment socket-related statistics counters.
  */
-static inline void
+static void
 inc_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
 	REQUIRE(counterid != -1);
 
@@ -658,7 +660,7 @@ inc_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
 /*%
  * Decrement socket-related statistics counters.
  */
-static inline void
+static void
 dec_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
 	REQUIRE(counterid != -1);
 
@@ -667,7 +669,7 @@ dec_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
 	}
 }
 
-static inline isc_result_t
+static isc_result_t
 watch_fd(isc__socketthread_t *thread, int fd, int msg) {
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -759,7 +761,7 @@ watch_fd(isc__socketthread_t *thread, int fd, int msg) {
 #endif /* ifdef USE_KQUEUE */
 }
 
-static inline isc_result_t
+static isc_result_t
 unwatch_fd(isc__socketthread_t *thread, int fd, int msg) {
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -807,7 +809,6 @@ unwatch_fd(isc__socketthread_t *thread, int fd, int msg) {
 #elif defined(USE_DEVPOLL)
 	struct pollfd pfds[2];
 	size_t writelen = sizeof(pfds[0]);
-	int lockid = FDLOCK_ID(fd);
 
 	memset(pfds, 0, sizeof(pfds));
 	pfds[0].events = POLLREMOVE;
@@ -1029,7 +1030,7 @@ make_nonblock(int fd) {
  * Note that cmsg_space() could run slow on OSes that do not have
  * CMSG_SPACE.
  */
-static inline socklen_t
+static socklen_t
 cmsg_len(socklen_t len) {
 #ifdef CMSG_LEN
 	return (CMSG_LEN(len));
@@ -1045,7 +1046,7 @@ cmsg_len(socklen_t len) {
 #endif /* ifdef CMSG_LEN */
 }
 
-static inline socklen_t
+static socklen_t
 cmsg_space(socklen_t len) {
 #ifdef CMSG_SPACE
 	return (CMSG_SPACE(len));
@@ -1464,9 +1465,10 @@ dump_msg(struct msghdr *msg) {
 	printf("\tname %p, namelen %ld\n", msg->msg_name,
 	       (long)msg->msg_namelen);
 	printf("\tiov %p, iovlen %ld\n", msg->msg_iov, (long)msg->msg_iovlen);
-	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
+	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++) {
 		printf("\t\t%u\tbase %p, len %ld\n", i,
 		       msg->msg_iov[i].iov_base, (long)msg->msg_iov[i].iov_len);
+	}
 	printf("\tcontrol %p, controllen %ld\n", msg->msg_control,
 	       (long)msg->msg_controllen);
 }
@@ -1576,8 +1578,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 	case isc_sockettype_raw:
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	if (sock->type == isc_sockettype_udp) {
@@ -2245,7 +2246,7 @@ again:
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 				      ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
 				      "%s: %s", err, strbuf);
-		/* fallthrough */
+			FALLTHROUGH;
 		case ENOBUFS:
 			inc_stats(manager->stats,
 				  sock->statsindex[STATID_OPENFAIL]);
@@ -2465,8 +2466,7 @@ socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		sock->statsindex = rawstatsindex;
 		break;
 	default:
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 
 	sock->pf = pf;
@@ -3945,7 +3945,7 @@ socket_recv(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 
 	case DOIO_EOF:
 		dev->result = ISC_R_EOF;
-		/* fallthrough */
+		FALLTHROUGH;
 
 	case DOIO_HARD:
 	case DOIO_SUCCESS:
@@ -4093,7 +4093,7 @@ socket_send(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			break;
 		}
 
-		/* FALLTHROUGH */
+		FALLTHROUGH;
 
 	case DOIO_HARD:
 	case DOIO_SUCCESS:
@@ -4218,7 +4218,7 @@ isc_socket_cleanunix(const isc_sockaddr_t *sockaddr, bool active) {
 			if (active) { /* We exited cleanly last time */
 				break;
 			}
-			/* intentional fallthrough */
+			FALLTHROUGH;
 		default:
 			strerror_r(errno, strbuf, sizeof(strbuf));
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
@@ -5093,7 +5093,7 @@ isc_socket_gettype(isc_socket_t *sock) {
 
 void
 isc_socket_ipv6only(isc_socket_t *sock, bool yes) {
-#if defined(IPV6_V6ONLY)
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
 	int onoff = yes ? 1 : 0;
 #else  /* if defined(IPV6_V6ONLY) */
 	UNUSED(yes);
@@ -5103,7 +5103,7 @@ isc_socket_ipv6only(isc_socket_t *sock, bool yes) {
 	REQUIRE(VALID_SOCKET(sock));
 	INSIST(!sock->dupped);
 
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
 	if (sock->pf == AF_INET6) {
 		if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			       (void *)&onoff, sizeof(int)) < 0)
