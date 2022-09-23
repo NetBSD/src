@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.19 2012/09/02 21:14:56 he Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.20 2022/09/23 19:04:04 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_DEV_WSCONS_WSKBDVAR_H_
+#define	_DEV_WSCONS_WSKBDVAR_H_
 
 /*
  * WSKBD interfaces.
@@ -116,3 +119,5 @@ void	wskbd_set_evtrans(device_t, keysym_t *, int);
 int	wskbd_cngetc(dev_t);
 void	wskbd_cnpollc(dev_t, int);
 void	wskbd_cnbell(dev_t, u_int, u_int, u_int);
+
+#endif	/* _DEV_WSCONS_WSKBDVAR_H_ */
