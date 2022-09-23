@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.27 2022/09/22 21:40:42 uwe Exp $
+.\"	$NetBSD: wdogctl.8,v 1.28 2022/09/23 12:35:00 riastradh Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ The
 .Nx
 kernel provides three modes in which watchdog timers may
 operate: kernel tickle mode, user tickle mode, and external tickle mode.
-.Bl -tag -width "external tickle mode"
+.Bl -tag
 .It kernel tickle mode
 A timer in the kernel refreshes the watchdog timer.
 This ensures kernel threads can make progress within the period of the
@@ -100,9 +100,8 @@ unless the timer is activated with the
 option.
 .It external tickle mode
 Similar to user tickle mode, except that the tickle must be done
-explicitly by a separate invocation of the program with the
-.Fl t
-option.
+explicitly by a separate invocation of
+.Nm Fl t .
 This allows users to determine the activity whose progress the watchdog
 timer checks.
 .El
