@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.341 2022/09/24 10:26:31 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.342 2022/09/24 16:13:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,13 +81,9 @@
  *			of one of the .if directives or the condition in a
  *			':?then:else' variable modifier.
  *
- *	Cond_PushMinDepth
- *	Cond_PopMinDepth
- *	Cond_ResetDepth
- *			Save and restore the nesting of the conditions, at
- *			the start and end of including another makefile, to
- *			ensure that in each makefile the conditional
- *			directives are well-balanced.
+ *	Cond_EndFile
+ *			At the end of reading a makefile, ensure that the
+ *			conditional directives are well-balanced.
  */
 
 #include <errno.h>
@@ -96,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.341 2022/09/24 10:26:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.342 2022/09/24 16:13:48 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -179,8 +175,7 @@ typedef struct CondParser {
 
 static CondResult CondParser_Or(CondParser *par, bool);
 
-static unsigned int cond_depth = 0;	/* current .if nesting level */
-static unsigned int cond_min_depth = 0;	/* depth at makefile open */
+unsigned int cond_depth = 0;	/* current .if nesting level */
 
 /* Names for ComparisonOp. */
 static const char opname[][3] = { "<", "<=", ">", ">=", "==", "!=" };
@@ -1138,7 +1133,7 @@ Cond_EvalLine(const char *line)
 			    "The .endif directive does not take arguments");
 		}
 
-		if (cond_depth == cond_min_depth) {
+		if (cond_depth == CurFile_CondMinDepth()) {
 			Parse_Error(PARSE_FATAL, "if-less endif");
 			return CR_TRUE;
 		}
@@ -1168,7 +1163,7 @@ Cond_EvalLine(const char *line)
 				    "The .else directive "
 				    "does not take arguments");
 
-			if (cond_depth == cond_min_depth) {
+			if (cond_depth == CurFile_CondMinDepth()) {
 				Parse_Error(PARSE_FATAL, "if-less else");
 				return CR_TRUE;
 			}
@@ -1203,7 +1198,7 @@ Cond_EvalLine(const char *line)
 		return CR_ERROR;
 
 	if (isElif) {
-		if (cond_depth == cond_min_depth) {
+		if (cond_depth == CurFile_CondMinDepth()) {
 			Parse_Error(PARSE_FATAL, "if-less elif");
 			return CR_TRUE;
 		}
@@ -1256,36 +1251,14 @@ Cond_EvalLine(const char *line)
 	return res;
 }
 
-unsigned int
-Cond_PushMinDepth(void)
-{
-	unsigned int depth = cond_min_depth;
-
-	cond_min_depth = cond_depth;
-	return depth;
-}
-
 void
-Cond_PopMinDepth(unsigned int saved_depth)
+Cond_EndFile(void)
 {
-	unsigned int open_conds = cond_depth - cond_min_depth;
+	unsigned int open_conds = cond_depth - CurFile_CondMinDepth();
 
-	assert(saved_depth <= cond_depth);
 	if (open_conds != 0) {
 		Parse_Error(PARSE_FATAL, "%u open conditional%s",
 		    open_conds, open_conds == 1 ? "" : "s");
-		cond_depth = cond_min_depth;
+		cond_depth = CurFile_CondMinDepth();
 	}
-
-	cond_min_depth = saved_depth;
-}
-
-/*
- * When breaking out of a .for loop, restore cond_depth to where it was when
- * the loop started.
- */
-void
-Cond_ResetDepth(void)
-{
-	cond_depth = cond_min_depth;
 }

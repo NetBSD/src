@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.686 2022/09/24 16:09:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.687 2022/09/24 16:13:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.686 2022/09/24 16:09:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.687 2022/09/24 16:13:48 rillig Exp $");
 
 /*
  * A file being read.
@@ -119,9 +119,8 @@ typedef struct IncludedFile {
 	unsigned forBodyReadLines; /* the number of physical lines that have
 				 * been read from the file above the body of
 				 * the .for loop */
-	unsigned int including_cond_min_depth; /* depth of nested 'if'
-				 * directives, at the point where the
-				 * including file was opened */
+	unsigned int condMinDepth; /* depth of nested 'if' directives, at the
+				 * beginning of the file */
 	bool depending;		/* state of doing_depend on EOF */
 
 	Buffer buf;		/* the file's content or the body of the .for
@@ -309,6 +308,12 @@ static IncludedFile *
 CurFile(void)
 {
 	return GetInclude(includes.len - 1);
+}
+
+unsigned int
+CurFile_CondMinDepth(void)
+{
+	return CurFile()->condMinDepth;
 }
 
 static Buffer
@@ -2142,7 +2147,7 @@ Parse_PushInput(const char *name, unsigned lineno, unsigned readLines,
 
 	curFile->buf_ptr = curFile->buf.data;
 	curFile->buf_end = curFile->buf.data + curFile->buf.len;
-	curFile->including_cond_min_depth = Cond_PushMinDepth();
+	curFile->condMinDepth = cond_depth;
 	SetParseFile(name);
 }
 
@@ -2275,11 +2280,7 @@ ParseEOF(void)
 		return true;
 	}
 
-	/*
-	 * Ensure the makefile (or .for loop) didn't have mismatched
-	 * conditionals.
-	 */
-	Cond_PopMinDepth(curFile->including_cond_min_depth);
+	Cond_EndFile();
 
 	FStr_Done(&curFile->name);
 	Buf_Done(&curFile->buf);
@@ -2672,7 +2673,7 @@ HandleBreak(void)
 	if (curFile->forLoop != NULL) {
 		/* pretend we reached EOF */
 		For_Break(curFile->forLoop);
-		Cond_ResetDepth();
+		cond_depth = CurFile_CondMinDepth();
 		ParseEOF();
 	} else
 		Parse_Error(PARSE_FATAL, "break outside of for loop");
