@@ -1,5 +1,324 @@
+23 June 2022: Wouter
+	- Tag for 4.6.0rc1.
+
+17 June 2022: Wouter
+	- Fix compilation with libev, without event_base_loopbreak.
+
+16 June 2022: Wouter
+	- Fix that the unit test verify_repat cleans up nsd on exit.
+	- Fix to remove ixfrcreate.c asserts about uint16 within limits
+	  because of warnings from analyzers.
+
+14 June 2022: Wouter
+	- Fix compilation without libevent and compilation of nsd-mem.
+	- Fix verify handler add of sigchld event for compilation without
+	  libevent.
+
+3 June 2022: Wouter
+	- Fix static analyzer reports on ixfrcreate temp file.
+	- Fixup wrong ixfrcreate fread return check.
+
+13 May 2022: Wouter
+	- The code repo continues with version 4.5.1.
+
+6 May 2022: Wouter
+	- Merge PR #209: IXFR out
+	  This adds IXFR out functionality to NSD. NSD can copy IXFRs from
+	  upstream to downstream clients, or create IXFRs from zonefiles.
+	  The options store-ixfr: yes and create-ixfr: yes can be used to
+	  turn this on. Default is turned off. The options ixfr-number and
+	  ixfr-size can be used to tune the number of IXFR transfers and
+	  total data size stored. This is configured per zone, the IXFRs
+	  are served to the hosts that are allowed to perform zone transfers.
+	  And if TSIG is configured, signed with the same key. The content
+	  is stored to file if a zonefile is configured for the zone, in
+	  the zonefile.ixfr and zonefile.ixfr.2, .. files. They contain
+	  readable text format. The number of IXFRs is num.rixfr in
+	  statistics output, also per zone if per zone statistics are enabled.
+	  If offline, nsd-checkzone -i can create ixfr files.
+	  NSD already supports requesting IXFRs, this addition allows NSD
+	  to serve IXFR transfers to clients.
+	  NSD stops responding with NOTIMPL to IXFR requests, also for zones
+	  that do not have IXFR enabled. The clients gets a full zone reply
+	  or a status reply if the serial is up to date.
+	- set version to 4.5.0 for feature change.
+	- Tag for 4.5.0rc1 release. It became the 4.5.0 release on 13 May 2022.
+
+14 April 2022: Wouter
+	- Update cirrus script FreeBSD version.
+
+25 March 2022: Wouter
+	- Fix spelling error in comment in svcbparam_lookup_key.
+
+2 March 2022: Wouter
+	- Fix code analyzer zero divide warning.
+	- Fix code analyzer large value with assertion.
+	- Fix another code analyzer zero divide warning.
+	- Fix code analyzer warning about uninitialized temp storage in loop.
+
+10 February 2022: Wouter
+	- Tag for 4.4.0rc1 release. This became 4.4.0 release on 17 Feb 2022,
+	  the code repository continues with version 4.4.1.
+
+9 February 2022: Wouter
+	- Fix unit tests for nds-control-setup exit code and the
+	  xfrd-tcp-max default.
+
+7 February 2022: Wouter
+	- Merge #207 Sync nsd-control-setup with unbound-control-setup to
+	  generate certificates with SANs.
+
+28 January 2022: Wouter
+	- Fix #206: build with --without-ssl fails.
+
+27 January 2022: Wouter
+	- current code branch continues as version 4.4.0, because of added
+	  feature.
+
+26 January 2022: Wouter
+	- Merge #193: Lower memory usage of the XFRD process by default.
+	  Instead of preallocating all elements, they are allocated when used.
+	  There are options for managing the memory usage, defaults are the
+	  same as before. xfrd-tcp-max sets the number of sockets for tcp
+	  connections that xfrd can make to download zone contents. And
+	  xfrd-tcp-pipeline the number of simultaneous transfers over the
+	  same connection.
+
+12 January 2022: Wouter
+	- Fix to document nsd-checkzone -p in the man page for nsd-checkzone.
+
+7 January 2022: Wouter
+	- Fix to change file mode before changing file owner for the
+	  nsd-control unix socket file.
+
+3 January 2022: Wouter
+	- Merge #204 from jonathangray: correct some spelling mistakes.
+
+15 December 2021: Wouter
+	- Fix #200: nsd-checkzone succeeds even with incorrect serial in SOA
+	  record.
+
+2 December 2021: Wouter
+	- Fix socket_partitioning unit test for FreeBSD.
+	- Fix SVCB test to work around older dig with drill.
+	- Fix unit test to not syslog setlogin failures.
+
+1 December 2021: Wouter
+	- Set up for branch for 4.3.9 release.
+	  This became release 4.3.9 on 9 Dec 2021 and included the changes
+	  until the SVCB fix on 2 dec 2021, but not the setlogin fix.
+	  The main branch continues as 4.3.10.
+	- Fix unit tests for new answer-cookie default.
+
+30 November 2021: Wouter
+	- Fix to remove git tracking and ci information from release tarballs.
+
+3 November 2021: Wouter
+	- Fix #198: nsd-control reconfig core dump.
+
+12 October 2021: Wouter
+	- Tag for 4.3.8 release, from 4.3.8rc2. The main branch continues
+	  with version 4.3.9 in development.
+
+7 October 2021: Wouter
+	- Set default for answer-cookie to no. Because in server deployments
+	  with mixed server software, a default of yes causes issues.
+	- Tag for 4.3.8rc2, includes the new answer-cookie default.
+
+4 October 2021: Wouter
+	- Tag for 4.3.8rc1.
+
+29 September 2021: Wouter
+	- Fix unit tests for svcb and xot to not touch the default
+	  zonelistfile.
+	- Fix unit test for xot tertiary config for zonelistfile default.
+	- Fix unit test for dns-cookies for no unshare, and allow-query
+	  for no IPv6 loopback.
+	- Fix unit test allow query to check for IPv6.
+
+22 September 2021: Wouter
+	- Fix #194: Incorrect NSEC3 response for SOA query below delegation
+	  point.
+
+13 September 2021: Wouter
+	- Fix compile failure with openssl 1.0.2.
+
+3 September 2021: Wouter
+	- Fix not reachable annotation in radix_find_prefix_node.
+
+31 August 2021: Willem
+	- Fix #191: dname_parse_wire() returns fqdn wireformat length.
+
+26 August 2021: Wouter
+	- Fix #190: NSD returns 3 NSEC3 records for NODATA response.
+
+23 August 2021: Wouter
+	- Fix #189: nsd 4.3.7 crash answer_delegation: Assertion
+	  `query->delegation_rrset' failed.
+
+17 August 2021: Wouter
+	- Fix #188: NSD fails to build against openssl 1.1 on CentOS 7.
+	- Fix sed script in ssldir split handling.
+
+13 August 2021: Wouter
+	- Merge #187: Support using system-wide crypto policies.
+
+10 August 2021: Wouter
+	- Merge #185 by cesarkuroiwa: Mutual TLS.
+	- Fixes for #185: Document client-cert, client-key and client-key-pw
+	  in the man page. Fix yacc semicolon. Fix unused variable warning.
+	  Use strlcpy instead of strncpy. Fix spelling error in error
+	  printout.
+
+2 August 2021: Wouter
+	- Quieter tpkg/do-tests shell script with -q flag.
+	- For #184: Note that all zones can be targeted by some nsd-control
+	  commands in the man page.
+
+30 July 2021: Wouter
+	- Move acx_nlnetlabs.m4 to version 41, with lib64 openssl dir check.
+	- Fix to compile with OpenSSL 3.0.0beta2.
+	- Fix configure detection of SSL_CTX_set_security_level.
+	- Fix deprecated functions use from openssl 3.0.0beta2.
+
+23 July 2021: Wouter
+	- Fix free on shutdown of XoT SSL context.
+
+22 July 2021: Wouter
+	- tag 4.3.7 release, with the fixes between rc1 and this release.
+	- main branch continues for 4.3.8.
+
+20 July 2021: Wouter
+	- Fix typo in xfrd-tcp.c.
+
+15 July 2021: Wouter
+	- tag for 4.3.7rc1.
+	- Fix compile of cookies on FreeBSD without IPv6.
+	- Fix for loop initial declaration for nonc99 compiler.
+
+14 July 2021: Wouter
+	- Fix truncate test for EDNS COOKIE making one less RR is added.
+	- Attempt to fix gcc11 warning.
+
+13 July 2021: Willem
+	- Fixes for child server processes getting out of sync with the
+	  dnstap-collector process
+
+13 July 2021: Willem
+	- Interoperable DNS Cookies support as per RFC7873 and RFC9018
+
+9 July 2021: Willem
+	- Client side DNS Zone Transfer-over-TLS (XoT) support as per
+	  draft-ietf-dprive-xfr-over-tls
+
+29 June 2021: Willem
+	- Fix #168: Buffer overflow in the dname_to_string() function
+
+14 June 2021: Wouter
+	- Update configure nonblocking test to use host.
+
+25 May 2021: Wouter
+	- Fix #179: log notice and server-count.
+
+21 May 2021: Wouter
+	- Test code has -q option for quiet output.
+
+17 May 2021: Wouter
+	- Update the ACX_CHECK_NONBLOCKING_BROKEN test for the configure
+	  script.
+
+7 May 2021: Wouter
+	- Fix #176: please review Loglevel on missing zonefile.
+
+6 May 2021: Wouter
+	- Fix #174: NS Records below delegation are not ignored (nsd-checkzone
+	  also does not raise any issue).
+
+4 May 2021: Wouter
+	- Fix SVCB sort call sizeof to be the size of the elements sorted.
+
+29 April 2021: Tom
+	- Implement Syntax of SVCB and HTTPS RR type as per draft-ietf-dnsop-svcb-https
+
+13 April 2021: Wouter
+	- Fix for #128: Skip over sendmmsg invalid argument when port is zero.
+	- Fix #171: Invalid negative response (NSEC3) after IXFR.
+	- Fix to make nsec3_chain_find_prev return NULL if one nsec3 left.
+	- remove debug settings from unit test.
+
+9 April 2021: Wouter
+	- Fix for #170: Fix build warnings when IPv6 is disabled.
+	- Fix #170: Disabled IPv6 and DNSTAP enabled triggers a build error.
+
+30 March 2021: Wouter
+	- Fix configure failure for enable systemd because of autoconf.
+	- This became release 4.3.6, the repository continues for 4.3.7
+	  in development.
+
+29 March 2021: Wouter
+	- Note unlisted changes in RELNOTES and prepare for 4.3.6rc1 tag.
+
+29 March 2021: Willem
+	- Per zone Access Control List for queries
+	  with an allow-query: option.
+
+24 March 2021: Wouter
+	- Update acx_nlnetlabs.m4 to version 38, fix deprecation test.
+	- Fix configure to use header checks with compile.
+	- Fix warning about unused function log_addr.
+
+18 March 2021: Tom
+	- Add Extended DNS Errors RFC8914
+
+15 March 2021: Wouter
+	- Fix double config.h include in configlexer.c
+	- Fix to remove configyyrename from makedist.sh and also
+	  update the flex and bison rules there to add the "c_" prefix.
+
+13 March 2021: Willem
+	- Fix #154: TXT with parentheses fails in 4.3.5.
+	- Align parsing of TXT elements with how bind does it.
+	- A -p option to nsd-checkzone to print a successfully read zone.
+
+12 March 2021: Wouter
+	- Fix that wildcard is printed as a star instead of escaped, in
+	  logs and in written zone files.
+	- Fix unit test for wildcard printout change.
+
+11 March 2021: Wouter
+	- Fix #163: A TSIG noncompliance with RFC 2845.
+
+9 March 2021: Willem
+	- Enable configuring a control-interface by interface name.
+
+19 February 2021: Wouter
+	- Fix segfault on high verbosity for TLS channels with dnstap log
+	  local address.
+
+18 February 2021: Wouter
+	- Fix #146 with #147: DNSTAP log the local address of the server
+	  with the dnstap logs.
+
+16 February 2021: Wouter
+	- Man page documentation for dnstap options.
+
+8 February 2021: Wouter
+	- Fix AF_LOCAL compile error for Solaris.
+	- Fix ifaddrs compile error for Solaris.
+	- Fix ifaddrs.h compile error for Solaris.
+
+4 February 2021: Wouter
+	- Merge PR #153 from fobser: Repair -fno-common linker errors
+	  automatically.
+	- Fix uninitialized access of log_buf in error printout on apply ixfr.
+
+26 January 2021: Wouter
+	- Prevent a few more yacc clashes.
+
 19 January 2021: Wouter
-	- Set branch ready for 4.3.5 release.
+	- Set branch ready for 4.3.5 release.  Tag for 4.3.5rc1.
+	  Became the 4.3.5 release on 26 january 2021.  This branch continues
+	  with 4.3.6 in development.
 
 15 January 2021: Wouter
 	- Fix #152: '*' in Rdata causes the return code to be NOERROR instead

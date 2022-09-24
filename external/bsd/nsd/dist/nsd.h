@@ -74,6 +74,13 @@ struct dt_collector;
  * port53 is free when all of nsd's processes have exited at shutdown time
  */
 #define NSD_QUIT_CHILD 11
+/*
+ * This is the exit code of a nsd "new master" child process to indicate to
+ * the master process that some zones failed verification and that it should
+ * reload again, reprocessing the difffiles. The master process will resend
+ * the command to xfrd so it will not reload from xfrd yet.
+ */
+#define NSD_RELOAD_FAILED 14
 
 #define NSD_SERVER_MAIN 0x0U
 #define NSD_SERVER_UDP  0x1U
@@ -185,6 +192,15 @@ struct nsd_child
 #endif
 };
 
+#define NSD_COOKIE_HISTORY_SIZE 2
+#define NSD_COOKIE_SECRET_SIZE 16
+
+typedef struct cookie_secret cookie_secret_type;
+struct cookie_secret {
+	/** cookie secret */
+	uint8_t cookie_secret[NSD_COOKIE_SECRET_SIZE];
+};
+
 /* NSD configuration and run-time variables */
 typedef struct nsd nsd_type;
 struct	nsd
@@ -258,6 +274,17 @@ struct	nsd
 	/* UDP specific configuration (array size ifs) */
 	struct nsd_socket* udp;
 
+	/* Interfaces used for zone verification */
+	size_t verify_ifs;
+	struct nsd_socket *verify_tcp;
+	struct nsd_socket *verify_udp;
+
+	struct zone *next_zone_to_verify;
+	size_t verifier_count; /* Number of active verifiers */
+	size_t verifier_limit; /* Maximum number of active verifiers */
+	int verifier_pipe[2]; /* Pipe to trigger verifier exit handler */
+	struct verifier *verifiers;
+
 	edns_data_type edns_ipv4;
 #if defined(INET6)
 	edns_data_type edns_ipv6;
@@ -285,7 +312,7 @@ struct	nsd
 		stc_type rcode[17], opcode[6]; /* Rcodes & opcodes */
 		/* Dropped, truncated, queries for nonconfigured zone, tx errors */
 		stc_type dropped, truncated, wrongzone, txerr, rxerr;
-		stc_type edns, ednserr, raxfr, nona;
+		stc_type edns, ednserr, raxfr, nona, rixfr;
 		uint64_t db_disk, db_mem;
 	} st;
 	/* per zone stats, each an array per zone-stat-idx, stats per zone is
@@ -305,13 +332,29 @@ struct	nsd
 	/* the dnstap collector process info */
 	struct dt_collector* dt_collector;
 	/* the pipes from server processes to the dt_collector,
-	 * arrays of size child_count.  Kept open for (re-)forks. */
+	 * arrays of size child_count * 2.  Kept open for (re-)forks. */
 	int *dt_collector_fd_send, *dt_collector_fd_recv;
+	/* the pipes from server processes to the dt_collector. Initially
+	 * these point halfway into dt_collector_fd_send, but during reload
+	 * the pointer is swapped with dt_collector_fd_send in order to
+	 * to prevent writing to the dnstap collector by old serve childs
+	 * simultaneous with new serve childs. */
+	int *dt_collector_fd_swap;
 #endif /* USE_DNSTAP */
 	/* ratelimit for errors, time value */
 	time_t err_limit_time;
 	/* ratelimit for errors, packet count */
 	unsigned int err_limit_count;
+
+	/** do answer with server cookie when request contained cookie option */
+	int do_answer_cookie;
+
+	/** how many cookies are there in the cookies array */
+	size_t cookie_count;
+
+	/* keep track of the last `NSD_COOKIE_HISTORY_SIZE`
+	 * cookies as per rfc requirement .*/
+	cookie_secret_type cookie_secrets[NSD_COOKIE_HISTORY_SIZE];
 
 	struct nsd_options* options;
 

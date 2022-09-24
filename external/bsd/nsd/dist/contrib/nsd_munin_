@@ -242,6 +242,7 @@ if test "$1" = "config" ; then
 		p_config "num.txerr" "transmit failed" "ABSOLUTE"
 		p_config "num.truncated" "truncated replies with TC" "ABSOLUTE"
 		p_config "num.raxfr" "AXFR from allowed client" "ABSOLUTE"
+		p_config "num.rixfr" "IXFR from allowed client" "ABSOLUTE"
 		p_config "num.dropped" "dropped due to sanity check" "ABSOLUTE"
 		echo "graph_info DNS queries."
 		;;
@@ -362,7 +363,7 @@ hits)
 		server15.queries \
 		num.queries num.udp num.udp6 num.tcp num.tcp6 \
 		num.edns num.ednserr num.answer_wo_aa num.rxerr num.txerr \
-		num.truncated num.raxfr num.dropped ; do
+		num.truncated num.raxfr num.rixfr num.dropped ; do
 		if grep "^"$x"=" $state >/dev/null 2>&1; then
 			print_value $x
 		fi

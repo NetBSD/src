@@ -43,6 +43,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_SSL
 #include <sys/types.h>
 #include <unistd.h>
@@ -60,9 +61,13 @@
 #include <sys/un.h>
 #endif
 #include <fcntl.h>
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
 #include "util.h"
 #include "tsig.h"
 #include "options.h"
+#include "zonec.h"
 
 static void usage(void) ATTR_NORETURN;
 static void ssl_err(const char* s) ATTR_NORETURN;
@@ -70,6 +75,14 @@ static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
 
 /** timeout to wait for connection over stream, in msec */
 #define NSD_CONTROL_CONNECT_TIMEOUT 5000
+
+int zonec_parse_string(region_type* ATTR_UNUSED(region),
+	domain_table_type* ATTR_UNUSED(domains), zone_type* ATTR_UNUSED(zone),
+	char* ATTR_UNUSED(str), domain_type** ATTR_UNUSED(parsed),
+	int* ATTR_UNUSED(num_rrs))
+{
+	return 0;
+}
 
 /** Give nsd-control usage, and exit (1). */
 static void
@@ -110,6 +123,10 @@ usage()
 	printf("  add_tsig <name> <secret> [algo] add new key with the given parameters\n");
 	printf("  assoc_tsig <zone> <key_name>	associate <zone> with given tsig <key_name> name\n");
 	printf("  del_tsig <key_name>		delete tsig <key_name> from configuration\n");
+	printf("  add_cookie_secret <secret>	add (or replace) a new cookie secret <secret>\n");
+	printf("  drop_cookie_secret		drop a staging cookie secret\n");
+	printf("  activate_cookie_secret	make a staging cookie secret active\n");
+	printf("  print_cookie_secrets		show all cookie secrets with their status\n");
 	exit(1);
 }
 
@@ -126,9 +143,7 @@ static void ssl_path_err(const char* s, const char *path)
 {
 	unsigned long err;
 	err = ERR_peek_error();
-	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
-		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
-		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS) {
 		fprintf(stderr, "error: %s\n%s: %s\n",
 			s, path, ERR_reason_error_string(err));
 		exit(1);
@@ -492,6 +507,7 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 	}
 	if(!opt->control_enable)
 		fprintf(stderr, "warning: control-enable is 'no' in the config file.\n");
+	resolve_interface_names(opt);
 	ctx = setup_ctx(opt);
 
 	/* contact server */
@@ -524,7 +540,9 @@ int main(int argc, char* argv[])
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
+#if defined(HAVE_ERR_LOAD_SSL_STRINGS) && !defined(DEPRECATED_ERR_LOAD_SSL_STRINGS)
 	ERR_load_SSL_strings();
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
 #else
@@ -572,8 +590,11 @@ int main(int argc, char* argv[])
 	if(argc == 0)
 		usage();
 	if(argc >= 1 && strcmp(argv[0], "start")==0) {
-		if(execl(NSD_START_PATH, "nsd", "-c", cfgfile, 
-			(char*)NULL) < 0) {
+		const char *path;
+		if((path = getenv("NSD_PATH")) == NULL) {
+			path = NSD_START_PATH;
+		}
+		if(execl(path, "nsd", "-c", cfgfile, (char*)NULL) < 0) {
 			fprintf(stderr, "could not exec %s: %s\n",
 				NSD_START_PATH, strerror(errno));
 			exit(1);

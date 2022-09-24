@@ -21,6 +21,13 @@
 extern char *optarg;
 extern int optind;
 static void usage(void) ATTR_NORETURN;
+int zonec_parse_string(region_type* ATTR_UNUSED(region),
+	domain_table_type* ATTR_UNUSED(domains), zone_type* ATTR_UNUSED(zone),
+	char* ATTR_UNUSED(str), domain_type** ATTR_UNUSED(parsed),
+	int* ATTR_UNUSED(num_rrs))
+{
+	return 0;
+}
 
 #define ZONE_GET_ACL(NAME, VAR, PATTERN) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
@@ -140,20 +147,21 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: nsd-checkconf [-v|-h] [-o option] [-z zonename]\n");
-	fprintf(stderr, "                     [-s keyname] <configfilename>\n");
+	fprintf(stderr, "                     [-s keyname] [-t tlsauthname] <configfilename>\n");
 	fprintf(stderr, "       Checks NSD configuration file for errors.\n");
 	fprintf(stderr, "       Version %s. Report bugs to <%s>.\n\n",
 		PACKAGE_VERSION, PACKAGE_BUGREPORT);
 	fprintf(stderr, "Use with a configfile as argument to check syntax.\n");
-	fprintf(stderr, "Use with -o, -z or -s options to query the configuration.\n\n");
-	fprintf(stderr, "-v		Verbose, echo settings that take effect to std output.\n");
-	fprintf(stderr, "-h		Print this help information.\n");
-	fprintf(stderr, "-f		Use with -o to print final pathnames, ie. with chroot.\n");
-	fprintf(stderr, "-o option	Print value of the option specified to stdout.\n");
-	fprintf(stderr, "-p pattern	Print option value for the pattern given.\n");
-	fprintf(stderr, "-z zonename	Print option value for the zone given.\n");
-	fprintf(stderr, "-a keyname	Print algorithm name for the TSIG key.\n");
-	fprintf(stderr, "-s keyname	Print base64 secret blob for the TSIG key.\n");
+	fprintf(stderr, "Use with -o, -z, -t or -s options to query the configuration.\n\n");
+	fprintf(stderr, "-v			Verbose, echo settings that take effect to std output.\n");
+	fprintf(stderr, "-h			Print this help information.\n");
+	fprintf(stderr, "-f			Use with -o to print final pathnames, ie. with chroot.\n");
+	fprintf(stderr, "-o option		Print value of the option specified to stdout.\n");
+	fprintf(stderr, "-p pattern		Print option value for the pattern given.\n");
+	fprintf(stderr, "-z zonename		Print option value for the zone given.\n");
+	fprintf(stderr, "-a keyname		Print algorithm name for the TSIG key.\n");
+	fprintf(stderr, "-s keyname		Print base64 secret blob for the TSIG key.\n");
+	fprintf(stderr, "-t tls-auth-name	Print auth domain name for the tls-auth clause.\n");
 	exit(1);
 }
 
@@ -196,9 +204,15 @@ quote_acl(acl_options_type* acl)
 {
 	while(acl)
 	{
-		printf("%s %s\n", acl->ip_address_spec,
-			acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
-			(acl->key_name?acl->key_name:"(null)")));
+		if (acl->tls_auth_name)
+			printf("%s %s %s\n", acl->ip_address_spec,
+				acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
+				(acl->key_name?acl->key_name:"(null)")),
+				acl->tls_auth_name?acl->tls_auth_name:"");
+		else
+			printf("%s %s\n", acl->ip_address_spec,
+				acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
+				(acl->key_name?acl->key_name:"(null)")));
 		acl=acl->next;
 	}
 }
@@ -213,9 +227,15 @@ print_acl(const char* varname, acl_options_type* acl)
 			printf("AXFR ");
 		if(acl->allow_udp)
 			printf("UDP ");
-		printf("%s %s\n", acl->ip_address_spec,
-			acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
-			(acl->key_name?acl->key_name:"(null)")));
+		if (acl->tls_auth_name)
+			printf("%s %s %s\n", acl->ip_address_spec,
+				acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
+				(acl->key_name?acl->key_name:"(null)")),
+				acl->tls_auth_name?acl->tls_auth_name:"");
+		else
+			printf("%s %s\n", acl->ip_address_spec,
+				acl->nokey?"NOKEY":(acl->blocked?"BLOCKED":
+				(acl->key_name?acl->key_name:"(null)")));
 		if(verbosity>1) {
 			printf("\t# %s", acl->is_ipv6?"ip6":"ip4");
 			if(acl->port == 0) printf(" noport");
@@ -263,7 +283,7 @@ print_acl_ips(const char* varname, acl_options_type* acl)
 
 void
 config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
-	const char *z, const char* pat, int final)
+	const char *z, const char* pat, const char* tls, int final)
 {
 	ip_address_option_type* ip;
 
@@ -279,6 +299,17 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 			return;
 		}
 		printf("Could not find key %s\n", k);
+		return;
+	}
+
+	if (tls) {
+		/* find tlsauth */
+		tls_auth_options_type* tlsauth = tls_auth_options_find(opt, tls);
+		if(tlsauth) {
+			quote(tlsauth->auth_domain_name);
+			return;
+		}
+		printf("Could not find tls-auth %s\n", tls);
 		return;
 	}
 
@@ -305,6 +336,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		}
 		ZONE_GET_BIN(part_of_config, o, zone);
 		ZONE_GET_PATH(final, zonefile, o, zone->pattern);
+		ZONE_GET_ACL(allow_query, o, zone->pattern);
 		ZONE_GET_ACL(request_xfr, o, zone->pattern);
 		ZONE_GET_ACL(provide_xfr, o, zone->pattern);
 		ZONE_GET_ACL(allow_notify, o, zone->pattern);
@@ -323,6 +355,10 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_RRL(rrl_whitelist, o, zone->pattern);
 #endif
 		ZONE_GET_BIN(multi_master_check, o, zone->pattern);
+		ZONE_GET_BIN(store_ixfr, o, zone->pattern);
+		ZONE_GET_INT(ixfr_size, o, zone->pattern);
+		ZONE_GET_INT(ixfr_number, o, zone->pattern);
+		ZONE_GET_BIN(create_ixfr, o, zone->pattern);
 		printf("Zone option not handled: %s %s\n", z, o);
 		exit(1);
 	} else if(pat) {
@@ -337,6 +373,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		}
 		ZONE_GET_STR(zonefile, o, p);
 		ZONE_GET_PATH(final, zonefile, o, p);
+		ZONE_GET_ACL(allow_query, o, p);
 		ZONE_GET_ACL(request_xfr, o, p);
 		ZONE_GET_ACL(provide_xfr, o, p);
 		ZONE_GET_ACL(allow_notify, o, p);
@@ -355,6 +392,10 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_RRL(rrl_whitelist, o, p);
 #endif
 		ZONE_GET_BIN(multi_master_check, o, p);
+		ZONE_GET_BIN(store_ixfr, o, p);
+		ZONE_GET_INT(ixfr_size, o, p);
+		ZONE_GET_INT(ixfr_number, o, p);
+		ZONE_GET_BIN(create_ixfr, o, p);
 		printf("Pattern option not handled: %s %s\n", pat, o);
 		exit(1);
 	} else {
@@ -396,6 +437,10 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_STR(tls_service_ocsp, o);
 		SERV_GET_STR(tls_service_pem, o);
 		SERV_GET_STR(tls_port, o);
+		SERV_GET_STR(tls_cert_bundle, o);
+		SERV_GET_STR(cookie_secret, o);
+		SERV_GET_STR(cookie_secret_file, o);
+		SERV_GET_BIN(answer_cookie, o);
 		/* int */
 		SERV_GET_INT(server_count, o);
 		SERV_GET_INT(tcp_count, o);
@@ -403,6 +448,8 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(tcp_timeout, o);
 		SERV_GET_INT(tcp_mss, o);
 		SERV_GET_INT(outgoing_tcp_mss, o);
+		SERV_GET_INT(xfrd_tcp_max, o);
+		SERV_GET_INT(xfrd_tcp_pipeline, o);
 		SERV_GET_INT(ipv4_edns_size, o);
 		SERV_GET_INT(ipv6_edns_size, o);
 		SERV_GET_INT(statistics, o);
@@ -463,6 +510,7 @@ static void print_zone_content_elems(pattern_options_type* pat)
 #ifdef RATELIMIT
 	zone_print_rrl_whitelist("\trrl-whitelist: ", pat->rrl_whitelist);
 #endif
+	print_acl("allow_query:", pat->allow_query);
 	print_acl("allow-notify:", pat->allow_notify);
 	print_acl("request-xfr:", pat->request_xfr);
 	if(pat->multi_master_check)
@@ -492,6 +540,40 @@ static void print_zone_content_elems(pattern_options_type* pat)
 	if(pat->size_limit_xfr != 0)
 		printf("\tsize-limit-xfr: %llu\n",
 			(long long unsigned)pat->size_limit_xfr);
+	if(!pat->store_ixfr_is_default)
+		printf("\tstore-ixfr: %s\n", pat->store_ixfr?"yes":"no");
+	if(!pat->ixfr_number_is_default)
+		printf("\tixfr-number: %u\n", (unsigned)pat->ixfr_number);
+	if(!pat->ixfr_size_is_default)
+		printf("\tixfr-size: %u\n", (unsigned)pat->ixfr_size);
+	if(!pat->create_ixfr_is_default)
+		printf("\tcreate-ixfr: %s\n", pat->create_ixfr?"yes":"no");
+	if(pat->verify_zone != VERIFY_ZONE_INHERIT) {
+		printf("\tverify-zone: ");
+		if(pat->verify_zone) {
+			printf("yes\n");
+		} else {
+			printf("no\n");
+		}
+	}
+	if(pat->verifier) {
+		printf("\tverifier:");
+		for(char *const *s = pat->verifier; *s; s++) {
+			printf(" \"%s\"", *s);
+		}
+		printf("\n");
+	}
+	if(pat->verifier_feed_zone != VERIFIER_FEED_ZONE_INHERIT) {
+		printf("\tverifier-feed-zone: ");
+		if(pat->verifier_feed_zone) {
+			printf("yes\n");
+		} else {
+			printf("no\n");
+		}
+	}
+	if(pat->verifier_timeout != VERIFIER_TIMEOUT_INHERIT) {
+		printf("\tverifier-timeout: %d\n", pat->verifier_timeout);
+	}
 }
 
 void
@@ -499,6 +581,7 @@ config_test_print_server(nsd_options_type* opt)
 {
 	ip_address_option_type* ip;
 	key_options_type* key;
+	tls_auth_options_type* tlsauth;
 	zone_options_type* zone;
 	pattern_options_type* pat;
 
@@ -549,6 +632,8 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\ttcp-timeout: %d\n", opt->tcp_timeout);
 	printf("\ttcp-mss: %d\n", opt->tcp_mss);
 	printf("\toutgoing-tcp-mss: %d\n", opt->outgoing_tcp_mss);
+	printf("\txfrd-tcp-max: %d\n", opt->xfrd_tcp_max);
+	printf("\txfrd-tcp-pipeline: %d\n", opt->xfrd_tcp_pipeline);
 	printf("\tipv4-edns-size: %d\n", (int) opt->ipv4_edns_size);
 	printf("\tipv6-edns-size: %d\n", (int) opt->ipv6_edns_size);
 	print_string_var("pidfile:", opt->pidfile);
@@ -603,6 +688,12 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("tls-service-pem:", opt->tls_service_pem);
 	print_string_var("tls-service-ocsp:", opt->tls_service_ocsp);
 	print_string_var("tls-port:", opt->tls_port);
+	print_string_var("tls-cert-bundle:", opt->tls_cert_bundle);
+	printf("\tanswer-cookie: %s\n", opt->answer_cookie?"yes":"no");
+	if (opt->cookie_secret)
+		print_string_var("cookie-secret:", opt->cookie_secret);
+	if (opt->cookie_secret_file)
+		print_string_var("cookie-secret-file:", opt->cookie_secret_file);
 
 #ifdef USE_DNSTAP
 	printf("\ndnstap:\n");
@@ -626,12 +717,36 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("control-key-file:", opt->control_key_file);
 	print_string_var("control-cert-file:", opt->control_cert_file);
 
+	printf("\nverify:\n");
+	printf("\tenable: %s\n", opt->verify_enable?"yes":"no");
+	for(ip = opt->verify_ip_addresses; ip; ip=ip->next) {
+		print_string_var("ip-address:", ip->address);
+	}
+	printf("\tport: %s\n", opt->verify_port);
+	printf("\tverify-zones: %s\n", opt->verify_zones?"yes":"no");
+	if(opt->verifier) {
+		printf("\tverifier:");
+		for(char **s = opt->verifier; *s; s++) {
+			printf(" \"%s\"", *s);
+		}
+		printf("\n");
+	}
+	printf("\tverifier-count: %d\n", opt->verifier_count);
+	printf("\tverifier-feed-zone: %s\n", opt->verifier_feed_zone?"yes":"no");
+	printf("\tverifier-timeout: %d\n", opt->verifier_timeout);
+
 	RBTREE_FOR(key, key_options_type*, opt->keys)
 	{
 		printf("\nkey:\n");
 		print_string_var("name:", key->name);
 		print_string_var("algorithm:", key->algorithm);
 		print_string_var("secret:", key->secret);
+	}
+	RBTREE_FOR(tlsauth, tls_auth_options_type*, opt->tls_auths)
+	{
+		printf("\ntls-auth:\n");
+		print_string_var("name:", tlsauth->name);
+		print_string_var("auth-domain-name:", tlsauth->auth_domain_name);
 	}
 	RBTREE_FOR(pat, pattern_options_type*, opt->patterns)
 	{
@@ -761,9 +876,10 @@ additional_checks(nsd_options_type* opt, const char* filename)
 		errors ++;
 	}
 	if(errors != 0) {
-		fprintf(stderr, "%s: %d semantic errors in %d zones, %d keys.\n",
+		fprintf(stderr, "%s: %d semantic errors in %d zones, %d keys, %d tls-auth.\n",
 			filename, errors, (int)nsd_options_num_zones(opt),
-			(int)opt->keys->count);
+			(int)opt->keys->count,
+			(int)opt->tls_auths->count);
 	}
 
 	return (errors == 0);
@@ -779,6 +895,7 @@ main(int argc, char* argv[])
 	const char * conf_opt = NULL; /* what option do you want? Can be NULL -> print all */
 	const char * conf_zone = NULL; /* what zone are we talking about */
 	const char * conf_key = NULL; /* what key is needed */
+	const char * conf_tlsauth = NULL; /* what tls-auth is needed */
 	const char * conf_pat = NULL; /* what pattern is talked about */
 	const char* configfile;
 	nsd_options_type *options;
@@ -786,7 +903,7 @@ main(int argc, char* argv[])
 	log_init("nsd-checkconf");
 
 	/* Parse the command line... */
-	while ((c = getopt(argc, argv, "vfho:a:p:s:z:")) != -1) {
+	while ((c = getopt(argc, argv, "vfho:a:p:s:z:t:")) != -1) {
 		switch (c) {
 		case 'v':
 			verbose = 1;
@@ -816,6 +933,9 @@ main(int argc, char* argv[])
 			conf_key = optarg;
 			key_sec = 1;
 			break;
+		case 't':
+			conf_tlsauth = optarg;
+			break;
 		case 'z':
 			conf_zone = optarg;
 			break;
@@ -838,17 +958,18 @@ main(int argc, char* argv[])
 	   !additional_checks(options, configfile)) {
 		exit(2);
 	}
-	if (conf_opt || conf_key) {
+	if (conf_opt || conf_key || conf_tlsauth) {
 		config_print_zone(options, conf_key, key_sec,
-			underscore(conf_opt), conf_zone, conf_pat, final);
+			underscore(conf_opt), conf_zone, conf_pat,  conf_tlsauth, final);
 	} else {
 		if (verbose) {
 			printf("# Read file %s: %d patterns, %d fixed-zones, "
-				"%d keys.\n",
+				"%d keys, %d tls-auth.\n",
 				configfile,
 				(int)options->patterns->count,
 				(int)nsd_options_num_zones(options),
-				(int)options->keys->count);
+				(int)options->keys->count,
+				(int)options->tls_auths->count);
 			config_test_print_server(options);
 		}
 	}
