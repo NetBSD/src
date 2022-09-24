@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.3 2022/04/01 06:51:12 skrll Exp $ */
+/* $NetBSD: efi.c,v 1.4 2022/09/24 11:06:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.3 2022/04/01 06:51:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.4 2022/09/24 11:06:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,7 +78,7 @@ static const struct efi_ops *efi_ops = NULL;
  * that a SetVariable() call between calls to GetNextVariableName() may
  * produce unpredictable results, and we want to avoid this.
  */
-static u_int efi_isopen = 0;
+static volatile u_int efi_isopen = 0;
 
 static dev_type_open(efi_open);
 static dev_type_close(efi_close);
@@ -102,20 +102,23 @@ const struct cdevsw efi_cdevsw = {
 static int
 efi_open(dev_t dev, int flags, int type, struct lwp *l)
 {
+
 	if (efi_ops == NULL) {
 		return ENXIO;
 	}
-	if (atomic_cas_uint(&efi_isopen, 0, 1) == 1) {
+	if (atomic_swap_uint(&efi_isopen, 1) == 1) {
 		return EBUSY;
 	}
+	membar_acquire();
 	return 0;
 }
 
 static int
 efi_close(dev_t dev, int flags, int type, struct lwp *l)
 {
+
 	KASSERT(efi_isopen);
-	atomic_swap_uint(&efi_isopen, 0);
+	atomic_store_release(&efi_isopen, 0);
 	return 0;
 }
 
