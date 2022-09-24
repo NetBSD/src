@@ -721,9 +721,6 @@ build_os
 build_vendor
 build_cpu
 build
-MAINT
-MAINTAINER_MODE_FALSE
-MAINTAINER_MODE_TRUE
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
 AM_DEFAULT_V
@@ -798,7 +795,6 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
-enable_maintainer_mode
 enable_elf
 enable_elf_core
 enable_zlib
@@ -1458,9 +1454,6 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-  --enable-maintainer-mode
-                          enable make rules and dependencies not useful (and
-                          sometimes confusing) to the casual installer
   --disable-elf            disable builtin ELF support
   --disable-elf-core       disable ELF core file support
   --disable-zlib          disable zlib compression support [default=auto]
@@ -3519,30 +3512,6 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
-printf %s "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
-    # Check whether --enable-maintainer-mode was given.
-if test ${enable_maintainer_mode+y}
-then :
-  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
-else $as_nop
-  USE_MAINTAINER_MODE=no
-fi
-
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
-printf "%s\n" "$USE_MAINTAINER_MODE" >&6; }
-   if test $USE_MAINTAINER_MODE = yes; then
-  MAINTAINER_MODE_TRUE=
-  MAINTAINER_MODE_FALSE='#'
-else
-  MAINTAINER_MODE_TRUE='#'
-  MAINTAINER_MODE_FALSE=
-fi
-
-  MAINT=$MAINTAINER_MODE_TRUE
-
 
 # Check whether --enable-silent-rules was given.
 if test ${enable_silent_rules+y}
@@ -13429,13 +13398,14 @@ CC=$lt_save_CC
   if test -n "$GCC"; then
                 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the -Werror option is usable" >&5
 printf %s "checking whether the -Werror option is usable... " >&6; }
-if test ${gl_cv_cc_vis_werror+y}
+    if test ${gl_cv_cc_vis_werror+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  gl_save_CFLAGS="$CFLAGS"
-       CFLAGS="$CFLAGS -Werror"
-       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+
+      gl_save_CFLAGS="$CFLAGS"
+      CFLAGS="$CFLAGS -Werror"
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -13453,29 +13423,30 @@ else $as_nop
   gl_cv_cc_vis_werror=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-       CFLAGS="$gl_save_CFLAGS"
-
+      CFLAGS="$gl_save_CFLAGS"
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_vis_werror" >&5
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_vis_werror" >&5
 printf "%s\n" "$gl_cv_cc_vis_werror" >&6; }
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for simple visibility declarations" >&5
 printf %s "checking for simple visibility declarations... " >&6; }
-if test ${gl_cv_cc_visibility+y}
+    if test ${gl_cv_cc_visibility+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  gl_save_CFLAGS="$CFLAGS"
-       CFLAGS="$CFLAGS -fvisibility=hidden"
-                                          if test $gl_cv_cc_vis_werror = yes; then
-         CFLAGS="$CFLAGS -Werror"
-       fi
-       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+
+      gl_save_CFLAGS="$CFLAGS"
+      CFLAGS="$CFLAGS -fvisibility=hidden"
+                                    if test $gl_cv_cc_vis_werror = yes; then
+        CFLAGS="$CFLAGS -Werror"
+      fi
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 extern __attribute__((__visibility__("hidden"))) int hiddenvar;
-              extern __attribute__((__visibility__("default"))) int exportedvar;
-              extern __attribute__((__visibility__("hidden"))) int hiddenfunc (void);
-              extern __attribute__((__visibility__("default"))) int exportedfunc (void);
-              void dummyfunc (void) {}
+             extern __attribute__((__visibility__("default"))) int exportedvar;
+             extern __attribute__((__visibility__("hidden"))) int hiddenfunc (void);
+             extern __attribute__((__visibility__("default"))) int exportedfunc (void);
+             void dummyfunc (void) {}
 
 int
 main (void)
@@ -13492,10 +13463,10 @@ else $as_nop
   gl_cv_cc_visibility=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-       CFLAGS="$gl_save_CFLAGS"
-
+      CFLAGS="$gl_save_CFLAGS"
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_visibility" >&5
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $gl_cv_cc_visibility" >&5
 printf "%s\n" "$gl_cv_cc_visibility" >&6; }
     if test $gl_cv_cc_visibility = yes; then
       CFLAG_VISIBILITY="-fvisibility=hidden"
@@ -15910,10 +15881,6 @@ else
   am__EXEEXT_FALSE=
 fi
 
-if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
-  as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${MINGW_TRUE}" && test -z "${MINGW_FALSE}"; then
   as_fn_error $? "conditional \"MINGW\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
