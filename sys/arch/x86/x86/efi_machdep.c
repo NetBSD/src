@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.2 2022/09/24 11:05:18 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.3 2022/09/24 15:01:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2022/09/24 11:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3 2022/09/24 15:01:54 riastradh Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -144,7 +144,7 @@ efi_aprintuuid(const struct uuid * uuid)
 	aprint_debug("-%04" PRIx16 "", uuid->time_mid);
 	aprint_debug("-%04" PRIx16 "", uuid->time_hi_and_version);
 	aprint_debug("-%02" PRIx8 "", uuid->clock_seq_hi_and_reserved);
-	aprint_debug("-%02" PRIx8 "", uuid->clock_seq_low);
+	aprint_debug("%02" PRIx8 "", uuid->clock_seq_low);
 	aprint_debug("-");
 	for (i = 0; i < _UUID_NODE_LEN; i++) {
 		aprint_debug("%02" PRIx8 "", uuid->node[i]);
