@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.1 2022/08/30 11:03:36 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.2 2022/09/24 11:05:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2022/08/30 11:03:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2022/09/24 11:05:18 riastradh Exp $");
+
+#include "efi.h"
+#include "opt_efi.h"
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -37,9 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2022/08/30 11:03:36 riastradh Ex
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootinfo.h>
+#include <machine/pmap_private.h>
+
 #include <x86/bus_defs.h>
 #include <x86/bus_funcs.h>
 #include <x86/efi.h>
+#include <x86/fpu.h>
 
 #include <dev/mm.h>
 #if NPCI > 0
@@ -66,6 +72,26 @@ static struct efi_e820memmap {
 	struct btinfo_memmap bim;
 	struct bi_memmap_entry entry[VM_PHYSSEG_MAX - 1];
 } efi_e820memmap;
+
+#ifdef EFI_RUNTIME
+
+#include <dev/efivar.h>
+
+#include <uvm/uvm_extern.h>
+
+#if !(NEFI > 0)
+#error options EFI_RUNTIME makes no sense without pseudo-device efi.
+#endif
+
+struct pmap *efi_runtime_pmap __read_mostly;
+
+static kmutex_t efi_runtime_lock __cacheline_aligned;
+static struct efi_rt efi_rt __read_mostly;
+static struct efi_ops efi_runtime_ops __read_mostly;
+
+static void efi_runtime_init(void);
+
+#endif
 
 /*
  * Map a physical address (PA) to a newly allocated virtual address (VA).
@@ -408,6 +434,10 @@ efi_init(void)
 #if NPCI > 0
 	pci_mapreg_map_enable_decode = true; /* PR port-amd64/53286 */
 #endif
+
+#ifdef EFI_RUNTIME
+	efi_runtime_init();
+#endif
 }
 
 bool
@@ -548,3 +578,419 @@ efi_get_e820memmap(void)
 	efi_e820memmap.bim.common.type = BTINFO_MEMMAP;
 	return &efi_e820memmap.bim;
 }
+
+#ifdef EFI_RUNTIME
+
+/*
+ * XXX move to sys/dev/efi/efi.h
+ */
+#ifdef _LP64
+#define	EFIERR(x)	(0x8000000000000000ul | (x))
+#else
+#define	EFIERR(x)	(0x80000000ul | (x))
+#endif
+
+#define	EFI_UNSUPPORTED		EFIERR(3)
+#define	EFI_DEVICE_ERROR	EFIERR(7)
+
+/*
+ * efi_runtime_init()
+ *
+ *	Set up kernel access to EFI runtime services:
+ *
+ *	- Create efi_runtime_pmap.
+ *	- Enter all the EFI runtime memory mappings into it.
+ *	- Make a copy of the EFI runtime services table in efi_rt.
+ *	- Initialize efi_runtime_lock to serialize calls.
+ *	- Register EFI runtime service operations for /dev/efi.
+ *
+ *	On failure, leaves efi_rt zero-initialized and everything else
+ *	uninitialized.
+ */
+static void
+efi_runtime_init(void)
+{
+	struct efi_systbl *systbl;
+	struct btinfo_efimemmap *efimm;
+	uint32_t i;
+	int error;
+
+	/*
+	 * Refuse to handle EFI runtime services with cross-word-sizes
+	 * for now.  We would need logic to handle the cross table
+	 * types, and logic to translate between the calling
+	 * conventions -- might be easy for 32-bit EFI and 64-bit OS,
+	 * but sounds painful to contemplate for 64-bit EFI and 32-bit
+	 * OS.
+	 */
+	if (efi_is32x64) {
+		aprint_debug("%s: 32x64 runtime services not supported\n",
+		    __func__);
+		return;
+	}
+
+	/*
+	 * Verify that we have an EFI system table with runtime
+	 * services and an EFI memory map.
+	 */
+	systbl = efi_getsystbl();
+	if (systbl->st_rt == NULL) {
+		aprint_debug("%s: no runtime\n", __func__);
+		return;
+	}
+	if ((efimm = lookup_bootinfo(BTINFO_EFIMEMMAP)) == NULL) {
+		aprint_debug("%s: no efi memmap\n", __func__);
+		return;
+	}
+
+	/*
+	 * Create a pmap for EFI runtime services and switch to it to
+	 * enter all of the mappings needed for EFI runtime services
+	 * according to the EFI_MEMORY_DESCRIPTOR records.
+	 */
+	efi_runtime_pmap = pmap_create();
+	void *const cookie = pmap_activate_sync(efi_runtime_pmap);
+	for (i = 0; i < efimm->num; i++) {
+		struct efi_md *md = (void *)(efimm->memmap + efimm->size * i);
+		uint64_t j;
+		vaddr_t va;
+		paddr_t pa;
+		int prot, flags;
+
+		/*
+		 * Only enter mappings tagged EFI_MEMORY_RUNTIME.
+		 * Ignore all others.
+		 */
+		if ((md->md_attr & EFI_MD_ATTR_RT) == 0)
+			continue;
+
+		/*
+		 * For debug boots, print the memory descriptor.
+		 */
+		aprint_debug("%s: map %zu pages at %#"PRIxVADDR
+		    " to %#"PRIxPADDR" type %"PRIu32" attrs 0x%08"PRIx64"\n",
+		    __func__, (size_t)md->md_pages, (vaddr_t)md->md_virt,
+		    (paddr_t)md->md_phys, md->md_type, md->md_attr);
+
+		/*
+		 * Allow read and write access in all of the mappings.
+		 * For code mappings, also allow execution by default.
+		 *
+		 * Even code mappings must be writable, apparently.
+		 * The mappings can be marked RO or XP to prevent write
+		 * or execute, but the code mappings are usually at the
+		 * level of entire PECOFF objects containing both rw-
+		 * and r-x sections.  The EFI_MEMORY_ATTRIBUTES_TABLE
+		 * provides finer-grained mapping protections, but we
+		 * don't currently use it.
+		 *
+		 * XXX Should parse EFI_MEMORY_ATTRIBUTES_TABLE and use
+		 * it to nix W or X access when possible.
+		 */
+		prot = VM_PROT_READ|VM_PROT_WRITE;
+		switch (md->md_type) {
+		case EFI_MD_TYPE_RT_CODE:
+			prot |= VM_PROT_EXECUTE;
+			break;
+		}
+
+		/*
+		 * Additionally pass on:
+		 *
+		 *	EFI_MEMORY_UC (uncacheable) -> PMAP_NOCACHE
+		 *	EFI_MEMORY_WC (write-combining) -> PMAP_WRITE_COMBINE
+		 *	EFI_MEMORY_RO (read-only) -> clear VM_PROT_WRITE
+		 *	EFI_MEMORY_XP (exec protect) -> clear VM_PROT_EXECUTE
+		 */
+		flags = 0;
+		if (md->md_attr & EFI_MD_ATTR_UC)
+			flags |= PMAP_NOCACHE;
+		else if (md->md_attr & EFI_MD_ATTR_WC)
+			flags |= PMAP_WRITE_COMBINE;
+		if (md->md_attr & EFI_MD_ATTR_RO)
+			prot &= ~VM_PROT_WRITE;
+		if (md->md_attr & EFI_MD_ATTR_XP)
+			prot &= ~VM_PROT_EXECUTE;
+
+		/*
+		 * Get the physical address, and the virtual address
+		 * that the EFI runtime services want mapped to it.
+		 *
+		 * If the requsted virtual address is zero, assume
+		 * we're using physical addressing, i.e., VA is the
+		 * same as PA.
+		 *
+		 * This logic is intended to allow the bootloader to
+		 * choose whether to use physical addressing or to use
+		 * virtual addressing with RT->SetVirtualAddressMap --
+		 * the kernel should work either way (although as of
+		 * time of writing it has only been tested with
+		 * physical addressing).
+		 */
+		pa = md->md_phys;
+		va = md->md_virt;
+		if (va == 0)
+			va = pa;
+
+		/*
+		 * Fail if EFI runtime services want any virtual pages
+		 * of the kernel map.
+		 */
+		if (VM_MIN_KERNEL_ADDRESS <= va &&
+		    va < VM_MAX_KERNEL_ADDRESS) {
+			aprint_debug("%s: efi runtime overlaps kernel map"
+			    " %"PRIxVADDR" in [%"PRIxVADDR", %"PRIxVADDR")\n",
+			    __func__,
+			    va,
+			    (vaddr_t)VM_MIN_KERNEL_ADDRESS,
+			    (vaddr_t)VM_MAX_KERNEL_ADDRESS);
+			goto fail;
+		}
+
+		/*
+		 * Fail if it would interfere with a direct map.
+		 *
+		 * (It's possible that it might happen to be identical
+		 * to the direct mapping, in which case we could skip
+		 * this entry.  Seems unlikely; let's deal with that
+		 * edge case as it comes up.)
+		 */
+#ifdef __HAVE_DIRECT_MAP
+		if (PMAP_DIRECT_BASE <= va && va < PMAP_DIRECT_END) {
+			aprint_debug("%s: efi runtime overlaps direct map"
+			    " %"PRIxVADDR" in [%"PRIxVADDR", %"PRIxVADDR")\n",
+			    __func__,
+			    va,
+			    (vaddr_t)PMAP_DIRECT_BASE,
+			    (vaddr_t)PMAP_DIRECT_END);
+			goto fail;
+		}
+#endif
+
+		/*
+		 * Enter each page in the range of this memory
+		 * descriptor into efi_runtime_pmap.
+		 */
+		for (j = 0; j < md->md_pages; j++) {
+			error = pmap_enter(efi_runtime_pmap,
+			    va + j*PAGE_SIZE, pa + j*PAGE_SIZE, prot, flags);
+			KASSERTMSG(error == 0, "error=%d", error);
+		}
+	}
+
+	/*
+	 * Commit the updates, make a copy of the EFI runtime services
+	 * for easy determination of unsupported ones without needing
+	 * the pmap, and deactivate the pmap now that we're done with
+	 * it for now.
+	 */
+	pmap_update(efi_runtime_pmap);
+	memcpy(&efi_rt, systbl->st_rt, sizeof(efi_rt));
+	pmap_deactivate_sync(efi_runtime_pmap, cookie);
+
+	/*
+	 * Initialize efi_runtime_lock for serializing access to the
+	 * EFI runtime services from any context up to interrupts at
+	 * IPL_VM.
+	 */
+	mutex_init(&efi_runtime_lock, MUTEX_DEFAULT, IPL_VM);
+
+	/*
+	 * Register the EFI runtime operations for /dev/efi.
+	 */
+	efi_register_ops(&efi_runtime_ops);
+
+	return;
+
+fail:	/*
+	 * On failure, deactivate and destroy efi_runtime_pmap -- no
+	 * runtime services.
+	 */
+	pmap_deactivate_sync(efi_runtime_pmap, cookie);
+	pmap_destroy(efi_runtime_pmap);
+	efi_runtime_pmap = NULL;
+	/*
+	 * efi_rt is all zero, so will lead to EFI_UNSUPPORTED even if
+	 * used outside efi_runtime_ops (which is now not registered)
+	 */
+}
+
+struct efi_runtime_cookie {
+	void	*erc_pmap_cookie;
+};
+
+/*
+ * efi_runtime_enter(cookie)
+ *
+ *	Prepare to call an EFI runtime service, storing state for the
+ *	context in cookie.  Caller must call efi_runtime_exit when
+ *	done.
+ */
+static void
+efi_runtime_enter(struct efi_runtime_cookie *cookie)
+{
+
+	KASSERT(efi_runtime_pmap != NULL);
+
+	/*
+	 * Serialize queries to the EFI runtime services.
+	 *
+	 * The UEFI spec allows some concurrency among them with rules
+	 * about which calls can run in parallel with which other
+	 * calls, but it is simplest if we just serialize everything --
+	 * none of this is performance-critical.
+	 */
+	mutex_enter(&efi_runtime_lock);
+
+	/*
+	 * EFI runtime services may use the FPU, so stash any user FPU
+	 * state and enable kernel use of it.  This has the side
+	 * effects of disabling preemption and of blocking interrupts
+	 * at up to and including IPL_VM.
+	 */
+	fpu_kern_enter();
+
+	/*
+	 * Activate the efi_runtime_pmap so that the EFI runtime
+	 * services have access to the memory mappings the firmware
+	 * requested, but not access to any user mappings.  They still,
+	 * however, have access to all kernel mappings, so we can pass
+	 * in pointers to buffers in KVA -- the EFI runtime services
+	 * run privileged, which they need in order to do I/O anyway.
+	 */
+	cookie->erc_pmap_cookie = pmap_activate_sync(efi_runtime_pmap);
+}
+
+/*
+ * efi_runtime_exit(cookie)
+ *
+ *	Restore state prior to efi_runtime_enter as stored in cookie
+ *	for a call to an EFI runtime service.
+ */
+static void
+efi_runtime_exit(struct efi_runtime_cookie *cookie)
+{
+
+	pmap_deactivate_sync(efi_runtime_pmap, cookie->erc_pmap_cookie);
+	fpu_kern_leave();
+	mutex_exit(&efi_runtime_lock);
+}
+
+/*
+ * efi_runtime_gettime(tm, tmcap)
+ *
+ *	Call RT->GetTime, or return EFI_UNSUPPORTED if unsupported.
+ */
+static efi_status
+efi_runtime_gettime(struct efi_tm *tm, struct efi_tmcap *tmcap)
+{
+	efi_status status;
+	struct efi_runtime_cookie cookie;
+
+	if (efi_rt.rt_gettime == NULL)
+		return EFI_UNSUPPORTED;
+
+	efi_runtime_enter(&cookie);
+	status = efi_rt.rt_gettime(tm, tmcap);
+	efi_runtime_exit(&cookie);
+
+	return status;
+}
+
+
+/*
+ * efi_runtime_settime(tm)
+ *
+ *	Call RT->SetTime, or return EFI_UNSUPPORTED if unsupported.
+ */
+static efi_status
+efi_runtime_settime(struct efi_tm *tm)
+{
+	efi_status status;
+	struct efi_runtime_cookie cookie;
+
+	if (efi_rt.rt_settime == NULL)
+		return EFI_UNSUPPORTED;
+
+	efi_runtime_enter(&cookie);
+	status = efi_rt.rt_settime(tm);
+	efi_runtime_exit(&cookie);
+
+	return status;
+}
+
+/*
+ * efi_runtime_getvar(name, vendor, attrib, datasize, data)
+ *
+ *	Call RT->GetVariable.
+ */
+static efi_status
+efi_runtime_getvar(efi_char *name, struct uuid *vendor, uint32_t *attrib,
+    unsigned long *datasize, void *data)
+{
+	efi_status status;
+	struct efi_runtime_cookie cookie;
+
+	if (efi_rt.rt_getvar == NULL)
+		return EFI_UNSUPPORTED;
+
+	efi_runtime_enter(&cookie);
+	status = efi_rt.rt_getvar(name, vendor, attrib, datasize, data);
+	efi_runtime_exit(&cookie);
+
+	return status;
+}
+
+/*
+ * efi_runtime_nextvar(namesize, name, vendor)
+ *
+ *	Call RT->GetNextVariableName.
+ */
+static efi_status
+efi_runtime_nextvar(unsigned long *namesize, efi_char *name,
+    struct uuid *vendor)
+{
+	efi_status status;
+	struct efi_runtime_cookie cookie;
+
+	if (efi_rt.rt_scanvar == NULL)
+		return EFI_UNSUPPORTED;
+
+	efi_runtime_enter(&cookie);
+	status = efi_rt.rt_scanvar(namesize, name, vendor);
+	efi_runtime_exit(&cookie);
+
+	return status;
+}
+
+/*
+ * efi_runtime_setvar(name, vendor, attrib, datasize, data)
+ *
+ *	Call RT->SetVariable.
+ */
+static efi_status
+efi_runtime_setvar(efi_char *name, struct uuid *vendor, uint32_t attrib,
+    unsigned long datasize, void *data)
+{
+	efi_status status;
+	struct efi_runtime_cookie cookie;
+
+	if (efi_rt.rt_setvar == NULL)
+		return EFI_UNSUPPORTED;
+
+	efi_runtime_enter(&cookie);
+	status = efi_rt.rt_setvar(name, vendor, attrib, datasize, data);
+	efi_runtime_exit(&cookie);
+
+	return status;
+}
+
+static struct efi_ops efi_runtime_ops = {
+	.efi_gettime = efi_runtime_gettime,
+	.efi_settime = efi_runtime_settime,
+	.efi_getvar = efi_runtime_getvar,
+	.efi_setvar = efi_runtime_setvar,
+	.efi_nextvar = efi_runtime_nextvar,
+};
+
+#endif	/* EFI_RUNTIME */
