@@ -20,7 +20,7 @@
 #define CONFCMDLINE ""
 
 /* Pathname to the Unbound configuration file */
-#define CONFIGFILE "/etc/unbound/unbound.conf"
+#define CONFIGFILE CHROOT_DIR "/etc/unbound/unbound.conf"
 
 /* Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work
    */
@@ -28,6 +28,9 @@
 
 /* Whether daemon is deprecated */
 /* #undef DEPRECATED_DAEMON */
+
+/* Deprecate RSA 1024 bit length, makes that an unsupported key */
+/* #undef DEPRECATE_RSA_1024 */
 
 /* Define this to enable kernel based UDP source port randomization. */
 /* #undef DISABLE_EXPLICIT_PORT_RANDOMISATION */
@@ -69,6 +72,9 @@
 
 /* If we have be64toh */
 #define HAVE_BE64TOH 1
+
+/* Define to 1 if you have the `BIO_set_callback_ex' function. */
+#define HAVE_BIO_SET_CALLBACK_EX 1
 
 /* Define to 1 if you have the <bsd/stdlib.h> header file. */
 /* #undef HAVE_BSD_STDLIB_H */
@@ -217,6 +223,10 @@
 /* Define to 1 if you have the `EVP_cleanup' function. */
 /* #undef HAVE_EVP_CLEANUP */
 
+/* Define to 1 if you have the `EVP_default_properties_is_fips_enabled'
+   function. */
+/* #undef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED */
+
 /* Define to 1 if you have the `EVP_DigestVerify' function. */
 #define HAVE_EVP_DIGESTVERIFY 1
 
@@ -313,6 +323,9 @@
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #define HAVE_IFADDRS_H 1
 
+/* Define to 1 if you have the `if_nametoindex' function. */
+#define HAVE_IF_NAMETOINDEX 1
+
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
 
@@ -373,6 +386,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #define HAVE_NETINET_TCP_H 1
 
+/* Define to 1 if you have the <netioapi.h> header file. */
+/* #undef HAVE_NETIOAPI_H */
+
 /* Use libnettle for crypto */
 /* #undef HAVE_NETTLE */
 
@@ -427,6 +443,9 @@
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #define HAVE_OPENSSL_INIT_SSL 1
 
+/* Define to 1 if you have the <openssl/param_build.h> header file. */
+/* #undef HAVE_OPENSSL_PARAM_BUILD_H */
+
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
 
@@ -435,6 +454,9 @@
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #define HAVE_OPENSSL_SSL_H 1
+
+/* Define to 1 if you have the `OSSL_PARAM_BLD_new' function. */
+/* #undef HAVE_OSSL_PARAM_BLD_NEW */
 
 /* Define if you have POSIX threads libraries and header files. */
 #define HAVE_PTHREAD 1
@@ -517,6 +539,9 @@
 /* Define if you have the SSL libraries installed. */
 #define HAVE_SSL /**/
 
+/* Define to 1 if you have the `SSL_CTX_set_alpn_protos' function. */
+#define HAVE_SSL_CTX_SET_ALPN_PROTOS 1
+
 /* Define to 1 if you have the `SSL_CTX_set_alpn_select_cb' function. */
 #define HAVE_SSL_CTX_SET_ALPN_SELECT_CB 1
 
@@ -530,8 +555,14 @@
    function. */
 /* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
 
+/* Define to 1 if you have the `SSL_get0_alpn_selected' function. */
+#define HAVE_SSL_GET0_ALPN_SELECTED 1
+
 /* Define to 1 if you have the `SSL_get0_peername' function. */
 #define HAVE_SSL_GET0_PEERNAME 1
+
+/* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
+/* #undef HAVE_SSL_GET1_PEER_CERTIFICATE */
 
 /* Define to 1 if you have the `SSL_set1_host' function. */
 #define HAVE_SSL_SET1_HOST 1
@@ -730,7 +761,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.13.1"
+#define PACKAGE_STRING "unbound 1.16.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -739,10 +770,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.13.1"
+#define PACKAGE_VERSION "1.16.3"
 
 /* default pidfile location */
-#define PIDFILE "/var/run/unbound.pid"
+#define PIDFILE CHROOT_DIR "/var/run/unbound.pid"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -756,19 +787,19 @@
 #define REUSEPORT_DEFAULT 0
 
 /* default rootkey location */
-#define ROOT_ANCHOR_FILE "/etc/unbound/root.key"
+#define ROOT_ANCHOR_FILE CHROOT_DIR "/etc/unbound/root.key"
 
 /* default rootcert location */
-#define ROOT_CERT_FILE "/etc/unbound/icannbundle.pem"
+#define ROOT_CERT_FILE CHROOT_DIR "/etc/unbound/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,13,1,0
+#define RSRC_PACKAGE_VERSION 1,16,3,0
 
 /* Directory to chdir to */
-#define RUN_DIR "/etc/unbound"
+#define RUN_DIR CHROOT_DIR "/etc/unbound"
 
 /* Shared data */
-#define SHARE_DIR "/etc/unbound"
+#define SHARE_DIR CHROOT_DIR "/etc/unbound"
 
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
@@ -933,6 +964,10 @@
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
 /* #undef _POSIX_1_SOURCE */
+
+/* defined to use gcc ansi snprintf and sscanf that understands %lld when
+   compiled for windows. */
+/* #undef __USE_MINGW_ANSI_STDIO */
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
@@ -1116,7 +1151,7 @@
 #include <ws2tcpip.h>
 #endif
 
-#ifndef USE_WINSOCK
+#if !defined(USE_WINSOCK) || !defined(HAVE_SNPRINTF) || defined(SNPRINTF_RET_BROKEN) || defined(__USE_MINGW_ANSI_STDIO)
 #define ARG_LL "%ll"
 #else
 #define ARG_LL "%I64"
