@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.23 2022/03/31 19:30:15 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.24 2022/09/24 23:16:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.23 2022/03/31 19:30:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.24 2022/09/24 23:16:37 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.23 2022/03/31 19:30:15 pgoyette Exp $");
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
@@ -492,7 +492,7 @@ spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 	if (sc->sc_inbuf != NULL)
 		return EBUSY;
 
-	sc->sc_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_inbuf = kmem_alloc(DEV_BSIZE, KM_SLEEP);
 	playinit(sc);
 	return 0;
 }
@@ -533,7 +533,7 @@ spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 		return EINVAL;
 
 	sc->sc_tone(sc->sc_dev, 0, 0);
-	free(sc->sc_inbuf, M_DEVBUF);
+	kmem_free(sc->sc_inbuf, DEV_BSIZE);
 	sc->sc_inbuf = NULL;
 
 	return 0;
