@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.685 2022/09/24 10:26:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.686 2022/09/24 16:09:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.685 2022/09/24 10:26:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.686 2022/09/24 16:09:04 rillig Exp $");
 
 /*
  * A file being read.
@@ -300,6 +300,7 @@ enum PosixState posix_state = PS_NOT_YET;
 static IncludedFile *
 GetInclude(size_t i)
 {
+	assert(i < includes.len);
 	return Vector_Get(&includes, i);
 }
 
@@ -362,11 +363,11 @@ PrintStackTrace(bool includingInnermost)
 	const IncludedFile *entries;
 	size_t i, n;
 
-	entries = GetInclude(0);
 	n = includes.len;
 	if (n == 0)
 		return;
 
+	entries = GetInclude(0);
 	if (!includingInnermost && entries[n - 1].forLoop == NULL)
 		n--;		/* already in the diagnostic */
 
