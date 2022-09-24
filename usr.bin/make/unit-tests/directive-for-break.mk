@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-break.mk,v 1.2 2022/09/03 00:50:07 rillig Exp $
+# $NetBSD: directive-for-break.mk,v 1.3 2022/09/24 10:52:05 rillig Exp $
 #
 # Tests for .break in .for loops, which immediately terminates processing of
 # the surrounding .for loop.
@@ -43,4 +43,18 @@ COMBINED+=	${outer}-${inner}
 .else
 # expect+1: break outside of for loop
 .  break
+.endif
+
+
+# Since cond.c 1.335 from 2022-09-02 and before cond.c 1.338 from 2022-09-23,
+# the following paragraph generated the wrong error message '4294967294 open
+# conditionals'.
+.if 1
+.  if 2
+.    for var in value
+.      if 3
+.        break
+.      endif
+.    endfor
+.  endif
 .endif
