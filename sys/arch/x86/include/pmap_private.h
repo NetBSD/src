@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_private.h,v 1.3 2022/09/13 09:40:17 riastradh Exp $	*/
+/*	$NetBSD: pmap_private.h,v 1.4 2022/09/24 11:05:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -377,5 +377,23 @@ extern struct pcpu_area *pcpuarea;
 #endif
 
 void	svs_quad_copy(void *, void *, long);
+
+#ifdef _KERNEL_OPT
+#include "opt_efi.h"
+#endif
+
+#ifdef EFI_RUNTIME
+void *		pmap_activate_sync(struct pmap *);
+void		pmap_deactivate_sync(struct pmap *, void *);
+bool		pmap_is_user(struct pmap *);
+#else
+static inline bool
+pmap_is_user(struct pmap *pmap)
+{
+
+	KASSERT(pmap != pmap_kernel());
+	return true;
+}
+#endif
 
 #endif	/* _X86_PMAP_PRIVATE_H_ */

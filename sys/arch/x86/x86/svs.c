@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.41 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: svs.c,v 1.42 2022/09/24 11:05:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.41 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.42 2022/09/24 11:05:18 riastradh Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -575,6 +575,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 
 	KASSERT(pmap != NULL);
 	KASSERT(pmap != pmap_kernel());
+	KASSERT(pmap_is_user(pmap));
 	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 	KASSERT(index < PDIR_SLOT_USERLIM);
@@ -699,6 +700,7 @@ svs_pdir_switch(struct pmap *pmap)
 
 	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel());
+	KASSERT(pmap_is_user(pmap));
 
 	/* Update the info in the UTLS page */
 	utls = (struct svs_utls *)ci->ci_svs_utls;
