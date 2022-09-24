@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.7 2022/09/24 20:07:55 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.18 2021/03/14 17:01:58 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.22 2022/07/30 16:49:18 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.7 2022/09/24 20:07:55 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -60,7 +60,8 @@ __RCSID("$NetBSD: seccomp.c,v 1.1.1.6 2021/04/09 18:58:01 christos Exp $");
 #define ALLOW_IOCTL_RULE(param) \
     do \
 	if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(ioctl), 1, \
-	    SCMP_CMP(1, SCMP_CMP_EQ, param)) == -1) \
+	    SCMP_CMP(1, SCMP_CMP_EQ, (scmp_datum_t)param, \
+		     (scmp_datum_t)0)) == -1) \
 		goto out; \
     while (/*CONSTCOND*/0)
 
@@ -177,10 +178,18 @@ enable_sandbox_full(void)
 	ALLOW_RULE(dup2);
 	ALLOW_RULE(exit);
 	ALLOW_RULE(exit_group);
+#ifdef __NR_faccessat
+	ALLOW_RULE(faccessat);
+#endif
 	ALLOW_RULE(fcntl);
  	ALLOW_RULE(fcntl64);
+#ifdef __NR_fstat
 	ALLOW_RULE(fstat);
+#endif
  	ALLOW_RULE(fstat64);
+#ifdef __NR_fstatat64
+	ALLOW_RULE(fstatat64);
+#endif
 	ALLOW_RULE(futex);
 	ALLOW_RULE(getdents);
 #ifdef __NR_getdents64
