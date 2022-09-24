@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: msdos,v 1.147 2021/04/08 12:09:58 christos Exp $
+# $File: msdos,v 1.158 2022/09/07 11:17:31 christos Exp $
 # msdos:  file(1) magic for MS-DOS files
 #
 
@@ -70,7 +70,7 @@
 >>(0x3c.l+24)	leshort		0x020b	\b32+ executable
 >>(0x3c.l+24)	leshort		0x0107	ROM image
 >>(0x3c.l+24)	default		x	Unknown PE signature
->>>&0 		leshort		x	0x%x
+>>>&0 		leshort		x	%#x
 >>(0x3c.l+22)	leshort&0x2000	>0	(DLL)
 >>(0x3c.l+92)	leshort		1
 # Native PEs include ntoskrnl.exe, hal.dll, smss.exe, autochk.exe, and all the
@@ -109,7 +109,7 @@
 >>(0x3c.l+92)	leshort		14	(XBOX)
 >>(0x3c.l+92)	leshort		15	(Windows boot application)
 >>(0x3c.l+92)	default		x	(Unknown subsystem
->>>&0		leshort		x	0x%x)
+>>>&0		leshort		x	%#x)
 >>(0x3c.l+4)	leshort		0x14c	Intel 80386
 >>(0x3c.l+4)	leshort		0x166	MIPS R4000
 >>(0x3c.l+4)	leshort		0x168	MIPS R10000
@@ -141,7 +141,7 @@
 >>(0x3c.l+4)	leshort		0xaa64	Aarch64
 >>(0x3c.l+4)	leshort		0xc0ee	MSIL
 >>(0x3c.l+4)	default		x	Unknown processor type
->>>&0		leshort		x	0x%x
+>>>&0		leshort		x	%#x
 >>(0x3c.l+22)	leshort&0x0200	>0	(stripped to external PDB)
 >>(0x3c.l+22)	leshort&0x1000	>0	system file
 >>(0x3c.l+24)	leshort		0x010b
@@ -398,7 +398,7 @@
 # os_type; target operating system like: 0~unknown 1~OS/2 2~Windows 3~DOS 4.x 4~Windows 386
 #>0x0A	leshort			x		\b, OS %u
 # flags; module type flags
-#>0x10	ulelong			x		\b, FLAGS 0x%8.8x
+#>0x10	ulelong			x		\b, FLAGS %#8.8x
 # 00000002h				~Reserved for system use
 #>0x10	ulelong			&0x00000002	\b, 2h reserved
 # OSF_INIT_INSTANCE=00000004h		~Per-Process Library Initialization; setting this bit for EXE file is invalid
@@ -450,7 +450,7 @@
 # for FreeDOS files like KEYBOARD.SYS, KEYBRD2.SYS, KEYBRD3.SYS, *.KBD
 0	string/b	KCF		FreeDOS KEYBoard Layout collection
 # only version=0x100 found
->3	uleshort	x		\b, version 0x%x
+>3	uleshort	x		\b, version %#x
 # length of string containing author,info and special characters
 >6	ubyte		>0
 #>>6	pstring		x		\b, name=%s
@@ -461,7 +461,7 @@
 # for FreeDOS *.KL files
 0	string/b	KLF		FreeDOS KEYBoard Layout file
 # only version=0x100 or 0x101 found
->3	uleshort	x		\b, version 0x%x
+>3	uleshort	x		\b, version %#x
 # stringlength
 >5	ubyte		>0
 >>8	string		x		\b, name=%-.2s
@@ -484,23 +484,23 @@
 # PROTMAN.DOS ELNKPL.DOS
 !:ext	sys/dev/bin/dos
 # 1 space char after "UPX compressed" to get phrase like "UPX compressed character device"
->40	search/7			UPX!			\bUPX compressed\040
+>40	search/7			UPX!			\bUPX compressed 
 # DOS device driver attributes
 >4	uleshort&0x8000			0x0000			\bblock device driver
 # character device
 >4	uleshort&0x8000			0x8000			\b
 # 1 space char after "clock" to get phrase like "clock character device driver CLOCK$"
->>4	uleshort&0x0008			0x0008			\bclock\040
+>>4	uleshort&0x0008			0x0008			\bclock 
 # fast video output by int 29h
 # 1 space char after "fast" to get phrase like "fast standard input/output character device driver"
->>4	uleshort&0x0010			0x0010			\bfast\040
+>>4	uleshort&0x0010			0x0010			\bfast 
 # standard input/output device
 # 1 space char after "standard" to get phrase like "standard input/output character device driver"
->>4	uleshort&0x0003			>0			\bstandard\040
+>>4	uleshort&0x0003			>0			\bstandard 
 >>>4	uleshort&0x0001			0x0001			\binput
 >>>4	uleshort&0x0003			0x0003			\b/
 # 1 space char after "output" to get phrase like "input/output character device driver"
->>>4	uleshort&0x0002			0x0002			\boutput\040
+>>>4	uleshort&0x0002			0x0002			\boutput 
 >>4	uleshort&0x8000			0x8000			\bcharacter device driver
 >0	ubyte				x
 # upx compressed device driver has garbage instead of real in name field of header
@@ -508,7 +508,7 @@
 >>40	default				x
 # leading/trailing nulls, zeros or non ASCII characters in 8-byte name field at offset 10 are skipped
 # 1 space char before device driver name to get phrase like "device driver PROTMAN$"
->>>12		ubyte			>0x2E			\b\040
+>>>12		ubyte			>0x2E			\b 
 >>>>10		ubyte			>0x20
 >>>>>10		ubyte			!0x2E
 >>>>>>10	ubyte			!0x2A			\b%c
@@ -551,7 +551,7 @@
 >4	uleshort&0x8000			0x0000
 >>4	uleshort&0x4842			>0			\bsupport
 >0	ubyte				x			\b)
->0	ulelong				!0xffffffff		with pointer 0x%x
+>0	ulelong				!0xffffffff		with pointer %#x
 # DOS driver cmd640x.sys has 0x12 instead of 0xffffffff for pointer field to next device header
 0	ulequad				0x0513c00000000012
 >0	use				msdos-driver
@@ -587,7 +587,8 @@
 # skip "GPG symmetrically encrypted data" ./gnu
 # skip "PGP symmetric key encrypted data" ./pgp
 # openpgpdefs.h: fourth byte < 14 indicate cipher algorithm type
->>>4	ubyte			>13	DOS executable (COM, 0x8C-variant)
+>>>4	ubyte			>13
+>>>>0		use	msdos-com
 # the remaining files should be DOS *.COM executables
 # dosshell.COM	8cc0 2ea35f07 e85211 e88a11 b80058 cd
 # hmload.COM	8cc8 8ec0 bbc02b 89dc 83c30f c1eb04 b4
@@ -597,48 +598,164 @@
 # SHARE.COM	8cca 2e8916 d602 b430 cd21 8b 2e0200 8b
 # validchr.COM	8cca 2e8916 9603 b430 cd21 8b 2e028b1e
 # devload.COM	8cca 8916ad01 b430 cd21 8b2e0200 892e
-!:mime	application/x-dosexec
-!:ext com
-
-# updated by Joerg Jenderek at Oct 2008
-0	ulelong		0xffff10eb	DR-DOS executable (COM)
-# byte 0xeb conflicts with "sequent" magic leshort 0xn2eb
-0	ubeshort&0xeb8d	>0xeb00
-# DR-DOS STACKER.COM SCREATE.SYS missed
 
 0       name    msdos-com
->0  byte        x               DOS executable (COM)
-!:mime	application/x-dosexec
-!:ext	com
+# URL:		http://fileformats.archiveteam.org/wiki/DOS_executable_(.com)
+>0  byte        x               DOS executable (
+# DOS execuable with JuMP 16-bit instruction
+>0	byte			=0xE9
+# check for probably nil padding til offset 64 of Lotus driver name
+>>56		quad		=0
+# check for "long" alpabetical Lotus driver name like:
+# Diablo "COMPAQ Text Display" "IBM Monochrome Display" "Plantronics ColorPlus"
+>>>24			regex	=^[A-Z][A-Za-z\040]{5,21}	\bLotus driver) %s
+!:mime				application/x-dosexec
+# like: CPQ0TD.DRV IBM0MONO.DRV (Lotus 123 10a) SDIAB4.DRV SPL0CPLS.DRV (Lotus Symphony 2)
+!:ext				drv
+# COM with nils like MODE.COM IBMDOS.COM (pcdos 3.31 ru Compaq) RSSTUB.COM (PC-DOS 2000 de) ACCESS.COM (Lotus Symphony 1)
+>>>24			default	x				\bCOM)
+!:mime				application/x-dosexec
+!:ext				com
+# DOS excutable with JuMP 16-bit and without nil padding
+>>56		quad		!0
+# https://wiki.syslinux.org/wiki/index.php?title=Doc/comboot
+# TODO: HOWTO distinguish COMboot from pure DOS executables?
+# look for unreliable Syslinux specific api call INTerrupt 22h for 16-bit COMBOOT program
+>>>1			search/0xc088	\xcd\x22		\bCOM or COMBOOT 16-bit)
+!:mime				application/x-dosexec
+# like: sbm.cbt command.com (Windows XP) UNI2ASCI.COM (FreeDOS 1.2)
+!:ext				com/cbt
+>>>1			default		x			\bCOM)
+!:mime				application/x-dosexec
+!:ext				com
+# DOS executable without JuMP 16-bit instruction
+>0	byte			!0xE9
+# SCREATE.SYS	https://en.wikipedia.org/wiki/Stac_Electronics
+>>10		string		=?STACVOL			\bSCREATE.SYS)
+!:mime			application/x-dosexec
+!:ext			sys
+# COM executable without JuMP 16-bit instruction and not SCREATE.SYS
+>>10		string		!?STACVOL			\bCOM)
+!:mime			application/x-dosexec
+!:ext			com
 >6	string		SFX\ of\ LHarc	\b, %s
 >0x1FE leshort	0xAA55		    \b, boot code
 >85	string		UPX		        \b, UPX compressed
 >4	string		\ $ARX		    \b, ARX self-extracting archive
 >4	string		\ $LHarc	    \b, LHarc self-extracting archive
 >0x20e string	SFX\ by\ LARC	\b, LARC self-extracting archive
+# like: E30ODI.COM MADGEODI.COM UNI2ASCI.COM RECOVER.COM (DOS 2) COMMAND.COM (DOS 2)
+>1	search/0xc088	\xcd\x22	\b, maybe with interrupt 22h
+>0	ubelong		x		\b, start instruction %#8.8x
+# show more instructions but not in samples like: rem.com (DJGPP)
+>4	ubelong		x		%8.8x
 
 # JMP 8bit
 0	        byte	0xeb
+# byte 0xeb conflicts with magic leshort 0xn2eb of "SYMMETRY i386" handled by ./sequent
 # allow forward jumps only
 >1          byte    >-1
 # that offset must be accessible
+# with hexadecimal values like: 0e 2e 50 8c 8d ba bc bd be e8 fb fc
 >>(1.b+2)   byte    x
->>>0        use msdos-com
-
+# if look like COM executable with x86 boot signature then this
+# implies FAT volume with x86 real mode code already handled by ./filesystems
+#
+# No x86 boot signature implies often DOS executable
+# check for unrealistic high number of FATs. Then it is an unusual disk image or often a DOS executable
+# like: FIXBIOS.COM (50 bytes)
+>>>16		ubyte		>3
+# https://www.drivedroid.io/
+# skip MBR disk image drivedroid.img version 12 July 2013 by start message
+>>>>2		string		!DriveDroid
+# ftp://old-dos.ru/OSCollect/OS/MS-DOS/Final Releases/
+# skip unusual floppy image disk1.img of MS-DOS 1.25 (Corona Data Systems OEM)
+# by check for characteristic message text near the beginning
+>>>>>15		string		!Non\040System\040disk
+# "ftp://old-dos.ru/OSCollect/OS/BeOS/BeOS 4.0.rar"
+# skip BeOS 4 bootfloppy.img done as "Linux kernel x86 boot executable" by ./linux
+# by check for characteristic message text near the beginning
+>>>>>>6		string		!read\040error\015
+# https://github.com/ventoy/Ventoy/releases/download/v1.0.78/ventoy-1.0.78-windows.zip
+# skip ventoy 1.0.78 boot_hybrid.img
+>>>>>>>24	string		!\220\220\353I$\022\017
+# "ftp://old-dos.ru/OSCollect/OS/MS-DOS/Final Releases/PC-DOS 1.0 (5.25).rar"
+# skip unusual floppy image PCDOS100.IMG of DOS 1.0
+# by check for characteristic message text near the beginning
+>>>>>>>>9	string		!7-May-81
+# "ftp://old-dos.ru/OSCollect/OS/BeOS/BeOS 5.0 Personal (BA).rar"
+# skip BeOS 5 floppy_1.44.00.ima done as "DOS/MBR boot sector" by ./filesystems
+# by check for characteristic message near the beginning
+>>>>>>>>>3	string		!\370sdfS\270
+# like: FIXBIOS.COM (50 bytes)
+>>>>>>>>>>0		use		msdos-com
+# check for unrealistic low number of FATs. Then it is an unusual FAT disk image or often a DOS executable
+# like: DEVICE.COM INSTALL.COM (GAG 4.10) WORD.COM (Word 1.15)
+>>>16		ubyte		=0
+# if low FATs with x86 boot signature it can be unusual disk image like: boot.img (Ventoy 1.0.27) geodspms.img (Syslinux)
+>>>>0x1FE	leshort		=0xAA55
+>>>>0x1FE	default		x
+# https://thestarman.pcministry.com/tool/hxd/dimtut.htm
+# skip unusual floppy image TK-DOS11.img IBMDOS11.img of IBM DOS 1.10
+# by check for characteristic bootloader names near end of boot sector
+>>>>>395	string		!ibmbio\040\040com
+>>>>>>0			use		msdos-com
+# 8-bit jump with valid number of FAT implies FAT volume already handled by ./filesystems
+# like: balder.img
+>>>16		default		x
+# skip disk images with boot signature at end of 1st sector
+# like: TDSK-64b.img
+>>>>(11.s-2)	uleshort	!0xAA55
+# skip unusual floppy image without boot signature like 360k-256.img (mtools 4.0.18)
+# by check for characteristic file system type text for FAT (12 bit or 16 bit)
+>>>>>54		string		!FAT
+# "ftp://old-dos.ru/OSCollect/OS/MS-DOS/Final Releases/Microsoft MS-DOS 3.31 (Compaq OEM) (3.5).rar" 
+# skip unusual floppy image Disk4.img without boot signature and file system type text
+# by check for characteristic OEM-ID text
+>>>>>>3		string		!COMPAQ\040\040
+# no such DOS COM executables found
+>>>>>>>0		use		msdos-com
 # JMP 16bit
 0           byte    0xe9
+# 16-bit offset; for DEBUGGING!; can be negative like: USBDRIVE.COM
+#>1		leshort		x	\b, OFFSET %d
 # forward jumps
->1          short   >-1
+>1		leshort	>-1
 # that offset must be accessible
+# with hexadecimal values like: 06 1e 0e 2e 60 8c 8d b4 ba be e8 fc
 >>(1.s+3)   byte    x
->>>0        use msdos-com
+# check for unrealistic high number of FATs. Then it is not a disk image and it is a DOS executable
+# like: CALLVER.COM CPUCACHE.COM K437_EUR.COM SHSUCDX.COM UMBFILL.COM (183 bytes)
+>>>16		ubyte		>3
+>>>>0			use		msdos-com
+# check for unrealistic low number of FATs. Then it is not a disk image and it is a DOS executable
+# like: GAG.COM DRMOUSE.COM NDN.COM CPQ0TD.DRV
+>>>16		ubyte		=0
+>>>>0			use		msdos-com
+# maybe disc image with valid number of FATs or DOS executable
+# like: IPXODI.COM PERUSE.COM TASKID.COM
+>>>16		default	x
+# invalid low media descriptor. Then it is not a disk image and it is a DOS executable
+>>>>21		ubyte		<0xE5
+>>>>>0			use		msdos-com
+# valid media descriptor. Then it is maybe disk image or DOS executable
+>>>>21		ubyte		>0xE4
+# invalid sectorsize not a power of 2 from 32-32768. Then it is not a disk image and it must be DOS executable
+# like: LEARN.COM (Word 1.15)
+>>>>>11		uleshort&0x001f	!0
+>>>>>>0			use		msdos-com
 # negative offset, must not lead into PSP
->1          short   <-259
+# like: BASICA.COM (PC dos 3.20) FORMAT.COM SMC8100.COM WORD.COM (word4)
+# HIDSUPT1.COM USBDRIVE.COM USBSUPT1.COM USBUHCI.COM (FreeDOS USBDOS)
+>1		leshort	<-259
 # that offset must be accessible
+# add 10000h to jump at end of 64 KiB segment, add 1 for jump instruction and 2 for 16-bit offset
 >>(1,s+65539)   byte    x
+# after jump next instruction for DEBUGGING!
+#>>>&-1		ubelong	x	\b, NEXT instruction %#8.8x
 >>>0        use msdos-com
 
-# updated by Joerg Jenderek at Oct 2008,2015
+# updated by Joerg Jenderek at Oct 2008,2015,2022
 # following line is too general
 0	ubyte		0xb8
 # skip 2 linux kernels like memtest.bin with "\xb8\xc0\x07\x8e" in ./linux
@@ -661,19 +778,49 @@
 # syslinux version (4.x)
 # "COM executable (COM32R)" or "Syslinux COM32 module" by TrID
 >>>1	lelong		0x21CD4CFe	\b, relocatable)
-# Hajin Jang <hajin_jang@worksmobile.com>:
-# Disable simplest COM signature to prevent false positive on some EUC-KR text files.
-## remaining are DOS COM executables starting with assembler instruction MOV
-## like FreeDOS BANNER*.COM FINDDISK.COM GIF2RAW.COM WINCHK.COM
-## MS-DOS SYS.COM RESTART.COM
-## SYSLINUX.COM (version 1.40 - 2.13)
-## GFXBOOT.COM (version 3.75)
-## COPYBS.COM POWEROFF.COM INT18.COM
-#>>1	default	x			COM executable for DOS
-#!:mime	application/x-dosexec
-##!:mime	application/x-ms-dos-executable
-##!:mime	application/x-msdos-program
-#!:ext com
+>>1	default	x
+# look for interrupt instruction like in rem.com (DJGPP) LOADER.COM (DR-DOS 7.x)
+>>>3	search/118	\xCD
+# FOR DEBUGGING; possible hexadecimal interupt number like: 10~BANNER.COM 13~bcdw_cl.com 15~poweroff.com (Syslinux)
+# 1A~BERNDPCI.COM 20~SETENHKB.COM 21~mostly 22~gfxboot.com (Syslinux) 2F~SHUTDOWN.COM (GEMSYS)
+#>>>>&0	ubyte	x			\b, INTERUPT %#x
+# few examples with interrupt 0x13 instruction
+>>>>&0	ubyte	=0x13
+# FOR DEBUGGING!
+#>>>>>3	ubequad	x			\b, 2nd INSTRUCTION %#16.16llx
+# skip Gpt.com Mbr.com (edk2-UDK2018 bootsector) described as "DOS/MBR boot sector" by ./filesystems
+# by check for assembler instructions: mov  es,ax ; mov  ax,07c0h ; mov ds,ax 
+>>>>>3	ubequad	!0x8ec0b8c0078ed88d
+# few COM exectables with interrupt 0x13 instruction like: Bootable CD Wizard executables bcdw_cl.com fdemuoff.com
+# http://bootcd.narod.ru/bcdw150z_en.zip
+>>>>>>0		use		msdos-com
+# few examples with interrupt 0x16 instruction like flashimg.img
+>>>>&0	ubyte	=0x16
+# skip Syslinux 3.71 flashimg.img done as "DOS/MBR boot sector" by ./filesystems
+# by check for assembler instructions: cmp ax 0xE4E4 (magic); jnz
+>>>>>8	ubelong	!0x3DE4E475
+# no DOS executable with interrupt 0x16 found
+>>>>>>0		use		msdos-com
+# most examples with interrupt instruction unequal 0x13 and 0x16
+>>>>&0	default	x
+#>>>>>&-1 ubyte	x			\b, INTERUPT %#x
+# like: LOADER.COM SETENHKB.COM banner.com copybs.com gif2raw.com poweroff.com rem.com
+>>>>>0		use		msdos-com
+# few COM executables without interupt instruction like RESTART.COM (DOS 7.10) REBOOT.COM
+# or some EUC-KR text files or one Ulead Imaginfo thumbnail
+>>>3	default	x
+# FOR DEBUGGING; 2nd instruction like 0x50 (RESTART.COM) 0x8e (REBOOT.COM)
+# or random like: 0x0 (IMAGINFO.PE3 sky_snow) 0xb1 (euckr_.txt)
+#>>>>3	ubyte	x			\b, 2nd INSTRUCTION %#x
+# skip 1 Ulead Imaginfo thumbnail (IMAGINFO.PE3 sky_snow) 
+# inside SAMPLES/TEXTURES/SKY_SNOW
+# from https://archive.org/download/PI3CANON/PI3CANON.iso
+>>>>3	ubyte	!0x0
+# skip some EUC-KR text files like: euckr_falsepositive.txt
+# https://bugs.astron.com/view.php?id=186
+>>>>>3	ubyte	!0xb1
+# like: RESTART.COM (DOS 7.10) REBOOT.COM
+>>>>>>0	use		msdos-com
 
 # URL:		https://en.wikipedia.org/wiki/UPX
 # Reference:	https://github.com/upx/upx/archive/v3.96.zip/upx-3.96/
@@ -681,13 +828,13 @@
 # Update:	Joerg Jenderek
 # assembler instructions: cmp sp, offset sp_limit
 0	string/b	\x81\xfc
-#>2	uleshort	x		\b, sp_limit=0x%x
+#>2	uleshort	x		\b, sp_limit=%#x
 # assembler instructions: jump above +2; int 0x20; mov cx, offset bytes_to_copy
 >4	string	\x77\x02\xcd\x20\xb9
-#>9	uleshort	x		\b, [bytes_to_copy]=0x%x
+#>9	uleshort	x		\b, [bytes_to_copy]=%#x
 # at different offsets assembler instructions: push di; jump decomp_start_n2b
 >0x1e	search/3	\x57\xe9
-#>>&0	uleshort	x		\b, decomp_start_n2b=0x%x
+#>>&0	uleshort	x		\b, decomp_start_n2b=%#x
 # src/stub/src/include/header.S; UPX_MAGIC_LE32
 >>&2	string		UPX!		FREE-DOS executable (COM), UPX
 !:mime	application/x-dosexec
@@ -732,7 +879,11 @@
 !:mime	application/x-dosexec
 !:ext	com
 #HELP.COm EDIT.coM
-18	string	\xcd\x21		COM executable for MS-DOS
+18	string	\xcd\x21	
+# not printable before it?
+>17	byte	>32
+>>17	byte	<126		
+>>17	default	x			COM executable for MS-DOS	
 !:mime	application/x-dosexec
 !:ext	com
 #NWRPLTRM.COm
@@ -803,7 +954,7 @@
 # reserved; must be zero
 #>>6	ulelong		!0			\b, reserved %u
 # block pointer to the block containing optional file manager information
-#>>0x1C	uleshort	x			\b, at 0x%x info block
+#>>0x1C	uleshort	x			\b, at %#x info block
 # jump to File manager information block
 >>(0x1C.s*128)	uleshort x
 # test for valid information start; maybe also 0012h
@@ -833,7 +984,7 @@
 # number of blocks used in the file; seems to be 0 for Word 4.0 and Write 3.0
 >>0x6A	uleshort	>0			\b, %u blocks
 # bit field for corrected text areas
-#>>0x6C	uleshort	x			\b, 0x%x bit field
+#>>0x6C	uleshort	x			\b, %#x bit field
 # text of document; some times start with 4 non printable characters like CR LF
 >>128	ubyte		x			\b,
 >>>128		ubyte	>0x1F
@@ -937,7 +1088,7 @@
 >>>>6	uleshort	!0x0004	formatting data
 !:ext	fXX
 # main revision number
->>>>4	uleshort	x	\b, revision 0x%x
+>>>>4	uleshort	x	\b, revision %#x
 >>>6	uleshort	=0x0004	\b, cell range
 # active cellcoord range (start row, page,column ; end row, page, column)
 # start values normally 0~1st sheet A1
@@ -951,9 +1102,9 @@
 >>>>12	uleshort	x	\b%d,
 >>>>15	ubyte		x	\b%d
 # Lotus Multi Byte Character Set (1~cp850,2~cp851,...,16~japan,...,31~??)
->>>>20	ubyte		>1	\b, character set 0x%x
+>>>>20	ubyte		>1	\b, character set %#x
 # flags
->>>>21	ubyte		x	\b, flags 0x%x
+>>>>21	ubyte		x	\b, flags %#x
 >>>6	uleshort	!0x0004
 # record type (FONTNAME=00AEh)
 >>>>30	search/29	\0\xAE
@@ -1027,7 +1178,7 @@
 # (version 5.26) labeled the entry as "Lotus 1-2-3"
 >>>4	default		x	unknown worksheet or configuration
 !:ext	cnf
->>>>4	uleshort	x	\b, revision 0x%x
+>>>>4	uleshort	x	\b, revision %#x
 # 2nd record for most worksheets describes cells range
 >>>6		use	lotus-cells
 # 3rd record for most japan worksheets describes cells range
@@ -1153,11 +1304,11 @@
 #>3		ubyte        	x		\b, reserved %x
 #>8		ulelong		x		\b, image size %d
 # offset of PNG or DIB image
-#>12		ulelong		x		\b, offset 0x%x
+#>12		ulelong		x		\b, offset %#x
 # PNG header (\x89PNG)
 >(12.l)		ubelong		=0x89504e47
 # 1 space char after "with" to get phrase "with PNG image" by magic in ./images
->>&-4		indirect	x	\b with\040
+>>&-4		indirect	x	\b with 
 # DIB image
 >(12.l)		ubelong		!0x89504e47
 #>>&-4		use     	dib-image
@@ -1271,11 +1422,6 @@
 >>>20	long		>0		TIFF starts at byte %d
 >>>>24	long		>0		length %d
 
-# TNEF magic From "Joomy" <joomy@se-ed.net>
-# Microsoft Outlook's Transport Neutral Encapsulation Format (TNEF)
-0	lelong		0x223e9f78	TNEF
-!:mime	application/vnd.ms-tnef
-
 # Norton Guide (.NG , .HLP) files added by Joerg Jenderek from source NG2HTML.C
 # of http://www.davep.org/norton-guides/ng2h-105.tgz
 # https://en.wikipedia.org/wiki/Norton_Guides
@@ -1329,17 +1475,17 @@
 >>>>>>>>>>>>>36	ubyte	!0x20			\b%c
 # followed by string like: 0 v.10 V1.20
 #
-# followed by ,\040Tran\040
->28	search/14	,\040Tran\040
+# followed by ,\040Tran 
+>28	search/14	,\040Tran 
 # probably translated version string like: 0 v1.00
 >>&0	string	x				\b, tran version %s
 # followed by Ctrl-J Ctrl-Z
->>>&0	ubyte		!0xa			\b, terminated by 0x%2.2x
+>>>&0	ubyte		!0xa			\b, terminated by %#2.2x
 >>>>&0	ubyte		x			\b%2.2x
 # Ctrl-Z
->0x65	ubyte		!0x1A			\b, at 0x65 0x%x
+>0x65	ubyte		!0x1A			\b, at 0x65 %#x
 # one
->0x66	ubyte		!0x01			\b, at 0x66 0x%x
+>0x66	ubyte		!0x01			\b, at 0x66 %#x
 # URL:		https://en.wikipedia.org/wiki/NetWare
 # Reference:	http://mark0.net/download/triddefs_xml.7z/defs/d/dat-novell-msg.trid.xml
 # ftp://ftp.iitb.ac.in/LDP/en/NLM-HOWTO/NLM-HOWTO-single.html
@@ -1363,6 +1509,8 @@
 
 # HtmlHelp files (.chm)
 0	string/b	ITSF\003\000\000\000\x60\000\000\000	MS Windows HtmlHelp Data
+!:mime	application/vnd.ms-htmlhelp
+!:ext	chm
 
 # GFA-BASIC (Wolfram Kleff)
 2	string/b	GFA-BASIC3	GFA-BASIC 3 data
@@ -1471,6 +1619,13 @@
 >>>>>>(16.l+16)	string	!Panoram	7 or 8
 !:ext	themepack/deskthemepack
 >>>>>>(16.l+16)	ubyte	x		Theme Pack
+# URL:		https://en.wikipedia.org/wiki/Microsoft_OneNote#File_format
+#		http://fileformats.archiveteam.org/wiki/OneNote
+# Reference:	https://mark0.net/download/triddefs_xml.7z/defs/o/onepkg.trid.xml
+# 1st member name like: "Class Notes.one" "test-onenote.one" "Open Notebook.onetoc2" "Editor Öffnen.onetoc2"
+>>>>>&0	string/c	one		\b, OneNote Package
+!:mime	application/msonenote
+!:ext	onepkg
 >>>>>&0	default		x
 # look for null terminator of 1st member name
 >>>>>>&0	search/255 	\0
@@ -1508,7 +1663,7 @@
 #>4	belong		!0		\b, reserved1 %x
 #>12	belong		!0		\b, reserved2 %x
 # offset of the first CFFILE entry coffFiles: minimal 2Ch
->16	ulelong		x		\b, at 0x%x
+>16	ulelong		x		\b, at %#x
 >(16.l)	use		cab-file
 # at least also 2nd member
 >28	uleshort		>1
@@ -1518,12 +1673,12 @@
 >>>>&0	use		cab-file
 #>20	belong		!0		\b, reserved %x
 # Cabinet file format version. Currently, versionMajor = 1 and versionMinor = 3
->24	ubeshort	!0x0301		\b version 0x%x
+>24	ubeshort	!0x0301		\b version %#x
 # number of CFFOLDER entries
 >26	uleshort	>1		\b, %u cffolders
 # cabinet file option indicators 1~PREVIOUS, 2~NEXT, 4~reserved fields
 # only found for flags 0 1 2 3 4 not 7
->30	uleshort	>0		\b, flags 0x%x
+>30	uleshort	>0		\b, flags %#x
 # Cabinet files have a 16-bit cabinet setID field that is designed for application use.
 # default is zero, however, the -i option of cabarc can be used to set this field
 >32	uleshort	>0		\b, ID %u
@@ -1574,30 +1729,30 @@
 #	display folder structure CFFOLDER information like compression of cabinet
 0       name    			cab-folder
 # offset of the CFDATA block in this folder
-#>0	ulelong		x		\b, coffCabStart 0x%x
+#>0	ulelong		x		\b, coffCabStart %#x
 # number of CFDATA blocks in folder
 >4	uleshort	x		\b, %u datablock
 # plural s
 >4	uleshort	>1		\bs
 # compression typeCompress: 0~None 1~MSZIP 0x1503~LZX:21 0x1003~LZX:16 0x0f03~LZX:15
->6	uleshort	x		\b, 0x%x compression
+>6	uleshort	x		\b, %#x compression
 # optional per-folder reserved area
-#>8	ubequad		x		\b, abReserve 0x%llx
+#>8	ubequad		x		\b, abReserve %#llx
 #	display member structure CFFILE information like member name of cabinet
 0       name    			cab-file
 # cbFile is uncompressed size of file in bytes
 #>0	ulelong		x		\b, cbFile %u
 # uoffFolderStart is uncompressed offset of file in folder
-#>4	ulelong		>0		\b, uoffFolderStart 0x%x
+#>4	ulelong		>0		\b, uoffFolderStart %#x
 # iFolder is index into the CFFOLDER area. 0 indicates first folder in cabinet
 # define ifoldCONTINUED_FROM_PREV      (0xFFFD)
 # define ifoldCONTINUED_TO_NEXT        (0xFFFE)
 # define ifoldCONTINUED_PREV_AND_NEXT  (0xFFFF)
->8	uleshort	>0		\b, iFolder 0x%x
+>8	uleshort	>0		\b, iFolder %#x
 # date stamp for file
-#>10	uleshort	x		\b, date 0x%x
+#>10	uleshort	x		\b, date %#x
 # time stamp for file
-#>12	uleshort	x		\b, time 0x%x
+#>12	uleshort	x		\b, time %#x
 # attribs is attribute flags for file
 # define  _A_RDONLY       (0x01)  file is read-only
 # define  _A_HIDDEN       (0x02)  file is hidden
@@ -1607,7 +1762,7 @@
 # define  _A_EXEC         (0x40)  run after extraction
 # define  _A_NAME_IS_UTF  (0x80)  szName[] contains UTF
 # define  UNKNOWN       (0x0100)  undocumented or accident
-#>14	uleshort	x		\b, attribs 0x%x
+#>14	uleshort	x		\b, attribs %#x
 >14	uleshort	>0		+
 >>14	uleshort	&0x0001		\bR
 >>14	uleshort	&0x0002		\bH
@@ -1650,7 +1805,7 @@
 # for further information.
 0	ulelong 1
 >40	string	\ EMF		Windows Enhanced Metafile (EMF) image data
->>44	ulelong x		version 0x%x
+>>44	ulelong x		version %#x
 
 
 0	string/b	\224\246\056		Microsoft Word Document
@@ -1695,7 +1850,8 @@
 0	string	Jetsam0		Mallard BASIC Jetsam index data
 
 # DOS backup 2.0 to 3.2
-
+# URL:		http://fileformats.archiveteam.org/wiki/BACKUP_(MS-DOS)
+# Reference:	http://www.ibiblio.org/pub/micro/pc-stuff/freedos/files/dos/restore/brtecdoc.htm
 # backupid.@@@
 
 # plausibility check for date
@@ -1705,6 +1861,7 @@
 # actually 121 nul bytes
 >>>0x7	string	\0\0\0\0\0\0\0\0
 >>>>0x1 ubyte	x	DOS 2.0 backup id file, sequence %d
+#!:mime	application/octet-stream
 !:ext @@@
 >>>>0x0 ubyte	0xff	\b, last disk
 
@@ -1738,12 +1895,14 @@
 >>>>>>>1 uleshort	x	sequence %d of
 # full file name with path but without drive letter and colon stored from 0x05 til 0x52
 >>>>>>0x5	string	x	file %s
+#!:mime	application/octet-stream
 # backup name is original filename
+#!:ext	doc/exe/rar/zip
 #!:ext	*
 # magic/Magdir/msdos, 1169: Warning: EXTENSION type `     *' has bad char '*'
 # file: line 1169: Bad magic entry '  *'
 # after header original file content
->>>>>>128	indirect x	\b;\040
+>>>>>>128	indirect x	\b; 
 
 
 # DOS backup 3.3 to 5.x
@@ -1757,3 +1916,37 @@
 
 # NB: The BACKUP.nnn files consist of the files backed up,
 # concatenated.
+
+# From:		Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/MS-DOS_date/time
+# Reference:	https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-dosdatetimetofiletime
+# Note:		DOS date+time format is different from formats such as Unix epoch
+#		bit encoded; uses year values relative to 1980 and 2 second precision
+0	name		dos-date
+# HHHHHMMMMMMSSSSS bit encoded Hour (0-23) Minute (0-59) SecondPart (*2)
+#>0	uleshort	x	RAW TIME [%#4.4x]
+# hour part
+#>0	uleshort/2048	x	hour [%u]
+# YYYYYMMMMDDDDD bit encoded YearPart (+1980) Month (1-12) Day (1-31)
+#>2	uleshort	x	RAW DATE [%#4.4x]
+# day part
+>2	uleshort&0x001F	x	%u
+#>2	uleshort/16	x	MONTH PART [%#x]
+# GRR: not working
+#>2	uleshort/16	&0x000F	MONTH [%u]
+#>2	uleshort&0x01E0	x	MONTH PART [%#4.4x]
+>2	uleshort&0x01E0	=0x0020	jan
+>2	uleshort&0x01E0	=0x0040	feb
+>2	uleshort&0x01E0	=0x0060	mar
+>2	uleshort&0x01E0	=0x0080	apr
+>2	uleshort&0x01E0	=0x00A0	may
+>2	uleshort&0x01E0	=0x00C0	jun
+>2	uleshort&0x01E0	=0x00E0	jul
+>2	uleshort&0x01E0	=0x0100	aug
+>2	uleshort&0x01E0	=0x0120	sep
+>2	uleshort&0x01E0	=0x0140	oct
+>2	uleshort&0x01E0	=0x0160	nov
+>2	uleshort&0x01E0	=0x0180	dec
+# year part
+>2	uleshort/512	x	1980+%u
+#

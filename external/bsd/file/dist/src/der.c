@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.7 2021/04/09 19:11:42 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.8 2022/09/24 20:21:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: der.c,v 1.21 2020/06/15 00:58:10 christos Exp $")
+FILE_RCSID("@(#)$File: der.c,v 1.25 2022/09/16 14:10:24 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.7 2021/04/09 19:11:42 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.8 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif
 #else
@@ -241,6 +241,7 @@ der_tag(char *buf, size_t len, uint32_t tag)
 static int
 der_data(char *buf, size_t blen, uint32_t tag, const void *q, uint32_t len)
 {
+	uint32_t i;
 	const uint8_t *d = CAST(const uint8_t *, q);
 	switch (tag) {
 	case DER_TAG_PRINTABLE_STRING:
@@ -257,7 +258,7 @@ der_data(char *buf, size_t blen, uint32_t tag, const void *q, uint32_t len)
 		break;
 	}
 
-	for (uint32_t i = 0; i < len; i++) {
+	for (i = 0; i < len; i++) {
 		uint32_t z = i << 1;
 		if (z < blen - 2)
 			snprintf(buf + z, blen - z, "%.2x", d[i]);
@@ -275,7 +276,7 @@ der_offs(struct magic_set *ms, struct magic *m, size_t nbytes)
 		DPRINTF(("%s: bad tag 1\n", __func__));
 		return -1;
 	}
-	DPRINTF(("%s1: %d %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
+	DPRINTF(("%s1: %u %" SIZE_T_FORMAT "u %d\n", __func__, ms->offset,
 	    offs, m->offset));
 
 	uint32_t tlen = getlength(b, &offs, len);
@@ -283,21 +284,22 @@ der_offs(struct magic_set *ms, struct magic *m, size_t nbytes)
 		DPRINTF(("%s: bad tag 2\n", __func__));
 		return -1;
 	}
-	DPRINTF(("%s2: %d %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
+	DPRINTF(("%s2: %u %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
 	    offs, tlen));
 
 	offs += ms->offset + m->offset;
 	DPRINTF(("cont_level = %d\n", m->cont_level));
 #ifdef DEBUG_DER
-	for (size_t i = 0; i < m->cont_level; i++)
-		printf("cont_level[%" SIZE_T_FORMAT "u] = %u\n", i,
+	size_t i;
+	for (i = 0; i < m->cont_level; i++)
+		printf("cont_level[%" SIZE_T_FORMAT "u] = %d\n", i,
 		    ms->c.li[i].off);
 #endif
 	if (m->cont_level != 0) {
 		if (offs + tlen > nbytes)
 			return -1;
 		ms->c.li[m->cont_level - 1].off = CAST(int, offs + tlen);
-		DPRINTF(("cont_level[%u] = %u\n", m->cont_level - 1,
+		DPRINTF(("cont_level[%u] = %d\n", m->cont_level - 1,
 		    ms->c.li[m->cont_level - 1].off));
 	}
 	return CAST(int32_t, offs);
@@ -320,7 +322,7 @@ der_cmp(struct magic_set *ms, struct magic *m)
 		return -1;
 	}
 
-	DPRINTF(("%s1: %d %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
+	DPRINTF(("%s1: %d %" SIZE_T_FORMAT "u %d\n", __func__, ms->offset,
 	    offs, m->offset));
 
 	tlen = getlength(b, &offs, len);
@@ -335,21 +337,26 @@ der_cmp(struct magic_set *ms, struct magic *m)
 		    buf, s);
 	size_t slen = strlen(buf);
 
-	if (strncmp(buf, s, slen) != 0)
+	if (strncmp(buf, s, slen) != 0) {
+		DPRINTF(("%s: no string match %s != %s\n", __func__, buf, s));
 		return 0;
+	}
 
 	s += slen;
 
 again:
 	switch (*s) {
 	case '\0':
+		DPRINTF(("%s: EOF match\n", __func__));
 		return 1;
 	case '=':
 		s++;
 		goto val;
 	default:
-		if (!isdigit(CAST(unsigned char, *s)))
+		if (!isdigit(CAST(unsigned char, *s))) {
+			DPRINTF(("%s: no digit %c\n", __func__, *s));
 			return 0;
+		}
 
 		slen = 0;
 		do
@@ -358,8 +365,10 @@ again:
 		if ((ms->flags & MAGIC_DEBUG) != 0)
 			fprintf(stderr, "%s: len %" SIZE_T_FORMAT "u %u\n",
 			    __func__, slen, tlen);
-		if (tlen != slen)
+		if (tlen != slen) {
+			DPRINTF(("%s: len %u != %zu\n", __func__, tlen, slen));
 			return 0;
+		}
 		goto again;
 	}
 val:
@@ -368,9 +377,12 @@ val:
 	der_data(buf, sizeof(buf), tag, b + offs, tlen);
 	if ((ms->flags & MAGIC_DEBUG) != 0)
 		fprintf(stderr, "%s: data %s %s\n", __func__, buf, s);
-	if (strcmp(buf, s) != 0 && strcmp("x", s) != 0)
+	if (strcmp(buf, s) != 0 && strcmp("x", s) != 0) {
+		DPRINTF(("%s: no string match %s != %s\n", __func__, buf, s));
 		return 0;
+	}
 	strlcpy(ms->ms_value.s, buf, sizeof(ms->ms_value.s));
+	DPRINTF(("%s: complete match\n", __func__));
 	return 1;
 }
 #endif

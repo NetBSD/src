@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.25 2021/04/09 19:11:42 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.26 2022/09/24 20:21:46 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.175 2020/12/17 20:43:37 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.184 2022/09/22 13:42:34 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.25 2021/04/09 19:11:42 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.26 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif
 
@@ -68,6 +68,7 @@ private uint64_t getu64(int, uint64_t);
 
 #define MAX_PHNUM	128
 #define	MAX_SHNUM	32768
+#define MAX_SHSIZE	(64 * 1024 * 1024)
 #define SIZE_UNKNOWN	CAST(off_t, -1)
 
 private int
@@ -456,6 +457,10 @@ do_note_netbsd_version(struct magic_set *ms, int swap, void *v)
 
 		if (file_printf(ms, " %u.%u", ver_maj, ver_min) == -1)
 			return -1;
+		if (ver_maj >= 9) {
+			ver_patch += 100 * ver_rel;
+			ver_rel = 0;
+		}
 		if (ver_rel == 0 && ver_patch != 0) {
 			if (file_printf(ms, ".%u", ver_patch) == -1)
 				return -1;
@@ -465,8 +470,7 @@ do_note_netbsd_version(struct magic_set *ms, int swap, void *v)
 					return -1;
 				ver_rel -= 26;
 			}
-			if (file_printf(ms, "%c", 'A' + ver_rel - 1)
-			    == -1)
+			if (file_printf(ms, "%c", 'A' + ver_rel - 1) == -1)
 				return -1;
 		}
 	}
@@ -790,7 +794,7 @@ do_core_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 
 			if (file_printf(ms, ", from '%.31s', pid=%u, uid=%u, "
 			    "gid=%u, nlwps=%u, lwp=%u (signal %u/code %u)",
-			    file_printable(sbuf, sizeof(sbuf),
+			    file_printable(ms, sbuf, sizeof(sbuf),
 			    RCAST(char *, pi.cpi_name), sizeof(pi.cpi_name)),
 			    elf_getu32(swap, CAST(uint32_t, pi.cpi_pid)),
 			    elf_getu32(swap, pi.cpi_euid),
@@ -902,6 +906,13 @@ do_core_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 					int adjust = 1;
 					if (prpsoffsets(k) >= prpsoffsets(i))
 						continue;
+					/*
+					 * pr_fname == pr_psargs - 16 &&
+					 * non-nul-terminated fname (qemu)
+					 */
+					if (prpsoffsets(k) ==
+					    prpsoffsets(i) - 16 && j == 16)
+						continue;
 					for (no = doff + prpsoffsets(k);
 					     no < doff + prpsoffsets(i); no++)
 						adjust = adjust
@@ -924,7 +935,7 @@ do_core_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 				if (file_printf(ms, ", from '%s'",
 				    file_copystr(buf, sizeof(buf),
 				    CAST(size_t, cp - cname),
-				    CAST(const char *, cname))) == -1)
+				    RCAST(char *, cname))) == -1)
 					return -1;
 				*flags |= FLAGS_DID_CORE;
 				return 1;
@@ -988,9 +999,8 @@ get_string_on_virtaddr(struct magic_set *ms,
 	    fsize, virtaddr);
 	if (offset < 0 ||
 	    (buflen = pread(fd, buf, CAST(size_t, buflen), offset)) <= 0) {
-		if (file_printf(ms, ", can't read elf string at %jd",
-		    (intmax_t)offset) == -1)
-			return 0;
+		(void)file_printf(ms, ", can't read elf string at %jd",
+		    (intmax_t)offset);
 		return 0;
 	}
 
@@ -1022,7 +1032,7 @@ do_auxv_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 	size_t elsize = xauxv_sizeof;
 	const char *tag;
 	int is_string;
-	size_t nval;
+	size_t nval, off;
 
 	if ((*flags & (FLAGS_IS_CORE|FLAGS_DID_CORE_STYLE)) !=
 	    (FLAGS_IS_CORE|FLAGS_DID_CORE_STYLE))
@@ -1050,7 +1060,7 @@ do_auxv_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 	*flags |= FLAGS_DID_AUXV;
 
 	nval = 0;
-	for (size_t off = 0; off + elsize <= descsz; off += elsize) {
+	for (off = 0; off + elsize <= descsz; off += elsize) {
 		memcpy(xauxv_addr, &nbuf[doff + off], xauxv_sizeof);
 		/* Limit processing to 50 vector entries to prevent DoS */
 		if (nval++ >= 50) {
@@ -1191,17 +1201,15 @@ donote(struct magic_set *ms, void *vbuf, size_t offset, size_t size,
 	}
 
 	if (namesz & 0x80000000) {
-		if (file_printf(ms, ", bad note name size %#lx",
-		    CAST(unsigned long, namesz)) == -1)
-			return 0;
+	    (void)file_printf(ms, ", bad note name size %#lx",
+		CAST(unsigned long, namesz));
 	    return 0;
 	}
 
 	if (descsz & 0x80000000) {
-		if (file_printf(ms, ", bad note description size %#lx",
-		    CAST(unsigned long, descsz)) == -1)
-		    	return 0;
-	    return 0;
+		(void)file_printf(ms, ", bad note description size %#lx",
+		    CAST(unsigned long, descsz));
+		return 0;
 	}
 
 	noff = offset;
@@ -1451,6 +1459,12 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 					return -1;
 				return 0;
 			}
+			if (xsh_size > MAX_SHSIZE) {
+				file_error(ms, errno, "Note section size too "
+				    "big (%ju > %u)", (uintmax_t)xsh_size,
+				    MAX_SHSIZE);
+				return -1;
+			}
 			if ((nbuf = malloc(xsh_size)) == NULL) {
 				file_error(ms, errno, "Cannot allocate memory"
 				    " for note");
@@ -1658,7 +1672,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	char ibuf[BUFSIZ];
 	char interp[BUFSIZ];
 	ssize_t bufsize;
-	size_t offset, align, len, need = 0;
+	size_t offset, align, need = 0;
 	int pie = 0, dynamic = 0;
 
 	if (num == 0) {
@@ -1718,7 +1732,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 		}
 
 		if (doread) {
-			len = xph_filesz < sizeof(nbuf) ? xph_filesz
+			size_t len = xph_filesz < sizeof(nbuf) ? xph_filesz
 			    : sizeof(nbuf);
 			off_t offs = xph_offset;
 			bufsize = pread(fd, nbuf, len, offs);
@@ -1729,8 +1743,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 					return -1;
 				return 0;
 			}
-		} else
-			len = 0;
+		}
 
 		/* Things we can determine when we seek */
 		switch (xph_type) {
@@ -1799,9 +1812,8 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 	if (file_printf(ms, ", %s linked", linking_style) == -1)
 		return -1;
 	if (interp[0])
-		if (file_printf(ms, ", interpreter %s",
-		    file_printable(ibuf, sizeof(ibuf), interp, sizeof(interp)))
-			== -1)
+		if (file_printf(ms, ", interpreter %s", file_printable(ms,
+		    ibuf, sizeof(ibuf), interp, sizeof(interp))) == -1)
 			return -1;
 	return 0;
 }

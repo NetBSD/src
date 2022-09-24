@@ -1,4 +1,4 @@
-/*	$NetBSD: is_csv.c,v 1.3 2021/04/09 19:11:42 christos Exp $	*/
+/*	$NetBSD: is_csv.c,v 1.4 2022/09/24 20:21:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 Christos Zoulas
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_csv.c,v 1.6 2020/08/09 16:43:36 christos Exp $")
+FILE_RCSID("@(#)$File: is_csv.c,v 1.8 2022/09/16 14:15:29 christos Exp $")
 #else
-__RCSID("$NetBSD: is_csv.c,v 1.3 2021/04/09 19:11:42 christos Exp $");
+__RCSID("$NetBSD: is_csv.c,v 1.4 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif
 
@@ -180,7 +180,7 @@ file_is_csv(struct magic_set *ms, const struct buffer *b, int looks_text)
 int
 main(int argc, char *argv[])
 {
-	int fd, rv;
+	int fd;
 	struct stat st;
 	unsigned char *p;
 
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 	if (fstat(fd, &st) == -1)
 		err(EXIT_FAILURE, "Can't stat `%s'", argv[1]);
 
-	if ((p = malloc(st.st_size)) == NULL)
+	if ((p = CAST(char *, malloc(st.st_size))) == NULL)
 		err(EXIT_FAILURE, "Can't allocate %jd bytes",
 		    (intmax_t)st.st_size);
 	if (read(fd, p, st.st_size) != st.st_size)
