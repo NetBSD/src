@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.422 2022/09/24 11:05:18 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.423 2022/09/24 11:05:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.422 2022/09/24 11:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.423 2022/09/24 11:05:47 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5001,9 +5001,13 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	npte |= pmap_pat_flags(flags);
 	if (wired)
 		npte |= PTE_WIRED;
-	if (va < VM_MAXUSER_ADDRESS &&
-	    (pmap == pmap_kernel() || pmap_is_user(pmap)))
-		npte |= PTE_U;
+	if (va < VM_MAXUSER_ADDRESS) {
+		KASSERTMSG(pmap != pmap_kernel(),
+		    "entering user va %#"PRIxVADDR" into kernel pmap",
+		    va);
+		if (pmap_is_user(pmap))
+			npte |= PTE_U;
+	}
 
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
