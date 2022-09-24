@@ -391,7 +391,7 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 			return (domain_type*)r->key;
 		}
 	}
-	if(zone->nsec3_last)
+	if(zone->nsec3_last && zone->nsec3_last != domain)
 		return zone->nsec3_last;
 	return NULL;
 }
@@ -677,7 +677,7 @@ nsec3_precompile_newparam(namedb_type* db, zone_type* zone)
 			s = time(NULL);
 			VERBOSITY(1, (LOG_INFO, "nsec3 %s %d %%",
 				zone->opts->name,
-				(int)(c*((unsigned long)100)/n)));
+				(n==0)?0:(int)(c*((unsigned long)100)/n)));
 		}
 	}
 	region_destroy(tmpregion);
@@ -977,6 +977,10 @@ nsec3_add_nonexist_proof(struct query* query, struct answer* answer,
 		VERBOSITY(3, (LOG_ERR, "nsec3 hash collision for name=%s hash=%s reverse=%s",
 			dname_to_string(to_prove, NULL), hashbuf, reversebuf));
 		RCODE_SET(query->packet, RCODE_SERVFAIL);
+		/* RFC 8914 - Extended DNS Errors
+		 * 4.21. Extended DNS Error Code 0 - Other */
+		ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+			EDE_OTHER, "NSEC3 hash collision");
 		return;
 	}
 	else
@@ -1049,12 +1053,21 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 				!prev_par->nsec3->nsec3_is_exact);
 			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 				prev_par->nsec3->nsec3_cover);
+		} else {
+			/* the exact case was handled earlier, so this is
+			 * with a closest-encloser proof, if in the part
+			 * before the else the closest encloser proof is done,
+			 * then we do not need to add a DS here because
+			 * the optout proof is already complete. If not,
+			 * we add the nsec3 here to complete the closest
+			 * encloser proof with a next closer */
+			/* add optout range from parent zone */
+			/* note: no check of optout bit, resolver checks it */
+			if(domain->nsec3) {
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					domain->nsec3->nsec3_ds_parent_cover);
+			}
 		}
-		/* add optout range from parent zone */
-		/* note: no check of optout bit, resolver checks it */
-		if(domain->nsec3)
-			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
-				domain->nsec3->nsec3_ds_parent_cover);
 	}
 }
 
@@ -1187,6 +1200,10 @@ nsec3_answer_authoritative(struct domain** match, struct query *query,
 			/* wildcard exists below the domain */
 			/* wildcard and nsec3 domain clash. server failure. */
 			RCODE_SET(query->packet, RCODE_SERVFAIL);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.21. Extended DNS Error Code 0 - Other */
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+				EDE_OTHER, "Wildcard and NSEC3 domain clash");
 		}
 		return;
 	}
