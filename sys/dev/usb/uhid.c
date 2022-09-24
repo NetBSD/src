@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.125 2022/03/31 17:43:50 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.126 2022/09/24 11:06:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.125 2022/03/31 17:43:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.126 2022/09/24 11:06:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -314,7 +314,6 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* We are open for business.  */
 	mutex_enter(&sc->sc_lock);
 	sc->sc_open = UHID_OPEN;
-	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
@@ -331,7 +330,6 @@ fail1:	selnotify(&sc->sc_rsel, POLLHUP, 0);
 fail0:	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_open == UHID_OPENING);
 	sc->sc_open = UHID_CLOSED;
-	cv_broadcast(&sc->sc_cv);
 	atomic_store_relaxed(&sc->sc_state, 0);
 	mutex_exit(&sc->sc_lock);
 	return error;
@@ -403,7 +401,6 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_open = UHID_CLOSED;
 out:	KASSERT(sc->sc_open == UHID_CLOSED);
 	sc->sc_closing = false;
-	cv_broadcast(&sc->sc_cv);
 	atomic_store_relaxed(&sc->sc_state, 0);
 	mutex_exit(&sc->sc_lock);
 
