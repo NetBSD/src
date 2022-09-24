@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.19 2022/09/23 10:07:36 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.20 2022/09/24 08:11:46 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -285,4 +285,10 @@ external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c	(apply patch)
 	a zfs volume. Fixed differently as part of a bigger change in
 	-current in rev 1.73.
 	[dholland, ticket #1532]
+
+sys/arch/arm/sunxi/sunxi_can.c			1.10,1.11
+
+	Improve sunxican(4) RX interrupt handling to reduce the risk of
+	receive overrun, and improve receive overrun recovery.
+	[bouyer, ticket #1533]
 
