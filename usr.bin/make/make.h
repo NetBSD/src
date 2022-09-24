@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.305 2022/09/23 22:58:15 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.306 2022/09/24 10:26:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -799,9 +799,9 @@ void Compat_Make(GNode *, GNode *);
 /* cond.c */
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
-void Cond_restore_depth(unsigned int);
-void Cond_reset_depth(void);
-unsigned int Cond_save_depth(void) MAKE_ATTR_USE;
+unsigned int Cond_PushMinDepth(void) MAKE_ATTR_USE;
+void Cond_PopMinDepth(unsigned int);
+void Cond_ResetDepth(void);
 
 /* dir.c; see also dir.h */
 

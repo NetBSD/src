@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.340 2022/09/24 10:19:07 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.341 2022/09/24 10:26:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,8 +81,9 @@
  *			of one of the .if directives or the condition in a
  *			':?then:else' variable modifier.
  *
- *	Cond_save_depth
- *	Cond_restore_depth
+ *	Cond_PushMinDepth
+ *	Cond_PopMinDepth
+ *	Cond_ResetDepth
  *			Save and restore the nesting of the conditions, at
  *			the start and end of including another makefile, to
  *			ensure that in each makefile the conditional
@@ -95,7 +96,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.340 2022/09/24 10:19:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.341 2022/09/24 10:26:31 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1256,7 +1257,7 @@ Cond_EvalLine(const char *line)
 }
 
 unsigned int
-Cond_save_depth(void)
+Cond_PushMinDepth(void)
 {
 	unsigned int depth = cond_min_depth;
 
@@ -1265,7 +1266,7 @@ Cond_save_depth(void)
 }
 
 void
-Cond_restore_depth(unsigned int saved_depth)
+Cond_PopMinDepth(unsigned int saved_depth)
 {
 	unsigned int open_conds = cond_depth - cond_min_depth;
 
@@ -1280,12 +1281,11 @@ Cond_restore_depth(unsigned int saved_depth)
 }
 
 /*
- * When we break out of a .for loop
- * we want to restore cond_depth to where it was
- * when the loop started.
+ * When breaking out of a .for loop, restore cond_depth to where it was when
+ * the loop started.
  */
 void
-Cond_reset_depth(void)
+Cond_ResetDepth(void)
 {
 	cond_depth = cond_min_depth;
 }

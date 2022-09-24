@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.684 2022/09/23 22:58:15 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.685 2022/09/24 10:26:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.684 2022/09/23 22:58:15 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.685 2022/09/24 10:26:32 rillig Exp $");
 
 /*
  * A file being read.
@@ -119,7 +119,9 @@ typedef struct IncludedFile {
 	unsigned forBodyReadLines; /* the number of physical lines that have
 				 * been read from the file above the body of
 				 * the .for loop */
-	unsigned int cond_depth; /* 'if' nesting when file opened */
+	unsigned int including_cond_min_depth; /* depth of nested 'if'
+				 * directives, at the point where the
+				 * including file was opened */
 	bool depending;		/* state of doing_depend on EOF */
 
 	Buffer buf;		/* the file's content or the body of the .for
@@ -2139,7 +2141,7 @@ Parse_PushInput(const char *name, unsigned lineno, unsigned readLines,
 
 	curFile->buf_ptr = curFile->buf.data;
 	curFile->buf_end = curFile->buf.data + curFile->buf.len;
-	curFile->cond_depth = Cond_save_depth();
+	curFile->including_cond_min_depth = Cond_PushMinDepth();
 	SetParseFile(name);
 }
 
@@ -2276,7 +2278,7 @@ ParseEOF(void)
 	 * Ensure the makefile (or .for loop) didn't have mismatched
 	 * conditionals.
 	 */
-	Cond_restore_depth(curFile->cond_depth);
+	Cond_PopMinDepth(curFile->including_cond_min_depth);
 
 	FStr_Done(&curFile->name);
 	Buf_Done(&curFile->buf);
@@ -2669,7 +2671,7 @@ HandleBreak(void)
 	if (curFile->forLoop != NULL) {
 		/* pretend we reached EOF */
 		For_Break(curFile->forLoop);
-		Cond_reset_depth();
+		Cond_ResetDepth();
 		ParseEOF();
 	} else
 		Parse_Error(PARSE_FATAL, "break outside of for loop");
