@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.205 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.205 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1434,7 +1434,7 @@ void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 #ifdef SVS
-	if (svs_enabled) {
+	if (svs_enabled && pmap_is_user(pmap)) {
 		svs_pdir_switch(pmap);
 	}
 #endif

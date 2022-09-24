@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.597 2022/09/01 12:35:02 bouyer Exp $
+# $NetBSD: GENERIC,v 1.598 2022/09/24 11:05:17 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.597 $"
+#ident		"GENERIC-$Revision: 1.598 $"
 
 maxusers	64		# estimated number of users
 
@@ -1224,6 +1224,10 @@ pseudo-device	pad
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
+
+# EFI runtime support
+options 	EFI_RUNTIME
+pseudo-device 	efi			# /dev/efi
 
 include "dev/veriexec.config"
 

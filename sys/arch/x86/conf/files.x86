@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.123 2022/08/30 11:03:36 riastradh Exp $
+#	$NetBSD: files.x86,v 1.124 2022/09/24 11:05:18 riastradh Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -20,6 +20,8 @@ defflag	opt_xen.h		DO_NOT_DEFINE
 
 # Option to have a static kernel memory layout
 defflag opt_kaslr.h	NO_X86_ASLR
+
+defflag opt_efi.h	EFI_RUNTIME
 
 defflag	SVS
 

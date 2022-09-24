@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.421 2022/08/31 12:51:56 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.422 2022/09/24 11:05:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.421 2022/08/31 12:51:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.422 2022/09/24 11:05:18 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.421 2022/08/31 12:51:56 bouyer Exp $");
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kaslr.h"
+#include "opt_efi.h"
 
 #define	__MUTEX_PRIVATE	/* for assertions */
 
@@ -2497,7 +2498,8 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 			xen_kpm_sync(pmap, index);
 		}
 #elif defined(SVS)
-		if (svs_enabled && level == PTP_LEVELS - 1) {
+		if (svs_enabled && level == PTP_LEVELS - 1 &&
+		    pmap_is_user(pmap)) {
 			svs_pmap_sync(pmap, index);
 		}
 #endif
@@ -2633,7 +2635,8 @@ pmap_install_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 			xen_kpm_sync(pmap, index);
 		}
 #elif defined(SVS)
-		if (svs_enabled && i == PTP_LEVELS) {
+		if (svs_enabled && i == PTP_LEVELS &&
+		    pmap_is_user(pmap)) {
 			svs_pmap_sync(pmap, index);
 		}
 #endif
@@ -3740,6 +3743,111 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(ci->ci_tlbstate == TLBSTATE_VALID);
 	ci->ci_tlbstate = TLBSTATE_LAZY;
 }
+
+#ifdef EFI_RUNTIME
+
+extern struct pmap *efi_runtime_pmap;
+
+/*
+ * pmap_is_user: true if pmap, which must not be the kernel pmap, is
+ * for an unprivileged user process
+ */
+bool
+pmap_is_user(struct pmap *pmap)
+{
+
+	KASSERT(pmap != pmap_kernel());
+	return (pmap != efi_runtime_pmap);
+}
+
+/*
+ * pmap_activate_sync: synchronously activate specified pmap.
+ *
+ * => Must be called with kernel preemption disabled (high IPL is enough).
+ * => Must not sleep before pmap_deactivate_sync.
+ */
+void *
+pmap_activate_sync(struct pmap *pmap)
+{
+	struct cpu_info *ci = curcpu();
+	struct pmap *oldpmap = ci->ci_pmap;
+	unsigned cid = cpu_index(ci);
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(pmap != pmap_kernel());
+
+	KASSERT(!kcpuset_isset(pmap->pm_cpus, cid));
+	KASSERT(!kcpuset_isset(pmap->pm_kernel_cpus, cid));
+
+	if (oldpmap) {
+		KASSERT_PDIRPA(oldpmap);
+		kcpuset_atomic_clear(oldpmap->pm_cpus, cid);
+		kcpuset_atomic_clear(oldpmap->pm_kernel_cpus, cid);
+	}
+
+	ci->ci_tlbstate = TLBSTATE_VALID;
+	kcpuset_atomic_set(pmap->pm_cpus, cid);
+	kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
+	ci->ci_pmap = pmap;
+
+#if defined(SVS) && defined(USER_LDT)
+	if (svs_enabled) {
+		svs_ldt_sync(pmap);
+	} else
+#endif
+	lldt(pmap->pm_ldt_sel);
+
+	cpu_load_pmap(pmap, oldpmap);
+
+	return oldpmap;
+}
+
+/*
+ * pmap_deactivate_sync: synchronously deactivate specified pmap and
+ * restore whatever was active before pmap_activate_sync.
+ *
+ * => Must be called with kernel preemption disabled (high IPL is enough).
+ * => Must not have slept since pmap_activate_sync.
+ */
+void
+pmap_deactivate_sync(struct pmap *pmap, void *cookie)
+{
+	struct cpu_info *ci = curcpu();
+	struct pmap *oldpmap = cookie;
+	unsigned cid = cpu_index(ci);
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(pmap != pmap_kernel());
+	KASSERT(ci->ci_pmap == pmap);
+
+	KASSERT_PDIRPA(pmap);
+
+	KASSERT(kcpuset_isset(pmap->pm_cpus, cid));
+	KASSERT(kcpuset_isset(pmap->pm_kernel_cpus, cid));
+
+	pmap_tlb_shootnow();
+
+	kcpuset_atomic_clear(pmap->pm_cpus, cid);
+	kcpuset_atomic_clear(pmap->pm_kernel_cpus, cid);
+
+	ci->ci_tlbstate = TLBSTATE_VALID;
+	ci->ci_pmap = oldpmap;
+	if (oldpmap) {
+		kcpuset_atomic_set(oldpmap->pm_cpus, cid);
+		kcpuset_atomic_set(oldpmap->pm_kernel_cpus, cid);
+#if defined(SVS) && defined(USER_LDT)
+		if (svs_enabled) {
+			svs_ldt_sync(oldpmap);
+		} else
+#endif
+		lldt(oldpmap->pm_ldt_sel);
+		cpu_load_pmap(oldpmap, pmap);
+	} else {
+		lcr3(pmap_pdirpa(pmap_kernel(), 0));
+	}
+}
+
+#endif	/* EFI_RUNTIME */
 
 /*
  * some misc. functions
@@ -4893,7 +5001,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	npte |= pmap_pat_flags(flags);
 	if (wired)
 		npte |= PTE_WIRED;
-	if (va < VM_MAXUSER_ADDRESS)
+	if (va < VM_MAXUSER_ADDRESS &&
+	    (pmap == pmap_kernel() || pmap_is_user(pmap)))
 		npte |= PTE_U;
 
 	if (pmap == pmap_kernel())
