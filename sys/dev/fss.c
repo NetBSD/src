@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.112 2022/03/31 19:30:15 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.113 2022/09/24 23:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.112 2022/03/31 19:30:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.113 2022/09/24 23:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
@@ -160,7 +160,7 @@ fss_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_work_cv, "fssbs");
 	cv_init(&sc->sc_cache_cv, "cowwait");
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
-	sc->sc_dkdev = malloc(sizeof(*sc->sc_dkdev), M_DEVBUF, M_WAITOK);
+	sc->sc_dkdev = kmem_zalloc(sizeof(*sc->sc_dkdev), KM_SLEEP);
 	sc->sc_dkdev->dk_info = NULL;
 	disk_init(sc->sc_dkdev, device_xname(self), NULL);
 	if (!pmf_device_register(self, NULL, NULL))
@@ -192,7 +192,7 @@ fss_detach(device_t self, int flags)
 	bufq_drain(sc->sc_bufq);
 	bufq_free(sc->sc_bufq);
 	disk_destroy(sc->sc_dkdev);
-	free(sc->sc_dkdev, M_DEVBUF);
+	kmem_free(sc->sc_dkdev, sizeof(*sc->sc_dkdev));
 
 	return 0;
 }
@@ -210,7 +210,7 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 
 	sc = device_lookup_private(&fss_cd, minor(dev));
 	if (sc == NULL) {
-		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf = kmem_zalloc(sizeof(*cf), KM_SLEEP);
 		cf->cf_name = fss_cd.cd_name;
 		cf->cf_atname = fss_cd.cd_name;
 		cf->cf_unit = minor(dev);
@@ -274,7 +274,7 @@ restart:
 	cf = device_cfdata(sc->sc_dev);
 	error = config_detach(sc->sc_dev, DETACH_QUIET);
 	if (! error)
-		free(cf, M_DEVBUF);
+		kmem_free(cf, sizeof(*cf));
 	mutex_exit(&fss_device_lock);
 
 	return error;
