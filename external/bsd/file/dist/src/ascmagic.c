@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.14 2021/04/09 18:58:01 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.15 2022/09/24 20:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.109 2021/02/05 23:01:40 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.110 2021/12/06 15:33:00 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.14 2021/04/09 18:58:01 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.15 2022/09/24 20:07:54 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -279,8 +279,8 @@ file_ascmagic_with_encoding(struct magic_set *ms, const struct buffer *b,
 				goto done;
 
 		if (has_long_lines)
-			if (file_printf(ms, ", with very long lines (%zu)",
-			    has_long_lines) == -1)
+			if (file_printf(ms, ", with very long lines (%"
+			    SIZE_T_FORMAT "u)", has_long_lines) == -1)
 				goto done;
 
 		/*

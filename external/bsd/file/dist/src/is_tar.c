@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.9 2019/05/22 17:19:56 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -43,9 +43,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_tar.c,v 1.44 2019/02/20 02:35:27 christos Exp $")
+FILE_RCSID("@(#)$File: is_tar.c,v 1.47 2022/09/13 18:46:07 christos Exp $")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.9 2019/05/22 17:19:56 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $");
 #endif
 #endif
 
@@ -104,14 +104,27 @@ file_is_tar(struct magic_set *ms, const struct buffer *b)
 private int
 is_tar(const unsigned char *buf, size_t nbytes)
 {
+	static const char gpkg_match[] = "/gpkg-1";
+
 	const union record *header = RCAST(const union record *,
 	    RCAST(const void *, buf));
 	size_t i;
 	int sum, recsum;
 	const unsigned char *p, *ep;
+	const char *nulp;
 
 	if (nbytes < sizeof(*header))
 		return 0;
+
+	/* If the file looks like Gentoo GLEP 78 binary package (GPKG),
+	 * don't waste time on further checks and fall back to magic rules.
+	 */
+	nulp = CAST(const char *,
+	    memchr(header->header.name, 0, sizeof(header->header.name)));
+	if (nulp != NULL && nulp >= header->header.name + sizeof(gpkg_match) &&
+	    memcmp(nulp - sizeof(gpkg_match) + 1, gpkg_match,
+	    sizeof(gpkg_match)) == 0)
+	    return 0;
 
 	recsum = from_oct(header->header.chksum, sizeof(header->header.chksum));
 

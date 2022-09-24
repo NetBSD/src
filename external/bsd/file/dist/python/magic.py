@@ -5,6 +5,7 @@ Python bindings for libmagic
 '''
 
 import ctypes
+import threading
 
 from collections import namedtuple
 
@@ -250,7 +251,7 @@ class Magic(object):
     def getparam(self, param):
         """
         Returns the param value if successful and -1 if the parameter
-	was unknown.
+        was unknown.
         """
         v = c_int()
         i = _getparam(self._magic_t, param, byref(v))
@@ -271,15 +272,51 @@ def open(flags):
     Returns a magic object on success and None on failure.
     Flags argument as for setflags.
     """
-    return Magic(_open(flags))
+    magic_t = _open(flags)
+    if magic_t is None:
+        return None
+    return Magic(magic_t)
 
 
 # Objects used by `detect_from_` functions
-mime_magic = Magic(_open(MAGIC_MIME))
-mime_magic.load()
-none_magic = Magic(_open(MAGIC_NONE))
-none_magic.load()
+class error(Exception):
+    pass
 
+class MagicDetect(object):
+    def __init__(self):
+        self.mime_magic = open(MAGIC_MIME)
+        if self.mime_magic is None:
+            raise error
+        if self.mime_magic.load() == -1:
+            self.mime_magic.close()
+            self.mime_magic = None
+            raise error
+        self.none_magic = open(MAGIC_NONE)
+        if self.none_magic is None:
+            self.mime_magic.close()
+            self.mime_magic = None
+            raise error
+        if self.none_magic.load() == -1:
+            self.none_magic.close()
+            self.none_magic = None
+            self.mime_magic.close()
+            self.mime_magic = None
+            raise error
+
+    def __del__(self):
+        if self.mime_magic is not None:
+            self.mime_magic.close()
+        if self.none_magic is not None:
+            self.none_magic.close()
+
+threadlocal = threading.local()
+
+def _detect_make():
+    v = getattr(threadlocal, "magic_instance", None)
+    if v is None:
+        v = MagicDetect()
+        setattr(threadlocal, "magic_instance", v)
+    return v
 
 def _create_filemagic(mime_detected, type_detected):
     try:
@@ -296,9 +333,9 @@ def detect_from_filename(filename):
 
     Returns a `FileMagic` namedtuple.
     '''
-
-    return _create_filemagic(mime_magic.file(filename),
-                             none_magic.file(filename))
+    x = _detect_make()
+    return _create_filemagic(x.mime_magic.file(filename),
+                             x.none_magic.file(filename))
 
 
 def detect_from_fobj(fobj):
@@ -308,8 +345,9 @@ def detect_from_fobj(fobj):
     '''
 
     file_descriptor = fobj.fileno()
-    return _create_filemagic(mime_magic.descriptor(file_descriptor),
-                             none_magic.descriptor(file_descriptor))
+    x = _detect_make()
+    return _create_filemagic(x.mime_magic.descriptor(file_descriptor),
+                             x.none_magic.descriptor(file_descriptor))
 
 
 def detect_from_content(byte_content):
@@ -318,5 +356,6 @@ def detect_from_content(byte_content):
     Returns a `FileMagic` namedtuple.
     '''
 
-    return _create_filemagic(mime_magic.buffer(byte_content),
-                             none_magic.buffer(byte_content))
+    x = _detect_make()
+    return _create_filemagic(x.mime_magic.buffer(byte_content),
+                             x.none_magic.buffer(byte_content))
