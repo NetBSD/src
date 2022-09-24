@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.1.8.1 2019/10/23 19:43:25 martin Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.1.8.2 2022/09/24 08:10:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.1.8.1 2019/10/23 19:43:25 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.1.8.2 2022/09/24 08:10:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,6 +101,8 @@ static void sunxi_can_ifwatchdog(struct ifnet *);
 
 static void sunxi_can_enter_reset(struct sunxi_can_softc *);
 static void sunxi_can_exit_reset(struct sunxi_can_softc *);
+static void sunxi_can_ifdown(struct sunxi_can_softc * const);
+static int sunxi_can_ifup(struct sunxi_can_softc * const);
 
 CFATTACH_DECL_NEW(sunxi_can, sizeof(struct sunxi_can_softc),
 	sunxi_can_match, sunxi_can_attach, NULL, NULL);
@@ -347,7 +349,9 @@ sunxi_can_err_intr(struct sunxi_can_softc *sc, uint32_t irq, uint32_t sts)
 
 	if (irq & SUNXI_CAN_INT_DATA_OR) {
 		ifp->if_ierrors++;
+		sunxi_can_ifdown(sc);
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_CLR_OR);
+		sunxi_can_ifup(sc);
 	}
 	if (irq & SUNXI_CAN_INT_ERR) {
 		reg = sunxi_can_read(sc, SUNXI_CAN_REC_REG);
@@ -386,21 +390,31 @@ sunxi_can_intr(void *arg)
 	while ((irq = sunxi_can_read(sc, SUNXI_CAN_INT_REG)) != 0) {
 		uint32_t sts = sunxi_can_read(sc, SUNXI_CAN_STA_REG);
 		rv = 1;
+                rnd_add_uint32(&sc->sc_rnd_source, irq);
 
-		if (irq & SUNXI_CAN_INT_TX_FLAG) {
-			sunxi_can_tx_intr(sc);
-		}
-		if (irq & SUNXI_CAN_INT_RX_FLAG) {
+		if ((irq & (SUNXI_CAN_INT_RX_FLAG | SUNXI_CAN_INT_DATA_OR)) ==
+		    SUNXI_CAN_INT_RX_FLAG) {
 			while (sts & SUNXI_CAN_STA_RX_RDY) {
 				sunxi_can_rx_intr(sc);
 				sts = sunxi_can_read(sc, SUNXI_CAN_STA_REG);
 			}
+			/*
+			 * Don't write SUNXI_CAN_INT_RX_FLAG to the interrupt
+			 * register, this may clear the RX pending flag
+			 * while there is indeed a packet pending.
+			 * Reading packets should have cleared the RX interrupt,
+			 * so just restart the loop and re-read the interrupt
+			 * register. In the common case irq will now be 0.
+			 */
+			continue;
+		}
+		if (irq & SUNXI_CAN_INT_TX_FLAG) {
+			sunxi_can_tx_intr(sc);
 		}
 		if (irq & SUNXI_CAN_INT_ALLERRS) {
 			sunxi_can_err_intr(sc, irq, sts);
 		}
 		sunxi_can_write(sc, SUNXI_CAN_INT_REG, irq);
-                rnd_add_uint32(&sc->sc_rnd_source, irq);
 
 	}
 	mutex_exit(&sc->sc_intr_lock);
