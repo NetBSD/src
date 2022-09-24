@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.338 2022/09/23 22:58:15 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.339 2022/09/24 10:12:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.338 2022/09/23 22:58:15 sjg Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.339 2022/09/24 10:12:46 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1260,7 +1260,8 @@ Cond_restore_depth(unsigned int saved_depth)
 {
 	unsigned int open_conds = cond_depth - cond_min_depth;
 
-	if (open_conds != 0 || saved_depth > cond_depth) {
+	assert(saved_depth <= cond_depth);
+	if (open_conds != 0) {
 		Parse_Error(PARSE_FATAL, "%u open conditional%s",
 		    open_conds, open_conds == 1 ? "" : "s");
 		cond_depth = cond_min_depth;
