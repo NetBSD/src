@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.34 2020/03/01 15:54:18 thorpej Exp $ */
+/*      $NetBSD: if_xge.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,13 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.34 2020/03/01 15:54:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/socket.h>

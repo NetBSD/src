@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.118 2021/09/20 11:27:30 jmcneill Exp $ */
+/* $NetBSD: if_msk.c,v 1.119 2022/09/24 18:12:42 thorpej Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,13 +52,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.118 2021/09/20 11:27:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.119 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.60 2022/01/22 15:10:32 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.61 2022/09/24 18:12:42 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.60 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.61 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>

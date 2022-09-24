@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.34 2022/09/17 15:31:29 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.34 2022/09/17 15:31:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.34 2022/09/17 15:31:29 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
