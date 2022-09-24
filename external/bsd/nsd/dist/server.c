@@ -81,11 +81,50 @@
 #include "remote.h"
 #include "lookup3.h"
 #include "rrl.h"
+#include "ixfr.h"
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
 #endif
+#include "verify.h"
 
 #define RELOAD_SYNC_TIMEOUT 25 /* seconds */
+
+#ifdef USE_DNSTAP
+/*
+ * log_addr() - the function to print sockaddr_in/sockaddr_in6 structures content
+ * just like its done in Unbound via the same log_addr(VERB_LEVEL, const char*, sockaddr_storage*)
+ */
+static void
+log_addr(const char* descr,
+#ifdef INET6
+	struct sockaddr_storage* addr
+#else
+	struct sockaddr_in* addr
+#endif
+	)
+{
+	char str_buf[64];
+	if(verbosity < 6)
+		return;
+	if(
+#ifdef INET6
+		addr->ss_family == AF_INET
+#else
+		addr->sin_family == AF_INET
+#endif
+		) {
+		struct sockaddr_in* s = (struct sockaddr_in*)addr;
+		inet_ntop(AF_INET, &s->sin_addr.s_addr, str_buf, sizeof(str_buf));
+		VERBOSITY(6, (LOG_INFO, "%s: address is: %s, port is: %d", descr, str_buf, ntohs(s->sin_port)));
+#ifdef INET6
+	} else {
+		struct sockaddr_in6* s6 = (struct sockaddr_in6*)addr;
+		inet_ntop(AF_INET6, &s6->sin6_addr.s6_addr, str_buf, sizeof(str_buf));
+		VERBOSITY(6, (LOG_INFO, "%s: address is: %s, port is: %d", descr, str_buf, ntohs(s6->sin6_port)));
+#endif
+	}
+}
+#endif /* USE_DNSTAP */
 
 #ifdef USE_TCP_FASTOPEN
   #define TCP_FASTOPEN_FILE "/proc/sys/net/ipv4/tcp_fastopen"
@@ -214,6 +253,12 @@ struct tcp_handler_data
 	 * If the connection is allowed to have further queries on it.
 	 */
 	int tcp_no_more_queries;
+
+#ifdef USE_DNSTAP
+	/* the socket of the accept socket to find proper service (local) address the socket is bound to. */
+	struct nsd_socket *socket;
+#endif /* USE_DNSTAP */
+
 #ifdef HAVE_SSL
 	/*
 	 * TLS object.
@@ -324,7 +369,7 @@ static void report_tcp_fastopen_config() {
 	}
 	if (!(tcp_fastopen_value & TCP_FASTOPEN_SERVER_BIT_MASK)) {
 		log_msg(LOG_WARNING, "Error: TCP Fast Open support is available and configured in NSD by default.\n");
-		log_msg(LOG_WARNING, "However the kernel paramenters are not configured to support TCP_FASTOPEN in server mode.\n");
+		log_msg(LOG_WARNING, "However the kernel parameters are not configured to support TCP_FASTOPEN in server mode.\n");
 		log_msg(LOG_WARNING, "To enable TFO use the command:");
 		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=2' for pure server mode or\n");
 		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=3' for both client and server mode\n");
@@ -820,10 +865,10 @@ set_nonblock(struct nsd_socket *sock)
 	return 1;
 }
 
+#ifdef INET6
 static int
 set_ipv6_v6only(struct nsd_socket *sock)
 {
-#ifdef INET6
 #ifdef IPV6_V6ONLY
 	int on = 1;
 	const char *socktype =
@@ -838,16 +883,19 @@ set_ipv6_v6only(struct nsd_socket *sock)
 	log_msg(LOG_ERR, "setsockopt(..., IPV6_V6ONLY, ...) failed for %s: %s",
 		socktype, strerror(errno));
 	return -1;
+#else
+	(void)sock;
 #endif /* IPV6_V6ONLY */
-#endif /* INET6 */
 
 	return 0;
 }
+#endif /* INET6 */
 
+#ifdef INET6
 static int
 set_ipv6_use_min_mtu(struct nsd_socket *sock)
 {
-#if defined(INET6) && (defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU))
+#if defined(IPV6_USE_MIN_MTU) || defined(IPV6_MTU)
 #if defined(IPV6_USE_MIN_MTU)
 	/* There is no fragmentation of IPv6 datagrams during forwarding in the
 	 * network. Therefore we do not send UDP datagrams larger than the
@@ -880,6 +928,7 @@ set_ipv6_use_min_mtu(struct nsd_socket *sock)
 
 	return 0;
 }
+#endif /* INET6 */
 
 static int
 set_ipv4_no_pmtu_disc(struct nsd_socket *sock)
@@ -1330,6 +1379,15 @@ server_init(struct nsd *nsd)
 		nsd->reuseport = 0;
 	}
 
+	/* open server interface ports for verifiers */
+	for(i = 0; i < nsd->verify_ifs; i++) {
+		if(open_udp_socket(nsd, &nsd->verify_udp[i], NULL) == -1 ||
+		   open_tcp_socket(nsd, &nsd->verify_tcp[i], NULL) == -1)
+		{
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -1483,6 +1541,7 @@ server_shutdown(struct nsd *nsd)
 #endif
 	udb_base_free_keep_mmap(nsd->task[0]);
 	udb_base_free_keep_mmap(nsd->task[1]);
+	namedb_free_ixfr(nsd->db);
 	namedb_close_udb(nsd->db); /* keeps mmap */
 	namedb_close(nsd->db);
 	nsd_options_destroy(nsd->options);
@@ -1770,7 +1829,9 @@ perform_openssl_init(void)
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
+#if defined(HAVE_ERR_LOAD_SSL_STRINGS) && !defined(DEPRECATED_ERR_LOAD_SSL_STRINGS)
 	ERR_load_SSL_strings();
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
 #else
@@ -1946,9 +2007,12 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 	}
 #endif
 #if defined(SHA256_DIGEST_LENGTH) && defined(SSL_TXT_CHACHA20)
-	/* if we have sha256, set the cipher list to have no known vulns */
-	if(!SSL_CTX_set_cipher_list(ctx, "ECDHE+AESGCM:ECDHE+CHACHA20"))
-		log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+	/* if we detect system-wide crypto policies, use those */
+	if (access( "/etc/crypto-policies/config", F_OK ) != 0 ) {
+		/* if we have sha256, set the cipher list to have no known vulns */
+		if(!SSL_CTX_set_cipher_list(ctx, "ECDHE+AESGCM:ECDHE+CHACHA20"))
+			log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+	}
 #endif
 	if((SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE) &
 		SSL_OP_CIPHER_SERVER_PREFERENCE) !=
@@ -2192,6 +2256,8 @@ reload_do_stats(int cmdfd, struct nsd* nsd, udb_ptr* last)
 }
 #endif /* BIND8_STATS */
 
+void server_verify(struct nsd *nsd, int cmdsocket);
+
 /*
  * Reload the database, stop parent, re-fork children and continue.
  * as server_main.
@@ -2205,6 +2271,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	int ret;
 	udb_ptr last_task;
 	struct sigaction old_sigchld, ign_sigchld;
+	struct radnode* node;
+	zone_type* zone;
+	enum soainfo_hint hint;
 	/* ignore SIGCHLD from the previous server_main that used this pid */
 	memset(&ign_sigchld, 0, sizeof(ign_sigchld));
 	ign_sigchld.sa_handler = SIG_IGN;
@@ -2246,8 +2315,66 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	server_zonestat_switch(nsd);
 #endif
 
+	if(nsd->options->verify_enable) {
+#ifdef RATELIMIT
+		/* allocate resources for rate limiting. use a slot that is guaranteed
+		   not mapped to a file so no persistent data is overwritten */
+		rrl_init(nsd->child_count + 1);
+#endif
+
+		/* spin-up server and execute verifiers for each zone */
+		server_verify(nsd, cmdsocket);
+#ifdef RATELIMIT
+		/* deallocate rate limiting resources */
+		rrl_deinit(nsd->child_count + 1);
+#endif
+	}
+
+	for(node = radix_first(nsd->db->zonetree);
+	    node != NULL;
+	    node = radix_next(node))
+	{
+		zone = (zone_type *)node->elem;
+		if(zone->is_updated) {
+			if(zone->is_bad) {
+				nsd->mode = NSD_RELOAD_FAILED;
+				hint = soainfo_bad;
+			} else {
+				hint = soainfo_ok;
+			}
+			/* update(s), verified or not, possibly with subsequent
+			   skipped update(s). skipped update(s) are picked up
+			   by failed update check in xfrd */
+			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			                 zone, hint);
+		} else if(zone->is_skipped) {
+			/* corrupt or inconsistent update without preceding
+			   update(s), communicate soainfo_gone */
+			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			                 zone, soainfo_gone);
+		}
+		zone->is_updated = 0;
+		zone->is_skipped = 0;
+	}
+
+	if(nsd->mode == NSD_RELOAD_FAILED) {
+		exit(NSD_RELOAD_FAILED);
+	}
+
 	/* listen for the signals of failed children again */
 	sigaction(SIGCHLD, &old_sigchld, NULL);
+#ifdef USE_DNSTAP
+	if (nsd->dt_collector) {
+		int *swap_fd_send;
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: swap dnstap collector pipes"));
+		/* Swap fd_send with fd_swap so old serve child and new serve
+		 * childs will not write to the same pipe ends simultaneously */
+		swap_fd_send = nsd->dt_collector_fd_send;
+		nsd->dt_collector_fd_send = nsd->dt_collector_fd_swap;
+		nsd->dt_collector_fd_swap = swap_fd_send;
+
+	}
+#endif
 	/* Start new child processes */
 	if (server_start_children(nsd, server_region, netio, &nsd->
 		xfrd_listener->fd) != 0) {
@@ -2418,13 +2545,14 @@ server_main(struct nsd *nsd)
 					restart_child_servers(nsd, server_region, netio,
 						&nsd->xfrd_listener->fd);
 				} else if (child_pid == reload_pid) {
-					sig_atomic_t cmd = NSD_RELOAD_DONE;
+					sig_atomic_t cmd = NSD_RELOAD_FAILED;
 					pid_t mypid;
 					log_msg(LOG_WARNING,
 					       "Reload process %d failed with status %d, continuing with old database",
 					       (int) child_pid, status);
 					reload_pid = -1;
 					if(reload_listener.fd != -1) close(reload_listener.fd);
+					netio_remove_handler(netio, &reload_listener);
 					reload_listener.fd = -1;
 					reload_listener.event_types = NETIO_EVENT_NONE;
 					task_process_sync(nsd->task[nsd->mytask]);
@@ -2440,6 +2568,43 @@ server_main(struct nsd *nsd)
 						log_msg(LOG_ERR, "problems sending reloadpid to xfrd: %s",
 							strerror(errno));
 					}
+#ifdef USE_DNSTAP
+				} else if(nsd->dt_collector && child_pid == nsd->dt_collector->dt_pid) {
+					log_msg(LOG_WARNING,
+					       "dnstap-collector %d terminated with status %d",
+					       (int) child_pid, status);
+					if(nsd->dt_collector) {
+						dt_collector_close(nsd->dt_collector, nsd);
+						dt_collector_destroy(nsd->dt_collector, nsd);
+						nsd->dt_collector = NULL;
+					}
+					/* Only respawn a crashed (or exited)
+					 * dnstap-collector when not reloading,
+					 * to not induce a reload during a
+					 * reload (which would seriously
+					 * disrupt nsd procedures and lead to
+					 * unpredictable results)!
+					 *
+					 * This will *leave* a dnstap-collector
+					 * process terminated, but because
+					 * signalling of the reload process to
+					 * the main process to respawn in this
+					 * situation will be cumbersome, and
+					 * because this situation is so
+					 * specific (and therefore hopefully
+					 * extremely rare or non-existing at
+					 * all), plus the fact that we are left
+					 * with a perfectly function NSD
+					 * (besides not logging dnstap
+					 * messages), I consider it acceptable
+					 * to leave this unresolved.
+					 */
+					if(reload_pid == -1 && nsd->options->dnstap_enable) {
+						nsd->dt_collector = dt_collector_create(nsd);
+						dt_collector_start(nsd->dt_collector, nsd);
+						nsd->mode = NSD_RELOAD_REQ;
+					}
+#endif
 				} else if(status != 0) {
 					/* check for status, because we get
 					 * the old-servermain because reload
@@ -2477,7 +2642,7 @@ server_main(struct nsd *nsd)
 				nsd->restart_children = 0;
 			}
 			if(nsd->reload_failed) {
-				sig_atomic_t cmd = NSD_RELOAD_DONE;
+				sig_atomic_t cmd = NSD_RELOAD_FAILED;
 				pid_t mypid;
 				nsd->reload_failed = 0;
 				log_msg(LOG_WARNING,
@@ -2485,6 +2650,7 @@ server_main(struct nsd *nsd)
 				       (int) reload_pid);
 				reload_pid = -1;
 				if(reload_listener.fd != -1) close(reload_listener.fd);
+				netio_remove_handler(netio, &reload_listener);
 				reload_listener.fd = -1;
 				reload_listener.event_types = NETIO_EVENT_NONE;
 				task_process_sync(nsd->task[nsd->mytask]);
@@ -2700,23 +2866,25 @@ server_main(struct nsd *nsd)
 }
 
 static query_state_type
-server_process_query(struct nsd *nsd, struct query *query)
+server_process_query(struct nsd *nsd, struct query *query, uint32_t *now_p)
 {
-	return query_process(query, nsd);
+	return query_process(query, nsd, now_p);
 }
 
 static query_state_type
-server_process_query_udp(struct nsd *nsd, struct query *query)
+server_process_query_udp(struct nsd *nsd, struct query *query, uint32_t *now_p)
 {
 #ifdef RATELIMIT
-	if(query_process(query, nsd) != QUERY_DISCARDED) {
-		if(rrl_process_query(query))
+	if(query_process(query, nsd, now_p) != QUERY_DISCARDED) {
+		if(query->edns.cookie_status != COOKIE_VALID
+		&& query->edns.cookie_status != COOKIE_VALID_REUSE
+		&& rrl_process_query(query))
 			return rrl_slip(query);
 		else	return QUERY_PROCESSED;
 	}
 	return QUERY_DISCARDED;
 #else
-	return query_process(query, nsd);
+	return query_process(query, nsd, now_p);
 #endif
 }
 
@@ -2827,8 +2995,8 @@ add_tcp_handler(
 		data->tls_accept = 1;
 		if(verbosity >= 2) {
 			char buf[48];
-			addrport2str((struct sockaddr_storage*)&sock->addr.ai_addr, buf, sizeof(buf));
-			VERBOSITY(2, (LOG_NOTICE, "setup TCP for TLS service on interface %s", buf));
+			addrport2str((void*)(struct sockaddr_storage*)&sock->addr.ai_addr, buf, sizeof(buf));
+			VERBOSITY(4, (LOG_NOTICE, "setup TCP for TLS service on interface %s", buf));
 		}
 	} else {
 		data->tls_accept = 0;
@@ -2842,6 +3010,131 @@ add_tcp_handler(
 	if(event_add(handler, NULL) != 0)
 		log_msg(LOG_ERR, "nsd tcp: event_add failed");
 	data->event_added = 1;
+}
+
+/*
+ * Serve DNS request to verifiers (short-lived)
+ */
+void server_verify(struct nsd *nsd, int cmdsocket)
+{
+	size_t size = 0;
+	struct event cmd_event, signal_event, exit_event;
+	struct zone *zone;
+
+	assert(nsd != NULL);
+
+	zone = verify_next_zone(nsd, NULL);
+	if(zone == NULL)
+		return;
+
+	nsd->server_region = region_create(xalloc, free);
+	nsd->event_base = nsd_child_event_base();
+
+	nsd->next_zone_to_verify = zone;
+	nsd->verifier_count = 0;
+	nsd->verifier_limit = nsd->options->verifier_count;
+	size = sizeof(struct verifier) * nsd->verifier_limit;
+	pipe(nsd->verifier_pipe);
+	fcntl(nsd->verifier_pipe[0], F_SETFD, FD_CLOEXEC);
+	fcntl(nsd->verifier_pipe[1], F_SETFD, FD_CLOEXEC);
+	nsd->verifiers = region_alloc_zero(nsd->server_region, size);
+
+	for(size_t i = 0; i < nsd->verifier_limit; i++) {
+		nsd->verifiers[i].nsd = nsd;
+		nsd->verifiers[i].zone = NULL;
+		nsd->verifiers[i].pid = -1;
+		nsd->verifiers[i].output_stream.fd = -1;
+		nsd->verifiers[i].output_stream.priority = LOG_INFO;
+		nsd->verifiers[i].error_stream.fd = -1;
+		nsd->verifiers[i].error_stream.priority = LOG_ERR;
+	}
+
+	event_set(&cmd_event, cmdsocket, EV_READ|EV_PERSIST, verify_handle_command, nsd);
+	if(event_base_set(nsd->event_base, &cmd_event) != 0 ||
+	   event_add(&cmd_event, NULL) != 0)
+	{
+		log_msg(LOG_ERR, "verify: could not add command event");
+		goto fail;
+	}
+
+	event_set(&signal_event, SIGCHLD, EV_SIGNAL|EV_PERSIST, verify_handle_signal, nsd);
+	if(event_base_set(nsd->event_base, &signal_event) != 0 ||
+	   signal_add(&signal_event, NULL) != 0)
+	{
+		log_msg(LOG_ERR, "verify: could not add signal event");
+		goto fail;
+	}
+
+	event_set(&exit_event, nsd->verifier_pipe[0], EV_READ|EV_PERSIST, verify_handle_exit, nsd);
+	if(event_base_set(nsd->event_base, &exit_event) != 0 ||
+	   event_add(&exit_event, NULL) != 0)
+  {
+		log_msg(LOG_ERR, "verify: could not add exit event");
+		goto fail;
+	}
+
+	memset(msgs, 0, sizeof(msgs));
+	for (int i = 0; i < NUM_RECV_PER_SELECT; i++) {
+		queries[i] = query_create(nsd->server_region,
+			compressed_dname_offsets,
+			compression_table_size, compressed_dnames);
+		query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
+		iovecs[i].iov_base = buffer_begin(queries[i]->packet);
+		iovecs[i].iov_len = buffer_remaining(queries[i]->packet);
+		msgs[i].msg_hdr.msg_iov = &iovecs[i];
+		msgs[i].msg_hdr.msg_iovlen = 1;
+		msgs[i].msg_hdr.msg_name = &queries[i]->addr;
+		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
+	}
+
+	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+		struct udp_handler_data *data;
+		data = region_alloc_zero(
+			nsd->server_region, sizeof(*data));
+		add_udp_handler(nsd, &nsd->verify_udp[i], data);
+	}
+
+	tcp_accept_handler_count = nsd->verify_ifs;
+	tcp_accept_handlers = region_alloc_array(nsd->server_region,
+		nsd->verify_ifs, sizeof(*tcp_accept_handlers));
+
+	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+		struct tcp_accept_handler_data *data;
+		data = &tcp_accept_handlers[i];
+		memset(data, 0, sizeof(*data));
+		add_tcp_handler(nsd, &nsd->verify_tcp[i], data);
+	}
+
+	while(nsd->next_zone_to_verify != NULL &&
+	      nsd->verifier_count < nsd->verifier_limit)
+	{
+		verify_zone(nsd, nsd->next_zone_to_verify);
+		nsd->next_zone_to_verify
+			= verify_next_zone(nsd, nsd->next_zone_to_verify);
+	}
+
+	/* short-lived main loop */
+	event_base_dispatch(nsd->event_base);
+
+	/* remove command and exit event handlers */
+	event_del(&exit_event);
+	event_del(&signal_event);
+	event_del(&cmd_event);
+
+	assert(nsd->next_zone_to_verify == NULL || nsd->mode == NSD_QUIT);
+	assert(nsd->verifier_count == 0 || nsd->mode == NSD_QUIT);
+fail:
+	event_base_free(nsd->event_base);
+	close(nsd->verifier_pipe[0]);
+	close(nsd->verifier_pipe[1]);
+	region_destroy(nsd->server_region);
+
+	nsd->event_base = NULL;
+	nsd->server_region = NULL;
+	nsd->verifier_limit = 0;
+	nsd->verifier_pipe[0] = -1;
+	nsd->verifier_pipe[1] = -1;
+	nsd->verifiers = NULL;
 }
 
 /*
@@ -3070,7 +3363,13 @@ service_remaining_tcp(struct nsd* nsd)
 	if(nsd->current_tcp_count == 0 || tcp_active_list == NULL)
 		return;
 	VERBOSITY(4, (LOG_INFO, "service remaining TCP connections"));
-
+#ifdef USE_DNSTAP
+	/* remove dnstap collector, we cannot write there because the new
+	 * child process is using the file descriptor, or the child
+	 * process after that. */
+	dt_collector_destroy(nsd->dt_collector, nsd);
+	nsd->dt_collector = NULL;
+#endif
 	/* setup event base */
 	event_base = nsd_child_event_base();
 	if(!event_base) {
@@ -3244,12 +3543,37 @@ nsd_sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags)
 }
 #endif /* HAVE_SENDMMSG */
 
+static int
+port_is_zero(
+#ifdef INET6
+        struct sockaddr_storage *addr
+#else
+        struct sockaddr_in *addr
+#endif
+	)
+{
+#ifdef INET6
+	if(addr->ss_family == AF_INET6) {
+		return (((struct sockaddr_in6 *)addr)->sin6_port) == 0;
+	} else if(addr->ss_family == AF_INET) {
+		return (((struct sockaddr_in *)addr)->sin_port) == 0;
+	}
+	return 0;
+#else
+	if(addr->sin_family == AF_INET) {
+		return addr->sin_port == 0;
+	}
+	return 0;
+#endif
+}
+
 static void
 handle_udp(int fd, short event, void* arg)
 {
 	struct udp_handler_data *data = (struct udp_handler_data *) arg;
 	int received, sent, recvcount, i;
 	struct query *q;
+	uint32_t now = 0;
 
 	if (!(event & EV_READ)) {
 		return;
@@ -3299,12 +3623,17 @@ handle_udp(int fd, short event, void* arg)
 		buffer_skip(q->packet, received);
 		buffer_flip(q->packet);
 #ifdef USE_DNSTAP
-		dt_collector_submit_auth_query(data->nsd, &q->addr, q->addrlen,
+		/*
+		 * sending UDP-query with server address (local) and client address to dnstap process
+		 */
+		log_addr("query from client", &q->addr);
+		log_addr("to server (local)", (void*)&data->socket->addr.ai_addr);
+		dt_collector_submit_auth_query(data->nsd, (void*)&data->socket->addr.ai_addr, &q->addr, q->addrlen,
 			q->tcp, q->packet);
 #endif /* USE_DNSTAP */
 
 		/* Process and answer the query... */
-		if (server_process_query_udp(data->nsd, q) != QUERY_DISCARDED) {
+		if (server_process_query_udp(data->nsd, q, &now) != QUERY_DISCARDED) {
 			if (RCODE(q->packet) == RCODE_OK && !AA(q->packet)) {
 				STATUP(data->nsd, nona);
 				ZTATUP(data->nsd, q->zone, nona);
@@ -3319,7 +3648,7 @@ handle_udp(int fd, short event, void* arg)
 #endif
 
 			/* Add EDNS0 and TSIG info if necessary.  */
-			query_add_optional(q, data->nsd);
+			query_add_optional(q, data->nsd, &now);
 
 			buffer_flip(q->packet);
 			iovecs[i].iov_len = buffer_remaining(q->packet);
@@ -3333,7 +3662,12 @@ handle_udp(int fd, short event, void* arg)
 			}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-			dt_collector_submit_auth_response(data->nsd,
+			/*
+			 * sending UDP-response with server address (local) and client address to dnstap process
+			 */
+			log_addr("from server (local)", (void*)&data->socket->addr.ai_addr);
+			log_addr("response to client", &q->addr);
+			dt_collector_submit_auth_response(data->nsd, (void*)&data->socket->addr.ai_addr,
 				&q->addr, q->addrlen, q->tcp, q->packet,
 				q->zone);
 #endif /* USE_DNSTAP */
@@ -3392,6 +3726,19 @@ handle_udp(int fd, short event, void* arg)
 				}
 				errno = errstore;
 			}
+			if(errno == EINVAL) {
+				/* skip the invalid argument entry,
+				 * send the remaining packets in the list */
+				if(!(port_is_zero((void*)&queries[i]->addr) &&
+					verbosity < 3)) {
+					const char* es = strerror(errno);
+					char a[64];
+					addrport2str((void*)&queries[i]->addr, a, sizeof(a));
+					log_msg(LOG_ERR, "sendmmsg skip invalid argument [0]=%s count=%d failed: %s", a, (int)(recvcount-i), es);
+				}
+				i += 1;
+				continue;
+			}
 			/* don't log transient network full errors, unless
 			 * on higher verbosity */
 			if(!(errno == ENOBUFS && verbosity < 1) &&
@@ -3401,7 +3748,7 @@ handle_udp(int fd, short event, void* arg)
 			   errno != EAGAIN) {
 				const char* es = strerror(errno);
 				char a[64];
-				addrport2str(&queries[i]->addr, a, sizeof(a));
+				addrport2str((void*)&queries[i]->addr, a, sizeof(a));
 				log_msg(LOG_ERR, "sendmmsg [0]=%s count=%d failed: %s", a, (int)(recvcount-i), es);
 			}
 #ifdef BIND8_STATS
@@ -3486,6 +3833,7 @@ handle_tcp_reading(int fd, short event, void* arg)
 	ssize_t received;
 	struct event_base* ev_base;
 	struct timeval timeout;
+	uint32_t now = 0;
 
 	if ((event & EV_TIMEOUT)) {
 		/* Connection timed out.  */
@@ -3635,10 +3983,15 @@ handle_tcp_reading(int fd, short event, void* arg)
 
 	buffer_flip(data->query->packet);
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_query(data->nsd, &data->query->addr,
+	/*
+	 * and send TCP-query with found address (local) and client address to dnstap process
+	 */
+	log_addr("query from client", &data->query->addr);
+	log_addr("to server (local)", (void*)&data->socket->addr.ai_addr);
+	dt_collector_submit_auth_query(data->nsd, (void*)&data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet);
 #endif /* USE_DNSTAP */
-	data->query_state = server_process_query(data->nsd, data->query);
+	data->query_state = server_process_query(data->nsd, data->query, &now);
 	if (data->query_state == QUERY_DISCARDED) {
 		/* Drop the packet and the entire connection... */
 		STATUP(data->nsd, dropped);
@@ -3668,7 +4021,7 @@ handle_tcp_reading(int fd, short event, void* arg)
 #endif
 #endif /* USE_ZONE_STATS */
 
-	query_add_optional(data->query, data->nsd);
+	query_add_optional(data->query, data->nsd, &now);
 
 	/* Switch to the tcp write handler.  */
 	buffer_flip(data->query->packet);
@@ -3683,7 +4036,12 @@ handle_tcp_reading(int fd, short event, void* arg)
 	}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
+	/*
+	 * sending TCP-response with found (earlier) address (local) and client address to dnstap process
+	 */
+	log_addr("from server (local)", (void*)&data->socket->addr.ai_addr);
+	log_addr("response to client", &data->query->addr);
+	dt_collector_submit_auth_response(data->nsd, (void*)&data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet,
 		data->query->zone);
 #endif /* USE_DNSTAP */
@@ -3713,6 +4071,7 @@ handle_tcp_writing(int fd, short event, void* arg)
 	struct query *q = data->query;
 	struct timeval timeout;
 	struct event_base* ev_base;
+	uint32_t now = 0;
 
 	if ((event & EV_TIMEOUT)) {
 		/* Connection timed out.  */
@@ -3811,12 +4170,15 @@ handle_tcp_writing(int fd, short event, void* arg)
 
 	assert(data->bytes_transmitted == q->tcplen + sizeof(q->tcplen));
 
-	if (data->query_state == QUERY_IN_AXFR) {
+	if (data->query_state == QUERY_IN_AXFR ||
+		data->query_state == QUERY_IN_IXFR) {
 		/* Continue processing AXFR and writing back results.  */
 		buffer_clear(q->packet);
-		data->query_state = query_axfr(data->nsd, q);
+		if(data->query_state == QUERY_IN_AXFR)
+			data->query_state = query_axfr(data->nsd, q, 0);
+		else data->query_state = query_ixfr(data->nsd, q);
 		if (data->query_state != QUERY_PROCESSED) {
-			query_add_optional(data->query, data->nsd);
+			query_add_optional(data->query, data->nsd, &now);
 
 			/* Reset data. */
 			buffer_flip(q->packet);
@@ -3966,6 +4328,7 @@ handle_tls_reading(int fd, short event, void* arg)
 {
 	struct tcp_handler_data *data = (struct tcp_handler_data *) arg;
 	ssize_t received;
+	uint32_t now = 0;
 
 	if ((event & EV_TIMEOUT)) {
 		/* Connection timed out.  */
@@ -4113,10 +4476,15 @@ handle_tls_reading(int fd, short event, void* arg)
 
 	buffer_flip(data->query->packet);
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_query(data->nsd, &data->query->addr,
+	/*
+	 * and send TCP-query with found address (local) and client address to dnstap process
+	 */
+	log_addr("query from client", &data->query->addr);
+	log_addr("to server (local)", (void*)&data->socket->addr.ai_addr);
+	dt_collector_submit_auth_query(data->nsd, (void*)&data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet);
 #endif /* USE_DNSTAP */
-	data->query_state = server_process_query(data->nsd, data->query);
+	data->query_state = server_process_query(data->nsd, data->query, &now);
 	if (data->query_state == QUERY_DISCARDED) {
 		/* Drop the packet and the entire connection... */
 		STATUP(data->nsd, dropped);
@@ -4146,7 +4514,7 @@ handle_tls_reading(int fd, short event, void* arg)
 #endif
 #endif /* USE_ZONE_STATS */
 
-	query_add_optional(data->query, data->nsd);
+	query_add_optional(data->query, data->nsd, &now);
 
 	/* Switch to the tcp write handler.  */
 	buffer_flip(data->query->packet);
@@ -4161,7 +4529,12 @@ handle_tls_reading(int fd, short event, void* arg)
 	}
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
-	dt_collector_submit_auth_response(data->nsd, &data->query->addr,
+	/*
+	 * sending TCP-response with found (earlier) address (local) and client address to dnstap process
+	 */
+	log_addr("from server (local)", (void*)&data->socket->addr.ai_addr);
+	log_addr("response to client", &data->query->addr);
+	dt_collector_submit_auth_response(data->nsd, (void*)&data->socket->addr.ai_addr, &data->query->addr,
 		data->query->addrlen, data->query->tcp, data->query->packet,
 		data->query->zone);
 #endif /* USE_DNSTAP */
@@ -4184,6 +4557,7 @@ handle_tls_writing(int fd, short event, void* arg)
 	 * TCP length in front of the packet, like writev. */
 	static buffer_type* global_tls_temp_buffer = NULL;
 	buffer_type* write_buffer;
+	uint32_t now = 0;
 
 	if ((event & EV_TIMEOUT)) {
 		/* Connection timed out.  */
@@ -4263,12 +4637,15 @@ handle_tls_writing(int fd, short event, void* arg)
 
 	assert(data->bytes_transmitted == q->tcplen + sizeof(q->tcplen));
 
-	if (data->query_state == QUERY_IN_AXFR) {
+	if (data->query_state == QUERY_IN_AXFR ||
+		data->query_state == QUERY_IN_IXFR) {
 		/* Continue processing AXFR and writing back results.  */
 		buffer_clear(q->packet);
-		data->query_state = query_axfr(data->nsd, q);
+		if(data->query_state == QUERY_IN_AXFR)
+			data->query_state = query_axfr(data->nsd, q, 0);
+		else data->query_state = query_ixfr(data->nsd, q);
 		if (data->query_state != QUERY_PROCESSED) {
-			query_add_optional(data->query, data->nsd);
+			query_add_optional(data->query, data->nsd, &now);
 
 			/* Reset data. */
 			buffer_flip(q->packet);
@@ -4445,6 +4822,11 @@ handle_tcp_accept(int fd, short event, void* arg)
 	memset(&tcp_data->event, 0, sizeof(tcp_data->event));
 	timeout.tv_sec = tcp_data->tcp_timeout / 1000;
 	timeout.tv_usec = (tcp_data->tcp_timeout % 1000)*1000;
+
+#ifdef USE_DNSTAP
+	/* save the address of the connection */
+	tcp_data->socket = data->socket;
+#endif /* USE_DNSTAP */
 
 #ifdef HAVE_SSL
 	if (data->tls_accept) {
