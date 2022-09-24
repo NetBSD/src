@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.16 2021/04/09 19:11:42 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.17 2022/09/24 20:21:46 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.114 2021/02/05 21:33:49 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.117 2021/12/06 15:33:00 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.16 2021/04/09 19:11:42 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.17 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -162,6 +162,7 @@ out:
 	free(dllpath);
 }
 
+#ifndef BUILD_AS_WINDOWS_STATIC_LIBARAY
 /* Placate GCC by offering a sacrificial previous prototype */
 BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID);
 
@@ -173,6 +174,7 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 		_w32_dll_instance = hinstDLL;
 	return 1;
 }
+#endif
 #endif
 
 private const char *
@@ -224,6 +226,10 @@ out:
 		free(default_magic);
 		default_magic = NULL;
 	}
+
+	/* Before anything else, try to get a magic file from user HOME */
+	if ((home = getenv("HOME")) != NULL)
+		_w32_append_path(&hmagicpath, "%s%s", home, hmagic);
 
 	/* First, try to get a magic file from user-application data */
 	if ((home = getenv("LOCALAPPDATA")) != NULL)
@@ -277,9 +283,22 @@ unreadable_info(struct magic_set *ms, mode_t md, const char *file)
 		if (access(file, W_OK) == 0)
 			if (file_printf(ms, "writable, ") == -1)
 				return -1;
+#ifndef WIN32
 		if (access(file, X_OK) == 0)
 			if (file_printf(ms, "executable, ") == -1)
 				return -1;
+#else
+		/* X_OK doesn't work well on MS-Windows */
+		{
+			const char *p = strrchr(file, '.');
+			if (p && (stricmp(p, ".exe")
+				  || stricmp(p, ".dll")
+				  || stricmp(p, ".bat")
+				  || stricmp(p, ".cmd")))
+				if (file_printf(ms, "writable, ") == -1)
+					return -1;
+		}
+#endif
 	}
 	if (S_ISREG(md))
 		if (file_printf(ms, "regular file, ") == -1)
@@ -446,8 +465,6 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
 			okstat = stat(inname, &sb) == 0;
-			if (okstat && S_ISFIFO(sb.st_mode))
-				ispipe = 1;
 #ifdef WIN32
 			/*
 			 * Can't stat, can't open.  It may have been opened in
@@ -466,7 +483,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 			rv = 0;
 			goto done;
 		}
-#if O_CLOEXEC == 0
+#if O_CLOEXEC == 0 && defined(F_SETFD)
 		(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
 	}
@@ -504,7 +521,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	} else if (fd != -1) {
 		/* Windows refuses to read from a big console buffer. */
 		size_t howmany =
-#if defined(WIN32)
+#ifdef WIN32
 		    _isatty(fd) ? 8 * 1024 :
 #endif
 		    ms->bytes_max;

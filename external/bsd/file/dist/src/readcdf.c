@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.18 2019/12/17 02:31:05 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.19 2022/09/24 20:21:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2016 Christos Zoulas
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.74 2019/09/11 15:46:30 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.76 2022/01/17 16:59:01 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.18 2019/12/17 02:31:05 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.19 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif
 
@@ -611,8 +611,8 @@ file_trycdf(struct magic_set *ms, const struct buffer *b)
 	}
 #endif
 
-	if ((i = cdf_read_user_stream(&info, &h, &sat, &ssat, &sst, &dir,
-	    "FileHeader", &scn)) != -1) {
+	if (cdf_read_user_stream(&info, &h, &sat, &ssat, &sst, &dir,
+	    "FileHeader", &scn) != -1) {
 #define HWP5_SIGNATURE "HWP Document File"
 		if (scn.sst_len * scn.sst_ss >= sizeof(HWP5_SIGNATURE) - 1
 		    && memcmp(scn.sst_tab, HWP5_SIGNATURE,
@@ -680,7 +680,8 @@ out0:
 			if (file_printf(ms, ", %s", expn) == -1)
 				return -1;
 	} else if (ms->flags & MAGIC_MIME_TYPE) {
-		if (file_printf(ms, "application/CDFV2") == -1)
+		/* https://reposcope.com/mimetype/application/x-ole-storage */
+		if (file_printf(ms, "application/x-ole-storage") == -1)
 			return -1;
 	}
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.15 2020/06/15 00:37:24 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.16 2022/09/24 20:21:46 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.88 2020/05/09 18:57:15 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.93 2022/09/16 14:14:30 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.15 2020/06/15 00:37:24 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.16 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -58,7 +58,7 @@ file_mdump(struct magic *m)
 	static const char optyp[] = { FILE_OPS };
 	char tbuf[256];
 
-	(void) fprintf(stderr, "%u: %.*s %u", m->lineno,
+	(void) fprintf(stderr, "%u: %.*s %d", m->lineno,
 	    (m->cont_level & 7) + 1, ">>>>>>>>", m->offset);
 
 	if (m->flag & INDIR) {
@@ -68,7 +68,7 @@ file_mdump(struct magic *m)
 		    "*bad in_type*");
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
-		(void) fprintf(stderr, "%c%u),",
+		(void) fprintf(stderr, "%c%d),",
 		    (CAST(size_t, m->in_op & FILE_OPS_MASK) <
 		    __arraycount(optyp)) ?
 		    optyp[m->in_op & FILE_OPS_MASK] : '?', m->in_offset);
@@ -140,7 +140,7 @@ file_mdump(struct magic *m)
 		case FILE_BESHORT:
 		case FILE_BELONG:
 		case FILE_INDIRECT:
-			(void) fprintf(stderr, "%d", m->value.l);
+			(void) fprintf(stderr, "%d", CAST(int32_t, m->value.l));
 			break;
 		case FILE_BEQUAD:
 		case FILE_LEQUAD:
@@ -163,34 +163,34 @@ file_mdump(struct magic *m)
 		case FILE_BEDATE:
 		case FILE_MEDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(tbuf, sizeof(tbuf), m->value.l, 0));
+			    file_fmtdatetime(tbuf, sizeof(tbuf), m->value.l, 0));
 			break;
 		case FILE_LDATE:
 		case FILE_LELDATE:
 		case FILE_BELDATE:
 		case FILE_MELDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(tbuf, sizeof(tbuf), m->value.l,
+			    file_fmtdatetime(tbuf, sizeof(tbuf), m->value.l,
 			    FILE_T_LOCAL));
 			break;
 		case FILE_QDATE:
 		case FILE_LEQDATE:
 		case FILE_BEQDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(tbuf, sizeof(tbuf), m->value.q, 0));
+			    file_fmtdatetime(tbuf, sizeof(tbuf), m->value.q, 0));
 			break;
 		case FILE_QLDATE:
 		case FILE_LEQLDATE:
 		case FILE_BEQLDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(tbuf, sizeof(tbuf), m->value.q,
+			    file_fmtdatetime(tbuf, sizeof(tbuf), m->value.q,
 			    FILE_T_LOCAL));
 			break;
 		case FILE_QWDATE:
 		case FILE_LEQWDATE:
 		case FILE_BEQWDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime(tbuf, sizeof(tbuf), m->value.q,
+			    file_fmtdatetime(tbuf, sizeof(tbuf), m->value.q,
 			    FILE_T_WINDOWS));
 			break;
 		case FILE_FLOAT:
@@ -202,6 +202,27 @@ file_mdump(struct magic *m)
 		case FILE_BEDOUBLE:
 		case FILE_LEDOUBLE:
 			(void) fprintf(stderr, "%G", m->value.d);
+			break;
+		case FILE_LEVARINT:
+		case FILE_BEVARINT:
+			(void)fprintf(stderr, "%s", file_fmtvarint(
+			    tbuf, sizeof(tbuf), m->value.us, m->type));
+			break;
+		case FILE_MSDOSDATE:
+		case FILE_BEMSDOSDATE:
+		case FILE_LEMSDOSDATE:
+			(void)fprintf(stderr, "%s,",
+			    file_fmtdate(tbuf, sizeof(tbuf), m->value.h));
+			break;
+		case FILE_MSDOSTIME:
+		case FILE_BEMSDOSTIME:
+		case FILE_LEMSDOSTIME:
+			(void)fprintf(stderr, "%s,",
+			    file_fmttime(tbuf, sizeof(tbuf), m->value.h));
+			break;
+		case FILE_OCTAL:
+			(void)fprintf(stderr, "%s",
+			    file_fmtnum(tbuf, sizeof(tbuf), m->value.s, 8));
 			break;
 		case FILE_DEFAULT:
 			/* XXX - do anything here? */
@@ -246,7 +267,15 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 }
 
 protected const char *
-file_fmttime(char *buf, size_t bsize, uint64_t v, int flags)
+file_fmtvarint(char *buf, size_t blen, const unsigned char *us, int t)
+{
+	snprintf(buf, blen, "%jd", CAST(intmax_t,
+	    file_varint2uintmax_t(us, t, NULL)));
+	return buf;
+}
+
+protected const char *
+file_fmtdatetime(char *buf, size_t bsize, uint64_t v, int flags)
 {
 	char *pp;
 	time_t t;
@@ -276,6 +305,67 @@ file_fmttime(char *buf, size_t bsize, uint64_t v, int flags)
 	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
 out:
+	strlcpy(buf, "*Invalid datetime*", bsize);
+	return buf;
+}
+
+/* 
+ * https://docs.microsoft.com/en-us/windows/win32/api/winbase/\
+ *	nf-winbase-dosdatetimetofiletime?redirectedfrom=MSDN
+ */
+protected const char *
+file_fmtdate(char *buf, size_t bsize, uint16_t v)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_mday = v & 0x1f;
+	tm.tm_mon = ((v >> 5) & 0xf) - 1;
+	tm.tm_year = (v >> 9) + 80;
+
+	if (strftime(buf, bsize, "%a, %b %d %Y", &tm) == 0)
+		goto out;
+
+	return buf;
+out:
+	strlcpy(buf, "*Invalid date*", bsize);
+	return buf;
+}
+
+protected const char *
+file_fmttime(char *buf, size_t bsize, uint16_t v)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_sec = (v & 0x1f) * 2;
+	tm.tm_min = ((v >> 5) & 0x3f);
+	tm.tm_hour = (v >> 11);
+
+	if (strftime(buf, bsize, "%T", &tm) == 0)
+		goto out;
+
+	return buf;
+out:
 	strlcpy(buf, "*Invalid time*", bsize);
+	return buf;
+
+}
+
+protected const char *
+file_fmtnum(char *buf, size_t blen, const char *us, int base)
+{
+	char *endptr;
+	unsigned long long val;
+
+	errno = 0;
+	val = strtoull(us, &endptr, base);
+	if (*endptr || errno) {
+bad:		strlcpy(buf, "*Invalid number*", blen);
+		return buf;
+	}
+
+	if (snprintf(buf, blen, "%llu", val) < 0)
+		goto bad;
 	return buf;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.10 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.11 2022/09/24 20:21:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.19 2019/03/12 20:43:05 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.21 2022/09/16 13:51:06 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.10 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.11 2022/09/24 20:21:46 christos Exp $");
 #endif
 #endif
 
@@ -163,7 +163,7 @@ cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 		return -1;
 	}
 	*t = (ts->ts_nsec / 100) * CDF_TIME_PREC;
-	*t = tm.tm_sec;
+	*t += tm.tm_sec;
 	*t += tm.tm_min * 60;
 	*t += tm.tm_hour * 60 * 60;
 	*t += tm.tm_mday * 60 * 60 * 24;
@@ -177,8 +177,13 @@ cdf_ctime(const time_t *sec, char *buf)
 	char *ptr = ctime_r(sec, buf);
 	if (ptr != NULL)
 		return buf;
+#ifdef WIN32
+	(void)snprintf(buf, 26, "*Bad* 0x%16.16I64x\n",
+	    CAST(long long, *sec));
+#else
 	(void)snprintf(buf, 26, "*Bad* %#16.16" INT64_T_FORMAT "x\n",
 	    CAST(long long, *sec));
+#endif
 	return buf;
 }
 
