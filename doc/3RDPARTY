@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1878 2022/09/23 12:22:49 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1879 2022/09/24 17:40:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -165,11 +165,11 @@ Notes:
 
 Package:	unbound
 Version:	1.13.1
-Current Vers:	1.13.1
+Current Vers:	1.16.3
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2020-06-13
+Date:		2022-09-24
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -179,12 +179,12 @@ Use cleantags to import
 run configure and update config files in include
 
 Package:	nsd
-Version:	4.3.5
-Current Vers:	4.3.5
+Version:	4.6.0
+Current Vers:	4.6.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2021-03-15
+Date:		2022-09-24
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
