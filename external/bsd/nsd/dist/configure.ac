@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT([NSD],[4.3.5],[nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.6.0],[nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -251,6 +251,25 @@ if test $ac_cv_c_unused_attribute = yes; then
 fi
 ])dnl
 
+AC_DEFUN([CHECK_WEAK_ATTRIBUTE],
+[AC_REQUIRE([AC_PROG_CC])
+AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "weak" attribute)
+AC_CACHE_VAL(ac_cv_c_weak_attribute,
+[ac_cv_c_weak_attribute=no
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ #include <stdio.h>
+__attribute__((weak)) void f(int x) { printf("%d", x); }
+]], [[
+   f(1);
+]])],[ac_cv_c_weak_attribute="yes"],[ac_cv_c_weak_attribute="no"])
+])
+
+AC_MSG_RESULT($ac_cv_c_weak_attribute)
+if test $ac_cv_c_weak_attribute = yes; then
+  AC_DEFINE(HAVE_ATTR_WEAK, 1, [Whether the C compiler accepts the "weak" attribute])
+  AC_DEFINE(ATTR_WEAK, [__attribute__((weak))], [apply the weak attribute to a symbol])
+fi
+])dnl End of CHECK_WEAK_ATTRIBUTE
+
 AC_DEFUN([CHECK_NORETURN_ATTRIBUTE],
 [AC_REQUIRE([AC_PROG_CC])
 AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "noreturn" attribute)
@@ -313,14 +332,6 @@ if test $ac_cv_c_ctime_c = no; then
 fi
 ])dnl
 
-AC_CANONICAL_HOST
-
-case "${host_os}" in
-	*netbsd*)
-		# NetBSD needs -D_OPENBSD_SOURCE for reallocarray
-		CPPFLAGS="$CPPFLAGS -D_OPENBSD_SOURCE";;
-esac
-
 # Checks for typedefs, structures, and compiler characteristics.
 # allow user to override the -g -O2 flags.
 if test "x$CFLAGS" = "x" ; then
@@ -340,6 +351,7 @@ AC_TYPE_OFF_T
 
 AC_CHECK_FORMAT_ATTRIBUTE
 AC_CHECK_UNUSED_ATTRIBUTE
+CHECK_WEAK_ATTRIBUTE
 CHECK_NORETURN_ATTRIBUTE
 ACX_CHECK_MEMCMP_SIGNED
 AC_CHECK_CTIME_R
@@ -351,23 +363,53 @@ AC_CHECK_CTIME_R
 # modified for NSD.
 AC_DEFUN([CHECK_SSL], [
     AC_ARG_WITH(ssl, AS_HELP_STRING([--with-ssl=pathname],[enable SSL (will check /usr/local/ssl
-                /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl)]),[
+                /usr/lib/ssl /usr/ssl /usr/sfw /usr/local /usr /usr/local/opt/openssl)]),[
         ],[
             withval="yes"
         ])
     if test x_$withval != x_no; then
         AC_MSG_CHECKING(for SSL)
+	if test -n "$withval"; then
+        	dnl look for openssl install with different version, eg.
+                dnl in /usr/include/openssl11/openssl/ssl.h
+                dnl and /usr/lib64/openssl11/libssl.so
+                dnl with the --with-ssl=/usr/include/openssl11
+                if test ! -f "$withval/include/openssl/ssl.h" -a -f "$withval/openssl/ssl.h"; then
+                        ssldir="$withval"
+                        found_ssl="yes"
+                        withval=""
+                        ssldir_include="$ssldir"
+                        CPPFLAGS="$CPPFLAGS -I$ssldir_include";
+                        dnl find the libdir
+                        ssldir_lib=`echo $ssldir | sed -e 's/include/lib/'`
+                        if test -f "$ssldir_lib/libssl.a" -o -f "$ssldir_lib/libssl.so"; then
+                                : # found here
+                        else
+                                ssldir_lib=`echo $ssldir | sed -e 's/include/lib64/'`
+                                if test -f "$ssldir_lib/libssl.a" -o -f "$ssldir_lib/libssl.so"; then
+                                        : # found here
+                                else
+                                        AC_MSG_ERROR([Could not find openssl lib file, $ssldir_lib/libssl.[so,a], pass like "/usr/local" or "/usr/include/openssl11"])
+                                fi
+                        fi
+                fi
+	fi
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
+            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
         for dir in $withval; do
             ssldir="$dir"
             if test -f "$dir/include/openssl/ssl.h"; then
                 found_ssl="yes";
-                AC_DEFINE_UNQUOTED([HAVE_SSL], [], [Define if you have the SSL libraries installed.])
                 if test x_$ssldir != x_/usr; then
                     CPPFLAGS="$CPPFLAGS -I$ssldir/include";
                 fi
+		ssldir_include="$ssldir/include"
+		if test ! -d "$ssldir/lib" -a -d "$ssldir/lib64"; then
+			ssldir_lib="$ssldir/lib64"
+		else
+			ssldir_lib="$ssldir/lib"
+		fi
                 break;
             fi
         done
@@ -376,21 +418,25 @@ AC_DEFUN([CHECK_SSL], [
         else
             AC_MSG_RESULT([found in $ssldir])
             HAVE_SSL=yes
+            AC_DEFINE_UNQUOTED([HAVE_SSL], [], [Define if you have the SSL libraries installed.])
             if test x_$ssldir != x_/usr; then
-                LDFLAGS="$LDFLAGS -Wl,-R$ssldir/lib -L$ssldir/lib";
+                LDFLAGS="$LDFLAGS -L$ssldir_lib";
             fi
+	    if test x_$ssldir = x_/usr/sfw; then
+		LDFLAGS="$LDFLAGS -R$ssldir_lib";
+	    fi
         fi
         AC_SUBST(HAVE_SSL)
     fi
 ])dnl
 
 # check for libevent
-AC_ARG_WITH(libevent, AS_HELP_STRING([--with-libevent=pathname],[use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent or you can specify an explicit path), useful when the zone count is high.]),
+AC_ARG_WITH(libevent, AS_HELP_STRING([--with-libevent=pathname],[use libevent (will check /usr/local /opt/local /usr/lib  /usr/sfw /usr /usr/local/opt/libevent or you can specify an explicit path), useful when the zone count is high.]),
     [ ],[ withval="yes" ])
 if test x_$withval = x_yes -o x_$withval != x_no; then
         AC_MSG_CHECKING(for libevent)
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent"
+            withval="/usr/local /opt/local /usr/lib  /usr/sfw /usr /usr/local/opt/libevent"
         fi
         for dir in $withval; do
             thedir="$dir"
@@ -420,12 +466,12 @@ You can restart ./configure --with-libevent=no to use a builtin alternative.])
             AC_MSG_RESULT(found in $thedir)
 	    dnl if event2 exists and no event lib in dir itself, use subdir
 	    if test ! -f $thedir/lib/libevent.a -a ! -f $thedir/lib/libevent.so -a -d "$thedir/lib/event2"; then
-		LDFLAGS="$LDFLAGS -Wl,-R$thedir/lib -L$thedir/lib/event2"
+		LDFLAGS="$LDFLAGS -L$thedir/lib/event2"
 		ACX_RUNTIME_PATH_ADD([$thedir/lib/event2])
 	    else
 		    dnl assume /usr is in default path, do not add "".
 		    if test "$thedir" != "/usr" -a "$thedir" != ""; then
-			LDFLAGS="$LDFLAGS -Wl,-R$thedir/lib -L$thedir/lib"
+			LDFLAGS="$LDFLAGS -L$thedir/lib"
 			ACX_RUNTIME_PATH_ADD([$thedir/lib])
 		    fi
 	    fi
@@ -454,7 +500,7 @@ fi
 
 # Checks for header files.
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h sys/random.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h sys/random.h ifaddrs.h],,, [AC_INCLUDES_DEFAULT])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -639,7 +685,7 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([getrandom arc4random arc4random_uniform])
-AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h])])
+AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h],,, [AC_INCLUDES_DEFAULT])])
 AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4 getifaddrs])
 
 AC_CHECK_TYPE([struct mmsghdr], AC_DEFINE(HAVE_MMSGHDR, 1, [If sys/socket.h has a struct mmsghdr.]), [], [
@@ -699,7 +745,7 @@ if echo $target_os | $EGREP -i 'linux|hurd' > /dev/null; then
 fi
 
 # see comment on _GNU_SOURCE above
-AC_CHECK_HEADERS([sched.h sys/cpuset.h])
+AC_CHECK_HEADERS([sched.h sys/cpuset.h],,, [AC_INCLUDES_DEFAULT])
 
 # Check for cpu_set_t (Linux) and cpuset_t (FreeBSD and NetBSD)
 AC_CHECK_TYPES([cpu_set_t, cpuset_t, cpuid_t],,,[
@@ -801,6 +847,7 @@ AC_REPLACE_FUNCS(b64_ntop)
 AC_REPLACE_FUNCS(pselect)
 AC_REPLACE_FUNCS(memmove)
 AC_REPLACE_FUNCS(setproctitle)
+AC_REPLACE_FUNCS(explicit_bzero)
 AC_MSG_CHECKING([for reallocarray])
 AC_LINK_IFELSE([AC_LANG_SOURCE(
 [[
@@ -862,6 +909,7 @@ AC_DEFINE_UNQUOTED([TLS_PORT], ["853"], [Define to the default DNS over TLS port
 AC_DEFINE_UNQUOTED([MAXSYSLOGMSGLEN], [512], [Define to the maximum message length to pass to syslog.])
 AC_DEFINE_UNQUOTED([NSD_CONTROL_PORT], [8952], [Define to the default nsd-control port.])
 AC_DEFINE_UNQUOTED([NSD_CONTROL_VERSION], [1], [Define to nsd-control proto version.])
+AC_DEFINE_UNQUOTED([VERIFY_PORT], ["5347"], [Define to the default zone verification udp port.])
 
 dnl
 dnl Determine the syslog facility to use
@@ -1000,7 +1048,12 @@ if test x$HAVE_SSL = x"yes"; then
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
 	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init])
+	if test "$ac_cv_func_SHA1_Init" = "yes"; then
+		ACX_FUNC_DEPRECATED([SHA1_Init], [(void)SHA1_Init(NULL);], [
+#include <openssl/sha.h>
+])
+	fi
 	AC_CHECK_DECLS([SSL_CTX_set_ecdh_auto,SSL_CTX_set_tmp_ecdh], [], [], [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_OPENSSL_ERR_H
@@ -1021,11 +1074,18 @@ AC_INCLUDES_DEFAULT
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 ])
-
+	AC_CHECK_DECL([TLS1_3_VERSION], 
+		[AC_DEFINE([HAVE_TLS_1_3], [1], [Define if TLS 1.3 is supported by OpenSSL])],
+		[AC_MSG_WARN([No TLS 1.3, therefore XFR-over-TLS is disabled])], [[#include <openssl/ssl.h>]])
 
 	BAKLIBS="$LIBS"
 	LIBS="-lssl $LIBS"
-	AC_CHECK_FUNCS([OPENSSL_init_ssl])
+	AC_CHECK_FUNCS([OPENSSL_init_ssl SSL_get1_peer_certificate SSL_CTX_set_security_level ERR_load_SSL_strings])
+	if test "$ac_cv_func_ERR_load_SSL_strings" = "yes"; then
+		ACX_FUNC_DEPRECATED([ERR_load_SSL_strings], [(void)ERR_load_SSL_strings();], [
+#include <openssl/ssl.h>
+])
+	fi
 	LIBS="$BAKLIBS"
 
 else
@@ -1061,7 +1121,7 @@ esac
 AC_ARG_ENABLE(mmap, AS_HELP_STRING([--enable-mmap],[Use mmap instead of malloc. Experimental.]))
 case "$enable_mmap" in
         yes)
-		AC_CHECK_HEADERS([sys/mman.h])
+		AC_CHECK_HEADERS([sys/mman.h],,, [AC_INCLUDES_DEFAULT])
 		AC_LIBGTOP_CHECK_TYPE(uintptr_t, void*)
 		AC_CHECK_FUNCS([mmap munmap])
 		AC_DEFINE_UNQUOTED([USE_MMAP_ALLOC], [], [Define this to enable mmap instead of malloc. Experimental.])
@@ -1264,6 +1324,10 @@ int inet_aton(const char *cp, struct in_addr *addr);
 #endif
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, size_t n);
+#endif
+#ifndef HAVE_EXPLICIT_BZERO
+#define explicit_bzero nsd_explicit_bzero
+void explicit_bzero(void* buf, size_t len);
 #endif
 #ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t siz);
