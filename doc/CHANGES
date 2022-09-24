@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2910 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2911 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -690,3 +690,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libuv: Import version 1.44.2. [christos 20220922]
 	bind: Import version 9.16.33. [christos 20220923]
 	nsd: Import 4.6.0. [christos 20220924]
+	unbound(8): Import 1.16.3. [christos 20220924]
