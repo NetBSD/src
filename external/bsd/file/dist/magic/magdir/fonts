@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: fonts,v 1.45 2021/01/03 21:00:11 christos Exp $
+# $File: fonts,v 1.51 2022/08/16 11:16:39 christos Exp $
 # fonts:  file(1) magic for font data
 #
 0	search/1	FONT		ASCII vfont text
@@ -8,13 +8,56 @@
 0	short		017001		byte-swapped Berkeley vfont data
 
 # PostScript fonts (must precede "printer" entries), quinlan@yggdrasil.com
+# Modified by:	Joerg Jenderek
+# URL:		https://en.wikipedia.org/wiki/PostScript_fonts
+#		http://fileformats.archiveteam.org/wiki/Adobe_Type_1
+# Reference:	http://mark0.net/download/triddefs_xml.7z
+#		defs/p/pfb.trid.xml
+# Note:		PFB stands for Printer Font Binary
 0	string		%!PS-AdobeFont-1.	PostScript Type 1 font text
+#!:mime	font/x-postscript-pfb
+#!:ext	pfb
 >20	string		>\0			(%s)
-6	string		%!PS-AdobeFont-1.	PostScript Type 1 font program data
->26	string		>\0			(%s)
+# http://www.nationalarchives.gov.uk/pronom/fmt/525
+6	string		%!PS-AdobeFont-1.
+# skip DROID fmt-525-signature-id-816.pfb by checking for content after header
+>24	ubyte		x			PostScript Type 1 font program data
+#!:mime	application/octet-stream
+!:mime	font/x-postscript-pfb
+!:ext	pfb
+# often followed by colon (3Ah) and space (20h) and font name like: DarkGardenMK LetterGothic
+>>24	ubyte		=0x3A
+>>>26	string		>\0			(%s)
+# some times instead of colon %%CreationDate: and "font name" later
+>>24	ubyte		!0x3A
+# font name directive followed by def like: c0633bt_.pfb
+>>>25	search/1247	/FontName\040/
+# show font name in parentheses like: Frankfurt Lithos CharterBT-BoldItalic Courier10PitchBT-Bold
+>>>>&0	regex		[A-Za-z0-9-]+		(%s)
+# http://cd.textfiles.com/maxfonts/ATM/M/MIRROR__.PFB
+6	string		%PS-AdobeFont-1.	PostScript Type 1 font program data
+!:mime	font/x-postscript-pfb
+!:ext	pfb
+# font name like:  Times-Mirror
+>25	string		>\0			(%s)
 0	string		%!FontType1	PostScript Type 1 font program data
+#!:mime	font/x-postscript-pfb
+#!:ext	pfb
 6	string		%!FontType1	PostScript Type 1 font program data
+#!:mime	application/octet-stream
+!:mime	font/x-postscript-pfb
+!:ext	pfb
+# font name like: CaslonOpenFace FetteFraktur Kaufmann Linotext MesozoicGothic Old-Town
+>23	string		>\0			(%s)
+# http://cd.textfiles.com/maxfonts/ATM/P/PLAYBI.PFB
+230	string		%!FontType1	PostScript Type 1 font program data
+!:mime	font/x-postscript-pfb
+!:ext	pfb
+# font name like: Playbill
+>247	string		>\0			(%s)
 0	string		%!PS-Adobe-3.0\ Resource-Font	PostScript Type 1 font text
+#!:mime	font/x-postscript-pfb
+#!:ext	pfb
 
 # Summary:	PostScript Type 1 Printer Font Metrics
 # URL:		https://en.wikipedia.org/wiki/PostScript_fonts
@@ -67,15 +110,23 @@
 >>>90		ubyte		65		script proportional
 
 # X11 font files in SNF (Server Natural Format) format
-# updated by Joerg Jenderek at Feb 2013
+# updated by Joerg Jenderek at Feb 2013 and Nov 2021
 # http://computer-programming-forum.com/51-perl/8f22fb96d2e34bab.htm
-0	belong		00000004		X11 SNF font data, MSB first
-#>104	belong		00000004		X11 SNF font data, MSB first
+# URL:		http://fileformats.archiveteam.org/wiki/SNF
+# Reference:	https://cgit.freedesktop.org/xorg/lib/libXfont/tree/src/bitmap/snfstr.h
+0	belong		00000004
+# version2 same as version1 in struct _snfFontInfo
+>104	belong		00000004		X11 SNF font data, MSB first
+# GRR: line above is too general as it catches also DEGAS low-res bitmap like:
+# http://cd.textfiles.com/geminiatari/FILES/GRAPHICS/ANIMAT/SPID_PAT/BIGSPID.PI1
 !:mime	application/x-font-sfn
-# GRR: line below too general as it catches also Xbase index file t3-CHAR.NDX
+!:ext	snf
+# GRR: line below is too general as it catches also Xbase index file t3-CHAR.NDX
 0	lelong		00000004
 >104	lelong		00000004		X11 SNF font data, LSB first
 !:mime	application/x-font-sfn
+# Reference:    http://mark0.net/download/triddefs_xml.7z/defs/s/snf-x11-lsb.trid.xml
+!:ext	snf
 
 # X11 Bitmap Distribution Format, from Daniel Quinlan (quinlan@yggdrasil.com)
 0	search/1	STARTFONT\ 		X11 BDF font text
@@ -167,7 +218,7 @@
 # face size in points 3-72 SLSS03CG.FNT H1CELT72.FNT
 >2	uleshort	x		%u
 # face ID (must be unique)
->0	uleshort	x		\b, ID 0x%4.4x
+>0	uleshort	x		\b, ID %#4.4x
 # lowest character index in face (4 but usually 32 for disk-loaded fonts)
 #>36	uleshort	!32		\b, unusual character index %u
 # width of the widest character like 0 8 10 12 16 24 32
@@ -177,21 +228,21 @@
 # thickening size in pixel like 0 1 2 3 4 5 6 7 8
 #>58	uleshort	x		\b, %u thick
 # lightening mask to eliminate pixels, usually 5555h
->62	uleshort	!0x5555		\b, lightening mask 0x%x
+>62	uleshort	!0x5555		\b, lightening mask %#x
 # skewing mask to determine when to perform additional rotation when skewing, usually 5555h
->64	uleshort	!0x5555		\b, skewing mask 0x%x
+>64	uleshort	!0x5555		\b, skewing mask %#x
 # offset to optional horizontal offset table 0 58h~88 5eh 252h
-#>68	ulelong		x		\b, 0x%x horizontal table offset
+#>68	ulelong		x		\b, %#x horizontal table offset
 # offset of character offset table 54h for many *.GFT 55h 58h 5Eh 120h 1D4h 202h 220h
-#>72	ulelong		x		\b, 0x%x coffset
+#>72	ulelong		x		\b, %#x coffset
 # offset to font data like 116h 118h 158 20Ah 20Eh
->76	ulelong		x		\b, 0x%x foffset
+>76	ulelong		x		\b, %#x foffset
 # form width in bytes like 58 67 156 190 227 317 345
 #>80	uleshort	x		\b, %u fwidth
 # form height in bytes like 4 8 11 17 26 56 70 90 120 146 150
 #>82	uleshort	x		\b, %u fheight
 # pointer to the next font like 0 10000h 20000h 30000h 40000h 60000h 80000h E0000h D0000h 
-#>84	ulelong		x		\b, 0x%x noffset
+#>84	ulelong		x		\b, %#x noffset
 
 # downloadable fonts for browser (prints type) anthon@mnt.org
 # https://tools.ietf.org/html/rfc3073
@@ -230,7 +281,7 @@
 # tag names consist of up to four characters padded with spaces at end like
 # BASE DSIG OS/2 Zapf acnt glyf cvt vmtx xref ...
 >>12	regex/4l	\^[A-Za-z][A-Za-z][A-Za-z/][A-Za-z2\ ]	
-#>>>0	ubelong	x	\b, sfnt version 0x%x
+#>>>0	ubelong	x	\b, sfnt version %#x
 >>>0	ubelong	!0x4f54544f	TrueType
 !:mime	font/sfnt
 !:apple	????tfil
@@ -262,7 +313,7 @@
 #>>>>&8	ubelong		>0x0100bd27	BIGGEST OFFSET
 >>&8	ubelong		>0x00100000	
 # offset of name table
->>>&-4	ubelong		x		\b, name offset 0x%x
+>>>&-4	ubelong		x		\b, name offset %#x
 # GRR: pointer to name table only works if offset ~< FILE_BYTES_MAX = 100000h defined in src\file.h
 >>&8	ubelong		<0x00100000	
 >>>&-16	ubelong		x		
@@ -293,7 +344,7 @@
 >>>>>&-2	ubeshort	1	\b, Macintosh
 >>>>>&-2	ubeshort	3	\b, Microsoft
 # languageID (0~english Macintosh, 0409h~english Microsoft, ...)
->>>>>&2		ubeshort	>0	\b, language 0x%x
+>>>>>&2		ubeshort	>0	\b, language %#x
 # name identifiers
 # often 0~copyright, 1~font, 2~font subfamily, 5~version, 13~license, 19~sample, ...
 >>>>>&4		ubeshort	>0	\b, type %d string
@@ -348,7 +399,7 @@
 # 0x44454947 = 'DSIG'
 >>>&4	belong		0x44534947	\b, digitally signed
 # offset to 1st font
->>12	ubelong		x		\b, at 0x%x
+>>12	ubelong		x		\b, at %#x
 # point to 1st font that starts with sfnt version
 >>(12.L) use		sfnt-font
 
@@ -384,11 +435,14 @@
 
 # https://www.w3.org/TR/WOFF/
 0	string		wOFF	Web Open Font Format
+!:mime font/woff
 >0	use		woff
 >20	beshort		x	\b, version %d
 >22	beshort		x	\b.%d
 # https://www.w3.org/TR/WOFF2/
 0	string		wOF2	Web Open Font Format (Version 2)
+!:mime font/woff2
+!:ext	woff2
 >0	use		woff
 #>20	belong		x	\b, totalCompressedSize %d
 >24	beshort		x	\b, version %d

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.1.1.4 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.1.1.5 2022/09/24 20:07:54 christos Exp $	*/
 
 /*	NetBSD: fmtcheck.c,v 1.8 2008/04/28 20:22:59 martin Exp 	*/
 
@@ -31,6 +31,13 @@
  */
 
 #include "file.h"
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)$File: fmtcheck.c,v 1.4 2022/09/13 18:46:07 christos Exp $")
+#else
+__RCSID("$NetBSD: fmtcheck.c,v 1.1.1.5 2022/09/24 20:07:54 christos Exp $");
+#endif
+#endif /* lint */
 
 #include <stdio.h>
 #include <string.h>
