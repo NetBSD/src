@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.43 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.44 2022/09/24 16:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.43 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.44 2022/09/24 16:29:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -87,7 +87,7 @@ const struct cdevsw ptm_cdevsw = {
 int pts_major, ptc_major;
 
 static dev_t pty_getfree(void);
-static int pty_alloc_master(struct lwp *, int *, dev_t *, struct mount *);
+static int pty_alloc_master(struct lwp *, int *, dev_t *, struct mount *, int);
 static int pty_alloc_slave(struct lwp *, int *, dev_t, struct mount *);
 static int pty_vn_open(struct vnode *, struct lwp *);
 
@@ -155,7 +155,8 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 }
 
 static int
-pty_alloc_master(struct lwp *l, int *fd, dev_t *dev, struct mount *mp)
+pty_alloc_master(struct lwp *l, int *fd, dev_t *dev, struct mount *mp,
+    int flags)
 {
 	int error;
 	struct file *fp;
@@ -199,7 +200,7 @@ retry:
 		else
 			goto bad;
 	}
-	fp->f_flag = FREAD|FWRITE;
+	fp->f_flag = FREAD|FWRITE|(flags&FMASK);
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
 	fp->f_vnode = vp;
@@ -321,9 +322,9 @@ ptmattach(int n)
 	extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
 	/* find the major and minor of the pty devices */
 	if ((pts_major = cdevsw_lookup_major(&pts_cdevsw)) == -1)
-		panic("ptmattach: Can't find pty slave in cdevsw");
+		panic("%s: Can't find pty slave in cdevsw", __func__);
 	if ((ptc_major = cdevsw_lookup_major(&ptc_cdevsw)) == -1)
-		panic("ptmattach: Can't find pty master in cdevsw");
+		panic("%s: Can't find pty master in cdevsw", __func__);
 #ifdef COMPAT_BSDPTY
 	ptm = &ptm_bsdpty;
 #endif
@@ -343,7 +344,7 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	case 2:		/* /emul/linux/dev/ptmx */
 		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
-		if ((error = pty_alloc_master(l, &fd, &ttydev, mp)) != 0)
+		if ((error = pty_alloc_master(l, &fd, &ttydev, mp, flag)) != 0)
 			return error;
 		if (minor(dev) == 2) {
 			/*
@@ -392,7 +393,7 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
 
-		if ((error = pty_alloc_master(l, &cfd, &newdev, mp)) != 0)
+		if ((error = pty_alloc_master(l, &cfd, &newdev, mp, 0)) != 0)
 			return error;
 
 		if ((error = pty_grant_slave(l, newdev, mp)) != 0)
