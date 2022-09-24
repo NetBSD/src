@@ -7612,7 +7612,7 @@ static int zonemd_simple_domain(struct auth_zone* z, int hashalgo,
 	struct secalgo_hash* h, struct auth_data* node,
 	struct regional* region, struct sldns_buffer* buf, char** reason)
 {
-	const size_t rrlistsize = 65536;
+#define	rrlistsize 65536
 	struct auth_rrset* rrlist[rrlistsize];
 	size_t i, rrnum = 0;
 	/* see if the domain is out of scope, the zone origin,
