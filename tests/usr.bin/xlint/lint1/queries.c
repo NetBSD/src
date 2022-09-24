@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.5 2022/09/10 13:13:22 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.6 2022/09/24 19:55:44 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -106,7 +106,7 @@ Q4(signed char *ptr, int i, unsigned long long ull)
 }
 
 void
-Q5(char *ptr, int i)
+Q5(signed char *ptr, int i)
 {
 	if (ptr + i > ptr)
 		return;
