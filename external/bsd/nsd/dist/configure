@@ -1451,14 +1451,14 @@ Optional Packages:
   --with-user=username    User name or ID to answer the queries with
   --with-libevent=pathname
                           use libevent (will check /usr/local /opt/local
-                          /usr/lib /usr/pkg /usr/sfw /usr
+                          /usr/lib  /usr/sfw /usr
                           /usr/local/opt/libevent or you can specify an
                           explicit path), useful when the zone count is high.
   --with-facility=name    Syslog default facility (LOG_DAEMON)
   --with-tcp-timeout=number
                           Limit the default tcp timeout
   --with-ssl=pathname     enable SSL (will check /usr/local/ssl /usr/lib/ssl
-                          /usr/ssl /usr/pkg /usr/sfw /usr/local /usr
+                          /usr/ssl  /usr/sfw /usr/local /usr
                           /usr/local/opt/openssl)
   --with-dnstap-socket-path=pathname
                           set default dnstap socket path
@@ -5951,7 +5951,7 @@ if test x_$withval = x_yes -o x_$withval != x_no; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libevent" >&5
 $as_echo_n "checking for libevent... " >&6; }
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent"
+            withval="/usr/local /opt/local /usr/lib  /usr/sfw /usr /usr/local/opt/libevent"
         fi
         for dir in $withval; do
             thedir="$dir"
@@ -9323,7 +9323,7 @@ $as_echo_n "checking for SSL... " >&6; }
                 fi
 	fi
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
+            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl  /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
         for dir in $withval; do
             ssldir="$dir"

@@ -4,6 +4,9 @@
 /* apply the noreturn attribute to a function that exits the program */
 #define ATTR_NORETURN __attribute__((__noreturn__))
 
+/* apply the weak attribute to a symbol */
+#define ATTR_WEAK __attribute__((__weak__))
+
 /* Define this to enable BIND8 like NSTATS & XSTATS. */
 #define BIND8_STATS /**/
 
@@ -28,6 +31,12 @@
 
 /* Pathname to the NSD database */
 #define DBFILE CHROOTDIR "/var/db/nsd/nsd.db"
+
+/* Whether ERR_load_SSL_strings is deprecated */
+/* #undef DEPRECATED_ERR_LOAD_SSL_STRINGS */
+
+/* Whether SHA1_Init is deprecated */
+/* #undef DEPRECATED_SHA1_INIT */
 
 /* default dnstap socket path */
 /* #undef DNSTAP_SOCKET_PATH */
@@ -61,6 +70,9 @@
 
 /* Whether the C compiler accepts the "unused" attribute */
 #define HAVE_ATTR_UNUSED 1
+
+/* Whether the C compiler accepts the "weak" attribute */
+#define HAVE_ATTR_WEAK 1
 
 /* Define to 1 if you have the `b64_ntop' function. */
 /* #undef HAVE_B64_NTOP */
@@ -122,6 +134,9 @@
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
 /* #undef HAVE_ERR_LOAD_CRYPTO_STRINGS */
 
+/* Define to 1 if you have the `ERR_load_SSL_strings' function. */
+#define HAVE_ERR_LOAD_SSL_STRINGS 1
+
 /* Define to 1 if you have the `event_base_free' function. */
 #define HAVE_EVENT_BASE_FREE 1
 
@@ -140,6 +155,9 @@
 /* Define to 1 if you have the `EVP_cleanup' function. */
 /* #undef HAVE_EVP_CLEANUP */
 
+/* Define to 1 if you have the `EVP_MAC_CTX_get_mac_size' function. */
+/* #undef HAVE_EVP_MAC_CTX_GET_MAC_SIZE */
+
 /* Define to 1 if you have the `EVP_MAC_CTX_new' function. */
 /* #undef HAVE_EVP_MAC_CTX_NEW */
 
@@ -151,6 +169,9 @@
 
 /* Define to 1 if you have the `ev_loop' function. */
 /* #undef HAVE_EV_LOOP */
+
+/* Define to 1 if you have the `explicit_bzero' function. */
+/* #undef HAVE_EXPLICIT_BZERO */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -199,6 +220,9 @@
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
 #define HAVE_HMAC_CTX_RESET 1
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#define HAVE_IFADDRS_H 1
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -304,7 +328,7 @@
 #define HAVE_SCHED_H 1
 
 /* Define this if sched_setaffinity is available */
-/* #undef HAVE_SCHED_SETAFFINITY */
+#define HAVE_SCHED_SETAFFINITY 1
 
 /* Define if sendmmsg is implemented */
 #define HAVE_SENDMMSG 1
@@ -327,6 +351,9 @@
 /* Define to 1 if you have the `setusercontext' function. */
 #define HAVE_SETUSERCONTEXT 1
 
+/* Define to 1 if you have the `SHA1_Init' function. */
+#define HAVE_SHA1_INIT 1
+
 /* Define to 1 if you have the `sigaction' function. */
 #define HAVE_SIGACTION 1
 
@@ -346,7 +373,10 @@
 #define HAVE_SSL /**/
 
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
-/* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
+#define HAVE_SSL_CTX_SET_SECURITY_LEVEL 1
+
+/* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
+/* #undef HAVE_SSL_GET1_PEER_CERTIFICATE */
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
@@ -424,7 +454,7 @@
 /* #undef HAVE_SYS_CPUSET_H */
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-/* #undef HAVE_SYS_MMAN_H */
+#define HAVE_SYS_MMAN_H 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -456,6 +486,9 @@
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
 
+/* Define if TLS 1.3 is supported by OpenSSL */
+#define HAVE_TLS_1_3 1
+
 /* Define to 1 if you have the `tzset' function. */
 #define HAVE_TZSET 1
 
@@ -483,11 +516,8 @@
 /* Define to the default nsd identity. */
 #define IDENTITY "NetBSD server"
 
-#if 0
-/* Makefile tunable */
 /* Define this to enable IPv6 support. */
-#define INET6 /**/
-#endif
+/* #undef INET6 **/
 
 /* If flex defines yy_current_buffer as a macro */
 /* #undef LEX_DEFINES_YY_CURRENT_BUFFER */
@@ -533,7 +563,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.3.5"
+#define PACKAGE_STRING "NSD 4.6.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -542,7 +572,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.3.5"
+#define PACKAGE_VERSION "4.6.0"
 
 /* Define this to use packed structure alignment. */
 /* #undef PACKED_STRUCTS */
@@ -554,7 +584,7 @@
 #define RATELIMIT 1
 
 /* Define this to set ratelimit to off by default. */
-/* #undef RATELIMIT_DEFAULT_OFF */
+#define RATELIMIT_DEFAULT_OFF 1
 
 /* If reallocarray needs defines to appear in the headers */
 #define REALLOCARRAY_NEEDS_DEFINES 1
@@ -643,7 +673,10 @@
 /* #undef USE_TCP_FASTOPEN */
 
 /* Define this to enable per-zone statistics gathering. */
-/* #undef USE_ZONE_STATS */
+#define USE_ZONE_STATS 1
+
+/* Define to the default zone verification udp port. */
+#define VERIFY_PORT "5347"
 
 /* Define to the NSD version to answer version.server query. */
 #define VERSION PACKAGE_STRING
@@ -852,7 +885,7 @@
 #if defined(__cplusplus)
 #define ATTR_UNUSED(x)
 #elif defined(HAVE_ATTR_UNUSED)
-#define ATTR_UNUSED(x)  x __attribute__((unused))
+#define ATTR_UNUSED(x)  x __attribute__((__unused__))
 #else /* !HAVE_ATTR_UNUSED */
 #define ATTR_UNUSED(x)  x
 #endif /* !HAVE_ATTR_UNUSED */
@@ -901,6 +934,9 @@ int inet_aton(const char *cp, struct in_addr *addr);
 #endif
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, size_t n);
+#endif
+#ifndef HAVE_EXPLICIT_BZERO
+#define explicit_bzero(a, b) explicit_memset((a), 0, (b))
 #endif
 #ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t siz);
