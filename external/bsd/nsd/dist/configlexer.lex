@@ -11,9 +11,6 @@
 #if defined(__clang__)||(defined(__GNUC__)&&((__GNUC__ >4)||(defined(__GNUC_MINOR__)&&(__GNUC__ ==4)&&(__GNUC_MINOR__ >=2))))
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
-
-#include "config.h"
-
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -23,7 +20,6 @@
 #endif
 
 #include "options.h"
-#include "configyyrename.h"
 #include "configparser.h"
 
 #if 0
@@ -47,27 +43,27 @@ static void config_start_include(const char* filename)
 	struct inc_state* s;
 	char* nm;
 	if(inc_depth++ > 10000000) {
-		yyerror("too many include files");
+		c_error("too many include files");
 		return;
 	}
 	if(strlen(filename) == 0) {
-		yyerror("empty include file name");
+		c_error("empty include file name");
 		return;
 	}
 	s = (struct inc_state*)malloc(sizeof(*s));
 	if(!s) {
-		yyerror("include %s: malloc failure", filename);
+		c_error("include %s: malloc failure", filename);
 		return;
 	}
 	nm = strdup(filename);
 	if(!nm) {
-		yyerror("include %s: strdup failure", filename);
+		c_error("include %s: strdup failure", filename);
 		free(s);
 		return;
 	}
 	input = fopen(filename, "r");
 	if(!input) {
-		yyerror("cannot open include file '%s': %s",
+		c_error("cannot open include file '%s': %s",
 			filename, strerror(errno));
 		free(s);
 		free(nm);
@@ -95,7 +91,7 @@ static void config_start_include_glob(const char* filename)
 	if (cfg_parser->chroot) {
 		int l = strlen(cfg_parser->chroot); /* chroot has trailing slash */
 		if (strncmp(cfg_parser->chroot, filename, l) != 0) {
-			yyerror("include file '%s' is not relative to chroot '%s'",
+			c_error("include file '%s' is not relative to chroot '%s'",
 				filename, cfg_parser->chroot);
 			return;
 		}
@@ -241,8 +237,14 @@ request-xfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REQUEST_XFR;}
 notify{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NOTIFY;}
 notify-retry{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_NOTIFY_RETRY;}
 provide-xfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_PROVIDE_XFR;}
+allow-query{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALLOW_QUERY;}
 outgoing-interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_OUTGOING_INTERFACE;}
 allow-axfr-fallback{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALLOW_AXFR_FALLBACK;}
+tls-auth{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH;}
+auth-domain-name{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_DOMAIN_NAME;}
+client-cert{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_CERT;}
+client-key{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_KEY;}
+client-key-pw{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_KEY_PW;}
 key{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_KEY;}
 algorithm{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALGORITHM;}
 secret{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_SECRET;}
@@ -278,19 +280,37 @@ dnstap-log-auth-query-messages{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_D
 dnstap-log-auth-response-messages{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_LOG_AUTH_RESPONSE_MESSAGES; }
 log-time-ascii{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_TIME_ASCII;}
 round-robin{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ROUND_ROBIN;}
-minimal-responses{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_MINIMAL_RESPONSES;}
-confine-to-zone{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_CONFINE_TO_ZONE;}
+minimal-responses{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MINIMAL_RESPONSES;}
+confine-to-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CONFINE_TO_ZONE;}
 refuse-any{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REFUSE_ANY;}
 max-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_REFRESH_TIME;}
 min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIME;}
 max-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_RETRY_TIME;}
 min-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_RETRY_TIME;}
 min-expire-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_EXPIRE_TIME;}
+store-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_STORE_IXFR;}
+ixfr-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_SIZE;}
+ixfr-number{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_NUMBER;}
+create-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CREATE_IXFR;}
 multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
 tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}
 tls-service-pem{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
 tls-port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
+tls-cert-bundle{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_CERT_BUNDLE; }
+answer-cookie{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ANSWER_COOKIE;}
+cookie-secret{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET;}
+cookie-secret-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET_FILE;}
+xfrd-tcp-max{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_TCP_MAX;}
+xfrd-tcp-pipeline{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_TCP_PIPELINE;}
+verify{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFY; }
+enable{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_ENABLE; }
+verify-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFY_ZONE; }
+verify-zones{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFY_ZONES; }
+verifier{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER; }
+verifier-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_COUNT; }
+verifier-feed-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_FEED_ZONE; }
+verifier-timeout{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_TIMEOUT; }
 {NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++;}
 
 servers={UNQUOTEDLETTER}*	{
@@ -318,14 +338,14 @@ server-[1-9][0-9]*-cpu-affinity{COLON}	{
 		while (*str != '\0' && (*str < '0' || *str > '9')) {
 			str++;
 		}
-		yylval.llng = strtoll(str, NULL, 10);
+		c_lval.llng = strtoll(str, NULL, 10);
 		return VAR_SERVER_CPU_AFFINITY;
 	}
 
 	/* Quoted strings. Strip leading and ending quotes */
 \"			{ BEGIN(quotedstring); LEXOUT(("QS ")); }
 <quotedstring><<EOF>>   {
-        yyerror("EOF inside quoted string");
+        c_error("EOF inside quoted string");
         BEGIN(INITIAL);
 }
 <quotedstring>{ANY}*    { LEXOUT(("STR(%s) ", yytext)); yymore(); }
@@ -334,14 +354,14 @@ server-[1-9][0-9]*-cpu-affinity{COLON}	{
         LEXOUT(("QE "));
         BEGIN(INITIAL);
         yytext[yyleng - 1] = '\0';
-	yylval.str = region_strdup(cfg_parser->opt->region, yytext);
+	c_lval.str = region_strdup(cfg_parser->opt->region, yytext);
         return STRING;
 }
 
 	/* include: directive */
 include{COLON}		{ LEXOUT(("v(%s) ", yytext)); BEGIN(include); }
 <include><<EOF>>	{
-        yyerror("EOF inside include directive");
+        c_error("EOF inside include directive");
         BEGIN(INITIAL);
 }
 <include>{SPACE}*	{ LEXOUT(("ISP ")); /* ignore */ }
@@ -353,7 +373,7 @@ include{COLON}		{ LEXOUT(("v(%s) ", yytext)); BEGIN(include); }
 	BEGIN(INITIAL);
 }
 <include_quoted><<EOF>>	{
-        yyerror("EOF inside quoted string");
+        c_error("EOF inside quoted string");
         BEGIN(INITIAL);
 }
 <include_quoted>{ANY}*	{ LEXOUT(("ISTR(%s) ", yytext)); yymore(); }
@@ -375,6 +395,6 @@ include{COLON}		{ LEXOUT(("v(%s) ", yytext)); BEGIN(include); }
 }
 
 {UNQUOTEDLETTER}*	{ LEXOUT(("unquotedstr(%s) ", yytext)); 
-			yylval.str = region_strdup(cfg_parser->opt->region, yytext); return STRING; }
+			c_lval.str = region_strdup(cfg_parser->opt->region, yytext); return STRING; }
 
 %%
