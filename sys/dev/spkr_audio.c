@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.11 2021/04/03 04:10:30 isaki Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.12 2022/09/24 23:16:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.11 2021/04/03 04:10:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.12 2022/09/24 23:16:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.11 2021/04/03 04:10:30 isaki Exp $"
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
