@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.23 2022/07/07 06:11:08 skrll Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.24 2022/09/24 18:12:42 thorpej Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.23 2022/07/07 06:11:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.24 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -26,7 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.23 2022/07/07 06:11:08 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>

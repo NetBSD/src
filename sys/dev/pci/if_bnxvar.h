@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxvar.h,v 1.14 2020/07/14 15:37:40 jdolecek Exp $	*/
+/*	$NetBSD: if_bnxvar.h,v 1.15 2022/09/24 18:12:42 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
