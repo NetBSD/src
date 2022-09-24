@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: animation,v 1.85 2021/03/14 16:36:53 christos Exp $
+# $File: animation,v 1.90 2022/08/16 11:16:39 christos Exp $
 # animation:  file(1) magic for animation/movie formats
 #
 # animation formats
@@ -30,8 +30,6 @@
 #!:mime	image/x-quicktime
 4       string          pckg            Apple QuickTime compressed archive
 !:mime	application/x-quicktime-player
-4	string/W	jP		JPEG 2000 image
-!:mime	image/jp2
 
 #### MP4 ####
 # https://www.ftyps.com/ with local additions
@@ -168,6 +166,7 @@
 #	?/enc-isoff-generic
 >8	string		iso		\b, MP4 Base Media
 !:mime	video/mp4
+!:ext	mp4
 >>11	string		m 		v1 [ISO 14496-12:2003]
 >>11	string		2		v2 [ISO 14496-12:2005]
 >>11	string		4		v4
@@ -937,9 +936,11 @@
 0	belong&0xFF5FFF10	0x47400010
 >188	byte			0x47		MPEG transport stream data
 !:mime  video/MP2T
+!:ext	ts
 
 # DIF digital video file format <mpruett@sgi.com>
 0	belong&0xffffff00	0x1f070000      DIF
+!:mime  video/x-dv
 >4	byte			&0x01		(DVCPRO) movie file
 >4	byte			^0x01		(DV) movie file
 >3	byte			&0x80		(PAL)
@@ -966,21 +967,6 @@
 
 # ABC (alembic.io 3d models)
 0	string	0gawa		ABC 3d model
-
-# VRML (Virtual Reality Modelling Language)
-0       string/w        #VRML\ V1.0\ ascii	VRML 1 file
-!:mime	model/vrml
-0	string/w	#VRML\ V2.0\ utf8	ISO/IEC 14772 VRML 97 file
-!:mime	model/vrml
-
-# X3D (Extensible 3D) [https://www.web3d.org/specifications/x3d-3.0.dtd]
-# From Michel Briand <michelbriand@free.fr>
-# mimetype from https://www.iana.org/assignments/media-types/model/x3d+xml
-# Example https://www.web3d.org/x3d/content/examples/Basic/course/CreateX3DFromStringRandomSpheres.x3d
-0	string/w	\<?xml\ version=
-!:strength + 5
->20	search/1000/w	\<!DOCTYPE\ X3D		X3D (Extensible 3D) model xml text
-!:mime model/x3d+xml
 
 #---------------------------------------------------------------------------
 # HVQM4: compressed movie format designed by Hudson for Nintendo GameCube
@@ -1174,3 +1160,28 @@
 0	string	TVS\015\012
 >&0	string	Version\040	TeamViewer Session File
 >>&0	string	x		\b, version %s
+
+# SER file format - simple uncompressed video format for astronomical use
+# Initially developed by Lucam Recorder,
+# as of 2021 maintained by Heiko Wilkens, Grischa Hahn
+# Typical extensions: .SER
+# http://www.grischa-hahn.homepage.t-online.de/astro/ser/SER%20Doc%20V3b.pdf
+0	string	LUCAM-RECORDER	SER video sequence
+!:ext	ser
+>18	lelong	0	\b, bayer: mono
+>18	lelong	8	\b, bayer: RGGB
+>18	lelong	9	\b, bayer: GRBG
+>18	lelong	10	\b, bayer: GBRG
+>18	lelong	11	\b, bayer: BGGR
+>18	lelong	16	\b, bayer: CYYM
+>18	lelong	17	\b, bayer: YCMY
+>18	lelong	18	\b, bayer: YMCY
+>18	lelong	19	\b, bayer: MYYC
+>18	lelong	100	\b, bayer: RGB
+>18	lelong	101	\b, bayer: BGR
+>22	lelong	0	\b, big-endian
+>22	lelong	1	\b, little-endian
+>26	lelong	x	\b, width: %d
+>30	lelong	x	\b, height: %d
+>34	lelong	x	\b, %d bit
+>38	lelong	x	\b, frames: %d

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: elf,v 1.85 2021/03/27 20:18:38 christos Exp $
+# $File: elf,v 1.87 2021/05/25 15:19:51 christos Exp $
 # elf:  file(1) magic for ELF executables
 #
 # We have to check the byte order flag to see what byte order all the
@@ -303,7 +303,7 @@
 >18	leshort		255		Synopsys ARCv3 32-bit,
 >18	leshort		256		Kalray VLIW core of the MPPA family,
 >18	leshort		257		WDC 65816/65C816,
->18	leshort		258		Loongson Loongarch,
+>18	leshort		258		LoongArch,
 >18	leshort		259		ChipON KungFu32,
 >18	leshort		0x1057		AVR (unofficial),
 >18	leshort		0x1059		MSP430 (unofficial),
@@ -334,7 +334,7 @@
 >18	leshort		0xfebb		NIOS (unofficial),
 >18	leshort		0xfeed		Moxie (unofficial),
 >18	default		x
->>18	leshort		x		*unknown arch 0x%x*
+>>18	leshort		x		*unknown arch %#x*
 >20	lelong		0		invalid version
 >20	lelong		1		version 1
 

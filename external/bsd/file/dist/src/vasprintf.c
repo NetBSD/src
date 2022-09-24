@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.9 2021/04/09 18:58:01 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.19 2021/02/23 00:51:11 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.21 2022/09/16 13:49:39 christos Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.9 2021/04/09 18:58:01 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.10 2022/09/24 20:07:55 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -145,8 +145,6 @@ typedef struct {
   size_t       pseudo_len;        /* total length of output text if it were not limited in size */
   size_t       maxlen;
   va_list      vargs;             /* pointer to current position into vargs */
-  char *       sprintf_string;
-  FILE *       fprintf_file;
 } xprintf_struct;
 
 /*
@@ -601,8 +599,6 @@ static int core(xprintf_struct *s)
   }
 
   /* for (v)asnprintf */
-  dummy_base = s->buffer_base;
-
   dummy_base = s->buffer_base + s->real_len;
   save_len = s->real_len;
 
@@ -631,6 +627,7 @@ int vasprintf(char **ptr, const char *format_string, va_list vargs)
   xprintf_struct s;
   int retval;
 
+  memset(&s, 0, sizeof(s));
   s.src_string = format_string;
 #ifdef va_copy
   va_copy (s.vargs, vargs);
@@ -641,7 +638,7 @@ int vasprintf(char **ptr, const char *format_string, va_list vargs)
 #  ifdef WIN32
   s.vargs = vargs;
 #  else
-  memcpy (&s.vargs, &vargs, sizeof (s.va_args));
+  memcpy (&s.vargs, &vargs, sizeof (s.vargs));
 #  endif /* WIN32 */
 # endif /* __va_copy */
 #endif /* va_copy */

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: windows,v 1.36 2021/02/05 22:29:07 christos Exp $
+# $File: windows,v 1.47 2022/09/23 13:23:04 christos Exp $
 # windows:  file(1) magic for Microsoft Windows
 #
 # This file is mainly reserved for files where programs
@@ -15,14 +15,84 @@
 
 
 # Summary: Outlook Express DBX file
-# Extension: .dbx
 # Created by: Christophe Monniez
-0	string	\xCF\xAD\x12\xFE	MS Outlook Express DBX file
->4	byte	=0xC5			\b, message database
->4	byte	=0xC6			\b, folder database
->4	byte	=0xC7			\b, account information
->4	byte	=0x30			\b, offline database
+# Update:	Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/Outlook_Express_Database
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/d/dbx.trid.xml
+#		https://sourceforge.net/projects/ol2mbox/files/LibDBX/
+#		v1.0.4/libdbx_1.0.4.tar.gz/FILE-FORMAT 
+# Note:		called "Outlook Express Database" by TrID and DROID via PUID fmt/838 fmt/839
+#		and partly verified by `undbx --verbosity 4 Posteingang.dbx`
+0	string	\xCF\xAD\x12\xFE
+# skip DROID fmt-838-signature-id-1193.dbx fmt-839-signature-id-1194.dbx by check for valid file size
+>0x7C	ulelong	>0			MS Outlook Express DBX file
+#!:mime		application/octet-stream
+#!:mime		application/vnd.ms-outlook
+!:mime		application/x-ms-dbx
+!:ext	dbx
+>>4	byte	=0xC5			\b, message database
+>>4	byte	=0xC6			\b, folder database
+>>4	byte	=0xC7			\b, account information
+>>4	byte	=0x30			\b, offline database
+# version like: 5.2 5.5 (typical)
+>>20	ulequad	!0x0000000500000005	\b, version
+# major version
+>>>24	ulelong	x			%u
+# minor version
+>>>20	ulelong	x			\b.%u
+# CLSID: 6F74FDC5-E366-11d1-9A4E-00C04FA309D4~Message 6F74FDC6-E366-11D1-9A4E-00C04FA309D4~Folder
+# 26FE9D30-1A8F-11D2-AABF-006097D474C4~offline
+#>>4	guid	x			\b, CLSID %s
+# file size; total size of file; sometimes real size a little bit higher
+>>0x7C	ulelong	x			\b, ~ %u bytes
+# highest Email ID; the next email will have a number one higher than this
+>>0x5c	ulelong	x			\b, highest ID %#x
+# item count; number of items stored in this DBX file
+>>0xC4	ulelong	x			\b, %u item
+# plural s
+>>0xC4	ulelong	!1			\bs
+# index pointer; file offset pointing to a page of Data Indexes
+>>0xE4	ulelong	>0			\b, index pointer %#x
 
+# From:		Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/Nickfile
+#		https://www.nirsoft.net/utils/outlook_nk2_edit.html
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/n/nk2.trid.xml
+#		https://github.com/libyal/libnk2/blob/main/documentation
+#		Nickfile%20(NK2)%20format.asciidoc
+# Note:		called "Outlook Nickfile" by TrID & TestDisk and
+#		"Outlook Nickname File" by Microsoft Outlook and
+#		"Outlook AutoComplete File" by Nirsoft NK2Edit
+#		partly verfied by NK2Edit Raw Text Edit Mode
+0	ubelong		0x0DF0ADBA	MS Outlook Nickfile
+#!:mime		application/octet-stream
+#!:mime		application/vnd.ms-outlook
+!:mime		application/x-ms-nickfile
+!:ext	nk2/dat/bak
+# nick is used by "older" Outlook; dat is used by "newer" Outlook (probably 2010 - 2016); bak is used for backup
+#!:ext	nick/nk2/dat/bak
+# Unknown; probably a version indicator like: 0000000Ah 0000000Ch 
+>4	ulelong		x		\b, probably version %u
+# Unknown2; probably a version indicator like: 1 0
+>8	ulelong		x		\b.%u
+# number of rows (nickname or alias items) in file
+>12	ulelong		x		\b, %u items
+# number of item entries/columns/properties value like: 17h
+>16	ulelong		x		\b, %u entries
+# value type/property tag: 001Fh~4 bytes for data size of UTF-16 LE string
+>20	uleshort	x		\b, value type %#4.4x
+# entry type/property identifier: 6001h~PR_DOTSTUFF_STATE/PR_NICK_NAME_W
+>22	uleshort	x		\b, entry type %#4.4x
+# Reserved like: 0013FD90h
+#>24	ulelong		x		\b, reserved %#8.8x
+# value data array/Irrelevant Union like: 0000000004E31A80h
+#>28	ulequad		x		\b, data %#16.16llx
+# UTF-16
+>20	uleshort	=0x001F
+# unicode string bytes like: 2Ch
+>>36	ulelong		x		\b, %u bytes
+# unicode string value PT_UNICODE like: janesmith@contoso.org
+>>40	lestring16	x		"%s"
 
 # Summary: Windows crash dump
 # Extension: .dmp
@@ -67,53 +137,53 @@
 # \Boot\boot.sdi
 !:ext	sdi
 # MDBtype: 0~Unspecified 1~RAM 2~ROM
->>8	ulequad			!0		\b, MDBtype 0x%llx
+>>8	ulequad			!0		\b, MDBtype %#llx
 # BootCodeOffset
->>16	ulequad			!0		\b, BootCodeOffset 0x%llx
+>>16	ulequad			!0		\b, BootCodeOffset %#llx
 # BootCodeSize
->>24	ulequad			!0		\b, BootCodeSize 0x%llx
+>>24	ulequad			!0		\b, BootCodeSize %#llx
 # VendorID
->>32	ulequad			!0		\b, VendorID 0x%llx
+>>32	ulequad			!0		\b, VendorID %#llx
 # DeviceID
->>40	ulequad			!0		\b, DeviceID 0x%llx
+>>40	ulequad			!0		\b, DeviceID %#llx
 # DeviceModel
->>48	ulequad			!0		\b, DeviceModel 0x%llx
+>>48	ulequad			!0		\b, DeviceModel %#llx
 >>>56	ulequad			!0		\b%llx
 # DeviceRole
->>64	ulequad			!0		\b, DeviceRole 0x%llx
+>>64	ulequad			!0		\b, DeviceRole %#llx
 # Reserved1; reserved fields and gaps between BLOBs are padded with \0
-#>>72	ulequad			!0		\b, Reserved1 0x%llx
+#>>72	ulequad			!0		\b, Reserved1 %#llx
 # RuntimeGUID
->>80	ulequad			!0		\b, RuntimeGUID 0x%llx
+>>80	ulequad			!0		\b, RuntimeGUID %#llx
 >>>88	ulequad			!0		\b%llx
 # RuntimeOEMrev
->>96	ulequad			!0		\b, RuntimeOEMrev 0x%llx
+>>96	ulequad			!0		\b, RuntimeOEMrev %#llx
 # Reserved2
-#>>104	ulequad			!0		\b, Reserved2 0x%llx
+#>>104	ulequad			!0		\b, Reserved2 %#llx
 # BLOB alignment value in pages, as specified in sdimgr /pack: 1~4K 2~8k
 >>112	ulequad			!0		\b, PageAlignment %llu
 # Reserved3[48]
-#>>120	ulequad			!0		\b, Reserved3 0x%llx
+#>>120	ulequad			!0		\b, Reserved3 %#llx
 # SDI checksum 39h
->>0x1f8	ulequad			x		\b, checksum 0x%llx
+>>0x1f8	ulequad			x		\b, checksum %#llx
 # BLOBtype[8] \0-padded: PART, WIM , BOOT, LOAD, DISK
 >>0x400	string			>\0		\b, type %-3.8s
 # 0~non-filesystem 7~NTFS 6~BIGFAT
->>>0x420	ulequad		!0		(0x%llx)
+>>>0x420	ulequad		!0		(%#llx)
 # ATTRibutes
->>>0x408	ulequad		!0		0x%llx attributes
+>>>0x408	ulequad		!0		%#llx attributes
 # Offset
->>>0x410	ulequad		x		at 0x%llx
+>>>0x410	ulequad		x		at %#llx
 # print 1 space after size and then handles NTFS boot sector by ./filesystems
 >>>0x418	ulequad		>0		%llu bytes 
 >>>>(0x410.l)	indirect	x
 # 2nd BLOB: WIM
 >>0x440		string		>\0		\b, type %-3.8s
->>>0x428	ulequad		!0		(0x%llx)
+>>>0x428	ulequad		!0		(%#llx)
 # ATTRibutes
->>>0x448	ulequad		!0		0x%llx attributes
+>>>0x448	ulequad		!0		%#llx attributes
 # Offset
->>>0x450	ulequad		x		at 0x%llx
+>>>0x450	ulequad		x		at %#llx
 >>>0x458	ulequad		>0		%llu bytes 
 >>>>(0x450.l)	indirect	x
 # 3rd BLOB
@@ -139,13 +209,13 @@
 # apparently a version number: 2 for older like Vista, 3, 4 Windows 10
 >0		ulelong		>2		\b, version %u
 # apparently the size of the header: often 10h in older Windows, 14h, 18h
->4		ulelong		!0x10		\b, header size 0x%x
+>4		ulelong		!0x10		\b, header size %#x
 #>4		ulelong		!0x10		\b, header size %u
 # apparently the size of the file: always 0x00010000~64KiB
 # the file is acceptable to BOOTMGR only if it is exactly 64 KiB
->8		ulelong		!0x00010000	\b, file size 0x%x
+>8		ulelong		!0x00010000	\b, file size %#x
 # size of valid data, in bytes: C8h 50h 172h 5D5Ch
->0xc		ulelong		x		\b, 0x%x valid bytes
+>0xc		ulelong		x		\b, %#x valid bytes
 # skip header and jump to first bootstat entry and display information
 >(0x4.l-1)	ubyte		x
 >>&0		use		bootstat-entry
@@ -164,24 +234,24 @@
 #>0x00		ubequad		x		\b, ENTRY %16.16llx
 # size of entry, in bytes: 40h(init) 78h(launced) 9Ch
 #>0x18		ulelong		x		\b; entry size %u
->0x18		ulelong		x		\b; entry size 0x%x
+>0x18		ulelong		x		\b; entry size %#x
 # time stamp, in seconds 
->0x00		ulelong		x		\b, 0x%x seconds
+>0x00		ulelong		x		\b, %#x seconds
 # always zero, significance unknown
 >0x04		ulelong		!0		\b, not null %u
 # GUID of event source; but empty if event source is BOOTMGR 
->0x08		ubequad		!0		\b, GUID 0x%16.16llx
+>0x08		ubequad		!0		\b, GUID %#16.16llx
 >>0x10		ubequad		x		\b%16.16llx
 # severity code: 1~informational 3~errors
->0x1C		ulelong		!1		\b, severity 0x%x
+>0x1C		ulelong		!1		\b, severity %#x
 # apparently a version number: 2 
 >0x20		ulelong		!2		\b, version %u
 # event identifier 1~log file initialised 11h~boot application launched 
-#>0x24		ulelong		x		\b, event 0x%x
+#>0x24		ulelong		x		\b, event %#x
 >0x24		ulelong		!1
->>0x24		ulelong		!0x11		\b, event 0x%x
+>>0x24		ulelong		!0x11		\b, event %#x
 # entry data; size depends on event identifier  
-#>0x28		ubequad		x		\b, data 0x%16.16llx
+#>0x28		ubequad		x		\b, data %#16.16llx
 >0x24		ulelong		=0x1		\b, Init
 # always 0, significance unknown 
 >>0x34		uleshort	!0		\b, not null %u
@@ -248,7 +318,7 @@
 >>>2	leshort		0x27		x.y
 >>>2	leshort		0x33		95
 >>>2	default		x		y.z
->>>>2	leshort		x		0x%x
+>>>>2	leshort		x		%#x
 # to complete message string like "MS Windows 3.x help file"
 >>>2	leshort		x		help
 # GenDate often older than file creation date
@@ -307,39 +377,39 @@
 !:mime	application/x-winhelp
 !:ext	bmk
 ## FirstFreeBlock normally FFFFFFFFh 10h for *ANN
-##>>8	lelong			x		\b, FirstFreeBlock 0x%8.8x
+##>>8	lelong			x		\b, FirstFreeBlock %#8.8x
 # EntireFileSize
 >>12	lelong			x		\b, %d bytes
 ## ReservedSpace normally 042Fh AFh for *.ANN
-#>>(4.l)	lelong		x		\b, ReservedSpace 0x%8.8x
+#>>(4.l)	lelong		x		\b, ReservedSpace %#8.8x
 ## UsedSpace normally 0426h A6h for *.ANN
-#>>(4.l+4)	lelong		x		\b, UsedSpace 0x%8.8x
+#>>(4.l+4)	lelong		x		\b, UsedSpace %#8.8x
 ## FileFlags normally 04...
-#>>(4.l+5)	lelong		x		\b, FileFlags 0x%8.8x
+#>>(4.l+5)	lelong		x		\b, FileFlags %#8.8x
 ## file header magic 0x293B
-#>>(4.l+9)	uleshort	x		\b, file header magic 0x%4.4x
+#>>(4.l+9)	uleshort	x		\b, file header magic %#4.4x
 ## file header Flags		0x0402
-#>>(4.l+11)	uleshort	x		\b, file header Flags 0x%4.4x
+#>>(4.l+11)	uleshort	x		\b, file header Flags %#4.4x
 ## file header PageSize	0400h 80h for *.ANN
-#>>(4.l+13)	uleshort	x		\b, PageSize 0x%4.4x
+#>>(4.l+13)	uleshort	x		\b, PageSize %#4.4x
 ## Structure[16]		z4
 #>>(4.l+15)	string		>\0		\b, Structure_"%-.16s"
 ## MustBeZero			0
-#>>(4.l+31)	uleshort	x		\b, MustBeZero 0x%4.4x
+#>>(4.l+31)	uleshort	x		\b, MustBeZero %#4.4x
 ## PageSplits
-#>>(4.l+33)	uleshort	x		\b, PageSplits 0x%4.4x
+#>>(4.l+33)	uleshort	x		\b, PageSplits %#4.4x
 ## RootPage
-#>>(4.l+35)	uleshort	x		\b, RootPage 0x%4.4x
+#>>(4.l+35)	uleshort	x		\b, RootPage %#4.4x
 ## MustBeNegOne			0xffff
-#>>(4.l+37)	uleshort	x		\b, MustBeNegOne 0x%4.4x
+#>>(4.l+37)	uleshort	x		\b, MustBeNegOne %#4.4x
 ## TotalPages			1
-#>>(4.l+39)	uleshort	x		\b, TotalPages 0x%4.4x
+#>>(4.l+39)	uleshort	x		\b, TotalPages %#4.4x
 ## NLevels			0x0001
-#>>(4.l+41)	uleshort	x		\b, NLevels 0x%4.4x
+#>>(4.l+41)	uleshort	x		\b, NLevels %#4.4x
 ## TotalBtreeEntries
-#>>(4.l+43)	ulelong		x		\b, TotalBtreeEntries 0x%8.8x
+#>>(4.l+43)	ulelong		x		\b, TotalBtreeEntries %#8.8x
 ## pages of the B+ tree
-#>>(4.l+47)	ubequad		x		\b, PageStart 0x%16.16llx
+#>>(4.l+47)	ubequad		x		\b, PageStart %#16.16llx
 
 # start with colon or semicolon for comment line like Back2Life.cnt
 0		regex		\^(:|;)
@@ -358,7 +428,7 @@
 # skip space at beginning
 >0     string		\040
 # name without extension and greater character or name with hlp extension
->>1	regex/c		\^([^\xd>]*|.*\.hlp)	MS Windows help file Content, based "%s"
+>>1	regex/c		\^([^\xd>]*|.*\\.hlp)	MS Windows help file Content, based "%s"
 !:mime	text/plain
 !:apple	????TEXT
 !:ext	cnt
@@ -382,6 +452,8 @@
 # Created by: unknown
 # 'L' + GUUID
 0	string		\114\0\0\0\001\024\002\0\0\0\0\0\300\0\0\0\0\0\0\106	MS Windows shortcut
+!:mime	application/x-ms-shortcut
+!:ext	lnk
 >20	lelong&1	1	\b, Item id list present
 >20	lelong&2	2	\b, Points to a file or directory
 >20	lelong&4	4	\b, Has Description string
@@ -427,9 +499,95 @@
 
 # Summary: Outlook Personal Folders
 # Created by: unknown
-0	lelong		0x4E444221	Microsoft Outlook email folder
->10	leshort		0x0e		(<=2002)
->10	leshort		0x17		(>=2003)
+# Update:	Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/Personal_Folder_File
+#		https://en.wikipedia.org/wiki/Personal_Storage_Table
+# Reference:	https://interoperability.blob.core.windows.net/files/MS-PST/%5bMS-PST%5d.pdf
+#		http://mark0.net/download/triddefs_xml.7z/defs/p/pab.trid.xml
+# dwMagic !BDN
+0	lelong		0x4E444221
+# skip DROID x-fmt-75-signature-id-472.pab x-fmt-248-signature-id-260.pst x-fmt-249-signature-id-261.pst
+# by check for existance of bPlatformCreate value
+>14	ubyte	x		Microsoft Outlook
+#!:mime		application/octet-stream
+# NOT official registered !
+!:mime		application/vnd.ms-outlook
+# dwCRCPartial; 32-bit cyclic redundancy check (CRC) value of followin 471 bytes; zero for 64-bit
+#>>4	ulelong		!0			\b, CRC %#x
+# wMagicClient; AB (4142h) is used for PAB files; SM (534Dh) is used for PST files; SO (534Fh) is used for OST files
+#>>8	leshort		x			\b, wMagicClient=%#x
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/p/pab.trid.xml
+# Note:		called "Microsoft Personal Address Book" by TrID and
+#		"Microsoft Outlook Personal Address Book" by DROID via x-fmt/75
+>>8	leshort		0x4142			Personal Address Book
+#!:mime	application/x-ms-pab
+!:ext	pab
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/p/pst.trid.xml
+#		http://mark0.net/download/triddefs_xml.7z/defs/p/pst-unicode.trid.xml
+# Note:		called "Microsoft OutLook Personal Folder" by TrID and
+#		by DROID via x-fmt/248 for ANSI and via x-fmt/249 for Unicode
+#>>8	leshort		0x4D53			\b, PST~
+# called "Microsoft Outlook email folder" in ./windows version 1.37 and older
+>>8	leshort		0x4D53			Personal Storage
+#!:mime	application/x-ms-pst
+!:ext	pst
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/o/ost.trid.xml
+# Note:		called "Outlook Exchange Offline Storage" by TrID
+>>8	leshort		0x4F53			Offline Storage
+#!:mime	application/x-ms-ost
+!:ext	ost
+# wVer; file format version. 14 or 15 if the file is ANSI; > 21 or 23(=17h) if Unicode; 37 for written by Outlook with WIP
+>>10	uleshort	x			(
+# probably NO intermediate versions exist
+>>10	leshort		<0x10			\b<=2002, ANSI,
+>>10	leshort		>0x14			\b>=2003, Unicode,
+>>10	uleshort	x			version %u)
+# wVerClient; client file format version like: 19 22
+#>>12	uleshort	x			\b, wVerClient=%u
+# bPlatformCreate; This value MUST be set to 1 but also found 2
+>>14	ubyte		>1			\b, bPlatformCreate=%u
+# bPlatformAccess; This value MUST be set to 1 but also found 2
+>>15	ubyte		>1			\b, bPlatformAccess=%u
+# dwReserved1; SHOULD ignore and NOT modify this value; SHOULD initialize to zero
+>>16	ulelong		!0			\b, dwReserved1=%#x
+# dwReserved2; SHOULD ignore and NOT modify this value; SHOULD initialize to zero
+>>20	ulelong		!0			\b, dwReserved2=%#x
+# ANSI 32-bit variant Outlook 1997-2002
+>>10	uleshort	<16
+# bidNextB; next BlockID (ANSI 4 bytes)
+#>>>24		ulelong	!0			\b, bidNextB=%#x
+# bidNextP; Next available back BlockID pointer
+#>>>28		ulelong	!0			\b, bidNextP=%#x
+# dwUnique; value monotonically increased when modifying PST; so CRC is changing
+>>>32		ulelong	!0			\b, dwUnique=%#x
+# rgnid[128]; A fixed array of 32 NodeIDs, each corresponding to one of the 32 possible NID_TYPEs
+#>>>36		ubequad	x			\b, rgnid=%#llx...
+# dwReserved; Implementations SHOULD ignore this value and SHOULD NOT modify it; Initialized zero
+>>>164		ulelong	!0			\b, dwReserved=%#x
+# ibFileEof; the size of the PST file, in bytes (ANSI 4 bytes)
+>>>168		ulelong	x			\b, %u bytes
+# ibAMapLast; offset to the last AMap page
+#>>>172		ulelong	x			\b, ibAMapLast=%#x
+# bSentinel; MUST be set to 0x80
+>>>460		ubyte	!0x80			\b, bSentinel=%#x
+# bCryptMethod: 0~No encryption 1~encryption with permutation 2~encryption with cyclic 16~encryption with Windows Information Protection (WIP)
+>>>461		ubyte	>0			\b, bCryptMethod=%u
+# UNICODE 64-bit variant Outlook 2003-2007
+>>10	uleshort >20
+# bidUnused; Unused 8 bytes padding (Unicode only); sometimes like: 0x0000000100000004
+>>>24		ulequad	!0x0000000100000004	\b, bidUnused=%#16.16llx
+# dwUnique; value monotonically increased when modifying PST; so CRC is changing
+>>>40		ulelong	!0			\b, dwUnique=%#x
+# rgnid[] (128 bytes): A fixed array of 32 NIDs, each corresponding to one of the 32 possible
+#>>>44		ubequad	x			\b, rgnid=%#llx...
+# ibFileEof; the size of the PST file, in bytes (Unicode 8 bytes)
+>>>184		ulequad	x			\b, %llu bytes
+# bSentinel; MUST be set to 0x80
+>>>512		ubyte	!0x80			\b, bSentinel=%#x
+# bCryptMethod; Encryption type like: 0 1 2 16
+>>>513		ubyte	>0			\b, bCryptMethod=%u
+# dwCRC; 32-bit CRC of the of the previous 516 bytes
+>>>524		ulelong		x		\b, CRC32 %#x
 
 
 # Summary: Windows help cache
@@ -495,10 +653,16 @@
 # empty line CRLF
 0	ubeshort	0x0D0A
 >0	use		ini-file
-# comment line
+# comment line starting with semicolon
 0	string		;
->0	use		ini-file
-# section line
+# look for phrase of Windows policy ADMinistrative template (with starting remark)
+# like: WINDOW_95_CD/TOOLS/RESKIT/netadmin/poledit/conf.adm
+>1	search/3548	END\040CATEGORY
+# ADM with remark (by adm-rem.trid.xml) already done by generic ASCII variant
+# if no Windows policy ADMinistrative template then Windows INItialization
+>1	default		x
+>>0	use		ini-file
+# section line starting with left bracket
 0	string		[
 >0	use		ini-file
 # check and then display Windows INItialization configuration
@@ -510,7 +674,7 @@
 # space after right bracket
 # or AutoRun.Amd64 for 64 bit systems
 # or only NL separator
->>&0	regex/c		\^(autorun)
+>>&0	regex/c		\^autorun
 # but sometimes total commander directory tree file "treeinfo.wc" with lines like
 # [AUTORUN]
 # [boot]
@@ -535,11 +699,11 @@
 # http://www.winfaq.de/faq_html/Content/tip2500/onlinefaq.php?h=tip2653.htm
 # https://msdn.microsoft.com/en-us/library/windows/desktop/cc144102.aspx
 # .ShellClassInfo DeleteOnCopy LocalizedFileNames ASCII coded case-independent
->>&0	regex/c	\^(\.ShellClassInfo|DeleteOnCopy|LocalizedFileNames)]	Windows desktop.ini
+>>&0	regex/1024c	\^(\\.ShellClassInfo|DeleteOnCopy|LocalizedFileNames)]	Windows desktop.ini
 !:mime application/x-wine-extension-ini
 #!:mime text/plain
 # https://support.microsoft.com/kb/84709/
->>&0	regex/c		\^(don't\ load)]				Windows CONTROL.INI
+>>&0	regex/c		\^don't\ load]					Windows CONTROL.INI
 !:mime application/x-wine-extension-ini
 !:ext	ini
 >>&0	regex/c		\^(ndishlp\\$|protman\\$|NETBEUI\\$)]		Windows PROTOCOL.INI
@@ -555,34 +719,57 @@
 !:mime application/x-wine-extension-ini
 !:ext	ini
 # http://www.mdgx.com/newtip6.htm
->>&0	regex/c		\^(SafeList)]					Windows IOS.INI
+>>&0	regex/c		\^SafeList]					Windows IOS.INI
 !:mime application/x-wine-extension-ini
 !:ext	ini
 # https://en.wikipedia.org/wiki/NTLDR	Windows Boot Loader information
->>&0	regex/c		\^(boot\x20loader)]				Windows boot.ini
+>>&0	regex/c		\^boot\x20loader]				Windows boot.ini
 !:mime application/x-wine-extension-ini
 !:ext	ini
 # https://en.wikipedia.org/wiki/CONFIG.SYS
->>&0	regex/c		\^(menu)]					MS-DOS CONFIG.SYS
+>>&0	regex/c		\^menu]						MS-DOS CONFIG.SYS
 # @CONFIG.UI configuration file of previous DOS version saved by Caldera OPENDOS INSTALL.EXE
 # CONFIG.PSS saved version of file CONFIG.SYS created by %WINDIR%\SYSTEM\MSCONFIG.EXE
 # CONFIG.TSH renamed file CONFIG.SYS.BAT by %WINDIR%\SYSTEM\MSCONFIG.EXE
 # dos and w40 used in dual booting scene
 !:ext	sys/dos/w40
 # https://support.microsoft.com/kb/118579/
->>&0	regex/c		\^(Paths)]\r\n					MS-DOS MSDOS.SYS
+>>&0	regex/c		\^Paths]\r\n					MS-DOS MSDOS.SYS
 !:ext	sys/dos
 # http://chmspec.nongnu.org/latest/INI.html#HHP
->>&0	regex/c		\^(options)]\r\n				Microsoft HTML Help Project
+>>&0	regex/c		\^options]\r\n					Microsoft HTML Help Project
 !:mime text/plain
 !:ext	hhp
 # From:		Joerg Jenderek
-# URL:		https://documentation.basis.com/BASISHelp/WebHelp/b3odbc/obdcdriv_character_translation.htm
+# URL:		https://documentation.basis.com/BASISHelp/WebHelp/b3odbc/ODBC_Driver/obdcdriv_character_translation.htm
 # Reference:	https://www.garykessler.net/library/file_sigs.html
+#		http://mark0.net/download/triddefs_xml.7z/defs/c/cpx.trid.xml
 # Note:		stored in directory %WINDIR%\SysWOW64 or %WINDIR%\system
->>&0	regex/c		\^(Windows\ Latin)				Windows codepage translator
-!:mime	text/plain
+#		second word often Latin but sometimes Cyrillic like in 12510866.CPX
+>>&0	regex/c		\^Windows\ (Latin|Cyrillic)			Windows codepage translator
+#!:mime	text/plain
+!:mime	text/x-ms-cpx
+# like: 12510866.CPX 
 !:ext	cpx
+# From:		Joerg Jenderek
+# URL:		https://en.wikipedia.org/wiki/InstallShield
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/l/lid-is.trid.xml
+# Note:		contain also 3 keywords like: count Default key0
+>>&0	regex/c		\^Languages]					InstallShield Language Identifier
+#!:mime	text/plain
+!:mime	text/x-installshield-lid
+# like: SETUP.LID
+!:ext	lid
+# From:		Joerg Jenderek
+# URL:		https://www.file-extensions.org/tag-file-extension
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/t/taginfo.trid.xml
+# Note:		contain also keywords like: Application Category Company Misc Version
+>>&0	regex/c		\^TagInfo]					TagInfo
+#!:mime	text/plain
+#!:mime	text/prs.lines.tag
+!:mime	text/x-ms-tag
+# like: DATA.TAG
+!:ext	tag
 # unknown keyword after opening bracket
 >>&0	default				x
 #>>>&0	string/c			x	UNKNOWN [%s
@@ -603,27 +790,72 @@
 !:mime	application/x-wine-extension-ini
 #!:mime	text/plain
 !:ext	ini/inf
+# UTF-16 BOM
+0	ubeshort		=0xFFFE
+# look for phrase of Windows policy ADMinistrative template (UTF-16 by adm-uni.trid.xml)
+# like: wuau.adm
+>2	search/0x384A	E\0N\0D\0\040\0C\0A\0T\0E\0G\0O\0R\0Y\0
+>>0	use		windows-adm
+# if no Windows policy ADMinistrative template then Windows INFormation
+>2	default		x
 # UTF-16 BOM followed by CR~0D00 , comment~semicolon~3B00 , section~bracket~5B00
-0	ubelong&0xFFff89FF	=0xFFFE0900
+>>0	ubelong&0xFFff89FF	=0xFFFE0900
 # look for left bracket in section line
->2	search/8192		[
+>>>2	search/8192		[
 # keyword without 1st letter which is maybe up-/down-case
->>&3	lestring16		ersion]			Windows setup INFormation
-!:mime	application/x-setupscript
-!:ext	inf
->>&3	lestring16		trings]			Windows setup INFormation
-!:mime	application/x-setupscript
-!:ext	inf
->>&3	lestring16		ourceDisksNames]	Windows setup INFormation
-!:mime	application/x-setupscript
-!:ext	inf
-# netnwcli.inf start with ;---[ NetNWCli.INX ]
->>&3	default			x
-# look for NL followed by left bracket
->>>&0	search/8192		\x0A\x00\x5b
 >>>>&3	lestring16		ersion]			Windows setup INFormation
 !:mime	application/x-setupscript
+# like: hdaudio.inf iscsi.inf spaceport.inf tpm.inf usbhub3.inf UVncVirtualDisplay.inf
 !:ext	inf
+>>>>&3	lestring16		trings]			Windows setup INFormation
+!:mime	application/x-setupscript
+# like: arduino_gemma.inf iis.inf MSM8960.inf
+!:ext	inf
+>>>>&3	lestring16		ourceDisksNames]	Windows setup INFormation
+!:mime	application/x-setupscript
+# like: atiixpag.inf mdmnokia.inf netefe32.inf rdpbus.inf
+!:ext	inf
+# netnwcli.inf start with ;---[ NetNWCli.INX ]
+>>>>&3	default			x
+# look for NL followed by left bracket
+>>>>>&0	search/8192		\x0A\x00\x5b
+# like: defltwk.inf netvwifibus.inf WSDPrint.inf
+>>>>>>&3 lestring16		ersion]			Windows setup INFormation
+!:mime	application/x-setupscript
+!:ext	inf
+
+# Summary:	Windows Policy ADMinistrative template
+# From:		Joerg Jenderek
+# URL:		https://en.wikipedia.org/wiki/Administrative_Template
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/a/adm.trid.xml
+# Note:		typically stored in directory like: %WINDIR%\system32\GroupPolicy\ADM
+# worst case ASCII variant starting with remark line like: inetset.adm
+0	search/0x4E	CLASS\040
+>&0	string		MACHINE
+>>0	use		windows-adm
+>&0	string		USER
+>>0	use		windows-adm
+# display information about Windows policy ADMinistrative template
+0	name		windows-adm	Windows Policy Administrative Template
+!:mime	text/x-ms-adm
+!:ext	adm
+# UTF-16 BOM implies UTF-16 encoded ADM (by adm-uni.trid.xml)
+>0	ubeshort		=0xFFFE
+>>2	lestring16		x		\b, 1st line "%s"
+# look for UTF-16 encoded CarriageReturn LineFeed
+>>>2	search/0x3A		\r\0\n\0
+>>>>&0	lestring16		x		\b, 2nd line "%s"
+# no UTF-16 BOM implies "ASCII" encoded ADM (by adm.trid.xml)
+>0	ubeshort		!0xFFFE
+>>0		string		x		\b, 1st line "%s"
+#>>>&0		ubequad		x		\b, 2ND %16.16llx
+# 2nd line empty
+>>>&2		beshort		=0x0D0A
+>>>>&0		beshort		!0x0D0A		\b, 3th line
+>>>>>&-2	string		x		"%s"
+# 2nd line with content
+>>>&2		beshort		!0x0D0A		\b, 2nd line
+>>>>&-2		string		x		"%s"
 
 # Windows Precompiled INF files *.PNF added by Joerg Jenderek at Mar 2013 of _PNF_HEADER inf.h
 # http://read.pudn.com/downloads3/sourcecode/windows/248345/win2k/private/windows/setup/setupapi/inf.h__.htm
@@ -639,21 +871,24 @@
 >>>2		uleshort	<3
 # look for colon in WinDirPath after PNF header
 #>>>>0x59	search/18	:
->>>>0	use	PreCompiledInf
+# skip few Adobe Photoshop Color swatch ("Mac OS.aco" TRUMATCH-Farben.aco Windows.aco) and some
+# Targa image (money-256.tga XING_B_UCM8.tga x-fmt-367-signature-id-604.tga) with "invalid low section name" \0
+>>>>(20.l)	ubelong		>0x40004000
+>>>>>0	use	PreCompiledInf
 0	name	PreCompiledInf
 >0		uleshort	x	Windows Precompiled iNF
 !:mime	application/x-pnf
 !:ext	pnf
 # major version 1 for older Windows like XP and 3 since about Windows Vista
-# 101h~98-XP; 301h~Windows Vista-7 ; 302h~Windows 10 14393; 303h~Windows 10 18362
+# 101h~95-XP; 301h~Windows Vista-7 ; 302h~Windows 10 14393; 303h~Windows 10 18362-Windows11
 >1		ubyte		x		\b, version %u
 >0		ubyte		x		\b.%u
 >0		uleshort	=0x0101		(Windows
->>4	ulelong&0x00000001	!0x00000001	98)
+>>4	ulelong&0x00000001	!0x00000001	95-98)
 >>4	ulelong&0x00000001	=0x00000001	XP)
 >0		uleshort	=0x0301		(Windows Vista-8.1)
 >0		uleshort	=0x0302		(Windows 10 older)
->0		uleshort	=0x0303		(Windows 10)
+>0		uleshort	=0x0303		(Windows 10-11)
 # 1 ,2 (windows 98 SE)
 >2		uleshort	!2		\b, InfStyle %u
 #	PNF_FLAG_IS_UNICODE		0x00000001
@@ -667,7 +902,7 @@
 #	UNKNOWN1			0x01000000
 #	UNKNOWN2			0x02000000
 >4	ulelong&0x03000180	>0		\b, flags
->>4	ulelong			x		0x%x
+>>4	ulelong			x		%#x
 >4	ulelong&0x00000001	0x00000001	\b, unicoded
 >4	ulelong&0x00000002	0x00000002	\b, has strings
 >4	ulelong&0x00000004	0x00000004	\b, src URL
@@ -678,16 +913,16 @@
 # >4	ulelong&0x00000100	0x00000100	\b, UNKNOWN
 # >4	ulelong&0x01000000	0x01000000	\b, UNKNOWN1
 # >4	ulelong&0x02000000	0x02000000	\b, UNKNOWN2
-#>8		ulelong		x		\b, InfSubstValueListOffset 0x%x
+#>8		ulelong		x		\b, InfSubstValueListOffset %#x
 # many 0, 1 lmouusb.PNF, 2 linkfx10.PNF , f webfdr16.PNF
 # , 6 bth.PNF, 9 usbport.PNF, d netnwifi.PNF, 10h nettcpip.PNF
-#>12		uleshort	x		\b, InfSubstValueCount 0x%x
+#>12		uleshort	x		\b, InfSubstValueCount %#x
 # only < 9 found: 8 hcw85b64.PNF
-#>14		uleshort	x		\b, InfVersionDatumCount 0x%x
+#>14		uleshort	x		\b, InfVersionDatumCount %#x
 # only found values lower 0x0000ffff ??
-#>16		ulelong		x		\b, InfVersionDataSize 0x%x
+#>16		ulelong		x		\b, InfVersionDataSize %#x
 # only found positive values lower 0x00ffFFff for InfVersionDataOffset
->20		ulelong		x		\b, at 0x%x
+>20		ulelong		x		\b, at %#x
 >4	ulelong&0x00000001	=0x00000001
 # case independent: CatalogFile Class DriverVer layoutfile LayoutFile SetupClass signature Signature
 >>(20.l)	lestring16	x		"%s"
@@ -695,23 +930,23 @@
 >>(20.l)	string		x		"%s"
 # FILETIME is number of 100-nanosecond intervals since 1 January 1601
 #>24		ulequad		x		\b, InfVersionLastWriteTime %16.16llx
-#>24		foodate-0xbar	x		\b, InfVersionLastWriteTime %s
+>24		qwdate		x		\b, InfVersionLastWriteTime %s
 # for Windows 98, XP
 >0		uleshort	<0x0102
 # only found values lower 0x00ffFFff
 # often 70 but also 78h for corelist.PNF
-# >>32		ulelong		x		\b, StringTableBlockOffset 0x%x
-# >>36		ulelong		x		\b, StringTableBlockSize 0x%x
-# >>40		ulelong		x		\b, InfSectionCount 0x%x
-# >>44		ulelong		x		\b, InfSectionBlockOffset 0x%x
-# >>48		ulelong		x		\b, InfSectionBlockSize 0x%x
-# >>52		ulelong		x		\b, InfLineBlockOffset 0x%x
-# >>56		ulelong		x		\b, InfLineBlockSize 0x%x
-# >>60		ulelong		x		\b, InfValueBlockOffset 0x%x
-# >>64		ulelong		x		\b, InfValueBlockSize 0x%x
+# >>32		ulelong		x		\b, StringTableBlockOffset %#x
+# >>36		ulelong		x		\b, StringTableBlockSize %#x
+# >>40		ulelong		x		\b, InfSectionCount %#x
+# >>44		ulelong		x		\b, InfSectionBlockOffset %#x
+# >>48		ulelong		x		\b, InfSectionBlockSize %#x
+# >>52		ulelong		x		\b, InfLineBlockOffset %#x
+# >>56		ulelong		x		\b, InfLineBlockSize %#x
+# >>60		ulelong		x		\b, InfValueBlockOffset %#x
+# >>64		ulelong		x		\b, InfValueBlockSize %#x
 # WinDirPathOffset
 # like 58h, which means direct after PNF header
-#>>68		ulelong		x		\b, at 0x%x
+#>>68		ulelong		x		\b, at %#x
 >>68		ulelong		x
 >>>4	ulelong&0x00000001	=0x00000001
 #>>>>(68.l)	ubequad		=0x43003a005c005700
@@ -732,18 +967,19 @@
 # seldom C:\ instead empty
 >>>>>(72.l)	string		x		OsLoaderPath "%s"
 # 1fdh
-#>>>76		uleshort	x		\b, StringTableHashBucketCount 0x%x
+#>>>76		uleshort	x		\b, StringTableHashBucketCount %#x
+# https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
 # only 407h found
 >>>78		uleshort	!0x409		\b, LanguageID %x
 #>>>78		uleshort	=0x409		\b, LanguageID %x
 # InfSourcePathOffset often 0
->>>80		ulelong		>0		\b, at 0x%x
+>>>80		ulelong		>0		\b, at %#x
 >>>>4	ulelong&0x00000001	=0x00000001
 >>>>>(80.l)	lestring16	x		SourcePath "%s"
 >>>>4	ulelong&0x00000001	!0x00000001
 >>>>>(80.l)	string		>\0		SourcePath "%s"
 # OriginalInfNameOffset often 0
->>>84		ulelong		>0		\b, at 0x%x
+>>>84		ulelong		>0		\b, at %#x
 >>>>4	ulelong&0x00000001	=0x00000001
 >>>>>(84.l)	lestring16	x		InfName "%s"
 >>>>4	ulelong&0x00000001	!0x00000001
@@ -751,7 +987,7 @@
 
 # for newer Windows like Vista, 7 , 8.1 , 10
 >0		uleshort	>0x0101
->>80	ulelong			x		\b, at 0x%x WinDirPath
+>>80	ulelong			x		\b, at %#x WinDirPath
 >>>4	ulelong&0x00000001	0x00000001
 # normally unicoded C:\Windows
 #>>>>(80.l)	ubequad		=0x43003a005c005700
@@ -761,7 +997,7 @@
 # language id: 0 407h~german 409h~English_US
 >>90		uleshort	!0x409		\b, LanguageID %x
 #>>90		uleshort	=0x409		\b, LanguageID %x
->>92	ulelong			>0		\b, at 0x%x
+>>92	ulelong			>0		\b, at %#x
 >>>4	ulelong&0x00000001	0x00000001
 # language string like: de-DE en-US
 >>>>(92.l)	lestring16	x		language %s
@@ -816,7 +1052,7 @@
 # Media Sequence Number
 >>>>>60	uleshort		>1		\b, sequence %u
 # Password Encryption Algorithm (3)
->>>>>62	uleshort		>0		\b, 0x%x encrypted
+>>>>>62	uleshort		>0		\b, %#x encrypted
 # Soft Filemark Block Size * 512 (2)
 #>>>>>64	uleshort		=2		\b, soft size %u*512
 >>>>>64	uleshort		!2		\b, soft size %u*512
@@ -845,7 +1081,7 @@
 # size of password name (0,1Ch)
 #>>>>>76	uleshort		>0		\b, password size %4.4x
 # Software Vendor ID (CBEh)
->>>>>86	uleshort		x		\b, software (0x%x)
+>>>>>86	uleshort		x		\b, software (%#x)
 # size of Software Name (6Eh)
 >>>>>80	uleshort		>0
 # offset of Software Name (1C8h,1CAh,1D0h)
@@ -897,9 +1133,9 @@
 >0x40	ubyte		0x7b
 >>0x40	string		x				%-.38s
 # do not know how this log version correlates to program version
->0x140	ulelong		x				\b, version 0x%x
+>0x140	ulelong		x				\b, version %#x
 # NumRecs
-#>0x144	ulelong		x				\b, 0x%4.4x records
+#>0x144	ulelong		x				\b, %#4.4x records
 # EndOffset means files size
 >0x148	ulelong		x				\b, %u bytes
 # Flags 5 25h 35h
@@ -945,7 +1181,7 @@
 # NotTotalSize: Cardinal;
 #>>0x48	ulelong		x				\b, NotTotalSize %u
 # CRCMessages: Longint;
-#>>0x4C	ulelong		x				\b, CRC 0x%x
+#>>0x4C	ulelong		x				\b, CRC %#x
 >>0x40	ulelong		x
 # (u) after version means unicoded messages
 >>>0x1c	search/2	(u)				(UTF-16),
@@ -1006,7 +1242,7 @@
 # 1-based index of the bootable image of the WIM, or 0 if no image is bootable
 >0x78	ulelong		>0			\b, bootable no. %u
 # dwFlags
-#>16	ulelong		x			\b, flags 0x%8.8x
+#>16	ulelong		x			\b, flags %#8.8x
 #define FLAG_HEADER_COMPRESSION		0x00000002
 #define FLAG_HEADER_READONLY            0x00000004
 #define FLAG_HEADER_SPANNED		0x00000008
@@ -1033,21 +1269,21 @@
 # dwCompressionSize; Uncompressed chunk size for resources or 0 if uncompressed
 #>20	ulelong		>0			\b, chunk size %u bytes
 # gWIMGuid
-#>24	ubequad		x			\b, GUID 0x%16.16llx
+#>24	ubequad		x			\b, GUID %#16.16llx
 #>>32	ubequad		x			\b%16.16llx
 # rhOffsetTable; the location of the resource lookup table
 # wim_reshdr_disk[24]= u8 size_in_wim[7] + u8 flags + le64 offset_in_wim + le64 uncompressed_size
-#>48	ubequad		x			\b, rhOffsetTable 0x%16.16llx
+#>48	ubequad		x			\b, rhOffsetTable %#16.16llx
 # rhXmlData; the location of the XML data
-#>0x50	ulelong		x			\b, at 0x%8.8x
+#>0x50	ulelong		x			\b, at %#8.8x
 # NOT WORKING \xff\xfe<\0W\0I\0M\0
 #>(0x50.l)	ubequad	x			\b, xml=%16.16llx
 # rhBootMetadata; the location of the metadata resource
-#>0x60	ubequad		x			\b, rhBootMetadata 0x%16.16llx
+#>0x60	ubequad		x			\b, rhBootMetadata %#16.16llx
 # rhIntegrity; the location of integrity table used to verify files
-#>0x7c	ubequad		x			\b, rhIntegrity 0x%16.16llx
+#>0x7c	ubequad		x			\b, rhIntegrity %#16.16llx
 # Unused[60]
-#>148	ubequad		!0			\b,unused 0x%16.16llx
+#>148	ubequad		!0			\b,unused %#16.16llx
 #
 
 # From:		Joerg Jenderek
@@ -1061,7 +1297,7 @@
 !:ext		mig
 >0x18		string		=MRTS	without password
 # data offset with 1 space at end
->>0x1c		ulelong+0x38	x	\b, at 0x%x 
+>>0x1c		ulelong+0x38	x	\b, at %#x 
 # look for zlib compressed data by ./compress
 >>(0x1c.l+0x38)	ubyte		x
 >>>&-1	indirect	x
@@ -1080,3 +1316,61 @@
 0	string	ID;P	Microsoft SYLK program
 >4	string	>0	\b, created by %s
 !:ext	slk/sylk
+
+# Summary:	Windows Performance Monitor Alert
+# From:		Joerg Jenderek
+# URL:		https://en.wikipedia.org/wiki/Performance_Monitor
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/p/pma.trid.xml
+# Note:		called "Windows Performance Monitor Alert" by TrID
+0	ubelong			=0xDC058340
+>4	ubyte			=0		Windows Performance Monitor Alert
+#!:mime		application/octet-stream
+# https://www.thoughtco.com/mime-types-by-content-type-3469108
+# https://filext.com/file-extension/PAM
+!:mime		application/x-perfmon 
+#!:mime		application/x-ms-pma
+!:ext		pma
+# metric type like: "BrowserMetrics" "CrashpadMetrics" "SetupMetrics"
+>>80	string			x		\b, "%s"
+
+# From:		Joerg Jenderek
+# URL:		https://en.wikipedia.org/wiki/InstallShield
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/i/ins.trid.xml
+# Note:		contain also keywords like: BATCH_INSTALL ISVERSION LOGHANDLE SRCDIR SRCDISK WINDIR WINSYSDISK 
+0	ubelong	0xB8C90C00	InstallShield Script
+#!:mime	application/octet-stream
+!:mime	application/x-installshield-ins
+# like test.ins Setup.ins
+!:ext	ins
+# UNKNOWN like: 160034121de07e00 1600341260befe00 16003412e0783700
+# 5000010021083f00 50000100b0335600 50000100cbfdf800 50000100dfbc4700
+#>4	ubequad		x		\b, at 4 %#16.16llx
+# copyright text like:	"Stirling Technologies, Inc.  (c) 1990-1994"
+#			"InstallSHIELD Software Coporation  (c) 1990-1997"
+>13	pstring/h	x		"%s"
+# look for specific ASCII variable names
+>1	search/0x121/s	SRCDIR	\b, variable names:
+# 1st like: SRCDIR
+>>&-4		leshort		x	#%u
+>>&-2		pstring/h	x	%s
+# 2nd like: SRCDISK
+>>>&0		leshort		x	#%u
+>>>&2		pstring/h	x	%s
+# 3rd like: TARGETDISK
+>>>>&0		leshort		x	#%u
+>>>>&2		pstring/h	x	%s
+# 4th like: TARGETDIR
+#>>>>>&0		leshort		x	#%u
+#>>>>>&2		pstring/h	x	%s
+# 5th like: WINDIR
+#>>>>>>&0	leshort		x	#%u
+#>>>>>>&2	pstring/h	x	%s
+# 6th like: WINDISK
+#>>>>>>>&0	leshort		x	#%u
+#>>>>>>>&2	pstring/h	x	%s
+# 7th like: WINSYSDIR
+#>>>>>>>>&0	leshort		x	#%u
+#>>>>>>>>&2	pstring/h	x	%s
+# ... LOGHANDLE
+>0		ubelong		x	...
+#

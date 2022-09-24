@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1.1.6 2021/04/09 18:58:02 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.1.1.7 2022/09/24 20:07:55 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -62,6 +62,8 @@ slurp(FILE *fp, size_t *final_len)
 		}
 		*s++ = c;
 	}
+	if (s != l && s[-1] == '\n')
+		s--;
 	if (s == l + len)
 		l = (char *)xrealloc(l, len + 1);
 	*s++ = '\0';
@@ -77,8 +79,8 @@ main(int argc, char **argv)
 	struct magic_set *ms;
 	const char *result;
 	size_t result_len, desired_len;
-	char *desired;
-	int i, e = EXIT_FAILURE;
+	char *desired = NULL;
+	int e = EXIT_FAILURE;
 	FILE *fp;
 
 
@@ -88,7 +90,7 @@ main(int argc, char **argv)
 	else
 		prog = argv[0];
 
-	ms = magic_open(MAGIC_NONE);
+	ms = magic_open(MAGIC_ERROR);
 	if (ms == NULL) {
 		(void)fprintf(stderr, "%s: ERROR opening MAGIC_NONE: %s\n",
 		    prog, strerror(errno));
@@ -107,7 +109,6 @@ main(int argc, char **argv)
 
 	if (argc != 3) {
 		(void)fprintf(stderr, "Usage: %s TEST-FILE RESULT\n", prog);
-		magic_close(ms);
 		goto bad;
 	}
 	if ((result = magic_file(ms, argv[1])) == NULL) {
@@ -133,6 +134,7 @@ main(int argc, char **argv)
 	}
 	e = 0;
 bad:
+	free(desired);
 	magic_close(ms);
 	return e;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.1.1.3 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.1.1.4 2022/09/24 20:07:55 christos Exp $	*/
 
 /*	$OpenBSD: strlcpy.c,v 1.10 2005/08/08 08:05:37 espie Exp $	*/
 
@@ -20,6 +20,13 @@
 
 /* OPENBSD ORIGINAL: lib/libc/string/strlcpy.c */
 #include "file.h"
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)$File: strlcpy.c,v 1.3 2022/09/13 18:46:07 christos Exp $")
+#else
+__RCSID("$NetBSD: strlcpy.c,v 1.1.1.4 2022/09/24 20:07:55 christos Exp $");
+#endif
+#endif
 
 #include <sys/types.h>
 #include <string.h>

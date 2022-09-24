@@ -1,4 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.11 2021/04/09 18:58:01 christos Exp $	*/
+/*	$NetBSD: file_opts.h,v 1.1.1.12 2022/09/24 20:07:55 christos Exp $	*/
 
 /*
  * Table of command-line options
@@ -6,7 +6,7 @@
  * The first column specifies the short name, if any, or 0 if none.
  * The second column specifies the long name.
  * The third column specifies whether it takes a parameter.
- * The fourth columns specifies whether is is marked as "default"
+ * The fourth column specifies whether is marked as "default"
  *      if POSIXLY_CORRECT is defined: 1,
  *      if POSIXLY_CORRECT is not defined: 2.
  * The fifth column is the documentation.
@@ -61,9 +61,9 @@ OPT('l', "list", 0, 0,
     "                 list magic strength\n")
 #ifdef S_IFLNK
 OPT('L', "dereference", 0, 1,
-    "          follow symlinks")
+    "          follow symlinks (default if POSIXLY_CORRECT is set)")
 OPT('h', "no-dereference", 0, 2,
-    "       don't follow symlinks")
+    "       don't follow symlinks (default if POSIXLY_CORRECT is not set)")
 #endif
 OPT('n', "no-buffer", 0, 0,
     "            do not buffer output\n")
