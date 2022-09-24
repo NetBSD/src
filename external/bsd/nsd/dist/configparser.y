@@ -20,7 +20,6 @@
 #include "dname.h"
 #include "tsig.h"
 #include "rrl.h"
-#include "configyyrename.h"
 
 int yylex(void);
 
@@ -32,10 +31,17 @@ extern "C"
 extern config_parser_state_type *cfg_parser;
 
 static void append_acl(struct acl_options **list, struct acl_options *acl);
+static void add_to_last_acl(struct acl_options **list, char *ac);
 static int parse_boolean(const char *str, int *bln);
 static int parse_expire_expr(const char *str, long long *num, uint8_t *expr);
 static int parse_number(const char *str, long long *num);
 static int parse_range(const char *str, long long *low, long long *high);
+
+struct component {
+	struct component *next;
+	char *str;
+};
+
 %}
 
 %union {
@@ -45,6 +51,8 @@ static int parse_range(const char *str, long long *low, long long *high);
   struct ip_address_option *ip;
   struct range_option *range;
   struct cpu_option *cpu;
+  char **strv;
+  struct component *comp;
 }
 
 %token <str> STRING
@@ -53,6 +61,8 @@ static int parse_range(const char *str, long long *low, long long *high);
 %type <ip> ip_address
 %type <llng> service_cpu_affinity
 %type <cpu> cpus
+%type <strv> command
+%type <comp> arguments
 
 /* server */
 %token VAR_SERVER
@@ -114,10 +124,13 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_TLS_SERVICE_PEM
 %token VAR_TLS_SERVICE_OCSP
 %token VAR_TLS_PORT
+%token VAR_TLS_CERT_BUNDLE
 %token VAR_CPU_AFFINITY
 %token VAR_XFRD_CPU_AFFINITY
 %token <llng> VAR_SERVER_CPU_AFFINITY
 %token VAR_DROP_UPDATES
+%token VAR_XFRD_TCP_MAX
+%token VAR_XFRD_TCP_PIPELINE
 
 /* dnstap */
 %token VAR_DNSTAP
@@ -145,12 +158,20 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_ALGORITHM
 %token VAR_SECRET
 
+/* xot auth */
+%token VAR_TLS_AUTH
+%token VAR_TLS_AUTH_DOMAIN_NAME
+%token VAR_TLS_AUTH_CLIENT_CERT
+%token VAR_TLS_AUTH_CLIENT_KEY
+%token VAR_TLS_AUTH_CLIENT_KEY_PW
+
 /* pattern */
 %token VAR_PATTERN
 %token VAR_NAME
 %token VAR_ZONEFILE
 %token VAR_NOTIFY
 %token VAR_PROVIDE_XFR
+%token VAR_ALLOW_QUERY
 %token VAR_AXFR
 %token VAR_UDP
 %token VAR_NOTIFY_RETRY
@@ -158,6 +179,9 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_REQUEST_XFR
 %token VAR_ALLOW_AXFR_FALLBACK
 %token VAR_OUTGOING_INTERFACE
+%token VAR_ANSWER_COOKIE
+%token VAR_COOKIE_SECRET
+%token VAR_COOKIE_SECRET_FILE
 %token VAR_MAX_REFRESH_TIME
 %token VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME
@@ -167,6 +191,10 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_SIZE_LIMIT_XFR
 %token VAR_ZONESTATS
 %token VAR_INCLUDE_PATTERN
+%token VAR_STORE_IXFR
+%token VAR_IXFR_SIZE
+%token VAR_IXFR_NUMBER
+%token VAR_CREATE_IXFR
 
 /* zone */
 %token VAR_ZONE
@@ -176,6 +204,16 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_SERVERS
 %token VAR_BINDTODEVICE
 %token VAR_SETFIB
+
+/* verify */
+%token VAR_VERIFY
+%token VAR_ENABLE
+%token VAR_VERIFY_ZONE
+%token VAR_VERIFY_ZONES
+%token VAR_VERIFIER
+%token VAR_VERIFIER_COUNT
+%token VAR_VERIFIER_FEED_ZONE
+%token VAR_VERIFIER_TIMEOUT
 
 %%
 
@@ -188,8 +226,10 @@ block:
   | dnstap
   | remote_control
   | key
+  | tls_auth
   | pattern
-  | zone ;
+  | zone
+  | verify ;
 
 server:
     VAR_SERVER server_block ;
@@ -433,6 +473,18 @@ server_option:
       (void)snprintf(buf, sizeof(buf), "%lld", $2);
       cfg_parser->opt->tls_port = region_strdup(cfg_parser->opt->region, buf);
     }
+  | VAR_TLS_CERT_BUNDLE STRING
+    { cfg_parser->opt->tls_cert_bundle = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_ANSWER_COOKIE boolean
+    { cfg_parser->opt->answer_cookie = $2; }
+  | VAR_COOKIE_SECRET STRING
+    { cfg_parser->opt->cookie_secret = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_COOKIE_SECRET_FILE STRING
+    { cfg_parser->opt->cookie_secret_file = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_XFRD_TCP_MAX number
+    { cfg_parser->opt->xfrd_tcp_max = (int)$2; }
+  | VAR_XFRD_TCP_PIPELINE number
+    { cfg_parser->opt->xfrd_tcp_pipeline = (int)$2; }
   | VAR_CPU_AFFINITY cpus
     {
       cfg_parser->opt->cpu_affinity = $2;
@@ -521,9 +573,9 @@ cpus:
       /* Users may specify "0 1", "0" "1", 0 1 or a combination thereof. */
       for(str = $2; (tok = strtok_r(str, " \t", &ptr)); str = NULL) {
         struct cpu_option *opt =
-          region_alloc(cfg_parser->opt->region, sizeof(*opt));
+          region_alloc_zero(cfg_parser->opt->region, sizeof(*opt));
         cpu = 0;
-        if(!parse_number(tok, &cpu) || opt->cpu < 0) {
+        if(!parse_number(tok, &cpu) || cpu < 0) {
           yyerror("expected a positive number");
           YYABORT;
         }
@@ -612,6 +664,61 @@ remote_control_option:
     { cfg_parser->opt->control_key_file = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_CONTROL_CERT_FILE STRING
     { cfg_parser->opt->control_cert_file = region_strdup(cfg_parser->opt->region, $2); }
+  ;
+
+tls_auth:
+    VAR_TLS_AUTH
+      {
+        tls_auth_options_type *tls_auth = tls_auth_options_create(cfg_parser->opt->region);
+        assert(cfg_parser->tls_auth == NULL);
+        cfg_parser->tls_auth = tls_auth;
+      }
+      tls_auth_block
+    {
+      struct tls_auth_options *tls_auth = cfg_parser->tls_auth;
+      if(tls_auth->name == NULL) {
+        yyerror("tls-auth has no name");
+      } else if(tls_auth->auth_domain_name == NULL) {
+        yyerror("tls-auth %s has no auth-domain-name", tls_auth->name);
+      } else if(tls_auth_options_find(cfg_parser->opt, tls_auth->name)) {
+        yyerror("duplicate tls-auth %s", tls_auth->name);
+      } else {
+      	tls_auth_options_insert(cfg_parser->opt, tls_auth);
+        cfg_parser->tls_auth = NULL;
+      }
+    } ;
+
+tls_auth_block:
+    tls_auth_block tls_auth_option | ;
+
+tls_auth_option:
+    VAR_NAME STRING
+    {
+      dname_type *dname;
+      dname = (dname_type *)dname_parse(cfg_parser->opt->region, $2);
+      cfg_parser->tls_auth->name = region_strdup(cfg_parser->opt->region, $2);
+      if(dname == NULL) {
+        yyerror("bad tls-auth name %s", $2);
+      } else {
+        region_recycle(cfg_parser->opt->region, dname, dname_total_size(dname));
+      }
+    }
+  | VAR_TLS_AUTH_DOMAIN_NAME STRING
+    {
+      cfg_parser->tls_auth->auth_domain_name = region_strdup(cfg_parser->opt->region, $2);
+    }
+  | VAR_TLS_AUTH_CLIENT_CERT STRING
+    {
+	    cfg_parser->tls_auth->client_cert = region_strdup(cfg_parser->opt->region, $2);
+    }
+  | VAR_TLS_AUTH_CLIENT_KEY STRING
+    {
+	    cfg_parser->tls_auth->client_key = region_strdup(cfg_parser->opt->region, $2);
+    }
+  | VAR_TLS_AUTH_CLIENT_KEY_PW STRING
+    {
+	    cfg_parser->tls_auth->client_key_pw = region_strdup(cfg_parser->opt->region, $2);
+    }
   ;
 
 key:
@@ -786,6 +893,8 @@ pattern_or_zone_option:
         yyerror("address range used for request-xfr");
       append_acl(&cfg_parser->pattern->request_xfr, acl);
     }
+	tlsauth_option
+	{ }
   | VAR_REQUEST_XFR VAR_AXFR STRING STRING
     {
       acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $3, $4);
@@ -796,6 +905,8 @@ pattern_or_zone_option:
         yyerror("address range used for request-xfr");
       append_acl(&cfg_parser->pattern->request_xfr, acl);
     }
+	tlsauth_option
+	{ }
   | VAR_REQUEST_XFR VAR_UDP STRING STRING
     {
       acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $3, $4);
@@ -824,6 +935,11 @@ pattern_or_zone_option:
     {
       acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
       append_acl(&cfg_parser->pattern->provide_xfr, acl);
+    }
+  | VAR_ALLOW_QUERY STRING STRING
+    {
+      acl_options_type *acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+      append_acl(&cfg_parser->pattern->allow_query, acl);
     }
   | VAR_OUTGOING_INTERFACE STRING
     {
@@ -871,7 +987,111 @@ pattern_or_zone_option:
       }
       cfg_parser->pattern->min_expire_time = num;
       cfg_parser->pattern->min_expire_time_expr = expr;
-    };
+    }
+  | VAR_STORE_IXFR boolean
+    {
+      cfg_parser->pattern->store_ixfr = $2;
+      cfg_parser->pattern->store_ixfr_is_default = 0;
+    }
+  | VAR_IXFR_SIZE number
+    {
+      cfg_parser->pattern->ixfr_size = $2;
+      cfg_parser->pattern->ixfr_size_is_default = 0;
+    }
+  | VAR_IXFR_NUMBER number
+    {
+      cfg_parser->pattern->ixfr_number = $2;
+      cfg_parser->pattern->ixfr_number_is_default = 0;
+    }
+  | VAR_CREATE_IXFR boolean
+    {
+      cfg_parser->pattern->create_ixfr = $2;
+      cfg_parser->pattern->create_ixfr_is_default = 0;
+    }
+  | VAR_VERIFY_ZONE boolean
+    { cfg_parser->pattern->verify_zone = $2; }
+  | VAR_VERIFIER command
+    { cfg_parser->pattern->verifier = $2; }
+  | VAR_VERIFIER_FEED_ZONE boolean
+    { cfg_parser->pattern->verifier_feed_zone = $2; }
+  | VAR_VERIFIER_TIMEOUT number
+    { cfg_parser->pattern->verifier_timeout = $2; } ;
+
+verify:
+    VAR_VERIFY verify_block ;
+
+verify_block:
+    verify_block verify_option | ;
+
+verify_option:
+    VAR_ENABLE boolean
+    { cfg_parser->opt->verify_enable = $2; }
+  | VAR_IP_ADDRESS ip_address
+    {
+      struct ip_address_option *ip = cfg_parser->opt->verify_ip_addresses;
+      if(!ip) {
+        cfg_parser->opt->verify_ip_addresses = $2;
+      } else {
+        while(ip->next) { ip = ip->next; }
+        ip->next = $2;
+      }
+    }
+  | VAR_PORT number
+    {
+      /* port number, stored as a string */
+      char buf[16];
+      (void)snprintf(buf, sizeof(buf), "%lld", $2);
+      cfg_parser->opt->verify_port = region_strdup(cfg_parser->opt->region, buf);
+    }
+  | VAR_VERIFY_ZONES boolean
+    { cfg_parser->opt->verify_zones = $2; }
+  | VAR_VERIFIER command
+    { cfg_parser->opt->verifier = $2; }
+  | VAR_VERIFIER_COUNT number
+    { cfg_parser->opt->verifier_count = (int)$2; }
+  | VAR_VERIFIER_TIMEOUT number
+    { cfg_parser->opt->verifier_timeout = (int)$2; }
+  | VAR_VERIFIER_FEED_ZONE boolean
+    { cfg_parser->opt->verifier_feed_zone = $2; } ;
+
+command:
+    STRING arguments
+    {
+      char **argv;
+      size_t argc = 1;
+      for(struct component *i = $2; i; i = i->next) {
+        argc++;
+      }
+      argv = region_alloc_zero(
+        cfg_parser->opt->region, (argc + 1) * sizeof(char *));
+      argc = 0;
+      argv[argc++] = $1;
+      for(struct component *j, *i = $2; i; i = j) {
+        j = i->next;
+        argv[argc++] = i->str;
+        region_recycle(cfg_parser->opt->region, i, sizeof(*i));
+      }
+      $$ = argv;
+    } ;
+
+arguments:
+    { $$ = NULL; }
+  | arguments STRING
+    {
+      struct component *comp = region_alloc_zero(
+        cfg_parser->opt->region, sizeof(*comp));
+      comp->str = region_strdup(cfg_parser->opt->region, $2);
+      if($1) {
+        struct component *tail = $1;
+        while(tail->next) {
+         tail = tail->next;
+        }
+        tail->next = comp;
+        $$ = $1;
+      } else {
+        $$ = comp;
+      }
+    } ;
 
 ip_address:
     STRING
@@ -901,6 +1121,11 @@ boolean:
       }
     } ;
 
+tlsauth_option:
+	| STRING
+	{ char *tls_auth_name = region_strdup(cfg_parser->opt->region, $1);
+	  add_to_last_acl(&cfg_parser->pattern->request_xfr, tls_auth_name);} ;
+
 %%
 
 static void
@@ -916,6 +1141,17 @@ append_acl(struct acl_options **list, struct acl_options *acl)
 			tail = tail->next;
 		tail->next = acl;
 	}
+}
+
+static void
+add_to_last_acl(struct acl_options **list, char *tls_auth_name)
+{
+	struct acl_options *tail = *list;
+	assert(list != NULL);
+	assert(*list != NULL);
+	while(tail->next != NULL)
+		tail = tail->next;
+	tail->tls_auth_name = tls_auth_name;
 }
 
 static int
