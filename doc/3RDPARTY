@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1879 2022/09/24 17:40:28 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1880 2022/09/24 18:12:49 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -164,7 +164,7 @@ Location:	external/mit/libuv/dist
 Notes:
 
 Package:	unbound
-Version:	1.13.1
+Version:	1.16.3
 Current Vers:	1.16.3
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
