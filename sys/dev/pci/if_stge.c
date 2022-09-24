@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.89 2022/01/22 19:08:33 martin Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.90 2022/09/24 18:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.89 2022/01/22 19:08:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.90 2022/09/24 18:12:43 thorpej Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

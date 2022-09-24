@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.58 2021/12/31 14:25:23 riastradh Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.59 2022/09/24 18:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.58 2021/12/31 14:25:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.59 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.58 2021/12/31 14:25:23 riastradh Exp $"
 #include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/rndsource.h>
 #include <sys/errno.h>
 #include <sys/systm.h>

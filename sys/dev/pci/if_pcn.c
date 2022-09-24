@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.76 2020/03/16 01:54:23 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.77 2022/09/24 18:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,13 +65,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.76 2020/03/16 01:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.77 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

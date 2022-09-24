@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.188 2022/09/11 15:23:39 ryo Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.189 2022/09/24 18:12:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.188 2022/09/11 15:23:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.189 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.46 2021/05/30 00:17:20 joerg Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.47 2022/09/24 18:12:42 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.46 2021/05/30 00:17:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.47 2022/09/24 18:12:42 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.46 2021/05/30 00:17:20 joerg Exp $");
 #include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

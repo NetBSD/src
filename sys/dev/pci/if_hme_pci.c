@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.39 2020/07/02 09:02:04 msaitoh Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.40 2022/09/24 18:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.39 2020/07/02 09:02:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.40 2022/09/24 18:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

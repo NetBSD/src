@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.85 2022/09/17 15:44:15 thorpej Exp $ */
+/* $NetBSD: if_vge.c,v 1.86 2022/09/24 18:12:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.85 2022/09/17 15:44:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.86 2022/09/24 18:12:43 thorpej Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.85 2022/09/17 15:44:15 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 

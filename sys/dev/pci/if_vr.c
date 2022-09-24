@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.136 2022/09/17 15:33:52 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.137 2022/09/24 18:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.136 2022/09/17 15:33:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.137 2022/09/24 18:12:43 thorpej Exp $");
 
 
 
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.136 2022/09/17 15:33:52 thorpej Exp $");
 #include <sys/callout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
