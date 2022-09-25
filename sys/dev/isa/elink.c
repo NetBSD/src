@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.18 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: elink.c,v 1.19 2022/09/25 17:11:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.18 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.19 2022/09/25 17:11:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/queue.h>
 
+#include <sys/queue.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 
 #include <dev/isa/elink.h>
@@ -84,8 +84,7 @@ elink_reset(bus_space_tag_t iot, bus_space_handle_t ioh, int bus)
 			goto out;
 
 	/* Mark this bus so we don't do it again. */
-	er = (struct elink_done_reset *)malloc(sizeof(struct elink_done_reset),
-	    M_DEVBUF, M_WAITOK);
+	er = kmem_alloc(sizeof(*er), KM_SLEEP);
 	er->er_bus = bus;
 	LIST_INSERT_HEAD(&elink_all_resets, er, er_link);
 

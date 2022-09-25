@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.88 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: wt.c,v 1.89 2022/09/25 17:11:48 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.88 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.89 2022/09/25 17:11:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.88 2016/07/14 10:19:06 msaitoh Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
@@ -438,7 +438,7 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	sc->bsize = (minor(dev) & WT_BSIZE) ? 1024 : 512;
-	sc->buf = malloc(sc->bsize, M_TEMP, M_WAITOK);
+	sc->buf = kmem_alloc(sc->bsize, KM_SLEEP);
 
 	sc->flags = TPINUSE;
 	if (flag & FREAD)
@@ -490,7 +490,7 @@ wtclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 done:
 	sc->flags &= TPREW | TPRMARK | TPSTART | TPTIMER;
-	free(sc->buf, M_TEMP);
+	kmem_free(sc->buf, sc->bsize);
 	return 0;
 }
 

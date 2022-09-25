@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.26 2014/04/03 23:49:47 mrg Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.27 2022/09/25 17:11:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.26 2014/04/03 23:49:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.27 2022/09/25 17:11:48 thorpej Exp $");
 
 #include "opt_pckbc.h"
 
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.26 2014/04/03 23:49:47 mrg Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 
@@ -190,8 +190,7 @@ pckbc_isa_attach(device_t parent, device_t self, void *aux)
 		    bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
-		    M_WAITOK|M_ZERO);
+		t = kmem_zalloc(sizeof(*t), KM_SLEEP);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
