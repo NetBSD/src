@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.23 2008/04/20 15:44:01 tsutsui Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.24 2022/09/25 21:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,14 +53,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.23 2008/04/20 15:44:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.24 2022/09/25 21:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>

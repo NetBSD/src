@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.30 2017/10/31 10:46:47 martin Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.31 2022/09/25 21:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,14 +51,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.30 2017/10/31 10:46:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.31 2022/09/25 21:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>

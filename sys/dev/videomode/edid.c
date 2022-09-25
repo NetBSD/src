@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.17 2022/04/16 18:15:22 andvar Exp $ */
+/* $NetBSD: edid.c,v 1.18 2022/09/25 21:27:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,14 +32,13 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.17 2022/04/16 18:15:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.18 2022/09/25 21:27:39 thorpej Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #else
 #include <stdlib.h>
 #include <inttypes.h>
