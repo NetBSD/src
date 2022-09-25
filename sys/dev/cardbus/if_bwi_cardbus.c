@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_cardbus.c,v 1.2 2012/04/12 12:52:58 nakayama Exp $ */
+/*	$NetBSD: if_bwi_cardbus.c,v 1.3 2022/09/25 17:33:19 thorpej Exp $ */
 /*	$OpenBSD: if_bwi_cardbus.c,v 1.13 2010/08/06 05:26:24 mglocker Exp $ */
 
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_cardbus.c,v 1.2 2012/04/12 12:52:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_cardbus.c,v 1.3 2022/09/25 17:33:19 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwi_cardbus.c,v 1.2 2012/04/12 12:52:58 nakayama 
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
