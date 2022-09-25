@@ -11,8 +11,8 @@ Comparing 1.000000 == 0.000000
 make: Bad conditional expression '1 == == 2' in '1 == == 2?yes:no'
 Comparing "" != ""
 make: "varmod-ifelse.mk" line 92: warning: Oops, the parse error should have been propagated.
-CondParser_Eval: ${ ${:U\$}{VAR} == value :?ok:bad} != "ok"
-CondParser_Eval: ${VAR} == value 
+CondParser_Eval: ${ ${:U\$}{VAR} == value:?ok:bad} != "ok"
+CondParser_Eval: ${VAR} == value
 Comparing "value" == "value"
 Comparing "ok" != "ok"
 make: "varmod-ifelse.mk" line 153: no.
