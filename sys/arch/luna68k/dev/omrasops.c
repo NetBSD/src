@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.21 2019/07/31 02:09:02 rin Exp $ */
+/* $NetBSD: omrasops.c,v 1.22 2022/09/25 11:22:36 isaki Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.21 2019/07/31 02:09:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.22 2022/09/25 11:22:36 isaki Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -80,7 +80,7 @@ static int	omrasops_init(struct rasops_info *, int, int);
 
 /*
  * macros to handle unaligned bit copy ops.
- * See src/sys/dev/rasops/rasops_mask.h for MI version.
+ * See src/sys/dev/rasops/rasops_masks.h for MI version.
  * Also refer src/sys/arch/hp300/dev/maskbits.h.
  * (which was implemented for ancient src/sys/arch/hp300/dev/grf_hy.c)
  */
@@ -97,7 +97,7 @@ static int	omrasops_init(struct rasops_info *, int, int);
 	asm("bfins %3,%0{%1:%2}"					\
 	    : "+o" (*(uint32_t *)(pdst))				\
 	    : "di" (x), "di" (w), "d" (src)				\
-	    : "memory" );
+	    : "memory" )
 
 #define	GETBITS(psrc, x, w, dst)	FASTGETBITS(psrc, x, w, dst)
 #define	PUTBITS(src, x, w, pdst)	FASTPUTBITS(src, x, w, pdst)
@@ -629,7 +629,7 @@ om1_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 
 	lmask = (db == 0) ? 0 : ALL1BITS >> db;
 	eb = (db + w) & ALIGNMASK;
-	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb); 
+	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb);
 	lnum = (32 - db) & ALIGNMASK;
 	rnum = (dstx + w) & ALIGNMASK;
 
@@ -765,7 +765,7 @@ om4_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 
 	lmask = (db == 0) ? 0 : ALL1BITS >> db;
 	eb = (db + w) & ALIGNMASK;
-	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb); 
+	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb);
 	lnum = (32 - db) & ALIGNMASK;
 	rnum = (dstx + w) & ALIGNMASK;
 
