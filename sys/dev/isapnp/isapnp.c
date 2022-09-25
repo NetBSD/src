@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.62 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.63 2022/09/25 17:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.62 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.63 2022/09/25 17:20:03 thorpej Exp $");
 
 #include "isadma.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 
@@ -862,7 +862,7 @@ isapnp_match(device_t parent, cfdata_t match, void *aux)
 		if (ipc->ipc_parent == parent)
 			return (0);
 
-	ipc = malloc(sizeof(*ipc), M_DEVBUF, M_WAITOK);
+	ipc = kmem_alloc(sizeof(*ipc), KM_SLEEP);
 	ipc->ipc_parent = parent;
 	LIST_INSERT_HEAD(&isapnp_probes, ipc, ipc_link);
 
