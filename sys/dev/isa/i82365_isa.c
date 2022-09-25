@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.35 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.36 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.35 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.36 2022/09/25 17:09:36 thorpej Exp $");
 
 #define	PCICISADEBUG
 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.35 2016/07/14 10:19:06 msaitoh Exp 
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

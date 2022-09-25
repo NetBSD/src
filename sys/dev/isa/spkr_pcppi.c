@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.13 2021/04/03 04:10:30 isaki Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.14 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,14 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.13 2021/04/03 04:10:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.14 2022/09/25 17:09:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>

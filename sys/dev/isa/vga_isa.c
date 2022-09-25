@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.21 2008/03/14 22:12:08 cube Exp $ */
+/* $NetBSD: vga_isa.c,v 1.22 2022/09/25 17:09:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.21 2008/03/14 22:12:08 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.22 2022/09/25 17:09:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/isa/isavar.h>
 
