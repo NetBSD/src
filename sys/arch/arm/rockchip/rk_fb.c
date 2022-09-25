@@ -1,4 +1,4 @@
-/* $NetBSD: rk_fb.c,v 1.6 2021/12/19 12:45:19 riastradh Exp $ */
+/* $NetBSD: rk_fb.c,v 1.7 2022/09/25 07:50:15 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.6 2021/12/19 12:45:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.7 2022/09/25 07:50:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,12 +87,6 @@ rk_fb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-#ifdef WSDISPLAY_MULTICONS
-	prop_dictionary_t dict = device_properties(self);
-	const bool is_console = true;
-	prop_dictionary_set_bool(dict, "is_console", is_console);
-#endif
 
 	rk_task_init(&sc->sc_attach_task, &rk_fb_init);
 	rk_task_schedule(parent, &sc->sc_attach_task);
