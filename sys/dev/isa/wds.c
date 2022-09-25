@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.80 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.80 2022/09/25 17:09:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 

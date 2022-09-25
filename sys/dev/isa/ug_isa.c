@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.9 2022/06/29 15:56:58 mlelstv Exp $ */
+/* $NetBSD: ug_isa.c,v 1.10 2022/09/25 17:09:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.9 2022/06/29 15:56:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.10 2022/09/25 17:09:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/conf.h>
 #include <sys/envsys.h>

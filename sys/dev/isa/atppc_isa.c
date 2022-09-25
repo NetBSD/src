@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.16 2021/12/03 13:27:38 andvar Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.17 2022/09/25 17:09:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.16 2021/12/03 13:27:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.17 2022/09/25 17:09:36 thorpej Exp $");
 
 #include "opt_atppc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <sys/intr.h>
