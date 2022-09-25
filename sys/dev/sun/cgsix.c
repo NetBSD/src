@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.71 2022/04/28 03:12:03 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.72 2022/09/25 21:30:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,14 +78,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.71 2022/04/28 03:12:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.72 2022/09/25 21:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
