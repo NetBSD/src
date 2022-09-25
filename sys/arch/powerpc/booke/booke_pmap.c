@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.34 2021/10/02 14:28:04 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.35 2022/09/25 06:21:58 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.34 2021/10/02 14:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.35 2022/09/25 06:21:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -125,9 +125,9 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 
 #ifdef PMAP_MINIMALTLB
 static pt_entry_t *
-kvtopte(const pmap_segtab_t *stp, vaddr_t va)
+kvtopte(const pmap_segtab_t *stb, vaddr_t va)
 {
-	pt_entry_t * const ptep = stp->seg_tab[va >> SEGSHIFT];
+	pt_entry_t * const ptep = stb->seg_tab[va >> SEGSHIFT];
 	if (ptep == NULL)
 		return NULL;
 	return &ptep[(va & SEGOFSET) >> PAGE_SHIFT];
@@ -136,9 +136,9 @@ kvtopte(const pmap_segtab_t *stp, vaddr_t va)
 vaddr_t
 pmap_kvptefill(vaddr_t sva, vaddr_t eva, pt_entry_t pt_entry)
 {
-	pmap_segtab_t * const stp = &pmap_kern_segtab;
+	pmap_segtab_t * const stb = &pmap_kern_segtab;
 	KASSERT(sva == trunc_page(sva));
-	pt_entry_t *ptep = kvtopte(stp, sva);
+	pt_entry_t *ptep = kvtopte(stb, sva);
 	for (; sva < eva; sva += NBPG) {
 		*ptep++ = pt_entry ? (sva | pt_entry) : 0;
 	}

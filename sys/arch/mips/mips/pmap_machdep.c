@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.36 2021/10/02 14:28:04 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.37 2022/09/25 06:21:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.36 2021/10/02 14:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.37 2022/09/25 06:21:58 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -444,23 +444,23 @@ pmap_bootstrap(void)
 	if (xsegs > 1) {
 		printf("%s: %zu xsegs required for %zu pages\n",
 		    __func__, xsegs, sysmap_size);
-		pmap_segtab_t *stp = (pmap_segtab_t *)
+		pmap_segtab_t *stb = (pmap_segtab_t *)
 		    uvm_pageboot_alloc(sizeof(pmap_segtab_t) * (xsegs - 1));
-		for (size_t i = 1; i <= xsegs; i++, stp++) {
-			pmap_kern_segtab.seg_seg[i] = stp;
+		for (size_t i = 1; i <= xsegs; i++, stb++) {
+			pmap_kern_segtab.seg_seg[i] = stb;
 		}
 	}
-	pmap_segtab_t ** const xstp = pmap_kern_segtab.seg_seg;
+	pmap_segtab_t ** const xstb = pmap_kern_segtab.seg_seg;
 #else
 	const size_t xsegs = 1;
-	pmap_segtab_t * const stp = &pmap_kern_segtab;
+	pmap_segtab_t * const stb = &pmap_kern_segtab;
 #endif
 	KASSERT(curcpu()->ci_pmap_kern_segtab == &pmap_kern_segtab);
 
 	for (size_t k = 0, i = 0; k < xsegs; k++) {
 #ifdef _LP64
-		pmap_segtab_t * const stp =
-		    xstp[(va >> XSEGSHIFT) & (NSEGPG - 1)];
+		pmap_segtab_t * const stb =
+		    xstb[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 #endif
 		bool done = false;
 
@@ -470,7 +470,7 @@ pmap_bootstrap(void)
 			/*
 			 * Now set the page table pointer...
 			 */
-			stp->seg_tab[j] = &sysmap[i];
+			stb->seg_tab[j] = &sysmap[i];
 #ifdef _LP64
 			/*
 			 * If we are at end of this XSEG, terminate the loop
