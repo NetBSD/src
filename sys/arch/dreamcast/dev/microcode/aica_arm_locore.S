@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm_locore.S,v 1.3 2019/05/06 17:12:50 ryo Exp $	*/
+/*	$NetBSD: aica_arm_locore.S,v 1.4 2022/09/25 21:19:20 ryo Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -49,6 +49,11 @@ exp_reset:
 	bic	r0,r0,#0x40
 	msr	CPSR_all,r0
 
+	mrc	p15,0,r0,c1,c0,0	/* read control register */
+	bic	r0,r0,#0x0004		/* DC disable */
+	orr	r0,r0,#0x1000		/* IC enable */
+	mcr	p15,0,r0,c1,c0,0	/* write control register */
+
 	bl	aica_main
 
 exp_reserved:
@@ -69,3 +74,30 @@ exp_swi:
 exp_undef:
 	mov	pc,r14
 
+	.global memset
+/* memset(void *b:r0, int c:r1, size_t len:r2) */
+memset:
+	/* optimized only if c == 0 and b is 4-byte aligned. */
+	and	r3,r0,#3	/* r0 is 4byte aligned ? */
+	orrs	r3,r3,r1	/* r1 == 0 ? */
+	mov	r3,r0		/* p:r3 = b; */
+	bne	.memset_byte
+	add	r2,r0,r2	/* e:r2 = b + (len & -4); */
+	bic	r2,r2,#3
+.memset32_zero:
+	cmp	r3,r2		/* if (e > p) { */
+	bls	.memset_byte
+1:				/*  do { */
+	str	r1,[r3],#4	/*   *(uint32_t *)p++ = c; */
+	cmp	r3,r2		/*  while (e < p); */
+	bhi	1b
+				/* } */
+.memset_byte:
+	add	r2,r0,r2	/* e:r2 = b + len; */
+	cmp	r0,r2		/* if (e > p) return; */
+	movls	pc,lr
+1:				/* do { */
+	strb	r1,[r3],#1	/*  *(uint8_t *)p++ = c; */
+	cmp	r3,r2		/* while (e < p); */
+	bhi	1b
+	mov	pc,lr		/* return; */
