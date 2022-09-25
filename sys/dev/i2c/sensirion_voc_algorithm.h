@@ -1,5 +1,5 @@
 /*
- *	$NetBSD: sensirion_voc_algorithm.h,v 1.1 2021/10/14 13:54:46 brad Exp $
+ *	$NetBSD: sensirion_voc_algorithm.h,v 1.2 2022/09/25 12:41:46 andvar Exp $
  */
 
 /*
@@ -140,7 +140,7 @@ void VocAlgorithm_get_states(VocAlgorithmParams* params, int32_t* state0,
 /**
  * Set previously retrieved algorithm states to resume operation after a short
  * interruption, skipping initial learning phase. This feature should not be
- * used after inerruptions of more than 10 minutes. Call this once after
+ * used after interruptions of more than 10 minutes. Call this once after
  * VocAlgorithm_init() and the optional VocAlgorithm_set_tuning_parameters(), if
  * desired. Otherwise, the algorithm will start with initial learning phase.
  * @param params    Pointer to the VocAlgorithmParams struct

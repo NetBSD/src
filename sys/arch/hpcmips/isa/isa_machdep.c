@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.42 2022/09/25 12:41:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.42 2022/09/25 12:41:46 andvar Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -71,7 +71,7 @@ int vrisa_debug = VRISADEBUG_CONF;
 #endif /* VRISADEBUG */
 
 /*
- * intrrupt no. encoding:
+ * interrupt no. encoding:
  *
  * 0x0000000f ISA IRQ#
  * 0x00ff0000 GPIO port#
@@ -90,7 +90,7 @@ void	vrisabattach(device_t, device_t, void *);
 
 struct vrisab_softc {
 	hpcio_chip_t sc_hc;
-	int sc_intr_map[INTR_NIRQS]; /* ISA <-> GIU inerrupt line mapping */
+	int sc_intr_map[INTR_NIRQS]; /* ISA <-> GIU interrupt line mapping */
 	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
