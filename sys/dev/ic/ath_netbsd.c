@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.22 2014/02/25 18:30:09 pooka Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.23 2022/09/25 18:43:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.22 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.23 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.22 2014/02/25 18:30:09 pooka Exp $"
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>

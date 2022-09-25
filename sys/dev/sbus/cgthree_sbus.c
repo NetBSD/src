@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.31 2016/04/21 18:10:57 macallan Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.32 2022/09/25 18:03:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,14 +78,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.31 2016/04/21 18:10:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.32 2022/09/25 18:03:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>

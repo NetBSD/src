@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.97 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.98 2022/09/25 18:03:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.97 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.98 2022/09/25 18:03:04 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.97 2022/09/02 23:48:10 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

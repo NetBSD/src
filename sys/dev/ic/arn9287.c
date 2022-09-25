@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9287.c,v 1.3 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: arn9287.c,v 1.4 2022/09/25 18:43:32 thorpej Exp $	*/
 /*	$OpenBSD: ar9287.c,v 1.17 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9287.c,v 1.3 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9287.c,v 1.4 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: arn9287.c,v 1.3 2013/10/17 21:24:24 christos Exp $")
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/conf.h>

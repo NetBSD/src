@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.34 2022/09/18 17:54:46 thorpej Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.35 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -94,7 +94,6 @@
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/sockio.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/cprng.h>
 #include <sys/rndsource.h>

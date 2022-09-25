@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: if_rtw_pci.c,v 1.25 2022/09/25 17:52:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
@@ -66,12 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.25 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

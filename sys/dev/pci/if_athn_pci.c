@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.14 2022/09/25 17:52:25 thorpej Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.14 2022/09/25 17:52:25 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.13 2018/12/09 11:14:02 jdolecek Ex
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 

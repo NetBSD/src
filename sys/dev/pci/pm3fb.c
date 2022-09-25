@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.8 2021/08/25 21:50:29 andvar Exp $ */
+/* $NetBSD: pm3fb.c,v 1.9 2022/09/25 17:52:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.8 2021/08/25 21:50:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.9 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>

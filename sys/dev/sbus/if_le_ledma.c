@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.37 2022/05/29 10:43:46 rin Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.38 2022/09/25 18:03:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.37 2022/05/29 10:43:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.38 2022/09/25 18:03:04 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.37 2022/05/29 10:43:46 rin Exp $")
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

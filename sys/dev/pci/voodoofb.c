@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.56 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.56 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/kauth.h>
 

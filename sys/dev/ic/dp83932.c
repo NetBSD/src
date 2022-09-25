@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.48 2022/06/25 02:46:15 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.49 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.48 2022/06/25 02:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.49 2022/09/25 18:43:32 thorpej Exp $");
 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

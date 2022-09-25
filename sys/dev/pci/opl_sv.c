@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sv.c,v 1.17 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: opl_sv.c,v 1.18 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.17 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.18 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/select.h>

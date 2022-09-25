@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.25 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.26 2022/09/25 17:52:25 thorpej Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.24 2015/11/24 17:11:39 mpi Exp $  */
 
 /*-
@@ -21,7 +21,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2860/RT3090 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.25 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.26 2022/09/25 17:52:25 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -30,7 +30,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.25 2018/12/09 11:14:02 jdolecek Exp
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <sys/bus.h>

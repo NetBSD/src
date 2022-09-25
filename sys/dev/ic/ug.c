@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.14 2020/06/24 19:24:44 jdolecek Exp $ */
+/* $NetBSD: ug.c,v 1.15 2022/09/25 18:43:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,14 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.14 2020/06/24 19:24:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.15 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/conf.h>
 #include <sys/envsys.h>

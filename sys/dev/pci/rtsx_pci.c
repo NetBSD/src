@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.9 2020/04/27 23:06:34 jmcneill Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.10 2022/09/25 17:52:25 thorpej Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 
@@ -20,12 +20,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.9 2020/04/27 23:06:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.10 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/pmf.h>
 
 #include <dev/pci/pcivar.h>

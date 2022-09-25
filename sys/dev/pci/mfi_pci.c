@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.21 2022/05/05 07:18:03 msaitoh Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,12 +17,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.21 2022/05/05 07:18:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

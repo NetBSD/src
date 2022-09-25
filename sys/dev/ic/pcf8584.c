@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.19 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.20 2022/09/25 18:43:32 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/bus.h>

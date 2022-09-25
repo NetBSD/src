@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.58 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.59 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.58 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.59 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

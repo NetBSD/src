@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.106 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.107 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,13 +34,12 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.106 2021/08/07 16:19:14 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.107 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>

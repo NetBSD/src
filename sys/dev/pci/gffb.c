@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.21 2022/08/15 11:55:52 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.21 2022/08/15 11:55:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>

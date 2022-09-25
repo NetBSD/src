@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.30 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.31 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -56,11 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.30 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.31 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>

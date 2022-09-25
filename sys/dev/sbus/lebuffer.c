@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.40 2022/01/22 11:49:18 thorpej Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.41 2022/09/25 18:03:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.40 2022/01/22 11:49:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.41 2022/09/25 18:03:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>

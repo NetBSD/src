@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.25 2022/01/21 19:14:14 thorpej Exp $ */
+/*	$NetBSD: xbox.c,v 1.26 2022/09/25 18:03:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.25 2022/01/21 19:14:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.26 2022/09/25 18:03:04 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 

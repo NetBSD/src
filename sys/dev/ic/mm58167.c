@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.16 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.16 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
