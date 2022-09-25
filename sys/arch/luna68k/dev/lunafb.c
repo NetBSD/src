@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.46 2022/07/14 20:13:21 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.47 2022/09/25 11:28:40 isaki Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.46 2022/07/14 20:13:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.47 2022/09/25 11:28:40 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ struct bt458 {
 
 #define	OMFB_RFCNT	BMAP_RFCNT	/* video h-origin/v-origin */
 #define	OMFB_RAMDAC	BMAP_PALLET2	/* Bt454/Bt458 RAMDAC */
+#define	OMFB_FB_WADDR	(BMAP_BMP + 8)	/* common bitmap plane */
+#define	OMFB_FB_RADDR	(BMAP_BMAP0 + 8)/* bitmap plane #0 */
 
 #define	OMFB_SIZE	(BMAP_FN0 - BMAP_BMP + PAGE_SIZE)
 
@@ -172,6 +174,8 @@ CFATTACH_DECL_NEW(fb, sizeof(struct omfb_softc),
     omfbmatch, omfbattach, NULL, NULL);
 
 extern int hwplanemask;	/* hardware planemask; retrieved at boot */
+
+int hwplanecount;	/* for omrasops */
 
 static int omfb_console;
 int  omfb_cnattach(void);
@@ -456,7 +460,7 @@ omfb_resetcmap(struct om_hwdevconfig *dc)
 static void
 omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 {
-	int bpp, i;
+	int i;
 	struct rasops_info *ri;
 	union {
 		struct { short h, v; } p;
@@ -465,21 +469,21 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 
 	switch (hwplanemask) {
 	case 0xff:
-		bpp = 8;	/* XXX check monochrome bit in DIPSW */
+		hwplanecount = 8;	/* XXX check monochrome bit in DIPSW */
 		break;
 	default:
 	case 0x0f:
-		bpp = 4;	/* XXX check monochrome bit in DIPSW */
+		hwplanecount = 4;	/* XXX check monochrome bit in DIPSW */
 		break;
 	case 1:
-		bpp = 1;
+		hwplanecount = 1;
 		break;
 	}
 	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
-	dc->dc_depth = bpp;
+	dc->dc_depth = hwplanecount;
 	dc->dc_rowbytes = 2048 / 8;
-	dc->dc_cmsize = (bpp == 1) ? 0 : 1 << bpp;
+	dc->dc_cmsize = (hwplanecount == 1) ? 0 : 1 << hwplanecount;
 	dc->dc_videobase = paddr;
 
 	omfb_resetcmap(dc);
@@ -509,7 +513,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_hw = dc;
 
-	if (bpp == 4 || bpp == 8)
+	if (hwplanecount == 4 || hwplanecount == 8)
 		omrasops4_init(ri, 34, 80);
 	else
 		omrasops1_init(ri, 34, 80);
