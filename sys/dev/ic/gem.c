@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.134 2021/03/10 18:26:16 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.135 2022/09/25 18:43:32 thorpej Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.134 2021/03/10 18:26:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.135 2022/09/25 18:43:32 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.134 2021/03/10 18:26:16 christos Exp $");
 #include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.78 2022/09/02 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.79 2022/09/25 18:03:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.78 2022/09/02 23:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.79 2022/09/25 18:03:04 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.78 2022/09/02 23:48:11 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

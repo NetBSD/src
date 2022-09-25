@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.112 2022/06/25 02:46:15 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.113 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.112 2022/06/25 02:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.113 2022/09/25 18:43:32 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.112 2022/06/25 02:46:15 tsutsui Exp $"
 #include <sys/device.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 

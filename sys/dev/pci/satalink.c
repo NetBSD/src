@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.57 2019/10/21 19:00:11 christos Exp $	*/
+/*	$NetBSD: satalink.c,v 1.58 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.57 2019/10/21 19:00:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.58 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

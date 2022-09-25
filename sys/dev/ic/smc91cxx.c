@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.107 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.108 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.107 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.108 2022/09/25 18:43:32 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.107 2022/05/24 20:50:19 andvar Exp $"
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/rndsource.h>

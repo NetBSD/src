@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.55 2020/01/29 14:53:40 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.56 2022/09/25 18:43:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.55 2020/01/29 14:53:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.56 2022/09/25 18:43:32 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.55 2020/01/29 14:53:40 thorpej Exp $");
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/rndsource.h>
 

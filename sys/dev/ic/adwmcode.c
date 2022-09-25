@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.18 2019/12/15 16:48:27 tsutsui Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.19 2022/09/25 18:43:32 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.18 2019/12/15 16:48:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.19 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.18 2019/12/15 16:48:27 tsutsui Exp $"
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 

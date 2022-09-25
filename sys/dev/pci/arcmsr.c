@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.44 2022/09/25 17:52:25 thorpej Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,12 +21,11 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.44 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>

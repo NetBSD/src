@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.34 2021/12/19 21:15:28 andvar Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.35 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.34 2021/12/19 21:15:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.35 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>

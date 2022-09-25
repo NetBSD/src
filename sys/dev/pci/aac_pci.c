@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.42 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,13 +65,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.42 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>

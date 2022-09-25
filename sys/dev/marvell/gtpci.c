@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.37 2022/07/21 10:09:21 andvar Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.38 2022/09/25 18:45:45 thorpej Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.37 2022/07/21 10:09:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.38 2022/09/25 18:45:45 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.37 2022/07/21 10:09:21 andvar Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 
 #include <prop/proplib.h>
 
