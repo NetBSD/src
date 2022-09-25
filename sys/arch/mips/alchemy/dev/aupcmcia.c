@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.12 2021/08/07 16:18:58 thorpej Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.13 2022/09/25 12:41:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.12 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.13 2022/09/25 12:41:46 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,7 +374,7 @@ aupcm_event_thread(void *arg)
 			 * XXX: Currently, the au_icu.c lacks support
 			 * for edge-triggered interrupts.  So we
 			 * cannot really use the status change
-			 * inerrupts.  For now we poll (once per sec).
+			 * interrupts.  For now we poll (once per sec).
 			 * FYI, Linux does it this way, and they *do*
 			 * have support for edge triggered interrupts.
 			 * Go figure.
