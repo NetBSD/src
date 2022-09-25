@@ -1,4 +1,4 @@
-/* $NetBSD: ti_fb.c,v 1.3 2021/12/19 12:44:57 riastradh Exp $ */
+/* $NetBSD: ti_fb.c,v 1.4 2022/09/25 07:50:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_fb.c,v 1.3 2021/12/19 12:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_fb.c,v 1.4 2022/09/25 07:50:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,13 +100,6 @@ tilcdc_fb_init(struct tilcdc_drm_task *task)
 	    sc_attach_task);
 	device_t self = sc->sc_dev;
 	struct tilcdcfb_attach_args * const tfa = &sc->sc_tfa;
-
-#ifdef WSDISPLAY_MULTICONS
-	prop_dictionary_t dict = device_properties(self);
-	const bool is_console = true;
-	prop_dictionary_set_bool(dict, "is_console", is_console);
-#endif
-
 	const struct drmfb_attach_args da = {
 		.da_dev = self,
 		.da_fb_helper = tfa->tfa_fb_helper,

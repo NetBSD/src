@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.13 2022/07/02 05:04:36 skrll Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.14 2022/09/25 07:50:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.13 2022/07/02 05:04:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.14 2022/09/25 07:50:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -391,6 +391,11 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": TI LCDC (disabled)\n");
 		return;
 	}
+
+#ifdef WSDISPLAY_MULTICONS
+	const bool is_console = true;
+	prop_dictionary_set_bool(dict, "is_console", is_console);
+#endif
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
