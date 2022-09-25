@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.76 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.77 2022/09/25 17:11:48 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.76 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.77 2022/09/25 17:11:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.76 2021/08/07 16:19:12 thorpej Exp $")
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/intr.h>
 #include <machine/pio.h>
@@ -808,7 +808,7 @@ sea_grow_scb(struct sea_softc *sea)
 		return;
 	}
 
-	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT|M_ZERO);
+	scb = kmem_zalloc(sizeof(*scb), KM_NOSLEEP);
 	if (scb == NULL)
 		return;
 
