@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.43 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.44 2022/09/25 21:53:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,13 +44,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.43 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.44 2022/09/25 21:53:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
