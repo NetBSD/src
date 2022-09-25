@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_fb.c,v 1.7 2021/12/19 12:28:20 riastradh Exp $ */
+/* $NetBSD: sunxi_fb.c,v 1.8 2022/09/25 07:50:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.7 2021/12/19 12:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.8 2022/09/25 07:50:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,11 +92,6 @@ sunxi_fb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#ifdef WSDISPLAY_MULTICONS
-	prop_dictionary_t dict = device_properties(self);
-	const bool is_console = true;
-	prop_dictionary_set_bool(dict, "is_console", is_console);
-#endif
 	sunxi_task_init(&sc->sc_attach_task, &sunxi_fb_init);
 	sunxi_task_schedule(parent, &sc->sc_attach_task);
 }
