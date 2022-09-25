@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.45 2011/10/07 20:47:42 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.46 2022/09/25 17:33:19 thorpej Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.45 2011/10/07 20:47:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.46 2022/09/25 17:33:19 thorpej Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

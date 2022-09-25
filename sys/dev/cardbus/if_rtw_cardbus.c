@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.46 2022/09/25 17:33:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,14 +64,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.46 2022/09/25 17:33:19 thorpej Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

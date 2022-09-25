@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.30 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.31 2022/09/25 17:33:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,11 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.30 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.31 2022/09/25 17:33:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
