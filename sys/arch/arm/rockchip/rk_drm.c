@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.19 2022/04/21 21:22:25 andvar Exp $ */
+/* $NetBSD: rk_drm.c,v 1.20 2022/09/25 07:50:15 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.19 2022/04/21 21:22:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.20 2022/09/25 07:50:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,6 +132,11 @@ rk_drm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
+
+#ifdef WSDISPLAY_MULTICONS
+	const bool is_console = true;
+	prop_dictionary_set_bool(dict, "is_console", is_console);
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
