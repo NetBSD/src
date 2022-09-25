@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.54 2022/08/13 21:51:33 jmcneill Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,14 +65,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.54 2022/08/13 21:51:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/vmem.h>
 

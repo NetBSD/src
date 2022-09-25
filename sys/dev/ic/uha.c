@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.49 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.50 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.49 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.50 2022/09/25 18:43:32 thorpej Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.49 2021/08/07 16:19:12 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 

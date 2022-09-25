@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb_bios.c,v 1.6 2020/09/18 20:44:20 macallan Exp $ */
+/* $NetBSD: radeonfb_bios.c,v 1.7 2022/09/25 17:52:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,12 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.6 2020/09/18 20:44:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.7 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <dev/pci/pcidevs.h>

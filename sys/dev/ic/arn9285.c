@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9285.c,v 1.4 2019/07/25 11:56:09 msaitoh Exp $	*/
+/*	$NetBSD: arn9285.c,v 1.5 2022/09/25 18:43:32 thorpej Exp $	*/
 /*	$OpenBSD: ar9285.c,v 1.19 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9285.c,v 1.4 2019/07/25 11:56:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9285.c,v 1.5 2022/09/25 18:43:32 thorpej Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: arn9285.c,v 1.4 2019/07/25 11:56:09 msaitoh Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/conf.h>

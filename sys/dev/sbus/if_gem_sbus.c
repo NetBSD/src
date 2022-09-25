@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.13 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,13 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.13 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.23 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.24 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,14 +50,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.23 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.24 2022/09/25 18:43:32 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <sys/bus.h>

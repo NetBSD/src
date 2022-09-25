@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.83 2020/10/20 18:17:58 roy Exp $	*/
+/*	$NetBSD: am7990.c,v 1.84 2022/09/25 18:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.83 2020/10/20 18:17:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.84 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.83 2020/10/20 18:17:58 roy Exp $");
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/rndsource.h>

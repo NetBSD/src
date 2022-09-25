@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.44 2019/12/15 16:48:27 tsutsui Exp $        */
+/* $NetBSD: adwlib.c,v 1.45 2022/09/25 18:43:32 thorpej Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -45,11 +45,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.44 2019/12/15 16:48:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.45 2022/09/25 18:43:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>

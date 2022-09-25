@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.44 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.45 2022/09/25 17:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.44 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.45 2022/09/25 17:52:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 
