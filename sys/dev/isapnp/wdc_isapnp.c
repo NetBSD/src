@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.44 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.45 2022/09/25 17:19:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.44 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.45 2022/09/25 17:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
