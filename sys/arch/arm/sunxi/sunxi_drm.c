@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.25 2022/06/28 05:19:03 skrll Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.26 2022/09/25 07:50:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.25 2022/06/28 05:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.26 2022/09/25 07:50:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,6 +148,11 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal(": Display Engine Pipeline\n");
+
+#ifdef WSDISPLAY_MULTICONS
+	const bool is_console = true;
+	prop_dictionary_set_bool(dict, "is_console", is_console);
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
