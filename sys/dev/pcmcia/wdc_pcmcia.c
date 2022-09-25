@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.129 2021/10/05 08:21:10 rin Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.130 2022/09/25 21:53:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.129 2021/10/05 08:21:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.130 2022/09/25 21:53:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
