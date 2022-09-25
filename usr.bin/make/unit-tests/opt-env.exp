@@ -1,5 +1,1 @@
-make: "opt-env.mk" line 13: Malformed conditional (${FROM_ENV} != value-from-env)
-make: "opt-env.mk" line 20: value-from-mk
-
-make: stopped in unit-tests
-exit status 1
+exit status 0
