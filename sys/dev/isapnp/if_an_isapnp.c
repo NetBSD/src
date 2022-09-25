@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.23 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.24 2022/09/25 17:19:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,12 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.23 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.24 2022/09/25 17:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
