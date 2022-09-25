@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfxfb.c,v 1.3 2022/07/18 23:34:03 riastradh Exp $	*/
+/*	$NetBSD: vmwgfxfb.c,v 1.4 2022/09/25 08:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfxfb.c,v 1.3 2022/07/18 23:34:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfxfb.c,v 1.4 2022/09/25 08:21:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -128,21 +128,7 @@ vmwgfxfb_attach_task(struct vmwgfx_task *task)
 		.da_fb_linebytes = vfa->vfa_fb_linebytes,
 		.da_params = &vmwgfxfb_drmfb_params,
 	};
-	device_t parent = device_parent(sc->sc_dev);
-	bool is_console;
 	int error;
-
-	/*
-	 * MD device enumeration logic may choose the vmwgfxN PCI
-	 * device as the console.  If so, propagate that down to the
-	 * vmwgfxfbN device for genfb.
-	 */
-	if (prop_dictionary_get_bool(device_properties(parent),
-		"is_console", &is_console) &&
-	    !prop_dictionary_set_bool(device_properties(sc->sc_dev),
-		"is_console", is_console)) {
-		aprint_error_dev(sc->sc_dev, "failed to set is_console\n");
-	}
 
 	error = drmfb_attach(&sc->sc_drmfb, &da);
 	if (error) {
