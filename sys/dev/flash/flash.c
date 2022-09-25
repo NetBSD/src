@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.18 2022/03/31 19:30:16 pgoyette Exp $	*/
+/*	$NetBSD: flash.c,v 1.19 2022/09/25 21:56:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.18 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.19 2022/09/25 21:56:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.18 2022/03/31 19:30:16 pgoyette Exp $");
 #include <sys/bufq.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/malloc.h>
 #include <sys/reboot.h>
 
 #include "ioconf.h"

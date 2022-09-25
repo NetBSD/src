@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.95 2022/04/08 10:17:54 andvar Exp $ */
+/*	$NetBSD: if_xi.c,v 1.96 2022/09/25 21:53:54 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.95 2022/04/08 10:17:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.96 2022/09/25 21:53:54 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.95 2022/04/08 10:17:54 andvar Exp $");
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
