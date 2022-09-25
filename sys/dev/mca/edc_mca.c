@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.54 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.55 2022/09/25 17:21:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.54 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.55 2022/09/25 17:21:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.54 2021/08/07 16:19:13 thorpej Exp $")
 #include <sys/bufq.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/endian.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

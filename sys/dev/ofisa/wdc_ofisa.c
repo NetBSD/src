@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.40 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.41 2022/09/25 17:29:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.40 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.41 2022/09/25 17:29:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
-#include <sys/malloc.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
