@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.33 2022/05/23 19:52:34 andvar Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.34 2022/09/25 12:28:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.33 2022/05/23 19:52:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.34 2022/09/25 12:28:54 andvar Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -691,7 +691,7 @@ sspci_intr(void *arg)
 		s = splhigh();
 		softint_schedule(sc->sc_softinterrupt);
 
-		/* mask INTA itnerrupt until softinterrupt is handled */
+		/* mask INTA interrupt until softinterrupt is handled */
 		sc->sc_pciinten &= ~PCIINT_INA;
 		bus_space_write_4(iot, ioh, PCICTL_PCIINTEN,
 		    sc->sc_pciinten);
