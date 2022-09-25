@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.28 2009/03/15 15:45:48 cegger Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.29 2022/09/25 17:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ struct isapnp_softc;
 # define panic printf
 
 #else
+
+# include <sys/malloc.h>
 
 # define ISAPNP_WRITE_ADDR(sc, v) \
     bus_space_write_1(sc->sc_iot, sc->sc_addr_ioh, 0, v)
