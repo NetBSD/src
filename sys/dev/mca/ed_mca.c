@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.68 2022/09/25 17:21:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.68 2022/09/25 17:21:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $"
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
