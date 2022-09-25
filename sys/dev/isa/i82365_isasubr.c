@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.48 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.49 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.48 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.49 2022/09/25 17:09:36 thorpej Exp $");
 
 #define	PCICISADEBUG
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.48 2012/10/27 17:18:24 chs Exp 
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

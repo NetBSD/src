@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_stub.c,v 1.3 2016/10/18 22:04:34 jdolecek Exp $	*/
+/*	$NetBSD: isa_stub.c,v 1.4 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.3 2016/10/18 22:04:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.4 2022/09/25 17:09:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <sys/intr.h>

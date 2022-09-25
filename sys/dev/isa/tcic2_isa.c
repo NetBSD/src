@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.29 2021/07/31 20:51:32 andvar Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.30 2022/09/25 17:09:36 thorpej Exp $	*/
 
 /*
  *
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.29 2021/07/31 20:51:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.30 2022/09/25 17:09:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
