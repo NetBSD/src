@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.313 2022/09/09 14:16:16 pgoyette Exp $
+$NetBSD: acronyms,v 1.314 2022/09/26 17:55:35 jschauma Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -447,6 +447,7 @@ PDQ	pretty darn quick
 PDS	please don't shout
 PEBCAK	problem exists between chair and keyboard
 PEBKAC	problem exists between keyboard and chair
+PFA	please find attached
 PFI	pay for inclusion
 PFY	pimply faced youth
 PHB	pointy haired boss
