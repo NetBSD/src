@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.256 2022/08/17 20:10:29 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.257 2022/09/27 17:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.256 2022/08/17 20:10:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.257 2022/09/27 17:46:58 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -462,7 +462,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	}
 
 	pgn->type |=
-	    cgn->type & ~(OP_OPMASK | OP_USE | OP_USEBEFORE | OP_TRANSFORM);
+	    cgn->type & (unsigned)~(OP_OPMASK | OP_USE | OP_USEBEFORE | OP_TRANSFORM);
 }
 
 /*
@@ -820,7 +820,7 @@ UnmarkChildren(GNode *gn)
 
 	for (ln = gn->children.first; ln != NULL; ln = ln->next) {
 		GNode *child = ln->datum;
-		child->type &= ~OP_MARK;
+		child->type &= (unsigned)~OP_MARK;
 	}
 }
 

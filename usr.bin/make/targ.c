@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.177 2022/04/15 12:19:28 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.178 2022/09/27 17:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.177 2022/04/15 12:19:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.178 2022/09/27 17:46:58 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -599,7 +599,7 @@ Targ_Propagate(void)
 		for (cln = gn->cohorts.first; cln != NULL; cln = cln->next) {
 			GNode *cohort = cln->datum;
 
-			cohort->type |= type & ~OP_OPMASK;
+			cohort->type |= type & (unsigned)~OP_OPMASK;
 		}
 	}
 }

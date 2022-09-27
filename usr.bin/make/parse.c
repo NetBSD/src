@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.687 2022/09/24 16:13:48 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.688 2022/09/27 17:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.687 2022/09/24 16:13:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.688 2022/09/27 17:46:58 rillig Exp $");
 
 /*
  * A file being read.
@@ -653,7 +653,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 		 * Propagate copied bits to the initial node.  They'll be
 		 * propagated back to the rest of the cohorts later.
 		 */
-		gn->type |= op & ~OP_OPMASK;
+		gn->type |= op & (unsigned)~OP_OPMASK;
 
 		cohort = Targ_NewInternalNode(gn->name);
 		if (doing_depend)

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.210 2022/01/15 18:34:41 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.211 2022/09/27 17:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.210 2022/01/15 18:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.211 2022/09/27 17:46:58 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -546,7 +546,8 @@ ArchStatMember(const char *archive, const char *member, bool addToCache)
 		if (strncmp(memName, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
 		    ch_isdigit(memName[sizeof AR_EFMT1 - 1])) {
 
-			size_t elen = atoi(memName + sizeof AR_EFMT1 - 1);
+			size_t elen = (size_t)atoi(
+			    memName + sizeof AR_EFMT1 - 1);
 
 			if (elen > MAXPATHLEN)
 				goto badarch;
@@ -788,7 +789,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 		if (strncmp(out_arh->ar_name, AR_EFMT1, sizeof AR_EFMT1 - 1) ==
 		    0 &&
 		    (ch_isdigit(out_arh->ar_name[sizeof AR_EFMT1 - 1]))) {
-			size_t elen = atoi(
+			size_t elen = (size_t)atoi(
 			    &out_arh->ar_name[sizeof AR_EFMT1 - 1]);
 			char ename[MAXPATHLEN + 1];
 

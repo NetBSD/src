@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1032 2022/08/24 22:09:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1033 2022/09/27 17:46:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1032 2022/08/24 22:09:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1033 2022/09/27 17:46:58 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1555,7 +1555,7 @@ static void
 RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 		    const regmatch_t *m, size_t nsub)
 {
-	unsigned int n = ref - '0';
+	unsigned int n = (unsigned)ref - '0';
 
 	if (n >= nsub)
 		Error("No subexpression \\%u", n);
