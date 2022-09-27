@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.64 2021/10/20 01:09:49 jmcneill Exp $	*/
+/*	$NetBSD: plcom.c,v 1.65 2022/09/27 06:11:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.64 2021/10/20 01:09:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.65 2022/09/27 06:11:36 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.64 2021/10/20 01:09:49 jmcneill Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -514,7 +514,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	tp->t_hwiflow = plcomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(plcom_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = kmem_alloc(plcom_rbuf_size << 1, KM_SLEEP);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = plcom_rbuf_size;
 	sc->sc_ebuf = sc->sc_rbuf + (plcom_rbuf_size << 1);
@@ -624,7 +624,7 @@ plcom_detach(device_t self, int flags)
 	}
 
 	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
+	kmem_free(sc->sc_rbuf, sc->sc_ebuf - sc->sc_rbuf);
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
