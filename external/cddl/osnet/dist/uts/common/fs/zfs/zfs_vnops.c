@@ -5027,7 +5027,7 @@ zfs_pathconf(vnode_t *vp, int cmd, ulong_t *valp, cred_t *cr,
 #endif
 
 	default:
-		return (EOPNOTSUPP);
+		return (EINVAL);
 	}
 }
 
