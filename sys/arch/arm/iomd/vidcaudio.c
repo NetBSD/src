@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.61 2021/02/03 14:22:21 isaki Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.62 2022/09/27 06:14:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,13 +65,13 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.61 2021/02/03 14:22:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.62 2022/09/27 06:14:41 skrll Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>	/* device calls */
 #include <sys/systm.h>
 
@@ -121,6 +121,7 @@ struct vidcaudio_softc {
 	vaddr_t	sc_poffset;
 	vaddr_t	sc_pbufsize;
 	paddr_t	*sc_ppages;
+	size_t	sc_szppages;
 	void	(*sc_pintr)(void *);
 	void	*sc_parg;
 	int	sc_pcountdown;
@@ -294,8 +295,9 @@ vidcaudio_close(void *addr)
 	DPRINTF(("DEBUG: vidcaudio_close called\n"));
 	sc = addr;
 	if (sc->sc_ppages != NULL) {
-		free(sc->sc_ppages, M_DEVBUF);
+		kmem_free(sc->sc_ppages, sc->sc_szppages * sizeof(paddr_t));
 		sc->sc_ppages = NULL;
+		sc->sc_szppages = 0;
 	}
 }
 
@@ -390,8 +392,9 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	sc->sc_pbufsize = (char *)end - (char *)start;
 	npages = sc->sc_pbufsize >> PGSHIFT;
 	if (sc->sc_ppages != NULL)
-		free(sc->sc_ppages, M_DEVBUF);
-	sc->sc_ppages = malloc(npages * sizeof(paddr_t), M_DEVBUF, M_WAITOK);
+		kmem_free(sc->sc_ppages, sc->sc_szppages);
+	sc->sc_szppages = npages * sizeof(paddr_t);
+	sc->sc_ppages = kmem_alloc(sc->sc_szppages, KM_SLEEP);
 	if (sc->sc_ppages == NULL)
 		return ENOMEM;
 	for (i = 0; i < npages; i++)
