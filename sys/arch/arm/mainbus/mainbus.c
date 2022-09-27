@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.23 2021/08/07 16:18:44 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.24 2022/09/27 06:36:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #if defined(arm32)		/* XXX */

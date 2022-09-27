@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: qms.c,v 1.22 2022/09/27 06:36:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -34,14 +34,13 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.22 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h> 
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/types.h>

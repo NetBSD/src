@@ -63,11 +63,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_intr.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_intr.c,v 1.2 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
 #include <machine/intr.h>

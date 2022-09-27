@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.49 2021/12/26 16:08:20 andvar Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.50 2022/09/27 06:36:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,13 +30,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.49 2021/12/26 16:08:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.50 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 

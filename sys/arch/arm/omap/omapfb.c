@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.31 2022/07/17 10:28:09 riastradh Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.32 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.31 2022/07/17 10:28:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.32 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 
