@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.52 2022/09/18 15:49:42 thorpej Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.53 2022/09/27 06:13:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.52 2022/09/18 15:49:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.53 2022/09/27 06:13:42 skrll Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.52 2022/09/18 15:49:42 thorpej E
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/endian.h>
 #include <sys/ioctl.h>
@@ -468,9 +468,7 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		goto unmap_dmamem;
 	}
 
-	/* XXX M_TEMP */
-	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP,
-	    M_WAITOK | M_ZERO);
+	dma->buf = kmem_zalloc(nbuf * sizeof(struct npebuf), KM_SLEEP);
 	dma->buf_phys = dma->buf_map->dm_segs[0].ds_addr;
 	for (i = 0; i < dma->nbuf; i++) {
 		struct npebuf *npe = &dma->buf[i];
@@ -514,7 +512,7 @@ npe_dma_destroy(struct npe_softc *sc, struct npedma *dma)
 		bus_dmamap_destroy(sc->sc_dt, dma->buf_map);
 	}
 	if (dma->buf != NULL)
-		free(dma->buf, M_TEMP);
+		kmem_free(dma->buf, dma->nbuf * sizeof(struct npebuf));
 	memset(dma, 0, sizeof(*dma));
 }
 #endif
