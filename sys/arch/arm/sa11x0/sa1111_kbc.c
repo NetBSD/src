@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.18 2015/04/13 21:18:41 riastradh Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.19 2022/09/27 06:36:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.18 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.19 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.18 2015/04/13 21:18:41 riastradh Ex
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>

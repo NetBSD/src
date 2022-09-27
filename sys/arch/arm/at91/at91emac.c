@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.34 2022/09/17 19:32:01 thorpej Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.35 2022/09/27 06:36:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.34 2022/09/17 19:32:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.35 2022/09/27 06:36:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.34 2022/09/17 19:32:01 thorpej Exp $"
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/time.h>
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>

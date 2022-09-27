@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdma.c,v 1.2 2013/01/09 04:38:14 macallan Exp $	*/
+/*	$NetBSD: omap3_sdma.c,v 1.3 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdma.c,v 1.2 2013/01/09 04:38:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdma.c,v 1.3 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 

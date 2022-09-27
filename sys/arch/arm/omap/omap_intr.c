@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.11 2014/03/26 08:52:00 christos Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.12 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,12 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.11 2014/03/26 08:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.12 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <sys/bus.h>
