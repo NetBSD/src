@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.11 2021/11/21 08:25:26 skrll Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.12 2022/09/27 06:32:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,12 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.11 2021/11/21 08:25:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.12 2022/09/27 06:32:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <uvm/uvm_param.h>
@@ -175,7 +175,7 @@ eppcic_attach_common(device_t parent, device_t self, void *aux,
 	epled_red_off();
 #endif
 	/* socket 0 */
-	ph = malloc(sizeof(struct eppcic_handle), M_DEVBUF, M_WAITOK);
+	ph = kmem_alloc(sizeof(*ph), KM_SLEEP);
 	sc->sc_ph[0] = ph;
 	ph->ph_sc = sc;
 	ph->ph_socket = 0;
