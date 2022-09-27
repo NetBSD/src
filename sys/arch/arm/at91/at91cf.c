@@ -1,5 +1,5 @@
-/*	$Id: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
-/*	$NetBSD: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$Id: at91cf.c,v 1.8 2022/09/27 06:34:44 skrll Exp $	*/
+/*	$NetBSD: at91cf.c,v 1.8 2022/09/27 06:34:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.8 2022/09/27 06:34:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <uvm/uvm_param.h>
@@ -174,7 +174,7 @@ at91cf_attach_common(device_t parent, device_t self, void *aux,
 	printf("\n");
 
 	/* socket 0 */
-	ph = malloc(sizeof(struct at91cf_handle), M_DEVBUF, M_WAITOK|M_ZERO);
+	ph = kmem_zalloc(sizeof(*ph), KM_SLEEP);
 	sc->sc_ph = ph;
 	ph->ph_sc = sc;
 	ph->ph_space[IO].base = sa->sa_addr + IO_BASE;
