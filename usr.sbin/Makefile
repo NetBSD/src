@@ -7,7 +7,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	bad144 bootp bta2dpd btattach btconfig btdevctl bthcid btpand catman \
 	chroot cnwctl cpuctl crash \
 	dev_mkdb diskpart dumpfs dumplfs \
-	edquota eeprom envstat etcupdate extattrctl \
+	edquota eeprom efitable envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
 	hdaudioctl \

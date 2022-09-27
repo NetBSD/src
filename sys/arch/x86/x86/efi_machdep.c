@@ -75,6 +75,9 @@ static struct efi_e820memmap {
 
 #ifdef EFI_RUNTIME
 
+#define	EFI_SUCCESS		EFIERR(0)
+#define	EFI_NOT_FOUND	EFIERR(14)
+
 #include <dev/efivar.h>
 
 #include <uvm/uvm_extern.h>
@@ -985,7 +988,27 @@ efi_runtime_setvar(efi_char *name, struct uuid *vendor, uint32_t attrib,
 	return status;
 }
 
+static efi_status
+efi_runtime_gettab(const struct uuid *uuid, uint64_t *ptr)
+{
+
+	struct efi_cfgtbl *cfgtbl = efi_getcfgtblhead();
+	paddr_t pa;
+
+	if (cfgtbl == NULL)
+		return EFI_UNSUPPORTED;
+
+	pa = efi_getcfgtblpa(uuid);
+
+	if (pa == 0)
+		return EFI_NOT_FOUND;
+	*ptr = pa;
+
+	return EFI_SUCCESS;
+}
+
 static struct efi_ops efi_runtime_ops = {
+	.efi_gettab = efi_runtime_gettab,
 	.efi_gettime = efi_runtime_gettime,
 	.efi_settime = efi_runtime_settime,
 	.efi_getvar = efi_runtime_getvar,

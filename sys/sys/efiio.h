@@ -57,6 +57,15 @@ struct efi_var_ioc {
 	size_t		datasize;	/* size in bytes of the data buffer */
 };
 
+struct efi_get_table_ioc
+{
+	void *		buf;			/* Pointer to userspace buffer */
+	struct uuid uuid;	/* UUID to look up */
+	size_t 		table_len;	/* Table size */
+	size_t 		buf_len;		/* Size of the buffer */
+};
+
+#define EFIIOC_TABLE_GET 	_IOWR('e', 1, struct efi_get_table_ioc)
 #define	EFIIOC_VAR_GET		_IOWR('e', 4, struct efi_var_ioc)
 #define	EFIIOC_VAR_NEXT		_IOWR('e', 5, struct efi_var_ioc)
 #define	EFIIOC_VAR_SET		_IOWR('e', 7, struct efi_var_ioc)
