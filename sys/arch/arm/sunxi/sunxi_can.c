@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.11 2022/09/21 20:21:16 bouyer Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.12 2022/09/27 06:14:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.11 2022/09/21 20:21:16 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.12 2022/09/27 06:14:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -232,8 +232,7 @@ sunxi_can_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 #ifdef MBUFTRACE
-	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
+	ifp->if_mowner = kmem_zalloc(sizeof(*ifp->if_mowner), KM_SLEEP);
 	strlcpy(ifp->if_mowner->mo_name, ifp->if_xname,
 		sizeof(ifp->if_mowner->mo_name));
 	MOWNER_ATTACH(ifp->if_mowner);
