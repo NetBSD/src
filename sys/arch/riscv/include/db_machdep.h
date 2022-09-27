@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.5 2021/05/18 06:42:11 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.6 2022/09/27 08:18:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,7 +43,8 @@ typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 
 extern const uint32_t __cpu_Debugger_insn[1];
-#define	DDB_REGS	(curcpu()->ci_ddb_regs)
+extern db_regs_t ddb_regs;
+#define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(tf)	((tf)->tf_pc)
 
@@ -87,7 +88,7 @@ db_addr_t	db_disasm_insn(uint32_t, db_addr_t, bool);
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
 void 	kdb_kbd_trap(db_regs_t *);
-int 	kdb_trap(int, struct trapframe *);
+int 	kdb_trap(int, db_regs_t *);
 
 static inline void
 db_set_ddb_regs(int type, struct trapframe *tf)
@@ -129,5 +130,7 @@ void db_resume_others(void);
  */
 #define	DB_MACHINE_COMMANDS
 #endif
+
+void dump_trapframe(const struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
 
 #endif	/* _RISCV_DB_MACHDEP_H_ */
