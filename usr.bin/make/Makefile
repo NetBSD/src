@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 2022/05/03 19:05:34 rillig Exp $
+#	$NetBSD: Makefile,v 1.123 2022/09/27 17:46:58 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -22,6 +22,7 @@ SRCS+=  targ.c
 SRCS+=  trace.c
 SRCS+=  var.c
 SRCS+=  util.c
+WARNS=	6
 
 # Whether to generate a coverage report after running the tests.
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
