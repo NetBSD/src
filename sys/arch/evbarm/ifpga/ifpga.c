@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.30 2021/08/07 16:18:49 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.31 2022/09/27 06:12:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.30 2021/08/07 16:18:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.31 2022/09/27 06:12:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/null.h>
 
 #include <dev/pci/pcivar.h>
@@ -267,7 +267,7 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 #if NPCI > 0
-	pci_sc = malloc(sizeof(struct ifpga_pci_softc), M_DEVBUF, M_WAITOK);
+	pci_sc = kmem_alloc(sizeof(*pci_sc), KM_SLEEP);
 	pci_sc->sc_iot = &ifpga_pci_io_tag;
 	pci_sc->sc_memt = &ifpga_pci_mem_tag;
 
