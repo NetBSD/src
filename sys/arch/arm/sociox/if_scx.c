@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.38 2022/09/18 15:22:43 thorpej Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.39 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.38 2022/09/18 15:22:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.39 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.38 2022/09/18 15:22:43 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/rndsource.h>
 #include <sys/kernel.h>

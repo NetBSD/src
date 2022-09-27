@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.16 2012/09/21 14:21:58 matt Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.17 2022/09/27 06:36:41 skrll Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,13 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.16 2012/09/21 14:21:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.17 2022/09/27 06:36:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 

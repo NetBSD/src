@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_dss.c,v 1.6 2022/07/17 10:28:09 riastradh Exp $	*/
+/*	$NetBSD: omap3_dss.c,v 1.7 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -33,13 +33,12 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.6 2022/07/17 10:28:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.7 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/bus.h>

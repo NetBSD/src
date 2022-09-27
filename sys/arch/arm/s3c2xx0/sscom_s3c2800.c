@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.10 2014/03/14 21:40:48 matt Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.11 2022/09/27 06:36:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.10 2014/03/14 21:40:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.11 2022/09/27 06:36:43 skrll Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.10 2014/03/14 21:40:48 matt Exp 
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 

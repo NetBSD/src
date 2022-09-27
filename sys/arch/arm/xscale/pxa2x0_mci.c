@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.12 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.13 2022/09/27 06:36:43 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -53,12 +53,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.12 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.13 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.29 2021/08/13 11:40:43 skrll Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.30 2022/09/27 06:36:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.29 2021/08/13 11:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.30 2022/09/27 06:36:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.10 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: tifb.c,v 1.11 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.10 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.11 2022/09/27 06:36:43 skrll Exp $");
 
 #include "opt_omap.h"
 
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.10 2021/08/07 16:18:45 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>

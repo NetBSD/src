@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.13 2009/05/29 14:15:44 rjs Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.14 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.13 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.14 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.13 2009/05/29 14:15:44 rjs Exp $")
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 

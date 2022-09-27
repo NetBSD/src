@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$Id: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,14 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm.h>
 

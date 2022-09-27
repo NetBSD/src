@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.20 2021/02/06 12:53:36 isaki Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.21 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
 #include <sys/kmem.h>

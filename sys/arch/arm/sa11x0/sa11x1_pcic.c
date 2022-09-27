@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.24 2021/08/07 16:18:45 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.25 2022/09/27 06:36:43 skrll Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.24 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.25 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.24 2021/08/07 16:18:45 thorpej Exp
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 

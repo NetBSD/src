@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2440_sdi.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: s3c2440_sdi.c,v 1.8 2022/09/27 06:36:43 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,13 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.8 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/malloc.h> /* For M_NOWAIT*/
 
 #include <sys/mutex.h>
 #include <sys/condvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.14 2020/07/07 03:38:46 thorpej Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.15 2022/09/27 06:36:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.14 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.15 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 

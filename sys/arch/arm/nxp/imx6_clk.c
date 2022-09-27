@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.3 2021/01/30 09:36:46 skrll Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.4 2022/09/27 06:36:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.3 2021/01/30 09:36:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.4 2022/09/27 06:36:42 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.3 2021/01/30 09:36:46 skrll Exp $");
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/cpufreq.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/param.h>
 

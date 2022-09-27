@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_dma.c,v 1.3 2012/09/18 05:47:27 matt Exp $ */
+/*	$NetBSD: imx_dma.c,v 1.4 2022/09/27 06:36:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_dma.c,v 1.3 2012/09/18 05:47:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_dma.c,v 1.4 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 
 #include <uvm/uvm_extern.h>

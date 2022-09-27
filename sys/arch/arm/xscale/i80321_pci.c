@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.18 2020/07/07 03:38:46 thorpej Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.19 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.18 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.19 2022/09/27 06:36:43 skrll Exp $");
 
 #include "opt_pci.h"
 #include "opt_i80321.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.18 2020/07/07 03:38:46 thorpej Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>

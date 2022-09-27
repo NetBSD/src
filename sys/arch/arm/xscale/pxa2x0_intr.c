@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.23 2021/01/04 15:13:50 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.24 2022/09/27 06:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,11 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.23 2021/01/04 15:13:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.24 2022/09/27 06:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>
