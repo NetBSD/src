@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.8 2021/05/23 23:22:55 dholland Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.9 2022/09/27 08:18:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.8 2021/05/23 23:22:55 dholland Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.9 2022/09/27 08:18:21 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: db_machdep.c,v 1.8 2021/05/23 23:22:55 dholland Exp $");
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
-
-int db_active = 0;
 
 static int db_rw_ddbreg(const struct db_variable *, db_expr_t *, int);
 

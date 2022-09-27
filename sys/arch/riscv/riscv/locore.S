@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.25 2022/09/20 07:18:23 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.26 2022/09/27 08:18:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -363,6 +363,8 @@ vstart:
 	mv	a0, s0			// hartid
 	mv	a1, t0			// vdtb
 	//mv	a1, s1			// dtb (physical)
+
+	li	s0, 0			// zero frame pointer
 	call	_C_LABEL(init_riscv)	// do MD startup
 	tail	_C_LABEL(main)		// and transfer to main
 	/* No return from main */
