@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.18 2022/09/20 07:18:24 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.19 2022/09/28 06:05:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.18 2022/09/20 07:18:24 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.19 2022/09/28 06:05:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -87,7 +87,7 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;
+	return uartgetc();
 }
 
 static struct consdev earlycons = {
