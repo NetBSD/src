@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.582 2022/05/07 17:49:47 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.583 2022/09/28 16:34:47 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.582 2022/05/07 17:49:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.583 2022/09/28 16:34:47 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -704,8 +704,10 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 	va_end(ap);
 
 	if (path[0] != '/') {
-		snprintf(buf2, MAXPATHLEN, "%s/%s", curdir, path);
-		path = buf2;
+		if (snprintf(buf2, MAXPATHLEN, "%s/%s", curdir, path) <= MAXPATHLEN)
+			path = buf2;
+		else
+			return false;
 	}
 
 	/* look for the directory and try to chdir there */
