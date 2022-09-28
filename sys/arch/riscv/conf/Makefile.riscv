@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.7 2021/05/01 07:13:21 skrll Exp $
+#	$NetBSD: Makefile.riscv,v 1.8 2022/09/28 05:02:02 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -71,7 +71,7 @@ locore.o: ${RISCV}/riscv/locore.S assym.h
 .if ${MACHINE_ARCH} == "riscv64" && ${LP64:Uyes} == "yes"
 TEXTADDR?=		0xFFFFFFC000000000
 .else
-TEXTADDR?=		0xC0001000
+TEXTADDR?=		0x80200000
 .endif
 KERNLDSCRIPT?=		${RISCV}/conf/kern.ldscript
 EXTRA_LINKFLAGS=	${LDOPTS} --relax

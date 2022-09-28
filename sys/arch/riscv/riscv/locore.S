@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.26 2022/09/27 08:18:21 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.27 2022/09/28 05:02:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -222,11 +222,16 @@ ENTRY_NP(start)
 
 	VPRINTX(s3)
 #endif
-#endif
 
 	VPRINTS(": ")
 	VPRINTXNL(t0)
 	VPRINTS("\n\r")
+#endif // _LP64
+
+#if ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
+	li	t1,  ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
+	add	s2, s2, t1
+#endif
 
 #if PGSHIFT < PTE_PPN_SHIFT
 #error Code assumes PGSHIFT is greater than PTE_PPN_SHIFT
@@ -240,7 +245,8 @@ ENTRY_NP(start)
 	// Fill in the PDEs for kernel.
 	//
 	PTR_LA	s0, start
-	srli	s0, s0, (PGSHIFT - PTE_PPN_SHIFT)
+	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
+	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
 .Lfill:
 	VPRINTS("kern ")
