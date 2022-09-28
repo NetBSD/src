@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.27 2022/09/28 05:02:02 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.28 2022/09/28 06:05:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -408,12 +408,23 @@ ENTRY_NP(uartputc)
 #ifdef EARLYCONS
 	tail	___CONCAT(EARLYCONS, _platform_early_putchar)
 #else
-#define SBI_LEGACY_CONSOLE_PUTCHAR        1
+#define	SBI_LEGACY_CONSOLE_PUTCHAR	1
 	li	a7, SBI_LEGACY_CONSOLE_PUTCHAR
 	ecall
 	ret
 #endif
 END(uartputc)
+
+
+ENTRY_NP(uartgetc)
+#ifdef EARLYCONS
+	li	a0, -1
+#else
+#define	SBI_LEGACY_CONSOLE_GETCHAR	2
+	li	a7, SBI_LEGACY_CONSOLE_GETCHAR
+	ecall
+	ret
+#endif
 
 
 ENTRY_NP(clear_bss)
