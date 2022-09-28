@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_wdt.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: mesongx_wdt.c,v 1.3 2022/09/28 10:23:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_wdt.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_wdt.c,v 1.3 2022/09/28 10:23:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mesongx_wdt.c,v 1.2 2021/01/27 03:10:18 thorpej Exp 
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-gx-wdt" },
+	{ .compat = "amlogic,meson-gxbb-wdt" },
 	DEVICE_COMPAT_EOL
 };
 
