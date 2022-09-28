@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.80 2022/09/17 06:33:55 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.80 2022/09/17 06:33:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ static int synaptics_button_boundary;
 static int synaptics_button2;
 static int synaptics_button3;
 static int synaptics_two_fingers_emul = 0;
-static int synaptics_scale_x = 16;
-static int synaptics_scale_y = 16;
+static int synaptics_scale_x = 8;
+static int synaptics_scale_y = 8;
 static int synaptics_scale_z = 32;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
