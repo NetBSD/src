@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.25 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: if_43.c,v 1.26 2022/09/28 15:32:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.25 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.26 2022/09/28 15:32:09 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.25 2020/06/12 11:04:45 roy Exp $");
 #include <net80211/ieee80211_ioctl.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#include <compat/net/if.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 

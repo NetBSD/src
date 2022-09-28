@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.11 2020/01/29 05:48:22 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.12 2022/09/28 15:32:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include <net/if.h>
 
+#include <compat/net/if.h>
 #include <compat/sys/time.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
@@ -59,7 +60,7 @@ static int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 {
 	struct if_data ifi;
-	struct oifdatareq *ifdr = data;
+	struct ifdatareq50 *ifdr = data;
 	struct ifnet *ifp;
 	int error;
 
