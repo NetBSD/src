@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1462 2022/09/13 11:45:52 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1463 2022/09/28 07:58:17 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5954,7 +5954,7 @@ product INTEL JSL_TROUTER_2_2	0x4e22	Jasper Lake Processor Transaction Router (S
 product INTEL JSL_TROUTER_4_2	0x4e24	Jasper Lake Processor Transaction Router (SKU 4)
 product INTEL JSL_TROUTER_4_3	0x4e26	Jasper Lake Processor Transaction Router (SKU 4)
 product INTEL JSL_TROUTER_4_4	0x4e28	Jasper Lake Processor Transaction Router (SKU 4)
-product INTEL JSL_TRACE_2	0x4da6	Jasper Lake Intel Trace Hub (Compute Die)
+product INTEL JSL_TRACE_2	0x4e29	Jasper Lake Intel Trace Hub (Compute Die)
 product INTEL JSL_GPU_EU_16	0x4e55	Jasper Lake GPU 16 EU
 product INTEL JSL_GPU_EU_24	0x4e61	Jasper Lake GPU 24 EU
 product INTEL JSL_GPU_EU_32	0x4e71	Jasper Lake GPU 32 EU
