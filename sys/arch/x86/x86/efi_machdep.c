@@ -991,18 +991,23 @@ efi_runtime_setvar(efi_char *name, struct uuid *vendor, uint32_t attrib,
 static efi_status
 efi_runtime_gettab(const struct uuid *uuid, uint64_t *ptr)
 {
-
+	aprint_normal("DEBUG efi_runtime_gettab 1\n");
 	struct efi_cfgtbl *cfgtbl = efi_getcfgtblhead();
 	paddr_t pa;
 
 	if (cfgtbl == NULL)
 		return EFI_UNSUPPORTED;
+	aprint_normal("DEBUG efi_runtime_gettab 2\n");
 
 	pa = efi_getcfgtblpa(uuid);
+
+	aprint_normal("DEBUG efi_runtime_gettab 3\n");
 
 	if (pa == 0)
 		return EFI_NOT_FOUND;
 	*ptr = pa;
+
+	aprint_normal("DEBUG efi_runtime_gettab 4\n");
 
 	return EFI_SUCCESS;
 }

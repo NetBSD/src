@@ -279,13 +279,14 @@ static int
 efi_ioctl_get_esrt(struct efi_get_table_ioc *ioc,
     struct EFI_SYSTEM_RESOURCE_TABLE *tab)
 {
-
+	aprint_normal("DEBUG ioctl_get_esrt 1\n");
 	/*
 	 * Verify the firmware resource version is one we understand.
 	 */
 	if (tab->FwResourceVersion !=
 	    EFI_SYSTEM_RESOURCE_TABLE_FIRMWARE_RESOURCE_VERSION)
 		return ENOENT;
+	aprint_normal("DEBUG ioctl_get_table 2\n");
 
 	/*
 	 * Verify the resource count fits within the single page we
@@ -297,14 +298,18 @@ efi_ioctl_get_esrt(struct efi_get_table_ioc *ioc,
 	 */
 	const size_t entry_space = PAGE_SIZE -
 	    offsetof(struct EFI_SYSTEM_RESOURCE_TABLE, Entries);
+	aprint_normal("DEBUG ioctl_get_table entry_space = %ld\n", entry_space);
 	if (tab->FwResourceCount > entry_space/sizeof(tab->Entries[0]))
 		return ENOENT;
+	aprint_normal("DEBUG ioctl_get_table 3\n");
 
 	/*
 	 * Success!  Return everything through the last table entry.
 	 */
 	const size_t len = offsetof(struct EFI_SYSTEM_RESOURCE_TABLE,
 	    Entries[tab->FwResourceCount]);
+	aprint_normal("DEBUG ioctl_get_table len = %ld\n", len);
+	aprint_normal("DEBUG ioctl_get_table 4\n");
 	return efi_ioctl_got_table(ioc, tab, len);
 }
 
@@ -322,6 +327,8 @@ efi_ioctl_get_table(struct efi_get_table_ioc *ioc)
 	if (efi_ops->efi_gettab == NULL)
 		return ENODEV;
 
+	aprint_normal("DEBUG ioctl_get_table 0\n");
+
 	/*
 	 * Get the address of the requested table out of the EFI
 	 * configuration table.
@@ -329,6 +336,8 @@ efi_ioctl_get_table(struct efi_get_table_ioc *ioc)
 	status = efi_ops->efi_gettab(&ioc->uuid, &addr);
 	if (status != EFI_SUCCESS)
 		return efi_status_to_error(status);
+
+	aprint_normal("DEBUG ioctl_get_table 1\n");
 
 	/*
 	 * UEFI provides no generic way to identify the size of the
@@ -349,9 +358,11 @@ efi_ioctl_get_table(struct efi_get_table_ioc *ioc)
 		if ((tab = efi_map_pa(addr, &direct)) == NULL)
 			return ENOENT;
 		error = efi_ioctl_get_esrt(ioc, tab);
+		aprint_normal("DEBUG ioctl_get_table 2\n");
 		efi_unmap(tab, direct);
 	} else {
 		error = ENOENT;
+		aprint_normal("DEBUG ioctl_get_table 3\n");
 	}
 
 	return error;
