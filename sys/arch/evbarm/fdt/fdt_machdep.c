@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.91 2022/04/02 11:16:07 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.92 2022/09/28 05:49:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.91 2022/04/02 11:16:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.92 2022/09/28 05:49:15 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -548,7 +548,7 @@ initarm(void *arg)
 
 #if BYTE_ORDER == BIG_ENDIAN
 	/*
-	 * Most boards are configured to little-endian mode in initial, and
+	 * Most boards are configured to little-endian mode initially, and
 	 * switched to big-endian mode after kernel is loaded. In this case,
 	 * framebuffer seems byte-swapped to CPU. Override FDT to let
 	 * drivers know.
