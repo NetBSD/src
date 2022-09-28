@@ -1482,6 +1482,7 @@
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
+./usr/sbin/efitable             base-efitable-bin
 ./usr/sbin/envstat				base-sysutil-bin
 ./usr/sbin/eshconfig				base-obsolete		obsolete
 ./usr/sbin/etcupdate				base-sysutil-bin
@@ -4374,6 +4375,7 @@
 ./usr/share/man/html8/cesfic			base-man-share
 ./usr/share/man/html8/cobalt			base-man-share
 ./usr/share/man/html8/dreamcast			base-man-share
+./usr/share/man/html8/efitable      base-man-share
 ./usr/share/man/html8/emips			base-man-share
 ./usr/share/man/html8/evbarm			base-man-share
 ./usr/share/man/html8/evbmips			base-man-share
@@ -4507,6 +4509,7 @@
 ./usr/share/man/man8/cesfic			base-man-share
 ./usr/share/man/man8/cobalt			base-man-share
 ./usr/share/man/man8/dreamcast			base-man-share
+./usr/share/man/man8/efitable     base-man-share
 ./usr/share/man/man8/emips			base-man-share
 ./usr/share/man/man8/evbarm			base-man-share
 ./usr/share/man/man8/evbmips			base-man-share
