@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.20 2022/09/28 08:12:56 msaitoh Exp $	*/
+/*	$NetBSD: sockio.h,v 1.21 2022/09/28 15:32:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -33,70 +33,7 @@
 #define	_COMPAT_SYS_SOCKIO_H_
 
 #include <sys/ioccom.h>
-
-#define OIFNAMSIZ	16
-
-struct oifreq {
-	char	ifr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
-	union {
-		struct	sockaddr ifru_addr;
-		struct	sockaddr ifru_dstaddr;
-		struct	sockaddr ifru_broadaddr;
-		short	ifru_flags;
-		int	ifru_metric;
-		int	ifru_mtu;
-		int	ifru_dlt;
-		u_int	ifru_value;
-		void *	ifru_data;
-		struct {
-			uint32_t	b_buflen;
-			void		*b_buf;
-		} ifru_b;
-	} ifr_ifru;
-};
-struct	oifconf {
-	int	ifc_len;		/* size of associated buffer */
-	union {
-		void *	ifcu_buf;
-		struct	oifreq *ifcu_req;
-	} ifc_ifcu;
-#define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
-#define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
-};
-
-#include <compat/sys/time.h>
-/*
- * Structure defining statistics and other data kept regarding a network
- * interface.
- */
-struct oif_data {
-	/* generic interface information */
-	u_char	ifi_type;		/* ethernet, tokenring, etc. */
-	u_char	ifi_addrlen;		/* media address length */
-	u_char	ifi_hdrlen;		/* media header length */
-	int	ifi_link_state;		/* current link state */
-	uint64_t ifi_mtu;		/* maximum transmission unit */
-	uint64_t ifi_metric;		/* routing metric (external only) */
-	uint64_t ifi_baudrate;		/* linespeed */
-	/* volatile statistics */
-	uint64_t ifi_ipackets;		/* packets received on interface */
-	uint64_t ifi_ierrors;		/* input errors on interface */
-	uint64_t ifi_opackets;		/* packets sent on interface */
-	uint64_t ifi_oerrors;		/* output errors on interface */
-	uint64_t ifi_collisions;	/* collisions on csma interfaces */
-	uint64_t ifi_ibytes;		/* total number of octets received */
-	uint64_t ifi_obytes;		/* total number of octets sent */
-	uint64_t ifi_imcasts;		/* packets received via multicast */
-	uint64_t ifi_omcasts;		/* packets sent via multicast */
-	uint64_t ifi_iqdrops;		/* dropped on input, this interface */
-	uint64_t ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval50 ifi_lastchange;/* last operational state change */
-};
-
-struct oifdatareq {
-	char	ifdr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
-	struct	oif_data ifdr_data;
-};
+#include <compat/net/if.h>
 
 #define	OSIOCSIFADDR	 _IOW('i', 12, struct oifreq)	/* set ifnet address */
 #define	OOSIOCGIFADDR	 _IOWR('i', 13, struct oifreq)	/* get ifnet address */
@@ -116,10 +53,9 @@ struct oifdatareq {
 #define	SIOCSIFMEDIA_80	 _IOWR('i', 53, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA_80	 _IOWR('i', 54, struct ifmediareq) /* set net media */
 #define	OSIOCGIFMTU	 _IOWR('i', 126, struct oifreq)	/* get ifnet mtu */
-#define	OSIOCGIFDATA	 _IOWR('i', 128, struct oifdatareq) /* get if_data */
-#define	OSIOCZIFDATA	 _IOWR('i', 129, struct oifdatareq) /* get if_data then
+#define	OSIOCGIFDATA	 _IOWR('i', 128, struct ifdatareq50) /* get if_data */
+#define	OSIOCZIFDATA	 _IOWR('i', 129, struct ifdatareq50) /* get if_data then
 							     zero ctrs*/
-
 
 #define	OBIOCGETIF	 _IOR('B', 107, struct oifreq)
 #define	OBIOCSETIF	 _IOW('B', 108, struct oifreq)

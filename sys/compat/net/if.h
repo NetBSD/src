@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.6 2022/09/28 08:12:55 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.7 2022/09/28 15:32:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,38 @@
 #ifndef _COMPAT_NET_IF_H_
 #define _COMPAT_NET_IF_H_
 
+#include <net/route.h>
 #include <compat/sys/time.h>
+
+#define OIFNAMSIZ	16
+
+struct oifreq {
+	char	ifr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
+	union {
+		struct	sockaddr ifru_addr;
+		struct	sockaddr ifru_dstaddr;
+		struct	sockaddr ifru_broadaddr;
+		short	ifru_flags;
+		int	ifru_metric;
+		int	ifru_mtu;
+		int	ifru_dlt;
+		u_int	ifru_value;
+		void *	ifru_data;
+		struct {
+			uint32_t	b_buflen;
+			void		*b_buf;
+		} ifru_b;
+	} ifr_ifru;
+};
+struct	oifconf {
+	int	ifc_len;		/* size of associated buffer */
+	union {
+		void *	ifcu_buf;
+		struct	oifreq *ifcu_req;
+	} ifc_ifcu;
+#define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
+#define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
+};
 
 /* Pre-1.5 if_data struct */
 struct if_data14 {
@@ -130,6 +161,15 @@ struct if_data50 {
 	uint64_t ifi_iqdrops;		/* dropped on input, this interface */
 	uint64_t ifi_noproto;		/* destined for unsupported protocol */
 	struct	timeval50 ifi_lastchange;/* last operational state change */
+};
+
+/*
+ * Structure defining statistics and other data kept regarding a network
+ * interface.
+ */
+struct ifdatareq50 {
+	char	ifdr_name[OIFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	if_data50 ifdr_data;
 };
 
 /*
