@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2912 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2913 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -692,3 +692,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	nsd: Import 4.6.0. [christos 20220924]
 	unbound(8): Import 1.16.3. [christos 20220924]
 	file(1): Upgraded to 5.43. [christos 20220924]
+	tzdata: updated to 2022d (using the 2022dgtz fork) [kre 20220928]
