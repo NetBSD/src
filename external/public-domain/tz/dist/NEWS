@@ -1,5 +1,50 @@
 News for the tz database
 
+Release 2022d - 2022-09-23 12:02:57 -0700
+
+  Briefly:
+    Palestine transitions are now Saturdays at 02:00.
+    Simplify three Ukraine zones into one.
+
+  Changes to future timestamps
+
+    Palestine now springs forward and falls back at 02:00 on the
+    first Saturday on or after March 24 and October 24, respectively.
+    This means 2022 falls back 10-29 at 02:00, not 10-28 at 01:00.
+    (Thanks to Heba Hamad.)
+
+  Changes to past timestamps
+
+    Simplify three Ukraine zones to one, since the post-1970
+    differences seem to have been imaginary.  Move Europe/Uzhgorod and
+    Europe/Zaporozhye to 'backzone'; backward-compatibility links
+    still work, albeit with different timestamps before October 1991.
+
+
+Release 2022c - 2022-08-15 17:47:18 -0700
+
+  Briefly:
+    Work around awk bug in FreeBSD, macOS, etc.
+    Improve tzselect on intercontinental Zones.
+
+  Changes to code
+
+    Work around a bug in onetrueawk that broke commands like
+    'make traditional_tarballs' on FreeBSD, macOS, etc.
+    (Problem reported by Deborah Goldsmith.)
+
+    Add code to tzselect that uses experimental structured comments in
+    zone1970.tab to clarify whether Zones like Africa/Abidjan and
+    Europe/Istanbul cross continent or ocean boundaries.
+    (Inspired by a problem reported by Peter Krefting.)
+
+    Fix bug with 'zic -d /a/b/c' when /a is unwritable but the
+    directory /a/b already exists.
+
+    Remove zoneinfo2tdf.pl, as it was unused and triggered false
+    malware alarms on some email servers.
+
+
 Release 2022b - 2022-08-10 15:38:32 -0700
 
   Briefly:
@@ -83,7 +128,7 @@ Release 2022b - 2022-08-10 15:38:32 -0700
 
     zic no longer complains "can't determine time zone abbreviation to
     use just after until time" when a transition to a new standard
-    time occurs simultanously with the first DST fallback transition.
+    time occurs simultaneously with the first DST fallback transition.
 
   Changes to build procedure
 
