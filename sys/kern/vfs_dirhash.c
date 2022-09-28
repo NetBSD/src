@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.14 2021/08/21 09:59:46 andvar Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.15 2022/09/28 09:57:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.14 2021/08/21 09:59:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.15 2022/09/28 09:57:13 reinoud Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.14 2021/08/21 09:59:46 andvar Exp 
  * internal only and is FS/mountpoint/vnode independent. On exit of the
  * exported functions this mutex is not held.
  *
- * The dirhash structure is considered part of the vnode/inode/udf_node
- * structure and will thus use the lock that protects that vnode/inode.
+ * The dirhash structure is considered part of the vnode/inode structure and
+ * will thus use the lock that protects that vnode/inode.
  *
  * The dirhash entries are considered part of the dirhash structure and thus
  * are on the same lock.
