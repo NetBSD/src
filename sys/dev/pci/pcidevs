@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1463 2022/09/28 07:58:17 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1464 2022/09/28 08:00:05 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5583,6 +5583,7 @@ product INTEL E5_SAD_2		0x3cf6	E5 SAD
 product INTEL XEONE_S_D_HOST_DRAM_2C 0x3e0f Xeon E (S, Desktop) Host Bridge, DRAM
 product INTEL XEONE_H_HOST_DRAM_4C 0x3e10 Xeon E (H) Host Bridge, DRAM
 product INTEL XEONE_S_W_HOST_DRAM_4C 0x3e18 Xeon E (S, WS) Host Bridge, DRAM
+product INTEL CORE8G_H_H_HOST_DRAM_8C 0x3e20 Core 8G (H, Halo) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_4C 0x3e1f Core 8G (S) Host Bridge, DRAM
 product INTEL CORE8G_U_HOST_DRAM_4C 0x3e34 Core 8G (U) Host Bridge, DRAM
 product INTEL CORE8G_U_HOST_DRAM_2C 0x3e35 Core 8G (U) Host Bridge, DRAM
