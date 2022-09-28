@@ -89,6 +89,8 @@ Link	Europe/Dublin		Eire
 Link	Etc/UTC			Etc/UCT
 Link	Europe/London		Europe/Belfast
 Link	Europe/Kyiv		Europe/Kiev
+Link	Europe/Kyiv		Europe/Uzhgorod
+Link	Europe/Kyiv		Europe/Zaporozhye
 Link	Europe/Chisinau		Europe/Tiraspol
 Link	Europe/London		GB
 Link	Europe/London		GB-Eire
