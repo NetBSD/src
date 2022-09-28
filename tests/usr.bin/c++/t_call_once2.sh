@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.6 2022/06/12 15:08:38 skrll Exp $
+#	$NetBSD: t_call_once2.sh,v 1.7 2022/09/28 11:09:59 skrll Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -198,7 +198,7 @@ int main(void) {
         return 0;
 }
 EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -static-m32 -pg -o call_once2 test.cpp -pthread
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -m32 -pg -o call_once2 test.cpp -pthread
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once2
 	atf_expect_fail "The combination of 32-bit and profiling should be fail"
 }
