@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.92 2022/09/28 05:49:15 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.93 2022/09/28 05:54:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.92 2022/09/28 05:49:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.93 2022/09/28 05:54:24 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -43,39 +43,40 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.92 2022/09/28 05:49:15 skrll Exp $
 #include "wsdisplay.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/bus.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
+#include <sys/bootblock.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
 #include <sys/endian.h>
 #include <sys/exec.h>
+#include <sys/fcntl.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/ksyms.h>
+#include <sys/md5.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/termios.h>
-#include <sys/bootblock.h>
-#include <sys/disklabel.h>
-#include <sys/vnode.h>
-#include <sys/kauth.h>
-#include <sys/fcntl.h>
-#include <sys/uuid.h>
-#include <sys/disk.h>
-#include <sys/md5.h>
 #include <sys/pserialize.h>
+#include <sys/reboot.h>
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
+#include <sys/vnode.h>
+#include <sys/uuid.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
-
-#include <sys/conf.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
