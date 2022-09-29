@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.8.10.6 2020/08/09 14:17:48 martin Exp $ */
+/* $NetBSD: mpii.c,v 1.8.10.7 2022/09/29 14:38:24 snj Exp $ */
 /*	OpenBSD: mpii.c,v 1.115 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.6 2020/08/09 14:17:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.7 2022/09/29 14:38:24 snj Exp $");
 
 #include "bio.h"
 
@@ -168,6 +168,7 @@ struct mpii_softc {
 	pcitag_t		sc_tag;
 
 	void			*sc_ih;
+	pci_intr_handle_t	*sc_pihp;
 
 	struct scsipi_adapter	sc_adapt;
 	struct scsipi_channel	sc_chan;
@@ -459,7 +460,6 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args		*pa = aux;
 	pcireg_t			memtype;
 	int				r;
-	pci_intr_handle_t		ih;
 	struct mpii_ccb			*ccb;
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
 	struct scsipi_channel *chan = &sc->sc_chan;
@@ -506,13 +506,14 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	    MPII_INTR_MASK_DOORBELL);
 
 	/* hook up the interrupt */
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	pci_intr_setattr(pa->pa_pc, &ih, PCI_INTR_MPSAFE, true);
-	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO,
+	intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0],
+	    intrbuf, sizeof(intrbuf));
+	pci_intr_setattr(pa->pa_pc, &sc->sc_pihp[0], PCI_INTR_MPSAFE, true);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, sc->sc_pihp[0], IPL_BIO,
 	    mpii_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
