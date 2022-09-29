@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: astro.c,v 1.5 2022/09/29 06:42:14 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -19,10 +19,11 @@
  */
 
 #include <sys/param.h>
+
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/tree.h>
 
@@ -185,7 +186,7 @@ paddr_t	iommu_dvmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 void	iommu_enter(struct astro_softc *, bus_addr_t, paddr_t, vaddr_t, int);
 void	iommu_remove(struct astro_softc *, bus_addr_t);
 
-struct iommu_map_state *iommu_iomap_create(int);
+struct iommu_map_state *iommu_iomap_create(int, int);
 void	iommu_iomap_destroy(struct iommu_map_state *);
 int	iommu_iomap_insert_page(struct iommu_map_state *, vaddr_t, paddr_t);
 bus_addr_t iommu_iomap_translate(struct iommu_map_state *, paddr_t);
@@ -362,7 +363,7 @@ iommu_dvmamap_create(void *v, bus_size_t size, int nsegments,
 	if (error)
 		return (error);
 
-	ims = iommu_iomap_create(atop(round_page(size)));
+	ims = iommu_iomap_create(atop(round_page(size)), flags);
 	if (ims == NULL) {
 		bus_dmamap_destroy(sc->sc_dmat, map);
 		return (ENOMEM);
@@ -604,7 +605,7 @@ SPLAY_GENERATE(iommu_page_tree, iommu_page_entry, ipe_node, iomap_compare);
  * Create a new iomap.
  */
 struct iommu_map_state *
-iommu_iomap_create(int n)
+iommu_iomap_create(int n, int flags)
 {
 	struct iommu_map_state *ims;
 
@@ -613,8 +614,10 @@ iommu_iomap_create(int n)
 	if (n < 16)
 		n = 16;
 
-	ims = malloc(sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	const size_t sz =
+	    sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]);
+
+	ims = kmem_zalloc(sz, (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 	if (ims == NULL)
 		return (NULL);
 
@@ -636,8 +639,11 @@ iommu_iomap_destroy(struct iommu_map_state *ims)
 		printf("iommu_iomap_destroy: %d page entries in use\n",
 		    ims->ims_map.ipm_pagecnt);
 #endif
+	const int n = ims->ims_map.ipm_maxpage;
+	const size_t sz =
+	    sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]);
 
-	free(ims, M_DEVBUF);
+	kmem_free(ims, sz);
 }
 
 /*

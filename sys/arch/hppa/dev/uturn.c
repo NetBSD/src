@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.5 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: uturn.c,v 1.6 2022/09/29 06:42:14 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -82,12 +82,13 @@
  */
 
 #include <sys/param.h>
+
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
+#include <sys/reboot.h>
 #include <sys/tree.h>
 
 #include <uvm/uvm.h>
@@ -240,7 +241,7 @@ static void uturn_iommu_enter(struct uturn_softc *, bus_addr_t, pa_space_t,
     vaddr_t, paddr_t);
 static void uturn_iommu_remove(struct uturn_softc *, bus_addr_t, bus_size_t);
 
-struct uturn_map_state *uturn_iomap_create(int);
+struct uturn_map_state *uturn_iomap_create(int, int);
 void	uturn_iomap_destroy(struct uturn_map_state *);
 int	uturn_iomap_insert_page(struct uturn_map_state *, vaddr_t, paddr_t);
 bus_addr_t uturn_iomap_translate(struct uturn_map_state *, paddr_t);
@@ -500,7 +501,7 @@ uturn_dmamap_create(void *v, bus_size_t size, int nsegments,
 	if (error)
 		return (error);
 
-	ums = uturn_iomap_create(atop(round_page(size)));
+	ums = uturn_iomap_create(atop(round_page(size)), flags);
 	if (ums == NULL) {
 		bus_dmamap_destroy(sc->sc_dmat, map);
 		return (ENOMEM);
@@ -743,7 +744,7 @@ SPLAY_GENERATE(uturn_page_tree, uturn_page_entry, upe_node, upe_compare);
  * Create a new iomap.
  */
 struct uturn_map_state *
-uturn_iomap_create(int n)
+uturn_iomap_create(int n, int flags)
 {
 	struct uturn_map_state *ums;
 
@@ -751,9 +752,9 @@ uturn_iomap_create(int n)
 	n += 4;
 	if (n < 16)
 		n = 16;
-
-	ums = malloc(sizeof(*ums) + (n - 1) * sizeof(ums->ums_map.upm_map[0]),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	const size_t sz =
+	    sizeof(*ums) + (n - 1) * sizeof(ums->ums_map.upm_map[0]);
+	ums = kmem_zalloc(sz, (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
 	if (ums == NULL)
 		return (NULL);
 
@@ -771,8 +772,11 @@ void
 uturn_iomap_destroy(struct uturn_map_state *ums)
 {
 	KASSERT(ums->ums_map.upm_pagecnt == 0);
+	const int n = ums->ums_map.upm_maxpage;
+	const size_t sz =
+	    sizeof(*ums) + (n - 1) * sizeof(ums->ums_map.upm_map[0]);
 
-	free(ums, M_DEVBUF);
+	kmem_free(ums, sz);
 }
 
 /*
