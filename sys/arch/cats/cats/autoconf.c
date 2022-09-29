@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2014/04/02 11:35:36 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2022/09/29 06:46:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2014/04/02 11:35:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2022/09/29 06:46:17 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -104,7 +104,7 @@ static void
 set_root_device(void)
 {
 	char *ptr;
-            
+
 	if (boot_file)
 		get_device(boot_file);
 	if (boot_args &&
@@ -174,7 +174,7 @@ device_register(device_t dev, void *aux)
 		 */
 		struct pci_attach_args *pa = aux;
 		if (((pa)->pa_bus == 0
-		    && (pa)->pa_device == 16 
+		    && (pa)->pa_device == 16
 		    && (pa)->pa_function == 0)) {
 			if (prop_dictionary_set_bool(device_properties(dev),
 						"ali1543-ide-force-compat-mode",
