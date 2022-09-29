@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.152 2022/09/16 18:40:23 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.153 2022/09/29 14:43:06 snj Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2860,4 +2860,16 @@ sys/arch/x86/x86/procfs_machdep.c		1.45
 	procfs: on x86 add tdx_guest, brs, hfi, ibt, amx_bf16, amx_tile
 	and amx_int8.
 	[msaitoh, ticket #1766]
+
+sys/dev/pci/mpii.c				patch
+
+	mpii(4): Convert from pci_intr_map() to pci_intr_alloc(); makes
+	the driver use MSI/MSI-x when available.
+	[bouyer, ticket #1767]
+
+sys/dev/pci/mfii.c				1.28
+
+	mfii(4): Convert from pci_intr_map() to pci_intr_alloc(); makes
+	the driver use MSI/MSI-x when available.
+	[bouyer, ticket #1768]
 
