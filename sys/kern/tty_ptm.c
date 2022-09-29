@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.44 2022/09/24 16:29:27 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.45 2022/09/29 12:18:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.44 2022/09/24 16:29:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.45 2022/09/29 12:18:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -204,7 +204,9 @@ retry:
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
 	fp->f_vnode = vp;
+
 	VOP_UNLOCK(vp);
+	fd_set_exclose(l, *fd, (flags & O_CLOEXEC) != 0);
 	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:
