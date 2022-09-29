@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2022/05/14 06:07:53 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2022/09/29 06:39:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2022/05/14 06:07:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2022/09/29 06:39:59 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2022/05/14 06:07:53 skrll Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>

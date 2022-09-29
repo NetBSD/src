@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.5 2022/08/16 08:40:33 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.6 2022/09/29 06:39:58 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -25,7 +25,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 
 #include <machine/iomod.h>
