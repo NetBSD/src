@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.20 2021/08/07 16:18:58 thorpej Exp $ */
+/* $NetBSD: aupci.c,v 1.21 2022/09/29 06:58:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,13 +29,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #include "opt_pci.h"
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.20 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.21 2022/09/29 06:58:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,7 @@ aupciattach(device_t parent, device_t self, void *aux)
 	bus_addr_t			mstart;
 	struct pcibus_attach_args	pba;
 #endif
-	
+
 	aupci_found = 1;
 
 	sc->sc_dev = self;
@@ -194,7 +194,7 @@ aupciattach(device_t parent, device_t self, void *aux)
 	 * their drivers.)
 	 */
 	cfg = AUPCI_CONFIG_CH | AUPCI_CONFIG_R1H |
-	    AUPCI_CONFIG_R2H | AUPCI_CONFIG_AEN | 
+	    AUPCI_CONFIG_R2H | AUPCI_CONFIG_AEN |
 	    AUPCI_CONFIG_SM | AUPCI_CONFIG_ST | AUPCI_CONFIG_SIC_DATA;
 #else
 	cfg = AUPCI_CONFIG_CH | AUPCI_CONFIG_R1H |
@@ -373,7 +373,7 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	splx(s);
 
 	bus_space_unmap(sc->sc_cfgt, h, 256);
-	
+
 	/* if we got a PCI master abort, fail it */
 	if (status & AUPCI_CONFIG_EF)
 		return false;

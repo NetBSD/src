@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.27 2022/09/18 11:38:48 thorpej Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.28 2022/09/29 06:59:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.27 2022/09/18 11:38:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.28 2022/09/29 06:59:01 skrll Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -318,7 +318,7 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	
+
 	ifp->if_capabilities =
 #if 0	/* XXX: no tx checksum yet */
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |

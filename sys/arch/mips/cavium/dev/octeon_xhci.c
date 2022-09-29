@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.7 2021/11/10 17:19:29 msaitoh Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.8 2022/09/29 06:59:01 skrll Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ octxhci_dwc3_init(struct xhci_softc *sc)
 }
 
 /* ---- bus_space(9) */
-#define CHIP			octxhci 
+#define CHIP			octxhci
 #define CHIP_IO
 #define	CHIP_LITTLE_ENDIAN
 

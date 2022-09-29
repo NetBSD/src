@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.13 2022/04/09 14:09:32 riastradh Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.14 2022/09/29 06:59:44 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.13 2022/04/09 14:09:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.14 2022/09/29 06:59:44 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -88,7 +88,7 @@ struct cpu_info *
 #endif	/* DEBUG */
 
 CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
-	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL); 
+	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL);
 
 #ifdef MULTIPROCESSOR
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
@@ -118,7 +118,7 @@ cpu_rmixl_watchpoint_init(void)
  * cpu_xls616_erratum
  *
  * on the XLS616, COUNT/COMPARE clock regs seem to interact between
- * threads on a core 
+ * threads on a core
  *
  * the symptom of the error is retarded clock interrupts
  * and very slow apparent system performance
@@ -174,7 +174,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct cpu_info *ci = NULL;
 	static bool once = false;
 	extern void rmixl_spl_init_cpu(void);
-	
+
 	if (once == false) {
 		/* first attach is the primary cpu */
 		once = true;
@@ -336,7 +336,7 @@ cpu_setup_trampoline_common(struct cpu_info *ci, struct rmixl_cpu_trampoline_arg
 {
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
 	uintptr_t stacktop;
- 
+
 #ifdef DIAGNOSTIC
 	/* Ensure our current stack can be used by the firmware */
 	uint64_t sp;
@@ -392,7 +392,7 @@ cpu_setup_trampoline_callback(struct cpu_info *ci)
 	struct rmixl_cpu_trampoline_args *ta = &rmixl_cpu_trampoline_args;
 	extern void rmixl_cpu_trampoline(void *);
 	extern void rmixlfw_wakeup_cpu(void *, void *, u_int64_t, void *);
- 
+
 	cpu_setup_trampoline_common(ci, ta);
 
 #if _LP64
