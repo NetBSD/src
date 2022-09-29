@@ -1,4 +1,4 @@
-/* $NetBSD: if_admswvar.h,v 1.8 2020/04/16 23:29:52 rin Exp $ */
+/* $NetBSD: if_admswvar.h,v 1.9 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -34,7 +34,7 @@
 #define	_IF_ADMSWVAR_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.8 2020/04/16 23:29:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.9 2022/09/29 07:00:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.8 2020/04/16 23:29:52 rin Exp $");
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>

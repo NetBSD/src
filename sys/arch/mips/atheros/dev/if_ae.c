@@ -1,4 +1,4 @@
-/* $NetBSD: if_ae.c,v 1.41 2022/09/18 11:30:40 thorpej Exp $ */
+/* $NetBSD: if_ae.c,v 1.42 2022/09/29 07:00:46 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.41 2022/09/18 11:30:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.42 2022/09/29 07:00:46 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.41 2022/09/18 11:30:40 thorpej Exp $");
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 

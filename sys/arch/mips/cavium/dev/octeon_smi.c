@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.8 2022/09/29 06:59:01 skrll Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.9 2022/09/29 07:00:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.8 2022/09/29 06:59:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.9 2022/09/29 07:00:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.7 2022/09/29 06:59:33 skrll Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.8 2022/09/29 07:00:47 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,14 +29,13 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.7 2022/09/29 06:59:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.8 2022/09/29 07:00:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 

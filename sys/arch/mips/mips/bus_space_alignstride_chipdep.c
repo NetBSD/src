@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.31 2018/01/22 18:15:56 flxd Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.32 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,12 +86,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.31 2018/01/22 18:15:56 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.32 2022/09/29 07:00:46 skrll Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
 #endif
-#include <sys/malloc.h>
 
 #include <mips/locore.h>
 

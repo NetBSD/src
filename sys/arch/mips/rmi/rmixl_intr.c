@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.14 2022/09/29 06:59:44 skrll Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.15 2022/09/29 07:00:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.14 2022/09/29 06:59:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.15 2022/09/29 07:00:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.14 2022/09/29 06:59:44 skrll Exp $"
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
 

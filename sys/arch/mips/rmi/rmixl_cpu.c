@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.14 2022/09/29 06:59:44 skrll Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.15 2022/09/29 07:00:47 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.14 2022/09/29 06:59:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.15 2022/09/29 07:00:47 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.14 2022/09/29 06:59:44 skrll Exp $")
 #include <sys/lock.h>
 #include <sys/lwp.h>
 #include <sys/cpu.h>
-#include <sys/malloc.h>
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_extern.h>
 #include <mips/regnum.h>

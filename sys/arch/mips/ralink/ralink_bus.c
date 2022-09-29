@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_bus.c,v 1.3 2014/04/30 00:51:01 matt Exp $	*/
+/*	$NetBSD: ralink_bus.c,v 1.4 2022/09/29 07:00:47 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -69,14 +69,13 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_bus.c,v 1.3 2014/04/30 00:51:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_bus.c,v 1.4 2022/09/29 07:00:47 skrll Exp $");
 #define	_MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <mips/ralink/ralink_reg.h>

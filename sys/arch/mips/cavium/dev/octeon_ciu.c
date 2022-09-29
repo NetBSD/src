@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciu.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
+/*	$NetBSD: octeon_ciu.c,v 1.5 2022/09/29 07:00:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Internet Initiative Japan, Inc.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ciu.c,v 1.5 2022/09/29 07:00:46 skrll Exp $");
 
 #include "opt_octeon.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
 
 #include <sys/bus.h>
 #include <machine/locore.h>

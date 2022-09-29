@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.9 2022/01/22 15:10:31 skrll Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.10 2022/09/29 07:00:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.9 2022/01/22 15:10:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.10 2022/09/29 07:00:47 skrll Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.9 2022/01/22 15:10:31 skrll Exp $")
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <mips/int_fmtio.h>

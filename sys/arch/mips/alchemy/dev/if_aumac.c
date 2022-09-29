@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.51 2022/09/29 06:58:51 skrll Exp $ */
+/* $NetBSD: if_aumac.c,v 1.52 2022/09/29 07:00:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.51 2022/09/29 06:58:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.52 2022/09/29 07:00:46 skrll Exp $");
 
 
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.51 2022/09/29 06:58:51 skrll Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <uvm/uvm.h>		/* for PAGE_SIZE */

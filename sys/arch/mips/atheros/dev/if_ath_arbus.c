@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.22 2012/02/12 16:34:09 matt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.23 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.22 2012/02/12 16:34:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.23 2022/09/29 07:00:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.22 2012/02/12 16:34:09 matt Exp $
 #include <sys/errno.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 
