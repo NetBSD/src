@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.20 2022/09/24 08:11:46 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.21 2022/09/29 18:27:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -291,4 +291,10 @@ sys/arch/arm/sunxi/sunxi_can.c			1.10,1.11
 	Improve sunxican(4) RX interrupt handling to reduce the risk of
 	receive overrun, and improve receive overrun recovery.
 	[bouyer, ticket #1533]
+
+sys/dev/pci/mfii.c				1.28
+
+	mfii(4): Convert from pci_intr_map() to pci_intr_alloc(); makes
+	the driver use MSI/MSI-x when available.
+	[bouyer, ticket #1534]
 
