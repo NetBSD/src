@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.27 2022/09/14 01:05:42 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.28 2022/09/29 10:27:02 bouyer Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.27 2022/09/14 01:05:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.28 2022/09/29 10:27:02 bouyer Exp $");
 
 #include "bio.h"
 
@@ -703,7 +703,7 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	struct mfii_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pcireg_t memtype;
-	pci_intr_handle_t ih;
+	pci_intr_handle_t *ihp;
 	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr;
 	u_int32_t status, scpad2, scpad3;
@@ -754,12 +754,12 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	/* disable interrupts */
 	mfii_write(sc, MFI_OMSK, 0xffffffff);
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_alloc(pa, &ihp, NULL, 0)) {
 		aprint_error(": unable to map interrupt\n");
 		goto pci_unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	pci_intr_setattr(pa->pa_pc, &ih, PCI_INTR_MPSAFE, true);
+	intrstr = pci_intr_string(pa->pa_pc, ihp[0], intrbuf, sizeof(intrbuf));
+	pci_intr_setattr(pa->pa_pc, &ihp[0], PCI_INTR_MPSAFE, true);
 
 	/* lets get started */
 	if (mfii_transition_firmware(sc))
@@ -873,7 +873,7 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_BIO,
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ihp[0], IPL_BIO,
 	    mfii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
