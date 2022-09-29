@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.7 2019/11/20 19:37:52 pgoyette Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.8 2022/09/29 06:39:59 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2019/11/20 19:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2022/09/29 06:39:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>

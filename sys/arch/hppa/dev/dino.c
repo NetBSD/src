@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.15 2022/08/16 08:40:33 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.16 2022/09/29 06:39:58 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.15 2022/08/16 08:40:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.16 2022/09/29 06:39:58 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.15 2022/08/16 08:40:33 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 
 #include <machine/iomod.h>
