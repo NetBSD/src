@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: GENERIC,v 1.216 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -324,5 +324,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"

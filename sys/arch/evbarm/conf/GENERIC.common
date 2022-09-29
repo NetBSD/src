@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.49 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: GENERIC.common,v 1.50 2022/09/29 10:10:06 riastradh Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -169,6 +169,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
 

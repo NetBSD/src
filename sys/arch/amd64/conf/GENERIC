@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.598 2022/09/24 11:05:17 riastradh Exp $
+# $NetBSD: GENERIC,v 1.599 2022/09/29 10:10:05 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.598 $"
+#ident		"GENERIC-$Revision: 1.599 $"
 
 maxusers	64		# estimated number of users
 
@@ -1211,6 +1211,7 @@ pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #pseudo-device	nvmm			# NetBSD Virtual Machine Monitor
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

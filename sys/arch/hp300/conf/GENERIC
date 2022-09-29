@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.209 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: GENERIC,v 1.210 2022/09/29 10:10:07 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.209 $"
+#ident 		"GENERIC-$Revision: 1.210 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -336,6 +336,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	putter			# for puffs and pud
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

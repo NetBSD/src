@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.246 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: GENERIC,v 1.247 2022/09/29 10:10:07 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.246 $"
+#ident 		"GENERIC-$Revision: 1.247 $"
 
 maxusers	16
 
@@ -667,6 +667,7 @@ pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd			# cryptographic disks
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor

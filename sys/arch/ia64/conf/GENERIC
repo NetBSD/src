@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: GENERIC,v 1.12 2022/09/29 10:10:07 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -143,4 +143,4 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 #pseudo-device	pty			# pseudo-terminals
-
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)

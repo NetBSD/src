@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.236 2022/08/07 02:52:29 simonb Exp $
+# $NetBSD: GENERIC,v 1.237 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.236 $"
+#ident		"GENERIC-$Revision: 1.237 $"
 
 maxusers	64
 
@@ -855,6 +855,7 @@ pseudo-device	fss			# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	lockstat		# lock profiling
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # drvctl - needed to show device dictionary via drvctl(8)
 pseudo-device	drvctl

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.55 2022/08/07 02:52:26 simonb Exp $
+#	$NetBSD: GENERIC,v 1.56 2022/09/29 10:10:07 riastradh Exp $
 #
 #
 
@@ -299,5 +299,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	ksyms
 pseudo-device	clockctl
 pseudo-device	drvctl			# user control of drive subsystem
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"

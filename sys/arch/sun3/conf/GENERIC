@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: GENERIC,v 1.189 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.188 $"
+#ident		"GENERIC-$Revision: 1.189 $"
 
 makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
 	# Bootloader has size limit (~2MB). -fno-omit-frame-pointer is
@@ -290,6 +290,7 @@ pseudo-device	vnd			# paging to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # Veriexec
 # include "dev/veriexec.config"
