@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.16 2021/08/07 16:18:58 thorpej Exp $ */
+/* $NetBSD: admpci.c,v 1.17 2022/09/29 06:58:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -55,13 +55,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 #include "opt_pci.h"
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.16 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.17 2022/09/29 06:58:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -183,7 +183,7 @@ admpciattach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	struct pcibus_attach_args	pba;
 #endif
-	
+
 	admpci_found = 1;
 
 	sc->sc_dev = self;
@@ -418,7 +418,7 @@ admpci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 /*
  * Map the bus 0 device numbers 1, 2, and 3 to IRQ 6, 7, and 8,
  * respectively.
- * 
+ *
  * XXX How to handle bridges?
  */
 static int

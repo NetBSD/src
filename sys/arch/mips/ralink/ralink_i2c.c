@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.7 2022/09/29 06:59:33 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.7 2022/09/29 06:59:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $
 #endif
 
 /*
- * Slow the I2C bus clock to 12.5 KHz to work around the misbehavior 
+ * Slow the I2C bus clock to 12.5 KHz to work around the misbehavior
  * of the TI part.
  */
 #define CLKDIV_VALUE 4264
@@ -237,7 +237,7 @@ i2c_write(ra_i2c_softc_t *sc, u_long addr, const u_char *data,
 
 	for (i=0; i < nbytes; i++) {
 		for (j=0; j < max_ee_busy_loop; j++) {
-			r = bus_space_read_4(sc->sc_memt, sc->sc_i2c_memh, 
+			r = bus_space_read_4(sc->sc_memt, sc->sc_i2c_memh,
 				RA_I2C_STATUS);
 			if ((r & I2C_STATUS_SDOEMPTY) != 0) {
 				bus_space_write_4(sc->sc_memt, sc->sc_i2c_memh,
@@ -256,7 +256,7 @@ i2c_write(ra_i2c_softc_t *sc, u_long addr, const u_char *data,
 			aprint_error_dev(sc->sc_dev, "timeout error in %s\n",
 				__func__);
 			return EAGAIN;
-		}	
+		}
 	}
 
 	ra_i2c_busy_wait(sc);
@@ -280,7 +280,7 @@ i2c_read(ra_i2c_softc_t *sc, u_long addr, u_char *data, u_long nbytes)
 		uint32_t r;
 
 		for (j=0; j < max_ee_busy_loop; j++) {
-			r = bus_space_read_4(sc->sc_memt, sc->sc_i2c_memh, 
+			r = bus_space_read_4(sc->sc_memt, sc->sc_i2c_memh,
 				RA_I2C_STATUS);
 			if ((r & I2C_STATUS_DATARDY) != 0) {
 				data[i] = bus_space_read_4(
@@ -331,7 +331,7 @@ ra_i2c_reset(ra_i2c_softc_t *sc)
 
 	/* reset i2c block */
 	r = bus_space_read_4(sc->sc_memt, sc->sc_sy_memh, RA_SYSCTL_RST);
-	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh, RA_SYSCTL_RST, 
+	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh, RA_SYSCTL_RST,
 		r | RST_I2C);
 	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh, RA_SYSCTL_RST, r);
 
