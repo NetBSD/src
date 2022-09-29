@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.28 2022/09/29 06:59:01 skrll Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.29 2022/09/29 07:00:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.28 2022/09/29 06:59:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.29 2022/09/29 07:00:46 skrll Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.28 2022/09/29 06:59:01 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

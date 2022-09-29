@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.17 2022/09/29 06:58:37 skrll Exp $ */
+/* $NetBSD: admpci.c,v 1.18 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.17 2022/09/29 06:58:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.18 2022/09/29 07:00:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.17 2022/09/29 06:58:37 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>

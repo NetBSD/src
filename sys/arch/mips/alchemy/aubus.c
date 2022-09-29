@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.26 2022/09/29 06:58:51 skrll Exp $ */
+/* $NetBSD: aubus.c,v 1.27 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.26 2022/09/29 06:58:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.27 2022/09/29 07:00:46 skrll Exp $");
 
 #include "locators.h"
 #define _MIPS_BUS_DMA_PRIVATE
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.26 2022/09/29 06:58:51 skrll Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.69 2022/09/29 06:59:12 skrll Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.70 2022/09/29 07:00:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.69 2022/09/29 06:59:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.70 2022/09/29 07:00:46 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.69 2022/09/29 06:59:12 skrll Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.6 2022/09/29 07:00:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.6 2022/09/29 07:00:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <evbmips/rmixl/autoconf.h>
