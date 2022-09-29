@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2022/09/29 06:46:17 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2022/09/29 06:47:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2022/09/29 06:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2022/09/29 06:47:06 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2022/09/29 06:46:17 skrll Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
 #include <dev/pci/pcivar.h>
