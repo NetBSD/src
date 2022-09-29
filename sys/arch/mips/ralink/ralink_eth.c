@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.25 2022/09/18 12:39:26 thorpej Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.26 2022/09/29 07:00:47 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.25 2022/09/18 12:39:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.26 2022/09/29 07:00:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.25 2022/09/18 12:39:26 thorpej Exp 
 #include <sys/ioctl.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>

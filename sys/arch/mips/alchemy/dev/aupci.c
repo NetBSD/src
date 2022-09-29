@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.21 2022/09/29 06:58:51 skrll Exp $ */
+/* $NetBSD: aupci.c,v 1.22 2022/09/29 07:00:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.21 2022/09/29 06:58:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.22 2022/09/29 07:00:46 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.21 2022/09/29 06:58:51 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>

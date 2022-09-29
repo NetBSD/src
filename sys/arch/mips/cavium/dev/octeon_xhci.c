@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.8 2022/09/29 06:59:01 skrll Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.9 2022/09/29 07:00:46 skrll Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -25,7 +25,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <mips/cavium/octeonvar.h>
 
