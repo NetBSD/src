@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2022/08/07 02:52:29 simonb Exp $
+# $NetBSD: GENERIC,v 1.47 2022/09/29 10:10:09 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.46 $"
+#ident		"GENERIC-$Revision: 1.47 $"
 
 maxusers	32
 
@@ -244,6 +244,7 @@ pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2022/08/07 02:52:24 simonb Exp $
+# $NetBSD: GENERIC,v 1.77 2022/09/29 10:10:05 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -134,5 +134,6 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"

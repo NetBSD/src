@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2022/08/07 02:52:28 simonb Exp $
+# $NetBSD: GENERIC,v 1.144 2022/09/29 10:10:08 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -289,6 +289,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	npf			# NPF packet filter
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

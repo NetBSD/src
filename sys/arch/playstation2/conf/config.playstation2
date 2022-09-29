@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.27 2022/08/07 02:52:28 simonb Exp $
+# 	$NetBSD: config.playstation2,v 1.28 2022/09/29 10:10:09 riastradh Exp $
 #
 
 maxusers	16
@@ -89,3 +89,4 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
