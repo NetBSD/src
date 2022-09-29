@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2020/11/04 20:04:01 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2022/09/29 06:51:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2020/11/04 20:04:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2022/09/29 06:51:17 skrll Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2020/11/04 20:04:01 skrll Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
 #include <sys/vnode.h>
