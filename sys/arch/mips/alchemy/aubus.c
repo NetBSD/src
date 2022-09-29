@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $ */
+/* $NetBSD: aubus.c,v 1.26 2022/09/29 06:58:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.26 2022/09/29 06:58:51 skrll Exp $");
 
 #include "locators.h"
 #define _MIPS_BUS_DMA_PRIVATE
