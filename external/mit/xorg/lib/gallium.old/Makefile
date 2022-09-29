@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2021/12/14 21:37:06 christos Exp $
+# $NetBSD: Makefile,v 1.4 2022/09/29 18:58:04 rjs Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -952,7 +952,7 @@ CPPFLAGS.${_s}+= -I${X11SRCDIR.Mesa}/src/gallium/${_d}
 #SRCS+=	${GALLIUM_SOURCES.${_d}}
 #. endif
 
-.include "../libloader.mk"
+.include "../libloader.old.mk"
 
 .if ${BUILD_RADEON} == 1
 CFLAGS+=	-pthread
@@ -1108,8 +1108,8 @@ MESA_SRC_MODULES=  main math vbo state_tracker program asm_s
 MESA_SRC_MODULES+= amd
 .endif
 
-.include "../libmesa.mk"
-.include "../libglsl.mk"
+.include "../libmesa.old.mk"
+.include "../libglsl.old.mk"
 
 # Special addition for just gallium; it misses the rest of asm_c files.
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/x86

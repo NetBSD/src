@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/07/11 20:53:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2022/09/29 18:58:04 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,7 @@ CFLAGS+=	-fno-strict-aliasing -fexceptions
 
 COPTS.gbm_dri.c+=	-Wno-error
 
-.include "../libloader.mk"
+.include "../libloader.old.mk"
 
 .PATH:	${X11SRCDIR.Mesa}/src/gbm/main
 .PATH:	${X11SRCDIR.Mesa}/src/gbm/backends/dri
