@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2022/08/07 02:52:28 simonb Exp $
+# $NetBSD: GENERIC,v 1.178 2022/09/29 10:10:09 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177 $"
+#ident 		"GENERIC-$Revision: 1.178 $"
 
 maxusers	32
 
@@ -440,6 +440,7 @@ pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	putter			# for puffs and pud
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl

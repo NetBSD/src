@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: GENERIC,v 1.207 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.206 $"
+#ident 		"GENERIC-$Revision: 1.207 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -497,6 +497,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	fss			# file system snapshot device
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # Veriexec
 # include "dev/veriexec.config"

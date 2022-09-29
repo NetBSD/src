@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201 2022/08/07 02:52:24 simonb Exp $
+# $NetBSD: GENERIC,v 1.202 2022/09/29 10:10:05 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.201 $"
+#ident		"GENERIC-$Revision: 1.202 $"
 
 maxusers	32		# estimated number of users
 
@@ -471,6 +471,7 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port arc yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

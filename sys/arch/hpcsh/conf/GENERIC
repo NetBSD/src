@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: GENERIC,v 1.116 2022/09/29 10:10:07 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -363,6 +363,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# kernel symbol table interface
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

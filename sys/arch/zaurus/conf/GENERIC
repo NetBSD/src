@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.92 2022/08/07 02:52:30 simonb Exp $
+#	$NetBSD: GENERIC,v 1.93 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -386,6 +386,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

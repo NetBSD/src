@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.31 2022/08/07 02:52:28 simonb Exp $
+# $NetBSD: GENERIC,v 1.32 2022/09/29 10:10:08 riastradh Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.31 $"
+ident		"GENERIC-$Revision: 1.32 $"
 
 maxusers	8
 
@@ -248,6 +248,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

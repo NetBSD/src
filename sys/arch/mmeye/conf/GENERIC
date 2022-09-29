@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2022/08/07 02:52:27 simonb Exp $
+# $NetBSD: GENERIC,v 1.131 2022/09/29 10:10:08 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.130 $"
+#ident 		"GENERIC-$Revision: 1.131 $"
 
 maxusers	16		# estimated number of users
 
@@ -220,6 +220,7 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS

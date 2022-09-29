@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.271 2022/08/07 02:52:29 simonb Exp $
+# $NetBSD: GENERIC,v 1.272 2022/09/29 10:10:10 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271 $"
+#ident 		"GENERIC-$Revision: 1.272 $"
 
 maxusers	32
 
@@ -710,6 +710,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	putter			# for puffs and pud
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
 
