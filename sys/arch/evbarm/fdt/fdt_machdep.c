@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.93 2022/09/28 05:54:24 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.94 2022/09/30 06:36:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.93 2022/09/28 05:54:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.94 2022/09/30 06:36:28 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -322,7 +322,7 @@ fdt_map_range(uint64_t start, uint64_t end, uint64_t *psize,
 
 	const vaddr_t voff = start & PAGE_MASK;
 
-	va = uvm_km_alloc(kernel_map, *psize, 0, UVM_KMF_VAONLY|UVM_KMF_NOWAIT);
+	va = uvm_km_alloc(kernel_map, *psize, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0) {
 		printf("Failed to allocate VA for %s\n", purpose);
 		return NULL;
@@ -330,7 +330,7 @@ fdt_map_range(uint64_t start, uint64_t end, uint64_t *psize,
 	ptr = (void *)(va + voff);
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 	return ptr;
