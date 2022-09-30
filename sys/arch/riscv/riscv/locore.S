@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.28 2022/09/28 06:05:28 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.29 2022/09/30 06:23:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ ENTRY_NP(start)
 
 	call	clear_bss		// zero through kernel_end (inc. stack)
 
-	li	s7, PTE_KERN		// for megapages
+	li	s7, PTE_V		// page table pointer {X,W,R} = {0,0,0}
 
 	// We allocated the kernel first PDE page so let's insert in the
 	// page table.
