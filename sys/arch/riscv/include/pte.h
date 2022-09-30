@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.7 2022/09/21 06:34:30 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.8 2022/09/30 06:23:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ typedef uint32_t pd_entry_t;
 #define	PTE_V		__BIT(0)	// Valid
 
 #define PTE_HARDWIRED	(PTE_A | PTE_D)
-#define PTE_KERN	(PTE_V | PTE_G)
+#define PTE_KERN	(PTE_V | PTE_G | PTE_A | PTE_D)
 #define PTE_RW		(PTE_R | PTE_W)
 #define PTE_RX		(PTE_R | PTE_X)
 
