@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.94 2022/09/30 06:36:28 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.95 2022/09/30 06:39:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.94 2022/09/30 06:36:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.95 2022/09/30 06:39:54 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -342,9 +342,12 @@ fdt_unmap_range(void *ptr, uint64_t size)
 	const char *start = ptr, *end = start + size;
 	const vaddr_t startva = trunc_page((vaddr_t)(uintptr_t)start);
 	const vaddr_t endva = round_page((vaddr_t)(uintptr_t)end);
+	const vsize_t sz = endva - startva;
 
-	pmap_kremove(startva, endva - startva);
+	pmap_kremove(startva, sz);
 	pmap_update(pmap_kernel());
+
+	uvm_km_free(kernel_map, startva, sz, UVM_KMF_VAONLY);
 }
 
 static void
