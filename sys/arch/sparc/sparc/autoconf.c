@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.270 2022/01/22 11:49:16 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.271 2022/09/30 14:32:45 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.270 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.271 2022/09/30 14:32:45 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1119,8 +1119,8 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 	};
 
 	struct mainbus_attach_args ma;
-	char namebuf[32];
 #if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
+	char namebuf[32];
 	const char *sp = NULL;
 	int node0, node;
 	const struct boot_special *openboot_special, *ssp;
