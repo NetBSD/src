@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.301 2022/10/01 09:59:40 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.302 2022/10/01 10:04:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.301 2022/10/01 09:59:40 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.302 2022/10/01 10:04:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -252,8 +252,8 @@ dcs_add_storage_class(scl_t sc)
  * dcs_end_type to build the type used for all declarators in this
  * declaration.
  *
- * If tp->t_typedef is 1, the type comes from a previously defined typename.
- * Otherwise it comes from a type specifier (int, long, ...) or a
+ * If tp->t_typedef is true, the type comes from a previously defined
+ * typename. Otherwise, it comes from a type specifier (int, long, ...) or a
  * struct/union/enum tag.
  */
 void
@@ -596,6 +596,7 @@ end_declaration_level(void)
 	lint_assert(dcs->d_enclosing != NULL);
 	di = dcs;
 	dcs = di->d_enclosing;
+
 	switch (di->d_kind) {
 	case DK_MOS:
 	case DK_MOU:
@@ -642,7 +643,7 @@ end_declaration_level(void)
 		rmsyms(di->d_dlsyms);
 		break;
 	case DK_EXTERN:
-		/* there is nothing after external declarations */
+		/* there is nothing around an external declarations */
 		/* FALLTHROUGH */
 	default:
 		lint_assert(/*CONSTCOND*/false);
@@ -1862,11 +1863,11 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 }
 
 type_t *
-complete_tag_enum(type_t *tp, sym_t *fmem)
+complete_tag_enum(type_t *tp, sym_t *first_enumerator)
 {
 
 	tp->t_enum->en_incomplete = false;
-	tp->t_enum->en_first_enumerator = fmem;
+	tp->t_enum->en_first_enumerator = first_enumerator;
 	return tp;
 }
 
@@ -2974,11 +2975,11 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 		UNIQUE_CURR_POS(sym->s_use_pos);
 	}
 	/*
-	 * for function calls another record is written
+	 * For function calls, another record is written.
 	 *
-	 * XXX Should symbols used in sizeof() be treated as used or not?
-	 * Probably not, because there is no sense to declare an
-	 * external variable only to get their size.
+	 * XXX: Should symbols used in sizeof() be treated as used or not?
+	 * Probably not, because there is no point in declaring an external
+	 * variable only to get its size.
 	 */
 	if (!fcall && !szof && sym->s_kind == FVFT && sym->s_scl == EXTERN)
 		outusg(sym);

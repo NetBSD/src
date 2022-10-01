@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.481 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.482 2022/10/01 10:04:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.481 2022/10/01 09:42:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.482 2022/10/01 10:04:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3357,6 +3357,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 	return ntn;
 }
 
+/* TODO: check for varargs */
 static bool
 is_cast_redundant(const tnode_t *tn)
 {
