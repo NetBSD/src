@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1034 2022/10/01 09:20:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1035 2022/10/01 09:27:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1034 2022/10/01 09:20:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1035 2022/10/01 09:27:45 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -198,9 +198,9 @@ typedef struct Var {
 	bool readOnly:1;
 
 	/*
-	* The variable's value is currently being used by Var_Parse or
-	* Var_Subst.  This marker is used to avoid endless recursion.
-	*/
+	 * The variable is currently being accessed by Var_Parse or Var_Subst.
+	 * This temporary marker is used to avoid endless recursion.
+	 */
 	bool inUse:1;
 
 	/*
@@ -4797,7 +4797,7 @@ Var_Dump(GNode *scope)
 
 	for (i = 0; i < vec.len; i++) {
 		const char *varname = varnames[i];
-		Var *var = HashTable_FindValue(&scope->vars, varname);
+		const Var *var = HashTable_FindValue(&scope->vars, varname);
 		debug_printf("%-16s = %s%s\n", varname,
 		    var->val.data, ValueDescription(var->val.data));
 	}
