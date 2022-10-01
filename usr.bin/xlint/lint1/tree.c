@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.482 2022/10/01 10:04:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.483 2022/10/01 10:07:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.482 2022/10/01 10:04:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.483 2022/10/01 10:07:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4049,8 +4049,6 @@ invalid_cast:
 tnode_t *
 build_function_argument(tnode_t *args, tnode_t *arg)
 {
-	tnode_t	*ntn;
-
 	/*
 	 * If there was a serious error in the expression for the argument,
 	 * create a dummy argument so the positions of the remaining arguments
@@ -4059,9 +4057,7 @@ build_function_argument(tnode_t *args, tnode_t *arg)
 	if (arg == NULL)
 		arg = build_integer_constant(INT, 0);
 
-	ntn = new_tnode(PUSH, arg->tn_sys, arg->tn_type, arg, args);
-
-	return ntn;
+	return new_tnode(PUSH, arg->tn_sys, arg->tn_type, arg, args);
 }
 
 /*
