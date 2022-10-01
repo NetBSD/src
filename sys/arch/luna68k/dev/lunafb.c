@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.47 2022/09/25 11:28:40 isaki Exp $ */
+/* $NetBSD: lunafb.c,v 1.48 2022/10/01 14:02:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.47 2022/09/25 11:28:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.48 2022/10/01 14:02:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,7 +505,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 	ri = &dc->dc_ri;
 	ri->ri_width = dc->dc_wid;
 	ri->ri_height = dc->dc_ht;
-	ri->ri_depth = 1;	/* since planes are independently addressed */
+	ri->ri_depth = dc->dc_depth;
 	ri->ri_stride = dc->dc_rowbytes;
 	ri->ri_bits = (void *)dc->dc_videobase;
 	ri->ri_flg = RI_CENTER;
