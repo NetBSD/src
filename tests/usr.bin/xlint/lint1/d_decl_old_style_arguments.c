@@ -1,7 +1,7 @@
 # 2 "d_decl_old_style_arguments.c"
 
 /*
- * A function is declared with a prototype, followed by an old style definition
+ * A function is declared with a prototype, followed by an old-style definition
  * that is completely different.
  */
 

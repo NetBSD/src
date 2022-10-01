@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_216.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_216.c,v 1.6 2022/10/01 09:42:40 rillig Exp $	*/
 # 3 "msg_216.c"
 
 // Test for message: function '%s' has 'return expr' and 'return' [216]
 
-/* expect+2: error: old style declaration; add 'int' [1] */
+/* expect+2: error: old-style declaration; add 'int' [1] */
 random(int n)
 {
 	if (n < 0)
