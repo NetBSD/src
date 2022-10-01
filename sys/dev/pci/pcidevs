@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1465 2022/09/28 08:02:47 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1466 2022/10/01 15:44:58 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1053,6 +1053,7 @@ product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
 product AMD F17_3X_HDA		0x1487	17h/7xh HD Audio
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
+product AMD F19_6X_RC		0x14d8	19h/6xh Root Complex
 product AMD F14_RC		0x1510	Family14h Root Complex
 product AMD F14_PCIE_1		0x1512	Family14h PCIe
 product AMD F14_PCIE_2		0x1513	Family14h PCIe
