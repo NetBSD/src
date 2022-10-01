@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.43 2022/10/01 12:27:29 rin Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.44 2022/10/01 12:35:25 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.43 2022/10/01 12:27:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.44 2022/10/01 12:35:25 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,8 @@ pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct pci_genfb_softc *sc = v;
-	int new_mode, i;
+	size_t i;
+	int new_mode;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -232,11 +233,9 @@ pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_SMODE:
 		new_mode = *(int *)data;
 		if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-			for (i = 0; i < 9; i++)
-				pci_conf_write(sc->sc_pc,
-				     sc->sc_pcitag,
-				     0x10 + (i << 2),
-				     sc->sc_bars[i]);
+			for (i = 0; i < __arraycount(sc->sc_bars); i++)
+				pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+				    PCI_BAR(i), sc->sc_bars[i]);
 		}
 		return 0;
 	}
