@@ -1,4 +1,4 @@
-/*	$NetBSD: psgpam_enc.c,v 1.1 2022/06/10 21:42:23 tsutsui Exp $	*/
+/*	$NetBSD: psgpam_enc.c,v 1.2 2022/10/01 13:41:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2018 Yosuke Sugahara. All rights reserved.
@@ -70,12 +70,12 @@ dynamic_offset(struct psgpam_codecvar *ctx, auint_t v)
 	 * } else {
 	 *   increment offset
 	 * }
-	 */ 
+	 */
 	if (v <= ctx->offset) {
 		ctx->offset = v;
 	} else {
 		if (--ctx->expire < 0) {
-			ctx->offset += 1; 
+			ctx->offset += 1;
 			ctx->expire = ctx->expire_initial;
 		}
 	}
