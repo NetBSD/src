@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.58 2022/08/27 08:58:32 rillig Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.59 2022/10/01 22:21:31 rillig Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -1159,6 +1159,7 @@ pgp_export_key(pgp_io_t *io, const pgp_key_t *keydata, uint8_t *passphrase)
 		pgp_write_xfer_seckey(output, keydata, passphrase,
 					strlen((char *)passphrase), 1);
 	}
+	pgp_memory_add(mem, "", 1);
 	cp = netpgp_strdup(pgp_mem_data(mem));
 	pgp_teardown_memory_write(output, mem);
 	return cp;
