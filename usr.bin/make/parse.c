@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.688 2022/09/27 17:46:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.689 2022/10/01 09:25:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.688 2022/09/27 17:46:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.689 2022/10/01 09:25:06 rillig Exp $");
 
 /*
  * A file being read.
@@ -1335,26 +1335,26 @@ ApplyDependencyTarget(char *name, char *nameEnd, ParseSpecial *inout_special,
 }
 
 static bool
-ParseDependencyTargets(char **inout_cp,
+ParseDependencyTargets(char **pp,
 		       const char *lstart,
 		       ParseSpecial *inout_special,
 		       GNodeType *inout_targetAttr,
 		       SearchPathList **inout_paths)
 {
-	char *cp = *inout_cp;
+	char *p = *pp;
 
 	for (;;) {
-		char *tgt = cp;
+		char *tgt = p;
 
-		ParseDependencyTargetWord(&cp, lstart);
+		ParseDependencyTargetWord(&p, lstart);
 
 		/*
 		 * If the word is followed by a left parenthesis, it's the
 		 * name of one or more files inside an archive.
 		 */
-		if (!IsEscaped(lstart, cp) && *cp == '(') {
-			cp = tgt;
-			if (!Arch_ParseArchive(&cp, targets, SCOPE_CMDLINE)) {
+		if (!IsEscaped(lstart, p) && *p == '(') {
+			p = tgt;
+			if (!Arch_ParseArchive(&p, targets, SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in archive specification: \"%s\"",
 				    tgt);
@@ -1363,27 +1363,27 @@ ParseDependencyTargets(char **inout_cp,
 			continue;
 		}
 
-		if (*cp == '\0') {
+		if (*p == '\0') {
 			InvalidLineType(lstart);
 			return false;
 		}
 
-		if (!ApplyDependencyTarget(tgt, cp, inout_special,
+		if (!ApplyDependencyTarget(tgt, p, inout_special,
 		    inout_targetAttr, inout_paths))
 			return false;
 
 		if (*inout_special != SP_NOT && *inout_special != SP_PATH)
-			SkipExtraTargets(&cp, lstart);
+			SkipExtraTargets(&p, lstart);
 		else
-			pp_skip_whitespace(&cp);
+			pp_skip_whitespace(&p);
 
-		if (*cp == '\0')
+		if (*p == '\0')
 			break;
-		if ((*cp == '!' || *cp == ':') && !IsEscaped(lstart, cp))
+		if ((*p == '!' || *p == ':') && !IsEscaped(lstart, p))
 			break;
 	}
 
-	*inout_cp = cp;
+	*pp = p;
 	return true;
 }
 
