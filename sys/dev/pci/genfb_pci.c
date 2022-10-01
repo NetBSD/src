@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.41 2022/10/01 11:40:08 rin Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.42 2022/10/01 12:24:19 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.41 2022/10/01 11:40:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.42 2022/10/01 12:24:19 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gen.sc_dev = self;
 	sc->sc_memt = pa->pa_memt;
-	sc->sc_iot = pa->pa_iot;	
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_want_wsfb = 0;
@@ -171,7 +171,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 			skip = false;
 			continue;
 		}
-		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM || 
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM ||
 		    PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_ROM) {
 			pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, bar, type,
 			    &sc->sc_ranges[idx].offset,
@@ -184,7 +184,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 			skip = true;
 	}
 
-	sc->sc_ranges_used = idx;			    
+	sc->sc_ranges_used = idx;
 
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
@@ -320,7 +320,7 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if ((offset >= PCI_MAGIC_IO_RANGE) &&
 	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
 		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
-		    0, prot, BUS_SPACE_MAP_LINEAR);	
+		    0, prot, BUS_SPACE_MAP_LINEAR);
 	}
 #endif
 
