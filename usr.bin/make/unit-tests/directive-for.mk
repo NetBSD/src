@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.14 2022/08/23 16:36:02 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.15 2022/10/01 09:23:04 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -235,9 +235,9 @@ var=	outer
 # over a variable of the same name, the expression '${scope}' expands to the
 # value from the .for loop.  This is because when the body of the .for loop is
 # expanded, the expression '${scope}' is textually replaced with ${:Uloop}',
-# without resolving any variable names.  Later, when the body of the .for loop
-# is actually interpreted, the body text doesn't contain the word 'scope'
-# anymore.
+# without resolving any other variable names (ForLoop_SubstBody).  Later, when
+# the body of the .for loop is actually interpreted, the body text doesn't
+# contain the word 'scope' anymore.
 .MAKEFLAGS: scope=cmdline
 .for scope in loop
 .  if ${scope} != "loop"
