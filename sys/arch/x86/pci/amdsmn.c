@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.13 2022/04/27 06:59:25 msaitoh Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.14 2022/10/01 15:50:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.13 2022/04/27 06:59:25 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.14 2022/10/01 15:50:05 msaitoh Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU
@@ -88,7 +88,17 @@ static const struct pciid {
 		.amdsmn_data_reg = F17H_SMN_DATA_REG,
 	},
 	{
+		.amdsmn_deviceid = PCI_PRODUCT_AMD_F17_6X_RC,
+		.amdsmn_addr_reg = F17H_SMN_ADDR_REG,
+		.amdsmn_data_reg = F17H_SMN_DATA_REG,
+	},
+	{
 		.amdsmn_deviceid = PCI_PRODUCT_AMD_F17_7X_RC,
+		.amdsmn_addr_reg = F17H_SMN_ADDR_REG,
+		.amdsmn_data_reg = F17H_SMN_DATA_REG,
+	},
+	{
+		.amdsmn_deviceid = PCI_PRODUCT_AMD_F19_6X_RC,
 		.amdsmn_addr_reg = F17H_SMN_ADDR_REG,
 		.amdsmn_data_reg = F17H_SMN_DATA_REG,
 	},
