@@ -1,4 +1,4 @@
-# $NetBSD: emit.ln,v 1.5 2022/01/15 17:33:42 rillig Exp $
+# $NetBSD: emit.ln,v 1.6 2022/10/01 10:04:06 rillig Exp $
 #
 # Test emitting a lint library file.
 
@@ -25,8 +25,8 @@ S emit.c
 122 d 0.122 e 38return_implicit_int_unknown_parameters F I
 125 d 0.125 e 32extern_return_void_no_parameters F0 V
 
-# Function calls are not part of a library's interface, therefore they are
-# omitted from the output.
+# Function calls are written as 'c'.  They are not part of a library's
+# interface, therefore they are omitted from the output.
 161 c 0.161 s2"%" i 9my_printf f2 PcC PC V
 
 # Function definitions are copied to the output.

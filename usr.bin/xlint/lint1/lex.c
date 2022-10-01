@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.133 2022/08/25 19:03:47 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.134 2022/10/01 10:04:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.133 2022/08/25 19:03:47 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.134 2022/10/01 10:04:06 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -636,18 +636,17 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 /*
  * Extend or truncate q to match t.  If t is signed, sign-extend.
  *
- * len is the number of significant bits. If len is -1, len is set
+ * len is the number of significant bits. If len is 0, len is set
  * to the width of type t.
  */
 int64_t
 convert_integer(int64_t q, tspec_t t, unsigned int len)
 {
-	uint64_t vbits;
 
 	if (len == 0)
 		len = size_in_bits(t);
 
-	vbits = value_bits(len);
+	uint64_t vbits = value_bits(len);
 	return t == PTR || is_uinteger(t) || ((q & bit(len - 1)) == 0)
 	    ? (int64_t)(q & vbits)
 	    : (int64_t)(q | ~vbits);
@@ -710,8 +709,8 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 			errno = 0;
 			break;
 		default:
-			INTERNAL_ERROR("lex_floating_constant(%s->%s)",
-			    cp, eptr);
+			INTERNAL_ERROR("lex_floating_constant(%.*s)",
+			    (int)(eptr - cp), cp);
 		}
 	}
 	if (errno != 0)
@@ -729,11 +728,10 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
-	if (typ == FLOAT) {
+	if (typ == FLOAT)
 		yylval.y_val->v_ldbl = f;
-	} else {
+	else
 		yylval.y_val->v_ldbl = d;
-	}
 
 	return T_CON;
 }
@@ -863,7 +861,7 @@ get_escaped_char(int delim)
 			return -2;
 		}
 		return c;
-	case 0:
+	case '\0':
 		/* syntax error '%s' */
 		error(249, "EOF or null byte in literal");
 		return -2;
