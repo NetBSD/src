@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.23 2022/09/25 11:28:40 isaki Exp $ */
+/* $NetBSD: omrasops.c,v 1.24 2022/10/01 13:51:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.23 2022/09/25 11:28:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.24 2022/10/01 13:51:55 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -113,7 +113,8 @@ static int	omrasops_init(struct rasops_info *, int, int);
  * This number of elements is derived from howmany(1024, fontheight = 24).
  * But it is currently initialized with row = 34, so it is used only up to 34.
  */
-static rowattr_t rowattr[43];
+#define OMRASOPS_MAX_ROWS	43
+static rowattr_t rowattr[OMRASOPS_MAX_ROWS];
 
 #define	ALL1BITS	(~0U)
 #define	ALL0BITS	(0U)
@@ -1801,6 +1802,8 @@ omrasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 {
 	int wsfcookie, bpp;
 
+	if (wantrows > OMRASOPS_MAX_ROWS)
+		wantrows = OMRASOPS_MAX_ROWS;
 	if (wantrows == 0)
 		wantrows = 34;
 	if (wantrows < 10)
