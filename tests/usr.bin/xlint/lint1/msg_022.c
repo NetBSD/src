@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_022.c,v 1.4 2022/04/05 23:09:19 rillig Exp $	*/
+/*	$NetBSD: msg_022.c,v 1.5 2022/10/01 09:42:40 rillig Exp $	*/
 # 3 "msg_022.c"
 
 // Test for message: incomplete or misplaced function definition [22]
@@ -26,5 +26,5 @@ unsigned long sz = sizeof(int(param1, param2));
 ;
 
 /* expect+2: error: incomplete or misplaced function definition [22] */
-/* expect+1: warning: old style declaration; add 'int' [1] */
+/* expect+1: warning: old-style declaration; add 'int' [1] */
 old_style(arg);

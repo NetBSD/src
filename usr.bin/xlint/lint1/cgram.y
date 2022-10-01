@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.423 2022/08/28 10:43:18 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.424 2022/10/01 09:42:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.423 2022/08/28 10:43:18 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.424 2022/10/01 09:42:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -710,7 +710,7 @@ declaration:			/* C99 6.7 */
 			/* syntax error '%s' */
 			error(249, "missing base type for typedef");
 		} else {
-			/* old style declaration; add 'int' */
+			/* old-style declaration; add 'int' */
 			error(1);
 		}
 	  }
@@ -1909,10 +1909,10 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 	  begin_type end_type notype_init_declarators T_SEMI {
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99) {
-			/* old style declaration; add 'int' */
+			/* old-style declaration; add 'int' */
 			error(1);
 		} else if (allow_c90) {
-			/* old style declaration; add 'int' */
+			/* old-style declaration; add 'int' */
 			warning(1);
 		}
 	  }
@@ -1957,14 +1957,14 @@ function_definition:		/* C99 6.9.1 */
 func_declarator:
 	  begin_type end_type notype_declarator {
 		if (!allow_trad) {
-			/* old style declaration; add 'int' */
+			/* old-style declaration; add 'int' */
 			error(1);
 		}
 		$$ = $3;
 	  }
 	| begin_type_declmods end_type notype_declarator {
 		if (!allow_trad) {
-			/* old style declaration; add 'int' */
+			/* old-style declaration; add 'int' */
 			error(1);
 		}
 		$$ = $3;
