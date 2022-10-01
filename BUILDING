@@ -319,7 +319,7 @@ CONFIGURATION
                  build, and whether lint libraries will be installed into
                  DESTDIR/usr/libdata/lint.
 
-                 Default: "yes"
+                 Default: "no"
 
      MKMAN       Can be set to "yes" or "no".  Indicates whether manual pages
                  will be installed during a build.
