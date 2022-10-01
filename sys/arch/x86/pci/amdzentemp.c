@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.14 2021/06/06 11:35:22 nonaka Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.15 2022/10/01 15:50:05 msaitoh Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.14 2021/06/06 11:35:22 nonaka Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.15 2022/10/01 15:50:05 msaitoh Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -114,6 +114,7 @@ struct amdzentemp_softc {
 	size_t sc_sensor_len;
 	size_t sc_numsensors;
 	int32_t sc_offset;
+	uint32_t sc_ccd_tmp_base;
 };
 
 enum {
@@ -345,7 +346,7 @@ amdzentemp_family17_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* Tccd */
 		i = edata->private - CCD_BASE;
 		error = amdsmn_read(sc->sc_smn,
-		    AMD_17H_CCD_TMP_BASE + (i * sizeof(temp)), &temp);
+		    sc->sc_ccd_tmp_base + (i * sizeof(temp)), &temp);
 		if (error || !ISSET(temp, AMD_17H_CCD_TMP_VALID)) {
 			edata->state = ENVSYS_SINVALID;
 			return;
@@ -399,6 +400,10 @@ amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
 	case 0x20 ... 0x2f: /* Zen3 Ryzen "Vermeer" */
 		maxreg = 8;
 		break;
+	case 0x60 ... 0x6f: /* Zen4 Ryzen "Raphael" */
+		sc->sc_ccd_tmp_base = 0x59b08;
+		maxreg = 8;
+		break;
 	default:
 		aprint_error_dev(sc->sc_dev,
 		    "Unrecognized Family 19h Model: %02xh\n", model);
@@ -412,6 +417,9 @@ static int
 amdzentemp_probe_ccd_sensors(struct amdzentemp_softc *sc, int family, int model)
 {
 	int nccd;
+
+	/* Set default CCD temp sensor base address. */
+	sc->sc_ccd_tmp_base = 0x59954;
 
 	switch (family) {
 	case 0x17:
@@ -437,7 +445,7 @@ amdzentemp_setup_ccd_sensors(struct amdzentemp_softc *sc)
 
 	for (i = 0; i < sc->sc_numsensors - 1; i++) {
 		error = amdsmn_read(sc->sc_smn,
-		    AMD_17H_CCD_TMP_BASE + (i * sizeof(temp)), &temp);
+		    sc->sc_ccd_tmp_base + (i * sizeof(temp)), &temp);
 		if (error || !ISSET(temp, AMD_17H_CCD_TMP_VALID))
 			continue;
 
