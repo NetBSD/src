@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.19 2022/08/28 08:41:06 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.20 2022/10/01 09:42:40 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -104,7 +104,7 @@ int
 declaration_without_type_specifier(void)
 {
 	const i = 3;
-	/* expect-1: error: old style declaration; add 'int' [1] */
+	/* expect-1: error: old-style declaration; add 'int' [1] */
 	return i;
 }
 
@@ -159,15 +159,15 @@ unsigned long sizes =
     sizeof(const typeof(unsigned_long)) +
     sizeof(const typeof(unnamed_struct));
 
-/* expect+2: error: old style declaration; add 'int' [1] */
+/* expect+2: error: old-style declaration; add 'int' [1] */
 /* expect+1: error: syntax error 'int' [249] */
 thread int thread_int;
 __thread int thread_int;
-/* expect+2: error: old style declaration; add 'int' [1] */
+/* expect+2: error: old-style declaration; add 'int' [1] */
 /* expect+1: error: syntax error 'int' [249] */
 __thread__ int thread_int;
 
-/* expect+4: error: old style declaration; add 'int' [1] */
+/* expect+4: error: old-style declaration; add 'int' [1] */
 /* expect+2: warning: static function 'cover_func_declarator' unused [236] */
 static
 cover_func_declarator(void)

@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.51 2022/08/28 12:04:47 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.52 2022/10/01 09:42:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.51 2022/08/28 12:04:47 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.52 2022/10/01 09:42:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -112,7 +112,7 @@ chkname(const hte_t *hte)
 			decl = sym;
 	}
 
-	/* A prototype is better than an old style declaration. */
+	/* A prototype is better than an old-style declaration. */
 	if (pdecl != NULL)
 		decl = pdecl;
 
@@ -441,9 +441,9 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
  *  hte		a pointer to the hash table entry of the function
  *  n		the number of the argument (1..)
  *  def		the function definition or NULL
- *  decl	prototype declaration, old style declaration or NULL
+ *  decl	prototype declaration, old-style declaration or NULL
  *  pos1p	position of definition, declaration of first call
- *  call1	first call, if both def and decl are old style def/decl
+ *  call1	first call, if both def and decl are old-style def/decl
  *  call	checked call
  *  arg1	currently checked argument of def/decl/call1
  *  arg2	currently checked argument of call
@@ -461,13 +461,13 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	/*
 	 * If a function definition is available (def != NULL), we compare the
 	 * function call (call) with the definition. Otherwise, if a function
-	 * definition is available and it is not an old style definition
+	 * definition is available and it is not an old-style definition
 	 * (decl != NULL && TP(decl->s_type)->t_proto), we compare the call
 	 * with this declaration. Otherwise we compare it with the first
 	 * call we have found (call1).
 	 */
 
-	/* arg1 must be promoted if it stems from an old style definition */
+	/* arg1 must be promoted if it stems from an old-style definition */
 	promote = def != NULL && def->s_old_style_function;
 
 	/*
@@ -1147,7 +1147,7 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
 		return;
 
 	/*
-	 * XXX Prototypes should also be compared with old style function
+	 * XXX Prototypes should also be compared with old-style function
 	 * declarations.
 	 */
 
@@ -1198,12 +1198,12 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
  * ignqual	if set, ignore qualifiers of outermost type; used for
  *		function arguments
  * promote	if set, promote left type before comparison; used for
- *		comparisons of arguments with parameters of old style
+ *		comparisons of arguments with parameters of old-style
  *		definitions
  * asgn		left indirected type must have at least the same qualifiers
  *		like right indirected type (for assignments and function
  *		arguments)
- * *dowarn	set to true if an old style declaration was compared with
+ * *dowarn	set to true if an old-style declaration was compared with
  *		an incompatible prototype declaration
  */
 static bool

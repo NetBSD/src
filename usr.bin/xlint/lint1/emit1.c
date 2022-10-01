@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.63 2022/06/21 22:10:30 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.64 2022/10/01 09:42:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.63 2022/06/21 22:10:30 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.64 2022/10/01 09:42:40 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -308,7 +308,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 		outchar('u');
 
 	if (osdef)
-		outchar('o');	/* old style function definition */
+		outchar('o');	/* old-style function definition */
 
 	if (fsym->s_inline)
 		outchar('i');

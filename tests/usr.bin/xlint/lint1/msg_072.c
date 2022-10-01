@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_072.c,v 1.6 2022/04/24 19:21:01 rillig Exp $	*/
+/*	$NetBSD: msg_072.c,v 1.7 2022/10/01 09:42:40 rillig Exp $	*/
 # 3 "msg_072.c"
 
 // Test for message: typedef declares no type name [72]
@@ -30,6 +30,6 @@ cover_cgram_declaration(void)
 	/* expect+1: error: syntax error 'missing base type for typedef' [249] */
 	typedef not_a_type;
 
-	/* expect+1: error: old style declaration; add 'int' [1] */
+	/* expect+1: error: old-style declaration; add 'int' [1] */
 	static missing_type;
 }

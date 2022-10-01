@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.144 2022/08/28 19:09:12 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.145 2022/10/01 09:42:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.144 2022/08/28 19:09:12 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.145 2022/10/01 09:42:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,9 +215,9 @@ check_statement_reachable(void)
 
 /*
  * Called after a function declaration which introduces a function definition
- * and before an (optional) old style argument declaration list.
+ * and before an (optional) old-style argument declaration list.
  *
- * Puts all symbols declared in the prototype or in an old style argument
+ * Puts all symbols declared in the prototype or in an old-style argument
  * list back to the symbol table.
  *
  * Does the usual checking of storage class, type (return value),
@@ -246,7 +246,7 @@ funcdef(sym_t *fsym)
 
 	/*
 	 * In old_style_function() we did not know whether it is an old
-	 * style function definition or only an old style declaration,
+	 * style function definition or only an old-style declaration,
 	 * if there are no arguments inside the argument list ("f()").
 	 */
 	if (!fsym->s_type->t_proto && fsym->u.s_old_style_args == NULL)
@@ -293,7 +293,7 @@ funcdef(sym_t *fsym)
 
 	/*
 	 * We must also remember the position. s_def_pos is overwritten
-	 * if this is an old style definition and we had already a
+	 * if this is an old-style definition and we had already a
 	 * prototype.
 	 */
 	dcs->d_func_def_pos = fsym->s_def_pos;

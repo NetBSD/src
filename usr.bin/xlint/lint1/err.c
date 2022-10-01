@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.183 2022/08/19 19:40:39 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.184 2022/10/01 09:42:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.183 2022/08/19 19:40:39 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.184 2022/10/01 09:42:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -56,7 +56,7 @@ int	sytxerr;
 
 static const char *const msgs[] = {
 	"empty declaration",					      /* 0 */
-	"old style declaration; add 'int'",			      /* 1 */
+	"old-style declaration; add 'int'",			      /* 1 */
 	"empty declaration",					      /* 2 */
 	"'%s' declared in argument declaration list",		      /* 3 */
 	"illegal type combination",				      /* 4 */
@@ -354,8 +354,8 @@ static const char *const msgs[] = {
 	"conversion of negative constant to unsigned type, arg #%d",  /* 296 */
 	"conversion to '%s' may sign-extend incorrectly, arg #%d",    /* 297 */
 	"conversion from '%s' to '%s' may lose accuracy, arg #%d",    /* 298 */
-	"prototype does not match old style definition, arg #%d",     /* 299 */
-	"old style definition",					      /* 300 */
+	"prototype does not match old-style definition, arg #%d",     /* 299 */
+	"old-style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */
 	"'%s' returns pointer to automatic object",		      /* 302 */
 	"ANSI C forbids conversion of %s to %s",		      /* 303 */
