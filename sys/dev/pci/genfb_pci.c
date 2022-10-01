@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.40 2021/08/07 16:19:14 thorpej Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.41 2022/10/01 11:40:08 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.40 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.41 2022/10/01 11:40:08 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	struct genfb_ops ops = zero_ops;
 	pcireg_t rom;
 	int idx, bar, type;
+	bool skip;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -151,17 +152,23 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 	/* mmap()able bus ranges */
 	idx = 0;
-	bar = PCI_MAPREG_START;
-	while (bar <= PCI_MAPREG_ROM) {
+	skip = false;
+	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_ROM; bar += 4) {
 
-		sc->sc_bars[(bar - PCI_MAPREG_START) >> 2] = rom =
-		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
-
-		if ((bar >= PCI_MAPREG_END && bar < PCI_MAPREG_ROM) ||
+		rom = pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
+		if ((bar == PCI_MAPREG_ROM) && (rom != 0)) {
+			rom |= PCI_MAPREG_ROM_ENABLE;
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag, bar, rom);
+		}
+		sc->sc_bars[(bar - PCI_MAPREG_START) >> 2] = rom;
+		if (skip || (bar >= PCI_MAPREG_END && bar < PCI_MAPREG_ROM) ||
 		    pci_mapreg_probe(sc->sc_pc, sc->sc_pcitag, bar, &type)
 		    == 0) {
-			/* skip unimplemented and non-BAR registers */
-			bar += 4;
+			/*
+			 * skip unimplemented, non-BAR registers, or
+			 * lower words of 64-bit BARs.
+			 */
+			skip = false;
 			continue;
 		}
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM || 
@@ -172,15 +179,9 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 			    &sc->sc_ranges[idx].flags);
 			idx++;
 		}
-		if ((bar == PCI_MAPREG_ROM) && (rom != 0)) {
-			pci_conf_write(sc->sc_pc, sc->sc_pcitag, bar, rom |
-			    PCI_MAPREG_ROM_ENABLE);
-		}
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM &&
 		    PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
-			bar += 8;
-		else
-			bar += 4;
+			skip = true;
 	}
 
 	sc->sc_ranges_used = idx;			    
