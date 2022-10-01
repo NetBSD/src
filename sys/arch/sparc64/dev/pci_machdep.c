@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.78 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.78 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2022/10/01 07:59:25 charlotte Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +116,7 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 	struct ofw_pci_register reg;
 	pcitag_t tag;
 	int (*valid)(void *);
-	int node, len;
+	int node, new_node, len;
 #ifdef DEBUG
 	char name[80];
 	memset(name, 0, sizeof(name));
@@ -193,8 +193,11 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 				break;
 			if (len != 2 || b < busrange[0] || b > busrange[1])
 				break;
-			/* Go down 1 level */
-			node = prom_firstchild(node);
+			/* Go down 1 level, as long as we're able */
+			new_node = prom_firstchild(node);
+			if (new_node == 0)
+				break;
+			node = new_node;
 			DPRINTF(SPDB_PROBE, ("going down to node %x %s\n", node,
 			    prom_getpropstringA(node, "name", name,
 				sizeof(name))));
