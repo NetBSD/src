@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.169 2022/08/28 19:09:12 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.170 2022/10/01 09:59:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -180,7 +180,7 @@ extern	void	enable_queries(const char *);
  * decl.c
  */
 extern	dinfo_t	*dcs;
-extern	const	char *unnamed;
+extern	const char unnamed[];
 extern	int	enumval;
 
 extern	void	initdecl(void);
