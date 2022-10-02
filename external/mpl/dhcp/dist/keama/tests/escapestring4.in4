@@ -1,6 +1,0 @@
-# string option-data with embedded commas
-
-# vendor option space
-option a-string code 250 = text;
-
-option a-string "foo, bar";

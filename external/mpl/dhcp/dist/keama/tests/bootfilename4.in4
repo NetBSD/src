@@ -1,4 +1,0 @@
-# Gitlab #22 dhcp4 option 67 wrong name
-
-option bootfile-name "boot.pxe";
-

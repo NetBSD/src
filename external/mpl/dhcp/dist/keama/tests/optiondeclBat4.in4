@@ -1,6 +1,0 @@
-# bad Bat (non terminal array) option declaration
-
-option space foobar;
-option foobar.fmt-Bat code 1 = { array of unsigned integer 8, text };
-
-

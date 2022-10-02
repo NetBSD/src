@@ -1,4 +1,0 @@
-pa-d.o: $(srcdir)/config/pa/pa-d.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-

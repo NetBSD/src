@@ -1,4 +1,0 @@
-include waddchstr
-call2 OK `\004a\004b\004c\000 ` mvwinchnstr $win1 0 0 5
-call2 OK `\000 \006d\006e\006f` mvwinchnstr $win1 1 0 5
-call2 OK `\000 \006d\006e\006f\006g\006h` mvwinchstr $win1 1 0

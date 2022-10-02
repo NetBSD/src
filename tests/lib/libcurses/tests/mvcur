@@ -1,6 +1,0 @@
-include start
-call OK move 6 5
-call OK refresh
-call OK mvcur 6 5 10 12
-call OK refresh
-compare mvcur.chk

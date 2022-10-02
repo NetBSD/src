@@ -1,7 +1,0 @@
-include window
-call $FALSE is_wintouched $win1
-call OK wmove $win1 2 2
-call OK waddch $win1 `\002F`
-call $TRUE is_wintouched $win1
-call OK wrefresh $win1
-call $FALSE is_wintouched $win1

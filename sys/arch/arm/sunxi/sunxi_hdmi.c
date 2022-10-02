@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,11 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14 2021/01/27 03:10:20 thorpej Exp 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcvar.h>
 #include <dev/i2c/ddcreg.h>
-#include <dev/videomode/videomode.h>
-#include <dev/videomode/edidvar.h>
 
 #include <arm/sunxi/sunxi_hdmireg.h>
 #include <arm/sunxi/sunxi_display.h>
+
+#include <drm/drm_bridge.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_modes.h>
 
 enum sunxi_hdmi_type {
 	HDMI_A10 = 1,
@@ -76,15 +79,7 @@ struct sunxi_hdmi_softc {
 	kmutex_t sc_exec_lock;
 
 	bool sc_display_connected;
-	char sc_display_vendor[16];
-	char sc_display_product[16];
 
-	u_int sc_display_mode;
-	u_int sc_current_display_mode;
-#define DISPLAY_MODE_AUTO	0
-#define DISPLAY_MODE_HDMI	1
-#define DISPLAY_MODE_DVI	2
-	
 	kmutex_t sc_pwr_lock;
 	int	sc_pwr_refcount; /* reference who needs HDMI */
 
@@ -95,6 +90,7 @@ struct sunxi_hdmi_softc {
 	struct fdt_endpoint *sc_in_ep;
 	struct fdt_endpoint *sc_in_rep;
 	struct fdt_endpoint *sc_out_ep;
+	struct drm_display_mode sc_curmode;
 };
 
 #define HDMI_READ(sc, reg)			\
@@ -123,18 +119,22 @@ static int	sunxi_hdmi_i2c_reset(struct sunxi_hdmi_softc *, int);
 static int	sunxi_hdmi_ep_activate(device_t, struct fdt_endpoint *, bool);
 static int	sunxi_hdmi_ep_enable(device_t, struct fdt_endpoint *, bool);
 static void	sunxi_hdmi_do_enable(struct sunxi_hdmi_softc *);
+#if 0
 static void	sunxi_hdmi_read_edid(struct sunxi_hdmi_softc *);
 static int	sunxi_hdmi_read_edid_block(struct sunxi_hdmi_softc *, uint8_t *,
 					  uint8_t);
 static u_int	sunxi_hdmi_get_display_mode(struct sunxi_hdmi_softc *,
 					   const struct edid_info *);
+#endif
 static void	sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *, bool);
+#if 0
 static void	sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *,
 					const struct videomode *, u_int);
 static void	sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *,
 					const struct videomode *, u_int);
 static void	sunxi_hdmi_hpd(struct sunxi_hdmi_softc *);
 static void	sunxi_hdmi_thread(void *);
+#endif
 static int	sunxi_hdmi_poweron(struct sunxi_hdmi_softc *, bool);
 #if 0
 static int	sunxi_hdmi_intr(void *);
@@ -547,23 +547,11 @@ sunxi_hdmi_ep_enable(device_t dev, struct fdt_endpoint *ep, bool enable)
 
 	if (fdt_endpoint_port_index(ep) == SUNXI_PORT_INPUT) {
 		KASSERT(ep == sc->sc_in_ep);
-		if (sc->sc_thread == NULL) {
-			if (enable) {
-				delay(50000);
-				mutex_enter(&sc->sc_pwr_lock);
-				sunxi_hdmi_hpd(sc);
-				mutex_exit(&sc->sc_pwr_lock);
-				kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-				    sunxi_hdmi_thread, sc, &sc->sc_thread, "%s",
-				    device_xname(dev));
-			}
-			return 0;
-		} else {
-			mutex_enter(&sc->sc_pwr_lock);
-			error = sunxi_hdmi_poweron(sc, enable);
-			mutex_exit(&sc->sc_pwr_lock);
-			return error;
-		}
+
+		mutex_enter(&sc->sc_pwr_lock);
+		error = sunxi_hdmi_poweron(sc, enable);
+		mutex_exit(&sc->sc_pwr_lock);
+		return error;
 	}
 	panic("sunxi_hdmi_ep_enable");
 }
@@ -628,6 +616,7 @@ sunxi_hdmi_do_enable(struct sunxi_hdmi_softc *sc)
 	delay(1000);
 }
 
+#if 0
 #define EDID_BLOCK_SIZE 128
 
 static int
@@ -800,6 +789,7 @@ next_block:
 	kmem_free(edid, EDID_BLOCK_SIZE);
 	return found_hdmi ? DISPLAY_MODE_HDMI : DISPLAY_MODE_DVI;
 }
+#endif
 
 static void
 sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *sc, bool enable)
@@ -829,6 +819,7 @@ sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *sc, bool enable)
 #endif
 }
 
+#if 0
 static void
 sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
     const struct videomode *mode, u_int display_mode)
@@ -1072,7 +1063,9 @@ sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc,
 	sunxi_hdmi_dump_regs();
 #endif
 }
+#endif
 
+#if 0
 static void
 sunxi_hdmi_hpd(struct sunxi_hdmi_softc *sc)
 {
@@ -1111,6 +1104,7 @@ sunxi_hdmi_thread(void *priv)
 		kpause("hdmihotplug", false, mstohz(1000), NULL);
 	}
 }
+#endif
 
 static int
 sunxi_hdmi_poweron(struct sunxi_hdmi_softc *sc, bool enable)

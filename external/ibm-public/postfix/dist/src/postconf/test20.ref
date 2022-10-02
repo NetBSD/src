@@ -1,4 +1,0 @@
-./postconf: warning: ./master.cf: undefined parameter: bar
-./postconf: warning: ./master.cf: undefined parameter: baz
-foo        inet  -       n       n       -       0       spawn
-    -o always_bcc=$bar$baz

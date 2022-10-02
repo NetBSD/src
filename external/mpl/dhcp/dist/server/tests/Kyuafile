@@ -1,8 +1,0 @@
-syntax(2)
-test_suite('isc-dhcp')
-
-atf_test_program{name='dhcpd_unittests'}
-atf_test_program{name='hash_unittests'}
-atf_test_program{name='leaseq_unittests'}
-atf_test_program{name='legacy_unittests'}
-atf_test_program{name='load_bal_unittests'}

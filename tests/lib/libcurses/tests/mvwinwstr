@@ -1,5 +1,0 @@
-include window
-wchar WSTR ["A"*2, 0x3401, "A"]
-call OK mvwaddwstr $win1 2 1 $WSTR
-call OK wrefresh $win1
-call2 OK $WSTR mvwinwstr $win1 2 1

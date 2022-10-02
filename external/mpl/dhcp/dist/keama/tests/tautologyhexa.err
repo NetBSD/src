@@ -1,9 +1,0 @@
-# bad (tautology) class declaration config
-
-# class declaration
-class "tautology" {
-    # tautology
-    # note that true does not work as it is a variable reference
-    # and for the same reason quotes are needed (or one can use hexa)
-    match if 12:34 = 56:78:9a;
-}

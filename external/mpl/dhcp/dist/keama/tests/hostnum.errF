@@ -1,7 +1,0 @@
-# numeric with address hostname config
-
-host 1901.fr {
-    hardware ethernet 00:07:0E:36:48:19;
-    fixed-address 1901.fr;
-}
-

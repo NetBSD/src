@@ -1,3 +1,0 @@
-# $NetBSD: md.vax,v 1.2 2020/02/11 11:36:53 uki Exp $
-./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	modules-base-kernel	kmod

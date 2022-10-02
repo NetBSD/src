@@ -1,8 +1,0 @@
-#	$NetBSD: list.crypto,v 1.10 2016/07/02 15:59:21 christos Exp $
-
-PROG	scp
-PROG	ssh		slogin
-SPECIAL	scp	srcdir	crypto/external/bsd/openssh/bin/scp
-SPECIAL	ssh	srcdir	crypto/external/bsd/openssh/bin/ssh
-
-LIBS	-lssh -lssl -lcrypto

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.72 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files.sunxi,v 1.72.2.1 2022/10/02 10:37:12 bouyer Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -256,26 +256,27 @@ attach	sunxii2s at fdt with sunxi_i2s
 file	arch/arm/sunxi/sunxi_i2s.c		sunxi_i2s
 
 # A10/A20 LCD/TV timing controller (TCON)
-device	sunxitcon
+device	sunxitcon: drmkms
 attach	sunxitcon at fdt with sunxi_tcon
 file	arch/arm/sunxi/sunxi_tcon.c		sunxi_tcon needs-flag
+makeoptions	sunxi_tcon	"CPPFLAGS.sunxi_tcon"+="${CPPFLAGS.drmkms}"
 
 # A10/A20 Display engine backend (DE-BE)
-device	sunxidebe { }
+device	sunxidebe: drmkms
 attach	sunxidebe at fdt with sunxi_debe
 file	arch/arm/sunxi/sunxi_debe.c		sunxi_debe needs-flag
-
-attach	genfb at sunxidebe with sunxi_befb
+makeoptions	sunxi_debe	"CPPFLAGS.sunxi_debe"+="${CPPFLAGS.drmkms}"
 
 # A10/A20 HDMI
-device	sunxihdmi: edid, videomode
+device	sunxihdmi: edid, videomode, drmkms, drmkms_i2c, ddc_read_edid
 attach	sunxihdmi at fdt with sunxi_hdmi
 file	arch/arm/sunxi/sunxi_hdmi.c		sunxi_hdmi needs-flag
+makeoptions	sunxi_hdmi	"CPPFLAGS.sunxi_hdmi"+="${CPPFLAGS.drmkms}"
 
 # A10/A20 display engine pipeline
-device sunxidep
-attach	sunxidep at fdt with sunxi_dep
-file	arch/arm/sunxi/sunxi_dep.c		sunxi_dep
+#device sunxidep
+#attach	sunxidep at fdt with sunxi_dep
+#file	arch/arm/sunxi/sunxi_dep.c		sunxi_dep
 
 # Touch Screen controller
 device	sunxits: wsmousedev, tpcalib, sysmon_envsys

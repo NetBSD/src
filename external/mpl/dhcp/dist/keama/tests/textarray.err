@@ -1,7 +1,0 @@
-# option definition config
-
-# options
-option space foobar;
-
-# array of text are forbidden
-option foobarstring-array code 1 = array of text;

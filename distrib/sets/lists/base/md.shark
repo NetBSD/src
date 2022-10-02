@@ -1,7 +1,0 @@
-# $NetBSD: md.shark,v 1.12 2022/01/11 19:27:13 martin Exp $
-./dev/mouse-qms0				base-obsolete		obsolete
-./dev/qms0					base-obsolete		obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

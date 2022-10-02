@@ -1,9 +1,0 @@
-include start
-call OK define_key "\etest" 1024
-call OK keypad STDSCR $TRUE
-input "\etest"
-call 1024 getch
-call OK define_key NULL 1024
-input "\etest"
-# sequence should now be unknown so we should just get first char back.
-call 0x1b getch

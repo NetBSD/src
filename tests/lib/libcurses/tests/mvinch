@@ -1,3 +1,0 @@
-include addchstr
-call `\004c` mvinch 0 2
-call `\006g` mvinch 0 6

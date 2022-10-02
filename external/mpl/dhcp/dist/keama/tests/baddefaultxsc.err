@@ -1,7 +1,0 @@
-# bad default executable statement construct
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;
-
-# a raw default statement
-default: break;

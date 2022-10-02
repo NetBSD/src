@@ -1,4 +1,0 @@
-# DHCPv4 fixed address declaration in root config
-
-# DHCPv4 fixed address declaration must be in a host declaration
-fixed-address 204.152.185.133;

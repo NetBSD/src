@@ -1,6 +1,0 @@
-./test_dns_lookup: lookup 1.0.0.127.zen.spamhaus.org type A flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: 1.0.0.127.zen.spamhaus.org (A): Host not found
-./test_dns_lookup: warning: Host or domain name not found. Name service error for name=1.0.0.127.zen.spamhaus.org type=A: Host not found (rcode=3)
-./test_dns_lookup: lookup 1.0.0.127.bl.spamcop.net type A flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: 1.0.0.127.bl.spamcop.net (A): Host not found
-./test_dns_lookup: warning: Host or domain name not found. Name service error for name=1.0.0.127.bl.spamcop.net type=A: Host not found (rcode=3)

@@ -1,7 +1,0 @@
-include window
-call win2 derwin $win1 2 3 3 2
-check win2 NON_NULL
-call 2 getparx $win2
-call 3 getpary $win2
-call2 3 2 getparyx $win2
-

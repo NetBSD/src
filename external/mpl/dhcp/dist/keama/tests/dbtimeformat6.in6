@@ -1,6 +1,0 @@
-# db-time-format config
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;
-
-db-time-format local;

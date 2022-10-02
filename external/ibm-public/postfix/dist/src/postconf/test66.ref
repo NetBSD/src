@@ -1,5 +1,0 @@
-./postconf: warning: ldap:PWD/test66.cf: unused parameter: junk=junk
-./postconf: warning: mysql:PWD/test66.cf: unused parameter: junk=junk
-./postconf: warning: pgsql:PWD/test66.cf: unused parameter: junk=junk
-./postconf: warning: sqlite:PWD/test66.cf: unused parameter: junk=junk
-./postconf: warning: memcache:PWD/test66.cf: unused parameter: junk=junk

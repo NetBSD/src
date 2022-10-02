@@ -1,9 +1,0 @@
-# $NetBSD: md.hpcmips,v 1.14 2022/09/08 05:16:45 rillig Exp $
-./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/apmd					base-sysutil-bin
-./usr/sbin/tpctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

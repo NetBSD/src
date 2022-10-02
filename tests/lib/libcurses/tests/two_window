@@ -1,9 +1,0 @@
-include window
-call win2 newwin 6 6 5 8
-check win2 NON_NULL
-
-# this ordering of refresh enables uniform checking of other files 
-# (say fill_window_numbers)
-call OK wrefresh $win2
-call OK wrefresh $win1
-compare two_window.chk

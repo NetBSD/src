@@ -1,6 +1,0 @@
-postmap: warning: dict_thash.in, line 1: unbalanced '"' in '"the answer is 42' -- ignoring this line
-postmap: warning: dict_thash.in, line 2: record is in "key: value" format; is this an alias file?
-postmap: warning: dict_thash.in, line 3: expected format: key whitespace value -- ignoring this line
-postmap: warning: dict_thash.in, line 5: duplicate entry: "aaa"
-aaa	bbb
-xxx:	yyy

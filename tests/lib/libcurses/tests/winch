@@ -1,5 +1,0 @@
-include waddchstr
-call OK wmove $win1 0 0
-call `\004a` winch $win1
-call OK wmove $win1 1 2
-call `\006e` winch $win1

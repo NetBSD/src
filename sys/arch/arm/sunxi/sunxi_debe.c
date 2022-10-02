@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.16 2022/01/01 13:47:19 andvar Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.16.2.1 2022/10/02 10:37:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.16 2022/01/01 13:47:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.16.2.1 2022/10/02 10:37:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.16 2022/01/01 13:47:19 andvar Exp $
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
 
+#include <arm/sunxi/sunxi_drm.h>
+
+#include <drm/drm_crtc.h>
+#include <drm/drm_crtc_helper.h>
+
 #include <dev/videomode/videomode.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfb/genfbvar.h>
@@ -63,6 +68,22 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.16 2022/01/01 13:47:19 andvar Exp $
 
 enum sunxi_debe_type {
 	DEBE_A10 = 1,
+};
+
+enum {
+	DEBE_PORT_OUTPUT = 1,
+};
+
+struct sunxi_debi_softc;
+
+struct sunxi_debe_crtc {
+	struct drm_crtc		base;
+	struct sunxi_debe_softc *sc;
+};
+
+struct sunxi_debe_plane {
+	struct drm_plane	base;
+	struct sunxi_debe_softc *sc;
 };
 
 struct sunxi_debe_softc {
@@ -79,20 +100,11 @@ struct sunxi_debe_softc {
 
 	struct fdtbus_reset *sc_rst;
 
-	bus_dma_segment_t sc_dmasegs[1];
-	bus_size_t sc_dmasize;
-	bus_dmamap_t sc_dmamap;
-	void *sc_dmap;
-
-	bool sc_cursor_enable;
-	int sc_cursor_x, sc_cursor_y;
-	int sc_hot_x, sc_hot_y;
-	uint8_t sc_cursor_bitmap[8 * SUNXI_DEBE_CURMAX];
-	uint8_t sc_cursor_mask[8 * SUNXI_DEBE_CURMAX];
-
 	int	sc_phandle;
+
+	struct sunxi_debe_crtc	sc_crtc;
+	struct sunxi_debe_plane sc_overlay;
 	struct fdt_device_ports sc_ports;
-	struct fdt_endpoint *sc_out_ep;
 	int sc_unit; /* debe0 or debe1 */
 };
 
@@ -101,39 +113,30 @@ struct sunxi_debe_softc {
 #define DEBE_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+#define	to_sunxi_debe_crtc(x)		container_of(x, struct sunxi_debe_crtc, base)
+#define	to_sunxi_debe_plane(x)	container_of(x, struct sunxi_debe_plane, base)
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-display-backend", .value = DEBE_A10 },
 	{ .compat = "allwinner,sun7i-a20-display-backend", .value = DEBE_A10 },
 	DEVICE_COMPAT_EOL
 };
 
-struct sunxifb_attach_args {
-	void *afb_fb;
-	uint32_t afb_width;
-	uint32_t afb_height;
-	bus_dma_tag_t afb_dmat;
-	bus_dma_segment_t *afb_dmasegs;
-	int afb_ndmasegs;
-};
-
-static void	sunxi_debe_ep_connect(device_t, struct fdt_endpoint *, bool);
-static int	sunxi_debe_ep_enable(device_t, struct fdt_endpoint *, bool);
+static int	sunxi_debe_ep_activate(device_t, struct fdt_endpoint *, bool);
+static void *	sunxi_debe_ep_get_data(device_t, struct fdt_endpoint *);
 static int	sunxi_debe_match(device_t, cfdata_t, void *);
 static void	sunxi_debe_attach(device_t, device_t, void *);
 
-static int	sunxi_debe_alloc_videomem(struct sunxi_debe_softc *);
-static void	sunxi_debe_setup_fbdev(struct sunxi_debe_softc *,
-				      const struct videomode *);
-
-static int	sunxi_debe_set_curpos(struct sunxi_debe_softc *, int, int);
-static int	sunxi_debe_set_cursor(struct sunxi_debe_softc *,
-				     struct wsdisplay_cursor *);
+#if 0
 static int	sunxi_debe_ioctl(device_t, u_long, void *);
 static void	sunxi_befb_set_videomode(device_t, u_int, u_int);
+#endif
 void sunxi_debe_dump_regs(int);
 
+#if 0
 static struct sunxi_debe_softc *debe_console_sc;
 static int sunxi_simplefb_phandle = -1;
+#endif
 
 CFATTACH_DECL_NEW(sunxi_debe, sizeof(struct sunxi_debe_softc),
 	sunxi_debe_match, sunxi_debe_attach, NULL, NULL);
@@ -150,11 +153,11 @@ static void
 sunxi_debe_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_debe_softc *sc = device_private(self);
+	struct fdt_endpoint *out_ep;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -196,21 +199,22 @@ sunxi_debe_attach(device_t parent, device_t self, void *aux)
 	    fdtbus_get_string(phandle, "name"));
 
 
-	sc->sc_dmasize = SUNXI_DEBE_VIDEOMEM;
+	sc->sc_unit = -1;
+	sc->sc_ports.dp_ep_activate = sunxi_debe_ep_activate;
+	sc->sc_ports.dp_ep_get_data = sunxi_debe_ep_get_data;
+	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_CRTC);
 
-	error = sunxi_debe_alloc_videomem(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't allocate video memory, error = %d\n", error);
-		return;
+	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports,
+		DEBE_PORT_OUTPUT, 0);
+	if (out_ep == NULL) {
+		aprint_error(": couldn't get endpoint\n"); 
 	}
 
-	sc->sc_unit = -1;
-	sc->sc_ports.dp_ep_connect = sunxi_debe_ep_connect;
-	sc->sc_ports.dp_ep_enable = sunxi_debe_ep_enable;
-	fdt_ports_register(&sc->sc_ports, self, phandle, EP_OTHER);
+	if (out_ep != NULL)
+		sunxi_drm_register_endpoint(phandle, out_ep);
 }
 
+#if 0
 static void
 sunxi_debe_doreset(void)
 {
@@ -266,183 +270,29 @@ sunxi_debe_doreset(void)
 		}
 	}
 }
-
-static void
-sunxi_debe_ep_connect(device_t self, struct fdt_endpoint *ep, bool connect)
-{
-	struct sunxi_debe_softc *sc = device_private(self);
-	struct fdt_endpoint *rep = fdt_endpoint_remote(ep);
-	int rep_idx = fdt_endpoint_index(rep);
-
-	KASSERT(device_is_a(self, "sunxidebe"));
-	if (!connect) {
-		aprint_error_dev(self, "endpoint disconnect not supported\n");
-		return;
-	}
-
-	if (fdt_endpoint_port_index(ep) == 1) {
-		bool do_print = (sc->sc_unit == -1);
-		/*
-		 * one of our output endpoints has been connected.
-		 * the remote id is our unit number
-		 */
-		if (sc->sc_unit != -1 && rep_idx != -1 &&
-		    sc->sc_unit != rep_idx) {
-			aprint_error_dev(self, ": remote id %d doesn't match"
-			    " discovered unit number %d\n",
-			    rep_idx, sc->sc_unit);
-			return;
-		}
-		if (!device_is_a(fdt_endpoint_device(rep), "sunxitcon")) {
-			aprint_error_dev(self,
-			    ": output %d connected to unknown device\n",
-			    fdt_endpoint_index(ep));
-			return;
-		}
-		if (rep_idx != -1)
-			sc->sc_unit = rep_idx;
-		else {
-			/* assume only one debe */
-			sc->sc_unit = 0;
-		}
-		if (do_print)
-			aprint_verbose_dev(self, "debe unit %d\n", sc->sc_unit);
-	}
-}
-
-static int
-sunxi_debe_alloc_videomem(struct sunxi_debe_softc *sc)
-{
-	int error, nsegs;
-
-	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0x1000, 0,
-	    sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
-	if (error)
-		return error;
-	error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
-	    sc->sc_dmasize, &sc->sc_dmap, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-	if (error)
-		goto free;
-	error = bus_dmamap_create(sc->sc_dmat, sc->sc_dmasize, 1,
-	    sc->sc_dmasize, 0, BUS_DMA_WAITOK, &sc->sc_dmamap);
-	if (error)
-		goto unmap;
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_dmap,
-	    sc->sc_dmasize, NULL, BUS_DMA_WAITOK);
-	if (error)
-		goto destroy;
-
-	memset(sc->sc_dmap, 0, sc->sc_dmasize);
-
-	return 0;
-
-destroy:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
-unmap:
-	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dmap, sc->sc_dmasize);
-free:
-	bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, nsegs);
-
-	sc->sc_dmasize = 0;
-	sc->sc_dmap = NULL;
-
-	return error;
-}
-
-static void
-sunxi_debe_setup_fbdev(struct sunxi_debe_softc *sc, const struct videomode *mode)
-{
-	if (mode == NULL)
-		return;
-
-	const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
-	const u_int fb_width = mode->hdisplay;
-	const u_int fb_height = (mode->vdisplay << interlace_p);
-
-	if (mode && sc->sc_fbdev == NULL) {
-		/* see if we are the console */
-		if (sunxi_simplefb_phandle >= 0) {
-			const char *cons_pipeline =
-			    fdtbus_get_string(sunxi_simplefb_phandle,
-			        "allwinner,pipeline");
-			struct fdt_endpoint *ep = fdt_endpoint_get_from_index(
-			    &sc->sc_ports, SUNXI_PORT_OUTPUT, sc->sc_unit);
-			struct fdt_endpoint *rep = fdt_endpoint_remote(ep);
-			if (sunxi_tcon_is_console(
-			    fdt_endpoint_device(rep), cons_pipeline))
-				debe_console_sc = sc;
-		} else if (debe_console_sc == NULL) {
-			if (match_bootconf_option(boot_args,
-			    "console", "fb0")) {
-				if (sc->sc_unit == 0)
-					debe_console_sc = sc;
-			} else if (match_bootconf_option(boot_args,
-			    "console", "fb1")) {
-				if (sc->sc_unit == 1)
-					debe_console_sc = sc;
-			} else if (match_bootconf_option(boot_args,
-			    "console", "fb")) {
-				/* match first activated */
-				debe_console_sc = sc;
-			}
-		}
-		struct sunxifb_attach_args afb = {
-			.afb_fb = sc->sc_dmap,
-			.afb_width = fb_width,
-			.afb_height = fb_height,
-			.afb_dmat = sc->sc_dmat,
-			.afb_dmasegs = sc->sc_dmasegs,
-			.afb_ndmasegs = 1
-		};
-		sc->sc_fbdev = config_found(sc->sc_dev, &afb, NULL, CFARGS_NONE);
-	} else if (sc->sc_fbdev != NULL) {
-		sunxi_befb_set_videomode(sc->sc_fbdev, fb_width, fb_height);
-	}
-}
-
-static int
-sunxi_debe_set_curpos(struct sunxi_debe_softc *sc, int x, int y)
-{
-	int xx, yy;
-	u_int yoff, xoff;
-
-	xoff = yoff = 0;
-	xx = x - sc->sc_hot_x;
-	yy = y - sc->sc_hot_y;
-	if (xx < 0) {
-		xoff -= xx;
-		xx = 0;
-	}
-	if (yy < 0) {
-		yoff -= yy;
-		yy = 0;
-	}
-
-	DEBE_WRITE(sc, SUNXI_DEBE_HWCCTL_REG,
-	    __SHIFTIN(yy, SUNXI_DEBE_HWCCTL_YCOOR) |
-	    __SHIFTIN(xx, SUNXI_DEBE_HWCCTL_XCOOR));
-	DEBE_WRITE(sc, SUNXI_DEBE_HWCFBCTL_REG,
-#if SUNXI_DEBE_CURMAX == 32
-	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_YSIZE_32, SUNXI_DEBE_HWCFBCTL_YSIZE) |
-	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_XSIZE_32, SUNXI_DEBE_HWCFBCTL_XSIZE) |
-#else
-	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_YSIZE_64, SUNXI_DEBE_HWCFBCTL_YSIZE) |
-	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_XSIZE_64, SUNXI_DEBE_HWCFBCTL_XSIZE) |
 #endif
-	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_FBFMT_2BPP, SUNXI_DEBE_HWCFBCTL_FBFMT) |
-	    __SHIFTIN(yoff, SUNXI_DEBE_HWCFBCTL_YCOOROFF) |
-	    __SHIFTIN(xoff, SUNXI_DEBE_HWCFBCTL_XCOOROFF));
 
-	return 0;
+static void
+sunxi_debe_destroy(struct drm_crtc *crtc)
+{
+	drm_crtc_cleanup(crtc);
 }
 
+#if 0
 static int
-sunxi_debe_set_cursor(struct sunxi_debe_softc *sc, struct wsdisplay_cursor *cur)
+sunxi_debe_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
+    uint32_t handle, uint32_t width, uint32_t height)
 {
+	struct sunxi_debe_crtc *debe_crtc = to_sunxi_debe_crtc(crtc);
+	struct sunxi_debe_softc * const sc = debe_crtc->sc;
+	struct drm_gem_object *gem_obj = NULL;
+	struct drm_gem_cma_object *obj;
 	uint32_t val;
+	int error;
+
 	uint8_t r[4], g[4], b[4];
 	u_int index, count, shift, off, pcnt;
-	int i, j, idx, error;
+	int i, j, idx;
 	uint8_t mask;
 
 	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
@@ -520,46 +370,102 @@ sunxi_debe_set_cursor(struct sunxi_debe_softc *sc, struct wsdisplay_cursor *cur)
 }
 
 static int
-sunxi_debe_ep_enable(device_t dev, struct fdt_endpoint *ep, bool enable)
+sunxi_debe_cursor_move(struct drm_crtc *crtc, int x, int y)
 {
-	struct sunxi_debe_softc *sc;
-	uint32_t val;
+	struct sunxi_debe_crtc *debe_crtc = to_sunxi_debe_crtc(crtc);
+	struct sunxi_debe_softc * const sc = debe_crtc->sc;
 
-	KASSERT(device_is_a(dev, "sunxidebe"));
-	sc = device_private(dev);
+	crtc->cursor_x = x & 0xffff;
+	crtc->cursor_y = y & 0xffff;
 
-	if (enable) {
-		if (clk_enable(sc->sc_clk_ram) != 0) {
-			device_printf(dev,
-			    ": warning: failed to enable ram clock\n");
-		}
-		val = DEBE_READ(sc, SUNXI_DEBE_REGBUFFCTL_REG);
-		val |= SUNXI_DEBE_REGBUFFCTL_REGLOADCTL;
-		DEBE_WRITE(sc, SUNXI_DEBE_REGBUFFCTL_REG, val);
-
-		val = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
-		val |= SUNXI_DEBE_MODCTL_START_CTL;
-		DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, val);
-#ifdef SUNXI_DEBE_DEBUG
-		sunxi_debe_dump_regs(sc->sc_unit);
+	DEBE_WRITE(sc, SUNXI_DEBE_HWCCTL_REG,
+	    __SHIFTIN(crtc->cursor_y, SUNXI_DEBE_HWCCTL_YCOOR) |
+	    __SHIFTIN(crtc->cursor_x, SUNXI_DEBE_HWCCTL_XCOOR));
+	DEBE_WRITE(sc, SUNXI_DEBE_HWCFBCTL_REG,
+#if SUNXI_DEBE_CURMAX == 32
+	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_YSIZE_32, SUNXI_DEBE_HWCFBCTL_YSIZE) |
+	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_XSIZE_32, SUNXI_DEBE_HWCFBCTL_XSIZE) |
+#else
+	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_YSIZE_64, SUNXI_DEBE_HWCFBCTL_YSIZE) |
+	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_XSIZE_64, SUNXI_DEBE_HWCFBCTL_XSIZE) |
 #endif
-	} else {
-		val = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
-		val &= ~SUNXI_DEBE_MODCTL_START_CTL;
-		DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, val);
-		if (clk_disable(sc->sc_clk_ram) != 0) {
-			device_printf(dev,
-			    ": warning: failed to disable ram clock\n");
-		}
-	}
-#if 0
-	for (int i = 0; i < 0x1000; i += 4) {
-		printf("DEBE 0x%04x: 0x%08x\n", i, DEBE_READ(sc, i));
-	}
-#endif
+	    __SHIFTIN(SUNXI_DEBE_HWCFBCTL_FBFMT_2BPP, SUNXI_DEBE_HWCFBCTL_FBFMT) |
+	    __SHIFTIN(crtc->cursor_y, SUNXI_DEBE_HWCFBCTL_YCOOROFF) |
+	    __SHIFTIN(crtc->cursor_x, SUNXI_DEBE_HWCFBCTL_XCOOROFF));
+
 	return 0;
 }
+#endif
 
+static const struct drm_crtc_funcs sunxi_debe_crtc_funcs = {
+	.set_config = drm_crtc_helper_set_config,
+	.destroy = sunxi_debe_destroy,
+#if 0
+	.cursor_set = sunxi_debe_cursor_set,
+	.cursor_move = sunxi_debe_cursor_move,
+#endif
+};
+
+static int
+sunxi_debe_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
+{
+	struct sunxi_debe_softc * const sc = device_private(dev);
+	struct drm_device *ddev;
+	uint32_t val;
+
+	if (!activate)
+		return EINVAL;
+
+	ddev = sunxi_drm_endpoint_device(ep);
+	if (ddev == NULL) {
+		DRM_ERROR("couldn't find DRM device\n");
+		return ENXIO;
+	}
+
+	sc->sc_crtc.sc = sc;
+	sc->sc_overlay.sc = sc;
+
+	if (clk_enable(sc->sc_clk_ram) != 0) {
+		device_printf(dev, ": warning: failed to enable ram clock\n");
+	}
+	val = DEBE_READ(sc, SUNXI_DEBE_REGBUFFCTL_REG);
+	val |= SUNXI_DEBE_REGBUFFCTL_REGLOADCTL;
+	DEBE_WRITE(sc, SUNXI_DEBE_REGBUFFCTL_REG, val);
+
+	val = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
+	val |= SUNXI_DEBE_MODCTL_START_CTL;
+	DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, val);
+#ifdef SUNXI_DEBE_DEBUG
+	sunxi_debe_dump_regs(sc->sc_unit);
+#endif
+#if 0
+	/* disable */
+	val = DEBE_READ(sc, SUNXI_DEBE_MODCTL_REG);
+	val &= ~SUNXI_DEBE_MODCTL_START_CTL;
+	DEBE_WRITE(sc, SUNXI_DEBE_MODCTL_REG, val);
+	if (clk_disable(sc->sc_clk_ram) != 0) {
+		device_printf(dev,
+			    ": warning: failed to disable ram clock\n");
+	}
+#endif
+
+	drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_debe_crtc_funcs);
+#if 0
+	drm_crtc_helper_add(&sc->sc_crtc_base, &sunxi_debe_crtc_helper_funcs);
+#endif
+
+	return fdt_endpoint_activate(ep, activate);
+}
+
+static void *
+sunxi_debe_ep_get_data(device_t dev, struct fdt_endpoint *ep)
+{
+	struct sunxi_debe_softc * const sc = device_private(dev);
+
+	return &sc->sc_crtc;
+}
+
+#if 0
 /*
  * FIXME 2020/10/19
  * This function is not called actually at the moment.
@@ -655,7 +561,9 @@ sunxi_debe_set_videomode(device_t dev, const struct videomode *mode)
 		sunxi_debe_setup_fbdev(sc, mode);
 	}
 }
+#endif
 
+#if 0
 static int
 sunxi_debe_ioctl(device_t self, u_long cmd, void *data)
 {
@@ -703,9 +611,11 @@ sunxi_debe_ioctl(device_t self, u_long cmd, void *data)
 
 	return EPASSTHROUGH;
 }
+#endif
 
 /* genfb attachement */
 
+#if 0
 struct sunxi_befb_softc {
 	struct genfb_softc sc_gen;
 	device_t sc_debedev;
@@ -944,6 +854,7 @@ static const struct fdt_console sunxidebe_fdt_console = {
 };
 
 FDT_CONSOLE(sunxidebe, &sunxidebe_fdt_console);
+#endif
 
 #if defined(SUNXI_DEBE_DEBUG)
 void

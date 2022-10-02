@@ -1,2 +1,0 @@
-include start
-call "flash" getcap "flash"

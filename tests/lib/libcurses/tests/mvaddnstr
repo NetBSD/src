@@ -1,7 +1,0 @@
-include start
-call OK mvaddnstr 7 10 "ABCDEFGH" 5
-call OK refresh
-compare mvaddnstr.chk
-call OK mvaddnstr 9 75 "1234567890" 10
-call OK refresh
-compare mvaddnstr2.chk

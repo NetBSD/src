@@ -1,4 +1,0 @@
-include addwstr
-call OK move 15 15
-call OK refresh
-call2 6 $WSTR mvinnwstr 0 0 7

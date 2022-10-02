@@ -1,4 +1,0 @@
-./postconf: warning: ./main.cf: undefined parameter: virtual_mapx
-config_directory = .
-mydestination =
-virtual_alias_maps =
