@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.66 2022/10/02 10:33:59 martin Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.67 2022/10/02 10:40:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.66 2022/10/02 10:33:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.67 2022/10/02 10:40:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -216,7 +216,7 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_QUIRK_EXTRA_DELAY },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_SATA_AHCI,
 	    AHCI_QUIRK_EXTRA_DELAY },
-	{ PCI_VENDOR_AMD, 0x43b8, AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_FCH_SATA_D, AHCI_QUIRK_EXTRA_DELAY },
 
 #if 0
 	/*
