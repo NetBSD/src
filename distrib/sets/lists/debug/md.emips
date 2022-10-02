@@ -1,4 +1,0 @@
-# $NetBSD: md.emips,v 1.2 2022/01/08 08:40:19 skrll Exp $
-./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-RAMDISK.debug	comp-sysutil-debug	debug

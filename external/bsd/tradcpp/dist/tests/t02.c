@@ -1,2 +1,0 @@
-#define glop flop
-glop

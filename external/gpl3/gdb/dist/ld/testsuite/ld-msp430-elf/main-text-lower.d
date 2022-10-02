@@ -1,3 +1,0 @@
-#...
-Disassembly of section .lower.text:
-#pass

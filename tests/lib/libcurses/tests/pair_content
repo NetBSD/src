@@ -1,7 +1,0 @@
-include start_color
-call OK init_pair 3 $COLOR_YELLOW $COLOR_CYAN
-call3 OK $COLOR_YELLOW $COLOR_CYAN pair_content 3
-
-# check for default: init_pair for 0 is nop
-call OK init_pair 0 $COLOR_YELLOW $COLOR_CYAN
-call3 OK $COLOR_WHITE $COLOR_BLACK pair_content 0

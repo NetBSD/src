@@ -1,7 +1,0 @@
-include window
-include fill_window_numbers
-call OK untouchwin $win1
-call OK wrefresh $win1
-call OK touchwin $win1
-call OK wrefresh $win1
-compare untouchwin.chk

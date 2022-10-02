@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.h,v 1.3 2021/12/19 12:28:20 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.h,v 1.3.2.1 2022/10/02 10:37:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 #define DRIVER_AUTHOR		"Jared McNeill"
 
-#define DRIVER_NAME		"sunxi"
+#define DRIVER_NAME		"sun4i_drm"
 #define DRIVER_DESC		"Allwinner Display Engine"
 #define DRIVER_DATE		"20190123"
 

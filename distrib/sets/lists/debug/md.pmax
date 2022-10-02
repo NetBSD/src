@@ -1,3 +1,0 @@
-# $NetBSD: md.pmax,v 1.3 2021/12/31 16:15:58 christos Exp $
-./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debug

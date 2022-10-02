@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.16.16.1 2022/10/02 10:37:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.16.16.1 2022/10/02 10:37:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.16 2021/01/27 03:10:20 thorpej E
 #define	PLL5_CFG_REG		0x020
 #define	PLL6_CFG_REG		0x028
 #define	PLL7_CFG_REG		0x030
+#define	PLL8_CFG_REG		0x040
 #define	OSC24M_CFG_REG		0x050
 #define	CPU_AHB_APB0_CFG_REG	0x054
 #define	APB1_CLK_DIV_REG	0x058
@@ -80,7 +81,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.16 2021/01/27 03:10:20 thorpej E
 #define	AUDIO_CODEC_SCLK_CFG_REG 0x140
 #define	LVDS_CFG_REG 		0x14c
 #define	HDMI_CLOCK_CFG_REG	0x150
-#define	MALI_CLOCK_CFG_REG	0x154
+#define	MALI_CFG_REG		0x154
 #define	IEP_SCLK_CFG_REG	0x160
 #define	CLK_OUTA_REG		0x1f0
 #define	CLK_OUTB_REG		0x1f4
@@ -114,6 +115,7 @@ static struct sunxi_ccu_reset sun4i_a10_ccu_resets[] = {
 	SUNXI_CCU_RESET(A10_RST_TCON0, LCD0CH0_CFG_REG, 30),
 	SUNXI_CCU_RESET(A10_RST_TCON1, LCD1CH0_CFG_REG, 30),
 	SUNXI_CCU_RESET(A10_RST_LVDS, LVDS_CFG_REG, 0),
+	SUNXI_CCU_RESET(A10_RST_GPU, MALI_CFG_REG, 30),
 };
 
 static const char *cpu_parents[] = { "losc", "osc24m", "pll_core", "pll_periph" };
@@ -126,6 +128,7 @@ static const char *sata_parents[] = { "pll6_periph_sata", "external" };
 static const char *de_parents[] = { "pll_video0", "pll_video1", "pll_ddr_other" };
 static const char *lcd_parents[] = { "pll_video0", "pll_video1", "pll_video0x2", "pll_video1x2" };
 static const char *out_parents[] = { "losc" /* really OSC24MHz/750 */, "losc", "osc24m" };
+static const char *gpu_parents[] = { "pll_gpu" };
 
 static const struct sunxi_ccu_nkmp_tbl sun4i_a10_pll1_table[] = {
 	{ 1008000000, 21, 1, 0, 0 },
@@ -384,6 +387,14 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	SUNXI_CCU_FIXED_FACTOR(A10_CLK_PLL_VIDEO1_2X,
 	    "pll_video1x2", "pll_video1",
 	    1, 2),
+	SUNXI_CCU_NKMP(A10_CLK_PLL_GPU, "pll_gpu", "osc24m",
+	    PLL8_CFG_REG,		/* reg */
+	    __BITS(12, 8),		/* n */
+	    __BITS(5,4),		/* k */
+	    0,				/* m */
+	    0,				/* p */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NKMP_FACTOR_N_EXACT),
 
 	SUNXI_CCU_DIV_GATE(A10_CLK_DE_BE0, "debe0-mod", de_parents,
 	    BE0_CFG_REG,		/* reg */
@@ -481,6 +492,13 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    },
 	SUNXI_CCU_DIV_GATE(A10_CLK_HDMI, "hdmi-mod", lcd_parents,
 	    HDMI_CLOCK_CFG_REG,		/* reg */
+	    __BITS(3,0),		/* div */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    0				/* flags */
+	    ),
+	SUNXI_CCU_DIV_GATE(A10_CLK_GPU, "gpu", gpu_parents,
+	    MALI_CFG_REG,		/* reg */
 	    __BITS(3,0),		/* div */
 	    __BITS(25,24),		/* sel */
 	    __BIT(31),			/* enable */

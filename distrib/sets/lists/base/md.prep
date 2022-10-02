@@ -1,9 +1,0 @@
-# $NetBSD: md.prep,v 1.20 2022/01/11 19:27:13 martin Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/boot_com0				base-sysutil-bin
-./usr/mdec/boot_com0_vreset				base-sysutil-bin
-./usr/mdec/installboot			base-obsolete		obsolete
-./usr/mdec/mkbootimage				base-sysutil-bin
-./usr/sbin/eeprom				base-sysutil-bin
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

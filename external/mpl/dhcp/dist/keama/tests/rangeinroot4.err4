@@ -1,4 +1,0 @@
-# DHCPv4 range declaration in root config
-
-# DHCPv4 range declaration must be in a subnet declaration
-range 204.152.185.135 204.152.185.185;

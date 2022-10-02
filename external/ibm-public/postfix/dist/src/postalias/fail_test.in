@@ -1,7 +1,0 @@
-${VALGRIND} ./postalias -q xx fail:aliases
-echo xx | ${VALGRIND} ./postalias -q - fail:aliases
-${VALGRIND} ./postalias -d xx fail:aliases
-echo xx | ${VALGRIND} ./postalias -d - fail:aliases
-${VALGRIND} ./postalias -s fail:aliases
-${VALGRIND} ./postalias -i fail:aliases < aliases
-${VALGRIND} ./postalias fail:aliases

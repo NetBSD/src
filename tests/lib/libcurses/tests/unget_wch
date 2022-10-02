@@ -1,8 +1,0 @@
-include start
-wchar CH 0x3401
-call OK ungetch 97
-call OK unget_wch $CH
-noinput
-call2 $KEY_CODE_YES $CH get_wch
-noinput
-call 97 getch

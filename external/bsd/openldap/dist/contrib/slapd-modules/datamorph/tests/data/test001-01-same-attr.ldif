@@ -1,3 +1,0 @@
-dn: olcDatamorphAttribute=enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
-changetype: add
-objectclass: olcDatamorphEnum

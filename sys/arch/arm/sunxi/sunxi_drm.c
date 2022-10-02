@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.26 2022/09/25 07:50:23 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.26.2.1 2022/10/02 10:37:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.26 2022/09/25 07:50:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.26.2.1 2022/10/02 10:37:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,8 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-display-engine" },
 	{ .compat = "allwinner,sun8i-v3s-display-engine" },
 	{ .compat = "allwinner,sun50i-a64-display-engine" },
+	{ .compat = "allwinner,sun4i-a10-display-engine" },
+	{ .compat = "allwinner,sun7i-a20-display-engine" },
 	DEVICE_COMPAT_EOL
 };
 

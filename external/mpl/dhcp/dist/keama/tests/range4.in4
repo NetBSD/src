@@ -1,9 +1,0 @@
-# DHCPv4 range config
-
-# subnet declaration
-subnet 10.5.5.0 netmask 255.255.255.224 {
-    # range declaration
-    option domain-search "example.com", "example.org";
-    default-lease-time 1800;
-    range 10.5.5.5 10.5.5.10;
-}

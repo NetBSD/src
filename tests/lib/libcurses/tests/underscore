@@ -1,8 +1,0 @@
-include start
-call3 OK 0 0 attr_get
-call OK attr_set ($REVERSE | $BOLD) 2
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD) 2 attr_get 
-call 1 underscore
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD | $UNDERSCORE) 2 attr_get
-call 1 underend
-call3 OK ($ACS_IS_WACS | $REVERSE | $BOLD) 2 attr_get

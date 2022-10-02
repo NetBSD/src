@@ -1,7 +1,0 @@
-# bad (2 interfaces)shared-network declaration config
-
-# shared-network declaration
-shared-network "foobar" {
-     interface "foo";
-     interface "bar";     
-}

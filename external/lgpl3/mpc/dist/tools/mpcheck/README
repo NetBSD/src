@@ -1,4 +1,0 @@
-The mpcheck tool provides tests to check the MPC library against the
-C library. It is meant as a tool for MPC developers, or for people who
-want to assert the accuracy of the C library.
-

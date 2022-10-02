@@ -1,2 +1,0 @@
-@c $NetBSD: asconfig.texi,v 1.6 2020/04/03 17:51:36 christos Exp $
-@include all.texi

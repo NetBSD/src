@@ -1,8 +1,0 @@
-# bad (2 interfaces) DHCPv4 subnet declaration config
-
-# DHCPv4 subnet declaration
-subnet 10.5.5.0 netmask 255.255.255.224 {
-    interface "foo";
-    interface "bar";
-}
-
