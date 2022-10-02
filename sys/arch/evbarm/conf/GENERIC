@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.108 2022/06/28 05:19:03 skrll Exp $
+#	$NetBSD: GENERIC,v 1.108.2.1 2022/10/02 10:40:40 bouyer Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -512,13 +512,12 @@ mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
 omapfb* 	at fdt?			# TI OMAP3 Framebuffer
 wsdisplay* 	at wsemuldisplaydev?
 sunxidebe* 	at fdt? pass 4		# Display Backend
-genfb* 		at sunxidebe?
-sunxitcon* 	at fdt? pass 4		# LCD LVDS/RGB controller
-sunxihdmi* 	at fdt? pass 4		# HDMI controller
-connector* 	at fdt? pass 4
+sunxidrm*	at fdt? pass 5		# Allwinner Display Pipeline
+sunxifb*	at sunxidrm?
+sunxilcdc*	at fdt? pass 4		# Allwinner DE2 timing controller
+sunxihdmi*	at fdt? pass 4		# HDMI controller
+dispcon*	at fdt? pass 4
 panel* 		at fdt? pass 4
-#sunxidep must be after display pipeline elements but before genfb@fdt
-sunxidep* 	at fdt? pass 5		# Display Engine Pipeline
 tilcdc* 	at fdt?			# TI OMAP4 LCDC
 tifb* 		at tilcdc?
 
