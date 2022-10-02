@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.44 2022/10/01 12:35:25 rin Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.45 2022/10/02 02:37:27 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.44 2022/10/01 12:35:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.45 2022/10/02 02:37:27 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 		    == 0) {
 			/*
 			 * skip unimplemented, non-BAR registers, or
-			 * lower words of 64-bit BARs.
+			 * higher words of 64-bit BARs.
 			 */
 			skip = false;
 			continue;
