@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -109,7 +109,8 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [data] "=&r" (data),
 		  [resid] "+r" (resid)
-		: [ctx] "r" (ctx), [uaddr] "b" (uaddr), [kaddr] "b" (kaddr));
+		: [ctx] "r" (ctx), [uaddr] "b" (uaddr), [kaddr] "b" (kaddr)
+		: "cr0", "ctr");
 
 	curpcb->pcb_onfault = NULL;
 	if (done)
