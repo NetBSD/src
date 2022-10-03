@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.376 2022/10/03 19:58:48 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.377 2022/10/03 19:59:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.376 2022/10/03 19:58:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.377 2022/10/03 19:59:21 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1930,18 +1930,16 @@ comstart(struct tty *tp)
 	struct com_softc *sc =
 	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 	struct com_regs *regsp = &sc->sc_regs;
-	int s;
 
 	if (COM_ISALIVE(sc) == 0)
 		return;
 
-	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
-		goto out;
+		return;
 	if (sc->sc_tx_stopped)
-		goto out;
+		return;
 	if (!ttypull(tp))
-		goto out;
+		return;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1979,9 +1977,6 @@ comstart(struct tty *tp)
 	}
 
 	mutex_spin_exit(&sc->sc_lock);
-out:
-	splx(s);
-	return;
 }
 
 /*
