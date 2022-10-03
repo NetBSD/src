@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.375 2022/10/03 19:57:41 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.376 2022/10/03 19:58:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.375 2022/10/03 19:57:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.376 2022/10/03 19:58:48 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -898,19 +898,6 @@ com_config(struct com_softc *sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 		com_enable_debugport(sc);
 }
-
-#if 0
-static int
-comcngetc_detached(dev_t dev)
-{
-	return 0;
-}
-
-static void
-comcnputc_detached(dev_t dev, int c)
-{
-}
-#endif
 
 int
 com_detach(device_t self, int flags)
@@ -2837,11 +2824,6 @@ bool
 com_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
-
-#if 0
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) && cn_tab == &comcons)
-		cn_tab = &comcons_suspend;
-#endif
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
 	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
