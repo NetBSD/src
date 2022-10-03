@@ -1,4 +1,4 @@
-/* $NetBSD: omrasopsvar.h,v 1.7 2022/10/01 13:41:12 tsutsui Exp $ */
+/* $NetBSD: omrasopsvar.h,v 1.8 2022/10/03 17:42:35 tsutsui Exp $ */
 /*
  * Copyright (c) 2013 Kenji Aoyama
  *
@@ -34,9 +34,7 @@
 #define OMFB_STRIDE		(2048/8)	/* stride [byte] */
 
 /* TODO: should be improved... */
-#define omfb_planecount hwplanecount
 extern int hwplanemask;
-extern int hwplanecount;
 
 /*
  * ROP function
