@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.83 2022/10/03 19:57:05 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.84 2022/10/03 19:57:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.83 2022/10/03 19:57:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.84 2022/10/03 19:57:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -84,7 +84,7 @@ const struct cdevsw cons_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = cnkqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_TTY
+	.d_flag = D_TTY|D_MPSAFE,
 };
 
 static struct kmutex cn_lock;
