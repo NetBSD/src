@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.301 2022/04/07 21:46:51 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.302 2022/10/03 19:57:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.301 2022/04/07 21:46:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.302 2022/10/03 19:57:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -99,6 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.301 2022/04/07 21:46:51 riastradh Exp $");
 #include <sys/module.h>
 #include <sys/bitops.h>
 #include <sys/compat_stub.h>
+#include <sys/atomic.h>
+#include <sys/condvar.h>
+#include <sys/pserialize.h>
 
 #ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
@@ -209,6 +212,9 @@ static void *tty_sigsih;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
+kmutex_t constty_lock;
+static struct pserialize *constty_psz;
+static kcondvar_t ttyref_cv;
 
 struct ptm_pty *ptm = NULL;
 
@@ -442,13 +448,28 @@ ttycancel(struct tty *tp)
 int
 ttyclose(struct tty *tp)
 {
-	extern struct tty *constty;	/* Temporary virtual console. */
 	struct session *sess;
 
-	mutex_spin_enter(&tty_lock);
+	/*
+	 * Make sure this is not the constty.  Without constty_lock it
+	 * is always allowed to transition from nonnull to null.
+	 */
+	(void)atomic_cas_ptr(&constty, tp, NULL);
 
-	if (constty == tp)
-		constty = NULL;
+	/*
+	 * We don't know if this has _ever_ been the constty: another
+	 * thread may have kicked it out as constty before we started
+	 * to close.
+	 *
+	 * So we wait for all users that might be acquiring references
+	 * to finish doing so -- after that, no more references can be
+	 * made, at which point we can safely flush the tty, wait for
+	 * the existing references to drain, and finally free or reuse
+	 * the tty.
+	 */
+	pserialize_perform(constty_psz);
+
+	mutex_spin_enter(&tty_lock);
 
 	ttyflush(tp, FREAD | FWRITE);
 
@@ -457,6 +478,9 @@ ttyclose(struct tty *tp)
 	tp->t_state = 0;
 	sess = tp->t_session;
 	tp->t_session = NULL;
+
+	while (tp->t_refcnt)
+		cv_wait(&ttyref_cv, &tty_lock);
 
 	mutex_spin_exit(&tty_lock);
 
@@ -471,6 +495,44 @@ ttyclose(struct tty *tp)
 #define	FLUSHQ(q) {							\
 	if ((q)->c_cc)							\
 		ndflush(q, (q)->c_cc);					\
+}
+
+/*
+ * tty_acquire(tp), tty_release(tp)
+ *
+ *	Acquire a reference to tp that prevents it from being closed
+ *	until released.  Caller must guarantee tp has not yet been
+ *	closed, e.g. by obtaining tp from constty during a pserialize
+ *	read section.  Caller must not hold tty_lock.
+ */
+void
+tty_acquire(struct tty *tp)
+{
+	unsigned refcnt __diagused;
+
+	refcnt = atomic_inc_uint_nv(&tp->t_refcnt);
+	KASSERT(refcnt < UINT_MAX);
+}
+
+void
+tty_release(struct tty *tp)
+{
+	unsigned old, new;
+
+	KDASSERT(mutex_ownable(&tty_lock));
+
+	do {
+		old = atomic_load_relaxed(&tp->t_refcnt);
+		if (old == 1) {
+			mutex_spin_enter(&tty_lock);
+			if (atomic_dec_uint_nv(&tp->t_refcnt) == 0)
+				cv_broadcast(&ttyref_cv);
+			mutex_spin_exit(&tty_lock);
+			return;
+		}
+		KASSERT(old != 0);
+		new = old - 1;
+	} while (atomic_cas_uint(&tp->t_refcnt, old, new) != old);
 }
 
 /*
@@ -941,7 +1003,6 @@ ttyoutput(int c, struct tty *tp)
 int
 ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	extern struct tty *constty;	/* Temporary virtual console. */
 	struct proc *p;
 	struct linesw	*lp;
 	int		s, error;
@@ -1044,32 +1105,47 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	}
-	case TIOCCONS:			/* become virtual console */
+	case TIOCCONS: {		/* become virtual console */
+		struct tty *ctp;
+
+		mutex_enter(&constty_lock);
+		error = 0;
+		ctp = atomic_load_relaxed(&constty);
 		if (*(int *)data) {
-			if (constty && constty != tp &&
-			    ISSET(constty->t_state, TS_CARR_ON | TS_ISOPEN) ==
-			    (TS_CARR_ON | TS_ISOPEN))
-				return EBUSY;
+			if (ctp != NULL && ctp != tp &&
+			    ISSET(ctp->t_state, TS_CARR_ON | TS_ISOPEN) ==
+			    (TS_CARR_ON | TS_ISOPEN)) {
+				error = EBUSY;
+				goto unlock_constty;
+			}
 
 			pb = pathbuf_create("/dev/console");
 			if (pb == NULL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto unlock_constty;
 			}
 			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, pb);
 			if ((error = namei(&nd)) != 0) {
 				pathbuf_destroy(pb);
-				return error;
+				goto unlock_constty;
 			}
 			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
 			vput(nd.ni_vp);
 			pathbuf_destroy(pb);
 			if (error)
-				return error;
+				goto unlock_constty;
 
-			constty = tp;
-		} else if (tp == constty)
-			constty = NULL;
+			KASSERT(atomic_load_relaxed(&constty) == ctp ||
+			    atomic_load_relaxed(&constty) == NULL);
+			atomic_store_release(&constty, tp);
+		} else if (tp == ctp) {
+			atomic_store_relaxed(&constty, NULL);
+		}
+unlock_constty:	mutex_exit(&constty_lock);
+		if (error)
+			return error;
 		break;
+	}
 	case TIOCDRAIN:			/* wait till output drained */
 		if ((error = ttywait(tp)) != 0)
 			return (error);
@@ -2968,6 +3044,8 @@ tty_init(void)
 {
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&constty_lock, MUTEX_DEFAULT, IPL_NONE);
+	constty_psz = pserialize_create();
 	tty_sigsih = softint_establish(SOFTINT_CLOCK, ttysigintr, NULL);
 	KASSERT(tty_sigsih != NULL);
 
