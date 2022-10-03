@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.374 2022/10/03 19:26:35 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.375 2022/10/03 19:57:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -63,10 +63,14 @@
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
+ *
+ * Lock order:
+ *	tty_lock (IPL_VM)
+ *	-> sc->sc_lock (IPL_HIGH)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.374 2022/10/03 19:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.375 2022/10/03 19:57:41 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
