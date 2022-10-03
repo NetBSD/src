@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.81 2022/10/03 19:12:51 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.82 2022/10/03 19:13:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.81 2022/10/03 19:12:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.82 2022/10/03 19:13:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -175,6 +175,8 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int unit, error;
 
 	unit = minor(dev);
+	if (unit > 1)
+		return ENODEV;
 
 	mutex_enter(&cn_lock);
 
