@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.48 2022/10/01 14:02:08 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.49 2022/10/03 17:42:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.48 2022/10/01 14:02:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.49 2022/10/03 17:42:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,6 @@ CFATTACH_DECL_NEW(fb, sizeof(struct omfb_softc),
     omfbmatch, omfbattach, NULL, NULL);
 
 extern int hwplanemask;	/* hardware planemask; retrieved at boot */
-
-int hwplanecount;	/* for omrasops */
 
 static int omfb_console;
 int  omfb_cnattach(void);
@@ -460,7 +458,7 @@ omfb_resetcmap(struct om_hwdevconfig *dc)
 static void
 omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 {
-	int i;
+	int bpp, i;
 	struct rasops_info *ri;
 	union {
 		struct { short h, v; } p;
@@ -469,21 +467,21 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 
 	switch (hwplanemask) {
 	case 0xff:
-		hwplanecount = 8;	/* XXX check monochrome bit in DIPSW */
+		bpp = 8;	/* XXX check monochrome bit in DIPSW */
 		break;
 	default:
 	case 0x0f:
-		hwplanecount = 4;	/* XXX check monochrome bit in DIPSW */
+		bpp = 4;	/* XXX check monochrome bit in DIPSW */
 		break;
 	case 1:
-		hwplanecount = 1;
+		bpp = 1;
 		break;
 	}
 	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
-	dc->dc_depth = hwplanecount;
+	dc->dc_depth = bpp;
 	dc->dc_rowbytes = 2048 / 8;
-	dc->dc_cmsize = (hwplanecount == 1) ? 0 : 1 << hwplanecount;
+	dc->dc_cmsize = (bpp == 1) ? 0 : 1 << bpp;
 	dc->dc_videobase = paddr;
 
 	omfb_resetcmap(dc);
@@ -513,7 +511,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_hw = dc;
 
-	if (hwplanecount == 4 || hwplanecount == 8)
+	if (bpp == 4 || bpp == 8)
 		omrasops4_init(ri, 34, 80);
 	else
 		omrasops1_init(ri, 34, 80);

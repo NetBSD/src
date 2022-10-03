@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.24 2022/10/01 13:51:55 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.25 2022/10/03 17:42:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.24 2022/10/01 13:51:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.25 2022/10/03 17:42:35 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -100,8 +100,8 @@ static void	om_eraserows(void *, int, int, long);
 static int	om_allocattr(void *, int, int, int, long *);
 
 static void	om_fill(int, int, uint8_t *, int, int, uint32_t, int, int);
-static void	om_fill_color(int, uint8_t *, int, int, int, int);
-static void	om_rascopy_single(uint8_t *, uint8_t *, int16_t, int16_t,
+static void	om_fill_color(int, int, uint8_t *, int, int, int, int);
+static void	om_rascopy_single(int, uint8_t *, uint8_t *, int16_t, int16_t,
     uint8_t[]);
 static void	om4_rascopy_multi(uint8_t *, uint8_t *, int16_t, int16_t);
 static void	om_unpack_attr(long, uint8_t *, uint8_t *, int *);
@@ -330,8 +330,8 @@ om_fill(int planemask, int rop, uint8_t *dstptr, int dstbitoffs, int dstspan,
 }
 
 static void
-om_fill_color(int color, uint8_t *dstptr, int dstbitoffs, int dstspan,
-    int width, int height)
+om_fill_color(int planecount, int color, uint8_t *dstptr, int dstbitoffs,
+    int dstspan, int width, int height)
 {
 	uint32_t mask;
 	uint32_t prev_mask;
@@ -340,7 +340,7 @@ om_fill_color(int color, uint8_t *dstptr, int dstbitoffs, int dstspan,
 
 	ASSUME(width > 0);
 	ASSUME(height > 0);
-	ASSUME(omfb_planecount > 0);
+	ASSUME(planecount > 0);
 
 	/* select all planes */
 	om_set_planemask(hwplanemask);
@@ -364,7 +364,7 @@ om_fill_color(int color, uint8_t *dstptr, int dstbitoffs, int dstspan,
 		}
 
 		if (prev_mask != mask) {
-			for (plane = 0; plane < omfb_planecount; plane++) {
+			for (plane = 0; plane < planecount; plane++) {
 				if ((color & (1U << plane)) != 0)
 					rop = ROP_ONE;
 				else
@@ -446,6 +446,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	uint32_t mask;
 	int width;
 	int height;
+	int planecount;
 	int x, y;
 	int fontstride;
 	int fontx;
@@ -462,6 +463,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 
 	width = ri->ri_font->fontwidth;
 	height = ri->ri_font->fontheight;
+	planecount = ri->ri_depth;
 	fontstride = ri->ri_font->stride;
 	y = height * row;
 	x = width * startcol;
@@ -475,7 +477,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 		last_fg = fg;
 		last_bg = bg;
 		/* calculate ROP */
-		for (plane = 0; plane < omfb_planecount; plane++) {
+		for (plane = 0; plane < planecount; plane++) {
 			int t = om_fgbg2rop(fg, bg);
 			ropaddr[plane] = om_rop_addr(plane, t);
 			fg >>= 1;
@@ -497,9 +499,9 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	mask = ALL1BITS >> xl;
 	dw = 32 - xl;
 
-	ASSUME(omfb_planecount == 1 ||
-	       omfb_planecount == 4 ||
-	       omfb_planecount == 8);
+	ASSUME(planecount == 1 ||
+	       planecount == 4 ||
+	       planecount == 8);
 
 	do {
 		uint8_t *d;
@@ -513,7 +515,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 			width = 0;
 		}
 
-		switch (omfb_planecount) {
+		switch (planecount) {
 		 case 8:
 			*(ropaddr[7]) = mask;
 			*(ropaddr[6]) = mask;
@@ -558,6 +560,7 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	int startx;
 	int width;
 	int height;
+	int planecount;
 	int sh, sl;
 	int y;
 	int scanspan;
@@ -569,6 +572,7 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	startx = ri->ri_font->fontwidth * startcol;
 	width = ri->ri_font->fontwidth * ncols;
 	height = ri->ri_font->fontheight;
+	planecount = ri->ri_depth;
 	om_unpack_attr(attr, &fg, &bg, NULL);
 	sh = startx >> 5;
 	sl = startx & 0x1f;
@@ -582,7 +586,7 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 		om_fill(hwplanemask, ROP_ZERO,
 		    p, sl, scanspan, 0, width, height);
 	} else {
-		om_fill_color(bg, p, sl, scanspan, width, height);
+		om_fill_color(planecount, bg, p, sl, scanspan, width, height);
 	}
 
 	/* reset mask value */
@@ -596,6 +600,7 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 	int startx;
 	int width;
 	int height;
+	int planecount;
 	int sh, sl;
 	int y;
 	int scanspan;
@@ -608,6 +613,7 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 	startx = 0;
 	width = ri->ri_emuwidth;
 	height = ri->ri_font->fontheight * nrows;
+	planecount = ri->ri_depth;
 	om_unpack_attr(attr, &fg, &bg, NULL);
 	sh = startx >> 5;
 	sl = startx & 0x1f;
@@ -622,7 +628,7 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 		om_fill(hwplanemask, ROP_ZERO,
 		    p, sl, scanspan, 0, width, height);
 	} else {
-		om_fill_color(bg, p, sl, scanspan, width, height);
+		om_fill_color(planecount, bg, p, sl, scanspan, width, height);
 	}
 	/* reset mask value */
 	om_reset_planemask_and_rop();
@@ -636,13 +642,13 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
  *       if y-backward, src < dst, point to left-bottom.
  *  width: pixel width (must > 0)
  *  height: pixel height (> 0 if forward, < 0 if backward)
- *  rop: ROP array with omfb_planecount elements.
+ *  rop: ROP array with planecount elements.
  *
  * This function modifies(breaks) the planemask and ROPs.
  */
 static void
-om_rascopy_single(uint8_t *dst, uint8_t *src, int16_t width, int16_t height,
-    uint8_t rop[])
+om_rascopy_single(int planecount, uint8_t *dst, uint8_t *src,
+    int16_t width, int16_t height, uint8_t rop[])
 {
 	uint32_t mask;
 	int wh;
@@ -773,7 +779,7 @@ om_rascopy_single(uint8_t *dst, uint8_t *src, int16_t width, int16_t height,
 	 * The common ROP cannot be used here.  Because the hardware doesn't
 	 * allow you to set the mask while keeping the ROP states.
 	 */
-	for (plane = 0; plane < omfb_planecount; plane++) {
+	for (plane = 0; plane < planecount; plane++) {
 		om_set_rop(plane, rop[plane], mask);
 	}
 
@@ -802,7 +808,7 @@ om_rascopy_single(uint8_t *dst, uint8_t *src, int16_t width, int16_t height,
 	}
 #endif
 
-	for (plane = 0; plane < omfb_planecount; plane++) {
+	for (plane = 0; plane < planecount; plane++) {
 		om_set_rop(plane, rop[plane], ALL1BITS);
 	}
 }
@@ -1140,6 +1146,7 @@ om4_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	struct rasops_info *ri = cookie;
 	uint8_t *src, *dst;
 	int width, rowheight;
+	int planecount;
 	int ptrstep, rowstep;
 	int srcplane;
 	int i;
@@ -1148,6 +1155,7 @@ om4_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 
 	width = ri->ri_emuwidth;
 	rowheight = ri->ri_font->fontheight;
+	planecount = ri->ri_depth;
 	src = (uint8_t *)ri->ri_bits + srcrow * rowheight * ri->ri_stride;
 	dst = (uint8_t *)ri->ri_bits + dstrow * rowheight * ri->ri_stride;
 
@@ -1231,7 +1239,7 @@ om4_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 				bg = tmp;
 			}
 
-			for (i = 0; i < omfb_planecount; i++) {
+			for (i = 0; i < planecount; i++) {
 				int t = om_fgbg2rop(fg, bg);
 				rop[i] = t;
 				om_set_rop(i, rop[i], ALL1BITS);
@@ -1248,7 +1256,8 @@ om4_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 			srcplane = (set != 0) ? (31 - __builtin_clz(set)) : 0;
 
 			srcp = src + OMFB_PLANEOFFS + srcplane * OMFB_PLANEOFFS;
-			om_rascopy_single(dst, srcp, width, rowheight * r, rop);
+			om_rascopy_single(planecount, dst, srcp,
+			    width, rowheight * r, rop);
 		}
 
 skip:
@@ -1673,8 +1682,10 @@ om_cursor(void *cookie, int on, int row, int col)
  */
 #endif
 static int
-om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
+om_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
+	struct rasops_info *ri = cookie;
+	int planecount = ri->ri_depth;
 	uint32_t a;
 	uint16_t c;
 
@@ -1697,7 +1708,7 @@ om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 	}
 
 	if ((flags & WSATTR_HILIT) != 0) {
-		if (omfb_planecount == 1) {
+		if (planecount == 1) {
 #if 0
 			a |= OMFB_ATTR_BOLD;
 #else
@@ -1721,7 +1732,7 @@ om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 
 #if 0
 	int i;
-	for (i = 0; i < omfb_planecount; i++) {
+	for (i = 0; i < planecount; i++) {
 		c += c;
 		c += ((fg & 1) << 1) | (bg & 1);
 		fg >>= 1;
