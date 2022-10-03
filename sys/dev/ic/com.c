@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.373 2021/11/12 21:57:13 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.374 2022/10/03 19:26:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.373 2021/11/12 21:57:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.374 2022/10/03 19:26:35 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -987,9 +987,9 @@ com_shutdown(struct com_softc *sc)
 	com_break(sc, 0);
 
 	/*
-	 * Hang up if necessary.  Wait a bit, so the other side has time to
-	 * notice even if we immediately open the port again.
-	 * Avoid tsleeping above splhigh().
+	 * Hang up if necessary.  Record when we hung up, so if we
+	 * immediately open the port again, we will wait a bit until
+	 * the other side has had time to notice that we hung up.
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		com_modem(sc, 0);
