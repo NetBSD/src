@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $");
 #include <machine/pcb.h>
 
 int
-copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
+copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	size_t resid;
@@ -93,9 +93,9 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		MTPID(%[ctx])			/* Load user ctx */
 		"isync;"
 
-		"stb %[data],0(%[udaddr]);"	/* Store byte */
-		"dcbst 0,%[udaddr];"
-		"addi %[udaddr],%[udaddr],1;"
+		"stb %[data],0(%[uaddr]);"	/* Store byte */
+		"dcbst 0,%[uaddr];"
+		"addi %[uaddr],%[uaddr],1;"
 
 		"or. %[data],%[data],%[data];"
 		"sync;"
@@ -109,7 +109,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [data] "=&r" (data),
 		  [resid] "+r" (resid)
-		: [ctx] "r" (ctx), [udaddr] "b" (udaddr), [kaddr] "b" (kaddr));
+		: [ctx] "r" (ctx), [uaddr] "b" (uaddr), [kaddr] "b" (kaddr));
 
 	curpcb->pcb_onfault = NULL;
 	if (done)
