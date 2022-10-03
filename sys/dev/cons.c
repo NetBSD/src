@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.80 2022/10/03 19:12:29 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.81 2022/10/03 19:12:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.80 2022/10/03 19:12:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.81 2022/10/03 19:12:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.80 2022/10/03 19:12:29 riastradh Exp $");
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include <dev/cons.h>
 
@@ -82,6 +83,8 @@ const struct cdevsw cons_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
+
+static struct kmutex cn_lock;
 
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
@@ -113,8 +116,12 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (unit > 1)
 		return ENODEV;
 
-	if (cn_tab == NULL)
-		return (0);
+	mutex_enter(&cn_lock);
+
+	if (cn_tab == NULL) {
+		error = 0;
+		goto out;
+	}
 
 	/*
 	 * always open the 'real' console device, so we don't get nailed
@@ -145,15 +152,19 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		panic("cnopen: cn_tab->cn_dev == dev");
 	}
-	if (cn_devvp[unit] != NULLVP)
-		return 0;
+	if (cn_devvp[unit] != NULLVP) {
+		error = 0;
+		goto out;
+	}
 	if ((error = cdevvp(cndev, &cn_devvp[unit])) != 0) {
 		printf("cnopen: unable to get vnode reference\n");
-		return error;
+		goto out;
 	}
 	vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
 	VOP_UNLOCK(cn_devvp[unit]);
+
+out:	mutex_exit(&cn_lock);
 	return error;
 }
 
@@ -165,8 +176,12 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	unit = minor(dev);
 
-	if (cn_tab == NULL)
-		return (0);
+	mutex_enter(&cn_lock);
+
+	if (cn_tab == NULL) {
+		error = 0;
+		goto out;
+	}
 
 	vp = cn_devvp[unit];
 	cn_devvp[unit] = NULL;
@@ -174,6 +189,8 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	error = VOP_CLOSE(vp, flag, kauth_cred_get());
 	VOP_UNLOCK(vp);
 	vrele(vp);
+
+out:	mutex_exit(&cn_lock);
 	return error;
 }
 
@@ -432,4 +449,22 @@ cn_redirect(dev_t *devp, int is_read, int *error)
 		dev = cn_tab->cn_dev;
 	*devp = dev;
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, cons, NULL);
+
+static int
+cons_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		mutex_init(&cn_lock, MUTEX_DEFAULT, IPL_NONE);
+		return 0;
+	case MODULE_CMD_FINI:
+		mutex_destroy(&cn_lock);
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }
