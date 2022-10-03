@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.377 2022/10/03 19:59:21 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.378 2022/10/03 20:15:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.377 2022/10/03 19:59:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.378 2022/10/03 20:15:50 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -176,12 +176,11 @@ int	comcngetc(dev_t);
 void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
 
-#define	integrate	static inline
 void	comsoft(void *);
-integrate void com_rxsoft(struct com_softc *, struct tty *);
-integrate void com_txsoft(struct com_softc *, struct tty *);
-integrate void com_stsoft(struct com_softc *, struct tty *);
-integrate void com_schedrx(struct com_softc *);
+static inline void com_rxsoft(struct com_softc *, struct tty *);
+static inline void com_txsoft(struct com_softc *, struct tty *);
+static inline void com_stsoft(struct com_softc *, struct tty *);
+static inline void com_schedrx(struct com_softc *);
 void	comdiag(void *);
 
 dev_type_open(comopen);
@@ -1389,7 +1388,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (error);
 }
 
-integrate void
+static inline void
 com_schedrx(struct com_softc *sc)
 {
 
@@ -2019,7 +2018,7 @@ comdiag(void *arg)
 	    floods, floods == 1 ? "" : "s");
 }
 
-integrate void
+static inline void
 com_rxsoft(struct com_softc *sc, struct tty *tp)
 {
 	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
@@ -2123,7 +2122,7 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 	}
 }
 
-integrate void
+static inline void
 com_txsoft(struct com_softc *sc, struct tty *tp)
 {
 
@@ -2135,7 +2134,7 @@ com_txsoft(struct com_softc *sc, struct tty *tp)
 	(*tp->t_linesw->l_start)(tp);
 }
 
-integrate void
+static inline void
 com_stsoft(struct com_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
