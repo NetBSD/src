@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.15 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.15 2022/09/12 08:02:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -72,32 +72,44 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 
 	resid = len;
 	__asm volatile(
-		"mtctr %3;"			/* Set up counter */
-		"mfmsr %0;"			/* Save MSR */
-		"li %1,0x20;"
-		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
-		"isync;"
-		MFPID(%1)			/* Save old PID */
+		"mtctr %[resid];"		/* Set up counter */
 
-		"1:"
-		MTPID(%1)
-		"isync;"
-		"lbz %2,0(%6); addi %6,%6,1;"	/* Store kernel byte */
-		"sync;"
-		MTPID(%4)			/* Load user ctx */
-		"isync;"
-		"stb %2,0(%5); dcbst 0,%5; addi %5,%5,1;"
-						/* Load byte */
-		"or. %2,%2,%2;"
-		"sync;"
-		"bdnzf 2,1b;"			/* while(ctr-- && !zero) */
+		"mfmsr %[msr];"			/* Save MSR */
 
-		MTPID(%1)			/* Restore PID, MSR */
-		"mtmsr %0;"
+		"li %[pid],0x20;"		/* Disable IMMU */
+		"andc %[pid],%[msr],%[pid];"
+		"mtmsr %[pid];"
 		"isync;"
-		"mfctr %3;"			/* Restore resid */
-		: "=&r" (msr), "=&r" (pid), "=&r" (data), "+r" (resid)
-		: "r" (ctx), "b" (udaddr), "b" (kaddr));
+
+		MFPID(%[pid])			/* Save old PID */
+
+	"1:"	MTPID(%[pid])
+		"isync;"
+
+		"lbz %[data],0(%[kaddr]);"	/* Load kernel byte */
+		"addi %[kaddr],%[kaddr],1;"
+		"sync;"
+
+		MTPID(%[ctx])			/* Load user ctx */
+		"isync;"
+
+		"stb %[data],0(%[udaddr]);"	/* Store byte */
+		"dcbst 0,%[udaddr];"
+		"addi %[udaddr],%[udaddr],1;"
+
+		"or. %[data],%[data],%[data];"
+		"sync;"
+		"bdnzf eq,1b;"			/* while(ctr-- && !zero) */
+
+		MTPID(%[pid])			/* Restore PID, MSR */
+		"mtmsr %[msr];"
+		"isync;"
+
+		"mfctr %[resid];"		/* Restore resid */
+
+		: [msr] "=&r" (msr), [pid] "=&r" (pid), [data] "=&r" (data),
+		  [resid] "+r" (resid)
+		: [ctx] "r" (ctx), [udaddr] "b" (udaddr), [kaddr] "b" (kaddr));
 
 	curpcb->pcb_onfault = NULL;
 	if (done)
