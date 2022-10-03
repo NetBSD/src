@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.17 2022/10/03 23:35:41 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.16 2022/10/03 23:32:27 rin Exp $");
 #include <machine/pcb.h>
 
 int
-copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
+copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	size_t resid;
@@ -85,8 +85,8 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 
 	"1:"	MTPID(%[ctx])			/* Load user ctx */
 		"isync;"
-		"lbz %[data],0(%[udaddr]);"	/* Load byte */
-		"addi %[udaddr],%[udaddr],1;"
+		"lbz %[data],0(%[uaddr]);"	/* Load byte */
+		"addi %[uaddr],%[uaddr],1;"
 		"sync;"
 
 		MTPID(%[pid])
@@ -107,7 +107,7 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [data] "=&r" (data),
 		  [resid] "+r" (resid)
-		: [ctx] "r" (ctx), [udaddr] "b" (udaddr), [kaddr] "b" (kaddr));
+		: [ctx] "r" (ctx), [uaddr] "b" (uaddr), [kaddr] "b" (kaddr));
 
 	curpcb->pcb_onfault = NULL;
 	if (done)
