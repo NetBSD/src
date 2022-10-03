@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.28 2022/08/28 09:52:43 riastradh Exp $	*/
+/*	$NetBSD: cons.h,v 1.29 2022/10/03 19:12:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,8 @@ struct consdev {
 
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
+
+void	cn_set_tab(struct consdev *);
 
 void	cninit(void);
 int	cngetc(void);
