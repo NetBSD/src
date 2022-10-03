@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.79 2022/08/22 00:20:56 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.80 2022/10/03 19:12:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.79 2022/08/22 00:20:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.80 2022/10/03 19:12:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,6 +86,22 @@ const struct cdevsw cons_cdevsw = {
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
+
+void
+cn_set_tab(struct consdev *tab)
+{
+
+	/*
+	 * This is a point that we should have KASSERT(cold) or add
+	 * synchronization in case this can happen after cold boot.
+	 * However, cn_tab initialization is so critical to any
+	 * diagnostics or debugging that we need to tread carefully
+	 * about introducing new ways to crash.  So let's put the
+	 * assertion in only after we've audited most or all of the
+	 * cn_tab updates.
+	 */
+	cn_tab = tab;
+}
 
 int
 cnopen(dev_t dev, int flag, int mode, struct lwp *l)
