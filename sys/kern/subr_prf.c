@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.189 2022/08/11 23:53:03 gutteridge Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.190 2022/10/03 19:57:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.189 2022/08/11 23:53:03 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.190 2022/10/03 19:57:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -103,7 +103,6 @@ static void	 kprintf_internal(const char *, int, void *, char *, ...);
  * globals
  */
 
-extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
@@ -401,22 +400,35 @@ addlog(const char *fmt, ...)
 static void
 putone(int c, int flags, struct tty *tp)
 {
-	if (panicstr)
-		constty = NULL;
+	struct tty *ctp;
+	int s;
 
-	if ((flags & TOCONS) && tp == NULL && constty) {
-		tp = constty;
+	/*
+	 * Ensure whatever constty points to can't go away while we're
+	 * trying to use it.
+	 */
+	s = pserialize_read_enter();
+
+	if (panicstr)
+		atomic_store_relaxed(&constty, NULL);
+
+	if ((flags & TOCONS) &&
+	    (ctp = atomic_load_consume(&constty)) != NULL &&
+	    tp == NULL) {
+		tp = ctp;
 		flags |= TOTTY;
 	}
 	if ((flags & TOTTY) && tp &&
 	    tputchar(c, flags, tp) < 0 &&
-	    (flags & TOCONS) && tp == constty)
-		constty = NULL;
+	    (flags & TOCONS))
+		atomic_cas_ptr(&constty, tp, NULL);
 	if ((flags & TOLOG) &&
 	    c != '\0' && c != '\r' && c != 0177)
 	    	logputchar(c);
-	if ((flags & TOCONS) && constty == NULL && c != '\0')
+	if ((flags & TOCONS) && ctp != NULL && c != '\0')
 		(*v_putc)(c);
+
+	pserialize_read_exit(s);
 }
 
 static void
