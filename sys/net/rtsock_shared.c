@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.22 2022/07/01 21:22:23 riastradh Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.23 2022/10/04 07:06:31 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.22 2022/07/01 21:22:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.23 2022/10/04 07:06:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -124,7 +124,7 @@ CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
 #else /* COMPAT_RTSOCK */
 /*
- * These are used when #include-d from compat/common/rtsock_50.c
+ * These are used normally, when not #include-d from compat/common/rtsock_50.c
  */
 #define	RTM_XVERSION	RTM_VERSION
 #define	RTM_XNEWADDR	RTM_NEWADDR
