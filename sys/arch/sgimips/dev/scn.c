@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.8 2015/04/04 14:12:40 macallan Exp $ */
+/*	$NetBSD: scn.c,v 1.9 2022/10/04 07:24:32 rin Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.8 2015/04/04 14:12:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.9 2022/10/04 07:24:32 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -377,8 +377,6 @@ const struct {
 
 #define DEV_UNIT(x)	(minor(x) & 0x7)
 #define DEV_DIALOUT(x)	(minor(x) & 0x80)
-
-extern struct tty *constty;
 
 #define SCN_MAXDUART 4
 static struct duart scn_duart[SCN_MAXDUART];
