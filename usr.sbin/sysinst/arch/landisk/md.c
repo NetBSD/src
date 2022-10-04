@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10.2.4 2022/02/02 04:25:39 msaitoh Exp $	*/
+/*	$NetBSD: md.c,v 1.10.2.5 2022/10/04 17:14:08 snj Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -130,7 +130,9 @@ md_pre_disklabel(struct install_partition_desc *install,
 	    msg_string(parts->pscheme->short_name));
 
 	/* write edited "MBR" onto disk. */
-	if (!parts->pscheme->write_to_disk(parts)) {
+	if (!parts->pscheme->write_to_disk(parts) ||
+	    run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "/sbin/fdisk -f -i -c /usr/mdec/mbr %s", parts->disk)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return false;
@@ -166,7 +168,7 @@ md_post_newfs(struct install_partition_desc *install)
 	bootxx = bootxx_name(install);
 	if (bootxx != NULL) {
 		error = run_program(RUN_DISPLAY,
-		    "/usr/sbin/installboot -v /dev/r%sd %s", pm->diskdev, bootxx);
+		    "/usr/sbin/installboot -v /dev/r%sa %s", pm->diskdev, bootxx);
 		free(bootxx);
 	} else
 		error = -1;
