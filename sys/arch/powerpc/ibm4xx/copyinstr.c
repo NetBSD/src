@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.19 2022/10/04 13:45:50 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.19 2022/10/04 13:45:50 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -92,7 +92,6 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 		MTPID(%[pid])
 		"isync;"
 		"stb %[data],0(%[kaddr]);"	/* Store kernel byte */
-		"dcbst 0,%[kaddr];"
 		"addi %[kaddr],%[kaddr],1;"
 		"or. %[data],%[data],%[data];"
 		"sync;"

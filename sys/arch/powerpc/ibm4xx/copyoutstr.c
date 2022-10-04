@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.19 2022/10/04 13:45:50 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.18 2022/10/03 23:41:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.19 2022/10/04 13:45:50 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -94,7 +94,6 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 		"isync;"
 
 		"stb %[data],0(%[uaddr]);"	/* Store byte */
-		"dcbst 0,%[uaddr];"
 		"addi %[uaddr],%[uaddr],1;"
 
 		"or. %[data],%[data],%[data];"
