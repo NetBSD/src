@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.21 2022/09/29 18:27:41 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.22 2022/10/04 17:26:46 snj Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -297,4 +297,14 @@ sys/dev/pci/mfii.c				1.28
 	mfii(4): Convert from pci_intr_map() to pci_intr_alloc(); makes
 	the driver use MSI/MSI-x when available.
 	[bouyer, ticket #1534]
+
+usr.sbin/sysinst/arch/landisk/md.c		1.16
+
+	PR install/57025: revert bogus rev 1.9 which was only papering over
+	a bug in the adoption of the MBR handling code and fix the original
+	conversion bug instead:
+	 - run fdisk to install the MBR bootcode on the raw disk partition
+	 - run installboot against the NetBSD root partition (not the raw
+	   partition).
+	[martin, ticket #1535]
 
