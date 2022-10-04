@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2022/09/12 08:06:36 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2022/10/04 13:45:50 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2022/09/12 08:06:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2022/10/04 13:45:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -481,7 +481,6 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 #else
 		"stw	%[tmp],0(%[kaddr]);"
 #endif
-		"dcbst	0,%[kaddr];"		/* flush cache */
 		"addi	%[kaddr],%[kaddr],0x4;"	/* next kaddr word */
 		"sync;"
 		"bdnz	1b;"			/* repeat */
@@ -498,7 +497,6 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		MTPID(%[pid])
 		"isync;"
 		"stswx	%[tmp],0,%[kaddr];"	/* Store kernel bytes */
-		"dcbst	0,%[kaddr];"		/* flush cache */
 		"sync;"
 
 	"10:"	"mtmsr	%[msr];"		/* Restore MSR */
@@ -601,7 +599,6 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 #else
 		"stw	%[tmp],0(%[uaddr]);"
 #endif
-		"dcbst	0,%[uaddr];"		/* flush cache */
 		"addi	%[uaddr],%[uaddr],0x4;"	/* next uaddr word */
 		"sync;"
 
@@ -619,7 +616,6 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		MTPID(%[ctx])
 		"isync;"
 		"stswx	%[tmp],0,%[uaddr];"	/* Store user bytes */
-		"dcbst	0,%[uaddr];"		/* flush cache */
 		"sync;"
 
 		MTPID(%[pid])			/* Restore PID and MSR */
