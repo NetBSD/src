@@ -1,4 +1,4 @@
-/*	$NetBSD: route_50.h,v 1.2 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: route_50.h,v 1.3 2022/10/04 05:33:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,4 +39,4 @@
 void rtsock_50_init(void);
 void rtsock_50_fini(void);
 
-#endif /* !_COMPAT_NET_ROUTE_70_H_ */
+#endif /* !_COMPAT_NET_ROUTE_50_H_ */
