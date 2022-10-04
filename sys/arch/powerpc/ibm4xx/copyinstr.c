@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.20 2022/10/04 13:58:54 rin Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.21 2022/10/04 14:02:46 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.20 2022/10/04 13:58:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.21 2022/10/04 14:02:46 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -72,32 +72,32 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 
 	resid = len;
 	__asm volatile(
-		"mtctr %[resid];"		/* Set up counter */
-		"mfmsr %[msr];"			/* Save MSR */
-		"li %[pid],0x20;"		/* Disable IMMU */
-		"andc %[pid],%[msr],%[pid];"
-		"mtmsr %[pid];"
+		"mtctr	%[resid];"		/* Set up counter */
+		"mfmsr	%[msr];"		/* Save MSR */
+		"li	%[pid],0x20;"		/* Disable IMMU */
+		"andc	%[pid],%[msr],%[pid];"
+		"mtmsr	%[pid];"
 		"isync;"
 		MFPID(%[pid])			/* Save old PID */
 
 	"1:"	MTPID(%[ctx])			/* Load user ctx */
 		"isync;"
-		"lbz %[data],0(%[uaddr]);"	/* Load byte */
-		"addi %[uaddr],%[uaddr],1;"
+		"lbz	%[data],0(%[uaddr]);"	/* Load byte */
+		"addi	%[uaddr],%[uaddr],1;"
 		"sync;"
 
 		MTPID(%[pid])
 		"isync;"
-		"stb %[data],0(%[kaddr]);"	/* Store kernel byte */
-		"addi %[kaddr],%[kaddr],1;"
-		"or. %[data],%[data],%[data];"
+		"stb	%[data],0(%[kaddr]);"	/* Store kernel byte */
+		"addi	%[kaddr],%[kaddr],1;"
+		"or.	%[data],%[data],%[data];"
 		"sync;"
-		"bdnzf eq,1b;"			/* while(ctr-- && !zero) */
+		"bdnzf	eq,1b;"			/* while(ctr-- && !zero) */
 
 		MTPID(%[pid])			/* Restore PID, MSR */
-		"mtmsr %[msr];"
+		"mtmsr	%[msr];"
 		"isync;"
-		"mfctr %[resid];"		/* Restore resid */
+		"mfctr	%[resid];"		/* Restore resid */
 
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [data] "=&r" (data),
 		  [resid] "+r" (resid)
