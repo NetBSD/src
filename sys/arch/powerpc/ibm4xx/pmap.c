@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2022/10/05 08:47:52 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2022/10/05 09:03:06 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2022/10/05 08:47:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2022/10/05 09:03:06 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1347,7 +1347,7 @@ ppc4xx_tlb_find_victim(void)
 void
 ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 {
-	u_long th, tl, i;
+	u_long hi, lo, i;
 	paddr_t pa;
 	int msr, pid, sz;
 
@@ -1355,9 +1355,9 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 
 	sz = (pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT;
 	pa = (pte & TTE_RPN_MASK(sz));
-	th = (va & TLB_EPN_MASK) | (sz << TLB_SIZE_SHFT) | TLB_VALID;
-	tl = (pte & ~TLB_RPN_MASK) | pa;
-	tl |= ppc4xx_tlbflags(va, pa);
+	hi = (va & TLB_EPN_MASK) | (sz << TLB_SIZE_SHFT) | TLB_VALID;
+	lo = (pte & ~TLB_RPN_MASK) | pa;
+	lo |= ppc4xx_tlbflags(va, pa);
 
 	i = ppc4xx_tlb_find_victim();
 
@@ -1377,14 +1377,14 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		MFPID(%[pid])			/* Save old PID */
 		MTPID(%[ctx])			/* Load translation ctx */
 		"isync;"
-		"tlbwe	%[tl],%[i],1;"		/* Set TLB */
-		"tlbwe	%[th],%[i],0;"
+		"tlbwe	%[lo],%[i],1;"		/* Set TLB */
+		"tlbwe	%[hi],%[i],0;"
 		"isync;"
 		MTPID(%[pid])			/* Restore PID */
 		"mtmsr	%[msr];"		/* and MSR */
 		"isync;"
 		: [msr] "=&r" (msr), [pid] "=&r" (pid)
-		: [ctx] "r" (ctx), [i] "r" (i), [tl] "r" (tl), [th] "r" (th));
+		: [ctx] "r" (ctx), [i] "r" (i), [lo] "r" (lo), [hi] "r" (hi));
 }
 
 void
