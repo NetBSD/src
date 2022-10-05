@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.37 2021/03/30 14:33:10 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.38 2022/10/05 08:18:00 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.37 2021/03/30 14:33:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.38 2022/10/05 08:18:00 rin Exp $");
 
 #include "ksyms.h"
 
@@ -295,7 +295,7 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
 	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : : "r"(0), "K"(PSL_IR|PSL_DR));
+		      : : "r" (0), "K" (PSL_IR|PSL_DR));
 	/* XXXX PSL_ME - With ME set kernel gets stuck... */
 
 	/*
@@ -334,12 +334,12 @@ ibm4xx_install_extint(void (*handler)(void))
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr));
+	__asm volatile ("mfmsr %0; wrteei 0" : "=r" (msr));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r" (msr));
 }
 
 /*
