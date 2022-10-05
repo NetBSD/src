@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.20 2021/09/02 11:26:18 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.21 2022/10/05 22:39:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.53 2021/06/04 06:19:07 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.54 2022/04/28 02:53:31 djm Exp $ */
 
 #include "includes.h"
-__RCSID("$NetBSD: krl.c,v 1.20 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.21 2022/10/05 22:39:36 christos Exp $");
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -1395,7 +1395,7 @@ krl_dump(struct ssh_krl *krl, FILE *f)
 			error("sshkey_fingerprint failed");
 			continue;
 		}
-		fprintf(f, "hash: SHA256:%s # %s\n", fp, sshkey_ssh_name(key));
+		fprintf(f, "hash: %s # %s\n", fp, sshkey_ssh_name(key));
 		free(fp);
 		free(key);
 	}

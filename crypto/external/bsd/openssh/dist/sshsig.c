@@ -1,5 +1,6 @@
-/*	$NetBSD: sshsig.c,v 1.9 2022/04/15 14:00:06 christos Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.29 2022/03/30 04:27:51 djm Exp $ */
+/*	$NetBSD: sshsig.c,v 1.10 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.30 2022/08/19 03:06:30 djm Exp $ */
+
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.9 2022/04/15 14:00:06 christos Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.10 2022/10/05 22:39:36 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -492,7 +493,7 @@ hash_file(int fd, const char *hashalg, struct sshbuf **bp)
 {
 	char *hex, rbuf[8192], hash[SSH_DIGEST_MAX_LENGTH];
 	ssize_t n, total = 0;
-	struct ssh_digest_ctx *ctx;
+	struct ssh_digest_ctx *ctx = NULL;
 	int alg, oerrno, r = SSH_ERR_INTERNAL_ERROR;
 	struct sshbuf *b = NULL;
 
@@ -515,7 +516,6 @@ hash_file(int fd, const char *hashalg, struct sshbuf **bp)
 				continue;
 			oerrno = errno;
 			error_f("read: %s", strerror(errno));
-			ssh_digest_free(ctx);
 			errno = oerrno;
 			r = SSH_ERR_SYSTEM_ERROR;
 			goto out;
@@ -550,9 +550,11 @@ hash_file(int fd, const char *hashalg, struct sshbuf **bp)
 	/* success */
 	r = 0;
  out:
+	oerrno = errno;
 	sshbuf_free(b);
 	ssh_digest_free(ctx);
 	explicit_bzero(hash, sizeof(hash));
+	errno = oerrno;
 	return r;
 }
 
