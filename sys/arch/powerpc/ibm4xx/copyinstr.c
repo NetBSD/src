@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.23 2022/10/05 02:56:14 rin Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.24 2022/10/05 08:18:00 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.23 2022/10/05 02:56:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.24 2022/10/05 08:18:00 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -71,7 +71,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	}
 
 	resid = len;
-	__asm volatile(
+	__asm volatile (
 		"mtctr	%[resid];"		/* Set up counter */
 		"mfmsr	%[msr];"		/* Save MSR */
 		"li	%[tmp],0x20;"		/* Disable IMMU */

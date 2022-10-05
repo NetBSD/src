@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2022/10/05 08:18:00 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2022/09/12 08:02:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2022/10/05 08:18:00 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -683,7 +683,7 @@ pmap_zero_page(paddr_t pa)
 #else
 
 	for (i = PAGE_SIZE/CACHELINESIZE; i > 0; i--) {
-		__asm volatile ("dcbz 0,%0" : : "r"(pa));
+		__asm volatile ("dcbz 0,%0" : : "r" (pa));
 		pa += CACHELINESIZE;
 	}
 #endif
@@ -1197,8 +1197,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			MTPID(%1)
 			"mtmsr	%0;"
 			"isync;"
-			: "=&r"(msr), "=&r"(opid)
-			: "r"(ctx), "r"(va), "r"(len), "r"(CACHELINESIZE));
+			: "=&r" (msr), "=&r" (opid)
+			: "r" (ctx), "r" (va), "r" (len), "r" (CACHELINESIZE));
 	} else {
 		paddr_t pa;
 		vaddr_t tva, eva;
@@ -1246,16 +1246,16 @@ tlb_invalidate_entry(int i)
 		MTPID(%1)
 		"mtmsr	%0;"
 		"isync;"
-		: "=&r"(msr), "=&r"(pid), "=&r"(hi)
-		: "r"(i), "r"(TLB_VALID));
+		: "=&r" (msr), "=&r" (pid), "=&r" (hi)
+		: "r" (i), "r" (TLB_VALID));
 #else
 	/*
 	 * Just clear entire TLBHI register.
 	 */
 	__asm volatile (
-		"tlbwe %0,%1,0;"
+		"tlbwe	%0,%1,0;"
 		"isync;"
-		: : "r"(0), "r"(i));
+		: : "r" (0), "r" (i));
 #endif
 
 	tlb_info[i].ti_ctx = 0;
@@ -1289,8 +1289,8 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		"beq	1f;"
 		"li	%1,0;"
 	"1:"
-		: "=&r"(i), "=&r"(found), "=&r"(msr)
-		: "r"(va), "r"(pid));
+		: "=&r" (i), "=&r" (found), "=&r" (msr)
+		: "r" (va), "r" (pid));
 
 	if (found && !TLB_LOCKED(i)) {
 		/* Now flush translation */
@@ -1382,8 +1382,8 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		MTPID(%1)			/* Restore PID */
 		"mtmsr	%0;"			/* and MSR */
 		"isync;"
-		: "=&r"(msr), "=&r"(pid)
-		: "r"(ctx), "r"(idx), "r"(tl), "r"(th));
+		: "=&r" (msr), "=&r" (pid)
+		: "r" (ctx), "r" (idx), "r" (tl), "r" (th));
 }
 
 void
@@ -1406,7 +1406,7 @@ ppc4xx_tlb_init(void)
 	__asm volatile (
 		"mtspr	%0,%1;"
 		"isync;"
-		: : "K"(SPR_ZPR), "r"(0x1b000000));
+		: : "K" (SPR_ZPR), "r" (0x1b000000));
 }
 
 /*
@@ -1448,10 +1448,10 @@ ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 	/* tlb_nreserved is only allowed to grow, so this is safe. */
 	for (i = 0; i < tlb_nreserved; i++) {
 		__asm volatile (
-		    "tlbre	%0,%2,1;" 	/* TLBLO */
-		    "tlbre	%1,%2,0;" 	/* TLBHI */
-		    : "=&r"(lo), "=&r"(hi)
-		    : "r"(i));
+			"tlbre	%0,%2,1;" 	/* TLBLO */
+			"tlbre	%1,%2,0;" 	/* TLBHI */
+			: "=&r" (lo), "=&r" (hi)
+			: "r" (i));
 
 		KASSERT(hi & TLB_VALID);
 		KASSERT(mfspr(SPR_PID) == KERNEL_PID);
@@ -1503,11 +1503,11 @@ ppc4xx_tlb_reserve(paddr_t pa, vaddr_t va, size_t size, int flags)
 	lo |= TLB_I;
 #endif
 
-	__asm volatile(
+	__asm volatile (
 		"tlbwe	%1,%0,1;"	/* write TLBLO */
 		"tlbwe	%2,%0,0;"	/* write TLBHI */
 		"isync;"
-		: : "r"(tlb_nreserved), "r"(lo), "r"(hi));
+		: : "r" (tlb_nreserved), "r" (lo), "r" (hi));
 
 	tlb_nreserved++;
 }

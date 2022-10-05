@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2022/10/04 13:45:50 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 2022/10/05 08:18:00 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2022/10/04 13:45:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2022/10/05 08:18:00 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -452,7 +452,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	__asm volatile(
+	__asm volatile (
 		"mfmsr	%[msr];"		/* Save MSR */
 		"li	%[tmp],0x20;"		/* Disable IMMU */
 		"andc	%[tmp],%[msr],%[tmp];"
@@ -571,7 +571,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	__asm volatile(
+	__asm volatile (
 		"mfmsr	%[msr];"		/* Save MSR */
 		"li	%[tmp],0x20;"		/* Disable IMMU */
 		"andc	%[tmp],%[msr],%[tmp];"
