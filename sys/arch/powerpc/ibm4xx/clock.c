@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2021/03/05 06:06:34 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 2022/10/05 08:18:00 rin Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2021/03/05 06:06:34 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2022/10/05 08:18:00 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -218,9 +218,9 @@ get_ppc4xx_timecount(struct timecounter *tc)
 	u_long tb;
 	int msr;
 
-	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
+	__asm volatile ("mfmsr %0; wrteei 0" : "=r" (msr));
 	tb = mftbl();
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	__asm volatile ("mtmsr %0" :: "r" (msr));
 
 	return tb;
 }
@@ -240,23 +240,26 @@ delay(unsigned int n)
 	tbh = tb >> 32;
 	tbl = tb;
 	__asm volatile (
+	"1:"
 #ifdef PPC_IBM403
-	    "1:	mftbhi %0	\n"
+		"mftbhi	%0;"
 #else
-	    "1:	mftbu %0	\n"
+		"mftbu	%0;"
 #endif
-	    "	cmplw %0,%1	\n"
-	    "	blt 1b		\n"
-	    "	bgt 2f		\n"
+		"cmplw	%0,%1;"
+		"blt	1b;"
+		"bgt	2f;"
 #ifdef PPC_IBM403
-	    "	mftblo %0	\n"
+		"mftblo	%0;"
 #else
-	    "	mftb %0		\n"
+		"mftb	%0;"
 #endif
-	    "	cmplw %0,%2	\n"
-	    "	blt 1b		\n"
-	    "2: 		\n"
-	    : "=&r"(scratch) : "r"(tbh), "r"(tbl) : "cr0");
+		"cmplw	%0,%2;"
+		"blt	1b;"
+	"2:"
+	    : "=&r" (scratch)
+	    : "r" (tbh), "r" (tbl)
+	    : "cr0");
 }
 
 /*
