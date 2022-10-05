@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.40 2021/06/16 05:21:08 rin Exp $
+# $NetBSD: Makefile.inc,v 1.41 2022/10/05 10:28:19 nia Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -133,7 +133,11 @@ GENERIC_SRCS+= \
 .endif
 
 
-.if ${MACHINE_CPU} != "aarch64"
+.if ${MACHINE_CPU} == "aarch64"
+GENERIC_SRCS+= \
+	comparetf2.c
+.endif
+
 GENERIC_SRCS+= \
 	fixunsdfti.c \
 	fixunssfti.c \
@@ -145,10 +149,6 @@ GENERIC_SRCS+= \
 	floatuntidf.c \
 	floatuntisf.c \
 	floatuntixf.c
-.else
-GENERIC_SRCS+= \
-	comparetf2.c
-.endif
 
 # These have h/w instructions which are always used.
 .if ${LIBC_MACHINE_ARCH} != "alpha" && ${LIBC_MACHINE_CPU} != "aarch64" \
@@ -250,7 +250,22 @@ GENERIC_SRCS+= \
 
 .if ${LIBC_MACHINE_CPU} == "aarch64"
 GENERIC_SRCS+= \
-	clear_cache.c
+	clear_cache.c \
+	addtf3.c \
+	divtf3.c \
+	multf3.c \
+	subtf3.c \
+	trunctfsf2.c \
+	trunctfdf2.c \
+	fixdfti.c \
+	fixtfsi.c \
+	fixtfdi.c \
+	extendsftf2.c \
+	extenddftf2.c \
+	floatunsitf.c \
+	floatunditf.c \
+	floatsitf.c \
+	floatditf.c
 .endif
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
