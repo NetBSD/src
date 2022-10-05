@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2022/10/05 08:18:00 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2022/10/05 08:47:52 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2022/10/05 08:18:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2022/10/05 08:47:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1160,7 +1160,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	struct pmap *pm = p->p_vmspace->vm_map.pmap;
 
 	if (__predict_true(p == curproc)) {
-		int msr, ctx, opid;
+		int msr, ctx, pid;
 
 		/*
 		 * Take it easy! TLB miss handler takes care of us.
@@ -1178,27 +1178,28 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		}
 
 		__asm volatile (
-			"mfmsr	%0;"
-			"li	%1,0x20;"	/* Turn off IMMU */
-			"andc	%1,%0,%1;"
-			"ori	%1,%1,0x10;"	/* Turn on DMMU for sure */
-			"mtmsr	%1;"
+			"mfmsr	%[msr];"
+			"li	%[pid],0x20;"		/* Turn off IMMU */
+			"andc	%[pid],%[msr],%[pid];"
+			"ori	%[pid],%[pid],0x10;" /* Turn on DMMU for sure */
+			"mtmsr	%[pid];"
 			"isync;"
-			MFPID(%1)
-			MTPID(%2)
+			MFPID(%[pid])
+			MTPID(%[ctx])
 			"isync;"
 		"1:"
-			"dcbst	0,%3;"
-			"icbi	0,%3;"
-			"add	%3,%3,%5;"
-			"sub.	%4,%4,%5;"
+			"dcbst	0,%[va];"
+			"icbi	0,%[va];"
+			"add	%[va],%[va],%[size];"
+			"sub.	%[len],%[len],%[size];"
 			"bge	1b;"
 			"sync;"
-			MTPID(%1)
-			"mtmsr	%0;"
+			MTPID(%[pid])
+			"mtmsr	%[msr];"
 			"isync;"
-			: "=&r" (msr), "=&r" (opid)
-			: "r" (ctx), "r" (va), "r" (len), "r" (CACHELINESIZE));
+			: [msr] "=&r" (msr), [pid] "=&r" (pid)
+			: [ctx] "r" (ctx), [va] "r" (va), [len] "r" (len),
+			  [size] "r" (CACHELINESIZE));
 	} else {
 		paddr_t pa;
 		vaddr_t tva, eva;
@@ -1236,18 +1237,18 @@ tlb_invalidate_entry(int i)
 	KASSERT(mfspr(SPR_PID) == KERNEL_PID);
 
 	__asm volatile (
-		"mfmsr	%0;"
-		"li	%1,0;"
-		"mtmsr	%1;"
-		MFPID(%1)
-		"tlbre	%2,%3,0;"
-		"andc	%2,%2,%4;"
-		"tlbwe	%2,%3,0;"
-		MTPID(%1)
-		"mtmsr	%0;"
+		"mfmsr	%[msr];"
+		"li	%[pid],0;"
+		"mtmsr	%[pid];"
+		MFPID(%[pid])
+		"tlbre	%[hi],%[i],0;"
+		"andc	%[hi],%[hi],%[valid];"
+		"tlbwe	%[hi],%[i],0;"
+		MTPID(%[pid])
+		"mtmsr	%[msr];"
 		"isync;"
-		: "=&r" (msr), "=&r" (pid), "=&r" (hi)
-		: "r" (i), "r" (TLB_VALID));
+		: [msr] "=&r" (msr), [pid] "=&r" (pid), [hi] "=&r" (hi)
+		: [i] "r" (i), [valid] "r" (TLB_VALID));
 #else
 	/*
 	 * Just clear entire TLBHI register.
@@ -1273,24 +1274,24 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		return;
 
 	__asm volatile (
-		MFPID(%1)		/* Save PID */
-		"mfmsr	%2;"		/* Save MSR */
-		"li	%0,0;"		/* Now clear MSR */
-		"mtmsr	%0;"
+		MFPID(%[found])		/* Save PID */
+		"mfmsr	%[msr];"	/* Save MSR */
+		"li	%[i],0;"	/* Now clear MSR */
+		"mtmsr	%[i];"
 		"isync;"
-		MTPID(%4)		/* Set PID */
+		MTPID(%[pid])		/* Set PID */
 		"isync;"
-		"tlbsx.	%0,0,%3;"	/* Search TLB */
+		"tlbsx.	%[i],0,%[va];"	/* Search TLB */
 		"isync;"
-		MTPID(%1)		/* Restore PID */
-		"mtmsr	%2;"		/* Restore MSR */
+		MTPID(%[found])		/* Restore PID */
+		"mtmsr	%[msr];"	/* Restore MSR */
 		"isync;"
-		"li	%1,1;"
+		"li	%[found],1;"
 		"beq	1f;"
-		"li	%1,0;"
+		"li	%[found],0;"
 	"1:"
-		: "=&r" (i), "=&r" (found), "=&r" (msr)
-		: "r" (va), "r" (pid));
+		: [i] "=&r" (i), [found] "=&r" (found), [msr] "=&r" (msr)
+		: [va] "r" (va), [pid] "r" (pid));
 
 	if (found && !TLB_LOCKED(i)) {
 		/* Now flush translation */
@@ -1346,7 +1347,7 @@ ppc4xx_tlb_find_victim(void)
 void
 ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 {
-	u_long th, tl, idx;
+	u_long th, tl, i;
 	paddr_t pa;
 	int msr, pid, sz;
 
@@ -1358,32 +1359,32 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	tl = (pte & ~TLB_RPN_MASK) | pa;
 	tl |= ppc4xx_tlbflags(va, pa);
 
-	idx = ppc4xx_tlb_find_victim();
+	i = ppc4xx_tlb_find_victim();
 
-	KASSERTMSG(idx >= tlb_nreserved && idx < NTLB,
-	    "invalid entry %ld", idx);
+	KASSERTMSG(i >= tlb_nreserved && i < NTLB,
+	    "invalid entry %ld", i);
 
-	tlb_info[idx].ti_va = (va & TLB_EPN_MASK);
-	tlb_info[idx].ti_ctx = ctx;
-	tlb_info[idx].ti_flags = TLBF_USED | TLBF_REF;
+	tlb_info[i].ti_va = (va & TLB_EPN_MASK);
+	tlb_info[i].ti_ctx = ctx;
+	tlb_info[i].ti_flags = TLBF_USED | TLBF_REF;
 
 	__asm volatile (
-		"mfmsr	%0;"			/* Save MSR */
-		"li	%1,0;"
-		"mtmsr	%1;"			/* Clear MSR */
+		"mfmsr	%[msr];"		/* Save MSR */
+		"li	%[pid],0;"
+		"mtmsr	%[pid];"		/* Clear MSR */
 		"isync;"
-		"tlbwe	%1,%3,0;"		/* Invalidate old entry. */
-		MFPID(%1)			/* Save old PID */
-		MTPID(%2)			/* Load translation ctx */
+		"tlbwe	%[pid],%[i],0;"		/* Invalidate old entry. */
+		MFPID(%[pid])			/* Save old PID */
+		MTPID(%[ctx])			/* Load translation ctx */
 		"isync;"
-		"tlbwe	%4,%3,1;"		/* Set TLB */
-		"tlbwe	%5,%3,0;"
+		"tlbwe	%[tl],%[i],1;"		/* Set TLB */
+		"tlbwe	%[th],%[i],0;"
 		"isync;"
-		MTPID(%1)			/* Restore PID */
-		"mtmsr	%0;"			/* and MSR */
+		MTPID(%[pid])			/* Restore PID */
+		"mtmsr	%[msr];"		/* and MSR */
 		"isync;"
-		: "=&r" (msr), "=&r" (pid)
-		: "r" (ctx), "r" (idx), "r" (tl), "r" (th));
+		: [msr] "=&r" (msr), [pid] "=&r" (pid)
+		: [ctx] "r" (ctx), [i] "r" (i), [tl] "r" (tl), [th] "r" (th));
 }
 
 void
@@ -1448,10 +1449,10 @@ ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 	/* tlb_nreserved is only allowed to grow, so this is safe. */
 	for (i = 0; i < tlb_nreserved; i++) {
 		__asm volatile (
-			"tlbre	%0,%2,1;" 	/* TLBLO */
-			"tlbre	%1,%2,0;" 	/* TLBHI */
-			: "=&r" (lo), "=&r" (hi)
-			: "r" (i));
+			"tlbre	%[lo],%[i],1;" 	/* TLBLO */
+			"tlbre	%[hi],%[i],0;" 	/* TLBHI */
+			: [lo] "=&r" (lo), [hi] "=&r" (hi)
+			: [i] "r" (i));
 
 		KASSERT(hi & TLB_VALID);
 		KASSERT(mfspr(SPR_PID) == KERNEL_PID);
@@ -1504,10 +1505,10 @@ ppc4xx_tlb_reserve(paddr_t pa, vaddr_t va, size_t size, int flags)
 #endif
 
 	__asm volatile (
-		"tlbwe	%1,%0,1;"	/* write TLBLO */
-		"tlbwe	%2,%0,0;"	/* write TLBHI */
+		"tlbwe	%[lo],%[i],1;"	/* write TLBLO */
+		"tlbwe	%[hi],%[i],0;"	/* write TLBHI */
 		"isync;"
-		: : "r" (tlb_nreserved), "r" (lo), "r" (hi));
+		: : [i] "r" (tlb_nreserved), [lo] "r" (lo), [hi] "r" (hi));
 
 	tlb_nreserved++;
 }
