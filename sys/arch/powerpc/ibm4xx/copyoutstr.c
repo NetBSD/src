@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.22 2022/10/04 14:08:30 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.23 2022/10/05 02:56:14 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.22 2022/10/04 14:08:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.23 2022/10/05 02:56:14 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -80,9 +80,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 		"isync;"
 		MFPID(%[pid])			/* Save old PID */
 
-	"1:"	MTPID(%[pid])
-		"isync;"
-		"lbz	%[tmp],0(%[kaddr]);"	/* Load kernel byte */
+	"1:"	"lbz	%[tmp],0(%[kaddr]);"	/* Load kernel byte */
 		"addi	%[kaddr],%[kaddr],1;"
 		"sync;"
 
@@ -92,10 +90,12 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 		"addi	%[uaddr],%[uaddr],1;"
 		"or.	%[tmp],%[tmp],%[tmp];"
 		"sync;"
+
+		MTPID(%[pid])
+		"isync;"
 		"bdnzf	eq,1b;"			/* while(ctr-- && !zero) */
 
-		MTPID(%[pid])			/* Restore PID, MSR */
-		"mtmsr	%[msr];"
+		"mtmsr	%[msr];"		/* Restore MSR */
 		"isync;"
 		"mfctr	%[resid];"		/* Restore resid */
 
