@@ -1,5 +1,6 @@
-/*	$NetBSD: serverloop.c,v 1.32 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.231 2022/01/22 00:49:34 djm Exp $ */
+/*	$NetBSD: serverloop.c,v 1.33 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.232 2022/04/20 04:19:11 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.32 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -409,8 +410,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 			cleanup_exit(254);
 		}
 
-		if (!ssh_packet_is_rekeying(ssh))
-			channel_after_poll(ssh, pfd, npfd_active);
+		channel_after_poll(ssh, pfd, npfd_active);
 		if (conn_in_ready &&
 		    process_input(ssh, connection_in) < 0)
 			break;

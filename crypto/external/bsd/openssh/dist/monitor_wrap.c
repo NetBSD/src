@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.30 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.123 2021/04/15 16:24:31 markus Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.31 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.125 2022/06/15 16:08:25 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.30 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.31 2022/10/05 22:39:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>

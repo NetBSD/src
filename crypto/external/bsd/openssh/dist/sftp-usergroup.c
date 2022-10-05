@@ -1,3 +1,5 @@
+/*	$NetBSD: sftp-usergroup.c,v 1.2 2022/10/05 22:39:36 christos Exp $	*/
+
 /*
  * Copyright (c) 2022 Damien Miller <djm@mindrot.org>
  *
@@ -15,6 +17,8 @@
  */
 
 /* sftp client user/group lookup and caching */
+#include "includes.h"
+__RCSID("$NetBSD: sftp-usergroup.c,v 1.2 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -152,14 +156,24 @@ collect_ids_from_glob(glob_t *g, int user, u_int **idsp, u_int *nidsp)
 	u_int id, i, n = 0, *ids = NULL;
 
 	for (i = 0; g->gl_pathv[i] != NULL; i++) {
+		struct stat *stp;
+#if GLOB_KEEPSTAT != 0
+		stp = g->gl_statv[i];
+#else
+		struct stat st;
+		if (lstat(g->gl_pathv[i], stp = &st) == -1) {
+			error("no stat information for %s", g->gl_pathv[i]);
+			continue;
+		}
+#endif
 		if (user) {
-			if (ruser_name(g->gl_statv[i]->st_uid) != NULL)
+			if (ruser_name(stp->st_uid) != NULL)
 				continue; /* Already seen */
-			id = (u_int)g->gl_statv[i]->st_uid;
+			id = (u_int)stp->st_uid;
 		} else {
-			if (rgroup_name(g->gl_statv[i]->st_gid) != NULL)
+			if (rgroup_name(stp->st_gid) != NULL)
 				continue; /* Already seen */
-			id = (u_int)g->gl_statv[i]->st_gid;
+			id = (u_int)stp->st_gid;
 		}
 		if (has_id(id, ids, n))
 			continue;

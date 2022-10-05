@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.22 2022/04/15 14:00:06 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.142 2022/03/30 21:10:25 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.23 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.143 2022/05/05 00:56:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

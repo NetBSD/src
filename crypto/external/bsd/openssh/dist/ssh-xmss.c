@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-xmss.c,v 1.4 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh-xmss.c,v 1.4 2020/10/19 22:49:23 dtucker Exp $*/
+/*	$NetBSD: ssh-xmss.c,v 1.5 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: ssh-xmss.c,v 1.5 2022/04/20 15:59:18 millert Exp $*/
 
 /*
  * Copyright (c) 2017 Stefan-Lukas Gazdag.
@@ -18,13 +18,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-xmss.c,v 1.4 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh-xmss.c,v 1.5 2022/10/05 22:39:36 christos Exp $");
 #define SSHKEY_INTERNAL
 #include <sys/types.h>
 #include <limits.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "log.h"

@@ -1,5 +1,5 @@
-/*	$NetBSD: addr.c,v 1.3 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: addr.c,v 1.4 2021/10/22 10:51:57 dtucker Exp $ */
+/*	$NetBSD: addr.c,v 1.4 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: addr.c,v 1.5 2022/04/29 04:55:07 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addr.c,v 1.3 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: addr.c,v 1.4 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -397,7 +397,7 @@ addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 		*mp = '\0';
 		mp++;
 		masklen = strtoul(mp, &cp, 10);
-		if (*mp == '\0' || *cp != '\0' || masklen > 128)
+		if (*mp < '0' || *mp > '9' || *cp != '\0' || masklen > 128)
 			return -1;
 	}
 

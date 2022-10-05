@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-getput-crypto.c,v 1.8 2019/11/15 06:00:20 djm Exp $	*/
+/*	$OpenBSD: sshbuf-getput-crypto.c,v 1.10 2022/05/25 06:03:44 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.10 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.11 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/types.h>
 #include <stdlib.h>

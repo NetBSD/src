@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2021/08/14 16:17:57 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2022/10/05 22:39:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ MAN=	sshd.8 sshd_config.5 moduli.5
 
 BINDIR=	/usr/sbin
 
-SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
+SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth2-pubkeyfile.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth2.c auth-options.c session.c \
 	auth-krb5.c auth2-chall.c groupaccess.c \

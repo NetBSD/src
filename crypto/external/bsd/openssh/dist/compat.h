@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.15 2021/09/02 11:26:17 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.16 2022/10/05 22:39:36 christos Exp $	*/
 /* $OpenBSD: compat.h,v 1.57 2021/06/06 03:40:39 djm Exp $ */
 
 /*
@@ -63,7 +63,7 @@
 struct ssh;
 
 void    compat_banner(struct ssh *, const char *);
-const char	*compat_cipher_proposal(struct ssh *, const char *);
+char	*compat_cipher_proposal(struct ssh *, char *);
 char	*compat_pkalg_proposal(struct ssh *, char *);
-const char	*compat_kex_proposal(struct ssh *, const char *);
+char	*compat_kex_proposal(struct ssh *, char *);
 #endif

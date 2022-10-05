@@ -1,5 +1,6 @@
-/*	$NetBSD: packet.c,v 1.46 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.307 2022/01/22 00:49:34 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.47 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.308 2022/08/31 02:56:40 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.46 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.47 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -971,7 +972,7 @@ ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
 		return 1;
 
 	/*
-	 * Always rekey when MAX_PACKETS sent in either direction 
+	 * Always rekey when MAX_PACKETS sent in either direction
 	 * As per RFC4344 section 3.1 we do this after 2^31 packets.
 	 */
 	if (state->p_send.packets > MAX_PACKETS ||

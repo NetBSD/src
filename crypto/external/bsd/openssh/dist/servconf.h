@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.27 2022/04/15 14:00:06 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.156 2022/03/18 04:04:11 djm Exp $ */
+/*	$NetBSD: servconf.h,v 1.28 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: servconf.h,v 1.157 2022/09/17 10:34:29 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -249,6 +249,7 @@ typedef struct {
 	int	expose_userauth_info;
 	u_int64_t timing_secret;
 	char   *sk_provider;
+	int	required_rsa_size;	/* minimum size of RSA keys */
 }       ServerOptions;
 
 /* Information about the incoming connection as used by Match */

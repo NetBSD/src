@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.c,v 1.17 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.69 2021/07/23 05:56:47 djm Exp $ */
+/*	$NetBSD: readpass.c,v 1.18 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: readpass.c,v 1.70 2022/05/27 04:27:49 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.17 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.18 2022/10/05 22:39:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -287,7 +287,8 @@ notify_start(int force_askpass, const char *fmt, ...)
 	}
  out_ctx:
 	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
-		kill(pid, SIGTERM);
+		if (pid != -1)
+			kill(pid, SIGTERM);
 		fatal_f("calloc failed");
 	}
 	ret->pid = pid;

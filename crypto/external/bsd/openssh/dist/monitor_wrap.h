@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.22 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.47 2021/04/15 16:24:31 markus Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.23 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.49 2022/06/15 16:08:25 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -55,7 +55,7 @@ char *mm_auth2_read_banner(void);
 int mm_auth_password(struct ssh *, const char *);
 int mm_key_allowed(enum mm_keytype, const char *, const char *, struct sshkey *,
     int, struct sshauthopt **);
-int mm_user_key_allowed(struct ssh *, struct passwd *, struct sshkey *, int,
+int mm_user_key_allowed(struct ssh *ssh, struct passwd *, struct sshkey *, int,
     struct sshauthopt **);
 int mm_hostbased_key_allowed(struct ssh *, struct passwd *, const char *,
     const char *, struct sshkey *);
