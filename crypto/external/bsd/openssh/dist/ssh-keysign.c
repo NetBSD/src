@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-keysign.c,v 1.23 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.70 2022/01/06 22:00:18 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.24 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.71 2022/08/01 11:09:26 djm Exp $ */
+
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.23 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.24 2022/10/05 22:39:36 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -153,9 +154,7 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret, char **pkalgp,
 
 	debug3_f("fail %d", fail);
 
-	if (fail)
-		sshkey_free(key);
-	else {
+	if (!fail) {
 		if (ret != NULL) {
 			*ret = key;
 			key = NULL;

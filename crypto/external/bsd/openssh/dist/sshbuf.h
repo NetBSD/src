@@ -1,5 +1,6 @@
-/*	$NetBSD: sshbuf.h,v 1.17 2022/08/27 10:04:45 mlelstv Exp $	*/
-/*	$OpenBSD: sshbuf.h,v 1.25 2022/01/22 00:43:43 djm Exp $	*/
+/*	$NetBSD: sshbuf.h,v 1.18 2022/10/05 22:39:36 christos Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.27 2022/05/25 06:03:44 djm Exp $	*/
+
 /*
  * Copyright (c) 2011 Damien Miller
  *

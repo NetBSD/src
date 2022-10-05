@@ -1,5 +1,6 @@
-/*	$NetBSD: sshconnect.c,v 1.32 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.356 2021/12/19 22:10:24 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.33 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.358 2022/08/26 08:16:27 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.32 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.33 2022/10/05 22:39:36 christos Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -813,7 +814,7 @@ other_hostkeys_message(const char *host, const char *ip,
 	    system_hostfiles, num_system_hostfiles,
 	    &othernames, &num_othernames);
 	if (num_othernames == 0)
-		return xstrdup("This key is not known by any other names");
+		return xstrdup("This key is not known by any other names.");
 
 	xasprintf(&ret, "This host key is known by the following other "
 	    "names/addresses:");
@@ -1331,7 +1332,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		if (options.exit_on_forward_failure && cancelled_forwarding)
 			fatal("Error: forwarding disabled due to host key "
 			    "check failure");
-		
+
 		/*
 		 * XXX Should permit the user to change to use the new id.
 		 * This could be done by converting the host key to an

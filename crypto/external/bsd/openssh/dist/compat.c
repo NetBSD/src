@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.24 2021/09/27 17:03:13 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.119 2021/09/10 05:46:09 djm Exp $ */
+/*	$NetBSD: compat.c,v 1.25 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: compat.c,v 1.120 2022/07/01 03:35:45 dtucker Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.24 2021/09/27 17:03:13 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.25 2022/10/05 22:39:36 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -158,11 +158,12 @@ compat_banner(struct ssh *ssh, const char *version)
 	debug_f("no match: %s", version);
 }
 
-const char *
-compat_cipher_proposal(struct ssh *ssh, const char *cipher_prop)
+/* Always returns pointer to allocated memory, caller must free. */
+char *
+compat_cipher_proposal(struct ssh *ssh, char *cipher_prop)
 {
 	if (!(ssh->compat & SSH_BUG_BIGENDIANAES))
-		return cipher_prop;
+		return xstrdup(cipher_prop);
 	debug2_f("original cipher proposal: %s", cipher_prop);
 	if ((cipher_prop = match_filter_denylist(cipher_prop, "aes*")) == NULL)
 		fatal("match_filter_denylist failed");
@@ -172,11 +173,12 @@ compat_cipher_proposal(struct ssh *ssh, const char *cipher_prop)
 	return cipher_prop;
 }
 
+/* Always returns pointer to allocated memory, caller must free. */
 char *
 compat_pkalg_proposal(struct ssh *ssh, char *pkalg_prop)
 {
 	if (!(ssh->compat & SSH_BUG_RSASIGMD5))
-		return pkalg_prop;
+		return xstrdup(pkalg_prop);
 	debug2_f("original public key proposal: %s", pkalg_prop);
 	if ((pkalg_prop = match_filter_denylist(pkalg_prop, "ssh-rsa")) == NULL)
 		fatal("match_filter_denylist failed");
@@ -186,21 +188,26 @@ compat_pkalg_proposal(struct ssh *ssh, char *pkalg_prop)
 	return pkalg_prop;
 }
 
-const char *
-compat_kex_proposal(struct ssh *ssh, const char *p)
+/* Always returns pointer to allocated memory, caller must free. */
+char *
+compat_kex_proposal(struct ssh *ssh, char *p)
 {
+	char *cp = NULL;
+
 	if ((ssh->compat & (SSH_BUG_CURVE25519PAD|SSH_OLD_DHGEX)) == 0)
-		return p;
+		return xstrdup(p);
 	debug2_f("original KEX proposal: %s", p);
 	if ((ssh->compat & SSH_BUG_CURVE25519PAD) != 0)
 		if ((p = match_filter_denylist(p,
 		    "curve25519-sha256@libssh.org")) == NULL)
 			fatal("match_filter_denylist failed");
 	if ((ssh->compat & SSH_OLD_DHGEX) != 0) {
+		cp = p;
 		if ((p = match_filter_denylist(p,
 		    "diffie-hellman-group-exchange-sha256,"
 		    "diffie-hellman-group-exchange-sha1")) == NULL)
 			fatal("match_filter_denylist failed");
+		free(cp);
 	}
 	debug2_f("compat KEX proposal: %s", p);
 	if (*p == '\0')

@@ -1,5 +1,6 @@
-/*	$NetBSD: authfd.c,v 1.24 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.129 2021/12/19 22:10:24 djm Exp $ */
+/*	$NetBSD: authfd.c,v 1.25 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.130 2022/04/27 11:08:55 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.24 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.25 2022/10/05 22:39:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -93,6 +94,7 @@ ssh_get_authentication_socket_path(const char *authsocket, int *fdp)
 	int sock, oerrno;
 	struct sockaddr_un sunaddr;
 
+	debug3_f("path '%s'", authsocket);
 	memset(&sunaddr, 0, sizeof(sunaddr));
 	sunaddr.sun_family = AF_UNIX;
 	strlcpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));

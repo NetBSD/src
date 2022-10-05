@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-sk-helper.c,v 1.5 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: ssh-sk-helper.c,v 1.12 2021/10/28 02:54:18 djm Exp $ */
+/*	$NetBSD: ssh-sk-helper.c,v 1.6 2022/10/05 22:39:36 christos Exp $	*/
+/* $OpenBSD: ssh-sk-helper.c,v 1.13 2022/04/29 03:16:48 dtucker Exp $ */
+
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -26,7 +27,7 @@
  * protocol changes.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk-helper.c,v 1.5 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: ssh-sk-helper.c,v 1.6 2022/10/05 22:39:36 christos Exp $");
 
 #include <limits.h>
 #include <stdarg.h>
@@ -265,6 +266,7 @@ process_load_resident(struct sshbuf *req)
 	sshsk_free_resident_keys(srks, nsrks);
 	sshbuf_free(kbuf);
 	free(provider);
+	free(device);
 	if (pin != NULL)
 		freezero(pin, strlen(pin));
 	return resp;
