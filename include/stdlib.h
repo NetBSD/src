@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.123 2021/07/03 14:07:13 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.124 2022/10/05 12:09:07 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -269,10 +269,7 @@ int	 getsubopt(char **, char * const *, char **);
  * Implementation-defined extensions
  */
 #if defined(_NETBSD_SOURCE)
-#if defined(alloca) && (alloca == __builtin_alloca) && \
-	defined(__GNUC__) && (__GNUC__ < 2)
-void	*alloca(int);     /* built-in for gcc */
-#elif defined(__PCC__) && !defined(__GNUC__)
+#if defined(__PCC__) && !defined(__GNUC__)
 #define alloca(size) __builtin_alloca(size)
 #else
 void	*alloca(size_t);
