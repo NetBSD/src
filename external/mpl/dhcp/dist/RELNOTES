@@ -1,9 +1,7 @@
                 Internet Systems Consortium DHCP Distribution
-                            Version 4.4.3
-                            9 March 2022
+                          Version 4.4.3-P1
+                            ? ????? 2022
                             Release Notes
-
-                            NEW FEATURES
 
 Please note that that ISC DHCP is licensed under the Mozilla Public
 License, MPL 2.0. Please see https://www.mozilla.org/en-US/MPL/2.0/ to read
@@ -27,6 +25,20 @@ and/or suggested fixes to dhcp-users@lists.isc.org.
 ISC DHCP is open source software maintained by Internet Systems
 Consortium.  This product includes cryptographic software written
 by Eric Young (eay@cryptsoft.com).
+
+		Changes since 4.4.3 (Bug Fixes)
+
+! Corrected a reference count leak that occurs when the server builds
+  responses to leasequery packets. Thanks to VictorV of Cyber Kunlun
+  Lab for reporting the issue.
+  [Gitblab #253]
+  CVE: CVS-2022-2928
+
+! Corrected a memory leak that occurs when unpacking a packet that has an
+  FQDN option (81) that contains a label whose lenght is greater than 63.
+  Thanks to VictorV of Cyber Kunlun Lab for reporting the issue.
+  [Gitblab #254]
+  CVE: CVS-2022-2929
 
 		Changes since 4.4.2-P1 (New Features)
 
