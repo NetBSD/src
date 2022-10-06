@@ -1,4 +1,4 @@
-/* $NetBSD: t_inet_network.c,v 1.4 2015/04/09 16:47:56 ginsbach Exp $ */
+/* $NetBSD: t_inet_network.c,v 1.5 2022/10/06 06:05:31 ryo Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_inet_network.c,v 1.4 2015/04/09 16:47:56 ginsbach Exp $");
+__RCSID("$NetBSD: t_inet_network.c,v 1.5 2022/10/06 06:05:31 ryo Exp $");
 
 #include <arpa/inet.h>
 
@@ -92,6 +92,9 @@ ATF_TC_BODY(inet_network_err, tc)
 		0xffffffff);
 	H_REQUIRE("255.255.255.255", 0xffffffff);
 	H_REQUIRE("x", 0xffffffff);
+	H_REQUIRE("x1", 0xffffffff);
+	H_REQUIRE("xab", 0xffffffff);
+	H_REQUIRE("x100", 0xffffffff);
 	H_REQUIRE("078", 0xffffffff);
 	H_REQUIRE("127.0xfff", 0xffffffff);
 }
