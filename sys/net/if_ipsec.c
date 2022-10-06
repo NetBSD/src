@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.32 2022/09/30 07:36:36 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.33 2022/10/06 06:59:24 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.32 2022/09/30 07:36:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.33 2022/10/06 06:59:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1798,12 +1798,12 @@ if_ipsec_get_reqids(struct ipsec_variant *var, u_int16_t reqids[REQID_INDEX_NUM]
 
 	mutex_enter(&ipsec_softcs.lock);
 	if (ipsec_softcs.use_fixed_reqid) {
-		u_int16_t reqid_base;
+		uint32_t reqid_base;
 
 		reqid_base = ipsec_softcs.reqid_base + ifp->if_index * 2;
 		if (reqid_base + 1 > ipsec_softcs.reqid_last) {
 			log(LOG_ERR,
-			    "%s: invalid fixed reqid(%"PRIu16"), "
+			    "%s: invalid fixed reqid(%"PRIu32"), "
 			    "current range %"PRIu16" <= reqid <= %"PRIu16"\n",
 			    ifp->if_xname, reqid_base + 1,
 			    ipsec_softcs.reqid_base, ipsec_softcs.reqid_last);
