@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.22 2022/08/20 23:13:51 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.23 2022/10/06 00:22:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.22 2022/08/20 23:13:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.23 2022/10/06 00:22:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	.edx =
 	    /* CPUID_SEF_AVX512_4VNNIW excluded */
 	    /* CPUID_SEF_AVX512_4FMAPS excluded */
-	    CPUID_SEF_FSREP_MOV |
+	    CPUID_SEF_FSRM |
 	    /* CPUID_SEF_AVX512_VP2INTERSECT excluded */
 	    /* CPUID_SEF_SRBDS_CTRL excluded */
 	    CPUID_SEF_MD_CLEAR |
