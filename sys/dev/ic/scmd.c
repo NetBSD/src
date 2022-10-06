@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmd.c,v 1.2 2022/03/31 19:30:16 pgoyette Exp $	*/
+/*	$NetBSD: scmd.c,v 1.3 2022/10/06 19:38:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmd.c,v 1.2 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmd.c,v 1.3 2022/10/06 19:38:54 andvar Exp $");
 
 /*
  * Common driver for the Sparkfun Serial motor controller.
@@ -274,7 +274,7 @@ scmd_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->sc_opened)
 		return EBUSY;
 
-	/* This is a meaningless assigment to keep GCC from
+	/* This is a meaningless assignment to keep GCC from
 	 * complaining.
 	 */
 	sc->sc_func_attach = &scmd_attach;
@@ -521,7 +521,7 @@ scmd_write(dev_t dev, struct uio *uio, int flags)
 			 * can perform re-enumeration, then do the wait thing.
 			 * It is not as important that this be done for remote module
 			 * access as the only thing that you could really do there is
-			 * a restart and not re-emumeration, which is really what the wait
+			 * a restart and not re-enumeration, which is really what the wait
 			 * is all about.
 			 */
 			if (reg_addr == SCMD_REG_CONTROL_1) {
