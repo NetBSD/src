@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550reg.h,v 1.13 2019/01/11 23:10:41 thorpej Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.14 2022/10/06 19:59:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -30,6 +30,9 @@
  *
  *	@(#)ns16550.h	7.1 (Berkeley) 5/9/91
  */
+
+#ifndef	_SYS_DEV_IC_NS16550REG_H_
+#define	_SYS_DEV_IC_NS16550REG_H_
 
 /*
  * NS16550 UART registers
@@ -65,3 +68,5 @@
 #define	com_tfl		32	/* transmit fifo level (R) (SUNXI) */
 #define	com_rfl		33	/* receive fifo level (R) (SUNXI) */
 #define	com_halt	41	/* halt tx (R/W) (SUNXI) */
+
+#endif	/* _SYS_DEV_IC_NS16550REG_H_ */
