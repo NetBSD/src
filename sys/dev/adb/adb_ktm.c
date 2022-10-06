@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.5 2022/04/06 17:37:31 macallan Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.6 2022/10/06 19:38:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.5 2022/04/06 17:37:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.6 2022/10/06 19:38:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -250,13 +250,13 @@ ktm_init(struct ktm_softc *sc)
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_INT, "left", "left button assigmnent",
+	    CTLTYPE_INT, "left", "left button assignment",
 	    sysctl_ktm_left, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_INT, "right", "right button assigmnent",
+	    CTLTYPE_INT, "right", "right button assignment",
 	    sysctl_ktm_right, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 	__USE(ret);
