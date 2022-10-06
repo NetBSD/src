@@ -1,4 +1,4 @@
-/*	$NetBSD: st16650reg.h,v 1.3 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: st16650reg.h,v 1.4 2022/10/06 19:59:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -31,6 +31,9 @@
  *	@(#)ns16550.h	7.1 (Berkeley) 5/9/91
  */
 
+#ifndef	_SYS_DEV_IC_ST16650REG_H_
+#define	_SYS_DEV_IC_ST16650REG_H_
+
 /*
  * ST16650A UART registers
  */
@@ -52,3 +55,5 @@
 #define	com_xoff1	6	/* XOFF 1 character (R/W) */
 #define	com_scratch	7	/* scratch register (R/W) */
 #define	com_xoff2	7	/* XOFF 2 character (R/W) */
+
+#endif	/* _SYS_DEV_IC_ST16650REG_H_ */
