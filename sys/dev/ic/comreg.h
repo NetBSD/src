@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.27 2020/09/28 11:33:15 jmcneill Exp $	*/
+/*	$NetBSD: comreg.h,v 1.28 2022/10/06 19:59:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -30,6 +30,9 @@
  *
  *	@(#)comreg.h	7.2 (Berkeley) 5/9/91
  */
+
+#ifndef	_SYS_DEV_IC_COMREG_H_
+#define	_SYS_DEV_IC_COMREG_H_
 
 #include <dev/ic/ns16550reg.h>
 
@@ -168,3 +171,5 @@
 
 /* XXX ISA-specific. */
 #define	COM_NPORTS	8
+
+#endif	/* _SYS_DEV_IC_COMREG_H_ */

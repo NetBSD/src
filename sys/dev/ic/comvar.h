@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.96 2021/11/12 21:57:13 jmcneill Exp $	*/
+/*	$NetBSD: comvar.h,v 1.97 2022/10/06 19:59:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_SYS_DEV_IC_COMVAR_H_
+#define	_SYS_DEV_IC_COMVAR_H_
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -230,3 +233,5 @@ bool com_suspend(device_t, const pmf_qual_t *);
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()
 #endif
+
+#endif	/* _SYS_DEV_IC_COMVAR_H_ */
