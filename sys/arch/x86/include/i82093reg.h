@@ -1,4 +1,4 @@
-/* 	$NetBSD: i82093reg.h,v 1.6 2019/06/19 06:32:46 msaitoh Exp $ */
+/* 	$NetBSD: i82093reg.h,v 1.7 2022/10/06 06:51:36 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #define IOAPIC_ID		0x00
 
 #define 	IOAPIC_ID_SHIFT		24
-#define		IOAPIC_ID_MASK		0x0f000000
+#define		IOAPIC_ID_MASK		0xff000000
 
 /* Version, and maximum interrupt pin number. */
   
