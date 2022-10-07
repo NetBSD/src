@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1467 2022/10/02 10:33:00 martin Exp $
+$NetBSD: pcidevs,v 1.1468 2022/10/07 02:55:33 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -8078,6 +8078,7 @@ product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
 product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
 product NVIDIA	GT610M		0x105A	GeForce GT 610M
 product NVIDIA	GF_GTX680	0x1180 	GeForce GTX 680
+product NVIDIA	GF_GTX770	0x1184	GeForce GTX 770
 product NVIDIA	GF_GTX560_Ti	0x1200	GeForce GTX 560 Ti
 product NVIDIA	GF_GTX560	0x1201	GeForce GTX 560
 product NVIDIA	GF_GTX560_TiOEM	0x1202	GeForce GTX 560 Ti OEM
