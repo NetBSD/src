@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonsubs.c,v 1.4 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: nfs_commonsubs.c,v 1.5 2022/10/07 19:56:31 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonsubs.c 308708 2016-11-16 01:11:49Z cperciva "); */
-__RCSID("$NetBSD: nfs_commonsubs.c,v 1.4 2018/09/03 16:29:34 riastradh Exp $");
+__RCSID("$NetBSD: nfs_commonsubs.c,v 1.5 2022/10/07 19:56:31 andvar Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -2772,7 +2772,7 @@ tryagain:
 		/*
 		 * If an '@' is found and the domain name matches, search for
 		 * the name with dns stripped off.
-		 * Mixed case alpahbetics will match for the domain name, but
+		 * Mixed case alphabetics will match for the domain name, but
 		 * all upper case will not.
 		 */
 		if (cnt == 0 && i < len && i > 0 &&
