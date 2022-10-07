@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.47 2022/05/28 21:14:56 andvar Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.48 2022/10/07 22:33:42 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.47 2022/05/28 21:14:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.48 2022/10/07 22:33:42 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1272,7 +1272,7 @@ nilfs_readlink(void *v)
 
 /* --------------------------------------------------------------------- */
 
-/* note: i tried to follow the logics of the tmpfs rename code */
+/* note: i tried to follow the logic of the tmpfs rename code */
 int
 nilfs_rename(void *v)
 {
@@ -1346,7 +1346,7 @@ nilfs_rename(void *v)
 		}
 	}
 
-	/* dont allow renaming directories acros directory for now */
+	/* don't allow renaming directories across directory for now */
 	if (fdnode != tdnode) {
 		if (fvp->v_type == VDIR) {
 			error = EINVAL;
