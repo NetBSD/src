@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.4 2022/02/12 17:09:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.5 2022/10/07 22:30:48 andvar Exp $");
 
 #include "opt_timer.h"
 
@@ -117,9 +117,9 @@ static struct omapl1xtmr_softc *ref_sc;
 
 /* Timer modes */
 #define TGCR_TIMMODE_64BIT		0x0
-#define TGCR_TIMMODE_32BIT_UNCHANINED	0x1
+#define TGCR_TIMMODE_32BIT_UNCHAINED	0x1
 #define TGCR_TIMMODE_64BIT_WDOG		0x2
-#define TGCR_TIMMODE_32BIT_CHANINED	0x3
+#define TGCR_TIMMODE_32BIT_CHAINED	0x3
 #define TGCR_TIMMODE_SHIFT		2
 
 #define TGCR_RS_STOP		0x0
@@ -277,8 +277,8 @@ timer_init (struct omapl1xtmr_softc *sc, int schz, uint8_t enamode,
 	if (intr)
 		omapl1xtimer_prd_intr_enb(sc);
 
-	/* Set timers to 32 bot unchained mode */
-	val = TGCR_TIMMODE_32BIT_UNCHANINED << TGCR_TIMMODE_SHIFT;
+	/* Set timers to 32-bit unchained mode */
+	val = TGCR_TIMMODE_32BIT_UNCHAINED << TGCR_TIMMODE_SHIFT;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TGCR, val);
 
 	omapl1xtimer_start(sc);
