@@ -8,6 +8,7 @@
 ./dict_open: warning: pcre map dict_pcre.map, line 22: no regexp: skipping this rule
 ./dict_open: warning: pcre map dict_pcre.map, line 24: ignoring ENDIF without matching IF
 ./dict_open: warning: pcre map dict_pcre.map, line 25: ignoring ENDIF without matching IF
+./dict_open: warning: pcre map dict_pcre.map, line 28: error in regex at offset 1: missing closing parenthesis
 ./dict_open: warning: pcre map dict_pcre.map, line 27: IF has no matching ENDIF
 ./dict_open: warning: pcre map dict_pcre.map, line 26: IF has no matching ENDIF
 owner=untrusted (uid=USER)

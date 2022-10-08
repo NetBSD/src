@@ -47,7 +47,7 @@
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions, or lookups
-#	can be directed to TCP-based server. In those case, the lookups
+#	can be directed to a TCP-based server. In those case, the lookups
 #	are done in a slightly different way as described below under
 #	"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 # CASE FOLDING
@@ -89,7 +89,7 @@
 #	$\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR
 #	or $\fBproxy_interfaces\fR.
 #	.sp
-#	This functionality overlaps with functionality of the local
+#	This functionality overlaps with the functionality of the local
 #	\fIaliases\fR(5) database. The difference is that \fBvirtual\fR(5)
 #	mapping can be applied to non-local addresses.
 # .IP "@\fIdomain address, address, ...\fR"
@@ -145,7 +145,7 @@
 #
 #	The \fBpropagate_unmatched_extensions\fR parameter controls whether
 #	an unmatched address extension (\fI+foo\fR) is propagated to the
-#	result of table lookup.
+#	result of a table lookup.
 # VIRTUAL ALIAS DOMAINS
 # .ad
 # .fi
@@ -224,7 +224,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available up to and including Postfix version 2.4.
+#	This feature is available in Postfix 2.5 and later.
 #
 #	Each lookup operation uses the entire address once.  Thus,
 #	\fIuser@domain\fR mail addresses are not broken up into their
@@ -243,9 +243,9 @@
 #	a configuration change.
 # .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
 #	Optional lookup tables that alias specific mail addresses or domains
-#	to other local or remote address.
+#	to other local or remote addresses.
 # .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
-#	Postfix is final destination for the specified list of virtual
+#	Postfix is the final destination for the specified list of virtual
 #	alias domains, that is, domains for which all addresses are aliased
 #	to addresses in other local or remote domains.
 # .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"

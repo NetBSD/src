@@ -2,7 +2,7 @@
 
 # Outputs missing mail_params.h lines for the proxy_read_maps default
 # value.
-#
+
 # First, get the proxy_read_maps default value from postconf command
 # output. This gives us a list of parameter names that are already
 # present in the proxy_read_maps default value.
@@ -36,7 +36,7 @@ while ($line = <MAIL_PARAMS>) {
     }
 }
 close(MAIL_PARAMS) || die "close $mail_params_h: !$\n";
-#
+
 # Produce mail_params.h lines for all parameters that have names
 # ending in _maps and that are not listed in proxy_read_maps. We get
 # the full parameter name list from postconf command output. Abort

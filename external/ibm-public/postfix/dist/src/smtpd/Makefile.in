@@ -146,7 +146,7 @@ smtpd_check_dsn_test: smtpd_check smtpd_check_dsn.in smtpd_check_dsn.ref smtpd_c
 	diff smtpd_check_dsn.ref smtpd_check.tmp
 	rm -f smtpd_check.tmp smtpd_check_access.*
 
-# This requires that 168,100.189.7 is a local or virtual interface.
+# This requires that 168.100.3.7 is a local or virtual interface.
 
 smtpd_check_backup_test: smtpd_check smtpd_check_backup.in smtpd_check_backup.ref
 	$(SHLIB_ENV) $(VALGRIND) ./smtpd_check <smtpd_check_backup.in >smtpd_check.tmp 2>&1
@@ -193,6 +193,7 @@ smtpd.o: ../../include/dsn_mask.h
 smtpd.o: ../../include/ehlo_mask.h
 smtpd.o: ../../include/events.h
 smtpd.o: ../../include/flush_clnt.h
+smtpd.o: ../../include/hfrom_format.h
 smtpd.o: ../../include/htable.h
 smtpd.o: ../../include/inet_proto.h
 smtpd.o: ../../include/info_log_addr_form.h
@@ -268,6 +269,7 @@ smtpd_chat.o: ../../include/check_arg.h
 smtpd_chat.o: ../../include/cleanup_user.h
 smtpd_chat.o: ../../include/dict.h
 smtpd_chat.o: ../../include/dns.h
+smtpd_chat.o: ../../include/hfrom_format.h
 smtpd_chat.o: ../../include/htable.h
 smtpd_chat.o: ../../include/int_filt.h
 smtpd_chat.o: ../../include/iostuff.h
@@ -562,6 +564,7 @@ smtpd_sasl_glue.o: ../../include/dns.h
 smtpd_sasl_glue.o: ../../include/htable.h
 smtpd_sasl_glue.o: ../../include/mail_params.h
 smtpd_sasl_glue.o: ../../include/mail_stream.h
+smtpd_sasl_glue.o: ../../include/match_list.h
 smtpd_sasl_glue.o: ../../include/milter.h
 smtpd_sasl_glue.o: ../../include/msg.h
 smtpd_sasl_glue.o: ../../include/myaddrinfo.h
@@ -569,7 +572,9 @@ smtpd_sasl_glue.o: ../../include/mymalloc.h
 smtpd_sasl_glue.o: ../../include/name_code.h
 smtpd_sasl_glue.o: ../../include/name_mask.h
 smtpd_sasl_glue.o: ../../include/nvtable.h
+smtpd_sasl_glue.o: ../../include/sasl_mech_filter.h
 smtpd_sasl_glue.o: ../../include/sock_addr.h
+smtpd_sasl_glue.o: ../../include/string_list.h
 smtpd_sasl_glue.o: ../../include/stringops.h
 smtpd_sasl_glue.o: ../../include/sys_defs.h
 smtpd_sasl_glue.o: ../../include/tls.h

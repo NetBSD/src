@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - postqueue(1) </title>
 </head> <body> <pre>
 POSTQUEUE(1)                                                      POSTQUEUE(1)
@@ -87,8 +87,8 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 
        <b>-s</b> <i>site</i>
               Schedule  immediate  delivery of all mail that is queued for the
-              named <i>site</i>. A numerical site must be specified as  a  valid  <a href="http://tools.ietf.org/html/rfc5321">RFC</a>
-              <a href="http://tools.ietf.org/html/rfc5321">5321</a>  address  literal  enclosed  in  [],  just  like  in  email
+              named <i>site</i>. A numerical site must be specified as  a  valid  <a href="https://tools.ietf.org/html/rfc5321">RFC</a>
+              <a href="https://tools.ietf.org/html/rfc5321">5321</a>  address  literal  enclosed  in  [],  just  like  in  email
               addresses.  The site must be eligible for the "fast flush"  ser-
               vice.   See <a href="flush.8.html"><b>flush</b>(8)</a> for more information about the "fast flush"
               service.
@@ -156,7 +156,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        it can connect to Postfix daemon processes.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc7159">RFC 7159</a> (JSON notation)
+       <a href="https://tools.ietf.org/html/rfc7159">RFC 7159</a> (JSON notation)
 
 <b>DIAGNOSTICS</b>
        Problems are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>, and to  the  standard
@@ -196,7 +196,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               tion logfiles with mail that is queued to those destinations.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment  parameters that a privileged Postfix
+              The  list  of  environment  variables  that a privileged Postfix
               process will  import  from  a  non-Postfix  parent  process,  or
               name=value environment overrides.
 

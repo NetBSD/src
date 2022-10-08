@@ -36,7 +36,9 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	smtputf8.c mail_conf_over.c mail_parm_split.c midna_adomain.c \
 	mail_addr_form.c quote_flags.c maillog_client.c \
 	normalize_mailhost_addr.c map_search.c reject_deliver_request.c \
-	info_log_addr_form.c
+	info_log_addr_form.c sasl_mech_filter.c login_sender_match.c \
+	test_main.c compat_level.c config_known_tcp_ports.c \
+	hfrom_format.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -74,7 +76,9 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	smtputf8.o attr_override.o mail_parm_split.o midna_adomain.o \
 	$(NON_PLUGIN_MAP_OBJ) mail_addr_form.o quote_flags.o maillog_client.o \
 	normalize_mailhost_addr.o map_search.o reject_deliver_request.o \
-	info_log_addr_form.o
+	info_log_addr_form.o sasl_mech_filter.o login_sender_match.o \
+	test_main.o compat_level.o config_known_tcp_ports.o \
+	hfrom_format.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these maps, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -109,7 +113,9 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	haproxy_srvr.h dsn_filter.h dynamicmaps.h uxtext.h smtputf8.h \
 	attr_override.h mail_parm_split.h midna_adomain.h mail_addr_form.h \
 	maillog_client.h normalize_mailhost_addr.h map_search.h \
-	info_log_addr_form.h
+	info_log_addr_form.h sasl_mech_filter.h login_sender_match.h \
+	test_main.h compat_level.h config_known_tcp_ports.h \
+	hfrom_format.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -125,7 +131,8 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	data_redirect addr_match_list safe_ultostr verify_sender_addr \
 	mail_version mail_dict server_acl uxtext mail_parm_split \
 	fold_addr smtp_reply_footer mail_addr_map normalize_mailhost_addr \
-	haproxy_srvr map_search
+	haproxy_srvr map_search delivered_hdr login_sender_match \
+	compat_level config_known_tcp_ports hfrom_format
 
 LIBS	= ../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
@@ -393,6 +400,21 @@ haproxy_srvr: haproxy_srvr.c $(LIB) $(LIBS)
 map_search: map_search.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
+delivered_hdr: delivered_hdr.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+login_sender_match: login_sender_match.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+compat_level: compat_level.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+hfrom_format: hfrom_format.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+config_known_tcp_ports: config_known_tcp_ports.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
 tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	xtext_test scache_multi_test ehlo_mask_test \
 	namadr_list_test mail_conf_time_test header_body_checks_tests \
@@ -400,7 +422,9 @@ tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	safe_ultostr_test mail_parm_split_test fold_addr_test \
 	smtp_reply_footer_test off_cvt_test mail_addr_crunch_test \
 	mail_addr_find_test mail_addr_map_test quote_822_local_test \
-	normalize_mailhost_addr_test haproxy_srvr_test map_search_test
+	normalize_mailhost_addr_test haproxy_srvr_test map_search_test \
+	delivered_hdr_test login_sender_match_test compat_level_test \
+	config_known_tcp_ports_test hfrom_format_test
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
@@ -728,6 +752,44 @@ map_search_test: update map_search map_search.ref
 	diff map_search.ref map_search.tmp
 	rm -f map_search.tmp
 
+delivered_hdr_test: update delivered_hdr delivered_hdr.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./delivered_hdr >delivered_hdr.tmp 2>&1
+	diff delivered_hdr.ref delivered_hdr.tmp
+	rm -f delivered_hdr.tmp
+
+login_sender_match_test: update login_sender_match login_sender_match.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./login_sender_match >login_sender_match.tmp 2>&1
+	diff login_sender_match.ref login_sender_match.tmp
+	rm -f login_sender_match.tmp
+
+compat_level_test: compat_level_expand_test compat_level_convert_test
+
+compat_level_expand_test: update compat_level compat_level_expand.in \
+	    compat_level_expand.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./compat_level -x <compat_level_expand.in >compat_level_expand.tmp 2>&1
+	diff compat_level_expand.ref compat_level_expand.tmp
+	rm -f compat_level_expand.tmp
+
+compat_level_convert_test: update compat_level compat_level_convert.in \
+	    compat_level_convert.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./compat_level -c <compat_level_convert.in >compat_level_convert.tmp 2>&1
+	diff compat_level_convert.ref compat_level_convert.tmp
+	rm -f compat_level_convert.tmp
+
+config_known_tcp_ports_test: update config_known_tcp_ports \
+	    config_known_tcp_ports.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./config_known_tcp_ports \
+	     >config_known_tcp_ports.tmp 2>&1
+	diff config_known_tcp_ports.ref config_known_tcp_ports.tmp
+	rm -f config_known_tcp_ports.tmp
+
+hfrom_format_test: update hfrom_format \
+	    hfrom_format.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./hfrom_format \
+	     >hfrom_format.tmp 2>&1
+	diff hfrom_format.ref hfrom_format.tmp
+	rm -f hfrom_format.tmp
+
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
 	mkdir printfck
@@ -930,6 +992,27 @@ clnt_stream.o: clnt_stream.c
 clnt_stream.o: clnt_stream.h
 clnt_stream.o: mail_params.h
 clnt_stream.o: mail_proto.h
+compat_level.o: ../../include/check_arg.h
+compat_level.o: ../../include/mac_expand.h
+compat_level.o: ../../include/mac_parse.h
+compat_level.o: ../../include/msg.h
+compat_level.o: ../../include/sane_strtol.h
+compat_level.o: ../../include/sys_defs.h
+compat_level.o: ../../include/vbuf.h
+compat_level.o: ../../include/vstring.h
+compat_level.o: compat_level.c
+compat_level.o: compat_level.h
+config_known_tcp_ports.o: ../../include/argv.h
+config_known_tcp_ports.o: ../../include/check_arg.h
+config_known_tcp_ports.o: ../../include/known_tcp_ports.h
+config_known_tcp_ports.o: ../../include/msg.h
+config_known_tcp_ports.o: ../../include/mymalloc.h
+config_known_tcp_ports.o: ../../include/stringops.h
+config_known_tcp_ports.o: ../../include/sys_defs.h
+config_known_tcp_ports.o: ../../include/vbuf.h
+config_known_tcp_ports.o: ../../include/vstring.h
+config_known_tcp_ports.o: config_known_tcp_ports.c
+config_known_tcp_ports.o: config_known_tcp_ports.h
 conv_time.o: ../../include/msg.h
 conv_time.o: ../../include/sys_defs.h
 conv_time.o: conv_time.c
@@ -1057,6 +1140,7 @@ deliver_pass.o: deliver_request.h
 deliver_pass.o: dsb_scan.h
 deliver_pass.o: dsn.h
 deliver_pass.o: dsn_buf.h
+deliver_pass.o: info_log_addr_form.h
 deliver_pass.o: mail_params.h
 deliver_pass.o: mail_proto.h
 deliver_pass.o: msg_stats.h
@@ -1401,6 +1485,7 @@ haproxy_srvr.o: ../../include/inet_proto.h
 haproxy_srvr.o: ../../include/msg.h
 haproxy_srvr.o: ../../include/myaddrinfo.h
 haproxy_srvr.o: ../../include/mymalloc.h
+haproxy_srvr.o: ../../include/sock_addr.h
 haproxy_srvr.o: ../../include/split_at.h
 haproxy_srvr.o: ../../include/stringops.h
 haproxy_srvr.o: ../../include/sys_defs.h
@@ -1448,6 +1533,12 @@ header_token.o: ../../include/vstring.h
 header_token.o: header_token.c
 header_token.o: header_token.h
 header_token.o: lex_822.h
+hfrom_format.o: ../../include/msg.h
+hfrom_format.o: ../../include/name_code.h
+hfrom_format.o: ../../include/sys_defs.h
+hfrom_format.o: hfrom_format.c
+hfrom_format.o: hfrom_format.h
+hfrom_format.o: mail_params.h
 info_log_addr_form.o: ../../include/check_arg.h
 info_log_addr_form.o: ../../include/msg.h
 info_log_addr_form.o: ../../include/name_code.h
@@ -1509,6 +1600,24 @@ log_adhoc.o: log_adhoc.h
 log_adhoc.o: mail_params.h
 log_adhoc.o: msg_stats.h
 log_adhoc.o: recipient_list.h
+login_sender_match.o: ../../include/argv.h
+login_sender_match.o: ../../include/check_arg.h
+login_sender_match.o: ../../include/dict.h
+login_sender_match.o: ../../include/msg.h
+login_sender_match.o: ../../include/myflock.h
+login_sender_match.o: ../../include/mymalloc.h
+login_sender_match.o: ../../include/stringops.h
+login_sender_match.o: ../../include/sys_defs.h
+login_sender_match.o: ../../include/vbuf.h
+login_sender_match.o: ../../include/vstream.h
+login_sender_match.o: ../../include/vstring.h
+login_sender_match.o: login_sender_match.c
+login_sender_match.o: login_sender_match.h
+login_sender_match.o: mail_params.h
+login_sender_match.o: maps.h
+login_sender_match.o: quote_822_local.h
+login_sender_match.o: quote_flags.h
+login_sender_match.o: strip_addr.h
 mail_addr.o: ../../include/check_arg.h
 mail_addr.o: ../../include/stringops.h
 mail_addr.o: ../../include/sys_defs.h
@@ -1832,6 +1941,8 @@ mail_params.o: ../../include/vbuf.h
 mail_params.o: ../../include/vstream.h
 mail_params.o: ../../include/vstring.h
 mail_params.o: ../../include/vstring_vstream.h
+mail_params.o: config_known_tcp_ports.h
+mail_params.o: compat_level.h
 mail_params.o: mail_conf.h
 mail_params.o: mail_params.c
 mail_params.o: mail_params.h
@@ -2572,6 +2683,18 @@ safe_ultostr.o: ../../include/vbuf.h
 safe_ultostr.o: ../../include/vstring.h
 safe_ultostr.o: safe_ultostr.c
 safe_ultostr.o: safe_ultostr.h
+sasl_mech_filter.o: ../../include/argv.h
+sasl_mech_filter.o: ../../include/check_arg.h
+sasl_mech_filter.o: ../../include/match_list.h
+sasl_mech_filter.o: ../../include/msg.h
+sasl_mech_filter.o: ../../include/mymalloc.h
+sasl_mech_filter.o: ../../include/stringops.h
+sasl_mech_filter.o: ../../include/sys_defs.h
+sasl_mech_filter.o: ../../include/vbuf.h
+sasl_mech_filter.o: ../../include/vstring.h
+sasl_mech_filter.o: sasl_mech_filter.c
+sasl_mech_filter.o: sasl_mech_filter.h
+sasl_mech_filter.o: string_list.h
 scache.o: ../../include/argv.h
 scache.o: ../../include/check_arg.h
 scache.o: ../../include/events.h
@@ -2741,6 +2864,25 @@ sys_exits.o: ../../include/vbuf.h
 sys_exits.o: ../../include/vstring.h
 sys_exits.o: sys_exits.c
 sys_exits.o: sys_exits.h
+test_main.o: ../../include/argv.h
+test_main.o: ../../include/check_arg.h
+test_main.o: ../../include/dict.h
+test_main.o: ../../include/msg.h
+test_main.o: ../../include/msg_vstream.h
+test_main.o: ../../include/myflock.h
+test_main.o: ../../include/mymalloc.h
+test_main.o: ../../include/stringops.h
+test_main.o: ../../include/sys_defs.h
+test_main.o: ../../include/vbuf.h
+test_main.o: ../../include/vstream.h
+test_main.o: ../../include/vstring.h
+test_main.o: mail_conf.h
+test_main.o: mail_dict.h
+test_main.o: mail_params.h
+test_main.o: mail_task.h
+test_main.o: mail_version.h
+test_main.o: test_main.c
+test_main.o: test_main.h
 timed_ipc.o: ../../include/check_arg.h
 timed_ipc.o: ../../include/msg.h
 timed_ipc.o: ../../include/sys_defs.h

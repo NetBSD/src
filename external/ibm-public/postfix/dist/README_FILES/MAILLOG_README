@@ -73,7 +73,7 @@ implements the following steps:
 
 Notes:
 
-  * This command will not rotate a logfile with pathname under the /dev
+  * This command will not rotate a logfile with a pathname under the /dev
     directory, such as /dev/stdout.
 
   * This command does not (yet) remove old logfiles.
@@ -86,7 +86,7 @@ Background:
     as well as non-daemon programs for local mail submission or Postfix
     management.
 
-  * Logging to Postfix logfile or stdout requires the Postfix postlogd(8)
+  * Logging to the Postfix logfile or stdout requires the Postfix postlogd(8)
     service. This ensures that simultaneous logging from different programs
     will not get mixed up.
 

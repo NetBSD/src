@@ -1,0 +1,27 @@
+compatibility_level = 3
+
+${ {$compatibility_level} ==level {3.0} ? {good} : {bad} }
+${ {$compatibility_level} !=level {3.0} ? {bad} : {good} }
+${ {$compatibility_level} ==level {3.10} ? {bad} : {good} }
+${ {$compatibility_level} !=level {3.10} ? {good} : {bad} }
+${ {$compatibility_level} <level {4} ? {good} : {bad} }
+${ {$compatibility_level} <=level {4} ? {good} : {bad} }
+${ {$compatibility_level} <level {2} ? {bad} : {good} }
+${ {$compatibility_level} <=level {2} ? {bad} : {good} }
+${ {$compatibility_level} <=level {3.0} ? {good} : {bad} }
+${ {$compatibility_level} >level {4} ? {bad} : {good} }
+${ {$compatibility_level} >=level {4} ? {bad} : {good} }
+${ {$compatibility_level} >level {2} ? {good} : {bad} }
+${ {$compatibility_level} >=level {2} ? {good} : {bad} }
+${ {$compatibility_level} >=level {3.0} ? {good} : {bad} }
+${ {$compatibility_level} >=level {3A} ? {error} : {error} }
+${ {$compatibility_level} >=level {3.} ? {error} : {error} }
+${ {$compatibility_level} >=level {.1} ? {error} : {error} }
+${ {3} > {3.2} ? {bad} : {good} }
+${ {3} >level {3.2} ? {bad} : {good} }
+${ {3} < {3.2} ? {good} : {bad} }
+${ {3} <level {3.2} ? {good} : {bad} }
+${ {3.10} > {3.2} ? {bad} : {good} }
+${ {3.10} >level {3.2} ? {good} : {bad} }
+${ {3.10} < {3.2} ? {good} : {bad} }
+${ {3.10} <level {3.2} ? {bad} : {good} }

@@ -39,9 +39,9 @@
 #	or domain portion.  This behavior is also found with, for
 #	example, btree:, hash:, or ldap: tables.
 #
-#	Unlike other flat-file Postfix databases, changes to
-#	an LMDB database do not trigger automatic daemon program
-#	restart, and do not require "\fBpostfix reload\fR".
+#	Changes to an LMDB database do not trigger an automatic
+#	daemon restart, and do not require a daemon restart with
+#	"\fBpostfix reload\fR".
 # RELIABILITY
 # .ad
 # .fi
@@ -82,8 +82,8 @@
 #	Short-lived programs automatically pick up changes to
 #	main.cf.  With long-running daemon programs, Use the command
 #	"\fBpostfix reload\fR" after a configuration change.
-# .IP "\fBlmdb_map_size (default: 16777216)\fR"
-#	The initial LMDB database size limit in bytes.
+# .IP "\fBlmdb_map_size (16777216)\fR"
+#	The initial OpenLDAP LMDB database size limit in bytes.
 # SEE ALSO
 #	postconf(1), Postfix supported lookup tables
 #	postmap(1), Postfix lookup table maintenance
