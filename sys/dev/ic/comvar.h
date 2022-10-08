@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.97 2022/10/06 19:59:55 riastradh Exp $	*/
+/*	$NetBSD: comvar.h,v 1.98 2022/10/08 07:27:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -208,9 +208,6 @@ struct com_softc {
 	int (*enable)(struct com_softc *);
 	void (*disable)(struct com_softc *);
 	int enabled;
-
-	/* XXXX: vendor workaround functions */
-	int (*sc_vendor_workaround)(struct com_softc *);
 
 	struct pps_state sc_pps_state;	/* pps state */
 
