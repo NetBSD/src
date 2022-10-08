@@ -1,4 +1,4 @@
-/*	$NetBSD: strip_addr.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: strip_addr.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -117,8 +117,6 @@ char   *strip_addr_internal(const char *full, char **extension,
 #include <msg.h>
 #include <mail_params.h>
 
-char   *var_double_bounce_sender = DEF_DOUBLE_BOUNCE;
-
 int     main(int unused_argc, char **unused_argv)
 {
     char   *extension;
@@ -126,6 +124,11 @@ int     main(int unused_argc, char **unused_argv)
     char   *delim = "+-";
 
 #define NO_DELIM	""
+
+    /*
+     * No static initializer, because this is owned by a library.
+     */
+    var_double_bounce_sender = DEF_DOUBLE_BOUNCE;
 
     /*
      * Incredible. This function takes only three arguments, and the tests

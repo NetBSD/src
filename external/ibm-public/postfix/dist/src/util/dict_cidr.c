@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -291,13 +291,11 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     /*
      * Open the configuration file.
      */
-    if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
+    if ((map_fp = dict_stream_open(DICT_TYPE_CIDR, mapname, O_RDONLY,
+				   dict_flags, &st, &why)) == 0)
 	DICT_CIDR_OPEN_RETURN(dict_surrogate(DICT_TYPE_CIDR, mapname,
 					     open_flags, dict_flags,
-					     "open %s: %m", mapname));
-    if (fstat(vstream_fileno(map_fp), &st) < 0)
-	msg_fatal("fstat %s: %m", mapname);
-
+					     "%s", vstring_str(why)));
     line_buffer = vstring_alloc(100);
     why = vstring_alloc(100);
 

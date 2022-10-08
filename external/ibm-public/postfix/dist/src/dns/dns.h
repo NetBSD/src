@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.4 2020/05/25 23:47:13 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.5 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -54,6 +54,17 @@
 	(cp) += 4; \
 }
 
+#endif
+
+ /*
+  * Provide API compatibility for systems without res_nxxx() API. Also
+  * require calling dns_get_h_errno() instead of directly accessing the
+  * global h_errno variable. We should not count on that being updated.
+  */
+#if !defined(NO_RES_NCALLS) && defined(__RES) && (__RES >= 19991006)
+#define USE_RES_NCALLS
+#undef h_errno
+#define h_errno use_dns_get_h_errno_instead_of_h_errno
 #endif
 
 /*
@@ -231,6 +242,7 @@ extern int dns_lookup_rl(const char *, unsigned, DNS_RR **, VSTRING *,
 			         VSTRING *, int *, int,...);
 extern int dns_lookup_rv(const char *, unsigned, DNS_RR **, VSTRING *,
 			         VSTRING *, int *, int, unsigned *);
+extern int dns_get_h_errno(void);
 
 #define dns_lookup(name, type, rflags, list, fqdn, why) \
     dns_lookup_x((name), (type), (rflags), (list), (fqdn), (why), (int *) 0, \
@@ -246,7 +258,12 @@ extern int dns_lookup_rv(const char *, unsigned, DNS_RR **, VSTRING *,
 	(lflags), (ltype))
 
  /*
-  * Request flags.
+  * The dns_lookup() rflag that requests DNSSEC validation.
+  */
+#define DNS_WANT_DNSSEC_VALIDATION(rflags)      ((rflags) & RES_USE_DNSSEC)
+
+ /*
+  * lflags.
   */
 #define DNS_REQ_FLAG_STOP_OK	(1<<0)
 #define DNS_REQ_FLAG_STOP_INVAL	(1<<1)
@@ -310,6 +327,18 @@ extern int dns_rr_filter_execute(DNS_RR **);
   * dns_str_resflags.c
   */
 const char *dns_str_resflags(unsigned long);
+
+ /*
+  * dns_sec.c.
+  */
+#define DNS_SEC_FLAG_AVAILABLE	(1<<0)	/* got some DNSSEC validated reply */
+#define DNS_SEC_FLAG_DONT_PROBE	(1<<1)	/* probe already sent, or disabled */
+
+#define DNS_SEC_STATS_SET(flags) (dns_sec_stats |= (flags))
+#define DNS_SEC_STATS_TEST(flags) (dns_sec_stats & (flags))
+
+extern int dns_sec_stats;		/* See DNS_SEC_FLAG_XXX above */
+extern void dns_sec_probe(int);
 
 /* LICENSE
 /* .ad

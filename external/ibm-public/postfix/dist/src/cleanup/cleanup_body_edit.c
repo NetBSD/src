@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_body_edit.c,v 1.2 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_body_edit.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -209,8 +209,15 @@ int     cleanup_body_edit_write(CLEANUP_STATE *state, int rec_type,
     /*
      * Finally, output the queue file record.
      */
-    CLEANUP_OUT_BUF(state, REC_TYPE_NORM, buf);
+    CLEANUP_OUT_BUF(state, rec_type, buf);
     curr_rp->write_offs = vstream_ftell(state->dst);
+
+    /*
+     * Sanity check.
+     */
+    if (curr_rp->len > 0
+	&& curr_rp->write_offs > curr_rp->start + curr_rp->len)
+	msg_panic("%s: write past end of body segment", myname);
 
     return (0);
 }

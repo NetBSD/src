@@ -1,4 +1,4 @@
-/*	$NetBSD: sasl_mech_filter.h,v 1.1.1.1 2022/10/08 16:09:08 christos Exp $	*/
+/*	$NetBSD: sasl_mech_filter.h,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _SASL_MECH_FILTER_H_INCLUDED_
 #define _SASL_MECH_FILTER_H_INCLUDED_

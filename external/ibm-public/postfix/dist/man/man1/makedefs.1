@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedefs.1,v 1.2 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: makedefs.1,v 1.3 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH MAKEDEFS 1 
 .ad
@@ -95,10 +95,12 @@ Do not build with NISPLUS support. Support for NISPLUS
 is unavailable on some recent Solaris distributions.
 .IP \fB\-DNO_PCRE\fR
 Do not build with PCRE support.
-By default, PCRE support is compiled in when the \fBpcre\-config\fR
-utility is installed.
+By default, PCRE support is compiled in when the \fBpcre2\-config\fR
+or \fBpcre\-config\fR utility are installed.
 .IP \fB\-DNO_POSIX_GETPW_R\fR
 Disable support for POSIX getpwnam_r/getpwuid_r.
+.IP \fB\-DNO_RES_NCALLS\fR
+Do not build with the threadsafe resolver(5) API (res_ninit() etc.).
 .IP \fB\-DNO_SIGSETJMP\fR
 Use setjmp()/longjmp() instead of sigsetjmp()/siglongjmp().
 By default, Postfix uses sigsetjmp()/siglongjmp() when they

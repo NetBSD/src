@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: smtp_stream.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,12 @@
 /* SYNOPSIS
 /*	#include <smtp_stream.h>
 /*
-/*	void	smtp_stream_setup(stream, timeout, enable_deadline)
+/*	void	smtp_stream_setup(stream, timeout, enable_deadline,
+/*					min_data_rate)
 /*	VSTREAM *stream;
 /*	int	timeout;
 /*	int	enable_deadline;
+/*	int	min_data_rate;
 /*
 /*	void	smtp_printf(stream, format, ...)
 /*	VSTREAM *stream;
@@ -62,7 +64,6 @@
 /*	void	smtp_timeout_setup(stream, timeout)
 /*	VSTREAM *stream;
 /*	int	timeout;
-/*	int	enable_deadline;
 /* DESCRIPTION
 /*	This module reads and writes text records delimited by CR LF,
 /*	with error detection: timeouts or unexpected end-of-file.
@@ -72,10 +73,16 @@
 /*	and write operations described below.
 /*	This routine alters the behavior of streams as follows:
 /* .IP \(bu
-/*	When enable_deadline is non-zero, the stream is configured
-/*	to enforce a total time limit for each smtp_stream read/write
-/*	operation. Otherwise, the stream is configured to enforce
+/*	When enable_deadline is non-zero, then the timeout argument
+/*	specifies a deadline for the total amount time that may be
+/*	spent in all subsequent read/write operations.
+/*	Otherwise, the stream is configured to enforce
 /*	a time limit for each individual read/write system call.
+/* .IP \f(bu
+/*	Additionally, when min_data_rate is > 0, the deadline is
+/*	incremented by 1/min_data_rate seconds for every min_data_rate
+/*	bytes transferred. However, the deadline will never exceed
+/*	the value specified with the timeout argument.
 /* .IP \f(bu
 /*	The stream is configured to use double buffering.
 /* .IP \f(bu
@@ -130,7 +137,7 @@
 /*	query the stream status with vstream_feof() etc.
 /*
 /*	smtp_timeout_setup() is a backwards-compatibility interface
-/*	for programs that don't require per-record deadline support.
+/*	for programs that don't require deadline or data-rate support.
 /* DIAGNOSTICS
 /* .fi
 /* .ad
@@ -203,20 +210,25 @@
 
 #include "smtp_stream.h"
 
-/* smtp_timeout_reset - reset per-stream error flags, restart deadline timer */
+ /*
+  * Important: the time limit feature must not introduce any system calls
+  * when the input is already in the buffer, or when the output still fits in
+  * the buffer. Such system calls would really hurt when receiving or sending
+  * body content one line at a time.
+  */
+
+/* smtp_timeout_reset - reset per-stream error flags */
 
 static void smtp_timeout_reset(VSTREAM *stream)
 {
-    vstream_clearerr(stream);
 
     /*
-     * Important: the time limit feature must not introduce any system calls
-     * when the input is already in the buffer, or when the output still fits
-     * in the buffer. Such system calls would really hurt when receiving or
-     * sending body content one line at a time.
+     * Individual smtp_stream(3) I/O functions must not recharge the deadline
+     * timer, because multiline responses involve multiple smtp_stream(3)
+     * calls, and we really want to limit the time to send or receive a
+     * response.
      */
-    if (vstream_fstat(stream, VSTREAM_FLAG_DEADLINE))
-	vstream_control(stream, CA_VSTREAM_CTL_START_DEADLINE, CA_VSTREAM_CTL_END);
+    vstream_clearerr(stream);
 }
 
 /* smtp_longjmp - raise an exception */
@@ -240,19 +252,21 @@ static NORETURN smtp_longjmp(VSTREAM *stream, int err, const char *context)
 
 /* smtp_stream_setup - configure timeout trap */
 
-void    smtp_stream_setup(VSTREAM *stream, int maxtime, int enable_deadline)
+void    smtp_stream_setup(VSTREAM *stream, int maxtime, int enable_deadline,
+			          int min_data_rate)
 {
     const char *myname = "smtp_stream_setup";
 
     if (msg_verbose)
-	msg_info("%s: maxtime=%d enable_deadline=%d",
-		 myname, maxtime, enable_deadline);
+	msg_info("%s: maxtime=%d enable_deadline=%d min_data_rate=%d",
+		 myname, maxtime, enable_deadline, min_data_rate);
 
     vstream_control(stream,
 		    CA_VSTREAM_CTL_DOUBLE,
 		    CA_VSTREAM_CTL_TIMEOUT(maxtime),
 		    enable_deadline ? CA_VSTREAM_CTL_START_DEADLINE
 		    : CA_VSTREAM_CTL_STOP_DEADLINE,
+		    CA_VSTREAM_CTL_MIN_DATA_RATE(min_data_rate),
 		    CA_VSTREAM_CTL_EXCEPT,
 		    CA_VSTREAM_CTL_END);
 }

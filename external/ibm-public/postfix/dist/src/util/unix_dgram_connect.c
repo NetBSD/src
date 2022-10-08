@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_dgram_connect.c,v 1.2 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: unix_dgram_connect.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -21,7 +21,7 @@
 /* .IP block_mode
 /*	Either NON_BLOCKING for a non-blocking socket, or BLOCKING for
 /*	blocking mode.
-/* DIAGNOSIICS
+/* DIAGNOSTICS
 /*	Fatal errors: path too large, can't create socket.
 /*
 /*	Other errors result in a -1 result value, with errno indicating

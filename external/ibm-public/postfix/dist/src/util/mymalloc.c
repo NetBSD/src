@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mymalloc.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -25,8 +25,8 @@
 /*	const char *str;
 /*	ssize_t	len;
 /*
-/*	char	*mymemdup(ptr, len)
-/*	const char *ptr;
+/*	void	*mymemdup(ptr, len)
+/*	const void *ptr;
 /*	ssize_t	len;
 /* DESCRIPTION
 /*	This module performs low-level memory management with error
@@ -263,7 +263,7 @@ char   *mystrndup(const char *str, ssize_t len)
 
 /* mymemdup - copy memory */
 
-char   *mymemdup(const void *ptr, ssize_t len)
+void   *mymemdup(const void *ptr, ssize_t len)
 {
     if (ptr == 0)
 	msg_panic("mymemdup: null pointer argument");

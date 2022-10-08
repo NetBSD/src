@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_state.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen_state.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -282,10 +282,10 @@ const char *psc_print_state_flags(int flags, const char *context)
 	"NOFORWARD", PSC_STATE_FLAG_NOFORWARD,
 	"USING_TLS", PSC_STATE_FLAG_USING_TLS,
 	"NEW", PSC_STATE_FLAG_NEW,
-	"BLIST_FAIL", PSC_STATE_FLAG_BLIST_FAIL,
+	"DNLIST_FAIL", PSC_STATE_FLAG_DNLIST_FAIL,
 	"HANGUP", PSC_STATE_FLAG_HANGUP,
 	/* unused */
-	"WLIST_FAIL", PSC_STATE_FLAG_WLIST_FAIL,
+	"ALLIST_FAIL", PSC_STATE_FLAG_ALLIST_FAIL,
 
 	"PREGR_FAIL", PSC_STATE_FLAG_PREGR_FAIL,
 	"PREGR_PASS", PSC_STATE_FLAG_PREGR_PASS,

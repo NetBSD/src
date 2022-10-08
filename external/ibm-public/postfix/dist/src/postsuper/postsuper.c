@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -40,6 +40,17 @@
 /*	times, or specify a \fIqueue_id\fR of \fB-\fR to read queue IDs
 /*	from standard input. For example, to delete all mail
 /*	with exactly one recipient \fBuser@example.com\fR:
+/* .sp
+/* .nf
+/*	postqueue -j | jq -r '
+/*	    # See JSON OBJECT FORMAT section in the postqueue(1) manpage
+/*	    select(.recipients[0].address == "user@example.com")
+/*	    | select(.recipients[1].address == null)
+/*	    | .queue_id
+/*	 ' | postsuper -d -
+/* .fi
+/* .sp
+/*	(note the "jq -r" option), or the historical form:
 /* .sp
 /* .nf
 /*	mailq | tail -n +2 | grep -v '^ *(' | awk  'BEGIN { RS = "" }

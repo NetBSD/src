@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -50,7 +50,7 @@
 /* .ad
 /* .fi
 /*	The \fBtrivial-rewrite\fR(8) servers run under control by
-/*	the Postfix master
+/*	the Postfix master(8)
 /*	server.  Each server can handle multiple simultaneous connections.
 /*	When all servers are busy while a client connects, the master
 /*	creates a new server process, provided that the trivial-rewrite
@@ -117,9 +117,8 @@
 /*	With locally submitted mail, append the string ".$mydomain" to
 /*	addresses that have no ".domain" information.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The set of characters that can separate a user name from its
-/*	extension (example: user+foo), or a .forward file name from its
-/*	extension (example: .forward+foo).
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* .IP "\fBswap_bangpath (yes)\fR"
 /*	Enable the rewriting of "site!user" into "user@site".
 /* .PP
@@ -155,7 +154,7 @@
 /*	matches subdomains of example.com,
 /*	instead of requiring an explicit ".example.com" pattern.
 /* .IP "\fBrelayhost (empty)\fR"
-/*	The next-hop destination of non-local mail; overrides non-local
+/*	The next-hop destination(s) for non-local mail; overrides non-local
 /*	domains in recipient addresses.
 /* .IP "\fBtransport_maps (empty)\fR"
 /*	Optional lookup tables with mappings from recipient address to
@@ -524,6 +523,21 @@ static void pre_accept(char *unused_name, char **unused_argv)
 
 #endif
 
+/* post_accept - announce our protocol name */
+
+static void post_accept(VSTREAM *stream, char *unused_name, char **unused_argv,
+			        HTABLE *unused_attr)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TRIVIAL),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 static void check_table_stats(int unused_event, void *unused_context)
 {
     const char *table;
@@ -650,5 +664,6 @@ int     main(int argc, char **argv)
 #ifdef CHECK_TABLE_STATS_BEFORE_ACCEPT
 		      CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
 #endif
+		      CA_MAIL_SERVER_POST_ACCEPT(post_accept),
 		      0);
 }

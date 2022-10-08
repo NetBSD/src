@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2022/10/08 16:12:51 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -18,6 +18,7 @@ argv.c \
 argv_attr_print.c \
 argv_attr_scan.c \
 argv_split.c \
+argv_split_at.c \
 argv_splitq.c \
 attr_clnt.c \
 attr_print0.c \
@@ -65,6 +66,7 @@ dict_regexp.c \
 dict_sdbm.c \
 dict_sockmap.c \
 dict_static.c \
+dict_stream.c \
 dict_surrogate.c \
 dict_tcp.c \
 dict_test.c \
@@ -95,6 +97,7 @@ fsspace.c \
 fullname.c \
 get_domainname.c \
 get_hostname.c \
+hash_fnv.c \
 hex_code.c \
 hex_quote.c \
 host_port.c \
@@ -109,6 +112,8 @@ inet_trigger.c \
 inet_windowsize.c \
 ip_match.c \
 killme_after.c \
+known_tcp_ports.c \
+ldseed.c \
 line_number.c \
 line_wrap.c \
 load_file.c \
@@ -148,7 +153,6 @@ open_lock.c \
 pass_accept.c \
 pass_trigger.c \
 peekfd.c \
-percentm.c \
 poll_fd.c \
 posix_signals.c \
 printable.c \
@@ -164,6 +168,7 @@ sane_connect.c \
 sane_link.c \
 sane_rename.c \
 sane_socketpair.c \
+sane_strtol.c \
 sane_time.c \
 scan_dir.c \
 select_bug.c \

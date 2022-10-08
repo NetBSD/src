@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_822_local.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: quote_822_local.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -232,7 +232,8 @@ VSTRING *unquote_822_local(VSTRING *dst, const char *mbox)
 
  /*
   * Proof-of-concept test program. Read an unquoted address from stdin, and
-  * show the quoted and unquoted results.
+  * show the quoted and unquoted results. Specify <> to test behavior for an
+  * empty unquoted address.
   */
 #include <ctype.h>
 #include <string.h>
@@ -260,7 +261,11 @@ int     main(int unused_argc, char **argv)
 		bp++;
 	    if (*bp == 0) {
 		msg_warn("missing argument");
-	    } else if (strcmp(cmd, "quote") == 0) {
+		continue;
+	    }
+	    if (strcmp(bp, "<>") == 0)
+		bp = "";
+	    if (strcmp(cmd, "quote") == 0) {
 		quote_822_local(out, bp);
 		vstream_printf("'%s' quoted '%s'\n", bp, STR(out));
 	    } else if (strcmp(cmd, "quote_with_flags") == 0) {

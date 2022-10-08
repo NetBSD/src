@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_certkey.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_certkey.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -151,7 +151,6 @@ static void init_pem_load_state(pem_load_state_t *st, SSL_CTX *ctx, SSL *ssl,
 
 /* use_chain - load cert, key and chain into ctx or ssl */
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fUL
 static int use_chain(pem_load_state_t *st)
 {
     int     ret;
@@ -182,54 +181,6 @@ static int use_chain(pem_load_state_t *st)
 
     return ret;
 }
-
-#else
-
-/* Legacy OpenSSL 1.0.2 and 1.1.0 interface */
-static int use_chain(pem_load_state_t *st)
-{
-    int     ret = 1;
-
-#define TRY(op, o) \
-    ((st->ctx && SSL_CTX_##op(st->ctx, st->o)) || \
-     (st->ssl && SSL_##op(st->ssl, st->o)))
-
-    /*
-     * This ensures the cert and key have the same type and match. A similar
-     * check is performed in use_PrivateKey(), but only if if the key and
-     * cert are of the same type.
-     */
-    if (!X509_check_private_key(st->cert, st->pkey))
-	ret = 0;
-
-    /*
-     * XXX: With OpenSSL 1.0.2, setting the certificate clears any previous
-     * mismatched key of the same type, so we don't detect conflicting chains
-     * for the same algorithm, and silently use the last one.
-     */
-
-    /* use_certificate() increments the refcount */
-    if (ret && !TRY(use_certificate, cert))
-	ret = 0;
-    X509_free(st->cert);
-    st->cert = 0;
-
-    /* use_PrivateKey() increments the refcount */
-    if (ret && !TRY(use_PrivateKey, pkey))
-	ret = 0;
-    EVP_PKEY_free(st->pkey);
-    st->pkey = 0;
-
-    /* set0_chain() does not increment the refcount */
-    if (!ret || !(ret = TRY(set0_chain, chain)))
-	sk_X509_pop_free(st->chain, X509_free);
-    /* The chain is now owned by the SSL library or freed, zero for next use */
-    st->chain = 0;
-
-    return ret;
-}
-
-#endif
 
 /* load_cert - decode and load a DER-encoded X509 certificate */
 
@@ -370,7 +321,7 @@ static void load_pkey(pem_load_state_t *st, int pkey_type,
 	if (pkey)
 	    EVP_PKEY_free(pkey);
 
-	/* XXX: Legacy behaviour was silent, should we stay silent? */
+	/* XXX: Legacy behavior was silent, should we stay silent? */
 	if (st->mixed) {
 	    msg_warn("ignoring 2nd key at index %d in %s after 1st at %d",
 		     st->objnum, st->source, st->keynum);
@@ -420,7 +371,7 @@ static int load_pem_object(pem_load_state_t *st)
 		   && strcmp(name, PEM_STRING_DSA) == 0)) {
 	load_pkey(st, pkey_type, buf, buflen);
     } else if (!st->mixed) {
-       msg_warn("loading %s: ignoring PEM type: %s", st->source, name);
+	msg_warn("loading %s: ignoring PEM type: %s", st->source, name);
     }
     OPENSSL_free(name);
     OPENSSL_free(header);
@@ -698,17 +649,6 @@ int     main(int argc, char *argv[])
     int     ret;
     char   *key_file = 0;
     SSL_CTX *ctx;
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-
-    /*
-     * Initialize the OpenSSL library by the book! To start with, we must
-     * initialize the algorithms. We want cleartext error messages instead of
-     * just error codes, so we load the error_strings.
-     */
-    SSL_load_error_strings();
-    OpenSSL_add_ssl_algorithms();
-#endif
 
     if (!(ctx = SSL_CTX_new(TLS_client_method()))) {
 	tls_print_errors();

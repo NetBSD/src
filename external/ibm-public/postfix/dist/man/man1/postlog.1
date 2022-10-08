@@ -1,4 +1,4 @@
-.\"	$NetBSD: postlog.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postlog.1,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH POSTLOG 1 
 .ad
@@ -50,6 +50,16 @@ is used when none is specified.
 .IP \fB\-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
+.SH "SECURITY"
+.na
+.nf
+.ad
+.fi
+The \fBpostlog\fR(1) command is designed to run with
+set\-groupid privileges, so that it can connect to the
+\fBpostlogd\fR(8) daemon process (Postfix 3.7 and later;
+earlier implementations of this command must not have
+set\-groupid or set\-userid permissions).
 .SH "ENVIRONMENT"
 .na
 .nf
@@ -98,6 +108,11 @@ syslogd(8), system logging
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
+.SH HISTORY
+.ad
+.fi
+The \fBpostlog\fR(1) command was introduced with Postfix
+version 3.4.
 .SH "AUTHOR(S)"
 .na
 .nf

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -71,8 +71,10 @@
 /*
 /*	void	tls_param_init()
 /*
-/*	int	tls_protocol_mask(plist)
+/*	int	tls_proto_mask_lims(plist, floor, ceiling)
 /*	const char *plist;
+/*	int	*floor;
+/*	int	*ceiling;
 /*
 /*	int	tls_cipher_grade(name)
 /*	const char *name;
@@ -95,13 +97,15 @@
 /*	int	where;
 /*	int	ret;
 /*
-/*	long	tls_bio_dump_cb(bio, cmd, argp, argi, argl, ret)
+/*	long	tls_bio_dump_cb(bio, cmd, argp, len, argi, argl, ret, processed)
 /*	BIO	*bio;
 /*	int	cmd;
 /*	const char *argp;
+/*	size_t	len;
 /*	int	argi;
 /*	long	argl; /* unused */
-/*	long	ret;
+/*	int	ret;
+/*	size_t	*processed;
 /*
 /*	int	tls_log_mask(log_param, log_level)
 /*	const char *log_param;
@@ -111,7 +115,7 @@
 /*	TLS_APPL_STATE *app_ctx;
 /*	int	log_mask;
 /*
-/*	int	tls_validate_digest(dgst)
+/*	const EVP_MD *tls_validate_digest(dgst)
 /*	const char *dgst;
 /* DESCRIPTION
 /*	This module implements public and internal routines that
@@ -159,10 +163,12 @@
 /*	entering a chroot jail. The "role" parameter must be TLS_ROLE_CLIENT
 /*	for clients and TLS_ROLE_SERVER for servers. Any errors are fatal.
 /*
-/*	tls_protocol_mask() returns a bitmask of excluded protocols, given
-/*	a list (plist) of protocols to include or (preceded by a '!') exclude.
-/*	If "plist" contains invalid protocol names, TLS_PROTOCOL_INVALID is
-/*	returned and no warning is logged.
+/*	tls_proto_mask_lims() returns a bitmask of excluded protocols, and
+/*	and the protocol version floor/ceiling, given a list (plist) of
+/*	protocols to include or (preceded by a '!') exclude, or constraints
+/*	of the form '>=name', '<=name', '>=hexvalue', '<=hexvalue'. If "plist"
+/*	contains invalid protocol names, TLS_PROTOCOL_INVALID is returned and
+/*	no warning is logged.
 /*
 /*	tls_cipher_grade() converts a case-insensitive cipher grade
 /*	name (high, medium, low, export, null) to the corresponding
@@ -204,8 +210,8 @@
 /*	tls_update_app_logmask() changes the log mask of the
 /*	application TLS context to the new setting.
 /*
-/*	tls_validate_digest() returns non-zero if the named digest
-/*	is usable and zero otherwise.
+/*	tls_validate_digest() returns a static handle for the named
+/*	digest algorithm, or NULL on error.
 /* LICENSE
 /* .ad
 /* .fi
@@ -240,8 +246,6 @@
 #include <sys_defs.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef USE_TLS
 
 /* Utility library. */
 
@@ -294,13 +298,11 @@ char   *var_tls_tkt_cipher;
 char   *var_openssl_path;
 char   *var_tls_server_sni_maps;
 bool    var_tls_fast_shutdown;
-
-static MAPS *tls_server_sni_maps;
-
-#ifdef VAR_TLS_PREEMPT_CLIST
 bool    var_tls_preempt_clist;
 
-#endif
+#ifdef USE_TLS
+
+static MAPS *tls_server_sni_maps;
 
  /*
   * Index to attach TLScontext pointers to SSL objects, so that they can be
@@ -319,6 +321,19 @@ static const NAME_CODE protocol_table[] = {
     SSL_TXT_TLSV1_2, TLS_PROTOCOL_TLSv1_2,
     TLS_PROTOCOL_TXT_TLSV1_3, TLS_PROTOCOL_TLSv1_3,
     0, TLS_PROTOCOL_INVALID,
+};
+
+/*
+ * Protocol name => numeric version, for MinProtocol and MaxProtocol
+ */
+static const NAME_CODE tls_version_table[] = {
+    "None", 0,
+    SSL_TXT_SSLV3, SSL3_VERSION,
+    SSL_TXT_TLSV1, TLS1_VERSION,
+    SSL_TXT_TLSV1_1, TLS1_1_VERSION,
+    SSL_TXT_TLSV1_2, TLS1_2_VERSION,
+    TLS_PROTOCOL_TXT_TLSV1_3, TLS1_3_VERSION,
+    0, -1,
 };
 
  /*
@@ -521,6 +536,7 @@ static const NAME_MASK tls_log_table[] = {
     "certmatch", TLS_LOG_CERTMATCH,
     "verbose", TLS_LOG_VERBOSE,		/* Postfix TLS library verbose */
     "cache", TLS_LOG_CACHE,
+    "dane", TLS_LOG_DANE,		/* DANE policy construction */
     "ssl-debug", TLS_LOG_DEBUG,		/* SSL library debug/verbose */
     "ssl-handshake-packet-dump", TLS_LOG_TLSPKTS,
     "ssl-session-packet-dump", TLS_LOG_TLSPKTS | TLS_LOG_ALLPKTS,
@@ -556,9 +572,32 @@ void    tls_update_app_logmask(TLS_APPL_STATE *app_ctx, int log_mask)
     app_ctx->log_mask = log_mask;
 }
 
-/* tls_protocol_mask - Bitmask of protocols to exclude */
+/* parse_version - parse TLS protocol version name or hex number */
 
-int     tls_protocol_mask(const char *plist)
+static int parse_tls_version(const char *tok, int *version)
+{
+    int     code = name_code(tls_version_table, NAME_CODE_FLAG_NONE, tok);
+    char   *_end;
+    unsigned long ulval;
+
+    if (code != -1) {
+	*version = code;
+	return (0);
+    }
+    errno = 0;
+    ulval = strtoul(tok, &_end, 16);
+    if (*_end != 0
+	|| (ulval == ULONG_MAX && errno == ERANGE)
+	|| ulval > INT_MAX)
+	return TLS_PROTOCOL_INVALID;
+
+    *version = (int) ulval;
+    return (0);
+}
+
+/* tls_proto_mask_lims - protocols to exclude and floor/ceiling */
+
+int     tls_proto_mask_lims(const char *plist, int *floor, int *ceiling)
 {
     char   *save;
     char   *tok;
@@ -572,9 +611,15 @@ int     tls_protocol_mask(const char *plist)
 	return (res); \
     } while (0)
 
+    *floor = *ceiling = 0;
+
     save = cp = mystrdup(plist);
     while ((tok = mystrtok(&cp, CHARS_COMMA_SP ":")) != 0) {
-	if (*tok == '!')
+	if (strncmp(tok, ">=", 2) == 0)
+	    code = parse_tls_version(tok + 2, floor);
+	else if (strncmp(tok, "<=", 2) == 0)
+	    code = parse_tls_version(tok + 2, ceiling);
+	else if (*tok == '!')
 	    exclude |= code =
 		name_code(protocol_table, NAME_CODE_FLAG_NONE, ++tok);
 	else
@@ -688,6 +733,27 @@ static int server_sni_callback(SSL *ssl, int *alert, void *arg)
 		 TLScontext->namaddr, sni);
 	return SSL_TLSEXT_ERR_NOACK;
     }
+
+    /*
+     * With TLS 1.3, when the client's proposed key share is not supported by
+     * the server, the server may issue a HelloRetryRequest (HRR), and the
+     * client will then retry with a new key share on a curve supported by
+     * the server.  This results in the SNI callback running twice for the
+     * same connection.
+     * 
+     * When that happens, The client MUST send the essentially the same hello
+     * message, including the SNI name, and since we've already loaded our
+     * certificate chain, we don't need to do it again!  Therefore, if we've
+     * already recorded the peer SNI name, just check that it has not
+     * changed, and return success.
+     */
+    if (TLScontext->peer_sni) {
+	if (strcmp(sni, TLScontext->peer_sni) == 0)
+	    return SSL_TLSEXT_ERR_OK;
+	msg_warn("TLS SNI changed from %s initially %s, %s after hello retry",
+		 TLScontext->namaddr, TLScontext->peer_sni, sni);
+	return SSL_TLSEXT_ERR_NOACK;
+    }
     do {
 	/* Don't silently skip maps opened with the wrong flags. */
 	pem = maps_file_find(tls_server_sni_maps, cp, 0);
@@ -799,58 +865,83 @@ const char *tls_set_ciphers(TLS_SESS_STATE *TLScontext, const char *grade,
     return (vstring_str(buf));
 }
 
+/* ec_curve_name - copy EC key curve group name */
+
+#ifndef OPENSSL_NO_EC
+static char *ec_curve_name(EVP_PKEY *pkey)
+{
+    char   *curve = 0;
+
+#if OPENSSL_VERSION_PREREQ(3,0)
+    size_t  namelen;
+
+    if (EVP_PKEY_get_group_name(pkey, 0, 0, &namelen)) {
+	curve = mymalloc(++namelen);
+	if (!EVP_PKEY_get_group_name(pkey, curve, namelen, 0)) {
+	    myfree(curve);
+	    curve = 0;
+	}
+    }
+#else
+    EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
+    int     nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+    const char *tmp = EC_curve_nid2nist(nid);
+
+    if (!tmp)
+	tmp = OBJ_nid2sn(nid);
+    if (tmp)
+	curve = mystrdup(tmp);
+#endif
+    return (curve);
+}
+
+#endif
+
 /* tls_get_signature_params - TLS 1.3 signature details */
 
 void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fUL && defined(TLS1_3_VERSION)
     const char *kex_name = 0;
-    const char *kex_curve = 0;
     const char *locl_sig_name = 0;
-    const char *locl_sig_curve = 0;
     const char *locl_sig_dgst = 0;
     const char *peer_sig_name = 0;
-    const char *peer_sig_curve = 0;
     const char *peer_sig_dgst = 0;
+    char   *kex_curve = 0;
+    char   *locl_sig_curve = 0;
+    char   *peer_sig_curve = 0;
     int     nid;
     SSL    *ssl = TLScontext->con;
     int     srvr = SSL_is_server(ssl);
-    X509   *cert;
-    EVP_PKEY *pkey = 0;
-
-#ifndef OPENSSL_NO_EC
-    EC_KEY *eckey;
-
-#endif
+    EVP_PKEY *dh_pkey = 0;
+    X509   *local_cert;
+    EVP_PKEY *local_pkey = 0;
+    X509   *peer_cert;
+    EVP_PKEY *peer_pkey = 0;
 
 #define SIG_PROP(c, s, p) (*((s) ? &c->srvr_sig_##p : &c->clnt_sig_##p))
 
     if (SSL_version(ssl) < TLS1_3_VERSION)
 	return;
 
-    if (tls_get_peer_dh_pubkey(ssl, &pkey)) {
-	switch (nid = EVP_PKEY_id(pkey)) {
+    if (tls_get_peer_dh_pubkey(ssl, &dh_pkey)) {
+	switch (nid = EVP_PKEY_id(dh_pkey)) {
 	default:
 	    kex_name = OBJ_nid2sn(EVP_PKEY_type(nid));
 	    break;
 
 	case EVP_PKEY_DH:
 	    kex_name = "DHE";
-	    TLScontext->kex_bits = EVP_PKEY_bits(pkey);
+	    TLScontext->kex_bits = EVP_PKEY_bits(dh_pkey);
 	    break;
 
 #ifndef OPENSSL_NO_EC
 	case EVP_PKEY_EC:
 	    kex_name = "ECDHE";
-	    eckey = EVP_PKEY_get0_EC_KEY(pkey);
-	    nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
-	    kex_curve = EC_curve_nid2nist(nid);
-	    if (!kex_curve)
-		kex_curve = OBJ_nid2sn(nid);
+	    kex_curve = ec_curve_name(dh_pkey);
 	    break;
 #endif
 	}
-	EVP_PKEY_free(pkey);
+	EVP_PKEY_free(dh_pkey);
     }
 
     /*
@@ -859,20 +950,20 @@ void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
      * data on clients requires at least 1.1.1a.
      */
     if (srvr || SSL_get_signature_nid(ssl, &nid))
-	cert = SSL_get_certificate(ssl);
+	local_cert = SSL_get_certificate(ssl);
     else
-	cert = 0;
+	local_cert = 0;
 
     /* Signature algorithms for the local end of the connection */
-    if (cert) {
-	pkey = X509_get0_pubkey(cert);
+    if (local_cert) {
+	local_pkey = X509_get0_pubkey(local_cert);
 
 	/*
 	 * Override the built-in name for the "ECDSA" algorithms OID, with
 	 * the more familiar name.  For "RSA" keys report "RSA-PSS", which
 	 * must be used with TLS 1.3.
 	 */
-	if ((nid = EVP_PKEY_type(EVP_PKEY_id(pkey))) != NID_undef) {
+	if ((nid = EVP_PKEY_type(EVP_PKEY_id(local_pkey))) != NID_undef) {
 	    switch (nid) {
 	    default:
 		locl_sig_name = OBJ_nid2sn(nid);
@@ -881,20 +972,17 @@ void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
 	    case EVP_PKEY_RSA:
 		/* For RSA, TLS 1.3 mandates PSS signatures */
 		locl_sig_name = "RSA-PSS";
-		SIG_PROP(TLScontext, srvr, bits) = EVP_PKEY_bits(pkey);
+		SIG_PROP(TLScontext, srvr, bits) = EVP_PKEY_bits(local_pkey);
 		break;
 
 #ifndef OPENSSL_NO_EC
 	    case EVP_PKEY_EC:
 		locl_sig_name = "ECDSA";
-		eckey = EVP_PKEY_get0_EC_KEY(pkey);
-		nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
-		locl_sig_curve = EC_curve_nid2nist(nid);
-		if (!locl_sig_curve)
-		    locl_sig_curve = OBJ_nid2sn(nid);
+		locl_sig_curve = ec_curve_name(local_pkey);
 		break;
 #endif
 	    }
+	    /* No X509_free(local_cert) */
 	}
 
 	/*
@@ -905,15 +993,15 @@ void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
 	    locl_sig_dgst = OBJ_nid2sn(nid);
     }
     /* Signature algorithms for the peer end of the connection */
-    if ((cert = SSL_get_peer_certificate(ssl)) != 0) {
-	pkey = X509_get0_pubkey(cert);
+    if ((peer_cert = TLS_PEEK_PEER_CERT(ssl)) != 0) {
+	peer_pkey = X509_get0_pubkey(peer_cert);
 
 	/*
 	 * Override the built-in name for the "ECDSA" algorithms OID, with
 	 * the more familiar name.  For "RSA" keys report "RSA-PSS", which
 	 * must be used with TLS 1.3.
 	 */
-	if ((nid = EVP_PKEY_type(EVP_PKEY_id(pkey))) != NID_undef) {
+	if ((nid = EVP_PKEY_type(EVP_PKEY_id(peer_pkey))) != NID_undef) {
 	    switch (nid) {
 	    default:
 		peer_sig_name = OBJ_nid2sn(nid);
@@ -922,17 +1010,13 @@ void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
 	    case EVP_PKEY_RSA:
 		/* For RSA, TLS 1.3 mandates PSS signatures */
 		peer_sig_name = "RSA-PSS";
-		SIG_PROP(TLScontext, !srvr, bits) = EVP_PKEY_bits(pkey);
+		SIG_PROP(TLScontext, !srvr, bits) = EVP_PKEY_bits(peer_pkey);
 		break;
 
 #ifndef OPENSSL_NO_EC
 	    case EVP_PKEY_EC:
 		peer_sig_name = "ECDSA";
-		eckey = EVP_PKEY_get0_EC_KEY(pkey);
-		nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
-		peer_sig_curve = EC_curve_nid2nist(nid);
-		if (!peer_sig_curve)
-		    peer_sig_curve = OBJ_nid2sn(nid);
+		peer_sig_curve = ec_curve_name(peer_pkey);
 		break;
 #endif
 	    }
@@ -944,27 +1028,25 @@ void    tls_get_signature_params(TLS_SESS_STATE *TLScontext)
 	 */
 	if (SSL_get_peer_signature_nid(ssl, &nid) && nid != NID_undef)
 	    peer_sig_dgst = OBJ_nid2sn(nid);
+
+	TLS_FREE_PEER_CERT(peer_cert);
     }
     if (kex_name) {
 	TLScontext->kex_name = mystrdup(kex_name);
-	if (kex_curve)
-	    TLScontext->kex_curve = mystrdup(kex_curve);
+	TLScontext->kex_curve = kex_curve;
     }
     if (locl_sig_name) {
 	SIG_PROP(TLScontext, srvr, name) = mystrdup(locl_sig_name);
-	if (locl_sig_curve)
-	    SIG_PROP(TLScontext, srvr, curve) = mystrdup(locl_sig_curve);
+	SIG_PROP(TLScontext, srvr, curve) = locl_sig_curve;
 	if (locl_sig_dgst)
 	    SIG_PROP(TLScontext, srvr, dgst) = mystrdup(locl_sig_dgst);
     }
     if (peer_sig_name) {
 	SIG_PROP(TLScontext, !srvr, name) = mystrdup(peer_sig_name);
-	if (peer_sig_curve)
-	    SIG_PROP(TLScontext, !srvr, curve) = mystrdup(peer_sig_curve);
+	SIG_PROP(TLScontext, !srvr, curve) = peer_sig_curve;
 	if (peer_sig_dgst)
 	    SIG_PROP(TLScontext, !srvr, dgst) = mystrdup(peer_sig_dgst);
     }
-#endif						/* OPENSSL_VERSION_NUMBER ... */
 }
 
 /* tls_log_summary - TLS loglevel 1 one-liner, embellished with TLS 1.3 details */
@@ -1102,11 +1184,8 @@ TLS_SESS_STATE *tls_alloc_sess_context(int log_mask, const char *namaddr)
     TLScontext->mdalg = 0;			/* Alias for props->mdalg */
     TLScontext->dane = 0;			/* Alias for props->dane */
     TLScontext->errordepth = -1;
-    TLScontext->tadepth = -1;
     TLScontext->errorcode = X509_V_OK;
     TLScontext->errorcert = 0;
-    TLScontext->untrusted = 0;
-    TLScontext->trusted = 0;
 
     return (TLScontext);
 }
@@ -1139,12 +1218,24 @@ void    tls_free_context(TLS_SESS_STATE *TLScontext)
 	myfree(TLScontext->peer_cert_fprint);
     if (TLScontext->peer_pkey_fprint)
 	myfree(TLScontext->peer_pkey_fprint);
+    if (TLScontext->kex_name)
+	myfree((void *) TLScontext->kex_name);
+    if (TLScontext->kex_curve)
+	myfree((void *) TLScontext->kex_curve);
+    if (TLScontext->clnt_sig_name)
+	myfree((void *) TLScontext->clnt_sig_name);
+    if (TLScontext->clnt_sig_curve)
+	myfree((void *) TLScontext->clnt_sig_curve);
+    if (TLScontext->clnt_sig_dgst)
+	myfree((void *) TLScontext->clnt_sig_dgst);
+    if (TLScontext->srvr_sig_name)
+	myfree((void *) TLScontext->srvr_sig_name);
+    if (TLScontext->srvr_sig_curve)
+	myfree((void *) TLScontext->srvr_sig_curve);
+    if (TLScontext->srvr_sig_dgst)
+	myfree((void *) TLScontext->srvr_sig_dgst);
     if (TLScontext->errorcert)
 	X509_free(TLScontext->errorcert);
-    if (TLScontext->untrusted)
-	sk_X509_pop_free(TLScontext->untrusted, X509_free);
-    if (TLScontext->trusted)
-	sk_X509_pop_free(TLScontext->trusted, X509_free);
 
     myfree((void *) TLScontext);
 }
@@ -1163,57 +1254,17 @@ static void tls_version_split(unsigned long version, TLS_VINFO *info)
      * 
      * The status nibble has one of the values 0 for development, 1 to e for
      * betas 1 to 14, and f for release. Parsed OpenSSL version number. for
-     * example
-     * 
-     * 0x000906000 == 0.9.6 dev 0x000906023 == 0.9.6b beta 3 0x00090605f ==
-     * 0.9.6e release
-     * 
-     * Versions prior to 0.9.3 have identifiers < 0x0930.  Versions between
-     * 0.9.3 and 0.9.5 had a version identifier with this interpretation:
-     * 
-     * MMNNFFRBB major minor fix final beta/patch
-     * 
-     * for example
-     * 
-     * 0x000904100 == 0.9.4 release 0x000905000 == 0.9.5 dev
-     * 
-     * Version 0.9.5a had an interim interpretation that is like the current
-     * one, except the patch level got the highest bit set, to keep continu-
-     * ity.  The number was therefore 0x0090581f.
+     * example: 0x1010103f == 1.1.1c.
      */
-
-    if (version < 0x0930) {
-	info->status = 0;
-	info->patch = version & 0x0f;
-	version >>= 4;
-	info->micro = version & 0x0f;
-	version >>= 4;
-	info->minor = version & 0x0f;
-	version >>= 4;
-	info->major = version & 0x0f;
-    } else if (version < 0x00905800L) {
-	info->patch = version & 0xff;
-	version >>= 8;
-	info->status = version & 0xf;
-	version >>= 4;
-	info->micro = version & 0xff;
-	version >>= 8;
-	info->minor = version & 0xff;
-	version >>= 8;
-	info->major = version & 0xff;
-    } else {
-	info->status = version & 0xf;
-	version >>= 4;
-	info->patch = version & 0xff;
-	version >>= 8;
-	info->micro = version & 0xff;
-	version >>= 8;
-	info->minor = version & 0xff;
-	version >>= 8;
-	info->major = version & 0xff;
-	if (version < 0x00906000L)
-	    info->patch &= ~0x80;
-    }
+    info->status = version & 0xf;
+    version >>= 4;
+    info->patch = version & 0xff;
+    version >>= 8;
+    info->micro = version & 0xff;
+    version >>= 8;
+    info->minor = version & 0xff;
+    version >>= 8;
+    info->major = version & 0xff;
 }
 
 /* tls_check_version - Detect mismatch between headers and library. */
@@ -1334,7 +1385,14 @@ void    tls_print_errors(void)
     int     line;
     int     flags;
 
-    while ((err = ERR_get_error_line_data(&file, &line, &data, &flags)) != 0) {
+#if OPENSSL_VERSION_PREREQ(3,0)
+/* XXX: We're ignoring the function name, do we want to log it? */
+#define ERRGET(fi, l, d, fl) ERR_get_error_all(fi, l, 0, d, fl)
+#else
+#define ERRGET(fi, l, d, fl) ERR_get_error_line_data(fi, l, d, fl)
+#endif
+
+    while ((err = ERRGET(&file, &line, &data, &flags)) != 0) {
 	ERR_error_string_n(err, buffer, sizeof(buffer));
 	if (flags & ERR_TXT_STRING)
 	    msg_warn("TLS library problem: %s:%s:%d:%s:",
@@ -1397,7 +1455,7 @@ void    tls_info_callback(const SSL *s, int where, int ret)
   * 
   * Modified to save a lot of strcpy and strcat by Matti Aarnio.
   * 
-  * Rewritten by Wietse to elimate fixed-size stack buffer, array index
+  * Rewritten by Wietse to eliminate fixed-size stack buffer, array index
   * multiplication and division, sprintf() and strcpy(), and lots of strlen()
   * calls. We could make it a little faster by using a fixed-size stack-based
   * buffer.
@@ -1458,6 +1516,7 @@ static void tls_dump_buffer(const unsigned char *start, int len)
 
 /* taken from OpenSSL apps/s_cb.c */
 
+#if !OPENSSL_VERSION_PREREQ(3,0)
 long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
 			        long unused_argl, long ret)
 {
@@ -1475,28 +1534,44 @@ long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
     return (ret);
 }
 
-int     tls_validate_digest(const char *dgst)
+#else
+long    tls_bio_dump_cb(BIO *bio, int cmd, const char *argp, size_t len,
+	             int argi, long unused_argl, int ret, size_t *processed)
+{
+    size_t  bytes = (ret > 0 && processed != NULL) ? *processed : len;
+
+    if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
+	if (ret > 0) {
+	    msg_info("read from %08lX [%08lX] (%ld bytes => %ld (0x%lX))",
+		     (unsigned long) bio, (unsigned long) argp, (long) len,
+		     (long) bytes, (long) bytes);
+	    tls_dump_buffer((unsigned char *) argp, (int) bytes);
+	} else {
+	    msg_info("read from %08lX [%08lX] (%ld bytes => %d)",
+		     (unsigned long) bio, (unsigned long) argp,
+		     (long) len, ret);
+	}
+    } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
+	if (ret > 0) {
+	    msg_info("write to %08lX [%08lX] (%ld bytes => %ld (0x%lX))",
+		     (unsigned long) bio, (unsigned long) argp, (long) len,
+		     (long) bytes, (long) bytes);
+	    tls_dump_buffer((unsigned char *) argp, (int) bytes);
+	} else {
+	    msg_info("write to %08lX [%08lX] (%ld bytes => %d)",
+		     (unsigned long) bio, (unsigned long) argp,
+		     (long) len, ret);
+	}
+    }
+    return ret;
+}
+
+#endif
+
+const EVP_MD *tls_validate_digest(const char *dgst)
 {
     const EVP_MD *md_alg;
     unsigned int md_len;
-
-    /*
-     * Register SHA-2 digests, if implemented and not already registered.
-     * Improves interoperability with clients and servers that prematurely
-     * deploy SHA-2 certificates.  Also facilitates DANE and TA support.
-     */
-#if defined(LN_sha256) && defined(NID_sha256) && !defined(OPENSSL_NO_SHA256)
-    if (!EVP_get_digestbyname(LN_sha224))
-	EVP_add_digest(EVP_sha224());
-    if (!EVP_get_digestbyname(LN_sha256))
-	EVP_add_digest(EVP_sha256());
-#endif
-#if defined(LN_sha512) && defined(NID_sha512) && !defined(OPENSSL_NO_SHA512)
-    if (!EVP_get_digestbyname(LN_sha384))
-	EVP_add_digest(EVP_sha384());
-    if (!EVP_get_digestbyname(LN_sha512))
-	EVP_add_digest(EVP_sha512());
-#endif
 
     /*
      * If the administrator specifies an unsupported digest algorithm, fail
@@ -1515,7 +1590,7 @@ int     tls_validate_digest(const char *dgst)
 		 dgst, md_len);
 	return (0);
     }
-    return (1);
+    return md_alg;
 }
 
 #else

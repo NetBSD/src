@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,8 @@
 /*	external mail filter support
 /* SYNOPSIS
 /*	#include <cleanup.h>
+/*
+/*	void	cleanup_milter_header_checks_init(void)
 /*
 /*	void	cleanup_milter_receive(state, count)
 /*	CLEANUP_STATE *state;
@@ -33,6 +35,9 @@
 /*	This module implements support for Sendmail-style mail
 /*	filter (milter) applications, including in-place queue file
 /*	modification.
+/*
+/*	cleanup_milter_header_checks_init() does pre-jail
+/*	initializations.
 /*
 /*	cleanup_milter_receive() receives mail filter definitions,
 /*	typically from an smtpd(8) server process, and registers
@@ -224,6 +229,8 @@
 
 /*#define msg_verbose	2*/
 
+static HBC_CHECKS *cleanup_milter_hbc_checks;
+static VSTRING *cleanup_milter_hbc_reply;
 static void cleanup_milter_set_error(CLEANUP_STATE *, int);
 static const char *cleanup_add_rcpt_par(void *, const char *, const char *);
 
@@ -347,9 +354,9 @@ static char *cleanup_milter_hbc_extend(void *context, const char *command,
 	    state->errs |= CLEANUP_STAT_CONT;
 	state->flags &= ~CLEANUP_FLAG_FILTER_ALL;
 	cleanup_milter_hbc_log(context, "reject", where, buf, state->reason);
-	vstring_sprintf(state->milter_hbc_reply, "%d %s",
+	vstring_sprintf(cleanup_milter_hbc_reply, "%d %s",
 			detail->smtp, state->reason);
-	STR(state->milter_hbc_reply)[0] = *state->reason;
+	STR(cleanup_milter_hbc_reply)[0] = *state->reason;
 	return ((char *) buf);
     }
     if (STREQUAL(command, "FILTER", cmd_len)) {
@@ -370,7 +377,7 @@ static char *cleanup_milter_hbc_extend(void *context, const char *command,
     }
     if (STREQUAL(command, "DISCARD", cmd_len)) {
 	cleanup_milter_hbc_log(context, "discard", where, buf, optional_text);
-	vstring_strcpy(state->milter_hbc_reply, "D");
+	vstring_strcpy(cleanup_milter_hbc_reply, "D");
 	state->flags |= CLEANUP_FLAG_DISCARD;
 	state->flags &= ~CLEANUP_FLAG_FILTER_ALL;
 	return ((char *) buf);
@@ -411,7 +418,7 @@ static int cleanup_milter_header_checks(CLEANUP_STATE *state, VSTRING *buf)
      * end-of-message stage, therefore all the header operations are relative
      * to the primary message header.
      */
-    ret = hbc_header_checks((void *) state, state->milter_hbc_checks,
+    ret = hbc_header_checks((void *) state, cleanup_milter_hbc_checks,
 			    MIME_HDR_PRIMARY, (HEADER_OPTS *) 0,
 			    buf, (off_t) 0);
     if (ret == 0) {
@@ -506,8 +513,10 @@ static void cleanup_milter_hbc_add_meta_records(CLEANUP_STATE *state)
 
 /* cleanup_milter_header_checks_init - initialize post-Milter header checks */
 
-static void cleanup_milter_header_checks_init(CLEANUP_STATE *state)
+void    cleanup_milter_header_checks_init(void)
 {
+    static const char myname[] = "cleanup_milter_header_checks_init";
+
 #define NO_NESTED_HDR_NAME	""
 #define NO_NESTED_HDR_VALUE	""
 #define NO_MIME_HDR_NAME	""
@@ -519,30 +528,60 @@ static void cleanup_milter_header_checks_init(CLEANUP_STATE *state)
 	cleanup_milter_hbc_extend,
     };
 
-    state->milter_hbc_checks =
+    if (*var_milt_head_checks == 0)
+	msg_panic("%s: %s is empty", myname, VAR_MILT_HEAD_CHECKS);
+
+    if (cleanup_milter_hbc_checks)
+	msg_panic("%s: cleanup_milter_hbc_checks is not null", myname);
+    cleanup_milter_hbc_checks =
 	hbc_header_checks_create(VAR_MILT_HEAD_CHECKS, var_milt_head_checks,
 				 NO_MIME_HDR_NAME, NO_MIME_HDR_VALUE,
 				 NO_NESTED_HDR_NAME, NO_NESTED_HDR_VALUE,
 				 &call_backs);
-    state->milter_hbc_reply = vstring_alloc(100);
+
+    if (cleanup_milter_hbc_reply)
+	msg_panic("%s: cleanup_milter_hbc_reply is not null", myname);
+    cleanup_milter_hbc_reply = vstring_alloc(100);
+}
+
+#ifdef TEST
+
+/* cleanup_milter_header_checks_deinit - undo cleanup_milter_header_checks_init */
+
+static void cleanup_milter_header_checks_deinit(void)
+{
+    static const char myname[] = "cleanup_milter_header_checks_deinit";
+
+    if (cleanup_milter_hbc_checks == 0)
+	msg_panic("%s: cleanup_milter_hbc_checks is null", myname);
+    hbc_header_checks_free(cleanup_milter_hbc_checks);
+    cleanup_milter_hbc_checks = 0;
+
+    if (cleanup_milter_hbc_reply == 0)
+	msg_panic("%s: cleanup_milter_hbc_reply is null", myname);
+    vstring_free(cleanup_milter_hbc_reply);
+    cleanup_milter_hbc_reply = 0;
+}
+
+#endif
+
+/* cleanup_milter_header_checks_reinit - re-init post-Milter header checks */
+
+static void cleanup_milter_header_checks_reinit(CLEANUP_STATE *state)
+{
     if (state->filter)
 	myfree(state->filter);
     state->filter = 0;
     if (state->redirect)
 	myfree(state->redirect);
     state->redirect = 0;
+    VSTRING_RESET(cleanup_milter_hbc_reply);
 }
 
 /* cleanup_milter_hbc_finish - finalize post-Milter header checks */
 
 static void cleanup_milter_hbc_finish(CLEANUP_STATE *state)
 {
-    if (state->milter_hbc_checks)
-	hbc_header_checks_free(state->milter_hbc_checks);
-    state->milter_hbc_checks = 0;
-    if (state->milter_hbc_reply)
-	vstring_free(state->milter_hbc_reply);
-    state->milter_hbc_reply = 0;
     if (CLEANUP_OUT_OK(state)
 	&& !CLEANUP_MILTER_REJECTING_OR_DISCARDING_MESSAGE(state)
 	&& (state->filter || state->redirect))
@@ -646,7 +685,7 @@ static const char *cleanup_add_header(void *context, const char *name,
      */
     buf = vstring_alloc(100);
     vstring_sprintf(buf, "%s:%s%s", name, space, value);
-    if (state->milter_hbc_checks) {
+    if (cleanup_milter_hbc_checks) {
 	if (cleanup_milter_header_checks(state, buf) == 0
 	    || (state->flags & CLEANUP_FLAG_DISCARD)) {
 	    vstring_free(buf);
@@ -709,8 +748,8 @@ static const char *cleanup_add_header(void *context, const char *name,
      * In case of error while doing record output.
      */
     return (CLEANUP_OUT_OK(state) == 0 ? cleanup_milter_error(state, 0) :
-	    state->milter_hbc_reply && LEN(state->milter_hbc_reply) ?
-	    STR(state->milter_hbc_reply) : 0);
+	    cleanup_milter_hbc_reply && LEN(cleanup_milter_hbc_reply) ?
+	    STR(cleanup_milter_hbc_reply) : 0);
 
     /*
      * Note: state->append_hdr_pt_target never changes.
@@ -1034,7 +1073,7 @@ static const char *cleanup_patch_header(CLEANUP_STATE *state,
      * be dropped.
      */
     vstring_sprintf(buf, "%s:%s%s", new_hdr_name, hdr_space, new_hdr_value);
-    if (state->milter_hbc_checks
+    if (cleanup_milter_hbc_checks
 	&& cleanup_milter_header_checks(state, buf) == 0)
 	CLEANUP_PATCH_HEADER_RETURN(0);
 
@@ -1103,8 +1142,8 @@ static const char *cleanup_patch_header(CLEANUP_STATE *state,
      */
     CLEANUP_PATCH_HEADER_RETURN(
 	       CLEANUP_OUT_OK(state) == 0 ? cleanup_milter_error(state, 0) :
-		   state->milter_hbc_reply && LEN(state->milter_hbc_reply) ?
-				STR(state->milter_hbc_reply) : 0);
+		 cleanup_milter_hbc_reply && LEN(cleanup_milter_hbc_reply) ?
+				STR(cleanup_milter_hbc_reply) : 0);
 
     /*
      * Note: state->append_hdr_pt_target never changes.
@@ -1805,6 +1844,11 @@ static const char *cleanup_del_rcpt(void *context, const char *ext_rcpt)
 		}
 		count++;
 	    }
+	    if (var_enable_orcpt)
+		/* Matches been_here() call in cleanup_out_recipient(). */
+		been_here_drop(state->dups, "%s\n%d\n%s\n%s",
+			       dsn_orcpt ? dsn_orcpt : "", dsn_notify,
+			     orig_rcpt ? orig_rcpt : "", STR(int_rcpt_buf));
 	    /* FALLTHROUGH */
 	case REC_TYPE_DRCP:			/* canceled recipient */
 	case REC_TYPE_DONE:			/* can't happen */
@@ -1820,6 +1864,9 @@ static const char *cleanup_del_rcpt(void *context, const char *ext_rcpt)
 	    break;
 	}
     }
+    /* Matches been_here_fixed() call in cleanup_out_recipient(). */
+    if (var_enable_orcpt == 0 && count > 0)
+	been_here_drop_fixed(state->dups, STR(int_rcpt_buf));
 
     if (msg_verbose)
 	msg_info("%s: deleted %d records for recipient \"%s\"",
@@ -1830,7 +1877,8 @@ static const char *cleanup_del_rcpt(void *context, const char *ext_rcpt)
 
 /* cleanup_repl_body - replace message body */
 
-static const char *cleanup_repl_body(void *context, int cmd, VSTRING *buf)
+static const char *cleanup_repl_body(void *context, int cmd, int rec_type,
+				             VSTRING *buf)
 {
     const char *myname = "cleanup_repl_body";
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
@@ -1842,7 +1890,7 @@ static const char *cleanup_repl_body(void *context, int cmd, VSTRING *buf)
      */
     switch (cmd) {
     case MILTER_BODY_LINE:
-	if (cleanup_body_edit_write(state, REC_TYPE_NORM, buf) < 0)
+	if (cleanup_body_edit_write(state, rec_type, buf) < 0)
 	    return (cleanup_milter_error(state, errno));
 	break;
     case MILTER_BODY_START:
@@ -1977,8 +2025,8 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
      * Don't process our own milter_header/body checks replies. See comments
      * in cleanup_milter_hbc_extend().
      */
-    if (state->milter_hbc_reply &&
-	strcmp(resp, STR(state->milter_hbc_reply)) == 0)
+    if (cleanup_milter_hbc_reply &&
+	strcmp(resp, STR(cleanup_milter_hbc_reply)) == 0)
 	return (0);
 
     /*
@@ -2079,7 +2127,7 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 
 static void cleanup_milter_client_init(CLEANUP_STATE *state)
 {
-    static INET_PROTO_INFO *proto_info;
+    static const INET_PROTO_INFO *proto_info;
     const char *proto_attr;
 
     /*
@@ -2144,7 +2192,7 @@ void    cleanup_milter_inspect(CLEANUP_STATE *state, MILTERS *milters)
      * Prologue: prepare for Milter header/body checks.
      */
     if (*var_milt_head_checks)
-	cleanup_milter_header_checks_init(state);
+	cleanup_milter_header_checks_reinit(state);
 
     /*
      * Process mail filter replies. The reply format is verified by the mail
@@ -2541,6 +2589,16 @@ int     main(int unused_argc, char **argv)
 	    } else {
 		msg_warn("bad verbose argument");
 	    }
+	} else if (strcmp(argv->argv[0], "line_length_limit") == 0) {
+	    if (argv->argc != 2) {
+		msg_warn("bad line_length_limit argument count: %ld",
+			 (long) argv->argc);
+	    } else if (alldig(argv->argv[1]) == 0) {
+		msg_warn("bad line_length_limit argument count: %ld",
+			 (long) argv->argc);
+	    } else if ((var_line_limit = atoi(argv->argv[1])) < DEF_LINE_LIMIT) {
+		msg_warn("bad line_length_limit argument");
+	    }
 	} else if (strcmp(argv->argv[0], "open") == 0) {
 	    if (state->dst != 0) {
 		msg_info("closing %s", VSTREAM_PATH(state->dst));
@@ -2551,6 +2609,18 @@ int     main(int unused_argc, char **argv)
 	    } else {
 		open_queue_file(state, argv->argv[1]);
 	    }
+	} else if (strcmp(argv->argv[0], "enable_original_recipient") == 0) {
+	    if (argv->argc == 1) {
+		msg_info("enable_original_recipient: %d", var_enable_orcpt);
+	    } else if (argv->argc != 2) {
+		msg_warn("bad enable_original_recipient argument count: %ld",
+			 (long) argv->argc);
+	    } else if (!alldig(argv->argv[1])) {
+		msg_warn("non-numeric enable_original_recipient argument: %s",
+			 argv->argv[1]);
+	    } else {
+		var_enable_orcpt = atoi(argv->argv[1]);
+	    }
 	} else if (state->dst == 0) {
 	    msg_warn("no open queue file");
 	} else if (strcmp(argv->argv[0], "close") == 0) {
@@ -2558,9 +2628,10 @@ int     main(int unused_argc, char **argv)
 		cleanup_milter_hbc_finish(state);
 		myfree(var_milt_head_checks);
 		var_milt_head_checks = "";
+		cleanup_milter_header_checks_deinit();
 	    }
 	    close_queue_file(state);
-	} else if (state->milter_hbc_reply && LEN(state->milter_hbc_reply)) {
+	} else if (cleanup_milter_hbc_reply && LEN(cleanup_milter_hbc_reply)) {
 	    /* Postfix libmilter would skip further requests. */
 	    msg_info("ignoring: %s %s %s", argv->argv[0],
 		     argv->argc > 1 ? argv->argv[1] : "",
@@ -2646,10 +2717,13 @@ int     main(int unused_argc, char **argv)
 		    msg_warn("open %s file: %m", argv->argv[1]);
 		} else {
 		    buf = vstring_alloc(100);
-		    cleanup_repl_body(state, MILTER_BODY_START, buf);
+		    cleanup_repl_body(state, MILTER_BODY_START,
+				      REC_TYPE_NORM, buf);
 		    while (vstring_get_nonl(buf, fp) != VSTREAM_EOF)
-			cleanup_repl_body(state, MILTER_BODY_LINE, buf);
-		    cleanup_repl_body(state, MILTER_BODY_END, buf);
+			cleanup_repl_body(state, MILTER_BODY_LINE,
+					  REC_TYPE_NORM, buf);
+		    cleanup_repl_body(state, MILTER_BODY_END,
+				      REC_TYPE_NORM, buf);
 		    vstring_free(buf);
 		    vstream_fclose(fp);
 		}
@@ -2662,7 +2736,7 @@ int     main(int unused_argc, char **argv)
 		msg_warn("can't change header checks");
 	    } else {
 		var_milt_head_checks = mystrdup(argv->argv[1]);
-		cleanup_milter_header_checks_init(state);
+		cleanup_milter_header_checks_init();
 	    }
 	} else if (strcmp(argv->argv[0], "sender_bcc_maps") == 0) {
 	    if (argv->argc != 2) {

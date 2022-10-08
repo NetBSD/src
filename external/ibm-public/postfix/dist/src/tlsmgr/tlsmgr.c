@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -505,7 +505,7 @@ static int tlsmgr_key(VSTRING *buffer, int timeout)
 	    return (TLS_MGR_STAT_ERR);
 	}
     }
-    /* Return value overrites name buffer */
+    /* Return value overwrites name buffer */
     vstring_memcpy(buffer, (char *) key, sizeof(*key));
     return (TLS_MGR_STAT_OK);
 }
@@ -1006,6 +1006,22 @@ static void tlsmgr_post_init(char *unused_name, char **unused_argv)
 	    tlsmgr_cache_run_event(NULL_EVENT, (void *) ent);
 }
 
+/* tlsmgr_post_accept - announce our protocol */
+
+static void tlsmgr_post_accept(VSTREAM *stream, char *unused_name,
+			           char **unused_argv, HTABLE *unused_table)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TLSMGR),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
+
 /* tlsmgr_before_exit - save PRNG state before exit */
 
 static void tlsmgr_before_exit(char *unused_service_name, char **unused_argv)
@@ -1063,6 +1079,7 @@ int     main(int argc, char **argv)
 		      CA_MAIL_SERVER_STR_TABLE(str_table),
 		      CA_MAIL_SERVER_PRE_INIT(tlsmgr_pre_init),
 		      CA_MAIL_SERVER_POST_INIT(tlsmgr_post_init),
+		      CA_MAIL_SERVER_POST_ACCEPT(tlsmgr_post_accept),
 		      CA_MAIL_SERVER_EXIT(tlsmgr_before_exit),
 		      CA_MAIL_SERVER_LOOP(tlsmgr_loop),
 		      CA_MAIL_SERVER_SOLITARY,

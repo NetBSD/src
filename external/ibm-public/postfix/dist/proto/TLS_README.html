@@ -7,7 +7,7 @@
 
 <title>Postfix TLS Support </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -29,7 +29,7 @@ SMTP mail or with SASL authentication. </p>
 the ability to encrypt mail and to authenticate remote SMTP clients
 or servers.  You also turn on hundreds of thousands of lines of
 OpenSSL library code.  Assuming that OpenSSL is written as carefully
-as Wietse's own code, every 1000 lines introduce one additional bug
+as Wietse's own code, every 1000 lines introduces one additional bug
 into Postfix.  </p>
 
 <p> Topics covered in this document: </p>
@@ -179,10 +179,10 @@ configurations will not accidentally enable TLS without certificates.  </p>
 
 <p> Note that server certificates are <b>not</b> optional in TLS 1.3. To
 run without certificates you'd have to disable the TLS 1.3 protocol by
-including '!TLSv1.3' in "smtpd_tls_protocols" and perhaps also
-"smtpd_tls_mandatory_protocols".  It is simpler instead to just
-configure a certificate chain.  Certificate-less operation is not
-recommended. <p>
+including "&lt;=TLSv1.2" (or, for Postfix &lt; 3.6, "!TLSv1.3") in
+"smtpd_tls_protocols" and perhaps also "smtpd_tls_mandatory_protocols".
+It is simpler instead to just configure a certificate chain.
+Certificate-less operation is not recommended. <p>
 
 <p> RSA, DSA and ECDSA (Postfix &ge; 2.6) certificates are supported.
 Most sites only have RSA certificates.  You can configure all three
@@ -201,7 +201,7 @@ client must receive the issuing CA certificates via the TLS handshake
 or via public-key infrastructure. This means that the Postfix server
 public-key certificate file must include the server certificate
 first, then the issuing CA(s) (bottom-up order). The Postfix SMTP
-server certificate must be usable as SSL server certificate and
+server certificate must be usable as an SSL server certificate and
 hence pass the "<tt>openssl verify -purpose sslserver ...</tt>" test.
 </p>
 
@@ -280,7 +280,7 @@ single file can hold multiple <i>(key, cert, [chain])</i> sequences, one
 per algorithm.  It is typically simpler to keep the chain for each
 algorithm in its own file.  Most users are likely to deploy just a
 single RSA chain, but with OpenSSL 1.1.1, it is possible to deploy up to
-five chains, one each for RSA, ECDSA, ED25519, ED448 and even the
+five chains, one each for RSA, ECDSA, ED25519, ED448, and even the
 obsolete DSA. </p>
 
 <blockquote>
@@ -540,7 +540,7 @@ by default and should only seldom be used. </p>
 </pre>
 </blockquote>
 
-<p> TLS is sometimes used in the non-standard "wrapper" mode where
+<p> TLS is also used in the "wrapper" mode where
 a server always uses TLS, instead of announcing STARTTLS support
 and waiting for remote SMTP clients to request TLS service. Some
 clients, namely
@@ -783,13 +783,19 @@ table. </p> </dd>
 
 <p> The digest algorithm used to compute the client certificate
 fingerprints is specified with the main.cf smtpd_tls_fingerprint_digest
-parameter.  The default is "md5", for compatibility with Postfix
-versions &lt; 2.5. </p>
+parameter. The default algorithm is <b>sha256</b> with Postfix &ge;
+3.6 and the <b>compatibility_level</b> set to 3.6 or higher. With
+Postfix &le; 3.5, the default algorithm is <b>md5</b>.  The
+best-practice algorithm is now <b>sha256</b>. Recent advances in hash
+function cryptanalysis have led to md5 and sha1 being deprecated in
+favor of sha256.  However, as long as there are no known "second
+pre-image" attacks against the older algorithms, their use in this
+context, though not recommended, is still likely safe.  </p>
 
 <p> The permit_tls_all_clientcerts feature must be used with caution,
 because it can result in too many access permissions.  Use this
 feature only if a special CA issues the client certificates, and
-only if this CA is listed as trusted CA. If other CAs are trusted,
+only if this CA is listed as a trusted CA. If other CAs are trusted,
 any owner of a valid client certificate would be authorized.
 The permit_tls_all_clientcerts feature can be practical for a
 specially created email relay server.  </p>
@@ -847,30 +853,15 @@ key always in "PEM" format. We pipe the result to another OpenSSL
 command that converts the key to DER and then to the "dgst" command
 to compute the fingerprint. </p>
 
-<p> The actual command to transform the key to DER format depends
-on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
-"pkey" command supports all key types. With OpenSSL 0.9.8 and
-earlier, the key type is always RSA (nobody uses DSA, and EC
-keys are not fully supported by 0.9.8), so the "rsa" command is
-used. </p>
+<p> Example: </p>
 <blockquote>
 <pre>
-# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
 $ openssl x509 -in cert.pem -noout -pubkey |
     openssl pkey -pubin -outform DER |
-    openssl dgst -sha1 -c
-(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
-
-# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
-$ openssl x509 -in cert.pem -noout -pubkey |
-    openssl rsa -pubin -outform DER |
-    openssl dgst -md5 -c
-(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+    openssl dgst -sha256 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:...:8b:fc:09:1a:61:98:b5:bc:7c:60:58
 </pre>
 </blockquote>
-<p> Note: Postfix 2.9.0&ndash;2.9.5 computed the public key
-fingerprint incorrectly. To use public-key fingerprints, upgrade
-to Postfix 2.9.6 or later. </p>
 
 <h3><a name="server_cipher">Server-side cipher controls</a> </h3>
 
@@ -900,7 +891,7 @@ after the middle of 2015; older releases only disable SSLv2 for
 mandatory TLS. The mandatory TLS protocol list is specified via the
 smtpd_tls_mandatory_protocols configuration parameter.  The
 smtpd_tls_protocols parameter (Postfix &ge; 2.6)
-controls the SSL/TLS protocols used with opportunistic TLS. </p>
+controls the TLS protocols used with opportunistic TLS. </p>
 
 <p> Note that the OpenSSL library only supports protocol exclusion
 (not inclusion). For this reason, Postfix can exclude only protocols
@@ -918,8 +909,8 @@ that TLSv1.3 be explicitly disabled. Therefore, they are not
 recommended, it is better and simpler to just configure a suitable
 certificate. </p>
 
-<p> Example, MSA that requires TLSv1 or higher, not SSLv2 or SSLv3,
-with high grade ciphers: </p>
+<p> Example, MSA that requires TLSv1.2 or higher, with high grade
+ciphers: </p>
 
 <blockquote>
 <pre>
@@ -929,10 +920,10 @@ with high grade ciphers: </p>
     smtpd_tls_mandatory_ciphers = high
     smtpd_tls_mandatory_exclude_ciphers = aNULL, MD5
     smtpd_tls_security_level = encrypt
-    # Preferred syntax with Postfix &ge; 2.5:
-    smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+    # Preferred syntax with Postfix &ge; 3.6:
+    smtpd_tls_mandatory_protocols = &gt;=TLSv1.2
     # Legacy syntax:
-    smtpd_tls_mandatory_protocols = TLSv1
+    smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
 </pre>
 </blockquote>
 
@@ -1272,9 +1263,10 @@ just in case the transport table entries are not specified consistently. </p>
     submission      587/tcp         msa             # mail message submission
 
 /etc/postfix/tls_policy:
-    [example.net]:587 encrypt protocols=TLSv1 ciphers=high
-    [example.net]:msa encrypt protocols=TLSv1 ciphers=high
-    [example.net]:submission encrypt protocols=TLSv1 ciphers=high
+    # Postfix &ge; 3.6 "protocols" syntax
+    [example.net]:587 encrypt protocols=&gt;=TLSv1.2 ciphers=high
+    # Legacy "protocols" syntax
+    [example.net]:msa encrypt protocols=!SSLv2:!SSLv3 ciphers=high
 </pre>
 </blockquote>
 
@@ -1387,7 +1379,8 @@ if deployed on a system with an updated resolver library.
 It will support DANE provided it supports TLSv1 and its TLSA records are
 published in a DNSSEC signed zone.  To receive DANE secured mail for multiple
 domains, use the same hostname to add the server to each domain's MX
-records.  There are no plans to implement SNI in the Postfix SMTP server.  </p>
+records. The Postfix SMTP server supports SNI (Postfix 3.4 and later),
+configured with tls_server_sni_maps. </p>
 
 <p> Note: The Postfix SMTP client's internal stub DNS resolver is
 DNSSEC-aware, but it does not itself validate DNSSEC records, rather
@@ -1509,6 +1502,15 @@ match attributes can be employed. The ":" character is not used as a
 delimiter as it occurs between each pair of fingerprint (hexadecimal)
 digits. </p>
 
+<p> The default algorithm is <b>sha256</b> with Postfix &ge; 3.6
+and the <b>compatibility_level</b> set to 3.6 or higher; with Postfix
+&le; 3.5, the default algorithm is <b>md5</b>.  The
+best-practice algorithm is now <b>sha256</b>. Recent advances in hash
+function cryptanalysis have led to md5 and sha1 being deprecated in
+favor of sha256.  However, as long as there are no known "second
+pre-image" attacks against the older algorithms, their use in this
+context, though not recommended, is still likely safe.  </p>
+
 <p> Example: fingerprint TLS security with an internal mailhub.
 Two matching fingerprints are listed. The relayhost may be multiple
 physical hosts behind a load-balancer, each with its own private/public
@@ -1520,10 +1522,10 @@ another, and both keys are trusted just prior to the transition. </p>
 <pre>
     relayhost = [mailhub.example.com]
     smtp_tls_security_level = fingerprint
-    smtp_tls_fingerprint_digest = md5
+    smtp_tls_fingerprint_digest = sha256
     smtp_tls_fingerprint_cert_match =
-        3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
-        EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
+        51:e9:af:2e:1e:40:1f:de:64:...:30:35:2d:09:16:31:5a:eb:82:76
+        b6:b4:72:34:e2:59:cd:fb:c2:...:63:0d:4d:cc:2c:7d:84:de:e6:2f
 </pre>
 </blockquote>
 
@@ -1533,15 +1535,15 @@ As in the example above, we show two matching fingerprints: </p>
 <pre>
 /etc/postfix/main.cf:
     smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
-    smtp_tls_fingerprint_digest = md5
+    smtp_tls_fingerprint_digest = sha256
 </pre>
 </blockquote>
 <blockquote>
 <pre>
 /etc/postfix/tls_policy:
     example.com	fingerprint
-        match=3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
-        match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
+        match=51:e9:af:2e:1e:40:1f:de:...:35:2d:09:16:31:5a:eb:82:76
+        match=b6:b4:72:34:e2:59:cd:fb:...:0d:4d:cc:2c:7d:84:de:e6:2f
 </pre>
 </blockquote>
 
@@ -1553,30 +1555,15 @@ key always in "PEM" format. We pipe the result to another OpenSSL
 command that converts the key to DER and then to the "dgst" command
 to compute the fingerprint. </p>
 
-<p> The actual command to transform the key to DER format depends
-on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
-"pkey" command supports all key types. With OpenSSL 0.9.8 and
-earlier, the key type is always RSA (nobody uses DSA, and EC
-keys are not fully supported by 0.9.8), so the "rsa" command is
-used. </p>
+<p> Example: </p>
 <blockquote>
 <pre>
-# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
 $ openssl x509 -in cert.pem -noout -pubkey |
     openssl pkey -pubin -outform DER |
-    openssl dgst -sha1 -c
-(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
-
-# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
-$ openssl x509 -in cert.pem -noout -pubkey |
-    openssl rsa -pubin -outform DER |
-    openssl dgst -md5 -c
-(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+    openssl dgst -sha256 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:...:09:1a:61:98:b5:bc:7c:60:58
 </pre>
 </blockquote>
-<p> Note: Postfix 2.9.0&ndash;2.9.5 computed the public key
-fingerprint incorrectly. To use public-key fingerprints, upgrade
-to Postfix 2.9.6 or later. </p>
 
 <h4><a name="client_tls_verify"> Mandatory server certificate verification </a> </h4>
 
@@ -1876,7 +1863,7 @@ cipher used determines which certificate is presented. </p>
 key/certificate pair as the Postfix SMTP server.  If a certificate
 is to be presented, it must be in "PEM" format. The private key
 must not be encrypted, meaning: it must be accessible without
-password. Both parts (certificate and private key) may be in the
+a password. Both parts (certificate and private key) may be in the
 same file. </p>
 
 <p> With OpenSSL 1.1.1 and Postfix &ge; 3.4 it is also possible to
@@ -1905,7 +1892,7 @@ As the "root" super-user create the client.pem file with: </p>
 </blockquote>
 
 <p> A Postfix SMTP client certificate supplied here must be usable
-as SSL client certificate and hence pass the "openssl verify -purpose
+as an SSL client certificate and hence pass the "openssl verify -purpose
 sslclient ..." test. </p>
 
 <p> A server that trusts the root CA has a local copy of the root
@@ -1924,7 +1911,7 @@ single file can hold multiple <i>(key, cert, [chain])</i> sequences, one
 per algorithm.  It is typically simpler to keep the chain for each
 algorithm in its own file.  Most users are likely to deploy at most a
 single RSA chain, but with OpenSSL 1.1.1, it is possible to deploy up
-five chains, one each for RSA, ECDSA, ED25519, ED448 and even the
+five chains, one each for RSA, ECDSA, ED25519, ED448, and even the
 obsolete DSA. </p>
 
 <blockquote>
@@ -2345,10 +2332,10 @@ files.  </dd>
 
 <dt><b>secure</b></dt> <dd><a href="#client_tls_secure">Secure certificate
 verification.</a> Mail is delivered only if the TLS handshake succeeds,
-if the remote SMTP server certificate can be validated (not expired
-or revoked, and signed by a trusted Certification Authority), and if the
-server certificate name matches the optional "match" attribute (or the
-main.cf smtp_tls_secure_cert_match parameter value when no optional
+and DNS forgery resistant remote SMTP certificate verification succeeds
+(not expired or revoked, and signed by a trusted Certification Authority),
+and if the server certificate name matches the optional "match" attribute
+(or the main.cf smtp_tls_secure_cert_match parameter value when no optional
 "match" attribute is specified).  With Postfix &ge; 2.11 the "tafile"
 attribute optionally modifies trust chain verification in the same manner
 as the "smtp_tls_trust_anchor_file" parameter.  The "tafile" attribute
@@ -2399,7 +2386,7 @@ Example:
 /etc/postfix/main.cf:
     smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
     # Postfix 2.5 and later
-    smtp_tls_fingerprint_digest = md5
+    smtp_tls_fingerprint_digest = sha256
 /etc/postfix/tls_policy:
     example.edu             none
     example.mil             may
@@ -2410,10 +2397,12 @@ Example:
     [mail.example.org]:587  secure match=nexthop
     # Postfix 2.5 and later
     [thumb.example.org]         fingerprint
-    	match=EC:3B:2D:B0:5B:B1:FB:6D:20:A3:9D:72:F6:8D:12:35
-	match=3D:95:34:51:24:66:33:B9:D2:40:99:C0:C1:17:0B:D1
-    # Postfix 2.6 and later
-    example.info            may protocols=!SSLv2 ciphers=medium exclude=3DES
+	match=b6:b4:72:34:e2:59:cd:fb:...:0d:4d:cc:2c:7d:84:de:e6:2f
+	match=51:e9:af:2e:1e:40:1f:de:...:35:2d:09:16:31:5a:eb:82:76
+    # Postfix &ge; 3.6 "protocols" syntax
+    example.info            may protocols=&gt;=TLSv1 ciphers=medium exclude=3DES
+    # Legacy protocols syntax
+    example.info            may protocols=!SSLv2:!SSLv3 ciphers=medium exclude=3DES
 </pre>
 </blockquote>
 
@@ -2508,7 +2497,7 @@ SMTP client will by default disable SSLv2 and SSLv3. The mandatory
 TLS protocol list is specified via the
 smtp_tls_mandatory_protocols configuration parameter.  The corresponding
 smtp_tls_protocols parameter (Postfix &ge; 2.6) controls
-the SSL/TLS protocols used with opportunistic TLS. </p>
+the TLS protocols used with opportunistic TLS. </p>
 
 <p> Example: </p>
  
@@ -2518,20 +2507,20 @@ the SSL/TLS protocols used with opportunistic TLS. </p>
     smtp_tls_mandatory_ciphers = medium
     smtp_tls_mandatory_exclude_ciphers = RC4, MD5
     smtp_tls_exclude_ciphers = aNULL
-    # Preferred form with Postfix &ge; 2.5:
-    smtp_tls_mandatory_protocols = !SSLv2
-    # Legacy form for Postfix &lt; 2.5:
-    smtp_tls_mandatory_protocols = SSLv3, TLSv1
-    # Also available with Postfix &ge; 2.6:
     smtp_tls_ciphers = medium
-    smtp_tls_protocols = !SSLv2
+    # Preferred form with Postfix &ge; 3.6:
+    smtp_tls_mandatory_protocols = &gt;=TLSv1.2
+    smtp_tls_protocols = &gt;=TLSv1
+    # Legacy form for Postfix &lt; 3.6:
+    smtp_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+    smtp_tls_protocols = !SSLv2,!SSLv3
 </pre>
 </blockquote>
 
 <h3> <a name="client_smtps">Client-side SMTPS support </a> </h3>
 
 <p> These sections show how to send mail to a server that does not
-support STARTTLS, but that provides the deprecated SMTPS service
+support STARTTLS, but that provides the SMTPS service
 on TCP port 465.  Depending on the Postfix version, some additional
 tooling may be required. </p>
 
@@ -2852,7 +2841,7 @@ for exchanging email with sites that you have no trust relationship
 with.  For real authentication you need also enable DNSSEC record
 signing for your domain and publish TLSA records and/or your Postfix
 public key certificate needs to be signed by a recognized Certification
-Authority.  To authenticate the certificates of remote host you
+Authority.  To authenticate the certificates of a remote host you
 need a DNSSEC-validating local resolver and to enable <a
 href="#client_tls_dane">DANE</a> authentication and/or configure
 the Postfix SMTP client with a list of public key certificates of
@@ -3123,7 +3112,7 @@ client certificates, unless there are servers which authenticate your mail
 submission via client certificates. Often servers that perform TLS client
 authentication will issue the required certificates signed by their own
 CA. If you configure the client certificate and key incorrectly, you
-will be unable to send mail to sites that request client certificate,
+will be unable to send mail to sites that request a client certificate,
 but don't require them from all clients. </p>
 
 <blockquote>
@@ -3192,6 +3181,10 @@ are in directory <tt>/usr/local/lib</tt>:  </p>
     AUXLIBS="-L/usr/local/lib -lssl -lcrypto" </b>
 </pre>
 </blockquote>
+
+<p> If your OpenSSL shared library is in a directory that the RUN-TIME
+linker does not know about, add a "-Wl,-R,/path/to/directory" option after
+"-lcrypto". </p>
 
 <p> On Solaris, specify the <tt>-R</tt> option as shown below:
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -58,7 +58,7 @@ Resolve the address for address verification purposes.
 .ad
 .fi
 The \fBtrivial\-rewrite\fR(8) servers run under control by
-the Postfix master
+the Postfix master(8)
 server.  Each server can handle multiple simultaneous connections.
 When all servers are busy while a client connects, the master
 creates a new server process, provided that the trivial\-rewrite
@@ -137,9 +137,8 @@ addresses without domain information.
 With locally submitted mail, append the string ".$mydomain" to
 addresses that have no ".domain" information.
 .IP "\fBrecipient_delimiter (empty)\fR"
-The set of characters that can separate a user name from its
-extension (example: user+foo), or a .forward file name from its
-extension (example: .forward+foo).
+The set of characters that can separate an email address
+localpart, user name, or a .forward file name from its extension.
 .IP "\fBswap_bangpath (yes)\fR"
 Enable the rewriting of "site!user" into "user@site".
 .PP
@@ -177,7 +176,7 @@ A list of Postfix features where the pattern "example.com" also
 matches subdomains of example.com,
 instead of requiring an explicit ".example.com" pattern.
 .IP "\fBrelayhost (empty)\fR"
-The next\-hop destination of non\-local mail; overrides non\-local
+The next\-hop destination(s) for non\-local mail; overrides non\-local
 domains in recipient addresses.
 .IP "\fBtransport_maps (empty)\fR"
 Optional lookup tables with mappings from recipient address to

@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: scache.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -546,6 +546,21 @@ static void post_jail_init(char *unused_name, char **unused_argv)
     scache_start_time = event_time();
 }
 
+/* scache_post_accept - announce our protocol */
+
+static void scache_post_accept(VSTREAM *stream, char *unused_name,
+			           char **unused_argv, HTABLE *unused_table)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SCACHE),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main - pass control to the multi-threaded skeleton */
@@ -566,6 +581,7 @@ int     main(int argc, char **argv)
     multi_server_main(argc, argv, scache_service,
 		      CA_MAIL_SERVER_TIME_TABLE(time_table),
 		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		      CA_MAIL_SERVER_POST_ACCEPT(scache_post_accept),
 		      CA_MAIL_SERVER_EXIT(scache_status_dump),
 		      CA_MAIL_SERVER_SOLITARY,
 		      0);

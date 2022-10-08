@@ -1,4 +1,4 @@
-/*	$NetBSD: hfrom_format.c,v 1.1.1.1 2022/10/08 16:09:07 christos Exp $	*/
+/*	$NetBSD: hfrom_format.c,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME

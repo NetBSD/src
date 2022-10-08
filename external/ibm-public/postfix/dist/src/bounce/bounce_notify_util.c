@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_util.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: bounce_notify_util.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -208,12 +208,14 @@
 #include <deliver_completed.h>
 #include <dsn_mask.h>
 #include <smtputf8.h>
+#include <header_opts.h>
 
 /* Application-specific. */
 
 #include "bounce_service.h"
 
 #define STR vstring_str
+#define LEN VSTRING_LEN
 
 /* bounce_mail_alloc - initialize */
 
@@ -230,6 +232,10 @@ static BOUNCE_INFO *bounce_mail_alloc(const char *service,
 {
     BOUNCE_INFO *bounce_info;
     int     rec_type;
+    int     prev_type;
+    int     all_headers_seen = 0;
+    int     skip_message_segment = 0;
+    int     in_envelope = 1;
 
     /*
      * Bundle up a bunch of parameters and initialize information that will
@@ -268,6 +274,7 @@ static BOUNCE_INFO *bounce_mail_alloc(const char *service,
     bounce_info->arrival_time = 0;
     bounce_info->orig_offs = 0;
     bounce_info->message_size = 0;
+    bounce_info->orig_msgid = vstring_alloc(100);
     bounce_info->rcpt_buf = rcpt_buf;
     bounce_info->dsn_buf = dsn_buf;
     bounce_info->log_handle = log_handle;
@@ -317,8 +324,9 @@ static BOUNCE_INFO *bounce_mail_alloc(const char *service,
 		    DELIVER_LOCK_MODE) < 0)
 	    msg_fatal("cannot get shared lock on %s: %m",
 		      VSTREAM_PATH(bounce_info->orig_fp));
-	while ((rec_type = rec_get(bounce_info->orig_fp,
-				   bounce_info->buf, 0)) > 0) {
+	for (prev_type = 0;
+	(rec_type = rec_get(bounce_info->orig_fp, bounce_info->buf, 0)) > 0;
+	     prev_type = rec_type) {
 
 	    /*
 	     * Postfix version dependent: data offset in SIZE record.
@@ -362,12 +370,101 @@ static BOUNCE_INFO *bounce_mail_alloc(const char *service,
 		    msg_warn("%s: no sender before message content record",
 			     bounce_info->queue_id);
 		bounce_info->orig_offs = vstream_ftell(bounce_info->orig_fp);
-		break;
+		if (var_threaded_bounce == 0)
+		    skip_message_segment = 1;
+		else
+		    in_envelope = 0;
 	    }
+
+	    /*
+	     * Extract Message-ID for threaded bounces.
+	     */
+	    else if (in_envelope == 0
+	      && (rec_type == REC_TYPE_NORM || rec_type == REC_TYPE_CONT)) {
+		const HEADER_OPTS *hdr;
+		char   *cp;
+
+		/*
+		 * Skip records that we cannot use. Degrade if we could not
+		 * skip over the message content.
+		 */
+		if (var_threaded_bounce == 0 || all_headers_seen
+		    || prev_type == REC_TYPE_CONT) {
+		     /* void */ ;
+		}
+
+		/*
+		 * Extract message-id header value.
+		 */
+		else if (is_header(STR(bounce_info->buf))) {
+		    if ((hdr = header_opts_find(
+					vstring_str(bounce_info->buf))) != 0
+			&& hdr->type == HDR_MESSAGE_ID) {
+			vstring_truncate(bounce_info->buf,
+					 trimblanks(STR(bounce_info->buf),
+						    LEN(bounce_info->buf))
+					 - STR(bounce_info->buf));
+			cp = STR(bounce_info->buf) + strlen(hdr->name) + 1;
+			while (ISSPACE(*cp))
+			    cp++;
+			if (*cp == '<' && vstring_end(bounce_info->buf)[-1] == '>')
+			    vstring_strcpy(bounce_info->orig_msgid, cp);
+			else
+			    msg_warn("%s: ignoring malformed Message-ID",
+				     bounce_info->queue_id);
+		    }
+		}
+
+		/*
+		 * Skip remainder of multiline header.
+		 */
+		else if (ISSPACE(*STR(bounce_info->buf))) {
+		     /* void */ ;
+		}
+
+		/*
+		 * Start of body.
+		 */
+		else {
+		    all_headers_seen = 1;
+		    skip_message_segment = 1;
+		}
+	    }
+
+	    /*
+	     * In case we ever want to process records from the extracted
+	     * segment, and in case there was no "start of body" event.
+	     */
+	    else if (rec_type == REC_TYPE_XTRA) {
+		if (VSTRING_LEN(bounce_info->orig_msgid) == 0)
+		    if (var_threaded_bounce)
+			all_headers_seen = 1;
+		in_envelope = 1;
+	    }
+
+	    /*
+	     * Are we done yet?
+	     */
 	    if (bounce_info->orig_offs > 0
 		&& bounce_info->arrival_time > 0
-		&& VSTRING_LEN(bounce_info->sender) > 0)
+		&& VSTRING_LEN(bounce_info->sender) > 0
+		&& (var_threaded_bounce == 0 || all_headers_seen
+		    || VSTRING_LEN(bounce_info->orig_msgid) > 0)) {
 		break;
+	    }
+
+	    /*
+	     * Skip over (the remainder of) the message segment. If that
+	     * fails, degrade.
+	     */
+	    if (skip_message_segment) {
+		if (vstream_fseek(bounce_info->orig_fp,
+				  bounce_info->orig_offs +
+				  bounce_info->message_size,
+				  SEEK_SET) < 0)
+		     /* void */ ;
+		skip_message_segment = 0;
+	    }
 	}
     }
     return (bounce_info);
@@ -441,6 +538,7 @@ void    bounce_mail_free(BOUNCE_INFO *bounce_info)
 	if (bounce_log_close(bounce_info->log_handle))
 	    msg_warn("%s: read bounce log %s: %m",
 		     bounce_info->queue_id, bounce_info->queue_id);
+	vstring_free(bounce_info->orig_msgid);
 	rcpb_free(bounce_info->rcpt_buf);
 	dsb_free(bounce_info->dsn_buf);
     }
@@ -475,6 +573,15 @@ int     bounce_header(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
     bounce_template_headers(post_mail_fprintf, bounce, template,
 			    STR(quote_822_local(bounce_info->buf, dest)),
 			    postmaster_copy);
+
+    /*
+     * References and Reply-To header that references the original message-id
+     * for better threading in MUAs.
+     */
+    if (VSTRING_LEN(bounce_info->orig_msgid) > 0) {
+	post_mail_fprintf(bounce, "References: %s", STR(bounce_info->orig_msgid));
+	post_mail_fprintf(bounce, "In-Reply-To: %s", STR(bounce_info->orig_msgid));
+    }
 
     /*
      * Auto-Submitted header, as per RFC 3834.
@@ -711,7 +818,7 @@ int     bounce_recipient_dsn(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
      * relayed.". Postfix adds an ORCPT parameter under these conditions.
      * 
      * Therefore, all down-stream MTAs will send DSNs with Original-Recipient
-     * field ontaining this same ORCPT value. When a down-stream MTA can use
+     * field containing this same ORCPT value. When a down-stream MTA can use
      * that information in their DSNs, it makes no sense that an up-stream
      * MTA can't use that same information in its own DSNs.
      * 

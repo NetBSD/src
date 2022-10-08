@@ -1,4 +1,4 @@
-/*	$NetBSD: stringops.h,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: stringops.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
@@ -32,6 +32,7 @@ extern char *trimblanks(char *, ssize_t);
 extern char *concatenate(const char *,...);
 extern char *mystrtok(char **, const char *);
 extern char *mystrtokq(char **, const char *, const char *);
+extern char *mystrtokdq(char **, const char *);
 extern char *translit(char *, const char *, const char *);
 
 #define printable(string, replacement) \
@@ -47,6 +48,7 @@ extern char *sane_dirname(VSTRING *, const char *);
 extern VSTRING *unescape(VSTRING *, const char *);
 extern VSTRING *escape(VSTRING *, const char *, ssize_t);
 extern int alldig(const char *);
+extern int allalnum(const char *);
 extern int allprint(const char *);
 extern int allspace(const char *);
 extern int allascii_len(const char *, ssize_t);
@@ -81,6 +83,12 @@ extern int strncasecmp_utf8x(int, const char *, const char *, ssize_t);
     strcasecmp_utf8x(util_utf8_enable ? CASEF_FLAG_UTF8 : 0, (s1), (s2))
 #define strncasecmp_utf8(s1, s2, l) \
     strncasecmp_utf8x(util_utf8_enable ? CASEF_FLAG_UTF8 : 0, (s1), (s2), (l))
+
+ /*
+  * Use STRREF(x) instead of x, to shut up compiler warnings when the operand
+  * is a string literal.
+  */
+#define STRREF(x)		(&x[0])
 
 /* LICENSE
 /* .ad

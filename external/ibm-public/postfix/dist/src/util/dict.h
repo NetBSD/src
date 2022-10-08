@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -16,6 +16,7 @@
  /*
   * System library.
   */
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <setjmp.h>
 
@@ -259,7 +260,7 @@ typedef struct DICT_UTF8_BACKUP {
     const char *(*lookup) (struct DICT *, const char *);
     int     (*update) (struct DICT *, const char *, const char *);
     int     (*delete) (struct DICT *, const char *);
-}       DICT_UTF8_BACKUP;
+} DICT_UTF8_BACKUP;
 
 extern DICT *dict_utf8_activate(DICT *);
 
@@ -315,6 +316,12 @@ extern struct VSTRING *dict_file_from_b64(DICT *, const char *);
 extern char *dict_file_get_error(DICT *);
 extern void dict_file_purge_buffers(DICT *);
 extern const char *dict_file_lookup(DICT *dict, const char *);
+
+ /*
+  * dict_stream(3)
+  */
+extern VSTREAM *dict_stream_open(const char *dict_type, const char *mapname,
+            int open_flags, int dict_flags, struct stat * st, VSTRING **why);
 
 /* LICENSE
 /* .ad

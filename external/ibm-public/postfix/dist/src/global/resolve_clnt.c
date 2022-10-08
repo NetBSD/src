@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -154,6 +154,15 @@ void    resolve_clnt_init(RESOLVE_REPLY *reply)
     reply->flags = 0;
 }
 
+/* resolve_clnt_handshake - receive server protocol announcement */
+
+static int resolve_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan(stream, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TRIVIAL),
+		      ATTR_TYPE_END));
+}
+
 /* resolve_clnt - resolve address to (transport, next hop, recipient) */
 
 void    resolve_clnt(const char *class, const char *sender,
@@ -221,17 +230,19 @@ void    resolve_clnt(const char *class, const char *sender,
 	rewrite_clnt_stream = clnt_stream_create(MAIL_CLASS_PRIVATE,
 						 var_rewrite_service,
 						 var_ipc_idle_limit,
-						 var_ipc_ttl_limit);
+						 var_ipc_ttl_limit,
+						 resolve_clnt_handshake);
 
     for (;;) {
 	stream = clnt_stream_access(rewrite_clnt_stream);
 	errno = 0;
 	count += 1;
-	if (attr_print(stream, ATTR_FLAG_NONE,
-		       SEND_ATTR_STR(MAIL_ATTR_REQ, class),
-		       SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
-		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
-		       ATTR_TYPE_END) != 0
+	if (stream == 0
+	    || attr_print(stream, ATTR_FLAG_NONE,
+			  SEND_ATTR_STR(MAIL_ATTR_REQ, class),
+			  SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+			  SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
+			  ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
 			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &server_flags),

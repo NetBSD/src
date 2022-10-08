@@ -1,23 +1,23 @@
-/*	$NetBSD: dnsblog.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
 /*	dnsblog 8
 /* SUMMARY
-/*	Postfix DNS white/blacklist logger
+/*	Postfix DNS allow/denylist logger
 /* SYNOPSIS
 /*	\fBdnsblog\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The \fBdnsblog\fR(8) server implements an ad-hoc DNS
-/*	white/blacklist lookup service. This may eventually be
+/*	allow/denylist lookup service. This may eventually be
 /*	replaced by an UDP client that is built directly into the
 /*	\fBpostscreen\fR(8) server.
 /* PROTOCOL
 /* .ad
 /* .fi
 /*	With each connection, the \fBdnsblog\fR(8) server receives
-/*	a DNS white/blacklist domain name, an IP address, and an ID.
-/*	If the IP address is listed under the DNS white/blacklist, the
+/*	a DNS allow/denylist domain name, an IP address, and an ID.
+/*	If the IP address is listed under the DNS allow/denylist, the
 /*	\fBdnsblog\fR(8) server logs the match and replies with the
 /*	query arguments plus an address list with the resulting IP
 /*	addresses, separated by whitespace, and the reply TTL.
@@ -45,7 +45,7 @@
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBpostscreen_dnsbl_sites (empty)\fR"
-/*	Optional list of DNS white/blacklist domains, filters and weight
+/*	Optional list of DNS allow/denylist domains, filters and weight
 /*	factors.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal

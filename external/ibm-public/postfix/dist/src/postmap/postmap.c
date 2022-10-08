@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postmap.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,10 @@
 /* .PP
 /*	The \fIkey\fR and \fIvalue\fR are processed as is, except that
 /*	surrounding white space is stripped off. Whitespace in lookup
-/*	keys is supported as of Postfix 3.2.
+/*	keys is supported in Postfix 3.2 and later, by surrounding the
+/*	key with double quote characters `"'. Within the double quotes,
+/*	double quote `"' and backslash `\\' characters can be included
+/*	by quoting them with a preceding backslash.
 /*
 /*	When the \fB-F\fR option is given, the \fIvalue\fR must
 /*	specify one or more filenames separated by comma and/or
@@ -80,8 +83,8 @@
 /*	headers and for attached message/* headers.
 /* .sp
 /*	NOTE: with "smtputf8_enable = yes", the \fB-b\fR option
-/*	option disables UTF-8 syntax checks on query keys and
-/*	lookup results. Specify the \fB-U\fR option to force UTF-8
+/*	disables UTF-8 syntax checks on query keys and lookup
+/*	results. Specify the \fB-U\fR option to force UTF-8
 /*	syntax checks anyway.
 /* .sp
 /*	This feature is available in Postfix version 2.6 and later.
@@ -107,7 +110,9 @@
 /*	value. When creating a map from source file, process each
 /*	value as a list of filenames, concatenate the content of
 /*	those files, and store the base64-encoded result instead
-/*	of the value (see INPUT FORMAT for details).
+/*	of the value (see INPUT FILE FORMAT for details).
+/* .sp
+/*	This feature is available in Postfix version 3.4 and later.
 /* .IP \fB-h\fR
 /*	Enable message header query mode. When reading lookup keys
 /*	from standard input with "\fB-q -\fR", process the input
@@ -212,13 +217,18 @@
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
 /*	This is available on systems with support for \fBdbm\fR databases.
-/* .IP \fBhash\fR
-/*	The output file is a hashed file, named \fIfile_name\fB.db\fR.
-/*	This is available on systems with support for \fBdb\fR databases.
 /* .IP \fBfail\fR
 /*	A table that reliably fails all requests. The lookup table
 /*	name is used for logging only. This table exists to simplify
 /*	Postfix error tests.
+/* .IP \fBhash\fR
+/*	The output file is a hashed file, named \fIfile_name\fB.db\fR.
+/*	This is available on systems with support for \fBdb\fR databases.
+/* .IP \fBlmdb\fR
+/*	The output is a btree-based file, named \fIfile_name\fB.lmdb\fR.
+/*	\fBlmdb\fR supports concurrent writes and reads from different
+/*	processes, unlike other supported file-based tables.
+/*	This is available on systems with support for \fBlmdb\fR databases.
 /* .IP \fBsdbm\fR
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
@@ -266,17 +276,21 @@
 /*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 /*	and \fBpostmap\fR(1) commands.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
+/*	The list of environment variables that a privileged Postfix
 /*	process will import from a non-Postfix parent process, or name=value
 /*	environment overrides.
 /* .IP "\fBsmtputf8_enable (yes)\fR"
 /*	Enable preliminary SMTPUTF8 support for the protocols described
-/*	in RFC 6531..6533.
+/*	in RFC 6531, RFC 6532, and RFC 6533.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 /*	A prefix that is prepended to the process name in syslog
 /*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 2.11 and later:
+/* .IP "\fBlmdb_map_size (16777216)\fR"
+/*	The initial OpenLDAP LMDB database size limit in bytes.
 /* SEE ALSO
 /*	postalias(1), create/update/query alias database
 /*	postconf(1), supported database types
@@ -648,7 +662,7 @@ static int postmap_queries(VSTREAM *in, char **maps, const int map_count,
 	dicts[n] = 0;
 
     /*
-     * Perform all queries. Open maps on the fly, to avoid opening unecessary
+     * Perform all queries. Open maps on the fly, to avoid opening unnecessary
      * maps.
      */
     if ((postmap_flags & POSTMAP_FLAG_HB_KEY) == 0) {
