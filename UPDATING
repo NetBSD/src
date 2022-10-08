@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.332 2022/09/21 22:01:56 gutteridge Exp $
+$NetBSD: UPDATING,v 1.333 2022/10/08 08:21:56 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,12 +21,32 @@ Recent changes:
 
 20220921:
 	Since the kernel version was bumped to 9.99.100, the bootloader
-	must be updated on x86 and efiboot platforms in order to load
-	modules.
+	must be updated on x86 or EFI boot platforms in order to load
+	modules from boot.cfg(5) or interactively at the bootloader
+	prompt.
 
-	The kernel can still load modules at runtime with no bootloader
-	update.  This will not affect release branches because it only
-	applies to patch numbers >=100.
+	The kernel can still load modules at runtime, with modload(8)
+	or modules.conf(5), with no bootloader update.  This will not
+	affect release branches because it only applies to patch
+	numbers >=100.
+
+	On x86 (i386 or amd64) with BIOS boot, this requires copying a
+	new /usr/mdec/boot to /boot.  You can build this in the destdir
+	by running `$TOOLDIR/bin/nbmake-$ARCH dependall install' in
+	sys/arch/i386/stand.
+
+	On platforms with EFI boot (including x86 with EFI boot), this
+	requires copying a new /usr/mdec/boot*.efi to the EFI/BOOT/
+	directory on the EFI system partition.  The boot*.efi file is:
+
+	aarch64	bootaa64.efi
+	amd64	bootx64.efi
+	arm	bootarm.efi	(32-bit arm)
+	i386	bootx32.efi
+
+	You can build this in the destdir by running
+	`$TOOLDIR/bin/nbmake-$ARCH dependall install' in
+	sys/stand/efiboot/boot*.
 
 20220821:
 	Support for building extsrc/ has been deprecated.
