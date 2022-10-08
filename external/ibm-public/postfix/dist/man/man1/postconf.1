@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postconf.1,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -173,7 +173,7 @@ With \fB\-F\fR, edit the \fBmaster.cf\fR configuration file,
 and replace one or more service fields with new values as
 specified with "\fIservice/type/field=value\fR" on the
 \fBpostconf\fR(1) command line. Currently, the "command"
-field contains the command name and command arguments.  this
+field contains the command name and command arguments.  This
 may change in the near future, so that the "command" field
 contains only the command name, and a new "arguments"
 pseudofield contains the command arguments.
@@ -190,7 +190,8 @@ characters and whitespace on the \fBpostconf\fR(1) command
 line.
 
 The \fB\-e\fR option is no longer needed with Postfix version
-2.8 and later.
+2.8 and later, as it is assumed whenever a value is specified
+(empty or non\-empty).
 .IP \fB\-f\fR
 Fold long lines when printing \fBmain.cf\fR or \fBmaster.cf\fR
 configuration file entries, for human readability.
@@ -210,8 +211,8 @@ fields.
 
 This feature is available with Postfix 2.11 and later.
 .IP \fB\-h\fR
-Show parameter or attribute values without the "\fIname\fR
-= " label that normally precedes the value.
+Show parameter or attribute values without the "\fIname\fR = "
+label that normally precedes the value.
 .IP \fB\-H\fR
 Show parameter or attribute names without the " = \fIvalue\fR"
 that normally follows the name.
@@ -429,12 +430,17 @@ to fold long lines for human readability (Postfix 2.9 and
 later). To show settings that differ from built\-in defaults
 only, use the following bash syntax:
 .nf
-    comm \-23 <(postconf \-n) <(postconf \-d)
+    LANG=C comm \-23 <(postconf \-n) <(postconf \-d)
 .fi
 Replace "\-23" with "\-12" to show settings that duplicate
 built\-in defaults.
 .IP "\fB\-o \fIname=value\fR"
-Override \fBmain.cf\fR parameter settings.
+Override \fBmain.cf\fR parameter settings.  This lets you see
+the effect changing a parameter would have when it is used in
+other configuration parameters, e.g.:
+.nf
+    postconf \-x \-o stress=yes
+.fi
 
 This feature is available with Postfix 2.10 and later.
 .IP \fB\-p\fR

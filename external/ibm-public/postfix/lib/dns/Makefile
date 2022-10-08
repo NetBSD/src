@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/03/18 19:05:22 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2022/10/08 16:12:51 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -17,6 +17,7 @@ dns_rr_filter.c \
 dns_rr_to_pa.c \
 dns_rr_to_sa.c \
 dns_sa_to_rr.c \
+dns_sec.c \
 dns_str_resflags.c \
 dns_strerror.c \
 dns_strrecord.c \

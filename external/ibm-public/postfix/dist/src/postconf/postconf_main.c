@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.3 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -141,7 +141,11 @@ void    pcf_set_parameters(char **name_val_array)
 static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
 				        PCF_PARAM_NODE *node)
 {
+    static VSTRING *exp_buf = 0;
     const char *value;
+
+    if (exp_buf == 0)
+	exp_buf = vstring_alloc(100);
 
     /*
      * Use the default or actual value.
@@ -157,7 +161,7 @@ static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
 	    pcf_print_line(fp, mode, "%s\n", name);
 	} else {
 	    if ((mode & PCF_SHOW_EVAL) != 0 && PCF_RAW_PARAMETER(node) == 0)
-		value = pcf_expand_parameter_value((VSTRING *) 0, mode, value,
+		value = pcf_expand_parameter_value(exp_buf, mode, value,
 						   (PCF_MASTER_ENT *) 0);
 	    if ((mode & PCF_HIDE_NAME) == 0) {
 		pcf_print_line(fp, mode, "%s = %s\n", name, value);

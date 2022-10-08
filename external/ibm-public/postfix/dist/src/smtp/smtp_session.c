@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -231,7 +231,8 @@ void    smtp_session_free(SMTP_SESSION *session)
     smtp_sasl_cleanup(session);
 #endif
 
-    debug_peer_restore();
+    if (session->state->debug_peer_per_nexthop == 0)
+	debug_peer_restore();
     myfree((void *) session);
 }
 

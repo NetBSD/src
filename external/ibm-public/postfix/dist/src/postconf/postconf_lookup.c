@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_lookup.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postconf_lookup.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -43,7 +43,7 @@
 /*
 /*	Arguments:
 /* .IP buf
-/*	Null buffer pointer, or pointer to user-supplied buffer.
+/*	Pointer to user-supplied buffer; must not be null.
 /* .IP mode
 /*	Bit-wise OR of zero or one of the following (other flags
 /*	are ignored):
@@ -160,18 +160,14 @@ char   *pcf_expand_parameter_value(VSTRING *buf, int mode, const char *value,
 				           PCF_MASTER_ENT *local_scope)
 {
     const char *myname = "pcf_expand_parameter_value";
-    static VSTRING *local_buf;
     int     status;
     PCF_EVAL_CTX eval_ctx;
 
     /*
-     * Initialize.
+     * Sanity check.
      */
-    if (buf == 0) {
-	if (local_buf == 0)
-	    local_buf = vstring_alloc(10);
-	buf = local_buf;
-    }
+    if (buf == 0)
+	msg_panic("%s: null buffer pointer", myname);
 
     /*
      * Expand macros recursively.

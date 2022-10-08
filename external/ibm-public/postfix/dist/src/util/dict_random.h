@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_random.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_random.h,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _DICT_RANDOM_H_INCLUDED_
 #define _DICT_RANDOM_H_INCLUDED_
@@ -7,7 +7,7 @@
 /* NAME
 /*	dict_random 3h
 /* SUMMARY
-/*	dictionary manager interface for ramdomized tables
+/*	dictionary manager interface for randomized tables
 /* SYNOPSIS
 /*	#include <dict_random.h>
 /* DESCRIPTION

@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -1149,10 +1149,12 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (edit_resp == 0 && LEN(body_line_buf) > 0)
 		edit_resp = parent->repl_body(parent->chg_context,
 					      MILTER_BODY_LINE,
+					      REC_TYPE_NORM,
 					      body_line_buf);
 	    if (edit_resp == 0)
 		edit_resp = parent->repl_body(parent->chg_context,
 					      MILTER_BODY_END,
+					      /* unused*/ 0,
 					      (VSTRING *) 0);
 	    body_edit_lockout = 1;
 	    vstring_free(body_line_buf);
@@ -1548,6 +1550,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			body_line_buf = vstring_alloc(var_line_limit);
 			edit_resp = parent->repl_body(parent->chg_context,
 						      MILTER_BODY_START,
+						      /* unused */ 0,
 						      (VSTRING *) 0);
 		    }
 		    /* Extract lines from the on-the-wire CRLF format. */
@@ -1561,9 +1564,18 @@ static const char *milter8_event(MILTER8 *milter, int event,
 						 LEN(body_line_buf) - 1);
 			    edit_resp = parent->repl_body(parent->chg_context,
 							  MILTER_BODY_LINE,
+							  REC_TYPE_NORM,
 							  body_line_buf);
 			    VSTRING_RESET(body_line_buf);
 			} else {
+			    /* Preserves \r if not followed by \n. */
+			    if (LEN(body_line_buf) == var_line_limit) {
+				edit_resp = parent->repl_body(parent->chg_context,
+							   MILTER_BODY_LINE,
+							      REC_TYPE_CONT,
+							      body_line_buf);
+				VSTRING_RESET(body_line_buf);
+			    }
 			    VSTRING_ADDCH(body_line_buf, ch);
 			}
 		    }
@@ -2674,7 +2686,7 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 	|| (milter->m.macros != 0
 	    && attr_print(stream, ATTR_FLAG_NONE,
 			  SEND_ATTR_FUNC(milter_macros_print,
-					 (void *) milter->m.macros),
+					 (const void *) milter->m.macros),
 			  ATTR_TYPE_END) != 0)
 	|| (milter->m.macros == 0
 	    && attr_print(stream, ATTR_FLAG_NONE,

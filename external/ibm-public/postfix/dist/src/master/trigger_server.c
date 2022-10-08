@@ -1,4 +1,4 @@
-/*	$NetBSD: trigger_server.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: trigger_server.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -572,7 +572,7 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 
     /*
      * Register higher-level dictionaries and initialize the support for
-     * dynamically-loaded dictionarles.
+     * dynamically-loaded dictionaries.
      */
     mail_dict_init();
 

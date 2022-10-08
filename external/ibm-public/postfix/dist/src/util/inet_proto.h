@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.h,v 1.1.1.2 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: inet_proto.h,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _INET_PROTO_INFO_H_INCLUDED_
 #define _INET_PROTO_INFO_H_INCLUDED_

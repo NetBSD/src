@@ -1,4 +1,4 @@
-.\"	$NetBSD: bounce.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: bounce.8,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH BOUNCE 8 
 .ad
@@ -138,6 +138,16 @@ mail origin classes.
 Available in Postfix 3.3 and later:
 .IP "\fBservice_name (read\-only)\fR"
 The master.cf service name of a Postfix daemon process.
+.PP
+Available in Postfix 3.6 and later:
+.IP "\fBenable_threaded_bounces (no)\fR"
+Enable non\-delivery, success, and delay notifications that link
+to the original message by including a References: and In\-Reply\-To:
+header with the original Message\-ID value.
+.PP
+Available in Postfix 3.7 and later:
+.IP "\fBheader_from_format (standard)\fR"
+The format of the Postfix\-generated \fBFrom:\fR header.
 .SH "FILES"
 .na
 .nf

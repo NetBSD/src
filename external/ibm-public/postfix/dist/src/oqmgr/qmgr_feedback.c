@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_feedback.c,v 1.1.1.2 2022/10/08 16:09:08 christos Exp $	*/
+/*	$NetBSD: qmgr_feedback.c,v 1.2 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME

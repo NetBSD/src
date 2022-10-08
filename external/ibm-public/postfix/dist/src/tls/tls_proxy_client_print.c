@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_print.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_print.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,36 +9,36 @@
 /*	#include <tls_proxy.h>
 /*
 /*	int	tls_proxy_client_param_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
-/*	void	*ptr;
+/*	const void *ptr;
 /*
 /*	int	tls_proxy_client_init_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
-/*	void	*ptr;
+/*	const void *ptr;
 /*
 /*	int	tls_proxy_client_start_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
-/*	void	*ptr;
+/*	const void *ptr;
 /* DESCRIPTION
 /*	tls_proxy_client_param_print() writes a TLS_CLIENT_PARAMS structure to
 /*	the named stream using the specified attribute print routine.
 /*	tls_proxy_client_param_print() is meant to be passed as a call-back to
 /*	attr_print(), thusly:
 /*
-/*	SEND_ATTR_FUNC(tls_proxy_client_param_print, (void *) param), ...
+/*	SEND_ATTR_FUNC(tls_proxy_client_param_print, (const void *) param), ...
 /*
 /*	tls_proxy_client_init_print() writes a full TLS_CLIENT_INIT_PROPS
 /*	structure to the named stream using the specified attribute
 /*	print routine. tls_proxy_client_init_print() is meant to
 /*	be passed as a call-back to attr_print(), thusly:
 /*
-/*	SEND_ATTR_FUNC(tls_proxy_client_init_print, (void *) init_props), ...
+/*	SEND_ATTR_FUNC(tls_proxy_client_init_print, (const void *) init_props), ...
 /*
 /*	tls_proxy_client_start_print() writes a TLS_CLIENT_START_PROPS
 /*	structure, without stream or file descriptor members, to
@@ -46,7 +46,7 @@
 /*	tls_proxy_client_start_print() is meant to be passed as a
 /*	call-back to attr_print(), thusly:
 /*
-/*	SEND_ATTR_FUNC(tls_proxy_client_start_print, (void *) start_props), ...
+/*	SEND_ATTR_FUNC(tls_proxy_client_start_print, (const void *) start_props), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -87,10 +87,10 @@
 
 /* tls_proxy_client_param_print - send TLS_CLIENT_PARAMS over stream */
 
-int     tls_proxy_client_param_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-				             int flags, void *ptr)
+int     tls_proxy_client_param_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
+				             int flags, const void *ptr)
 {
-    TLS_CLIENT_PARAMS *params = (TLS_CLIENT_PARAMS *) ptr;
+    const TLS_CLIENT_PARAMS *params = (const TLS_CLIENT_PARAMS *) ptr;
     int     ret;
 
     if (msg_verbose)
@@ -136,10 +136,10 @@ int     tls_proxy_client_param_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
 
 /* tls_proxy_client_init_print - send TLS_CLIENT_INIT_PROPS over stream */
 
-int     tls_proxy_client_init_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-				            int flags, void *ptr)
+int     tls_proxy_client_init_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
+				            int flags, const void *ptr)
 {
-    TLS_CLIENT_INIT_PROPS *props = (TLS_CLIENT_INIT_PROPS *) ptr;
+    const TLS_CLIENT_INIT_PROPS *props = (const TLS_CLIENT_INIT_PROPS *) ptr;
     int     ret;
 
     if (msg_verbose)
@@ -182,108 +182,18 @@ int     tls_proxy_client_init_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
     return (ret);
 }
 
-/* tls_proxy_client_certs_print - send x509 certificates over stream */
-
-static int tls_proxy_client_certs_print(ATTR_PRINT_MASTER_FN print_fn,
-				          VSTREAM *fp, int flags, void *ptr)
-{
-    TLS_CERTS *tls_certs = (TLS_CERTS *) ptr;
-    TLS_CERTS *tp;
-    int     count;
-    int     ret;
-
-    for (tp = tls_certs, count = 0; tp != 0; tp = tp->next, count++)
-	 /* void */ ;
-    if (msg_verbose)
-	msg_info("tls_proxy_client_certs_print count=%d", count);
-
-    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-		   SEND_ATTR_INT(TLS_ATTR_COUNT, count),
-		   ATTR_TYPE_END);
-
-    if (ret == 0 && count > 0) {
-	VSTRING *buf = vstring_alloc(100);
-	int     n;
-
-	for (tp = tls_certs, n = 0; ret == 0 && n < count; tp = tp->next, n++) {
-	    size_t  len = i2d_X509(tp->cert, (unsigned char **) 0);
-	    unsigned char *bp;
-
-	    VSTRING_RESET(buf);
-	    VSTRING_SPACE(buf, len);
-	    bp = (unsigned char *) STR(buf);
-	    i2d_X509(tp->cert, &bp);
-	    if ((char *) bp - STR(buf) != len)
-		msg_panic("i2d_X509 failed to encode certificate");
-	    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-			   SEND_ATTR_DATA(TLS_ATTR_CERT, LEN(buf), STR(buf)),
-			   ATTR_TYPE_END);
-	}
-	vstring_free(buf);
-    }
-    /* Do not flush the stream. */
-    if (msg_verbose)
-	msg_info("tls_proxy_client_certs_print ret=%d", count);
-    return (ret);
-}
-
-/* tls_proxy_client_pkeys_print - send public keys over stream */
-
-static int tls_proxy_client_pkeys_print(ATTR_PRINT_MASTER_FN print_fn,
-				          VSTREAM *fp, int flags, void *ptr)
-{
-    TLS_PKEYS *tls_pkeys = (TLS_PKEYS *) ptr;
-    TLS_PKEYS *tp;
-    int     count;
-    int     ret;
-
-    for (tp = tls_pkeys, count = 0; tp != 0; tp = tp->next, count++)
-	 /* void */ ;
-    if (msg_verbose)
-	msg_info("tls_proxy_client_pkeys_print count=%d", count);
-
-    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-		   SEND_ATTR_INT(TLS_ATTR_COUNT, count),
-		   ATTR_TYPE_END);
-
-    if (ret == 0 && count > 0) {
-	VSTRING *buf = vstring_alloc(100);
-	int     n;
-
-	for (tp = tls_pkeys, n = 0; ret == 0 && n < count; tp = tp->next, n++) {
-	    size_t  len = i2d_PUBKEY(tp->pkey, (unsigned char **) 0);
-	    unsigned char *bp;
-
-	    VSTRING_RESET(buf);
-	    VSTRING_SPACE(buf, len);
-	    bp = (unsigned char *) STR(buf);
-	    i2d_PUBKEY(tp->pkey, &bp);
-	    if ((char *) bp - STR(buf) != len)
-		msg_panic("i2d_PUBKEY failed to encode public key");
-	    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-			   SEND_ATTR_DATA(TLS_ATTR_PKEY, LEN(buf), STR(buf)),
-			   ATTR_TYPE_END);
-	}
-	vstring_free(buf);
-    }
-    /* Do not flush the stream. */
-    if (msg_verbose)
-	msg_info("tls_proxy_client_pkeys_print ret=%d", count);
-    return (ret);
-}
-
 /* tls_proxy_client_tlsa_print - send TLS_TLSA over stream */
 
-static int tls_proxy_client_tlsa_print(ATTR_PRINT_MASTER_FN print_fn,
-				          VSTREAM *fp, int flags, void *ptr)
+static int tls_proxy_client_tlsa_print(ATTR_PRINT_COMMON_FN print_fn,
+			            VSTREAM *fp, int flags, const void *ptr)
 {
-    TLS_TLSA *tls_tlsa = (TLS_TLSA *) ptr;
-    TLS_TLSA *tp;
+    const TLS_TLSA *head = (const TLS_TLSA *) ptr;
+    const TLS_TLSA *tp;
     int     count;
     int     ret;
 
-    for (tp = tls_tlsa, count = 0; tp != 0; tp = tp->next, count++)
-	 /* void */ ;
+    for (tp = head, count = 0; tp != 0; tp = tp->next)
+	++count;
     if (msg_verbose)
 	msg_info("tls_proxy_client_tlsa_print count=%d", count);
 
@@ -291,19 +201,14 @@ static int tls_proxy_client_tlsa_print(ATTR_PRINT_MASTER_FN print_fn,
 		   SEND_ATTR_INT(TLS_ATTR_COUNT, count),
 		   ATTR_TYPE_END);
 
-    if (ret == 0 && count > 0) {
-	int     n;
+    for (tp = head; ret == 0 && tp != 0; tp = tp->next)
+	ret = print_fn(fp, flags | ATTR_FLAG_MORE,
+		       SEND_ATTR_INT(TLS_ATTR_USAGE, tp->usage),
+		       SEND_ATTR_INT(TLS_ATTR_SELECTOR, tp->selector),
+		       SEND_ATTR_INT(TLS_ATTR_MTYPE, tp->mtype),
+		       SEND_ATTR_DATA(TLS_ATTR_DATA, tp->length, tp->data),
+		       ATTR_TYPE_END);
 
-	for (tp = tls_tlsa, n = 0; ret == 0 && n < count; tp = tp->next, n++) {
-	    ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-			   SEND_ATTR_STR(TLS_ATTR_MDALG, tp->mdalg),
-			   SEND_ATTR_FUNC(argv_attr_print,
-					  (void *) tp->certs),
-			   SEND_ATTR_FUNC(argv_attr_print,
-					  (void *) tp->pkeys),
-			   ATTR_TYPE_END);
-	}
-    }
     /* Do not flush the stream. */
     if (msg_verbose)
 	msg_info("tls_proxy_client_tlsa_print ret=%d", count);
@@ -312,10 +217,10 @@ static int tls_proxy_client_tlsa_print(ATTR_PRINT_MASTER_FN print_fn,
 
 /* tls_proxy_client_dane_print - send TLS_DANE over stream */
 
-static int tls_proxy_client_dane_print(ATTR_PRINT_MASTER_FN print_fn,
-				          VSTREAM *fp, int flags, void *ptr)
+static int tls_proxy_client_dane_print(ATTR_PRINT_COMMON_FN print_fn,
+			            VSTREAM *fp, int flags, const void *ptr)
 {
-    TLS_DANE *dane = (TLS_DANE *) ptr;
+    const TLS_DANE *dane = (const TLS_DANE *) ptr;
     int     ret;
 
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
@@ -325,19 +230,12 @@ static int tls_proxy_client_dane_print(ATTR_PRINT_MASTER_FN print_fn,
 	msg_info("tls_proxy_client_dane_print dane=%d", dane != 0);
 
     if (ret == 0 && dane != 0) {
+	/* Send the base_domain and RRs, we don't need the other fields */
 	ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-		       SEND_ATTR_FUNC(tls_proxy_client_tlsa_print,
-				      (void *) dane->ta),
-		       SEND_ATTR_FUNC(tls_proxy_client_tlsa_print,
-				      (void *) dane->ee),
-		       SEND_ATTR_FUNC(tls_proxy_client_certs_print,
-				      (void *) dane->certs),
-		       SEND_ATTR_FUNC(tls_proxy_client_pkeys_print,
-				      (void *) dane->pkeys),
 		       SEND_ATTR_STR(TLS_ATTR_DOMAIN,
 				     STRING_OR_EMPTY(dane->base_domain)),
-		       SEND_ATTR_INT(TLS_ATTR_FLAGS, dane->flags),
-		       SEND_ATTR_LONG(TLS_ATTR_EXP, dane->expires),
+		       SEND_ATTR_FUNC(tls_proxy_client_tlsa_print,
+				      (const void *) dane->tlsa),
 		       ATTR_TYPE_END);
     }
     /* Do not flush the stream. */
@@ -348,10 +246,10 @@ static int tls_proxy_client_dane_print(ATTR_PRINT_MASTER_FN print_fn,
 
 /* tls_proxy_client_start_print - send TLS_CLIENT_START_PROPS over stream */
 
-int     tls_proxy_client_start_print(ATTR_PRINT_MASTER_FN print_fn,
-				          VSTREAM *fp, int flags, void *ptr)
+int     tls_proxy_client_start_print(ATTR_PRINT_COMMON_FN print_fn,
+			            VSTREAM *fp, int flags, const void *ptr)
 {
-    TLS_CLIENT_START_PROPS *props = (TLS_CLIENT_START_PROPS *) ptr;
+    const TLS_CLIENT_START_PROPS *props = (const TLS_CLIENT_START_PROPS *) ptr;
     int     ret;
 
     if (msg_verbose)
@@ -381,11 +279,11 @@ int     tls_proxy_client_start_print(ATTR_PRINT_MASTER_FN print_fn,
 		   SEND_ATTR_STR(TLS_ATTR_CIPHER_EXCLUSIONS,
 				 STRING_OR_EMPTY(props->cipher_exclusions)),
 		   SEND_ATTR_FUNC(argv_attr_print,
-				  (void *) props->matchargv),
+				  (const void *) props->matchargv),
 		   SEND_ATTR_STR(TLS_ATTR_MDALG,
 				 STRING_OR_EMPTY(props->mdalg)),
 		   SEND_ATTR_FUNC(tls_proxy_client_dane_print,
-				  (void *) props->dane),
+				  (const void *) props->dane),
 		   ATTR_TYPE_END);
     /* Do not flush the stream. */
     if (msg_verbose)

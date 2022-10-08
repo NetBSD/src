@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.5 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -10,8 +10,8 @@
 /* DESCRIPTION
 /*	The \fBtlsproxy\fR(8) server implements a two-way TLS proxy. It
 /*	is used by the \fBpostscreen\fR(8) server to talk SMTP-over-TLS
-/*	with remote SMTP clients that are not whitelisted (including
-/*	clients whose whitelist status has expired), and by the
+/*	with remote SMTP clients that are not allowlisted (including
+/*	clients whose allowlist status has expired), and by the
 /*	\fBsmtp\fR(8) client to support TLS connection reuse, but it
 /*	should also work for non-SMTP protocols.
 /*
@@ -274,12 +274,6 @@
 /*	value.
 /* .IP "\fBtlsproxy_client_scert_verifydepth ($smtp_tls_scert_verifydepth)\fR"
 /*	The verification depth for remote TLS server certificates.
-/* .IP "\fBtlsproxy_client_security_level ($smtp_tls_security_level)\fR"
-/*	The default TLS security level for the Postfix \fBtlsproxy\fR(8)
-/*	client.
-/* .IP "\fBtlsproxy_client_policy_maps ($smtp_tls_policy_maps)\fR"
-/*	Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
-/*	security policy by next-hop destination.
 /* .IP "\fBtlsproxy_client_use_tls ($smtp_use_tls)\fR"
 /*	Opportunistic mode: use TLS when a remote server announces TLS
 /*	support.
@@ -289,6 +283,22 @@
 /*	Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
 /*	usage policy by next-hop destination and by remote TLS server
 /*	hostname.
+/* .PP
+/*	Available in Postfix version 3.4-3.6:
+/* .IP "\fBtlsproxy_client_level ($smtp_tls_security_level)\fR"
+/*	The default TLS security level for the Postfix \fBtlsproxy\fR(8)
+/*	client.
+/* .IP "\fBtlsproxy_client_policy ($smtp_tls_policy_maps)\fR"
+/*	Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
+/*	security policy by next-hop destination.
+/* .PP
+/*	Available in Postfix version 3.7 and later:
+/* .IP "\fBtlsproxy_client_security_level ($smtp_tls_security_level)\fR"
+/*	The default TLS security level for the Postfix \fBtlsproxy\fR(8)
+/*	client.
+/* .IP "\fBtlsproxy_client_policy_maps ($smtp_tls_policy_maps)\fR"
+/*	Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
+/*	security policy by next-hop destination.
 /* OBSOLETE STARTTLS SUPPORT CONTROLS
 /* .ad
 /* .fi
@@ -300,6 +310,11 @@
 /* .IP "\fBtlsproxy_enforce_tls ($smtpd_enforce_tls)\fR"
 /*	Mandatory TLS: announce STARTTLS support to remote SMTP clients, and
 /*	require that clients use TLS encryption.
+/* .IP "\fBtlsproxy_client_use_tls ($smtp_use_tls)\fR"
+/*	Opportunistic mode: use TLS when a remote server announces TLS
+/*	support.
+/* .IP "\fBtlsproxy_client_enforce_tls ($smtp_enforce_tls)\fR"
+/*	Enforcement mode: require that SMTP servers use TLS encryption.
 /* RESOURCE CONTROLS
 /* .ad
 /* .fi
@@ -925,7 +940,7 @@ static void tlsp_strategy(TLSP_STATE *state)
      * block. In practice, postscreen(8) limits the number of client
      * commands, and thus postscreen(8)'s output will fit in a kernel buffer.
      * A remote SMTP server is not supposed to flood the local SMTP client
-     * with massive replies; it it does, then the local SMTP client should
+     * with massive replies; if it does, then the local SMTP client should
      * deal with it.
      */
     if (NBBIO_WRITE_PEND(plaintext_buf) > 0) {
@@ -973,7 +988,7 @@ static void tlsp_ciphertext_event(int event, void *context)
     TLSP_STATE *state = (TLSP_STATE *) context;
 
     /*
-     * Without a TLS quivalent of the NBBIO layer, we must decode the events
+     * Without a TLS equivalent of the NBBIO layer, we must decode the events
      * ourselves and do the ciphertext I/O. Then, we can decide if we want to
      * read or write more ciphertext.
      */
@@ -998,13 +1013,7 @@ static int tlsp_client_start_pre_handshake(TLSP_STATE *state)
 {
     state->client_start_props->ctx = state->appl_state;
     state->client_start_props->fd = state->ciphertext_fd;
-    /* These predicates and warning belong inside tls_client_start(). */
-    if (!TLS_DANE_BASED(state->client_start_props->tls_level)
-	|| tls_dane_avail())
-	state->tls_context = tls_client_start(state->client_start_props);
-    else
-	msg_warn("%s: DANE requested, but not available",
-		 state->client_start_props->namaddr);
+    state->tls_context = tls_client_start(state->client_start_props);
     if (state->tls_context != 0)
 	return (TLSP_STAT_OK);
 
@@ -1073,7 +1082,7 @@ static int tlsp_server_start_pre_handshake(TLSP_STATE *state)
     /*
      * XXX Do we care about TLS session rate limits? Good postscreen(8)
      * clients will occasionally require the tlsproxy to renew their
-     * whitelist status, but bad clients hammering the server can suck up
+     * allowlist status, but bad clients hammering the server can suck up
      * lots of CPU cycles. Per-client concurrency limits in postscreen(8)
      * will divert only naive security "researchers".
      */
@@ -1196,16 +1205,13 @@ static void tlsp_log_config_diff(const char *server_cfg, const char *client_cfg)
 /* tlsp_client_init - initialize a TLS client engine */
 
 static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
-				          TLS_CLIENT_INIT_PROPS *init_props,
-					        int dane_based)
+				          TLS_CLIENT_INIT_PROPS *init_props)
 {
     TLS_APPL_STATE *appl_state;
     VSTRING *param_buf;
     char   *param_key;
     VSTRING *init_buf;
     char   *init_key;
-    VSTRING *init_buf_for_hashing;
-    char   *init_key_for_hashing;
     int     log_hints = 0;
 
     /*
@@ -1217,21 +1223,13 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
      * First, compute the TLS_APPL_STATE cache lookup key. Save a copy of the
      * pre-jail request TLS_CLIENT_PARAMS and TLSPROXY_CLIENT_INIT_PROPS
      * settings, so that we can detect post-jail requests that do not match.
-     * 
-     * Workaround: salt the hash-table key with DANE on/off info. This avoids
-     * cross-talk between DANE and non-DANE sessions. Postfix DANE support
-     * modifies SSL_CTX to override certificate verification because there is
-     * no other way to do this before OpenSSL 1.1.0.
      */
     param_buf = vstring_alloc(100);
-    param_key = tls_proxy_client_param_with_names_to_string(
-						     param_buf, tls_params);
+    param_key = tls_proxy_client_param_serialize(attr_print_plain, param_buf,
+						 tls_params);
     init_buf = vstring_alloc(100);
-    init_key = tls_proxy_client_init_with_names_to_string(
-						      init_buf, init_props);
-    init_buf_for_hashing = vstring_alloc(100);
-    init_key_for_hashing = STR(vstring_sprintf(init_buf_for_hashing, "%s%d\n",
-					       init_key, dane_based));
+    init_key = tls_proxy_client_init_serialize(attr_print_plain, init_buf,
+					       init_props);
     if (tlsp_pre_jail_done == 0) {
 	if (tlsp_pre_jail_client_param_key == 0
 	    || tlsp_pre_jail_client_init_key == 0) {
@@ -1261,7 +1259,7 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
      * Look up the cached TLS_APPL_STATE for this tls_client_init request.
      */
     if ((appl_state = (TLS_APPL_STATE *)
-	 htable_find(tlsp_client_app_cache, init_key_for_hashing)) == 0) {
+	 htable_find(tlsp_client_app_cache, init_key)) == 0) {
 
 	/*
 	 * Before creating a TLS_APPL_STATE instance, log a warning if a
@@ -1312,7 +1310,7 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
      */
     if (appl_state == 0
 	&& (appl_state = tls_client_init(init_props)) != 0) {
-	(void) htable_enter(tlsp_client_app_cache, init_key_for_hashing,
+	(void) htable_enter(tlsp_client_app_cache, init_key,
 			    (void *) appl_state);
 
 	/*
@@ -1326,7 +1324,6 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
 			 SSL_MODE_ENABLE_PARTIAL_WRITE
 			 | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     }
-    vstring_free(init_buf_for_hashing);
     vstring_free(init_buf);
     vstring_free(param_buf);
     return (appl_state);
@@ -1376,6 +1373,12 @@ static void tlsp_get_request_event(int event, void *context)
     /*
      * Receive the initial request attributes. Receive the remainder after we
      * figure out what role we are expected to play.
+     * 
+     * The tlsproxy server does not enforce per-request read/write deadlines or
+     * minimal data rates. Instead, the tlsproxy server relies on the
+     * tlsproxy client to enforce these context-dependent limits. When a
+     * tlsproxy client decides to time out, it will close its end of the
+     * tlsproxy stream, and the tlsproxy server will handle that immediately.
      */
     if (event != EVENT_READ
 	|| attr_scan(plaintext_stream, ATTR_FLAG_STRICT,
@@ -1428,8 +1431,7 @@ static void tlsp_get_request_event(int event, void *context)
 	    return;
 	}
 	state->appl_state = tlsp_client_init(state->tls_params,
-					     state->client_init_props,
-		      TLS_DANE_BASED(state->client_start_props->tls_level));
+					     state->client_init_props);
 	ready = state->appl_state != 0;
 	break;
     case TLS_PROXY_FLAG_ROLE_SERVER:
@@ -1490,6 +1492,12 @@ static void tlsp_service(VSTREAM *plaintext_stream,
 		    CA_VSTREAM_CTL_PATH("plaintext"),
 		    CA_VSTREAM_CTL_TIMEOUT(5),
 		    CA_VSTREAM_CTL_END);
+
+    (void) attr_print(plaintext_stream, ATTR_FLAG_NONE,
+		   SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TLSPROXY),
+		      ATTR_TYPE_END);
+    if (vstream_fflush(plaintext_stream) != 0)
+	msg_warn("write %s attribute: %m", MAIL_ATTR_PROTO);
 
     /*
      * Receive postscreen's remote SMTP client address/port and socket.
@@ -1716,7 +1724,6 @@ static void pre_jail_init_client(void)
     if (clnt_use_tls || var_tlsp_clnt_per_site[0] || var_tlsp_clnt_policy[0]) {
 	TLS_CLIENT_PARAMS tls_params;
 	TLS_CLIENT_INIT_PROPS init_props;
-	int     dane_based_mode;
 
 	tls_pre_jail_init(TLS_ROLE_CLIENT);
 
@@ -1743,11 +1750,8 @@ static void pre_jail_init_client(void)
 				    CAfile = var_tlsp_clnt_CAfile,
 				    CApath = var_tlsp_clnt_CApath,
 				    mdalg = var_tlsp_clnt_fpt_dgst);
-	for (dane_based_mode = 0; dane_based_mode < 2; dane_based_mode++) {
-	    if (tlsp_client_init(&tls_params, &init_props,
-				 dane_based_mode) == 0)
-		msg_warn("TLS client initialization failed");
-	}
+	if (tlsp_client_init(&tls_params, &init_props) == 0)
+	    msg_warn("TLS client initialization failed");
     }
 }
 

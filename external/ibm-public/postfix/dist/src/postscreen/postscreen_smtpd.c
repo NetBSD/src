@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_smtpd.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen_smtpd.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -42,7 +42,7 @@
 /*	at any stage.
 /*
 /*	No support is announced for AUTH, XCLIENT or XFORWARD.
-/*	Clients that need this should be whitelisted or should talk
+/*	Clients that need this should be allowlisted or should talk
 /*	directly to the submission service.
 /*
 /*	The engine rejects RCPT TO and VRFY commands with the
@@ -215,7 +215,7 @@ static void psc_smtpd_read_event(int, void *);
  /*
   * Encapsulation. The STARTTLS, EHLO and AUTH command handlers temporarily
   * suspend SMTP command events, send an asynchronous proxy request, and
-  * resume SMTP command events after receiving the asynchrounous proxy
+  * resume SMTP command events after receiving the asynchronous proxy
   * response (the EHLO handler must asynchronously talk to the auth server
   * before it can announce the SASL mechanism list; the list can depend on
   * the client IP address and on the presence on TLS encryption).
@@ -639,7 +639,7 @@ static int psc_bdat_cmd(PSC_STATE *state, char *args)
     else if (state->sender == 0)
 	PSC_CLEAR_EVENT_DROP_SESSION_STATE(state,
 					   psc_smtpd_time_event,
-				  "554 5.5.1 Error: need RCPT command\r\n");
+				  "554 5.5.1 Error: need MAIL command\r\n");
     else
 	PSC_CLEAR_EVENT_DROP_SESSION_STATE(state,
 					   psc_smtpd_time_event,
@@ -904,7 +904,7 @@ static void psc_smtpd_read_event(int event, void *context)
 		    case PSC_ACT_IGNORE:
 			PSC_UNFAIL_SESSION_STATE(state,
 						 PSC_STATE_FLAG_BARLF_FAIL);
-			/* Temporarily whitelist until something expires. */
+			/* Temporarily allowlist until something expires. */
 			PSC_PASS_SESSION_STATE(state, "bare newline test",
 					       PSC_STATE_FLAG_BARLF_PASS);
 			expire_time[PSC_TINDX_BARLF] = event_time() + psc_min_ttl;
@@ -931,11 +931,18 @@ static void psc_smtpd_read_event(int event, void *context)
 	}
 
 	/*
+	 * Avoid complaints from Postfix maps about malformed content.
+	 */
+#define PSC_BAD_UTF8(str, len) \
+	(var_smtputf8_enable && !valid_utf8_string((str), (len)))
+
+	/*
 	 * Terminate the command buffer, and apply the last-resort command
 	 * editing workaround.
 	 */
 	VSTRING_TERMINATE(state->cmd_buffer);
-	if (psc_cmd_filter != 0) {
+	if (psc_cmd_filter != 0 && !PSC_BAD_UTF8(STR(state->cmd_buffer),
+						 LEN(state->cmd_buffer))) {
 	    const char *cp;
 
 	    for (cp = STR(state->cmd_buffer); *cp && IS_SPACE_TAB(*cp); cp++)
@@ -1002,6 +1009,7 @@ static void psc_smtpd_read_event(int event, void *context)
 	if ((state->flags & PSC_STATE_MASK_NSMTP_TODO_SKIP)
 	    == PSC_STATE_FLAG_NSMTP_TODO && cmdp->name == 0
 	    && (is_header(command)
+		|| PSC_BAD_UTF8(command, strlen(command))
 	/* Ignore forbid_cmds lookup errors. Non-critical feature. */
 		|| (*var_psc_forbid_cmds
 		    && string_list_match(psc_forbid_cmds, command)))) {
@@ -1030,7 +1038,7 @@ static void psc_smtpd_read_event(int event, void *context)
 	    case PSC_ACT_IGNORE:
 		PSC_UNFAIL_SESSION_STATE(state,
 					 PSC_STATE_FLAG_NSMTP_FAIL);
-		/* Temporarily whitelist until something else expires. */
+		/* Temporarily allowlist until something else expires. */
 		PSC_PASS_SESSION_STATE(state, "non-smtp test",
 				       PSC_STATE_FLAG_NSMTP_PASS);
 		expire_time[PSC_TINDX_NSMTP] = event_time() + psc_min_ttl;
@@ -1068,7 +1076,7 @@ static void psc_smtpd_read_event(int event, void *context)
 	    case PSC_ACT_IGNORE:
 		PSC_UNFAIL_SESSION_STATE(state,
 					 PSC_STATE_FLAG_PIPEL_FAIL);
-		/* Temporarily whitelist until something else expires. */
+		/* Temporarily allowlist until something else expires. */
 		PSC_PASS_SESSION_STATE(state, "pipelining test",
 				       PSC_STATE_FLAG_PIPEL_PASS);
 		expire_time[PSC_TINDX_PIPEL] = event_time() + psc_min_ttl;

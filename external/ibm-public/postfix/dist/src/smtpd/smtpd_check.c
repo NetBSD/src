@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.4 2020/05/25 23:47:14 christos Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.5 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -399,7 +399,7 @@ static STRING_LIST *smtpd_acl_perm_log;
   * restriction must defer immediately when lookup fails, otherwise incorrect
   * results happen with:
   * 
-  * reject_unknown_client, hostname-based white-list, reject
+  * reject_unknown_client, hostname-based allow-list, reject
   * 
   * XXX With warn_if_reject, don't raise the defer_if_permit flag when a
   * reject-style restriction fails. Instead, log the warning for the
@@ -1609,6 +1609,11 @@ static int permit_tls_clientcerts(SMTPD_STATE *state, int permit_all_certs)
 	int     i;
 	char   *prints[2];
 
+	if (warn_compat_break_smtpd_tls_fpt_dgst)
+	    msg_info("using backwards-compatible default setting "
+		     VAR_SMTPD_TLS_FPT_DGST "=md5 to compute certificate "
+		     "fingerprints");
+
 	prints[0] = state->tls_context->peer_cert_fprint;
 	prints[1] = state->tls_context->peer_pkey_fprint;
 
@@ -1817,7 +1822,8 @@ static int all_auth_mx_addr(SMTPD_STATE *state, char *host,
 			 "%s as mail exchanger: %s",
 			 reply_name, reply_class, host,
 			 dns_status == DNS_POLICY ?
-			 "DNS reply filter policy" : dns_strerror(h_errno));
+			 "DNS reply filter policy" :
+			 dns_strerror(dns_get_h_errno()));
 	return (NOPE);
     }
     for (rr = addr_list; rr != 0; rr = rr->next) {
@@ -1865,7 +1871,7 @@ static int has_my_addr(SMTPD_STATE *state, const char *host,
     struct addrinfo *res0;
     int     aierr;
     MAI_HOSTADDR_STR hostaddr;
-    INET_PROTO_INFO *proto_info = inet_proto_info();
+    const INET_PROTO_INFO *proto_info = inet_proto_info();
 
     if (msg_verbose)
 	msg_info("%s: host %s", myname, host);
@@ -2061,8 +2067,10 @@ static int permit_mx_backup(SMTPD_STATE *state, const char *recipient,
 			     450, "4.4.4",
 			     "<%s>: %s rejected: Unable to look up mail "
 			     "exchanger information: %s",
-			 reply_name, reply_class, dns_status == DNS_POLICY ?
-			 "DNS reply filter policy" : dns_strerror(h_errno));
+			     reply_name, reply_class,
+			     dns_status == DNS_POLICY ?
+			     "DNS reply filter policy" :
+			     dns_strerror(dns_get_h_errno()));
 	return (SMTPD_CHECK_DUNNO);
     }
 
@@ -2976,7 +2984,7 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
     struct addrinfo *res0;
     struct addrinfo *res;
     int     status;
-    INET_PROTO_INFO *proto_info;
+    const INET_PROTO_INFO *proto_info;
 
     /*
      * Sanity check.
@@ -3082,8 +3090,10 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
 	}
 	if (dns_status != DNS_OK) {
 	    msg_warn("Unable to look up %s host for %s: %s", dns_strtype(type),
-	     domain && domain[1] ? domain : name, dns_status == DNS_POLICY ?
-		     "DNS reply filter policy" : dns_strerror(h_errno));
+		     domain && domain[1] ? domain : name,
+		     dns_status == DNS_POLICY ?
+		     "DNS reply filter policy" :
+		     dns_strerror(dns_get_h_errno()));
 	    return (SMTPD_CHECK_DUNNO);
 	}
     }
@@ -3193,9 +3203,17 @@ static int check_ccert_access(SMTPD_STATE *state, const char *acl_spec,
 	    switch (*action) {
 	    case SMTPD_ACL_SEARCH_CODE_CERT_FPRINT:
 		match_this = state->tls_context->peer_cert_fprint;
+		if (warn_compat_break_smtpd_tls_fpt_dgst)
+		    msg_info("using backwards-compatible default setting "
+			     VAR_SMTPD_TLS_FPT_DGST "=md5 to compute "
+			     "certificate fingerprints");
 		break;
 	    case SMTPD_ACL_SEARCH_CODE_PKEY_FPRINT:
 		match_this = state->tls_context->peer_pkey_fprint;
+		if (warn_compat_break_smtpd_tls_fpt_dgst)
+		    msg_info("using backwards-compatible default setting "
+			     VAR_SMTPD_TLS_FPT_DGST "=md5 to compute "
+			     "certificate fingerprints");
 		break;
 	    default:
 		known_action = str_name_code(search_actions, *action);
@@ -3662,7 +3680,7 @@ static const SMTPD_RBL_STATE *find_dnsxl_addr(SMTPD_STATE *state,
     return (rbl);
 }
 
-/* reject_rbl_addr - reject address in real-time blackhole list */
+/* reject_rbl_addr - reject address in DNS deny list */
 
 static int reject_rbl_addr(SMTPD_STATE *state, const char *rbl_domain,
 			           const char *addr, const char *reply_class)
@@ -3692,7 +3710,7 @@ static int permit_dnswl_addr(SMTPD_STATE *state, const char *dnswl_domain,
     if (msg_verbose)
 	msg_info("%s: %s", myname, addr);
 
-    /* Safety: don't whitelist unauthorized recipients. */
+    /* Safety: don't allowlist unauthorized recipients. */
     if (strcmp(state->where, SMTPD_CMD_RCPT) == 0 && state->recipient != 0
       && permit_auth_destination(state, state->recipient) != SMTPD_CHECK_OK)
 	return (SMTPD_CHECK_DUNNO);
@@ -3716,7 +3734,7 @@ static int permit_dnswl_addr(SMTPD_STATE *state, const char *dnswl_domain,
     }
 }
 
-/* find_dnsxl_domain - reject if domain in real-time blackhole list */
+/* find_dnsxl_domain - reject if domain in DNS deny list */
 
 static const SMTPD_RBL_STATE *find_dnsxl_domain(SMTPD_STATE *state,
 			           const char *rbl_domain, const char *what)
@@ -3781,7 +3799,7 @@ static const SMTPD_RBL_STATE *find_dnsxl_domain(SMTPD_STATE *state,
     return (rbl);
 }
 
-/* reject_rbl_domain - reject if domain in real-time blackhole list */
+/* reject_rbl_domain - reject if domain in DNS deny list */
 
 static int reject_rbl_domain(SMTPD_STATE *state, const char *rbl_domain,
 			          const char *what, const char *reply_class)
@@ -3811,7 +3829,7 @@ static int permit_dnswl_domain(SMTPD_STATE *state, const char *dnswl_domain,
     if (msg_verbose)
 	msg_info("%s: %s", myname, what);
 
-    /* Safety: don't whitelist unauthorized recipients. */
+    /* Safety: don't allowlist unauthorized recipients. */
     if (strcmp(state->where, SMTPD_CMD_RCPT) == 0 && state->recipient != 0
       && permit_auth_destination(state, state->recipient) != SMTPD_CHECK_OK)
 	return (SMTPD_CHECK_DUNNO);
@@ -3835,7 +3853,7 @@ static int permit_dnswl_domain(SMTPD_STATE *state, const char *dnswl_domain,
     }
 }
 
-/* reject_maps_rbl - reject if client address in real-time blackhole list */
+/* reject_maps_rbl - reject if client address in DNS deny list */
 
 static int reject_maps_rbl(SMTPD_STATE *state)
 {
@@ -3955,6 +3973,7 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 		            const char *reply_name, const char *reply_class,
 				        const char *def_acl)
 {
+    static int warned = 0;
     static VSTRING *action = 0;
     SMTPD_POLICY_CLNT *policy_clnt;
 
@@ -3996,6 +4015,23 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 
     ENCODE_CN(subject, subject_buf, state->tls_context->peer_CN);
     ENCODE_CN(issuer, issuer_buf, state->tls_context->issuer_CN);
+
+    /*
+     * XXX: Too noisy to warn for each policy lookup, especially because we
+     * don't even know whether the policy server will use the fingerprint. So
+     * warn at most once per process, though on only lightly loaded servers,
+     * it might come close to one warning per inbound message.
+     */
+    if (!warned
+	&& warn_compat_break_smtpd_tls_fpt_dgst
+	&& state->tls_context
+	&& state->tls_context->peer_cert_fprint
+	&& *state->tls_context->peer_cert_fprint) {
+	warned = 1;
+	msg_info("using backwards-compatible default setting "
+		 VAR_SMTPD_TLS_FPT_DGST "=md5 to compute certificate "
+		 "fingerprints");
+    }
 #endif
 
     if (attr_clnt_request(policy_clnt->client,
@@ -4137,9 +4173,9 @@ static int is_map_command(SMTPD_STATE *state, const char *name,
     }
 }
 
-/* forbid_whitelist - disallow whitelisting */
+/* forbid_allowlist - disallow allowlisting */
 
-static void forbid_whitelist(SMTPD_STATE *state, const char *name,
+static void forbid_allowlist(SMTPD_STATE *state, const char *name,
 			             int status, const char *target)
 {
     if (state->discard == 0 && status == SMTPD_CHECK_OK) {
@@ -4284,7 +4320,7 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 	    status = check_namadr_access(state, *cpp, state->reverse_name, state->addr,
 					 FULL, &found, state->reverse_name,
 					 SMTPD_NAME_REV_CLIENT, def_acl);
-	    forbid_whitelist(state, name, status, state->reverse_name);
+	    forbid_allowlist(state, name, status, state->reverse_name);
 	} else if (strcasecmp(name, REJECT_MAPS_RBL) == 0) {
 	    status = reject_maps_rbl(state);
 	} else if (strcasecmp(name, REJECT_RBL_CLIENT) == 0
@@ -4340,8 +4376,8 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 	    }
 	} else if (is_map_command(state, name, CHECK_CCERT_ACL, &cpp)) {
 	    status = check_ccert_access(state, *cpp, def_acl);
-#ifdef USE_SASL_AUTH
 	} else if (is_map_command(state, name, CHECK_SASL_ACL, &cpp)) {
+#ifdef USE_SASL_AUTH
 	    if (var_smtpd_sasl_enable) {
 		if (state->sasl_username && state->sasl_username[0])
 		    status = check_sasl_access(state, *cpp, def_acl);
@@ -4353,42 +4389,42 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		status = check_server_access(state, *cpp, state->name,
 					     T_NS, state->namaddr,
 					     SMTPD_NAME_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->name);
+		forbid_allowlist(state, name, status, state->name);
 	    }
 	} else if (is_map_command(state, name, CHECK_CLIENT_MX_ACL, &cpp)) {
 	    if (strcasecmp(state->name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->name,
 					     T_MX, state->namaddr,
 					     SMTPD_NAME_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->name);
+		forbid_allowlist(state, name, status, state->name);
 	    }
 	} else if (is_map_command(state, name, CHECK_CLIENT_A_ACL, &cpp)) {
 	    if (strcasecmp(state->name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->name,
 					     T_A, state->namaddr,
 					     SMTPD_NAME_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->name);
+		forbid_allowlist(state, name, status, state->name);
 	    }
 	} else if (is_map_command(state, name, CHECK_REVERSE_CLIENT_NS_ACL, &cpp)) {
 	    if (strcasecmp(state->reverse_name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->reverse_name,
 					     T_NS, state->reverse_name,
 					     SMTPD_NAME_REV_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->reverse_name);
+		forbid_allowlist(state, name, status, state->reverse_name);
 	    }
 	} else if (is_map_command(state, name, CHECK_REVERSE_CLIENT_MX_ACL, &cpp)) {
 	    if (strcasecmp(state->reverse_name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->reverse_name,
 					     T_MX, state->reverse_name,
 					     SMTPD_NAME_REV_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->reverse_name);
+		forbid_allowlist(state, name, status, state->reverse_name);
 	    }
 	} else if (is_map_command(state, name, CHECK_REVERSE_CLIENT_A_ACL, &cpp)) {
 	    if (strcasecmp(state->reverse_name, "unknown") != 0) {
 		status = check_server_access(state, *cpp, state->reverse_name,
 					     T_A, state->reverse_name,
 					     SMTPD_NAME_REV_CLIENT, def_acl);
-		forbid_whitelist(state, name, status, state->reverse_name);
+		forbid_allowlist(state, name, status, state->reverse_name);
 	    }
 	}
 
@@ -4435,21 +4471,21 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		status = check_server_access(state, *cpp, state->helo_name,
 					     T_NS, state->helo_name,
 					     SMTPD_NAME_HELO, def_acl);
-		forbid_whitelist(state, name, status, state->helo_name);
+		forbid_allowlist(state, name, status, state->helo_name);
 	    }
 	} else if (is_map_command(state, name, CHECK_HELO_MX_ACL, &cpp)) {
 	    if (state->helo_name) {
 		status = check_server_access(state, *cpp, state->helo_name,
 					     T_MX, state->helo_name,
 					     SMTPD_NAME_HELO, def_acl);
-		forbid_whitelist(state, name, status, state->helo_name);
+		forbid_allowlist(state, name, status, state->helo_name);
 	    }
 	} else if (is_map_command(state, name, CHECK_HELO_A_ACL, &cpp)) {
 	    if (state->helo_name) {
 		status = check_server_access(state, *cpp, state->helo_name,
 					     T_A, state->helo_name,
 					     SMTPD_NAME_HELO, def_acl);
-		forbid_whitelist(state, name, status, state->helo_name);
+		forbid_allowlist(state, name, status, state->helo_name);
 	    }
 	} else if (strcasecmp(name, REJECT_NON_FQDN_HELO_HOSTNAME) == 0
 		   || strcasecmp(name, REJECT_NON_FQDN_HOSTNAME) == 0) {
@@ -4539,21 +4575,21 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		status = check_server_access(state, *cpp, state->sender,
 					     T_NS, state->sender,
 					     SMTPD_NAME_SENDER, def_acl);
-		forbid_whitelist(state, name, status, state->sender);
+		forbid_allowlist(state, name, status, state->sender);
 	    }
 	} else if (is_map_command(state, name, CHECK_SENDER_MX_ACL, &cpp)) {
 	    if (state->sender && *state->sender) {
 		status = check_server_access(state, *cpp, state->sender,
 					     T_MX, state->sender,
 					     SMTPD_NAME_SENDER, def_acl);
-		forbid_whitelist(state, name, status, state->sender);
+		forbid_allowlist(state, name, status, state->sender);
 	    }
 	} else if (is_map_command(state, name, CHECK_SENDER_A_ACL, &cpp)) {
 	    if (state->sender && *state->sender) {
 		status = check_server_access(state, *cpp, state->sender,
 					     T_A, state->sender,
 					     SMTPD_NAME_SENDER, def_acl);
-		forbid_whitelist(state, name, status, state->sender);
+		forbid_allowlist(state, name, status, state->sender);
 	    }
 	} else if (strcasecmp(name, REJECT_RHSBL_SENDER) == 0) {
 	    if (cpp[1] == 0)
@@ -4643,21 +4679,21 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		status = check_server_access(state, *cpp, state->recipient,
 					     T_NS, state->recipient,
 					     SMTPD_NAME_RECIPIENT, def_acl);
-		forbid_whitelist(state, name, status, state->recipient);
+		forbid_allowlist(state, name, status, state->recipient);
 	    }
 	} else if (is_map_command(state, name, CHECK_RECIP_MX_ACL, &cpp)) {
 	    if (state->recipient && *state->recipient) {
 		status = check_server_access(state, *cpp, state->recipient,
 					     T_MX, state->recipient,
 					     SMTPD_NAME_RECIPIENT, def_acl);
-		forbid_whitelist(state, name, status, state->recipient);
+		forbid_allowlist(state, name, status, state->recipient);
 	    }
 	} else if (is_map_command(state, name, CHECK_RECIP_A_ACL, &cpp)) {
 	    if (state->recipient && *state->recipient) {
 		status = check_server_access(state, *cpp, state->recipient,
 					     T_A, state->recipient,
 					     SMTPD_NAME_RECIPIENT, def_acl);
-		forbid_whitelist(state, name, status, state->recipient);
+		forbid_allowlist(state, name, status, state->recipient);
 	    }
 	} else if (strcasecmp(name, REJECT_RHSBL_RECIPIENT) == 0) {
 	    if (cpp[1] == 0)
@@ -5005,6 +5041,8 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
     char   *err;
     ARGV   *restrctions[2];
     int     n;
+    int     rcpt_index;
+    int     relay_index;
 
     /*
      * Initialize.
@@ -5062,19 +5100,30 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
      * value would block the request, without logging REJECT messages.
      * Approach: evaluate fake relay restrictions (permit_mynetworks,
      * permit_sasl_authenticated, permit_auth_destination) and log a warning
-     * if the result is DUNNO instead of OK, i.e. a reject_unauth_destinatin
+     * if the result is DUNNO instead of OK, i.e. a reject_unauth_destination
      * at the end would have blocked the request.
+     * 
+     * If warn_compat_break_relay_restrictions is true, always evaluate
+     * smtpd_relay_restrictions last (rcpt_index == 0). The backwards
+     * compatibility warning says that it avoids blocking a recipient (with
+     * "Relay access denied"); that is not useful information when moments
+     * later, smtpd_recipient_restrictions blocks the recipient anyway (with
+     * 'Relay access denied' or some other cause).
      */
     SMTPD_CHECK_RESET();
-    restrctions[0] = rcpt_restrctions;
-    restrctions[1] = warn_compat_break_relay_restrictions ?
+    rcpt_index = (var_relay_before_rcpt_checks
+		  && !warn_compat_break_relay_restrictions);
+    relay_index = !rcpt_index;
+
+    restrctions[rcpt_index] = rcpt_restrctions;
+    restrctions[relay_index] = warn_compat_break_relay_restrictions ?
 	fake_relay_restrctions : relay_restrctions;
     for (n = 0; n < 2; n++) {
 	status = setjmp(smtpd_check_buf);
 	if (status == 0 && restrctions[n]->argc)
 	    status = generic_checks(state, restrctions[n],
 			  recipient, SMTPD_NAME_RECIPIENT, CHECK_RECIP_ACL);
-	if (n == 1 && warn_compat_break_relay_restrictions
+	if (n == relay_index && warn_compat_break_relay_restrictions
 	    && status == SMTPD_CHECK_DUNNO) {
 	    msg_info("using backwards-compatible default setting \""
 		     VAR_RELAY_CHECKS " = (empty)\" to avoid \"Relay "
@@ -5084,6 +5133,12 @@ char   *smtpd_check_rcpt(SMTPD_STATE *state, char *recipient)
 	if (status == SMTPD_CHECK_REJECT)
 	    break;
     }
+    if (status == SMTPD_CHECK_REJECT
+	&& warn_compat_relay_before_rcpt_checks && n == 0)
+	msg_info("using backwards-compatible default setting "
+		 VAR_RELAY_BEFORE_RCPT_CHECKS "=no to reject "
+		 "recipient \"%s\" from client \"%s\"",
+		 state->recipient, state->namaddr);
 
     /*
      * Force permission into deferral when some earlier temporary error may
@@ -5572,7 +5627,6 @@ char   *var_rcpt_checks = "";
 char   *var_etrn_checks = "";
 char   *var_data_checks = "";
 char   *var_eod_checks = "";
-char   *var_relay_domains = "";
 char   *var_smtpd_uproxy_proto = "";
 int     var_smtpd_uproxy_tmout = 0;
 
@@ -5580,7 +5634,6 @@ int     var_smtpd_uproxy_tmout = 0;
 char   *var_relay_ccerts = "";
 
 #endif
-char   *var_mynetworks = "";
 char   *var_notify_classes = "";
 char   *var_smtpd_policy_def_action = "";
 char   *var_smtpd_policy_context = "";
@@ -5589,11 +5642,6 @@ char   *var_smtpd_policy_context = "";
   * String-valued configuration parameters.
   */
 char   *var_maps_rbl_domains;
-char   *var_myorigin;
-char   *var_mydest;
-char   *var_inet_interfaces;
-char   *var_proxy_interfaces;
-char   *var_rcpt_delim;
 char   *var_rest_classes;
 char   *var_alias_maps;
 char   *var_send_canon_maps;
@@ -5605,10 +5653,8 @@ char   *var_virt_mailbox_maps;
 char   *var_virt_mailbox_doms;
 char   *var_local_rcpt_maps;
 char   *var_perm_mx_networks;
-char   *var_par_dom_match;
 char   *var_smtpd_null_key;
 char   *var_smtpd_snd_auth_maps;
-char   *var_double_bounce_sender;
 char   *var_rbl_reply_maps;
 char   *var_smtpd_exp_filter;
 char   *var_def_rbl_reply;
@@ -5625,7 +5671,6 @@ char   *var_unk_addr_tf_act;
 char   *var_unv_rcpt_tf_act;
 char   *var_unv_from_tf_act;
 char   *var_smtpd_acl_perm_log;
-char   *var_info_log_addr_form;
 
 typedef struct {
     char   *name;
@@ -5682,6 +5727,9 @@ static const STRING_TABLE string_table[] = {
     VAR_SMTPD_ACL_PERM_LOG, DEF_SMTPD_ACL_PERM_LOG, &var_smtpd_acl_perm_log,
     VAR_SMTPD_DNS_RE_FILTER, DEF_SMTPD_DNS_RE_FILTER, &var_smtpd_dns_re_filter,
     VAR_INFO_LOG_ADDR_FORM, DEF_INFO_LOG_ADDR_FORM, &var_info_log_addr_form,
+    /* XXX No static initialization with "", because owned by a library. */
+    VAR_MYNETWORKS, "", &var_mynetworks,
+    VAR_RELAY_DOMAINS, "", &var_relay_domains,
     0,
 };
 
@@ -5823,6 +5871,11 @@ static int int_update(char **argv)
     }
     return (0);
 }
+
+ /*
+  * Boolean parameters.
+  */
+bool    var_relay_before_rcpt_checks;
 
  /*
   * Restrictions.

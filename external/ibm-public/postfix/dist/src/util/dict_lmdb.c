@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_lmdb.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_lmdb.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,10 @@
 /* DIAGNOSTICS
 /*	Fatal errors: cannot open file, file write error, out of
 /*	memory.
+/*
+/*	If a jump buffer is specified with dict_setjmp(), then the LMDB
+/*	client will call dict_longjmp() to return to that execution
+/*	context after a recoverable error.
 /* BUGS
 /*	The on-the-fly map resize operations require no concurrent
 /*	activity in the same database by other threads in the same

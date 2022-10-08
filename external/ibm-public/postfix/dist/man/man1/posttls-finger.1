@@ -1,4 +1,4 @@
-.\"	$NetBSD: posttls-finger.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: posttls-finger.1,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH POSTTLS-FINGER 1 
 .ad
@@ -20,7 +20,7 @@ Probe the TLS properties of an ESMTP or LMTP server.
 and reports TLS\-related information about the server. With SMTP, the
 destination is a domainname; with LMTP it is either a domainname
 prefixed with \fBinet:\fR or a pathname prefixed with \fBunix:\fR.  If
-Postfix is built without TLS support, the resulting posttls\-finger
+Postfix is built without TLS support, the resulting \fBposttls\-finger\fR(1)
 program has very limited functionality, and only the \fB\-a\fR, \fB\-c\fR,
 \fB\-h\fR, \fB\-o\fR, \fB\-S\fR, \fB\-t\fR, \fB\-T\fR and \fB\-v\fR options
 are available.
@@ -86,9 +86,9 @@ SMTP. The default TCP port for LMTP is 24.
 Arguments:
 .IP "\fB\-a\fR \fIfamily\fR (default: \fBany\fR)"
 Address family preference: \fBipv4\fR, \fBipv6\fR or \fBany\fR.  When
-using \fBany\fR, posttls\-finger will randomly select one of the two as
-the more preferred, and exhaust all MX preferences for the first
-address family before trying any addresses for the other.
+using \fBany\fR, \fBposttls\-finger\fR(1) will randomly select one of
+the two as the more preferred, and exhaust all MX preferences for the
+first address family before trying any addresses for the other.
 .IP "\fB\-A\fR \fItrust\-anchor.pem\fR (default: none)"
 A list of PEM trust\-anchor files that overrides CAfile and CApath
 trust chain verification.  Specify the option multiple times to
@@ -104,11 +104,12 @@ certificate block.  If you specify \fB\-F \fICAfile\fR or
 \fB\-P \fICApath\fR, the OpenSSL library may augment the chain with
 missing issuer certificates.  To see the actual chain sent by the
 remote SMTP server leave \fICAfile\fR and \fICApath\fR unset.
-.IP "\fB\-d \fImdalg\fR (default: \fBsha1\fR)"
+.IP "\fB\-d \fImdalg\fR (default: \fB$smtp_tls_fingerprint_digest\fR)"
 The message digest algorithm to use for reporting remote SMTP server
 fingerprints and matching against user provided certificate
 fingerprints (with DANE TLSA records the algorithm is specified
-in the DNS).
+in the DNS).  In Postfix versions prior to 3.6, the default value
+was "md5".
 .IP "\fB\-f\fR"
 Lookup the associated DANE TLSA RRset even when a hostname is not an
 alias and its address records lie in an unsigned zone.  See
@@ -118,8 +119,8 @@ The PEM formatted CAfile for remote SMTP server certificate
 verification.  By default no CAfile is used and no public CAs
 are trusted.
 .IP "\fB\-g \fIgrade\fR (default: medium)"
-The minimum TLS cipher grade used by posttls\-finger.  See
-smtp_tls_mandatory_ciphers for details.
+The minimum TLS cipher grade used by \fBposttls\-finger\fR(1).
+See smtp_tls_mandatory_ciphers for details.
 .IP "\fB\-h \fIhost_lookup\fR (default: \fBdns\fR)"
 The hostname lookup methods used for the connection.  See the
 documentation of smtp_host_lookup for syntax and semantics.
@@ -149,7 +150,7 @@ TLSA records are found, or all the records found are unusable, the
 security level allows you to test certificate or public\-key
 fingerprint matches before you deploy them in the policy table.
 .IP
-Note, since \fBposttls\-finger\fR does not actually deliver any email,
+Note, since \fBposttls\-finger\fR(1) does not actually deliver any email,
 the \fBnone\fR, \fBmay\fR and \fBencrypt\fR security levels are not
 very useful.  Since \fBmay\fR and \fBencrypt\fR don't require peer
 certificates, they will often negotiate anonymous TLS ciphersuites,
@@ -225,14 +226,14 @@ response; with these servers there will never be more than
 The TLS policy for MX hosts with "secure" TLSA records when the
 nexthop destination security level is \fBdane\fR, but the MX
 record was found via an "insecure" MX lookup.  See the main.cf
-documentation for smtp_tls_insecure_mx_policy for details.
+documentation for smtp_tls_dane_insecure_mx_policy for details.
 .IP "\fB\-o \fIname=value\fR"
 Specify zero or more times to override the value of the main.cf
 parameter \fIname\fR with \fIvalue\fR.  Possible use\-cases include
 overriding the values of TLS library parameters, or "myhostname" to
 configure the SMTP EHLO name sent to the remote server.
-.IP "\fB\-p \fIprotocols\fR (default: !SSLv2)"
-List of TLS protocols that posttls\-finger will exclude or include.  See
+.IP "\fB\-p \fIprotocols\fR (default: >=TLSv1)"
+TLS protocols that \fBposttls\-finger\fR(1) will exclude or include.  See
 smtp_tls_mandatory_protocols for details.
 .IP "\fB\-P \fICApath/\fR (default: none)"
 The OpenSSL CApath/ directory (indexed via c_rehash(1)) for remote
@@ -264,10 +265,10 @@ The SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and QUIT.
 Enable verbose Postfix logging.  Specify more than once to increase
 the level of verbose logging.
 .IP "\fB\-w\fR"
-Enable outgoing TLS wrapper mode, or SMTPS support.  This is typically
-provided on port 465 by servers that are compatible with the ad\-hoc
-SMTP in SSL protocol, rather than the standard STARTTLS protocol.
-The destination \fIdomain\fR:\fIport\fR should of course provide such
+Enable outgoing TLS wrapper mode, or SUBMISSIONS/SMTPS support.  This
+is typically provided on port 465 by servers that are compatible with
+the SMTP\-in\-SSL protocol, rather than the STARTTLS protocol.
+The destination \fIdomain\fR:\fIport\fR must of course provide such
 a service.
 .IP "\fB\-X\fR"
 Enable \fBtlsproxy\fR(8) mode. This is an unsupported mode,

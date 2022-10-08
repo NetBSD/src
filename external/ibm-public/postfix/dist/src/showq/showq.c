@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: showq.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -361,6 +361,13 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
      */
     if (argv[0])
 	msg_fatal("unexpected command-line argument: %s", argv[0]);
+
+    /*
+     * Protocol identification.
+     */
+    (void) attr_print(client, ATTR_FLAG_NONE,
+		      SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SHOWQ),
+		      ATTR_TYPE_END);
 
     /*
      * Skip any files that have the wrong permissions. If we can't open an

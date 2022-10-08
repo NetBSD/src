@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/03/18 19:05:22 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2022/10/08 16:12:51 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,6 +22,8 @@ cfg_parser.c \
 cleanup_strerror.c \
 cleanup_strflags.c \
 clnt_stream.c \
+compat_level.c \
+config_known_tcp_ports.c \
 conv_time.c \
 data_redirect.c \
 db_common.c \
@@ -59,11 +61,13 @@ haproxy_srvr.c \
 header_body_checks.c \
 header_opts.c \
 header_token.c \
+hfrom_format.c \
 info_log_addr_form.c \
 input_transp.c \
 int_filt.c \
 is_header.c \
 log_adhoc.c \
+login_sender_match.c \
 mail_addr.c \
 mail_addr_crunch.c \
 mail_addr_find.c \
@@ -145,6 +149,7 @@ resolve_clnt.c \
 resolve_local.c \
 rewrite_clnt.c \
 safe_ultostr.c \
+sasl_mech_filter.c \
 scache.c \
 scache_clnt.c \
 scache_multi.c \

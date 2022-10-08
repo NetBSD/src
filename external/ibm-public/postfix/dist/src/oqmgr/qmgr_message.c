@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -326,6 +326,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
     char   *dsn_orcpt = 0;
     int     n;
     int     have_log_client_attr = 0;
+    static const char env_rec_types[] = REC_TYPE_ENVELOPE REC_TYPE_EXTRACT;
+    static const char extra_rec_type[] = {REC_TYPE_XTRA, 0};
+    const char *expected_rec_types;
 
     /*
      * Initialize. No early returns or we have a memory leak.
@@ -373,12 +376,14 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
      * mailing lists.
      */
     for (;;) {
+	expected_rec_types = env_rec_types;
 	if ((curr_offset = vstream_ftell(message->fp)) < 0)
 	    msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
 	if (curr_offset == message->data_offset && curr_offset > 0) {
 	    if (vstream_fseek(message->fp, message->data_size, SEEK_CUR) < 0)
 		msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
 	    curr_offset += message->data_size;
+	    expected_rec_types = extra_rec_type;
 	}
 	rec_type = rec_get_raw(message->fp, buf, 0, REC_FLAG_NONE);
 	start = vstring_str(buf);
@@ -395,6 +400,12 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		     message->queue_id);
 	    break;
 	}
+	if (strchr(expected_rec_types, rec_type) == 0) {
+	    msg_warn("Unexpected record type '%c' at offset %ld",
+		     rec_type, (long) curr_offset);
+	    rec_type = REC_TYPE_ERROR;
+	    break;
+	}
 	if (rec_type == REC_TYPE_END) {
 	    message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
 	    break;
@@ -408,7 +419,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	 */
 	if (rec_type == REC_TYPE_ATTR) {
 	    if ((error_text = split_nameval(start, &name, &value)) != 0) {
-		msg_warn("%s: ignoring bad attribute: %s: %.200s",
+		msg_warn("%s: bad attribute record: %s: %.200s",
 			 message->queue_id, error_text, start);
 		rec_type = REC_TYPE_ERROR;
 		break;
@@ -456,9 +467,15 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 			message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
 			break;
 		    }
-		    /* Examine non-recipient records in extracted segment. */
-		    if (vstream_fseek(message->fp, message->data_offset
-				      + message->data_size, SEEK_SET) < 0)
+
+		    /*
+		     * Examine non-recipient records in the extracted
+		     * segment. Note that this skips to the message start
+		     * record, because the handler for that record changes
+		     * the expectations for allowed record types.
+		     */
+		    if (vstream_fseek(message->fp, message->data_offset,
+				      SEEK_SET) < 0)
 			msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
 		    continue;
 		}

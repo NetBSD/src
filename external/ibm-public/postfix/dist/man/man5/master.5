@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: master.5,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH MASTER 5 
 .ad
@@ -15,7 +15,7 @@ The Postfix mail system is implemented by small number of
 a larger number of services that run in the background.
 
 Postfix services are implemented by daemon processes. These
-run in the background under control of the \fBmaster\fR(8)
+run in the background, started on\-demand by the \fBmaster\fR(8)
 process.  The master.cf configuration file defines how a
 client program connects to a service, and what daemon
 program runs when a service is requested.  Most daemon
@@ -26,7 +26,7 @@ serving \fBmax_use\fR clients, or after inactivity for
 All daemons specified here must speak a Postfix\-internal
 protocol. In order to execute non\-Postfix software use the
 \fBlocal\fR(8), \fBpipe\fR(8) or \fBspawn\fR(8) services, or
-run the server under control by \fBinetd\fR(8) or equivalent.
+execute the software with \fBinetd\fR(8) or equivalent.
 .PP
 After changing master.cf you must execute "\fBpostfix reload\fR"
 to reload the configuration.
@@ -125,7 +125,9 @@ implemented with streams sockets.
 This feature is available as of Postfix version 2.5.
 .RE
 .IP "\fBPrivate (default: y)\fR"
-Whether or not access is restricted to the mail system.
+Whether a service is internal to Postfix (pathname starts
+with \fBprivate/\fR), or exposed through Postfix command\-line
+tools (pathname starts with \fBpublic/\fR).
 Internet (type \fBinet\fR) services can't be private.
 .IP "\fBUnprivileged (default: y)\fR"
 Whether the service runs with root privileges or as the
@@ -135,7 +137,7 @@ main.cf file).
 .sp
 The \fBlocal\fR(8), \fBpipe\fR(8), \fBspawn\fR(8), and
 \fBvirtual\fR(8) daemons require privileges.
-.IP "\fBChroot (default: Postfix >= 3.0: n, Postfix <3.0: y)\fR"
+.IP "\fBChroot (default: Postfix >= 3.0: n, Postfix < 3.0: y)\fR"
 Whether or not the service runs chrooted to the mail queue
 directory (pathname is controlled by the \fBqueue_directory\fR
 configuration variable in the main.cf file).

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldseed.h,v 1.1.1.1 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: ldseed.h,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _LDSEED_H_INCLUDED_
 #define _LDSEED_H_INCLUDED_

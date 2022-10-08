@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -233,8 +233,18 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
     date = mail_date(now.tv_sec);
 
     /*
-     * XXX Don't flush buffers while sending the initial message records.
-     * That would cause deadlock between verify(8) and cleanup(8) servers.
+     * The comment in the next paragraph is likely obsolete. Fix 20030610
+     * changed the verify server to use asynchronous submission of mail
+     * probes, to avoid blocking the post_mail client for in_flow_delay
+     * seconds when the cleanup service receives email messages faster than
+     * they are delivered. Instead, the post_mail client waits until the
+     * cleanup server announces its availability to receive input. A similar
+     * change was made at the end of submission, to avoid blocking the
+     * post_mail client for up to trigger_timeout seconds when the cleanup
+     * server attempts to notify a queue manager that is overwhelmed.
+     * 
+     * XXX Don't flush buffers while sending the initial message records. That
+     * would cause deadlock between verify(8) and cleanup(8) servers.
      */
     vstream_control(stream, VSTREAM_CTL_BUFSIZE, 2 * VSTREAM_BUFSIZE,
 		    VSTREAM_CTL_END);
@@ -243,6 +253,7 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
      * Negotiate with the cleanup service. Give up if we can't agree.
      */
     if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_CLEANUP),
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 		  ATTR_TYPE_END) != 1
 	|| attr_print(stream, ATTR_FLAG_NONE,

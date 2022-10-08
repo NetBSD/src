@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: access.5,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -37,7 +37,7 @@ or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP\-based server. In those cases, the lookups
+can be directed to a TCP\-based server. In those cases, the lookups
 are done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
@@ -221,7 +221,7 @@ Prior to Postfix 2.6, the SMTP reply code is 450.
 .sp
 This feature is available in Postfix 2.1 and later.
 .IP "\fBDEFER_IF_PERMIT \fIoptional text...\fR
-Defer the request if some later restriction would result in a
+Defer the request if some later restriction would result in
 an explicit or implicit PERMIT action.
 Reply with "\fB$access_map_defer_code 4.7.1 \fI optional
 text...\fR" when the

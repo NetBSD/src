@@ -1,4 +1,4 @@
-/*	$NetBSD: been_here.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: been_here.h,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _BEEN_HERE_H_INCLUDED_
 #define _BEEN_HERE_H_INCLUDED_
@@ -37,6 +37,8 @@ extern int been_here_fixed(BH_TABLE *, const char *);
 extern int PRINTFLIKE(2, 3) been_here(BH_TABLE *, const char *,...);
 extern int been_here_check_fixed(BH_TABLE *, const char *);
 extern int PRINTFLIKE(2, 3) been_here_check(BH_TABLE *, const char *,...);
+extern int been_here_drop_fixed(BH_TABLE *, const char *);
+extern int PRINTFLIKE(2, 3) been_here_drop(BH_TABLE *, const char *,...);
 
 /* LICENSE
 /* .ad
@@ -47,6 +49,11 @@ extern int PRINTFLIKE(2, 3) been_here_check(BH_TABLE *, const char *,...);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

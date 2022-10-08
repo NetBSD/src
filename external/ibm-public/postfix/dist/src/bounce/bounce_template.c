@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_template.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: bounce_template.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -46,7 +46,6 @@
 /*	int	IS_FAILURE_TEMPLATE(template)
 /*	int	IS_DELAY_TEMPLATE(template)
 /*	int	IS_SUCCESS_TEMPLATE(template)
-/*	int	IS_VERIFY_TEMPLATE(template)
 /*	BOUNCE_TEMPLATE *template;
 /* DESCRIPTION
 /*	This module implements the built-in and external bounce
@@ -100,6 +99,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -129,10 +133,12 @@
 #include <mail_proto.h>
 #include <mail_conf.h>
 #include <is_header.h>
+#include <hfrom_format.h>
 
 /* Application-specific. */
 
 #include <bounce_template.h>
+#include <bounce_service.h>
 
  /*
   * The following tables implement support for bounce template expansions of
@@ -332,7 +338,7 @@ static void bounce_template_parse_buffer(BOUNCE_TEMPLATE *tp)
 	if (strcasecmp("charset", cp) == 0) {
 	    tp->mime_charset = hval;
 	} else if (strcasecmp("from", cp) == 0) {
-	    tp->from = hval;
+	    tp->std_from = tp->obs_from = hval;
 	} else if (strcasecmp("subject", cp) == 0) {
 	    tp->subject = hval;
 	} else if (strcasecmp("postmaster-subject", cp) == 0) {
@@ -489,7 +495,8 @@ void    bounce_template_headers(BOUNCE_XP_PRN_FN out_fn, VSTREAM *fp,
     if (tp->flags & BOUNCE_TMPL_FLAG_NEW_BUFFER)
 	bounce_template_parse_buffer(tp);
 
-    out_fn(fp, "From: %s", tp->from);
+    out_fn(fp, "From: %s", bounce_hfrom_format == HFROM_FORMAT_CODE_STD ?
+	   tp->std_from : tp->obs_from);
     out_fn(fp, "Subject: %s", tp->postmaster_subject && postmaster_copy ?
 	   tp->postmaster_subject : tp->subject);
     out_fn(fp, "To: %s", rcpt);
@@ -531,7 +538,8 @@ void    bounce_template_dump(VSTREAM *fp, BOUNCE_TEMPLATE *tp)
 	bounce_template_parse_buffer(tp);
 
     vstream_fprintf(fp, "Charset: %s\n", tp->mime_charset);
-    vstream_fprintf(fp, "From: %s\n", tp->from);
+    vstream_fprintf(fp, "From: %s\n", bounce_hfrom_format == HFROM_FORMAT_CODE_STD ?
+		    tp->std_from : tp->obs_from);
     vstream_fprintf(fp, "Subject: %s\n", tp->subject);
     if (tp->postmaster_subject)
 	vstream_fprintf(fp, "Postmaster-Subject: %s\n",

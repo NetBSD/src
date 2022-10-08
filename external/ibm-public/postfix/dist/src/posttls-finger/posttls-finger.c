@@ -1,4 +1,4 @@
-/*	$NetBSD: posttls-finger.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: posttls-finger.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -14,7 +14,7 @@
 /*	and reports TLS-related information about the server. With SMTP, the
 /*	destination is a domainname; with LMTP it is either a domainname
 /*	prefixed with \fBinet:\fR or a pathname prefixed with \fBunix:\fR.  If
-/*	Postfix is built without TLS support, the resulting posttls-finger
+/*	Postfix is built without TLS support, the resulting \fBposttls-finger\fR(1)
 /*	program has very limited functionality, and only the \fB-a\fR, \fB-c\fR,
 /*	\fB-h\fR, \fB-o\fR, \fB-S\fR, \fB-t\fR, \fB-T\fR and \fB-v\fR options
 /*	are available.
@@ -80,9 +80,9 @@
 /*	Arguments:
 /* .IP "\fB-a\fR \fIfamily\fR (default: \fBany\fR)"
 /*	Address family preference: \fBipv4\fR, \fBipv6\fR or \fBany\fR.  When
-/*	using \fBany\fR, posttls-finger will randomly select one of the two as
-/*	the more preferred, and exhaust all MX preferences for the first
-/*	address family before trying any addresses for the other.
+/*	using \fBany\fR, \fBposttls-finger\fR(1) will randomly select one of
+/*	the two as the more preferred, and exhaust all MX preferences for the
+/*	first address family before trying any addresses for the other.
 /* .IP "\fB-A\fR \fItrust-anchor.pem\fR (default: none)"
 /*	A list of PEM trust-anchor files that overrides CAfile and CApath
 /*	trust chain verification.  Specify the option multiple times to
@@ -98,11 +98,12 @@
 /*	\fB-P \fICApath\fR, the OpenSSL library may augment the chain with
 /*	missing issuer certificates.  To see the actual chain sent by the
 /*	remote SMTP server leave \fICAfile\fR and \fICApath\fR unset.
-/* .IP "\fB-d \fImdalg\fR (default: \fBsha1\fR)"
+/* .IP "\fB-d \fImdalg\fR (default: \fB$smtp_tls_fingerprint_digest\fR)"
 /*	The message digest algorithm to use for reporting remote SMTP server
 /*	fingerprints and matching against user provided certificate
 /*	fingerprints (with DANE TLSA records the algorithm is specified
-/*	in the DNS).
+/*	in the DNS).  In Postfix versions prior to 3.6, the default value
+/*	was "md5".
 /* .IP "\fB-f\fR"
 /*	Lookup the associated DANE TLSA RRset even when a hostname is not an
 /*	alias and its address records lie in an unsigned zone.  See
@@ -112,8 +113,8 @@
 /*	verification.  By default no CAfile is used and no public CAs
 /*	are trusted.
 /* .IP "\fB-g \fIgrade\fR (default: medium)"
-/*	The minimum TLS cipher grade used by posttls-finger.  See
-/*	smtp_tls_mandatory_ciphers for details.
+/*	The minimum TLS cipher grade used by \fBposttls-finger\fR(1).
+/*	See smtp_tls_mandatory_ciphers for details.
 /* .IP "\fB-h \fIhost_lookup\fR (default: \fBdns\fR)"
 /*	The hostname lookup methods used for the connection.  See the
 /*	documentation of smtp_host_lookup for syntax and semantics.
@@ -143,7 +144,7 @@
 /*	security level allows you to test certificate or public-key
 /*	fingerprint matches before you deploy them in the policy table.
 /* .IP
-/*	Note, since \fBposttls-finger\fR does not actually deliver any email,
+/*	Note, since \fBposttls-finger\fR(1) does not actually deliver any email,
 /*	the \fBnone\fR, \fBmay\fR and \fBencrypt\fR security levels are not
 /*	very useful.  Since \fBmay\fR and \fBencrypt\fR don't require peer
 /*	certificates, they will often negotiate anonymous TLS ciphersuites,
@@ -219,14 +220,14 @@
 /*	The TLS policy for MX hosts with "secure" TLSA records when the
 /*	nexthop destination security level is \fBdane\fR, but the MX
 /*	record was found via an "insecure" MX lookup.  See the main.cf
-/*	documentation for smtp_tls_insecure_mx_policy for details.
+/*	documentation for smtp_tls_dane_insecure_mx_policy for details.
 /* .IP "\fB-o \fIname=value\fR"
 /*	Specify zero or more times to override the value of the main.cf
 /*	parameter \fIname\fR with \fIvalue\fR.  Possible use-cases include
 /*	overriding the values of TLS library parameters, or "myhostname" to
 /*	configure the SMTP EHLO name sent to the remote server.
-/* .IP "\fB-p \fIprotocols\fR (default: !SSLv2)"
-/*	List of TLS protocols that posttls-finger will exclude or include.  See
+/* .IP "\fB-p \fIprotocols\fR (default: >=TLSv1)"
+/*	TLS protocols that \fBposttls-finger\fR(1) will exclude or include.  See
 /*	smtp_tls_mandatory_protocols for details.
 /* .IP "\fB-P \fICApath/\fR (default: none)"
 /*	The OpenSSL CApath/ directory (indexed via c_rehash(1)) for remote
@@ -258,10 +259,10 @@
 /*	Enable verbose Postfix logging.  Specify more than once to increase
 /*	the level of verbose logging.
 /* .IP "\fB-w\fR"
-/*	Enable outgoing TLS wrapper mode, or SMTPS support.  This is typically
-/*	provided on port 465 by servers that are compatible with the ad-hoc
-/*	SMTP in SSL protocol, rather than the standard STARTTLS protocol.
-/*	The destination \fIdomain\fR:\fIport\fR should of course provide such
+/*	Enable outgoing TLS wrapper mode, or SUBMISSIONS/SMTPS support.  This
+/*	is typically provided on port 465 by servers that are compatible with
+/*	the SMTP-in-SSL protocol, rather than the STARTTLS protocol.
+/*	The destination \fIdomain\fR:\fIport\fR must of course provide such
 /*	a service.
 /* .IP "\fB-X\fR"
 /*	Enable \fBtlsproxy\fR(8) mode. This is an unsupported mode,
@@ -372,6 +373,7 @@
 #include <sock_addr.h>
 #include <midna_domain.h>
 #include <clean_env.h>
+#include <known_tcp_ports.h>
 
 #define STR(x)		vstring_str(x)
 
@@ -618,7 +620,7 @@ static int greeting(STATE *state)
     /*
      * Prepare for disaster.
      */
-    smtp_stream_setup(stream, conn_tmout, 1);
+    smtp_stream_setup(stream, conn_tmout, /* deadline */ 1, /* minrate */ 0);
     if ((except = vstream_setjmp(stream)) != 0) {
 	msg_info("%s while reading server greeting", exception_text(except));
 	return (1);
@@ -653,6 +655,7 @@ static RESPONSE *ehlo(STATE *state)
     /*
      * Send the standard greeting with our hostname
      */
+    smtp_stream_setup(stream, smtp_tmout, /* deadline */ 1, /* minrate */ 0);
     if ((except = vstream_setjmp(stream)) != 0) {
 	msg_info("%s while sending %s", exception_text(except), ehlo);
 	return (0);
@@ -740,7 +743,7 @@ static int starttls(STATE *state)
 
     if (state->wrapper_mode == 0) {
 	/* SMTP stream with deadline timeouts */
-	smtp_stream_setup(stream, smtp_tmout, 1);
+	smtp_stream_setup(stream, smtp_tmout, /* deadline */ 1, /* minrate */ 0);
 	if ((except = vstream_setjmp(stream)) != 0) {
 	    msg_fatal("%s while sending STARTTLS", exception_text(except));
 	    return (1);
@@ -780,6 +783,7 @@ static int starttls(STATE *state)
     else
 	ADD_EXCLUDE(cipher_exclusions, "eNULL");
 
+    smtp_stream_setup(stream, smtp_tmout, /* deadline */ 1, /* minrate */ 0);
     if (state->tlsproxy_mode) {
 	TLS_CLIENT_PARAMS tls_params;
 
@@ -878,16 +882,20 @@ static int starttls(STATE *state)
 	     * context attributes.
 	     */
 	    state->tls_context = tls_proxy_context_receive(state->stream);
-	    if (state->log_mask &
-		(TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT))
-		msg_info("%s: subject_CN=%s, issuer_CN=%s, "
-			 "fingerprint=%s, pkey_fingerprint=%s",
-			 state->namaddrport, state->tls_context->peer_CN,
-			 state->tls_context->issuer_CN,
-			 state->tls_context->peer_cert_fprint,
-			 state->tls_context->peer_pkey_fprint);
-	    tls_log_summary(TLS_ROLE_CLIENT, TLS_USAGE_NEW,
-			    state->tls_context);
+	    if (state->tls_context) {
+		if (state->log_mask &
+		    (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT))
+		    msg_info("%s: subject_CN=%s, issuer_CN=%s, "
+			     "fingerprint=%s, pkey_fingerprint=%s",
+			     state->namaddrport, state->tls_context->peer_CN,
+			     state->tls_context->issuer_CN,
+			     state->tls_context->peer_cert_fprint,
+			     state->tls_context->peer_pkey_fprint);
+		tls_log_summary(TLS_ROLE_CLIENT, TLS_USAGE_NEW,
+				state->tls_context);
+	    } else {
+		msg_warn("error receiving TLS proxy context");
+	    }
 	}
     } else {					/* tls_proxy_mode */
 	state->tls_context =
@@ -981,7 +989,7 @@ static int doproto(STATE *state)
     /*
      * Prepare for disaster.
      */
-    smtp_stream_setup(stream, smtp_tmout, 1);
+    smtp_stream_setup(stream, smtp_tmout, /* deadline */ 1, /* minrate */ 0);
     if ((except = vstream_setjmp(stream)) != 0) {
 	msg_warn("%s while sending QUIT command", exception_text(except));
 	return (0);
@@ -1161,7 +1169,7 @@ static DNS_RR *addr_one(STATE *state, DNS_RR *addr_list, const char *host,
     int     aierr;
     struct addrinfo *res0;
     struct addrinfo *res;
-    INET_PROTO_INFO *proto_info = inet_proto_info();
+    const INET_PROTO_INFO *proto_info = inet_proto_info();
     int     found;
 
     if (msg_verbose)
@@ -1387,7 +1395,7 @@ static DNS_RR *host_addr(STATE *state, const char *host)
     return (addr_list);
 }
 
-/* dane_host_level - canidate host "dane" or degraded security level */
+/* dane_host_level - candidate host "dane" or degraded security level */
 
 static int dane_host_level(STATE *state, DNS_RR *addr)
 {
@@ -1397,10 +1405,6 @@ static int dane_host_level(STATE *state, DNS_RR *addr)
     if (TLS_DANE_BASED(level)) {
 	if (state->mx == 0 || state->mx->dnssec_valid ||
 	    state->mxinsec_level > TLS_LEV_MAY) {
-	    if (state->log_mask & (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE))
-		tls_dane_verbose(1);
-	    else
-		tls_dane_verbose(0);
 
 	    /* See addr loop in connect_remote() */
 	    if (state->ddane)
@@ -1425,8 +1429,7 @@ static int dane_host_level(STATE *state, DNS_RR *addr)
 			     tls_dane_unusable(state->ddane) ?
 			     "usable " : "");
 		level = TLS_LEV_SECURE;
-	    } else if (!TLS_DANE_HASTA(state->ddane)
-		       && !TLS_DANE_HASEE(state->ddane)) {
+	    } else if (state->ddane->tlsa == 0) {
 		msg_panic("DANE activated with no TLSA records to match");
 	    } else if (state->mx && !state->mx->dnssec_valid &&
 		       state->mxinsec_level == TLS_LEV_ENCRYPT) {
@@ -1489,9 +1492,11 @@ static char *parse_destination(char *destination, char *def_service,
     /*
      * Convert service to port number, network byte order.
      */
+    service = (char *) filter_known_tcp_port(service);
     if (alldig(service)) {
 	if ((port = atoi(service)) >= 65536 || port == 0)
-	    msg_fatal("bad network port in destination: %s", destination);
+	    msg_fatal("bad network port: %s for destination: %s",
+		      service, destination);
 	*portp = htons(port);
     } else {
 	if ((sp = getservbyname(service, protocol)) != 0)
@@ -1675,23 +1680,6 @@ static int finger(STATE *state)
     return (0);
 }
 
-#if defined(USE_TLS) && OPENSSL_VERSION_NUMBER < 0x10100000L
-
-/* ssl_cleanup - free memory allocated in the OpenSSL library */
-
-static void ssl_cleanup(void)
-{
-    ERR_remove_thread_state(0);		/* Thread-id is now a pointer */
-    ENGINE_cleanup();
-    CONF_modules_unload(1);
-    ERR_free_strings();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-}
-
-#endif					/* USE_TLS && OPENSSL_VERSION_NUMBER
-					 * < 0x10100000L */
-
 /* run - do what we were asked to do. */
 
 static int run(STATE *state)
@@ -1825,7 +1813,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
     state->max_reconnect = 5;
     state->wrapper_mode = 0;
 #ifdef USE_TLS
-    state->protocols = mystrdup("!SSLv2");
+    state->protocols = mystrdup(">=TLSv1");
     state->grade = mystrdup("medium");
 #endif
     memset((void *) &state->options, 0, sizeof(state->options));
@@ -1835,7 +1823,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
 #ifdef USE_TLS
 #define TLSOPTS "A:Cd:fF:g:H:k:K:l:L:m:M:p:P:r:s:wX"
 
-    state->mdalg = mystrdup("sha1");
+    state->mdalg = 0;
     state->CApath = mystrdup("");
     state->CAfile = mystrdup("");
     state->chains = mystrdup("");
@@ -1890,7 +1878,8 @@ static void parse_options(STATE *state, int argc, char *argv[])
 	    state->print_trust = 1;
 	    break;
 	case 'd':
-	    myfree(state->mdalg);
+	    if (state->mdalg)
+		myfree(state->mdalg);
 	    state->mdalg = mystrdup(optarg);
 	    break;
 	case 'f':
@@ -1990,7 +1979,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
 	msg_fatal("bad '-a' option value: %s", state->options.addr_pref);
 
 #ifdef USE_TLS
-    if (state->tlsproxy_mode && state->reconnect)
+    if (state->tlsproxy_mode && state->reconnect >= 0)
 	msg_fatal("The -X and -r options are mutually exclusive");
 #endif
 
@@ -2013,6 +2002,7 @@ static void parse_options(STATE *state, int argc, char *argv[])
     if (state->options.logopts == 0)
 	state->options.logopts = mystrdup("routine,certmatch");
     state->log_mask = tls_log_mask("-L option", state->options.logopts);
+    tls_dane_loglevel("-L option", state->options.logopts);
 
     if (state->options.level) {
 	state->level = tls_level_lookup(state->options.level);
@@ -2026,21 +2016,6 @@ static void parse_options(STATE *state, int argc, char *argv[])
 	    msg_fatal("Invalid TLS level \"%s\"", state->options.level);
 	}
     }
-
-    /*
-     * We first call tls_init(), which ultimately calls SSL_library_init(),
-     * since otherwise we can't tell whether we have the message digests
-     * required for DANE support.
-     */
-    tls_init(state);
-    if (TLS_DANE_BASED(state->level) && !tls_dane_avail()) {
-	msg_warn("DANE TLS support is not available, resorting to \"secure\"");
-	state->level = TLS_LEV_SECURE;
-    }
-    state->tls_bio = 0;
-    if (state->print_trust)
-	state->tls_bio = BIO_new_fp(stdout, BIO_NOCLOSE);
-
 #endif
 }
 
@@ -2049,9 +2024,10 @@ static void parse_options(STATE *state, int argc, char *argv[])
 static void parse_match(STATE *state, int argc, char *argv[])
 {
 #ifdef USE_TLS
+    int     smtp_mode = 1;
 
     switch (state->level) {
-	case TLS_LEV_SECURE:
+    case TLS_LEV_SECURE:
 	state->match = argv_alloc(2);
 	while (*argv)
 	    argv_split_append(state->match, *argv++, "");
@@ -2068,8 +2044,8 @@ static void parse_match(STATE *state, int argc, char *argv[])
     case TLS_LEV_FPRINT:
 	state->dane = tls_dane_alloc();
 	while (*argv)
-	    tls_dane_add_ee_digests((TLS_DANE *) state->dane,
-				    state->mdalg, *argv++, "");
+	    tls_dane_add_fpt_digests((TLS_DANE *) state->dane, *argv++, "",
+				     smtp_mode);
 	break;
     case TLS_LEV_DANE:
     case TLS_LEV_DANE_ONLY:
@@ -2114,6 +2090,13 @@ int     main(int argc, char *argv[])
     char   *loopenv = getenv("VALGRINDLOOP");
     int     loop = loopenv ? atoi(loopenv) : 1;
     ARGV   *import_env;
+    static char *var_smtp_tls_fpt_dgst;
+    static const CONFIG_STR_TABLE smtp_str_table[] = {
+#ifdef USE_TLS
+	VAR_SMTP_TLS_FPT_DGST, DEF_SMTP_TLS_FPT_DGST, &var_smtp_tls_fpt_dgst, 1, 0,
+#endif
+	0,
+    };
 
     /* Don't die when a peer goes away unexpectedly. */
     signal(SIGPIPE, SIG_IGN);
@@ -2130,7 +2113,30 @@ int     main(int argc, char *argv[])
     mail_conf_suck();
     parse_options(&state, argc, argv);
     mail_params_init();
+    get_mail_conf_str_table(smtp_str_table);
     parse_tas(&state);
+
+#ifdef USE_TLS
+    /* Less surprising to default to the same fingerprint digest as smtp(8) */
+    if (state.mdalg)
+	warn_compat_break_smtp_tls_fpt_dgst = 0;
+    else
+	state.mdalg = mystrdup(var_smtp_tls_fpt_dgst);
+
+    /*
+     * We first call tls_init(), which ultimately calls SSL_library_init(),
+     * since otherwise we can't tell whether we have the message digests
+     * required for DANE support.
+     */
+    tls_init(&state);
+    if (TLS_DANE_BASED(state.level) && !tls_dane_avail()) {
+	msg_warn("DANE TLS support is not available, resorting to \"secure\"");
+	state.level = TLS_LEV_SECURE;
+    }
+    state.tls_bio = 0;
+    if (state.print_trust)
+	state.tls_bio = BIO_new_fp(stdout, BIO_NOCLOSE);
+#endif
 
     /* Enforce consistent operation of different Postfix parts. */
     import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
@@ -2156,11 +2162,6 @@ int     main(int argc, char *argv[])
 
     /* Be valgrind friendly and clean-up */
     cleanup(&state);
-
-    /* OpenSSL 1.1.0 and later (de)initialization is implicit */
-#if defined(USE_TLS) && OPENSSL_VERSION_NUMBER < 0x10100000L
-    ssl_cleanup();
-#endif
 
     return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -263,7 +263,7 @@ int     cleanup_flush(CLEANUP_STATE *state)
      * (mail submitted with the Postfix sendmail command, mail forwarded by
      * the local(8) delivery agent, or mail re-queued with "postsuper -r"),
      * send a bounce notification, reset the error flags in case of success,
-     * and request deletion of the the incoming queue file and of the
+     * and request deletion of the incoming queue file and of the
      * optional DSN SUCCESS records from virtual alias expansion.
      * 
      * XXX It would make no sense to knowingly report success after we already

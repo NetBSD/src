@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp.h,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -187,6 +187,18 @@ typedef struct SMTP_STATE {
      * DSN Support introduced major bloat in error processing.
      */
     DSN_BUF *why;			/* on-the-fly formatting buffer */
+
+    /*
+     * Whether per-nexthop debug_peer support was requested. Otherwise,
+     * assume per-server debug_peer support.
+     */
+    int     debug_peer_per_nexthop;
+
+    /*
+     * One-bit counters to avoid logging the same warning multiple times per
+     * delivery request.
+     */
+    int     logged_line_length_limit:1;
 } SMTP_STATE;
 
  /*
@@ -299,7 +311,7 @@ extern MAPS *smtp_ehlo_dis_maps;	/* ehlo keyword filter */
 extern MAPS *smtp_pix_bug_maps;		/* PIX workarounds */
 
 extern MAPS *smtp_generic_maps;		/* make internal address valid */
-extern int smtp_ext_prop_mask;		/* address externsion propagation */
+extern int smtp_ext_prop_mask;		/* address extension propagation */
 extern unsigned smtp_dns_res_opt;	/* DNS query flags */
 
 #ifdef USE_TLS
@@ -467,7 +479,7 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
 	(session->expire_time = (when))
 
  /*
-  * Encapsulate the following so that we don't expose details of of
+  * Encapsulate the following so that we don't expose details of
   * connection management and error handling to the SMTP protocol engine.
   */
 #ifdef USE_SASL_AUTH
@@ -726,6 +738,11 @@ extern SMTP_CLI_ATTR smtp_cli_attr;
 extern void smtp_rewrite_generic_internal(VSTRING *, const char *);
 extern void smtp_quote_822_address_flags(VSTRING *, const char *, int);
 extern void smtp_quote_821_address(VSTRING *, const char *);
+
+ /*
+  * header_from_format support, for postmaster notifications.
+  */
+extern int smtp_hfrom_format;
 
 /* LICENSE
 /* .ad

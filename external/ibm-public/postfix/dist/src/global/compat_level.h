@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_level.h,v 1.1.1.1 2022/10/08 16:09:07 christos Exp $	*/
+/*	$NetBSD: compat_level.h,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _COMPAT_LEVEL_H_INCLUDED_
 #define _COMPAT_LEVEL_H_INCLUDED_

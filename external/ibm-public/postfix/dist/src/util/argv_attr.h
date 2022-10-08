@@ -1,4 +1,4 @@
-/*	$NetBSD: argv_attr.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: argv_attr.h,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _ARGV_ATTR_H_INCLUDED_
 #define _ARGV_ATTR_H_INCLUDED_
@@ -28,8 +28,8 @@
 #define ARGV_ATTR_VALUE	"argv_value"
 #define ARGV_ATTR_MAX	1024
 
-extern int argv_attr_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int argv_attr_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int argv_attr_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int argv_attr_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 /* LICENSE
 /* .ad
