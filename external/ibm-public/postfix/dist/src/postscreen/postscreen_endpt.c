@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_endpt.c,v 1.1.1.4 2020/03/18 18:59:36 christos Exp $	*/
+/*	$NetBSD: postscreen_endpt.c,v 1.1.1.5 2022/10/08 16:09:09 christos Exp $	*/
 
 /*++
 /* NAME
@@ -110,7 +110,7 @@
 #include <postscreen.h>
 #include <postscreen_haproxy.h>
 
-static INET_PROTO_INFO *proto_info;
+static const INET_PROTO_INFO *proto_info;
 
 /* psc_sockaddr_to_hostaddr - transform endpoint address and port to string */
 

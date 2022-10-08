@@ -1,4 +1,4 @@
-/*	$NetBSD: argv_attr_scan.c,v 1.1.1.1 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: argv_attr_scan.c,v 1.1.1.2 2022/10/08 16:09:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <argv_attr.h>
 /*
 /*	int	argv_attr_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM *stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -58,7 +58,7 @@
 
 /* argv_attr_scan - write ARGV to stream */
 
-int     argv_attr_scan(ATTR_PRINT_MASTER_FN scan_fn, VSTREAM *fp,
+int     argv_attr_scan(ATTR_PRINT_COMMON_FN scan_fn, VSTREAM *fp,
 		               int flags, void *ptr)
 {
     ARGV   *argv = 0;

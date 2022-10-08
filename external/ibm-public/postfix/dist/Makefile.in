@@ -1,7 +1,7 @@
 # To test with valgrind:
-# make -i tests VALGRIND="valgrind --tool=memcheck --log-file=/some/where.%p" 
+# make -i tests NORANDOMIZE="" VALGRIND="valgrind --tool=memcheck --log-file=/some/where.%p" 
 SHELL	= /bin/sh
-WARN    = -Wmissing-prototypes -Wformat -Wno-comment -fcommon
+WARN    = -Wmissing-prototypes -Wformat -Wno-comment -fno-common
 OPTS	= 'WARN=$(WARN)'
 DIRS	= src/util src/global src/dns src/tls src/xsasl src/master src/milter \
 	src/postfix src/fsstone src/smtpstone \
@@ -114,7 +114,39 @@ manpages:
 	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) -f Makefile.in $(OPTS) MAKELEVEL=) || exit 1; \
 	done </dev/null
 
-printfck: update
+# Some checks require a bin/postconf executable.
+pre-release-checks: typo-check missing-proxy-read-maps-check \
+	postlink-check postfix-files-check
+
+postfix-files-check:
+	mantools/check-postfix-files | diff /dev/null -
+
+postlink-check:
+	$(SHLIB_ENV) mantools/check-postlink | diff /dev/null -
+
+missing-proxy-read-maps-check:
+	$(SHLIB_ENV) mantools/missing-proxy-read-maps | diff /dev/null -
+
+typo-check: spell-cc spell-install-proto-text spell-proto-html \
+	double-cc double-install-proto-text double-proto-html
+
+spell-cc:
+	mantools/check-spell-cc | diff /dev/null -
+
+spell-install-proto-text:
+	mantools/check-spell-install-proto-text | diff /dev/null -
+
+spell-proto-html:
+	mantools/check-spell-proto-html | diff /dev/null -
+
+double-cc:
+	mantools/check-double-cc | diff /dev/null -
+
+double-install-proto-text:
+	mantools/check-double-install-proto-text | diff /dev/null -
+
+double-proto-html:
+	mantools/check-double-proto-html | diff /dev/null -
 
 # The build-time shlib_directory setting must take precedence over
 # the installed main.cf settings, otherwise we can't update an

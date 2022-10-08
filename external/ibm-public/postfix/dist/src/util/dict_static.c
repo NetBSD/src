@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_static.c,v 1.1.1.4 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: dict_static.c,v 1.1.1.5 2022/10/08 16:09:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -75,6 +75,8 @@ static void dict_static_close(DICT *dict)
 
     if (dict_static->value)
 	myfree(dict_static->value);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 

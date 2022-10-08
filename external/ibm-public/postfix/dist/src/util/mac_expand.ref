@@ -185,3 +185,38 @@ stat=0 result=true
 stat=0 result=
 << ${{a} >  {b}}
 stat=0 result=
+<< 
+
+<< name1 = foo
+<< 
+<< ${{$name1} >=blah {bar}}
+unknown: warning: bad operator suffix at: "...>=>>>blah"
+stat=1 result=
+<< ${{aaa} == {bbb}}
+stat=0 result=
+<< ${{aaa} ==length {bbb}}
+stat=0 result=true
+<< ${{aaa} <=length {bbb}}
+stat=0 result=true
+<< ${{aaa} >=length {bbb}}
+stat=0 result=true
+<< ${{aaa} != {bbb}}
+stat=0 result=true
+<< ${{aaa} !=length {bbb}}
+stat=0 result=
+<< ${{aaa} > {bb}}
+stat=0 result=
+<< ${{aaa} >length {bb}}
+stat=0 result=true
+<< ${{aaa} >= {bb}}
+stat=0 result=
+<< ${{aaa} >=length {bb}}
+stat=0 result=true
+<< ${{aaa} < {bb}}
+stat=0 result=true
+<< ${{aaa} <length {bb}}
+stat=0 result=
+<< ${{aaa} <= {bb}}
+stat=0 result=true
+<< ${{aaa} <=length {bb}}
+stat=0 result=

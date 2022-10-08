@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - header_checks(5) </title>
 </head> <body> <pre>
 HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
@@ -173,7 +173,7 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
               Note  1:  the  BCC  address is added as if it was specified with
               NOTIFY=NONE. The sender  will  not  be  notified  when  the  BCC
               address  is  undeliverable,  as long as all down-stream software
-              implements <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a>.
+              implements <a href="https://tools.ietf.org/html/rfc3461">RFC 3461</a>.
 
               Note 2: this ignores duplicate addresses (with the same delivery
               status notification options).
@@ -376,10 +376,10 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
               line at a time. A decision made for one line is not carried over
               to the next line.
 
-       <b>o</b>      If text in the message body is encoded (<a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a>) then the rules
+       <b>o</b>      If text in the message body is encoded (<a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a>) then the rules
               need to be specified for the encoded form.
 
-       <b>o</b>      Likewise, when message headers are encoded (<a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a>)  then  the
+       <b>o</b>      Likewise, when message headers are encoded (<a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a>)  then  the
               rules need to be specified for the encoded form.
 
        Message headers added by the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon itself are excluded from
@@ -462,8 +462,8 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table management
        <a href="postsuper.1.html">postsuper(1)</a>, Postfix janitor
        <a href="postcat.1.html">postcat(1)</a>, show Postfix queue file contents
-       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a>, base64 and quoted-printable encoding rules
-       <a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a>, message header encoding for non-ASCII text
+       <a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a>, base64 and quoted-printable encoding rules
+       <a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a>, message header encoding for non-ASCII text
 
 <b>README FILES</b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview

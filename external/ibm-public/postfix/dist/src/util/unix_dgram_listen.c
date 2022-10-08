@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_dgram_listen.c,v 1.1.1.1 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: unix_dgram_listen.c,v 1.1.1.2 2022/10/08 16:09:12 christos Exp $	*/
 
 /*++
 /* NAME
@@ -21,7 +21,7 @@
 /* .IP backlog
 /*	Either NON_BLOCKING for a non-blocking socket, or BLOCKING for
 /*	blocking mode.
-/* DIAGNOSIICS
+/* DIAGNOSTICS
 /*	Fatal errors: path too large, can't create socket.
 /* LICENSE
 /* .ad

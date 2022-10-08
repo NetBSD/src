@@ -51,7 +51,7 @@
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular
-#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        expressions,  or  lookups  can  be directed to a TCP-based
 #        server. In those case, the lookups are done in a  slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
@@ -99,8 +99,8 @@
 #               tination,  or when it is listed in $inet_interfaces
 #               or $proxy_interfaces.
 # 
-#               This functionality overlaps with  functionality  of
-#               the  local  aliases(5)  database. The difference is
+#               This functionality overlaps with the  functionality
+#               of the local aliases(5) database. The difference is
 #               that virtual(5) mapping can be applied to non-local
 #               addresses.
 # 
@@ -155,7 +155,7 @@
 # 
 #        The  propagate_unmatched_extensions   parameter   controls
 #        whether  an  unmatched  address extension (+foo) is propa-
-#        gated to the result of table lookup.
+#        gated to the result of a table lookup.
 # 
 # VIRTUAL ALIAS DOMAINS
 #        Besides virtual aliases, the virtual alias table can  also
@@ -232,8 +232,8 @@
 #        This  section  describes how the table lookups change when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
-#        ble(5).  This feature is not available up to and including
-#        Postfix version 2.4.
+#        ble(5).  This feature is  available  in  Postfix  2.5  and
+#        later.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain mail addresses are not broken  up  into  their
@@ -254,11 +254,11 @@
 #        virtual_alias_maps ($virtual_maps)
 #               Optional lookup tables  that  alias  specific  mail
 #               addresses  or  domains  to  other  local  or remote
-#               address.
+#               addresses.
 # 
 #        virtual_alias_domains ($virtual_alias_maps)
-#               Postfix is final destination for the specified list
-#               of  virtual  alias  domains,  that  is, domains for
+#               Postfix is the final destination for the  specified
+#               list of virtual alias domains, that is, domains for
 #               which all addresses are  aliased  to  addresses  in
 #               other local or remote domains.
 # 

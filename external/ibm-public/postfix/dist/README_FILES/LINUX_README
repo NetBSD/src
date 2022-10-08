@@ -4,10 +4,10 @@ PPoossttffiixx aanndd LLiinnuuxx
 
 HHoosstt llooookkuupp iissssuueess
 
-By default Linux /etc/hosts lookups do not support multiple IP address per
+By default Linux /etc/hosts lookups do not support multiple IP addresses per
 hostname. This causes warnings from the Postfix SMTP server that "hostname XXX
 does not resolve to address YYY", and is especially a problem with hosts that
-have both IPv4 and IPv6 addresses. To fix, turn on support for multiple IP
+have both IPv4 and IPv6 addresses. To fix this, turn on support for multiple IP
 addresses:
 
     /etc/host.conf:
@@ -42,10 +42,16 @@ file for further information.
 
 PPrrooccmmaaiill iissssuueess
 
-On RedHat Linux 7.1 and later pprrooccmmaaiill no longer has permission to write the
+On RedHat Linux 7.1 and later pprrooccmmaaiill no longer has permission to write to the
 mail spool directory. Workaround:
 
     # chmod 1777 /var/spool/mail
+
+LLooggggiinngg iinn aa ccoonnttaaiinneerr
+
+When running Postfix inside a container, you can use stdout logging as
+described in MAILLOG_README. Alternatives: run syslogd inside the container, or
+mount the host's syslog socket inside the container.
 
 SSyyssllooggdd ppeerrffoorrmmaannccee
 
@@ -58,4 +64,11 @@ synchronous mail logfile writes by editing /etc/syslog.conf and by prepending a
         mail.*                          -/var/log/mail.log
 
 Send a "kkiillll --HHUUPP" to the ssyyssllooggdd to make the change effective.
+
+OOtthheerr llooggggiinngg ppeerrffoorrmmaannccee iissssuueess
+
+LINUX ssyysstteemmdd intercepts all logging and enforces its own rate limits before
+handing off requests to a backend such as rrssyyssllooggdd or ssyysslloogg--nngg. On a busy mail
+server this can result in information loss. As a workaround, you can use
+Postfix's built-in logging as described in MAILLOG_README.
 

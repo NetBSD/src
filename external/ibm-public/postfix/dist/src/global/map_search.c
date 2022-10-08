@@ -1,4 +1,4 @@
-/*	$NetBSD: map_search.c,v 1.1.1.1 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: map_search.c,v 1.1.1.2 2022/10/08 16:09:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -190,7 +190,6 @@ const MAP_SEARCH *map_search_create(const char *map_spec)
 		    MAP_SEARCH_CREATE_RETURN(0);
 		}
 	    }
-	    msg_info("split_nameval(\"%s\"", attr_name_val);
 	    if ((const_err = split_nameval(attr_name_val, &attr_name,
 					   &attr_value)) != 0) {
 		msg_warn("malformed map attribute in '%s': '%s'",

@@ -30,11 +30,11 @@ OK
 >>> mail user@spike.porcupine.org
 OK
 >>> helo spike.porcupine.org
-./smtpd_check: ignoring DNS RR: spike.porcupine.org. TTL IN A 168.100.189.2
+./smtpd_check: ignoring DNS RR: spike.porcupine.org. TTL IN A 168.100.3.2
 OK
 >>> # EXPECT OK + "all A records dropped" warning + no delayed reject.
 >>> helo fist.porcupine.org
-./smtpd_check: ignoring DNS RR: fist.porcupine.org. TTL IN A 168.100.189.4
+./smtpd_check: ignoring DNS RR: fist.porcupine.org. TTL IN A 168.100.3.4
 ./smtpd_check: warning: fist.porcupine.org: address or MX lookup error: DNS reply filter drops all results
 OK
 >>> mail user@spike.porcupine.org
@@ -96,11 +96,11 @@ OK
 OK
 >>> # EXPECT OK (host has AAAA record).
 >>> mail user@spike.porcupine.org
-./smtpd_check: ignoring DNS RR: spike.porcupine.org. TTL IN A 168.100.189.2
+./smtpd_check: ignoring DNS RR: spike.porcupine.org. TTL IN A 168.100.3.2
 OK
 >>> # EXPECT OK + "all A records dropped" warning.
 >>> mail user@fist.porcupine.org
-./smtpd_check: ignoring DNS RR: fist.porcupine.org. TTL IN A 168.100.189.4
+./smtpd_check: ignoring DNS RR: fist.porcupine.org. TTL IN A 168.100.3.4
 ./smtpd_check: warning: fist.porcupine.org: MX or address lookup error: DNS reply filter drops all results
 OK
 >>> smtpd_dns_reply_filter regexp:../dns/error.reg

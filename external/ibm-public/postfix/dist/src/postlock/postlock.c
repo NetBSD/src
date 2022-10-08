@@ -1,4 +1,4 @@
-/*	$NetBSD: postlock.c,v 1.1.1.4 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: postlock.c,v 1.1.1.5 2022/10/08 16:09:09 christos Exp $	*/
 
 /*++
 /* NAME
@@ -204,6 +204,11 @@ int     main(int argc, char **argv)
      */
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_cleanup(fatal_exit);
+
+    /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
 
     /*
      * Parse JCL.

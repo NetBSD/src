@@ -1,0 +1,330 @@
+void  void rewrite_proto stream 
+ Strip trailing dot at end of domain but not dot dot or dot This
+ strip source routed addresses site site user domain 
+transport_lookup  transport_lookup finds the channel and nexthop for the given
+ Typically the nexthop specifies a hostname hostname TCP Port or the
+resolve_addr  resolve_addr resolve address according to rule set 
+ technically incorrect this is needed to stop user domain domain relay
+ needs white space but stuff stuff does not This is not a
+ where stuff stuff does not happen 
+ Strip trailing dot at end of domain but not dot dot or at dot 
+XXX  XXX Short cut invalid address forms 
+ Connect via TCP to domain domain port port The default
+ Connect via TCP to domain domain port port The default
+files  files that are owned by the wrong user or files that have world write
+ name is is not defined 
+ conditionally to value when name is is not 
+MUMBLE_TODO  MUMBLE_TODO flags must not be cleared once raised The _TODO_TO_PASS and
+psc_todo_tests  psc_todo_tests overwrites all per session flag bits and
+ Either hand off the socket to a real SMTP engine or say bye bye 
+char  char context 
+inet_pton  inet_pton 
+void  void psc_early_tests state 
+void  void psc_smtpd_init void 
+void  void psc_smtpd_tests state 
+ IP postscreen_dnsbl_max_ttl postscreen_dnsbl_ttl postscreen_dnsbl_ttl 1 h 
+ WARNING WARNING WARNING
+ WARNING WARNING WARNING
+ The event driven TLS I O implementation is founded on on line OpenSSL
+unused  unused 
+ IP f command command 
+ IP q command command 
+ IP Q command command 
+ IP r command command 
+ IP s command command 
+ TCP port port Both host and port may be
+void  void 
+ reset_cmd_flags reset per command command flags 
+ set_cmd_flags set per command command flags 
+ Connect via TCP to host host port port The default
+ Connect via TCP to host host port port The default
+argv  argv command 
+time  time of entry into active queue 
+peer  peer entries 
+FD_SETSIZE  FD_SETSIZE 
+FD_SETSIZE  FD_SETSIZE 
+FD_SETSIZE  FD_SETSIZE 
+ var spool postfix incoming incoming queue
+ var spool postfix active active queue
+ var spool postfix deferred deferred queue
+time  time of entry into active queue 
+FD_SETSIZE  FD_SETSIZE 
+FD_SETSIZE  FD_SETSIZE 
+FD_SETSIZE  FD_SETSIZE 
+ var spool postfix incoming incoming queue
+ var spool postfix active active queue
+ var spool postfix deferred deferred queue
+XXX  XXX 
+ WARNING WARNING WARNING
+ WARNING WARNING WARNING
+NOTREACHED  NOTREACHED 
+ If not connected to stdin stdin must not be a terminal 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ If not connected to stdin stdin must not be a terminal 
+select  select 
+ If not connected to stdin stdin must not be a terminal 
+ main main program 
+this  this first 
+linkage  linkage 
+ Postfix master master cf file processing
+select  select 
+ If not connected to stdin stdin must not be a terminal 
+ response to stress level changes Doing so would would contaminate
+ IP CA_MAIL_SERVER_EXIT void void 
+ If not connected to stdin stdin must not be a terminal 
+smtp_site_fail  smtp_site_fail handles the case where the program fails to
+ We can t avoid copying copying lots of strings into VSTRING buffers 
+binding  binding properties passivated 
+endpoint  endpoint properties passivated 
+safety  safety 
+XXX  XXX 
+ See src tls tls_level c and src tls tls h Levels above encrypt require
+smtp_rcpt_done  smtp_rcpt_done 
+smtp_rcpt_done  smtp_rcpt_done 
+smtp_rcpt_done  smtp_rcpt_done 
+ Ignore out of protocol enhanced status codes codes that accompany 3XX
+ IP name name 
+void  void 
+FALLTHROUGH  FALLTHROUGH 
+HAS_PCRE  HAS_PCRE 
+HAS_PCRE  HAS_PCRE 
+ any any 
+ typedef DICT DICT_OPEN_FN const char int int 
+EDIT_FILE  EDIT_FILE edit_file_open original_path output_flags output_mode 
+void  void 
+nvtable_locate  nvtable_locate returns a pointer to the entry that was stored
+legacy  legacy 
+ for symlinks owned by root NEVER NEVER make exceptions for symlinks
+ sanitize sanitize db_get put del result 
+ simple attr attr name colon attr value newline
+void  void htable_free table free_fn 
+void  void htable_walk table action ptr 
+htable_locate  htable_locate returns a pointer to the entry that was stored
+ IP CA_VSTREAM_POPEN_WAITPID_FN pid_t pid_t WAIT_STATUS_T int 
+optimization  optimization 
+msg_fatal  msg_fatal reports an unrecoverable error and terminates the program
+ compare compare the address family and network address or
+ numbers or number number ranges 
+ v4pattern v4field v4field v4field v4field
+ v4pattern v4field v4field v4field v4field
+ v4pattern v4field v4field v4field v4field
+ v4seq_member v4octet v4octet v4octet
+ v4seq_member v4octet v4octet v4octet
+Corruption  Corruption 
+ main main program 
+privileges  privileges 
+DICT_THASH_OPEN_RETURN  DICT_THASH_OPEN_RETURN 
+ Fatal errors cannot open file file write error out of memory 
+found  found 
+found  found 
+XXX  XXX maybe earlier 
+XXX  XXX 
+ verified RedHat 3 03 
+ Bits per byte byte in vector bit offset in byte bytes per set 
+ echo echo text received on stdin 
+ request request a bunch of timer events 
+ Fatal errors cannot open file file write error out of memory 
+found  found 
+found  found 
+ concatenate concatenate null terminated list of strings 
+void  void context 
+void  void binhash_free table free_fn 
+void  void binhash_walk table action ptr 
+binhash_locate  binhash_locate returns a pointer to the entry that was stored
+width  width precision separator 
+ and whitespace characters must be replaced by XX XX being the
+ and whitespace characters and the by XX XX being the two digit
+ Fatal errors cannot open file file write error out of
+privileges  privileges 
+ Example 00000000000000000000000000000001 01 80 10 80 lo
+ text text 
+void  void 
+matched  matched text 
+SUNOS5  SUNOS5 
+ casefold casefold text for caseless comparison 
+ simple name string string simple name 
+ attribute list attribute attribute attribute list 
+ attribute list attribute attribute attribute list 
+ attribute string string 
+string  string ISO Latin 1 character set except the character
+ WARNING WARNING WARNING 
+ WARNING WARNING WARNING 
+ Example checking infrastructure for int int const int 
+ Example variables with type int int const int 
+int  int int_val 
+ host port host host 
+host  host port host host
+ host port host host
+ port port
+ host port host host 
+ host port host host port port 
+ host port host host port port 
+ simple attr attr name null attr value null
+ IP CA_SLMDB_CTL_LONGJMP_FN void void int 
+ IP CA_SLMDB_CTL_NOTIFY_FN void void int 
+ IP CA_SLMDB_CTL_ASSERT_FN void void const char 
+ DICT dict_static_open name name dict_flags 
+buffer  buffer length 
+privileges  privileges 
+key  key length 
+ simple attr attr name attr value newline
+ attr name any string without null or or newline 
+ var spool postfix maildrop maildrop queue
+ WARNING WARNING WARNING
+ WARNING WARNING WARNING
+lmdb  lmdb supports concurrent writes and reads from different
+private  private 
+private  private 
+ var spool postfix private private class endpoints
+ var spool postfix public public class endpoints
+messages  messages put on hold 
+option  option disables UTF 8 syntax checks on query keys and
+option  option disables UTF 8 syntax checks on query keys and
+lmdb  lmdb supports concurrent writes and reads from different
+peer  peer 
+void  void 
+XXX  XXX 
+ relay loopholes with user domain domain when relaying mail to a
+ Strip one trailing dot but not dot dot 
+void  void 
+headers  headers after multipart boundary 
+ by XX XX being the two digit uppercase hexadecimal equivalent 
+must  must 
+request  request completed unsuccessfully 
+DSN_BUF  DSN_BUF dsb_create void 
+DSN_SPLIT  DSN_SPLIT dsn_split dp def_dsn text 
+ that registers operators such as level level that compare
+ var_maillog_file var_maillog_file import_service_path 0 
+ IP address address family information and the numerical TCP port 
+privileges  privileges 
+void  void rcpb_reset rcpb 
+ The entire lookup key key 
+DSN  DSN dsn_create status action reason dtype dtext mtype mname 
+ When specified with a flush request request that
+storage  storage 
+message  message size 
+ starts with or or the prefix which will be used
+ with or or the prefix which will be used to obtain
+strings  strings with digits uppercase letters and lowercase
+safe_strtoul  safe_strtoul implements similar functionality as strtoul 
+ typedef LOGIN_SENDER_MATCH LOGIN_SENDER_MATCH 
+LOGIN_SENDER_MATCH  LOGIN_SENDER_MATCH login_sender_create 
+void  void anvil_clnt_free anvil_clnt 
+privileges  privileges 
+ characters specified with special with x XX XX being
+0000 0000 0000 007 F 0x xxxxxx
+0000 0000 0000 007 F 0x xxxxxx
+ https github com aox aox blob master encodings utf cpp with
+FALLTHROUGH  FALLTHROUGH 
+ Detail format is digit digit 1 3 digit 1 3 
+encoding  encoding domain 
+domain  domain 
+domain  domain 
+encoding  encoding 
+XXX  XXX EAI inspect encoded message global 
+domain  domain 
+MBOX  MBOX mbox_open path flags mode st user group lock_style 
+ incomplete address address rewriting alias expansion automatic BCC
+unquoted  unquoted form then quoted 
+ records data offset offset of the first REC_TYPE_NORM or REC_TYPE_CONT
+DELIVER_REQUEST  DELIVER_REQUEST deliver_request_read stream 
+MAIL_VERSION  MAIL_VERSION mail_version_parse version_string why 
+dict_xx_open  dict_xx_open result 
+ When specified with a flush request request that
+MAIL_STREAM  MAIL_STREAM mail_stream_file queue class service mode 
+ starts with or or the prefix which will be used to
+hosts  hosts on which databases reside 
+ or maptype mapname search name name The search
+ with or or the prefix which will be used to obtain
+the  the message delivery record 
+MKMAP  MKMAP mkmap_open type path open_flags dict_flags 
+BOUNCE_LOG  BOUNCE_LOG bounce_log_open queue id flags mode 
+ internal external external first 
+context  context for queue file changes 
+sender  sender transport 
+SMFIM_EOH  SMFIM_EOH SMFIM_EOM 
+value  value to string 
+RE  RE
+PCF_MASTER_ENT  PCF_MASTER_ENT local_scope 
+to  to instantiate legacy per dbms parameters and to examine
+ tls_digest_encode encode message digest binary blob as xx xx 
+logged  logged 
+logged  logged 
+ DNS at the dane dane only and half dane security levels or be
+void  void tls_pre_jail_init TLS_ROLE 
+TLS_ROLE  TLS_ROLE role 
+and  and the protocol version floor ceiling given a list plist of
+ of the form name name hexvalue hexvalue If plist 
+ of the form name name hexvalue hexvalue If plist 
+XXX  XXX We re ignoring the function name do we want to log it 
+ If the match is required unambiguous insist that that no other values
+ etc postfix canonical canonical mapping table
+ etc postfix virtual virtual mapping table
+void  void 
+regions  regions with body content 
+SASLv2  SASLv2 s sasl_server_new takes two new parameters to specify local and
+SASLv2  SASLv2 s sasl_client_new takes two new parameters to specify local and
+ All 5xx replies must have a 5 xx xx detail code 
+ Truncate hostnames ending in dot but not dot dot 
+ Truncate hostnames ending in dot but not dot dot 
+ Truncate hostnames ending in dot but not dot dot 
+ Truncate names ending in dot but not dot dot 
+200412  200412 
+ Reject mail to unknown addresses in local domains domains that
+client  client name 
+stuff  stuff 
+counter  counter 
+Milter  Milter initialization status 
+USE_TLSPROXY  USE_TLSPROXY 
+address  address family 
+void  void 
+probed  probed if non zero the time the currently outstanding address probe was
+ recipient lists and some MUAs even specify word word address 
+VERP  VERP 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+NOTREACHED  NOTREACHED 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+key  key 
+ Fatal error error opening existing file 
+void  void bounce_cleanup_unregister void 
+ Fatal error error opening existing file 
+BOUNCE_TEMPLATES  BOUNCE_TEMPLATES bounce_templates_create void 
+void  void bounce_templates_free templates 
+ Fatal error error opening existing file 
+ also showq showq c 
+name  name length 
+BOUNCE_INFO  BOUNCE_INFO bounce_mail_init service queue_name queue_id encoding 
+ Fatal error error opening existing file 
+more  more useful and more consistent 
+ Fatal error error opening existing file 
+ Fatal error error opening existing file 
+XXX  XXX 
+ int compar DNS_RR DNS_RR 
+USE_FNV_32BIT  USE_FNV_32BIT 

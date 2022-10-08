@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - makedefs(1) </title>
 </head> <body> <pre>
 MAKEDEFS(1)                                                        MAKEDEFS(1)
@@ -34,7 +34,7 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
               Specifies  one or more non-default object libraries. Postfix 3.0
               and later specify some of their  database  library  dependencies
               with  <a href="CDB_README.html">AUXLIBS_CDB</a>,  <a href="LDAP_README.html">AUXLIBS_LDAP</a>,  <a href="LMDB_README.html">AUXLIBS_LMDB</a>,  <a href="MYSQL_README.html">AUXLIBS_MYSQL</a>,
-              <a href="PCRE_README.html">AUXLIBS_PCRE</a>, <a href="PGSQL_README.html">AUXLIBS_PGSQL</a>, <a href="SDBM_README.html">AUXLIBS_SDBM</a>,  and  <a href="SQLITE_README.html">AUXLIBS_SQLITE</a>,
+              <a href="PCRE_README.html">AUXLIBS_PCRE</a>, <a href="PGSQL_README.html">AUXLIBS_PGSQL</a>, AUXLIBS_SDBM,  and  <a href="SQLITE_README.html">AUXLIBS_SQLITE</a>,
               respectively.
 
        <b>CC=</b><i>compiler</i><b>_</b><i>command</i>
@@ -104,47 +104,52 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
 
               <b>-DNO_PCRE</b>
                      Do not build with PCRE support.  By default, PCRE support
-                     is compiled in when the <b>pcre-config</b> utility is installed.
+                     is compiled in when the <b>pcre2-config</b> or <b>pcre-config</b> util-
+                     ity are installed.
 
               <b>-DNO_POSIX_GETPW_R</b>
                      Disable support for POSIX getpwnam_r/getpwuid_r.
 
+              <b>-DNO_RES_NCALLS</b>
+                     Do   not   build  with  the  threadsafe  resolver(5)  API
+                     (res_ninit() etc.).
+
               <b>-DNO_SIGSETJMP</b>
-                     Use   setjmp()/longjmp()   instead   of  sigsetjmp()/sig-
-                     longjmp().  By  default,  Postfix  uses  sigsetjmp()/sig-
+                     Use  setjmp()/longjmp()   instead   of   sigsetjmp()/sig-
+                     longjmp().   By  default,  Postfix  uses sigsetjmp()/sig-
                      longjmp() when they appear to work.
 
               <b>-DNO_SNPRINTF</b>
-                     Use  sprintf() instead of snprintf(). By default, Postfix
+                     Use sprintf() instead of snprintf(). By default,  Postfix
                      uses snprintf() except on ancient systems.
 
        <b>DEBUG=</b><i>debug</i><b>_</b><i>level</i>
-              Specifies a non-default debugging  level.  The  default  is  <b>-g</b>.
+              Specifies  a  non-default  debugging  level.  The default is <b>-g</b>.
               Specify <b>DEBUG=</b> to turn off debugging.
 
        <b>OPT=</b><i>optimization</i><b>_</b><i>level</i>
-              Specifies  a  non-default optimization level. The default is <b>-O</b>.
+              Specifies a non-default optimization level. The default  is  <b>-O</b>.
               Specify <b>OPT=</b> to turn off optimization.
 
        <b>POSTFIX_INSTALL_OPTS=</b><i>-option...</i>
-              Specifies options for the postfix-install command, separated  by
-              whitespace.    Currently,   the   only   supported   option   is
+              Specifies  options for the postfix-install command, separated by
+              whitespace.   Currently,   the   only   supported   option    is
               <b>-keep-build-mtime</b>.
 
        <b>SHLIB_CFLAGS=</b><i>flags</i>
-              Override the compiler flags  (typically,  "-fPIC")  for  Postfix
+              Override  the  compiler  flags  (typically, "-fPIC") for Postfix
               dynamically-linked libraries and database plugins.
 
               This feature was introduced with Postfix 3.0.
 
        <b>SHLIB_RPATH=</b><i>rpath</i>
-              Override  the  runpath  (typically, "'-Wl,-rpath,${SHLIB_DIR}'")
+              Override the  runpath  (typically,  "'-Wl,-rpath,${SHLIB_DIR}'")
               for Postfix dynamically-linked libraries.
 
               This feature was introduced with Postfix 3.0.
 
        <b>SHLIB_SUFFIX=</b><i>suffix</i>
-              Override the filename  suffix  (typically,  ".so")  for  Postfix
+              Override  the  filename  suffix  (typically,  ".so") for Postfix
               dynamically-linked libraries and database plugins.
 
               This feature was introduced with Postfix 3.0.
@@ -152,7 +157,7 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
        <b>shared=yes</b>
 
        <b>shared=no</b>
-              Enable   (disable)   Postfix   builds   with  dynamically-linked
+              Enable  (disable)   Postfix   builds   with   dynamically-linked
               libraries typically named $<a href="postconf.5.html#shlib_directory">shlib_directory</a>/libpostfix-*.so.*.
 
               This feature was introduced with Postfix 3.0.
@@ -160,39 +165,39 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
        <b>dynamicmaps=yes</b>
 
        <b>dynamicmaps=no</b>
-              Enable (disable) Postfix  builds  with  the  configuration  file
+              Enable  (disable)  Postfix  builds  with  the configuration file
               $<a href="postconf.5.html#meta_directory">meta_directory</a>/dynamicmaps.cf and dynamically-loadable database
-              plugins typically named  postfix-*.so.*.   The  setting  "dynam-
-              icmaps=yes"   implicitly   enables   Postfix  dynamically-linked
+              plugins  typically  named  postfix-*.so.*.   The setting "dynam-
+              icmaps=yes"  implicitly   enables   Postfix   dynamically-linked
               libraries.
 
               This feature was introduced with Postfix 3.0.
 
        <b>pie=yes</b>
 
-       <b>pie=no</b> Enable (disable) Postfix builds with  position-independent  exe-
+       <b>pie=no</b> Enable  (disable)  Postfix builds with position-independent exe-
               cutables, on platforms where this is supported.
 
               This feature was introduced with Postfix 3.0.
 
        <i>installation</i><b>_</b><i>parameter</i><b>=</b><i>value</i>...
-              Override  the compiled-in default value of the specified instal-
-              lation parameter(s). The following parameters are  supported  in
+              Override the compiled-in default value of the specified  instal-
+              lation  parameter(s).  The following parameters are supported in
               this context:
 
-              <a href="postconf.5.html#command_directory">command_directory</a>  <a href="postconf.5.html#config_directory">config_directory</a> <a href="postconf.5.html#daemon_directory">daemon_directory</a> <a href="postconf.5.html#data_directory">data_direc</a>-
-              <a href="postconf.5.html#data_directory">tory</a> <a href="postconf.5.html#default_database_type">default_database_type</a>  <a href="postconf.5.html#html_directory">html_directory</a>  <a href="postconf.5.html#mail_spool_directory">mail_spool_directory</a>
-              <a href="postconf.5.html#mailq_path">mailq_path</a>   <a href="postconf.5.html#manpage_directory">manpage_directory</a>   <a href="postconf.5.html#meta_directory">meta_directory</a>  <a href="postconf.5.html#newaliases_path">newaliases_path</a>
-              <a href="postconf.5.html#queue_directory">queue_directory</a> <a href="postconf.5.html#readme_directory">readme_directory</a>  <a href="postconf.5.html#sendmail_path">sendmail_path</a>  <a href="postconf.5.html#shlib_directory">shlib_directory</a>
+              <a href="postconf.5.html#command_directory">command_directory</a> <a href="postconf.5.html#config_directory">config_directory</a> <a href="postconf.5.html#daemon_directory">daemon_directory</a>  <a href="postconf.5.html#data_directory">data_direc</a>-
+              <a href="postconf.5.html#data_directory">tory</a>  <a href="postconf.5.html#default_database_type">default_database_type</a>  <a href="postconf.5.html#html_directory">html_directory</a> <a href="postconf.5.html#mail_spool_directory">mail_spool_directory</a>
+              <a href="postconf.5.html#mailq_path">mailq_path</a>  <a href="postconf.5.html#manpage_directory">manpage_directory</a>   <a href="postconf.5.html#meta_directory">meta_directory</a>   <a href="postconf.5.html#newaliases_path">newaliases_path</a>
+              <a href="postconf.5.html#queue_directory">queue_directory</a>  <a href="postconf.5.html#readme_directory">readme_directory</a>  <a href="postconf.5.html#sendmail_path">sendmail_path</a> <a href="postconf.5.html#shlib_directory">shlib_directory</a>
               <a href="postconf.5.html#openssl_path">openssl_path</a>
 
-              See  the  <a href="postconf.5.html">postconf(5)</a> manpage for a description of these parame-
+              See the <a href="postconf.5.html">postconf(5)</a> manpage for a description of  these  parame-
               ters.
 
               This feature was introduced with Postfix 3.0.
 
        <b>WARN=</b><i>warning</i><b>_</b><i>flags</i>
-              Specifies non-default gcc compiler warning options for use  when
+              Specifies  non-default gcc compiler warning options for use when
               "make" is invoked in a source subdirectory only.
 
 <b>LICENSE</b>

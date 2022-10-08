@@ -1,0 +1,247 @@
+ 1 000 000 messages with good performance unlikely above that limit 
+ 10 10 Mandatory configuration file edits
+ 11 11 To chroot or not to chroot
+ 12 12 Care and feeding of the Postfix system
+14 rbl_domain rbl_reason rbl_reason 
+168 100 189 2 255 255 255 224
+18 rbl_domain rbl_reason rbl_reason 
+ 1 ffff ffff ffff ffff ffff ffff ffff ffff
+2001 240 587 0 2d0 b7ff fe88 2ca7 ffff ffff ffff ffff 
+ 31 sasldb Accounts are stored stored in a Cyrus SASL Berkeley DB
+ 33 ldapdb Accounts are stored stored in an LDAP database
+ 4 yes yes yes never 100 
+5 postmaster postmaster example com
+5 root root localhost
+6 abuse abuse example com
+80821 S 0 00 24 smtpd n smtp t inet u c o stress yes
+83326 S 0 00 28 smtpd n smtp t inet u c o stress 
+84345 Ss 0 00 11 usr bin perl usr libexec postfix smtpd policy pl
+ 8 SENDMAIL usr sbin sendmail G i NEVER NEVER NEVER use t here 
+address localpart as per RFC 822 so that additional or or 
+all  all Maximum per destination delivery concurrency
+and cost cost 1 times more than if the preemptive scheduler was
+ and sneak in the ten recipient mail Wait wait wait Could we Aren t
+ aNULL aNULL kEECDH kEDH RC4 eNULL EXPORT LOW STRENGTH 
+Arrival Date Sun 26 Nov 2006 17 01 01 0500 EST 
+attacks with user domain domain addresses when Postfix provides
+authzTo authzTo dn regex uniqueIdentifier ou people dc example dc com
+ AUXLIBS AUXLIBS options for LDAP or TLS etc 
+blockquote  blockquote 
+ broken smtp smtp o smtp_quote_rfc821_envelope no
+ccert_fingerprint C2 9D F4 87 71 73 73 D9 18 E7 C2 F3 C1 DA 6E 04
+command_directory command_directory
+ concurrency concurrency limit
+config_directory config_directory
+daemon_directory daemon_directory
+data_directory data_directory
+Date Sun 26 Nov 2006 17 01 01 0500 EST 
+dd  dd Alternatively check_ccert_access accepts an explicit search
+dd  dd check_ccert_access type table search_order cert_fingerprint 
+dd  dd The commas are optional dd 
+dd  dd The default algorithm is b sha256 b with Postfix ge 3 6
+ dd No TLS TLS will not be used unless enabled for specific
+Dec 4 04 30 09 hostname postfix smtpd 58549 NOQUEUE reject 
+ default_transport uucp uucp gateway
+ different client IP addresses Lookup results override the the global
+Documentation  Documentation is available as README files start with the file
+done  done
+done done
+ dt b a name check_address_map check_address_map a i a href DATABASE_RE
+ dt b a name check_ccert_access check_ccert_access a i a href DATABASE_
+ dt b a name check_client_a_access check_client_a_access a i a href DAT
+ dt b a name check_client_access check_client_access a i a href DATABAS
+ dt b a name check_client_mx_access check_client_mx_access a i a href D
+ dt b a name check_client_ns_access check_client_ns_access a i a href D
+ dt b a name check_etrn_access check_etrn_access a i a href DATABASE_RE
+ dt b a name check_helo_a_access check_helo_a_access a i a href DATABAS
+ dt b a name check_helo_access check_helo_access a i a href DATABASE_RE
+ dt b a name check_helo_mx_access check_helo_mx_access a i a href DATAB
+ dt b a name check_helo_ns_access check_helo_ns_access a i a href DATAB
+ dt b a name check_policy_service check_policy_service i servername i a 
+ dt b a name check_recipient_a_access check_recipient_a_access a i a hre
+ dt b a name check_recipient_access check_recipient_access a i a href D
+ dt b a name check_recipient_mx_access check_recipient_mx_access a i a h
+ dt b a name check_recipient_ns_access check_recipient_ns_access a i a h
+ dt b a name check_sasl_access check_sasl_access a i a href DATABASE_RE
+ dt b a name check_sender_a_access check_sender_a_access a i a href DAT
+ dt b a name check_sender_access check_sender_access a i a href DATABAS
+ dt b a name check_sender_mx_access check_sender_mx_access a i a href D
+ dt b a name check_sender_ns_access check_sender_ns_access a i a href D
+ dt b a name defer defer a b dt 
+ dt b a name defer_if_permit defer_if_permit a b dt 
+ dt b a name defer_if_reject defer_if_reject a b dt 
+ dt b a name defer_unauth_destination defer_unauth_destination a b dt 
+ dt b a name no_address_mappings no_address_mappings a b dt 
+ dt b a name no_header_body_checks no_header_body_checks a b dt 
+ dt b a name no_milters no_milters a b dt 
+ dt b a name no_unknown_recipient_checks no_unknown_recipient_checks a b 
+ dt b a name permit_auth_destination permit_auth_destination a b dt 
+ dt b a name permit_dnswl_client permit_dnswl_client i dnswl_domain d d d d
+ dt b a name permit_inet_interfaces permit_inet_interfaces a b dt 
+ dt b a name permit_mx_backup permit_mx_backup a b dt 
+ dt b a name permit_mynetworks permit_mynetworks a b dt 
+ dt b a name permit permit a b dt 
+ dt b a name permit_rhswl_client permit_rhswl_client i rhswl_domain d d d d
+ dt b a name permit_sasl_authenticated permit_sasl_authenticated a b dt
+ dt b a name permit_tls_all_clientcerts permit_tls_all_clientcerts a b 
+ dt b a name permit_tls_clientcerts permit_tls_clientcerts a b dt 
+ dt b a name reject_invalid_helo_hostname reject_invalid_helo_hostname a 
+ dt b a name reject_multi_recipient_bounce reject_multi_recipient_bounce a 
+ dt b a name reject_non_fqdn_helo_hostname reject_non_fqdn_helo_hostname a 
+ dt b a name reject_non_fqdn_recipient reject_non_fqdn_recipient a b dt
+ dt b a name reject_non_fqdn_sender reject_non_fqdn_sender a b dt 
+ dt b a name reject_plaintext_session reject_plaintext_session a b dt 
+ dt b a name reject_rbl_client reject_rbl_client i rbl_domain d d d d i 
+ dt b a name reject reject a b dt 
+ dt b a name reject_rhsbl_client reject_rhsbl_client i rbl_domain d d d d 
+ dt b a name reject_rhsbl_helo reject_rhsbl_helo i rbl_domain d d d d i 
+ dt b a name reject_rhsbl_recipient reject_rhsbl_recipient i rbl_domain d d
+ dt b a name reject_rhsbl_reverse_client reject_rhsbl_reverse_client i rbl_
+ dt b a name reject_rhsbl_sender reject_rhsbl_sender i rbl_domain d d d d 
+ dt b a name reject_sender_login_mismatch reject_sender_login_mismatch a 
+ dt b a name reject_unauth_destination reject_unauth_destination a b dt
+ dt b a name reject_unauth_pipelining reject_unauth_pipelining a b dt 
+ dt b a name reject_unknown_client_hostname reject_unknown_client_hostname 
+ dt b a name reject_unknown_helo_hostname reject_unknown_helo_hostname a 
+ dt b a name reject_unknown_recipient_domain reject_unknown_recipient_domain
+ dt b a name reject_unknown_sender_domain reject_unknown_sender_domain a 
+ dt b a name reject_unlisted_recipient reject_unlisted_recipient a b wi
+ dt b a name reject_unlisted_sender reject_unlisted_sender a b dt 
+ dt b a name reject_unverified_recipient reject_unverified_recipient a b 
+ dt b a name reject_unverified_sender reject_unverified_sender a b dt 
+ dt b a name sleep sleep i seconds i a b dt 
+ dt b a name warn_if_reject warn_if_reject a b dt 
+dt  dt b i a href DATABASE_README html type table a i b dt 
+dt  dt b i number i i number i b dt 
+ dt dt dd 0 Disable logging of TLS activity dd 
+ dt dt dd 1 Log only a summary message on TLS handshake completion
+ dt dt dd 2 Also log levels during TLS negotiation dd 
+ dt dt dd 3 Also log hexadecimal and ASCII dump of TLS negotiation
+ dt dt dd 4 Also log hexadecimal and ASCII dump of complete
+ dude dude example com 
+ eliminates the latency of the TCP handshake SYN SYN ACK ACK 
+ example com uucp uucp host
+ example MAIL RCPT BDAT BDAT MAIL RCPT BDAT without ever having to
+ export MANPATH MANPATH pwd man MANPATH 
+fe80 1 2d0 b7ff fe88 2ca7 ffff ffff ffff ffff 
+fe80 5 1 ffff ffff ffff ffff 
+file allows for robust handling of temporary delivery errors errors
+Filtered  Filtered
+for the file name when a pattern is a type table table specification 
+from host example com 192 168 0 2 TLSv1 with cipher cipher name
+generic generic a restrictions These restrictions are applicable in
+ groups msn com 63 2 1 2 4 4 14 14 14 8 0
+ highvolume com 4000 160 160 320 640 1280 1440 0 0 0 0
+host host port host port address or address port the form
+ http www umich edu dirsvcs ldap ldap html or OpenLDAP
+ id 84863BC0E5 Sun 26 Nov 2006 17 01 01 0500 EST 
+ if concurrency concurrency limit 
+ ifconfig en0 alias address netmask 255 255 255 255
+ inet_addr_local inet_addr_local configured 2 IPv4 addresses
+ inet_addr_local inet_addr_local configured 4 IPv6 addresses
+insiders_only  insiders_only check_sender_access hash etc postfix insiders reject
+in the form of a domain name hostname hostname port hostname port 
+into memory such as pcre regexp or texthash texthash is similar
+ jane jane janes preferred machine
+ joe joe joes preferred machine
+ Line 8 NEVER NEVER NEVER use the t command line option here It
+listname  listname request 
+ lists sourceforge net 2313 2313 0 0 0 0 0 0 0 0
+local  local 8 
+local_only  local_only 
+maildrop  maildrop 
+maildrop  maildrop owner cn root dc your dc com 
+make  make makefiles CC opt ansic bin cc Ae HP UX 
+make  make makefiles CC purify cc 
+ man man man5 postconf 5 less 
+master_service_disable foo inet inet
+multi_instance_enable multi_instance_enable
+multi_instance_group multi_instance_group
+multi_instance_name multi_instance_name
+mydestination myhostname localhost mydomain mydomain
+ mydomain to an incomplete address address rewriting alias
+mynetworks mynetworks 127 0 0 0 8 168 100 189 0 28 1 128 fe80 10 2001 240 587 
+mynetworks mynetworks hash etc postfix network_table
+Name lt user example com gt gt i Postfix will ignore the i User
+ name name port name or name port 
+ NOTE Postfix 3 6 also introduces support for the level level 
+number number ranges Postfix version 2 8 and later If no
+numbers or number number ranges Postfix version 2 8 and later 
+one or more separated numbers or number number ranges 
+ openssl req new key key 
+or more separated numbers or number number ranges p 
+or number number ranges Postfix version 2 8 and later If no
+ ownership of system directories such as etc usr usr bin var
+ PARAM postscreen_dnsbl_max_ttl postscreen_dnsbl_ttl postscreen_dnsbl_ttl 
+ patterns list multiple domain names as domain domain 
+ p Note 2 address information may be enclosed inside tt tt 
+ postfix 12345 12345 postfix no where no shell
+ Postfix 2 3 2 5 to hang up on clients that that match
+ Postfix has TWO sets of mail filters filters that are used for
+Postfix  Postfix can use an LDAP directory as a source for any of its lookups 
+ Postfix Postfix passes the status back to the remote SMTP
+ Postfix Postfix will send the mail back to the sender address 
+pre  pre 
+query_filter mailacceptinggeneralid s maildrop maildrop 
+queue_directory queue_directory
+Received from localhost localhost 127 0 0 1 
+Received  Received from porcupine org 
+rejected  rejected recipients are available on request by the Milter
+ rewrite 8 none none
+ Say we have ten recipient mail followed by two two recipient mails If
+ separated numbers or number number ranges If no
+smtpd_recipient_restrictions smtpd_recipient_restrictions 
+smtpd_relay_restrictions  smtpd_relay_restrictions 
+smtpd_relay_restrictions smtpd_relay_restrictions 
+ smtpd_tls_mandatory_protocols SSLv2 SSLv3 TLSv1 TLSv1 1
+smtpd_tls_mandatory_protocols SSLv2 SSLv3 TLSv1 TLSv1 1
+ smtp smtp o smtp_bind_address 11 22 33 44
+ smtp smtp o smtp_bind_address6 1 2 3 4 5 6 7 8
+ smtp_tls_mandatory_protocols SSLv2 SSLv3 TLSv1 TLSv1 1
+smtp_tls_mandatory_protocols SSLv2 SSLv3 TLSv1 TLSv1 1
+ SSLv3 TLSv1 TLSv1 1 TLSv1 2 and TLSv1 3 Starting with
+ T 5 10 20 40 80 160 320 640 1280 1280 
+ T A 5 10 20 40 80 160 320 320 
+ The and match and literally Without the the
+ The matches literally Without the the would
+Therefore 301 0301 0x301 and 0x0301 are all equivalent to
+ The syntax of name value value name value and name value 
+the  the backed up domain tld domain This prevents your mail queue
+ tls_random_source dev dev urandom
+ tls_random_source dev dev urandom 
+tls_random_source dev dev urandom
+TLS  TLS support in the LMTP delivery agent
+ TLSv1 3 with cipher TLS_AES_256_GCM_SHA384 256 256 bits 
+ to flush flush 8 Deferred
+to host example com 192 168 0 2 25 TLSv1 with cipher cipher name
+ to server example TLSv1 3 with cipher TLS_AES_256_GCM_SHA384 256 256 bits 
+ TOTAL 5000 200 200 400 800 1600 1000 200 200 200 200
+transport transport 
+ tt tt in the authorized_verp_clients value and in files
+ tt tt in the mynetworks value and in files specified with
+ tt tt in the smtpd_authorized_verp_clients value and in
+ tt tt in the smtpd_authorized_xclient_hosts value and in
+ tt tt in the smtpd_authorized_xforward_hosts value and in
+ tt tt in the smtpd_client_event_limit_exceptions value and
+ tt tt in the smtpd_sasl_exceptions_networks value and in
+ tt tt p 
+two  two recipient mails 
+ uid cn cn auth
+Unfiltered  Unfiltered 
+ unknown recipients in local domains domains that match mydestination
+ Use blockquote pre pre blockquote for examples
+ Use pre pre for the Examples section at the end
+username username
+ user sourceforge net 7678 7678 0 0 0 0 0 0 0 0
+ using TLSv1 3 with cipher TLS_AES_256_GCM_SHA384 256 256 bits 
+ using TLSv1 with cipher cipher name
+var  var spool and so on This is especially an issue if you executed
+With the standard operators lt lt etc compatibility
+ yes yes yes never 100 
+zombie  zombie tlsproxy 8 smtpd 8 
+ and 1 000 000 messages with good performance unlikely above that
+dt  dt b name value b Postfix ge 3 0 dt 
+ dt dt dd 3 Also log the hexadecimal and ASCII dump of the
+ dt dt dd 4 Also log the hexadecimal and ASCII dump of complete
+ parametername stress something something Other
+ p Note on OpenBSD systems specify dev dev arandom when dev dev urandom

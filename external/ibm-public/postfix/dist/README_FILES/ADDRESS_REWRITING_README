@@ -280,8 +280,8 @@ address manipulations:
 
     Rewrite "user@host" to "user@host.$mydomain"
         This feature is controlled by the boolean append_dot_mydomain parameter
-        (default: yes). The purpose is to get consistent treatment of different
-        forms of the same hostname.
+        (default: Postfix ≥ 3.0: no, Postfix < 3.0: yes). The purpose is to
+        get consistent treatment of different forms of the same hostname.
 
         NOTE: Postfix versions 2.2 and later rewrite message headers from
         remote SMTP clients only if the client matches the

@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.1.1.7 2020/05/25 23:40:33 christos Exp $	*/
+/*	$NetBSD: milter.c,v 1.1.1.8 2022/10/08 16:09:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -800,7 +800,7 @@ int     milter_send(MILTERS *milters, VSTREAM *stream)
      */
     (void) attr_print(stream, ATTR_FLAG_MORE,
 		      SEND_ATTR_FUNC(milter_macros_print,
-				     (void *) milters->macros),
+				     (const void *) milters->macros),
 		      ATTR_TYPE_END);
 
     /*

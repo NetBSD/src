@@ -1,4 +1,4 @@
-/*	$NetBSD: dgram_server.c,v 1.1.1.1 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: dgram_server.c,v 1.1.1.2 2022/10/08 16:09:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -462,7 +462,7 @@ NORETURN dgram_server_main(int argc, char **argv, DGRAM_SERVER_FN service,...)
 
     /*
      * Register higher-level dictionaries and initialize the support for
-     * dynamically-loaded dictionarles.
+     * dynamically-loaded dictionaries.
      */
     mail_dict_init();
 

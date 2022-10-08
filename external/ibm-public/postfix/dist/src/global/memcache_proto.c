@@ -1,4 +1,4 @@
-/*	$NetBSD: memcache_proto.c,v 1.1.1.3 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: memcache_proto.c,v 1.1.1.4 2022/10/08 16:09:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -33,7 +33,7 @@
 /*	ssize_t	len;
 /* DESCRIPTION
 /*	This module implements the low-level memcache protocol.
-/*	All functions return -1 on error and 0 on succcess.
+/*	All functions return -1 on error and 0 on success.
 /* SEE ALSO
 /*	smtp_proto(3) SMTP low-level protocol.
 /* AUTHOR(S)

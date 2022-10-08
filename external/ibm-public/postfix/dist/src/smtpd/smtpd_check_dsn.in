@@ -4,7 +4,7 @@
 #! ../bin/postmap smtpd_check_access
 #msg_verbose 1
 smtpd_delay_reject 0
-mynetworks 127.0.0.0/8,168.100.189.0/28
+mynetworks 127.0.0.0/8,168.100.3.0/28
 #
 # Test the client restrictions.
 #

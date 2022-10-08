@@ -1,4 +1,4 @@
-/*	$NetBSD: postlogd.c,v 1.1.1.1 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: postlogd.c,v 1.1.1.2 2022/10/08 16:09:09 christos Exp $	*/
 
 /*++
 /* NAME
@@ -28,8 +28,8 @@
 /*	with the operation of some of these programs). These programs
 /*	can log to \fBpostlogd\fR(8) if they are run by the super-user,
 /*	or if their executable file has set-gid permission. Do not
-/*	set this permission on programs other than \fBpostdrop\fR(1)
-/*	and \fBpostqueue\fR(1).
+/*	set this permission on programs other than \fBpostdrop\fR(1),
+/*	\fBpostqueue\fR(1) and (Postfix >= 3.7) \fBpostlog\fR(1).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi

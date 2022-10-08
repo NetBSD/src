@@ -386,12 +386,12 @@ When reporting a problem, be sure to include the following information.
 
       o "ppoossttccoonnff --MMff" (Postfix 2.9 or later).
 
-  * Better, provide output from the ppoossttffiinnggeerr tool. This can be found at http:
-    //ftp.wl0.org/SOURCES/postfinger.
+  * Better, provide output from the ppoossttffiinnggeerr tool. This can be found at
+    https://github.com/ford--prefect/postfinger.
 
   * If the problem is SASL related, consider including the output from the
-    ssaassllffiinnggeerr tool. This can be found at http://postfix.state-of-mind.de/
-    patrick.koetter/saslfinger/.
+    ssaassllffiinnggeerr tool. This can be found at https://packages.debian.org/
+    search?keywords=sasl2-bin.
 
   * If the problem is about too much mail in the queue, consider including
     output from the qqsshhaappee tool, as described in the QSHAPE_README file.

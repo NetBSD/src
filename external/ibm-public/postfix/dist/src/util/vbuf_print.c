@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf_print.c,v 1.1.1.4 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: vbuf_print.c,v 1.1.1.5 2022/10/08 16:09:12 christos Exp $	*/
 
 /*++
 /* NAME
@@ -292,7 +292,8 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
 		break;
 	    case 'm':
 		/* Ignore the 'l' modifier, width and precision. */
-		VBUF_STRCAT(bp, strerror(saved_errno));
+		VBUF_STRCAT(bp, saved_errno ?
+			    strerror(saved_errno) : "Application error");
 		break;
 	    case 'p':
 		if (long_flag)

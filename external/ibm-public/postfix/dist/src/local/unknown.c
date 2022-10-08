@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.1.1.8 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: unknown.c,v 1.1.1.9 2022/10/08 16:09:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -115,7 +115,7 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
 	return (0);
 
     /*
-     * The fall-back transport specifies a delivery machanism that handles
+     * The fall-back transport specifies a delivery mechanism that handles
      * users not found in the aliases or UNIX passwd databases.
      */
     if (*var_fbck_transp_maps && transp_maps == 0)

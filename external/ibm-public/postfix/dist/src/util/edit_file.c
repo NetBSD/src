@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.c,v 1.1.1.4 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: edit_file.c,v 1.1.1.5 2022/10/08 16:09:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -264,7 +264,7 @@ EDIT_FILE *edit_file_open(const char *path, int flags, mode_t mode)
 	 * content and its temporary pathname (within the rules of the
 	 * cooperative protocol). But wait, there is more.
 	 * 
-	 * There are many opportunies for trouble when opening a pre-existing
+	 * There are many opportunities for trouble when opening a pre-existing
 	 * output file. Here are just a few.
 	 * 
 	 * - Victor observes that a system crash in the middle of the
@@ -317,7 +317,7 @@ void    edit_file_cleanup(EDIT_FILE *ep)
     EDIT_FILE_FREE(ep);
 }
 
-/* edit_file_close - rename the file into place and and close the file */
+/* edit_file_close - rename the file into place and close the file */
 
 int     edit_file_close(EDIT_FILE *ep)
 {

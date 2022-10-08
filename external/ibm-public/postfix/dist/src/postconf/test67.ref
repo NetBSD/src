@@ -4,7 +4,7 @@ smtp       inet  n       -       n       -       -       smtpd
 smtp       unix  n       -       n       -       -       smtp
     -o test2_process_name=smtp
     -o test2_service_name=smtp
-./postconf: warning: ./master.cf: unused parameter: test1_process_name=$process_name
 ./postconf: warning: ./master.cf: unused parameter: test1_service_name=$service_name
-./postconf: warning: ./master.cf: unused parameter: test2_process_name=$process_name
+./postconf: warning: ./master.cf: unused parameter: test1_process_name=$process_name
 ./postconf: warning: ./master.cf: unused parameter: test2_service_name=$service_name
+./postconf: warning: ./master.cf: unused parameter: test2_process_name=$process_name

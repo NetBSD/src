@@ -173,7 +173,7 @@ mail from outside an authorized network block. This is explained in the
 SASL_README and TLS_README documents.
 
 IMPORTANT: If your machine is connected to a wide area network then the
-"mynetworks_style = host" setting may be too friendly.
+"mynetworks_style = subnet" setting may be too friendly.
 
 Examples (specify only one of the following):
 
@@ -188,13 +188,13 @@ You can specify the trusted networks in the main.cf file, or you can let
 Postfix do the work for you. The default is to let Postfix do the work. The
 result depends on the mynetworks_style parameter value.
 
-  * Specify "mynetworks_style = host" when Postfix should forward mail from
-    only the local machine.
+  * Specify "mynetworks_style = host" (the default when compatibility_level >=
+    2) when Postfix should forward mail from only the local machine.
 
-  * Specify "mynetworks_style = subnet" (the default) when Postfix should
-    forward mail from SMTP clients in the same IP subnetworks as the local
-    machine. On Linux, this works correctly only with interfaces specified with
-    the "ifconfig" command.
+  * Specify "mynetworks_style = subnet" (the default when compatibility_level <
+    2) when Postfix should forward mail from SMTP clients in the same IP
+    subnetworks as the local machine. On Linux, this works correctly only with
+    interfaces specified with the "ifconfig" or "ip" command.
 
   * Specify "mynetworks_style = class" when Postfix should forward mail from
     SMTP clients in the same IP class A/B/C networks as the local machine.

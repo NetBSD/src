@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_task.c,v 1.1.1.3 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: mail_task.c,v 1.1.1.4 2022/10/08 16:09:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,8 +19,8 @@
 /*
 /*	The result is overwritten with each call.
 /*
-/*	A null argv0 argument requests that the current
-/*	result is returned.
+/*	A null argv0 argument requests that the current result is
+/*	returned, or "unknown" when no current result exists.
 /* LICENSE
 /* .ad
 /* .fi
@@ -61,6 +61,8 @@ const char *mail_task(const char *argv0)
     const char *slash;
     const char *tag;
 
+    if (argv0 == 0 && canon_name == 0)
+	argv0 = "unknown";
     if (argv0) {
 	if (canon_name == 0)
 	    canon_name = vstring_alloc(10);

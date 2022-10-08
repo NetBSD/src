@@ -110,7 +110,7 @@
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP command_directory
 #	The final destination directory for Postfix administrative commands.
-#	This directory should be in the command search path of adminstrative
+#	This directory should be in the command search path of administrative
 #	users. The built-in default directory name is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP html_directory
@@ -405,7 +405,7 @@ in the command search path of any users."
 
 command_directory_prompt="the final destination directory for
 installed Postfix administrative commands.  This directory should
-be in the command search path of adminstrative users."
+be in the command search path of administrative users."
 
 queue_directory_prompt="the final destination directory for Postfix
 queues."

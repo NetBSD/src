@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.6 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.7 2022/10/08 16:09:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -490,6 +490,7 @@ static int pickup_file(PICKUP_INFO *info)
 
     cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_CLEANUP),
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, buf),
 		  ATTR_TYPE_END) != 1
 	|| attr_print(cleanup, ATTR_FLAG_NONE,

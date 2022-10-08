@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Spellchecks the proto HTML files.
+
+LANG=C; export LANG
+
+mantools/dehtml proto/*html proto/*.proto | spell | fgrep -vxf proto/stop | fgrep -vxf proto/stop.spell-proto-html

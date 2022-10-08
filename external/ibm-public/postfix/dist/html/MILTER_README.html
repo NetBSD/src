@@ -7,7 +7,7 @@
 
 <title>Postfix before-queue Milter support </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -309,7 +309,8 @@ from other Milter applications.  </p>
 <dt> <b>unix:</b><i>pathname</i> </dt> <dd><p>Connect to the local
 UNIX-domain server that is bound to the specified pathname. If the
 <a href="smtpd.8.html">smtpd(8)</a> or <a href="cleanup.8.html">cleanup(8)</a> process runs chrooted, an absolute pathname
-is interpreted relative to the Postfix queue directory.</p> </dd>
+is interpreted relative to the Postfix queue directory. On many
+systems, <b>local</b> is a synonym for <b>unix</b></p> </dd>
 
 <dt> <b> inet:</b><i>host</i><b>:</b><i>port</i> </dt> <dd> <p>
 Connect to the specified TCP port on the specified local or remote
@@ -758,7 +759,7 @@ transaction (for example; queue ID, sender, or recipient). </p>
 you may specify macro default values with the <a href="postconf.5.html#milter_macro_defaults">milter_macro_defaults</a>
 parameter. Specify zero or more <i>name=value</i> pairs separated by
 comma or whitespace; you may even specify macro names that Postfix does
-know about! </p>
+not know about! </p>
 
 <h2><a name="workarounds">Workarounds</a></h2>
 

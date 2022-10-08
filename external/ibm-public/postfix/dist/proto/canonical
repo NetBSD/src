@@ -27,7 +27,7 @@
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions, or lookups
-#	can be directed to TCP-based server. In those cases, the lookups
+#	can be directed to a TCP-based server. In those cases, the lookups
 #	are done in a slightly different way as described below under
 #	"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 #
@@ -226,7 +226,7 @@
 #	off in email addresses.
 # .IP "\fBmasquerade_exceptions (empty)\fR"
 #	Optional list of user names that are not subjected to address
-#	masquerading, even when their address matches $masquerade_domains.
+#	masquerading, even when their addresses match $masquerade_domains.
 # .IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
 #	The list of domains that are delivered via the $local_transport
 #	mail delivery transport.

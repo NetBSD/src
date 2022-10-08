@@ -1,0 +1,9 @@
+#verbose on
+open test-queue-file17a.tmp
+#
+# Delete a recipient. Then add the recipient back.
+
+del_rcpt user@example.com
+add_rcpt user@example.com
+
+close

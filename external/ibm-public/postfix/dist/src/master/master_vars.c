@@ -1,4 +1,4 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.4 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: master_vars.c,v 1.1.1.5 2022/10/08 16:09:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -48,7 +53,6 @@
  /*
   * Tunable parameters.
   */
-char   *var_inet_protocols;
 int     var_throttle_time;
 char   *var_master_disable;
 

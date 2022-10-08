@@ -219,6 +219,7 @@ master_conf.o: master_conf.c
 master_ent.o: ../../include/argv.h
 master_ent.o: ../../include/attr.h
 master_ent.o: ../../include/check_arg.h
+master_ent.o: ../../include/compat_level.h
 master_ent.o: ../../include/host_port.h
 master_ent.o: ../../include/htable.h
 master_ent.o: ../../include/inet_addr_host.h

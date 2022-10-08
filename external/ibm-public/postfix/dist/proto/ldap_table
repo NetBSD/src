@@ -146,9 +146,9 @@
 #	For the \fBsearch_base\fR parameter, the upper-case equivalents
 #	of the above expansions behave identically to their lower-case
 #	counter-parts. With the \fBresult_format\fR parameter (previously
-#	called \fBresult_filter\fR see the COMPATIBILITY section and below),
-#	they expand to the corresponding components of input key rather
-#	than the result value.
+#	called \fBresult_filter\fR see the OTHER OBSOLETE FEATURES section
+#	and below), they expand to the corresponding components of input
+#	key rather than the result value.
 # .IP "\fB%[1-9]\fR"
 #	The patterns %1, %2, ... %9 are replaced by the corresponding
 #	most significant component of the input key's domain. If the
@@ -189,9 +189,9 @@
 #	The upper-case equivalents of the above expansions behave in the
 #	\fBquery_filter\fR parameter identically to their lower-case
 #	counter-parts. With the \fBresult_format\fR parameter (previously
-#	called \fBresult_filter\fR see the COMPATIBILITY section and below),
-#	they expand to the corresponding components of input key rather
-#	than the result value.
+#	called \fBresult_filter\fR see the OTHER OBSOLETE FEATURES section
+#	and below), they expand to the corresponding components of input
+#	key rather than the result value.
 # .IP
 #	The above %S, %U and %D expansions are available with Postfix 2.2
 #	and later.
@@ -268,7 +268,7 @@
 #	NOTE: DO NOT put quotes around the result format!
 # .IP "\fBdomain (default: no domain list)\fR"
 #	This is a list of domain names, paths to files, or
-#	dictionaries. When specified, only fully qualified search
+#	"type:table" databases. When specified, only fully qualified search
 #	keys with a *non-empty* localpart and a matching domain
 #	are eligible for lookup: 'user' lookups, bare domain lookups
 #	and "@domain" lookups are not performed. This can significantly

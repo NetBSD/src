@@ -1,4 +1,4 @@
-.\"	$NetBSD: aliases.5,v 1.1.1.4 2020/03/18 18:59:30 christos Exp $
+.\"	$NetBSD: aliases.5,v 1.1.1.5 2022/10/08 16:09:03 christos Exp $
 .\"
 .TH ALIASES 5 
 .ad
@@ -182,9 +182,8 @@ Enable special treatment for owner\-\fIlistname\fR entries in the
 \fIlistname\fR\-request address localparts when the recipient_delimiter
 is set to "\-".
 .IP "\fBrecipient_delimiter (empty)\fR"
-The set of characters that can separate a user name from its
-extension (example: user+foo), or a .forward file name from its
-extension (example: .forward+foo).
+The set of characters that can separate an email address
+localpart, user name, or a .forward file name from its extension.
 .PP
 Available in Postfix version 2.3 and later:
 .IP "\fBfrozen_delivered_to (yes)\fR"

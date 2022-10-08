@@ -1,14 +1,20 @@
+./attr_print64: send attr protocol = test
 ./attr_print64: send attr number = 4711
 ./attr_print64: send attr long_number = 1234
 ./attr_print64: send attr string = whoopee
 ./attr_print64: send attr data = [data 7 bytes]
-./attr_print64: send attr name foo-name value foo-value
 ./attr_print64: send attr name bar-name value bar-value
+./attr_print64: send attr name foo-name value foo-value
 ./attr_print64: send attr long_number = 4321
+./attr_print64: send attr protocol = test
 ./attr_print64: send attr number = 4711
 ./attr_print64: send attr long_number = 1234
 ./attr_print64: send attr string = whoopee
 ./attr_print64: send attr data = [data 7 bytes]
+./attr_print64: send attr protocol = not-test
+./attr_scan64: unknown_stream: wanted attribute: protocol
+./attr_scan64: input attribute name: protocol
+./attr_scan64: input attribute value: test
 ./attr_scan64: unknown_stream: wanted attribute: number
 ./attr_scan64: input attribute name: number
 ./attr_scan64: input attribute value: 4711
@@ -24,11 +30,11 @@
 ./attr_scan64: unknown_stream: wanted attribute: (any attribute name or list terminator)
 ./attr_scan64: input attribute name: {
 ./attr_scan64: unknown_stream: wanted attribute: (any attribute name or '}')
-./attr_scan64: input attribute name: foo-name
-./attr_scan64: input attribute value: foo-value
-./attr_scan64: unknown_stream: wanted attribute: (any attribute name or '}')
 ./attr_scan64: input attribute name: bar-name
 ./attr_scan64: input attribute value: bar-value
+./attr_scan64: unknown_stream: wanted attribute: (any attribute name or '}')
+./attr_scan64: input attribute name: foo-name
+./attr_scan64: input attribute value: foo-value
 ./attr_scan64: unknown_stream: wanted attribute: (any attribute name or '}')
 ./attr_scan64: input attribute name: }
 ./attr_scan64: unknown_stream: wanted attribute: long_number
@@ -36,6 +42,9 @@
 ./attr_scan64: input attribute value: 4321
 ./attr_scan64: unknown_stream: wanted attribute: (list terminator)
 ./attr_scan64: input attribute name: (end)
+./attr_scan64: unknown_stream: wanted attribute: protocol
+./attr_scan64: input attribute name: protocol
+./attr_scan64: input attribute value: test
 ./attr_scan64: unknown_stream: wanted attribute: number
 ./attr_scan64: input attribute name: number
 ./attr_scan64: input attribute value: 4711
@@ -50,16 +59,21 @@
 ./attr_scan64: input attribute value: whoopee
 ./attr_scan64: unknown_stream: wanted attribute: (list terminator)
 ./attr_scan64: input attribute name: (end)
+./attr_scan64: unknown_stream: wanted attribute: protocol
+./attr_scan64: input attribute name: protocol
+./attr_scan64: input attribute value: not-test
+./attr_scan64: warning: unexpected protocol not-test from unknown_stream (expected: test)
 number 4711
 long_number 1234
 string whoopee
 data whoopee
-(hash) foo-name foo-value
 (hash) bar-name bar-value
+(hash) foo-name foo-value
 long_number 4321
 number 4711
 long_number 1234
 string whoopee
 data whoopee
-(hash) foo-name foo-value
 (hash) bar-name bar-value
+(hash) foo-name foo-value
+return: -1

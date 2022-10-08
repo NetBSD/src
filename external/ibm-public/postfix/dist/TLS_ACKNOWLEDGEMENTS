@@ -1,5 +1,5 @@
 - Walcir Fontanini <walcir@densis.fee.unicamp.br>
-  * tested on Solaris 2.5 and and reported missing "snprintf()"
+  * tested on Solaris 2.5 and reported missing "snprintf()"
     -> was fixed in pfixtls-0.1.2
   * contributed the script to add fingerprints
 	contributed/fp.csh

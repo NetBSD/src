@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.9 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.10 2022/10/08 16:09:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -224,7 +224,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
      * This suggests that we parse the address in internalized (unquoted) form.
      * Unfortunately, if we do that, the unparser generates incorrect white
      * space between adjacent non-operator tokens. Example: ``first last''
-     * needs white space, but ``stuff[stuff]'' does not. This is is not a
+     * needs white space, but ``stuff[stuff]'' does not. This is not a
      * problem when unparsing the result from parsing externalized forms,
      * because the parser/unparser were designed for valid externalized forms
      * where ``stuff[stuff]'' does not happen.

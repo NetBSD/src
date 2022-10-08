@@ -7,7 +7,7 @@
 
 <title>Postfix logging to file or stdout</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -129,7 +129,7 @@ program is configured with the <a href="postconf.5.html#maillog_file_compressor"
 
 <ul>
 
-<li> <p> This command will not rotate a logfile with pathname under
+<li> <p> This command will not rotate a logfile with a pathname under
 the /dev directory, such as /dev/stdout. </p>
 
 <li> <p> This command does not (yet) remove old logfiles. </p>
@@ -146,7 +146,7 @@ the /dev directory, such as /dev/stdout. </p>
 in the background, as well as non-daemon programs for local mail
 submission or Postfix management.
 
-<li> <p> Logging to Postfix logfile or stdout requires the Postfix
+<li> <p> Logging to the Postfix logfile or stdout requires the Postfix
 <a href="postlogd.8.html">postlogd(8)</a> service. This ensures that simultaneous logging from
 different programs will not get mixed up. </p>
 

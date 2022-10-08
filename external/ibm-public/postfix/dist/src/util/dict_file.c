@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_file.c,v 1.1.1.1 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: dict_file.c,v 1.1.1.2 2022/10/08 16:09:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -47,7 +47,7 @@
 /*	memory that are associated with this DICT.
 /*
 /*	dict_file_get_error() should be called only after error;
-/*	it returns a desciption of the problem. Storage is owned
+/*	it returns a description of the problem. Storage is owned
 /*	by the caller.
 /*
 /*	dict_file_lookup() wraps the dictionary lookup method and
