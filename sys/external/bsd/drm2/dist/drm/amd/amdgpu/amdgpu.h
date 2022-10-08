@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.7 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.8 2022/10/08 19:06:30 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -372,12 +372,8 @@ struct amdgpu_clock {
 #define AMDGPU_SA_NUM_FENCE_LISTS	32
 
 struct amdgpu_sa_manager {
-#ifdef __NetBSD__
 	spinlock_t		wq_lock;
 	drm_waitqueue_t		wq;
-#else
-	wait_queue_head_t	wq;
-#endif
 	struct amdgpu_bo	*bo;
 	struct list_head	*hole;
 	struct list_head	flist[AMDGPU_SA_NUM_FENCE_LISTS];
