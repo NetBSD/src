@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats.h,v 1.1.1.2 2022/10/08 16:09:08 christos Exp $	*/
+/*	$NetBSD: msg_stats.h,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _MSG_STATS_H_INCLUDED_
 #define _MSG_STATS_H_INCLUDED_

@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,9 @@
 /* .IP \fB!\fR
 /*	The message is in the \fBhold\fR queue, i.e. no further delivery
 /*	attempt will be made until the mail is taken off hold.
+/* .IP \fB#\fR
+/*	The message is forced to expire. See the \fBpostsuper\fR(1)
+/*	options \fB-e\fR or \fB-f\fR.
 /* .RE
 /* .IP
 /*	This mode of operation is implemented by executing the
@@ -80,7 +83,7 @@
 /*	command above.
 /* .IP \fB-bl\fR
 /*	Go into daemon mode. To accept only local connections as
-/*	with Sendmail\'s \fB-bl\fR option, specify "\fBinet_interfaces
+/*	with Sendmail's \fB-bl\fR option, specify "\fBinet_interfaces
 /*	= loopback\fR" in the Postfix \fBmain.cf\fR configuration
 /*	file.
 /* .IP \fB-bm\fR
@@ -139,7 +142,7 @@
 /*	Initialize alias database. See the \fBnewaliases\fR
 /*	command above.
 /* .IP "\fB-i\fR"
-/*	When reading a message from standard input, don\'t treat a line
+/*	When reading a message from standard input, don't treat a line
 /*	with only a \fB.\fR character as the end of input.
 /* .IP "\fB-L \fIlabel\fR (ignored)"
 /*	The logging label. Use the \fBsyslog_name\fR configuration
@@ -169,7 +172,7 @@
 /*	To send 8-bit or binary content, use an appropriate MIME encapsulation
 /*	and specify the appropriate \fB-B\fR command-line option.
 /* .IP "\fB-oi\fR"
-/*	When reading a message from standard input, don\'t treat a line
+/*	When reading a message from standard input, don't treat a line
 /*	with only a \fB.\fR character as the end of input.
 /* .IP "\fB-om\fR (ignored)"
 /*	The sender is never eliminated from alias etc. expansions.
@@ -252,10 +255,43 @@
 /* SECURITY
 /* .ad
 /* .fi
-/*	By design, this program is not set-user (or group) id. However,
-/*	it must handle data from untrusted, possibly remote, users.
-/*	Thus, the usual precautions need to be taken against malicious
-/*	inputs.
+/*	By design, this program is not set-user (or group) id.
+/*	It is prepared to handle message content from untrusted,
+/*	possibly remote, users.
+/*
+/*	However, like most Postfix programs, this program does not
+/*	enforce a security policy on its command-line arguments.
+/*	Instead, it relies on the UNIX system to enforce access
+/*	policies based on the effective user and group IDs of the
+/*	process. Concretely, this means that running Postfix commands
+/*	as root (from sudo or equivalent) on behalf of a non-root
+/*	user is likely to create privilege escalation opportunities.
+/*
+/*	If an application runs any Postfix programs on behalf of
+/*	users that do not have normal shell access to Postfix
+/*	commands, then that application MUST restrict user-specified
+/*	command-line arguments to avoid privilege escalation.
+/* .IP \(bu
+/*	Filter all command-line arguments, for example arguments
+/*	that contain a pathname or that specify a database access
+/*	method. These pathname checks must reject user-controlled
+/*	symlinks or hardlinks to sensitive files, and must not be
+/*	vulnerable to TOCTOU race attacks.
+/* .IP \(bu
+/*	Disable command options processing for all command arguments
+/*	that contain user-specified data. For example, the Postfix
+/*	\fBsendmail\fR(1) command line MUST be structured as follows:
+/*
+/* .nf
+/*	    \fB/path/to/sendmail\fR \fIsystem-arguments\fR \fB--\fR \fIuser-arguments\fR
+/* .fi
+/*
+/*	Here, the "\fB--\fR" disables command option processing for
+/*	all \fIuser-arguments\fR that follow.
+/* .IP
+/*	Without the "\fB--\fR", a malicious user could enable Postfix
+/*	\fBsendmail\fR(1) command options, by specifying an email
+/*	address that starts with "\fB-\fR".
 /* DIAGNOSTICS
 /*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8),
 /*	and to the standard error stream.
@@ -296,12 +332,13 @@
 /*	The external command to execute when a Postfix daemon program is
 /*	invoked with the -D option.
 /* .IP "\fBdebug_peer_level (2)\fR"
-/*	The increment in verbose logging level when a remote client or
-/*	server matches a pattern in the debug_peer_list parameter.
+/*	The increment in verbose logging level when a nexthop destination,
+/*	remote client or server name or network address matches a pattern
+/*	given with the debug_peer_list parameter.
 /* .IP "\fBdebug_peer_list (empty)\fR"
-/*	Optional list of remote client or server hostname or network
-/*	address patterns that cause the verbose logging level to increase
-/*	by the amount specified in $debug_peer_level.
+/*	Optional list of nexthop destination, remote client or server
+/*	name or network address patterns that, if matched, cause the verbose
+/*	logging level to increase by the amount specified in $debug_peer_level.
 /* ACCESS CONTROLS
 /* .ad
 /* .fi
@@ -368,7 +405,7 @@
 /*	The time after which the sender receives a copy of the message
 /*	headers of mail that is still queued.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
+/*	The list of environment variables that a privileged Postfix
 /*	process will import from a non-Postfix parent process, or name=value
 /*	environment overrides.
 /* .IP "\fBmail_owner (postfix)\fR"
@@ -659,6 +696,7 @@ static void enqueue(const int flags, const char *encoding,
     VSTRING *postdrop_command;
     uid_t   uid = getuid();
     int     status;
+    VSTRING *why;			/* postdrop status message */
     int     naddr;
     int     prev_type;
     MIME_STATE *mime_state = 0;
@@ -952,11 +990,15 @@ static void enqueue(const int flags, const char *encoding,
     if (vstream_ferror(VSTREAM_IN))
 	msg_fatal_status(EX_DATAERR, "%s(%ld): error reading input: %m",
 			 saved_sender, (long) uid);
-    if ((status = mail_stream_finish(handle, (VSTRING *) 0)) != 0)
+    why = vstring_alloc(100);
+    if ((status = mail_stream_finish(handle, why)) != CLEANUP_STAT_OK)
 	msg_fatal_status((status & CLEANUP_STAT_BAD) ? EX_SOFTWARE :
 			 (status & CLEANUP_STAT_WRITE) ? EX_TEMPFAIL :
+			 (status & CLEANUP_STAT_NOPERM) ? EX_NOPERM :
 			 EX_UNAVAILABLE, "%s(%ld): %s", saved_sender,
-			 (long) uid, cleanup_strerror(status));
+			 (long) uid, VSTRING_LEN(why) ?
+			 STR(why) : cleanup_strerror(status));
+    vstring_free(why);
 
     /*
      * Don't leave them in the dark.
@@ -1012,6 +1054,7 @@ int     main(int argc, char **argv)
     const char *dsn_envid = 0;
     int     saved_optind;
     ARGV   *import_env;
+    char   *alias_map_from_args = 0;
 
     /*
      * Fingerprint executables and core dumps.
@@ -1281,9 +1324,7 @@ int     main(int argc, char **argv)
 	    case 'A':
 		if (optarg[1] == 0)
 		    msg_fatal_status(EX_USAGE, "-oA requires pathname");
-		myfree(var_alias_db_map);
-		var_alias_db_map = mystrdup(optarg + 1);
-		set_mail_conf_str(VAR_ALIAS_DB_MAP, var_alias_db_map);
+		alias_map_from_args = optarg + 1;
 		break;
 	    case '7':
 	    case '8':
@@ -1433,13 +1474,17 @@ int     main(int argc, char **argv)
 	if (argv[OPTIND])
 	    msg_fatal_status(EX_USAGE,
 			 "alias initialization mode requires no recipient");
-	if (*var_alias_db_map == 0)
+	if (alias_map_from_args == 0 && *var_alias_db_map == 0)
 	    return (0);
-	ext_argv = argv_alloc(2);
+	ext_argv = argv_alloc(3);
 	argv_add(ext_argv, "postalias", (char *) 0);
 	for (n = 0; n < msg_verbose; n++)
 	    argv_add(ext_argv, "-v", (char *) 0);
-	argv_split_append(ext_argv, var_alias_db_map, CHARS_COMMA_SP);
+	argv_add(ext_argv, "--", (char *) 0);
+	if (alias_map_from_args != 0)
+	    argv_add(ext_argv, alias_map_from_args, (char *) 0);
+	else
+	    argv_split_append(ext_argv, var_alias_db_map, CHARS_COMMA_SP);
 	argv_terminate(ext_argv);
 	mail_run_replace(var_command_dir, ext_argv->argv);
 	/* NOTREACHED */

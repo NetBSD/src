@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sqlite.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dict_sqlite.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -176,7 +176,7 @@ static const char *dict_sqlite_lookup(DICT *dict, const char *name)
     }
 
     /*
-     * Optionally fold the key. Folding may be enabled on on-the-fly.
+     * Optionally fold the key. Folding may be enabled on-the-fly.
      */
     if (dict->flags & DICT_FLAG_FOLD_FIX) {
 	if (dict->fold_buf == 0)

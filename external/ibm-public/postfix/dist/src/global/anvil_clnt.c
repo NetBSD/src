@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil_clnt.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: anvil_clnt.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -172,6 +172,15 @@
 #define ANVIL_IDENT(service, addr) \
     printable(concatenate(service, ":", addr, (char *) 0), '?')
 
+/* anvil_clnt_handshake - receive server protocol announcement */
+
+static int anvil_clnt_handshake(VSTREAM *stream)
+{
+    return (attr_scan_plain(stream, ATTR_FLAG_STRICT,
+		    RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_ANVIL),
+			    ATTR_TYPE_END));
+}
+
 /* anvil_clnt_create - instantiate connection rate service client */
 
 ANVIL_CLNT *anvil_clnt_create(void)
@@ -188,6 +197,9 @@ ANVIL_CLNT *anvil_clnt_create(void)
 #else
     anvil_clnt = attr_clnt_create(var_anvil_service, var_ipc_timeout, 0, 0);
 #endif
+    attr_clnt_control(anvil_clnt,
+		      ATTR_CLNT_CTL_HANDSHAKE, anvil_clnt_handshake,
+		      ATTR_CLNT_CTL_END);
     return ((ANVIL_CLNT *) anvil_clnt);
 }
 

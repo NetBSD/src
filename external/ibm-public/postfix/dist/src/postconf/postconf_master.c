@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.6 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.7 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -197,6 +197,8 @@ static const char *pcf_valid_master_types[] = {
 };
 
 static const char pcf_valid_bool_types[] = "yn-";
+
+static VSTRING *pcf_exp_buf;
 
 #define STR(x) vstring_str(x)
 
@@ -494,6 +496,9 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
     while (0)
 #define ADD_SPACE ADD_TEXT(" ", 1)
 
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
+
     /*
      * Show the standard fields at their preferred column position. Use at
      * least one-space column separation.
@@ -547,7 +552,7 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
 		 */
 		if (strcmp(arg, "-o") == 0
 		    && (mode & PCF_SHOW_EVAL) != 0)
-		    aval = pcf_expand_parameter_value((VSTRING *) 0, mode,
+		    aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
 						      aval, masterp);
 
 		/*
@@ -667,6 +672,9 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
     int     in_daemon_options;
     int     need_parens;
 
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
+
     /*
      * Show the field value, or the first value in the case of a multi-column
      * field.
@@ -722,7 +730,7 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
 		     */
 		    if (strcmp(arg, "-o") == 0
 			&& (mode & PCF_SHOW_EVAL) != 0)
-			aval = pcf_expand_parameter_value((VSTRING *) 0, mode,
+			aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
 							  aval, masterp);
 
 		    /*
@@ -878,13 +886,16 @@ static void pcf_print_master_param(VSTREAM *fp, int mode,
 				           const char *param_name,
 				           const char *param_value)
 {
+    if (pcf_exp_buf == 0)
+	pcf_exp_buf = vstring_alloc(100);
+
     if (mode & PCF_HIDE_VALUE) {
 	pcf_print_line(fp, mode, "%s%c%s\n",
 		       masterp->name_space, PCF_NAMESP_SEP_CH,
 		       param_name);
     } else {
 	if ((mode & PCF_SHOW_EVAL) != 0)
-	    param_value = pcf_expand_parameter_value((VSTRING *) 0, mode,
+	    param_value = pcf_expand_parameter_value(pcf_exp_buf, mode,
 						     param_value, masterp);
 	if ((mode & PCF_HIDE_NAME) == 0) {
 	    pcf_print_line(fp, mode, "%s%c%s = %s\n",
@@ -921,7 +932,7 @@ static void pcf_show_master_any_param(VSTREAM *fp, int mode,
 
     /*
      * Print parameters in sorted order. The number of parameters per
-     * master.cf entry is small, so we optmiize for code simplicity and don't
+     * master.cf entry is small, so we optimize for code simplicity and don't
      * worry about the cost of double lookup.
      */
 

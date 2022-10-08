@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize_mailhost_addr.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: normalize_mailhost_addr.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -36,7 +36,7 @@
 /* .IP addr_family
 /*	Null pointer, or pointer to integer for storing the address
 /*	family.
-/* DIAGNISTICS
+/* DIAGNOSTICS
 /*	normalize_mailhost_addr() returns -1 if the input is malformed,
 /*	zero otherwise.
 /* LICENSE
@@ -81,7 +81,7 @@ int     normalize_mailhost_addr(const char *string, char **mailhost_addr,
 				        char **bare_addr, int *addr_family)
 {
     const char myname[] = "normalize_mailhost_addr";
-    INET_PROTO_INFO *proto_info = inet_proto_info();
+    const INET_PROTO_INFO *proto_info = inet_proto_info();
     struct addrinfo *res = 0;
     MAI_HOSTADDR_STR hostaddr;
     const char *valid_addr;		/* IPv6:fc00::1 */

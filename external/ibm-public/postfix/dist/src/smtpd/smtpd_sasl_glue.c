@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -139,6 +139,8 @@
 /* Global library. */
 
 #include <mail_params.h>
+#include <sasl_mech_filter.h>
+#include <string_list.h>
 
 /* XSASL library. */
 
@@ -151,6 +153,11 @@
 #include "smtpd_chat.h"
 
 #ifdef USE_SASL_AUTH
+
+ /*
+  * SASL mechanism filter.
+  */
+static STRING_LIST *smtpd_sasl_mech_filter;
 
 /*
  * Silly little macros.
@@ -180,6 +187,12 @@ void    smtpd_sasl_initialize(void)
 					     var_smtpd_sasl_path)) == 0)
 	msg_fatal("SASL per-process initialization failed");
 
+    /*
+     * Initialize the SASL mechanism filter.
+     */
+    smtpd_sasl_mech_filter = string_list_init(VAR_SMTPD_SASL_MECH_FILTER,
+					      MATCH_FLAG_NONE,
+					      var_smtpd_sasl_mech_filter);
 }
 
 /* smtpd_sasl_activate - per-connection initialization */
@@ -188,6 +201,7 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
 			            const char *sasl_opts_val)
 {
     const char *mechanism_list;
+    const char *filtered_mechanism_list;
     XSASL_SERVER_CREATE_ARGS create_args;
     int     tls_flag;
 
@@ -241,7 +255,12 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
     if ((mechanism_list =
 	 xsasl_server_get_mechanism_list(state->sasl_server)) == 0)
 	msg_fatal("no SASL authentication mechanisms");
-    state->sasl_mechanism_list = mystrdup(mechanism_list);
+    filtered_mechanism_list =
+	sasl_mech_filter(smtpd_sasl_mech_filter, mechanism_list);
+    if (*filtered_mechanism_list == 0)
+	msg_fatal("%s discards all mechanisms in '%s'",
+		  VAR_SMTPD_SASL_MECH_FILTER, mechanism_list);
+    state->sasl_mechanism_list = mystrdup(filtered_mechanism_list);
 }
 
 /* smtpd_sasl_state_init - initialize state to allow extern authentication. */

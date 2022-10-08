@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -210,7 +210,7 @@
 /*	values for the private directories of the new instance. The
 /*	"\fB-G \fIgroup\fR" option may be specified to assign the
 /*	instance to a group, otherwise, the new instance is not a
-/*	member of any groups.
+/*	member of any group.
 /* .sp
 /*	The new instance main.cf is the stock main.cf with the
 /*	parameters that specify the locations of shared files cloned
@@ -235,9 +235,9 @@
 /* .RE
 /* .IP
 /*	If any of these pathnames is not supplied, the program
-/*	attempts to generate the pathname by taking the corresponding
-/*	primary instance pathname, and by replacing the last pathname
-/*	component by the value of the \fB-I\fR option.
+/*	attempts to generate the missing pathname(s) by taking the
+/*	corresponding primary instance pathname, and replacing the
+/*	last pathname component by the value of the \fB-I\fR option.
 /* .sp
 /*	If the instance configuration directory already exists, and
 /*	contains both a main.cf and master.cf file, \fBcreate\fR
@@ -328,7 +328,7 @@
 /* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
 /*	The directory with Postfix support programs and daemon programs.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
+/*	The list of environment variables that a privileged Postfix
 /*	process will import from a non-Postfix parent process, or name=value
 /*	environment overrides.
 /* .IP "\fBmulti_instance_directories (empty)\fR"
@@ -616,7 +616,7 @@ typedef struct {
   * To detect conflicts, each instance name and each shared or private
   * pathname is registered in one place, with its owner. Everyone must
   * register their claims when they join, and will be rejected in case of
-  * conlict.
+  * conflict.
   * 
   * Each claim value involves a parameter value (either a directory name or an
   * instance name). Each claim owner is the config_directory pathname plus
@@ -967,7 +967,7 @@ static void check_shared_dir_status(void)
 
     /*
      * XXX Avoid false conflicts with meta_directory. This usually overlaps
-     * with other directories, typcally config_directory, shlib_directory or
+     * with other directories, typically config_directory, shlib_directory or
      * daemon_directory.
      */
     for (sp = shared_dir_table; sp->param_name; ++sp) {

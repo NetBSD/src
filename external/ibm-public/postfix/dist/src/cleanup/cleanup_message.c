@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -91,6 +91,7 @@
 #include <dsn_util.h>
 #include <conv_time.h>
 #include <info_log_addr_form.h>
+#include <hfrom_format.h>
 
 /* Application-specific. */
 
@@ -682,7 +683,7 @@ static void cleanup_header_done_callback(void *context)
     /*
      * Future proofing: the Milter client's header suppression algorithm
      * assumes that the MTA prepends its own Received: header. This
-     * assupmtion may be violated after some source-code update. The
+     * assumption may be violated after some source-code update. The
      * following check ensures consistency, at least for local submission.
      */
     if (state->hop_count < 1) {
@@ -762,13 +763,11 @@ static void cleanup_header_done_callback(void *context)
 		   || (cp = strchr(state->fullname, '\n')) != 0)
 		*cp = ' ';
 
-	    switch (hfrom_format_code) {
-
-		/*
-		 * "From: phrase <route-addr>". Quote the phrase if it
-		 * contains specials or the "%!" legacy address operators.
-		 */
-	    case HFROM_FORMAT_CODE_STD:
+	    /*
+	     * "From: phrase <route-addr>". Quote the phrase if it contains
+	     * specials or the "%!" legacy address operators.
+	     */
+	    if (cleanup_hfrom_format == HFROM_FORMAT_CODE_STD) {
 		vstring_sprintf(state->temp2, "%sFrom: ", state->resent);
 		if (state->fullname[strcspn(state->fullname,
 					    "%!" LEX_822_SPECIALS)] == 0) {
@@ -778,26 +777,25 @@ static void cleanup_header_done_callback(void *context)
 		} else {
 		    token = tok822_alloc(TOK822_QSTRING, state->fullname);
 		}
-		tok822_externalize(state->temp2, token, TOK822_STR_NONE);
-		tok822_free(token);
-		vstring_sprintf_append(state->temp2, " <%s>",
+		if (token) {
+		    tok822_externalize(state->temp2, token, TOK822_STR_NONE);
+		    tok822_free(token);
+		    vstring_strcat(state->temp2, " ");
+		}
+		vstring_sprintf_append(state->temp2, "<%s>",
 				       vstring_str(state->temp1));
-		break;
+	    }
 
-		/*
-		 * "From: addr-spec (ctext)". This is the obsolete form.
-		 */
-	    case HFROM_FORMAT_CODE_OBS:
+	    /*
+	     * "From: addr-spec (ctext)". This is the obsolete form.
+	     */
+	    else {
 		vstring_sprintf(state->temp2, "%sFrom: %s ",
 				state->resent, vstring_str(state->temp1));
 		vstring_sprintf(state->temp1, "(%s)", state->fullname);
 		token = tok822_parse(vstring_str(state->temp1));
 		tok822_externalize(state->temp2, token, TOK822_STR_NONE);
 		tok822_free_tree(token);
-		break;
-	    default:
-		msg_panic("%s: unknown header format %d",
-			  myname, hfrom_format_code);
 	    }
 	}
 

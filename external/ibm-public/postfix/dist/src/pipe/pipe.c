@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: pipe.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -172,6 +172,7 @@
 /* .nf
 /*	    \fIRight\fR: command -f $sender -- $recipient
 /* .fi
+/* NOTE: DO NOT put quotes around the command, $sender, or $recipient.
 /* .IP
 /*	This feature is available as of Postfix 2.3.
 /* .IP "\fBsize\fR=\fIsize_limit\fR (optional)"
@@ -407,9 +408,8 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The set of characters that can separate a user name from its
-/*	extension (example: user+foo), or a .forward file name from its
-/*	extension (example: .forward+foo).
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"

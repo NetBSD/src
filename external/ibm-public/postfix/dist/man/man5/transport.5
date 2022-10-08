@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: transport.5,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -62,7 +62,7 @@ or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP\-based server. In those case, the lookups
+can be directed to a TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
@@ -91,7 +91,8 @@ A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .PP
 The \fIpattern\fR specifies an email address, a domain name, or
-a domain name hierarchy, as described in section "TABLE LOOKUP".
+a domain name hierarchy, as described in section "TABLE
+SEARCH ORDER".
 
 The \fIresult\fR is of the form \fItransport:nexthop\fR and
 specifies how or where to deliver mail. This is described in

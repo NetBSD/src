@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.h,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: milter.h,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 #ifndef _MILTER_H_INCLUDED_
 #define _MILTER_H_INCLUDED_
@@ -81,8 +81,8 @@ extern MILTER_MACROS *milter_macros_create(const char *, const char *,
 					        const char *, const char *);
 extern MILTER_MACROS *milter_macros_alloc(int);
 extern void milter_macros_free(MILTER_MACROS *);
-extern int milter_macros_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int milter_macros_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int milter_macros_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int milter_macros_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 #define MILTER_MACROS_ALLOC_ZERO	1	/* null pointer */
 #define MILTER_MACROS_ALLOC_EMPTY	2	/* mystrdup(""); */
@@ -102,7 +102,7 @@ typedef const char *(*MILTER_DEL_HEADER_FN) (void *, ssize_t, const char *);
 typedef const char *(*MILTER_EDIT_FROM_FN) (void *, const char *, const char *);
 typedef const char *(*MILTER_EDIT_RCPT_FN) (void *, const char *);
 typedef const char *(*MILTER_EDIT_RCPT_PAR_FN) (void *, const char *, const char *);
-typedef const char *(*MILTER_EDIT_BODY_FN) (void *, int, VSTRING *);
+typedef const char *(*MILTER_EDIT_BODY_FN) (void *, int, int, VSTRING *);
 
 typedef struct MILTERS {
     MILTER *milter_list;		/* linked list of Milters */

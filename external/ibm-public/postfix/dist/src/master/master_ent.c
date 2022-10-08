@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -104,6 +104,7 @@
 #include <own_inet_addr.h>
 #include <wildcard_inet_addr.h>
 #include <mail_conf.h>
+#include <compat_level.h>
 
 /* Local stuff. */
 
@@ -492,7 +493,9 @@ MASTER_SERV *get_master_ent()
      * XXX Chroot cannot imply unprivileged service (for example, the pickup
      * service runs chrooted but needs privileges to open files as the user).
      */
-    chroot = get_bool_ent(&bufp, "chroot", var_compat_level < 1 ? "y" : "n");
+    chroot = get_bool_ent(&bufp, "chroot", compat_level
+		     < compat_level_from_string(COMPAT_LEVEL_1, msg_panic) ?
+			  "y" : "n");
 
     /*
      * Wakeup timer. XXX should we require that var_proc_limit == 1? Right

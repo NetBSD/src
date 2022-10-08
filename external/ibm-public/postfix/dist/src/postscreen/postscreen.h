@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -115,10 +115,10 @@ typedef struct {
 #define PSC_STATE_FLAG_USING_TLS	(1<<1)	/* using the TLS proxy */
 #define PSC_STATE_FLAG_UNUSED2		(1<<2)	/* use me! */
 #define PSC_STATE_FLAG_NEW		(1<<3)	/* some test was never passed */
-#define PSC_STATE_FLAG_BLIST_FAIL	(1<<4)	/* blacklisted */
+#define PSC_STATE_FLAG_DNLIST_FAIL	(1<<4)	/* denylisted */
 #define PSC_STATE_FLAG_HANGUP		(1<<5)	/* NOT a test failure */
 #define PSC_STATE_FLAG_SMTPD_X21	(1<<6)	/* hang up after command */
-#define PSC_STATE_FLAG_WLIST_FAIL	(1<<7)	/* do not whitelist */
+#define PSC_STATE_FLAG_ALLIST_FAIL	(1<<7)	/* do not allowlist */
 #define PSC_STATE_FLAG_TEST_BASE	(8)	/* start of indexable flags */
 
  /*
@@ -158,7 +158,7 @@ typedef struct {
 #define PSC_STATE_FLAG_SHIFT_BYFNAME(fname) (PSC_STATE_FLAG_SHIFT_ ## fname)
 
  /*
-  * Indexable per-test flags. These are used for DNS whitelisting multiple
+  * Indexable per-test flags. These are used for DNS allowlisting multiple
   * tests, without needing per-test ad-hoc code.
   */
 #define PSC_STATE_FLAG_BYTINDX_FNAME(tindx, fname) \
@@ -269,9 +269,9 @@ typedef struct {
   * Super-aggregates for all tests combined.
   */
 #define PSC_STATE_MASK_ANY_FAIL \
-	(PSC_STATE_FLAG_BLIST_FAIL | \
+	(PSC_STATE_FLAG_DNLIST_FAIL | \
 	PSC_STATE_MASK_EARLY_FAIL | PSC_STATE_MASK_SMTPD_FAIL | \
-	PSC_STATE_FLAG_WLIST_FAIL)
+	PSC_STATE_FLAG_ALLIST_FAIL)
 
 #define PSC_STATE_MASK_ANY_PASS \
 	(PSC_STATE_MASK_EARLY_PASS | PSC_STATE_MASK_SMTPD_PASS)
@@ -575,9 +575,9 @@ extern void psc_endpt_local_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
  /*
   * postscreen_access emulation.
   */
-#define PSC_ACL_ACT_WHITELIST	SERVER_ACL_ACT_PERMIT
+#define PSC_ACL_ACT_ALLOWLIST	SERVER_ACL_ACT_PERMIT
 #define PSC_ACL_ACT_DUNNO	SERVER_ACL_ACT_DUNNO
-#define PSC_ACL_ACT_BLACKLIST	SERVER_ACL_ACT_REJECT
+#define PSC_ACL_ACT_DENYLIST	SERVER_ACL_ACT_REJECT
 #define PSC_ACL_ACT_ERROR	SERVER_ACL_ACT_ERROR
 
 #define psc_acl_pre_jail_init	server_acl_pre_jail_init

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_context_scan.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_context_scan.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <tls_proxy.h>
 /*
 /*	int     tls_proxy_context_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM *stream;
 /*	int     flags;
 /*	void    *ptr;
@@ -68,7 +68,7 @@
 
 /* tls_proxy_context_scan - receive TLS session state from stream */
 
-int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     tls_proxy_context_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 			               int flags, void *ptr)
 {
     TLS_SESS_STATE *tls_context
@@ -102,6 +102,8 @@ int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
 		  RECV_ATTR_STR(TLS_ATTR_ISSUER_CN, issuer_CN),
 		  RECV_ATTR_STR(TLS_ATTR_PEER_CERT_FPT, peer_cert_fprint),
 		  RECV_ATTR_STR(TLS_ATTR_PEER_PKEY_FPT, peer_pkey_fprint),
+		  RECV_ATTR_INT(TLS_ATTR_SEC_LEVEL,
+				&tls_context->level),
 		  RECV_ATTR_INT(TLS_ATTR_PEER_STATUS,
 				&tls_context->peer_status),
 		  RECV_ATTR_STR(TLS_ATTR_CIPHER_PROTOCOL, protocol),
@@ -139,7 +141,7 @@ int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
     tls_context->srvr_sig_curve = vstring_export(srvr_sig_curve);
     tls_context->srvr_sig_dgst = vstring_export(srvr_sig_dgst);
     tls_context->namaddr = vstring_export(namaddr);
-    ret = (ret == 21 ? 1 : -1);
+    ret = (ret == 22 ? 1 : -1);
     if (ret != 1) {
 	tls_proxy_context_free(tls_context);
 	tls_context = 0;

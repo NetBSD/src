@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -104,12 +104,14 @@ int     verify_append(const char *queue_id, MSG_STATS *stats,
      * XXX No DSN check; this routine is called from bounce/defer/sent, which
      * know what the DSN initial digit should look like.
      * 
-     * XXX vrfy_stat is competely redundant because of dsn.
+     * XXX vrfy_stat is completely redundant because of dsn.
      */
     if (var_verify_neg_cache || vrfy_stat == DEL_RCPT_STAT_OK) {
 	if (recipient->orig_addr[0])
 	    req_stat = verify_clnt_update(recipient->orig_addr, vrfy_stat,
 					  my_dsn.reason);
+	else
+	    req_stat = VRFY_STAT_OK;
 	/* Two verify updates for one verify request! */
 	if (req_stat == VRFY_STAT_OK
 	    && strcmp(recipient->address, recipient->orig_addr) != 0)

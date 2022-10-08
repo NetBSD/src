@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -127,7 +127,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdio.h>			/* strerror() */
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
@@ -154,7 +153,7 @@
 
 #include "smtpd.h"
 
-static INET_PROTO_INFO *proto_info;
+static const INET_PROTO_INFO *proto_info;
 
  /*
   * XXX If we make local port information available via logging, then we must
@@ -267,7 +266,7 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	    /*
 	     * Following RFC 2821 section 4.1.3, an IPv6 address literal gets
 	     * a prefix of 'IPv6:'. We do this consistently for all IPv6
-	     * addresses that that appear in headers or envelopes. The fact
+	     * addresses that appear in headers or envelopes. The fact
 	     * that valid_mailhost_addr() enforces the form helps of course.
 	     * We use the form without IPV6: prefix when doing access
 	     * control, or when accessing the connection cache.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postscreen.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postscreen.8,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH POSTSCREEN 8 
 .ad
@@ -31,9 +31,9 @@ Alternatively, a site could set up a dedicated, non\-postscreen,
 "port 25" server that provides \fBsubmission\fR service and
 client authentication, but no MX service.
 
-\fBpostscreen\fR(8) maintains a temporary whitelist for
+\fBpostscreen\fR(8) maintains a temporary allowlist for
 clients that have passed a number of tests.  When an SMTP
-client IP address is whitelisted, \fBpostscreen\fR(8) hands
+client IP address is allowlisted, \fBpostscreen\fR(8) hands
 off the connection immediately to a Postfix SMTP server
 process. This minimizes the overhead for legitimate mail.
 
@@ -144,6 +144,10 @@ Available in Postfix version 3.4 and later:
 .IP "\fBpostscreen_reject_footer_maps ($smtpd_reject_footer_maps)\fR"
 Optional lookup table for information that is appended after a 4XX
 or 5XX \fBpostscreen\fR(8) server response.
+.PP
+Available in Postfix 3.6 and later:
+.IP "\fBrespectful_logging (see 'postconf -d' output)\fR"
+Avoid logging that implies white is better than black.
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf
@@ -171,36 +175,33 @@ proxy agent.
 .IP "\fBpostscreen_upstream_proxy_timeout (5s)\fR"
 The time limit for the proxy protocol specified with the
 postscreen_upstream_proxy_protocol parameter.
-.SH "PERMANENT WHITE/BLACKLIST TEST"
+.SH "PERMANENT ALLOW/DENYLIST TEST"
 .na
 .nf
 .ad
 .fi
 This test is executed immediately after a remote SMTP client
-connects. If a client is permanently whitelisted, the client
+connects. If a client is permanently allowlisted, the client
 will be handed off immediately to a Postfix SMTP server
 process.
 .IP "\fBpostscreen_access_list (permit_mynetworks)\fR"
-Permanent white/blacklist for remote SMTP client IP addresses.
+Permanent allow/denylist for remote SMTP client IP addresses.
 .IP "\fBpostscreen_blacklist_action (ignore)\fR"
-The action that \fBpostscreen\fR(8) takes when a remote SMTP client is
-permanently blacklisted with the postscreen_access_list parameter.
+Renamed to postscreen_denylist_action in Postfix 3.6.
 .SH "MAIL EXCHANGER POLICY TESTS"
 .na
 .nf
 .ad
 .fi
 When \fBpostscreen\fR(8) is configured to monitor all primary
-and backup MX addresses, it can refuse to whitelist clients
+and backup MX addresses, it can refuse to allowlist clients
 that connect to a backup MX address only. For small sites,
 this requires configuring primary and backup MX addresses
 on the same MTA. Larger sites would have to share the
 \fBpostscreen\fR(8) cache between primary and backup MTAs,
 which would introduce a common point of failure.
 .IP "\fBpostscreen_whitelist_interfaces (static:all)\fR"
-A list of local \fBpostscreen\fR(8) server IP addresses where a
-non\-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
-whitelist status.
+Renamed to postscreen_allowlist_interfaces in Postfix 3.6.
 .SH "BEFORE 220 GREETING TESTS"
 .na
 .nf
@@ -223,7 +224,7 @@ A mapping from actual DNSBL domain name which includes a secret
 password, to the DNSBL domain name that postscreen will reply with
 when it rejects mail.
 .IP "\fBpostscreen_dnsbl_sites (empty)\fR"
-Optional list of DNS white/blacklist domains, filters and weight
+Optional list of DNS allow/denylist domains, filters and weight
 factors.
 .IP "\fBpostscreen_dnsbl_threshold (1)\fR"
 The inclusive lower bound for blocking a remote SMTP client, based on
@@ -250,13 +251,24 @@ connections to.
 .PP
 Available in Postfix version 2.11 and later:
 .IP "\fBpostscreen_dnsbl_whitelist_threshold (0)\fR"
-Allow a remote SMTP client to skip "before" and "after 220
-greeting" protocol tests, based on its combined DNSBL score as
-defined with the postscreen_dnsbl_sites parameter.
+Renamed to postscreen_dnsbl_allowlist_threshold in Postfix 3.6.
 .PP
 Available in Postfix version 3.0 and later:
 .IP "\fBpostscreen_dnsbl_timeout (10s)\fR"
 The time limit for DNSBL or DNSWL lookups.
+.PP
+Available in Postfix version 3.6 and later:
+.IP "\fBpostscreen_denylist_action (ignore)\fR"
+The action that \fBpostscreen\fR(8) takes when a remote SMTP client is
+permanently denylisted with the postscreen_access_list parameter.
+.IP "\fBpostscreen_allowlist_interfaces (static:all)\fR"
+A list of local \fBpostscreen\fR(8) server IP addresses where a
+non\-allowlisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
+allowlist status.
+.IP "\fBpostscreen_dnsbl_allowlist_threshold (0)\fR"
+Allow a remote SMTP client to skip "before" and "after 220
+greeting" protocol tests, based on its combined DNSBL score as
+defined with the postscreen_dnsbl_sites parameter.
 .SH "AFTER 220 GREETING TESTS"
 .na
 .nf
@@ -308,7 +320,7 @@ The amount of time between \fBpostscreen\fR(8) cache cleanup runs.
 Persistent storage for the \fBpostscreen\fR(8) server decisions.
 .IP "\fBpostscreen_cache_retention_time (7d)\fR"
 The amount of time that \fBpostscreen\fR(8) will cache an expired
-temporary whitelist entry before it is removed.
+temporary allowlist entry before it is removed.
 .IP "\fBpostscreen_bare_newline_ttl (30d)\fR"
 The amount of time that \fBpostscreen\fR(8) will use the result from
 a successful "bare newline" SMTP protocol test.
@@ -351,7 +363,7 @@ built\-in SMTP protocol engine.
 The number of clients that can be waiting for service from a
 real Postfix SMTP server process.
 .IP "\fBpostscreen_pre_queue_limit ($default_process_limit)\fR"
-The number of non\-whitelisted clients that can be waiting for
+The number of non\-allowlisted clients that can be waiting for
 a decision whether they will receive service from a real Postfix
 SMTP server
 process.
@@ -422,7 +434,7 @@ The email address form that will be used in non\-debug logging
 .nf
 smtpd(8), Postfix SMTP server
 tlsproxy(8), Postfix TLS proxy server
-dnsblog(8), DNS black/whitelist logger
+dnsblog(8), DNS allow/denylist logger
 postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "README FILES"

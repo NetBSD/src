@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
 /*	down-stream servers in the case of a dictionary attack or
 /*	a flood of backscatter bounces.
 /*	Sender address verification may cause your site to be
-/*	blacklisted by some providers.
+/*	denylisted by some providers.
 /*
 /*	If the persistent database ever gets corrupted then the world
 /*	comes to an end and human intervention is needed. This violates
@@ -528,8 +528,8 @@ static void verify_query_service(VSTREAM *client_stream)
     (addr_status != DEL_RCPT_STAT_OK && updated + var_verify_neg_try < now)
 
 	if (now - probed > PROBE_TTL
-	       && (POSITIVE_REFRESH_NEEDED(addr_status, updated)
-		   || NEGATIVE_REFRESH_NEEDED(addr_status, updated))) {
+	    && (POSITIVE_REFRESH_NEEDED(addr_status, updated)
+		|| NEGATIVE_REFRESH_NEEDED(addr_status, updated))) {
 	    if (msg_verbose)
 		msg_info("PROBE %s status=%d probed=%ld updated=%ld",
 			 STR(addr), addr_status, now, updated);
@@ -725,6 +725,21 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
     RESTORE_SAVED_EUGID();
 }
 
+/* post_accept_init - announce our protocol */
+
+static void post_accept_init(VSTREAM *stream, char *unused_name,
+			           char **unused_argv, HTABLE *unused_table)
+{
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_VERIFY),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(stream);
+}
+
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main - pass control to the multi-threaded skeleton */
@@ -756,6 +771,7 @@ int     main(int argc, char **argv)
 		      CA_MAIL_SERVER_TIME_TABLE(time_table),
 		      CA_MAIL_SERVER_PRE_INIT(pre_jail_init),
 		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		      CA_MAIL_SERVER_POST_ACCEPT(post_accept_init),
 		      CA_MAIL_SERVER_SOLITARY,
 		      CA_MAIL_SERVER_EXIT(verify_dump),
 		      0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy.h,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _TLS_PROXY_H_INCLUDED_
 #define _TLS_PROXY_H_INCLUDED_
@@ -79,11 +79,10 @@ typedef struct TLS_CLIENT_PARAMS {
   * tls_proxy_client_param_scan.c.
   */
 extern TLS_CLIENT_PARAMS *tls_proxy_client_param_from_config(TLS_CLIENT_PARAMS *);
-extern char *tls_proxy_client_param_to_string(VSTRING *, TLS_CLIENT_PARAMS *);
-extern char *tls_proxy_client_param_with_names_to_string(VSTRING *, TLS_CLIENT_PARAMS *);
-extern int tls_proxy_client_param_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
+extern char *tls_proxy_client_param_serialize(ATTR_PRINT_COMMON_FN, VSTRING *, const TLS_CLIENT_PARAMS *);
+extern int tls_proxy_client_param_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
 extern void tls_proxy_client_param_free(TLS_CLIENT_PARAMS *);
-extern int tls_proxy_client_param_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_client_param_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
  /*
   * Functions that handle TLS_XXX_INIT_PROPS and TLS_XXX_START_PROPS. These
@@ -116,25 +115,24 @@ extern VSTREAM *tls_proxy_open(const char *, int, VSTREAM *, const char *,
 
 extern TLS_SESS_STATE *tls_proxy_context_receive(VSTREAM *);
 extern void tls_proxy_context_free(TLS_SESS_STATE *);
-extern int tls_proxy_context_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int tls_proxy_context_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_context_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int tls_proxy_context_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
-extern int tls_proxy_client_init_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int tls_proxy_client_init_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_client_init_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int tls_proxy_client_init_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 extern void tls_proxy_client_init_free(TLS_CLIENT_INIT_PROPS *);
-extern char *tls_proxy_client_init_to_string(VSTRING *, TLS_CLIENT_INIT_PROPS *);
-extern char *tls_proxy_client_init_with_names_to_string(VSTRING *, TLS_CLIENT_INIT_PROPS *);
+extern char *tls_proxy_client_init_serialize(ATTR_PRINT_COMMON_FN, VSTRING *, const TLS_CLIENT_INIT_PROPS *);
 
-extern int tls_proxy_client_start_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int tls_proxy_client_start_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_client_start_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 extern void tls_proxy_client_start_free(TLS_CLIENT_START_PROPS *);
 
-extern int tls_proxy_server_init_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int tls_proxy_server_init_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_server_init_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int tls_proxy_server_init_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 extern void tls_proxy_server_init_free(TLS_SERVER_INIT_PROPS *);
 
-extern int tls_proxy_server_start_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
-extern int tls_proxy_server_start_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int tls_proxy_server_start_print(ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
+extern int tls_proxy_server_start_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
 
@@ -162,6 +160,7 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
 #define TLS_ATTR_ISSUER_CN	"issuer_CN"
 #define TLS_ATTR_PEER_CERT_FPT	"peer_fingerprint"
 #define TLS_ATTR_PEER_PKEY_FPT	"peer_pubkey_fingerprint"
+#define TLS_ATTR_SEC_LEVEL      "level"
 #define TLS_ATTR_PEER_STATUS	"peer_status"
 #define TLS_ATTR_CIPHER_PROTOCOL "cipher_protocol"
 #define TLS_ATTR_CIPHER_NAME	"cipher_name"
@@ -254,30 +253,15 @@ extern void tls_proxy_server_start_free(TLS_SERVER_START_PROPS *);
  /*
   * TLS_TLSA attributes.
   */
-#define TLS_ATTR_MDALG		"mdalg"
-#define TLS_ATTR_CERTS		"certs"
-#define TLS_ATTR_PKEYS		"pkeys"
-
- /*
-  * TLS_CERTS attributes.
-  */
-#define TLS_ATTR_CERT		"cert"
-
- /*
-  * TLS_PKEYS attributes.
-  */
-#define TLS_ATTR_PKEY		"pkey"
+#define TLS_ATTR_USAGE		"usage"
+#define TLS_ATTR_SELECTOR	"selector"
+#define TLS_ATTR_MTYPE		"mtype"
+#define TLS_ATTR_DATA		"data"
 
  /*
   * TLS_DANE attributes.
   */
-#define TLS_ATTR_TA		"ta"
-#define TLS_ATTR_EE		"ee"
-#define TLS_ATTR_CERTS		"certs"
-#define TLS_ATTR_PKEYS		"pkeys"
 #define TLS_ATTR_DOMAIN		"domain"
-#define TLS_ATTR_FLAGS		"flags"
-#define TLS_ATTR_EXP		"exp"
 
 #endif
 

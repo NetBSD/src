@@ -90,10 +90,12 @@
 #	is unavailable on some recent Solaris distributions.
 # .IP \fB-DNO_PCRE\fR
 #	Do not build with PCRE support.
-#	By default, PCRE support is compiled in when the \fBpcre-config\fR
-#	utility is installed.
+#	By default, PCRE support is compiled in when the \fBpcre2-config\fR
+#	or \fBpcre-config\fR utility are installed.
 # .IP \fB-DNO_POSIX_GETPW_R\fR
 #	Disable support for POSIX getpwnam_r/getpwuid_r.
+# .IP \fB-DNO_RES_NCALLS\fR
+#	Do not build with the threadsafe resolver(5) API (res_ninit() etc.).
 # .IP \fB-DNO_SIGSETJMP\fR
 #	Use setjmp()/longjmp() instead of sigsetjmp()/siglongjmp().
 #	By default, Postfix uses sigsetjmp()/siglongjmp() when they
@@ -182,6 +184,28 @@
 #	New York, NY 10011, USA
 #--
 
+# By now all shells must have functions.
+
+error() {
+   # Alas, tput(1) is not portable so we can't use visual effects.
+   echo "ATTENTION:" 1>&2;
+   echo "ATTENTION:" $* 1>&2;
+   echo "ATTENTION:" 1>&2;
+   exit 1
+}
+
+# First, deal with unsupported usage.
+case "$LD_LIBRARY_PATH" in
+?*) error "Not supported: building with LD_LIBRARY_PATH";;
+esac
+
+env | grep '^AUXLIBS_' | while read line
+do
+    case  "$line" in
+*-lpostfix-*) error "Not supported: linking plugins with -lpostfix-*: $line";;
+    esac
+done || exit 1
+
 # Emit system-dependent Makefile macro definitions to standard output.
 
 echo "#----------------------------------------------------------------"
@@ -203,16 +227,6 @@ ARFL=rv
 # Ugly function to make our error message more visible among the
 # garbage that is output by some versions of make(1).
 
-# By now all shells must have functions.
-
-error() {
-   # Alas, tput(1) is not portable so we can't use visual effects.
-   echo "ATTENTION:" 1>&2;
-   echo "ATTENTION:" $* 1>&2;
-   echo "ATTENTION:" 1>&2;
-   exit 1
-}
-
 case $# in
  # Officially supported usage.
  0) SYSTEM=`(uname -s) 2>/dev/null`
@@ -226,19 +240,6 @@ case $# in
  # Unsupported debug-only mode. Not suitable for cross-platform tests.
  2) SYSTEM="$1"; RELEASE="$2";;
  *) echo usage: $0 [system release] 1>&2; exit 1;;
-esac
-
-case "$SYSTEM" in
- Linux)
-    case "`PATH=/bin:/usr/bin ldd /bin/sh`" in
-     *-musl-*)
-	case "$CCARGS" in
-	 *-DNO_DNSSEC*) ;;
-	 *) echo Warning: libc-musl breaks DANE/TLSA security. 1>&2
-	    echo This build will not support DANE/TLSA. 1>&2
-	    CCARGS="$CCARGS -DNO_DNSSEC";;
-	esac;;
-    esac;;
 esac
 
 case "$SYSTEM.$RELEASE" in
@@ -311,6 +312,33 @@ case "$SYSTEM.$RELEASE" in
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC} -shared"}
 		;;
+   FreeBSD.12*) SYSTYPE=FREEBSD12
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
+   FreeBSD.13*)	SYSTYPE=FREEBSD13
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
+   FreeBSD.14*)	SYSTYPE=FREEBSD14
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
  DragonFly.*)	SYSTYPE=DRAGONFLY
 		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
@@ -329,6 +357,15 @@ case "$SYSTEM.$RELEASE" in
 		: ${PLUGIN_LD="${CC} -shared"}
 		;;
   OpenBSD.6*)	SYSTYPE=OPENBSD6
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so.1.0}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
+  OpenBSD.7*)	SYSTYPE=OPENBSD7
 		: ${CC=cc}
 		: ${SHLIB_SUFFIX=.so.1.0}
 		: ${SHLIB_CFLAGS=-fPIC}
@@ -356,8 +393,32 @@ case "$SYSTEM.$RELEASE" in
 		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC-gcc} -shared"}
-               ;;
-   NetBSD.7*)  SYSTYPE=NETBSD7
+		;;
+   NetBSD.7*)	SYSTYPE=NETBSD7
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+		;;
+   NetBSD.8*)	SYSTYPE=NETBSD8
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+		;;
+   NetBSD.9*)	SYSTYPE=NETBSD9
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+		;;
+   NetBSD.10*)	SYSTYPE=NETBSD10
 		: ${SHLIB_SUFFIX=.so}
 		: ${SHLIB_CFLAGS=-fPIC}
 		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
@@ -423,10 +484,6 @@ case "$SYSTEM.$RELEASE" in
 		CCARGS="$CCARGS -Dstrcasecmp=fix_strcasecmp \
 		    -Dstrncasecmp=fix_strncasecmp"
 		STRCASE="strcasecmp.o"
-		# Avoid common types of braindamage
-		case "$LD_LIBRARY_PATH" in
-		?*) error "Don't set LD_LIBRARY_PATH";;
-		esac
 		case "${CC}" in
 		*" "*) ;;
 		*ucb*) error "Don't use /usr/ucb/cc or ucblib";;
@@ -868,11 +925,17 @@ test -r /dev/urandom && CCARGS="$CCARGS -DHAS_DEV_URANDOM"
 case "$CCARGS" in
 *-DHAS_PCRE*)	;;
  *-DNO_PCRE*)	;;
-	   *)	pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
-		    pcre_libs=`(pcre-config --libs) 2>/dev/null` && {
-			CCARGS="$CCARGS -DHAS_PCRE $pcre_cflags"
-			AUXLIBS_PCRE="$pcre_libs"
-		}
+	   *)	if pcre_cflags=`(pcre2-config --cflags) 2>/dev/null` &&
+		    pcre_libs=`(pcre2-config --libs8) 2>/dev/null` 
+		then
+		    CCARGS="$CCARGS -DHAS_PCRE=2 $pcre_cflags"
+		    AUXLIBS_PCRE="$pcre_libs"
+		elif pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
+		    pcre_libs=`(pcre-config --libs) 2>/dev/null` 
+		then
+		    CCARGS="$CCARGS -DHAS_PCRE=1 $pcre_cflags"
+		    AUXLIBS_PCRE="$pcre_libs"
+		fi
 		;;
 esac
 
@@ -919,7 +982,7 @@ CCARGS="-I. -I../../include $CCARGS"
 # "make makefiles name=value...". The replacement depends on usage
 # context: the expanded release version in actual pathnames, or the
 # unexpanded ${mail_version} in configuration parameter values (both
-# main.cf and and built-in defaults).
+# main.cf and built-in defaults).
 
 # Helper function to determine DEF_MAIL_VERSION.
 
@@ -1149,7 +1212,7 @@ esac
 : ${CC=gcc} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk} \
 ${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused -Wno-missing-braces -fcommon'}
+	-Wunused -Wno-missing-braces -fno-common'}
 
 # Extract map type names from -DHAS_XXX compiler options.  We avoid
 # problems with tr(1) range syntax by using enumerations instead,
@@ -1157,7 +1220,8 @@ ${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
 # The following was validated in 2014 on FreeBSD/Linux and Solaris 9.
 
 DEFINED_MAP_TYPES=`
-    echo $CCARGS | tr -cd '\- _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' | 
+    echo $CCARGS | sed 's/=[^ ]*//g' | 
+	tr -cd '\- _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' | 
 	tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz | ${AWK} '
 	{ for (n = 1; n <= NF; n++)
 	      if ($n ~ /^-dhas_/)

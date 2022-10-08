@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_out_recipient.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -157,6 +157,7 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
 
     if ((state->flags & CLEANUP_FLAG_MAP_OK) == 0
 	|| cleanup_virt_alias_maps == 0) {
+	/* Matches been_here_drop{,_fixed}() calls cleanup_del_rcpt(). */
 	if ((var_enable_orcpt ?
 	     been_here(state->dups, "%s\n%d\n%s\n%s",
 		       dsn_orcpt, dsn_notify, orcpt, recip) :

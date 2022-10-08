@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_early.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen_early.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -58,27 +58,27 @@
 static char *psc_teaser_greeting;
 static VSTRING *psc_escape_buf;
 
-/* psc_whitelist_non_dnsbl - whitelist pending non-dnsbl tests */
+/* psc_allowlist_non_dnsbl - allowlist pending non-dnsbl tests */
 
-static void psc_whitelist_non_dnsbl(PSC_STATE *state)
+static void psc_allowlist_non_dnsbl(PSC_STATE *state)
 {
     time_t  now;
     int     tindx;
 
     /*
-     * If no tests failed (we can't undo those), and if the whitelist
+     * If no tests failed (we can't undo those), and if the allowlist
      * threshold is met, flag non-dnsbl tests that are pending or disabled as
      * successfully completed, and set their expiration times equal to the
      * DNSBL expiration time, except for tests that would expire later.
      * 
      * Why flag disabled tests as passed? When a disabled test is turned on,
      * postscreen should not apply that test to clients that are already
-     * whitelisted based on their combined DNSBL score.
+     * allowlisted based on their combined DNSBL score.
      */
     if ((state->flags & PSC_STATE_MASK_ANY_FAIL) == 0
 	&& state->dnsbl_score < var_psc_dnsbl_thresh
-	&& var_psc_dnsbl_wthresh < 0
-	&& state->dnsbl_score <= var_psc_dnsbl_wthresh) {
+	&& var_psc_dnsbl_althresh < 0
+	&& state->dnsbl_score <= var_psc_dnsbl_althresh) {
 	now = event_time();
 	for (tindx = 0; tindx < PSC_TINDX_COUNT; tindx++) {
 	    if (tindx == PSC_TINDX_DNSBL)
@@ -156,7 +156,7 @@ static void psc_early_event(int event, void *context)
 	}
 
 	/*
-	 * Collect the DNSBL score, and whitelist other tests if applicable.
+	 * Collect the DNSBL score, and allowlist other tests if applicable.
 	 * Note: this score will be partial when some DNS lookup did not
 	 * complete before the pregreet timer expired.
 	 * 
@@ -174,8 +174,8 @@ static void psc_early_event(int event, void *context)
 				       &state->dnsbl_name,
 				       state->dnsbl_index,
 				       &state->dnsbl_ttl);
-		if (var_psc_dnsbl_wthresh < 0)
-		    psc_whitelist_non_dnsbl(state);
+		if (var_psc_dnsbl_althresh < 0)
+		    psc_allowlist_non_dnsbl(state);
 	    }
 	    if (state->dnsbl_score < var_psc_dnsbl_thresh) {
 		expire_time[PSC_TINDX_DNSBL] = event_time() + state->dnsbl_ttl;
@@ -305,13 +305,13 @@ static void psc_early_dnsbl_event(int unused_event, void *context)
 	msg_info("%s: notify [%s]:%s", myname, PSC_CLIENT_ADDR_PORT(state));
 
     /*
-     * Collect the DNSBL score, and whitelist other tests if applicable.
+     * Collect the DNSBL score, and allowlist other tests if applicable.
      */
     state->dnsbl_score =
 	psc_dnsbl_retrieve(state->smtp_client_addr, &state->dnsbl_name,
 			   state->dnsbl_index, &state->dnsbl_ttl);
-    if (var_psc_dnsbl_wthresh < 0)
-	psc_whitelist_non_dnsbl(state);
+    if (var_psc_dnsbl_althresh < 0)
+	psc_allowlist_non_dnsbl(state);
 
     /*
      * Terminate the greet delay if we're just waiting for DNSBL lookup to

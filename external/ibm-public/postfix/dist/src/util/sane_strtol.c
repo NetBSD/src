@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_strtol.c,v 1.1.1.1 2022/10/08 16:09:12 christos Exp $	*/
+/*	$NetBSD: sane_strtol.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME

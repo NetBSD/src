@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -86,12 +86,13 @@
 /* .ad
 /* .fi
 /* .IP "\fBdebug_peer_level (2)\fR"
-/*	The increment in verbose logging level when a remote client or
-/*	server matches a pattern in the debug_peer_list parameter.
+/*	The increment in verbose logging level when a nexthop destination,
+/*	remote client or server name or network address matches a pattern
+/*	given with the debug_peer_list parameter.
 /* .IP "\fBdebug_peer_list (empty)\fR"
-/*	Optional list of remote client or server hostname or network
-/*	address patterns that cause the verbose logging level to increase
-/*	by the amount specified in $debug_peer_level.
+/*	Optional list of nexthop destination, remote client or server
+/*	name or network address patterns that, if matched, cause the verbose
+/*	logging level to increase by the amount specified in $debug_peer_level.
 /* .IP "\fBsoft_bounce (no)\fR"
 /*	Safety net to keep mail queued that would otherwise be returned to
 /*	the sender.

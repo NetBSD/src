@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: local.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -53,12 +53,18 @@
 /*	(complete recipient address), \fB$extension\fR (recipient address
 /*	extension), \fB$domain\fR (recipient domain), \fB$local\fR
 /*	(entire recipient address localpart) and
-/*	\fB$recipient_delimiter.\fR The forms \fI${name?value}\fR and
-/*	\fI${name:value}\fR expand conditionally to \fIvalue\fR when
-/*	\fI$name\fR is (is not) defined.
-/*	Characters that may have special meaning to the shell or file system
-/*	are replaced by underscores.  The list of acceptable characters
-/*	is specified with the \fBforward_expansion_filter\fR configuration
+/*	\fB$recipient_delimiter.\fR The forms \fI${name?value}\fR
+/*	and \fI${name?{value}}\fR (Postfix 3.0 and later) expand
+/*	conditionally to \fIvalue\fR when \fI$name\fR is defined,
+/*	and the forms \fI${name:value}\fR \fI${name:{value}}\fR
+/*	(Postfix 3.0 and later) expand conditionally to \fIvalue\fR
+/*	when \fI$name\fR is not defined.  The form
+/*	\fI${name?{value1}:{value2}}\fR (Postfix 3.0 and later)
+/*	expands conditionally to \fIvalue1\fR when \fI$name\fR is
+/*	defined, or \fIvalue2\fR otherwise. Characters that may
+/*	have special meaning to the shell or file system are replaced
+/*	with underscores. The list of acceptable characters is
+/*	specified with the \fBforward_expansion_filter\fR configuration
 /*	parameter.
 /*
 /*	An alias or ~/.\fBforward\fR file may list any combination of external
@@ -166,13 +172,18 @@
 /*	address), \fB$extension\fR (recipient address extension),
 /*	\fB$domain\fR (recipient domain), \fB$local\fR (entire
 /*	recipient address localpart) and \fB$recipient_delimiter.\fR
-/*	The forms \fI${name?value}\fR and \fI${name:value}\fR expand
-/*	conditionally to \fIvalue\fR when \fI$name\fR is (is not)
-/*	defined.  Characters that may have special meaning to the
-/*	shell or file system are replaced by underscores.  The list
-/*	of acceptable characters is specified with the
-/*	\fBexecution_directory_expansion_filter\fR configuration
-/*	parameter.
+/*	The forms \fI${name?value}\fR and \fI${name?{value}}\fR
+/*	(Postfix 3.0 and later) expand conditionally to \fIvalue\fR
+/*	when \fI$name\fR is defined, and the forms \fI${name:value}\fR
+/*	and \fI${name:{value}}\fR (Postfix 3.0 and later) expand
+/*	conditionally to \fIvalue\fR when \fI$name\fR is not defined.
+/*	The form \fI${name?{value1}:{value2}}\fR (Postfix 3.0 and
+/*	later) expands conditionally to \fIvalue1\fR when \fI$name\fR
+/*	is defined, or \fIvalue2\fR otherwise. Characters that may
+/*	have special meaning to the shell or file system are replaced
+/*	with underscores. The list of acceptable characters
+/*	is specified with the \fBexecution_directory_expansion_filter\fR
+/*	configuration parameter.
 /*
 /*	The command is executed directly where possible. Assistance by the
 /*	shell (\fB/bin/sh\fR on UNIX systems) is used only when the command
@@ -194,7 +205,7 @@
 /*
 /*	A limited amount of message context is exported via environment
 /*	variables. Characters that may have special meaning to the shell
-/*	are replaced by underscores.  The list of acceptable characters
+/*	are replaced with underscores.  The list of acceptable characters
 /*	is specified with the \fBcommand_expansion_filter\fR configuration
 /*	parameter.
 /* .IP \fBSHELL\fR
@@ -441,7 +452,7 @@
 /*	Available in Postfix version 2.2 and later:
 /* .IP "\fBcommand_execution_directory (empty)\fR"
 /*	The \fBlocal\fR(8) delivery agent working directory for delivery to
-/*	external command.
+/*	external commands.
 /* MAILBOX LOCKING CONTROLS
 /* .ad
 /* .fi
@@ -490,7 +501,7 @@
 /*	$name expansions of $mailbox_command and $command_execution_directory.
 /* .IP "\fBdefault_privs (nobody)\fR"
 /*	The default rights used by the \fBlocal\fR(8) delivery agent for delivery
-/*	to external file or command.
+/*	to an external file or command.
 /* .IP "\fBforward_expansion_filter (see 'postconf -d' output)\fR"
 /*	Restrict the characters that the \fBlocal\fR(8) delivery agent allows in
 /*	$name expansions of $forward_path.
@@ -522,7 +533,7 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBlocal_command_shell (empty)\fR"
-/*	Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
+/*	Optional shell program for \fBlocal\fR(8) delivery to non-Postfix commands.
 /* .IP "\fBmax_idle (100s)\fR"
 /*	The maximum amount of time that an idle Postfix daemon process waits
 /*	for an incoming connection before terminating voluntarily.
@@ -543,9 +554,8 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The set of characters that can separate a user name from its
-/*	extension (example: user+foo), or a .forward file name from its
-/*	extension (example: .forward+foo).
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* .IP "\fBrequire_home_directory (no)\fR"
 /*	Require that a \fBlocal\fR(8) recipient's home directory exists
 /*	before mail delivery is attempted.

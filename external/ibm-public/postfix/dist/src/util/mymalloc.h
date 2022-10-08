@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mymalloc.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _MALLOC_H_INCLUDED_
 #define _MALLOC_H_INCLUDED_
@@ -21,7 +21,7 @@ extern void *myrealloc(void *, ssize_t);
 extern void myfree(void *);
 extern char *mystrdup(const char *);
 extern char *mystrndup(const char *, ssize_t);
-extern char *mymemdup(const void *, ssize_t);
+extern void *mymemdup(const void *, ssize_t);
 
 /* LICENSE
 /* .ad

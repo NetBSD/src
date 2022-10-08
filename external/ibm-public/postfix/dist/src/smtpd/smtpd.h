@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -418,6 +418,11 @@ extern MILTERS *smtpd_milters;
   * Message size multiplication factor for free space check.
   */
 extern double smtpd_space_multf;
+
+ /*
+  * header_from_format support.
+  */
+extern int smtpd_hfrom_format;
 
 /* LICENSE
 /* .ad

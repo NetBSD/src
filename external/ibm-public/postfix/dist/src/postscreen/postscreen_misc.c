@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_misc.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen_misc.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -99,8 +99,8 @@ void    psc_conclude(PSC_STATE *state)
 
     /*
      * Handle clients that passed at least one test other than permanent
-     * whitelisting, and that didn't fail any test including permanent
-     * blacklisting. There may still be unfinished tests; those tests will
+     * allowlisting, and that didn't fail any test including permanent
+     * denylisting. There may still be unfinished tests; those tests will
      * need to be completed when the client returns in a later session.
      */
     if (state->flags & PSC_STATE_MASK_ANY_FAIL)
@@ -118,7 +118,7 @@ void    psc_conclude(PSC_STATE *state)
 
     /*
      * Update the postscreen cache. This still supports a scenario where a
-     * client gets whitelisted in the course of multiple sessions, as long as
+     * client gets allowlisted in the course of multiple sessions, as long as
      * that client does not "fail" any test. Don't try to optimize away cache
      * updates; we want cached information to be up-to-date even if a test
      * result is renewed during overlapping SMTP sessions, and even if

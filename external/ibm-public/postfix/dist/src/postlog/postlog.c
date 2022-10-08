@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postlog.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,14 @@
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
+/* SECURITY
+/* .ad
+/* .fi
+/*	The \fBpostlog\fR(1) command is designed to run with
+/*	set-groupid privileges, so that it can connect to the
+/*	\fBpostlogd\fR(8) daemon process (Postfix 3.7 and later;
+/*	earlier implementations of this command must not have
+/*	set-groupid or set-userid permissions).
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -84,6 +92,9 @@
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/*	The \fBpostlog\fR(1) command was introduced with Postfix
+/*	version 3.4.
 /* AUTHOR(S)
 /*	Wietse Venema
 /*	IBM T.J. Watson Research
@@ -119,6 +130,7 @@
 #include <msg_vstream.h>
 #include <warn_stat.h>
 #include <clean_env.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -130,6 +142,32 @@
 #include <maillog_client.h>
 
 /* Application-specific. */
+
+ /*
+  * WARNING WARNING WARNING
+  * 
+  * This software is designed to run set-gid. In order to avoid exploitation of
+  * privilege, this software should not run any external commands, nor should
+  * it take any information from the user, unless that information can be
+  * properly sanitized. To get an idea of how much information a process can
+  * inherit from a potentially hostile user, examine all the members of the
+  * process structure (typically, in /usr/include/sys/proc.h): the current
+  * directory, open files, timers, signals, environment, command line, umask,
+  * and so on.
+  */
+
+ /*
+  * Access lists.
+  */
+#if 0
+char   *var_postlog_acl;
+
+X static const CONFIG_STR_TABLE str_table[] = {
+    X VAR_POSTLOG_ACL, DEF_POSTLOG_ACL, &var_postlog_acl, 0, 0,
+    X 0,
+X};
+
+#endif
 
  /*
   * Support for the severity level mapping.
@@ -150,6 +188,8 @@ static struct level_table level_table[] = {
     "panic", MSG_PANIC,
     0,
 };
+
+#define POSTLOG_CMD	"postlog"
 
 /* level_map - lookup facility or severity value */
 
@@ -199,6 +239,7 @@ int     main(int argc, char **argv)
     int     fd;
     int     ch;
     const char *tag;
+    char   *unsanitized_tag;
     int     level = MSG_INFO;
     ARGV   *import_env;
 
@@ -223,8 +264,10 @@ int     main(int argc, char **argv)
 	    msg_fatal("open /dev/null: %m");
 
     /*
-     * Set up diagnostics.
+     * Set up diagnostics. Censor the process name: it is provided by the
+     * user.
      */
+    argv[0] = POSTLOG_CMD;
     tag = mail_task(argv[0]);
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
@@ -236,9 +279,12 @@ int     main(int argc, char **argv)
     MAIL_VERSION_CHECK;
 
     /*
-     * Parse switches.
+     * Parse switches. This program is set-gid and must sanitize all
+     * command-line parameters. The configuration directory argument is
+     * validated by the mail configuration read routine. Don't do complex
+     * things until we have completed initializations.
      */
-    tag = 0;
+    unsanitized_tag = 0;
     while ((ch = GETOPT(argc, argv, "c:ip:t:v")) > 0) {
 	switch (ch) {
 	default:
@@ -254,7 +300,7 @@ int     main(int argc, char **argv)
 	    level = level_map(optarg);
 	    break;
 	case 't':
-	    tag = optarg;
+	    unsanitized_tag = optarg;
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -267,12 +313,29 @@ int     main(int argc, char **argv)
      * may require that mail_task() be re-evaluated.
      */
     mail_conf_read();
-    /* Enforce consistent operation of different Postfix parts. */
+    /* Re-evaluate mail_task() after reading main.cf. */
+    maillog_client_init(mail_task(POSTLOG_CMD), MAILLOG_CLIENT_FLAG_NONE);
+#if 0
+    mail_dict_init();				/* proxy, sql, ldap */
+    get_mail_conf_str_table(str_table);
+#endif
+
+    /*
+     * This program is designed to be set-gid, which makes it a potential
+     * target for attack. Strip and optionally override the process
+     * environment so that we don't have to trust the C library.
+     */
     import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-    update_env(import_env->argv);
+    clean_env(import_env->argv);
     argv_free(import_env);
-    if (tag == 0)
-	tag = mail_task(argv[0]);
+
+    /*
+     * Sanitize the user-specified tag. The result depends on the value of
+     * var_smtputf8_enable, therefore this code is after the mail_conf_read()
+     * call.
+     */
+    if (unsanitized_tag != 0)
+	tag = printable(unsanitized_tag, '?');
 
     /*
      * Re-initialize the logging, this time with the tag specified in main.cf
@@ -281,6 +344,17 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     maillog_client_init(tag, MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
+
+#if 0
+    uid_t   uid = getuid();
+
+    if (uid != 0 && uid != var_owner_uid
+	&& (errstr = check_user_acl_byuid(VAR_SHOWQ_ACL, var_showq_acl,
+					  uid)) != 0)
+	msg_fatal_status(EX_NOPERM,
+			 "User %s(%ld) is not allowed to invoke 'postlog'",
+			 errstr, (long) uid);
+#endif
 
     /*
      * Log the command line or log lines from standard input.

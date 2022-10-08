@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -34,7 +34,7 @@
 #define MAIL_PROTO_QMQP		"QMQP"
 
  /*
-  * Names of services: these are the names of the UNIX-domain socket or or
+  * Names of services: these are the names of the UNIX-domain socket or
   * FIFO that a service listens on.
   */
 #define MAIL_SERVICE_BOUNCE	"bounce"
@@ -116,10 +116,31 @@
   */
 extern VSTREAM *mail_connect(const char *, const char *, int);
 extern VSTREAM *mail_connect_wait(const char *, const char *);
-extern int mail_command_client(const char *, const char *,...);
+extern int mail_command_client(const char *, const char *, const char *,...);
 extern int mail_command_server(VSTREAM *,...);
 extern int mail_trigger(const char *, const char *, const char *, ssize_t);
 extern char *mail_pathname(const char *, const char *);
+
+ /*
+  * Each Postfix internal service identifies the protocol that it intends to
+  * use. On the receiver end, this information does not contribute to the
+  * reported number of received attributes (it is a constant).
+  */
+#define MAIL_ATTR_PROTO		"protocol"
+
+#define MAIL_ATTR_PROTO_ANVIL	"anvil_protocol"
+#define MAIL_ATTR_PROTO_BOUNCE	"delivery_status_protocol"
+#define MAIL_ATTR_PROTO_CLEANUP	"cleanup_protocol"
+#define MAIL_ATTR_PROTO_DELIVER	"delivery_request_protocol"
+#define MAIL_ATTR_PROTO_FLUSH	"queue_flush_protocol"
+#define MAIL_ATTR_PROTO_POSTDROP "postdrop_protocol"
+#define MAIL_ATTR_PROTO_PROXYMAP "proxymap_protocol"
+#define MAIL_ATTR_PROTO_SCACHE	"connection_cache_protocol"
+#define MAIL_ATTR_PROTO_SHOWQ	"mail_queue_list_protocol"
+#define MAIL_ATTR_PROTO_TLSMGR	"tlsmgr_protocol"
+#define MAIL_ATTR_PROTO_TLSPROXY "tlsproxy_protocol"
+#define MAIL_ATTR_PROTO_TRIVIAL	"trivial_rewrite_protocol"
+#define MAIL_ATTR_PROTO_VERIFY	"address_verification_prrotocol"
 
  /*
   * Attribute names.

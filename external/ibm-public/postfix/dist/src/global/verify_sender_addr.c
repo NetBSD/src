@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_sender_addr.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: verify_sender_addr.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@
 #define VERIFY_BASE		31
 
  /*
-  * We append the time-dependent portion to the localpart of the the address
+  * We append the time-dependent portion to the localpart of the address
   * verification probe sender address, so that the result has the form
   * ``fixed1variable@fixed2''. There is no delimiter between ``fixed1'' and
   * ``variable'', because that could make "old" time stamps valid depending

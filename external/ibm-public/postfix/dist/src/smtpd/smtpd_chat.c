@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_chat.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -105,6 +105,7 @@
 #include <post_mail.h>
 #include <mail_error.h>
 #include <smtp_reply_footer.h>
+#include <hfrom_format.h>
 
 /* Application-specific. */
 
@@ -318,16 +319,23 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
 #define INDENT	4
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
-				    var_error_rcpt,
+				    (state->error_mask & MAIL_ERROR_BOUNCE) ?
+				    var_bounce_rcpt : var_error_rcpt,
 				    MAIL_SRC_MASK_NOTIFY, NULL_TRACE_FLAGS,
 				    SMTPUTF8_FLAG_NONE, NO_QUEUE_ID);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;
     }
-    post_mail_fprintf(notice, "From: %s (Mail Delivery System)",
-		      mail_addr_mail_daemon());
-    post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
+    if (smtpd_hfrom_format == HFROM_FORMAT_CODE_STD) {
+	post_mail_fprintf(notice, "From: Mail Delivery System <%s>",
+			  mail_addr_mail_daemon());
+	post_mail_fprintf(notice, "To: Postmaster <%s>", var_error_rcpt);
+    } else {
+	post_mail_fprintf(notice, "From: %s (Mail Delivery System)",
+			  mail_addr_mail_daemon());
+	post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
+    }
     post_mail_fprintf(notice, "Subject: %s SMTP server: errors from %s",
 		      var_mail_name, state->namaddr);
     post_mail_fputs(notice, "");

@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: argv.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,7 @@
 /*
 /*	argv_terminate() null-terminates its string array argument.
 /*
-/*	argv_truncate() trucates its argument to the specified
+/*	argv_truncate() truncates its argument to the specified
 /*	number of entries, but does not reallocate memory. The
 /*	result is null-terminated.
 /*

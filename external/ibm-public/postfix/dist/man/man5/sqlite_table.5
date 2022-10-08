@@ -1,4 +1,4 @@
-.\"	$NetBSD: sqlite_table.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: sqlite_table.5,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH SQLITE_TABLE 5 
 .ad
@@ -24,7 +24,7 @@ Alternatively, lookup tables can be specified as SQLite databases.
 In order to use SQLite lookups, define an SQLite source as a lookup
 table in main.cf, for example:
 .nf
-    alias_maps = sqlite:/etc/sqlite\-aliases.cf
+    alias_maps = sqlite:/etc/postfix/sqlite\-aliases.cf
 .fi
 
 The file /etc/postfix/sqlite\-aliases.cf has the same format as
@@ -168,8 +168,8 @@ This parameter is available with Postfix 2.2 and later.
 
 NOTE: DO NOT put quotes around the result format!
 .IP "\fBdomain (default: no domain list)\fR"
-This is a list of domain names, paths to files, or
-dictionaries. When specified, only fully qualified search
+This is a list of domain names, paths to files, or "type:table"
+databases. When specified, only fully qualified search
 keys with a *non\-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_scan.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_scan.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <tls_proxy.h>
 /*
 /*	int	tls_proxy_client_param_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -18,7 +18,7 @@
 /*	TLS_CLIENT_PARAMS *params;
 /*
 /*	int	tls_proxy_client_init_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -27,7 +27,7 @@
 /*	TLS_CLIENT_INIT_PROPS *init_props;
 /*
 /*	int	tls_proxy_client_start_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM	*stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -112,6 +112,7 @@
 
 /* TLS library. */
 
+#define TLS_INTERNAL
 #include <tls.h>
 #include <tls_proxy.h>
 
@@ -140,7 +141,7 @@ void    tls_proxy_client_param_free(TLS_CLIENT_PARAMS *params)
 
 /* tls_proxy_client_param_scan - receive TLS_CLIENT_PARAMS from stream */
 
-int     tls_proxy_client_param_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     tls_proxy_client_param_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 				            int flags, void *ptr)
 {
     TLS_CLIENT_PARAMS *params
@@ -240,7 +241,7 @@ void    tls_proxy_client_init_free(TLS_CLIENT_INIT_PROPS *props)
 
 /* tls_proxy_client_init_scan - receive TLS_CLIENT_INIT_PROPS from stream */
 
-int     tls_proxy_client_init_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     tls_proxy_client_init_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 				           int flags, void *ptr)
 {
     TLS_CLIENT_INIT_PROPS *props
@@ -308,59 +309,6 @@ int     tls_proxy_client_init_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
     return (ret);
 }
 
-/* tls_proxy_client_certs_free - destroy TLS_PKEYS from stream */
-
-static void tls_proxy_client_certs_free(TLS_CERTS *tp)
-{
-    if (tp->next)
-	tls_proxy_client_certs_free(tp->next);
-    if (tp->cert)
-	X509_free(tp->cert);
-    myfree((void *) tp);
-}
-
-/* tls_proxy_client_pkeys_free - destroy TLS_PKEYS from stream */
-
-static void tls_proxy_client_pkeys_free(TLS_PKEYS *tp)
-{
-    if (tp->next)
-	tls_proxy_client_pkeys_free(tp->next);
-    if (tp->pkey)
-	EVP_PKEY_free(tp->pkey);
-    myfree((void *) tp);
-}
-
-/* tls_proxy_client_tlsa_free - destroy TLS_TLSA from stream */
-
-static void tls_proxy_client_tlsa_free(TLS_TLSA *tp)
-{
-    if (tp->next)
-	tls_proxy_client_tlsa_free(tp->next);
-    myfree(tp->mdalg);
-    if (tp->certs)
-	argv_free(tp->certs);
-    if (tp->pkeys)
-	argv_free(tp->pkeys);
-    myfree((void *) tp);
-}
-
-/* tls_proxy_client_dane_free - destroy TLS_DANE from stream */
-
-static void tls_proxy_client_dane_free(TLS_DANE *dane)
-{
-    if (dane->ta)
-	tls_proxy_client_tlsa_free(dane->ta);
-    if (dane->ee)
-	tls_proxy_client_tlsa_free(dane->ee);
-    if (dane->certs)
-	tls_proxy_client_certs_free(dane->certs);
-    if (dane->pkeys)
-	tls_proxy_client_pkeys_free(dane->pkeys);
-    myfree(dane->base_domain);
-    if (dane->refs-- == 1)
-	myfree((void *) dane);
-}
-
 /* tls_proxy_client_start_free - destroy TLS_CLIENT_START_PROPS structure */
 
 void    tls_proxy_client_start_free(TLS_CLIENT_START_PROPS *props)
@@ -378,169 +326,49 @@ void    tls_proxy_client_start_free(TLS_CLIENT_START_PROPS *props)
 	argv_free((ARGV *) props->matchargv);
     myfree((void *) props->mdalg);
     if (props->dane)
-	tls_proxy_client_dane_free((TLS_DANE *) props->dane);
+	tls_dane_free((TLS_DANE *) props->dane);
     myfree((void *) props);
-}
-
-/* tls_proxy_client_certs_scan - receive TLS_CERTS from stream */
-
-static int tls_proxy_client_certs_scan(ATTR_SCAN_MASTER_FN scan_fn,
-				          VSTREAM *fp, int flags, void *ptr)
-{
-    int     ret;
-    int     count;
-    VSTRING *buf = 0;
-    TLS_CERTS **tpp;
-    TLS_CERTS *head = 0;
-    TLS_CERTS *tp;
-    int     n;
-
-    ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  RECV_ATTR_INT(TLS_ATTR_COUNT, &count),
-		  ATTR_TYPE_END);
-    if (msg_verbose)
-	msg_info("tls_proxy_client_certs_scan count=%d", count);
-
-    for (tpp = &head, n = 0; ret == 1 && n < count; n++, tpp = &tp->next) {
-	*tpp = tp = (TLS_CERTS *) mymalloc(sizeof(*tp));
-	const unsigned char *bp;
-
-	if (buf == 0)
-	    buf = vstring_alloc(100);
-
-	/*
-	 * Note: memset() is not a portable way to initialize non-integer
-	 * types.
-	 */
-	memset(tp, 0, sizeof(*tp));
-	ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		      RECV_ATTR_DATA(TLS_ATTR_CERT, buf),
-		      ATTR_TYPE_END);
-	/* Always construct a well-formed structure. */
-	if (ret == 1) {
-	    bp = (const unsigned char *) STR(buf);
-	    if (d2i_X509(&tp->cert, &bp, LEN(buf)) == 0
-		|| LEN(buf) != ((char *) bp) - STR(buf)) {
-		msg_warn("malformed certificate in TLS_CERTS");
-		ret = -1;
-	    }
-	} else {
-	    tp->cert = 0;
-	}
-	tp->next = 0;
-    }
-    if (buf)
-	vstring_free(buf);
-    if (ret != 1) {
-	tls_proxy_client_certs_free(head);
-	head = 0;
-    }
-    *(TLS_CERTS **) ptr = head;
-    if (msg_verbose)
-	msg_info("tls_proxy_client_certs_scan ret=%d", ret);
-    return (ret);
-}
-
-/* tls_proxy_client_pkeys_scan - receive TLS_PKEYS from stream */
-
-static int tls_proxy_client_pkeys_scan(ATTR_SCAN_MASTER_FN scan_fn,
-				          VSTREAM *fp, int flags, void *ptr)
-{
-    int     ret;
-    int     count;
-    VSTRING *buf = vstring_alloc(100);
-    TLS_PKEYS **tpp;
-    TLS_PKEYS *head = 0;
-    TLS_PKEYS *tp;
-    int     n;
-
-    ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  RECV_ATTR_INT(TLS_ATTR_COUNT, &count),
-		  ATTR_TYPE_END);
-    if (msg_verbose)
-	msg_info("tls_proxy_client_pkeys_scan count=%d", count);
-
-    for (tpp = &head, n = 0; ret == 1 && n < count; n++, tpp = &tp->next) {
-	*tpp = tp = (TLS_PKEYS *) mymalloc(sizeof(*tp));
-	const unsigned char *bp;
-
-	if (buf == 0)
-	    buf = vstring_alloc(100);
-
-	/*
-	 * Note: memset() is not a portable way to initialize non-integer
-	 * types.
-	 */
-	memset(tp, 0, sizeof(*tp));
-	ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		      RECV_ATTR_DATA(TLS_ATTR_PKEY, buf),
-		      ATTR_TYPE_END);
-	/* Always construct a well-formed structure. */
-	if (ret == 1) {
-	    bp = (const unsigned char *) STR(buf);
-	    if (d2i_PUBKEY(&tp->pkey, &bp, LEN(buf)) == 0
-		|| LEN(buf) != (char *) bp - STR(buf)) {
-		msg_warn("malformed public key in TLS_PKEYS");
-		ret = -1;
-	    }
-	} else {
-	    tp->pkey = 0;
-	}
-	tp->next = 0;
-    }
-    if (buf)
-	vstring_free(buf);
-    if (ret != 1) {
-	tls_proxy_client_pkeys_free(head);
-	head = 0;
-    }
-    *(TLS_PKEYS **) ptr = head;
-    if (msg_verbose)
-	msg_info("tls_proxy_client_pkeys_scan ret=%d", ret);
-    return (ret);
 }
 
 /* tls_proxy_client_tlsa_scan - receive TLS_TLSA from stream */
 
-static int tls_proxy_client_tlsa_scan(ATTR_SCAN_MASTER_FN scan_fn,
+static int tls_proxy_client_tlsa_scan(ATTR_SCAN_COMMON_FN scan_fn,
 				          VSTREAM *fp, int flags, void *ptr)
 {
-    int     ret;
+    static VSTRING *data;
+    TLS_TLSA *head;
     int     count;
-    TLS_TLSA **tpp;
-    TLS_TLSA *head = 0;
-    TLS_TLSA *tp;
-    int     n;
+    int     ret;
+
+    if (data == 0)
+	data = vstring_alloc(64);
 
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
 		  RECV_ATTR_INT(TLS_ATTR_COUNT, &count),
 		  ATTR_TYPE_END);
-    if (msg_verbose)
+    if (ret == 1 && msg_verbose)
 	msg_info("tls_proxy_client_tlsa_scan count=%d", count);
 
-    for (tpp = &head, n = 0; ret == 1 && n < count; n++, tpp = &tp->next) {
-	*tpp = tp = (TLS_TLSA *) mymalloc(sizeof(*tp));
-	VSTRING *mdalg = vstring_alloc(25);
+    for (head = 0; ret == 1 && count > 0; --count) {
+	int     u, s, m;
 
-	/*
-	 * Note: memset() is not a portable way to initialize non-integer
-	 * types.
-	 */
-	memset(tp, 0, sizeof(*tp));
-	/* Always construct a well-formed structure. */
-	tp->certs = 0;				/* scan_fn may return early */
-	tp->pkeys = 0;
 	ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		      RECV_ATTR_STR(TLS_ATTR_MDALG, mdalg),
-		      RECV_ATTR_FUNC(argv_attr_scan, &tp->certs),
-		      RECV_ATTR_FUNC(argv_attr_scan, &tp->pkeys),
+		      RECV_ATTR_INT(TLS_ATTR_USAGE, &u),
+		      RECV_ATTR_INT(TLS_ATTR_SELECTOR, &s),
+		      RECV_ATTR_INT(TLS_ATTR_MTYPE, &m),
+		      RECV_ATTR_DATA(TLS_ATTR_DATA, data),
 		      ATTR_TYPE_END);
-	tp->mdalg = vstring_export(mdalg);
-	tp->next = 0;
-	ret = (ret == 3 ? 1 : -1);
+	if (ret == 4) {
+	    ret = 1;
+	    /* This makes a copy of the static vstring content */
+	    head = tlsa_prepend(head, u, s, m, (unsigned char *) STR(data),
+				LEN(data));
+	} else
+	    ret = -1;
     }
+
     if (ret != 1) {
-	tls_proxy_client_tlsa_free(head);
+	tls_tlsa_free(head);
 	head = 0;
     }
     *(TLS_TLSA **) ptr = head;
@@ -551,7 +379,7 @@ static int tls_proxy_client_tlsa_scan(ATTR_SCAN_MASTER_FN scan_fn,
 
 /* tls_proxy_client_dane_scan - receive TLS_DANE from stream */
 
-static int tls_proxy_client_dane_scan(ATTR_SCAN_MASTER_FN scan_fn,
+static int tls_proxy_client_dane_scan(ATTR_SCAN_COMMON_FN scan_fn,
 				          VSTREAM *fp, int flags, void *ptr)
 {
     TLS_DANE *dane = 0;
@@ -566,41 +394,20 @@ static int tls_proxy_client_dane_scan(ATTR_SCAN_MASTER_FN scan_fn,
 
     if (ret == 1 && have_dane) {
 	VSTRING *base_domain = vstring_alloc(25);
-	long    expires;
 
-	dane = (TLS_DANE *) mymalloc(sizeof(*dane));
-
-	/*
-	 * Note: memset() is not a portable way to initialize non-integer
-	 * types.
-	 */
-	memset(dane, 0, sizeof(*dane));
-	/* Always construct a well-formed structure. */
-	dane->ta = 0;				/* scan_fn may return early */
-	dane->ee = 0;
-	dane->certs = 0;
-	dane->pkeys = 0;
+	dane = tls_dane_alloc();
+	/* We only need the base domain and TLSA RRs */
 	ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		      RECV_ATTR_FUNC(tls_proxy_client_tlsa_scan,
-				     &dane->ta),
-		      RECV_ATTR_FUNC(tls_proxy_client_tlsa_scan,
-				     &dane->ee),
-		      RECV_ATTR_FUNC(tls_proxy_client_certs_scan,
-				     &dane->certs),
-		      RECV_ATTR_FUNC(tls_proxy_client_pkeys_scan,
-				     &dane->pkeys),
 		      RECV_ATTR_STR(TLS_ATTR_DOMAIN, base_domain),
-		      RECV_ATTR_INT(TLS_ATTR_FLAGS, &dane->flags),
-		      RECV_ATTR_LONG(TLS_ATTR_EXP, &expires),
+		      RECV_ATTR_FUNC(tls_proxy_client_tlsa_scan,
+				     &dane->tlsa),
 		      ATTR_TYPE_END);
+
 	/* Always construct a well-formed structure. */
 	dane->base_domain = vstring_export(base_domain);
-	dane->expires = expires;
-	dane->refs = 1;
-	ret = (ret == 7 ? 1 : -1);
-	/* XXX if scan_fn() completed normally, sanity check dane->flags. */
+	ret = (ret == 2 ? 1 : -1);
 	if (ret != 1) {
-	    tls_proxy_client_dane_free(dane);
+	    tls_dane_free(dane);
 	    dane = 0;
 	}
     }
@@ -612,7 +419,7 @@ static int tls_proxy_client_dane_scan(ATTR_SCAN_MASTER_FN scan_fn,
 
 /* tls_proxy_client_start_scan - receive TLS_CLIENT_START_PROPS from stream */
 
-int     tls_proxy_client_start_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     tls_proxy_client_start_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 				            int flags, void *ptr)
 {
     TLS_CLIENT_START_PROPS *props

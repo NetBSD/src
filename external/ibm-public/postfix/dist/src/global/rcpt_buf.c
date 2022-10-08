@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_buf.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: rcpt_buf.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -31,7 +31,7 @@
 /*	RCPT_BUF *rcpb;
 /*
 /*	int	rcpb_scan(scan_fn, stream, flags, ptr)
-/*	ATTR_SCAN_MASTER_FN scan_fn;
+/*	ATTR_SCAN_COMMON_FN scan_fn;
 /*	VSTREAM *stream;
 /*	int	flags;
 /*	void	*ptr;
@@ -58,6 +58,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -117,7 +122,7 @@ void    rcpb_free(RCPT_BUF *rcpt)
 
 /* rcpb_scan - receive recipient buffer */
 
-int     rcpb_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
+int     rcpb_scan(ATTR_SCAN_COMMON_FN scan_fn, VSTREAM *fp,
 		          int flags, void *ptr)
 {
     RCPT_BUF *rcpt = (RCPT_BUF *) ptr;

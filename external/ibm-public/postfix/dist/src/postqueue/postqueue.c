@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -186,7 +186,7 @@
 /*	Optional list of destinations that are eligible for per-destination
 /*	logfiles with mail that is queued to those destinations.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
+/*	The list of environment variables that a privileged Postfix
 /*	process will import from a non-Postfix parent process, or name=value
 /*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
@@ -343,6 +343,26 @@ static const CONFIG_STR_TABLE str_table[] = {
     0,
 };
 
+/* showq_client - run the appropriate showq protocol client */
+
+static void showq_client(int mode, VSTREAM *showq)
+{
+    if (attr_scan(showq, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_SHOWQ),
+		  ATTR_TYPE_END) != 0)
+	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
+    switch (mode) {
+    case PQ_MODE_MAILQ_LIST:
+	showq_compat(showq);
+	break;
+    case PQ_MODE_JSON_LIST:
+	showq_json(showq);
+	break;
+    default:
+	msg_panic("show_queue: unknown mode %d", mode);
+    }
+}
+
 /* show_queue - show queue status */
 
 static void show_queue(int mode)
@@ -363,16 +383,7 @@ static void show_queue(int mode)
      * Connect to the show queue service.
      */
     if ((showq = mail_connect(MAIL_CLASS_PUBLIC, var_showq_service, BLOCKING)) != 0) {
-	switch (mode) {
-	case PQ_MODE_MAILQ_LIST:
-	    showq_compat(showq);
-	    break;
-	case PQ_MODE_JSON_LIST:
-	    showq_json(showq);
-	    break;
-	default:
-	    msg_panic("show_queue: unknown mode %d", mode);
-	}
+	showq_client(mode, showq);
 	if (vstream_fclose(showq))
 	    msg_warn("close: %m");
     }
@@ -381,7 +392,7 @@ static void show_queue(int mode)
      * Don't assume that the mail system is down when the user has
      * insufficient permission to access the showq socket.
      */
-    else if (errno == EACCES) {
+    else if (errno == EACCES || errno == EPERM) {
 	msg_fatal_status(EX_SOFTWARE,
 			 "Connect to the %s %s service: %m",
 			 var_mail_name, var_showq_service);
@@ -396,7 +407,9 @@ static void show_queue(int mode)
 	ARGV   *argv;
 	int     stat;
 
-	msg_warn("Mail system is down -- accessing queue directly");
+	msg_warn("Mail system is down -- accessing queue directly"
+		 " (Connect to the %s %s service: %m)",
+		 var_mail_name, var_showq_service);
 	showq_path = concatenate(var_daemon_dir, "/", var_showq_service,
 				 (char *) 0);
 	argv = argv_alloc(6);
@@ -409,23 +422,14 @@ static void show_queue(int mode)
 				   CA_VSTREAM_POPEN_END)) == 0) {
 	    stat = -1;
 	} else {
-	    switch (mode) {
-	    case PQ_MODE_MAILQ_LIST:
-		showq_compat(showq);
-		break;
-	    case PQ_MODE_JSON_LIST:
-		showq_json(showq);
-		break;
-	    default:
-		msg_panic("show_queue: unknown mode %d", mode);
-	    }
+	    showq_client(mode, showq);
 	    stat = vstream_pclose(showq);
 	}
 	argv_free(argv);
+	myfree(showq_path);
 	if (stat != 0)
 	    msg_fatal_status(stat < 0 ? EX_OSERR : EX_SOFTWARE,
 			     "Error running %s", showq_path);
-	myfree(showq_path);
     }
 
     /*
@@ -436,7 +440,9 @@ static void show_queue(int mode)
      */
     else {
 	msg_fatal_status(EX_UNAVAILABLE,
-			 "Queue report unavailable - mail system is down");
+			 "Queue report unavailable - mail system is down"
+			 " (Connect to the %s %s service: %m)",
+			 var_mail_name, var_showq_service);
     }
 }
 

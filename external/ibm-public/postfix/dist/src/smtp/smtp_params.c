@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
     static const CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -67,6 +67,7 @@
 	VAR_SMTP_DSN_FILTER, DEF_SMTP_DSN_FILTER, &var_smtp_dsn_filter, 0, 0,
 	VAR_SMTP_DNS_RE_FILTER, DEF_SMTP_DNS_RE_FILTER, &var_smtp_dns_re_filter, 0, 0,
 	VAR_TLSPROXY_SERVICE, DEF_TLSPROXY_SERVICE, &var_tlsproxy_service, 1, 0,
+	VAR_HFROM_FORMAT, DEF_HFROM_FORMAT, &var_hfrom_format, 1, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE smtp_time_table[] = {
@@ -101,6 +102,7 @@
 #ifdef USE_TLS
 	VAR_SMTP_TLS_SCERT_VD, DEF_SMTP_TLS_SCERT_VD, &var_smtp_tls_scert_vd, 0, 0,
 #endif
+	VAR_SMTP_MIN_DATA_RATE, DEF_SMTP_MIN_DATA_RATE, &var_smtp_min_data_rate, 1, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE smtp_bool_table[] = {
@@ -129,8 +131,12 @@
 	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,
 	VAR_SMTP_SASL_AUTH_SOFT_BOUNCE, DEF_SMTP_SASL_AUTH_SOFT_BOUNCE, &var_smtp_sasl_auth_soft_bounce,
 	VAR_LMTP_ASSUME_FINAL, DEF_LMTP_ASSUME_FINAL, &var_lmtp_assume_final,
-	VAR_SMTP_REC_DEADLINE, DEF_SMTP_REC_DEADLINE, &var_smtp_rec_deadline,
 	VAR_SMTP_DUMMY_MAIL_AUTH, DEF_SMTP_DUMMY_MAIL_AUTH, &var_smtp_dummy_mail_auth,
 	VAR_SMTP_BALANCE_INET_PROTO, DEF_SMTP_BALANCE_INET_PROTO, &var_smtp_balance_inet_proto,
+	VAR_SMTP_BIND_ADDR_ENFORCE, DEF_SMTP_BIND_ADDR_ENFORCE, &var_smtp_bind_addr_enforce,
+	0,
+    };
+    static const CONFIG_NBOOL_TABLE smtp_nbool_table[] = {
+	VAR_SMTP_REQ_DEADLINE, DEF_SMTP_REQ_DEADLINE, &var_smtp_req_deadline,
 	0,
     };

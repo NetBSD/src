@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_fnv.c,v 1.1.1.1 2022/10/08 16:09:11 christos Exp $	*/
+/*	$NetBSD: hash_fnv.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME

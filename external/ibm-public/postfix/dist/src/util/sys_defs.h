@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.12 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.13 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -32,13 +32,15 @@
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
     || defined(FREEBSD8) || defined(FREEBSD9) || defined(FREEBSD10) \
-    || defined(FREEBSD11) \
+    || defined(FREEBSD11) || defined(FREEBSD12) || defined(FREEBSD13) \
+    || defined(FREEBSD14) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
-    || defined(OPENBSD5) || defined(OPENBSD6) \
+    || defined(OPENBSD5) || defined(OPENBSD6) || defined(OPENBSD7) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
     || defined(NETBSD4) || defined(NETBSD5) || defined(NETBSD6) \
-    || defined(NETBSD7) \
+    || defined(NETBSD7) | defined(NETBSD8) || defined(NETBSD9) \
+    || defined(NETBSD10) \
     || defined(EKKOBSD1) || defined(DRAGONFLY)
 #define SUPPORTED
 #include <sys/param.h>
@@ -523,7 +525,7 @@ extern int opterr;
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
 #define STRCASECMP_IN_STRINGS_H
-#define SET_H_ERRNO(err) (set_h_errno(err))
+#define USE_SET_H_ERRNO
 #endif
 
 #ifdef UW21				/* UnixWare 2.1.x */
@@ -829,6 +831,9 @@ extern int initgroups(const char *, int);
 	|| (defined(_POSIX_SOURCE) && _POSIX_SOURCE >= 1)
 #define HAVE_POSIX_GETPW_R
 #endif
+#endif
+#if HAVE_GLIBC_API_VERSION_SUPPORT(2, 34)
+#define HAS_CLOSEFROM
 #endif
 
 #endif
@@ -1703,14 +1708,6 @@ typedef int pid_t;
   * Consistent enforcement of size limits.
   */
 #define ENFORCING_SIZE_LIMIT(param)	((param) > 0)
-
- /*
-  * Setting globals like h_errno can be problematic when Postfix is linked
-  * with multi-threaded libraries.
-  */
-#ifndef SET_H_ERRNO
-#define SET_H_ERRNO(err) (h_errno = (err))
-#endif
 
  /*
   * Don't mix socket message send/receive calls with socket stream read/write

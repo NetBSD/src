@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_user.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postconf_user.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -410,7 +410,7 @@ void    pcf_register_user_parameters(void)
     /*
      * Scan parameter values that are left at their defaults in the global
      * name space. Some defaults contain the $name of an obsolete parameter
-     * for backwards compatilility purposes. We might warn that an explicit
+     * for backwards compatibility purposes. We might warn that an explicit
      * name=value is obsolete, but we must not warn that the parameter is
      * unused.
      */

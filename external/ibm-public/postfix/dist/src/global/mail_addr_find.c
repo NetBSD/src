@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_find.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_addr_find.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -96,7 +96,8 @@
 /*	external and internal forms differ), or MA_FORM_INTERNAL_FIRST
 /*	(internal form, then external form if the internal and external
 /*	forms differ).
-/* .IP in_form .IP out_form
+/* .IP in_form
+/* .IP out_form
 /*	Input and output address forms, one of MA_FORM_INTERNAL (unquoted
 /*	form), or MA_FORM_EXTERNAL (quoted form).
 /* .IP strategy

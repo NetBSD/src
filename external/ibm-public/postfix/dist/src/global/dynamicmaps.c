@@ -1,4 +1,4 @@
-/*	$NetBSD: dynamicmaps.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dynamicmaps.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -170,11 +170,23 @@ static MKMAP_OPEN_FN dymap_mkmap_lookup(const char *dict_type)
      * All errors are fatal. If the postmap(1) or postalias(1) command can't
      * create the requested database, then graceful degradation is not
      * useful.
+     * 
+     * Fix 20220416: if this dictionary type is registered for some non-mkmap
+     * purpose, then don't talk nonsense about a missing package.
      */
-    if ((dp = (DYMAP_INFO *) htable_find(dymap_info, dict_type)) == 0)
+    if ((dp = (DYMAP_INFO *) htable_find(dymap_info, dict_type)) == 0) {
+	ARGV   *types = dict_mapnames();
+	char  **cpp;
+
+	for (cpp = types->argv; *cpp; cpp++) {
+	    if (strcmp(dict_type, *cpp) == 0)
+		msg_fatal("unsupported dictionary type: %s does not support "
+			  "bulk-mode creation.", dict_type);
+	}
 	msg_fatal("unsupported dictionary type: %s. "
 		  "Is the postfix-%s package installed?",
 		  dict_type, dict_type);
+    }
     if (!dp->mkmap_name)
 	msg_fatal("unsupported dictionary type: %s does not support "
 		  "bulk-mode creation.", dict_type);
@@ -313,7 +325,7 @@ void    dymap_init(const char *conf_path, const char *plugin_dir)
     VSTRING *sub_conf_path;
 
     /*
-     * Reload dynamicsmaps.cf, but don't reload already-loaded plugins.
+     * Reload dynamicmaps.cf, but don't reload already-loaded plugins.
      */
     if (dymap_info != 0)
 	htable_free(dymap_info, dymap_entry_free);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.11 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp.c,v 1.12 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -300,12 +300,14 @@
 /* .IP "\fBsmtp_dns_resolver_options (empty)\fR"
 /*	DNS Resolver options for the Postfix SMTP client.
 /* .PP
-/*	Available in Postfix version 2.9 and later:
+/*	Available in Postfix version 2.9 - 3.6:
 /* .IP "\fBsmtp_per_record_deadline (no)\fR"
 /*	Change the behavior of the smtp_*_timeout time limits, from a
 /*	time limit per read or write system call, to a time limit to send
 /*	or receive a complete record (an SMTP command line, SMTP response
 /*	line, SMTP message content line, or TLS protocol message).
+/* .PP
+/*	Available in Postfix version 2.9 and later:
 /* .IP "\fBsmtp_send_dummy_mail_auth (no)\fR"
 /*	Whether or not to append the "AUTH=<>" option to the MAIL
 /*	FROM command in SASL-authenticated SMTP sessions.
@@ -332,6 +334,26 @@
 /* .IP "\fBinfo_log_address_format (external)\fR"
 /*	The email address form that will be used in non-debug logging
 /*	(info, warning, etc.).
+/* .PP
+/*	Available in Postfix 3.6 and later:
+/* .IP "\fBdnssec_probe (ns:.)\fR"
+/*	The DNS query type (default: "ns") and DNS query name (default:
+/*	".") that Postfix may use to determine whether DNSSEC validation
+/*	is available.
+/* .IP "\fBknown_tcp_ports (lmtp=24, smtp=25, smtps=submissions=465, submission=587)\fR"
+/*	Optional setting that avoids lookups in the \fBservices\fR(5) database.
+/* .PP
+/*	Available in Postfix version 3.7 and later:
+/* .IP "\fBsmtp_per_request_deadline (no)\fR"
+/*	Change the behavior of the smtp_*_timeout time limits, from a
+/*	time limit per plaintext or TLS read or write call, to a combined
+/*	time limit for sending a complete SMTP request and for receiving a
+/*	complete SMTP response.
+/* .IP "\fBsmtp_min_data_rate (500)\fR"
+/*	The minimum plaintext data transfer rate in bytes/second for
+/*	DATA requests, when deadlines are enabled with smtp_per_request_deadline.
+/* .IP "\fBheader_from_format (standard)\fR"
+/*	The format of the Postfix-generated \fBFrom:\fR header.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -450,9 +472,9 @@
 /*	Optional lookup tables with the Postfix SMTP client TLS security
 /*	policy by next-hop destination; when a non-empty value is specified,
 /*	this overrides the obsolete smtp_tls_per_site parameter.
-/* .IP "\fBsmtp_tls_mandatory_protocols (!SSLv2, !SSLv3)\fR"
-/*	List of SSL/TLS protocols that the Postfix SMTP client will use with
-/*	mandatory TLS encryption.
+/* .IP "\fBsmtp_tls_mandatory_protocols (see 'postconf -d' output)\fR"
+/*	TLS protocols that the Postfix SMTP client will use with mandatory
+/*	TLS encryption.
 /* .IP "\fBsmtp_tls_scert_verifydepth (9)\fR"
 /*	The verification depth for remote SMTP server certificates.
 /* .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
@@ -495,14 +517,14 @@
 /*	List of acceptable remote SMTP server certificate fingerprints for
 /*	the "fingerprint" TLS security level (\fBsmtp_tls_security_level\fR =
 /*	fingerprint).
-/* .IP "\fBsmtp_tls_fingerprint_digest (md5)\fR"
+/* .IP "\fBsmtp_tls_fingerprint_digest (see 'postconf -d' output)\fR"
 /*	The message digest algorithm used to construct remote SMTP server
 /*	certificate fingerprints.
 /* .PP
 /*	Available in Postfix version 2.6 and later:
-/* .IP "\fBsmtp_tls_protocols (!SSLv2, !SSLv3)\fR"
-/*	List of TLS protocols that the Postfix SMTP client will exclude or
-/*	include with opportunistic TLS encryption.
+/* .IP "\fBsmtp_tls_protocols (see postconf -d output)\fR"
+/*	TLS protocols that the Postfix SMTP client will use with
+/*	opportunistic TLS encryption.
 /* .IP "\fBsmtp_tls_ciphers (medium)\fR"
 /*	The minimum TLS cipher grade that the Postfix SMTP client
 /*	will use with opportunistic TLS encryption.
@@ -544,7 +566,7 @@
 /*	legacy SMTPS protocol instead of using the STARTTLS command.
 /* .PP
 /*	Available in Postfix version 3.1 and later:
-/* .IP "\fBsmtp_tls_dane_insecure_mx_policy (dane)\fR"
+/* .IP "\fBsmtp_tls_dane_insecure_mx_policy (see 'postconf -d' output)\fR"
 /*	The TLS policy for MX hosts with "secure" TLSA records when the
 /*	nexthop destination security level is \fBdane\fR, but the MX
 /*	record was found via an "insecure" MX lookup.
@@ -656,7 +678,7 @@
 /*	Time limit for connection cache connect, send or receive
 /*	operations.
 /* .PP
-/*	Available in Postfix version 2.9 and later:
+/*	Available in Postfix version 2.9 - 3.6:
 /* .IP "\fBsmtp_per_record_deadline (no)\fR"
 /*	Change the behavior of the smtp_*_timeout time limits, from a
 /*	time limit per read or write system call, to a time limit to send
@@ -672,6 +694,16 @@
 /*	Available in Postfix version 3.4 and later:
 /* .IP "\fBsmtp_tls_connection_reuse (no)\fR"
 /*	Try to make multiple deliveries per TLS-encrypted connection.
+/* .PP
+/*	Available in Postfix version 3.7 and later:
+/* .IP "\fBsmtp_per_request_deadline (no)\fR"
+/*	Change the behavior of the smtp_*_timeout time limits, from a
+/*	time limit per plaintext or TLS read or write call, to a combined
+/*	time limit for sending a complete SMTP request and for receiving a
+/*	complete SMTP response.
+/* .IP "\fBsmtp_min_data_rate (500)\fR"
+/*	The minimum plaintext data transfer rate in bytes/second for
+/*	DATA requests, when deadlines are enabled with smtp_per_request_deadline.
 /* .PP
 /*	Implemented in the qmgr(8) daemon:
 /* .IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
@@ -704,12 +736,13 @@
 /* .ad
 /* .fi
 /* .IP "\fBdebug_peer_level (2)\fR"
-/*	The increment in verbose logging level when a remote client or
-/*	server matches a pattern in the debug_peer_list parameter.
+/*	The increment in verbose logging level when a nexthop destination,
+/*	remote client or server name or network address matches a pattern
+/*	given with the debug_peer_list parameter.
 /* .IP "\fBdebug_peer_list (empty)\fR"
-/*	Optional list of remote client or server hostname or network
-/*	address patterns that cause the verbose logging level to increase
-/*	by the amount specified in $debug_peer_level.
+/*	Optional list of nexthop destination, remote client or server
+/*	name or network address patterns that, if matched, cause the verbose
+/*	logging level to increase by the amount specified in $debug_peer_level.
 /* .IP "\fBerror_notice_recipient (postmaster)\fR"
 /*	The recipient of postmaster notifications about mail delivery
 /*	problems that are caused by policy, resource, software or protocol
@@ -740,7 +773,7 @@
 /* .IP "\fBinet_interfaces (all)\fR"
 /*	The network interface addresses that this mail system receives
 /*	mail on.
-/* .IP "\fBinet_protocols (all)\fR"
+/* .IP "\fBinet_protocols (see 'postconf -d output')\fR"
 /*	The Internet protocols Postfix will attempt to use when making
 /*	or accepting connections.
 /* .IP "\fBipc_timeout (3600s)\fR"
@@ -818,6 +851,11 @@
 /*	Available in Postfix 3.3 and later:
 /* .IP "\fBservice_name (read-only)\fR"
 /*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.7 and later:
+/* .IP "\fBsmtp_bind_address_enforce (no)\fR"
+/*	Defer delivery when the Postfix SMTP client cannot apply the
+/*	smtp_bind_address or smtp_bind_address6 setting.
 /* SEE ALSO
 /*	generic(5), output address rewriting
 /*	header_checks(5), message header content inspection
@@ -912,6 +950,7 @@
 #include <string_list.h>
 #include <maps.h>
 #include <ext_prop.h>
+#include <hfrom_format.h>
 
 /* DNS library. */
 
@@ -940,7 +979,6 @@ int     var_smtp_data1_tmout;
 int     var_smtp_data2_tmout;
 int     var_smtp_rset_tmout;
 int     var_smtp_quit_tmout;
-char   *var_inet_interfaces;
 char   *var_notify_classes;
 int     var_smtp_skip_5xx_greeting;
 int     var_ign_mx_lookup_err;
@@ -1043,16 +1081,20 @@ char   *var_smtp_resp_filter;
 bool    var_lmtp_assume_final;
 char   *var_smtp_dns_res_opt;
 char   *var_smtp_dns_support;
-bool    var_smtp_rec_deadline;
 bool    var_smtp_dummy_mail_auth;
 char   *var_smtp_dsn_filter;
 char   *var_smtp_dns_re_filter;
 bool    var_smtp_balance_inet_proto;
+bool    var_smtp_req_deadline;
+int     var_smtp_min_data_rate;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
 int     var_smtp_sasl_auth_cache_time;
 bool    var_smtp_sasl_auth_soft_bounce;
+
+char   *var_hfrom_format;
+bool var_smtp_bind_addr_enforce;
 
  /*
   * Global variables.
@@ -1070,6 +1112,7 @@ MAPS   *smtp_pix_bug_maps;
 HBC_CHECKS *smtp_header_checks;		/* limited header checks */
 HBC_CHECKS *smtp_body_checks;		/* limited body checks */
 SMTP_CLI_ATTR smtp_cli_attr;		/* parsed command-line */
+int     smtp_hfrom_format;		/* postmaster notifications */
 
 #ifdef USE_TLS
 
@@ -1218,6 +1261,8 @@ static int deliver_message(const char *service, DELIVER_REQUEST *request)
     state->src = request->fp;
     state->service = service;
     state->misc_flags |= smtp_addr_pref;
+    state->debug_peer_per_nexthop =
+	debug_peer_check(request->nexthop, "noaddr");
     SMTP_RCPT_INIT(state);
 
     /*
@@ -1353,6 +1398,11 @@ static void post_init(char *unused_name, char **argv)
      * the process lifetime.
      */
     get_cli_attr(&smtp_cli_attr, argv);
+
+    /*
+     * header_from format, for postmaster notifications.
+     */
+    smtp_hfrom_format = hfrom_format_parse(VAR_HFROM_FORMAT, var_hfrom_format);
 }
 
 /* pre_init - pre-jail initialization */
@@ -1445,6 +1495,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 			    CApath = var_smtp_tls_CApath,
 			    mdalg = var_smtp_tls_fpt_dgst);
 	smtp_tls_list_init();
+	tls_dane_loglevel(VAR_LMTP_SMTP(TLS_LOGLEVEL), var_smtp_tls_loglevel);
 #else
 	msg_warn("TLS has been selected, but TLS support is not compiled in");
 #endif
@@ -1587,6 +1638,8 @@ int     main(int argc, char **argv)
 					   smtp_str_table : lmtp_str_table),
 		       CA_MAIL_SERVER_BOOL_TABLE(smtp_mode ?
 					 smtp_bool_table : lmtp_bool_table),
+		       CA_MAIL_SERVER_NBOOL_TABLE(smtp_mode ?
+				       smtp_nbool_table : lmtp_nbool_table),
 		       CA_MAIL_SERVER_PRE_INIT(pre_init),
 		       CA_MAIL_SERVER_POST_INIT(post_init),
 		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),

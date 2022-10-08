@@ -1,4 +1,4 @@
-.\"	$NetBSD: postdrop.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postdrop.1,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH POSTDROP 1 
 .ad
@@ -98,6 +98,18 @@ Available in Postfix version 2.2 and later:
 .IP "\fBauthorized_submit_users (static:anyone)\fR"
 List of users who are authorized to submit mail with the \fBsendmail\fR(1)
 command (and with the privileged \fBpostdrop\fR(1) helper command).
+.PP
+Available in Postfix version 3.6 and later:
+.IP "\fBlocal_login_sender_maps (static:*)\fR"
+A list of lookup tables that are searched by the UNIX login name,
+and that return a list of allowed envelope sender patterns separated
+by space or comma.
+.IP "\fBempty_address_local_login_sender_maps_lookup_key (<>)\fR"
+The lookup key to be used in local_login_sender_maps tables, instead
+of the null sender address.
+.IP "\fBrecipient_delimiter (empty)\fR"
+The set of characters that can separate an email address
+localpart, user name, or a .forward file name from its extension.
 .SH "FILES"
 .na
 .nf

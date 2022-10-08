@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.9 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.10 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -119,8 +119,6 @@ typedef struct CLEANUP_STATE {
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
     VSTRING *milter_err_text;		/* milter call-back reply */
-    HBC_CHECKS *milter_hbc_checks;	/* Milter header checks */
-    VSTRING *milter_hbc_reply;		/* Milter header checks reply */
     VSTRING *milter_dsn_buf;		/* Milter DSN parsing buffer */
 
     /*
@@ -320,6 +318,7 @@ extern int cleanup_bounce(CLEANUP_STATE *);
  /*
   * cleanup_milter.c.
   */
+extern void cleanup_milter_header_checks_init(void);
 extern void cleanup_milter_receive(CLEANUP_STATE *, int);
 extern void cleanup_milter_inspect(CLEANUP_STATE *, MILTERS *);
 extern void cleanup_milter_emul_mail(CLEANUP_STATE *, MILTERS *, const char *);
@@ -354,9 +353,7 @@ extern void cleanup_body_edit_free(CLEANUP_STATE *);
  /*
   * From: header formatting.
   */
-#define HFROM_FORMAT_CODE_STD	0
-#define HFROM_FORMAT_CODE_OBS	1
-extern int hfrom_format_code;
+extern int cleanup_hfrom_format;
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_context_print.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_context_print.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,17 +9,17 @@
 /*	#include <tls_proxy.h>
 /*
 /*	int     tls_proxy_context_print(print_fn, stream, flags, ptr)
-/*	ATTR_PRINT_MASTER_FN print_fn;
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTREAM *stream;
 /*	int     flags;
-/*	void    *ptr;
+/*	const void *ptr;
 /* DESCRIPTION
 /*	tls_proxy_context_print() writes the public members of a
 /*	TLS_ATTR_STATE structure to the named stream using the
 /*	specified attribute print routine. tls_proxy_context_print()
 /*	is meant to be passed as a call-back to attr_print(), thusly:
 /*
-/*	... SEND_ATTR_FUNC(tls_proxy_context_print, (void *) tls_context), ...
+/*	... SEND_ATTR_FUNC(tls_proxy_context_print, (const void *) tls_context), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -55,10 +55,10 @@
 
 /* tls_proxy_context_print - send TLS session state over stream */
 
-int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
-				        int flags, void *ptr)
+int     tls_proxy_context_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
+				        int flags, const void *ptr)
 {
-    TLS_SESS_STATE *tp = (TLS_SESS_STATE *) ptr;
+    const TLS_SESS_STATE *tp = (const TLS_SESS_STATE *) ptr;
     int     ret;
 
 #define STRING_OR_EMPTY(s) ((s) ? (s) : "")
@@ -72,6 +72,8 @@ int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
 				 STRING_OR_EMPTY(tp->peer_cert_fprint)),
 		   SEND_ATTR_STR(TLS_ATTR_PEER_PKEY_FPT,
 				 STRING_OR_EMPTY(tp->peer_pkey_fprint)),
+		   SEND_ATTR_INT(TLS_ATTR_SEC_LEVEL,
+				 tp->level),
 		   SEND_ATTR_INT(TLS_ATTR_PEER_STATUS,
 				 tp->peer_status),
 		   SEND_ATTR_STR(TLS_ATTR_CIPHER_PROTOCOL,

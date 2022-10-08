@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_misc.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_misc.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -11,39 +11,27 @@
 /*	TLS_CLIENT_PARAMS *tls_proxy_client_param_from_config(params)
 /*	TLS_CLIENT_PARAMS *params;
 /*
-/*	char	*tls_proxy_client_param_to_string(buf, params)
+/*	char	*tls_proxy_client_param_serialize(print_fn, buf, params)
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTRING *buf;
-/*	TLS_CLIENT_PARAMS *params;
+/*	const TLS_CLIENT_PARAMS *params;
 /*
-/*	char	*tls_proxy_client_param_with_names_to_string(buf, params)
+/*	char	*tls_proxy_client_init_serialize(print_fn, buf, init_props)
+/*	ATTR_PRINT_COMMON_FN print_fn;
 /*	VSTRING *buf;
-/*	TLS_CLIENT_PARAMS *params;
-/*
-/*	char	*tls_proxy_client_init_to_string(buf, init_props)
-/*	VSTRING *buf;
-/*	TLS_CLIENT_INIT_PROPS *init_props;
+/*	const TLS_CLIENT_INIT_PROPS *init_props;
 /* DESCRIPTION
 /*	tls_proxy_client_param_from_config() initializes a TLS_CLIENT_PARAMS
 /*	structure from configuration parameters and returns its
 /*	argument. Strings are not copied. The result must therefore
 /*	not be passed to tls_proxy_client_param_free().
 /*
-/*	tls_proxy_client_param_to_string() produces a lookup key
-/*	that is unique for the TLS_CLIENT_PARAMS member values.
-/*
-/*	tls_proxy_client_param_with_names_to_string() produces a
-/*	string with "name = value\n" for each TLS_CLIENT_PARAMS
-/*	member. This may be useful for reporting differences between
-/*	TLS_CLIENT_PARAMS instances.
-/*
-/*	tls_proxy_client_init_to_string() produces a lookup key
-/*	that is unique for the properties received by
-/*	tls_proxy_client_init_scan().
-/*
-/*	tls_proxy_client_init_with_names_to_string() produces a
-/*	string with "name = value\n" for each TLS_CLIENT_INIT_PROPS
-/*	member. This may be useful for reporting differences between
-/*	TLS_CLIENT_INIT_PROPS instances.
+/*	tls_proxy_client_param_serialize() and
+/*	tls_proxy_client_init_serialize() serialize the specified
+/*	object to a memory buffer, using the specified print function
+/*	(typically, attr_print_plain). The result can be used
+/*	determine whether there are any differences between instances
+/*	of the same object type.
 /* LICENSE
 /* .ad
 /* .fi
@@ -101,91 +89,41 @@ TLS_CLIENT_PARAMS *tls_proxy_client_param_from_config(TLS_CLIENT_PARAMS *params)
     return (params);
 }
 
-/* tls_proxy_client_param_to_string - serialize TLS_CLIENT_PARAMS to string */
+/* tls_proxy_client_param_serialize - serialize TLS_CLIENT_PARAMS to string */
 
-char   *tls_proxy_client_param_to_string(VSTRING *buf, TLS_CLIENT_PARAMS *params)
+char   *tls_proxy_client_param_serialize(ATTR_PRINT_COMMON_FN print_fn,
+					         VSTRING *buf,
+				            const TLS_CLIENT_PARAMS *params)
 {
-    vstring_sprintf(buf, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n"
-		    "%s\n%s\n%d\n%d\n%d\n%d\n%d\n",
-		    params->tls_high_clist, params->tls_medium_clist,
-		    params->tls_low_clist, params->tls_export_clist,
-		    params->tls_null_clist, params->tls_eecdh_auto,
-		    params->tls_eecdh_strong, params->tls_eecdh_ultra,
-		    params->tls_bug_tweaks, params->tls_ssl_options,
-		    params->tls_dane_digests, params->tls_mgr_service,
-		    params->tls_tkt_cipher, params->tls_daemon_rand_bytes,
-		    params->tls_append_def_CA, params->tls_bc_pkey_fprint,
-		    params->tls_preempt_clist, params->tls_multi_wildcard);
+    const char myname[] = "tls_proxy_client_param_serialize";
+    VSTREAM *mp;
+
+    if ((mp = vstream_memopen(buf, O_WRONLY)) == 0
+	|| print_fn(mp, ATTR_FLAG_NONE,
+		    SEND_ATTR_FUNC(tls_proxy_client_param_print,
+				   (const void *) params),
+		    ATTR_TYPE_END) != 0
+	|| vstream_fclose(mp) != 0)
+	msg_fatal("%s: can't serialize properties: %m", myname);
     return (vstring_str(buf));
 }
 
-/* tls_proxy_client_param_with_names_to_string - serialize TLS_CLIENT_PARAMS to string */
+/* tls_proxy_client_init_serialize - serialize to string */
 
-char   *tls_proxy_client_param_with_names_to_string(VSTRING *buf, TLS_CLIENT_PARAMS *params)
+char   *tls_proxy_client_init_serialize(ATTR_PRINT_COMMON_FN print_fn,
+					        VSTRING *buf,
+				         const TLS_CLIENT_INIT_PROPS *props)
 {
-    vstring_sprintf(buf, "%s = %s\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n"
-		    "%s = %s\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n"
-		    "%s = %s\n%s = %s\n%s = %d\n"
-		    "%s = %d\n%s = %d\n%s = %d\n%s = %d\n",
-		    VAR_TLS_HIGH_CLIST, params->tls_high_clist,
-		    VAR_TLS_MEDIUM_CLIST, params->tls_medium_clist,
-		    VAR_TLS_LOW_CLIST, params->tls_low_clist,
-		    VAR_TLS_EXPORT_CLIST, params->tls_export_clist,
-		    VAR_TLS_NULL_CLIST, params->tls_null_clist,
-		    VAR_TLS_EECDH_AUTO, params->tls_eecdh_auto,
-		    VAR_TLS_EECDH_STRONG, params->tls_eecdh_strong,
-		    VAR_TLS_EECDH_ULTRA, params->tls_eecdh_ultra,
-		    VAR_TLS_BUG_TWEAKS, params->tls_bug_tweaks,
-		    VAR_TLS_SSL_OPTIONS, params->tls_ssl_options,
-		    VAR_TLS_DANE_DIGESTS, params->tls_dane_digests,
-		    VAR_TLS_MGR_SERVICE, params->tls_mgr_service,
-		    VAR_TLS_TKT_CIPHER, params->tls_tkt_cipher,
-		    VAR_TLS_DAEMON_RAND_BYTES, params->tls_daemon_rand_bytes,
-		    VAR_TLS_APPEND_DEF_CA, params->tls_append_def_CA,
-		    VAR_TLS_BC_PKEY_FPRINT, params->tls_bc_pkey_fprint,
-		    VAR_TLS_PREEMPT_CLIST, params->tls_preempt_clist,
-		    VAR_TLS_MULTI_WILDCARD, params->tls_multi_wildcard);
-    return (vstring_str(buf));
-}
+    const char myname[] = "tls_proxy_client_init_serialize";
+    VSTREAM *mp;
 
-/* tls_proxy_client_init_to_string - serialize to string */
-
-char   *tls_proxy_client_init_to_string(VSTRING *buf,
-					        TLS_CLIENT_INIT_PROPS *props)
-{
-    vstring_sprintf(buf, "%s\n%s\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n"
-		    "%s\n%s\n%s\n%s\n%s\n", props->log_param,
-		    props->log_level, props->verifydepth,
-		    props->cache_type, props->chain_files,
-		    props->cert_file, props->key_file,
-		    props->dcert_file, props->dkey_file,
-		    props->eccert_file, props->eckey_file,
-		    props->CAfile, props->CApath, props->mdalg);
-    return (vstring_str(buf));
-}
-
-/* tls_proxy_client_init_with_names_to_string - serialize to string */
-
-char   *tls_proxy_client_init_with_names_to_string(VSTRING *buf,
-					        TLS_CLIENT_INIT_PROPS *props)
-{
-    vstring_sprintf(buf, "%s = %s\n%s = %s\n%s = %d\n%s = %s\n%s = %s\n"
-		    "%s = %s\n%s = %s\n%s = %s\n%s = %s\n%s = %s\n"
-		    "%s = %s\n%s = %s\n%s = %s\n%s = %s\n",
-		    TLS_ATTR_LOG_PARAM, props->log_param,
-		    TLS_ATTR_LOG_LEVEL, props->log_level,
-		    TLS_ATTR_VERIFYDEPTH, props->verifydepth,
-		    TLS_ATTR_CACHE_TYPE, props->cache_type,
-		    TLS_ATTR_CHAIN_FILES, props->chain_files,
-		    TLS_ATTR_CERT_FILE, props->cert_file,
-		    TLS_ATTR_KEY_FILE, props->key_file,
-		    TLS_ATTR_DCERT_FILE, props->dcert_file,
-		    TLS_ATTR_DKEY_FILE, props->dkey_file,
-		    TLS_ATTR_ECCERT_FILE, props->eccert_file,
-		    TLS_ATTR_ECKEY_FILE, props->eckey_file,
-		    TLS_ATTR_CAFILE, props->CAfile,
-		    TLS_ATTR_CAPATH, props->CApath,
-		    TLS_ATTR_MDALG, props->mdalg);
+    if ((mp = vstream_memopen(buf, O_WRONLY)) == 0
+	|| print_fn(mp, ATTR_FLAG_NONE,
+		    SEND_ATTR_FUNC(tls_proxy_client_init_print,
+				   (const void *) props),
+		    ATTR_TYPE_END) != 0
+	|| vstream_fclose(mp) != 0)
+	msg_fatal("%s: can't serialize properties: %m", myname);
     return (vstring_str(buf));
 }
 

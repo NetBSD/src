@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_clnt.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tls_proxy_clnt.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -189,6 +189,14 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
      * remote peer file descriptor in a later transaction.
      */
     tlsproxy_stream = vstream_fdopen(fd, O_RDWR);
+    if (attr_scan(tlsproxy_stream, ATTR_FLAG_STRICT,
+		  RECV_ATTR_STREQ(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_TLSPROXY),
+		  ATTR_TYPE_END) != 0) {
+	msg_warn("error receiving %s service initial response",
+		 STR(tlsproxy_service));
+	vstream_fclose(tlsproxy_stream);
+	return (0);
+    }
     vstring_sprintf(remote_endpt, "[%s]:%s", peer_addr, peer_port);
     attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
 	       SEND_ATTR_STR(TLS_ATTR_REMOTE_ENDPT, STR(remote_endpt)),

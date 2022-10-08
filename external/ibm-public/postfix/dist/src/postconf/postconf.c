@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postconf.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -167,7 +167,7 @@
 /*	and replace one or more service fields with new values as
 /*	specified with "\fIservice/type/field=value\fR" on the
 /*	\fBpostconf\fR(1) command line. Currently, the "command"
-/*	field contains the command name and command arguments.  this
+/*	field contains the command name and command arguments.  This
 /*	may change in the near future, so that the "command" field
 /*	contains only the command name, and a new "arguments"
 /*	pseudofield contains the command arguments.
@@ -184,7 +184,8 @@
 /*	line.
 /*
 /*	The \fB-e\fR option is no longer needed with Postfix version
-/*	2.8 and later.
+/*	2.8 and later, as it is assumed whenever a value is specified
+/*	(empty or non-empty).
 /* .IP \fB-f\fR
 /*	Fold long lines when printing \fBmain.cf\fR or \fBmaster.cf\fR
 /*	configuration file entries, for human readability.
@@ -204,8 +205,8 @@
 /*
 /*	This feature is available with Postfix 2.11 and later.
 /* .IP \fB-h\fR
-/*	Show parameter or attribute values without the "\fIname\fR
-/*	= " label that normally precedes the value.
+/*	Show parameter or attribute values without the "\fIname\fR = "
+/*	label that normally precedes the value.
 /* .IP \fB-H\fR
 /*	Show parameter or attribute names without the " = \fIvalue\fR"
 /*	that normally follows the name.
@@ -423,12 +424,17 @@
 /*	later). To show settings that differ from built-in defaults
 /*	only, use the following bash syntax:
 /* .nf
-/*	    comm -23 <(postconf -n) <(postconf -d)
+/*	    LANG=C comm -23 <(postconf -n) <(postconf -d)
 /* .fi
 /*	Replace "-23" with "-12" to show settings that duplicate
 /*	built-in defaults.
 /* .IP "\fB-o \fIname=value\fR"
-/*	Override \fBmain.cf\fR parameter settings.
+/*	Override \fBmain.cf\fR parameter settings.  This lets you see
+/*	the effect changing a parameter would have when it is used in
+/*	other configuration parameters, e.g.:
+/*	.nf
+/*	    postconf -x -o stress=yes
+/*	.fi
 /*
 /*	This feature is available with Postfix 2.10 and later.
 /* .IP \fB-p\fR
@@ -610,6 +616,7 @@
 #include <mail_version.h>
 #include <mail_run.h>
 #include <mail_dict.h>
+#include <compat_level.h>
 
 /* Application-specific. */
 
@@ -832,6 +839,11 @@ int     main(int argc, char **argv)
     msg_vstream_init(argv[0], VSTREAM_ERR);
 
     /*
+     * Check the Postfix library version as soon as we enable logging.
+     */
+    MAIL_VERSION_CHECK;
+
+    /*
      * Parse JCL.
      */
     while ((ch = GETOPT(argc, argv, "aAbc:C:deEfFhHlmMno:pPtT:vxX#")) > 0) {
@@ -929,6 +941,11 @@ int     main(int argc, char **argv)
 	    usage(argv[0]);
 	}
     }
+
+    /*
+     * For consistency with mail_params_init().
+     */
+    compat_level_relop_register();
 
     /*
      * We don't enforce import_environment consistency in this program.

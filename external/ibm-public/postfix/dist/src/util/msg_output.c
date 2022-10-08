@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: msg_output.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -97,7 +97,6 @@
 #include <vstream.h>
 #include <msg_vstream.h>
 #include <stringops.h>
-#include <percentm.h>
 #include <msg_output.h>
 
  /*
@@ -167,7 +166,7 @@ void    msg_vprintf(int level, const char *format, va_list ap)
 	    msg_vstream_init("unknown", VSTREAM_ERR);
 	vp = msg_buffers[msg_vprintf_level - 1];
 	/* OK if terminating signal handler hijacks control before next stmt. */
-	vstring_vsprintf(vp, percentm(format, errno), ap);
+	vstring_vsprintf(vp, format, ap);
 	printable(vstring_str(vp), '?');
 	for (i = 0; i < msg_output_fn_count; i++)
 	    msg_output_fn[i] (level, vstring_str(vp));

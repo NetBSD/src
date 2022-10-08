@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: flush.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -231,7 +231,7 @@ static DOMAIN_LIST *flush_domains;
   * Silly little macros.
   */
 #define STR(x)			vstring_str(x)
-#define STREQ(x,y)		((x) == (y) || strcmp(x,y) == 0)
+#define STREQ(x,y)		(STRREF(x) == STRREF(y) || strcmp(x,y) == 0)
 
  /*
   * Forward declarations resulting from breaking up routines according to
@@ -481,7 +481,7 @@ static int flush_one_file(const char *queue_id, VSTRING *queue_file,
 		 path, queue_name, MAIL_QUEUE_INCOMING);
 
     /*
-     * If we got here, we achieved something, so let's claim succes.
+     * If we got here, we achieved something, so let's claim success.
      */
     return (1);
 }
@@ -700,6 +700,14 @@ static int flush_refresh_service(int max_age)
 static int flush_request_receive(VSTREAM *client_stream, VSTRING *request)
 {
     int     count;
+
+    /*
+     * Announce the protocol.
+     */
+    attr_print(client_stream, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_FLUSH),
+	       ATTR_TYPE_END);
+    (void) vstream_fflush(client_stream);
 
     /*
      * Kluge: choose the protocol depending on the request size.

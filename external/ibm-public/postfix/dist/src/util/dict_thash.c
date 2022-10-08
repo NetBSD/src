@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,6 +48,7 @@
 /* Utility library. */
 
 #include <msg.h>
+#include <mymalloc.h>
 #include <iostuff.h>
 #include <vstring.h>
 #include <stringops.h>
@@ -182,10 +183,28 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 			 " is this an alias file?", path, lineno);
 
 	    /*
+	     * Optionally treat the value as a filename, and replace the value
+	     * with the BASE64-encoded content of the named file.
+	     */
+	    if (dict_flags & DICT_FLAG_SRC_RHS_IS_FILE) {
+		VSTRING *base64_buf;
+		char   *err;
+
+		if ((base64_buf = dict_file_to_b64(dict, value)) == 0) {
+		    err = dict_file_get_error(dict);
+		    msg_warn("%s, line %d: %s: skipping this entry",
+			     VSTREAM_PATH(fp), lineno, err);
+		    myfree(err);
+		    continue;
+		}
+		value = vstring_str(base64_buf);
+	    }
+
+	    /*
 	     * Store the value under the key. Handle duplicates
 	     * appropriately. XXX Move this into dict_ht, but 1) that map
 	     * ignores duplicates by default and we would have to check that
-	     * we won't break existing code that depends on such benavior; 2)
+	     * we won't break existing code that depends on such behavior; 2)
 	     * by inlining the checks here we can degrade gracefully instead
 	     * of terminating with a fatal error. See comment in
 	     * dict_inline.c.

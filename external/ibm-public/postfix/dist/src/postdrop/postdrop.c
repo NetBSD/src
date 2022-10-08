@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -84,6 +84,18 @@
 /* .IP "\fBauthorized_submit_users (static:anyone)\fR"
 /*	List of users who are authorized to submit mail with the \fBsendmail\fR(1)
 /*	command (and with the privileged \fBpostdrop\fR(1) helper command).
+/* .PP
+/*	Available in Postfix version 3.6 and later:
+/* .IP "\fBlocal_login_sender_maps (static:*)\fR"
+/*	A list of lookup tables that are searched by the UNIX login name,
+/*	and that return a list of allowed envelope sender patterns separated
+/*	by space or comma.
+/* .IP "\fBempty_address_local_login_sender_maps_lookup_key (<>)\fR"
+/*	The lookup key to be used in local_login_sender_maps tables, instead
+/*	of the null sender address.
+/* .IP "\fBrecipient_delimiter (empty)\fR"
+/*	The set of characters that can separate an email address
+/*	localpart, user name, or a .forward file name from its extension.
 /* FILES
 /*	/var/spool/postfix/maildrop, maildrop queue
 /* SEE ALSO
@@ -130,6 +142,7 @@
 #include <argv.h>
 #include <iostuff.h>
 #include <stringops.h>
+#include <mypwd.h>
 
 /* Global library. */
 
@@ -149,6 +162,7 @@
 #include <rec_attr_map.h>
 #include <mail_parm_split.h>
 #include <maillog_client.h>
+#include <login_sender_match.h>
 
 /* Application-specific. */
 
@@ -169,9 +183,13 @@
   * Local mail submission access list.
   */
 char   *var_submit_acl;
+char   *var_local_login_snd_maps;
+char   *var_null_local_login_snd_maps_key;
 
 static const CONFIG_STR_TABLE str_table[] = {
     VAR_SUBMIT_ACL, DEF_SUBMIT_ACL, &var_submit_acl, 0, 0,
+    VAR_LOCAL_LOGIN_SND_MAPS, DEF_LOCAL_LOGIN_SND_MAPS, &var_local_login_snd_maps, 0, 0,
+    VAR_NULL_LOCAL_LOGIN_SND_MAPS_KEY, DEF_NULL_LOCAL_LOGIN_SND_MAPS_KEY, &var_null_local_login_snd_maps_key, 0, 0,
     0,
 };
 
@@ -222,6 +240,74 @@ static void postdrop_cleanup(void)
     postdrop_sig(0);
 }
 
+/* check_login_sender_acl - check if a user is authorized to use this sender */
+
+static int check_login_sender_acl(uid_t uid, VSTRING *sender_buf,
+				          VSTRING *reason)
+{
+    const char myname[] = "check_login_sender_acl";
+    struct mypasswd *user_info;
+    char   *user_name;
+    VSTRING *user_name_buf = 0;
+    LOGIN_SENDER_MATCH *lsm;
+    int     res;
+
+    /*
+     * Sanity checks.
+     */
+    if (vstring_memchr(sender_buf, '\0') != 0) {
+	vstring_sprintf(reason, "NUL in FROM record");
+	return (CLEANUP_STAT_BAD);
+    }
+
+    /*
+     * Optimization.
+     */
+#ifndef SNAPSHOT
+    if (strcmp(var_local_login_snd_maps, DEF_LOCAL_LOGIN_SND_MAPS) == 0)
+	return (CLEANUP_STAT_OK);
+#endif
+
+    /*
+     * Get the username.
+     */
+    if ((user_info = mypwuid(uid)) != 0) {
+	user_name = user_info->pw_name;
+    } else {
+	user_name_buf = vstring_alloc(10);
+	vstring_sprintf(user_name_buf, "uid:%ld", (long) uid);
+	user_name = vstring_str(user_name_buf);
+    }
+
+
+    /*
+     * Apply the a login-sender matcher. TODO: add DICT flags.
+     */
+    lsm = login_sender_create(VAR_LOCAL_LOGIN_SND_MAPS,
+			      var_local_login_snd_maps,
+			      var_rcpt_delim,
+			      var_null_local_login_snd_maps_key, "*");
+    res = login_sender_match(lsm, user_name, vstring_str(sender_buf));
+    login_sender_free(lsm);
+    if (user_name_buf)
+	vstring_free(user_name_buf);
+    switch (res) {
+    case LSM_STAT_FOUND:
+	return (CLEANUP_STAT_OK);
+    case LSM_STAT_NOTFOUND:
+	vstring_sprintf(reason, "not authorized to use sender='%s'",
+			vstring_str(sender_buf));
+	return (CLEANUP_STAT_NOPERM);
+    case LSM_STAT_RETRY:
+    case LSM_STAT_CONFIG:
+	vstring_sprintf(reason, "%s table lookup error for '%s'",
+			VAR_LOCAL_LOGIN_SND_MAPS, var_local_login_snd_maps);
+	return (CLEANUP_STAT_WRITE);
+    default:
+	msg_panic("%s: bad login_sender_match() result: %d", myname, res);
+    }
+}
+
 MAIL_VERSION_STAMP_DECLARE;
 
 /* main - the main program */
@@ -232,7 +318,8 @@ int     main(int argc, char **argv)
     int     fd;
     int     c;
     VSTRING *buf;
-    int     status;
+    int     status = CLEANUP_STAT_OK;
+    VSTRING *reason = vstring_alloc(100);
     MAIL_STREAM *dst;
     int     rec_type;
     static char *segment_info[] = {
@@ -318,16 +405,6 @@ int     main(int argc, char **argv)
     get_mail_conf_str_table(str_table);
 
     /*
-     * Mail submission access control. Should this be in the user-land gate,
-     * or in the daemon process?
-     */
-    mail_dict_init();
-    if ((errstr = check_user_acl_byuid(VAR_SUBMIT_ACL, var_submit_acl,
-				       uid)) != 0)
-	msg_fatal("User %s(%ld) is not allowed to submit mail",
-		  errstr, (long) uid);
-
-    /*
      * Stop run-away process accidents by limiting the queue file size. This
      * is not a defense against DOS attack.
      */
@@ -371,6 +448,16 @@ int     main(int argc, char **argv)
     /* End of initializations. */
 
     /*
+     * Mail submission access control. Should this be in the user-land gate,
+     * or in the daemon process?
+     */
+    mail_dict_init();
+    if ((errstr = check_user_acl_byuid(VAR_SUBMIT_ACL, var_submit_acl,
+				       uid)) != 0)
+	msg_fatal("User %s(%ld) is not allowed to submit mail",
+		  errstr, (long) uid);
+
+    /*
      * Don't trust the caller's time information.
      */
     GETTIMEOFDAY(&start);
@@ -383,6 +470,7 @@ int     main(int argc, char **argv)
     dst = mail_stream_file(MAIL_QUEUE_MAILDROP, MAIL_CLASS_PUBLIC,
 			   var_pickup_service, 0444);
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
+	       SEND_ATTR_STR(MAIL_ATTR_PROTO, MAIL_ATTR_PROTO_POSTDROP),
 	       SEND_ATTR_STR(MAIL_ATTR_QUEUEID, dst->id),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
@@ -411,7 +499,7 @@ int     main(int argc, char **argv)
     for (;;) {
 	/* Don't allow PTR records. */
 	rec_type = rec_get_raw(VSTREAM_IN, buf, var_line_limit, REC_FLAG_NONE);
-	if (rec_type == REC_TYPE_EOF) {		/* request cancelled */
+	if (rec_type == REC_TYPE_EOF) {		/* request canceled */
 	    mail_stream_cleanup(dst);
 	    if (remove(postdrop_path))
 		msg_warn("uid=%ld: remove %s: %m", (long) uid, postdrop_path);
@@ -431,8 +519,10 @@ int     main(int argc, char **argv)
 	if (rec_type == REC_TYPE_TIME)
 	    continue;
 	/* Check these at submission time instead of pickup time. */
-	if (rec_type == REC_TYPE_FROM)
+	if (rec_type == REC_TYPE_FROM) {
+	    status |= check_login_sender_acl(uid, buf, reason);
 	    from_count++;
+	}
 	if (rec_type == REC_TYPE_RCPT)
 	    rcpt_count++;
 	/* Limit the attribute types that users may specify. */
@@ -464,7 +554,8 @@ int     main(int argc, char **argv)
 	    }
 	    continue;
 	}
-	if (REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
+	if (status != CLEANUP_STAT_OK
+	    || REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
 	    /* rec_get() errors must not clobber errno. */
 	    saved_errno = errno;
 	    while ((rec_type = rec_get_raw(VSTREAM_IN, buf, var_line_limit,
@@ -497,16 +588,20 @@ int     main(int argc, char **argv)
      * reporting (report at submission time instead of pickup time). Besides
      * the segment terminator records, there aren't any other mandatory
      * records in a Postfix submission queue file.
+     * 
+     * TODO: return an informative reason for missing sender, too many senders,
+     * or missing recipient.
      */
-    if (validate_input && (from_count == 0 || rcpt_count == 0)) {
-	status = CLEANUP_STAT_BAD;
+    if (validate_input && (from_count == 0 || rcpt_count == 0))
+	status |= CLEANUP_STAT_BAD;
+    if (status != CLEANUP_STAT_OK) {
 	mail_stream_cleanup(dst);
     }
 
     /*
      * Finish the file.
      */
-    else if ((status = mail_stream_finish(dst, (VSTRING *) 0)) != 0) {
+    else if ((status = mail_stream_finish(dst, reason)) != 0) {
 	msg_warn("uid=%ld: %m", (long) uid);
 	postdrop_cleanup();
     }
@@ -526,7 +621,9 @@ int     main(int argc, char **argv)
      */
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
 	       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
-	       SEND_ATTR_STR(MAIL_ATTR_WHY, ""),
+	       SEND_ATTR_STR(MAIL_ATTR_WHY, status != CLEANUP_STAT_OK
+			     && VSTRING_LEN(reason) > 0 ?
+			     vstring_str(reason) : ""),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
     exit(status);

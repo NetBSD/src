@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cache.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_cache.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -141,7 +141,7 @@
 /*	behind" strategy does not interfere with database access,
 /*	allow dict_cache_sequence() to run to completion.
 /* .IP table
-/*	A bare dictonary handle.
+/*	A bare dictionary handle.
 /* DIAGNOSTICS
 /*	When a request is satisfied, the lookup routine returns
 /*	non-null, and the update, delete and sequence routines

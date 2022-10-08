@@ -1,4 +1,4 @@
-/*	$NetBSD: cidr_match.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: cidr_match.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -222,14 +222,23 @@ VSTRING *cidr_match_parse(CIDR_MATCH *ip, char *pattern, int match,
      * Parse the pattern into network and mask, destroying the pattern.
      */
     if ((mask = split_at(mask_search, '/')) != 0) {
+	const char *parse_error;
+
 	ip->addr_family = CIDR_MATCH_ADDR_FAMILY(pattern);
 	ip->addr_bit_count = CIDR_MATCH_ADDR_BIT_COUNT(ip->addr_family);
 	ip->addr_byte_count = CIDR_MATCH_ADDR_BYTE_COUNT(ip->addr_family);
-	if (!alldig(mask)
-	    || (ip->mask_shift = atoi(mask)) > ip->addr_bit_count
-	    || inet_pton(ip->addr_family, pattern, ip->net_bytes) != 1) {
+	if (!alldig(mask)) {
+	    parse_error = "bad mask value";
+	} else if ((ip->mask_shift = atoi(mask)) > ip->addr_bit_count) {
+	    parse_error = "bad mask length";
+	} else if (inet_pton(ip->addr_family, pattern, ip->net_bytes) != 1) {
+	    parse_error = "bad network value";
+	} else {
+	    parse_error = 0;
+	}
+	if (parse_error != 0) {
 	    vstring_sprintf(why ? why : (why = vstring_alloc(20)),
-			  "bad net/mask pattern: \"%s/%s\"", pattern, mask);
+			    "%s in \"%s/%s\"", parse_error, pattern, mask);
 	    return (why);
 	}
 	if (ip->mask_shift > 0) {

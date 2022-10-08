@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: vstring.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -144,7 +144,7 @@
 /*	Specifies a hard upper limit on a string's length. When the
 /*	length would be exceeded, the program simulates a memory
 /*	allocation problem (i.e. it terminates through msg_fatal()).
-/*	This fuctionality is currently unimplemented.
+/*	This functionality is currently unimplemented.
 /* .IP "CA_VSTRING_CTL_EXACT (no argument)"
 /*	Allocate the requested amounts, instead of rounding up.
 /*	This should be used for tests only.

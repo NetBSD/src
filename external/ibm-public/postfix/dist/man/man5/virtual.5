@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: virtual.5,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -55,7 +55,7 @@ or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP\-based server. In those case, the lookups
+can be directed to a TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
@@ -103,7 +103,7 @@ Redirect mail for \fIuser\fR@\fIsite\fR to \fIaddress\fR when
 $\fBmydestination\fR, or when it is listed in $\fBinet_interfaces\fR
 or $\fBproxy_interfaces\fR.
 .sp
-This functionality overlaps with functionality of the local
+This functionality overlaps with the functionality of the local
 \fIaliases\fR(5) database. The difference is that \fBvirtual\fR(5)
 mapping can be applied to non\-local addresses.
 .IP "@\fIdomain address, address, ...\fR"
@@ -163,7 +163,7 @@ When a mail address localpart contains the optional recipient delimiter
 
 The \fBpropagate_unmatched_extensions\fR parameter controls whether
 an unmatched address extension (\fI+foo\fR) is propagated to the
-result of table lookup.
+result of a table lookup.
 .SH "VIRTUAL ALIAS DOMAINS"
 .na
 .nf
@@ -248,7 +248,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.4.
+This feature is available in Postfix 2.5 and later.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their
@@ -271,9 +271,9 @@ and for default values. Use the "\fBpostfix reload\fR" command after
 a configuration change.
 .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
 Optional lookup tables that alias specific mail addresses or domains
-to other local or remote address.
+to other local or remote addresses.
 .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
-Postfix is final destination for the specified list of virtual
+Postfix is the final destination for the specified list of virtual
 alias domains, that is, domains for which all addresses are aliased
 to addresses in other local or remote domains.
 .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -16,8 +16,8 @@ Postfix TLS proxy
 .fi
 The \fBtlsproxy\fR(8) server implements a two\-way TLS proxy. It
 is used by the \fBpostscreen\fR(8) server to talk SMTP\-over\-TLS
-with remote SMTP clients that are not whitelisted (including
-clients whose whitelist status has expired), and by the
+with remote SMTP clients that are not allowlisted (including
+clients whose allowlist status has expired), and by the
 \fBsmtp\fR(8) client to support TLS connection reuse, but it
 should also work for non\-SMTP protocols.
 
@@ -294,12 +294,6 @@ The name of the parameter that provides the tlsproxy_client_loglevel
 value.
 .IP "\fBtlsproxy_client_scert_verifydepth ($smtp_tls_scert_verifydepth)\fR"
 The verification depth for remote TLS server certificates.
-.IP "\fBtlsproxy_client_security_level ($smtp_tls_security_level)\fR"
-The default TLS security level for the Postfix \fBtlsproxy\fR(8)
-client.
-.IP "\fBtlsproxy_client_policy_maps ($smtp_tls_policy_maps)\fR"
-Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
-security policy by next\-hop destination.
 .IP "\fBtlsproxy_client_use_tls ($smtp_use_tls)\fR"
 Opportunistic mode: use TLS when a remote server announces TLS
 support.
@@ -309,6 +303,22 @@ Enforcement mode: require that SMTP servers use TLS encryption.
 Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
 usage policy by next\-hop destination and by remote TLS server
 hostname.
+.PP
+Available in Postfix version 3.4\-3.6:
+.IP "\fBtlsproxy_client_level ($smtp_tls_security_level)\fR"
+The default TLS security level for the Postfix \fBtlsproxy\fR(8)
+client.
+.IP "\fBtlsproxy_client_policy ($smtp_tls_policy_maps)\fR"
+Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
+security policy by next\-hop destination.
+.PP
+Available in Postfix version 3.7 and later:
+.IP "\fBtlsproxy_client_security_level ($smtp_tls_security_level)\fR"
+The default TLS security level for the Postfix \fBtlsproxy\fR(8)
+client.
+.IP "\fBtlsproxy_client_policy_maps ($smtp_tls_policy_maps)\fR"
+Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
+security policy by next\-hop destination.
 .SH "OBSOLETE STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -322,6 +332,11 @@ but do not require that clients use TLS encryption.
 .IP "\fBtlsproxy_enforce_tls ($smtpd_enforce_tls)\fR"
 Mandatory TLS: announce STARTTLS support to remote SMTP clients, and
 require that clients use TLS encryption.
+.IP "\fBtlsproxy_client_use_tls ($smtp_use_tls)\fR"
+Opportunistic mode: use TLS when a remote server announces TLS
+support.
+.IP "\fBtlsproxy_client_enforce_tls ($smtp_enforce_tls)\fR"
+Enforcement mode: require that SMTP servers use TLS encryption.
 .SH "RESOURCE CONTROLS"
 .na
 .nf

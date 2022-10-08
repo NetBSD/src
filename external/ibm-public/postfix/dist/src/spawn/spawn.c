@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: spawn.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -14,7 +14,7 @@
 /*	and spawns an external command whenever a connection is established.
 /*	The connection can be made over local IPC (such as UNIX-domain
 /*	sockets) or over non-local IPC (such as TCP sockets).
-/*	The command\'s standard input, output and error streams are connected
+/*	The command's standard input, output and error streams are connected
 /*	directly to the communication endpoint.
 /*
 /*	This daemon expects to be run from the \fBmaster\fR(8) process

@@ -1,4 +1,4 @@
-/*	$NetBSD: attr.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: attr.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
@@ -30,10 +30,10 @@
  /*
   * Delegation for better data abstraction.
   */
-typedef int (*ATTR_SCAN_MASTER_FN) (VSTREAM *, int,...);
-typedef int (*ATTR_SCAN_SLAVE_FN) (ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
-typedef int (*ATTR_PRINT_MASTER_FN) (VSTREAM *, int,...);
-typedef int (*ATTR_PRINT_SLAVE_FN) (ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
+typedef int (*ATTR_SCAN_COMMON_FN) (VSTREAM *, int,...);
+typedef int (*ATTR_SCAN_CUSTOM_FN) (ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
+typedef int (*ATTR_PRINT_COMMON_FN) (VSTREAM *, int,...);
+typedef int (*ATTR_PRINT_CUSTOM_FN) (ATTR_PRINT_COMMON_FN, VSTREAM *, int, const void *);
 
  /*
   * Attribute types. See attr_scan(3) for documentation.
@@ -47,6 +47,7 @@ typedef int (*ATTR_PRINT_SLAVE_FN) (ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *
 #define ATTR_TYPE_LONG		4	/* Unsigned long */
 #define ATTR_TYPE_DATA		5	/* Binary data */
 #define ATTR_TYPE_FUNC		6	/* Function pointer */
+#define ATTR_TYPE_STREQ		7	/* Requires (name, value) match */
 
  /*
   * Optional sender-specified grouping for hash or nameval tables.
@@ -68,15 +69,16 @@ typedef int (*ATTR_PRINT_SLAVE_FN) (ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *
 #define SEND_ATTR_NV(val)		ATTR_TYPE_NV, CHECK_CPTR(ATTR, NVTABLE, (val))
 #define SEND_ATTR_LONG(name, val)	ATTR_TYPE_LONG, CHECK_CPTR(ATTR, char, (name)), CHECK_VAL(ATTR, long, (val))
 #define SEND_ATTR_DATA(name, len, val)	ATTR_TYPE_DATA, CHECK_CPTR(ATTR, char, (name)), CHECK_VAL(ATTR, ssize_t, (len)), CHECK_CPTR(ATTR, void, (val))
-#define SEND_ATTR_FUNC(func, val)	ATTR_TYPE_FUNC, CHECK_VAL(ATTR, ATTR_PRINT_SLAVE_FN, (func)), CHECK_CPTR(ATTR, void, (val))
+#define SEND_ATTR_FUNC(func, val)	ATTR_TYPE_FUNC, CHECK_VAL(ATTR, ATTR_PRINT_CUSTOM_FN, (func)), CHECK_CPTR(ATTR, void, (val))
 
 #define RECV_ATTR_INT(name, val)	ATTR_TYPE_INT, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, int, (val))
 #define RECV_ATTR_STR(name, val)	ATTR_TYPE_STR, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, VSTRING, (val))
+#define RECV_ATTR_STREQ(name, val)	ATTR_TYPE_STREQ, CHECK_CPTR(ATTR, char, (name)), CHECK_CPTR(ATTR, char, (val))
 #define RECV_ATTR_HASH(val)		ATTR_TYPE_HASH, CHECK_PTR(ATTR, HTABLE, (val))
 #define RECV_ATTR_NV(val)		ATTR_TYPE_NV, CHECK_PTR(ATTR, NVTABLE, (val))
 #define RECV_ATTR_LONG(name, val)	ATTR_TYPE_LONG, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, long, (val))
 #define RECV_ATTR_DATA(name, val)	ATTR_TYPE_DATA, CHECK_CPTR(ATTR, char, (name)), CHECK_PTR(ATTR, VSTRING, (val))
-#define RECV_ATTR_FUNC(func, val)	ATTR_TYPE_FUNC, CHECK_VAL(ATTR, ATTR_SCAN_SLAVE_FN, (func)), CHECK_PTR(ATTR, void, (val))
+#define RECV_ATTR_FUNC(func, val)	ATTR_TYPE_FUNC, CHECK_VAL(ATTR, ATTR_SCAN_CUSTOM_FN, (func)), CHECK_PTR(ATTR, void, (val))
 
 CHECK_VAL_HELPER_DCL(ATTR, ssize_t);
 CHECK_VAL_HELPER_DCL(ATTR, long);
@@ -91,8 +93,8 @@ CHECK_CPTR_HELPER_DCL(ATTR, void);
 CHECK_CPTR_HELPER_DCL(ATTR, char);
 CHECK_CPTR_HELPER_DCL(ATTR, NVTABLE);
 CHECK_CPTR_HELPER_DCL(ATTR, HTABLE);
-CHECK_VAL_HELPER_DCL(ATTR, ATTR_PRINT_SLAVE_FN);
-CHECK_VAL_HELPER_DCL(ATTR, ATTR_SCAN_SLAVE_FN);
+CHECK_VAL_HELPER_DCL(ATTR, ATTR_PRINT_CUSTOM_FN);
+CHECK_VAL_HELPER_DCL(ATTR, ATTR_SCAN_CUSTOM_FN);
 
  /*
   * Flags that control processing. See attr_scan(3) for documentation.
@@ -101,9 +103,10 @@ CHECK_VAL_HELPER_DCL(ATTR, ATTR_SCAN_SLAVE_FN);
 #define ATTR_FLAG_MISSING	(1<<0)	/* Flag missing attribute */
 #define ATTR_FLAG_EXTRA		(1<<1)	/* Flag spurious attribute */
 #define ATTR_FLAG_MORE		(1<<2)	/* Don't skip or terminate */
+#define ATTR_FLAG_PRINTABLE	(1<<3)	/* Sanitize received strings */
 
 #define ATTR_FLAG_STRICT	(ATTR_FLAG_MISSING | ATTR_FLAG_EXTRA)
-#define ATTR_FLAG_ALL		(07)
+#define ATTR_FLAG_ALL		(017)
 
  /*
   * Default to null-terminated, as opposed to base64-encoded.

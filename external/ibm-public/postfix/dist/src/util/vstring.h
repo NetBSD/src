@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.h,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: vstring.h,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
 
 #ifndef _VSTRING_H_INCLUDED_
 #define _VSTRING_H_INCLUDED_
@@ -64,6 +64,7 @@ CHECK_VAL_HELPER_DCL(VSTRING_CTL, ssize_t);
 
 /* Flags 24..31 are reserved for VSTRING. */
 #define VSTRING_FLAG_EXACT	(1<<24)	/* exact allocation for tests */
+#define VSTRING_FLAG_MASK	(255 << 24)
 
  /*
   * Macros. Unsafe macros have UPPERCASE names.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: sendmail.1,v 1.4 2022/10/08 16:12:44 christos Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -47,6 +47,9 @@ selected for delivery.
 .IP \fB!\fR
 The message is in the \fBhold\fR queue, i.e. no further delivery
 attempt will be made until the mail is taken off hold.
+.IP \fB#\fR
+The message is forced to expire. See the \fBpostsuper\fR(1)
+options \fB\-e\fR or \fB\-f\fR.
 .RE
 .IP
 This mode of operation is implemented by executing the
@@ -86,7 +89,7 @@ Initialize alias database. See the \fBnewaliases\fR
 command above.
 .IP \fB\-bl\fR
 Go into daemon mode. To accept only local connections as
-with Sendmail\'s \fB\-bl\fR option, specify "\fBinet_interfaces
+with Sendmail's \fB\-bl\fR option, specify "\fBinet_interfaces
 = loopback\fR" in the Postfix \fBmain.cf\fR configuration
 file.
 .IP \fB\-bm\fR
@@ -145,7 +148,7 @@ parameter instead.
 Initialize alias database. See the \fBnewaliases\fR
 command above.
 .IP "\fB\-i\fR"
-When reading a message from standard input, don\'t treat a line
+When reading a message from standard input, don't treat a line
 with only a \fB.\fR character as the end of input.
 .IP "\fB\-L \fIlabel\fR (ignored)"
 The logging label. Use the \fBsyslog_name\fR configuration
@@ -175,7 +178,7 @@ configuration parameter in \fBmain.cf\fR instead.
 To send 8\-bit or binary content, use an appropriate MIME encapsulation
 and specify the appropriate \fB\-B\fR command\-line option.
 .IP "\fB\-oi\fR"
-When reading a message from standard input, don\'t treat a line
+When reading a message from standard input, don't treat a line
 with only a \fB.\fR character as the end of input.
 .IP "\fB\-om\fR (ignored)"
 The sender is never eliminated from alias etc. expansions.
@@ -260,10 +263,43 @@ Log mailer traffic. Use the \fBdebug_peer_list\fR and
 .nf
 .ad
 .fi
-By design, this program is not set\-user (or group) id. However,
-it must handle data from untrusted, possibly remote, users.
-Thus, the usual precautions need to be taken against malicious
-inputs.
+By design, this program is not set\-user (or group) id.
+It is prepared to handle message content from untrusted,
+possibly remote, users.
+
+However, like most Postfix programs, this program does not
+enforce a security policy on its command\-line arguments.
+Instead, it relies on the UNIX system to enforce access
+policies based on the effective user and group IDs of the
+process. Concretely, this means that running Postfix commands
+as root (from sudo or equivalent) on behalf of a non\-root
+user is likely to create privilege escalation opportunities.
+
+If an application runs any Postfix programs on behalf of
+users that do not have normal shell access to Postfix
+commands, then that application MUST restrict user\-specified
+command\-line arguments to avoid privilege escalation.
+.IP \(bu
+Filter all command\-line arguments, for example arguments
+that contain a pathname or that specify a database access
+method. These pathname checks must reject user\-controlled
+symlinks or hardlinks to sensitive files, and must not be
+vulnerable to TOCTOU race attacks.
+.IP \(bu
+Disable command options processing for all command arguments
+that contain user\-specified data. For example, the Postfix
+\fBsendmail\fR(1) command line MUST be structured as follows:
+
+.nf
+    \fB/path/to/sendmail\fR \fIsystem\-arguments\fR \fB\-\-\fR \fIuser\-arguments\fR
+.fi
+
+Here, the "\fB\-\-\fR" disables command option processing for
+all \fIuser\-arguments\fR that follow.
+.IP
+Without the "\fB\-\-\fR", a malicious user could enable Postfix
+\fBsendmail\fR(1) command options, by specifying an email
+address that starts with "\fB\-\fR".
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -314,12 +350,13 @@ Postfix system.
 The external command to execute when a Postfix daemon program is
 invoked with the \-D option.
 .IP "\fBdebug_peer_level (2)\fR"
-The increment in verbose logging level when a remote client or
-server matches a pattern in the debug_peer_list parameter.
+The increment in verbose logging level when a nexthop destination,
+remote client or server name or network address matches a pattern
+given with the debug_peer_list parameter.
 .IP "\fBdebug_peer_list (empty)\fR"
-Optional list of remote client or server hostname or network
-address patterns that cause the verbose logging level to increase
-by the amount specified in $debug_peer_level.
+Optional list of nexthop destination, remote client or server
+name or network address patterns that, if matched, cause the verbose
+logging level to increase by the amount specified in $debug_peer_level.
 .SH "ACCESS CONTROLS"
 .na
 .nf
@@ -396,7 +433,7 @@ and \fBpostmap\fR(1) commands.
 The time after which the sender receives a copy of the message
 headers of mail that is still queued.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
+The list of environment variables that a privileged Postfix
 process will import from a non\-Postfix parent process, or name=value
 environment overrides.
 .IP "\fBmail_owner (postfix)\fR"
