@@ -7,7 +7,7 @@
 
 <title>Postfix Configuration Parameters </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 

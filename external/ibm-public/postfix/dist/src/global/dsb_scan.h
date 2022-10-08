@@ -1,4 +1,4 @@
-/*	$NetBSD: dsb_scan.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsb_scan.h,v 1.1.1.2 2022/10/08 16:09:07 christos Exp $	*/
 
 #ifndef _DSB_SCAN_H_INCLUDED_
 #define _DSB_SCAN_H_INCLUDED_
@@ -27,7 +27,7 @@
  /*
   * External interface.
   */
-extern int dsb_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+extern int dsb_scan(ATTR_SCAN_COMMON_FN, VSTREAM *, int, void *);
 
 /* LICENSE
 /* .ad
@@ -38,6 +38,11 @@ extern int dsb_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

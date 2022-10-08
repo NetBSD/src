@@ -16,7 +16,7 @@
 #	In order to use SQLite lookups, define an SQLite source as a lookup
 #	table in main.cf, for example:
 # .nf
-#	    alias_maps = sqlite:/etc/sqlite-aliases.cf
+#	    alias_maps = sqlite:/etc/postfix/sqlite-aliases.cf
 # .fi
 #
 #	The file /etc/postfix/sqlite-aliases.cf has the same format as
@@ -156,8 +156,8 @@
 #
 #	NOTE: DO NOT put quotes around the result format!
 # .IP "\fBdomain (default: no domain list)\fR"
-#	This is a list of domain names, paths to files, or
-#	dictionaries. When specified, only fully qualified search
+#	This is a list of domain names, paths to files, or "type:table"
+#	databases. When specified, only fully qualified search
 #	keys with a *non-empty* localpart and a matching domain
 #	are eligible for lookup: 'user' lookups, bare domain lookups
 #	and "@domain" lookups are not performed. This can significantly

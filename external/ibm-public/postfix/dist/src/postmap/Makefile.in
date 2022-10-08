@@ -26,40 +26,39 @@ update: ../../bin/$(PROG)
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
 
-tests:	test1 test2 fail_test quote_test file_test
+tests:	test1 test2 fail_test quote_test file_test lmdb_abb_test \
+	lmdb_bulk_test lmdb_incr_test
 
 root_tests:
 
 test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-uABC1.ref
-	$(SHLIB_ENV) ./$(PROG) map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) map.in
 	for key in abc ghi; \
 	do \
-	    $(SHLIB_ENV) ./$(PROG) -q $${key} map.in | diff map-$${key}1.ref -; \
+	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -q $${key} map.in | diff map-$${key}1.ref -; \
 	done
-	$(SHLIB_ENV) ./$(PROG) -f map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -f map.in
 	for key in ABC; \
 	do \
-	    $(SHLIB_ENV) ./$(PROG) -fq $${key} map.in | diff map-u$${key}1.ref -; \
+	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -fq $${key} map.in | diff map-u$${key}1.ref -; \
 	done
 	rm -f map.in.db
 
 test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-uABC2.ref
-	$(SHLIB_ENV) ./$(PROG) map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) map.in
 	for key in abc ghi; \
 	do \
-	    echo $${key} | $(SHLIB_ENV) ./$(PROG) -q - map.in | diff map-$${key}2.ref -; \
+	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -q - map.in | diff map-$${key}2.ref -; \
 	done
-	$(SHLIB_ENV) ./$(PROG) -f map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -f map.in
 	for key in ABC; \
 	do \
-	    echo $${key} | $(SHLIB_ENV) ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
+	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
 	done
 	rm -f map.in.db
 
 fail_test: $(PROG) aliases fail_test.in fail_test.ref
-	-($(SHLIB_ENV) sh fail_test.in || exit 0) 2>&1 | \
-	    sed -e 's/No error:/Unknown error:/' \
-		-e 's/Success/Unknown error: 0/' > fail_test.tmp
+	-($(SHLIB_ENV) sh fail_test.in || exit 0) >fail_test.tmp 2>&1
 	diff fail_test.ref fail_test.tmp
 	rm -f fail_test.tmp
 
@@ -74,6 +73,35 @@ file_test: $(PROG) file_test.in file_test.ref
 	$(SHLIB_ENV) sh file_test.in >file_test.tmp 2>&1
 	diff file_test.ref file_test.tmp
 	rm -f file_test.tmp file_test_map.* postmap-file-1 postmap-file-2
+
+lmdb_abb_test: $(PROG) lmdb_abb lmdb_abb.ref
+	rm -f lmdb_abb.lmdb
+	($(SHLIB_ENV) $(VALGRIND) ./postmap lmdb:lmdb_abb; \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_abb | sort) >lmdb_abb.tmp 2>&1
+	diff lmdb_abb.ref lmdb_abb.tmp
+	rm -f lmdb_abb.tmp lmdb_abb.lmdb
+
+lmdb_bulk_test: $(PROG)
+	rm -f lmdb_retry.lmdb main.cf
+	tr A-Z a-z < /usr/share/dict/words| \
+	    sed -e 's/.*/&	&/' -e 10000q| LANG=C sort -u >lmdb_retry
+	echo lmdb_map_size=10240 >main.cf
+	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . lmdb:lmdb_retry; \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
+	    LANG=C sort > lmdb_retry.tmp)
+	cmp lmdb_retry lmdb_retry.tmp
+	rm -f lmdb_retry lmdb_retry.tmp lmdb_retry.lmdb main.cf
+
+lmdb_incr_test: $(PROG)
+	rm -f lmdb_retry.lmdb main.cf
+	tr A-Z a-z < /usr/share/dict/words| \
+	    sed -e 's/.*/&	&/' -e 1000q| LANG=C sort -u >lmdb_retry
+	echo lmdb_map_size=10240 >main.cf
+	($(SHLIB_ENV) $(VALGRIND) ./postmap -ic . lmdb:lmdb_retry <lmdb_retry; \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
+	    LANG=C sort > lmdb_retry.tmp)
+	cmp lmdb_retry lmdb_retry.tmp
+	rm -f lmdb_retry lmdb_retry.tmp lmdb_retry.lmdb main.cf
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck

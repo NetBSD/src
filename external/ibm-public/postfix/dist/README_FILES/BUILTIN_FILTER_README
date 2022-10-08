@@ -300,9 +300,9 @@ CCoonnffiigguurriinngg hheeaaddeerr//bbooddyy cchheecc
 The following information applies to Postfix 2.1. Earlier Postfix versions do
 not support the receive_override_options feature.
 
-If you are MX service provider and want to apply disable head/body checks for
-some domains, you can configure ONE Postfix instance with multiple SMTP server
-IP addresses in master.cf. Each address provides a different service.
+If you are an MX service provider and want to enable header/body checks only
+for some domains, you can configure ONE Postfix instance with multiple SMTP
+server IP addresses in master.cf. Each address provides a different service.
 
     /etc/postfix.master.cf:
         # =================================================================

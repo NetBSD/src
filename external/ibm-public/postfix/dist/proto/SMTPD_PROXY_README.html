@@ -7,7 +7,7 @@
 
 <title>Postfix Before-Queue Content Filter </title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -199,8 +199,9 @@ usual. </p>
 <p> The content filter itself is not described here. You can use
 any filter that is SMTP enabled. For non-SMTP capable content
 filtering software, Bennett Todd's SMTP proxy implements a nice
-Perl-based framework. See: http://bent.latency.net/smtpprox/ or
-https://github.com/jnorell/smtpprox.</p>
+Perl-based framework. See:
+https://web.archive.org/web/20151022025756/http://bent.latency.net/smtpprox/
+or https://github.com/jnorell/smtpprox/ </p>
 
 <blockquote>
 
@@ -351,8 +352,8 @@ the top of the master.cf file: </p>
 
 <p> By default, the filter has 100 seconds to do its work. If it
 takes longer then Postfix gives up and reports an error to the
-remote SMTP client. You can increase this time limit (see configuration
-parameter section below) but doing so is pointless because you
+remote SMTP client. You can increase this time limit (see the <a href="#parameters">"Configuration
+parameters"</a> section below) but doing so is pointless because you
 can't control when the remote SMTP client times out. </p>
 
 <h2><a name="parameters">Configuration parameters</a></h2>

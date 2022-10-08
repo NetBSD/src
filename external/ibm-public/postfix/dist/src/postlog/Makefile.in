@@ -74,6 +74,7 @@ postlog.o: ../../include/maillog_client.h
 postlog.o: ../../include/msg.h
 postlog.o: ../../include/msg_output.h
 postlog.o: ../../include/msg_vstream.h
+postlog.o: ../../include/stringops.h
 postlog.o: ../../include/sys_defs.h
 postlog.o: ../../include/vbuf.h
 postlog.o: ../../include/vstream.h

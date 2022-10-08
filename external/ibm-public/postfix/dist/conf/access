@@ -31,7 +31,7 @@
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular
-#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        expressions,  or  lookups  can  be directed to a TCP-based
 #        server. In those cases, the lookups are done in a slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
@@ -232,7 +232,7 @@
 # 
 #        DEFER_IF_PERMIT optional text...
 #               Defer  the  request if some later restriction would
-#               result in a an explicit or implicit PERMIT  action.
+#               result in an explicit or  implicit  PERMIT  action.
 #               Reply  with "$access_map_defer_code 4.7.1  optional
 #               text..." when the optional text is specified,  oth-
 #               erwise reply with a generic error response message.

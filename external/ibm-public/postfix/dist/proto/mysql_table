@@ -16,7 +16,7 @@
 #	In order to use MySQL lookups, define a MySQL source as a lookup
 #	table in main.cf, for example:
 # .nf
-#	    alias_maps = mysql:/etc/mysql-aliases.cf
+#	    alias_maps = mysql:/etc/postfix/mysql-aliases.cf
 # .fi
 #
 #	The file /etc/postfix/mysql-aliases.cf has the same format as
@@ -46,8 +46,9 @@
 # .IP "\fBhosts\fR"
 #	The hosts that Postfix will try to connect to and query from.
 #	Specify \fIunix:\fR for UNIX domain sockets, \fIinet:\fR for TCP
-#	connections (default).  Example:
+#	connections (default).  Examples:
 # .nf
+#	    hosts = inet:host1.some.domain inet:host2.some.domain:port
 #	    hosts = host1.some.domain host2.some.domain:port
 #	    hosts = unix:/file/name
 # .fi
@@ -190,10 +191,10 @@
 #
 #	NOTE: DO NOT put quotes around the result format!
 # .IP "\fBdomain (default: no domain list)\fR"
-#	This is a list of domain names, paths to files, or
-#	dictionaries. When specified, only fully qualified search
-#	keys with a *non-empty* localpart and a matching domain
-#	are eligible for lookup: 'user' lookups, bare domain lookups
+#	This is a list of domain names, paths to files, or "type:table"
+#	databases. When specified, only fully qualified search keys
+#	with a *non-empty* localpart and a matching domain are
+#	eligible for lookup: 'user' lookups, bare domain lookups
 #	and "@domain" lookups are not performed. This can significantly
 #	reduce the query load on the MySQL server.
 # .nf

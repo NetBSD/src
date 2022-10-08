@@ -29,7 +29,7 @@
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular
-#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        expressions,  or  lookups  can  be directed to a TCP-based
 #        server. In those cases, the lookups are done in a slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
@@ -252,8 +252,8 @@
 # 
 #        masquerade_exceptions (empty)
 #               Optional list of user names that are not  subjected
-#               to  address  masquerading,  even when their address
-#               matches $masquerade_domains.
+#               to  address masquerading, even when their addresses
+#               match $masquerade_domains.
 # 
 #        mydestination  ($myhostname,  localhost.$mydomain,  local-
 #        host)

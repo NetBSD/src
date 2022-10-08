@@ -74,6 +74,7 @@ posttls-finger.o: ../../include/host_port.h
 posttls-finger.o: ../../include/htable.h
 posttls-finger.o: ../../include/inet_proto.h
 posttls-finger.o: ../../include/iostuff.h
+posttls-finger.o: ../../include/known_tcp_ports.h
 posttls-finger.o: ../../include/mail_conf.h
 posttls-finger.o: ../../include/mail_params.h
 posttls-finger.o: ../../include/mail_parm_split.h

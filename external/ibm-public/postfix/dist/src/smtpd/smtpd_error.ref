@@ -63,13 +63,13 @@ OK
 >>> # 
 >>> # Test mynetworks. 
 >>> #
->>> mynetworks 168.100.189.1/27
+>>> mynetworks 168.100.3.1/27
 OK
 >>> #
 >>> # Expect REJECT (server configuration error)
 >>> #
 >>> rcpt reject@dunno.domain
-./smtpd_check: warning: mynetworks: non-null host address bits in "168.100.189.1/27", perhaps you should use "168.100.189.0/27" instead
+./smtpd_check: warning: mynetworks: non-null host address bits in "168.100.3.1/27", perhaps you should use "168.100.3.0/27" instead
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure; from=<reject@dunno.domain> to=<reject@dunno.domain> proto=SMTP helo=<foobar>
 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure
 >>> #

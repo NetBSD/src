@@ -16,7 +16,7 @@
 #	databases.  In order to use PostgreSQL lookups, define a
 #	PostgreSQL source as a lookup table in main.cf, for example:
 # .nf
-#	    alias_maps = pgsql:/etc/pgsql-aliases.cf
+#	    alias_maps = pgsql:/etc/postfix/pgsql-aliases.cf
 # .fi
 #
 #	The file /etc/postfix/pgsql-aliases.cf has the same format as
@@ -53,6 +53,7 @@
 #	Examples:
 # .nf
 #	    hosts = postgresql://username@example.com/tablename?sslmode=require
+#	    hosts = inet:host1.some.domain inet:host2.some.domain:port
 #	    hosts = host1.some.domain host2.some.domain:port
 #	    hosts = unix:/file/name
 # .fi
@@ -130,7 +131,7 @@
 #	\fBselect_function\fR, \fBquery\fR, \fBselect_field\fR, ...
 #
 #	With Postfix 2.2 the \fBquery\fR parameter has highest precedence,
-#	see COMPATIBILITY above.
+#	see OBSOLETE QUERY INTERFACES below.
 #
 #	NOTE: DO NOT put quotes around the \fBquery\fR parameter.
 # .IP "\fBresult_format (default: \fB%s\fR)\fR"
@@ -176,8 +177,8 @@
 #
 #	NOTE: DO NOT put quotes around the result format!
 # .IP "\fBdomain (default: no domain list)\fR"
-#	This is a list of domain names, paths to files, or
-#	dictionaries. When specified, only fully qualified search
+#	This is a list of domain names, paths to files, or "type:table"
+#	databases. When specified, only fully qualified search
 #	keys with a *non-empty* localpart and a matching domain
 #	are eligible for lookup: 'user' lookups, bare domain lookups
 #	and "@domain" lookups are not performed. This can significantly

@@ -1,8 +1,8 @@
-postmap: fatal: table fail:aliases: query error: Unknown error: 0
-postmap: fatal: table fail:aliases: query error: Unknown error: 0
-postmap: fatal: table fail:aliases: query error: Unknown error: 0
-postmap: fatal: table fail:aliases: delete error: Unknown error: 0
-postmap: fatal: table fail:aliases: delete error: Unknown error: 0
-postmap: fatal: table fail:aliases: sequence error: Unknown error: 0
-postmap: fatal: table fail:aliases: write error: Unknown error: 0
-postmap: fatal: table fail:aliases: write error: Unknown error: 0
+postmap: fatal: table fail:aliases: query error: Application error
+postmap: fatal: table fail:aliases: query error: Application error
+postmap: fatal: table fail:aliases: query error: Application error
+postmap: fatal: table fail:aliases: delete error: Application error
+postmap: fatal: table fail:aliases: delete error: Application error
+postmap: fatal: table fail:aliases: sequence error: Application error
+postmap: fatal: table fail:aliases: write error: Application error
+postmap: fatal: table fail:aliases: write error: Application error

@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - postsuper(1) </title>
 </head> <body> <pre>
 POSTSUPER(1)                                                      POSTSUPER(1)
@@ -43,6 +43,15 @@ POSTSUPER(1)                                                      POSTSUPER(1)
               or specify a <i>queue</i><b>_</b><i>id</i> of <b>-</b>  to  read  queue  IDs  from  standard
               input.  For example, to delete all mail with exactly one recipi-
               ent <b>user@example.com</b>:
+
+              postqueue -j | jq -r '
+                  # See JSON OBJECT FORMAT section in the <a href="postqueue.1.html">postqueue(1)</a> manpage
+                  select(.recipients[0].address == "user@example.com")
+                  | select(.recipients[1].address == null)
+                  | .queue_id
+               ' | postsuper -d -
+
+              (note the "jq -r" option), or the historical form:
 
               mailq | tail -n +2 | grep -v '^ *(' | awk  'BEGIN { RS = "" }
                   # $7=sender, $8=recipient1, $9=recipient2

@@ -58,7 +58,7 @@ With some tables, however, Postfix needs to know only if the lookup key exists.
 Any non-empty lookup result value may be used here: the lookup result is not
 used. Examples are the local_recipient_maps that determine what local
 recipients Postfix accepts in mail from the network, the mydestination
-parameter that specifies what domains Postfix delivers locally, or the
+parameter that specifies what domains Postfix delivers locally for, or the
 mynetworks parameter that specifies the IP addresses of trusted clients or
 client networks. Technically, these are lists, not tables. Despite the
 difference, Postfix lists are described here because they use the same
@@ -221,8 +221,8 @@ To find out what database types your Postfix system supports, use the "ppooss
         to create a database file for just a few fixed elements. See also the
         static: map type.
     iinntteerrnnaall
-        A non-shared, in-memory hash table. Its content are lost when a process
-        terminates.
+        A non-shared, in-memory hash table. Its contents are lost when a
+        process terminates.
     llmmddbb
         OpenLDAP LMDB database. This is available only on systems with support
         for LMDB databases. Public database files are created with the postmap

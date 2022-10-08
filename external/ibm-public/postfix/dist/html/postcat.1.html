@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - postcat(1) </title>
 </head> <body> <pre>
 POSTCAT(1)                                                          POSTCAT(1)
@@ -52,6 +52,15 @@ POSTCAT(1)                                                          POSTCAT(1)
               the names literally.
 
               This feature is available in Postfix 2.0 and later.
+
+       <b>-r</b>     Print records in file order, don't follow pointer records.
+
+              This feature is available in Postfix 3.7 and later.
+
+       <b>-s</b> <i>offset</i>
+              Skip to the specified queue file offset.
+
+              This feature is available in Postfix 3.7 and later.
 
        <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
               options make the software increasingly verbose.

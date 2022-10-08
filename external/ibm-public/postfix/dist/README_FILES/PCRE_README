@@ -14,33 +14,42 @@ A description of how to use pcre tables, including examples, is given in the
 pcre_table(5) manual page. Information about PCRE itself can be found at http:/
 /www.pcre.org/.
 
-BBuuiillddiinngg PPoossttffiixx wwiitthh PPCCRREE ssuuppppoorrtt
+UUssiinngg PPoossttffiixx ppaacckkaaggeess wwiitthh PPCCRREE ssuuppppoorrtt
+
+To use pcre with Debian GNU/Linux's Postfix, or with Fedora or RHEL Postfix,
+all you need is to install the postfix-pcre package and you're done. There is
+no need to recompile Postfix.
+
+BBuuiillddiinngg PPoossttffiixx ffrroomm ssoouurrccee wwiitthh PPCCRREE ssuuppppoorrtt
 
 These instructions assume that you build Postfix from source code as described
-in the INSTALL document. Some modification may be required if you build Postfix
-from a vendor-specific source package.
+in the INSTALL document.
 
-Note: to use pcre with Debian GNU/Linux's Postfix, all you need is to install
-the postfix-pcre package and you're done. There is no need to recompile
-Postfix.
+To build Postfix from source with pcre support, you need a pcre library.
+Install a vendor package, or download the source code from locations in https:/
+/www.pcre.org/ and build that yourself.
 
-In some future, Postfix will have a plug-in interface for adding map types.
-Until then, you need to compile PCRE support into Postfix.
+Postfix can build with the pcre2 library or the legacy pcre library. It's
+probably easiest to let the Postfix build procedure pick one. The following
+commands will first discover if the pcre2 library is installed, and if that is
+not available, will discover if the legacy pcre library is installed.
 
-First of all, you need the PCRE library (Perl Compatible Regular Expressions),
-which can be obtained from:
+    $ make -f Makefile.init makefiles
+    $ make
 
-    ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/.
+To build Postfix explicitly with a pcre2 library (Postfix 3.7 and later):
 
-NOTE: pcre versions prior to 2.06 cannot be used.
+    $ make -f Makefile.init makefiles \
+        "CCARGS=-DHAS_PCRE=2 `pcre2-config --cflags`" \
+        "AUXLIBS_PCRE=`pcre2-config --libs8`"
+    $ make
 
-In order to build Postfix with PCRE support you need to add -DHAS_PCRE and a -
-I option for the PCRE include file to CCARGS, and add the path to the PCRE
-library to AUXLIBS_PCRE, for example:
+To build Postfix explicitly with a legacy pcre library (all Postfix versions):
 
-    make -f Makefile.init makefiles \
-        "CCARGS=-DHAS_PCRE `pcre-config --cflags`" \
+    $ make -f Makefile.init makefiles \
+        "CCARGS=-DHAS_PCRE=1 `pcre-config --cflags`" \
         "AUXLIBS_PCRE=`pcre-config --libs`"
+    $ make
 
 Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_PCRE. With Postfix
 3.0 and later, the old AUXLIBS variable still supports building a statically-
