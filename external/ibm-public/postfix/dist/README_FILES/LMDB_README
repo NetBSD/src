@@ -31,6 +31,9 @@ support, use something like:
         AUXLIBS_LMDB="-L/usr/local/lib -llmdb"
     % make
 
+If your LMDB shared library is in a directory that the RUN-TIME linker does not
+know about, add a "-Wl,-R,/path/to/directory" option after "-llmdb".
+
 Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_LMDB. With Postfix
 3.0 and later, the old AUXLIBS variable still supports building a statically-
 loaded LMDB database client, but only the new AUXLIBS_LMDB variable supports

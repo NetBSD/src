@@ -62,6 +62,7 @@ depend: $(MAKES)
 spawn.o: ../../include/argv.h
 spawn.o: ../../include/check_arg.h
 spawn.o: ../../include/dict.h
+spawn.o: ../../include/htable.h
 spawn.o: ../../include/mail_conf.h
 spawn.o: ../../include/mail_params.h
 spawn.o: ../../include/mail_parm_split.h

@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - transport(5) </title>
 </head> <body> <pre>
 TRANSPORT(5)                                                      TRANSPORT(5)
@@ -61,8 +61,8 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
        Alternatively,  the  table  can be provided as a regular-expression map
        where patterns are given as regular  expressions,  or  lookups  can  be
-       directed  to TCP-based server. In those case, the lookups are done in a
-       slightly different way as described  below  under  "REGULAR  EXPRESSION
+       directed  to a TCP-based server. In those case, the lookups are done in
+       a slightly different way as described below under  "REGULAR  EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
@@ -87,7 +87,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
               starts with whitespace continues a logical line.
 
        The <i>pattern</i> specifies an email address, a domain name, or a domain name
-       hierarchy, as described in section "TABLE LOOKUP".
+       hierarchy, as described in section "TABLE SEARCH ORDER".
 
        The <i>result</i> is of the form <i>transport:nexthop</i> and specifies how or  where
        to deliver mail. This is described in section "RESULT FORMAT".

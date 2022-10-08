@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - tlsproxy(8) </title>
 </head> <body> <pre>
 TLSPROXY(8)                                                        TLSPROXY(8)
@@ -15,7 +15,7 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 <b>DESCRIPTION</b>
        The  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  server  implements a two-way TLS proxy. It is used by
        the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server to talk SMTP-over-TLS with remote SMTP clients
-       that  are not whitelisted (including clients whose whitelist status has
+       that  are not allowlisted (including clients whose allowlist status has
        expired), and by the <a href="smtp.8.html"><b>smtp</b>(8)</a> client to support  TLS  connection  reuse,
        but it should also work for non-SMTP protocols.
 
@@ -103,7 +103,7 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 
        Available in Postfix version 2.9 and later:
 
-       <b><a href="postconf.5.html#tls_legacy_public_key_fingerprint">tls_legacy_public_key_fingerprints</a> (no)</b>
+       <b><a href="postconf.5.html#tls_legacy_public_key_fingerprints">tls_legacy_public_key_fingerprints</a> (no)</b>
               A  temporary  migration  aid for sites that use certificate <i>pub-</i>
               <i>lic-key</i> fingerprints with Postfix  2.9.0..2.9.5,  which  use  an
               incorrect algorithm.
@@ -111,10 +111,10 @@ TLSPROXY(8)                                                        TLSPROXY(8)
        Available in Postfix version 2.11-3.1:
 
        <b><a href="postconf.5.html#tls_dane_digest_agility">tls_dane_digest_agility</a> (on)</b>
-              Configure <a href="http://tools.ietf.org/html/rfc7671">RFC7671</a> DANE TLSA digest algorithm agility.
+              Configure <a href="https://tools.ietf.org/html/rfc7671">RFC7671</a> DANE TLSA digest algorithm agility.
 
        <b><a href="postconf.5.html#tls_dane_trust_anchor_digest_enable">tls_dane_trust_anchor_digest_enable</a> (yes)</b>
-              Enable support for <a href="http://tools.ietf.org/html/rfc6698">RFC 6698</a> (DANE TLSA) DNS records that contain
+              Enable support for <a href="https://tools.ietf.org/html/rfc6698">RFC 6698</a> (DANE TLSA) DNS records that contain
               digests of trust-anchors with certificate usage "2".
 
        Available in Postfix version 2.11 and later:
@@ -126,7 +126,7 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 
        <b><a href="postconf.5.html#tls_session_ticket_cipher">tls_session_ticket_cipher</a> (Postfix</b> &gt;<b>= 3.0: aes-256-cbc, Postfix</b> &lt;  <b>3.0:</b>
        <b>aes-128-cbc)</b>
-              Algorithm used to encrypt <a href="http://tools.ietf.org/html/rfc5077">RFC5077</a> TLS session tickets.
+              Algorithm used to encrypt <a href="https://tools.ietf.org/html/rfc5077">RFC5077</a> TLS session tickets.
 
        <b><a href="postconf.5.html#openssl_path">openssl_path</a> (openssl)</b>
               The location of the OpenSSL command line program <b>openssl</b>(1).
@@ -323,14 +323,6 @@ TLSPROXY(8)                                                        TLSPROXY(8)
        <b><a href="postconf.5.html#tlsproxy_client_scert_verifydepth">tlsproxy_client_scert_verifydepth</a> ($<a href="postconf.5.html#smtp_tls_scert_verifydepth">smtp_tls_scert_verifydepth</a>)</b>
               The verification depth for remote TLS server certificates.
 
-       <b><a href="postconf.5.html#tlsproxy_client_security_level">tlsproxy_client_security_level</a> ($<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>)</b>
-              The  default  TLS  security  level  for  the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>
-              client.
-
-       <b><a href="postconf.5.html#tlsproxy_client_policy_maps">tlsproxy_client_policy_maps</a> ($<a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a>)</b>
-              Optional lookup tables with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  client  TLS
-              security policy by next-hop destination.
-
        <b><a href="postconf.5.html#tlsproxy_client_use_tls">tlsproxy_client_use_tls</a> ($<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>)</b>
               Opportunistic  mode:  use TLS when a remote server announces TLS
               support.
@@ -343,6 +335,26 @@ TLSPROXY(8)                                                        TLSPROXY(8)
               usage policy by next-hop destination and by  remote  TLS  server
               hostname.
 
+       Available in Postfix version 3.4-3.6:
+
+       <b><a href="postconf.5.html#tlsproxy_client_level">tlsproxy_client_level</a> ($<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>)</b>
+              The  default  TLS  security  level  for  the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>
+              client.
+
+       <b><a href="postconf.5.html#tlsproxy_client_policy">tlsproxy_client_policy</a> ($<a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a>)</b>
+              Optional lookup tables with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  client  TLS
+              security policy by next-hop destination.
+
+       Available in Postfix version 3.7 and later:
+
+       <b><a href="postconf.5.html#tlsproxy_client_security_level">tlsproxy_client_security_level</a> ($<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>)</b>
+              The  default  TLS  security  level  for  the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>
+              client.
+
+       <b><a href="postconf.5.html#tlsproxy_client_policy_maps">tlsproxy_client_policy_maps</a> ($<a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a>)</b>
+              Optional lookup tables with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  client  TLS
+              security policy by next-hop destination.
+
 <b>OBSOLETE STARTTLS SUPPORT CONTROLS</b>
        These  parameters  are supported for compatibility with <a href="smtpd.8.html"><b>smtpd</b>(8)</a> legacy
        parameters.
@@ -354,6 +366,13 @@ TLSPROXY(8)                                                        TLSPROXY(8)
        <b><a href="postconf.5.html#tlsproxy_enforce_tls">tlsproxy_enforce_tls</a> ($<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a>)</b>
               Mandatory TLS: announce STARTTLS support to remote SMTP clients,
               and require that clients use TLS encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_client_use_tls">tlsproxy_client_use_tls</a> ($<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>)</b>
+              Opportunistic mode: use TLS when a remote server  announces  TLS
+              support.
+
+       <b><a href="postconf.5.html#tlsproxy_client_enforce_tls">tlsproxy_client_enforce_tls</a> ($<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>)</b>
+              Enforcement  mode: require that SMTP servers use TLS encryption.
 
 <b>RESOURCE CONTROLS</b>
        <b><a href="postconf.5.html#tlsproxy_watchdog_timeout">tlsproxy_watchdog_timeout</a> (10s)</b>

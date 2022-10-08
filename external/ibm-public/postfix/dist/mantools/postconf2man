@@ -38,6 +38,7 @@ while(<>) {
     # Even \134 comes out as \e. What brain damage is this?
     #$block =~ s/\n\./\n\\\&./g;
     $block =~ s/\n\./\n\134\&./g;
+    $block =~ s/\n'/\n\134\&'/g;
     if ($block =~ /<H2>/) {
 	$block =~ s/<H2><a[^>]+>([^<]+)<\/a><\/H2>/\n.SH \1\n/g;
 	$block =~ tr/a-z/A-Z/;
@@ -88,7 +89,7 @@ while(<>) {
     $block =~ s/\s+\n/\n/g;
     $block =~ s/^\n//g;
     $block =~ s/\s*<\s*nroffescape\s+([^ >]+)\s*>\s*/\n\1\n/g;
-    $block =~ s/([a-z][_a-zA-Z0-9-]*)(\([0-9]\))/\\fB\1\\fR\2/g;
+    $block =~ s/([A-Za-z][_a-zA-Z0-9-]*)(\([0-9]\))/\\fB\1\\fR\2/g;
     print $block;
     $wantpp = !($block =~ /^\.(SH|IP)/);
 }

@@ -121,7 +121,7 @@ Exchange servers and is not recommended for now.
 
 EEDDHH SSeerrvveerr ssuuppppoorrtt
 
-Postfix >= 2.2 support 1024-bit-prime EDH out of the box, with no additional
+Postfix >= 2.2 supports 1024-bit-prime EDH out of the box, with no additional
 configuration, but you may want to override the default prime to be 2048 bits
 long, and you may want to regenerate your primes periodically. See the quick-
 start section for details. With Postfix >= 3.1 the out of the box (compiled-in)
@@ -153,7 +153,7 @@ recommended configuration to work around this issue.
 
 EEEECCDDHH SSeerrvveerr ssuuppppoorrtt
 
-Postfix >= 2.6 support NIST P-256 EECDH when built with OpenSSL >= 1.0.0. When
+Postfix >= 2.6 supports NIST P-256 EECDH when built with OpenSSL >= 1.0.0. When
 the remote SMTP client also supports EECDH and implements the P-256 curve,
 forward secrecy just works.
 
@@ -248,8 +248,18 @@ security against pre-computation attacks and for compatibility with Debian-
 patched Exim SMTP clients that require a >= 2048-bit length for the non-export
 prime.
 
-Execute as root (prime group generation can take a few seconds to a few
-minutes):
+With Postfix >= 3.7 built against OpenSSL version is 3.0.0 or later, when the
+value of smtpd_tls_dh1024_param_file is either empty or "aauuttoo", the EDH
+parameter selection is delegated to the OpenSSL library, which selects
+appropriate parameters based on the TLS handshake. This choice is likely to be
+the most interoperable with SMTP clients using various TLS libraries, and
+custom local parameters are no longer recommended when using Postfix >= 3.7
+built against OpenSSL 3.0.0. Just leave smtpd_tls_dh1024_param_file at its
+default value (both in main.cf(5) and any master.cf(5) overrides, and let
+OpenSSL do the work.
+
+Otherwise, execute as root (prime group generation can take a few seconds to a
+few minutes):
 
     # cd /etc/postfix
     # umask 022
@@ -259,7 +269,8 @@ minutes):
     # chmod 644 dh512.pem dh1024.pem dh2048.pem
 
 The Postfix SMTP server EDH parameter files are not secret, after all these
-parameters are sent to all remote SMTP clients in the clear. Mode 0644 is fine.
+parameters are sent to all remote SMTP clients in the clear. Mode 0644 is
+appropriate.
 
 You can improve security against pre-computation attacks further by
 regenerating the Postfix SMTP server EDH parameters periodically (an hourly or
@@ -401,7 +412,7 @@ with one of these prefixes. This pattern is likely to persist until some new
 key-exchange mechanism is invented that also supports forward secrecy.
 
 The actual key length and raw algorithm key length are generally the same with
-non-export ciphers, but may they differ for the legacy export ciphers where the
+non-export ciphers, but they may differ for the legacy export ciphers where the
 actual key is artificially shortened.
 
 Starting with TLS 1.3 the cipher name no longer contains enough information to

@@ -40,7 +40,7 @@ rcpt reject@dunno.domain
 # 
 # Test mynetworks. 
 #
-mynetworks 168.100.189.1/27
+mynetworks 168.100.3.1/27
 #
 # Expect REJECT (server configuration error)
 #

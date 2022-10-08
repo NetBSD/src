@@ -7,7 +7,7 @@
 
 <title>Postfix BDAT (CHUNKING) support</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -20,7 +20,7 @@ BDAT (CHUNKING) support</h1>
 
 <h2>Overview </h2>
 
-<p> Postfix SMTP server supports <a href="http://tools.ietf.org/html/rfc3030">RFC 3030</a> CHUNKING (the BDAT command)
+<p> Postfix SMTP server supports <a href="https://tools.ietf.org/html/rfc3030">RFC 3030</a> CHUNKING (the BDAT command)
 without BINARYMIME, in both <a href="smtpd.8.html">smtpd(8)</a> and <a href="postscreen.8.html">postscreen(8)</a>. It is enabled
 by default. </p>
 
@@ -51,7 +51,7 @@ globally: </p>
     # The logging alternative:
     <a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo_keywords</a> = chunking
     # The non-logging alternative:
-    <a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo_keywords</a> = chunking, silent_discard
+    <a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo_keywords</a> = chunking, silent-discard
 </pre>
 </blockquote>
 
@@ -155,7 +155,7 @@ signatures, so conversion would have to happen before signing. </p>
 <h2> <a name="downsides">Downsides of CHUNKING (BDAT) support</a>
 </h2>
 
-<p> The <a href="http://tools.ietf.org/html/rfc3030">RFC 3030</a> authors did not specify any limitations on how
+<p> The <a href="https://tools.ietf.org/html/rfc3030">RFC 3030</a> authors did not specify any limitations on how
 clients may pipeline commands (i.e. send commands without waiting
 for a server response). If a server announces PIPELINING support,
 like Postfix does, then a remote SMTP client can pipeline all
@@ -167,10 +167,10 @@ behavior. If you require "<a href="postconf.5.html#reject_unauth_pipelining">rej
 then turn off Postfix's CHUNKING announcement as described above.
 </p>
 
-<p> In <a href="http://tools.ietf.org/html/rfc4468">RFC 4468</a>, the authors write that a client may pipeline
+<p> In <a href="https://tools.ietf.org/html/rfc4468">RFC 4468</a>, the authors write that a client may pipeline
 commands, and that after sending BURL LAST or BDAT LAST, a client
 must wait for the server's response. But as this text does not
-appear in <a href="http://tools.ietf.org/html/rfc3030">RFC 3030</a> which defines BDAT, is it a useless restriction
+appear in <a href="https://tools.ietf.org/html/rfc3030">RFC 3030</a> which defines BDAT, it is a useless restriction
 that Postfix will not enforce. </p>
 
 </body>

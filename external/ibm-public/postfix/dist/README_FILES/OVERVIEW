@@ -282,16 +282,41 @@ queues.
     Postfix version 2.2 and later. More information about this feature is in
     the CONNECTION_CACHE_README document.
 
-            /-- smtp(8) --> Internet
+            /--  smtp(8)  --> Internet
 
-    qmgr(8)       |  
-                  |
-            \--   | smtp(8) --> Internet
-                  |
-                  ^          
-                  |
+    qmgr(8)
+                |
+            \-- |    smtp(8)
+                |
+                |     ^
+                v     |
 
-                  scache(8)
+                scache(8)
+
+    A Postfix smtp(8) client can reuse a TLS-encrypted connection (with
+    "smtp_tls_connection_reuse = yes"). This can greatly reduce the overhead of
+    connection setup and improves message delivery rates. After a Postfix smtp
+    (8) client connects to a remote SMTP server and sends plaintext EHLO and
+    STARTTLS commands, the smtp(8) client inserts a tlsproxy(8) process into
+    the connection as shown below.
+
+    After the mail transaction completes, the Postfix smtp(8) client gives the
+    smtp(8)-to-tlsproxy(8) connection to the scache(8) server, which keeps the
+    connection open for a limited amount of time. The smtp(8) client continues
+    with some other mail delivery request. Meanwhile, any Postfix smtp(8)
+    client can ask the scache(8) server for that cached connection and reuse it
+    for mail delivery.
+
+            /--  smtp(8)  --> tlsproxy(8) --> Internet
+
+    qmgr(8)
+                |
+            \-- |    smtp(8)
+                |
+                |     ^
+                v     |
+
+                scache(8)
 
   * The showq(8) servers list the Postfix queue status. This is the queue
     listing service that does the work for the mailq(1) and postqueue(1)
@@ -324,7 +349,7 @@ queues.
 
                         <---seed---            ---seed--->
     Network-> smtpd(8)              tlsmgr(8)               smtp(8)  ->Network
-                        <-session->            <-session->      
+                        <-session->            <-session->
 
                                   /       |    \
                                           |
@@ -342,11 +367,9 @@ queues.
     This process is described in the ADDRESS_VERIFICATION_README document. The
     verify(8) service is available with Postfix version 2.1 and later.
 
-                               
                                              probe     Postfix
                                             message ->   mail
-                                                        queue
-    Network -> smtpd(8) <->   verify(8)  ->
+    Network -> smtpd(8) <->   verify(8)  ->             queue
 
                                                             |
                                                             v
@@ -356,7 +379,6 @@ queues.
                                     ^                   agents
                                     |
                                     v
-                                          
 
                               Address
                             verification
@@ -370,33 +392,51 @@ queues.
     While postscreen(8) keeps the zombies away, more smtpd(8) processes remain
     available for legitimate clients.
 
-    postscreen(8) maintains a temporary whitelist for clients that pass its
-    tests; by allowing whitelisted clients to skip tests, postscreen(8)
+    postscreen(8) maintains a temporary allowlist for clients that pass its
+    tests; by allowing allowlisted clients to skip tests, postscreen(8)
     minimizes its impact on legitimate email traffic.
 
     The postscreen(8) server is available with Postfix 2.8 and later. To keep
-    the implementation simple, postscreen(8) delegates DNS white/blacklist
+    the implementation simple, postscreen(8) delegates DNS allow/denylist
     lookups to dnsblog(8) server processes, and delegates TLS encryption/
     decryption to tlsproxy(8) server processes. This delegation is invisible to
-    the remote SMTP client, and is not shown in the diagram below.
+    the remote SMTP client.
 
-    zombie
+                zombie
 
-           \
+                         \
 
-    zombie -                    - smtpd(8)
+    zombie - tlsproxy(8) -                    - smtpd(8)
 
-             \               /
+                           \               /
 
-    other  --- postscreen(8)
+                 other   --- postscreen(8)
 
-             /               \
+                           /               \
 
-    other  -                    - smtpd(8)
+                 other   -                    - smtpd(8)
 
-           /
+                         /
 
-    zombie
+                zombie
+
+  * The postlogd(8) server provides an alternative to syslog logging, which
+    remains the default. This feature is available with Postfix version 3.4 or
+    later, and supports the following modes:
+
+      o Logging to file, which addresses a usability problem with MacOS, and
+        eliminates information loss caused by systemd rate limits.
+
+         commands    -> postlogd(8) -> /path/to/file
+        or daemons
+
+      o Logging to stdout, which eliminates a syslog dependency when Postfix
+        runs inside a container.
+
+         commands  -> postlogd(8) ->    stdout inherited
+        or daemons                   from "postfix start-fg"
+
+    See MAILLOG_README for details and limitations.
 
 PPoossttffiixx ssuuppppoorrtt ccoommmmaannddss
 

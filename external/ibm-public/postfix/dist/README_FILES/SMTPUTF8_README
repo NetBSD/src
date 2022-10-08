@@ -173,7 +173,7 @@ This section applies only to systems that have SMTPUTF8 support turned on
 
 For compatibility with pre-SMTPUTF8 environments, Postfix does not
 automatically set the "SMTPUTF8 requested" flag on messages from non-SMTPUTF8
-clients that contain an UTF-8 header value or UTF-8 address localpart. This
+clients that contain a UTF-8 header value or UTF-8 address localpart. This
 would make such messages undeliverable to non-SMTPUTF8 servers, and could be a
 barrier to SMTPUTF8 adoption.
 

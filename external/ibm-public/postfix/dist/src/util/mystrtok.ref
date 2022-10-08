@@ -1,0 +1,30 @@
+unknown: RUN test case 0 mystrtok ><
+unknown: PASS test 0
+unknown: RUN test case 1 mystrtok >  foo  <
+unknown: PASS test 1
+unknown: RUN test case 2 mystrtok >  foo  bar  <
+unknown: PASS test 2
+unknown: RUN test case 3 mystrtokq ><
+unknown: PASS test 3
+unknown: RUN test case 4 mystrtokq >foo bar<
+unknown: PASS test 4
+unknown: RUN test case 5 mystrtokq >{ bar }  <
+unknown: PASS test 5
+unknown: RUN test case 6 mystrtokq >foo { bar } baz<
+unknown: PASS test 6
+unknown: RUN test case 7 mystrtokq >foo{ bar } baz<
+unknown: PASS test 7
+unknown: RUN test case 8 mystrtokq >foo { bar }baz<
+unknown: PASS test 8
+unknown: RUN test case 9 mystrtokdq ><
+unknown: PASS test 9
+unknown: RUN test case 10 mystrtokdq >  foo  <
+unknown: PASS test 10
+unknown: RUN test case 11 mystrtokdq >  foo  bar  <
+unknown: PASS test 11
+unknown: RUN test case 12 mystrtokdq >  foo\ bar  <
+unknown: PASS test 12
+unknown: RUN test case 13 mystrtokdq >  foo \" bar<
+unknown: PASS test 13
+unknown: RUN test case 14 mystrtokdq >  foo " bar baz"  <
+unknown: PASS test 14

@@ -22,8 +22,8 @@ Postfix SMTPUTF8 support
 <h2> Overview </h2>
 
 <p> This document describes Postfix support for Email Address
-Internationalization (EAI) as defined in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a> (SMTPUTF8 extension),
-<a href="http://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized email headers) and <a href="http://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized
+Internationalization (EAI) as defined in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a> (SMTPUTF8 extension),
+<a href="https://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized email headers) and <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized
 delivery status notifications). Introduced with Postfix version
 3.0, this fully supports UTF-8 email addresses and UTF-8 message
 header values. </p>
@@ -244,7 +244,7 @@ turned on (<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> = yes).
 
 <p> For compatibility with pre-SMTPUTF8 environments, Postfix does
 not automatically set the "SMTPUTF8 requested" flag on messages
-from non-SMTPUTF8 clients that contain an UTF-8 header value or
+from non-SMTPUTF8 clients that contain a UTF-8 header value or
 UTF-8 address localpart. This would make such messages undeliverable
 to non-SMTPUTF8 servers, and could be a barrier to SMTPUTF8 adoption.
 </p>
@@ -288,7 +288,7 @@ at one point in time. </p>
 
 <h3> No automatic conversions between ASCII and UTF-8 domain names. </h3>
 
-<p> Some background: According to <a href="http://tools.ietf.org/html/rfc6530">RFC 6530</a> and related documents,
+<p> Some background: According to <a href="https://tools.ietf.org/html/rfc6530">RFC 6530</a> and related documents,
 an internationalized domain name can appear in two forms: the UTF-8
 form, and the ASCII (xn--mumble) form. An internationalized address
 localpart must be encoded in UTF-8; the RFCs do not define an ASCII
@@ -336,7 +336,7 @@ environments</a> </h2>
 non-UTF-8 members. Postfix will try to deliver the non-UTF8 subscribers
 over "traditional" non-SMTPUTF8 sessions, as long as the message
 has an ASCII envelope sender address and all-ASCII header values.
-The mailing list manager may have to apply <a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a> encoding to
+The mailing list manager may have to apply <a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a> encoding to
 satisfy that last condition. </p>
 
 <h3> Pre-existing non-ASCII email flows </h3>
@@ -352,7 +352,7 @@ if pre-SMTPUTF8 standards do not support such practice. </p>
 requires that non-ASCII address information is encoded in UTF-8 and
 will reject other encodings such as ISO-8859. It is not practical
 for Postfix to support multiple encodings at the same time.  There
-is no problem with <a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a> encodings such as "=?ISO-8859-1?Q?text?=",
+is no problem with <a href="https://tools.ietf.org/html/rfc2047">RFC 2047</a> encodings such as "=?ISO-8859-1?Q?text?=",
 because those use only characters from the ASCII characterset. </p>
 
 <h3> Rejecting non-ASCII addresses in non-SMTPUTF8 transactions </h3>

@@ -9,8 +9,8 @@ OBJS	= postconf.o postconf_builtin.o postconf_edit.o postconf_main.o \
 	postconf_lookup.o postconf_match.o postconf_print.o
 HDRS	= postconf.h
 TESTSRC	=
-DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
-CFLAGS	= $(DEBUG) $(OPT) $(DEFS) -DLEGACY_DBMS_SUPPORT
+DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE) -DLEGACY_DBMS_SUPPORT
+CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
 MAKES	= bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h \
@@ -28,6 +28,7 @@ LIBS	= ../../lib/libxsasl.a \
 	../../lib/lib$(LIB_PREFIX)dns$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
+HTABLE_FIX = NORANDOMIZE=1
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
@@ -94,7 +95,7 @@ test1:	$(PROG) test1.ref
 	echo smtpd_restriction_classes = foo bar >> main.cf
 	echo foo = yes >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test1.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test1.tmp 2>&1
 	diff test1.ref test1.tmp
 	rm -f main.cf master.cf test1.tmp
 
@@ -106,7 +107,7 @@ test2:	$(PROG) test2.ref
 	echo restriction_classes = foo bar >> main.cf
 	echo foo = yes >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test2.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test2.tmp 2>&1
 	diff test2.ref test2.tmp
 	rm -f main.cf master.cf test2.tmp
 
@@ -119,7 +120,7 @@ test3:	$(PROG) test3.ref
 	echo 'bar = $$foo' >> main.cf
 	echo 'always_bcc = $$bar' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test3.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test3.tmp 2>&1
 	diff test3.ref test3.tmp
 	rm -f main.cf master.cf test3.tmp
 
@@ -133,7 +134,7 @@ test4:	$(PROG) test4.ref
 	echo smtpd unix - n n - 0 smtpd >> master.cf
 	echo ' -o always_bcc=$$bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test4.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test4.tmp 2>&1
 	diff test4.ref test4.tmp
 	rm -f main.cf master.cf test4.tmp
 
@@ -149,7 +150,7 @@ test4b:	$(PROG) test4b.ref
 	echo ' -o foo=xxx -o bar=yyy -o baz=zzz' >> master.cf
 	echo '#smtpd2 unix - n n - 0 smtpd' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test4b.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test4b.tmp 2>&1
 	diff test4b.ref test4b.tmp
 	rm -f main.cf master.cf test4b.tmp
 
@@ -162,7 +163,7 @@ test5:	$(PROG) test5.ref
 	echo smtpd unix - n n - 0 smtpd >> master.cf
 	echo ' -o bar=yes -o always_bcc=$$bar -o' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test5.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test5.tmp 2>&1
 	diff test5.ref test5.tmp
 	rm -f main.cf master.cf test5.tmp
 
@@ -173,7 +174,7 @@ test6:	$(PROG) test6.ref
 	touch main.cf master.cf
 	echo whatevershebrings unix - n n - 0 pipe >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test6.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test6.tmp
 	diff test6.ref test6.tmp
 	rm -f main.cf master.cf test6.tmp
 
@@ -184,7 +185,7 @@ test7:	$(PROG) test7.ref
 	touch main.cf master.cf
 	echo whatevershebrings unix - n n - 0 spawn >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test7.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test7.tmp
 	diff test7.ref test7.tmp
 	rm -f main.cf master.cf test7.tmp
 
@@ -194,7 +195,7 @@ test8:	$(PROG) test8.ref
 	echo whatevershebrings inet - n n - 0 spawn >> master.cf
 	echo whatevershebrings_time_limit=1 >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test8.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test8.tmp
 	diff test8.ref test8.tmp
 	rm -f main.cf master.cf test8.tmp
 
@@ -204,7 +205,7 @@ test9:	$(PROG) test9.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo bar unix - n n - 0 spawn >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M '*'/inet >test9.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M '*'/inet >test9.tmp 2>&1
 	diff test9.ref test9.tmp
 	rm -f main.cf master.cf test9.tmp
 
@@ -214,7 +215,7 @@ test10:	$(PROG) test10.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo bar unix - n n - 0 spawn >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M bar/inet foo/unix >test10.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M bar/inet foo/unix >test10.tmp 2>&1
 	diff test10.ref test10.tmp
 	rm -f main.cf master.cf test10.tmp
 
@@ -224,7 +225,7 @@ test11:	$(PROG) test11.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo bar unix - n n - 0 spawn >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M >test11.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M >test11.tmp 2>&1
 	diff test11.ref test11.tmp
 	rm -f main.cf master.cf test11.tmp
 
@@ -239,7 +240,7 @@ test12:	$(PROG) test12.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo ' -o always_bcc=$$bar -o' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M >test12.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -M >test12.tmp 2>&1
 	diff test12.ref test12.tmp
 	rm -f main.cf master.cf test12.tmp
 
@@ -253,7 +254,7 @@ test13:	$(PROG) test13.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo ' -o smtpd_restriction_classes=bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test13.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test13.tmp 2>&1
 	diff test13.ref test13.tmp
 	rm -f main.cf master.cf test13.tmp
 
@@ -266,7 +267,7 @@ test14:	$(PROG) test14.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo ' -o bar=yes -o baz=xx' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test14.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test14.tmp 2>&1
 	diff test14.ref test14.tmp
 	rm -f main.cf master.cf test14.tmp
 
@@ -280,7 +281,7 @@ test15:	$(PROG) test15.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo ' -o bar=yes -o always_bcc=$$bar$$baz' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test15.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test15.tmp 2>&1
 	diff test15.ref test15.tmp
 	rm -f main.cf master.cf test15.tmp
 
@@ -289,14 +290,14 @@ test15:	$(PROG) test15.ref
 test16:	$(PROG) test16.ref
 	rm -f main.cf master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test16.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test16.tmp 2>&1
 	diff test16.ref test16.tmp
 	rm -f main.cf master.cf test16.tmp
 
 test17:	$(PROG) test17.ref
 	rm -f main.cf master.cf
 	touch -t 197101010000 main.cf
-	-$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc . >test17.tmp 2>&1; exit 0
+	-$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc . >test17.tmp 2>&1; exit 0
 	diff test17.ref test17.tmp
 	rm -f main.cf master.cf test17.tmp
 
@@ -308,7 +309,7 @@ test18:	$(PROG) test18.ref
 	echo virtual_maps=xxx >> main.cf
 	echo smtpd_client_connection_limit_exceptions=yyy >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test18.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test18.tmp 2>&1
 	diff test18.ref test18.tmp
 	rm -f main.cf master.cf test18.tmp
 
@@ -320,7 +321,7 @@ test19:	$(PROG) test19.ref
 	echo forward_path='$$'aaaa >> main.cf
 	echo default_rbl_reply='$$'bbbb >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test19.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test19.tmp 2>&1
 	diff test19.ref test19.tmp
 	rm -f main.cf master.cf test19.tmp
 
@@ -332,7 +333,7 @@ test20:	$(PROG) test20.ref
 	echo foo inet - n n - 0 spawn >> master.cf
 	echo ' -o always_bcc=$$bar$$baz' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc . >test20.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc . >test20.tmp 2>&1
 	diff test20.ref test20.tmp
 	rm -f main.cf master.cf test20.tmp
 
@@ -344,7 +345,7 @@ test21:	$(PROG) test21.ref
 	echo forward_path = xxxxxxxxxxxxx xxxxxxxxxxxxxx xxxxxxxxxxxx \
 	    xxxxxxxxxxxxx xxxxxxxxxxxxxx >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nfc . >test21.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nfc . >test21.tmp 2>&1
 	diff test21.ref test21.tmp
 	rm -f main.cf master.cf test21.tmp
 
@@ -355,7 +356,7 @@ test22:	$(PROG) test22.ref
 	touch main.cf master.cf
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test22.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . 2>&1 | grep whatevershebrings >test22.tmp
 	diff test22.ref test22.tmp
 	rm -f main.cf master.cf test22.tmp
 
@@ -369,7 +370,7 @@ test23:	$(PROG) test23.ref
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	echo ' -o always_bcc=$$name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -nC builtin >test23.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -nC builtin >test23.tmp 2>&1
 	diff test23.ref test23.tmp
 	rm -f main.cf master.cf test23.tmp
 
@@ -381,7 +382,7 @@ test24:	$(PROG) test24.ref
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	echo ' -o always_bcc=$$name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -nC user >test24.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -nC user >test24.tmp 2>&1
 	diff test24.ref test24.tmp
 	rm -f main.cf master.cf test24.tmp
 
@@ -393,7 +394,7 @@ test25:	$(PROG) test25.ref
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	echo ' -o always_bcc=$$name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -C service 2>&1 | grep whatevershebrings >test25.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -C service 2>&1 | grep whatevershebrings >test25.tmp
 	diff test25.ref test25.tmp
 	rm -f main.cf master.cf test25.tmp
 
@@ -407,7 +408,7 @@ test26:	$(PROG) test26.ref
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	echo ' -o always_bcc=$$name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . -C all >test26.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . -C all >test26.tmp 2>&1
 	diff test26.ref test26.tmp
 	rm -f main.cf master.cf test26.tmp
 
@@ -419,7 +420,7 @@ test27:	$(PROG) test27.ref
 	echo whatevershebrings unix - n n - 0 smtp >> master.cf
 	echo ' -o always_bcc=$$name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -C all 2>&1 | grep whatevershebrings >test27.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -C all 2>&1 | grep whatevershebrings >test27.tmp
 	diff test27.ref test27.tmp
 	rm -f main.cf master.cf test27.tmp
 
@@ -440,7 +441,7 @@ test28:	$(PROG) test28.ref
 	echo 'aap_domain = whatever' >> main.cf
 	echo 'aa_domain = whatever' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test28.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test28.tmp 2>&1
 	diff test28.ref test28.tmp
 	rm -f main.cf master.cf test28.tmp
 
@@ -465,7 +466,7 @@ test29:	$(PROG) test29.ref
 	echo 'memcachefoo_domain = bar' >> main.cf
 	echo 'memcachefoo_domainx = bar' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test29.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test29.tmp 2>&1
 	diff test29.ref test29.tmp
 	rm -f main.cf master.cf test29.tmp
 
@@ -482,7 +483,7 @@ test30:	$(PROG) test30.ref
 	echo ' -oheader_checks=$$p3' >> master.cf
 	echo ' -oheaderx_checks=$$p4' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test30.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test30.tmp 2>&1
 	diff test30.ref test30.tmp
 	rm -f main.cf master.cf test30.tmp
 
@@ -494,7 +495,7 @@ test31:	$(PROG) test31.ref
 	echo 'smtpd_helo_restrictions=whatever' >> main.cf
 	echo 'smtpd_sender_restrictions=$$smtpd_helo_restrictions' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc . >test31.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc . >test31.tmp 2>&1
 	diff test31.ref test31.tmp
 	rm -f main.cf master.cf test31.tmp
 
@@ -505,7 +506,7 @@ test32:	$(PROG) test32.ref
 	touch main.cf master.cf
 	echo 'relay_domains=whatever' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . fast_flush_domains >test32.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . fast_flush_domains >test32.tmp 2>&1
 	diff test32.ref test32.tmp
 	rm -f main.cf master.cf test32.tmp
 
@@ -517,7 +518,7 @@ test33:	$(PROG) test33.ref
 	echo 'mydestination=whatever' >> main.cf
 	echo 'always_bcc=$$relay_domains' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . always_bcc >test33.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . always_bcc >test33.tmp 2>&1
 	diff test33.ref test33.tmp
 	rm -f main.cf master.cf test33.tmp
 
@@ -528,7 +529,7 @@ test34:	$(PROG) test34.ref
 	echo 'process_name=xxx' >> main.cf
 	echo 'process_id=yyy' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . mydestination process_name >test34.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . mydestination process_name >test34.tmp 2>&1
 	diff test34.ref test34.tmp
 	rm -f main.cf master.cf test34.tmp
 
@@ -540,7 +541,7 @@ test35:	$(PROG) test35.ref
 	echo ' -o process_name=aaa' >> master.cf
 	echo ' -o process_id=bbb' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . process_name >test35.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xc . process_name >test35.tmp 2>&1
 	diff test35.ref test35.tmp
 	rm -f main.cf master.cf test35.tmp
 
@@ -550,7 +551,7 @@ test36:	$(PROG) test36.ref
 	echo 'mydestination=$$virtual_mapx' >> main.cf
 	echo 'virtual_alias_maps=$$virtual_maps' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc . >test36.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc . >test36.tmp 2>&1
 	diff test36.ref test36.tmp
 	rm -f main.cf master.cf test36.tmp
 
@@ -564,7 +565,7 @@ test37: $(PROG) test37.ref
 	echo ' -o always_bcc=$$aaa' >> master.cf
 	echo ' -o aaa=ccc' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfxc . >test37.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfxc . >test37.tmp 2>&1
 	diff test37.ref test37.tmp
 	rm -f main.cf master.cf test37.tmp
 
@@ -575,7 +576,7 @@ test39: $(PROG) test39.ref
 	echo bar inet - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc . '*'/unix >test39.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc . '*'/unix >test39.tmp 2>&1
 	diff test39.ref test39.tmp
 	rm -f main.cf master.cf test39.tmp
 
@@ -587,7 +588,7 @@ test40: $(PROG) test40.ref
 	echo ' -vo ccc=$$aaa' >> master.cf
 	echo ' -v -oddd=$$ccc' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfxc . '*'/unix >test40.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfxc . '*'/unix >test40.tmp 2>&1
 	diff test40.ref test40.tmp
 	rm -f main.cf master.cf test40.tmp
 
@@ -598,11 +599,11 @@ test41: $(PROG) test41.ref
 	echo bar unix - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test41.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test41.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=YYY bar/unix/aaa=BBB >>test41.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test41.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . >>test41.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test41.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test41.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=YYY bar/unix/aaa=BBB >>test41.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test41.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . >>test41.tmp 2>&1
 	diff test41.ref test41.tmp
 	rm -f main.cf master.cf test41.tmp
 
@@ -613,11 +614,11 @@ test42: $(PROG) test42.ref
 	echo bar unix - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test42.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test42.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . >>test42.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -PXc. bar/unix/xxx bar/unix/aaa >>test42.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test42.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . bar/unix/xxx=yyy bar/unix/aaa=bbb >test42.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test42.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Pc . >>test42.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -PXc. bar/unix/xxx bar/unix/aaa >>test42.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test42.tmp 2>&1
 	diff test42.ref test42.tmp
 	rm -f main.cf master.cf test42.tmp
 
@@ -628,8 +629,8 @@ test43: $(PROG) test43.ref
 	echo bar unix - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Fc . bar/unix/chroot=y bar/unix/command='aa -stuffobb=cc dd' >test43.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test43.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Fc . bar/unix/chroot=y bar/unix/command='aa -stuffobb=cc dd' >test43.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test43.tmp 2>&1
 	diff test43.ref test43.tmp
 	rm -f main.cf master.cf test43.tmp
 
@@ -640,8 +641,8 @@ test44: $(PROG) test44.ref
 	echo bar unix - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc . bar/unix='xx inet - n n - 0 aa -stuffobb=cc dd' >test44.tmp 2>&1
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test44.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc . bar/unix='xx inet - n n - 0 aa -stuffobb=cc dd' >test44.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >>test44.tmp 2>&1
 	diff test44.ref test44.tmp
 	rm -f main.cf master.cf test44.tmp
 
@@ -652,7 +653,7 @@ test45: $(PROG) test45.ref
 	echo bar xxxx - n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test45.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test45.tmp 2>&1 || true
 	diff test45.ref test45.tmp
 	rm -f main.cf master.cf test45.tmp
 
@@ -663,7 +664,7 @@ test46: $(PROG) test46.ref
 	echo bar inet X n n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test46.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test46.tmp 2>&1 || true
 	diff test46.ref test46.tmp
 	rm -f main.cf master.cf test46.tmp
 
@@ -674,7 +675,7 @@ test47: $(PROG) test47.ref
 	echo bar inet - X n - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test47.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test47.tmp 2>&1 || true
 	diff test47.ref test47.tmp
 	rm -f main.cf master.cf test47.tmp
 
@@ -685,7 +686,7 @@ test48: $(PROG) test48.ref
 	echo bar inet - n X - 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test48.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test48.tmp 2>&1 || true
 	diff test48.ref test48.tmp
 	rm -f main.cf master.cf test48.tmp
 
@@ -696,7 +697,7 @@ test49: $(PROG) test49.ref
 	echo bar inet - n n X 0 other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test49.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test49.tmp 2>&1 || true
 	diff test49.ref test49.tmp
 	rm -f main.cf master.cf test49.tmp
 
@@ -707,7 +708,7 @@ test50: $(PROG) test50.ref
 	echo bar inet - n n - X other >> master.cf
 	echo baz unix - n n - 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test50.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test50.tmp 2>&1 || true
 	diff test50.ref test50.tmp
 	rm -f main.cf master.cf test50.tmp
 
@@ -718,7 +719,7 @@ test51: $(PROG) test51.ref
 	echo bar inet - n n X? 0 other >> master.cf
 	echo baz unix - n n 0? 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test51.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test51.tmp 2>&1 || true
 	diff test51.ref test51.tmp
 	rm -f main.cf master.cf test51.tmp
 
@@ -729,8 +730,8 @@ test52: $(PROG) test52.ref
 	echo bar inet - n n 0 0 other >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -MXc. bar/inet foo/unix xxx/yyy
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test52.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -MXc. bar/inet foo/unix xxx/yyy
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test52.tmp 2>&1 || true
 	diff test52.ref test52.tmp
 	rm -f main.cf master.cf test52.tmp
 
@@ -741,7 +742,7 @@ test53: $(PROG) test53.ref
 	echo bar inet - n n 0 0 other >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet xxx/yyy
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet xxx/yyy
 	diff test53.ref master.cf
 	rm -f main.cf master.cf test53.tmp
 
@@ -752,7 +753,7 @@ test54: $(PROG) test54.ref
 	echo bar inet - n n 0 0 other >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet foo/unix
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet foo/unix
 	diff test54.ref master.cf
 	rm -f main.cf master.cf test54.tmp
 
@@ -763,7 +764,7 @@ test55: $(PROG) test55.ref
 	echo bar inet - n n 0 0 other >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet baz/unix
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet baz/unix
 	diff test55.ref master.cf
 	rm -f main.cf master.cf test55.tmp
 
@@ -776,7 +777,7 @@ test56: $(PROG) test56.ref
 	echo " -o second" >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet xxx/yyy
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -M#c. bar/inet xxx/yyy
 	diff test56.ref master.cf
 	rm -f main.cf master.cf test56.tmp
 
@@ -793,7 +794,7 @@ test57: $(PROG) test57.ref
 	echo 't1 = Postfix 2.11 $${{$${x?bug:x}} == {bug}?in}compatible' >> main.cf
 	echo 't2 = $$t1' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc. >test57.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nxc. >test57.tmp 2>&1
 	diff test57.ref test57.tmp
 	rm -f main.cf master.cf test57.tmp
 
@@ -806,7 +807,7 @@ test58: $(PROG) test58.ref
 	echo 'yy_backup = bbb' >> main.cf
 	echo 'yy_bogus = bbb' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./postconf -nc. >test58.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./postconf -nc. >test58.tmp 2>&1 || true
 	diff test58.ref test58.tmp
 	rm -f main.cf master.cf test58.tmp
 
@@ -822,7 +823,7 @@ test59: $(PROG) test59.ref
 	echo " { arg3a arg3b " >> master.cf
 	echo baz unix - n n 0 0 other >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test59.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mfc. >test59.tmp 2>&1 || true
 	diff test59.ref test59.tmp
 	rm -f main.cf master.cf test59.tmp
 
@@ -832,7 +833,7 @@ test60: $(PROG) test60.ref
 	echo foo unix - n n - 0 other >> master.cf
 	echo ' -o always_bcc=bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Fhc. >test60.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Fhc. >test60.tmp 2>&1 || true
 	diff test60.ref test60.tmp
 	rm -f main.cf master.cf test60.tmp
 
@@ -842,7 +843,7 @@ test61: $(PROG) test61.ref
 	echo foo unix - n n - 0 other >> master.cf
 	echo ' -o always_bcc=bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Phc. >test61.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Phc. >test61.tmp 2>&1 || true
 	diff test61.ref test61.tmp
 	rm -f main.cf master.cf test61.tmp
 
@@ -852,7 +853,7 @@ test62: $(PROG) test62.ref
 	echo foo unix - n n - 0 other >> master.cf
 	echo ' -o always_bcc=bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -FHc. >test62.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -FHc. >test62.tmp 2>&1 || true
 	diff test62.ref test62.tmp
 	rm -f main.cf master.cf test62.tmp
 
@@ -862,7 +863,7 @@ test63: $(PROG) test63.ref
 	echo foo unix - n n - 0 other >> master.cf
 	echo ' -o always_bcc=bar' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -PHc. >test63.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -PHc. >test63.tmp 2>&1 || true
 	diff test63.ref test63.tmp
 	rm -f main.cf master.cf test63.tmp
 
@@ -873,7 +874,7 @@ test64: $(PROG) test64.ref
 	touch main.cf master.cf
 	echo 'relayhost = relay-from-main.cf' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. relayhost >test64.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. relayhost >test64.tmp 2>&1
 	diff test64.ref test64.tmp
 	rm -f main.cf master.cf test64.tmp
 
@@ -884,7 +885,7 @@ test65: $(PROG) test65.ref
 	touch main.cf master.cf
 	echo 'relayhost = relay-from-main.cf' >> main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -o relayhost=relay-from-cmd-line relayhost >test65.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -o relayhost=relay-from-cmd-line relayhost >test65.tmp 2>&1
 	diff test65.ref test65.tmp
 	rm -f main.cf master.cf test65.tmp
 
@@ -900,7 +901,7 @@ test66: $(PROG) test66.ref
 	echo " " memcache:`pwd`/test66.cf >> main.cf
 	echo junk = junk >> test66.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. 2>test66.tmp >/dev/null
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. 2>test66.tmp >/dev/null
 	sed "s;PWD;`pwd`;" test66.ref | diff - test66.tmp
 	rm -f main.cf master.cf test66.tmp test66.cf
 
@@ -916,7 +917,7 @@ test67: $(PROG) test67.ref
 	echo ' -o test2_process_name=$$process_name' >> master.cf
 	echo ' -o test2_service_name=$$service_name' >> master.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xMfc. >test67.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xMfc. >test67.tmp 2>&1
 	diff test67.ref test67.tmp
 	rm -f main.cf master.cf test67.tmp
 
@@ -931,7 +932,7 @@ test68: $(PROG) test68.ref
 	echo " " memcache:`pwd`/test68.cf >> main.cf
 	echo junk = junk >> test68.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. 2>test68.tmp >/dev/null
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. 2>test68.tmp >/dev/null
 	sed "s;PWD;`pwd`;" test68.ref | diff - test68.tmp
 	rm -f main.cf master.cf test68.tmp test68.cf
 
@@ -945,7 +946,7 @@ test69:	$(PROG) test69.ref
 	echo ' -o body_checks=$$ldap/test69.cf' >> master.cf
 	echo junk = junk >> test69.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test69.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test69.tmp 2>&1
 	sed "s;PWD;`pwd`;" test69.ref | diff - test69.tmp
 	rm -f main.cf master.cf test69.tmp test69.cf
 
@@ -961,7 +962,7 @@ test70:	$(PROG) test70.ref
 	echo "used_server_host = 127.0.0.1"  >>main.cf
 	echo "unused_server_host = 127.0.0.1"  >>main.cf
 	touch -t 197101010000 main.cf
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test70.tmp 2>&1
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test70.tmp 2>&1
 	diff test70.ref test70.tmp
 	rm -f main.cf master.cf test70.tmp test70.cf
 
@@ -995,6 +996,7 @@ depend: $(MAKES)
 # do not edit below this line - it is generated by 'make depend'
 postconf.o: ../../include/argv.h
 postconf.o: ../../include/check_arg.h
+postconf.o: ../../include/compat_level.h
 postconf.o: ../../include/dict.h
 postconf.o: ../../include/htable.h
 postconf.o: ../../include/mail_conf.h

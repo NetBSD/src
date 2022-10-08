@@ -98,14 +98,44 @@
 #
 #	Note: address information may be enclosed inside "[]" but
 #	this form is not required.
+# INLINE SPECIFICATION
+# .ad
+# .fi
+#	The contents of a table may be specified in the table name.
+#	The basic syntax is:
+#
+# .nf
+#	main.cf:
+#	    \fIparameter\fR \fB= .. cidr:{ { \fIrule-1\fB }, { \fIrule-2\fB } .. } ..\fR
+#
+#	master.cf:
+#	    \fB.. -o { \fIparameter\fR \fB= .. cidr:{ { \fIrule-1\fB }, { \fIrule-2\fB } .. } .. } ..\fR
+# .fi
+#
+#	Postfix ignores whitespace after '{' and before '}', and
+#	writes each \fIrule\fR as one text line to an in-memory
+#	file:
+#
+# .nf
+#	in-memory file:
+#	    rule-1
+#	    rule-2
+#	    ..
+# .fi
+#
+#	Postfix parses the result as if it is a file in /etc/postfix.
+#
+#	Note: if a rule contains \fB$\fR, specify \fB$$\fR to keep
+#	Postfix from trying to do \fI$name\fR expansion as it
+#	evaluates a parameter value.
 # EXAMPLE SMTPD ACCESS MAP
 # .nf
 #	/etc/postfix/main.cf:
 #	    smtpd_client_restrictions = ... cidr:/etc/postfix/client.cidr ...
 #
 #	/etc/postfix/client.cidr:
-#	    # Rule order matters. Put more specific whitelist entries
-#	    # before more general blacklist entries.
+#	    # Rule order matters. Put more specific allowlist entries
+#	    # before more general denylist entries.
 #	    192.168.1.1             OK
 #	    192.168.0.0/16          REJECT
 #	    2001:db8::1             OK

@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - pgsql_table(5) </title>
 </head> <body> <pre>
 PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
@@ -21,7 +21,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        Alternatively, lookup tables can be specified as PostgreSQL  databases.
        In  order  to  use  PostgreSQL lookups, define a PostgreSQL source as a
        lookup table in <a href="postconf.5.html">main.cf</a>, for example:
-           <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/pgsql-aliases.cf
+           <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/pgsql-aliases.cf
 
        The file /etc/postfix/pgsql-aliases.cf has the same format as the Post-
        fix <a href="postconf.5.html">main.cf</a> file, and can specify the parameters described below.
@@ -48,6 +48,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               prefixes are accepted and ignored for  backwards  compatibility.
               Examples:
                   hosts = postgresql://username@example.com/tablename?sslmode=require
+                  hosts = inet:host1.some.domain inet:host2.some.domain:port
                   hosts = host1.some.domain host2.some.domain:port
                   hosts = unix:/file/name
 
@@ -118,7 +119,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               <b>select_function</b>, <b>query</b>, <b>select_field</b>, ...
 
               With Postfix 2.2 the <b>query</b> parameter has highest precedence, see
-              COMPATIBILITY above.
+              OBSOLETE QUERY INTERFACES below.
 
               NOTE: DO NOT put quotes around the <b>query</b> parameter.
 
@@ -167,9 +168,9 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               NOTE: DO NOT put quotes around the result format!
 
        <b>domain (default: no domain list)</b>
-              This is a list of domain names, paths to files, or dictionaries.
-              When   specified,  only  fully  qualified  search  keys  with  a
-              *non-empty* localpart and a matching  domain  are  eligible  for
+              This is a list of domain names, paths to files, or  "<a href="DATABASE_README.html">type:table</a>"
+              databases. When specified, only fully qualified search keys with
+              a *non-empty* localpart and a matching domain are  eligible  for
               lookup:  'user'  lookups,  bare  domain  lookups  and  "@domain"
               lookups are not performed. This  can  significantly  reduce  the
               query load on the PostgreSQL server.

@@ -331,7 +331,7 @@ install" or "make upgrade".
     # make upgrade meta_directory=/usr/libexec/postfix ...
     # make install meta_directory=/usr/libexec/postfix ...
 
-As with the command "make makefiles, the command "make install/upgrade
+As with the command "make makefiles", the command "make install/upgrade
 name=value..." will replace the string MAIL_VERSION at the end of a
 configuration parameter value with the Postfix release version. Do not try to
 specify something like $mail_version on this command line. This produces
@@ -592,6 +592,9 @@ The following is an extensive list of names and values.
 ||				|Disable support for POSIX getpwnam_r/	      |
 ||-DNO_POSIX_GETPW_R		|getpwuid_r. By default Postfix uses these    |
 ||				|where they are known to be available.	      |
+||______________________________|_____________________________________________|
+||-DNO_RES_NCALLS		|Do not build with the threadsafe resolver(5) |
+||				|API (res_ninit() etc.).		      |
 ||______________________________|_____________________________________________|
 ||				|Use setjmp()/longjmp() instead of sigsetjmp  |
 ||-DNO_SIGSETJMP		|()/siglongjmp(). By default, Postfix uses    |
@@ -1085,6 +1088,7 @@ Finally, build the indexed aliases file with one of the following commands:
 
     # newaliases
     # sendmail -bi
+    # postalias /etc/aliases (pathname is system dependent!)
 
 11 - To chroot or not to chroot
 

@@ -2,7 +2,7 @@
 # Initialize
 #
 smtpd_delay_reject 0
-mynetworks 127.0.0.0/8,168.100.189.0/28
+mynetworks 127.0.0.0/8,168.100.3.0/28
 local_recipient_maps inline:{foo_canon=whatever,bar_canon=whatever}
 mydestination example.com
 myorigin example.com

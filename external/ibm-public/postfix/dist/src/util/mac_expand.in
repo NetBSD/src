@@ -85,3 +85,21 @@ ${{a} <  {b}}
 ${{a} <= {b}}
 ${{a} >= {b}}
 ${{a} >  {b}}
+
+name1 = foo
+
+${{$name1} >=blah {bar}}
+${{aaa} == {bbb}}
+${{aaa} ==length {bbb}}
+${{aaa} <=length {bbb}}
+${{aaa} >=length {bbb}}
+${{aaa} != {bbb}}
+${{aaa} !=length {bbb}}
+${{aaa} > {bb}}
+${{aaa} >length {bb}}
+${{aaa} >= {bb}}
+${{aaa} >=length {bb}}
+${{aaa} < {bb}}
+${{aaa} <length {bb}}
+${{aaa} <= {bb}}
+${{aaa} <=length {bb}}

@@ -164,9 +164,8 @@
 #	\fIlistname\fR-request address localparts when the recipient_delimiter
 #	is set to "-".
 # .IP "\fBrecipient_delimiter (empty)\fR"
-#	The set of characters that can separate a user name from its
-#	extension (example: user+foo), or a .forward file name from its
-#	extension (example: .forward+foo).
+#	The set of characters that can separate an email address
+#	localpart, user name, or a .forward file name from its extension.
 # .PP
 #	Available in Postfix version 2.3 and later:
 # .IP "\fBfrozen_delivered_to (yes)\fR"

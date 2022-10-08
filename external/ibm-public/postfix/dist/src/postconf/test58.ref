@@ -4,5 +4,5 @@ config_directory = .
 mydestination = foo bar pipemap:{ldap:xxx, memcache:yy}x randmap:{xx
 xxx_domain = foo
 yy_backup = bbb
-./postconf: warning: ./main.cf: unused parameter: yy_bogus=bbb
 ./postconf: warning: ./main.cf: unused parameter: xxx_bogus=foo
+./postconf: warning: ./main.cf: unused parameter: yy_bogus=bbb

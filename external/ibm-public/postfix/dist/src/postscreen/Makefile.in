@@ -417,6 +417,7 @@ postscreen_tests.o: ../../include/msg.h
 postscreen_tests.o: ../../include/myaddrinfo.h
 postscreen_tests.o: ../../include/myflock.h
 postscreen_tests.o: ../../include/name_code.h
+postscreen_tests.o: ../../include/sane_strtol.h
 postscreen_tests.o: ../../include/server_acl.h
 postscreen_tests.o: ../../include/string_list.h
 postscreen_tests.o: ../../include/sys_defs.h

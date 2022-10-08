@@ -42,8 +42,8 @@
 # 
 #        Alternatively, the  table  can  be  provided  as  a  regu-
 #        lar-expression  map  where  patterns  are given as regular
-#        expressions, or  lookups  can  be  directed  to  TCP-based
-#        server.  In those case, the lookups are done in a slightly
+#        expressions, or lookups can be  directed  to  a  TCP-based
+#        server. In those cases, the lookups are done in a slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
 # 
@@ -140,8 +140,8 @@
 #        This  section  describes how the table lookups change when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
-#        ble(5).  This feature is not available up to and including
-#        Postfix version 2.4.
+#        ble(5).  This feature is  available  in  Postfix  2.5  and
+#        later.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain mail addresses are not broken  up  into  their
@@ -180,40 +180,42 @@
 #        The  text  below  provides  only  a parameter summary. See
 #        postconf(5) for more details including examples.
 # 
-#        smtp_generic_maps
-#               Address  mapping  lookup  table  for  envelope  and
-#               header  sender and recipient addresses while deliv-
-#               ering mail via SMTP.
+#        smtp_generic_maps (empty)
+#               Optional lookup tables that perform address rewrit-
+#               ing in the Postfix SMTP client, typically to trans-
+#               form a locally valid address into a globally  valid
+#               address when sending mail across the Internet.
 # 
-#        propagate_unmatched_extensions
-#               A list of address rewriting  or  forwarding  mecha-
-#               nisms  that propagate an address extension from the
-#               original address to the result.   Specify  zero  or
-#               more   of   canonical,   virtual,  alias,  forward,
-#               include, or generic.
+#        propagate_unmatched_extensions (canonical, virtual)
+#               What  address  lookup tables copy an address exten-
+#               sion from the lookup key to the lookup result.
 # 
 #        Other parameters of interest:
 # 
-#        inet_interfaces
-#               The network interface addresses  that  this  system
-#               receives mail on.  You need to stop and start Post-
-#               fix when this parameter changes.
+#        inet_interfaces (all)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on.
 # 
-#        proxy_interfaces
-#               Other interfaces that this machine receives mail on
-#               by way of a proxy agent or network address transla-
-#               tor.
+#        proxy_interfaces (empty)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on by way of a proxy  or  network
+#               address translation unit.
 # 
-#        mydestination
-#               List of domains that  this  mail  system  considers
-#               local.
+#        mydestination  ($myhostname,  localhost.$mydomain,  local-
+#        host)
+#               The  list  of  domains  that  are delivered via the
+#               $local_transport mail delivery transport.
 # 
-#        myorigin
-#               The domain that is appended to locally-posted mail.
+#        myorigin ($myhostname)
+#               The domain name that locally-posted mail appears to
+#               come  from,  and that locally posted mail is deliv-
+#               ered to.
 # 
-#        owner_request_special
-#               Give special treatment to owner-xxx and xxx-request
-#               addresses.
+#        owner_request_special (yes)
+#               Enable special treatment for owner-listname entries
+#               in the aliases(5) file, and don't split owner-list-
+#               name and listname-request address  localparts  when
+#               the recipient_delimiter is set to "-".
 # 
 # SEE ALSO
 #        postmap(1), Postfix lookup table manager

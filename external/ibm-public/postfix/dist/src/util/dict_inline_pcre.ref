@@ -1,0 +1,4 @@
+> get foo
+foo=got foo
+> get bar
+bar: not found

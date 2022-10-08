@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - local(8) </title>
 </head> <body> <pre>
 LOCAL(8)                                                              LOCAL(8)
@@ -51,11 +51,15 @@ LOCAL(8)                                                              LOCAL(8)
        shell), <b>$recipient</b> (complete recipient address), <b>$extension</b>  (recipient
        address  extension), <b>$domain</b> (recipient domain), <b>$local</b> (entire recipi-
        ent   address   localpart)   and   <b>$<a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>.</b>   The    forms
-       <i>${name?value}</i>  and  <i>${name:value}</i>  expand  conditionally  to <i>value</i> when
-       <i>$name</i> is (is not) defined.  Characters that may have special meaning to
-       the  shell  or  file  system  are replaced by underscores.  The list of
-       acceptable characters is specified  with  the  <b><a href="postconf.5.html#forward_expansion_filter">forward_expansion_filter</a></b>
-       configuration parameter.
+       <i>${name?value}</i> and <i>${name?{value}}</i> (Postfix 3.0 and later) expand condi-
+       tionally to <i>value</i> when <i>$name</i> is defined, and  the  forms  <i>${name:value}</i>
+       <i>${name:{value}}</i>  (Postfix  3.0 and later) expand conditionally to <i>value</i>
+       when <i>$name</i> is not defined.  The form <i>${name?{value1}:{value2}}</i> (Postfix
+       3.0  and  later) expands conditionally to <i>value1</i> when <i>$name</i> is defined,
+       or <i>value2</i> otherwise. Characters that may have special  meaning  to  the
+       shell or file system are replaced with underscores. The list of accept-
+       able characters is specified with the <b><a href="postconf.5.html#forward_expansion_filter">forward_expansion_filter</a></b> configu-
+       ration parameter.
 
        An  alias  or ~/.<b>forward</b> file may list any combination of external com-
        mands, destination file names, <b>:include:</b> directives, or mail addresses.
@@ -141,11 +145,15 @@ LOCAL(8)                                                              LOCAL(8)
        <b>$shell</b>  (recipient  shell),  <b>$recipient</b>  (complete  recipient address),
        <b>$extension</b> (recipient address extension), <b>$domain</b>  (recipient  domain),
        <b>$local</b>  (entire  recipient address localpart) and <b>$<a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>.</b>
-       The forms <i>${name?value}</i> and <i>${name:value}</i> expand conditionally to <i>value</i>
-       when <i>$name</i> is (is not) defined.  Characters that may have special mean-
-       ing to the shell or file system are replaced by underscores.  The  list
-       of   acceptable  characters  is  specified  with  the  <b><a href="postconf.5.html#execution_directory_expansion_filter">execution_direc</a>-</b>
-       <b><a href="postconf.5.html#execution_directory_expansion_filter">tory_expansion_filter</a></b> configuration parameter.
+       The forms <i>${name?value}</i> and <i>${name?{value}}</i>  (Postfix  3.0  and  later)
+       expand  conditionally  to  <i>value</i>  when  <i>$name</i> is defined, and the forms
+       <i>${name:value}</i> and <i>${name:{value}}</i> (Postfix 3.0 and later) expand condi-
+       tionally   to   <i>value</i>   when   <i>$name</i>   is   not   defined.    The  form
+       <i>${name?{value1}:{value2}}</i> (Postfix 3.0 and later) expands conditionally
+       to  <i>value1</i>  when <i>$name</i> is defined, or <i>value2</i> otherwise. Characters that
+       may have special meaning to the shell or file system are replaced  with
+       underscores.  The  list  of acceptable characters is specified with the
+       <b><a href="postconf.5.html#execution_directory_expansion_filter">execution_directory_expansion_filter</a></b> configuration parameter.
 
        The command is executed directly  where  possible.  Assistance  by  the
        shell  (<b>/bin/sh</b> on UNIX systems) is used only when the command contains
@@ -159,14 +167,14 @@ LOCAL(8)                                                              LOCAL(8)
        follow  the  conventions  defined in &lt;<b>sysexits.h</b>&gt;.  Exit status 0 means
        normal successful completion.
 
-       Postfix version 2.3 and later support <a href="http://tools.ietf.org/html/rfc3463">RFC  3463</a>-style  enhanced  status
+       Postfix version 2.3 and later support <a href="https://tools.ietf.org/html/rfc3463">RFC  3463</a>-style  enhanced  status
        codes.   If  a  command terminates with a non-zero exit status, and the
        command output begins with an enhanced status code,  this  status  code
        takes precedence over the non-zero exit status.
 
        A  limited  amount of message context is exported via environment vari-
        ables. Characters that may  have  special  meaning  to  the  shell  are
-       replaced  by  underscores.  The list of acceptable characters is speci-
+       replaced with underscores.  The list of acceptable characters is speci-
        fied with the <b><a href="postconf.5.html#command_expansion_filter">command_expansion_filter</a></b> configuration parameter.
 
        <b>SHELL</b>  The recipient user's login shell.
@@ -279,8 +287,8 @@ LOCAL(8)                                                              LOCAL(8)
        the <b><a href="postconf.5.html#default_privs">default_privs</a></b> configuration parameter.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
-       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
+       <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
 
 <b>DIAGNOSTICS</b>
        Problems  and  transactions  are  logged  to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
@@ -421,7 +429,7 @@ LOCAL(8)                                                              LOCAL(8)
 
        <b><a href="postconf.5.html#command_execution_directory">command_execution_directory</a> (empty)</b>
               The <a href="local.8.html"><b>local</b>(8)</a> delivery agent working directory  for  delivery  to
-              external command.
+              external commands.
 
 <b>MAILBOX LOCKING CONTROLS</b>
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
@@ -480,7 +488,7 @@ LOCAL(8)                                                              LOCAL(8)
 
        <b><a href="postconf.5.html#default_privs">default_privs</a> (nobody)</b>
               The  default  rights  used  by  the  <a href="local.8.html"><b>local</b>(8)</a> delivery agent for
-              delivery to external file or command.
+              delivery to an external file or command.
 
        <b><a href="postconf.5.html#forward_expansion_filter">forward_expansion_filter</a> (see 'postconf -d' output)</b>
               Restrict the characters that the <a href="local.8.html"><b>local</b>(8)</a> delivery agent  allows
@@ -521,7 +529,7 @@ LOCAL(8)                                                              LOCAL(8)
 
        <b><a href="postconf.5.html#local_command_shell">local_command_shell</a> (empty)</b>
               Optional shell program for <a href="local.8.html"><b>local</b>(8)</a> delivery to non-Postfix com-
-              mand.
+              mands.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
               The  maximum  amount of time that an idle Postfix daemon process
@@ -550,9 +558,8 @@ LOCAL(8)                                                              LOCAL(8)
               The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set  of  characters  that can separate a user name from its
-              extension (example: user+foo), or a .forward file name from  its
-              extension (example: .forward+foo).
+              The  set of characters that can separate an email address local-
+              part, user name, or a .forward file name from its extension.
 
        <b><a href="postconf.5.html#require_home_directory">require_home_directory</a> (no)</b>
               Require that a <a href="local.8.html"><b>local</b>(8)</a> recipient's home directory exists before
@@ -562,14 +569,14 @@ LOCAL(8)                                                              LOCAL(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
+              A  prefix  that  is  prepended  to  the  process  name in syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix version 3.3 and later:
 
        <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable  support  for  the  original  recipient  address after an
-              address is rewritten to a different address  (for  example  with
+              Enable support for  the  original  recipient  address  after  an
+              address  is  rewritten  to a different address (for example with
               aliasing or with canonical mapping).
 
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
@@ -577,8 +584,8 @@ LOCAL(8)                                                              LOCAL(8)
 
        Available in Postfix 3.5 and later:
 
-       <b>info_log_address_format (external)</b>
-              The  email  address  form that will be used in non-debug logging
+       <b><a href="postconf.5.html#info_log_address_format">info_log_address_format</a> (external)</b>
+              The email address form that will be used  in  non-debug  logging
               (info, warning, etc.).
 
 <b>FILES</b>
@@ -602,10 +609,10 @@ LOCAL(8)                                                              LOCAL(8)
        The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
-       The <b>Delivered-To:</b> message header appears in the <b>qmail</b> system by  Daniel
+       The  <b>Delivered-To:</b> message header appears in the <b>qmail</b> system by Daniel
        Bernstein.
 
-       The  <i>maildir</i> structure appears in the <b>qmail</b> system by Daniel Bernstein.
+       The <i>maildir</i> structure appears in the <b>qmail</b> system by Daniel  Bernstein.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

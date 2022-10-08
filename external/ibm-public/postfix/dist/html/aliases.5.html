@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - aliases(5) </title>
 </head> <body> <pre>
 ALIASES(5)                                                          ALIASES(5)
@@ -63,8 +63,8 @@ ALIASES(5)                                                          ALIASES(5)
        The <i>value</i> contains one or more of the following:
 
        <i>address</i>
-              Mail is forwarded to <i>address</i>, which is compatible with  the  <a href="http://tools.ietf.org/html/rfc822">RFC</a>
-              <a href="http://tools.ietf.org/html/rfc822">822</a> standard.
+              Mail is forwarded to <i>address</i>, which is compatible with  the  <a href="https://tools.ietf.org/html/rfc822">RFC</a>
+              <a href="https://tools.ietf.org/html/rfc822">822</a> standard.
 
        <i>/file/name</i>
               Mail  is  appended  to  <i>/file/name</i>.  See <a href="local.8.html"><b>local</b>(8)</a> for details of
@@ -164,20 +164,19 @@ ALIASES(5)                                                          ALIASES(5)
               set to "-".
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set  of  characters  that can separate a user name from its
-              extension (example: user+foo), or a .forward file name from  its
-              extension (example: .forward+foo).
+              The  set of characters that can separate an email address local-
+              part, user name, or a .forward file name from its extension.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#frozen_delivered_to">frozen_delivered_to</a> (yes)</b>
-              Update  the  <a href="local.8.html"><b>local</b>(8)</a> delivery agent's idea of the Delivered-To:
-              address (see <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>) only once, at  the  start
-              of  a  delivery attempt; do not update the Delivered-To: address
+              Update the <a href="local.8.html"><b>local</b>(8)</a> delivery agent's idea of  the  Delivered-To:
+              address  (see  <a href="postconf.5.html#prepend_delivered_header">prepend_delivered_header</a>) only once, at the start
+              of a delivery attempt; do not update the  Delivered-To:  address
               while expanding aliases or .forward files.
 
 <b>STANDARDS</b>
-       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
 
 <b>SEE ALSO</b>
        <a href="local.8.html">local(8)</a>, local delivery agent

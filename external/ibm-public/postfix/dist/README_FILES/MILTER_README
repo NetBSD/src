@@ -163,7 +163,7 @@ The general syntax for listening sockets is as follows:
         Connect to the local UNIX-domain server that is bound to the specified
         pathname. If the smtpd(8) or cleanup(8) process runs chrooted, an
         absolute pathname is interpreted relative to the Postfix queue
-        directory.
+        directory. On many systems, llooccaall is a synonym for uunniixx
 
     iinneett::host::port
         Connect to the specified TCP port on the specified local or remote
@@ -507,7 +507,7 @@ queue ID, sender, or recipient).
 To force a macro to be sent even when its value has not been updated, you may
 specify macro default values with the milter_macro_defaults parameter. Specify
 zero or more name=value pairs separated by comma or whitespace; you may even
-specify macro names that Postfix does know about!
+specify macro names that Postfix does not know about!
 
 WWoorrkkaarroouunnddss
 

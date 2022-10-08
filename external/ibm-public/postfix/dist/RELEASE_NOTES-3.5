@@ -1,0 +1,157 @@
+This is the Postfix 3.5 (stable) release.
+
+The stable Postfix release is called postfix-3.5.x where 3=major
+release number, 5=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-3.6-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 3.3 or earlier, read RELEASE_NOTES-3.4
+before proceeding.
+
+License change
+---------------
+
+This software is distributed with a dual license: in addition to the
+historical IBM Public License 1.0, it is now also distributed with the
+more recent Eclipse Public License 2.0. Recipients can choose to take
+the software under the license of their choice. Those who are more
+comfortable with the IPL can continue with that license.
+
+Major changes - multiple relayhost in SMTP
+------------------------------------------
+
+[Feature 20200111] the Postfix SMTP and LMTP client support a list
+of nexthop destinations separated by comma or whitespace. These
+destinations will be tried in the specified order.
+
+The list form can be specified in relayhost, transport_maps,
+default_transport, and sender_dependent_default_transport_maps.
+
+Examples:
+/etc/postfix/main.cf:
+    relayhost = foo.example, bar.example
+    default_transport = smtp:foo.example, bar.example.
+
+NOTE: this is an SMTP and LMTP client feature. It does not work for
+other Postfix delivery agents.
+
+Major changes - certificate access
+----------------------------------
+
+[Feature 20190517] Search order support for check_ccert_access.
+Search order support for other tables is in design (canonical_maps,
+virtual_alias_maps, transport_maps, etc.).
+
+The following check_ccert_access setting uses the built-in search
+order: it first looks up the client certificate fingerprint, then
+the client certificate public-key fingerprint, and it stops when a
+decision is made.
+
+/etc/postfix/main.cf:
+    smtpd_mumble_restrictions =
+        ...
+        check_ccert_access hash:/etc/postfix/ccert-access
+        ...
+
+The following setting, with explicit search order, produces the
+exact same result:
+
+/etc/postfix/main.cf:
+    smtpd_mumble_restrictions =
+        ...
+        check_ccert_access {
+            hash:/etc/postfix/ccert-access {
+                search_order = cert_fingerprint, pubkey_fingerprint } }
+        ...
+
+Support is planned for other certificate features.
+
+Major changes - dovecot usability
+---------------------------------
+
+[Feature 20190615] The SMTP+LMTP delivery agent can now prepend
+Delivered-To, X-Original-To and Return-Path headers, just like the
+pipe(8) and local(8) delivery agents. 
+
+This uses the "flags=DORX" command-line flags in master.cf. See the
+smtp(8) manpage for details.
+
+This obsoletes the "lmtp_assume_final = yes" setting, and replaces
+it with "flags=...X...", for consistency with the pipe(8) delivery
+agent.
+
+Major changes - forced expiration
+---------------------------------
+
+[Feature 20200202] Support to force-expire email messages. This
+introduces new postsuper(1) command-line options to request expiration,
+and additional information in mailq(1) or postqueue(1) output.
+
+The forced-to-expire status is stored in a queue file attribute.
+An expired message is returned to the sender when the queue manager
+attempts to deliver that message (note that Postfix will never
+deliver messages in the hold queue).
+
+The postsuper(1) -e and -f options both set the forced-to-expire
+queue file attribute. The difference is that -f will also release
+a message if it is in the hold queue. With -e, such a message would
+not be returned to the sender until it is released with -f or -H.
+
+In the mailq(1) or postqueue(1) -p output, a forced-to-expire message
+is indicated with # after the queue file name. In postqueue(1) JSON
+output, there is a new per-message field "forced_expire" (with value
+true or false) that shows the forced-to-expire status.
+
+Major changes - haproxy2 protocol
+---------------------------------
+
+[Feature 20200112] Support for the haproxy v2 protocol. The Postfix
+implementation supports TCP over IPv4 and IPv6, as well as non-proxied
+connections; the latter are typically used for heartbeat tests.
+
+The haproxy v2 protocol introduces no additional Postfix configuration.
+The Postfix smtpd(8) and postscreen(8) daemons accept both v1 and
+v2 protocol versions.
+
+Major changes - logging
+-----------------------
+
+[Incompat 20191109] Postfix daemon processes now log the from= and
+to= addresses in external (quoted) form in non-debug logging (info,
+warning, etc.).  This means that when an address localpart contains
+spaces or other special characters, the localpart will be quoted,
+for example:
+
+    from=<"name with spaces"@example.com>
+
+Older Postfix versions would log the internal (unquoted) form:
+
+    from=<name with spaces@example.com>
+
+The external and internal forms are identical for the vast majority
+of email addresses that contain no spaces or other special characters
+in the localpart.
+
+Specify "info_log_address_format = internal" for backwards
+compatibility.
+
+The logging in external form is consistent with the address form
+that Postfix 3.2 and later prefer for table lookups. It is therefore
+the more useful form for non-debug logging.
+
+Major changes - IP address normalization
+----------------------------------------
+
+[Incompat 20190427] Postfix now normalizes IP addresses received
+with XCLIENT, XFORWARD, or with the HaProxy protocol, for consistency
+with direct connections to Postfix. This may change the appearance
+of logging, and the way that check_client_access will match subnets
+of an IPv6 address.

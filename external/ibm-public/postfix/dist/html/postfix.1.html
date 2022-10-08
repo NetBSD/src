@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - postfix(1) </title>
 </head> <body> <pre>
 POSTFIX(1)                                                          POSTFIX(1)
@@ -41,11 +41,15 @@ POSTFIX(1)                                                          POSTFIX(1)
               ground,  and enable <a href="master.8.html"><b>master</b>(8)</a> "init" mode when running as PID 1.
               This command requires that multi-instance  support  is  disabled
               (i.e.  the  <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a>  parameter  value must be
-              empty). When running Postfix inside a container, mount the  con-
-              tainer  host's  /dev/log  socket  inside the container (example:
-              "docker run -v /dev/log:/dev/log ...")  and specify  a  distinct
-              Postfix  "<a href="postconf.5.html#syslog_name">syslog_name</a>"  prefix  that identifies logging from the
-              Postfix instance.
+              empty).
+
+              When running Postfix inside a container, see <a href="MAILLOG_README.html">MAILLOG_README</a>  for
+              logging  to  stdout.  Postfix  logs  to syslog by default, which
+              requires a) running a syslogd process inside the  container,  or
+              b) mounting the container host's /dev/log socket inside the con-
+              tainer (example: "docker run -v /dev/log:/dev/log ..."), and  c)
+              a  distinct Postfix "<a href="postconf.5.html#syslog_name">syslog_name</a>" prefix that identifies logging
+              from the Postfix instance.
 
        <b>stop</b>   Stop the Postfix mail system in an orderly fashion. If possible,
               running  processes  are  allowed  to terminate at their earliest
@@ -217,6 +221,11 @@ POSTFIX(1)                                                          POSTFIX(1)
 
        Available in Postfix version 3.0 and later:
 
+       <b><a href="postconf.5.html#compatibility_level">compatibility_level</a> (0)</b>
+              A  safety net that causes Postfix to run with backwards-compati-
+              ble default settings after an upgrade to a  newer  Postfix  ver-
+              sion.
+
        <b><a href="postconf.5.html#meta_directory">meta_directory</a> (see 'postconf -d' output)</b>
               The  location of non-executable files that are shared among mul-
               tiple Postfix instances, such as postfix-files,  dynamicmaps.cf,
@@ -237,7 +246,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        Other configuration parameters:
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment  parameters that a privileged Postfix
+              The  list  of  environment  variables  that a privileged Postfix
               process will  import  from  a  non-Postfix  parent  process,  or
               name=value environment overrides.
 
@@ -294,24 +303,26 @@ POSTFIX(1)                                                          POSTFIX(1)
 
 <b>FILES</b>
        Prior to Postfix version 2.6, all of the following files were in  <b>$<a href="postconf.5.html#config_directory">con</a>-</b>
-       <b><a href="postconf.5.html#config_directory">fig_directory</a></b>. Some files are now in <b>$<a href="postconf.5.html#daemon_directory">daemon_directory</a></b> so that they can
-       be shared among multiple instances that run the same Postfix version.
+       <b><a href="postconf.5.html#config_directory">fig_directory</a></b>.  Some files are now in <b>$<a href="postconf.5.html#daemon_directory">daemon_directory</a></b> or <b>$meta_direc-</b>
+       <b>tory</b> so that they can be shared among multiple instances that  run  the
+       same Postfix version.
 
-       Use the command "<b>postconf <a href="postconf.5.html#config_directory">config_directory</a></b>" or "<b>postconf  <a href="postconf.5.html#daemon_directory">daemon_direc</a>-</b>
+       Use  the command "<b>postconf <a href="postconf.5.html#config_directory">config_directory</a></b>" or "<b>postconf <a href="postconf.5.html#daemon_directory">daemon_direc</a>-</b>
        <b><a href="postconf.5.html#daemon_directory">tory</a></b>" to expand the names into their actual values.
 
        $<a href="postconf.5.html#config_directory">config_directory</a>/<a href="postconf.5.html">main.cf</a>, Postfix configuration parameters
        $<a href="postconf.5.html#config_directory">config_directory</a>/<a href="master.5.html">master.cf</a>, Postfix daemon processes
-       $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/postfix-files, file/directory permissions
        $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/postfix-script, administrative commands
        $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/post-install, post-installation configuration
-       $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/dynamicmaps.cf, plug-in database clients
+       $<a href="postconf.5.html#meta_directory">meta_directory</a>/dynamicmaps.cf, plug-in database clients
+       $<a href="postconf.5.html#meta_directory">meta_directory</a>/postfix-files, file/directory permissions
 
 <b>SEE ALSO</b>
        Commands:
        <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database
        <a href="postcat.1.html">postcat(1)</a>, examine Postfix queue file
        <a href="postconf.1.html">postconf(1)</a>, Postfix configuration utility
+       <a href="postdrop.1.html">postdrop(1)</a>, Postfix mail posting utility
        <a href="postfix.1.html">postfix(1)</a>, Postfix control program
        <a href="postfix-tls.1.html">postfix-tls(1)</a>, Postfix TLS management
        <a href="postkick.1.html">postkick(1)</a>, trigger Postfix daemon
@@ -360,7 +371,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="bounce.8.html">bounce(8)</a>, <a href="defer.8.html">defer(8)</a>, <a href="trace.8.html">trace(8)</a>, Delivery status reports
        <a href="cleanup.8.html">cleanup(8)</a>, canonicalize and enqueue message
        <a href="discard.8.html">discard(8)</a>, Postfix discard delivery agent
-       <a href="dnsblog.8.html">dnsblog(8)</a>, DNS black/whitelist logger
+       <a href="dnsblog.8.html">dnsblog(8)</a>, DNS allow/denylist logger
        <a href="error.8.html">error(8)</a>, Postfix error delivery agent
        <a href="flush.8.html">flush(8)</a>, Postfix fast ETRN service
        <a href="local.8.html">local(8)</a>, Postfix local delivery agent

@@ -196,7 +196,7 @@ running "make"), then start and test the null-client:
     testing
     EOF
 
-The test message should be delivered the members of the "mtaadmin" address
+The test message should be delivered to the members of the "mtaadmin" address
 group (or whatever address group you choose) with the following headers:
 
     From: mtaadmin+root=mta1@example.com
@@ -294,7 +294,7 @@ injection SMTP service. Typical additions include:
         smtpd_relay_restrictions =
         smtpd_recipient_restrictions = permit_mynetworks, reject
 
-        # Tolerate occasional high latency in the  content filter.
+        # Tolerate occasional high latency in the content filter.
         #
         smtpd_timeout = 1200s
 

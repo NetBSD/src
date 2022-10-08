@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - qmqpd(8) </title>
 </head> <body> <pre>
 QMQPD(8)                                                              QMQPD(8)
@@ -60,7 +60,7 @@ QMQPD(8)                                                              QMQPD(8)
 
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable preliminary SMTPUTF8 support for the protocols  described
-              in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
 
        <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
               Detect  that  a message requires SMTPUTF8 support for the speci-
@@ -92,13 +92,15 @@ QMQPD(8)                                                              QMQPD(8)
 
 <b>TROUBLE SHOOTING CONTROLS</b>
        <b><a href="postconf.5.html#debug_peer_level">debug_peer_level</a> (2)</b>
-              The increment in verbose logging level when a remote  client  or
-              server matches a pattern in the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
+              The increment in verbose logging level when a  nexthop  destina-
+              tion,  remote client or server name or network address matches a
+              pattern given with the <a href="postconf.5.html#debug_peer_list">debug_peer_list</a> parameter.
 
        <b><a href="postconf.5.html#debug_peer_list">debug_peer_list</a> (empty)</b>
-              Optional  list  of  remote  client or server hostname or network
-              address  patterns  that  cause  the  verbose  logging  level  to
-              increase by the amount specified in $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
+              Optional list of nexthop destination, remote  client  or  server
+              name  or  network  address  patterns that, if matched, cause the
+              verbose logging level to increase by  the  amount  specified  in
+              $<a href="postconf.5.html#debug_peer_level">debug_peer_level</a>.
 
        <b><a href="postconf.5.html#soft_bounce">soft_bounce</a> (no)</b>
               Safety  net to keep mail queued that would otherwise be returned

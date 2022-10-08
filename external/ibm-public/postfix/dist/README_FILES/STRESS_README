@@ -259,7 +259,7 @@ to Postfix.
     maps. The Postfix SMTP server will reject mail and disconnect without
     waiting for the remote SMTP client to send a QUIT command.
 
-  * To hang up connections from blacklisted zombies, you can set specific
+  * To hang up connections from denylisted zombies, you can set specific
     Postfix SMTP server reject codes for specific RBLs, and for individual
     responses from specific RBLs. We'll use zen.spamhaus.org as an example; by
     the time you read this document, details may have changed. Right now, their
@@ -410,7 +410,7 @@ OOtthheerr mmeeaassuurreess ttoo ooffff--llooaadd zzoom
 
 The postscreen(8) daemon, introduced with Postfix 2.8, provides additional
 protection against mail server overload. One postscreen(8) process handles
-multiple inbound SMTP connections, and decides which clients may to talk to a
+multiple inbound SMTP connections, and decides which clients may talk to a
 Postfix SMTP server process. By keeping spambots away, postscreen(8) leaves
 more SMTP server processes available for legitimate clients, and delays the
 onset of server overload conditions.

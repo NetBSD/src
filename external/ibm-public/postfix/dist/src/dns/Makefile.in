@@ -1,10 +1,10 @@
 SHELL	= /bin/sh
 SRCS	= dns_lookup.c dns_rr.c dns_strerror.c dns_strtype.c dns_rr_to_pa.c \
 	dns_sa_to_rr.c dns_rr_eq_sa.c dns_rr_to_sa.c dns_strrecord.c \
-	dns_rr_filter.c dns_str_resflags.c
+	dns_rr_filter.c dns_str_resflags.c dns_sec.c
 OBJS	= dns_lookup.o dns_rr.o dns_strerror.o dns_strtype.o dns_rr_to_pa.o \
 	dns_sa_to_rr.o dns_rr_eq_sa.o dns_rr_to_sa.o dns_strrecord.o \
-	dns_rr_filter.o dns_str_resflags.o
+	dns_rr_filter.o dns_str_resflags.o dns_sec.o
 HDRS	= dns.h
 TESTSRC	= test_dns_lookup.c test_alias_token.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -76,7 +76,7 @@ update: $(LIB_DIR)/$(LIB) $(HDRS)
 	done
 	cd $(INC_DIR); chmod 644 $(HDRS)
 
-test_dns_lookup: test_dns_lookup.c $(LIB) $(LIBS)
+test_dns_lookup: test_dns_lookup.c all $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 dns_rr_to_pa: $(LIB) $(LIBS)
@@ -346,6 +346,18 @@ dns_sa_to_rr.o: ../../include/vbuf.h
 dns_sa_to_rr.o: ../../include/vstring.h
 dns_sa_to_rr.o: dns.h
 dns_sa_to_rr.o: dns_sa_to_rr.c
+dns_sec.o: ../../include/check_arg.h
+dns_sec.o: ../../include/mail_params.h
+dns_sec.o: ../../include/msg.h
+dns_sec.o: ../../include/myaddrinfo.h
+dns_sec.o: ../../include/mymalloc.h
+dns_sec.o: ../../include/sock_addr.h
+dns_sec.o: ../../include/split_at.h
+dns_sec.o: ../../include/sys_defs.h
+dns_sec.o: ../../include/vbuf.h
+dns_sec.o: ../../include/vstring.h
+dns_sec.o: dns.h
+dns_sec.o: dns_sec.c
 dns_str_resflags.o: ../../include/check_arg.h
 dns_str_resflags.o: ../../include/myaddrinfo.h
 dns_str_resflags.o: ../../include/name_mask.h

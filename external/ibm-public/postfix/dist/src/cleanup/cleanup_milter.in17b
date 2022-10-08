@@ -1,0 +1,10 @@
+#verbose on
+open test-queue-file17b.tmp
+#
+# Delete a recipient. Then add the recipient back, with a DSN NOTIFY
+# record instead of a DSN original recipient.
+
+del_rcpt user@example.com
+add_rcpt_par user@example.com NOTIFY=never
+
+close

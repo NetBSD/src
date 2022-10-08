@@ -1,7 +1,7 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title> Postfix manual - access(5) </title>
 </head> <body> <pre>
 ACCESS(5)                                                            ACCESS(5)
@@ -34,8 +34,8 @@ ACCESS(5)                                                            ACCESS(5)
 
        Alternatively, the table can be provided as  a  regular-expression  map
        where  patterns  are  given  as  regular expressions, or lookups can be
-       directed to TCP-based server. In those cases, the lookups are done in a
-       slightly  different  way  as  described below under "REGULAR EXPRESSION
+       directed to a TCP-based server. In those cases, the lookups are done in
+       a  slightly  different way as described below under "REGULAR EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
@@ -160,7 +160,7 @@ ACCESS(5)                                                            ACCESS(5)
 
 <b>REJECT ACTIONS</b>
        Postfix  version 2.3 and later support enhanced status codes as defined
-       in <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code is specified at the beginning  of  the  <i>text</i>
+       in <a href="https://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code is specified at the beginning  of  the  <i>text</i>
        below, Postfix inserts a default enhanced status code of "5.7.1" in the
        case of reject actions, and "4.7.1" in the case of defer  actions.  See
        "ENHANCED STATUS CODES" below.
@@ -213,7 +213,7 @@ ACCESS(5)                                                            ACCESS(5)
               This feature is available in Postfix 2.1 and later.
 
        <b>DEFER_IF_PERMIT</b> <i>optional text...</i>
-              Defer the request if some later restriction would result in a an
+              Defer  the  request if some later restriction would result in an
               explicit   or    implicit    PERMIT    action.     Reply    with
               "<b>$<a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a>   4.7.1</b>    <i>optional  text...</i>"  when  the
               optional text is specified, otherwise reply with a generic error
@@ -340,7 +340,7 @@ ACCESS(5)                                                            ACCESS(5)
 
 <b>ENHANCED STATUS CODES</b>
        Postfix version 2.3 and later support enhanced status codes as  defined
-       in  <a href="http://tools.ietf.org/html/rfc3463">RFC  3463</a>.   When an enhanced status code is specified in an access
+       in  <a href="https://tools.ietf.org/html/rfc3463">RFC  3463</a>.   When an enhanced status code is specified in an access
        table, it is subject to modification. The following transformations are
        needed  when the same access table is used for client, helo, sender, or
        recipient access restrictions; they happen regardless of whether  Post-

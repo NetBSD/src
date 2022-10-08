@@ -7,7 +7,7 @@
 
 <title>Postfix Lookup Table Overview</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -98,7 +98,7 @@ lookup key exists.  Any non-empty lookup result value may be used
 here: the lookup result is not used. Examples
 are the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> that determine what local recipients
 Postfix accepts in mail from the network, the <a href="postconf.5.html#mydestination">mydestination</a> parameter
-that specifies what domains Postfix delivers locally, or the
+that specifies what domains Postfix delivers locally for, or the
 <a href="postconf.5.html#mynetworks">mynetworks</a> parameter that specifies the IP addresses of trusted
 clients or client networks.  Technically, these are lists, not
 tables. Despite the difference, Postfix lists are described here
@@ -326,7 +326,7 @@ also the <a href="DATABASE_README.html#types">static</a>: map type. </dd>
 
 <dt> <b>internal</b> </dt>
 
-<dd> A non-shared, in-memory hash table. Its content are lost when
+<dd> A non-shared, in-memory hash table. Its contents are lost when
 a process terminates. </dd>
 
 <dt> <b>lmdb</b> </dt>

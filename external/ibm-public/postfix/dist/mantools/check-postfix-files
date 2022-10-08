@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Reports missing documentation file names in postfix-files. For
+# simplicity and maintainability this looks at file basenames only.
+# The odds that a file is installed in the wrong place are small.
+
+trap 'rm -f expected.tmp actual.tmp' 0 1 2 3 15
+
+LANG=C; export LANG
+LC_ALL=C; export LC_ALL
+
+# Extract file basenames from postfix-files.
+
+awk -F: '
+    BEGIN { want["f"] = want["h"] = want["l"] = want["p"] = 1 }
+    want[$2] == 1 { n = split($1, path, "/"); print path[n] }
+' conf/postfix-files | sort >actual.tmp
+
+# Create a list of expected names, excluding files that aren't installed.
+
+(ls man/man?/* html/*.html |sed 's/.*\///' | egrep -v '^makedefs.1
+^posttls-finger.1
+^qmqp-sink.1
+^qmqp-source.1
+^qshape.1
+^smtp-sink.1
+^smtp-source.1'
+ls README_FILES) | sort >expected.tmp 
+
+# Compare the expected names against the names in postfix-files.
+
+comm -23 expected.tmp actual.tmp

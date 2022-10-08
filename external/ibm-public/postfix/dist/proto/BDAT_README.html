@@ -7,7 +7,7 @@
 
 <title>Postfix BDAT (CHUNKING) support</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 </head>
 
@@ -51,7 +51,7 @@ globally: </p>
     # The logging alternative:
     smtpd_discard_ehlo_keywords = chunking
     # The non-logging alternative:
-    smtpd_discard_ehlo_keywords = chunking, silent_discard
+    smtpd_discard_ehlo_keywords = chunking, silent-discard
 </pre>
 </blockquote>
 
@@ -170,7 +170,7 @@ then turn off Postfix's CHUNKING announcement as described above.
 <p> In RFC 4468, the authors write that a client may pipeline
 commands, and that after sending BURL LAST or BDAT LAST, a client
 must wait for the server's response. But as this text does not
-appear in RFC 3030 which defines BDAT, is it a useless restriction
+appear in RFC 3030 which defines BDAT, it is a useless restriction
 that Postfix will not enforce. </p>
 
 </body>

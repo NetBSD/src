@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Spellchecks comments in C source code. See mantools/comment.c for
+# 'comment' source code.
+
+LANG=C; export LANG
+
+find . -name *.[hc] | xargs cat | comment | mantools/deroff | spell | fgrep -vxf proto/stop | fgrep -vxf proto/stop.spell-cc

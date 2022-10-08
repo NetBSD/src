@@ -61,7 +61,7 @@
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular
-#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        expressions,  or  lookups  can  be directed to a TCP-based
 #        server. In those case, the lookups are done in a  slightly
 #        different way as described below under "REGULAR EXPRESSION
 #        TABLES" or "TCP-BASED TABLES".
@@ -91,7 +91,7 @@
 # 
 #        The  pattern specifies an email address, a domain name, or
 #        a domain name hierarchy, as described  in  section  "TABLE
-#        LOOKUP".
+#        SEARCH ORDER".
 # 
 #        The  result is of the form transport:nexthop and specifies
 #        how or where to deliver mail. This is described in section

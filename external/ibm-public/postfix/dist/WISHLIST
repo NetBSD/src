@@ -1,0 +1,1140 @@
+Wish list:
+
+	Things to do before the stable release:
+
+	make pre-release-check, HTML validator check.
+
+	Disable -DSNAPSHOT and -DNONPROD in makedefs.
+
+	Alias htable(3) calls to equivalent binhash(3) calls,
+	and obsolete the htable(3) module.
+
+	FILTER_README needs some text on multi-instance implementations,
+	and existing multi-instance references need to be updated.
+
+	Fix code that still uses "long" for data_size and data_offset,
+	and that uses "%ld" in sscanf().
+
+	A smart query service for live Postfix tables that outputs JSON?
+
+	Add a pointer to
+	http://mmogilvi.users.sourceforge.net/software/oauthbearer.html
+	in documentation or on-line howtos.
+
+	Read http://mmogilvi.users.sourceforge.net/software/oauthbearer.html
+	and see how we can improve on the Postfix side.
+
+	Add verp=+= to the qmgr "from=" logging. This is already
+	implemented but not yet integrated.
+
+	Need canonical Dovecot example that has virtual_mailbox_domains,
+	(virtual_mailbox_maps or reject unverified_recipient), and
+	virtual_transport.
+
+	Make smtpd_relay_before_recipient_restrictions settable
+	in smtpd_checks tests.
+
+	Make the DNS resolver library pluggable, so that we can a)
+	plug in a fake resolver library for DNS-related regression
+	tests and make DNS tests hermetic (no external dependency;
+	b) add support for non-libbind resolvers. Gracefully handle
+	requests for unsupported functionality; return an error status,
+	instead of terminating.
+
+	Add a robust dnssec_probe regression test (success and fail)
+	that does not break existing regression tests.
+
+	smtp_sasl_tls_security_options = noanonymous, and make
+	smtp_sasl_security_options the default dependent on the
+	smtp_sasl_tls_security_options default (i.e. reverse the
+	dependency). Or make them independent.
+
+	Try to make the master throttle more distrusting. Currently,
+	the master throttles a service after a child process cannot be
+	created (fork() fails), or if a child process fails upon its
+	first use. The master always unthrottles the service if a process
+	handles a client successfully. This is sufficient to mitigate
+	local errors that break all attempts to use a service. It also
+	slows down stupid remote attacks as long as malicious traffic
+	dominates benign traffic. Perhaps monitor a crashing percentage?
+	If 50% of all connections to a service result in abnormal
+	termination, that would be bad even under a non-attack scenario.
+
+	More accurate address verification: do a quota check before
+	reporting that a local(8) or virtual(8) recipient is deliverable.
+
+	Eliminate duplicate mail submission permission checks from
+	sendmail, so that they happen in postdrop only. Then, pass the
+	result through the postdrop-to-sendmail protocol. This requires
+	that postdrop reads all inputs before responding (the
+	local_login_sender_maps check depends on the envelope
+	sender). Then sendmail can save input to dead.letter (no setgid
+	privilege, but it would still have to use safe_open() to avoid
+	clobbering files).
+
+	Consider removing compat_level_from_numbers() and aliases,
+	because they are no longer used anywhere.
+
+	Allow '}' at the beginning of a line. This would make multi-line
+	configuration settings easier to enter. This may be true
+	for main.cf, master.cf and similar files (such as database
+	configuration files, but not necessarily elsewhere). So it
+	may have to be a readlline flag.
+
+	Understand what happens with DNSSEC related status fields 
+	in posttls-finger when resolv.conf points to a host that
+	runs no DNS server.
+
+	Hardening the half-dane behavior: some sites may rely on
+	current behavior which allows original MX domain name for
+	certificate matches. Requires a new (compatibility) parameter
+	setting?
+
+	Code deduplication: migrate multi_server applications to
+	event_server, because the multi_server and event_server
+	skeletons are much more similar than other skeletons. In
+	addition to the default event_server accept() handler, also
+	register a read event callback for handling post_accept
+	events. But the currrent multi_server API fits typical usage
+	better.
+
+	When a secondary instance has no multi_instance_name set,
+	postmulti -i won't be able to find it.
+
+	nbbio: exercise the sanity checks with fake msg(3) functions.
+
+	optreset (bsd-ism) how badly do we need it?
+
+	transport policy protocol (clone of check_policy).
+
+	See also postscreen event-driven client for policy delegation
+	below.
+
+	smtp_line_length_limit can insert a line break in the middle
+	of a multi-byte character (which is not necessarily UTF-8,
+	so we can't simply look at the 8th bit). Also, note that a
+	multi-byte character may span queue file record boundaries,
+	for example if line_length_limit == smtp_line_length_limit.
+	The only way to fix this is to make the smtp_text_out()
+	routine aware of every possible multi-byte encoding.
+
+	Replace ad-hoc code for pipe(8) flags handling, with
+	infrastructure that was built for smtp(8).
+
+	Move map descriptions from postconf(1) to DATABASE_README
+	and point there. The text in DATABASE_README is less complete
+	than that in postconf(1).
+
+	make tls_pre_jail_init() safe by design for use in programs
+	that implement both clients and servers.
+
+	In smtpd(8) and postscreen(8), set the ehlo_discard_mask
+	to ~0 so that STARTTLS, BDAT, DSN, etc. work only for clients
+	that send EHLO.
+
+	Wordsmithing: "replace by X" -> "replace with X" unless X
+	is "responsible" for making the substitution.
+
+	In postscreen, don't fork after 'postfix reload' when
+	psc_check_queue_length (and psc_post_queue_length?) is zero.
+
+	After I/O error, store errno in VSTREAM object before errno
+	may be overwritten.
+
+	Add some tips for logging from container:
+	https://www.projectatomic.io/blog/2016/10/playing-with-docker-logging/;
+	syslog_name = $myhostname/postfix; mkdir queue and data
+	dir; postfix check to create queue subdirectories.
+
+	Add postwhite as a postscreen-related project.
+	https://github.com/stevejenkins/postwhite/blob/master/README.md
+
+	XFORWARD attributes in policy protocol?
+
+	Document postsrsd and postforward for srs-ifying. Would
+	more fine-grained smtp_generic_maps support help?
+
+	Decide whether to deprecate database configuration pathnames
+	that start with ".", for example, ldap:./file/name. These forms
+	are documented for ldap:, memcache:, mysql:, pgsql:, and sqlite:
+	maps. Postfix daemon processes will look up files relative to the
+	queue directory, but with postmap command-line processes it would
+	be more natural to interpret relative pathnames relative to the
+	current directory of the calling process (it would be a surprise
+	if "postmap hash:./foo" would access "/var/spool/postfix/foo",
+	or if "postmap hash:foo" and or "postmap hash:./foo" would access
+	different files).
+
+	Convert postalias(1) to store external-form keys, and convert
+	aliases(5) to perform external-first lookup with fallback to
+	internal form, to make it consistent with the rest of Postfix.
+	In several years we may remove the internal-form fallbacks
+	with a compatibility_level safety net.
+
+	In the bounce daemon, set util_utf8_enable if returning an
+	SMTPUTF8 message. This is wrong; if SMTPUTF8 is disabled,
+	then Postfix must not turn it on.
+
+	Add a header_body_checks extension callback in smtp_proto.c
+	that implements the PASS action.
+
+	Propagate SMTPD_PEER_CODE_XXX from smtpd(8) to cleanup(8),
+	so that {client_resolve} and {_} produce consistent results.
+
+	NO_IP_CYRUS_SASL_AUTH should be a main.cf parameter.
+
+	Modeline support in config files to enable/disable trailing
+	#comment, and to give hints about how to handle an LHS or
+	RHS. This will not preserve trailing comments in lines that
+	are modified with "postconf -e" and the like.
+
+	Maintainability: replace lengthy libmilter-API argument lists
+	with named parameters, as with the libtls API.
+	
+	Fix buflen integer overflow detection in dict*sql.c.
+
+	Fix "make test" bitrot.
+
+	Move DNS-based tests from porcupine.org to postfix.org, or use
+	a mock DNS library (a library that presents the same API as the
+	real library, but that produces canned responses).
+
+	Document dns_ncache_ttl_fix_enable use case in POSTSCREEN_README
+	and RELEASE_NOTES.
+
+	Remove this file from the stable release.
+
+	Things to do after the stable release:
+
+	Specify WARN_UNUSED_RESULT for all library functions that
+	pass, deliver, bounce or defer a delivery request.
+
+	Invent some kind of type-checking wrappers for htable(3),
+	ctable(3) and other modules that take and return a void*
+	pointer. We already did that for variadic functions.
+
+	TLS certificate provenance: indicate whether a subject
+	name/issuer are verified or not (for example, change the
+	attribute name to unverified_ccert_subject etc.).  This is
+	relevant only for fingerprint-based authentication including
+	DANE, and affects logging, SMTPD policy, and Milters.
+
+	Generalize the daemon '-S' stand-alone mode, so that it can
+	be used with custom configuration settings for request/reply
+	regression testing. This would use the existing "-o name=value"
+	support to override parameters. For example, queue_directory
+	would point to a directory with sockets for fake versions of
+	Postfix-internal services.
+
+	Update the list of Sendmail macros that Postfix can send
+	to Milters (auth_ssf and TLS-related).
+
+	Update smtpd command count when rejecting or skipping input
+	before command-table lookup. But then we need to count
+	commands that are rejected (malformed UTF-8, tokenizer
+	error, forbidden command), or skipped (noop).
+
+	What is the best place to detect spaces in pathnames during
+	installation/upgrade/packaging? postfix-install for early
+	warning, and post-install as a safety net?
+
+	When the service basename differs from the program file
+	basename, either prepend the service name to the syslogname (as
+	if syslog_name=postfix/service/program), or prepend the service
+	name to the process name (perhaps too confusing).  The service
+	indication is desirable for mail delivery transports (smtp
+	versus relay) as it identifies what scheduler parameters are
+	in effect, but it is also desirable for mail receiving services
+	(smtp versus submission verus smtps as configured in the stock
+	master.cf file). This requires exceptions for some program names
+	(exclude smtpd to avoid logging postfix/smtp/smtpd which could
+	result in more confusion, and maybe other program names).
+
+	UTF8 DNS[BW]L domain name.
+
+	Consolidate maps flags in mail_params.h instead of having
+	multiple copies scattered across programs.
+
+	Try to allow UTF-8 myhostname/mydomain, at least in bounce
+	template expansion.
+
+	In the SMTP server, do not issue an enhanced status code when
+	rejecting a connection before the HELO handshake is completed.
+
+	Maybe don't whitelist a client that has maxed out its
+	per-MTA connection count limit.
+
+	Inline support for pcre:{/pattern/=action, ...} and ditto
+	support for regexp: and cidr: tables. Factor out and reuse
+	code that already exists in inline: and other tables.
+
+	Log command=good/bad statistics in postscreen?
+
+	smtpd_checks tests either must use a DNS dummy resolver
+	(override the res_search API) or all names must be under
+	test.postfix.org (but that does not work for address->name
+	lookups, and cannot simulate some errors).
+
+	Reporting the original Message-ID in a bounce message
+	In-Reply-To: or References: header.  In the cleanup daemon,
+	grab a copy of the Message-ID and export it along with other
+	header-extracted information at the top of the "extracted"
+	queue file segment.  In the queue manager, extract this
+	along with other header-extracted information, and forward
+	the Message-ID in the bounce server notification request.
+
+	Clobber ORCPT when sender is owner-mumble?
+
+	Add milter_mumble_macros to the list of per-macro features.
+
+	The pickup daemon logs warnings only when the cleanup daemon
+	dit not provide a "reason" attribute. Is this logic right?
+
+	up-convert myhostname to UTF-8 in MIME boundary strings?
+
+	Eliminate code duplication between pcf_print_master_field()
+	and pcf_print_master_entry().
+
+	Error reporting: see if pcf_check_master_entry() and children
+	can return error descriptions instead of terminating with
+	a fatal error.
+
+	Add a switch to consider postscreen deep protocol tests as
+	"completed" when receiving "RSET" after "RCPT TO" and the
+	session has passed all tests up to that point. RSET becomes
+	like QUIT except perhaps that it does not hang up.
+
+	apipe: map, splits results into address lists and performs
+	lookups for the invidual addresses, converting back and
+	forth between external and internal forms.
+
+	Clarify that receive_override_options have no effect with
+	smtpd_proxy_filter.
+
+	Document the relative order of header_checks, address
+	rewriting, milters.
+
+	NOT: Table-driven case folding and case-insensitive string
+	comparison specifically for UTF-8. Use libicu functions
+	instead.
+
+	When downgrading message/global to 7bit, is quoted-printable
+	the appropriate encoding? Should it be base64?
+
+	Should we encode headers with RFC 2047, when that is the
+	only reason that Postfix cannot deliver to a non-UTF8SMTP
+	server? Probably not in the general case. What about 
+	Postfix as a gateway server that converts UTF8SMTP
+	for delivery to non-UTF8SMTP environments?
+
+	Document and test restriction_classes example for 
+	smtpd_policy_service_default_action.
+
+	Don't accept AUTH or other features that are not announced
+	in the EHLO response.
+
+	Suggested at Mailserver conference: Postscreen RDNS-based
+	reputation (but this makes postscreen performance highly
+	unpredicable because it introduces a dependency on random
+	DNS servers).
+
+	Suggested at Mailserver conference: a way to select a
+	specific field in a table, presumably as the result value.
+	This may be done with a filtermap{i,j,...}: table that propagates
+	only the specified field(s).
+
+	Discourage the use of "after 220" tests in POSTSCREEN_README
+	and the documentation of individual parameter settings.
+
+	To un-break "make tests" under src/smtpd, make tests
+	independent from the DNS and native routines for host
+	name/address lookup.
+
+	Make been_here flag BH_FLAG_FOLD configurable for masochists.
+
+	Replace some redundant TLS_README sections with pointers
+	to FORWARD_SECRECY_README.
+
+	Move html/index.html source to proto/.
+
+	How hard is it to follow canonical or virtual mapping
+	for the purpose of address validation? We must never
+	reject a valid address.
+
+	Preserve case in smtpd_resolve_addr() and add a structure
+	member for the case-folded address. IIRC some Milter macro
+	needs to show the unfolded address.
+
+	Per SASL account rate limits. This requires new infrastructure
+	that maintains stats by SASL account instead of client IP
+	address.
+
+	Watchdog timer in postmap/postalias.
+
+	Begin code revision, after DANE support stabilizes.  This
+	should be one pass that changes only names and no code.
+
+	recipient_delimiters = $recipient_delimiter for BC
+
+	All source code must specify its original author and
+	license statement. Some code modules specify Lutz Jaenicke
+	as the original author and fall under his liberal license.
+	Code that is added to such a module has the same license
+	(or at least something that is not more restrictive). Code
+	modules without input from Lutz Jaenicke must state its
+	original author and license (preferably no more restrictive
+	than Postfix's own license). Currently, too many files list
+	Wietse as the original author, and Lutz Jaenicke's license,
+	which is wrong.
+
+	We have smtp_host_lookup, smtp_dns_resolver_options, and
+	now smtp_dns_support_level.  Of these, smtp_dns_resolver_options
+	is orthogonal but the rest has overlap.
+
+	There needs to be support for automatic migration from the
+	deprecated disable_dns_lookups feature to the preferred
+	smtp_dns_support_level feature. This support needs to exist
+	for several releases before the deprecated feature can be
+	removed.
+
+	End code revision, after DANE support stabilizes.
+
+	It would be nice if "bare username" lookup is not hard-coded
+	for domains in the local address class.
+
+	Don't forget Apple's code donation for fetching mail from
+	IMAP server.
+
+	Should postconf -o refuse to work without the -x option?
+
+	Make 30s caching (feature 20070414) configurable, such that
+	0 means no caching.
+
+	Make errno white/blacklist for getpwnam_r etc. and mailbox
+	write errors.
+
+	smtpd_muble_restrictions rule names are case-insensitive.
+	restriction_classes values are case-sensitive but should
+	be case-insensitive for consistency with smtpd_muble_restrictions.
+
+	Make "rename" the default when postmapping a DB file
+	(later: use copy+rename for postmap -i, postmap -d).
+
+	Service-name parameters aren't documented in daemon manpages.
+
+	When faking up the DSN ORCPT, don't send bare usernames
+	from local command-line submission.
+
+	lmtp_assume_final is broken. A 2XX response does not imply
+	final delivery. The Sieve language implements accept-then-bounce.
+
+	postscreen event-driven plug-in interface to send out a
+	query in parallel with the Pregreet and DNSBL tests, using
+	a simplified version of the policy delegation protocol.
+
+	Parallelized queue preprocessing: rip out the queue manager
+	code to read queue files and resolve recipients, and run
+	it in parallel processes. The queue manager then processes
+	their results as they become available.  This would eliminate
+	the qmgr<->trivial-rewrite bottleneck. This can also eliminate
+	much of the scheduling disadvantage of a single queue manager
+	compared to hundreds of mail receiving or sending processes
+	(especially if there is a way to scan the queue in parallel).
+
+	Memory pools for same-type memory objects.  This can be
+	used to either increase memory locality for frequently-allocated
+	objects (MRU allocation) or to make use-after-free bugs
+	more detectable (use LRU allocation and wipe the object
+	immediately after free().  Finally, same-type memory pools
+	prevent object type errors with use-after-free bugs.
+
+	"no-cache" option for selected postscreen tests?
+
+	Need a new DICT flag to indicate that a map handle supports
+	locking.  If it doesn't (as with memcache or proxymap
+	handles), then postscreen etc. don't need to close a cache
+	file after "postfix reload".  After a fork() it is OK to
+	keep using a memcache or proxymap handle, because the parent
+	exits immediately.  For this to work, the memcache client
+	needs to propagate the flag from a persistent backup map,
+	but the proxymap protocol should not propagate this to the
+	client.
+
+	Different TTL values for different DNSBL sources?
+
+	Replace master(8) SIGHUP by very simple socket protocol to
+	allow reload of a specific service.
+
+	postscreen: in the dummy SMTP engine, log the protocol state
+	at time of violation (like smtpd, set state->where initially
+	to CONNECT, then update it with the name of the last "known"
+	command, or set it to "unimplemented").
+
+	The discussion of postscreen cache configuration is in the
+	wrong place (how whitelisting works). Move it to the section
+	about configuring postscreen.
+
+	Before proxymap can be exposed to the network (primarily
+	to share postscreen or verify caches), need to enforce
+	limits on attribute string name and value length in IPC
+	protocols.  10-20KB seems OK. We need to enforce content
+	sanity checks (for example, no control characters; Postfix
+	does not pass around multi-line data in table lookups). The
+	VSTREAM library already supports read/write deadlines.  We
+	need to use attack-resistant code for numeric conversion.
+
+	move flush_init() etc. from defer service clients to the
+	bounce daemon? Postfix works best when work can be spread
+	out over many clients, instead of over a few servers.
+
+	multi_connect() function that takes a list of inet:host:port
+	and/or unix:pathname specs, with an explicit "inet" prefix
+	argument to handle applications that use host:port only.
+	This will simplify multi-host implementation for memcache
+	client, dovecot client, and other.
+
+	dict_memcache: treat "bad" key as cache miss, i.e.  read/write
+	the backup database as if the cache did not exist. This
+	does not help because most Postfix maps (virtual, canonical,
+	access, transport, ...) also don't support spaces in keys.
+
+	postscreen: keep the cache open after "postfix reload" when
+	it is remote (type memcache: or proxy:). This does not work
+	because memcache can use a non-proxied file as backup).
+
+	What is the feasibility of adding an mta_name (personality)
+	attribute that is propagated via queue files and delivery
+	agent requests? It would default to myhostname.
+
+	Major performance improvement opportunity (that is until
+	everyone runs Postfix queues on SSDs).  Investigate the
+	viability of a daemon that produces incoming and postdrop
+	queue files on request (in reality it would maintain a
+	limited queue of "spare" files). Central queue file allocation
+	reduces the I/O performance disadvantage that qmgr has when
+	100 smtpd processes are receiving mail, or when lots of
+	mail is submitted with the sendmail command line.  When an
+	smtpd process accepts MAIL FROM, a cleanup daemon requests
+	a queue file and receives a queue ID + file handle from the
+	queue file daemon.  If the queue file daemon is down, the
+	cleanup daemon creates the file itself like it does now;
+	this can be hidden in the mail_stream library module.  If
+	the mail transaction is aborted, then the cleanup daemon
+	gives the queue file back to the queue file daemon's "spare"
+	file pool, saving most of the overhead of creating and
+	deleting a queue file (the file would still need to be
+	renamed at the start of the next mail transaction).  If the
+	cleanup daemon is unable to give a file back, then it can
+	delete the file like it does now; this can be hidden in the
+	mail_stream library module.  The whole thing can be
+	transparently added to Postfix by adding calls to a
+	queue-file-service client to the mail_queue_enter() and
+	mail_queue_remove() library routines.  Other advantages:
+	1) negligible performance hit when queue file allocation
+	happens earlier, so that logging and milters have a queue
+	ID for the whole transaction not just the first valid
+	recipient; 2) by not removing every queue files we get most
+	of the performance gain of a queue based on append/truncate
+	instead of the much more expensive create/delete.
+
+	Investigate viability of Sendmail dns maps.
+
+	Make the rules for how to use close-on-exec more explicit.
+
+	Provide separate timeout control for dict_proxy client,
+	rewrite client, resolve client, cleanup client, and so on.
+	Perhaps a timeout argument to the mail_connect() routines.
+
+	Trick from amavisd: save listen socket/fifo/etc state, clear
+	their close-on-exec flags, exec the same program file to
+	re-initialize (with saved socket state on command line or
+	in environment), then restore the listen socket/fifo/etc
+	close-on-exec flags.  This could be a way to mitigate the
+	impact of memory/file leaks, and to implement "postfix
+	reload" support for master(8) features that currently don't
+	support this. 
+
+	Sub-second time resolution. The first benefit is to make
+	per-destination rate delays more usable. Other applications
+	will come up once the support exists. The straightforward
+	approach is to represent all time intervals in milliseconds,
+	and to update all code that makes system calls with a time
+	argument (as well as the compiled-in upper and lower time
+	parameter bounds, which are currently in seconds).
+	Unfortunately, that limits he maximum time interval to less
+	than 25 days on 32-bit systems, and is likely to break
+	compatibility (for starters, it cannot even deal with the
+	compiled-in 100d upper bound on the queue file lifetime).
+	A second option is to have a "compatibility" time base
+	switch between milliseconds and seconds; this means extra
+	changes to all code that makes system calls with a time
+	argument, and the way that the compiled-in upper and lower
+	bounds are specified.  Some of this can be encapsulated in
+	macros like time_to_sec(t), time_to_msec(t) and sec_to_time(t).
+	Finally, it is relatively easy to replace the events(3)
+	interface to use "double" for the time delay arguments, but
+	it is a major pain to convert all main.cf time parameters
+	into doubles (converting only some leads to a documentation
+	nightmare).
+
+	Address verify cache: allow a negative cache "refresh"
+	result to purge a "positive" cache entry in some safe manner.
+	Currently, the negative cache "refresh" result is discarded,
+	address verify cache lookup returns OK, and each lookup
+	forces a "refresh" probe until the entry expires.
+
+	Some Sendmail configurations trigger sub-optimal behavior
+	when the postscreen_whitelist_interfaces parameter lists
+	primary MX addresses only.  When postscreen's "deep protocol
+	tests" are successful on the primary MX address (i.e. they
+	result in 4XX responses to RCPT TO), some Sendmail
+	configurations keep the primary MX connection open until
+	AFTER they finish talking to the backup MX address.  The
+	problem is that the backup connection runs into a WHITELIST
+	VETO condition because the whitelisting database has not
+	yet been updated with the PASS NEW result for the primary
+	MX connection.  Unfortunately postscreen can't update the
+	whitelisting database before the primary MX connection is
+	closed, because a client may still make a mistake.
+
+	In the SMTP server, check if the connection is closed before
+	replying to ".", and discard the message if the reply can't
+	be sent. This reduces the time window for RFC 1047 message
+	duplication, and may even prevent the delivery of some spam.
+	http://www.exim.org/lurker/message/20070416.103159.9d5ff0ce.en.html
+	This requires splitting the SMTP server's commit operation
+	into two operations: first, a tentative commit operation
+	that performs most of the I/O and processing in milters and
+	in the cleanup server; second, a final commit operation
+	that is executed only if the remote SMTP client hasn't hung
+	up in the mean time. Unfortunately, SMTP-based before-queue
+	content filters don't support a tentative commit operation.
+
+	Find out how to reproduce Berkeley DB bogus ENOENT errors.
+	postscreen does not log this with Berkeley DB 1 (FreeBSD
+	4..8), 4.7.25 (Ubuntu 9.04) and 4.8.24 (Ubuntu 10.04).
+
+	postconf command-line option to show the compile-time
+	settings (CCARGS, AUXLIBS) in case binary packages
+	don't install the makedefs.out file.
+
+	events.c: cache the side effects of file descriptor event
+	enable/disable operations in user space, and do bulk kernel
+	updates at event_loop() time.  This can eliminate costly
+	system calls with successive event disable/enable operations
+	on the same file descriptor. This can also eliminate the
+	need for tricky code that tries to avoid the expense of
+	successive disable/enable operations. Such code is likely
+	to introduce bugs.
+
+	When does it pay off to send domains in the active queue
+	to a DNS prefetch daemon? Could this generalize to a dynamic
+	transport map that piggy-backs domains with the same MX
+	host into the same mail delivery transaction?
+
+	tlsproxy(8) should receive TLS preferences from postscreen(8)
+	and smtpd(8), instead of reading them from main.cf. This
+	means that many tlsproxy_ parameters become postscreen_
+	parameters, and that tls_server_init() parameters move to
+	to tls_server_start(). That is a significant API change.
+	It also means tlsproxy can't open all files before chroot().
+
+	anvil rate limit for sasl_username.
+
+	Encapsulate nbbio buffer access and update by tlsproxy.
+
+	Full-duplex support for tlsproxy(8). This requires updating
+	events(3) and nbbio(3).
+
+	Register automagic destructor for object attached to VSTREAM.
+
+	Use different ipc time limits for email message transactions
+	(smtpd, pickup)->cleanup and for quick query/reply transactions
+	such as address rewriting/resolution. Beware of large time
+	limits for local or virtual alias expansion.
+
+	permit_tempfail_action (default: defer_if_reject) to be
+	used as the default value for dnswl_tempfail_action and
+	rhswl_tempfail_action. Steal liberally from the code that
+	implements unverified_recipient_tempfail_action etc.
+
+	Support filtering of messages that are generated by Postfix:
+	This would apply to postmaster notices and bounce messages
+	(DKIM), and address verification (BATV).
+
+	Consistency: in postconf.proto make <dt>..</dt> tags bold.
+
+	Would it help if there were different cleanup_service
+	parameter names for different message paths? smtpd(8) uses
+	the same cleanup_service value for receiving remote mail
+	and for submitting postmaster problem reports. Do we need
+	separate mumble_cleanup_service_name parameters for "inject",
+	"notify" and "forward" (with backwards compatible defaults)?
+
+	IF/ENDIF support for CIDR tables.
+
+	Need a regular expression table to translate address
+	verification responses into hard/soft/accept reply codes.
+
+	Is there a way to make sendmail -V work after local alias
+	expansion? Majordomo-like mailing lists would benefit from
+	this; the example in VERP_README does not work in the general
+	case.
+
+	When an alias is a member of an :include: list with owner-
+	alias, local(8) needs an option to deliver alias or alias->user
+	indirectly. What happens when an :include: list with owner-
+	alias includes another list?
+
+	Don't allow empty result values in pcre and regexp maps.
+	Postfix doesn't allow them anywhere else (check this).
+
+	Make PCRE_MAX_CAPTURE configurable.
+
+	Add some checks for tokens starting with #. A challenge
+	is to report sensible context from the guts of some low-level
+	parser, without introducing a great deal of clumsiness.
+
+	Add sendmail macros for {verify} and maybe other TLS info.
+
+	Find out if we are doing the correct thing by looking at
+	state->milter_reject_text when expanding {rcpt_addr} or
+	{rcpt_host}.
+
+	Find out why post_mail() etc. block when the qmgr fifo is
+	full (answer: trigger_timeout). How can this cause delays
+	in the queue manager?  When a recipient bounces during
+	(transport, nexthop, address) resolution, it is redirected
+	to the error or retry mailer; and bounce-after-delivery is
+	asynchrounous so it can't block the queue manager, either.
+
+	How to ensure that proxy_read_maps is processed after all
+	its dependencies are initialized, or just bite the bullet
+	and rewrite the parameter initialization code.
+
+	The cleanup virtual alias expansion limit does not really
+	deliver on its promises. 1) It promises to truncate the
+	result without aborting delivery, which would be undesirable
+	anyway, but that is not what it does, so that is good.  2)
+	It keeps all the recipients from multi-recipient database
+	lookup, then terminates further recursion when the result
+	exceeds the expansion limit. This behavior achieves the
+	original goal that all things shall have a finite size (even
+	though but we don'really care how large they are) but may
+	result in surprises when recipients are listed in virtual
+	alias domains or need expansion for other reasons.  In a
+	phone call with Victor, a reasonable way out is to set the
+	limit to some large number (100000) and abort delivery when
+	the result exceeds the limit.
+
+	Should the postscreen save permanent white/black list lookup
+	results to the temporary cache, and query the temporary
+	cache first? Skipping white/black list lookups will speed
+	up the handling of "good" clients without a permanent
+	whitelist entry.  Of course, this means that updates to the
+	white/black lists do not immediately take effect. Workarounds:
+	1) use a shorter temporary cache TTL for clients on the
+	permanent black/white lists; 2) ignore cached white/black
+	list lookup results after "postfix reload"; 2) adjust the
+	logging, for example "WHITELISTED address (cached)" and
+	"BLACKLISTED address (cached)" to eliminate surprises.
+	Comparing the cache entry time with the white/blacklist
+	file modification time is not foolproof: for example, pcre
+	or CIDR tables are read only once.
+
+	It would be nice if the generic dict_cache(3) cache manager
+	could postpone process suicide until cache cleanup is
+	completed (but that is not possible when postscreen forks
+	into the background to finish already-accepted connections,
+	and it is not desirable when a host is being shut down).
+
+	When postscreen drops a connection, a 521 "greeting" should
+	be of the form "521 servername..." and not have an enhanced
+	status code. The "521 5.7.1" form can be used after EHLO.
+	Of course no spammer is going to complain about Postfix
+	SMTP compliance.
+
+	Find a place to document all the mail routing mechanisms
+	in one place so people can figure out how Postfix works.
+
+	The access map BCC action is marked "not stable", perhaps
+	because people would also expect BCC actions in header/body_checks.
+	How much would it take to make the queue file editing code
+	generally usable?
+
+	Move smtpd_command_filter into smtpd_chat_query() and update
+	the session transcript (see smtp_chat_reply() for an example).
+
+	SMTP connection caching without storing connections, to
+	improve TLS mail delivery performance.
+
+	Should not milter8_mail_event() unset the "hold" default
+	reply? Better, the default reply should not be used for
+	this purpose.
+
+	Don't send MASTER_STAT_TAKEN/MASTER_STAT_AVAIL when a server
+	runs with process limit of 1. But this means the master
+	never learns that the process is successful and will always
+	pause $service_throttle_time before restarting a failed service.
+
+	Don't bother maintaining a per-service lockfile when a
+	server runs with process limit of 1. The purpose of the
+	lockfile is to avoid thundering herd problems when the kernel
+	wakes up multiple processes for each new client connection.
+
+	Implement PREPEND action for milter_header_checks. Save the
+	to-be-prepended text to buffer, then emit it along with the
+	new header.
+
+	Fix the header_body_checks API, so that the name of the map
+	class (e.g. milter_header_checks) is available for logging.
+
+	Fix the mime_state and header_body_checks APIs, so that
+	they use VSTRINGs. This simplifies REPLACE actions.
+
+	Update FILTER_README for multi-instance support, and rename
+	the old document to FILTER_LEGACY_README.
+
+	Need to sign delivery status notifications, to avoid surprises
+	when eventually people start enforcing DKIM etc. signatures.
+
+	Either document or remove the internal_mail_filter_classes
+	feature (it's disabled by default).
+
+	Make the "unknown recipient" test configurable as
+	first|last|never, with "yes"=="last" for backwards
+	compatibility. The "first" setting is good for performance
+	(stress=yes) when all users are defined in local files; but
+	it may perform worse when users are in networked tables.
+
+	Cleanup: make DNSBL query format configurable beyond the
+	client's reversed IP address.
+
+	With 'final delivery' in the LMTP client, need an option
+	to also add delivered-to and other pipe(8) features.  This
+	requires making mail_copy() functionality available in
+	non-mailbox context.
+
+	Cleanup: modernize the "add missing From: header" code, to
+	``phrase <addr>'' form. Most likely, quote the entire phrase
+	if it contains any text that is special, then rfc822_externalize
+	the whole thing.
+
+	SMTP server: make the server_addr and server_port available
+	to policy server, Dovecot, and perhaps Milters.
+
+	Med: local and remote source port and IP address for smtpd
+	policy hook.
+
+	Maybe change maps_rbl_reject_code default to 521, and
+	update wording in STRESS_README.
+
+	Encapsulate time_t comparisons so that they can be made
+	system dependent (use difftime() where available).
+
+	Encapsulate time_t conversions (e.g. REC_TYPE_TIME) so that
+	they can be made system dependent.
+
+	Plan for time_t larger than long, or wait for LP64 to
+	dominate the world?
+
+	Make "AUTH=<>" appendage to MAIL FROM configurable, enabled
+	by default.
+
+	To support ternary operator without a huge parsing effort,
+	consider ${value?{xxx}:{yyy}} where ${name} is existing
+	syntax, and where ?{text} and :{text} are new syntax that
+	is unlikely to break existing configurations. Or perhaps
+	it's just too ugly.
+
+	Write delivery rate delay example (which _README?) and auth
+	failure cache example (SASL_README). Then include them in
+	SOHO_README.
+
+	Look for alternatives for the use of non_smtpd_milters.
+	This involves some way to force local submissions to go
+	through a local SMTP client and server, without triggering
+	"mail loops back to myself" false alarms. The advantage is
+	that it makes smtpd_mumble_restrictions available for local
+	and remote mail; the disadvantage is that it makes local
+	submissions more dependent on networking.  One possibility
+	is to use "pickup -o content_filter=smtp:127.0.0.1:10025",
+	or a dedicated SMTP client/server on UNIX-domain sockets;
+	we could also decide to always suppress "mail loop" detection
+	for loopback connections.  Another option is to have the
+	pickup or cleanup server drive an SMTP client directly;
+	this would require extension of the mail_stream() interface,
+	plus a way to handle bounced/deferred recipients intelligently,
+	but it would be at odds with Postfix design where delivery
+	agents access queue files directly; exposing delivery agents
+	to raw queue files violates another Postfix design principle.
+
+	Consolidate duplicated code in *_server_accept_{pass,inet}().
+
+	Consolidate duplicated code in {inet,unix,upass}_trigger.c.
+
+	In the SMTP client, handle 421 replies in smtp_loop() by
+	having the input function raise a flag after detecting 421
+	(kill connection caching and be sure to do the right thing
+	with RSET probes), leave the smtp_loop() per-command reply
+	handlers unchanged, and have the smtp_loop() reader loop
+	bail out with smtp_site_fail("server disconnected after
+	%s", where), but only in the case that it isn't already in
+	the final state. But first we need to clean up the handling
+	of do/don't cache, expired, bad and dead sessions.
+
+	Combine smtpd_peer.c and qmqpd_peer.c into a single function
+	that produces a client context object, and provide attribute
+	print/scan routines that pass these client context objects
+	around. With this, we no longer have to update multiple
+	pieces of code when a client attribute is added. Ditto for
+	SASL and TLS context.
+
+	Don't log "warning: XXXXX: undeliverable postmaster
+	notification discarded" for spam from outside.
+
+	Really need a cleanup driver that allows testing against
+	Milter applications instead of synthetic events. This would
+	have to provide stubs for clients that talk to Postfix
+	daemon processes. See if this approach can also be used for
+	other daemons.
+
+	smtpd(8) exempts $address_verify_sender from access controls,
+	but it doesn't know whether cleanup(8) or delivery agents
+	modify the sender. Would it be possible to "calibrate" this
+	exemption, perhaps by having delivery agents pass the probe
+	sender to the verify server, keeping in mind that the probe
+	sender may differ per delivery agent due to output rewriting.
+
+	Update attr_print/scan() so they can send/receive file
+	descriptors. This simplifies kludgy code in many daemons.
+
+	Would there be a problem adding $smtpd_mumble_restrictions
+	and $smtpd_sender_login_maps to the default proxy_read_maps
+	settings?
+
+	Remove defer(8) and trace(8) references and man pages. These
+	are services not program names. On the other hand we have
+	man pages for lmtp(8) and smtp(8), but not for relay(8).
+	Likewise, retry(8) does not have a man page.
+
+	Bind all deliveries to the same local delivery process,
+	making Postfix perform as poorly as monolithic mailers, but
+	giving a possibility to eliminate duplicate deliveries.
+
+	Maybe declare loop when resolve_local(mxhost) is true?
+
+	Update message content length when adding/removing headers.
+
+	Need scache size limit.
+
+	REDIRECT should override original recipient info, and
+	probably override DSN as well.
+
+	Update FILTER_README with mailing list suggestions to tag
+	with a badness indicator and then filter down-stream.
+
+	Make null local-part handling configurable: either expand
+	into mailer-daemon (current behavior) or disallow (strict
+	behavior, currently implemented only in the SMTP server).
+
+	Add M flag (enable multi-recipient delivery) to pipe daemon.
+
+	The usage of TLScontext->cache_type is unclear. It specifies
+	a TLS session cache type (smtpd, smtp, or lmtp), but it is
+	sometimes used as an indicator that TLS session caching is
+	unavailable.  In reality, that decision is made by not
+	registering call-back functions for cache maintenance.
+
+	Postfix TLS library code should copy any strings that it
+	receives from the application, instead of passing them
+	around as pointers. TLScontext->cache_type is a case in
+	point.
+
+	Are transport:nexthop null fields the same as in the case
+	of default_transport etc. parameters?
+
+	Don't lose bits when converting st_dev into maildir file
+	name. It's 64 bits on Linux. Found with the BEAM source
+	code analyzer. Is this really a problem, or are they just
+	using 64 bits for upwards compatibility with LP64 systems?
+
+	Do or don't introduce unknown_reverse_client_reject_code.
+
+	Check that "UINT32 == unsigned int" choice is ok (i.e. LP64
+	UNIX).
+
+	Tempfail when a Milter application tries to negotiate content
+	access, while it is configured in an SMTP server that runs
+	before the smtpd_proxy filter.
+
+	Log DSN original recipient when rejecting mail.
+
+	Keep whitespace between label and ":"?
+
+	Make the map case folding/locking options configurable, if
+	not at run-time then at least at compile time so we get
+	consistent behavior across applications.
+
+	Investigate what it would take to eliminate oqmgr, and to
+	make the old behavior configurable in a unified queue
+	manager.  This would shave another 2.7 KLOC from the source
+	footprint.
+
+	Document the case folding strategy for match_list like
+	features.
+
+	Eliminate the (incoming,deferred)->active rename operation.
+	This requires an in-memory hash of queue file names to avoid 
+	duplicate open() operations.
+
+	Softbounce fallback-to-ISP for SOHO users. This heuristic
+	assumes that when direct-to-MX delivery fails with 5XX,
+	delivery via the ISP may still succeed.  This could be
+	implemented by enabling soft bounces for destinations other
+	than the smtp_fallback_relay. So the only benefit of this
+	over the existing soft_bounce feature is that it has no
+	effect on smtp_fallback_relay deliveries.
+
+	Centralize main.cf parameter input so that defaults work
+	consistently. What about parameter names that are prefixed
+	with mail delivery transport names?
+
+	Fix default time unit handling so that we can have a default
+	bounce lifetime of $maximal_queue_lifetime, without causing
+	panics when a non-default maximal_queue_lifetime setting
+	includes no time unit.
+
+	After the 20051222 ISASCII paranoia, lowercase() lowercases
+	ASCII text only.
+
+	Privacy: remove local command/pathname details from remote
+	delivery status reports, and log them via local msg_warn().
+
+	Is it safe to cache a connection after it has been used for
+	more than some number of address verification probes?
+
+	Try to recognize that Resent- headers appear in blocks,
+	newest block first. But don't break on incorrect header
+	block organization.
+
+	Hard limits on cache sizes (anvil, specifically).
+
+	Laptop friendliness: make the qmgr remember when the next
+	deferred queue scan needs to be done, and have the pickup
+	server stat() the maildrop directory before searching it.
+
+	Low: replace_sender/replace_recipient actions in access
+	maps, so they can be used in policy servers?
+
+	Low: configurable order of local(8) delivery methods.
+
+	Med: smtp_connect_timeout_budget (default: 3x smtp_connect_timeout)
+	to limit the total time spent trying to connect.
+
+	Med: transform IPv4-in-IPv6 address literals to IPv4 form
+	when comparing against local IP addresses?
+
+	Med: transform IPv4-in-IPv6 address literals to IPv4 form
+	when eliminating MX mailer loops?
+
+	Med: Postfix requires [] around IPv6 address information
+	in match lists such as mynetworks, debug_peer_list etc.,
+	but the [] must not be specified in access(5) maps. Other
+	places don't care.  For now, this gotcha is documented in
+	IPV6_README and in postconf(5) with each feature that may
+	use IPv6 address information. The general recommendation
+	is not to use [] unless absolutely necessary.
+
+	Med: the partial address matching of IPv6 addresses in
+	access(5) maps is a bit lame: it repeatedly truncates the
+	last ":octetpair" from the printable address representation
+	until a match is found or until truncation is no longer
+	possible.  Since one or more ":" are usually omitted from
+	the printable IPv6 address representation, this does not
+	really try all the possibilities that one might expect to
+	be tried. For now, this gotcha is documented in access(5).
+
+	Low: reject HELO with any domain name or IP address that
+	this MTA is the final destination for.
+
+	Low: should the Delivered-To: test in local(8) be configurable?
+
+	Low: make mail_addr_find() lookup configurable.
+
+	Low: update events.c so that 1-second timer requests do not
+	suffer from rounding errors. This is needed for 1-second
+	SMTP session caching time limits. A 1-second interval would
+	become arbitrarily short when an event is scheduled just
+	before the current second rolls over.
+
+	Low: configurable internal/system locking method.
+
+	Low: add INSTALL section for pre-existing Postfix systems.
+
+	Low: add INSTALL section for pre-existing RPM Postfixes.
+
+	Low: disallow smtpd_recipient_limit < 100 (the RFC minimum).
+
+	Low: noise filter: allow smtp(8) to retry immediately if
+	all MXes return a quick ECONNRESET or 4xx reply during the
+	initial handshake. Retry once? How many times?
+
+	Low: make post-install a "postfix-only script" so it can
+	take data from the environment instead of main.cf.
+
+	Low: randomize deferred mail backoff.
+
+	Med: separate ulimit for delivery to command?
+
+	Med: postsuper -r should do something with recipients in
+	bounce logfiles, to make sure the sender will be notified.
+	To be perfectly safe, no process other than the queue manager
+	should move a queue file away from the active queue.
+
+	This could involve tagging a queue file, and use up another
+	permission bit (postsuper tags a "hot" file, qmgr requeues it).
+
+	Low: postsuper re-run after renaming files, but only a
+	limited number of times.
+
+	Low: smtp-source may block when sending large test messages.
+
+	Med: find a way to log the sender address when MAIL FROM
+	is rejected due to lack of disk space.
+
+	Low: revise other local delivery agent duplicate filters.
+
+	Low: all table lookups should consistently use internalized
+	(unquoted) or externalized (quoted) forms as lookup keys.
+	smtpd, qmgr, local, etc. use unquoted address forms as keys.
+	cleanup uses quoted forms.
+
+	Low: have a configurable list of errno values for mailbox
+	or maildir delivery that result in deferral rather than
+	bouncing mail. What about "killed by signal" exits?
+
+	Low: after reorganizing configuration parameters, add flags
+	to all parameters whose value can be read from file.
+
+	Medium: need in-process caching for map lookups. LDAP servers
+	seem to need this in particular. Need a way to expire cached
+	results that are too old.
+
+	Low: generic showq protocol, to allow for more intelligent
+	processing than just mailq. Maybe marry this with postsuper.
+
+	Low: default domain for appending to unqualified recipients,
+	so that unqualified names can be delivered locally.
+
+	Low: The $process_id_directory setting is not used anywhere
+	in Postfix. Problem reported by Michael Smith, texas.net.
+	This should be documented, or better, the code should warn
+	about attempts to set read-only parameters.
+
+	Low: while converting 8bit text to quoted-printable, perhaps
+	use =46rom to avoid having to produce >From when delivering
+	to mailbox.
+
+	virtual_mailbox_path expression like forward_path, so that
+	people can specify prefix and suffix.

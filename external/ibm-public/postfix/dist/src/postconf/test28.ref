@@ -6,5 +6,5 @@ hh_domain = whatever
 yy = aap
 zz = $yy
 ./postconf: warning: ./main.cf: unused parameter: foo_domain=bar
-./postconf: warning: ./main.cf: unused parameter: aa_domain=whatever
 ./postconf: warning: ./main.cf: unused parameter: xx=proxy:ldap:foo
+./postconf: warning: ./main.cf: unused parameter: aa_domain=whatever

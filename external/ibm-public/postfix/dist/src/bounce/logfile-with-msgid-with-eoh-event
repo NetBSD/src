@@ -1,0 +1,13 @@
+
+recipient = rcpt-address
+original_recipient = rcpt-orig_addr
+offset = 271
+notify_flags = rcpt-dsn_notify
+status = dsn-status
+action = dsn-action
+diag_type = dsn-dtype
+diag_text = dsn-dtext
+mta_type = dsn-mtype
+mta_mname = dsn-mname
+reason = dsn-reason
+

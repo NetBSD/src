@@ -4,7 +4,7 @@
 #! ../bin/postmap smtpd_check_access
 #msg_verbose 1
 #smtpd_delay_reject 0
-#mynetworks 127.0.0.0/8,168.100.189.0/28
+#mynetworks 127.0.0.0/8,168.100.3.0/28
 #relay_domains porcupine.org
 #maps_rbl_domains dnsbltest.porcupine.org
 #rbl_reply_maps hash:smtpd_check_access
@@ -14,7 +14,7 @@
 #
 smtpd_delay_reject 0
 helo_restrictions reject_unknown_helo_hostname
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 mail sname@sdomain
 rcpt rname@rdomain
 helo nxdomain.porcupine.org
@@ -25,7 +25,7 @@ helo spike.porcupine.org
 #
 smtpd_delay_reject 0
 sender_restrictions reject_unknown_sender_domain
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 helo spike.porcupine.org
 rcpt rname@rdomain
 mail sname@nxdomain.porcupine.org
@@ -38,7 +38,7 @@ smtpd_delay_reject 0
 sender_restrictions permit
 recipient_restrictions reject_unknown_recipient_domain
 relay_restrictions reject_unauth_destination
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 helo spike.porcupine.org
 mail sname@sdomain
 relay_domains nxdomain.porcupine.org
@@ -52,7 +52,7 @@ rcpt rname@spike.porcupine.org
 #
 smtpd_delay_reject 0
 sender_restrictions check_sender_mx_access,hash:smtpd_check_access
-client spike.porcupine.org 168.100.189.2
+client spike.porcupine.org 168.100.3.2
 mail sname@nxdomain.porcupine.org
 mail sname@nullmx.porcupine.org
 mail sname@spike.porcupine.org
