@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.7 2020/05/25 20:47:18 christos Exp $
+#	$NetBSD: ntp2netbsd,v 1.8 2022/10/09 21:41:03 christos Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@
 #	$ tar xpfz /new/ntp/release/tar/file
 #	$ sh /usr/src/external/bsd/ntp/ntp2netbsd ntp-4.x.y `pwd`
 #	$ cd src/external/bsd/ntp/dist
-#	$ cvs import -m "Import ntp 4.x.y" src/external/bsd/ntp/dist UDEL ntp-4-x-y
+#	$ cvs import src/external/bsd/ntp/dist UDEL ntp-4-x-y
 #	$ cd ../../../../../ntp-4.x.y
 #	$ run ./configure  --enable-all-clocks --enable-parse-clocks
 #	$ echo cp config.h /usr/src/external/bsd/ntp/include

@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.2 2020/05/25 20:47:36 christos Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.3 2022/10/09 21:41:04 christos Exp $	*/
 
 #include "config.h"
 
@@ -31,7 +31,7 @@ test_Initialization(void) {
 void
 test_GetAndFree(void) {
 	u_long initial = free_recvbuffs();
-	recvbuf_t* buf = get_free_recv_buffer();
+	recvbuf_t* buf = get_free_recv_buffer(TRUE);
 
 	TEST_ASSERT_EQUAL_UINT(initial-1, free_recvbuffs());
 	freerecvbuf(buf);
@@ -42,7 +42,7 @@ test_GetAndFree(void) {
 void
 test_GetAndFill(void) {
 	// int initial = free_recvbuffs();
-	recvbuf_t* buf = get_free_recv_buffer();
+	recvbuf_t* buf = get_free_recv_buffer(TRUE);
 
 	add_full_recv_buffer(buf);
 	TEST_ASSERT_EQUAL_UINT(1, full_recvbuffs());

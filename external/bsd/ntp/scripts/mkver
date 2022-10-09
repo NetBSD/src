@@ -3,7 +3,7 @@ PROG=${1-UNKNOWN}
 
 ConfStr="$PROG"
 
-ConfStr="$ConfStr 4.2.8p14"
+ConfStr="$ConfStr 4.2.8p15"
 
 case "$CSET" in
  '') ;;
@@ -15,23 +15,31 @@ case "o" in
  *) ConfStr="${ConfStr}-o" ;;
 esac
 
-ifile="`dirname $0`/../importdate"
-
-if [ -f "$ifile" ]; then
-  # NetBSD MKREPRO: Don't embed current date/time/run number
-  ConfStr="$ConfStr "`cat "$ifile"`
-else
-  ConfStr="$ConfStr `LC_TIME=C TZ= date`"
-
-  if [ ! -f .version ]; then
-    echo 0 > .version
-  fi
-  RUN="`cat .version`"
-  RUN="`expr $RUN + 1`"
-  echo $RUN > .version
-
-  ConfStr="$ConfStr (${RUN})"
+if [ -n "$MKREPRO_TIMESTAMP" ]; then
+   SOURCE_DATE_EPOCH=$MKREPRO_TIMESTAMP
 fi
+
+if [ -n "$SOURCE_DATE_EPOCH" ]; then
+   ConfStr="$ConfStr `LC_TIME=C TZ=UTC date -d@$SOURCE_DATE_EPOCH 2>/dev/null`" ||
+   ConfStr="$ConfStr `LC_TIME=C TZ=UTC date -r $SOURCE_DATE_EPOCH`"
+else
+   ifile="`dirname $0`/../importdate"
+   if [ -f "$ifile" ]; then
+       # NetBSD MKREPRO: Don't embed current date/time/run number
+       ConfStr="$ConfStr "`cat "$ifile"`
+   else
+       ConfStr="$ConfStr `LC_TIME=C TZ=UTC date`"
+   fi
+fi
+
+if [ ! -f .version ]; then
+  echo 0 > .version
+fi
+RUN="`cat .version`"
+RUN="`expr $RUN + 1`"
+echo $RUN > .version
+
+ConfStr="$ConfStr (${RUN})"
 
 echo "Version <${ConfStr}>";
 

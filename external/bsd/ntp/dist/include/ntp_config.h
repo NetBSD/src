@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.13 2020/05/30 23:52:09 joerg Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.14 2022/10/09 21:41:03 christos Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -276,6 +276,7 @@ typedef struct settrap_parms_tag {
 	sockaddr_u	ifaddr;
 	int		ifaddr_nonnull;
 } settrap_parms;
+
 
 /*
 ** Data Minimization Items

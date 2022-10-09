@@ -591,6 +591,10 @@
 /* Define to 1 if you have the <md5.h> header file. */
 #define HAVE_MD5_H 1
 
+/* Define to 1 if you have the `memchr' function. */
+#define HAVE_MEMCHR 1
+
+ /* Define to 1 if you have the `memlk' function. */
 /* Define to 1 if you have the `memlk' function. */
 /* #undef HAVE_MEMLK */
 
@@ -905,6 +909,9 @@
 
 /* Define to 1 if you have the `strlcpy' function. */
 #define HAVE_STRLCPY 1
+
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
 
 /* Define to 1 if you have the <stropts.h> header file. */
 /* #undef HAVE_STROPTS_H */
@@ -1489,7 +1496,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p14"
+#define PACKAGE_STRING "ntp 4.2.8p15"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1498,7 +1505,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p14"
+#define PACKAGE_VERSION "4.2.8p15"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1675,7 +1682,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p14"
+#define VERSION "4.2.8p15"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */
