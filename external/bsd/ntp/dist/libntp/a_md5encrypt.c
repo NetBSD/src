@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.11 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.12 2022/10/09 21:41:03 christos Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -95,7 +95,7 @@ make_mac(
 		}
 	  cmac_fail:
 		if (ctx)
-			CMAC_CTX_cleanup(ctx);
+			CMAC_CTX_free(ctx);
 	}
 	else
 #   endif /*ENABLE_CMAC*/

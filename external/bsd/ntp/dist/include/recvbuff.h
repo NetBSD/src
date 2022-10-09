@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.h,v 1.7 2020/05/25 20:47:20 christos Exp $	*/
+/*	$NetBSD: recvbuff.h,v 1.8 2022/10/09 21:41:03 christos Exp $	*/
 
 #ifndef RECVBUFF_H
 #define RECVBUFF_H
@@ -12,10 +12,26 @@
 /*
  * recvbuf memory management
  */
-#define RECV_INIT	10	/* 10 buffers initially */
+#define RECV_INIT	64	/* 64 buffers initially */
 #define RECV_LOWAT	3	/* when we're down to three buffers get more */
-#define RECV_INC	5	/* get 5 more at a time */
-#define RECV_TOOMANY	40	/* this is way too many buffers */
+#define RECV_INC	32	/* [power of 2] get 32 more at a time */
+#define RECV_BATCH	128	/* [power of 2] max increment in one sweep */
+#define RECV_TOOMANY	4096	/* this should suffice, really. TODO: tos option? */
+
+/* If we have clocks, keep an iron reserve of receive buffers for
+ * clocks only.
+ */
+#if defined(REFCLOCK)
+# if !defined(RECV_CLOCK) || RECV_CLOCK == 0
+#  undef RECV_CLOCK
+#  define RECV_CLOCK	16
+# endif
+#else
+# if defined(RECV_CLOCK)
+#  undef RECV_CLOCK
+# endif
+# define RECV_CLOCK 0
+#endif
 
 #if defined HAVE_IO_COMPLETION_PORT
 # include "ntp_iocompletionport.h"
@@ -92,10 +108,10 @@ extern	void	freerecvbuf(struct recvbuf *);
  *  you put it back with freerecvbuf() or 
  */
 
-/* signal safe - no malloc */
-extern	struct recvbuf *get_free_recv_buffer(void);
-/* signal unsafe - may malloc, never returs NULL */
-extern	struct recvbuf *get_free_recv_buffer_alloc(void);
+/* signal safe - no malloc, returns NULL when no bufs */
+extern	struct recvbuf *get_free_recv_buffer(int /*BOOL*/ urgent);
+/* signal unsafe - may malloc, returns NULL when no bufs */
+extern	struct recvbuf *get_free_recv_buffer_alloc(int /*BOOL*/ urgent);
 
 /*   Add a buffer to the full list
  */

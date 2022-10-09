@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.24 2020/05/30 23:52:09 joerg Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.25 2022/10/09 21:41:03 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -147,6 +147,16 @@ typedef struct peer_resolved_ctx_tag {
 /* Limits */
 #define MAXPHONE	10	/* maximum number of phone strings */
 #define MAXPPS		20	/* maximum length of PPS device string */
+
+/*
+ * Poll Skew List
+ */
+
+static psl_item psl[17-3+1];	/* values for polls 3-17 */
+				/* To simplify the runtime code we */
+				/* don't want to have to special-case */
+				/* dealing with a default */
+
 
 /*
  * Miscellaneous macros

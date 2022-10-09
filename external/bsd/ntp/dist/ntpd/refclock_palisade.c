@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.8 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.9 2022/10/09 21:41:04 christos Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -306,13 +306,13 @@ palisade_start (
 	int fd;
 	char gpsdev[20];
 	struct termios tio;
+	u_int speed;
 
 	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
 
 	/*
 	 * Open serial port. 
 	 */
-	u_int speed;
 	speed = (CLK_TYPE(peer) == CLK_COPERNICUS) ? SPEED232COP : SPEED232;
 	fd = refclock_open(gpsdev, speed, LDISC_RAW);
 	if (fd <= 0) {
@@ -943,30 +943,32 @@ TSIP_decode (
 			return 0;
 		}
 		/* Get date & time from WN & ToW minus offset */
-		TCivilDate cd;
-		TGpsDatum wd;
-		l_fp ugo; /* UTC-GPS offset, negative number */
-		ugo.Ul_i.Xl_i = (int32_t)-GPS_UTC_Offset;
-		ugo.l_uf = 0;
-		wd = gpscal_from_gpsweek((wn % 1024), (int32_t)tow, ugo);
-		gpscal_to_calendar(&cd, &wd);
-		pp->year = cd.year;
-		pp->day = cd.yearday;
-		pp->hour = cd.hour;
-		pp->minute = cd.minute;
-		pp->second = cd.second;
-		pp->nsec = 0;
-		pp->leap = LEAP_NOWARNING;
+		{
+			TCivilDate cd;
+			TGpsDatum wd;
+			l_fp ugo; /* UTC-GPS offset, negative number */
+			ugo.Ul_i.Xl_i = (int32_t)-GPS_UTC_Offset;
+			ugo.l_uf = 0;
+			wd = gpscal_from_gpsweek((wn % 1024), (int32_t)tow, ugo);
+			gpscal_to_calendar(&cd, &wd);
+			pp->year = cd.year;
+			pp->day = cd.yearday;
+			pp->hour = cd.hour;
+			pp->minute = cd.minute;
+			pp->second = cd.second;
+			pp->nsec = 0;
+			pp->leap = LEAP_NOWARNING;
 #ifdef DEBUG
-		if (debug > 1)	{
-			printf("GPS TOW: %ld\n", tow);
-			printf("GPS WN: %d\n", wn);
-			printf("GPS UTC-GPS Offset: %d\n", GPS_UTC_Offset);
-			printf("TSIP_decode: unit %d: %02X #%d %02d:%02d:%02d.%09ld %02d/%02d/%04d ",
-			       up->unit, mb(0) & 0xff, event, pp->hour, pp->minute, pp->second,
-			       pp->nsec, cd.month, cd.monthday, pp->year);
-		}
+			if (debug > 1)	{
+				printf("GPS TOW: %ld\n", tow);
+				printf("GPS WN: %d\n", wn);
+				printf("GPS UTC-GPS Offset: %d\n", GPS_UTC_Offset);
+				printf("TSIP_decode: unit %d: %02X #%d %02d:%02d:%02d.%09ld %02d/%02d/%04d ",
+				       up->unit, mb(0) & 0xff, event, pp->hour, pp->minute, pp->second,
+				       pp->nsec, cd.month, cd.monthday, pp->year);
+			}
 #endif
+		}
 		return 1;
 	}
 

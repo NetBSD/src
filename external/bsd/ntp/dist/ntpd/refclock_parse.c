@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.23 2020/09/03 07:26:41 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.24 2022/10/09 21:41:04 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2368,7 +2368,7 @@ local_input(
 			}
 			if (count)
 			{	/* simulate receive */
-				buf = get_free_recv_buffer();
+				buf = get_free_recv_buffer(TRUE);
 				if (buf != NULL) {
 					memmove((caddr_t)buf->recv_buffer,
 						(caddr_t)&parse->parseio.parse_dtime,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.17 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.18 2022/10/09 21:41:03 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1186,7 +1186,7 @@ mem_stats(
 
 	for (i = 0; i < NTP_HASH_SIZE; i++)
 		ms->hashcount[i] = (u_char)
-		    max((u_int)peer_hash_count[i], UCHAR_MAX);
+		    min((u_int)peer_hash_count[i], UCHAR_MAX);
 
 	(void) more_pkt();
 	flush_pkt();
