@@ -1,4 +1,4 @@
-/*	$NetBSD: l_stdlib.h,v 1.1.1.8 2020/05/25 20:40:04 christos Exp $	*/
+/*	$NetBSD: l_stdlib.h,v 1.1.1.9 2022/10/09 21:00:07 christos Exp $	*/
 
 /*
  * Proto types for machines that are not ANSI and POSIX	 compliant.
@@ -222,5 +222,14 @@ extern	int	errno;
 #if defined(DECL_H_ERRNO) && !defined(h_errno)
 extern	int	h_errno;
 #endif
+
+#ifndef HAVE_MEMCHR
+extern void *memchr(const void *s, int c, size_t n);
+#endif
+
+#ifndef HAVE_STRNLEN
+extern size_t strnlen(const char *s, size_t n);
+#endif
+
 
 #endif	/* L_STDLIB_H */

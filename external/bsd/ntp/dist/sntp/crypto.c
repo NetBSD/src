@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.14 2020/05/25 20:40:11 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.15 2022/10/09 21:00:13 christos Exp $	*/
 
 /*
  * HMS: we need to test:
@@ -72,7 +72,8 @@ compute_mac(
 		}
 		len = (u_int)slen;
 		
-		CMAC_CTX_cleanup(ctx);
+		if (ctx)
+			CMAC_CTX_free(ctx);
 		/* Test our AES-128-CMAC implementation */
 		
 	} else	/* MD5 MAC handling */

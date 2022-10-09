@@ -1,4 +1,4 @@
-/*	$NetBSD: int.h,v 1.1.1.8 2020/05/25 20:40:04 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.1.1.9 2022/10/09 21:00:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,9 @@
 #ifndef ISC_INT_H
 #define ISC_INT_H 1
 
-#define _INTEGRAL_MAX_BITS 64
+#ifndef _INTEGRAL_MAX_BITS
+# define _INTEGRAL_MAX_BITS 64
+#endif
 #include <limits.h>
 
 typedef __int8				isc_int8_t;

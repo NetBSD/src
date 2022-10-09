@@ -1,4 +1,4 @@
-/*	$NetBSD: timexsup.c,v 1.1.1.1 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: timexsup.c,v 1.1.1.2 2022/10/09 21:00:08 christos Exp $	*/
 
 /*
  * timexsup.c - 'struct timex' support functions
@@ -29,13 +29,13 @@ clamp_rounded(
 	dval = floor(dval + 0.5);
 
 	/* clamp / saturate */
-	if (dval >= LONG_MAX)
+	if (dval >= (double)LONG_MAX)
 		return LONG_MAX;
-	if (dval <= LONG_MIN)
+	if (dval <= (double)LONG_MIN)
 		return LONG_MIN;
 	return (long)dval;
-	
 }
+
 double
 dbl_from_var_long(
 	long	lval,
@@ -82,4 +82,3 @@ usec_long_from_dbl(
 {
 	return clamp_rounded(dval * 1e+6);
 }
-

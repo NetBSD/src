@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.1.1.12 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.1.1.13 2022/10/09 21:00:07 christos Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -276,16 +276,6 @@ typedef struct settrap_parms_tag {
 	sockaddr_u	ifaddr;
 	int		ifaddr_nonnull;
 } settrap_parms;
-
-
-/*
- * Poll Skew List
- */
-
-psl_item psl[17-3+1];		/* values for polls 3-17 */
-				/* To simplify the runtime code we */
-				/* don't want to have to special-case */
-				/* dealing with a default */
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.15 2020/05/25 20:40:05 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.16 2022/10/09 21:00:07 christos Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -130,7 +130,7 @@ typedef char s_char;
 #define MAX_TTL		8	/* max ttl mapping vector size */
 #define	BEACON		7200	/* manycast beacon interval */
 #define NTP_MAXEXTEN	2048	/* max extension field size */
-#define	NTP_ORPHWAIT	300	/* orphan wair (s) */
+#define	NTP_ORPHWAIT	300	/* orphan wait (s) */
 
 /*
  * Miscellaneous stuff
