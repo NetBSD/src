@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.153 2022/09/29 14:43:06 snj Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.154 2022/10/10 15:11:45 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2872,4 +2872,17 @@ sys/dev/pci/mfii.c				1.28
 	mfii(4): Convert from pci_intr_map() to pci_intr_alloc(); makes
 	the driver use MSI/MSI-x when available.
 	[bouyer, ticket #1768]
+
+sys/arch/x86/include/i82093reg.h		1.7
+sys/arch/x86/x86/ioapic.c			1.66
+
+	- Fix a bug that an IOAPIC ID is tried to remap with a wrong ID.
+	  The bit width is 8 bits these days. Fixes PR kern/54276.
+	- Print detail about misconfigured APIC ID.
+	[msaitoh, ticket #1769]
+
+sys/net/if_ethersubr.c				1.254
+
+	Fix inverted logic dropping wrong sized packets in the VLAN path.
+	[msaitoh, ticket #1770]
 
