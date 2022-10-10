@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.23 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.24 2022/10/10 18:30:28 martin Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.23 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.24 2022/10/10 18:30:28 martin Exp $");
 
 #include <sys/param.h>
 
@@ -652,8 +652,8 @@ mos_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	struct ifnet *ifp = usbnet_ifp(un);
-	ifp->if_capabilities = ETHERCAP_VLAN_MTU;
+	struct ethercom *ec = usbnet_ec(un);
+	ec->ec_capabilities = ETHERCAP_VLAN_MTU;
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
