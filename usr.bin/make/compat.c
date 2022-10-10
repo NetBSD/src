@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.241 2022/08/17 20:10:29 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.242 2022/10/10 21:17:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.241 2022/08/17 20:10:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.242 2022/10/10 21:17:25 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -107,7 +107,7 @@ CompatDeleteTarget(GNode *gn)
 	if (gn != NULL && !GNode_IsPrecious(gn)) {
 		const char *file = GNode_VarTarget(gn);
 
-		if (!opts.noExecute && unlink_file(file)) {
+		if (!opts.noExecute && unlink_file(file) == 0) {
 			Error("*** %s removed", file);
 		}
 	}
