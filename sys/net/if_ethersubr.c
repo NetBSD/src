@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242.6.9 2021/10/27 18:52:51 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242.6.10 2022/10/10 16:09:12 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.9 2021/10/27 18:52:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.10 2022/10/10 16:09:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -706,7 +706,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * just being used to store the priority.  Extract the ether
 		 * type, and if IP or IPV6, let them deal with it.
 		 */
-		if (m->m_len <= sizeof(*evl)
+		if (m->m_len >= sizeof(*evl)
 		    && EVL_VLANOFTAG((ntohs(evl->evl_tag))) == 0) {
 			etype = ntohs(evl->evl_proto);
 			ehlen = sizeof(*evl);
@@ -841,11 +841,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		}
 	} else {
+		KASSERT(ehlen == sizeof(*eh));
 #if defined (LLC) || defined (NETATALK)
-		if (m->m_len < ehlen + sizeof(struct llc)) {
+		if (m->m_len < sizeof(*eh) + sizeof(struct llc)) {
 			goto dropanyway;
 		}
 		l = (struct llc *)(eh+1);
+
 		switch (l->llc_dsap) {
 #ifdef NETATALK
 		case LLC_SNAP_LSAP:
@@ -871,10 +873,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				    sizeof(aarp_org_code)) == 0 &&
 				    ntohs(l->llc_snap_ether_type) ==
 				    ETHERTYPE_AARP) {
-					m_adj( m, sizeof(struct ether_header)
+					m_adj(m, sizeof(struct ether_header)
 					    + sizeof(struct llc));
 					aarpinput(ifp, m); /* XXX */
-				    return;
+					return;
 				}
 
 			default:
