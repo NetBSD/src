@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.52.10.1 2017/11/21 11:01:02 martin Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.52.10.2 2022/10/10 15:04:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52.10.1 2017/11/21 11:01:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52.10.2 2022/10/10 15:04:31 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -373,8 +373,9 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_pic.pic_apicid) {
-		aprint_debug_dev(sc->sc_dev, "misconfigured as apic %d\n",
-				 apic_id);
+		aprint_debug_dev(sc->sc_dev,
+		    "apid is misconfigured (%d != %d)\n",
+		    apic_id, sc->sc_pic.pic_apicid);
 
 		ioapic_write(sc, IOAPIC_ID,
 		    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK)
@@ -385,7 +386,8 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		
 		if (apic_id != sc->sc_pic.pic_apicid)
 			aprint_error_dev(sc->sc_dev,
-			    "can't remap to apid %d\n", sc->sc_pic.pic_apicid);
+			    "can't remap apid from %d to %d\n",
+			    apic_id, sc->sc_pic.pic_apicid);
 		else
 			aprint_debug_dev(sc->sc_dev, "remapped to apic %d\n",
 			    sc->sc_pic.pic_apicid);
