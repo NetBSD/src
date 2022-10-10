@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.22 2022/10/04 17:26:46 snj Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.23 2022/10/10 15:03:40 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -307,4 +307,12 @@ usr.sbin/sysinst/arch/landisk/md.c		1.16
 	 - run installboot against the NetBSD root partition (not the raw
 	   partition).
 	[martin, ticket #1535]
+
+sys/arch/x86/include/i82093reg.h		1.7
+sys/arch/x86/x86/ioapic.c			1.66
+
+	- Fix a bug that an IOAPIC ID is tried to remap with a wrong ID.
+	  The bit width is 8 bits these days. Fixes PR kern/54276.
+	- Print detail about misconfigured APIC ID.
+	[msaitoh, ticket #1536]
 
