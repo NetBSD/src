@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.12.2.2 2019/05/12 09:22:52 martin Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.12.2.3 2022/10/11 18:07:11 martin Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.12.2.2 2019/05/12 09:22:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.12.2.3 2022/10/11 18:07:11 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -109,63 +109,65 @@ static int
 cpu_ucode_intel_verify(struct cpu_ucode_softc *sc,
     struct intel1_ucode_header *buf)
 {
+	struct intel1_ucode_ext_table *ehdr;
 	uint32_t data_size, total_size, payload_size, ext_size;
 	uint32_t sum;
+	uint32_t *p;
 	int i;
 
 	if ((buf->uh_header_ver != 1) || (buf->uh_loader_rev != 1))
 		return EINVAL;
 
-	/*
-	 * Data size.
-	 */
-	if (buf->uh_data_size == 0) {
+	/* Data size. */
+	if (buf->uh_data_size == 0)
 		data_size = 2000;
-	} else {
+	else
 		data_size = buf->uh_data_size;
-	}
 	if ((data_size % 4) != 0)
 		return EINVAL;
 	if (data_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Total size.
-	 */
-	if (buf->uh_total_size == 0) {
+	/* Total size. */
+	if (buf->uh_total_size == 0)
 		total_size = data_size + 48;
-	} else {
+	else
 		total_size = buf->uh_total_size;
-	}
 	if ((total_size % 1024) != 0)
 		return EINVAL;
 	if (total_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Payload size.
-	 */
+	/* Payload size. */
 	payload_size = data_size + 48;
 	if (payload_size > sc->sc_blobsize)
 		return EINVAL;
 
-	/*
-	 * Verify checksum of update data and header. Exclude extended
-	 * signature.
-	 */
+	/* Verify checksum of update data and header(s). */
 	sum = 0;
-	for (i = 0; i < (payload_size / sizeof(uint32_t)); i++) {
-		sum += *((uint32_t *)buf + i);
-	}
+	p = (uint32_t *)buf;
+	for (i = 0; i < (payload_size / sizeof(uint32_t)); i++)
+		sum += p[i];
 	if (sum != 0)
 		return EINVAL;
 
-	/*
-	 * Extended table size. Ignored for now.
-	 */
 	ext_size = total_size - payload_size;
 	if (ext_size > 0) {
-		printf("This image has extended signature table.");
+		/* This image has extended signature table. */
+		ehdr = (struct intel1_ucode_ext_table *)
+		    ((uint8_t *)buf + sizeof(struct intel1_ucode_header) +
+			data_size);
+		payload_size =
+		    sizeof(struct intel1_ucode_ext_table) +
+		    sizeof(struct intel1_ucode_proc_signature) *
+		    ehdr->uet_count;
+		    
+		sum = 0;
+		p = (uint32_t *)ehdr;
+		for (i = 0; i < (payload_size / sizeof(uint32_t)); i++)
+			sum += p[i];
+		if (sum != 0)
+			return EINVAL;
 	}
 
 	return 0;
@@ -196,7 +198,8 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		/* Make the buffer 16 byte aligned. */
 		newbufsize = sc->sc_blobsize + 15;
 		uha = kmem_alloc(newbufsize, KM_SLEEP);
-		uh = (struct intel1_ucode_header *)roundup2((uintptr_t)uha, 16);
+		uh =
+		    (struct intel1_ucode_header *)roundup2((uintptr_t)uha, 16);
 		memcpy(uh, sc->sc_blob, sc->sc_blobsize);
 	}
 
