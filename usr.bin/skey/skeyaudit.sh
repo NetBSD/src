@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: skeyaudit.sh,v 1.4 2000/07/27 14:40:58 mjl Exp $
+#	$NetBSD: skeyaudit.sh,v 1.4.102.1 2022/10/11 18:25:26 martin Exp $
 #
 # This script will look thru the skeykeys file for
 # people with sequence numbers less than LOWLIMIT=12
@@ -56,6 +56,6 @@ while [ "X$1" != "X" ]; do
     $ECHO " "
     $ECHO "Use \"skeyinit -s\" to reinitialize your sequence number."
     $ECHO ""
-    ) | /usr/bin/Mail -s "$SUBJECT"  $USER $ADMIN
+    ) | /usr/bin/mailx -s "$SUBJECT"  $USER $ADMIN
   fi
 done
