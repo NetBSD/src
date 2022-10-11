@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.h,v 1.3 2012/10/17 20:19:55 drochner Exp $ */
+/* $NetBSD: cpu_ucode.h,v 1.3.30.1 2022/10/11 18:07:11 martin Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,17 +72,16 @@ struct intel1_ucode_header {
 	uint32_t	uh_reserved[3];
 };
 
-struct intel1_ucode_proc_signature {
-	uint32_t	ups_signature;
-	uint32_t	ups_proc_flags;
-	uint32_t	ups_checksum;
-};
-
 struct intel1_ucode_ext_table {
 	uint32_t	uet_count;
 	uint32_t	uet_checksum;
 	uint32_t	uet_reserved[3];
-	struct intel1_ucode_proc_signature uet_proc_sig[1];
+};
+
+struct intel1_ucode_proc_signature {
+	uint32_t	ups_signature;
+	uint32_t	ups_proc_flags;
+	uint32_t	ups_checksum;
 };
 
 #endif
