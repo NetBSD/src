@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.38 2022/07/26 20:08:56 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.39 2022/10/11 22:03:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2022/10/11 22:03:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap_t pmap;
 
 #ifdef DEBUG_DMA
-	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d, 1st=%d)\n",
+	printf("_bus_dmamap_load_buffer(buf=%p, len=%lx, flags=%d, 1st=%d)\n",
 	    buf, buflen, flags, first);
 #endif	/* DEBUG_DMA */
 

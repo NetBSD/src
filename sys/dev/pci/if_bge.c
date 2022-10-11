@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.387 2022/09/04 08:55:43 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.388 2022/10/11 22:03:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.387 2022/09/04 08:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.388 2022/10/11 22:03:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3814,7 +3814,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_ring_rseg);
 		return;
 	}
-	DPRINTFN(5, ("bus_dmamem_create\n"));
+	DPRINTFN(5, ("bus_dmamap_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_WAITOK, &sc->bge_ring_map)) {
@@ -3825,7 +3825,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_ring_rseg);
 		return;
 	}
-	DPRINTFN(5, ("bus_dmamem_load\n"));
+	DPRINTFN(5, ("bus_dmamap_load\n"));
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_ring_map, kva,
 			    sizeof(struct bge_ring_data), NULL,
 			    BUS_DMA_WAITOK)) {
