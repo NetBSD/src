@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.154 2022/10/10 15:11:45 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.155 2022/10/11 18:24:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2885,4 +2885,35 @@ sys/net/if_ethersubr.c				1.254
 
 	Fix inverted logic dropping wrong sized packets in the VLAN path.
 	[msaitoh, ticket #1770]
+
+sys/dev/pci/pcidevs				1.1461-1.1468 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add several samsung nvme entries.
+	- Add more Alder Lake devices.
+	- Jasper Lake Intel Trace Hub on Compute Die is not 0x4da6 but 0x4e29.
+	- Add Intel Core 8G (8core, H, Halo) Host Bridge, DRAM.
+	- Add AMD 19h/6xh Root Complex.
+	- Add AMD FCH SATA Controller D.
+	- Add NVIDIA GeForce GTX 770.
+	- Sort by number.
+	[msaitoh, ticket #1771]
+
+sys/arch/x86/include/cpu_ucode.h		1.5
+sys/arch/x86/x86/cpu_ucode_intel.c		1.19,1.20
+
+	- Verify checksum of the extended signature table.
+	- KNF.
+	[msaitoh, ticket #1772]
+
+share/man/man4/man4.x86/amdsmn.4		1.4,1.5
+share/man/man4/man4.x86/amdzentemp.4		1.7
+sys/arch/x86/pci/amdsmn.c			1.7-1.9,1.13,1.14
+sys/arch/x86/pci/amdzentemp.c			1.8-1.10,1.12-1.15
+
+	- Add some newer zen2, zen3 and zen4 support.
+	- Fix temperature bias values.
+	- Add support for per CCD temperature sensor.
+	[msaitoh, ticket #1773]
 
