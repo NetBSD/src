@@ -1,8 +1,11 @@
-/*      $NetBSD: amdzentemp.c,v 1.7.2.2 2018/02/05 13:06:55 martin Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.7.2.3 2022/10/11 18:22:44 martin Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Copyright (c) 2019 Conrad Meyer <cem@FreeBSD.org>
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7.2.2 2018/02/05 13:06:55 martin Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7.2.3 2022/10/11 18:22:44 martin Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,17 +73,64 @@ __KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7.2.2 2018/02/05 13:06:55 martin Ex
 
 #include "amdsmn.h"
 
-/* Address to query for temp on family 17h */
-#define AMD_17H_CUR_TMP    0x59800
+#define	AMD_CURTMP_RANGE_ADJUST	49000000	/* in microKelvins (ie, 49C) */
+#define	AMD_CURTMP_RANGE_CHECK	__BIT(19)
+#define	F10_TEMP_CURTMP		__BITS(31,21)	/* XXX same as amdtemp.c */
+#define	F10_TEMP_CURTMP_MASK	0x7ff
+#define	F15M60_CURTMP_TJSEL	__BITS(17,16)
+
+/*
+ * Reported Temperature, Family 15h, M60+
+ *
+ * Same register bit definitions as other Family 15h CPUs, but access is
+ * indirect via SMN, like Family 17h.
+ */
+#define	AMD_15H_M60H_REPTMP_CTRL	0xd8200ca4
+
+/*
+ * Reported Temperature, Family 17h
+ *
+ * According to AMD OSRR for 17H, section 4.2.1, bits 31-21 of this register
+ * provide the current temp.  bit 19, when clear, means the temp is reported in
+ * a range 0.."225C" (probable typo for 255C), and when set changes the range
+ * to -49..206C.
+ */
+#define	AMD_17H_CUR_TMP			0x59800
+
+/*
+ * The following register set was discovered experimentally by Ondrej Čerman
+ * and collaborators, but is not (yet) documented in a PPR/OSRR (other than
+ * the M70H PPR SMN memory map showing [0x59800, +0x314] as allocated to
+ * SMU::THM).  It seems plausible and the Linux sensor folks have adopted it.
+ */
+#define	AMD_17H_CCD_TMP_BASE		0x59954
+#define	AMD_17H_CCD_TMP_VALID		__BIT(11)
 
 struct amdzentemp_softc {
-        pci_chipset_tag_t sc_pc;
-        pcitag_t sc_pcitag;
+	device_t sc_dev;
 	struct sysmon_envsys *sc_sme;
 	device_t sc_smn;
 	envsys_data_t *sc_sensor;
 	size_t sc_sensor_len;
-        size_t sc_numsensors;
+	size_t sc_numsensors;
+	int32_t sc_offset;
+	uint32_t sc_ccd_tmp_base;
+};
+
+enum {
+	NOSENSOR = 0,
+	CORE0_SENSOR0,
+	CCD_BASE,
+	CCD0 = CCD_BASE,
+	CCD1,
+	CCD2,
+	CCD3,
+	CCD4,
+	CCD5,
+	CCD6,
+	CCD7,
+	CCD_MAX,
+	NUM_CCDS = CCD_MAX - CCD_BASE
 };
 
 
@@ -88,9 +138,12 @@ static int  amdzentemp_match(device_t, cfdata_t, void *);
 static void amdzentemp_attach(device_t, device_t, void *);
 static int  amdzentemp_detach(device_t, int);
 
-static void amdzentemp_family17_init(struct amdzentemp_softc *);
-static void amdzentemp_family17_setup_sensors(struct amdzentemp_softc *, int);
+static void amdzentemp_init(struct amdzentemp_softc *, int, int);
+static void amdzentemp_setup_sensors(struct amdzentemp_softc *);
+static void amdzentemp_family15_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void amdzentemp_family17_refresh(struct sysmon_envsys *, envsys_data_t *);
+static int  amdzentemp_probe_ccd_sensors(struct amdzentemp_softc *, int, int);
+static void amdzentemp_setup_ccd_sensors(struct amdzentemp_softc *);
 
 CFATTACH_DECL_NEW(amdzentemp, sizeof(struct amdzentemp_softc),
     amdzentemp_match, amdzentemp_attach, amdzentemp_detach, NULL);
@@ -101,9 +154,9 @@ amdzentemp_match(device_t parent, cfdata_t match, void *aux)
 	struct pci_attach_args *pa __diagused = aux;
 
 	KASSERT(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD);
-     
+
 	cfdata_t parent_cfdata = device_cfdata(parent);
-     
+
 	/* Got AMD family 17h system management network */
 	return parent_cfdata->cf_name &&
 	    memcmp(parent_cfdata->cf_name, "amdsmn", 6) == 0;
@@ -113,18 +166,21 @@ static void
 amdzentemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct amdzentemp_softc *sc = device_private(self);
-	struct pci_attach_args *pa = aux;
+	struct cpu_info *ci = curcpu();
+	int family, model;
 	int error;
 	size_t i;
 
-	aprint_naive("\n");
-	aprint_normal(": AMD CPU Temperature Sensors (Family17h)");
+	sc->sc_dev = self;
 
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	aprint_naive("\n");
+	aprint_normal(": AMD CPU Temperature Sensors (Family%xh)", family);
+
 	sc->sc_smn = parent;
-     
-	amdzentemp_family17_init(sc);
+
+	amdzentemp_init(sc, family, model);
 
 	aprint_normal("\n");
 
@@ -132,12 +188,14 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor_len = sizeof(envsys_data_t) * sc->sc_numsensors;
 	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_SLEEP);
 
-	amdzentemp_family17_setup_sensors(sc, device_unit(self));
+	amdzentemp_setup_sensors(sc);
 
 	/*
 	 * Set properties in sensors.
 	 */
 	for (i = 0; i < sc->sc_numsensors; i++) {
+		if (sc->sc_sensor[i].private == NOSENSOR)
+			continue;
 		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
 			goto bad;
 	}
@@ -148,7 +206,18 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 
-	sc->sc_sme->sme_refresh = amdzentemp_family17_refresh;
+	switch (family) {
+	case 0x15:
+		sc->sc_sme->sme_refresh = amdzentemp_family15_refresh;
+		break;
+	case 0x17:
+	case 0x19:
+		sc->sc_sme->sme_refresh = amdzentemp_family17_refresh;
+		break;
+	default:
+		/* XXX panic */
+		break;
+	}
 
 	error = sysmon_envsys_register(sc->sc_sme);
 	if (error) {
@@ -188,37 +257,206 @@ amdzentemp_detach(device_t self, int flags)
 
 
 static void
-amdzentemp_family17_init(struct amdzentemp_softc *sc) 
+amdzentemp_init(struct amdzentemp_softc *sc, int family, int model)
 {
-	sc->sc_numsensors = 1;
+
+	sc->sc_numsensors = 1 + amdzentemp_probe_ccd_sensors(sc, family, model);
+	sc->sc_offset = 0;
+
+	if (strstr(cpu_brand_string, "AMD Ryzen 5 1600X")
+	    || strstr(cpu_brand_string, "AMD Ryzen 7 1700X")
+	    || strstr(cpu_brand_string, "AMD Ryzen 7 1800X"))
+		sc->sc_offset = -20000000;
+	else if (strstr(cpu_brand_string, "AMD Ryzen 7 2700X"))
+		sc->sc_offset = -10000000;
+	else if (strstr(cpu_brand_string, "AMD Ryzen Threadripper 19")
+	    || strstr(cpu_brand_string, "AMD Ryzen Threadripper 29"))
+		sc->sc_offset = -27000000;
 }
 
 static void
-amdzentemp_family17_setup_sensors(struct amdzentemp_softc *sc, int dv_unit) 
+amdzentemp_setup_sensors(struct amdzentemp_softc *sc)
 {
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
 	sc->sc_sensor[0].flags = ENVSYS_FHAS_ENTROPY;
+	sc->sc_sensor[0].private = CORE0_SENSOR0;
 
 	snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
-	    "cpu%u temperature", dv_unit);
+	    "cpu%u temperature", device_unit(sc->sc_dev));
+
+	if (sc->sc_numsensors > 1)
+		amdzentemp_setup_ccd_sensors(sc);
 }
 
 static void
-amdzentemp_family17_refresh(struct sysmon_envsys *sme, envsys_data_t *edata) 
+amdzentemp_family15_refresh(struct sysmon_envsys *sme,
+    envsys_data_t *edata)
 {
 	struct amdzentemp_softc *sc = sme->sme_cookie;
-	uint32_t temp;
+	uint32_t val, temp;
 	int error;
-	
-	error = amdsmn_read(sc->sc_smn, AMD_17H_CUR_TMP, &temp);  
+
+	error = amdsmn_read(sc->sc_smn, AMD_15H_M60H_REPTMP_CTRL, &val);
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
 		return;
 	}
+
+	/* from amdtemp.c:amdtemp_family10_refresh() */
+	temp = __SHIFTOUT(val, F10_TEMP_CURTMP);
+
+	/* From Celsius to micro-Kelvin. */
+	edata->value_cur = (temp * 125000) + 273150000;
+
+	/*
+	 * On Family 15h and higher, if CurTmpTjSel is 11b, the range is
+	 * adjusted down by 49.0 degrees Celsius.  (This adjustment is not
+	 * documented in BKDGs prior to family 15h model 00h.)
+	 *
+	 * XXX should be in amdtemp.c:amdtemp_family10_refresh() for f15
+	 *     as well??
+	 */
+	if (__SHIFTOUT(val, F15M60_CURTMP_TJSEL) == 0x3)
+		edata->value_cur -= AMD_CURTMP_RANGE_ADJUST;
+
 	edata->state = ENVSYS_SVALID;
-	/* From C to uK. */      
-	edata->value_cur = ((temp >> 21) * 125000) + 273150000;
+}
+
+static void
+amdzentemp_family17_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct amdzentemp_softc *sc = sme->sme_cookie;
+	uint32_t temp;
+	bool minus49;
+	int i, error;
+
+	switch (edata->private) {
+	case CORE0_SENSOR0:
+		/* Tctl */
+		error = amdsmn_read(sc->sc_smn, AMD_17H_CUR_TMP, &temp);
+		if (error) {
+			edata->state = ENVSYS_SINVALID;
+			return;
+		}
+		minus49 = (temp & AMD_CURTMP_RANGE_CHECK) ? true : false;
+		temp = __SHIFTOUT(temp, F10_TEMP_CURTMP);
+		break;
+	case CCD_BASE ... (CCD_MAX - 1):
+		/* Tccd */
+		i = edata->private - CCD_BASE;
+		error = amdsmn_read(sc->sc_smn,
+		    sc->sc_ccd_tmp_base + (i * sizeof(temp)), &temp);
+		if (error || !ISSET(temp, AMD_17H_CCD_TMP_VALID)) {
+			edata->state = ENVSYS_SINVALID;
+			return;
+		}
+		minus49 = true;
+		temp &= F10_TEMP_CURTMP_MASK;
+		break;
+	default:
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+	edata->state = ENVSYS_SVALID;
+	/* From C to uK. */
+	edata->value_cur = (temp * 125000) + 273150000;
+	/* adjust for possible offset of 49K */
+	if (minus49)
+		edata->value_cur -= AMD_CURTMP_RANGE_ADJUST;
+	edata->value_cur += sc->sc_offset;
+}
+
+static int
+amdzentemp_probe_ccd_sensors17h(struct amdzentemp_softc *sc, int model)
+{
+	int maxreg;
+
+	switch (model) {
+	case 0x00 ... 0x2f: /* Zen1, Zen+ */
+		maxreg = 4;
+		break;
+	case 0x30 ... 0x3f: /* Zen2 TR (Castle Peak)/EPYC (Rome) */
+	case 0x60 ... 0x7f: /* Zen2 Ryzen (Renoir APU, Matisse) */
+	case 0x90 ... 0x9f: /* Zen2 Ryzen (Van Gogh APU) */
+		maxreg = 8;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "Unrecognized Family 17h Model: %02xh\n", model);
+		return 0;
+	}
+
+	return maxreg;
+}
+
+static int
+amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
+{
+	int maxreg;
+
+	switch (model) {
+	case 0x00 ... 0x0f: /* Zen3 EPYC "Milan" */
+	case 0x20 ... 0x2f: /* Zen3 Ryzen "Vermeer" */
+		maxreg = 8;
+		break;
+	case 0x60 ... 0x6f: /* Zen4 Ryzen "Raphael" */
+		sc->sc_ccd_tmp_base = 0x59b08;
+		maxreg = 8;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "Unrecognized Family 19h Model: %02xh\n", model);
+		return 0;
+	}
+
+	return maxreg;
+}
+
+static int
+amdzentemp_probe_ccd_sensors(struct amdzentemp_softc *sc, int family, int model)
+{
+	int nccd;
+
+	/* Set default CCD temp sensor base address. */
+	sc->sc_ccd_tmp_base = 0x59954;
+
+	switch (family) {
+	case 0x17:
+		nccd = amdzentemp_probe_ccd_sensors17h(sc, model);
+		break;
+	case 0x19:
+		nccd = amdzentemp_probe_ccd_sensors19h(sc, model);
+		break;
+	default:
+		return 0;
+	}
+
+	return nccd;
+}
+
+static void
+amdzentemp_setup_ccd_sensors(struct amdzentemp_softc *sc)
+{
+	envsys_data_t *edata;
+	size_t i;
+	uint32_t temp;
+	int error;
+
+	for (i = 0; i < sc->sc_numsensors - 1; i++) {
+		error = amdsmn_read(sc->sc_smn,
+		    sc->sc_ccd_tmp_base + (i * sizeof(temp)), &temp);
+		if (error || !ISSET(temp, AMD_17H_CCD_TMP_VALID))
+			continue;
+
+		edata = &sc->sc_sensor[1 + i];
+		edata->units = ENVSYS_STEMP;
+		edata->state = ENVSYS_SVALID;
+		edata->flags = ENVSYS_FHAS_ENTROPY;
+		edata->private = CCD_BASE + i;
+		snprintf(edata->desc, sizeof(edata->desc),
+		    "cpu%u ccd%zu temperature", device_unit(sc->sc_dev), i);
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, amdzentemp, "sysmon_envsys,amdsmn");
@@ -249,4 +487,3 @@ amdzentemp_modcmd(modcmd_t cmd, void *aux)
 		return ENOTTY;
 	}
 }
-
