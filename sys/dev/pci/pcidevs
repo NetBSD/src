@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289.2.22 2022/08/02 15:41:46 snj Exp $
+$NetBSD: pcidevs,v 1.1289.2.23 2022/10/11 17:57:17 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -961,8 +961,8 @@ product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 product ALTIMA AC1003	0x03eb	AC1003 Gigabit Ethernet
 
 /* Amazon.com, Inc. products */
-product AMAZON UART	0x8250	16650-compatible UART
 product AMAZON NVME	0x8061	NVMe SSD
+product AMAZON UART	0x8250	16650-compatible UART
 product AMAZON ENA	0xec20	Elastic Network Adapter
 
 /* AMD products */
@@ -1053,6 +1053,7 @@ product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
 product AMD F17_3X_HDA		0x1487	17h/7xh HD Audio
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
+product AMD F19_6X_RC		0x14d8	19h/6xh Root Complex
 product AMD F14_RC		0x1510	Family14h Root Complex
 product AMD F14_PCIE_1		0x1512	Family14h PCIe
 product AMD F14_PCIE_2		0x1513	Family14h PCIe
@@ -1182,6 +1183,7 @@ product AMD HUDSON_PCIE_2	0x43a2	Hudson PCIe Root Port 2
 product AMD HUDSON_PCIE_3	0x43a3	Hudson PCIe Root Port 3
 product AMD 300SERIES_PCIE	0x43b4	300 Series PCIe
 product AMD 300SERIES_SATA	0x43b7	300 Series SATA
+product AMD FCH_SATA_D		0x43b8	FCH SATA Controller D
 product AMD 300SERIES_XHCI	0x43bb	300 Series xHCI
 product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIe
 product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIe
@@ -2455,8 +2457,8 @@ product BROADCOM BCM5714	0x1668	BCM5714 1000baseT Ethernet
 product BROADCOM BCM5714S	0x1669	BCM5714S 1000baseSX Ethernet
 product BROADCOM BCM5780	0x166a	BCM5780 NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5780S	0x166b	BCM5780S NetXtreme 1000baseSX Ethernet
-product BROADCOM BCM57712_VF	0x166f	BCM57712 NetXtreme II 10Gb Ethernet VF
 product BROADCOM BCM5705F	0x166e	BCM5705F 10/100 Ethernet
+product BROADCOM BCM57712_VF	0x166f	BCM57712 NetXtreme II 10Gb Ethernet VF
 product BROADCOM BCM5754M	0x1672	BCM5754M NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5755M	0x1673	BCM5755M NetXtreme 1000baseT Ethernet
 product BROADCOM BCM5756	0x1674	BCM5756 10/100/1000 Ethernet
@@ -2550,6 +2552,7 @@ product BROADCOM BCM5901	0x170d	BCM5901 10/100 Ethernet
 product BROADCOM BCM5901A2	0x170e	BCM5901A 10/100 Ethernet
 product BROADCOM BCM5906	0x1712	BCM5906 NetLink Fast Ethernet
 product BROADCOM BCM5906M	0x1713	BCM5906M NetLink Fast Ethernet
+product BROADCOM BCM2711	0x2711	BCM2711 PCIe Host
 product BROADCOM BCM4303	0x4301	BCM4303
 product BROADCOM BCM4307	0x4307	BCM4307
 product BROADCOM BCM4311	0x4311	BCM4311 2.4GHz
@@ -2592,8 +2595,6 @@ product BROADCOM 5825		0x5825	5825 Security Processor
 product BROADCOM 5860		0x5860	5860 Security Processor
 product BROADCOM 5861		0x5861	5861 Security Processor
 product BROADCOM 5862		0x5862	5862 Security Processor
-
-product BROADCOM BCM2711	0x2711	BCM2711 PCIe Host
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	Bt848 Video Capture
@@ -3374,7 +3375,31 @@ product HP PLUTO		0x1229	Pluto MIO
 product HP ZX1_IOC		0x122a	zx1 IOC
 product HP MERCURY		0x122e	Mercury Ropes-PCI
 product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
-
+product HP HPSA_P430I		0x1920	Smart Array P430i
+product HP HPSA_P830I		0x1921	Smart Array P830i
+product HP HPSA_P430		0x1922	Smart Array P430
+product HP HPSA_P431		0x1923	Smart Array P431
+product HP HPSA_P830		0x1924	Smart Array P830
+product HP HPSA_P731M		0x1926	Smart Array P731m
+product HP HPSA_P230I		0x1928	Smart Array P230i
+product HP HPSA_P530		0x1929	Smart Array P530
+product HP HPSA_P531		0x192A	Smart Array P531
+product HP HPSA_P244BR		0x21bd	Smart Array P244br
+product HP HPSA_P741M		0x21be	Smart Array P741m
+product HP HPSA_H240AR		0x21bf	Smart Array H240ar
+product HP HPSA_P440AR		0x21c0	Smart Array H440ar
+product HP HPSA_P840AR		0x21c1	Smart Array P840ar
+product HP HPSA_P440		0x21c2	Smart Array P440
+product HP HPSA_P441		0x21c3	Smart Array P441
+product HP HPSA_P841		0x21c5	Smart Array P841
+product HP HPSA_H244BR		0x21c6	Smart Array H244br
+product HP HPSA_H240		0x21c7	Smart Array H240
+product HP HPSA_H241		0x21c8	Smart Array H241
+product HP HPSA_P246BR		0x21ca	Smart Array P246br
+product HP HPSA_P840		0x21cb	Smart Array P840
+product HP HPSA_P542D		0x21cc	Smart Array P542d
+product HP HPSA_P240NR		0x21cd	Smart Array P240nr
+product HP HPSA_H240NR		0x21ce	Smart Array H240nr
 product HP HPSAV100		0x3210	Smart Array V100
 product HP HPSAE200I_1		0x3211	Smart Array E200i
 product HP HPSAE200		0x3212	Smart Array E200
@@ -3406,6 +3431,10 @@ product HP HPSA_P411		0x3247	Smart Array P411
 product HP HPSA_P812		0x3249	Smart Array P822
 product HP HPSA_P712M		0x324a	Smart Array P712m
 product HP HPSA_14		0x324b	Smart Array
+product HP USB			0x3300	iLO3 Virtual USB
+product HP IPMI			0x3302	IPMI
+product HP ILO3_SLAVE		0x3306	iLO3 Slave
+product HP ILO3_MGMT		0x3307	iLO3 Management
 product HP HPSA_P222		0x3350	Smart Array P222
 product HP HPSA_P420		0x3351	Smart Array P420
 product HP HPSA_P421		0x3352	Smart Array P421
@@ -3413,35 +3442,6 @@ product HP HPSA_P822		0x3353	Smart Array P822
 product HP HPSA_P420I		0x3354	Smart Array P420i
 product HP HPSA_P220I		0x3355	Smart Array P220i
 product HP HPSA_P721I		0x3356	Smart Array P721i
-product HP HPSA_P430I		0x1920	Smart Array P430i
-product HP HPSA_P830I		0x1921	Smart Array P830i
-product HP HPSA_P430		0x1922	Smart Array P430
-product HP HPSA_P431		0x1923	Smart Array P431
-product HP HPSA_P830		0x1924	Smart Array P830
-product HP HPSA_P731M		0x1926	Smart Array P731m
-product HP HPSA_P230I		0x1928	Smart Array P230i
-product HP HPSA_P530		0x1929	Smart Array P530
-product HP HPSA_P531		0x192A	Smart Array P531
-product HP HPSA_P244BR		0x21bd	Smart Array P244br
-product HP HPSA_P741M		0x21be	Smart Array P741m
-product HP HPSA_H240AR		0x21bf	Smart Array H240ar
-product HP HPSA_P440AR		0x21c0	Smart Array H440ar
-product HP HPSA_P840AR		0x21c1	Smart Array P840ar
-product HP HPSA_P440		0x21c2	Smart Array P440
-product HP HPSA_P441		0x21c3	Smart Array P441
-product HP HPSA_P841		0x21c5	Smart Array P841
-product HP HPSA_H244BR		0x21c6	Smart Array H244br
-product HP HPSA_H240		0x21c7	Smart Array H240
-product HP HPSA_H241		0x21c8	Smart Array H241
-product HP HPSA_P246BR		0x21ca	Smart Array P246br
-product HP HPSA_P840		0x21cb	Smart Array P840
-product HP HPSA_P542D		0x21cc	Smart Array P542d
-product HP HPSA_P240NR		0x21cd	Smart Array P240nr
-product HP HPSA_H240NR		0x21ce	Smart Array H240nr
-product HP USB			0x3300	iLO3 Virtual USB
-product HP IPMI			0x3302	IPMI
-product HP ILO3_SLAVE		0x3306	iLO3 Slave
-product HP ILO3_MGMT		0x3307	iLO3 Management
 product HP RS780_PPB_GFX	0x9602  (AMD) RS780 PCI-PCI Bridge (int gfx)
 
 /* HGST Inc. products */
@@ -5156,9 +5156,8 @@ product INTEL XE5_V3_RQPI_PM_1	0x2f36	Xeon E5 v3/Core i7-6xxxK QPI Ring Performa
 product INTEL XE5_V3_RQPI_PM_2	0x2f37	Xeon E5 v3/Core i7-6xxxK QPI Ring Interface Monitoring
 product INTEL XE7_V4_QPI_LINK2	0x2f40	Xeon E7 v4 QPI Link 2
 product INTEL XE7_V4_RQPI_RING	0x2f41	Xeon E7 v4 QPI Ring Interface
-product INTEL XE5_V3_IMC1_MAIN	0x2f68	Xeon E5 v3 IMC Main
 product INTEL XE5_V3_HA1	0x2f60  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 1
-product INTEL XE5_V3_ICM1_TATRR	0x2f68  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 1 Target Address, Thermal & RAS Registers
+product INTEL XE5_V3_IMC1_TATRR	0x2f68  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 1 Target Address, Thermal & RAS Registers
 product INTEL XE5_V3_IMC1_TADR1	0x2f6a	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC1_TADR2	0x2f6b	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE7_V4_IMC1_TADR3	0x2f6c	Xeon E7 v4 IMC Ch 0-3 Target Address Decoder
@@ -5181,7 +5180,6 @@ product INTEL XE5_V3_PCU_1	0x2f98	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_2	0x2f99	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_3	0x2f9a	Xeon E5 v3 Power Control Unit
 product INTEL XE5_V3_PCU_5	0x2f9c	Xeon E5 v3 Power Control Unit
-product INTEL XE5_V3_IMC0_MAIN	0x2fa8	Xeon E5 v3 IMC Main
 product INTEL XE5_V3_HA0	0x2fa0  Xeon E7 v3/Xeon E5 v3/Core i7 Home Agent 0
 product INTEL XE5_V3_IMC0_TATRR	0x2fa8  Xeon E7 v3/Xeon E5 v3/Core i7 Integrated Memory Controller 0 Target Address, Thermal & RAS Registers
 product INTEL XE5_V3_IMC0_TADR1 0x2faa	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
@@ -5583,13 +5581,13 @@ product INTEL XEONE_S_D_HOST_DRAM_2C 0x3e0f Xeon E (S, Desktop) Host Bridge, DRA
 product INTEL XEONE_H_HOST_DRAM_4C 0x3e10 Xeon E (H) Host Bridge, DRAM
 product INTEL XEONE_S_W_HOST_DRAM_4C 0x3e18 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL CORE8G_S_HOST_DRAM_4C 0x3e1f Core 8G (S) Host Bridge, DRAM
-product INTEL CORE8G_U_HOST_DRAM_4C 0x3e34 Core 8G (U) Host Bridge, DRAM
-product INTEL CORE8G_U_HOST_DRAM_2C 0x3e35 Core 8G (U) Host Bridge, DRAM
-product INTEL CORE8G_S_HOST_DRAM_6C 0x3ec2 Core 8G (S) Host Bridge, DRAM
+product INTEL CORE8G_H_H_HOST_DRAM_8C 0x3e20 Core 8G (H, Halo) Host Bridge, DRAM
 product INTEL XEONE_S_D_HOST_DRAM_8C 0x3e30 Xeon E (S, Desktop) Host Bridge, DRAM
 product INTEL XEONE_S_W_HOST_DRAM_8C 0x3e31 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL XEONE_S_S_HOST_DRAM_8C 0x3e32 Xeon E (S, Server) Host Bridge, DRAM
 product INTEL XEONE_S_S_HOST_DRAM_4C 0x3e33 Xeon E (S, Server) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_4C 0x3e34 Core 8G (U) Host Bridge, DRAM
+product INTEL CORE8G_U_HOST_DRAM_2C 0x3e35 Core 8G (U) Host Bridge, DRAM
 product INTEL XEONE_H_HOST_DRAM_6C 0x3e4c Xeon E (H) Host Bridge, DRAM
 product INTEL CORE8G_PCIE_X16	0x3e81 Core 8G (S) PCIe x16
 product INTEL CORE8G_PCIE_X8	0x3e85 Core 8G (S) PCIe x16
@@ -5611,7 +5609,7 @@ product INTEL COFLK_IGD_6	0x3ea5	Iris Plus Graphics 655
 product INTEL COFLK_U_GT3_2	0x3ea6	Iris Plus Graphics 645
 product INTEL COFLK_U_GT3_4	0x3ea8	Iris Plus Graphics 655
 product INTEL COFLK_U_GT2_2	0x3ea9	UHD Graphics 620
-product INTEL XEONE_S_D_HOST_DRAM_6C 0x3ec2 Xeon E (S, Desktop) Host Bridge, DRAM
+product INTEL CORE8G_S_HOST_DRAM_6C 0x3ec2 Core 8G (S) Host Bridge, DRAM
 product INTEL CORE8G_H_H_HOST_DRAM_6C 0x3ec4 Core 8G (H, Halo) Host Bridge, DRAM
 product INTEL XEONE_S_W_HOST_DRAM_6C 0x3ec6 Xeon E (S, WS) Host Bridge, DRAM
 product INTEL XEONE_S_S_HOST_DRAM_6C 0x3eca Xeon E (S, Server) Host Bridge, DRAM
@@ -5729,37 +5727,47 @@ product INTEL 5HS_H_CNVI	0x43f0	500 Series PCH-H CNVi WiFi
 product INTEL 5HS_H_GSPI_2	0x43fb	500 Series PCH-H GSPI 2
 product INTEL 5HS_H_ISH		0x43fc	500 Series PCH-H Integrated Sensor Hub
 product INTEL 5HS_H_GSPI_3	0x43fd	500 Series PCH-H GSPI 3
+product INTEL EHL_DPTF		0x4503	Elkhart Lake DPTF
+product INTEL EHL_GNA		0x4511	Elkhart Lake GNA
 product INTEL EHL_TROUTER_3	0x4512	Elkhart Lake Transaction Router (SKU 3)
-product INTEL EHL_TROUTER_3A	0x451e	Elkhart Lake Transaction Router (SKU 3A)
 product INTEL EHL_TROUTER_5	0x4514	Elkhart Lake Transaction Router (SKU 5)
 product INTEL EHL_TROUTER_8	0x4516	Elkhart Lake Transaction Router (SKU 8)
 product INTEL EHL_TROUTER_12	0x4518	Elkhart Lake Transaction Router (SKU 12)
+product INTEL EHL_TROUTER_3A	0x451e	Elkhart Lake Transaction Router (SKU 3A)
 product INTEL EHL_TROUTER_1	0x4522	Elkhart Lake Transaction Router (SKU 1)
-product INTEL EHL_TROUTER_1A	0x4538	Elkhart Lake Transaction Router (SKU 1A)
 product INTEL EHL_TROUTER_4	0x4526	Elkhart Lake Transaction Router (SKU 4)
 product INTEL EHL_TROUTER_6	0x4528	Elkhart Lake Transaction Router (SKU 6)
+product INTEL EHL_TRACE_2	0x4529	Elkhart Lake Trace Hub (Compute Die)
 product INTEL EHL_TROUTER_7	0x452a	Elkhart Lake Transaction Router (SKU 7)
 product INTEL EHL_TROUTER_9	0x452c	Elkhart Lake Transaction Router (SKU 9)
 product INTEL EHL_TROUTER_10	0x452e	Elkhart Lake Transaction Router (SKU 10)
 product INTEL EHL_TROUTER_11	0x4532	Elkhart Lake Transaction Router (SKU 11)
+product INTEL EHL_TROUTER_1A	0x4538	Elkhart Lake Transaction Router (SKU 1A)
 product INTEL EHL_TROUTER_2	0x453a	Elkhart Lake Transaction Router (SKU 2)
 product INTEL EHL_GPU_16	0x4551	Elkhart Lake GPU (16EU)
 product INTEL EHL_GPU_32_SUPER	0x4551	Elkhart Lake GPU (32EU Super)
 product INTEL EHL_GPU_32	0x4551	Elkhart Lake GPU (32EU)
-product INTEL EHL_DPTF		0x4503	Elkhart Lake DPTF
-product INTEL EHL_GNA		0x4511	Elkhart Lake GNA
-product INTEL EHL_TRACE_2	0x4529	Elkhart Lake Trace Hub (Compute Die)
+product INTEL ADL_U15_2_8_HOST	0x4601	Alder Lake (U15,2+8) Host
+product INTEL ADL_U9_2_8_HOST	0x4602	Alder Lake (U9,2+8) Host
+product INTEL ADL_U15_2_4_HOST	0x4609	Alder Lake (U15,2+4) Host
+product INTEL ADL_U9_2_4_HOST	0x460a	Alder Lake (U9,2+4) Host
 product INTEL ADL_PCIE_RP_0	0x460d	Alder Lake PCIe G5 Root Port 0 (x16)
 product INTEL ADL_XDCI		0x460e	Alder Lake USB-C Device (xDCI)
 product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake (S,2+0) Host
+product INTEL ADL_U15_1_4_HOST	0x4619	Alder Lake (U15,1+4) Host
+product INTEL ADL_U9_1_4_HOST	0x461a	Alder Lake (U9,1+4) Host
 product INTEL ADL_DTT		0x461d	Alder Lake Dynamic Tuning Technology
 product INTEL ADL_XHCI		0x461e	Alder Lake USB-C Host (xHCI)
 product INTEL ADL_TBT_PCIE_3	0x461f	Alder Lake Thunderbolt PCIe 3
 product INTEL ADL_H_4_8_HOST	0x4621	Alder Lake (H,4+8) Host
+product INTEL ADL_HX_4_8_HOST	0x4623	Alder Lake (HX,4+8) Host
 product INTEL ADL_H_4_4_HOST	0x4629	Alder Lake (H,4+4) Host
+product INTEL ADL_HX_4_4_HOST	0x462b	Alder Lake (HX,4+4) Host
 product INTEL ADL_PCIE_RP_1	0x462d	Alder Lake PCIe G5 Root Port 1 (x8)
 product INTEL ADL_TBT_PCIE_2	0x462f	Alder Lake Thunderbolt PCIe 2
 product INTEL ADL_S_4_0_HOST	0x4630	Alder Lake (S,4+0) Host
+product INTEL ADL_HX_8_8_HOST	0x4637	Alder Lake (HX,8+8) Host
+product INTEL ADL_HX_6_8_HOST	0x463b	Alder Lake (HX,6+8) Host
 product INTEL ADL_PCIE_RP_3	0x463d	Alder Lake PCIe G4 Root Port 3 (x4)
 product INTEL ADL_TBTDMA_0	0x463e	Alder Lake Thunderbolt DMA 0
 product INTEL ADL_TBT_PCIE_1	0x463f	Alder Lake Thunderbolt PCIe 1
@@ -5779,11 +5787,17 @@ product INTEL ADL_CLSRAM	0x467d	Alder Lake Crash Log & Telemetry
 product INTEL ADL_VMD		0x467f	Alder Lake Volume Management Device
 product INTEL ADL_IGD_1		0x4680	Alder Lake Graphics (32EU)
 product INTEL ADL_IGD_2		0x4682	Alder Lake Graphics (24EU)
+product INTEL ADL_IGD_8		0x4688	Alder Lake Graphics (32EU)
+product INTEL ADL_IGD_9		0x468b	Alder Lake Graphics (16EU)
 product INTEL ADL_IGD_3		0x4690	Alder Lake Graphics (32EU)
 product INTEL ADL_IGD_4		0x4692	Alder Lake Graphics (24EU)
 product INTEL ADL_IGD_5		0x4693	Alder Lake Graphics (16EU)
-product INTEL ADL_IGD_6		0x46a6	Alder Lake Graphics
-product INTEL ADL_IGD_7		0x46a3	Alder Lake Graphics
+product INTEL ADL_IGD_6		0x46a3	Alder Lake Graphics (48EU)
+product INTEL ADL_IGD_7		0x46a6	Alder Lake Graphics
+product INTEL ADL_IGD_10	0x46a8	Alder Lake Graphics
+product INTEL ADL_IGD_11	0x46aa	Alder Lake Graphics
+product INTEL ADL_IGD_12	0x46b3	Alder Lake Graphics
+product INTEL ADL_IGD_13	0x46c3	Alder Lake Graphics
 product INTEL EHL_ESPI		0x4b00	Elkhart Lake eSPI
 product INTEL EHL_P2SB		0x4b20	Elkhart Lake P2SB
 product INTEL EHL_PMC		0x4b21	Elkhart Lake PMC
@@ -5823,8 +5837,8 @@ product INTEL EHL_CAVS_8	0x4b5c	Elkhart Lake cAVS
 product INTEL EHL_AHCI		0x4b60	Elkhart Lake AHCI
 product INTEL EHL_HPET		0x4b68	Elkhart Lake HPET
 product INTEL EHL_IOAPIC	0x4b69	Elkhart Lake IOAPIC
-product INTEL EHL_CSE_UMA	0x4b6c	Elkhart Lake CSE UMA Access
 product INTEL EHL_CSE_PTTDMA	0x4b6b	Elkhart Lake CSE PTT DMA
+product INTEL EHL_CSE_UMA	0x4b6c	Elkhart Lake CSE UMA Access
 product INTEL EHL_CSE_HECI_0	0x4b70	Elkhart Lake CSE HECI 0
 product INTEL EHL_CSE_HECI_1	0x4b71	Elkhart Lake CSE HECI 1
 product INTEL EHL_CSE_HECI_2	0x4b74	Elkhart Lake CSE HECI 2
@@ -5937,7 +5951,7 @@ product INTEL JSL_TROUTER_2_2	0x4e22	Jasper Lake Processor Transaction Router (S
 product INTEL JSL_TROUTER_4_2	0x4e24	Jasper Lake Processor Transaction Router (SKU 4)
 product INTEL JSL_TROUTER_4_3	0x4e26	Jasper Lake Processor Transaction Router (SKU 4)
 product INTEL JSL_TROUTER_4_4	0x4e28	Jasper Lake Processor Transaction Router (SKU 4)
-product INTEL JSL_TRACE_2	0x4da6	Jasper Lake Intel Trace Hub (Compute Die)
+product INTEL JSL_TRACE_2	0x4e29	Jasper Lake Intel Trace Hub (Compute Die)
 product INTEL JSL_GPU_EU_16	0x4e55	Jasper Lake GPU 16 EU
 product INTEL JSL_GPU_EU_24	0x4e61	Jasper Lake GPU 24 EU
 product INTEL JSL_GPU_EU_32	0x4e71	Jasper Lake GPU 32 EU
@@ -5965,6 +5979,56 @@ product INTEL EP80579_RESERVED2	0x503f	EP80579 Reserved
 product INTEL EP80579_LAN_1	0x5040	EP80579 LAN
 product INTEL EP80579_LAN_2	0x5044	EP80579 LAN
 product INTEL EP80579_LAN_3	0x5048	EP80579 LAN
+product INTEL 6HS_LP_ESPI	0x5182	600 Series PCH-LP eSPI
+product INTEL 6HS_LP_P2SB	0x51a0	600 Series PCH-LP P2SB
+product INTEL 6HS_LP_PMC	0x51a1	600 Series PCH-LP PMC
+product INTEL 6HS_LP_SMB	0x51a3	600 Series PCH-LP SMBus
+product INTEL 6HS_LP_SPI	0x51a4	600 Series PCH-LP SPI (FLASH)
+product INTEL 6HS_LP_TRACE	0x51a6	600 Series PCH-LP Trace Hub
+product INTEL 6HS_LP_UART_0	0x51a8	600 Series PCH-LP UART 0
+product INTEL 6HS_LP_UART_1	0x51a9	600 Series PCH-LP UART 1
+product INTEL 6HS_LP_GSPI_0	0x51aa	600 Series PCH-LP GSPI 0
+product INTEL 6HS_LP_GSIP_1	0x51ab	600 Series PCH-LP GSPI 1
+product INTEL 6HS_LP_PCIE_9	0x51b0	600 Series PCH-LP PCIe RP 9
+product INTEL 6HS_LP_PCIE_10	0x51b1	600 Series PCH-LP PCIe RP 10
+product INTEL 6HS_LP_PCIE_11	0x51b2	600 Series PCH-LP PCIe RP 11
+product INTEL 6HS_LP_PCIE_12	0x51b3	600 Series PCH-LP PCIe RP 12
+product INTEL 6HS_LP_PCIE_1	0x51b8	600 Series PCH-LP PCIe RP 1
+product INTEL 6HS_LP_PCIE_2	0x51b9	600 Series PCH-LP PCIe RP 2
+product INTEL 6HS_LP_PCIE_3	0x51ba	600 Series PCH-LP PCIe RP 3
+product INTEL 6HS_LP_PCIE_4	0x51bb	600 Series PCH-LP PCIe RP 4
+product INTEL 6HS_LP_PCIE_5	0x51bc	600 Series PCH-LP PCIe RP 5
+product INTEL 6HS_LP_PCIE_6	0x51bd	600 Series PCH-LP PCIe RP 6
+product INTEL 6HS_LP_PCIE_7	0x51be	600 Series PCH-LP PCIe RP 7
+product INTEL 6HS_LP_PCIE_8	0x51bf	600 Series PCH-LP PCIe RP 8
+product INTEL 6HS_LP_I2C_4	0x51c5	600 Series PCH-LP I2C 4
+product INTEL 6HS_LP_I2C_5	0x51c6	600 Series PCH-LP I2C 5
+product INTEL 6HS_LP_UART_2	0x51c7	600 Series PCH-LP UART 2
+product INTEL 6HS_LP_HDA	0x51c8	600 Series PCH-LP HD Audio
+product INTEL 6HS_LP_THC_0	0x51d0	600 Series PCH-LP THC 0
+product INTEL 6HS_LP_THC_1	0x51d1	600 Series PCH-LP THC 1
+product INTEL 6HS_LP_AHCI	0x51d3	600 Series PCH-LP SATA (AHCI)
+product INTEL 6HS_LP_RAID_P	0x51d7	600 Series PCH-LP SATA (RAID) premium
+product INTEL 6HS_LP_I2C_6	0x51d8	600 Series PCH-LP I2C 6
+product INTEL 6HS_LP_I2C_7	0x51d9	600 Series PCH-LP I2C 7
+product INTEL 6HS_LP_UART_3	0x51da	600 Series PCH-LP UART 3
+product INTEL 6HS_LP_HECI_1	0x51e0	600 Series PCH-LP HECI 1
+product INTEL 6HS_LP_HECI_2	0x51e1	600 Series PCH-LP HECI 2
+product INTEL 6HS_LP_IDER	0x51e2	600 Series PCH-LP IDE-R
+product INTEL 6HS_LP_KT		0x51e3	600 Series PCH-LP KT
+product INTEL 6HS_LP_HECI_3	0x51e4	600 Series PCH-LP HECI 3
+product INTEL 6HS_LP_HECI_4	0x51e5	600 Series PCH-LP HECI 4
+product INTEL 6HS_LP_I2C_0	0x51e8	600 Series PCH-LP I2C 0
+product INTEL 6HS_LP_I2C_1	0x51e9	600 Series PCH-LP I2C 1
+product INTEL 6HS_LP_I2C_2	0x51ea	600 Series PCH-LP I2C 2
+product INTEL 6HS_LP_I2C_3	0x51eb	600 Series PCH-LP I2C 3
+product INTEL 6HS_LP_XHCI	0x51ed	600 Series PCH-LP USB 3.2 Gen 2x1 xHCI
+product INTEL 6HS_LP_XDCI	0x51ee	600 Series PCH-LP USB 3.2 Gen 1x1 xDCI
+product INTEL 6HS_LP_SSRAM	0x51ef	600 Series PCH-LP Shared SRAM
+product INTEL AX211		0x51f0	Wi-Fi 6 AX211
+product INTEL 6HS_LP_GSPI_2	0x51fb	600 Series PCH-LP GSPI 2
+product INTEL 6HS_LP_ISH	0x51fc	600 Series PCH-LP Integrated Sensor Hub
+product INTEL 6HS_LP_UFS	0x51ff	600 Series PCH-LP UFS
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL I219_LM18		0x550a	I219-LM (18) Ethernet Connection
 product INTEL I219_V18		0x550b	I219-V (18) Ethernet Connection
@@ -6168,11 +6232,16 @@ product INTEL 82440MX_PMC	0x719b	82443MX Power Management Controller
 product INTEL 82443GX		0x71a0	82443GX Host Bridge/Controller
 product INTEL 82443GX_AGP	0x71a1	82443GX AGP Interface
 product INTEL 82443GX_NOAGP	0x71a2	82443GX Host Bridge/Controller (AGP disabled)
+product INTEL XMM7360		0x7360  XMM 7360 LTE Modem
 product INTEL I740		0x7800	i740 Graphics Accelerator
+product INTEL 6HS_Q670_ESPI	0x7a83	Q670 eSPI
 product INTEL 6HS_Z690_ESPI	0x7a84	Z690 eSPI
 product INTEL 6HS_H670_ESPI	0x7a85	H670 eSPI
 product INTEL 6HS_B660_ESPI	0x7a86	B660 eSPI
 product INTEL 6HS_H610_ESPI	0x7a87	H610 eSPI
+product INTEL 6HS_W680_ESPI	0x7a88	W680 eSPI
+product INTEL 6HS_HM670_ESPI	0x7a8c	HM670 eSPI
+product INTEL 6HS_WM690_ESPI	0x7a8d	WM690 eSPI
 product INTEL 6HS_H_P2SB	0x7aa0	600 Series PCH-H P2SB
 product INTEL 6HS_H_PMC		0x7aa1	600 Series PCH-H PMC
 product INTEL 6HS_H_SMB		0x7aa3	600 Series PCH-H SMBus
@@ -7034,7 +7103,6 @@ product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
 product INTEL HANKSVILLE	0xf0fe	HANKSVILLE LAN Controller
 product INTEL SSD_760P		0xf1a6	NVMe SSD 760p/7600p/E-6100p
 product INTEL SSD_660P		0xf1a8	NVMe SSD 660p
-product INTEL XMM7360		0x7360  XMM 7360 LTE Modem
 
 /* Intergraph products */
 product INTERGRAPH 4D60T	0x00e3	Powerstorm 4D60T
@@ -7360,9 +7428,9 @@ product NETVIN 5000	0x5000	5000 Ethernet
 
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42		0x0000	Universe VME Bridge
+product NEWBRIDGE CA91L826A		0x0826	QSpan II PCI Bridge
 product NEWBRIDGE TSI381		0x8111	Tsi381 PCIe-PCI
 product NEWBRIDGE PEB383		0x8113	PEB383 PCIe-PCI
-product NEWBRIDGE CA91L826A		0x0826	QSpan II PCI Bridge
 product NEWBRIDGE CA91L8260		0x8260	PowerSpan PCI Bridge
 product NEWBRIDGE CA91L8261		0x8261	PowerSpan II PCI Bridge
 
@@ -7508,6 +7576,7 @@ product SYMBIOS FC919X			0x0628	FC919X
 product SYMBIOS FC949X			0x0640	FC949X
 product SYMBIOS FC939X			0x0642	FC939X
 product SYMBIOS FC949E			0x0646	FC949E
+product SYMBIOS PE_GNIC			0x0702	Packet Engines G-NIC Ethernet
 product SYMBIOS 1030R			0x1030	53c1030R
 product SYMBIOS MEGARAID_39XX_1		0x10e0	MegaRAID Unsupported SAS39xx
 product SYMBIOS MEGARAID_39XX_2		0x10e1	MegaRAID SAS39xx
@@ -7518,9 +7587,6 @@ product SYMBIOS MEGARAID_38XX_2		0x10e5	MegaRAID SAS38xx
 product SYMBIOS MEGARAID_38XX_3		0x10e6	MegaRAID Secure SAS38xx
 product SYMBIOS MEGARAID_38XX_4		0x10e7	MegaRAID Unsupported SAS38xx
 product SYMBIOS PERC_4SC		0x1960	PERC 4/SC
-
-/* Packet Engines products */
-product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 
 /* Parallels products */
 product PARALLELS TOOLS		0x1112	Tools
@@ -8011,6 +8077,7 @@ product NVIDIA	GEFORCE_610M	0x1058	GeForce 610M
 product NVIDIA	GEFORCE_610M2	0x1059	GeForce 610M
 product NVIDIA	GT610M		0x105A	GeForce GT 610M
 product NVIDIA	GF_GTX680	0x1180 	GeForce GTX 680
+product NVIDIA	GF_GTX770	0x1184	GeForce GTX 770
 product NVIDIA	GF_GTX560_Ti	0x1200	GeForce GTX 560 Ti
 product NVIDIA	GF_GTX560	0x1201	GeForce GTX 560
 product NVIDIA	GF_GTX560_TiOEM	0x1202	GeForce GTX 560 Ti OEM
@@ -8303,9 +8370,9 @@ product NVIDIA	GF_RTX3050_M	0x25a2 	GeForce RTX 3050 Mobile
 product NVIDIA	GF_RTX3050_M2	0x25a5 	GeForce RTX 3050 Mobile
 product NVIDIA	GF_RTXA4_M	0x25b5 	GeForce RTX A4 Mobile
 product NVIDIA	GF_RTXA2000_M	0x25b7 	GeForce RTX A2000 Mobile
-product NVIDIA	GF_RTX3050_TiM2	0x25e9 	GeForce RTX 3050 Ti Mobile
 product NVIDIA	GF_RTX3050_M3	0x25e2 	GeForce RTX 3050 Mobile
 product NVIDIA	GF_RTX3050_M4	0x25e5 	GeForce RTX 3050 Mobile
+product NVIDIA	GF_RTX3050_TiM2	0x25e9 	GeForce RTX 3050 Ti Mobile
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
@@ -8851,8 +8918,16 @@ product SAFENET SAFEXCEL	0x1141 SafeXcel
 product SAMSUNGELEC3	XP941		0xa800	XP941 M.2 SSD
 product SAMSUNGELEC3	SM951		0xa801	SM951 M.2 SSD
 product SAMSUNGELEC3	SM951_NVME	0xa802	SM951 M.2 NVMe SSD
+product SAMSUNGELEC3	SM961		0xa804	SM961 M.2 NVMe SSD
+product SAMSUNGELEC3	SM981		0xa808	SM981 M.2 NVMe SSD
+product SAMSUNGELEC3	SM980		0xa809	SM980 M.2 NVMe SSD
+product SAMSUNGELEC3	PM9A1		0xa80a	PM9A1 M.2 NVMe SSD
+product SAMSUNGELEC3	171X		0xa820	NVMe SSD Controller 171X
 product SAMSUNGELEC3	172X		0xa821	NVMe SSD Controller 172X
 product SAMSUNGELEC3	172XAB		0xa822	NVMe SSD Controller 172Xa/172Xb
+product SAMSUNGELEC3	PM173X		0xa824	NVMe SSD Controller PM173X
+product SAMSUNGELEC3	PM173Xa		0xa825	NVMe SSD Controller PM173Xa
+product SAMSUNGELEC3	PM174X		0xa826	NVMe SSD Controller PM174X
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
@@ -9462,20 +9537,20 @@ product VIATECH VT8251_SATA	0x6287	VT8251 Integrated SATA Controller
 product VIATECH P4M900_6	0x6364	CN896/P4M900 Security Device
 product VIATECH VX900_SCRATCH	0x6410	VX900 Scratch Registers
 product VIATECH CHROME9_HD	0x7122	VX900 Graphics [Chrome9 HD]
-product VIATECH VX900_2		0x7410	VX900 North-South Module Interface Control
 product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics
 product VIATECH KT880_5		0x7269	KT880 CPU to PCI Bridge
 product VIATECH VT3351_HB_7351	0x7351	VT3351 Host Bridge
 product VIATECH P4M900_7	0x7364	CN896/P4M900 Host Bridge
 product VIATECH VT8237S_SATA_RAID 0x7372 VT8237S Integrated SATA Controller (RAID mode)
+product VIATECH VX900_2		0x7410	VX900 North-South Module Interface Control
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
-product VIATECH VX855		0x8409  VX855 PCI-LPC Bridge
-product VIATECH VX900		0x8410	VX900 Bus Control and Power Management
 product VIATECH CX700		0x8324	CX700 PCI-LPC Bridge
 product VIATECH VX800		0x8353	VX800/VX820 PCI-LPC Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
+product VIATECH VX855		0x8409  VX855 PCI-LPC Bridge
+product VIATECH VX900		0x8410	VX900 Bus Control and Power Management
 product VIATECH VT8501AGP	0x8501	VT8501 (Apollo MVP4) CPU-AGP Bridge
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
