@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.16 2021/09/06 17:19:52 rillig Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.17 2022/10/11 09:54:15 knakahara Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -453,11 +453,11 @@ kdebug_sadb_x_policy(struct sadb_ext *ext)
 		panic("kdebug_sadb_x_policy: NULL pointer was passed.\n");
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
-	printf("sadb_x_policy{ type=%u dir=%u id=%x priority=%u }\n",
+	printf("sadb_x_policy{ type=%u dir=%u flags=0x%02x id=%x priority=%u }\n",
 #else
-	printf("sadb_x_policy{ type=%u dir=%u id=%x }\n",
+	printf("sadb_x_policy{ type=%u dir=%u flags=0x%02x id=%x }\n",
 #endif
-		xpl->sadb_x_policy_type, xpl->sadb_x_policy_dir,
+		xpl->sadb_x_policy_type, xpl->sadb_x_policy_dir, xpl->sadb_x_policy_flags,
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 		xpl->sadb_x_policy_id, xpl->sadb_x_policy_priority);
 #else
