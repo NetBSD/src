@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2022/07/26 20:08:55 andvar Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2022/07/26 20:08:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -944,12 +944,12 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 
 		if (size == 0)
-			panic("mbus_dmamem_load_raw: size botch");
+			panic("mbus_dmamap_load_raw: size botch");
 
 		pa = VM_PAGE_TO_PHYS(m);
 		if (pa != pa_next) {
 			if (++seg >= map->_dm_segcnt)
-				panic("mbus_dmamem_load_raw: nsegs botch");
+				panic("mbus_dmamap_load_raw: nsegs botch");
 			map->dm_segs[seg].ds_addr = pa;
 			map->dm_segs[seg].ds_len = 0;
 		}
