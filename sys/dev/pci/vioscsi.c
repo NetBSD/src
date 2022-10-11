@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.29 2022/01/27 18:38:07 jakllsch Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.30 2022/10/11 22:03:37 andvar Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.29 2022/01/27 18:38:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.30 2022/10/11 22:03:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_control);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
-		    	    "%s: bus_dmamem_create ctrl failed, error %d\n",
+		    	    "%s: bus_dmamap_create ctrl failed, error %d\n",
 			    __func__, r);
 			goto cleanup;
 		}
@@ -623,7 +623,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
-		    	    "%s: bus_dmamem_create data failed, error %d\n",
+		    	    "%s: bus_dmamap_create data failed, error %d\n",
 			    __func__, r);
 			goto cleanup;
 		}
