@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.21 2022/03/13 11:30:04 riastradh Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.22 2022/10/11 09:18:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -112,6 +112,8 @@ struct xhci_softc {
 	 * Port routing and root hub - xHCI 4.19.7
 	 */
 	int sc_maxports;		/* number of controller ports */
+	int sc_usb3nports;
+	int sc_usb2nports;
 
 	uint8_t *sc_ctlrportbus;	/* a bus bit per port */
 

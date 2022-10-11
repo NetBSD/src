@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.172 2022/09/25 07:23:07 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.173 2022/10/11 09:18:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.172 2022/09/25 07:23:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.173 2022/10/11 09:18:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1214,6 +1214,10 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	case 0x0320:
 		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
 		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
+		if (major == 3)
+			sc->sc_usb3nports = cpo + cpc -1;
+		else
+			sc->sc_usb2nports = cpo + cpc -1;
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
