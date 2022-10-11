@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.33 2022/10/06 06:59:24 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.34 2022/10/11 09:51:47 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.33 2022/10/06 06:59:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.34 2022/10/11 09:51:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1706,7 +1706,7 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	xpl->sadb_x_policy_type = policy;
 	xpl->sadb_x_policy_dir = dir;
-	xpl->sadb_x_policy_reserved = 0;
+	xpl->sadb_x_policy_flags = 0;
 	xpl->sadb_x_policy_id = id;
 	xpl->sadb_x_policy_reserved2 = 0;
 
