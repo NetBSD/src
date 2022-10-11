@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $ */
+/* $NetBSD: imc.c,v 1.2.6.1 2022/10/11 17:49:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2.6.1 2022/10/11 17:49:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,12 +137,12 @@ __KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $");
 
 #define IMCSMB_PCI_DEV_ID_IMC0_SBX	0x3ca8
 #define IMCSMB_PCI_DEV_ID_IMC0_IBX	0x0ea8
-#define IMCSMB_PCI_DEV_ID_IMC0_HSX	PCI_PRODUCT_INTEL_XE5_V3_IMC0_MAIN
+#define IMCSMB_PCI_DEV_ID_IMC0_HSX	PCI_PRODUCT_INTEL_XE5_V3_IMC0_TATRR
 #define IMCSMB_PCI_DEV_ID_IMC0_BDX	PCI_PRODUCT_INTEL_XEOND_MEM_0_TTR_1
 
 /* (Sandy,Ivy)bridge-Xeon only have a single memory controller per socket */
 
-#define IMCSMB_PCI_DEV_ID_IMC1_HSX	PCI_PRODUCT_INTEL_XE5_V3_IMC1_MAIN
+#define IMCSMB_PCI_DEV_ID_IMC1_HSX	PCI_PRODUCT_INTEL_XE5_V3_IMC1_TATRR
 #define IMCSMB_PCI_DEV_ID_IMC1_BDX	PCI_PRODUCT_INTEL_COREI76K_IMC_0
 
 /* There are two SMBus controllers in each device. These define the registers
@@ -299,8 +299,8 @@ imc_probe(device_t dev, cfdata_t cf, void *aux)
 		switch(PCI_PRODUCT(pa->pa_id)) {
 		case  PCI_PRODUCT_INTEL_COREI76K_IMC_0:
 		case  PCI_PRODUCT_INTEL_XEOND_MEM_0_TTR_1:
-		case  PCI_PRODUCT_INTEL_XE5_V3_IMC0_MAIN:
-		case  PCI_PRODUCT_INTEL_XE5_V3_IMC1_MAIN:
+		case  PCI_PRODUCT_INTEL_XE5_V3_IMC0_TATRR:
+		case  PCI_PRODUCT_INTEL_XE5_V3_IMC1_TATRR:
 		case  PCI_PRODUCT_INTEL_E5_IMC_TA:
 		case  PCI_PRODUCT_INTEL_E5V2_IMC_TA:
 			return 1;
