@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2022/09/20 07:18:23 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2022/10/12 07:53:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -142,10 +142,10 @@
 #ifdef _LP64
 /*
  * Since we have the address space, we map all of physical memory (RAM)
- * using block page table entries.
+ * using gigapages on SV39, terapages on SV48 and petapages on SV57.
  */
 #define RISCV_DIRECTMAP_MASK	((vaddr_t) 0xffffffe000000000L)
-#define RISCV_DIRECTMAP_SIZE	(-RISCV_DIRECTMAP_MASK)	/* 128GiB */
+#define RISCV_DIRECTMAP_SIZE	(-RISCV_DIRECTMAP_MASK - PAGE_SIZE)	/* 128GiB */
 #define RISCV_DIRECTMAP_START	RISCV_DIRECTMAP_MASK
 #define RISCV_DIRECTMAP_END	(RISCV_DIRECTMAP_START + RISCV_DIRECTMAP_SIZE)
 #define RISCV_KVA_P(va)	(((vaddr_t) (va) & RISCV_DIRECTMAP_MASK) != 0)
@@ -173,7 +173,7 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #ifndef VM_PHYSSEG_MAX
-#define VM_PHYSSEG_MAX		1
+#define VM_PHYSSEG_MAX		16
 #endif
 #if VM_PHYSSEG_MAX == 1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
