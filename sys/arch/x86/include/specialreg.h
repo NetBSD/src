@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.192 2022/10/06 00:22:16 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.193 2022/10/12 10:25:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -884,6 +884,22 @@
  *	No Cores/package (%eax bit 31..26)
  *	No Complex cache indexing (%edx bit 2)
  */
+
+/*
+ * AMD Processor Topology Information.
+ * CPUID Fn8000_001e
+ * %eax: Extended APIC ID.
+ * %ebx: Core Identifiers.
+ * %ecx: Node Identifiers.
+ */
+
+/* %ebx */
+#define CPUID_AMD_PROCT_COREID		   __BITS(7,0)	/* Core ID */
+#define CPUID_AMD_PROCT_THREADS_PER_CORE   __BITS(15,8)	/* Threads/Core - 1 */
+
+/* %ecx */
+#define CPUID_AMD_PROCT_NODEID		   __BITS(7,0)	/* Node ID */
+#define CPUID_AMD_PROCT_NODE_PER_PROCESSOR __BITS(10,8)	/* Node/Processor -1 */
 
 /*
  * AMD Encrypted Memory Capabilities.
