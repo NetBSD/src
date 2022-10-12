@@ -1,4 +1,4 @@
-/*	$NetBSD: blocklistd.c,v 1.2 2022/06/11 19:15:58 christos Exp $	*/
+/*	$NetBSD: blocklistd.c,v 1.3 2022/10/12 18:36:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blocklistd.c,v 1.2 2022/06/11 19:15:58 christos Exp $");
+__RCSID("$NetBSD: blocklistd.c,v 1.3 2022/10/12 18:36:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -322,7 +322,7 @@ again:
 		if (dbi.id[0]) {
 			run_change("rem", &c, dbi.id, 0);
 			sockaddr_snprintf(buf, sizeof(buf), "%a", ss);
-			syslog(LOG_INFO, "released %s/%d:%d after %d seconds",
+			(*lfun)(LOG_INFO, "released %s/%d:%d after %d seconds",
 			    buf, c.c_lmask, c.c_port, c.c_duration);
 		}
 		state_del(state, &c);
