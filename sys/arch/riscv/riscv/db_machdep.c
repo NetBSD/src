@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.9 2022/09/27 08:18:21 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.10 2022/10/12 07:53:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.9 2022/09/27 08:18:21 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.10 2022/10/12 07:53:56 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -274,6 +274,3 @@ db_write_bytes(vaddr_t addr, size_t len, const char *data)
 	}
 	__asm("fence rw,rw; fence.i");
 }
-
-
-
