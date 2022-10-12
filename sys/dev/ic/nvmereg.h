@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.18 2022/08/01 07:34:28 mlelstv Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.19 2022/10/12 20:50:43 andvar Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -214,7 +214,7 @@ struct nvme_sqe_io {
 #define  NVM_SQE_IO_FREQ_FRR_FRW	0x5	/* Freq. read and writes */
 #define  NVM_SQE_IO_FREQ_ONCE		0x6	/* One time i/o operation */
 /* Extra Access Frequency bits for read operations */
-#define  NVM_SQE_IO_FREQ_SPEC		0x7	/* Speculative read - prefech */
+#define  NVM_SQE_IO_FREQ_SPEC		0x7	/* Speculative read - prefetch */
 #define  NVM_SQE_IO_FREQ_OVERWRITE	0x8	/* Will be overwritten soon */
 	uint8_t		_reserved2[3];
 
@@ -320,8 +320,8 @@ NVME_CTASSERT(sizeof(struct nvme_cqe) == 16, "bad size for nvme_cqe");
 #define NVM_ADMIN_DEV_SELFTEST	0x14 /* Device Self Test */
 #define NVM_ADMIN_NS_ATTACHMENT	0x15 /* Namespace Attachment */
 #define NVM_ADMIN_KEEP_ALIVE	0x18 /* Keep Alive */
-#define NVM_ADMIN_DIRECTIVE_SND	0x19 /* Derective Send */
-#define NVM_ADMIN_DIRECTIVE_RCV	0x1a /* Derective Receive */
+#define NVM_ADMIN_DIRECTIVE_SND	0x19 /* Directive Send */
+#define NVM_ADMIN_DIRECTIVE_RCV	0x1a /* Directive Receive */
 #define NVM_ADMIN_VIRT_MGMT	0x1c /* Virtualization Management */
 #define NVM_ADMIN_NVME_MI_SEND	0x1d /* NVMe-MI Send */
 #define NVM_ADMIN_NVME_MI_RECV	0x1e /* NVMe-MI Receive */

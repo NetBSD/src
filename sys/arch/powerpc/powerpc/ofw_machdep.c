@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.30 2021/03/02 02:28:45 thorpej Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.31 2022/10/12 20:50:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.30 2021/03/02 02:28:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31 2022/10/12 20:50:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -471,7 +471,7 @@ ofw_bootstrap(void)
 	aprint_normal("OpenFirmware running in %s-mode\n",
 	    ofw_real_mode ? "real" : "virtual");
 
-	/* Get #address-cells and #size-cells to fething memory info. */
+	/* Get #address-cells and #size-cells to fetching memory info. */
 	if (OF_getprop(ofw_root, "#address-cells", &ofw_address_cells,
 		       sizeof(ofw_address_cells)) <= 0)
 		ofw_address_cells = 1;

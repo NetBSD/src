@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.39 2014/09/05 09:21:55 matt Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.40 2022/10/12 20:50:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,19 +47,19 @@
 /*
  * Ultrix emulation filesystem-namespace compatibility module.
  *
- * Ultrix system calls that examine the filesysten namespace
+ * Ultrix system calls that examine the filesystem namespace
  * are implemented here.  Each system call has a wrapper that
  * first checks if the given file exists at a special `emulation'
- * pathname: the given path, prefixex with '/emul/ultrix', and
- * if that pathname exists, it is used instead of the providd pathname.
+ * pathname: the given path, prefixed with '/emul/ultrix', and
+ * if that pathname exists, it is used instead of the provided pathname.
  *
  * Used to locate OS-specific files (shared libraries, config files,
  * etc) used by emul processes at their `normal' pathnames, without
- * polluting, or conflicting with, the native filesysten namespace.
+ * polluting, or conflicting with, the native filesystem namespace.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.39 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.40 2022/10/12 20:50:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
