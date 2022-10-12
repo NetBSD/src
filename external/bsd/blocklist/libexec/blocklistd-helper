@@ -152,7 +152,7 @@ add)
 		    /sbin/pfctl -a "$2/$6" -f -
 		# insert $ip/$mask into per-protocol/port anchored table
 		/sbin/pfctl -qa "$2/$6" -t "port$6" -T add "$addr/$mask" && \
-		    /sbin/pcftl -qk "$addr" && echo OK
+		    /sbin/pfctl -qk "$addr" && echo OK
 		;;
 
 	esac
