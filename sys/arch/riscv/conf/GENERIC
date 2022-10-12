@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.17 2022/10/12 07:56:46 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	64		# estimated number of users
 
@@ -77,7 +77,7 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 makeoptions	COPY_SYMTAB=1
 options 	DDB		# in-kernel debugger
-#options	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
+#options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
@@ -97,8 +97,8 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
-#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 include 	"conf/filesystems.config"
 
