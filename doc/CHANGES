@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2918 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2919 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -698,3 +698,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 9.1. [christos 20221005]
 	postfix(1): Import version 3.7.3. [christos 20221008]
 	ntp: Import ntp 4.2.8p15. [christos 20221009]
+	tzdata: updated to 2022e (using the 2022egtz fork) [kre 20221013]
