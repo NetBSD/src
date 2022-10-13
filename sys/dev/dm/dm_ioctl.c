@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.55 2021/08/21 22:23:33 andvar Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.56 2022/10/13 06:10:48 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.55 2021/08/21 22:23:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.56 2022/10/13 06:10:48 andvar Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.55 2021/08/21 22:23:33 andvar Exp $")
  *
  * Example: dm_table_get_entry
  *          dm_table_destroy/dm_table_switch_tables
- * This exaple will lead to deadlock situation because after dm_table_get_entry
+ * This example will lead to deadlock situation because after dm_table_get_entry
  * table reference counter is != 0 and dm_table_destroy have to wait on cv until
  * reference counter is 0.
  *
