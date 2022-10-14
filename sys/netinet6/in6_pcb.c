@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.170 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.171 2022/10/14 19:39:32 ryo Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.170 2022/08/29 09:14:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.171 2022/10/14 19:39:32 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1055,6 +1055,7 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 
 	if (vp && table->vestige && table->vestige->init_ports6) {
 		struct vestigial_inpcb better;
+		bool has_better = false;
 		void *state;
 
 		state = (*table->vestige->init_ports6)(laddr6,
@@ -1087,7 +1088,7 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 				continue;
 			if (wildcard < matchwild) {
 				better = *vp;
-				match  = (void*)&better;
+				has_better = true;
 
 				matchwild = wildcard;
 				if (matchwild == 0)
@@ -1095,13 +1096,9 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 			}
 		}
 
-		if (match) {
-			if (match != (void*)&better)
-				return match;
-			else {
-				*vp = better;
-				return 0;
-			}
+		if (has_better) {
+			*vp = better;
+			return 0;
 		}
 	}
 	return (match);
