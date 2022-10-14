@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.223 2022/06/06 10:56:27 nia Exp $
+# $NetBSD: mi,v 1.224 2022/10/14 19:43:35 ryo Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1356,7 +1356,12 @@
 ./usr/share/examples/asm/README			misc-asm-examples	share
 ./usr/share/examples/asm/hello			misc-asm-examples
 ./usr/share/examples/asm/hello/Makefile		misc-asm-examples	share
+./usr/share/examples/asm/hello/arm.s		misc-asm-examples	share
+./usr/share/examples/asm/hello/aarch64.s	misc-asm-examples	share
+./usr/share/examples/asm/hello/i386.s		misc-asm-examples	share
 ./usr/share/examples/asm/hello/powerpc.s	misc-asm-examples	share
+./usr/share/examples/asm/hello/sh3.s		misc-asm-examples	share
+./usr/share/examples/asm/hello/x86_64.s		misc-asm-examples	share
 ./usr/share/examples/atf			misc-atf-examples
 ./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf,!kyua
 ./usr/share/examples/atf/atf-run.hooks		misc-obsolete		share,kyua,obsolete
