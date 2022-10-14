@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.36 2022/02/27 14:19:07 riastradh Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.37 2022/10/14 22:10:15 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.36 2022/02/27 14:19:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.37 2022/10/14 22:10:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,14 +57,6 @@ ACPI_MODULE_NAME	  ("acpi_pci")
 
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
-
-/*
- * UUID for _DSM control method, from PCI Firmware Specification.
- */
-static UINT8 acpi_pci_dsm_uuid[ACPI_UUID_LENGTH] = {
-	0xd0, 0x37, 0xc9, 0xe5, 0x53, 0x35, 0x7a, 0x4d,
-	0x91, 0x17, 0xea, 0x4d, 0x19, 0xc3, 0x43, 0x4d
-};
 
 /*
  * Regarding PCI Segment Groups (ACPI 4.0, p. 277):
@@ -483,63 +475,6 @@ acpi_pcidev_find_dev(struct acpi_devnode *ad)
 	deviter_release(&di);
 
 	return dv;
-}
-
-/*
- * acpi_pci_ignore_boot_config:
- *
- *	Returns 1 if the operating system may ignore the boot configuration
- *	of PCI resources.
- */
-ACPI_INTEGER
-acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
-{
-	ACPI_OBJECT *pobj = NULL;
-	ACPI_INTEGER ret;
-
-	/*
-	 * This one is a little confusing, but the result of
-	 * evaluating _DSM #5 is:
-	 *
-	 * 0: The operating system may not ignore the boot configuration
-	 *    of PCI resources.
-	 *
-	 * 1: The operating system may ignore the boot configuration of
-	 *    PCI resources, and reconfigure or rebalance these resources
-	 *    in the hierarchy as required.
-	 */
-
-	if (ACPI_FAILURE(acpi_dsm(handle, acpi_pci_dsm_uuid,
-				  1, 5, NULL, &pobj))) {
-		/*
-		 * In the absence of _DSM #5, we may assume that the
-		 * boot config can be ignored.
-		 */
-		return 1;
-	}
-
-	/*
-	 * ...and we default to "may ignore" in the event that the
-	 * method returns nonsense.
-	 */
-	ret = 1;
-
-	if (pobj != NULL) {
-		switch (pobj->Type) {
-		case ACPI_TYPE_INTEGER:
-			ret = pobj->Integer.Value;
-			break;
-
-		case ACPI_TYPE_PACKAGE:
-			if (pobj->Package.Count == 1 &&
-			    pobj->Package.Elements[0].Type == ACPI_TYPE_INTEGER)
-				ret = pobj->Package.Elements[0].Integer.Value;
-			break;
-		}
-		ACPI_FREE(pobj);
-	}
-
-	return ret;
 }
 
 /*

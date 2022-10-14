@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.30 2022/08/13 20:08:36 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.31 2022/10/14 22:10:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.30 2022/08/13 20:08:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.31 2022/10/14 22:10:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,15 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.30 2022/08/13 20:08:36 jmcneill Exp $
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pciconf.h>
+#include <dev/pci/pci_resource.h>
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_mcfg.h>
 
 #include <arm/acpi/acpi_pci_machdep.h>
-
-#define	PCIHOST_CACHELINE_SIZE		arm_dcache_align
 
 #define	ACPIPCHB_MAX_RANGES	64	/* XXX arbitrary limit */
 
@@ -194,34 +192,16 @@ acpipchb_configure_bus(struct acpipchb_softc *sc, struct pcibus_attach_args *pba
 	struct arm32_pci_chipset *md_pc =
 	    (struct arm32_pci_chipset *)pba->pba_pc;
 	struct acpi_pci_context *ap = md_pc->pc_conf_v;
-	struct pciconf_resources *pcires;
-	ACPI_STATUS rv;
+	const bool mapcfgspace = (ap->ap_flags & ACPI_PCI_FLAG_NO_MCFG) == 0;
 	int error, val;
 
-	if (!acpi_pci_ignore_boot_config(sc->sc_handle)) {
-		return;
-	}
 	if (get_bootconf_option(boot_args, "nopciconf",
 				BOOTOPT_TYPE_BOOLEAN, &val) && val) {
 		return;
 	}
 
-	if ((ap->ap_flags & ACPI_PCI_FLAG_NO_MCFG) != 0) {
-		pcires = pciconf_resource_init();
-		rv = AcpiWalkResources(sc->sc_handle, "_CRS",
-		    acpimcfg_configure_bus_cb, pcires);
-		if (ACPI_FAILURE(rv)) {
-			error = ENXIO;
-		} else {
-			error = pci_configure_bus(pba->pba_pc, pcires, ap->ap_bus,
-			    PCIHOST_CACHELINE_SIZE);
-		}
-		pciconf_resource_fini(pcires);
-	} else {
-		error = acpimcfg_configure_bus(sc->sc_dev, pba->pba_pc, sc->sc_handle,
-		    sc->sc_bus, PCIHOST_CACHELINE_SIZE);
-	}
-
+	error = acpimcfg_configure_bus(sc->sc_dev, pba->pba_pc, sc->sc_handle,
+	    sc->sc_bus, mapcfgspace);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to configure bus, error %d\n",
 		    error);
