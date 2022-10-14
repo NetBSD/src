@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.32 2022/02/06 15:52:20 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.33 2022/10/14 07:54:49 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct sdhc_softc {
 						   * Can't 64K Byte data transfer
 						   */
 #define	SDHC_FLAG_NO_1_8_V	0x08000000 /* No 1.8V supply */
+#define	SDHC_FLAG_BROKEN_ADMA	0x10000000 /* ADMA engine does not work */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
