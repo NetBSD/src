@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.30 2022/10/14 07:58:30 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.31 2022/10/14 08:10:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -212,6 +212,7 @@ ENTRY_NP(start)
 #endif
 	REG_S	t0, 0(t1)
 
+	VPRINTS("l2pde:   ")
 	VPRINTX(t1)
 #else
 #ifdef notyet
@@ -220,10 +221,11 @@ ENTRY_NP(start)
 	REG_S	t0, 0(s3)
 #endif
 
+	VPRINTS("l2pde:   ")
 	VPRINTX(s3)
 #endif
 
-	VPRINTS(": ")
+	VPRINTS(":  ")
 	VPRINTXNL(t0)
 	VPRINTS("\n\r")
 #endif // _LP64
@@ -249,9 +251,9 @@ ENTRY_NP(start)
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
 .Lfill:
-	VPRINTS("kern ")
+	VPRINTS("kern:    ")
 	VPRINTX(s2)
-	VPRINTS(": ")
+	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
 	REG_S	s0, 0(s2)		// store PDE
@@ -268,9 +270,9 @@ ENTRY_NP(start)
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
 
-	VPRINTS("dtb  ")
+	VPRINTS("dtb:     ")
 	VPRINTX(s2)
-	VPRINTS(": ")
+	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
 	REG_S	s0, 0(s2)
@@ -282,9 +284,9 @@ ENTRY_NP(start)
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
 
-	VPRINTS("cons ")
+	VPRINTS("cons:    ")
 	VPRINTX(s2)
-	VPRINTS(": ")
+	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
 	REG_S	s0, 0(s2)
