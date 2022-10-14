@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.10 2022/09/27 08:18:21 skrll Exp $
+#	$NetBSD: files.riscv,v 1.11 2022/10/14 07:58:30 skrll Exp $
 #
 
 maxpartitions	16
@@ -21,6 +21,7 @@ file	arch/riscv/riscv/bus_space_notimpl.S
 file	arch/riscv/riscv/clock_machdep.c
 file	arch/riscv/riscv/core_machdep.c		coredump
 file	arch/riscv/riscv/cpu_subr.c
+file	arch/riscv/riscv/cpu_switch.S
 file	arch/riscv/riscv/db_interface.c		ddb
 file	arch/riscv/riscv/db_disasm.c		ddb
 file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
