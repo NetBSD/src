@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.2 2019/01/07 22:00:32 jdolecek Exp $ */
+/* $NetBSD: param.h,v 1.3 2022/10/14 07:13:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
 #define STACK_ALIGNBYTES	(__BIGGEST_ALIGNMENT__ - 1)
 #define	ALIGNBYTES32	__BIGGEST_ALIGNMENT__
 
-#define NKMEMPAGES_MAX_DEFAULT	(2048UL * 1024 * 1024)
-#define NKMEMPAGES_MIN_DEFAULT	(128UL * 1024 * 1024)
+#define NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
+#define NKMEMPAGES_MIN_DEFAULT	((128UL * 1024 * 1024) >> PAGE_SHIFT)
 
 #define PGSHIFT		13
 #define	NBPG		(1 << PGSHIFT)
