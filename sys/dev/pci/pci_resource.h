@@ -1,19 +1,17 @@
-/* $NetBSD: acpi_pci.h,v 1.13 2022/10/14 22:10:15 jmcneill Exp $ */
+/* $NetBSD: pci_resource.h,v 1.1 2022/10/14 22:10:15 jmcneill Exp $ */
 
-/*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Christoph Egger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -28,19 +26,25 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_DEV_ACPI_ACPI_PCI_H
-#define _SYS_DEV_ACPI_ACPI_PCI_H
+#pragma once
 
-ACPI_STATUS		 acpi_pcidev_scan(struct acpi_devnode *);
-ACPI_STATUS		 acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
-ACPI_STATUS		 acpi_pcidev_ppb_downbus(pci_chipset_tag_t,
-						 uint16_t, uint16_t, uint16_t,
-						 uint16_t, uint16_t *);
-struct acpi_devnode	*acpi_pcidev_find(uint16_t, uint16_t,
-					  uint16_t, uint16_t);
-pci_chipset_tag_t	 acpi_pcidev_get_tag(uint16_t, uint16_t,
-					     uint16_t, uint16_t);
-device_t		 acpi_pcidev_find_dev(struct acpi_devnode *);
-struct acpi_devnode	*acpi_pciroot_find(uint16_t, uint16_t);
+enum pci_range_type {
+	PCI_RANGE_BUS,
+	PCI_RANGE_IO,
+	PCI_RANGE_MEM,
+	PCI_RANGE_PMEM,
+	NUM_PCI_RANGES
+};
 
-#endif	/* !_SYS_DEV_ACPI_ACPI_PCI_H */
+struct pci_resource_range {
+	uint64_t	start;
+	uint64_t	end;
+};
+
+struct pci_resource_info {
+	pci_chipset_tag_t		pc;
+	struct pci_resource_range	ranges[NUM_PCI_RANGES];
+};
+
+void		pci_resource_init(const struct pci_resource_info *);
+const char *	pci_resource_typename(enum pci_range_type);

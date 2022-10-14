@@ -1,10 +1,11 @@
-#	$NetBSD: files.pci,v 1.444 2022/09/16 03:12:03 knakahara Exp $
+#	$NetBSD: files.pci,v 1.445 2022/10/14 22:10:15 jmcneill Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
 defflag	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
+			PCI_RESOURCE
 defparam opt_pci.h	PCI_NETBSD_ENABLE_IDE
 
 defflag	opt_bktr.h	BKTR_430_FX_MODE BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
@@ -20,6 +21,7 @@ attach	pci at pcibus
 file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
+file	dev/pci/pci_resource.c		pci & pci_resource
 file	dev/pci/pci_subr.c		pci
 file	dev/pci/pci_stub.c		pci
 file	dev/pci/pci_usrreq.c		pci
