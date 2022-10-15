@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.1 2022/10/14 22:10:15 jmcneill Exp $ */
+/* $NetBSD: pci_resource.c,v 1.2 2022/10/15 20:11:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.1 2022/10/14 22:10:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.2 2022/10/15 20:11:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,17 +161,12 @@ static vmem_t *
 pci_create_vmem(const char *name, bus_addr_t start, bus_addr_t end)
 {
 	vmem_t *arena;
+	int error __diagused;
 
 	arena = vmem_create(name, 0, 0, 1, NULL, NULL, NULL, 0, VM_SLEEP,
 	    IPL_NONE);
-	if (arena == NULL) {
-		return NULL;
-	}
-
-	if (vmem_add(arena, start, end - start + 1, VM_SLEEP) != 0) {
-		vmem_destroy(arena);
-		arena = NULL;
-	}
+	error = vmem_add(arena, start, end - start + 1, VM_SLEEP);
+	KASSERTMSG(error == 0, "error=%d", error);
 
 	return arena;
 }
