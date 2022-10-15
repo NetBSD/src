@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.25 2021/08/08 10:28:26 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.26 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.25 2021/08/08 10:28:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.26 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,7 @@ acpi_md_mcfg_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	return arm_generic_bs_tag.bs_map(t, bpa, size,
-	    flag | _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, bshp);
+	    flag | BUS_SPACE_MAP_NONPOSTED, bshp);
 }
 #endif
 

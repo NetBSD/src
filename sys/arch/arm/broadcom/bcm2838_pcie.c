@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.5 2021/08/07 16:18:43 thorpej Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.6 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.5 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.6 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -855,7 +855,7 @@ bcmstb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 //        if ((bs->flags & PCI_FLAGS_IO_OKAY) != 0) {
                 /* Force strongly ordered mapping for all I/O space */
-                flag = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+                flag = BUS_SPACE_MAP_NONPOSTED;
 //        }
 
         for (size_t i = 0; i < bs->nranges; i++) {

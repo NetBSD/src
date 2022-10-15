@@ -1,10 +1,10 @@
-#	$NetBSD: files.aarch64,v 1.38 2022/06/25 13:24:34 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.39 2022/10/15 11:07:38 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL1_STACK_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_HAVE_L2CTLR
-defflag opt_cpuoptions.h	AARCH64_DEVICE_MEM_STRONGLY_ORDERED
+defflag opt_cpuoptions.h	AARCH64_DEVICE_MEM_NONPOSTED
 defflag opt_cpuoptions.h	ARMV81_HAFDBS
 
 defflag	opt_cputypes.h		CPU_ARMV8
