@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.15 2018/08/12 09:03:21 christos Exp $	*/
+/*	$NetBSD: grep.c,v 1.16 2022/10/15 21:53:22 andvar Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.15 2018/08/12 09:03:21 christos Exp $");
+__RCSID("$NetBSD: grep.c,v 1.16 2022/10/15 21:53:22 andvar Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ nl_catd	 catalog;
 #endif
 
 /*
- * Default messags to use when NLS is disabled or no catalogue
+ * Default messages to use when NLS is disabled or no catalogue
  * is found.
  */
 const char	*errstr[] = {
@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 #endif
 
 	/* Check what is the program name of the binary.  In this
-	   way we can have all the funcionalities in one binary
+	   way we can have all the functionalities in one binary
 	   without the need of scripting and using ugly hacks. */
 	switch (__progname[0]) {
 	case 'e':
