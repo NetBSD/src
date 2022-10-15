@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.23 2022/01/31 17:46:36 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.24 2022/10/15 10:16:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@
 #define CPUID_DCP_CACHELEVEL	__BITS(7, 5)	/* Cache level (start at 1) */
 #define CPUID_DCP_SELFINITCL	__BIT(8)	/* Self initializing cachelvl*/
 #define CPUID_DCP_FULLASSOC	__BIT(9)	/* Full associative */
-#define CPUID_DCP_SHAREING	__BITS(25, 14)	/* shareing */
+#define CPUID_DCP_SHARING	__BITS(25, 14)	/* sharing */
 #define CPUID_DCP_CORE_P_PKG	__BITS(31, 26)	/* Cores/package */
 
 /* %ebx */
@@ -459,7 +459,7 @@
 /* %ecx = 0, %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)  /* AVX512 4-reg Neural Network ins */
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)  /* AVX512 4-reg Mult Accum Single precision */
-#define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOVE */
+#define CPUID_SEF_FSRM		__BIT(4)  /* Fast Short Rep Move */
 #define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8) /* AVX512 VP2INTERSECT */
 #define CPUID_SEF_SRBDS_CTRL	__BIT(9)  /* IA32_MCU_OPT_CTRL */
 #define CPUID_SEF_MD_CLEAR	__BIT(10) /* VERW clears CPU buffers */
@@ -479,7 +479,7 @@
 
 #define CPUID_SEF_FLAGS2	"\20"					  \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-	"\5" "FSREP_MOV"						  \
+	"\5" "FSRM"							  \
 	"\11VP2INTERSECT" "\12SRBDS_CTRL" "\13MD_CLEAR"			  \
 			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	  \
 	"\21" "TSXLDTRK"		"\23" "PCONFIG"	"\24" "ARCH_LBR"  \
@@ -503,7 +503,7 @@
 	"\31" "LAM"
 
 /* %ecx = 1, %ebx */
-#define CPUID_SEF_PPIN		__BIT(0)  /* IA32_PPIN & IA32_PPIN_CTL MSRs */
+#define CPUID_SEF_INTEL_PPIN	__BIT(0)  /* IA32_PPIN & IA32_PPIN_CTL MSRs */
 
 #define CPUID_SEF1_FLAGS_B	"\20"				\
 				"\1" "PPIN"
@@ -533,10 +533,16 @@
 #define CPUID_PERF_LLCMISS	__BIT(4)       /* No LLCache miss */
 #define CPUID_PERF_BRINSRETR	__BIT(5)       /* No branch inst. retried */
 #define CPUID_PERF_BRMISPRRETR	__BIT(6)       /* No branch mispredict retry */
+#define CPUID_PERF_TOPDOWNSLOT	__BIT(7)       /* No top-down slots */
 
-#define CPUID_PERF_FLAGS1	"\177\20"			      \
-	"b\0CORECYCL\0" "b\1INSTRETRY\0" "b\2REFCYCL\0" "b\3LLCREF\0" \
-	"b\4LLCMISS\0" "b\5BRINSRETR\0" "b\6BRMISPRRETR\0"
+#define CPUID_PERF_FLAGS1	"\177\20"				      \
+	"b\0CORECYCL\0"	"b\1INST\0"	"b\2REFCYCL\0"	"b\3LLCREF\0"	      \
+	"b\4LLCMISS\0"	"b\5BRINST\0"	"b\6BRMISPR\0"	"b\7TOPDOWNSLOT\0"
+
+/* %ecx */
+
+#define CPUID_PERF_FLAGS2	"\177\20"				      \
+	"b\0INST\0" "b\1CLK_CORETHREAD\0" "b\2CLK_REF_TSC\0" "b\3TOPDOWNSLOT\0"
 
 /* %edx */
 #define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
@@ -588,10 +594,10 @@
  */
 
 /* %ecx = 1, %eax */
-#define CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
-#define CPUID_PES1_XSAVEC	0x00000002	/* xsavec & compacted XRSTOR */
-#define CPUID_PES1_XGETBV	0x00000004	/* xgetbv with ECX = 1 */
-#define CPUID_PES1_XSAVES	0x00000008	/* xsaves/xrstors, IA32_XSS */
+#define CPUID_PES1_XSAVEOPT	__BIT(0)	/* xsaveopt instruction */
+#define CPUID_PES1_XSAVEC	__BIT(1)	/* xsavec & compacted XRSTOR */
+#define CPUID_PES1_XGETBV	__BIT(2)	/* xgetbv with ECX = 1 */
+#define CPUID_PES1_XSAVES	__BIT(3)	/* xsaves/xrstors, IA32_XSS */
 
 #define CPUID_PES1_FLAGS	"\20"					\
 	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
@@ -624,7 +630,7 @@
 #define CPUID_DATP_TCTYPE_S	5		/*   Store only TLB */
 #define CPUID_DATP_TCLEVEL	__BITS(7, 5)	/* TLB level (start at 1) */
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
-#define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
+#define CPUID_DATP_SHARING	__BITS(25, 14)	/* sharing */
 
 /*
  * Intel Hybrid Information Enumeration.
@@ -771,6 +777,7 @@
 #define CPUID_CAPEX_IRPERF	   __BIT(1)  /* InstRetCntMsr */
 #define CPUID_CAPEX_XSAVEERPTR	   __BIT(2)  /* RstrFpErrPtrs by XRSTOR */
 #define CPUID_CAPEX_RDPRU	   __BIT(4)  /* RDPRU instruction */
+#define CPUID_CAPEX_MBE		   __BIT(6)  /* Memory Bandwidth Enforcement */
 #define CPUID_CAPEX_MCOMMIT	   __BIT(8)  /* MCOMMIT instruction */
 #define CPUID_CAPEX_WBNOINVD	   __BIT(9)  /* WBNOINVD instruction */
 #define CPUID_CAPEX_IBPB	   __BIT(12) /* Speculation Control IBPB */
@@ -782,26 +789,28 @@
 #define CPUID_CAPEX_PREFER_IBRS	   __BIT(18) /* IBRS preferred */
 #define CPUID_CAPEX_IBRS_SAMEMODE  __BIT(19) /* IBRS same speculation limits */
 #define CPUID_CAPEX_EFER_LSMSLE_UN __BIT(20) /* EFER.LMSLE is unsupported */
+#define CPUID_CAPEX_AMD_PPIN	   __BIT(23) /* Protected Processor Inventory Number */
 #define CPUID_CAPEX_SSBD	   __BIT(24) /* Speculation Control SSBD */
 #define CPUID_CAPEX_VIRT_SSBD	   __BIT(25) /* Virt Spec Control SSBD */
 #define CPUID_CAPEX_SSB_NO	   __BIT(26) /* SSBD not required */
+#define CPUID_CAPEX_CPPC	   __BIT(27) /* Collaborative Processor Perf. Control */
 #define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Forward Dis */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			   \
-	"\5RDPRU"			"\7B6"				   \
+	"\5RDPRU"			"\7MBE"				   \
 	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			   \
 	"\15IBPB"	"\16INT_WBINVD"	"\17IBRS"	"\20STIBP"	   \
 	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"		   \
 							"\24IBRS_SAMEMODE" \
-	"\25EFER_LSMSLE_UN"						   \
-	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"			   \
+	"\25EFER_LSMSLE_UN"				"\30PPIN"	   \
+	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"	"\34CPPC"	   \
 	"\35PSFD"
 
 /* %ecx */
-#define CPUID_CAPEX_PerfTscSize	__BITS(17,16)
-#define CPUID_CAPEX_ApicIdSize	__BITS(15,12)
-#define CPUID_CAPEX_NC		__BITS(7,0)
+#define CPUID_CAPEX_PerfTscSize	__BITS(17,16)	/* Perf. tstamp counter size */
+#define CPUID_CAPEX_ApicIdSize	__BITS(15,12)	/* APIC ID Size */
+#define CPUID_CAPEX_NC		__BITS(7,0)	/* Number of threads - 1 */
 
 /*
  * AMD SVM Revision and Feature.
@@ -828,6 +837,7 @@
 #define CPUID_AMD_SVM_GMET	      __BIT(17) /* Guest Mode Execution Trap */
 #define CPUID_AMD_SVM_SSSCHECK	      __BIT(19)  /* Shadow Stack restrictions */
 #define CPUID_AMD_SVM_SPEC_CTRL	      __BIT(20) /* SPEC_CTRL virtualization */
+#define CPUID_AMD_SVM_HOST_MCE_OVERRIDE __BIT(23) /* #MC intercept */
 #define CPUID_AMD_SVM_TLBICTL	      __BIT(24) /* TLB Intercept Control */
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
@@ -837,9 +847,9 @@
 	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"	"\22" "GMET"			"\24SSSCHECK"	\
-	"\25" "SPEC_CTRL"						\
-	"\31" "TLBICTL"							\
+	"\21" "VGIF"	"\22" "GMET"	"\23B18"	"\24SSSCHECK"	\
+	"\25" "SPEC_CTRL"			"\30HOST_MCE_OVERRIDE"	\
+	"\31" "TLBICTL"	"\32B25"	"\32B26"	"\32B27"	\
 	"\35B28"
 
 /*
