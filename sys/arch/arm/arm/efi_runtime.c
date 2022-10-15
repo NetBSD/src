@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.9 2022/06/18 08:13:44 skrll Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.10 2022/10/15 11:19:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.9 2022/06/18 08:13:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.10 2022/10/15 11:19:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.9 2022/06/18 08:13:44 skrll Exp $"
 #include <dev/efivar.h>
 
 #include <arm/arm/efi_runtime.h>
+#include <arm/bootconfig.h>
 
 #ifdef _LP64
 #define	EFIERR(x)	(0x8000000000000000 | x)
@@ -77,6 +78,12 @@ arm_efirt_init(paddr_t efi_system_table)
 	const size_t sz = PAGE_SIZE * 2;
 	vaddr_t va, cva;
 	paddr_t cpa;
+	int val;
+
+	if (get_bootconf_option(boot_args, "noefirt",
+				BOOTOPT_TYPE_BOOLEAN, &val) && val) {
+		return ENXIO;
+	}
 
 	va = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (va == 0) {
