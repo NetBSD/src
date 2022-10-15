@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.24 2022/10/11 18:26:37 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.25 2022/10/15 10:31:45 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -350,4 +350,38 @@ usr.bin/skey/skeyaudit.sh			1.5
 
 	Adapt to removal of "Mail".
 	[is, ticket #1540]
+
+share/man/man4/lm.4				1.37
+sys/dev/ic/nslm7x.c				1.78
+sys/dev/isa/wbsio.c				1.28
+sys/dev/isa/wbsioreg.h				1.10
+
+	Add Nuvoton NCT6799D support.
+	[msaitoh, ticket #1541]
+
+sys/arch/x86/include/specialreg.h		1.189-1.192
+sys/dev/nvmm/x86/nvmm_x86.c			1.23
+usr.sbin/cpuctl/arch/i386.c			1.128
+
+	- Add top-down slots event bit of architectural performance monitoring
+	  leaf.
+	- Modify CPUID Fn0000000a %ebx's string. Add new string for %ecx.
+	- Modify output of CPUID Fn0000000a.
+	- Update some AMD CPUID bits.
+	- Fix typo.
+	[msaitoh, ticket #1542]
+
+sys/dev/tprof/tprof_x86_intel.c 		1.4
+usr.sbin/tprof/arch/tprof_x86.c 		1.10-1.12
+
+	- Add topdown-slots to Intel architectural performance monitoring
+	  version 1.
+	- Disable the unsupported events based on CPUID Fn0000000a %eax.
+	- Fix typo in comment. Remove duplicated macros.
+	[msaitoh, ticket #1543]
+
+sys/dev/pci/ichsmb.c				1.76-1.77 (via patch)
+
+	Add Intel 600 Series PCH support.
+	[msaitoh, ticket #1544]
 
