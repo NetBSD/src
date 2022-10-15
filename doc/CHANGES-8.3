@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.155 2022/10/11 18:24:18 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.156 2022/10/15 10:35:16 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2917,3 +2917,26 @@ sys/arch/x86/pci/amdzentemp.c			1.8-1.10,1.12-1.15
 	- Add support for per CCD temperature sensor.
 	[msaitoh, ticket #1773]
 
+share/man/man4/lm.4				1.37
+sys/dev/ic/nslm7x.c				1.78
+sys/dev/isa/wbsio.c				1.28
+sys/dev/isa/wbsioreg.h				1.10
+
+	Add Nuvoton NCT6799D support.
+	[msaitoh, ticket #1774]
+
+sys/arch/x86/include/specialreg.h		1.189-1.192
+usr.sbin/cpuctl/arch/i386.c			1.128
+
+	- Add top-down slots event bit of architectural performance monitoring
+	  leaf.
+	- Modify CPUID Fn0000000a %ebx's string. Add new string for %ecx.
+	- Modify output of CPUID Fn0000000a.
+	- Update some AMD CPUID bits.
+	- Fix typo. 
+	[msaitoh, ticket #1775]
+
+sys/dev/pci/ichsmb.c				1.76-1.77 (via patch)
+
+	Add Intel 600 Series PCH support.
+	[msaitoh, ticket #1776]
