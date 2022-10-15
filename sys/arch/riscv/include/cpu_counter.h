@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.1 2014/09/19 17:36:26 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2 2022/10/15 06:41:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-/* $NetBSD: cpu_counter.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: cpu_counter.h,v 1.2 2022/10/15 06:41:43 simonb Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #ifndef _RISCV_CPU_COUNTER_H_
-#define _RISCV_CPU_COUNTER_H_
+#define	_RISCV_CPU_COUNTER_H_
 
 /*
  * Machine-specific support for CPU counter.
@@ -67,7 +67,7 @@
 #ifdef _KERNEL
 
 #define	cpu_hascounter()	true
-#define cpu_counter()		cpu_counter32()
+#define	cpu_counter()		cpu_counter32()
 
 static __inline uint32_t
 cpu_counter32(void)

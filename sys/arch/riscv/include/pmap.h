@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.10 2022/09/20 07:18:23 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.11 2022/10/15 06:41:43 simonb Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #ifndef _RISCV_PMAP_H_
-#define _RISCV_PMAP_H_
+#define	_RISCV_PMAP_H_
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -50,57 +50,57 @@
 #include <riscv/pte.h>
 #include <riscv/sysreg.h>
 
-#define PMAP_SEGTABSIZE	NPTEPG
-#define PMAP_PDETABSIZE	NPTEPG
+#define	PMAP_SEGTABSIZE	NPTEPG
+#define	PMAP_PDETABSIZE	NPTEPG
 
 #ifdef _LP64
-#define PTPSHIFT	3
+#define	PTPSHIFT	3
 /* This is SV48. */
 //#define SEGLENGTH + SEGSHIFT + SEGSHIFT */
 
 /* This is SV39. */
-#define XSEGSHIFT	(SEGSHIFT + SEGLENGTH)
-#define NBXSEG		(1ULL << XSEGSHIFT)
-#define XSEGOFSET	(NBXSEG - 1)		/* byte offset into xsegment */
-#define XSEGLENGTH	(PGSHIFT - 3)
-#define NXSEGPG		(1 << XSEGLENGTH)
+#define	XSEGSHIFT	(SEGSHIFT + SEGLENGTH)
+#define	NBXSEG		(1ULL << XSEGSHIFT)
+#define	XSEGOFSET	(NBXSEG - 1)		/* byte offset into xsegment */
+#define	XSEGLENGTH	(PGSHIFT - 3)
+#define	NXSEGPG		(1 << XSEGLENGTH)
 #else
-#define PTPSHIFT	2
-#define XSEGSHIFT	SEGLENGTH
+#define	PTPSHIFT	2
+#define	XSEGSHIFT	SEGLENGTH
 #endif
 
-#define SEGLENGTH	(PGSHIFT - PTPSHIFT)
-#define SEGSHIFT	(SEGLENGTH + PGSHIFT)
-#define NBSEG		(1 << SEGSHIFT)		/* bytes/segment */
-#define SEGOFSET	(NBSEG - 1)		/* byte offset into segment */
+#define	SEGLENGTH	(PGSHIFT - PTPSHIFT)
+#define	SEGSHIFT	(SEGLENGTH + PGSHIFT)
+#define	NBSEG		(1 << SEGSHIFT)		/* bytes/segment */
+#define	SEGOFSET	(NBSEG - 1)		/* byte offset into segment */
 
-#define KERNEL_PID	0
+#define	KERNEL_PID	0
 
-#define PMAP_HWPAGEWALKER		1
-#define PMAP_TLB_MAX			1
+#define	PMAP_HWPAGEWALKER		1
+#define	PMAP_TLB_MAX			1
 #ifdef _LP64
-#define PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
-#define PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
+#define	PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
+#define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
 #else
-#define PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)0xdeadbeef)
-#define PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xdeadbeef)
+#define	PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)0xdeadbeef)
+#define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xdeadbeef)
 #endif
-#define PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
-#define PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
-#define PMAP_TLB_FLUSH_ASID_ON_RESET	false
+#define	PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
+#define	PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 
-#define pmap_phys_address(x)		(x)
+#define	pmap_phys_address(x)		(x)
 
 #ifndef __BSD_PTENTRY_T__
-#define __BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
 #ifdef _LP64
-#define PRIxPTE         PRIx64
+#define	PRIxPTE         PRIx64
 #else
-#define PRIxPTE         PRIx32
+#define	PRIxPTE         PRIx32
 #endif
 #endif /* __BSD_PTENTRY_T__ */
 
-#define PMAP_NEED_PROCWR
+#define	PMAP_NEED_PROCWR
 static inline void
 pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 {
@@ -110,12 +110,12 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 #include <uvm/pmap/tlb.h>
 #include <uvm/pmap/pmap_tlb.h>
 
-#define PMAP_GROWKERNEL
-#define PMAP_STEAL_MEMORY
+#define	PMAP_GROWKERNEL
+#define	PMAP_STEAL_MEMORY
 
 #ifdef _KERNEL
 
-#define __HAVE_PMAP_MD
+#define	__HAVE_PMAP_MD
 struct pmap_md {
 	paddr_t md_ppn;
 	pd_entry_t *md_pdetab;
@@ -140,11 +140,11 @@ void	pmap_bootstrap(vaddr_t kstart, vaddr_t kend);
 
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
-#define PMAP_DIRECT_MAP(pa)	(pmap_direct_base + (pa))
-#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
+#define	PMAP_DIRECT_MAP(pa)	(pmap_direct_base + (pa))
+#define	PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
 
-#define MEGAPAGE_TRUNC(x)	((x) & ~SEGOFSET)
-#define MEGAPAGE_ROUND(x)	MEGAPAGE_TRUNC((x) + SEGOFSET)
+#define	MEGAPAGE_TRUNC(x)	((x) & ~SEGOFSET)
+#define	MEGAPAGE_ROUND(x)	MEGAPAGE_TRUNC((x) + SEGOFSET)
 
 #ifdef __PMAP_PRIVATE
 
@@ -199,7 +199,7 @@ pmap_md_tlb_asid_max(void)
  * whether we are using modules or not.
  */
 #ifndef __HAVE_VM_PAGE_MD
-#define __HAVE_VM_PAGE_MD
+#define	__HAVE_VM_PAGE_MD
 
 struct vm_page_md {
 	uintptr_t mdpg_dummy[3];

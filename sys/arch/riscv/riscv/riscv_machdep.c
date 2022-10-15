@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.19 2022/09/28 06:05:28 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.20 2022/10/15 06:41:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.19 2022/09/28 06:05:28 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.20 2022/10/15 06:41:43 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -66,13 +66,13 @@ char machine_arch[] = MACHINE_ARCH;
 #include <dev/fdt/fdt_memory.h>
 
 #ifdef VERBOSE_INIT_RISCV
-#define VPRINTF(...)	printf(__VA_ARGS__)
+#define	VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	__nothing
+#define	VPRINTF(...)	__nothing
 #endif
 
 #ifndef FDT_MAX_BOOT_STRING
-#define FDT_MAX_BOOT_STRING 1024
+#define	FDT_MAX_BOOT_STRING 1024
 #endif
 
 char bootargs[FDT_MAX_BOOT_STRING] = "";
@@ -532,7 +532,7 @@ init_riscv(register_t hartid, vaddr_t vdtb)
 
 	kernelvmstart = kernend_mega;
 
-#define DPRINTF(v)	VPRINTF("%24s = 0x%16lx\n", #v, (unsigned long)v);
+#define	DPRINTF(v)	VPRINTF("%24s = 0x%16lx\n", #v, (unsigned long)v);
 
 	VPRINTF("------------------------------------------\n");
 	DPRINTF(kern_vtopdiff);
