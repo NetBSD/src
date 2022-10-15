@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.25 2021/07/23 04:20:05 martin Exp $	*/
+/*	$NetBSD: ldd.c,v 1.26 2022/10/15 05:55:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.25 2021/07/23 04:20:05 martin Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.26 2022/10/15 05:55:45 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -124,11 +124,12 @@ main(int argc, char **argv)
 	const char *fmt1 = NULL, *fmt2 = NULL;
 	int c, exit_status = EXIT_SUCCESS;
 	char cwd[MAXPATHLEN], path[MAXPATHLEN];
+	bool verbose = false, failed = false;
 
 #ifdef DEBUG
 	debug = 1;
 #endif
-	while ((c = getopt(argc, argv, "f:o")) != -1) {
+	while ((c = getopt(argc, argv, "f:ov")) != -1) {
 		switch (c) {
 		case 'f':
 			if (fmt1) {
@@ -142,6 +143,9 @@ main(int argc, char **argv)
 			if (fmt1 || fmt2)
 				errx(1, "Cannot use -o and -f together");
 			fmt1 = "%a:-l%o.%m => %p\n";
+			break;
+		case 'v':
+			verbose = true;
 			break;
 		default:
 			usage();
@@ -174,17 +178,31 @@ main(int argc, char **argv)
 			warn("%s", *argv);
 			continue;
 		}
-		if (elf_ldd(fd, *argv, path, fmt1, fmt2) == -1
-		    /* Alpha never had 32 bit support. */
+		if (elf_ldd(fd, *argv, path, fmt1, fmt2) == -1) {
+			if (verbose)
+				warnx("%s", error_message);
+			failed = true;
+		}
+		/* Alpha never had 32 bit support. */
 #if (defined(_LP64) && !defined(ELF64_ONLY)) || defined(MIPS_N32)
-		    && elf32_ldd(fd, *argv, path, fmt1, fmt2) == -1
+		if (elf32_ldd(fd, *argv, path, fmt1, fmt2) == -1) {
+			if (verbose)
+				warnx("%s", error_message);
+			failed = true;
+		}
 #if defined(__mips__) && 0 /* XXX this is still hosed for some reason */
-		    && elf32_ldd_compat(fd, *argv, path, fmt1, fmt2) == -1
+		if (elf32_ldd_compat(fd, *argv, path, fmt1, fmt2) == -1) {
+			if (verbose)
+				warnx("%s", error_message);
+			failed = true;
+		}
 #endif
 #endif
-		    ) {
+
+		if (failed) {
 			exit_status = EXIT_FAILURE;
-			warnx("%s", error_message);
+			if (!verbose)
+				warnx("%s", error_message);
 		}
 		close(fd);
 	}
