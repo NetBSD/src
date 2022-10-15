@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.302 2022/04/14 16:50:26 pgoyette Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.303 2022/10/15 18:42:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.302 2022/04/14 16:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.303 2022/10/15 18:42:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,6 +792,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "SX336704LC"   , ""}, PQUIRK_CAP_SYNC | PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "SX173404LC",       ""},     PQUIRK_CAP_SYNC | PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
+	 "ORACLE",   "BlockVolume",	 ""},	  PQUIRK_ONLYBIG},
 
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
