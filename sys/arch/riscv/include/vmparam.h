@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2022/10/12 07:53:15 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2022/10/15 06:07:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  * User/kernel map constants.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
-#ifdef _LP64	/* Sv39 */
+#ifdef _LP64	/* Sv39 / Sv48 / Sv57 */
 /*
  * kernel virtual space layout:
  *   0xffff_ffc0_0000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
