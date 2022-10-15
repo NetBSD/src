@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.h,v 1.6 2022/10/15 19:49:32 christos Exp $	*/
+/*	$NetBSD: zlib.h,v 1.7 2022/10/15 23:21:34 christos Exp $	*/
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.13, October 13th, 2022
@@ -1726,7 +1726,9 @@ ZEXTERN uLong ZEXPORT adler32_combine OF((uLong adler1, uLong adler2,
    negative, the result has no meaning or utility.
 */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 ZEXTERN uLong ZEXPORT crc32 OF((uLong crc, const Bytef *buf, uInt len));
+#endif
 /*
      Update a running CRC-32 with the bytes buf[0..len-1] and return the
    updated CRC-32. A CRC-32 value is in the range of a 32-bit unsigned integer.
