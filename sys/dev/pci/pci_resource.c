@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.2 2022/10/15 20:11:00 riastradh Exp $ */
+/* $NetBSD: pci_resource.c,v 1.3 2022/10/15 20:11:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.2 2022/10/15 20:11:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.3 2022/10/15 20:11:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ struct pci_resources {
 };
 
 static void	pci_resource_scan_bus(struct pci_resources *,
-    					  struct pci_device *, uint8_t);
+		    struct pci_device *, uint8_t);
 
 #define	PCI_SBDF_FMT			"%04x:%02x:%02x.%u"
 #define	PCI_SBDF_FMT_ARGS(_pr, _pd)	\
@@ -593,7 +593,7 @@ pci_resource_claim(vmem_t *arena, vmem_addr_t start, vmem_addr_t end)
  *   Allocate a resource from a vmem arena. This is called when configuring
  *   devices that were not already configured by system firmware.
  */
-static int 
+static int
 pci_resource_alloc(vmem_t *arena, vmem_size_t size, vmem_size_t align,
     uint64_t *base)
 {
@@ -921,9 +921,9 @@ pci_resource_alloc_device(struct pci_resources *pr, struct pci_device *pd)
 			pci_conf_write(pr->pr_pc, pd->pd_tag,
 			    PCI_BAR(pi->pi_bar), base);
 			if (pi->pi_mem.memtype == PCI_MAPREG_MEM_TYPE_64BIT) {
-                                base = (pcireg_t)                               
-                                    (PCI_MAPREG_MEM64_ADDR(addr) >> 32); 
-                                pci_conf_write(pr->pr_pc, pd->pd_tag,
+				base = (pcireg_t)
+				    (PCI_MAPREG_MEM64_ADDR(addr) >> 32);
+				pci_conf_write(pr->pr_pc, pd->pd_tag,
 				    PCI_BAR(pi->pi_bar + 1), base);
 			}
 		}
