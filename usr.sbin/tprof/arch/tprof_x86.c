@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.8.4.1 2019/10/12 14:34:45 martin Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.8.4.2 2022/10/15 10:20:32 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ static struct name_to_event intel_arch1_names[] = {
 	{ "llc-misses",			0x2E, 0x41, true },
 	{ "branch-instruction-retired",	0xC4, 0x00, true },
 	{ "branch-misses-retired",	0xC5, 0x00, true },
+	{ "topdown-slots",		0xA4, 0x01, true },
 };
 
 static struct event_table intel_arch1 = {
@@ -98,7 +99,7 @@ static struct event_table intel_arch1 = {
 static struct event_table *
 init_intel_arch1(void)
 {
-	unsigned int eax, ebx, ecx, edx;
+	unsigned int eax, ebx, ecx, edx, vectorlen;
 	struct event_table *table;
 	size_t i;
 
@@ -108,9 +109,17 @@ init_intel_arch1(void)
 	edx = 0;
 	x86_cpuid(&eax, &ebx, &ecx, &edx);
 
+	vectorlen = __SHIFTOUT(eax, CPUID_PERF_BVECLEN);
+
 	table = &intel_arch1;
 	for (i = 0; i < table->nevents; i++) {
-		/* Disable the unsupported events. */
+		/*
+		 * Disable the unsupported events from:
+		 * a) the bit vector length in EAX.
+		 * b) the disable bit in EBX.
+		 */
+		if (i >= vectorlen)
+			table->names[i].enabled = false;
 		if ((ebx & (i << 1)) != 0)
 			table->names[i].enabled = false;
 	}
@@ -550,7 +559,7 @@ init_intel_generic(void)
 			table->next = init_intel_silvermont_airmont();
 			break;
 		case 0x5C: /* Goldmont (Apollo Lake) */
-		case 0x5F: /* Goldmont (Denvertion) */
+		case 0x5F: /* Goldmont (Denverton) */
 			table->next = init_intel_goldmont();
 			break;
 		case 0x7A: /* Goldmont Plus (Gemini Lake) */
