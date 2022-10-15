@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.16 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.17 2022/10/15 21:53:21 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.16 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.17 2022/10/15 21:53:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ static bool sequoiaLock_held;
 
 /*
 **
-** FUNCITONAL PROTOTYPES
+** FUNCTIONAL PROTOTYPES
 **
 */
 static void ledSetBiled(int color);
@@ -149,7 +149,7 @@ static void ledTimeout(void *arg);
 
 /*
 ** 
-** FUNCITONS
+** FUNCTIONS
 **
 */
 void sequoiaInit(void)

@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.25 2022/05/28 22:16:44 andvar Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.26 2022/10/15 21:53:21 andvar Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.25 2022/05/28 22:16:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.26 2022/10/15 21:53:21 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3787,7 +3787,7 @@ sctp_pcb_init(void)
 {
 	/*
 	 * SCTP initialization for the PCB structures
-	 * should be called by the sctp_init() funciton.
+	 * should be called by the sctp_init() function.
 	 */
 	int i;
 	int hashtblsize = SCTP_TCBHASHSIZE;
