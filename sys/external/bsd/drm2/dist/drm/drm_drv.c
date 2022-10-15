@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.23 2022/07/17 14:11:18 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.24 2022/10/15 15:19:28 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.23 2022/07/17 14:11:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.24 2022/10/15 15:19:28 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -695,6 +695,12 @@ int drm_dev_init(struct drm_device *dev,
 	mutex_init(&dev->filelist_mutex);
 	mutex_init(&dev->clientlist_mutex);
 	mutex_init(&dev->master_mutex);
+#ifdef __NetBSD__
+	mutex_init(&dev->suspend_lock);
+	DRM_INIT_WAITQUEUE(&dev->suspend_cv, "drmsusp");
+	dev->active_ioctls = 0;
+	dev->suspender = NULL;
+#endif
 
 	dev->sc_monitor_hotplug.smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
 	dev->sc_monitor_hotplug.smpsw_type = PSWITCH_TYPE_HOTKEY;
@@ -756,6 +762,12 @@ err_pswitch:
 #endif
 #ifndef __NetBSD__		/* XXX drm sysfs */
 	put_device(dev->dev);
+#endif
+#ifdef __NetBSD__
+	KASSERT(dev->suspender == NULL);
+	KASSERT(dev->active_ioctls == 0);
+	DRM_DESTROY_WAITQUEUE(&dev->suspend_cv);
+	mutex_destroy(&dev->suspend_lock);
 #endif
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->clientlist_mutex);
@@ -842,6 +854,13 @@ void drm_dev_fini(struct drm_device *dev)
 
 #ifndef __NetBSD__		/* XXX drm sysfs */
 	put_device(dev->dev);
+#endif
+
+#ifdef __NetBSD__
+	KASSERT(dev->suspender == NULL);
+	KASSERT(dev->active_ioctls == 0);
+	DRM_DESTROY_WAITQUEUE(&dev->suspend_cv);
+	mutex_destroy(&dev->suspend_lock);
 #endif
 
 	mutex_destroy(&dev->master_mutex);
