@@ -1,9 +1,9 @@
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-2005, 2010, 2011, 2012, 2016 Jean-loup Gailly
+ * Copyright (C) 1995-2017 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zutil.c,v 1.1.1.2 2017/01/10 00:25:30 christos Exp $ */
+/* @(#) $Id: zutil.c,v 1.1.1.3 2022/10/15 19:38:37 christos Exp $ */
 
 #include "zutil.h"
 #ifndef Z_SOLO
@@ -61,9 +61,11 @@ uLong ZEXPORT zlibCompileFlags()
 #ifdef ZLIB_DEBUG
     flags += 1 << 8;
 #endif
+    /*
 #if defined(ASMV) || defined(ASMINF)
     flags += 1 << 9;
 #endif
+     */
 #ifdef ZLIB_WINAPI
     flags += 1 << 10;
 #endif
@@ -119,7 +121,7 @@ uLong ZEXPORT zlibCompileFlags()
 #  endif
 int ZLIB_INTERNAL z_verbose = verbose;
 
-void ZLIB_INTERNAL z_error (m)
+void ZLIB_INTERNAL z_error(m)
     char *m;
 {
     fprintf(stderr, "%s\n", m);
@@ -136,8 +138,8 @@ const char * ZEXPORT zError(err)
     return ERR_MSG(err);
 }
 
-#if defined(_WIN32_WCE)
-    /* The Microsoft C Run-Time Library for Windows CE doesn't have
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+    /* The older Microsoft C Run-Time Library for Windows CE doesn't have
      * errno.  We define it as a global variable to simplify porting.
      * Its value is always 0 and should not be used.
      */
@@ -214,7 +216,7 @@ local ptr_table table[MAX_PTR];
  * a protected system like OS/2. Use Microsoft C instead.
  */
 
-voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
+voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size)
 {
     voidpf buf;
     ulg bsize = (ulg)items*size;
@@ -240,7 +242,7 @@ voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
     return buf;
 }
 
-void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
+void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr)
 {
     int n;
 
@@ -277,13 +279,13 @@ void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
 #  define _hfree   hfree
 #endif
 
-voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, uInt items, uInt size)
+voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, uInt items, uInt size)
 {
     (void)opaque;
     return _halloc((long)items, size);
 }
 
-void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
+void ZLIB_INTERNAL zcfree(voidpf opaque, voidpf ptr)
 {
     (void)opaque;
     _hfree(ptr);
@@ -302,7 +304,7 @@ extern voidp  calloc OF((uInt items, uInt size));
 extern void   free   OF((voidpf ptr));
 #endif
 
-voidpf ZLIB_INTERNAL zcalloc (opaque, items, size)
+voidpf ZLIB_INTERNAL zcalloc(opaque, items, size)
     voidpf opaque;
     unsigned items;
     unsigned size;
@@ -312,7 +314,7 @@ voidpf ZLIB_INTERNAL zcalloc (opaque, items, size)
                               (voidpf)calloc(items, size);
 }
 
-void ZLIB_INTERNAL zcfree (opaque, ptr)
+void ZLIB_INTERNAL zcfree(opaque, ptr)
     voidpf opaque;
     voidpf ptr;
 {
