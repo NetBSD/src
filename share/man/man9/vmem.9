@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.20 2020/06/16 01:29:00 thorpej Exp $
+.\"	$NetBSD: vmem.9,v 1.21 2022/10/15 14:54:21 riastradh Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -500,18 +500,45 @@ The caller must ensure that no one will use it anymore.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn vmem_create
-return a pointer to the newly allocated vmem_t.
-Otherwise, it returns
-.Dv NULL .
-.Pp
-On success,
-.Fn vmem_xalloc
 and
+.Fn vmem_xcreate
+return a pointer to the newly allocated vmem_t on success, or
+.Dv NULL
+if
+.Dv VM_NOSLEEP
+was specified and memory could not be allocated immediately.
+.Pp
+.Fn vmem_add
+returns 0 on success, or
+.Er ENOMEM
+if
+.Dv VM_NOSLEEP
+was specified and memory could not be allocated immediately to record
+the region.
+.Pp
 .Fn vmem_alloc
-return 0.
-Otherwise,
-.Dv ENOMEM
-is returned.
+and
+.Fn vmem_xalloc
+return 0 on success, or
+.Er ENOMEM
+if either:
+.Bl -dash
+.It
+.Dv VM_NOSLEEP
+was specified and a matching region could not be allocated immediately;
+or
+.It
+non-default
+.Fa align ,
+.Fa phase ,
+or
+.Fa nocross
+parameters were specified, and a matching region could not be allocated
+without calling the backing
+.Fa allocfn
+passed to
+.Fn vmem_create .
+.El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
 The
@@ -546,3 +573,29 @@ and
 .Xr RUN_ONCE 9 ,
 so it cannot be used as early during system bootstrap as
 .Xr extent 9 .
+.Pp
+.Nm
+has no way to pass
+.Fa align ,
+.Fa phase ,
+.Fa nocross ,
+.Fa minaddr ,
+or
+.Fa maxaddr
+constraints into the backing allocator
+.Fa allocfn ,
+so even if
+.Dv VM_SLEEP
+is specified,
+.Fn vmem_alloc
+and
+.Fn vmem_xalloc
+may spuriously fail immediately with
+.Fa align ,
+.Fa phase ,
+or
+.Fa nocross ,
+or sleep forever with
+.Fa minaddr
+or
+.Fa maxaddr .
