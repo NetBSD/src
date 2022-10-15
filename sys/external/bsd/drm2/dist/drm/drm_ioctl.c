@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.23 2022/08/27 21:24:15 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.24 2022/10/15 15:19:28 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.23 2022/08/27 21:24:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.24 2022/10/15 15:19:28 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
@@ -739,6 +739,58 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 
 #define DRM_CORE_IOCTL_COUNT	ARRAY_SIZE( drm_ioctls )
 
+#ifdef __NetBSD__
+/* ioctl suspend/resume */
+
+static void
+drm_ioctl_enter(struct drm_device *dev)
+{
+	int ret __diagused;
+
+	mutex_lock(&dev->suspend_lock);
+	DRM_WAIT_NOINTR_UNTIL(ret, &dev->suspend_cv, &dev->suspend_lock,
+	    dev->suspender == NULL);
+	KASSERTMSG(ret == 0, "error=%d", -ret);
+	dev->active_ioctls++;
+	mutex_unlock(&dev->suspend_lock);
+}
+
+static void
+drm_ioctl_exit(struct drm_device *dev)
+{
+
+	mutex_lock(&dev->suspend_lock);
+	KASSERT(dev->suspender == NULL);
+	if (--dev->active_ioctls == 0)
+		DRM_WAKEUP_ALL(&dev->suspend_cv, &dev->suspend_lock);
+	mutex_unlock(&dev->suspend_lock);
+}
+
+void
+drm_suspend_ioctl(struct drm_device *dev)
+{
+	int ret;
+
+	mutex_lock(&dev->suspend_lock);
+	DRM_WAIT_NOINTR_UNTIL(ret, &dev->suspend_cv, &dev->suspend_lock,
+	    dev->suspender == NULL && dev->active_ioctls == 0);
+	dev->suspender = curlwp;
+	mutex_unlock(&dev->suspend_lock);
+}
+
+void
+drm_resume_ioctl(struct drm_device *dev)
+{
+
+	mutex_lock(&dev->suspend_lock);
+	KASSERT(dev->suspender);
+	KASSERT(dev->active_ioctls == 0);
+	dev->suspender = NULL;
+	DRM_WAKEUP_ALL(&dev->suspend_cv, &dev->suspend_lock);
+	mutex_unlock(&dev->suspend_lock);
+}
+#endif
+
 /**
  * DOC: driver specific ioctls
  *
@@ -805,6 +857,8 @@ long drm_ioctl_kernel(struct file *file, drm_ioctl_t *func, void *kdata,
 	if (unlikely(retcode))
 		return retcode;
 
+	drm_ioctl_enter(dev);
+
 	/* Enforce sane locking for modern driver ioctls. */
 	if (likely(!drm_core_check_feature(dev, DRIVER_LEGACY)) ||
 	    (flags & DRM_UNLOCKED))
@@ -814,6 +868,9 @@ long drm_ioctl_kernel(struct file *file, drm_ioctl_t *func, void *kdata,
 		retcode = func(dev, kdata, file_priv);
 		mutex_unlock(&drm_global_mutex);
 	}
+
+	drm_ioctl_exit(dev);
+
 	return retcode;
 }
 EXPORT_SYMBOL(drm_ioctl_kernel);
@@ -900,6 +957,7 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 		data0 = buf;
 	}
 
+	drm_ioctl_enter(dev);
 	if ((drm_core_check_feature(dev, DRIVER_MODESET) && is_driver_ioctl) ||
 	    ISSET(ioctl->flags, DRM_UNLOCKED)) {
 		/* XXX errno Linux->NetBSD */
@@ -910,6 +968,7 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 		error = -(*ioctl->func)(dev, data0, file);
 		mutex_unlock(&drm_global_mutex);
 	}
+	drm_ioctl_exit(dev);
 
 	/* If we used a temporary buffer, copy it back out.  */
 	if (data != data0)
