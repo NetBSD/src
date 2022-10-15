@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.11 2022/09/20 07:18:23 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.12 2022/10/15 06:41:43 simonb Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -32,10 +32,10 @@
 
 #include "opt_riscv_debug.h"
 
-#define __PMAP_PRIVATE
+#define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.11 2022/09/20 07:18:23 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.12 2022/10/15 06:41:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.11 2022/09/20 07:18:23 skrll Exp $");
 #include <riscv/sysreg.h>
 
 #ifdef VERBOSE_INIT_RISCV
-#define VPRINTF(...)	printf(__VA_ARGS__)
+#define	VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	__nothing
+#define	VPRINTF(...)	__nothing
 #endif
 
 int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
