@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.19 2022/09/19 17:23:14 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.20 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2022/09/19 17:23:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -431,8 +431,8 @@ db_pte_print(pt_entry_t pte, int level,
 		case LX_BLKPAG_ATTR_DEVICE_MEM:
 			pr(", DEV");
 			break;
-		case LX_BLKPAG_ATTR_DEVICE_MEM_SO:
-			pr(", DEV(SO)");
+		case LX_BLKPAG_ATTR_DEVICE_MEM_NP:
+			pr(", DEV(NP)");
 			break;
 		default:
 			pr(", ATTR(%lu)", __SHIFTOUT(pte, LX_BLKPAG_ATTR_INDX));

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_layerscape_gen4.c,v 1.4 2020/06/17 06:45:09 thorpej Exp $ */
+/* $NetBSD: acpi_pci_layerscape_gen4.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_layerscape_gen4.c,v 1.4 2020/06/17 06:45:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_layerscape_gen4.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -272,7 +272,7 @@ acpi_pci_layerscape_gen4_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 	}
 
 	error = bus_space_map(ap->ap_bst, mem->ar_base, mem->ar_length,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &bsh);
+	    BUS_SPACE_MAP_NONPOSTED, &bsh);
 	if (error != 0)
 		return AE_NO_MEMORY;
 
@@ -282,7 +282,7 @@ acpi_pci_layerscape_gen4_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 	mutex_init(&pcie->lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	error = bus_space_map(ap->ap_bst, win_base, PCI_EXTCONF_SIZE,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &pcie->win_bsh);
+	    BUS_SPACE_MAP_NONPOSTED, &pcie->win_bsh);
 	if (error != 0)
 		return AE_NO_MEMORY;
 

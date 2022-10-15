@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_n1sdp.c,v 1.6 2020/10/24 07:08:22 skrll Exp $ */
+/* $NetBSD: acpi_pci_n1sdp.c,v 1.7 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.6 2020/10/24 07:08:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.7 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,7 +166,7 @@ acpi_pci_n1sdp_init(struct acpi_pci_context *ap)
 			panic("acpi_pci_n1sdp_init: couldn't get PCIe discovery table VA");
 
 		error = bus_space_map(bst, n1sdp_data[ap->ap_seg]->rc_base_addr, PCI_EXTCONF_SIZE,
-		    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &ap->ap_conf_bsh);
+		    BUS_SPACE_MAP_NONPOSTED, &ap->ap_conf_bsh);
 		if (error != 0)
 			panic("acpi_pci_n1sdp_init: couldn't map segment %d", ap->ap_seg);
 

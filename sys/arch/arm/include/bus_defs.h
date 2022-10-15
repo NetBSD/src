@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.18 2022/01/22 15:10:30 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.19 2022/10/15 11:07:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ typedef u_long bus_space_handle_t;
 #define	BUS_SPACE_MAP_BUS3		0x0400
 #define	BUS_SPACE_MAP_BUS4		0x0800
 
-#define	_ARM_BUS_SPACE_MAP_STRONGLY_ORDERED	BUS_SPACE_MAP_BUS1
+#define	BUS_SPACE_MAP_NONPOSTED		BUS_SPACE_MAP_BUS1
 
 struct bus_space {
 	/* cookie */

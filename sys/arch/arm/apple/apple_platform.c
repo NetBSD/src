@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.4 2021/09/13 23:30:52 jmcneill Exp $ */
+/* $NetBSD: apple_platform.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.4 2021/09/13 23:30:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,7 +77,7 @@ apple_nonposted_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	if (flag == 0) {
-		flag |= _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+		flag |= BUS_SPACE_MAP_NONPOSTED;
 	}
 
 	return bus_space_map(&arm_generic_bs_tag, bpa, size, flag, bshp);
@@ -126,7 +126,7 @@ apple_platform_devmap(void)
 		devmap[devmap_index].pd_va = DEVMAP_ALIGN(devmap_va);
 		devmap[devmap_index].pd_size = DEVMAP_SIZE(L3_SIZE);
 		devmap[devmap_index].pd_prot = VM_PROT_READ | VM_PROT_WRITE;
-		devmap[devmap_index].pd_flags = PMAP_DEV_SO;
+		devmap[devmap_index].pd_flags = PMAP_DEV_NP;
 		devmap_va = DEVMAP_SIZE(devmap[devmap_index].pd_va +
 		    devmap[devmap_index].pd_size);
 		devmap_index++;
