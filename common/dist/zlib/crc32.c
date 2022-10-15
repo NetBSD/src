@@ -7,7 +7,7 @@
  * Kadatch and Jenkins (2010). See doc/crc-doc.1.0.pdf in this distribution.
  */
 
-/* @(#) $Id: crc32.c,v 1.1.1.3 2022/10/15 19:38:37 christos Exp $ */
+/* @(#) Id */
 
 /*
   Note on the use of DYNAMIC_CRC_TABLE: there is no mutex or semaphore
