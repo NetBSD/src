@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2020/07/06 10:49:41 rin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13 2022/10/15 04:47:37 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2020/07/06 10:49:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2022/10/15 04:47:37 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -69,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2020/07/06 10:49:41 rin Exp $")
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/pci_machdep.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
+
+#ifdef DHT_FIXUP_PDCIDE
+#include <dev/pci/pciidereg.h>
+#endif
 
 static struct powerpc_bus_space pci_iot = {
 	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
@@ -182,5 +186,25 @@ ibm4xx_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 		/* Don't configure the bridge and PCI probe. */
 		return 0;
 	}
+
+#ifdef DHT_FIXUP_PDCIDE
+	/*
+	 * Initialize PDC20265 to native-PCI mode. This should be done
+	 * *before* pci_do_device_query(). Otherwise, we will fail to
+	 * configure native-PCI IO registers.
+	 */
+	if (PCI_VENDOR(id) == PCI_VENDOR_PROMISE &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_PROMISE_PDC20265) {
+		pcitag_t tag;
+		pcireg_t csr;
+
+		tag = ibm4xx_pci_make_tag(v, bus, dev, func);
+		csr = ibm4xx_pci_conf_read(v, tag, PCI_CLASS_REG);
+		csr |= (PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1))
+		    << PCI_INTERFACE_SHIFT;
+		ibm4xx_pci_conf_write(v, tag, PCI_CLASS_REG, csr);
+        }
+#endif
+
 	return PCI_CONF_DEFAULT;
 }
