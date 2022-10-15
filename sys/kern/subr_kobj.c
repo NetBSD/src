@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.69 2021/08/21 23:00:32 andvar Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.70 2022/10/15 15:22:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.69 2021/08/21 23:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.70 2022/10/15 15:22:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -1149,7 +1149,12 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 
 	KASSERT(ko->ko_source != NULL);
 
-	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
+	if (off < 0) {
+		kobj_error(ko, "negative offset %lld",
+		    (unsigned long long)off);
+		error = EINVAL;
+		base = NULL;
+	} else if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
 		kobj_error(ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
