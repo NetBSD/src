@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.31 2022/10/14 08:10:22 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.32 2022/10/15 16:20:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -124,9 +124,6 @@ ENTRY_NP(start)
 	 * Our load address is not fixed, but our VA is.  We need to construct
 	 * an initial PDETAB.
 	 */
-
-	li	s10, PAGE_SIZE
-	li	s9, USPACE
 
 	PTR_LA	s5, _C_LABEL(lwp0uspace)
 	PTR_LA	s6, _C_LABEL(bootstk)
