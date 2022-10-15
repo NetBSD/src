@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_smccc.c,v 1.1 2021/08/07 21:27:53 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_smccc.c,v 1.2 2022/10/15 10:45:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_smccc.c,v 1.1 2021/08/07 21:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_smccc.c,v 1.2 2022/10/15 10:45:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ acpi_pci_smccc_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	}
 
 	status = pci_smccc_write(PCI_SMCCC_SBDF(ap->ap_seg, b, d, f), reg,
-				PCI_SMCCC_ACCESS_32BIT, data);
+				 PCI_SMCCC_ACCESS_32BIT, data);
 	if (!PCI_SMCCC_SUCCESS(status)) {
 		return EINVAL;
 	}
