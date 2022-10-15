@@ -3,7 +3,7 @@
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 #
-#	$NetBSD: tzselect.ksh,v 1.20 2022/08/16 11:07:40 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.21 2022/10/15 18:57:37 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -35,6 +35,7 @@ REPORT_BUGS_TO=tz@iana.org
 #
 #	Gawk (GNU awk) <https://www.gnu.org/software/gawk/>
 #	mawk <https://invisible-island.net/mawk/>
+#	nawk <https://github.com/onetrueawk/awk>
 
 
 # Specify default values for environment variables if they are unset.
