@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2022/10/15 06:41:43 simonb Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.3 2022/10/15 06:46:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-/* $NetBSD: cpu_counter.h,v 1.2 2022/10/15 06:41:43 simonb Exp $ */
+/* $NetBSD: cpu_counter.h,v 1.3 2022/10/15 06:46:41 simonb Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,13 +67,28 @@
 #ifdef _KERNEL
 
 #define	cpu_hascounter()	true
+
+#ifdef _LP64
+static __inline uint64_t
+cpu_counter(void)
+{
+	uint64_t __count;
+
+	__asm __volatile("csrr\t%0, cycle" : "=r"(__count));
+	return __count;
+}
+
+
+#else /* 32-bit */
 #define	cpu_counter()		cpu_counter32()
+#endif /* 32-bit */
 
 static __inline uint32_t
 cpu_counter32(void)
 {
 	uint32_t __count;
-	__asm("csrr\t%0, cycle" : "=r"(__count));
+
+	__asm __volatile("csrr\t%0, cycle" : "=r"(__count));
 	return __count;
 }
 
