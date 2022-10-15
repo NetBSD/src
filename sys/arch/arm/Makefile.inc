@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/04/04 19:43:34 dyoung Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2022/10/15 11:31:40 jmcneill Exp $
 
 AARM=	${SYSDIR}/arch/arm/arm/*.S
 SARM=	${SYSDIR}/arch/arm/arm/*.[ch] ${SYSDIR}/arch/arm/include/*.h
@@ -13,7 +13,6 @@ SARM+=	${SYSDIR}/arch/arm/iomd/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/ixp12x0/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/mainbus/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/marvell/*.[ch]
-SARM+=	${SYSDIR}/arch/arm/mpcore/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/ofw/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/omap/*.[ch]
 SARM+=	${SYSDIR}/arch/arm/pic/*.[ch]
