@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.71 2022/10/15 15:23:24 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.72 2022/10/15 15:27:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.71 2022/10/15 15:23:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.72 2022/10/15 15:27:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -1145,7 +1145,7 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
     bool allocate)
 {
 	void *base = *basep;
-	int error;
+	int error = 0;
 
 	KASSERT(ko->ko_source != NULL);
 
@@ -1154,31 +1154,23 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 		    (unsigned long long)off);
 		error = EINVAL;
 		base = NULL;
+		goto out;
 	} else if (ko->ko_memsize != -1 &&
 	    (size > ko->ko_memsize || off > ko->ko_memsize - size)) {
 		kobj_error(ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
-	} else if (allocate) {
-		base = kmem_alloc(size, KM_SLEEP);
-		error = 0;
-	} else {
-		error = 0;
-	}
-
-	if (error == 0) {
-		/* Copy the section */
-		memcpy(base, (uint8_t *)ko->ko_source + off, size);
-	}
-
-	if (allocate && error != 0) {
-		kmem_free(base, size);
-		base = NULL;
+		goto out;
 	}
 
 	if (allocate)
-		*basep = base;
+		base = kmem_alloc(size, KM_SLEEP);
 
+	/* Copy the section */
+	memcpy(base, (uint8_t *)ko->ko_source + off, size);
+
+out:	if (allocate)
+		*basep = base;
 	return error;
 }
 
