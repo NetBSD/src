@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: example.c,v 1.1.1.1 2017/01/10 00:25:31 christos Exp $ */
+/* @(#) $Id: example.c,v 1.1.1.2 2022/10/15 19:38:38 christos Exp $ */
 
 #include "zlib.h"
 #include <stdio.h>
@@ -440,9 +440,8 @@ void test_sync(compr, comprLen, uncompr, uncomprLen)
     CHECK_ERR(err, "inflateSync");
 
     err = inflate(&d_stream, Z_FINISH);
-    if (err != Z_DATA_ERROR) {
-        fprintf(stderr, "inflate should report DATA_ERROR\n");
-        /* Because of incorrect adler32 */
+    if (err != Z_STREAM_END) {
+        fprintf(stderr, "inflate should report Z_STREAM_END\n");
         exit(1);
     }
     err = inflateEnd(&d_stream);
@@ -556,7 +555,8 @@ int main(argc, argv)
         exit(1);
 
     } else if (strcmp(zlibVersion(), ZLIB_VERSION) != 0) {
-        fprintf(stderr, "warning: different zlib version\n");
+        fprintf(stderr, "warning: different zlib version linked: %s\n",
+                zlibVersion());
     }
 
     printf("zlib version %s = 0x%04x, compile flags = 0x%lx\n",
