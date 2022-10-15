@@ -1,7 +1,7 @@
-/*	$NetBSD: deflate.h,v 1.4 2022/03/24 10:13:01 wiz Exp $	*/
+/*	$NetBSD: deflate.h,v 1.5 2022/10/15 19:49:32 christos Exp $	*/
 
 /* deflate.h -- internal compression state
- * Copyright (C) 1995-2016 Jean-loup Gailly
+ * Copyright (C) 1995-2018 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: deflate.h,v 1.4 2022/03/24 10:13:01 wiz Exp $ */
+/* @(#) Id */
 
 #ifndef DEFLATE_H
 #define DEFLATE_H
@@ -331,8 +331,8 @@ void ZLIB_INTERNAL _tr_stored_block OF((deflate_state *s, charf *buf,
 # define _tr_tally_dist(s, distance, length, flush) \
   { uch len = (uch)(length); \
     ush dist = (ush)(distance); \
-    s->sym_buf[s->sym_next++] = dist; \
-    s->sym_buf[s->sym_next++] = dist >> 8; \
+    s->sym_buf[s->sym_next++] = (uch)dist; \
+    s->sym_buf[s->sym_next++] = (uch)(dist >> 8); \
     s->sym_buf[s->sym_next++] = len; \
     dist--; \
     s->dyn_ltree[_length_code[len]+LITERALS+1].Freq++; \

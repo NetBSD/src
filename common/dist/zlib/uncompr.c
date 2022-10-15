@@ -1,11 +1,11 @@
-/*	$NetBSD: uncompr.c,v 1.3 2017/01/10 01:27:41 christos Exp $	*/
+/*	$NetBSD: uncompr.c,v 1.4 2022/10/15 19:49:32 christos Exp $	*/
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: uncompr.c,v 1.3 2017/01/10 01:27:41 christos Exp $ */
+/* @(#) Id */
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
@@ -26,7 +26,7 @@
    Z_DATA_ERROR if the input data was corrupted, including if the input data is
    an incomplete zlib stream.
 */
-int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress2(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -85,7 +85,7 @@ int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
            err;
 }
 
-int ZEXPORT uncompress (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
