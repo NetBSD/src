@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.215 2022/09/21 10:59:10 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.216 2022/10/15 15:20:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.215 2022/09/21 10:59:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.216 2022/10/15 15:20:46 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,6 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.215 2022/09/21 10:59:10 riastradh E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#ifdef DDB
+#include <ddb/ddb.h>
+#endif
 
 /*
  * Lock order:
@@ -1485,6 +1493,9 @@ spec_strategy(void *v)
 			if (mp && (mp->mnt_flag & MNT_RDONLY)) {
 				printf("%s blk %"PRId64" written while ro!\n",
 				    mp->mnt_stat.f_mntonname, bp->b_blkno);
+#ifdef DDB
+				db_stacktrace();
+#endif
 			}
 		}
 #endif /* DIAGNOSTIC */
