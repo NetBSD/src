@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.58 2022/08/14 10:06:54 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.59 2022/10/15 19:53:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.58 2022/08/14 10:06:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.59 2022/10/15 19:53:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ virtio_reinit_start(struct virtio_softc *sc)
 			continue;
 		if (n != vq->vq_num) {
 			panic("%s: virtqueue size changed, vq index %d\n",
-			      device_xname(sc->sc_dev),
-			      vq->vq_index);
+			    device_xname(sc->sc_dev),
+			    vq->vq_index);
 		}
 		virtio_init_vq(sc, vq, true);
 		sc->sc_ops->setup_queue(sc, vq->vq_index,
@@ -167,7 +167,8 @@ virtio_negotiate_features(struct virtio_softc *sc, uint64_t guest_features)
 
 
 uint8_t
-virtio_read_device_config_1(struct virtio_softc *sc, int index) {
+virtio_read_device_config_1(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint8_t val;
@@ -179,7 +180,8 @@ virtio_read_device_config_1(struct virtio_softc *sc, int index) {
 }
 
 uint16_t
-virtio_read_device_config_2(struct virtio_softc *sc, int index) {
+virtio_read_device_config_2(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint16_t val;
@@ -190,13 +192,15 @@ virtio_read_device_config_2(struct virtio_softc *sc, int index) {
 
 	DPRINTFR("read_2", "%04x", val, index, 2);
 	DPRINTFR2("read_2", "%04x",
-		bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
-		bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
+	    bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+		index),
+	    bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
 	return val;
 }
 
 uint32_t
-virtio_read_device_config_4(struct virtio_softc *sc, int index) {
+virtio_read_device_config_4(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint32_t val;
@@ -207,8 +211,9 @@ virtio_read_device_config_4(struct virtio_softc *sc, int index) {
 
 	DPRINTFR("read_4", "%08x", val, index, 4);
 	DPRINTFR2("read_4", "%08x",
-		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
-		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
+	    bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+		index),
+	    bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
 	return val;
 }
 
@@ -218,7 +223,8 @@ virtio_read_device_config_4(struct virtio_softc *sc, int index) {
  * it. We access it using two 32 reads. See virtio spec 4.1.3.1.
  */
 uint64_t
-virtio_read_device_config_8(struct virtio_softc *sc, int index) {
+virtio_read_device_config_8(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	union {
@@ -240,11 +246,13 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index) {
 
 	DPRINTFR("read_8", "%08lx", val, index, 8);
 	DPRINTFR2("read_8 low ", "%08x",
-		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index),
-		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
+	    bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+		index),
+	    bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index));
 	DPRINTFR2("read_8 high ", "%08x",
-		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index + 4),
-		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index + 4));
+	    bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+		index + 4),
+	    bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index + 4));
 	return val;
 }
 
@@ -254,7 +262,8 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index) {
  * register to always be little endian. These functions cater for these.
  */
 uint16_t
-virtio_read_device_config_le_2(struct virtio_softc *sc, int index) {
+virtio_read_device_config_le_2(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint16_t val;
@@ -265,13 +274,14 @@ virtio_read_device_config_le_2(struct virtio_softc *sc, int index) {
 
 	DPRINTFR("read_le_2", "%04x", val, index, 2);
 	DPRINTFR2("read_le_2", "%04x",
-		bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
-		bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
+	    bus_space_read_stream_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
+	    bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
 	return val;
 }
 
 uint32_t
-virtio_read_device_config_le_4(struct virtio_softc *sc, int index) {
+virtio_read_device_config_le_4(struct virtio_softc *sc, int index)
+{
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
 	uint32_t val;
@@ -282,8 +292,8 @@ virtio_read_device_config_le_4(struct virtio_softc *sc, int index) {
 
 	DPRINTFR("read_le_4", "%08x", val, index, 4);
 	DPRINTFR2("read_le_4", "%08x",
-		bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
-		bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
+	    bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0),
+	    bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, 0));
 	return val;
 }
 
@@ -297,7 +307,8 @@ virtio_write_device_config_1(struct virtio_softc *sc, int index, uint8_t value)
 }
 
 void
-virtio_write_device_config_2(struct virtio_softc *sc, int index, uint16_t value)
+virtio_write_device_config_2(struct virtio_softc *sc, int index,
+    uint16_t value)
 {
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
@@ -308,7 +319,8 @@ virtio_write_device_config_2(struct virtio_softc *sc, int index, uint16_t value)
 }
 
 void
-virtio_write_device_config_4(struct virtio_softc *sc, int index, uint32_t value)
+virtio_write_device_config_4(struct virtio_softc *sc, int index,
+    uint32_t value)
 {
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
@@ -326,7 +338,8 @@ virtio_write_device_config_4(struct virtio_softc *sc, int index, uint32_t value)
  * spec 4.1.3.1.
  */
 void
-virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
+virtio_write_device_config_8(struct virtio_softc *sc, int index,
+    uint64_t value)
 {
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
@@ -359,7 +372,8 @@ virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
  * register to always be little endian. These functions cater for these.
  */
 void
-virtio_write_device_config_le_2(struct virtio_softc *sc, int index, uint16_t value)
+virtio_write_device_config_le_2(struct virtio_softc *sc, int index,
+    uint16_t value)
 {
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
@@ -370,7 +384,8 @@ virtio_write_device_config_le_2(struct virtio_softc *sc, int index, uint16_t val
 }
 
 void
-virtio_write_device_config_le_4(struct virtio_softc *sc, int index, uint32_t value)
+virtio_write_device_config_le_4(struct virtio_softc *sc, int index,
+    uint32_t value)
 {
 	bus_space_tag_t	   iot = sc->sc_devcfg_iot;
 	bus_space_handle_t ioh = sc->sc_devcfg_ioh;
@@ -384,19 +399,22 @@ virtio_write_device_config_le_4(struct virtio_softc *sc, int index, uint32_t val
 /*
  * data structures endian helpers
  */
-uint16_t virtio_rw16(struct virtio_softc *sc, uint16_t val)
+uint16_t
+virtio_rw16(struct virtio_softc *sc, uint16_t val)
 {
 	KASSERT(sc);
 	return BYTE_ORDER != sc->sc_struct_endian ? bswap16(val) : val;
 }
 
-uint32_t virtio_rw32(struct virtio_softc *sc, uint32_t val)
+uint32_t
+virtio_rw32(struct virtio_softc *sc, uint32_t val)
 {
 	KASSERT(sc);
 	return BYTE_ORDER != sc->sc_struct_endian ? bswap32(val) : val;
 }
 
-uint64_t virtio_rw64(struct virtio_softc *sc, uint64_t val)
+uint64_t
+virtio_rw64(struct virtio_softc *sc, uint64_t val)
 {
 	KASSERT(sc);
 	return BYTE_ORDER != sc->sc_struct_endian ? bswap64(val) : val;
@@ -588,7 +606,7 @@ virtio_vq_intrhand(struct virtio_softc *sc)
  */
 int
 virtio_postpone_intr(struct virtio_softc *sc, struct virtqueue *vq,
-		uint16_t nslots)
+    uint16_t nslots)
 {
 	uint16_t	idx, nused;
 
@@ -600,7 +618,7 @@ virtio_postpone_intr(struct virtio_softc *sc, struct virtqueue *vq,
 	vq->vq_queued++;
 
 	nused = (uint16_t)
-		(virtio_rw16(sc, vq->vq_used->idx) - vq->vq_used_idx);
+	    (virtio_rw16(sc, vq->vq_used->idx) - vq->vq_used_idx);
 	KASSERT(nused <= vq->vq_num);
 
 	return nslots < nused;
@@ -616,7 +634,7 @@ virtio_postpone_intr_smart(struct virtio_softc *sc, struct virtqueue *vq)
 	uint16_t	nslots;
 
 	nslots = (uint16_t)
-		(virtio_rw16(sc, vq->vq_avail->idx) - vq->vq_used_idx) * 3 / 4;
+	    (virtio_rw16(sc, vq->vq_avail->idx) - vq->vq_used_idx) * 3 / 4;
 
 	return virtio_postpone_intr(sc, vq, nslots);
 }
@@ -631,7 +649,7 @@ virtio_postpone_intr_far(struct virtio_softc *sc, struct virtqueue *vq)
 	uint16_t	nslots;
 
 	nslots = (uint16_t)
-		(virtio_rw16(sc, vq->vq_avail->idx) - vq->vq_used_idx);
+	    (virtio_rw16(sc, vq->vq_avail->idx) - vq->vq_used_idx);
 
 	return virtio_postpone_intr(sc, vq, nslots);
 }
@@ -705,7 +723,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 		for (i = 0; i < vq_size; i++) {
 			vd = vq->vq_indirect;
 			vd += vq->vq_maxnsegs * i;
-			for (j = 0; j < vq->vq_maxnsegs-1; j++) {
+			for (j = 0; j < vq->vq_maxnsegs - 1; j++) {
 				vd[j].next = virtio_rw16(sc, j + 1);
 			}
 		}
@@ -714,8 +732,8 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 	/* free slot management */
 	SIMPLEQ_INIT(&vq->vq_freelist);
 	for (i = 0; i < vq_size; i++) {
-		SIMPLEQ_INSERT_TAIL(&vq->vq_freelist,
-				    &vq->vq_entries[i], qe_list);
+		SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, &vq->vq_entries[i],
+		    qe_list);
 		vq->vq_entries[i].qe_index = i;
 	}
 	if (!reinit)
@@ -742,8 +760,8 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 {
 	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
 	int rsegs, r, hdrlen;
-#define VIRTQUEUE_ALIGN(n)	(((n)+(VIRTIO_PAGE_SIZE-1))&	\
-				 ~(VIRTIO_PAGE_SIZE-1))
+#define VIRTQUEUE_ALIGN(n)	(((n) + (VIRTIO_PAGE_SIZE - 1)) &	\
+				    ~(VIRTIO_PAGE_SIZE - 1))
 
 	/* Make sure callers allocate vqs in order */
 	KASSERT(sc->sc_nvqs == index);
@@ -753,8 +771,8 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	vq_size = sc->sc_ops->read_queue_size(sc, index);
 	if (vq_size == 0) {
 		aprint_error_dev(sc->sc_dev,
-				 "virtqueue not exist, index %d for %s\n",
-				 index, name);
+		    "virtqueue not exist, index %d for %s\n",
+		    index, name);
 		goto err;
 	}
 
@@ -762,10 +780,10 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* allocsize1: descriptor table + avail ring + pad */
 	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc)*vq_size
-			     + sizeof(uint16_t)*(hdrlen + vq_size));
+	    + sizeof(uint16_t)*(hdrlen + vq_size));
 	/* allocsize2: used ring + pad */
 	allocsize2 = VIRTQUEUE_ALIGN(sizeof(uint16_t) * hdrlen
-			     + sizeof(struct vring_used_elem)*vq_size);
+	    + sizeof(struct vring_used_elem)*vq_size);
 	/* allocsize3: indirect table */
 	if (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT)
 		allocsize3 = sizeof(struct vring_desc) * maxnsegs * vq_size;
@@ -775,35 +793,35 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* alloc and map the memory */
 	r = bus_dmamem_alloc(sc->sc_dmat, allocsize, VIRTIO_PAGE_SIZE, 0,
-			     &vq->vq_segs[0], 1, &rsegs, BUS_DMA_WAITOK);
+	    &vq->vq_segs[0], 1, &rsegs, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
-				 "virtqueue %d for %s allocation failed, "
-				 "error code %d\n", index, name, r);
+		    "virtqueue %d for %s allocation failed, "
+		    "error code %d\n", index, name, r);
 		goto err;
 	}
 	r = bus_dmamem_map(sc->sc_dmat, &vq->vq_segs[0], rsegs, allocsize,
-			   &vq->vq_vaddr, BUS_DMA_WAITOK);
+	    &vq->vq_vaddr, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
-				 "virtqueue %d for %s map failed, "
-				 "error code %d\n", index, name, r);
+		    "virtqueue %d for %s map failed, "
+		    "error code %d\n", index, name, r);
 		goto err;
 	}
 	r = bus_dmamap_create(sc->sc_dmat, allocsize, 1, allocsize, 0,
-			      BUS_DMA_WAITOK, &vq->vq_dmamap);
+	    BUS_DMA_WAITOK, &vq->vq_dmamap);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
-				 "virtqueue %d for %s dmamap creation failed, "
-				 "error code %d\n", index, name, r);
+		    "virtqueue %d for %s dmamap creation failed, "
+		    "error code %d\n", index, name, r);
 		goto err;
 	}
 	r = bus_dmamap_load(sc->sc_dmat, vq->vq_dmamap,
-			    vq->vq_vaddr, allocsize, NULL, BUS_DMA_WAITOK);
+	    vq->vq_vaddr, allocsize, NULL, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
-				 "virtqueue %d for %s dmamap load failed, "
-				 "error code %d\n", index, name, r);
+		    "virtqueue %d for %s dmamap load failed, "
+		    "error code %d\n", index, name, r);
 		goto err;
 	}
 
@@ -813,18 +831,18 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	vq->vq_index = index;
 	vq->vq_desc = vq->vq_vaddr;
 	vq->vq_availoffset = sizeof(struct vring_desc)*vq_size;
-	vq->vq_avail = (void*)(((char*)vq->vq_desc) + vq->vq_availoffset);
-	vq->vq_used_event = (uint16_t *) ((char *)vq->vq_avail +
-		 offsetof(struct vring_avail, ring[vq->vq_num]));
+	vq->vq_avail = (void *)(((char *)vq->vq_desc) + vq->vq_availoffset);
+	vq->vq_used_event = (uint16_t *)((char *)vq->vq_avail +
+	    offsetof(struct vring_avail, ring[vq->vq_num]));
 	vq->vq_usedoffset = allocsize1;
-	vq->vq_used = (void*)(((char*)vq->vq_desc) + vq->vq_usedoffset);
+	vq->vq_used = (void *)(((char *)vq->vq_desc) + vq->vq_usedoffset);
 	vq->vq_avail_event = (uint16_t *)((char *)vq->vq_used +
-		 offsetof(struct vring_used, ring[vq->vq_num]));
+	    offsetof(struct vring_used, ring[vq->vq_num]));
 
 	if (allocsize3 > 0) {
 		vq->vq_indirectoffset = allocsize1 + allocsize2;
-		vq->vq_indirect = (void*)(((char*)vq->vq_desc)
-					  + vq->vq_indirectoffset);
+		vq->vq_indirect = (void *)(((char *)vq->vq_desc)
+		    + vq->vq_indirectoffset);
 	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxsegsize = maxsegsize;
@@ -832,7 +850,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* free slot management */
 	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry)*vq_size,
-				     KM_SLEEP);
+	    KM_SLEEP);
 	virtio_init_vq(sc, vq, false);
 
 	/* set the vq address */
@@ -840,13 +858,12 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	    vq->vq_dmamap->dm_segs[0].ds_addr);
 
 	aprint_verbose_dev(sc->sc_dev,
-			   "allocated %u byte for virtqueue %d for %s, "
-			   "size %d\n", allocsize, index, name, vq_size);
+	    "allocated %u byte for virtqueue %d for %s, size %d\n",
+	    allocsize, index, name, vq_size);
 	if (allocsize3 > 0)
 		aprint_verbose_dev(sc->sc_dev,
-				   "using %d byte (%d entries) "
-				   "indirect descriptors\n",
-				   allocsize3, maxnsegs * vq_size);
+		    "using %d byte (%d entries) indirect descriptors\n",
+		    allocsize3, maxnsegs * vq_size);
 
 	sc->sc_nvqs++;
 
@@ -878,7 +895,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 	if (i != vq->vq_num) {
 		printf("%s: freeing non-empty vq, index %d\n",
-		       device_xname(sc->sc_dev), vq->vq_index);
+		    device_xname(sc->sc_dev), vq->vq_index);
 		return EBUSY;
 	}
 
@@ -943,18 +960,18 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *  - dmamaps for payload should be pre-allocated
  *      r = virtio_enqueue_prep(sc, vq, &slot);		// allocate a slot
  *	if (r)		// currently 0 or EAGAIN
- *	  return r;
+ *		return r;
  *	r = bus_dmamap_load(dmat, dmamap_payload[slot], data, count, ..);
  *	if (r) {
- *	  virtio_enqueue_abort(sc, vq, slot);
- *	  return r;
+ *		virtio_enqueue_abort(sc, vq, slot);
+ *		return r;
  *	}
  *	r = virtio_enqueue_reserve(sc, vq, slot,
- *				   dmamap_payload[slot]->dm_nsegs+1);
+ *	    dmamap_payload[slot]->dm_nsegs + 1);
  *							// ^ +1 for command
  *	if (r) {	// currently 0 or EAGAIN
- *	  bus_dmamap_unload(dmat, dmamap_payload[slot]);
- *	  return r;					// do not call abort()
+ *		bus_dmamap_unload(dmat, dmamap_payload[slot]);
+ *		return r;				// do not call abort()
  *	}
  *	<setup and prepare commands>
  *	bus_dmamap_sync(dmat, dmamap_cmd[slot],... BUS_DMASYNC_PREWRITE);
@@ -989,7 +1006,7 @@ virtio_enqueue_prep(struct virtio_softc *sc, struct virtqueue *vq, int *slotp)
  */
 int
 virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
-		       int slot, int nsegs)
+    int slot, int nsegs)
 {
 	int indirect;
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
@@ -1012,9 +1029,9 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
 
 		vd = &vq->vq_desc[qe1->qe_index];
 		addr = vq->vq_dmamap->dm_segs[0].ds_addr
-			+ vq->vq_indirectoffset;
+		    + vq->vq_indirectoffset;
 		addr += sizeof(struct vring_desc)
-			* vq->vq_maxnsegs * qe1->qe_index;
+		    * vq->vq_maxnsegs * qe1->qe_index;
 		vd->addr  = virtio_rw64(sc, addr);
 		vd->len   = virtio_rw32(sc, sizeof(struct vring_desc) * nsegs);
 		vd->flags = virtio_rw16(sc, VRING_DESC_F_INDIRECT);
@@ -1023,7 +1040,7 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
 		vd += vq->vq_maxnsegs * qe1->qe_index;
 		qe1->qe_desc_base = vd;
 
-		for (i = 0; i < nsegs-1; i++) {
+		for (i = 0; i < nsegs - 1; i++) {
 			vd[i].flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
 		}
 		vd[i].flags  = virtio_rw16(sc, 0);
@@ -1061,7 +1078,7 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
  */
 int
 virtio_enqueue(struct virtio_softc *sc, struct virtqueue *vq, int slot,
-	       bus_dmamap_t dmamap, bool write)
+    bus_dmamap_t dmamap, bool write)
 {
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
 	struct vring_desc *vd = qe1->qe_desc_base;
@@ -1085,8 +1102,8 @@ virtio_enqueue(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 
 int
 virtio_enqueue_p(struct virtio_softc *sc, struct virtqueue *vq, int slot,
-		 bus_dmamap_t dmamap, bus_addr_t start, bus_size_t len,
-		 bool write)
+    bus_dmamap_t dmamap, bus_addr_t start, bus_size_t len,
+    bool write)
 {
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
 	struct vring_desc *vd = qe1->qe_desc_base;
@@ -1094,8 +1111,8 @@ virtio_enqueue_p(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 
 	KASSERT(s >= 0);
 	KASSERT(dmamap->dm_nsegs == 1); /* XXX */
-	KASSERT((dmamap->dm_segs[0].ds_len > start) &&
-		(dmamap->dm_segs[0].ds_len >= start + len));
+	KASSERT(dmamap->dm_segs[0].ds_len > start);
+	KASSERT(dmamap->dm_segs[0].ds_len >= start + len);
 
 	vd[s].addr = virtio_rw64(sc, dmamap->dm_segs[0].ds_addr + start);
 	vd[s].len  = virtio_rw32(sc, len);
@@ -1111,7 +1128,7 @@ virtio_enqueue_p(struct virtio_softc *sc, struct virtqueue *vq, int slot,
  */
 int
 virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
-		      bool notifynow)
+    bool notifynow)
 {
 	struct vq_entry *qe1;
 
@@ -1203,7 +1220,7 @@ virtio_enqueue_abort(struct virtio_softc *sc, struct virtqueue *vq, int slot)
  */
 int
 virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
-	       int *slotp, int *lenp)
+    int *slotp, int *lenp)
 {
 	uint16_t slot, usedidx;
 	struct vq_entry *qe;
@@ -1254,10 +1271,10 @@ virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
  */
 void
 virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
-		    struct virtqueue *vqs,
-		    virtio_callback config_change,
-		    virtio_callback intr_hand,
-		    int req_flags, int req_features, const char *feat_bits)
+    struct virtqueue *vqs,
+    virtio_callback config_change,
+    virtio_callback intr_hand,
+    int req_flags, int req_features, const char *feat_bits)
 {
 	char buf[1024];
 
@@ -1295,7 +1312,8 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 	sc->sc_finished_called = true;
 	r = sc->sc_ops->alloc_interrupts(sc);
 	if (r != 0) {
-		aprint_error_dev(sc->sc_dev, "failed to allocate interrupts\n");
+		aprint_error_dev(sc->sc_dev,
+		    "failed to allocate interrupts\n");
 		goto fail;
 	}
 
@@ -1311,7 +1329,8 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 		if (sc->sc_flags & VIRTIO_F_INTR_MPSAFE)
 			flags |= SOFTINT_MPSAFE;
 
-		sc->sc_soft_ih = softint_establish(flags, virtio_soft_intr, sc);
+		sc->sc_soft_ih = softint_establish(flags, virtio_soft_intr,
+		    sc);
 		if (sc->sc_soft_ih == NULL) {
 			sc->sc_ops->free_interrupts(sc);
 			aprint_error_dev(sc->sc_dev,
@@ -1396,7 +1415,7 @@ virtio_attach_failed(struct virtio_softc *sc)
 
 	if (sc->sc_child == NULL) {
 		aprint_error_dev(self,
-			"no matching child driver; not configured\n");
+		    "no matching child driver; not configured\n");
 		return 1;
 	}
 
@@ -1408,7 +1427,7 @@ virtio_attach_failed(struct virtio_softc *sc)
 	/* sanity check */
 	if (!sc->sc_finished_called) {
 		aprint_error_dev(self, "virtio internal error, child driver "
-			"signaled OK but didn't initialize interrupts\n");
+		    "signaled OK but didn't initialize interrupts\n");
 		return 1;
 	}
 
