@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_bus_machdep.c,v 1.1 2021/09/06 14:03:18 jmcneill Exp $ */
+/* $NetBSD: fdt_bus_machdep.c,v 1.2 2022/10/15 11:07:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.1 2021/09/06 14:03:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.2 2022/10/15 11:07:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,7 @@ nonposted_mmio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	if (flag == 0) {
-		flag |= _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+		flag |= BUS_SPACE_MAP_NONPOSTED;
 	}
 
 	return bus_space_map(&arm_generic_bs_tag, bpa, size, flag, bshp);

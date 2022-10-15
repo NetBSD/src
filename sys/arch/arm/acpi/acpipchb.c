@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.31 2022/10/14 22:10:15 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.31 2022/10/14 22:10:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -225,7 +225,7 @@ acpipchb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	if ((abs->flags & PCI_FLAGS_IO_OKAY) != 0) {
 		/* Force strongly ordered mapping for all I/O space */
-		flag = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+		flag = BUS_SPACE_MAP_NONPOSTED;
 	}
 
 	for (i = 0; i < abs->nrange; i++) {

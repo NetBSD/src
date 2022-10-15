@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.52 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.53 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ struct vm_page_md {
 #define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_DEVICE_MEM_SO	__SHIFTIN(4, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_DEVICE_MEM_NP	__SHIFTIN(4, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
 #define lxpde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
@@ -341,8 +341,8 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
 #define	PMAP_DEV			0x20000000 /* kenter_pa */
-#define	PMAP_DEV_SO			0x40000000 /* kenter_pa */
-#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_SO)
+#define	PMAP_DEV_NP			0x40000000 /* kenter_pa */
+#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_NP)
 
 static inline u_int
 aarch64_mmap_flags(paddr_t mdpgno)

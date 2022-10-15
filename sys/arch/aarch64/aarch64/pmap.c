@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2022/08/19 08:17:32 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2022/10/15 11:07:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2022/08/19 08:17:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -882,7 +882,7 @@ pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
 	switch (pte & LX_BLKPAG_ATTR_MASK) {
 	case LX_BLKPAG_ATTR_NORMAL_NC:
 	case LX_BLKPAG_ATTR_DEVICE_MEM:
-	case LX_BLKPAG_ATTR_DEVICE_MEM_SO:
+	case LX_BLKPAG_ATTR_DEVICE_MEM_NP:
 		coherency = true;
 		break;
 	}
@@ -1116,8 +1116,8 @@ _pmap_pte_adjust_cacheflags(pt_entry_t pte, u_int flags)
 	pte &= ~LX_BLKPAG_ATTR_MASK;
 
 	switch (flags & (PMAP_CACHE_MASK|PMAP_DEV_MASK)) {
-	case PMAP_DEV_SO ... PMAP_DEV_SO | PMAP_CACHE_MASK:
-		pte |= LX_BLKPAG_ATTR_DEVICE_MEM_SO;	/* Device-nGnRnE */
+	case PMAP_DEV_NP ... PMAP_DEV_NP | PMAP_CACHE_MASK:
+		pte |= LX_BLKPAG_ATTR_DEVICE_MEM_NP;	/* Device-nGnRnE */
 		break;
 	case PMAP_DEV ... PMAP_DEV | PMAP_CACHE_MASK:
 		pte |= LX_BLKPAG_ATTR_DEVICE_MEM;	/* Device-nGnRE */

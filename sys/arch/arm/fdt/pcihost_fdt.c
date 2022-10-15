@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.31 2022/09/06 11:55:07 skrll Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.31 2022/09/06 11:55:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -135,7 +135,7 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pci_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
 	error = bus_space_map(sc->sc_bst, cs_addr, cs_size,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh);
+	    BUS_SPACE_MAP_NONPOSTED, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
@@ -668,7 +668,7 @@ pcihost_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	if ((pbs->flags & PCI_FLAGS_IO_OKAY) != 0) {
 		/* Force strongly ordered mapping for all I/O space */
-		flag = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+		flag = BUS_SPACE_MAP_NONPOSTED;
 	}
 
 	for (size_t i = 0; i < pbs->nranges; i++) {
