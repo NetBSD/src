@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.34 2022/10/15 16:34:29 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.35 2022/10/15 16:58:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -90,8 +90,8 @@ ENTRY_NP(start)
 	/*
 	 * The BP only executes from here on.
 	 */
-	mv	s0, a0			// copy hartid
-	mv	s1, a1			// copy dtb PA
+	mv	s10, a0			// copy hartid
+	mv	s11, a1			// copy dtb PA
 
 	/* set the stack pointer for boot */
 	PTR_LA	t0, _C_LABEL(bootstk)
@@ -106,10 +106,10 @@ ENTRY_NP(start)
 	VPRINTXNL(a0)
 
 	VPRINTS("hart:    ")
-	VPRINTXNL(s0)
+	VPRINTXNL(s10)
 
 	VPRINTS("dtb:     ")
-	VPRINTXNL(s1)
+	VPRINTXNL(s11)
 
 	/*
 	 * Calculate the difference between the VA and PA for start and
@@ -262,7 +262,7 @@ ENTRY_NP(start)
 	li	s7, PTE_KERN | PTE_R | PTE_W
 
 	// DTB physical address
-	mv	s0, s1
+	mv	s0, s11
 	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
@@ -349,13 +349,13 @@ vstart:
 	PTR_S	s8, 0(t0)	/* kern_vtopdiff = start(virt) - start(phys) */
 
 #if notyet
-	mv	a0, s1			// dtb
+	mv	a0, s11			// dtb
 	call	_C_LABEL(init_mmu)
 #endif
 
 	li	t0, VM_MIN_KERNEL_ADDRESS + VM_KERNEL_SIZE
 	li	t1, NBSEG - 1
-	and	t1, s1, t1
+	and	t1, s11, t1
 	or	t0, t0, t1
 
 	/* Set the global pointer */
