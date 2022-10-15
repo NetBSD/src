@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.16 2022/10/15 06:48:31 simonb Exp $ */
+/* $NetBSD: sysreg.h,v 1.17 2022/10/15 06:52:35 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 {
 	uint32_t __old;
 	__new = __SHIFTIN(__new, FCSR_FRM);
-	__asm volatile("fsrm\t%0, %1" : "=r"(__old) : "r"(__new));
+	__asm __volatile("fsrm\t%0, %1" : "=r"(__old) : "r"(__new));
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
