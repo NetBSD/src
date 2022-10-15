@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.32 2022/10/15 16:20:32 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.33 2022/10/15 16:29:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -120,16 +120,16 @@ ENTRY_NP(start)
 
 	sub	s8, s8, s11
 
-	/*
-	 * Our load address is not fixed, but our VA is.  We need to construct
-	 * an initial PDETAB.
-	 */
-
 	PTR_LA	s5, _C_LABEL(lwp0uspace)
 	PTR_LA	s6, _C_LABEL(bootstk)
 
-	// The space for the inital page table is included in the kernel
-	// .bss size calculation so we know the space exists.
+	/*
+	 * Our load address is not fixed, but our VA is.  We need to construct
+	 * an initial PDETAB.
+	 *
+	 * The space for the inital page table is included in the kernel
+	 * .bss size calculation so we know the space exists.
+	 */
 
 	li	a1, 0
 	PTR_LA	s2, _C_LABEL(l1_pte)
