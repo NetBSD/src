@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.13 2022/09/22 14:37:38 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.14 2022/10/15 15:20:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.13 2022/09/22 14:37:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.14 2022/10/15 15:20:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.13 2022/09/22 14:37:38 riast
 #include <sys/queue.h>
 #include <sys/workqueue.h>
 
+#include <drm/drm_ioctl.h>
 #include <drm/drm_pci.h>
 
 #include "i915_drv.h"
@@ -255,6 +256,8 @@ i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
 	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
 
+	drm_suspend_ioctl(dev);
+
 	ret = i915_drm_prepare(dev);
 	if (ret)
 		return false;
@@ -277,12 +280,13 @@ i915drmkms_resume(device_t self, const pmf_qual_t *qual)
 
 	ret = i915_drm_resume_early(dev);
 	if (ret)
-		return false;
+		goto out;
 	ret = i915_drm_resume(dev);
 	if (ret)
-		return false;
+		goto out;
 
-	return true;
+out:	drm_resume_ioctl(dev);
+	return ret == 0;
 }
 
 static void
