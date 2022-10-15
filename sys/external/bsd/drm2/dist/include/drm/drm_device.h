@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.10 2021/12/22 12:05:24 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.11 2022/10/15 15:19:28 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -12,6 +12,7 @@
 #include <drm/drm_mode_config.h>
 
 #ifdef __NetBSD__
+#include <drm/drm_wait_netbsd.h>
 #include <dev/sysmon/sysmonvar.h>
 #endif
 
@@ -332,6 +333,10 @@ struct drm_device {
 
 #ifdef __NetBSD__
 	struct sysmon_pswitch sc_monitor_hotplug;
+	struct mutex suspend_lock;
+	drm_waitqueue_t suspend_cv;
+	uint64_t active_ioctls;
+	struct lwp *suspender;
 #endif
 
 	/* Everything below here is for legacy driver, never use! */
