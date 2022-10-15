@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.33 2022/10/15 16:29:56 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.34 2022/10/15 16:34:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -94,8 +94,8 @@ ENTRY_NP(start)
 	mv	s1, a1			// copy dtb PA
 
 	/* set the stack pointer for boot */
-	PTR_LA	s8, _C_LABEL(bootstk)
-	mv	sp, s8
+	PTR_LA	t0, _C_LABEL(bootstk)
+	mv	sp, t0
 
 	VPRINTS("\n------------\nNetBSD start\n\n")
 	VPRINTS("sp:      ")
@@ -115,10 +115,10 @@ ENTRY_NP(start)
 	 * Calculate the difference between the VA and PA for start and
 	 * keep in s8.  Store this in kern_vtopdiff once the MMU is on.
 	 */
-	PTR_LA	s11, start
+	PTR_LA	t0, start
 	PTR_L	s8, .Lstart
 
-	sub	s8, s8, s11
+	sub	s8, s8, t0
 
 	PTR_LA	s5, _C_LABEL(lwp0uspace)
 	PTR_LA	s6, _C_LABEL(bootstk)
@@ -330,9 +330,9 @@ vstart:
 	PTR_LA	a0, _C_LABEL(cpu_exception_handler)
 	csrw	stvec, a0
 
-	PTR_LA	s2, bootstk		// top of lwp0uspace
-	PTR_S	s2, L_PCB(tp)		// set uarea of lwp (already zeroed)
-	addi	sp, s2, -TF_LEN		// switch to new stack
+	PTR_LA	t0, bootstk		// top of lwp0uspace
+	PTR_S	t0, L_PCB(tp)		// set uarea of lwp (already zeroed)
+	addi	sp, t0, -TF_LEN		// switch to new stack
 	PTR_S	sp, L_MD_UTF(tp)	// store pointer to empty trapframe
 
 	PTR_LA	t1, _C_LABEL(kernel_pmap_store)
@@ -345,8 +345,8 @@ vstart:
 	 * Store kern_vtopdiff (the difference between the physical
 	 * and virtual address of the "start" symbol).
 	 */
-	PTR_LA	s11, _C_LABEL(kern_vtopdiff)
-	PTR_S	s8, 0(s11)	/* kern_vtopdiff = start(virt) - start(phys) */
+	PTR_LA	t0, _C_LABEL(kern_vtopdiff)
+	PTR_S	s8, 0(t0)	/* kern_vtopdiff = start(virt) - start(phys) */
 
 #if notyet
 	mv	a0, s1			// dtb
