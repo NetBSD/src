@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.72 2022/10/15 15:27:20 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.73 2022/10/15 15:28:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.72 2022/10/15 15:27:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.73 2022/10/15 15:28:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -610,10 +610,13 @@ kobj_load(kobj_t ko)
 	 * symbols will be done by kobj_affix().
 	 */
 	error = kobj_checksyms(ko, false);
-	if (error == 0) {
-		error = kobj_relocate(ko, true);
-	}
- out:
+	if (error)
+		goto out;
+
+	error = kobj_relocate(ko, true);
+	if (error)
+		goto out;
+out:
 	if (hdr != NULL) {
 		kobj_free(ko, hdr, sizeof(*hdr));
 	}
@@ -731,21 +734,22 @@ kobj_affix(kobj_t ko, const char *name)
 
 	/* Cache addresses of undefined symbols. */
 	error = kobj_checksyms(ko, true);
+	if (error)
+		goto out;
 
 	/* Now do global relocations. */
-	if (error == 0)
-		error = kobj_relocate(ko, false);
+	error = kobj_relocate(ko, false);
+	if (error)
+		goto out;
 
 	/*
 	 * Now that we know the name, register the symbol table.
 	 * Do after global relocations because ksyms will pack
 	 * the table.
 	 */
-	if (error == 0) {
-		ksyms_modload(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
-		    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
-		ko->ko_ksyms = true;
-	}
+	ksyms_modload(ko->ko_name, ko->ko_symtab,
+	    ko->ko_symcnt * sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
+	ko->ko_ksyms = true;
 
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
@@ -755,47 +759,55 @@ kobj_affix(kobj_t ko, const char *name)
 	 *
 	 * Most architectures use this opportunity to flush their caches.
 	 */
-	if (error == 0 && ko->ko_text_address != 0) {
+	if (ko->ko_text_address != 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_text_address,
 		    ko->ko_text_size, true);
-		if (error != 0)
+		if (error) {
 			kobj_error(ko, "machine dependent init failed (text)"
 			    " %d", error);
+			goto out;
+		}
 	}
 
-	if (error == 0 && ko->ko_data_address != 0) {
+	if (ko->ko_data_address != 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_data_address,
 		    ko->ko_data_size, true);
-		if (error != 0)
+		if (error) {
 			kobj_error(ko, "machine dependent init failed (data)"
 			    " %d", error);
+			goto out;
+		}
 	}
 
-	if (error == 0 && ko->ko_rodata_address != 0) {
+	if (ko->ko_rodata_address != 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
 		    ko->ko_rodata_size, true);
-		if (error != 0)
+		if (error) {
 			kobj_error(ko, "machine dependent init failed (rodata)"
 			    " %d", error);
+			goto out;
+		}
 	}
 
-	if (error == 0) {
-		ko->ko_loaded = true;
+	ko->ko_loaded = true;
 
-		/* Change the memory protections, when needed. */
-		if (ko->ko_text_address != 0) {
-			uvm_km_protect(module_map, ko->ko_text_address,
-			     ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
-		}
-		if (ko->ko_rodata_address != 0) {
-			uvm_km_protect(module_map, ko->ko_rodata_address,
-			    ko->ko_rodata_size, VM_PROT_READ);
-		}
-	} else {
+	/* Change the memory protections, when needed. */
+	if (ko->ko_text_address != 0) {
+		uvm_km_protect(module_map, ko->ko_text_address,
+		    ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
+	}
+	if (ko->ko_rodata_address != 0) {
+		uvm_km_protect(module_map, ko->ko_rodata_address,
+		    ko->ko_rodata_size, VM_PROT_READ);
+	}
+
+	/* Success! */
+	error = 0;
+
+out:	if (error) {
 		/* If there was an error, destroy the whole object. */
 		kobj_unload(ko);
 	}
-
 	return error;
 }
 
