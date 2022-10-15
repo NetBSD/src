@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.59 2022/10/15 19:53:27 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.60 2022/10/15 19:55:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.59 2022/10/15 19:53:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.60 2022/10/15 19:55:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -760,8 +760,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 {
 	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
 	int rsegs, r, hdrlen;
-#define VIRTQUEUE_ALIGN(n)	(((n) + (VIRTIO_PAGE_SIZE - 1)) &	\
-				    ~(VIRTIO_PAGE_SIZE - 1))
+#define VIRTQUEUE_ALIGN(n)	howmany(n, VIRTIO_PAGE_SIZE)
 
 	/* Make sure callers allocate vqs in order */
 	KASSERT(sc->sc_nvqs == index);
