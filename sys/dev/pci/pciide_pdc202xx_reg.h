@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.15 2009/10/19 18:41:16 bouyer Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.16 2022/10/15 14:03:16 rin Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -35,13 +35,13 @@
 #define PDC2xx_STATE		0x50
 #define PDC2xx_STATE_IDERAID		0x0001
 #define PDC2xx_STATE_NATIVE		0x0080
-/* controller initial state values(PDC20246 only) */
+/* controller initial state values (PDC20246 only) */
 #define PDC246_STATE_SHIPID		0x8000
 #define PDC246_STATE_IOCHRDY		0x0400
 #define PDC246_STATE_LBA(channel)	(0x0100 << (channel))
 #define PDC246_STATE_ISAIRQ		0x0008
 #define PDC246_STATE_EN(channel)	(0x0002 << (channel))
-/* controller initial state values(PDC20262 only) */
+/* controller initial state values (PDC20262 only) */
 #define PDC262_STATE_EN(chan)		(0x1000 << (chan))
 #define PDC262_STATE_80P(chan)		(0x0400 << (chan))
 
@@ -88,7 +88,7 @@
 #define PDC262_SCR_GEN_LAT	0x20
 #define PDC265_SCR_GEN_LAT	0x03
 
-/* ATAPI port ((PDC20262 only) (4 bytes) */
+/* ATAPI port (PDC20262 only, 4 bytes) */
 #define PDC262_ATAPI(chan) (0x20 + (4 * (chan)))
 #define PDC262_ATAPI_WC_MASK	0x00000fff
 #define PDC262_ATAPI_DMA_READ	0x00001000
@@ -98,7 +98,7 @@
 #define PDC262_ATAPI_LBA48_WRITE 0x06000000
 
 /*
- * The timings provided here cmoes from the PDC20262 docs. I hope they are
+ * The timings provided here comes from the PDC20262 docs. I hope they are
  * right for the PDC20246 too ...
  */
 
