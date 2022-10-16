@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.12 2022/10/15 06:41:43 simonb Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.13 2022/10/16 08:43:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.12 2022/10/15 06:41:43 simonb Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.13 2022/10/16 08:43:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -289,6 +289,7 @@ tlb_set_asid(tlb_asid_t asid, struct pmap *pm)
 void    tlb_invalidate_all(void);
 void    tlb_invalidate_globals(void);
 #endif
+
 void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
@@ -318,11 +319,17 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 bool
 tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 {
-	KASSERT(asid != KERNEL_PID);
-	__asm __volatile("sfence.vma %[va], %[asid]"
-	    : /* output operands */
-	    : [va] "r" (va), [asid] "r" (asid)
-	    : "memory");
+	if (asid == KERNEL_PID) {
+		__asm __volatile("sfence.vma %[va]"
+		    : /* output operands */
+		    : [va] "r" (va)
+		    : "memory");
+	} else {
+		__asm __volatile("sfence.vma %[va], %[asid]"
+		    : /* output operands */
+		    : [va] "r" (va), [asid] "r" (asid)
+		    : "memory");
+	}
 	return false;
 }
 
