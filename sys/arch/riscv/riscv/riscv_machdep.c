@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.20 2022/10/15 06:41:43 simonb Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.21 2022/10/16 06:14:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.20 2022/10/15 06:41:43 simonb Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.21 2022/10/16 06:14:53 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -431,14 +431,15 @@ parse_bi_bootargs(char *args)
 
 
 void
-init_riscv(register_t hartid, vaddr_t vdtb)
+init_riscv(register_t hartid, paddr_t dtb)
 {
 
 	/* set temporally to work printf()/panic() even before consinit() */
 	cn_tab = &earlycons;
 
 	/* Load FDT */
-	void *fdt_data = (void *)vdtb;
+	const vaddr_t dtbva = VM_KERNEL_DTB_BASE + (dtb & (NBSEG - 1));
+	void *fdt_data = (void *)dtbva;
 	int error = fdt_check_header(fdt_data);
 	if (error != 0)
 	    panic("fdt_check_header failed: %s", fdt_strerror(error));
