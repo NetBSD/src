@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.27 2021/10/31 10:47:18 nia Exp $	*/
+/*	$NetBSD: timed.c,v 1.28 2022/10/16 16:37:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.27 2021/10/31 10:47:18 nia Exp $");
+__RCSID("$NetBSD: timed.c,v 1.28 2022/10/16 16:37:16 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 	iflag = OFF;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "Mtdn:i:F:G:P:")) != -1) {
+	while ((c = getopt(argc, argv, "Mtdn:i:F:G:")) != -1) {
 		switch (c) {
 		case 'M':
 			Mflag = 1;
