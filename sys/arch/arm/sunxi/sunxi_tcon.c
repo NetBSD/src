@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.13.2.2 2022/10/16 17:21:46 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.13.2.3 2022/10/16 17:23:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13.2.2 2022/10/16 17:21:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13.2.3 2022/10/16 17:23:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -822,9 +822,9 @@ sunxi_tcon1_set_videomode(device_t dev, const struct drm_display_mode *mode)
 
 	sunxi_debe_set_videomode(fdt_endpoint_device(sc->sc_in_rep), mode);
 	if (mode) {
-		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
-		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
-		const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
+		const u_int interlace_p = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
+		const u_int phsync_p = !!(mode->flags & DRM_MODE_FLAG_PHSYNC);
+		const u_int pvsync_p = !!(mode->flags & DRM_MODE_FLAG_PVSYNC);
 		const u_int hspw = mode->hsync_end - mode->hsync_start;
 		const u_int hbp = mode->htotal - mode->hsync_start;
 		const u_int vspw = mode->vsync_end - mode->vsync_start;
