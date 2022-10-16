@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2022/10/16 23:38:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	xditview
 SRCS=	xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 	XFontName.c DviChar.c
 
+CPPFLAGS+=	-D_CONST_X_STRING
 CPPFLAGS+=	-DHAS_MKSTEMP
 CPPFLAGS+=	-DUSE_XFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
