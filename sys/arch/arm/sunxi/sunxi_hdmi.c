@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.14.16.2 2022/10/16 14:56:04 bouyer Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.14.16.3 2022/10/16 17:11:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.2 2022/10/16 14:56:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.3 2022/10/16 17:11:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1089,6 +1089,7 @@ sunxi_hdmi_mode_set(struct drm_encoder *enc,
 	device_printf(sc->sc_dev, "v: %u %u %u %u\n",
 	    mode->vdisplay, vbp, vfp, vspw);
 #endif
+	sunxi_tcon1_set_videomode(fdt_endpoint_device(sc->sc_in_rep), mode);
 
 	HDMI_WRITE(sc, SUNXI_HDMI_INT_STATUS_REG, 0xffffffff);
 
