@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.91 2022/09/17 18:41:26 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.92 2022/10/16 15:16:12 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.91 2022/09/17 18:41:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.92 2022/10/16 15:16:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,11 +357,11 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag,
 	}
 
 	/* the accelerated tga_putchar() needs LSbit left */
-	if (wsfont_lock(cookie, &dc->dc_rinfo.ri_font)) {
+	if (wsfont_lock(cookie, &rip->ri_font)) {
 		printf("tga: couldn't lock font\n");
 		return;
 	}
-	dc->dc_rinfo.ri_wsfcookie = cookie;
+	rip->ri_wsfcookie = cookie;
 
 	rasops_init(rip, 34, 80);
 
@@ -369,16 +369,16 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag,
 	/* XXX shouldn't have to do this; rasops should leave non-NULL
 	 * XXX entries alone.
 	 */
-	dc->dc_rinfo.ri_ops.copyrows = tga_copyrows;
-	dc->dc_rinfo.ri_ops.eraserows = tga_eraserows;
-	dc->dc_rinfo.ri_ops.erasecols = tga_erasecols;
-	dc->dc_rinfo.ri_ops.copycols = tga_copycols;
-	dc->dc_rinfo.ri_ops.putchar = tga_putchar;
+	rip->ri_ops.copyrows = tga_copyrows;
+	rip->ri_ops.eraserows = tga_eraserows;
+	rip->ri_ops.erasecols = tga_erasecols;
+	rip->ri_ops.copycols = tga_copycols;
+	rip->ri_ops.putchar = tga_putchar;
 
-	tga_stdscreen.nrows = dc->dc_rinfo.ri_rows;
-	tga_stdscreen.ncols = dc->dc_rinfo.ri_cols;
-	tga_stdscreen.textops = &dc->dc_rinfo.ri_ops;
-	tga_stdscreen.capabilities = dc->dc_rinfo.ri_caps;
+	tga_stdscreen.nrows = rip->ri_rows;
+	tga_stdscreen.ncols = rip->ri_cols;
+	tga_stdscreen.textops = &rip->ri_ops;
+	tga_stdscreen.capabilities = rip->ri_caps;
 
 
 	dc->dc_intrenabled = 0;
