@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 2021/10/09 20:00:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 2022/10/16 15:20:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2021/10/09 20:00:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2022/10/16 15:20:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -370,7 +370,7 @@ static const struct hp300_model hp300_models[] = {
 static void
 identifycpu(void)
 {
-	const char *t, *mc, *s, *mmu;
+	const char *t, *cpu, *s, *mmu;
 	int i; 
 	char fpu[64], cache[64];
 
@@ -397,13 +397,13 @@ identifycpu(void)
 	 */
 	switch (cputype) {
 	case CPU_68040:
-		mc = "40";
+		cpu = "MC68040";
 		break;
 	case CPU_68030:
-		mc = "30";
+		cpu = "MC68030";
 		break;
 	case CPU_68020:
-		mc = "20";
+		cpu = "MC68020";
 		break;
 	default:
 		printf("\nunknown cputype %d\n", cputype);
@@ -426,7 +426,7 @@ identifycpu(void)
 		mmu = ", HP MMU";
 		break;
 	default:
-		printf("MC680%s\nunknown MMU type %d\n", mc, mmutype);
+		printf("%s\nunknown MMU type %d\n", cpu, mmutype);
 		panic("startup");
 	}
 
@@ -478,7 +478,7 @@ identifycpu(void)
 		}
 	}
 
-	cpu_setmodel("HP 9000/%s (%sMHz MC680%s CPU%s%s%s)", t, s, mc,
+	cpu_setmodel("HP 9000/%s (%sMHz %s CPU%s%s%s)", t, s, cpu,
 	    mmu, fpu, cache);
 	printf("%s\n", cpu_getmodel());
 #ifdef DIAGNOSTIC
