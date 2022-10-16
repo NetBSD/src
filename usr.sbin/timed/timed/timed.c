@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.28 2022/10/16 16:37:16 rillig Exp $	*/
+/*	$NetBSD: timed.c,v 1.29 2022/10/16 16:44:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.28 2022/10/16 16:37:16 rillig Exp $");
+__RCSID("$NetBSD: timed.c,v 1.29 2022/10/16 16:44:15 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ u_short sequence;			/* sequence number */
 long delay1;
 long delay2;
 
-int nslavenets;				/* nets were I could be a slave */
-int nmasternets;			/* nets were I could be a master */
+int nslavenets;				/* nets where I could be a slave */
+int nmasternets;			/* nets where I could be a master */
 int nignorednets;			/* ignored nets */
 int nnets;				/* nets I am connected to */
 
@@ -229,7 +229,7 @@ main(int argc, char *argv[])
 	if (sock < 0)
 		err(EXIT_FAILURE, "socket");
 
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) 
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0)
 		err(EXIT_FAILURE, "setsockopt");
 
 	if (bind(sock, (struct sockaddr*)(void *)&server, sizeof(server))) {
@@ -470,7 +470,7 @@ lookformaster(struct netinfo *ntp)
 		 * Various conditions can cause conflict: races between
 		 * two just started timedaemons when no master is
 		 * present, or timedaemons started during an election.
-		 * A conservative approach is taken.  Give up and became a
+		 * A conservative approach is taken.  Give up and become a
 		 * slave, postponing election of a master until first
 		 * timer expires.
 		 */
@@ -795,5 +795,3 @@ good_host_name(char *name)
 
 	return 0;			/* did not find him */
 }
-
-
