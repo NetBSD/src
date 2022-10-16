@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.11 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: globals.h,v 1.12 2022/10/16 16:58:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -148,8 +148,8 @@ extern u_short sequence;		/* TSP message sequence number */
 extern struct netinfo *fromnet, *slavenet;
 extern FILE *fd;
 extern long delay1, delay2;
-extern int nslavenets;			/* nets were I could be a slave */
-extern int nmasternets;			/* nets were I could be a master */
+extern int nslavenets;			/* nets where I could be a slave */
+extern int nmasternets;			/* nets where I could be a master */
 extern int nignorednets;		/* ignored nets */
 extern int nnets;			/* nets I am connected to */
 
