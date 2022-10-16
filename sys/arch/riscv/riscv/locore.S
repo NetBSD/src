@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.38 2022/10/16 06:03:14 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.39 2022/10/16 06:14:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -227,6 +227,7 @@ ENTRY_NP(start)
 	VPRINTS("\n\r")
 #endif // _LP64
 
+	// kernel VA
 	li	t1,  ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
 	add	s9, s2, t1
 
@@ -257,9 +258,16 @@ ENTRY_NP(start)
 	addi	s5, s5, -1		// count down segment
 	bnez	s5, 1b			// loop if more
 
+	// DTB VA
+	li	t1,  ((VM_KERNEL_DTB_BASE >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
+	add	s9, s2, t1
+
 	li	s7, PTE_KERN | PTE_R | PTE_W
 
-	// DTB physical address
+	//
+	// Fill in the PDE for the DTB. Only do one - if any more are required
+	// they will be mapped in later.
+	//
 	mv	s0, s11
 	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
@@ -271,10 +279,14 @@ ENTRY_NP(start)
 	VPRINTXNL(s0)
 
 	REG_S	s0, 0(s9)
-	add	s9, s9, SZREG		// advance to next PDE slot
 
 #ifdef CONSADDR
-	ld	s0, .Lconsaddr
+	li	t1,  ((VM_KERNEL_IO_BASE >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
+	add	s9, s2, t1
+
+	// Fill in the PDE for CONSADDR.
+	ld	t0, .Lconsaddr
+	mv	s0, t0
 	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
@@ -285,7 +297,6 @@ ENTRY_NP(start)
 	VPRINTXNL(s0)
 
 	REG_S	s0, 0(s9)
-	add	s9, s9, SZREG		// advance to next PDE slot
 #endif
 
 	li	a0, 'P'
@@ -364,8 +375,7 @@ vstart:
 
 	// Now we should ready to start initializing the kernel.
 	mv	a0, s10			// hartid
-	mv	a1, t0			// vdtb
-	//mv	a1, s11			// dtb (physical)
+	mv	a1, s11			// dtb (physical)
 
 	li	s0, 0			// zero frame pointer
 	call	_C_LABEL(init_riscv)	// do MD startup

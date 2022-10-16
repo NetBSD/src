@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 2022/09/28 06:05:28 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 2022/10/16 06:14:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _RISCV_MACHDEP_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.2 2022/09/28 06:05:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.3 2022/10/16 06:14:53 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/lwp.h>
@@ -63,7 +63,7 @@ void	uartputc(int);
 int	uartgetc(void);
 
 paddr_t	init_mmu(paddr_t);
-void	init_riscv(register_t, vaddr_t);
+void	init_riscv(register_t, paddr_t);
 
 
 #endif	/* _RISCV_MACHDEP_H_ */
