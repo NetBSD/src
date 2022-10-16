@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.13 2021/08/20 20:25:27 andvar Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.13.2.1 2022/10/16 17:08:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13 2021/08/20 20:25:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13.2.1 2022/10/16 17:08:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,10 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13 2021/08/20 20:25:27 andvar Exp $
 #include <dev/fdt/fdt_port.h>
 #include <dev/fdt/panel_fdt.h>
 
-#include <dev/videomode/videomode.h>
-
 #include <arm/sunxi/sunxi_tconreg.h>
 #include <arm/sunxi/sunxi_display.h>
+
+#include <drm/drm_bridge.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_modes.h>
 
 #define DIVIDE(x,y)     (((x) + ((y) / 2)) / (y))
 
@@ -75,6 +78,8 @@ struct sunxi_tcon_softc {
 	struct fdt_endpoint *sc_in_ep;
 	struct fdt_endpoint *sc_in_rep;
 	struct fdt_endpoint *sc_out_ep;
+	struct drm_encoder sc_encoder;
+	struct drm_connector sc_connector;
 };
 
 static bus_space_handle_t tcon_mux_bsh;
@@ -88,6 +93,70 @@ static int  sunxi_tcon0_enable(struct sunxi_tcon_softc *, bool);
 static int  sunxi_tcon1_enable(struct sunxi_tcon_softc *, bool);
 void sunxi_tcon_dump_regs(int);
 
+#define encoder_to_tcon(x)		container_of(x, struct sunxi_tcon_softc, sc_encoder)
+#define connector_to_tcon(x)		container_of(x, struct sunxi_tcon_softc, sc_connector)
+
+static void
+sunxi_tcon_destroy(struct drm_encoder *encoder)
+{
+	drm_encoder_cleanup(encoder);
+}
+
+static const struct drm_encoder_funcs sunxi_tcon_enc_funcs = {
+	.destroy = sunxi_tcon_destroy,
+};
+
+static int sunxi_tcon_atomic_check(struct drm_encoder *,
+    struct drm_crtc_state *, struct drm_connector_state *);
+static void sunxi_tcon_disable(struct drm_encoder *);
+static void sunxi_tcon_enable(struct drm_encoder *);
+static void sunxi_tcon_mode_set(struct drm_encoder *,
+    struct drm_display_mode *, struct drm_display_mode *);
+static void sunxi_tcon_mode_valid(struct drm_encoder *,
+    struct drm_display_mode *);
+
+static void
+sunxi_tcon_encoder_disable(struct drm_encoder *encoder)
+{
+	int ret;
+	struct sunxi_tcon_softc *sc = encoder_to_tcon(encoder);
+	ret = sunxi_tcon0_enable(sc, false);
+	if (ret)
+		device_printf(sc->sc_dev, "failed to disable tcon0: %d\n", ret);
+}
+static void
+sunci_tcon_encoder_enable(struct drm_encoder *encoder)
+{
+	int ret;
+	struct sunxi_tcon_softc *sc = encoder_to_tcon(encoder);
+	ret = sunxi_tcon0_enable(sc, true);
+	if (ret)
+		device_printf(sc->sc_dev, "failed to enable tcon0: %d\n", ret);
+}
+
+static const struct drm_encoder_helper_funcs sunxi_tcon_enc_helper_funcs = {
+	.disable	= sunxi_tcon_disable,
+	.enable	 	= sunxi_tcon_enable,
+};
+
+static enum drm_connector_status sunxi_tcon_connector_detect(
+    struct drm_connector *, bool);
+
+static const struct drm_connector_funcs sunxi_tcon_connector_funcs = {
+	.fill_modes		= drm_helper_probe_single_connector_modes,
+	.destroy		= drm_connector_cleanup,
+	.reset			= drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
+};
+
+static int sunxi_tcon_get_modes(struct drm_connector *);
+
+static const struct drm_connector_helper_funcs sunxi_tcon_connector_helper_funcs
+ = {
+	 .get_modes      = sunxi_tcon_get_modes,
+};
+
 #define TCON_READ(sc, reg) \
     bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define TCON_WRITE(sc, reg, val) \
@@ -96,6 +165,8 @@ void sunxi_tcon_dump_regs(int);
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-tcon", .value = TCON_A10},
 	{ .compat = "allwinner,sun7i-a20-tcon", .value = TCON_A10},
+	{ .compat = "allwinner,sun7i-a20-tcon0", .value = TCON_A10 },
+	{ .compat = "allwinner,sun7i-a20-tcon1", .value = TCON_A10 },
 	DEVICE_COMPAT_EOL
 };
 
@@ -320,6 +391,29 @@ sunxi_tcon_ep_connect(device_t self, struct fdt_endpoint *ep, bool connect)
 	}
 }
 
+static int 
+sunxi_tcon0_drm_register(struct sunxi_tcon_softc *sc)
+{
+	struct drm_crtc *crtc = sunxi_tcon_get_crtc(sc->sc_dev);
+	KASSERT(crtc != NULL);
+	int error;
+
+	sc->sc_encoder.possible_crtcs = 1 << drm_crtc_index(crtc);
+	drm_encoder_helper_add(&sc->sc_encoder, sunxi_tcon_enc_helper_funcs);
+	error = drm_encoder_init(crtc->dev, &sc->sc_encoder,
+	    sunxi_tcon_enc_funcs, DRM_MODE_ENCODER_LVDS, NULL);
+	if (error)
+		return -error;
+	drm_connector_helper_add(&sc->sc_connector,
+	    &sunxi_tcon_connector_helper_funcs);
+	error = drm_connector_init(crtc->dev, &sc->sc_connector,
+	    DRM_MODE_CONNECTOR_LVDS);
+	if (error)
+		return -error;
+	drm_connector_attach_encoder(&sc->sc_connector, &sc->sc_encoder.base);
+	return sunxi_tcon0_set_video(sc);
+}
+
 static int
 sunxi_tcon_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
@@ -376,7 +470,7 @@ sunxi_tcon_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 			    device_xname(fdt_endpoint_device(rep)));
 			sc->sc_out_ep = out_ep;
 			if (outi == 0)
-				return sunxi_tcon0_set_video(sc);
+				return sunxi_tcon0_drm_register(sc);
 			/* XXX should check VGA here */
 			sc->sc_output_type = OUTPUT_HDMI;
 			return 0;
@@ -876,6 +970,47 @@ sunxi_tcon_is_console(device_t dev, const char *pipeline)
 bad:
 	aprint_error("warning: can't parse pipeline %s\n", pipeline);
 	return is_console;
+}
+
+struct drm_crtc *
+sunxi_tcon_get_crtc(device_t dev)
+{
+	struct sunxi_tcon_softc *sc = device_private(dev);
+	return sunxi_debe_get_crtc(fdt_endpoint_device(sc->sc_in_rep));
+}
+
+static int
+sunxi_tcon_get_modes(struct drm_connector * conn)
+{
+	struct drm_display_mode *mode;
+	const struct fdt_panel * panel;
+
+	panel = fdt_endpoint_get_data(fdt_endpoint_remote(sc->sc_out_ep));
+	KASSERT(panel != NULL);
+	KASSERT(panel->panel_type == PANEL_DUAL_LVDS ||
+	    panel->panel_type == PANEL_LVDS);
+	sc->sc_output_type = OUTPUT_LVDS;
+
+	mode = drm_mode_create(connector->dev);
+	if (mode == NULL)
+		return ENOMEM;
+
+	mode->hdisplay = panel->panel_timing.hactive;
+	mode->hsync_start = mode->hdisplay + panel->panel_timing.hfront_porch;
+	mode->hsync_end = mode->hsync_start + panel->panel_timing.hsync_len;
+	mode->htotal = mode->hsync_end + panel->panel_timing.back_porch;
+	mode->vdisplay = panel->panel_timing.vactive;
+	mode->vsync_start = mode->vdisplay + panel->panel_timing.vfront_porch;
+	mode->vsync_end = mode->vsync_start + panel->panel_timing.vsync_len;
+	mode->vtotal = mode->vsync_end + panel->panel_timing.vback_porch;
+
+	mode->clock = panel->panel_timing.clock_freq / 1000;
+
+	/* XXX */
+	mode->flags |= DRM_MODE_FLAG_PHSYNC;
+	mode->flags |= DRM_MODE_FLAG_PVSYNC;
+	drm_mode_set_name(mode);
+	return 0;
 }
 
 #if defined(DDB) || defined(SUNXI_TCON_DEBUG)
