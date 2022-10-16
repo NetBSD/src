@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_display.h,v 1.3 2018/06/01 17:18:44 bouyer Exp $	*/
+/*	$NetBSD: sunxi_display.h,v 1.3.30.1 2022/10/16 17:21:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 struct videomode;
 int sunxi_debe_pipeline(int, bool);
-void sunxi_tcon1_set_videomode(device_t, const struct videomode *);
+void sunxi_tcon1_set_videomode(device_t, const struct drm_display_mode *);
 void sunxi_debe_set_videomode(device_t, const struct videomode *);
 bool sunxi_tcon_is_console(device_t, const char *);
 
