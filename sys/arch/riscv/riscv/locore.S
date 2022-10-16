@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.37 2022/10/16 05:56:50 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.38 2022/10/16 06:03:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ ENTRY_NP(start)
 	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
 	or	s0, s0, s7
-.Lfill:
+1:
 	VPRINTS("kern:    ")
 	VPRINTX(s9)
 	VPRINTS(":  ")
@@ -255,7 +255,7 @@ ENTRY_NP(start)
 	add	s0, s0, s6		// advance PA in PDE to next segment
 	add	s9, s9, SZREG		// advance to next PDE slot
 	addi	s5, s5, -1		// count down segment
-	bnez	s5, .Lfill		// loop if more
+	bnez	s5, 1b			// loop if more
 
 	li	s7, PTE_KERN | PTE_R | PTE_W
 
