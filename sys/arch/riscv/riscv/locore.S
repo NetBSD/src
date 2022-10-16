@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.36 2022/10/16 05:48:15 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.37 2022/10/16 05:56:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -227,10 +227,8 @@ ENTRY_NP(start)
 	VPRINTS("\n\r")
 #endif // _LP64
 
-#if ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
 	li	t1,  ((VM_MIN_KERNEL_ADDRESS >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
-	add	s2, s2, t1
-#endif
+	add	s9, s2, t1
 
 #if PGSHIFT < PTE_PPN_SHIFT
 #error Code assumes PGSHIFT is greater than PTE_PPN_SHIFT
@@ -249,13 +247,13 @@ ENTRY_NP(start)
 	or	s0, s0, s7
 .Lfill:
 	VPRINTS("kern:    ")
-	VPRINTX(s2)
+	VPRINTX(s9)
 	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
-	REG_S	s0, 0(s2)		// store PDE
+	REG_S	s0, 0(s9)		// store PDE
 	add	s0, s0, s6		// advance PA in PDE to next segment
-	add	s2, s2, SZREG		// advance to next PDE slot
+	add	s9, s9, SZREG		// advance to next PDE slot
 	addi	s5, s5, -1		// count down segment
 	bnez	s5, .Lfill		// loop if more
 
@@ -268,12 +266,12 @@ ENTRY_NP(start)
 	or	s0, s0, s7
 
 	VPRINTS("dtb:     ")
-	VPRINTX(s2)
+	VPRINTX(s9)
 	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
-	REG_S	s0, 0(s2)
-	add	s2, s2, SZREG		// advance to next PDE slot
+	REG_S	s0, 0(s9)
+	add	s9, s9, SZREG		// advance to next PDE slot
 
 #ifdef CONSADDR
 	ld	s0, .Lconsaddr
@@ -286,8 +284,8 @@ ENTRY_NP(start)
 	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
-	REG_S	s0, 0(s2)
-	add	s2, s2, SZREG		// advance to next PDE slot
+	REG_S	s0, 0(s9)
+	add	s9, s9, SZREG		// advance to next PDE slot
 #endif
 
 	li	a0, 'P'
