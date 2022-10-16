@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.35 2022/10/15 16:58:16 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.36 2022/10/16 05:48:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -365,9 +365,9 @@ vstart:
 	.option pop
 
 	// Now we should ready to start initializing the kernel.
-	mv	a0, s0			// hartid
+	mv	a0, s10			// hartid
 	mv	a1, t0			// vdtb
-	//mv	a1, s1			// dtb (physical)
+	//mv	a1, s11			// dtb (physical)
 
 	li	s0, 0			// zero frame pointer
 	call	_C_LABEL(init_riscv)	// do MD startup
