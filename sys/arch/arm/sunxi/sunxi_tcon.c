@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_tcon.c,v 1.13.2.1 2022/10/16 17:08:46 bouyer Exp $ */
+/* $NetBSD: sunxi_tcon.c,v 1.13.2.2 2022/10/16 17:21:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13.2.1 2022/10/16 17:08:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_tcon.c,v 1.13.2.2 2022/10/16 17:21:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -810,7 +810,7 @@ sunxi_tcon1_enable(struct sunxi_tcon_softc *sc, bool enable)
 }
 
 void
-sunxi_tcon1_set_videomode(device_t dev, const struct videomode *mode)
+sunxi_tcon1_set_videomode(device_t dev, const struct drm_display_mode *mode)
 {
 	struct sunxi_tcon_softc *sc = device_private(dev);
 	uint32_t val;
