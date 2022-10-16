@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.14.16.2 2022/10/16 14:56:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.2 2022/10/16 14:56:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer 
 #include <arm/sunxi/sunxi_hdmireg.h>
 #include <arm/sunxi/sunxi_display.h>
 
+#include <arm/sunxi/sunxi_drm.h>
+
 #include <drm/drm_bridge.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_drv.h>
@@ -60,6 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.14.16.1 2022/10/02 10:37:12 bouyer 
 enum sunxi_hdmi_type {
 	HDMI_A10 = 1,
 	HDMI_A31,
+};
+
+struct sunxi_hdmi_softc;
+
+struct sunxi_hdmi_encoder {
+	struct drm_encoder      base;
+	struct sunxi_hdmi_softc *sc;
+	struct drm_display_mode curmode;
 };
 
 struct sunxi_hdmi_softc {
@@ -75,22 +85,78 @@ struct sunxi_hdmi_softc {
 	void *sc_ih;
 	lwp_t *sc_thread;
 
-	struct i2c_controller sc_ic;
-	kmutex_t sc_exec_lock;
+	struct sunxi_hdmi_encoder sc_encoder;
+	struct drm_connector sc_connector;
+	struct i2c_adapter sc_i2c_adapt;
 
-	bool sc_display_connected;
+	enum sc_display_mode {
+		DISPLAY_MODE_NONE = 0,
+		DISPLAY_MODE_DVI,
+		DISPLAY_MODE_HDMI
+	} sc_display_mode;
+
+	kmutex_t sc_exec_lock;
 
 	kmutex_t sc_pwr_lock;
 	int	sc_pwr_refcount; /* reference who needs HDMI */
 
 	uint32_t sc_ver;
-	unsigned int sc_i2c_blklen;
 
 	struct fdt_device_ports sc_ports;
 	struct fdt_endpoint *sc_in_ep;
 	struct fdt_endpoint *sc_in_rep;
 	struct fdt_endpoint *sc_out_ep;
 	struct drm_display_mode sc_curmode;
+};
+
+#define to_sunxi_hdmi_encoder(x)	container_of(x, struct sunxi_hdmi_encoder, base)
+
+#define connector_to_hdmi(x)		container_of(x, struct sunxi_hdmi_softc, sc_connector)
+
+static void
+sunxi_hdmi_destroy(struct drm_encoder *encoder)
+{
+	drm_encoder_cleanup(encoder);
+}
+
+static const struct drm_encoder_funcs sunxi_hdmi_enc_funcs = {
+	.destroy = sunxi_hdmi_destroy,
+};
+
+static int sunxi_hdmi_atomic_check(struct drm_encoder *,
+    struct drm_crtc_state *, struct drm_connector_state *);
+static void sunxi_hdmi_disable(struct drm_encoder *);
+static void sunxi_hdmi_enable(struct drm_encoder *);
+static void sunxi_hdmi_mode_set(struct drm_encoder *,
+    struct drm_display_mode *, struct drm_display_mode *);
+static void sunxi_hdmi_mode_valid(struct drm_encoder *,
+    struct drm_display_mode *);
+
+static const struct drm_encoder_helper_funcs sunxi_hdmi_enc_helper_funcs = {
+	.atomic_check	= sunxi_hdmi_atomic_check,
+	.disable	= sunxi_hdmi_disable,
+	.enable	 	= sunxi_hdmi_enable,
+	.mode_set	= sunxi_hdmi_mode_set,
+	.mode_valid	= sunxi_hdmi_mode_valid,
+};
+
+static enum drm_connector_status sunxi_hdmi_connector_detect(
+    struct drm_connector *, bool);
+
+static const struct drm_connector_funcs sunxi_hdmi_connector_funcs = {
+	.detect			= sunxi_hdmi_connector_detect,
+	.fill_modes		= drm_helper_probe_single_connector_modes,
+	.destroy		= drm_connector_cleanup,
+	.reset			= drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
+};
+
+static int sunxi_hdmi_get_modes(struct drm_connector *);
+
+static const struct drm_connector_helper_funcs sunxi_hdmi_connector_helper_funcs
+ = {
+	 .get_modes      = sunxi_hdmi_get_modes,
 };
 
 #define HDMI_READ(sc, reg)			\
@@ -110,11 +176,11 @@ static const struct device_compatible_entry compat_data[] = {
 static int	sunxi_hdmi_match(device_t, cfdata_t, void *);
 static void	sunxi_hdmi_attach(device_t, device_t, void *);
 static void	sunxi_hdmi_i2c_init(struct sunxi_hdmi_softc *);
-static int	sunxi_hdmi_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
-				   size_t, void *, size_t, int);
-static int	sunxi_hdmi_i2c_xfer(void *, i2c_addr_t, uint8_t, uint8_t,
-				   size_t, int, int);
-static int	sunxi_hdmi_i2c_reset(struct sunxi_hdmi_softc *, int);
+static int	sunxi_hdmi_i2c_drm_xfer(struct i2c_adapter *,
+				   struct i2c_msg *, int);
+static int	sunxi_hdmi_i2c_xfer(struct sunxi_hdmi_softc *,
+					struct i2c_msg *);
+static int	sunxi_hdmi_i2c_reset(struct sunxi_hdmi_softc *);
 
 static int	sunxi_hdmi_ep_activate(device_t, struct fdt_endpoint *, bool);
 static int	sunxi_hdmi_ep_enable(device_t, struct fdt_endpoint *, bool);
@@ -127,10 +193,9 @@ static u_int	sunxi_hdmi_get_display_mode(struct sunxi_hdmi_softc *,
 					   const struct edid_info *);
 #endif
 static void	sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *, bool);
+static void	sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *, int);
 #if 0
 static void	sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *,
-					const struct videomode *, u_int);
-static void	sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *,
 					const struct videomode *, u_int);
 static void	sunxi_hdmi_hpd(struct sunxi_hdmi_softc *);
 static void	sunxi_hdmi_thread(void *);
@@ -168,6 +233,7 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_encoder.sc = sc;
 
 	sc->sc_type =
 	    of_compatible_lookup(faa->faa_phandle, compat_data)->value;
@@ -209,7 +275,6 @@ sunxi_hdmi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": HDMI %d.%d\n", vmaj, vmin);
 
 	sc->sc_ver = ver;
-	sc->sc_i2c_blklen = 16;
 
 	sc->sc_ports.dp_ep_activate = sunxi_hdmi_ep_activate;
 	sc->sc_ports.dp_ep_enable = sunxi_hdmi_ep_enable;
@@ -257,71 +322,83 @@ sunxi_hdmi_doreset(void)
 	}
 }
 
+static int
+sun4i_hdmi_atomic_check(struct drm_encoder *encoder,
+    struct drm_crtc_state * crtc_state,
+    struct drm_connector_state *conn_state)
+{
+	if (crtc_state->mode.flags & DRM_MODE_FLAG_DBLCLK)
+		return -EINVAL;
+	return 0;
+}
+
+static void
+sunxi_hdmi_disable(struct drm_encoder *enc)
+{
+	struct sunxi_hdmi_encoder *hdmi_encoder = to_sunxi_hdmi_encoder(enc);
+	struct sunxi_hdmi_softc *sc = hdmi_encoder->sc;
+	sunxi_hdmi_video_enable(sc, false);
+}
+
+static void
+sunxi_hdmi_enable(struct drm_encoder *enc)
+{
+	struct sunxi_hdmi_encoder *hdmi_encoder = to_sunxi_hdmi_encoder(enc);
+	struct sunxi_hdmi_softc *sc = hdmi_encoder->sc;
+	struct drm_display_mode *mode = &enc->crtc->state->adjusted_mode;
+	sunxi_hdmi_video_enable(sc, true);
+}
+
+static uint32_t sunxi_hdmi_i2c_func(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+}
+
+
+static const struct i2c_algorithm sunxi_hdmi_i2c_algorithm = {
+        .master_xfer    = sunxi_hdmi_i2c_drm_xfer,
+	.functionality  = sunxi_hdmi_i2c_func, 
+};      
+
 static void
 sunxi_hdmi_i2c_init(struct sunxi_hdmi_softc *sc)
 {
-	struct i2c_controller *ic = &sc->sc_ic;
-
 	mutex_init(&sc->sc_exec_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	iic_tag_init(ic);
-	ic->ic_cookie = sc;
-	ic->ic_exec = sunxi_hdmi_i2c_exec;
+	sc->sc_i2c_adapt.owner = THIS_MODULE;
+	sc->sc_i2c_adapt.class = I2C_CLASS_DDC;
+	sc->sc_i2c_adapt.algo = &sunxi_hdmi_i2c_algorithm;
+	strlcpy(sc->sc_i2c_adapt.name, "sunxi_hdmi_i2c",
+	    sizeof(sc->sc_i2c_adapt.name));
 }
 
 static int
-sunxi_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
-    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
-{
-	struct sunxi_hdmi_softc *sc = priv;
-	uint8_t *pbuf;
-	uint8_t block;
-	int resid;
-	off_t off;
-	int err;
+sunxi_hdmi_i2c_drm_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num){
+	struct sunxi_hdmi_softc *sc = i2c_get_adapdata(adap);
+	int i, err;
 
 	mutex_enter(&sc->sc_exec_lock);
 
-	KASSERT(op == I2C_OP_READ_WITH_STOP);
-	KASSERT(addr == DDC_ADDR);
-	KASSERT(cmdlen > 0);
-	KASSERT(buf != NULL);
+	for (i = 0; i < num; i++) {
+		if (msg[i].len == 0 ||
+		    msg[i].len > SUNXI_HDMI_DDC_BYTE_COUNTER) 
+			return -EINVAL;
+	}
 
-	err = sunxi_hdmi_i2c_reset(sc, flags);
+	err = sunxi_hdmi_i2c_reset(sc);
 	if (err)
 		goto done;
 
-	block = *(const uint8_t *)cmdbuf;
-	off = (block & 1) ? 128 : 0;
-
-	pbuf = buf;
-	resid = len;
-	while (resid > 0) {
-		size_t blklen = uimin(resid, sc->sc_i2c_blklen);
-
-		err = sunxi_hdmi_i2c_xfer(sc, addr, block >> 1, off, blklen,
-		      SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_EOREAD, flags);
+	for (i = 0; i < num; i++) {
+		err = sunxi_hdmi_i2c_xfer(sc, &msg[i]);
 		if (err)
-			goto done;
-
-		if (HDMI_1_3_P(sc)) {
-			bus_space_read_multi_1(sc->sc_bst, sc->sc_bsh,
-			    SUNXI_HDMI_DDC_FIFO_ACCESS_REG, pbuf, blklen);
-		} else {
-			bus_space_read_multi_1(sc->sc_bst, sc->sc_bsh,
-			    SUNXI_A31_HDMI_DDC_FIFO_ACCESS_REG, pbuf, blklen);
-		}
-
+			break;
 #ifdef SUNXI_HDMI_DEBUG
-		printf("off=%d:", (int)off);
-		for (int i = 0; i < blklen; i++)
-			printf(" %02x", pbuf[i]);
+		printf("msg %d:", i);
+		for (int j = 0; j < msg[i].len; j++)
+			printf(" %02x", msg[i].buf[j]);
 		printf("\n");
 #endif
-
-		pbuf += blklen;
-		off += blklen;
-		resid -= blklen;
 	}
 
 done:
@@ -329,117 +406,212 @@ done:
 	return err;
 }
 
+#define SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK ( \
+		SUNXI_HDMI_DDC_INT_STATUS_ILLEGAL_FIFO_OP | \
+		SUNXI_HDMI_DDC_INT_STATUS_RX_UNDERFLOW | \
+		SUNXI_HDMI_DDC_INT_STATUS_TX_OVERFLOW | \
+		SUNXI_HDMI_DDC_INT_STATUS_ARB_ERR | \
+		SUNXI_HDMI_DDC_INT_STATUS_ACK_ERR | \
+		SUNXI_HDMI_DDC_INT_STATUS_BUS_ERR)
+
 static int
-sunxi_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
-    size_t len, int type, int flags)
+sunxi_hdmi_i2c_xfer_1_3(struct sunxi_hdmi_softc *sc, struct i2c_msg *msg)
 {
 	struct sunxi_hdmi_softc *sc = priv;
 	uint32_t val;
+	uint8_t *buf;
+	int len;
 	int retry;
 
 	val = HDMI_READ(sc, SUNXI_HDMI_DDC_CTRL_REG);
 	val &= ~SUNXI_HDMI_DDC_CTRL_FIFO_DIR;
+	if (msg->flags & I2C_M_RD) 
+		val |= SUNXI_HDMI_DDC_CTRL_FIFO_DIR_READ;
+	else
+		val |= SUNXI_HDMI_DDC_CTRL_FIFO_DIR_WRITE;
 	HDMI_WRITE(sc, SUNXI_HDMI_DDC_CTRL_REG, val);
 
-	val |= __SHIFTIN(block, SUNXI_HDMI_DDC_SLAVE_ADDR_0);
-	val |= __SHIFTIN(0x60, SUNXI_HDMI_DDC_SLAVE_ADDR_1);
-	val |= __SHIFTIN(reg, SUNXI_HDMI_DDC_SLAVE_ADDR_2);
-	val |= __SHIFTIN(addr, SUNXI_HDMI_DDC_SLAVE_ADDR_3);
+	val = __SHIFTIN(msg->addr, SUNXI_HDMI_DDC_SLAVE_ADDR_3);
 	HDMI_WRITE(sc, SUNXI_HDMI_DDC_SLAVE_ADDR_REG, val);
 
-	val = HDMI_READ(sc, SUNXI_HDMI_DDC_FIFO_CTRL_REG);
+	val = __SHIFTIN(0, SUNXI_HDMI_DDC_FIFO_CTRL_TX_TRIGGER_THRESH);
+	val |= __SHIFTIN(SUNXI_HDMI_DDC_FIFO_CTRL_TRIGGER_MAX,
+	    SUNXI_HDMI_DDC_FIFO_CTRL_RX_TRIGGER_THRESH);
 	val |= SUNXI_HDMI_DDC_FIFO_CTRL_ADDR_CLEAR;
 	HDMI_WRITE(sc, SUNXI_HDMI_DDC_FIFO_CTRL_REG, val);
 
-	HDMI_WRITE(sc, SUNXI_HDMI_DDC_BYTE_COUNTER_REG, len);
+	retry = 20;
+	while (HDMI_READ(sc, SUNXI_HDMI_DDC_FIFO_CTRL_REG) & SUNXI_HDMI_DDC_FIFO_CTRL_ADDR_CLEAR) {
+		if (--retry == 0)
+			return -EIO;
+		delay(100);
+	}
 
-	HDMI_WRITE(sc, SUNXI_HDMI_DDC_COMMAND_REG, type);
+	HDMI_WRITE(sc, SUNXI_HDMI_DDC_BYTE_COUNTER_REG, msg->len);
+
+	HDMI_WRITE(sc, SUNXI_HDMI_DDC_COMMAND_REG,
+	    msg->flags & I2C_M_RD ?
+	    SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_IOREAD :
+	    SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_IOWRITE;
+
+	val = SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ |
+	       SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK |
+	       SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE;
+	HDMI_WRITE(sc, SUNXI_HDMI_DDC_INT_STATUS_REG, val);
 
 	val = HDMI_READ(sc, SUNXI_HDMI_DDC_CTRL_REG);
 	val |= SUNXI_HDMI_DDC_CTRL_ACCESS_CMD_START;
 	HDMI_WRITE(sc, SUNXI_HDMI_DDC_CTRL_REG, val);
 
-	retry = 1000;
-	while (--retry > 0) {
-		val = HDMI_READ(sc, SUNXI_HDMI_DDC_CTRL_REG);
-		if ((val & SUNXI_HDMI_DDC_CTRL_ACCESS_CMD_START) == 0)
-			break;
+	/* read data when some is available */
+	len = msg->len;
+	buf = msg->buf;
+	while (len > 0) {
+		int blklen = imin(SUNXI_HDMI_DDC_FIFO_CTRL_TRIGGER_MAX, len);
+		retry = 0;
+		do {
+			val = HDMI_READ(sc, SUNXI_HDMI_DDC_INT_STATUS_REG);
+			if (++retry > 1000)
+				return -ETIMEOUT;
+		} while (val & (SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ |
+			      SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE |
+			      SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK) == 0);
+		if (val & SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK) {
+			device_printf(sc->sc_dev,
+			    "xfer failed, status=%08x\n", val);
+			return -EIO;
+		}
+		if (msg->flags & I2C_M_RD)
+			bus_space_read_multi_1(sc->sc_bst, sc->sc_bsh,
+			    SUNXI_HDMI_DDC_FIFO_ACCESS_REG, buf, blklen);
+		else 
+			bus_space_write_multi_1(sc->sc_bst, sc->sc_bsh,
+			    SUNXI_HDMI_DDC_FIFO_ACCESS_REG, buf, blklen);
+		buf += blklen;
+		len -= blklen;
+		HDMI_WRITE(sc, SUNXI_HDMI_DDC_INT_STATUS_REG,
+		    SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ);
+	}
+
+	retry = 0;
+	while (HDMI_READ(sc, SUNXI_HDMI_DDC_CTRL_REG) & SUNXI_HDMI_DDC_CTRL_ACCESS_CMD_START) {
+		if (++retry == 1000)
+			return EIO;
 		delay(1000);
 	}
-	if (retry == 0)
-		return ETIMEDOUT;
 
 	val = HDMI_READ(sc, SUNXI_HDMI_DDC_INT_STATUS_REG);
-	if ((val & SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE) == 0) {
+	if ((val & SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE) == 0 ||
+	    (val & SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK)) {
 		device_printf(sc->sc_dev, "xfer failed, status=%08x\n", val);
-		return EIO;
+		return -EIO;
 	}
-
 	return 0;
 }
 
 static int
-sunxi_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
-    size_t len, int type, int flags)
+sunxi_hdmi_i2c_xfer_1_4(struct sunxi_hdmi_softc *sc, struct i2c_msg *msg)
 {
-	struct sunxi_hdmi_softc *sc = priv;
 	uint32_t val;
+	uint8_t *buf;
+	int len;
 	int retry;
 
-	val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_FIFO_CTRL_REG);
+	val = __SHIFTIN(1, SUNXI_HDMI_DDC_FIFO_CTRL_TX_TRIGGER_THRESH);
+	val |= __SHIFTIN(SUNXI_HDMI_DDC_FIFO_CTRL_TRIGGER_MAX,
+	    SUNXI_HDMI_DDC_FIFO_CTRL_RX_TRIGGER_THRESH);
 	val |= SUNXI_A31_HDMI_DDC_FIFO_CTRL_RST;
 	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_FIFO_CTRL_REG, val);
+	retry = 0;
+	while (HDMI_READ(sc, SUNXI_A31_HDMI_DDC_FIFO_CTRL_REG) &
+	    SUNXI_A31_HDMI_DDC_FIFO_CTRL_RST) {
+		if (++rety > 2000)
+			return -EIO;
+		delay(100);
+	}
 
-	val = __SHIFTIN(block, SUNXI_A31_HDMI_DDC_SLAVE_ADDR_SEG_PTR);
-	val |= __SHIFTIN(0x60, SUNXI_A31_HDMI_DDC_SLAVE_ADDR_DDC_CMD);
-	val |= __SHIFTIN(reg, SUNXI_A31_HDMI_DDC_SLAVE_ADDR_OFF_ADR);
-	val |= __SHIFTIN(addr, SUNXI_A31_HDMI_DDC_SLAVE_ADDR_DEV_ADR);
+	val = __SHIFTIN(msg->addr, SUNXI_HDMI_DDC_SLAVE_ADDR_3);
 	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_SLAVE_ADDR_REG, val);
 
-	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_COMMAND_REG,
-	    __SHIFTIN(len, SUNXI_A31_HDMI_DDC_COMMAND_DTC) |
-	    __SHIFTIN(type, SUNXI_A31_HDMI_DDC_COMMAND_CMD));
+	val = __SHIFTIN(msg->len, SUNXI_A31_HDMI_DDC_COMMAND_DTC);
+	val |= __SHIFTIN(msg->flags & I2C_M_RD ?
+		SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_IOREAD :
+		SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_IOWRITE);
+	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_COMMAND_REG, val,
+	    SUNXI_A31_HDMI_DDC_COMMAND_CMD));
+
+	val = SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ |
+	       SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK |
+	       SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE;
+	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_INT_STATUS_REG, val);
 
 	val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_CTRL_REG);
 	val |= SUNXI_A31_HDMI_DDC_CTRL_ACCESS_CMD_START;
 	HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_CTRL_REG, val);
 
-	retry = 1000;
-	while (--retry > 0) {
-		val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_CTRL_REG);
-		if ((val & SUNXI_A31_HDMI_DDC_CTRL_ACCESS_CMD_START) == 0)
-			break;
-		if (flags & I2C_F_POLL)
-			delay(1000);
-		else
-			kpause("hdmiddc", false, mstohz(10), &sc->sc_exec_lock);
+	/* read data when some is available */
+	len = msg->len;
+	buf = msg->buf;
+	while (len > 0) {
+		int blklen;
+		retry = 0;
+		do {
+			val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_INT_STATUS_REG);
+			if (++retry > 1000)
+				return -ETIMEOUT;
+		} while (val & (SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ |
+			      SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE |
+			      SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK) == 0);
+		if (val & SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK) {
+			device_printf(sc->sc_dev,
+			    "xfer failed, status=%08x\n", val);
+			return -EIO;
+		}
+		if (msg->flags & I2C_M_RD) {
+			blklen =
+			    imin(SUNXI_HDMI_DDC_FIFO_CTRL_TRIGGER_MAX - 1, len);
+			bus_space_read_multi_1(sc->sc_bst, sc->sc_bsh,
+			    SUNXI_A31_HDMI_DDC_FIFO_ACCESS_REG, buf, blklen);
+		} else {
+			blklen =
+			    imin(SUNXI_HDMI_DDC_FIFO_CTRL_TRIGGER_MAX, len);
+			bus_space_write_multi_1(sc->sc_bst, sc->sc_bsh,
+			    SUNXI_A31_HDMI_DDC_FIFO_ACCESS_REG, buf, blklen);
+		}
+		buf += blklen;
+		len -= blklen;
+		HDMI_WRITE(sc, SUNXI_A31_HDMI_DDC_INT_STATUS_REG,
+		    SUNXI_HDMI_DDC_INT_STATUS_FIFO_REQ);
 	}
-	if (retry == 0)
-		return ETIMEDOUT;
+
+	retry = 1000;
+	while (HDMI_READ(sc, SUNXI_A31_HDMI_DDC_CTRL_REG) & SUNXI_A31_HDMI_DDC_CTRL_ACCESS_CMD_START) {
+		if (--retry == 0)
+			return -ETIMEDOUT;
+		delay(1000);
+	}
+	val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_INT_STATUS_REG);
+	if ((val & SUNXI_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE) == 0 ||
+	    (val & SUNXI_HDMI_DDC_INT_STATUS_ERR_MASK)) {
+		device_printf(sc->sc_dev, "xfer failed, status=%08x\n", val);
+		return -EIO;
+	}
 
 	return 0;
 }
 
 static int
-sunxi_hdmi_i2c_xfer(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
-    size_t len, int type, int flags)
+sunxi_hdmi_i2c_xfer(struct sunxi_hdmi_softc *sc, struct i2c_msg *msg)
 {
-	struct sunxi_hdmi_softc *sc = priv;
-	int rv;
-
 	if (HDMI_1_3_P(sc)) {
-		rv = sunxi_hdmi_i2c_xfer_1_3(priv, addr, block, reg, len,
-		    type, flags);
+		return sunxi_hdmi_i2c_xfer_1_3(sc, msg);
 	} else {
-		rv = sunxi_hdmi_i2c_xfer_1_4(priv, addr, block, reg, len,
-		    type, flags);
+		return sunxi_hdmi_i2c_xfer_1_4(sc, msg);
 	}
-
-	return rv;
 }
 
 static int
-sunxi_hdmi_i2c_reset(struct sunxi_hdmi_softc *sc, int flags)
+sunxi_hdmi_i2c_reset(struct sunxi_hdmi_softc *sc)
 {
 	uint32_t hpd, ctrl;
 
@@ -491,6 +663,7 @@ sunxi_hdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
 	struct sunxi_hdmi_softc *sc = device_private(dev);
 	struct fdt_endpoint *in_ep, *out_ep;
+	struct drm_crtc *crtc;
 	int error;
 
 	/* our input is activated by tcon, we activate our output */
@@ -528,10 +701,36 @@ sunxi_hdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		aprint_error_dev(dev, "no output endpoint\n");
 		return ENODEV;
 	}
+	sc->sc_in_rep = fdt_endpoint_remote(ep);
+	KASSERT(sc->sc_in_rep != NULL);
+
+	if (fdt_endpoint_type(sc->sc_in_rep) != EP_DRM_ENCODER) {
+		device_printf(sc->sc_dev, ": in endpoint %d wrong type\n",
+		    fdt_endpoint_type(sc->sc_in_rep));
+		panic("hdmi fdt_endpoint_type");
+	}
+	crtc = sunxi_tcon_get_crtc(fdt_endpoint_device(sc->sc_in_rep));
+
+	sc->sc_encoder.sc = sc;
+	sc->sc_encoder.base.possible_crtcs = 1 << drm_crtc_index(crtc);
+	drm_encoder_helper_add(&sc->sc_encoder.base,
+	    &sunxi_hdmi_enc_helper_funcs);
+	error = drm_encoder_init(crtc->dev, &sc->sc_encoder.base,
+	    sunxi_hdmi_enc_funcs, DRM_MODE_ENCODER_TMDS, NULL);
+	if (error)
+		return -error;
+	
+	drm_connector_helper_add(&sc->sc_connector,
+	    &sunxi_hdmi_connector_helper_funcs);
+	error = drm_connector_init_with_ddc(crtc->dev, &sc->sc_connector,
+	    DRM_MODE_CONNECTOR_HDMIA, &sc->sc_i2c_adapt);
+	if (error)
+		return -error;
+	drm_connector_attach_encoder(&sc->sc_connector, &sc->sc_encoder.base);
+
 	error = fdt_endpoint_activate(out_ep, activate);
 	if (error == 0) {
 		sc->sc_in_ep = ep;
-		sc->sc_in_rep = fdt_endpoint_remote(ep);
 		sc->sc_out_ep = out_ep;
 		sunxi_hdmi_do_enable(sc);
 		return 0;
@@ -819,39 +1018,12 @@ sunxi_hdmi_video_enable(struct sunxi_hdmi_softc *sc, bool enable)
 #endif
 }
 
-#if 0
-static void
-sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
-    const struct videomode *mode, u_int display_mode)
+static int
+hdmi_clk_find(struct sunxi_hdmi_softc *sc, int rate, int *div, int *dbl)
 {
-	uint32_t val;
-	const u_int dblscan_p = !!(mode->flags & VID_DBLSCAN);
-	const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
-	const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
-	const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
-	const u_int hfp = mode->hsync_start - mode->hdisplay;
-	const u_int hspw = mode->hsync_end - mode->hsync_start;
-	const u_int hbp = mode->htotal - mode->hsync_start;
-	const u_int vfp = mode->vsync_start - mode->vdisplay;
-	const u_int vspw = mode->vsync_end - mode->vsync_start;
-	const u_int vbp = mode->vtotal - mode->vsync_start;
-	struct clk *clk_pll;
+	int best_diff;
 	int parent_rate;
-	int best_div, best_dbl, best_diff;
-	int target_rate = mode->dot_clock * 1000;
-
-#ifdef SUNXI_HDMI_DEBUG
-	device_printf(sc->sc_dev,
-	    "dblscan %d, interlace %d, phsync %d, pvsync %d\n",
-	    dblscan_p, interlace_p, phsync_p, pvsync_p);
-	device_printf(sc->sc_dev, "h: %u %u %u %u\n",
-	    mode->hdisplay, hbp, hfp, hspw);
-	device_printf(sc->sc_dev, "v: %u %u %u %u\n",
-	    mode->vdisplay, vbp, vfp, vspw);
-#endif
-
-	HDMI_WRITE(sc, SUNXI_HDMI_INT_STATUS_REG, 0xffffffff);
-
+	struct clk *clk_pll;
 	/* assume tcon0 uses pll3, tcon1 uses pll7 */
 	switch(fdt_endpoint_index(sc->sc_in_ep)) {
 	case 0:
@@ -865,7 +1037,7 @@ sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
 	}
 	parent_rate = clk_get_rate(clk_pll);
 	KASSERT(parent_rate > 0);
-	best_div = best_dbl = 0;
+	*div = *dbl = 0;
 	best_diff = INT_MAX;
 	for (int d = 2; d > 0 && best_diff != 0; d--) {
 		for (int m = 1; m <= 16 && best_diff != 0; m++) {
@@ -873,20 +1045,56 @@ sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
 			int diff = abs(target_rate - cur_rate);
 			if (diff >= 0 && diff < best_diff) {
 				best_diff = diff;
-				best_div = m;
-				best_dbl = d;
+				*div = m;
+				*dbl = d;
 			}
 		}
 	}
 
 #ifdef SUNXI_HDMI_DEBUG
 	device_printf(sc->sc_dev, "parent rate: %d\n", parent_rate);
-	device_printf(sc->sc_dev, "dot_clock: %d\n", mode->dot_clock);
+	device_printf(sc->sc_dev, "crtc_clock: %d\n", mode->crtc_clock);
 	device_printf(sc->sc_dev, "clkdiv: %d\n", best_div);
 	device_printf(sc->sc_dev, "clkdbl: %c\n", (best_dbl == 1) ? 'Y' : 'N');
 #endif
+	return best_diff;
+}
 
-	if (best_div == 0) {
+static void
+sunxi_hdmi_mode_set(struct drm_encoder *enc,
+    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+{
+	struct sunxi_hdmi_encoder *hdmi_encoder = to_sunxi_hdmi_encoder(enc);
+	struct sunxi_hdmi_softc *sc = hdmi_encoder->sc;
+	uint32_t val;
+	const u_int dblscan_p = !!(mode->flags & DRM_MODE_FLAG_DBLSCAN);
+	const u_int interlace_p = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
+	const u_int phsync_p = !!(mode->flags & DRM_MODE_FLAG_PHSYNC);
+	const u_int pvsync_p = !!(mode->flags & DRM_MODE_FLAG_PVSYNC);
+	const u_int hfp = mode->hsync_start - mode->hdisplay;
+	const u_int hspw = mode->hsync_end - mode->hsync_start;
+	const u_int hbp = mode->htotal - mode->hsync_start;
+	const u_int vfp = mode->vsync_start - mode->vdisplay;
+	const u_int vspw = mode->vsync_end - mode->vsync_start;
+	const u_int vbp = mode->vtotal - mode->vsync_start;
+	int div, dbl, diff;
+	int target_rate = mode->crtc_clock * 1000;
+
+#ifdef SUNXI_HDMI_DEBUG
+	device_printf(sc->sc_dev,
+	    "dblscan %d, interlace %d, phsync %d, pvsync %d\n",
+	    dblscan_p, interlace_p, phsync_p, pvsync_p);
+	device_printf(sc->sc_dev, "h: %u %u %u %u\n",
+	    mode->hdisplay, hbp, hfp, hspw);
+	device_printf(sc->sc_dev, "v: %u %u %u %u\n",
+	    mode->vdisplay, vbp, vfp, vspw);
+#endif
+
+	HDMI_WRITE(sc, SUNXI_HDMI_INT_STATUS_REG, 0xffffffff);
+
+	diff = hdmi_clk_find(target_rate, &div, &dbl);
+
+	if (div == 0) {
 		device_printf(sc->sc_dev, "ERROR: TCON clk not configured\n");
 		return;
 	}
@@ -896,14 +1104,14 @@ sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
 		pad_ctrl0 = 0x7e8000ff;
 		pad_ctrl1 = 0x01ded030;
 		pll_ctrl = 0xba48a308;
-		pll_ctrl |= __SHIFTIN(best_div - 1, SUNXI_HDMI_PLL_CTRL_PREDIV);
+		pll_ctrl |= __SHIFTIN(div - 1, SUNXI_HDMI_PLL_CTRL_PREDIV);
 	} else {
 		pad_ctrl0 = 0xfe800000;
 		pad_ctrl1 = 0x00d8c830;
 		pll_ctrl = 0xfa4ef708;
-		pll_ctrl |= __SHIFTIN(best_div, SUNXI_HDMI_PLL_CTRL_PREDIV);
+		pll_ctrl |= __SHIFTIN(div, SUNXI_HDMI_PLL_CTRL_PREDIV);
 	}
-	if (best_dbl == 2)
+	if (dbl == 2)
 		pad_ctrl1 |= 0x40;
 
 	HDMI_WRITE(sc, SUNXI_HDMI_PAD_CTRL0_REG, pad_ctrl0);
@@ -923,7 +1131,7 @@ sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
 
 	val = HDMI_READ(sc, SUNXI_HDMI_VID_CTRL_REG);
 	val &= ~SUNXI_HDMI_VID_CTRL_HDMI_MODE;
-	if (display_mode == DISPLAY_MODE_DVI) {
+	if (sc->sc_display_mode == DISPLAY_MODE_DVI) {
 		val |= __SHIFTIN(SUNXI_HDMI_VID_CTRL_HDMI_MODE_DVI,
 				 SUNXI_HDMI_VID_CTRL_HDMI_MODE);
 	} else {
@@ -982,11 +1190,28 @@ sunxi_hdmi_set_videomode(struct sunxi_hdmi_softc *sc,
 	HDMI_WRITE(sc, SUNXI_HDMI_GP_PKT1_REG, 0);
 	HDMI_WRITE(sc, SUNXI_HDMI_PKT_CTRL0_REG, 0x00005321);
 	HDMI_WRITE(sc, SUNXI_HDMI_PKT_CTRL1_REG, 0x0000000f);
+	sunxi_hdmi_set_audiomode(sc, mode->crtc_clock);
 }
 
 static void
-sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc,
-    const struct videomode *mode, u_int display_mode)
+sunxi_hdmi_mode_valid(struct drm_encoder *enc,
+    struct drm_display_mode *mode)
+{
+	struct sunxi_hdmi_encoder *hdmi_encoder = to_sunxi_hdmi_encoder(enc);
+	struct sunxi_hdmi_softc *sc = hdmi_encoder->sc;
+	int diff, div, dbl;
+	int target_rate = mode->clock * 10000;
+
+	if (target_rate > 165000000) /* max pixelclock for HDMI <= 1.2 */
+		return MODE_CLOCK_HIGH;
+	diff = hdmi_clk_find(target_rate, &div, &dbl);
+	if (diff >= target_rate / 200) /* HDMI allows max 0.5% */
+		return MODE_NOCLOCK;
+	return MODE_OK;
+}
+
+static void
+sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc, int dot_clock)
 {
 	uint32_t cts, n, val;
 
@@ -1004,7 +1229,7 @@ sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc,
 	} while (val & SUNXI_HDMI_AUD_CTRL_RST);
 
 	/* No audio support in DVI mode */
-	if (display_mode != DISPLAY_MODE_HDMI) {
+	if (sc->sc_display_mode != DISPLAY_MODE_HDMI) {
 		return;
 	}
 
@@ -1036,7 +1261,7 @@ sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc,
 
 	/* Clock setup */
 	n = 6144;	/* 48 kHz */
-	cts = ((mode->dot_clock * 10) * (n / 128)) / 480;
+	cts = ((dot_clock * 10) * (n / 128)) / 480;
 	HDMI_WRITE(sc, SUNXI_HDMI_AUD_CTS_REG, cts);
 	HDMI_WRITE(sc, SUNXI_HDMI_AUD_N_REG, n);
 
@@ -1063,48 +1288,42 @@ sunxi_hdmi_set_audiomode(struct sunxi_hdmi_softc *sc,
 	sunxi_hdmi_dump_regs();
 #endif
 }
-#endif
 
-#if 0
-static void
-sunxi_hdmi_hpd(struct sunxi_hdmi_softc *sc)
+static enum drm_connector_status   
+sunxi_hdmi_connector_detect(struct drm_connector *connector, bool force)
 {
-	uint32_t hpd = HDMI_READ(sc, SUNXI_HDMI_HPD_REG);
-	bool con = !!(hpd & SUNXI_HDMI_HPD_HOTPLUG_DET);
+	struct sunxi_hdmi_softc *sc = connector_to_hdmi(connector);
 
-	KASSERT(mutex_owned(&sc->sc_pwr_lock));
-	if (sc->sc_display_connected == con)
-		return;
+	if (HDMI_READ(sc, SUNXI_HDMI_HPD_REG) & SUNXI_HDMI_HPD_HOTPLUG_DET) {
+		return connector_status_connected;
+	}
+	sc->sc_display_mode = DISPLAY_MODE_NONE;
+	return connector_status_disconnected;
+}
 
-	if (con) {
-		device_printf(sc->sc_dev, "display connected\n");
-		sc->sc_pwr_refcount  = 1;
-		sunxi_hdmi_read_edid(sc);
+static int
+sunxi_hdmi_get_modes(struct drm_connector * connector)
+{
+	struct sunxi_hdmi_softc *sc = connector_to_hdmi(connector);
+	struct edid *edid;
+	int ret;
+
+	edid = drm_get_edid(connector, &sc->sc_i2c_adapt);
+	if (!edid) {
+		sc->sc_display_mode = DISPLAY_MODE_NONE;
+		return 0;
+	}
+
+	if (drm_detect_hdmi_monitor(edid)) {
+		sc->sc_display_mode = DISPLAY_MODE_HDMI;
 	} else {
-		device_printf(sc->sc_dev, "display disconnected\n");
-		sc->sc_pwr_refcount = 0;
-		sunxi_hdmi_video_enable(sc, false);
-		fdt_endpoint_enable(sc->sc_in_ep, false);
-		sunxi_tcon1_set_videomode(
-		    fdt_endpoint_device(sc->sc_in_rep), NULL);
+		sc->sc_display_mode = DISPLAY_MODE_DVI;
 	}
-
-	sc->sc_display_connected = con;
+	drm_connector_update_edid_property(connector, edid);
+	ret = drm_add_edid_modes(connector, edid);
+	kfree(edid);
+	return ret;
 }
-
-static void
-sunxi_hdmi_thread(void *priv)
-{
-	struct sunxi_hdmi_softc *sc = priv;
-
-	for (;;) {
-		mutex_enter(&sc->sc_pwr_lock);
-		sunxi_hdmi_hpd(sc);
-		mutex_exit(&sc->sc_pwr_lock);
-		kpause("hdmihotplug", false, mstohz(1000), NULL);
-	}
-}
-#endif
 
 static int
 sunxi_hdmi_poweron(struct sunxi_hdmi_softc *sc, bool enable)
