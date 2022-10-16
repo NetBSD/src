@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.32 2011/08/29 14:35:00 joerg Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.33 2022/10/16 16:26:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.32 2011/08/29 14:35:00 joerg Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.33 2022/10/16 16:26:35 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ mount_cd9660_parseargs(int argc, char **argv,
 	memset(args, 0, sizeof(*args));
 	*mntflags = opts = 0;
 	optind = optreset = 1;
-	while ((ch = getopt(argc, argv, "egijo:r")) != -1)
+	while ((ch = getopt(argc, argv, "egjo:r")) != -1)
 		switch (ch) {
 		case 'e':
 			/* obsolete, retained for compatibility only, use
@@ -180,6 +180,7 @@ mount_cd9660(int argc, char **argv)
 	}
 
 	exit(0);
+	/* NOTREACHED */
 }
 
 static void
