@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.21 2022/10/16 06:14:53 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.22 2022/10/16 06:19:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.21 2022/10/16 06:14:53 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.22 2022/10/16 06:19:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -57,13 +57,13 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.21 2022/10/16 06:14:53 skrll Exp $");
 #include <riscv/machdep.h>
 #include <riscv/pte.h>
 
-int cpu_printfataltraps;
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_memory.h>
+
+int cpu_printfataltraps;
+char machine[] = MACHINE;
+char machine_arch[] = MACHINE_ARCH;
 
 #ifdef VERBOSE_INIT_RISCV
 #define	VPRINTF(...)	printf(__VA_ARGS__)
