@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.167 2022/10/01 12:40:42 rin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.168 2022/10/17 03:05:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1186,6 +1186,9 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCAP2_DRS		__BIT(31)       /* DRS Supported */
 #define PCIE_LCSR2	0x30	/* Link Control & Status 2 Register */
 #define PCIE_LCSR2_TGT_LSPEED	__BITS(3, 0)   /* Target Link Speed */
+#define  PCIE_LCSR2_TGT_LSPEED_2_5G  0x1       /* 2.5GT/s supported */
+#define  PCIE_LCSR2_TGT_LSPEED_5G    0x2       /* 5.0GT/s supported */
+#define  PCIE_LCSR2_TGT_LSPEED_8G    0x3       /* 8.0GT/s supported */
 #define PCIE_LCSR2_ENT_COMPL	__BIT(4)       /* Enter Compliance */
 #define PCIE_LCSR2_HW_AS_DIS	__BIT(5)       /* HW Autonomous Speed Disabl */
 #define PCIE_LCSR2_SEL_DEEMP	__BIT(6)       /* Selectable De-emphasis */
