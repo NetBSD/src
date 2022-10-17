@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.40 2019/09/02 00:12:11 sevan Exp $
+.\"	$NetBSD: wait.2,v 1.41 2022/10/17 18:41:06 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)wait.2	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 2, 2019
+.Dd October 17, 2022
 .Dt WAIT 2
 .Os
 .Sh NAME
@@ -410,7 +410,7 @@ structure contains the full 32 bit exit status passed to
 .Xr _exit 2 ;
 the
 .Fa status
-argument of other calls only returns 8 lowest bits of the exit status.
+argument of other calls only returns the 8 lowest bits of the exit status.
 .Pp
 When the
 .Dv WNOHANG
