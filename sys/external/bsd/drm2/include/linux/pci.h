@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.54 2022/09/20 23:01:42 mrg Exp $	*/
+/*	$NetBSD: pci.h,v 1.55 2022/10/17 03:05:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
+#include <dev/pci/ppbvar.h>
 
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
@@ -60,6 +61,7 @@
 
 struct acpi_devnode;
 struct pci_driver;
+struct pci_dev;
 
 struct pci_bus {
 	/* NetBSD private members */
@@ -68,6 +70,8 @@ struct pci_bus {
 
 	/* Linux API */
 	u_int			number;
+
+	struct pci_dev		*self;
 };
 
 struct pci_device_id {
@@ -132,6 +136,21 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	DEVICE_COUNT_RESOURCE	PCI_NUM_RESOURCES
 
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
+
+#define PCI_EXP_LNKCTL			PCIE_LCSR
+#define  PCI_EXP_LNKCTL_HAWD		PCIE_LCSR_HAWD
+#define PCI_EXP_DEVSTA			(PCIE_DCSR + 2)
+#define  PCI_EXP_DEVSTA_TRPND		(PCIE_DCSR_TRANSACTION_PND >> 16)
+#define PCI_EXP_LNKCTL2			PCIE_LCAP2
+#define  PCI_EXP_LNKCTL2_ENTER_COMP	PCIE_LCSR2_ENT_COMPL
+#define  PCI_EXP_LNKCTL2_TX_MARGIN	PCIE_LCSR2_TX_MARGIN
+#define  PCI_EXP_LNKCTL2_TLS		PCIE_LCSR2_TGT_LSPEED
+#define  PCI_EXP_LNKCTL2_TLS_2_5GT	PCIE_LCSR2_TGT_LSPEED_2_5G
+#define  PCI_EXP_LNKCTL2_TLS_5_0GT	PCIE_LCSR2_TGT_LSPEED_5G
+#define  PCI_EXP_LNKCTL2_TLS_8_0GT	PCIE_LCSR2_TGT_LSPEED_8G
+#define PCI_EXP_LNKCAP			PCIE_LCAP
+#define  PCI_EXP_LNKCAP_CLKPM		PCIE_LCAP_CLOCK_PM
+
 
 typedef int pci_power_t;
 
@@ -262,6 +281,10 @@ enum pcie_link_width {
 #define	pcibios_align_resource		linux_pcibios_align_resource
 #define	pcie_get_speed_cap		linux_pcie_get_speed_cap
 #define	pcie_bandwidth_available	linux_pcie_bandwidth_available
+#define	pcie_read_config_dword		linux_pcie_capability_read_dword
+#define	pcie_read_config_word		linux_pcie_capability_read_word
+#define	pcie_write_config_dword		linux_pcie_capability_write_dword
+#define	pcie_write_config_word		linux_pcie_capability_write_word
 
 /* NetBSD local additions.  */
 void		linux_pci_dev_init(struct pci_dev *, device_t, device_t,
@@ -292,6 +315,11 @@ int		pci_write_config_dword(struct pci_dev *, int, uint32_t);
 int		pci_write_config_word(struct pci_dev *, int, uint16_t);
 int		pci_write_config_byte(struct pci_dev *, int, uint8_t);
 
+int		pcie_capability_read_dword(struct pci_dev *, int, uint32_t *);
+int		pcie_capability_read_word(struct pci_dev *, int, uint16_t *);
+int		pcie_capability_write_dword(struct pci_dev *, int, uint32_t);
+int		pcie_capability_write_word(struct pci_dev *, int, uint16_t);
+
 int		pci_bus_read_config_dword(struct pci_bus *, unsigned, int,
 		    uint32_t *);
 int		pci_bus_read_config_word(struct pci_bus *, unsigned, int,
@@ -309,6 +337,9 @@ int		pci_enable_msi(struct pci_dev *);
 void		pci_disable_msi(struct pci_dev *);
 void		pci_set_master(struct pci_dev *);
 void		pci_clear_master(struct pci_dev *);
+
+int		pcie_get_readrq(struct pci_dev *);
+int		pcie_set_readrq(struct pci_dev *, int);
 
 bus_addr_t	pcibios_align_resource(void *, const struct resource *,
 		    bus_addr_t, bus_size_t);

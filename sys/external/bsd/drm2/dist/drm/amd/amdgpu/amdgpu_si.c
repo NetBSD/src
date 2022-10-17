@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_si.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_si.c,v 1.4 2022/10/17 03:05:32 mrg Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_si.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_si.c,v 1.4 2022/10/17 03:05:32 mrg Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1656,7 +1656,6 @@ static void si_init_golden_registers(struct amdgpu_device *adev)
 
 static void si_pcie_gen3_enable(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	struct pci_dev *root = adev->pdev->bus->self;
 	u32 speed_cntl, current_data_rate;
 	int i;
@@ -1827,7 +1826,6 @@ static void si_pcie_gen3_enable(struct amdgpu_device *adev)
 			break;
 		udelay(1);
 	}
-#endif	/* __NetBSD__ */
 }
 
 static inline u32 si_pif_phy0_rreg(struct amdgpu_device *adev, u32 reg)
@@ -2002,9 +2000,6 @@ static void si_program_aspm(struct amdgpu_device *adev)
 
 			if (!disable_clkreq &&
 			    !pci_is_root_bus(adev->pdev->bus)) {
-#ifdef __NetBSD__		/* XXX amdgpu pcie */
-				clk_req_support = false;
-#else
 				struct pci_dev *root = adev->pdev->bus->self;
 				u32 lnkcap;
 
@@ -2012,7 +2007,6 @@ static void si_program_aspm(struct amdgpu_device *adev)
 				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
 				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
-#endif
 			} else {
 				clk_req_support = false;
 			}

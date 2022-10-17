@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cik.c,v 1.6 2022/10/17 03:05:32 mrg Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.6 2022/10/17 03:05:32 mrg Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1461,7 +1461,6 @@ static int cik_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk)
 
 static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	struct pci_dev *root = adev->pdev->bus->self;
 	u32 speed_cntl, current_data_rate;
 	int i;
@@ -1644,7 +1643,6 @@ static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
 			break;
 		udelay(1);
 	}
-#endif
 }
 
 static void cik_program_aspm(struct amdgpu_device *adev)
