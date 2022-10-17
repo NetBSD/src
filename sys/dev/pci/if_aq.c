@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.35 2022/09/22 06:04:26 skrll Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.36 2022/10/17 10:39:01 riastradh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.35 2022/09/22 06:04:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.36 2022/10/17 10:39:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -4898,11 +4898,8 @@ aq_stop_locked(struct ifnet *ifp, bool disable)
 	    RX_DMA_DESC_CACHE_INIT_REG, RX_DMA_DESC_CACHE_INIT) ^ 1);
 
  already_stopped:
-	if (!disable) {
-		/* when pmf stop, disable link status intr and callout */
-		aq_enable_intr(sc, false, false);
-		callout_halt(&sc->sc_tick_ch, &sc->sc_mutex);
-	}
+	aq_enable_intr(sc, false, false);
+	callout_halt(&sc->sc_tick_ch, &sc->sc_mutex);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_if_flags = ifp->if_flags;
