@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si.c,v 1.4 2021/12/19 09:56:27 riastradh Exp $	*/
+/*	$NetBSD: radeon_si.c,v 1.5 2022/10/17 03:05:32 mrg Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si.c,v 1.4 2021/12/19 09:56:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si.c,v 1.5 2022/10/17 03:05:32 mrg Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -7099,7 +7099,6 @@ int si_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
 
 static void si_pcie_gen3_enable(struct radeon_device *rdev)
 {
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	struct pci_dev *root = rdev->pdev->bus->self;
 	enum pci_bus_speed speed_cap;
 	u32 speed_cntl, current_data_rate;
@@ -7283,7 +7282,6 @@ static void si_pcie_gen3_enable(struct radeon_device *rdev)
 			break;
 		udelay(1);
 	}
-#endif
 }
 
 static void si_program_aspm(struct radeon_device *rdev)
