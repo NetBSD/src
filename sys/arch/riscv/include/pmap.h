@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.11 2022/10/15 06:41:43 simonb Exp $ */
+/* $NetBSD: pmap.h,v 1.12 2022/10/18 04:39:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #define	NXSEGPG		(1 << XSEGLENGTH)
 #else
 #define	PTPSHIFT	2
-#define	XSEGSHIFT	SEGLENGTH
+#define	XSEGSHIFT	SEGSHIFT
 #endif
 
 #define	SEGLENGTH	(PGSHIFT - PTPSHIFT)
