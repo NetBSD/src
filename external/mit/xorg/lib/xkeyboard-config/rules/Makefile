@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2022/10/17 18:51:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2022/10/18 07:41:29 mrg Exp $
 #
 #	When upgrading, re-assemble the files base, base.lst, evdev and
 #	evdev.lst by running ./configure && make in the dist directory,
@@ -8,6 +8,10 @@
 #	% env PKG_CONFIG_PATH=/usr/X11R7/lib/pkgconfig meson compile -C build
 #	% cp build/xkeyboard-config.7 src/external/mit/xorg/lib/xkeyboard-config/xkeyboard-config.man
 #	% cp build/rules/{base,evdev}{,.lst} src/external/mit/xorg/lib/xkeyboard-config/rules
+#
+#       XXX and for now, this one too:
+#
+#	% cp build/meson-private/xkeyboard-config.pc src/external/mit/xorg/lib/xkeyboard-config/xkeyboard-config.pc.in
 
 .include <bsd.own.mk>
 
