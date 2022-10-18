@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.9 2022/10/15 06:41:43 simonb Exp $ */
+/* $NetBSD: pte.h,v 1.10 2022/10/18 06:44:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -259,19 +259,19 @@ pte_invalid_pde(void)
 static inline pd_entry_t
 pte_pde_pdetab(paddr_t pa, bool kernel_p)
 {
-	return PTE_V | (pa >> PAGE_SHIFT) << L2_SHIFT;
+	return PTE_V | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
 }
 
 static inline pd_entry_t
 pte_pde_ptpage(paddr_t pa, bool kernel_p)
 {
-	return PTE_V | PTE_X | PTE_W | PTE_R | (pa >> PAGE_SHIFT) << L2_SHIFT;
+	return PTE_V | PTE_X | PTE_W | PTE_R | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
 }
 
 static inline bool
 pte_pde_valid_p(pd_entry_t pde)
 {
-	return (pde & (PTE_X | PTE_W | PTE_R)) == 0;
+	return (pde & (PTE_X | PTE_W | PTE_R | PTE_V)) == PTE_V;
 }
 
 static inline paddr_t
