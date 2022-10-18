@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.61 2022/10/17 07:03:19 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.62 2022/10/18 04:20:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.61 2022/10/17 07:03:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.62 2022/10/18 04:20:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ static inline void
 vq_sync_descs(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 
-	/* availoffset == sizeof(vring_desc)*vq_num */
+	/* availoffset == sizeof(vring_desc) * vq_num */
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, 0, vq->vq_availoffset,
 	    ops);
 }
@@ -778,11 +778,11 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	hdrlen = sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX ? 3 : 2;
 
 	/* allocsize1: descriptor table + avail ring + pad */
-	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc)*vq_size
-	    + sizeof(uint16_t)*(hdrlen + vq_size));
+	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc) * vq_size
+	    + sizeof(uint16_t) * (hdrlen + vq_size));
 	/* allocsize2: used ring + pad */
 	allocsize2 = VIRTQUEUE_ALIGN(sizeof(uint16_t) * hdrlen
-	    + sizeof(struct vring_used_elem)*vq_size);
+	    + sizeof(struct vring_used_elem) * vq_size);
 	/* allocsize3: indirect table */
 	if (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT)
 		allocsize3 = sizeof(struct vring_desc) * maxnsegs * vq_size;
@@ -829,7 +829,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	vq->vq_num = vq_size;
 	vq->vq_index = index;
 	vq->vq_desc = vq->vq_vaddr;
-	vq->vq_availoffset = sizeof(struct vring_desc)*vq_size;
+	vq->vq_availoffset = sizeof(struct vring_desc) * vq_size;
 	vq->vq_avail = (void *)(((char *)vq->vq_desc) + vq->vq_availoffset);
 	vq->vq_used_event = (uint16_t *)((char *)vq->vq_avail +
 	    offsetof(struct vring_avail, ring[vq->vq_num]));
@@ -848,7 +848,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	vq->vq_maxnsegs = maxnsegs;
 
 	/* free slot management */
-	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry)*vq_size,
+	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry) * vq_size,
 	    KM_SLEEP);
 	virtio_init_vq(sc, vq, false);
 
