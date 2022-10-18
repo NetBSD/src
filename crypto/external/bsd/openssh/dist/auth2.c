@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.25 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.26 2022/10/18 06:46:51 kre Exp $	*/
 /* $OpenBSD: auth2.c,v 1.164 2022/02/23 11:18:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.25 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.26 2022/10/18 06:46:51 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -158,7 +158,7 @@ userauth_send_banner(struct ssh *ssh, const char *msg)
 	    (r = sshpkt_put_cstring(ssh, msg)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, "")) != 0 ||	/* language, unused */
 	    (r = sshpkt_send(ssh)) != 0)
-		fatal("%s: %s", __func__, ssh_err(r));
+		fatal_fr(r, "send packet");
 	debug("%s: sent", __func__);
 }
 
@@ -166,7 +166,6 @@ static void
 userauth_banner(struct ssh *ssh)
 {
 	char *banner = NULL;
-	int r;
 
 	if (options.banner == NULL)
 		return;
@@ -175,12 +174,6 @@ userauth_banner(struct ssh *ssh)
 		goto done;
 	userauth_send_banner(ssh, banner);
 
-	if ((r = sshpkt_start(ssh, SSH2_MSG_USERAUTH_BANNER)) != 0 ||
-	    (r = sshpkt_put_cstring(ssh, banner)) != 0 ||
-	    (r = sshpkt_put_cstring(ssh, "")) != 0 ||	/* language, unused */
-	    (r = sshpkt_send(ssh)) != 0)
-		fatal_fr(r, "send packet");
-	debug("userauth_banner: sent");
 done:
 	free(banner);
 }
