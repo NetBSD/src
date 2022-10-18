@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2022/10/18 07:41:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2022/10/18 08:18:36 mrg Exp $
 #
 #	When upgrading, re-assemble the files base, base.lst, evdev and
 #	evdev.lst by running ./configure && make in the dist directory,
@@ -18,6 +18,7 @@
 XKBNAME=	rules
 GENFILES=	base.extras.xml base.xml
 FILES=		README base base.lst evdev evdev.lst xfree98 xkb.dtd
+FILES+=		evdev.extras.xml evdev.xml
 FILES+=		${GENFILES}
 CLEAN+=		${GENFILES}
 
