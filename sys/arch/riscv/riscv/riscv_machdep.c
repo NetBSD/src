@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.22 2022/10/16 06:19:16 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.23 2022/10/18 04:24:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.22 2022/10/16 06:19:16 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.23 2022/10/18 04:24:54 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -516,8 +516,6 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	parse_bi_bootargs(boot_args);
 
-
-	// initarm_common
 	extern char __kernel_text[];
 	extern char _end[];
 
