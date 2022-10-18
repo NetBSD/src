@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.26 2022/10/15 05:55:45 mrg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.27 2022/10/18 19:04:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.26 2022/10/15 05:55:45 mrg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.27 2022/10/18 19:04:57 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -185,13 +185,14 @@ main(int argc, char **argv)
 		}
 		/* Alpha never had 32 bit support. */
 #if (defined(_LP64) && !defined(ELF64_ONLY)) || defined(MIPS_N32)
-		if (elf32_ldd(fd, *argv, path, fmt1, fmt2) == -1) {
+		if (failed && elf32_ldd(fd, *argv, path, fmt1, fmt2) == -1) {
 			if (verbose)
 				warnx("%s", error_message);
 			failed = true;
 		}
 #if defined(__mips__) && 0 /* XXX this is still hosed for some reason */
-		if (elf32_ldd_compat(fd, *argv, path, fmt1, fmt2) == -1) {
+		if (failed &&
+		    elf32_ldd_compat(fd, *argv, path, fmt1, fmt2) == -1) {
 			if (verbose)
 				warnx("%s", error_message);
 			failed = true;
