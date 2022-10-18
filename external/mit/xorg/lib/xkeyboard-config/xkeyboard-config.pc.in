@@ -1,0 +1,7 @@
+
+datadir=/usr/X11R7/share
+xkb_base=/usr/X11R7/share/X11/xkb
+
+Name: XKeyboardConfig
+Description: X Keyboard configuration data
+Version: 2.37
