@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.13 2022/05/03 07:25:34 blymn Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.14 2022/10/19 06:09:27 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.13 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.14 2022/10/19 06:09:27 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -174,7 +174,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;
-				(*tp).wcols = 1;
+				tp->wcols = 1;
+				tp->cflags = CA_BACKGROUND;
 				np = tp->nsp;
 			}
 		} else {
@@ -186,7 +187,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	}
 	lnp->flags |= __ISDIRTY;
 	newx = sx + win->ch_off;
-	if (newx < *lnp->firstchp)
+	if (newx < *lnp->firstchp) 
 		*lnp->firstchp = newx;
 
 	/* add characters in the string */
@@ -210,7 +211,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 					    == ERR)
 						return ERR;
 					lp->attr = win->battr;
-					lp->cflags |= CA_BACKGROUND;
+					lp->cflags = CA_BACKGROUND;
 					(*lp).wcols = 1;
 					lp++, ex++;
 				}
@@ -259,6 +260,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 				lp->ch = chp->vals[0];
 				lp->attr = chp->attributes & WA_ATTRIBUTES;
+				lp->cflags &= ~CA_BACKGROUND;
+				lp->cflags |= CA_CONTINUATION;
 				(*lp).wcols = x - ex;
 				lp++, ex++;
 			}

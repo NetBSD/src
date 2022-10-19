@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.22 2022/04/12 21:54:16 blymn Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.23 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.22 2022/04/12 21:54:16 blymn Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.23 2022/10/19 06:09:27 blymn Exp $");
 #endif				/* not lint */
 
 /*
@@ -116,7 +116,10 @@ winsdelln(WINDOW *win, int nlines)
 			for (i = 0; i < win->maxx; i++) {
 				win->alines[y]->line[i].ch = win->bch;
 				win->alines[y]->line[i].attr = attr;
-				win->alines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].cflags |= 
+				    CA_BACKGROUND;
+				win->alines[y]->line[i].cflags &= 
+				    ~CA_CONTINUATION;
 #ifdef HAVE_WCHAR
 				lp = &win->alines[y]->line[i];
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
@@ -157,7 +160,10 @@ winsdelln(WINDOW *win, int nlines)
 			for (i = 0; i < win->maxx; i++) {
 				win->alines[y]->line[i].ch = win->bch;
 				win->alines[y]->line[i].attr = attr;
-				win->alines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].cflags |= 
+				    CA_BACKGROUND;
+				win->alines[y]->line[i].cflags &= 
+				    ~CA_CONTINUATION;
 #ifdef HAVE_WCHAR
 				lp = &win->alines[y]->line[i];
 				lp->wcols = 1;

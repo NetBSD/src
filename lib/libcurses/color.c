@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.46 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.46 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -678,6 +678,7 @@ __change_pair(short pair)
 						 */
 						if (*lp->firstchp > x)
 							*lp->firstchp = x;
+
 						if (*lp->lastchp < x)
 							*lp->lastchp = x;
 					}

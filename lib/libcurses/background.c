@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.32 2022/05/05 22:02:17 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.33 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.32 2022/05/05 22:02:17 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.33 2022/10/19 06:09:27 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -172,7 +172,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 	/* get a copy of the old background, we will need it. */
 	obkgrnd.ch = win->bch;
 	obkgrnd.attr = win->battr;
-	obkgrnd.cflags |= CA_BACKGROUND;
+	obkgrnd.cflags = CA_BACKGROUND;
 	obkgrnd.wcols = win->wcols;
 	obkgrnd.nsp = NULL;
 	_cursesi_copy_nsp(win->bnsp, &obkgrnd);
@@ -223,7 +223,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 
 	nbkgrnd.ch = win->bch;
 	nbkgrnd.attr = win->battr;
-	nbkgrnd.cflags |= CA_BACKGROUND;
+	nbkgrnd.cflags = CA_BACKGROUND;
 	nbkgrnd.wcols = win->wcols;
 	nbkgrnd.nsp = NULL;
 	_cursesi_copy_nsp(win->bnsp, &nbkgrnd);

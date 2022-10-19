@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.23 2022/04/12 07:03:04 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.24 2022/10/19 06:09:27 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.23 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.24 2022/10/19 06:09:27 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -291,6 +291,7 @@ loopdone:
 		newx = sx + win->ch_off;
 		if (newx < *lnp->firstchp)
 			*lnp->firstchp = newx;
+
 #ifdef DEBUG
 		{
 			int i;
@@ -298,9 +299,11 @@ loopdone:
 			__CTRACE(__CTRACE_INPUT, "========before=======\n");
 			for (i = 0; i < win->maxx; i++)
 			__CTRACE(__CTRACE_INPUT,
-				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+				    "wins_nwstr: (%d,%d)=(%x,%x,%d,%x,%p)\n",
 				    y, i, win->alines[y]->line[i].ch,
 				    win->alines[y]->line[i].attr,
+				    win->alines[y]->line[i].wcols,
+				    win->alines[y]->line[i].cflags,
 				    win->alines[y]->line[i].nsp);
 		}
 #endif /* DEBUG */
@@ -323,6 +326,8 @@ loopdone:
 						return ERR;
 					}
 					temp1->attr = win->battr;
+					temp1->cflags |= CA_BACKGROUND;
+					temp1->cflags &= ~CA_CONTINUATION;
 					temp1->wcols = 1;
 					__CTRACE(__CTRACE_INPUT,
 					    "wins_nwstr: empty cell(%p)\n", temp1);
@@ -340,10 +345,11 @@ loopdone:
 				__CTRACE(__CTRACE_INPUT, "=====after shift====\n");
 				for (i = 0; i < win->maxx; i++)
 					__CTRACE(__CTRACE_INPUT,
-					    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+					    "wins_nwstr: (%d,%d)=(%x,%x,%x,%p)\n",
 					    y, i,
 					    win->alines[y]->line[i].ch,
 					    win->alines[y]->line[i].attr,
+					    win->alines[y]->line[i].cflags,
 					    win->alines[y]->line[i].nsp);
 				__CTRACE(__CTRACE_INPUT, "=====lstr====\n");
 				for (i = 0; i < len; i++)
@@ -372,10 +378,12 @@ loopdone:
 			__CTRACE(__CTRACE_INPUT, "========after=======\n");
 			for (i = 0; i < win->maxx; i++)
 				__CTRACE(__CTRACE_INPUT,
-				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+				    "wins_nwstr: (%d,%d)=(%x,%x,%d,%x,%p)\n",
 				    y, i,
 				    win->alines[y]->line[i].ch,
 				    win->alines[y]->line[i].attr,
+				    win->alines[y]->line[i].wcols,
+				    win->alines[y]->line[i].cflags,
 				    win->alines[y]->line[i].nsp);
 		}
 #endif /* DEBUG */
