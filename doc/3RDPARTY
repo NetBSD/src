@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1894 2022/10/19 11:54:35 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1895 2022/10/19 13:00:53 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1096,6 +1096,7 @@ markus is very cooperative about it):
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
   (see if there is any difference between the current version of opensshX.Yp1
    and the new opensshZ.Wp1) and apply them.
+- added LDAP from portable openssh.
 - conditionalize login_cap
 - conditionalize bsd_auth
 - restore krb5, krb4, afs, skey
@@ -1112,6 +1113,7 @@ markus is very cooperative about it):
 - always bump major when importing to avoid api problems.
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
 - adjust the DEFAULT_PKCS11_WHITELIST for ssh-agent
+- blocklistd additions
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.1n
