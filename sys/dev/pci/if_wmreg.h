@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.127 2022/07/22 05:23:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.128 2022/10/19 06:37:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1707,7 +1707,7 @@ typedef union nq_txdesc {
 		uint32_t nqtxc_sn;
 		uint32_t nqtxc_cmd;
 		uint32_t nqtxc_mssidx;
-	} nqrx_ctx;
+	} nqtx_ctx;
 } __packed nq_txdesc_t;
 
 
