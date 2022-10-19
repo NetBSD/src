@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.30 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.31 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.30 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.31 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -90,6 +90,9 @@ _cursesi_celleq(__LDATA *x, __LDATA *y)
 
 #ifdef HAVE_WCHAR
 	if (!ret)
+		return 0;
+
+	if ((x->cflags & CA_CONTINUATION) != (y->cflags & CA_CONTINUATION))
 		return 0;
 
 	if (!xnp && !ynp)

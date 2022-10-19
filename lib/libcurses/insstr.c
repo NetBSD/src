@@ -1,4 +1,4 @@
-/*   $NetBSD: insstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $ */
+/*   $NetBSD: insstr.c,v 1.11 2022/10/19 06:09:27 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: insstr.c,v 1.11 2022/10/19 06:09:27 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -186,6 +186,8 @@ winsnstr(WINDOW *win, const char *str, int n)
 	{
 		temp1->ch = (wchar_t)*scp & __CHARTEXT;
 		temp1->attr = win->wattr;
+		temp1->cflags &= ~CA_BACKGROUND;
+		temp1->cflags &= ~CA_CONTINUATION;
 #ifdef HAVE_WCHAR
 		temp1->wcols = 1;
 #endif /* HAVE_WCHAR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.36 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.37 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.36 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.37 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -86,6 +86,7 @@ werase(WINDOW *win)
 
 			sp->ch = bch;
 			sp->cflags |= CA_BACKGROUND;
+			sp->cflags &= ~CA_CONTINUATION;
 			sp->attr = battr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)

@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.19 2022/04/12 07:03:04 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.20 2022/10/19 06:09:27 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.19 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.20 2022/10/19 06:09:27 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -200,6 +200,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		temp1->ch = wch->vals[0];
 		temp1->wcols = x - ex;
 		temp1->nsp = NULL;
+		temp1->cflags |= CA_CONTINUATION;
 		ex++, temp1++;
 	}
 

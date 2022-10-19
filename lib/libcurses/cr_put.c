@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.39 2022/04/10 09:50:44 andvar Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.40 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.39 2022/04/10 09:50:44 andvar Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.40 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -221,6 +221,7 @@ static int
 plod(int cnt, int in_refresh)
 {
 	int	 i, j, k, soutcol, soutline;
+	__LDATA  *csp;
 
 	__CTRACE(__CTRACE_OUTPUT, "plod: cnt=%d, in_refresh=%d\n",
 	    cnt, in_refresh);
@@ -423,16 +424,23 @@ dontcr:while (outline < destline) {
 	 * If destcol is halfway through a multicolumn
 	 * wide char, we have no chance of plodding.
 	 */
-	k = outcol - destcol;
-	if (k < 0)
-		k = -k;
-	if ((k != 0) && (curscr->alines[outline]->line[outcol].wcols > k)) {
+	if (curscr->alines[outline]->line[outcol].cflags & CA_CONTINUATION) {
 		plodcnt = -1;
 		goto out;
 	}
 #endif /* HAVE_WCHAR */
 
 	while (outcol < destcol) {
+		int chw;
+
+		csp = &curscr->alines[outline]->line[outcol];
+#ifdef HAVE_WCHAR
+		chw = csp->wcols;
+#else
+		chw = 1;
+#endif /* HAVE_WCHAR */
+
+
 		/*
 		 * Move one char to the right.  We don't use nd space because
 		 * it's better to just print the char we are moving over.
@@ -442,44 +450,42 @@ dontcr:while (outline < destline) {
 				plodcnt--;
 			else {
 #ifndef HAVE_WCHAR
-				i = curscr->alines[outline]->line[outcol].ch
-				    & __CHARTEXT;
-				if (curscr->alines[outline]->line[outcol].attr
-				    == curscr->wattr)
+				i = csp->ch & __CHARTEXT;
+				if (csp->attr == curscr->wattr)
 					__cputchar(i);
 #else
-				if ((curscr->alines[outline]->line[outcol].attr
-				    & WA_ATTRIBUTES)
+				if ((csp->attr & WA_ATTRIBUTES)
 				    == curscr->wattr) {
-					switch (curscr->alines[outline]->line[outcol].wcols) {
-					case 1:
-						__cputwchar(curscr->alines[outline]->line[outcol].ch);
-						__cursesi_putnsp(curscr->alines[outline]->line[outcol].nsp,
+					if (csp->cflags & CA_CONTINUATION)
+						goto nondes;
+
+					if (csp->wcols >= 1) {
+						__cputwchar(csp->ch);
+						__cursesi_putnsp(csp->nsp,
 								outline,
 								outcol);
 						__CTRACE(__CTRACE_OUTPUT,
 						    "plod: (%d,%d)wcols(%d), "
 						    "putwchar(%x)\n",
 						    outline, outcol,
-						    curscr->alines[outline]->line[outcol].wcols,
-						    curscr->alines[outline]->line[outcol].ch);
-					/*FALLTHROUGH*/
-					case 0:
-						break;
-					default:
-						goto nondes;
+						    csp->wcols, csp->ch);
 					}
+
+					if (csp->wcols == 0)
+						break;
 				}
 #endif /* HAVE_WCHAR */
 				else
 					goto nondes;
 			}
-		else
-	nondes:	if (cursor_right)
-			tputs(cursor_right, 0, plodput);
-		else
-			plodput(' ');
-		outcol++;
+		else {
+		nondes:	if (cursor_right)
+				tputs(cursor_right, 0, plodput);
+			else
+				plodput(' ');
+		}
+
+		outcol += chw;
 		if (plodcnt < 0)
 			goto out;
 	}

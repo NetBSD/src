@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.64 2022/05/19 07:41:26 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.65 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.64 2022/05/19 07:41:26 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.65 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -293,6 +293,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 	 */
 	if (newx < *(*lp)->firstchp)
 		*(*lp)->firstchp = newx;
+
 	if (newx > *(*lp)->lastchp)
 		*(*lp)->lastchp = newx;
 	__CTRACE(__CTRACE_INPUT, "ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
@@ -311,7 +312,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 #endif
 	}
 
-	(*lp)->line[*x].cflags &= ~ CA_BACKGROUND;
+	(*lp)->line[*x].cflags &= ~ (CA_BACKGROUND | CA_CONTINUATION);
 
 	if (attributes & __COLOR)
 		(*lp)->line[*x].attr =
@@ -421,6 +422,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		newx = *x + win->ch_off;
 		if (newx < *(*lnp)->firstchp)
 			*(*lnp)->firstchp = newx;
+
 		if (newx > *(*lnp)->lastchp)
 			*(*lnp)->lastchp = newx;
 		__touchline(win, *y, *x, *x);
@@ -451,7 +453,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			    *y, sx);
 			tp = &win->alines[*y]->line[sx];
 			tp->ch = win->bch;
-			tp->cflags |= CA_BACKGROUND;
+			tp->cflags = CA_BACKGROUND;
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
 
@@ -483,12 +485,14 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		newx = *x + win->ch_off;
 		if (newx < *(*lnp)->firstchp)
 			*(*lnp)->firstchp = newx;
+
 		for (tp = lp; *x < win->maxx; tp++, (*x)++) {
 			tp->ch = win->bch;
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
 			tp->attr = win->battr;
 			tp->wcols = win->wcols;
+			tp->cflags = CA_BACKGROUND;
 		}
 		newx = win->maxx - 1 + win->ch_off;
 		if (newx > *(*lnp)->lastchp)
@@ -510,13 +514,14 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	newx = *x + win->ch_off;
 	if (newx < *(*lnp)->firstchp)
 		*(*lnp)->firstchp = newx;
+
 	if (lp->nsp) {
 		__cursesi_free_nsp(lp->nsp);
 		lp->nsp = NULL;
 	}
 
 	lp->ch = wch->vals[0];
-	lp->cflags &= ~CA_BACKGROUND;
+	lp->cflags &= ~ (CA_BACKGROUND | CA_CONTINUATION);
 
 	attributes = (win->wattr | wch->attributes)
 		& (WA_ATTRIBUTES & ~__COLOR);
@@ -555,7 +560,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	    sx + 1, sx + cw - 1);
 	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, win->maxx = %d\n",
 	    *x, win->maxx);
-	for (tp = lp + 1, *x = sx + 1; *x - sx <= cw - 1; tp++, (*x)++) {
+	for (tp = lp + 1, *x = sx + 1, i = cw - 1; i > 0; tp++, (*x)++, i--) {
+		__CTRACE(__CTRACE_INPUT,
+		    "_cursesi_addwchar: setting continuation at x %d\n", *x);
 		if (tp->nsp) {
 			__cursesi_free_nsp(tp->nsp);
 			tp->nsp = NULL;
@@ -564,8 +571,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		tp->attr = lp->attr & WA_ATTRIBUTES;
 		/* Mark as "continuation" cell */
 		tp->cflags |= CA_CONTINUATION;
+		tp->cflags &= ~ CA_BACKGROUND;
+		tp->wcols = i;
 	}
-
 
 	if (*x >= win->maxx) {
 		__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: do line wrap\n");
@@ -590,7 +598,6 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		(*lnp) = win->alines[*y];
 		*(*lnp)->lastchp = win->ch_off + win->maxx - 1;
 	} else {
-
 		/* clear the remaining of the current character */
 		if (*x && *x < win->maxx) {
 			ex = sx + cw;
@@ -601,7 +608,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 				    "remaining of current char (%d,%d)nn",
 				    *y, ex);
 				tp->ch = win->bch;
-				tp->cflags |= CA_BACKGROUND;
+				tp->cflags = CA_BACKGROUND;
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;
