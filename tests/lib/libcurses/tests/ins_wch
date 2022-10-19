@@ -11,10 +11,13 @@ call OK mvaddstr 10 75 "AAAA"
 call OK refresh
 
 # test shifting of above added characters, test do not wrap property
-# XXXX output is wrong - we add 2 2 column chars so no A's should be
-# XXXX left but ins_wch only spaces out 2 of them leaving 2 A's.
 call OK move 10 10
+# these two inserts should result in one A at the end of the line
 call OK ins_wch $ch1
+call OK ins_wch $ch1
+call OK refresh
+call2 10 10 getyx STDSCR
+# This should push the last A off
 call OK ins_wch $ch1
 call OK refresh
 call2 10 10 getyx STDSCR
