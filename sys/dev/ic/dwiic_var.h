@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_var.h,v 1.2 2018/09/26 18:32:51 jakllsch Exp $ */
+/* $NetBSD: dwiic_var.h,v 1.3 2022/10/19 22:34:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ struct dwiic_softc {
 		int		flags;
 		volatile int	error;
 	} sc_i2c_xfer;
+
+	volatile bool		sc_attached;
 };
 
 bool		dwiic_attach(struct dwiic_softc *);
