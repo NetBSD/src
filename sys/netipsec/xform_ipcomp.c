@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.74 2022/05/22 11:40:29 riastradh Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.75 2022/10/19 21:28:02 christos Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.74 2022/05/22 11:40:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.75 2022/10/19 21:28:02 christos Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -573,10 +573,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		}
 		ipcomp->comp_flags = 0;
 
-		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0)
-			cpi = sav->alg_enc;
-		else
-			cpi = ntohl(sav->spi) & 0xffff;
+		cpi = ntohl(sav->spi) & 0xffff;
 		ipcomp->comp_cpi = htons(cpi);
 
 		/* Fix Next Protocol in IPv4/IPv6 header */
