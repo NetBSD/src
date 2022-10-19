@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.277 2022/10/11 09:51:47 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.278 2022/10/19 21:28:02 christos Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.277 2022/10/11 09:51:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.278 2022/10/19 21:28:02 christos Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -8765,10 +8765,7 @@ key_savlut_writer_insert_head(struct secasvar *sav)
 	KASSERT(mutex_owned(&key_sad.lock));
 	KASSERT(!sav->savlut_added);
 
-	if (sav->sah->saidx.proto == IPPROTO_IPCOMP)
-		hash_key = sav->alg_comp;
-	else
-		hash_key = sav->spi;
+	hash_key = sav->spi;
 
 	hash = key_savluthash(&sav->sah->saidx.dst.sa,
 	    sav->sah->saidx.proto, hash_key, key_sad.savlutmask);
