@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.193 2022/10/12 10:25:41 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.194 2022/10/19 15:01:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -859,10 +859,13 @@
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD __BIT(15) /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF	      __BIT(16) /* Virtualized GIF */
 #define CPUID_AMD_SVM_GMET	      __BIT(17) /* Guest Mode Execution Trap */
+#define CPUID_AMD_SVM_X2AVIC	      __BIT(18) /* Virt. Intr. Ctrl 4 x2APIC */
 #define CPUID_AMD_SVM_SSSCHECK	      __BIT(19)  /* Shadow Stack restrictions */
 #define CPUID_AMD_SVM_SPEC_CTRL	      __BIT(20) /* SPEC_CTRL virtualization */
 #define CPUID_AMD_SVM_HOST_MCE_OVERRIDE __BIT(23) /* #MC intercept */
 #define CPUID_AMD_SVM_TLBICTL	      __BIT(24) /* TLB Intercept Control */
+#define CPUID_AMD_SVM_VNMI	      __BIT(25) /* NMI Virtualization */
+#define CPUID_AMD_SVM_IBSVIRT	      __BIT(26) /* IBS Virtualization */
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
@@ -871,9 +874,9 @@
 	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"	"\22" "GMET"	"\23B18"	"\24SSSCHECK"	\
+	"\21" "VGIF"	"\22" "GMET"	"\23x2AVIC"	"\24SSSCHECK"	\
 	"\25" "SPEC_CTRL"			"\30HOST_MCE_OVERRIDE"	\
-	"\31" "TLBICTL"	"\32B25"	"\32B26"	"\32B27"	\
+	"\31" "TLBICTL"	"\32VNMI"	"\33IBSVIRT"	"\34B27"	\
 	"\35B28"
 
 /*
