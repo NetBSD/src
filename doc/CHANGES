@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2922 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2923 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -695,10 +695,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	luna68k: Improve framebuffer performance. [isaki 20220925]
 	tzdata: updated to 2022d (using the 2022dgtz fork) [kre 20220928]
 	swwdog(4): Enable in GENERIC kernels. [riastradh 20220929]
-	wbsio(4): Add Nuvoton NCT6799D support. [msaitoh 20221001]
 	amdsmn(4), amdzentemp(4): Add support for AMD family 17h/6xh and
 		19h/6xh. [msaitoh 20221001]
-	wbsio(4),lm(4): Add NCT6799D support. [msaitoh 20221001]
+	wbsio(4),lm(4): Add Nuvoton NCT6799D support. [msaitoh 20221001]
 	dhcp: Patch to version 4.4.3-P1. [christos 20221005]
 	OpenSSH: Import 9.1. [christos 20221005]
 	postfix(1): Import version 3.7.3. [christos 20221008]
