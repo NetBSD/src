@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.8 2021/11/14 20:51:57 andvar Exp $ */
+/* $NetBSD: dwiic.c,v 1.9 2022/10/19 22:34:10 riastradh Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,9 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.8 2021/11/14 20:51:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.9 2022/10/19 22:34:10 riastradh Exp $");
 
 #include <sys/param.h>
+
+#include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -195,6 +197,8 @@ dwiic_attach(struct dwiic_softc *sc)
 	sc->sc_iba.iba_tag = &sc->sc_i2c_tag;
 
 	/* config_found_ia for "i2cbus" is done in the bus-attachment glue */
+
+	atomic_store_release(&sc->sc_attached, true);
 
 	return 1;
 }
@@ -586,6 +590,17 @@ dwiic_intr(void *arg)
 {
 	struct dwiic_softc *sc = arg;
 	uint32_t en, stat;
+
+	/*
+	 * Give up if attach hasn't succeeded.  If it failed, nothing
+	 * to do here.  If it is still ongoing and simply hasn't yet
+	 * succeeded, interrupts from the device are masked -- so this
+	 * interrupt must be shared with another driver -- and any
+	 * interrupts applicable to us will be delivered once
+	 * interrupts from the device are unmasked in dwiic_i2c_exec.
+	 */
+	if (!atomic_load_acquire(&sc->sc_attached))
+		return 0;
 
 	en = dwiic_read(sc, DW_IC_ENABLE);
 	/* probably for the other controller */
