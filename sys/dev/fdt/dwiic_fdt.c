@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.5 2022/10/19 22:28:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.5 2022/10/19 22:28:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,8 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	dwiic_attach(&sc->sc_dwiic);
+	if (!dwiic_attach(&sc->sc_dwiic))
+		goto out;
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 

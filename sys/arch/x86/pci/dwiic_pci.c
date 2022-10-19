@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.8 2021/10/27 19:04:03 msaitoh Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.9 2022/10/19 22:28:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.8 2021/10/27 19:04:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.9 2022/10/19 22:28:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,8 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 		aprint_verbose_dev(self, "no matching ACPI node\n");
 	}
 
-	dwiic_attach(&sc->sc_dwiic);
+	if (!dwiic_attach(&sc->sc_dwiic))
+		goto out;
 
 	config_found(self, &sc->sc_dwiic.sc_iba, iicbus_print, CFARGS_NONE);
 
