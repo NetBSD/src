@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.35 2022/04/26 22:40:32 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.36 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.35 2022/04/26 22:40:32 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.36 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -350,6 +350,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		lp = win->alines[i];
 		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
 			sp->attr = 0;
+			sp->cflags = CA_BACKGROUND;
 #ifndef HAVE_WCHAR
 			sp->ch = win->bch;
 #else

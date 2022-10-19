@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: insch.c,v 1.28 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: insch.c,v 1.28 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -106,8 +106,14 @@ winsch(WINDOW *win, chtype ch)
 		temp1--, temp2--;
 	}
 	temp1->ch = (wchar_t)ch & __CHARTEXT;
-	if (temp1->ch == ' ')
+	if (temp1->ch == win->bch) {
 		temp1->ch = win->bch;
+		temp1->cflags &= ~CA_CONTINUATION;
+		temp1->cflags |= CA_BACKGROUND;
+	} else {
+		temp1->cflags &= ~ CA_BACKGROUND;
+	}
+
 	temp1->attr = (attr_t) ch & __ATTRIBUTES;
 	if (temp1->attr & __COLOR)
 		temp1->attr |= (win->battr & ~__COLOR);
