@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.764 2022/09/08 02:40:10 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.765 2022/10/19 06:37:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.764 2022/09/08 02:40:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.765 2022/10/19 06:37:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -8922,12 +8922,12 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	 * however it does not cause problems.
 	 */
 	/* Fill in the context descriptor. */
-	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_vl_len =
+	txq->txq_nq_descs[txq->txq_next].nqtx_ctx.nqtxc_vl_len =
 	    htole32(vl_len);
-	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_sn = 0;
-	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_cmd =
+	txq->txq_nq_descs[txq->txq_next].nqtx_ctx.nqtxc_sn = 0;
+	txq->txq_nq_descs[txq->txq_next].nqtx_ctx.nqtxc_cmd =
 	    htole32(cmdc);
-	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_mssidx =
+	txq->txq_nq_descs[txq->txq_next].nqtx_ctx.nqtxc_mssidx =
 	    htole32(mssidx);
 	wm_cdtxsync(txq, txq->txq_next, 1, BUS_DMASYNC_PREWRITE);
 	DPRINTF(sc, WM_DEBUG_TX,
