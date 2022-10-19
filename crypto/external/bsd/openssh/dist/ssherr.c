@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.9 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.10 2022/10/19 11:54:02 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -154,7 +154,6 @@ ssh_err(int n)
 		{
 			static char buf[1024];
 			snprintf(buf, sizeof(buf), "unknown error %d", n);
-			sleep(1000);
 			return buf;
 		}
 	}
