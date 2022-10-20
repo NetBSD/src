@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.6 2022/08/06 20:16:42 ryo Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.7 2022/10/20 11:38:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.6 2022/08/06 20:16:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.7 2022/10/20 11:38:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -153,9 +153,6 @@ fdt_memory_remove_reserved(uint64_t min_addr, uint64_t max_addr)
 		for (child = OF_child(phandle); child; child = OF_peer(child)) {
 			bus_addr_t addr;
 			bus_size_t size;
-
-			if (!of_hasprop(child, "no-map"))
-				continue;
 
 			if (fdtbus_get_reg(child, 0, &addr, &size) != 0)
 				continue;
