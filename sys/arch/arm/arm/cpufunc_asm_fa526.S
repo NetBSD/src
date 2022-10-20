@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.7 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.8 2022/10/20 06:58:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@ ENTRY(fa526_setttb)
 	mcr	p15, 0, r2, c7, c5, 6	/* invalidate BTB */
 	mcr	p15, 0, r2, c7, c10, 4	/* drain write and fill buffer */
 1:
-	mcr	p15, 0, r0, c2, c0, 0	/* Write the TTB */ 
+	mcr	p15, 0, r0, c2, c0, 0	/* Write the TTB */
 
 	/* If we have updated the TTB we must flush the TLB */
 	mcrne	p15, 0, r1, c8, c7, 0	/* invalidate I+D TLB */

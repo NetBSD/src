@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.7 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.8 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  *
  * ARM6/ARM7 assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
@@ -71,7 +71,7 @@ ENTRY(arm67_setttb)
  * TLB functions
  */
 ENTRY(arm67_tlb_flush)
-	mcr	p15, 0, r0, c5, c0, 0 
+	mcr	p15, 0, r0, c5, c0, 0
 	mov	pc, lr
 
 ENTRY(arm67_tlb_purge)

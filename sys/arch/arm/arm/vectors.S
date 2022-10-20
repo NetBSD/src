@@ -1,9 +1,9 @@
-/*	$NetBSD: vectors.S,v 1.10 2013/09/06 21:25:34 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.11 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
  * Copyright (C) 1994 Brini
- * All rights reserved. 
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,10 +18,10 @@
  *	This product includes software developed by Brini.
  * 4. The name of Brini may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL BRINI BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
@@ -50,7 +50,7 @@
 #if defined(CPU_ARMV7) || defined(CPU_ARM11) || defined(ARM_HAS_VBAR)
 	/*
 	 * ARMv[67] processors with the Security Extension have the VBAR
-	 * which redirects the low vector to any 32-byte aligned address. 
+	 * which redirects the low vector to any 32-byte aligned address.
 	 * Since we are in kernel, we can just do a relative branch to the
 	 * exception code and avoid the intermediate load.
 	 */

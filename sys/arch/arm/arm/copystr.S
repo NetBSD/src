@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.13 2020/06/30 16:20:00 maxv Exp $	*/
+/*	$NetBSD: copystr.S,v 1.14 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,14 +40,14 @@
 
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
-	
+
 #include "assym.h"
 
 #include <machine/asm.h>
 
 #include <arm/locore.h>
 
-RCSID("$NetBSD: copystr.S,v 1.13 2020/06/30 16:20:00 maxv Exp $")
+RCSID("$NetBSD: copystr.S,v 1.14 2022/10/20 06:58:38 skrll Exp $")
 
 #include <sys/errno.h>
 

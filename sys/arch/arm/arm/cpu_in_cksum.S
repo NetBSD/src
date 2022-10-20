@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.13 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,8 +40,8 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.12 2018/01/24 09:04:44 skrll Exp $")
-	
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.13 2022/10/20 06:58:38 skrll Exp $")
+
 #include "assym.h"
 
 /*
@@ -61,7 +61,7 @@ RCSID("$NetBSD: cpu_in_cksum.S,v 1.12 2018/01/24 09:04:44 skrll Exp $")
 /* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *, int, int, uint32_t) */
 ENTRY(cpu_in_cksum)
 	push	{r4-r11,lr}
-	
+
 	mov	r8, r3			/* Accumulate sum in r8 */
 	mov	r9, r1			/* save len in r9 */
 	mov	ip, r0			/* set ip to the current mbuf */
@@ -78,7 +78,7 @@ ENTRY(cpu_in_cksum)
 	b	.Lin_cksum_whoops
 
 .Lin_cksum_skip_done:
-	add	r0, r2, r0		/* data += offset (offset is < 0) */ 
+	add	r0, r2, r0		/* data += offset (offset is < 0) */
 	add	r0, r0, r1		/* data += length of mbuf */
 					/* data == start of data to cksum */
 	rsb	r1, r2, #0x00		/* length = remainder of mbuf to read */

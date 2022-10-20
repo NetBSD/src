@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.24 2018/01/17 02:37:32 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.25 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  *
  * XScale assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
@@ -140,7 +140,7 @@ ENTRY(xscale_setttb)
 #else
 	ldr	r3, .Lblock_userspace_access
 	ldr	r2, [r3]
-	orr	ip, r2, #1 
+	orr	ip, r2, #1
 	str	ip, [r3]
 #endif
 	cmp	r1, #0			/* flush cache/TLB? */
@@ -155,7 +155,7 @@ ENTRY(xscale_setttb)
 	ldmfd	sp!, {r0-r3, lr}
 	cmp	r0, #1
 
-1:	/* Write the TTB */ 
+1:	/* Write the TTB */
 	mcr	p15, 0, r0, c2, c0, 0
 
 	beq	2f			/*   nope, so don't */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.10 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.11 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -34,7 +34,7 @@
  *
  * ARM8 assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>

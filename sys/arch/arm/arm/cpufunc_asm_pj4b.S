@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.13 2017/01/07 16:19:28 kiyohara Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.14 2022/10/20 06:58:38 skrll Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -81,7 +81,7 @@ ENTRY(pj4b_config)
 	orr	r0, r0, #(1 << 25)	@ Intervention Interleave disable
 	orr	r0, r0, #(1 << 27)	@ Critical word 1st sequencing dis.
 	orr	r0, r0, #(1 << 29)	@ Disable MO device R/W
-	orr	r0, r0, #(1 << 30)	@ L1 cache strict round-robin 
+	orr	r0, r0, #(1 << 30)	@ L1 cache strict round-robin
 	orr	r0, r0, #(1 << 31)	@ Enable write evict
 	mcr	p15, 1, r0, c15, c1, 2
 
@@ -91,7 +91,7 @@ ENTRY(pj4b_config)
 	tst	ip, #PJ4B_MPIDR_MP
 	beq	1f				@ if not set, not a MPCORE
 	tst	ip, #PJ4B_MPIDR_U
-	bne	1f				@ if set, uni-processor system 
+	bne	1f				@ if set, uni-processor system
 	orr	r0, r0, #(PJ4B_AUXFMC0_SMPNAMP)	@ enable SMP/nAMP
 	orr	r0, r0, #(PJ4B_AUXFMC0_FW)	@ enable maintenance bcast
 1:
