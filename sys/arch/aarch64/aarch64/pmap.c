@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 2022/10/15 11:07:38 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141 2022/10/20 06:47:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2022/10/20 06:47:29 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -844,7 +844,7 @@ pmap_extract_coherency(struct pmap *pm, vaddr_t va, paddr_t *pap,
 			 * have no physical memory haven't been mapped.
 			 * fast lookup by using the S1E1R/PAR_EL1 registers.
 			 */
-			register_t s = daif_disable(DAIF_I|DAIF_F);
+			register_t s = daif_disable(DAIF_I | DAIF_F);
 			reg_s1e1r_write(va);
 			isb();
 			uint64_t par = reg_par_el1_read();
@@ -1064,7 +1064,7 @@ _pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t refmod,
 	pt_entry_t xn;
 
 	masked = prot & refmod;
-	pte &= ~(LX_BLKPAG_OS_RWMASK|LX_BLKPAG_AF|LX_BLKPAG_DBM|LX_BLKPAG_AP);
+	pte &= ~(LX_BLKPAG_OS_RWMASK | LX_BLKPAG_AF | LX_BLKPAG_DBM | LX_BLKPAG_AP);
 
 	/*
 	 * keep actual prot in the pte as OS_{READ|WRITE} for ref/mod emulation,
@@ -1072,9 +1072,9 @@ _pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t refmod,
 	 */
 	pte |= LX_BLKPAG_OS_READ;	/* a valid pte can always be readable */
 	if (prot & VM_PROT_WRITE)
-		pte |= LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM;
+		pte |= LX_BLKPAG_OS_WRITE | LX_BLKPAG_DBM;
 
-	switch (masked & (VM_PROT_READ|VM_PROT_WRITE)) {
+	switch (masked & (VM_PROT_READ | VM_PROT_WRITE)) {
 	case 0:
 	default:
 		/*
@@ -1092,7 +1092,7 @@ _pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t refmod,
 		pte |= LX_BLKPAG_AP_RO;
 		break;
 	case VM_PROT_WRITE:
-	case VM_PROT_READ|VM_PROT_WRITE:
+	case VM_PROT_READ | VM_PROT_WRITE:
 		/* fully readable and writable */
 		pte |= LX_BLKPAG_AF;
 		pte |= LX_BLKPAG_AP_RW;
@@ -1100,7 +1100,7 @@ _pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t refmod,
 	}
 
 	/* executable for kernel or user? first set never exec both */
-	pte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	pte |= (LX_BLKPAG_UXN | LX_BLKPAG_PXN);
 	/* and either to executable */
 	xn = user ? LX_BLKPAG_UXN : LX_BLKPAG_PXN;
 	if (prot & VM_PROT_EXECUTE)
@@ -1115,7 +1115,7 @@ _pmap_pte_adjust_cacheflags(pt_entry_t pte, u_int flags)
 
 	pte &= ~LX_BLKPAG_ATTR_MASK;
 
-	switch (flags & (PMAP_CACHE_MASK|PMAP_DEV_MASK)) {
+	switch (flags & (PMAP_CACHE_MASK | PMAP_DEV_MASK)) {
 	case PMAP_DEV_NP ... PMAP_DEV_NP | PMAP_CACHE_MASK:
 		pte |= LX_BLKPAG_ATTR_DEVICE_MEM_NP;	/* Device-nGnRnE */
 		break;
@@ -1348,7 +1348,7 @@ _pmap_protect_pv(struct pmap_page *pp, struct pv_entry *pv, vm_prot_t prot)
 
 	/* get prot mask from pte */
 	pteprot = VM_PROT_READ;	/* a valid pte can always be readable */
-	if ((pte & (LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM)) != 0)
+	if ((pte & (LX_BLKPAG_OS_WRITE | LX_BLKPAG_DBM)) != 0)
 		pteprot |= VM_PROT_WRITE;
 	if (l3pte_executable(pte, user))
 		pteprot |= VM_PROT_EXECUTE;
@@ -2071,9 +2071,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 * read permission is treated as an access permission internally.
 	 * require to add PROT_READ even if only PROT_WRITE or PROT_EXEC
 	 */
-	if (prot & (VM_PROT_WRITE|VM_PROT_EXECUTE))
+	if (prot & (VM_PROT_WRITE | VM_PROT_EXECUTE))
 		prot |= VM_PROT_READ;
-	if (flags & (VM_PROT_WRITE|VM_PROT_EXECUTE))
+	if (flags & (VM_PROT_WRITE | VM_PROT_EXECUTE))
 		flags |= VM_PROT_READ;
 
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
@@ -2434,7 +2434,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		return;
 	}
 
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	if ((prot & (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)) ==
 	    VM_PROT_NONE) {
 		pmap_page_remove(pp, prot);
 	} else {
@@ -2549,7 +2549,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	 * If DBM is 1, it is considered a writable page.
 	 */
 	pmap_prot = VM_PROT_READ;
-	if ((pte & (LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM)) != 0)
+	if ((pte & (LX_BLKPAG_OS_WRITE | LX_BLKPAG_DBM)) != 0)
 		pmap_prot |= VM_PROT_WRITE;
 
 	if (l3pte_executable(pte, pm != pmap_kernel()))
@@ -2559,7 +2559,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	    va, pmap_prot, accessprot, 0);
 
 	/* ignore except read/write */
-	accessprot &= (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	accessprot &= (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 
 	/* PROT_EXEC requires implicit PROT_READ */
 	if (accessprot & VM_PROT_EXECUTE)
