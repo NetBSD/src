@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.96 2022/10/20 07:13:45 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.97 2022/10/20 07:16:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.96 2022/10/20 07:13:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.97 2022/10/20 07:16:19 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -662,7 +662,6 @@ initarm(void *arg)
 		    "loading in freelist %d\n", spa, epa, VM_FREELIST_DEFAULT);
 
 		uvm_page_physload(spg, epg, spg, epg, VM_FREELIST_DEFAULT);
-
 	}
 
 	return sp;
