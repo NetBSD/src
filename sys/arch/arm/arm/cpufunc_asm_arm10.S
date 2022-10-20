@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.11 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm10.S,v 1.12 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 ARM Limited
@@ -30,7 +30,7 @@
  *
  * ARM10 assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include <machine/asm.h>
 #include <arm/locore.h>
 #include "assym.h"

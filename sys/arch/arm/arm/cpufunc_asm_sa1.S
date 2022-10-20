@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.15 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.16 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  *
  * SA-1 assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
@@ -56,7 +56,7 @@ ENTRY(sa1_setttb)
 #else
 	ldr	r3, .Lblock_userspace_access
 	ldr	r2, [r3]
-	orr	ip, r2, #1 
+	orr	ip, r2, #1
 	str	ip, [r3]
 #endif
 	cmp	r1, #0
@@ -68,7 +68,7 @@ ENTRY(sa1_setttb)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
 	cmp	r0, #1
 
-1:	/* Write the TTB */ 
+1:	/* Write the TTB */
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */

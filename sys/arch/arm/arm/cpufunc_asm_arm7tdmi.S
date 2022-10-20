@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.7 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.8 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 John Fremlin
@@ -33,7 +33,7 @@
  *
  * ARM7TDMI assembly functions for CPU / MMU / TLB specific operations
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>

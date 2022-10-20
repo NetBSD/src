@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.22 2020/12/11 09:14:19 dholland Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.23 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -52,14 +52,14 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.22 2020/12/11 09:14:19 dholland Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.23 2022/10/20 06:58:38 skrll Exp $")
 
 	.text
 	.align	0
 
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11}
-		
+
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 #define HELLOCPP #
 #define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
@@ -78,7 +78,7 @@ RCSID("$NetBSD: bcopyinout.S,v 1.22 2020/12/11 09:14:19 dholland Exp $")
  * r4-r11 are scratch
  */
 ENTRY(copyin)
-	/* Quick exit if length is zero */	
+	/* Quick exit if length is zero */
 	teq	r2, #0
 	moveq	r0, #0
 	RETc(eq)
@@ -291,7 +291,7 @@ END(copyin)
  */
 
 ENTRY(copyout)
-	/* Quick exit if length is zero */	
+	/* Quick exit if length is zero */
 	teq	r2, #0
 	moveq	r0, #0
 	moveq	pc, lr
@@ -494,7 +494,7 @@ END(copyout)
  */
 
 ENTRY(kcopy)
-	/* Quick exit if length is zero */	
+	/* Quick exit if length is zero */
 	teq	r2, #0
 	moveq	r0, #0
 	moveq	pc, lr
