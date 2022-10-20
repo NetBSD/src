@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.11 2013/12/01 02:54:33 joerg Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.12 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.11 2013/12/01 02:54:33 joerg Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.12 2022/10/20 06:58:38 skrll Exp $")
 
 	.text
 	.align	0
@@ -292,10 +292,10 @@ ENTRY(copyin)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lcopyin_bad1:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyin_bad1_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -353,10 +353,10 @@ ENTRY(copyin)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lcopyin_bad2:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyin_bad2_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -414,10 +414,10 @@ ENTRY(copyin)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lcopyin_bad3:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyin_bad3_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -445,7 +445,7 @@ ENTRY(copyin)
 	pop	{r4-r7}
 	mov	r3, #0x00
 	adds	r2, r2, #0x04
-	RETc(eq)	
+	RETc(eq)
 .Lcopyin_l4_2:
 	rsbs	r2, r2, #0x03
 	addne	pc, pc, r2, lsl #3
@@ -732,10 +732,10 @@ ENTRY(copyout)
 	strt	r6, [r1], #0x04
 	strt	r7, [r1], #0x04
 .Lcopyout_bad1:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyout_bad1_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -793,10 +793,10 @@ ENTRY(copyout)
 	strt	r6, [r1], #0x04
 	strt	r7, [r1], #0x04
 .Lcopyout_bad2:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyout_bad2_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -854,10 +854,10 @@ ENTRY(copyout)
 	strt	r6, [r1], #0x04
 	strt	r7, [r1], #0x04
 .Lcopyout_bad3:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lcopyout_bad3_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -1150,10 +1150,10 @@ ENTRY(kcopy)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lkcopy_bad1:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lkcopy_bad1_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -1211,10 +1211,10 @@ ENTRY(kcopy)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lkcopy_bad2:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lkcopy_bad2_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -1272,10 +1272,10 @@ ENTRY(kcopy)
 	str	r6, [r1], #0x04
 	str	r7, [r1], #0x04
 .Lkcopy_bad3:
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lkcopy_bad3_loop16
 
-	adds	r2, r2, #0x10         
+	adds	r2, r2, #0x10
 	popeq	{r4-r7}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
@@ -1303,7 +1303,7 @@ ENTRY(kcopy)
 	pop	{r4-r7}
 	mov	r3, #0x00
 	adds	r2, r2, #0x04
-	RETc(eq)	
+	RETc(eq)
 .Lkcopy_bad_endgame2:
 	rsbs	r2, r2, #0x03
 	addne	pc, pc, r2, lsl #3

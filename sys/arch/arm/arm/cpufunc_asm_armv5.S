@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.8 2021/10/07 09:57:27 rin Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.9 2022/10/20 06:58:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -228,7 +228,7 @@ ENTRY(armv5_dcache_wbinv_all)
 
 /*
  * Parameters for the cache cleaning code.  Note that the order of these
- * four variables is assumed in the code above.  Hence the reason for 
+ * four variables is assumed in the code above.  Hence the reason for
  * declaring them in the assembler file.
  */
 	.align 0
