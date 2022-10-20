@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.12 2022/10/18 04:39:38 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.13 2022/10/20 07:18:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 static inline void
 pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 {
-	__asm __volatile("fence\trw,rw; fence.i");
+	__asm __volatile("fence\trw,rw; fence.i" ::: "memory");
 }
 
 #include <uvm/pmap/tlb.h>
@@ -158,7 +158,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 static inline void
 pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *kc)
 {
-	__asm __volatile("fence\trw,rw; fence.i");
+	__asm __volatile("fence\trw,rw; fence.i" ::: "memory");
 }
 
 /*
