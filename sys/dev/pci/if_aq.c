@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.37 2022/10/17 10:39:27 riastradh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.38 2022/10/21 09:29:32 riastradh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.37 2022/10/17 10:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.38 2022/10/21 09:29:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -4871,7 +4871,6 @@ aq_stop_locked(struct ifnet *ifp, bool disable)
 	struct aq_softc * const sc = ifp->if_softc;
 	int i;
 
-	ASSERT_SLEEPABLE();
 	KASSERT(IFNET_LOCKED(ifp));
 	AQ_LOCKED(sc);
 
