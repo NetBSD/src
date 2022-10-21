@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.97 2022/10/20 07:16:19 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.98 2022/10/21 05:51:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.97 2022/10/20 07:16:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.98 2022/10/21 05:51:08 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -609,7 +609,7 @@ initarm(void *arg)
 	fdt_probe_rndseed(&rndseed_start, &rndseed_end);
 	fdt_probe_efirng(&efirng_start, &efirng_end);
 
-	fdt_memory_remove_reserved(mem_start, mem_end);
+	fdt_memory_remove_reserved(memory_start, memory_end);
 
 	/*
 	 * Populate bootconfig structure for the benefit of dodumpsys
