@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.66 2022/10/21 12:11:29 uwe Exp $
+.\" $NetBSD: ctime.3,v 1.67 2022/10/21 12:28:43 uwe Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -264,7 +264,8 @@ of 0 means the day preceding the current month, and
 .Fa tm_mon
 of \-2 means 2 months before January of
 .Fa tm_year .
-(A positive or zero value for
+.It
+A positive or zero value for
 .Fa tm_isdst
 causes
 .Fn mktime
