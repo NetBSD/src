@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.62 2021/05/26 20:19:51 christos Exp $ */
+/* $NetBSD: date.c,v 1.63 2022/10/22 20:11:43 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.62 2021/05/26 20:19:51 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.63 2022/10/22 20:11:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,15 @@ __RCSID("$NetBSD: date.c,v 1.62 2021/05/26 20:19:51 christos Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+#if !HAVE_NBTOOL_CONFIG_H
+#include <utmpx.h>
+#endif
 
 #include "extern.h"
 
 static time_t tval;
 static int aflag, jflag, rflag, nflag;
+static char *fmt;
 
 __dead static void badcanotime(const char *, const char *, size_t);
 static void setthetime(const char *);
@@ -87,7 +91,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ad:jnr:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:jnr:u")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
@@ -106,6 +110,9 @@ main(int argc, char *argv[])
 			errx(EXIT_FAILURE,
 			    "-d not supported in the tool version");
 #endif
+		case 'f':
+			fmt = optarg;
+			break;
 		case 'j':		/* don't set time */
 			jflag = 1;
 			break;
@@ -152,7 +159,8 @@ main(int argc, char *argv[])
 	if (*argv) {
 		setthetime(*argv);
 		++argv;
-	}
+	} else if (fmt)
+		usage();
 
 	if (*argv && **argv == '+')
 		format = *argv;
@@ -195,6 +203,22 @@ setthetime(const char *p)
 	size_t len;
 	int yearset;
 
+	if ((lt = localtime(&tval)) == NULL)
+		err(EXIT_FAILURE, "%lld: localtime", (long long)tval);
+
+	lt->tm_isdst = -1;			/* Divine correct DST */
+
+	if (fmt) {
+		t = strptime(p, fmt, lt);
+		if (t == NULL) {
+			warnx("Failed conversion of ``%s''"
+			    " using format ``%s''\n", p, fmt);
+		} else if (*t != '\0')
+			warnx("Ignoring %zu extraneous"
+				" characters in date string (%s)",
+				strlen(t), t);
+		goto setit;
+	}
 	for (t = p, dot = NULL; *t; ++t) {
 		if (*t == '.') {
 			if (dot == NULL) {
@@ -207,10 +231,6 @@ setthetime(const char *p)
 		}
 	}
 
-	if ((lt = localtime(&tval)) == NULL)
-		err(EXIT_FAILURE, "%lld: localtime", (long long)tval);
-
-	lt->tm_isdst = -1;			/* Divine correct DST */
 
 	if (dot != NULL) {			/* .ss */
 		len = strlen(dot);
@@ -325,11 +345,11 @@ setthetime(const char *p)
 		    badcanotime("Not enough digits", p, strlen(p) - len);
 	    }
 	}
-
+setit:
 	/* convert broken-down time to UTC clock time */
 	if ((new_time = mktime(lt)) == -1) {
 		/* Can this actually happen? */
-		err(EXIT_FAILURE, "%s: mktime", op);
+		err(EXIT_FAILURE, "mktime");
 	}
 
 	/* if jflag is set, don't actually change the time, just return */
@@ -340,6 +360,12 @@ setthetime(const char *p)
 
 	/* set the time */
 #ifndef HAVE_NBTOOL_CONFIG_H
+	struct utmpx utx;
+	memset(&utx, 0, sizeof(utx));
+	utx.ut_type = OLD_TIME;
+	(void)gettimeofday(&utx.ut_tv, NULL);
+	pututxline(&utx);
+
 	if (nflag || netsettime(new_time)) {
 		logwtmp("|", "date", "");
 		if (aflag) {
@@ -356,13 +382,16 @@ setthetime(const char *p)
 		}
 		logwtmp("{", "date", "");
 	}
-#else
-	errx(EXIT_FAILURE, "Can't set the time in the tools version");
-#endif
+	utx.ut_type = NEW_TIME;
+	(void)gettimeofday(&utx.ut_tv, NULL);
+	pututxline(&utx);
 
 	if ((p = getlogin()) == NULL)
 		p = "???";
 	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
+#else
+	errx(EXIT_FAILURE, "Can't set the time in the tools version");
+#endif
 }
 
 static void
@@ -372,6 +401,9 @@ usage(void)
 	    "Usage: %s [-ajnu] [-d date] [-r seconds] [+format]",
 	    getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
+	(void)fprintf(stderr,
+	    "       %s [-ajnu] -f input_format new_date [+format]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
