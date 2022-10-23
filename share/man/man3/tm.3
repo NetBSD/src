@@ -1,4 +1,4 @@
-.\" $NetBSD: tm.3,v 1.4 2011/04/14 05:45:34 jruoho Exp $
+.\" $NetBSD: tm.3,v 1.5 2022/10/23 15:43:40 jschauma Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -42,7 +42,7 @@ The following standards-compliant fields are present:
 .Bl -column -offset indent \
 "Type" "Field  " "Months since January 1     "  "Range "
 .It Sy Type Ta Sy Field Ta Sy Represents Ta Sy Range
-.It Vt int Ta Va tm_sec Ta Seconds Ta [0, 61]
+.It Vt int Ta Va tm_sec Ta Seconds Ta [0, 60]
 .It Vt int Ta Va tm_min Ta Minutes Ta [0, 59]
 .It Vt int Ta Va tm_hour Ta Hours since midnight Ta [0, 23]
 .It Vt int Ta Va tm_mday Ta Day of the month Ta [1, 31]

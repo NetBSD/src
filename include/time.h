@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.47 2016/10/04 09:41:41 kamil Exp $	*/
+/*	$NetBSD: time.h,v 1.48 2022/10/23 15:43:40 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,7 +73,7 @@ typedef	_BSD_TIMER_T_	timer_t;
 #define CLOCKS_PER_SEC	100
 
 struct tm {
-	int	tm_sec;		/* seconds after the minute [0-61] */
+	int	tm_sec;		/* seconds after the minute [0-60] */
 	int	tm_min;		/* minutes after the hour [0-59] */
 	int	tm_hour;	/* hours since midnight [0-23] */
 	int	tm_mday;	/* day of the month [1-31] */
