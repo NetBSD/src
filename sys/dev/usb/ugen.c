@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.170 2022/10/23 06:27:26 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.171 2022/10/23 11:06:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.170 2022/10/23 06:27:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.171 2022/10/23 11:06:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -562,7 +562,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct usbd_xfer *xfer;
 	int i, j;
 	int error;
-	int opened;
+	int opened = 0;
 
 	UGENHIST_FUNC(); UGENHIST_CALLED();
 
