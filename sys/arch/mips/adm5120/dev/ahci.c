@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.31 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.32 2022/10/23 06:29:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.31 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.32 2022/10/23 06:29:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,7 +743,7 @@ ahci_root_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	KASSERT(sc->sc_intr_xfer == NULL);
 	sc->sc_interval = MS_TO_TICKS(xfer->ux_pipe->up_endpoint->ue_edesc->bInterval);
@@ -834,7 +834,7 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	int len, isread;
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 #if 0
 	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->ux_pipe;
@@ -1011,7 +1011,7 @@ ahci_device_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTF(D_TRACE, ("INTRstart "));
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	sx = kmem_intr_alloc(sizeof(*sx), KM_NOSLEEP);
 	if (sx == NULL)
@@ -1158,7 +1158,7 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 #define KSEG1ADDR(x) (0xa0000000 | (((uint32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	if (xfer->ux_rqflags & URQ_REQUEST) {
