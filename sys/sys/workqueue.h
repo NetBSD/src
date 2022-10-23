@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.11 2020/08/01 02:14:43 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.12 2022/10/23 08:38:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -28,6 +28,8 @@
 
 #ifndef _SYS_WORKQUEUE_H_
 #define	_SYS_WORKQUEUE_H_
+
+#include <sys/types.h>
 
 struct cpu_info;
 
