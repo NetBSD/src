@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.303 2021/08/09 21:38:04 andvar Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.304 2022/10/23 06:10:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.303 2021/08/09 21:38:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.304 2022/10/23 06:10:09 skrll Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2092,14 +2092,14 @@ mips_init_msgbuf(void)
 
 	paddr_t start = uvm_physseg_get_start(bank);
 	paddr_t end = uvm_physseg_get_end(bank);
-	
+
 	/* shrink so that it'll fit in the last segment */
 	if ((end - start) < atop(sz))
 		sz = ptoa(end - start);
 
 	end -= atop(sz);
 	uvm_physseg_unplug(end, atop(sz));
-	
+
 #ifdef _LP64
 	msgbufaddr = (void *) MIPS_PHYS_TO_XKPHYS_CACHED(ptoa(end));
 #else
