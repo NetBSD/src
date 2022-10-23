@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.255 2022/07/16 10:36:19 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.256 2022/10/23 23:30:31 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.255 2022/07/16 10:36:19 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.256 2022/10/23 23:30:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -2299,7 +2299,7 @@ hist_dodump(struct kern_history *histp)
 			bintime2timeval(&e->bt, &tv);
 			(void)printf("%06ld.%06ld ", (long int)tv.tv_sec,
 			    (long int)tv.tv_usec);
-			(void)printf("%s#%" PRId32 "@%" PRId32 "d: ",
+			(void)printf("%s#%" PRId32 "@%" PRId32 ": ",
 			    fn, e->call, e->cpunum);
 			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			(void)putchar('\n');
