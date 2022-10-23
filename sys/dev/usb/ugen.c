@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.169 2022/10/21 04:55:11 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.170 2022/10/23 06:27:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.169 2022/10/21 04:55:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.170 2022/10/23 06:27:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -473,8 +473,8 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 
 	UGENHIST_FUNC(); UGENHIST_CALLED();
 
-	DPRINTFN(1, "ugen%jd: %s to configno %jd, sc=%jx",
-		    device_unit(sc->sc_dev), configno, sc, 0);
+	DPRINTFN(1, "ugen%jd: to configno %jd, sc=%jx",
+		    device_unit(sc->sc_dev), configno, (uintptr_t)sc, 0);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -486,8 +486,8 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 		for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++)
 			if (sc->sc_is_open[endptno]) {
 				DPRINTFN(1,
-				     "%s - endpoint %d is open",
-				      endptno, 0, 0, 0);
+				     "ugen%jd - endpoint %d is open",
+				      device_unit(sc->sc_dev), endptno, 0, 0);
 				return USBD_IN_USE;
 			}
 
@@ -607,7 +607,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sce->state = 0;
 		sce->timeout = USBD_NO_TIMEOUT;
 		DPRINTFN(5, "sc=%jx, endpt=%jd, dir=%jd, sce=%jp",
-			     sc, endpt, dir, sce);
+			     (uintptr_t)sc, endpt, dir, (uintptr_t)sce);
 		edesc = sce->edesc;
 		switch (edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
@@ -754,7 +754,7 @@ ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 		if (sce->pipeh == NULL)
 			continue;
 		DPRINTFN(5, "endpt=%jd dir=%jd sce=%jx",
-			     endpt, dir, sce, 0);
+			     endpt, dir, (uintptr_t)sce, 0);
 
 		usbd_abort_pipe(sce->pipeh);
 
@@ -856,7 +856,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				mutex_exit(&sc->sc_lock);
 				return EWOULDBLOCK;
 			}
-			DPRINTFN(5, "sleep on %jx", sce, 0, 0, 0);
+			DPRINTFN(5, "sleep on %jx", (uintptr_t)sce, 0, 0, 0);
 			/* "ugenri" */
 			error = cv_timedwait_sig(&sce->cv, &sc->sc_lock,
 			    mstohz(sce->timeout));
@@ -899,7 +899,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			while (uio->uio_resid > 0 && !error) {
 				while (sce->ra_wb_used == 0) {
 					DPRINTFN(5, "sleep on %jx",
-						    sce, 0, 0, 0);
+						    (uintptr_t)sce, 0, 0, 0);
 					/* "ugenrb" */
 					error = cv_timedwait_sig(&sce->cv,
 					    &sc->sc_lock, mstohz(sce->timeout));
@@ -987,7 +987,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				return EWOULDBLOCK;
 			}
 			/* "ugenri" */
-			DPRINTFN(5, "sleep on %jx", sce, 0, 0, 0);
+			DPRINTFN(5, "sleep on %jx", (uintptr_t)sce, 0, 0, 0);
 			error = cv_timedwait_sig(&sce->cv, &sc->sc_lock,
 			    mstohz(sce->timeout));
 			DPRINTFN(5, "woke, error=%jd", error, 0, 0, 0);
@@ -1076,8 +1076,8 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 			while (uio->uio_resid > 0 && !error) {
 				while (sce->ra_wb_used ==
 				       sce->limit - sce->ibuf) {
-					DPRINTFN(5, "sleep on %p",
-						     sce, 0, 0, 0);
+					DPRINTFN(5, "sleep on %#jx",
+						     (uintptr_t)sce, 0, 0, 0);
 					/* "ugenwb" */
 					error = cv_timedwait_sig(&sce->cv,
 					    &sc->sc_lock, mstohz(sce->timeout));
@@ -1231,7 +1231,7 @@ ugen_detach(device_t self, int flags)
 
 	UGENHIST_FUNC(); UGENHIST_CALLED();
 
-	DPRINTF("sc=%ju flags=%ju", sc, flags, 0, 0);
+	DPRINTF("sc=%ju flags=%ju", (uintptr_t)sc, flags, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -1340,8 +1340,8 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	ibuf = sce->ibuf;
 
-	DPRINTFN(5, "xfer=%p status=%d count=%d",
-		     xfer, status, count, 0);
+	DPRINTFN(5, "xfer=%#jx status=%d count=%d",
+		     (uintptr_t)xfer, status, count, 0);
 	DPRINTFN(5, "          data = %02x %02x %02x",
 		     ibuf[0], ibuf[1], ibuf[2], 0);
 
