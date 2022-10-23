@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142 2022/10/23 07:02:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.143 2022/10/23 07:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2022/10/23 07:02:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2022/10/23 07:04:44 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -472,7 +472,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	PMAP_HIST_INIT();	/* init once */
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLARGS(pmaphist, "vstart=%#jx vend=%#jx", (uintptr_t)vstart,
+	    (uintptr_t)vend, 0, 0);
 
 	uvmexp.ncolors = aarch64_cache_vindexsize / PAGE_SIZE;
 
