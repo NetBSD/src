@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.54 2022/10/23 07:11:26 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.55 2022/10/23 07:13:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ struct vm_page_md {
 #define LX_BLKPAG_OS_WRITE		LX_BLKPAG_OS_1
 #define LX_BLKPAG_OS_WIRED		LX_BLKPAG_OS_2
 #define LX_BLKPAG_OS_BOOT		LX_BLKPAG_OS_3
-#define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
+#define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE | LX_BLKPAG_OS_READ)
 
 #define PMAP_PTE_OS0	"read"
 #define PMAP_PTE_OS1	"write"
@@ -215,7 +215,7 @@ struct vm_page_md {
     (((pde) & ((user) ? LX_BLKPAG_UXN : LX_BLKPAG_PXN)) == 0)
 #define l3pte_readable(pde)	((pde) & LX_BLKPAG_AF)
 #define l3pte_writable(pde)	\
-    (((pde) & (LX_BLKPAG_AF|LX_BLKPAG_AP)) == (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
+    (((pde) & (LX_BLKPAG_AF | LX_BLKPAG_AP)) == (LX_BLKPAG_AF | LX_BLKPAG_AP_RW))
 #define l3pte_index(v)		(((vaddr_t)(v) & L3_ADDR_BITS) >> L3_SHIFT)
 #define l3pte_valid(pde)	lxpde_valid(pde)
 #define l3pte_is_page(pde)	(((pde) & LX_TYPE) == L3_TYPE_PAG)
@@ -251,16 +251,16 @@ pmap_kvattr(pt_entry_t *ptep, vm_prot_t prot)
 	pt_entry_t pte = *ptep;
 	const pt_entry_t opte = pte;
 
-	pte &= ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
-	switch (prot & (VM_PROT_READ|VM_PROT_WRITE)) {
+	pte &= ~(LX_BLKPAG_AF | LX_BLKPAG_AP);
+	switch (prot & (VM_PROT_READ | VM_PROT_WRITE)) {
 	case 0:
 		break;
 	case VM_PROT_READ:
-		pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RO);
+		pte |= (LX_BLKPAG_AF | LX_BLKPAG_AP_RO);
 		break;
 	case VM_PROT_WRITE:
 	case VM_PROT_READ|VM_PROT_WRITE:
-		pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+		pte |= (LX_BLKPAG_AF | LX_BLKPAG_AP_RW);
 		break;
 	}
 
@@ -320,7 +320,7 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 		.pd_va = DEVMAP_ALIGN(va),			\
 		.pd_pa = DEVMAP_ALIGN(pa),			\
 		.pd_size = DEVMAP_SIZE(sz),			\
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,		\
+		.pd_prot = VM_PROT_READ | VM_PROT_WRITE,	\
 		.pd_flags = PMAP_DEV				\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
