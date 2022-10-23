@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2022/09/15 06:44:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2022/10/23 06:37:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2022/09/15 06:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2022/10/23 06:37:15 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -202,7 +202,7 @@ pmap_segtab_t	pmap_kstart_segtab PMAP_SEGTAB_ALIGN; /* first mid-level segtab fo
 #endif
 pmap_segtab_t	pmap_kern_segtab PMAP_SEGTAB_ALIGN = { /* top level segtab for kernel */
 #ifdef _LP64
-	.seg_seg[(VM_MIN_KERNEL_ADDRESS & XSEGOFSET) >> SEGSHIFT] = &pmap_kstart_segtab,
+	.seg_seg[(VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) & (NSEGPG - 1)] = &pmap_kstart_segtab,
 #endif
 };
 
