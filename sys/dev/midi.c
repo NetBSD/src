@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.100 2022/10/23 23:03:13 riastradh Exp $	*/
+/*	$NetBSD: midi.c,v 1.101 2022/10/23 23:03:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.100 2022/10/23 23:03:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.101 2022/10/23 23:03:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -246,10 +246,8 @@ mididetach(device_t self, int flags)
 		sc->sih = NULL;
 	}
 
-	mutex_enter(sc->lock);
-	callout_halt(&sc->xmt_asense_co, sc->lock);
-	callout_halt(&sc->rcv_asense_co, sc->lock);
-	mutex_exit(sc->lock);
+	callout_halt(&sc->xmt_asense_co, NULL);
+	callout_halt(&sc->rcv_asense_co, NULL);
 
 	callout_destroy(&sc->xmt_asense_co);
 	callout_destroy(&sc->rcv_asense_co);
