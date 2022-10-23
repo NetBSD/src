@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.53 2022/10/15 11:07:38 jmcneill Exp $ */
+/* $NetBSD: pmap.h,v 1.54 2022/10/23 07:11:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -315,13 +315,13 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 #define DEVMAP_ALIGN(x)		L3_TRUNC_BLOCK((x))
 #define DEVMAP_SIZE(x)		L3_ROUND_BLOCK((x))
 
-#define	DEVMAP_ENTRY(va, pa, sz)			\
-	{						\
-		.pd_va = DEVMAP_ALIGN(va),		\
-		.pd_pa = DEVMAP_ALIGN(pa),		\
+#define	DEVMAP_ENTRY(va, pa, sz)				\
+	{							\
+		.pd_va = DEVMAP_ALIGN(va),			\
+		.pd_pa = DEVMAP_ALIGN(pa),			\
 		.pd_size = DEVMAP_SIZE(sz),			\
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_flags = PMAP_DEV			\
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,		\
+		.pd_flags = PMAP_DEV				\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
 
