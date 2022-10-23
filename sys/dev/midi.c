@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.99 2022/10/23 23:02:50 riastradh Exp $	*/
+/*	$NetBSD: midi.c,v 1.100 2022/10/23 23:03:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.99 2022/10/23 23:02:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.100 2022/10/23 23:03:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -211,6 +211,10 @@ mididetach(device_t self, int flags)
 
 	if (--sc->refcnt >= 0) {
 		(void)cv_timedwait(&sc->detach_cv, sc->lock, hz * 60);
+		if (sc->refcnt >= 0) {
+			aprint_error_dev(self, "refcnt failed to drain,"
+			    " bashing my brains out anyway\n");
+		}
 	}
 	mutex_exit(sc->lock);
 
