@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2022/10/20 06:47:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2022/10/23 07:02:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2022/10/20 06:47:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2022/10/23 07:02:26 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -199,15 +199,18 @@ static int _pmap_get_pdp(struct pmap *, vaddr_t, bool, int, paddr_t *,
     struct vm_page **);
 
 static struct pmap kernel_pmap __cacheline_aligned;
-static struct pmap efirt_pmap __cacheline_aligned;
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap;
+
+#if defined(EFI_RUNTIME)
+static struct pmap efirt_pmap __cacheline_aligned;
 
 pmap_t
 pmap_efirt(void)
 {
 	return &efirt_pmap;
 }
+#endif
 
 static vaddr_t pmap_maxkvaddr;
 
