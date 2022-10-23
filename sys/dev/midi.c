@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.98 2022/06/04 03:31:10 pgoyette Exp $	*/
+/*	$NetBSD: midi.c,v 1.99 2022/10/23 23:02:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.98 2022/06/04 03:31:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.99 2022/10/23 23:02:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -206,13 +206,12 @@ mididetach(device_t self, int flags)
 
 	mutex_enter(sc->lock);
 	sc->dying = 1;
-
-	if (--sc->refcnt >= 0) {
-		/* Wake anything? */
-		(void)cv_timedwait(&sc->detach_cv, sc->lock, hz * 60);
-	}
 	cv_broadcast(&sc->wchan);
 	cv_broadcast(&sc->rchan);
+
+	if (--sc->refcnt >= 0) {
+		(void)cv_timedwait(&sc->detach_cv, sc->lock, hz * 60);
+	}
 	mutex_exit(sc->lock);
 
 	/* locate the major number */
