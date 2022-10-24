@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.28 2022/10/24 05:04:50 dholland Exp $
+/	$NetBSD: units.lib,v 1.29 2022/10/24 05:52:48 dholland Exp $
 
 / primitive units
 
@@ -104,7 +104,7 @@ radian			.5 / pi
 degree			1|180 pi-radian
 circle			2 pi-radian
 turn			2 pi-radian
-revolution			turn
+revolution		turn
 rev			turn
 grade			.9 degree
 arcdeg			1 degree
@@ -291,33 +291,82 @@ league			3 mi
 mil			1e-3 in
 
 / nautical
+/
 / Historically, the nautical mile was 6080 feet (6080.2 in England)
 / but was changed to 1852 meters (6076 feet and change) in the 20th
 / century with varying dates of adoption around the world.
 / https://en.wikipedia.org/wiki/Nautical_mile
+/
+/ The US cable is 720 feet. The international cable is 1/10 nautical
+/ mile, which is substantially shorter. The UK Admiralty cable is
+/ apparently 1/10 of a historical Admiralty nautical mile, which is
+/ 1853.2 instead of 1852 meters. These definitions date from the 20th
+/ century. Historically, a cable was 100 fathoms, but the fathom
+/ hadn't yet been fixed at 6 feet, so cables weren't a fixed length
+/ either.
+/ https://en.wikipedia.org/wiki/Cable_(unit)
+/
 fathom			6 ft
 nmile			1852 m
 nauticalmile		nmile
 marineleague		3 nmile
-cable			720 ft
+cable			1|10 nmile
+uscable			720 ft
+admiraltycable		185.32 m
 
 / surveying
 /
 / The US survey foot is defined as 1200/3937 meters, as opposed to the
 / ordinary international foot, which is 0.3048 meter (that's exactly
-/ 2.54 cm to the inch as defined above.)
+/ 2.54 cm to the inch as defined above.) These differ slightly.
 / https://en.wikipedia.org/wiki/Foot_(unit)
-rod			5.5 yd
-rd			rod
-perch			rd
-pole			rd
-chain			66 ft
-link			66|100 ft
-furlong			220 yd
+/
+/ In the US, rods, chains, and furlongs are defined in terms of survey
+/ feet, though the Wikipedia page on furlongs claims without citation
+/ that some states use one definition and some the other. However, it
+/ appears that as of 2022 this definition is on the way out, and other
+/ jurisdictions define these units (to the extent they're used at all)
+/ in terms of the international foot.
+/ https://en.wikipedia.org/wiki/Rod_(unit)
+/ https://en.wikipedia.org/wiki/Furlong_(unit)
+/
+/ Consequently we'll make two sets of definitions and prefix the
+/ variant US ones with "us".
+/
+/ Since historically this file defined "surveyfoot" and "surveyyard"
+/ but "surveyorschain" and "surveyorslink", we will now end up with
+/ several sets for consistency.
+/
 surveyfoot		1200|3937 meter
 surveyyard		3 surveyfoot
-surveyorschain		66 ft
-surveyorslink		66|100 ft
+
+rod			5.5 yard
+rd			rod
+perch			rod
+pole			rod
+chain			66 foot
+link			1|100 chain
+furlong			220 yard
+
+usrod			5.5 surveyyard
+usperch			usrod
+uspole			usrod
+uschain			66 surveyfoot
+uslink			1|100 uschain
+usfurlong		220 surveyyard
+
+surveyorsfoot		surveyfoot
+surveyorsyard		surveyyard
+surveyorsrod		usrod
+surveyorschain		uschain
+surveyorslink		uslink
+
+/ These are the same as the basic ones based on the international foot.
+/ https://en.wikipedia.org/wiki/Gunter's_chain
+/ https://en.wikipedia.org/wiki/Imperial_units
+guntersrod		rod
+gunterschain		chain
+gunterslink		link
 
 / typographical
 pica			1|6 in
@@ -363,7 +412,6 @@ geodeticfoot		surveyfoot
 geographicalmile	1852 m
 engineerschain		100 ft
 engineerslink		100|100 ft
-gunterschain		22 yd
 
 / note that while caliber is technically a unit, caliber sizes for ammunition
 / are usually short names for more complicated specifications.
@@ -603,13 +651,13 @@ tesla			weber/m2
 
 / special-case abbreviations
 mh			millihenry
+uf			microfarad
 pf			picofarad
 
 / other
 biot			10 amp
 debye			3.336e-30 coul-m
 faraday			9.652e+4 coul
-franklin		3.33564e-10 coul
 gamma			1e-9 weber/m2
 gauss			1e-4 weber/m2
 gilbert			7.95775e-1 amp
@@ -625,6 +673,9 @@ statamp			1|2.99792458e9 amp
 statvolt		2.99792458e2 volt
 statcoulomb		statcoul
 statampere		statamp
+/ franklin is an alternate name for statcoulomb
+/ https://en.wikipedia.org/wiki/Franklin_(unit)
+franklin		statcoul
 
 / ////////////////////////////////////////////////////////////
 / more energy
@@ -794,6 +845,7 @@ kbyte			1024 byte
 megabyte		1024 kbyte
 gigabyte		1024 megabyte
 meg			megabyte
+gig			gigabyte
 terabyte		1024 gigabyte
 petabyte		1024 terabyte
 
@@ -845,5 +897,5 @@ cottonyarncount		2520 ft/pound
 linenyarncount		900 ft/pound
 worstedyarncount	1680 ft/pound
 metricyarncount		meter/gram
-jewlerspoint		2 milligram
+jewelerspoint		2 milligram
 
