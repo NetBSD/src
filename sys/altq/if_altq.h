@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.15 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.16 2022/10/24 08:11:24 msaitoh Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -44,8 +44,8 @@ struct	ifaltq {
 	struct	mbuf *ifq_tail;
 	int	ifq_len;
 	int	ifq_maxlen;
-	int	ifq_drops;
-	kmutex_t	*ifq_lock;
+	uint64_t ifq_drops;
+	kmutex_t *ifq_lock;
 
 	/* alternate queueing related fields */
 	int	altq_type;		/* discipline type */

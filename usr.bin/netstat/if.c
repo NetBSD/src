@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.105 2022/09/21 07:59:19 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.106 2022/10/24 08:11:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.105 2022/09/21 07:59:19 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.106 2022/10/24 08:11:25 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -685,9 +685,8 @@ print_addr(const int ifindex, struct sockaddr *sa, struct sockaddr **rtinfo,
 			(unsigned long long)ifd->ifi_collisions);
 	}
 	if (dflag)
-		printf(" %6lld", ifnet ?
-		    (unsigned long long)ifnet->if_snd.ifq_drops :
-			dext->ifi_oqdrops);
+		printf(" %6" PRIu64, ifnet ?
+		    ifnet->if_snd.ifq_drops : dext->ifi_oqdrops);
 	if (tflag)
 		printf(" %4d", ifnet ? ifnet->if_timer : 0);
 	putchar('\n');
