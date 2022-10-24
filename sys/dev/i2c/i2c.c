@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.88 2022/07/23 03:05:27 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.89 2022/10/24 10:17:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.88 2022/07/23 03:05:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.89 2022/10/24 10:17:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ const struct cdevsw iic_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-static void	iic_smbus_intr_thread(void *);
 static void	iic_fill_compat(struct i2c_attach_args*, const char*,
 			size_t, char **);
 
@@ -426,7 +425,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t props;
 	char *buf;
 	i2c_tag_t ic;
-	int rv;
 	bool no_indirect_config = false;
 
 	aprint_naive("\n");
@@ -435,16 +433,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
 	ic = sc->sc_tag;
-	ic->ic_devname = device_xname(self);
-
-	LIST_INIT(&(sc->sc_tag->ic_list));
-	LIST_INIT(&(sc->sc_tag->ic_proc_list));
-
-	rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-	    iic_smbus_intr_thread, ic, &ic->ic_intr_thread,
-	    "%s", ic->ic_devname);
-	if (rv)
-		aprint_error_dev(self, "unable to create intr thread\n");
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -556,9 +544,7 @@ static int
 iic_detach(device_t self, int flags)
 {
 	struct iic_softc *sc = device_private(self);
-	i2c_tag_t ic = sc->sc_tag;
 	int i, error;
-	void *hdl;
 
 	for (i = 0; i <= I2C_MAX_ADDR; i++) {
 		if (sc->sc_devices[i]) {
@@ -568,129 +554,9 @@ iic_detach(device_t self, int flags)
 		}
 	}
 
-	if (ic->ic_running) {
-		ic->ic_running = 0;
-		wakeup(ic);
-		kthread_join(ic->ic_intr_thread);
-	}
-
-	if (!LIST_EMPTY(&ic->ic_list)) {
-		device_printf(self, "WARNING: intr handler list not empty\n");
-		while (!LIST_EMPTY(&ic->ic_list)) {
-			hdl = LIST_FIRST(&ic->ic_list);
-			iic_smbus_intr_disestablish(ic, hdl);
-		}
-	}
-	if (!LIST_EMPTY(&ic->ic_proc_list)) {
-		device_printf(self, "WARNING: proc handler list not empty\n");
-		while (!LIST_EMPTY(&ic->ic_proc_list)) {
-			hdl = LIST_FIRST(&ic->ic_proc_list);
-			iic_smbus_intr_disestablish_proc(ic, hdl);
-		}
-	}
-
 	pmf_device_deregister(self);
 
 	return 0;
-}
-
-static void
-iic_smbus_intr_thread(void *aux)
-{
-	i2c_tag_t ic;
-	struct ic_intr_list *il;
-
-	ic = (i2c_tag_t)aux;
-	ic->ic_running = 1;
-	ic->ic_pending = 0;
-
-	while (ic->ic_running) {
-		if (ic->ic_pending == 0)
-			tsleep(ic, PZERO, "iicintr", hz);
-		if (ic->ic_pending > 0) {
-			LIST_FOREACH(il, &(ic->ic_proc_list), il_next) {
-				(*il->il_intr)(il->il_intrarg);
-			}
-			ic->ic_pending--;
-		}
-	}
-
-	kthread_exit(0);
-}
-
-void *
-iic_smbus_intr_establish(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
-{
-	struct ic_intr_list *il;
-
-	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
-	if (il == NULL)
-		return NULL;
-
-	il->il_intr = intr;
-	il->il_intrarg = intrarg;
-
-	LIST_INSERT_HEAD(&(ic->ic_list), il, il_next);
-
-	return il;
-}
-
-void
-iic_smbus_intr_disestablish(i2c_tag_t ic, void *hdl)
-{
-	struct ic_intr_list *il;
-
-	il = (struct ic_intr_list *)hdl;
-
-	LIST_REMOVE(il, il_next);
-	free(il, M_DEVBUF);
-
-	return;
-}
-
-void *
-iic_smbus_intr_establish_proc(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
-{
-	struct ic_intr_list *il;
-
-	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
-	if (il == NULL)
-		return NULL;
-
-	il->il_intr = intr;
-	il->il_intrarg = intrarg;
-
-	LIST_INSERT_HEAD(&(ic->ic_proc_list), il, il_next);
-
-	return il;
-}
-
-void
-iic_smbus_intr_disestablish_proc(i2c_tag_t ic, void *hdl)
-{
-	struct ic_intr_list *il;
-
-	il = (struct ic_intr_list *)hdl;
-
-	LIST_REMOVE(il, il_next);
-	free(il, M_DEVBUF);
-
-	return;
-}
-
-int
-iic_smbus_intr(i2c_tag_t ic)
-{
-	struct ic_intr_list *il;
-
-	LIST_FOREACH(il, &(ic->ic_list), il_next) {
-		(*il->il_intr)(il->il_intrarg);
-	}
-
-	ic->ic_pending++;
-	wakeup(ic);
-
-	return 1;
 }
 
 static void
