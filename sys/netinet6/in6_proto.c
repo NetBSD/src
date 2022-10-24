@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.129 2022/09/03 02:53:18 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.130 2022/10/24 01:54:19 knakahara Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.129 2022/09/03 02:53:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.130 2022/10/24 01:54:19 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -551,6 +551,7 @@ int ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int ip6_v6only = 1;
 int ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
 int ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
+int ip6_param_rt_msg = 1; /* How to send parmeter changing rtm */
 
 int ip6_keepfaith = 0;
 time_t ip6_log_time = 0;

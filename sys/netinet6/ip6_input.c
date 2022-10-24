@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.225 2022/09/02 03:50:00 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.226 2022/10/24 01:54:19 knakahara Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.225 2022/09/02 03:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.226 2022/10/24 01:54:19 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1801,6 +1801,14 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("Maximum number of routes created via"
 			   " redirect"),
 		       NULL, 1, &ip6_maxdynroutes, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "param_rt_msg",
+		       SYSCTL_DESCR("How to send parameter changing"
+			   " routing message"),
+		       NULL, 0, &ip6_param_rt_msg, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
 }

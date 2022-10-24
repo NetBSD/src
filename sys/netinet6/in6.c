@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.286 2022/09/20 02:23:37 knakahara Exp $	*/
+/*	$NetBSD: in6.c,v 1.287 2022/10/24 01:54:19 knakahara Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.286 2022/09/20 02:23:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.287 2022/10/24 01:54:19 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1065,6 +1065,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	int dad_delay, was_tentative;
 	struct in6_ifaddr *ia = iap ? *iap : NULL;
 	char ip6buf[INET6_ADDRSTRLEN];
+	bool addrmaskNotChanged = false;
+	bool send_rtm_newaddr = (ip6_param_rt_msg == 1);
+	int saved_flags;
 
 	KASSERT((iap == NULL && psref == NULL) ||
 	    (iap != NULL && psref != NULL));
@@ -1186,6 +1189,21 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			return 0; /* there's nothing to do */
 	}
 
+#define sin6eq(a, b) \
+	((a)->sin6_len == sizeof(struct sockaddr_in6) && \
+	 (b)->sin6_len == sizeof(struct sockaddr_in6) && \
+	 IN6_ARE_ADDR_EQUAL(&(a)->sin6_addr, &(b)->sin6_addr))
+
+	if (!send_rtm_newaddr) {
+		if (ia != NULL &&
+		    sin6eq(&ifra->ifra_addr, &ia->ia_addr) &&
+		    sin6eq(&ifra->ifra_prefixmask, &ia->ia_prefixmask)) {
+			addrmaskNotChanged = true;
+			saved_flags = ia->ia6_flags;  /* check it later */
+		}
+	}
+#undef sin6eq
+
 	/*
 	 * If this is a new address, allocate a new ifaddr and link it
 	 * into chains.
@@ -1289,6 +1307,17 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if ((ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0) {
 		ia->ia6_lifetime.ia6t_pltime = 0;
 		ia->ia6_lifetime.ia6t_preferred = time_uptime;
+	}
+
+	if (!send_rtm_newaddr) {
+		/*
+		 * We will not send RTM_NEWADDR if the only difference between
+		 * ia and ifra is preferred/valid lifetimes, because it is not
+		 * very useful for userland programs to be notified of that
+		 * changes.
+		 */
+		if (addrmaskNotChanged && ia->ia6_flags == saved_flags)
+			return 0;
 	}
 
 	if (hostIsNew) {
