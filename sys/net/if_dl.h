@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.28 2019/04/30 20:55:41 kre Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.29 2022/10/24 07:45:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -68,11 +68,11 @@ struct dl_addr {
 	uint8_t	    dl_nlen;	/* interface name length, no trailing 0 reqd. */
 	uint8_t	    dl_alen;	/* link level address length */
 	uint8_t	    dl_slen;	/* link layer selector length */
-	/*
-	 * minimum work area, can be larger; contains both if name
-	 * and ll address
-	 */
-	char	    dl_data[12];
+	char	    dl_data[24]; /*
+				  * minimum work area, can be larger; contains
+				  * both if name and ll address; big enough for
+				  * IFNAMSIZ plus 8byte ll addr
+				  */
 };
 
 /*
