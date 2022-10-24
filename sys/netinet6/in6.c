@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.287 2022/10/24 01:54:19 knakahara Exp $	*/
+/*	$NetBSD: in6.c,v 1.288 2022/10/24 14:15:19 msaitoh Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.287 2022/10/24 01:54:19 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.288 2022/10/24 14:15:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1067,7 +1067,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	char ip6buf[INET6_ADDRSTRLEN];
 	bool addrmaskNotChanged = false;
 	bool send_rtm_newaddr = (ip6_param_rt_msg == 1);
-	int saved_flags;
+	int saved_flags = 0;
 
 	KASSERT((iap == NULL && psref == NULL) ||
 	    (iap != NULL && psref != NULL));
