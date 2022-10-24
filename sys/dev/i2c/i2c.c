@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.89 2022/10/24 10:17:27 riastradh Exp $	*/
+/*	$NetBSD: i2c.c,v 1.90 2022/10/24 10:17:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.89 2022/10/24 10:17:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.90 2022/10/24 10:17:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,16 +543,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 static int
 iic_detach(device_t self, int flags)
 {
-	struct iic_softc *sc = device_private(self);
-	int i, error;
+	int error;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++) {
-		if (sc->sc_devices[i]) {
-			error = config_detach(sc->sc_devices[i], flags);
-			if (error)
-				return error;
-		}
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
