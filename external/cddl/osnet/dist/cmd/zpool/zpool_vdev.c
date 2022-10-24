@@ -482,7 +482,7 @@ make_leaf_vdev(const char *arg, uint64_t is_log)
 			if (errno == ENOENT) {
 				(void) fprintf(stderr,
 				    gettext("cannot open '%s': no such "
-				    "GEOM provider\n"), arg);
+				    "device\n"), arg);
 				(void) fprintf(stderr,
 				    gettext("must be a full path or "
 				    "shorthand device name\n"));
@@ -513,7 +513,7 @@ make_leaf_vdev(const char *arg, uint64_t is_log)
 		type = VDEV_TYPE_FILE;
 	} else {
 		(void) fprintf(stderr, gettext("cannot use '%s': must be a "
-		    "GEOM provider or regular file\n"), path);
+		    "device or regular file\n"), path);
 		return (NULL);
 	}
 
