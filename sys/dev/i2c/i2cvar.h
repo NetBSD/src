@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.25 2022/05/28 22:16:43 andvar Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.26 2022/10/24 10:17:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -120,12 +120,7 @@ typedef struct i2c_controller {
 	int	(*ic_read_byte)(void *, uint8_t *, int);
 	int	(*ic_write_byte)(void *, uint8_t, int);
 
-	LIST_HEAD(, ic_intr_list) ic_list;
-	LIST_HEAD(, ic_intr_list) ic_proc_list;
-	volatile int	ic_running;
-	volatile int	ic_pending;
-	struct lwp *ic_intr_thread;
-	const char *ic_devname;
+	struct i2c_tag_private	*ic_tag_private;
 } *i2c_tag_t;
 
 /* Used to attach the i2c framework to the controller. */
@@ -242,11 +237,5 @@ int	iic_smbus_block_read(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
 	    size_t, int);
 int	iic_smbus_block_write(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
 	    size_t, int);
-
-void *	iic_smbus_intr_establish(i2c_tag_t, int (*)(void *), void *);
-void *	iic_smbus_intr_establish_proc(i2c_tag_t, int (*)(void *), void *);
-void	iic_smbus_intr_disestablish(i2c_tag_t, void *);
-void	iic_smbus_intr_disestablish_proc(i2c_tag_t, void *);
-int	iic_smbus_intr(i2c_tag_t);
 
 #endif /* _DEV_I2C_I2CVAR_H_ */

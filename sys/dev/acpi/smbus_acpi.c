@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.17 2021/08/07 16:19:09 thorpej Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.18 2022/10/24 10:17:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.17 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.18 2022/10/24 10:17:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -496,8 +496,6 @@ acpi_smbus_alerts(struct acpi_smbus_softc *sc)
 
 				aprint_debug_dev(sc->sc_dv,
 				    "alert for 0x%x\n", addr);
-
-				(void)iic_smbus_intr(&sc->sc_i2c_tag);
 			}
 		}
 done:
