@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.103 2022/09/02 06:25:43 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.104 2022/10/24 08:11:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.103 2022/09/02 06:25:43 msaitoh Exp $");
+__RCSID("$NetBSD: main.c,v 1.104 2022/10/24 08:11:25 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -778,7 +778,7 @@ print_softintrq(void)
 		printf("%s:\n", siq->siq_name);
 		printf("\tqueue length: %d\n", ifq->ifq_len);
 		printf("\tmaximum queue length: %d\n", ifq->ifq_maxlen);
-		printf("\tpackets dropped: %d\n", ifq->ifq_drops);
+		printf("\tpackets dropped: %" PRIu64 "\n", ifq->ifq_drops);
 	}
 }
 

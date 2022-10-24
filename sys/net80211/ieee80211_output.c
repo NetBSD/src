@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.66 2021/07/24 21:31:38 andvar Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.67 2022/10/24 08:11:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.66 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.67 2022/10/24 08:11:25 msaitoh Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2133,9 +2133,10 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 		IEEE80211_NODE_SAVEQ_UNLOCK(ni);
 
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
-			"[%s] pwr save q overflow, drops %d (size %d)\n",
-			ether_sprintf(ni->ni_macaddr), 
-			ni->ni_savedq.ifq_drops, IEEE80211_PS_MAX_QUEUE);
+		    "[%s] pwr save q overflow, drops %" PRIu64
+		    " (size %d)\n",
+		    ether_sprintf(ni->ni_macaddr), 
+		    ni->ni_savedq.ifq_drops, IEEE80211_PS_MAX_QUEUE);
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_msg_dumppkts(ic))
 			ieee80211_dump_pkt(mtod(m, void *), m->m_len, -1, -1);
