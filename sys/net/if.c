@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.526 2022/09/20 02:23:37 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.527 2022/10/24 08:11:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.526 2022/09/20 02:23:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.527 2022/10/24 08:11:25 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -940,7 +940,7 @@ static void
 if_percpuq_drops(void *p, void *arg, struct cpu_info *ci __unused)
 {
 	struct ifqueue *const ifq = p;
-	int *sum = arg;
+	uint64_t *sum = arg;
 
 	*sum += ifq->ifq_drops;
 }
@@ -950,7 +950,7 @@ sysctl_percpuq_drops_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct if_percpuq *ipq;
-	int sum = 0;
+	uint64_t sum = 0;
 	int error;
 
 	node = *rnode;
@@ -1017,7 +1017,7 @@ sysctl_percpuq_setup(struct sysctllog **clog, const char* ifname,
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops",
+		       CTLTYPE_QUAD, "drops",
 		       SYSCTL_DESCR("Total packets dropped due to full input queue"),
 		       sysctl_percpuq_drops_handler, 0, (void *)ipq, 0,
 		       CTL_CREATE, CTL_EOL) != 0)
@@ -4031,7 +4031,7 @@ sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
 
 	if (sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops",
+		       CTLTYPE_QUAD, "drops",
 		       SYSCTL_DESCR("Packets dropped due to full output queue"),
 		       NULL, 0, &ifq->ifq_drops, 0,
 		       CTL_CREATE, CTL_EOL) != 0)

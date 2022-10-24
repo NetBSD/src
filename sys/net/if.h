@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.302 2022/09/18 16:58:54 martin Exp $	*/
+/*	$NetBSD: if.h,v 1.303 2022/10/24 08:11:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ struct ifqueue {
 	struct		mbuf *ifq_tail;
 	int		ifq_len;
 	int		ifq_maxlen;
-	int		ifq_drops;
+	uint64_t	ifq_drops;
 	kmutex_t	*ifq_lock;
 };
 
