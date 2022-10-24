@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.27 2022/10/24 04:55:19 dholland Exp $
+/	$NetBSD: units.lib,v 1.28 2022/10/24 05:04:50 dholland Exp $
 
 / primitive units
 
@@ -290,8 +290,6 @@ mi			mile
 league			3 mi
 mil			1e-3 in
 
-british			1200|3937 m/ft
-
 / nautical
 / Historically, the nautical mile was 6080 feet (6080.2 in England)
 / but was changed to 1852 meters (6076 feet and change) in the 20th
@@ -304,6 +302,11 @@ marineleague		3 nmile
 cable			720 ft
 
 / surveying
+/
+/ The US survey foot is defined as 1200/3937 meters, as opposed to the
+/ ordinary international foot, which is 0.3048 meter (that's exactly
+/ 2.54 cm to the inch as defined above.)
+/ https://en.wikipedia.org/wiki/Foot_(unit)
 rod			5.5 yd
 rd			rod
 perch			rd
@@ -311,7 +314,7 @@ pole			rd
 chain			66 ft
 link			66|100 ft
 furlong			220 yd
-surveyfoot		british-ft
+surveyfoot		1200|3937 meter
 surveyyard		3 surveyfoot
 surveyorschain		66 ft
 surveyorslink		66|100 ft
@@ -356,7 +359,7 @@ englishell		45 inch
 rood			1.21e+3 yd
 
 / other
-geodeticfoot		british-ft
+geodeticfoot		surveyfoot
 geographicalmile	1852 m
 engineerschain		100 ft
 engineerslink		100|100 ft
