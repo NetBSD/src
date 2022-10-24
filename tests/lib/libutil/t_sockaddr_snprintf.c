@@ -1,4 +1,4 @@
-/* $NetBSD: t_sockaddr_snprintf.c,v 1.1 2010/07/16 13:56:32 jmmv Exp $ */
+/* $NetBSD: t_sockaddr_snprintf.c,v 1.2 2022/10/24 13:42:55 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.1 2010/07/16 13:56:32 jmmv Exp $");
+__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.2 2022/10/24 13:42:55 msaitoh Exp $");
 
 #include <sys/socket.h>		/* AF_ */
 #include <sys/un.h>			/* sun */
@@ -169,7 +169,7 @@ ATF_TC_BODY(sockaddr_snprintf_dl, tc)
 		(struct sockaddr *)&sdl);
 
 	ATF_REQUIRE_EQ_MSG(i, 17, "bad length for sdl");
-	ATF_REQUIRE_STREQ(buf, "18 20 1.2.3.4.5.6");
+	ATF_REQUIRE_STREQ(buf, "18 32 1.2.3.4.5.6");
 }
 
 ATF_TP_ADD_TCS(tp)
