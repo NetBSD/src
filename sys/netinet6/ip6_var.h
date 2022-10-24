@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.91 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.92 2022/10/24 01:54:19 knakahara Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -257,6 +257,7 @@ extern int	ip6_mcast_pmtu;		/* enable pMTU discovery for multicast? */
 extern int	ip6_v6only;
 extern int	ip6_neighborgcthresh;	/* Threshold # of NDP entries for GC */
 extern int	ip6_maxdynroutes; /* Max # of routes created via redirect */
+extern int	ip6_param_rt_msg;  /* How to send parmeter changing rtm */
 
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */

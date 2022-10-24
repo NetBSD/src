@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.161 2022/08/29 09:14:02 knakahara Exp $
+.\"	$NetBSD: sysctl.7,v 1.162 2022/10/24 01:54:19 knakahara Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 29, 2022
+.Dd October 24, 2022
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1888,6 +1888,7 @@ The currently defined protocols and names are:
 .It ip6	maxfragpackets	integer	yes
 .It ip6	maxfrags	integer	yes
 .It ip6	neighborgcthresh	integer	yes
+.It ip6	param_rt_msg	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	rr_prune	integer	yes
 .It ip6	use_deprecated	integer	yes
@@ -2023,6 +2024,10 @@ The flag is provided basically for avoiding possible DoS attacks.
 Maximum number of entries in neighbor cache per interface.
 Set to negative to disable.
 The default value is 2048.
+.It Li ip6.param_rt_msg
+If set to 0, parameter changing routing message is suppressed.
+If set to 1, parameter changing routing message is sent by RTM_NEWADDR.
+Other values are undefined yet.
 .It Li ip6.redirect
 If set to 1, ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,
