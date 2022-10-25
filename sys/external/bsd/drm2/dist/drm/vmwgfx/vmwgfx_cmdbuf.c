@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.5 2022/10/25 23:32:04 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.6 2022/10/25 23:33:44 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.5 2022/10/25 23:32:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.6 2022/10/25 23:33:44 riastradh Exp $");
 
 #include <linux/dmapool.h>
 #include <linux/pci.h>
@@ -132,8 +132,8 @@ struct vmw_cmdbuf_man {
 	spinlock_t lock;
 	struct dma_pool *headers;
 	struct dma_pool *dheaders;
-	wait_queue_head_t alloc_queue;
-	wait_queue_head_t idle_queue;
+	drm_waitqueue_t alloc_queue;
+	drm_waitqueue_t idle_queue;
 	bool irq_on;
 	bool using_mob;
 	bool has_pool;
@@ -276,7 +276,7 @@ static void __vmw_cmdbuf_header_free(struct vmw_cmdbuf_header *header)
 	}
 
 	drm_mm_remove_node(&header->node);
-	wake_up_all(&man->alloc_queue);
+	DRM_SPIN_WAKEUP_ALL(&man->alloc_queue, &man->lock); /* XXX */
 	if (header->cb_header)
 		dma_pool_free(man->headers, header->cb_header,
 			      header->handle);
@@ -391,6 +391,8 @@ static void vmw_cmdbuf_ctx_process(struct vmw_cmdbuf_man *man,
 {
 	struct vmw_cmdbuf_header *entry, *next;
 
+	assert_spin_locked(&man->lock);
+
 	vmw_cmdbuf_ctx_submit(man, ctx);
 
 	list_for_each_entry_safe(entry, next, &ctx->hw_submitted, list) {
@@ -400,7 +402,7 @@ static void vmw_cmdbuf_ctx_process(struct vmw_cmdbuf_man *man,
 			break;
 
 		list_del(&entry->list);
-		wake_up_all(&man->idle_queue);
+		DRM_SPIN_WAKEUP_ONE(&man->idle_queue, &man->lock);
 		ctx->num_hw_submitted--;
 		switch (status) {
 		case SVGA_CB_STATUS_COMPLETED:
@@ -447,6 +449,8 @@ static void vmw_cmdbuf_man_process(struct vmw_cmdbuf_man *man)
 	int notempty;
 	struct vmw_cmdbuf_context *ctx;
 	int i;
+
+	assert_spin_locked(&man->lock);
 
 retry:
 	notempty = 0;
@@ -622,7 +626,9 @@ static void vmw_cmdbuf_work_func(struct work_struct *work)
 	/* Send a new fence in case one was removed */
 	if (send_fence) {
 		vmw_fifo_send_fence(man->dev_priv, &dummy);
-		wake_up_all(&man->idle_queue);
+		spin_lock(&man->lock);
+		DRM_SPIN_WAKEUP_ALL(&man->idle_queue, &man->lock);
+		spin_unlock(&man->lock);
 	}
 
 	mutex_unlock(&man->error_mutex);
@@ -642,20 +648,19 @@ static bool vmw_cmdbuf_man_idle(struct vmw_cmdbuf_man *man,
 	bool idle = false;
 	int i;
 
-	spin_lock(&man->lock);
+	assert_spin_locked(&man->lock);
+
 	vmw_cmdbuf_man_process(man);
 	for_each_cmdbuf_ctx(man, i, ctx) {
 		if (!list_empty(&ctx->submitted) ||
 		    !list_empty(&ctx->hw_submitted) ||
 		    (check_preempted && !list_empty(&ctx->preempted)))
-			goto out_unlock;
+			goto out;
 	}
 
 	idle = list_empty(&man->error);
 
-out_unlock:
-	spin_unlock(&man->lock);
-
+out:
 	return idle;
 }
 
@@ -732,18 +737,17 @@ int vmw_cmdbuf_idle(struct vmw_cmdbuf_man *man, bool interruptible,
 	int ret;
 
 	ret = vmw_cmdbuf_cur_flush(man, interruptible);
+	spin_lock(&man->lock);
 	vmw_generic_waiter_add(man->dev_priv,
 			       SVGA_IRQFLAG_COMMAND_BUFFER,
 			       &man->dev_priv->cmdbuf_waiters);
-
 	if (interruptible) {
-		ret = wait_event_interruptible_timeout
-			(man->idle_queue, vmw_cmdbuf_man_idle(man, true),
-			 timeout);
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &man->idle_queue, &man->lock,
+		    timeout, vmw_cmdbuf_man_idle(man, true));
 	} else {
-		ret = wait_event_timeout
-			(man->idle_queue, vmw_cmdbuf_man_idle(man, true),
-			 timeout);
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &man->idle_queue,
+		    &man->lock,
+		    timeout, vmw_cmdbuf_man_idle(man, true));
 	}
 	vmw_generic_waiter_remove(man->dev_priv,
 				  SVGA_IRQFLAG_COMMAND_BUFFER,
@@ -754,6 +758,7 @@ int vmw_cmdbuf_idle(struct vmw_cmdbuf_man *man, bool interruptible,
 		else
 			ret = 0;
 	}
+	spin_unlock(&man->lock);
 	if (ret > 0)
 		ret = 0;
 
@@ -825,6 +830,7 @@ static int vmw_cmdbuf_alloc_space(struct vmw_cmdbuf_man *man,
 	} else {
 		mutex_lock(&man->space_mutex);
 	}
+	spin_lock(&man->lock);
 
 	/* Try to allocate space without waiting. */
 	if (vmw_cmdbuf_try_alloc(man, &info))
@@ -837,23 +843,29 @@ static int vmw_cmdbuf_alloc_space(struct vmw_cmdbuf_man *man,
 	if (interruptible) {
 		int ret;
 
-		ret = wait_event_interruptible
-			(man->alloc_queue, vmw_cmdbuf_try_alloc(man, &info));
+		DRM_SPIN_WAIT_UNTIL(ret, &man->alloc_queue, &man->lock,
+		    vmw_cmdbuf_try_alloc(man, &info));
 		if (ret) {
 			vmw_generic_waiter_remove
 				(man->dev_priv, SVGA_IRQFLAG_COMMAND_BUFFER,
 				 &man->dev_priv->cmdbuf_waiters);
+			spin_unlock(&man->lock);
 			mutex_unlock(&man->space_mutex);
 			return ret;
 		}
 	} else {
-		wait_event(man->alloc_queue, vmw_cmdbuf_try_alloc(man, &info));
+		int ret;
+
+		DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &man->alloc_queue, &man->lock,
+		    vmw_cmdbuf_try_alloc(man, &info));
+		BUG_ON(ret);
 	}
 	vmw_generic_waiter_remove(man->dev_priv,
 				  SVGA_IRQFLAG_COMMAND_BUFFER,
 				  &man->dev_priv->cmdbuf_waiters);
 
 out_unlock:
+	spin_unlock(&man->lock);
 	mutex_unlock(&man->space_mutex);
 
 	return 0;
@@ -1387,8 +1399,8 @@ struct vmw_cmdbuf_man *vmw_cmdbuf_man_create(struct vmw_private *dev_priv)
 	mutex_init(&man->space_mutex);
 	mutex_init(&man->error_mutex);
 	man->default_size = VMW_CMDBUF_INLINE_SIZE;
-	init_waitqueue_head(&man->alloc_queue);
-	init_waitqueue_head(&man->idle_queue);
+	DRM_INIT_WAITQUEUE(&man->alloc_queue, "vmwgfxaq");
+	DRM_INIT_WAITQUEUE(&man->idle_queue, "vmwgfxiq");
 	man->dev_priv = dev_priv;
 	man->max_hw_submitted = SVGA_CB_MAX_QUEUED_PER_CONTEXT - 1;
 	INIT_WORK(&man->work, &vmw_cmdbuf_work_func);
@@ -1468,8 +1480,11 @@ void vmw_cmdbuf_man_destroy(struct vmw_cmdbuf_man *man)
 	(void) cancel_work_sync(&man->work);
 	dma_pool_destroy(man->dheaders);
 	dma_pool_destroy(man->headers);
+	DRM_DESTROY_WAITQUEUE(&man->idle_queue);
+	DRM_DESTROY_WAITQUEUE(&man->alloc_queue);
 	mutex_destroy(&man->cur_mutex);
 	mutex_destroy(&man->space_mutex);
 	mutex_destroy(&man->error_mutex);
+	spin_lock_destroy(&man->lock);
 	kfree(man);
 }
