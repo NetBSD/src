@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.55 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: pci.h,v 1.56 2022/10/25 23:37:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -266,6 +266,10 @@ enum pcie_link_width {
 #define	pci_read_config_byte		linux_pci_read_config_byte
 #define	pci_read_config_dword		linux_pci_read_config_dword
 #define	pci_read_config_word		linux_pci_read_config_word
+#define	pci_release_region		linux_pci_release_region
+#define	pci_release_regions		linux_pci_release_regions
+#define	pci_request_region		linux_pci_request_region
+#define	pci_request_regions		linux_pci_request_regions
 #define	pci_resource_end		linux_pci_resource_end
 #define	pci_resource_flags		linux_pci_resource_flags
 #define	pci_resource_len		linux_pci_resource_len
@@ -361,6 +365,11 @@ void __pci_rom_iomem *
 void		pci_unmap_rom(struct pci_dev *, void __pci_rom_iomem *);
 int		pci_enable_rom(struct pci_dev *);
 void		pci_disable_rom(struct pci_dev *);
+
+int		pci_request_regions(struct pci_dev *, const char *);
+void		pci_release_regions(struct pci_dev *);
+int		pci_request_region(struct pci_dev *, int, const char *);
+void		pci_release_region(struct pci_dev *, int);
 
 bus_addr_t	pci_resource_start(struct pci_dev *, unsigned);
 bus_size_t	pci_resource_len(struct pci_dev *, unsigned);
