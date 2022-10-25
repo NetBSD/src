@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_irq.c,v 1.5 2022/10/25 23:35:43 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_irq.c,v 1.6 2022/10/25 23:36:21 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.5 2022/10/25 23:35:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.6 2022/10/25 23:36:21 riastradh Exp $");
 
 #include <linux/sched/signal.h>
 
@@ -49,11 +49,20 @@ __KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.5 2022/10/25 23:35:43 riastradh Exp
  * vmw_irq_handler has returned with IRQ_WAKE_THREAD.
  *
  */
+#ifdef __NetBSD__
+static void
+vmw_thread_fn(struct work *work, void *arg)
+#else
 static irqreturn_t vmw_thread_fn(int irq, void *arg)
+#endif
 {
 	struct drm_device *dev = (struct drm_device *)arg;
 	struct vmw_private *dev_priv = vmw_priv(dev);
 	irqreturn_t ret = IRQ_NONE;
+
+#ifdef __NetBSD__
+	atomic_store_relaxed(&dev_priv->irqthread_scheduled, false);
+#endif
 
 	if (test_and_clear_bit(VMW_IRQTHREAD_FENCE,
 			       dev_priv->irqthread_pending)) {
@@ -71,7 +80,9 @@ static irqreturn_t vmw_thread_fn(int irq, void *arg)
 		ret = IRQ_HANDLED;
 	}
 
+#ifndef __NetBSD__
 	return ret;
+#endif
 }
 
 /**
@@ -128,6 +139,16 @@ static irqreturn_t vmw_irq_handler(int irq, void *arg)
 	    !test_and_set_bit(VMW_IRQTHREAD_CMDBUF,
 			      dev_priv->irqthread_pending))
 		ret = IRQ_WAKE_THREAD;
+
+#ifdef __NetBSD__
+	if (ret == IRQ_WAKE_THREAD) {
+		if (atomic_swap_uint(&dev_priv->irqthread_scheduled, 1) == 0) {
+			workqueue_enqueue(dev_priv->irqthread_wq,
+			    &dev_priv->irqthread_work, NULL);
+		}
+		ret = IRQ_HANDLED;
+	}
+#endif
 
 	return ret;
 }
@@ -450,7 +471,13 @@ void vmw_irq_uninstall(struct drm_device *dev)
 #endif
 
 	dev->irq_enabled = false;
+#ifdef __NetBSD__
+	int ret = drm_irq_uninstall(dev);
+	KASSERT(ret == 0);
+	workqueue_destroy(dev_priv->irqthread_wq);
+#else
 	free_irq(dev->irq, dev);
+#endif
 }
 
 /**
@@ -469,8 +496,21 @@ int vmw_irq_install(struct drm_device *dev, int irq)
 
 	vmw_irq_preinstall(dev);
 
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	ret = -workqueue_create(&vmw_priv(dev)->irqthread_wq, "vmwgfirq",
+	    vmw_thread_fn, dev, PRI_NONE, IPL_DRM, WQ_MPSAFE);
+	if (ret < 0)
+		return ret;
+	ret = drm_irq_install(dev);
+	if (ret < 0) {
+		workqueue_destroy(vmw_priv(dev)->irqthread_wq);
+		vmw_priv(dev)->irqthread_wq = NULL;
+	}
+#else
 	ret = request_threaded_irq(irq, vmw_irq_handler, vmw_thread_fn,
 				   IRQF_SHARED, VMWGFX_DRIVER_NAME, dev);
+#endif
 	if (ret < 0)
 		return ret;
 

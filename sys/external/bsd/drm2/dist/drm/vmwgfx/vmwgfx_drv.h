@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.8 2022/10/25 23:35:43 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.9 2022/10/25 23:36:21 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -29,6 +29,10 @@
 
 #ifndef _VMWGFX_DRV_H_
 #define _VMWGFX_DRV_H_
+
+#ifdef __NetBSD__
+#include <sys/workqueue.h>
+#endif
 
 #include <linux/notifier.h>
 #include <linux/suspend.h>
@@ -629,6 +633,11 @@ struct vmw_private {
 
 	struct vmw_cmdbuf_man *cman;
 	DECLARE_BITMAP(irqthread_pending, VMW_IRQTHREAD_MAX);
+#ifdef __NetBSD__
+	struct workqueue *irqthread_wq;
+	struct work irqthread_work;
+	volatile unsigned irqthread_scheduled;
+#endif
 
 	/* Validation memory reservation */
 	struct vmw_validation_mem vvm;
