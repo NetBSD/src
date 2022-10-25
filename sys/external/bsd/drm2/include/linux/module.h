@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.12 2021/12/19 10:47:38 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.13 2022/10/25 23:31:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #define	MODULE_DEVICE_TABLE(DESCRIPTION, IDLIST)
 #define	MODULE_FIRMWARE(FIRMWARE)
 #define	MODULE_LICENSE(LICENSE)
+#define	MODULE_VERSION(VERSION)
 
 #define	THIS_MODULE	0
 #define	KBUILD_MODNAME	__file__
