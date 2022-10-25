@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_bo.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_bo.c,v 1.3 2022/10/25 23:39:13 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -29,7 +29,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_bo.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_bo.c,v 1.3 2022/10/25 23:39:13 riastradh Exp $");
 
 #include <drm/ttm/ttm_placement.h>
 
@@ -490,6 +490,9 @@ static void vmw_user_bo_destroy(struct ttm_buffer_object *bo)
 	ttm_prime_object_kfree(vmw_user_bo, prime);
 }
 
+#ifdef __NetBSD__
+extern rb_tree_ops_t vmwgfx_res_rb_ops;
+#endif
 
 /**
  * vmw_bo_init - Initialize a vmw buffer object
@@ -521,7 +524,11 @@ int vmw_bo_init(struct vmw_private *dev_priv,
 	memset(vmw_bo, 0, sizeof(*vmw_bo));
 	BUILD_BUG_ON(TTM_MAX_BO_PRIORITY <= 3);
 	vmw_bo->base.priority = 3;
+#ifdef __NetBSD__
+	rb_tree_init(&vmw_bo->res_tree.rbr_tree, &vmwgfx_res_rb_ops);
+#else
 	vmw_bo->res_tree = RB_ROOT;
+#endif
 
 	ret = ttm_bo_init(bdev, &vmw_bo->base, size,
 			  ttm_bo_type_device, placement,
