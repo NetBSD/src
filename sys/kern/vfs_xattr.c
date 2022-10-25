@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.37 2022/10/25 23:22:17 riastradh Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.38 2022/10/25 23:22:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.37 2022/10/25 23:22:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.38 2022/10/25 23:22:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ extattr_check_cred(struct vnode *vp, int attrspace, kauth_cred_t cred,
 {
 
 	if (cred == NOCRED)
-		return (0);
+		return 0;
 
 	return kauth_authorize_vnode(cred, kauth_extattr_action(access), vp,
 	    NULL, genfs_can_extattr(vp, cred, access, attrspace));
@@ -131,7 +131,7 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 
 	if (vp != NULL)
 		VOP_UNLOCK(vp);
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 /*
@@ -161,28 +161,27 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 		error = copyinstr(SCARG(uap, attrname), attrname,
 		    sizeof(attrname), NULL);
 		if (error)
-			return (error);
+			return error;
 	}
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &path_vp);
-	if (error) {
-		return (error);
-	}
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &path_vp);
+	if (error)
+		return error;
 
 	file_vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
 		error = pathbuf_copyin(SCARG(uap, filename), &file_pb);
 		if (error) {
 			vrele(path_vp);
-			return (error);
+			return error;
 		}
 		NDINIT(&file_nd, LOOKUP, FOLLOW | LOCKLEAF, file_pb);
 		error = namei(&file_nd);
 		if (error) {
 			pathbuf_destroy(file_pb);
 			vrele(path_vp);
-			return (error);
+			return error;
 		}
 		file_vp = file_nd.ni_vp;
 		pathbuf_destroy(file_pb);
@@ -196,7 +195,7 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 		vrele(file_vp);
 	vrele(path_vp);
 
-	return (error);
+	return error;
 }
 
 /*****************************************************************************
@@ -228,7 +227,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		size_t attrlen;
 
 		error = VOP_GETEXTATTR(vp, attrnamespace, attrname, NULL,
-				       &attrlen, l->l_cred);
+		    &attrlen, l->l_cred);
 
 		switch (error) {
 		case ENODATA:
@@ -271,7 +270,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 
  done:
 	VOP_UNLOCK(vp);
-	return (error);
+	return error;
 }
 
 /*
@@ -333,7 +332,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 
  done:
 	VOP_UNLOCK(vp);
-	return (error);
+	return error;
 }
 
 /*
@@ -357,7 +356,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		    l->l_cred);
 
 	VOP_UNLOCK(vp);
-	return (error);
+	return error;
 }
 
 /*
@@ -399,8 +398,8 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	} else
 		sizep = &size;
 
-	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep, 
-				flag, l->l_cred);
+	error = VOP_LISTEXTATTR(vp, attrnamespace, auiop, sizep, flag,
+	    l->l_cred);
 
 	if (auiop != NULL) {
 		cnt -= auio.uio_resid;
@@ -412,7 +411,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 
  done:
 	VOP_UNLOCK(vp);
-	return (error);
+	return error;
 }
 
 /*****************************************************************************
@@ -420,7 +419,8 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
  *****************************************************************************/
 
 int
-sys_extattr_set_fd(struct lwp *l, const struct sys_extattr_set_fd_args *uap, register_t *retval)
+sys_extattr_set_fd(struct lwp *l, const struct sys_extattr_set_fd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -437,22 +437,24 @@ sys_extattr_set_fd(struct lwp *l, const struct sys_extattr_set_fd_args *uap, reg
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	error = extattr_set_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval, 0);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_set_file(struct lwp *l, const struct sys_extattr_set_file_args *uap, register_t *retval)
+sys_extattr_set_file(struct lwp *l,
+    const struct sys_extattr_set_file_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -468,22 +470,24 @@ sys_extattr_set_file(struct lwp *l, const struct sys_extattr_set_file_args *uap,
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_set_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval, 0);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_set_link(struct lwp *l, const struct sys_extattr_set_link_args *uap, register_t *retval)
+sys_extattr_set_link(struct lwp *l,
+    const struct sys_extattr_set_link_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -499,22 +503,24 @@ sys_extattr_set_link(struct lwp *l, const struct sys_extattr_set_link_args *uap,
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_set_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval, 0);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_get_fd(struct lwp *l, const struct sys_extattr_get_fd_args *uap, register_t *retval)
+sys_extattr_get_fd(struct lwp *l,
+    const struct sys_extattr_get_fd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -531,22 +537,24 @@ sys_extattr_get_fd(struct lwp *l, const struct sys_extattr_get_fd_args *uap, reg
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	error = extattr_get_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_get_file(struct lwp *l, const struct sys_extattr_get_file_args *uap, register_t *retval)
+sys_extattr_get_file(struct lwp *l,
+    const struct sys_extattr_get_file_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -562,22 +570,24 @@ sys_extattr_get_file(struct lwp *l, const struct sys_extattr_get_file_args *uap,
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_get_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_get_link(struct lwp *l, const struct sys_extattr_get_link_args *uap, register_t *retval)
+sys_extattr_get_link(struct lwp *l,
+    const struct sys_extattr_get_link_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -593,22 +603,24 @@ sys_extattr_get_link(struct lwp *l, const struct sys_extattr_get_link_args *uap,
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_get_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_delete_fd(struct lwp *l, const struct sys_extattr_delete_fd_args *uap, register_t *retval)
+sys_extattr_delete_fd(struct lwp *l,
+    const struct sys_extattr_delete_fd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -623,21 +635,23 @@ sys_extattr_delete_fd(struct lwp *l, const struct sys_extattr_delete_fd_args *ua
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	error = extattr_delete_vp(vp, SCARG(uap, attrnamespace), attrname, l);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_delete_file(struct lwp *l, const struct sys_extattr_delete_file_args *uap, register_t *retval)
+sys_extattr_delete_file(struct lwp *l,
+    const struct sys_extattr_delete_file_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -651,21 +665,23 @@ sys_extattr_delete_file(struct lwp *l, const struct sys_extattr_delete_file_args
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_delete_vp(vp, SCARG(uap, attrnamespace), attrname, l);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_delete_link(struct lwp *l, const struct sys_extattr_delete_link_args *uap, register_t *retval)
+sys_extattr_delete_link(struct lwp *l,
+    const struct sys_extattr_delete_link_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -679,21 +695,23 @@ sys_extattr_delete_link(struct lwp *l, const struct sys_extattr_delete_link_args
 	error = copyinstr(SCARG(uap, attrname), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_delete_vp(vp, SCARG(uap, attrnamespace), attrname, l);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, register_t *retval)
+sys_extattr_list_fd(struct lwp *l,
+    const struct sys_extattr_list_fd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -707,7 +725,7 @@ sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, r
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
@@ -715,11 +733,13 @@ sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, r
 	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_list_file(struct lwp *l, const struct sys_extattr_list_file_args *uap, register_t *retval)
+sys_extattr_list_file(struct lwp *l,
+    const struct sys_extattr_list_file_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -730,21 +750,23 @@ sys_extattr_list_file(struct lwp *l, const struct sys_extattr_list_file_args *ua
 	struct vnode *vp;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
 	    SCARG(uap, data), SCARG(uap, nbytes),
 	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 int
-sys_extattr_list_link(struct lwp *l, const struct sys_extattr_list_link_args *uap, register_t *retval)
+sys_extattr_list_link(struct lwp *l,
+    const struct sys_extattr_list_link_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -755,17 +777,17 @@ sys_extattr_list_link(struct lwp *l, const struct sys_extattr_list_link_args *ua
 	struct vnode *vp;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
 	    SCARG(uap, data), SCARG(uap, nbytes),
 	    EXTATTR_LIST_LENPREFIX, l, retval);
 
 	vrele(vp);
-	return (error);
+	return error;
 }
 
 /*****************************************************************************
@@ -774,7 +796,9 @@ sys_extattr_list_link(struct lwp *l, const struct sys_extattr_list_link_args *ua
 
 #define MATCH_NS(ns, key) (strncmp(ns, key, sizeof(ns) - 1) == 0)
 static int
-xattr_native(const char *key) {
+xattr_native(const char *key)
+{
+
 	if (MATCH_NS("system.", key))
 		return EXTATTR_NAMESPACE_SYSTEM;
 	else if (MATCH_NS("user.", key))
@@ -783,16 +807,17 @@ xattr_native(const char *key) {
 		return EXTATTR_NAMESPACE_SYSTEM;
 	else if (MATCH_NS("trusted.", key))
 		return EXTATTR_NAMESPACE_SYSTEM;
-	else 
+	else
 		return EXTATTR_NAMESPACE_USER;
-	
 }
 #undef MATCH_NS
 
 #define XATTR_ERRNO(e) ((e) == EOPNOTSUPP ? ENOTSUP : (e))
 
 int
-sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *retval)
+sys_setxattr(struct lwp *l,
+    const struct sys_setxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -813,45 +838,7 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 		goto out;
 
 	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error)
-		goto out;
-
-	attrnamespace = xattr_native(attrname);
-
-	error = extattr_set_vp(vp, attrnamespace,
-	    attrname, SCARG(uap, value), SCARG(uap, size), l, 
-	    &attrlen, SCARG(uap, flags));
-
-	vrele(vp);
-out:
-	*retval = (error == 0) ? 0 : -1;
-	return (XATTR_ERRNO(error));
-}
-
-int
-sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) name;
-		syscallarg(void *) value;
-		syscallarg(size_t) size;
-		syscallarg(int) flags;
-	} */
-	struct vnode *vp;
-	char attrname[XATTR_NAME_MAX];
-	int attrnamespace;
-	register_t attrlen;
-	int error;
-
-	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
-	    NULL);
-	if (error)
-		goto out;
-
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	    NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error)
 		goto out;
 
@@ -863,12 +850,54 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 
 	vrele(vp);
 out:
-	*retval = (error == 0) ? 0 : -1;
-	return (XATTR_ERRNO(error));
+	*retval = (error == 0 ? 0 : -1);
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *retval)
+sys_lsetxattr(struct lwp *l,
+    const struct sys_lsetxattr_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) name;
+		syscallarg(void *) value;
+		syscallarg(size_t) size;
+		syscallarg(int) flags;
+	} */
+	struct vnode *vp;
+	char attrname[XATTR_NAME_MAX];
+	int attrnamespace;
+	register_t attrlen;
+	int error;
+
+	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
+	    NULL);
+	if (error)
+		goto out;
+
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
+	if (error)
+		goto out;
+
+	attrnamespace = xattr_native(attrname);
+
+	error = extattr_set_vp(vp, attrnamespace,
+	    attrname, SCARG(uap, value), SCARG(uap, size), l,
+	    &attrlen, SCARG(uap, flags));
+
+	vrele(vp);
+out:
+	*retval = (error == 0 ? 0 : -1);
+	return XATTR_ERRNO(error);
+}
+
+int
+sys_fsetxattr(struct lwp *l,
+    const struct sys_fsetxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -902,12 +931,14 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 
 	fd_putfile(SCARG(uap, fd));
 out:
-	*retval = (error == 0) ? 0 : -1;
-	return (XATTR_ERRNO(error));
+	*retval = (error == 0 ? 0 : -1);
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *retval)
+sys_getxattr(struct lwp *l,
+    const struct sys_getxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -923,12 +954,12 @@ sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *ret
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	attrnamespace = xattr_native(attrname);
 
@@ -936,11 +967,13 @@ sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *ret
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *retval)
+sys_lgetxattr(struct lwp *l,
+    const struct sys_lgetxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -956,12 +989,12 @@ sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *r
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	attrnamespace = xattr_native(attrname);
 
@@ -969,11 +1002,13 @@ sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *r
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *retval)
+sys_fgetxattr(struct lwp *l,
+    const struct sys_fgetxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -990,11 +1025,11 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	attrnamespace = xattr_native(attrname);
@@ -1003,11 +1038,13 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	fd_putfile(SCARG(uap, fd));
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *retval)
+sys_listxattr(struct lwp *l,
+    const struct sys_listxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1020,10 +1057,10 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 	register_t listsize_usr, listsize_sys;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	list = SCARG(uap, list);
 	size = SCARG(uap, size);
@@ -1047,20 +1084,21 @@ sys_listxattr(struct lwp *l, const struct sys_listxattr_args *uap, register_t *r
 		break;
 	case 0:
 		break;
-	default: 
+	default:
 		goto out;
 		break;
 	}
 
-	*retval = listsize_usr + listsize_sys; 	
-
+	*retval = listsize_usr + listsize_sys;
 out:
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t *retval)
+sys_llistxattr(struct lwp *l,
+    const struct sys_llistxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1073,10 +1111,10 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 	register_t listsize_usr, listsize_sys;
 	int error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	list = SCARG(uap, list);
 	size = SCARG(uap, size);
@@ -1099,19 +1137,21 @@ sys_llistxattr(struct lwp *l, const struct sys_llistxattr_args *uap, register_t 
 		break;
 	case 0:
 		break;
-	default: 
+	default:
 		goto out;
 		break;
 	}
 
-	*retval = listsize_usr + listsize_sys; 	
+	*retval = listsize_usr + listsize_sys;
 out:
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t *retval)
+sys_flistxattr(struct lwp *l,
+    const struct sys_flistxattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1127,7 +1167,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	list = SCARG(uap, list);
@@ -1152,20 +1192,21 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 		break;
 	case 0:
 		break;
-	default: 
+	default:
 		goto out;
 		break;
 	}
 
-	*retval = listsize_usr + listsize_sys; 	
+	*retval = listsize_usr + listsize_sys;
 out:
-
 	fd_putfile(SCARG(uap, fd));
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_removexattr(struct lwp *l, const struct sys_removexattr_args *uap, register_t *retval)
+sys_removexattr(struct lwp *l,
+    const struct sys_removexattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1179,23 +1220,25 @@ sys_removexattr(struct lwp *l, const struct sys_removexattr_args *uap, register_
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_FOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	attrnamespace = xattr_native(attrname);
 
 	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_lremovexattr(struct lwp *l, const struct sys_lremovexattr_args *uap, register_t *retval)
+sys_lremovexattr(struct lwp *l,
+    const struct sys_lremovexattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -1209,23 +1252,25 @@ sys_lremovexattr(struct lwp *l, const struct sys_lremovexattr_args *uap, registe
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_NOFOLLOW_NOEMULROOT, &vp);
+	error = namei_simple_user(SCARG(uap, path), NSM_NOFOLLOW_NOEMULROOT,
+	    &vp);
 	if (error)
-		return (error);
+		return error;
 
 	attrnamespace = xattr_native(attrname);
 
 	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	vrele(vp);
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
 
 int
-sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, register_t *retval)
+sys_fremovexattr(struct lwp *l,
+    const struct sys_fremovexattr_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1240,11 +1285,11 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
 	    NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	attrnamespace = xattr_native(attrname);
@@ -1252,5 +1297,5 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	fd_putfile(SCARG(uap, fd));
-	return (XATTR_ERRNO(error));
+	return XATTR_ERRNO(error);
 }
