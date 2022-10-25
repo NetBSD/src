@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.6 2022/10/25 23:33:44 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.7 2022/10/25 23:35:29 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.6 2022/10/25 23:33:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.7 2022/10/25 23:35:29 riastradh Exp $");
 
 #include <linux/dmapool.h>
 #include <linux/pci.h>
@@ -1373,7 +1373,11 @@ struct vmw_cmdbuf_man *vmw_cmdbuf_man_create(struct vmw_private *dev_priv)
 	man->num_contexts = (dev_priv->capabilities & SVGA_CAP_HP_CMD_QUEUE) ?
 		2 : 1;
 	man->headers = dma_pool_create("vmwgfx cmdbuf",
+#ifdef __NetBSD__
+				       dev_priv->dev->dmat,
+#else
 				       &dev_priv->dev->pdev->dev,
+#endif
 				       sizeof(SVGACBHeader),
 				       64, PAGE_SIZE);
 	if (!man->headers) {
@@ -1382,7 +1386,11 @@ struct vmw_cmdbuf_man *vmw_cmdbuf_man_create(struct vmw_private *dev_priv)
 	}
 
 	man->dheaders = dma_pool_create("vmwgfx inline cmdbuf",
+#ifdef __NetBSD__
+					dev_priv->dev->dmat,
+#else
 					&dev_priv->dev->pdev->dev,
+#endif
 					sizeof(struct vmw_cmdbuf_dheader),
 					64, PAGE_SIZE);
 	if (!man->dheaders) {
