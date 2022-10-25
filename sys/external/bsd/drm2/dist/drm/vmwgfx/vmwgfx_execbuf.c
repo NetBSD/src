@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_execbuf.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_execbuf.c,v 1.5 2022/10/25 23:35:57 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -27,9 +27,13 @@
  *
  **************************************************************************/
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_execbuf.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_execbuf.c,v 1.5 2022/10/25 23:35:57 riastradh Exp $");
 
 #include <linux/sync_file.h>
+
+#ifdef __NetBSD__
+#include <sys/filedesc.h>
+#endif
 
 #include "vmwgfx_drv.h"
 #include "vmwgfx_reg.h"
@@ -3466,6 +3470,10 @@ vmw_execbuf_copy_fence_user(struct vmw_private *dev_priv,
 	 * handle.
 	 */
 	if (unlikely(ret != 0) && (fence_rep.error == 0)) {
+#ifdef __NetBSD__
+		if (fd_getfile(fence_rep.fd))
+			(void)fd_close(fence_rep.fd);
+#else
 		if (sync_file)
 			fput(sync_file->file);
 
@@ -3473,6 +3481,7 @@ vmw_execbuf_copy_fence_user(struct vmw_private *dev_priv,
 			put_unused_fd(fence_rep.fd);
 			fence_rep.fd = -1;
 		}
+#endif
 
 		ttm_ref_object_base_unref(vmw_fp->tfile, fence_handle,
 					  TTM_REF_USAGE);
@@ -3655,18 +3664,29 @@ int vmw_execbuf_process(struct drm_file *file_priv,
 	struct vmw_cmdbuf_header *header;
 	uint32_t handle = 0;
 	int ret;
+#ifdef __NetBSD__
+	int out_fence_fd = -1;
+	struct file *out_fence_fp = NULL;
+#else
 	int32_t out_fence_fd = -1;
+#endif
 	struct sync_file *sync_file = NULL;
 	DECLARE_VAL_CONTEXT(val_ctx, &sw_context->res_ht, 1);
 
 	vmw_validation_set_val_mem(&val_ctx, &dev_priv->vvm);
 
 	if (flags & DRM_VMW_EXECBUF_FLAG_EXPORT_FENCE_FD) {
+#ifdef __NetBSD__
+		ret = -fd_allocfile(&out_fence_fp, &out_fence_fd);
+		if (ret)
+			return ret;
+#else
 		out_fence_fd = get_unused_fd_flags(O_CLOEXEC);
 		if (out_fence_fd < 0) {
 			VMW_DEBUG_USER("Failed to get a fence fd.\n");
 			return out_fence_fd;
 		}
+#endif
 	}
 
 	if (throttle_us) {
@@ -3813,17 +3833,30 @@ int vmw_execbuf_process(struct drm_file *file_priv,
 	 */
 	if (flags & DRM_VMW_EXECBUF_FLAG_EXPORT_FENCE_FD) {
 
+#ifdef __NetBSD__
+		sync_file = sync_file_create(&fence->base, out_fence_fp);
+#else
 		sync_file = sync_file_create(&fence->base);
+#endif
 		if (!sync_file) {
 			VMW_DEBUG_USER("Sync file create failed for fence\n");
+#ifdef __NetBSD__
+			fd_abort(curproc, out_fence_fp, out_fence_fd);
+			out_fence_fp = NULL;
+#else
 			put_unused_fd(out_fence_fd);
+#endif
 			out_fence_fd = -1;
 
 			(void) vmw_fence_obj_wait(fence, false, false,
 						  VMW_FENCE_WAIT_TIMEOUT);
 		} else {
 			/* Link the fence with the FD created earlier */
+#ifdef __NetBSD__
+			fd_affix(curproc, out_fence_fp, out_fence_fd);
+#else
 			fd_install(out_fence_fd, sync_file->file);
+#endif
 		}
 	}
 
@@ -3877,7 +3910,11 @@ out_free_header:
 		vmw_cmdbuf_header_free(header);
 out_free_fence_fd:
 	if (out_fence_fd >= 0)
+#ifdef __NetBSD__
+		fd_abort(curproc, out_fence_fp, out_fence_fd);
+#else
 		put_unused_fd(out_fence_fd);
+#endif
 
 	return ret;
 }
