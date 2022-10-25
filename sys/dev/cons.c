@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.90 2022/10/07 18:59:37 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.91 2022/10/25 23:21:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.90 2022/10/07 18:59:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.91 2022/10/25 23:21:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.90 2022/10/07 18:59:37 riastradh Exp $");
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
+#include <sys/pserialize.h>
 
 #include <dev/cons.h>
 
@@ -67,7 +69,8 @@ dev_type_ioctl(cnioctl);
 dev_type_poll(cnpoll);
 dev_type_kqfilter(cnkqfilter);
 
-static bool cn_redirect(dev_t *, int, int *);
+static bool cn_redirect(dev_t *, int, int *, struct tty **);
+static void cn_release(struct tty *);
 
 const struct cdevsw cons_cdevsw = {
 	.d_open = cnopen,
@@ -86,7 +89,7 @@ const struct cdevsw cons_cdevsw = {
 
 static struct kmutex cn_lock;
 
-struct	tty *constty = NULL;	/* virtual console output device */
+struct	tty *volatile constty;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
@@ -199,6 +202,7 @@ out:	mutex_exit(&cn_lock);
 int
 cnread(dev_t dev, struct uio *uio, int flag)
 {
+	struct tty *ctp = NULL;
 	int error;
 
 	/*
@@ -208,25 +212,31 @@ cnread(dev_t dev, struct uio *uio, int flag)
 	 * input (except a shell in single-user mode, but then,
 	 * one wouldn't TIOCCONS then).
 	 */
-	if (!cn_redirect(&dev, 1, &error))
+	if (!cn_redirect(&dev, 1, &error, &ctp))
 		return error;
-	return cdev_read(dev, uio, flag);
+	error = cdev_read(dev, uio, flag);
+	cn_release(ctp);
+	return error;
 }
 
 int
 cnwrite(dev_t dev, struct uio *uio, int flag)
 {
+	struct tty *ctp = NULL;
 	int error;
 
 	/* Redirect output, if that's appropriate. */
-	if (!cn_redirect(&dev, 0, &error))
+	if (!cn_redirect(&dev, 0, &error, &ctp))
 		return error;
-	return cdev_write(dev, uio, flag);
+	error = cdev_write(dev, uio, flag);
+	cn_release(ctp);
+	return error;
 }
 
 int
 cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	struct tty *ctp = NULL;
 	int error;
 
 	error = 0;
@@ -235,29 +245,41 @@ cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
-	if (cmd == TIOCCONS && constty != NULL) {
-		error = kauth_authorize_device_tty(l->l_cred,
-		    KAUTH_DEVICE_TTY_VIRTUAL, constty);
-		if (!error)
-			constty = NULL;
-		return (error);
-	}
+	if (cmd == TIOCCONS) {
+		struct tty *tp;
 
+		mutex_enter(&constty_lock);
+		tp = atomic_load_relaxed(&constty);
+		if (tp == NULL) {
+			mutex_exit(&constty_lock);
+			goto passthrough; /* XXX ??? */
+		}
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_VIRTUAL, tp);
+		if (!error)
+			atomic_store_relaxed(&constty, NULL);
+		mutex_exit(&constty_lock);
+		return error;
+	}
+passthrough:
 	/*
 	 * Redirect the ioctl, if that's appropriate.
 	 * Note that strange things can happen, if a program does
 	 * ioctls on /dev/console, then the console is redirected
 	 * out from under it.
 	 */
-	if (!cn_redirect(&dev, 0, &error))
+	if (!cn_redirect(&dev, 0, &error, &ctp))
 		return error;
-	return cdev_ioctl(dev, cmd, data, flag, l);
+	error = cdev_ioctl(dev, cmd, data, flag, l);
+	cn_release(ctp);
+	return error;
 }
 
 /*ARGSUSED*/
 int
 cnpoll(dev_t dev, int events, struct lwp *l)
 {
+	struct tty *ctp = NULL;
 	int error;
 
 	/*
@@ -265,15 +287,18 @@ cnpoll(dev_t dev, int events, struct lwp *l)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (!cn_redirect(&dev, 0, &error))
+	if (!cn_redirect(&dev, 0, &error, &ctp))
 		return POLLHUP;
-	return cdev_poll(dev, events, l);
+	error = cdev_poll(dev, events, l);
+	cn_release(ctp);
+	return error;
 }
 
 /*ARGSUSED*/
 int
 cnkqfilter(dev_t dev, struct knote *kn)
 {
+	struct tty *ctp = NULL;
 	int error;
 
 	/*
@@ -281,9 +306,11 @@ cnkqfilter(dev_t dev, struct knote *kn)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (!cn_redirect(&dev, 0, &error))
+	if (!cn_redirect(&dev, 0, &error, &ctp))
 		return error;
-	return cdev_kqfilter(dev, kn);
+	error = cdev_kqfilter(dev, kn);
+	cn_release(ctp);
+	return error;
 }
 
 int
@@ -429,28 +456,44 @@ cnhalt(void)
 /*
  * Redirect output, if that's appropriate.  If there's no real console,
  * return ENXIO.
- *
- * Call with tty_mutex held.
  */
 static bool
-cn_redirect(dev_t *devp, int is_read, int *error)
+cn_redirect(dev_t *devp, int is_read, int *error, struct tty **ctpp)
 {
 	dev_t dev = *devp;
+	struct tty *ctp;
+	int s;
+	bool ok = false;
 
 	*error = ENXIO;
-	if (constty != NULL && minor(dev) == 0 &&
+	*ctpp = NULL;
+	s = pserialize_read_enter();
+	if ((ctp = atomic_load_consume(&constty)) != NULL && minor(dev) == 0 &&
 	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {
 		if (is_read) {
 			*error = 0;
-			return false;
+			goto out;
 		}
-		dev = constty->t_dev;
+		tty_acquire(ctp);
+		*ctpp = ctp;
+		dev = ctp->t_dev;
 	} else if (cn_tab == NULL)
-		return false;
+		goto out;
 	else
 		dev = cn_tab->cn_dev;
+	ok = true;
 	*devp = dev;
-	return true;
+out:	pserialize_read_exit(s);
+	return ok;
+}
+
+static void
+cn_release(struct tty *ctp)
+{
+
+	if (ctp == NULL)
+		return;
+	tty_release(ctp);
 }
 
 MODULE(MODULE_CLASS_DRIVER, cons, NULL);
