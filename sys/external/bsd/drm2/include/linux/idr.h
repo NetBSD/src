@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.9 2021/12/19 01:15:21 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.10 2022/10/25 23:36:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ ida_destroy(struct ida *ida)
 }
 
 static inline void
-ida_remove(struct ida *ida, int id)
+ida_free(struct ida *ida, int id)
 {
 
 	idr_remove(&ida->ida_idr, id);
@@ -118,12 +118,19 @@ ida_simple_get(struct ida *ida, unsigned start, unsigned end, gfp_t gfp)
 	return id;
 }
 
+static inline int
+ida_alloc_max(struct ida *ida, unsigned max, gfp_t gfp)
+{
+
+	return ida_simple_get(ida, 0, max + 1, gfp);
+}
+
 static inline void
 ida_simple_remove(struct ida *ida, unsigned int id)
 {
 
 	KASSERT((int)id >= 0);
-	ida_remove(ida, id);
+	ida_free(ida, id);
 }
 
 #endif  /* _LINUX_IDR_H_ */
