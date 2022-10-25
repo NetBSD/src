@@ -1,4 +1,4 @@
-#	$NetBSD: files.vmwgfx,v 1.2 2022/07/19 23:19:07 riastradh Exp $
+#	$NetBSD: files.vmwgfx,v 1.3 2022/10/25 23:31:38 riastradh Exp $
 
 version	20180827
 
@@ -22,7 +22,14 @@ makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-I$S/external/bsd/drm2/vmwgfx"
 # Then their header files.
 makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-I$S/external/bsd/drm2/dist/drm/vmwgfx"
 
+makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-DCONFIG_DRM_TTM_DMA_PAGE_POOL=0"
+makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-DCONFIG_DRM_VMWGFX_FBCON=1"
+
+makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-cast-qual"
 makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-missing-field-initializers"
+makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-pointer-arith"
+makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-unused-but-set-variable"
+makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-unused-function"
 
 file	external/bsd/drm2/vmwgfx/vmwgfx_module.c		vmwgfx
 file	external/bsd/drm2/vmwgfx/vmwgfx_pci.c			vmwgfx
@@ -40,7 +47,7 @@ file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_context.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_cotable.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_drv.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_execbuf.c	vmwgfx
-file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fb.c	vmwgfx
+#file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fb.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fence.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fifo.c	vmwgfx
 file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_gmr.c	vmwgfx
