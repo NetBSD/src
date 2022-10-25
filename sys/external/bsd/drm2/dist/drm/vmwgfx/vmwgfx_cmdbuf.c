@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.5 2022/10/25 23:32:04 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.5 2022/10/25 23:32:04 riastradh Exp $");
 
 #include <linux/dmapool.h>
 #include <linux/pci.h>
@@ -137,6 +137,10 @@ struct vmw_cmdbuf_man {
 	bool irq_on;
 	bool using_mob;
 	bool has_pool;
+#ifdef __NetBSD__
+	bus_dmamap_t dmamap;
+	bus_dma_segment_t dmaseg;
+#endif
 	dma_addr_t handle;
 	size_t size;
 	u32 num_contexts;
@@ -1237,8 +1241,46 @@ int vmw_cmdbuf_set_pool_size(struct vmw_cmdbuf_man *man,
 
 	/* First, try to allocate a huge chunk of DMA memory */
 	size = PAGE_ALIGN(size);
+#ifdef __NetBSD__
+	int error, nseg, alloced = 0,  mapped = 0, loaded = 0;
+
+	do {
+		error = bus_dmamap_create(dev_priv->dev->dmat, size, 1, size,
+		    0, BUS_DMA_ALLOCNOW|BUS_DMA_WAITOK, &man->dmamap);
+		if (error)
+			break;
+		error = bus_dmamem_alloc(dev_priv->dev->dmat, size, 1, 0,
+		    &man->dmaseg, 1, &nseg, BUS_DMA_WAITOK);
+		if (error)
+			break;
+		KASSERT(nseg == 1);
+		alloced = 1;
+		error = bus_dmamem_map(dev_priv->dev->dmat, &man->dmaseg, 1,
+		    size, (void *)&man->map, BUS_DMA_COHERENT|BUS_DMA_WAITOK);
+		if (error)
+			break;
+		mapped = 1;
+		error = bus_dmamap_load(dev_priv->dev->dmat, man->dmamap,
+		    man->map, size, NULL, BUS_DMA_WAITOK);
+		if (error)
+			break;
+		loaded = 1;
+	} while (0);
+	if (error) {
+		if (loaded)
+			bus_dmamap_unload(dev_priv->dev->dmat, man->dmamap);
+		if (mapped)
+			bus_dmamem_unmap(dev_priv->dev->dmat, man->map, size);
+		if (alloced)
+			bus_dmamem_free(dev_priv->dev->dmat, &man->dmaseg, 1);
+		if (man->dmamap)
+			bus_dmamap_destroy(dev_priv->dev->dmat, man->dmamap);
+		man->map = NULL;
+	}
+#else
 	man->map = dma_alloc_coherent(&dev_priv->dev->pdev->dev, size,
 				      &man->handle, GFP_KERNEL);
+#endif
 	if (man->map) {
 		man->using_mob = false;
 	} else {
@@ -1393,8 +1435,16 @@ void vmw_cmdbuf_remove_pool(struct vmw_cmdbuf_man *man)
 		ttm_bo_put(man->cmd_space);
 		man->cmd_space = NULL;
 	} else {
+#ifdef __NetBSD__
+		const bus_dma_tag_t dmat = man->dev_priv->dev->dmat;
+		bus_dmamap_unload(dmat, man->dmamap);
+		bus_dmamem_unmap(dmat, man->map, man->size);
+		bus_dmamem_free(dmat, &man->dmaseg, 1);
+		bus_dmamap_destroy(dmat, man->dmamap);
+#else
 		dma_free_coherent(&man->dev_priv->dev->pdev->dev,
 				  man->size, man->map, man->handle);
+#endif
 	}
 }
 
