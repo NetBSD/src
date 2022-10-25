@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.c,v 1.5 2022/02/17 01:21:02 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.c,v 1.6 2022/10/25 23:34:05 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.5 2022/02/17 01:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.6 2022/10/25 23:34:05 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/dma-mapping.h>
@@ -655,8 +655,10 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 		INIT_LIST_HEAD(&dev_priv->res_lru[i]);
 	}
 
-	init_waitqueue_head(&dev_priv->fence_queue);
-	init_waitqueue_head(&dev_priv->fifo_queue);
+	DRM_INIT_WAITQUEUE(&dev_priv->fence_queue, "vmwgfence");
+	spin_lock_init(&dev_priv->fence_lock);
+	DRM_INIT_WAITQUEUE(&dev_priv->fifo_queue, "vmwgfifo");
+	spin_lock_init(&dev_priv->fifo_lock);
 	dev_priv->fence_queue_waiters = 0;
 	dev_priv->fifo_queue_waiters = 0;
 
@@ -963,6 +965,11 @@ out_no_device:
 out_err4:
 	memunmap(dev_priv->mmio_virt);
 out_err0:
+	spin_lock_destroy(&dev_priv->fifo_lock);
+	DRM_DESTROY_WAITQUEUE(&dev_priv->fifo_queue);
+	spin_lock_destroy(&dev_priv->fence_lock);
+	DRM_DESTROY_WAITQUEUE(&dev_priv->fence_queue);
+
 	for (i = vmw_res_context; i < vmw_res_max; ++i)
 		idr_destroy(&dev_priv->res_idr[i]);
 
@@ -1014,6 +1021,11 @@ static void vmw_driver_unload(struct drm_device *dev)
 	memunmap(dev_priv->mmio_virt);
 	if (dev_priv->ctx.staged_bindings)
 		vmw_binding_state_free(dev_priv->ctx.staged_bindings);
+
+	spin_lock_destroy(&dev_priv->fifo_lock);
+	DRM_DESTROY_WAITQUEUE(&dev_priv->fifo_queue);
+	spin_lock_destroy(&dev_priv->fence_lock);
+	DRM_DESTROY_WAITQUEUE(&dev_priv->fence_queue);
 
 	for (i = vmw_res_context; i < vmw_res_max; ++i)
 		idr_destroy(&dev_priv->res_idr[i]);
