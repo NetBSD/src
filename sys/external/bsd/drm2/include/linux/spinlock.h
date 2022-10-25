@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.14 2021/12/19 11:52:08 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.15 2022/10/25 23:33:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -62,6 +62,18 @@ static inline void
 spin_unlock(spinlock_t *spinlock)
 {
 	mutex_exit(&spinlock->sl_lock);
+}
+
+static inline void
+spin_lock_bh(spinlock_t *spinlock)
+{
+	spin_lock(spinlock);
+}
+
+static inline void
+spin_unlock_bh(spinlock_t *spinlock)
+{
+	spin_unlock(spinlock);
 }
 
 static inline void
