@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_fence.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_fence.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,11 +28,13 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_fence.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_fence.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $");
 
 #include <linux/sched/signal.h>
 
 #include "vmwgfx_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define VMW_FENCE_WRAP (1 << 31)
 
@@ -158,7 +160,11 @@ static bool vmw_fence_enable_signaling(struct dma_fence *f)
 
 struct vmwgfx_wait_cb {
 	struct dma_fence_cb base;
+#ifdef __NetBSD__
+	drm_waitqueue_t wq;
+#else
 	struct task_struct *task;
+#endif
 };
 
 static void
@@ -167,7 +173,11 @@ vmwgfx_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
 	struct vmwgfx_wait_cb *wait =
 		container_of(cb, struct vmwgfx_wait_cb, base);
 
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ALL(&wait->wq, fence->lock);
+#else
 	wake_up_process(wait->task);
+#endif
 }
 
 static void __vmw_fences_update(struct vmw_fence_manager *fman);
@@ -198,10 +208,26 @@ static long vmw_fence_wait(struct dma_fence *f, bool intr, signed long timeout)
 		goto out;
 	}
 
-	cb.base.func = vmwgfx_wait_cb;
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&cb.wq, "vmwgfxwf");
+#else
 	cb.task = current;
-	list_add(&cb.base.node, &f->cb_list);
+#endif
+	spin_unlock(f->lock);
+	ret = dma_fence_add_callback(f, &cb.base, vmwgfx_wait_cb);
+	spin_lock(f->lock);
+	if (ret)
+		goto out;
 
+#ifdef __NetBSD__
+#define	C	(__vmw_fences_update(fman), dma_fence_is_signaled_locked(f))
+	if (intr) {
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &cb.wq, f->lock, timeout, C);
+	} else {
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &cb.wq, f->lock, timeout,
+		    C);
+	}
+#else
 	for (;;) {
 		__vmw_fences_update(fman);
 
@@ -238,9 +264,16 @@ static long vmw_fence_wait(struct dma_fence *f, bool intr, signed long timeout)
 	__set_current_state(TASK_RUNNING);
 	if (!list_empty(&cb.base.node))
 		list_del(&cb.base.node);
+#endif
+	spin_unlock(f->lock);
+	dma_fence_remove_callback(f, &cb.base);
+	spin_lock(f->lock);
 
 out:
 	spin_unlock(f->lock);
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&cb.wq);
+#endif
 
 	vmw_seqno_waiter_remove(dev_priv);
 
@@ -878,8 +911,11 @@ int vmw_fence_obj_signaled_ioctl(struct drm_device *dev, void *data,
 	arg->signaled = vmw_fence_obj_signaled(fence);
 
 	arg->signaled_flags = arg->flags;
+	spin_lock(&dev_priv->fence_lock);
+	const u32 seqno = dev_priv->last_read_seqno;
+	spin_unlock(&dev_priv->fence_lock);
 	spin_lock(&fman->lock);
-	arg->passed_seqno = dev_priv->last_read_seqno;
+	arg->passed_seqno = seqno;
 	spin_unlock(&fman->lock);
 
 	ttm_base_object_unref(&base);

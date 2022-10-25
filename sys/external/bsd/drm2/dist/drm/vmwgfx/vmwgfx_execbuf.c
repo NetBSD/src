@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_execbuf.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_execbuf.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -27,7 +27,7 @@
  *
  **************************************************************************/
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_execbuf.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_execbuf.c,v 1.4 2022/10/25 23:34:05 riastradh Exp $");
 
 #include <linux/sync_file.h>
 
@@ -3447,8 +3447,10 @@ vmw_execbuf_copy_fence_user(struct vmw_private *dev_priv,
 
 		fence_rep.handle = fence_handle;
 		fence_rep.seqno = fence->base.seqno;
+		spin_lock(&dev_priv->fence_lock);
 		vmw_update_seqno(dev_priv, &dev_priv->fifo);
 		fence_rep.passed_seqno = dev_priv->last_read_seqno;
+		spin_unlock(&dev_priv->fence_lock);
 	}
 
 	/*

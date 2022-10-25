@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.6 2022/02/17 01:21:02 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.7 2022/10/25 23:34:05 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -538,7 +538,9 @@ struct vmw_private {
 
 	atomic_t marker_seq;
 	drm_waitqueue_t fence_queue;
+	spinlock_t fence_lock;
 	drm_waitqueue_t fifo_queue;
+	spinlock_t fifo_lock;
 	spinlock_t waiter_lock;
 	int fence_queue_waiters; /* Protected by waiter_lock */
 	int goal_queue_waiters; /* Protected by waiter_lock */

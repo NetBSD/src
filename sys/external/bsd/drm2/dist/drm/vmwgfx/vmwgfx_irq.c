@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_irq.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_irq.c,v 1.4 2022/10/25 23:34:06 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.4 2022/10/25 23:34:06 riastradh Exp $");
 
 #include <linux/sched/signal.h>
 
@@ -55,8 +55,11 @@ static irqreturn_t vmw_thread_fn(int irq, void *arg)
 
 	if (test_and_clear_bit(VMW_IRQTHREAD_FENCE,
 			       dev_priv->irqthread_pending)) {
+		spin_lock(&dev_priv->fence_lock);
 		vmw_fences_update(dev_priv->fman);
-		wake_up_all(&dev_priv->fence_queue);
+		DRM_SPIN_WAKEUP_ALL(&dev_priv->fence_queue,
+		    &dev_priv->fence_lock);
+		spin_unlock(&dev_priv->fence_lock);
 		ret = IRQ_HANDLED;
 	}
 
@@ -96,8 +99,12 @@ static irqreturn_t vmw_irq_handler(int irq, void *arg)
 	if (!status)
 		return IRQ_NONE;
 
-	if (masked_status & SVGA_IRQFLAG_FIFO_PROGRESS)
-		wake_up_all(&dev_priv->fifo_queue);
+	if (masked_status & SVGA_IRQFLAG_FIFO_PROGRESS) {
+		spin_lock(&dev_priv->fifo_lock);
+		DRM_SPIN_WAKEUP_ALL(&dev_priv->fifo_queue,
+		    &dev_priv->fifo_lock);
+		spin_unlock(&dev_priv->fifo_lock);
+	}
 
 	if ((masked_status & (SVGA_IRQFLAG_ANY_FENCE |
 			      SVGA_IRQFLAG_FENCE_GOAL)) &&
@@ -125,6 +132,8 @@ void vmw_update_seqno(struct vmw_private *dev_priv,
 	u32 *fifo_mem = dev_priv->mmio_virt;
 	uint32_t seqno = vmw_mmio_read(fifo_mem + SVGA_FIFO_FENCE);
 
+	assert_spin_locked(&dev_priv->fence_lock);
+
 	if (dev_priv->last_read_seqno != seqno) {
 		dev_priv->last_read_seqno = seqno;
 		vmw_marker_pull(&fifo_state->marker_queue, seqno);
@@ -137,6 +146,8 @@ bool vmw_seqno_passed(struct vmw_private *dev_priv,
 {
 	struct vmw_fifo_state *fifo_state;
 	bool ret;
+
+	assert_spin_locked(&dev_priv->fence_lock);
 
 	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP))
 		return true;
@@ -175,7 +186,9 @@ int vmw_fallback_wait(struct vmw_private *dev_priv,
 	int ret;
 	unsigned long end_jiffies = jiffies + timeout;
 	bool (*wait_condition)(struct vmw_private *, uint32_t);
+#ifndef __NetBSD__
 	DEFINE_WAIT(__wait);
+#endif
 
 	wait_condition = (fifo_idle) ? &vmw_fifo_idle :
 		&vmw_seqno_passed;
@@ -194,10 +207,40 @@ int vmw_fallback_wait(struct vmw_private *dev_priv,
 		}
 	}
 
+	spin_lock(&dev_priv->fence_lock);
+
 	signal_seq = atomic_read(&dev_priv->marker_seq);
 	ret = 0;
 
 	for (;;) {
+#ifdef __NetBSD__
+		if (!lazy) {
+			if (wait_condition(dev_priv, seqno))
+				break;
+			spin_unlock(&dev_priv->fence_lock);
+			if ((++count & 0xf) == 0)
+				yield();
+			spin_lock(&dev_priv->fence_lock);
+		} else if (interruptible) {
+			DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->fence_queue,
+			    &dev_priv->fence_lock, /*timeout*/1,
+			    wait_condition(dev_priv, seqno));
+		} else {
+			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+			    &dev_priv->fence_queue,
+			    &dev_priv->fence_lock, /*timeout*/1,
+			    wait_condition(dev_priv, seqno));
+		}
+		if (ret) {	/* success or error but not timeout */
+			if (ret > 0) /* success */
+				ret = 0;
+			break;
+		}
+		if (time_after_eq(jiffies, end_jiffies)) {
+			DRM_ERROR("SVGA device lockup.\n");
+			break;
+		}
+#else
 		prepare_to_wait(&dev_priv->fence_queue, &__wait,
 				(interruptible) ?
 				TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
@@ -225,14 +268,22 @@ int vmw_fallback_wait(struct vmw_private *dev_priv,
 			ret = -ERESTARTSYS;
 			break;
 		}
+#endif
 	}
+#ifndef __NetBSD__
 	finish_wait(&dev_priv->fence_queue, &__wait);
+#endif
 	if (ret == 0 && fifo_idle) {
 		u32 *fifo_mem = dev_priv->mmio_virt;
 
 		vmw_mmio_write(signal_seq, fifo_mem + SVGA_FIFO_FENCE);
 	}
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->fence_queue, &dev_priv->fence_lock);
+	spin_unlock(&dev_priv->fence_lock);
+#else
 	wake_up_all(&dev_priv->fence_queue);
+#endif
 out_err:
 	if (fifo_idle)
 		up_read(&fifo_state->rwsem);
@@ -294,36 +345,45 @@ int vmw_wait_seqno(struct vmw_private *dev_priv,
 	long ret;
 	struct vmw_fifo_state *fifo = &dev_priv->fifo;
 
-	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP))
+	spin_lock(&dev_priv->fence_lock);
+	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP)) {
+		spin_unlock(&dev_priv->fence_lock);
 		return 0;
+	}
 
-	if (likely(vmw_seqno_passed(dev_priv, seqno)))
+	if (likely(vmw_seqno_passed(dev_priv, seqno))) {
+		spin_unlock(&dev_priv->fence_lock);
 		return 0;
+	}
 
 	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
 
-	if (!(fifo->capabilities & SVGA_FIFO_CAP_FENCE))
+	if (!(fifo->capabilities & SVGA_FIFO_CAP_FENCE)) {
+		spin_unlock(&dev_priv->fence_lock);
 		return vmw_fallback_wait(dev_priv, lazy, true, seqno,
 					 interruptible, timeout);
+	}
 
-	if (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
+	if (!(dev_priv->capabilities & SVGA_CAP_IRQMASK)) {
+		spin_unlock(&dev_priv->fence_lock);
 		return vmw_fallback_wait(dev_priv, lazy, false, seqno,
 					 interruptible, timeout);
+	}
 
 	vmw_seqno_waiter_add(dev_priv);
 
 	if (interruptible)
-		ret = wait_event_interruptible_timeout
-		    (dev_priv->fence_queue,
-		     vmw_seqno_passed(dev_priv, seqno),
-		     timeout);
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->fence_queue,
+		    &dev_priv->fence_lock, timeout,
+		    vmw_seqno_passed(dev_priv, seqno));
 	else
-		ret = wait_event_timeout
-		    (dev_priv->fence_queue,
-		     vmw_seqno_passed(dev_priv, seqno),
-		     timeout);
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &dev_priv->fence_queue,
+		    &dev_priv->fence_lock, timeout,
+		    vmw_seqno_passed(dev_priv, seqno));
 
 	vmw_seqno_waiter_remove(dev_priv);
+
+	spin_unlock(&dev_priv->fence_lock);
 
 	if (unlikely(ret == 0))
 		ret = -EBUSY;
