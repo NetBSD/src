@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_overlay.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_overlay.c,v 1.4 2022/10/25 23:35:43 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_overlay.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_overlay.c,v 1.4 2022/10/25 23:35:43 riastradh Exp $");
 
 #include <drm/ttm/ttm_placement.h>
 
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: vmwgfx_overlay.c,v 1.3 2021/12/18 23:45:45 riastradh
 #include "device_include/svga_escape.h"
 
 #include "vmwgfx_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define VMW_MAX_NUM_STREAMS 1
 #define VMW_OVERLAY_CAP_MASK (SVGA_FIFO_CAP_VIDEO | SVGA_FIFO_CAP_ESCAPE)

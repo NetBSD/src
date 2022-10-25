@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_reg.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_reg.h,v 1.4 2022/10/25 23:35:43 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -39,6 +39,7 @@
 #define VMWGFX_INDEX_PORT     0x0
 #define VMWGFX_VALUE_PORT     0x1
 #define VMWGFX_IRQSTATUS_PORT 0x8
+#define VMWGFX_IOSIZE	      0xc
 
 struct svga_guest_mem_descriptor {
 	u32 ppn;
