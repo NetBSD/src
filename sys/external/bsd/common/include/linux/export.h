@@ -1,4 +1,4 @@
-/*	$NetBSD: export.h,v 1.1 2021/12/19 09:42:27 riastradh Exp $	*/
+/*	$NetBSD: export.h,v 1.2 2022/10/25 23:31:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_EXPORT_H_
 #define _LINUX_EXPORT_H_
+
+#include <linux/stringify.h>
 
 #define	EXPORT_SYMBOL(name)
 
