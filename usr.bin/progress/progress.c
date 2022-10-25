@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.21.18.1 2021/01/29 18:27:05 martin Exp $ */
+/*	$NetBSD: progress.c,v 1.21.18.2 2022/10/25 17:52:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.21.18.1 2021/01/29 18:27:05 martin Exp $");
+__RCSID("$NetBSD: progress.c,v 1.21.18.2 2022/10/25 17:52:46 martin Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -232,7 +232,11 @@ main(int argc, char *argv[])
 		do {
 			nr = read(fd, fb_buf, buffersize);
 		} while (nr < 0 && errno == EINTR);
-		if (nr <= 0)
+		if (nr < 0) {
+			progressmeter(1);
+			err(1, "reading input");
+		}
+		if (nr == 0)
 			break;
 		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
 			if ((nw = write(outpipe[1], fb_buf + off,
@@ -260,7 +264,7 @@ main(int argc, char *argv[])
 		 */
 		ws = WIFSIGNALED(ws) ? WTERMSIG(ws) : WEXITSTATUS(ws);
 
-		if (deadpid != -1 && errno == EINTR)
+		if (deadpid == -1 && errno == EINTR)
 			continue;
 		if (deadpid == pid) {
 			pid = 0;
