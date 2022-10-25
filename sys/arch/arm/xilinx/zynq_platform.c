@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.5 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.5 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,12 +127,6 @@ zynq_platform_early_putchar(char c)
 static void
 zynq_platform_device_register(device_t dev, void *aux)
 {
-	prop_dictionary_t dict = device_properties(dev);
-
-	if (device_is_a(dev, "arma9tmr")) {
-		prop_dictionary_set_uint32(dict, "frequency",
-			ZYNQ_REF_FREQ / 4);
-	}
 }
 
 static u_int
