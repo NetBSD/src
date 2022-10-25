@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.c,v 1.6 2022/10/25 23:34:05 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.c,v 1.7 2022/10/25 23:35:43 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.6 2022/10/25 23:34:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.7 2022/10/25 23:35:43 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/dma-mapping.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.6 2022/10/25 23:34:05 riastradh Exp
 #include "ttm_object.h"
 #include "vmwgfx_binding.h"
 #include "vmwgfx_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define VMWGFX_DRIVER_DESC "Linux drm driver for VMware graphics devices"
 #define VMWGFX_CHIP_SVGAII 0
@@ -269,7 +271,9 @@ static int vmw_force_coherent;
 static int vmw_restrict_dma_mask;
 static int vmw_assume_16bpp;
 
+#ifndef __NetBSD__
 static int vmw_probe(struct pci_dev *, const struct pci_device_id *);
+#endif
 static int vmwgfx_pm_notifier(struct notifier_block *nb, unsigned long val,
 			      void *ptr);
 
@@ -608,11 +612,19 @@ static int vmw_dma_masks(struct vmw_private *dev_priv)
 	struct drm_device *dev = dev_priv->dev;
 	int ret = 0;
 
+#ifdef __NetBSD__
+	ret = drm_limit_dma_space(dev, 0, __BITS(63,0));
+#else
 	ret = dma_set_mask_and_coherent(dev->dev, DMA_BIT_MASK(64));
+#endif
 	if (dev_priv->map_mode != vmw_dma_phys &&
 	    (sizeof(unsigned long) == 4 || vmw_restrict_dma_mask)) {
 		DRM_INFO("Restricting DMA addresses to 44 bits.\n");
+#ifdef __NetBSD__
+		return drm_limit_dma_space(dev, 0, __BITS(43,0));
+#else
 		return dma_set_mask_and_coherent(dev->dev, DMA_BIT_MASK(44));
+#endif
 	}
 
 	return ret;
@@ -762,8 +774,10 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 	if (unlikely(ret != 0))
 		goto out_err0;
 
+#ifndef __NetBSD__		/* XXX set bus_dma maxsegsz? */
 	dma_set_max_seg_size(dev->dev, min_t(unsigned int, U32_MAX & PAGE_MASK,
 					     SCATTERLIST_MAX_SEGMENT));
+#endif
 
 	if (dev_priv->capabilities & SVGA_CAP_GMR2) {
 		DRM_INFO("Max GMR ids is %u\n",
@@ -780,14 +794,38 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 	DRM_INFO("MMIO at 0x%08x size is %u kiB\n",
 		 dev_priv->mmio_start, dev_priv->mmio_size / 1024);
 
+#ifdef __NetBSD__
+	dev_priv->mmio_bst = dev->bst;
+	if (bus_space_map(dev_priv->mmio_bst, dev_priv->mmio_start,
+		dev_priv->mmio_size, BUS_SPACE_MAP_LINEAR,
+		&dev_priv->mmio_bsh) == 0) {
+		dev_priv->mmio_virt = bus_space_vaddr(dev_priv->mmio_bst,
+		    dev_priv->mmio_bsh);
+	} else {
+		dev_priv->mmio_virt = NULL;
+	}
+#else
 	dev_priv->mmio_virt = memremap(dev_priv->mmio_start,
 				       dev_priv->mmio_size, MEMREMAP_WB);
+#endif
 
 	if (unlikely(dev_priv->mmio_virt == NULL)) {
 		ret = -ENOMEM;
 		DRM_ERROR("Failed mapping MMIO.\n");
 		goto out_err0;
 	}
+
+#ifdef __NetBSD__
+	dev_priv->iot = dev->pdev->pd_pa.pa_iot;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_space_map(dev_priv->iot, dev_priv->io_start, VMWGFX_IOSIZE,
+	    0, &dev_priv->ioh);
+	if (ret) {
+		DRM_ERROR("Failed mapping IO ports.\n");
+		goto out_err3;
+	}
+#endif
 
 	/* Need mmio memory to check for fifo pitchlock cap. */
 	if (!(dev_priv->capabilities & SVGA_CAP_DISPLAY_TOPOLOGY) &&
@@ -826,7 +864,11 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 	}
 
 	if (dev_priv->capabilities & SVGA_CAP_IRQMASK) {
+#ifdef __NetBSD__
+		ret = vmw_irq_install(dev, 0);
+#else
 		ret = vmw_irq_install(dev, dev->pdev->irq);
+#endif
 		if (ret != 0) {
 			DRM_ERROR("Failed installing irq: %d\n", ret);
 			goto out_no_irq;
@@ -844,7 +886,12 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 				    DRM_FILE_PAGE_OFFSET_SIZE);
 	ret = ttm_bo_device_init(&dev_priv->bdev,
 				 &vmw_bo_driver,
+#ifdef __NetBSD__
+				 dev->bst,
+				 dev->dmat,
+#else
 				 dev->anon_inode->i_mapping,
+#endif
 				 &dev_priv->vma_manager,
 				 false);
 	if (unlikely(ret != 0)) {
@@ -963,7 +1010,15 @@ out_no_irq:
 out_no_device:
 	ttm_object_device_release(&dev_priv->tdev);
 out_err4:
+#ifdef __NetBSD__
+	bus_space_unmap(dev_priv->iot, dev_priv->ioh, VMWGFX_IOSIZE);
+out_err3:
+	dev_priv->mmio_virt = NULL;
+	bus_space_unmap(dev_priv->mmio_bst, dev_priv->mmio_bsh,
+	    dev_priv->mmio_size);
+#else
 	memunmap(dev_priv->mmio_virt);
+#endif
 out_err0:
 	spin_lock_destroy(&dev_priv->fifo_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->fifo_queue);
@@ -1018,7 +1073,13 @@ static void vmw_driver_unload(struct drm_device *dev)
 		pci_release_regions(dev->pdev);
 
 	ttm_object_device_release(&dev_priv->tdev);
+#ifdef __NetBSD__
+	dev_priv->mmio_virt = NULL;
+	bus_space_unmap(dev_priv->mmio_bst, dev_priv->mmio_bsh,
+	    dev_priv->mmio_size);
+#else
 	memunmap(dev_priv->mmio_virt);
+#endif
 	if (dev_priv->ctx.staged_bindings)
 		vmw_binding_state_free(dev_priv->ctx.staged_bindings);
 
@@ -1065,12 +1126,23 @@ out_no_tfile:
 	return ret;
 }
 
+#ifdef __NetBSD__
+static int vmw_generic_ioctl(struct file *filp, unsigned long cmd,
+			      void *arg,
+			      int (*ioctl_func)(struct file *, unsigned long,
+						 void *))
+#else
 static long vmw_generic_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg,
 			      long (*ioctl_func)(struct file *, unsigned int,
 						 unsigned long))
+#endif
 {
+#ifdef __NetBSD__
+	struct drm_file *file_priv = filp->f_data;
+#else
 	struct drm_file *file_priv = filp->private_data;
+#endif
 	struct drm_device *dev = file_priv->minor->dev;
 	unsigned int nr = DRM_IOCTL_NR(cmd);
 	unsigned int flags;
@@ -1108,8 +1180,12 @@ out_io_encoding:
 	return -EINVAL;
 }
 
+#ifdef __NetBSD__
+static int vmw_unlocked_ioctl(struct file *filp, unsigned long cmd, void *arg)
+#else
 static long vmw_unlocked_ioctl(struct file *filp, unsigned int cmd,
 			       unsigned long arg)
+#endif
 {
 	return vmw_generic_ioctl(filp, cmd, arg, &drm_ioctl);
 }
@@ -1230,6 +1306,7 @@ void vmw_svga_disable(struct vmw_private *dev_priv)
 	ttm_write_unlock(&dev_priv->reservation_sem);
 }
 
+#ifndef __NetBSD__
 static void vmw_remove(struct pci_dev *pdev)
 {
 	struct drm_device *dev = pci_get_drvdata(pdev);
@@ -1239,10 +1316,12 @@ static void vmw_remove(struct pci_dev *pdev)
 	drm_dev_put(dev);
 	pci_disable_device(pdev);
 }
+#endif
 
 static int vmwgfx_pm_notifier(struct notifier_block *nb, unsigned long val,
 			      void *ptr)
 {
+#ifndef __NetBSD__
 	struct vmw_private *dev_priv =
 		container_of(nb, struct vmw_private, pm_nb);
 
@@ -1269,8 +1348,11 @@ static int vmwgfx_pm_notifier(struct notifier_block *nb, unsigned long val,
 	default:
 		break;
 	}
+#endif
 	return 0;
 }
+
+#ifndef __NetBSD__
 
 static int vmw_pci_suspend(struct pci_dev *pdev, pm_message_t state)
 {
@@ -1413,6 +1495,8 @@ static const struct file_operations vmwgfx_driver_fops = {
 	.llseek = noop_llseek,
 };
 
+#endif
+
 static struct drm_driver driver = {
 	.driver_features =
 	DRIVER_MODESET | DRIVER_RENDER | DRIVER_ATOMIC,
@@ -1423,8 +1507,10 @@ static struct drm_driver driver = {
 	.num_ioctls = ARRAY_SIZE(vmw_ioctls),
 	.master_set = vmw_master_set,
 	.master_drop = vmw_master_drop,
+	.load = vmw_driver_load,
 	.open = vmw_driver_open,
 	.postclose = vmw_postclose,
+	.unload = vmw_driver_unload,
 
 	.dumb_create = vmw_dumb_create,
 	.dumb_map_offset = vmw_dumb_map_offset,
@@ -1433,7 +1519,11 @@ static struct drm_driver driver = {
 	.prime_fd_to_handle = vmw_prime_fd_to_handle,
 	.prime_handle_to_fd = vmw_prime_handle_to_fd,
 
+#ifdef __NetBSD__
+	.ioctl_override = &vmw_unlocked_ioctl,
+#else
 	.fops = &vmwgfx_driver_fops,
+#endif
 	.name = VMWGFX_DRIVER_NAME,
 	.desc = VMWGFX_DRIVER_DESC,
 	.date = VMWGFX_DRIVER_DATE,
@@ -1444,9 +1534,9 @@ static struct drm_driver driver = {
 
 #ifdef __NetBSD__
 
-static const struct drm_driver *const vmwgfx_driver = &driver;
-static const struct pci_device_id *const vmwgfx_pci_ids = vmw_pci_id_list;
-static const size_t vmwgfx_n_pci_ids = __arraycount(vmw_pci_id_list);
+const struct drm_driver *const vmwgfx_driver = &driver;
+const struct pci_device_id *const vmwgfx_pci_ids = vmw_pci_id_list;
+const size_t vmwgfx_n_pci_ids = __arraycount(vmw_pci_id_list);
 
 #else
 

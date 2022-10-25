@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_ioctl.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_ioctl.c,v 1.4 2022/10/25 23:35:43 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_ioctl.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_ioctl.c,v 1.4 2022/10/25 23:35:43 riastradh Exp $");
 
 #include "vmwgfx_drv.h"
 #include <drm/vmwgfx_drm.h>
@@ -411,6 +411,8 @@ out_clips:
 }
 
 
+#ifndef __NetBSD__		/* XXX vmwgfx fops ping */
+
 /**
  * vmw_fops_poll - wrapper around the drm_poll function
  *
@@ -452,3 +454,5 @@ ssize_t vmw_fops_read(struct file *filp, char __user *buffer,
 	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
 	return drm_read(filp, buffer, count, offset);
 }
+
+#endif	/* __NetBSD__ */

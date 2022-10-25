@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_irq.c,v 1.4 2022/10/25 23:34:06 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_irq.c,v 1.5 2022/10/25 23:35:43 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,9 +28,11 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.4 2022/10/25 23:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_irq.c,v 1.5 2022/10/25 23:35:43 riastradh Exp $");
 
 #include <linux/sched/signal.h>
+
+#include <drm/drm_irq.h>
 
 #include "vmwgfx_drv.h"
 
@@ -90,11 +92,21 @@ static irqreturn_t vmw_irq_handler(int irq, void *arg)
 	uint32_t status, masked_status;
 	irqreturn_t ret = IRQ_HANDLED;
 
+#ifdef __NetBSD__
+	status = bus_space_read_4(dev_priv->iot, dev_priv->ioh,
+	    VMWGFX_IRQSTATUS_PORT);
+#else
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
+#endif
 	masked_status = status & READ_ONCE(dev_priv->irq_mask);
 
 	if (likely(status))
+#ifdef __NetBSD__
+		bus_space_write_4(dev_priv->iot, dev_priv->ioh,
+		    VMWGFX_IRQSTATUS_PORT, status);
+#else
 		outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
+#endif
 
 	if (!status)
 		return IRQ_NONE;
@@ -296,7 +308,12 @@ void vmw_generic_waiter_add(struct vmw_private *dev_priv,
 {
 	spin_lock_bh(&dev_priv->waiter_lock);
 	if ((*waiter_count)++ == 0) {
+#ifdef __NetBSD__
+		bus_space_write_4(dev_priv->iot, dev_priv->ioh,
+		    VMWGFX_IRQSTATUS_PORT, flag);
+#else
 		outl(flag, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
+#endif
 		dev_priv->irq_mask |= flag;
 		vmw_write(dev_priv, SVGA_REG_IRQMASK, dev_priv->irq_mask);
 	}
@@ -398,8 +415,15 @@ static void vmw_irq_preinstall(struct drm_device *dev)
 	struct vmw_private *dev_priv = vmw_priv(dev);
 	uint32_t status;
 
+#ifdef __NetBSD__
+	status = bus_space_read_4(dev_priv->iot, dev_priv->ioh,
+	    VMWGFX_IRQSTATUS_PORT);
+	bus_space_write_4(dev_priv->iot, dev_priv->ioh, VMWGFX_IRQSTATUS_PORT,
+	    status);
+#else
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 	outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
+#endif
 }
 
 void vmw_irq_uninstall(struct drm_device *dev)
@@ -415,8 +439,15 @@ void vmw_irq_uninstall(struct drm_device *dev)
 
 	vmw_write(dev_priv, SVGA_REG_IRQMASK, 0);
 
+#ifdef __NetBSD__
+	status = bus_space_read_4(dev_priv->iot, dev_priv->ioh,
+	    VMWGFX_IRQSTATUS_PORT);
+	bus_space_write_4(dev_priv->iot, dev_priv->ioh, VMWGFX_IRQSTATUS_PORT,
+	    status);
+#else
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 	outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
+#endif
 
 	dev->irq_enabled = false;
 	free_irq(dev->irq, dev);
