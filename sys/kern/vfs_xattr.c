@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.36 2021/06/27 09:13:08 christos Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.37 2022/10/25 23:22:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.36 2021/06/27 09:13:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.37 2022/10/25 23:22:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		aiov.iov_base = data;
 		aiov.iov_len = nbytes;
 		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		if (nbytes > INT_MAX) {
 			error = EINVAL;
@@ -383,6 +384,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		aiov.iov_base = data;
 		aiov.iov_len = nbytes;
 		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		if (nbytes > INT_MAX) {
 			error = EINVAL;
