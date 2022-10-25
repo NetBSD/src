@@ -1,4 +1,4 @@
-#	$NetBSD: files.zynq,v 1.1 2019/06/11 13:01:48 skrll Exp $
+#	$NetBSD: files.zynq,v 1.2 2022/10/25 22:27:49 jmcneill Exp $
 #
 # Configuration info for Xilinx Zynq-7000 SoC
 #
@@ -14,6 +14,11 @@ defflag	opt_soc.h				SOC_ZYNQ7000: SOC_ZYNQ
 #device	zynqslcr
 #attach	zynqslcr at fdt
 #file	arch/arm/xilinx/zynq_slcr.c		zynqslcr needs-flag
+
+# PS clock subsystem
+device	zynqclk
+attach	zynqclk at fdt with zynq7000_clkc
+file	arch/arm/xilinx/zynq7000_clkc.c		zynq7000_clkc
 
 # UART
 device	zynquart
