@@ -1,11 +1,8 @@
-/*	$NetBSD: mem_encrypt.h,v 1.1 2021/12/19 00:28:55 riastradh Exp $	*/
+/*	$NetBSD: mem_encrypt.h,v 1.1 2022/10/25 23:38:33 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,5 +28,7 @@
 
 #ifndef	_LINUX_MEM_ENCRYPT_H_
 #define	_LINUX_MEM_ENCRYPT_H_
+
+#define	mem_encrypt_active()	0
 
 #endif	/* _LINUX_MEM_ENCRYPT_H_ */
