@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.7 2022/10/25 23:34:05 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.8 2022/10/25 23:35:43 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -33,6 +33,7 @@
 #include <linux/notifier.h>
 #include <linux/suspend.h>
 #include <linux/sync_file.h>
+#include <linux/uaccess.h>
 
 #include <drm/drm_auth.h>
 #include <drm/drm_device.h>
@@ -458,10 +459,8 @@ struct vmw_private {
 #ifdef __NetBSD__
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_size_t iosz;
-#else
-	unsigned int io_start;
 #endif
+	unsigned int io_start;
 	uint32_t vram_start;
 	uint32_t vram_size;
 	uint32_t prim_bb_mem;
@@ -475,6 +474,10 @@ struct vmw_private {
 	uint32_t stdu_max_height;
 	uint32_t initial_width;
 	uint32_t initial_height;
+#ifdef __NetBSD__
+	bus_space_tag_t mmio_bst;
+	bus_space_handle_t mmio_bsh;
+#endif
 	u32 *mmio_virt;
 	uint32_t capabilities;
 	uint32_t capabilities2;
