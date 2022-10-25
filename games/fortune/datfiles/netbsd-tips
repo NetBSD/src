@@ -1,6 +1,6 @@
 List 20 largest files (larger than 5 MB) sorted by megabytes:
 
- find . -type f -size +10000 -exec du -h {} + | sort -nr | head -20
+ find . -type f -size +10000 -exec du -m {} + | sort -nr | head -20
 %
 You can keep specific rc.conf configurations in individual files
 under /etc/rc.conf.d/ where each file is named after the $name of
