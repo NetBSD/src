@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_uart.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: zynq7000_uart.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -75,13 +75,13 @@ zynquart_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (fdtbus_intr_establish(phandle, 0, IPL_SERIAL, IST_LEVEL,
-		zynquartintr, device_private(self)) == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
+				  zynquartintr, device_private(self)) == NULL) {
+		aprint_error(": failed to establish interrupt on %s\n", intrstr);
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	zynquart_attach_common(parent, self, faa->faa_bst, addr, size, 0);
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
 /*
