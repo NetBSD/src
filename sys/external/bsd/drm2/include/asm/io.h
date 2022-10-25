@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.9 2022/02/14 00:28:33 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.10 2022/10/25 23:33:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 
 #include <linux/string.h>
+#include <linux/vmalloc.h>
 
 #define	memcpy_fromio(d,s,n)	memcpy((d),__UNVOLATILE(s),(n))
 #define	memcpy_toio(d,s,n)	memcpy(__UNVOLATILE(d),(s),(n))
