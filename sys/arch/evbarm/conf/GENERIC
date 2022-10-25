@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.108 2022/06/28 05:19:03 skrll Exp $
+#	$NetBSD: GENERIC,v 1.109 2022/10/25 22:27:49 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -162,6 +162,7 @@ tegra210car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 tidivclk* 	at fdt? pass 1		# TI divider clock
 tidpllclk* 	at fdt? pass 2		# TI DPLL clock
 timuxclk* 	at fdt? pass 1		# TI mux clock
+zynqclk*	at fdt? pass 1		# Xilinx Zynq PS clocks
 
 fclock* 	at fdt? pass 1
 ffclock* 	at fdt? pass 1
