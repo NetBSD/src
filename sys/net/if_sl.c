@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.135 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.136 2022/10/26 23:42:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.135 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.136 2022/10/26 23:42:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -350,7 +350,7 @@ slopen(dev_t dev, struct tty *tp)
 			tp->t_sc = (void *)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
-			mutex_spin_enter(&tty_lock);
+			ttylock(tp);
 			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
 			ttyflush(tp, FREAD | FWRITE);
 			/*
@@ -366,7 +366,7 @@ slopen(dev_t dev, struct tty *tp)
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
 				clfree(&tp->t_outq);
-				mutex_spin_exit(&tty_lock);
+				ttyunlock(tp);
 				error = clalloc(&tp->t_outq, 2 * SLMAX + 2, 0);
 				if (error) {
 					softint_disestablish(sc->sc_si);
@@ -379,7 +379,7 @@ slopen(dev_t dev, struct tty *tp)
 				}
 			} else {
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
-				mutex_spin_exit(&tty_lock);
+				ttyunlock(tp);
 			}
 			return 0;
 		}
