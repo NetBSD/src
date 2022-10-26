@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.35 2022/09/25 06:21:58 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.36 2022/10/26 07:35:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.35 2022/09/25 06:21:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.36 2022/10/26 07:35:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -100,7 +100,7 @@ pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 	 * the next time page is faulted, it will get icache
 	 * synched.  But this is easier. :)
 	 */
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	dcache_wb_page(pa);
 	icache_inv_page(pa);
 }
@@ -227,11 +227,12 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	 * an extra page for the segment table and allows the user/kernel
 	 * access to be common.
 	 */
-	pt_entry_t **ptp = &stp->seg_tab[VM_MIN_KERNEL_ADDRESS >> SEGSHIFT];
-	pt_entry_t *ptep = (void *)kv_segtabs;
-	memset(ptep, 0, NBPG * kv_nsegtabs);
-	for (size_t i = 0; i < kv_nsegtabs; i++, ptep += NPTEPG) {
-		*ptp++ = ptep;
+
+	pmap_ptpage_t **ppg_p = &stp->seg_ppg[VM_MIN_KERNEL_ADDRESS >> SEGSHIFT];
+	pmap_ptpage_t *ppg = (void *)kv_segtabs;
+	memset(ppg, 0, NBPG * kv_nsegtabs);
+	for (size_t i = 0; i < kv_nsegtabs; i++, ppg++) {
+		*ppg_p++ = ppg;
 	}
 
 #if PMAP_MINIMALTLB
@@ -246,10 +247,10 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	endkernel += NBPG * dm_nsegtabs;
 
 	ptp = stp->seg_tab;
-	ptep = (void *)dm_segtabs;
-	memset(ptep, 0, NBPG * dm_nsegtabs);
-	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ptep += NPTEPG) {
-		*ptp = ptep;
+	ppg = (void *)dm_segtabs;
+	memset(ppg, 0, NBPG * dm_nsegtabs);
+	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ppg ++) {
+		*ptp = ppg;
 	}
 
 	/*
@@ -308,6 +309,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 struct vm_page *
 pmap_md_alloc_poolpage(int flags)
 {
+
 	/*
 	 * Any managed page works for us.
 	 */

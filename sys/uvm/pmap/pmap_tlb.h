@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.15 2020/08/19 06:11:49 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.16 2022/10/26 07:35:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,6 +184,9 @@ int	pmap_tlb_update_addr(pmap_t, vaddr_t, pt_entry_t, u_int);
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
 void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
 void	pmap_tlb_asid_check(void);
+
+/* for ddb */
+void pmap_db_tlb_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
 
 #endif	/* _KERNEL */
 #endif	/* _UVM_PMAP_PMAP_TLB_H_ */
