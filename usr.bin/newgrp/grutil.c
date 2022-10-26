@@ -1,4 +1,4 @@
-/*	$NetBSD: grutil.c,v 1.4 2014/06/23 06:57:31 shm Exp $	*/
+/*	$NetBSD: grutil.c,v 1.5 2022/10/26 21:18:49 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grutil.c,v 1.4 2014/06/23 06:57:31 shm Exp $");
+__RCSID("$NetBSD: grutil.c,v 1.5 2022/10/26 21:18:49 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -157,7 +157,7 @@ addgrp(gid_t newgid, int makespace)
 #if (defined(BSD) && BSD >= 199306)
 	/*
 	 * According to POSIX/XPG6:
-	 * On system where the egid is normally in the supplemental group list
+	 * On systems where the egid is normally in the supplemental group list
 	 * (or whenever the old egid actually is in the supplemental group
 	 * list):
 	 *	o If the new egid is in the supplemental group list,
