@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.303 2022/08/05 05:20:39 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.304 2022/10/26 23:40:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -507,6 +507,8 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
+
+extern const struct vnodeop_desc * const vfs_op_descs[];
 
 /*
  * Union filesystem hook for vn_readdir().
