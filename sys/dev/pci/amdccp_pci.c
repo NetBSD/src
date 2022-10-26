@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_pci.c,v 1.2 2020/06/25 16:40:40 thorpej Exp $ */
+/* $NetBSD: amdccp_pci.c,v 1.3 2022/10/26 13:35:25 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.2 2020/06/25 16:40:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.3 2022/10/26 13:35:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,7 +65,13 @@ static const struct amdccp_pci_product {
 	  .product	=	PCI_PRODUCT_AMD_F17_CCP_2,
 	},
 	{ .vendor	=	PCI_VENDOR_AMD,
+	  .product	=	PCI_PRODUCT_AMD_F17_1X_PSP,
+	},
+	{ .vendor	=	PCI_VENDOR_AMD,
 	  .product	=	PCI_PRODUCT_AMD_F17_7X_CCP,
+	},
+	{ .vendor	=	PCI_VENDOR_AMD,
+	  .product	=	PCI_PRODUCT_AMD_F17_9X_CCP,
 	},
 };
 
