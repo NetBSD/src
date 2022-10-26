@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.48 2021/07/20 08:37:20 skrll Exp $	*/
+/*	$NetBSD: timevar.h,v 1.49 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -236,6 +236,8 @@ void	ptimers_free(struct proc *, int);
 
 extern volatile time_t time_second;	/* current second in the epoch */
 extern volatile time_t time_uptime;	/* system uptime in seconds */
+
+extern int time_adjusted;
 
 #define	DEFAULT_TIMEOUT_EPSILON						      \
 	(&(const struct bintime) {					      \

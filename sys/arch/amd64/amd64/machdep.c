@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.364 2022/10/26 23:22:07 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.365 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2022/10/26 23:22:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.365 2022/10/26 23:23:52 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2022/10/26 23:22:07 riastradh Exp 
 #include <sys/csan.h>
 #include <sys/msan.h>
 #include <sys/module.h>
+#include <sys/timevar.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -302,8 +303,6 @@ void dodumpsys(void);
 void dumpsys(void);
 
 static void x86_64_proc0_pcb_ldt_init(void);
-
-extern int time_adjusted;	/* XXX no common header */
 
 void dump_misc_init(void);
 void dump_seg_prep(void);

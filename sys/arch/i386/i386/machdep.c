@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.837 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.838 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.837 2022/08/20 23:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.838 2022/10/26 23:23:52 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.837 2022/08/20 23:48:50 riastradh Exp 
 #include <sys/ras.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/timevar.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -249,8 +250,6 @@ void init386(paddr_t);
 void initgdt(union descriptor *);
 
 static void i386_proc0_pcb_ldt_init(void);
-
-extern int time_adjusted;
 
 int *esym;
 int *eblob;

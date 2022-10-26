@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.57 2021/09/20 01:00:55 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.58 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.57 2021/09/20 01:00:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.58 2022/10/26 23:23:52 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -260,9 +260,6 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 	} */
 	struct netbsd32_timeval atv;
 	int error;
-
-	extern int time_adjusted;     /* in kern_ntptime.c */
-	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,
