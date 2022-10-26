@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.30 2022/06/28 13:25:36 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.31 2022/10/26 23:44:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.30 2022/06/28 13:25:36 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.31 2022/10/26 23:44:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -265,9 +265,9 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 	sc->sc_tp = tp;
 	tp->t_sc = sc;
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	ttyflush(tp, FREAD | FWRITE);
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	splx(s);
 
@@ -283,9 +283,9 @@ btuartclose(struct tty *tp, int flag __unused)
 
 	s = spltty();
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	ttyflush(tp, FREAD | FWRITE);
-	mutex_spin_exit(&tty_lock);	/* XXX */
+	ttyunlock(tp);	/* XXX */
 
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
