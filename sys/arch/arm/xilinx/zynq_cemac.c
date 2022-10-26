@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $");
 
 #include "opt_soc.h"
 
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp 
 
 #include <dev/cadence/cemacreg.h>
 #include <dev/cadence/if_cemacvar.h>
+
+#include <net/if_ether.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -61,11 +63,13 @@ cemac_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	prop_dictionary_t prop = device_properties(self);
 	bus_space_handle_t ioh;
 	char intrstr[128];
+	const char *macaddr;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, len;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -88,6 +92,11 @@ cemac_attach(device_t parent, device_t self, void *aux)
 				  device_private(self)) == NULL) {
 		aprint_error(": failed to establish interrupt on %s\n", intrstr);
 		return;
+	}
+
+	macaddr = fdtbus_get_prop(phandle, "local-mac-address", &len);
+	if (macaddr != NULL && len == ETHER_ADDR_LEN) {
+		prop_dictionary_set_data(prop, "mac-address", macaddr, len);
 	}
 
 	cemac_attach_common(self, faa->faa_bst, ioh, faa->faa_dmat, CEMAC_FLAG_GEM);
