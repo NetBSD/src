@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: spif.c,v 1.35 2022/10/26 23:46:50 riastradh Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.35 2022/10/26 23:46:50 riastradh Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -354,7 +354,7 @@ stty_open(dev_t dev, int flags, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -393,12 +393,12 @@ stty_open(dev_t dev, int flags, int mode, struct lwp *l)
 			int error;
 			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			if (error != 0) {
-				mutex_spin_exit(&tty_lock);
+				ttyunlock(tp);
 				return (error);
 			}
 		}
 	}
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
