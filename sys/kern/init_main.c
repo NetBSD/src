@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.540 2022/07/21 14:07:16 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.541 2022/10/26 23:20:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.540 2022/07/21 14:07:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.541 2022/10/26 23:20:47 riastradh Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -138,6 +138,7 @@ extern void *_binary_splash_image_end;
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/kthread.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
@@ -230,7 +231,6 @@ extern void *_binary_splash_image_end;
 
 #include <sys/userconf.h>
 
-extern struct lwp lwp0;
 extern time_t rootfstime;
 
 #ifndef curlwp
