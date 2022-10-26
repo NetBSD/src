@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.53 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.53 2022/10/26 23:23:52 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.52 2021/09/07 11:43:05 rias
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/timevar.h>
+#include <sys/timex.h>
 #include <sys/ktrace.h>
 #include <sys/eventvar.h>
 #include <sys/resourcevar.h>
@@ -246,9 +248,6 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 	} */
 	struct netbsd32_timeval50 atv;
 	int error;
-
-	extern int time_adjusted;     /* in kern_ntptime.c */
-	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,

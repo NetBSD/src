@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.63 2022/03/13 12:57:33 riastradh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.64 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.63 2022/03/13 12:57:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.64 2022/10/26 23:23:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -189,8 +189,6 @@ static l_fp time_freq;			/* frequency offset (ns/s) */
 
 static l_fp time_adj;			/* tick adjust (ns/s) */
 int64_t time_adjtime;		/* correction from adjtime(2) (usec) */
-
-extern int time_adjusted;	/* ntp might have changed the system time */
 
 #ifdef NTP
 #ifdef PPS_SYNC
