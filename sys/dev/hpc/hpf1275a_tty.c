@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.31 2021/08/07 16:19:11 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.32 2022/10/26 23:45:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.31 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.32 2022/10/26 23:45:10 riastradh Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -346,9 +346,9 @@ hpf1275a_close(struct tty *tp, int flag)
 	int s;
 
 	s = spltty();
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	ttyflush(tp, FREAD | FWRITE);
-	mutex_spin_exit(&tty_lock);	 /* XXX */
+	ttyunlock(tp);	 /* XXX */
 	ttyldisc_release(tp->t_linesw);
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
