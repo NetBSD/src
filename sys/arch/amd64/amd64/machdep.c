@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.363 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.364 2022/10/26 23:22:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2022/08/20 23:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2022/10/26 23:22:07 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -153,6 +153,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2022/08/20 23:48:50 riastradh Exp 
 #include <sys/asan.h>
 #include <sys/csan.h>
 #include <sys/msan.h>
+#include <sys/module.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -268,7 +269,6 @@ vaddr_t ldt_vaddr;
 paddr_t ldt_paddr;
 
 static struct vm_map module_map_store;
-extern struct vm_map *module_map;
 extern struct bootspace bootspace;
 extern struct slotspace slotspace;
 

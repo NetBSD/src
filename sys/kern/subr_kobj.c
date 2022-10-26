@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.73 2022/10/15 15:28:23 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.74 2022/10/26 23:22:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.73 2022/10/15 15:28:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.74 2022/10/26 23:22:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -94,8 +94,6 @@ static void	kobj_free(kobj_t, void *, size_t);
 static void	kobj_close(kobj_t);
 static int	kobj_read_mem(kobj_t, void **, size_t, off_t, bool);
 static void	kobj_close_mem(kobj_t);
-
-extern struct vm_map *module_map;
 
 /*
  * kobj_load_mem:
