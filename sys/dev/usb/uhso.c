@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.36 2022/09/03 02:48:00 thorpej Exp $	*/
+/*	$NetBSD: uhso.c,v 1.37 2022/10/26 23:53:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.36 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.37 2022/10/26 23:53:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1759,7 +1759,6 @@ uhso_tty_do_ioctl(struct uhso_port *hp, u_long cmd, void *data, int flag,
 	return error;
 }
 
-/* this is called with tty_lock held */
 static void
 uhso_tty_stop(struct tty *tp, int flag)
 {
@@ -1768,6 +1767,8 @@ uhso_tty_stop(struct tty *tp, int flag)
 	    UHSOUNIT(tp->t_dev));
 	struct uhso_port *hp = sc->sc_port[UHSOPORT(tp->t_dev)];
 #endif
+
+	KASSERT(ttylocked(tp));
 }
 
 static struct tty *
@@ -1838,7 +1839,6 @@ uhso_tty_param(struct tty *tp, struct termios *t)
 	return 0;
 }
 
-/* this is called with tty_lock held */
 Static void
 uhso_tty_start(struct tty *tp)
 {
@@ -1846,6 +1846,8 @@ uhso_tty_start(struct tty *tp)
 	    UHSOUNIT(tp->t_dev));
 	struct uhso_port *hp = sc->sc_port[UHSOPORT(tp->t_dev)];
 	int s;
+
+	KASSERT(ttylocked(tp));
 
 	if (!device_is_active(sc->sc_dev))
 		return;
