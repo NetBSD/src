@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.145 2022/08/05 05:20:39 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.146 2022/10/26 23:39:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -141,14 +141,14 @@
  *	Vnode is considered active, if reference count (vnode_t::v_usecount)
  *	is non-zero.  It is maintained using: vref(9) and vrele(9), as well
  *	as vput(9), routines.  Common points holding references are e.g.
- *	file openings, current working directory, mount points, etc.  
+ *	file openings, current working directory, mount points, etc.
  *
  *	v_usecount is adjusted with atomic operations, however to change
  *	from a non-zero value to zero the interlock must also be held.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.145 2022/08/05 05:20:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.146 2022/10/26 23:39:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -175,6 +175,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.145 2022/08/05 05:20:39 thorpej Exp 
 #include <sys/vnode_impl.h>
 #include <sys/wapbl.h>
 #include <sys/fstrans.h>
+
+#include <miscfs/deadfs/deadfs.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -224,10 +226,7 @@ static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
 
 /* Routines having to do with the management of the vnode table. */
-extern struct mount	*dead_rootmount;
-extern int		(**dead_vnodeop_p)(void *);
 extern int		(**spec_vnodeop_p)(void *);
-extern struct vfsops	dead_vfsops;
 
 /*
  * The high bit of v_usecount is a gate for vcache_tryvget().  It's set
@@ -1258,7 +1257,7 @@ vgone(vnode_t *vp)
 	lktype = LK_EXCLUSIVE;
 	mutex_enter(vp->v_interlock);
 	VSTATE_WAIT_STABLE(vp);
-	if (VSTATE_GET(vp) == VS_LOADED) { 
+	if (VSTATE_GET(vp) == VS_LOADED) {
 		VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
 		vcache_reclaim(vp);
 		lktype = LK_NONE;

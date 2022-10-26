@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.495 2022/09/13 09:13:19 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.495 2022/09/13 09:13:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -96,8 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.495 2022/09/13 09:13:19 riastradh Exp
 #include <sys/kauth.h>
 #include <sys/module.h>
 
+#include <miscfs/deadfs/deadfs.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
 #include <uvm/uvm_ddb.h>
 
 const enum vtype iftovt_tab[16] = {
@@ -119,8 +121,6 @@ const int	vttoif_tab[9] = {
 }
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
-
-extern struct mount *dead_rootmount;
 
 /*
  * Local declarations.
