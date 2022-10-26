@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.70 2022/05/04 07:48:35 andvar Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.71 2022/10/26 23:42:56 riastradh Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.70 2022/05/04 07:48:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.71 2022/10/26 23:42:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -235,9 +235,9 @@ pppopen(dev_t dev, struct tty *tp)
     sc->sc_if.if_baudrate = tp->t_ospeed;
 
     tp->t_sc = (void *) sc;
-    mutex_spin_enter(&tty_lock);
+    ttylock(tp);
     ttyflush(tp, FREAD | FWRITE);
-    mutex_spin_exit(&tty_lock);
+    ttyunlock(tp);
 
     splx(s);
     return (0);
@@ -256,9 +256,9 @@ pppclose(struct tty *tp, int flag)
     int s;
 
     s = spltty();
-    mutex_spin_enter(&tty_lock);
+    ttylock(tp);
     ttyflush(tp, FREAD|FWRITE);
-    mutex_spin_exit(&tty_lock);	/* XXX */
+    ttyunlock(tp);	/* XXX */
     ttyldisc_release(tp->t_linesw);
     tp->t_linesw = ttyldisc_default();
     sc = (struct ppp_softc *) tp->t_sc;
@@ -316,27 +316,27 @@ pppread(struct tty *tp, struct uio *uio, int flag)
      * Loop waiting for input, checking that nothing disastrous
      * happens in the meantime.
      */
-    mutex_spin_enter(&tty_lock);
+    ttylock(tp);
     for (;;) {
 	if (tp != (struct tty *) sc->sc_devp ||
 	    tp->t_linesw != &ppp_disc) {
-	    mutex_spin_exit(&tty_lock);
+	    ttyunlock(tp);
 	    return 0;
 	}
 	if (sc->sc_inq.ifq_head != NULL)
 	    break;
 	if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0
 	    && (tp->t_state & TS_ISOPEN)) {
-	    mutex_spin_exit(&tty_lock);
+	    ttyunlock(tp);
 	    return 0;		/* end of file */
 	}
 	if (tp->t_state & TS_ASYNC || flag & IO_NDELAY) {
-	    mutex_spin_exit(&tty_lock);
+	    ttyunlock(tp);
 	    return (EWOULDBLOCK);
 	}
 	error = ttysleep(tp, &tp->t_rawcv, true, 0);
 	if (error) {
-	    mutex_spin_exit(&tty_lock);
+	    ttyunlock(tp);
 	    return error;
 	}
     }
@@ -346,7 +346,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 
     /* Get the packet from the input queue */
     IF_DEQUEUE(&sc->sc_inq, m0);
-    mutex_spin_exit(&tty_lock);
+    ttyunlock(tp);
 
     for (m = m0; m && uio->uio_resid; m = m->m_next)
 	if ((error = uiomove(mtod(m, u_char *), m->m_len, uio)) != 0)
@@ -702,7 +702,7 @@ pppasyncstart(struct ppp_softc *sc)
 	return;
     }
 
-    mutex_spin_enter(&tty_lock);
+    ttylock(tp);
 
     idle = 0;
     while (CCOUNT(&tp->t_outq) < PPP_HIWAT) {
@@ -860,7 +860,7 @@ pppasyncstart(struct ppp_softc *sc)
 	sc->sc_flags |= SC_TIMEOUT;
     }
 
-    mutex_spin_exit(&tty_lock);
+    ttyunlock(tp);
 }
 
 /*
@@ -873,11 +873,11 @@ pppasyncctlp(struct ppp_softc *sc)
     struct tty *tp;
 
     /* Put a placeholder byte in canq for ttselect()/ttnread(). */
-    mutex_spin_enter(&tty_lock);
     tp = (struct tty *) sc->sc_devp;
+    ttylock(tp);
     putc(0, &tp->t_canq);
     ttwakeup(tp);
-    mutex_spin_exit(&tty_lock);
+    ttyunlock(tp);
 }
 
 /*
@@ -932,10 +932,10 @@ ppp_timeout(void *x)
     struct ppp_softc *sc = (struct ppp_softc *) x;
     struct tty *tp = (struct tty *) sc->sc_devp;
 
-    mutex_spin_enter(&tty_lock);
+    ttylock(tp);
     sc->sc_flags &= ~SC_TIMEOUT;
     pppstart(tp);
-    mutex_spin_exit(&tty_lock);
+    ttyunlock(tp);
 }
 
 /*
