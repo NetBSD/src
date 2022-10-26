@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.26 2022/05/08 06:38:58 skrll Exp $ */
+/* $NetBSD: spiflash.c,v 1.27 2022/10/26 21:56:19 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.26 2022/05/08 06:38:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.27 2022/10/26 21:56:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -258,7 +258,7 @@ spiflash_open(dev_t dev, int flags, int mode, struct lwp *l)
 	 * There are devices that could be used "in the raw" with a
 	 * NetBSD label, but then you get into devices that have other
 	 * kinds of data on them -- some have VxWorks data, some have
-	 * RedBoot data, and some have other contraints -- for example
+	 * RedBoot data, and some have other constraints -- for example
 	 * some devices might have a portion that is read-only,
 	 * whereas others might have a portion that is read-write.
 	 *
