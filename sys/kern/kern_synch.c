@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.351 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.352 2022/10/26 23:23:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.351 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.352 2022/10/26 23:23:28 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.351 2022/06/29 22:27:01 riastradh E
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
+#include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/rwlock.h>
 #include <sys/sched.h>
@@ -1104,7 +1105,6 @@ static const fixpt_t cexp[ ] = {
 void
 sched_pstats(void)
 {
-	extern struct loadavg averunnable;
 	struct loadavg *avg = &averunnable;
 	const int clkhz = (stathz != 0 ? stathz : hz);
 	static bool backwards = false;
