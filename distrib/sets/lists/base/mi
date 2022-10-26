@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158.2.7 2020/12/07 19:52:52 martin Exp $
+# $NetBSD: mi,v 1.1158.2.8 2022/10/26 18:16:43 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5718,6 +5718,7 @@
 ./usr/share/zoneinfo/Europe/Kiev		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kirov		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kuybyshev		base-obsolete		obsolete
+./usr/share/zoneinfo/Europe/Kyiv 		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Lisbon		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Ljubljana		base-sys-share		share
 ./usr/share/zoneinfo/Europe/London		base-sys-share		share
@@ -5859,6 +5860,7 @@
 ./usr/share/zoneinfo/Pacific/Guam		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Honolulu		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Johnston		base-sys-share		share
+./usr/share/zoneinfo/Pacific/Kanton		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kiritimati		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kosrae		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kwajalein		base-sys-share		share
