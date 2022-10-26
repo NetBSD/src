@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.64 2022/09/11 20:32:37 gutteridge Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.65 2022/10/26 21:56:19 andvar Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.64 2022/09/11 20:32:37 gutteridge Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.65 2022/10/26 21:56:19 andvar Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -503,9 +503,9 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 }
 
 /* build_file_cache --
- *   This function generates an md5 hash of the file passed as its 2nd parameter
+ *   This function generates a md5 hash of the file passed as its 2nd parameter
  *   and stores it in a temporary table file_cache along with the full file path.
- *   This is done to support incremental updation of the database.
+ *   This is done to support incremental update of the database.
  *   The temporary table file_cache is dropped thereafter in the function
  *   update_db(), once the database has been updated.
  */
@@ -693,7 +693,7 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
 }
 
 /* update_db --
- *	Does an incremental updation of the database by checking the file_cache.
+ *	Does an incremental update of the database by checking the file_cache.
  *	It parses and adds the pages which are present in file_cache,
  *	but not in the database.
  *	It also removes the pages which are present in the database,
@@ -1219,7 +1219,7 @@ pman_block(const struct roff_node *n, mandb_rec *rec)
  *  1. If the present section is NAME, then it will:
  *    (a) Extract the name of the page (in case of multiple comma separated
  *        names, it will pick up the first one).
- *    (b) Build a space spearated list of all the symlinks/hardlinks to
+ *    (b) Build a space separated list of all the symlinks/hardlinks to
  *        this page and store in the buffer 'links'. These are extracted from
  *        the comma separated list of names in the NAME section as well.
  *    (c) Move on to the one line description section, which is after the list
@@ -1690,7 +1690,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 	sqlite3_finalize(stmt);
 	if (rc == SQLITE_CONSTRAINT_UNIQUE) {
 		/* The *most* probable reason for reaching here is that
-		 * the UNIQUE contraint on the file column of the mandb_meta
+		 * the UNIQUE constraint on the file column of the mandb_meta
 		 * table was violated.
 		 * This can happen when a file was updated/modified.
 		 * To fix this we need to do two things:

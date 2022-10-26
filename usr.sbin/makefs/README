@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2015/01/12 19:50:47 christos Exp $
+$NetBSD: README,v 1.8 2022/10/26 21:56:19 andvar Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -27,7 +27,7 @@ Support for the following file systems maybe be added in the future
 
 	ext2fs	Linux EXT2 file system
 
-Various file system independent parameters and contraints can be
+Various file system independent parameters and constraints can be
 specified, such as:
 
 	- minimum file system size (in KB)
@@ -35,7 +35,7 @@ specified, such as:
 	- free inodes
 	- free blocks (in KB)
 	- mtree(8) specification file containing permissions and ownership
-	  to use in image, overridding the settings in the directory tree
+	  to use in image, overriding the settings in the directory tree
 	- file containing list of files to specifically exclude or include
 	- fnmatch(3) pattern of filenames to exclude or include
 	- endianness of target file system
