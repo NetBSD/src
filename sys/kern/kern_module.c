@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.159 2022/09/06 13:31:09 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.160 2022/10/26 23:22:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.159 2022/09/06 13:31:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.160 2022/10/26 23:22:07 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -411,7 +411,6 @@ void
 module_init(void)
 {
 	__link_set_decl(modules, modinfo_t);
-	extern struct vm_map *module_map;
 	modinfo_t *const *mip;
 	int rv;
 
