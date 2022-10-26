@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.35 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.36 2022/10/26 23:24:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -63,6 +63,9 @@ void	sleepq_lendpri(lwp_t *, pri_t);
 int	sleepq_block(int, bool, struct syncobj *);
 
 #ifdef _KERNEL
+
+#include <sys/kernel.h>
+
 typedef union {
 	kmutex_t	lock;
 	uint8_t		pad[COHERENCY_UNIT];
@@ -76,7 +79,6 @@ typedef union {
 static __inline bool
 sleepq_dontsleep(lwp_t *l)
 {
-	extern int cold;
 
 	return cold || (doing_shutdown && (panicstr || CURCPU_IDLE_P()));
 }
@@ -97,6 +99,7 @@ sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 	lwp_unlock_to(l, mp);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 }
+
 #endif
 
 #include <sys/sleeptab.h>
