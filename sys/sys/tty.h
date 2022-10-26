@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.102 2022/10/25 23:21:13 riastradh Exp $	*/
+/*	$NetBSD: tty.h,v 1.103 2022/10/26 23:41:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -318,6 +318,10 @@ bool	 ttypull(struct tty *);
 int	 tty_unit(dev_t);
 void	 tty_acquire(struct tty *);
 void	 tty_release(struct tty *);
+
+void	 ttylock(struct tty *);
+void	 ttyunlock(struct tty *);
+bool	 ttylocked(struct tty *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
