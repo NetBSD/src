@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.134 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.135 2022/10/26 23:45:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.134 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.135 2022/10/26 23:45:25 riastradh Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -565,7 +565,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 
 	/*
 	 * Do the following iff this is a first open.
@@ -578,7 +578,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		/* Call the power management hook. */
 		if (cs->enable) {
 			if ((*cs->enable)(cs)) {
-				mutex_spin_exit(&tty_lock);
+				ttyunlock(tp);
 				printf("%s: device enable failed\n",
 				    device_xname(zst->zst_dev));
 				return (EIO);
@@ -624,9 +624,9 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-		mutex_spin_exit(&tty_lock);
+		ttyunlock(tp);
 		(void) zsparam(tp, &t);
-		mutex_spin_enter(&tty_lock);
+		ttylock(tp);
 
 		/*
 		 * Note: zsparam has done: cflag, ispeed, ospeed
@@ -666,7 +666,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		mutex_spin_exit(&cs->cs_lock);
 	}
 
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	error = ttyopen(tp, ZSDIALOUT(dev), ISSET(flags, O_NONBLOCK));
 	if (error)
