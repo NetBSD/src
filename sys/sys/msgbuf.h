@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.17 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.18 2022/10/26 23:28:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -47,6 +47,7 @@ struct	kern_msgbuf {
 extern int	msgbufmapped;		/* is the message buffer mapped */
 extern int	msgbufenabled;		/* is logging to the buffer enabled */
 extern struct	kern_msgbuf *msgbufp;	/* the mapped buffer, itself. */
+extern int	log_open;		/* is /dev/klog open? */
 
 void	initmsgbuf(void *, size_t);
 void	loginit(void);
