@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.93 2020/04/25 15:42:15 bouyer Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.94 2022/10/26 23:39:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.93 2020/04/25 15:42:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.94 2022/10/26 23:39:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.93 2020/04/25 15:42:15 bouyer Exp $")
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
 
-extern struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
 
 static void

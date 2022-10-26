@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.69 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.70 2022/10/26 23:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -186,6 +186,8 @@ typedef struct cwdinfo {
 struct fileops;
 struct socket;
 struct proc;
+
+extern struct cwdinfo cwdi0;
 
 /*
  * Kernel global variables and routines.
