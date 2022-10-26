@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2022/05/07 06:53:16 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2022/10/26 07:35:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,12 +74,44 @@
 #ifndef	_UVM_PMAP_PMAP_H_
 #define	_UVM_PMAP_PMAP_H_
 
+#include <sys/rwlock.h>
+#include <uvm/uvm_object.h>
 #include <uvm/uvm_stat.h>
+
 #ifdef UVMHIST
 UVMHIST_DECL(pmapexechist);
 UVMHIST_DECL(pmaphist);
-UVMHIST_DECL(pmapsegtabhist);
+UVMHIST_DECL(pmapxtabhist);
 #endif
+
+/*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ */
+struct vm_page *pmap_md_alloc_poolpage(int);
+
+#if !defined(KASAN)
+vaddr_t pmap_map_poolpage(paddr_t);
+paddr_t pmap_unmap_poolpage(vaddr_t);
+#define	PMAP_ALLOC_POOLPAGE(flags)	pmap_md_alloc_poolpage(flags)
+#define	PMAP_MAP_POOLPAGE(pa)		pmap_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)		pmap_unmap_poolpage(va)
+
+#if defined(_LP64)
+#define PMAP_DIRECT
+static __inline int
+pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
+    int (*process)(void *, size_t, void *), void *arg)
+{
+        vaddr_t va = pmap_md_direct_map_paddr(pa);
+
+        return process((void *)(va + pgoff), len, arg);
+}
+#endif
+#endif
+
+#define PMAP_MAP_PDETABPAGE(pa)		pmap_md_map_poolpage(pa, PAGE_SIZE)
+#define PMAP_MAP_SEGTABPAGE(pa)		pmap_md_map_poolpage(pa, PAGE_SIZE)
+#define PMAP_MAP_PTEPAGE(pa)		pmap_md_map_poolpage(pa, PAGE_SIZE)
 
 /*
  * The user address space is mapped using a two level structure where
@@ -93,12 +125,33 @@ UVMHIST_DECL(pmapsegtabhist);
 #define pmap_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
 /*
- * Each seg_tab point an array of pt_entry [NPTEPG]
+ * Each ptpage maps a "segment" worth of address space.  That is
+ * NPTEPG * PAGE_SIZE.
  */
+
+typedef struct {
+	pt_entry_t ppg_ptes[NPTEPG];
+} pmap_ptpage_t;
+
+#if defined(PMAP_HWPAGEWALKER)
+typedef union pmap_pdetab {
+	pd_entry_t		pde_pde[PMAP_PDETABSIZE];
+	union pmap_pdetab *	pde_next;
+} pmap_pdetab_t;
+#endif
+#if !defined(PMAP_HWPAGEWALKER) || !defined(PMAP_MAP_PDETABPAGE)
 typedef union pmap_segtab {
+#ifdef _LP64
 	union pmap_segtab *	seg_seg[PMAP_SEGTABSIZE];
-	pt_entry_t *		seg_tab[PMAP_SEGTABSIZE];
+#endif
+	pmap_ptpage_t *		seg_ppg[PMAP_SEGTABSIZE];
+#ifdef PMAP_HWPAGEWALKER
+	pd_entry_t		seg_pde[PMAP_PDETABSIZE];
+#endif
+	union pmap_segtab *	seg_next;
 } pmap_segtab_t;
+#endif
+
 
 #ifdef _KERNEL
 struct pmap;
@@ -110,6 +163,7 @@ typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
  * virtual memory.
  */
 void pmap_bootstrap_common(void);
+
 pt_entry_t *pmap_pte_lookup(struct pmap *, vaddr_t);
 pt_entry_t *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
@@ -118,6 +172,10 @@ void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_deactivate(struct pmap *);
 void pmap_segtab_init(struct pmap *);
 void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
+#ifdef PMAP_HWPAGEWALKER
+pd_entry_t *pmap_pde_lookup(struct pmap *, vaddr_t, paddr_t *);
+bool pmap_pdetab_fixup(struct pmap *, vaddr_t);
+#endif
 extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
@@ -130,13 +188,32 @@ extern kmutex_t pmap_segtab_lock;
  * Machine dependent pmap structure.
  */
 struct pmap {
+	struct uvm_object	pm_uobject;
+#define pm_count		pm_uobject.uo_refs /* pmap reference count */
+#define pm_pvp_list		pm_uobject.memq
+
+	krwlock_t		pm_obj_lock;	/* lock for pm_uobject */
+#define pm_lock pm_uobject.vmobjlock
+
+	struct pglist		pm_ppg_list;
+#if defined(PMAP_HWPAGEWALKER)
+	struct pglist		pm_pdetab_list;
+#endif
+#if !defined(PMAP_HWPAGEWALKER) || !defined(PMAP_MAP_PDETABPAGE)
+	struct pglist		pm_segtab_list;
+#endif
 #ifdef MULTIPROCESSOR
 	kcpuset_t		*pm_active;	/* pmap was active on ... */
 	kcpuset_t		*pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
-	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
-	u_int			pm_count;	/* pmap reference count */
+#if defined(PMAP_HWPAGEWALKER)
+	pmap_pdetab_t *		pm_pdetab;	/* pointer to HW PDEs */
+#endif
+#if !defined(PMAP_HWPAGEWALKER) || !defined(PMAP_MAP_PDETABPAGE)
+	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs; or  */
+						/* virtual shadow of HW PDEs */
+#endif
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	__BIT(0)
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
@@ -147,6 +224,20 @@ struct pmap {
 #endif
 	struct pmap_asid_info	pm_pai[1];
 };
+
+static inline void
+pmap_lock(struct pmap *pm)
+{
+
+	rw_enter(pm->pm_lock, RW_WRITER);
+}
+
+static inline void
+pmap_unlock(struct pmap *pm)
+{
+
+	rw_exit(pm->pm_lock);
+}
 
 #ifdef	_KERNEL
 struct pmap_kernel {
@@ -184,12 +275,16 @@ extern struct pmap_limits pmap_limits;
 
 extern u_int pmap_page_colormask;
 
-extern pmap_segtab_t pmap_kern_segtab;
-
 /*
  * The current top of kernel VM
  */
 extern vaddr_t pmap_curmaxkvaddr;
+
+#if defined(PMAP_HWPAGEWALKER)
+extern pmap_pdetab_t pmap_kern_pdetab;
+#else
+extern pmap_segtab_t pmap_kern_segtab;
+#endif
 
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
@@ -211,27 +306,37 @@ void	pmap_pv_protect(paddr_t, vm_prot_t);
 #define	PMAP_WBINV	1
 #define	PMAP_INV	2
 
-//uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 kmutex_t *pmap_pvlist_lock_addr(struct vm_page_md *);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL		/* enable pmap_growkernel() */
-
-/*
- * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
- */
-vaddr_t pmap_map_poolpage(paddr_t);
-paddr_t pmap_unmap_poolpage(vaddr_t);
-struct vm_page *pmap_md_alloc_poolpage(int);
-#define	PMAP_ALLOC_POOLPAGE(flags)	pmap_md_alloc_poolpage(flags)
-#define	PMAP_MAP_POOLPAGE(pa)		pmap_map_poolpage(pa)
-#define	PMAP_UNMAP_POOLPAGE(va)		pmap_unmap_poolpage(va)
 
 #define PMAP_COUNT(name)	(pmap_evcnt_##name.ev_count++ + 0)
 #define PMAP_COUNTER(name, desc) \
 struct evcnt pmap_evcnt_##name = \
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", desc); \
 EVCNT_ATTACH_STATIC(pmap_evcnt_##name)
+
+
+static inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+
+	return pmap_pte_lookup(pmap_kernel(), va);
+}
+
+/* for ddb */
+void pmap_db_pmap_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
+void pmap_db_mdpg_print(struct vm_page *, void (*)(const char *, ...) __printflike(1, 2));
+
+#if defined(EFI_RUNTIME)
+struct pmap *
+	pmap_efirt(void);
+
+#define pmap_activate_efirt()	pmap_md_activate_efirt()
+#define pmap_deactivate_efirt()	pmap_md_deactivate_efirt()
+
+#endif
 
 #endif	/* _KERNEL */
 #endif	/* _UVM_PMAP_PMAP_H_ */

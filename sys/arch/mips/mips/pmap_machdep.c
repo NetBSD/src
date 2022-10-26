@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.37 2022/09/25 06:21:58 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.38 2022/10/26 07:35:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.37 2022/09/25 06:21:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.38 2022/10/26 07:35:20 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -470,7 +470,7 @@ pmap_bootstrap(void)
 			/*
 			 * Now set the page table pointer...
 			 */
-			stb->seg_tab[j] = &sysmap[i];
+			stb->seg_ppg[j] = (pmap_ptpage_t *)&sysmap[i];
 #ifdef _LP64
 			/*
 			 * If we are at end of this XSEG, terminate the loop

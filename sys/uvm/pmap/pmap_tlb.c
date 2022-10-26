@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.53 2022/10/20 06:24:51 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.54 2022/10/26 07:35:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.53 2022/10/20 06:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.54 2022/10/26 07:35:20 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -549,20 +549,26 @@ pmap_tlb_shootdown_process(void)
 	struct cpu_info * const ci = curcpu();
 	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLED(maphist);
+
 	KASSERT(cpu_intr_p());
 	KASSERTMSG(ci->ci_cpl >= IPL_SCHED, "%s: cpl (%d) < IPL_SCHED (%d)",
 	    __func__, ci->ci_cpl, IPL_SCHED);
 
 	TLBINFO_LOCK(ti);
+	UVMHIST_LOG(maphist, "ti %#jx", ti, 0, 0, 0);
 
 	switch (ti->ti_tlbinvop) {
 	case TLBINV_ONE: {
 		/*
 		 * We only need to invalidate one user ASID.
 		 */
+		UVMHIST_LOG(maphist, "TLBINV_ONE ti->ti_victim %#jx", ti->ti_victim, 0, 0, 0);
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
 		if (pmap_tlb_intersecting_onproc_p(ti->ti_victim, ti)) {
+			UVMHIST_LOG(maphist, "pmap_tlb_intersecting_onproc_p", 0, 0, 0, 0);
 			/*
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
@@ -572,6 +578,7 @@ pmap_tlb_shootdown_process(void)
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
 			pmap_tlb_asid_check();
 		} else if (pai->pai_asid) {
+			UVMHIST_LOG(maphist, "asid %jd", pai->pai_asid, 0, 0, 0);
 			/*
 			 * The victim is no longer an active pmap for this TLB.
 			 * So simply clear its ASID and when pmap_activate is
@@ -664,6 +671,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
 		KASSERT(tlbinfo_index(ti) == i);
+		UVMHIST_LOG(maphist, "ti %#jx", ti, 0, 0, 0);
 		/*
 		 * Skip this TLB if there are no active mappings for it.
 		 */
@@ -697,6 +705,8 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 						ti->ti_victim = NULL;
 				}
 			}
+			UVMHIST_LOG(maphist, "tlbinvop %jx victim %#jx", ti->ti_tlbinvop,
+			    (uintptr_t)ti->ti_victim, 0, 0);
 			TLBINFO_UNLOCK(ti);
 			/*
 			 * Now we can send out the shootdown IPIs to a CPU
@@ -712,6 +722,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 			continue;
 		}
 		if (!pmap_tlb_intersecting_active_p(pm, ti)) {
+			UVMHIST_LOG(maphist, "pm %#jx not active", (uintptr_t)pm, 0, 0, 0);
 			/*
 			 * If this pmap has an ASID assigned but it's not
 			 * currently running, nuke its ASID.  Next time the
@@ -1066,14 +1077,20 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 void
 pmap_tlb_asid_check(void)
 {
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLED(pmaphist);
+
 #ifdef DEBUG
 	kpreempt_disable();
 	const tlb_asid_t asid __debugused = tlb_get_asid();
+	UVMHIST_LOG(pmaphist, " asid %u vs pmap_cur_asid %u", asid,
+	    curcpu()->ci_pmap_asid_cur, 0, 0);
 	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
 	   "%s: asid (%#x) != current asid (%#x)",
 	    __func__, asid, curcpu()->ci_pmap_asid_cur);
 	kpreempt_enable();
 #endif
+	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
 }
 
 #ifdef DEBUG
@@ -1088,3 +1105,18 @@ pmap_tlb_check(pmap_t pm, bool (*func)(void *, vaddr_t, tlb_asid_t, pt_entry_t))
 	TLBINFO_UNLOCK(ti);
 }
 #endif /* DEBUG */
+
+#ifdef DDB
+void
+pmap_db_tlb_print(struct pmap *pm,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+#if PMAP_TLB_MAX == 1
+	pr(" asid %5u\n", pm->pm_pai[0].pai_asid);
+#else
+        for (size_t i = 0; i < (PMAP_TLB_MAX > 1 ? pmap_ntlbs : 1); i++) {
+                pr(" tlb %zu  asid %5u\n", i, pm->pm_pai[i].pai_asid);
+        }
+#endif
+}
+#endif /* DDB */

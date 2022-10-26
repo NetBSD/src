@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2022/09/25 06:21:58 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2022/10/26 07:35:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.38 2022/09/25 06:21:58 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.39 2022/10/26 07:35:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -148,10 +148,13 @@ trap_pte_lookup(struct trapframe *tf, vaddr_t va, register_t psl_mask)
 	pmap_segtab_t * const stb = stbs[(tf->tf_srr1 / psl_mask) & 1];
 	if (__predict_false(stb == NULL))
 		return NULL;
-	pt_entry_t * const ptep = stb->seg_tab[va >> SEGSHIFT];
-	if (__predict_false(ptep == NULL))
+
+	pmap_ptpage_t * const ppg = stb->seg_ppg[va >> SEGSHIFT];
+	if (__predict_false(ppg == NULL))
 		return NULL;
-	return ptep + ((va & SEGOFSET) >> PAGE_SHIFT);
+	const size_t pte_idx = (va >> PGSHIFT) & (NPTEPG - 1);
+
+	return ppg->ppg_ptes + pte_idx;
 }
 
 static int
