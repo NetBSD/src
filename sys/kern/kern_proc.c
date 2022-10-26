@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.268 2022/07/01 01:06:40 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.269 2022/10/26 23:20:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.268 2022/07/01 01:06:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.269 2022/10/26 23:20:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -184,8 +184,6 @@ static u_int		last_free_pt	__cacheline_aligned;
 static pid_t		pid_max		__read_mostly;
 
 /* Components of the first process -- never freed. */
-
-extern struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 struct session session0 = {
 	.s_count = 1,
