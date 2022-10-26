@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.62 2021/09/26 15:11:33 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.62 2021/09/26 15:11:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63 2022/10/26 23:28:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static pid_t	log_pgid;		/* process/group for async I/O */
 static kcondvar_t log_cv;
 static void	*log_sih;
 
-kmutex_t log_lock;
+static kmutex_t log_lock;
 int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
@@ -457,7 +457,6 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t len, maxlen;
 	long beg, end;
-	extern kmutex_t log_lock;
 	int error;
 
 	if (!logenabled(msgbufp)) {
