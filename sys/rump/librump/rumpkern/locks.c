@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.81 2020/02/22 21:44:51 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.82 2022/10/26 23:21:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.81 2020/02/22 21:44:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.82 2022/10/26 23:21:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -103,11 +103,11 @@ static lockops_t rw_lockops = {
  * penalty.
  */
 
-#define RUMPMTX(mtx) (*(struct rumpuser_mtx *const*)(mtx))
+#define RUMPMTX(mtx) (*(struct rumpuser_mtx *const *)(mtx))
 
-void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 void
-_mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl, uintptr_t return_address)
+_mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl,
+    uintptr_t return_address)
 {
 	int ruflags = RUMPUSER_MTX_KMUTEX;
 	int isspin;
