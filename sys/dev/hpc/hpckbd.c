@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.37 2021/08/07 16:19:11 thorpej Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.38 2022/10/26 22:09:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.37 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.38 2022/10/26 22:09:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 
 	/* 
 	 * fix keydesc table. Since it is const data, we must 
-	 * copy it once before changingg it.
+	 * copy it once before changing it.
 	 */
 
 	if (ndesc == NULL) {
