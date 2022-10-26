@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.54 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.55 2022/10/26 23:39:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.54 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.55 2022/10/26 23:39:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -150,8 +150,6 @@ static struct sysctllog *vfs_sysctllog;
 static void
 sysctl_vfs_setup(void)
 {
-	extern int vfs_magiclinks;
-	extern int vfs_timestamp_precision;
 
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
