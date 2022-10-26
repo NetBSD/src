@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.74 2022/10/26 23:22:07 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.75 2022/10/26 23:26:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.74 2022/10/26 23:22:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.75 2022/10/26 23:26:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -1195,8 +1195,6 @@ kobj_free(kobj_t ko, void *base, size_t size)
 
 	kmem_free(base, size);
 }
-
-extern char module_base[];
 
 void
 kobj_setname(kobj_t ko, const char *name)
