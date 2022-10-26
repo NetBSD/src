@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.57 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.58 2022/10/26 23:59:36 riastradh Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.57 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.58 2022/10/26 23:59:36 riastradh Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -693,7 +693,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -744,24 +744,24 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			if (error != 0) {
-				mutex_spin_exit(&tty_lock);
+				ttyunlock(tp);
 				return (error);
 			}
 		}
 	}
 
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	s = (*tp->t_linesw->l_open)(dev, tp);
 	if (s != 0) {
-		mutex_spin_enter(&tty_lock);
+		ttylock(tp);
 		if (tp->t_state & TS_ISOPEN) {
-			mutex_spin_exit(&tty_lock);
+			ttyunlock(tp);
 			return (s);
 		}
 		if (tp->t_cflag & HUPCL) {
 			sabtty_mdmctrl(sc, 0, DMSET);
-			cv_wait(&lbolt, &tty_lock);
+			ttysleep(tp, NULL, /*catch_p*/false, hz);
 		}
 
 		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
@@ -769,7 +769,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 			sabtty_flush(sc);
 			sabtty_reset(sc);
 		}
-		mutex_spin_exit(&tty_lock);
+		ttyunlock(tp);
 	}
 	return (s);
 }
