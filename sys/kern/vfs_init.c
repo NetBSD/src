@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.56 2022/10/26 23:39:43 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.57 2022/10/26 23:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.56 2022/10/26 23:39:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.57 2022/10/26 23:40:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.56 2022/10/26 23:39:43 riastradh Exp 
 #include <sys/kauth.h>
 
 #include <miscfs/deadfs/deadfs.h>
+#include <miscfs/specfs/specdev.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -109,7 +110,6 @@ extern const struct vnodeop_desc * const vfs_op_descs[];
  * be initialized by vfs_attach().
  */
 extern const struct vnodeopv_desc fifo_vnodeop_opv_desc;
-extern const struct vnodeopv_desc spec_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.52 2022/03/28 12:38:04 riastradh Exp $	*/
+/*	$NetBSD: specdev.h,v 1.53 2022/10/26 23:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ void	spec_node_revoke(vnode_t *);
 /*
  * Prototypes for special file operations on vnodes.
  */
+extern const struct vnodeopv_desc spec_vnodeop_opv_desc;
 extern	int (**spec_vnodeop_p)(void *);
 struct	nameidata;
 struct	componentname;
@@ -175,7 +176,7 @@ int	spec_advlock(void *);
  * spec_foo. For fsync it varies, but should always also call spec_fsync.
  *
  * Note that because the op descriptor tables are unordered it does not
- * matter where in the table this macro goes (except I think default 
+ * matter where in the table this macro goes (except I think default
  * still needs to be first...)
  */
 #define GENFS_SPECOP_ENTRIES \
