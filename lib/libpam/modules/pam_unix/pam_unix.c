@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.18 2022/04/10 09:50:44 andvar Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.19 2022/10/26 22:09:37 andvar Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.18 2022/04/10 09:50:44 andvar Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.19 2022/10/26 22:09:37 andvar Exp $");
 #endif
 
 
@@ -521,7 +521,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		if (pwd->pw_passwd[0] == '\0') {
 			/*
 			 * No password case.
-			 * XXX Are we giviing too much away by not prompting
+			 * XXX Are we giving too much away by not prompting
 			 * XXX for a password?
 			 * XXX Check PAM_DISALLOW_NULL_AUTHTOK
 			 */
