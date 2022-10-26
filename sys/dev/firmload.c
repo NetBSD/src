@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.23 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: firmload.c,v 1.24 2022/10/26 23:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.23 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.24 2022/10/26 23:39:10 riastradh Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -209,7 +209,6 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 	firmware_handle_t fh;
 	struct vnode *vp;
 	int error;
-	extern struct cwdinfo cwdi0;
 
 	if (drvname == NULL || imgname == NULL)
 		return (EINVAL);

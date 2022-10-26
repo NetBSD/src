@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.97 2022/09/13 09:35:31 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.98 2022/10/26 23:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.97 2022/09/13 09:35:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.98 2022/10/26 23:39:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1273,7 +1273,6 @@ done:
 	if (error == 0) {
 		mount_iterator_t *iter;
 		struct mount *mp;
-		extern struct cwdinfo cwdi0;
 
 		mountlist_iterator_init(&iter);
 		mp = mountlist_iterator_next(iter);
