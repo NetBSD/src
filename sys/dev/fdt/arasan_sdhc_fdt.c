@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.10 2022/10/26 10:55:23 jmcneill Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.11 2022/10/26 20:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.10 2022/10/26 10:55:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.11 2022/10/26 20:54:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -234,7 +234,6 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	u_int bus_width;
-	int error;
 	void *ih;
 
 	fdtbus_clock_assign(phandle);
@@ -274,9 +273,10 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bsz = size;
 	sc->sc_type = of_compatible_lookup(phandle, compat_data)->value;
 
+#ifdef _LP64
 	const uint32_t caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh, SDHC_CAPABILITIES);
 	if ((caps & (SDHC_ADMA2_SUPP|SDHC_64BIT_SYS_BUS)) == SDHC_ADMA2_SUPP) {
-		error = bus_dmatag_subregion(faa->faa_dmat, 0, __MASK(32),
+		int error = bus_dmatag_subregion(faa->faa_dmat, 0, __MASK(32),
 		    &sc->sc_base.sc_dmat, BUS_DMA_WAITOK);
 		if (error != 0) {
 			aprint_error(": couldn't create DMA tag: %d\n", error);
@@ -285,6 +285,9 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_base.sc_dmat = faa->faa_dmat;
 	}
+#else
+	sc->sc_base.sc_dmat = faa->faa_dmat;
+#endif
 
 	sc->sc_base.sc_dev = self;
 	sc->sc_base.sc_host = sc->sc_host;
