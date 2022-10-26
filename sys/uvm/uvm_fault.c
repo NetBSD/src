@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.230 2022/06/03 00:21:44 dholland Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.231 2022/10/26 23:27:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.230 2022/06/03 00:21:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.231 2022/10/26 23:27:32 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -169,12 +169,6 @@ static const struct uvm_advice uvmadvice[] = {
 /*
  * private prototypes
  */
-
-/*
- * externs from other modules
- */
-
-extern int start_init_exec;	/* Is init_main() done / init running? */
 
 /*
  * inline functions
