@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.13 2022/05/31 08:43:16 andvar Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.14 2022/10/26 23:21:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,12 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.13 2022/05/31 08:43:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.14 2022/10/26 23:21:06 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/condvar.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/exec.h>
 #include <sys/hook.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
@@ -245,7 +247,6 @@ doexechooks(struct proc *p)
 }
 
 static hook_list_t exithook_list = LIST_HEAD_INITIALIZER(exithook_list);
-extern krwlock_t exec_lock;
 
 void *
 exithook_establish(void (*fn)(struct proc *, void *), void *arg)
