@@ -1,4 +1,4 @@
-/* $NetBSD: zynq7000_clkc.c,v 1.1 2022/10/25 22:27:49 jmcneill Exp $ */
+/* $NetBSD: zynq7000_clkc.c,v 1.2 2022/10/26 10:55:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.1 2022/10/25 22:27:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.2 2022/10/26 10:55:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,11 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.1 2022/10/25 22:27:49 jmcneill E
 #define	APER_CLK_CTRL	0x02c
 #define	 UART1_CPU_1XCLKACT	__BIT(21)
 #define	 UART0_CPU_1XCLKACT	__BIT(20)
+#define	 SDI1_CPU_1XCLKACT	__BIT(11)
+#define	 SDI0_CPU_1XCLKACT	__BIT(10)
+#define	SDIO_CLK_CTRL	0x050
 #define	UART_CLK_CTRL	0x054
-#define	 UART_CLK_CTRL_DIVISOR	__BITS(13,8)
-#define	 UART_CLK_CTRL_SRCSEL	__BITS(5,4)
-#define	 UART_CLK_CTRL_CLKACT1	__BIT(1)
-#define	 UART_CLK_CTRL_CLKACT0	__BIT(0)
+#define	 CLK_CTRL_DIVISOR	__BITS(13,8)
+#define	 CLK_CTRL_SRCSEL	__BITS(5,4)
+#define	 CLK_CTRL_CLKACT1	__BIT(1)
+#define	 CLK_CTRL_CLKACT0	__BIT(0)
 #define	CLK_621_TRUE	0x0C4
 #define	 CLK_621_TRUE_EN	__BIT(0)
 
@@ -119,6 +122,8 @@ CTASSERT(clkid_dbg_apb == 47);
 static int zynq7000_clkc_match(device_t, cfdata_t, void *);
 static void zynq7000_clkc_attach(device_t, device_t, void *);
 
+static u_int zynq7000_clkc_clk_get_rate(void *, struct clk *);
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "xlnx,ps7-clkc" },
 	DEVICE_COMPAT_EOL
@@ -170,11 +175,34 @@ zynq7000_clkc_get_rate_pll(struct zynq7000_clkc_softc *sc,
 }
 
 static u_int
+zynq7000_clkc_get_rate_iop(struct zynq7000_clkc_softc *sc,
+    bus_addr_t reg)
+{
+	uint32_t val;
+	u_int prate, sel;
+
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg);
+	sel = __SHIFTOUT(val, CLK_CTRL_SRCSEL);
+	if (sel == 2) {
+		prate = zynq7000_clkc_clk_get_rate(sc,
+		    &sc->sc_clk[clkid_armpll]);
+	} else if (sel == 3) {
+		prate = zynq7000_clkc_clk_get_rate(sc,
+		    &sc->sc_clk[clkid_ddrpll]);
+	} else {
+		prate = zynq7000_clkc_clk_get_rate(sc,
+		    &sc->sc_clk[clkid_iopll]);
+	}
+
+	return prate / __SHIFTOUT(val, CLK_CTRL_DIVISOR);
+}
+
+static u_int
 zynq7000_clkc_clk_get_rate(void *priv, struct clk *clk)
 {
 	struct zynq7000_clkc_softc * const sc = priv;
 	uint32_t val;
-	u_int prate, sel;
+	u_int prate;
 
 	if (clk == &sc->sc_clk[clkid_armpll]) {
 		return zynq7000_clkc_get_rate_pll(sc, ARM_PLL_CTRL);
@@ -204,22 +232,12 @@ zynq7000_clkc_clk_get_rate(void *priv, struct clk *clk)
 		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    ARM_CLK_CTRL);
 		return prate / __SHIFTOUT(val, ARM_CLK_CTRL_DIVISOR);
+	} else if (clk == &sc->sc_clk[clkid_sdio0] ||
+		   clk == &sc->sc_clk[clkid_sdio1]) {
+		return zynq7000_clkc_get_rate_iop(sc, SDIO_CLK_CTRL);
 	} else if (clk == &sc->sc_clk[clkid_uart0] ||
 		   clk == &sc->sc_clk[clkid_uart1]) {
-		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		    UART_CLK_CTRL);
-		sel = __SHIFTOUT(val, UART_CLK_CTRL_SRCSEL);
-		if (sel == 2) {
-			prate = zynq7000_clkc_clk_get_rate(sc,
-			    &sc->sc_clk[clkid_armpll]);
-		} else if (sel == 3) {
-			prate = zynq7000_clkc_clk_get_rate(sc,
-			    &sc->sc_clk[clkid_ddrpll]);
-		} else {
-			prate = zynq7000_clkc_clk_get_rate(sc,
-			    &sc->sc_clk[clkid_iopll]);
-		}
-		return prate / __SHIFTOUT(val, UART_CLK_CTRL_DIVISOR);
+		return zynq7000_clkc_get_rate_iop(sc, UART_CLK_CTRL);
 	} else if (clk == &sc->sc_clk[clkid_uart0_aper] ||
 		   clk == &sc->sc_clk[clkid_uart1_aper]) {
 		return zynq7000_clkc_clk_get_rate(sc,
@@ -249,12 +267,24 @@ zynq7000_clkc_clk_enable(void *priv, struct clk *clk)
 	} else if (clk == &sc->sc_clk[clkid_cpu_6or4x]) {
 		reg = ARM_CLK_CTRL;
 		mask = ARM_CLK_CTRL_CPU_6OR4XCLKACT;
+	} else if (clk == &sc->sc_clk[clkid_sdio0]) {
+		reg = SDIO_CLK_CTRL;
+		mask = CLK_CTRL_CLKACT0;
+	} else if (clk == &sc->sc_clk[clkid_sdio1]) {
+		reg = SDIO_CLK_CTRL;
+		mask = CLK_CTRL_CLKACT1;
 	} else if (clk == &sc->sc_clk[clkid_uart0]) {
 		reg = UART_CLK_CTRL;
-		mask = UART_CLK_CTRL_CLKACT0;
+		mask = CLK_CTRL_CLKACT0;
 	} else if (clk == &sc->sc_clk[clkid_uart1]) {
 		reg = UART_CLK_CTRL;
-		mask = UART_CLK_CTRL_CLKACT1;
+		mask = CLK_CTRL_CLKACT1;
+	} else if (clk == &sc->sc_clk[clkid_sdio0_aper]) {
+		reg = APER_CLK_CTRL;
+		mask = SDI0_CPU_1XCLKACT;
+	} else if (clk == &sc->sc_clk[clkid_sdio1_aper]) {
+		reg = APER_CLK_CTRL;
+		mask = SDI1_CPU_1XCLKACT;
 	} else if (clk == &sc->sc_clk[clkid_uart0_aper]) {
 		reg = APER_CLK_CTRL;
 		mask = UART0_CPU_1XCLKACT;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.zynq,v 1.2 2022/10/25 22:27:49 jmcneill Exp $
+#	$NetBSD: files.zynq,v 1.3 2022/10/26 10:55:23 jmcneill Exp $
 #
 # Configuration info for Xilinx Zynq-7000 SoC
 #
@@ -37,8 +37,3 @@ file	arch/arm/xilinx/zynq_cemac.c		cemac
 attach	ehci at fdt with zynqusb
 file	arch/arm/xilinx/zynq_usb.c		zynqusb
 file	arch/arm/xilinx/zynq7000_usb.c		zynqusb
-
-# SD host controller for SD/MMC
-attach	sdhc at fdt with sdhc_fdt
-file	arch/arm/xilinx/zynq7000_sdhc.c		sdhc_fdt
-

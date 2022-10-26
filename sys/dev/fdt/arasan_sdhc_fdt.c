@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.9 2022/02/06 15:52:20 jmcneill Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.10 2022/10/26 10:55:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.9 2022/02/06 15:52:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.10 2022/10/26 10:55:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.9 2022/02/06 15:52:20 jmcneill
 #define	 RK3399_CORECFG_CLOCKMULTIPLIER		__BITS(7,0)
 
 enum arasan_sdhc_type {
+	AS_TYPE_GENERIC = 0,
 	AS_TYPE_RK3399 = 1,
 };
 
@@ -75,6 +76,9 @@ struct arasan_sdhc_softc {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "rockchip,rk3399-sdhci-5.1",
 	  .value = AS_TYPE_RK3399 },
+
+	{ .compat = "arasan,sdhci-8.9a",
+	  .value = AS_TYPE_GENERIC },
 
 	DEVICE_COMPAT_EOL
 };
