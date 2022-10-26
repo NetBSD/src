@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.90 2020/05/23 23:37:17 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.91 2022/10/26 23:24:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
@@ -211,6 +211,7 @@ struct schedstate_percpu {
 
 extern int schedhz;			/* ideally: 16 */
 extern u_int sched_rrticks;
+extern u_int sched_pstats_ticks;
 
 struct proc;
 struct cpu_info;

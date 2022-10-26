@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.45 2021/08/09 19:57:57 andvar Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.46 2022/10/26 23:24:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.45 2021/08/09 19:57:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.46 2022/10/26 23:24:09 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -89,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.45 2021/08/09 19:57:57 andvar Exp $
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
-
-extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
 /* Number of hardclock ticks per sched_tick() */
 u_int sched_rrticks __read_mostly;
