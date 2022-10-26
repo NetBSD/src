@@ -1,4 +1,4 @@
-# $NetBSD
+# $NetBSD: PTCP154%UCS.src,v 1.2 2022/10/26 22:13:09 andvar Exp $
 
 TYPE		ROWCOL
 NAME		PTCP154/UCS
