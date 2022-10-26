@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.9 2022/10/04 07:24:32 rin Exp $ */
+/*	$NetBSD: scn.c,v 1.10 2022/10/26 23:59:14 riastradh Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.9 2022/10/04 07:24:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.10 2022/10/26 23:59:14 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1098,7 +1098,7 @@ scnopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -1135,7 +1135,7 @@ scnopen(dev_t dev, int flags, int mode, struct lwp *l)
 			tp->t_state &= ~TS_CARR_ON;
 	}
 
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	error = ttyopen(tp, SCN_DIALOUT(sc), flags & O_NONBLOCK);
 if (error) printf("ttyopen failed line %d, error %d\n", __LINE__, error);
