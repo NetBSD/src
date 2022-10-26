@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.68 2022/08/22 09:13:08 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.69 2022/10/26 23:39:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.68 2022/08/22 09:13:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.69 2022/10/26 23:39:43 riastradh Exp $");
 
 /*
  * File system transaction operations.
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.68 2022/08/22 09:13:08 hannken Exp $
 #include <sys/proc.h>
 #include <sys/pool.h>
 
+#include <miscfs/deadfs/deadfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #define FSTRANS_MOUNT_HASHSIZE	32
@@ -123,8 +124,6 @@ static bool state_change_done(const struct fstrans_mount_info *);
 static bool cow_state_change_done(const struct fstrans_mount_info *);
 static void cow_change_enter(struct fstrans_mount_info *);
 static void cow_change_done(struct fstrans_mount_info *);
-
-extern struct mount *dead_rootmount;
 
 /*
  * Initialize.
