@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.146 2022/10/26 23:39:43 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.147 2022/10/26 23:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.146 2022/10/26 23:39:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.147 2022/10/26 23:40:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -177,6 +177,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.146 2022/10/26 23:39:43 riastradh Ex
 #include <sys/fstrans.h>
 
 #include <miscfs/deadfs/deadfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -226,7 +227,6 @@ static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
 
 /* Routines having to do with the management of the vnode table. */
-extern int		(**spec_vnodeop_p)(void *);
 
 /*
  * The high bit of v_usecount is a gate for vcache_tryvget().  It's set
