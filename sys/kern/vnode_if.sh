@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.76 2022/07/18 04:30:30 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.77 2022/10/26 23:39:43 riastradh Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -361,6 +361,8 @@ echo '
 
 if [ -z "${rump}" ] ; then
 	echo "
+#include <miscfs/deadfs/deadfs.h>
+
 enum fst_op { FST_NO, FST_YES, FST_LAZY, FST_TRY };
 
 static inline int
@@ -543,8 +545,6 @@ do {									\\
 
 #define	vop_close_post(ap, e)						\\
 do {									\\
-	extern int (**dead_vnodeop_p)(void *);				\\
-									\\
 	/* See the definition of VN_KNOTE() in <sys/vnode.h>. */	\\
 	if (__predict_false(VN_KEVENT_INTEREST((ap)->a_vp,		\\
 	    NOTE_CLOSE_WRITE | NOTE_CLOSE) && (e) == 0)) {		\\
