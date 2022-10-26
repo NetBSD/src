@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.193 2022/08/21 10:18:20 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.194 2022/10/26 23:22:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.193 2022/08/21 10:18:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.194 2022/10/26 23:22:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.193 2022/08/21 10:18:20 riastradh Exp $");
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/radixtree.h>
+#include <sys/module.h>
 
 #include <machine/pmap.h>
 
@@ -97,7 +98,6 @@ static struct vm_map kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store;
 
 static struct vm_map module_map_store;
-extern struct vm_map *module_map;
 
 static struct pmap pmap_kernel;
 struct pmap rump_pmap_local;
