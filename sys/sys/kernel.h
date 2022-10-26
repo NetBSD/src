@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.34 2022/03/19 14:34:48 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.35 2022/10/26 23:27:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,6 +53,7 @@ extern int domainnamelen;
 extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
 extern int cold;		/* still working on startup */
+extern int start_init_exec;	/* init(8) may have started */
 extern int shutting_down;	/* system is shutting down */
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickadj;		/* "standard" clock skew, us./tick */
