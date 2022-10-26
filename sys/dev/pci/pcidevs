@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1469 2022/10/26 13:22:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1470 2022/10/26 14:50:26 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1028,6 +1028,7 @@ product AMD F17_IOMMU		0x1451	Family17h IOMMU
 product AMD F17_PCIE_1		0x1452	Family17h PCIe
 product AMD F17_PCIE_2		0x1453	Family17h PCIe
 product AMD F17_PCIE_3		0x1454	Family17h PCIe
+product AMD F17_AX_PCIE_DUMMY	0x1455	17h/Axh PCIe Dummy Function
 product AMD F17_CCP_1		0x1456	Family17h Crypto
 product AMD F17_HDA		0x1457	Family17h HD Audio
 product AMD F17_PCIE_DUMMY	0x145a	Family17h PCIe Dummy Function
@@ -1053,7 +1054,16 @@ product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
 product AMD F17_3X_HDA		0x1487	17h/7xh HD Audio
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
+product AMD F17_AX_RC		0x14b5	17h/Axh Root Complex
+product AMD F17_AX_IOMMU	0x14b6	17h/Axh IOMMU
+product AMD F17_AX_PCIE_DUMMY_HB 0x14b7	17h/Axh PCIe Dummy Host Bridge
+product AMD F17_AX_INTNL_GPPB_0	0x14b9	17h/Axh Internal GPP Bridge 0
+product AMD F17_AX_GPPB		0x14ba	17h/Axh PCIe GPP Bridge
 product AMD F19_6X_RC		0x14d8	19h/6xh Root Complex
+product AMD F17_AX_XHCI_0	0x1503	17h/Axh USB 3.1 xHCI
+product AMD F17_AX_XHCI_1	0x1504	17h/Axh USB 3.1 xHCI
+product AMD F17_AX_USB_BIOM	0x1505	17h/Axh Secure USB BIOmetric
+product AMD F17_AX_GFX		0x1506	17h/Axh Internal GPU
 product AMD F14_RC		0x1510	Family14h Root Complex
 product AMD F14_PCIE_1		0x1512	Family14h PCIe
 product AMD F14_PCIE_2		0x1513	Family14h PCIe
@@ -1131,6 +1141,7 @@ product AMD F17_6X_PCIE_3	0x1635	17h/6xh PCIe
 product AMD F17_6X_HDAUDIO	0x1637	17h/6xh HD Audio Controller
 product AMD F17_6X_XHCI		0x1639	17h/6xh xHCI
 product AMD F17_9X_XHCI_2	0x163b	17h/9xh xHCI
+product AMD F17_AX_HDA		0x1640	17h/Axh HD Audio
 product AMD F17_6X_XGBE		0x1641	17h/6xh 10GbE Controller
 product AMD F17_6X_WLAN		0x1642	17h/6xh WLAN
 product AMD F17_6X_BT		0x1643	17h/6xh Bluetooth
@@ -1171,6 +1182,14 @@ product AMD F12_PCIE_7		0x170d	Family12h PCIe
 product AMD F14_MISC		0x1716	Family12h/14h Misc. Configuration
 product AMD F14_HB18		0x1718	Family12h/14h Host Bridge
 product AMD F14_HB19		0x1719	Family12h/14h Host Bridge
+product AMD F17_AX_DF_0		0x1724	17h/Axh Data Fabric
+product AMD F17_AX_DF_1		0x1725	17h/Axh Data Fabric
+product AMD F17_AX_DF_2		0x1726	17h/Axh Data Fabric
+product AMD F17_AX_DF_3		0x1727	17h/Axh Data Fabric
+product AMD F17_AX_DF_4		0x1728	17h/Axh Data Fabric
+product AMD F17_AX_DF_5		0x1729	17h/Axh Data Fabric
+product AMD F17_AX_DF_6		0x172a	17h/Axh Data Fabric
+product AMD F17_AX_DF_7		0x172b	17h/Axh Data Fabric
 product AMD SEATTLE_PCHB_1	0x1a00	Seattle Host Bridge
 product AMD SEATTLE_PCHB_2	0x1a01	Seattle Host Bridge
 product AMD SEATTLE_PCIE	0x1a02	Seattle PCIe Root Port
