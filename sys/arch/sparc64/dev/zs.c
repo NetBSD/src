@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.79 2022/10/26 23:38:08 riastradh Exp $	*/
+/*	$NetBSD: zs.c,v 1.80 2022/10/26 23:59:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.79 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.80 2022/10/26 23:59:56 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -541,8 +541,8 @@ zssoft(void *arg)
 	struct zsc_softc *zsc = arg;
 
 #if 0 /* not yet */
-	/* Make sure we call the tty layer with tty_lock held. */
-	mutex_spin_enter(&tty_lock);
+	/* Make sure we call the tty layer with ttylock held. */
+	ttylock(tp);
 #endif
 	(void)zsc_intr_soft(zsc);
 #ifdef TTY_DEBUG
@@ -558,7 +558,7 @@ zssoft(void *arg)
 	}
 #endif
 #if 0 /* not yet */
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 #endif
 }
 
