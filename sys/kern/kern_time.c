@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.217 2022/07/01 21:22:44 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.218 2022/10/26 23:23:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.217 2022/07/01 21:22:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.218 2022/10/26 23:23:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.217 2022/07/01 21:22:44 riastradh Ex
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/timetc.h>
+#include <sys/timevar.h>
 #include <sys/timex.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
@@ -603,7 +604,6 @@ sys___adjtime50(struct lwp *l, const struct sys___adjtime50_args *uap,
 void
 adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 {
-	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
 		memset(olddelta, 0, sizeof(*olddelta));
