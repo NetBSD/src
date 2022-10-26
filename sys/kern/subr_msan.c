@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.17 2021/09/11 10:09:55 riastradh Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.18 2022/10/26 23:38:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.17 2021/09/11 10:09:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.18 2022/10/26 23:38:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.17 2021/09/11 10:09:55 riastradh Exp
 #include <sys/buf.h>
 #include <sys/cpu.h>
 #include <sys/msan.h>
+
+#include <ddb/db_active.h>
 
 static void kmsan_printf(const char *, ...);
 
@@ -145,7 +147,6 @@ static void
 kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 {
 	const char *mod, *sym;
-	extern int db_active;
 	msan_orig_t *orig;
 	const char *typename;
 	char *var, *fn;
@@ -205,7 +206,6 @@ static void
 kmsan_report_inline(msan_orig_t orig, unsigned long pc)
 {
 	const char *mod, *sym;
-	extern int db_active;
 	const char *typename;
 	char *var, *fn;
 	uintptr_t ptr;

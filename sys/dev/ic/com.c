@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.378 2022/10/03 20:15:50 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.379 2022/10/26 23:38:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.378 2022/10/03 20:15:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.379 2022/10/26 23:38:09 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -119,8 +119,9 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.378 2022/10/03 20:15:50 riastradh Exp $");
 #include <sys/rndsource.h>
 #endif
 
-
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -2516,10 +2517,7 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 	stat = CSR_READ_1(regsp, COM_REG_IIR);
 	{
 		int cn_trapped = 0;	/* required by cn_trap, see above */
-#ifdef DDB
-		extern int db_active;
 		if (!db_active)
-#endif
 			cn_check_magic(dev, c, com_cnm_state);
 	}
 	splx(s);

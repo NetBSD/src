@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.85 2022/10/04 07:24:32 rin Exp $ */
+/*	$NetBSD: ser.c,v 1.86 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.85 2022/10/04 07:24:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.86 2022/10/26 23:38:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.85 2022/10/04 07:24:32 rin Exp $");
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
+
+#include <ddb/db_active.h>
 
 #include "ser.h"
 #if NSER > 0
@@ -605,8 +607,6 @@ sereint(int stat)
 		break_in_progress = 1;
 #ifdef DDB
 		if (serconsole == 0) {
-			extern int db_active;
-
 			if (!db_active) {
 				console_debugger();
 				return;

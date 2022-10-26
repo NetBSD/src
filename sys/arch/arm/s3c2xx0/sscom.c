@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.49 2020/11/20 18:34:45 thorpej Exp $ */
+/*	$NetBSD: sscom.c,v 1.50 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,10 +98,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.49 2020/11/20 18:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.50 2022/10/26 23:38:06 riastradh Exp $");
 
 #include "opt_sscom.h"
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -142,6 +141,8 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.49 2020/11/20 18:34:45 thorpej Exp $");
 #include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/mutex.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/sscom_var.h>
@@ -1927,11 +1928,8 @@ sscomcngetc(dev_t dev)
 	c = sscom_getc(sscomconstag, sscomconsioh);
 	stat = sscom_geterr(sscomconstag, sscomconsioh);
 	{
-		int __attribute__((__unused__))cn_trapped = 0;
-#ifdef DDB
-		extern int db_active;
+		int cn_trapped __unused = 0;
 		if (!db_active)
-#endif
 			cn_check_magic(dev, c, sscom_cnm_state);
 	}
 	splx(s);

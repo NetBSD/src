@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.250 2020/12/20 11:11:34 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.251 2022/10/26 23:38:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.250 2020/12/20 11:11:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.251 2022/10/26 23:38:09 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -111,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.250 2020/12/20 11:11:34 skrll Exp $")
 #include <sys/radixtree.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+
+#include <ddb/db_active.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
@@ -1756,13 +1758,8 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
-	bool ddb __diagused = false;
-#ifdef DDB
-	extern int db_active;
-	ddb = db_active != 0;
-#endif
 
-	KASSERT(ddb || rw_lock_held(obj->vmobjlock));
+	KASSERT(db_active || rw_lock_held(obj->vmobjlock));
 
 	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 

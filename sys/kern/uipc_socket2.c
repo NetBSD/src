@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.141 2022/04/09 23:52:23 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.142 2022/10/26 23:38:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.141 2022/04/09 23:52:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.142 2022/10/26 23:38:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.141 2022/04/09 23:52:23 riastradh
 
 #ifdef DDB
 #include <sys/filedesc.h>
+#include <ddb/db_active.h>
 #endif
 
 /*
@@ -1596,7 +1597,6 @@ sowait(struct socket *so, bool catch_p, int timo)
 static inline int
 db_mutex_enter(kmutex_t *mtx)
 {
-	extern int db_active;
 	int rv;
 
 	if (!db_active) {
