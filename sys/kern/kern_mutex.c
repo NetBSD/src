@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.99 2022/04/09 23:46:10 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.100 2022/10/26 23:21:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.99 2022/04/09 23:46:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.100 2022/10/26 23:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -348,7 +348,6 @@ mutex_abort(const char *func, size_t line, const kmutex_t *mtx, const char *msg)
  *	sleeps - see comments in mutex_vector_enter() about releasing
  *	mutexes unlocked.
  */
-void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 void
 _mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl,
     uintptr_t return_address)
