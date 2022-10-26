@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.13 2017/03/16 16:13:21 chs Exp $	*/
+/*	$NetBSD: pcu.h,v 1.14 2022/10/26 23:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@ void	pcu_save(const pcu_ops_t *, lwp_t *);
 void	pcu_save_all_on_cpu(void);
 void	pcu_discard(const pcu_ops_t *, lwp_t *, bool);
 bool	pcu_valid_p(const pcu_ops_t *, const lwp_t *);
+
+/* PCU operations structure provided by the MD code. */
+extern const pcu_ops_t *const pcu_ops_md_defs[];
 
 #else
 #define	pcu_switchpoint(l)

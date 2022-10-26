@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.26 2022/02/08 12:59:16 riastradh Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.27 2022/10/26 23:38:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.26 2022/02/08 12:59:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.27 2022/10/26 23:38:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -84,9 +84,6 @@ typedef struct {
  * PCU IPIs run at IPL_HIGH (aka IPL_PCU in this code).
  */
 #define	splpcu		splhigh
-
-/* PCU operations structure provided by the MD code. */
-extern const pcu_ops_t * const pcu_ops_md_defs[];
 
 /*
  * pcu_available_p: true if lwp is allowed to use PCU state.
