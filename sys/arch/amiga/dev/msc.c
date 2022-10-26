@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.47 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: msc.c,v 1.48 2022/10/26 23:55:40 riastradh Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.47 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.48 2022/10/26 23:55:40 riastradh Exp $");
 
 #include "msc.h"
 
@@ -390,7 +390,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	/* initialize tty */
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -451,7 +451,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_wopen--;
 
 		if (error) {
-			mutex_spin_exit(&tty_lock);
+			ttyunlock(tp);
 			return(error);
 		}
 	}
@@ -472,7 +472,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	return tp->t_linesw->l_open(dev, tp);
 }
