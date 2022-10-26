@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.30 2021/01/13 07:36:56 skrll Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.31 2022/10/26 23:26:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.30 2021/01/13 07:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.31 2022/10/26 23:26:57 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,7 +103,7 @@ kgdb_waitc(void *arg)
  * is shared with DDB.
  */
 #ifdef DDB
-extern void (*db_trap_callback)(int);
+#include <ddb/db_extern.h>
 #else
 void (*db_trap_callback)(int);
 #endif
