@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.17 2022/07/06 01:12:46 riastradh Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.18 2022/10/26 23:24:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -579,7 +579,6 @@ void __sanitizer_cov_trace_pc(void);
 void __nomsan
 __sanitizer_cov_trace_pc(void)
 {
-	extern int cold;
 	uint64_t idx;
 	kcov_t *kd;
 
@@ -626,7 +625,6 @@ __sanitizer_cov_trace_pc(void)
 static void __nomsan
 trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 {
-	extern int cold;
 	uint64_t idx;
 	kcov_t *kd;
 
