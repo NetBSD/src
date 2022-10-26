@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.62 2021/08/30 01:25:10 rin Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.62 2021/08/30 01:25:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $");
 
 #include "opt_pax.h"
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.62 2021/08/30 01:25:10 rin Exp $");
 
 #ifdef PAX_ASLR
 #include <sys/mman.h>
+#include <sys/resourcevar.h>
 
 int pax_aslr_enabled = 1;
 int pax_aslr_global = PAX_ASLR;
@@ -336,7 +337,6 @@ pax_init(void)
 {
 #ifdef PAX_ASLR
 	/* Adjust maximum stack by the size we can consume for ASLR */
-	extern rlim_t maxsmap;
 	maxsmap = MAXSSIZ - (MAXSSIZ / PAX_ASLR_MAX_STACK_WASTE);
 	// XXX: compat32 is not handled.
 #endif
