@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.60 2021/10/21 13:21:54 andvar Exp $ */
+/*	$NetBSD: mfc.c,v 1.61 2022/10/26 23:54:19 riastradh Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.60 2021/10/21 13:21:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.61 2022/10/26 23:54:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -563,7 +563,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 		if (error) {
-			mutex_spin_exit(&tty_lock);
+			ttyunlock(tp);
 			return(error);
 		}
 	}
@@ -578,7 +578,7 @@ done:
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 	return tp->t_linesw->l_open(dev, tp);
 }
 
