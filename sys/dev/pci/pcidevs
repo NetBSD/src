@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1468 2022/10/07 02:55:33 snj Exp $
+$NetBSD: pcidevs,v 1.1469 2022/10/26 13:22:31 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1121,6 +1121,7 @@ product AMD F15_DRAM		0x1602	Family15h DRAM Configuration
 product AMD F15_MISC		0x1603	Family15h Miscellaneous Configuration
 product AMD F15_LINK		0x1604	Family15h Link Configuration
 product AMD F15_NB		0x1605	Family15h North Bridge Configuration
+product AMD F17_9X_XHCI_1	0x162c	17h/9xh xHCI
 product AMD F17_6X_RC		0x1630	17h/6xh Root Complex
 product AMD F17_6X_IOMMU	0x1631	17h/6xh IOMMU
 product AMD F17_6X_HB		0x1632	17h/6xh Host Bridge
@@ -1129,10 +1130,23 @@ product AMD F17_6X_PCIE_2	0x1634	17h/6xh PCIe
 product AMD F17_6X_PCIE_3	0x1635	17h/6xh PCIe
 product AMD F17_6X_HDAUDIO	0x1637	17h/6xh HD Audio Controller
 product AMD F17_6X_XHCI		0x1639	17h/6xh xHCI
+product AMD F17_9X_XHCI_2	0x163b	17h/9xh xHCI
 product AMD F17_6X_XGBE		0x1641	17h/6xh 10GbE Controller
 product AMD F17_6X_WLAN		0x1642	17h/6xh WLAN
 product AMD F17_6X_BT		0x1643	17h/6xh Bluetooth
 product AMD F17_6X_I2S		0x1644	17h/6xh I2S
+product AMD F17_9X_HB		0x1645	17h/9xh Host
+product AMD F17_9X_PCIE_1	0x1647	17h/9xh PCIE
+product AMD F17_9X_PCIE_2	0x1648	17h/9xh PCIE
+product AMD F17_9X_CCP		0x1649	17h/9xh Crypto
+product AMD F17_9X_DF_0		0x1660	17h/9xh Data Fabric
+product AMD F17_9X_DF_1		0x1661	17h/9xh Data Fabric
+product AMD F17_9X_DF_2		0x1662	17h/9xh Data Fabric
+product AMD F17_9X_DF_3		0x1663	17h/9xh Data Fabric
+product AMD F17_9X_DF_4		0x1664	17h/9xh Data Fabric
+product AMD F17_9X_DF_5		0x1665	17h/9xh Data Fabric
+product AMD F17_9X_DF_6		0x1666	17h/9xh Data Fabric
+product AMD F17_9X_DF_7		0x1667	17h/9xh Data Fabric
 product AMD F19_5X_DF_0		0x166a	19h/5xh Data Fabric
 product AMD F19_5X_DF_1		0x166b	19h/5xh Data Fabric
 product AMD F19_5X_DF_2		0x166c	19h/5xh Data Fabric
