@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.133 2022/04/17 09:25:24 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.134 2022/10/26 23:48:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.133 2022/04/17 09:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.134 2022/10/26 23:48:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -415,10 +415,10 @@ ucom_detach(device_t self, int flags)
 
 	/* tty is now off.  */
 	if (tp != NULL) {
-		mutex_spin_enter(&tty_lock);
+		ttylock(tp);
 		CLR(tp->t_state, TS_CARR_ON);
 		CLR(tp->t_cflag, CLOCAL | MDMBUF);
-		mutex_spin_exit(&tty_lock);
+		ttyunlock(tp);
 	}
 
 	/* locate the major number */
@@ -783,10 +783,10 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	 * ttyclose should have cleared TS_ISOPEN and interrupted all
 	 * pending opens, which should have completed by now.
 	 */
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	KASSERT(!ISSET(tp->t_state, TS_ISOPEN));
 	KASSERT(tp->t_wopen == 0);
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 
 	/*
 	 * Close any device-specific state.
@@ -1180,7 +1180,7 @@ ucomhwiflow(struct tty *tp, int block)
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
 	KASSERT(&sc->sc_lock);
-	KASSERT(mutex_owned(&tty_lock));
+	KASSERT(ttylocked(tp));
 
 	old = sc->sc_rx_stopped;
 	sc->sc_rx_stopped = (u_char)block;
@@ -1263,14 +1263,14 @@ ucomstop(struct tty *tp, int flag)
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 
 	mutex_enter(&sc->sc_lock);
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* obuff_full -> obuff_free? */
 		/* sc->sc_tx_stopped = 1; */
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 	mutex_exit(&sc->sc_lock);
 #endif
 }
@@ -1303,22 +1303,22 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
 		cc -= sc->sc_opkthdrlen;
 
-		mutex_spin_enter(&tty_lock);
+		ttylock(tp);
 		CLR(tp->t_state, TS_BUSY);
 		if (ISSET(tp->t_state, TS_FLUSH))
 			CLR(tp->t_state, TS_FLUSH);
 		else
 			ndflush(&tp->t_outq, cc);
-		mutex_spin_exit(&tty_lock);
+		ttyunlock(tp);
 
 		if (err != USBD_CANCELLED && err != USBD_IOERROR &&
 		    !sc->sc_closing) {
 			if ((ub = SIMPLEQ_FIRST(&sc->sc_obuff_full)) != NULL)
 				ucom_submit_write(sc, ub);
 
-			mutex_spin_enter(&tty_lock);
+			ttylock(tp);
 			(*tp->t_linesw->l_start)(tp);
-			mutex_spin_exit(&tty_lock);
+			ttyunlock(tp);
 		}
 		break;
 	}
@@ -1356,13 +1356,13 @@ ucom_softintr(void *arg)
 	struct tty *tp = sc->sc_tty;
 
 	mutex_enter(&sc->sc_lock);
-	mutex_enter(&tty_lock);
+	ttylock(tp);
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		mutex_exit(&tty_lock);
+		ttyunlock(tp);
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
-	mutex_exit(&tty_lock);
+	ttyunlock(tp);
 
 	struct ucom_buffer *ub = SIMPLEQ_FIRST(&sc->sc_obuff_full);
 
@@ -1390,7 +1390,7 @@ ucom_read_complete(struct ucom_softc *sc)
 
 	while (ub != NULL && !sc->sc_rx_stopped) {
 
-		/* XXX ttyinput takes tty_lock */
+		/* XXX ttyinput takes ttylock */
 		while (ub->ub_index < ub->ub_len && !sc->sc_rx_stopped) {
 			/* Give characters to tty layer. */
 			if ((*rint)(ub->ub_data[ub->ub_index], tp) == -1) {
@@ -1453,9 +1453,9 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		if (status == USBD_IOERROR || sc->sc_closing) {
 			/* Send something to wake upper layer */
 			(tp->t_linesw->l_rint)('\n', tp);
-			mutex_spin_enter(&tty_lock);	/* XXX */
+			ttylock(tp);	/* XXX */
 			ttwakeup(tp);
-			mutex_spin_exit(&tty_lock);	/* XXX */
+			ttyunlock(tp);	/* XXX */
 		}
 
 		mutex_exit(&sc->sc_lock);
