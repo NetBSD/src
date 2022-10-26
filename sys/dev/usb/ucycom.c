@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.55 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.56 2022/10/26 23:50:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.55 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.56 2022/10/26 23:50:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -272,11 +272,11 @@ ucycom_detach(device_t self, int flags)
 
 	s = splusb();
 	if (tp != NULL) {
-		mutex_spin_enter(&tty_lock);
+		ttylock(tp);
 		CLR(tp->t_state, TS_CARR_ON);
 		CLR(tp->t_cflag, CLOCAL | MDMBUF);
 		ttyflush(tp, FREAD|FWRITE);
-		mutex_spin_exit(&tty_lock);
+		ttyunlock(tp);
 	}
 	/* Wait for processes to go away. */
 	usb_detach_waitold(sc->sc_dev);
@@ -490,7 +490,7 @@ ucycomstart(struct tty *tp)
 	u_char *data;
 	int cnt, len, s;
 
-	KASSERT(mutex_owned(&tty_lock));
+	KASSERT(ttylocked(tp));
 
 	if (sc->sc_dying)
 		return;
