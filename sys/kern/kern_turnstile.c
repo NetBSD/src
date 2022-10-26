@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.44 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.45 2022/10/26 23:27:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.44 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.45 2022/10/26 23:27:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
 #include <sys/pool.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/sleepq.h>
+#include <sys/sleeptab.h>
 #include <sys/systm.h>
 
 /*
@@ -81,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.44 2022/06/29 22:27:01 riastrad
 
 static tschain_t	turnstile_chains[TS_HASH_SIZE] __cacheline_aligned;
 struct pool		turnstile_pool;
-extern turnstile_t	turnstile0;
 
 static union {
 	kmutex_t	lock;
