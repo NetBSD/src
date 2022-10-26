@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.42 2014/07/25 08:10:36 dholland Exp $	*/
+/*	$NetBSD: dz.c,v 1.43 2022/10/26 23:44:36 riastradh Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.42 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.43 2022/10/26 23:44:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
@@ -416,7 +416,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (error)
 			break;
 	}
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));
