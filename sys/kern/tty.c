@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.306 2022/10/25 23:21:13 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.307 2022/10/26 23:41:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.306 2022/10/25 23:21:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.307 2022/10/26 23:41:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -351,6 +351,34 @@ sysctl_kern_tty_setup(void)
 		       SYSCTL_DESCR("TTY input and output queue size"),
 		       sysctl_kern_tty_qsize, 0, &tty_qsize, 0,
 		       CTL_CREATE, CTL_EOL);
+}
+
+/*
+ * ttylock(tp), ttyunlock(tp), ttylocked(tp)
+ *
+ *	Exclusive lock on tty.  Currently a single global lock.
+ *
+ *	ttylocked is for positive DIAGNOSTIC assertions only.
+ */
+void
+ttylock(struct tty *tp)
+{
+
+	mutex_spin_enter(&tty_lock);
+}
+
+void
+ttyunlock(struct tty *tp)
+{
+
+	mutex_spin_exit(&tty_lock);
+}
+
+bool
+ttylocked(struct tty *tp)
+{
+
+	return mutex_owned(&tty_lock);
 }
 
 int
