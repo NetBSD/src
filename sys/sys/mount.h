@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.238 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.239 2022/10/26 23:39:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -437,6 +437,9 @@ extern time_t	dirdelay;
 extern time_t	metadelay;
 void	vfs_syncer_add_to_worklist(struct mount *);
 void	vfs_syncer_remove_from_worklist(struct mount *);
+
+extern int vfs_magiclinks;
+extern int vfs_timestamp_precision;
 
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
