@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.67 2022/10/21 12:28:43 uwe Exp $
+.\" $NetBSD: ctime.3,v 1.68 2022/10/26 23:22:54 jschauma Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -255,15 +255,56 @@ components of the structure are ignored,
 and the original values of the other components are not restricted
 to their normal ranges and will be normalized,
 if need be.
+.Pp
 For example,
-October 40 is changed into November 9, a
-.Fa tm_hour
-of \-1 means 1 hour before midnight,
-.Fa tm_mday
-of 0 means the day preceding the current month, and
+consider a
+.Fa struct tm
+initialized with
+.Fa tm_year
+= 122,
 .Fa tm_mon
-of \-2 means 2 months before January of
-.Fa tm_year .
+= 10,
+.Fa tm_mday
+= 30,
+.Fa tm_hour
+= 22,
+.Fa tm_min
+= 57,
+and
+.Fa tm_sec
+= 0.
+Incrementing
+.Fa tm_min
+by 13 and calling
+.Fn mktime
+would lead to
+.Fa tm_hour
+= 23 and
+.Fa tm_min
+= 10.
+.Pp
+This normalizing can lead to cascading changes:
+Again using a
+.Fa struct tm
+initialized as in the above example but with
+.Fa tm_hour
+= 23,
+the same change would lead to
+.Fa tm_mon
+= 11,
+.Fa tm_mday
+= 1,
+.Fa tm_hour
+= 0, and
+.Fa tm_min
+= 10.
+.Pp
+Negative values may also be normalized with similar
+cascading effect such that e.g.,
+a
+.Fa tm_hour
+of \-1 means 1 hour before midnight on the previous
+day and so on.
 .It
 A positive or zero value for
 .Fa tm_isdst
