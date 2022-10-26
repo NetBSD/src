@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.57 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: dhu.c,v 1.58 2022/10/26 23:46:37 riastradh Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.57 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.58 2022/10/26 23:46:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,8 @@ dhuopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (line >= sc->sc_lines)
 		return ENXIO;
 
-	mutex_spin_enter(&tty_lock);
+	tp = sc->sc_dhu[line].dhu_tty;
+	ttylock(tp);
 	if (sc->sc_type == IS_DHU) {
 		/* CSR 3:0 must be 0 */
 		DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE);
@@ -448,8 +449,6 @@ dhuopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
-
-	tp = sc->sc_dhu[line].dhu_tty;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
@@ -482,7 +481,7 @@ dhuopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (error)
 			break;
 	}
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));
