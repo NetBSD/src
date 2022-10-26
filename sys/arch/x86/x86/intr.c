@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.161 2022/09/07 00:40:19 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.162 2022/10/26 23:38:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.161 2022/09/07 00:40:19 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.162 2022/10/26 23:38:09 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -195,6 +195,8 @@ extern void Xrecurse_hyperv_hypercall(void);
 #if NPCI == 0 || !defined(__HAVE_PCI_MSI_MSIX)
 #define msipic_is_msi_pic(PIC)	(false)
 #endif
+
+#include <ddb/db_active.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -1413,7 +1415,6 @@ intr_printconfig(void)
 
 	pr = printf;
 #ifdef DDB
-	extern int db_active;
 	if (db_active) {
 		pr = db_printf;
 	}

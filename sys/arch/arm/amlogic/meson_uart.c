@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.6 2021/02/12 21:39:55 ryo Exp $ */
+/* $NetBSD: meson_uart.c,v 1.7 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.6 2021/02/12 21:39:55 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.7 2022/10/26 23:38:06 riastradh Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -53,6 +53,8 @@ __KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.6 2021/02/12 21:39:55 ryo Exp $");
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/tty.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 
@@ -261,11 +263,7 @@ meson_uart_cngetc(dev_t dev)
 	}
 
 	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG) & 0xff;
-#if defined(DDB)
-	extern int db_active;
-	if (!db_active)
-#endif
-	{
+	if (!db_active) {
 		int cn_trapped __unused = 0;
 		cn_check_magic(dev, c, meson_uart_cnm_state);
 	}

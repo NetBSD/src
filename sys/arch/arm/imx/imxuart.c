@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.29 2022/05/20 06:59:02 skrll Exp $ */
+/* $NetBSD: imxuart.c,v 1.30 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.29 2022/05/20 06:59:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.30 2022/10/26 23:38:06 riastradh Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -155,6 +155,8 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.29 2022/05/20 06:59:02 skrll Exp $");
 #include <sys/intr.h>
 
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
@@ -2120,16 +2122,13 @@ imxuart_common_getc(dev_t dev, struct imxuart_regs *regsp)
 
 	/* block until a character becomes available */
 	while (!((usr2 = bus_space_read_4(iot, ioh, IMX_USR2)) & IMX_USR2_RDR))
-		;
+		continue;
 
 	c = 0xff & bus_space_read_4(iot, ioh, IMX_URXD);
 
 	{
-		int __attribute__((__unused__))cn_trapped = 0; /* unused */
-#ifdef DDB
-		extern int db_active;
+		int cn_trapped __unused = 0;
 		if (!db_active)
-#endif
 			cn_check_magic(dev, c, imxuart_cnm_state);
 	}
 	splx(s);

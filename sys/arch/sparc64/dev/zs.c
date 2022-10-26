@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.78 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.79 2022/10/26 23:38:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.79 2022/10/26 23:38:08 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2021/09/11 20:28:05 andvar Exp $");
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
+
+#include <ddb/db_active.h>
 #include <ddb/db_output.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -738,15 +740,11 @@ zs_abort(struct zs_chanstate *cs)
 #if defined(KGDB)
 	zskgdb(cs);
 #elif defined(DDB)
-	{
-		extern int db_active;
-		
-		if (!db_active)
-			Debugger();
-		else
-			/* Debugger is probably hozed */
-			callrom();
-	}
+	if (!db_active)
+		Debugger();
+	else
+		/* Debugger is probably hozed */
+		callrom();
 #else
 	printf("stopping on keyboard abort\n");
 	callrom();

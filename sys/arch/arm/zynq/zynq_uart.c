@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.4 2020/11/20 18:51:31 thorpej Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.5 2022/10/26 23:38:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.4 2020/11/20 18:51:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.5 2022/10/26 23:38:07 riastradh Exp $");
 
 #include "opt_zynq.h"
 #include "opt_zynquart.h"
@@ -143,6 +143,8 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.4 2020/11/20 18:51:31 thorpej Exp $"
 #endif
 
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/zynq/zynq7000_reg.h>
 #include <arm/zynq/zynq_uartreg.h>
@@ -1919,11 +1921,9 @@ zynquart_common_getc(dev_t dev, struct zynquart_regs *regsp)
 	c = 0xff & bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 
 	{
-		int __attribute__((__unused__))cn_trapped = 0; /* unused */
-#ifdef DDB
-		extern int db_active;
+		int cn_trapped __unused = 0;
+
 		if (!db_active)
-#endif
 			cn_check_magic(dev, c, zynquart_cnm_state);
 	}
 	splx(s);

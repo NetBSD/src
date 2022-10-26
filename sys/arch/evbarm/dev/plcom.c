@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.65 2022/09/27 06:11:36 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.66 2022/10/26 23:38:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,10 +94,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.65 2022/09/27 06:11:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.66 2022/10/26 23:38:07 riastradh Exp $");
 
 #include "opt_plcom.h"
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -136,6 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.65 2022/09/27 06:11:36 skrll Exp $");
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
+
+#include <ddb/db_active.h>
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
@@ -2306,10 +2307,8 @@ plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 	c = PREAD1(pi, PL01XCOM_DR);
 	{
 		int cn_trapped __unused = 0;
-#ifdef DDB
-		extern int db_active;
+
 		if (!db_active)
-#endif
 			cn_check_magic(dev, c, plcom_cnm_state);
 	}
 	splx(s);

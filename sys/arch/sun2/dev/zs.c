@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 2022/10/26 23:38:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2022/10/26 23:38:09 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24 2021/09/11 20:28:05 andvar Exp $");
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
+
+#include <ddb/db_active.h>
 #include <ddb/db_output.h>
 
 #include <sun2/dev/cons.h>
@@ -145,7 +147,7 @@ static int zs_get_speed(struct zs_chanstate *);
  * USE ROM PROPERTIES port-a-ignore-cd AND port-b-ignore-cd FOR
  * SOFT CARRIER, AND keyboard PROPERTY FOR KEYBOARD/MOUSE?
  */
-void 
+void
 zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
@@ -240,17 +242,17 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 			zs_lock_chan(cs);
 			zs_write_reg(cs,  9, reset);
 			zs_unlock_chan(cs);
-		} 
+		}
 #if (NKBD > 0) || (NMS > 0)
-		/* 
+		/*
 		 * If this was a zstty it has a keyboard
 		 * property on it we need to attach the
 		 * sunkbd and sunms line disciplines.
 		 */
-		if (child 
+		if (child
 		    && device_is_a(child, "zstty")) {
 			struct kbd_ms_tty_attach_args kma;
-			struct zstty_softc {	
+			struct zstty_softc {
 				/*
 				 * The following are the only fields
 				 * we need here
@@ -265,7 +267,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 			if (tp != NULL) {
 				kma.kmta_dev = tp->t_dev;
 				kma.kmta_consdev = zsc_args.consdev;
-			
+
 				/* Attach 'em if we got 'em. */
 				switch(zs_peripheral_type(zsc->zsc_promunit,
 						 	  zsc->zsc_node,
@@ -318,7 +320,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 
 }
 
-static int 
+static int
 zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
@@ -332,7 +334,7 @@ zs_print(void *aux, const char *name)
 	return (UNCONF);
 }
 
-static int 
+static int
 zshard(void *arg)
 {
 	struct zsc_softc *zsc = arg;
@@ -353,7 +355,7 @@ zshard(void *arg)
 	return (rval);
 }
 
-int 
+int
 zscheckintr(void *arg)
 {
 	struct zsc_softc *zsc;
@@ -374,7 +376,7 @@ zscheckintr(void *arg)
 /*
  * We need this only for TTY_DEBUG purposes.
  */
-static void 
+static void
 zssoft(void *arg)
 {
 	struct zsc_softc *zsc = arg;
@@ -389,7 +391,7 @@ zssoft(void *arg)
 		struct zstty_softc *zst1 = zsc->zsc_cs[1]->cs_private;
 		if (zst0->zst_overflows || zst1->zst_overflows ) {
 			struct trapframe *frame = arg;	/* XXX */
-			
+
 			printf("zs silo overflow from %p\n",
 			    (long)frame->tf_pc);
 		}
@@ -402,7 +404,7 @@ zssoft(void *arg)
 /*
  * Compute the current baud rate given a ZS channel.
  */
-static int 
+static int
 zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
@@ -415,7 +417,7 @@ zs_get_speed(struct zs_chanstate *cs)
 /*
  * MD functions for setting the baud rate and control modes.
  */
-int 
+int
 zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	int tconst, real_bps;
@@ -446,7 +448,7 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 	return (0);
 }
 
-int 
+int
 zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 {
 
@@ -560,7 +562,7 @@ extern void Debugger(void);
 /*
  * Handle user request to enter kernel debugger.
  */
-void 
+void
 zs_abort(struct zs_chanstate *cs)
 {
 	volatile struct zschan *zc = zs_conschan_get;
@@ -576,26 +578,21 @@ zs_abort(struct zs_chanstate *cs)
 #if defined(KGDB)
 	zskgdb(cs);
 #elif defined(DDB)
-	{
-		extern int db_active;
-		
-		if (!db_active)
-			Debugger();
-		else
-			/* Debugger is probably hozed */
-			callrom();
-	}
+	if (!db_active)
+		Debugger();
+	else
+		/* Debugger is probably hozed */
+		callrom();
 #else
 	printf("stopping on keyboard abort\n");
 	callrom();
 #endif
 }
 
-
 /*
  * Polled input char.
  */
-int 
+int
 zs_getc(void *arg)
 {
 	volatile struct zschan *zc = arg;
@@ -622,7 +619,7 @@ zs_getc(void *arg)
 /*
  * Polled output char.
  */
-void 
+void
 zs_putc(void *arg, int c)
 {
 	volatile struct zschan *zc = arg;
@@ -653,13 +650,10 @@ zs_putc(void *arg, int c)
 
 /*****************************************************************/
 
-
-
-
 /*
  * Polled console input putchar.
  */
-static int 
+static int
 zscngetc(dev_t dev)
 {
 	return (zs_getc(zs_conschan_get));
@@ -668,7 +662,7 @@ zscngetc(dev_t dev)
 /*
  * Polled console output putchar.
  */
-static void 
+static void
 zscnputc(dev_t dev, int c)
 {
 	zs_putc(zs_conschan_put, c);
@@ -676,10 +670,10 @@ zscnputc(dev_t dev, int c)
 
 int swallow_zsintrs;
 
-static void 
+static void
 zscnpollc(dev_t dev, int on)
 {
-	/* 
+	/*
 	 * Need to tell zs driver to acknowledge all interrupts or we get
 	 * annoying spurious interrupt messages.  This is because mucking
 	 * with spl() levels during polling does not prevent interrupts from
@@ -689,4 +683,3 @@ zscnpollc(dev_t dev, int on)
 	if (on) swallow_zsintrs++;
 	else swallow_zsintrs--;
 }
-

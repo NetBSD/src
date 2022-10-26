@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.13 2015/04/13 21:18:40 riastradh Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.13 2015/04/13 21:18:40 riastradh Exp $ */
+/*	$Id: at91usart.c,v 1.14 2022/10/26 23:38:06 riastradh Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.14 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.13 2015/04/13 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.14 2022/10/26 23:38:06 riastradh Exp $");
 
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #ifdef RND_COM
@@ -115,6 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.13 2015/04/13 21:18:40 riastradh Exp
 
 #include <machine/intr.h>
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91var.h>
@@ -946,12 +947,8 @@ at91usart_cn_getc(dev_t dev)
 		USARTREG(USART_CR) = USART_CR_RSTSTA;	// reset status bits
 		c = CNC_BREAK;
 	}
-#ifdef DDB
-	extern int db_active;
-	if (!db_active)
-#endif
-	{
-		int cn_trapped = 0; /* unused */
+	if (!db_active) {
+		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, at91usart_cnm_state);
 	}

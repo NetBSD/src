@@ -1,29 +1,29 @@
-/*	$NetBSD: db_machdep.c,v 1.59 2021/02/23 07:13:52 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.60 2022/10/26 23:38:09 riastradh Exp $	*/
 
-/* 
+/*
  * :set tabs=4
  *
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -39,9 +39,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.59 2021/02/23 07:13:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.60 2022/10/26 23:38:09 riastradh Exp $");
 
-#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -60,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.59 2021/02/23 07:13:52 mrg Exp $");
 #include <machine/rpb.h>
 #include <vax/vax/gencons.h>
 
+#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -313,7 +313,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 	}
 
 #if 0
-	while (((u_int)(fp->vax_fp) > stackbase - 0x100) && 
+	while (((u_int)(fp->vax_fp) > stackbase - 0x100) &&
 			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
 #endif
 	while (!IN_USERLAND(fp->vax_fp)) {
@@ -412,7 +412,7 @@ db_stack_trace_print(
 	int		trace_proc;
 	pid_t		curpid;
 	const char	*s;
- 
+
 	/* Check to see if we're tracing a process */
 	trace_proc = 0;
 	s = modif;
@@ -433,8 +433,8 @@ db_stack_trace_print(
 		return;
 	}
 
-	/* 
-	 * If user typed an address its either a PID, or a Frame 
+	/*
+	 * If user typed an address its either a PID, or a Frame
 	 * if no address then either current proc or panic
 	 */
 	if (have_addr) {
@@ -489,17 +489,17 @@ db_stack_trace_print(
 	(*pr)(" ESP = 0x%x\n", (unsigned int)(pcb->ESP));
 	(*pr)(" SSP = 0x%x\n", (unsigned int)(pcb->SSP));
 	(*pr)(" USP = 0x%x\n", (unsigned int)(pcb->USP));
-	(*pr)(" R[00] = 0x%08x	  R[06] = 0x%08x\n", 
+	(*pr)(" R[00] = 0x%08x	  R[06] = 0x%08x\n",
 		(unsigned int)(pcb->R[0]), (unsigned int)(pcb->R[6]));
-	(*pr)(" R[01] = 0x%08x	  R[07] = 0x%08x\n", 
+	(*pr)(" R[01] = 0x%08x	  R[07] = 0x%08x\n",
 		(unsigned int)(pcb->R[1]), (unsigned int)(pcb->R[7]));
-	(*pr)(" R[02] = 0x%08x	  R[08] = 0x%08x\n", 
+	(*pr)(" R[02] = 0x%08x	  R[08] = 0x%08x\n",
 		(unsigned int)(pcb->R[2]), (unsigned int)(pcb->R[8]));
-	(*pr)(" R[03] = 0x%08x	  R[09] = 0x%08x\n", 
+	(*pr)(" R[03] = 0x%08x	  R[09] = 0x%08x\n",
 		(unsigned int)(pcb->R[3]), (unsigned int)(pcb->R[9]));
-	(*pr)(" R[04] = 0x%08x	  R[10] = 0x%08x\n", 
+	(*pr)(" R[04] = 0x%08x	  R[10] = 0x%08x\n",
 		(unsigned int)(pcb->R[4]), (unsigned int)(pcb->R[10]));
-	(*pr)(" R[05] = 0x%08x	  R[11] = 0x%08x\n", 
+	(*pr)(" R[05] = 0x%08x	  R[11] = 0x%08x\n",
 		(unsigned int)(pcb->R[5]), (unsigned int)(pcb->R[11]));
 	(*pr)(" AP = 0x%x\n", (unsigned int)(pcb->AP));
 	(*pr)(" FP = 0x%x\n", (unsigned int)(pcb->FP));
@@ -509,7 +509,7 @@ db_stack_trace_print(
 	db_dump_stack((VAX_CALLFRAME *)(pcb->FP), (u_int)pcb->KSP, pr);
 	return;
 #if 0
-	while (((u_int)(cur_frame->vax_fp) > stackbase) && 
+	while (((u_int)(cur_frame->vax_fp) > stackbase) &&
 			((u_int)(cur_frame->vax_fp) < (stackbase + USPACE))) {
 		u_int nargs;
 		VAX_CALLFRAME *tmp_frame;
@@ -597,7 +597,7 @@ kdbrint(int tkn)
 		ddbescape = 0;
 		return 2;
 	}
-	
+
 	ddbescape = 0;
 	return 0;
 }

@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $ */
+/*	$Id: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $ */
 
 /*
  *
@@ -76,9 +76,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $");
 
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
@@ -98,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $"
 		cn_trapped = 1;			\
 	} while (/* CONSTCOND */ 0)
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -114,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.18 2020/11/20 18:03:52 thorpej Exp $"
 
 #include <machine/intr.h>
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91var.h>
@@ -893,11 +893,7 @@ at91dbgu_cn_getc(dev_t dev)
 		DBGUREG(DBGU_CR) = DBGU_CR_RSTSTA;	// reset status bits
 		c = CNC_BREAK;
 	}
-#ifdef DDB
-	extern int db_active;
-	if (!db_active)
-#endif
-	{
+	if (!db_active) {
 		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, at91dbgu_cnm_state);
@@ -1072,10 +1068,7 @@ dbgu_intr(void* arg)
 		if (ISSET(sr, DBGU_SR_FRAME) && c == 0) {
 			c = CNC_BREAK;
 		}
-#ifdef DDB
-		extern int db_active;
 		if (!db_active)
-#endif
 			cn_check_magic(cn_tab->cn_dev, c, at91dbgu_cnm_state);
 		if (!cn_trapped && cc) {
 			put[0] = c & 0xff;

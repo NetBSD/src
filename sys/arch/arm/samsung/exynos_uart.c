@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.6 2021/09/13 23:31:23 jmcneill Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.7 2022/10/26 23:38:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013-2021 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.6 2021/09/13 23:31:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.7 2022/10/26 23:38:07 riastradh Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -52,6 +52,8 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.6 2021/09/13 23:31:23 jmcneill Exp
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/tty.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 
@@ -311,11 +313,7 @@ exynos_uart_cngetc(dev_t dev)
 	}
 
 	c = RD4(sc, SSCOM_URXH);
-#if defined(DDB)
-	extern int db_active;
-	if (!db_active)
-#endif
-	{
+	if (!db_active) {
 		int cn_trapped __unused = 0;
 		cn_check_magic(dev, c & 0xff, exynos_uart_cnm_state);
 	}

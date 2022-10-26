@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.3 2020/11/20 18:49:44 thorpej Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.4 2022/10/26 23:38:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.3 2020/11/20 18:49:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.4 2022/10/26 23:38:07 riastradh Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -131,6 +131,8 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.3 2020/11/20 18:49:44 thorpej Exp $"
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+
+#include <ddb/db_active.h>
 
 #ifdef RND_COM
 #include <sys/rndsource.h>
@@ -1896,17 +1898,15 @@ zynquart_common_getc(dev_t dev, struct zynquart_regs *regsp)
 	}
 
 	/* block until a character becomes available */
-	while ((sts = bus_space_read_4(iot, ioh, UART_CHANNEL_STS)) & STS_REMPTY)
-		;
+	while ((sts = bus_space_read_4(iot, ioh, UART_CHANNEL_STS))
+	    & STS_REMPTY)
+		continue;
 
 	c = 0xff & bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 
 	{
-		int __attribute__((__unused__))cn_trapped = 0; /* unused */
-#ifdef DDB
-		extern int db_active;
-		if (!db_active)
-#endif
+		int cn_trapped __unused = 0;
+		if (!db_active) {
 			cn_check_magic(dev, c, zynquart_cnm_state);
 	}
 	splx(s);
