@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.27 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: fifo.h,v 1.28 2022/10/26 23:40:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -30,6 +30,15 @@
  *
  *	@(#)fifo.h	8.6 (Berkeley) 5/21/95
  */
+
+#ifndef _MISCFS_FIFOFS_FIFO_H_
+#define _MISCFS_FIFOFS_FIFO_H_
+
+#include <sys/vnode.h>
+
+#include <miscfs/genfs/genfs.h>
+
+extern const struct vnodeopv_desc fifo_vnodeop_opv_desc;
 
 extern int (**fifo_vnodeop_p)(void *);
 
@@ -78,7 +87,7 @@ extern int (**fifo_vnodeop_p)(void *);
  * fifo_foo (currently via vn_fifo_bypass). For fsync it varies.
  *
  * Note that because the op descriptor tables are unordered it does not
- * matter where in the table this macro goes (except I think default 
+ * matter where in the table this macro goes (except I think default
  * still needs to be first...)
  *
  * XXX currently all the ops are vn_fifo_bypass, which does an
@@ -117,3 +126,5 @@ extern int (**fifo_vnodeop_p)(void *);
 	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */	\
 	{ &vop_getpages_desc, genfs_badop },	 	/* getpages */	\
 	{ &vop_putpages_desc, vn_fifo_bypass }	 	/* putpages */
+
+#endif	/* _MISCFS_FIFOFS_FIFO_H_ */
