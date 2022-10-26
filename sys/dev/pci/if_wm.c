@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.765 2022/10/19 06:37:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.766 2022/10/26 06:36:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.765 2022/10/19 06:37:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.766 2022/10/26 06:36:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -5579,6 +5579,11 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, reg);
 		/* Don't insert a completion barrier when reset */
 		delay(20*1000);
+		/*
+		 * The EXTCNFCTR_MDIO_SW_OWNERSHIP bit is cleared by the reset,
+		 * so don't use sc->phy.release(sc). Release sc_ich_phymtx
+		 * only. See also wm_get_swflag_ich8lan().
+		 */
 		mutex_exit(sc->sc_ich_phymtx);
 		break;
 	case WM_T_82580:
