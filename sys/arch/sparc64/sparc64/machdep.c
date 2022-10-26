@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305 2022/07/26 20:08:56 andvar Exp $ */
+/*	$NetBSD: machdep.c,v 1.306 2022/10/26 23:38:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.306 2022/10/26 23:38:08 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2022/07/26 20:08:56 andvar Exp $")
 #include <sys/pserialize.h>
 
 #include <sys/exec_aout.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/mm.h>
 
@@ -574,12 +576,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		       vfs_unmount_forceone(l))
 			;	/* do nothing */
 	} else {
-		int ddb = 0;
-#ifdef DDB
-		extern int db_active; /* XXX */
-		ddb = db_active;
-#endif
-		if (!ddb)
+		if (!db_active)
 			suspendsched();
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.35 2022/02/12 03:24:34 riastradh Exp $ */
+/*	$NetBSD: epcom.c,v 1.36 2022/10/26 23:38:06 riastradh Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,9 +73,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.35 2022/02/12 03:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.36 2022/10/26 23:38:06 riastradh Exp $");
 
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "epcom.h"
 
@@ -111,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.35 2022/02/12 03:24:34 riastradh Exp $")
 
 #include <machine/intr.h>
 #include <sys/bus.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/ep93xx/epcomreg.h>
 #include <arm/ep93xx/epcomvar.h>
@@ -880,17 +881,14 @@ epcom_common_getc(struct epcom_cons_softc *sc, dev_t dev)
 
         s = splserial();
 
-	while((bus_space_read_4(iot, ioh, EPCOM_Flag) & Flag_RXFE) != 0)
-		;
+	while ((bus_space_read_4(iot, ioh, EPCOM_Flag) & Flag_RXFE) != 0)
+		continue;
 
 	c = bus_space_read_4(iot, ioh, EPCOM_Data);
 	sts = bus_space_read_4(iot, ioh, EPCOM_RXSts);
-	if (ISSET(sts, RXSts_BE)) c = CNC_BREAK;
-#ifdef DDB
-	extern int db_active;
-	if (!db_active)
-#endif
-	{
+	if (ISSET(sts, RXSts_BE))
+		c = CNC_BREAK;
+	if (!db_active) {
 		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, epcom_cnm_state);

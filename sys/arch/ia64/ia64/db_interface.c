@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.9 2021/02/23 07:13:52 mrg Exp $ */
+/* $NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2021/02/23 07:13:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2021/02/23 07:13:52 mrg Exp $")
 #include <machine/md_var.h>
 #include <machine/db_machdep.h>
 
+#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2022/09/27 08:18:21 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2022/10/26 23:38:08 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 2022/09/27 08:18:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 2022/10/26 23:38:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
-#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #endif
 
@@ -53,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 2022/09/27 08:18:21 skrll Exp $
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_user.h>
 #ifndef KGDB
 #include <ddb/db_command.h>

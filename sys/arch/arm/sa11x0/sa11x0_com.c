@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.58 2020/11/20 18:37:30 thorpej Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.59 2022/10/26 23:38:07 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.58 2020/11/20 18:37:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.59 2022/10/26 23:38:07 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_console.h"
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.58 2020/11/20 18:37:30 thorpej Exp 
 #include <sys/uio.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 
@@ -1487,7 +1489,6 @@ sacomcngetc(dev_t dev)
 #if defined(DDB) || defined(KGDB)
 #ifndef DDB_BREAK_CHAR
 		u_int sr0;
-		extern int db_active;
 
 		sr0 = bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR0);
 		if (ISSET(sr0, SR0_RBB))

@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.9 2020/11/20 18:03:52 thorpej Exp $      */
+/*      $NetBSD: clpscom.c,v 1.10 2022/10/26 23:38:06 riastradh Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.9 2020/11/20 18:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.10 2022/10/26 23:38:06 riastradh Exp $");
 
 #include "rnd.h"
 
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.9 2020/11/20 18:03:52 thorpej Exp $");
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/types.h>
+
+#include <ddb/db_active.h>
 
 #include <arm/clps711x/clps711xreg.h>
 #include <arm/clps711x/clpssocvar.h>
@@ -1070,13 +1072,8 @@ clpscom_cngetc(dev_t dev)
 
 	ch = CLPSCOM_CNREAD();
 
-	{
-#ifdef DDB
-		extern int db_active;
-		if (!db_active)
-#endif
-			cn_check_magic(dev, ch, clpscom_cnm_state);
-	}
+	if (!db_active)
+		cn_check_magic(dev, ch, clpscom_cnm_state);
 
 	splx(s);
 	return ch;
