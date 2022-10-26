@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.103 2022/06/08 10:12:42 rin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.103 2022/06/08 10:12:42 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -84,8 +84,6 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.103 2022/06/08 10:12:42 rin Exp $");
 
 #include <sys/pax.h>
 #include <uvm/uvm_param.h>
-
-extern struct emul emul_netbsd;
 
 #define elf_check_header	ELFNAME(check_header)
 #define elf_copyargs		ELFNAME(copyargs)
