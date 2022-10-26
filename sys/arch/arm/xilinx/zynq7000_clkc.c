@@ -1,4 +1,4 @@
-/* $NetBSD: zynq7000_clkc.c,v 1.2 2022/10/26 10:55:23 jmcneill Exp $ */
+/* $NetBSD: zynq7000_clkc.c,v 1.3 2022/10/26 22:14:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.2 2022/10/26 10:55:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.3 2022/10/26 22:14:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,29 +41,30 @@ __KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.2 2022/10/26 10:55:23 jmcneill E
 #include <dev/clk/clk_backend.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
-#define	ARM_PLL_CTRL	0x000
-#define	DDR_PLL_CTRL	0x004
-#define	IO_PLL_CTRL	0x008
+#define	ARM_PLL_CTRL	0x100
+#define	DDR_PLL_CTRL	0x104
+#define	IO_PLL_CTRL	0x108
 #define	 PLL_FDIV		__BITS(18,12)
-#define	ARM_CLK_CTRL	0x020
-#define	 ARM_CLK_CTRL_DIVISOR		__BITS(13,8)
+#define	ARM_CLK_CTRL	0x120
 #define	 ARM_CLK_CTRL_CPU_1XCLKACT	__BIT(27)
 #define	 ARM_CLK_CTRL_CPU_2XCLKACT	__BIT(26)
 #define	 ARM_CLK_CTRL_CPU_3OR2XCLKACT	__BIT(25)
 #define	 ARM_CLK_CTRL_CPU_6OR4XCLKACT	__BIT(24)
-#define	APER_CLK_CTRL	0x02c
+#define	 ARM_CLK_CTRL_DIVISOR		__BITS(13,8)
+#define	APER_CLK_CTRL	0x12c
 #define	 UART1_CPU_1XCLKACT	__BIT(21)
 #define	 UART0_CPU_1XCLKACT	__BIT(20)
 #define	 SDI1_CPU_1XCLKACT	__BIT(11)
 #define	 SDI0_CPU_1XCLKACT	__BIT(10)
-#define	SDIO_CLK_CTRL	0x050
-#define	UART_CLK_CTRL	0x054
+#define	SDIO_CLK_CTRL	0x150
+#define	UART_CLK_CTRL	0x154
 #define	 CLK_CTRL_DIVISOR	__BITS(13,8)
 #define	 CLK_CTRL_SRCSEL	__BITS(5,4)
 #define	 CLK_CTRL_CLKACT1	__BIT(1)
 #define	 CLK_CTRL_CLKACT0	__BIT(0)
-#define	CLK_621_TRUE	0x0C4
+#define	CLK_621_TRUE	0x1C4
 #define	 CLK_621_TRUE_EN	__BIT(0)
 
 enum xynq7000_clkid {
@@ -135,9 +136,7 @@ struct zynq7000_clkc_softc {
 	struct clk		sc_clk[num_clkid];
 
 	u_int			sc_ps_clk_frequency;
-
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
+	struct syscon		*sc_syscon;
 };
 
 CFATTACH_DECL_NEW(zynq7000_clkc, sizeof(struct zynq7000_clkc_softc),
@@ -169,7 +168,9 @@ zynq7000_clkc_get_rate_pll(struct zynq7000_clkc_softc *sc,
 {
 	uint32_t val;
 
-	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg);
+	syscon_lock(sc->sc_syscon);
+	val = syscon_read_4(sc->sc_syscon, reg);
+	syscon_unlock(sc->sc_syscon);
 
 	return sc->sc_ps_clk_frequency * __SHIFTOUT(val, PLL_FDIV);
 }
@@ -181,7 +182,10 @@ zynq7000_clkc_get_rate_iop(struct zynq7000_clkc_softc *sc,
 	uint32_t val;
 	u_int prate, sel;
 
-	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg);
+	syscon_lock(sc->sc_syscon);
+	val = syscon_read_4(sc->sc_syscon, reg);
+	syscon_unlock(sc->sc_syscon);
+
 	sel = __SHIFTOUT(val, CLK_CTRL_SRCSEL);
 	if (sel == 2) {
 		prate = zynq7000_clkc_clk_get_rate(sc,
@@ -211,15 +215,17 @@ zynq7000_clkc_clk_get_rate(void *priv, struct clk *clk)
 	} else if (clk == &sc->sc_clk[clkid_cpu_6or4x]) {
 		prate = zynq7000_clkc_clk_get_rate(sc,
 		    &sc->sc_clk[clkid_cpu_1x]);
-		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		    CLK_621_TRUE);
+		syscon_lock(sc->sc_syscon);
+		val = syscon_read_4(sc->sc_syscon, CLK_621_TRUE);
+		syscon_unlock(sc->sc_syscon);
 		return (val & CLK_621_TRUE_EN) != 0 ?
 		    prate * 6 : prate * 4;
 	} else if (clk == &sc->sc_clk[clkid_cpu_3or2x]) {
 		prate = zynq7000_clkc_clk_get_rate(sc,
 		    &sc->sc_clk[clkid_cpu_1x]);
-		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		    CLK_621_TRUE);
+		syscon_lock(sc->sc_syscon);
+		val = syscon_read_4(sc->sc_syscon, CLK_621_TRUE);
+		syscon_unlock(sc->sc_syscon);
 		return (val & CLK_621_TRUE_EN) != 0 ?
 		    prate * 3 : prate * 2;
 	} else if (clk == &sc->sc_clk[clkid_cpu_2x]) {
@@ -229,9 +235,10 @@ zynq7000_clkc_clk_get_rate(void *priv, struct clk *clk)
 	} else if (clk == &sc->sc_clk[clkid_cpu_1x]) {
 		prate = zynq7000_clkc_clk_get_rate(sc,
 		    &sc->sc_clk[clkid_armpll]);
-		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		    ARM_CLK_CTRL);
-		return prate / __SHIFTOUT(val, ARM_CLK_CTRL_DIVISOR);
+		syscon_lock(sc->sc_syscon);
+		val = syscon_read_4(sc->sc_syscon, ARM_CLK_CTRL);
+		syscon_unlock(sc->sc_syscon);
+		return prate / __SHIFTOUT(val, ARM_CLK_CTRL_DIVISOR) / 6;
 	} else if (clk == &sc->sc_clk[clkid_sdio0] ||
 		   clk == &sc->sc_clk[clkid_sdio1]) {
 		return zynq7000_clkc_get_rate_iop(sc, SDIO_CLK_CTRL);
@@ -295,8 +302,10 @@ zynq7000_clkc_clk_enable(void *priv, struct clk *clk)
 		return ENXIO;
 	}
 
-	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, val | mask);
+	syscon_lock(sc->sc_syscon);
+	val = syscon_read_4(sc->sc_syscon, reg);
+	syscon_write_4(sc->sc_syscon, reg, val | mask);
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -363,9 +372,9 @@ zynq7000_clkc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(phandle));
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get syscon registers\n");
 		return;
 	}
 
@@ -392,6 +401,12 @@ zynq7000_clkc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Zynq-7000 PS clock subsystem (PS_CLK %u Hz)\n",
 	    sc->sc_ps_clk_frequency);
+
+	for (clkid = 0; clkid < num_clkid; clkid++) {
+		aprint_debug_dev(self, "clkid %u [%s]: %u Hz\n", clkid,
+		    sc->sc_clk[clkid].name ? sc->sc_clk[clkid].name : "<none>",
+		    clk_get_rate(&sc->sc_clk[clkid]));
+	}
 
 	fdtbus_register_clock_controller(self, phandle, &zynq7000_clkc_fdt_funcs);
 }
