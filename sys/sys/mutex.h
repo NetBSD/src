@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.25 2020/01/01 21:34:39 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.26 2022/10/26 23:21:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ void	mutex_wakeup(kmutex_t *);
 
 #ifdef _KERNEL
 
+void	_mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 void	mutex_init(kmutex_t *, kmutex_type_t, int);
 void	mutex_destroy(kmutex_t *);
 

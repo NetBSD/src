@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.9 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.10 2022/10/26 23:21:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.9 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.10 2022/10/26 23:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -87,7 +87,6 @@ kmutex_t *
 mutex_obj_alloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
-	extern void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 
 	mo = pool_cache_get(mutex_obj_cache, PR_WAITOK);
 	_mutex_init(&mo->mo_lock, type, ipl,
@@ -106,7 +105,6 @@ kmutex_t *
 mutex_obj_tryalloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
-	extern void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 
 	mo = pool_cache_get(mutex_obj_cache, PR_NOWAIT);
 	if (__predict_true(mo != NULL)) {
