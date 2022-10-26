@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.82 2022/10/26 23:21:20 riastradh Exp $	*/
+/*	$NetBSD: locks.c,v 1.83 2022/10/26 23:22:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.82 2022/10/26 23:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.83 2022/10/26 23:22:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -246,7 +246,6 @@ krw2rumprw(const krw_t op)
 	}
 }
 
-void _rw_init(krwlock_t *, uintptr_t);
 void
 _rw_init(krwlock_t *rw, uintptr_t return_address)
 {
