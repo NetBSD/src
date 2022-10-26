@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: nftw.c,v 1.2 2022/10/26 22:13:09 andvar Exp $ */
 
 /*	From OpenBSD: nftw.c,v 1.2 2003/07/21 21:15:32 millert Exp 	*/
 
@@ -25,7 +25,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: nftw.c,v 1.1 2005/12/30 23:07:32 agc Exp $");
+__RCSID("$NetBSD: nftw.c,v 1.2 2022/10/26 22:13:09 andvar Exp $");
 #endif
 
 #include <sys/types.h>
