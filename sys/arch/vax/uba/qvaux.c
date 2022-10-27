@@ -1,4 +1,4 @@
-/*	$NetBSD: qvaux.c,v 1.4 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: qvaux.c,v 1.5 2022/10/27 00:00:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ qvauxopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (qvauxmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;
-	mutex_spin_enter(&tty_lock);
+	ttylock(tp);
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
@@ -557,7 +557,7 @@ qvauxopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (error)
 			break;
 	}
-	mutex_spin_exit(&tty_lock);
+	ttyunlock(tp);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));
