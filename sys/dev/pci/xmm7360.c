@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.16 2022/02/12 16:21:27 thorpej Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.17 2022/10/27 00:01:07 riastradh Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.16 2022/02/12 16:21:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.17 2022/10/27 00:01:07 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -167,9 +167,9 @@ typedef struct mutex spinlock_t;
 #define if_deferred_start_init(ifp, arg)	/* nothing */
 #define IF_OUTPUT_CONST				/* nothing */
 #define knote_set_eof(kn, f)			(kn)->kn_flags |= EV_EOF | (f)
-#define tty_lock()				int s = spltty()
-#define tty_unlock()				splx(s)
-#define tty_locked()				/* nothing */
+#define tty_lock(tp)				int s = spltty()
+#define tty_unlock(tp)				splx(s)
+#define tty_locked(tp)				/* nothing */
 #define pmf_device_deregister(dev)		/* nothing */
 #if NBPFILTER > 0
 #define BPF_MTAP_OUT(ifp, m)						\
@@ -263,9 +263,9 @@ typedef struct kmutex spinlock_t;
 #define if_hardmtu			if_mtu
 #define IF_OUTPUT_CONST			const
 #define XMM_KQ_ISFD_INITIALIZER		.f_flags = FILTEROP_ISFD
-#define tty_lock()			mutex_spin_enter(&tty_lock)
-#define tty_unlock()			mutex_spin_exit(&tty_lock)
-#define tty_locked()			KASSERT(mutex_owned(&tty_lock))
+#define tty_lock(tp)			ttylock(tp)
+#define tty_unlock(tp)			ttyunlock(tp)
+#define tty_locked(tp)			KASSERT(ttylocked(tp))
 #define bpfattach(bpf, ifp, dlt, sz)	bpf_attach(ifp, dlt, sz)
 #define NBPFILTER			1
 #define BPF_MTAP_OUT(ifp, m)		bpf_mtap(ifp, m, BPF_D_OUT)
@@ -2677,7 +2677,7 @@ wwancstart(struct tty *tp)
 
 	KASSERT(DEV_IS_TTY(dev));
 	KASSERT(tp == sc->sc_tty[func]);
-	tty_locked();
+	tty_locked(tp);
 
 	if (ISSET(tp->t_state, TS_BUSY) || !xmm7360_qp_can_write(qp))
 		return;
@@ -2752,10 +2752,14 @@ static void
 filt_wwancrdetach(struct knote *kn)
 {
 	struct queue_pair *qp = (struct queue_pair *)kn->kn_hook;
+	struct xmm_dev *xmm = qp->xmm;
+	int func = qp - xmm->qp;
+	struct wwanc_softc *sc = container_of(xmm, struct wwanc_softc, sc_xmm);
+	struct tty *tp = sc->sc_tty[func];
 
-	tty_lock();
+	tty_lock(tp);
 	selremove_knote(&qp->selr, kn);
-	tty_unlock();
+	tty_unlock(tp);
 }
 
 static int
@@ -2779,10 +2783,14 @@ static void
 filt_wwancwdetach(struct knote *kn)
 {
 	struct queue_pair *qp = (struct queue_pair *)kn->kn_hook;
+	struct xmm_dev *xmm = qp->xmm;
+	int func = qp - xmm->qp;
+	struct wwanc_softc *sc = container_of(xmm, struct wwanc_softc, sc_xmm);
+	struct tty *tp = sc->sc_tty[func];
 
-	tty_lock();
+	tty_lock(tp);
 	selremove_knote(&qp->selw, kn);
-	tty_unlock();
+	tty_unlock(tp);
 }
 
 static int
@@ -2820,6 +2828,7 @@ wwanckqfilter(dev_t dev, struct knote *kn)
 	struct wwanc_softc *sc = device_lookup_private(&wwanc_cd, DEVUNIT(dev));
 	int func = DEVFUNC(dev);
 	struct queue_pair *qp = &sc->sc_xmm.qp[func];
+	struct tty *tp = sc->sc_tty[func];
 	struct selinfo *si;
 
 	if (DEV_IS_TTY(func))
@@ -2842,9 +2851,9 @@ wwanckqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = (void *)qp;
 
-	tty_lock();
+	tty_lock(tp);
 	selrecord_knote(si, kn);
-	tty_unlock();
+	tty_unlock(tp);
 
 	return (0);
 }
