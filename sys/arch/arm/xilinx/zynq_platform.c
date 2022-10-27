@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.7 2022/10/27 08:49:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.7 2022/10/27 08:49:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill E
 #include <machine/bootconfig.h>
 
 #include <arm/cortex/a9tmr_var.h>
+#include <arm/cortex/scu_reg.h>
 #include <arm/xilinx/zynq_uartreg.h>
 
 #include <evbarm/fdt/platform.h>
@@ -58,8 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill E
 
 #include <arm/cortex/pl310_var.h>
 
-#define	ZYNQ_REF_FREQ	24000000
+#include <arm/arm32/machdep.h>
 
+#define	ZYNQ_REF_FREQ	24000000
 #define	ZYNQ7000_DDR_PBASE	0x00000000
 #define	ZYNQ7000_DDR_SIZE	0x40000000
 
@@ -74,6 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.6 2022/10/25 22:59:10 jmcneill E
 #define ZYNQ_ARMCORE_VBASE	(ZYNQ_GPV_VBASE + ZYNQ_GPV_SIZE)
 #define ZYNQ_ARMCORE_PBASE	0xf8f00000
 #define ZYNQ_ARMCORE_SIZE	0x00003000
+
+#define	ZYNQ_ARMCORE_SCU_BASE	0x00000000
+#define	ZYNQ_ARMCORE_L2C_BASE	0x00002000
+
+#define	ZYNQ7000_CPU1_ENTRY	0xfffffff0
+#define	ZYNQ7000_CPU1_ENTRY_SZ	4
 
 extern struct bus_space arm_generic_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
@@ -135,7 +143,51 @@ zynq_platform_uart_freq(void)
 	return ZYNQ_REF_FREQ;
 }
 
-#define ZYNQ_ARMCORE_L2C_BASE	0x00002000
+#ifdef MULTIPROCESSOR
+static int
+zynq_platform_mpstart(void)
+{
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t val;
+	int error;
+	u_int i;
+
+	/* Invalidate all SCU cache tags and enable SCU. */
+	bsh = ZYNQ_ARMCORE_VBASE + ZYNQ_ARMCORE_SCU_BASE;
+	bus_space_write_4(bst, bsh, SCU_INV_ALL_REG, 0xffff);
+	val = bus_space_read_4(bst, bsh, SCU_CTL);
+	bus_space_write_4(bst, bsh, SCU_CTL, val | SCU_CTL_SCU_ENA);
+	armv7_dcache_wbinv_all();
+
+	/* Write start address for CPU1. */
+	error = bus_space_map(bst, ZYNQ7000_CPU1_ENTRY,
+	    ZYNQ7000_CPU1_ENTRY_SZ, 0, &bsh);
+	if (error) {
+		panic("%s: Couldn't map OCM: %d", __func__, error);
+	}
+	bus_space_write_4(bst, bsh, 0, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+	bus_space_unmap(bst, bsh, ZYNQ7000_CPU1_ENTRY_SZ);
+
+	dsb(sy);
+	sev();
+
+	const u_int cpuindex = 1;
+	for (i = 0x10000000; i > 0; i--) {
+		if (cpu_hatched_p(cpuindex)) {
+			break;
+		}
+	}
+	if (i == 0) {
+		aprint_error("cpu%d: WARNING: AP failed to start\n",
+		    cpuindex);
+		return EIO;
+	}
+
+	return 0;
+}
+#endif
+
 #define ZYNQ_ARM_PL310_BASE	ZYNQ_ARMCORE_VBASE + ZYNQ_ARMCORE_L2C_BASE
 
 static void
@@ -184,8 +236,8 @@ static const struct arm_platform zynq_platform = {
 	.ap_reset = zynq_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = zynq_platform_uart_freq,
-#if 0
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+#ifdef MULTIPROCESSOR
+	.ap_mpstart = zynq_platform_mpstart,
 #endif
 };
 
