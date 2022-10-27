@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.29 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.30 2022/10/27 06:49:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.29 2022/10/26 07:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.30 2022/10/27 06:49:51 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1161,8 +1161,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		pd_entry_t npde = pte_pde_ptpage(pa, pmap == pmap_kernel());
 #endif
 #if defined(PMAP_HWPAGEWALKER) && defined(PMAP_MAP_PDETABPAGE)
-		pd_entry_t opde = *pde_p;
-		opde = pte_pde_cas(pde_p, opde, npde);
+		pd_entry_t opde = pte_pde_cas(pde_p, pte_invalid_pde(), npde);
 		if (__predict_false(pte_pde_valid_p(opde))) {
 			pmap_ptpage_free(pmap, ppg, __func__);
 			ppg = pmap_pde_to_ptpage(opde);
