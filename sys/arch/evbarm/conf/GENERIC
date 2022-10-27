@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.109 2022/10/25 22:27:49 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.110 2022/10/27 09:41:28 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -270,6 +270,7 @@ sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 rkgpio*		at rkiomux?		# Rockchip GPIO
 tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
 tigpio* 	at fdt? pass 2		# TI GPIO
+zynqgpio*	at fdt? pass 2		# Xilinx Zynq GPIO
 gpio* 		at gpiobus?
 
 # IOMUX / MPIO / Pinmux
