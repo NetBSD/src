@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.4 2022/10/26 23:38:07 riastradh Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.5 2022/10/27 07:57:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.4 2022/10/26 23:38:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.5 2022/10/27 07:57:46 skrll Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -1904,10 +1904,9 @@ zynquart_common_getc(dev_t dev, struct zynquart_regs *regsp)
 
 	c = 0xff & bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 
-	{
+	if (!db_active) {
 		int cn_trapped __unused = 0;
-		if (!db_active) {
-			cn_check_magic(dev, c, zynquart_cnm_state);
+		cn_check_magic(dev, c, zynquart_cnm_state);
 	}
 	splx(s);
 	return (c);
@@ -1923,8 +1922,8 @@ zynquart_common_putc(dev_t dev, struct zynquart_regs *regsp, int c)
 
 	if (!READAHEAD_IS_FULL() &&
 	    !(bus_space_read_4(iot, ioh, UART_CHANNEL_STS) & STS_REMPTY)) {
+		int cn_trapped __unused = 0;
 
-		int __attribute__((__unused__))cn_trapped = 0;
 		cin = bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 		cn_check_magic(dev, cin & 0xff, zynquart_cnm_state);
 		zynquart_readahead_in = (zynquart_readahead_in + 1) &
