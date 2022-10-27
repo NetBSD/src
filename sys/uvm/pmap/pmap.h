@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 2022/10/27 05:33:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 2022/10/27 06:19:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,7 +189,7 @@ extern kmutex_t pmap_segtab_lock;
  */
 struct pmap {
 	struct uvm_object	pm_uobject;
-#define pm_count		pm_uobject.uo_refs /* pmap reference count */
+#define pm_refcnt		pm_uobject.uo_refs /* pmap reference count */
 #define pm_pvp_list		pm_uobject.memq
 
 	krwlock_t		pm_obj_lock;	/* lock for pm_uobject */

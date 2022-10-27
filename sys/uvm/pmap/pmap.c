@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2022/10/27 06:19:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2022/10/26 07:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2022/10/27 06:19:56 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -223,7 +223,7 @@ pmap_segtab_t	pmap_kern_segtab PMAP_SEGTAB_ALIGN = { /* top level segtab for ker
 
 struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
-		.pm_count = 1,
+		.pm_refcnt = 1,
 #ifdef PMAP_HWPAGEWALKER
 		.pm_pdetab = PMAP_INVALID_PDETAB_ADDRESS,
 #endif
@@ -707,7 +707,7 @@ pmap_create(void)
 
 	KASSERT(pmap->pm_pai[0].pai_link.le_prev == NULL);
 
-	pmap->pm_count = 1;
+	pmap->pm_refcnt = 1;
 	pmap->pm_minaddr = VM_MIN_ADDRESS;
 	pmap->pm_maxaddr = VM_MAXUSER_ADDRESS;
 
@@ -751,7 +751,7 @@ pmap_destroy(pmap_t pmap)
 	UVMHIST_CALLARGS(pmapxtabhist, "(pmap=%#jx)", (uintptr_t)pmap, 0, 0, 0);
 
 	membar_release();
-	if (atomic_dec_uint_nv(&pmap->pm_count) > 0) {
+	if (atomic_dec_uint_nv(&pmap->pm_refcnt) > 0) {
 		PMAP_COUNT(dereference);
 		UVMHIST_LOG(pmaphist, " <-- done (deref)", 0, 0, 0, 0);
 		UVMHIST_LOG(pmapxtabhist, " <-- done (deref)", 0, 0, 0, 0);
@@ -760,7 +760,7 @@ pmap_destroy(pmap_t pmap)
 	membar_acquire();
 
 	PMAP_COUNT(destroy);
-	KASSERT(pmap->pm_count == 0);
+	KASSERT(pmap->pm_refcnt == 0);
 	kpreempt_disable();
 	pmap_tlb_miss_lock_enter();
 	pmap_tlb_asid_release_all(pmap);
@@ -807,7 +807,7 @@ pmap_reference(pmap_t pmap)
 	PMAP_COUNT(reference);
 
 	if (pmap != NULL) {
-		atomic_inc_uint(&pmap->pm_count);
+		atomic_inc_uint(&pmap->pm_refcnt);
 	}
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
