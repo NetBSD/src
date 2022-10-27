@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2022/10/27 05:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -225,6 +225,8 @@ struct pmap {
 	struct pmap_asid_info	pm_pai[1];
 };
 
+
+#ifdef	_KERNEL
 static inline void
 pmap_lock(struct pmap *pm)
 {
@@ -239,7 +241,6 @@ pmap_unlock(struct pmap *pm)
 	rw_exit(pm->pm_lock);
 }
 
-#ifdef	_KERNEL
 struct pmap_kernel {
 	struct pmap kernel_pmap;
 #if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
