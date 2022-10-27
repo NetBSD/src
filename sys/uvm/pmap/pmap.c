@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2022/10/27 06:19:56 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2022/10/27 06:20:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2022/10/27 06:19:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2022/10/27 06:20:41 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -764,8 +764,8 @@ pmap_destroy(pmap_t pmap)
 	kpreempt_disable();
 	pmap_tlb_miss_lock_enter();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_destroy(pmap, NULL, 0);
 	pmap_tlb_miss_lock_exit();
+	pmap_segtab_destroy(pmap, NULL, 0);
 
 	KASSERT(TAILQ_EMPTY(&pmap->pm_ppg_list));
 
