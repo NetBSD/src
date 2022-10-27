@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.60.6.5 2018/09/27 15:07:35 martin Exp $	*/
+/*	$NetBSD: frag6.c,v 1.60.6.6 2022/10/27 16:08:50 martin Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.60.6.5 2018/09/27 15:07:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.60.6.6 2022/10/27 16:08:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -80,7 +80,7 @@ frag6_init(void)
 {
 
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
-	mutex_init(&frag6_lock, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&frag6_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
