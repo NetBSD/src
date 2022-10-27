@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.157 2022/10/26 18:19:42 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.158 2022/10/27 16:19:25 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2972,4 +2972,15 @@ doc/3RDPARTY					(apply patch)
 
 	Updata tzdata to 2022e.
 	[kre, ticket #1777]
+
+sys/netinet6/frag6.c				1.76
+
+	frag6: do not use a spin mutex for frag6_lock.
+	[ozaki-r, ticket #1778]
+
+bin/sh/miscbltin.c				1.51,1.52
+
+	PR 56972: fix escape ('\') handling in sh read builtin
+	and cosmetic improvements to error reporting.
+	[kre, ticket #1779]
 
