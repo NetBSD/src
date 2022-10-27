@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.27 2022/10/25 17:54:59 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.28 2022/10/27 16:15:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -421,4 +421,15 @@ usr.bin/progress/progress.c			1.24,1.25
 
 	PR 56303: progress(1): fix error handling.
 	[riastradh, ticket #1547]
+
+sys/netinet6/frag6.c				1.76
+
+	frag6: do not use a spin mutex for frag6_lock.
+	[ozaki-r, ticket #1548]
+
+bin/sh/miscbltin.c				1.51,1.52
+
+	PR 56972: fix escape ('\') handling in sh read builtin
+	and cosmetic improvements to error reporting.
+	[kre, ticket #1549]
 
