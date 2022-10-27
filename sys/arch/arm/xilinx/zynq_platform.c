@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.7 2022/10/27 08:49:08 jmcneill Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.8 2022/10/27 20:37:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.7 2022/10/27 08:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.8 2022/10/27 20:37:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,6 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.7 2022/10/27 08:49:08 jmcneill E
 #define ZYNQ_ARMCORE_PBASE	0xf8f00000
 #define ZYNQ_ARMCORE_SIZE	0x00003000
 
+#define	ZYNQ_OCM_VBASE		(ZYNQ_ARMCORE_VBASE + ZYNQ_ARMCORE_SIZE)
+#define	ZYNQ_OCM_PBASE		0xfff00000
+#define	ZYNQ_OCM_SIZE		0x00100000
+
 #define	ZYNQ_ARMCORE_SCU_BASE	0x00000000
 #define	ZYNQ_ARMCORE_L2C_BASE	0x00002000
 
@@ -101,6 +105,9 @@ zynq_platform_devmap(void)
 		DEVMAP_ENTRY(ZYNQ_ARMCORE_VBASE,
 			     ZYNQ_ARMCORE_PBASE,
 			     ZYNQ_ARMCORE_SIZE),
+		DEVMAP_ENTRY(ZYNQ_OCM_VBASE,
+			     ZYNQ_OCM_PBASE,
+			     ZYNQ_OCM_SIZE),
 		DEVMAP_ENTRY_END
 	};
 
