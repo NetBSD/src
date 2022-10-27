@@ -1,4 +1,4 @@
-/* $NetBSD: zynq_gpio.c,v 1.1 2022/10/27 09:41:28 jmcneill Exp $ */
+/* $NetBSD: zynq_gpio.c,v 1.2 2022/10/27 22:35:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.1 2022/10/27 09:41:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.2 2022/10/27 22:35:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.1 2022/10/27 09:41:28 jmcneill Exp $
 #define	MASK_DATA_REG(pin)	(0x000 + 0x4 * ((pin) / 16))
 #define	MASK_DATA_SET(pin, val)	((((pin) % 16) << 16) | ((val) << ((pin) % 16)))
 #define	DATA_RO_REG(pin)	(0x060 + 0x4 * ((pin) / 32))
-#define	DATA_RO_BIT(pin)	((pin) % 32)
+#define	DATA_RO_BIT(pin)	__BIT((pin) % 32)
 #define	DIRM_REG(pin)		(0x204 + 0x40 * ((pin) / 32))
-#define	DIRM_BIT(pin)		((pin) % 32)
+#define	DIRM_BIT(pin)		__BIT((pin) % 32)
 #define	OEN_REG(pin)		(0x208 + 0x40 * ((pin) / 32))
-#define	OEN_BIT(pin)		((pin) % 32)
+#define	OEN_BIT(pin)		__BIT((pin) % 32)
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "xlnx,zynq-gpio-1.0" },
