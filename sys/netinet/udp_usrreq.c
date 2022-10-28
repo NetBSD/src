@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.261 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.262 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.261 2021/02/19 14:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.262 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -488,7 +488,6 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 	u_int16_t *sport, *dport;
 	int rcvcnt;
 	struct in_addr *src4, *dst4;
-	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct mbuf *m = *mp;
 
@@ -528,8 +527,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		TAILQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
-			inp = (struct inpcb *)inph;
+		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_af != AF_INET)
 				continue;
 

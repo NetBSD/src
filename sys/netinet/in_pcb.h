@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.70 2022/06/10 09:54:54 knakahara Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.71 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,9 +70,14 @@
 #include <netinet/in.h>
 #include <netinet/in_pcb_hdr.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
+
+typedef int (*pcb_overudp_cb_t)(struct mbuf **, int, struct socket *,
+    struct sockaddr *, void *);
 
 struct ip_moptions;
 struct mbuf;
+struct icmp6_filter;
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -81,33 +86,63 @@ struct mbuf;
  * up (to a socket structure) and down (to a protocol-specific)
  * control block.
  */
+
 struct inpcb {
-	struct inpcb_hdr inp_head;
-#define inp_queue	inp_head.inph_queue
-#define inp_af		inp_head.inph_af
-#define inp_ppcb	inp_head.inph_ppcb
-#define inp_state	inp_head.inph_state
-#define inp_portalgo	inp_head.inph_portalgo
-#define inp_socket	inp_head.inph_socket
-#define inp_table	inp_head.inph_table
-#define inp_sp		inp_head.inph_sp
-	struct	  route inp_route;	/* placeholder for routing entry */
-	u_int16_t inp_fport;		/* foreign port */
-	u_int16_t inp_lport;		/* local port */
-	int	  inp_flags;		/* generic IP/datagram flags */
-	struct	  ip inp_ip;		/* header prototype; should have more */
-	struct	  mbuf *inp_options;	/* IP options */
-	struct	  ip_moptions *inp_moptions; /* IP multicast options */
-	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
-	uint8_t	  inp_ip_minttl;
-	bool      inp_bindportonsend;
-	struct    in_addr inp_prefsrcip; /* preferred src IP when wild  */
-	pcb_overudp_cb_t inp_overudp_cb;
-	void      *inp_overudp_arg;
+	LIST_ENTRY(inpcb) inp_hash;
+	LIST_ENTRY(inpcb) inp_lhash;
+	TAILQ_ENTRY(inpcb) inp_queue;
+	int	  inp_af;		/* address family - AF_INET or AF_INET6 */
+	void *	  inp_ppcb;		/* pointer to per-protocol pcb */
+	int	  inp_state;		/* bind/connect state */
+#define	INP_ATTACHED		0
+#define	INP_BOUND		1
+#define	INP_CONNECTED		2
+	int       inp_portalgo;
+	struct	  socket *inp_socket;	/* back pointer to socket */
+	struct	  inpcbtable *inp_table;
+	struct	  inpcbpolicy *inp_sp;	/* security policy */
+	struct route	inp_route;	/* placeholder for routing entry */
+	u_int16_t	inp_fport;	/* foreign port */
+	u_int16_t	inp_lport;	/* local port */
+	int	 	inp_flags;	/* generic IP/datagram flags */
+	union {				/* header prototype. */
+		struct ip inp_ip;
+		struct ip6_hdr inp_ip6;
+	};
+#define	inp_flowinfo	inp_ip6.ip6_flow
+	struct mbuf	*inp_options;	/* IP options */
+	bool		inp_bindportonsend;
+
+	/* We still need both for IPv6 due to v4-mapped addresses */
+	struct ip_moptions *inp_moptions;	/* IPv4 multicast options */
+	struct ip6_moptions *inp_moptions6;	/* IPv6 multicast options */
+
+	union {
+		/* IPv4 only stuffs */
+		struct {
+			int	inp_errormtu;	/* MTU of last xmit status = EMSGSIZE */
+			uint8_t	inp_ip_minttl;
+			struct in_addr	inp_prefsrcip; /* preferred src IP when wild  */
+		};
+		/* IPv6 only stuffs */
+		struct {
+			int	inp_hops6;	/* default IPv6 hop limit */
+			int	inp_cksum6;	/* IPV6_CHECKSUM setsockopt */
+			struct icmp6_filter	*inp_icmp6filt;
+			struct ip6_pktopts	*inp_outputopts6; /* IP6 options for outgoing packets */
+		};
+	};
+
+	pcb_overudp_cb_t	inp_overudp_cb;
+	void		*inp_overudp_arg;
 };
 
 #define	inp_faddr	inp_ip.ip_dst
 #define	inp_laddr	inp_ip.ip_src
+#define inp_faddr6	inp_ip6.ip6_dst
+#define inp_laddr6	inp_ip6.ip6_src
+
+LIST_HEAD(inpcbhead, inpcb);
 
 /* flags in inp_flags: */
 #define	INP_RECVOPTS		0x0001	/* receive incoming IP options */
@@ -134,17 +169,69 @@ struct inpcb {
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO)
 
+/*
+ * Flags for IPv6 in inp_flags
+ * We define KAME's original flags in higher 16 bits as much as possible
+ * for compatibility with *bsd*s.
+ */
+#define IN6P_RECVOPTS		0x00001000 /* receive incoming IP6 options */
+#define IN6P_RECVRETOPTS	0x00002000 /* receive IP6 options for reply */
+#define IN6P_RECVDSTADDR	0x00004000 /* receive IP6 dst address */
+#define IN6P_IPV6_V6ONLY	0x00008000 /* restrict AF_INET6 socket for v6 */
+#define IN6P_PKTINFO		0x00010000 /* receive IP6 dst and I/F */
+#define IN6P_HOPLIMIT		0x00020000 /* receive hoplimit */
+#define IN6P_HOPOPTS		0x00040000 /* receive hop-by-hop options */
+#define IN6P_DSTOPTS		0x00080000 /* receive dst options after rthdr */
+#define IN6P_RTHDR		0x00100000 /* receive routing header */
+#define IN6P_RTHDRDSTOPTS	0x00200000 /* receive dstoptions before rthdr */
+#define IN6P_TCLASS		0x00400000 /* traffic class */
+#define IN6P_BINDANY		0x00800000 /* allow bind to any address */
+#define IN6P_HIGHPORT		0x01000000 /* user wants "high" port binding */
+#define IN6P_LOWPORT		0x02000000 /* user wants "low" port binding */
+#define IN6P_ANONPORT		0x04000000 /* port chosen for user */
+#define IN6P_FAITH		0x08000000 /* accept FAITH'ed connections */
+/* XXX should move to an UDP control block */
+#define IN6P_ESPINUDP		INP_ESPINUDP /* ESP over UDP for NAT-T */
+
+#define IN6P_RFC2292		0x40000000 /* RFC2292 */
+#define IN6P_MTU		0x80000000 /* use minimum MTU */
+
+#define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
+				 IN6P_TCLASS|IN6P_RFC2292|\
+				 IN6P_MTU)
+
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
+#define soaf(so) 		(so->so_proto->pr_domain->dom_family)
 #define	inp_lock(inp)		solock((inp)->inp_socket)
 #define	inp_unlock(inp)		sounlock((inp)->inp_socket)
 #define	inp_locked(inp)		solocked((inp)->inp_socket)
+
+TAILQ_HEAD(inpcbqueue, inpcb);
+
+struct vestigial_hooks;
+
+/* It's still referenced by kvm users */
+struct inpcbtable {
+	struct	  inpcbqueue inpt_queue;
+	struct	  inpcbhead *inpt_porthashtbl;
+	struct	  inpcbhead *inpt_bindhashtbl;
+	struct	  inpcbhead *inpt_connecthashtbl;
+	u_long	  inpt_porthash;
+	u_long	  inpt_bindhash;
+	u_long	  inpt_connecthash;
+	u_int16_t inpt_lastport;
+	u_int16_t inpt_lastlow;
+
+	struct vestigial_hooks *vestige;
+};
+#define inpt_lasthi inpt_lastport
 
 #ifdef _KERNEL
 
 #include <sys/kauth.h>
 #include <sys/queue.h>
 
-struct inpcbtable;
 struct lwp;
 struct rtentry;
 struct sockaddr_in;
@@ -185,6 +272,38 @@ struct rtentry *
 	in_pcbrtentry(struct inpcb *);
 void	in_pcbrtentry_unref(struct rtentry *, struct inpcb *);
 
+void	in6_pcbinit(struct inpcbtable *, int, int);
+int	in6_pcbbind(void *, struct sockaddr_in6 *, struct lwp *);
+int	in6_pcbconnect(void *, struct sockaddr_in6 *, struct lwp *);
+void	in6_pcbdetach(struct inpcb *);
+void	in6_pcbdisconnect(struct inpcb *);
+struct	inpcb *in6_pcblookup_port(struct inpcbtable *, struct in6_addr *,
+				   u_int, int, struct vestigial_inpcb *);
+int	in6_pcbnotify(struct inpcbtable *, const struct sockaddr *,
+	u_int, const struct sockaddr *, u_int, int, void *,
+	void (*)(struct inpcb *, int));
+void	in6_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
+void	in6_pcbpurgeif(struct inpcbtable *, struct ifnet *);
+void	in6_pcbstate(struct inpcb *, int);
+void	in6_rtchange(struct inpcb *, int);
+void	in6_setpeeraddr(struct inpcb *, struct sockaddr_in6 *);
+void	in6_setsockaddr(struct inpcb *, struct sockaddr_in6 *);
+
+/* in in6_src.c */
+int	in6_selecthlim(struct inpcb *, struct ifnet *);
+int	in6_selecthlim_rt(struct inpcb *);
+int	in6_pcbsetport(struct sockaddr_in6 *, struct inpcb *, struct lwp *);
+
+extern struct rtentry *
+	in6_pcbrtentry(struct inpcb *);
+extern void
+	in6_pcbrtentry_unref(struct rtentry *, struct inpcb *);
+extern struct inpcb *in6_pcblookup_connect(struct inpcbtable *,
+					    const struct in6_addr *, u_int, const struct in6_addr *, u_int, int,
+					    struct vestigial_inpcb *);
+extern struct inpcb *in6_pcblookup_bind(struct inpcbtable *,
+	const struct in6_addr *, u_int, int);
+
 static inline void
 in_pcb_register_overudp_cb(struct inpcb *inp, pcb_overudp_cb_t cb, void *arg)
 {
@@ -192,6 +311,37 @@ in_pcb_register_overudp_cb(struct inpcb *inp, pcb_overudp_cb_t cb, void *arg)
 	inp->inp_overudp_cb = cb;
 	inp->inp_overudp_arg = arg;
 }
+
+/* compute hash value for foreign and local in6_addr and port */
+#define IN6_HASH(faddr, fport, laddr, lport) 			\
+	(((faddr)->s6_addr32[0] ^ (faddr)->s6_addr32[1] ^	\
+	  (faddr)->s6_addr32[2] ^ (faddr)->s6_addr32[3] ^	\
+	  (laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^	\
+	  (laddr)->s6_addr32[2] ^ (laddr)->s6_addr32[3])	\
+	 + (fport) + (lport))
+
+// from in_pcb_hdr.h
+struct vestigial_inpcb;
+struct in6_addr;
+
+/* Hooks for vestigial pcb entries.
+ * If vestigial entries exist for a table (TCP only)
+ * the vestigial pointer is set.
+ */
+typedef struct vestigial_hooks {
+	/* IPv4 hooks */
+	void	*(*init_ports4)(struct in_addr, u_int, int);
+	int	(*next_port4)(void *, struct vestigial_inpcb *);
+	int	(*lookup4)(struct in_addr, uint16_t,
+			   struct in_addr, uint16_t,
+			   struct vestigial_inpcb *);
+	/* IPv6 hooks */
+	void	*(*init_ports6)(const struct in6_addr*, u_int, int);
+	int	(*next_port6)(void *, struct vestigial_inpcb *);
+	int	(*lookup6)(const struct in6_addr *, uint16_t,
+			   const struct in6_addr *, uint16_t,
+			   struct vestigial_inpcb *);
+} vestigial_hooks_t;
 
 #endif	/* _KERNEL */
 

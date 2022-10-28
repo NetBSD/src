@@ -121,7 +121,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.21 2021/08/13 20:47:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.22 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1969,21 +1969,21 @@ vtw_add(int af, struct tcpcb *tp)
 		}
 
 		case AF_INET6: {
-			struct in6pcb	*inp = tp->t_in6pcb;
+			struct inpcb	*inp = tp->t_inpcb;
 			vtw_v6_t	*v6  = (void*)vtw;
 
-			v6->faddr = inp->in6p_faddr;
-			v6->laddr = inp->in6p_laddr;
-			v6->fport = inp->in6p_fport;
-			v6->lport = inp->in6p_lport;
+			v6->faddr = inp->inp_faddr6;
+			v6->laddr = inp->inp_laddr6;
+			v6->fport = inp->inp_fport;
+			v6->lport = inp->inp_lport;
 
-			vtw->reuse_port = !!(inp->in6p_socket->so_options
+			vtw->reuse_port = !!(inp->inp_socket->so_options
 					     & SO_REUSEPORT);
-			vtw->reuse_addr = !!(inp->in6p_socket->so_options
+			vtw->reuse_addr = !!(inp->inp_socket->so_options
 					     & SO_REUSEADDR);
-			vtw->v6only	= !!(inp->in6p_flags
+			vtw->v6only	= !!(inp->inp_flags
 					     & IN6P_IPV6_V6ONLY);
-			vtw->uid	= inp->in6p_socket->so_uidinfo->ui_uid;
+			vtw->uid	= inp->inp_socket->so_uidinfo->ui_uid;
 
 			vtw_inshash_v6(ctl, vtw);
 #ifdef VTW_DEBUG
@@ -1992,14 +1992,14 @@ vtw_add(int af, struct tcpcb *tp)
 			 */
 			if (enable & 4) {
 				KASSERT(vtw_lookup_hash_v6(ctl
-					 , &inp->in6p_faddr, inp->in6p_fport
-					 , &inp->in6p_laddr, inp->in6p_lport
+					 , &inp->inp_faddr6, inp->inp_fport
+					 , &inp->inp_laddr6, inp->inp_lport
 					 , 0)
 					== vtw);
 				KASSERT(vtw_lookup_hash_v6
 					(ctl
-					 , &inp->in6p_faddr, inp->in6p_fport
-					 , &inp->in6p_laddr, inp->in6p_lport
+					 , &inp->inp_faddr6, inp->inp_fport
+					 , &inp->inp_laddr6, inp->inp_lport
 					 , 1));
 			}
 			/* Immediate port iterator functionality check: not wild
@@ -2009,8 +2009,8 @@ vtw_add(int af, struct tcpcb *tp)
 				struct vestigial_inpcb res;
 				int cnt = 0;
 
-				it = tcp_init_ports_v6(&inp->in6p_laddr
-						       , inp->in6p_lport, 0);
+				it = tcp_init_ports_v6(&inp->inp_laddr6
+						       , inp->inp_lport, 0);
 
 				while (tcp_next_port_v6(it, &res)) {
 					++cnt;
@@ -2026,7 +2026,7 @@ vtw_add(int af, struct tcpcb *tp)
 				int cnt = 0;
 
 				it = tcp_init_ports_v6(&any
-						       , inp->in6p_lport, 1);
+						       , inp->inp_lport, 1);
 
 				while (tcp_next_port_v6(it, &res)) {
 					++cnt;

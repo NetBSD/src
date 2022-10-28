@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.2 2022/09/20 10:12:18 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.3 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.2 2022/09/20 10:12:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.3 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -558,9 +558,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	struct inpcb *inp = NULL;
-#ifdef INET6
-	struct in6pcb *in6p = NULL;
-#endif
 	struct tcpcb *tp;
 	int s;
 	struct socket *oso;
@@ -608,20 +605,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	if (so == NULL)
 		goto resetandabort;
 
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		inp = sotoinpcb(so);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		in6p = sotoin6pcb(so);
-		break;
-#endif
-	}
+	inp = sotoinpcb(so);
 
 	switch (src->sa_family) {
 	case AF_INET:
-		if (inp) {
+		if (inp->inp_af == AF_INET) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute(m);
@@ -632,44 +620,44 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 			}
 		}
 #ifdef INET6
-		else if (in6p) {
+		else if (inp->inp_af == AF_INET6) {
 			/* IPv4 packet to AF_INET6 socket */
-			memset(&in6p->in6p_laddr, 0, sizeof(in6p->in6p_laddr));
-			in6p->in6p_laddr.s6_addr16[5] = htons(0xffff);
+			memset(&inp->inp_laddr6, 0, sizeof(inp->inp_laddr6));
+			inp->inp_laddr6.s6_addr16[5] = htons(0xffff);
 			bcopy(&((struct sockaddr_in *)dst)->sin_addr,
-				&in6p->in6p_laddr.s6_addr32[3],
+				&inp->inp_laddr6.s6_addr32[3],
 				sizeof(((struct sockaddr_in *)dst)->sin_addr));
-			in6p->in6p_lport = ((struct sockaddr_in *)dst)->sin_port;
-			in6totcpcb(in6p)->t_family = AF_INET;
-			if (sotoin6pcb(oso)->in6p_flags & IN6P_IPV6_V6ONLY)
-				in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
+			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
+			intotcpcb(inp)->t_family = AF_INET;
+			if (sotoinpcb(oso)->inp_flags & IN6P_IPV6_V6ONLY)
+				inp->inp_flags |= IN6P_IPV6_V6ONLY;
 			else
-				in6p->in6p_flags &= ~IN6P_IPV6_V6ONLY;
-			in6_pcbstate(in6p, IN6P_BOUND);
+				inp->inp_flags &= ~IN6P_IPV6_V6ONLY;
+			in_pcbstate(inp, INP_BOUND);
 		}
 #endif
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (in6p) {
-			in6p->in6p_laddr = ((struct sockaddr_in6 *)dst)->sin6_addr;
-			in6p->in6p_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
-			in6_pcbstate(in6p, IN6P_BOUND);
+		if (inp->inp_af == AF_INET6) {
+			inp->inp_laddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
+			inp->inp_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
+			in_pcbstate(inp, INP_BOUND);
 		}
 		break;
 #endif
 	}
 
 #ifdef INET6
-	if (in6p && in6totcpcb(in6p)->t_family == AF_INET6 && sotoinpcb(oso)) {
-		struct in6pcb *oin6p = sotoin6pcb(oso);
+	if (inp && intotcpcb(inp)->t_family == AF_INET6 && sotoinpcb(oso)) {
+		struct inpcb *oinp = sotoinpcb(oso);
 		/* inherit socket options from the listening socket */
-		in6p->in6p_flags |= (oin6p->in6p_flags & IN6P_CONTROLOPTS);
-		if (in6p->in6p_flags & IN6P_CONTROLOPTS) {
-			m_freem(in6p->in6p_options);
-			in6p->in6p_options = NULL;
+		inp->inp_flags |= (oinp->inp_flags & IN6P_CONTROLOPTS);
+		if (inp->inp_flags & IN6P_CONTROLOPTS) {
+			m_freem(inp->inp_options);
+			inp->inp_options = NULL;
 		}
-		ip6_savecontrol(in6p, &in6p->in6p_options,
+		ip6_savecontrol(inp, &inp->inp_options,
 		    mtod(m, struct ip6_hdr *), m);
 	}
 #endif
@@ -677,18 +665,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	/*
 	 * Give the new socket our cached route reference.
 	 */
-	if (inp) {
-		rtcache_copy(&inp->inp_route, &sc->sc_route);
-		rtcache_free(&sc->sc_route);
-	}
-#ifdef INET6
-	else {
-		rtcache_copy(&in6p->in6p_route, &sc->sc_route);
-		rtcache_free(&sc->sc_route);
-	}
-#endif
+	rtcache_copy(&inp->inp_route, &sc->sc_route);
+	rtcache_free(&sc->sc_route);
 
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 		struct sockaddr_in sin;
 		memcpy(&sin, src, src->sa_len);
 		if (in_pcbconnect(inp, &sin, &lwp0)) {
@@ -696,14 +676,14 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		}
 	}
 #ifdef INET6
-	else if (in6p) {
+	else if (inp->inp_af == AF_INET6) {
 		struct sockaddr_in6 sin6;
 		memcpy(&sin6, src, src->sa_len);
 		if (src->sa_family == AF_INET) {
 			/* IPv4 packet to AF_INET6 socket */
 			in6_sin_2_v4mapsin6((struct sockaddr_in *)src, &sin6);
 		}
-		if (in6_pcbconnect(in6p, &sin6, NULL)) {
+		if (in6_pcbconnect(inp, &sin6, NULL)) {
 			goto resetandabort;
 		}
 	}
@@ -712,14 +692,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		goto resetandabort;
 	}
 
-	if (inp)
-		tp = intotcpcb(inp);
-#ifdef INET6
-	else if (in6p)
-		tp = in6totcpcb(in6p);
-#endif
-	else
-		tp = NULL;
+	tp = intotcpcb(inp);
 
 	tp->t_flags = sototcpcb(oso)->t_flags & TF_NODELAY;
 	if (sc->sc_request_r_scale != 15) {
@@ -773,10 +746,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		tp->snd_cwnd = tp->t_peermss;
 	else {
 		int ss = tcp_init_win;
-		if (inp != NULL && in_localaddr(inp->inp_faddr))
+		if (inp->inp_af == AF_INET && in_localaddr(inp->inp_faddr))
 			ss = tcp_init_win_local;
 #ifdef INET6
-		if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
+		else if (inp->inp_af == AF_INET6 && in6_localaddr(&inp->inp_faddr6))
 			ss = tcp_init_win_local;
 #endif
 		tp->snd_cwnd = TCP_INITIAL_WINDOW(ss, tp->t_peermss);
@@ -1373,7 +1346,7 @@ syn_cache_respond(struct syn_cache *sc)
 		rtcache_unref(rt, ro);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL,
-		    tp ? tp->t_in6pcb : NULL, NULL);
+		    tp ? tp->t_inpcb : NULL, NULL);
 		break;
 #endif
 	default:

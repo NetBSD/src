@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.434 2022/09/20 07:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.435 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.434 2022/09/20 07:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.435 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,21 +254,7 @@ nd_hint(struct tcpcb *tp)
 	if (tp == NULL)
 		return;
 
-	switch (tp->t_family) {
-#if NARP > 0
-	case AF_INET:
-		if (tp->t_inpcb != NULL)
-			ro = &tp->t_inpcb->inp_route;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		if (tp->t_in6pcb != NULL)
-			ro = &tp->t_in6pcb->in6p_route;
-		break;
-#endif
-	}
-
+	ro = &tp->t_inpcb->inp_route;
 	if (ro == NULL)
 		return;
 
@@ -478,12 +464,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 #endif
 	uint64_t *tcps;
 
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	else if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
+	so = tp->t_inpcb->inp_socket;
 
 	TCP_REASS_LOCK_CHECK(tp);
 
@@ -1198,7 +1179,6 @@ tcp_input(struct mbuf *m, int off, int proto)
 	struct inpcb *inp;
 #ifdef INET6
 	struct ip6_hdr *ip6;
-	struct in6pcb *in6p;
 #endif
 	u_int8_t *optp = NULL;
 	int optlen = 0;
@@ -1385,9 +1365,6 @@ tcp_input(struct mbuf *m, int off, int proto)
 	 */
 findpcb:
 	inp = NULL;
-#ifdef INET6
-	in6p = NULL;
-#endif
 	switch (af) {
 	case AF_INET:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
@@ -1404,21 +1381,16 @@ findpcb:
 			/* mapped addr case */
 			in6_in_2_v4mapin6(&ip->ip_src, &s);
 			in6_in_2_v4mapin6(&ip->ip_dst, &d);
-			in6p = in6_pcblookup_connect(&tcbtable, &s,
+			inp = in6_pcblookup_connect(&tcbtable, &s,
 			    th->th_sport, &d, th->th_dport, 0, &vestige);
-			if (in6p == 0 && !vestige.valid) {
+			if (inp == NULL && !vestige.valid) {
 				TCP_STATINC(TCP_STAT_PCBHASHMISS);
-				in6p = in6_pcblookup_bind(&tcbtable, &d,
+				inp = in6_pcblookup_bind(&tcbtable, &d,
 				    th->th_dport, 0);
 			}
 		}
 #endif
-#ifndef INET6
-		if (inp == NULL && !vestige.valid)
-#else
-		if (inp == NULL && in6p == NULL && !vestige.valid)
-#endif
-		{
+		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_NOPORT);
 			if (tcp_log_refused &&
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
@@ -1429,14 +1401,8 @@ findpcb:
 		}
 #if defined(IPSEC)
 		if (ipsec_used) {
-			if (inp && ipsec_in_reject(m, inp)) {
+			if (inp && ipsec_in_reject(m, inp))
 				goto drop;
-			}
-#ifdef INET6
-			else if (in6p && ipsec_in_reject(m, in6p)) {
-				goto drop;
-			}
-#endif
 		}
 #endif /*IPSEC*/
 		break;
@@ -1450,14 +1416,14 @@ findpcb:
 #else
 		faith = 0;
 #endif
-		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
+		inp = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
 		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
-		if (!in6p && !vestige.valid) {
+		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
+			inp = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
 			    th->th_dport, faith);
 		}
-		if (!in6p && !vestige.valid) {
+		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_NOPORT);
 			if (tcp_log_refused &&
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
@@ -1467,9 +1433,8 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (ipsec_used && in6p && ipsec_in_reject(m, in6p)) {
+		if (ipsec_used && inp && ipsec_in_reject(m, inp))
 			goto drop;
-		}
 #endif
 		break;
 	    }
@@ -1488,19 +1453,12 @@ findpcb:
 	so = NULL;
 	if (inp) {
 		/* Check the minimum TTL for socket. */
-		if (ip->ip_ttl < inp->inp_ip_minttl)
+		if (inp->inp_af == AF_INET && ip->ip_ttl < inp->inp_ip_minttl)
 			goto drop;
 
 		tp = intotcpcb(inp);
 		so = inp->inp_socket;
-	}
-#ifdef INET6
-	else if (in6p) {
-		tp = in6totcpcb(in6p);
-		so = in6p->in6p_socket;
-	}
-#endif
-	else if (vestige.valid) {
+	} else if (vestige.valid) {
 		/* We do not support the resurrection of vtw tcpcps. */
 		tcp_vtw_input(th, &vestige, m, tlen);
 		m = NULL;
@@ -1523,12 +1481,12 @@ findpcb:
 
 #ifdef INET6
 	/* save packet options if user wanted */
-	if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS)) {
-		if (in6p->in6p_options) {
-			m_freem(in6p->in6p_options);
-			in6p->in6p_options = NULL;
+	if (inp && (inp->inp_flags & IN6P_CONTROLOPTS)) {
+		if (inp->inp_options) {
+			m_freem(inp->inp_options);
+			inp->inp_options = NULL;
 		}
-		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
+		ip6_savecontrol(inp, &inp->inp_options, ip6, m);
 	}
 #endif
 
@@ -1634,23 +1592,8 @@ nosave:;
 					 * We have created a full-blown
 					 * connection.
 					 */
-					tp = NULL;
-					inp = NULL;
-#ifdef INET6
-					in6p = NULL;
-#endif
-					switch (so->so_proto->pr_domain->dom_family) {
-					case AF_INET:
-						inp = sotoinpcb(so);
-						tp = intotcpcb(inp);
-						break;
-#ifdef INET6
-					case AF_INET6:
-						in6p = sotoin6pcb(so);
-						tp = in6totcpcb(in6p);
-						break;
-#endif
-					}
+					inp = sotoinpcb(so);
+					tp = intotcpcb(inp);
 					if (tp == NULL)
 						goto badsyn;	/*XXX*/
 					tiwin <<= tp->snd_scale;
@@ -2145,10 +2088,10 @@ after_listen:
 			tp->snd_cwnd = tp->t_peermss;
 		else {
 			int ss = tcp_init_win;
-			if (inp != NULL && in_localaddr(inp->inp_faddr))
+			if (inp->inp_af == AF_INET && in_localaddr(inp->inp_faddr))
 				ss = tcp_init_win_local;
 #ifdef INET6
-			if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
+			else if (inp->inp_af == AF_INET6 && in6_localaddr(&inp->inp_faddr6))
 				ss = tcp_init_win_local;
 #endif
 			tp->snd_cwnd = TCP_INITIAL_WINDOW(ss, tp->t_peermss);
@@ -2912,8 +2855,7 @@ dodata:
 
 	if (tp->t_state == TCPS_TIME_WAIT
 	    && (so->so_state & SS_NOFDREF)
-	    && (tp->t_inpcb || af != AF_INET)
-	    && (tp->t_in6pcb || af != AF_INET6)
+	    && (tp->t_inpcb || af != AF_INET || af != AF_INET6)
 	    && ((af == AF_INET ? tcp4_vtw_enable : tcp6_vtw_enable) & 1) != 0
 	    && TAILQ_EMPTY(&tp->segq)
 	    && vtw_add(af, tp)) {
@@ -2996,14 +2938,7 @@ drop:
 	 * Drop space held by incoming segment and return.
 	 */
 	if (tp) {
-		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-		else if (tp->t_in6pcb)
-			so = tp->t_in6pcb->in6p_socket;
-#endif
-		else
-			so = NULL;
+		so = tp->t_inpcb->inp_socket;
 #ifdef TCP_DEBUG
 		if (so && (so->so_options & SO_DEBUG) != 0)
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);

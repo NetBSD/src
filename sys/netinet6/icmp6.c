@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.252 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.253 2022/10/28 05:18:39 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.252 2022/08/29 09:14:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.253 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.252 2022/08/29 09:14:02 knakahara Exp $"
 #include <net/nd.h>
 
 #include <netinet/in.h>
+#include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet/wqinput.h>
@@ -1939,9 +1940,8 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct inpcb_hdr *inph;
-	struct in6pcb *in6p;
-	struct in6pcb *last = NULL;
+	struct inpcb *inp;
+	struct inpcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct icmp6_hdr *icmp6;
 	struct mbuf *n, *opts = NULL;
@@ -1962,21 +1962,20 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		return IPPROTO_DONE;
 	}
 
-	TAILQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
-		in6p = (struct in6pcb *)inph;
-		if (in6p->in6p_af != AF_INET6)
+	TAILQ_FOREACH(inp, &raw6cbtable.inpt_queue, inp_queue) {
+		if (inp->inp_af != AF_INET6)
 			continue;
-		if (in6p->in6p_ip6.ip6_nxt != IPPROTO_ICMPV6)
+		if (inp->inp_ip6.ip6_nxt != IPPROTO_ICMPV6)
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
+		    !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &ip6->ip6_dst))
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
+		    !IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, &ip6->ip6_src))
 			continue;
-		if (in6p->in6p_icmp6filt &&
+		if (inp->inp_icmp6filt &&
 		    ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-		    in6p->in6p_icmp6filt))
+		    inp->inp_icmp6filt))
 			continue;
 
 		if (last == NULL) {
@@ -1988,23 +1987,23 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		}
 #endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-			if (last->in6p_flags & IN6P_CONTROLOPTS)
+			if (last->inp_flags & IN6P_CONTROLOPTS)
 				ip6_savecontrol(last, &opts, ip6, n);
 			/* strip intermediate headers */
 			m_adj(n, off);
-			if (sbappendaddr(&last->in6p_socket->so_rcv,
+			if (sbappendaddr(&last->inp_socket->so_rcv,
 			    sin6tosa(&rip6src), n, opts) == 0) {
-				soroverflow(last->in6p_socket);
+				soroverflow(last->inp_socket);
 				m_freem(n);
 				if (opts)
 					m_freem(opts);
 			} else {
-				sorwakeup(last->in6p_socket);
+				sorwakeup(last->inp_socket);
 			}
 			opts = NULL;
 		}
 
-		last = in6p;
+		last = inp;
 	}
 
 #ifdef IPSEC
@@ -2015,18 +2014,18 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	} else
 #endif
 	if (last) {
-		if (last->in6p_flags & IN6P_CONTROLOPTS)
+		if (last->inp_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
 		/* strip intermediate headers */
 		m_adj(m, off);
-		if (sbappendaddr(&last->in6p_socket->so_rcv,
+		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
-			soroverflow(last->in6p_socket);
+			soroverflow(last->inp_socket);
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
 		} else {
-			sorwakeup(last->in6p_socket);
+			sorwakeup(last->inp_socket);
 		}
 	} else {
 		m_freem(m);
@@ -2741,7 +2740,7 @@ int
 icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0;
-	struct in6pcb *in6p = sotoin6pcb(so);
+	struct inpcb *inp = sotoinpcb(so);
 
 	if (sopt->sopt_level != IPPROTO_ICMPV6)
 		return rip6_ctloutput(op, so, sopt);
@@ -2756,7 +2755,7 @@ icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &fil, sizeof(fil));
 			if (error)
 				break;
-			memcpy(in6p->in6p_icmp6filt, &fil,
+			memcpy(inp->inp_icmp6filt, &fil,
 			    sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -2772,11 +2771,11 @@ icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			if (in6p->in6p_icmp6filt == NULL) {
+			if (inp->inp_icmp6filt == NULL) {
 				error = EINVAL;
 				break;
 			}
-			error = sockopt_set(sopt, in6p->in6p_icmp6filt,
+			error = sockopt_set(sopt, inp->inp_icmp6filt,
 			    sizeof(struct icmp6_filter));
 			break;
 		    }
