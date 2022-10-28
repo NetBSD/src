@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.173 2021/12/08 20:03:26 andvar Exp $ */
+/* $NetBSD: ipsec.c,v 1.174 2022/10/28 05:18:39 ozaki-r Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.173 2021/12/08 20:03:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.174 2022/10/28 05:18:39 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -160,7 +160,7 @@ static int ipsec_invalpcbcache(struct inpcbpolicy *, int);
 int crypto_support = 0;
 
 static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
-    struct inpcb_hdr *, int *);
+    struct inpcb *, int *);
 
 #ifdef INET6
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
@@ -171,7 +171,7 @@ struct secpolicy ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 #endif
 
-static int ipsec_setspidx_inpcb(struct mbuf *, void *);
+static int ipsec_setspidx_inpcb(struct mbuf *, struct inpcb *);
 static int ipsec_setspidx(struct mbuf *, struct secpolicyindex *, int, int);
 static void ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec4_setspidx_ipaddr(struct mbuf *, struct secpolicyindex *);
@@ -198,7 +198,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	KASSERT(IPSEC_DIR_IS_VALID(dir));
 	KASSERT(pcbsp != NULL);
 	KASSERT(dir < __arraycount(pcbsp->sp_cache));
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	/*
 	 * Checking the generation and sp->state and taking a reference to an SP
@@ -265,7 +265,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 
 	KASSERT(IPSEC_DIR_IS_INOROUT(dir));
 	KASSERT(dir < __arraycount(pcbsp->sp_cache));
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	pcbsp->sp_cache[dir].cachesp = NULL;
 	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_UNKNOWN;
@@ -301,7 +301,7 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 {
 	int i;
 
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
 		if (dir != IPSEC_DIR_ANY && i != dir)
@@ -319,7 +319,7 @@ void
 ipsec_pcbconn(struct inpcbpolicy *pcbsp)
 {
 
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	pcbsp->sp_cacheflags |= IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
@@ -329,7 +329,7 @@ void
 ipsec_pcbdisconn(struct inpcbpolicy *pcbsp)
 {
 
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	pcbsp->sp_cacheflags &= ~IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
@@ -399,7 +399,7 @@ key_get_default_sp(int af, const char *where, int tag)
  * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
-ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
+ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb *inp,
     int *error)
 {
 	struct inpcbpolicy *pcbsp = NULL;
@@ -408,22 +408,22 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	int af;
 
 	KASSERT(m != NULL);
-	KASSERT(inph != NULL);
+	KASSERT(inp != NULL);
 	KASSERT(error != NULL);
 	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
-	KASSERT(inph->inph_socket != NULL);
-	KASSERT(inph_locked(inph));
+	KASSERT(inp->inp_socket != NULL);
+	KASSERT(inp_locked(inp));
 
-	/* XXX FIXME inpcb/in6pcb vs socket*/
-	af = inph->inph_af;
+	/* XXX FIXME inpcb vs socket*/
+	af = inp->inp_af;
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
 	    "unexpected protocol family %u", af);
 
-	KASSERT(inph->inph_sp != NULL);
+	KASSERT(inp->inp_sp != NULL);
 	/* If we have a cached entry, and if it is still valid, use it. */
 	IPSEC_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
-	currsp = ipsec_checkpcbcache(m, inph->inph_sp, dir);
+	currsp = ipsec_checkpcbcache(m, inp->inp_sp, dir);
 	if (currsp) {
 		*error = 0;
 		return currsp;
@@ -435,8 +435,8 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 #if defined(INET6)
 	case AF_INET6:
 #endif
-		*error = ipsec_setspidx_inpcb(m, inph);
-		pcbsp = inph->inph_sp;
+		*error = ipsec_setspidx_inpcb(m, inp);
+		pcbsp = inp->inp_sp;
 		break;
 	default:
 		*error = EPFNOSUPPORT;
@@ -566,7 +566,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 
 static struct secpolicy *
 ipsec_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
-    void *inp)
+    struct inpcb *inp)
 {
 	struct secpolicy *sp;
 
@@ -575,9 +575,8 @@ ipsec_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (inp == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
 	} else {
-		struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
-		KASSERT(inph->inph_socket != NULL);
-		sp = ipsec_getpolicybysock(m, dir, inph, error);
+		KASSERT(inp->inp_socket != NULL);
+		sp = ipsec_getpolicybysock(m, dir, inp, error);
 	}
 	if (sp == NULL) {
 		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
@@ -788,26 +787,25 @@ ipsec_mtu(struct mbuf *m, int *destmtu)
 }
 
 static int
-ipsec_setspidx_inpcb(struct mbuf *m, void *pcb)
+ipsec_setspidx_inpcb(struct mbuf *m, struct inpcb *inp)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)pcb;
 	int error;
 
-	KASSERT(inph != NULL);
-	KASSERT(inph->inph_sp != NULL);
-	KASSERT(inph->inph_sp->sp_out != NULL);
-	KASSERT(inph->inph_sp->sp_in != NULL);
+	KASSERT(inp != NULL);
+	KASSERT(inp->inp_sp != NULL);
+	KASSERT(inp->inp_sp->sp_out != NULL);
+	KASSERT(inp->inp_sp->sp_in != NULL);
 
-	error = ipsec_setspidx(m, &inph->inph_sp->sp_in->spidx,
+	error = ipsec_setspidx(m, &inp->inp_sp->sp_in->spidx,
 	    IPSEC_DIR_INBOUND, 1);
 	if (error == 0) {
-		inph->inph_sp->sp_out->spidx = inph->inph_sp->sp_in->spidx;
-		inph->inph_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
+		inp->inp_sp->sp_out->spidx = inp->inp_sp->sp_in->spidx;
+		inp->inp_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
 	} else {
-		memset(&inph->inph_sp->sp_in->spidx, 0,
-		    sizeof(inph->inph_sp->sp_in->spidx));
-		memset(&inph->inph_sp->sp_out->spidx, 0,
-		    sizeof(inph->inph_sp->sp_out->spidx));
+		memset(&inp->inp_sp->sp_in->spidx, 0,
+		    sizeof(inp->inp_sp->sp_in->spidx));
+		memset(&inp->inp_sp->sp_out->spidx, 0,
+		    sizeof(inp->inp_sp->sp_out->spidx));
 	}
 	return error;
 }
@@ -1144,33 +1142,32 @@ ipsec_destroy_policy(struct secpolicy *sp)
 }
 
 int
-ipsec_set_policy(void *inp, const void *request, size_t len,
+ipsec_set_policy(struct inpcb *inp, const void *request, size_t len,
     kauth_cred_t cred)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *newsp, *oldsp;
 	struct secpolicy **policy;
 	int error;
 
 	KASSERT(!cpu_softintr_p());
-	KASSERT(inph != NULL);
-	KASSERT(inph_locked(inph));
+	KASSERT(inp != NULL);
+	KASSERT(inp_locked(inp));
 	KASSERT(request != NULL);
 
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
 
-	KASSERT(inph->inph_sp != NULL);
+	KASSERT(inp->inp_sp != NULL);
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = &inph->inph_sp->sp_in;
+		policy = &inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = &inph->inph_sp->sp_out;
+		policy = &inp->inp_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1223,17 +1220,16 @@ ipsec_set_policy(void *inp, const void *request, size_t len,
 }
 
 int
-ipsec_get_policy(void *inp, const void *request, size_t len,
+ipsec_get_policy(struct inpcb *inp, const void *request, size_t len,
     struct mbuf **mp)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *policy;
 
 	/* sanity check. */
-	if (inph == NULL || request == NULL || mp == NULL)
+	if (inp == NULL || request == NULL || mp == NULL)
 		return EINVAL;
-	KASSERT(inph->inph_sp != NULL);
+	KASSERT(inp->inp_sp != NULL);
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
@@ -1241,10 +1237,10 @@ ipsec_get_policy(void *inp, const void *request, size_t len,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = inph->inph_sp->sp_in;
+		policy = inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = inph->inph_sp->sp_out;
+		policy = inp->inp_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1269,25 +1265,24 @@ ipsec_get_policy(void *inp, const void *request, size_t len,
 }
 
 int
-ipsec_delete_pcbpolicy(void *inp)
+ipsec_delete_pcbpolicy(struct inpcb *inp)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 
-	KASSERT(inph != NULL);
+	KASSERT(inp != NULL);
 
-	if (inph->inph_sp == NULL)
+	if (inp->inp_sp == NULL)
 		return 0;
 
-	if (inph->inph_sp->sp_in != NULL)
-		ipsec_destroy_policy(inph->inph_sp->sp_in);
+	if (inp->inp_sp->sp_in != NULL)
+		ipsec_destroy_policy(inp->inp_sp->sp_in);
 
-	if (inph->inph_sp->sp_out != NULL)
-		ipsec_destroy_policy(inph->inph_sp->sp_out);
+	if (inp->inp_sp->sp_out != NULL)
+		ipsec_destroy_policy(inp->inp_sp->sp_out);
 
-	ipsec_invalpcbcache(inph->inph_sp, IPSEC_DIR_ANY);
+	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
 
-	ipsec_delpcbpolicy(inph->inph_sp);
-	inph->inph_sp = NULL;
+	ipsec_delpcbpolicy(inp->inp_sp);
+	inp->inp_sp = NULL;
 
 	return 0;
 }
@@ -1453,21 +1448,20 @@ ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
  * Check security policy requirements.
  */
 int
-ipsec_in_reject(struct mbuf *m, void *inp)
+ipsec_in_reject(struct mbuf *m, struct inpcb *inp)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
 	int error;
 	int result;
 
 	KASSERT(m != NULL);
 
-	if (inph == NULL)
+	if (inp == NULL)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
 		    IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-		    inph, &error);
+		    inp, &error);
 
 	if (sp != NULL) {
 		result = ipsec_sp_reject(sp, m);
@@ -1557,21 +1551,20 @@ ipsec_sp_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 }
 
 size_t
-ipsec_hdrsiz(struct mbuf *m, u_int dir, void *inp)
+ipsec_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 {
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
 	int error;
 	size_t size;
 
 	KASSERT(m != NULL);
-	KASSERTMSG(inph == NULL || inph->inph_socket != NULL,
+	KASSERTMSG(inp == NULL || inp->inp_socket != NULL,
 	    "socket w/o inpcb");
 
-	if (inph == NULL)
+	if (inp == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir, inph, &error);
+		sp = ipsec_getpolicybysock(m, dir, inp, &error);
 
 	if (sp != NULL) {
 		size = ipsec_sp_hdrsiz(sp, m);
@@ -1804,7 +1797,7 @@ ipsec_logsastr(const struct secasvar *sav, char *buf, size_t size)
 
 #ifdef INET6
 struct secpolicy *
-ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p, int flags,
+ipsec6_check_policy(struct mbuf *m, struct inpcb *inp, int flags,
     int *needipsecp, int *errorp)
 {
 	struct secpolicy *sp = NULL;
@@ -1816,11 +1809,11 @@ ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p, int flags,
 		goto skippolicycheck;
 	}
 	s = splsoftnet();
-	if (in6p && ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
+	if (inp && ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
 		splx(s);
 		goto skippolicycheck;
 	}
-	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, in6p);
+	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
 	splx(s);
 
 	/*

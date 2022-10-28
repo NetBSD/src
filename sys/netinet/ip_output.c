@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.320 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.321 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.320 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.321 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1256,8 +1256,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			if (error)
 				break;
 
-			error = portalgo_algo_index_select(
-			    (struct inpcb_hdr *)inp, optval);
+			error = portalgo_algo_index_select(inp, optval);
 			break;
 
 #if defined(IPSEC)

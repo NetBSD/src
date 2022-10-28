@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.92 2022/10/24 01:54:19 knakahara Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.93 2022/10/28 05:18:39 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ extern int      ip6_maxflows;           /* maximum amount of flows for ip6ff */
 extern int	ip6_hashsize;		/* size of hash table */
 #endif
 
-struct in6pcb;
+struct inpcb;
 extern const struct pr_usrreqs rip6_usrreqs;
 
 int	icmp6_ctloutput(int, struct socket *, struct sockopt *);
@@ -306,9 +306,9 @@ int	ip6_lasthdr(struct mbuf *, int, int, int *);
 struct ip6_hdr;
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
 int	ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
-void	ip6_savecontrol(struct in6pcb *, struct mbuf **, struct ip6_hdr *,
+void	ip6_savecontrol(struct inpcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *);
-void	ip6_notify_pmtu(struct in6pcb *, const struct sockaddr_in6 *,
+void	ip6_notify_pmtu(struct inpcb *, const struct sockaddr_in6 *,
 		u_int32_t *);
 int	ip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
@@ -317,7 +317,7 @@ void	ip6_forward(struct mbuf *, int, struct ifnet *);
 void	ip6_mloopback(struct ifnet *, struct mbuf *,
 	              const struct sockaddr_in6 *);
 int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route *, int,
-	    struct ip6_moptions *, struct in6pcb *, struct ifnet **);
+	    struct ip6_moptions *, struct inpcb *, struct ifnet **);
 int	ip6_if_output(struct ifnet * const, struct ifnet * const,
 	    struct mbuf * const,
 	    const struct sockaddr_in6 * const, const struct rtentry *);
@@ -328,7 +328,7 @@ int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 			    struct ip6_pktopts *, kauth_cred_t, int);
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
 struct ip6_pktopts *ip6_copypktopts(struct ip6_pktopts *, int);
-int	ip6_optlen(struct in6pcb *);
+int	ip6_optlen(struct inpcb *);
 
 void	ip6_statinc(u_int);
 

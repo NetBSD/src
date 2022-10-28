@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.91 2020/08/28 06:20:44 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.92 2022/10/28 05:18:39 ozaki-r Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -46,6 +46,7 @@
 #include <sys/localcount.h>
 
 #include <netinet/in_pcb_hdr.h>
+#include <netinet/in_pcb.h>
 #include <netipsec/keydb.h>
 
 /*
@@ -126,7 +127,7 @@ struct inpcbpolicy {
 	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
 	int sp_cacheflags;
 #define	IPSEC_PCBSP_CONNECTED	1
-	struct inpcb_hdr *sp_inph;	/* back pointer */
+	struct inpcb *sp_inp;		/* back pointer */
 };
 
 extern u_int ipsec_spdgen;
@@ -135,7 +136,7 @@ static __inline bool
 ipsec_pcb_skip_ipsec(struct inpcbpolicy *pcbsp, int dir)
 {
 
-	KASSERT(inph_locked(pcbsp->sp_inph));
+	KASSERT(inp_locked(pcbsp->sp_inp));
 
 	return pcbsp->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&
 	    pcbsp->sp_cache[(dir)].cachegen == ipsec_spdgen;
@@ -288,10 +289,10 @@ int ipsec_init_pcbpolicy(struct socket *so, struct inpcbpolicy **);
 int ipsec_copy_policy(const struct inpcbpolicy *, struct inpcbpolicy *);
 u_int ipsec_get_reqlevel(const struct ipsecrequest *);
 
-int ipsec_set_policy(void *, const void *, size_t, kauth_cred_t);
-int ipsec_get_policy(void *, const void *, size_t, struct mbuf **);
-int ipsec_delete_pcbpolicy(void *);
-int ipsec_in_reject(struct mbuf *, void *);
+int ipsec_set_policy(struct inpcb *, const void *, size_t, kauth_cred_t);
+int ipsec_get_policy(struct inpcb *, const void *, size_t, struct mbuf **);
+int ipsec_delete_pcbpolicy(struct inpcb *);
+int ipsec_in_reject(struct mbuf *, struct inpcb *);
 
 struct secasvar *ipsec_lookup_sa(const struct ipsecrequest *,
     const struct mbuf *);
@@ -301,7 +302,7 @@ struct tcpcb;
 int ipsec_chkreplay(u_int32_t, const struct secasvar *);
 int ipsec_updatereplay(u_int32_t, const struct secasvar *);
 
-size_t ipsec_hdrsiz(struct mbuf *, u_int, void *);
+size_t ipsec_hdrsiz(struct mbuf *, u_int, struct inpcb *);
 size_t ipsec4_hdrsiz_tcp(struct tcpcb *);
 
 union sockaddr_union;
