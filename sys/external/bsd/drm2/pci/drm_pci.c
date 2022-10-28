@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.47 2021/12/19 11:54:32 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.48 2022/10/28 21:58:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.47 2021/12/19 11:54:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.48 2022/10/28 21:58:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -188,6 +188,8 @@ drm_pci_request_irq(struct drm_device *dev, int flags)
 		}
 	}
 
+	pci_intr_setattr(pa->pa_pc, &irq_cookie->intr_handles[0],
+	    PCI_INTR_MPSAFE, true);
 	intrstr = pci_intr_string(pa->pa_pc, irq_cookie->intr_handles[0],
 	    intrbuf, sizeof(intrbuf));
 	irq_cookie->ih_cookie = pci_intr_establish_xname(pa->pa_pc,
