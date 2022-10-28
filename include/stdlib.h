@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.124 2022/10/05 12:09:07 nia Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.125 2022/10/28 09:43:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -118,6 +118,7 @@ void	*malloc(size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
+void	*reallocarray(void *, size_t, size_t);
 void	 srand(unsigned);
 double	 strtod(const char * __restrict, char ** __restrict);
 long	 strtol(const char * __restrict, char ** __restrict, int);
@@ -125,7 +126,6 @@ unsigned long
 	 strtoul(const char * __restrict, char ** __restrict, int);
 #ifdef _OPENBSD_SOURCE
 long long strtonum(const char *, long long, long long, const char **);
-void	*reallocarray(void *, size_t, size_t);
 #endif
 int	 system(const char *);
 

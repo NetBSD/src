@@ -1,4 +1,4 @@
-.\" $NetBSD: reallocarray.3,v 1.4 2015/07/26 02:29:44 kamil Exp $
+.\" $NetBSD: reallocarray.3,v 1.5 2022/10/28 09:43:59 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,13 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 5, 2015
+.Dd September 9, 2022
 .Dt REALLOCARRAY 3
 .Os
 .Sh NAME
 .Nm reallocarray
 .Nd reallocate memory for an array of elements checking for overflow
 .Sh SYNOPSIS
-.Vt #define _OPENBSD_SOURCE
 .In stdlib.h
 .Ft void *
 .Fo reallocarray
@@ -55,12 +54,8 @@ bytes using
 .Xr realloc 3
 and making sure that overflow does not happen in the multiplication of
 .Dq "nmemb * size" .
-.Pp
-This function is provided for source compatibility with
-.Ox
-and
-its use is discouraged in preference to
-.Xr reallocarr 3 .
+Otherwise it behaves like
+.Xr realloc 3 .
 .Sh RETURN VALUES
 The
 .Fn reallocarray
@@ -71,18 +66,15 @@ if there was overflow or if
 failed setting
 .Va errno
 to
-.Dv EOVERFLOW
+.Dv ENOMEM
 or preserving the value from
 .Xr realloc 3 .
 .Sh SEE ALSO
 .Xr malloc 3 ,
 .Xr realloc 3 ,
 .Xr reallocarr 3
-.Sh STANDARDS
-.Fn reallocarray
-is an
-.Ox
-extension.
+.\" .Sh STANDARDS
+.\" Will be part of POSIX, but isn't yet.
 .Sh HISTORY
 The
 .Fn reallocarray
@@ -93,9 +85,10 @@ was redesigned in
 .Nx 8
 as
 .Fn reallocarr 3 .
-For compatibility reasons it's available since
-.Nx 8
-in the
+Until
+.Nx 10 ,
+.Nm
+was available in the
 .Vt _OPENBSD_SOURCE
 namespace.
 .Sh CAVEATS

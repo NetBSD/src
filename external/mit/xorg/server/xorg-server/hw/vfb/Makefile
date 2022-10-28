@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2022/07/15 19:12:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2022/10/28 09:43:59 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -28,8 +28,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-UGLXEXT
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
-		-DHAS_SHM -DHAS_MMAP -UXFree86LOADER \
-		-D_OPENBSD_SOURCE
+		-DHAS_SHM -DHAS_MMAP -UXFree86LOADER
 
 .include "../../Makefile.common"
 

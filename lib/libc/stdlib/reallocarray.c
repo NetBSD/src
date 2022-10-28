@@ -1,4 +1,4 @@
-/*	$NetBSD: reallocarray.c,v 1.11 2021/02/26 19:25:12 christos Exp $	*/
+/*	$NetBSD: reallocarray.c,v 1.12 2022/10/28 09:43:59 wiz Exp $	*/
 /*	$OpenBSD: reallocarray.c,v 1.1 2014/05/08 21:43:49 deraadt Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarray.c,v 1.11 2021/02/26 19:25:12 christos Exp $");
+__RCSID("$NetBSD: reallocarray.c,v 1.12 2022/10/28 09:43:59 wiz Exp $");
 
 #include "namespace.h"
 
@@ -54,6 +54,10 @@ reallocarray(void *optr, size_t nmemb, size_t size)
 	e = reallocarr(&optr, nmemb, size);
 	if (e == 0)
 		return optr;
-	errno = e;
+	if (e == EOVERFLOW)
+		errno = ENOMEM;
+	else
+		errno = e;
+
 	return NULL;
 }
