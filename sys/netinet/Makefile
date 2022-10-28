@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.31 2022/09/20 07:19:14 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.32 2022/10/28 05:23:09 ozaki-r Exp $
 
 INCSDIR= /usr/include/netinet
 
 INCS=	dccp.h icmp6.h icmp_var.h if_ether.h if_inarp.h igmp.h \
-	igmp_var.h in.h in_gif.h in_l2tp.h in_pcb.h in_pcb_hdr.h \
+	igmp_var.h in.h in_gif.h in_l2tp.h in_pcb.h \
 	in_offload.h in_selsrc.h in_systm.h \
 	in_var.h ip.h ip_carp.h ip6.h ip_ecn.h ip_encap.h \
 	ip_icmp.h ip_mroute.h ip_var.h pim.h pim_var.h portalgo.h \

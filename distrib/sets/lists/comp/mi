@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2424 2022/09/20 07:19:14 ozaki-r Exp $
+#	$NetBSD: mi,v 1.2425 2022/10/28 05:23:09 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2706,7 +2706,7 @@
 ./usr/include/netinet/in_l2tp.h			comp-c-include
 ./usr/include/netinet/in_offload.h		comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
-./usr/include/netinet/in_pcb_hdr.h		comp-c-include
+./usr/include/netinet/in_pcb_hdr.h		comp-obsolete		obsolete
 ./usr/include/netinet/in_route.h		comp-obsolete		obsolete
 ./usr/include/netinet/in_selsrc.h		comp-c-include
 ./usr/include/netinet/in_systm.h		comp-c-include
