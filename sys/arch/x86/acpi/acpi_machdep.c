@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.33 2022/08/20 23:48:50 riastradh Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.33 2022/08/20 23:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	void *ih;
 
 	ih = acpi_md_intr_establish(InterruptNumber, IPL_TTY, IST_LEVEL,
-	    (int (*)(void *))ServiceRoutine, Context, false, xname);
+	    (int (*)(void *))ServiceRoutine, Context, /*mpsafe*/true, xname);
 	if (ih == NULL)
 		return AE_NO_MEMORY;
 
