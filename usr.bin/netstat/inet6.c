@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.82 2022/09/21 07:59:19 msaitoh Exp $	*/
+/*	$NetBSD: inet6.c,v 1.83 2022/10/28 05:24:07 ozaki-r Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.82 2022/09/21 07:59:19 msaitoh Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.83 2022/10/28 05:24:07 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ extern const char * const tcptimers[];
 
 #ifdef INET6
 
-struct	in6pcb in6pcb;
+struct	inpcb inpcb;
 #ifdef TCP6
 struct	tcp6cb tcp6cb;
 #else
@@ -287,7 +287,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len)
 {
 	struct socket sockb;
 	struct inpcbtable table;
-	struct inpcb_hdr *next, *prev;
+	struct inpcb *next, *prev;
 	int istcp = strcmp(name, "tcp6") == 0;
 	struct kinfo_pcb *pcblist;
 	size_t size = 100, i;
@@ -309,33 +309,33 @@ getpcblist_kmem(u_long off, const char *name, size_t *len)
 
 	i = 0;
 	while (next != TAILQ_END(head)) {
-		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
-		next = TAILQ_NEXT(&in6pcb, in6p_queue);
+		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
+		next = TAILQ_NEXT(&inpcb, inp_queue);
 		prev = next;
 
-		if (in6pcb.in6p_af != AF_INET6)
+		if (inpcb.inp_af != AF_INET6)
 			continue;
 
-		kread((u_long)in6pcb.in6p_socket, (char *)&sockb,
+		kread((u_long)inpcb.inp_socket, (char *)&sockb,
 		    sizeof (sockb));
 		if (istcp) {
 #ifdef TCP6
-			kread((u_long)in6pcb.in6p_ppcb,
+			kread((u_long)inpcb.inp_ppcb,
 			    (char *)&tcp6cb, sizeof (tcp6cb));
 #else
-			kread((u_long)in6pcb.in6p_ppcb,
+			kread((u_long)inpcb.inp_ppcb,
 			    (char *)&tcpcb, sizeof (tcpcb));
 #endif
 		}
 		pcblist[i].ki_ppcbaddr =
-		    istcp ? (uintptr_t) in6pcb.in6p_ppcb : (uintptr_t) prev;
+		    istcp ? (uintptr_t) inpcb.inp_ppcb : (uintptr_t) prev;
 		pcblist[i].ki_rcvq = (uint64_t)sockb.so_rcv.sb_cc;
 		pcblist[i].ki_sndq = (uint64_t)sockb.so_snd.sb_cc;
-		sin6.sin6_addr = in6pcb.in6p_laddr;
-		sin6.sin6_port = in6pcb.in6p_lport;
+		sin6.sin6_addr = inpcb.inp_laddr6;
+		sin6.sin6_port = inpcb.inp_lport;
 		memcpy(&pcblist[i].ki_s, &sin6, sizeof(sin6));
-		sin6.sin6_addr = in6pcb.in6p_faddr;
-		sin6.sin6_port = in6pcb.in6p_fport;
+		sin6.sin6_addr = inpcb.inp_faddr6;
+		sin6.sin6_port = inpcb.inp_fport;
 		memcpy(&pcblist[i].ki_d, &sin6, sizeof(sin6));
 		pcblist[i].ki_tstate = tcpcb.t_state;
 		if (i++ == size) {
@@ -1431,7 +1431,7 @@ inet6print(const struct in6_addr *in6, int port, const char *proto)
  */
 
 char *
-inet6name(const struct in6_addr *in6p)
+inet6name(const struct in6_addr *inp)
 {
 	char *cp;
 	static char line[NI_MAXHOST];
@@ -1451,8 +1451,8 @@ inet6name(const struct in6_addr *in6p)
 			domain[0] = 0;
 	}
 	cp = 0;
-	if (!numeric_addr && !IN6_IS_ADDR_UNSPECIFIED(in6p)) {
-		hp = gethostbyaddr((const char *)in6p, sizeof(*in6p), AF_INET6);
+	if (!numeric_addr && !IN6_IS_ADDR_UNSPECIFIED(inp)) {
+		hp = gethostbyaddr((const char *)inp, sizeof(*inp), AF_INET6);
 		if (hp) {
 			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
@@ -1460,7 +1460,7 @@ inet6name(const struct in6_addr *in6p)
 			cp = hp->h_name;
 		}
 	}
-	if (IN6_IS_ADDR_UNSPECIFIED(in6p))
+	if (IN6_IS_ADDR_UNSPECIFIED(inp))
 		strlcpy(line, "*", sizeof(line));
 	else if (cp)
 		strlcpy(line, cp, sizeof(line));
@@ -1468,7 +1468,7 @@ inet6name(const struct in6_addr *in6p)
 		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_family = AF_INET6;
-		sin6.sin6_addr = *in6p;
+		sin6.sin6_addr = *inp;
 		inet6_getscopeid(&sin6,
 		    INET6_IS_ADDR_LINKLOCAL | INET6_IS_ADDR_MC_LINKLOCAL);
 		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
@@ -1529,8 +1529,8 @@ tcp6_dump(u_long off, const char *name, u_long pcbaddr)
 		printf("State: %d", mypcb.t_state);
 	else
 		printf("State: %s", tcp6states[mypcb.t_state]);
-	printf(", flags 0x%x, in6pcb 0x%lx\n\n", mypcb.t_flags,
-	    (u_long)mypcb.t_in6pcb);
+	printf(", flags 0x%x, inpcb 0x%lx\n\n", mypcb.t_flags,
+	    (u_long)mypcb.t_inpcb);
 
 	printf("rxtshift %d, rxtcur %d, dupacks %d\n", mypcb.t_rxtshift,
 	    mypcb.t_rxtcur, mypcb.t_dupacks);
