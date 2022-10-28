@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.48 2021/08/21 13:22:19 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.49 2022/10/28 05:24:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,15 +67,11 @@ extern double	etime;
 extern bool 	showzero;
 
 struct inpcb;
-#ifdef INET6
-struct in6pcb;
-#endif
 
 int	 checkhost(struct inpcb *);
 int	 checkport(struct inpcb *);
 #ifdef INET6
-int	 checkhost6(struct in6pcb *);
-int	 checkport6(struct in6pcb *);
+int	 checkhost6(struct inpcb *);
 #endif
 void	 closebufcache(WINDOW *);
 void	 closedf(WINDOW *);
