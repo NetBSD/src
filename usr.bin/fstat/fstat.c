@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.116 2022/10/28 05:24:07 ozaki-r Exp $	*/
+/*	$NetBSD: fstat.c,v 1.117 2022/10/28 05:27:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.116 2022/10/28 05:24:07 ozaki-r Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.117 2022/10/28 05:27:16 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -1061,7 +1061,8 @@ socktrans(struct file *f, struct socket *sock, int i)
 	struct socket	so;
 	struct protosw	proto;
 	struct domain	dom;
-	struct inpcb	inpcb;
+	struct in4pcb	in4pcb;
+	struct in6pcb	in6pcb;
 	struct unpcb	unpcb;
 	struct ddpcb	ddpcb;
 	int len;
@@ -1123,15 +1124,16 @@ socktrans(struct file *f, struct socket *sock, int i)
 		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
-			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
-			    sizeof(inpcb)) != sizeof(inpcb)) {
-				dprintf("can't read inpcb at %p", so.so_pcb);
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in4pcb,
+			    sizeof(in4pcb)) != sizeof(in4pcb)) {
+				dprintf("can't read in4pcb at %p", so.so_pcb);
 				goto bad;
 			}
-			inet_addrstr(lbuf, sizeof(lbuf), &inpcb.inp_laddr,
-			    ntohs(inpcb.inp_lport), isdgram);
-			inet_addrstr(fbuf, sizeof(fbuf), &inpcb.inp_faddr,
-			    ntohs(inpcb.inp_fport), isdgram);
+			struct inpcb *inp = (struct inpcb *)&in4pcb;
+			inet_addrstr(lbuf, sizeof(lbuf), &in4p_laddr(inp),
+			    ntohs(inp->inp_lport), isdgram);
+			inet_addrstr(fbuf, sizeof(fbuf), &in4p_faddr(inp),
+			    ntohs(inp->inp_fport), isdgram);
 			break;
 		default:
 			break;
@@ -1147,15 +1149,16 @@ socktrans(struct file *f, struct socket *sock, int i)
 		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
-			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
-			    sizeof(inpcb)) != sizeof(inpcb)) {
-				dprintf("can't read inpcb at %p", so.so_pcb);
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in6pcb,
+			    sizeof(in6pcb)) != sizeof(in6pcb)) {
+				dprintf("can't read in6pcb at %p", so.so_pcb);
 				goto bad;
 			}
-			inet6_addrstr(lbuf, sizeof(lbuf), &inpcb.inp_laddr6,
-			    ntohs(inpcb.inp_lport), isdgram);
-			inet6_addrstr(fbuf, sizeof(fbuf), &inpcb.inp_faddr6,
-			    ntohs(inpcb.inp_fport), isdgram);
+			struct inpcb *inp = (struct inpcb *)&in6pcb;
+			inet6_addrstr(lbuf, sizeof(lbuf), &in6p_laddr(inp),
+			    ntohs(inp->inp_lport), isdgram);
+			inet6_addrstr(fbuf, sizeof(fbuf), &in6p_faddr(inp),
+			    ntohs(inp->inp_fport), isdgram);
 			break;
 		default:
 			break;
