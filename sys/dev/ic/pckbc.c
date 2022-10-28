@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.62 2020/05/01 01:34:57 riastradh Exp $ */
+/* $NetBSD: pckbc.c,v 1.63 2022/10/28 23:40:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.62 2020/05/01 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.63 2022/10/28 23:40:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,13 @@ void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
 
 const char * const pckbc_slot_names[] = { "kbd", "aux" };
 
-static struct pckbport_accessops const pckbc_ops = {
-	pckbc_xt_translation,
-	pckbc_send_devcmd,
-	pckbc_poll_data1,
-	pckbc_slot_enable,
-	pckbc_intr_establish,
-	pckbc_set_poll
+static const struct pckbport_accessops pckbc_ops = {
+	.t_xt_translation = pckbc_xt_translation,
+	.t_send_devcmd = pckbc_send_devcmd,
+	.t_poll_data1 = pckbc_poll_data1,
+	.t_slot_enable = pckbc_slot_enable,
+	.t_intr_establish = pckbc_intr_establish,
+	.t_set_poll = pckbc_set_poll,
 };
 
 #define	KBD_DELAY	DELAY(8)
