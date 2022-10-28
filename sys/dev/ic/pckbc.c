@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.63 2022/10/28 23:40:37 riastradh Exp $ */
+/* $NetBSD: pckbc.c,v 1.64 2022/10/28 23:44:38 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.63 2022/10/28 23:40:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.64 2022/10/28 23:44:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,27 +311,23 @@ pckbc_attach(struct pckbc_softc *sc)
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_KBDTEST))
 		return;
-	res = pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
+	res = pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 
 	/*
 	 * Normally, we should get a "0" here.
 	 * But there are keyboard controllers behaving differently.
 	 */
-	if (res == 0 || res == 0xfa || res == 0x01 || res == 0xab) {
-#ifdef PCKBCDEBUG
-		if (res != 0)
-			printf("pckbc: returned %x on kbd slot test\n", res);
-#endif
-		if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
-			cmdbits |= KC8_KENABLE;
-	} else {
+	if (!(res == 0 || res == 0xfa || res == 0x01 || res == 0xab)) {
 		printf("pckbc: kbd port test: %x\n", res);
 		return;
 	}
-#else
+#ifdef PCKBCDEBUG
+	if (res != 0)
+		printf("pckbc: returned %x on kbd slot test\n", res);
+#endif
+#endif /* 0 */
 	if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
 		cmdbits |= KC8_KENABLE;
-#endif /* 0 */
 
 	/*
 	 * Check aux port ok.
