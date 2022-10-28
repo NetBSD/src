@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.37 2022/10/28 23:40:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.37 2022/10/28 23:40:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,9 +137,9 @@ void	pckbd_set_leds(void *, int);
 int	pckbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops pckbd_accessops = {
-	pckbd_enable,
-	pckbd_set_leds,
-	pckbd_ioctl,
+	.enable = pckbd_enable,
+	.set_leds = pckbd_set_leds,
+	.ioctl = pckbd_ioctl,
 };
 
 void	pckbd_cngetc(void *, u_int *, int *);
@@ -147,17 +147,17 @@ void	pckbd_cnpollc(void *, int);
 void	pckbd_cnbell(void *, u_int, u_int, u_int);
 
 const struct wskbd_consops pckbd_consops = {
-	pckbd_cngetc,
-	pckbd_cnpollc,
-	pckbd_cnbell,
+	.getc = pckbd_cngetc,
+	.pollc = pckbd_cnpollc,
+	.bell = pckbd_cnbell,
 };
 
 const struct wskbd_mapdata pckbd_keymapdata = {
-	pckbd_keydesctab,
+	.keydesc = pckbd_keydesctab,
 #ifdef PCKBD_LAYOUT
-	PCKBD_LAYOUT,
+	.layout = PCKBD_LAYOUT,
 #else
-	KB_US,
+	.layout = KB_US,
 #endif
 };
 
