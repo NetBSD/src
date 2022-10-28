@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.323 2022/07/06 06:31:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.324 2022/10/28 01:10:41 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.323 2022/07/06 06:31:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324 2022/10/28 01:10:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1001,7 +1001,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (error == IXGBE_ERR_SFP_NOT_PRESENT)
 		error = IXGBE_SUCCESS;
 	else if (error == IXGBE_ERR_SFP_NOT_SUPPORTED) {
-		aprint_error_dev(dev, "Unsupported SFP+ module detected!\n");
+		aprint_error_dev(dev,
+		    "Unsupported SFP+ module type was detected.\n");
 		unsupported_sfp = true;
 		error = IXGBE_SUCCESS;
 	} else if (error) {
