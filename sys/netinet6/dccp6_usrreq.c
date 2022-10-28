@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.13 2022/10/28 05:20:08 ozaki-r Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.14 2022/10/28 05:26:29 ozaki-r Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.13 2022/10/28 05:20:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.14 2022/10/28 05:26:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -162,7 +162,7 @@ dccp6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		return EINVAL;
 	}
 	INP_LOCK(inp);
-	if (inp->inp_faddr6.s_addr != INADDR_ANY) {
+	if (in6p_faddr(inp).s_addr != INADDR_ANY) {
 		INP_UNLOCK(inp);
 		INP_INFO_WUNLOCK(&dccpbinfo);
 		return EISCONN;
@@ -174,7 +174,7 @@ dccp6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	if (inp == 0) {
 		return EINVAL;
 	}
-	if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
+	if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp))) {
 		return EISCONN;
 	}
 
