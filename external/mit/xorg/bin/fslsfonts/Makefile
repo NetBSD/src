@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2022/10/16 23:38:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2022/10/28 09:43:58 wiz Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fslsfonts
 
-CPPFLAGS+=	-DHAVE_REALLOCARRAY -D_OPENBSD_SOURCE
+CPPFLAGS+=	-DHAVE_REALLOCARRAY
 
 LDADD+=	-lFS
 DPADD+=	${LIBFS}
