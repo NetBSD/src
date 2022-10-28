@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2022/10/23 07:04:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.144 2022/10/28 06:22:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2022/10/23 07:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2022/10/28 06:22:26 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -199,7 +199,6 @@ static int _pmap_get_pdp(struct pmap *, vaddr_t, bool, int, paddr_t *,
     struct vm_page **);
 
 static struct pmap kernel_pmap __cacheline_aligned;
-
 struct pmap * const kernel_pmap_ptr = &kernel_pmap;
 
 #if defined(EFI_RUNTIME)
@@ -2873,7 +2872,6 @@ kvtopte(vaddr_t va)
 }
 
 #ifdef DDB
-
 void
 pmap_db_pmap_print(struct pmap *pm,
     void (*pr)(const char *, ...) __printflike(1, 2))
@@ -2886,4 +2884,3 @@ pmap_db_pmap_print(struct pmap *pm,
 	pr(" pm_activated  = %d\n\n", pm->pm_activated);
 }
 #endif /* DDB */
-
