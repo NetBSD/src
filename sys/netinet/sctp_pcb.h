@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.5 2022/05/24 20:50:20 andvar Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.6 2022/10/28 05:20:08 ozaki-r Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -41,6 +41,7 @@
  * we would not allocate enough for Net/Open BSD :-<
  */
 #include <net/if.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6protosw.h>
@@ -287,7 +288,7 @@ struct sctp_inpcb {
 	 */
 	union {
 		struct inpcb inp;
-		char align[(sizeof(struct in6pcb) + SCTP_ALIGNM1) &
+		char align[(sizeof(struct inpcb) + SCTP_ALIGNM1) &
 			  ~SCTP_ALIGNM1];
 	} ip_inp;
 	LIST_ENTRY(sctp_inpcb) sctp_list;	/* lists all endpoints */
@@ -750,6 +751,42 @@ sctp_initiate_iterator(asoc_func af, uint32_t, uint32_t, void *, uint32_t,
 
 void in6_sin6_2_sin (struct sockaddr_in *,
                             struct sockaddr_in6 *sin6);
+
+#ifdef __NetBSD__
+#ifndef in6pcb
+#define in6pcb		inpcb
+#endif
+#ifndef sotoin6pcb
+#define sotoin6pcb      sotoinpcb
+#endif
+#ifndef in6p_flags
+#define in6p_flags	inp_flags
+#endif
+#ifndef in6p_af
+#define in6p_af		inp_af
+#endif
+#ifndef in6p_cksum
+#define in6p_cksum	inp_cksum6
+#endif
+#ifndef in6p_hops
+#define in6p_hops	inp_hops6
+#endif
+#ifndef in6p_flowinfo
+#define in6p_flowinfo	inp_flowinfo
+#endif
+#ifndef in6p_outputopts
+#define in6p_outputopts	inp_outputopts6
+#endif
+#ifndef in6p_moptions
+#define in6p_moptions	inp_moptions6
+#endif
+#ifndef inpcb_hdr
+#define inpcb_hdr	inpcb
+#endif
+#ifndef sp_inph
+#define sp_inph		sp_inp
+#endif
+#endif
 
 #endif /* _KERNEL */
 #endif /* !__SCTP_PCB_H__ */

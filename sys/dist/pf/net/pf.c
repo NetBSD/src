@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.84 2020/08/10 10:59:34 rin Exp $	*/
+/*	$NetBSD: pf.c,v 1.85 2022/10/28 05:20:08 ozaki-r Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.84 2020/08/10 10:59:34 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.85 2022/10/28 05:20:08 ozaki-r Exp $");
 
 #include "pflog.h"
 
@@ -2758,11 +2758,8 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	struct inpcbtable	*tb;
 	struct inpcb		*inp = NULL;
 	struct socket		*so = NULL;
-#if defined(__NetBSD__) && defined(INET6)
-	struct in6pcb		*in6p = NULL;
-#else
 #define in6p inp
-#endif /* __NetBSD__ && INET6 */
+#define in6p_socket inp_socket
 
 	if (pd == NULL)
 		return (-1);
