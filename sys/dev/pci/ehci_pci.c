@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.74 2022/03/13 11:29:21 riastradh Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.75 2022/10/28 21:56:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.74 2022/03/13 11:29:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.75 2022/10/28 21:56:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf, sizeof(intrbuf));
+	pci_intr_setattr(pa->pa_pc, &sc->sc_pihp[0], PCI_INTR_MPSAFE, true);
 	sc->sc_ih = pci_intr_establish_xname(pc, sc->sc_pihp[0], IPL_USB,
 	    ehci_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
