@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.39 2022/10/15 11:07:38 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.40 2022/10/28 07:16:34 skrll Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -47,7 +47,6 @@ file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
 
 # EFI support
-defflag	opt_efi.h		EFI_RUNTIME
 file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # PMAP options

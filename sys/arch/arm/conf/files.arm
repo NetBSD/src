@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.166 2022/04/02 11:16:07 skrll Exp $
+#	$NetBSD: files.arm,v 1.167 2022/10/28 07:16:34 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -109,7 +109,6 @@ file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
 
 # EFI support
-defflag	opt_efi.h		EFI_RUNTIME
 file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # New PMAP options
