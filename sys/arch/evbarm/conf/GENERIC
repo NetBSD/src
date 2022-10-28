@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.110 2022/10/27 09:41:28 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.111 2022/10/28 20:37:47 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -185,7 +185,6 @@ sunxisramc* 	at fdt? pass 4		# SRAM controller
 imxocotp0 	at fdt? pass 2		# On-Chip OTP Controller
 syscon*		at fdt? pass 1		# Generic System Controller
 tisysc*		at fdt? pass 2		# TI sysc interconnect
-#zynqslcr* 	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
 a9ptmr* 	at fdt? pass 2		# ARM Cortex A5/A9 Private Timer
