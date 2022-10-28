@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.23 2022/10/28 05:20:08 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.24 2022/10/28 05:26:29 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.23 2022/10/28 05:20:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.24 2022/10/28 05:26:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -443,8 +443,8 @@ dccp_input(struct mbuf *m, int off, int proto)
 #ifdef INET6
 		if (isipv6) {
 			inp = sotoinpcb(so);
-			inp->inp_laddr6 = ip6->ip6_dst;
-			inp->inp_faddr6 = ip6->ip6_src;
+			in6p_laddr(inp) = ip6->ip6_dst;
+			in6p_faddr(inp) = ip6->ip6_src;
 			inp->inp_lport = dh->dh_dport;
 			inp->inp_fport = dh->dh_sport;
 			in_pcbstate(inp, INP_CONNECTED);
@@ -452,8 +452,8 @@ dccp_input(struct mbuf *m, int off, int proto)
 #endif
 		{
 			inp = sotoinpcb(so);
-			inp->inp_laddr = ip->ip_dst;
-			inp->inp_faddr = ip->ip_src;
+			in4p_laddr(inp) = ip->ip_dst;
+			in4p_faddr(inp) = ip->ip_src;
 			inp->inp_lport = dh->dh_dport;
 			inp->inp_fport = dh->dh_sport;
 		}
@@ -1353,12 +1353,12 @@ again:
 		ip6 = mtod(m, struct ip6_hdr *);
 		dh = (struct dccphdr *)(ip6 + 1);
 		ip6->ip6_flow = (ip6->ip6_flow & ~IPV6_FLOWINFO_MASK) |
-			(inp->inp_flowinfo & IPV6_FLOWINFO_MASK);
+			(in6p_flowinfo(inp) & IPV6_FLOWINFO_MASK);
 		ip6->ip6_vfc = (ip6->ip6_vfc & ~IPV6_VERSION_MASK) |
 			 (IPV6_VERSION & IPV6_VERSION_MASK);
 		ip6->ip6_nxt = IPPROTO_DCCP;
-		ip6->ip6_src = inp->inp_laddr6;
-		ip6->ip6_dst = inp->inp_faddr6;
+		ip6->ip6_src = in6p_laddr(inp);
+		ip6->ip6_dst = in6p_faddr(inp);
 	} else 
 #endif
 	{
@@ -1366,8 +1366,8 @@ again:
 		dh = (struct dccphdr *)(ip + 1);
 		memset(ip, 0, sizeof(struct ip));
 		ip->ip_p = IPPROTO_DCCP;
-		ip->ip_src = inp->inp_laddr;
-		ip->ip_dst = inp->inp_faddr;
+		ip->ip_src = in4p_laddr(inp);
+		ip->ip_dst = in4p_faddr(inp);
 	}
 	dlh = (struct dccplhdr *)dh;
 
@@ -1507,7 +1507,7 @@ again:
 	if (isipv6) {
 		DCCP_DEBUG((LOG_INFO, "Calling ip_output6, mbuf->m_len = %u, mbuf->m_pkthdr.len = %u\n", m->m_len, m->m_pkthdr.len));
 
-		error = ip6_output(m, inp->inp_outputopts6, &inp->inp_route,
+		error = ip6_output(m, in6p_outputopts(inp), &inp->inp_route,
 		    (inp->inp_socket->so_options & SO_DONTROUTE), NULL, NULL,
 		    NULL);
 	} else
@@ -1705,7 +1705,7 @@ dccp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		return EINVAL;
 	}
 	INP_LOCK(inp);
-	if (inp->inp_faddr.s_addr != INADDR_ANY) {
+	if (in4p_faddr(inp).s_addr != INADDR_ANY) {
 		INP_UNLOCK(inp);
 		INP_INFO_WUNLOCK(&dccpbinfo);
 		return EISCONN;
@@ -1850,7 +1850,7 @@ dccp_disconnect(struct socket *so)
 		return EINVAL;
 	}
 	INP_LOCK(inp);
-	if (inp->inp_faddr.s_addr == INADDR_ANY) {
+	if (in4p_faddr(inp).s_addr == INADDR_ANY) {
 		INP_INFO_WUNLOCK(&dccpbinfo);
 		INP_UNLOCK(inp);
 		return ENOTCONN;
@@ -2130,10 +2130,10 @@ dccp_newdccpcb(int family, void *aux)
 	inp->inp_ppcb = dp;
 	switch (family) {
 	case PF_INET:
-		inp->inp_ip.ip_ttl = ip_defttl;
+		in4p_ip(inp).ip_ttl = ip_defttl;
 		break;
 	case PF_INET6:
-		inp->inp_ip6.ip6_hlim = in6_selecthlim_rt(inp);
+		in6p_ip6(inp).ip6_hlim = in6_selecthlim_rt(inp);
 		break;
 	}
 	

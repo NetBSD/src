@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.22 2020/04/27 19:33:48 rjs Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.23 2022/10/28 05:26:29 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.22 2020/04/27 19:33:48 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.23 2022/10/28 05:26:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -234,7 +234,7 @@ sctp_skip_csum:
 	/*
 	 * Check AH/ESP integrity.
 	 */
-	if (ipsec_used && ipsec_in_reject(m, (struct in6pcb *)in6p_ip)) {
+	if (ipsec_used && ipsec_in_reject(m, in6p_ip)) {
 /* XXX */
 #if 0
 		/* FIX ME: need to find right stat */
@@ -262,9 +262,9 @@ sctp_skip_csum:
 		ip6_savecontrol(in6p_ip, m, &opts, NULL);
 #endif
 #elif defined(__NetBSD__)
-		ip6_savecontrol((struct in6pcb *)in6p_ip, &opts, ip6, m);
+		ip6_savecontrol(in6p_ip, &opts, ip6, m);
 #else
-		ip6_savecontrol((struct in6pcb *)in6p_ip, m, &opts);
+		ip6_savecontrol(in6p_ip, m, &opts);
 #endif
 	}
 
@@ -483,8 +483,7 @@ sctp6_ctlinput(int cmd, const struct sockaddr *pktdst, void *d)
 			}
 		} else {
 			if (PRC_IS_REDIRECT(cmd) && inp) {
-				in6_rtchange((struct in6pcb *)inp,
-					     inet6ctlerrmap[cmd]);
+				in6_rtchange((struct inpcb *)inp, inet6ctlerrmap[cmd]);
 			}
 			if (inp) {
 				/* reduce inp's ref-count */
