@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2022/09/09 03:46:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2022/10/28 09:43:58 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,6 @@ INCS=	FSlib.h
 INCSDIR=${X11INCDIR}/X11/fonts
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts \
-		-D_OPENBSD_SOURCE \
 		-DHAVE_REALLOCARRAY \
 		-DHAVE_STRNLEN \
 		-DHAVE_STRLCPY \
