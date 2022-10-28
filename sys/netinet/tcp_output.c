@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.215 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.216 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.215 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.216 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -276,16 +276,16 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #endif
 	} else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - hdrlen;
-	else if (inp && tp->t_mtudisc)
+	else if (inp->inp_af == AF_INET && tp->t_mtudisc)
 		size = ifp->if_mtu - hdrlen;
-	else if (inp && in_localaddr(inp->inp_faddr))
+	else if (inp->inp_af == AF_INET && in_localaddr(in4p_faddr(inp)))
 		size = ifp->if_mtu - hdrlen;
 #ifdef INET6
 	else if (inp->inp_af == AF_INET6) {
-		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
+		if (IN6_IS_ADDR_V4MAPPED(&in6p_faddr(inp))) {
 			/* mapped addr case */
 			struct in_addr d;
-			memcpy(&d, &inp->inp_faddr6.s6_addr32[3], sizeof(d));
+			memcpy(&d, &in6p_faddr(inp).s6_addr32[3], sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - hdrlen;
 		} else {
@@ -619,11 +619,11 @@ tcp_output(struct tcpcb *tp)
 			 */
 			int ss = tcp_init_win;
 			if (tp->t_inpcb->inp_af == AF_INET &&
-			    in_localaddr(tp->t_inpcb->inp_faddr))
+			    in_localaddr(in4p_faddr(tp->t_inpcb)))
 				ss = tcp_init_win_local;
 #ifdef INET6
 			else if (tp->t_inpcb->inp_af == AF_INET6 &&
-			    in6_localaddr(&tp->t_inpcb->inp_faddr6))
+			    in6_localaddr(&in6p_faddr(tp->t_inpcb)))
 				ss = tcp_init_win_local;
 #endif
 			tp->snd_cwnd = uimin(tp->snd_cwnd,
@@ -1541,8 +1541,8 @@ timer:
 		ip->ip_len = htons(m->m_pkthdr.len);
 		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb->inp_af == AF_INET) {
-			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
-			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos | ecn_tos;
+			ip->ip_ttl = in4p_ip(tp->t_inpcb).ip_ttl;
+			ip->ip_tos = in4p_ip(tp->t_inpcb).ip_tos | ecn_tos;
 		}
 #ifdef INET6
 		else if (tp->t_inpcb->inp_af == AF_INET6) {
@@ -1579,7 +1579,7 @@ timer:
 	    {
 		struct mbuf *opts;
 
-		if (tp->t_inpcb && tp->t_family == AF_INET)
+		if (tp->t_inpcb->inp_af == AF_INET)
 			opts = tp->t_inpcb->inp_options;
 		else
 			opts = NULL;
@@ -1593,8 +1593,8 @@ timer:
 	    {
 		struct ip6_pktopts *opts;
 
-		if (tp->t_inpcb && tp->t_family == AF_INET6)
-			opts = tp->t_inpcb->inp_outputopts6;
+		if (tp->t_inpcb->inp_af == AF_INET6)
+			opts = in6p_outputopts(tp->t_inpcb);
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,

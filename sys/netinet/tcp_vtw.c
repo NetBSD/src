@@ -121,7 +121,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.22 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.23 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1900,8 +1900,8 @@ vtw_add(int af, struct tcpcb *tp)
 			struct inpcb	*inp = tp->t_inpcb;
 			vtw_v4_t	*v4  = (void*)vtw;
 
-			v4->faddr = inp->inp_faddr.s_addr;
-			v4->laddr = inp->inp_laddr.s_addr;
+			v4->faddr = in4p_faddr(inp).s_addr;
+			v4->laddr = in4p_laddr(inp).s_addr;
 			v4->fport = inp->inp_fport;
 			v4->lport = inp->inp_lport;
 
@@ -1922,14 +1922,14 @@ vtw_add(int af, struct tcpcb *tp)
 			if (enable & 4) {
 				KASSERT(vtw_lookup_hash_v4
 					(ctl
-					 , inp->inp_faddr.s_addr, inp->inp_fport
-					 , inp->inp_laddr.s_addr, inp->inp_lport
+					 , in4p_faddr(inp).s_addr, inp->inp_fport
+					 , in4p_laddr(inp).s_addr, inp->inp_lport
 					 , 0)
 					== vtw);
 				KASSERT(vtw_lookup_hash_v4
 					(ctl
-					 , inp->inp_faddr.s_addr, inp->inp_fport
-					 , inp->inp_laddr.s_addr, inp->inp_lport
+					 , in4p_faddr(inp).s_addr, inp->inp_fport
+					 , in4p_laddr(inp).s_addr, inp->inp_lport
 					 , 1));
 			}
 			/* Immediate port iterator functionality check: not wild
@@ -1939,7 +1939,7 @@ vtw_add(int af, struct tcpcb *tp)
 				struct vestigial_inpcb res;
 				int cnt = 0;
 
-				it = tcp_init_ports_v4(inp->inp_laddr
+				it = tcp_init_ports_v4(in4p_laddr(inp)
 						       , inp->inp_lport, 0);
 
 				while (tcp_next_port_v4(it, &res)) {
@@ -1972,8 +1972,8 @@ vtw_add(int af, struct tcpcb *tp)
 			struct inpcb	*inp = tp->t_inpcb;
 			vtw_v6_t	*v6  = (void*)vtw;
 
-			v6->faddr = inp->inp_faddr6;
-			v6->laddr = inp->inp_laddr6;
+			v6->faddr = in6p_faddr(inp);
+			v6->laddr = in6p_laddr(inp);
 			v6->fport = inp->inp_fport;
 			v6->lport = inp->inp_lport;
 
@@ -1992,14 +1992,14 @@ vtw_add(int af, struct tcpcb *tp)
 			 */
 			if (enable & 4) {
 				KASSERT(vtw_lookup_hash_v6(ctl
-					 , &inp->inp_faddr6, inp->inp_fport
-					 , &inp->inp_laddr6, inp->inp_lport
+					 , &in6p_faddr(inp), inp->inp_fport
+					 , &in6p_laddr(inp), inp->inp_lport
 					 , 0)
 					== vtw);
 				KASSERT(vtw_lookup_hash_v6
 					(ctl
-					 , &inp->inp_faddr6, inp->inp_fport
-					 , &inp->inp_laddr6, inp->inp_lport
+					 , &in6p_faddr(inp), inp->inp_fport
+					 , &in6p_laddr(inp), inp->inp_lport
 					 , 1));
 			}
 			/* Immediate port iterator functionality check: not wild
@@ -2009,7 +2009,7 @@ vtw_add(int af, struct tcpcb *tp)
 				struct vestigial_inpcb res;
 				int cnt = 0;
 
-				it = tcp_init_ports_v6(&inp->inp_laddr6
+				it = tcp_init_ports_v6(&in6p_laddr(inp)
 						       , inp->inp_lport, 0);
 
 				while (tcp_next_port_v6(it, &res)) {

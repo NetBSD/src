@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.89 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.90 2022/10/28 05:25:36 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.89 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.90 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -811,8 +811,8 @@ out:
 int
 in6_selecthlim(struct inpcb *inp, struct ifnet *ifp)
 {
-	if (inp && inp->inp_hops6 >= 0)
-		return (inp->inp_hops6);
+	if (inp && in6p_hops6(inp) >= 0)
+		return in6p_hops6(inp);
 	else if (ifp)
 		return (ND_IFINFO(ifp)->chlim);
 	else

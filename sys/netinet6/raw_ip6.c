@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.179 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.180 2022/10/28 05:25:36 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.179 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.180 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -191,16 +191,16 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	TAILQ_FOREACH(inp, &raw6cbtable.inpt_queue, inp_queue) {
 		if (inp->inp_af != AF_INET6)
 			continue;
-		if (inp->inp_ip6.ip6_nxt &&
-		    inp->inp_ip6.ip6_nxt != proto)
+		if (in6p_ip6(inp).ip6_nxt &&
+		    in6p_ip6(inp).ip6_nxt != proto)
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &ip6->ip6_dst))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) &&
+		    !IN6_ARE_ADDR_EQUAL(&in6p_laddr(inp), &ip6->ip6_dst))
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, &ip6->ip6_src))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp)) &&
+		    !IN6_ARE_ADDR_EQUAL(&in6p_faddr(inp), &ip6->ip6_src))
 			continue;
-		if (inp->inp_cksum6 != -1) {
+		if (in6p_cksum(inp) != -1) {
 			RIP6_STATINC(RIP6_STAT_ISUM);
 			if (in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
@@ -323,8 +323,8 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		}
 #endif
 
-		if (inp && inp->inp_ip6.ip6_nxt &&
-		    inp->inp_ip6.ip6_nxt == nxt)
+		if (inp && in6p_ip6(inp).ip6_nxt &&
+		    in6p_ip6(inp).ip6_nxt == nxt)
 			valid++;
 
 		/*
@@ -375,13 +375,13 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	dst = &dstsock->sin6_addr;
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
-		    inp->inp_outputopts6,
+		    in6p_outputopts(inp),
 		    kauth_cred_get(), so->so_proto->pr_protocol)) != 0) {
 			goto bad;
 		}
 		optp = &opt;
 	} else
-		optp = inp->inp_outputopts6;
+		optp = in6p_outputopts(inp);
 
 	/*
 	 * Check and convert scope zone ID into internal form.
@@ -428,8 +428,8 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	/*
 	 * Source address selection.
 	 */
-	error = in6_selectsrc(dstsock, optp, inp->inp_moptions6,
-	    &inp->inp_route, &inp->inp_laddr6, &oifp, &psref, &ip6->ip6_src);
+	error = in6_selectsrc(dstsock, optp, in6p_moptions(inp),
+	    &inp->inp_route, &in6p_laddr(inp), &oifp, &psref, &ip6->ip6_src);
 	if (error != 0)
 		goto bad;
 
@@ -449,18 +449,18 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	ip6->ip6_dst = dstsock->sin6_addr;
 
 	/* fill in the rest of the IPv6 header fields */
-	ip6->ip6_flow = inp->inp_flowinfo & IPV6_FLOWINFO_MASK;
+	ip6->ip6_flow = in6p_flowinfo(inp) & IPV6_FLOWINFO_MASK;
 	ip6->ip6_vfc  &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc  |= IPV6_VERSION;
 	/* ip6_plen will be filled in ip6_output, so not fill it here. */
-	ip6->ip6_nxt   = inp->inp_ip6.ip6_nxt;
+	ip6->ip6_nxt   = in6p_ip6(inp).ip6_nxt;
 	ip6->ip6_hlim = in6_selecthlim(inp, oifp);
 
 	if_put(oifp, &psref);
 	oifp = NULL;
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
-	    inp->inp_cksum6 != -1) {
+	    in6p_cksum(inp) != -1) {
 		const uint8_t nxt = ip6->ip6_nxt;
 		int off;
 		u_int16_t sum;
@@ -469,7 +469,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
 			off = offsetof(struct icmp6_hdr, icmp6_cksum);
 		else
-			off = inp->inp_cksum6;
+			off = in6p_cksum(inp);
 		if (plen < off + 1) {
 			error = EINVAL;
 			goto bad;
@@ -496,7 +496,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		struct ifnet *ret_oifp = NULL;
 
 		error = ip6_output(m, optp, &inp->inp_route, 0,
-		    inp->inp_moptions6, inp, &ret_oifp);
+		    in6p_moptions(inp), inp, &ret_oifp);
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 			if (ret_oifp)
 				icmp6_ifoutstat_inc(ret_oifp, type, code);
@@ -604,11 +604,11 @@ rip6_attach(struct socket *so, int proto)
 	}
 	splx(s);
 	inp = sotoinpcb(so);
-	inp->inp_ip6.ip6_nxt = proto;
-	inp->inp_cksum6 = -1;
+	in6p_ip6(inp).ip6_nxt = proto;
+	in6p_cksum(inp) = -1;
 
-	inp->inp_icmp6filt = kmem_alloc(sizeof(struct icmp6_filter), KM_SLEEP);
-	ICMP6_FILTER_SETPASSALL(inp->inp_icmp6filt);
+	in6p_icmp6filt(inp) = kmem_alloc(sizeof(struct icmp6_filter), KM_SLEEP);
+	ICMP6_FILTER_SETPASSALL(in6p_icmp6filt(inp));
 	KASSERT(solocked(so));
 	return error;
 }
@@ -625,9 +625,9 @@ rip6_detach(struct socket *so)
 		ip6_mrouter_done();
 	}
 	/* xxx: RSVP */
-	if (inp->inp_icmp6filt != NULL) {
-		kmem_free(inp->inp_icmp6filt, sizeof(struct icmp6_filter));
-		inp->inp_icmp6filt = NULL;
+	if (in6p_icmp6filt(inp) != NULL) {
+		kmem_free(in6p_icmp6filt(inp), sizeof(struct icmp6_filter));
+		in6p_icmp6filt(inp) = NULL;
 	}
 	in_pcbdetach(inp);
 }
@@ -679,7 +679,7 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		goto out;
 	}
 
-	inp->inp_laddr6 = addr->sin6_addr;
+	in6p_laddr(inp) = addr->sin6_addr;
 	error = 0;
 out:
 	pserialize_read_exit(s);
@@ -732,9 +732,9 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 
 	bound = curlwp_bind();
 	/* Source address selection. XXX: need pcblookup? */
-	error = in6_selectsrc(addr, inp->inp_outputopts6,
-	    inp->inp_moptions6, &inp->inp_route,
-	    &inp->inp_laddr6, &ifp, &psref, &in6a);
+	error = in6_selectsrc(addr, in6p_outputopts(inp),
+	    in6p_moptions(inp), &inp->inp_route,
+	    &in6p_laddr(inp), &ifp, &psref, &in6a);
 	if (error != 0)
 		goto out;
 	/* XXX: see above */
@@ -742,8 +742,8 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
 		goto out;
 	}
-	inp->inp_laddr6 = in6a;
-	inp->inp_faddr6 = addr->sin6_addr;
+	in6p_laddr(inp) = in6a;
+	in6p_faddr(inp) = addr->sin6_addr;
 	soisconnected(so);
 out:
 	if_put(ifp, &psref);
@@ -770,7 +770,7 @@ rip6_disconnect(struct socket *so)
 	if ((so->so_state & SS_ISCONNECTED) == 0)
 		return ENOTCONN;
 
-	inp->inp_faddr6 = in6addr_any;
+	in6p_faddr(inp) = in6addr_any;
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 	return 0;
 }
@@ -875,7 +875,7 @@ rip6_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			goto release;
 		}
 		/* XXX */
-		sockaddr_in6_init(&tmp, &inp->inp_faddr6, 0, 0, 0);
+		sockaddr_in6_init(&tmp, &in6p_faddr(inp), 0, 0, 0);
 		dst = &tmp;
 	} else {
 		if (nam == NULL) {

@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.151 2022/10/28 05:18:39 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.152 2022/10/28 05:25:36 ozaki-r Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.151 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.152 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -474,8 +474,8 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 
 			if (inp->inp_lport != dport)
 				continue;
-			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
-				if (!IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6,
+			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp))) {
+				if (!IN6_ARE_ADDR_EQUAL(&in6p_laddr(inp),
 				    dst6))
 					continue;
 			} else {
@@ -483,8 +483,8 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 				    (inp->inp_flags & IN6P_IPV6_V6ONLY))
 					continue;
 			}
-			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
-				if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
+			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp))) {
+				if (!IN6_ARE_ADDR_EQUAL(&in6p_faddr(inp),
 				    &src6) || inp->inp_fport != sport)
 					continue;
 			} else {
@@ -788,11 +788,11 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			panic("%s: control but no lwp", __func__);
 		}
 		if ((error = ip6_setpktopts(control, &opt,
-		    inp->inp_outputopts6, l->l_cred, IPPROTO_UDP)) != 0)
+		    in6p_outputopts(inp), l->l_cred, IPPROTO_UDP)) != 0)
 			goto release;
 		optp = &opt;
 	} else
-		optp = inp->inp_outputopts6;
+		optp = in6p_outputopts(inp);
 
 
 	if (sin6) {
@@ -808,7 +808,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			goto release;
 		}
 
-		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp))) {
 			/* how about ::ffff:0.0.0.0 case? */
 			error = EISCONN;
 			goto release;
@@ -832,8 +832,8 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 				error = EINVAL;
 				goto release;
 			}
-			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
-			    !IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6)) {
+			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) &&
+			    !IN6_IS_ADDR_V4MAPPED(&in6p_laddr(inp))) {
 				/*
 				 * when remote addr is an IPv4-mapped address,
 				 * local addr should not be an IPv6 address,
@@ -852,9 +852,9 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			int bound = curlwp_bind();
 
 			error = in6_selectsrc(sin6, optp,
-			    inp->inp_moptions6,
+			    in6p_moptions(inp),
 			    &inp->inp_route,
-			    &inp->inp_laddr6, &oifp, &psref, &_laddr);
+			    &in6p_laddr(inp), &oifp, &psref, &_laddr);
 			if (error)
 				laddr = NULL;
 			else
@@ -875,7 +875,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			 * udp_output() directly in this case, and thus we'll
 			 * never see this path.
 			 */
-			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
+			if (IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp))) {
 				struct sockaddr_in sin_dst;
 				struct in_addr ina;
 				struct in_ifaddr *ia4;
@@ -904,7 +904,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 				laddr = &laddr_mapped;
 			} else
 			{
-				laddr = &inp->inp_laddr6;	/* XXX */
+				laddr = &in6p_laddr(inp);	/* XXX */
 			}
 		}
 		if (laddr == NULL) {
@@ -928,16 +928,16 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			error = in6_pcbsetport(&lsin6, inp, l);
 
 			if (error) {
-				inp->inp_laddr6 = in6addr_any;
+				in6p_laddr(inp) = in6addr_any;
 				goto release;
 			}
 		}
 	} else {
-		if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp))) {
 			error = ENOTCONN;
 			goto release;
 		}
-		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
+		if (IN6_IS_ADDR_V4MAPPED(&in6p_faddr(inp))) {
 			if ((inp->inp_flags & IN6P_IPV6_V6ONLY))
 			{
 				/*
@@ -954,8 +954,8 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			} else
 				af = AF_INET;
 		}
-		laddr = &inp->inp_laddr6;
-		faddr = &inp->inp_faddr6;
+		laddr = &in6p_laddr(inp);
+		faddr = &in6p_faddr(inp);
 		fport = inp->inp_fport;
 	}
 
@@ -987,7 +987,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 	switch (af) {
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_flow	= inp->inp_flowinfo & IPV6_FLOWINFO_MASK;
+		ip6->ip6_flow	= in6p_flowinfo(inp) & IPV6_FLOWINFO_MASK;
 		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc 	|= IPV6_VERSION;
 #if 0		/* ip6_plen will be filled in ip6_output. */
@@ -1005,7 +1005,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 
 		UDP6_STATINC(UDP6_STAT_OPACKETS);
 		error = ip6_output(m, optp, &inp->inp_route, 0,
-		    inp->inp_moptions6, inp, NULL);
+		    in6p_moptions(inp), inp, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
@@ -1084,7 +1084,7 @@ udp6_attach(struct socket *so, int proto)
 	}
 
 	inp = sotoinpcb(so);
-	inp->inp_cksum6 = -1;	/* just to be sure */
+	in6p_cksum(inp) = -1;	/* just to be sure */
 
 	KASSERT(solocked(so));
 	return 0;
@@ -1147,7 +1147,7 @@ udp6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(solocked(so));
 	KASSERT(inp != NULL);
 
-	if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+	if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp)))
 		return EISCONN;
 	s = splsoftnet();
 	error = in6_pcbconnect(inp, (struct sockaddr_in6 *)nam, l);
@@ -1175,12 +1175,12 @@ udp6_disconnect(struct socket *so)
 	KASSERT(solocked(so));
 	KASSERT(inp != NULL);
 
-	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+	if (IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp)))
 		return ENOTCONN;
 
 	s = splsoftnet();
 	in6_pcbdisconnect(inp);
-	memset((void *)&inp->inp_laddr6, 0, sizeof(inp->inp_laddr6));
+	memset((void *)&in6p_laddr(inp), 0, sizeof(in6p_laddr(inp)));
 	splx(s);
 
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
