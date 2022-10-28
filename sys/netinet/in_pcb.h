@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.72 2022/10/28 05:23:09 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.73 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,42 +104,55 @@ struct inpcb {
 	u_int16_t	inp_fport;	/* foreign port */
 	u_int16_t	inp_lport;	/* local port */
 	int	 	inp_flags;	/* generic IP/datagram flags */
-	union {				/* header prototype. */
-		struct ip inp_ip;
-		struct ip6_hdr inp_ip6;
-	};
-#define	inp_flowinfo	inp_ip6.ip6_flow
 	struct mbuf	*inp_options;	/* IP options */
 	bool		inp_bindportonsend;
 
-	/* We still need both for IPv6 due to v4-mapped addresses */
+	/* We still need it for IPv6 due to v4-mapped addresses */
 	struct ip_moptions *inp_moptions;	/* IPv4 multicast options */
-	struct ip6_moptions *inp_moptions6;	/* IPv6 multicast options */
-
-	union {
-		/* IPv4 only stuffs */
-		struct {
-			int	inp_errormtu;	/* MTU of last xmit status = EMSGSIZE */
-			uint8_t	inp_ip_minttl;
-			struct in_addr	inp_prefsrcip; /* preferred src IP when wild  */
-		};
-		/* IPv6 only stuffs */
-		struct {
-			int	inp_hops6;	/* default IPv6 hop limit */
-			int	inp_cksum6;	/* IPV6_CHECKSUM setsockopt */
-			struct icmp6_filter	*inp_icmp6filt;
-			struct ip6_pktopts	*inp_outputopts6; /* IP6 options for outgoing packets */
-		};
-	};
 
 	pcb_overudp_cb_t	inp_overudp_cb;
 	void		*inp_overudp_arg;
 };
 
-#define	inp_faddr	inp_ip.ip_dst
-#define	inp_laddr	inp_ip.ip_src
-#define inp_faddr6	inp_ip6.ip6_dst
-#define inp_laddr6	inp_ip6.ip6_src
+struct in4pcb {
+	struct inpcb	in4p_pcb;
+	struct ip	in4p_ip;
+	int		in4p_errormtu;	/* MTU of last xmit status = EMSGSIZE */
+	uint8_t		in4p_ip_minttl;
+	struct in_addr	in4p_prefsrcip; /* preferred src IP when wild  */
+};
+
+#define in4p_faddr(inpcb)	(((struct in4pcb *)(inpcb))->in4p_ip.ip_dst)
+#define in4p_laddr(inpcb)	(((struct in4pcb *)(inpcb))->in4p_ip.ip_src)
+#define const_in4p_faddr(inpcb)	(((const struct in4pcb *)(inpcb))->in4p_ip.ip_dst)
+#define const_in4p_laddr(inpcb)	(((const struct in4pcb *)(inpcb))->in4p_ip.ip_src)
+#define in4p_ip(inpcb)		(((struct in4pcb *)(inpcb))->in4p_ip)
+#define in4p_errormtu(inpcb)	(((struct in4pcb *)(inpcb))->in4p_errormtu)
+#define in4p_ip_minttl(inpcb)	(((struct in4pcb *)(inpcb))->in4p_ip_minttl)
+#define in4p_prefsrcip(inpcb)	(((struct in4pcb *)(inpcb))->in4p_prefsrcip)
+
+struct in6pcb {
+	struct inpcb	in6p_pcb;
+	struct ip6_hdr	in6p_ip6;
+	int		in6p_hops;	/* default IPv6 hop limit */
+	int		in6p_cksum;	/* IPV6_CHECKSUM setsockopt */
+	struct icmp6_filter	*in6p_icmp6filt;
+	struct ip6_pktopts	*in6p_outputopts; /* IP6 options for outgoing packets */
+	struct ip6_moptions *in6p_moptions;	/* IPv6 multicast options */
+};
+
+#define in6p_faddr(inpcb)	(((struct in6pcb *)(inpcb))->in6p_ip6.ip6_dst)
+#define in6p_laddr(inpcb)	(((struct in6pcb *)(inpcb))->in6p_ip6.ip6_src)
+#define const_in6p_faddr(inpcb)	(((const struct in6pcb *)(inpcb))->in6p_ip6.ip6_dst)
+#define const_in6p_laddr(inpcb)	(((const struct in6pcb *)(inpcb))->in6p_ip6.ip6_src)
+#define in6p_ip6(inpcb)		(((struct in6pcb *)(inpcb))->in6p_ip6)
+#define in6p_flowinfo(inpcb)	(((struct in6pcb *)(inpcb))->in6p_ip6.ip6_flow)
+#define const_in6p_flowinfo(inpcb)	(((const struct in6pcb *)(inpcb))->in6p_ip6.ip6_flow)
+#define in6p_hops6(inpcb)	(((struct in6pcb *)(inpcb))->in6p_hops)
+#define in6p_cksum(inpcb)	(((struct in6pcb *)(inpcb))->in6p_cksum)
+#define in6p_icmp6filt(inpcb)	(((struct in6pcb *)(inpcb))->in6p_icmp6filt)
+#define in6p_outputopts(inpcb)	(((struct in6pcb *)(inpcb))->in6p_outputopts)
+#define in6p_moptions(inpcb)	(((struct in6pcb *)(inpcb))->in6p_moptions)
 
 LIST_HEAD(inpcbhead, inpcb);
 

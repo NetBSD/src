@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.97 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.98 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.97 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.98 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -330,7 +330,7 @@ tcp_timer_rexmt(void *arg)
 		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
-		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
+		icmpsrc.sin_addr = in4p_faddr(tp->t_inpcb);
 		icmp_mtudisc(&icmp, icmpsrc.sin_addr);
 
 		/*

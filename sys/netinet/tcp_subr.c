@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.292 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.293 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.292 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.293 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -460,8 +460,8 @@ tcp_template(struct tcpcb *tp)
 #ifdef INET6
 		if (inp->inp_af == AF_INET6) {
 			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6)
-			 && IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6))
+			if (IN6_IS_ADDR_V4MAPPED(&in6p_laddr(inp))
+			 && IN6_IS_ADDR_V4MAPPED(&in6p_faddr(inp)))
 				break;
 		}
 #endif
@@ -516,15 +516,15 @@ tcp_template(struct tcpcb *tp)
 		ipov->ih_pr = IPPROTO_TCP;
 		ipov->ih_len = htons(sizeof(struct tcphdr));
 		if (inp->inp_af == AF_INET) {
-			ipov->ih_src = inp->inp_laddr;
-			ipov->ih_dst = inp->inp_faddr;
+			ipov->ih_src = in4p_laddr(inp);
+			ipov->ih_dst = in4p_faddr(inp);
 		}
 #ifdef INET6
 		else if (inp->inp_af == AF_INET6) {
 			/* mapped addr case */
-			bcopy(&inp->inp_laddr6.s6_addr32[3], &ipov->ih_src,
+			bcopy(&in6p_laddr(inp).s6_addr32[3], &ipov->ih_src,
 				sizeof(ipov->ih_src));
-			bcopy(&inp->inp_faddr6.s6_addr32[3], &ipov->ih_dst,
+			bcopy(&in6p_faddr(inp).s6_addr32[3], &ipov->ih_dst,
 				sizeof(ipov->ih_dst));
 		}
 #endif
@@ -549,9 +549,9 @@ tcp_template(struct tcpcb *tp)
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_nxt = IPPROTO_TCP;
 		ip6->ip6_plen = htons(sizeof(struct tcphdr));
-		ip6->ip6_src = inp->inp_laddr6;
-		ip6->ip6_dst = inp->inp_faddr6;
-		ip6->ip6_flow = inp->inp_flowinfo & IPV6_FLOWINFO_MASK;
+		ip6->ip6_src = in6p_laddr(inp);
+		ip6->ip6_dst = in6p_faddr(inp);
+		ip6->ip6_flow = in6p_flowinfo(inp) & IPV6_FLOWINFO_MASK;
 		if (ip6_auto_flowlabel) {
 			ip6->ip6_flow &= ~IPV6_FLOWLABEL_MASK;
 			ip6->ip6_flow |=
@@ -567,8 +567,8 @@ tcp_template(struct tcpcb *tp)
 		 * checksum right before the packet is sent off onto
 		 * the wire.
 		 */
-		n->th_sum = in6_cksum_phdr(&inp->inp_laddr6,
-		    &inp->inp_faddr6, htonl(sizeof(struct tcphdr)),
+		n->th_sum = in6_cksum_phdr(&in6p_laddr(inp),
+		    &in6p_faddr(inp), htonl(sizeof(struct tcphdr)),
 		    htonl(IPPROTO_TCP));
 		break;
 	    }
@@ -823,7 +823,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 	if (tp != NULL && tp->t_inpcb->inp_af == AF_INET) {
 		ro = &tp->t_inpcb->inp_route;
 		KASSERT(family == AF_INET);
-		KASSERT(in_hosteq(ip->ip_dst, tp->t_inpcb->inp_faddr));
+		KASSERT(in_hosteq(ip->ip_dst, in4p_faddr(tp->t_inpcb)));
 	}
 #ifdef INET6
 	else if (tp != NULL && tp->t_inpcb->inp_af == AF_INET6) {
@@ -831,16 +831,16 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 
 #ifdef DIAGNOSTIC
 		if (family == AF_INET) {
-			if (!IN6_IS_ADDR_V4MAPPED(&tp->t_inpcb->inp_faddr6))
+			if (!IN6_IS_ADDR_V4MAPPED(&in6p_faddr(tp->t_inpcb)))
 				panic("tcp_respond: not mapped addr");
 			if (memcmp(&ip->ip_dst,
-			    &tp->t_inpcb->inp_faddr6.s6_addr32[3],
+			    &in6p_faddr(tp->t_inpcb).s6_addr32[3],
 			    sizeof(ip->ip_dst)) != 0) {
 				panic("tcp_respond: ip_dst != in6p_faddr");
 			}
 		} else if (family == AF_INET6) {
 			if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-			    &tp->t_inpcb->inp_faddr6))
+			    &in6p_faddr(tp->t_inpcb)))
 				panic("tcp_respond: ip6_dst != in6p_faddr");
 		} else
 			panic("tcp_respond: address family mismatch");
@@ -967,7 +967,7 @@ tcp_newtcpcb(int family, struct inpcb *inp)
 
 	switch (family) {
 	case AF_INET:
-		inp->inp_ip.ip_ttl = ip_defttl;
+		in4p_ip(inp).ip_ttl = ip_defttl;
 		inp->inp_ppcb = (void *)tp;
 
 		tp->t_inpcb = inp;
@@ -975,7 +975,7 @@ tcp_newtcpcb(int family, struct inpcb *inp)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		inp->inp_ip6.ip6_hlim = in6_selecthlim_rt(inp);
+		in6p_ip6(inp).ip6_hlim = in6_selecthlim_rt(inp);
 		inp->inp_ppcb = (void *)tp;
 
 		tp->t_inpcb = inp;
@@ -1843,7 +1843,7 @@ tcp_established(struct tcpcb *tp)
 		rt = in_pcbrtentry(tp->t_inpcb);
 #endif
 		if (__predict_true(tcp_msl_enable)) {
-			if (tp->t_inpcb->inp_laddr.s_addr == INADDR_LOOPBACK) {
+			if (in4p_laddr(tp->t_inpcb).s_addr == INADDR_LOOPBACK) {
 				tp->t_msl = tcp_msl_loop ? tcp_msl_loop : (TCPTV_MSL >> 2);
 				break;
 			}
@@ -1853,7 +1853,7 @@ tcp_established(struct tcpcb *tp)
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
-			if (in_localaddr(tp->t_inpcb->inp_faddr)) {
+			if (in_localaddr(in4p_faddr(tp->t_inpcb))) {
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
@@ -1874,7 +1874,7 @@ tcp_established(struct tcpcb *tp)
 		if (__predict_true(tcp_msl_enable)) {
 			extern const struct in6_addr in6addr_loopback;
 
-			if (IN6_ARE_ADDR_EQUAL(&tp->t_inpcb->inp_laddr6,
+			if (IN6_ARE_ADDR_EQUAL(&in6p_laddr(tp->t_inpcb),
 			    &in6addr_loopback)) {
 				tp->t_msl = tcp_msl_loop ? tcp_msl_loop : (TCPTV_MSL >> 2);
 				break;
@@ -1885,7 +1885,7 @@ tcp_established(struct tcpcb *tp)
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
-			if (in6_localaddr(&tp->t_inpcb->inp_faddr6)) {
+			if (in6_localaddr(&in6p_faddr(tp->t_inpcb))) {
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
@@ -1977,15 +1977,15 @@ tcp_new_iss(struct tcpcb *tp)
 {
 
 	if (tp->t_inpcb->inp_af == AF_INET) {
-		return tcp_new_iss1(&tp->t_inpcb->inp_laddr,
-		    &tp->t_inpcb->inp_faddr, tp->t_inpcb->inp_lport,
-		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr));
+		return tcp_new_iss1(&in4p_laddr(tp->t_inpcb),
+		    &in4p_faddr(tp->t_inpcb), tp->t_inpcb->inp_lport,
+		    tp->t_inpcb->inp_fport, sizeof(in4p_laddr(tp->t_inpcb)));
 	}
 #ifdef INET6
 	if (tp->t_inpcb->inp_af == AF_INET6) {
-		return tcp_new_iss1(&tp->t_inpcb->inp_laddr6,
-		    &tp->t_inpcb->inp_faddr6, tp->t_inpcb->inp_lport,
-		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr6));
+		return tcp_new_iss1(&in6p_laddr(tp->t_inpcb),
+		    &in6p_faddr(tp->t_inpcb), tp->t_inpcb->inp_lport,
+		    tp->t_inpcb->inp_fport, sizeof(in6p_laddr(tp->t_inpcb)));
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.233 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.234 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.233 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.234 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -573,7 +573,7 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = in6_pcbbind(inp, sin6, l);
 		if (!error) {
 			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6))
+			if (IN6_IS_ADDR_V4MAPPED(&in6p_laddr(inp)))
 				tp->t_family = AF_INET;
 			else
 				tp->t_family = AF_INET6;
@@ -667,7 +667,7 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = in6_pcbconnect(inp, (struct sockaddr_in6 *)nam, l);
 		if (!error) {
 			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6))
+			if (IN6_IS_ADDR_V4MAPPED(&in6p_faddr(inp)))
 				tp->t_family = AF_INET;
 			else
 				tp->t_family = AF_INET6;
@@ -1665,13 +1665,13 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 			in->sin_len = sizeof(*in);
 			in->sin_family = pf;
 			in->sin_port = inp->inp_lport;
-			in->sin_addr = inp->inp_laddr;
+			in->sin_addr = const_in4p_laddr(inp);
 			if (pcb.ki_prstate >= INP_CONNECTED) {
 				in = satosin(&pcb.ki_dst);
 				in->sin_len = sizeof(*in);
 				in->sin_family = pf;
 				in->sin_port = inp->inp_fport;
-				in->sin_addr = inp->inp_faddr;
+				in->sin_addr = const_in4p_faddr(inp);
 			}
 			break;
 #ifdef INET6
@@ -1705,8 +1705,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 			in6->sin6_len = sizeof(*in6);
 			in6->sin6_family = pf;
 			in6->sin6_port = inp->inp_lport;
-			in6->sin6_flowinfo = inp->inp_flowinfo;
-			in6->sin6_addr = inp->inp_laddr6;
+			in6->sin6_flowinfo = const_in6p_flowinfo(inp);
+			in6->sin6_addr = const_in6p_laddr(inp);
 			in6->sin6_scope_id = 0; /* XXX? */
 
 			if (pcb.ki_prstate >= INP_CONNECTED) {
@@ -1714,8 +1714,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 				in6->sin6_len = sizeof(*in6);
 				in6->sin6_family = pf;
 				in6->sin6_port = inp->inp_fport;
-				in6->sin6_flowinfo = inp->inp_flowinfo;
-				in6->sin6_addr = inp->inp_faddr6;
+				in6->sin6_flowinfo = const_in6p_flowinfo(inp);
+				in6->sin6_addr = const_in6p_faddr(inp);
 				in6->sin6_scope_id = 0; /* XXX? */
 			}
 			break;

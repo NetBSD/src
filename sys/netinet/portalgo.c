@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.12 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.13 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.12 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.13 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -260,7 +260,7 @@ check_suitable_port(uint16_t port, struct inpcb *inp, kauth_cred_t cred)
 		if (__BITMAP_ISSET(port, &inet4_reserve))
 			return false;
 
-		sin.sin_addr = inp->inp_laddr;
+		sin.sin_addr = in4p_laddr(inp);
 		pcb = in_pcblookup_port(table, sin.sin_addr, htons(port), 1,
 		    &vestigial);
 
@@ -304,7 +304,7 @@ check_suitable_port(uint16_t port, struct inpcb *inp, kauth_cred_t cred)
 		if (__BITMAP_ISSET(port, &inet6_reserve))
 			return false;
 
-		sin6.sin6_addr = inp->inp_laddr6;
+		sin6.sin6_addr = in6p_laddr(inp);
 		so = inp->inp_socket;
 
 		/* XXX: this is redundant when called from in6_pcbbind */
@@ -521,10 +521,10 @@ Fhash(const struct inpcb *inp)
 	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
-		MD5Update(&f_ctx, (const u_char *)&inp->inp_laddr,
-		    sizeof(inp->inp_laddr));
-		MD5Update(&f_ctx, (const u_char *)&inp->inp_faddr,
-		    sizeof(inp->inp_faddr));
+		MD5Update(&f_ctx, (const u_char *)&const_in4p_laddr(inp),
+		    sizeof(const_in4p_laddr(inp)));
+		MD5Update(&f_ctx, (const u_char *)&const_in4p_faddr(inp),
+		    sizeof(const_in4p_faddr(inp)));
 		MD5Update(&f_ctx, (const u_char *)&inp->inp_fport,
 		    sizeof(inp->inp_fport));
 		break;
@@ -532,10 +532,10 @@ Fhash(const struct inpcb *inp)
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		MD5Update(&f_ctx, (const u_char *)&inp->inp_laddr6,
-		    sizeof(inp->inp_laddr6));
-		MD5Update(&f_ctx, (const u_char *)&inp->inp_faddr6,
-		    sizeof(inp->inp_faddr6));
+		MD5Update(&f_ctx, (const u_char *)&const_in6p_laddr(inp),
+		    sizeof(const_in6p_laddr(inp)));
+		MD5Update(&f_ctx, (const u_char *)&const_in6p_faddr(inp),
+		    sizeof(const_in6p_faddr(inp)));
 		MD5Update(&f_ctx, (const u_char *)&inp->inp_fport,
 		    sizeof(inp->inp_fport));
 		break;
@@ -565,7 +565,7 @@ iscompletetuple(struct inpcb *inp)
 	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
-		if (inp->inp_fport == 0 || in_nullhost(inp->inp_faddr)) {
+		if (inp->inp_fport == 0 || in_nullhost(in4p_faddr(inp))) {
 			DPRINTF("%s fport or faddr missing, delaying port "
 			    "to connect/send\n", __func__);
 			inp->inp_bindportonsend = true;
@@ -578,8 +578,8 @@ iscompletetuple(struct inpcb *inp)
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		if (inp->inp_fport == 0 || memcmp(&inp->inp_faddr6,
-		    &in6addr_any, sizeof(inp->inp_faddr6)) == 0) {
+		if (inp->inp_fport == 0 || memcmp(&in6p_faddr(inp),
+		    &in6addr_any, sizeof(in6p_faddr(inp))) == 0) {
 			DPRINTF("%s fport or faddr missing, delaying port "
 			    "to connect/send\n", __func__);
 			inp->inp_bindportonsend = true;
@@ -783,9 +783,9 @@ portalgo_randport(uint16_t *port, struct inpcb *inp, kauth_cred_t cred)
 #ifdef INET
 	case AF_INET: {
 		char buf[INET_ADDRSTRLEN];
-		DPRINTF("local addr: %s\n", IN_PRINT(buf, &inp->inp_laddr));
+		DPRINTF("local addr: %s\n", IN_PRINT(buf, &in4p_laddr(inp)));
 		DPRINTF("local port: %d\n", inp->inp_lport);
-		DPRINTF("foreign addr: %s\n", IN_PRINT(buf, &inp->inp_faddr));
+		DPRINTF("foreign addr: %s\n", IN_PRINT(buf, &in4p_faddr(inp)));
 		DPRINTF("foreign port: %d\n", inp->inp_fport);
 		break;
 	}
@@ -793,10 +793,10 @@ portalgo_randport(uint16_t *port, struct inpcb *inp, kauth_cred_t cred)
 #ifdef INET6
 	case AF_INET6: {
 		char buf[INET6_ADDRSTRLEN];
-		DPRINTF("local addr: %s\n", IN6_PRINT(buf, &inp->inp_laddr6));
+		DPRINTF("local addr: %s\n", IN6_PRINT(buf, &in6p_laddr(inp)));
 		DPRINTF("local port: %d\n", inp->inp_lport);
 		DPRINTF("foreign addr: %s\n", IN6_PRINT(buf,
-		    &inp->inp_laddr6));
+		    &in6p_laddr(inp)));
 		DPRINTF("foreign port: %d\n", inp->inp_fport);
 		break;
 	}

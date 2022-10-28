@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.253 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.254 2022/10/28 05:25:36 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.253 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.254 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1965,17 +1965,17 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	TAILQ_FOREACH(inp, &raw6cbtable.inpt_queue, inp_queue) {
 		if (inp->inp_af != AF_INET6)
 			continue;
-		if (inp->inp_ip6.ip6_nxt != IPPROTO_ICMPV6)
+		if (in6p_ip6(inp).ip6_nxt != IPPROTO_ICMPV6)
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &ip6->ip6_dst))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) &&
+		    !IN6_ARE_ADDR_EQUAL(&in6p_laddr(inp), &ip6->ip6_dst))
 			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, &ip6->ip6_src))
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp)) &&
+		    !IN6_ARE_ADDR_EQUAL(&in6p_faddr(inp), &ip6->ip6_src))
 			continue;
-		if (inp->inp_icmp6filt &&
+		if (in6p_icmp6filt(inp) &&
 		    ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-		    inp->inp_icmp6filt))
+		    in6p_icmp6filt(inp)))
 			continue;
 
 		if (last == NULL) {
@@ -2755,7 +2755,7 @@ icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_get(sopt, &fil, sizeof(fil));
 			if (error)
 				break;
-			memcpy(inp->inp_icmp6filt, &fil,
+			memcpy(in6p_icmp6filt(inp), &fil,
 			    sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -2771,11 +2771,11 @@ icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			if (inp->inp_icmp6filt == NULL) {
+			if (in6p_icmp6filt(inp) == NULL) {
 				error = EINVAL;
 				break;
 			}
-			error = sockopt_set(sopt, inp->inp_icmp6filt,
+			error = sockopt_set(sopt, in6p_icmp6filt(inp),
 			    sizeof(struct icmp6_filter));
 			break;
 		    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.262 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.263 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.262 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.263 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -533,12 +533,12 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 
 			if (inp->inp_lport != *dport)
 				continue;
-			if (!in_nullhost(inp->inp_laddr)) {
-				if (!in_hosteq(inp->inp_laddr, *dst4))
+			if (!in_nullhost(in4p_laddr(inp))) {
+				if (!in_hosteq(in4p_laddr(inp), *dst4))
 					continue;
 			}
-			if (!in_nullhost(inp->inp_faddr)) {
-				if (!in_hosteq(inp->inp_faddr, *src4) ||
+			if (!in_nullhost(in4p_faddr(inp))) {
+				if (!in_hosteq(in4p_faddr(inp), *src4) ||
 				    inp->inp_fport != *sport)
 					continue;
 			}
@@ -623,7 +623,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Check the minimum TTL for socket.
 		 */
-		if (mtod(m, struct ip *)->ip_ttl < inp->inp_ip_minttl)
+		if (mtod(m, struct ip *)->ip_ttl < in4p_ip_minttl(inp))
 			goto bad;
 
 		udp4_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
@@ -816,7 +816,7 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 	ui = mtod(m, struct udpiphdr *);
 	ui->ui_pr = IPPROTO_UDP;
 	ui->ui_src = pktopts.ippo_laddr.sin_addr;
-	ui->ui_dst = inp->inp_faddr;
+	ui->ui_dst = in4p_faddr(inp);
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = inp->inp_fport;
 	ui->ui_ulen = htons((u_int16_t)len + sizeof(struct udphdr));
@@ -840,8 +840,8 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 		ui->ui_sum = 0;
 
 	((struct ip *)ui)->ip_len = htons(sizeof(struct udpiphdr) + len);
-	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
-	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
+	((struct ip *)ui)->ip_ttl = in4p_ip(inp).ip_ttl;	/* XXX */
+	((struct ip *)ui)->ip_tos = in4p_ip(inp).ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
 
 	flags |= inp->inp_socket->so_options & (SO_DONTROUTE|SO_BROADCAST);
@@ -882,7 +882,7 @@ udp_attach(struct socket *so, int proto)
 		return error;
 	}
 	inp = sotoinpcb(so);
-	inp->inp_ip.ip_ttl = ip_defttl;
+	in4p_ip(inp).ip_ttl = ip_defttl;
 	KASSERT(solocked(so));
 
 	return error;
@@ -976,7 +976,7 @@ udp_disconnect(struct socket *so)
 	/*soisdisconnected(so);*/
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 	in_pcbdisconnect(inp);
-	inp->inp_laddr = zeroin_addr;		/* XXX */
+	in4p_laddr(inp) = zeroin_addr;		/* XXX */
 	in_pcbstate(inp, INP_BOUND);		/* XXX */
 	splx(s);
 
@@ -1087,7 +1087,7 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 
 	s = splsoftnet();
 	if (nam) {
-		laddr = inp->inp_laddr;		/* XXX */
+		laddr = in4p_laddr(inp);		/* XXX */
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
 			error = EISCONN;
 			goto die;
@@ -1106,7 +1106,7 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	control = NULL;
 	if (nam) {
 		in_pcbdisconnect(inp);
-		inp->inp_laddr = laddr;		/* XXX */
+		in4p_laddr(inp) = laddr;		/* XXX */
 		in_pcbstate(inp, INP_BOUND);	/* XXX */
 	}
   die:
