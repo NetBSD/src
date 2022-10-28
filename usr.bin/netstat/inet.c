@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.117 2022/09/21 07:59:19 msaitoh Exp $	*/
+/*	$NetBSD: inet.c,v 1.118 2022/10/28 05:24:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.117 2022/09/21 07:59:19 msaitoh Exp $");
+__RCSID("$NetBSD: inet.c,v 1.118 2022/10/28 05:24:07 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,7 @@ static struct kinfo_pcb *
 getpcblist_kmem(u_long off, const char *name, size_t *len)
 {
 	struct inpcbtable table;
-	struct inpcb_hdr *next, *prev;
+	struct inpcb *next, *prev;
 	struct inpcb inpcb;
 	struct tcpcb tcpcb;
 	struct socket sockb;
@@ -1084,8 +1084,8 @@ tcp_dump(u_long off, const char *name, u_long pcbaddr)
 		printf("State: %d", tcpcb.t_state);
 	else
 		printf("State: %s", tcpstates[tcpcb.t_state]);
-	printf(", flags 0x%x, inpcb 0x%lx, in6pcb 0x%lx\n\n", tcpcb.t_flags,
-	    (u_long)tcpcb.t_inpcb, (u_long)tcpcb.t_in6pcb);
+	printf(", flags 0x%x, inpcb 0x%lx\n\n", tcpcb.t_flags,
+	    (u_long)tcpcb.t_inpcb);
 
 	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcpcb.t_rxtshift,
 	    tcpcb.t_rxtcur, tcpcb.t_dupacks);

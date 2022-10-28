@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.115 2022/06/19 11:31:19 simonb Exp $	*/
+/*	$NetBSD: fstat.c,v 1.116 2022/10/28 05:24:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.115 2022/06/19 11:31:19 simonb Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.116 2022/10/28 05:24:07 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -1062,9 +1062,6 @@ socktrans(struct file *f, struct socket *sock, int i)
 	struct protosw	proto;
 	struct domain	dom;
 	struct inpcb	inpcb;
-#ifdef INET6
-	struct in6pcb	in6pcb;
-#endif
 	struct unpcb	unpcb;
 	struct ddpcb	ddpcb;
 	int len;
@@ -1150,15 +1147,15 @@ socktrans(struct file *f, struct socket *sock, int i)
 		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
-			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in6pcb,
-			    sizeof(in6pcb)) != sizeof(in6pcb)) {
-				dprintf("can't read in6pcb at %p", so.so_pcb);
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(inpcb)) != sizeof(inpcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
 				goto bad;
 			}
-			inet6_addrstr(lbuf, sizeof(lbuf), &in6pcb.in6p_laddr,
-			    ntohs(in6pcb.in6p_lport), isdgram);
-			inet6_addrstr(fbuf, sizeof(fbuf), &in6pcb.in6p_faddr,
-			    ntohs(in6pcb.in6p_fport), isdgram);
+			inet6_addrstr(lbuf, sizeof(lbuf), &inpcb.inp_laddr6,
+			    ntohs(inpcb.inp_lport), isdgram);
+			inet6_addrstr(fbuf, sizeof(fbuf), &inpcb.inp_faddr6,
+			    ntohs(inpcb.inp_fport), isdgram);
 			break;
 		default:
 			break;

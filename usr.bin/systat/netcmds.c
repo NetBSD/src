@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.22 2021/10/30 11:31:51 nia Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.23 2022/10/28 05:24:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.22 2021/10/30 11:31:51 nia Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.23 2022/10/28 05:24:08 ozaki-r Exp $");
 #endif /* not lint */
 
 /*
@@ -245,20 +245,6 @@ checkport(struct inpcb *inp)
 	return (1);
 }
 
-#ifdef INET6
-int
-checkport6(struct in6pcb *in6p)
-{
-	struct pitem *p;
-
-	if (ports)
-	for (p = ports; p < ports+nports; p++)
-		if (p->port == in6p->in6p_lport || p->port == in6p->in6p_fport)
-			return (p->onoff);
-	return (1);
-}
-#endif
-
 static void
 showports(void)
 {
@@ -354,7 +340,7 @@ checkhost(struct inpcb *inp)
 
 #ifdef INET6
 int
-checkhost6(struct in6pcb *in6p)
+checkhost6(struct inpcb *inp)
 {
 	struct hitem *p;
 	struct sockaddr_in6 *sin6;
@@ -364,8 +350,8 @@ checkhost6(struct in6pcb *in6p)
 			if (((struct sockaddr *)&p->addr)->sa_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)&p->addr;
-			if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &in6p->in6p_laddr) ||
-			    IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &in6p->in6p_faddr))
+			if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &inp->inp_laddr6) ||
+			    IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &inp->inp_faddr6))
 				return (p->onoff);
 		}
 	return (1);
