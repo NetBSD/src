@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.70 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.71 2022/10/28 21:52:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.70 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.71 2022/10/28 21:52:22 riastradh Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.70 2022/06/29 22:27:01 riastradh 
  * We use the fact that any element added to the queue must be added with
  * a positive time.  That means that any element `to' on the queue cannot
  * be scheduled to timeout further in time than INT_MAX, but c->c_time can
- * be positive or negative so comparing it with anything is dangerous. 
+ * be positive or negative so comparing it with anything is dangerous.
  * The only way we can use the c->c_time value in any predictable way is
  * when we calculate how far in the future `to' will timeout - "c->c_time
  * - c->c_cpu->cc_ticks".  The result will always be positive for future
@@ -547,7 +547,7 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 		}
 
 		/*
-		 * Re-lock the callout and check the state of play again. 
+		 * Re-lock the callout and check the state of play again.
 		 * It's a common design pattern for callouts to re-schedule
 		 * themselves so put a stop to it again if needed.
 		 */
