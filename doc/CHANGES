@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2923 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2924 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -709,3 +709,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		recent. [mrg 20221015]
 	evbarm: Add support for Oracle Cloud virtual machines.
 		[jmcneill 20221015]
+	libc: put reallocarray(3) in the public namespace
