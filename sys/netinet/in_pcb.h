@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.71 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.72 2022/10/28 05:23:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,7 +68,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_pcb_hdr.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 
