@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.92 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.93 2022/10/28 05:23:09 ozaki-r Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -45,7 +45,6 @@
 #include <sys/socketvar.h>
 #include <sys/localcount.h>
 
-#include <netinet/in_pcb_hdr.h>
 #include <netinet/in_pcb.h>
 #include <netipsec/keydb.h>
 
