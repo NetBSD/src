@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.39 2021/08/07 16:19:15 thorpej Exp $ */
+/* $NetBSD: pms.c,v 1.40 2022/10/28 23:40:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.39 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.40 2022/10/28 23:40:37 riastradh Exp $");
 
 #include "opt_pms.h"
 
@@ -97,9 +97,9 @@ static bool	pms_suspend(device_t, const pmf_qual_t *);
 static bool	pms_resume(device_t, const pmf_qual_t *);
 
 static const struct wsmouse_accessops pms_accessops = {
-	pms_enable,
-	pms_ioctl,
-	pms_disable,
+	.enable = pms_enable,
+	.ioctl = pms_ioctl,
+	.disable = pms_disable,
 };
 
 static int
