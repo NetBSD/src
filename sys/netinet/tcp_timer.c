@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.96 2021/03/08 17:54:43 christos Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.97 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.96 2021/03/08 17:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.97 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -344,12 +344,7 @@ tcp_timer_rexmt(void *arg)
  		return;
  	}
 #ifdef TCP_DEBUG
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
+	so = tp->t_inpcb->inp_socket;
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
 
@@ -391,14 +386,8 @@ tcp_timer_rexmt(void *arg)
 	if (tp->t_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 		TCP_STATINC(TCP_STAT_PMTUBLACKHOLE);
 
-		/* try turning PMTUD off */
-		if (tp->t_inpcb)
-			tp->t_mtudisc = 0;
-#ifdef INET6
-		/* try using IPv6 minimum MTU */
-		if (tp->t_in6pcb)
-			tp->t_mtudisc = 0;
-#endif
+		/* try turning PMTUD off or try using IPv6 minimum MTU */
+		tp->t_mtudisc = 0;
 
 		/* XXX: more sophisticated Black hole recovery code? */
 	}
@@ -412,12 +401,7 @@ tcp_timer_rexmt(void *arg)
 	 * retransmit times until then.
 	 */
 	if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
-		if (tp->t_inpcb)
-			in_losing(tp->t_inpcb);
-#ifdef INET6
-		if (tp->t_in6pcb)
-			in6_losing(tp->t_in6pcb);
-#endif
+		in_losing(tp->t_inpcb);
 		/*
 		 * This operation is not described in RFC2988.  The
 		 * point is to keep srtt+4*rttvar constant, so we
@@ -482,13 +466,7 @@ tcp_timer_persist(void *arg)
 
 	KERNEL_LOCK(1, NULL);
 #ifdef TCP_DEBUG
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
-
+	so = tp->t_inpcb->inp_socket;
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
 
@@ -563,12 +541,7 @@ tcp_timer_keep(void *arg)
 	TCP_STATINC(TCP_STAT_KEEPTIMEO);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
+	so = tp->t_inpcb->inp_socket;
 	KASSERT(so != NULL);
 	if (so->so_options & SO_KEEPALIVE &&
 	    tp->t_state <= TCPS_CLOSE_WAIT) {
@@ -642,13 +615,7 @@ tcp_timer_2msl(void *arg)
 	tp->snd_fack = tp->snd_una;
 
 #ifdef TCP_DEBUG
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
-
+	so = tp->t_inpcb->inp_socket;
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
 

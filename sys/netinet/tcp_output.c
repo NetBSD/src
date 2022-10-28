@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.214 2021/12/30 23:03:44 andvar Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.215 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.214 2021/12/30 23:03:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.215 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -227,9 +227,6 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
     bool *alwaysfragp)
 {
 	struct inpcb *inp = tp->t_inpcb;
-#ifdef INET6
-	struct in6pcb *in6p = tp->t_in6pcb;
-#endif
 	struct socket *so = NULL;
 	struct rtentry *rt;
 	struct ifnet *ifp;
@@ -239,8 +236,6 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 
 	*alwaysfragp = false;
 	size = tcp_mssdflt;
-
-	KASSERT(!(tp->t_inpcb && tp->t_in6pcb));
 
 	switch (tp->t_family) {
 	case AF_INET:
@@ -256,17 +251,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		goto out;
 	}
 
-	rt = NULL;
-	if (inp) {
-		rt = in_pcbrtentry(inp);
-		so = inp->inp_socket;
-	}
-#ifdef INET6
-	if (in6p) {
-		rt = in6_pcbrtentry(in6p);
-		so = in6p->in6p_socket;
-	}
-#endif
+	rt = in_pcbrtentry(inp);
+	so = inp->inp_socket;
 	if (rt == NULL) {
 		goto out;
 	}
@@ -275,7 +261,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 
 	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0) {
 #ifdef INET6
-		if (in6p && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
+		if (inp->inp_af == AF_INET6 && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
 			/*
 			 * RFC2460 section 5, last paragraph: if path MTU is
 			 * smaller than 1280, use 1280 as packet size and
@@ -295,11 +281,11 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	else if (inp && in_localaddr(inp->inp_faddr))
 		size = ifp->if_mtu - hdrlen;
 #ifdef INET6
-	else if (in6p) {
-		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+	else if (inp->inp_af == AF_INET6) {
+		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
 			/* mapped addr case */
 			struct in_addr d;
-			memcpy(&d, &in6p->in6p_faddr.s6_addr32[3], sizeof(d));
+			memcpy(&d, &inp->inp_faddr6.s6_addr32[3], sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - hdrlen;
 		} else {
@@ -312,12 +298,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		}
 	}
 #endif
-	if (inp)
-		in_pcbrtentry_unref(rt, inp);
-#ifdef INET6
-	if (in6p)
-		in6_pcbrtentry_unref(rt, in6p);
-#endif
+	in_pcbrtentry_unref(rt, inp);
  out:
 	/*
 	 * Now we must make room for whatever extra TCP/IP options are in
@@ -330,7 +311,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 * fragmentation will occur... need more investigation
 	 */
 
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 #if defined(IPSEC)
 		if (ipsec_used &&
 		    !ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND))
@@ -340,20 +321,20 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	}
 
 #ifdef INET6
-	if (in6p && tp->t_family == AF_INET) {
+	if (inp->inp_af == AF_INET6 && tp->t_family == AF_INET) {
 #if defined(IPSEC)
 		if (ipsec_used &&
-		    !ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		    !ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
-	} else if (in6p && tp->t_family == AF_INET6) {
+	} else if (inp->inp_af == AF_INET6) {
 #if defined(IPSEC)
 		if (ipsec_used &&
-		    !ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		    !ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
-		optlen += ip6_optlen(in6p);
+		optlen += ip6_optlen(inp);
 	}
 #endif
 	size -= optlen;
@@ -555,37 +536,15 @@ tcp_output(struct tcpcb *tp)
 #endif
 	uint64_t *tcps;
 
-	KASSERT(!(tp->t_inpcb && tp->t_in6pcb));
-
-	so = NULL;
-	ro = NULL;
-	if (tp->t_inpcb) {
-		so = tp->t_inpcb->inp_socket;
-		ro = &tp->t_inpcb->inp_route;
-	}
-#ifdef INET6
-	else if (tp->t_in6pcb) {
-		so = tp->t_in6pcb->in6p_socket;
-		ro = &tp->t_in6pcb->in6p_route;
-	}
-#endif
+	so = tp->t_inpcb->inp_socket;
+	ro = &tp->t_inpcb->inp_route;
 
 	switch (af = tp->t_family) {
 	case AF_INET:
+	case AF_INET6:
 		if (tp->t_inpcb)
 			break;
-#ifdef INET6
-		/* mapped addr case */
-		if (tp->t_in6pcb)
-			break;
-#endif
 		return EINVAL;
-#ifdef INET6
-	case AF_INET6:
-		if (tp->t_in6pcb)
-			break;
-		return EINVAL;
-#endif
 	default:
 		return EAFNOSUPPORT;
 	}
@@ -603,7 +562,7 @@ tcp_output(struct tcpcb *tp)
 	 */
 	has_tso4 = has_tso6 = false;
 
-	has_tso4 = tp->t_inpcb != NULL &&
+	has_tso4 = tp->t_inpcb->inp_af == AF_INET &&
 #if defined(IPSEC)
 	    (!ipsec_used || ipsec_pcb_skip_ipsec(tp->t_inpcb->inp_sp,
 	    IPSEC_DIR_OUTBOUND)) &&
@@ -616,15 +575,15 @@ tcp_output(struct tcpcb *tp)
 	}
 
 #if defined(INET6)
-	has_tso6 = tp->t_in6pcb != NULL &&
+	has_tso6 = tp->t_inpcb->inp_af == AF_INET6 &&
 #if defined(IPSEC)
-	    (!ipsec_used || ipsec_pcb_skip_ipsec(tp->t_in6pcb->in6p_sp,
+	    (!ipsec_used || ipsec_pcb_skip_ipsec(tp->t_inpcb->inp_sp,
 	    IPSEC_DIR_OUTBOUND)) &&
 #endif
-	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
+	    (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
 	    (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
 	if (rt != NULL)
-		rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
+		rtcache_unref(rt, &tp->t_inpcb->inp_route);
 #endif /* defined(INET6) */
 	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 
@@ -659,12 +618,12 @@ tcp_output(struct tcpcb *tp)
 			 * slow start to get ack "clock" running again.
 			 */
 			int ss = tcp_init_win;
-			if (tp->t_inpcb &&
+			if (tp->t_inpcb->inp_af == AF_INET &&
 			    in_localaddr(tp->t_inpcb->inp_faddr))
 				ss = tcp_init_win_local;
 #ifdef INET6
-			if (tp->t_in6pcb &&
-			    in6_localaddr(&tp->t_in6pcb->in6p_faddr))
+			else if (tp->t_inpcb->inp_af == AF_INET6 &&
+			    in6_localaddr(&tp->t_inpcb->inp_faddr6))
 				ss = tcp_init_win_local;
 #endif
 			tp->snd_cwnd = uimin(tp->snd_cwnd,
@@ -1107,23 +1066,11 @@ send:
 	if (flags & TH_SYN) {
 		struct rtentry *synrt;
 
-		synrt = NULL;
-		if (tp->t_inpcb)
-			synrt = in_pcbrtentry(tp->t_inpcb);
-#ifdef INET6
-		if (tp->t_in6pcb)
-			synrt = in6_pcbrtentry(tp->t_in6pcb);
-#endif
-
+		synrt = in_pcbrtentry(tp->t_inpcb);
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(synrt != NULL ?
 						    synrt->rt_ifp : NULL, af);
-		if (tp->t_inpcb)
-			in_pcbrtentry_unref(synrt, tp->t_inpcb);
-#ifdef INET6
-		if (tp->t_in6pcb)
-			in6_pcbrtentry_unref(synrt, tp->t_in6pcb);
-#endif
+		in_pcbrtentry_unref(synrt, tp->t_inpcb);
 		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(TCPOLEN_MAXSEG)) {
 			*optp++ = TCPOPT_MAXSEG;
 			*optp++ = TCPOLEN_MAXSEG;
@@ -1593,13 +1540,13 @@ timer:
 	case AF_INET:
 		ip->ip_len = htons(m->m_pkthdr.len);
 		packetlen = m->m_pkthdr.len;
-		if (tp->t_inpcb) {
+		if (tp->t_inpcb->inp_af == AF_INET) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos | ecn_tos;
 		}
 #ifdef INET6
-		else if (tp->t_in6pcb) {
-			ip->ip_ttl = in6_selecthlim(tp->t_in6pcb, NULL); /*XXX*/
+		else if (tp->t_inpcb->inp_af == AF_INET6) {
+			ip->ip_ttl = in6_selecthlim(tp->t_inpcb, NULL); /*XXX*/
 			ip->ip_tos = ecn_tos;	/*XXX*/
 		}
 #endif
@@ -1608,14 +1555,14 @@ timer:
 	case AF_INET6:
 		packetlen = m->m_pkthdr.len;
 		ip6->ip6_nxt = IPPROTO_TCP;
-		if (tp->t_in6pcb) {
+		if (tp->t_family == AF_INET6) {
 			/*
 			 * we separately set hoplimit for every segment, since
 			 * the user might want to change the value via
 			 * setsockopt. Also, desired default hop limit might
 			 * be changed via Neighbor Discovery.
 			 */
-			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_in6pcb);
+			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_inpcb);
 		}
 		ip6->ip6_flow |= htonl(ecn_tos << 20);
 		/* ip6->ip6_flow = ??? (from template) */
@@ -1632,7 +1579,7 @@ timer:
 	    {
 		struct mbuf *opts;
 
-		if (tp->t_inpcb)
+		if (tp->t_inpcb && tp->t_family == AF_INET)
 			opts = tp->t_inpcb->inp_options;
 		else
 			opts = NULL;
@@ -1646,12 +1593,12 @@ timer:
 	    {
 		struct ip6_pktopts *opts;
 
-		if (tp->t_in6pcb)
-			opts = tp->t_in6pcb->in6p_outputopts;
+		if (tp->t_inpcb && tp->t_family == AF_INET6)
+			opts = tp->t_inpcb->inp_outputopts6;
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
-			NULL, tp->t_in6pcb, NULL);
+			NULL, tp->t_inpcb, NULL);
 		break;
 	    }
 #endif
@@ -1663,12 +1610,7 @@ timer:
 out:
 		if (error == ENOBUFS) {
 			TCP_STATINC(TCP_STAT_SELFQUENCH);
-			if (tp->t_inpcb)
-				tcp_quench(tp->t_inpcb);
-#ifdef INET6
-			if (tp->t_in6pcb)
-				tcp6_quench(tp->t_in6pcb);
-#endif
+			tcp_quench(tp->t_inpcb);
 			error = 0;
 		} else if ((error == EHOSTUNREACH || error == ENETDOWN) &&
 		    TCPS_HAVERCVDSYN(tp->t_state)) {

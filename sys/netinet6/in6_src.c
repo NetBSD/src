@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.88 2021/08/10 06:29:56 kardel Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.89 2022/10/28 05:18:39 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.88 2021/08/10 06:29:56 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.89 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -809,10 +809,10 @@ out:
  * 3. The system default hoplimit.
 */
 int
-in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
+in6_selecthlim(struct inpcb *inp, struct ifnet *ifp)
 {
-	if (in6p && in6p->in6p_hops >= 0)
-		return (in6p->in6p_hops);
+	if (inp && inp->inp_hops6 >= 0)
+		return (inp->inp_hops6);
 	else if (ifp)
 		return (ND_IFINFO(ifp)->chlim);
 	else
@@ -820,35 +820,35 @@ in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
 }
 
 int
-in6_selecthlim_rt(struct in6pcb *in6p)
+in6_selecthlim_rt(struct inpcb *inp)
 {
 	struct rtentry *rt;
 
-	if (in6p == NULL)
-		return in6_selecthlim(in6p, NULL);
+	if (inp == NULL)
+		return in6_selecthlim(inp, NULL);
 
-	rt = rtcache_validate(&in6p->in6p_route);
+	rt = rtcache_validate(&inp->inp_route);
 	if (rt != NULL) {
-		int ret = in6_selecthlim(in6p, rt->rt_ifp);
-		rtcache_unref(rt, &in6p->in6p_route);
+		int ret = in6_selecthlim(inp, rt->rt_ifp);
+		rtcache_unref(rt, &inp->inp_route);
 		return ret;
 	} else
-		return in6_selecthlim(in6p, NULL);
+		return in6_selecthlim(inp, NULL);
 }
 
 /*
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
+in6_pcbsetport(struct sockaddr_in6 *sin6, struct inpcb *inp, struct lwp *l)
 {
-	struct socket *so = in6p->in6p_socket;
-	struct inpcbtable *table = in6p->in6p_table;
+	struct socket *so = inp->inp_socket;
+	struct inpcbtable *table = inp->inp_table;
 	u_int16_t lport, *lastport;
 	enum kauth_network_req req;
 	int error = 0;
 
-	if (in6p->in6p_flags & IN6P_LOWPORT) {
+	if (inp->inp_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
 #else
@@ -870,14 +870,14 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
        /*
         * Use RFC6056 randomized port selection
         */
-	error = portalgo_randport(&lport, &in6p->in6p_head, l->l_cred);
+	error = portalgo_randport(&lport, inp, l->l_cred);
 	if (error)
 		return error;
 
-	in6p->in6p_flags |= IN6P_ANONPORT;
+	inp->inp_flags |= IN6P_ANONPORT;
 	*lastport = lport;
-	in6p->in6p_lport = htons(lport);
-	in6_pcbstate(in6p, IN6P_BOUND);
+	inp->inp_lport = htons(lport);
+	in6_pcbstate(inp, INP_BOUND);
 	return (0);		/* success */
 }
 

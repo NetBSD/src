@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.30 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.31 2022/10/28 05:18:39 ozaki-r Exp $	*/
 /*	$FreeBSD: ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -46,10 +46,10 @@ extern int ip6_ah_net_deflev;
 extern int ip6_ipsec_ecn;
 extern struct secpolicy ip6_def_policy;
 
-struct in6pcb;
+struct inpcb;
 struct tcp6cb;
 
-struct secpolicy *ipsec6_check_policy(struct mbuf *, struct in6pcb *,
+struct secpolicy *ipsec6_check_policy(struct mbuf *, struct inpcb *,
     int, int *, int *);
 size_t ipsec6_hdrsiz_tcp(struct tcpcb *);
 

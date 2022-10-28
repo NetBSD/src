@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.232 2022/09/20 07:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.233 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.232 2022/09/20 07:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.233 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,42 +169,6 @@ tcp_debug_trace(struct socket *so, struct tcpcb *tp, int ostate, int req)
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, NULL, req);
 #endif
-}
-
-static int
-tcp_getpcb(struct socket *so, struct inpcb **inp,
-    struct in6pcb **in6p, struct tcpcb **tp)
-{
-
-	KASSERT(solocked(so));
-
-	/*
-	 * When a TCP is attached to a socket, then there will be
-	 * a (struct inpcb) pointed at by the socket, and this
-	 * structure will point at a subsidary (struct tcpcb).
-	 */
-	switch (so->so_proto->pr_domain->dom_family) {
-	case PF_INET:
-		*inp = sotoinpcb(so);
-		if (*inp == NULL)
-			return EINVAL;
-		*tp = intotcpcb(*inp);
-		break;
-#ifdef INET6
-	case PF_INET6:
-		*in6p = sotoin6pcb(so);
-		if (*in6p == NULL)
-			return EINVAL;
-		*tp = in6totcpcb(*in6p);
-		break;
-#endif
-	default:
-		return EAFNOSUPPORT;
-	}
-
-	KASSERT(tp != NULL);
-
-	return 0;
 }
 
 static void
@@ -295,9 +259,6 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0, s;
 	struct inpcb *inp;
-#ifdef INET6
-	struct in6pcb *in6p;
-#endif
 	struct tcpcb *tp;
 	struct tcp_info ti;
 	u_int ui;
@@ -310,32 +271,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	family = so->so_proto->pr_domain->dom_family;
 
 	s = splsoftnet();
-	switch (family) {
-	case PF_INET:
-		inp = sotoinpcb(so);
-#ifdef INET6
-		in6p = NULL;
-#endif
-		break;
-#ifdef INET6
-	case PF_INET6:
-		inp = NULL;
-		in6p = sotoin6pcb(so);
-		break;
-#endif
-	default:
-		splx(s);
-		panic("%s: af %d", __func__, family);
-	}
-#ifndef INET6
-	if (inp == NULL)
-#else
-	if (inp == NULL && in6p == NULL)
-#endif
-	{
-		splx(s);
-		return ECONNRESET;
-	}
+	inp = sotoinpcb(so);
 	if (level != IPPROTO_TCP) {
 		switch (family) {
 		case PF_INET:
@@ -350,14 +286,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		splx(s);
 		return error;
 	}
-	if (inp)
-		tp = intotcpcb(inp);
-#ifdef INET6
-	else if (in6p)
-		tp = in6totcpcb(in6p);
-#endif
-	else
-		tp = NULL;
+	tp = intotcpcb(inp);
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -513,39 +442,18 @@ tcp_attach(struct socket *so, int proto)
 {
 	struct tcpcb *tp;
 	struct inpcb *inp;
-#ifdef INET6
-	struct in6pcb *in6p;
-#endif
 	int s, error, family;
 
 	/* Assign the lock (must happen even if we will error out). */
 	s = splsoftnet();
 	sosetlock(so);
 	KASSERT(solocked(so));
+	KASSERT(sotoinpcb(so) == NULL);
 
-	family = so->so_proto->pr_domain->dom_family;
-	switch (family) {
-	case PF_INET:
-		inp = sotoinpcb(so);
-#ifdef INET6
-		in6p = NULL;
-#endif
-		break;
-#ifdef INET6
-	case PF_INET6:
-		inp = NULL;
-		in6p = sotoin6pcb(so);
-		break;
-#endif
-	default:
-		error = EAFNOSUPPORT;
-		goto out;
-	}
-
+	inp = sotoinpcb(so);
 	KASSERT(inp == NULL);
-#ifdef INET6
-	KASSERT(in6p == NULL);
-#endif
+
+	family = soaf(so);
 
 #ifdef MBUFTRACE
 	so->so_mowner = &tcp_sock_mowner;
@@ -561,48 +469,17 @@ tcp_attach(struct socket *so, int proto)
 	so->so_rcv.sb_flags |= SB_AUTOSIZE;
 	so->so_snd.sb_flags |= SB_AUTOSIZE;
 
-	switch (family) {
-	case PF_INET:
-		error = in_pcballoc(so, &tcbtable);
-		if (error)
-			goto out;
-		inp = sotoinpcb(so);
-#ifdef INET6
-		in6p = NULL;
-#endif
-		break;
-#ifdef INET6
-	case PF_INET6:
-		error = in6_pcballoc(so, &tcbtable);
-		if (error)
-			goto out;
-		inp = NULL;
-		in6p = sotoin6pcb(so);
-		break;
-#endif
-	default:
-		error = EAFNOSUPPORT;
+	error = in_pcballoc(so, &tcbtable);
+	if (error)
 		goto out;
-	}
-	if (inp)
-		tp = tcp_newtcpcb(family, (void *)inp);
-#ifdef INET6
-	else if (in6p)
-		tp = tcp_newtcpcb(family, (void *)in6p);
-#endif
-	else
-		tp = NULL;
+	inp = sotoinpcb(so);
 
+	tp = tcp_newtcpcb(family, inp);
 	if (tp == NULL) {
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
-		if (inp)
-			in_pcbdetach(inp);
-#ifdef INET6
-		if (in6p)
-			in6_pcbdetach(in6p);
-#endif
+		in_pcbdetach(inp);
 		so->so_state |= nofd;
 		error = ENOBUFS;
 		goto out;
@@ -620,13 +497,12 @@ out:
 static void
 tcp_detach(struct socket *so)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int s;
 
-	if (tcp_getpcb(so, &inp, &in6p, &tp) != 0)
-		return;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	s = splsoftnet();
 	(void)tcp_disconnect1(tp);
@@ -636,15 +512,13 @@ tcp_detach(struct socket *so)
 static int
 tcp_accept(struct socket *so, struct sockaddr *nam)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
-	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_ACCEPT);
 
@@ -654,12 +528,12 @@ tcp_accept(struct socket *so, struct sockaddr *nam)
 	 * of the peer, storing through addr.
 	 */
 	s = splsoftnet();
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
-	if (in6p) {
-		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
+	else if (inp->inp_af == AF_INET6) {
+		in6_setpeeraddr(inp, (struct sockaddr_in6 *)nam);
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
@@ -672,18 +546,17 @@ static int
 tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
 	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
 #ifdef INET6
 	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nam;
 #endif /* INET6 */
-	struct tcpcb *tp = NULL;
+	struct tcpcb *tp;
 	int s;
 	int error = 0;
 	int ostate = 0;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_BIND);
 
@@ -697,10 +570,10 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		break;
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcbbind(in6p, sin6, l);
+		error = in6_pcbbind(inp, sin6, l);
 		if (!error) {
 			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
+			if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6))
 				tp->t_family = AF_INET;
 			else
 				tp->t_family = AF_INET6;
@@ -717,15 +590,14 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 static int
 tcp_listen(struct socket *so, struct lwp *l)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int error = 0;
 	int ostate = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_LISTEN);
 
@@ -733,14 +605,14 @@ tcp_listen(struct socket *so, struct lwp *l)
 	 * Prepare to accept connections.
 	 */
 	s = splsoftnet();
-	if (inp && inp->inp_lport == 0) {
+	if (inp->inp_af == AF_INET && inp->inp_lport == 0) {
 		error = in_pcbbind(inp, NULL, l);
 		if (error)
 			goto release;
 	}
 #ifdef INET6
-	if (in6p && in6p->in6p_lport == 0) {
-		error = in6_pcbbind(in6p, NULL, l);
+	if (inp->inp_af == AF_INET6 && inp->inp_lport == 0) {
+		error = in6_pcbbind(inp, NULL, l);
 		if (error)
 			goto release;
 	}
@@ -757,15 +629,14 @@ release:
 static int
 tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int s;
 	int error = 0;
 	int ostate = 0;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_CONNECT);
 
@@ -778,7 +649,7 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	 */
 	s = splsoftnet();
 
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 		if (inp->inp_lport == 0) {
 			error = in_pcbbind(inp, NULL, l);
 			if (error)
@@ -787,16 +658,16 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	}
 #ifdef INET6
-	if (in6p) {
-		if (in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, NULL, l);
+	if (inp->inp_af == AF_INET6) {
+		if (inp->inp_lport == 0) {
+			error = in6_pcbbind(inp, NULL, l);
 			if (error)
 				goto release;
 		}
-		error = in6_pcbconnect(in6p, (struct sockaddr_in6 *)nam, l);
+		error = in6_pcbconnect(inp, (struct sockaddr_in6 *)nam, l);
 		if (!error) {
 			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
+			if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6))
 				tp->t_family = AF_INET;
 			else
 				tp->t_family = AF_INET6;
@@ -807,11 +678,11 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		goto release;
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
-		if (inp)
+		if (inp->inp_af == AF_INET)
 			in_pcbdisconnect(inp);
 #ifdef INET6
-		if (in6p)
-			in6_pcbdisconnect(in6p);
+		else if (inp->inp_af == AF_INET6)
+			in6_pcbdisconnect(inp);
 #endif
 		error = ENOBUFS;
 		goto release;
@@ -841,16 +712,14 @@ release:
 static int
 tcp_connect2(struct socket *so, struct socket *so2)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
-	int error = 0;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
 
 	KASSERT(solocked(so));
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_CONNECT2);
 
@@ -862,15 +731,14 @@ tcp_connect2(struct socket *so, struct socket *so2)
 static int
 tcp_disconnect(struct socket *so)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int error = 0;
 	int ostate = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_DISCONNECT);
 
@@ -896,15 +764,14 @@ tcp_disconnect(struct socket *so)
 static int
 tcp_shutdown(struct socket *so)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int error = 0;
 	int ostate = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SHUTDOWN);
 	/*
@@ -924,15 +791,14 @@ tcp_shutdown(struct socket *so)
 static int
 tcp_abort(struct socket *so)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int error = 0;
 	int ostate = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_ABORT);
 
@@ -974,25 +840,23 @@ tcp_stat(struct socket *so, struct stat *ub)
 static int
 tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
-	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_PEERADDR);
 
 	s = splsoftnet();
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
-	if (in6p) {
-		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
+	else if (inp->inp_af == AF_INET6) {
+		in6_setpeeraddr(inp, (struct sockaddr_in6 *)nam);
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_PEERADDR);
@@ -1004,25 +868,23 @@ tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 static int
 tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
-	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SOCKADDR);
 
 	s = splsoftnet();
-	if (inp) {
+	if (inp->inp_af == AF_INET) {
 		in_setsockaddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
-	if (in6p) {
-		in6_setsockaddr(in6p, (struct sockaddr_in6 *)nam);
+	if (inp->inp_af == AF_INET6) {
+		in6_setsockaddr(inp, (struct sockaddr_in6 *)nam);
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
@@ -1034,15 +896,13 @@ tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 static int
 tcp_rcvd(struct socket *so, int flags, struct lwp *l)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
-	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_RCVD);
 
@@ -1068,15 +928,13 @@ tcp_rcvd(struct socket *so, int flags, struct lwp *l)
 static int
 tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
-	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_RCVOOB);
 
@@ -1111,15 +969,14 @@ static int
 tcp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
-	struct tcpcb *tp = NULL;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ostate = 0;
 	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
-		return error;
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SEND);
 
@@ -1148,17 +1005,13 @@ static int
 tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	struct inpcb *inp = NULL;
-	struct in6pcb *in6p = NULL;
 	struct tcpcb *tp = NULL;
 	int ostate = 0;
 	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0) {
-		m_freem(m);
-		m_freem(control);
-		return error;
-	}
+	inp = sotoinpcb(so);
+	tp = intotcpcb(inp);
 	if (tp->t_template == NULL) {
 		/*
 		 * XXX FreeBSD appears to open the connection
@@ -1256,14 +1109,7 @@ tcp_disconnect1(struct tcpcb *tp)
 {
 	struct socket *so;
 
-	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	else if (tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
-	else
-		so = NULL;
+	so = tp->t_inpcb->inp_socket;
 
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		tp = tcp_close(tp);
@@ -1312,15 +1158,7 @@ tcp_usrclosed(struct tcpcb *tp)
 		break;
 	}
 	if (tp && tp->t_state >= TCPS_FIN_WAIT_2) {
-		struct socket *so;
-		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-		else if (tp->t_in6pcb)
-			so = tp->t_in6pcb->in6p_socket;
-#endif
-		else
-			so = NULL;
+		struct socket *so = tp->t_inpcb->inp_socket;
 		if (so)
 			soisdisconnected(so);
 		/*
@@ -1333,11 +1171,11 @@ tcp_usrclosed(struct tcpcb *tp)
 		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
 			TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
 		else if (tp->t_state == TCPS_TIME_WAIT
-			 && ((tp->t_inpcb
+			 && ((tp->t_inpcb->inp_af == AF_INET
 			      && (tcp4_vtw_enable & 1)
 			      && vtw_add(AF_INET, tp))
 			     ||
-			     (tp->t_in6pcb
+			     (tp->t_inpcb->inp_af == AF_INET6
 			      && (tcp6_vtw_enable & 1)
 			      && vtw_add(AF_INET6, tp)))) {
 			tp = 0;
@@ -1576,24 +1414,24 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
     void *oldp, size_t *oldlenp,
     struct lwp *l, int dodrop)
 {
-	struct in6pcb *in6p;
+	struct inpcb *inp;
 	struct socket *sockp;
 
-	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0, 0);
+	inp = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0, 0);
 
-	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
+	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
 		return ESRCH;
 
 	if (dodrop) {
 		struct tcpcb *tp;
 		int error;
 
-		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
-		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
+		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
+		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
 
 		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-		    KAUTH_REQ_NETWORK_SOCKET_DROP, in6p->in6p_socket, tp, NULL);
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, inp->inp_socket, tp, NULL);
 		if (error)
 			return error;
 
@@ -1739,10 +1577,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	const struct inpcb *inp;
 #ifdef INET6
 	struct sockaddr_in6 *in6;
-	const struct in6pcb *in6p;
 #endif
 	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
-	const struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -1780,17 +1616,12 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	mutex_enter(softnet_lock);
 
-	TAILQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
-		inp = (const struct inpcb *)inph;
-#ifdef INET6
-		in6p = (const struct in6pcb *)inph;
-#endif
-
-		if (inph->inph_af != pf)
+	TAILQ_FOREACH(inp, &pcbtbl->inpt_queue, inp_queue) {
+		if (inp->inp_af != pf)
 			continue;
 
 		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, inph->inph_socket, NULL,
+		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, inp->inp_socket, NULL,
 		    NULL) != 0)
 			continue;
 
@@ -1845,46 +1676,46 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 			break;
 #ifdef INET6
 		case PF_INET6:
-			pcb.ki_family = in6p->in6p_socket->so_proto->
+			pcb.ki_family = inp->inp_socket->so_proto->
 			    pr_domain->dom_family;
-			pcb.ki_type = in6p->in6p_socket->so_proto->pr_type;
-			pcb.ki_protocol = in6p->in6p_socket->so_proto->
+			pcb.ki_type = inp->inp_socket->so_proto->pr_type;
+			pcb.ki_protocol = inp->inp_socket->so_proto->
 			    pr_protocol;
-			pcb.ki_pflags = in6p->in6p_flags;
+			pcb.ki_pflags = inp->inp_flags;
 
-			pcb.ki_sostate = in6p->in6p_socket->so_state;
-			pcb.ki_prstate = in6p->in6p_state;
+			pcb.ki_sostate = inp->inp_socket->so_state;
+			pcb.ki_prstate = inp->inp_state;
 			if (proto == IPPROTO_TCP) {
-				tp = in6totcpcb(in6p);
+				tp = intotcpcb(inp);
 				pcb.ki_tstate = tp->t_state;
 				pcb.ki_tflags = tp->t_flags;
 			}
 
 			COND_SET_VALUE(pcb.ki_pcbaddr,
-			    PTRTOUINT64(in6p), allowaddr);
+			    PTRTOUINT64(inp), allowaddr);
 			COND_SET_VALUE(pcb.ki_ppcbaddr,
-			    PTRTOUINT64(in6p->in6p_ppcb), allowaddr);
+			    PTRTOUINT64(inp->inp_ppcb), allowaddr);
 			COND_SET_VALUE(pcb.ki_sockaddr,
-			    PTRTOUINT64(in6p->in6p_socket), allowaddr);
+			    PTRTOUINT64(inp->inp_socket), allowaddr);
 
-			pcb.ki_rcvq = in6p->in6p_socket->so_rcv.sb_cc;
-			pcb.ki_sndq = in6p->in6p_socket->so_snd.sb_cc;
+			pcb.ki_rcvq = inp->inp_socket->so_rcv.sb_cc;
+			pcb.ki_sndq = inp->inp_socket->so_snd.sb_cc;
 
 			in6 = satosin6(&pcb.ki_src);
 			in6->sin6_len = sizeof(*in6);
 			in6->sin6_family = pf;
-			in6->sin6_port = in6p->in6p_lport;
-			in6->sin6_flowinfo = in6p->in6p_flowinfo;
-			in6->sin6_addr = in6p->in6p_laddr;
+			in6->sin6_port = inp->inp_lport;
+			in6->sin6_flowinfo = inp->inp_flowinfo;
+			in6->sin6_addr = inp->inp_laddr6;
 			in6->sin6_scope_id = 0; /* XXX? */
 
-			if (pcb.ki_prstate >= IN6P_CONNECTED) {
+			if (pcb.ki_prstate >= INP_CONNECTED) {
 				in6 = satosin6(&pcb.ki_dst);
 				in6->sin6_len = sizeof(*in6);
 				in6->sin6_family = pf;
-				in6->sin6_port = in6p->in6p_fport;
-				in6->sin6_flowinfo = in6p->in6p_flowinfo;
-				in6->sin6_addr = in6p->in6p_faddr;
+				in6->sin6_port = inp->inp_fport;
+				in6->sin6_flowinfo = inp->inp_flowinfo;
+				in6->sin6_addr = inp->inp_faddr6;
 				in6->sin6_scope_id = 0; /* XXX? */
 			}
 			break;

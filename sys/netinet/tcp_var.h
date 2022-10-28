@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.197 2022/09/20 07:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.198 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -253,7 +253,6 @@ struct tcpcb {
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
-	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
 	callout_t t_delack_ch;		/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
@@ -523,16 +522,7 @@ struct tcp_opt_info {
 #define	TOF_SIGLEN	0x0080		/* sigature length valid (RFC2385) */
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
-#ifdef INET6
-#define	in6totcpcb(ip)	((struct tcpcb *)(ip)->in6p_ppcb)
-#endif
-#ifndef INET6
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
-#else
-#define	sototcpcb(so)	(((so)->so_proto->pr_domain->dom_family == AF_INET) \
-				? intotcpcb(sotoinpcb(so)) \
-				: in6totcpcb(sotoin6pcb(so)))
-#endif
 
 /*
  * See RFC2988 for a discussion of RTO calculation; comments assume
@@ -830,19 +820,13 @@ u_long	 tcp_mss_to_advertise(const struct ifnet *, int);
 void	 tcp_mss_from_peer(struct tcpcb *, int);
 void	 tcp_tcpcb_template(void);
 struct tcpcb *
-	 tcp_newtcpcb(int, void *);
+	 tcp_newtcpcb(int, struct inpcb *);
 void	 tcp_notify(struct inpcb *, int);
-#ifdef INET6
-void	 tcp6_notify(struct in6pcb *, int);
-#endif
 u_int	 tcp_optlen(struct tcpcb *);
 int	 tcp_output(struct tcpcb *);
 void	 tcp_pulloutofband(struct socket *,
 	    struct tcphdr *, struct mbuf *, int);
 void	 tcp_quench(struct inpcb *);
-#ifdef INET6
-void	 tcp6_quench(struct in6pcb *);
-#endif
 void	 tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6
 void	 tcp6_mtudisc_callback(struct in6_addr *);

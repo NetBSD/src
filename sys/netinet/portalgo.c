@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.12 2022/10/28 05:18:39 ozaki-r Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.12 2022/10/28 05:18:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,15 +105,15 @@ static bitmap inet6_reserve;
 
 typedef struct {
 	const char *name;
-	int (*func)(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
+	int (*func)(int, uint16_t *, struct inpcb *, kauth_cred_t);
 } portalgo_algorithm_t;
 
-static int algo_bsd(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-static int algo_random_start(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-static int algo_random_pick(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-static int algo_hash(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-static int algo_doublehash(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-static int algo_randinc(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
+static int algo_bsd(int, uint16_t *, struct inpcb *, kauth_cred_t);
+static int algo_random_start(int, uint16_t *, struct inpcb *, kauth_cred_t);
+static int algo_random_pick(int, uint16_t *, struct inpcb *, kauth_cred_t);
+static int algo_hash(int, uint16_t *, struct inpcb *, kauth_cred_t);
+static int algo_doublehash(int, uint16_t *, struct inpcb *, kauth_cred_t);
+static int algo_randinc(int, uint16_t *, struct inpcb *, kauth_cred_t);
 
 static const portalgo_algorithm_t algos[] = {
 	{
@@ -151,16 +151,16 @@ static uint16_t portalgo_next_ephemeral[NPROTO][NAF][NRANGES][NALGOS];
  * the port range.
  */
 static int
-pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
+pcb_getports(struct inpcb *inp, uint16_t *lastport,
     uint16_t *mymin, uint16_t *mymax, uint16_t **pnext_ephemeral, int algo)
 {
-	struct inpcbtable * const table = inp_hdr->inph_table;
+	struct inpcbtable * const table = inp->inp_table;
 	struct socket *so;
 	int portalgo_proto;
 	int portalgo_af;
 	int portalgo_range;
 
-	so = inp_hdr->inph_socket;
+	so = inp->inp_socket;
 	switch (so->so_type) {
 	case SOCK_DGRAM: /* UDP or DCCP */
 	case SOCK_CONN_DGRAM:
@@ -173,11 +173,9 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 		return EPFNOSUPPORT;
 	}
 
-	switch (inp_hdr->inph_af) {
+	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
-		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
-
 		portalgo_af = PORTALGO_IPV4;
 		if (inp->inp_flags & INP_LOWPORT) {
 			*mymin = lowportmin;
@@ -195,10 +193,8 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
-
 		portalgo_af = PORTALGO_IPV6;
-		if (in6p->in6p_flags & IN6P_LOWPORT) {
+		if (inp->inp_flags & IN6P_LOWPORT) {
 			*mymin = ip6_lowportmin;
 			*mymax = ip6_lowportmax;
 			*lastport = table->inpt_lastlow;
@@ -241,9 +237,9 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
  * shamelessly copied from in_pcb.c.
  */
 static bool
-check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
+check_suitable_port(uint16_t port, struct inpcb *inp, kauth_cred_t cred)
 {
-	struct inpcbtable * const table = inp_hdr->inph_table;
+	struct inpcbtable * const table = inp->inp_table;
 #ifdef INET
 	vestigial_inpcb_t vestigial;
 #endif
@@ -255,10 +251,9 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 	DPRINTF("%s called for argument %d\n", __func__, port);
 
-	switch (inp_hdr->inph_af) {
+	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: { /* IPv4 */
-		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
 		struct inpcb *pcb;
 		struct sockaddr_in sin;
 
@@ -303,15 +298,14 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 #endif
 #ifdef INET6
 	case AF_INET6: { /* IPv6 */
-		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
 		struct sockaddr_in6 sin6;
 		void *t;
 
 		if (__BITMAP_ISSET(port, &inet6_reserve))
 			return false;
 
-		sin6.sin6_addr = in6p->in6p_laddr;
-		so = in6p->in6p_socket;
+		sin6.sin6_addr = inp->inp_laddr6;
+		so = inp->inp_socket;
 
 		/* XXX: this is redundant when called from in6_pcbbind */
 		if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
@@ -344,7 +338,7 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 			enum kauth_network_req req;
 
 			/* We have a free port. Check with the secmodel. */
-			if (in6p->in6p_flags & IN6P_LOWPORT) {
+			if (inp->inp_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 				req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
 #else
@@ -377,7 +371,7 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 /* This is the default BSD algorithm, as described in RFC 6056 */
 static int
-algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
+algo_bsd(int algo, uint16_t *port, struct inpcb *inp, kauth_cred_t cred)
 {
 	uint16_t count;
 	uint16_t mymin, mymax, lastport;
@@ -385,7 +379,7 @@ algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 	int error;
 
 	DPRINTF("%s called\n", __func__);
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
@@ -396,7 +390,7 @@ algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		if (myport < mymin || mymax < myport)
 			myport = mymax;
 		*next_ephemeral = myport - 1;
-		if (check_suitable_port(myport, inp_hdr, cred)) {
+		if (check_suitable_port(myport, inp, cred)) {
 			*port = myport;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -413,7 +407,7 @@ algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
  * by a random amount.
  */
 static int
-algo_random_start(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
+algo_random_start(int algo, uint16_t *port, struct inpcb *inp,
     kauth_cred_t cred)
 {
 	uint16_t count, num_ephemeral;
@@ -423,7 +417,7 @@ algo_random_start(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("%s called\n", __func__);
 
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
@@ -439,7 +433,7 @@ algo_random_start(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	count = num_ephemeral;
 
 	do {
-		if (check_suitable_port(*next_ephemeral, inp_hdr, cred)) {
+		if (check_suitable_port(*next_ephemeral, inp, cred)) {
 			*port = *next_ephemeral;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -467,7 +461,7 @@ algo_random_start(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
  * give up before exhausting the free ports.
  */
 static int
-algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
+algo_random_pick(int algo, uint16_t *port, struct inpcb *inp,
     kauth_cred_t cred)
 {
 	uint16_t count, num_ephemeral;
@@ -477,7 +471,7 @@ algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("%s called\n", __func__);
 
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
@@ -492,7 +486,7 @@ algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	count = num_ephemeral;
 
 	do {
-		if (check_suitable_port(*next_ephemeral, inp_hdr, cred)) {
+		if (check_suitable_port(*next_ephemeral, inp, cred)) {
 			*port = *next_ephemeral;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -513,7 +507,7 @@ algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 /* This is the implementation from FreeBSD, with tweaks */
 static uint16_t
-Fhash(const struct inpcb_hdr *inp_hdr)
+Fhash(const struct inpcb *inp)
 {
 	MD5_CTX f_ctx;
 	uint32_t Ff[4];
@@ -524,11 +518,9 @@ Fhash(const struct inpcb_hdr *inp_hdr)
 	cprng_fast(secret_f, sizeof(secret_f));
 
 	MD5Init(&f_ctx);
-	switch (inp_hdr->inph_af) {
+	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
-		const struct inpcb *inp =
-		    (const struct inpcb *)(const void *)inp_hdr;
 		MD5Update(&f_ctx, (const u_char *)&inp->inp_laddr,
 		    sizeof(inp->inp_laddr));
 		MD5Update(&f_ctx, (const u_char *)&inp->inp_faddr,
@@ -540,14 +532,12 @@ Fhash(const struct inpcb_hdr *inp_hdr)
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		const struct in6pcb *in6p =
-		    (const struct in6pcb *)(const void *)inp_hdr;
-		MD5Update(&f_ctx, (const u_char *)&in6p->in6p_laddr,
-		    sizeof(in6p->in6p_laddr));
-		MD5Update(&f_ctx, (const u_char *)&in6p->in6p_faddr,
-		    sizeof(in6p->in6p_faddr));
-		MD5Update(&f_ctx, (const u_char *)&in6p->in6p_fport,
-		    sizeof(in6p->in6p_fport));
+		MD5Update(&f_ctx, (const u_char *)&inp->inp_laddr6,
+		    sizeof(inp->inp_laddr6));
+		MD5Update(&f_ctx, (const u_char *)&inp->inp_faddr6,
+		    sizeof(inp->inp_faddr6));
+		MD5Update(&f_ctx, (const u_char *)&inp->inp_fport,
+		    sizeof(inp->inp_fport));
 		break;
 	}
 #endif
@@ -569,16 +559,12 @@ Fhash(const struct inpcb_hdr *inp_hdr)
  * late binding.
  */
 static bool
-iscompletetuple(struct inpcb_hdr *inp_hdr)
+iscompletetuple(struct inpcb *inp)
 {
-#ifdef INET6
-	struct in6pcb *in6p;
-#endif
 
-	switch (inp_hdr->inph_af) {
+	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
-		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
 		if (inp->inp_fport == 0 || in_nullhost(inp->inp_faddr)) {
 			DPRINTF("%s fport or faddr missing, delaying port "
 			    "to connect/send\n", __func__);
@@ -592,15 +578,14 @@ iscompletetuple(struct inpcb_hdr *inp_hdr)
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		in6p = (struct in6pcb *)(void *)inp_hdr;
-		if (in6p->in6p_fport == 0 || memcmp(&in6p->in6p_faddr,
-		    &in6addr_any, sizeof(in6p->in6p_faddr)) == 0) {
+		if (inp->inp_fport == 0 || memcmp(&inp->inp_faddr6,
+		    &in6addr_any, sizeof(inp->inp_faddr6)) == 0) {
 			DPRINTF("%s fport or faddr missing, delaying port "
 			    "to connect/send\n", __func__);
-			in6p->in6p_bindportonsend = true;
+			inp->inp_bindportonsend = true;
 			return false;
 		} else {
-			in6p->in6p_bindportonsend = false;
+			inp->inp_bindportonsend = false;
 		}
 		break;
 	}
@@ -614,7 +599,7 @@ iscompletetuple(struct inpcb_hdr *inp_hdr)
 }
 
 static int
-algo_hash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
+algo_hash(int algo, uint16_t *port, struct inpcb *inp,
     kauth_cred_t cred)
 {
 	uint16_t count, num_ephemeral;
@@ -625,12 +610,12 @@ algo_hash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("%s called\n", __func__);
 
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
 
-	if (!iscompletetuple(inp_hdr)) {
+	if (!iscompletetuple(inp)) {
 		*port = 0;
 		return 0;
 	}
@@ -640,7 +625,7 @@ algo_hash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("num_ephemeral: %d\n", num_ephemeral);
 
-	offset = Fhash(inp_hdr);
+	offset = Fhash(inp);
 
 	count = num_ephemeral;
 	do {
@@ -649,7 +634,7 @@ algo_hash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 		(*next_ephemeral)++;
 
-		if (check_suitable_port(myport, inp_hdr, cred)) {
+		if (check_suitable_port(myport, inp, cred)) {
 			*port = myport;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -663,7 +648,7 @@ algo_hash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 }
 
 static int
-algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
+algo_doublehash(int algo, uint16_t *port, struct inpcb *inp,
     kauth_cred_t cred)
 {
 	uint16_t count, num_ephemeral;
@@ -676,12 +661,12 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("%s called\n", __func__);
 
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
 
-	if (!iscompletetuple(inp_hdr)) {
+	if (!iscompletetuple(inp)) {
 		*port = 0;
 		return 0;
 	}
@@ -692,8 +677,8 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	/* Ephemeral port selection function */
 	num_ephemeral = mymax - mymin + 1;
-	offset = Fhash(inp_hdr);
-	idx = Fhash(inp_hdr) % __arraycount(dhtable);	/* G */
+	offset = Fhash(inp);
+	idx = Fhash(inp) % __arraycount(dhtable);	/* G */
 	count = num_ephemeral;
 
 	do {
@@ -701,7 +686,7 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 		    % num_ephemeral;
 		dhtable[idx]++;
 
-		if (check_suitable_port(myport, inp_hdr, cred)) {
+		if (check_suitable_port(myport, inp, cred)) {
 			*port = myport;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -716,7 +701,7 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 }
 
 static int
-algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
+algo_randinc(int algo, uint16_t *port, struct inpcb *inp,
     kauth_cred_t cred)
 {
 	static const uint16_t N = 500;	/* Determines the trade-off */
@@ -728,7 +713,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("%s called\n", __func__);
 
-	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
+	error = pcb_getports(inp, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
@@ -746,7 +731,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 		myport = mymin +
 		    (*next_ephemeral % num_ephemeral);
 
-		if (check_suitable_port(myport, inp_hdr, cred)) {
+		if (check_suitable_port(myport, inp, cred)) {
 			*port = myport;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
@@ -759,7 +744,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 /* The generic function called in order to pick a port. */
 int
-portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
+portalgo_randport(uint16_t *port, struct inpcb *inp, kauth_cred_t cred)
 {
 	int algo, error;
 	uint16_t lport;
@@ -767,8 +752,8 @@ portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 	DPRINTF("%s called\n", __func__);
 
-	if (inp_hdr->inph_portalgo == PORTALGO_DEFAULT) {
-		switch (inp_hdr->inph_af) {
+	if (inp->inp_portalgo == PORTALGO_DEFAULT) {
+		switch (inp->inp_af) {
 #ifdef INET
 		case AF_INET:
 			default_algo = inet4_portalgo;
@@ -789,16 +774,15 @@ portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 			algo = default_algo;
 	}
 	else /* socket specifies the algorithm */
-		algo = inp_hdr->inph_portalgo;
+		algo = inp->inp_portalgo;
 
 	KASSERT(algo >= 0);
 	KASSERT(algo < NALGOS);
 
-	switch (inp_hdr->inph_af) {
+	switch (inp->inp_af) {
 #ifdef INET
 	case AF_INET: {
 		char buf[INET_ADDRSTRLEN];
-		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
 		DPRINTF("local addr: %s\n", IN_PRINT(buf, &inp->inp_laddr));
 		DPRINTF("local port: %d\n", inp->inp_lport);
 		DPRINTF("foreign addr: %s\n", IN_PRINT(buf, &inp->inp_faddr));
@@ -809,13 +793,11 @@ portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 #ifdef INET6
 	case AF_INET6: {
 		char buf[INET6_ADDRSTRLEN];
-		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
-
-		DPRINTF("local addr: %s\n", IN6_PRINT(buf, &in6p->in6p_laddr));
-		DPRINTF("local port: %d\n", in6p->in6p_lport);
+		DPRINTF("local addr: %s\n", IN6_PRINT(buf, &inp->inp_laddr6));
+		DPRINTF("local port: %d\n", inp->inp_lport);
 		DPRINTF("foreign addr: %s\n", IN6_PRINT(buf,
-		    &in6p->in6p_laddr));
-		DPRINTF("foreign port: %d\n", in6p->in6p_fport);
+		    &inp->inp_laddr6));
+		DPRINTF("foreign port: %d\n", inp->inp_fport);
 		break;
 	}
 #endif
@@ -825,13 +807,13 @@ portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 	DPRINTF("%s portalgo = %d\n", __func__, algo);
 
-	error = (*algos[algo].func)(algo, &lport, inp_hdr, cred);
+	error = (*algos[algo].func)(algo, &lport, inp, cred);
 	if (error == 0) {
 		*port = lport;
 	} else if (error != EAGAIN) {
 		uint16_t lastport, mymin, mymax, *pnext_ephemeral;
 
-		error = pcb_getports(inp_hdr, &lastport, &mymin,
+		error = pcb_getports(inp, &lastport, &mymin,
 		    &mymax, &pnext_ephemeral, algo);
 		if (error)
 			return error;
@@ -859,7 +841,7 @@ portalgo_algo_name_select(const char *name, int *algo)
 
 /* Sets the algorithm to be used by the pcb inp. */
 int
-portalgo_algo_index_select(struct inpcb_hdr *inp, int algo)
+portalgo_algo_index_select(struct inpcb *inp, int algo)
 {
 
 	DPRINTF("%s called with algo %d for pcb %p\n", __func__, algo, inp );
@@ -868,7 +850,7 @@ portalgo_algo_index_select(struct inpcb_hdr *inp, int algo)
 	    (algo != PORTALGO_DEFAULT))
 		return EINVAL;
 
-	inp->inph_portalgo = algo;
+	inp->inp_portalgo = algo;
 	return 0;
 }
 
