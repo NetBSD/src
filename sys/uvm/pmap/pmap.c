@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2022/10/27 06:20:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2022/10/28 07:16:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2022/10/27 06:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2022/10/28 07:16:34 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2022/10/27 06:20:41 skrll Exp $");
  */
 
 #include "opt_ddb.h"
+#include "opt_efi.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_sysv.h"
@@ -157,6 +158,7 @@ PMAP_COUNTER(kernel_mappings_changed, "kernel mapping changed");
 PMAP_COUNTER(uncached_mappings, "uncached pages mapped");
 PMAP_COUNTER(unmanaged_mappings, "unmanaged pages mapped");
 PMAP_COUNTER(pvtracked_mappings, "pv-tracked unmanaged pages mapped");
+PMAP_COUNTER(efirt_mappings, "EFI RT pages mapped");
 PMAP_COUNTER(managed_mappings, "managed pages mapped");
 PMAP_COUNTER(mappings, "pages mapped");
 PMAP_COUNTER(remappings, "pages remapped");
@@ -236,6 +238,22 @@ struct pmap_kernel kernel_pmap_store = {
 };
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
+
+#if defined(EFI_RUNTIME)
+static struct pmap efirt_pmap;
+
+pmap_t
+pmap_efirt(void)
+{
+	return &efirt_pmap;
+}
+#else
+static inline pt_entry_t
+pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
+{
+	panic("not supported");
+}
+#endif
 
 /* The current top of kernel VM - gets updated by pmap_growkernel */
 vaddr_t pmap_curmaxkvaddr;
@@ -1354,6 +1372,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	const bool wired = (flags & PMAP_WIRED) != 0;
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
+#if defined(EFI_RUNTIME)
+	const bool is_efirt_pmap_p = (pmap == pmap_efirt());
+#else
+	const bool is_efirt_pmap_p = false;
+#endif
 	u_int update_flags = (flags & VM_PROT_ALL) != 0 ? PMAP_TLB_INSERT : 0;
 #ifdef UVMHIST
 	struct kern_history * const histp =
@@ -1411,6 +1434,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		PMAP_COUNT(pvtracked_mappings);
 #endif
+	} else if (is_efirt_pmap_p) {
+		PMAP_COUNT(efirt_mappings);
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
@@ -1421,11 +1446,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		PMAP_COUNT(unmanaged_mappings);
 	}
 
-	KASSERTMSG(mdpg == NULL || mdpp == NULL, "mdpg %p mdpp %p", mdpg, mdpp);
+	KASSERTMSG(mdpg == NULL || mdpp == NULL || is_efirt_pmap_p,
+	    "mdpg %p mdpp %p efirt %s", mdpg, mdpp,
+	    is_efirt_pmap_p ? "true" : "false");
 
 	struct vm_page_md *md = (mdpg != NULL) ? mdpg : mdpp;
-	pt_entry_t npte = pte_make_enter(pa, md, prot, flags,
-	    is_kernel_pmap_p);
+	pt_entry_t npte = is_efirt_pmap_p ?
+	    pte_make_enter_efirt(pa, prot, flags) :
+	    pte_make_enter(pa, md, prot, flags, is_kernel_pmap_p);
 
 	kpreempt_disable();
 
