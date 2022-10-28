@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.3 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.4 2022/10/28 05:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.3 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.4 2022/10/28 05:25:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -610,7 +610,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	switch (src->sa_family) {
 	case AF_INET:
 		if (inp->inp_af == AF_INET) {
-			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
+			in4p_laddr(inp) = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute(m);
 			in_pcbstate(inp, INP_BOUND);
@@ -622,10 +622,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #ifdef INET6
 		else if (inp->inp_af == AF_INET6) {
 			/* IPv4 packet to AF_INET6 socket */
-			memset(&inp->inp_laddr6, 0, sizeof(inp->inp_laddr6));
-			inp->inp_laddr6.s6_addr16[5] = htons(0xffff);
+			memset(&in6p_laddr(inp), 0, sizeof(in6p_laddr(inp)));
+			in6p_laddr(inp).s6_addr16[5] = htons(0xffff);
 			bcopy(&((struct sockaddr_in *)dst)->sin_addr,
-				&inp->inp_laddr6.s6_addr32[3],
+				&in6p_laddr(inp).s6_addr32[3],
 				sizeof(((struct sockaddr_in *)dst)->sin_addr));
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			intotcpcb(inp)->t_family = AF_INET;
@@ -640,7 +640,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #ifdef INET6
 	case AF_INET6:
 		if (inp->inp_af == AF_INET6) {
-			inp->inp_laddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
+			in6p_laddr(inp) = ((struct sockaddr_in6 *)dst)->sin6_addr;
 			inp->inp_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
 			in_pcbstate(inp, INP_BOUND);
 		}
@@ -746,10 +746,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		tp->snd_cwnd = tp->t_peermss;
 	else {
 		int ss = tcp_init_win;
-		if (inp->inp_af == AF_INET && in_localaddr(inp->inp_faddr))
+		if (inp->inp_af == AF_INET && in_localaddr(in4p_faddr(inp)))
 			ss = tcp_init_win_local;
 #ifdef INET6
-		else if (inp->inp_af == AF_INET6 && in6_localaddr(&inp->inp_faddr6))
+		else if (inp->inp_af == AF_INET6 && in6_localaddr(&in6p_faddr(inp)))
 			ss = tcp_init_win_local;
 #endif
 		tp->snd_cwnd = TCP_INITIAL_WINDOW(ss, tp->t_peermss);
