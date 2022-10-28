@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.118 2022/10/28 05:24:07 ozaki-r Exp $	*/
+/*	$NetBSD: inet.c,v 1.119 2022/10/28 05:27:17 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.118 2022/10/28 05:24:07 ozaki-r Exp $");
+__RCSID("$NetBSD: inet.c,v 1.119 2022/10/28 05:27:17 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,8 @@ getpcblist_kmem(u_long off, const char *name, size_t *len)
 {
 	struct inpcbtable table;
 	struct inpcb *next, *prev;
-	struct inpcb inpcb;
+	struct in4pcb in4pcb;
+	struct inpcb *inp;
 	struct tcpcb tcpcb;
 	struct socket sockb;
 	int istcp = strcmp(name, "tcp") == 0;
@@ -301,31 +302,32 @@ getpcblist_kmem(u_long off, const char *name, size_t *len)
 
 	i = 0;
 	while (next != TAILQ_END(head)) {
-		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
+		kread((u_long)next, (char *)&in4pcb, sizeof in4pcb);
 		prev = next;
-		next = TAILQ_NEXT(&inpcb, inp_queue);
+		inp = (struct inpcb *)&in4pcb;
+		next = TAILQ_NEXT(inp, inp_queue);
 
-		if (inpcb.inp_af != AF_INET)
+		if (inp->inp_af != AF_INET)
 			continue;
 
-		kread((u_long)inpcb.inp_socket, (char *)&sockb, sizeof(sockb));
+		kread((u_long)inp->inp_socket, (char *)&sockb, sizeof(sockb));
 		if (istcp) {
-			kread((u_long)inpcb.inp_ppcb,
+			kread((u_long)inp->inp_ppcb,
 			    (char *)&tcpcb, sizeof (tcpcb));
 		}
 		pcblist[i].ki_ppcbaddr =
-		    istcp ? (uintptr_t) inpcb.inp_ppcb : (uintptr_t) prev;
+		    istcp ? (uintptr_t) inp->inp_ppcb : (uintptr_t) prev;
 		pcblist[i].ki_rcvq = (uint64_t)sockb.so_rcv.sb_cc;
 		pcblist[i].ki_sndq = (uint64_t)sockb.so_snd.sb_cc;
 
-		sin.sin_addr = inpcb.inp_laddr;
-		sin.sin_port = inpcb.inp_lport;
+		sin.sin_addr = in4p_laddr(inp);
+		sin.sin_port = inp->inp_lport;
 		memcpy(&pcblist[i].ki_s, &sin, sizeof(sin));
-		sin.sin_addr = inpcb.inp_faddr;
-		sin.sin_port = inpcb.inp_fport;
+		sin.sin_addr = in4p_faddr(inp);
+		sin.sin_port = inp->inp_fport;
 		memcpy(&pcblist[i].ki_d, &sin, sizeof(sin));
 		pcblist[i].ki_tstate = tcpcb.t_state;
-		pcblist[i].ki_pflags = inpcb.inp_flags;
+		pcblist[i].ki_pflags = inp->inp_flags;
 		if (i++ == size) {
 			size += 100;
 			if (reallocarr(&pcblist, size, sizeof(*pcblist)) != 0)
