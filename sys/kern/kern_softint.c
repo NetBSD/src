@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.71 2022/09/03 02:48:00 thorpej Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.72 2022/10/28 21:52:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.71 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.72 2022/10/28 21:52:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -184,6 +184,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.71 2022/09/03 02:48:00 thorpej Ex
 #include <sys/cpu.h>
 #include <sys/xcall.h>
 #include <sys/psref.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -222,6 +223,31 @@ u_int		softint_bytes = 32768;
 u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
+
+SDT_PROBE_DEFINE4(sdt, kernel, softint, establish,
+    "void *"/*sih*/,
+    "void (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "unsigned"/*flags*/);
+
+SDT_PROBE_DEFINE1(sdt, kernel, softint, disestablish,
+    "void *"/*sih*/);
+
+SDT_PROBE_DEFINE2(sdt, kernel, softint, schedule,
+    "void *"/*sih*/,
+    "struct cpu_info *"/*ci*/);
+
+SDT_PROBE_DEFINE4(sdt, kernel, softint, entry,
+    "void *"/*sih*/,
+    "void (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "unsigned"/*flags*/);
+
+SDT_PROBE_DEFINE4(sdt, kernel, softint, return,
+    "void *"/*sih*/,
+    "void (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "unsigned"/*flags*/);
 
 /*
  * softint_init_isr:
@@ -382,6 +408,8 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	}
 	mutex_exit(&softint_lock);
 
+	SDT_PROBE4(sdt, kernel, softint, establish,  sih, func, arg, flags);
+
 	return sih;
 }
 
@@ -425,6 +453,12 @@ softint_disestablish(void *arg)
 	 */
 	xc_barrier(XC_HIGHPRI_IPL(sh->sh_isr->si_ipl));
 
+	/*
+	 * Notify dtrace probe when the old softint can't be running
+	 * any more, but before it can be recycled for a new softint.
+	 */
+	SDT_PROBE1(sdt, kernel, softint, disestablish,  arg);
+
 	/* Clear the handler on each CPU. */
 	mutex_enter(&softint_lock);
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -450,6 +484,8 @@ softint_schedule(void *arg)
 	softint_t *si;
 	uintptr_t offset;
 	int s;
+
+	SDT_PROBE2(sdt, kernel, softint, schedule,  arg, /*ci*/NULL);
 
 	/*
 	 * If this assert fires, rather than disabling preemption explicitly
@@ -503,6 +539,7 @@ softint_schedule_cpu(void *arg, struct cpu_info *ci)
 		const uintptr_t offset = (uintptr_t)arg;
 		const softhand_t *sh;
 
+		SDT_PROBE2(sdt, kernel, softint, schedule,  arg, ci);
 		sh = (const softhand_t *)((const uint8_t *)sc + offset);
 		KASSERT((sh->sh_flags & SOFTINT_RCPU) != 0);
 		ipi_trigger(sh->sh_ipi_id, ci);
@@ -550,6 +587,10 @@ softint_execute(lwp_t *l, int s)
 		splx(s);
 
 		/* Run the handler. */
+		SDT_PROBE4(sdt, kernel, softint, entry,
+		    ((const char *)sh -
+			(const char *)curcpu()->ci_data.cpu_softcpu),
+		    sh->sh_func, sh->sh_arg, sh->sh_flags);
 		if (__predict_true((sh->sh_flags & SOFTINT_MPSAFE) != 0)) {
 			(*sh->sh_func)(sh->sh_arg);
 		} else {
@@ -557,6 +598,10 @@ softint_execute(lwp_t *l, int s)
 			(*sh->sh_func)(sh->sh_arg);
 			KERNEL_UNLOCK_ONE(l);
 		}
+		SDT_PROBE4(sdt, kernel, softint, return,
+		    ((const char *)sh -
+			(const char *)curcpu()->ci_data.cpu_softcpu),
+		    sh->sh_func, sh->sh_arg, sh->sh_flags);
 
 		/* Diagnostic: check that spin-locks have not leaked. */
 		KASSERTMSG(curcpu()->ci_mtx_count == 0,
