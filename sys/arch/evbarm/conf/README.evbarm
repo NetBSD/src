@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.34 2022/10/28 20:37:04 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.35 2022/10/29 08:33:45 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -38,7 +38,6 @@ MIRABOX		2014/05/15	GlobalScale Technologies MiraBox
 MMNET_GENERIC	2011/11/04	Propox MMnet1002 board
 MPCSA_GENERIC	2008/07/03	MPCSA Atmel AT91RM9200 based board
 MV2120		2011/07/20	HP Media Vault MV2011 Marvell Orion board
-N900		2012/12/07	Nokia N900 smartphone
 NAPPI		2002/07/15	Netwise APlication Platform Board
 NETWALKER	2010/11/13	Sharp NetWalker
 NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")
@@ -47,7 +46,6 @@ OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OPENBLOCKS_AX3	2013/09/30	Plat'Home. OpenBlockS AX3
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
-PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)
 POGO		2016/05/12	CloudEngines Pogoplug NAS
 RPI		2012/07/26	Raspberry Pi
@@ -62,5 +60,4 @@ TISDP2430	2008/04/27	TI OMAP 2430 eval board
 TS7200		2004/12/23	Technologic Systems TS-7200 board
 TWINTAIL	2005/02/26	Genetec corp. "Twintail" PXA255 eval board
 VIPER		2005/06/06	Arcom Viper PXA255 ARM board
-VTC100		2016/07/04	NEXCOM VTC100
 ZAO425		2003/05/23	NOVATEC NTNP425B "ZAO425" IXP425 eval board
