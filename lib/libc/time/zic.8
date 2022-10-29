@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.39 2022/08/24 06:39:14 christos Exp $
+.\"	$NetBSD: zic.8,v 1.40 2022/10/29 13:55:50 christos Exp $
 .Dd August 24, 2022
 .Dt ZIC 8
 .Os
@@ -162,7 +162,10 @@ the named file rather than in the standard location.
 Be more verbose, and complain about the following situations:
 .Bl -dash
 .It
-The input specifies a link to a link.
++The input specifies a link to a link,
+something not supported by some older parsers, including
+.Nm
+itself through release 2022e.
 .It
 A year that appears in a data file is outside the range
 of representable years.
@@ -651,18 +654,32 @@ The
 field should appear as the
 .Em NAME
 field in some zone line.
+field in some zone line or as the
+.Em LINK-NAME
+field in some link line.
 The
 .Em LINK-NAME
 field is used as an alternative name for that zone;
 it has the same syntax as a zone line's
 .Em NAME
 field.
+Links can chain together, although the behavior is unspecified if a
+chain of one or more links does not terminate in a Zone name.
+A link line can appear before the line that defines the link target.
+For example:
+.Bl -column -offset indent ".Sy Link" ".Sy Greenwich" ".Sy G_M_T"
+.It Sy Link Ta Sy Greenwich Ta Sy G_M_T
+.It 
+.It Link Ta Sy Etc/GMT Ta Sy Greenwich
+.It Zone Ta Sy Etc/GMT 0 Ta Sy Ta Sy \*- GMT
+.El
+The two links are chained together, and G_M_T, Greenwich, and Etc/GMT
+all name the same zone.
 .Pp
 Except for continuation lines,
 lines may appear in any order in the input.
 However, the behavior is unspecified if multiple zone or link lines
-define the same name, or if the source of one link line is the target
-of another.
+define the same name.
 .Pp
 The file that describes leap seconds can have leap lines and an
 expiration line.
