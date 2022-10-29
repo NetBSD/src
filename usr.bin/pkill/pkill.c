@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.32 2022/07/02 20:50:26 ad Exp $	*/
+/*	$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2022 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.32 2022/07/02 20:50:26 ad Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.33 2022/10/29 08:17:16 simonb Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -87,6 +87,7 @@ static int	prenice;
 static int	signum = SIGTERM;
 static int	nicenum;
 static int	newest;
+static int	quiet;
 static int	inverse;
 static int	longfmt;
 static int	matchargs;
@@ -181,7 +182,7 @@ main(int argc, char **argv)
 		} else
 			usage();
 	} else {
-		while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilns:t:u:vx")) != -1)
+		while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilnqs:t:u:vx")) != -1)
 			switch (ch) {
 			case 'G':
 				makelist(&rgidlist, LT_GROUP, optarg);
@@ -216,6 +217,11 @@ main(int argc, char **argv)
 			case 'n':
 				newest = 1;
 				criteria = 1;
+				break;
+			case 'q':
+				if (!pgrep)
+					usage();
+				quiet = 1;
 				break;
 			case 's':
 				makelist(&sidlist, LT_SID, optarg);
@@ -443,7 +449,7 @@ usage(void)
 		    getprogname());
 	else {
 		if (pgrep)
-			ustr = "[-filnvx] [-d delim]";
+			ustr = "[-filnqvx] [-d delim]";
 		else
 			ustr = "[-signal] [-filnvx]";
 
@@ -513,6 +519,9 @@ static int
 grepact(const struct kinfo_proc2 *kp)
 {
 	char **argv;
+
+	if (quiet)
+		return 1;
 
 	if (longfmt && matchargs) {
 
