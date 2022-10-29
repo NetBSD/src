@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.134 2022/08/16 10:56:21 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.135 2022/10/29 13:55:50 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.134 2022/08/16 10:56:21 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.135 2022/10/29 13:55:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -858,12 +858,14 @@ typesequiv(const struct state *sp, int a, int b)
 		b < 0 || b >= sp->typecnt)
 			result = false;
 	else {
+		/* Compare the relevant members of *AP and *BP.
+		   Ignore tt_ttisstd and tt_ttisut, as they are
+		   irrelevant now and counting them could cause
+		   sp->goahead to mistakenly remain false.  */
 		register const struct ttinfo *	ap = &sp->ttis[a];
 		register const struct ttinfo *	bp = &sp->ttis[b];
 		result = (ap->tt_utoff == bp->tt_utoff
 			  && ap->tt_isdst == bp->tt_isdst
-			  && ap->tt_ttisstd == bp->tt_ttisstd
-			  && ap->tt_ttisut == bp->tt_ttisut
 			  && (strcmp(&sp->chars[ap->tt_desigidx],
 				     &sp->chars[bp->tt_desigidx])
 			      == 0));
@@ -1158,7 +1160,7 @@ transtime(const int year, register const struct rule *const rulep,
 			value += mon_lengths[leapyear][i] * SECSPERDAY;
 		break;
 
-	default: UNREACHABLE();
+	default: unreachable();
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.83 2022/08/16 11:07:40 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.84 2022/10/29 13:55:50 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.83 2022/08/16 11:07:40 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.84 2022/10/29 13:55:50 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -28,14 +28,16 @@ __RCSID("$NetBSD: zic.c,v 1.83 2022/08/16 11:07:40 christos Exp $");
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <util.h>
 
 typedef int_fast64_t	zic_t;
-#define ZIC_MIN INT_FAST64_MIN
-#define ZIC_MAX INT_FAST64_MAX
+static zic_t const
+  ZIC_MIN = INT_FAST64_MIN,
+  ZIC_MAX = INT_FAST64_MAX,
+  ZIC32_MIN = -1 - (zic_t) 0x7fffffff,
+  ZIC32_MAX = 0x7fffffff;
 #define SCNdZIC SCNdFAST64
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
@@ -47,6 +49,10 @@ typedef int_fast64_t	zic_t;
 # include <io.h>
 # undef mkdir
 # define mkdir(name, mode) _mkdir(name)
+#endif
+
+#if HAVE_GETRANDOM
+# include <sys/random.h>
 #endif
 
 #if HAVE_SYS_STAT_H
@@ -63,9 +69,11 @@ typedef int_fast64_t	zic_t;
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
 
-/* The minimum alignment of a type, for pre-C11 platforms.  */
+/* The minimum alignment of a type, for pre-C23 platforms.  */
 #if __STDC_VERSION__ < 201112
-# define _Alignof(type) offsetof(struct { char a; type b; }, b)
+# define alignof(type) offsetof(struct { char a; type b; }, b)
+#elif __STDC_VERSION__ < 202311
+# include <stdalign.h>
 #endif
 
 /* The maximum length of a text line, including the trailing newline.  */
@@ -79,7 +87,7 @@ static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 typedef intmax_t lineno;
 
 struct rule {
-	const char *	r_filename;
+	int		r_filenum;
 	lineno		r_linenum;
 	const char *	r_name;
 
@@ -115,7 +123,7 @@ enum {
 };
 
 struct zone {
-	const char *	z_filename;
+	int		z_filenum;
 	lineno		z_linenum;
 
 	const char *	z_name;
@@ -142,17 +150,28 @@ extern char *	optarg;
 extern int	optind;
 #endif
 
-#if ! HAVE_LINK
-# define link(target, linkname) (errno = ENOTSUP, -1)
-#endif
 #if ! HAVE_SYMLINK
-# define readlink(file, buf, size) (errno = ENOTSUP, -1)
-# define symlink(target, linkname) (errno = ENOTSUP, -1)
-# define S_ISLNK(m) 0
+static ssize_t
+readlink(char const *restrict file, char *restrict buf, size_t size)
+{
+  errno = ENOTSUP;
+  return -1;
+}
+static int
+symlink(char const *target, char const *linkname)
+{
+  errno = ENOTSUP;
+  return -1;
+}
 #endif
 #ifndef AT_SYMLINK_FOLLOW
-# define linkat(targetdir, target, linknamedir, linkname, flag) \
-    (itssymlink(target) ? (errno = ENOTSUP, -1) : link(target, linkname))
+# if HAVE_LINK
+#  define linkat(targetdir, target, linknamedir, linkname, flag) \
+     (itssymlink(target) ? (errno = ENOTSUP, -1) : link(target, linkname))
+# else
+#  define linkat(targetdir, target, linknamedir, linkname, flag) \
+     (errno = ENOTSUP, -1)
+# endif
 #endif
 
 static void	addtt(zic_t starttime, int type);
@@ -165,7 +184,7 @@ static int	getfields(char *, char **, int);
 static zic_t	gethms(const char * string, const char * errstring);
 static zic_t	getsave(char *, bool *);
 static void	inexpires(char **, int);
-static void	infile(const char * filename);
+static void	infile(int, char const *);
 static void	inleap(char ** fields, int nfields);
 static void	inlink(char ** fields, int nfields);
 static void	inrule(char ** fields, int nfields);
@@ -189,19 +208,10 @@ static zic_t	tadd(zic_t t1, zic_t t2);
 /* Bound on length of what %z can expand to.  */
 enum { PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1 };
 
-/* If true, work around a bug in Qt 5.6.1 and earlier, which mishandles
-   TZif files whose POSIX-TZ-style strings contain '<'; see
-   QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
-   workaround will no longer be needed when Qt 5.6.1 and earlier are
-   obsolete, say in the year 2021.  */
-#ifndef WORK_AROUND_QTBUG_53071
-enum { WORK_AROUND_QTBUG_53071 = true };
-#endif
-
 static int		charcnt;
 static bool		errors;
 static bool		warnings;
-static const char *	filename;
+static int		filenum;
 static int		leapcnt;
 static bool		leapseen;
 static zic_t		leapminyear;
@@ -212,9 +222,11 @@ static size_t		max_format_len;
 static zic_t		max_year;
 static zic_t		min_year;
 static bool		noise;
-static const char *	rfilename;
+static int		rfilenum;
 static lineno		rlinenum;
 static const char *	progname;
+static char const *	leapsec;
+static char *const *	main_argv;
 static ptrdiff_t	timecnt;
 static ptrdiff_t	timecnt_alloc;
 static int		typecnt;
@@ -335,7 +347,7 @@ static ptrdiff_t	nzones;	/* number of zones */
 static ptrdiff_t	nzones_alloc;
 
 struct link {
-	const char *	l_filename;
+	int		l_filenum;
 	lineno		l_linenum;
 	const char *	l_target;
 	const char *	l_linkname;
@@ -516,8 +528,7 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 	if (nitems < *nitems_alloc)
 		return ptr;
 	else {
-		ptrdiff_t nitems_max = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
-		ptrdiff_t amax = min((size_t)nitems_max, SIZE_MAX);
+		ptrdiff_t amax = min(PTRDIFF_MAX, SIZE_MAX);
 		if ((amax - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("integer overflow"));
 		*nitems_alloc += (*nitems_alloc >> 1) + 1;
@@ -529,19 +540,36 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 ** Error handling.
 */
 
-static void
-eats(char const *name, lineno num, char const *rname, lineno rnum)
+/* In most of the code, an input file name is represented by its index
+   into the main argument vector, except that LEAPSEC_FILENUM stands
+   for leapsec and COMMAND_LINE_FILENUM stands for the command line.  */
+enum { LEAPSEC_FILENUM = -2, COMMAND_LINE_FILENUM = -1 };
+
+/* Return the name of the Ith input file, for diagnostics.  */
+static char const *
+filename(int i)
 {
-	filename = name;
+  if (i == COMMAND_LINE_FILENUM)
+    return _("command line");
+  else {
+    char const *fname = i == LEAPSEC_FILENUM ? leapsec : main_argv[i];
+    return strcmp(fname, "-") == 0 ? _("standard input") : fname;
+  }
+}
+
+static void
+eats(int fnum, lineno num, int rfnum, lineno rnum)
+{
+	filenum = fnum;
 	linenum = num;
-	rfilename = rname;
+	rfilenum = rfnum;
 	rlinenum = rnum;
 }
 
 static void
-eat(char const *name, lineno num)
+eat(int fnum, lineno num)
 {
-	eats(name, num, NULL, -1);
+	eats(fnum, num, 0, -1);
 }
 
 static void ATTRIBUTE_FORMAT((printf, 1, 0))
@@ -552,12 +580,13 @@ verror(const char *const string, va_list args)
 	**	zic ... 2>&1 | error -t "*" -v
 	** on BSD systems.
 	*/
-	if (filename)
-	  fprintf(stderr, _("\"%s\", line %"PRIdMAX": "), filename, linenum);
+	if (filenum)
+	  fprintf(stderr, _("\"%s\", line %"PRIdMAX": "),
+		  filename(filenum), linenum);
 	vfprintf(stderr, string, args);
-	if (rfilename != NULL)
+	if (rfilenum)
 		fprintf(stderr, _(" (rule from \"%s\", line %"PRIdMAX")"),
-			rfilename, rlinenum);
+			filename(rfilenum), rlinenum);
 	fprintf(stderr, "\n");
 }
 
@@ -634,6 +663,131 @@ change_directory(char const *dir)
       fprintf(stderr, _("%s: Can't chdir to %s: %s\n"),
 	      progname, dir, strerror(chdir_errno));
       exit(EXIT_FAILURE);
+    }
+  }
+}
+
+/* Compare the two links A and B, for a stable sort by link name.  */
+static int
+qsort_linkcmp(void const *a, void const *b)
+{
+  struct link const *l = a;
+  struct link const *m = b;
+  int cmp = strcmp(l->l_linkname, m->l_linkname);
+  if (cmp)
+    return cmp;
+
+  /* The link names are the same.  Make the sort stable by comparing
+     file numbers (where subtraction cannot overflow) and possibly
+     line numbers (where it can).  */
+  cmp = l->l_filenum - m->l_filenum;
+  if (cmp)
+    return cmp;
+  return (l->l_linenum > m->l_linenum) - (l->l_linenum < m->l_linenum);
+}
+
+/* Compare the string KEY to the link B, for bsearch.  */
+static int
+bsearch_linkcmp(void const *key, void const *b)
+{
+  struct link const *m = b;
+  return strcmp(key, m->l_linkname);
+}
+
+/* Make the links specified by the Link lines.  */
+static void
+make_links(void)
+{
+  ptrdiff_t i, j, nalinks, pass_size;
+  if (1 < nlinks)
+    qsort(links, nlinks, sizeof *links, qsort_linkcmp);
+
+  /* Ignore each link superseded by a later link with the same name.  */
+  j = 0;
+  for (i = 0; i < nlinks; i++) {
+    while (i + 1 < nlinks
+	   && strcmp(links[i].l_linkname, links[i + 1].l_linkname) == 0)
+      i++;
+    links[j++] = links[i];
+  }
+  nlinks = pass_size = j;
+
+  /* Walk through the link array making links.  However,
+     if a link's target has not been made yet, append a copy to the
+     end of the array.  The end of the array will gradually fill
+     up with a small sorted subsequence of not-yet-made links.
+     nalinks counts all the links in the array, including copies.
+     When we reach the copied subsequence, it may still contain
+     a link to a not-yet-made link, so the process repeats.
+     At any given point in time, the link array consists of the
+     following subregions, where 0 <= i <= j <= nalinks and
+     0 <= nlinks <= nalinks:
+
+       0 .. (i - 1):
+	 links that either have been made, or have been copied to a
+	 later point point in the array (this later point can be in
+	 any of the three subregions)
+       i .. (j - 1):
+	 not-yet-made links for this pass
+       j .. (nalinks - 1):
+	 not-yet-made links that this pass has skipped because
+	 they were links to not-yet-made links
+
+     The first subregion might not be sorted if nlinks < i;
+     the other two subregions are sorted.  This algorithm does
+     not alter entries 0 .. (nlinks - 1), which remain sorted.
+
+     If there are L links, this algorithm is O(C*L*log(L)) where
+     C is the length of the longest link chain.  Usually C is
+     short (e.g., 3) though its worst-case value is L.  */
+
+  j = nalinks = nlinks;
+
+  for (i = 0; i < nalinks; i++) {
+    struct link *l;
+
+    eat(links[i].l_filenum, links[i].l_linenum);
+
+    /* If this pass examined all its links, start the next pass.  */
+    if (i == j) {
+      if (nalinks - i == pass_size) {
+	error(_("\"Link %s %s\" is part of a link cycle"),
+	      links[i].l_target, links[i].l_linkname);
+	break;
+      }
+      j = nalinks;
+      pass_size = nalinks - i;
+    }
+
+    /* Diagnose self links, which the cycle detection algorithm would not
+       otherwise catch.  */
+    if (strcmp(links[i].l_target, links[i].l_linkname) == 0) {
+      error(_("link %s targets itself"), links[i].l_target);
+      continue;
+    }
+
+    /* Make this link unless its target has not been made yet.  */
+    l = bsearch(links[i].l_target, &links[i + 1], j - (i + 1),
+		sizeof *links, bsearch_linkcmp);
+    if (!l)
+      l = bsearch(links[i].l_target, &links[j], nalinks - j,
+		  sizeof *links, bsearch_linkcmp);
+    if (!l)
+      dolink(links[i].l_target, links[i].l_linkname, false);
+    else {
+      /* The link target has not been made yet; copy the link to the end.  */
+      links = growalloc(links, sizeof *links, nalinks, &nlinks_alloc);
+      links[nalinks++] = links[i];
+    }
+
+    if (noise && i < nlinks) {
+      if (l)
+	warning(_("link %s targeting link %s mishandled by pre-2023 zic"),
+		links[i].l_linkname, links[i].l_target);
+      else if (bsearch(links[i].l_target, links, nlinks, sizeof *links,
+		       bsearch_linkcmp))
+	warning(_("link %s targeting link %s"),
+		links[i].l_linkname, links[i].l_target);
     }
   }
 }
@@ -764,7 +918,6 @@ redundant_time_option(char *opt)
 static const char *	psxrules;
 static const char *	lcltime;
 static const char *	directory;
-static const char *	leapsec;
 static const char *	tzdefault;
 
 /* -1 if the TZif output file should be slim, 0 if default, 1 if the
@@ -799,6 +952,7 @@ main(int argc, char **argv)
 # endif /* defined TEXTDOMAINDIR */
 	textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT */
+	main_argv = argv;
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) < 64) {
 		fprintf(stderr, "%s: %s\n", progname,
@@ -933,12 +1087,12 @@ _("%s: invalid time range: %s\n"),
 		tzdefault = TZDEFAULT;
 
 	if (optind < argc && leapsec != NULL) {
-		infile(leapsec);
+		infile(LEAPSEC_FILENUM, leapsec);
 		adjleap();
 	}
 
 	for (k = optind; k < argc; k++)
-		infile(argv[k]);
+	  infile(k, argv[k]);
 	if (errors)
 		return EXIT_FAILURE;
 	associate();
@@ -952,24 +1106,13 @@ _("%s: invalid time range: %s\n"),
 			continue;
 		outzone(&zones[i], j - i);
 	}
-	/*
-	** Make links.
-	*/
-	for (i = 0; i < nlinks; ++i) {
-		eat(links[i].l_filename, links[i].l_linenum);
-		dolink(links[i].l_target, links[i].l_linkname, false);
-		if (noise)
-			for (j = 0; j < nlinks; ++j)
-				if (strcmp(links[i].l_linkname,
-					links[j].l_target) == 0)
-						warning(_("link to link"));
-	}
+	make_links();
 	if (lcltime != NULL) {
-		eat(_("command line"), 1);
+		eat(COMMAND_LINE_FILENUM, 1);
 		dolink(lcltime, tzdefault, true);
 	}
 	if (psxrules != NULL) {
-		eat(_("command line"), 1);
+		eat(COMMAND_LINE_FILENUM, 1);
 		dolink(psxrules, TZDEFRULES, true);
 	}
 	if (warnings && (ferror(stderr) || fclose(stderr) != 0))
@@ -1048,6 +1191,63 @@ namecheck(const char *name)
 	return componentcheck(name, component, cp);
 }
 
+/* Return a random uint_fast64_t.  */
+static uint_fast64_t
+get_rand_u64(void)
+{
+#if HAVE_GETRANDOM
+  static uint_fast64_t entropy_buffer[max(1, 256 / sizeof(uint_fast64_t))];
+  static int nwords;
+  if (!nwords) {
+    ssize_t s;
+    do
+      s = getrandom(entropy_buffer, sizeof entropy_buffer, 0);
+    while (s < 0 && errno == EINTR);
+
+    nwords = s < 0 ? (size_t)-1 : s / sizeof *entropy_buffer;
+  }
+  if (0 < nwords)
+    return entropy_buffer[--nwords];
+#endif
+
+  /* getrandom didn't work, so fall back on portable code that is
+     not the best because the seed doesn't necessarily have enough bits,
+     the seed isn't cryptographically random on platforms lacking
+     getrandom, and 'rand' might not be cryptographically secure.  */
+  {
+    static bool initialized;
+    if (!initialized) {
+      unsigned seed;
+#ifdef CLOCK_REALTIME
+      struct timespec now;
+      clock_gettime (CLOCK_REALTIME, &now);
+      seed = now.tv_sec ^ now.tv_nsec;
+#else
+      seed = time(NULL);
+#endif
+      srand(seed);
+      initialized = true;
+    }
+  }
+
+  /* Return a random number if rand() yields a random number and in
+     the typical case where RAND_MAX is one less than a power of two.
+     In other cases this code yields a sort-of-random number.  */
+  {
+    uint_fast64_t
+      rand_max = RAND_MAX,
+      multiplier = rand_max + 1, /* It's OK if this overflows to 0.  */
+      r = 0, rmax = 0;
+    do {
+      uint_fast64_t rmax1 = rmax * multiplier + rand_max;
+      r = r * multiplier + rand();
+      rmax = rmax < rmax1 ? rmax1 : UINT_FAST64_MAX;
+    } while (rmax < UINT_FAST64_MAX);
+
+    return r;
+  }
+}
+
 /* Generate a randomish name in the same directory as *NAME.  If
    *NAMEALLOC, put the name into *NAMEALLOC which is assumed to be
    that returned by a previous call and is thus already almost set up
@@ -1067,8 +1267,19 @@ random_dirent(char const **name, char **namealloc)
   int suffixlen = 6;
   char const *lastslash = strrchr(src, '/');
   ptrdiff_t dirlen = lastslash ? lastslash + 1 - src : 0;
-  static unsigned short initialized;
   int i;
+  uint_fast64_t r;
+  uint_fast64_t base = alphabetlen;
+
+  /* BASE**6 */
+  uint_fast64_t base__6 = base * base * base * base * base * base;
+
+  /* The largest uintmax_t that is a multiple of BASE**6.  Any random
+     uintmax_t value that is this value or greater, yields a biased
+     remainder when divided by BASE**6.  UNFAIR_MIN equals the
+     mathematical value of ((UINTMAX_MAX + 1) - (UINTMAX_MAX + 1) % BASE**6)
+     computed without overflow.  */
+  uint_fast64_t unfair_min = - ((UINTMAX_MAX % base__6 + 1) % base__6);
 
   if (!dst) {
     dst = emalloc(dirlen + prefixlen + suffixlen + 1);
@@ -1078,13 +1289,14 @@ random_dirent(char const **name, char **namealloc)
     *name = *namealloc = dst;
   }
 
-  /* This randomization is not the best, but is portable to C89.  */
-  if (!initialized++) {
-    unsigned now = time(NULL);
-    srand(rand() ^ now);
+  do
+    r = get_rand_u64();
+  while (unfair_min <= r);
+
+  for (i = 0; i < suffixlen; i++) {
+    dst[dirlen + prefixlen + i] = alphabet[r % alphabetlen];
+    r /= alphabetlen;
   }
-  for (i = 0; i < suffixlen; i++)
-    dst[dirlen + prefixlen + i] = alphabet[rand() % alphabetlen];
 }
 
 /* Prepare to write to the file *OUTNAME, using *TEMPNAME to store the
@@ -1307,28 +1519,26 @@ associate(void)
 	struct rule *	rp;
 	ptrdiff_t	i, j, base, out;
 
-	if (nrules != 0) {
+	if (1 < nrules) {
 		qsort(rules, (size_t)nrules, sizeof *rules, rcomp);
 		for (i = 0; i < nrules - 1; ++i) {
 			if (strcmp(rules[i].r_name,
 				rules[i + 1].r_name) != 0)
 					continue;
-			if (strcmp(rules[i].r_filename,
-				rules[i + 1].r_filename) == 0)
+			if (rules[i].r_filenum == rules[i + 1].r_filenum)
 					continue;
-			eat(rules[i].r_filename, rules[i].r_linenum);
+			eat(rules[i].r_filenum, rules[i].r_linenum);
 			warning(_("same rule name in multiple files"));
-			eat(rules[i + 1].r_filename, rules[i + 1].r_linenum);
+			eat(rules[i + 1].r_filenum, rules[i + 1].r_linenum);
 			warning(_("same rule name in multiple files"));
 			for (j = i + 2; j < nrules; ++j) {
 				if (strcmp(rules[i].r_name,
 					rules[j].r_name) != 0)
 						break;
-				if (strcmp(rules[i].r_filename,
-					rules[j].r_filename) == 0)
+				if (rules[i].r_filenum == rules[j].r_filenum)
 						continue;
-				if (strcmp(rules[i + 1].r_filename,
-					rules[j].r_filename) == 0)
+				if (rules[i + 1].r_filenum
+				    == rules[j].r_filenum)
 						continue;
 				break;
 			}
@@ -1359,7 +1569,7 @@ associate(void)
 			/*
 			** Maybe we have a local standard time offset.
 			*/
-			eat(zp->z_filename, zp->z_linenum);
+			eat(zp->z_filenum, zp->z_linenum);
 			zp->z_save = getsave(zp->z_rule, &zp->z_isdst);
 			/*
 			** Note, though, that if there's no rule,
@@ -1408,7 +1618,7 @@ inputline(FILE *fp, char *buf, ptrdiff_t bufsize)
 }
 
 static void
-infile(const char *name)
+infile(int fnum, char const *name)
 {
 	FILE *			fp;
 	const struct lookup *	lp;
@@ -1416,7 +1626,6 @@ infile(const char *name)
 	lineno			num;
 
 	if (strcmp(name, "-") == 0) {
-		name = _("standard input");
 		fp = stdin;
 	} else if ((fp = fopen(name, "r")) == NULL) {
 		const char *e = strerror(errno);
@@ -1431,7 +1640,7 @@ infile(const char *name)
 		char buf[_POSIX2_LINE_MAX];
 		int nfields;
 		char *fields[MAX_FIELDS];
-		eat(name, num);
+		eat(fnum, num);
 		linelen = inputline(fp, buf, sizeof buf);
 		if (linelen < 0)
 		  break;
@@ -1443,7 +1652,7 @@ infile(const char *name)
 			wantcont = inzcont(fields, nfields);
 		} else {
 			struct lookup const *line_codes
-			  = name == leapsec ? leap_line_codes : zi_line_codes;
+			  = fnum < 0 ? leap_line_codes : zi_line_codes;
 			lp = byword(fields[0], line_codes);
 			if (lp == NULL)
 				error(_("input line of unknown type"));
@@ -1467,11 +1676,11 @@ infile(const char *name)
 					inexpires(fields, nfields);
 					wantcont = false;
 					break;
-				default: UNREACHABLE();
+				default: unreachable();
 			}
 		}
 	}
-	close_file(fp, NULL, filename, NULL);
+	close_file(fp, NULL, filename(fnum), NULL);
 	if (wantcont)
 		error(_("expected continuation line not found"));
 }
@@ -1574,7 +1783,7 @@ inrule(char **fields, int nfields)
 		error(_("Invalid rule name \"%s\""), fields[RF_NAME]);
 		return;
 	}
-	r.r_filename = filename;
+	r.r_filenum = filenum;
 	r.r_linenum = linenum;
 	r.r_save = getsave(fields[RF_SAVE], &r.r_isdst);
 	if (!rulesub(&r, fields[RF_LOYEAR], fields[RF_HIYEAR],
@@ -1615,9 +1824,9 @@ _("\"Zone %s\" line and -p option are mutually exclusive"),
 		    strcmp(zones[i].z_name, fields[ZF_NAME]) == 0) {
 			error(_("duplicate zone name %s"
 				" (file \"%s\", line %"PRIdMAX")"),
-				fields[ZF_NAME],
-				zones[i].z_filename,
-				zones[i].z_linenum);
+				      fields[ZF_NAME],
+				      filename(zones[i].z_filenum),
+				      zones[i].z_linenum);
 			return false;
 		}
 	return inzsub(fields, nfields, false);
@@ -1664,7 +1873,7 @@ inzsub(char **fields, int nfields, bool iscont)
 		i_untilday = ZF_TILDAY;
 		i_untiltime = ZF_TILTIME;
 	}
-	z.z_filename = filename;
+	z.z_filenum = filenum;
 	z.z_linenum = linenum;
 	z.z_stdoff = gethms(fields[i_stdoff], _("invalid UT offset"));
 	if ((cp = strchr(fields[i_format], '%')) != 0) {
@@ -1680,7 +1889,7 @@ inzsub(char **fields, int nfields, bool iscont)
 	  max_format_len = format_len;
 	hasuntil = nfields > i_untilyear;
 	if (hasuntil) {
-		z.z_untilrule.r_filename = filename;
+		z.z_untilrule.r_filenum = filenum;
 		z.z_untilrule.r_linenum = linenum;
 		if (!rulesub(
 			&z.z_untilrule,
@@ -1849,7 +2058,7 @@ inlink(char **fields, int nfields)
 	}
 	if (! namecheck(fields[LF_LINKNAME]))
 	  return;
-	l.l_filename = filename;
+	l.l_filenum = filenum;
 	l.l_linenum = linenum;
 	l.l_target = ecpyalloc(fields[LF_TARGET]);
 	l.l_linkname = ecpyalloc(fields[LF_LINKNAME]);
@@ -1913,7 +2122,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 		case YR_MAXIMUM:
 			rp->r_loyear = ZIC_MAX;
 			break;
-		default: UNREACHABLE();
+		default: unreachable();
 	} else if (sscanf(cp, "%"SCNdZIC"%c", &rp->r_loyear, &xs) != 1) {
 		error(_("invalid starting year"));
 		return false;
@@ -1931,7 +2140,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 		case YR_ONLY:
 			rp->r_hiyear = rp->r_loyear;
 			break;
-		default: UNREACHABLE();
+		default: unreachable();
 	} else if (sscanf(cp, "%"SCNdZIC"%c", &rp->r_hiyear, &xs) != 1) {
 		error(_("invalid ending year"));
 		return false;
@@ -2102,17 +2311,14 @@ writezone(const char *const name, const char *const string, char version,
 	FILE *			fp;
 	ptrdiff_t		i, j;
 	int			pass;
-	zic_t one = 1;
-	zic_t y2038_boundary = one << 31;
-	ptrdiff_t nats = timecnt + WORK_AROUND_QTBUG_53071;
 	char *tempname = NULL;
 	char const *outname = name;
 
 	/* Allocate the ATS and TYPES arrays via a single malloc,
 	   as this is a bit faster.  */
-	zic_t *ats = zic_malloc(align_to(size_product(nats, sizeof *ats + 1),
-				_Alignof(zic_t)));
-	void *typesptr = ats + nats;
+	zic_t *ats = emalloc(align_to(size_product(timecnt, sizeof *ats + 1),
+				      alignof(zic_t)));
+	void *typesptr = ats + timecnt;
 	unsigned char *types = typesptr;
 	struct timerange rangeall = {0}, range32, range64;
 
@@ -2182,21 +2388,6 @@ writezone(const char *const name, const char *const string, char version,
 			}
 	}
 
-	/* Work around QTBUG-53071 for timestamps less than y2038_boundary - 1,
-	   by inserting a no-op transition at time y2038_boundary - 1.
-	   This works only for timestamps before the boundary, which
-	   should be good enough in practice as QTBUG-53071 should be
-	   long-dead by 2038.  Do this after correcting for leap
-	   seconds, as the idea is to insert a transition just before
-	   32-bit time_t rolls around, and this occurs at a slightly
-	   different moment if transitions are leap-second corrected.  */
-	if (WORK_AROUND_QTBUG_53071 && timecnt != 0 && want_bloat()
-	    && ats[timecnt - 1] < y2038_boundary - 1 && strchr(string, '<')) {
-	  ats[timecnt] = y2038_boundary - 1;
-	  types[timecnt] = types[timecnt - 1];
-	  timecnt++;
-	}
-
 	rangeall.defaulttype = defaulttype;
 	rangeall.count = timecnt;
 	rangeall.leapcount = leapcnt;
@@ -2204,7 +2395,7 @@ writezone(const char *const name, const char *const string, char version,
 			     max(hi_time,
 				 redundant_time - (ZIC_MIN < redundant_time)),
 			     ats, types);
-	range32 = limitrange(range64, INT32_MIN, INT32_MAX, ats, types);
+	range32 = limitrange(range64, ZIC32_MIN, ZIC32_MAX, ats, types);
 
 	/* TZif version 4 is needed if a no-op transition is appended to
 	   indicate the expiration of the leap second table, or if the first
@@ -2258,8 +2449,8 @@ writezone(const char *const name, const char *const string, char version,
 			thisleapi = range32.leapbase;
 			thisleapcnt = range32.leapcount;
 			thisleapexpiry = range32.leapexpiry;
-			thismin = INT32_MIN;
-			thismax = INT32_MAX;
+			thismin = ZIC32_MIN;
+			thismax = ZIC32_MAX;
 		} else {
 			thisdefaulttype = range64.defaulttype;
 			thistimei = range64.base;
@@ -2292,7 +2483,7 @@ writezone(const char *const name, const char *const string, char version,
 
 		/* Arguably the default time type in the 32-bit data
 		   should be range32.defaulttype, which is suited for
-		   timestamps just before INT32_MIN.  However, zic
+		   timestamps just before ZIC32_MIN.  However, zic
 		   traditionally used the time type of the indefinite
 		   past instead.  Internet RFC 8532 says readers should
 		   ignore 32-bit data, so this discrepancy matters only
@@ -2444,7 +2635,7 @@ writezone(const char *const name, const char *const string, char version,
 		/* Output a LO_TIME transition if needed; see limitrange.
 		   But do not go below the minimum representable value
 		   for this pass.  */
-		lo = pass == 1 && lo_time < INT32_MIN ? INT32_MIN : lo_time;
+		lo = pass == 1 && lo_time < ZIC32_MIN ? ZIC32_MIN : lo_time;
 
 		if (0 <= pretranstype)
 		  puttzcodepass(lo, fp, pass);
@@ -2992,7 +3183,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 		INITIALIZE(prevktime);
 		if (useuntil && zp->z_untiltime <= min_time)
 			continue;
-		eat(zp->z_filename, zp->z_linenum);
+		eat(zp->z_filenum, zp->z_linenum);
 		*startbuf = '\0';
 		if (zp->z_nrules == 0) {
 			int type;
@@ -3021,8 +3212,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				zic_t one = 1;
 				zic_t y2038_boundary = one << 31;
 				struct rule *rp = &zp->z_rules[j];
-				eats(zp->z_filename, zp->z_linenum,
-					rp->r_filename, rp->r_linenum);
+				eats(zp->z_filenum, zp->z_linenum,
+				     rp->r_filenum, rp->r_linenum);
 				rp->r_todo = year >= rp->r_loyear &&
 						year <= rp->r_hiyear;
 				if (rp->r_todo) {
@@ -3063,8 +3254,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					struct rule *r = &zp->z_rules[j];
 					if (!r->r_todo)
 						continue;
-					eats(zp->z_filename, zp->z_linenum,
-						r->r_filename, r->r_linenum);
+					eats(zp->z_filenum, zp->z_linenum,
+					     r->r_filenum, r->r_linenum);
 					offset = r->r_todisut ? 0 : stdoff;
 					if (!r->r_todisstd)
 						offset = oadd(offset, save);
@@ -3079,12 +3270,12 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					} else if (jtime == ktime) {
 					  char const *dup_rules_msg =
 					    _("two rules for same instant");
-					  eats(zp->z_filename, zp->z_linenum,
-					       r->r_filename, r->r_linenum);
+					  eats(zp->z_filenum, zp->z_linenum,
+					       r->r_filenum, r->r_linenum);
 					  warning("%s", dup_rules_msg);
 					  r = &zp->z_rules[k];
-					  eats(zp->z_filename, zp->z_linenum,
-					       r->r_filename, r->r_linenum);
+					  eats(zp->z_filenum, zp->z_linenum,
+					       r->r_filenum, r->r_linenum);
 					  error("%s", dup_rules_msg);
 					}
 				}
@@ -3130,8 +3321,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 								false);
 					}
 				}
-				eats(zp->z_filename, zp->z_linenum,
-					rp->r_filename, rp->r_linenum);
+				eats(zp->z_filenum, zp->z_linenum,
+				     rp->r_filenum, rp->r_linenum);
 				doabbr(ab, max_abbr_len + 1, zp, rp->r_abbrvar,
 				       rp->r_isdst, rp->r_save, false);
 				offset = oadd(zp->z_stdoff, rp->r_save);
@@ -3161,7 +3352,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			  doabbr(startbuf, max_abbr_len + 1, 
 				 zp, disable_percent_s,
 				 isdst, save, false);
-			eat(zp->z_filename, zp->z_linenum);
+			eat(zp->z_filenum, zp->z_linenum);
 			if (*startbuf == '\0')
 error(_("can't determine time zone abbreviation to use just after until time"));
 			else {
