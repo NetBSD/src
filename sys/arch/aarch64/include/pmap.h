@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.55 2022/10/23 07:13:07 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.56 2022/10/29 08:29:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -256,11 +256,11 @@ pmap_kvattr(pt_entry_t *ptep, vm_prot_t prot)
 	case 0:
 		break;
 	case VM_PROT_READ:
-		pte |= (LX_BLKPAG_AF | LX_BLKPAG_AP_RO);
+		pte |= LX_BLKPAG_AF | LX_BLKPAG_AP_RO;
 		break;
 	case VM_PROT_WRITE:
-	case VM_PROT_READ|VM_PROT_WRITE:
-		pte |= (LX_BLKPAG_AF | LX_BLKPAG_AP_RW);
+	case VM_PROT_READ | VM_PROT_WRITE:
+		pte |= LX_BLKPAG_AF | LX_BLKPAG_AP_RW;
 		break;
 	}
 
