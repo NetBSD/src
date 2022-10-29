@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.40 2022/08/15 11:43:56 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.40 2022/08/15 11:43:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.41 2022/10/29 11:41:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.40 2022/08/15 11:43:56 riastrad
 #include <sys/workqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/sdt.h>
 #include <sys/queue.h>
 
 typedef struct work_impl {
@@ -68,6 +69,43 @@ struct workqueue {
 #define	WQ_QUEUE_SIZE	(roundup2(sizeof(struct workqueue_queue), coherency_unit))
 
 #define	POISON	0xaabbccdd
+
+SDT_PROBE_DEFINE7(sdt, kernel, workqueue, create,
+    "struct workqueue *"/*wq*/,
+    "const char *"/*name*/,
+    "void (*)(struct work *, void *)"/*func*/,
+    "void *"/*arg*/,
+    "pri_t"/*prio*/,
+    "int"/*ipl*/,
+    "int"/*flags*/);
+SDT_PROBE_DEFINE1(sdt, kernel, workqueue, destroy,
+    "struct workqueue *"/*wq*/);
+
+SDT_PROBE_DEFINE3(sdt, kernel, workqueue, enqueue,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/,
+    "struct cpu_info *"/*ci*/);
+SDT_PROBE_DEFINE4(sdt, kernel, workqueue, entry,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/,
+    "void (*)(struct work *, void *)"/*func*/,
+    "void *"/*arg*/);
+SDT_PROBE_DEFINE4(sdt, kernel, workqueue, return,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/,
+    "void (*)(struct work *, void *)"/*func*/,
+    "void *"/*arg*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__start,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
+SDT_PROBE_DEFINE2(sdt, kernel, workqueue, wait__done,
+    "struct workqueue *"/*wq*/,
+    "struct work *"/*wk*/);
+
+SDT_PROBE_DEFINE1(sdt, kernel, workqueue, exit__start,
+    "struct workqueue *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, kernel, workqueue, exit__done,
+    "struct workqueue *"/*wq*/);
 
 static size_t
 workqueue_size(int flags)
@@ -102,7 +140,11 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
+		SDT_PROBE4(sdt, kernel, workqueue, entry,
+		    wq, wk, wq->wq_func, wq->wq_arg);
 		(*wq->wq_func)((void *)wk, wq->wq_arg);
+		SDT_PROBE4(sdt, kernel, workqueue, return,
+		    wq, wk, wq->wq_func, wq->wq_arg);
 	}
 }
 
@@ -326,6 +368,7 @@ workqueue_wait(struct workqueue *wq, struct work *wk)
 
 	ASSERT_SLEEPABLE();
 
+	SDT_PROBE2(sdt, kernel, workqueue, wait__start,  wq, wk);
 	if (ISSET(wq->wq_flags, WQ_PERCPU)) {
 		struct cpu_info *ci;
 		CPU_INFO_ITERATOR cii;
@@ -339,6 +382,7 @@ workqueue_wait(struct workqueue *wq, struct work *wk)
 		q = workqueue_queue_lookup(wq, NULL);
 		(void) workqueue_q_wait(q, (work_impl_t *)wk);
 	}
+	SDT_PROBE2(sdt, kernel, workqueue, wait__done,  wq, wk);
 }
 
 void
@@ -350,6 +394,7 @@ workqueue_destroy(struct workqueue *wq)
 
 	ASSERT_SLEEPABLE();
 
+	SDT_PROBE1(sdt, kernel, workqueue, exit__start,  wq);
 	wq->wq_func = workqueue_exit;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		q = workqueue_queue_lookup(wq, ci);
@@ -357,6 +402,7 @@ workqueue_destroy(struct workqueue *wq)
 			workqueue_finiqueue(wq, q);
 		}
 	}
+	SDT_PROBE1(sdt, kernel, workqueue, exit__done,  wq);
 	kmem_free(wq->wq_ptr, workqueue_size(wq->wq_flags));
 }
 
@@ -378,6 +424,8 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
 	struct workqueue_queue *q;
 	work_impl_t *wk = (void *)wk0;
+
+	SDT_PROBE3(sdt, kernel, workqueue, enqueue,  wq, wk0, ci);
 
 	KASSERT(wq->wq_flags & WQ_PERCPU || ci == NULL);
 	q = workqueue_queue_lookup(wq, ci);
