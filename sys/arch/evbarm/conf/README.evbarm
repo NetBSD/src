@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.35 2022/10/29 08:33:45 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.36 2022/10/29 13:10:25 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -11,7 +11,6 @@ BCM56340	2013/10/28	Broadcom BCM56340 iProc based switch
 CP3100		2006/11/08	Certance IOP321 CP-3100
 CUBOX		2017/01/07	SolidRun Cubox
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
-DUOVERO		2016/10/15	Gumstix Inc. DuoVero COMS boards
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GENERIC		2018/04/01	ARMv7 FDT based boards
 GENERIC64	2018/04/01	ARMv8 (aarch64) FDT based boards
@@ -46,7 +45,6 @@ OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OPENBLOCKS_AX3	2013/09/30	Plat'Home. OpenBlockS AX3
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
-PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)
 POGO		2016/05/12	CloudEngines Pogoplug NAS
 RPI		2012/07/26	Raspberry Pi
 RPI2		2015/03/04	Raspberry Pi 2

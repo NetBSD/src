@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.71 2020/12/03 07:45:53 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.72 2022/10/29 13:10:25 jmcneill Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -144,18 +144,6 @@
 #include "opt_evbarm_boardtype.h"
 #include "opt_gumstix.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
-#if defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
-#include "opt_omap.h"
-
-#if defined(DUOVERO)
-#include "arml2cc.h"
-#endif
-#include "prcm.h"
-
-#include "arma9tmr.h"
-#include "armgtmr.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -182,32 +170,11 @@
 
 #include <arm/arm32/machdep.h>
 
-#include <arm/omap/omap2_obiovar.h>
-#include <arm/omap/am335x_prcm.h>
-#include <arm/omap/omap2_gpio.h>
-#include <arm/omap/omap2_gpmcreg.h>
-#include <arm/omap/omap2_prcm.h>
-#if defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
-#include <arm/omap/omap2_reg.h>		/* Must required "opt_omap.h" */
-#endif
-#include <arm/omap/omap3_sdmmcreg.h>
-#include <arm/omap/omap_var.h>
-#include <arm/omap/omap_com.h>
-#include <arm/omap/tifbvar.h>
-
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <evbarm/gumstix/gumstixreg.h>
 #include <evbarm/gumstix/gumstixvar.h>
-
-#include <arm/cortex/pl310_var.h>
-#include <arm/cortex/pl310_reg.h>
-#include <arm/cortex/scu_reg.h>
-
-#include <arm/cortex/a9tmr_var.h>
-
-#include <arm/cortex/gtmr_var.h>
 
 #include <dev/cons.h>
 
@@ -226,7 +193,6 @@
  * Core-logic registers and I/O mappings occupy
  *
  *    0xfd000000 - 0xfd800000	on gumstix
- *    0xc0000000 - 0xc0400000	on overo, duovero and pepper
  */
 #ifndef KERNEL_VM_BASE
 #define	KERNEL_VM_BASE		0xc8000000
@@ -244,10 +210,6 @@ uint32_t system_serial_low;
 /* Prototypes */
 #if defined(GUMSTIX)
 static void	read_system_serial(void);
-#endif
-#if defined(OMAP2)
-static void	omap_reset(void);
-static void	find_cpu_clock(void);
 #endif
 static void	process_kernel_args(int, char *[]);
 static void	process_kernel_args_liner(char *);
@@ -376,95 +338,6 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		VM_PROT_READ | VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
-#elif defined(OVERO)
-	{	/* SCM, PRCM */
-		OVERO_L4_CORE_VBASE,
-		_A(OMAP3530_L4_CORE_BASE),
-		_S(L1_S_SIZE),		/* No need 16MB.  Use only first 1MB */
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{	/* Console, GPIO[2-6] */
-		OVERO_L4_PERIPHERAL_VBASE,
-		_A(OMAP3530_L4_PERIPHERAL_BASE),
-		_S(OMAP3530_L4_PERIPHERAL_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{	/* GPIO1 */
-		OVERO_L4_WAKEUP_VBASE,
-		_A(OMAP3530_L4_WAKEUP_BASE),
-		_S(OMAP3530_L4_WAKEUP_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{
-		OVERO_GPMC_VBASE,
-		_A(GPMC_BASE),
-		_S(GPMC_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{
-		OVERO_SRDC_VBASE,
-		_A(OMAP3530_SDRC_BASE),
-		_S(OMAP3530_SDRC_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-#elif defined(DUOVERO)
-	{
-		DUOVERO_L4_CM_VBASE,
-		_A(OMAP4430_L4_CORE_BASE + 0x100000),
-		_S(L1_S_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{	/* Console, SCU, L2CC, GPIO[2-6] */
-		DUOVERO_L4_PERIPHERAL_VBASE,
-		_A(OMAP4430_L4_PERIPHERAL_BASE),
-		_S(L1_S_SIZE * 3),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{	/* PRCM, GPIO1 */
-		DUOVERO_L4_WAKEUP_VBASE,
-		_A(OMAP4430_L4_WAKEUP_BASE),
-		_S(OMAP4430_L4_WAKEUP_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{
-		DUOVERO_GPMC_VBASE,
-		_A(GPMC_BASE),
-		_S(GPMC_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{
-		DUOVERO_DMM_VBASE,
-		_A(OMAP4430_DMM_BASE),
-		_S(OMAP4430_DMM_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-#elif defined(PEPPER)
-	{
-		/* CM, Control Module, GPIO0, Console */
-		PEPPER_PRCM_VBASE,
-		_A(OMAP2_CM_BASE),
-		_S(L1_S_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
-	{
-		/* GPIO[1-3] */
-		PEPPER_L4_PERIPHERAL_VBASE,
-		_A(TI_AM335X_L4_PERIPHERAL_BASE),
-		_S(L1_S_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
 #endif
 	{ 0, 0, 0, 0, 0 }
 };
@@ -472,93 +345,7 @@ static const struct pmap_devmap gumstix_devmap[] = {
 #undef	_A
 #undef	_S
 
-#ifdef MULTIPROCESSOR
-void gumstix_cpu_hatch(struct cpu_info *);
-
-void
-gumstix_cpu_hatch(struct cpu_info *ci)
-{
-#if NARMA9TMR > 0
-	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
-		a9tmr_init_cpu_clock(ci);
-	}
-#endif
-#if NARMGTMR > 0
-	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid) ||
-	    CPU_ID_CORTEX_A15_P(curcpu()->ci_arm_cpuid)) {
-		gtmr_init_cpu_clock(ci);
-	}
-#endif
-}
-#endif
-
-
-static void
-gumstix_mpstart(void)
-{
-#if defined(MULTIPROCESSOR)
-	const bus_space_tag_t iot = &omap_bs_tag;
-	int error;
-
-	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
-		bus_space_handle_t scu_ioh;
-		error = bus_space_map(iot, OMAP4_SCU_BASE, OMAP4_SCU_SIZE, 0, &scu_ioh);
-		if (error)
-			panic("Could't map OMAP4_SCU_BASE");
-
-		/*
-		 * Invalidate all SCU cache tags. That is, for all cores (0-3)
-		 */
-		bus_space_write_4(iot, scu_ioh, SCU_INV_ALL_REG, 0xffff);
-
-		uint32_t diagctl = bus_space_read_4(iot, scu_ioh, SCU_DIAG_CONTROL);
-		diagctl |= SCU_DIAG_DISABLE_MIGBIT;
-		bus_space_write_4(iot, scu_ioh, SCU_DIAG_CONTROL, diagctl);
-
-		uint32_t scu_ctl = bus_space_read_4(iot, scu_ioh, SCU_CTL);
-		scu_ctl |= SCU_CTL_SCU_ENA;
-		bus_space_write_4(iot, scu_ioh, SCU_CTL, scu_ctl);
-
-		armv7_dcache_wbinv_all();
-	}
-
-	bus_space_handle_t wugen_ioh;
-	error = bus_space_map(iot, OMAP4_WUGEN_BASE, OMAP4_WUGEN_SIZE, 0,
-	    &wugen_ioh);
-	if (error)
-		panic("Couldn't map OMAP4_WUGEN_BASE");
-	const paddr_t mpstart = KERN_VTOPHYS((vaddr_t)cpu_mpstart);
-
-	bus_space_write_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT1, mpstart);
-
-	for (size_t i = 1; i < arm_cpu_max; i++) {
-		uint32_t boot = bus_space_read_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT0);
-		boot |= __SHIFTIN(0xf, i * 4);
-		bus_space_write_4(iot, wugen_ioh, OMAP4_AUX_CORE_BOOT0, boot);
-	}
-
-	dsb(sy);
-	sev();
-
-	u_int i;
-	for (i = 0x10000000; i > 0; i--) {
-		if (cpu_hatched_p(cpuindex))
-			break;
-	}
-
-	if (i == 0) {
-		aprint_error("cpu%d: WARNING: AP failed to start\n",
-		    cpuindex);
-	}
-#endif
-}
-
-#if defined(CPU_CORTEX)
-/* filled in before cleaning bss. keep in .data */
-u_int uboot_args[4] __attribute__((__section__(".data")));
-#else
 extern uint32_t *uboot_args;
-#endif
 
 /*
  * vaddr_t initarm(...)
@@ -580,10 +367,6 @@ initarm(void *arg)
 	uint32_t ram_size = 0x400000;
 	enum { r0 = 0, r1 = 1, r2 = 2, r3 = 3 }; /* args from u-boot */
 
-#if defined(OVERO) || defined(DUOVERO) /* || defined(PEPPER) */
-	const bus_space_tag_t iot = &omap_bs_tag;
-#endif
-
 #if defined(CPU_XSCALE)
 
 	/*
@@ -602,10 +385,6 @@ initarm(void *arg)
 	xscale_cache_clean_addr = 0xff000000U;
 
 	cpu_reset_address = NULL;
-#elif defined(OMAP2)
-	cpu_reset_address = omap_reset;
-
-	find_cpu_clock();
 #endif
 
 	/*
@@ -630,62 +409,6 @@ initarm(void *arg)
 	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
 #endif
 
-
-#if defined(OVERO)
-
-#define OMAP3530_SRDC_MCFG_p(p)		(0x80 + ((p) * 0x30))
-#define OMAP3530_SRDC_MCFG_RAMSIZE	__BITS(17,8)
-
-	bus_space_handle_t sdrcioh;
-	if (bus_space_map(iot, OMAP3530_SDRC_BASE, OMAP3530_SDRC_SIZE,
-	    0, &sdrcioh) != 0)
-		panic("OMAP_SDRC_BASE map failed\n");
-
-	ram_size = 0;
-	for (u_int p = 0; p < 2; p++) {
-		uint32_t mcfg = bus_space_read_4(iot, sdrcioh,
-		    OMAP3530_SRDC_MCFG_p(p));
-		ram_size += __SHIFTOUT(mcfg, OMAP3530_SRDC_MCFG_RAMSIZE) *
-		    (2 * 1024 * 1024);
-	}
-
-#elif defined(DUOVERO)
-
-#define OMAP4_DMM_LISA_MAP_i(i)		(0x40 + ((i) * 0x4))
-#define  OMAP4_DMM_LISA_SYS_ADDR	__BITS(31,24)
-#define  OMAP4_DMM_LISA_SYS_SIZE	__BITS(22,20)
-#define  OMAP4_DMM_LISA_SDRC_ADDRSPC	__BITS(17,16)
-
-	bus_space_handle_t dmmioh;
-	if (bus_space_map(iot, OMAP4430_DMM_BASE, OMAP4430_DMM_SIZE, 0,
-	    &dmmioh) != 0)
-		panic("OMAP4_DMM_BASE map failed\n");
-
-	ram_size = 0;
-	for (u_int i = 0; i < 4; i++) {
-		const uint32_t lisa = bus_space_read_4(iot, dmmioh,
-		     OMAP4_DMM_LISA_MAP_i(i));
-
-		const uint32_t sys_addr =
-		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SYS_ADDR);
-		/* skip non-physical */
-		if ((sys_addr & 0x80) != 0)
-			continue;
-
-		const uint32_t sdrc_addrspc =
-		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SDRC_ADDRSPC);
-		/* Skip reserced areas */
-		if (sdrc_addrspc == 2)
-			continue;
-
-		const uint32_t sys_size =
-		    __SHIFTOUT(lisa, OMAP4_DMM_LISA_SYS_SIZE);
-		ram_size += (16 * 1024 * 1024) << sys_size;
-	}
-
-
-#endif
-
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 	/* configure MUX, GPIO and CLK. */
@@ -704,8 +427,6 @@ initarm(void *arg)
 	 */
 #if defined(GUMSTIX)
 #define SDRAM_START	0xa0000000UL
-#elif defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
-#define SDRAM_START	0x80000000UL
 #endif
 	if (uboot_args[r0] < SDRAM_START ||
 	    uboot_args[r0] >= SDRAM_START + ram_size)
@@ -733,27 +454,6 @@ initarm(void *arg)
 
 	VPRINTF("initarm: Configuring system ...\n");
 
-#if defined(OMAP_4430)
-	bus_space_handle_t ioh;
-
-#if NARML2CC > 0
-	/*
-	 * Initialize L2-Cache parameters
-	 */
-
-	if (bus_space_map(iot, OMAP4_L2CC_BASE, OMAP4_L2CC_SIZE, 0, &ioh) != 0)
-		panic("OMAP4_L2CC_BASE map failed\n");
-	arml2cc_init(iot, ioh, 0);
-#endif
-
-#ifdef MULTIPROCESSOR
-	if (bus_space_map(iot, OMAP4_SCU_BASE, SCU_SIZE, 0, &ioh) != 0)
-		panic("OMAP4_SCU_BASE map failed\n");
-	arm_cpu_max =
-	    1 + (bus_space_read_4(iot, ioh, SCU_CFG) & SCU_CFG_CPUMAX);
-#endif
-#endif
-
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
@@ -767,21 +467,12 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE,
 #if defined(CPU_XSCALE)
 	    ARM_VECTORS_LOW,
-#elif defined(CPU_CORTEX)
-	    ARM_VECTORS_HIGH,
 #endif
 	    0, gumstix_devmap, true);
 
 	evbarm_device_register = gumstix_device_register;
 
-	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
-
-	/*
-	 * initarm_common flushes cache if required before AP start
-	 */
-	gumstix_mpstart();
-
-	return sp;
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 
 #if defined(GUMSTIX)
@@ -827,89 +518,6 @@ read_system_serial(void)
 	for (i = 0; i < sizeof (system_serial); i++)
 		printf("%02x", system_serial[i]);
 	printf("\n");
-}
-#endif
-
-#if defined(OMAP2)
-static void
-omap_reset(void)
-{
-
-#if defined(TI_AM335X)
-	vaddr_t prm_base = (PEPPER_PRCM_VBASE + AM335X_PRCM_PRM_DEVICE);
-
-	*(volatile uint32_t *)(prm_base + PRM_RSTCTRL) = RST_GLOBAL_WARM_SW;
-#elif defined(OMAP_4430)
-	*(volatile uint32_t *)(DUOVERO_L4_WAKEUP_VBASE + OMAP4_PRM_RSTCTRL) =
-	    OMAP4_PRM_RSTCTRL_WARM;
-#endif
-
-#if NPRCM > 0
-	prcm_cold_reset();
-#endif
-}
-
-static void
-find_cpu_clock(void)
-{
-	const vaddr_t prm_base __unused = OMAP2_PRM_BASE;
-	const vaddr_t cm_base = OMAP2_CM_BASE;
-
-#if defined(OMAP_3530)
-
-	const uint32_t prm_clksel =
-	    *(volatile uint32_t *)(prm_base + PLL_MOD + OMAP3_PRM_CLKSEL);
-	static const uint32_t prm_clksel_freqs[] = OMAP3_PRM_CLKSEL_FREQS;
-	const uint32_t sys_clk =
-	    prm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP3_PRM_CLKSEL_CLKIN)];
-	const uint32_t dpll1 =
-	    *(volatile uint32_t *)(cm_base + OMAP3_CM_CLKSEL1_PLL_MPU);
-	const uint32_t dpll2 =
-	    *(volatile uint32_t *)(cm_base + OMAP3_CM_CLKSEL2_PLL_MPU);
-	const uint32_t m =
-	    __SHIFTOUT(dpll1, OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_MULT);
-	const uint32_t n = __SHIFTOUT(dpll1, OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_DIV);
-	const uint32_t m2 =
-	    __SHIFTOUT(dpll2, OMAP3_CM_CLKSEL2_PLL_MPU_DPLL_CLKOUT_DIV);
-
-	/*
-	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
-	 */
-	curcpu()->ci_data.cpu_cc_freq =
-	    ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
-	omap_sys_clk = sys_clk * OMAP3_PRM_CLKSEL_MULT;
-
-#elif defined(OMAP_4430)
-
-	const uint32_t prm_clksel =
-	    *(volatile uint32_t *)(prm_base + OMAP4_CM_SYS_CLKSEL);
-	static const uint32_t cm_clksel_freqs[] = OMAP4_CM_CLKSEL_FREQS;
-	const uint32_t sys_clk =
-	    cm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP4_CM_SYS_CLKSEL_CLKIN)];
-	const uint32_t dpll1 =
-	    *(volatile uint32_t *)(cm_base + OMAP4_CM_CLKSEL_DPLL_MPU);
-	const uint32_t dpll2 =
-	    *(volatile uint32_t *)(cm_base + OMAP4_CM_DIV_M2_DPLL_MPU);
-	const uint32_t m =
-	    __SHIFTOUT(dpll1, OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
-	const uint32_t n = __SHIFTOUT(dpll1, OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_DIV);
-	const uint32_t m2 =
-	    __SHIFTOUT(dpll2, OMAP4_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV);
-
-	/*
-	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
-	 */
-	curcpu()->ci_data.cpu_cc_freq =
-	    ((sys_clk * 2 * m) / ((n + 1) * m2)) * OMAP4_CM_CLKSEL_MULT / 2;
-	omap_sys_clk = sys_clk * OMAP4_CM_CLKSEL_MULT;
-
-#elif defined(TI_AM335X)
-
-	prcm_bootstrap(cm_base);
-	am335x_sys_clk(TI_AM335X_CTLMOD_BASE);
-	am335x_cpu_clk();
-
-#endif
 }
 #endif
 
@@ -1160,13 +768,7 @@ consinit(void)
 	}
 #endif /* HWUARTCONSOLE */
 
-#elif defined(OVERO) || defined(DUOVERO) || defined(PEPPER)
-
-	if (comcnattach(&omap_a4x_bs_tag, CONSADDR, comcnspeed,
-	    OMAP_COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
-		return;
-
-#endif /* GUMSTIX or OVERO */
+#endif /* GUMSTIX */
 
 #endif /* NCOM */
 
@@ -1218,52 +820,7 @@ gumstix_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
-	if (device_is_a(dev, "arma9tmr") ||
-	    device_is_a(dev, "a9wdt")) {
-		/*
-		 * We need to tell the A9 Global/Watchdog Timer
-		 * what frequency it runs at.
-		 */
-
-		/*
-		 * This clock always runs at (arm_clk div 2) and only goes
-		 * to timers that are part of the A9 MP core subsystem.
-		 */
-		prop_dictionary_set_uint32(dict, "frequency",
-		    curcpu()->ci_data.cpu_cc_freq / 2);
-	}
-	if (device_is_a(dev, "armperiph")) {
-		if (device_is_a(device_parent(dev), "mainbus")) {
-#if defined(OMAP2)
-			/*
-			 * XXX KLUDGE ALERT XXX
-			 * The iot mainbus supplies is completely wrong since
-			 * it scales addresses by 2.  The simpliest remedy is
-			 * to replace with our bus space used for the armcore
-			 * registers (which armperiph uses).
-			 */
-			struct mainbus_attach_args * const mb = aux;
-			mb->mb_iot = &omap_bs_tag;
-#endif
-		}
-	}
 	if (device_is_a(dev, "ehci")) {
-#if defined(OVERO)
-		prop_dictionary_set_uint16(dict, "nports", 2);
-		prop_dictionary_set_bool(dict, "phy-reset", true);
-		prop_dictionary_set_cstring(dict, "port0-mode", "none");
-		prop_dictionary_set_int16(dict, "port0-gpio", -1);
-		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
-		prop_dictionary_set_int16(dict, "port1-gpio", 183);
-		prop_dictionary_set_bool(dict, "port1-gpioval", true);
-#elif defined(DUOVERO)
-		prop_dictionary_set_uint16(dict, "nports", 1);
-		prop_dictionary_set_bool(dict, "phy-reset", true);
-		prop_dictionary_set_cstring(dict, "port0-mode", "phy");
-		prop_dictionary_set_int16(dict, "port0-gpio", 62);
-		prop_dictionary_set_bool(dict, "port0-gpioval", false);
-		prop_dictionary_set_bool(dict, "port0-extclk", true);
-#endif
 		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
 		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
 		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
@@ -1283,89 +840,6 @@ gumstix_device_register(device_t dev, void *aux)
 		    "Ganged-power-mask-on-port3", 1) == false) {
 			printf("WARNING: unable to set power-mask for port3"
 			    " property for %s\n", device_xname(dev));
-		}
-	}
-	if (device_is_a(dev, "omapmputmr")) {
-		struct obio_attach_args *obio = aux;
-
-		switch (obio->obio_addr) {
-		case 0x49032000:	/* GPTIMER2 */
-		case 0x49034000:	/* GPTIMER3 */
-		case 0x49036000:	/* GPTIMER4 */
-		case 0x49038000:	/* GPTIMER5 */
-		case 0x4903a000:	/* GPTIMER6 */
-		case 0x4903c000:	/* GPTIMER7 */
-		case 0x4903e000:	/* GPTIMER8 */
-		case 0x49040000:	/* GPTIMER9 */
-#if defined(OVERO)
-			{
-			/* Ensure enable PRCM.CM_[FI]CLKEN_PER[3:10]. */
-			const int en =
-			    1 << (((obio->obio_addr >> 13) & 0x3f) - 0x16);
-
-			ioreg_write(OVERO_L4_CORE_VBASE + 0x5000,
-			    ioreg_read(OVERO_L4_CORE_VBASE + 0x5000) | en);
-			ioreg_write(OVERO_L4_CORE_VBASE + 0x5010,
-			    ioreg_read(OVERO_L4_CORE_VBASE + 0x5010) | en);
-			}
-#endif
-			break;
-		}
-	}
-	if (device_is_a(dev, "sdhc")) {
-		bool dualvolt = false;
-
-#if defined(OVERO) || defined(DUOVERO)
-		if (device_is_a(device_parent(dev), "obio")) {
-			struct obio_attach_args *obio = aux;
-
-#if defined(OVERO)
-			if (obio->obio_addr == SDMMC2_BASE_3530)
-				dualvolt = true;
-#elif defined(DUOVERO)
-			if (obio->obio_addr == SDMMC5_BASE_4430)
-				dualvolt = true;
-#endif
-		}
-#endif
-#if defined(PEPPER)
-		if (device_is_a(device_parent(dev), "mainbus")) {
-			struct mainbus_attach_args * const mb = aux;
-
-			if (mb->mb_iobase == SDMMC3_BASE_TIAM335X)
-				dualvolt = true;
-		}
-#endif
-		prop_dictionary_set_bool(dict, "dual-volt", dualvolt);
-	}
-	if (device_is_a(dev, "tifb")) {
-		prop_data_t panel_info;
-
-		panel_info = prop_data_create_data_nocopy(tifb_panel_info,
-		    sizeof(struct tifb_panel_info));
-		KASSERT(panel_info != NULL);
-		prop_dictionary_set(dict, "panel-info", panel_info);
-		prop_object_release(panel_info);
-
-#if defined(OMAP2)
-		/* enable LCD */
-		omap2_gpio_ctl(59, GPIO_PIN_OUTPUT);
-		omap2_gpio_write(59, 0);	/* reset */
-		delay(100);
-		omap2_gpio_write(59, 1);
-#endif
-	}
-	if (device_is_a(dev, "tps65217pmic")) {
-#if defined(TI_AM335X)
-		extern const char *mpu_supply;
-
-		mpu_supply = "DCDC3";
-#endif
-
-		if (use_tps65217_wled) {
-			prop_dictionary_set_int32(dict, "isel", 1);
-			prop_dictionary_set_int32(dict, "fdim", 200);
-			prop_dictionary_set_int32(dict, "brightness", 80);
 		}
 	}
 }

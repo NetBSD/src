@@ -1,4 +1,4 @@
-.\" $NetBSD: gxio.4,v 1.1 2017/04/06 14:35:15 wiz Exp $
+.\" $NetBSD: gxio.4,v 1.2 2022/10/29 13:10:26 jmcneill Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 3, 2017
+.Dd October 29, 2022
 .Dt GXIO 4
 .Os
 .Sh NAME
@@ -46,11 +46,10 @@ using boot time parameter.
 The supported extension boards is system specific.
 .Pp
 .Nm
-is available for OMAP based Overo/DouVero and Pepper
-as well as for XScale based Gumstix boards.
+is available for XScale based Gumstix boards.
 To setup the expansion board on boot the parameter
 .Dq expansion
-for OMAP and XScale can be used.
+can be used.
 Additionally, some XScale systems can connect two expansion boards.
 The second board can be configured by the
 .Dq busheader
@@ -98,27 +97,6 @@ For Xscale based boards the following values are supported:
 .It netpro-vx
 .It wfistix
 .It wfistix-cf
-.El
-.Pp
-For Overo the following values are supported:
-.Bl -column
-.It chestnut43
-.It gallop43
-.It summit
-.It tobi
-.It tobi-duo
-.El
-.Pp
-For DuoVero the following value is supported:
-.Bl -column
-.It parlor
-.El
-.Pp
-For Pepper the following values are supported:
-.Bl -column
-.It 43c
-.It 43r
-.It dvi
 .El
 .El
 .Sh SEE ALSO
