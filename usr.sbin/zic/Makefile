@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/07/03 15:50:40 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2022/10/29 13:53:19 christos Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -19,8 +19,8 @@ CPPFLAGS+=-DZIC_BLOAT_DEFAULT='"slim"'
 .PATH: ${NETBSDSRCDIR}/lib/libc/time
 
 .if !defined(HOSTPROG)
-LDADD+=-lutil
-DPADD+=${LIBUTIL}
+LDADD+=-lintl -lutil
+DPADD+=${LIBINTL} ${LIBUTIL}
 .endif
 
 foo:
