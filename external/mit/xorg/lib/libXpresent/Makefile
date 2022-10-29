@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2015/07/23 05:46:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2022/10/29 21:06:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,15 @@ INCSDIR=${X11INCDIR}/X11/extensions
 
 PKGDIST=	${LIB}
 
-MAN=	Xpresent.3
+MAN=	Xpresent.3 \
+	XPresentFreeInput.3 \
+	XPresentNotifyMSC.3 \
+	XPresentPixmap.3 \
+	XPresentQueryCapabilities.3 \
+	XPresentQueryExtension.3 \
+	XPresentQueryVersion.3 \
+	XPresentSelectInput.3 \
+	XPresentVersion.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

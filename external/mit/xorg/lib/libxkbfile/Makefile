@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/10/13 07:28:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2022/10/29 21:06:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS=	cout.c maprules.c srvmisc.c xkbatom.c xkbbells.c xkbconfig.c \
 	xkmread.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
+CPPFLAGS+=	-DHAVE_UNLOCKED_STDIO -DHAVE_STRNDUP -DHAVE_STRCASECMP
 
 INCS=	XKBbells.h XKBconfig.h XKBfile.h XKBrules.h XKM.h XKMformat.h
 INCSDIR=${X11INCDIR}/X11/extensions
