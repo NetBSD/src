@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/11/11 22:45:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2022/10/29 13:53:19 christos Exp $
 
 .include "${.PARSEDIR}/../zic/Makefile.inc"
 .include <bsd.own.mk>
@@ -6,6 +6,9 @@
 PROG=	zdump
 SRCS=	zdump.c
 MAN=	zdump.8
+
+LDADD+= -lintl
+DPADD+= ${LIBINTL}
 
 TZVERSION!= ${TOOL_CAT} ${NETBSDSRCDIR}/lib/libc/time/version
 CPPFLAGS+=-DPKGVERSION='"(tzcode) "' -DTZVERSION='"${TZVERSION}"'
