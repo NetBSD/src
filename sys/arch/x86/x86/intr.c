@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.162 2022/10/26 23:38:09 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.163 2022/10/29 13:59:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.162 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163 2022/10/29 13:59:04 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.162 2022/10/26 23:38:09 riastradh Exp $")
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
 #include <sys/reboot.h> /* for AB_VERBOSE */
+#include <sys/sdt.h>
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -245,6 +246,16 @@ static void intr_activate_xcall(void *, void *);
 static void intr_deactivate_xcall(void *, void *);
 static void intr_get_affinity(struct intrsource *, kcpuset_t *);
 static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
+
+SDT_PROBE_DEFINE3(sdt, kernel, intr, entry,
+    "int (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "struct intrhand *"/*ih*/);
+SDT_PROBE_DEFINE4(sdt, kernel, intr, return,
+    "int (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "struct intrhand *"/*ih*/,
+    "int"/*handled*/);
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -660,7 +671,11 @@ intr_biglock_wrapper(void *vp)
 	KERNEL_LOCK(1, NULL);
 
 	locks = curcpu()->ci_biglock_count;
+	SDT_PROBE3(sdt, kernel, intr, entry,
+	    ih->ih_realfun, ih->ih_realarg, ih);
 	ret = (*ih->ih_realfun)(ih->ih_realarg);
+	SDT_PROBE4(sdt, kernel, intr, return,
+	    ih->ih_realfun, ih->ih_realarg, ih, ret);
 	KASSERTMSG(locks == curcpu()->ci_biglock_count,
 	    "%s @ %p slipped locks %d -> %d",
 	    ih->ih_xname, ih->ih_realfun, locks, curcpu()->ci_biglock_count);
@@ -670,6 +685,23 @@ intr_biglock_wrapper(void *vp)
 	return ret;
 }
 #endif /* MULTIPROCESSOR */
+
+#ifdef KDTRACE_HOOKS
+static int
+intr_kdtrace_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+
+	SDT_PROBE3(sdt, kernel, intr, entry,
+	    ih->ih_realfun, ih->ih_realarg, ih);
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+	SDT_PROBE4(sdt, kernel, intr, return,
+	    ih->ih_realfun, ih->ih_realarg, ih, ret);
+
+	return ret;
+}
+#endif
 
 /*
  * Append device name to intrsource. If device A and device B share IRQ number,
@@ -911,6 +943,10 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
 	strlcpy(ih->ih_xname, xname, sizeof(ih->ih_xname));
+#ifdef KDTRACE_HOOKS
+	ih->ih_fun = intr_kdtrace_wrapper;
+	ih->ih_arg = ih;
+#endif
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
