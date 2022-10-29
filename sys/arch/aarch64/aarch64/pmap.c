@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.144 2022/10/28 06:22:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.145 2022/10/29 07:21:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2022/10/28 06:22:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2022/10/29 07:21:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1012,7 +1012,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			cpu_icache_sync_range(va, len);
 		} else {
 			/*
-			 * change to accessible temporally
+			 * change to accessible temporarily
 			 * to do cpu_icache_sync_range()
 			 */
 			struct pmap_asid_info * const pai = PMAP_PAI(pm,
