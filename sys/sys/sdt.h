@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.14 2020/04/19 03:12:35 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.15 2022/10/29 14:00:12 riastradh Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -172,7 +172,7 @@
 	extern struct sdt_probe sdt_##prov##_##mod##_##func##_##name[1]
 
 #define SDT_PROBE(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4)	do {	\
-	if (sdt_##prov##_##mod##_##func##_##name->id)				\
+	if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id))		\
 		(*sdt_probe_func)(sdt_##prov##_##mod##_##func##_##name->id,	\
 		    (uintptr_t) (arg0), (uintptr_t) (arg1), (uintptr_t) (arg2),	\
 		    (uintptr_t) (arg3), (uintptr_t) (arg4));			\
@@ -313,7 +313,7 @@
 /* XXX: void * function casts */
 #define	SDT_PROBE6(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4, arg5)  \
 	do {								       \
-		if (sdt_##prov##_##mod##_##func##_##name->id)		       \
+		if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id)) \
 			__FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,    \
 			    uintptr_t, uintptr_t, uintptr_t, uintptr_t),       \
 			    sdt_probe_func)(  				       \
@@ -324,7 +324,7 @@
 #define	SDT_PROBE7(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4, arg5,  \
     arg6)								       \
 	do {								       \
-		if (sdt_##prov##_##mod##_##func##_##name->id)		       \
+		if (__predict_false(sdt_##prov##_##mod##_##func##_##name->id)) \
 			__FPTRCAST(void (*)(uint32_t, uintptr_t, uintptr_t,    \
 			    uintptr_t, uintptr_t, uintptr_t, uintptr_t,	       \
 			    uintptr_t), sdt_probe_func)(		       \
