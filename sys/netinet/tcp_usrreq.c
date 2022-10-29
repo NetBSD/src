@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.234 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.235 2022/10/29 15:35:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.234 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.235 2022/10/29 15:35:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -502,6 +502,8 @@ tcp_detach(struct socket *so)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return;
 	tp = intotcpcb(inp);
 
 	s = splsoftnet();
@@ -518,6 +520,8 @@ tcp_accept(struct socket *so, struct sockaddr *nam)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_ACCEPT);
@@ -556,6 +560,8 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	int ostate = 0;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_BIND);
@@ -597,6 +603,8 @@ tcp_listen(struct socket *so, struct lwp *l)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_LISTEN);
@@ -636,6 +644,8 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	int ostate = 0;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_CONNECT);
@@ -719,6 +729,8 @@ tcp_connect2(struct socket *so, struct socket *so2)
 	KASSERT(solocked(so));
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_CONNECT2);
@@ -738,6 +750,8 @@ tcp_disconnect(struct socket *so)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_DISCONNECT);
@@ -771,6 +785,8 @@ tcp_shutdown(struct socket *so)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SHUTDOWN);
@@ -798,6 +814,8 @@ tcp_abort(struct socket *so)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_ABORT);
@@ -846,6 +864,8 @@ tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_PEERADDR);
@@ -874,6 +894,8 @@ tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SOCKADDR);
@@ -902,6 +924,8 @@ tcp_rcvd(struct socket *so, int flags, struct lwp *l)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_RCVD);
@@ -934,6 +958,8 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_RCVOOB);
@@ -976,6 +1002,8 @@ tcp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL)
+		return EINVAL;
 	tp = intotcpcb(inp);
 
 	ostate = tcp_debug_capture(tp, PRU_SEND);
@@ -1011,6 +1039,11 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	int s;
 
 	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		m_freem(m);
+		m_freem(control);
+		return EINVAL;
+	}
 	tp = intotcpcb(inp);
 	if (tp->t_template == NULL) {
 		/*
