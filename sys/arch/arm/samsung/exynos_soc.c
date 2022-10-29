@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.40 2021/09/19 10:34:08 andvar Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.41 2022/10/29 13:29:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.40 2021/09/19 10:34:08 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.41 2022/10/29 13:29:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,8 +58,9 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.40 2021/09/19 10:34:08 andvar Exp $
 #include <arm/cortex/pl310_var.h>
 #include <arm/cortex/pl310_reg.h>
 
-/* XXXNH */
-#include <evbarm/exynos/platform.h>
+#include <evbarm/fdt/platform.h>
+
+#define	EXYNOS_CORE_VBASE	KERNEL_IO_VBASE
 
 
 /* these variables are retrieved in start.S and stored in .data */
