@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.36 2022/10/29 13:10:25 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.37 2022/10/29 13:18:57 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -15,7 +15,6 @@ GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GENERIC		2018/04/01	ARMv7 FDT based boards
 GENERIC64	2018/04/01	ARMv8 (aarch64) FDT based boards
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
-HAWK		2013/10/02	TI OMAP-L138 based Hawkboard
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
 IMX23_OLINUXINO	2012/11/20	Olimex iMX233 based OLinuXino boards
