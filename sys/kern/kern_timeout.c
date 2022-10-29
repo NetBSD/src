@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.72 2022/10/28 21:53:26 riastradh Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.72 2022/10/28 21:53:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -817,7 +817,7 @@ callout_softclock(void *v)
 	void (*func)(void *);
 	void *arg;
 	int mpsafe, count, ticks, delta;
-	u_int flags;
+	u_int flags __unused;
 	lwp_t *l;
 
 	l = curlwp;
