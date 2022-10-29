@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/21 06:01:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2022/10/29 21:06:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,8 @@ INCS=	Atoms.h CharSet.h CloseHook.h Converters.h CurUtil.h \
 INCSDIR=${X11INCDIR}/X11/Xmu
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
-CPPFLAGS+=	-DHAS_SNPRINTF
+CPPFLAGS+=	-DHAS_SNPRINTF -DHAVE_REALLOCARRAY -DHAVE_UNAME
+CPPFLAGS+=	-D_CONST_X_STRING
 CPPFLAGS+=	-DXTSTRINGDEFINES	#XTODO is this correct?
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xmu
 
