@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.48 2022/08/28 12:24:39 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.49 2022/10/29 10:52:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.48 2022/08/28 12:24:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.49 2022/10/29 10:52:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -124,6 +124,248 @@ static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 kmutex_t device_lock;
 
 void (*biodone_vfs)(buf_t *) = (void *)nullop;
+
+/*
+ * bdev probes
+ */
+SDT_PROBE_DEFINE6(sdt, bdev, open, acquire,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*unit*/,
+    "device_t"/*dv*/);
+SDT_PROBE_DEFINE4(sdt, bdev, open, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, bdev, open, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE6(sdt, bdev, open, release,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*unit*/,
+    "device_t"/*dv*/);
+
+SDT_PROBE_DEFINE4(sdt, bdev, cancel, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, bdev, cancel, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, bdev, close, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, bdev, close, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE3(sdt, bdev, strategy, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "struct buf *"/*bp*/);
+SDT_PROBE_DEFINE3(sdt, bdev, strategy, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "struct buf *"/*bp*/);
+
+SDT_PROBE_DEFINE5(sdt, bdev, ioctl, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "unsigned long"/*cmd*/,
+    "void *"/*data*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE6(sdt, bdev, ioctl, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "unsigned long"/*cmd*/,
+    "void *"/*data*/,
+    "int"/*flag*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE2(sdt, bdev, psize, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/);
+SDT_PROBE_DEFINE3(sdt, bdev, psize, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*psize*/);
+
+SDT_PROBE_DEFINE4(sdt, bdev, discard, entry,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*pos*/,
+    "off_t"/*len*/);
+SDT_PROBE_DEFINE5(sdt, bdev, discard, return,
+    "struct bdevsw *"/*bdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*pos*/,
+    "off_t"/*len*/,
+    "int"/*error*/);
+
+/*
+ * cdev probes
+ */
+SDT_PROBE_DEFINE6(sdt, cdev, open, acquire,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*unit*/,
+    "device_t"/*dv*/);
+SDT_PROBE_DEFINE4(sdt, cdev, open, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, cdev, open, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE6(sdt, cdev, open, release,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*unit*/,
+    "device_t"/*dv*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, cancel, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, cdev, cancel, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, close, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/);
+SDT_PROBE_DEFINE5(sdt, cdev, close, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*flag*/,
+    "int"/*devtype*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, read, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct uio *"/*uio*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE5(sdt, cdev, read, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct uio *"/*uio*/,
+    "int"/*flag*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, write, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct uio *"/*uio*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE5(sdt, cdev, write, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct uio *"/*uio*/,
+    "int"/*flag*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE5(sdt, cdev, ioctl, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "unsigned long"/*cmd*/,
+    "void *"/*data*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE6(sdt, cdev, ioctl, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "unsigned long"/*cmd*/,
+    "void *"/*data*/,
+    "int"/*flag*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, stop, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct tty *"/*tp*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE4(sdt, cdev, stop, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct tty *"/*tp*/,
+    "int"/*flag*/);
+
+SDT_PROBE_DEFINE3(sdt, cdev, poll, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*events*/);
+SDT_PROBE_DEFINE4(sdt, cdev, poll, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "int"/*events*/,
+    "int"/*revents*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, mmap, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*off*/,
+    "int"/*flag*/);
+SDT_PROBE_DEFINE5(sdt, cdev, mmap, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*off*/,
+    "int"/*flag*/,
+    "paddr_t"/*mmapcookie*/);
+
+SDT_PROBE_DEFINE3(sdt, cdev, kqfilter, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct knote *"/*kn*/);
+SDT_PROBE_DEFINE4(sdt, cdev, kqfilter, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "struct knote *"/*kn*/,
+    "int"/*error*/);
+
+SDT_PROBE_DEFINE4(sdt, cdev, discard, entry,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*pos*/,
+    "off_t"/*len*/);
+SDT_PROBE_DEFINE5(sdt, cdev, discard, return,
+    "struct cdevsw *"/*cdevsw*/,
+    "dev_t"/*dev*/,
+    "off_t"/*pos*/,
+    "off_t"/*len*/,
+    "int"/*error*/);
 
 void
 devsw_init(void)
@@ -922,7 +1164,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct bdevsw *d;
 	struct localcount *lc;
 	device_t dv = NULL/*XXXGCC*/;
-	int unit, rv, mpflag;
+	int unit = -1/*XXXGCC*/, rv, mpflag;
 
 	d = bdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
@@ -943,13 +1185,19 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 			return ENXIO;
 		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) == NULL)
 			return ENXIO;
+		SDT_PROBE6(sdt, bdev, open, acquire,
+		    d, dev, flag, devtype, unit, dv);
 	}
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, bdev, open, entry,  d, dev, flag, devtype);
 	rv = (*d->d_open)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, bdev, open, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	if (d->d_devtounit) {
+		SDT_PROBE6(sdt, bdev, open, release,
+		    d, dev, flag, devtype, unit, dv);
 		device_release(dv);
 	}
 
@@ -970,7 +1218,9 @@ bdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
 		return ENODEV;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, bdev, cancel, entry,  d, dev, flag, devtype);
 	rv = (*d->d_cancel)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, bdev, cancel, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -986,7 +1236,9 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, bdev, close, entry,  d, dev, flag, devtype);
 	rv = (*d->d_close)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, bdev, close, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1011,7 +1263,9 @@ bdev_strategy(struct buf *bp)
 	}
 
 	DEV_LOCK(d);
+	SDT_PROBE3(sdt, bdev, strategy, entry,  d, bp->b_dev, bp);
 	(*d->d_strategy)(bp);
+	SDT_PROBE3(sdt, bdev, strategy, return,  d, bp->b_dev, bp);
 	DEV_UNLOCK(d);
 }
 
@@ -1025,7 +1279,9 @@ bdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE5(sdt, bdev, ioctl, entry,  d, dev, cmd, data, flag);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
+	SDT_PROBE6(sdt, bdev, ioctl, return,  d, dev, cmd, data, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1088,7 +1344,9 @@ bdev_size(dev_t dev)
 	 */
 	if ((boothowto & RB_DUMP) == 0)
 		DEV_LOCK(d);
+	SDT_PROBE2(sdt, bdev, psize, entry,  d, dev);
 	rv = (*d->d_psize)(dev);
+	SDT_PROBE3(sdt, bdev, psize, return,  d, dev, rv);
 	if ((boothowto & RB_DUMP) == 0)
 		DEV_UNLOCK(d);
 
@@ -1105,7 +1363,9 @@ bdev_discard(dev_t dev, off_t pos, off_t len)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, bdev, discard, entry,  d, dev, pos, len);
 	rv = (*d->d_discard)(dev, pos, len);
+	SDT_PROBE5(sdt, bdev, discard, return,  d, dev, pos, len, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1135,7 +1395,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct cdevsw *d;
 	struct localcount *lc;
 	device_t dv = NULL/*XXXGCC*/;
-	int unit, rv, mpflag;
+	int unit = -1/*XXXGCC*/, rv, mpflag;
 
 	d = cdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
@@ -1156,13 +1416,19 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 			return ENXIO;
 		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) == NULL)
 			return ENXIO;
+		SDT_PROBE6(sdt, cdev, open, acquire,
+		    d, dev, flag, devtype, unit, dv);
 	}
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, open, entry,  d, dev, flag, devtype);
 	rv = (*d->d_open)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, cdev, open, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	if (d->d_devtounit) {
+		SDT_PROBE6(sdt, cdev, open, release,
+		    d, dev, flag, devtype, unit, dv);
 		device_release(dv);
 	}
 
@@ -1183,7 +1449,9 @@ cdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
 		return ENODEV;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, cancel, entry,  d, dev, flag, devtype);
 	rv = (*d->d_cancel)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, cdev, cancel, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1199,7 +1467,9 @@ cdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, close, entry,  d, dev, flag, devtype);
 	rv = (*d->d_close)(dev, flag, devtype, l);
+	SDT_PROBE5(sdt, cdev, close, return,  d, dev, flag, devtype, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1215,7 +1485,9 @@ cdev_read(dev_t dev, struct uio *uio, int flag)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, read, entry,  d, dev, uio, flag);
 	rv = (*d->d_read)(dev, uio, flag);
+	SDT_PROBE5(sdt, cdev, read, return,  d, dev, uio, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1231,7 +1503,9 @@ cdev_write(dev_t dev, struct uio *uio, int flag)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, write, entry,  d, dev, uio, flag);
 	rv = (*d->d_write)(dev, uio, flag);
+	SDT_PROBE5(sdt, cdev, write, return,  d, dev, uio, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1247,7 +1521,9 @@ cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE5(sdt, cdev, ioctl, entry,  d, dev, cmd, data, flag);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
+	SDT_PROBE6(sdt, cdev, ioctl, return,  d, dev, cmd, data, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1263,7 +1539,9 @@ cdev_stop(struct tty *tp, int flag)
 		return;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, stop, entry,  d, tp->t_dev, tp, flag);
 	(*d->d_stop)(tp, flag);
+	SDT_PROBE4(sdt, cdev, stop, return,  d, tp->t_dev, tp, flag);
 	DEV_UNLOCK(d);
 }
 
@@ -1292,7 +1570,9 @@ cdev_poll(dev_t dev, int flag, lwp_t *l)
 		return POLLERR;
 
 	DEV_LOCK(d);
+	SDT_PROBE3(sdt, cdev, poll, entry,  d, dev, flag);
 	rv = (*d->d_poll)(dev, flag, l);
+	SDT_PROBE4(sdt, cdev, poll, return,  d, dev, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1309,7 +1589,9 @@ cdev_mmap(dev_t dev, off_t off, int flag)
 		return (paddr_t)-1LL;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, mmap, entry,  d, dev, off, flag);
 	rv = (*d->d_mmap)(dev, off, flag);
+	SDT_PROBE5(sdt, cdev, mmap, return,  d, dev, off, flag, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1325,7 +1607,9 @@ cdev_kqfilter(dev_t dev, struct knote *kn)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE3(sdt, cdev, kqfilter, entry,  d, dev, kn);
 	rv = (*d->d_kqfilter)(dev, kn);
+	SDT_PROBE4(sdt, cdev, kqfilter, return,  d, dev, kn, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
@@ -1341,7 +1625,9 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 		return ENXIO;
 
 	DEV_LOCK(d);
+	SDT_PROBE4(sdt, cdev, discard, entry,  d, dev, pos, len);
 	rv = (*d->d_discard)(dev, pos, len);
+	SDT_PROBE5(sdt, cdev, discard, return,  d, dev, pos, len, rv);
 	DEV_UNLOCK(d);
 
 	return rv;
