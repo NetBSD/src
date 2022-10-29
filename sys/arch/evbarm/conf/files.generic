@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.13 2021/12/18 16:31:06 riastradh Exp $
+#	$NetBSD: files.generic,v 1.14 2022/10/29 13:59:57 jmcneill Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -28,7 +28,6 @@ include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/ti/files.ti"
 include "arch/arm/vexpress/files.vexpress"
-include "arch/arm/virt/files.virt"
 include "arch/arm/xilinx/files.zynq"
 
 #
