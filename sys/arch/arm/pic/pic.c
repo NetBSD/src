@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.83 2022/07/28 10:26:26 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.84 2022/10/29 15:13:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.83 2022/07/28 10:26:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.84 2022/10/29 15:13:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -345,7 +345,11 @@ pic_dispatch(struct intrsource *is, void *frame)
 
 	ocpl = curcpu()->ci_cpl;
 #ifdef MULTIPROCESSOR
-	if (!is->is_mpsafe) {
+	const bool mpsafe = is->is_mpsafe;
+#else
+	const bool mpsafe = true;
+#endif
+	if (!mpsafe) {
 		KERNEL_LOCK(1, NULL);
 		const u_int ci_blcnt __diagused = curcpu()->ci_biglock_count;
 		const u_int l_blcnt __diagused = curlwp->l_blcnt;
@@ -353,9 +357,9 @@ pic_dispatch(struct intrsource *is, void *frame)
 		KASSERT(ci_blcnt == curcpu()->ci_biglock_count);
 		KASSERT(l_blcnt == curlwp->l_blcnt);
 		KERNEL_UNLOCK_ONE(NULL);
-	} else
-#endif
+	} else {
 		(void)(*func)(arg);
+	}
 	ncpl = curcpu()->ci_cpl;
 	KASSERTMSG(ocpl <= ncpl, "pic %s irq %u intrsource %s:"
 	    " cpl slipped %d -> %d",
