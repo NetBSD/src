@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_codec.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sun8i_codec.c,v 1.10 2022/10/29 19:07:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_codec.c,v 1.10 2022/10/29 19:07:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,11 +174,31 @@ static audio_dai_tag_t
 sun8i_codec_dai_get_tag(device_t dev, const void *data, size_t len)
 {
 	struct sun8i_codec_softc * const sc = device_private(dev);
+	const u_int sound_dai_cells = len / 4;
 
-	if (len != 4)
-		return NULL;
+	KASSERT(sound_dai_cells > 0);
 
-	return &sc->sc_dai;
+	/*
+	 * This driver only supports AIF1 with CPU DAI at the moment.
+	 * When #sound-dai-cells is 0, return this tag. When #sound-dai-cells
+	 * is 1, return this tag only when the second cell contains the
+	 * value 0.
+	 *
+	 * Update this when support for multiple interfaces is added to
+	 * this driver.
+	 */
+	if (sound_dai_cells == 1) {
+		return &sc->sc_dai;
+	}
+
+	if (sound_dai_cells == 2) {
+		const u_int iface = be32dec((const u_int *)data + 1);
+		if (iface == 0) {
+			return &sc->sc_dai;
+		}
+	}
+
+	return NULL;
 }
 
 static struct fdtbus_dai_controller_func sun8i_codec_dai_funcs = {
