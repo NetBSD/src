@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2926 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2927 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -709,6 +709,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		recent. [mrg 20221015]
 	evbarm: Add support for Oracle Cloud virtual machines.
 		[jmcneill 20221015]
-	libc: put reallocarray(3) in the public namespace
+	libc: put reallocarray(3) in the public namespace [wiz 20221028]
 	evbarm: Update Xilinx Zynq-7000 SoC support to use FDT based
 		configuration. [jmcneill 20221028]
+	tzcode: Updated to 2022f. [christos 20221029]
