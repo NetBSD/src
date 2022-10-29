@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2022/10/29 08:33:45 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.13 2022/10/29 13:14:38 jmcneill Exp $
 
 # Makefile for evbarm tags file and boot blocks
 
@@ -10,7 +10,6 @@ SEVBARM=	${SYSDIR}/arch/evbarm/adi_brh/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/armadillo/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/cp3100/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/dev/*.[ch]
-SEVBARM+=	${SYSDIR}/arch/evbarm/devkit8000/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/evbarm/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/g42xxeb/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/gemini/*.[ch]
