@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.129 2022/10/29 08:52:22 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.130 2022/10/29 08:52:47 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -62,8 +62,6 @@ EVBARM_BOARDS.armv6+=		RPI
 EVBARM_BOARDS.armv6hf+=	 	RPI
 KERNEL_SETS.armv6+=		RPI2
 KERNEL_SETS.armv6hf+=	 	RPI2
-EVBARM_BOARDS.armv6+=		TISDP2420
-EVBARM_BOARDS.armv6hf+= 	TISDP2420
 
 KERNEL_SETS.armv7+=		GENERIC
 KERNEL_SETS.armv7hf+=		GENERIC
