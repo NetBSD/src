@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.193 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.194 2022/10/29 02:56:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.193 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.194 2022/10/29 02:56:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -157,7 +157,9 @@ int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
 static struct pool in4pcb_pool;
+#ifdef INET6
 static struct pool in6pcb_pool;
+#endif
 
 static int
 inpcb_poolinit(void)
@@ -165,8 +167,10 @@ inpcb_poolinit(void)
 
 	pool_init(&in4pcb_pool, sizeof(struct in4pcb), 0, 0, 0, "in4pcbpl", NULL,
 	    IPL_NET);
+#ifdef INET6
 	pool_init(&in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0, "in6pcbpl", NULL,
 	    IPL_NET);
+#endif
 	return 0;
 }
 
@@ -195,12 +199,17 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcb *inp;
 	int s;
 
+#ifdef INET6
 	KASSERT(soaf(so) == AF_INET || soaf(so) == AF_INET6);
 
 	if (soaf(so) == AF_INET)
 		inp = pool_get(&in4pcb_pool, PR_NOWAIT|PR_ZERO);
 	else
 		inp = pool_get(&in6pcb_pool, PR_NOWAIT|PR_ZERO);
+#else
+	KASSERT(soaf(so) == AF_INET);
+	inp = pool_get(&in4pcb_pool, PR_NOWAIT|PR_ZERO);
+#endif
 	if (inp == NULL)
 		return (ENOBUFS);
 	inp->inp_af = soaf(so);
@@ -226,10 +235,15 @@ in_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 		if (error != 0) {
+#ifdef INET6
 			if (inp->inp_af == AF_INET)
 				pool_put(&in4pcb_pool, inp);
 			else
 				pool_put(&in6pcb_pool, inp);
+#else
+			KASSERT(inp->inp_af == AF_INET);
+			pool_put(&in4pcb_pool, inp);
+#endif
 			return error;
 		}
 		inp->inp_sp->sp_inp = inp;
@@ -665,6 +679,7 @@ in_pcbdetach(void *v)
 	}
 	rtcache_free(&inp->inp_route);
 	ip_freemoptions(inp->inp_moptions);
+#ifdef INET6
 	if (inp->inp_af == AF_INET6) {
 		if (in6p_outputopts(inp) != NULL) {
 			ip6_clearpktopts(in6p_outputopts(inp), -1);
@@ -672,12 +687,18 @@ in_pcbdetach(void *v)
 		}
 		ip6_freemoptions(in6p_moptions(inp));
 	}
+#endif
 	sofree(so);			/* drops the socket's lock */
 
+#ifdef INET6
 	if (inp->inp_af == AF_INET)
 		pool_put(&in4pcb_pool, inp);
 	else
 		pool_put(&in6pcb_pool, inp);
+#else
+	KASSERT(inp->inp_af == AF_INET);
+	pool_put(&in4pcb_pool, inp);
+#endif
 	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
 
@@ -1096,10 +1117,15 @@ void
 in_pcbstate(struct inpcb *inp, int state)
 {
 
+#ifdef INET6
 	if (inp->inp_af == AF_INET6) {
 		in6_pcbstate(inp, state);
 		return;
 	}
+#else
+	if (inp->inp_af != AF_INET)
+		return;
+#endif
 
 	if (inp->inp_state > INP_ATTACHED)
 		LIST_REMOVE(inp, inp_hash);
@@ -1130,8 +1156,10 @@ in_pcbrtentry(struct inpcb *inp)
 		struct sockaddr_in	dst4;
 	} u;
 
+#ifdef INET6
 	if (inp->inp_af == AF_INET6)
 		return in6_pcbrtentry(inp);
+#endif
 	if (inp->inp_af != AF_INET)
 		return (NULL);
 
