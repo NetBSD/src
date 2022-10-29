@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.238 2022/08/12 07:35:55 mrg Exp $
+#	 $NetBSD: mi,v 1.239 2022/10/29 21:06:48 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2577,6 +2577,14 @@
 ./usr/X11R7/man/cat3/XpStartJob.0			xcomp-obsolete	obsolete
 ./usr/X11R7/man/cat3/XpStartPage.0			xcomp-obsolete	obsolete
 ./usr/X11R7/man/cat3/Xpresent.0				xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentFreeInput.0		xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentNotifyMSC.0		xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentPixmap.0			xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentQueryCapabilities.0	xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentQueryExtension.0		xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentQueryVersion.0		xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentSelectInput.0		xcomp-libXpresent-catman	.cat,xorg
+./usr/X11R7/man/cat3/XPresentVersion.0			xcomp-libXpresent-catman	.cat,xorg
 ./usr/X11R7/man/cat3/Xrandr.0				xcomp-libXrandr-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XrmCombineDatabase.0		xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XrmCombineFileDatabase.0		xcomp-libX11-catman	.cat,xorg
@@ -4043,6 +4051,14 @@
 ./usr/X11R7/man/html3/XpStartJob.html			xcomp-obsolete	obsolete
 ./usr/X11R7/man/html3/XpStartPage.html			xcomp-obsolete	obsolete
 ./usr/X11R7/man/html3/Xpresent.html			xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentFreeInput.html		xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentNotifyMSC.html		xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentPixmap.html		xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentQueryCapabilities.html	xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentQueryExtension.html	xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentQueryVersion.html		xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentSelectInput.html		xcomp-libXpresent-htmlman	html,xorg
+./usr/X11R7/man/html3/XPresentVersion.html		xcomp-libXpresent-htmlman	html,xorg
 ./usr/X11R7/man/html3/Xrandr.html			xcomp-libXrandr-htmlman	html,xorg
 ./usr/X11R7/man/html3/XrmCombineDatabase.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XrmCombineFileDatabase.html	xcomp-libX11-htmlman	html,xorg
@@ -5508,6 +5524,14 @@
 ./usr/X11R7/man/man3/XpStartJob.3			xcomp-obsolete	obsolete
 ./usr/X11R7/man/man3/XpStartPage.3			xcomp-obsolete	obsolete
 ./usr/X11R7/man/man3/Xpresent.3				xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentFreeInput.3		xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentNotifyMSC.3		xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentPixmap.3			xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentQueryCapabilities.3	xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentQueryExtension.3		xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentQueryVersion.3		xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentSelectInput.3		xcomp-libXpresent-man	.man,xorg
+./usr/X11R7/man/man3/XPresentVersion.3			xcomp-libXpresent-man	.man,xorg
 ./usr/X11R7/man/man3/Xrandr.3				xcomp-libXrandr-man	.man,xorg
 ./usr/X11R7/man/man3/XrmCombineDatabase.3		xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XrmCombineFileDatabase.3		xcomp-libX11-man	.man,xorg
