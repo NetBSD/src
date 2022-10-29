@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.88 2022/10/15 11:07:38 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.88 2022/10/15 11:07:38 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -52,7 +52,7 @@ RCSID("$NetBSD: locore.S,v 1.88 2022/10/15 11:07:38 jmcneill Exp $")
 
 #define LOCORE_EL2
 
-#define BOOT_AP_STACKSIZE	256	/* size of temporally stack for APs */
+#define BOOT_AP_STACKSIZE	256	/* size of temporary stack for APs */
 #define PMAPBOOT_PAGEALLOCMAX	(1024 * 1024)	/* reserved size from _end[] */
 
 #if (defined(VERBOSE_INIT_ARM) || defined(DEBUG_LOCORE)) && defined(EARLYCONS)
