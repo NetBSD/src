@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2014/03/29 23:51:02 joerg Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 2022/10/29 11:04:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,8 @@ struct pci_attach_args;
 void landisk_pci_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 int landisk_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
+int landisk_pci_intr_setattr(const struct pci_attach_args *,
+    pci_intr_handle_t *, int, uint64_t);
 const char *landisk_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
     char *, size_t);
 const struct evcnt *landisk_pci_intr_evcnt(pci_chipset_tag_t,pci_intr_handle_t);
@@ -83,6 +85,8 @@ int landisk_pci_conf_hook(void *, int, int, int, pcireg_t);
 	landisk_pci_attach_hook(pa, self, pba)
 #define	pci_intr_map(pa, ihp) \
 	landisk_pci_intr_map(pa, ihp)
+#define	pci_intr_setattr(pa, ihp, attr, data) \
+	landisk_pci_intr_setattr(pa, ihp, attr, data)
 #define	pci_intr_string(v, ih, buf, len) \
 	landisk_pci_intr_string(v, ih, buf, len)
 #define	pci_intr_evcnt(v, ih) \

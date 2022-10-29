@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.7 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.8 2022/10/29 11:04:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.7 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.8 2022/10/29 11:04:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,6 +115,19 @@ landisk_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 bad:
 	*ihp = -1;
 	return 1;
+}
+
+int
+landisk_pci_intr_setattr(const struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp, int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 const char *
