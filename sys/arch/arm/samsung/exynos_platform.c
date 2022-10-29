@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.38 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.39 2022/10/29 13:29:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,14 +35,14 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.38 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.39 2022/10/29 13:29:46 jmcneill Exp $");
 
+#define	EXYNOS_CORE_VBASE	KERNEL_IO_VBASE
 
 /*
  * Booting a CA7 core on Exynos5422 is currently broken, disable starting CA7 secondaries.
  */
 #define        EXYNOS5422_DISABLE_CA7_CLUSTER
-
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.38 2021/04/24 23:36:28 thorpej
 #include <arm/samsung/mct_var.h>
 #include <arm/samsung/sscom_reg.h>
 
-#include <evbarm/exynos/platform.h>
+#include <evbarm/fdt/platform.h>
 #include <evbarm/fdt/machdep.h>
 
 #include <arm/fdt/arm_fdtvar.h>
