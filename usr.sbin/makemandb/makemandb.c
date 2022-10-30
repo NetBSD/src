@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.65 2022/10/26 21:56:19 andvar Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.66 2022/10/30 01:49:30 gutteridge Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.65 2022/10/26 21:56:19 andvar Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.66 2022/10/30 01:49:30 gutteridge Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -503,7 +503,7 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 }
 
 /* build_file_cache --
- *   This function generates a md5 hash of the file passed as its 2nd parameter
+ *   This function generates an md5 hash of the file passed as its 2nd parameter
  *   and stores it in a temporary table file_cache along with the full file path.
  *   This is done to support incremental update of the database.
  *   The temporary table file_cache is dropped thereafter in the function
