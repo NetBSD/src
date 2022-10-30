@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2022/10/30 10:26:48 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2022/10/30 14:08:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2022/10/30 10:26:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2022/10/30 14:08:09 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1426,7 +1426,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			continue;
 		}
 
-		if (pte & LX_BLKPAG_NG) {
+		if ((pte & LX_BLKPAG_OS_WIRED) == 0) {
 			const paddr_t pa = lxpde_pa(pte);
 			struct vm_page *const pg = PHYS_TO_VM_PAGE(pa);
 
