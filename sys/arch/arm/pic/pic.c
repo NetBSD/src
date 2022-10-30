@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.84 2022/10/29 15:13:27 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.85 2022/10/30 10:20:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.84 2022/10/29 15:13:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.85 2022/10/30 10:20:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.84 2022/10/29 15:13:27 riastradh Exp $");
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
+#include <sys/sdt.h>
 #include <sys/xcall.h>
 
 #include <arm/armreg.h>
@@ -93,6 +94,16 @@ static struct evcnt pic_deferral_ev =
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
 
 static int pic_init(void);
+
+SDT_PROBE_DEFINE3(sdt, kernel, intr, entry,
+    "void (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "struct intrsource *"/*is*/);
+SDT_PROBE_DEFINE4(sdt, kernel, intr, return,
+    "void (*)(void *)"/*func*/,
+    "void *"/*arg*/,
+    "struct intrsource *"/*is*/,
+    "int"/*handled*/);
 
 #ifdef __HAVE_PIC_SET_PRIORITY
 void
@@ -333,7 +344,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 {
 	int (*func)(void *) = is->is_func;
 	void *arg = is->is_arg;
-	int ocpl, ncpl;
+	int ocpl, ncpl, handled __unused;
 
 	if (__predict_false(arg == NULL)) {
 		if (__predict_false(frame == NULL)) {
@@ -353,12 +364,16 @@ pic_dispatch(struct intrsource *is, void *frame)
 		KERNEL_LOCK(1, NULL);
 		const u_int ci_blcnt __diagused = curcpu()->ci_biglock_count;
 		const u_int l_blcnt __diagused = curlwp->l_blcnt;
-		(void)(*func)(arg);
+		SDT_PROBE3(sdt, kernel, intr, entry,  func, arg, is);
+		handled = (*func)(arg);
+		SDT_PROBE4(sdt, kernel, intr, return,  func, arg, is, handled);
 		KASSERT(ci_blcnt == curcpu()->ci_biglock_count);
 		KASSERT(l_blcnt == curlwp->l_blcnt);
 		KERNEL_UNLOCK_ONE(NULL);
 	} else {
-		(void)(*func)(arg);
+		SDT_PROBE3(sdt, kernel, intr, entry,  func, arg, is);
+		handled = (*func)(arg);
+		SDT_PROBE4(sdt, kernel, intr, return,  func, arg, is, handled);
 	}
 	ncpl = curcpu()->ci_cpl;
 	KASSERTMSG(ocpl <= ncpl, "pic %s irq %u intrsource %s:"
