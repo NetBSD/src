@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.176 2022/09/21 01:33:53 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.177 2022/10/30 19:11:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.176 2022/09/21 01:33:53 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.177 2022/10/30 19:11:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -240,7 +240,7 @@ _default_history_file(void)
 		return NULL;
 
 	len = strlen(p->pw_dir) + sizeof("/.history");
-	if ((path = malloc(len)) == NULL)
+	if ((path = el_malloc(len)) == NULL)
 		return NULL;
 
 	(void)snprintf(path, len, "%s/.history", p->pw_dir);
@@ -2331,6 +2331,8 @@ rl_copy_text(int from, int to)
 
 	len = (size_t)(to - from);
 	out = el_malloc((size_t)len + 1);
+	if (out == NULL)
+		return NULL;
 	(void)strlcpy(out, li->buffer + from , len);
 
 	return out;
