@@ -72,10 +72,13 @@ Link	America/Sao_Paulo	Brazil/East
 Link	America/Manaus		Brazil/West
 Link	America/Halifax		Canada/Atlantic
 Link	America/Winnipeg	Canada/Central
+Link	America/Winnipeg	America/Rainy_River
 # This line is commented out, as the name exceeded the 14-character limit
 # and was an unused misnomer.
 #Link	America/Regina		Canada/East-Saskatchewan
 Link	America/Toronto		Canada/Eastern
+Link	America/Toronto		America/Nipigon
+Link	America/Toronto		America/Thunder_Bay
 Link	America/Edmonton	Canada/Mountain
 Link	America/St_Johns	Canada/Newfoundland
 Link	America/Vancouver	Canada/Pacific
@@ -125,6 +128,7 @@ Link	Asia/Taipei		ROC
 Link	Asia/Seoul		ROK
 Link	Asia/Singapore		Singapore
 Link	Europe/Istanbul		Turkey
+Link	Europe/Istanbul		Asia/Istanbul
 Link	Etc/UTC			UCT
 Link	America/Anchorage	US/Alaska
 Link	America/Adak		US/Aleutian
@@ -142,3 +146,9 @@ Link	Etc/UTC			UTC
 Link	Etc/UTC			Universal
 Link	Europe/Moscow		W-SU
 Link	Etc/UTC			Zulu
+Link	Etc/GMT			Etc/GMT+0
+Link	Etc/GMT			Etc/GMT-0
+Link	Etc/GMT			Etc/GMT0
+Link	Etc/GMT			Etc/Greenwich
+Link	Etc/UTC			Etc/Universal
+Link	Etc/UTC			Etc/Zulu
