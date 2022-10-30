@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.44 2021/09/09 20:24:07 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.45 2022/10/30 19:11:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.44 2021/09/09 20:24:07 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.45 2022/10/30 19:11:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -272,40 +272,29 @@ terminal_init(EditLine *el)
 	el->el_terminal.t_buf = el_calloc(TC_BUFSIZE,
 	    sizeof(*el->el_terminal.t_buf));
 	if (el->el_terminal.t_buf == NULL)
-		goto fail1;
+		return -1;
 	el->el_terminal.t_cap = el_calloc(TC_BUFSIZE,
 	    sizeof(*el->el_terminal.t_cap));
 	if (el->el_terminal.t_cap == NULL)
-		goto fail2;
+		goto out;
 	el->el_terminal.t_fkey = el_calloc(A_K_NKEYS,
 	    sizeof(*el->el_terminal.t_fkey));
 	if (el->el_terminal.t_fkey == NULL)
-		goto fail3;
+		goto out;
 	el->el_terminal.t_loc = 0;
 	el->el_terminal.t_str = el_calloc(T_str,
 	    sizeof(*el->el_terminal.t_str));
 	if (el->el_terminal.t_str == NULL)
-		goto fail4;
+		goto out;
 	el->el_terminal.t_val = el_calloc(T_val,
 	    sizeof(*el->el_terminal.t_val));
 	if (el->el_terminal.t_val == NULL)
-		goto fail5;
+		goto out;
 	(void) terminal_set(el, NULL);
 	terminal_init_arrow(el);
 	return 0;
-fail5:
-	free(el->el_terminal.t_str);
-	el->el_terminal.t_str = NULL;
-fail4:
-	free(el->el_terminal.t_fkey);
-	el->el_terminal.t_fkey = NULL;
-fail3:
-	free(el->el_terminal.t_cap);
-	el->el_terminal.t_cap = NULL;
-fail2:
-	free(el->el_terminal.t_buf);
-	el->el_terminal.t_buf = NULL;
-fail1:
+out:
+	terminal_end(el);
 	return -1;
 }
 
