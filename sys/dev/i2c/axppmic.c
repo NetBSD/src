@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.37 2022/10/30 11:51:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.37 2022/10/30 11:51:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $")
 
 #define	AXP_ADC_RAW(_hi, _lo)	\
 	(((u_int)(_hi) << 4) | ((_lo) & 0xf))
+
+#define	AXP_GPIO_CTRL_REG(pin)	(0x90 + (pin) * 2)
+#define	 AXP_GPIO_CTRL_FUNC_MASK 	__BITS(2,0)
+#define	 AXP_GPIO_CTRL_FUNC_LOW	 	0
+#define	 AXP_GPIO_CTRL_FUNC_HIGH	1
+#define	 AXP_GPIO_CTRL_FUNC_INPUT	2
+#define	AXP_GPIO_SIGNAL_REG	0x94
 
 #define	AXP_FUEL_GAUGE_CTRL_REG	0xb8
 #define	 AXP_FUEL_GAUGE_CTRL_EN	__BIT(7)
@@ -327,6 +334,8 @@ struct axppmic_irq {
 
 struct axppmic_config {
 	const char *name;
+	const char *gpio_compat;
+	u_int gpio_npins;
 	const struct axppmic_ctrl *controls;
 	u_int ncontrols;
 	u_int irq_regs;
@@ -386,6 +395,13 @@ struct axppmic_softc {
 	u_int		sc_shut_thres;
 };
 
+struct axppmic_gpio_pin {
+	struct axppmic_softc *pin_sc;
+	u_int pin_nr;
+	int pin_flags;
+	bool pin_actlo;
+};
+
 struct axpreg_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
@@ -402,6 +418,8 @@ struct axpreg_attach_args {
 
 static const struct axppmic_config axp803_config = {
 	.name = "AXP803",
+	.gpio_compat = "x-powers,axp803-gpio",
+	.gpio_npins = 2,
 	.controls = axp803_ctrls,
 	.ncontrols = __arraycount(axp803_ctrls),
 	.irq_regs = 6,
@@ -447,6 +465,8 @@ static const struct axppmic_config axp809_config = {
 
 static const struct axppmic_config axp813_config = {
 	.name = "AXP813",
+	.gpio_compat = "x-powers,axp813-gpio",
+	.gpio_npins = 2,
 	.controls = axp813_ctrls,
 	.ncontrols = __arraycount(axp813_ctrls),
 	.irq_regs = 6,
@@ -581,6 +601,132 @@ axppmic_power_poweroff(device_t dev)
 
 static struct fdtbus_power_controller_func axppmic_power_funcs = {
 	.poweroff = axppmic_power_poweroff,
+};
+
+static int
+axppmic_gpio_ctl(struct axppmic_softc *sc, uint8_t pin, uint8_t func)
+{
+	uint8_t val;
+	int error;
+
+	KASSERT(pin < sc->sc_conf->gpio_npins);
+	KASSERT((func & ~AXP_GPIO_CTRL_FUNC_MASK) == 0);
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	error = axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_GPIO_CTRL_REG(pin),
+	    &val, 0);
+	if (error == 0) {
+		val &= ~AXP_GPIO_CTRL_FUNC_MASK;
+		val |= func;
+		error = axppmic_write(sc->sc_i2c, sc->sc_addr,
+		    AXP_GPIO_CTRL_REG(pin), val, 0);
+	}
+	iic_release_bus(sc->sc_i2c, 0);
+
+	return error;
+}
+
+static void *
+axppmic_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
+{
+	struct axppmic_softc *sc = device_private(dev);
+	struct axppmic_gpio_pin *gpin;
+	const u_int *gpio = data;
+	int error;
+
+	if (len != 12) {
+		return NULL;
+	}
+
+	const uint8_t pin = be32toh(gpio[1]) & 0xff;
+	const bool actlo = be32toh(gpio[2]) & 1;
+
+	if (pin >= sc->sc_conf->gpio_npins) {
+		return NULL;
+	}
+
+	if ((flags & GPIO_PIN_INPUT) != 0) {
+		error = axppmic_gpio_ctl(sc, pin, AXP_GPIO_CTRL_FUNC_INPUT);
+		if (error != 0) {
+			return NULL;
+		}
+	}
+
+	gpin = kmem_zalloc(sizeof(*gpin), KM_SLEEP);
+	gpin->pin_sc = sc;
+	gpin->pin_nr = pin;
+	gpin->pin_flags = flags;
+	gpin->pin_actlo = actlo;
+
+	return gpin;
+}
+
+static void
+axppmic_gpio_release(device_t dev, void *priv)
+{
+	struct axppmic_softc *sc = device_private(dev);
+	struct axppmic_gpio_pin *gpin = priv;
+
+	axppmic_gpio_ctl(sc, gpin->pin_nr, AXP_GPIO_CTRL_FUNC_INPUT);
+
+	kmem_free(gpin, sizeof(*gpin));
+}
+
+static int
+axppmic_gpio_read(device_t dev, void *priv, bool raw)
+{
+	struct axppmic_softc *sc = device_private(dev);
+	struct axppmic_gpio_pin *gpin = priv;
+	uint8_t data;
+	int error, val;
+
+	KASSERT(sc == gpin->pin_sc);
+
+	const uint8_t data_mask = __BIT(gpin->pin_nr);
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	error = axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_GPIO_SIGNAL_REG,
+	    &data, 0);
+	iic_release_bus(sc->sc_i2c, 0);
+
+	if (error != 0) {
+		device_printf(dev, "WARNING: failed to read pin %d: %d\n",
+		    gpin->pin_nr, error);
+		val = 0;
+	} else {
+		val = __SHIFTOUT(data, data_mask);
+	}
+	if (!raw && gpin->pin_actlo) {
+		val = !val;
+	}
+
+	return val;
+}
+
+static void
+axppmic_gpio_write(device_t dev, void *priv, int val, bool raw)
+{
+	struct axppmic_softc *sc = device_private(dev);
+	struct axppmic_gpio_pin *gpin = priv;
+	int error;
+
+	if (!raw && gpin->pin_actlo) {
+		val = !val;
+	}
+
+	error = axppmic_gpio_ctl(sc, gpin->pin_nr,
+	    val == 0 ? AXP_GPIO_CTRL_FUNC_LOW : AXP_GPIO_CTRL_FUNC_HIGH);
+	if (error != 0) {
+		device_printf(dev, "WARNING: failed to write pin %d: %d\n",
+		    gpin->pin_nr, error);
+	}
+}
+
+static struct fdtbus_gpio_controller_func axppmic_gpio_funcs = {
+	.acquire = axppmic_gpio_acquire,
+	.release = axppmic_gpio_release,
+	.read = axppmic_gpio_read,
+	.write = axppmic_gpio_write,
 };
 
 static void
@@ -1040,6 +1186,14 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_power_controller(sc->sc_dev, sc->sc_phandle,
 	    &axppmic_power_funcs);
+
+	if (c->gpio_compat != NULL) {
+		phandle = of_find_bycompat(sc->sc_phandle, c->gpio_compat);
+		if (phandle > 0) {
+			fdtbus_register_gpio_controller(self, phandle,
+			    &axppmic_gpio_funcs);
+		}
+	}
 
 	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
 	if (phandle > 0) {
