@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.116 2022/04/18 06:02:27 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.117 2022/10/30 01:46:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.116 2022/04/18 06:02:27 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.117 2022/10/30 01:46:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,11 +267,7 @@ do_fgcmd(const char *arg_ptr)
 	out1c('\n');
 	flushall();
 
-	for (i = 0; i < jp->nprocs; i++)
-	    if (tcsetpgrp(ttyfd, jp->ps[i].pid) != -1)
-		    break;
-
-	if (i >= jp->nprocs) {
+	if (tcsetpgrp(ttyfd, jp->pgrp) == -1) {
 		error("Cannot set tty process group (%s) at %d",
 		    strerror(errno), __LINE__);
 	}
@@ -376,6 +372,9 @@ restartjob(struct job *jp)
 
 	if (jp->state == JOBDONE)
 		return;
+	if (jp->pgrp == 0)
+		error("Job [%d] does not have a process group", JNUM(jp));
+
 	INTOFF;
 	for (e = i = 0; i < jp->nprocs; i++) {
 		/*
@@ -390,13 +389,16 @@ restartjob(struct job *jp)
 		 * Otherwise tell it to continue, if it worked, we're done
 		 * (we signal the whole process group)
 		 */
-		if (killpg(jp->ps[i].pid, SIGCONT) != -1)
+		if (killpg(jp->pgrp, SIGCONT) != -1)
 			break;
-		if (e == 0 && errno != ESRCH)
-			e = errno;
+		e = errno;
+		break;		/* no point trying again */
 	}
-	if (i >= jp->nprocs)
-		error("Cannot continue job (%s)", strerror(e ? e : ESRCH));
+
+	if (e != 0)
+		error("Cannot continue job (%s)", strerror(e));
+	else if (i >= jp->nprocs)
+		error("Job [%d] has no stopped processes", JNUM(jp));
 
 	/*
 	 * Now change state of all stopped processes in the job to running
@@ -436,8 +438,8 @@ showjob(struct output *out, struct job *jp, int mode)
 
 #if JOBS
 	if (mode & SHOW_PGID) {
-		/* just output process (group) id of pipeline */
-		outfmt(out, "%ld\n", (long)jp->ps->pid);
+		/* output only the process group ID (lead process ID) */
+		outfmt(out, "%ld\n", (long)jp->pgrp);
 		return;
 	}
 #endif
@@ -1206,14 +1208,19 @@ forkshell(struct job *jp, union node *n, int mode)
 int
 forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 {
-	int pgrp;
+	int pgrp = 0;
 
 	if (rootshell && mode != FORK_NOJOB && mflag) {
+		/*
+		 * The process group ID must always be that of the
+		 * first process created for the job.   If this proc
+		 * is the first, that's us, otherwise the pgrp has
+		 * already been determined.
+		 */
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
-			pgrp = jp->ps[0].pid;
-		jp->pgrp = pgrp;
+			pgrp = jp->pgrp;
 		/* This can fail because we are doing it in the child also */
 		(void)setpgid(pid, pgrp);
 	}
@@ -1224,6 +1231,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 		ps->pid = pid;
 		ps->status = -1;
 		ps->cmd[0] = 0;
+		jp->pgrp = pgrp;	/* 0 if !mflag */
 		if (/* iflag && rootshell && */ n)
 			commandtext(ps, n);
 	}
