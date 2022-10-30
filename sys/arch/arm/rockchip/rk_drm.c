@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.20 2022/09/25 07:50:15 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.21 2022/10/30 23:10:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.20 2022/09/25 07:50:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.21 2022/10/30 23:10:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -255,7 +255,6 @@ rk_drm_fb_destroy(struct drm_framebuffer *fb)
 static const struct drm_framebuffer_funcs rk_drm_framebuffer_funcs = {
 	.create_handle = rk_drm_fb_create_handle,
 	.destroy = rk_drm_fb_destroy,
-	.dirty = drm_atomic_helper_dirtyfb,
 };
 
 static struct drm_framebuffer *
