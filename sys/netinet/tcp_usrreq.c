@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.235 2022/10/29 15:35:16 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.236 2022/10/30 08:45:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.235 2022/10/29 15:35:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.236 2022/10/30 08:45:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -272,6 +272,10 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		splx(s);
+		return ECONNRESET;
+	}
 	if (level != IPPROTO_TCP) {
 		switch (family) {
 		case PF_INET:
