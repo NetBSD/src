@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2022/10/29 07:21:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2022/10/30 10:26:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2022/10/29 07:21:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2022/10/30 10:26:48 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1410,9 +1410,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #ifdef UVMHIST
 		pt_entry_t opte;
 #endif
-		struct vm_page *pg;
 		struct pmap_page *pp;
-		paddr_t pa;
 		uint32_t mdattr;
 		bool executable;
 
@@ -1428,24 +1426,30 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			continue;
 		}
 
-		pa = lxpde_pa(pte);
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL) {
-			pp = VM_PAGE_TO_PP(pg);
-			PMAP_COUNT(protect_managed);
-		} else {
+		if (pte & LX_BLKPAG_NG) {
+			const paddr_t pa = lxpde_pa(pte);
+			struct vm_page *const pg = PHYS_TO_VM_PAGE(pa);
+
+			if (pg != NULL) {
+				pp = VM_PAGE_TO_PP(pg);
+				PMAP_COUNT(protect_managed);
+			} else {
 #ifdef __HAVE_PMAP_PV_TRACK
-			pp = pmap_pv_tracked(pa);
+				pp = pmap_pv_tracked(pa);
 #ifdef PMAPCOUNTERS
-			if (pp != NULL)
-				PMAP_COUNT(protect_pvmanaged);
-			else
-				PMAP_COUNT(protect_unmanaged);
+				if (pp != NULL)
+					PMAP_COUNT(protect_pvmanaged);
+				else
+					PMAP_COUNT(protect_unmanaged);
 #endif
 #else
+				pp = NULL;
+				PMAP_COUNT(protect_unmanaged);
+#endif /* __HAVE_PMAP_PV_TRACK */
+			}
+		} else {	/* kenter */
 			pp = NULL;
 			PMAP_COUNT(protect_unmanaged);
-#endif /* __HAVE_PMAP_PV_TRACK */
 		}
 
 		if (pp != NULL) {
