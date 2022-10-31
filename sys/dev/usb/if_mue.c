@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.82 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.83 2022/10/31 21:22:06 andvar Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.82 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.83 2022/10/31 21:22:06 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -732,7 +732,7 @@ mue_get_macaddr(struct usbnet *un, prop_dictionary_t dict)
 
 	/*
 	 * Other MD methods. This should be tried only if other methods fail.
-	 * Otherwise, MAC address for internal device can be assinged to
+	 * Otherwise, MAC address for internal device can be assigned to
 	 * external devices on Raspberry Pi, for example.
 	 */
 	eaprop = prop_dictionary_get(dict, "mac-address");

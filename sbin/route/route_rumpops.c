@@ -1,4 +1,4 @@
-/*	$NetBSD: route_rumpops.c,v 1.3 2020/04/03 16:20:52 martin Exp $	*/
+/*	$NetBSD: route_rumpops.c,v 1.4 2022/10/31 21:22:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: route_rumpops.c,v 1.3 2020/04/03 16:20:52 martin Exp $");
+__RCSID("$NetBSD: route_rumpops.c,v 1.4 2022/10/31 21:22:05 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ const struct prog_ops prog_ops = {
 
 	/*
 	 * The following are only indirected through ops because
-	 * santizers get confused otherwise.
+	 * sanitizers get confused otherwise.
 	 */
 	.op_sysctlbyname =	sysctlbyname,
 

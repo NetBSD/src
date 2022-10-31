@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.8 2022/02/12 15:51:28 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.9 2022/10/31 21:22:05 andvar Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -1398,7 +1398,7 @@ struct {
 	int maxspeed;
 	int numspeeds;
 	int hz [6];
-	int rate [6]; /* could this be simplfied by not having 100% in table? */
+	int rate [6]; /* could this be simplified by not having 100% in table? */
 }
 	speedtables[] = {
 		{ 91, 1, { 91 }, { 100 }},
