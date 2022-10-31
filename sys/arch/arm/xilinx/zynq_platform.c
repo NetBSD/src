@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.9 2022/10/28 20:37:03 jmcneill Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.10 2022/10/31 22:23:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.9 2022/10/28 20:37:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.10 2022/10/31 22:23:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,7 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.9 2022/10/28 20:37:03 jmcneill E
 #define	ZYNQ_IOREG_PBASE	0xe0000000
 #define ZYNQ_IOREG_SIZE		0x00200000
 
-#define ZYNQ_GPV_VBASE		(ZYNQ_IOREG_VBASE + ZYNQ_IOREG_SIZE)
+#define	ZYNQ_SLCR_VBASE		(ZYNQ_IOREG_VBASE + ZYNQ_IOREG_SIZE)
+#define	ZYNQ_SLCR_PBASE		0xf8000000
+#define	ZYNQ_SLCR_SIZE		0x00100000
+
+#define ZYNQ_GPV_VBASE		(ZYNQ_SLCR_VBASE + ZYNQ_SLCR_SIZE)
 #define ZYNQ_GPV_PBASE		0xf8900000
 #define ZYNQ_GPV_SIZE		0x00100000
 
@@ -87,6 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.9 2022/10/28 20:37:03 jmcneill E
 #define	ZYNQ7000_CPU1_ENTRY	0xfffffff0
 #define	ZYNQ7000_CPU1_ENTRY_SZ	4
 
+/* SLCR registers */
+#define	SLCR_UNLOCK		0x008
+#define	 UNLOCK_KEY		0xdf0d
+#define	PSS_RST_CTRL		0x200
+#define	 SOFT_RST		__BIT(0)
+
 extern struct bus_space arm_generic_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
@@ -99,6 +109,9 @@ zynq_platform_devmap(void)
 		DEVMAP_ENTRY(ZYNQ_IOREG_VBASE,
 			     ZYNQ_IOREG_PBASE,
 			     ZYNQ_IOREG_SIZE),
+		DEVMAP_ENTRY(ZYNQ_SLCR_VBASE,
+			     ZYNQ_SLCR_PBASE,
+			     ZYNQ_SLCR_SIZE),
 		DEVMAP_ENTRY(ZYNQ_GPV_VBASE,
 			     ZYNQ_GPV_PBASE,
 			     ZYNQ_GPV_SIZE),
@@ -232,7 +245,11 @@ zynq_platform_bootstrap(void)
 static void
 zynq_platform_reset(void)
 {
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+	bus_space_handle_t bsh = ZYNQ_SLCR_VBASE;
 
+	bus_space_write_4(bst, bsh, SLCR_UNLOCK, UNLOCK_KEY);
+	bus_space_write_4(bst, bsh, PSS_RST_CTRL, SOFT_RST);
 }
 
 static const struct arm_platform zynq_platform = {
