@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.62 2022/10/18 04:20:56 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.63 2022/10/31 13:00:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.62 2022/10/18 04:20:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.63 2022/10/31 13:00:34 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index)
 	if (BYTE_ORDER != sc->sc_struct_endian)
 		val = bswap64(val);
 
-	DPRINTFR("read_8", "%08lx", val, index, 8);
+	DPRINTFR("read_8", "%08"PRIx64, val, index, 8);
 	DPRINTFR2("read_8 low ", "%08x",
 	    bus_space_read_stream_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
 		index),
