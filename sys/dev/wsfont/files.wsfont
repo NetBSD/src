@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.30 2021/11/20 00:08:23 rin Exp $
+# 	$NetBSD: files.wsfont,v 1.31 2022/10/31 13:24:58 macallan Exp $
 
 defpseudo wsfont
 
@@ -37,5 +37,6 @@ defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_SPLEEN16x32
 				FONT_SPLEEN32x64
 				FONT_LIBERATION_MONO12x21
+				FONT_TERMINAL8x13
 
 file	dev/wsfont/wsfontdev.c	wsfont needs-flag
