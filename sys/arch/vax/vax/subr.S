@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.40 2021/12/05 03:01:59 msaitoh Exp $	   */
+/*	$NetBSD: subr.S,v 1.41 2022/10/31 20:30:23 andvar Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -225,7 +225,7 @@ _C_LABEL(cmn_idsptch):
 	calls	$0,_C_LABEL(krnunlock)
 #endif
 	popr	$0x3f		# pop registers
-	rei			# return from interrut
+	rei			# return from interrupt
 #if 0
 2:	.asciz	"intr %p(%p)\n"
 #endif

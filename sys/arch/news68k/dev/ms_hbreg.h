@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hbreg.h,v 1.2 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: ms_hbreg.h,v 1.3 2022/10/31 20:30:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -35,6 +35,6 @@
 #define MS_INTE			0x01	/* interrupt enable */
 
 /* status port definitions */
-#define MSSTAT_INT		0x04	/* mouse interrut flag */
+#define MSSTAT_INT		0x04	/* mouse interrupt flag */
 #define MSSTAT_BUF		0x10	/* mouse buffer full */
 #define MSSTAT_RDY		0x40	/* mouse Rx data ready */

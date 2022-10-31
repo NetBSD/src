@@ -1,4 +1,4 @@
-/*	$NetBSD: dovereg.h,v 1.1 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: dovereg.h,v 1.2 2022/10/31 20:30:22 andvar Exp $	*/
 /*
  * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define DOVE_UNITID_DDR			MVSOC_UNITID_DDR
 #define DOVE_UNITID_DEVBUS		MVSOC_UNITID_DEVBUS
 #define DOVE_UNITID_DB			0x2	/* Downstream Bridge reg */
-#define DOVE_UNITID_SA			0x3	/* Security Accelelerator reg */
+#define DOVE_UNITID_SA			0x3	/* Security Accelerator reg */
 #define DOVE_UNITID_PEX			MVSOC_UNITID_PEX
 #define DOVE_UNITID_USB			0x5
 #define DOVE_UNITID_XOR			0x6
@@ -233,8 +233,8 @@
 #define DOVE_PMU_CPUCDC0R_XPRATIO(x)		(((x) >> 16) & 0x3f) /* L2C */
 #define DOVE_PMU_CPUCDC0R_BPRATIO(x)		(((x) >> 8) & 0x3f) /* AXI DS */
 #define DOVE_PMU_CPUCDC0R_PPRATIO(x)		(((x) >> 0) & 0x3f) /* CPU */
-#define DOVE_PMU_PMUICR			0x50	/* PMU Interruts Cause reg */
-#define DOVE_PMU_PMUIMR			0x54	/* PMU Interruts Mask reg */
+#define DOVE_PMU_PMUICR			0x50	/* PMU Interrupts Cause reg */
+#define DOVE_PMU_PMUIMR			0x54	/* PMU Interrupts Mask reg */
 #define DOVE_PMU_PMUI_DFSDONE			(1 << 0) /* DFS Done */
 #define DOVE_PMU_PMUI_DVSDONE			(1 << 1) /* DVS Done */
 #define DOVE_PMU_PMUI_THERMCOOLING		(1 << 3) /* Thermal Cooling */

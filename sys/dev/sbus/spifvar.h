@@ -1,4 +1,4 @@
-/*	$NetBSD: spifvar.h,v 1.4 2011/07/18 00:58:52 mrg Exp $	*/
+/*	$NetBSD: spifvar.h,v 1.5 2022/10/31 20:30:23 andvar Exp $	*/
 /*	$OpenBSD: spifvar.h,v 1.3 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ struct sbpp_softc {
 struct spif_softc {
 	device_t sc_dev;
 	void *sc_stcih;			/* stc interrupt vector */
-	void *sc_ppcih;			/* ppc interrut vector */
+	void *sc_ppcih;			/* ppc interrupt vector */
 	void *sc_softih;		/* soft interrupt vector */
 	int	sc_rev;			/* revision level */
 	int	sc_osc;			/* oscillator speed (hz) */

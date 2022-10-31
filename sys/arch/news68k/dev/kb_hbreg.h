@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hbreg.h,v 1.2 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kb_hbreg.h,v 1.3 2022/10/31 20:30:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -37,6 +37,6 @@
 #define KB_INTE			0x01	/* interrupt enable */
 
 /* status port definitions */
-#define KBSTAT_INT		0x08	/* keyboard interrut flag */
+#define KBSTAT_INT		0x08	/* keyboard interrupt flag */
 #define KBSTAT_BUF		0x20	/* keyboard buffer full */
 #define KBSTAT_RDY		0x80	/* keyboard Rx data ready */

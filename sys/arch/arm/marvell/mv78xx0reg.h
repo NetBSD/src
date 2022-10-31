@@ -1,4 +1,4 @@
-/*	$NetBSD: mv78xx0reg.h,v 1.2 2013/09/30 13:21:10 kiyohara Exp $	*/
+/*	$NetBSD: mv78xx0reg.h,v 1.3 2022/10/31 20:30:22 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -48,7 +48,7 @@
 #define MV78XX0_UNITID_GBE01		0x7	/* Gigabit Ethernet registers */
 #define MV78XX0_UNITID_PEX1		0x8
 #define MV78XX0_UNITID_CRYPT		0x9	/* Cryptographic Engine reg */
-#define MV78XX0_UNITID_SA		0x9	/* Security Accelelerator reg */
+#define MV78XX0_UNITID_SA		0x9	/* Security Accelerator reg */
 #define MV78XX0_UNITID_SATA		0xa	/* SATA registers */
 #define MV78XX0_UNITID_TDM		0xb	/* TDM registers */
 
