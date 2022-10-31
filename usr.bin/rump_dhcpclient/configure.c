@@ -252,7 +252,7 @@ get_routes(const struct interface *iface)
 }
 
 /* Some DHCP servers add set host routes by setting the gateway
- * to the assinged IP address. This differs from our notion of a host route
+ * to the assigned IP address. This differs from our notion of a host route
  * where the gateway is the destination address, so we fix it. */
 static struct rt *
 massage_host_routes(struct rt *rt, const struct interface *iface)

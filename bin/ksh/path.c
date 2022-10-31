@@ -1,8 +1,8 @@
-/*	$NetBSD: path.c,v 1.13 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: path.c,v 1.14 2022/10/31 21:22:05 andvar Exp $	*/
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.13 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: path.c,v 1.14 2022/10/31 21:22:05 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -296,7 +296,7 @@ main(argc, argv)
 			rv = make_path(pwd, file, &cp, result, sizeof(result));
 			printf("make_path returns (%d), \"%s\" ", rv, result);
 			simplify_path(result);
-			printf("(simpifies to \"%s\")\n", result);
+			printf("(simplifies to \"%s\")\n", result);
 		} while (cp);
 	}
 }
