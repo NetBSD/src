@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.14 2022/09/19 22:30:19 mlelstv Exp $	*/
+/*	$NetBSD: time.h,v 1.15 2022/10/31 04:50:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -50,7 +50,8 @@
 typedef longlong_t	hrtime_t;
 #endif
 
-#if defined(__i386__) || defined(__powerpc__)
+/* FreeBSD i386 and PPC use int32 for time, all else int64 */
+#if defined(__FreeBSD__) && (defined(__i386__) || defined(__powerpc__))
 #define	TIMESPEC_OVERFLOW(ts)						\
 	((ts)->tv_sec < INT32_MIN || (ts)->tv_sec > INT32_MAX)
 #else
