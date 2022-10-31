@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.24 2022/09/27 06:36:43 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.25 2022/10/31 21:22:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.24 2022/09/27 06:36:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.25 2022/10/31 21:22:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ pxa2x0_irq_handler(void *arg)
 	irqbits = read_icu(SAIPIC_IP);
 
 	while ((irqno = find_first_bit(irqbits)) >= 0) {
-		/* XXX: Shuould we handle IRQs in priority order? */
+		/* XXX: Should we handle IRQs in priority order? */
 
 		/* raise spl to stop interrupts of lower priorities */
 		if (saved_spl_level < extirq_level[irqno])

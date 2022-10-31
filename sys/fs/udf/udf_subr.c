@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.171 2022/05/28 21:14:57 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.172 2022/10/31 21:22:06 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.171 2022/05/28 21:14:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.172 2022/10/31 21:22:06 andvar Exp $");
 #endif /* not lint */
 
 
@@ -5520,7 +5520,7 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 	/*
 	 * Remember where to record an updated version of the descriptor. If
 	 * there is a sequence of indirect entries, icb_loc will have been
-	 * updated. Its the write disipline to allocate new space and to make
+	 * updated. It's the write discipline to allocate new space and to make
 	 * sure the chain is maintained.
 	 *
 	 * `needs_indirect' flags if the next location is to be filled with
