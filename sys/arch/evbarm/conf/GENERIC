@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.112 2022/10/29 13:59:57 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.113 2022/10/31 22:45:38 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -327,6 +327,7 @@ inphy* 		at mii? phy ?		# Intel 82555 PHYs
 iophy* 		at mii? phy ?		# Intel 82553 PHYs
 lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+micphy*		at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 nsphy* 		at mii? phy ?		# NS83840 PHYs
 nsphyter* 	at mii? phy ?		# NS83843 PHYs
 pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
