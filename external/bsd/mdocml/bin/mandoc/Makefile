@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2019/10/13 07:28:06 mrg Exp $
+# $NetBSD: Makefile,v 1.20 2022/10/31 09:37:37 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,7 @@ CPPFLAGS+=	-DUSE_WCHAR
 .else
 SRCS.libmandoc!=cd ${.PARSEDIR}/../../lib/libmandoc && ${MAKE} -v SRCS
 
-SRCS+=		${SRCS.libmandoc} compat_strtonum.c compat_reallocarray.c
+SRCS+=		${SRCS.libmandoc} compat_strtonum.c
 .endif
 
 COPTS.man_term.c+= -Wno-error=array-bounds
