@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: micphy.c,v 1.15 2022/10/31 22:45:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.15 2022/10/31 22:45:13 jmcneill Exp $");
 
 #include "opt_mii.h"
 
@@ -244,9 +244,7 @@ micphyattach(device_t parent, device_t self, void *aux)
 
 	mii_unlock(mii);
 
-	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
-	aprint_normal("\n");
 }
 
 static void
