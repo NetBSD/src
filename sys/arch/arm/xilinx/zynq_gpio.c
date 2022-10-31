@@ -1,4 +1,4 @@
-/* $NetBSD: zynq_gpio.c,v 1.3 2022/10/29 01:19:36 jmcneill Exp $ */
+/* $NetBSD: zynq_gpio.c,v 1.4 2022/10/31 23:04:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.3 2022/10/29 01:19:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.4 2022/10/31 23:04:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_gpio.c,v 1.3 2022/10/29 01:19:36 jmcneill Exp $
 #define	ZYNQ_GPIO_NPINS		(4 * 32)
 
 #define	MASK_DATA_REG(pin)	(0x000 + 0x4 * ((pin) / 16))
-#define	MASK_DATA_SET(pin, val)	\
-	((1 << (((pin) % 16) + 16)) | ((val) << ((pin) % 16)))
 #define	DATA_RO_REG(pin)	(0x060 + 0x4 * ((pin) / 32))
 #define	DATA_RO_BIT(pin)	__BIT((pin) % 32)
 #define	DIRM_REG(pin)		(0x204 + 0x40 * ((pin) / 32))
@@ -94,17 +92,21 @@ CFATTACH_DECL_NEW(zynqgpio, sizeof(struct zynq_gpio_softc),
 static int
 zynq_gpio_ctl(struct zynq_gpio_softc *sc, u_int pin, int flags)
 {
-	uint32_t val;
+	uint32_t dirm, oen;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	val = RD4(sc, OEN_REG(pin));
+	dirm = RD4(sc, DIRM_REG(pin));
+	oen = RD4(sc, OEN_REG(pin));
 	if ((flags & GPIO_PIN_INPUT) != 0) {
-		val &= ~OEN_BIT(pin);
+		dirm &= ~DIRM_BIT(pin);
+		oen &= ~OEN_BIT(pin);
 	} else if ((flags & GPIO_PIN_OUTPUT) != 0) {
-		val |= OEN_BIT(pin);
+		dirm |= DIRM_BIT(pin);
+		oen |= OEN_BIT(pin);
 	}
-	WR4(sc, OEN_REG(pin), val);
+	WR4(sc, OEN_REG(pin), oen);
+	WR4(sc, DIRM_REG(pin), dirm);
 
 	return 0;
 }
@@ -211,10 +213,15 @@ static void
 zynq_gpio_pin_write(void *priv, int pin, int val)
 {
 	struct zynq_gpio_softc * const sc = priv;
+	uint32_t mask_data;
 
 	KASSERT(pin < __arraycount(sc->sc_pins));
 
-	WR4(sc, MASK_DATA_REG(pin), MASK_DATA_SET(pin, val));
+	mask_data = (0xffff & ~__BIT(pin % 16)) << 16;
+	if (val) {
+		mask_data |= __BIT(pin % 16);
+	}
+	WR4(sc, MASK_DATA_REG(pin), mask_data);
 }
 
 static void
