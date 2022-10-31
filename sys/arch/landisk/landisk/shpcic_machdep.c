@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.8 2022/10/29 11:04:23 riastradh Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.9 2022/10/31 15:56:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.8 2022/10/29 11:04:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.9 2022/10/31 15:56:40 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,7 +118,7 @@ bad:
 }
 
 int
-landisk_pci_intr_setattr(const struct pci_attach_args *pa,
+landisk_pci_intr_setattr(pci_chipset_tag_t pc,
     pci_intr_handle_t *ihp, int attr, uint64_t data)
 {
 
