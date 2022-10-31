@@ -1,4 +1,4 @@
-/*	$NetBSD: kbcreg.h,v 1.2 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kbcreg.h,v 1.3 2022/10/31 20:30:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -40,7 +40,7 @@
 
 /* status port definitions */
 #define KBCSTAT_MSINT		0x04	/* mouse interrupt flag */
-#define KBCSTAT_KBINT		0x08	/* keyboard interrut flag */
+#define KBCSTAT_KBINT		0x08	/* keyboard interrupt flag */
 #define KBCSTAT_MSBUF		0x10	/* mouse buffer full */
 #define KBCSTAT_KBBUF		0x20	/* keyboard buffer full */
 #define KBCSTAT_MSRDY		0x40	/* mouse Rx data ready */

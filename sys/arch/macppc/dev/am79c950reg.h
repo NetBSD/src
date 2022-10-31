@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950reg.h,v 1.1 1998/05/15 10:15:47 tsubai Exp $	*/
+/*	$NetBSD: am79c950reg.h,v 1.2 2022/10/31 20:30:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -116,7 +116,7 @@
 #define	RCVINT		0x02	/* Receive Interrupt */
 #define	XMTINT		0x01	/* Transmit Interrupt */
 
-/* 9: Interrut Mask Register (IMR) */
+/* 9: Interrupt Mask Register (IMR) */
 #define	JABM		0x80	/* Jabber Error Mask */
 #define	BABLM		0x40	/* Babble Error Mask */
 #define	CERRM		0x20	/* Collision Error Mask */

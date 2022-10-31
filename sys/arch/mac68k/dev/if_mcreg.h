@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcreg.h,v 1.4 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: if_mcreg.h,v 1.5 2022/10/31 20:30:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -116,7 +116,7 @@
 #define	RCVINT		0x02	/* Receive Interrupt */
 #define	XMTINT		0x01	/* Transmit Interrupt */
 
-/* 9: Interrut Mask Register (IMR) */
+/* 9: Interrupt Mask Register (IMR) */
 #define	JABM		0x80	/* Jabber Error Mask */
 #define	BABLM		0x40	/* Babble Error Mask */
 #define	CERRM		0x20	/* Collision Error Mask */
