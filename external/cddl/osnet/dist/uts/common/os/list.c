@@ -35,6 +35,10 @@
 #include <sys/sysmacros.h>
 #include <sys/debug.h>
 
+#ifdef _STANDALONE
+#define	ASSERT(x)	/* nothing */
+#endif
+
 #define	list_d2l(a, obj) ((list_node_t *)(((char *)obj) + (a)->list_offset))
 #define	list_object(a, node) ((void *)(((char *)node) - (a)->list_offset))
 #define	list_empty(a) ((a)->list_head.list_next == &(a)->list_head)
