@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.9 2017/06/01 02:45:09 chs Exp $ */
+/* $NetBSD: midictl.c,v 1.10 2022/10/31 20:35:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.9 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.10 2022/10/31 20:35:02 andvar Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -688,7 +688,7 @@ store_rehash(midictl_store *s)
 	 * If s->lgcapacity is changed from what we saved int oldlgcap
 	 * then someone else has already done this for us.
 	 * XXXMRG but only function changes s->lgcapacity from its
-	 * initial value, and it is called singled threaded from the
+	 * initial value, and it is called single threaded from the
 	 * main store_thread(), so this code seems dead to me.
 	 */
 	if (oldlgcap != s->lgcapacity) {
