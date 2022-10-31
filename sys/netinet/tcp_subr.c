@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.293 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.294 2022/10/31 00:56:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.293 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.294 2022/10/31 00:56:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1022,7 +1022,7 @@ tcp_drop(struct tcpcb *tp, int errno)
 	KASSERT(tp->t_inpcb != NULL);
 
 	so = tp->t_inpcb->inp_socket;
-	if (so != NULL)
+	if (so == NULL)
 		return NULL;
 
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {
