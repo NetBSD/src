@@ -3077,7 +3077,7 @@ zfs_get_vfs(const char *resource)
 		mtx_unlock(&mountlist_mtx);
 #endif
 #ifdef __NetBSD__
-        mount_iterator_t *iter;
+	mount_iterator_t *iter;
 
 	mountlist_iterator_init(&iter);
 	while ((vfsp = mountlist_iterator_next(iter)) != NULL) {
