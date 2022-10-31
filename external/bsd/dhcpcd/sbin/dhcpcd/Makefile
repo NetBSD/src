@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.56 2021/10/22 13:25:58 roy Exp $
+# $NetBSD: Makefile,v 1.57 2022/10/31 09:27:23 wiz Exp $
 #
 
 WARNS?=		6
@@ -21,7 +21,7 @@ SRCS+=		privsep.c privsep-root.c privsep-inet.c privsep-control.c
 SRCS+=		privsep-bsd.c
 .endif
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
+CPPFLAGS+=	-DHAVE_CONFIG_H
 
 USE_INET?=	yes
 
