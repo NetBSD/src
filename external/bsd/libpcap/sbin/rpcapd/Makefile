@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2020/03/29 17:12:45 christos Exp $
+# $NetBSD: Makefile,v 1.2 2022/10/31 09:30:43 wiz Exp $
 
 USE_FORT?=	yes	# network server
 
@@ -30,7 +30,7 @@ FILESDIR=	/usr/share/examples/rpcapd
 CPPFLAGS+=	-pthread
 LDFLAGS+=	-pthread
 CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}/../../include
-CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
+CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-DPCAP_DONT_INCLUDE_PCAP_BPF_H
 
 PROGDPLIBS+=	pcap ${.CURDIR}/../../lib \
