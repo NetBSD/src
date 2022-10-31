@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.6 2013/12/23 02:52:47 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.7 2022/10/31 20:30:22 andvar Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -46,7 +46,7 @@
 #define KIRKWOOD_UNITID_DEVBUS		MVSOC_UNITID_DEVBUS
 #define KIRKWOOD_UNITID_MLMB		MVSOC_UNITID_MLMB
 #define KIRKWOOD_UNITID_CRYPT		0x3	/* Cryptographic Engine reg */
-#define KIRKWOOD_UNITID_SA		0x3	/* Security Accelelerator reg */
+#define KIRKWOOD_UNITID_SA		0x3	/* Security Accelerator reg */
 #define KIRKWOOD_UNITID_PEX		MVSOC_UNITID_PEX
 #define KIRKWOOD_UNITID_USB		0x5	/* USB registers */
 #define KIRKWOOD_UNITID_IDMA		0x6	/* IDMA registers */
