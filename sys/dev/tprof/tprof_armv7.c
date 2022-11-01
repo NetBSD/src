@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.6 2021/11/26 13:24:28 christos Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.7 2022/11/01 11:03:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.6 2021/11/26 13:24:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.7 2022/11/01 11:03:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,22 +54,53 @@ static const u_int armv7_pmu_counter = 1;
 static uint32_t counter_val;
 static uint32_t counter_reset_val;
 
+static uint16_t cortexa9_events[] = {
+	0x40, 0x41, 0x42,
+	0x50, 0x51,
+	0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
+	0x6e,
+	0x70, 0x71, 0x72, 0x73, 0x74,
+	0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86,
+	0x8a, 0x8b,
+	0x90, 0x91, 0x92, 0x93,
+	0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5
+};
+
 static bool
 armv7_pmu_event_implemented(uint16_t event)
 {
-	uint32_t eid[2];
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_midr)) {
+		/* Cortex-A9 with PMUv1 lacks PMCEID0/1 */
+		u_int n;
 
-	if (event >= 64)
-		return false;
+		/* Events specific to the Cortex-A9 */
+		for (n = 0; n < __arraycount(cortexa9_events); n++) {
+			if (cortexa9_events[n] == event) {
+				return true;
+			}
+		}
+		/* Supported architectural events */
+		if (event != 0x08 && event != 0x0e && event < 0x1e) {
+			return true;
+		}
+	} else {
+		/* PMUv2 */
+		uint32_t eid[2];
 
-	eid[0] = armreg_pmceid0_read();
-	eid[1] = armreg_pmceid1_read();
+		if (event >= 64) {
+			return false;
+		}
 
-	const u_int idx = event / 32;
-	const u_int bit = event % 32;
+		eid[0] = armreg_pmceid0_read();
+		eid[1] = armreg_pmceid1_read();
 
-	if (eid[idx] & __BIT(bit))
-		return true;
+		const u_int idx = event / 32;
+		const u_int bit = event % 32;
+
+		if (eid[idx] & __BIT(bit)) {
+			return true;
+		}
+	}
 
 	return false;
 }
