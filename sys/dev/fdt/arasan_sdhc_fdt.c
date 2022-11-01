@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.11 2022/10/26 20:54:52 jmcneill Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.12 2022/11/01 00:57:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.11 2022/10/26 20:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.12 2022/11/01 00:57:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.11 2022/10/26 20:54:52 jmcneil
 #define	 RK3399_CORECFG_CLOCKMULTIPLIER		__BITS(7,0)
 
 enum arasan_sdhc_type {
-	AS_TYPE_GENERIC = 0,
 	AS_TYPE_RK3399 = 1,
+	AS_TYPE_SDHCI_8_9A,
 };
 
 struct arasan_sdhc_softc {
@@ -78,7 +78,7 @@ static const struct device_compatible_entry compat_data[] = {
 	  .value = AS_TYPE_RK3399 },
 
 	{ .compat = "arasan,sdhci-8.9a",
-	  .value = AS_TYPE_GENERIC },
+	  .value = AS_TYPE_SDHCI_8_9A },
 
 	DEVICE_COMPAT_EOL
 };
@@ -296,8 +296,16 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 			       SDHC_FLAG_32BIT_ACCESS |
 			       SDHC_FLAG_USE_DMA |
 			       SDHC_FLAG_STOP_WITH_TC;
-	if (bus_width == 8)
+	if (sc->sc_type == AS_TYPE_SDHCI_8_9A) {
+		/*
+		 * Workaround for sporadic transfer errors on the Arasan SDHCI
+		 * found in the Xilinx Zynq-7000 SoC.
+		 */
+		sc->sc_base.sc_flags |= SDHC_FLAG_BROKEN_ADMA;
+	}
+	if (bus_width == 8) {
 		sc->sc_base.sc_flags |= SDHC_FLAG_8BIT_MODE;
+	}
 	sc->sc_base.sc_clkbase = clk_get_rate(sc->sc_clk_xin) / 1000;
 	sc->sc_base.sc_vendor_bus_clock = arasan_sdhc_bus_clock_pre;
 	sc->sc_base.sc_vendor_bus_clock_post = arasan_sdhc_bus_clock_post;
