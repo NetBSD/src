@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_fdt.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: a9tmr_fdt.c,v 1.8 2022/11/01 11:05:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.8 2022/11/01 11:05:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $"
 #include <arm/cortex/a9tmr_intr.h>
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/a9tmr_var.h>
+
+#include <arm/armreg.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
@@ -79,6 +81,8 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_space_handle_t bsh;
+	uint32_t mpidr;
+	bool is_hardclock;
 
 	sc->sc_dev = self;
 	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
@@ -104,13 +108,18 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	void *ih = fdtbus_intr_establish_xname(phandle, 0, IPL_CLOCK,
-	    FDT_INTR_MPSAFE, a9tmr_intr, NULL, device_xname(self));
-	if (ih == NULL) {
-		aprint_error_dev(self, "couldn't install interrupt handler\n");
-		return;
+	mpidr = armreg_mpidr_read();
+	is_hardclock = (mpidr & MPIDR_U) != 0;	/* Global timer for UP */
+
+	if (is_hardclock) {
+		void *ih = fdtbus_intr_establish_xname(phandle, 0, IPL_CLOCK,
+		    FDT_INTR_MPSAFE, a9tmr_intr, NULL, device_xname(self));
+		if (ih == NULL) {
+			aprint_error_dev(self, "couldn't install interrupt handler\n");
+			return;
+		}
+		aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	bus_addr_t addr;
 	bus_size_t size;
@@ -132,8 +141,10 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 
 	config_found(self, &mpcaa, NULL, CFARGS_NONE);
 
-	arm_fdt_cpu_hatch_register(self, a9tmr_fdt_cpu_hatch);
-	arm_fdt_timer_register(a9tmr_cpu_initclocks);
+	if (is_hardclock) {
+		arm_fdt_cpu_hatch_register(self, a9tmr_fdt_cpu_hatch);
+		arm_fdt_timer_register(a9tmr_cpu_initclocks);
+	}
 
 	pmf_event_register(self, PMFE_SPEED_CHANGED, a9tmr_fdt_speed_changed, true);
 }
