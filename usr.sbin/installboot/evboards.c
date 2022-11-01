@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.7 2022/07/10 19:28:00 brook Exp $	*/
+/*	$NetBSD: evboards.c,v 1.8 2022/11/01 19:51:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.7 2022/07/10 19:28:00 brook Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.8 2022/11/01 19:51:46 andvar Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -216,7 +216,7 @@ __RCSID("$NetBSD: evboards.c,v 1.7 2022/07/10 19:28:00 brook Exp $");
  *		  -- Value: A string representing the path to the u-boot
  *		  --        binary files needed to install the boot loader.
  *		  --        This value is computed at run-time and is the
- *		  --        same directory in which the instalboot.plist
+ *		  --        same directory in which the installboot.plist
  *		  --        file for that u-boot package is located.
  *		  --        This key/value pair should never be included
  *		  --        in an installboot.plist file, and including it
