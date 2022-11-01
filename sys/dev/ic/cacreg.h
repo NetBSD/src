@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.11 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.12 2022/11/01 19:24:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ struct cac_drive_status {
 	u_int8_t	memfail;	/* cache mem failure */
 	u_int8_t	expfail;	/* expansion failure */
 	u_int8_t	rebldfail;	/* rebuild failure */
-#define	CAC_LD_RBLD_READ	0x01	/* read faild */
+#define	CAC_LD_RBLD_READ	0x01	/* read failed */
 #define	CAC_LD_RBLD_WRITE	0x02	/* write fail */
 	u_int8_t	bigfailed[16];	/* bigmap vers of same of the above */
 	u_int8_t	bigremapcnt[256];
