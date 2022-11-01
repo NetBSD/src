@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.10 2020/07/16 14:41:04 jdolecek Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.11 2022/11/01 19:24:30 andvar Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ struct ciss_ldstat {
 	u_int8_t	memfail;	/* cache mem failure */
 	u_int8_t	expfail;	/* expansion failure */
 	u_int8_t	rebldfail;	/* rebuild failure */
-#define	CISS_LD_RBLD_READ	0x01	/* read faild */
+#define	CISS_LD_RBLD_READ	0x01	/* read failed */
 #define	CISS_LD_RBLD_WRITE	0x02	/* write fail */
 	u_int8_t	bigfailed[16];	/* bigmap vers of same of the above */
 	u_int8_t	bigremapcnt[256];

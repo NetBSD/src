@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.39 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.40 2022/11/01 19:24:31 andvar Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.39 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.40 2022/11/01 19:24:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -731,7 +731,7 @@ uvscom_open(void *addr, int portno)
 
 		err = uvscom_readstat(sc);
 		if (err) {
-			DPRINTF(("%s: uvscom_open: readstat faild\n",
+			DPRINTF(("%s: uvscom_open: readstat failed\n",
 				 device_xname(sc->sc_dev)));
 			return EIO;
 		}

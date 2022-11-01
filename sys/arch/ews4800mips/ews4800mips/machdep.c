@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2022/11/01 19:24:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2022/11/01 19:24:30 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -290,7 +290,7 @@ cpu_reboot(int howto, char *bootstr)
 	if (platform.reboot)
 		(*platform.reboot)();
 
-	printf("reboot faild.\n");
+	printf("reboot failed.\n");
 	for (;;)
 		;
 	/* NOTREACHED */
