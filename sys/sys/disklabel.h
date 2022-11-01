@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.126 2022/03/28 12:33:59 riastradh Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.127 2022/11/01 06:47:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -399,7 +399,7 @@ x(MINIXFS3,29, "MINIX FSv3", NULL,   NULL)    /* MINIX file system v3 */ \
 x(VMKCORE, 30, "VMware vmkcore", NULL, NULL)  /* VMware vmkcore */ \
 x(VMFS,    31, "VMware VMFS", NULL,  NULL)    /* VMware VMFS */ \
 x(VMWRESV, 32, "VMware Reserved", NULL, NULL) /* VMware reserved */ \
-x(ZFS,     33, "ZFS",        NULL,   NULL)    /* ZFS */
+x(ZFS,     33, "ZFS",        NULL,   "zfs")   /* ZFS */
 
 
 #ifndef _LOCORE
