@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.16 2021/12/03 13:27:38 andvar Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.17 2022/11/01 19:45:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.16 2021/12/03 13:27:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.17 2022/11/01 19:45:35 andvar Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -1057,7 +1057,7 @@ pi1ppc_read_ivar(device_t dev, int index, unsigned int *val)
 	return rval;
 }
 
-/* Write "instance varaibles" of pi1ppc device */
+/* Write "instance variables" of pi1ppc device */
 static int
 pi1ppc_write_ivar(device_t dev, int index, unsigned int *val)
 {
