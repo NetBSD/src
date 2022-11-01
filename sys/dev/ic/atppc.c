@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.40 2021/12/03 13:27:38 andvar Exp $ */
+/* $NetBSD: atppc.c,v 1.41 2022/11/01 19:45:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.40 2021/12/03 13:27:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.41 2022/11/01 19:45:35 andvar Exp $");
 
 #include "opt_atppc.h"
 
@@ -1494,7 +1494,7 @@ atppc_read_ivar(device_t dev, int index, unsigned int *val)
 	return rval;
 }
 
-/* Write "instance varaibles" of atppc device */
+/* Write "instance variables" of atppc device */
 static int
 atppc_write_ivar(device_t dev, int index, unsigned int *val)
 {

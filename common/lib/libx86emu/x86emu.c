@@ -1,5 +1,5 @@
 
-/*	$NetBSD: x86emu.c,v 1.13 2022/10/26 22:09:37 andvar Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.14 2022/11/01 19:45:35 andvar Exp $	*/
 
 /****************************************************************************
 *
@@ -381,7 +381,7 @@ no segment override. Address modes such as -3[BP] or 10[BP+SI] all refer to
 addresses relative to SS (ie: on the stack). So, at the minimum, all
 decodings of addressing modes would have to set/clear a bit describing
 whether the access is relative to DS or SS.  That is the function of the
-cpu-state-varible emu->x86.mode. There are several potential states:
+cpu-state-variable emu->x86.mode. There are several potential states:
 
 	repe prefix seen  (handled elsewhere)
 	repne prefix seen  (ditto)

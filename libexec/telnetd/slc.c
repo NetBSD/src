@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.15 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: slc.c,v 1.16 2022/11/01 19:45:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.15 2006/11/24 19:46:58 christos Exp $");
+__RCSID("$NetBSD: slc.c,v 1.16 2022/11/01 19:45:35 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: slc.c,v 1.15 2006/11/24 19:46:58 christos Exp $");
 
 #ifdef	LINEMODE
 /*
- * local varibles
+ * local variables
  */
 static unsigned char	*def_slcbuf = (unsigned char *)0;
 static int		def_slclen = 0;
