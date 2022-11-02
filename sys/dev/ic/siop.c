@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.103 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.104 2022/11/02 12:03:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.103 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.104 2022/11/02 12:03:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ siop_intr(void *v)
 				goto scintr;
 			}
 			/*
-			 * else we have to restart it ourselve, at the
+			 * else we have to restart it ourselves, at the
 			 * interrupted instruction.
 			 */
 			bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,

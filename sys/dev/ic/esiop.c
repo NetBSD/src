@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.61 2022/05/23 19:21:30 andvar Exp $	*/
+/*	$NetBSD: esiop.c,v 1.62 2022/11/02 12:03:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.61 2022/05/23 19:21:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.62 2022/11/02 12:03:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,7 +660,7 @@ none:
 		if ((sist & (SIST1_STO << 8)) && need_reset == 0) {
 			/*
 			 * selection time out, assume there's no device here
-			 * We also have to update the ring pointer ourselve
+			 * We also have to update the ring pointer ourselves
 			 */
 			slot = bus_space_read_1(sc->sc_c.sc_rt,
 			    sc->sc_c.sc_rh, SIOP_SCRATCHE);
@@ -733,7 +733,7 @@ none:
 				goto scintr;
 			}
 			/*
-			 * else we have to restart it ourselve, at the
+			 * else we have to restart it ourselves, at the
 			 * interrupted instruction.
 			 */
 			bus_space_write_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
