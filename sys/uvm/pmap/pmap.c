@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2022/10/28 07:16:34 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 2022/11/02 08:05:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2022/10/28 07:16:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2022/11/02 08:05:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -880,7 +880,7 @@ pmap_page_remove(struct vm_page_md *mdpg)
 	}
 
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE|VM_PAGEMD_UNCACHED);
+	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE | VM_PAGEMD_UNCACHED);
 #else
 	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 #endif
@@ -1166,13 +1166,13 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	PMAP_COUNT(page_protect);
 
 	switch (prot) {
-	case VM_PROT_READ|VM_PROT_WRITE:
+	case VM_PROT_READ | VM_PROT_WRITE:
 	case VM_PROT_ALL:
 		break;
 
 	/* copy_on_write */
 	case VM_PROT_READ:
-	case VM_PROT_READ|VM_PROT_EXECUTE:
+	case VM_PROT_READ | VM_PROT_EXECUTE:
 		pv = &mdpg->mdpg_first;
 		kpreempt_disable();
 		VM_PAGEMD_PVLIST_READLOCK(mdpg);
@@ -1415,7 +1415,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (mdpg) {
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE) {
-			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED|VM_PAGEMD_REFERENCED);
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED | VM_PAGEMD_REFERENCED);
 		} else if (flags & VM_PROT_ALL) {
 			pmap_page_set_attributes(mdpg, VM_PAGEMD_REFERENCED);
 		}
@@ -1941,7 +1941,7 @@ pmap_set_modified(paddr_t pa)
 {
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-	pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED|VM_PAGEMD_REFERENCED);
+	pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED | VM_PAGEMD_REFERENCED);
 }
 
 /******************** pv_entry management ********************/
