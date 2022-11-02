@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.84 2022/10/29 13:55:50 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.85 2022/11/02 12:49:10 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.84 2022/10/29 13:55:50 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.85 2022/11/02 12:49:10 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -1204,7 +1204,10 @@ get_rand_u64(void)
       s = getrandom(entropy_buffer, sizeof entropy_buffer, 0);
     while (s < 0 && errno == EINTR);
 
-    nwords = s < 0 ? (size_t)-1 : s / sizeof *entropy_buffer;
+    if (s < 0)
+      nwords = -1;
+    else
+      nwords = s / sizeof *entropy_buffer;
   }
   if (0 < nwords)
     return entropy_buffer[--nwords];
