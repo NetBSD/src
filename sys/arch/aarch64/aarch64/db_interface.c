@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.21 2022/10/23 07:14:12 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.22 2022/11/02 08:37:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.21 2022/10/23 07:14:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22 2022/11/02 08:37:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -566,7 +566,7 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
 	if (pg == NULL) {
 		pr("%sL%d: pa=%lx pg=NULL\n", spc, level, pa);
 	} else {
-		pr("%sL%d: pa=%lx pg=%p", spc, level, pa, pg);
+		pr("%sL%d: pa=%lx pg=%p\n", spc, level, pa, pg);
 	}
 
 	for (i = n = 0; i < Ln_ENTRIES; i++) {
