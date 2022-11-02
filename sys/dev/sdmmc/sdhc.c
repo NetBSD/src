@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.116 2022/10/14 07:54:49 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.117 2022/11/02 10:38:04 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.116 2022/10/14 07:54:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.117 2022/11/02 10:38:04 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1835,20 +1835,20 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		}
 		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
 		    BUS_DMASYNC_PREWRITE);
+
+		const bus_addr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
+		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR, desc_addr & 0xffffffff);
+		if (ISSET(hp->flags, SHF_USE_ADMA2_64)) {
+			HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR + 4,
+			    (uint64_t)desc_addr >> 32);
+		}
+
 		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
 			HCLR4(hp, SDHC_HOST_CTL, SDHC_USDHC_DMA_SELECT);
 			HSET4(hp, SDHC_HOST_CTL, SDHC_USDHC_DMA_SELECT_ADMA2);
 		} else {
 			HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
 			HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
-		}
-
-		const bus_addr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
-
-		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR, desc_addr & 0xffffffff);
-		if (ISSET(hp->flags, SHF_USE_ADMA2_64)) {
-			HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR + 4,
-			    (uint64_t)desc_addr >> 32);
 		}
 	} else if (ISSET(mode, SDHC_DMA_ENABLE) &&
 	    !ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA)) {
