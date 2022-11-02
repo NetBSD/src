@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.43 2021/11/25 14:17:22 hannken Exp $
+#	$NetBSD: net_common.sh,v 1.44 2022/11/02 09:35:12 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -139,6 +139,7 @@ start_nc_server()
 	local port=$2
 	local outfile=$3
 	local proto=${4:-ipv4}
+	local extra_opts="$5"
 	local backup=$RUMP_SERVER
 	local opts=
 
@@ -149,6 +150,7 @@ start_nc_server()
 	else
 		opts="-l -6"
 	fi
+	opts="$opts $extra_opts"
 
 	env LD_PRELOAD=/usr/lib/librumphijack.so nc $opts $port > $outfile &
 	echo $! > $NC_PID
