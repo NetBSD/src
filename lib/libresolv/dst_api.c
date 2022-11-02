@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.9 2022/05/24 06:27:59 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.10 2022/11/02 20:38:21 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -21,7 +21,7 @@
  * This is the only file that needs to be changed if the crypto system is
  * changed.  Exported functions are:
  * void dst_init()	 Initialize the toolkit
- * int  dst_check_algorithm()   Function to determines if alg is suppored.
+ * int  dst_check_algorithm()   Function to determines if alg is supported.
  * int  dst_compare_keys()      Function to compare two keys for equality.
  * int  dst_sign_data()         Incremental signing routine.
  * int  dst_verify_data()       Incremental verify routine.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.9 2022/05/24 06:27:59 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.10 2022/11/02 20:38:21 andvar Exp $");
 #endif
 
 
@@ -334,7 +334,7 @@ dst_read_key(const char *in_keyname, const u_int16_t in_id,
 	DST_KEY *dg_key = NULL, *pubkey = NULL;
 
 	if (!dst_check_algorithm(in_alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__, in_alg));
+		EREPORT(("%s: Algorithm %d not supported\n", __func__, in_alg));
 		return (NULL);
 	}
 	if ((type & (DST_PUBLIC | DST_PRIVATE)) == 0) 
@@ -376,7 +376,7 @@ dst_write_key(const DST_KEY *key, const int type)
 	if (key == NULL) 
 		return (0);
 	if (!dst_check_algorithm(key->dk_alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__,
+		EREPORT(("%s: Algorithm %d not supported\n", __func__,
 		    key->dk_alg));
 		return (UNSUPPORTED_KEYALG);
 	}
@@ -659,7 +659,7 @@ dst_dnskey_to_key(const char *in_name, const u_char *rdata, const int len)
 		return (NULL);
 	alg = (u_int8_t) rdata[DST_KEY_ALG];
 	if (!dst_check_algorithm(alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__,
+		EREPORT(("%s: Algorithm %d not supported\n", __func__,
 		    alg));
 		return (NULL);
 	}
@@ -688,7 +688,7 @@ dst_dnskey_to_key(const char *in_name, const u_char *rdata, const int len)
 						  len - start) > 0)
 			return (key_st);
 	} else
-		EREPORT(("%s: unsuppored alg %d\n", __func__,
+		EREPORT(("%s: unsupported alg %d\n", __func__,
 			 alg));
 
 	SAFE_FREE(key_st);
@@ -718,7 +718,7 @@ dst_key_to_dnskey(const DST_KEY *key, u_char *out_storage,
 		return (-1);
 
 	if (!dst_check_algorithm(key->dk_alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__,
+		EREPORT(("%s: Algorithm %d not supported\n", __func__,
 		    key->dk_alg));
 		return (UNSUPPORTED_KEYALG);
 	}
@@ -775,7 +775,7 @@ dst_buffer_to_key(const char *key_name,		/*!< name of the key  */
 	u_char dns[2048];
 
 	if (!dst_check_algorithm(alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__, alg));
+		EREPORT(("%s: Algorithm %d not supported\n", __func__, alg));
 		return (NULL);
 	}
 
@@ -971,7 +971,7 @@ dst_generate_key(const char *name, const int bits, const int exp,
 		return (NULL);
 
 	if (!dst_check_algorithm(alg)) { /*%< make sure alg is available */
-		EREPORT(("%s: Algorithm %d not suppored\n", __func__, alg));
+		EREPORT(("%s: Algorithm %d not supported\n", __func__, alg));
 		return (NULL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.28 2022/10/01 07:22:55 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.29 2022/11/02 20:38:22 andvar Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -827,7 +827,7 @@ wbsio_wdog_attach(device_t self)
 	case WBSIO_ID_NCT6779D:
 		break;
 	default:
-		/* WDT is not supoorted */
+		/* WDT is not supported */
 		return;
 	}
 

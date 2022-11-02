@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.75 2020/01/25 18:38:35 thorpej Exp $
+#	$NetBSD: MIMORI,v 1.76 2022/11/02 20:38:21 andvar Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -198,7 +198,7 @@ tlphy*		at mii? phy ?		# ThunderLAN PHYs
 tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
-# SCSI bus supoort
+# SCSI bus support
 scsibus*	at scsi?
 
 #### SCSI bus devices

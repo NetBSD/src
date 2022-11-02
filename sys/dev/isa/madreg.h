@@ -1,4 +1,4 @@
-/*	$NetBSD: madreg.h,v 1.5 1998/12/08 14:26:57 augustss Exp $	*/
+/*	$NetBSD: madreg.h,v 1.6 2022/11/02 20:38:22 andvar Exp $	*/
 /*
  * Copyright (c) 1996 Lennart Augustsson
  * Copyright (c) 1995 Hannu Savolainen
@@ -36,7 +36,7 @@
  */
 
 /*
- * Variations of the suppored chips.
+ * Variations of the supported chips.
  */
 
 #define MAD_NONE	0
