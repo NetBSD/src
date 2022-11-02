@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.51 2020/05/30 19:16:53 ad Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.52 2022/11/02 09:01:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.51 2020/05/30 19:16:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.52 2022/11/02 09:01:42 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -348,6 +348,14 @@ lwproc_makelwp(struct proc *p, bool doswitch, bool procmake)
 {
 	struct lwp *l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
+	l->l_refcnt = 1;
+	l->l_proc = p;
+	l->l_stat = LSIDL;
+	l->l_mutex = &unruntime_lock;
+
+	proc_alloc_lwpid(p, l);
+
+	mutex_enter(p->p_lock);
 	/*
 	 * Account the new lwp to the owner of the process.
 	 * For some reason, NetBSD doesn't count the first lwp
@@ -357,14 +365,6 @@ lwproc_makelwp(struct proc *p, bool doswitch, bool procmake)
 		chglwpcnt(kauth_cred_getuid(p->p_cred), 1);
 	}
 
-	l->l_refcnt = 1;
-	l->l_proc = p;
-	l->l_stat = LSIDL;
-	l->l_mutex = &unruntime_lock;
-
-	proc_alloc_lwpid(p, l);
-
-	mutex_enter(p->p_lock);
 	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 
