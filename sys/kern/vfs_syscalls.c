@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.555 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.556 2022/11/02 20:38:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.555 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.556 2022/11/02 20:38:22 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4575,7 +4575,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 
 	/*
 	 * Acknowledge that directories and non-directories aren't
-	 * suposed to mix.
+	 * supposed to mix.
 	 */
 	if (tvp != NULL) {
 		if ((fvp->v_type == VDIR) && (tvp->v_type != VDIR)) {

@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.53 2022/01/04 06:08:14 kim Exp $
+$NetBSD: CHANGES,v 1.54 2022/11/02 20:38:21 andvar Exp $
 
 changes in bozohttpd 20220104:
 	o  remove obsolete .bzdirect handling.
@@ -376,7 +376,7 @@ changes in bozohttpd 5.03 (20000427):
 	- fix a bug with chdir() 
 
 changes in bozohttpd 5.02 (20000426):
-	- .pac spport from simonb
+	- .pac support from simonb
 
 changes in bozohttpd 5.01 (20000421):
 	- .swf support 

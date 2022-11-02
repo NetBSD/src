@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.38 2022/10/21 09:29:32 riastradh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.39 2022/11/02 20:38:22 andvar Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.38 2022/10/21 09:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.39 2022/11/02 20:38:22 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.38 2022/10/21 09:29:32 riastradh Exp $")
 
 /* driver configuration */
 #define CONFIG_INTR_MODERATION_ENABLE	true	/* delayed interrupt */
-#undef CONFIG_LRO_SUPPORT			/* no LRO not suppoted */
+#undef CONFIG_LRO_SUPPORT			/* no LRO not supported */
 #undef CONFIG_NO_TXRX_INDEPENDENT		/* share TX/RX interrupts */
 
 #define AQ_NINTR_MAX			(AQ_RSSQUEUE_MAX + AQ_RSSQUEUE_MAX + 1)

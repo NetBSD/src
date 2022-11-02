@@ -1,4 +1,4 @@
-*	$NetBSD: get_op.sa,v 1.4 2001/12/09 01:43:13 briggs Exp $
+*	$NetBSD: get_op.sa,v 1.5 2022/11/02 20:38:22 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -380,7 +380,7 @@ end_getop:
 
 *
 * Sets the DY_MO_FLG correctly. This is used only on if it is an
-* unuspported data type exception.  Set if dyadic.
+* unsupported data type exception.  Set if dyadic.
 *
 chk_dy_mo:
 	move.w	CMDREG1B(a6),d0	

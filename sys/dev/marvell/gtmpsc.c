@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.47 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.48 2022/11/02 20:38:22 andvar Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.47 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.48 2022/11/02 20:38:22 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1331,7 +1331,7 @@ gtmpsccnattach(bus_space_tag_t iot, bus_dma_tag_t dmat, bus_addr_t base,
 }
 
 /*
- * gtmpsc_hackinit - hacks required to supprt GTMPSC console
+ * gtmpsc_hackinit - hacks required to support GTMPSC console
  */
 STATIC int
 gtmpsc_hackinit(struct gtmpsc_softc *sc, bus_space_tag_t iot,
