@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1224 2022/10/11 09:55:21 knakahara Exp $
+# $NetBSD: mi,v 1.1225 2022/11/02 09:37:56 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4283,6 +4283,10 @@
 ./usr/tests/net/sys/t_listen				tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056				tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/t_socketpair			tests-obsolete		obsolete
+./usr/tests/net/tcp					tests-net-tests		compattestfile,atf
+./usr/tests/net/tcp/Atffile				tests-net-tests		compattestfile,atf
+./usr/tests/net/tcp/Kyuafile				tests-net-tests		compattestfile,atf,kyua
+./usr/tests/net/tcp/t_tcp_nc				tests-net-tests		compattestfile,atf
 ./usr/tests/net/wireguard				tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Atffile			tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Kyuafile			tests-obsolete		obsolete
