@@ -1,4 +1,4 @@
-/*	$NetBSD: hvtimesync.c,v 1.2 2019/03/01 08:17:51 nonaka Exp $	*/
+/*	$NetBSD: hvtimesync.c,v 1.3 2022/11/02 18:18:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014,2016-2017 Microsoft Corp.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hvtimesync.c,v 1.2 2019/03/01 08:17:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvtimesync.c,v 1.3 2022/11/02 18:18:44 andvar Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/utilities/vmbus_timesync.c 322488 2017-08-14 06:00:50Z sephe $");
@@ -75,7 +75,7 @@ CFATTACH_DECL_NEW(hvtimesync, sizeof(struct hvtimesync_softc),
     hvtimesync_match, hvtimesync_attach, hvtimesync_detach, NULL);
 
 static int hvtimesync_ignore_sync;
-static int hvtimesnyc_sample_verbose;
+static int hvtimesync_sample_verbose;
 static int hvtimesync_sample_thresh = -1;
 
 static int
@@ -149,7 +149,7 @@ do_timesync(struct hvtimesync_softc *sc, uint64_t hvtime, uint64_t sent_tc,
 
 	if ((tsflags & VMBUS_ICMSG_TS_FLAG_SAMPLE) &&
 	    hvtimesync_sample_thresh >= 0) {
-		if (hvtimesnyc_sample_verbose) {
+		if (hvtimesync_sample_verbose) {
 			device_printf(vsc->sc_dev,
 			    "sample request, hv: %ju, vm: %ju\n",
 			    (uintmax_t)hv_ns, (uintmax_t)vm_ns);
@@ -284,7 +284,7 @@ hvtimesync_sysctl_setup(device_t self)
 	error = sysctl_createv(&vsc->sc_log, 0, &node, NULL,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "sample_verbose", NULL,
-	    NULL, 0, &hvtimesnyc_sample_verbose, 0,
+	    NULL, 0, &hvtimesync_sample_verbose, 0,
 	    CTL_CREATE, CTL_EOL);
 	if (error)
 		return error;
