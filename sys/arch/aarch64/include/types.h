@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.20 2021/10/10 07:15:25 skrll Exp $ */
+/* $NetBSD: types.h,v 1.21 2022/11/03 09:04:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define _AARCH64_TYPES_H_
 
 #ifdef __aarch64__
+
+#ifdef _KERNEL_OPT
+#include "opt_pmap.h"
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -115,6 +119,11 @@ typedef __uint64_t __register_t;
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
+#endif
+
+#if defined(PMAP_MI)
+/* XXX temporary */
+#define __HAVE_UNLOCKED_PMAP
 #endif
 
 #elif defined(__arm__)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.56 2022/10/29 08:29:28 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.57 2022/11/03 09:04:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_kasan.h"
+#include "opt_pmap.h"
 #endif
 
 #include <sys/types.h>
@@ -47,15 +48,6 @@
 
 #include <aarch64/armreg.h>
 #include <aarch64/pte.h>
-
-#define PMAP_NEED_PROCWR
-#define PMAP_GROWKERNEL
-#define PMAP_STEAL_MEMORY
-
-#define __HAVE_VM_PAGE_MD
-#define __HAVE_PMAP_PV_TRACK	1
-
-#define	PMAP_HWPAGEWALKER		1
 
 #define	PMAP_TLB_MAX			1
 #if PMAP_TLB_MAX > 1
@@ -92,96 +84,6 @@ pmap_md_tlb_asid_max(void)
 
 #define KERNEL_PID		0	/* The kernel uses ASID 0 */
 
-#ifndef KASAN
-#define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
-#define PMAP_UNMAP_POOLPAGE(va)		AARCH64_KVA_TO_PA(va)
-
-#define PMAP_DIRECT
-static __inline int
-pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
-    int (*process)(void *, size_t, void *), void *arg)
-{
-	vaddr_t va = AARCH64_PA_TO_KVA(pa);
-
-	return process((void *)(va + pgoff), len, arg);
-}
-#endif
-
-struct pmap {
-	kmutex_t pm_lock;
-	struct pool *pm_pvpool;
-	pd_entry_t *pm_l0table;			/* L0 table: 512G*512 */
-	paddr_t pm_l0table_pa;
-
-	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
-	LIST_HEAD(, pv_entry) pm_pvlist;	/* all pv of this process */
-
-	struct pmap_statistics pm_stats;
-	unsigned int pm_refcnt;
-	unsigned int pm_idlepdp;
-
-	kcpuset_t *pm_onproc;
-	kcpuset_t *pm_active;
-
-	struct pmap_asid_info pm_pai[PMAP_TLB_MAX];
-	bool pm_activated;
-};
-
-static inline paddr_t
-pmap_l0pa(struct pmap *pm)
-{
-	return pm->pm_l0table_pa;
-}
-
-/*
- * should be kept <=32 bytes sized to reduce memory consumption & cache misses,
- * but it doesn't...
- */
-struct pv_entry {
-	struct pv_entry *pv_next;
-	struct pmap *pv_pmap;
-	vaddr_t pv_va;	/* for embedded entry (pp_pv) also includes flags */
-	void *pv_ptep;	/* pointer for fast pte lookup */
-	LIST_ENTRY(pv_entry) pv_proc;	/* belonging to the process */
-};
-
-struct pmap_page {
-	kmutex_t pp_pvlock;
-	struct pv_entry pp_pv;
-};
-
-/* try to keep vm_page at or under 128 bytes to reduce cache misses */
-struct vm_page_md {
-	struct pmap_page mdpg_pp;
-};
-/* for page descriptor page only */
-#define	mdpg_ptep_parent	mdpg_pp.pp_pv.pv_ptep
-
-#define VM_MDPAGE_INIT(pg)					\
-	do {							\
-		PMAP_PAGE_INIT(&(pg)->mdpage.mdpg_pp);		\
-	} while (/*CONSTCOND*/ 0)
-
-#define PMAP_PAGE_INIT(pp)						\
-	do {								\
-		mutex_init(&(pp)->pp_pvlock, MUTEX_NODEBUG, IPL_NONE);	\
-		(pp)->pp_pv.pv_next = NULL;				\
-		(pp)->pp_pv.pv_pmap = NULL;				\
-		(pp)->pp_pv.pv_va = 0;					\
-		(pp)->pp_pv.pv_ptep = NULL;				\
-	} while (/*CONSTCOND*/ 0)
-
-/* saved permission bit for referenced/modified emulation */
-#define LX_BLKPAG_OS_READ		LX_BLKPAG_OS_0
-#define LX_BLKPAG_OS_WRITE		LX_BLKPAG_OS_1
-#define LX_BLKPAG_OS_WIRED		LX_BLKPAG_OS_2
-#define LX_BLKPAG_OS_BOOT		LX_BLKPAG_OS_3
-#define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE | LX_BLKPAG_OS_READ)
-
-#define PMAP_PTE_OS0	"read"
-#define PMAP_PTE_OS1	"write"
-#define PMAP_PTE_OS2	"wired"
-#define PMAP_PTE_OS3	"boot"
 
 /* memory attributes are configured MAIR_EL1 in locore */
 #define LX_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)
@@ -219,30 +121,13 @@ struct vm_page_md {
 #define l3pte_index(v)		(((vaddr_t)(v) & L3_ADDR_BITS) >> L3_SHIFT)
 #define l3pte_valid(pde)	lxpde_valid(pde)
 #define l3pte_is_page(pde)	(((pde) & LX_TYPE) == L3_TYPE_PAG)
-/* l3pte contains always page entries */
 
-
-static inline uint64_t
-pte_value(pt_entry_t pte)
-{
-	return pte;
-}
-
-static inline bool
-pte_valid_p(pt_entry_t pte)
-{
-	return l3pte_valid(pte);
-}
-
+pd_entry_t *pmap_l0table(struct pmap *);
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
 
-/* for ddb */
-pt_entry_t *kvtopte(vaddr_t);
-void pmap_db_pmap_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
-void pmap_db_mdpg_print(struct vm_page *, void (*)(const char *, ...) __printflike(1, 2));
+bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 
-pd_entry_t *pmap_l0table(struct pmap *);
 
 /* change attribute of kernel segment */
 static inline pt_entry_t
@@ -275,19 +160,6 @@ pmap_kvattr(pt_entry_t *ptep, vm_prot_t prot)
 
 	return opte;
 }
-
-/* pmapboot.c */
-pd_entry_t *pmapboot_pagealloc(void);
-void pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
-    void (*pr)(const char *, ...) __printflike(1, 2));
-void pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
-    void (*)(const char *, ...) __printflike(1, 2));
-int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
-
-/* Hooks for the pool allocator */
-paddr_t vtophys(vaddr_t);
-#define VTOPHYS_FAILED		((paddr_t)-1L)	/* POOL_PADDR_INVALID */
-#define POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 /* devmap */
 struct pmap_devmap {
@@ -324,6 +196,9 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 		.pd_flags = PMAP_DEV				\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
+
+/* Hooks for the pool allocator */
+paddr_t vtophys(vaddr_t);
 
 /* mmap cookie and flags */
 #define AARCH64_MMAP_FLAG_SHIFT		(64 - PGSHIFT)
@@ -383,6 +258,145 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_phys_address(pa)		aarch64_ptob((pa))
 #define pmap_mmap_flags(ppn)		aarch64_mmap_flags((ppn))
 
+void pmap_bootstrap(vaddr_t, vaddr_t);
+bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
+
+pd_entry_t *pmapboot_pagealloc(void);
+void pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
+    void (*pr)(const char *, ...) __printflike(1, 2));
+void pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
+    void (*)(const char *, ...) __printflike(1, 2));
+int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
+
+#if defined(DDB)
+void pmap_db_pte_print(pt_entry_t, int, void (*)(const char *, ...) __printflike(1, 2));
+void pmap_db_pteinfo(vaddr_t, void (*)(const char *, ...) __printflike(1, 2));
+void pmap_db_ttbrdump(bool, vaddr_t, void (*)(const char *, ...) __printflike(1, 2));
+#endif
+
+#define LX_BLKPAG_OS_WIRED		LX_BLKPAG_OS_2
+#define LX_BLKPAG_OS_BOOT		LX_BLKPAG_OS_3
+
+#define PMAP_PTE_OS2	"wired"
+#define PMAP_PTE_OS3	"boot"
+
+#if defined(PMAP_MI)
+#include <aarch64/pmap_machdep.h>
+#else
+
+#define PMAP_NEED_PROCWR
+#define PMAP_GROWKERNEL
+#define PMAP_STEAL_MEMORY
+
+#define __HAVE_VM_PAGE_MD
+#define __HAVE_PMAP_PV_TRACK	1
+
+struct pmap {
+	kmutex_t pm_lock;
+	struct pool *pm_pvpool;
+	pd_entry_t *pm_l0table;			/* L0 table: 512G*512 */
+	paddr_t pm_l0table_pa;
+
+	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
+	LIST_HEAD(, pv_entry) pm_pvlist;	/* all pv of this process */
+
+	struct pmap_statistics pm_stats;
+	unsigned int pm_refcnt;
+	unsigned int pm_idlepdp;
+
+	kcpuset_t *pm_onproc;
+	kcpuset_t *pm_active;
+
+	struct pmap_asid_info pm_pai[PMAP_TLB_MAX];
+	bool pm_activated;
+};
+
+static inline paddr_t
+pmap_l0pa(struct pmap *pm)
+{
+	return pm->pm_l0table_pa;
+}
+
+
+/*
+ * should be kept <=32 bytes sized to reduce memory consumption & cache misses,
+ * but it doesn't...
+ */
+struct pv_entry {
+	struct pv_entry *pv_next;
+	struct pmap *pv_pmap;
+	vaddr_t pv_va;	/* for embedded entry (pp_pv) also includes flags */
+	void *pv_ptep;	/* pointer for fast pte lookup */
+	LIST_ENTRY(pv_entry) pv_proc;	/* belonging to the process */
+};
+
+struct pmap_page {
+	kmutex_t pp_pvlock;
+	struct pv_entry pp_pv;
+};
+
+/* try to keep vm_page at or under 128 bytes to reduce cache misses */
+struct vm_page_md {
+	struct pmap_page mdpg_pp;
+};
+/* for page descriptor page only */
+#define	mdpg_ptep_parent	mdpg_pp.pp_pv.pv_ptep
+
+#define VM_MDPAGE_INIT(pg)					\
+	do {							\
+		PMAP_PAGE_INIT(&(pg)->mdpage.mdpg_pp);		\
+	} while (/*CONSTCOND*/ 0)
+
+#define PMAP_PAGE_INIT(pp)						\
+	do {								\
+		mutex_init(&(pp)->pp_pvlock, MUTEX_NODEBUG, IPL_NONE);	\
+		(pp)->pp_pv.pv_next = NULL;				\
+		(pp)->pp_pv.pv_pmap = NULL;				\
+		(pp)->pp_pv.pv_va = 0;					\
+		(pp)->pp_pv.pv_ptep = NULL;				\
+	} while (/*CONSTCOND*/ 0)
+
+/* saved permission bit for referenced/modified emulation */
+#define LX_BLKPAG_OS_READ		LX_BLKPAG_OS_0
+#define LX_BLKPAG_OS_WRITE		LX_BLKPAG_OS_1
+#define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE | LX_BLKPAG_OS_READ)
+
+#define PMAP_PTE_OS0	"read"
+#define PMAP_PTE_OS1	"write"
+
+#define VTOPHYS_FAILED			((paddr_t)-1L)	/* POOL_PADDR_INVALID */
+#define POOL_VTOPHYS(va)		vtophys((vaddr_t) (va))
+
+#ifndef KASAN
+#define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
+#define PMAP_UNMAP_POOLPAGE(va)		AARCH64_KVA_TO_PA(va)
+
+#define PMAP_DIRECT
+static __inline int
+pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
+    int (*process)(void *, size_t, void *), void *arg)
+{
+	vaddr_t va = AARCH64_PA_TO_KVA(pa);
+
+	return process((void *)(va + pgoff), len, arg);
+}
+#endif
+
+/* l3pte contains always page entries */
+static inline uint64_t
+pte_value(pt_entry_t pte)
+{
+	return pte;
+}
+
+static inline bool
+pte_valid_p(pt_entry_t pte)
+{
+	return l3pte_valid(pte);
+}
+
+pt_entry_t *kvtopte(vaddr_t);
+
 #define pmap_update(pmap)		((void)0)
 #define pmap_copy(dp,sp,d,l,s)		((void)0)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
@@ -394,7 +408,6 @@ void	pmap_activate_efirt(void);
 void	pmap_deactivate_efirt(void);
 
 void	pmap_procwr(struct proc *, vaddr_t, int);
-bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
 
 void	pmap_pv_init(void);
@@ -403,6 +416,12 @@ void	pmap_pv_untrack(paddr_t, psize_t);
 void	pmap_pv_protect(paddr_t, vm_prot_t);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
+
+/* for ddb */
+void pmap_db_pmap_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
+void pmap_db_mdpg_print(struct vm_page *, void (*)(const char *, ...) __printflike(1, 2));
+
+#endif	/* !PMAP_MI */
 
 #endif /* _KERNEL */
 

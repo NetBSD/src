@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.40 2022/10/28 07:16:34 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.41 2022/11/03 09:04:56 skrll Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -54,6 +54,10 @@ defflag opt_pmap.h		PMAPHIST : KERNHIST
 defflag opt_pmap.h		PMAPCOUNTERS PMAP_STEAL_MEMORY
 				PMAP_NEED_ALLOC_POOLPAGE
 defflag opt_pmapboot.h		PMAPBOOT_DEBUG
+
+# MI PMAP flags
+#
+defflag	opt_pmap.h		PMAP_MI
 
 # MI support
 file	dev/cons.c
@@ -113,11 +117,14 @@ file	arch/aarch64/aarch64/vm_machdep.c
 
 # pmap
 file	arch/aarch64/aarch64/aarch64_tlb.c
-file	arch/aarch64/aarch64/pmap.c
+file	arch/aarch64/aarch64/pmap.c		!pmap_mi
 file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
-file	uvm/pmap/pmap_tlb.c
+file	arch/aarch64/aarch64/pmap_machdep.c	pmap_mi
+file	uvm/pmap/pmap.c				pmap_mi
 file	uvm/pmap/pmap_pvt.c
+file	uvm/pmap/pmap_segtab.c			pmap_mi
+file	uvm/pmap/pmap_tlb.c
 
 # EFI runtime (machdep)
 file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime
