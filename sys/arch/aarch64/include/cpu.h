@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.47 2022/06/25 13:24:34 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.48 2022/11/03 09:04:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
 #include "opt_multiprocessor.h"
+#include "opt_pmap.h"
 #endif
 
 #include <sys/param.h>
@@ -137,6 +138,12 @@ struct cpu_info {
 
 	int ci_kfpu_spl;
 
+#if defined(PMAP_MI)
+        struct pmap_tlb_info *ci_tlb_info;
+        struct pmap *ci_pmap_lastuser;
+        struct pmap *ci_pmap_cur;
+#endif
+
 	/* ASID of current pmap */
 	tlb_asid_t ci_pmap_asid_cur;
 
@@ -190,6 +197,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #define	setsoftast(ci)		(cpu_signotify((ci)->ci_onproc))
 #undef curlwp
 #define	curlwp			(aarch64_curlwp())
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 void	cpu_signotify(struct lwp *l);
 void	cpu_need_proftick(struct lwp *l);
