@@ -1,0 +1,12 @@
+#
+
+include "arch/evbarm/conf/GENERIC64"
+
+options 	PMAP_MI
+
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
+#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+
+#options 	LOCKDEBUG

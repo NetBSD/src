@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2022/11/02 08:05:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2022/11/02 08:05:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -658,6 +658,33 @@ pmap_bootstrap_common(void)
 	TAILQ_INIT(&pm->pm_segtab_list);
 #endif
 
+#if defined(EFI_RUNTIME)
+
+	const pmap_t efipm = pmap_efirt();
+	struct pmap_asid_info * const efipai = PMAP_PAI(efipm, cpu_tlb_info(ci));
+
+	rw_init(&efipm->pm_obj_lock);
+	uvm_obj_init(&efipm->pm_uobject, &pmap_pager, false, 1);
+	uvm_obj_setlock(&efipm->pm_uobject, &efipm->pm_obj_lock);
+
+	efipai->pai_asid = KERNEL_PID;
+
+	TAILQ_INIT(&efipm->pm_ppg_list);
+
+#if defined(PMAP_HWPAGEWALKER)
+	TAILQ_INIT(&efipm->pm_pdetab_list);
+#endif
+#if !defined(PMAP_HWPAGEWALKER) || !defined(PMAP_MAP_PDETABPAGE)
+	TAILQ_INIT(&efipm->pm_segtab_list);
+#endif
+
+#endif
+
+	/*
+	 * Initialize the segtab lock.
+	 */
+	mutex_init(&pmap_segtab_lock, MUTEX_DEFAULT, IPL_HIGH);
+
 	pmap_tlb_miss_lock_init();
 }
 
@@ -671,11 +698,6 @@ pmap_init(void)
 {
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
-
-	/*
-	 * Initialize the segtab lock.
-	 */
-	mutex_init(&pmap_segtab_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set a low water mark on the pv_entry pool, so that we are

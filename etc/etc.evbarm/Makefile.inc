@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.130 2022/10/29 08:52:47 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.131 2022/11/03 09:04:56 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -31,7 +31,9 @@ KERNEL_SETS.armv6hf+=	 	RPI2
 
 KERNEL_SETS.armv7+=		GENERIC
 KERNEL_SETS.armv7hf+=		GENERIC
+
 KERNEL_SETS.arm64+=		GENERIC64
+KERNEL_SETS.arm64+=		GENERIC64_PMAPMI
 .else
 IMAGEENDIAN=	le
 # little endian boards
@@ -65,7 +67,9 @@ KERNEL_SETS.armv6hf+=	 	RPI2
 
 KERNEL_SETS.armv7+=		GENERIC
 KERNEL_SETS.armv7hf+=		GENERIC
+
 KERNEL_SETS.arm64+=		GENERIC64
+KERNEL_SETS.arm64+=		GENERIC64_PMAPMI
 .endif
 
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
