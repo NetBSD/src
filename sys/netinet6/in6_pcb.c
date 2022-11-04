@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.176 2022/11/04 09:03:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.177 2022/11/04 09:04:27 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.176 2022/11/04 09:03:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.177 2022/11/04 09:04:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,15 +151,15 @@ in6pcb_bind_addr(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 	 * incorrectly fail to initialize it.
 	 */
 	if (sin6->sin6_family != AF_INET6)
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 
 #ifndef INET
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-		return (EADDRNOTAVAIL);
+		return EADDRNOTAVAIL;
 #endif
 
 	if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
-		return (error);
+		return error;
 
 	s = pserialize_read_enter();
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
@@ -255,7 +255,7 @@ in6pcb_bind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_BIND,
 		    req, so, sin6, NULL);
 		if (error)
-			return (EACCES);
+			return EACCES;
 	}
 
 	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
@@ -280,13 +280,13 @@ in6pcb_bind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
 			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
-				return (EADDRINUSE);
+				return EADDRINUSE;
 			if (!t
 			    && vestige.valid
 			    && !(reuseport && vestige.reuse_port))
 			    return EADDRINUSE;
 #else
-			return (EADDRNOTAVAIL);
+			return EADDRNOTAVAIL;
 #endif
 		}
 
@@ -297,7 +297,7 @@ in6pcb_bind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 			t = in6pcb_lookup_local(table, &sin6->sin6_addr,
 			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
-				return (EADDRINUSE);
+				return EADDRINUSE;
 			if (!t
 			    && vestige.valid
 			    && !(reuseport && vestige.reuse_port))
@@ -309,7 +309,7 @@ in6pcb_bind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 		int e;
 		e = in6pcb_set_port(sin6, inp, l);
 		if (e != 0)
-			return (e);
+			return e;
 	} else {
 		inp->inp_lport = sin6->sin6_port;
 		inpcb_set_state(inp, INP_BOUND);
@@ -319,7 +319,7 @@ in6pcb_bind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, inp->inp_lport),
 	    inp, inp_lhash);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -330,7 +330,7 @@ in6pcb_bind(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	int error;
 
 	if (inp->inp_af != AF_INET6)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * If we already have a local port or a local address it means we're
@@ -339,12 +339,12 @@ in6pcb_bind(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	if (inp->inp_lport || !(IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) ||
 	    (IN6_IS_ADDR_V4MAPPED(&in6p_laddr(inp)) &&
 	      in6p_laddr(inp).s6_addr32[3] == 0)))
-		return (EINVAL);
+		return EINVAL;
 
 	if (NULL != sin6) {
 		/* We were provided a sockaddr_in6 to use. */
 		if (sin6->sin6_len != sizeof(*sin6))
-			return (EINVAL);
+			return EINVAL;
 	} else {
 		/* We always bind to *something*, even if it's "anything". */
 		lsin6 = *((const struct sockaddr_in6 *)
@@ -355,7 +355,7 @@ in6pcb_bind(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	/* Bind address. */
 	error = in6pcb_bind_addr(inp, sin6, l);
 	if (error)
-		return (error);
+		return error;
 
 	/* Bind port. */
 	error = in6pcb_bind_port(inp, sin6, l);
@@ -366,14 +366,14 @@ in6pcb_bind(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		 */
 		in6p_laddr(inp) = in6addr_any;
 
-		return (error);
+		return error;
 	}
 
 
 #if 0
 	in6p_flowinfo(inp) = 0;	/* XXX */
 #endif
-	return (0);
+	return 0;
 }
 
 /*
@@ -402,14 +402,14 @@ in6pcb_connect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	(void)&in6a;				/* XXX fool gcc */
 
 	if (inp->inp_af != AF_INET6)
-		return (EINVAL);
+		return EINVAL;
 
 	if (sin6->sin6_len != sizeof(*sin6))
-		return (EINVAL);
+		return EINVAL;
 	if (sin6->sin6_family != AF_INET6)
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 	if (sin6->sin6_port == 0)
-		return (EADDRNOTAVAIL);
+		return EADDRNOTAVAIL;
 
 	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr) &&
 	    inp->inp_socket->so_type == SOCK_STREAM)
@@ -418,7 +418,7 @@ in6pcb_connect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	if (sin6->sin6_scope_id == 0 && !ip6_use_defzone)
 		scope_ambiguous = 1;
 	if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
-		return(error);
+		return error;
 
 	/* sanity check for mapped address case */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
@@ -458,7 +458,7 @@ in6pcb_connect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			curlwp_bindx(bound);
-			return (error);
+			return error;
 		}
 		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = htons(0xffff);
@@ -509,7 +509,7 @@ in6pcb_connect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	    IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) ? in6a : &in6p_laddr(inp),
 				  inp->inp_lport, 0, &vestige)
 		|| vestige.valid)
-		return (EADDRINUSE);
+		return EADDRINUSE;
 	if (IN6_IS_ADDR_UNSPECIFIED(&in6p_laddr(inp)) ||
 	    (IN6_IS_ADDR_V4MAPPED(&in6p_laddr(inp)) &&
 	     in6p_laddr(inp).s6_addr32[3] == 0))
@@ -544,7 +544,7 @@ in6pcb_connect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	if (ipsec_enabled && inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
-	return (0);
+	return 0;
 }
 
 void
@@ -958,7 +958,7 @@ in6pcb_lookup_local(struct inpcbtable *table, struct in6_addr *laddr6,
 			return 0;
 		}
 	}
-	return (match);
+	return match;
 }
 
 /*
@@ -981,7 +981,7 @@ in6pcb_rtentry(struct inpcb *inp)
 	ro = &inp->inp_route;
 
 	if (inp->inp_af != AF_INET6)
-		return (NULL);
+		return NULL;
 
 	cdst.sa = rtcache_getdst(ro);
 	if (cdst.sa == NULL)
@@ -1152,7 +1152,7 @@ in6pcb_lookup_bound(struct inpcbtable *table, const struct in6_addr *laddr6,
 		if (IN6_ARE_ADDR_EQUAL(&in6p_laddr(inp), &zeroin6_addr))
 			goto out;
 	}
-	return (NULL);
+	return NULL;
 
 out:
 	if (inp != LIST_FIRST(head)) {
