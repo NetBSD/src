@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.22 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.23 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.22 2022/08/06 18:26:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.23 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -473,7 +473,7 @@ sctp_ctlinput(int cmd, const struct sockaddr *sa, void *vip)
 #if defined(__FreeBSD__) && __FreeBSD_version < 500000
                         /* XXX must be fixed for 5.x and higher, leave for 4.x */
 			if (PRC_IS_REDIRECT(cmd) && inp) {
-				in_rtchange((struct inpcb *)inp,
+				inpcb_rtchange((struct inpcb *)inp,
 					    inetctlerrmap[cmd]);
 			}
 #endif

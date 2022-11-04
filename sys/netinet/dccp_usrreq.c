@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.24 2022/10/28 05:26:29 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.25 2022/11/04 09:00:58 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.24 2022/10/28 05:26:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.25 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -177,7 +177,7 @@ dccp_init(void)
 	pool_init(&dccpcb_pool, sizeof(struct dccpcb), 0, 0, 0, "dccpcbpl",
 		  NULL, IPL_SOFTNET);
 
-	in_pcbinit(&dccpbtable, DCCPBHASHSIZE, DCCPBHASHSIZE);
+	inpcb_init(&dccpbtable, DCCPBHASHSIZE, DCCPBHASHSIZE);
 }
 
 void
@@ -347,11 +347,11 @@ dccp_input(struct mbuf *m, int off, int proto)
 	} else
 #endif
 	{
-		inp = in_pcblookup_connect(&dccpbtable, ip->ip_src,
+		inp = inpcb_lookup(&dccpbtable, ip->ip_src,
 		    dh->dh_sport, ip->ip_dst, dh->dh_dport, 0);
 		if (inp == NULL) {
 			/* XXX stats increment? */
-			inp = in_pcblookup_bind(&dccpbtable, ip->ip_dst,
+			inp = inpcb_lookup_bound(&dccpbtable, ip->ip_dst,
 			    dh->dh_dport);
 		}
 	}
@@ -447,7 +447,7 @@ dccp_input(struct mbuf *m, int off, int proto)
 			in6p_faddr(inp) = ip6->ip6_src;
 			inp->inp_lport = dh->dh_dport;
 			inp->inp_fport = dh->dh_sport;
-			in_pcbstate(inp, INP_CONNECTED);
+			inpcb_set_state(inp, INP_CONNECTED);
 		} else 
 #endif
 		{
@@ -459,7 +459,7 @@ dccp_input(struct mbuf *m, int off, int proto)
 		}
 
 		if (!isipv6)
-			in_pcbstate(inp, INP_BOUND);
+			inpcb_set_state(inp, INP_BOUND);
 
 		dp = inp->inp_ppcb;
 
@@ -944,7 +944,7 @@ dccp_ctlinput(int cmd, const struct sockaddr *sa, void *vip)
 
 	if (PRC_IS_REDIRECT(cmd)) {
 		ip = 0;
-		notify = in_rtchange;
+		notify = inpcb_rtchange;
 	} else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0)
@@ -953,7 +953,7 @@ dccp_ctlinput(int cmd, const struct sockaddr *sa, void *vip)
 		/*s = splsoftnet();*/
 		dh = (struct dccphdr *)((vaddr_t)ip + (ip->ip_hl << 2));
 		INP_INFO_RLOCK(&dccpbinfo);
-		in_pcbnotify(&dccpbtable, faddr, dh->dh_dport,
+		inpcb_notify(&dccpbtable, faddr, dh->dh_dport,
 		    ip->ip_src, dh->dh_sport, inetctlerrmap[cmd], notify);
 		if (inp != NULL) {
 			INP_LOCK(inp);
@@ -965,7 +965,7 @@ dccp_ctlinput(int cmd, const struct sockaddr *sa, void *vip)
 		INP_INFO_RUNLOCK(&dccpbinfo);
 		/*splx(s);*/
 	} else
-		in_pcbnotifyall(&dccpbtable, faddr, inetctlerrmap[cmd], notify);
+		inpcb_notifyall(&dccpbtable, faddr, inetctlerrmap[cmd], notify);
 
 	return NULL;
 }
@@ -1593,7 +1593,7 @@ dccp_close(struct dccpcb *dp)
 	pool_put(&dccpcb_pool, dp);
 	inp->inp_ppcb = NULL;
 	soisdisconnected(so);
-	in_pcbdetach(inp);
+	inpcb_destroy(inp);
 	return ((struct dccpcb *)0);
 }
 
@@ -1621,7 +1621,7 @@ dccp_attach(struct socket *so, int proto)
 	error = soreserve(so, dccp_sendspace, dccp_recvspace);
 	if (error)
 		goto out;
-	error = in_pcballoc(so, &dccpbtable);
+	error = inpcb_create(so, &dccpbtable);
 	if (error)
 		goto out;
 	inp = sotoinpcb(so);
@@ -1630,7 +1630,7 @@ dccp_attach(struct socket *so, int proto)
 	if (dp == 0) {
 		int nofd = so->so_state & SS_NOFDREF;
 		so->so_state &= ~SS_NOFDREF;
-		in_pcbdetach(inp);
+		inpcb_destroy(inp);
 		so->so_state |= nofd;
 		error = ENOBUFS;
 		goto out;
@@ -1676,7 +1676,7 @@ dccp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	}
 	INP_LOCK(inp);
 	s = splsoftnet();
-	error = in_pcbbind(inp, sin, l);
+	error = inpcb_bind(inp, sin, l);
 	splx(s);
 	INP_UNLOCK(inp);
 	INP_INFO_WUNLOCK(&dccpbinfo);
@@ -1784,10 +1784,10 @@ dccp_doconnect(struct socket *so, struct sockaddr *nam,
 		} else
 #endif /* INET6 */
 		{
-			error = in_pcbbind(inp, NULL, l);
+			error = inpcb_bind(inp, NULL, l);
 		}
 		if (error) {
-			DCCP_DEBUG((LOG_INFO, "in_pcbbind=%d\n",error));
+			DCCP_DEBUG((LOG_INFO, "inpcb_bind=%d\n",error));
 			return error;
 		}
 	}
@@ -1798,9 +1798,9 @@ dccp_doconnect(struct socket *so, struct sockaddr *nam,
 		DCCP_DEBUG((LOG_INFO, "in6_pcbconnect=%d\n",error));
 	} else
 #endif
-		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
+		error = inpcb_connect(inp, (struct sockaddr_in *)nam, l);
 	if (error) {
-		DCCP_DEBUG((LOG_INFO, "in_pcbconnect=%d\n",error));
+		DCCP_DEBUG((LOG_INFO, "inpcb_connect=%d\n",error));
 		return error;
 	}
 
@@ -2034,7 +2034,7 @@ dccp_listen(struct socket *so, struct lwp *td)
 	INP_INFO_RUNLOCK(&dccpbinfo);
 	dp = (struct dccpcb *)inp->inp_ppcb;
 	if (inp->inp_lport == 0)
-		error = in_pcbbind(inp, NULL, td);
+		error = inpcb_bind(inp, NULL, td);
 	if (error == 0) {
 		dp->state = DCCPS_LISTEN;
 		dp->who = DCCP_LISTENER;
@@ -2070,14 +2070,14 @@ dccp_accept(struct socket *so, struct sockaddr *nam)
 	}
 	INP_LOCK(inp);
 	INP_INFO_RUNLOCK(&dccpbinfo);
-	in_setpeeraddr(inp, (struct sockaddr_in *)nam);
+	inpcb_fetch_peeraddr(inp, (struct sockaddr_in *)nam);
 
 	return error;
 }
 
 /*
  * Initializes a new DCCP control block
- * (in_pcballoc in attach has already allocated memory for it)
+ * (inpcb_create in attach has already allocated memory for it)
  */
 struct dccpcb *
 dccp_newdccpcb(int family, void *aux)
@@ -2688,7 +2688,7 @@ dccp_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	return 0;
 }
 
@@ -2700,7 +2700,7 @@ dccp_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	return 0;
 }
 
@@ -2738,9 +2738,9 @@ dccp_purgeif(struct socket *so, struct ifnet *ifp)
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
-	in_pcbpurgeif0(&dccpbtable, ifp);
+	inpcb_purgeif0(&dccpbtable, ifp);
 	in_purgeif(ifp);
-	in_pcbpurgeif(&dccpbtable, ifp);
+	inpcb_purgeif(&dccpbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
 

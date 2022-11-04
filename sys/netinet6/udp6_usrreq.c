@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.152 2022/10/28 05:25:36 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.153 2022/11/04 09:00:58 ozaki-r Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.152 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.153 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -799,7 +799,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 		/*
 		 * Slightly different than v4 version in that we call
 		 * in6_selectsrc and in6_pcbsetport to fill in the local
-		 * address and port rather than in_pcbconnect. in_pcbconnect
+		 * address and port rather than inpcb_connect. inpcb_connect
 		 * sets inp_faddr which causes EISCONN below to be hit on
 		 * subsequent sendto.
 		 */
@@ -1077,7 +1077,7 @@ udp6_attach(struct socket *so, int proto)
 	 *  Always attach for IPv6, and only when necessary for IPv4.
 	 */
 	s = splsoftnet();
-	error = in_pcballoc(so, &udbtable);
+	error = inpcb_create(so, &udbtable);
 	splx(s);
 	if (error) {
 		return error;
@@ -1100,7 +1100,7 @@ udp6_detach(struct socket *so)
 	KASSERT(inp != NULL);
 
 	s = splsoftnet();
-	in_pcbdetach(inp);
+	inpcb_destroy(inp);
 	splx(s);
 }
 
@@ -1210,7 +1210,7 @@ udp6_abort(struct socket *so)
 
 	s = splsoftnet();
 	soisdisconnected(so);
-	in_pcbdetach(sotoinpcb(so));
+	inpcb_destroy(sotoinpcb(so));
 	splx(s);
 
 	return 0;
