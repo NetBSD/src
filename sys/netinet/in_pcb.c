@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.201 2022/11/04 09:05:04 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.202 2022/11/04 09:05:41 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.201 2022/11/04 09:05:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.202 2022/11/04 09:05:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,6 +192,10 @@ inpcb_init(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 	RUN_ONCE(&control, inpcb_poolinit);
 }
 
+/*
+ * inpcb_create: construct a new PCB and associated with a given socket.
+ * Sets the PCB state to INP_ATTACHED and makes PCB globally visible.
+ */
 int
 inpcb_create(struct socket *so, void *v)
 {
@@ -462,6 +466,14 @@ inpcb_bind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	return 0;
 }
 
+/*
+ * inpcb_bind: assign a local IP address and port number to the PCB.
+ *
+ * If the address is not a wildcard, verify that it corresponds to a
+ * local interface.  If a port is specified and it is privileged, then
+ * check the permission.  Check whether the address or port is in use,
+ * and if so, whether we can re-use them.
+ */
 int
 inpcb_bind(void *v, struct sockaddr_in *sin, struct lwp *l)
 {
@@ -501,10 +513,11 @@ inpcb_bind(void *v, struct sockaddr_in *sin, struct lwp *l)
 }
 
 /*
- * Connect from a socket to a specified address.
- * Both address and port must be specified in argument sin.
- * If don't have a local address for this socket yet,
- * then pick one.
+ * inpcb_connect: connect from a socket to a specified address, i.e.,
+ * assign a foreign IP address and port number to the PCB.
+ *
+ * Both address and port must be specified in the name argument.
+ * If there is no local address for this socket yet, then pick one.
  */
 int
 inpcb_connect(void *v, struct sockaddr_in *sin, struct lwp *l)
@@ -638,6 +651,11 @@ inpcb_connect(void *v, struct sockaddr_in *sin, struct lwp *l)
 	return 0;
 }
 
+/*
+ * inpcb_disconnect: remove any foreign IP/port association.
+ *
+ * Note: destroys the PCB if socket was closed.
+ */
 void
 inpcb_disconnect(void *v)
 {
@@ -657,6 +675,9 @@ inpcb_disconnect(void *v)
 		inpcb_destroy(inp);
 }
 
+/*
+ * inpcb_destroy: destroy PCB as well as the associated socket.
+ */
 void
 inpcb_destroy(void *v)
 {
@@ -706,6 +727,9 @@ inpcb_destroy(void *v)
 	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
 
+/*
+ * inpcb_fetch_sockaddr: fetch the local IP address and port number.
+ */
 void
 inpcb_fetch_sockaddr(struct inpcb *inp, struct sockaddr_in *sin)
 {
@@ -716,6 +740,9 @@ inpcb_fetch_sockaddr(struct inpcb *inp, struct sockaddr_in *sin)
 	sockaddr_in_init(sin, &in4p_laddr(inp), inp->inp_lport);
 }
 
+/*
+ * inpcb_fetch_peeraddr: fetch the foreign IP address and port number.
+ */
 void
 inpcb_fetch_peeraddr(struct inpcb *inp, struct sockaddr_in *sin)
 {
@@ -727,13 +754,14 @@ inpcb_fetch_peeraddr(struct inpcb *inp, struct sockaddr_in *sin)
 }
 
 /*
- * Pass some notification to all connections of a protocol
- * associated with address dst.  The local address and/or port numbers
- * may be specified to limit the search.  The "usual action" will be
- * taken, depending on the ctlinput cmd.  The caller must filter any
- * cmds that are uninteresting (e.g., no error in the map).
- * Call the protocol specific routine (if any) to report
- * any errors for each matching socket.
+ * inpcb_notify: pass some notification to all connections of a protocol
+ * associated with destination address.  The local address and/or port
+ * numbers may be specified to limit the search.  The "usual action" will
+ * be taken, depending on the command.
+ *
+ * The caller must filter any commands that are not interesting (e.g.,
+ * no error in the map).  Call the protocol specific routine (if any) to
+ * report any errors for each matching socket.
  *
  * Must be called at splsoftnet.
  */
@@ -859,10 +887,10 @@ inpcb_purgeif(struct inpcbtable *table, struct ifnet *ifp)
 }
 
 /*
- * Check for alternatives when higher level complains
- * about service problems.  For now, invalidate cached
- * routing information.  If the route was created dynamically
- * (by a redirect), time to try a default gateway again.
+ * inpcb_losing: check for alternatives when higher level complains about
+ * service problems.  For now, invalidate cached routing information.
+ * If the route was created dynamically (by a redirect), time to try a
+ * default gateway again.
  */
 void
 inpcb_losing(struct inpcb *inp)
@@ -902,8 +930,8 @@ inpcb_losing(struct inpcb *inp)
 }
 
 /*
- * After a routing change, flush old routing.  A new route can be
- * allocated the next time output is attempted.
+ * inpcb_rtchange: after a routing change, flush old routing.
+ * A new route can be allocated the next time output is attempted.
  */
 void
 inpcb_rtchange(struct inpcb *inp, int errno)
@@ -917,6 +945,11 @@ inpcb_rtchange(struct inpcb *inp, int errno)
 	/* XXX SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
 
+/*
+ * inpcb_lookup_local: find a PCB by looking at the local port and matching
+ * the local address or resolving the wildcards.  Primarily used to detect
+ * when the local address is already in use.
+ */
 struct inpcb *
 inpcb_lookup_local(struct inpcbtable *table, struct in_addr laddr,
 		  u_int lport_arg, int lookup_wildcard, vestigial_inpcb_t *vp)
@@ -1026,6 +1059,9 @@ inpcb_lookup_local(struct inpcbtable *table, struct in_addr laddr,
 int	inpcb_notifymiss = 0;
 #endif
 
+/*
+ * inpcb_lookup: perform a full 4-tuple PCB lookup.
+ */
 struct inpcb *
 inpcb_lookup(struct inpcbtable *table,
     struct in_addr faddr, u_int fport_arg,
@@ -1074,6 +1110,10 @@ out:
 	return inp;
 }
 
+/*
+ * inpcb_lookup_bound: find a PCB by looking at the local address and port.
+ * Primarily used to find the listening (i.e., already bound) socket.
+ */
 struct inpcb *
 inpcb_lookup_bound(struct inpcbtable *table,
     struct in_addr laddr, u_int lport_arg)
