@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.103 2020/04/13 19:23:19 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.104 2022/11/04 11:20:40 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.103 2020/04/13 19:23:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.104 2022/11/04 11:20:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,12 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	log(LOG_DEBUG, "umapfs: using fsid %x/%x\n",
 		mp->mnt_stat.f_fsidx.__fsid_val[0],
 		mp->mnt_stat.f_fsidx.__fsid_val[1]);
-	mp->mnt_lower = lowerrootvp->v_mount;
+	error = vfs_set_lowermount(mp, lowerrootvp->v_mount);
+	if (error) {
+		vput(lowerrootvp);
+		kmem_free(amp, sizeof(struct umap_mount));
+		return error;
+	}
 
 	amp->umapm_size = sizeof(struct umap_node);
 	amp->umapm_tag = VT_UMAP;
