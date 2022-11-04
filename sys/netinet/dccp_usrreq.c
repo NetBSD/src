@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.25 2022/11/04 09:00:58 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.26 2022/11/04 09:01:53 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.25 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.26 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -337,11 +337,11 @@ dccp_input(struct mbuf *m, int off, int proto)
 	 */
 #ifdef INET6
 	if (isipv6) {
-		inp = in6_pcblookup_connect(&dccpbtable, &ip6->ip6_src,
+		inp = in6pcb_lookup(&dccpbtable, &ip6->ip6_src,
 		    dh->dh_sport, &ip6->ip6_dst, dh->dh_dport, 0, 0);
 		if (inp == NULL) {
 			/* XXX stats increment? */
-			inp = in6_pcblookup_bind(&dccpbtable, &ip6->ip6_dst,
+			inp = in6pcb_lookup_bound(&dccpbtable, &ip6->ip6_dst,
 			    dh->dh_dport, 0);
 		}
 	} else
@@ -1779,8 +1779,8 @@ dccp_doconnect(struct socket *so, struct sockaddr *nam,
 	if (inp->inp_lport == 0) {
 #ifdef INET6
 		if (isipv6) {
-			DCCP_DEBUG((LOG_INFO, "Running in6_pcbbind!\n"));
-			error = in6_pcbbind(inp, NULL, l);
+			DCCP_DEBUG((LOG_INFO, "Running in6pcb_bind!\n"));
+			error = in6pcb_bind(inp, NULL, l);
 		} else
 #endif /* INET6 */
 		{
@@ -1794,8 +1794,8 @@ dccp_doconnect(struct socket *so, struct sockaddr *nam,
 
 #ifdef INET6
 	if (isipv6) {
-		error = in6_pcbconnect(inp, (struct sockaddr_in6 *)nam, l);
-		DCCP_DEBUG((LOG_INFO, "in6_pcbconnect=%d\n",error));
+		error = in6pcb_connect(inp, (struct sockaddr_in6 *)nam, l);
+		DCCP_DEBUG((LOG_INFO, "in6pcb_connect=%d\n",error));
 	} else
 #endif
 		error = inpcb_connect(inp, (struct sockaddr_in *)nam, l);
@@ -2133,7 +2133,7 @@ dccp_newdccpcb(int family, void *aux)
 		in4p_ip(inp).ip_ttl = ip_defttl;
 		break;
 	case PF_INET6:
-		in6p_ip6(inp).ip6_hlim = in6_selecthlim_rt(inp);
+		in6p_ip6(inp).ip6_hlim = in6pcb_selecthlim_rt(inp);
 		break;
 	}
 	

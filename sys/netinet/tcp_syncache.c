@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.5 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.6 2022/11/04 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.5 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.6 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -683,7 +683,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 			/* IPv4 packet to AF_INET6 socket */
 			in6_sin_2_v4mapsin6((struct sockaddr_in *)src, &sin6);
 		}
-		if (in6_pcbconnect(inp, &sin6, NULL)) {
+		if (in6pcb_connect(inp, &sin6, NULL)) {
 			goto resetandabort;
 		}
 	}
@@ -1341,7 +1341,7 @@ syn_cache_respond(struct syn_cache *sc)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6->ip6_hlim = in6_selecthlim(NULL,
+		ip6->ip6_hlim = in6pcb_selecthlim(NULL,
 		    (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp : NULL);
 		rtcache_unref(rt, ro);
 
