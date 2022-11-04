@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1226 2022/11/04 07:54:27 ozaki-r Exp $
+# $NetBSD: mi,v 1.1227 2022/11/04 08:01:42 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -178,6 +178,7 @@
 ./usr/libdata/debug/usr/tests/net/mcast			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/net			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/sys			tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/tcp			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/rump			tests-syscall-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/rump/modautoload		tests-syscall-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern		tests-syscall-debug	compattestfile,atf
@@ -4286,7 +4287,9 @@
 ./usr/tests/net/tcp					tests-net-tests		compattestfile,atf
 ./usr/tests/net/tcp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/tcp/Kyuafile				tests-net-tests		atf,rump,kyua
+./usr/tests/net/tcp/tcp_shutdown			tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_nc				tests-net-tests		atf,rump
+./usr/tests/net/tcp/t_tcp_shutdown			tests-net-tests		atf,rump
 ./usr/tests/net/wireguard				tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Atffile			tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Kyuafile			tests-obsolete		obsolete
