@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.7 2022/10/20 11:38:21 skrll Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.8 2022/11/04 10:51:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.7 2022/10/20 11:38:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.8 2022/11/04 10:51:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -40,10 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.7 2022/10/20 11:38:21 skrll Exp $")
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_memory.h>
-
-#ifndef FDT_MEMORY_RANGES
-#define FDT_MEMORY_RANGES	256
-#endif
 
 struct fdt_memory_range {
 	struct fdt_memory               mr_mem;

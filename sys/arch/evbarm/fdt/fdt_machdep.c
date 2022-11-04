@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.98 2022/10/21 05:51:08 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.99 2022/11/04 10:51:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.98 2022/10/21 05:51:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.99 2022/11/04 10:51:17 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -185,9 +185,8 @@ fdt_add_dram_blocks(const struct fdt_memory *m, void *arg)
 	bc->dramblocks++;
 }
 
-#define MAX_PHYSMEM 64
 static int nfdt_physmem = 0;
-static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
+static struct boot_physmem fdt_physmem[FDT_MEMORY_RANGES];
 
 static void
 fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
@@ -204,7 +203,7 @@ fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 
 	struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
-	KASSERT(nfdt_physmem <= MAX_PHYSMEM);
+	KASSERT(nfdt_physmem <= FDT_MEMORY_RANGES);
 
 	bp->bp_start = atop(saddr);
 	bp->bp_pages = atop(eaddr) - bp->bp_start;
