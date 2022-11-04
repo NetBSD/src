@@ -1343,7 +1343,9 @@ sfs_snapshot_mount(vnode_t *vp, const char *snapname)
 	set_statvfs_info(path, UIO_SYSSPACE, vfsp->mnt_stat.f_mntfromname,
 	    UIO_SYSSPACE, vfsp->mnt_op->vfs_name, vfsp, curlwp);
 
-	vfsp->mnt_lower = vp->v_vfsp;
+	error = vfs_set_lowermount(vfsp, vp->v_vfsp);
+	if (error)
+		goto out;
 
 	mountlist_append(vfsp);
 	vref(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.83 2022/09/12 13:11:41 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.84 2022/11/04 11:20:39 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.83 2022/09/12 13:11:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.84 2022/11/04 11:20:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,9 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
-	mp->mnt_lower = um->um_uppervp->v_mount;
+	error = vfs_set_lowermount(mp, um->um_uppervp->v_mount);
+	if (error)
+		goto bad;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
