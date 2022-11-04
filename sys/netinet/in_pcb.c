@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.198 2022/11/04 09:03:20 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.199 2022/11/04 09:03:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.198 2022/11/04 09:03:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.199 2022/11/04 09:03:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -747,7 +747,7 @@ inpcb_notify(struct inpcbtable *table, struct in_addr faddr, u_int fport_arg,
 	in_port_t fport = fport_arg, lport = lport_arg;
 	int nmatch;
 
-	if (in_nullhost(faddr) || notify == 0)
+	if (in_nullhost(faddr) || notify == NULL)
 		return (0);
 
 	nmatch = 0;
@@ -773,7 +773,7 @@ inpcb_notifyall(struct inpcbtable *table, struct in_addr faddr, int errno,
 {
 	struct inpcb *inp;
 
-	if (in_nullhost(faddr) || notify == 0)
+	if (in_nullhost(faddr) || notify == NULL)
 		return;
 
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
