@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.14 2022/10/28 05:26:29 ozaki-r Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.15 2022/11/04 09:01:53 ozaki-r Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.14 2022/10/28 05:26:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.15 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -137,7 +137,7 @@ dccp6_bind(struct socket *so, struct sockaddr *nam, struct lwp *td)
 	intodccpcb(inp)->inp_vflag &= ~INP_IPV4;
 	intodccpcb(inp)->inp_vflag |= INP_IPV6;
 	
-	error = in6_pcbbind(inp, sinp, td);
+	error = in6pcb_bind(inp, sinp, td);
 	INP_UNLOCK(inp);
 	INP_INFO_WUNLOCK(&dccpbinfo);
 	return error;
@@ -249,7 +249,7 @@ dccp6_listen(struct socket *so, struct lwp *l)
 	dp = intodccpcb(inp);
 	DCCP_DEBUG((LOG_INFO, "Checking inp->inp_lport!\n"));
 	if (inp->inp_lport == 0) {
-		error = in6_pcbbind(inp, NULL, l);
+		error = in6pcb_bind(inp, NULL, l);
 	}
 	if (error == 0) {
 		dp->state = DCCPS_LISTEN;
@@ -283,7 +283,7 @@ dccp6_accept(struct socket *so, struct sockaddr *nam)
 	}
 	INP_LOCK(inp);
 	INP_INFO_RUNLOCK(&dccpbinfo);
-	in6_setpeeraddr(inp, (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_peeraddr(inp, (struct sockaddr_in6 *)nam);
 
 	INP_UNLOCK(inp);
 	return error;
@@ -319,7 +319,7 @@ dccp6_purgeif(struct socket *so, struct ifnet *ifp)
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
-	in6_pcbpurgeif0(&dccpbtable, ifp);
+	in6pcb_purgeif0(&dccpbtable, ifp);
 #ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
@@ -327,7 +327,7 @@ dccp6_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
-	in6_pcbpurgeif(&dccpbtable, ifp);
+	in6pcb_purgeif(&dccpbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
 
@@ -380,7 +380,7 @@ dccp6_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
@@ -391,7 +391,7 @@ dccp6_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 

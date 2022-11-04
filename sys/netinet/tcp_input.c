@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.437 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.437 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1381,11 +1381,11 @@ findpcb:
 			/* mapped addr case */
 			in6_in_2_v4mapin6(&ip->ip_src, &s);
 			in6_in_2_v4mapin6(&ip->ip_dst, &d);
-			inp = in6_pcblookup_connect(&tcbtable, &s,
+			inp = in6pcb_lookup(&tcbtable, &s,
 			    th->th_sport, &d, th->th_dport, 0, &vestige);
 			if (inp == NULL && !vestige.valid) {
 				TCP_STATINC(TCP_STAT_PCBHASHMISS);
-				inp = in6_pcblookup_bind(&tcbtable, &d,
+				inp = in6pcb_lookup_bound(&tcbtable, &d,
 				    th->th_dport, 0);
 			}
 		}
@@ -1416,11 +1416,11 @@ findpcb:
 #else
 		faith = 0;
 #endif
-		inp = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
+		inp = in6pcb_lookup(&tcbtable, &ip6->ip6_src,
 		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
 		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			inp = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
+			inp = in6pcb_lookup_bound(&tcbtable, &ip6->ip6_dst,
 			    th->th_dport, faith);
 		}
 		if (inp == NULL && !vestige.valid) {

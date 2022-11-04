@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.195 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.196 2022/11/04 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.195 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.196 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -405,7 +405,7 @@ inpcb_bind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 
 #ifdef INET6
 		in6_in_2_v4mapin6(&sin->sin_addr, &mapped);
-		t6 = in6_pcblookup_port(table, &mapped, sin->sin_port, wild, &vestige);
+		t6 = in6pcb_lookup_local(table, &mapped, sin->sin_port, wild, &vestige);
 		if (t6 && (reuseport & t6->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
 		if (!t6 && vestige.valid) {
@@ -1119,7 +1119,7 @@ inpcb_set_state(struct inpcb *inp, int state)
 
 #ifdef INET6
 	if (inp->inp_af == AF_INET6) {
-		in6_pcbstate(inp, state);
+		in6pcb_set_state(inp, state);
 		return;
 	}
 #else
@@ -1158,7 +1158,7 @@ inpcb_rtentry(struct inpcb *inp)
 
 #ifdef INET6
 	if (inp->inp_af == AF_INET6)
-		return in6_pcbrtentry(inp);
+		return in6pcb_rtentry(inp);
 #endif
 	if (inp->inp_af != AF_INET)
 		return (NULL);

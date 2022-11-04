@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.23 2022/10/28 05:26:29 ozaki-r Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.24 2022/11/04 09:01:53 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.23 2022/10/28 05:26:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.24 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -483,7 +483,7 @@ sctp6_ctlinput(int cmd, const struct sockaddr *pktdst, void *d)
 			}
 		} else {
 			if (PRC_IS_REDIRECT(cmd) && inp) {
-				in6_rtchange((struct inpcb *)inp, inet6ctlerrmap[cmd]);
+				in6pcb_rtchange((struct inpcb *)inp, inet6ctlerrmap[cmd]);
 			}
 			if (inp) {
 				/* reduce inp's ref-count */
