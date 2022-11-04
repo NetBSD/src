@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.295 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.296 2022/11/04 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.295 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.296 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -807,7 +807,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 		    tlen);
 		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_inpcb->inp_af == AF_INET6)
-			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_inpcb);
+			ip6->ip6_hlim = in6pcb_selecthlim_rt(tp->t_inpcb);
 		else
 			ip6->ip6_hlim = ip6_defhlim;
 		ip6->ip6_flow &= ~IPV6_FLOWINFO_MASK;
@@ -975,7 +975,7 @@ tcp_newtcpcb(int family, struct inpcb *inp)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		in6p_ip6(inp).ip6_hlim = in6_selecthlim_rt(inp);
+		in6p_ip6(inp).ip6_hlim = in6pcb_selecthlim_rt(inp);
 		inp->inp_ppcb = (void *)tp;
 
 		tp->t_inpcb = inp;
@@ -1295,7 +1295,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 */
 		return NULL;
 	} else if (PRC_IS_REDIRECT(cmd))
-		notify = in6_rtchange, d = NULL;
+		notify = in6pcb_rtchange, d = NULL;
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (cmd == PRC_HOSTDEAD)
@@ -1336,7 +1336,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&tcbtable, &sa6->sin6_addr,
+			if (in6pcb_lookup(&tcbtable, &sa6->sin6_addr,
 			    th.th_dport,
 			    (const struct in6_addr *)&sa6_src->sin6_addr,
 						  th.th_sport, 0, 0))
@@ -1352,13 +1352,13 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			/*
-			 * no need to call in6_pcbnotify, it should have been
+			 * no need to call in6pcb_notify, it should have been
 			 * called via callback if necessary
 			 */
 			return NULL;
 		}
 
-		nmatch = in6_pcbnotify(&tcbtable, sa, th.th_dport,
+		nmatch = in6pcb_notify(&tcbtable, sa, th.th_dport,
 		    (const struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
@@ -1367,7 +1367,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			syn_cache_unreach((const struct sockaddr *)sa6_src,
 					  sa, &th);
 	} else {
-		(void) in6_pcbnotify(&tcbtable, sa, 0,
+		(void) in6pcb_notify(&tcbtable, sa, 0,
 		    (const struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
 
@@ -1425,7 +1425,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		    th->th_dport, ip->ip_src, th->th_sport, 0)) != NULL)
 			;
 #ifdef INET6
-		else if ((inp = in6_pcblookup_connect(&tcbtable, &dst6,
+		else if ((inp = in6pcb_lookup(&tcbtable, &dst6,
 		    th->th_dport, &src6, th->th_sport, 0, 0)) != NULL)
 			;
 #endif
@@ -1602,7 +1602,7 @@ tcp6_mtudisc_callback(struct in6_addr *faddr)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
+	(void) in6pcb_notify(&tcbtable, (struct sockaddr *)&sin6, 0,
 	    (const struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
 }
 
@@ -1615,15 +1615,15 @@ tcp6_mtudisc(struct inpcb *inp, int errno)
 	if (tp == NULL)
 		return;
 
-	rt = in6_pcbrtentry(inp);
+	rt = in6pcb_rtentry(inp);
 	if (rt != NULL) {
 		/*
 		 * If this was not a host route, remove and realloc.
 		 */
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			in6_pcbrtentry_unref(rt, inp);
-			in6_rtchange(inp, errno);
-			rt = in6_pcbrtentry(inp);
+			in6pcb_rtentry_unref(rt, inp);
+			in6pcb_rtchange(inp, errno);
+			rt = in6pcb_rtentry(inp);
 			if (rt == NULL)
 				return;
 		}
@@ -1640,7 +1640,7 @@ tcp6_mtudisc(struct inpcb *inp, int errno)
 			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
 			    rt->rt_rmx.rmx_mtu);
 		}
-		in6_pcbrtentry_unref(rt, inp);
+		in6pcb_rtentry_unref(rt, inp);
 	}
 
 	/*
@@ -1869,7 +1869,7 @@ tcp_established(struct tcpcb *tp)
 	while (tp->t_inpcb->inp_af == AF_INET6) {
 		so = tp->t_inpcb->inp_socket;
 #if defined(RTV_RPIPE)
-		rt = in6_pcbrtentry(tp->t_inpcb);
+		rt = in6pcb_rtentry(tp->t_inpcb);
 #endif
 		if (__predict_true(tcp_msl_enable)) {
 			extern const struct in6_addr in6addr_loopback;

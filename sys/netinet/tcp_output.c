@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.217 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.218 2022/11/04 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.217 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.218 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1546,7 +1546,7 @@ timer:
 		}
 #ifdef INET6
 		else if (tp->t_inpcb->inp_af == AF_INET6) {
-			ip->ip_ttl = in6_selecthlim(tp->t_inpcb, NULL); /*XXX*/
+			ip->ip_ttl = in6pcb_selecthlim(tp->t_inpcb, NULL); /*XXX*/
 			ip->ip_tos = ecn_tos;	/*XXX*/
 		}
 #endif
@@ -1562,7 +1562,7 @@ timer:
 			 * setsockopt. Also, desired default hop limit might
 			 * be changed via Neighbor Discovery.
 			 */
-			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_inpcb);
+			ip6->ip6_hlim = in6pcb_selecthlim_rt(tp->t_inpcb);
 		}
 		ip6->ip6_flow |= htonl(ecn_tos << 20);
 		/* ip6->ip6_flow = ??? (from template) */

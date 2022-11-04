@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.181 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.182 2022/11/04 09:01:53 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.181 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.182 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -129,7 +129,7 @@ rip6_init(void)
 {
 
 	sysctl_net_inet6_raw6_setup(NULL);
-	in6_pcbinit(&raw6cbtable, 1, 1);
+	in6pcb_init(&raw6cbtable, 1, 1);
 
 	rip6stat_percpu = percpu_alloc(sizeof(uint64_t) * RIP6_NSTATS);
 }
@@ -262,7 +262,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
-	void (*notify)(struct inpcb *, int) = in6_rtchange;
+	void (*notify)(struct inpcb *, int) = in6pcb_rtchange;
 	int nxt;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -272,7 +272,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in6_rtchange, d = NULL;
+		notify = in6pcb_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (cmd == PRC_MSGSIZE)
@@ -307,7 +307,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 * from icmp6_notify_error()
 		 */
 		inp = NULL;
-		inp = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
+		inp = in6pcb_lookup(&raw6cbtable, &sa6->sin6_addr, 0,
 					     (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0, 0);
 #if 0
 		if (!inp) {
@@ -318,7 +318,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * We should at least check if the local
 			 * address (= s) is really ours.
 			 */
-			inp = in6_pcblookup_bind(&raw6cbtable,
+			inp = in6pcb_lookup_bound(&raw6cbtable,
 			    &sa6->sin6_addr, 0, 0);
 		}
 #endif
@@ -338,14 +338,14 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 		/*
 		 * regardless of if we called icmp6_mtudisc_update(),
-		 * we need to call in6_pcbnotify(), to notify path MTU
+		 * we need to call in6pcb_notify(), to notify path MTU
 		 * change to the userland (RFC3542), because some
 		 * unconnected sockets may share the same destination
 		 * and want to know the path MTU.
 		 */
 	}
 
-	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
+	(void) in6pcb_notify(&raw6cbtable, sa, 0,
 	    sin6tocsa(sa6_src), 0, cmd, cmdarg, notify);
 	return NULL;
 }
@@ -454,7 +454,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	ip6->ip6_vfc  |= IPV6_VERSION;
 	/* ip6_plen will be filled in ip6_output, so not fill it here. */
 	ip6->ip6_nxt   = in6p_ip6(inp).ip6_nxt;
-	ip6->ip6_hlim = in6_selecthlim(inp, oifp);
+	ip6->ip6_hlim = in6pcb_selecthlim(inp, oifp);
 
 	if_put(oifp, &psref);
 	oifp = NULL;
@@ -819,7 +819,7 @@ rip6_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
@@ -830,7 +830,7 @@ rip6_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
@@ -920,7 +920,7 @@ rip6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
 	mutex_enter(softnet_lock);
-	in6_pcbpurgeif0(&raw6cbtable, ifp);
+	in6pcb_purgeif0(&raw6cbtable, ifp);
 #ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
@@ -928,7 +928,7 @@ rip6_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
-	in6_pcbpurgeif(&raw6cbtable, ifp);
+	in6pcb_purgeif(&raw6cbtable, ifp);
 	mutex_exit(softnet_lock);
 
 	return 0;

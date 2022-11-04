@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.153 2022/11/04 09:00:58 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.153 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -206,12 +206,12 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in6_rtchange, d = NULL;
+		notify = in6pcb_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (cmd == PRC_MSGSIZE) {
 		/* special code is present, see below */
-		notify = in6_rtchange;
+		notify = in6pcb_rtchange;
 	}
 	else if (inet6ctlerrmap[cmd] == 0)
 		return NULL;
@@ -251,7 +251,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&udbtable, &sa6->sin6_addr,
+			if (in6pcb_lookup(&udbtable, &sa6->sin6_addr,
 			    uh.uh_dport, (const struct in6_addr *)&sa6_src->sin6_addr,
 			    uh.uh_sport, 0, 0))
 				valid++;
@@ -263,7 +263,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * We should at least check if the local address (= s)
 			 * is really ours.
 			 */
-			else if (in6_pcblookup_bind(&udbtable, &sa6->sin6_addr,
+			else if (in6pcb_lookup_bound(&udbtable, &sa6->sin6_addr,
 			    uh.uh_dport, 0))
 				valid++;
 #endif
@@ -280,18 +280,18 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			/*
 			 * regardless of if we called
 			 * icmp6_mtudisc_update(), we need to call
-			 * in6_pcbnotify(), to notify path MTU change
+			 * in6pcb_notify(), to notify path MTU change
 			 * to the userland (RFC3542), because some
 			 * unconnected sockets may share the same
 			 * destination and want to know the path MTU.
 			 */
 		}
 
-		(void)in6_pcbnotify(&udbtable, sa, uh.uh_dport,
+		(void)in6pcb_notify(&udbtable, sa, uh.uh_dport,
 		    sin6tocsa(sa6_src), uh.uh_sport, cmd, cmdarg,
 		    notify);
 	} else {
-		(void)in6_pcbnotify(&udbtable, sa, 0,
+		(void)in6pcb_notify(&udbtable, sa, 0,
 		    sin6tocsa(sa6_src), 0, cmd, cmdarg, notify);
 	}
 	return NULL;
@@ -512,11 +512,11 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		/*
 		 * Locate pcb for datagram.
 		 */
-		inp = in6_pcblookup_connect(&udbtable, &src6, sport, dst6,
+		inp = in6pcb_lookup(&udbtable, &src6, sport, dst6,
 					     dport, 0, 0);
 		if (inp == NULL) {
 			UDP_STATINC(UDP_STAT_PCBHASHMISS);
-			inp = in6_pcblookup_bind(&udbtable, dst6, dport, 0);
+			inp = in6pcb_lookup_bound(&udbtable, dst6, dport, 0);
 			if (inp == NULL)
 				return rcvcnt;
 		}
@@ -798,7 +798,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 	if (sin6) {
 		/*
 		 * Slightly different than v4 version in that we call
-		 * in6_selectsrc and in6_pcbsetport to fill in the local
+		 * in6_selectsrc and in6pcb_set_port to fill in the local
 		 * address and port rather than inpcb_connect. inpcb_connect
 		 * sets inp_faddr which causes EISCONN below to be hit on
 		 * subsequent sendto.
@@ -925,7 +925,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			if (error)
 				goto release;
 
-			error = in6_pcbsetport(&lsin6, inp, l);
+			error = in6pcb_set_port(&lsin6, inp, l);
 
 			if (error) {
 				in6p_laddr(inp) = in6addr_any;
@@ -994,7 +994,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 		ip6->ip6_plen	= htons((u_int16_t)plen);
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
-		ip6->ip6_hlim	= in6_selecthlim_rt(inp);
+		ip6->ip6_hlim	= in6pcb_selecthlim_rt(inp);
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
 
@@ -1032,7 +1032,7 @@ udp6_output(struct inpcb * const inp, struct mbuf *m,
 			udp6->uh_sum = 0xffff;
 
 		ip->ip_len = htons(hlen + plen);
-		ip->ip_ttl = in6_selecthlim(inp, NULL); /* XXX */
+		ip->ip_ttl = in6pcb_selecthlim(inp, NULL); /* XXX */
 		ip->ip_tos = 0;	/* XXX */
 
 		UDP_STATINC(UDP_STAT_OPACKETS);
@@ -1124,7 +1124,7 @@ udp6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(inp != NULL);
 
 	s = splsoftnet();
-	error = in6_pcbbind(inp, sin6, l);
+	error = in6pcb_bind(inp, sin6, l);
 	splx(s);
 	return error;
 }
@@ -1150,7 +1150,7 @@ udp6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	if (!IN6_IS_ADDR_UNSPECIFIED(&in6p_faddr(inp)))
 		return EISCONN;
 	s = splsoftnet();
-	error = in6_pcbconnect(inp, (struct sockaddr_in6 *)nam, l);
+	error = in6pcb_connect(inp, (struct sockaddr_in6 *)nam, l);
 	splx(s);
 	if (error == 0)
 		soisconnected(so);
@@ -1179,12 +1179,12 @@ udp6_disconnect(struct socket *so)
 		return ENOTCONN;
 
 	s = splsoftnet();
-	in6_pcbdisconnect(inp);
+	in6pcb_disconnect(inp);
 	memset((void *)&in6p_laddr(inp), 0, sizeof(in6p_laddr(inp)));
 	splx(s);
 
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
-	in6_pcbstate(inp, INP_BOUND);		/* XXX */
+	in6pcb_set_state(inp, INP_BOUND);		/* XXX */
 	return 0;
 }
 
@@ -1248,7 +1248,7 @@ udp6_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
@@ -1259,7 +1259,7 @@ udp6_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
+	in6pcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
@@ -1314,7 +1314,7 @@ udp6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
 	mutex_enter(softnet_lock);
-	in6_pcbpurgeif0(&udbtable, ifp);
+	in6pcb_purgeif0(&udbtable, ifp);
 #ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
@@ -1322,7 +1322,7 @@ udp6_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
-	in6_pcbpurgeif(&udbtable, ifp);
+	in6pcb_purgeif(&udbtable, ifp);
 	mutex_exit(softnet_lock);
 
 	return 0;

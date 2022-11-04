@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.32 2022/10/28 05:26:29 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.33 2022/11/04 09:01:53 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.32 2022/10/28 05:26:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.33 2022/11/04 09:01:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2416,7 +2416,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		 * We set the hop limit now since there is a good chance that
 		 * our ro pointer is now filled
 		 */
-		ip6h->ip6_hlim = in6_selecthlim(&inp->ip_inp.inp,
+		ip6h->ip6_hlim = in6pcb_selecthlim(&inp->ip_inp.inp,
 						(ro ?
 						 (rt ? (rt->rt_ifp) : (NULL)) :
 						 (NULL)));
