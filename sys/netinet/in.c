@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.243 2022/09/20 02:23:37 knakahara Exp $	*/
+/*	$NetBSD: in.c,v 1.244 2022/11/04 09:03:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.243 2022/09/20 02:23:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.244 2022/11/04 09:03:20 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1861,7 +1861,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		ia = ifatoia(ifa);
 	}
 	if (ia == NULL) {
-		u_int16_t fport = sin->sin_port;
+		in_port_t fport = sin->sin_port;
 		struct ifaddr *ifa;
 		int s;
 

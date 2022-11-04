@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.75 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.76 2022/11/04 09:03:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,8 +101,8 @@ struct inpcb {
 	struct	  inpcbtable *inp_table;
 	struct	  inpcbpolicy *inp_sp;	/* security policy */
 	struct route	inp_route;	/* placeholder for routing entry */
-	u_int16_t	inp_fport;	/* foreign port */
-	u_int16_t	inp_lport;	/* local port */
+	in_port_t	inp_fport;	/* foreign port */
+	in_port_t	inp_lport;	/* local port */
 	int	 	inp_flags;	/* generic IP/datagram flags */
 	struct mbuf	*inp_options;	/* IP options */
 	bool		inp_bindportonsend;
@@ -232,8 +232,8 @@ struct inpcbtable {
 	u_long	  inpt_porthash;
 	u_long	  inpt_bindhash;
 	u_long	  inpt_connecthash;
-	u_int16_t inpt_lastport;
-	u_int16_t inpt_lastlow;
+	in_port_t inpt_lastport;
+	in_port_t inpt_lastlow;
 
 	struct vestigial_hooks *vestige;
 };
