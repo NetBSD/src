@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.175 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.176 2022/11/04 09:03:20 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.175 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.176 2022/11/04 09:03:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ in6pcb_init(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
 
 	inpcb_init(table, bindhashsize, connecthashsize);
-	table->inpt_lastport = (u_int16_t)ip6_anonportmax;
+	table->inpt_lastport = (in_port_t)ip6_anonportmax;
 }
 
 /*
@@ -606,7 +606,7 @@ in6pcb_notify(struct inpcbtable *table, const struct sockaddr *dst,
 	struct inpcb *inp;
 	struct sockaddr_in6 sa6_src;
 	const struct sockaddr_in6 *sa6_dst;
-	u_int16_t fport = fport_arg, lport = lport_arg;
+	in_port_t fport = fport_arg, lport = lport_arg;
 	int errno;
 	int nmatch = 0;
 	u_int32_t flowinfo;
@@ -836,7 +836,7 @@ in6pcb_lookup_local(struct inpcbtable *table, struct in6_addr *laddr6,
 	struct inpcbhead *head;
 	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
-	u_int16_t lport = lport_arg;
+	in_port_t lport = lport_arg;
 
 	if (vp)
 		vp->valid = 0;
@@ -1047,7 +1047,7 @@ in6pcb_lookup(struct inpcbtable *table, const struct in6_addr *faddr6,
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
-	u_int16_t fport = fport_arg, lport = lport_arg;
+	in_port_t fport = fport_arg, lport = lport_arg;
 
 	if (vp)
 		vp->valid = 0;
@@ -1091,7 +1091,7 @@ in6pcb_lookup_bound(struct inpcbtable *table, const struct in6_addr *laddr6,
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
-	u_int16_t lport = lport_arg;
+	in_port_t lport = lport_arg;
 #ifdef INET
 	struct in6_addr zero_mapped;
 #endif
