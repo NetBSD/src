@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.200 2022/11/04 09:04:27 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.201 2022/11/04 09:05:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.200 2022/11/04 09:04:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.201 2022/11/04 09:05:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -619,15 +619,15 @@ inpcb_connect(void *v, struct sockaddr_in *sin, struct lwp *l)
 	in4p_faddr(inp) = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 
-        /* Late bind, if needed */
+	/* Late bind, if needed */
 	if (inp->inp_bindportonsend) {
-               struct sockaddr_in lsin = *((const struct sockaddr_in *)
+		struct sockaddr_in lsin = *((const struct sockaddr_in *)
 		    inp->inp_socket->so_proto->pr_domain->dom_sa_any);
 		lsin.sin_addr = in4p_laddr(inp);
 		lsin.sin_port = 0;
 
 		if ((error = inpcb_bind_port(inp, &lsin, l->l_cred)) != 0)
-                       return error;
+			return error;
 	}
 
 	inpcb_set_state(inp, INP_CONNECTED);
