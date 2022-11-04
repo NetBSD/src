@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.197 2022/11/04 09:02:38 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.198 2022/11/04 09:03:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.197 2022/11/04 09:02:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.198 2022/11/04 09:03:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -187,7 +187,7 @@ inpcb_init(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST, true,
 	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
-	table->inpt_lastport = (u_int16_t)anonportmax;
+	table->inpt_lastport = (in_port_t)anonportmax;
 
 	RUN_ONCE(&control, inpcb_poolinit);
 }
@@ -268,8 +268,8 @@ inpcb_set_port(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 {
 	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
-	u_int16_t *lastport;
-	u_int16_t lport = 0;
+	in_port_t *lastport;
+	in_port_t lport = 0;
 	enum kauth_network_req req;
 	int error;
 
@@ -744,7 +744,7 @@ inpcb_notify(struct inpcbtable *table, struct in_addr faddr, u_int fport_arg,
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
-	u_int16_t fport = fport_arg, lport = lport_arg;
+	in_port_t fport = fport_arg, lport = lport_arg;
 	int nmatch;
 
 	if (in_nullhost(faddr) || notify == 0)
@@ -926,7 +926,7 @@ inpcb_lookup_local(struct inpcbtable *table, struct in_addr laddr,
 	struct inpcb *match = NULL;
 	int matchwild = 3;
 	int wildcard;
-	u_int16_t lport = lport_arg;
+	in_port_t lport = lport_arg;
 
 	if (vp)
 		vp->valid = 0;
@@ -1034,7 +1034,7 @@ inpcb_lookup(struct inpcbtable *table,
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
-	u_int16_t fport = fport_arg, lport = lport_arg;
+	in_port_t fport = fport_arg, lport = lport_arg;
 
 	if (vp)
 		vp->valid = 0;
@@ -1080,7 +1080,7 @@ inpcb_lookup_bound(struct inpcbtable *table,
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
-	u_int16_t lport = lport_arg;
+	in_port_t lport = lport_arg;
 
 	head = INPCBHASH_BIND(table, laddr, lport);
 	LIST_FOREACH(inp, head, inp_hash) {
