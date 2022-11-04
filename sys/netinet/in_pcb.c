@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.196 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.197 2022/11/04 09:02:38 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.196 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.197 2022/11/04 09:02:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -156,20 +156,20 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-static struct pool in4pcb_pool;
+static pool_cache_t	in4pcb_pool_cache;
 #ifdef INET6
-static struct pool in6pcb_pool;
+static pool_cache_t	in6pcb_pool_cache;
 #endif
 
 static int
 inpcb_poolinit(void)
 {
 
-	pool_init(&in4pcb_pool, sizeof(struct in4pcb), 0, 0, 0, "in4pcbpl", NULL,
-	    IPL_NET);
+	in4pcb_pool_cache = pool_cache_init(sizeof(struct in4pcb), coherency_unit,
+	    0, 0, "in4pcbpl", NULL, IPL_NET, NULL, NULL, NULL);
 #ifdef INET6
-	pool_init(&in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0, "in6pcbpl", NULL,
-	    IPL_NET);
+	in6pcb_pool_cache = pool_cache_init(sizeof(struct in6pcb), coherency_unit,
+	    0, 0, "in6pcbpl", NULL, IPL_NET, NULL, NULL, NULL);
 #endif
 	return 0;
 }
@@ -203,22 +203,26 @@ inpcb_create(struct socket *so, void *v)
 	KASSERT(soaf(so) == AF_INET || soaf(so) == AF_INET6);
 
 	if (soaf(so) == AF_INET)
-		inp = pool_get(&in4pcb_pool, PR_NOWAIT|PR_ZERO);
+		inp = pool_cache_get(in4pcb_pool_cache, PR_NOWAIT);
 	else
-		inp = pool_get(&in6pcb_pool, PR_NOWAIT|PR_ZERO);
+		inp = pool_cache_get(in6pcb_pool_cache, PR_NOWAIT);
 #else
 	KASSERT(soaf(so) == AF_INET);
-	inp = pool_get(&in4pcb_pool, PR_NOWAIT|PR_ZERO);
+	inp = pool_cache_get(in4pcb_pool_cache, PR_NOWAIT);
 #endif
 	if (inp == NULL)
 		return (ENOBUFS);
+	if (soaf(so) == AF_INET)
+		memset(inp, 0, sizeof(struct in4pcb));
+#ifdef INET6
+	else
+		memset(inp, 0, sizeof(struct in6pcb));
+#endif
 	inp->inp_af = soaf(so);
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
-	inp->inp_overudp_cb = NULL;
-	inp->inp_overudp_arg = NULL;
 
 	if (inp->inp_af == AF_INET) {
 		in4p_errormtu(inp) = -1;
@@ -237,12 +241,12 @@ inpcb_create(struct socket *so, void *v)
 		if (error != 0) {
 #ifdef INET6
 			if (inp->inp_af == AF_INET)
-				pool_put(&in4pcb_pool, inp);
+				pool_cache_put(in4pcb_pool_cache, inp);
 			else
-				pool_put(&in6pcb_pool, inp);
+				pool_cache_put(in6pcb_pool_cache, inp);
 #else
 			KASSERT(inp->inp_af == AF_INET);
-			pool_put(&in4pcb_pool, inp);
+			pool_cache_put(in4pcb_pool_cache, inp);
 #endif
 			return error;
 		}
@@ -692,12 +696,12 @@ inpcb_destroy(void *v)
 
 #ifdef INET6
 	if (inp->inp_af == AF_INET)
-		pool_put(&in4pcb_pool, inp);
+		pool_cache_put(in4pcb_pool_cache, inp);
 	else
-		pool_put(&in6pcb_pool, inp);
+		pool_cache_put(in6pcb_pool_cache, inp);
 #else
 	KASSERT(inp->inp_af == AF_INET);
-	pool_put(&in4pcb_pool, inp);
+	pool_cache_put(in4pcb_pool_cache, inp);
 #endif
 	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
