@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.70 2022/10/28 05:20:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.70 2022/10/28 05:20:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3266,7 +3266,7 @@ wg_socreate(struct wg_softc *wg, int af, struct socket **sop)
 	so->so_upcallarg = wg;
 	so->so_upcall = wg_so_upcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
-	in_pcb_register_overudp_cb(sotoinpcb(so), wg_overudp_cb, wg);
+	inpcb_register_overudp_cb(sotoinpcb(so), wg_overudp_cb, wg);
 	sounlock(so);
 
 	*sop = so;

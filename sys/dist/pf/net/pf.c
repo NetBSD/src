@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.85 2022/10/28 05:20:08 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.86 2022/11/04 09:00:58 ozaki-r Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.85 2022/10/28 05:20:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.86 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #include "pflog.h"
 
@@ -2455,7 +2455,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 
 		/*
 		 * port search; start random, step;
-		 * similar 2 portloop in in_pcbbind
+		 * similar 2 portloop in inpcb_bind
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
 		    proto == IPPROTO_ICMP)) {
@@ -2800,11 +2800,11 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 
 #ifdef __NetBSD__
 #define in_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
-    in_pcblookup_connect(tbl, saddr, sport, daddr, dport, NULL)
+    inpcb_lookup(tbl, saddr, sport, daddr, dport, NULL)
 #define in6_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
     in6_pcblookup_connect(tbl, saddr, sport, daddr, dport, 0, NULL)
 #define in_pcblookup_listen(tbl, addr, port, zero) \
-    in_pcblookup_bind(tbl, addr, port)
+    inpcb_lookup_bound(tbl, addr, port)
 #define in6_pcblookup_listen(tbl, addr, port, zero) \
     in6_pcblookup_bind(tbl, addr, port, zero)
 #endif

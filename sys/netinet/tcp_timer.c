@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.98 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.99 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.98 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.99 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -337,7 +337,7 @@ tcp_timer_rexmt(void *arg)
 		 * Notify all connections to the same peer about
 		 * new mss and trigger retransmit.
 		 */
-		in_pcbnotifyall(&tcbtable, icmpsrc.sin_addr, EMSGSIZE,
+		inpcb_notifyall(&tcbtable, icmpsrc.sin_addr, EMSGSIZE,
 		    tcp_mtudisc);
 		KERNEL_UNLOCK_ONE(NULL);
 		mutex_exit(softnet_lock);
@@ -401,7 +401,7 @@ tcp_timer_rexmt(void *arg)
 	 * retransmit times until then.
 	 */
 	if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
-		in_losing(tp->t_inpcb);
+		inpcb_losing(tp->t_inpcb);
 		/*
 		 * This operation is not described in RFC2988.  The
 		 * point is to keep srtt+4*rttvar constant, so we

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.173 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.174 2022/11/04 09:00:58 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.173 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.174 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,7 +133,7 @@ void
 in6_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
 
-	in_pcbinit(table, bindhashsize, connecthashsize);
+	inpcb_init(table, bindhashsize, connecthashsize);
 	table->inpt_lastport = (u_int16_t)ip6_anonportmax;
 }
 
@@ -276,7 +276,7 @@ in6_pcbbind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 			struct inpcb *t;
 			struct vestigial_inpcb vestige;
 
-			t = in_pcblookup_port(table,
+			t = inpcb_lookup_local(table,
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
 			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
@@ -312,7 +312,7 @@ in6_pcbbind_port(struct inpcb *inp, struct sockaddr_in6 *sin6, struct lwp *l)
 			return (e);
 	} else {
 		inp->inp_lport = sin6->sin6_port;
-		in_pcbstate(inp, INP_BOUND);
+		inpcb_set_state(inp, INP_BOUND);
 	}
 
 	LIST_REMOVE(inp, inp_lhash);
@@ -535,7 +535,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
                        return error;
 	}
 	
-	in_pcbstate(inp, INP_CONNECTED);
+	inpcb_set_state(inp, INP_CONNECTED);
 	in6p_flowinfo(inp) &= ~IPV6_FLOWLABEL_MASK;
 	if (ip6_auto_flowlabel)
 		in6p_flowinfo(inp) |=
@@ -552,14 +552,14 @@ in6_pcbdisconnect(struct inpcb *inp)
 {
 	memset((void *)&in6p_faddr(inp), 0, sizeof(in6p_faddr(inp)));
 	inp->inp_fport = 0;
-	in_pcbstate(inp, INP_BOUND);
+	inpcb_set_state(inp, INP_BOUND);
 	in6p_flowinfo(inp) &= ~IPV6_FLOWLABEL_MASK;
 #if defined(IPSEC)
 	if (ipsec_enabled)
 		ipsec_pcbdisconn(inp->inp_sp);
 #endif
 	if (inp->inp_socket->so_state & SS_NOFDREF)
-		in_pcbdetach(inp);
+		inpcb_destroy(inp);
 }
 
 void

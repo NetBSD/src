@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.322 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.323 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.322 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.323 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1441,7 +1441,7 @@ ip_pktinfo_prepare(const struct inpcb *inp, const struct in_pktinfo *pktinfo,
 	if (!in_nullhost(pktinfo->ipi_addr)) {
 		pktopts->ippo_laddr.sin_addr = pktinfo->ipi_addr;
 		/* EADDRNOTAVAIL? */
-		error = in_pcbbindableaddr(inp, &pktopts->ippo_laddr, cred);
+		error = inpcb_bindableaddr(inp, &pktopts->ippo_laddr, cred);
 		if (error != 0)
 			return error;
 		addrset = true;

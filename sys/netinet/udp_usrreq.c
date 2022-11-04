@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.263 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.264 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.263 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.264 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -186,7 +186,7 @@ static int
 do_udpinit(void)
 {
 
-	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
+	inpcb_init(&udbtable, udbhashsize, udbhashsize);
 	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
 
 	MOWNER_ATTACH(&udp_tx_mowner);
@@ -563,11 +563,11 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb for datagram.
 		 */
-		inp = in_pcblookup_connect(&udbtable, *src4, *sport, *dst4,
+		inp = inpcb_lookup(&udbtable, *src4, *sport, *dst4,
 		    *dport, 0);
 		if (inp == 0) {
 			UDP_STATINC(UDP_STAT_PCBHASHMISS);
-			inp = in_pcblookup_bind(&udbtable, *dst4, *dport);
+			inp = inpcb_lookup_bound(&udbtable, *dst4, *dport);
 			if (inp == 0)
 				return rcvcnt;
 		}
@@ -664,7 +664,7 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 
 	errno = inetctlerrmap[cmd];
 	if (PRC_IS_REDIRECT(cmd)) {
-		notify = in_rtchange;
+		notify = inpcb_rtchange;
 		ip = NULL;
 	} else if (cmd == PRC_HOSTDEAD) {
 		ip = NULL;
@@ -674,11 +674,11 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 
 	if (ip) {
 		uh = (struct udphdr *)((char *)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
+		inpcb_notify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
 		/* XXX mapped address case */
 	} else {
-		in_pcbnotifyall(&udbtable, satocsin(sa)->sin_addr, errno,
+		inpcb_notifyall(&udbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	}
 
@@ -877,7 +877,7 @@ udp_attach(struct socket *so, int proto)
 		}
 	}
 
-	error = in_pcballoc(so, &udbtable);
+	error = inpcb_create(so, &udbtable);
 	if (error) {
 		return error;
 	}
@@ -896,7 +896,7 @@ udp_detach(struct socket *so)
 	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 	KASSERT(inp != NULL);
-	in_pcbdetach(inp);
+	inpcb_destroy(inp);
 }
 
 static int
@@ -922,7 +922,7 @@ udp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbbind(inp, sin, l);
+	error = inpcb_bind(inp, sin, l);
 	splx(s);
 
 	return error;
@@ -948,7 +948,7 @@ udp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
+	error = inpcb_connect(inp, (struct sockaddr_in *)nam, l);
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -975,9 +975,9 @@ udp_disconnect(struct socket *so)
 	s = splsoftnet();
 	/*soisdisconnected(so);*/
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
-	in_pcbdisconnect(inp);
+	inpcb_disconnect(inp);
 	in4p_laddr(inp) = zeroin_addr;		/* XXX */
-	in_pcbstate(inp, INP_BOUND);		/* XXX */
+	inpcb_set_state(inp, INP_BOUND);		/* XXX */
 	splx(s);
 
 	return 0;
@@ -1032,7 +1032,7 @@ udp_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -1048,7 +1048,7 @@ udp_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -1092,7 +1092,7 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			error = EISCONN;
 			goto die;
 		}
-		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
+		error = inpcb_connect(inp, (struct sockaddr_in *)nam, l);
 		if (error)
 			goto die;
 	} else {
@@ -1105,9 +1105,9 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	m = NULL;
 	control = NULL;
 	if (nam) {
-		in_pcbdisconnect(inp);
+		inpcb_disconnect(inp);
 		in4p_laddr(inp) = laddr;		/* XXX */
-		in_pcbstate(inp, INP_BOUND);	/* XXX */
+		inpcb_set_state(inp, INP_BOUND);	/* XXX */
 	}
   die:
 	if (m != NULL)
@@ -1137,7 +1137,7 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
-	in_pcbpurgeif0(&udbtable, ifp);
+	inpcb_purgeif0(&udbtable, ifp);
 #ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
@@ -1145,7 +1145,7 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
-	in_pcbpurgeif(&udbtable, ifp);
+	inpcb_purgeif(&udbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
 

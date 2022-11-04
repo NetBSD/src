@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.236 2022/10/30 08:45:46 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.237 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.236 2022/10/30 08:45:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.237 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -473,7 +473,7 @@ tcp_attach(struct socket *so, int proto)
 	so->so_rcv.sb_flags |= SB_AUTOSIZE;
 	so->so_snd.sb_flags |= SB_AUTOSIZE;
 
-	error = in_pcballoc(so, &tcbtable);
+	error = inpcb_create(so, &tcbtable);
 	if (error)
 		goto out;
 	inp = sotoinpcb(so);
@@ -483,7 +483,7 @@ tcp_attach(struct socket *so, int proto)
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
-		in_pcbdetach(inp);
+		inpcb_destroy(inp);
 		so->so_state |= nofd;
 		error = ENOBUFS;
 		goto out;
@@ -537,7 +537,7 @@ tcp_accept(struct socket *so, struct sockaddr *nam)
 	 */
 	s = splsoftnet();
 	if (inp->inp_af == AF_INET) {
-		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
+		inpcb_fetch_peeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
 	else if (inp->inp_af == AF_INET6) {
@@ -576,7 +576,7 @@ tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	s = splsoftnet();
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
-		error = in_pcbbind(inp, sin, l);
+		error = inpcb_bind(inp, sin, l);
 		break;
 #ifdef INET6
 	case PF_INET6:
@@ -618,7 +618,7 @@ tcp_listen(struct socket *so, struct lwp *l)
 	 */
 	s = splsoftnet();
 	if (inp->inp_af == AF_INET && inp->inp_lport == 0) {
-		error = in_pcbbind(inp, NULL, l);
+		error = inpcb_bind(inp, NULL, l);
 		if (error)
 			goto release;
 	}
@@ -665,11 +665,11 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 
 	if (inp->inp_af == AF_INET) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL, l);
+			error = inpcb_bind(inp, NULL, l);
 			if (error)
 				goto release;
 		}
-		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
+		error = inpcb_connect(inp, (struct sockaddr_in *)nam, l);
 	}
 #ifdef INET6
 	if (inp->inp_af == AF_INET6) {
@@ -693,7 +693,7 @@ tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
 		if (inp->inp_af == AF_INET)
-			in_pcbdisconnect(inp);
+			inpcb_disconnect(inp);
 #ifdef INET6
 		else if (inp->inp_af == AF_INET6)
 			in6_pcbdisconnect(inp);
@@ -876,7 +876,7 @@ tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 
 	s = splsoftnet();
 	if (inp->inp_af == AF_INET) {
-		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
+		inpcb_fetch_peeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
 	else if (inp->inp_af == AF_INET6) {
@@ -906,7 +906,7 @@ tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 
 	s = splsoftnet();
 	if (inp->inp_af == AF_INET) {
-		in_setsockaddr(inp, (struct sockaddr_in *)nam);
+		inpcb_fetch_sockaddr(inp, (struct sockaddr_in *)nam);
 	}
 #ifdef INET6
 	if (inp->inp_af == AF_INET6) {
@@ -1100,7 +1100,7 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 	mutex_enter(softnet_lock);
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
-		in_pcbpurgeif0(&tcbtable, ifp);
+		inpcb_purgeif0(&tcbtable, ifp);
 #ifdef NET_MPSAFE
 		mutex_exit(softnet_lock);
 #endif
@@ -1108,7 +1108,7 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 		mutex_enter(softnet_lock);
 #endif
-		in_pcbpurgeif(&tcbtable, ifp);
+		inpcb_purgeif(&tcbtable, ifp);
 		break;
 #ifdef INET6
 	case PF_INET6:
@@ -1419,7 +1419,7 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 	struct inpcb *inp;
 	struct socket *sockp;
 
-	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
+	inp = inpcb_lookup(&tcbtable, raddr, rport, laddr, lport, 0);
 
 	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
 		return ESRCH;
