@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.h,v 1.1 2020/12/12 09:27:31 skrll Exp $ */
+/* $NetBSD: fdt_memory.h,v 1.2 2022/11/04 10:51:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,12 @@
 
 #ifndef _DEV_FDT_FDT_MEMORY_H_
 #define _DEV_FDT_FDT_MEMORY_H_
+
+#include "opt_fdt.h"
+
+#ifndef FDT_MEMORY_RANGES
+#define FDT_MEMORY_RANGES 256
+#endif
 
 struct fdt_memory {
 	uint64_t	start;
