@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.183 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.184 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.183 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.184 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -132,7 +132,7 @@ rip_init(void)
 {
 
 	sysctl_net_inet_raw_setup(NULL);
-	in_pcbinit(&rawcbtable, 1, 1);
+	inpcb_init(&rawcbtable, 1, 1);
 }
 
 static void
@@ -262,7 +262,7 @@ void *
 rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
-	void (*notify)(struct inpcb *, int) = in_rtchange;
+	void (*notify)(struct inpcb *, int) = inpcb_rtchange;
 	int errno;
 
 	if (sa->sa_family != AF_INET ||
@@ -272,7 +272,7 @@ rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		return NULL;
 	errno = inetctlerrmap[cmd];
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, ip = 0;
+		notify = inpcb_rtchange, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
@@ -283,7 +283,7 @@ rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 
 		/* XXX mapped address case */
 	} else
-		in_pcbnotifyall(&rawcbtable, satocsin(sa)->sin_addr, errno,
+		inpcb_notifyall(&rawcbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }
@@ -525,7 +525,7 @@ rip_attach(struct socket *so, int proto)
 		}
 	}
 
-	error = in_pcballoc(so, &rawcbtable);
+	error = inpcb_create(so, &rawcbtable);
 	if (error) {
 		return error;
 	}
@@ -551,7 +551,7 @@ rip_detach(struct socket *so)
 		ip_mrouter_done();
 	}
 #endif
-	in_pcbdetach(inp);
+	inpcb_destroy(inp);
 }
 
 static int
@@ -717,7 +717,7 @@ rip_peeraddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_peeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -733,7 +733,7 @@ rip_sockaddr(struct socket *so, struct sockaddr *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
+	inpcb_fetch_sockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -819,7 +819,7 @@ rip_purgeif(struct socket *so, struct ifnet *ifp)
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
-	in_pcbpurgeif0(&rawcbtable, ifp);
+	inpcb_purgeif0(&rawcbtable, ifp);
 #ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
@@ -827,7 +827,7 @@ rip_purgeif(struct socket *so, struct ifnet *ifp)
 #ifdef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
-	in_pcbpurgeif(&rawcbtable, ifp);
+	inpcb_purgeif(&rawcbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
 

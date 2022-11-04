@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.12 2022/09/03 02:07:32 thorpej Exp $	*/
+/*	$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.12 2022/09/03 02:07:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.13 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -840,14 +840,14 @@ can_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		return NULL;
 	errno = inetctlerrmap[cmd];
 	if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, ip = 0;
+		notify = inpcb_rtchange, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
 		return NULL;
 	if (ip) {
 		uh = (struct canhdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udbtable, satosin(sa)->sin_addr, uh->uh_dport,
+		inpcb_notify(&udbtable, satosin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
 
 		/* XXX mapped address case */

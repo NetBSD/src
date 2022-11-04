@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.174 2022/10/28 05:18:39 ozaki-r Exp $ */
+/* $NetBSD: ipsec.c,v 1.175 2022/11/04 09:00:58 ozaki-r Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.174 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.175 2022/11/04 09:00:58 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -244,7 +244,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 * to generate spidx again, nor check the address match again.
 		 *
 		 * For IPv4/v6 SOCK_STREAM sockets, this assumptions holds
-		 * and there are calls to ipsec_pcbconn() from in_pcbconnect().
+		 * and there are calls to ipsec_pcbconn() from inpcb_connect().
 		 */
 	}
 

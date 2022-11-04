@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.180 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.181 2022/11/04 09:00:58 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.180 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.181 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -598,7 +598,7 @@ rip6_attach(struct socket *so, int proto)
 		splx(s);
 		return error;
 	}
-	if ((error = in_pcballoc(so, &raw6cbtable)) != 0) {
+	if ((error = inpcb_create(so, &raw6cbtable)) != 0) {
 		splx(s);
 		return error;
 	}
@@ -629,7 +629,7 @@ rip6_detach(struct socket *so)
 		kmem_free(in6p_icmp6filt(inp), sizeof(struct icmp6_filter));
 		in6p_icmp6filt(inp) = NULL;
 	}
-	in_pcbdetach(inp);
+	inpcb_destroy(inp);
 }
 
 static int

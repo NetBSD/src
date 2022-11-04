@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.4 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.5 2022/11/04 09:00:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.4 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.5 2022/11/04 09:00:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -613,7 +613,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 			in4p_laddr(inp) = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute(m);
-			in_pcbstate(inp, INP_BOUND);
+			inpcb_set_state(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
 				sc->sc_ipopts = NULL;
@@ -633,7 +633,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 				inp->inp_flags |= IN6P_IPV6_V6ONLY;
 			else
 				inp->inp_flags &= ~IN6P_IPV6_V6ONLY;
-			in_pcbstate(inp, INP_BOUND);
+			inpcb_set_state(inp, INP_BOUND);
 		}
 #endif
 		break;
@@ -642,7 +642,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		if (inp->inp_af == AF_INET6) {
 			in6p_laddr(inp) = ((struct sockaddr_in6 *)dst)->sin6_addr;
 			inp->inp_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
-			in_pcbstate(inp, INP_BOUND);
+			inpcb_set_state(inp, INP_BOUND);
 		}
 		break;
 #endif
@@ -671,7 +671,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	if (inp->inp_af == AF_INET) {
 		struct sockaddr_in sin;
 		memcpy(&sin, src, src->sa_len);
-		if (in_pcbconnect(inp, &sin, &lwp0)) {
+		if (inpcb_connect(inp, &sin, &lwp0)) {
 			goto resetandabort;
 		}
 	}
