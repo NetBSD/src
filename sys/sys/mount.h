@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.239 2022/10/26 23:39:22 riastradh Exp $	*/
+/*	$NetBSD: mount.h,v 1.240 2022/11/04 11:20:40 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -393,6 +393,7 @@ int 	vfs_busy(struct mount *);
 int 	vfs_trybusy(struct mount *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
 void	vfs_unbusy(struct mount *);
+int	vfs_set_lowermount(struct mount *, struct mount *);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);

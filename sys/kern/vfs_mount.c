@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.98 2022/10/26 23:39:10 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.99 2022/11/04 11:20:39 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.98 2022/10/26 23:39:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.99 2022/11/04 11:20:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -389,6 +389,37 @@ vfs_unbusy(struct mount *mp)
 
 	fstrans_done(mp);
 	vfs_rele(mp);
+}
+
+/*
+ * Change a file systems lower mount.
+ * Both the current and the new lower mount may be NULL.  The caller
+ * guarantees exclusive access to the mount and holds a pre-existing
+ * reference to the new lower mount.
+ */
+int
+vfs_set_lowermount(struct mount *mp, struct mount *lowermp)
+{
+	struct mount *oldlowermp;
+	int error;
+
+	if (lowermp) {
+		error = vfs_busy(lowermp);
+		if (error)
+			return error;
+		vfs_ref(lowermp);
+	}
+
+	oldlowermp = mp->mnt_lower;
+	mp->mnt_lower = lowermp;
+
+	if (lowermp)
+		vfs_unbusy(lowermp);
+
+	if (oldlowermp)
+		vfs_rele(oldlowermp);
+
+	return 0;
 }
 
 struct vnode_iterator {
@@ -874,6 +905,7 @@ err_mounted:
 	mutex_exit(mp->mnt_updating);
 	if (error2 == 0)
 		vfs_resume(mp);
+	vfs_set_lowermount(mp, NULL);
 	vfs_rele(mp);
 
 	return error;
@@ -959,6 +991,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		panic("unmount: dangling vnode");
 	vfs_hooks_unmount(mp);
 
+	vfs_set_lowermount(mp, NULL);
 	vfs_rele(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.72 2022/07/08 07:43:48 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.73 2022/11/04 11:20:39 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.72 2022/07/08 07:43:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.73 2022/11/04 11:20:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,12 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * that the node create call will work.
 	 */
 	vfs_getnewfsid(mp);
-	mp->mnt_lower = lowerrootvp->v_mount;
+	error = vfs_set_lowermount(mp, lowerrootvp->v_mount);
+	if (error) {
+		vput(lowerrootvp);
+		kmem_free(nmp, sizeof(struct overlay_mount));
+		return error;
+	}
 
 	nmp->ovm_size = sizeof (struct overlay_node);
 	nmp->ovm_tag = VT_OVERLAY;
