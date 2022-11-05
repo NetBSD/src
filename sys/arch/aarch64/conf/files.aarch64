@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.41 2022/11/03 09:04:56 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.42 2022/11/05 08:29:17 skrll Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -72,8 +72,6 @@ file	arch/aarch64/aarch64/kgdb_machdep.c		kgdb
 
 # mainbus files
 device	mainbus { [addr = -1], [size = 0], [intr = -1] }
-attach	mainbus at root
-file	arch/aarch64/dev/mainbus.c			mainbus
 
 device cpu { }
 file	arch/aarch64/aarch64/cpu.c			cpu
