@@ -1,4 +1,4 @@
-/*	$NetBSD: a9ptmr.c,v 1.2 2019/08/14 09:20:00 skrll Exp $	*/
+/*	$NetBSD: a9ptmr.c,v 1.3 2022/11/05 17:30:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9ptmr.c,v 1.2 2019/08/14 09:20:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9ptmr.c,v 1.3 2022/11/05 17:30:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/xcall.h>
 
 #include <prop/proplib.h>
 
@@ -264,4 +265,26 @@ a9ptmr_intr(void *arg)
 	hardclock(cf);
 
 	return 1;
+}
+
+static void
+a9ptmr_update_freq_cb(void *arg1, void *arg2)
+{
+	a9ptmr_init_cpu_clock(curcpu());
+}
+
+void
+a9ptmr_update_freq(uint32_t freq)
+{
+	struct a9ptmr_softc * const sc = a9ptmr_sc;
+	uint64_t xc;
+
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(freq != 0);
+
+	sc->sc_freq = freq;
+	sc->sc_load = (sc->sc_freq / hz) - 1;
+
+	xc = xc_broadcast(0, a9ptmr_update_freq_cb, NULL, NULL);
+	xc_wait(xc);
 }
