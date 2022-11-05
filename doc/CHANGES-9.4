@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.28 2022/10/27 16:15:57 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.29 2022/11/05 11:21:06 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -432,4 +432,10 @@ bin/sh/miscbltin.c				1.51,1.52
 	PR 56972: fix escape ('\') handling in sh read builtin
 	and cosmetic improvements to error reporting.
 	[kre, ticket #1549]
+
+sys/dev/usb/uhidev.c				1.94
+
+	PR 57031: back out rev 1.82 "Do not explicitly set the HID Report
+	Protocol upon attach", pulled up for 9.3 in ticket #1428.
+	[jmcneill, ticket #1550]
 
