@@ -1,4 +1,4 @@
-/* $NetBSD: a9ptmr_var.h,v 1.1 2019/08/10 17:03:59 skrll Exp $ */
+/* $NetBSD: a9ptmr_var.h,v 1.2 2022/11/05 17:30:20 jmcneill Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,7 @@ struct cpu_info;
 void	a9ptmr_init_cpu_clock(struct cpu_info *);
 
 int	a9ptmr_intr(void *);
+void	a9ptmr_update_freq(uint32_t);
 void	a9ptmr_delay(unsigned int n);
 #endif
 
