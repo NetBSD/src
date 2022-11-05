@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.25 2021/02/26 19:24:47 christos Exp $	*/
+/*	$NetBSD: regerror.c,v 1.26 2022/11/05 11:33:55 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -46,7 +46,7 @@
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regerror.c 326025 2017-11-20 19:49:47Z pfg $");
 #endif
-__RCSID("$NetBSD: regerror.c,v 1.25 2021/02/26 19:24:47 christos Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.26 2022/11/05 11:33:55 riastradh Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -139,7 +139,7 @@ regerror(int errcode,
 	char convbuf[50];
 
 	_DIAGASSERT(errcode != REG_ATOI || preg != NULL);
-	_DIAGASSERT(errbuf != NULL);
+	_DIAGASSERT(errbuf_size == 0 || errbuf != NULL);
 
 	if (errcode == REG_ATOI) {
 		s = regatoi(preg, convbuf, sizeof convbuf);
