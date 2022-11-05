@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.113 2022/10/31 22:45:38 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.114 2022/11/05 17:32:03 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -359,6 +359,7 @@ zynquart* 	at fdt?	pass 4		# Cadence UART
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
 bsciic* 	at fdt?			# Broadcom BCM283x Serial Control
+cdnsiic*	at fdt? pass 4		# Cadence I2C
 exyoi2c* 	at fdt?			# Samsung Exynos I2C
 imxi2c* 	at fdt? pass 4		# i.MX I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
@@ -380,6 +381,7 @@ axppmic* 	at iic?			# X-Powers AXP Power Management IC
 axpreg* 	at axppmic?
 dsrtc*		at iic?			# Dallas Semiconductor RTCs
 em3027rtc* 	at iic?
+lmtemp*		at iic?			# National Semiconductor LM7x
 max77620pmic* 	at iic?
 pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc* 	at iic?			# PCF8563 RTC
