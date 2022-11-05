@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.5 2019/01/02 14:54:54 jmcneill Exp $ */
+/* $NetBSD: cpus.c,v 1.6 2022/11/05 10:04:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.5 2019/01/02 14:54:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.6 2022/11/05 10:04:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,7 +85,7 @@ cpus_cpu_enabled(int child)
 	s = fdtbus_get_string(child, "status");
 	if (s) {
 		if (strcmp(s, "okay") == 0)
-			return false;
+			return true;
 		if (strcmp(s, "disabled") == 0)
 			return of_hasprop(child, "enable-method");
 		return false;
