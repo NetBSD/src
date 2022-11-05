@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1302 2022/10/28 07:16:34 skrll Exp $
+#	$NetBSD: files,v 1.1303 2022/11/05 17:31:38 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1158,6 +1158,11 @@ file	dev/ic/pca9564.c		pca9564
 define	dwiic
 device dwiic: dwiic, i2cbus
 file	dev/ic/dwiic.c			dwiic
+
+# Cadence I2C controller
+define	cdnsiic
+device	cdnsiic: i2cbus
+file	dev/ic/cdnsiic.c		cdnsiic
 
 # ACPI power management timer (hardware access, independent of ACPI)
 #

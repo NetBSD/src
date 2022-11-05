@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.65 2022/07/20 10:01:11 riastradh Exp $
+# $NetBSD: files.fdt,v 1.66 2022/11/05 17:31:37 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -184,6 +184,10 @@ file	dev/fdt/ahcisata_fdt.c			ahcisata_fdt
 # Designware I2C
 attach 	dwiic at fdt with dwiic_fdt
 file	dev/fdt/dwiic_fdt.c			dwiic_fdt
+
+# Cadence I2C
+attach	cdnsiic at fdt with cdnsiic_fdt
+file	dev/fdt/cdnsiic_fdt.c			cdnsiic_fdt
 
 # AMD Cryptographic Coprocessor
 attach	amdccp at fdt with amdccp_fdt
