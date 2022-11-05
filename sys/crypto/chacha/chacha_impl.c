@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_impl.c,v 1.3 2020/07/27 20:49:10 riastradh Exp $	*/
+/*	$NetBSD: chacha_impl.c,v 1.4 2022/11/05 17:36:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ chacha_select(void)
 			chacha_impl = chacha_md_impl;
 	}
 
-	aprint_verbose("chacha: %s\n", chacha_impl->ci_name);
+	aprint_debug("chacha: %s\n", chacha_impl->ci_name);
 	return 0;
 }
 
