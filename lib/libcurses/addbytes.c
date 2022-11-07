@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.65 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.66 2022/11/07 21:18:49 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.65 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.66 2022/11/07 21:18:49 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -177,7 +177,7 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 		cc.attributes = attr;
 		err = _cursesi_addwchar(win, &lp, py, px, &cc, char_interp);
 		bytes += n;
-		count -= n;
+		count -= wcwidth(wc);
 #endif
 	}
 
