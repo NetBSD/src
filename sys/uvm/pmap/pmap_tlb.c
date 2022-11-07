@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.54 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.55 2022/11/07 07:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.54 2022/10/26 07:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.55 2022/11/07 07:28:04 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -1078,19 +1078,19 @@ void
 pmap_tlb_asid_check(void)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLED(maphist);
 
 #ifdef DEBUG
 	kpreempt_disable();
 	const tlb_asid_t asid __debugused = tlb_get_asid();
-	UVMHIST_LOG(pmaphist, " asid %u vs pmap_cur_asid %u", asid,
+	UVMHIST_LOG(maphist, " asid %u vs pmap_cur_asid %u", asid,
 	    curcpu()->ci_pmap_asid_cur, 0, 0);
 	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
 	   "%s: asid (%#x) != current asid (%#x)",
 	    __func__, asid, curcpu()->ci_pmap_asid_cur);
 	kpreempt_enable();
 #endif
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 #ifdef DEBUG
