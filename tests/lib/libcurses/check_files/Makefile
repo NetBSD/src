@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2022/04/20 07:43:05 blymn Exp $
+# $NetBSD: Makefile,v 1.11 2022/11/08 06:06:54 blymn Exp $
 
 NOMAN=		# defined
 
@@ -222,6 +222,7 @@ FILES+=		slk3.chk
 FILES+=		slk4.chk
 FILES+=		slk5.chk
 FILES+=		slk6.chk
+FILES+=		slk7.chk
 FILES+=		slk_init.chk
 FILES+=		timeout.chk
 FILES+=		touchline1.chk
