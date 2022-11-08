@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1227 2022/11/04 08:01:42 ozaki-r Exp $
+# $NetBSD: mi,v 1.1228 2022/11/08 06:08:33 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3504,6 +3504,7 @@
 ./usr/tests/lib/libcurses/check_files/slk4.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/slk5.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/slk6.chk			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/slk7.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/slk_init.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/timeout.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/touchline1.chk		tests-lib-tests		compattestfile,atf
