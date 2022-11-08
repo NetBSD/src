@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.18 2022/10/15 06:53:49 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.19 2022/11/08 12:48:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 
 /* Supervisor interrupt registers */
 /* ... interrupt pending register (sip) */
-			/* Bit (XLEN-1)-10 is WIRI */
+			/* Bit (XLEN-1) - 10 is WIRI */
 #define	SIP_SEIP	__BIT(9)
 #define	SIP_UEIP	__BIT(8)
 			/* Bit 7-6 is WIRI */
