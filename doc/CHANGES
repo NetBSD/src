@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2928 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2929 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -702,6 +702,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 9.1. [christos 20221005]
 	postfix(1): Import version 3.7.3. [christos 20221008]
 	ntp: Import ntp 4.2.8p15. [christos 20221009]
+	xhci(4): Support xHCI bus devices with only USB 2 ports.
+		[msaitoh 20221011]
 	tzdata: updated to 2022e (using the 2022egtz fork) [kre 20221013]
 	tzcode: Updated to 2022e. [christos 20221015]
 	zlib(3): Import 1.2.13 [christos 20221015]
@@ -709,8 +711,22 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		recent. [mrg 20221015]
 	evbarm: Add support for Oracle Cloud virtual machines.
 		[jmcneill 20221015]
+	date(1): Add -f option to set the time. From FreeBSD.
+		[christos 20221022]
+	tty(4), console(4): Remove the big kernel lock from ttycons.
+		[riastradh 20221025]
+	amdccp(4): Add AMD F17/1x and F17/9x CCP(PSP) support.
+		[msaitoh 20221026]
+	evbarm: Removed support for legacy (non-FDT) OMAP boards,
+		including the Gumstix, Hawkboard, Pandaboard, and
+		TI OMAP 2420, 2430, and 5912 OSK eval boards.
+		[jmcneill 20221029]
+	pgrep(1): Add a -q option to not print anything, similar
+		to grep -q.  [simonb 20221029]
 	libc: put reallocarray(3) in the public namespace [wiz 20221028]
 	evbarm: Update Xilinx Zynq-7000 SoC support to use FDT based
 		configuration. [jmcneill 20221028]
 	tzcode: Updated to 2022f. [christos 20221029]
 	tzdata: updated to 2022f (using the 2022fgtz fork) [kre 20221030]
+	regerror(3): Allow null errbuf if errbuf_size is zero,
+		as documented and in POSIX. [riastradh 20221105]
