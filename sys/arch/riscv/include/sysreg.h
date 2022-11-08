@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.19 2022/11/08 12:48:28 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.20 2022/11/08 13:35:32 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -210,6 +210,10 @@ riscvreg_status_set(uint32_t __mask)
 }
 
 // Cause register
+#define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN-1)))
+#define	CAUSE_CODE(cause)		((cause) & __BITS((XLEN-2), 0))
+
+// Cause register - exceptions
 #define	CAUSE_FETCH_MISALIGNED		0
 #define	CAUSE_FETCH_ACCESS		1
 #define	CAUSE_ILLEGAL_INSTRUCTION	2
@@ -218,8 +222,8 @@ riscvreg_status_set(uint32_t __mask)
 #define	CAUSE_LOAD_ACCESS		5
 #define	CAUSE_STORE_MISALIGNED		6
 #define	CAUSE_STORE_ACCESS		7
-#define	CAUSE_SYSCALL			8
 #define	CAUSE_USER_ECALL		8
+#define	CAUSE_SYSCALL			CAUSE_USER_ECALL /* convenience alias */
 #define	CAUSE_SUPERVISOR_ECALL		9
 /* 10 is reserved */
 #define	CAUSE_MACHINE_ECALL		11
@@ -227,7 +231,15 @@ riscvreg_status_set(uint32_t __mask)
 #define	CAUSE_LOAD_PAGE_FAULT		13
 /* 14 is Reserved */
 #define	CAUSE_STORE_PAGE_FAULT		15
-/* >= 16 is reserved */
+/* >= 16 is reserved/custom */
+
+// Cause register - traps
+#define	IRQ_SUPERVISOR_SOFTWARE	1
+#define	IRQ_MACHINE_SOFTWARE	3
+#define	IRQ_SUPERVISOR_TIMER	5
+#define	IRQ_MACHINE_TIMER	7
+#define	IRQ_SUPERVISOR_EXTERNAL	9
+#define	IRQ_MACHINE_EXTERNAL	11
 
 static inline uint64_t
 riscvreg_cycle_read(void)
