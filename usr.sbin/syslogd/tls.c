@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.20 2022/05/15 20:37:51 andvar Exp $	*/
+/*	$NetBSD: tls.c,v 1.21 2022/11/08 01:05:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.20 2022/05/15 20:37:51 andvar Exp $");
+__RCSID("$NetBSD: tls.c,v 1.21 2022/11/08 01:05:10 uwe Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: tls.c,v 1.20 2022/05/15 20:37:51 andvar Exp $");
 
 static unsigned getVerifySetting(const char *x509verifystring);
 
+#ifndef NDEBUG
 /* to output SSL error codes */
 static const char *SSL_ERRCODE[] = {
 	"SSL_ERROR_NONE",
@@ -81,6 +82,7 @@ static const char *TLS_CONN_STATES[] = {
 	"ST_CLOSING0",
 	"ST_CLOSING1",
 	"ST_CLOSING2"};
+#endif	/* !NDEBUG */
 
 DH *get_dh1024(void);
 /* DH parameter precomputed with "openssl dhparam -C -2 1024" */
