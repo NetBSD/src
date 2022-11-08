@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.139 2022/05/20 19:34:23 andvar Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.140 2022/11/08 01:43:09 uwe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.139 2022/05/20 19:34:23 andvar Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.140 2022/11/08 01:43:09 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ char	include_pid_buf[11];
 
 /* init and setup */
 void		usage(void) __attribute__((__noreturn__));
+void		set_debug(const char *);
 void		logpath_add(char ***, int *, int *, const char *);
 void		logpath_fileadd(char ***, int *, int *, const char *);
 void		init(int fd, short event, void *ev);  /* SIGHUP kevent dispatch routine */
@@ -318,7 +319,7 @@ main(int argc, char *argv[])
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:B:dnsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:d::nsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
@@ -329,9 +330,27 @@ main(int argc, char *argv[])
 				buflen = RCVBUFLEN;
 			break;
 		case 'd':		/* debug */
-			Debug = D_DEFAULT;
-			/* is there a way to read the integer value
-			 * for Debug as an optional argument? */
+			if (optarg != NULL) {
+				/*
+				 * getopt passes as optarg everything
+				 * after 'd' in -darg, manually accept
+				 * -d=arg too.
+				 */
+				if (optarg[0] == '=')
+					++optarg;
+			} else if (optind < argc) {
+				/*
+				 * :: treats "-d ..." as missing
+				 * optarg, so look ahead manually and
+				 * pick up the next arg if it looks
+				 * like one.
+				 */
+				if (argv[optind][0] != '-') {
+					optarg = argv[optind];
+					++optind;
+				}
+			}
+			set_debug(optarg);
 			break;
 		case 'f':		/* configuration file */
 			ConfFile = optarg;
@@ -4874,6 +4893,67 @@ writev1(int fd, struct iovec *iov, size_t count)
 	}
 	return tot == 0 ? nw : tot;
 }
+
+
+#ifdef NDEBUG
+/*
+ * -d also controls daemoniziation, so it makes sense even with
+ * NDEBUG, but if the user also tries to specify the logging details
+ * with an argument, warn them it's not compiled into this binary.
+ */
+void
+set_debug(const char *level)
+{
+	Debug = D_DEFAULT;
+	if (level == NULL)
+		return;
+
+	/* don't bother parsing the argument */
+	fprintf(stderr,
+		"%s: debug logging is not compiled\n",
+		getprogname());
+}
+
+#else  /* !NDEBUG */
+void
+set_debug(const char *level)
+{
+	if (level == NULL) {
+		Debug = D_DEFAULT; /* compat */
+		return;
+	}
+
+	/* skip initial whitespace for consistency with strto*l */
+	while (isspace((unsigned char)*level))
+		++level;
+
+	/* accept ~num to mean "all except num" */
+	bool invert = level[0] == '~';
+	if (invert)
+		++level;
+
+	errno = 0;
+	char *endp = NULL;
+	unsigned long bits = strtoul(level, &endp, 0);
+	if (errno || endp == level || *endp != '\0') {
+		fprintf(stderr, "%s: bad argument to -d\n", getprogname());
+		usage();
+	}
+	if (invert)
+		bits = ~bits;
+
+	Debug = bits & D_ALL;
+
+	/*
+	 * make it possible to use -d to stay in the foreground but
+	 * suppress all dbprintf output (there better be free bits in
+	 * typeof(Debug) that are not in D_ALL).
+	 */
+	if (Debug == 0)
+		Debug = ~D_ALL;
+}
+#endif	/* !NDEBUG */
+
 
 #ifndef NDEBUG
 void

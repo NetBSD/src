@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.58 2018/11/05 09:22:30 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.59 2022/11/08 01:43:09 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 4, 2018
+.Dd November 8, 2022
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,9 +37,10 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnrSsTUvX
+.Op Fl nrSsTUvX
 .Op Fl B Ar buffer_length
 .Op Fl b Ar bind_address
+.Op Fl d Op Oo Cm \&~ Oc Ns Ar what
 .Op Fl f Ar config_file
 .Op Fl g Ar group
 .Op Fl m Ar mark_interval
@@ -68,9 +69,20 @@ option.
 Specify one specific IP address or hostname to bind to.
 If a hostname is specified, the IPv4 or IPv6 address
 which corresponds to it is used.
-.It Fl d
-Enable debugging to the standard output,
-and do not disassociate from the controlling terminal.
+.It Fl d Op Oo Cm \&~ Oc Ns Ar what
+Do not disassociate from the controlling terminal and
+enable debugging to the standard output.
+The optional
+.Ar what
+argument is a number that selects which categories of the debug
+messages are to be enabled.
+A tilde
+.Pq Sq Cm \&~
+before
+.Ar what
+inverts its meaning so that all messages except those selected by
+.Ar what
+are enabled.
 .It Fl f Ar config_file
 Specify the pathname of an alternative configuration file;
 the default is
