@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.20 2022/11/08 13:35:32 simonb Exp $ */
+/* $NetBSD: sysreg.h,v 1.21 2022/11/08 13:47:09 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -210,8 +210,8 @@ riscvreg_status_set(uint32_t __mask)
 }
 
 // Cause register
-#define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN-1)))
-#define	CAUSE_CODE(cause)		((cause) & __BITS((XLEN-2), 0))
+#define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN-1))
+#define	CAUSE_CODE(cause)		((cause) & __BITS(XLEN-2, 0))
 
 // Cause register - exceptions
 #define	CAUSE_FETCH_MISALIGNED		0
