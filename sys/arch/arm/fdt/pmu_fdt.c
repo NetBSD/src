@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.10 2021/11/25 09:36:20 skrll Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.11 2022/11/09 19:03:38 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.10 2021/11/25 09:36:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.11 2022/11/09 19:03:38 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,8 +137,8 @@ pmu_fdt_init(device_t self)
 		if (error) {
 			aprint_error_dev(self,
 			    "couldn't initialise PMU event counter");
+			return;
 		}
-		return;
 	}
 
 	ih = kmem_zalloc(sizeof(void *) * ncpu, KM_SLEEP);
