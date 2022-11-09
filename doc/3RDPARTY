@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1899 2022/11/05 18:38:08 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1900 2022/11/09 14:43:20 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2172,7 +2172,7 @@ Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	texinfo
 Version:	4.8a (Last GPLv2+ version)
-Current Vers:	6.5
+Current Vers:	7.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
