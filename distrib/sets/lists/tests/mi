@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1228 2022/11/08 06:08:33 blymn Exp $
+# $NetBSD: mi,v 1.1229 2022/11/09 08:21:20 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4214,6 +4214,7 @@
 ./usr/tests/net/ipsec/natt_terminator			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_ah_keys			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_esp_keys			tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_forwarding		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_gif			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_l2tp			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_misc			tests-net-tests		atf,rump
