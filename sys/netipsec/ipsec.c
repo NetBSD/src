@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.175 2022/11/04 09:00:58 ozaki-r Exp $ */
+/* $NetBSD: ipsec.c,v 1.176 2022/11/09 08:18:52 knakahara Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.175 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.176 2022/11/09 08:18:52 knakahara Exp $");
 
 /*
  * IPsec controller part.
@@ -543,7 +543,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	sp = NULL;
 
 	/* Make an index to look for a policy. */
-	*error = ipsec_setspidx(m, &spidx, dir, (flag & IP_FORWARDING) ? 0 : 1);
+	*error = ipsec_setspidx(m, &spidx, dir, 1);
 	if (*error != 0) {
 		IPSECLOG(LOG_DEBUG, "setpidx failed, dir %u flag %u\n", dir, flag);
 		memset(&spidx, 0, sizeof(spidx));
