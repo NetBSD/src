@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.99 2022/11/04 11:20:39 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.100 2022/11/10 10:55:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.99 2022/11/04 11:20:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.100 2022/11/10 10:55:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,6 +402,20 @@ vfs_set_lowermount(struct mount *mp, struct mount *lowermp)
 {
 	struct mount *oldlowermp;
 	int error;
+
+#ifdef DEBUG
+	/*
+	 * Limit the depth of file system stack so kernel sanitizers
+	 * may stress mount/unmount without exhausting the kernel stack.
+	 */
+	int depth;
+	struct mount *mp2;
+
+	for (depth = 0, mp2 = lowermp; mp2; depth++, mp2 = mp2->mnt_lower) {
+		if (depth == 23)
+			return EINVAL;
+	}
+#endif
 
 	if (lowermp) {
 		error = vfs_busy(lowermp);
