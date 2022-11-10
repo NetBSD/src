@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1229 2022/11/09 08:21:20 knakahara Exp $
+# $NetBSD: mi,v 1.1230 2022/11/10 06:13:58 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3523,6 +3523,7 @@
 ./usr/tests/lib/libcurses/check_files/waddnwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddnwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddstr.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/waddstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/waddwstr3.chk		tests-lib-tests		compattestfile,atf
