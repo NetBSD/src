@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.15 2022/11/09 19:06:46 ryo Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.16 2022/11/10 07:54:20 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.15 2022/11/09 19:06:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.16 2022/11/10 07:54:20 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -233,8 +233,7 @@ armv8_pmu_detect(void)
 int
 armv8_pmu_init(void)
 {
-	if (!armv8_pmu_detect())
-		return ENOTSUP;
+	KASSERT(armv8_pmu_detect());
 
 	uint64_t xc = xc_broadcast(0, armv8_pmu_init_cpu, NULL, NULL);
 	xc_wait(xc);
