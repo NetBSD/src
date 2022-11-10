@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.77 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.78 2022/11/10 10:54:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.77 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.78 2022/11/10 10:54:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -196,6 +196,11 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	tmpfs_mntmem_init(tmp, memlimit);
 	mp->mnt_data = tmp;
 
+	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, curlwp);
+	if (error)
+		goto errout;
+
 	/* Allocate the root node. */
 	vattr_null(&va);
 	va.va_type = VDIR;
@@ -203,13 +208,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	va.va_uid = args->ta_root_uid;
 	va.va_gid = args->ta_root_gid;
 	error = vcache_new(mp, NULL, &va, NOCRED, NULL, &vp);
-	if (error) {
-		mp->mnt_data = NULL;
-		tmpfs_mntmem_destroy(tmp);
-		mutex_destroy(&tmp->tm_lock);
-		kmem_free(tmp, sizeof(*tmp));
-		return error;
-	}
+	if (error)
+		goto errout;
 	KASSERT(vp != NULL);
 	root = VP_TO_TMPFS_NODE(vp);
 	KASSERT(root != NULL);
@@ -224,11 +224,14 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	tmp->tm_root = root;
 	vrele(vp);
 
-	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
-	    mp->mnt_op->vfs_name, mp, curlwp);
-	if (error) {
-		(void)tmpfs_unmount(mp, MNT_FORCE);
-	}
+	return 0;
+
+errout:
+	mp->mnt_data = NULL;
+	tmpfs_mntmem_destroy(tmp);
+	mutex_destroy(&tmp->tm_lock);
+	kmem_free(tmp, sizeof(*tmp));
+
 	return error;
 }
 
