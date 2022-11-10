@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.376 2022/04/16 08:00:55 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.377 2022/11/10 10:53:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.376 2022/04/16 08:00:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.377 2022/11/10 10:53:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -683,7 +683,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			}
 #endif
 			fs->fs_ronly = 0;
-			fs->fs_clean <<= 1;
+			fs->fs_clean =
+			    fs->fs_clean == FS_ISCLEAN ? FS_WASCLEAN : 0;
 			fs->fs_fmod = 1;
 #ifdef WAPBL
 			if (fs->fs_flags & FS_DOWAPBL) {
@@ -743,20 +744,22 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    DPRINTF("set_statvfs_info returned %d", error);
 	}
 	fs->fs_flags &= ~FS_DOSOFTDEP;
-	if (fs->fs_fmod != 0) {	/* XXX */
+
+	if ((fs->fs_ronly && (fs->fs_clean & FS_ISCLEAN) == 0) ||
+	    (!fs->fs_ronly && (fs->fs_clean & FS_WASCLEAN) == 0)) {
+		printf("%s: file system not clean (fs_clean=%#x); "
+		    "please fsck(8)\n", mp->mnt_stat.f_mntfromname,
+		    fs->fs_clean);
+	}
+
+	if (fs->fs_fmod != 0) {
 		int err;
 
-		fs->fs_fmod = 0;
+		KASSERT(!fs->fs_ronly);
+
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time_second;
-		else {
-			printf("%s: file system not clean (fs_clean=%#x); "
-			    "please fsck(8)\n", mp->mnt_stat.f_mntfromname,
-			    fs->fs_clean);
-			printf("%s: lost blocks %" PRId64 " files %d\n",
-			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
-			    fs->fs_pendinginodes);
-		}
+		fs->fs_fmod = 0;
 		err = UFS_WAPBL_BEGIN(mp);
 		if (err == 0) {
 			(void) ffs_cgupdate(ump, MNT_WAIT);
@@ -1346,6 +1349,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 	}
 
+	fs->fs_fmod = 0;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
@@ -1427,7 +1431,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Don't bump fs_clean if we're replaying journal */
 	if (!((fs->fs_flags & FS_DOWAPBL) && (fs->fs_clean & FS_WASCLEAN))) {
 		if (ronly == 0) {
-			fs->fs_clean <<= 1;
+			fs->fs_clean =
+			    fs->fs_clean == FS_ISCLEAN ? FS_WASCLEAN : 0;
 			fs->fs_fmod = 1;
 		}
 	}
