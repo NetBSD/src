@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.21 2022/11/08 13:47:09 simonb Exp $ */
+/* $NetBSD: sysreg.h,v 1.22 2022/11/11 01:18:32 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -177,18 +177,18 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define	SR_KERNEL	(SR_SIE | SR_UIE)
 #endif
 
-static inline uint32_t
+static inline register_t
 riscvreg_status_read(void)
 {
-	uint32_t __sr;
+	register_t __sr;
 	__asm("csrr\t%0, sstatus" : "=r"(__sr));
 	return __sr;
 }
 
-static inline uint32_t
-riscvreg_status_clear(uint32_t __mask)
+static inline register_t
+riscvreg_status_clear(register_t __mask)
 {
-	uint32_t __sr;
+	register_t __sr;
 	if (__builtin_constant_p(__mask) && __mask < 0x20) {
 		__asm("csrrci\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
 	} else {
@@ -197,10 +197,10 @@ riscvreg_status_clear(uint32_t __mask)
 	return __sr;
 }
 
-static inline uint32_t
-riscvreg_status_set(uint32_t __mask)
+static inline register_t
+riscvreg_status_set(register_t __mask)
 {
-	uint32_t __sr;
+	register_t __sr;
 	if (__builtin_constant_p(__mask) && __mask < 0x20) {
 		__asm("csrrsi\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
 	} else {
