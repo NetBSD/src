@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.114 2022/11/05 17:32:03 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.115 2022/11/11 20:31:30 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -436,6 +436,7 @@ tegrartc* 	at fdt?			# NVIDIA Tegra RTC
 
 # Thermal sensor
 sunxithermal* 	at fdt?			# Thermal sensor controller
+zynqxadc*	at fdt?			# Xilinx 7 series ADC
 
 # BCM2835 VCHIQ, etc
 vchiq0 		at fdt?
