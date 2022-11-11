@@ -1,4 +1,4 @@
-/* $NetBSD: zynq7000_clkc.c,v 1.4 2022/11/05 17:28:55 jmcneill Exp $ */
+/* $NetBSD: zynq7000_clkc.c,v 1.5 2022/11/11 20:29:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.4 2022/11/05 17:28:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.5 2022/11/11 20:29:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq7000_clkc.c,v 1.4 2022/11/05 17:28:55 jmcneill E
 #define	 SDI0_CPU_1XCLKACT	__BIT(10)
 #define	SDIO_CLK_CTRL	0x150
 #define	UART_CLK_CTRL	0x154
+#define	PCAP_CLK_CTRL	0x168
 #define	 CLK_CTRL_DIVISOR	__BITS(13,8)
 #define	 CLK_CTRL_SRCSEL	__BITS(5,4)
 #define	 CLK_CTRL_CLKACT1	__BIT(1)
@@ -247,6 +248,8 @@ zynq7000_clkc_clk_get_rate(void *priv, struct clk *clk)
 	} else if (clk == &sc->sc_clk[clkid_uart0] ||
 		   clk == &sc->sc_clk[clkid_uart1]) {
 		return zynq7000_clkc_get_rate_iop(sc, UART_CLK_CTRL);
+	} else if (clk == &sc->sc_clk[clkid_pcap]) {
+		return zynq7000_clkc_get_rate_iop(sc, PCAP_CLK_CTRL);
 	} else if (clk == &sc->sc_clk[clkid_uart0_aper] ||
 		   clk == &sc->sc_clk[clkid_uart1_aper] ||
 		   clk == &sc->sc_clk[clkid_i2c0_aper] ||
@@ -290,6 +293,9 @@ zynq7000_clkc_clk_enable(void *priv, struct clk *clk)
 	} else if (clk == &sc->sc_clk[clkid_uart1]) {
 		reg = UART_CLK_CTRL;
 		mask = CLK_CTRL_CLKACT1;
+	} else if (clk == &sc->sc_clk[clkid_pcap]) {
+		reg = PCAP_CLK_CTRL;
+		mask = CLK_CTRL_CLKACT0;
 	} else if (clk == &sc->sc_clk[clkid_sdio0_aper]) {
 		reg = APER_CLK_CTRL;
 		mask = SDI0_CPU_1XCLKACT;
