@@ -1,4 +1,4 @@
-#	$NetBSD: files.zynq,v 1.4 2022/10/27 09:41:28 jmcneill Exp $
+#	$NetBSD: files.zynq,v 1.5 2022/11/11 20:31:30 jmcneill Exp $
 #
 # Configuration info for Xilinx Zynq-7000 SoC
 #
@@ -37,3 +37,8 @@ file	arch/arm/xilinx/zynq_cemac.c		cemac
 attach	ehci at fdt with zynqusb
 file	arch/arm/xilinx/zynq_usb.c		zynqusb
 file	arch/arm/xilinx/zynq7000_usb.c		zynqusb
+
+# Xilinx 7 series ADC
+device	zynqxadc: sysmon_envsys
+attach	zynqxadc at fdt
+file	arch/arm/xilinx/zynq_xadc.c		zynqxadc
