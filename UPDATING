@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.333 2022/10/08 08:21:56 riastradh Exp $
+$NetBSD: UPDATING,v 1.334 2022/11/12 02:20:15 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,17 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20221111:
+	The new libdrm import worsened the conflict issues for the
+	kdump/ktruss ioctl, and i915 now conflicts with base, and has
+	been turned off.  This will cause update build issues like:
+
+		kdump-ioctl.c:12175:143: error: 'DRM_IOCTL_I915_DESTROY_HEAP'
+		   undeclared here (not in a function);
+		   did you mean 'DRM_IOCTL_MODE_DESTROY_DUMB'?
+
+	You'll need to clean usr.bin/ktruss, usr.bin/kdump, and rescue.
 
 20220921:
 	Since the kernel version was bumped to 9.99.100, the bootloader
