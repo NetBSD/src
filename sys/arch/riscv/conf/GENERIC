@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2022/10/12 07:56:46 simonb Exp $
+# $NetBSD: GENERIC,v 1.18 2022/11/12 11:14:44 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	64		# estimated number of users
 
@@ -113,6 +113,7 @@ options 	WAPBL		# File system journaling support
 				# immutable) behave as system flags.
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	NFSSERVER	# Network File System server
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
