@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.25 2022/09/18 16:54:30 thorpej Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.26 2022/11/12 16:54:36 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.25 2022/09/18 16:54:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.26 2022/11/12 16:54:36 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -579,8 +579,7 @@ cemac_init(struct cemac_softc *sc)
 	mii->mii_statchg = cemac_statchg;
 	ifmedia_init(&mii->mii_media, IFM_IMASK, cemac_mediachange,
 	    cemac_mediastatus);
-	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, 1, 0);
 	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 #if 0
