@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2022/01/14 19:44:04 macallan Exp $
+#	$NetBSD: Makefile,v 1.11 2022/11/12 02:03:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,8 @@ INCS=	pciaccess.h
 INCSDIR=${X11INCDIR}
 
 PKGDIST=	${LIB}
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@PCIACCESS_LIBS@,-lpci -lz," \
 
 LIBDPLIBS+=	pci	${NETBSDSRCDIR}/lib/libpci \
 		z	${NETBSDSRCDIR}/lib/libz
