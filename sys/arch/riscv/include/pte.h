@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.10 2022/10/18 06:44:43 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.11 2022/11/12 07:34:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -56,8 +56,14 @@ typedef uint32_t pd_entry_t;
 #define	NSEGPG		NPTEPG
 #define	NPDEPG		NPTEPG
 
+
+/* HardWare PTE bits SV39 */
+#define PTE_N		__BIT(63)	// Svnapot
+#define PTE_PBMT	__BITS(62, 61)	// Svpbmt
+#define PTE_reserved0	__BITS(60, 54)	//
+
 /* Software PTE bits. */
-#define	PTE_RSW		__BITS(9,8)
+#define	PTE_RSW		__BITS(9, 8)
 #define	PTE_WIRED	__BIT(9)
 
 /* Hardware PTE bits. */
@@ -155,7 +161,7 @@ pte_to_paddr(pt_entry_t pte)
 static inline pt_entry_t
 pte_nv_entry(bool kernel_p)
 {
-	return kernel_p ? PTE_G : 0;
+	return 0;
 }
 
 static inline pt_entry_t
@@ -265,7 +271,7 @@ pte_pde_pdetab(paddr_t pa, bool kernel_p)
 static inline pd_entry_t
 pte_pde_ptpage(paddr_t pa, bool kernel_p)
 {
-	return PTE_V | PTE_X | PTE_W | PTE_R | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
+	return PTE_V | (pa >> PAGE_SHIFT) << PTE_PPN_SHIFT;
 }
 
 static inline bool
