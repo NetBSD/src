@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dmamem_common.c,v 1.4 2020/09/06 15:27:22 riastradh Exp $	*/
+/*	$NetBSD: bus_dmamem_common.c,v 1.5 2022/11/12 07:48:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dmamem_common.c,v 1.4 2020/09/06 15:27:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dmamem_common.c,v 1.5 2022/11/12 07:48:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ _bus_dmamem_alloc_range_common(bus_dma_tag_t t,
 				&mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (__predict_false(error != 0))
 		return (error);
-	
+
 	/*
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM system.
@@ -156,7 +156,7 @@ _bus_dmamem_map_common(bus_dma_tag_t t,
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 	if (__predict_false(va == 0))
 		return (ENOMEM);
-	
+
 	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
