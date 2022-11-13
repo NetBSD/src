@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.23 2022/11/12 07:05:40 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.24 2022/11/13 08:13:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ riscvreg_status_set(uintptr_t __mask)
 #define	CAUSE_STORE_PAGE_FAULT		15
 /* >= 16 is reserved/custom */
 
-// Cause register - traps
+// Cause register - interrupts
 #define	IRQ_SUPERVISOR_SOFTWARE	1
 #define	IRQ_MACHINE_SOFTWARE	3
 #define	IRQ_SUPERVISOR_TIMER	5
