@@ -1,5 +1,5 @@
 
-#	$NetBSD: Makefile,v 1.1 2022/11/13 09:36:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2022/11/13 21:57:12 mrg Exp $
 
 NOINSTALL=1
 NOMAN=1
@@ -55,6 +55,13 @@ LDADD+=		-lpixman-1
 .include "../Makefile.cflags"
 
 .PATH:	${X11SRCDIR.pixman}/test
+
+check:
+.for test in ${PROGS}
+	echo -n "Starting ${test}: "; date
+	./${test} && echo Passed: ${test}
+.endfor
+	echo -n "Done: "; date
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
