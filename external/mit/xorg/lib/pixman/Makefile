@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2022/11/12 07:43:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2022/11/13 09:36:37 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -54,20 +54,20 @@ COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
 .  if defined(HAVE_LLVM)
 COPTS.pixman-mmx.c+=	-Wno-error=attributes
 .  endif
-CPPFLAGS+=		-DUSE_X86_MMX
+#CPPFLAGS+=		-DUSE_X86_MMX
 MKDEPFLAGS+=		-mmmx
 . endif
 SRCS+=	pixman-sse2.c pixman-ssse3.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 COPTS.pixman-ssse3.c=	-msse3 -mssse3 -fvisibility=hidden
-CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
+#CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
 MKDEPFLAGS+=		-msse2 -msse3 -mssse3 -fvisibility=hidden
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
 SRCS+=	pixman-vmx.c
 COPTS.pixman-vmx.c=	-maltivec
-CPPFLAGS+=		-DUSE_VMX
+#CPPFLAGS+=		-DUSE_VMX
 MKDEPFLAGS+=		-maltivec
 .endif
 
@@ -76,21 +76,18 @@ MKDEPFLAGS+=		-maltivec
 SRCS+=		pixman-arm-simd.c 		\
 		pixman-arm-simd-asm.S		\
 		pixman-arm-simd-asm-scaled.S
-CPPFLAGS+=	-DUSE_ARM_SIMD
 # ARM NEON
 SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm.S		\
 		pixman-arm-neon-asm-bilinear.S
-CPPFLAGS+=	-DUSE_ARM_NEON
 
 AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 # ARM iwMMX
 #SRCS+=		pixman-mmx.c
 #COPTS.pixman-mmx.c=	-mcpu=iwmmxt
-#CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
 
-.if !empty(MACHINE_ARCH:Maarch64*) && 0
+.if !empty(MACHINE_ARCH:Maarch64*)
 # ARM64 NEON
 SRCS+=		pixman-arm-neon.c			\
 		pixman-arma64-neon-asm.S		\
@@ -104,7 +101,7 @@ CPPFLAGS+=	-DUSE_ARM_A64_NEON
 .if !empty(MACHINE_ARCH:Mmips*64el) && empty(COPTS:M-march=*)
 # Loongson MMI
 SRCS+=		pixman-mmx.c
-CPPFLAGS+=	-DUSE_LOONGSON_MMI
+#CPPFLAGS+=	-DUSE_LOONGSON_MMI
 # SIMD instructions use floatpoint registers so we need to enable their use
 COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float -Wa,-mhard-float
 .endif
@@ -114,13 +111,10 @@ COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float -Wa,-mhard-float
 COPTS.pixman-fast-path.c+=	-O1
 .endif
 
+.include "Makefile.cflags"
+
 INCS=	pixman.h pixman-version.h
 INCSDIR=${X11INCDIR}/pixman-1
-
-CPPFLAGS+=	-DHAVE_CONFIG_H \
-		-I${X11SRCDIR.pixman}/../include \
-		-I${X11SRCDIR.pixman}/../combine \
-		-I${X11SRCDIR.pixman}/pixman
 
 # With pixman 0.28.3, HAVE_PTHREAD_SETSPECIFIC is much faster than TLS
 CPPFLAGS+=	-DHAVE_PTHREAD_SETSPECIFIC
