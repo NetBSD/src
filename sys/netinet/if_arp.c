@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.308 2022/09/03 01:35:03 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.309 2022/11/14 09:32:21 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.308 2022/09/03 01:35:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.309 2022/11/14 09:32:21 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -932,6 +932,8 @@ again:
 
 	/*
 	 * DAD check, RFC 5227.
+	 * ARP sender hardware address must match the interface
+	 * address of the interface sending the packet.
 	 * Collision on sender address is always a duplicate.
 	 * Collision on target address is only a duplicate
 	 * IF the sender address is the null host (ie a DAD probe)
@@ -943,7 +945,10 @@ again:
 	    (in_hosteq(isaddr, myaddr) ||
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
 	     m->m_flags & M_BCAST &&
-	     ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED))))
+	     ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED))) &&
+	    m->m_pkthdr.l2_shalen == ah->ar_hln && (
+	    ah->ar_hln == 0 ||
+	    memcmp(m->m_pkthdr.l2_sha, ar_sha(ah), ah->ar_hln) == 0))
 	{
 		struct sockaddr_dl sdl, *sdlp;
 
