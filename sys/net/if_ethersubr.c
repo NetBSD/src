@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.320 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.321 2022/11/14 09:23:42 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.320 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.321 2022/11/14 09:23:42 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -885,6 +885,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		goto noproto;
 #endif
 	}
+
+	/* Store the senders hardware address */
+	m->m_pkthdr.l2_sha = &eh->ether_shost;
+	m->m_pkthdr.l2_shalen = ETHER_ADDR_LEN;
 
 	/* Strip off the Ethernet header. */
 	m_adj(m, ehlen);
