@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.233 2022/11/14 09:23:42 roy Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.234 2022/11/14 10:15:08 roy Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -178,8 +178,8 @@ struct m_hdr {
  * checksum) -- this is so we can accumulate the checksum for fragmented
  * packets during reassembly.
  *
- * Size ILP32: 40
- *       LP64: 56
+ * Size ILP32: 48
+ *       LP64: 72
  */
 struct pkthdr {
 	union {
