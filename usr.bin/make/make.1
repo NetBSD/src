@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.348 2022/10/02 23:36:41 rillig Exp $
+.\"	$NetBSD: make.1,v 1.349 2022/11/15 07:58:00 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -474,6 +474,7 @@ the target is not removed if
 .Nm
 is interrupted.
 .El
+.Pp
 All dependency lines mentioning a particular target must use the same
 operator.
 .Pp
@@ -1901,7 +1902,7 @@ exits immediately.
 .Ss Conditionals
 The directives for conditionals are:
 .ds maybenot Oo Ic \&! Oc Ns
-.Bl -tag -width Ds
+.Bl -tag
 .It Ic .if \*[maybenot] Ar expression Op Ar operator expression No ...
 Test the value of an expression.
 .It Ic .ifdef \*[maybenot] Ar variable Op Ar operator variable No ...
@@ -1946,7 +1947,7 @@ End the body of the conditional.
 The
 .Ar operator
 may be any one of the following:
-.Bl -tag -width "Cm XX"
+.Bl -tag
 .It Ic \&|\&|
 Logical OR.
 .It Ic \&&&
@@ -1966,7 +1967,7 @@ It is of higher precedence than
 The value of
 .Ar expression
 may be any of the following function call expressions:
-.Bl -tag -width defined
+.Bl -tag
 .Sm off
 .It Ic defined Li \&( Ar varname Li \&)
 .Sm on
