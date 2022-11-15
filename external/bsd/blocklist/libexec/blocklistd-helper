@@ -14,10 +14,10 @@ if [ -f "/etc/ipfw-blocklist.rc" ]; then
 	pf="ipfw"
 	. /etc/ipfw-blocklist.rc
 	ipfw_offset=${ipfw_offset:-2000}
-fi
-
-if [ -z "$pf" ]; then
-	for f in npf pf ipfilter; do
+elif [ -f "/etc/ipfilter.conf" ]; then
+	pf="ipf"
+else
+	for f in npf pf ipf; do
 		if [ -f "/etc/$f.conf" ]; then
 			pf="$f"
 			break
