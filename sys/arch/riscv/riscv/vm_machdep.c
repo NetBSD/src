@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2022/09/29 06:51:17 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2022/11/15 14:33:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2022/09/29 06:51:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2022/11/15 14:33:33 simonb Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -111,7 +111,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	--tf;	/* cpu_switchto uses trapframes */
 
-	tf->tf_sr = riscvreg_status_read();
+	tf->tf_sr = csr_sstatus_read();
 	tf->tf_s0 = (intptr_t)func;			/* S0 */
 	tf->tf_s1 = (intptr_t)arg;			/* S1 */
 	tf->tf_ra = (intptr_t)cpu_lwp_trampoline;	/* RA */
