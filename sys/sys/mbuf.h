@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.234 2022/11/14 10:15:08 roy Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.235 2022/11/15 09:13:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -178,8 +178,8 @@ struct m_hdr {
  * checksum) -- this is so we can accumulate the checksum for fragmented
  * packets during reassembly.
  *
- * Size ILP32: 48
- *       LP64: 72
+ * Size ILP32: 40
+ *       LP64: 56
  */
 struct pkthdr {
 	union {
@@ -203,9 +203,6 @@ struct pkthdr {
 	int	pattr_af;		/* ALTQ: address family */
 	void	*pattr_class;		/* ALTQ: sched class set by classifier */
 	void	*pattr_hdr;		/* ALTQ: saved header position in mbuf */
-
-	void		*l2_sha;		/* l2 sender host address */
-	size_t		l2_shalen;		/* length of the sender address */
 };
 
 /* Checksumming flags (csum_flags). */
