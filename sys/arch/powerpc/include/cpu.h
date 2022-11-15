@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122 2022/05/30 14:48:08 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123 2022/11/15 12:43:14 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -240,12 +240,8 @@ curcpu(void)
 	return ci;
 }
 
-#ifdef __clang__
-#define	curlwp			(curcpu()->ci_curlwp)
-#else
 register struct lwp *powerpc_curlwp __asm("r13");
 #define	curlwp			powerpc_curlwp
-#endif
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
