@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.13 2022/10/16 08:43:44 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.14 2022/11/15 14:33:33 simonb Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.13 2022/10/16 08:43:44 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.14 2022/11/15 14:33:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -168,14 +168,14 @@ pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 	    __SHIFTIN(pai->pai_asid, SATP_ASID) |
 	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
 
-	riscvreg_satp_write(satp);
+	csr_satp_write(satp);
 }
 
 void
 pmap_md_xtab_deactivate(struct pmap *pmap)
 {
 
-	riscvreg_satp_write(0);
+	csr_satp_write(0);
 }
 
 void
@@ -276,13 +276,13 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 tlb_asid_t
 tlb_get_asid(void)
 {
-	return riscvreg_asid_read();
+	return csr_asid_read();
 }
 
 void
 tlb_set_asid(tlb_asid_t asid, struct pmap *pm)
 {
-	riscvreg_asid_write(asid);
+	csr_asid_write(asid);
 }
 
 #if 0

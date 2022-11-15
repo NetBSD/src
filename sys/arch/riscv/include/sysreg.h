@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.24 2022/11/13 08:13:55 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.25 2022/11/15 14:33:33 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -104,7 +104,64 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
+
+#define	RISCVREG_READ_INLINE(regname)					\
+static inline uintptr_t							\
+csr_##regname##_read(void)						\
+{									\
+	uintptr_t __rv;							\
+	asm volatile("csrr %0, " #regname : "=r"(__rv) :: "memory");	\
+	return __rv;							\
+}
+
+#define	RISCVREG_WRITE_INLINE(regname)					\
+static inline void							\
+csr_##regname##_write(uintptr_t __val)					\
+{									\
+	asm volatile("csrw " #regname ", %0" :: "r"(__val) : "memory");	\
+}
+
+#define	RISCVREG_SET_INLINE(regname)					\
+static inline void							\
+csr_##regname##_set(uintptr_t __mask)					\
+{									\
+	if (__builtin_constant_p(__mask) && __mask < 0x20) {		\
+		asm volatile("csrsi " #regname ", %0" :: "i"(__mask) :	\
+		    "memory");						\
+	} else {							\
+		asm volatile("csrs " #regname ", %0" :: "r"(__mask) :	\
+		    "memory");						\
+	}								\
+}
+
+#define	RISCVREG_CLEAR_INLINE(regname)					\
+static inline void							\
+csr_##regname##_clear(uintptr_t __mask)					\
+{									\
+	if (__builtin_constant_p(__mask) && __mask < 0x20) {		\
+		asm volatile("csrci " #regname ", %0" :: "i"(__mask) :	\
+		    "memory");						\
+	} else {							\
+		asm volatile("csrc " #regname ", %0" :: "r"(__mask) :	\
+		    "memory");						\
+	}								\
+}
+
+#define	RISCVREG_READ_WRITE_INLINE(regname)				\
+RISCVREG_READ_INLINE(regname)						\
+RISCVREG_WRITE_INLINE(regname)
+#define	RISCVREG_SET_CLEAR_INLINE(regname)				\
+RISCVREG_SET_INLINE(regname)						\
+RISCVREG_CLEAR_INLINE(regname)
+#define	RISCVREG_READ_SET_CLEAR_INLINE(regname)				\
+RISCVREG_READ_INLINE(regname)						\
+RISCVREG_SET_CLEAR_INLINE(regname)
+#define	RISCVREG_READ_WRITE_SET_CLEAR_INLINE(regname)			\
+RISCVREG_READ_WRITE_INLINE(regname)					\
+RISCVREG_SET_CLEAR_INLINE(regname)
+
 /* Supervisor Status Register */
+RISCVREG_READ_SET_CLEAR_INLINE(sstatus)		// supervisor status register
 #ifdef _LP64
 #define	SR_WPRI		__BITS(62, 34) | __BITS(31,20) | __BIT(17) | \
 			    __BITS(12,9) | __BITS(7,6) | __BITS(3,2)
@@ -144,6 +201,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 
 /* Supervisor interrupt registers */
 /* ... interrupt pending register (sip) */
+RISCVREG_READ_SET_CLEAR_INLINE(sip)		// supervisor interrupt pending
 			/* Bit (XLEN-1) - 10 is WIRI */
 #define	SIP_SEIP	__BIT(9)
 #define	SIP_UEIP	__BIT(8)
@@ -155,6 +213,7 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define	SIP_USIP	__BIT(0)
 
 /* ... interrupt-enable register (sie) */
+RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 			/* Bit (XLEN-1) - 10 is WIRI */
 #define	SIE_SEIE	__BIT(9)
 #define	SIE_UEIE	__BIT(8)
@@ -176,38 +235,6 @@ riscvreg_fcsr_write_frm(uint32_t __new)
 #define	SR_USER		(SR_UIE)
 #define	SR_KERNEL	(SR_SIE | SR_UIE)
 #endif
-
-static inline uintptr_t
-riscvreg_status_read(void)
-{
-	uintptr_t __sr;
-	__asm("csrr\t%0, sstatus" : "=r"(__sr));
-	return __sr;
-}
-
-static inline uintptr_t
-riscvreg_status_clear(uintptr_t __mask)
-{
-	uintptr_t __sr;
-	if (__builtin_constant_p(__mask) && __mask < 0x20) {
-		__asm("csrrci\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
-	} else {
-		__asm("csrrc\t%0, sstatus, %1" : "=r"(__sr) : "r"(__mask));
-	}
-	return __sr;
-}
-
-static inline uintptr_t
-riscvreg_status_set(uintptr_t __mask)
-{
-	uintptr_t __sr;
-	if (__builtin_constant_p(__mask) && __mask < 0x20) {
-		__asm("csrrsi\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
-	} else {
-		__asm("csrrs\t%0, sstatus, %1" : "=r"(__sr) : "r"(__mask));
-	}
-	return __sr;
-}
 
 // Cause register
 #define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN-1))
@@ -241,14 +268,13 @@ riscvreg_status_set(uintptr_t __mask)
 #define	IRQ_SUPERVISOR_EXTERNAL	9
 #define	IRQ_MACHINE_EXTERNAL	11
 
-static inline uint64_t
-riscvreg_cycle_read(void)
-{
+RISCVREG_READ_INLINE(time)
 #ifdef _LP64
-	uint64_t __lo;
-	__asm __volatile("csrr\t%0, cycle" : "=r"(__lo));
-	return __lo;
-#else
+RISCVREG_READ_INLINE(cycle)
+#else /* !_LP64 */
+static inline uint64_t
+csr_cycle_read(void)
+{
 	uint32_t __hi0, __hi1, __lo0;
 	do {
 		__asm __volatile(
@@ -260,8 +286,8 @@ riscvreg_cycle_read(void)
 			[__hi1] "=r"(__hi1));
 	} while (__hi0 != __hi1);
 	return ((uint64_t)__hi0 << 32) | (uint64_t)__lo0;
-#endif
 }
+#endif /* !_LP64 */
 
 #ifdef _LP64
 #define	SATP_MODE		__BITS(63,60)
@@ -280,36 +306,25 @@ riscvreg_cycle_read(void)
 #define	SATP_PPN		__BITS(21,0)
 #endif
 
-static inline uintptr_t
-riscvreg_satp_read(void)
-{
-	uintptr_t satp;
-	__asm __volatile("csrr	%0, satp" : "=r" (satp));
-	return satp;
-}
+RISCVREG_READ_WRITE_INLINE(satp)
 
-static inline void
-riscvreg_satp_write(uintptr_t satp)
-{
-	__asm __volatile("csrw	satp, %0" :: "r" (satp));
-}
-
+/* Fake "ASID" CSR (a field of SATP register) functions */
 static inline uint32_t
-riscvreg_asid_read(void)
+csr_asid_read(void)
 {
-	uintptr_t satp;
-	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+	uintptr_t satp = csr_satp_read();
 	return __SHIFTOUT(satp, SATP_ASID);
 }
 
 static inline void
-riscvreg_asid_write(uint32_t asid)
+csr_asid_write(uint32_t asid)
 {
 	uintptr_t satp;
-	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+
+	satp = csr_satp_read();
 	satp &= ~SATP_ASID;
 	satp |= __SHIFTIN(asid, SATP_ASID);
-	__asm __volatile("csrw	satp, %0" :: "r" (satp));
+	csr_satp_write(satp);
 }
 
 #endif /* _RISCV_SYSREG_H_ */
