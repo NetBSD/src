@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.322 2022/11/15 09:14:28 roy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.323 2022/11/15 10:47:39 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.322 2022/11/15 09:14:28 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.323 2022/11/15 10:47:39 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -884,6 +884,19 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		/* ethertype of 0-1500 is regarded as noproto */
 		goto noproto;
 #endif
+	}
+
+	/* For ARP packets, store the source address so that
+	 * ARP DAD probes can be validated. */
+	if (etype == ETHERTYPE_ARP) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_get(PACKET_TAG_ETHERNET_SRC, ETHER_ADDR_LEN,
+		    M_NOWAIT);
+		if (mtag != NULL) {
+			memcpy(mtag + 1, &eh->ether_shost, ETHER_ADDR_LEN);
+			m_tag_prepend(m, mtag);
+		}
 	}
 
 	/* Strip off the Ethernet header. */
