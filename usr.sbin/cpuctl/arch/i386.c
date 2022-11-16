@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.131 2022/11/16 14:55:50 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.132 2022/11/16 15:02:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.131 2022/11/16 14:55:50 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.132 2022/11/16 15:02:00 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2255,8 +2255,7 @@ identifycpu(int fd, const char *cpuname)
 		}
 		if (ci->ci_max_ext_cpuid >= 0x8000001b) {
 			x86_cpuid(0x8000001b, descs);
-			print_bits(cpuname,
-			    "Instruction-Based Sampling features",
+			print_bits(cpuname, "IBS features",
 			    CPUID_IBS_FLAGS, descs[0]);
 		}
 		if (ci->ci_max_ext_cpuid >= 0x8000001f) {
