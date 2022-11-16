@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.196 2022/11/16 14:01:41 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.197 2022/11/16 14:55:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1007,6 +1007,24 @@
 	"\11AutomaticIBRS" "\12NoSmmCtlMSR"				      \
 			"\16PrefetchCtlMSR"				      \
 			"\22CpuidUserDis"
+
+/*
+ * AMD Extended Performance Monitoring and Debug
+ * CPUID Fn8000_0022
+ */
+
+/* %eax */
+#define CPUID_AXPERF_PERFMONV2	__BIT(0)  /* Version 2 */
+#define CPUID_AXPERF_LBRSTACK	__BIT(1)  /* Last Branch Record Stack */
+#define CPUID_AXPERF_LBRPMCFREEZE __BIT(2) /* Freezing LBR and PMC */
+
+#define CPUID_AXPERF_FLAGS	 "\20"					      \
+	"\1PerfMonV2"	"\2LbrStack"	"\3LbrAndPmcFreeze"
+
+/* %ebx */
+#define CPUID_AXPERF_NCPC      __BITS(3, 0)	/* Num of Core PMC counters */
+#define CPUID_AXPERF_NLBRSTACK __BITS(9, 4)	/* Num of LBR Stack entries */
+#define CPUID_AXPERF_NNBPC     __BITS(15, 10)	/* Num of Northbridge PMC */
 
 /*
  * Centaur Extended Feature flags.
