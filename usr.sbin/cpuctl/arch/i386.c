@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.129 2022/11/16 13:15:26 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.130 2022/11/16 14:01:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.129 2022/11/16 13:15:26 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.130 2022/11/16 14:01:41 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2232,6 +2232,12 @@ identifycpu(int fd, const char *cpuname)
 	}
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
+		if (ci->ci_max_ext_cpuid >= 0x80000021) {
+			x86_cpuid(0x80000021, descs);
+			print_bits(cpuname, "AMD Extended features 2",
+			    CPUID_AMDEXT2_FLAGS, descs[0]);
+		}
+
 		if (ci->ci_max_ext_cpuid >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
 			print_bits(cpuname, "RAS features",
