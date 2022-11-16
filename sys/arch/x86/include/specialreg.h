@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.195 2022/11/16 13:14:33 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.196 2022/11/16 14:01:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -984,6 +984,29 @@
 	"\21VTE"      "\22VmgexitParam" "\23VirtualTomMsr" "\24IbsVirtGuest"  \
 	"\31VmsaRegProt" "\32SmtProtection"				      \
 	"\35SvsmCommPageMSR" "\36NestedVirtSnpMsr"
+
+/*
+ * AMD Extended Features 2.
+ * CPUID Fn8000_0021
+ */
+
+/* %eax */
+#define CPUID_AMDEXT2_NONESTEDDBP __BIT(0) /* No nested data breakpoints */
+#define CPUID_AMDEXT2_LFENCESERIAL __BIT(2) /* LFENCE always serializing */
+#define CPUID_AMDEXT2_SMMPGCFGLCK __BIT(3) /* SMM Paging configuration lock */
+#define CPUID_AMDEXT2_NULLSELCLRB __BIT(6) /* Null segment selector clr base */
+#define CPUID_AMDEXT2_UPADDRIGN	  __BIT(7) /* Upper Address Ignore */
+#define CPUID_AMDEXT2_AUTOIBRS	  __BIT(8) /* Automatic IBRS */
+#define CPUID_AMDEXT2_NOSMMCTL	  __BIT(9) /* SMM_CTL MSR is not supported */
+#define CPUID_AMDEXT2_PREFETCHCTL __BIT(13) /* Prefetch control MSR */
+#define CPUID_AMDEXT2_CPUIDUSRDIS __BIT(17) /* CPUID dis. for non-priv. soft */
+
+#define CPUID_AMDEXT2_FLAGS	 "\20"					      \
+	"\1NoNestedDataBp"	"\3LfenceAlwaysSerialize" "\4SmmPgCfgLock"    \
+			     "\7NullSelectClearsBase" "\10UpperAddressIgnore" \
+	"\11AutomaticIBRS" "\12NoSmmCtlMSR"				      \
+			"\16PrefetchCtlMSR"				      \
+			"\22CpuidUserDis"
 
 /*
  * Centaur Extended Feature flags.
