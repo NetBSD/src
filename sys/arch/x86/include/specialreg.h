@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.194 2022/10/19 15:01:24 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.195 2022/11/16 13:14:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -759,11 +759,24 @@
 	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "AddrMaskExt" "\40" "B31"
 
 /*
- * Advanced Power Management.
+ * Advanced Power Management and RAS.
  * CPUID Fn8000_0007
  *
  * Only ITSC is for both Intel and AMD. Others are only for AMD.
+ *
+ *	%ebx: RAS capabilities. See below.
+ *	%ecx: Processor Power Monitoring Interface.
+ *	%edx: See below.
+ *
  */
+/* %ebx */
+#define CPUID_RAS_OVFL_RECOV __BIT(0) /* MCA Overflow Recovery */
+#define CPUID_RAS_SUCCOR  __BIT(1) /* Sw UnCorr. err. COntainment & Recovery */
+#define CPUID_RAS_MCAX	  __BIT(3) /* MCA Extension */
+
+#define CPUID_RAS_FLAGS		"\20"					      \
+	"\1OVFL_RECOV"	"\2SUCCOR"		"\4" "MCAX"
+
 /* %edx */
 #define CPUID_APM_TS	   __BIT(0)	/* Temperature Sensor */
 #define CPUID_APM_FID	   __BIT(1)	/* Frequency ID control */
@@ -819,6 +832,7 @@
 #define CPUID_CAPEX_SSB_NO	   __BIT(26) /* SSBD not required */
 #define CPUID_CAPEX_CPPC	   __BIT(27) /* Collaborative Processor Perf. Control */
 #define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Forward Dis */
+#define CPUID_CAPEX_BTC_NO	   __BIT(29) /* Branch Type Confusion NO */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			   \
@@ -829,7 +843,7 @@
 							"\24IBRS_SAMEMODE" \
 	"\25EFER_LSMSLE_UN"				"\30PPIN"	   \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"	"\34CPPC"	   \
-	"\35PSFD"
+	"\35PSFD"	"\36BTC_NO"
 
 /* %ecx */
 #define CPUID_CAPEX_PerfTscSize	__BITS(17,16)	/* Perf. tstamp counter size */
@@ -862,6 +876,7 @@
 #define CPUID_AMD_SVM_X2AVIC	      __BIT(18) /* Virt. Intr. Ctrl 4 x2APIC */
 #define CPUID_AMD_SVM_SSSCHECK	      __BIT(19)  /* Shadow Stack restrictions */
 #define CPUID_AMD_SVM_SPEC_CTRL	      __BIT(20) /* SPEC_CTRL virtualization */
+#define CPUID_AMD_SVM_ROGPT	      __BIT(21) /* Read-Only Guest PTable */
 #define CPUID_AMD_SVM_HOST_MCE_OVERRIDE __BIT(23) /* #MC intercept */
 #define CPUID_AMD_SVM_TLBICTL	      __BIT(24) /* TLB Intercept Control */
 #define CPUID_AMD_SVM_VNMI	      __BIT(25) /* NMI Virtualization */
@@ -875,9 +890,30 @@
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
 	"\21" "VGIF"	"\22" "GMET"	"\23x2AVIC"	"\24SSSCHECK"	\
-	"\25" "SPEC_CTRL"			"\30HOST_MCE_OVERRIDE"	\
+	"\25" "SPEC_CTRL" "\26" "ROGPT"		"\30HOST_MCE_OVERRIDE"	\
 	"\31" "TLBICTL"	"\32VNMI"	"\33IBSVIRT"	"\34B27"	\
 	"\35B28"
+
+/*
+ * AMD Instruction-Based Sampling Capabilities.
+ * CPUID Fn8000_001b
+ */
+/* %eax */
+#define CPUID_IBS_FFV		__BIT(0)  /* Feature Flags Valid */
+#define CPUID_IBS_FETCHSUM	__BIT(1)  /* Fetch Sampling */
+#define CPUID_IBS_OPSAM		__BIT(2)  /* execution SAMpling */
+#define CPUID_IBS_RDWROPCNT	__BIT(3)  /* Read Write of Op Counter */
+#define CPUID_IBS_OPCNT		__BIT(4)  /* OP CouNTing mode */
+#define CPUID_IBS_BRNTRGT	__BIT(5)  /* Branch Target */
+#define CPUID_IBS_OPCNTEXT	__BIT(6)  /* OpCurCnt and OpMaxCnt extended */
+#define CPUID_IBS_RIPINVALIDCHK	__BIT(7)  /* Invalid RIP indication */
+#define CPUID_IBS_OPBRNFUSE	__BIT(8)  /* Fused branch micro-op indicate */
+#define CPUID_IBS_L3MISSFILT	__BIT(11) /* L3 Miss Filtering */
+
+#define CPUID_IBS_FLAGS	 "\20"						   \
+	"\1IBSFFV"	"\2FetchSam"	"\3OpSam"	"\4RdWrOpCnt"	   \
+	"\5OpCnt"	"\6BrnTrgt"	"\7OpCntExt"	"\10RipInvalidChk" \
+	"\11OpBrnFuse"	"\12B9"				"\14IbsL3MissFiltering"
 
 /*
  * AMD Cache Topology Information.
@@ -920,7 +956,10 @@
 #define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
 #define CPUID_AMD_ENCMEM_SEV_SNP __BIT(4)  /* Secure Nested Paging */
 #define CPUID_AMD_ENCMEM_VMPL	__BIT(5)   /* Virtual Machine Privilege Lvl */
+#define CPUID_AMD_ENCMEM_RPMQUERY __BIT(6) /* RMPQUERY instruction */
+#define CPUID_AMD_ENCMEM_VMPLSSS __BIT(7)  /* VMPL Secure Shadow Stack */
 #define CPUID_AMD_ENCMEM_SECTSC	__BIT(8)   /* Secure TSC */
+#define CPUID_AMD_ENCMEM_TSCAUX_V __BIT(9)  /* TSC AUX Virtualization */
 #define CPUID_AMD_ENCMEM_HECC	__BIT(10) /* HW Enf Cache Coh across enc dom */
 #define CPUID_AMD_ENCMEM_64BH	__BIT(11)  /* 64Bit Host */
 #define CPUID_AMD_ENCMEM_RSTRINJ __BIT(12) /* Restricted Injection */
@@ -928,15 +967,23 @@
 #define CPUID_AMD_ENCMEM_DBGSWAP __BIT(14) /* Debug Swap */
 #define CPUID_AMD_ENCMEM_PREVHOSTIBS __BIT(15) /* Prevent Host IBS */
 #define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
-#define CPUID_AMD_ENCMEM_VMSA_REGPROT __BIT(24)  /* VmsaRegProt */
+
+#define CPUID_AMD_ENCMEM_VMGEXITP __BIT(17) /* VMGEXIT Parameter */
+#define CPUID_AMD_ENCMEM_VIRTTOM __BIT(18)  /* Virtual TOM MSR */
+#define CPUID_AMD_ENCMEM_IBSVGUEST __BIT(19) /* IBS Virt. for SEV-ES guest */
+#define CPUID_AMD_ENCMEM_VMSA_REGPROT __BIT(24) /* VmsaRegProt */
+#define CPUID_AMD_ENCMEM_SMTPROTECT __BIT(25) /* SMT Protection */
+#define CPUID_AMD_ENCMEM_SVSM_COMMPAGE __BIT(28) /* SVSM Communication Page */
+#define CPUID_AMD_ENCMEM_NESTED_VSMP __BIT(29) /* VIRT_{RMPUPDATE,PSMASH} */
 
 #define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
 	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
-	"\5" "SEV-SNP"	"\6" "VMPL"					      \
-	"\11SecureTSC"			"\13HwEnfCacheCoh"  "\14" "64BitHost" \
+	"\5" "SEV-SNP"	"\6" "VMPL"	"\7RMPQUERY"	"\10VmplSSS"	      \
+	"\11SecureTSC"	"\12TscAuxVirt"	"\13HwEnfCacheCoh"  "\14" "64BitHost" \
 	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostlbs" \
-	"\21" "VTE"							      \
-	"\31" "VmsaRegProt"
+	"\21VTE"      "\22VmgexitParam" "\23VirtualTomMsr" "\24IbsVirtGuest"  \
+	"\31VmsaRegProt" "\32SmtProtection"				      \
+	"\35SvsmCommPageMSR" "\36NestedVirtSnpMsr"
 
 /*
  * Centaur Extended Feature flags.
