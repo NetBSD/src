@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.24 2022/11/15 14:33:33 simonb Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.25 2022/11/17 13:11:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.24 2022/11/15 14:33:33 simonb Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.25 2022/11/17 13:11:08 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -156,7 +156,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_sp = (intptr_t)stack_align(stack);
 	tf->tf_pc = (intptr_t)pack->ep_entry & ~1;
 #ifdef _LP64
-	tf->tf_sr = (p->p_flag & PK_32) ? SR_USER32 : SR_USER;
+	tf->tf_sr = (p->p_flag & PK_32) ? SR_USER32 : SR_USER64;
 #else
 	tf->tf_sr = SR_USER;
 #endif
