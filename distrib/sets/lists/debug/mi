@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.390 2022/11/04 08:01:42 ozaki-r Exp $
+# $NetBSD: mi,v 1.391 2022/11/17 08:45:35 ozaki-r Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2421,6 +2421,8 @@
 ./usr/libdata/debug/usr/tests/net/if_tap/rump_open_tap.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/bpfopen.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/siocXmulti.debug	tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/inpcb/broadcast_bind.debug	tests-net-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/net/inpcb/inpcb_bind.debug	tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/in_cksum/in_cksum.debug	tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/ipsec/natt_terminator.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
@@ -2430,6 +2432,7 @@
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo_send.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/net/t_socket_afinet.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_tcp.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf,compattestfile
@@ -2438,6 +2441,7 @@
 ./usr/libdata/debug/usr/tests/net/sys/t_rfc6056.debug			tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/sys/t_socketpair.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/net/tcp/tcp_shutdown.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/tcp/t_tcp_connect_port.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/modautoload/t_modautoload.debug	tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_forkcli.debug			tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-obsolete		obsolete
