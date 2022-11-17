@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.25 2022/11/15 14:33:33 simonb Exp $ */
+/* $NetBSD: sysreg.h,v 1.26 2022/11/17 13:10:42 simonb Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -165,75 +165,77 @@ RISCVREG_READ_SET_CLEAR_INLINE(sstatus)		// supervisor status register
 #ifdef _LP64
 #define	SR_WPRI		__BITS(62, 34) | __BITS(31,20) | __BIT(17) | \
 			    __BITS(12,9) | __BITS(7,6) | __BITS(3,2)
-#define	SR_SD		__BIT(63)
+#define	SR_SD		__BIT(63)	// any of FS or VS or XS dirty
 			/* Bits 62-34 are WPRI */
-#define	SR_UXL		__BITS(33,32)
-#define	 SR_UXL_32	1
-#define	 SR_UXL_64	2
-#define	 SR_UXL_128	3
+#define	SR_UXL		__BITS(33,32)	// U-mode XLEN
+#define	 SR_UXL_32	1		//   XLEN ==  32
+#define	 SR_UXL_64	2		//   XLEN ==  64
+#define	 SR_UXL_128	3		//   XLEN == 128
 			/* Bits 31-20 are WPRI*/
 #else
 #define	SR_WPRI		__BITS(30,20) | __BIT(17) | __BITS(12,9) | \
 			    __BITS(7,6) | __BITS(3,2)
-#define	SR_SD		__BIT(31)
+#define	SR_SD		__BIT(31)	// any of FS or VS or XS dirty
 			/* Bits 30-20 are WPRI*/
 #endif /* _LP64 */
 
 /* Both RV32 and RV64 have the bottom 20 bits shared */
-#define	SR_MXR		__BIT(19)
-#define	SR_SUM		__BIT(18)
+#define	SR_MXR		__BIT(19)	// Make eXecutable Readable
+#define	SR_SUM		__BIT(18)	// permit Supervisor User Memory access
 			/* Bit 17 is WPRI */
-#define	SR_XS		__BITS(16,15)
-#define	SR_FS		__BITS(14,13)
-#define	 SR_FS_OFF	0
-#define	 SR_FS_INITIAL	1
-#define	 SR_FS_CLEAN	2
-#define	 SR_FS_DIRTY	3
-
-			/* Bits 12-9 are WPRI */
-#define	SR_SPP		__BIT(8)
-			/* Bits 7-6 are WPRI */
-#define	SR_SPIE		__BIT(5)
-#define	SR_UPIE		__BIT(4)
-			/* Bits 3-2 are WPRI */
-#define	SR_SIE		__BIT(1)
-#define	SR_UIE		__BIT(0)
+#define	SR_XS		__BITS(16,15)	// Vector extension state
+#define	 SR_XS_OFF		0	//   All off
+#define	 SR_XS_SOME_ON		1	//   None dirty or clean, some on
+#define	 SR_XS_SOME_CLEAN	2	//   None dirty, some clean
+#define	 SR_XS_SOME_DIRTY	3	//   Some dirty
+#define	SR_FS		__BITS(14,13)	// Floating-point unit state
+#define	 SR_FS_OFF	0		//   Off
+#define	 SR_FS_INITIAL	1		//   Initial
+#define	 SR_FS_CLEAN	2		//   Clean
+#define	 SR_FS_DIRTY	3		//   Dirty
+			/* Bits 12-11 are WPRI */
+#define	SR_VS		__BITS(10,9)	// User-mode extention state
+#define	 SR_VS_OFF	SR_FS_OFF	//   Off
+#define	 SR_VS_INITIAL	SR_FS_INITIAL	//   Initial
+#define	 SR_VS_CLEAN	SR_FS_CLEAN	//   Clean
+#define	 SR_VS_DIRTY	SR_FS_DIRTY	//   Dirty
+#define	SR_SPP		__BIT(8)	// Priv level before supervisor mode
+			/* Bit 7 is WPRI */
+#define	SR_UBE		__BIT(6)	// User-mode endianness
+#define	SR_SPIE		__BIT(5)	// S-Mode interrupts enabled before trap
+			/* Bits 4-2 are WPRI */
+#define	SR_SIE		__BIT(1)	// Supervisor mode interrupt enable
+			/* Bit 0 is WPRI */
 
 /* Supervisor interrupt registers */
 /* ... interrupt pending register (sip) */
 RISCVREG_READ_SET_CLEAR_INLINE(sip)		// supervisor interrupt pending
 			/* Bit (XLEN-1) - 10 is WIRI */
-#define	SIP_SEIP	__BIT(9)
-#define	SIP_UEIP	__BIT(8)
-			/* Bit 7-6 is WIRI */
-#define	SIP_STIP	__BIT(5)
-#define	SIP_UTIP	__BIT(4)
-			/* Bit 3-2 is WIRI */
-#define	SIP_SSIP	__BIT(1)
-#define	SIP_USIP	__BIT(0)
+#define	SIP_SEIP	__BIT(9)	// S-mode interrupt pending
+			/* Bit 8-6 is WIRI */
+#define	SIP_STIP	__BIT(5)	// S-mode timer interrupt pending
+			/* Bit 4-2 is WIRI */
+#define	SIP_SSIP	__BIT(1)	// S-mode software interrupt pending
+			/* Bit 0 is WIRI */
 
 /* ... interrupt-enable register (sie) */
 RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 			/* Bit (XLEN-1) - 10 is WIRI */
-#define	SIE_SEIE	__BIT(9)
-#define	SIE_UEIE	__BIT(8)
-			/* Bit 7-6 is WIRI */
-#define	SIE_STIE	__BIT(5)
-#define	SIE_UTIE	__BIT(4)
-			/* Bit 3-2 is WIRI */
-#define	SIE_SSIE	__BIT(1)
-#define	SIE_USIE	__BIT(0)
+#define	SIE_SEIE	__BIT(9)	// S-mode interrupt enable
+			/* Bit 8-6 is WIRI */
+#define	SIE_STIE	__BIT(5)	// S-mode timer interrupt enable
+			/* Bit 4-2 is WIRI */
+#define	SIE_SSIE	__BIT(1)	// S-mode software interrupt enable
+			/* Bit 0 is WIRI */
 
 /* Mask for all interrupts */
-#define	SIE_IM		(SIE_SEI|SIE_UEIE|SIE_STIE|SIE_UTIE|SIE_SSIE|SIE_USIE)
+#define	SIE_IM		(SIE_SEI|SIE_STIE|SIE_SSIE)	/* XXX unused? */
 
 #ifdef _LP64
-#define	SR_USER		(SR_UIE)
-#define	SR_USER32	(SR_USER)
-#define	SR_KERNEL	(SR_SIE | SR_UIE)
+#define	SR_USER64	(SR_SPIE | SR_UXL_64)	// 64-bit U-mode sstatus
+#define	SR_USER32	(SR_SPIE | SR_UXL_32)	// 32-bit U-mode sstatus
 #else
-#define	SR_USER		(SR_UIE)
-#define	SR_KERNEL	(SR_SIE | SR_UIE)
+#define	SR_USER		(SR_SPIE)		// U-mode sstatus
 #endif
 
 // Cause register
@@ -290,20 +292,23 @@ csr_cycle_read(void)
 #endif /* !_LP64 */
 
 #ifdef _LP64
-#define	SATP_MODE		__BITS(63,60)
-#define	 SATP_MODE_BARE		0
-#define	 SATP_MODE_SV39		8
-#define	 SATP_MODE_SV48		9
-#define	 SATP_MODE_SV57		10
-#define	 SATP_MODE_SV64		11
-#define	SATP_ASID		__BITS(59,44)
-#define	SATP_PPN		__BITS(43,0)
+#define	SATP_MODE		__BITS(63,60)	// Translation mode
+#define	 SATP_MODE_BARE		0		//   No translation or protection
+				/* modes 1-7 reserved for standard use */
+#define	 SATP_MODE_SV39		8		//   Page-based 39-bit virt addr
+#define	 SATP_MODE_SV48		9		//   Page-based 48-bit virt addr
+#define	 SATP_MODE_SV57		10		//   Page-based 57-bit virt addr
+#define	 SATP_MODE_SV64		11		//   Page-based 64-bit virt addr
+				/* modes 12-13 reserved for standard use */
+				/* modes 14-15 designated for custom use */
+#define	SATP_ASID		__BITS(59,44)	//   Address Space Identifier
+#define	SATP_PPN		__BITS(43,0)	//   Physical Page Number
 #else
-#define	SATP_MODE		__BIT(31)
-#define	 SATP_MODE_BARE		0
-#define	 SATP_MODE_SV32		1
-#define	SATP_ASID		__BITS(30,22)
-#define	SATP_PPN		__BITS(21,0)
+#define	SATP_MODE		__BIT(31)	// Translation mode
+#define	 SATP_MODE_BARE		0		//   No translation or protection
+#define	 SATP_MODE_SV32		1		//   Page-based 32-bit virt addr
+#define	SATP_ASID		__BITS(30,22)	//   Address Space Identifier
+#define	SATP_PPN		__BITS(21,0)	//   Physical Page Number
 #endif
 
 RISCVREG_READ_WRITE_INLINE(satp)
