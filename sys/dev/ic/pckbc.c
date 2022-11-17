@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.64 2022/10/28 23:44:38 riastradh Exp $ */
+/* $NetBSD: pckbc.c,v 1.65 2022/11/17 23:57:20 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.64 2022/10/28 23:44:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.65 2022/11/17 23:57:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,6 @@ pckbc_poll_data1(void *pt, pckbc_slot_t slot)
 	for (; i; i--, delay(1000)) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
 		if (stat & KBS_DIB) {
-			KBD_DELAY;
 			c = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
 		    process:
@@ -512,12 +511,10 @@ pckbcintr_hard(void *vsc)
 		if (!q) {
 			/* XXX do something for live insertion? */
 			printf("pckbc: no dev for slot %d\n", slot);
-			KBD_DELAY;
 			(void) bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 			continue;
 		}
 
-		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
 		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
@@ -600,7 +597,6 @@ pckbcintr(void *vsc)
 			return 0;
 
 		served = 1;
-		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
 		if (q != NULL)
