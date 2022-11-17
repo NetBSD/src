@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.123 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files.i2c,v 1.124 2022/11/17 19:20:06 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -430,3 +430,8 @@ file	dev/i2c/pcf8574.c			pcf8574io
 # Sparkfun Serial motor controller
 attach  scmd at iic with scmdi2c
 file	dev/i2c/scmdi2c.c			scmdi2c
+
+# Aosong AHT20 Temperature and Humidity sensor
+device aht20temp
+attach aht20temp at iic
+file dev/i2c/aht20.c				aht20temp

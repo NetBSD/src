@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1754 2022/08/27 21:53:38 dholland Exp $
+# $NetBSD: mi,v 1.1755 2022/11/17 19:20:06 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -781,6 +781,7 @@
 ./usr/share/man/cat4/ahci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahcisata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahd.0			man-sys-catman		.cat
+./usr/share/man/cat4/aht20temp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ai.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aiboost.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aibs.0			man-sys-catman		.cat
@@ -4088,6 +4089,7 @@
 ./usr/share/man/html4/ahci.html			man-sys-htmlman		html
 ./usr/share/man/html4/ahcisata.html		man-sys-htmlman		html
 ./usr/share/man/html4/ahd.html			man-sys-htmlman		html
+./usr/share/man/html4/aht20temp.html		man-sys-htmlman		html
 ./usr/share/man/html4/ai.html			man-sys-htmlman		html
 ./usr/share/man/html4/aiboost.html		man-sys-htmlman		html
 ./usr/share/man/html4/aibs.html			man-sys-htmlman		html
@@ -7089,6 +7091,7 @@
 ./usr/share/man/man4/ahci.4			man-sys-man		.man
 ./usr/share/man/man4/ahcisata.4			man-sys-man		.man
 ./usr/share/man/man4/ahd.4			man-sys-man		.man
+./usr/share/man/man4/aht20temp.4		man-sys-man		.man
 ./usr/share/man/man4/ai.4			man-sys-man		.man
 ./usr/share/man/man4/aiboost.4			man-sys-man		.man
 ./usr/share/man/man4/aibs.4			man-sys-man		.man

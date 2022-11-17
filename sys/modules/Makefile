@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.271 2022/09/07 11:26:23 martin Exp $
+#	$NetBSD: Makefile,v 1.272 2022/11/17 19:20:05 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ SUBDIR+=	accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	adiantum
+SUBDIR+=	aht20temp
 SUBDIR+=	aio
 SUBDIR+=	audio
 SUBDIR+=	autofs
