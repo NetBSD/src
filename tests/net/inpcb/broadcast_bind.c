@@ -1,3 +1,4 @@
+/* $NetBSD: broadcast_bind.c,v 1.2 2022/11/17 08:42:06 ozaki-r Exp $ */
 /* $OpenBSD: broadcast_bind.c,v 1.2 2015/12/02 20:45:00 mpi Exp $ */
 
 /*
@@ -30,7 +31,7 @@
 #include <netinet/in.h>
 
 
-int
+static int
 test_bind(char *paddr, struct in_addr *addr, u_int16_t port, int type,
     int expected_errno)
 {
@@ -100,7 +101,11 @@ main(int argc, char *argv[])
 	rc = 0;
 	rc |= test_bind(argv[1], &uc_addr, port, SOCK_STREAM, 0);
 	rc |= test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
+#ifdef __NetBSD__
+	rc |= test_bind(argv[3], &bc_addr, port, SOCK_STREAM, 0);
+#else
 	rc |= test_bind(argv[3], &bc_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
+#endif
 
 	rc |= test_bind(argv[2], &err_addr, port, SOCK_STREAM, EADDRNOTAVAIL);
 	rc |= test_bind(argv[3], &bc_addr, port, SOCK_DGRAM, 0);
