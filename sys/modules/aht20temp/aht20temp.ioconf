@@ -1,0 +1,7 @@
+ioconf aht20temp
+
+include "conf/files"
+
+pseudo-root iic*
+
+aht20temp* at iic? addr 0x38
