@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.16 2021/07/24 21:31:36 andvar Exp $
+\	$NetBSD: bootblk.fth,v 1.17 2022/11/17 06:40:39 chs Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -624,6 +624,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
    fs_magic l@  case
       fs1_magic_value  of  init-ffs-v1 true  endof
       fs2_magic_value  of  init-ffs-v2 true  endof
+      fs2ea_magic_value  of  init-ffs-v2 true  endof
       false swap	\ Return false
    endcase
 ;
@@ -890,7 +891,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.16 2021/07/24 21:31:36 andvar Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.17 2022/11/17 06:40:39 chs Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 

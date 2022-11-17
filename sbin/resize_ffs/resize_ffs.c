@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.56 2022/04/08 10:17:53 andvar Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.57 2022/11/17 06:40:39 chs Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.56 2022/04/08 10:17:53 andvar Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.57 2022/11/17 06:40:39 chs Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -2227,12 +2227,14 @@ main(int argc, char **argv)
 		readat(where / DEV_BSIZE, oldsb, SBLOCKSIZE);
 		switch (oldsb->fs_magic) {
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
 			needswap = 0;
 			break;
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
  			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:

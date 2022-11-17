@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.34 2016/07/28 08:24:58 martin Exp $	*/
+/*	$NetBSD: quot.c,v 1.35 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.34 2016/07/28 08:24:58 martin Exp $");
+__RCSID("$NetBSD: quot.c,v 1.35 2022/11/17 06:40:41 chs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -569,10 +569,12 @@ quot(const char *name, const char *mp)
 		fs = (struct fs *)superblock;
 
 		if (fs->fs_magic != FS_UFS1_MAGIC &&
-		    fs->fs_magic != FS_UFS2_MAGIC)
+		    fs->fs_magic != FS_UFS2_MAGIC &&
+		    fs->fs_magic != FS_UFS2EA_MAGIC)
 			continue;
 
 		if (fs->fs_magic == FS_UFS2_MAGIC
+		    || fs->fs_magic == FS_UFS2EA_MAGIC
 		    || fs->fs_old_flags & FS_FLAGS_UPDATED) {
 			/* Not the main superblock */
 			if (fs->fs_sblockloc != sbloc)

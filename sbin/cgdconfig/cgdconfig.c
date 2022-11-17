@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.60 2022/09/13 10:14:32 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.60 2022/09/13 10:14:32 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -1207,8 +1207,10 @@ verify_ffs(int fd)
 		switch (u.fs.fs_magic) {
 		case FS_UFS1_MAGIC:
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			return 0;
 		default:
 			continue;

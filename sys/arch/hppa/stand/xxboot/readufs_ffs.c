@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.2 2022/11/17 06:40:39 chs Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
@@ -66,7 +66,7 @@ try_ffs(void)
 			break;
 #endif
 #ifdef USE_UFS2
-		if (magic == FS_UFS2_MAGIC) {
+		if (magic == FS_UFS2_MAGIC || magic == FS_UFS2EA_MAGIC) {
 #ifdef USE_UFS1
 			fsi.ufstype = UFSTYPE_UFS2;
 #endif
@@ -81,7 +81,8 @@ try_ffs(void)
 	 */
 	fsi_ffs.magic = magic;
 #ifdef DEBUG_WITH_STDIO
-	printf("FFS: detected UFS%d format\n", (magic == FS_UFS2_MAGIC) + 1);
+	printf("FFS: detected UFS%d format\n",
+	       (magic == FS_UFS2_MAGIC || magic == FS_UFS2EA_MAGIC) + 1);
 #endif
 
 	/* This partition looks like an FFS. */

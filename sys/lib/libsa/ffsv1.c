@@ -1,4 +1,4 @@
-/* $NetBSD: ffsv1.c,v 1.9 2022/04/24 06:52:59 mlelstv Exp $ */
+/* $NetBSD: ffsv1.c,v 1.10 2022/11/17 06:40:39 chs Exp $ */
 
 #define LIBSA_FFSv1
 
@@ -16,10 +16,5 @@
 #define ufs_dinode_swap	ffs_dinode1_swap
 #define ufs_indp_swap	bswap32
 #define indp_t		int32_t
-
-#define FS_MAGIC FS_UFS1_MAGIC
-
-/* #define	FSMOD	"wapbl/ufs/ffs" */
-#define	FSMOD	NULL
 
 #include "ufs.c"

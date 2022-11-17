@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.117 2022/04/16 18:15:20 andvar Exp $	*/
+/*	$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.117 2022/04/16 18:15:20 andvar Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,7 @@ int	mfs;			/* run as the memory based filesystem */
 int	Gflag;			/* allow garbage parameters (for testing) */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* format as an 4.3BSD file system */
+int	eaflag;			/* use UFS2ea fs_magic */
 int	verbosity;		/* amount of printf() output */
 #define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior */
 int64_t	fssize;			/* file system size */
@@ -315,6 +316,10 @@ main(int argc, char *argv[])
 				verbosity = DEFAULT_VERBOSITY;
 			break;
 		case 'O':
+			if (strcmp(optarg, "2ea") == 0) {
+				eaflag = 1;
+				optarg[1] = 0;
+			}
 			Oflag = strsuftoi64("format", optarg, 0, 2, NULL);
 			break;
 		case 'S':
@@ -862,7 +867,7 @@ struct help_strings {
 	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
-	{ NEWFS,	"-O N\t\tfilesystem format: 0 => 4.3BSD, 1 => FFSv1, 2 => FFSv2" },
+	{ NEWFS,	"-O N\t\tfilesystem format: 0 => 4.3BSD, 1 => FFSv1, 2 => FFSv2, 2ea => FFSv2 with extattrs" },
 	{ NEWFS,	"-S secsize\tsector size" },
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },

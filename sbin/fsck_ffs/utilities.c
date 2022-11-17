@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.66 2020/04/17 09:42:27 jdolecek Exp $	*/
+/*	$NetBSD: utilities.c,v 1.67 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.66 2020/04/17 09:42:27 jdolecek Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.67 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,6 +323,18 @@ ckfini(int noint)
 				printf(
 				    "\n***** FILE SYSTEM MARKED CLEAN *****\n");
 		}
+	}
+	if (doing2ea) {
+		printf("ENABLING EXTATTR SUPPORT\n");
+		is_ufs2ea = 1;
+		sbdirty();
+		flush(fswritefd, &sblk);
+	}
+	if (doing2noea) {
+		printf("DISABLING EXTATTR SUPPORT\n");
+		is_ufs2ea = 0;
+		sbdirty();
+		flush(fswritefd, &sblk);
 	}
 	if (debug)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
