@@ -1,3 +1,5 @@
+/*	$NetBSD: t_socket_afinet.c,v 1.2 2022/11/17 08:34:39 ozaki-r Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -26,7 +28,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __NetBSD__
+__RCSID("$NetBSD: t_socket_afinet.c,v 1.2 2022/11/17 08:34:39 ozaki-r Exp $");
+#define USE_RUMPKERNEL	1
+#else
 __FBSDID("$FreeBSD$");
+#endif
 
 #include <sys/errno.h>
 #include <sys/socket.h>
@@ -35,10 +42,29 @@ __FBSDID("$FreeBSD$");
 
 #include <atf-c.h>
 
+#ifdef USE_RUMPKERNEL
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+
+#define socket	rump_sys_socket
+#define bind	rump_sys_bind
+#define listen	rump_sys_listen
+#define connect	rump_sys_connect
+#define write	rump_sys_write
+#define poll	rump_sys_poll
+#define close	rump_sys_close
+
+#define RUMP_INIT()	rump_init()
+#else
+#define RUMP_INIT()	do { } while (0)
+#endif
+
 ATF_TC_WITHOUT_HEAD(socket_afinet);
 ATF_TC_BODY(socket_afinet, tc)
 {
 	int sd;
+
+	RUMP_INIT();
 
 	sd = socket(PF_INET, SOCK_DGRAM, 0);
 	ATF_CHECK(sd >= 0);
@@ -51,6 +77,12 @@ ATF_TC_BODY(socket_afinet_bind_zero, tc)
 {
 	int sd, rc;
 	struct sockaddr_in sin;
+
+	RUMP_INIT();
+
+#ifdef __NetBSD__
+	atf_tc_expect_fail("NetBSD doesn't allow sin_family == 0 (sin_len == 0 too)");
+#endif
 
 	if (atf_tc_get_config_var_as_bool_wd(tc, "ci", false))
 		atf_tc_skip("doesn't work when mac_portacl(4) loaded (https://bugs.freebsd.org/238781)");
@@ -76,6 +108,8 @@ ATF_TC_BODY(socket_afinet_bind_ok, tc)
 	int sd, rc;
 	struct sockaddr_in sin;
 
+	RUMP_INIT();
+
 	sd = socket(PF_INET, SOCK_DGRAM, 0);
 	ATF_CHECK(sd >= 0);
 
@@ -90,6 +124,7 @@ ATF_TC_BODY(socket_afinet_bind_ok, tc)
 	close(sd);
 }
 
+#ifdef POLLRDHUP
 ATF_TC_WITHOUT_HEAD(socket_afinet_poll_no_rdhup);
 ATF_TC_BODY(socket_afinet_poll_no_rdhup, tc)
 {
@@ -97,6 +132,8 @@ ATF_TC_BODY(socket_afinet_poll_no_rdhup, tc)
 	struct sockaddr_in sin;
 	struct pollfd pfd;
 	int one = 1;
+
+	RUMP_INIT();
 
 	/* Verify that we don't expose POLLRDHUP if not requested. */
 
@@ -157,6 +194,8 @@ ATF_TC_BODY(socket_afinet_poll_rdhup, tc)
 	struct pollfd pfd;
 	char buffer;
 	int one = 1;
+
+	RUMP_INIT();
 
 	/* Verify that server sees POLLRDHUP if it asks for it. */
 
@@ -227,6 +266,7 @@ ATF_TC_BODY(socket_afinet_poll_rdhup, tc)
 	close(ss2);
 	close(ss);
 }
+#endif /* POLLRDHUP */
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -234,8 +274,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, socket_afinet);
 	ATF_TP_ADD_TC(tp, socket_afinet_bind_zero);
 	ATF_TP_ADD_TC(tp, socket_afinet_bind_ok);
+#ifdef POLLRDHUP
 	ATF_TP_ADD_TC(tp, socket_afinet_poll_no_rdhup);
 	ATF_TP_ADD_TC(tp, socket_afinet_poll_rdhup);
+#endif
 
 	return atf_no_error();
 }
