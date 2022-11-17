@@ -1,3 +1,5 @@
+/*	$NetBSD: t_tcp_connect_port.c,v 1.2 2022/11/17 08:36:54 ozaki-r Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -27,7 +29,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __NetBSD__
+__RCSID("$NetBSD: t_tcp_connect_port.c,v 1.2 2022/11/17 08:36:54 ozaki-r Exp $");
+#define USE_RUMPKERNEL	1
+#else
 __FBSDID("$FreeBSD$");
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -45,6 +52,21 @@ __FBSDID("$FreeBSD$");
 
 #include <atf-c.h>
 
+#ifdef USE_RUMPKERNEL
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+
+#define socket	rump_sys_socket
+#define bind	rump_sys_bind
+#define listen	rump_sys_listen
+#define accept	rump_sys_accept
+#define connect	rump_sys_connect
+#define write	rump_sys_write
+#define close	rump_sys_close
+#define setsockopt	rump_sys_setsockopt
+#define getsockname	rump_sys_getsockname
+#endif /* USE_RUMPKERNEL */
+
 #define	SYSCTLBAKFILE	"tmp.net.inet.ip.portrange.randomized"
 
 /*
@@ -54,6 +76,9 @@ __FBSDID("$FreeBSD$");
 static void
 disable_random_ports(void)
 {
+#ifdef USE_RUMPKERNEL
+	rump_init(); /* XXX */
+#else
 	int error, fd, random_new, random_save;
 	size_t sysctlsz;
 
@@ -112,6 +137,7 @@ restore_sysctl:
 		    NULL, &random_save, sysctlsz);
 		atf_tc_skip("Error setting sysctl");
 	}
+#endif /* USE_RUMPKERNEL */
 }
 
 /*
@@ -120,6 +146,7 @@ restore_sysctl:
 static void
 restore_random_ports(void)
 {
+#ifndef USE_RUMPKERNEL
 	int error, fd, random_save;
 
 	/* Open the backup file, read the contents, close it, and delete it. */
@@ -152,6 +179,7 @@ restore_random_ports(void)
 	if (error)
 		warn("sysctlbyname(\"net.inet.ip.portrange.randomized\") "
 		    "failed while restoring value");
+#endif /* USE_RUMPKERNEL */
 }
 
 /*
@@ -271,7 +299,9 @@ ATF_TC_HEAD(basic_ipv4, tc)
 {
 
 	atf_tc_set_md_var(tc, "require.user", "root");
+#ifndef USE_RUMPKERNEL
 	atf_tc_set_md_var(tc, "require.config", "allow_sysctl_side_effects");
+#endif
 	atf_tc_set_md_var(tc, "descr",
 	    "Check automatic local port assignment during TCP connect calls");
 }
@@ -300,7 +330,9 @@ ATF_TC_HEAD(basic_ipv6, tc)
 {
 
 	atf_tc_set_md_var(tc, "require.user", "root");
+#ifndef USE_RUMPKERNEL
 	atf_tc_set_md_var(tc, "require.config", "allow_sysctl_side_effects");
+#endif
 	atf_tc_set_md_var(tc, "descr",
 	    "Check automatic local port assignment during TCP connect calls");
 }
