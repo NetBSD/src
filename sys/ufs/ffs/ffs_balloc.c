@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.65 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.66 2022/11/17 06:40:40 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.65 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.66 2022/11/17 06:40:40 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -542,6 +542,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	int unwindidx = -1;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
+
+	KASSERT((ump->um_flags & UFS_EA) != 0 || (flags & IO_EXT) == 0);
 
 	lbn = ffs_lblkno(fs, off);
 	size = ffs_blkoff(fs, off) + size;

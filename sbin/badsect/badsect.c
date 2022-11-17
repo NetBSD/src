@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.34 2016/09/05 01:09:57 sevan Exp $	*/
+/*	$NetBSD: badsect.c,v 1.35 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.34 2016/09/05 01:09:57 sevan Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.35 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,11 +151,13 @@ main(int argc, char *argv[])
 		rdfs(sblock_try[i], SBLOCKSIZE, fs);
 		switch (fs->fs_magic) {
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
 			break;
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:

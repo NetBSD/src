@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.65 2021/09/18 03:05:20 christos Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.66 2022/11/17 06:40:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.65 2021/09/18 03:05:20 christos Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.66 2022/11/17 06:40:40 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,11 +192,13 @@ dumpfs(const char *name)
 		if (read(fd, &afs, SBLOCKSIZE) != SBLOCKSIZE)
 			continue;
 		switch(afs.fs_magic) {
+		case FS_UFS2EA_MAGIC:
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			break;
 		case FS_UFS1_MAGIC:
 			break;
+		case FS_UFS2EA_MAGIC_SWAPPED:
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			needswap = 1;
@@ -294,7 +296,8 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	time_t t;
 	int32_t fsflags;
 
-	printf("format\tFFSv%d\n", is_ufs2+1);
+	printf("format\tFFSv%d%s\n", is_ufs2+1,
+	       fs->fs_magic == FS_UFS2EA_MAGIC ? "ea" : "");
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (needswap)
 #else

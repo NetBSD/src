@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.23 2019/03/01 16:42:11 christos Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.24 2022/11/17 06:40:38 chs Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.23 2019/03/01 16:42:11 christos Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.24 2022/11/17 06:40:38 chs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,11 +83,17 @@ fs_read_sblock(char *superblock)
 		rawread(sblock_try[i], (char *)superblock, MAXBSIZE);
 
 		switch(sblock->fs_magic) {
+		case FS_UFS2EA_MAGIC:
+			sblock->fs_magic = FS_UFS2_MAGIC;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
 			break;
+		case FS_UFS2EA_MAGIC_SWAPPED:
+			sblock->fs_magic = FS_UFS2_MAGIC_SWAPPED;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/

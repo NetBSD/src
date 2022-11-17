@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.35 2022/01/20 14:45:14 christos Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.36 2022/11/17 06:40:39 chs Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.35 2022/01/20 14:45:14 christos Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.36 2022/11/17 06:40:39 chs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,7 +128,9 @@ ffs_checkver(struct sblockinfo *sbi)
 			sbi->ffs->fs_size = sbi->ffs->fs_old_size;
 			return FSTYPE_FFSV1;
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			return FSTYPE_FFSV2;
 		default:
 			return FSTYPE_NONE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.2 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: ufs.c,v 1.2 2022/11/17 06:40:40 chs Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -67,6 +67,12 @@ fstyp_ufs(FILE *fp, char *label, size_t labelsize)
 		fs = (struct fs *)read_buf(fp, superblock, SBLOCKSIZE);
 		if (fs == NULL)
 			continue;
+
+		if (fs->fs_magic == FS_UFS2EA_MAGIC)
+			fs->fs_magic = FS_UFS2_MAGIC;
+		else if (fs->fs_magic == FS_UFS2EA_MAGIC_SWAPPED)
+			fs->fs_magic = FS_UFS2_MAGIC_SWAPPED;
+
 		/*
 		 * Check for magic. We also need to check if file system size
 		 * is equal to providers size, because sysinstall(8) used to

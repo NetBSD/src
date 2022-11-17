@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.69 2021/09/18 03:05:20 christos Exp $	*/
+/*	$NetBSD: fs.h,v 1.70 2022/11/17 06:40:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -398,8 +398,10 @@ struct fs {
  */
 #define	FS_UFS1_MAGIC	0x011954	/* UFS1 fast file system magic number */
 #define	FS_UFS2_MAGIC	0x19540119	/* UFS2 fast file system magic number */
+#define	FS_UFS2EA_MAGIC	0x19012038	/* UFS2 with extattrs */
 #define	FS_UFS1_MAGIC_SWAPPED	0x54190100
 #define	FS_UFS2_MAGIC_SWAPPED	0x19015419
+#define	FS_UFS2EA_MAGIC_SWAPPED	0x38200119
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
 #define	FS_42INODEFMT	-1		/* 4.2BSD inode format */
 #define	FS_44INODEFMT	2		/* 4.4BSD inode format */

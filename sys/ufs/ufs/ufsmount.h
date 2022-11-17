@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.43 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.44 2022/11/17 06:40:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -163,6 +163,7 @@ struct ufs_ops {
 #define UFS_ISAPPLEUFS	0x02	/* filesystem is Apple UFS */
 #define UFS_QUOTA	0x04	/* filesystem has QUOTA (v1) */
 #define UFS_QUOTA2	0x08	/* filesystem has QUOTA2 */
+#define UFS_EA		0x10	/* UFS2 with extattrs */
 
 /*
  * Filesystem types

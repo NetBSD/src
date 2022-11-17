@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.8 2021/12/14 11:06:50 chs Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.9 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.8 2021/12/14 11:06:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.9 2022/11/17 06:40:40 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -464,6 +464,9 @@ ffs_open_ea(struct vnode *vp, kauth_cred_t cred)
 	int error;
 
 	ip = VTOI(vp);
+	if ((ip->i_ump->um_flags & UFS_EA) == 0) {
+		return EOPNOTSUPP;
+	}
 
 	ffs_lock_ea(vp);
 	if (ip->i_ea_area != NULL) {
@@ -497,6 +500,7 @@ ffs_close_ea(struct vnode *vp, int commit, kauth_cred_t cred)
 	struct ufs2_dinode *dp;
 
 	ip = VTOI(vp);
+	KASSERT((ip->i_ump->um_flags & UFS_EA) != 0);
 
 	if (commit)
 		KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);

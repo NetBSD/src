@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2011/06/09 19:57:52 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -42,6 +42,7 @@ void		clri(struct inodesc *, const char *, int);
 int		cmpsblks(const struct fs *, struct fs *);
 int		cmpsblks42(const struct fs *, struct fs *);
 int		cmpsblks44(const struct fs *, struct fs *);
+void		cvt_magic(struct fs *);
 union		dinode * getnextinode(ino_t);
 void		direrror(ino_t, const char *);
 int		dirscan(struct inodesc *);

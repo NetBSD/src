@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.55 2020/04/18 12:54:38 jdolecek Exp $	*/
+/*	$NetBSD: fsck.h,v 1.56 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -166,6 +166,7 @@ extern struct fs *sblocksave;
 		sb_oldfscompat_write(sblk.b_un.b_fs, sblocksave); \
 		if (needswap) \
 			ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs); \
+		cvt_magic(sblk.b_un.b_fs); \
 		sblk.b_dirty = 1; \
 	} while (0)
 #define	cgdirty()	do {copyback_cg(&cgblk); cgblk.b_dirty = 1;} while (0)
@@ -280,12 +281,15 @@ extern int	zflag;		/* zero unused directory space */
 extern int	cvtlevel;	/* convert to newer file system format */
 extern int	doinglevel1;	/* converting to new cylinder group format */
 extern int	doinglevel2;	/* converting to new inode format */
+extern int	doing2ea;	/* converting UFS2 to UFS2ea */
+extern int	doing2noea;	/* converting UFS2ea to UFS2 */
 extern int	newinofmt;	/* filesystem has new inode format */
 extern char	usedsoftdep;	/* just fix soft dependency inconsistencies */
 extern int	preen;		/* just fix normal inconsistencies */
 extern int	quiet;		/* Don't print anything if clean */
 extern int	forceimage;	/* file system is an image file */
 extern int	is_ufs2;	/* we're dealing with an UFS2 filesystem */
+extern int	is_ufs2ea;	/* is the variant that supports exattrs */
 extern int	markclean;	/* mark file system clean when done */
 extern char	havesb;		/* superblock has been read */
 extern char	skipclean;	/* skip clean file systems if preening */

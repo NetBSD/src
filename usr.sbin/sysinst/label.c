@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.41 2022/06/21 15:46:10 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.42 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.41 2022/06/21 15:46:10 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.42 2022/11/17 06:40:41 chs Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2023,7 +2023,9 @@ get_last_mounted(int fd, daddr_t partstart, uint *fs_type, uint *fs_sub_type,
 				*fs_sub_type = 1;
 			continue;
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			/* Check we have the main superblock */
 			if (SB->fs_sblockloc == *sbp) {
 				mnt = (const char *)SB->fs_fsmnt;

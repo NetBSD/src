@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.85 2019/04/13 19:29:27 maya Exp $
+.\"	$NetBSD: newfs.8,v 1.86 2022/11/17 06:40:39 chs Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,9 +229,10 @@ or
 This is the default.
 .It 2
 FFSv2; enhanced Fast File System, suited for more than 1 Terabyte capacity.
-.\" Supports access control lists.
 This is also known as
 .Sq UFS2 .
+.It 2ea
+FFSv2 plus support for extended attributes and access control lists.
 .El
 See
 .Xr fsck_ffs 8

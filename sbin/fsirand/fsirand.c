@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.32 2013/10/19 01:09:58 christos Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.33 2022/11/17 06:40:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.32 2013/10/19 01:09:58 christos Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.33 2022/11/17 06:40:39 chs Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -95,11 +95,13 @@ getsblock(int fd, const char *name, struct fs *fs)
 
 		switch(fs->fs_magic) {
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
 			break;
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:
