@@ -1,4 +1,4 @@
-#	$NetBSD: genfth.cf,v 1.9 2013/06/10 10:26:22 hannken Exp $
+#	$NetBSD: genfth.cf,v 1.10 2022/11/17 06:40:39 chs Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ member	d_name
 
 define	fs1_magic_value	FS_UFS1_MAGIC
 define	fs2_magic_value	FS_UFS2_MAGIC
+define	fs2ea_magic_value FS_UFS2EA_MAGIC
 define	fs_42postblfmt	FS_42POSTBLFMT
 define	fs_44inodefmt	FS_44INODEFMT
 define	ndaddr		UFS_NDADDR

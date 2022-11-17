@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.55 2021/09/18 03:05:20 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.56 2022/11/17 06:40:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.55 2021/09/18 03:05:20 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.56 2022/11/17 06:40:39 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ int	fi;
 long	dev_bsize = 512;
 int	needswap = 0;
 int	is_ufs2 = 0;
+int	extattr = 0;
 off_t	sblockloc;
 int	userquota = 0;
 int	groupquota = 0;
@@ -361,7 +362,9 @@ main(int argc, char *argv[])
 	if (aflag) {
 		name = "ACLs";
 		if (strcmp(avalue, "enable") == 0) {
-			if (sblock.fs_flags & FS_NFS4ACLS) {
+			if (is_ufs2 && !extattr) {
+				warnx("%s not supported by this fs", name);
+			} else if (sblock.fs_flags & FS_NFS4ACLS) {
 				warnx("%s remains unchanged as enabled", name);
 			} else if (sblock.fs_flags & FS_POSIX1EACLS) {
 				warnx("%s and POSIX.1e ACLs are mutually "
@@ -384,7 +387,9 @@ main(int argc, char *argv[])
 	if (pflag) {
 		name = "POSIX1e ACLs";
 		if (strcmp(pvalue, "enable") == 0) {
-			if (sblock.fs_flags & FS_POSIX1EACLS) {
+			if (is_ufs2 && !extattr) {
+				warnx("%s not supported by this fs", name);
+			} else if (sblock.fs_flags & FS_POSIX1EACLS) {
 				warnx("%s remains unchanged as enabled", name);
 			} else if (sblock.fs_flags & FS_NFS4ACLS) {
 				warnx("%s and ACLs are mutually "
@@ -657,11 +662,17 @@ getsb(struct fs *fs, const char *file)
 			errx(5, "cannot find filesystem superblock");
 		bread(sblock_try[i] / dev_bsize, (char *)fs, SBLOCKSIZE, file);
 		switch(fs->fs_magic) {
+		case FS_UFS2EA_MAGIC:
+			extattr = 1;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
 			break;
+		case FS_UFS2EA_MAGIC_SWAPPED:
+			extattr = 1;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.54 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: pass5.c,v 1.55 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.54 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.55 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,11 +223,13 @@ pass5(void)
 		 * write back the superblock to the spare at this
 		 * cylinder group.
 		 */
-		if ((cvtlevel && sblk.b_dirty) || doswap) {
+		if ((cvtlevel && sblk.b_dirty) || doswap || doing2ea || doing2noea) {
 			bwrite(fswritefd, sblk.b_un.b_buf,
 			    FFS_FSBTODB(sblock, cgsblock(sblock, c)),
 			    sblock->fs_sbsize);
 		} else {
+			int alt_ufs2ea = 0;
+
 			/*
 			 * Read in the current alternate superblock,
 			 * and compare it to the master.  If it's
@@ -242,10 +244,15 @@ pass5(void)
 				    sblock->fs_sbsize);
 				if (needswap)
 					ffs_sb_swap(asblk.b_un.b_fs, altsblock);
+				if (altsblock->fs_magic == FS_UFS2EA_MAGIC) {
+					altsblock->fs_magic = FS_UFS2_MAGIC;
+					alt_ufs2ea = 1;
+				}
 			}
 			sb_oldfscompat_write(sblock, sblocksave);
-			if ((asblk.b_errs || cmpsblks(sblock, altsblock)) &&
-			     dofix(&idesc[3],
+			if ((asblk.b_errs || cmpsblks(sblock, altsblock) ||
+			     is_ufs2ea != alt_ufs2ea) &&
+			    dofix(&idesc[3],
 				   "ALTERNATE SUPERBLK(S) ARE INCORRECT")) {
 				bwrite(fswritefd, sblk.b_un.b_buf,
 				    FFS_FSBTODB(sblock, cgsblock(sblock, c)),

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.86 2022/04/29 07:42:07 rin Exp $	*/
+/*	$NetBSD: ufs.c,v 1.87 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -156,9 +156,6 @@ typedef uint32_t	ino32_t;
 #ifndef FSBTODB
 #define FSBTODB(fs, indp) FFS_FSBTODB(fs, indp)
 #endif
-#ifndef FS_MAGIC
-#define FS_MAGIC FS_UFS1_MAGIC
-#endif
 #ifndef UFS_NINDIR
 #define UFS_NINDIR FFS_NINDIR
 #endif
@@ -214,17 +211,54 @@ static int search_directory(const char *, int, struct open_file *, ino32_t *);
 static void ffs_oldfscompat(FS *);
 #endif
 
+#ifdef LIBSA_FFSv1
 static __inline__ bool
 ffs_is_magic(FS *fs)
 {
-	return fs->fs_magic == FS_MAGIC;
+	return fs->fs_magic == FS_UFS1_MAGIC;
 }
+
+static __inline__ bool
+ffs_is_magic_swapped(FS *fs)
+{
+	return fs->fs_magic == bswap32(FS_UFS1_MAGIC);
+}
+#endif
+
+#ifdef LIBSA_FFSv2
+static __inline__ bool
+ffs_is_magic(FS *fs)
+{
+	return fs->fs_magic == FS_UFS2_MAGIC || fs->fs_magic == FS_UFS2EA_MAGIC;
+}
+
+static __inline__ bool
+ffs_is_magic_swapped(FS *fs)
+{
+	return fs->fs_magic == bswap32(FS_UFS2_MAGIC) ||
+		fs->fs_magic == bswap32(FS_UFS2EA_MAGIC);
+}
+#endif
+
+#ifdef LIBSA_LFS
+static __inline__ bool
+ffs_is_magic(FS *fs)
+{
+	return fs->fs_magic == LFS_MAGIC;
+}
+
+static __inline__ bool
+ffs_is_magic_swapped(FS *fs)
+{
+	return fs->fs_magic == bswap32(LFS_MAGIC);
+}
+#endif
 
 static __inline__ void
 ffs_fix_magic_swapped(struct file *fp, FS *fs)
 {
 #ifdef LIBSA_FFS_EI
-	fp->f_swapped = fs->fs_magic == bswap32(FS_MAGIC);
+	fp->f_swapped = ffs_is_magic_swapped(fs);
 	if (fp->f_swapped)
 {
 		ffs_sb_swap(fs, fs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.103 2020/04/17 09:42:27 jdolecek Exp $	*/
+/*	$NetBSD: setup.c,v 1.104 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.103 2020/04/17 09:42:27 jdolecek Exp $");
+__RCSID("$NetBSD: setup.c,v 1.104 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -718,7 +718,8 @@ detect_byteorder(struct fs *fs, int sblockoff)
 	    fs->fs_magic == FS_UFS1_MAGIC_SWAPPED))
 		/* Likely to be the first alternate of a fs with 64k blocks */
 		return -1;
-	if (fs->fs_magic == FS_UFS1_MAGIC || fs->fs_magic == FS_UFS2_MAGIC) {
+	if (fs->fs_magic == FS_UFS1_MAGIC || fs->fs_magic == FS_UFS2_MAGIC ||
+	    fs->fs_magic == FS_UFS2EA_MAGIC) {
 #ifndef NO_FFS_EI
 		if (endian == 0 || BYTE_ORDER == endian) {
 			needswap = 0;
@@ -732,7 +733,8 @@ detect_byteorder(struct fs *fs, int sblockoff)
 	}
 #ifndef NO_FFS_EI
 	else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED ||
-		   fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
+		 fs->fs_magic == FS_UFS2_MAGIC_SWAPPED ||
+		 fs->fs_magic == FS_UFS2EA_MAGIC_SWAPPED) {
 		if (endian == 0 || BYTE_ORDER != endian) {
 			needswap = 1;
 			doswap = do_blkswap = do_dirswap = 0;
@@ -744,6 +746,29 @@ detect_byteorder(struct fs *fs, int sblockoff)
 	}
 #endif
 	return -1;
+}
+
+/* Update on-disk fs->fs_magic if we are converting */
+void
+cvt_magic(struct fs *fs)
+{
+
+	if (is_ufs2ea || doing2ea) {
+		if (fs->fs_magic == FS_UFS2_MAGIC) {
+			fs->fs_magic = FS_UFS2EA_MAGIC;
+		}
+		if (fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
+			fs->fs_magic = FS_UFS2EA_MAGIC_SWAPPED;
+		}
+	}
+	if (doing2noea) {
+		if (fs->fs_magic == FS_UFS2EA_MAGIC) {
+			fs->fs_magic = FS_UFS2_MAGIC;
+		}
+		if (fs->fs_magic == FS_UFS2EA_MAGIC_SWAPPED) {
+			fs->fs_magic = FS_UFS2_MAGIC_SWAPPED;
+		}
+	}
 }
 
 /*
@@ -811,8 +836,14 @@ readsb(int listerr)
 	memmove(sblock, sblk.b_un.b_fs, SBLOCKSIZE);
 	if (needswap)
 		ffs_sb_swap(sblk.b_un.b_fs, sblock);
-
+	if (sblock->fs_magic == FS_UFS2EA_MAGIC) {
+		is_ufs2ea = 1;
+		sblock->fs_magic = FS_UFS2_MAGIC;
+	}
 	is_ufs2 = sblock->fs_magic == FS_UFS2_MAGIC;
+
+	/* change on-disk magic if asked */
+	cvt_magic(fs);
 
 	/*
 	 * run a few consistency checks of the super block
@@ -845,6 +876,11 @@ readsb(int listerr)
 	memmove(altsblock, asblk.b_un.b_fs, sblock->fs_sbsize);
 	if (needswap)
 		ffs_sb_swap(asblk.b_un.b_fs, altsblock);
+	if (altsblock->fs_magic == FS_UFS2EA_MAGIC) {
+		altsblock->fs_magic = FS_UFS2_MAGIC;
+	}
+	/* change on-disk magic if asked */
+	cvt_magic(asblk.b_un.b_fs);
 	if (cmpsblks(sblock, altsblock)) {
 		if (debug) {
 			uint32_t *nlp, *olp, *endlp;
@@ -873,7 +909,7 @@ out:
 	sb_oldfscompat_read(sblock, &sblocksave);
 
 	/* Now we know the SB is valid, we can write it back if needed */
-	if (doswap) {
+	if (doswap || doing2ea || doing2noea) {
 		sbdirty();
 		dirty(&asblk);
 	}

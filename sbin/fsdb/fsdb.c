@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.52 2021/05/29 16:51:25 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.53 2022/11/17 06:40:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.52 2021/05/29 16:51:25 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.53 2022/11/17 06:40:38 chs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: fsdb.c,v 1.52 2021/05/29 16:51:25 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <err.h>
+#include <stdbool.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -91,13 +92,17 @@ int	bflag;
 int	debug;
 int	zflag;
 int	cvtlevel;
+int	eaflag;
 int	doinglevel1;
 int	doinglevel2;
+int	doing2ea;
+int	doing2noea;
 int	newinofmt;
 char	usedsoftdep;
 int	preen;
 int	forceimage;
 int	is_ufs2;
+int	is_ufs2ea;
 int	markclean;
 char	havesb;
 char	skipclean;
@@ -137,6 +142,7 @@ static int scannames(struct inodesc *);
 static int dolookup(char *);
 static int chinumfunc(struct inodesc *);
 static int chnamefunc(struct inodesc *);
+static int chreclenfunc(struct inodesc *);
 static int dotime(char *, int64_t *, int32_t *);
 static void print_blks32(int32_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
 static void print_blks64(int64_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
@@ -160,7 +166,7 @@ ino_t   curinum;
 static void
 usage(void)
 {
-	errx(1, "usage: %s [-dFn] -f <fsname>", getprogname());
+	errx(1, "usage: %s [-dFfNn] <fsname>", getprogname());
 }
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
@@ -173,11 +179,12 @@ main(int argc, char *argv[])
 {
 	int     ch, rval;
 	char   *fsys = NULL;
+	bool	makedirty = true;
 
 	forceimage = 0;
 	debug = 0;
 	isappleufs = 0;
-	while ((ch = getopt(argc, argv, "dFf:n")) != -1) {
+	while ((ch = getopt(argc, argv, "dFf:Nn")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug++;
@@ -188,6 +195,9 @@ main(int argc, char *argv[])
 		case 'f':
 			fsys = optarg;
 			break;
+		case 'N':
+			makedirty = false;
+			break;
 		case 'n':
 			nflag++;
 			break;
@@ -195,6 +205,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (fsys == NULL)
+		fsys = argv[0];
 	if (fsys == NULL)
 		usage();
 	endian = 0;
@@ -205,6 +219,10 @@ main(int argc, char *argv[])
 	rval = cmdloop();
 	if (nflag)
 		exit(rval);
+	if (!makedirty) {
+		ckfini(1);
+		exit(rval);
+	}
 	sblock->fs_clean = 0;	/* mark it dirty */
 	sbdirty();
 	markclean = 0;
@@ -245,6 +263,15 @@ CMDFUNC(chatime);		/* Change atime */
 CMDFUNC(chbirthtime);		/* Change birthtime */
 CMDFUNC(chinum);		/* Change inode # of dirent */
 CMDFUNC(chname);		/* Change dirname of dirent */
+CMDFUNC(chreclen);		/* Change reclen of dirent */
+CMDFUNC(chextsize);		/* Change extsize */
+CMDFUNC(chblocks);		/* Change blocks */
+CMDFUNC(chdb);			/* Change direct block pointer */
+CMDFUNC(chib);			/* Change indirect block pointer */
+CMDFUNC(chextb);		/* Change extattr block pointer */
+CMDFUNC(chfreelink);		/* Change freelink pointer */
+CMDFUNC(iptrs);			/* print raw block pointers for active inode */
+CMDFUNC(saveea);		/* Save extattrs */
 
 static struct cmdtable cmds[] = {
 	{"help", "Print out help", 1, 1, helpfn},
@@ -261,13 +288,14 @@ static struct cmdtable cmds[] = {
 	{"linkcount", "Set link count to COUNT", 2, 2, linkcount},
 	{"ls", "List current inode as directory", 1, 1, ls},
 	{"blks", "List current inode's data blocks", 1, 1, blks},
-	{"saveblks", "Save current inode's data blocks", 2, 2, blks},
+	{"saveblks", "Save current inode's data blocks to FILE", 2, 2, blks},
 	{"findblk", "Find inode owning disk block(s)", 2, 33, findblk},
 	{"rm", "Remove NAME from current inode directory", 2, 2, rm},
 	{"del", "Remove NAME from current inode directory", 2, 2, rm},
 	{"ln", "Hardlink INO into current inode directory as NAME", 3, 3, ln},
 	{"chinum", "Change dir entry number INDEX to INUM", 3, 3, chinum},
 	{"chname", "Change dir entry number INDEX to NAME", 3, 3, chname},
+	{"chreclen", "Change dir entry number INDEX to RECLEN", 3, 3, chreclen},
 	{"chtype", "Change type of current inode to TYPE", 2, 2, newtype},
 	{"chmod", "Change mode of current inode to MODE", 2, 2, chmode},
 	{"chown", "Change owner of current inode to OWNER", 2, 2, chowner},
@@ -276,11 +304,19 @@ static struct cmdtable cmds[] = {
 	{"chflags", "Change flags of current inode to FLAGS", 2, 2, chaflags},
 	{"chgen", "Change generation number of current inode to GEN", 2, 2,
 		    chgen},
+	{ "chextsize", "Change extsize of current inode to EXTSIZE", 2, 2, chextsize },
+	{ "chblocks", "Change blocks of current inode to BLOCKS", 2, 2, chblocks },
+	{ "chdb", "Change db pointer N of current inode to BLKNO", 3, 3, chdb },
+	{ "chib", "Change ib pointer N of current inode to BLKNO", 3, 3, chib },
+	{ "chextb", "Change extb pointer N of current inode to BLKNO", 3, 3, chextb },
+	{ "chfreelink", "Change freelink of current inode to FREELINK", 2, 2, chfreelink },
+	{ "iptrs", "Print raw block pointers of current inode", 1, 1, iptrs },
 	{"mtime", "Change mtime of current inode to MTIME", 2, 2, chmtime},
 	{"ctime", "Change ctime of current inode to CTIME", 2, 2, chctime},
 	{"atime", "Change atime of current inode to ATIME", 2, 2, chatime},
 	{"birthtime", "Change atime of current inode to BIRTHTIME", 2, 2,
 	    chbirthtime},
+	{"saveea", "Save current inode's extattr blocks to FILE", 2, 2, saveea},
 	{"quit", "Exit", 1, 1, quit},
 	{"q", "Exit", 1, 1, quit},
 	{"exit", "Exit", 1, 1, quit},
@@ -491,6 +527,7 @@ static const char *typename[] = {
 	"whiteout",
 };
 
+static int diroff;
 static int slot;
 
 static int
@@ -498,10 +535,11 @@ scannames(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
-	printf("slot %d ino %d reclen %d: %s, `%.*s'\n",
-	    slot++, iswap32(dirp->d_ino), iswap16(dirp->d_reclen),
-		typename[dirp->d_type],
+	printf("slot %d off %d ino %d reclen %d: %s, `%.*s'\n",
+	    slot++, diroff, iswap32(dirp->d_ino), iswap16(dirp->d_reclen),
+	    typename[dirp->d_type],
 	    dirp->d_namlen, dirp->d_name);
+	diroff += dirp->d_reclen;
 	return (KEEPON);
 }
 
@@ -511,6 +549,7 @@ CMDFUNC(ls)
 	checkactivedir();	/* let it go on anyway */
 
 	slot = 0;
+	diroff = 0;
 	idesc.id_number = curinum;
 	idesc.id_func = scannames;
 	idesc.id_type = DATA;
@@ -524,27 +563,23 @@ CMDFUNC(ls)
 CMDFUNC(blks)
 {
 	uint64_t blkno = 0;
-	int i, type;
+	int i;
 	struct wrinfo wrinfo, *wrp = NULL;
+	bool saveblks;
 
-	if (strcmp(argv[0], "saveblks") == 0) {
+	saveblks = strcmp(argv[0], "saveblks") == 0;
+	if (saveblks) {
 		wrinfo.fd = open(argv[1], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 		if (wrinfo.fd == -1) {
 			warn("unable to create file %s", argv[1]);
 			return 0;
 		}
-		wrinfo.size = DIP(curinode, size);
+		wrinfo.size = iswap64(DIP(curinode, size));
 		wrinfo.written_size = 0;
 		wrp = &wrinfo;
 	}
 	if (!curinode) {
 		warnx("no current inode");
-		return 0;
-	}
-	type = iswap16(DIP(curinode, mode)) & IFMT;
-	if (type != IFDIR && type != IFREG) {
-		warnx("inode %llu not a file or directory",
-		    (unsigned long long)curinum);
 		return 0;
 	}
 	if (is_ufs2) {
@@ -564,6 +599,11 @@ CMDFUNC(blks)
 		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks64(iswap64(curinode->dp2.di_ib[i]), i,
 			    &blkno, wrp);
+		printf("Extattr blocks:\n");
+		blkno = 0;
+		if (saveblks)
+			wrinfo.size += iswap32(curinode->dp2.di_extsize);
+		print_blks64(curinode->dp2.di_extb, UFS_NXADDR, &blkno, wrp);
 	} else {
 		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks32(iswap32(curinode->dp1.di_ib[i]), i,
@@ -827,7 +867,7 @@ static int
 writefileblk(struct wrinfo *wrp, uint64_t blk)
 {
 	char buf[MAXBSIZE];
-	long long size;
+	long long size, rsize;
 
 	size = wrp->size - wrp->written_size;
 	if (size > sblock->fs_bsize)
@@ -837,7 +877,8 @@ writefileblk(struct wrinfo *wrp, uint64_t blk)
 		return -1;
 	}
 
-	if (bread(fsreadfd, buf, FFS_FSBTODB(sblock, blk), size) != 0)
+	rsize = roundup(size, DEV_BSIZE);
+	if (bread(fsreadfd, buf, FFS_FSBTODB(sblock, blk), rsize) != 0)
 		return -1;
 	if (write(wrp->fd, buf, size) != size)
 		return -1;
@@ -1154,6 +1195,53 @@ CMDFUNC(chname)
 		}
 }
 
+static int
+chreclenfunc(struct inodesc *idesc)
+{
+	struct direct *dirp = idesc->id_dirp;
+
+	if (slotcount++ == desired) {
+		dirp->d_reclen = iswap16(idesc->id_parent);
+		return STOP | ALTERED | FOUND;
+	}
+	return KEEPON;
+}
+
+CMDFUNC(chreclen)
+{
+	char   *cp;
+	uint32_t reclen;
+	struct inodesc idesc;
+
+	slotcount = 0;
+	if (!checkactivedir())
+		return 1;
+
+	desired = strtoul(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		printf("invalid slot number `%s'\n", argv[1]);
+		return 1;
+	}
+	reclen = strtoul(argv[2], &cp, 0);
+	if (reclen >= UINT16_MAX) {
+		printf("invalid reclen `%s'\n", argv[2]);
+		return 1;
+	}
+
+	idesc.id_number = curinum;
+	idesc.id_func = chreclenfunc;
+	idesc.id_fix = IGNORE;
+	idesc.id_type = DATA;
+	idesc.id_parent = reclen;	/* XXX convenient hiding place */
+
+	if (ckinode(curinode, &idesc) & FOUND)
+		return 0;
+	else {
+		warnx("no %sth slot in current directory", argv[1]);
+		return 1;
+	}
+}
+
 static struct typemap {
 	const char *typename;
 	int     typebits;
@@ -1162,6 +1250,9 @@ static struct typemap {
 	{ "dir", IFDIR },
 	{ "socket", IFSOCK },
 	{ "fifo", IFIFO },
+	{"link", IFLNK},
+	{"chr", IFCHR},
+	{"blk", IFBLK},
 };
 
 CMDFUNC(newtype)
@@ -1217,13 +1308,13 @@ CMDFUNC(chmode)
 
 CMDFUNC(chlen)
 {
-	long    len;
+	off_t    len;
 	char   *cp;
 
 	if (!checkactive())
 		return 1;
 
-	len = strtol(argv[1], &cp, 0);
+	len = strtoull(argv[1], &cp, 0);
 	if (cp == argv[1] || *cp != '\0' || len < 0) {
 		warnx("bad length '%s'", argv[1]);
 		return 1;
@@ -1278,6 +1369,160 @@ CMDFUNC(chgen)
 	DIP_SET(curinode, gen, iswap32(gen));
 	inodirty();
 	printactive();
+	return 0;
+}
+
+CMDFUNC(chextsize)
+{
+	uint32_t extsize;
+	char *cp;
+
+	if (!is_ufs2)
+		return 1;
+	if (!checkactive())
+		return 1;
+
+	extsize = strtol(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad extsize `%s'", argv[1]);
+		return 1;
+	}
+
+	curinode->dp2.di_extsize = extsize;
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chblocks)
+{
+	uint64_t blocks;
+	char *cp;
+
+	if (!checkactive())
+		return 1;
+
+	blocks = strtoll(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad blocks `%s'", argv[1]);
+		return 1;
+	}
+
+	DIP_SET(curinode, blocks, blocks);
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chdb)
+{
+	unsigned int idx;
+	daddr_t bno;
+	char *cp;
+
+	if (!checkactive())
+		return 1;
+
+	idx = strtoull(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad pointer idx `%s'", argv[1]);
+		return 1;
+	}
+	bno = strtoll(argv[2], &cp, 0);
+	if (cp == argv[2] || *cp != '\0') {
+		warnx("bad block number `%s'", argv[2]);
+		return 1;
+	}
+	if (idx >= UFS_NDADDR) {
+		warnx("pointer index %d is out of range", idx);
+		return 1;
+	}
+
+	DIP_SET(curinode, db[idx], bno);
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chib)
+{
+	unsigned int idx;
+	daddr_t bno;
+	char *cp;
+
+	if (!checkactive())
+		return 1;
+
+	idx = strtoull(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad pointer idx `%s'", argv[1]);
+		return 1;
+	}
+	bno = strtoll(argv[2], &cp, 0);
+	if (cp == argv[2] || *cp != '\0') {
+		warnx("bad block number `%s'", argv[2]);
+		return 1;
+	}
+	if (idx >= UFS_NIADDR) {
+		warnx("pointer index %d is out of range", idx);
+		return 1;
+	}
+
+	DIP_SET(curinode, ib[idx], bno);
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chextb)
+{
+	unsigned int idx;
+	daddr_t bno;
+	char *cp;
+
+	if (!checkactive())
+		return 1;
+
+	idx = strtoull(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad pointer idx `%s'", argv[1]);
+		return 1;
+	}
+	bno = strtoll(argv[2], &cp, 0);
+	if (cp == argv[2] || *cp != '\0') {
+		warnx("bad block number `%s'", argv[2]);
+		return 1;
+	}
+	if (idx >= UFS_NXADDR) {
+		warnx("pointer index %d is out of range", idx);
+		return 1;
+	}
+
+	curinode->dp2.di_extb[idx] = bno;
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chfreelink)
+{
+#if 0
+	ino_t freelink;
+	char *cp;
+
+	if (!checkactive())
+		return 1;
+
+	freelink = strtoll(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		warnx("bad freelink `%s'", argv[1]);
+		return 1;
+	}
+
+	DIP_SET(curinode, freelink, freelink);
+	inodirty();
+	printactive();
+#endif
 	return 0;
 }
 
@@ -1418,6 +1663,8 @@ CMDFUNC(chmtime)
 	int64_t rsec;
 	int32_t nsec;
 
+	if (!checkactive())
+		return 1;
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
 	DIP_SET(curinode, mtime, rsec);
@@ -1432,6 +1679,8 @@ CMDFUNC(chatime)
 	int64_t rsec;
 	int32_t nsec;
 
+	if (!checkactive())
+		return 1;
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
 	DIP_SET(curinode, atime, rsec);
@@ -1446,6 +1695,8 @@ CMDFUNC(chctime)
 	int64_t rsec;
 	int32_t nsec;
 
+	if (!checkactive())
+		return 1;
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
 	DIP_SET(curinode, ctime, rsec);
@@ -1464,6 +1715,8 @@ CMDFUNC(chbirthtime)
 		warnx("birthtime can only be set in ufs2");
 		return 1;
 	}
+	if (!checkactive())
+		return 1;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
@@ -1471,5 +1724,45 @@ CMDFUNC(chbirthtime)
 	curinode->dp2.di_birthnsec = nsec;
 	inodirty();
 	printactive();
+	return 0;
+}
+
+CMDFUNC(iptrs)
+{
+	int i;
+
+	if (!checkactive())
+		return 1;
+	for (i = 0; i < UFS_NDADDR; i++)
+		printf("di_db %d %ju\n", i, DIP(curinode, db[i]));
+	for (i = 0; i < UFS_NIADDR; i++)
+		printf("di_ib %d %ju\n", i, DIP(curinode, ib[i]));
+	if (is_ufs2)
+		for (i = 0; i < UFS_NXADDR; i++)
+			printf("di_extb %d %ju\n", i, curinode->dp2.di_extb[i]);
+	return 0;
+}
+
+CMDFUNC(saveea)
+{
+	struct wrinfo wrinfo;
+	uint64_t blkno = 0;
+
+	if (!is_ufs2) {
+		warnx("dumping extattrs is only supported for ufs2");
+		return 1;
+	}
+	if (!checkactive())
+		return 1;
+
+	wrinfo.fd = open(argv[1], O_WRONLY | O_TRUNC | O_CREAT, 0644);
+	if (wrinfo.fd == -1) {
+		warn("unable to create file %s", argv[1]);
+		return 0;
+	}
+
+	wrinfo.size = iswap32(curinode->dp2.di_extsize);
+	wrinfo.written_size = 0;
+	print_blks64(curinode->dp2.di_extb, UFS_NXADDR, &blkno, &wrinfo);
 	return 0;
 }

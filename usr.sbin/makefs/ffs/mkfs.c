@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.40 2022/04/02 19:16:49 mlelstv Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.41 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.40 2022/04/02 19:16:49 mlelstv Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.41 2022/11/17 06:40:41 chs Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -109,6 +109,7 @@ union {
 #define writebuf wb.pad
 
 static int     Oflag;	   /* format as an 4.3BSD file system */
+static int     extattr;	   /* use UFS2ea magic */
 static int64_t fssize;	   /* file system size */
 static int     sectorsize;	   /* bytes/sector */
 static int     fsize;	   /* fragment size */
@@ -148,6 +149,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
 	Oflag =		ffs_opts->version;
+	extattr =	ffs_opts->extattr;
 	fssize =        fsopts->size / fsopts->sectorsize;
 	sectorsize =    fsopts->sectorsize;
 	fsize =         ffs_opts->fsize;
@@ -296,7 +298,10 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 		sblock.fs_old_postblformat = 1;
 		sblock.fs_old_nrpos = 1;
 	} else {
-		sblock.fs_magic = FS_UFS2_MAGIC;
+		if (extattr)
+			sblock.fs_magic = FS_UFS2EA_MAGIC;
+		else
+			sblock.fs_magic = FS_UFS2_MAGIC;
 #if 0 /* XXX makefs is used for small filesystems. */
 		sblock.fs_sblockloc = SBLOCK_UFS2;
 #else

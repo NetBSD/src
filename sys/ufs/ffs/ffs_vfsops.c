@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.377 2022/11/10 10:53:29 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.378 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.377 2022/11/10 10:53:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.378 2022/11/17 06:40:40 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -845,6 +845,15 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 
 	brelse(bp, 0);
 
+	/* Allow converting from UFS2 to UFS2EA but not vice versa. */
+	if (newfs->fs_magic == FS_UFS2EA_MAGIC) {
+		ump->um_flags |= UFS_EA;
+		newfs->fs_magic = FS_UFS2_MAGIC;
+	} else {
+		if ((ump->um_flags & UFS_EA) != 0)
+			return EINVAL;
+	}
+
 	if ((newfs->fs_magic != FS_UFS1_MAGIC) &&
 	    (newfs->fs_magic != FS_UFS2_MAGIC)) {
 		kmem_free(newfs, fs_sbsize);
@@ -1217,6 +1226,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 * size to read the superblock. Once read, we swap the whole
 		 * superblock structure.
 		 */
+		if (fs->fs_magic == FS_UFS2EA_MAGIC) {
+			ump->um_flags |= UFS_EA;
+			fs->fs_magic = FS_UFS2_MAGIC;
+		} else if (fs->fs_magic == FS_UFS2EA_MAGIC_SWAPPED) {
+			ump->um_flags |= UFS_EA;
+			fs->fs_magic = FS_UFS2_MAGIC_SWAPPED;
+		}
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
 			fs_sbsize = fs->fs_sbsize;
 			fstype = UFS1;
@@ -2375,6 +2391,11 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
+	if (mp->um_flags & UFS_EA) {
+		struct fs *bfs = (struct fs *)bp->b_data;
+		KASSERT(bfs->fs_magic == FS_UFS2_MAGIC);
+		bfs->fs_magic = FS_UFS2EA_MAGIC;
+	}
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
 		ffs_sb_swap((struct fs *)bp->b_data, (struct fs *)bp->b_data);

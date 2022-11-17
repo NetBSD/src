@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.32 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: ffs.c,v 1.33 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.32 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.33 2022/11/17 06:40:40 chs Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -502,6 +502,7 @@ ffs_match_common(ib_params *params, off_t offset)
 			continue;
 		switch (fs->fs_magic) {
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
@@ -512,6 +513,7 @@ ffs_match_common(ib_params *params, off_t offset)
 			break;
 #ifndef FFS_NO_SWAP
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:

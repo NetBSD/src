@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.24 2015/08/30 05:23:17 mlelstv Exp $	*/
+/*	$NetBSD: clri.c,v 1.25 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.24 2015/08/30 05:23:17 mlelstv Exp $");
+__RCSID("$NetBSD: clri.c,v 1.25 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,11 +107,13 @@ main(int argc, char *argv[])
 		sbp = (struct fs *)sblock;
 		switch(sbp->fs_magic) {
 		case FS_UFS2_MAGIC:
+		case FS_UFS2EA_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
 			break;
 		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC_SWAPPED:

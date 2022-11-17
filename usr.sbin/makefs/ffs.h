@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
+/*	$NetBSD: ffs.h,v 1.3 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -60,6 +60,7 @@ typedef struct {
 	int	avgfilesize;	/* expected average file size */
 	int	avgfpdir;	/* expected # of files per directory */
 	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
+	int	extattr;	/* use UFS2ea magic */
 	int	maxbsize;	/* maximum extent size */
 	int	maxblkspercg;	/* max # of blocks per cylinder group */
 		/* XXX: support `old' file systems ? */

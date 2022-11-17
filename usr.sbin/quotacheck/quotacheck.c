@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.49 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.50 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.49 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.50 2022/11/17 06:40:41 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,6 +367,9 @@ chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
 		bread(sblock_try[i], (char *)&sblock, SBLOCKSIZE);
 		switch (sblock.fs_magic) {
 #ifdef HAVE_UFSv2
+		case FS_UFS2EA_MAGIC:
+			sblock.fs_magic = FS_UFS2_MAGIC;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
@@ -374,6 +377,9 @@ chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
 		case FS_UFS1_MAGIC:
 			break;
 #ifdef HAVE_UFSv2
+		case FS_UFS2EA_MAGIC_SWAPPED:
+			sblock.fs_magic = FS_UFS2_MAGIC_SWAPPED;
+			/*FALLTHROUGH*/
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/

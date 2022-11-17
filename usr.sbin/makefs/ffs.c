@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.72 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: ffs.c,v 1.73 2022/11/17 06:40:41 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.72 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.73 2022/11/17 06:40:41 chs Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -180,6 +180,8 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	      0, 0, "Optimization (time|space)" },
 	    { 'l', "label", ffs_opts->label, OPT_STRARRAY,
 	      1, sizeof(ffs_opts->label), "UFS label" },
+	    { 'e', "extattr", &ffs_opts->extattr, OPT_INT32,
+	      0, 1, "extattr support" },
 	    { .name = NULL }
 	};
 
@@ -194,6 +196,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->avgfilesize= -1;
 	ffs_opts->avgfpdir= -1;
 	ffs_opts->version = 1;
+	ffs_opts->extattr = 1;
 
 	fsopts->fs_specific = ffs_opts;
 	fsopts->fs_options = copy_opts(ffs_options);

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_extattr.c,v 1.2 2020/04/12 23:52:20 christos Exp $	*/
+/*	$NetBSD: t_extattr.c,v 1.3 2022/11/17 06:40:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_extattr.c,v 1.2 2020/04/12 23:52:20 christos Exp $");
+__RCSID("$NetBSD: t_extattr.c,v 1.3 2022/11/17 06:40:40 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -78,8 +78,8 @@ check_list(const char *buf, ssize_t nr)
 	}
 }
 
-// Make it ffsv2
-const char *newfs = "newfs -O 2 -F -s 10000 " IMGNAME;
+// Make it ffsv2 with extattrs
+const char *newfs = "newfs -O 2ea -F -s 10000 " IMGNAME;
 #define FAKEBLK "/dev/formula1"
 
 static void

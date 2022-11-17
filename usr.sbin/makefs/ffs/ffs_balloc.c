@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.22 2022/11/17 06:40:41 chs Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.21 2015/03/29 05:52:59 agc Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.22 2022/11/17 06:40:41 chs Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -74,7 +74,8 @@ static int ffs_balloc_ufs2(struct inode *, off_t, int, struct buf **);
 int
 ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 {
-	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC)
+	if (ip->i_fs->fs_magic == FS_UFS2_MAGIC ||
+	    ip->i_fs->fs_magic == FS_UFS2EA_MAGIC)
 		return ffs_balloc_ufs2(ip, offset, bufsize, bpp);
 	else
 		return ffs_balloc_ufs1(ip, offset, bufsize, bpp);

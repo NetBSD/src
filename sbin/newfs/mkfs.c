@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.131 2022/01/01 10:32:28 msaitoh Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.132 2022/11/17 06:40:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.131 2022/01/01 10:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.132 2022/11/17 06:40:39 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -745,6 +745,8 @@ mkfs(const char *fsys, int fi, int fo,
 	memset(iobuf + sizeof(sblock), 0, i - sizeof(sblock));
 	if (needswap)
 		ffs_sb_swap(&sblock, (struct fs *)iobuf);
+	if (eaflag)
+		((struct fs *)iobuf)->fs_magic = FS_UFS2EA_MAGIC;
 	if ((sblock.fs_old_flags & FS_FLAGS_UPDATED) == 0)
 		memset(iobuf + offsetof(struct fs, fs_old_postbl_start),
 		    0xff, 256);

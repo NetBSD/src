@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.23 2021/05/29 16:51:25 christos Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.24 2022/11/17 06:40:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.23 2021/05/29 16:51:25 christos Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.24 2022/11/17 06:40:38 chs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,11 +95,13 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	time_t  t;
 	char   *p;
 	uint64_t size, blocks;
+	uint32_t extsize;
 	uint16_t mode;
 	uint32_t rdev;
 	uint32_t uid, gid;
 
 	size = iswap64(DIP(dp, size));
+	extsize = is_ufs2 ? iswap32(dp->dp2.di_extsize) : 0;
 	blocks = is_ufs2 ? iswap64(DIP(dp, blocks)) : iswap32(DIP(dp, blocks));
 	mode = iswap16(DIP(dp, mode));
 	rdev = iswap32(DIP(dp, rdev));
@@ -139,8 +141,8 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		puts("fifo");
 		break;
 	}
-	printf("I=%llu MODE=%o SIZE=%llu", (unsigned long long)inum, mode,
-	    (unsigned long long)size);
+	printf("I=%llu MODE=%o SIZE=%llu EXTSIZE=%u", (unsigned long long)inum,
+	    mode, (unsigned long long)size, extsize);
 	t = is_ufs2 ? iswap64(dp->dp2.di_mtime) : iswap32(dp->dp1.di_mtime);
 	p = ctime(&t);
 	printf("\n\t    MTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],

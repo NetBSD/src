@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.59 2020/04/19 19:37:06 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.60 2022/11/17 06:40:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.59 2020/04/19 19:37:06 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.60 2022/11/17 06:40:38 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,7 +423,23 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	else
 		idesc->id_type = ADDR;
 	(void)ckinode(dp, idesc);
-	if (is_ufs2 && iswap32(dp->dp2.di_extsize) > 0) {
+	if (is_ufs2 && (!is_ufs2ea || doing2noea) &&
+	    (iswap32(dp->dp2.di_extsize) != 0 ||
+	     iswap64(dp->dp2.di_extb[0]) != 0 ||
+	     iswap64(dp->dp2.di_extb[1]) != 0)) {
+		pfatal("NON-ZERO EXTATTR FIELDS");
+		if (!reply("CLEAR EXTATTR FIELDS AND SET PERMS TO 0")) {
+			markclean = 0;
+			return;
+		}
+		dp = ginode(inumber);
+		dp->dp2.di_extsize = iswap32(0);
+		dp->dp2.di_extb[0] = iswap64(0);
+		dp->dp2.di_extb[1] = iswap64(0);
+		dp->dp2.di_mode &= ~07777;
+		inodirty();
+	}
+	if (is_ufs2ea && iswap32(dp->dp2.di_extsize) > 0) {
 		int ret, offset;
 		idesc->id_type = ADDR;
 		ndb = howmany(iswap32(dp->dp2.di_extsize), sblock->fs_bsize);
