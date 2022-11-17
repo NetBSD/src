@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1232 2022/11/17 08:45:35 ozaki-r Exp $
+# $NetBSD: mi,v 1.1233 2022/11/17 09:58:42 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -173,6 +173,7 @@
 ./usr/libdata/debug/usr/tests/net/if_tap		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_vether		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_vlan		tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/inpcb			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/ipsec			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/mcast			tests-net-debug		compattestfile,atf
