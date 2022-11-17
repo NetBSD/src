@@ -1,3 +1,4 @@
+/* $NetBSD: inpcb_bind.c,v 1.2 2022/11/17 08:38:58 ozaki-r Exp $ */
 /* $OpenBSD: runtest.c,v 1.7 2022/04/10 14:08:35 claudio Exp $ */
 /*
  * Copyright (c) 2015 Vincent Gross <vincent.gross@kilob.yt>
@@ -29,12 +30,11 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
-int
+static int
 runtest(int *sockp, struct addrinfo *ai, int reuseaddr, int reuseport,
     void *mreq, int expected)
 {
 	int error, optval;
-	struct ip_mreq imr;
 
 	*sockp = socket(ai->ai_family, ai->ai_socktype, 0);
 	if (*sockp == -1) {
@@ -106,7 +106,7 @@ runtest(int *sockp, struct addrinfo *ai, int reuseaddr, int reuseport,
 	return (0);
 }
 
-void
+static void
 cleanup(int *fds, int num_fds)
 {
 	while (num_fds-- > 0)
@@ -114,7 +114,7 @@ cleanup(int *fds, int num_fds)
 			err(2, "unable to clean up sockets, aborting");
 }
 
-int
+static int
 unicast_testsuite(struct addrinfo *local, struct addrinfo *any)
 {
 	int test_rc, rc, *s;
@@ -180,12 +180,11 @@ unicast_testsuite(struct addrinfo *local, struct addrinfo *any)
 	return (test_rc);
 }
 
-int
+static int
 mcast_reuse_testsuite(struct addrinfo *local, void *mr)
 {
 	int test_rc, rc, *s;
 	int sockets[6];
-	int testnum = 1;
 
 	test_rc = 0;
 	rc = 0; s = sockets;
@@ -266,13 +265,12 @@ mcast_reuse_testsuite(struct addrinfo *local, void *mr)
 	return (test_rc);
 }
 
-int
+static int
 mcast6_testsuite(struct addrinfo *local, struct ipv6_mreq *local_mreq,
     struct addrinfo *any, struct ipv6_mreq *any_mreq)
 {
 	int test_rc, rc, *s;
 	int sockets[4];
-	int testnum = 1;
 
 	test_rc = 0;
 	rc = 0; s = sockets;
@@ -350,11 +348,10 @@ main(int argc, char *argv[])
 	char *baddr_s, *bport_s, *bmifa_s;
 	struct addrinfo hints, *baddr, *any, *mifa;
 	struct ifaddrs *ifap, *curifa;
-	struct ip_mreq local_imr, any_imr;
+	struct ip_mreq local_imr;
 	struct ipv6_mreq local_i6mr, any_i6mr;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
-	int *s;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST | AI_NUMERICSERV | \
@@ -373,7 +370,7 @@ main(int argc, char *argv[])
 	if ((error = getaddrinfo(NULL, bport_s, &hints, &any)))
 		errx(2, "getaddrinfo(NULL,%s): %s", bport_s,
 		    gai_strerror(error));
-	any->ai_canonname = "*";
+	any->ai_canonname = strdup("*");
 
 	switch (baddr->ai_family) {
 	case AF_INET:
