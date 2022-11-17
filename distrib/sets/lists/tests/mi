@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1231 2022/11/17 06:40:38 chs Exp $
+# $NetBSD: mi,v 1.1232 2022/11/17 08:45:35 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4204,6 +4204,13 @@
 ./usr/tests/net/if_wg/t_interoperability		tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_misc				tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_tunnel				tests-net-tests		atf,rump
+./usr/tests/net/inpcb					tests-net-tests		compattestfile,atf
+./usr/tests/net/inpcb/Atffile				tests-net-tests		atf,rump
+./usr/tests/net/inpcb/Kyuafile				tests-net-tests		atf,rump,kyua
+./usr/tests/net/inpcb/broadcast_bind			tests-net-tests		atf,rump
+./usr/tests/net/inpcb/inpcb_bind			tests-net-tests		atf,rump
+./usr/tests/net/inpcb/t_broadcast_bind			tests-net-tests		atf,rump
+./usr/tests/net/inpcb/t_inpcb_bind			tests-net-tests		atf,rump
 ./usr/tests/net/in_cksum				tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Kyuafile			tests-net-tests		compattestfile,atf,kyua
@@ -4264,6 +4271,7 @@
 ./usr/tests/net/net/t_pktinfo				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_pktinfo_send			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_raw				tests-net-tests		atf,rump
+./usr/tests/net/net/t_socket_afinet			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_tcp				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_udp				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_unix				tests-net-tests		compattestfile,atf
@@ -4291,6 +4299,7 @@
 ./usr/tests/net/tcp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/tcp/Kyuafile				tests-net-tests		atf,rump,kyua
 ./usr/tests/net/tcp/tcp_shutdown			tests-net-tests		atf,rump
+./usr/tests/net/tcp/t_tcp_connect_port			tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_nc				tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_shutdown			tests-net-tests		atf,rump
 ./usr/tests/net/wireguard				tests-obsolete		obsolete
