@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2930 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2931 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -733,3 +733,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata: updated to 2022f (using the 2022fgtz fork) [kre 20221030]
 	regerror(3): Allow null errbuf if errbuf_size is zero,
 		as documented and in POSIX. [riastradh 20221105]
+	aht20temp(4): Driver for the Aosong AHT20 temperature and
+		humidity sensor [brad 20221117]
