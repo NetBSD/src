@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.244 2022/11/04 09:03:20 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.245 2022/11/17 05:02:11 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.244 2022/11/04 09:03:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.245 2022/11/17 05:02:11 knakahara Exp $");
 
 #include "arp.h"
 
@@ -1194,7 +1194,11 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		return error;
 	}
 
-	if (scrub || hostIsNew) {
+	/*
+	 * The interface which does not have IPv4 address is not required
+	 * to scrub old address.  So, skip scrub such cases.
+	 */
+	if (oldaddr.sin_family == AF_INET && (scrub || hostIsNew)) {
 		int newflags = ia->ia4_flags;
 
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
