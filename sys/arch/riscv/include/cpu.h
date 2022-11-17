@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.8 2021/08/14 17:51:19 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.9 2022/11/17 09:50:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,13 +35,13 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
 struct clockframe {
-	uintptr_t cf_pc;
-	uint32_t cf_sr;
+	vaddr_t cf_epc;
+	register_t cf_status;
 	int cf_intr_depth;
 };
 
-#define CLKF_USERMODE(cf)	(((cf)->cf_sr & 1) == 0)
-#define CLKF_PC(cf)		((cf)->cf_pc)
+#define CLKF_USERMODE(cf)	(((cf)->cf_status & SR_SPP) == 0)
+#define CLKF_PC(cf)		((cf)->cf_epc)
 #define CLKF_INTR(cf)		((cf)->cf_intr_depth > 0)
 
 #include <sys/cpu_data.h>
