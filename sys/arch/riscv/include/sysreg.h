@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.26 2022/11/17 13:10:42 simonb Exp $ */
+ /* $NetBSD: sysreg.h,v 1.27 2022/11/18 06:53:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 #include <riscv/reg.h>
 
 #define	FCSR_FMASK	0	// no exception bits
-#define	FCSR_FRM	__BITS(7,5)
+#define	FCSR_FRM	__BITS(7, 5)
 #define	 FCSR_FRM_RNE	0b000	// Round Nearest, ties to Even
 #define	 FCSR_FRM_RTZ	0b001	// Round Towards Zero
 #define	 FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
 #define	 FCSR_FRM_RUP	0b011	// Round UP (+infinity)
 #define	 FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
 #define	 FCSR_FRM_DYN	0b111	// Dynamic rounding
-#define	FCSR_FFLAGS	__BITS(4,0)	// Sticky bits
+#define	FCSR_FFLAGS	__BITS(4, 0)	// Sticky bits
 #define	FCSR_NV		__BIT(4)	// iNValid operation
 #define	FCSR_DZ		__BIT(3)	// Divide by Zero
 #define	FCSR_OF		__BIT(2)	// OverFlow
@@ -163,18 +163,20 @@ RISCVREG_SET_CLEAR_INLINE(regname)
 /* Supervisor Status Register */
 RISCVREG_READ_SET_CLEAR_INLINE(sstatus)		// supervisor status register
 #ifdef _LP64
-#define	SR_WPRI		__BITS(62, 34) | __BITS(31,20) | __BIT(17) | \
-			    __BITS(12,9) | __BITS(7,6) | __BITS(3,2)
+#define	SR_WPRI		__BITS(62, 34) | __BITS(31, 20) | \
+			__BIT(17) | __BITS(12, 11) | __BIT(7) | __BITS(4, 2) | \
+			__BIT(0)
 #define	SR_SD		__BIT(63)	// any of FS or VS or XS dirty
 			/* Bits 62-34 are WPRI */
-#define	SR_UXL		__BITS(33,32)	// U-mode XLEN
+#define	SR_UXL		__BITS(33, 32)	// U-mode XLEN
 #define	 SR_UXL_32	1		//   XLEN ==  32
 #define	 SR_UXL_64	2		//   XLEN ==  64
 #define	 SR_UXL_128	3		//   XLEN == 128
 			/* Bits 31-20 are WPRI*/
 #else
-#define	SR_WPRI		__BITS(30,20) | __BIT(17) | __BITS(12,9) | \
-			    __BITS(7,6) | __BITS(3,2)
+#define	SR_WPRI		__BITS(30, 20) | \
+			__BIT(17) | __BITS(12, 11) | __BIT(7) | __BITS(4, 2) | \
+			__BIT(0)
 #define	SR_SD		__BIT(31)	// any of FS or VS or XS dirty
 			/* Bits 30-20 are WPRI*/
 #endif /* _LP64 */
@@ -183,18 +185,18 @@ RISCVREG_READ_SET_CLEAR_INLINE(sstatus)		// supervisor status register
 #define	SR_MXR		__BIT(19)	// Make eXecutable Readable
 #define	SR_SUM		__BIT(18)	// permit Supervisor User Memory access
 			/* Bit 17 is WPRI */
-#define	SR_XS		__BITS(16,15)	// Vector extension state
+#define	SR_XS		__BITS(16, 15)	// Vector extension state
 #define	 SR_XS_OFF		0	//   All off
 #define	 SR_XS_SOME_ON		1	//   None dirty or clean, some on
 #define	 SR_XS_SOME_CLEAN	2	//   None dirty, some clean
 #define	 SR_XS_SOME_DIRTY	3	//   Some dirty
-#define	SR_FS		__BITS(14,13)	// Floating-point unit state
+#define	SR_FS		__BITS(14, 13)	// Floating-point unit state
 #define	 SR_FS_OFF	0		//   Off
 #define	 SR_FS_INITIAL	1		//   Initial
 #define	 SR_FS_CLEAN	2		//   Clean
 #define	 SR_FS_DIRTY	3		//   Dirty
 			/* Bits 12-11 are WPRI */
-#define	SR_VS		__BITS(10,9)	// User-mode extention state
+#define	SR_VS		__BITS(10, 9)	// User-mode extention state
 #define	 SR_VS_OFF	SR_FS_OFF	//   Off
 #define	 SR_VS_INITIAL	SR_FS_INITIAL	//   Initial
 #define	 SR_VS_CLEAN	SR_FS_CLEAN	//   Clean
@@ -229,7 +231,7 @@ RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 			/* Bit 0 is WIRI */
 
 /* Mask for all interrupts */
-#define	SIE_IM		(SIE_SEI|SIE_STIE|SIE_SSIE)	/* XXX unused? */
+#define	SIE_IM		(SIE_SEI |SIE_STIE | SIE_SSIE)
 
 #ifdef _LP64
 #define	SR_USER64	(SR_SPIE | SR_UXL_64)	// 64-bit U-mode sstatus
@@ -239,8 +241,8 @@ RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 #endif
 
 // Cause register
-#define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN-1))
-#define	CAUSE_CODE(cause)		((cause) & __BITS(XLEN-2, 0))
+#define	CAUSE_INTERRUPT_P(cause)	((cause) & __BIT(XLEN - 1))
+#define	CAUSE_CODE(cause)		((cause) & __BITS(XLEN - 2, 0))
 
 // Cause register - exceptions
 #define	CAUSE_FETCH_MISALIGNED		0
@@ -287,12 +289,14 @@ csr_cycle_read(void)
 			[__lo0] "=r"(__lo0),
 			[__hi1] "=r"(__hi1));
 	} while (__hi0 != __hi1);
-	return ((uint64_t)__hi0 << 32) | (uint64_t)__lo0;
+	return
+	    __SHIFTIN(__hi0, __BITS(63, 32)) |
+	    __SHIFTIN(__lo0, __BITS(31,  0));
 }
 #endif /* !_LP64 */
 
 #ifdef _LP64
-#define	SATP_MODE		__BITS(63,60)	// Translation mode
+#define	SATP_MODE		__BITS(63, 60)	// Translation mode
 #define	 SATP_MODE_BARE		0		//   No translation or protection
 				/* modes 1-7 reserved for standard use */
 #define	 SATP_MODE_SV39		8		//   Page-based 39-bit virt addr
@@ -301,14 +305,14 @@ csr_cycle_read(void)
 #define	 SATP_MODE_SV64		11		//   Page-based 64-bit virt addr
 				/* modes 12-13 reserved for standard use */
 				/* modes 14-15 designated for custom use */
-#define	SATP_ASID		__BITS(59,44)	//   Address Space Identifier
-#define	SATP_PPN		__BITS(43,0)	//   Physical Page Number
+#define	SATP_ASID		__BITS(59, 44)	//   Address Space Identifier
+#define	SATP_PPN		__BITS(43, 0)	//   Physical Page Number
 #else
 #define	SATP_MODE		__BIT(31)	// Translation mode
 #define	 SATP_MODE_BARE		0		//   No translation or protection
 #define	 SATP_MODE_SV32		1		//   Page-based 32-bit virt addr
-#define	SATP_ASID		__BITS(30,22)	//   Address Space Identifier
-#define	SATP_PPN		__BITS(21,0)	//   Physical Page Number
+#define	SATP_ASID		__BITS(30, 22)	//   Address Space Identifier
+#define	SATP_PPN		__BITS(21, 0)	//   Physical Page Number
 #endif
 
 RISCVREG_READ_WRITE_INLINE(satp)
@@ -324,9 +328,7 @@ csr_asid_read(void)
 static inline void
 csr_asid_write(uint32_t asid)
 {
-	uintptr_t satp;
-
-	satp = csr_satp_read();
+	uintptr_t satp = csr_satp_read();
 	satp &= ~SATP_ASID;
 	satp |= __SHIFTIN(asid, SATP_ASID);
 	csr_satp_write(satp);
