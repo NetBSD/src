@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.61 2022/11/17 18:57:16 martin Exp $	*/
+/*	$NetBSD: pass1.c,v 1.62 2022/11/18 07:41:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.61 2022/11/17 18:57:16 martin Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.62 2022/11/18 07:41:31 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,7 +437,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		dp->dp2.di_extsize = iswap32(0);
 		dp->dp2.di_extb[0] = iswap64(0);
 		dp->dp2.di_extb[1] = iswap64(0);
-		dp->dp2.di_mode &= ~07777;
+		dp->dp2.di_mode &= iswap16(IFMT);
 		inodirty();
 	}
 	if (is_ufs2ea && iswap32(dp->dp2.di_extsize) > 0) {
