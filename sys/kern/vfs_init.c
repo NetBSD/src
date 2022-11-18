@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.58 2022/10/26 23:40:20 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.59 2022/11/18 00:10:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.58 2022/10/26 23:40:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.59 2022/11/18 00:10:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -99,11 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.58 2022/10/26 23:40:20 riastradh Exp 
 #endif
 
 pool_cache_t pnbuf_cache;
-
-/*
- * The global list of vnode operations.
- */
-extern const struct vnodeop_desc * const vfs_op_descs[];
 
 /*
  * These vnodeopv_descs are listed here because they are not
