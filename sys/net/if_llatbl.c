@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.34 2022/05/24 20:50:20 andvar Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.35 2022/11/19 08:00:51 yamt Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -540,6 +540,9 @@ lltable_allocate_htbl(uint32_t hsize)
 	llt->llt_foreach_entry = htable_foreach_lle;
 
 	llt->llt_free_tbl = htable_free_tbl;
+#ifdef MBUFTRACE
+	llt->llt_mowner = NULL;
+#endif
 
 	return (llt);
 }

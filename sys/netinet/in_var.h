@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.102 2021/03/08 22:01:18 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.103 2022/11/19 08:00:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -357,6 +357,9 @@ in_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
 struct in_ifinfo {
 	struct lltable		*ii_llt;	/* ARP state */
 	struct in_ifsysctl	*ii_selsrc;
+#ifdef MBUFTRACE
+	struct mowner		ii_mowner;
+#endif
 };
 
 #endif /* _KERNEL */

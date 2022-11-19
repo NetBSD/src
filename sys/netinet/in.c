@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.245 2022/11/17 05:02:11 knakahara Exp $	*/
+/*	$NetBSD: in.c,v 1.246 2022/11/19 08:00:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.245 2022/11/17 05:02:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.246 2022/11/19 08:00:51 yamt Exp $");
 
 #include "arp.h"
 
@@ -2415,7 +2415,7 @@ in_sysctl_init(struct sysctllog **clog)
 #if NARP > 0
 
 static struct lltable *
-in_lltattach(struct ifnet *ifp)
+in_lltattach(struct ifnet *ifp, struct in_ifinfo *ii)
 {
 	struct lltable *llt;
 
@@ -2431,6 +2431,12 @@ in_lltattach(struct ifnet *ifp)
 	llt->llt_fill_sa_entry = in_lltable_fill_sa_entry;
 	llt->llt_free_entry = in_lltable_free_entry;
 	llt->llt_match_prefix = in_lltable_match_prefix;
+#ifdef MBUFTRACE
+	struct mowner *mowner = &ii->ii_mowner;
+	mowner_init_owner(mowner, ifp->if_xname, "arp");
+	MOWNER_ATTACH(mowner);
+	llt->llt_mowner = mowner;
+#endif
 	lltable_link(llt);
 
 	return (llt);
@@ -2446,7 +2452,7 @@ in_domifattach(struct ifnet *ifp)
 	ii = kmem_zalloc(sizeof(struct in_ifinfo), KM_SLEEP);
 
 #if NARP > 0
-	ii->ii_llt = in_lltattach(ifp);
+	ii->ii_llt = in_lltattach(ifp, ii);
 #endif
 
 #ifdef IPSELSRC
@@ -2467,6 +2473,9 @@ in_domifdetach(struct ifnet *ifp, void *aux)
 #endif
 #if NARP > 0
 	lltable_free(ii->ii_llt);
+#ifdef MBUFTRACE
+	MOWNER_DETACH(&ii->ii_mowner);
+#endif
 #endif
 	kmem_free(ii, sizeof(struct in_ifinfo));
 }
