@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.28 2022/08/23 05:40:46 ryo Exp $
+#	$NetBSD: files.rockchip,v 1.29 2022/11/19 09:17:57 yamt Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -6,7 +6,7 @@
 
 file	arch/arm/rockchip/rk_platform.c		soc_rockchip
 
-file	arch/arm/rockchip/rk3066_smp.c		soc_rk3288
+file	arch/arm/rockchip/rk3066_smp.c		soc_rk3288 & multiprocessor
 
 # Clock and reset unit (CRU)
 device	rkcru: rk_cru
