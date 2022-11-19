@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19 2022/11/15 14:44:04 simonb Exp $
+# $NetBSD: GENERIC,v 1.20 2022/11/19 12:10:03 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,14 +22,14 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	64		# estimated number of users
 
 options 	FDT
 
-#options 	EARLYCONS=com, CONSADDR=0x10000000
-#options 	EARLYCONS=com, CONSADDR=0x12440000
+#options 	EARLYCONS=com, CONSADDR=0x10000000	# qemu virt
+#options 	EARLYCONS=com, CONSADDR=0x12440000	# sifive
 options 	VERBOSE_INIT_RISCV
 
 # Standard system options
