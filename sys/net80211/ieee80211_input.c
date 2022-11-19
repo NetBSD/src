@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.116 2020/01/29 05:21:14 thorpej Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.117 2022/11/19 07:57:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.116 2020/01/29 05:21:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.117 2022/11/19 07:57:51 yamt Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -182,7 +182,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	case IEEE80211_M_STA:
 		if (dir != IEEE80211_FC1_DIR_FROMDS) {
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			    wh, "data", "unknown dir 0x%x", dir);
 			ic->ic_stats.is_rx_wrongdir++;
 			goto out;
 		}
@@ -206,7 +206,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	case IEEE80211_M_AHDEMO:
 		if (dir != IEEE80211_FC1_DIR_NODS) {
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			    wh, "data", "unknown dir 0x%x", dir);
 			ic->ic_stats.is_rx_wrongdir++;
 			goto out;
 		}
@@ -217,7 +217,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 #ifndef IEEE80211_NO_HOSTAP
 		if (dir != IEEE80211_FC1_DIR_TODS) {
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			    wh, "data", "unknown dir 0x%x", dir);
 			ic->ic_stats.is_rx_wrongdir++;
 			goto out;
 		}
@@ -399,7 +399,7 @@ ieee80211_input_management(struct ieee80211com *ic, struct mbuf **mp,
 	IEEE80211_NODE_STAT(ni, rx_mgmt);
 	if (dir != IEEE80211_FC1_DIR_NODS) {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-		    wh, "data", "%s", "unknown dir 0x%x", dir);
+		    wh, "data", "unknown dir 0x%x", dir);
 		ic->ic_stats.is_rx_wrongdir++;
 		goto err;
 	}
