@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.18 2020/09/14 15:09:57 roy Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.19 2022/11/19 08:00:51 yamt Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -34,6 +34,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
+#include "opt_mbuftrace.h"
 #endif
 
 #include <sys/rwlock.h>
@@ -232,6 +233,9 @@ struct lltable {
 	llt_unlink_entry_t	*llt_unlink_entry;
 	llt_fill_sa_entry_t	*llt_fill_sa_entry;
 	llt_free_tbl_t		*llt_free_tbl;
+#ifdef MBUFTRACE
+	struct mowner		*llt_mowner;
+#endif
 };
 
 MALLOC_DECLARE(M_LLTABLE);
