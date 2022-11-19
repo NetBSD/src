@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.12 2022/09/27 06:14:13 skrll Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.13 2022/11/19 09:05:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.12 2022/09/27 06:14:13 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.13 2022/11/19 09:05:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/ioctl.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rndsource.h>
 #include <sys/mbuf.h>
