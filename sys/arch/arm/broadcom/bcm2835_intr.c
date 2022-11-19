@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.43 2022/06/25 12:41:55 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.43 2022/06/25 12:41:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -99,7 +99,12 @@ static int  bcm2835_icu_match(device_t, cfdata_t, void *);
 static void bcm2835_icu_attach(device_t, device_t, void *);
 
 static int bcm2835_int_base;
-static int bcm2836mp_int_base[BCM2836_NCPUS];
+#if defined(MULTIPROCESSOR)
+#define _BCM2836_NCPUS BCM2836_NCPUS
+#else
+#define _BCM2836_NCPUS 1
+#endif
+static int bcm2836mp_int_base[_BCM2836_NCPUS];
 
 #define	BCM2835_INT_BASE		bcm2835_int_base
 #define	BCM2836_INT_BASECPUN(n)		bcm2836mp_int_base[(n)]
@@ -180,8 +185,8 @@ static struct pic_ops bcm2836mp_picops = {
 #endif
 };
 
-static struct pic_softc bcm2836mp_pic[BCM2836_NCPUS] = {
-	[0 ... BCM2836_NCPUS - 1] = {
+static struct pic_softc bcm2836mp_pic[_BCM2836_NCPUS] = {
+	[0 ... _BCM2836_NCPUS - 1] = {
 		.pic_ops = &bcm2836mp_picops,
 		.pic_maxsources = BCM2836_NIRQPERCPU,
 		.pic_name = "bcm2836 pic",
@@ -208,7 +213,7 @@ struct bcm2836mp_interrupt {
 	int bi_flags;
 	int (*bi_func)(void *);
 	void *bi_arg;
-	void *bi_ihs[BCM2836_NCPUS];
+	void *bi_ihs[_BCM2836_NCPUS];
 };
 
 static TAILQ_HEAD(, bcm2836mp_interrupt) bcm2836mp_interrupts =
@@ -360,7 +365,6 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 
 		ifuncs = &bcm2836mpicu_fdt_funcs;
 
-#if defined(MULTIPROCESSOR)
 		/*
 		 * Register all PICs here in order to avoid pic_add() from
 		 * cpu_hatch().  This is the only approved method.
@@ -371,8 +375,8 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 			const cpuid_t cpuid = ci->ci_core_id;
 			struct pic_softc * const pic = &bcm2836mp_pic[cpuid];
 
-			KASSERT(cpuid < BCM2836_NCPUS);
-
+			KASSERT(cpuid < _BCM2836_NCPUS);
+#if defined(MULTIPROCESSOR)
 			pic->pic_cpus = ci->ci_kcpuset;
 			/*
 			 * Append "#n" to avoid duplication of .pic_name[]
@@ -381,12 +385,13 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 			char suffix[sizeof("#00000")];
 			snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
 			strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
-
+#endif
 			bcm2836mp_int_base[cpuid] =
 			    pic_add(pic, PIC_IRQBASE_ALLOC);
+#if defined(MULTIPROCESSOR)
 			bcm2836mp_intr_init(ci);
-		}
 #endif
+		}
 	} else {
 		if (bcml1icu_sc == NULL)
 			arm_fdt_irq_set_handler(bcm2835_irq_handler);
@@ -414,7 +419,7 @@ bcm2835_irq_handler(void *frame)
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 
 	ci->ci_data.cpu_nintr++;
 
@@ -692,7 +697,7 @@ bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -739,7 +744,7 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 	KASSERT(irqbase == 0);
 
 	if (irq_mask & BCM2836MP_TIMER_IRQS) {
@@ -777,7 +782,7 @@ bcm2836mp_pic_find_pending_irqs(struct pic_softc *pic)
 	uint32_t lpending;
 	int ipl = 0;
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 	KASSERT(pic == &bcm2836mp_pic[cpuid]);
 
 	bcm2835_barrier();
@@ -816,7 +821,7 @@ static void bcm2836mp_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	const cpuid_t cpuid = ci->ci_core_id;
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 
 	/* Enable IRQ and not FIQ */
 	bus_space_write_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
@@ -831,7 +836,7 @@ bcm2836mp_send_ipi(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	KASSERT(pic->pic_cpus != NULL);
 
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 
 	bus_space_write_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
 	    BCM2836_LOCAL_MAILBOX0_SETN(cpuid), __BIT(ipi));
@@ -844,7 +849,7 @@ bcm2836mp_ipi_handler(void *priv)
 	const cpuid_t cpuid = ci->ci_core_id;
 	uint32_t ipimask, bit;
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 
 	ipimask = bus_space_read_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
 	    BCM2836_LOCAL_MAILBOX0_CLRN(cpuid));
@@ -893,7 +898,7 @@ bcm2836mp_intr_init(struct cpu_info *ci)
 {
 	const cpuid_t cpuid = ci->ci_core_id;
 
-	KASSERT(cpuid < BCM2836_NCPUS);
+	KASSERT(cpuid < _BCM2836_NCPUS);
 
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
 	    IST_LEVEL | IST_MPSAFE, bcm2836mp_ipi_handler, ci);
@@ -919,8 +924,8 @@ bcm2836mp_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	if (irq == -1)
 		return NULL;
 
-	void *ihs[BCM2836_NCPUS];
-	for (cpuid_t cpuid = 0; cpuid < BCM2836_NCPUS; cpuid++) {
+	void *ihs[_BCM2836_NCPUS];
+	for (cpuid_t cpuid = 0; cpuid < _BCM2836_NCPUS; cpuid++) {
 		const int cpuirq = BCM2836_INT_BASECPUN(cpuid) + irq;
 		ihs[cpuid] = intr_establish_xname(cpuirq, ipl,
 		    IST_LEVEL | iflags, func, arg, xname);
