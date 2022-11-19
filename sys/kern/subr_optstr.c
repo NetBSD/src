@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_optstr.c,v 1.6 2016/05/30 11:24:40 martin Exp $	*/
+/*	$NetBSD: subr_optstr.c,v 1.7 2022/11/19 15:30:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.6 2016/05/30 11:24:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.7 2022/11/19 15:30:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/optstr.h>
@@ -46,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.6 2016/05/30 11:24:40 martin Exp $
 bool
 optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
 {
-	bool found;
-
-	found = false;
+	bool found = false;
 
 	/* Skip any initial spaces until we find a word. */
 	while (*optstr == ' ')
