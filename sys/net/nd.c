@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.4 2020/09/15 23:40:03 roy Exp $	*/
+/*	$NetBSD: nd.c,v 1.5 2022/11/19 08:00:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.4 2020/09/15 23:40:03 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.5 2022/11/19 08:00:51 yamt Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -359,6 +359,9 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	    ln->ln_state == ND_LLINFO_WAITDELETE)
 		ln->ln_state = ND_LLINFO_INCOMPLETE;
 
+#ifdef MBUFTRACE
+	m_claimm(m, ln->lle_tbl->llt_mowner);
+#endif
 	if (ln->ln_hold != NULL) {
 		struct mbuf *m_hold;
 		int i;
