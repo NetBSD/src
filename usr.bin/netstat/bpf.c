@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.16 2022/09/01 10:10:20 msaitoh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.17 2022/11/19 08:56:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -162,8 +162,13 @@ bpf_dump(const char *bpfif)
 			name[namelen++] = szproc;
 			name[namelen++] = 1;
 
+			/*
+			 * Note: The sysctl succeeds (returns 0) even if it failed
+			 * to find the process. The szproc check below is to detect
+			 * that case.
+			 */
 			if (prog_sysctl(&name[0], namelen, &p, &szproc,
-			    NULL, 0) == -1)
+			    NULL, 0) == -1 || szproc != sizeof(p))
 				printf("-\n");
 			else
 				printf("%s\n", p.p_comm);
