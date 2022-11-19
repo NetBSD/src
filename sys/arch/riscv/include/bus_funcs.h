@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.2 2022/11/19 12:16:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -720,7 +720,7 @@ paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vaddr_t low, vaddr_t high);
+	    paddr_t low, paddr_t high);
 
 int	_bus_dmatag_subregion(bus_dma_tag_t, bus_addr_t, bus_addr_t,
 	    bus_dma_tag_t *, int);

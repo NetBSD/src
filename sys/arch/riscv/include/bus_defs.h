@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2022/11/19 12:16:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ typedef struct riscv_bus_dma_segment	bus_dma_segment_t;
  *	This structure describes a valid DMA range.
  */
 struct riscv_dma_range {
-	bus_addr_t	dr_sysbase;	/* system base address */
+	paddr_t		dr_sysbase;	/* system base address */
 	bus_addr_t	dr_busbase;	/* appears here on bus */
 	bus_size_t	dr_len;		/* length of range */
 	uint32_t	dr_flags;	/* flags for range */
