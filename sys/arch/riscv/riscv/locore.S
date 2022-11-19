@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.39 2022/10/16 06:14:53 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.40 2022/11/19 09:55:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ ENTRY_NP(start)
 	or	s0, s0, s7
 
 	VPRINTS("cons:    ")
-	VPRINTX(s2)
+	VPRINTX(s9)
 	VPRINTS(":  ")
 	VPRINTXNL(s0)
 
@@ -303,7 +303,7 @@ ENTRY_NP(start)
 	call	_C_LABEL(uartputc)
 
 	/* Set supervisor trap vector base register */
-	PTR_LA	t0, .Lmmu_on
+	PTR_LA	t0, vstart
 	add	t0, t0, s8
 	csrw	stvec, t0
 
@@ -319,10 +319,14 @@ ENTRY_NP(start)
 	csrw	satp, t0
 
 	.align 2
-.Lmmu_on:
+	.global vstart
+vstart:
 	// MMU is on!
 	csrw	sscratch, zero		// zero in sscratch to mark kernel
 
+#ifdef CONSADDR
+	add	sp, sp, s8
+#endif
 	li	a0, 'M'
 	call	_C_LABEL(uartputc)	// uartputs doesn't use stack
 	li	a0, '\n'
@@ -332,8 +336,6 @@ ENTRY_NP(start)
 
 	PTR_LA	tp, _C_LABEL(lwp0)	// put curlwp in tp
 
-	.global vstart
-vstart:
 
 	/* Set supervisor trap vector base register */
 	PTR_LA	a0, _C_LABEL(cpu_exception_handler)
