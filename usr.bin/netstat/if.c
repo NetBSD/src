@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.106 2022/10/24 08:11:25 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.107 2022/11/19 14:42:35 taca Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.106 2022/10/24 08:11:25 msaitoh Exp $");
+__RCSID("$NetBSD: if.c,v 1.107 2022/11/19 14:42:35 taca Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ if_data_ext_get(const char *ifname, struct if_data_ext *dext)
 {
 	char namebuf[1024];
 	size_t len;
-	int drops;
+	uint64_t drops;
 
 	/* For sysctl */
 	snprintf(namebuf, sizeof(namebuf),
