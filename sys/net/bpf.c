@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.247 2022/09/03 10:03:20 riastradh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.248 2022/11/19 08:53:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.247 2022/09/03 10:03:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.248 2022/11/19 08:53:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -682,6 +682,11 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	int timed_out;
 	int error;
 
+	/*
+	 * Refresh the PID associated with this bpf file.
+	 */
+	d->bd_pid = curproc->p_pid;
+
 	getnanotime(&d->bd_atime);
 	/*
 	 * Restrict application to use a buffer the same size as
@@ -816,6 +821,11 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	static struct sockaddr_storage dst;
 	struct psref psref;
 	int bound;
+
+	/*
+	 * Refresh the PID associated with this bpf file.
+	 */
+	d->bd_pid = curproc->p_pid;
 
 	m = NULL;	/* XXX gcc */
 
@@ -1568,6 +1578,11 @@ filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
 	int rv;
+
+	/*
+	 * Refresh the PID associated with this bpf file.
+	 */
+	d->bd_pid = curproc->p_pid;
 
 	mutex_enter(d->bd_buf_mtx);
 	kn->kn_data = d->bd_hlen;
