@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.h,v 1.43 2022/07/16 12:57:14 mlelstv Exp $	*/
+/*	$NetBSD: gpt.h,v 1.44 2022/11/20 11:57:02 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -85,6 +85,7 @@ gpt_t	gpt_open(const char *, int, int, off_t, u_int, time_t);
 #define GPT_TIMESTAMP	0x20
 #define GPT_SYNC	0x40
 #define GPT_HYBRID	0x80
+#define GPT_OPTGPT	0x4000
 #define GPT_OPTDEV	0x8000
 
 void*	gpt_read(gpt_t, off_t, size_t);
