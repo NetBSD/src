@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.13 2019/10/16 19:03:53 jnemeth Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.14 2022/11/20 11:57:02 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ struct gpt_cmd c_destroy = {
 	"destroy",
 	cmd_destroy,
 	destroyhelp, __arraycount(destroyhelp),
-	GPT_SYNC,
+	GPT_OPTGPT | GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_destroy)
