@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1233 2022/11/17 09:58:42 ozaki-r Exp $
+# $NetBSD: mi,v 1.1234 2022/11/21 22:01:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4035,6 +4035,13 @@
 ./usr/tests/lib/libutil/t_pidfile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/t_snprintb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/t_sockaddr_snprintf		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua					tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/Atffile				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm/h_lualibm			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm/lualibm.lua			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm/t_lualibm			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/semaphore				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/semaphore/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/semaphore/Kyuafile			tests-lib-tests		compattestfile,atf,kyua

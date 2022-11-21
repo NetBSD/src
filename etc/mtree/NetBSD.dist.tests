@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.196 2022/11/17 08:45:35 ozaki-r Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.197 2022/11/21 22:01:33 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -132,6 +132,8 @@
 ./usr/libdata/debug/usr/tests/lib/libtre
 ./usr/libdata/debug/usr/tests/lib/libusbhid
 ./usr/libdata/debug/usr/tests/lib/libutil
+./usr/libdata/debug/usr/tests/lib/lua
+./usr/libdata/debug/usr/tests/lib/lua/libm
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
 ./usr/libdata/debug/usr/tests/libexec
@@ -343,6 +345,8 @@
 ./usr/tests/lib/libtre/data
 ./usr/tests/lib/libusbhid
 ./usr/tests/lib/libutil
+./usr/tests/lib/lua
+./usr/tests/lib/lua/libm
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
 ./usr/tests/libexec
