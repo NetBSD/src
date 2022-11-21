@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.84 2022/11/04 11:20:39 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.85 2022/11/21 10:37:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.84 2022/11/04 11:20:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.85 2022/11/21 10:37:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,9 +205,13 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * supports whiteout operations
 	 */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		static struct componentname nullcn = {
+			.cn_nameiop = LOOKUP,
+			.cn_cred = NOCRED
+		};
+
 		vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_WHITEOUT(um->um_uppervp,
-		    (struct componentname *) 0, LOOKUP);
+		error = VOP_WHITEOUT(um->um_uppervp, &nullcn, LOOKUP);
 		VOP_UNLOCK(um->um_uppervp);
 		if (error)
 			goto bad;
