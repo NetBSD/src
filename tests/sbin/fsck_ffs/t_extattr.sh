@@ -1,4 +1,4 @@
-# $NetBSD: t_extattr.sh,v 1.1 2022/11/17 06:40:40 chs Exp $
+# $NetBSD: t_extattr.sh,v 1.2 2022/11/21 19:07:36 martin Exp $
 #
 #  Copyright (c) 2021 The NetBSD Foundation, Inc.
 #  All rights reserved.
@@ -45,6 +45,7 @@ cleanup()
 fsck_extattr_enable_head()
 {
 	atf_set "descr" "Checks fsck_ffs enabling extattrs"
+	atf_set "require.user" "root";
 }
 
 fsck_extattr_enable_body()
@@ -85,6 +86,7 @@ fsck_extattr_enable_cleanup()
 fsck_extattr_enable_corrupted_head()
 {
 	atf_set "descr" "Checks fsck_ffs enabling extattrs with corruption"
+	atf_set "require.user" "root";
 }
 
 fsck_extattr_enable_corrupted_body()
@@ -142,6 +144,7 @@ fsck_extattr_enable_corrupted_cleanup()
 fsck_extattr_disable_head()
 {
 	atf_set "descr" "Checks fsck_ffs disabling extattrs"
+	atf_set "require.user" "root";
 }
 
 fsck_extattr_disable_body()
