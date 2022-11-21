@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1755 2022/11/17 19:20:06 brad Exp $
+# $NetBSD: mi,v 1.1756 2022/11/21 21:24:01 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -965,6 +965,7 @@
 ./usr/share/man/cat4/bio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bktr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bluetooth.0		man-sys-catman		.cat
+./usr/share/man/cat4/bmx280thp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bmtphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bnx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/boca.0			man-sys-catman		.cat
@@ -4237,6 +4238,7 @@
 ./usr/share/man/html4/bio.html			man-sys-htmlman		html
 ./usr/share/man/html4/bktr.html			man-sys-htmlman		html
 ./usr/share/man/html4/bluetooth.html		man-sys-htmlman		html
+./usr/share/man/html4/bmx280thp.html		man-sys-htmlman		html
 ./usr/share/man/html4/bmtphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/bnx.html			man-sys-htmlman		html
 ./usr/share/man/html4/boca.html			man-sys-htmlman		html
@@ -7275,6 +7277,7 @@
 ./usr/share/man/man4/bio.4			man-sys-man		.man
 ./usr/share/man/man4/bktr.4			man-sys-man		.man
 ./usr/share/man/man4/bluetooth.4		man-sys-man		.man
+./usr/share/man/man4/bmx280thp.4		man-sys-man		.man
 ./usr/share/man/man4/bmtphy.4			man-sys-man		.man
 ./usr/share/man/man4/bnx.4			man-sys-man		.man
 ./usr/share/man/man4/boca.4			man-sys-man		.man
