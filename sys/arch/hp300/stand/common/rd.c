@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.12 2022/11/21 14:55:08 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.13 2022/11/21 15:05:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,12 +52,12 @@
 #include <hp300/stand/common/hpibvar.h>
 #include <hp300/stand/common/samachdep.h>
 
-struct	rd_iocmd rd_ioc;
-struct	rd_rscmd rd_rsc;
-struct	rd_stat rd_stat;
-struct	rd_ssmcmd rd_ssmc;
+static struct	rd_iocmd rd_ioc;
+static struct	rd_rscmd rd_rsc;
+static struct	rd_stat rd_stat;
+static struct	rd_ssmcmd rd_ssmc;
 
-struct	disklabel rdlabel;
+static struct	disklabel rdlabel;
 
 struct	rdminilabel {
 	u_short	npart;
@@ -88,9 +88,9 @@ static void rdreset(int, int);
 static int rdgetinfo(struct rd_softc *);
 static int rderror(int, int, int);
 
-struct rd_softc rd_softc[NHPIB][NRD];
+static struct rd_softc rd_softc[NHPIB][NRD];
 
-struct rdidentinfo rdidentinfo[] = {
+static const struct rdidentinfo rdidentinfo[] = {
 	[RD7945A]  = { RD7946AID,	0,	 108416 },
 	[RD9134D]  = { RD9134DID,	1,	  29088 },
 	[RD9122S]  = { RD9134LID,	1,	   1232 },
@@ -115,9 +115,9 @@ struct rdidentinfo rdidentinfo[] = {
 	[RD7911A]  = { RD7911AID,	0,	  54912 },
 	[RD7941A]  = { RD7946AID,	0,	  46464 }
 };
-int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
+static const int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-int
+static int
 rdinit(int ctlr, int unit)
 {
 	struct rd_softc *rs = &rd_softc[ctlr][unit];
@@ -210,7 +210,7 @@ rdident(int ctlr, int unit)
 	return id;
 }
 
-char io_buf[MAXBSIZE];
+static char io_buf[MAXBSIZE];
 
 static int
 rdgetinfo(struct rd_softc *rs)
