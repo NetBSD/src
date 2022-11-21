@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2018/05/03 22:51:18 sevan Exp $
+#	$NetBSD: Makefile,v 1.8 2022/11/21 22:01:33 christos Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKPIC} != "no"
 # No support for shared libraries and pic code.
-SUBDIR+=	bozohttpd gpio sqlite syslog
+SUBDIR+=	bozohttpd gpio libm sqlite syslog
 .endif
 
 .include <bsd.subdir.mk>
