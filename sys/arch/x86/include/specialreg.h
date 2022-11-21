@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.197 2022/11/16 14:55:50 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.198 2022/11/21 12:21:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -908,12 +908,15 @@
 #define CPUID_IBS_OPCNTEXT	__BIT(6)  /* OpCurCnt and OpMaxCnt extended */
 #define CPUID_IBS_RIPINVALIDCHK	__BIT(7)  /* Invalid RIP indication */
 #define CPUID_IBS_OPBRNFUSE	__BIT(8)  /* Fused branch micro-op indicate */
+#define CPUID_IBS_FETCHCTLEXTD	__BIT(9)  /* IC_IBS_EXTD_CTL MSR */
+#define CPUID_IBS_OPDATA4	__BIT(10) /* IBS op data 4 MSR */
 #define CPUID_IBS_L3MISSFILT	__BIT(11) /* L3 Miss Filtering */
 
 #define CPUID_IBS_FLAGS	 "\20"						   \
 	"\1IBSFFV"	"\2FetchSam"	"\3OpSam"	"\4RdWrOpCnt"	   \
 	"\5OpCnt"	"\6BrnTrgt"	"\7OpCntExt"	"\10RipInvalidChk" \
-	"\11OpBrnFuse"	"\12B9"				"\14IbsL3MissFiltering"
+	"\11OpBrnFuse" "\12IbsFetchCtlExtd" "\13IbsOpData4"		   \
+						   "\14IbsL3MissFiltering"
 
 /*
  * AMD Cache Topology Information.
@@ -980,7 +983,7 @@
 	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
 	"\5" "SEV-SNP"	"\6" "VMPL"	"\7RMPQUERY"	"\10VmplSSS"	      \
 	"\11SecureTSC"	"\12TscAuxVirt"	"\13HwEnfCacheCoh"  "\14" "64BitHost" \
-	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostlbs" \
+	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostIbs" \
 	"\21VTE"      "\22VmgexitParam" "\23VirtualTomMsr" "\24IbsVirtGuest"  \
 	"\31VmsaRegProt" "\32SmtProtection"				      \
 	"\35SvsmCommPageMSR" "\36NestedVirtSnpMsr"
