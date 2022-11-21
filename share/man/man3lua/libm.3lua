@@ -1,0 +1,151 @@
+.\"
+.\" Copyright (c) 2022 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Phillip Rulon
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 2, 2022
+.Dt LIBM 3lua
+.Os
+.Sh NAME
+.Nm libm
+.Nd Lua interface to the
+.Xr math 3
+library
+.Sh SYNOPSIS
+.Cd "local lm = require 'libm'"
+.Sh DESCRIPTION
+The
+.Nm
+Lua binding provides access to the
+.Xr math 3
+library.  If these functions are given an argument outside the domain
+of the function the return value will be NaN.  This can be checked with
+lm.isnan().
+.Pp
+Many of these functions have native equivalents in the Lua math library.
+Others, like
+.Xr round 3 ,
+.Xr cbrt 3 ,
+and the hyperbolic trigonometry functions, are not provided without an
+auxiliary module.  The functions that are redundant are provided for
+completeness.
+.Pp
+Since these functions map quite closely to the functions in the math
+library, detailed information about their behavior can be found in the
+man pages for each function in section 3 of the manual.
+.Ss List of Functions
+.Bl -column "copysignX" "gammaX3XX" "inverse trigonometric funcX"
+.It Sy Name Ta Sy Man page Ta Sy Description Ta
+.It lm.acos Ta Xr acos 3 Ta inverse trigonometric function Ta
+.It lm.acosh Ta Xr acosh 3 Ta inverse hyperbolic function Ta
+.It lm.asin Ta Xr asin 3 Ta inverse trigonometric function Ta
+.It lm.asinh Ta Xr asinh 3 Ta inverse hyperbolic function Ta
+.It lm.atan Ta Xr atan 3 Ta inverse trigonometric function Ta
+.It lm.atanh Ta Xr atanh 3 Ta inverse hyperbolic function Ta
+.It lm.atan2 Ta Xr atan2 3 Ta inverse trigonometric function Ta
+.It lm.cbrt Ta Xr sqrt 3 Ta cube root Ta
+.It lm.ceil Ta Xr ceil 3 Ta integer no less than Ta
+.It lm.copysign Ta Xr copysign 3 Ta copy sign bit Ta
+.It lm.cos Ta Xr cos 3 Ta trigonometric function Ta
+.It lm.cosh Ta Xr cosh 3 Ta hyperbolic function Ta
+.It lm.erf Ta Xr erf 3 Ta error function Ta
+.It lm.erfc Ta Xr erf 3 Ta complementary error function Ta
+.It lm.exp Ta Xr exp 3 Ta base e exponential Ta
+.It lm.exp2 Ta Xr exp2 3 Ta base 2 exponential Ta
+.It lm.expm1 Ta Xr expm1 3 Ta exp(x)\-1 Ta
+.It lm.fabs Ta Xr fabs 3 Ta absolute value Ta
+.It lm.fdim Ta Xr erf 3 Ta positive difference Ta
+.It lm.finite Ta Xr finite 3 Ta test for finity Ta
+.It lm.floor Ta Xr floor 3 Ta integer no greater than Ta
+.It lm.fma Ta Xr fmod 3 Ta fused multiply-add Ta
+.It lm.fmax Ta Xr fmax 3 Ta maximum Ta
+.It lm.fmin Ta Xr fmin 3 Ta minimum Ta
+.It lm.fmod Ta Xr fmod 3 Ta remainder Ta
+.It lm.hypot Ta Xr hypot 3 Ta Euclidean distance Ta
+.It lm.ilogb Ta Xr ilogb 3 Ta exponent extraction Ta
+.It lm.isinf Ta Xr isinf 3 Ta test for infinity Ta
+.It lm.isnan Ta Xr isnan 3 Ta test for not-a-number Ta
+.It lm.j0 Ta Xr j0 3 Ta Bessel function Ta
+.It lm.j1 Ta Xr j0 3 Ta Bessel function Ta
+.It lm.jn Ta Xr j0 3 Ta Bessel function Ta
+.It lm.lgamma Ta Xr lgamma 3 Ta log gamma function Ta
+.It lm.log Ta Xr log 3 Ta natural logarithm Ta
+.It lm.log10 Ta Xr log 3 Ta logarithm to base 10 Ta
+.It lm.log1p Ta Xr log 3 Ta log(1+x) Ta
+.It lm.nan Ta Xr nan 3 Ta return quiet \*(Na Ta
+.It lm.nextafter Ta Xr nextafter 3 Ta next representable number Ta
+.It lm.pow Ta Xr pow 3 Ta exponential x**y Ta
+.It lm.remainder Ta Xr remainder 3 Ta remainder Ta
+.It lm.rint Ta Xr rint 3 Ta round to nearest integer Ta
+.It lm.scalbn Ta Xr scalbn 3 Ta exponent adjustment Ta
+.It lm.sin Ta Xr sin 3 Ta trigonometric function Ta
+.It lm.sinh Ta Xr sinh 3 Ta hyperbolic function Ta
+.It lm.sqrt Ta Xr sqrt 3 Ta square root Ta
+.It lm.tan Ta Xr tan 3 Ta trigonometric function Ta
+.It lm.tanh Ta Xr tanh 3 Ta hyperbolic function Ta
+.It lm.trunc Ta Xr trunc 3 Ta nearest integral value Ta
+.It lm.y0 Ta Xr j0 3 Ta Bessel function Ta
+.It lm.y1 Ta Xr j0 3 Ta Bessel function Ta
+.It lm.yn Ta Xr j0 3 Ta Bessel function Ta
+.El
+.Ss List of Defined Values
+.Bl -column "M_2_SQRTPIXX" "1.12837916709551257390XX" "2/sqrt(pi)XXX"
+.It Sy Name Ta Sy Value Ta Sy Description
+.It lm.M_E	2.7182818284590452354	e
+.It lm.M_LOG2E	1.4426950408889634074	log 2e
+.It lm.M_LOG10E	0.43429448190325182765	log 10e
+.It lm.M_LN2	0.69314718055994530942	log e2
+.It lm.M_LN10	2.30258509299404568402	log e10
+.It lm.M_PI	3.14159265358979323846	pi
+.It lm.M_PI_2	1.57079632679489661923	pi/2
+.It lm.M_PI_4	0.78539816339744830962	pi/4
+.It lm.M_1_PI	0.31830988618379067154	1/pi
+.It lm.M_2_PI	0.63661977236758134308	2/pi
+.It lm.M_2_SQRTPI	1.12837916709551257390	2/sqrt(pi)
+.It lm.M_SQRT2	1.41421356237309504880	sqrt(2)
+.It lm.M_SQRT1_2	0.70710678118654752440	1/sqrt(2)
+.El
+.Sh NOTES
+The functions finite, isfinite, isinf, and isnan return integers in
+the math library, the results are converted to lua boolean values by
+this interface.
+.Sh BUGS
+The single precision float, and long double data types, implemented in
+several of the libm routines, are not supported by this interface.
+.Pp
+The math library has a long development history, but if a bug exists
+there, it will certainly exist in this interface as well.
+.Sh HISTORY
+A
+.Nm
+Lua binding appeared in
+.Nx 9.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+Lua binding was written by
+.An Phillip Rulon .
