@@ -1,4 +1,4 @@
-.\" $NetBSD: bmx280thp.4,v 1.1 2022/11/21 21:24:00 brad Exp $
+.\" $NetBSD: bmx280thp.4,v 1.2 2022/11/21 23:51:10 wiz Exp $
 .\"
 .\" Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -36,7 +36,7 @@ The
 argument selects the address at the
 .Xr iic 4
 bus.
-The percision of the measurement can be changed through
+The precision of the measurement can be changed through
 .Xr sysctl 8
 nodes.
 .Sh SYSCTL VARIABLES
@@ -47,12 +47,13 @@ variables are provided:
 .It Li hw.bmx280thp0.osrs_t
 .It Li hw.bmx280thp0.osrs_p
 .It Li hw.bmx280thp0.osrs_h
-These control oversampling of temperature, pressure and humidity.  The
-valid values are 1, 2, 4, 8, and 16 times oversample.  Humidity is only
-available if the chip is a BME280.
+These control oversampling of temperature, pressure and humidity.
+The valid values are 1, 2, 4, 8, and 16 times oversample.
+Humidity is only available if the chip is a BME280.
 .It Li hw.bmx280thp0.irr_samples
 IRR is a filter that can be used to reduce the noise in the
-measurement.  The value values are 1 (or off), 2, 5, 11 and 22 samples
+measurement.
+The value values are 1 (or off), 2, 5, 11 and 22 samples
 to reach >= 75% of the step response.
 .It Li hw.bmx280thp0.debug
 .It Li hw.bmx280thp0.dump_calibration
@@ -60,7 +61,8 @@ If the driver is compiled with
 .Dv BMX280_DEBUG ,
 these nodes will appear and can be used to set the debugging level and
 provide the calibration constants, upon refresh, that are stored in the
-chip.  Since the constants are fixed, this is a boolean node and will
+chip.
+Since the constants are fixed, this is a boolean node and will
 reset back to false once one dump has been performed.
 .It Li hw.bmx280thp0.readattempts
 A status register tells the driver if the chip is busy with a measurement.
@@ -86,4 +88,5 @@ driver was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
 The driver does not support the continuous read mode that the BMP280
-and BME280 has.  This driver does not support the SPI interface.
+and BME280 has.
+This driver does not support the SPI interface.
