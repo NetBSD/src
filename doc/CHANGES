@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2931 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2932 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -735,3 +735,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		as documented and in POSIX. [riastradh 20221105]
 	aht20temp(4): Driver for the Aosong AHT20 temperature and
 		humidity sensor [brad 20221117]
+	bmx280thp(4): Driver for the Bosch BMP280/BME280 temperature,
+		humidity and pressure sensor [brad 20221121]
