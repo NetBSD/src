@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.102 2022/05/28 10:36:24 andvar Exp $ */
+/* $NetBSD: envstat.c,v 1.103 2022/11/21 21:24:02 brad Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.102 2022/05/28 10:36:24 andvar Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.103 2022/11/21 21:24:02 brad Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1139,6 +1139,53 @@ do {									\
 				/* show statistics if flag set */
 				(void)printf(" %8u %8u %8u",
 				    stats->max, stats->min, stats->avg);
+				ilen += 2;
+			} else if (!nflag) {
+				if (sensor->critmax_value) {
+					(void)printf(" %*u", (int)ilen,
+					    sensor->critmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmax_value) {
+					(void)printf(" %*u", (int)ilen,
+					    sensor->warnmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmin_value) {
+					(void)printf(" %*u", (int)ilen,
+					    sensor->warnmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->critmin_value) {
+					(void)printf( " %*u", (int)ilen,
+					    sensor->critmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+			}
+
+			if (!nflag)
+				(void)printf(" %*s", (int)ilen - 3, stype);
+
+		/* Pressure */
+		} else if (strcmp(sensor->type, "pressure") == 0) {
+			stype = "hPa";
+
+			(void)printf("%s%*.3f", sep, flen,
+			    sensor->cur_value / 10000.0);
+
+			ilen = 8;
+			if (statistics) {
+				/* show statistics if flag set */
+				(void)printf("  %.3f  %.3f  %.3f",
+				    stats->max / 10000.0, stats->min / 10000.0, stats->avg / 10000.0);
 				ilen += 2;
 			} else if (!nflag) {
 				if (sensor->critmax_value) {

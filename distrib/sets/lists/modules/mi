@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.155 2022/11/17 19:20:06 brad Exp $
+# $NetBSD: mi,v 1.156 2022/11/21 21:24:01 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -31,6 +31,8 @@
 ./@MODULEDIR@/blake2s/blake2s.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/blowfish				modules-base-kernel	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/bmx280thp				modules-base-kernel	kmod
+./@MODULEDIR@/bmx280thp/bmx280thp.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/bpf				modules-base-kernel	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/bpf_filter			modules-base-kernel	kmod
