@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.110 2021/07/31 20:29:36 andvar Exp $	*/
+/*	$NetBSD: rd.c,v 1.111 2022/11/21 16:22:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.110 2021/07/31 20:29:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.111 2022/11/21 16:22:37 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -191,8 +191,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7945A",
 		.ri_nbpt = NRD7945ABPT,
 		.ri_ntpc = NRD7945ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 108416
+		.ri_ncyl = NRD7945ACYL,
+		.ri_nblocks = NRD7945ABLK
 	},
 
 	[RD9134D] = {
@@ -200,8 +200,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9134D",
 		.ri_nbpt = NRD9134DBPT,
 		.ri_ntpc = NRD9134DTRK,
-		.ri_ncyl = 303,
-		.ri_nblocks = 29088
+		.ri_ncyl = NRD9134DCYL,
+		.ri_nblocks = NRD9134DBLK
 	},
 
 	[RD9122S] = {
@@ -209,8 +209,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9122S",
 		.ri_nbpt = NRD9122SBPT,
 		.ri_ntpc = NRD9122STRK,
-		.ri_ncyl = 77,
-		.ri_nblocks = 1232
+		.ri_ncyl = NRD9122SCYL,
+		.ri_nblocks = NRD9122SBLK
 	},
 
 	[RD7912P] = {
@@ -218,8 +218,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7912P",
 		.ri_nbpt = NRD7912PBPT,
 		.ri_ntpc = NRD7912PTRK,
-		.ri_ncyl = 572,
-		.ri_nblocks = 128128
+		.ri_ncyl = NRD7912PCYL,
+		.ri_nblocks = NRD7912PBLK
 	},
 
 	[RD7914P] = {
@@ -227,8 +227,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7914P",
 		.ri_nbpt = NRD7914PBPT,
 		.ri_ntpc = NRD7914PTRK,
-		.ri_ncyl = 1152,
-		.ri_nblocks = 258048
+		.ri_ncyl = NRD7914PCYL,
+		.ri_nblocks = NRD7914PBLK
 	},
 
 	[RD7958A] = {
@@ -236,8 +236,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7958A",
 		.ri_nbpt = NRD7958ABPT,
 		.ri_ntpc = NRD7958ATRK,
-		.ri_ncyl = 1013,
-		.ri_nblocks = 255276
+		.ri_ncyl = NRD7958ACYL,
+		.ri_nblocks = NRD7958ABLK
 	},
 
 	[RD7957A] = {
@@ -245,8 +245,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7957A",
 		.ri_nbpt = NRD7957ABPT,
 		.ri_ntpc = NRD7957ATRK,
-		.ri_ncyl = 1036,
-		.ri_nblocks = 159544
+		.ri_ncyl = NRD7957ACYL,
+		.ri_nblocks = NRD7957ABLK
 	},
 
 	[RD7933H] = {
@@ -254,8 +254,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7933H",
 		.ri_nbpt = NRD7933HBPT,
 		.ri_ntpc = NRD7933HTRK,
-		.ri_ncyl = 1321,
-		.ri_nblocks = 789958
+		.ri_ncyl = NRD7933HCYL,
+		.ri_nblocks = NRD7933HBLK
 	},
 
 	[RD9134L] = {
@@ -263,8 +263,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9134L",
 		.ri_nbpt = NRD9134LBPT,
 		.ri_ntpc = NRD9134LTRK,
-		.ri_ncyl = 973,
-		.ri_nblocks = 77840
+		.ri_ncyl = NRD9134LCYL,
+		.ri_nblocks = NRD9134LBLK
 	},
 
 	[RD7936H] = {
@@ -272,8 +272,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7936H",
 		.ri_nbpt = NRD7936HBPT,
 		.ri_ntpc = NRD7936HTRK,
-		.ri_ncyl = 698,
-		.ri_nblocks = 600978
+		.ri_ncyl = NRD7936HCYL,
+		.ri_nblocks = NRD7936HBLK
 	},
 
 	[RD7937H] = {
@@ -281,8 +281,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7937H",
 		.ri_nbpt = NRD7937HBPT,
 		.ri_ntpc = NRD7937HTRK,
-		.ri_ncyl = 698,
-		.ri_nblocks = 1116102
+		.ri_ncyl = NRD7937HCYL,
+		.ri_nblocks = NRD7937HBLK
 	},
 
 	[RD7914CT] = {
@@ -290,8 +290,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7914CT",
 		.ri_nbpt = NRD7914PBPT,
 		.ri_ntpc = NRD7914PTRK,
-		.ri_ncyl = 1152,
-		.ri_nblocks = 258048
+		.ri_ncyl = NRD7914PCYL,
+		.ri_nblocks = NRD7914PBLK
 	},
 
 	[RD7946A] = {
@@ -299,8 +299,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7946A",
 		.ri_nbpt = NRD7945ABPT,
 		.ri_ntpc = NRD7945ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 108416
+		.ri_ncyl = NRD7945ACYL,
+		.ri_nblocks = NRD7945ABLK
 	},
 
 	[RD9122D] = {
@@ -308,8 +308,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9122D",
 		.ri_nbpt = NRD9122SBPT,
 		.ri_ntpc = NRD9122STRK,
-		.ri_ncyl = 77,
-		.ri_nblocks = 1232
+		.ri_ncyl = NRD9122SCYL,
+		.ri_nblocks = NRD9122SBLK
 	},
 
 	[RD7957B] = {
@@ -317,8 +317,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7957B",
 		.ri_nbpt = NRD7957BBPT,
 		.ri_ntpc = NRD7957BTRK,
-		.ri_ncyl = 1269,
-		.ri_nblocks = 159894
+		.ri_ncyl = NRD7957BCYL,
+		.ri_nblocks = NRD7957BBLK
 	},
 
 	[RD7958B] = {
@@ -326,8 +326,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7958B",
 		.ri_nbpt = NRD7958BBPT,
 		.ri_ntpc = NRD7958BTRK,
-		.ri_ncyl = 786,
-		.ri_nblocks = 297108
+		.ri_ncyl = NRD7958BCYL,
+		.ri_nblocks = NRD7958BBLK
 	},
 
 	[RD7959B] = {
@@ -335,8 +335,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7959B",
 		.ri_nbpt = NRD7959BBPT,
 		.ri_ntpc = NRD7959BTRK,
-		.ri_ncyl = 1572,
-		.ri_nblocks = 594216
+		.ri_ncyl = NRD7959BCYL,
+		.ri_nblocks = NRD7959BBLK
 	},
 
 	[RD2200A] = {
@@ -344,8 +344,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2200A",
 		.ri_nbpt = NRD2200ABPT,
 		.ri_ntpc = NRD2200ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 654948
+		.ri_ncyl = NRD2200ACYL,
+		.ri_nblocks = NRD2200ABLK
 	},
 
 	[RD2203A] = {
@@ -353,8 +353,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2203A",
 		.ri_nbpt = NRD2203ABPT,
 		.ri_ntpc = NRD2203ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 1309896
+		.ri_ncyl = NRD2203ACYL,
+		.ri_nblocks = NRD2203ABLK
 	},
 
 	[RD2202A] = {
@@ -362,8 +362,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2202A",
 		.ri_nbpt = NRD2202ABPT,
 		.ri_ntpc = NRD2202ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 1309896
+		.ri_ncyl = NRD2202ACYL,
+		.ri_nblocks = NRD2202ABLK
 	},
 
 	[RD7908A] = {
@@ -371,8 +371,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7908A",
 		.ri_nbpt = NRD7908ABPT,
 		.ri_ntpc = NRD7908ATRK,
-		.ri_ncyl = 185,
-		.ri_nblocks = 32375
+		.ri_ncyl = NRD7908ACYL,
+		.ri_nblocks = NRD7908ABLK
 	},
 
 	[RD7911A] = {
@@ -380,8 +380,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7911A",
 		.ri_nbpt = NRD7911ABPT,
 		.ri_ntpc = NRD7911ATRK,
-		.ri_ncyl = 572,
-		.ri_nblocks = 54912
+		.ri_ncyl = NRD7911ACYL,
+		.ri_nblocks = NRD7911ABLK
 	},
 
 	[RD7941A] = {
@@ -389,8 +389,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7941A",
 		.ri_nbpt = NRD7941ABPT,
 		.ri_ntpc = NRD7941ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 46464
+		.ri_ncyl = NRD7941ACYL,
+		.ri_nblocks = NRD7941ABLK
 	}
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
