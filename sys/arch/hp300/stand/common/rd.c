@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.11 2021/07/05 14:51:23 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.12 2022/11/21 14:55:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,25 +91,29 @@ static int rderror(int, int, int);
 struct rd_softc rd_softc[NHPIB][NRD];
 
 struct rdidentinfo rdidentinfo[] = {
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134DID,	1,	  29088 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7912PID,	0,	 128128 },
-	{ RD7914PID,	0,	 258048 },
-	{ RD7958AID,	0,	 255276 },
-	{ RD7957AID,	0,	 159544 },
-	{ RD7933HID,	0,	 789958 },
-	{ RD9134LID,	1,	  77840 },
-	{ RD7936HID,	0,	 600978 },
-	{ RD7937HID,	0,	1116102 },
-	{ RD7914CTID,	0,	 258048 },
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7957BID,	0,	 159894 },
-	{ RD7958BID,	0,	 297108 },
-	{ RD7959BID,	0,	 594216 },
-	{ RD2200AID,	0,	 654948 },
-	{ RD2203AID,	0,	1309896 }
+	[RD7945A]  = { RD7946AID,	0,	 108416 },
+	[RD9134D]  = { RD9134DID,	1,	  29088 },
+	[RD9122S]  = { RD9134LID,	1,	   1232 },
+	[RD7912P]  = { RD7912PID,	0,	 128128 },
+	[RD7914P]  = { RD7914PID,	0,	 258048 },
+	[RD7958A]  = { RD7958AID,	0,	 255276 },
+	[RD7957A]  = { RD7957AID,	0,	 159544 },
+	[RD7933H]  = { RD7933HID,	0,	 789958 },
+	[RD9134L]  = { RD9134LID,	1,	  77840 },
+	[RD7936H]  = { RD7936HID,	0,	 600978 },
+	[RD7937H]  = { RD7937HID,	0,	1116102 },
+	[RD7914CT] = { RD7914CTID,	0,	 258048 },
+	[RD7946A]  = { RD7946AID,	0,	 108416 },
+	[RD9122D]  = { RD9134LID,	1,	   1232 },
+	[RD7957B]  = { RD7957BID,	0,	 159894 },
+	[RD7958B]  = { RD7958BID,	0,	 297108 },
+	[RD7959B]  = { RD7959BID,	0,	 594216 },
+	[RD2200A]  = { RD2200AID,	0,	 654948 },
+	[RD2203A]  = { RD2203AID,	0,	1309896 },
+	[RD2202A]  = { RD2202AID,	0,	1309896 },
+	[RD7908A]  = { RD7908AID,	0,	  32375 },
+	[RD7911A]  = { RD7911AID,	0,	  54912 },
+	[RD7941A]  = { RD7946AID,	0,	  46464 }
 };
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
@@ -183,6 +187,8 @@ rdident(int ctlr, int unit)
 	case RD7946AID:
 		if (memcmp(name, "079450", 6) == 0)
 			id = RD7945A;
+		else if (memcmp(name, "079410", 6) == 0)
+			id = RD7941A;
 		else
 			id = RD7946A;
 		break;
