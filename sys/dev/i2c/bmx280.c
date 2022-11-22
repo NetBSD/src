@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.1 2022/11/21 21:24:01 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.2 2022/11/22 19:40:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.1 2022/11/21 21:24:01 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2022/11/22 19:40:31 brad Exp $");
 
 /*
   Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -501,7 +501,7 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		    error);
 	}
 
-	delay(100);
+	delay(30000);
 
 	reg = BMX280_REGISTER_ID;
 	error = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, &chip_id, 1);
@@ -510,7 +510,7 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		    error);
 	}
 
-	delay(100);
+	delay(1000);
 
 	DPRINTF(sc, 2, ("%s: read ID value: %02x\n",
 	    device_xname(sc->sc_dev), chip_id));
@@ -718,6 +718,12 @@ bmx280_set_control_and_trigger(struct bmx280_sc *sc,
 		error = EINVAL;
 	}
 
+	/* Hmm... this delay is not documented well..  mostly just a guess...
+	 * If it is too short, you will get junk returned as it is possible to try
+	 * to ask for the data before the chip has even started... it seems...
+	 */
+	delay(35000);
+
 	return error;
 }
 
@@ -731,7 +737,7 @@ bmx280_wait_for_data(struct bmx280_sc *sc)
 
 	reg = BMX280_REGISTER_STATUS;
 	do {
-		delay(10);
+		delay(1000);
 		ierror = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, &running, 1);
 		if (ierror) {
 			DPRINTF(sc, 2, ("%s: Refresh failed to read back status: %d\n",
