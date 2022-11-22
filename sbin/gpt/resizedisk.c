@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.19 2022/11/20 11:57:02 mlelstv Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.20 2022/11/22 00:25:52 mlelstv Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -194,7 +194,7 @@ resizedisk(gpt_t gpt, off_t sector, off_t size, bool quiet)
 	}
 
 	hdr = gpt->gpt->map_data;
-	hdr->hdr_lba_alt = (uint64_t)gpt->tpg->map_start;
+	hdr->hdr_lba_alt = htole64((uint64_t)gpt->tpg->map_start);
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_lba_end = htole64((uint64_t)(gpt->lbt->map_start - 1));
 	hdr->hdr_crc_self =
