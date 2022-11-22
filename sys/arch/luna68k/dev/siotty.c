@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.51 2021/09/25 15:18:38 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.52 2022/11/22 16:17:29 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.51 2021/09/25 15:18:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.52 2022/11/22 16:17:29 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "siotty.h"
@@ -76,6 +76,13 @@ static const struct speedtab siospeedtab[] = {
 	{ -1,	0, },
 };
 
+struct siotty_rxqdata {
+	uint8_t data;
+	uint8_t stat;
+};
+
+typedef struct siotty_rxqdata rxqdata_t;
+
 struct siotty_softc {
 	device_t	sc_dev;
 	struct tty	*sc_tty;
@@ -86,10 +93,10 @@ struct siotty_softc {
 	u_int		sc_hwflags;
 #define	SIOTTY_HW_CONSOLE	0x0001
 
-	uint8_t		*sc_rbuf;
-	uint8_t		*sc_rbufend;
-	uint8_t	* volatile sc_rbget;
-	uint8_t	* volatile sc_rbput;
+	rxqdata_t	*sc_rbuf;
+	rxqdata_t	*sc_rbufend;
+	rxqdata_t * volatile sc_rbget;
+	rxqdata_t * volatile sc_rbput;
 	volatile u_int	sc_rbavail;
 
 	uint8_t		*sc_tba;
@@ -192,8 +199,9 @@ siotty_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_SLEEP);
-	sc->sc_rbufend = sc->sc_rbuf + (siotty_rbuf_size * 2);
+	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * sizeof(rxqdata_t),
+	    KM_SLEEP);
+	sc->sc_rbufend = sc->sc_rbuf + siotty_rbuf_size;
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = siotty_rbuf_size;
 
@@ -217,7 +225,7 @@ siottyintr(void *arg)
 {
 	struct siotty_softc *sc;
 	struct sioreg *sio;
-	uint8_t *put, *end;
+	rxqdata_t *put, *end;
 	uint8_t c;
 	uint16_t rr;
 	int cc;
@@ -241,9 +249,9 @@ siottyintr(void *arg)
 				c = sio->sio_data;
 				cn_check_magic(sc->sc_tty->t_dev, c,
 				    siotty_cnm_state);
-				put[0] = c;
-				put[1] = rr & 0xff;
-				put += 2;
+				put->data = c;
+				put->stat = rr & 0xff;
+				put++;
 				if (put >= end)
 					put = sc->sc_rbuf;
 				cc--;
@@ -294,7 +302,7 @@ siottysoft(void *arg)
 static void
 siotty_rxsoft(struct siotty_softc *sc, struct tty *tp)
 {
-	uint8_t *get, *end;
+	rxqdata_t *get, *end;
 	u_int cc, scc;
 	unsigned int code;
 	uint8_t stat;
@@ -309,15 +317,15 @@ siotty_rxsoft(struct siotty_softc *sc, struct tty *tp)
 	}
 
 	while (cc > 0) {
-		code = get[0];
-		stat = get[1];
+		code = get->data;
+		stat = get->stat;
 		if ((stat & RR_FRAMING) != 0)
 			code |= TTY_FE;
 		else if ((stat & RR_PARITY) != 0)
 			code |= TTY_PE;
 
 		(*tp->t_linesw->l_rint)(code, tp);
-		get += 2;
+		get++;
 		if (get >= end)
 			get = sc->sc_rbuf;
 		cc--;
