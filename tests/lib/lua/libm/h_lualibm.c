@@ -73,7 +73,7 @@ main(void)
 	TEST(remainder(M_PI, M_E));
 	TEST(rint(M_PI));
 	TEST(rint(M_E));
-	printf("%-24s%+2.13f\n", "scalbn(1.0,2)", scalbn(1.0, 2));
+	printf("%-24s%+2.13f\n", "scalbn(1.0, 2)", scalbn(1.0, 2));
 	TEST(sin(M_PI_4));
 	TEST(sinh(M_PI_4));
 	TEST(sqrt(9.0));
