@@ -1,4 +1,4 @@
-.\" $NetBSD: bmx280thp.4,v 1.2 2022/11/21 23:51:10 wiz Exp $
+.\" $NetBSD: bmx280thp.4,v 1.3 2022/11/23 23:45:30 brad Exp $
 .\"
 .\" Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -55,6 +55,15 @@ IRR is a filter that can be used to reduce the noise in the
 measurement.
 The value values are 1 (or off), 2, 5, 11 and 22 samples
 to reach >= 75% of the step response.
+.It Li hw.bmx280thp0.waitfactor.t
+.It Li hw.bmx280thp0.waitfactor.p
+.It Li hw.bmx280thp0.waitfactor.h
+These control the wait multiplication factor for a measurement cycle.
+This factor is different for temperature, pressure and humidity and
+is based upon the values of osrs_t, osrs_p and osrs_h.  If the chip
+does not return the correct measurements for a given over sampling
+then the wait factors can be adjusted to allow more time for the
+measurement to complete successfully.
 .It Li hw.bmx280thp0.debug
 .It Li hw.bmx280thp0.dump_calibration
 If the driver is compiled with

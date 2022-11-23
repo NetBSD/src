@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280var.h,v 1.1 2022/11/21 21:24:01 brad Exp $	*/
+/*	$NetBSD: bmx280var.h,v 1.2 2022/11/23 23:45:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -65,6 +65,9 @@ struct bmx280_sc {
 	int		sc_irr_samples;
 	uint8_t		sc_previous_irr;
 	bool		sc_bmx280dump;
+	int		sc_waitfactor_t;
+	int		sc_waitfactor_p;
+	int		sc_waitfactor_h;
 };
 
 struct bmx280_sensor {

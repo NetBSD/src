@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.2 2022/11/22 19:40:31 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.3 2022/11/23 23:45:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2022/11/22 19:40:31 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.3 2022/11/23 23:45:29 brad Exp $");
 
 /*
   Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2022/11/22 19:40:31 brad Exp $");
 #include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/i2c/i2cvar.h>
@@ -349,7 +350,7 @@ bmx280_sysctl_init(struct bmx280_sc *sc)
 {
 	int error;
 	const struct sysctlnode *cnode;
-	int sysctlroot_num;
+	int sysctlroot_num, sysctlwait_num;
 
 	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
 	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
@@ -414,6 +415,36 @@ bmx280_sysctl_init(struct bmx280_sc *sc)
 	    0, CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
 		return error;
 
+	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
+	    0, CTLTYPE_NODE, "waitfactor",
+	    SYSCTL_DESCR("bmx280 wait factors"), NULL, 0, NULL, 0, CTL_HW,
+	    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+		return error;
+	sysctlwait_num = cnode->sysctl_num;
+
+	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "t",
+	    SYSCTL_DESCR("Temperature wait multiplier"),
+	    bmx280_verify_sysctl, 0, &sc->sc_waitfactor_t,
+	    0, CTL_HW, sysctlroot_num, sysctlwait_num, CTL_CREATE, CTL_EOL)) != 0)
+		return error;
+
+	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "p",
+	    SYSCTL_DESCR("Pressure wait multiplier"),
+	    bmx280_verify_sysctl, 0, &sc->sc_waitfactor_p,
+	    0, CTL_HW, sysctlroot_num, sysctlwait_num, CTL_CREATE, CTL_EOL)) != 0)
+		return error;
+
+	if (sc->sc_has_humidity) {
+		if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "h",
+		    SYSCTL_DESCR("Humidity wait multiplier"),
+		    bmx280_verify_sysctl, 0, &sc->sc_waitfactor_h,
+		    0, CTL_HW, sysctlroot_num, sysctlwait_num, CTL_CREATE, CTL_EOL)) != 0)
+			return error;
+	}
+
 	return 0;
 }
 
@@ -472,6 +503,9 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 	sc->sc_osrs_h = 1;
 	sc->sc_irr_samples = 1;
 	sc->sc_previous_irr = 0xff;
+	sc->sc_waitfactor_t = 6;
+	sc->sc_waitfactor_p = 2;
+	sc->sc_waitfactor_h = 2;
 	sc->sc_sme = NULL;
 
 	aprint_normal("\n");
@@ -718,11 +752,24 @@ bmx280_set_control_and_trigger(struct bmx280_sc *sc,
 		error = EINVAL;
 	}
 
-	/* Hmm... this delay is not documented well..  mostly just a guess...
-	 * If it is too short, you will get junk returned as it is possible to try
-	 * to ask for the data before the chip has even started... it seems...
+	/* The wait needed is not well documented, so this is somewhat of a guess.
+	 * There is an attempt with this to only wait as long as needed.
 	 */
-	delay(35000);
+
+	int p1, p2;
+
+	p1 = (osrs_t_mask * sc->sc_waitfactor_t) + (osrs_p_mask * sc->sc_waitfactor_p);
+	if (sc->sc_has_humidity) {
+		p1 = p1 + (osrs_h_mask * sc->sc_waitfactor_h);
+	}
+	p2 = mstohz(p1);
+	if (p2 == 0) {
+		p2 = 1;
+	}
+	/* Be careful with this...  the print itself will cause extra delay */
+	DPRINTF(sc, 2, ("%s: p1: %d ; %d\n",
+	    device_xname(sc->sc_dev), p1, p2));
+	kpause("b280mea",false,p2,NULL);
 
 	return error;
 }
