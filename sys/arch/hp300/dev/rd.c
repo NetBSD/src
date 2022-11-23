@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.111 2022/11/21 16:22:37 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.112 2022/11/23 18:53:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.111 2022/11/21 16:22:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.112 2022/11/23 18:53:22 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -427,6 +427,7 @@ static const int numrdname2id = __arraycount(rdname2id);
 static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
+static void	rdreset_unit(int, int, int);
 static void	rdustart(struct rd_softc *);
 static int	rdgetinfo(dev_t);
 static void	rdrestart(void *);
@@ -490,36 +491,8 @@ static int
 rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
-	struct rd_clearcmd ccmd;
-	int ctlr, slave, punit;
-	int rv;
-	uint8_t stat;
 
-	rv = rdident(parent, NULL, ha);
-
-	if (rv == 0)
-		return 0;
-
-	/*
-	 * The supported device ID is probed.
-	 * Check if the specified physical unit is actually supported
-	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
-	 */
-	ctlr  = device_unit(parent);
-	slave = ha->ha_slave;
-	punit = ha->ha_punit;
-	if (punit == 0)
-		return 1;
-
-	ccmd.c_unit = C_SUNIT(punit);
-	ccmd.c_cmd  = C_CLEAR;
-	hpibsend(ctlr, slave, C_TCMD, &ccmd, sizeof(ccmd));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-	if (stat != 0)
-		return 0;
-
-	return 1;
+	return rdident(parent, NULL, ha);
 }
 
 static void
@@ -608,29 +581,45 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 		return 0;
 
 	/*
-	 * If we're just probing for the device, that's all the
-	 * work we need to do.
+	 * The supported dvice ID is probed.
+	 * Check if the specified physical unit is actually supported
+	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
 	 */
-	if (sc == NULL)
-		return 1;
-
 	/*
 	 * Reset device and collect description
 	 */
-	rdreset(sc);
+	memset(&desc, 0, sizeof(desc));
+	stat = 0;
+	rdreset_unit(ctlr, slave, ha->ha_punit);
 	cmd[0] = C_SUNIT(ha->ha_punit);
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
 	hpibrecv(ctlr, slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	if (stat != 0 || desc.d_name == 0) {
+		/*
+		 * No valid response from the specified punit.
+		 *
+		 * Note it looks HPDisk responds to commands against
+		 * supported but not-configured punits at 1 to 3.
+		 */
+		return 0;
+	}
+
+	/*
+	 * If we're just probing for the device, that's all the
+	 * work we need to do.
+	 */
+	if (sc == NULL)
+		return 1;
+
 	memset(name, 0, sizeof(name));
-	if (stat == 0) {
-		n = desc.d_name;
-		for (i = 5; i >= 0; i--) {
-			name[i] = (n & 0xf) + '0';
-			n >>= 4;
-		}
+	n = desc.d_name;
+	for (i = 5; i >= 0; i--) {
+		name[i] = (n & 0xf) + '0';
+		n >>= 4;
 	}
 
 #ifdef DEBUG
@@ -711,36 +700,48 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 static void
 rdreset(struct rd_softc *sc)
 {
-	int ctlr = device_unit(device_parent(sc->sc_dev));
-	int slave = sc->sc_slave;
-	u_char stat;
+	int ctlr, slave, punit;
 
-	sc->sc_clear.c_unit = C_SUNIT(sc->sc_punit);
-	sc->sc_clear.c_cmd = C_CLEAR;
-	hpibsend(ctlr, slave, C_TCMD, &sc->sc_clear, sizeof(sc->sc_clear));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-
-	sc->sc_src.c_unit = C_SUNIT(RDCTLR);
-	sc->sc_src.c_nop = C_NOP;
-	sc->sc_src.c_cmd = C_SREL;
-	sc->sc_src.c_param = C_REL;
-	hpibsend(ctlr, slave, C_CMD, &sc->sc_src, sizeof(sc->sc_src));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-
-	sc->sc_ssmc.c_unit = C_SUNIT(sc->sc_punit);
-	sc->sc_ssmc.c_cmd = C_SSM;
-	sc->sc_ssmc.c_refm = REF_MASK;
-	sc->sc_ssmc.c_fefm = FEF_MASK;
-	sc->sc_ssmc.c_aefm = AEF_MASK;
-	sc->sc_ssmc.c_iefm = IEF_MASK;
-	hpibsend(ctlr, slave, C_CMD, &sc->sc_ssmc, sizeof(sc->sc_ssmc));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+	ctlr = device_unit(device_parent(sc->sc_dev));
+	slave = sc->sc_slave;
+	punit = sc->sc_punit;
+	rdreset_unit(ctlr, slave, punit);
 #ifdef DEBUG
 	sc->sc_stats.rdresets++;
 #endif
+}
+
+static void
+rdreset_unit(int ctlr, int slave, int punit)
+{
+	struct rd_ssmcmd ssmc;
+	struct rd_srcmd src;
+	struct rd_clearcmd clear;
+	u_char stat;
+
+	clear.c_unit = C_SUNIT(punit);
+	clear.c_cmd = C_CLEAR;
+	hpibsend(ctlr, slave, C_TCMD, &clear, sizeof(clear));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	src.c_unit = C_SUNIT(RDCTLR);
+	src.c_nop = C_NOP;
+	src.c_cmd = C_SREL;
+	src.c_param = C_REL;
+	hpibsend(ctlr, slave, C_CMD, &src, sizeof(src));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	ssmc.c_unit = C_SUNIT(punit);
+	ssmc.c_cmd = C_SSM;
+	ssmc.c_refm = REF_MASK;
+	ssmc.c_fefm = FEF_MASK;
+	ssmc.c_aefm = AEF_MASK;
+	ssmc.c_iefm = IEF_MASK;
+	hpibsend(ctlr, slave, C_CMD, &ssmc, sizeof(ssmc));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 }
 
 /*
