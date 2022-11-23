@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3lua,v 1.9 2018/05/05 13:49:24 sevan Exp $
+.\"	$NetBSD: intro.3lua,v 1.10 2022/11/23 19:20:34 christos Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Marc Balmer <mbalmer@NetBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd May 5, 2018
+.Dd November 23, 2022
 .Dt INTRO 3lua
 .Os
 .Sh NAME
@@ -51,6 +51,10 @@ functionality.
 Access
 .Xr gpio 4
 pins.
+.It Em libm
+Access
+.Xr math 3
+functionality.
 .It Em netpgp
 Access
 .Xr libnetpgp 3
@@ -69,6 +73,7 @@ functionality.
 .Xr luac 1 ,
 .Xr bozohttpd 3lua ,
 .Xr gpio 3lua ,
+.Xr libm 3lua ,
 .Xr netpgp 3lua ,
 .Xr sqlite 3lua ,
 .Xr syslog 3lua ,
