@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.26 2021/07/09 17:05:33 tsutsui Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.27 2022/11/23 18:55:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,9 +72,6 @@ struct	rd_softc {
 	struct	rd_iocmd sc_ioc;
 	struct	rd_rscmd sc_rsc;
 	struct	rd_stat sc_stat;
-	struct	rd_ssmcmd sc_ssmc;
-	struct	rd_srcmd sc_src;
-	struct	rd_clearcmd sc_clear;
 	struct	bufq_state *sc_tab;
 	int	sc_active;
 	int	sc_errcnt;
