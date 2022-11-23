@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.402 2022/06/08 16:55:00 macallan Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.403 2022/11/23 23:53:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.402 2022/06/08 16:55:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403 2022/11/23 23:53:53 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1994,7 +1994,20 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	/* Try to find the space in the red-black tree */
 
 	/* Check slot before any entry */
-	hint = topdown ? entry->next->start - length : entry->end;
+	if (topdown) {
+		KASSERTMSG(entry->next->start >= vm_map_min(map),
+		    "map=%p entry=%p entry->next=%p"
+		    " entry->next->start=0x%"PRIxVADDR" min=0x%"PRIxVADDR,
+		    map, entry, entry->next,
+		    entry->next->start, vm_map_min(map));
+		if (length > entry->next->start - vm_map_min(map))
+			hint = vm_map_min(map); /* XXX goto wraparound? */
+		else
+			hint = entry->next->start - length;
+		KASSERT(hint >= vm_map_min(map));
+	} else {
+		hint = entry->end;
+	}
 	INVARIANTS();
 	avail = uvm_map_space_avail(&hint, length, uoffset, align, flags,
 	    topdown, entry);
