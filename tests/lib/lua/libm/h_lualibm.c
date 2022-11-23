@@ -68,7 +68,10 @@ main(void)
 	TEST(log10(100.0));
 	TEST(log1p(M_PI));
 	TEST(nan(""));
+#ifdef notyet
+	// XXX: vax
 	TEST(nextafter(1.0e-14, 1.0));
+#endif
 	TEST(pow(M_SQRT2, 2.0));
 	TEST(remainder(M_PI, M_E));
 	TEST(rint(M_PI));
