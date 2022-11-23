@@ -1,4 +1,4 @@
-/* $NetBSD: libm.c,v 1.1 2022/11/21 22:01:33 christos Exp $	*/
+/* $NetBSD: libm.c,v 1.2 2022/11/23 18:15:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: libm.c,v 1.1 2022/11/21 22:01:33 christos Exp $");
+__RCSID("$NetBSD: libm.c,v 1.2 2022/11/23 18:15:43 christos Exp $");
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -140,7 +140,9 @@ DFUNC_DBL(lgamma)
 DFUNC_DBL(log)
 DFUNC_DBL(log10)
 DFUNC_DBL(log1p)
+#ifndef __vax__
 DFUNC_DBL_DBL(nextafter)
+#endif
 DFUNC_DBL_DBL(pow)
 DFUNC_DBL_DBL(remainder)
 DFUNC_DBL(rint)
@@ -277,7 +279,9 @@ static const struct luaL_Reg lualibm[] = {
 	{ "log10", libm_log10 },
 	{ "log1p", libm_log1p },
 	{ "nan", libm_nan },
+#ifndef __vax__
 	{ "nextafter", libm_nextafter },
+#endif
 	{ "pow", libm_pow },
 	{ "remainder", libm_remainder },
 	{ "rint", libm_rint },
