@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.32 2022/11/24 00:07:48 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.33 2022/11/24 00:13:54 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.32 2022/11/24 00:07:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.33 2022/11/24 00:13:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,7 +115,8 @@ void ofprint(const char *blah, ...)
 	va_end(va);
 	OF_write(console_instance, buf, len);
 	/* Apple OF only does a newline on \n, so add an explicit CR */
-	OF_write(console_instance, "\r", 1);
+	if ((len > 0) && (buf[len - 1] == '\n'))
+		OF_write(console_instance, "\r", 1);
 }
 
 static int
