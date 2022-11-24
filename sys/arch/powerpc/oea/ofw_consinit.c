@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.25 2022/02/13 12:24:24 martin Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.26 2022/11/24 00:07:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.25 2022/02/13 12:24:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.26 2022/11/24 00:07:49 macallan Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -89,7 +89,7 @@ extern struct consdev consdev_zs;
 #include <dev/ic/pckbcvar.h>
 #endif
 
-extern int console_node, console_instance;
+extern int console_node;
 
 int ofkbd_ihandle = -1;
 
@@ -98,19 +98,6 @@ static void ofwoea_cnprobe_keyboard(void);
 /*#define OFDEBUG*/
 
 #ifdef OFDEBUG
-void ofprint(const char *, ...);
-
-void ofprint(const char *blah, ...)
-{
-	va_list va;
-	char buf[256];
-	int len;
-
-	va_start(va, blah);
-	len = vsnprintf(buf, sizeof(buf), blah, va);
-	va_end(va);
-	OF_write(console_instance, buf, len);
-}
 
 #define OFPRINTF ofprint
 #else
