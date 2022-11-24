@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.3 2022/11/23 23:45:29 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.4 2022/11/24 21:07:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.3 2022/11/23 23:45:29 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.4 2022/11/24 21:07:05 brad Exp $");
 
 /*
   Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -643,8 +643,13 @@ out:
 	sc->sc_sme = NULL;
 }
 
-/* The conversion algorithms are taken from the Bosch datasheet for
- * the BMX280 and adapted to the envsys infrastructure.
+/* The conversion algorithms are taken from the BMP280 datasheet.  The
+ * same algorithms are used with the BME280.
+ *
+ * https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
+ *
+ * Section 3.11.3, page 21
+ *
  */
 
 static int32_t
