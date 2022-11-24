@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.15 2022/10/01 15:50:05 msaitoh Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.16 2022/11/24 21:03:38 mrg Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.15 2022/10/01 15:50:05 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.16 2022/11/24 21:03:38 mrg Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -398,6 +398,7 @@ amdzentemp_probe_ccd_sensors19h(struct amdzentemp_softc *sc, int model)
 	switch (model) {
 	case 0x00 ... 0x0f: /* Zen3 EPYC "Milan" */
 	case 0x20 ... 0x2f: /* Zen3 Ryzen "Vermeer" */
+	case 0x50 ... 0x5f: /* Zen3 Ryzen "Cezanne" */
 		maxreg = 8;
 		break;
 	case 0x60 ... 0x6f: /* Zen4 Ryzen "Raphael" */
