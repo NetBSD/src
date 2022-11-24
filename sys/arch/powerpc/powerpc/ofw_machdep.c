@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.31 2022/10/12 20:50:43 andvar Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.32 2022/11/24 00:07:48 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31 2022/10/12 20:50:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.32 2022/11/24 00:07:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.31 2022/10/12 20:50:43 andvar Exp 
 #include <powerpc/ofw_machdep.h>
 
 #ifdef DEBUG
-#define DPRINTF aprint_error
+#define DPRINTF ofprint
 #else
 #define DPRINTF while(0) printf
 #endif
@@ -103,6 +103,20 @@ bool	ofwbootcons_suppress;
 
 int	ofw_address_cells;
 int	ofw_size_cells;
+
+void ofprint(const char *blah, ...)
+{
+	va_list va;
+	char buf[256];
+	int len;
+
+	va_start(va, blah);
+	len = vsnprintf(buf, sizeof(buf), blah, va);
+	va_end(va);
+	OF_write(console_instance, buf, len);
+	/* Apple OF only does a newline on \n, so add an explicit CR */
+	OF_write(console_instance, "\r", 1);
+}
 
 static int
 ofwbootcons_cngetc(dev_t dev)
@@ -227,14 +241,14 @@ ofw_bootstrap_get_memory(void)
 #ifndef _LP64
 		if (addr > 0xFFFFFFFF || size > 0xFFFFFFFF ||
 			(addr + size) > 0xFFFFFFFF) {
-			aprint_error("Base addr of %llx or size of %llx too"
+			ofprint("Base addr of %llx or size of %llx too"
 			    " large for 32 bit OS. Skipping.", addr, size);
 			continue;
 		}
 #endif
 		OFmem[memcnt].start = addr;
 		OFmem[memcnt].size = size;
-		aprint_normal("mem region %d start=%"PRIx64" size=%"PRIx64"\n",
+		ofprint("mem region %d start=%"PRIx64" size=%"PRIx64"\n",
 		    memcnt, addr, size);
 		memcnt++;
 	}
@@ -290,14 +304,14 @@ ofw_bootstrap_get_memory(void)
 #ifndef _LP64
 		if (addr > 0xFFFFFFFF || size > 0xFFFFFFFF ||
 			(addr + size) > 0xFFFFFFFF) {
-			aprint_verbose("Base addr of %llx or size of %llx too"
+			ofprint("Base addr of %llx or size of %llx too"
 			    " large for 32 bit OS. Skipping.", addr, size);
 			continue;
 		}
 #endif
 		OFavail[cnt].start = addr;
 		OFavail[cnt].size = size;
-		aprint_normal("avail region %d start=%#"PRIx64" size=%#"PRIx64"\n",
+		ofprint("avail region %d start=%#"PRIx64" size=%#"PRIx64"\n",
 		    cnt, addr, size);
 		cnt++;
 	}
@@ -318,7 +332,7 @@ ofw_bootstrap_get_memory(void)
 			    AVAIL_THRESH) & ~AVAIL_THRESH;
 			OFavail[cnt].size =
 			    OFmem[memcnt-1].size - OFavail[cnt].start;
-			aprint_normal("WARNING: add memory segment %lx - %lx,"
+			ofprint("WARNING: add memory segment %lx - %" PRIxPADDR ","
 			    "\nWARNING: which was not recognized by "
 			    "the Firmware.\n",
 			    (unsigned long)OFavail[cnt].start,
@@ -468,7 +482,7 @@ ofw_bootstrap(void)
 			ofw_real_mode = false;
 		}
 	}
-	aprint_normal("OpenFirmware running in %s-mode\n",
+	ofprint("OpenFirmware running in %s-mode\n",
 	    ofw_real_mode ? "real" : "virtual");
 
 	/* Get #address-cells and #size-cells to fetching memory info. */
