@@ -1,4 +1,4 @@
-#       $NetBSD: t_ipsec_forwarding.sh,v 1.1 2022/11/09 08:21:20 knakahara Exp $
+#       $NetBSD: t_ipsec_forwarding.sh,v 1.2 2022/11/24 02:58:28 knakahara Exp $
 #
 # Copyright (c) 2022 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -456,33 +456,6 @@ test_ipsec_sp_port_ipv6()
 	atf_check -s exit:0 \
 	    -o match:"${ip_remote_i}\.$port > ${ip_local_i}\.[0-9]+" \
 	    cat $routfile
-
-#	# Check TCP communications from remote to local
-#	start_nc_server $SOCK_LOCAL $port $file_recv ipv6
-#	prepare_file $file_send
-#	export RUMP_SERVER=$SOCK_REMOTE
-#	atf_check -s exit:0 $HIJACKING nc -w 3 $ip_local_i $port < $file_send
-#	atf_check -s exit:0 diff -q $file_send $file_recv
-#	stop_nc_server
-#
-#	extract_new_packets $BUS_LOCAL_F > $loutfile
-#	extract_new_packets $BUS_REMOTE_F > $routfile
-#	$DEBUG && cat $loutfile
-#	atf_check -s exit:0 \
-#	    -o match:"${ip_local_f}\.[0-9]+ > ${ip_remote_i}\.$port" \
-#	    cat $loutfile
-#	atf_check -s exit:0 \
-#	    -o match:"${ip_remote_i}\.$port > ${ip_local_f}\.[0-9]+" \
-#	    cat $loutfile
-#	$DEBUG && cat $routfile
-#	atf_check -s exit:0 \
-#	    -o match:"${ip_forward_l} > ${ip_remote_i}: ESP" \
-#	    cat $routfile
-#	atf_check -s exit:0 \
-#	    -o match:"${ip_remote_i} > ${ip_forward_l}: ESP" \
-#	    cat $routfile
-
-
 }
 
 add_test_ipsec_sp_port()
