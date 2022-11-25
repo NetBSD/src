@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.113 2022/11/25 13:02:51 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.114 2022/11/25 16:12:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.113 2022/11/25 13:02:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.114 2022/11/25 16:12:32 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -1202,7 +1202,6 @@ rderror(int unit)
 	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
-	char *hexstr(int, int); /* XXX */
 
 	if (rdstatus(sc)) {
 #ifdef DEBUG
@@ -1226,7 +1225,6 @@ rderror(int unit)
 	 * RDRETRY as defined, the range is 1 to 32 seconds.
 	 */
 	if (sp->c_fef & FEF_IMR) {
-		extern int hz;
 		int rdtimo = RDWAITC << sc->sc_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
