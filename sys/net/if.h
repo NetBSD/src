@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.303 2022/10/24 08:11:25 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.304 2022/11/25 08:39:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -447,7 +447,15 @@ typedef struct ifnet {
 #define	IFF_DEBUG	0x0004		/* turn on debugging */
 #define	IFF_LOOPBACK	0x0008		/* is a loopback net */
 #define	IFF_POINTOPOINT	0x0010		/* interface is point-to-point link */
+#if 0
 /*			0x0020		   was IFF_NOTRAILERS */
+#else
+/*
+ * sys/compat/svr4 is remvoed on 19 Dec 2018.
+ * And then, IFF_NOTRAILERS itself is removed by if.h:r1.268 on 5 Feb 2019.
+ */
+#define	IFF_UNNUMBERED	0x0020		/* explicit unnumbered */
+#endif
 #define	IFF_RUNNING	0x0040		/* resources allocated */
 #define	IFF_NOARP	0x0080		/* no address resolution protocol */
 #define	IFF_PROMISC	0x0100		/* receive all packets */
@@ -599,7 +607,7 @@ if_start_lock(struct ifnet *ifp)
 #endif /* _KERNEL */
 
 #define	IFFBITS \
-    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT" \
+    "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6UNNUMBERED" \
     "\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX" \
     "\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
