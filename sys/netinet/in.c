@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.246 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: in.c,v 1.247 2022/11/25 08:39:32 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.246 2022/11/19 08:00:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.247 2022/11/25 08:39:32 knakahara Exp $");
 
 #include "arp.h"
 
@@ -790,6 +790,10 @@ in_ifaddlocal(struct ifaddr *ifa)
 	struct in_ifaddr *ia;
 
 	ia = (struct in_ifaddr *)ifa;
+	if ((ia->ia_ifp->if_flags & IFF_UNNUMBERED)) {
+		rt_addrmsg(RTM_NEWADDR, ifa);
+		return;
+	}
 	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY ||
 	    (ia->ia_ifp->if_flags & IFF_POINTOPOINT &&
 	    in_hosteq(ia->ia_dstaddr.sin_addr, ia->ia_addr.sin_addr)))
@@ -813,10 +817,17 @@ in_ifremlocal(struct ifaddr *ifa)
 	int bound = curlwp_bind();
 
 	ia = (struct in_ifaddr *)ifa;
+	if ((ia->ia_ifp->if_flags & IFF_UNNUMBERED)) {
+		rt_addrmsg(RTM_DELADDR, ifa);
+		goto out;
+	}
 	/* Delete the entry if exactly one ifaddr matches the
 	 * address, ifa->ifa_addr. */
 	s = pserialize_read_enter();
 	IN_ADDRLIST_READER_FOREACH(p) {
+		if ((p->ia_ifp->if_flags & IFF_UNNUMBERED))
+			continue;
+
 		if (!in_hosteq(p->ia_addr.sin_addr, ia->ia_addr.sin_addr))
 			continue;
 		if (p->ia_ifp != ia->ia_ifp)
@@ -1323,6 +1334,9 @@ in_addprefix(struct in_ifaddr *target, int flags)
 		if (prefix.s_addr != p.s_addr)
 			continue;
 
+		if ((ia->ia_ifp->if_flags & IFF_UNNUMBERED))
+			continue;
+
 		/*
 		 * if we got a matching prefix route inserted by other
 		 * interface address, we don't need to bother
@@ -1339,14 +1353,18 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&target->ia_ifa, RTM_ADD, flags);
-	if (error == 0)
-		target->ia_flags |= IFA_ROUTE;
-	else if (error == EEXIST) {
-		/*
-		 * the fact the route already exists is not an error.
-		 */
+	if (target->ia_ifa.ifa_ifp->if_flags & IFF_UNNUMBERED) {
 		error = 0;
+	} else {
+		error = rtinit(&target->ia_ifa, RTM_ADD, flags);
+		if (error == 0)
+			target->ia_flags |= IFA_ROUTE;
+		else if (error == EEXIST) {
+			/*
+			 * the fact the route already exists is not an error.
+			 */
+			error = 0;
+		}
 	}
 	return error;
 }
@@ -1397,6 +1415,9 @@ in_scrubprefix(struct in_ifaddr *target)
 		}
 
 		if (prefix.s_addr != p.s_addr)
+			continue;
+
+		if ((ia->ia_ifp->if_flags & IFF_UNNUMBERED))
 			continue;
 
 		/*
