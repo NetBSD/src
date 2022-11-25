@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.14 2022/11/21 16:22:37 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.15 2022/11/25 13:06:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -370,7 +370,7 @@ rderror(int ctlr, int unit, int part)
 	printf("rd(%d,%d,0,%d) err: vu 0x%x",
 	       ctlr, unit, part, rd_stat.c_vu);
 	if ((rd_stat.c_aef & AEF_UD) || (rd_stat.c_ief & (IEF_MD|IEF_RD)))
-		printf(", block %ld", rd_stat.c_blk);
+		printf(", block %d", rd_stat.c_blk);
 	printf(", R0x%x F0x%x A0x%x I0x%x\n",
 	       rd_stat.c_ref, rd_stat.c_fef, rd_stat.c_aef, rd_stat.c_ief);
 	return 1;
