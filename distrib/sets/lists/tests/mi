@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1235 2022/11/22 17:35:45 jakllsch Exp $
+# $NetBSD: mi,v 1.1236 2022/11/25 08:43:15 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4165,12 +4165,14 @@
 ./usr/tests/net/if_gif/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_gif/Kyuafile				tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_gif/t_gif				tests-net-tests		atf,rump
+./usr/tests/net/if_gif/t_gif_unnumbered			tests-net-tests		atf,rump
 ./usr/tests/net/if_ipsec				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_ipsec/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_ipsec/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_ipsec/t_ipsec			tests-net-tests		atf,rump
 ./usr/tests/net/if_ipsec/t_ipsec_natt			tests-net-tests		atf,rump
 ./usr/tests/net/if_ipsec/t_ipsec_pfil			tests-net-tests		atf,rump
+./usr/tests/net/if_ipsec/t_ipsec_unnumbered		tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_l2tp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -4188,6 +4190,7 @@
 ./usr/tests/net/if_pppoe/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_pppoe/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_pppoe/t_pppoe			tests-net-tests		atf,rump
+./usr/tests/net/if_pppoe/t_pppoe_unnumbered		tests-net-tests		atf,rump
 ./usr/tests/net/if_tap					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_tap/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_tap/Kyuafile				tests-net-tests		atf,rump,kyua
