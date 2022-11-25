@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.34 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.35 2022/11/25 13:12:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.34 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.35 2022/11/25 13:12:02 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -155,7 +155,7 @@ frodoattach(device_t parent, device_t self, void *aux)
 	sc->sc_ipl = ia->ia_ipl;
 
 	if ((FRODO_READ(sc, FRODO_IISR) & FRODO_IISR_SERVICE) == 0)
-		aprint_error(": service mode enabled");
+		aprint_normal(": service mode enabled");
 	aprint_normal("\n");
 
 	/* Initialize bus_space_tag_t for frodo */
