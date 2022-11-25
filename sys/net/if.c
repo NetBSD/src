@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.527 2022/10/24 08:11:25 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.528 2022/11/25 06:18:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.527 2022/10/24 08:11:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.528 2022/11/25 06:18:42 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -367,18 +367,21 @@ ifinit_post(void)
 ifnet_t *
 if_alloc(u_char type)
 {
+
 	return kmem_zalloc(sizeof(ifnet_t), KM_SLEEP);
 }
 
 void
 if_free(ifnet_t *ifp)
 {
+
 	kmem_free(ifp, sizeof(ifnet_t));
 }
 
 void
 if_initname(struct ifnet *ifp, const char *name, int unit)
 {
+
 	(void)snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 	    "%s%d", name, unit);
 }
@@ -483,7 +486,8 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 
 	namelen = strlen(ifp->if_xname);
 	addrlen = ifp->if_addrlen;
-	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
+	socksize = roundup(sockaddr_dl_measure(namelen, addrlen),
+	    sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = malloc(ifasize, M_IFADDR, M_WAITOK | M_ZERO);
 
@@ -641,8 +645,7 @@ if_getindex(ifnet_t *ifp)
 	char xnamebuf[HOOKNAMSIZ];
 
 	ifp->if_index_gen = index_gen++;
-	snprintf(xnamebuf, sizeof(xnamebuf),
-	    "%s-lshk", ifp->if_xname);
+	snprintf(xnamebuf, sizeof(xnamebuf), "%s-lshk", ifp->if_xname);
 	ifp->if_linkstate_hooks = simplehook_create(IPL_NET,
 	    xnamebuf);
 
@@ -669,9 +672,8 @@ if_getindex(ifnet_t *ifp)
 			 * slot in ifindex2ifnet[], then there
 			 * there are too many (>65535) interfaces.
 			 */
-			if (hitlimit) {
+			if (hitlimit)
 				panic("too many interfaces");
-			}
 			hitlimit = true;
 			if_index = 1;
 		}
@@ -1064,8 +1066,9 @@ if_snd_is_used(struct ifnet *ifp)
 {
 
 	return ALTQ_IS_ENABLED(&ifp->if_snd) ||
-		ifp->if_transmit == if_transmit ||
-		ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit;
+	    ifp->if_transmit == if_transmit ||
+	    ifp->if_transmit == NULL ||
+	    ifp->if_transmit == if_nulltransmit;
 }
 
 /*
@@ -1224,7 +1227,8 @@ if_is_deactivated(const struct ifnet *ifp)
 }
 
 void
-if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
+if_purgeaddrs(struct ifnet *ifp, int family,
+    void (*purgeaddr)(struct ifaddr *))
 {
 	struct ifaddr *ifa, *nifa;
 	int s;
@@ -1504,7 +1508,8 @@ restart:
 		 * addresses.  (Protocols which might store ifnet
 		 * pointers are marked with PR_PURGEIF.)
 		 */
-		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
+		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
+		{
 			so.so_proto = pr;
 			if (pr->pr_usrreqs && pr->pr_flags & PR_PURGEIF)
 				(void)(*pr->pr_usrreqs->pr_purgeif)(&so, ifp);
@@ -1567,9 +1572,9 @@ static int
 if_clone_create(const char *name)
 {
 	struct if_clone *ifc;
-	int unit;
 	struct ifnet *ifp;
 	struct psref psref;
+	int unit;
 
 	KASSERT(mutex_owned(&if_clone_mtx));
 
@@ -1753,8 +1758,7 @@ if_clone_list(int buf_count, char *buffer, int *total)
 		goto out;
 	}
 
-	count = (if_cloners_count < buf_count) ?
-	    if_cloners_count : buf_count;
+	count = (if_cloners_count < buf_count) ? if_cloners_count : buf_count;
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
@@ -1844,7 +1848,8 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	 * if_is_deactivated indicates ifa_remove is called from if_detach
 	 * where it is safe even if IFNET_LOCK isn't held.
 	 */
-	KASSERT(!if_is_mpsafe(ifp) || if_is_deactivated(ifp) || IFNET_LOCKED(ifp));
+	KASSERT(!if_is_mpsafe(ifp) || if_is_deactivated(ifp) ||
+	    IFNET_LOCKED(ifp));
 
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
@@ -1889,6 +1894,7 @@ ifa_held(struct ifaddr *ifa)
 static inline int
 equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
+
 	return sockaddr_cmp(sa1, sa2) == 0;
 }
 
@@ -2005,7 +2011,8 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		IFNET_READER_FOREACH(ifp) {
 			if (if_is_deactivated(ifp))
 				continue;
-			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
+			ifa = at_ifawithnet((const struct sockaddr_at *)addr,
+			    ifp);
 			if (ifa == NULL)
 				continue;
 			sat2 = (struct sockaddr_at *)ifa->ifa_addr;
@@ -2041,7 +2048,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 			}
 			if (ifa_maybe == NULL ||
 			    rt_refines(ifa->ifa_netmask,
-			               ifa_maybe->ifa_netmask))
+				       ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
 	}
@@ -2272,11 +2279,13 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		 * detached and the queue is being drained so we need
 		 * to avoid queuing more work.
 		 */
-		 if (ifp->if_link_state == link_state || ifp->if_link_scheduled)
+		 if (ifp->if_link_state == link_state ||
+		     ifp->if_link_scheduled)
 			goto out;
 	} else {
 		/* Ensure link_state doesn't match the last queued state. */
-		if (LQ_ITEM(ifp->if_link_queue, idx - 1) == (uint8_t)link_state)
+		if (LQ_ITEM(ifp->if_link_queue, idx - 1)
+		    == (uint8_t)link_state)
 			goto out;
 	}
 
@@ -2415,7 +2424,8 @@ if_link_state_change_work(struct work *work, void *arg)
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
 	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET) {
 		ifp->if_link_scheduled = true;
-		workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work, NULL);
+		workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work,
+		    NULL);
 	} else
 		ifp->if_link_scheduled = false;
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
@@ -2436,7 +2446,8 @@ if_linkstate_change_establish(struct ifnet *ifp, void (*fn)(void *), void *arg)
 }
 
 void
-if_linkstate_change_disestablish(struct ifnet *ifp, void *vhook, kmutex_t *lock)
+if_linkstate_change_disestablish(struct ifnet *ifp, void *vhook,
+    kmutex_t *lock)
 {
 
 	simplehook_disestablish(ifp->if_linkstate_hooks, vhook, lock);
@@ -2627,6 +2638,7 @@ if_slowtimo_countdown(struct ifnet *ifp)
 {
 	bool fire = false;
 	const int s = splnet();
+
 	KERNEL_LOCK(1, NULL);
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		fire = true;
@@ -2650,9 +2662,8 @@ if_slowtimo_intr(void *arg)
 				workqueue_enqueue(if_slowtimo_wq,
 				    &isd->isd_work, NULL);
 			}
-		} else {
+		} else
 			callout_schedule(&isd->isd_ch, hz / IFNET_SLOWHZ);
-		}
 	}
 	mutex_exit(&isd->isd_lock);
 }
@@ -2664,6 +2675,7 @@ if_slowtimo_work(struct work *work, void *arg)
 	    container_of(work, struct if_slowtimo_data, isd_work);
 	struct ifnet *ifp = isd->isd_ifp;
 	const int s = splnet();
+
 	KERNEL_LOCK(1, NULL);
 	(*ifp->if_slowtimo)(ifp);
 	KERNEL_UNLOCK_ONE(NULL);
@@ -2786,9 +2798,9 @@ ifpromisc_locked(struct ifnet *ifp, int pswitch)
 	}
 	ret = if_flags_set(ifp, nflags);
 	/* Restore interface state if not successful. */
-	if (ret != 0) {
+	if (ret != 0)
 		ifp->if_pcount = pcount;
-	}
+
 out:
 	return ret;
 }
@@ -2887,9 +2899,8 @@ ifunit(const char *name)
 	/*
 	 * If the entire name is a number, treat it as an ifindex.
 	 */
-	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++)
 		unit = unit * 10 + (*cp - '0');
-	}
 
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
@@ -2902,7 +2913,7 @@ ifunit(const char *name)
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
-	 	if (strcmp(ifp->if_xname, name) == 0)
+		if (strcmp(ifp->if_xname, name) == 0)
 			goto out;
 	}
 out:
@@ -2926,9 +2937,8 @@ if_get(const char *name, struct psref *psref)
 	/*
 	 * If the entire name is a number, treat it as an ifindex.
 	 */
-	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++)
 		unit = unit * 10 + (*cp - '0');
-	}
 
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
@@ -3057,8 +3067,8 @@ if_held(struct ifnet *ifp)
 }
 
 /*
- * Some tunnel interfaces can nest, e.g. IPv4 over IPv4 gif(4) tunnel over IPv4.
- * Check the tunnel nesting count.
+ * Some tunnel interfaces can nest, e.g. IPv4 over IPv4 gif(4) tunnel over
+ * IPv4. Check the tunnel nesting count.
  * Return > 0, if tunnel nesting count is more than limit.
  * Return 0, if tunnel nesting count is equal or less than limit.
  */
@@ -3085,8 +3095,8 @@ if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
 			count = (int *)(mtag + 1);
 			*count = 0;
 		} else {
-			log(LOG_DEBUG,
-			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
+			log(LOG_DEBUG, "%s: m_tag_get() failed, "
+			    "recursion calls are not prevented.\n",
 			    ifp->if_xname);
 		}
 	}
@@ -3131,7 +3141,8 @@ if_tunnel_free_ro_percpu(percpu_t *ro_percpu)
 
 
 static void
-if_tunnel_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+if_tunnel_rtcache_free_pc(void *p, void *arg __unused,
+    struct cpu_info *ci __unused)
 {
 	struct tunnel_ro *tro = p;
 
@@ -3339,7 +3350,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_description = descr;
 		break;
 
- 	case SIOCGIFDESCR:
+	case SIOCGIFDESCR:
 		ifr = data;
 		descr = ifp->if_description;
 
@@ -3352,7 +3363,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		error = copyout(descr, ifr->ifr_buf, IFDESCRSIZE);
 		if (error)
 			return error;
- 		break;
+		break;
 
 	default:
 		return ENOTTY;
@@ -3707,7 +3718,7 @@ ifconf(u_long cmd, void *data)
 		}
 		pserialize_read_exit(s);
 
-        next:
+next:
 		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
@@ -3721,7 +3732,7 @@ ifconf(u_long cmd, void *data)
 		KASSERT(space >= 0);
 		ifc->ifc_len = space;
 	}
-	return (0);
+	return 0;
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -3864,8 +3875,7 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 	KASSERT(IFNET_LOCKED(ifp));
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
-	else if (src ||
-	         (rc = if_ioctl(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
+	else if (src || (rc = if_ioctl(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
 		rc = if_ioctl(ifp, SIOCINITIFADDR, ifa);
 
 	return rc;
@@ -3932,10 +3942,10 @@ if_flags_set(ifnet_t *ifp, const u_short flags)
 		if (cantflags != 0)
 			ifp->if_flags ^= cantflags;
 
-                /*
+		/*
 		 * Traditionally, we do not call if_ioctl after
-                 * setting/clearing only IFF_PROMISC if the interface
-                 * isn't IFF_UP.  Uphold that tradition.
+		 * setting/clearing only IFF_PROMISC if the interface
+		 * isn't IFF_UP.  Uphold that tradition.
 		 */
 		if (chgdflags == IFF_PROMISC && (ifp->if_flags & IFF_UP) == 0)
 			return 0;
@@ -4074,7 +4084,8 @@ if_sdl_sysctl(SYSCTLFN_ARGS)
 
 	if (*oldlenp >= sdl->sdl_alen)
 		*oldlenp = sdl->sdl_alen;
-	error = sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+	error = sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen],
+	    oldp, *oldlenp);
 out1:
 	if_put(ifp, &psref);
 out0:
