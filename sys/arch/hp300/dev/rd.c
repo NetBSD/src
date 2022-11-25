@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.112 2022/11/23 18:53:22 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.113 2022/11/25 13:02:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.112 2022/11/23 18:53:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.113 2022/11/25 13:02:51 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -562,7 +562,7 @@ static int
 rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
 	struct cs80_describe desc;
-	u_char stat, cmd[3];
+	uint8_t stat, cmd[3];
 	char name[7];
 	int i, id, n, ctlr, slave;
 
@@ -717,7 +717,7 @@ rdreset_unit(int ctlr, int slave, int punit)
 	struct rd_ssmcmd ssmc;
 	struct rd_srcmd src;
 	struct rd_clearcmd clear;
-	u_char stat;
+	uint8_t stat;
 
 	clear.c_unit = C_SUNIT(punit);
 	clear.c_cmd = C_CLEAR;
@@ -1032,7 +1032,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %lx blk %lld len %d ecnt %d\n",
+		printf("%s: rdstart: cmd %x adr %x blk %lld len %d ecnt %d\n",
 		    device_xname(sc->sc_dev),
 		    sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 		    bp->b_blkno, sc->sc_resid, sc->sc_errcnt);
@@ -1042,7 +1042,7 @@ again:
 	rdreset(sc);
 	if (sc->sc_errcnt++ < RDRETRY)
 		goto again;
-	printf("%s: rdstart err: cmd 0x%x sect %ld blk %" PRId64 " len %d\n",
+	printf("%s: rdstart err: cmd 0x%x sect %u blk %" PRId64 " len %d\n",
 	    device_xname(sc->sc_dev), sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 	    bp->b_blkno, sc->sc_resid);
 	bp->b_error = EIO;
@@ -1083,7 +1083,7 @@ rdintr(void *arg)
 	struct rd_softc *sc = arg;
 	int unit = device_unit(sc->sc_dev);
 	struct buf *bp = bufq_peek(sc->sc_tab);
-	u_char stat = 13;	/* in case hpibrecv fails */
+	uint8_t stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
@@ -1150,7 +1150,7 @@ static int
 rdstatus(struct rd_softc *sc)
 {
 	int c, s;
-	u_char stat;
+	uint8_t stat;
 	int rv;
 
 	c = device_unit(device_parent(sc->sc_dev));
@@ -1284,17 +1284,17 @@ rderror(int unit)
 		rdprinterr("access", sp->c_aef, err_access);
 		rdprinterr("info", sp->c_ief, err_info);
 		printf("    block: %lld, P1-P10: ", hwbn);
-		printf("0x%x", *(u_int *)&sp->c_raw[0]);
-		printf("0x%x", *(u_int *)&sp->c_raw[4]);
-		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+		printf("0x%x", *(uint32_t *)&sp->c_raw[0]);
+		printf("0x%x", *(uint32_t *)&sp->c_raw[4]);
+		printf("0x%x\n", *(uint16_t *)&sp->c_raw[8]);
 		/* command */
 		printf("    ioc: ");
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_pad);
-		printf("0x%x", *(u_short *)&sc->sc_ioc.c_hiaddr);
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_addr);
-		printf("0x%x", *(u_short *)&sc->sc_ioc.c_nop2);
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_len);
-		printf("0x%x\n", *(u_short *)&sc->sc_ioc.c_cmd);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_pad);
+		printf("0x%x", *(uint16_t *)&sc->sc_ioc.c_hiaddr);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_addr);
+		printf("0x%x", *(uint16_t *)&sc->sc_ioc.c_nop2);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_len);
+		printf("0x%x\n", *(uint16_t *)&sc->sc_ioc.c_cmd);
 		return 1;
 	}
 #endif
@@ -1302,9 +1302,9 @@ rderror(int unit)
 	    (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
 	    sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
 	printf("P1-P10: ");
-	printf("0x%x", *(u_int *)&sp->c_raw[0]);
-	printf("0x%x", *(u_int *)&sp->c_raw[4]);
-	printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+	printf("0x%x", *(uint32_t *)&sp->c_raw[0]);
+	printf("0x%x", *(uint32_t *)&sp->c_raw[4]);
+	printf("0x%x\n", *(uint16_t *)&sp->c_raw[8]);
 	return 1;
 }
 
