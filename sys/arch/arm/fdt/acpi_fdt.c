@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.24 2022/11/25 22:17:20 mrg Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.24 2022/11/25 22:17:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $"
 #include <sys/lwp.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
-#include <sys/sysctl.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -63,7 +62,6 @@ static void	acpi_fdt_attach(device_t, device_t, void *);
 static void	acpi_fdt_poweroff(device_t);
 
 static void	acpi_fdt_smbios_init(device_t);
-static void	acpi_fdt_sysctl_init(void);
 
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
 
@@ -124,8 +122,6 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	aa.aa_dmat = NULL;
 	aa.aa_dmat64 = NULL;
 	config_found(self, &aa, NULL, CFARGS_NONE);
-
-	acpi_fdt_sysctl_init();
 }
 
 static void
@@ -225,28 +221,4 @@ acpi_fdt_smbios_init(device_t dev)
 		    sh->majrev, sh->minrev, (u_long)sh->addr, sh->count);
 		AcpiOsUnmapMemory(sh, sizeof(*sh));
 	}
-}
-
-static void
-acpi_fdt_sysctl_init(void)
-{
-	const struct sysctlnode *rnode;
-	int error;
-
-	if (smbios_table == 0) {
-		return;
-	}
-
-	error = sysctl_createv(NULL, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
-	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
-	if (error) {
-		return;
-	}
-
-	(void)sysctl_createv(NULL, 0, &rnode, NULL,
-	    CTLFLAG_PERMANENT | CTLFLAG_READONLY | CTLFLAG_HEX, CTLTYPE_QUAD,
-	    "smbios", SYSCTL_DESCR("SMBIOS table pointer"),
-	    NULL, 0, &smbios_table, sizeof(smbios_table),
-	    CTL_CREATE, CTL_EOL);
 }

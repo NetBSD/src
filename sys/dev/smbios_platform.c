@@ -1,4 +1,4 @@
-/* $NetBSD: smbios_platform.c,v 1.1 2021/07/21 23:26:15 jmcneill Exp $ */
+/* $NetBSD: smbios_platform.c,v 1.2 2022/11/25 22:17:20 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios_platform.c,v 1.1 2021/07/21 23:26:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios_platform.c,v 1.2 2022/11/25 22:17:20 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,6 +76,20 @@ platform_init(void)
 	struct smbios_slot *pslot;
 	int nisa, nother;
 
+	if (smbios_entry.hdrphys) {
+		int err;
+
+		err = sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_PERMANENT | CTLFLAG_READONLY | CTLFLAG_HEX |
+		    CTLFLAG_IMMEDIATE, CTLTYPE_QUAD,
+		    "smbios", SYSCTL_DESCR("SMBIOS table pointer"),
+		    NULL, smbios_entry.hdrphys, 0, 0,
+		    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+		if (err != 0 && err != EEXIST)
+			printf("platform: sysctl_createv "
+			    "(machdep.smbios) failed, err = %d\n", err);
+	}
+	
 	smbios.cookie = 0;
 	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
 		psys = smbios.tblhdr;
