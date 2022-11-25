@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.248 2020/10/14 13:37:14 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.249 2022/11/25 08:41:05 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.248 2020/10/14 13:37:14 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.249 2022/11/25 08:41:05 knakahara Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -141,6 +141,7 @@ __dead static void usage(void);
 static const struct kwinst ifflagskw[] = {
 	  IFKW("arp", -IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
+	, IFKW("unnumbered", IFF_UNNUMBERED)
 	, IFKW("link0", IFF_LINK0)
 	, IFKW("link1", IFF_LINK1)
 	, IFKW("link2", IFF_LINK2)
@@ -1524,6 +1525,7 @@ usage(void)
 		"\t[ preference n ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"\t[ linkstr str | -linkstr ]\n"
+		"\t[ unnumbered | -unnumbered ]\n"
 		"\t[ description str | descr str | -description | -descr ]\n"
 		"       %s -a [-b] [-d] [-h] %s[-u] [-v] [-z] [ af ]\n"
 		"       %s -l [-b] [-d] [-s] [-u]\n"
