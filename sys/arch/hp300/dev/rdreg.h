@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.19 2022/11/21 16:22:37 tsutsui Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.20 2022/11/25 13:02:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,42 +39,42 @@
  */
 
 struct	rd_iocmd {
-	char	c_pad;
-	char	c_unit;
-	char	c_volume;
-	char	c_saddr;
-	short	c_hiaddr;
-	long	c_addr;
-	char	c_nop2;
-	char	c_slen;
-	long	c_len;
-	char	c_cmd;
-	char	c_pad2;
+	uint8_t 	c_pad;
+	uint8_t 	c_unit;
+	uint8_t 	c_volume;
+	uint8_t 	c_saddr;
+	uint16_t	c_hiaddr;
+	uint32_t	c_addr;
+	uint8_t 	c_nop2;
+	uint8_t 	c_slen;
+	uint32_t	c_len;
+	uint8_t 	c_cmd;
+	uint8_t 	c_pad2;
 } __attribute__((__packed__));
 
 struct	rd_rscmd {
-	char	c_unit;
-	char	c_sram;
-	char	c_ram;
-	char	c_cmd;
+	uint8_t 	c_unit;
+	uint8_t 	c_sram;
+	uint8_t 	c_ram;
+	uint8_t 	c_cmd;
 } __attribute__((__packed__));
 
 struct	rd_stat {
-	char	c_vu;
-	char	c_pend;
-	short	c_ref;
-	short	c_fef;
-	short	c_aef;
-	short	c_ief;
+	uint8_t 	c_vu;
+	uint8_t 	c_pend;
+	uint16_t	c_ref;
+	uint16_t	c_fef;
+	uint16_t	c_aef;
+	uint16_t	c_ief;
 	union {
-		char cu_raw[10];
+		uint8_t cu_raw[10];
 		struct {
-			short	cu_msw;
-			long	cu_lsl;
+			uint16_t	cu_msw;
+			uint32_t	cu_lsl;
 		} cu_sva;
 		struct {
-			long	cu_cyhd;
-			short	cu_sect;
+			uint32_t	cu_cyhd;
+			uint16_t	cu_sect;
 		} cu_tva;
 	} c_pf;
 } __attribute__((__packed__));
@@ -83,24 +83,24 @@ struct	rd_stat {
 #define	c_tva	c_pf.cu_tva
 
 struct	rd_ssmcmd {
-	char	c_unit;
-	char	c_cmd;
-	short	c_refm;
-	short	c_fefm;
-	short	c_aefm;
-	short	c_iefm;
+	uint8_t 	c_unit;
+	uint8_t 	c_cmd;
+	uint16_t	c_refm;
+	uint16_t	c_fefm;
+	uint16_t	c_aefm;
+	uint16_t	c_iefm;
 } __attribute__((__packed__));
 
 struct	rd_srcmd {
-	char	c_unit;
-	char	c_nop;
-	char	c_cmd;
-	char	c_param;
+	uint8_t 	c_unit;
+	uint8_t 	c_nop;
+	uint8_t 	c_cmd;
+	uint8_t 	c_param;
 } __attribute__((__packed__));
 
 struct	rd_clearcmd {
-	char	c_unit;
-	char	c_cmd;
+	uint8_t 	c_unit;
+	uint8_t 	c_cmd;
 } __attribute__((__packed__));
 
 /* HW ids */
@@ -313,7 +313,7 @@ struct	rd_clearcmd {
 #define	RDSTOB(x)	((x) >> (DEV_BSHIFT-8))
 
 /* extract cyl/head/sect info from three-vector address */
-#define	RDCYL(tva)	((u_long)(tva).cu_cyhd >> 8)
+#define	RDCYL(tva)	((uint32_t)(tva).cu_cyhd >> 8)
 #define	RDHEAD(tva)	((tva).cu_cyhd & 0xFF)
 #define	RDSECT(tva)	((tva).cu_sect)
 
