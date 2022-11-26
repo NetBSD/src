@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.55 2021/07/05 14:03:46 tsutsui Exp $	*/
+/*	$NetBSD: mt.c,v 1.56 2022/11/26 00:25:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.55 2021/07/05 14:03:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.56 2022/11/26 00:25:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.55 2021/07/05 14:03:46 tsutsui Exp $");
 #include "ioconf.h"
 
 static const struct mtinfo {
-	u_short	hwid;
+	uint16_t hwid;
 	const char *desc;
 } mtinfo[] = {
 	{ MT7978ID,	"7978"	},
@@ -103,8 +103,8 @@ struct	mt_softc {
 	int	sc_hpibno;	/* logical HPIB this slave it attached to */
 	int	sc_slave;	/* HPIB slave address (0-6) */
 	short	sc_flags;	/* see below */
-	u_char	sc_lastdsj;	/* place for DSJ in mtreaddsj() */
-	u_char	sc_lastecmd;	/* place for End Command in mtreaddsj() */
+	uint8_t	sc_lastdsj;	/* place for DSJ in mtreaddsj() */
+	uint8_t	sc_lastecmd;	/* place for End Command in mtreaddsj() */
 	short	sc_recvtimeo;	/* count of hpibsend timeouts to prevent hang */
 	short	sc_statindex;	/* index for next sc_stat when MTF_STATTIMEO */
 	struct	mt_stat sc_stat;/* status bytes last read from device */
@@ -247,10 +247,10 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 {
 	int retval;
 
-	if (sc->sc_flags & MTF_STATTIMEO)
+	if ((sc->sc_flags & MTF_STATTIMEO) != 0)
 		goto getstats;
 	retval = hpibrecv(sc->sc_hpibno,
-	    (sc->sc_flags & MTF_DSJTIMEO) ? -1 : sc->sc_slave,
+	    (sc->sc_flags & MTF_DSJTIMEO) != 0 ? -1 : sc->sc_slave,
 	    MTT_DSJ, &(sc->sc_lastdsj), 1);
 	sc->sc_flags &= ~MTF_DSJTIMEO;
 	if (retval != 1) {
@@ -270,24 +270,24 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	    sc->sc_lastdsj);
 	sc->sc_lastecmd = ecmd;
 	switch (sc->sc_lastdsj) {
-	    case 0:
+	case 0:
 		if (ecmd & MTE_DSJ_FORCE)
 			break;
 		return 0;
 
-	    case 2:
+	case 2:
 		sc->sc_lastecmd = MTE_COMPLETE;
-	    case 1:
+	case 1:
 		break;
 
-	    default:
+	default:
 		log(LOG_ERR, "%s readdsj: DSJ 0x%x\n", device_xname(sc->sc_dev),
 		    sc->sc_lastdsj);
 		return -1;
 	}
  getstats:
 	retval = hpibrecv(sc->sc_hpibno,
-	    (sc->sc_flags & MTF_STATCONT) ? -1 : sc->sc_slave,
+	    (sc->sc_flags & MTF_STATCONT) != 0 ? -1 : sc->sc_slave,
 	    MTT_STAT, ((char *)&(sc->sc_stat)) + sc->sc_statindex,
 	    sizeof(sc->sc_stat) - sc->sc_statindex);
 	sc->sc_flags &= ~(MTF_STATTIMEO | MTF_STATCONT);
@@ -312,9 +312,9 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	    device_xname(sc->sc_dev),
 	    sc->sc_stat1, sc->sc_stat2, sc->sc_stat3,
 	    sc->sc_stat4, sc->sc_stat5, sc->sc_stat6);
-	if (sc->sc_lastecmd)
+	if (sc->sc_lastecmd != 0)
 		(void) hpibsend(sc->sc_hpibno, sc->sc_slave,
-		    MTL_ECMD, &(sc->sc_lastecmd), 1);
+		    MTL_ECMD, &sc->sc_lastecmd, 1);
 	return (int)sc->sc_lastdsj;
 }
 
@@ -334,7 +334,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	dlog(LOG_DEBUG, "%s open: flags 0x%x", device_xname(sc->sc_dev),
 	    sc->sc_flags);
-	if (sc->sc_flags & MTF_OPEN)
+	if ((sc->sc_flags & MTF_OPEN) != 0)
 		return EBUSY;
 	sc->sc_flags |= MTF_OPEN;
 	sc->sc_ttyp = tprintf_open(l->l_proc);
@@ -348,7 +348,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 	for (;;) {
 		if ((error = mtcommand(dev, MTNOP, 0)) != 0)
 			goto errout;
-		if (!(sc->sc_flags & MTF_REW))
+		if ((sc->sc_flags & MTF_REW) == 0)
 			break;
 		error = kpause("mt", true, hz, NULL);
 		if (error != 0 && error != EWOULDBLOCK) {
@@ -356,11 +356,11 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto errout;
 		}
 	}
-	if ((flag & FWRITE) && (sc->sc_stat1 & SR1_RO)) {
+	if ((flag & FWRITE) != 0 && (sc->sc_stat1 & SR1_RO) != 0) {
 		error = EROFS;
 		goto errout;
 	}
-	if (!(sc->sc_stat1 & SR1_ONLINE)) {
+	if ((sc->sc_stat1 & SR1_ONLINE) == 0) {
 		uprintf("%s: not online\n", device_xname(sc->sc_dev));
 		error = EIO;
 		goto errout;
@@ -395,16 +395,15 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 			 (sc->sc_stat3 & SR3_800) ? T_800BPI : -1));
 	req_den = (dev & T_DENSEL);
 
-	if (flag & FWRITE) {
-		if (!(sc->sc_stat1 & SR1_BOT)) {
+	if ((flag & FWRITE) != 0) {
+		if ((sc->sc_stat1 & SR1_BOT) == 0) {
 			if (sc->sc_density != req_den) {
 				uprintf("%s: can't change density mid-tape\n",
 				    device_xname(sc->sc_dev));
 				error = EIO;
 				goto errout;
 			}
-		}
-		else {
+		} else {
 			int mtset_density =
 			    (req_den == T_800BPI  ? MTSET800BPI : (
 			     req_den == T_1600BPI ? MTSET1600BPI : (
@@ -417,7 +416,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 	}
 	return 0;
-errout:
+ errout:
 	sc->sc_flags &= ~MTF_OPEN;
 	return error;
 }
@@ -427,12 +426,12 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
-	if (sc->sc_flags & MTF_WRT) {
-		(void) mtcommand(dev, MTWEOF, 2);
-		(void) mtcommand(dev, MTBSF, 0);
+	if ((sc->sc_flags & MTF_WRT) != 0) {
+		(void)mtcommand(dev, MTWEOF, 2);
+		(void)mtcommand(dev, MTBSF, 0);
 	}
 	if ((minor(dev) & T_NOREWIND) == 0)
-		(void) mtcommand(dev, MTREW, 0);
+		(void)mtcommand(dev, MTREW, 0);
 	sc->sc_flags &= ~MTF_OPEN;
 	tprintf_close(sc->sc_ttyp);
 	return 0;
@@ -485,14 +484,14 @@ mtstrategy(struct buf *bp)
 		}
 #endif
 		s = 16 * 1024;
-		if (sc->sc_stat2 & SR2_LONGREC) {
+		if ((sc->sc_stat2 & SR2_LONGREC) != 0) {
 			switch (sc->sc_density) {
-			    case T_1600BPI:
+			case T_1600BPI:
 				s = 32 * 1024;
 				break;
 
-			    case T_6250BPI:
-			    case T_BADBPI:
+			case T_6250BPI:
+			case T_BADBPI:
 				s = 60 * 1024;
 				break;
 			}
@@ -502,7 +501,7 @@ mtstrategy(struct buf *bp)
 			    "%s: write record (%d) too big: limit (%d)\n",
 			    device_xname(sc->sc_dev), bp->b_bcount, s);
 #if 0 /* XXX see above */
-	    error:
+ error:
 #endif
 			bp->b_error = EIO;
 			biodone(bp);
@@ -552,8 +551,8 @@ mtstart(void *arg)
 {
 	struct mt_softc *sc = arg;
 	struct buf *bp;
-	short	cmdcount = 1;
-	u_char	cmdbuf[2];
+	short cmdcount = 1;
+	uint8_t	cmdbuf[2];
 
 	dlog(LOG_DEBUG, "%s start", device_xname(sc->sc_dev));
 	sc->sc_flags &= ~MTF_WRT;
@@ -562,103 +561,104 @@ mtstart(void *arg)
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
 
-	if (sc->sc_flags & MTF_REW) {
+	if ((sc->sc_flags & MTF_REW) != 0) {
 		if (!hpibpptest(sc->sc_hpibno, sc->sc_slave))
 			goto stillrew;
 		switch (mtreaddsj(sc, MTE_DSJ_FORCE|MTE_COMPLETE|MTE_IDLE)) {
-		    case 0:
-		    case 1:
+		case 0:
+		case 1:
 		stillrew:
-			if ((sc->sc_stat1 & SR1_BOT) ||
-			    !(sc->sc_stat1 & SR1_ONLINE)) {
+			if ((sc->sc_stat1 & SR1_BOT) != 0 ||
+			    (sc->sc_stat1 & SR1_ONLINE) == 0) {
 				sc->sc_flags &= ~MTF_REW;
 				break;
 			}
-		    case -2:
+		case -2:
 			/*
 			 * -2 means "timeout" reading DSJ, which is probably
 			 * temporary.  This is considered OK when doing a NOP,
 			 * but not otherwise.
 			 */
-			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
+			if ((sc->sc_flags &
+			    (MTF_DSJTIMEO | MTF_STATTIMEO)) != 0) {
 				callout_reset(&sc->sc_start_ch, hz >> 5,
 				    spl_mtstart, sc);
 				return;
 			}
-		    case 2:
+		case 2:
 			if (bp->b_cmd != MTNOP || !(bp->b_flags & B_CMD)) {
 				bp->b_error = EBUSY;
 				goto done;
 			}
 			goto done;
 
-		    default:
+		default:
 			goto fatalerror;
 		}
 	}
-	if (bp->b_flags & B_CMD) {
-		if (sc->sc_flags & MTF_PASTEOT) {
+	if ((bp->b_flags & B_CMD) != 0) {
+		if ((sc->sc_flags & MTF_PASTEOT) != 0) {
 			switch(bp->b_cmd) {
-			    case MTFSF:
-			    case MTWEOF:
-			    case MTFSR:
+			case MTFSF:
+			case MTWEOF:
+			case MTFSR:
 				bp->b_error = ENOSPC;
 				goto done;
 
-			    case MTBSF:
-			    case MTOFFL:
-			    case MTBSR:
-			    case MTREW:
+			case MTBSF:
+			case MTOFFL:
+			case MTBSR:
+			case MTREW:
 				sc->sc_flags &= ~(MTF_PASTEOT | MTF_ATEOT);
 				break;
 			}
 		}
 		switch(bp->b_cmd) {
-		    case MTFSF:
-			if (sc->sc_flags & MTF_HITEOF)
+		case MTFSF:
+			if ((sc->sc_flags & MTF_HITEOF) != 0)
 				goto done;
 			cmdbuf[0] = MTTC_FSF;
 			break;
 
-		    case MTBSF:
-			if (sc->sc_flags & MTF_HITBOF)
+		case MTBSF:
+			if ((sc->sc_flags & MTF_HITBOF) != 0)
 				goto done;
 			cmdbuf[0] = MTTC_BSF;
 			break;
 
-		    case MTOFFL:
+		case MTOFFL:
 			sc->sc_flags |= MTF_REW;
 			cmdbuf[0] = MTTC_REWOFF;
 			break;
 
-		    case MTWEOF:
+		case MTWEOF:
 			cmdbuf[0] = MTTC_WFM;
 			break;
 
-		    case MTBSR:
+		case MTBSR:
 			cmdbuf[0] = MTTC_BSR;
 			break;
 
-		    case MTFSR:
+		case MTFSR:
 			cmdbuf[0] = MTTC_FSR;
 			break;
 
-		    case MTREW:
+		case MTREW:
 			sc->sc_flags |= MTF_REW;
 			cmdbuf[0] = MTTC_REW;
 			break;
 
-		    case MTNOP:
+		case MTNOP:
 			/*
 			 * NOP is supposed to set status bits.
 			 * Force readdsj to do it.
 			 */
 			switch (mtreaddsj(sc,
-			  MTE_DSJ_FORCE | MTE_COMPLETE | MTE_IDLE)) {
-			    default:
+			    MTE_DSJ_FORCE | MTE_COMPLETE | MTE_IDLE)) {
+			default:
 				goto done;
 
-			    case -1:
+			case -1:
 				/*
 				 * If this fails, perform a device clear
 				 * to fix any protocol problems and (most
@@ -667,19 +667,20 @@ mtstart(void *arg)
 				bp->b_cmd = MTRESET;
 				break;
 
-			    case -2:
+			case -2:
 				callout_reset(&sc->sc_start_ch, hz >> 5,
 				    spl_mtstart, sc);
 				return;
 			}
 
-		    case MTRESET:
+		case MTRESET:
 			/*
 			 * 1) selected device clear (send with "-2" secondary)
 			 * 2) set timeout, then wait for "service request"
 			 * 3) interrupt will read DSJ (and END COMPLETE-IDLE)
 			 */
-			if (hpibsend(sc->sc_hpibno, sc->sc_slave, -2, NULL, 0)){
+			if (hpibsend(sc->sc_hpibno, sc->sc_slave, -2,
+			    NULL, 0)) {
 				log(LOG_ERR, "%s can't reset",
 				    device_xname(sc->sc_dev));
 				goto fatalerror;
@@ -688,45 +689,47 @@ mtstart(void *arg)
 			hpibawait(sc->sc_hpibno);
 			return;
 
-		    case MTSET800BPI:
+		case MTSET800BPI:
 			cmdbuf[0] = MTTC_800;
 			break;
 
-		    case MTSET1600BPI:
+		case MTSET1600BPI:
 			cmdbuf[0] = MTTC_1600;
 			break;
 
-		    case MTSET6250BPI:
+		case MTSET6250BPI:
 			cmdbuf[0] = MTTC_6250;
 			break;
 
-		    case MTSET6250DC:
+		case MTSET6250DC:
 			cmdbuf[0] = MTTC_DC6250;
 			break;
 		}
 	} else {
-		if (sc->sc_flags & MTF_PASTEOT) {
+		if ((sc->sc_flags & MTF_PASTEOT) != 0) {
 			bp->b_error = ENOSPC;
 			goto done;
 		}
-		if (bp->b_flags & B_READ) {
+		if ((bp->b_flags & B_READ) != 0) {
 			sc->sc_flags |= MTF_IO;
 			cmdbuf[0] = MTTC_READ;
 		} else {
 			sc->sc_flags |= MTF_WRT | MTF_IO;
 			cmdbuf[0] = MTTC_WRITE;
-			cmdbuf[1] = (bp->b_bcount + ((1 << WRITE_BITS_IGNORED) - 1)) >> WRITE_BITS_IGNORED;
+			cmdbuf[1] =
+			    (bp->b_bcount + ((1 << WRITE_BITS_IGNORED) - 1))
+			    >> WRITE_BITS_IGNORED;
 			cmdcount = 2;
 		}
 	}
 	if (hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_TCMD, cmdbuf, cmdcount)
 	    == cmdcount) {
-		if (sc->sc_flags & MTF_REW)
+		if ((sc->sc_flags & MTF_REW) != 0)
 			goto done;
 		hpibawait(sc->sc_hpibno);
 		return;
 	}
-fatalerror:
+ fatalerror:
 	/*
 	 * If anything fails, the drive is probably hosed, so mark it not
 	 * "ALIVE" (but it EXISTS and is OPEN or we wouldn't be here, and
@@ -734,7 +737,7 @@ fatalerror:
 	 */
 	sc->sc_flags &= MTF_EXISTS | MTF_OPEN | MTF_REW;
 	bp->b_error = EIO;
-done:
+ done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
@@ -770,7 +773,7 @@ mtintr(void *arg)
 	struct mt_softc *sc = arg;
 	struct buf *bp;
 	int i;
-	u_char cmdbuf[4];
+	uint8_t cmdbuf[4];
 
 	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
@@ -789,15 +792,15 @@ mtintr(void *arg)
 	 */
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	if ((bp->b_flags & (B_CMD|B_READ)) == B_READ &&
-	    !(sc->sc_flags & (MTF_IO | MTF_STATTIMEO | MTF_DSJTIMEO))){
+	    (sc->sc_flags & (MTF_IO | MTF_STATTIMEO | MTF_DSJTIMEO)) == 0){
 		cmdbuf[0] = MTE_STOP;
-		(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD,cmdbuf,1);
+		(void)hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD,cmdbuf, 1);
 	}
 	switch (mtreaddsj(sc, 0)) {
-	    case 0:
+	case 0:
 		break;
 
-	    case 1:
+	case 1:
 		/*
 		 * If we're in the middle of a READ/WRITE and have yet to
 		 * start the data transfer, a DSJ of one should terminate it.
@@ -805,11 +808,11 @@ mtintr(void *arg)
 		sc->sc_flags &= ~MTF_IO;
 		break;
 
-	    case 2:
-		(void) hpibawait(sc->sc_hpibno);
+	case 2:
+		(void)hpibawait(sc->sc_hpibno);
 		return;
 
-	    case -2:
+	case -2:
 		/*
 		 * -2 means that the drive failed to respond quickly enough
 		 * to the request for DSJ.  It's probably just "busy" figuring
@@ -818,12 +821,12 @@ mtintr(void *arg)
 		callout_reset(&sc->sc_intr_ch, hz >> 5, spl_mtintr, sc);
 		return;
 
-	    default:
+	default:
 		log(LOG_ERR, "%s intr: can't get drive stat",
 		    device_xname(sc->sc_dev));
 		goto error;
 	}
-	if (sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) {
+	if ((sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) != 0) {
 		i = sc->sc_stat4 & SR4_ERCLMASK;
 		log(LOG_ERR, "%s: %s error, retry %d, SR2/3 %x/%x, code %d",
 			device_xname(sc->sc_dev), i == SR4_DEVICE ? "device" :
@@ -832,16 +835,16 @@ mtintr(void *arg)
 			sc->sc_stat4 & SR4_RETRYMASK, sc->sc_stat2,
 			sc->sc_stat3, sc->sc_stat5);
 
-		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
+		if ((bp->b_flags & B_CMD) != 0 && bp->b_cmd == MTRESET)
 			callout_stop(&sc->sc_intr_ch);
-		if (sc->sc_stat3 & SR3_POWERUP)
+		if ((sc->sc_stat3 & SR3_POWERUP) != 0)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
 	}
 	/*
 	 * Report and clear any soft errors.
 	 */
-	if (sc->sc_stat1 & SR1_SOFTERR) {
+	if ((sc->sc_stat1 & SR1_SOFTERR) != 0) {
 		log(LOG_WARNING, "%s: soft error, retry %d\n",
 		    device_xname(sc->sc_dev), sc->sc_stat4 & SR4_RETRYMASK);
 		sc->sc_stat1 &= ~SR1_SOFTERR;
@@ -850,7 +853,7 @@ mtintr(void *arg)
 	 * We've initiated a read or write, but haven't actually started to
 	 * DMA the data yet.  At this point, the drive's ready.
 	 */
-	if (sc->sc_flags & MTF_IO) {
+	if ((sc->sc_flags & MTF_IO) != 0) {
 		sc->sc_flags &= ~MTF_IO;
 		if (hpibustart(sc->sc_hpibno))
 			mtgo(sc);
@@ -863,8 +866,8 @@ mtintr(void *arg)
 	 * here and HAVE already hit EOT, don't allow any more operations that
 	 * move the tape forward.
 	 */
-	if (sc->sc_stat1 & SR1_EOT) {
-		if (sc->sc_flags & MTF_ATEOT)
+	if ((sc->sc_stat1 & SR1_EOT) != 0) {
+		if ((sc->sc_flags & MTF_ATEOT) != 0)
 			sc->sc_flags |= MTF_PASTEOT;
 		else {
 			bp->b_error = ENOSPC;
@@ -876,8 +879,8 @@ mtintr(void *arg)
 	 * If we were doing data, make sure we got the right amount, and
 	 * check for hitting tape marks on reads.
 	 */
-	if (bp->b_flags & B_CMD) {
-		if (sc->sc_stat1 & SR1_EOF) {
+	if ((bp->b_flags & B_CMD) != 0) {
+		if ((sc->sc_stat1 & SR1_EOF) != 0) {
 			if (bp->b_cmd == MTFSR)
 				sc->sc_flags |= MTF_HITEOF;
 			if (bp->b_cmd == MTBSR)
@@ -894,7 +897,7 @@ mtintr(void *arg)
 			    device_xname(sc->sc_dev));
 			goto error;
 		}
-		i = (int) *((u_short *) cmdbuf);
+		i = (int)*((uint16_t *)cmdbuf);
 		if (i <= bp->b_bcount) {
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
@@ -904,8 +907,8 @@ mtintr(void *arg)
 			    bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
-				"%s: record (%d) larger than wanted (%d)\n",
-				device_xname(sc->sc_dev), i, bp->b_bcount);
+			    "%s: record (%d) larger than wanted (%d)\n",
+			    device_xname(sc->sc_dev), i, bp->b_bcount);
  error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
@@ -916,7 +919,7 @@ mtintr(void *arg)
 	 * Let the drive know with an END command.
 	 */
 	cmdbuf[0] = MTE_COMPLETE | MTE_IDLE;
-	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
+	(void)hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
 	(void)bufq_get(sc->sc_tab);
 	biodone(bp);
@@ -948,32 +951,32 @@ mtioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int cnt;
 
 	switch (cmd) {
-	    case MTIOCTOP:
+	case MTIOCTOP:
 		op = (struct mtop *)data;
 		switch(op->mt_op) {
-		    case MTWEOF:
-		    case MTFSF:
-		    case MTBSR:
-		    case MTBSF:
-		    case MTFSR:
+		case MTWEOF:
+		case MTFSF:
+		case MTBSR:
+		case MTBSF:
+		case MTFSR:
 			cnt = op->mt_count;
 			break;
 
-		    case MTOFFL:
-		    case MTREW:
-		    case MTNOP:
+		case MTOFFL:
+		case MTREW:
+		case MTNOP:
 			cnt = 0;
 			break;
 
-		    default:
+		default:
 			return EINVAL;
 		}
 		return mtcommand(dev, op->mt_op, cnt);
 
-	    case MTIOCGET:
+	case MTIOCGET:
 		break;
 
-	    default:
+	default:
 		return EINVAL;
 	}
 	return 0;
