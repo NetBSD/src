@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.7 2021/12/05 02:25:29 msaitoh Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.8 2022/11/26 00:25:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, The University of Utah and
@@ -115,7 +115,7 @@
 
 
 struct	mt_stat {
-	u_char	m_stat[6];
+	uint8_t	m_stat[6];
 };
 
 /* sc_flags */
