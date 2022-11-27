@@ -1,4 +1,4 @@
-# $NetBSD: MIPSSIM,v 1.7 2022/11/15 14:49:14 simonb Exp $
+# $NetBSD: MIPSSIM,v 1.8 2022/11/27 14:54:25 he Exp $
 #
 # Kernel config for the QEMU MIPS "mipssim" simulator
 #
@@ -8,7 +8,7 @@
 
 include 	"arch/evbmips/conf/std.mipssim"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -24,6 +24,8 @@ options 	INET_CSUM_COUNTERS
 options 	TCP_CSUM_COUNTERS
 options 	UDP_CSUM_COUNTERS
 options 	TCP_OUTPUT_COUNTERS
+
+options 	MSGBUFSIZE=32768 # need a bit more than 4K for virtio qemu
 
 options 	NTP		# network time protocol
 
