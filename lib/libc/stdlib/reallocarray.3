@@ -1,4 +1,4 @@
-.\" $NetBSD: reallocarray.3,v 1.5 2022/10/28 09:43:59 wiz Exp $
+.\" $NetBSD: reallocarray.3,v 1.6 2022/11/27 20:17:20 gutteridge Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,19 +104,19 @@ functions by centralizing the overflow check in the multiplication of
 and
 .Fa size .
 .Pp
-There are still portability issues (it does not solve
-the
+There are still portability issues.
+(It does not solve the
 .Dv 0
 sized allocation return ambiguity in the C standard: does
 .Fn reallocarray
 return
 .Dv NULL
-or a unique pointer to memory that cannot be accessed? Does a
+or a unique pointer to memory that cannot be accessed?
+Does a
 .Dv NULL
 mean that an error occurred, and can someone check
 .Dv errno
-in that case to find out what happened?).
-.Pp
+in that case to find out what happened?)
 For this reason
 .Nx
 decided to go with an alternative implementation, and created
