@@ -1,10 +1,8 @@
-# $NetBSD: protocols,v 1.32 2022/11/28 02:46:58 jschauma Exp $
-# See also: protocols(5), https://www.iana.org/assignments/protocol-numbers/
+# $NetBSD: protocols,v 1.33 2022/11/28 15:28:16 jschauma Exp $
+# See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
-#                                                                    Protocol Numbers
-# 
 #    Last Updated
-#            2022-09-28
+#            2021-02-26
 # 
 #    Available Formats
 #            [IMG]
@@ -52,7 +50,7 @@ igmp           2 IGMP         # Internet Group Management                   [RFC
 ggp            3 GGP          # Gateway-to-Gateway                          [RFC823]
 ipv4           4 IPv4         # IPv4 encapsulation                          [RFC2003]
 st             5 ST           # Stream                                      [RFC1190][RFC1819]
-tcp            6 TCP          # Transmission Control                        [RFC9293]
+tcp            6 TCP          # Transmission Control                        [RFC793]
 cbt            7 CBT          # CBT                                         [Tony_Ballardie]
 egp            8 EGP          # Exterior Gateway Protocol                   [RFC888][David_Mills]
 #                               any private interior gateway
@@ -164,9 +162,9 @@ iso-ip        80 ISO-IP       # ISO Internet Protocol                       [Mar
 vmtp          81 VMTP         # VMTP                                        [Dave_Cheriton]
 secure-vmtp   82 SECURE-VMTP  # SECURE-VMTP                                 [Dave_Cheriton]
 vines         83 VINES        # VINES                                       [Brian Horn]
-ttp           84 TTP          # Transaction Transport                       [Jim_Stevens]
+ttp           84 TTP iptm IPTM # Transaction Transport                       [Jim_Stevens]
 #                               Protocol
-iptm          84 IPTM         # Internet Protocol Traffic                   [Jim_Stevens]
+#iptm          84 IPTM         # Internet Protocol Traffic                   [Jim_Stevens]
 #                               Manager
 nsfnet-igp    85 NSFNET-IGP   # NSFNET-IGP                                  [Hans_Werner_Braun]
 dgp           86 DGP          # Dissimilar Gateway Protocol                 [M/A-COM Government Systems, "Dissimilar Gateway Protocol Specification,
@@ -207,7 +205,7 @@ ipcomp       108 IPComp       # IP Payload Compression                      [RFC
 snp          109 SNP          # Sitara Networks Protocol                    [Manickam_R_Sridhar]
 compaq-peer  110 Compaq-Peer  # Compaq Peer Protocol                        [Victor_Volpe]
 ipx-in-ip    111 IPX-in-IP    # IPX in IP                                   [CJ_Lee]
-vrrp         112 VRRP         # Virtual Router Redundancy                   [RFC5798]
+vrrp         112 VRRP carp    # Virtual Router Redundancy                   [RFC5798]
 #                               Protocol
 pgm          113 PGM          # PGM Reliable Transport                      [Tony_Speakman]
 #                               Protocol
@@ -240,16 +238,16 @@ rsvp-e2e-ignore 134 RSVP-E2E-IGNORE # [RFC3175]
 mobility     135 Mobility     # Header                                       Y        [RFC6275]
 udplite      136 UDPLite      # [RFC3828]
 mpls-in-ip   137 MPLS-in-IP   # [RFC4023]
-manet        138 manet        # MANET Protocols                             [RFC5498]
+manet        138 MANET        # MANET Protocols                             [RFC5498]
 hip          139 HIP          # Host Identity Protocol             Y        [RFC7401]
 shim6        140 Shim6        # Shim6 Protocol                     Y        [RFC5533]
 wesp         141 WESP         # Wrapped Encapsulating                       [RFC5840]
 #                               Security Payload
 rohc         142 ROHC         # Robust Header Compression                   [RFC5858]
 ethernet     143 Ethernet     # Ethernet                                    [RFC8986]
-aggfrag      144 AGGFRAG      # AGGFRAG encapsulation                       [RFC-ietf-ipsecme-iptfs-19]
-#                               payload for ESP
-#    145-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
+#    144-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
+pfsync       240 PFSYNC       # PF Synchronization
+#    241-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
 #      253                      Use for experimentation and        Y        [RFC3692]
 #                               testing
 #      254                      Use for experimentation and        Y        [RFC3692]
@@ -332,5 +330,3 @@ reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 #    [Wesley_Craig]                        Wesley Craig                        mailto:Wesley.Craig&terminator.cc.umich.edu
 #    [William_Melohn]                      William Melohn                      mailto:Melohn&sun.com
 #    [Zaw_Sing_Su]                         Zaw-Sing Su                         mailto:ZSu&tsca.istc.sri.
-# 
-#    Licensing Terms
