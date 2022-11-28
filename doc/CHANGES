@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2932 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2933 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -735,5 +735,17 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		as documented and in POSIX. [riastradh 20221105]
 	aht20temp(4): Driver for the Aosong AHT20 temperature and
 		humidity sensor [brad 20221117]
+	fsck_ffs(8): Allow file systems to be converted between "UFS2"
+		and "UFS2ea" (new file system variant with extended
+		attributes support).  For compatibility with previous
+		NetBSD releases, "UFS2" file systems no longer
+		support extended attributes. [chs 20221117]
 	bmx280thp(4): Driver for the Bosch BMP280/BME280 temperature,
 		humidity and pressure sensor [brad 20221121]
+	libm(3lua): Add Lua API for the math library, from Phil Rulon.
+		[christos 20221121]
+	kernel: Move creation of machdep.smbios sysctl into
+		machine-independent code, allowing dmidecode -d /dev/smbios
+		to be used on x86. [mrg 20221125]
+	ifconfig(8): Allow configuration of interfaces as
+		explicitly unnumbred. [knakahara 20221125]
