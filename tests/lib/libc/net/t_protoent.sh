@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.3 2022/11/28 17:09:52 jschauma Exp $
+# $NetBSD: t_protoent.sh,v 1.4 2022/11/28 17:41:00 jschauma Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ protoent_body()
 				if (i>2) {
 					printf " ";
 				}
-				printf "%s ", ar[i];
+				printf "%s", ar[i];
 			}
 			printf "\n";
 			delete ar;
