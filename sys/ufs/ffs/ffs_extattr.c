@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.9 2022/11/17 06:40:40 chs Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.10 2022/11/28 04:52:04 chs Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.9 2022/11/17 06:40:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.10 2022/11/28 04:52:04 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.9 2022/11/17 06:40:40 chs Exp $");
 #define VI_UNLOCK(vp)		mutex_exit((vp)->v_interlock)
 #define UFS_INODE_SET_FLAG(ip, f)	((ip)->i_flag |= (f))
 #define ASSERT_VOP_ELOCKED(vp, m)	KASSERT(VOP_ISLOCKED(vp))
-#define I_IS_UFS2(ip)		(ITOFS(ip)->fs_magic == FS_UFS2_MAGIC)
+#define I_IS_UFS2(ip)		((ip)->i_ump->um_fstype == UFS2)
 #define	lblktosize(fs, o)	ffs_lblktosize(fs, o)
 #define	lblkno(fs, o)		ffs_lblkno(fs, o)
 #define	blkoff(fs, o)		ffs_blkoff(fs, o)
@@ -151,7 +151,7 @@ ffs_extread(struct vnode *vp, struct uio *uio, int ioflag)
 	dp = ip->i_din2;
 
 #ifdef INVARIANTS
-	if (uio->uio_rw != UIO_READ || fs->fs_magic != FS_UFS2_MAGIC)
+	if (uio->uio_rw != UIO_READ || ip->i_ump->um_fstype != UFS2)
 		panic("ffs_extread: mode");
 
 #endif
@@ -269,7 +269,7 @@ ffs_extwrite(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t ucred)
 	dp = ip->i_din2;
 
 #ifdef INVARIANTS
-	if (uio->uio_rw != UIO_WRITE || fs->fs_magic != FS_UFS2_MAGIC)
+	if (uio->uio_rw != UIO_WRITE || ip->i_ump->um_fstype != UFS2)
 		panic("ffs_extwrite: mode");
 #endif
 
@@ -585,10 +585,9 @@ ffs_openextattr(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
 
 	/* Not supported for UFS1 file systems. */
-	if (fs->fs_magic == FS_UFS1_MAGIC)
+	if (ip->i_ump->um_fstype == UFS1)
 		return (EOPNOTSUPP);
 
 #ifdef __FreeBSD__
@@ -612,10 +611,9 @@ ffs_closeextattr(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
 
 	/* Not supported for UFS1 file systems. */
-	if (fs->fs_magic == FS_UFS1_MAGIC)
+	if (ip->i_ump->um_fstype == UFS1)
 		return (EOPNOTSUPP);
 
 #ifdef __FreeBSD__
@@ -646,11 +644,15 @@ ffs_getextattr(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
 
 	KASSERT(VOP_ISLOCKED(vp));
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
+
+	if (ip->i_ump->um_fstype == UFS1) {
+#ifdef UFS_EXTATTR
 		return ufs_getextattr(ap);
+#else
+		return EOPNOTSUPP;
+#endif
 	}
 
 	u_char *eae, *p;
@@ -708,8 +710,12 @@ ffs_setextattr(void *v)
 	struct fs *fs = ip->i_fs;
 
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
+	if (ip->i_ump->um_fstype == UFS1) {
+#ifdef UFS_EXTATTR
 		return ufs_setextattr(ap);
+#else
+		return EOPNOTSUPP;
+#endif
 	}
 
 	struct extattr *eap;
@@ -829,10 +835,13 @@ ffs_listextattr(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
-	struct fs *fs = ip->i_fs;
 
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
+	if (ip->i_ump->um_fstype == UFS1) {
+#ifdef UFS_EXTATTR
 		return ufs_listextattr(ap);
+#else
+		return EOPNOTSUPP;
+#endif
 	}
 
 	struct extattr *eap, *eaend;
@@ -890,10 +899,13 @@ ffs_deleteextattr(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
 
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
+	if (ip->i_ump->um_fstype == UFS1) {
+#ifdef UFS_EXTATTR
 		return ufs_deleteextattr(ap);
+#else
+		return EOPNOTSUPP;
+#endif
 	}
 
 	struct extattr *eap;

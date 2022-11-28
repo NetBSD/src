@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.86 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.87 2022/11/28 04:52:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -141,7 +141,6 @@ int	ffs_islocked(void *);
 int	ffs_full_fsync(struct vnode *, int);
 
 /* ffs_extattr.c */
-#ifdef UFS_EXTATTR
 int	ffs_openextattr(void *);
 int	ffs_closeextattr(void *);
 int	ffs_getextattr(void *);
@@ -149,15 +148,6 @@ int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
 int	ffsext_strategy(void *);
-#else
-#define	ffs_openextattr		genfs_eopnotsupp
-#define	ffs_closeextattr	genfs_eopnotsupp
-#define	ffs_getextattr		genfs_eopnotsupp
-#define	ffs_setextattr		genfs_eopnotsupp
-#define	ffs_listextattr		genfs_eopnotsupp
-#define	ffs_deleteextattr	genfs_eopnotsupp
-#define	ffsext_strategy		vn_fifo_bypass
-#endif
 
 /*
  * Snapshot function prototypes.
