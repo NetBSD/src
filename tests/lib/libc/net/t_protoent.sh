@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.2 2012/09/03 15:32:18 christos Exp $
+# $NetBSD: t_protoent.sh,v 1.3 2022/11/28 17:09:52 jschauma Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,15 +67,15 @@ protoent_body()
 			n = split(names[key], ar);
 			printf "name=%s, proto=%s, aliases=", ar[1], proto;
 			for (i=2; i<=n; i++) {
-			if (i>2) {
-				printf " ";
-			}
-			printf "%s", ar[i];
+				if (i>2) {
+					printf " ";
+				}
+				printf "%s ", ar[i];
 			}
 			printf "\n";
 			delete ar;
 		}
-		}
+	}
 	' | sort >exp
 
 	# run test program
