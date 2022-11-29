@@ -1,4 +1,4 @@
-.\"	$NetBSD: socketpair.2,v 1.23 2011/06/27 08:21:08 wiz Exp $
+.\"	$NetBSD: socketpair.2,v 1.24 2022/11/29 20:26:39 jschauma Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 24, 2011
+.Dd November 29, 2022
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -58,12 +58,32 @@ and
 .Fa sv[1] .
 The two sockets are indistinguishable.
 .Pp
-The
+Possible values for the
 .Fa type
+argument are
+.Dv SOCK_STREAM ,
+.Dv SOCK_DGRAM ,
 and
+.Dv SOCK_SEQPACKET ;
+the only supported value for the
 .Fa protocol
-argument values are described in
-.Xr socket 2 .
+is
+.Ar 0 ,
+which will let the system select an appropriate
+protocol for the requested socket
+.Fa type.
+.Pp
+Any combination of the following flags may
+additionally be used in the
+.Fa type
+argument:
+.Pp
+.Bl -tag -width "SOCK_NONBLOCKX" -offset indent -compact
+.It SOCK_CLOEXEC
+Set close-on-exec flag on both the new descriptors.
+.It SOCK_NONBLOCK
+Set non-blocking I/O mode on both the new sockets.
+.El
 .Sh RETURN VALUES
 A 0 is returned if the call succeeds, \-1 if it fails.
 .Sh ERRORS
@@ -95,6 +115,13 @@ The
 .Fn socketpair
 function call appeared in
 .Bx 4.2 .
+.Pp
+Support for the
+.Dv SOCK_CLOEXEC
+and
+.Dv SOCK_NONBLOCK
+flags appeared in
+.Nx 6.0 .
 .Sh BUGS
 This call is currently implemented only for the
 .Dv PF_LOCAL
