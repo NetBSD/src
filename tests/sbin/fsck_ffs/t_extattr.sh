@@ -1,4 +1,4 @@
-# $NetBSD: t_extattr.sh,v 1.2 2022/11/21 19:07:36 martin Exp $
+# $NetBSD: t_extattr.sh,v 1.3 2022/11/29 20:06:24 martin Exp $
 #
 #  Copyright (c) 2021 The NetBSD Foundation, Inc.
 #  All rights reserved.
@@ -25,9 +25,10 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+rawpart=$( sysctl -n kern.rawpartition | tr '01234' 'abcde' )
 VND=vnd0
-BDEV=/dev/${VND}a
-CDEV=/dev/r${VND}a
+BDEV=/dev/${VND}${rawpart}
+CDEV=/dev/r${VND}${rawpart}
 IMG=fsimage
 MNT=mnt
 
@@ -128,7 +129,7 @@ fsck_extattr_enable_corrupted_body()
 		  fsck_ffs -y -c ea ${CDEV}
 
 	# Verify that the test file does not have the extattr.
-	atf_check -o ignore fsck -n ${CDEV}
+	atf_check -o ignore fsck_ffs -n ${CDEV}
 	atf_check mount -t ffs ${BDEV} ${MNT}
 	atf_check -s exit:1 -e 'match:Attribute not found' \
 		  getextattr user testname ${MNT}/file
@@ -167,7 +168,7 @@ fsck_extattr_disable_body()
 		  fsck_ffs -y -c no-ea ${CDEV}
 
 	# Verify that the test file does not have the test extattr.
-	atf_check -o ignore fsck -n ${CDEV}
+	atf_check -o ignore fsck_ffs -n ${CDEV}
 	atf_check mount -t ffs ${BDEV} ${MNT}
 	atf_check -s exit:1 -e 'match:getextattr: mnt/file: failed: Operation not supported' \
 		  getextattr user testname ${MNT}/file
@@ -178,7 +179,7 @@ fsck_extattr_disable_body()
 		  fsck_ffs -y -c ea ${CDEV}
 
 	# Verify that the test extattr is still gone.
-	atf_check -o ignore fsck -n ${CDEV}
+	atf_check -o ignore fsck_ffs -n ${CDEV}
 	atf_check mount -t ffs ${BDEV} ${MNT}
 	atf_check -s exit:1 -e 'match:Attribute not found' \
 		  getextattr user testname ${MNT}/file
