@@ -1,3 +1,5 @@
+/*	$NetBSD: t_ip_reass.c,v 1.2 2022/11/30 06:06:36 ozaki-r Exp $	*/
+
 /*-
  * Copyright (c) 2018 The FreeBSD Foundation
  *
@@ -28,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: t_ip_reass.c,v 1.2 2022/11/30 06:06:36 ozaki-r Exp $");
+#define USE_RUMPKERNEL	1
+#else
 __FBSDID("$FreeBSD$");
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -50,7 +58,24 @@ __FBSDID("$FreeBSD$");
 #include <time.h>
 #include <unistd.h>
 
+#ifdef USE_RUMPKERNEL
+#include <netinet/if_ether.h>
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#include "h_macros.h"
+
+#define ioctl	rump_sys_ioctl
+#define close	rump_sys_close
+#define write	rump_sys_write
+#endif
+
 #include <atf-c.h>
+
+#ifdef __NetBSD__
+struct ipstat {
+	uint64_t ips_ipstat[IP_NSTATS];
+};
+#endif
 
 struct lopacket {
 	u_int		family;
@@ -141,10 +166,15 @@ open_lobpf(in_addr_t *addrp)
 	struct ifaddrs *ifa, *ifap;
 	int error, fd;
 
+#ifdef USE_RUMPKERNEL
+	rump_init();
+	RL(fd = rump_sys_open("/dev/bpf", O_RDWR));
+#else
 	fd = open("/dev/bpf0", O_RDWR);
 	if (fd < 0 && errno == ENOENT)
 		atf_tc_skip("no BPF device available");
 	ATF_REQUIRE_MSG(fd >= 0, "open(/dev/bpf0): %s", strerror(errno));
+#endif
 
 	error = getifaddrs(&ifap);
 	ATF_REQUIRE(error == 0);
@@ -181,10 +211,21 @@ get_ipstat(struct ipstat *stat)
 	ATF_REQUIRE(len == sizeof(*stat));
 }
 
+#ifdef __NetBSD__
+#define	CHECK_IP_COUNTER(oldp, newp, counter)				\
+	ATF_REQUIRE_MSG((oldp)->ips_ipstat[counter] < (newp)->ips_ipstat[counter], \
+	    "ips_" #counter " wasn't incremented (%ju vs. %ju)",	\
+	    (uintmax_t)old.ips_ipstat[counter], (uintmax_t)new.ips_ipstat[counter]);
+#define fragdropped	IP_STAT_FRAGDROPPED
+#define toosmall	IP_STAT_TOOSMALL
+#define toolong		IP_STAT_TOOLONG
+#define badfrags	IP_STAT_BADFRAGS
+#else
 #define	CHECK_IP_COUNTER(oldp, newp, counter)				\
 	ATF_REQUIRE_MSG((oldp)->ips_ ## counter < (newp)->ips_ ## counter, \
-	    "ips_" #counter " wasn't incremented (%ju vs. %ju)",	\
+	    #counter " wasn't incremented (%ju vs. %ju)",	\
 	    (uintmax_t)old.ips_ ## counter, (uintmax_t)new.ips_## counter);
+#endif
 
 /*
  * Make sure a fragment with MF set doesn't come after the last fragment of a
@@ -306,14 +347,21 @@ ATF_TC_BODY(ip_reass__zero_length_fragment, tc)
 	get_ipstat(&old);
 	write_lopacket(fd, packet1);
 	get_ipstat(&new);
+#ifdef __NetBSD__
+	CHECK_IP_COUNTER(&old, &new, badfrags);
+#else
 	CHECK_IP_COUNTER(&old, &new, toosmall);
 	CHECK_IP_COUNTER(&old, &new, fragdropped);
+#endif
 
 	get_ipstat(&old);
 	write_lopacket(fd, packet2);
 	get_ipstat(&new);
+	/* NetBSD doesn't reject a packet of zero length w/o MF */
+#ifndef __NetBSD__
 	CHECK_IP_COUNTER(&old, &new, toosmall);
 	CHECK_IP_COUNTER(&old, &new, fragdropped);
+#endif
 
 	error = close(fd);
 	ATF_REQUIRE(error == 0);
@@ -359,13 +407,17 @@ ATF_TC_BODY(ip_reass__large_fragment, tc)
 	write_lopacket(fd, packet1);
 	get_ipstat(&new);
 	CHECK_IP_COUNTER(&old, &new, toolong);
+#ifndef __NetBSD__
 	CHECK_IP_COUNTER(&old, &new, fragdropped);
+#endif
 
 	get_ipstat(&old);
 	write_lopacket(fd, packet2);
 	get_ipstat(&new);
 	CHECK_IP_COUNTER(&old, &new, toolong);
+#ifndef __NetBSD__
 	CHECK_IP_COUNTER(&old, &new, fragdropped);
+#endif
 
 	error = close(fd);
 	ATF_REQUIRE(error == 0);
