@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.64 2022/06/16 16:27:30 tsutsui Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.65 2022/11/30 15:53:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1993,7 +1993,7 @@ check_partitions(struct install_partition_desc *install)
 				continue;
 			if (install->infos[i].fs_type != FS_BSDFFS)
 				continue;
-			if (install->infos[i].fs_version != 2)
+			if (install->infos[i].fs_version < 2)
 				continue;
 			hit_enter_to_continue(NULL, MSG_cannot_ufs2_root);
 			return false;

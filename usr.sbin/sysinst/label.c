@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.42 2022/11/17 06:40:41 chs Exp $	*/
+/*	$NetBSD: label.c,v 1.43 2022/11/30 15:53:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.42 2022/11/17 06:40:41 chs Exp $");
+__RCSID("$NetBSD: label.c,v 1.43 2022/11/30 15:53:35 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -549,17 +549,19 @@ init_fs_type_ext(menudesc *menu, void *arg)
 	size_t i, ndx, max = menu->numopts;
 
 	if (t == FS_BSDFFS) {
-		if (edit->info.fs_sub_type == 2)
+		if (edit->info.fs_sub_type == 3)
 			menu->cursel = 0;
-		else
+		else if (edit->info.fs_sub_type == 2)
 			menu->cursel = 1;
+		else
+			menu->cursel = 2;
 		return;
 	} else if (t == FS_EX2FS && edit->info.fs_sub_type == 1) {
-		menu->cursel = FSMAXTYPES;
+		menu->cursel = FSMAXTYPES+2;
 		return;
 	}
 	/* skip the two FFS entries, and do not add FFS later again */
-	for (ndx = 2, i = 0; i < FSMAXTYPES && ndx < max; i++) {
+	for (ndx = 3, i = 0; i < FSMAXTYPES && ndx < max; i++) {
 		if (i == FS_UNUSED)
 			continue;
 		if (i == FS_BSDFFS)
@@ -589,17 +591,17 @@ set_fstype_ext(menudesc *menu, void *arg)
 	size_t i, ndx, max = menu->numopts;
 	enum part_type pt;
 
-	if (menu->cursel == 0 || menu->cursel == 1) {
+	if (menu->cursel >= 0 && menu->cursel <= 2) {
 		edit->info.fs_type = FS_BSDFFS;
-		edit->info.fs_sub_type = menu->cursel == 0 ? 2 : 1;
+		edit->info.fs_sub_type = 3-menu->cursel;
 		goto found_type;
-	} else if (menu->cursel == FSMAXTYPES) {
+	} else if (menu->cursel == FSMAXTYPES+2) {
 		edit->info.fs_type = FS_EX2FS;
 		edit->info.fs_sub_type = 1;
 		goto found_type;
 	}
 
-	for (ndx = 2, i = 0; i < FSMAXTYPES && ndx < max; i++) {
+	for (ndx = 3, i = 0; i < FSMAXTYPES && ndx < max; i++) {
 		if (i == FS_UNUSED)
 			continue;
 		if (i == FS_BSDFFS)
@@ -614,12 +616,12 @@ set_fstype_ext(menudesc *menu, void *arg)
 		}
 		ndx++;
 		if (i == FS_MSDOS) {
-			ndx++;
 			if (ndx == (size_t)menu->cursel) {
 				edit->info.fs_type = FS_EFI_SP;
 				edit->info.fs_sub_type = 0;
 				goto found_type;
 			}
+			ndx++;
 		}
 	}
 	return 1;
@@ -648,12 +650,15 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 	int m;
 	size_t i, ndx, cnt;
 
-	cnt = __arraycount(fstypenames)+1;
+	cnt = __arraycount(fstypenames)+2;
 	opts = calloc(cnt, sizeof(*opts));
 	if (opts == NULL)
 		return 1;
 
 	ndx = 0;
+	opts[ndx].opt_name = msg_string(MSG_fs_type_ffsv2ea);
+	opts[ndx].opt_action = set_fstype_ext;
+	ndx++;
 	opts[ndx].opt_name = msg_string(MSG_fs_type_ffsv2);
 	opts[ndx].opt_action = set_fstype_ext;
 	ndx++;
@@ -701,14 +706,16 @@ init_fs_type(menudesc *menu, void *arg)
 
 	/* init menu->cursel from fs type in arg */
 	if (edit->info.fs_type == FS_BSDFFS) {
-		if (edit->info.fs_sub_type == 2)
+		if (edit->info.fs_sub_type == 3)
 			menu->cursel = 0;
-		else
+		else if (edit->info.fs_sub_type == 2)
 			menu->cursel = 1;
+		else
+			menu->cursel = 2;
 	}
 	for (i = 1; i < __arraycount(edit_fs_common_types); i++) {
 		if (edit->info.fs_type == edit_fs_common_types[i]) {
-			menu->cursel = i+1;
+			menu->cursel = i+2;
 			break;
 		}
 	}
@@ -722,11 +729,11 @@ set_fstype(menudesc *menu, void *arg)
 	int ndx;
 
 	pt = edit->info.nat_type ? edit->info.nat_type->generic_ptype : PT_root;
-	if (menu->cursel < 2) {
+	if (menu->cursel < 3) {
 		edit->info.fs_type = FS_BSDFFS;
-		edit->info.fs_sub_type = menu->cursel == 0 ? 2 : 1;
+		edit->info.fs_sub_type = 3-menu->cursel;
 		edit->info.nat_type = edit->pset->parts->pscheme->
-		    get_fs_part_type(pt, FS_BSDFFS, 2);
+		    get_fs_part_type(pt, FS_BSDFFS, edit->info.fs_sub_type);
 		if (edit->info.nat_type == NULL)
 			edit->info.nat_type = edit->pset->parts->
 			    pscheme->get_generic_part_type(PT_root);
@@ -735,7 +742,7 @@ set_fstype(menudesc *menu, void *arg)
 		edit->wanted->fs_version = edit->info.fs_sub_type;
 		return 1;
 	}
-	ndx = menu->cursel-1;
+	ndx = menu->cursel-2;
 
 	if (ndx < 0 ||
 	    (size_t)ndx >= __arraycount(edit_fs_common_types))
@@ -783,24 +790,25 @@ edit_fs_type(menudesc *menu, void *arg)
 	/*
 	 * Starting with a common type, show short menu first
 	 */
-	cnt = __arraycount(edit_fs_common_types) + 2;
+	cnt = __arraycount(edit_fs_common_types) + 3;
 	opts = calloc(cnt, sizeof(*opts));
 	if (opts == NULL)
 		return 0;
 
-	/* special case entry 0: two FFS entries */
+	/* special case entry 0 and 1: three FFS entries */
 	for (i = 0; i < __arraycount(edit_fs_common_types); i++) {
-		opts[i+1].opt_name = getfslabelname(edit_fs_common_types[i], 0);
-		opts[i+1].opt_action = set_fstype;
+		opts[i+2].opt_name = getfslabelname(edit_fs_common_types[i], 0);
+		opts[i+2].opt_action = set_fstype;
 	}
-	/* duplicate FFS (at offset 1) into first entry */
-	opts[0] = opts[1];
-	opts[0].opt_name = msg_string(MSG_fs_type_ffsv2);
-	opts[1].opt_name = msg_string(MSG_fs_type_ffs);
+	/* duplicate FFS (at offset 2) into first two entries */
+	opts[0] = opts[1] = opts[2];
+	opts[0].opt_name = msg_string(MSG_fs_type_ffsv2ea);
+	opts[1].opt_name = msg_string(MSG_fs_type_ffsv2);
+	opts[2].opt_name = msg_string(MSG_fs_type_ffs);
 	/* add secondary sub-menu */
-	assert(i+1 < (size_t)cnt);
-	opts[i+1].opt_name = msg_string(MSG_other_fs_type);
-	opts[i+1].opt_action = edit_fs_type_ext;
+	assert(i+2 < (size_t)cnt);
+	opts[i+2].opt_name = msg_string(MSG_other_fs_type);
+	opts[i+2].opt_action = edit_fs_type_ext;
 
 	m = new_menu(MSG_Select_the_type, opts, cnt,
 		30, 6, 0, 0, MC_SUBMENU | MC_SCROLL,
@@ -1183,7 +1191,9 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 		switch (opt) {
 		case 0:
 			if (edit->info.fs_type == FS_BSDFFS)
-				if (edit->info.fs_sub_type == 2)
+				if (edit->info.fs_sub_type == 3)
+					c = msg_string(MSG_fs_type_ffsv2ea);
+				else if (edit->info.fs_sub_type == 2)
 					c = msg_string(MSG_fs_type_ffsv2);
 				else
 					c = msg_string(MSG_fs_type_ffs);
