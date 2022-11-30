@@ -1,4 +1,4 @@
-# $NetBSD: t_extattr.sh,v 1.3 2022/11/29 20:06:24 martin Exp $
+# $NetBSD: t_extattr.sh,v 1.4 2022/11/30 07:20:36 martin Exp $
 #
 #  Copyright (c) 2021 The NetBSD Foundation, Inc.
 #  All rights reserved.
@@ -25,10 +25,9 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-rawpart=$( sysctl -n kern.rawpartition | tr '01234' 'abcde' )
 VND=vnd0
-BDEV=/dev/${VND}${rawpart}
-CDEV=/dev/r${VND}${rawpart}
+BDEV=/dev/${VND}
+CDEV=/dev/r${VND}
 IMG=fsimage
 MNT=mnt
 
