@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.118 2022/11/30 17:07:30 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.119 2022/11/30 17:39:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.118 2022/11/30 17:07:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.119 2022/11/30 17:39:12 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -428,6 +428,7 @@ static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
 static void	rdreset_unit(int, int, int);
+static void	rd_set_geom(struct rd_softc *);
 static int	rdgetinfo(dev_t);
 static void	rdrestart(void *);
 static struct buf *rdfinish(struct rd_softc *, struct buf *);
@@ -531,6 +532,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	memset(&sc->sc_dkdev, 0, sizeof(sc->sc_dkdev));
 	disk_init(&sc->sc_dkdev, device_xname(sc->sc_dev), NULL);
 	disk_attach(&sc->sc_dkdev);
+	rd_set_geom(sc);
 
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
@@ -741,6 +743,23 @@ rdreset_unit(int ctlr, int slave, int punit)
 	hpibsend(ctlr, slave, C_CMD, &ssmc, sizeof(ssmc));
 	hpibswait(ctlr, slave);
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+}
+
+static void
+rd_set_geom(struct rd_softc *sc)
+{
+	struct disk_geom *dg = &sc->sc_dkdev.dk_geom;
+	const struct rdidentinfo *ri = &rdidentinfo[sc->sc_type];
+
+	memset(dg, 0, sizeof(*dg));
+
+	dg->dg_secsize = DEV_BSIZE;
+	dg->dg_nsectors = ri->ri_nbpt;
+	dg->dg_ntracks = ri->ri_ntpc;
+	dg->dg_ncylinders = ri->ri_ncyl;
+	dg->dg_secperunit = ri->ri_nblocks;
+
+	disk_set_info(sc->sc_dev, &sc->sc_dkdev, ri->ri_desc);
 }
 
 /*
