@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.483 2022/10/01 10:07:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.484 2022/11/30 20:59:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.483 2022/10/01 10:07:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.484 2022/11/30 20:59:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2893,27 +2893,28 @@ static void
 convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 			     op_t op, int arg, const val_t *v, val_t *nv)
 {
-	unsigned int osz, nsz;
+	unsigned int obitsz, nbitsz;
 	uint64_t xmask, xmsk1;
 
-	osz = size_in_bits(ot);
-	nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
-	xmask = value_bits(nsz) ^ value_bits(osz);
-	xmsk1 = value_bits(nsz) ^ value_bits(osz - 1);
+	obitsz = size_in_bits(ot);
+	nbitsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
+	xmask = value_bits(nbitsz) ^ value_bits(obitsz);
+	xmsk1 = value_bits(nbitsz) ^ value_bits(obitsz - 1);
 	/*
-	 * For bitwise operations we are not interested in the
+	 * For bitwise operations we are not interested in the arithmetic
 	 * value, but in the bits itself.
 	 */
 	if (op == ORASS || op == BITOR || op == BITXOR) {
-		convert_constant_check_range_bitor(nsz, osz, v, xmask, op);
+		convert_constant_check_range_bitor(
+		    nbitsz, obitsz, v, xmask, op);
 	} else if (op == ANDASS || op == BITAND) {
-		convert_constant_check_range_bitand(nsz, osz, xmask, nv, ot,
-		    v, tp, op);
+		convert_constant_check_range_bitand(
+		    nbitsz, obitsz, xmask, nv, ot, v, tp, op);
 	} else if ((nt != PTR && is_uinteger(nt)) &&
 		   (ot != PTR && !is_uinteger(ot)) &&
 		   v->v_quad < 0) {
 		convert_constant_check_range_signed(op, arg);
-	} else if (nv->v_quad != v->v_quad && nsz <= osz &&
+	} else if (nv->v_quad != v->v_quad && nbitsz <= obitsz &&
 		   (v->v_quad & xmask) != 0 &&
 		   (is_uinteger(ot) || (v->v_quad & xmsk1) != xmsk1)) {
 		convert_constant_check_range_truncated(op, arg, tp, ot);
