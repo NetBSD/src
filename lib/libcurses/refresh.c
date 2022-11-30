@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.124 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.125 2022/11/30 06:19:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.124 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.125 2022/11/30 06:19:15 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1851,6 +1851,13 @@ scrolln(int starts, int startw, int curs, int bot, int top)
 	oy = curscr->cury;
 	ox = curscr->curx;
 	n = starts - startw;
+
+	if (!lineeq(__virtscr->alines[startw]->line,
+	    curscr->alines[starts]->line, (size_t) __virtscr->maxx))
+		n--;
+
+	if (n == 0)
+		return;
 
 	/*
 	 * XXX
