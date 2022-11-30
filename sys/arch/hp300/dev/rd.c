@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.119 2022/11/30 17:39:12 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.120 2022/11/30 17:42:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.119 2022/11/30 17:39:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.120 2022/11/30 17:42:20 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -790,7 +790,7 @@ rdgetinfo(dev_t dev)
 	pi = lp->d_partitions;
 	printf("%s: WARNING: %s\n", device_xname(sc->sc_dev), msg);
 
-	pi[2].p_size = rdidentinfo[sc->sc_type].ri_nblocks;
+	pi[RAW_PART].p_size = rdidentinfo[sc->sc_type].ri_nblocks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
 	pi[0].p_size = 0;
