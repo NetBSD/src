@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.117 2022/11/30 17:01:56 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.118 2022/11/30 17:07:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.117 2022/11/30 17:01:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.118 2022/11/30 17:07:30 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -428,7 +428,6 @@ static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
 static void	rdreset_unit(int, int, int);
-static void	rdustart(struct rd_softc *);
 static int	rdgetinfo(dev_t);
 static void	rdrestart(void *);
 static struct buf *rdfinish(struct rd_softc *, struct buf *);
