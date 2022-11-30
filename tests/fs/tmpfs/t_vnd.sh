@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.11 2021/06/05 06:40:59 gson Exp $
+# $NetBSD: t_vnd.sh,v 1.12 2022/11/30 17:50:00 martin Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,8 +29,7 @@
 #
 
 vnddev=vnd3
-rawpart=$( sysctl -n kern.rawpartition | tr '01234' 'abcde' )
-vnd=/dev/${vnddev}${rawpart}
+vnd=/dev/${vnddev}
 
 atf_test_case basic cleanup
 basic_head() {
