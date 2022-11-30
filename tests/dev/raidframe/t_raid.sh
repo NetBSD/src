@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.15 2020/11/30 05:33:32 msaitoh Exp $
+#	$NetBSD: t_raid.sh,v 1.16 2022/11/30 17:49:09 martin Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
+rawpart=$( set -- a b c d e f g h i j k l m n o p q r s t u v w x y z;
+	shift $( sysctl -n kern.rawpartition ); printf %s "$1" )
 rawraid=/dev/rraid0${rawpart}
 raidserver="rump_server -lrumpvfs -lrumpdev -lrumpdev_disk -lrumpdev_raidframe"
 
