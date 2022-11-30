@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.90 2022/08/30 15:27:37 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.91 2022/11/30 15:53:35 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,10 +114,14 @@ getfslabelname(uint f, uint f_version)
 		return "mfs";
 	else if (f == FS_EFI_SP)
 		return msg_string(MSG_fs_type_efi_sp);
-	else if (f == FS_BSDFFS && f_version > 0)
-		return f_version == 2 ?
-		    msg_string(MSG_fs_type_ffsv2) : msg_string(MSG_fs_type_ffs);
-	else if (f == FS_EX2FS && f_version == 1)
+	else if (f == FS_BSDFFS && f_version > 0) {
+		switch (f_version) {
+		default:
+		case 1:	return msg_string(MSG_fs_type_ffs);
+		case 2:	return msg_string(MSG_fs_type_ffsv2);
+		case 3:	return msg_string(MSG_fs_type_ffsv2ea);
+		}
+	} else if (f == FS_EX2FS && f_version == 1)
 		return msg_string(MSG_fs_type_ext2old);
 	else if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
 		return "invalid";
@@ -1278,7 +1282,7 @@ make_filesystems(struct install_partition_desc *install)
 			if (!ask_noyes(MSG_No_filesystem_newfs))
 				return EINVAL;
 			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/newfs -V2 -O2 %s", rdev);
+			    "/sbin/newfs -V2 -O2ea %s", rdev);
 		}
 
 		md_pre_mount(install, 0);
@@ -1349,9 +1353,16 @@ make_filesystems(struct install_partition_desc *install)
 				    ptn->fs_opt2);
 				strcat(opts, opt);
 			}
+			const char *ffs_fmt;
+			switch (ptn->fs_version) {
+			case 3: ffs_fmt = "2ea"; break;
+			case 2: ffs_fmt = "2"; break;
+			case 1:
+			default: ffs_fmt = "1"; break;
+			}
 			asprintf(&newfs,
-			    "/sbin/newfs -V2 -O %d %s",
-			    ptn->fs_version == 2 ? 2 : 1, opts);
+			    "/sbin/newfs -V2 -O %s %s",
+			    ffs_fmt, opts);
 			if (ptn->mountflags & PUIMNT_LOG)
 				mnt_opts = "-tffs -o log";
 			else

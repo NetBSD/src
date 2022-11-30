@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.37 2022/07/22 16:51:14 christos Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.38 2022/11/30 15:53:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1380,6 +1380,7 @@ message Too_large {Demasiado grande!}
 message free_space_line {Espacio en $0..$1 $3 (tamaño $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
+message	fs_type_ffsv2ea	{FFSv2ea}
 message	fs_type_ffs	{FFS}
 message	fs_type_efi_sp	{EFI system partition}
 message fs_type_ext2old	{Linux Ext2 (old)}
