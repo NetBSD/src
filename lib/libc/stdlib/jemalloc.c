@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.54 2021/08/30 13:12:16 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.55 2022/11/30 04:35:53 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -116,8 +116,8 @@
 #endif
 
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.54 2021/08/30 13:12:16 christos Exp $");
+/* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
+__RCSID("$NetBSD: jemalloc.c,v 1.55 2022/11/30 04:35:53 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -288,12 +288,12 @@ __RCSID("$NetBSD: jemalloc.c,v 1.54 2021/08/30 13:12:16 christos Exp $");
 #    define NO_TLS
 #  endif
 #endif
-#ifdef __hppa__                                                                                                                                         
-#  define QUANTUM_2POW_MIN	4                                                                                                                        
+#ifdef __hppa__
+#  define QUANTUM_2POW_MIN	4
 #  define TINY_MIN_2POW		4
-#  define SIZEOF_PTR_2POW	2                                                                                                                        
-#  define USE_BRK                                                                                                                                       
-#endif           
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
 
 #define	SIZEOF_PTR		(1 << SIZEOF_PTR_2POW)
 
@@ -3572,7 +3572,7 @@ malloc_init_hard(void)
 				break;
 			default: {
 				char cbuf[2];
-				
+
 				cbuf[0] = opts[j];
 				cbuf[1] = '\0';
 				_malloc_message(getprogname(),
