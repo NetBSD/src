@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.32 2022/07/08 21:19:06 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.33 2022/11/30 20:50:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.32 2022/07/08 21:19:06 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.33 2022/11/30 20:50:22 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -52,89 +52,75 @@ __RCSID("$NetBSD: inittyp.c,v 1.32 2022/07/08 21:19:06 rillig Exp $");
 #define typeinfo( \
 	    name, signed_type, unsigned_type, \
 	    size_in_bits, portable_size_in_bits, \
-	    is_integer, is_unsigned, is_floating, is_arithmetic, \
-	    is_scalar, is_complex) \
-	{ \
+	    c) \
+	{ /*CONSTCOND*/ \
 		size_in_bits, portable_size_in_bits, \
 		signed_type, unsigned_type, \
-		(is_integer) > 0, (is_unsigned) > 0, (is_floating) > 0, \
-		(is_arithmetic) > 0, (is_scalar) > 0, (is_complex) > 0, \
+		(c) == 's' || (c) == 'u', \
+		(c) == 'u' || (c) == 'p', \
+		(c) == 'f' || (c) == 'c', \
+		(c) == 's' || (c) == 'u' || (c) == 'f' || \
+		    (c) == 'c', \
+		(c) == 's' || (c) == 'u' || (c) == 'f' || \
+		    (c) == 'c' || (c) == 'p', \
+		(c) == 'c', \
 		name, \
 	}
 #else
 #define typeinfo( \
 	    name, signed_type, unsigned_type, \
 	    size_in_bits, portable_size_in_bits, \
-	    is_integer, is_unsigned, is_floating, is_arithmetic, \
-	    is_scalar, is_complex) \
-	{ \
+	    c) \
+	{ /*CONSTCOND*/ \
 		signed_type, unsigned_type, \
-		(is_integer) > 0, \
+		(c) == 's' || (c) == 'u', \
 		name, \
 	}
 #endif
 
 /* various type information */
 ttab_t	ttab[NTSPEC] = {
-	typeinfo(NULL, NOTSPEC, NOTSPEC, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("signed", SIGNED, UNSIGN, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("unsigned", SIGNED, UNSIGN, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("_Bool", BOOL, BOOL, CHAR_SIZE,
-	    1, 1, 1, 0, 1, 1, 0),
+	typeinfo(NULL, NOTSPEC, NOTSPEC, 0, 0, ' '),
+	typeinfo("signed", SIGNED, UNSIGN, 0, 0, ' '),
+	typeinfo("unsigned", SIGNED, UNSIGN, 0, 0, ' '),
+	typeinfo("_Bool", BOOL, BOOL, CHAR_SIZE, 1, 'u'),
 	typeinfo("char", SCHAR, UCHAR, CHAR_SIZE, 8,
-	    1, /*CONSTCOND*/ TARG_CHAR_MIN == 0 ? 1 : 0, 0, 1, 1, 0),
-	typeinfo("signed char", SCHAR, UCHAR, CHAR_SIZE, 8,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("unsigned char", SCHAR, UCHAR, CHAR_SIZE, 8,
-	    1, 1, 0, 1, 1, 0),
-	typeinfo("short", SHORT, USHORT, SHORT_SIZE, 16,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("unsigned short", SHORT, USHORT, SHORT_SIZE, 16,
-	    1, 1, 0, 1, 1, 0),
-	typeinfo("int", INT, UINT, INT_SIZE, INT_RSIZE * 8,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("unsigned int", INT, UINT, INT_SIZE, INT_RSIZE * 8,
-	    1, 1, 0, 1, 1, 0),
-	typeinfo("long", LONG, ULONG, LONG_SIZE, 32,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("unsigned long", LONG, ULONG, LONG_SIZE, 32,
-	    1, 1, 0, 1, 1, 0),
-	typeinfo("long long", QUAD, UQUAD, QUAD_SIZE, 64,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("unsigned long long", QUAD, UQUAD, QUAD_SIZE, 64,
-	    1, 1, 0, 1, 1, 0),
+	    TARG_CHAR_MIN == 0 ? 'u' : 's'),
+	typeinfo("signed char", SCHAR, UCHAR, CHAR_SIZE, 8, 's'),
+	typeinfo("unsigned char", SCHAR, UCHAR, CHAR_SIZE, 8, 'u'),
+	typeinfo("short", SHORT, USHORT, SHORT_SIZE, 16, 's'),
+	typeinfo("unsigned short", SHORT, USHORT, SHORT_SIZE, 16, 'u'),
+	typeinfo("int", INT, UINT, INT_SIZE, INT_RSIZE * 8, 's'),
+	typeinfo("unsigned int", INT, UINT, INT_SIZE, INT_RSIZE * 8, 'u'),
+	typeinfo("long", LONG, ULONG, LONG_SIZE, 32, 's'),
+	typeinfo("unsigned long", LONG, ULONG, LONG_SIZE, 32, 'u'),
+	typeinfo("long long", QUAD, UQUAD, QUAD_SIZE, 64, 's'),
+	typeinfo("unsigned long long", QUAD, UQUAD, QUAD_SIZE, 64, 'u'),
 #ifdef INT128_SIZE
-	typeinfo("__int128_t", INT128, UINT128, INT128_SIZE, 128,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("__uint128_t", INT128, UINT128, INT128_SIZE, 128,
-	    1, 1, 0, 1, 1, 0),
+	typeinfo("__int128_t", INT128, UINT128, INT128_SIZE, 128, 's'),
+	typeinfo("__uint128_t", INT128, UINT128, INT128_SIZE, 128, 'u'),
 #endif
-	typeinfo("float", FLOAT, FLOAT, FLOAT_SIZE, 32,
-	    0, 0, 1, 1, 1, 0),
-	typeinfo("double", DOUBLE, DOUBLE, DOUBLE_SIZE, 64,
-	    0, 0, 1, 1, 1, 0),
-	typeinfo("long double", LDOUBLE, LDOUBLE, LDOUBLE_SIZE, 80,
-	    0, 0, 1, 1, 1, 0),
-	typeinfo("void", VOID, VOID, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("struct", STRUCT, STRUCT, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("union", UNION, UNION, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("enum", ENUM, ENUM, ENUM_SIZE, 24,
-	    1, 0, 0, 1, 1, 0),
-	typeinfo("pointer", PTR, PTR, PTR_SIZE, 32,
-	    0, 1, 0, 0, 1, 0),
-	typeinfo("array", ARRAY, ARRAY, 0, 0, 0, 0, 0, 0, 0, 0),
-	typeinfo("function", FUNC, FUNC, 0, 0, 0, 0, 0, 0, 0, 0),
+	typeinfo("float", FLOAT, FLOAT, FLOAT_SIZE, 32, 'f'),
+	typeinfo("double", DOUBLE, DOUBLE, DOUBLE_SIZE, 64, 'f'),
+	typeinfo("long double", LDOUBLE, LDOUBLE, LDOUBLE_SIZE, 80, 'f'),
+	typeinfo("void", VOID, VOID, 0, 0, ' '),
+	typeinfo("struct", STRUCT, STRUCT, 0, 0, ' '),
+	typeinfo("union", UNION, UNION, 0, 0, ' '),
+	typeinfo("enum", ENUM, ENUM, ENUM_SIZE, 24, 's'),
+	typeinfo("pointer", PTR, PTR, PTR_SIZE, 32, 'p'),
+	typeinfo("array", ARRAY, ARRAY, 0, 0, ' '),
+	typeinfo("function", FUNC, FUNC, 0, 0, ' '),
 #ifdef DEBUG
-	typeinfo("_Complex", NOTSPEC, NOTSPEC, 0, 0, 0, 0, 0, 0, 0, 0),
+	typeinfo("_Complex", NOTSPEC, NOTSPEC, 0, 0, ' '),
 #else
-	typeinfo(NULL, NOTSPEC, NOTSPEC, 0, 0, 0, 0, 0, 0, 0, 0),
+	typeinfo(NULL, NOTSPEC, NOTSPEC, 0, 0, ' '),
 #endif
 	typeinfo("float _Complex", FCOMPLEX, FCOMPLEX,
-	    FLOAT_SIZE * 2, 32 * 2, 0, 0, 1, 1, 1, 1),
+	    FLOAT_SIZE * 2, 32 * 2, 'c'),
 	typeinfo("double _Complex", DCOMPLEX, DCOMPLEX,
-	    DOUBLE_SIZE * 2, 64 * 2, 0, 0, 1, 1, 1, 1),
+	    DOUBLE_SIZE * 2, 64 * 2, 'c'),
 	typeinfo("long double _Complex", LCOMPLEX, LCOMPLEX,
-	    LDOUBLE_SIZE * 2, 80 * 2, 0, 0, 1, 1, 1, 1),
+	    LDOUBLE_SIZE * 2, 80 * 2, 'c'),
 };
 #undef typeinfo
 
