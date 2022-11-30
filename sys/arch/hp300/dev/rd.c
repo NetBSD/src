@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.120 2022/11/30 17:42:20 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.121 2022/11/30 18:15:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.120 2022/11/30 17:42:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.121 2022/11/30 18:15:32 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -430,8 +430,6 @@ static void	rdreset(struct rd_softc *);
 static void	rdreset_unit(int, int, int);
 static void	rd_set_geom(struct rd_softc *);
 static int	rdgetinfo(dev_t);
-static void	rdrestart(void *);
-static struct buf *rdfinish(struct rd_softc *, struct buf *);
 
 static void	rdgetdefaultlabel(struct rd_softc *, struct disklabel *);
 static void	rdrestart(void *);
