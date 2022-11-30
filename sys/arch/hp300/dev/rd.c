@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.116 2022/11/30 16:37:44 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.117 2022/11/30 17:01:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.116 2022/11/30 16:37:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.117 2022/11/30 17:01:56 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -1305,7 +1305,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
-	error = disk_ioctl(&sc->sc_dkdev, rdpart(dev), cmd, data, flag, l);
+	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
