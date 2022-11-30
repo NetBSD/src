@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.7 2011/05/14 17:42:28 jmmv Exp $
+#	$NetBSD: t_md.sh,v 1.8 2022/11/30 17:49:09 martin Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
+rawpart=$( set -- a b c d e f g h i j k l m n o p q r s t u v w x y z;
+	shift $( sysctl -n kern.rawpartition ); printf %s "$1" )
 rawmd=/dev/rmd0${rawpart}
 
 atf_test_case basic cleanup
@@ -37,10 +38,6 @@ basic_head()
 
 basic_body()
 {
-
-	# Scope out raw part.  This is actually the *host* raw partition,
-	# but just let it slide for now, since they *should* be the same.
-	rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
 
 	atf_check -s exit:0 $(atf_get_srcdir)/h_mdserv ${rawmd}
 
