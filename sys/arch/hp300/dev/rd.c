@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.114 2022/11/25 16:12:32 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.115 2022/11/30 15:59:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.114 2022/11/25 16:12:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.115 2022/11/30 15:59:01 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -893,7 +893,11 @@ rdstrategy(struct buf *bp)
 	/* Don't perform partition translation on RAW_PART. */
 	offset = (rdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
 
-	if (rdpart(bp->b_dev) != RAW_PART) {
+	if (rdpart(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    rdidentinfo[sc->sc_type].ri_nblocks) <= 0)
+			goto done;
+	} else {
 		/*
 		 * XXX This block of code belongs in
 		 * XXX bounds_check_with_label()
