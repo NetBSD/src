@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1236 2022/11/25 08:43:15 knakahara Exp $
+# $NetBSD: mi,v 1.1237 2022/11/30 06:07:51 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4276,6 +4276,7 @@
 ./usr/tests/net/net/t_ipaddress				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6_lifetime			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6address			tests-net-tests		atf,rump
+./usr/tests/net/net/t_ip_reass				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mapped				tests-net-tests		atf
 ./usr/tests/net/net/t_mtudisc				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mtudisc6				tests-net-tests		atf,rump
