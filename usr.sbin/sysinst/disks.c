@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.91 2022/11/30 15:53:35 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.92 2022/11/30 19:44:06 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2234,7 +2234,7 @@ bootxx_name(struct install_partition_desc *install)
 	switch (fstype) {
 #if defined(BOOTXX_FFSV1) || defined(BOOTXX_FFSV2)
 	case FS_BSDFFS:
-		if (install->infos[i].fs_version == 2) {
+		if (install->infos[i].fs_version >= 2) {
 #ifdef BOOTXX_FFSV2
 			bootxxname = BOOTXX_FFSV2;
 #else
