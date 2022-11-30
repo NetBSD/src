@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.115 2022/11/30 15:59:01 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.116 2022/11/30 16:37:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.115 2022/11/30 15:59:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.116 2022/11/30 16:37:44 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -877,7 +877,7 @@ rdstrategy(struct buf *bp)
 	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(bp->b_dev));
 	struct partition *pinfo;
 	daddr_t bn;
-	int sz, s;
+	int s;
 	int offset;
 
 #ifdef DEBUG
@@ -887,7 +887,6 @@ rdstrategy(struct buf *bp)
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 	bn = bp->b_blkno;
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	pinfo = &sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
 
 	/* Don't perform partition translation on RAW_PART. */
@@ -898,34 +897,9 @@ rdstrategy(struct buf *bp)
 		    rdidentinfo[sc->sc_type].ri_nblocks) <= 0)
 			goto done;
 	} else {
-		/*
-		 * XXX This block of code belongs in
-		 * XXX bounds_check_with_label()
-		 */
-
-		if (bn < 0 || bn + sz > pinfo->p_size) {
-			sz = pinfo->p_size - bn;
-			if (sz == 0) {
-				bp->b_resid = bp->b_bcount;
-				goto done;
-			}
-			if (sz < 0) {
-				bp->b_error = EINVAL;
-				goto done;
-			}
-			bp->b_bcount = dbtob(sz);
-		}
-		/*
-		 * Check for write to write protected label
-		 */
-		if (bn + offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-		    bn + offset + sz > LABELSECTOR &&
-#endif
-		    !(bp->b_flags & B_READ) && !(sc->sc_flags & RDF_WLABEL)) {
-			bp->b_error = EROFS;
+		if (bounds_check_with_label(&sc->sc_dkdev, bp,
+		    (sc->sc_flags & RDF_WLABEL) != 0) <= 0)
 			goto done;
-		}
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
