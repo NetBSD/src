@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.248 2022/11/19 08:53:06 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.249 2022/11/30 06:02:37 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.248 2022/11/19 08:53:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.249 2022/11/30 06:02:37 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.248 2022/11/19 08:53:06 yamt Exp $");
 
 #include <net/if_arc.h>
 #include <net/if_ether.h>
+#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
@@ -244,7 +245,7 @@ static void	bpf_freed(struct bpf_d *);
 static void	bpf_free_filter(struct bpf_filter *);
 static void	bpf_ifname(struct ifnet *, struct ifreq *);
 static void	*bpf_mcpy(void *, const void *, size_t);
-static int	bpf_movein(struct uio *, int, uint64_t,
+static int	bpf_movein(struct ifnet *, struct uio *, int, uint64_t,
 			        struct mbuf **, struct sockaddr *,
 				struct bpf_filter **);
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
@@ -323,7 +324,7 @@ bpf_jit_freecode(bpfjit_func_t jcode)
 }
 
 static int
-bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
+bpf_movein(struct ifnet *ifp, struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	   struct sockaddr *sockp, struct bpf_filter **wfilter)
 {
 	struct mbuf *m, *m0, *n;
@@ -385,7 +386,11 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 
 	case DLT_NULL:
 		sockp->sa_family = AF_UNSPEC;
-		hlen = 0;
+		if (ifp->if_type == IFT_LOOP) {
+			/* Set here to apply the following validations */
+			hlen = sizeof(uint32_t);
+		} else
+			hlen = 0;
 		align = 0;
 		break;
 
@@ -441,8 +446,15 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	}
 
 	if (hlen != 0) {
-		/* move link level header in the top of mbuf to sa_data */
-		memcpy(sockp->sa_data, mtod(m0, void *), hlen);
+		if (linktype == DLT_NULL && ifp->if_type == IFT_LOOP) {
+			uint32_t af;
+			/* the link header indicates the address family */
+			memcpy(&af, mtod(m0, void *), sizeof(af));
+			sockp->sa_family = af;
+		} else {
+			/* move link level header in the top of mbuf to sa_data */
+			memcpy(sockp->sa_data, mtod(m0, void *), hlen);
+		}
 		m0->m_data += hlen;
 		m0->m_len -= hlen;
 	}
@@ -853,7 +865,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		goto out;
 	}
 
-	error = bpf_movein(uio, (int)bp->bif_dlt, ifp->if_mtu, &m,
+	error = bpf_movein(ifp, uio, (int)bp->bif_dlt, ifp->if_mtu, &m,
 		(struct sockaddr *) &dst, &d->bd_wfilter);
 	if (error)
 		goto out;
