@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.393 2022/11/22 17:35:45 jakllsch Exp $
+# $NetBSD: mi,v 1.394 2022/11/30 06:07:51 ozaki-r Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2429,6 +2429,7 @@
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/t_mcast.debug		tests-obsolete		debug,atf,rump,obsolete
 ./usr/libdata/debug/usr/tests/net/net/t_bind.debug		tests-net-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/net/net/t_ip_reass.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_mapped.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo_send.debug	tests-net-debug		debug,atf,rump
