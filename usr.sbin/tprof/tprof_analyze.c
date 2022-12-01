@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.7 2022/12/01 00:41:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.6 2022/12/01 00:32:52 ryo Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.7 2022/12/01 00:41:10 ryo Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -46,8 +46,7 @@ __RCSID("$NetBSD: tprof_analyze.c,v 1.6 2022/12/01 00:32:52 ryo Exp $");
 #include <util.h>
 #include <dev/tprof/tprof_ioctl.h>
 #include "tprof.h"
-
-#define	_PATH_KSYMS	"/dev/ksyms"
+#include "ksyms.h"
 
 #include <sys/rbtree.h>
 
@@ -67,147 +66,6 @@ struct addr {
 };
 
 static rb_tree_t addrtree;
-
-struct sym {
-	char *name;
-	uint64_t value;
-	uint64_t size;
-};
-
-static struct sym **syms = NULL;
-static size_t nsyms = 0;
-
-static int
-compare_value(const void *p1, const void *p2)
-{
-	const struct sym *s1 = *(const struct sym * const *)p1;
-	const struct sym *s2 = *(const struct sym * const *)p2;
-
-	if (s1->value > s2->value) {
-		return -1;
-	} else if (s1->value < s2->value) {
-		return 1;
-	}
-	/*
-	 * to produce a stable result, it's better not to return 0
-	 * even for __strong_alias.
-	 */
-	if (s1->size > s2->size) {
-		return -1;
-	} else if (s1->size < s2->size) {
-		return 1;
-	}
-	return strcmp(s1->name, s2->name);
-}
-
-static void
-ksymload(void)
-{
-	Elf *e;
-	Elf_Scn *s;
-	GElf_Shdr sh_store;
-	GElf_Shdr *sh;
-	Elf_Data *d;
-	int fd;
-	size_t size, i;
-
-	fd = open(_PATH_KSYMS, O_RDONLY);
-	if (fd == -1) {
-		err(EXIT_FAILURE, "open " _PATH_KSYMS);
-	}
-	if (elf_version(EV_CURRENT) == EV_NONE) {
-		goto elffail;
-	}
-	e = elf_begin(fd, ELF_C_READ, NULL);
-	if (e == NULL) {
-		goto elffail;
-	}
-	for (s = elf_nextscn(e, NULL); s != NULL; s = elf_nextscn(e, s)) {
-		sh = gelf_getshdr(s, &sh_store);
-		if (sh == NULL) {
-			goto elffail;
-		}
-		if (sh->sh_type == SHT_SYMTAB) {
-			break;
-		}
-	}
-	if (s == NULL) {
-		errx(EXIT_FAILURE, "no symtab");
-	}
-	d = elf_getdata(s, NULL);
-	if (d == NULL) {
-		goto elffail;
-	}
-	assert(sh->sh_size == d->d_size);
-	size = sh->sh_size / sh->sh_entsize;
-	for (i = 1; i < size; i++) {
-		GElf_Sym st_store;
-		GElf_Sym *st;
-		struct sym *sym;
-
-		st = gelf_getsym(d, (int)i, &st_store);
-		if (st == NULL) {
-			goto elffail;
-		}
-		if (ELF_ST_TYPE(st->st_info) != STT_FUNC) {
-			continue;
-		}
-		sym = emalloc(sizeof(*sym));
-		sym->name = estrdup(elf_strptr(e, sh->sh_link, st->st_name));
-		sym->value = (uint64_t)st->st_value;
-		sym->size = st->st_size;
-		nsyms++;
-		syms = erealloc(syms, sizeof(*syms) * nsyms);
-		syms[nsyms - 1] = sym;
-	}
-	qsort(syms, nsyms, sizeof(*syms), compare_value);
-	return;
-elffail:
-	errx(EXIT_FAILURE, "libelf: %s", elf_errmsg(elf_errno()));
-}
-
-static const char *
-ksymlookup(uint64_t value, uint64_t *offset)
-{
-	size_t hi;
-	size_t lo;
-	size_t i;
-
-	/*
-	 * try to find the smallest i for which syms[i]->value <= value.
-	 * syms[] is ordered by syms[]->value in the descending order.
-	 */
-
-	hi = nsyms - 1;
-	lo = 0;
-	while (lo < hi) {
-		const size_t mid = (lo + hi) / 2;
-		const struct sym *sym = syms[mid];
-
-		assert(syms[lo]->value >= sym->value);
-		assert(sym->value >= syms[hi]->value);
-		if (sym->value <= value) {
-			hi = mid;
-			continue;
-		}
-		lo = mid + 1;
-	}
-	assert(lo == nsyms - 1 || syms[lo]->value <= value);
-	assert(lo == 0 || syms[lo - 1]->value > value);
-	for (i = lo; i < nsyms; i++) {
-		const struct sym *sym = syms[i];
-
-		if (sym->value <= value &&
-		    (sym->size == 0 || value - sym->value <= sym->size )) {
-			*offset = value - sym->value;
-			return sym->name;
-		}
-		if (sym->size != 0 && sym->value + sym->size < value) {
-			break;
-		}
-	}
-	return NULL;
-}
 
 static signed int
 addrtree_compare_key(void *ctx, const void *n1, const void *keyp)

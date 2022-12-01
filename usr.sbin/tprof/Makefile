@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2020/11/17 10:47:17 rin Exp $
+#	$NetBSD: Makefile,v 1.11 2022/12/01 00:41:10 ryo Exp $
 
 .PATH:	${.CURDIR}/arch
 
 PROG=	tprof
 MAN=	tprof.8
-SRCS=	tprof.c tprof_analyze.c
+SRCS=	tprof.c tprof_analyze.c ksyms.c
 
 .if	${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	tprof_x86.c
