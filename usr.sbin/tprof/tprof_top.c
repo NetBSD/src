@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.1 2022/12/01 00:43:27 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.1 2022/12/01 00:43:27 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -387,7 +387,7 @@ show_count_per_event(void)
 			printf("%5.2f%%", sample_nsample_per_event[i] *
 			    100.00 / nsample_total);
 		}
-		printf("%8lu ", sample_nsample_per_event[i]);
+		printf("%8"PRIu64" ", sample_nsample_per_event[i]);
 
 		printf("%-32.32s", eventname[i]);
 		for (n = 0; n < ncpu; n++) {
@@ -481,10 +481,10 @@ sample_show(void)
 		name = e->name;
 		if (name == NULL) {
 			if (e->flags & SAMPLE_ELM_FLAGS_USER) {
-				snprintf(namebuf, sizeof(namebuf), "<PID:%lu>",
+				snprintf(namebuf, sizeof(namebuf), "<PID:%"PRIu64">",
 				    e->addr);
 			} else {
-				snprintf(namebuf, sizeof(namebuf), "0x%016lx",
+				snprintf(namebuf, sizeof(namebuf), "0x%016"PRIx64,
 				    e->addr);
 			}
 			name = namebuf;
