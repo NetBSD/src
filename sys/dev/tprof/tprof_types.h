@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_types.h,v 1.5 2018/07/15 23:46:25 jmcneill Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -39,26 +39,55 @@
 #include <stdint.h>
 #endif
 
+#define TPROF_MAXCOUNTERS	32
+typedef uint32_t tprof_countermask_t;
+#define TPROF_COUNTERMASK_ALL	__BITS(31, 0)
+
 typedef struct {
 	uint32_t s_pid;		/* process id */
 	uint32_t s_lwpid;	/* lwp id */
 	uint32_t s_cpuid;	/* cpu id */
-	uint32_t s_flags;	/* flags */
+	uint32_t s_flags;	/* flags and counterID */
+#define TPROF_SAMPLE_INKERNEL	0x00000001 /* s_pc is in kernel address space */
+#define	TPROF_SAMPLE_COUNTER_MASK 0xff000000 /* 0..(TPROF_MAXCOUNTERS-1) */
 	uintptr_t s_pc;		/* program counter */
 } tprof_sample_t;
 
 typedef struct tprof_param {
+	u_int p_counter;	/* 0..(TPROF_MAXCOUNTERS-1) */
+	u_int p__unused;
 	uint64_t p_event;	/* event class */
 	uint64_t p_unit;	/* unit within the event class */
 	uint64_t p_flags;
+#define	TPROF_PARAM_KERN		0x1
+#define	TPROF_PARAM_USER		0x2
+#define	TPROF_PARAM_PROFILE		0x4
+#define	TPROF_PARAM_VALUE2_MASK		__BITS(63, 60)
+#define	TPROF_PARAM_VALUE2_SCALE	__SHIFTIN(1, TPROF_PARAM_VALUE2_MASK)
+#define	TPROF_PARAM_VALUE2_TRIGGERCOUNT	__SHIFTIN(2, TPROF_PARAM_VALUE2_MASK)
+	uint64_t p_value;	/* initial value */
+	uint64_t p_value2;
+	/*
+	 * p_value2 is an optional value. (p_flags & TPROF_PARAM_VALUE2_MASK)
+	 * determines the usage.
+	 *
+	 * TPROF_PARAM_VALUE2_SCALE:
+	 *   Specify the counter speed as the reciprocal of the cycle counter
+	 *   speed ratio. if the counter is N times slower than the cycle
+	 *   counter, p_value2 is (0x1_0000_0000 / N). 0 is treated as 1.0.
+	 * TPROF_PARAM_VALUE2_TRIGGERCOUNT:
+	 *   When the event counter counts up p_value2, an interrupt for profile
+	 *   is generated. 0 is treated as 1.
+	 */
 } tprof_param_t;
 
-/* s_flags */
-#define	TPROF_SAMPLE_INKERNEL	1	/* s_pc is in kernel address space */
-
-/* p_flags */
-#define	TPROF_PARAM_KERN	0x01
-#define	TPROF_PARAM_USER	0x02
+typedef struct tprof_counts {
+	uint32_t c_cpu;				/* W */
+	uint32_t c_ncounters;			/* R */
+	tprof_countermask_t c_runningmask;	/* R */
+	uint32_t c__unused;
+	uint64_t c_count[TPROF_MAXCOUNTERS];	/* R */
+} tprof_counts_t;
 
 /* ti_ident */
 #define	TPROF_IDENT_NONE		0x00

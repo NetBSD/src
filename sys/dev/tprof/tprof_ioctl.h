@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_ioctl.h,v 1.4 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof_ioctl.h,v 1.5 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*-
  * Copyright (c)2008,2010 YAMAMOTO Takashi,
@@ -37,17 +37,12 @@
 
 #include <dev/tprof/tprof_types.h>
 
-#define	TPROF_VERSION	4	/* kernel-userland ABI version */
+#define	TPROF_VERSION	5	/* kernel-userland ABI version */
 
 struct tprof_info {
 	uint32_t ti_version;
 	uint32_t ti_ident;
 };
-#define	TPROF_IOC_GETINFO	_IOR('T', 1, struct tprof_info)
-
-#define	TPROF_IOC_START		_IOW('T', 2, tprof_param_t)
-
-#define	TPROF_IOC_STOP		_IO('T', 3)
 
 struct tprof_stat {
 	uint64_t ts_sample;	/* samples successfully recorded */
@@ -57,6 +52,13 @@ struct tprof_stat {
 	uint64_t ts_dropbuf;	/* buffers dropped due to the global limit */
 	uint64_t ts_dropbuf_sample; /* samples dropped with ts_dropbuf */
 };
-#define	TPROF_IOC_GETSTAT	_IOR('T', 4, struct tprof_stat)
+
+#define	TPROF_IOC_GETINFO		_IOR('T', 1, struct tprof_info)
+#define	TPROF_IOC_START			_IOW('T', 2, tprof_countermask_t)
+#define	TPROF_IOC_STOP			_IOW('T', 3, tprof_countermask_t)
+#define	TPROF_IOC_GETSTAT		_IOR('T', 4, struct tprof_stat)
+#define	TPROF_IOC_GETNCOUNTERS		_IOR('T', 5, u_int)
+#define	TPROF_IOC_CONFIGURE_EVENT	_IOW('T', 6, tprof_param_t)
+#define	TPROF_IOC_GETCOUNTS		_IOWR('T', 7, tprof_counts_t)
 
 #endif /* _DEV_TPROF_TPROF_IOCTL_H_ */

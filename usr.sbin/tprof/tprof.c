@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.13 2018/07/24 09:50:37 maxv Exp $	*/
+/*	$NetBSD: tprof.c,v 1.14 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.13 2018/07/24 09:50:37 maxv Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.14 2022/12/01 00:32:52 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -80,8 +80,11 @@ __RCSID("$NetBSD: tprof.c,v 1.13 2018/07/24 09:50:37 maxv Exp $");
 
 #define	_PATH_TPROF	"/dev/tprof"
 
+struct tprof_info tprof_info;
+u_int ncounters;
 int devfd;
 int outfd;
+u_int nevent;
 
 static void tprof_list(int, char **);
 static void tprof_monitor(int, char **) __dead;
@@ -106,7 +109,7 @@ usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\tlist\n");
 	fprintf(stderr, "\t\tList the available events.\n");
-	fprintf(stderr, "\tmonitor -e name:option [-o outfile] command\n");
+	fprintf(stderr, "\tmonitor -e name:option [-e ...] [-o outfile] command\n");
 	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
 	    "\t\tcounted during the execution of 'command'.\n");
 	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
@@ -156,14 +159,15 @@ static void
 tprof_monitor(int argc, char **argv)
 {
 	const char *outfile = "tprof.out";
-	struct tprof_param param;
 	struct tprof_stat ts;
+	tprof_param_t params[TPROF_MAXCOUNTERS];
 	pid_t pid;
 	pthread_t pt;
-	int ret, ch;
+	int ret, ch, i;
 	char *tokens[2];
+	tprof_countermask_t mask = TPROF_COUNTERMASK_ALL;
 
-	memset(&param, 0, sizeof(param));
+	memset(params, 0, sizeof(params));
 
 	while ((ch = getopt(argc, argv, "o:e:")) != -1) {
 		switch (ch) {
@@ -175,11 +179,17 @@ tprof_monitor(int argc, char **argv)
 			tokens[1] = strtok(NULL, ":");
 			if (tokens[1] == NULL)
 				usage();
-			tprof_event_lookup(tokens[0], &param);
+			tprof_event_lookup(tokens[0], &params[nevent]);
 			if (strchr(tokens[1], 'u'))
-				param.p_flags |= TPROF_PARAM_USER;
+				params[nevent].p_flags |= TPROF_PARAM_USER;
 			if (strchr(tokens[1], 'k'))
-				param.p_flags |= TPROF_PARAM_KERN;
+				params[nevent].p_flags |= TPROF_PARAM_KERN;
+			if (params[nevent].p_flags == 0)
+				usage();
+			nevent++;
+			if (nevent > __arraycount(params) ||
+			    nevent > ncounters)
+				errx(EXIT_FAILURE, "Too many events");
 			break;
 		default:
 			usage();
@@ -187,11 +197,7 @@ tprof_monitor(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc == 0) {
-		usage();
-	}
-
-	if (param.p_flags == 0) {
+	if (argc == 0 || nevent == 0) {
 		usage();
 	}
 
@@ -200,7 +206,15 @@ tprof_monitor(int argc, char **argv)
 		err(EXIT_FAILURE, "%s", outfile);
 	}
 
-	ret = ioctl(devfd, TPROF_IOC_START, &param);
+	for (i = 0; i < (int)nevent; i++) {
+		params[i].p_counter = i;
+		params[i].p_flags |= TPROF_PARAM_PROFILE;
+		ret = ioctl(devfd, TPROF_IOC_CONFIGURE_EVENT, &params[i]);
+		if (ret == -1)
+			err(EXIT_FAILURE, "TPROF_IOC_CONFIGURE_EVENT");
+	}
+
+	ret = ioctl(devfd, TPROF_IOC_START, &mask);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "TPROF_IOC_START");
 	}
@@ -237,7 +251,7 @@ tprof_monitor(int argc, char **argv)
 		}
 	}
 
-	ret = ioctl(devfd, TPROF_IOC_STOP, NULL);
+	ret = ioctl(devfd, TPROF_IOC_STOP, &mask);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "TPROF_IOC_STOP");
 	}
@@ -263,7 +277,6 @@ tprof_monitor(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-	struct tprof_info info;
 	const struct cmdtab *ct;
 	int ret;
 
@@ -275,16 +288,24 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "%s", _PATH_TPROF);
 	}
 
-	ret = ioctl(devfd, TPROF_IOC_GETINFO, &info);
+	ret = ioctl(devfd, TPROF_IOC_GETINFO, &tprof_info);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "TPROF_IOC_GETINFO");
 	}
-	if (info.ti_version != TPROF_VERSION) {
+	if (tprof_info.ti_version != TPROF_VERSION) {
 		errx(EXIT_FAILURE, "version mismatch: version=%d, expected=%d",
-		    info.ti_version, TPROF_VERSION);
+		    tprof_info.ti_version, TPROF_VERSION);
 	}
-	if (tprof_event_init(info.ti_ident) == -1) {
+	if (tprof_event_init(tprof_info.ti_ident) == -1) {
 		errx(EXIT_FAILURE, "cpu not supported");
+	}
+
+	ret = ioctl(devfd, TPROF_IOC_GETNCOUNTERS, &ncounters);
+	if (ret == -1) {
+		err(EXIT_FAILURE, "TPROF_IOC_GETNCOUNTERS");
+	}
+	if (ncounters == 0) {
+		errx(EXIT_FAILURE, "no available counters");
 	}
 
 	if (argc == 0)
