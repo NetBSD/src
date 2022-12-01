@@ -1,3 +1,4 @@
+# $NetBSD: protocols,v 1.35 2022/12/01 13:21:07 jschauma Exp $
 # See also: protocols(5), https://www.iana.org/assignments/protocol-numbers/
 #
 #                                                                    Protocol Numbers
