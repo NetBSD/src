@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.4 2022/11/24 21:07:05 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.5 2022/12/01 00:47:51 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.4 2022/11/24 21:07:05 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.5 2022/12/01 00:47:51 brad Exp $");
 
 /*
   Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -277,8 +277,7 @@ bmx280_store_raw_blob_h(struct bmx280_sc *sc, uint8_t *b) {
 	sc->sc_cal_blob.dig_H2 = (int16_t)b[2] << 8;
 	sc->sc_cal_blob.dig_H2 = sc->sc_cal_blob.dig_H2 | (int16_t)b[1];
 	sc->sc_cal_blob.dig_H3 = (uint8_t)b[3];
-	sc->sc_cal_blob.dig_H4 = ((int16_t)b[5] & 0x000f) << 8;
-	sc->sc_cal_blob.dig_H4 = sc->sc_cal_blob.dig_H4 | (int16_t)b[4];
+	sc->sc_cal_blob.dig_H4 = ((int16_t)((b[4] << 4) | (b[5] & 0x0F)));
 	sc->sc_cal_blob.dig_H5 = (int16_t)b[6] << 4;
 	sc->sc_cal_blob.dig_H5 = sc->sc_cal_blob.dig_H5 | (((int16_t)b[5] & 0x00f0) >> 4);
 	sc->sc_cal_blob.dig_H6 = (int8_t)b[7];
@@ -566,6 +565,13 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		    error);
 	}
 
+	if (sc->sc_bmx280debug > 0) {
+		for(int _d = 0;_d < 24;_d++) {
+			DPRINTF(sc, 0, ("%s: %d %02x\n",
+			    device_xname(sc->sc_dev), _d, raw_blob_tp[_d]));
+		}
+	}
+
 	bmx280_store_raw_blob_tp(sc,raw_blob_tp);
 
 	if (sc->sc_has_humidity) {
@@ -583,6 +589,13 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		if (error) {
 			aprint_error_dev(self, "Failed to read the calibration registers for h2 - h6: %d\n",
 			    error);
+		}
+
+		if (sc->sc_bmx280debug > 0) {
+			for(int _d = 0;_d < 8;_d++) {
+				DPRINTF(sc, 0, ("%s: %d %02x\n",
+				    device_xname(sc->sc_dev), _d, raw_blob_h[_d]));
+			}
 		}
 
 		bmx280_store_raw_blob_h(sc,raw_blob_h);
@@ -1049,15 +1062,15 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 						DPRINTF(sc, 2, ("%s: Refresh compensated humidity: %d\n",
 						    device_xname(sc->sc_dev), comp_hum));
 
-						uint32_t q;
+						uint64_t q;
 
-						q = comp_hum;
+						q = (uint64_t)comp_hum * 1000000;
+						DPRINTF(sc, 1, ("%s: Refresh humidity Q 1: %lld\n", __func__, q));
 						q = q / 1024;
-						q = q * 100; /* XXX - this probably is not correct */
 
-						DPRINTF(sc, 1, ("%s: Refresh humidity Q: %d\n", __func__, q));
+						DPRINTF(sc, 1, ("%s: Refresh humidity Q 2: %lld\n", __func__, q));
 
-						edata->value_cur = q;
+						edata->value_cur = (uint32_t) q;
 						edata->state = ENVSYS_SVALID;
 					}
 				}
