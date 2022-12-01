@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.7 2022/12/01 00:41:10 ryo Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.8 2022/12/01 00:43:27 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.7 2022/12/01 00:41:10 ryo Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.8 2022/12/01 00:43:27 ryo Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -192,7 +192,7 @@ tprof_analyze(int argc, char **argv)
 		errx(EXIT_FAILURE, "fopen");
 	}
 
-	ksymload();
+	ksymload(NULL);
 	rb_tree_init(&addrtree, &addrtree_ops);
 
 	/*
@@ -245,7 +245,7 @@ tprof_analyze(int argc, char **argv)
 			const char *name;
 			uint64_t offset;
 
-			name = ksymlookup(a->addr, &offset);
+			name = ksymlookup(a->addr, &offset, NULL);
 			if (name != NULL) {
 				a->addr -= offset;
 			}
@@ -310,7 +310,7 @@ tprof_analyze(int argc, char **argv)
 
 		a = l[i];
 		if (a->in_kernel) {
-			name = ksymlookup(a->addr, &offset);
+			name = ksymlookup(a->addr, &offset, NULL);
 		} else {
 			name = NULL;
 		}

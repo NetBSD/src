@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.1 2022/12/01 00:41:10 ryo Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.2 2022/12/01 00:43:27 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -35,10 +35,7 @@ struct sym {
 	uint64_t size;
 };
 
-extern struct sym **syms;
-extern size_t nsyms;
-
-void ksymload(void);
-const char *ksymlookup(uint64_t, uint64_t *);
+struct sym **ksymload(size_t *);
+const char *ksymlookup(uint64_t, uint64_t *, size_t *);
 
 #endif /* _KSYMS_H_ */

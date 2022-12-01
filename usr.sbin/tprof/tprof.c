@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.15 2022/12/01 00:40:05 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.16 2022/12/01 00:43:27 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.15 2022/12/01 00:40:05 ryo Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.16 2022/12/01 00:43:27 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -111,6 +111,7 @@ static struct cmdtab {
 	{ "monitor",	true,  false, tprof_monitor },
 	{ "count",	true,  false, tprof_count },
 	{ "analyze",	true,  true,  tprof_analyze },
+	{ "top",	true,  true,  tprof_top },
 	{ NULL,		false, false, NULL },
 };
 
@@ -122,7 +123,8 @@ usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\tlist\n");
 	fprintf(stderr, "\t\tList the available events.\n");
-	fprintf(stderr, "\tmonitor -e name[:option] [-e ...] [-o outfile] command\n");
+	fprintf(stderr, "\tmonitor -e name[:option] [-e ...] [-o outfile]"
+	    " command\n");
 	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
 	    "\t\tcounted during the execution of 'command'.\n");
 	fprintf(stderr, "\tcount -e name[:option] [-e ...] [-i interval]"
@@ -131,7 +133,8 @@ usage(void)
 	    " only outputs a counter.\n");
 	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
 	fprintf(stderr, "\t\tAnalyze the samples of the file 'file'.\n");
-
+	fprintf(stderr, "\ttop [-e name [-e ...]] [-i interval] [-u]\n");
+	fprintf(stderr, "\t\tDisplay profiling results in real-time.\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -257,6 +260,7 @@ process_stat(void *arg)
 static void
 tprof_list(int argc, char **argv)
 {
+	printf("%u events can be counted at the same time\n", ncounters);
 	tprof_event_list();
 }
 
@@ -309,7 +313,9 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 			nevent++;
 			if (nevent > __arraycount(params) ||
 			    nevent > ncounters)
-				errx(EXIT_FAILURE, "Too many events");
+				errx(EXIT_FAILURE, "Too many events. Only a"
+				    " maximum of %d counters can be used.",
+				    ncounters);
 			break;
 		default:
 			usage();
@@ -333,8 +339,10 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 		if (do_profile)
 			params[i].p_flags |= TPROF_PARAM_PROFILE;
 		ret = ioctl(devfd, TPROF_IOC_CONFIGURE_EVENT, &params[i]);
-		if (ret == -1)
-			err(EXIT_FAILURE, "TPROF_IOC_CONFIGURE_EVENT");
+		if (ret == -1) {
+			err(EXIT_FAILURE, "TPROF_IOC_CONFIGURE_EVENT: %s",
+			    eventname[i]);
+		}
 	}
 
 	ret = ioctl(devfd, TPROF_IOC_START, &mask);
@@ -404,7 +412,8 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 		fprintf(stderr, "\tbuf %" PRIu64 "\n", ts.ts_buf);
 		fprintf(stderr, "\temptybuf %" PRIu64 "\n", ts.ts_emptybuf);
 		fprintf(stderr, "\tdropbuf %" PRIu64 "\n", ts.ts_dropbuf);
-		fprintf(stderr, "\tdropbuf_sample %" PRIu64 "\n", ts.ts_dropbuf_sample);
+		fprintf(stderr, "\tdropbuf_sample %" PRIu64 "\n",
+		    ts.ts_dropbuf_sample);
 
 		fprintf(stderr, "\n");
 	}
