@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.c,v 1.1 2022/12/01 00:41:10 ryo Exp $	*/
+/*	$NetBSD: ksyms.c,v 1.2 2022/12/01 00:43:27 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ksyms.c,v 1.1 2022/12/01 00:41:10 ryo Exp $");
+__RCSID("$NetBSD: ksyms.c,v 1.2 2022/12/01 00:43:27 ryo Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -43,8 +43,8 @@ __RCSID("$NetBSD: ksyms.c,v 1.1 2022/12/01 00:41:10 ryo Exp $");
 #include <util.h>
 #include "ksyms.h"
 
-struct sym **syms = NULL;
-size_t nsyms = 0;
+static struct sym **syms = NULL;
+static size_t nsyms = 0;
 
 static int
 compare_value(const void *p1, const void *p2)
@@ -69,8 +69,8 @@ compare_value(const void *p1, const void *p2)
 	return strcmp(s1->name, s2->name);
 }
 
-void
-ksymload(void)
+struct sym **
+ksymload(size_t *nsymp)
 {
 	Elf *e;
 	Elf_Scn *s;
@@ -132,13 +132,15 @@ ksymload(void)
 	elf_end(e);
 	close(fd);
 	qsort(syms, nsyms, sizeof(*syms), compare_value);
-	return;
+	if (nsymp != NULL)
+		*nsymp = nsyms;
+	return syms;
 elffail:
 	errx(EXIT_FAILURE, "libelf: %s", elf_errmsg(elf_errno()));
 }
 
 const char *
-ksymlookup(uint64_t value, uint64_t *offset)
+ksymlookup(uint64_t value, uint64_t *offset, size_t *n)
 {
 	size_t hi;
 	size_t lo;
@@ -171,6 +173,8 @@ ksymlookup(uint64_t value, uint64_t *offset)
 		if (sym->value <= value &&
 		    (sym->size == 0 || value - sym->value <= sym->size )) {
 			*offset = value - sym->value;
+			if (n != NULL)
+				*n = i;
 			return sym->name;
 		}
 		if (sym->size != 0 && sym->value + sym->size < value) {
