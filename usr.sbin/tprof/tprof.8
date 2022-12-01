@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.17 2022/12/01 00:32:52 ryo Exp $
+.\"	$NetBSD: tprof.8,v 1.18 2022/12/01 00:40:05 ryo Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -66,7 +66,7 @@ Valid actions are:
 Display a list of performance counter events available on the system.
 .It monitor Xo
 .Fl e
-.Ar name:option
+.Ar name[:option]
 .Op Fl e Ar ...
 .Op Fl o Ar outfile
 .Ar command
@@ -81,12 +81,25 @@ specifies the source of the event; it must be a combination of
 .Ar u
 (userland) and
 .Ar k
-(kernel).
+(kernel). If omitted, it is assumed that both are specified.
 The collected samples are written into the file
 .Ar outfile
 if specified.
 The default is
 .Dq Pa tprof.out .
+.It count Xo
+.Fl e
+.Ar name[:option]
+.Op Fl e Ar ...
+.Op Fl i Ar interval
+.Ar command
+.Xc
+Same as
+.Ar monitor ,
+but does not do any profiling,
+only outputs counters every
+.Ar interval
+second.
 .It analyze Xo
 .Op Fl CkLPs
 .Op Fl p Ar pid
