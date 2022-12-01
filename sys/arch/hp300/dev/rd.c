@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.121 2022/11/30 18:15:32 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.122 2022/12/01 15:02:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.121 2022/11/30 18:15:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.122 2022/12/01 15:02:11 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.121 2022/11/30 18:15:32 tsutsui Exp $");
 
 #include "ioconf.h"
 
-int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
+int	rderrthresh = RDRETRY - 1;	/* when to start reporting errors */
 
 #ifdef DEBUG
 /* error message tables */
@@ -547,7 +547,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = RDF_ALIVE;
 #ifdef DEBUG
 	/* always report errors */
-	if (rddebug & RDB_ERROR)
+	if ((rddebug & RDB_ERROR) != 0)
 		rderrthresh = 0;
 #endif
 	/*
@@ -812,8 +812,8 @@ rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Wait for any pending opens/closes to complete
 	 */
-	while (sc->sc_flags & (RDF_OPENING|RDF_CLOSING))
-		(void) tsleep(sc, PRIBIO, "rdopen", 0);
+	while ((sc->sc_flags & (RDF_OPENING | RDF_CLOSING)) != 0)
+		(void)tsleep(sc, PRIBIO, "rdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -878,10 +878,10 @@ rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 		s = splbio();
 		while (sc->sc_active) {
 			sc->sc_flags |= RDF_WANTED;
-			(void) tsleep(&sc->sc_tab, PRIBIO, "rdclose", 0);
+			(void)tsleep(&sc->sc_tab, PRIBIO, "rdclose", 0);
 		}
 		splx(s);
-		sc->sc_flags &= ~(RDF_CLOSING|RDF_WLABEL);
+		sc->sc_flags &= ~(RDF_CLOSING | RDF_WLABEL);
 		wakeup((void *)sc);
 	}
 	return 0;
@@ -897,10 +897,11 @@ rdstrategy(struct buf *bp)
 	int offset;
 
 #ifdef DEBUG
-	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%p): dev %"PRIx64", bn %llx, bcount %x, %c\n",
-		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
-		       (bp->b_flags & B_READ) ? 'R' : 'W');
+	if ((rddebug & RDB_FOLLOW) != 0)
+		printf("rdstrategy(%p): dev %" PRIx64
+		    ", bn %llx, bcount %x, %c\n",
+		    bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
+		    (bp->b_flags & B_READ) != 0 ? 'R' : 'W');
 #endif
 	bn = bp->b_blkno;
 	pinfo = &sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
@@ -926,7 +927,7 @@ rdstrategy(struct buf *bp)
 	}
 	splx(s);
 	return;
-done:
+ done:
 	biodone(bp);
 }
 
@@ -936,8 +937,11 @@ done:
 static void
 rdrestart(void *arg)
 {
-	int s = splbio();
-	rdustart((struct rd_softc *)arg);
+	struct rd_softc *sc = arg;
+	int s;
+
+	s = splbio();
+	rdustart(sc);
 	splx(s);
 }
 
@@ -965,7 +969,7 @@ rdfinish(struct rd_softc *sc, struct buf *bp)
 	if ((bp = bufq_peek(sc->sc_tab)) != NULL)
 		return bp;
 	sc->sc_active = 0;
-	if (sc->sc_flags & RDF_WANTED) {
+	if ((sc->sc_flags & RDF_WANTED) != 0) {
 		sc->sc_flags &= ~RDF_WANTED;
 		wakeup((void *)&sc->sc_tab);
 	}
@@ -982,7 +986,7 @@ rdstart(void *arg)
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
 
-again:
+ again:
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
 		printf("rdstart(%s): bp %p, %c\n", device_xname(sc->sc_dev), bp,
@@ -997,22 +1001,22 @@ again:
 	sc->sc_ioc.c_nop2 = C_NOP;
 	sc->sc_ioc.c_slen = C_SLEN;
 	sc->sc_ioc.c_len = sc->sc_resid;
-	sc->sc_ioc.c_cmd = bp->b_flags & B_READ ? C_READ : C_WRITE;
+	sc->sc_ioc.c_cmd = (bp->b_flags & B_READ) != 0 ? C_READ : C_WRITE;
 #ifdef DEBUG
-	if (rddebug & RDB_IO)
+	if ((rddebug & RDB_IO) != 0)
 		printf("rdstart: hpibsend(%x, %x, %x, %p, %x)\n",
-		       ctlr, slave, C_CMD,
-		       &sc->sc_ioc.c_unit, sizeof(sc->sc_ioc) - 2);
+		    ctlr, slave, C_CMD,
+		    &sc->sc_ioc.c_unit, sizeof(sc->sc_ioc) - 2);
 #endif
 	if (hpibsend(ctlr, slave, C_CMD, &sc->sc_ioc.c_unit,
-		     sizeof(sc->sc_ioc) - 2) == sizeof(sc->sc_ioc) - 2) {
+	    sizeof(sc->sc_ioc) - 2) == sizeof(sc->sc_ioc) - 2) {
 
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dkdev);
 		iostat_seek(sc->sc_dkdev.dk_stats);
 
 #ifdef DEBUG
-		if (rddebug & RDB_IO)
+		if ((rddebug & RDB_IO) != 0)
 			printf("rdstart: hpibawait(%x)\n", ctlr);
 #endif
 		hpibawait(ctlr);
@@ -1025,7 +1029,7 @@ again:
 	 * integrate this with the backoff code in rderror.
 	 */
 #ifdef DEBUG
-	if (rddebug & RDB_ERROR)
+	if ((rddebug & RDB_ERROR) != 0)
 		printf("%s: rdstart: cmd %x adr %x blk %lld len %d ecnt %d\n",
 		    device_xname(sc->sc_dev),
 		    sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
@@ -1041,7 +1045,7 @@ again:
 	    bp->b_blkno, sc->sc_resid);
 	bp->b_error = EIO;
 	bp = rdfinish(sc, bp);
-	if (bp) {
+	if (bp != NULL) {
 		sc->sc_addr = bp->b_data;
 		sc->sc_resid = bp->b_bcount;
 		if (hpibreq(device_parent(sc->sc_dev), &sc->sc_hq))
@@ -1084,7 +1088,7 @@ rdintr(void *arg)
 	slave = sc->sc_slave;
 
 #ifdef DEBUG
-	if (rddebug & RDB_FOLLOW)
+	if ((rddebug & RDB_FOLLOW) != 0)
 		printf("rdintr(%d): bp %p, %c, flags %x\n", unit, bp,
 		    (bp->b_flags & B_READ) ? 'R' : 'W', sc->sc_flags);
 	if (bp == NULL) {
@@ -1095,7 +1099,7 @@ rdintr(void *arg)
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
 
-	if (sc->sc_flags & RDF_SEEK) {
+	if ((sc->sc_flags & RDF_SEEK) != 0) {
 		sc->sc_flags &= ~RDF_SEEK;
 		if (hpibustart(ctlr))
 			rdgo(sc);
@@ -1119,7 +1123,7 @@ rdintr(void *arg)
 	} else
 		sc->sc_flags &= ~RDF_SWAIT;
 	rv = hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
-	if (rv != 1 || stat) {
+	if (rv != 1 || stat != 0) {
 #ifdef DEBUG
 		if (rddebug & RDB_ERROR)
 			printf("rdintr: recv failed or bad stat %d\n", stat);
@@ -1157,7 +1161,7 @@ rdstatus(struct rd_softc *sc)
 	rv = hpibsend(c, s, C_CMD, &sc->sc_rsc, sizeof(sc->sc_rsc));
 	if (rv != sizeof(sc->sc_rsc)) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: send C_CMD failed %d != %d\n",
 			    rv, sizeof(sc->sc_rsc));
 #endif
@@ -1166,16 +1170,16 @@ rdstatus(struct rd_softc *sc)
 	rv = hpibrecv(c, s, C_EXEC, &sc->sc_stat, sizeof(sc->sc_stat));
 	if (rv != sizeof(sc->sc_stat)) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: send C_EXEC failed %d != %d\n",
 			    rv, sizeof(sc->sc_stat));
 #endif
 		return 1;
 	}
 	rv = hpibrecv(c, s, C_QSTAT, &stat, 1);
-	if (rv != 1 || stat) {
+	if (rv != 1 || stat != 0) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: recv failed %d or bad stat %d\n",
 			    rv, stat);
 #endif
@@ -1192,12 +1196,12 @@ rdstatus(struct rd_softc *sc)
 static int
 rderror(int unit)
 {
-	struct rd_softc *sc = device_lookup_private(&rd_cd,unit);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, unit);
 	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
 
-	if (rdstatus(sc)) {
+	if (rdstatus(sc) != 0) {
 #ifdef DEBUG
 		printf("%s: couldn't get status\n", device_xname(sc->sc_dev));
 #endif
@@ -1205,9 +1209,9 @@ rderror(int unit)
 		return 1;
 	}
 	sp = &sc->sc_stat;
-	if (sp->c_fef & FEF_REXMT)
+	if ((sp->c_fef & FEF_REXMT) != 0)
 		return 1;
-	if (sp->c_fef & FEF_PF) {
+	if ((sp->c_fef & FEF_PF) != 0) {
 		rdreset(sc);
 		return 1;
 	}
@@ -1218,7 +1222,7 @@ rderror(int unit)
 	 * know how long the maintenance will take.  With RDWAITC and
 	 * RDRETRY as defined, the range is 1 to 32 seconds.
 	 */
-	if (sp->c_fef & FEF_IMR) {
+	if ((sp->c_fef & FEF_IMR) != 0) {
 		int rdtimo = RDWAITC << sc->sc_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
@@ -1244,8 +1248,8 @@ rderror(int unit)
 	 */
 	bp = bufq_peek(sc->sc_tab);
 	pbn = sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
-	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
-	    (sp->c_ief & IEF_RRMASK)) {
+	if ((sp->c_fef & FEF_CU) != 0 || (sp->c_fef & FEF_DR) != 0 ||
+	    (sp->c_ief & IEF_RRMASK) != 0) {
 		hwbn = RDBTOS(pbn + bp->b_blkno);
 		pbn = bp->b_blkno;
 	} else {
@@ -1259,18 +1263,18 @@ rderror(int unit)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%" PRId64 "\n", device_xname(sc->sc_dev),
-	    'a'+rdpart(bp->b_dev), pbn);
+	    'a' + rdpart(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
 	 */
 	printf("%s %s error:", device_xname(sc->sc_dev),
-	    (bp->b_flags & B_READ) ? "read" : "write");
+	    (bp->b_flags & B_READ) != 0 ? "read" : "write");
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR) {
 		/* status info */
 		printf("\n    volume: %d, unit: %d\n",
-		    (sp->c_vu>>4)&0xF, sp->c_vu&0xF);
+		    (sp->c_vu >> 4) & 0xF, sp->c_vu & 0xF);
 		rdprinterr("reject", sp->c_ref, err_reject);
 		rdprinterr("fault", sp->c_fef, err_fault);
 		rdprinterr("access", sp->c_aef, err_access);
@@ -1291,7 +1295,7 @@ rderror(int unit)
 	}
 #endif
 	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
-	    (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
+	    (sp->c_vu >> 4) & 0xF, sp->c_vu & 0xF,
 	    sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
 	printf("P1-P10: ");
 	printf("0x%x", *(uint32_t *)&sp->c_raw[0]);
@@ -1348,7 +1352,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = setdisklabel(lp, (struct disklabel *)data,
 		    (sc->sc_flags & RDF_WLABEL) ? 0 : sc->sc_dkdev.dk_openmask,
 		    NULL);
-		if (error)
+		if (error != 0)
 			return error;
 		flags = sc->sc_flags;
 		sc->sc_flags = RDF_ALIVE | RDF_WLABEL;
@@ -1396,7 +1400,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 	lp->d_checksum = dkcksum(lp);
 }
 
-int
+static int
 rdsize(dev_t dev)
 {
 	struct rd_softc *sc;
@@ -1415,14 +1419,14 @@ rdsize(dev_t dev)
 	 * to handle it here.
 	 */
 	if (sc->sc_dkdev.dk_openmask == 0) {
-		if (rdopen(dev, FREAD|FWRITE, S_IFBLK, NULL))
+		if (rdopen(dev, FREAD | FWRITE, S_IFBLK, NULL))
 			return -1;
 		didopen = 1;
 	}
 	psize = sc->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_size *
 	    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
-		(void)rdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
+		(void)rdclose(dev, FREAD | FWRITE, S_IFBLK, NULL);
 	return psize;
 }
 
@@ -1438,7 +1442,7 @@ rdprinterr(const char *str, short err, const char **tab)
 	printf("    %s error %d field:", str, err);
 	printed = 0;
 	for (i = 0; i < 16; i++)
-		if (err & (0x8000 >> i))
+		if ((err & (0x8000 >> i)) != 0)
 			printf("%s%s", printed++ ? " + " : " ", tab[i]);
 	printf("\n");
 }
@@ -1526,7 +1530,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		 * Send the data.
 		 */
 		hpibsend(ctlr, slave, C_EXEC, va, nwrt * sectorsize);
-		(void) hpibswait(ctlr, slave);
+		(void)hpibswait(ctlr, slave);
 		hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
 		if (stat)
 			return EIO;
@@ -1540,7 +1544,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va = (char *)va + sectorsize * nwrt;
+		va = (uint8_t *)va + sectorsize * nwrt;
 	}
 	rddoingadump = 0;
 	return 0;
