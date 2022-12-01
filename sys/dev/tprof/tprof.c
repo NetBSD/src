@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $	*/
+/*	$NetBSD: tprof.c,v 1.18 2022/12/01 00:27:59 ryo Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.18 2022/12/01 00:27:59 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,18 @@ static kcondvar_t tprof_cv;		/* L: */
 static struct tprof_stat tprof_stat;	/* L: */
 
 static tprof_cpu_t *
+tprof_cpu_direct(struct cpu_info *ci)
+{
+	tprof_cpu_t **cp;
+
+	cp = percpu_getptr_remote(tprof_cpus, ci);
+	return *cp;
+}
+
+static tprof_cpu_t *
 tprof_cpu(struct cpu_info *ci)
 {
-	tprof_cpu_t **cp, *c;
+	tprof_cpu_t *c;
 
 	/*
 	 * As long as xcalls are blocked -- e.g., by kpreempt_disable
@@ -126,8 +135,7 @@ tprof_cpu(struct cpu_info *ci)
 	 * moved to a new buffer, but we can safely read from it.
 	 */
 	kpreempt_disable();
-	cp = percpu_getptr_remote(tprof_cpus, ci);
-	c = *cp;
+	c = tprof_cpu_direct(ci);
 	kpreempt_enable();
 
 	return c;
@@ -433,7 +441,7 @@ tprof_backend_lookup(const char *name)
 void
 tprof_sample(void *unused, const tprof_frame_info_t *tfi)
 {
-	tprof_cpu_t * const c = tprof_curcpu();
+	tprof_cpu_t * const c = tprof_cpu_direct(curcpu());
 	tprof_buf_t * const buf = c->c_buf;
 	tprof_sample_t *sp;
 	const uintptr_t pc = tfi->tfi_pc;
