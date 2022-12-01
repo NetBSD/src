@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.8 2022/12/01 00:29:10 ryo Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.9 2022/12/01 00:29:51 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.8 2022/12/01 00:29:10 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.9 2022/12/01 00:29:51 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -258,8 +258,8 @@ armv7_pmu_intr(void *priv)
 	return 1;
 }
 
-int
-armv7_pmu_init(void)
+static void
+armv7_pmu_init_cpu(void *arg1, void *arg2)
 {
 	/* Disable user mode access to performance monitors */
 	armreg_pmuserenr_write(0);
@@ -269,6 +269,13 @@ armv7_pmu_init(void)
 
 	/* Disable counters */
 	armreg_pmcntenclr_write(PMCNTEN_P);
+}
+
+int
+armv7_pmu_init(void)
+{
+	uint64_t xc = xc_broadcast(0, armv7_pmu_init_cpu, NULL, NULL);
+	xc_wait(xc);
 
 	return tprof_backend_register("tprof_armv7", &tprof_armv7_pmu_ops,
 	    TPROF_BACKEND_VERSION);
