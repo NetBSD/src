@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.16 2022/11/10 07:54:20 ryo Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.17 2022/12/01 00:29:10 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.16 2022/11/10 07:54:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.17 2022/12/01 00:29:10 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,7 @@ armv8_pmu_start_cpu(void *arg1, void *arg2)
 
 	/* Enable event counter */
 	reg_pmcntenset_el0_write(counter_mask);
-	reg_pmcr_el0_write(PMCR_E);
+	reg_pmcr_el0_write(reg_pmcr_el0_read() | PMCR_E);
 }
 
 static void
@@ -125,7 +125,6 @@ armv8_pmu_stop_cpu(void *arg1, void *arg2)
 
 	/* Disable event counter */
 	reg_pmcntenclr_el0_write(counter_mask);
-	reg_pmcr_el0_write(0);
 }
 
 static uint64_t
@@ -214,7 +213,7 @@ armv8_pmu_init_cpu(void *arg1, void *arg2)
 	reg_pmuserenr_el0_write(0);
 
 	/* Disable interrupts */
-	reg_pmintenclr_el1_write(~0U);
+	reg_pmintenclr_el1_write(PMINTEN_P);
 
 	/* Disable event counters */
 	reg_pmcntenclr_el0_write(PMCNTEN_P);
