@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.14 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.15 2022/12/01 00:40:05 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,10 +57,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.14 2022/12/01 00:32:52 ryo Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.15 2022/12/01 00:40:05 ryo Exp $");
 #endif /* not lint */
 
+#include <sys/atomic.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <dev/tprof/tprof_ioctl.h>
@@ -69,13 +71,16 @@ __RCSID("$NetBSD: tprof.c,v 1.14 2022/12/01 00:32:52 ryo Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
+#include <util.h>
 #include "tprof.h"
 
 #define	_PATH_TPROF	"/dev/tprof"
@@ -84,10 +89,17 @@ struct tprof_info tprof_info;
 u_int ncounters;
 int devfd;
 int outfd;
+int ncpu;
 u_int nevent;
+double interval = 0xffffffff;	/* XXX */
+const char *eventname[TPROF_MAXCOUNTERS];
+u_int eventnamewidth[TPROF_MAXCOUNTERS];
+#define	COUNTER_COLUMNS_WIDTH	11
 
 static void tprof_list(int, char **);
-static void tprof_monitor(int, char **) __dead;
+static void tprof_monitor_common(bool, int, char **) __dead;
+static void tprof_monitor(int, char **);
+static void tprof_count(int, char **);
 
 static struct cmdtab {
 	const char *label;
@@ -97,6 +109,7 @@ static struct cmdtab {
 } const tprof_cmdtab[] = {
 	{ "list",	false, false, tprof_list },
 	{ "monitor",	true,  false, tprof_monitor },
+	{ "count",	true,  false, tprof_count },
 	{ "analyze",	true,  true,  tprof_analyze },
 	{ NULL,		false, false, NULL },
 };
@@ -109,13 +122,31 @@ usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\tlist\n");
 	fprintf(stderr, "\t\tList the available events.\n");
-	fprintf(stderr, "\tmonitor -e name:option [-e ...] [-o outfile] command\n");
+	fprintf(stderr, "\tmonitor -e name[:option] [-e ...] [-o outfile] command\n");
 	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
 	    "\t\tcounted during the execution of 'command'.\n");
+	fprintf(stderr, "\tcount -e name[:option] [-e ...] [-i interval]"
+	    " command\n");
+	fprintf(stderr, "\t\tSame as monitor, but does not profile,"
+	    " only outputs a counter.\n");
 	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
 	fprintf(stderr, "\t\tAnalyze the samples of the file 'file'.\n");
 
 	exit(EXIT_FAILURE);
+}
+
+static int
+getncpu(void)
+{
+	size_t size;
+	int mib[2];
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
+		ncpu = 1;
+	return ncpu;
 }
 
 static void *
@@ -150,13 +181,87 @@ process_samples(void *dummy)
 }
 
 static void
+show_counters(void)
+{
+	unsigned int i;
+	int n, ret;
+
+	fprintf(stderr, "      ");
+	for (i = 0; i < nevent; i++)
+		fprintf(stderr, " %*s", eventnamewidth[i], eventname[i]);
+	fprintf(stderr, "\n");
+
+	for (n = 0; n < ncpu; n++) {
+		tprof_counts_t counts;
+
+		memset(&counts, 0, sizeof(counts));
+		counts.c_cpu = n;
+		ret = ioctl(devfd, TPROF_IOC_GETCOUNTS, &counts);
+		if (ret == -1)
+			err(EXIT_FAILURE, "TPROF_IOC_GETCOUNTS");
+
+		fprintf(stderr, "CPU%-3d", n);
+		for (i = 0; i < nevent; i++) {
+			fprintf(stderr, " %*"PRIu64,
+			    eventnamewidth[i], counts.c_count[i]);
+		}
+		fprintf(stderr, "\n");
+	}
+}
+
+/* XXX: avoid mixing with the output of the child process SIGINFO handler... */
+static void
+output_delay(void)
+{
+	struct timespec delay_ts;
+
+	delay_ts.tv_sec = 0;
+	delay_ts.tv_nsec = 100000000;
+	nanosleep(&delay_ts, NULL);
+}
+
+static void
+siginfo_nothing(int signo)
+{
+	__nothing;
+}
+
+static void
+siginfo_showcount(int signo)
+{
+	output_delay();
+	show_counters();
+}
+
+static void *
+process_stat(void *arg)
+{
+	unsigned int *done = arg;
+	double ival, fval;
+	struct timespec ts;
+
+	ival = floor(interval);
+	fval = (1000000000 * (interval - ival));
+	ts.tv_sec = ival;
+	ts.tv_nsec = fval;
+
+	while (atomic_add_int_nv(done, 0) == 0) {
+		show_counters();
+		nanosleep(&ts, NULL);
+		if (errno == EINTR)	/* interrupted by SIGINFO? */
+			output_delay();
+	}
+	return NULL;
+}
+
+static void
 tprof_list(int argc, char **argv)
 {
 	tprof_event_list();
 }
 
 static void
-tprof_monitor(int argc, char **argv)
+tprof_monitor_common(bool do_profile, int argc, char **argv)
 {
 	const char *outfile = "tprof.out";
 	struct tprof_stat ts;
@@ -164,28 +269,43 @@ tprof_monitor(int argc, char **argv)
 	pid_t pid;
 	pthread_t pt;
 	int ret, ch, i;
-	char *tokens[2];
+	char *tokens[2], *p;
 	tprof_countermask_t mask = TPROF_COUNTERMASK_ALL;
 
 	memset(params, 0, sizeof(params));
 
-	while ((ch = getopt(argc, argv, "o:e:")) != -1) {
+	while ((ch = getopt(argc, argv, do_profile ? "o:e:" : "e:i:")) != -1) {
 		switch (ch) {
 		case 'o':
 			outfile = optarg;
 			break;
+		case 'i':
+			interval = strtod(optarg, &p);
+			if (*p != '\0' || interval <= 0)
+				errx(EXIT_FAILURE, "Bad/invalid interval: %s",
+				    optarg);
+			break;
 		case 'e':
-			tokens[0] = strtok(optarg, ":");
+			p = estrdup(optarg);
+			tokens[0] = strtok(p, ":");
 			tokens[1] = strtok(NULL, ":");
-			if (tokens[1] == NULL)
-				usage();
 			tprof_event_lookup(tokens[0], &params[nevent]);
-			if (strchr(tokens[1], 'u'))
-				params[nevent].p_flags |= TPROF_PARAM_USER;
-			if (strchr(tokens[1], 'k'))
-				params[nevent].p_flags |= TPROF_PARAM_KERN;
-			if (params[nevent].p_flags == 0)
-				usage();
+
+			if (tokens[1] == NULL) {
+				params[nevent].p_flags |=
+				    (TPROF_PARAM_USER | TPROF_PARAM_KERN);
+			} else {
+				if (strchr(tokens[1], 'u'))
+					params[nevent].p_flags |=
+					    TPROF_PARAM_USER;
+				if (strchr(tokens[1], 'k'))
+					params[nevent].p_flags |=
+					    TPROF_PARAM_KERN;
+			}
+			eventname[nevent] = tokens[0];
+			eventnamewidth[nevent] = strlen(eventname[nevent]);
+			if (eventnamewidth[nevent] < COUNTER_COLUMNS_WIDTH)
+				eventnamewidth[nevent] = COUNTER_COLUMNS_WIDTH;
 			nevent++;
 			if (nevent > __arraycount(params) ||
 			    nevent > ncounters)
@@ -201,14 +321,17 @@ tprof_monitor(int argc, char **argv)
 		usage();
 	}
 
-	outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (outfd == -1) {
-		err(EXIT_FAILURE, "%s", outfile);
+	if (do_profile) {
+		outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		if (outfd == -1) {
+			err(EXIT_FAILURE, "%s", outfile);
+		}
 	}
 
 	for (i = 0; i < (int)nevent; i++) {
 		params[i].p_counter = i;
-		params[i].p_flags |= TPROF_PARAM_PROFILE;
+		if (do_profile)
+			params[i].p_flags |= TPROF_PARAM_PROFILE;
 		ret = ioctl(devfd, TPROF_IOC_CONFIGURE_EVENT, &params[i]);
 		if (ret == -1)
 			err(EXIT_FAILURE, "TPROF_IOC_CONFIGURE_EVENT");
@@ -230,11 +353,18 @@ tprof_monitor(int argc, char **argv)
 	}
 
 	signal(SIGINT, SIG_IGN);
+	if (do_profile)
+		signal(SIGINFO, siginfo_showcount);
+	else
+		signal(SIGINFO, siginfo_nothing);
 
-	ret = pthread_create(&pt, NULL, process_samples, NULL);
-	if (ret != 0) {
+	unsigned int done = 0;
+	if (do_profile)
+		ret = pthread_create(&pt, NULL, process_samples, NULL);
+	else
+		ret = pthread_create(&pt, NULL, process_stat, &done);
+	if (ret != 0)
 		errx(1, "pthread_create: %s", strerror(ret));
-	}
 
 	for (;;) {
 		int status;
@@ -256,22 +386,43 @@ tprof_monitor(int argc, char **argv)
 		err(EXIT_FAILURE, "TPROF_IOC_STOP");
 	}
 
-	pthread_join(pt, NULL);
-
-	ret = ioctl(devfd, TPROF_IOC_GETSTAT, &ts);
-	if (ret == -1) {
-		err(EXIT_FAILURE, "TPROF_IOC_GETSTAT");
+	if (!do_profile) {
+		atomic_add_int(&done, 1);	/* terminate thread */
+		kill(0, SIGINFO);
 	}
 
-	fprintf(stderr, "\n%s statistics:\n", getprogname());
-	fprintf(stderr, "\tsample %" PRIu64 "\n", ts.ts_sample);
-	fprintf(stderr, "\toverflow %" PRIu64 "\n", ts.ts_overflow);
-	fprintf(stderr, "\tbuf %" PRIu64 "\n", ts.ts_buf);
-	fprintf(stderr, "\temptybuf %" PRIu64 "\n", ts.ts_emptybuf);
-	fprintf(stderr, "\tdropbuf %" PRIu64 "\n", ts.ts_dropbuf);
-	fprintf(stderr, "\tdropbuf_sample %" PRIu64 "\n", ts.ts_dropbuf_sample);
+	pthread_join(pt, NULL);
+
+	if (do_profile) {
+		ret = ioctl(devfd, TPROF_IOC_GETSTAT, &ts);
+		if (ret == -1)
+			err(EXIT_FAILURE, "TPROF_IOC_GETSTAT");
+
+		fprintf(stderr, "\n%s statistics:\n", getprogname());
+		fprintf(stderr, "\tsample %" PRIu64 "\n", ts.ts_sample);
+		fprintf(stderr, "\toverflow %" PRIu64 "\n", ts.ts_overflow);
+		fprintf(stderr, "\tbuf %" PRIu64 "\n", ts.ts_buf);
+		fprintf(stderr, "\temptybuf %" PRIu64 "\n", ts.ts_emptybuf);
+		fprintf(stderr, "\tdropbuf %" PRIu64 "\n", ts.ts_dropbuf);
+		fprintf(stderr, "\tdropbuf_sample %" PRIu64 "\n", ts.ts_dropbuf_sample);
+
+		fprintf(stderr, "\n");
+	}
+	show_counters();
 
 	exit(EXIT_SUCCESS);
+}
+
+static void
+tprof_monitor(int argc, char **argv)
+{
+	tprof_monitor_common(true, argc, argv);
+}
+
+static void
+tprof_count(int argc, char **argv)
+{
+	tprof_monitor_common(false, argc, argv);
 }
 
 int
@@ -280,6 +431,7 @@ main(int argc, char *argv[])
 	const struct cmdtab *ct;
 	int ret;
 
+	getncpu();
 	setprogname(argv[0]);
 	argv += 1, argc -= 1;
 
