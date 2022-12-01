@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.61 2022/05/02 10:13:15 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.62 2022/12/01 00:29:10 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1250,9 +1250,15 @@ AARCH64REG_WRITE_INLINE(pmevtyper1_el0)
 AARCH64REG_WRITE_INLINE(pmintenclr_el1)
 AARCH64REG_WRITE_INLINE(pmintenset_el1)
 
+#define PMINTEN_C		__BIT(31)	// for the cycle counter
+#define PMINTEN_P		__BITS(30,0)	// for event counters (0-30)
+
 AARCH64REG_WRITE_INLINE(pmovsclr_el0)
 AARCH64REG_READ_INLINE(pmovsset_el0)
 AARCH64REG_WRITE_INLINE(pmovsset_el0)
+
+#define PMOVS_C			__BIT(31)	// for the cycle counter
+#define PMOVS_P			__BITS(30,0)	// for event counters (0-30)
 
 AARCH64REG_WRITE_INLINE(pmselr_el0)
 
