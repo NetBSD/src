@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.87 2022/11/17 06:40:40 chs Exp $	*/
+/*	$NetBSD: ufs.c,v 1.88 2022/12/01 18:06:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -218,11 +218,14 @@ ffs_is_magic(FS *fs)
 	return fs->fs_magic == FS_UFS1_MAGIC;
 }
 
+#ifdef LIBSA_FFS_EI
 static __inline__ bool
 ffs_is_magic_swapped(FS *fs)
 {
 	return fs->fs_magic == bswap32(FS_UFS1_MAGIC);
 }
+#endif
+
 #endif
 
 #ifdef LIBSA_FFSv2
@@ -232,12 +235,15 @@ ffs_is_magic(FS *fs)
 	return fs->fs_magic == FS_UFS2_MAGIC || fs->fs_magic == FS_UFS2EA_MAGIC;
 }
 
+#ifdef LIBSA_FFS_EI
 static __inline__ bool
 ffs_is_magic_swapped(FS *fs)
 {
 	return fs->fs_magic == bswap32(FS_UFS2_MAGIC) ||
 		fs->fs_magic == bswap32(FS_UFS2EA_MAGIC);
 }
+#endif
+
 #endif
 
 #ifdef LIBSA_LFS
@@ -247,11 +253,14 @@ ffs_is_magic(FS *fs)
 	return fs->fs_magic == LFS_MAGIC;
 }
 
+#ifdef LIBSA_FFS_EI
 static __inline__ bool
 ffs_is_magic_swapped(FS *fs)
 {
 	return fs->fs_magic == bswap32(LFS_MAGIC);
 }
+#endif
+
 #endif
 
 static __inline__ void
