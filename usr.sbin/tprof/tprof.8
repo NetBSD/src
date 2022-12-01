@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.18 2022/12/01 00:40:05 ryo Exp $
+.\"	$NetBSD: tprof.8,v 1.19 2022/12/01 00:43:27 ryo Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -129,6 +129,39 @@ Process only samples for the process with PID
 and ignore the rest.
 .It Fl s
 Per symbol.
+.El
+.It top Xo
+.Oo
+.Fl e
+.Ar name[,value]
+.Op Fl e Ar ...
+.Oc
+.Op Fl i Ar interval
+.Op Fl c
+.Op Fl u
+.Xc
+Displays profiling results in real-time.
+.Ar name
+specifies the name of the event to count.
+.Ar value
+specifies the ratio of the speed to the cycle counter, or the counter until
+overflow.
+The counter reset value on overflow used for profiling is calculated from the
+speed of the cycle counter by default, but for some events this value may be
+too large (counter increasing too slowly) to be sufficient for profiling.
+For example, to specify an event that increases about 1000 times slower than
+the cycle counter, specify
+.Dq Pa -e event,1000 .
+Also, if 
+.Dq Pa -e event,=200
+is specified, profiling is performed every time the counter is increased by 200.
+.Bl -tag -width XXintervalX -offset indent
+.It Fl i Ar interval
+set the update interval in seconds. The default value is 1.
+.It Fl c
+show the delta of the event counters.
+.It Fl u
+Userland processes are also included in the profiling.
 .El
 .El
 .Sh EXAMPLES
