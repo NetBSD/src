@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.7 2022/11/01 11:03:01 jmcneill Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.8 2022/12/01 00:29:10 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.7 2022/11/01 11:03:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.8 2022/12/01 00:29:10 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.7 2022/11/01 11:03:01 jmcneill Exp
 #define	PMCR_N			__BITS(15,11)
 #define	PMCR_D			__BIT(3)
 #define	PMCR_E			__BIT(0)
+
+#define	PMINTEN_C		__BIT(31)
+#define	PMINTEN_P		__BITS(30,0)
+#define	PMCNTEN_C		__BIT(31)
+#define	PMCNTEN_P		__BITS(30,0)
 
 #define	PMEVTYPER_P		__BIT(31)
 #define	PMEVTYPER_U		__BIT(30)
@@ -161,18 +166,12 @@ static void
 armv7_pmu_stop_cpu(void *arg1, void *arg2)
 {
 	const uint32_t counter_mask = __BIT(armv7_pmu_counter);
-	uint32_t pmcr;
 
 	/* Disable overflow interrupts */
 	armreg_pmintenclr_write(counter_mask);
 
 	/* Disable event counter */
 	armreg_pmcntenclr_write(counter_mask);
-
-	/* Disable performance monitor */
-	pmcr = armreg_pmcr_read();
-	pmcr &= ~PMCR_E;
-	armreg_pmcr_write(pmcr);
 }
 
 static uint64_t
@@ -266,13 +265,10 @@ armv7_pmu_init(void)
 	armreg_pmuserenr_write(0);
 
 	/* Disable interrupts */
-	armreg_pmintenclr_write(~0U);
+	armreg_pmintenclr_write(PMINTEN_P);
 
 	/* Disable counters */
-	armreg_pmcntenclr_write(~0U);
-
-	/* Disable performance monitor */
-	armreg_pmcr_write(0);
+	armreg_pmcntenclr_write(PMCNTEN_P);
 
 	return tprof_backend_register("tprof_armv7", &tprof_armv7_pmu_ops,
 	    TPROF_BACKEND_VERSION);
