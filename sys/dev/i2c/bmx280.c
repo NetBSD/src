@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.5 2022/12/01 00:47:51 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.6 2022/12/01 02:29:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.5 2022/12/01 00:47:51 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.6 2022/12/01 02:29:37 brad Exp $");
 
 /*
   Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -1065,10 +1065,10 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 						uint64_t q;
 
 						q = (uint64_t)comp_hum * 1000000;
-						DPRINTF(sc, 1, ("%s: Refresh humidity Q 1: %lld\n", __func__, q));
+						DPRINTF(sc, 1, ("%s: Refresh humidity Q 1: %jd\n", __func__, (uintmax_t)q));
 						q = q / 1024;
 
-						DPRINTF(sc, 1, ("%s: Refresh humidity Q 2: %lld\n", __func__, q));
+						DPRINTF(sc, 1, ("%s: Refresh humidity Q 2: %jd\n", __func__, (uintmax_t)q));
 
 						edata->value_cur = (uint32_t) q;
 						edata->state = ENVSYS_SVALID;
