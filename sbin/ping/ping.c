@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.121 2022/12/01 14:40:53 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.122 2022/12/01 14:42:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.121 2022/12/01 14:40:53 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.122 2022/12/01 14:42:12 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1079,7 +1079,7 @@ pr_pack(u_char *buf,
 	/* Check the IP header */
 	ip = (struct ip *) buf;
 	hlen = ip->ip_hl << 2;
-	if (hlen < sizeof(*ip) || tot_len < hlen + ICMP_MINLEN) {
+	if (hlen < (int)sizeof(*ip) || tot_len < hlen + ICMP_MINLEN) {
 		if (pingflags & F_VERBOSE) {
 			jiggle_flush(1);
 			(void)printf("packet too short (%d bytes) from %s\n",
