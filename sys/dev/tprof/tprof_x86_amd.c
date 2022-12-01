@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.5 2019/10/11 18:04:52 jmcneill Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.5 2019/10/11 18:04:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.6 2022/12/01 00:32:52 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.5 2019/10/11 18:04:52 jmcneill E
 #include <sys/module.h>
 
 #include <sys/cpu.h>
+#include <sys/percpu.h>
 #include <sys/xcall.h>
 
 #include <dev/tprof/tprof.h>
@@ -78,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.5 2019/10/11 18:04:52 jmcneill E
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
-#define	NCTRS	4
+#define	NCTRS			4
+#define	COUNTER_BITWIDTH	48
 
 #define	PERFEVTSEL(i)		(0xc0010000 + (i))
 #define	PERFCTR(i)		(0xc0010004 + (i))
@@ -106,92 +108,128 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.5 2019/10/11 18:04:52 jmcneill E
  * http://developer.amd.com/wordpress/media/2012/10/Basic_Performance_Measurements.pdf
  */
 
-static int ctrno = 0;
-static uint64_t counter_val = 5000000;
-static uint64_t counter_reset_val;
 static uint32_t amd_lapic_saved[MAXCPUS];
 static nmi_handler_t *amd_nmi_handle;
-static tprof_param_t amd_param;
+
+static uint32_t
+tprof_amd_ncounters(void)
+{
+	return NCTRS;
+}
+
+static u_int
+tprof_amd_counter_bitwidth(u_int counter)
+{
+	return COUNTER_BITWIDTH;
+}
+
+static inline void
+tprof_amd_counter_write(u_int counter, uint64_t val)
+{
+	wrmsr(PERFCTR(counter), val);
+}
+
+static inline uint64_t
+tprof_amd_counter_read(u_int counter)
+{
+	return rdmsr(PERFCTR(counter));
+}
 
 static void
-tprof_amd_start_cpu(void *arg1, void *arg2)
+tprof_amd_configure_event(u_int counter, const tprof_param_t *param)
 {
-	struct cpu_info * const ci = curcpu();
 	uint64_t pesr;
 	uint64_t event_lo;
 	uint64_t event_hi;
 
-	event_hi = amd_param.p_event >> 8;
-	event_lo = amd_param.p_event & 0xff;
+	event_hi = param->p_event >> 8;
+	event_lo = param->p_event & 0xff;
 	pesr =
-	    ((amd_param.p_flags & TPROF_PARAM_USER) ? PESR_USR : 0) |
-	    ((amd_param.p_flags & TPROF_PARAM_KERN) ? PESR_OS : 0) |
+	    ((param->p_flags & TPROF_PARAM_USER) ? PESR_USR : 0) |
+	    ((param->p_flags & TPROF_PARAM_KERN) ? PESR_OS : 0) |
 	    PESR_INT |
 	    __SHIFTIN(event_lo, PESR_EVENT_MASK_LO) |
 	    __SHIFTIN(event_hi, PESR_EVENT_MASK_HI) |
 	    __SHIFTIN(0, PESR_COUNTER_MASK) |
-	    __SHIFTIN(amd_param.p_unit, PESR_UNIT_MASK);
+	    __SHIFTIN(param->p_unit, PESR_UNIT_MASK);
+	wrmsr(PERFEVTSEL(counter), pesr);
 
-	wrmsr(PERFCTR(ctrno), counter_reset_val);
-	wrmsr(PERFEVTSEL(ctrno), pesr);
-
-	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_LVT_PCINT);
-	lapic_writereg(LAPIC_LVT_PCINT, LAPIC_DLMODE_NMI);
-
-	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
+	/* reset the counter */
+	tprof_amd_counter_write(counter, param->p_value);
 }
 
 static void
-tprof_amd_stop_cpu(void *arg1, void *arg2)
+tprof_amd_start(tprof_countermask_t runmask)
 {
-	struct cpu_info * const ci = curcpu();
+	int bit;
 
-	wrmsr(PERFEVTSEL(ctrno), 0);
+	while ((bit = ffs(runmask)) != 0) {
+		bit--;
+		CLR(runmask, __BIT(bit));
+		wrmsr(PERFEVTSEL(bit), rdmsr(PERFEVTSEL(bit)) | PESR_EN);
+	}
+}
 
-	lapic_writereg(LAPIC_LVT_PCINT, amd_lapic_saved[cpu_index(ci)]);
+static void
+tprof_amd_stop(tprof_countermask_t stopmask)
+{
+	int bit;
+
+	while ((bit = ffs(stopmask)) != 0) {
+		bit--;
+		CLR(stopmask, __BIT(bit));
+		wrmsr(PERFEVTSEL(bit), rdmsr(PERFEVTSEL(bit)) & ~PESR_EN);
+	}
 }
 
 static int
-tprof_amd_nmi(const struct trapframe *tf, void *dummy)
+tprof_amd_nmi(const struct trapframe *tf, void *arg)
 {
+	tprof_backend_softc_t *sc = arg;
 	tprof_frame_info_t tfi;
-	uint64_t ctr;
+	int bit;
 
-	KASSERT(dummy == NULL);
+	uint64_t *counters_offset =
+	    percpu_getptr_remote(sc->sc_ctr_offset_percpu, curcpu());
+	tprof_countermask_t mask = sc->sc_ctr_ovf_mask;
+	while ((bit = ffs(mask)) != 0) {
+		bit--;
+		CLR(mask, __BIT(bit));
 
-	/* check if it's for us */
-	ctr = rdmsr(PERFCTR(ctrno));
-	if ((ctr & (UINT64_C(1) << 63)) != 0) { /* check if overflowed */
-		/* not ours */
-		return 0;
-	}
+		/* If the highest bit is non zero, then it's not for us. */
+		uint64_t ctr = tprof_amd_counter_read(bit);
+		if ((ctr & __BIT(COUNTER_BITWIDTH - 1)) != 0)
+			continue;	/* not overflowed */
 
-	/* record a sample */
+		if (ISSET(sc->sc_ctr_prof_mask, __BIT(bit))) {
+			/* account for the counter, and reset */
+			tprof_amd_counter_write(bit,
+			    sc->sc_count[bit].ctr_counter_reset_val);
+			counters_offset[bit] +=
+			    sc->sc_count[bit].ctr_counter_val + ctr;
+
+			/* record a sample */
 #if defined(__x86_64__)
-	tfi.tfi_pc = tf->tf_rip;
+			tfi.tfi_pc = tf->tf_rip;
 #else
-	tfi.tfi_pc = tf->tf_eip;
+			tfi.tfi_pc = tf->tf_eip;
 #endif
-	tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
-	tprof_sample(NULL, &tfi);
-
-	/* reset counter */
-	wrmsr(PERFCTR(ctrno), counter_reset_val);
+			tfi.tfi_counter = bit;
+			tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
+			tprof_sample(NULL, &tfi);
+		} else {
+			/* not profiled, but require to consider overflow */
+			counters_offset[bit] += __BIT(COUNTER_BITWIDTH);
+		}
+	}
 
 	return 1;
 }
 
 static uint64_t
-tprof_amd_estimate_freq(void)
+tprof_amd_counter_estimate_freq(u_int counter)
 {
-	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
-	uint64_t freq = 10000;
-
-	counter_val = cpufreq / freq;
-	if (counter_val == 0) {
-		counter_val = UINT64_C(4000000000) / freq;
-	}
-	return freq;
+	return curcpu()->ci_data.cpu_cc_freq;
 }
 
 static uint32_t
@@ -213,8 +251,25 @@ tprof_amd_ident(void)
 	return TPROF_IDENT_NONE;
 }
 
+static void
+tprof_amd_establish_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info * const ci = curcpu();
+
+	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_LVT_PCINT);
+	lapic_writereg(LAPIC_LVT_PCINT, LAPIC_DLMODE_NMI);
+}
+
+static void
+tprof_amd_disestablish_cpu(void *arg1, void *arg2)
+{
+	struct cpu_info * const ci = curcpu();
+
+	lapic_writereg(LAPIC_LVT_PCINT, amd_lapic_saved[cpu_index(ci)]);
+}
+
 static int
-tprof_amd_start(const tprof_param_t *param)
+tprof_amd_establish(tprof_backend_softc_t *sc)
 {
 	uint64_t xc;
 
@@ -223,23 +278,20 @@ tprof_amd_start(const tprof_param_t *param)
 	}
 
 	KASSERT(amd_nmi_handle == NULL);
-	amd_nmi_handle = nmi_establish(tprof_amd_nmi, NULL);
+	amd_nmi_handle = nmi_establish(tprof_amd_nmi, sc);
 
-	counter_reset_val = - counter_val + 1;
-	memcpy(&amd_param, param, sizeof(*param));
-
-	xc = xc_broadcast(0, tprof_amd_start_cpu, NULL, NULL);
+	xc = xc_broadcast(0, tprof_amd_establish_cpu, sc, NULL);
 	xc_wait(xc);
 
 	return 0;
 }
 
 static void
-tprof_amd_stop(const tprof_param_t *param)
+tprof_amd_disestablish(tprof_backend_softc_t *sc)
 {
 	uint64_t xc;
 
-	xc = xc_broadcast(0, tprof_amd_stop_cpu, NULL, NULL);
+	xc = xc_broadcast(0, tprof_amd_disestablish_cpu, sc, NULL);
 	xc_wait(xc);
 
 	KASSERT(amd_nmi_handle != NULL);
@@ -248,8 +300,15 @@ tprof_amd_stop(const tprof_param_t *param)
 }
 
 const tprof_backend_ops_t tprof_amd_ops = {
-	.tbo_estimate_freq = tprof_amd_estimate_freq,
 	.tbo_ident = tprof_amd_ident,
+	.tbo_ncounters = tprof_amd_ncounters,
+	.tbo_counter_bitwidth = tprof_amd_counter_bitwidth,
+	.tbo_counter_read = tprof_amd_counter_read,
+	.tbo_counter_estimate_freq = tprof_amd_counter_estimate_freq,
+	.tbo_valid_event = NULL,
+	.tbo_configure_event = tprof_amd_configure_event,
 	.tbo_start = tprof_amd_start,
 	.tbo_stop = tprof_amd_stop,
+	.tbo_establish = tprof_amd_establish,
+	.tbo_disestablish = tprof_amd_disestablish,
 };

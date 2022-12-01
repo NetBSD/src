@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.9 2022/12/01 00:29:51 ryo Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.10 2022/12/01 00:32:52 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.9 2022/12/01 00:29:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.10 2022/12/01 00:32:52 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
+#include <sys/percpu.h>
 #include <sys/xcall.h>
 
 #include <dev/tprof/tprof.h>
@@ -50,14 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.9 2022/12/01 00:29:51 ryo Exp $");
 #define	PMCNTEN_C		__BIT(31)
 #define	PMCNTEN_P		__BITS(30,0)
 
+#define	PMOVS_C			__BIT(31)
+#define	PMOVS_P			__BITS(30,0)
+
 #define	PMEVTYPER_P		__BIT(31)
 #define	PMEVTYPER_U		__BIT(30)
 #define	PMEVTYPER_EVTCOUNT	__BITS(7,0)
-
-static tprof_param_t armv7_pmu_param;
-static const u_int armv7_pmu_counter = 1;
-static uint32_t counter_val;
-static uint32_t counter_reset_val;
 
 static uint16_t cortexa9_events[] = {
 	0x40, 0x41, 0x42,
@@ -118,7 +117,7 @@ armv7_pmu_set_pmevtyper(u_int counter, uint64_t val)
 	armreg_pmxevtyper_write(val);
 }
 
-static void
+static inline void
 armv7_pmu_set_pmevcntr(u_int counter, uint32_t val)
 {
 	armreg_pmselr_write(counter);
@@ -126,70 +125,153 @@ armv7_pmu_set_pmevcntr(u_int counter, uint32_t val)
 	armreg_pmxevcntr_write(val);
 }
 
-static void
-armv7_pmu_start_cpu(void *arg1, void *arg2)
+static inline uint64_t
+armv7_pmu_get_pmevcntr(u_int counter)
 {
-	const uint32_t counter_mask = __BIT(armv7_pmu_counter);
-	uint64_t pmcr, pmevtyper;
-
-	/* Enable performance monitor */
-	pmcr = armreg_pmcr_read();
-	pmcr |= PMCR_E;
-	armreg_pmcr_write(pmcr);
-
-	/* Disable event counter */
-	armreg_pmcntenclr_write(counter_mask);
-
-	/* Configure event counter */
-	pmevtyper = __SHIFTIN(armv7_pmu_param.p_event, PMEVTYPER_EVTCOUNT);
-	if (!ISSET(armv7_pmu_param.p_flags, TPROF_PARAM_USER))
-		pmevtyper |= PMEVTYPER_U;
-	if (!ISSET(armv7_pmu_param.p_flags, TPROF_PARAM_KERN))
-		pmevtyper |= PMEVTYPER_P;
-
-	armv7_pmu_set_pmevtyper(armv7_pmu_counter, pmevtyper);
-
-	/* Enable overflow interrupts */
-	armreg_pmintenset_write(counter_mask);
-
-	/* Clear overflow flag */
-	armreg_pmovsr_write(counter_mask);
-
-	/* Initialize event counter value */
-	armv7_pmu_set_pmevcntr(armv7_pmu_counter, counter_reset_val);
-
-	/* Enable event counter */
-	armreg_pmcntenset_write(counter_mask);
+	armreg_pmselr_write(counter);
+	isb();
+	return armreg_pmxevcntr_read();
 }
 
-static void
-armv7_pmu_stop_cpu(void *arg1, void *arg2)
+/* read and write at once */
+static inline uint64_t
+armv7_pmu_getset_pmevcntr(u_int counter, uint64_t val)
 {
-	const uint32_t counter_mask = __BIT(armv7_pmu_counter);
+	uint64_t c;
 
-	/* Disable overflow interrupts */
-	armreg_pmintenclr_write(counter_mask);
+	armreg_pmselr_write(counter);
+	isb();
+	c = armreg_pmxevcntr_read();
+	armreg_pmxevcntr_write(val);
+	return c;
+}
 
-	/* Disable event counter */
-	armreg_pmcntenclr_write(counter_mask);
+static uint32_t
+armv7_pmu_ncounters(void)
+{
+	return __SHIFTOUT(armreg_pmcr_read(), PMCR_N);
+}
+
+static u_int
+armv7_pmu_counter_bitwidth(u_int counter)
+{
+	return 32;
 }
 
 static uint64_t
-armv7_pmu_estimate_freq(void)
+armv7_pmu_counter_estimate_freq(u_int counter)
 {
 	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
-	uint64_t freq = 10000;
-	uint32_t pmcr;
 
-	counter_val = cpufreq / freq;
-	if (counter_val == 0)
-		counter_val = 4000000000ULL / freq;
+	if (ISSET(armreg_pmcr_read(), PMCR_D))
+		cpufreq /= 64;
+	return cpufreq;
+}
 
-	pmcr = armreg_pmcr_read();
-	if (pmcr & PMCR_D)
-		counter_val /= 64;
+static int
+armv7_pmu_valid_event(u_int counter, const tprof_param_t *param)
+{
+	if (!armv7_pmu_event_implemented(param->p_event)) {
+		printf("%s: event %#" PRIx64 " not implemented on this CPU\n",
+		    __func__, param->p_event);
+		return EINVAL;
+	}
+	return 0;
+}
 
-	return freq;
+static void
+armv7_pmu_configure_event(u_int counter, const tprof_param_t *param)
+{
+	/* Disable event counter */
+	armreg_pmcntenclr_write(__BIT(counter) & PMCNTEN_P);
+
+	/* Disable overflow interrupts */
+	armreg_pmintenclr_write(__BIT(counter) & PMINTEN_P);
+
+	/* Configure event counter */
+	uint32_t pmevtyper = __SHIFTIN(param->p_event, PMEVTYPER_EVTCOUNT);
+	if (!ISSET(param->p_flags, TPROF_PARAM_USER))
+		pmevtyper |= PMEVTYPER_U;
+	if (!ISSET(param->p_flags, TPROF_PARAM_KERN))
+		pmevtyper |= PMEVTYPER_P;
+	armv7_pmu_set_pmevtyper(counter, pmevtyper);
+
+	/*
+	 * Enable overflow interrupts.
+	 * Whether profiled or not, the counter width of armv7 is 32 bits,
+	 * so overflow handling is required anyway.
+	 */
+	armreg_pmintenset_write(__BIT(counter) & PMINTEN_P);
+
+	/* Clear overflow flag */
+	armreg_pmovsr_write(__BIT(counter) & PMOVS_P);
+
+	/* reset the counter */
+	armv7_pmu_set_pmevcntr(counter, param->p_value);
+}
+
+static void
+armv7_pmu_start(tprof_countermask_t runmask)
+{
+	/* Enable event counters */
+	armreg_pmcntenset_write(runmask & PMCNTEN_P);
+
+	/*
+	 * PMCR.E is shared with PMCCNTR and event counters.
+	 * It is set here in case PMCCNTR is not used in the system.
+	 */
+	armreg_pmcr_write(armreg_pmcr_read() | PMCR_E);
+}
+
+static void
+armv7_pmu_stop(tprof_countermask_t stopmask)
+{
+	/* Disable event counter */
+	armreg_pmcntenclr_write(stopmask & PMCNTEN_P);
+}
+
+/* XXX: argument of armv8_pmu_intr() */
+extern struct tprof_backend *tprof_backend;
+static void *pmu_intr_arg;
+
+int
+armv7_pmu_intr(void *priv)
+{
+	const struct trapframe * const tf = priv;
+	tprof_backend_softc_t *sc = pmu_intr_arg;
+	tprof_frame_info_t tfi;
+	int bit;
+	const uint32_t pmovs = armreg_pmovsr_read() & PMOVS_P;
+
+	uint64_t *counters_offset =
+	    percpu_getptr_remote(sc->sc_ctr_offset_percpu, curcpu());
+	uint32_t mask = pmovs;
+	while ((bit = ffs(mask)) != 0) {
+		bit--;
+		CLR(mask, __BIT(bit));
+
+		if (ISSET(sc->sc_ctr_prof_mask, __BIT(bit))) {
+			/* account for the counter, and reset */
+			uint64_t ctr = armv7_pmu_getset_pmevcntr(bit,
+			    sc->sc_count[bit].ctr_counter_reset_val);
+			counters_offset[bit] +=
+			    sc->sc_count[bit].ctr_counter_val + ctr;
+
+			/* record a sample */
+			tfi.tfi_pc = tf->tf_pc;
+			tfi.tfi_counter = bit;
+			tfi.tfi_inkernel =
+			    tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS &&
+			    tfi.tfi_pc < VM_MAX_KERNEL_ADDRESS;
+			tprof_sample(NULL, &tfi);
+		} else {
+			/* counter has overflowed */
+			counters_offset[bit] += __BIT(32);
+		}
+	}
+	armreg_pmovsr_write(pmovs);
+
+	return 1;
 }
 
 static uint32_t
@@ -198,65 +280,19 @@ armv7_pmu_ident(void)
 	return TPROF_IDENT_ARMV7_GENERIC;
 }
 
-static int
-armv7_pmu_start(const tprof_param_t *param)
-{
-	/* PMCR.N of 0 means that no event counters are available */
-	if (__SHIFTOUT(armreg_pmcr_read(), PMCR_N) == 0) {
-		return EINVAL;
-	}
-
-	if (!armv7_pmu_event_implemented(param->p_event)) {
-		printf("%s: event %#llx not implemented on this CPU\n",
-		    __func__, param->p_event);
-		return EINVAL;
-	}
-
-	counter_reset_val = -counter_val + 1;
-
-	armv7_pmu_param = *param;
-	uint64_t xc = xc_broadcast(0, armv7_pmu_start_cpu, NULL, NULL);
-	xc_wait(xc);
-
-	return 0;
-}
-
-static void
-armv7_pmu_stop(const tprof_param_t *param)
-{
-	uint64_t xc;
-
-	xc = xc_broadcast(0, armv7_pmu_stop_cpu, NULL, NULL);
-	xc_wait(xc);
-}
-
 static const tprof_backend_ops_t tprof_armv7_pmu_ops = {
-	.tbo_estimate_freq = armv7_pmu_estimate_freq,
 	.tbo_ident = armv7_pmu_ident,
+	.tbo_ncounters = armv7_pmu_ncounters,
+	.tbo_counter_bitwidth = armv7_pmu_counter_bitwidth,
+	.tbo_counter_read = armv7_pmu_get_pmevcntr,
+	.tbo_counter_estimate_freq = armv7_pmu_counter_estimate_freq,
+	.tbo_valid_event = armv7_pmu_valid_event,
+	.tbo_configure_event = armv7_pmu_configure_event,
 	.tbo_start = armv7_pmu_start,
 	.tbo_stop = armv7_pmu_stop,
+	.tbo_establish = NULL,
+	.tbo_disestablish = NULL,
 };
-
-int
-armv7_pmu_intr(void *priv)
-{
-	const struct trapframe * const tf = priv;
-	const uint32_t counter_mask = __BIT(armv7_pmu_counter);
-	tprof_frame_info_t tfi;
-
-	const uint32_t pmovsr = armreg_pmovsr_read();
-	if ((pmovsr & counter_mask) != 0) {
-		tfi.tfi_pc = tf->tf_pc;
-		tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS &&
-		    tfi.tfi_pc < VM_MAX_KERNEL_ADDRESS;
-		tprof_sample(NULL, &tfi);
-
-		armv7_pmu_set_pmevcntr(armv7_pmu_counter, counter_reset_val);
-	}
-	armreg_pmovsr_write(pmovsr);
-
-	return 1;
-}
 
 static void
 armv7_pmu_init_cpu(void *arg1, void *arg2)
@@ -274,9 +310,21 @@ armv7_pmu_init_cpu(void *arg1, void *arg2)
 int
 armv7_pmu_init(void)
 {
+	int error, ncounters;
+
+	ncounters = armv7_pmu_ncounters();
+	if (ncounters == 0)
+		return ENOTSUP;
+
 	uint64_t xc = xc_broadcast(0, armv7_pmu_init_cpu, NULL, NULL);
 	xc_wait(xc);
 
-	return tprof_backend_register("tprof_armv7", &tprof_armv7_pmu_ops,
+	error = tprof_backend_register("tprof_armv7", &tprof_armv7_pmu_ops,
 	    TPROF_BACKEND_VERSION);
+	if (error == 0) {
+		/* XXX: for argument of armv7_pmu_intr() */
+		pmu_intr_arg = tprof_backend;
+	}
+
+	return error;
 }

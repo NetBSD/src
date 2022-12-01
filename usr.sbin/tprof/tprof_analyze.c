@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.5 2021/10/14 09:52:40 skrll Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.5 2021/10/14 09:52:40 skrll Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.6 2022/12/01 00:32:52 ryo Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -63,6 +63,7 @@ struct addr {
 	uint32_t cpuid;		/* cpu id */
 	bool in_kernel;		/* if addr is in the kernel address space */
 	unsigned int nsamples;	/* number of samples taken for the address */
+	unsigned int ncount[TPROF_MAXCOUNTERS];	/* count per event */
 };
 
 static rb_tree_t addrtree;
@@ -278,6 +279,7 @@ tprof_analyze(int argc, char **argv)
 	size_t naddrs, nsamples, i;
 	float perc;
 	int ch;
+	u_int c, maxevent = 0;
 	bool distinguish_processes = true;
 	bool distinguish_cpus = true;
 	bool distinguish_lwps = true;
@@ -363,6 +365,7 @@ tprof_analyze(int argc, char **argv)
 			continue;
 		}
 		a = emalloc(sizeof(*a));
+		memset(a, 0, sizeof(*a));
 		a->addr = (uint64_t)sample.s_pc;
 		if (distinguish_processes) {
 			a->pid = sample.s_pid;
@@ -389,7 +392,13 @@ tprof_analyze(int argc, char **argv)
 				a->addr -= offset;
 			}
 		}
+		c = __SHIFTOUT(sample.s_flags, TPROF_SAMPLE_COUNTER_MASK);
+		assert(c < TPROF_MAXCOUNTERS);
+		if (maxevent < c)
+			maxevent = c;
+
 		a->nsamples = 1;
+		a->ncount[c] = 1;
 		o = rb_tree_insert_node(&addrtree, a);
 		if (o != a) {
 			assert(a->addr == o->addr);
@@ -398,7 +407,9 @@ tprof_analyze(int argc, char **argv)
 			assert(a->cpuid == o->cpuid);
 			assert(a->in_kernel == o->in_kernel);
 			free(a);
+
 			o->nsamples++;
+			o->ncount[c]++;
 		} else {
 			naddrs++;
 		}
@@ -423,8 +434,17 @@ tprof_analyze(int argc, char **argv)
 	 */
 	printf("File: %s\n", argv[0]);
 	printf("Number of samples: %zu\n\n", nsamples);
-	printf("percentage   nsamples pid    lwp    cpu  k address          symbol\n");
-	printf("------------ -------- ------ ------ ---- - ---------------- ------\n");
+
+	printf("percentage   nsamples ");
+	for (c = 0; c <= maxevent; c++)
+		printf("event#%02u ", c);
+	printf("pid    lwp    cpu  k address          symbol\n");
+
+	printf("------------ -------- ");
+	for (c = 0; c <= maxevent; c++)
+		printf("-------- ");
+
+	printf("------ ------ ---- - ---------------- ------\n");
 	for (i = 0; i < naddrs; i++) {
 		const char *name;
 		char buf[100];
@@ -448,11 +468,17 @@ tprof_analyze(int argc, char **argv)
 
 		perc = ((float)a->nsamples / (float)nsamples) * 100.0;
 
-		printf("%11f%% %8u %6" PRIu32 " %6" PRIu32 " %4" PRIu32 " %u %016"
-		    PRIx64 " %s\n",
-		    perc,
-		    a->nsamples, a->pid, a->lwpid, a->cpuid, a->in_kernel,
-		    a->addr, name);
+		printf("%11f%% %8u", perc, a->nsamples);
+
+		for (c = 0; c <= maxevent; c++)
+			printf(" %8u", a->ncount[c]);
+
+		printf(" %6" PRIu32 " %6" PRIu32 " %4" PRIu32 " %u %016"
+		    PRIx64" %s",
+		    a->pid, a->lwpid, a->cpuid, a->in_kernel, a->addr, name);
+
+
+		printf("\n");
 	}
 
 	fclose(f);

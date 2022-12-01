@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.1 2018/07/24 09:47:35 maxv Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.2 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86.c,v 1.1 2018/07/24 09:47:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86.c,v 1.2 2022/12/01 00:32:52 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,16 +54,28 @@ extern const tprof_backend_ops_t tprof_intel_ops;
 static int
 tprof_x86_init(void)
 {
+	const tprof_backend_ops_t *ops;
+	const char *name;
+	int ncounters;
+
 	switch (cpu_vendor) {
 	case CPUVENDOR_AMD:
-		return tprof_backend_register("tprof_amd", &tprof_amd_ops,
-		    TPROF_BACKEND_VERSION);
+		name = "tprof_amd";
+		ops = &tprof_amd_ops;
+		break;
 	case CPUVENDOR_INTEL:
-		return tprof_backend_register("tprof_intel", &tprof_intel_ops,
-		    TPROF_BACKEND_VERSION);
+		name = "tprof_intel";
+		ops = &tprof_intel_ops;
+		break;
 	default:
 		return ENOTSUP;
 	}
+
+	ncounters = ops->tbo_ncounters();
+	if (ncounters == 0)
+		return ENOTSUP;
+
+	return tprof_backend_register(name, ops, TPROF_BACKEND_VERSION);
 }
 
 static int
