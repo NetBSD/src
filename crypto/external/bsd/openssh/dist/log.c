@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.25 2021/09/27 17:03:13 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.26 2022/12/01 22:57:37 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.60 2021/09/16 15:11:19 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.25 2021/09/27 17:03:13 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.26 2022/12/01 22:57:37 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -423,7 +423,7 @@ sshlogdie(const char *file, const char *func, int line, int showfunc,
 	sshlogv(file, func, line, showfunc, SYSLOG_LEVEL_INFO,
 	    suffix, fmt, args);
 	va_end(args);
-	cleanup_exit(255);
+	cleanup_exit(254);
 }
 
 void
