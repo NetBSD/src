@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.h,v 1.6 2018/07/13 07:56:29 maxv Exp $	*/
+/*	$NetBSD: tprof.h,v 1.7 2022/12/01 00:32:52 ryo Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -37,19 +37,45 @@
 
 #include <dev/tprof/tprof_types.h>
 
+struct tprof_backend_softc_counter {
+	tprof_param_t ctr_param;
+	u_int ctr_bitwidth;
+	uint64_t ctr_counter_val;
+	uint64_t ctr_counter_reset_val;
+};
+
+typedef struct tprof_backend_softc {
+	u_int sc_ncounters;
+	tprof_countermask_t sc_ctr_running_mask;/* start/stop */
+	tprof_countermask_t sc_ctr_configured_mask;	/* configured */
+	tprof_countermask_t sc_ctr_ovf_mask;	/* overflow intr required */
+	tprof_countermask_t sc_ctr_prof_mask;	/* profiled */
+	percpu_t *sc_ctr_offset_percpu;
+	size_t sc_ctr_offset_percpu_size;
+	struct tprof_backend_softc_counter sc_count[TPROF_MAXCOUNTERS];
+} tprof_backend_softc_t;
+
 typedef struct tprof_backend_ops {
-	uint64_t (*tbo_estimate_freq)(void);	/* samples per second */
 	uint32_t (*tbo_ident)(void);
-	int (*tbo_start)(const tprof_param_t *);
-	void (*tbo_stop)(const tprof_param_t *);
+	u_int (*tbo_ncounters)(void);
+	u_int (*tbo_counter_bitwidth)(u_int);
+	uint64_t (*tbo_counter_read)(u_int);
+	uint64_t (*tbo_counter_estimate_freq)(u_int);
+	int (*tbo_valid_event)(u_int, const tprof_param_t *);
+	void (*tbo_configure_event)(u_int, const tprof_param_t *);
+	void (*tbo_start)(tprof_countermask_t);
+	void (*tbo_stop)(tprof_countermask_t);
+	int (*tbo_establish)(tprof_backend_softc_t *);
+	void (*tbo_disestablish)(tprof_backend_softc_t *);
 } tprof_backend_ops_t;
 
-#define	TPROF_BACKEND_VERSION	3
+#define	TPROF_BACKEND_VERSION	4
 int tprof_backend_register(const char *, const tprof_backend_ops_t *, int);
 int tprof_backend_unregister(const char *);
 
 typedef struct {
 	uintptr_t tfi_pc;	/* program counter */
+	u_int tfi_counter;	/* counter. 0..(TPROF_MAXCOUNTERS-1) */
 	bool tfi_inkernel;	/* if tfi_pc is in the kernel address space */
 } tprof_frame_info_t;
 
