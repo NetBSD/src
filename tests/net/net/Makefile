@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2022/11/30 07:48:43 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.29 2022/12/01 04:24:37 ozaki-r Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,9 +11,9 @@ TESTS_C+=	t_mapped
 TESTS_C+=	t_tcp
 TESTS_C+=	t_udp
 TESTS_C+=	t_pktinfo
+.if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=	t_socket_afinet
 TESTS_C+=	t_ip_reass
-.if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=	t_pktinfo_send
 TESTS_C+=	t_raw
 
