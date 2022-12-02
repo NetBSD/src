@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.177 2022/10/30 19:11:31 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.178 2022/12/02 19:23:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.177 2022/10/30 19:11:31 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.178 2022/12/02 19:23:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1606,7 +1606,7 @@ replace_history_entry(int num, const char *line, histdata_t data)
 	if (history(h, &ev, H_NEXT_EVDATA, num, &he->data))
 		goto out;
 
-	he->line = strdup(ev.str);
+	he->line = ev.str;
 	if (he->line == NULL)
 		goto out;
 
