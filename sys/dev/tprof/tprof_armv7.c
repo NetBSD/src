@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.10 2022/12/01 00:32:52 ryo Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.11 2022/12/03 20:24:21 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.10 2022/12/01 00:32:52 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.11 2022/12/03 20:24:21 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,22 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.10 2022/12/01 00:32:52 ryo Exp $")
 #include <arm/locore.h>
 
 #include <dev/tprof/tprof_armv7.h>
-
-#define	PMCR_N			__BITS(15,11)
-#define	PMCR_D			__BIT(3)
-#define	PMCR_E			__BIT(0)
-
-#define	PMINTEN_C		__BIT(31)
-#define	PMINTEN_P		__BITS(30,0)
-#define	PMCNTEN_C		__BIT(31)
-#define	PMCNTEN_P		__BITS(30,0)
-
-#define	PMOVS_C			__BIT(31)
-#define	PMOVS_P			__BITS(30,0)
-
-#define	PMEVTYPER_P		__BIT(31)
-#define	PMEVTYPER_U		__BIT(30)
-#define	PMEVTYPER_EVTCOUNT	__BITS(7,0)
 
 static uint16_t cortexa9_events[] = {
 	0x40, 0x41, 0x42,
