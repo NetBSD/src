@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.123 2022/12/03 06:08:18 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.124 2022/12/03 16:56:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,12 +72,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.123 2022/12/03 06:08:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.124 2022/12/03 16:56:40 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/conf.h>
