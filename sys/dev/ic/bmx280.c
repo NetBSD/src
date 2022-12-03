@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.6 2022/12/01 02:29:37 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,11 +17,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.6 2022/12/01 02:29:37 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
 
 /*
-  Driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
-  (usually barometric) pressure sensor
+ * Common driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
+ * (usually barometric) pressure sensor.  Calls out to specific frontends to
+ * the move bits around.
 */
 
 #include <sys/param.h>
@@ -34,21 +35,15 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.6 2022/12/01 02:29:37 brad Exp $");
 #include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/spi/spivar.h>
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/bmx280reg.h>
-#include <dev/i2c/bmx280var.h>
+#include <dev/ic/bmx280reg.h>
+#include <dev/ic/bmx280var.h>
 
 
-static int	bmx280_write_register(i2c_tag_t, i2c_addr_t,
-    uint8_t *, size_t);
-static int	bmx280_read_register(i2c_tag_t, i2c_addr_t, uint8_t *,
-    uint8_t *, size_t);
 static void	bmx280_store_raw_blob_tp(struct bmx280_sc *, uint8_t *);
 static void	bmx280_store_raw_blob_h(struct bmx280_sc *, uint8_t *);
-static int 	bmx280_poke(i2c_tag_t, i2c_addr_t, bool);
-static int 	bmx280_match(device_t, cfdata_t, void *);
-static void 	bmx280_attach(device_t, device_t, void *);
-static int 	bmx280_detach(device_t, int);
+void 		bmx280_attach(struct bmx280_sc *);
 static void 	bmx280_refresh(struct sysmon_envsys *, envsys_data_t *);
 static int 	bmx280_verify_sysctl(SYSCTLFN_ARGS);
 static int 	bmx280_verify_sysctl_osrs(SYSCTLFN_ARGS);
@@ -64,9 +59,6 @@ static int 	bmx280_verify_sysctl_irr(SYSCTLFN_ARGS);
 #else
 #define DPRINTF(s, l, x)
 #endif
-
-CFATTACH_DECL_NEW(bmx280thp, sizeof(struct bmx280_sc),
-    bmx280_match, bmx280_attach, bmx280_detach, NULL);
 
 static struct bmx280_sensor bmx280_sensors[] = {
 	{
@@ -283,73 +275,14 @@ bmx280_store_raw_blob_h(struct bmx280_sc *sc, uint8_t *b) {
 	sc->sc_cal_blob.dig_H6 = (int8_t)b[7];
 }
 
-/* For the BMX280, a write consists of sending a I2C START, I2C SLAVE
- * address and then pairs of registers and data until a I2C STOP is
- * sent.
- */
-
-static int
-bmx280_write_register(i2c_tag_t tag, i2c_addr_t addr,
-    uint8_t *buf, size_t blen)
-{
-	int error;
-
-	KASSERT(blen > 0);
-	/* XXX - there should be a KASSERT for blen at least
-	   being an even number */
-
-	error = iic_exec(tag,I2C_OP_WRITE_WITH_STOP,addr,NULL,0,
-	    buf,blen,0);
-
-	return error;
-}
-
-/* For the BMX280, a read consists of writing on the I2C bus
- * a I2C START, I2C SLAVE address, then the starting register.
- * If that works, then following will be another I2C START,
- * I2C SLAVE address, followed by as many I2C reads that is
- * desired and then a I2C STOP
- */
-
-static int
-bmx280_read_register(i2c_tag_t tag, i2c_addr_t addr, uint8_t *reg,
-    uint8_t *buf, size_t blen)
-{
-	int error;
-
-	KASSERT(blen > 0);
-
-	error = iic_exec(tag,I2C_OP_WRITE,addr,reg,1,NULL,0,0);
-
-	if (error == 0) {
-		error = iic_exec(tag,I2C_OP_READ_WITH_STOP,addr,NULL,0,
-		    buf,blen,0);
-	}
-
-	return error;
-}
-
-
-static int
-bmx280_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
-{
-	uint8_t reg = BMX280_REGISTER_ID;
-	uint8_t buf[1];
-	int error;
-
-	error = bmx280_read_register(tag, addr, &reg, buf, 1);
-	if (matchdebug) {
-		printf("poke X 1: %d\n", error);
-	}
-	return error;
-}
-
 static int
 bmx280_sysctl_init(struct bmx280_sc *sc)
 {
 	int error;
 	const struct sysctlnode *cnode;
 	int sysctlroot_num, sysctlwait_num;
+
+	sc->sc_func_attach = &bmx280_attach;
 
 	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
 	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
@@ -446,54 +379,13 @@ bmx280_sysctl_init(struct bmx280_sc *sc)
 
 	return 0;
 }
-
-static int
-bmx280_match(device_t parent, cfdata_t match, void *aux)
+void
+bmx280_attach(struct bmx280_sc *sc)
 {
-	struct i2c_attach_args *ia = aux;
-	int error, match_result;
-	const bool matchdebug = false;
-
-	if (iic_use_direct_match(ia, match, NULL, &match_result))
-		return match_result;
-
-	/* indirect config - check for configured address */
-	if (ia->ia_addr != BMX280_TYPICAL_ADDR_1 &&
-	    ia->ia_addr != BMX280_TYPICAL_ADDR_2)
-		return 0;
-
-	/*
-	 * Check to see if something is really at this i2c address. This will
-	 * keep phantom devices from appearing
-	 */
-	if (iic_acquire_bus(ia->ia_tag, 0) != 0) {
-		if (matchdebug)
-			printf("in match acquire bus failed\n");
-		return 0;
-	}
-
-	error = bmx280_poke(ia->ia_tag, ia->ia_addr, matchdebug);
-	iic_release_bus(ia->ia_tag, 0);
-
-	return error == 0 ? I2C_MATCH_ADDRESS_AND_PROBE : 0;
-}
-
-static void
-bmx280_attach(device_t parent, device_t self, void *aux)
-{
-	struct bmx280_sc *sc;
-	struct i2c_attach_args *ia;
 	int error, i;
 	uint8_t reg, chip_id;
 	uint8_t buf[2];
 
-	ia = aux;
-	sc = device_private(self);
-
-	sc->sc_dev = self;
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-	sc->sc_bmx280debug = 0;
 	sc->sc_bmx280dump = false;
 	sc->sc_has_humidity = false;
 	sc->sc_readattempts = 25;
@@ -513,33 +405,33 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 	sc->sc_numsensors = __arraycount(bmx280_sensors);
 
 	if ((sc->sc_sme = sysmon_envsys_create()) == NULL) {
-		aprint_error_dev(self,
+		aprint_error_dev(sc->sc_dev,
 		    "Unable to create sysmon structure\n");
 		sc->sc_sme = NULL;
 		return;
 	}
 
-	error = iic_acquire_bus(sc->sc_tag, 0);
+	error = (*(sc->sc_func_acquire_bus))(sc);
 	if (error) {
-		aprint_error_dev(self, "Could not acquire iic bus: %d\n",
+		aprint_error_dev(sc->sc_dev, "Could not acquire the bus: %d\n",
 		    error);
 		goto out;
 	}
 
 	buf[0] = BMX280_REGISTER_RESET;
 	buf[1] = BMX280_TRIGGER_RESET;
-	error = bmx280_write_register(sc->sc_tag, sc->sc_addr, buf, 2);
+	error = (*(sc->sc_func_write_register))(sc, buf, 2);
 	if (error) {
-		aprint_error_dev(self, "Failed to reset chip: %d\n",
+		aprint_error_dev(sc->sc_dev, "Failed to reset chip: %d\n",
 		    error);
 	}
 
 	delay(30000);
 
 	reg = BMX280_REGISTER_ID;
-	error = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, &chip_id, 1);
+	error = (*(sc->sc_func_read_register))(sc, reg, &chip_id, 1);
 	if (error) {
-		aprint_error_dev(self, "Failed to read ID: %d\n",
+		aprint_error_dev(sc->sc_dev, "Failed to read ID: %d\n",
 		    error);
 	}
 
@@ -553,15 +445,15 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((error = bmx280_sysctl_init(sc)) != 0) {
-		aprint_error_dev(self, "Can't setup sysctl tree (%d)\n", error);
+		aprint_error_dev(sc->sc_dev, "Can't setup sysctl tree (%d)\n", error);
 		goto out;
 	}
 
 	uint8_t raw_blob_tp[24];
 	reg = BMX280_REGISTER_DIG_T1;
-	error = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, raw_blob_tp, 24);
+	error = (*(sc->sc_func_read_register))(sc, reg, raw_blob_tp, 24);
 	if (error) {
-		aprint_error_dev(self, "Failed to read the calibration registers for tp: %d\n",
+		aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for tp: %d\n",
 		    error);
 	}
 
@@ -578,16 +470,16 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		uint8_t raw_blob_h[8];
 
 		reg = BMX280_REGISTER_DIG_H1;
-		error = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, raw_blob_h, 1);
+		error = (*(sc->sc_func_read_register))(sc, reg, raw_blob_h, 1);
 		if (error) {
-			aprint_error_dev(self, "Failed to read the calibration registers for h1: %d\n",
+			aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for h1: %d\n",
 			    error);
 		}
 
 		reg = BMX280_REGISTER_DIG_H2;
-		error = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, &raw_blob_h[1], 7);
+		error = (*(sc->sc_func_read_register))(sc, reg, &raw_blob_h[1], 7);
 		if (error) {
-			aprint_error_dev(self, "Failed to read the calibration registers for h2 - h6: %d\n",
+			aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for h2 - h6: %d\n",
 			    error);
 		}
 
@@ -601,10 +493,10 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		bmx280_store_raw_blob_h(sc,raw_blob_h);
 	}
 
-	iic_release_bus(sc->sc_tag, 0);
+	(*(sc->sc_func_release_bus))(sc);
 
 	if (error != 0) {
-		aprint_error_dev(self, "Unable to setup device\n");
+		aprint_error_dev(sc->sc_dev, "Unable to setup device\n");
 		goto out;
 	}
 
@@ -626,7 +518,7 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 		error = sysmon_envsys_sensor_attach(sc->sc_sme,
 		    &sc->sc_sensors[i]);
 		if (error) {
-			aprint_error_dev(self,
+			aprint_error_dev(sc->sc_dev,
 			    "Unable to attach sensor %d: %d\n", i, error);
 			goto out;
 		}
@@ -639,14 +531,14 @@ bmx280_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(sc, 2, ("bmx280_attach: registering with envsys\n"));
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(self,
+		aprint_error_dev(sc->sc_dev,
 			"unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		sc->sc_sme = NULL;
 		return;
 	}
 
-	aprint_normal_dev(self, "Bosch Sensortec %s, Chip ID: 0x%02x\n",
+	aprint_normal_dev(sc->sc_dev, "Bosch Sensortec %s, Chip ID: 0x%02x\n",
 	    (chip_id == BMX280_ID_BMP280) ? "BMP280" : (chip_id == BMX280_ID_BME280) ? "BME280" : "Unknown chip",
 	    chip_id);
 
@@ -763,7 +655,7 @@ bmx280_set_control_and_trigger(struct bmx280_sc *sc,
 	s++;
 	DPRINTF(sc, 2, ("%s: control register set up: num: %d ; %02x %02x ; %02x %02x ; %02x %02x\n",
 	    device_xname(sc->sc_dev), s, cr[0], cr[1], cr[2], cr[3], cr[4], cr[5]));
-	error = bmx280_write_register(sc->sc_tag, sc->sc_addr, cr, s);
+	error = (*(sc->sc_func_write_register))(sc, cr, s);
 	if (error) {
 		DPRINTF(sc, 2, ("%s: write control registers: %d\n",
 		    device_xname(sc->sc_dev), error));
@@ -803,7 +695,7 @@ bmx280_wait_for_data(struct bmx280_sc *sc)
 	reg = BMX280_REGISTER_STATUS;
 	do {
 		delay(1000);
-		ierror = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, &running, 1);
+		ierror = (*(sc->sc_func_read_register))(sc, reg, &running, 1);
 		if (ierror) {
 			DPRINTF(sc, 2, ("%s: Refresh failed to read back status: %d\n",
 			    device_xname(sc->sc_dev), ierror));
@@ -858,7 +750,7 @@ bmx280_read_data(struct bmx280_sc *sc,
 	DPRINTF(sc, 2, ("%s: read data: reg: %02x ; len: %d ; tstart: %d ; pstart: %d\n",
 	    device_xname(sc->sc_dev), reg, rlen, rtstart, rpstart));
 
-	ierror = bmx280_read_register(sc->sc_tag, sc->sc_addr, &reg, raw_press_temp_hum, rlen);
+	ierror = (*(sc->sc_func_read_register))(sc, reg, raw_press_temp_hum, rlen);
 	if (ierror) {
 		DPRINTF(sc, 2, ("%s: failed to read pressure and temp registers: %d\n",
 		    device_xname(sc->sc_dev), ierror));
@@ -948,7 +840,7 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 	}
 
 	mutex_enter(&sc->sc_mutex);
-	error = iic_acquire_bus(sc->sc_tag, 0);
+	error = (*(sc->sc_func_acquire_bus))(sc);
 	if (error) {
 		DPRINTF(sc, 2, ("%s: Could not acquire i2c bus: %x\n",
 		    device_xname(sc->sc_dev), error));
@@ -1084,39 +976,15 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 		    device_xname(sc->sc_dev), error));
 	}
 
-	iic_release_bus(sc->sc_tag, 0);
+	(*(sc->sc_func_release_bus))(sc);
 out:
 	mutex_exit(&sc->sc_mutex);
 }
 
-static int
-bmx280_detach(device_t self, int flags)
-{
-	struct bmx280_sc *sc;
-
-	sc = device_private(self);
-
-	mutex_enter(&sc->sc_mutex);
-
-	/* Remove the sensors */
-	if (sc->sc_sme != NULL) {
-		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
-	mutex_exit(&sc->sc_mutex);
-
-	/* Remove the sysctl tree */
-	sysctl_teardown(&sc->sc_bmx280log);
-
-	/* Remove the mutex */
-	mutex_destroy(&sc->sc_mutex);
-
-	return 0;
-}
-
-MODULE(MODULE_CLASS_DRIVER, bmx280thp, "iic,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, bmx280thp, NULL);
 
 #ifdef _MODULE
+CFDRIVER_DECL(bmx280thp, DV_DULL, NULL);
 #include "ioconf.c"
 #endif
 

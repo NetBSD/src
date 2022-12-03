@@ -1,6 +1,6 @@
 .include "../Makefile.inc"
 
-.PATH:	${S}/dev/i2c
+.PATH:	${S}/dev/ic
 
 KMOD=	bmx280thp
 IOCONF=	bmx280thp.ioconf

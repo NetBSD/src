@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.22 2022/11/21 21:24:01 brad Exp $
+# $NetBSD: module.mi,v 1.23 2022/12/03 01:04:43 brad Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -24,6 +24,8 @@
 ./usr/libdata/debug/@MODULEDIR@/blowfish/blowfish.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bmx280thp				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bmx280thp/bmx280thp.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/bmx280thpi2c				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/bmx280thpi2c/bmx280thpi2c.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bpf				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bpf/bpf.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bpf_filter			modules-base-kernel	kmod,debug

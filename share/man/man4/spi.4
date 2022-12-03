@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.12 2021/12/07 17:50:27 brad Exp $
+.\"	$NetBSD: spi.4,v 1.13 2022/12/03 01:04:42 brad Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -131,6 +131,8 @@ includes the following machine-independent
 .Tn SPI
 drivers:
 .Bl -tag -width mcp23s17gpio(4) -offset indent
+.It Xr bmx280thp 4
+Bosch BMP280 / BME280 sensor.
 .It Xr m25p 4
 STMicroelectronics M25P family of NOR flash devices.
 .It Xr mcp23s17gpio 4

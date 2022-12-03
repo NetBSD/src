@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280var.h,v 1.2 2022/11/23 23:45:29 brad Exp $	*/
+/*	$NetBSD: bmx280var.h,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _DEV_I2C_BMX280VAR_H_
-#define _DEV_I2C_BMX280VAR_H_
+#ifndef _DEV_IC_BMX280VAR_H_
+#define _DEV_IC_BMX280VAR_H_
 
 #define BMX280_NUM_SENSORS	3
 #define BMX280_TEMP_SENSOR 0
@@ -51,6 +51,7 @@ struct bmx280_sc {
 	device_t 	sc_dev;
 	i2c_tag_t 	sc_tag;
 	i2c_addr_t 	sc_addr;
+	struct spi_handle *sc_sh;
 	kmutex_t 	sc_mutex;
 	int 		sc_numsensors;
 	struct sysmon_envsys *sc_sme;
@@ -68,6 +69,11 @@ struct bmx280_sc {
 	int		sc_waitfactor_t;
 	int		sc_waitfactor_p;
 	int		sc_waitfactor_h;
+	void		(*sc_func_attach)(struct bmx280_sc *);
+	int		(*sc_func_acquire_bus)(struct bmx280_sc *);
+	void		(*sc_func_release_bus)(struct bmx280_sc *);
+	int		(*sc_func_read_register)(struct bmx280_sc *, uint8_t, uint8_t *, size_t);
+	int		(*sc_func_write_register)(struct bmx280_sc *, uint8_t *, size_t);
 };
 
 struct bmx280_sensor {
