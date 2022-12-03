@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.20 2021/02/06 06:58:59 simonb Exp $	*/
+/*	$NetBSD: cerror.S,v 1.21 2022/12/03 14:04:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.20 2021/02/06 06:58:59 simonb Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.21 2022/12/03 14:04:39 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,7 +78,7 @@ NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
 	# on the stack and not in the t3 reg (for the n32/n64 case).
 	j		ra
 END(__cerror)
-#else		
+#else
 	.globl	_C_LABEL(errno)
 LEAF_NOPROFILE(__cerror)
 	PIC_PROLOGUE(__cerror)
