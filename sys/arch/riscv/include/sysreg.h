@@ -1,4 +1,4 @@
- /* $NetBSD: sysreg.h,v 1.27 2022/11/18 06:53:06 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.28 2022/12/03 11:09:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
