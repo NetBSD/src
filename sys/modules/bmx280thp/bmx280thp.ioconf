@@ -1,8 +1,3 @@
 ioconf bmx280thp
 
 include "conf/files"
-
-pseudo-root iic*
-
-bmx280thp* at iic? addr 0x76
-bmx280thp* at iic? addr 0x77
