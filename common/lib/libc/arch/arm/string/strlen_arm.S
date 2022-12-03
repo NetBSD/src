@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.9 2014/05/06 16:02:11 joerg Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.10 2022/12/03 11:34:38 skrll Exp $")
 
 #if defined(__thumb__) && !defined(_ARM_ARCH_T2)
 #error Only Thumb2 or ARM supported
@@ -121,9 +121,9 @@ ENTRY(FUNCNAME)
 	 * (other tests for NULs in a word take more instructions/cycles).
 	 */
 	tst	r3, #BYTE0		/* is this byte 0? */
-	tstne	r3, #BYTE1		/*   no, is this byte 0? */
-	tstne	r3, #BYTE2		/*   no, is this byte 0? */
-	tstne	r3, #BYTE3		/*   no, is this byte 0? */
+	tstne	r3, #BYTE1		/*   no, is this byte 1? */
+	tstne	r3, #BYTE2		/*   no, is this byte 2? */
+	tstne	r3, #BYTE3		/*   no, is this byte 3? */
 	bne	.Lmain_loop		/*   no, then get next word */
 #endif
 #if defined(_ARM_ARCH_6)
