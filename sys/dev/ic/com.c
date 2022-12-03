@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.379 2022/10/26 23:38:09 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.380 2022/12/03 11:28:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.379 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.380 2022/12/03 11:28:38 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2771,8 +2771,10 @@ com_kgdb_putc(void *arg, int c)
 }
 #endif /* KGDB */
 
-/* helper function to identify the com ports used by
- console or KGDB (and not yet autoconf attached) */
+/*
+ * helper function to identify the com ports used by
+ * console or KGDB (and not yet autoconf attached)
+ */
 int
 com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 {
