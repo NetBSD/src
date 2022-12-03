@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1303 2022/11/05 17:31:38 jmcneill Exp $
+#	$NetBSD: files,v 1.1304 2022/12/03 01:04:42 brad Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -436,6 +436,10 @@ file	dev/ic/ssdfb.c	ssdfb
 # Sparkfun Serial motor controller (attaches via I2C or SPI)
 device  scmd
 file	dev/ic/scmd.c	scmd
+
+# Bosch BMP280 / BME280 sensor (attaches via I2C or SPI)
+device  bmx280thp
+file	dev/ic/bmx280.c	bmx280thp
 
 # Generic HID support (used by USB, bluetooth and i2c)
 include "dev/hid/files.hid"

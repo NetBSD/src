@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280reg.h,v 1.1 2022/11/21 21:24:01 brad Exp $	*/
+/*	$NetBSD: bmx280reg.h,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _DEV_I2C_BMX280REG_H_
-#define _DEV_I2C_BMX280REG_H_
+#ifndef _DEV_IC_BMX280REG_H_
+#define _DEV_IC_BMX280REG_H_
 
 #define BMX280_TYPICAL_ADDR_1	0x76
 #define BMX280_TYPICAL_ADDR_2	0x77

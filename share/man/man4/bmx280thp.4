@@ -1,4 +1,4 @@
-.\" $NetBSD: bmx280thp.4,v 1.4 2022/11/23 23:49:23 wiz Exp $
+.\" $NetBSD: bmx280thp.4,v 1.5 2022/12/03 01:04:42 brad Exp $
 .\"
 .\" Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -23,6 +23,9 @@
 .Sh SYNOPSIS
 .Cd "bmx280thp* at iic? addr 0x76"
 .Cd "bmx280thp* at iic? addr 0x77"
+
+.Cd "bmx280thp* at spi? slave 0"
+.Cd "bmx280thp* at spi? slave 1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -35,8 +38,14 @@ The
 .Ar addr
 argument selects the address at the
 .Xr iic 4
+bus and the
+.Nm
+.Ar slave
+argument selects which chip select will be used on the
+.Xr spi 4
 bus.
-The precision of the measurement can be changed through
+The precision of the measurement which is related to the over
+sampling performed on the measurement can be changed through
 .Xr sysctl 8
 nodes.
 .Sh SYSCTL VARIABLES
@@ -82,6 +91,7 @@ The default is 25 which should be more than enough for most purposes.
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr iic 4 ,
+.Xr spi 4 ,
 .Xr envstat 8 ,
 .Xr sysctl 8
 .Sh HISTORY
@@ -98,4 +108,3 @@ driver was written by
 .Sh BUGS
 The driver does not support the continuous read mode that the BMP280
 and BME280 has.
-This driver does not support the SPI interface.

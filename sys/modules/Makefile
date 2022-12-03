@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.273 2022/11/21 21:24:01 brad Exp $
+#	$NetBSD: Makefile,v 1.274 2022/12/03 01:04:42 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,7 @@ SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
 SUBDIR+=	bmx280thp
+SUBDIR+=	bmx280thpi2c
 SUBDIR+=	bufq_disksort
 SUBDIR+=	bufq_fcfs
 SUBDIR+=	bufq_priocscan
