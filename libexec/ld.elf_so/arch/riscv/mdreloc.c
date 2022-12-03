@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.5 2019/04/15 19:13:03 maya Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.6 2022/12/03 09:39:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.5 2019/04/15 19:13:03 maya Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.6 2022/12/03 09:39:44 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -256,7 +256,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
-	
+
 	for (const Elf_Rel *rel = obj->pltrel; rel < obj->pltrellim; rel++) {
 		if (_rtld_relocate_plt_object(obj, rel, NULL) < 0)
 			return -1;
