@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.8 2013/08/19 17:02:25 matt Exp $")
+RCSID("$NetBSD: strlen_naive.S,v 1.9 2022/12/03 11:30:24 skrll Exp $")
 
 #ifdef STRNLEN
 /* LINTSTUB: size_t strnlen(const char *, size_t) */
@@ -40,7 +40,7 @@ ENTRY(strnlen)
 #else
 	adds	ip, r0, r1	/* &src[maxlen] */
 #endif
-1:	cmp	r0, ip		/* is this of string? */
+1:	cmp	r0, ip		/* is this the end of string? */
 	beq	2f		/*   yes it is */
 #ifdef __thumb__
 	ldrb	r2, [r0]	/* read a byte */
