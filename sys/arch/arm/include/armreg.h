@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.135 2022/05/20 19:34:22 andvar Exp $	*/
+/*	$NetBSD: armreg.h,v 1.136 2022/12/03 20:24:21 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -484,6 +484,26 @@
 #define	ARM11_PMCEVT_RETURN_HIT		37	/* return address predicted */
 #define	ARM11_PMCEVT_RETURN_MISS	38	/* return addr. mispredicted */
 #define	ARM11_PMCEVT_CYCLE		255	/* Increment each cycle */
+
+/* ARMv7 PMCR, Performance Monitor Control Register */
+#define	PMCR_N			__BITS(15,11)
+#define	PMCR_D			__BIT(3)
+#define	PMCR_E			__BIT(0)
+
+/* ARMv7 INTEN{SET,CLR}, Performance Monitors Interrupt Enable Set register */
+#define	PMINTEN_C		__BIT(31)
+#define	PMINTEN_P		__BITS(30,0)
+#define	PMCNTEN_C		__BIT(31)
+#define	PMCNTEN_P		__BITS(30,0)
+
+/* ARMv7 PMOVSR, Performance Monitors Overflow Flag Status Register */
+#define	PMOVS_C			__BIT(31)
+#define	PMOVS_P			__BITS(30,0)
+
+/* ARMv7 PMXEVTYPER, Performance Monitors Event Type Select Register */
+#define	PMEVTYPER_P		__BIT(31)
+#define	PMEVTYPER_U		__BIT(30)
+#define	PMEVTYPER_EVTCOUNT	__BITS(7,0)
 
 /* Defines for ARM CORTEX performance counters */
 #define CORTEX_CNTENS_C __BIT(31)	/* Enables the cycle counter */
