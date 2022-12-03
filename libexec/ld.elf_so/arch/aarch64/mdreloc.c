@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.16 2022/06/21 06:52:17 skrll Exp $ */
+/* $NetBSD: mdreloc.c,v 1.17 2022/12/03 09:10:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.16 2022/06/21 06:52:17 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.17 2022/12/03 09:10:40 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -288,15 +288,14 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("TLS_DTPREL %s in %s --> %p",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where));
-
 			break;
+
 		case R_TLS_TYPE(TLS_DTPMOD):
 			*where = (Elf_Addr)(defobj->tlsindex);
 
 			rdbg(("TLS_DTPMOD %s in %s --> %p",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where));
-
 			break;
 
 		case R_TLS_TYPE(TLS_TPREL):
