@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.13 2022/03/14 06:40:12 mlelstv Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.14 2022/12/03 16:06:20 mlelstv Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -245,6 +245,9 @@ struct bwfm_softc {
 	size_t			sc_txcapsize;
 	uint8_t			*sc_cal;
 	size_t			sc_calsize;
+
+	int			sc_pm;
+	bool			sc_setpm;
 };
 
 void bwfm_attach(struct bwfm_softc *);
