@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2015/03/27 23:14:53 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2022/12/03 09:39:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ ENTRY_NP(_rtld_bind_start)
 	REG_L	a5, XCALLFRAME_A5(sp)
 	REG_L	a6, XCALLFRAME_A6(sp)
 	REG_L	a7, XCALLFRAME_A7(sp)
-	REG_L	ra, XCALLFRAME_RA(sp)		
+	REG_L	ra, XCALLFRAME_RA(sp)
 	addi	sp, sp, XCALLFRAME_SIZ
 	jr	t0
 END(_rtld_bind_start)

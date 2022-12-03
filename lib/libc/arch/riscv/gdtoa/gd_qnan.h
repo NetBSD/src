@@ -1,6 +1,6 @@
-/* $NetBSD: gd_qnan.h,v 1.2 2019/04/14 19:25:27 maya Exp $ */
+/* $NetBSD: gd_qnan.h,v 1.3 2022/12/03 09:38:53 skrll Exp $ */
 
-/* 
+/*
  * The RISC-V Instruction Set Manual Volume I: User-Level ISA
  * Document Version 2.2
  *
