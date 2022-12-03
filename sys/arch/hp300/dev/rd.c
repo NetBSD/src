@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.122 2022/12/01 15:02:11 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.123 2022/12/03 06:08:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.122 2022/12/01 15:02:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.123 2022/12/03 06:08:18 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -1362,6 +1362,10 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case DIOCGDEFLABEL:
 		rdgetdefaultlabel(sc, (struct disklabel *)data);
+		return 0;
+
+	case DIOCCACHESYNC:
+		/* no cache to be flushed but required to appease raid(4) */
 		return 0;
 	}
 	return EINVAL;
