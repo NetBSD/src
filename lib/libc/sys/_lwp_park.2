@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_park.2,v 1.12 2019/07/31 23:53:25 pgoyette Exp $
+.\"	$NetBSD: _lwp_park.2,v 1.13 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2007, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ and the time it specifies has passed.
 The
 .Fa ts
 time can be a relative interval to wait if the
-.Ar flags
+.Fa flags
 argument does not contain
 .Dv TIMER_ABSTIME
 or it can be an absolute time.
@@ -125,17 +125,21 @@ If
 .Fa unpark
 is non-zero, the system will behave as if the following call had been made
 before the calling thread begins to wait:
-.Bd -literal
-	_lwp_unpark(unpark, unparkhint);
-.Ed
+.Pp
+.Dl _lwp_unpark(unpark, unparkhint);
 .Sh RETURN VALUES
+.\" Rv -std _lwp_park
+.\" The "if successful" language in .Rv -std is misleading, but try to
+ \" follow its phrasing as close as possible.
+The
 .Fn _lwp_park
-may return a value of 0.
-Otherwise, \-1 is returned and
+.\" XXX: TODO: when?  be more precise
+function may return the value of 0.
+Otherwise the value \-1 is returned and the global variable
 .Va errno
 is set to provide more information.
 .Sh ERRORS
-.Bl -tag -width [EINVAL]
+.Bl -tag -width Er
 .It Bq Er EALREADY
 A request was made to wake the LWP before it began to wait in
 the kernel.

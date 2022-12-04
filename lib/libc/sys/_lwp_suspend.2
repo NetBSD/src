@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_suspend.2,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_suspend.2,v 1.5 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,18 +59,13 @@ Once an LWP is resumed, subsequent calls to
 .Fn _lwp_continue
 have no effect.
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn _lwp_suspend
-and
-.Fn _lwp_continue
-return a value of 0.
-Otherwise, an error code is returned to indicate the error.
+.Rv -std _lwp_continue _lwp_suspend
 .Sh ERRORS
 .Fn _lwp_suspend
 and
 .Fn _lwp_continue
 will fail if:
-.Bl -tag -width [EDEADLK]
+.Bl -tag -width Er
 .It Bq Er ESRCH
 No LWP can be found in the current process corresponding to that
 specified by
@@ -79,7 +74,7 @@ specified by
 .Pp
 .Fn _lwp_suspend
 will fail if:
-.Bl -tag -width [EDEADLK]
+.Bl -tag -width Er
 .It Bq Er EDEADLK
 The LWP specified by
 .Fa lwp
