@@ -1,4 +1,4 @@
-.\" $NetBSD: bluetooth.3,v 1.9 2017/07/03 21:32:49 wiz Exp $
+.\" $NetBSD: bluetooth.3,v 1.10 2022/12/04 01:29:31 uwe Exp $
 .\"
 .\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -208,7 +208,7 @@ if ((hp = bt_gethostbyaddr((const char *)&bd,
 
 printf("name associated with %s is %s\en", bdstr, hp->h_name);
 .Ed
-.Sh DIAGNOSTICS
+.Sh RETURN VALUES
 Error return status from
 .Fn bt_gethostent ,
 .Fn bt_gethostbyname ,
