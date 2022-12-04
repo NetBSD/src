@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.4 2015/03/31 11:59:41 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.5 2022/12/04 17:04:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.4 2015/03/31 11:59:41 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.5 2022/12/04 17:04:06 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.hidden	_C_LABEL(__minbrk)
@@ -58,11 +58,11 @@ ENTRY(_brk)
 	lla	t1, _C_LABEL(__minbrk)
 	PTR_L	t5, 0(t1)
 	bgeu	a0, t5, 1f
-	move	a0, t5		# dont allow break < minbrk
+	mv	a0, t5		# dont allow break < minbrk
 1:
 	SYSTRAP(break)
 	JUMP_TO_CERROR()				/* error */
 	PTR_S	a0, __SIZEOF_POINTER__(t1)		/* success */
-	move	a0, zero
+	mv	a0, zero
 	ret
 END(_brk)

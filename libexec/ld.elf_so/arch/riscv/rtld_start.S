@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2022/12/03 09:39:44 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2022/12/04 17:04:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,31 +41,31 @@
  *     struct ps_strings *ps_strings)
  */
 ENTRY(_rtld_start)
-	move	s0, sp			# save stack pointer
+	mv	s0, sp			# save stack pointer
 	addi	sp, sp, -4*__SIZEOF_POINTER__
 					# adjust stack pointer
 					# -> 2*PTR_SIZE(sp) for atexit
 					# -> 3*PTR_SIZE(sp) for obj_main
-	move	s1, a2			# save ps_strings pointer
+	mv	s1, a2			# save ps_strings pointer
 
 .L0:	auipc	gp, %pcrel_hi(_GLOBAL_OFFSET_TABLE_)
 	PTR_L	t0, %pcrel_lo(.L0)(gp) # &_DYNAMIC
 .L1:	auipc	a0, %pcrel_hi(_DYNAMIC)
 	addi	a0, a0, %pcrel_lo(.L1)
 	sub	s2, a0, t0		# save for _rtld
-	move	a1, s2
+	mv	a1, s2
 	call	_C_LABEL(_rtld_relocate_nonplt_self)
 
-	move	a1, s2			# relocbase
+	mv	a1, s2			# relocbase
 	addi	a0, sp, 2*__SIZEOF_POINTER__	# sp
 	call	_C_LABEL(_rtld)		# a0 = _rtld(sp, relocbase)
 	mv	t0, a0
 
 	PTR_L	a0, 2*__SIZEOF_POINTER__(sp)	# cleanup function
 	PTR_L	a1, 3*__SIZEOF_POINTER__(sp)	# obj_main entry
-	move	a2, s1			# restore ps_strings
-	move	sp, s0			# readjust stack
-	move	s0, zero		# break stack chain
+	mv	a2, s1			# restore ps_strings
+	mv	sp, s0			# readjust stack
+	mv	s0, zero		# break stack chain
 	jr	t0			# _start(cleanup, obj_main, ps_strings);
 END(_rtld_start)
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2022/12/04 17:04:06 skrll Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: __setjmp14.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+__RCSID("$NetBSD: __setjmp14.S,v 1.3 2022/12/04 17:04:06 skrll Exp $")
 #endif
 
 /*
@@ -94,7 +94,7 @@ ENTRY(__longjmp14)
 	fld	fs10, JB_FS10(a0)	/* restore callee saved register */
 	fld	fs11, JB_FS11(a0)	/* restore callee saved register */
 #endif
-	move	t1, a1			/* save return value */
+	mv	t1, a1			/* save return value */
 	li	a2, 0
 	addi	a1, a0, JB_SIGMASK	/* &sigmask */
 	li	a0, SIG_SETMASK
@@ -102,6 +102,6 @@ ENTRY(__longjmp14)
 	nop		/* error */
 	li	a0, 1	/* success */	/* default return value */
 	beqz	t1, 1f			/* test return value */
-	move	a0, t1			/* use it if not 0 */
+	mv	a0, t1			/* use it if not 0 */
 1:	ret
 END(__longjmp14)
