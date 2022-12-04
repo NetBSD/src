@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2022/11/15 14:33:33 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2022/12/04 16:23:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2022/11/15 14:33:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2022/12/04 16:23:48 skrll Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -77,8 +77,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct trapframe *tf;
 
 	KASSERT(l1 == curlwp || l1 == &lwp0);
-
-	l2->l_md.md_astpending = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
 
 	/* Copy the PCB from parent. */
 	*pcb2 = *pcb1;
