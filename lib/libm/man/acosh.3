@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acosh.3	5.2 (Berkeley) 5/6/91
-.\"	$NetBSD: acosh.3,v 1.17 2014/09/19 16:02:58 wiz Exp $
+.\"	$NetBSD: acosh.3,v 1.18 2022/12/04 11:25:09 uwe Exp $
 .\"
 .Dd January 29, 2013
 .Dt ACOSH 3
@@ -65,7 +65,8 @@ and
 .Fn acoshl "x"
 return NaN and set the global variable
 .Va errno
-to EDOM.
+to
+.Er EDOM .
 .\" SVR4_MODE
 .\" call
 .\" .Xr matherr 3 .

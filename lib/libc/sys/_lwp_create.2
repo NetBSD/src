@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.9 2021/08/22 20:18:39 andvar Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.10 2022/12/04 11:25:09 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,8 @@ disabled.
 If this context specifies invalid register values (for example privilege
 escalation by setting machine dependent bits forbidden for user processes),
 or does not specify cpu register values (uc_flags does not have the
-_UC_CPU bit set), the call will fail and errno will be set to EINVAL.
+_UC_CPU bit set), the call will fail and errno will be set to
+.Er EINVAL .
 .Pp
 The following flags affect the creation of the new LWP:
 .Bl -tag -width LWP_SUSPENDED

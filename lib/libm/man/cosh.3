@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)cosh.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: cosh.3,v 1.15 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: cosh.3,v 1.16 2022/12/04 11:25:09 uwe Exp $
 .\"
 .Dd May 2, 1991
 .Dt COSH 3
@@ -58,7 +58,8 @@ and
 .\" POSIX_MODE
 return Inf and sets the global variable
 .Va errno
-to ERANGE.
+to
+.Er ERANGE .
 .\" SYSV_MODE
 .\" call
 .\" .Xr matherr 3 .

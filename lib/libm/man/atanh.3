@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
-.\"	$NetBSD: atanh.3,v 1.17 2014/09/19 16:02:58 wiz Exp $
+.\"	$NetBSD: atanh.3,v 1.18 2022/12/04 11:25:09 uwe Exp $
 .\"
 .Dd January 29, 2013
 .Dt ATANH 3
@@ -65,7 +65,8 @@ and
 .\" POSIX_MODE
 return +inf, -inf or NaN, and sets the global variable
 .Va errno
-to EDOM.
+to
+.Er EDOM .
 .\" SYSV_MODE
 .\" call
 .\" .Xr matherr 3 .

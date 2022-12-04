@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.44 2019/05/29 01:21:33 christos Exp $
+.\"	$NetBSD: glob.3,v 1.45 2022/12/04 11:25:08 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -316,9 +316,9 @@ is not a directory, resulting in a
 call to
 .Fa errfunc .
 The error routine can suppress this action by testing for
-.Dv ENOENT
+.Er ENOENT
 and
-.Dv ENOTDIR ;
+.Er ENOTDIR ;
 however, the
 .Dv GLOB_ERR
 flag will still cause an immediate
