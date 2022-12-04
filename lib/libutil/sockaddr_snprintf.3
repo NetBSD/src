@@ -1,4 +1,4 @@
-.\"     $NetBSD: sockaddr_snprintf.3,v 1.8 2013/06/07 17:23:26 christos Exp $
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.9 2022/12/04 11:25:09 uwe Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,7 +176,7 @@ If the address family is not supported,
 returns \-1 and sets
 .Va errno
 to
-.Dv EAFNOSUPPORT .
+.Er EAFNOSUPPORT .
 For
 .Dv AF_INET
 and

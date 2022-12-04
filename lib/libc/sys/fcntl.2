@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.47 2021/07/28 11:29:59 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.48 2022/12/04 11:25:09 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -340,7 +340,7 @@ the first entry found in the cache is returned.
 may fail if the corresponding entry has been evicted from the LRU
 .Xr namei 9
 cache and return
-.Dv ENOENT .
+.Er ENOENT .
 .It
 File descriptors that don't point to vnodes are not handled, as
 well as symbolic links since there is currently no way to obtain

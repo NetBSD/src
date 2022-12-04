@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigpause.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigpause.3,v 1.15 2003/08/07 16:42:40 agc Exp $
+.\"	$NetBSD: sigpause.3,v 1.16 2022/12/04 11:25:08 uwe Exp $
 .\"
 .Dd June 2, 1993
 .Dt SIGPAUSE 3
@@ -59,7 +59,7 @@ signals are to be blocked.
 always terminates by being interrupted, returning -1 with
 .Va errno
 set to
-.Dv EINTR .
+.Er EINTR .
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,

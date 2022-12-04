@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.29 2022/12/04 01:29:32 uwe Exp $
+.\"	$NetBSD: rcmd.3,v 1.30 2022/12/04 11:25:08 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -275,7 +275,7 @@ They return \-1 on error with the global value
 .Va errno
 set according to the reason for failure.
 The error code
-.Dv EAGAIN
+.Er EAGAIN
 is overloaded to mean ``All network ports in use.''
 .Sh SEE ALSO
 .Xr rcmd 1 ,
