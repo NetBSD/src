@@ -1,4 +1,4 @@
-.\"	$NetBSD: wordexp.3,v 1.4 2021/12/10 20:36:02 andvar Exp $
+.\"	$NetBSD: wordexp.3,v 1.5 2022/12/04 01:29:32 uwe Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -189,7 +189,7 @@ wordexp_t we;
 wordexp("${EDITOR:-vi} *.c /etc/motd", &we, 0);
 execvp(we->we_wordv[0], we->we_wordv);
 .Ed
-.Sh DIAGNOSTICS
+.Sh DIAGNOSTICS		\" sic!
 Diagnostic messages from the shell are written to the standard error output
 if
 .Dv WRDE_SHOWERR

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.15 2017/07/03 21:32:51 wiz Exp $
+.\"	$NetBSD: rmtops.3,v 1.16 2022/12/04 01:29:33 uwe Exp $
 .\"
 .Dd October 16, 2001
 .Dt RMTOPS 3
@@ -127,7 +127,7 @@ and must have the same calling conventions as
 .It Pa /usr/lib/librmt.a
 remote tape library
 .El
-.Sh DIAGNOSTICS
+.Sh RETURN VALUES
 Several of these routines will return \-1 and set
 .Va errno
 to EOPNOTSUPP, if they are given a remote file name or a file descriptor
