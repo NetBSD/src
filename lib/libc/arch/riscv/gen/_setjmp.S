@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.3 2022/12/04 17:04:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: _setjmp.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+__RCSID("$NetBSD: _setjmp.S,v 1.3 2022/12/04 17:04:06 skrll Exp $")
 #endif
 
 /*
@@ -119,6 +119,6 @@ ENTRY(_longjmp)
 #endif
 	li	a0, 1			/* default return value */
 	beqz	a1, 1f			/* test return value */
-	move	a0, a1			/* use it if not 0 */
+	mv	a0, a1			/* use it if not 0 */
 1:	ret
 END(_longjmp)
