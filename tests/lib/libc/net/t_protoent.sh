@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.4 2022/11/28 17:41:00 jschauma Exp $
+# $NetBSD: t_protoent.sh,v 1.5 2022/12/04 02:53:17 jschauma Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+: ${TEST_FILE:="/etc/protocols"}
 
 atf_test_case protoent
 protoent_head()
@@ -38,7 +39,7 @@ protoent_body()
 	#  (2) fold all names for the same port/proto together
 	#  (3) prune duplicates
 	#
-	tr '\t' ' ' </etc/protocols | awk '
+	tr '\t' ' ' <"${TEST_FILE}" | awk '
 	function add(key, name, i, n, ar) {
 		n = split(names[key], ar);
 		for (i = 1; i <= n; i++) {

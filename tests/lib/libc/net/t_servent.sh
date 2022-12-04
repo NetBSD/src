@@ -1,4 +1,4 @@
-# $NetBSD: t_servent.sh,v 1.3 2022/12/04 02:42:39 jschauma Exp $
+# $NetBSD: t_servent.sh,v 1.4 2022/12/04 02:53:17 jschauma Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,6 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+: ${TEST_FILE:="/etc/services"}
 
 atf_test_case servent
 servent_head()
@@ -40,7 +41,7 @@ servent_body()
 	#  (2) fold all names for the same port/proto together
 	#  (3) prune duplicates
 	#
-	tr '\t' ' ' </etc/services | awk '
+	tr '\t' ' ' <"${TEST_FILE}" | awk '
 		function add(key, name, i, n, ar) {
 			n = split(names[key], ar);
 			for (i=1; i<=n; i++) {
