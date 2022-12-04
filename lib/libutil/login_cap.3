@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.23 2016/01/23 07:21:18 wiz Exp $
+.\" $NetBSD: login_cap.3,v 1.24 2022/12/04 22:51:43 uwe Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -76,25 +76,27 @@
 The
 .Fn login_getclass
 function extracts the entry specified by
-.Ar class
+.Fa class
 (or
-.Li default
+.Ql default
 if
-.Ar class
+.Fa class
 is
 .Dv NULL
 or the empty string)
 from
 .Pa /etc/login.conf
-(see
-.Xr login.conf 5 ) .
+.Po
+see
+.Xr login.conf 5
+.Pc .
 If the entry is found, a
-.Li login_cap_t
+.Vt login_cap_t
 pointer is returned.
 .Dv NULL
 is returned if the user class is not found.
 When the
-.Li login_cap_t
+.Vt login_cap_t
 structure is no longer needed, it should be freed by the
 .Fn login_close
 function.
@@ -102,10 +104,11 @@ function.
 The
 .Fn login_getpwclass
 function is equivalent to:
+.Pp
 .Dl login_getclass(pwd\ ? pwd->pw_class\ : NULL)
 .Pp
 Once
-.Ar lc
+.Fa lc
 has been returned by
 .Fn login_getclass ,
 any of the other
@@ -119,13 +122,13 @@ The
 and
 .Fn login_getcaptime
 functions all query the database entry for a field named
-.Ar cap .
+.Fa cap .
 If the field is found, its value is returned.
 If the field is not found, the value specified by
-.Ar def
+.Fa def
 is returned.
 If an error is encountered while trying to find the field,
-.Ar err
+.Fa err
 is returned.
 See
 .Xr login.conf 5
@@ -134,23 +137,26 @@ The
 .Fn login_getcapbool
 function is slightly different.
 It returns
-.Ar def
-if no capabilities were found for this class (typically meaning that
+.Fa def
+if no capabilities were found for this class
+.Po
+typically meaning that
 the default class was used and the
-.Li /etc/login.conf
-file is missing).
+.Pa /etc/login.conf
+file is missing
+.Pc .
 It returns a non-zero value if
-.Ar cap ,
+.Fa cap ,
 with no value, was found,
 zero otherwise.
 .Pp
 The
 .Fn setclasscontext
 function takes
-.Ar class ,
+.Fa class ,
 the name of a user class,
 and sets the resources defined by that class according to
-.Ar flags .
+.Fa flags .
 Only the
 .Dv LOGIN_SETPATH ,
 .Dv LOGIN_SETPRIORITY ,
@@ -158,88 +164,89 @@ Only the
 and
 .Dv LOGIN_SETUMASK
 bits are used.
-(See
+.Po
+See
 .Fn setusercontext
-below).
-It returns 0 on success and -1 on failure.
+below
+.Pc .
+It returns 0 on success and \-1 on failure.
 .Pp
 The
 .Fn setusercontext
 function
 sets the resources according to
-.Ar flags .
+.Fa flags .
 The
-.Ar lc
+.Fa lc
 argument, if not
 .Dv NULL ,
 contains the class information that should
 be used.
 The
-.Ar pwd
+.Fa pwd
 argument, if not
 .Dv NULL ,
 provides information about the user.
-Both
-.Ar lc
+.Fa lc
 and
-.Ar pwd
-cannot be
+.Fa pwd
+cannot both be
 .Dv NULL .
 The
-.Ar uid
+.Fa uid
 argument is used in place of the user id contained in the
-.Ar pwd
+.Fa pwd
 structure when calling
 .Xr setuid 2 .
 The various bits available to be or-ed together to make up
-.Ar flags
+.Fa flags
 are:
-.Bl -tag -width LOGIN_SETRESOURCESXX
-.It LOGIN_SETGID
+.Bl -tag -width Dv
+.It Dv LOGIN_SETGID
 Set the group id.
 Requires the
-.Ar pwd
+.Fa pwd
 field be specified.
-.It LOGIN_SETGROUPS
+.It Dv LOGIN_SETGROUPS
 Set the group membership list by calling
 .Xr initgroups 3 .
 Requires the
-.Ar pwd
+.Fa pwd
 field be specified.
-.It LOGIN_SETGROUP
+.It Dv LOGIN_SETGROUP
 Set the group id and call
 .Xr initgroups 3 .
 Requires the
-.Ar pwd
+.Fa pwd
 field be specified.
-.It LOGIN_SETLOGIN
+.It Dv LOGIN_SETLOGIN
 Sets the login name by
 .Xr setlogin 2 .
 Requires the
-.Ar pwd
+.Fa pwd
 field be specified.
-.It LOGIN_SETPATH
+.It Dv LOGIN_SETPATH
 Sets the
 .Ev PATH
 environment variable.
-.It LOGIN_SETPRIORITY
+.It Dv LOGIN_SETPRIORITY
 Sets the priority by
 .Xr setpriority 2 .
-.It LOGIN_SETRESOURCES
+.It Dv LOGIN_SETRESOURCES
 Sets the various system resources by
 .Xr setrlimit 2 .
-.It LOGIN_SETUMASK
+.It Dv LOGIN_SETUMASK
 Sets the umask by
 .Xr umask 2 .
-.It LOGIN_SETUSER
+.It Ev LOGIN_SETUSER
 Sets the user id to
-.Ar uid
+.Fa uid
 by
 .Xr setuid 2 .
-.It LOGIN_SETENV
+.It Dv LOGIN_SETENV
 Sets the environment variables as defined by the setenv keyword, by
 .Xr setenv 3 .
-.It LOGIN_SETALL
+.It Dv LOGIN_SETALL
 Sets all of the above.
 .El
 .Sh SEE ALSO
