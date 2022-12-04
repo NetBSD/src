@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.4 2015/03/31 11:59:41 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.5 2022/12/04 17:04:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ ENTRY(_sbrk)
 	SYSTRAP(break)
 	JUMP_TO_CERROR()		/* error */
 	PTR_S		a0, 0(t1)	// save current val of curbrk from above
-	move		a0, t2		// return old val of curbrk from above
+	mv		a0, t2		// return old val of curbrk from above
 	ret
 1:
 END(_sbrk)
