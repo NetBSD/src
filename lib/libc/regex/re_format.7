@@ -1,4 +1,4 @@
-.\" $NetBSD: re_format.7,v 1.15 2022/08/28 12:59:50 uwe Exp $
+.\" $NetBSD: re_format.7,v 1.16 2022/12/04 16:52:48 uwe Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -69,7 +69,7 @@ leaves some aspects of RE syntax and semantics open;
 may not be fully portable to other
 .St -p1003.2
 implementations.
-.Pp
+.Ss Extended regular expressions
 A (modern) RE is one\*(DG or more non-empty\*(DG
 .Em branches ,
 separated by
@@ -383,7 +383,7 @@ Programs intended to be portable should not employ REs longer
 than 256 bytes,
 as an implementation can refuse to accept such REs and remain
 POSIX-compliant.
-.Pp
+.Ss Basic regular expressions
 Obsolete
 .Pq Dq basic
 regular expressions differ in several respects.
