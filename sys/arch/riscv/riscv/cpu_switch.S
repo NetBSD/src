@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.1 2022/10/14 07:58:30 skrll Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.2 2022/12/04 16:29:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -278,8 +278,8 @@ exception_kernexit:
 	REG_L	t2, TF_T2(sp)		// restore t2
 	REG_L	t3, TF_T3(sp)		// restore t3
 	REG_L	t4, TF_T4(sp)		// restore t4
-	REG_L	t5, TF_T3(sp)		// restore t5
-	REG_L	t6, TF_T4(sp)		// restore t6
+	REG_L	t5, TF_T5(sp)		// restore t5
+	REG_L	t6, TF_T6(sp)		// restore t6
 
 	REG_L	t0, TF_PC(sp)		// fetch exception PC
 	REG_L	t1, TF_SR(sp)		// fetch status
