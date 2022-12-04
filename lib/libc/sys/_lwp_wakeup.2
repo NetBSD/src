@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_wakeup.2,v 1.5 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_wakeup.2,v 1.6 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,14 +47,11 @@ state.
 Unblocking the LWP does not guarantee that it will make progress; it
 may block again as soon as it resumes execution in the kernel.
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn _lwp_wakeup
-returns a value of 0.
-Otherwise, an error code is returned to indicate the error.
+.Rt -std _lwp_wakeup
 .Sh ERRORS
 .Fn _lwp_wakeup
 will fail if:
-.Bl -tag -width [ENODEV]
+.Bl -tag -width Er
 .It Bq Er ESRCH
 No LWP can be found in the current process corresponding to that
 specified by

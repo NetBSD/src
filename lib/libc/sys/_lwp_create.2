@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.10 2022/12/04 11:25:09 uwe Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.11 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,20 +51,23 @@ The signal stack of the newly created light-weight process is reset to
 disabled.
 If this context specifies invalid register values (for example privilege
 escalation by setting machine dependent bits forbidden for user processes),
-or does not specify cpu register values (uc_flags does not have the
-_UC_CPU bit set), the call will fail and errno will be set to
+or does not specify cpu register values
+.Fa ( uc_flags
+does not have the
+.Dv _UC_CPU
+bit set), the call will fail and errno will be set to
 .Er EINVAL .
 .Pp
 The following flags affect the creation of the new LWP:
-.Bl -tag -width LWP_SUSPENDED
-.It LWP_DETACHED
+.Bl -tag -width Dv
+.It Dv LWP_DETACHED
 The LWP is created detached.
 The resources associated with a detached LWP will be automatically
 reclaimed by the system when the LWP exits.
 Otherwise, a terminated LWP's resources will not be reclaimed until
 its status is reported to another LWP via
 .Xr _lwp_wait 2 .
-.It LWP_SUSPENDED
+.It Dv LWP_SUSPENDED
 The LWP is created suspended, and will not begin execution until
 it is resumed by another LWP via
 .Xr _lwp_continue 2 .
@@ -74,15 +77,11 @@ it is resumed by another LWP via
 The LWP ID of the new LWP is stored in the location pointed to by
 .Fa new_lwp .
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn _lwp_create
-returns a value of 0.
-Otherwise, a value of -1 is returned and errno is set to one of the values
-documented below.
+.Rv -std _lwp_create
 .Sh ERRORS
 .Fn _lwp_create
 will fail and no LWP will be created if:
-.Bl -tag -width 10n
+.Bl -tag -width Er
 .It Bq Er EAGAIN
 The system-imposed limit on the total
 number of LWPs under execution would be exceeded.
@@ -94,7 +93,9 @@ or
 .Fa new_lwp
 is outside the process's allocated address space.
 .It Bq Er EINVAL
-The ucontext_t passed is invalid.
+The
+.Vt ucontext_t
+passed is invalid.
 .It Bq Er ENOMEM
 There is insufficient swap space for the new LWP.
 .El

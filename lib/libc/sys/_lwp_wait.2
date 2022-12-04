@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_wait.2,v 1.5 2020/02/23 20:41:41 ad Exp $
+.\"	$NetBSD: _lwp_wait.2,v 1.6 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,14 +58,11 @@ is not
 then it points to the location where the LWP ID of
 the exited LWP is stored.
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn _lwp_wait
-returns a value of 0.
-Otherwise, an error code is returned to indicate the error.
+.Rv -std _lwp_wait
 .Sh ERRORS
 .Fn _lwp_wait
 will fail if:
-.Bl -tag -width [EDEADLK]
+.Bl -tag -width Er
 .It Bq Er ESRCH
 No LWP can be found in the current process corresponding to that
 specified by

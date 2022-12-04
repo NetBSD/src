@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_unpark_all.2,v 1.7 2014/04/08 13:02:14 pooka Exp $
+.\"	$NetBSD: _lwp_unpark_all.2,v 1.8 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,16 +52,18 @@ If any of the target LWPs are not currently waiting, those LWPs will return
 immediately upon the next call to
 .Fn _lwp_park .
 .Pp
-The value pointed to by
+The
 .Fa ntargets
-specifies the size of the array pointed to by
+argument specifies the size of the array pointed to by
 .Fa targets .
+.Pp
 If the
 .Fa targets
 argument is given as
 .Dv NULL ,
-the maximum size of the array (expressed
-as the number of entries) is returned.
+the maximum size of the array
+.Pq expressed as the number of entries
+is returned.
 .Pp
 See
 .Xr _lwp_park 2
@@ -69,14 +71,18 @@ for a description of the
 .Fa hint
 argument.
 .Sh RETURN VALUES
+.\" XXX: almsost, but we need the initial "if" clause...
+.\" .Rv -std _lwp_unpark_all
 If the maximum size of the
 .Fa targets
-array is not being queried, a return of 0 indicates that the call succeeded.
-A \-1 return value indicates an error occurred and
+array is not being queried, the
+.Fn _lwp_unpark_all
+function returns the value 0 if successful;
+otherwise the value \-1 is returned and the global variable
 .Va errno
-is set to indicate the reason.
+is set to indicate the error.
 .Sh ERRORS
-.Bl -tag -width [EINVAL]
+.Bl -tag -width Er
 .It Bq Er EFAULT
 The value specified for
 .Fa targets

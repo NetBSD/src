@@ -1,4 +1,4 @@
-.\"     $NetBSD: _lwp_ctl.2,v 1.5 2012/04/13 15:14:58 yamt Exp $
+.\"     $NetBSD: _lwp_ctl.2,v 1.6 2022/12/04 16:17:50 uwe Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -49,7 +49,7 @@ It takes the following arguments.
 .Bl -tag -width features
 .It Fa features
 The bitwise-OR of the following flags.
-.Bl -tag -width LWPCTL_FEATURE_CURCPU
+.Bl -tag -width Dv
 .It Dv LWPCTL_FEATURE_CURCPU
 Request
 .Vt lc_curcpu .
@@ -68,8 +68,8 @@ The per-LWP communication area is described by an
 structure.
 It has following members, depending on
 .Fa features .
-.Bl -tag -width int_lc_curcpu
-.It Vt int lc_curcpu
+.Bl -tag -width Fa
+.It Vt int Fa lc_curcpu
 The integral identifier of the CPU on which the LWP is running,
 or
 .Dv LWPCTL_CPU_NONE
@@ -79,10 +79,13 @@ userland.
 It's available only if requested with the
 .Dv LWPCTL_FEATURE_CURCPU
 flag.
-.It Vt int lc_pctr
+.It Vt int Fa lc_pctr
 The integer which is incremented on every context switches to the LWP.
-It can be used to detect preemption of the LWP.
-(thus its name "preemption counter".)
+It can be used to detect preemption of the LWP
+.Po
+thus its name
+.Dq preemption counter .
+.Pc
 It's updated by the kernel and should be considered as read-only for
 userland.
 It's available only if requested with the
@@ -91,11 +94,7 @@ flag.
 .El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
-.Fn _lwp_ctl
-returns 0 on success.
-Otherwise, \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std _lwp_ctl
 .\" ------------------------------------------------------------
 .\".Sh ERRORS
 .\" ------------------------------------------------------------
