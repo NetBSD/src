@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.206 2019/09/15 07:01:13 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.207 2022/12/04 11:25:08 uwe Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,8 @@ and that location gives the amount of data copied after a successful call.
 If the amount of data available is greater
 than the size of the buffer supplied,
 the call supplies as much data as fits in the buffer provided
-and returns with the error code ENOMEM.
+and returns with the error code
+.Er ENOMEM .
 If the old value is not desired,
 .Fa oldp
 and

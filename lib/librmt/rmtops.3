@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.16 2022/12/04 01:29:33 uwe Exp $
+.\"	$NetBSD: rmtops.3,v 1.17 2022/12/04 11:25:09 uwe Exp $
 .\"
 .Dd October 16, 2001
 .Dt RMTOPS 3
@@ -130,7 +130,9 @@ remote tape library
 .Sh RETURN VALUES
 Several of these routines will return \-1 and set
 .Va errno
-to EOPNOTSUPP, if they are given a remote file name or a file descriptor
+to
+.Er EOPNOTSUPP ,
+if they are given a remote file name or a file descriptor
 on an open remote file (e.g.,
 .Fn rmtdup ) .
 .Sh SEE ALSO
