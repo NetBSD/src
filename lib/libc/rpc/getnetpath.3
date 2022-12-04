@@ -1,5 +1,5 @@
 .\"	@(#)getnetpath.3n 1.26 93/05/07 SMI; from SVr4
-.\"	$NetBSD: getnetpath.3,v 1.6 2003/04/16 13:34:43 wiz Exp $
+.\"	$NetBSD: getnetpath.3,v 1.7 2022/12/04 23:02:57 uwe Exp $
 .\" Copyright 1989 AT&T
 .Dd April 22, 2000
 .Dt GETNETPATH 3
@@ -25,37 +25,51 @@ network configuration database,
 .Pa /etc/netconfig ,
 as it is
 .Dq filtered
-by the NETPATH
-environment variable (see
-.Xr environ 7 ) .
+by the
+.Ev NETPATH
+environment variable
+.Po see
+.Xr environ 7
+.Pc .
 See
 .Xr getnetconfig 3
 for other routines that also access the
 network configuration database directly.
-The NETPATH variable is a list of colon-separated network identifiers.
+The
+.Ev NETPATH
+variable is a list of colon-separated network identifiers.
 .Pp
 .Fn getnetpath
 returns a pointer to the
 netconfig database entry corresponding to the first valid
-NETPATH component.
-The netconfig entry is formatted as a struct netconfig.
+.Ev NETPATH
+component.
+The netconfig entry is formatted as a
+.Vt struct netconfig .
 On each subsequent call,
 .Fn getnetpath
 returns a pointer to the netconfig entry that corresponds to the next
-valid NETPATH component.
+valid
+.Ev NETPATH
+component.
 .Fn getnetpath
 can thus be used to search the netconfig database for all networks
-included in the NETPATH variable.
-When NETPATH has been exhausted,
+included in the
+.Ev NETPATH
+variable.
+When
+.Ev NETPATH
+has been exhausted,
 .Fn getnetpath
-returns NULL.
+returns
+.Dv NULL .
 .Pp
 A call to
 .Fn setnetpath
 .Dq binds
 to or
 .Dq rewinds
-NETPATH.
+.Ev NETPATH .
 .Fn setnetpath
 must be called before the first call to
 .Fn getnetpath
@@ -64,14 +78,20 @@ It returns a handle that is used by
 .Fn getnetpath .
 .Pp
 .Fn getnetpath
-silently ignores invalid NETPATH
+silently ignores invalid
+.Ev NETPATH
 components.
-A NETPATH component is invalid if there is no corresponding
+A
+.Ev NETPATH
+component is invalid if there is no corresponding
 entry in the netconfig database.
 .Pp
-If the NETPATH variable is unset,
+If the
+.Ev NETPATH
+variable is unset,
 .Fn getnetpath
-behaves as if NETPATH
+behaves as if
+.Ev NETPATH
 were set to the sequence of
 .Dq default
 or
@@ -84,26 +104,32 @@ order in which they are listed.
 .Fn endnetpath
 may be called to
 .Dq unbind
-from NETPATH
+from
+.Ev NETPATH
 when processing is complete, releasing resources for reuse.
 Programmers should be aware, however, that
 .Fn endnetpath
 frees all memory allocated by
 .Fn getnetpath
-for the struct netconfig data structure.
+for the
+.Vt struct netconfig
+data structure.
 .Sh RETURN VALUES
 .Fn setnetpath
 returns a handle that is used by
 .Fn getnetpath .
 In case of an error,
 .Fn setnetpath
-returns NULL.
+returns
+.Dv NULL .
 .Pp
 .Fn endnetpath
-returns 0 on success and -1 on failure
-(for example, if
+returns 0 on success and \-1 on failure
+.Po
+for example, if
 .Fn setnetpath
-was not called previously).
+was not called previously
+.Pc .
 .Fn nc_perror
 or
 .Fn nc_sperror
@@ -114,10 +140,15 @@ See
 When first called,
 .Fn getnetpath
 returns a pointer to the netconfig database entry corresponding to the first
-valid NETPATH component.
-When NETPATH has been exhausted,
+valid
+.Ev NETPATH
+component.
+When
+.Ev NETPATH
+has been exhausted,
 .Fn getnetpath
-returns NULL.
+returns
+.Dv NULL .
 .Sh SEE ALSO
 .Xr getnetconfig 3 ,
 .Xr netconfig 5 ,
