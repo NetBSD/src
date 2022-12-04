@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.231 2022/09/12 08:11:51 rin Exp $
+# $NetBSD: HACKS,v 1.232 2022/12/04 22:35:15 jakllsch Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -590,6 +590,14 @@ port	vax
 	descr
 		pickmove.c crashes with -O2, warns about ovi.o_intersect being
 		unitialized with -O1, works with -O0
+	kcah
+
+	hack	gdtoa/misc.c miscompile
+	cdate	Sun Dec  4 22:27:26 UTC 2022
+	who	jakllsch
+	file	src/lib/libc/gdtoa/Makefile.inc : 1.11
+	descr
+		some doubles print as garbage if gdtoa/misc.c isn't compiled at -O0
 	kcah
 
 port	arm
