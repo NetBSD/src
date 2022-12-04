@@ -1,4 +1,4 @@
-.\"	$NetBSD: getservent.3,v 1.15 2022/12/03 23:55:52 jschauma Exp $
+.\"	$NetBSD: getservent.3,v 1.16 2022/12/04 00:13:11 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,9 +129,8 @@ searches must also match the protocol.
 .It Pa /etc/services
 .It Pa /var/db/services.cdb
 .El
-.Sh DIAGNOSTICS
-Null pointer
-(0) returned on
+.Sh RETURN VALUES
+Null pointer is returned on
 .Dv EOF
 or error.
 .Sh SEE ALSO
