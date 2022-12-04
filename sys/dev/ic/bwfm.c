@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.33 2022/12/03 16:06:20 mlelstv Exp $ */
+/* $NetBSD: bwfm.c,v 1.34 2022/12/04 09:25:04 mlelstv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -379,6 +379,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	    IEEE80211_C_TKIP |
 	    IEEE80211_C_AES |
 	    IEEE80211_C_AES_CCM |
+	    IEEE80211_C_PMGT |
 #if notyet
 	    IEEE80211_C_MONITOR |		/* monitor mode supported */
 	    IEEE80211_C_IBSS |
@@ -635,11 +636,16 @@ bwfm_init(struct ifnet *ifp)
          * Use CAM (constantly awake) when we are running as AP
          * otherwise use fast power saving.
          */
-	sc->sc_pm = BWFM_PM_FAST_PS;
+
+	if (ic->ic_flags & IEEE80211_F_PMGTON) {
+		sc->sc_pm = BWFM_PM_FAST_PS;
 #ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		sc->sc_pm = BWFM_PM_CAM;
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			sc->sc_pm = BWFM_PM_CAM;
 #endif
+	} else {
+		sc->sc_pm = BWFM_PM_CAM;
+	}
 	sc->sc_setpm = true;
 
 	bwfm_fwvar_var_set_int(sc, "txbf", 1);
@@ -694,8 +700,8 @@ bwfm_stop(struct ifnet *ifp, int disable)
 
 	memset(&join, 0, sizeof(join));
 	bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join, sizeof(join));
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 0);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 0);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
@@ -777,8 +783,7 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0 &&
-		    ic->ic_roaming != IEEE80211_ROAMING_MANUAL) {
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			bwfm_init(ifp);
 		}
 		error = 0;
