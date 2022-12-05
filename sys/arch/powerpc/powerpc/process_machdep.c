@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.42 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.43 2022/12/05 16:03:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.42 2021/03/06 08:08:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2022/12/05 16:03:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -138,10 +138,8 @@ process_sstep(struct lwp *l, int sstep)
 	
 	if (sstep) {
 		tf->tf_srr1 |= PSL_SE;
-		l->l_md.md_flags |= PSL_SE;
 	} else {
 		tf->tf_srr1 &= ~PSL_SE;
-		l->l_md.md_flags &= ~PSL_SE;
 	}
 	return 0;
 #else
