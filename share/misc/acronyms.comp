@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.327 2022/03/20 20:19:34 andvar Exp $
+$NetBSD: acronyms.comp,v 1.328 2022/12/05 15:00:19 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -307,6 +307,7 @@ CR	carriage return
 CRC	cyclic redundancy check
 CRL	carrier recovery loop
 CRLF	carriage return line feed
+CSPM	cloud security posture management
 CSU	C start up
 CRT	cathode ray tube
 CRTP	curiously recurring template pattern
