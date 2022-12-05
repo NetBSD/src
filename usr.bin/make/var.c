@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1035 2022/10/01 09:27:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1036 2022/12/05 23:41:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1035 2022/10/01 09:27:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1036 2022/12/05 23:41:24 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2168,7 +2168,7 @@ ParseModifierPartDollar(const char **pp, LazyBuf *part)
 					depth--;
 			}
 		}
-		LazyBuf_AddBytesBetween(part, start, p);
+		LazyBuf_AddSubstring(part, Substring_Init(start, p));
 		*pp = p;
 	} else {
 		LazyBuf_Add(part, *start);
