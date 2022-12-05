@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.721 2022/12/01 00:48:05 ryo Exp $	*/
+/*	$NetBSD: param.h,v 1.722 2022/12/05 05:56:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -259,7 +259,7 @@
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
+ * data types (int, long, ...).   The result is uintptr_t and must be cast to
  * any desired pointer type.
  *
  * ALIGNED_POINTER is a boolean macro that checks whether an address
