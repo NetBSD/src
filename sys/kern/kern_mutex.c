@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.100 2022/10/26 23:21:19 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.101 2022/12/05 07:09:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.100 2022/10/26 23:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.101 2022/12/05 07:09:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,20 +145,18 @@ do {								\
 
 #define	MUTEX_SPIN_SPLRAISE(mtx)					\
 do {									\
-	struct cpu_info *x__ci;						\
-	int x__cnt, s;							\
-	s = splraiseipl(MUTEX_SPIN_IPL(mtx));				\
-	x__ci = curcpu();						\
-	x__cnt = x__ci->ci_mtx_count--;					\
+	const int s = splraiseipl(MUTEX_SPIN_IPL(mtx));			\
+	struct cpu_info * const x__ci = curcpu();			\
+	const int x__cnt = x__ci->ci_mtx_count--;			\
 	__insn_barrier();						\
 	if (x__cnt == 0)						\
-		x__ci->ci_mtx_oldspl = (s);				\
+		x__ci->ci_mtx_oldspl = s;				\
 } while (/* CONSTCOND */ 0)
 
 #define	MUTEX_SPIN_SPLRESTORE(mtx)					\
 do {									\
-	struct cpu_info *x__ci = curcpu();				\
-	int s = x__ci->ci_mtx_oldspl;					\
+	struct cpu_info * const x__ci = curcpu();			\
+	const int s = x__ci->ci_mtx_oldspl;				\
 	__insn_barrier();						\
 	if (++(x__ci->ci_mtx_count) == 0)				\
 		splx(s);						\
