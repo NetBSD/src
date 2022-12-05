@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.352 2022/10/26 23:23:28 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.353 2022/12/05 15:47:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.352 2022/10/26 23:23:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.353 2022/12/05 15:47:14 martin Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -554,7 +554,8 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	 * the update to ci_want_resched will become globally visible before
 	 * the release of spc_mutex becomes globally visible.
 	 */
-	ci->ci_want_resched = ci->ci_data.cpu_softints;
+	if (ci->ci_data.cpu_softints == 0)
+		ci->ci_want_resched = 0;
 
 	return newl;
 }
