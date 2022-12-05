@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.16 2022/12/01 00:43:27 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.17 2022/12/05 05:02:45 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.16 2022/12/01 00:43:27 ryo Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.17 2022/12/05 05:02:45 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -98,8 +98,8 @@ u_int eventnamewidth[TPROF_MAXCOUNTERS];
 
 static void tprof_list(int, char **);
 static void tprof_monitor_common(bool, int, char **) __dead;
-static void tprof_monitor(int, char **);
-static void tprof_count(int, char **);
+static void tprof_monitor(int, char **) __dead;
+static void tprof_count(int, char **) __dead;
 
 static struct cmdtab {
 	const char *label;
