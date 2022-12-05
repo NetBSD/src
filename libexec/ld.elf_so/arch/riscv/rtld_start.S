@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2022/12/04 17:04:06 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2022/12/05 07:33:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,10 @@
 	.globl _C_LABEL(_rtld_relocate_nonplt_self)
 	.globl _C_LABEL(_rtld)
 
+#if __SIZEOF_POINTER__ != SZREG
+#error SZREG is the wrong size
+#endif
+
 /*
  * void
  * ___start(void (*cleanup)(void),
@@ -42,10 +46,10 @@
  */
 ENTRY(_rtld_start)
 	mv	s0, sp			# save stack pointer
-	addi	sp, sp, -4*__SIZEOF_POINTER__
+	addi	sp, sp, -4 * SZREG
 					# adjust stack pointer
-					# -> 2*PTR_SIZE(sp) for atexit
-					# -> 3*PTR_SIZE(sp) for obj_main
+					# -> 2 * PTR_SIZE(sp) for atexit
+					# -> 3 * PTR_SIZE(sp) for obj_main
 	mv	s1, a2			# save ps_strings pointer
 
 .L0:	auipc	gp, %pcrel_hi(_GLOBAL_OFFSET_TABLE_)
@@ -57,28 +61,28 @@ ENTRY(_rtld_start)
 	call	_C_LABEL(_rtld_relocate_nonplt_self)
 
 	mv	a1, s2			# relocbase
-	addi	a0, sp, 2*__SIZEOF_POINTER__	# sp
+	addi	a0, sp, 2 * SZREG	# sp
 	call	_C_LABEL(_rtld)		# a0 = _rtld(sp, relocbase)
 	mv	t0, a0
 
-	PTR_L	a0, 2*__SIZEOF_POINTER__(sp)	# cleanup function
-	PTR_L	a1, 3*__SIZEOF_POINTER__(sp)	# obj_main entry
+	PTR_L	a0, 2 * SZREG(sp)	# cleanup function
+	PTR_L	a1, 3 * SZREG(sp)	# obj_main entry
 	mv	a2, s1			# restore ps_strings
 	mv	sp, s0			# readjust stack
 	mv	s0, zero		# break stack chain
 	jr	t0			# _start(cleanup, obj_main, ps_strings);
 END(_rtld_start)
 
-#define	XCALLFRAME_SIZ		(12*SZREG)
-#define	XCALLFRAME_RA		(8*SZREG)
-#define	XCALLFRAME_A7		(7*SZREG)
-#define	XCALLFRAME_A6		(6*SZREG)
-#define	XCALLFRAME_A5		(5*SZREG)
-#define	XCALLFRAME_A4		(4*SZREG)
-#define	XCALLFRAME_A3		(3*SZREG)
-#define	XCALLFRAME_A2		(2*SZREG)
-#define	XCALLFRAME_A1		(1*SZREG)
-#define	XCALLFRAME_A0		(0*SZREG)
+#define	XCALLFRAME_SIZ		(12 * SZREG)
+#define	XCALLFRAME_RA		( 8 * SZREG)
+#define	XCALLFRAME_A7		( 7 * SZREG)
+#define	XCALLFRAME_A6		( 6 * SZREG)
+#define	XCALLFRAME_A5		( 5 * SZREG)
+#define	XCALLFRAME_A4		( 4 * SZREG)
+#define	XCALLFRAME_A3		( 3 * SZREG)
+#define	XCALLFRAME_A2		( 2 * SZREG)
+#define	XCALLFRAME_A1		( 1 * SZREG)
+#define	XCALLFRAME_A0		( 0 * SZREG)
 
 /*
  * t0 = obj pointer
