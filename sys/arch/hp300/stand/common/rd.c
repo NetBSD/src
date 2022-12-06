@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.10.58.1 2021/07/14 18:04:04 martin Exp $	*/
+/*	$NetBSD: rd.c,v 1.10.58.2 2022/12/06 19:26:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,12 +52,12 @@
 #include <hp300/stand/common/hpibvar.h>
 #include <hp300/stand/common/samachdep.h>
 
-struct	rd_iocmd rd_ioc;
-struct	rd_rscmd rd_rsc;
-struct	rd_stat rd_stat;
-struct	rd_ssmcmd rd_ssmc;
+static struct	rd_iocmd rd_ioc;
+static struct	rd_rscmd rd_rsc;
+static struct	rd_stat rd_stat;
+static struct	rd_ssmcmd rd_ssmc;
 
-struct	disklabel rdlabel;
+static struct	disklabel rdlabel;
 
 struct	rdminilabel {
 	u_short	npart;
@@ -88,32 +88,36 @@ static void rdreset(int, int);
 static int rdgetinfo(struct rd_softc *);
 static int rderror(int, int, int);
 
-struct rd_softc rd_softc[NHPIB][NRD];
+static struct rd_softc rd_softc[NHPIB][NRD];
 
-struct rdidentinfo rdidentinfo[] = {
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134DID,	1,	  29088 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7912PID,	0,	 128128 },
-	{ RD7914PID,	0,	 258048 },
-	{ RD7958AID,	0,	 255276 },
-	{ RD7957AID,	0,	 159544 },
-	{ RD7933HID,	0,	 789958 },
-	{ RD9134LID,	1,	  77840 },
-	{ RD7936HID,	0,	 600978 },
-	{ RD7937HID,	0,	1116102 },
-	{ RD7914CTID,	0,	 258048 },
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7957BID,	0,	 159894 },
-	{ RD7958BID,	0,	 297108 },
-	{ RD7959BID,	0,	 594216 },
-	{ RD2200AID,	0,	 654948 },
-	{ RD2203AID,	0,	1309896 }
+static const struct rdidentinfo rdidentinfo[] = {
+	[RD7945A]  = { RD7946AID,	0,	NRD7945ABLK },
+	[RD9134D]  = { RD9134DID,	1,	NRD9134DBLK },
+	[RD9122S]  = { RD9134LID,	1,	NRD9122SBLK },
+	[RD7912P]  = { RD7912PID,	0,	NRD7912PBLK },
+	[RD7914P]  = { RD7914PID,	0,	NRD7914PBLK },
+	[RD7958A]  = { RD7958AID,	0,	NRD7958ABLK },
+	[RD7957A]  = { RD7957AID,	0,	NRD7957ABLK },
+	[RD7933H]  = { RD7933HID,	0,	NRD7933HBLK },
+	[RD9134L]  = { RD9134LID,	1,	NRD9134LBLK },
+	[RD7936H]  = { RD7936HID,	0,	NRD7936HBLK },
+	[RD7937H]  = { RD7937HID,	0,	NRD7937HBLK },
+	[RD7914CT] = { RD7914CTID,	0,	NRD7914PBLK },
+	[RD7946A]  = { RD7946AID,	0,	NRD7945ABLK },
+	[RD9122D]  = { RD9134LID,	1,	NRD9122SBLK },
+	[RD7957B]  = { RD7957BID,	0,	NRD7957BBLK },
+	[RD7958B]  = { RD7958BID,	0,	NRD7958BBLK },
+	[RD7959B]  = { RD7959BID,	0,	NRD7959BBLK },
+	[RD2200A]  = { RD2200AID,	0,	NRD2200ABLK },
+	[RD2203A]  = { RD2203AID,	0,	NRD2203ABLK },
+	[RD2202A]  = { RD2202AID,	0,	NRD2202ABLK },
+	[RD7908A]  = { RD7908AID,	0,	NRD7908ABLK },
+	[RD7911A]  = { RD7911AID,	0,	NRD7911ABLK },
+	[RD7941A]  = { RD7946AID,	0,	NRD7941ABLK }
 };
-int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
+static const int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-int
+static int
 rdinit(int ctlr, int unit)
 {
 	struct rd_softc *rs = &rd_softc[ctlr][unit];
@@ -183,6 +187,8 @@ rdident(int ctlr, int unit)
 	case RD7946AID:
 		if (memcmp(name, "079450", 6) == 0)
 			id = RD7945A;
+		else if (memcmp(name, "079410", 6) == 0)
+			id = RD7941A;
 		else
 			id = RD7946A;
 		break;
@@ -204,7 +210,7 @@ rdident(int ctlr, int unit)
 	return id;
 }
 
-char io_buf[MAXBSIZE];
+static char io_buf[MAXBSIZE];
 
 static int
 rdgetinfo(struct rd_softc *rs)
@@ -364,7 +370,7 @@ rderror(int ctlr, int unit, int part)
 	printf("rd(%d,%d,0,%d) err: vu 0x%x",
 	       ctlr, unit, part, rd_stat.c_vu);
 	if ((rd_stat.c_aef & AEF_UD) || (rd_stat.c_ief & (IEF_MD|IEF_RD)))
-		printf(", block %ld", rd_stat.c_blk);
+		printf(", block %d", rd_stat.c_blk);
 	printf(", R0x%x F0x%x A0x%x I0x%x\n",
 	       rd_stat.c_ref, rd_stat.c_fef, rd_stat.c_aef, rd_stat.c_ief);
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.101.22.1 2021/07/14 18:04:04 martin Exp $	*/
+/*	$NetBSD: rd.c,v 1.101.22.2 2022/12/06 19:26:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,12 +72,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.101.22.1 2021/07/14 18:04:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.101.22.2 2022/12/06 19:26:06 martin Exp $");
 
 #include "opt_useleds.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/conf.h>
@@ -102,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.101.22.1 2021/07/14 18:04:04 martin Exp $")
 
 #include "ioconf.h"
 
-int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
+int	rderrthresh = RDRETRY - 1;	/* when to start reporting errors */
 
 #ifdef DEBUG
 /* error message tables */
@@ -191,8 +192,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7945A",
 		.ri_nbpt = NRD7945ABPT,
 		.ri_ntpc = NRD7945ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 108416
+		.ri_ncyl = NRD7945ACYL,
+		.ri_nblocks = NRD7945ABLK
 	},
 
 	[RD9134D] = {
@@ -200,8 +201,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9134D",
 		.ri_nbpt = NRD9134DBPT,
 		.ri_ntpc = NRD9134DTRK,
-		.ri_ncyl = 303,
-		.ri_nblocks = 29088
+		.ri_ncyl = NRD9134DCYL,
+		.ri_nblocks = NRD9134DBLK
 	},
 
 	[RD9122S] = {
@@ -209,8 +210,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9122S",
 		.ri_nbpt = NRD9122SBPT,
 		.ri_ntpc = NRD9122STRK,
-		.ri_ncyl = 77,
-		.ri_nblocks = 1232
+		.ri_ncyl = NRD9122SCYL,
+		.ri_nblocks = NRD9122SBLK
 	},
 
 	[RD7912P] = {
@@ -218,8 +219,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7912P",
 		.ri_nbpt = NRD7912PBPT,
 		.ri_ntpc = NRD7912PTRK,
-		.ri_ncyl = 572,
-		.ri_nblocks = 128128
+		.ri_ncyl = NRD7912PCYL,
+		.ri_nblocks = NRD7912PBLK
 	},
 
 	[RD7914P] = {
@@ -227,8 +228,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7914P",
 		.ri_nbpt = NRD7914PBPT,
 		.ri_ntpc = NRD7914PTRK,
-		.ri_ncyl = 1152,
-		.ri_nblocks = 258048
+		.ri_ncyl = NRD7914PCYL,
+		.ri_nblocks = NRD7914PBLK
 	},
 
 	[RD7958A] = {
@@ -236,8 +237,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7958A",
 		.ri_nbpt = NRD7958ABPT,
 		.ri_ntpc = NRD7958ATRK,
-		.ri_ncyl = 1013,
-		.ri_nblocks = 255276
+		.ri_ncyl = NRD7958ACYL,
+		.ri_nblocks = NRD7958ABLK
 	},
 
 	[RD7957A] = {
@@ -245,8 +246,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7957A",
 		.ri_nbpt = NRD7957ABPT,
 		.ri_ntpc = NRD7957ATRK,
-		.ri_ncyl = 1036,
-		.ri_nblocks = 159544
+		.ri_ncyl = NRD7957ACYL,
+		.ri_nblocks = NRD7957ABLK
 	},
 
 	[RD7933H] = {
@@ -254,8 +255,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7933H",
 		.ri_nbpt = NRD7933HBPT,
 		.ri_ntpc = NRD7933HTRK,
-		.ri_ncyl = 1321,
-		.ri_nblocks = 789958
+		.ri_ncyl = NRD7933HCYL,
+		.ri_nblocks = NRD7933HBLK
 	},
 
 	[RD9134L] = {
@@ -263,8 +264,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9134L",
 		.ri_nbpt = NRD9134LBPT,
 		.ri_ntpc = NRD9134LTRK,
-		.ri_ncyl = 973,
-		.ri_nblocks = 77840
+		.ri_ncyl = NRD9134LCYL,
+		.ri_nblocks = NRD9134LBLK
 	},
 
 	[RD7936H] = {
@@ -272,8 +273,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7936H",
 		.ri_nbpt = NRD7936HBPT,
 		.ri_ntpc = NRD7936HTRK,
-		.ri_ncyl = 698,
-		.ri_nblocks = 600978
+		.ri_ncyl = NRD7936HCYL,
+		.ri_nblocks = NRD7936HBLK
 	},
 
 	[RD7937H] = {
@@ -281,8 +282,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7937H",
 		.ri_nbpt = NRD7937HBPT,
 		.ri_ntpc = NRD7937HTRK,
-		.ri_ncyl = 698,
-		.ri_nblocks = 1116102
+		.ri_ncyl = NRD7937HCYL,
+		.ri_nblocks = NRD7937HBLK
 	},
 
 	[RD7914CT] = {
@@ -290,8 +291,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7914CT",
 		.ri_nbpt = NRD7914PBPT,
 		.ri_ntpc = NRD7914PTRK,
-		.ri_ncyl = 1152,
-		.ri_nblocks = 258048
+		.ri_ncyl = NRD7914PCYL,
+		.ri_nblocks = NRD7914PBLK
 	},
 
 	[RD7946A] = {
@@ -299,8 +300,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7946A",
 		.ri_nbpt = NRD7945ABPT,
 		.ri_ntpc = NRD7945ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 108416
+		.ri_ncyl = NRD7945ACYL,
+		.ri_nblocks = NRD7945ABLK
 	},
 
 	[RD9122D] = {
@@ -308,8 +309,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "9122D",
 		.ri_nbpt = NRD9122SBPT,
 		.ri_ntpc = NRD9122STRK,
-		.ri_ncyl = 77,
-		.ri_nblocks = 1232
+		.ri_ncyl = NRD9122SCYL,
+		.ri_nblocks = NRD9122SBLK
 	},
 
 	[RD7957B] = {
@@ -317,8 +318,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7957B",
 		.ri_nbpt = NRD7957BBPT,
 		.ri_ntpc = NRD7957BTRK,
-		.ri_ncyl = 1269,
-		.ri_nblocks = 159894
+		.ri_ncyl = NRD7957BCYL,
+		.ri_nblocks = NRD7957BBLK
 	},
 
 	[RD7958B] = {
@@ -326,8 +327,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7958B",
 		.ri_nbpt = NRD7958BBPT,
 		.ri_ntpc = NRD7958BTRK,
-		.ri_ncyl = 786,
-		.ri_nblocks = 297108
+		.ri_ncyl = NRD7958BCYL,
+		.ri_nblocks = NRD7958BBLK
 	},
 
 	[RD7959B] = {
@@ -335,8 +336,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7959B",
 		.ri_nbpt = NRD7959BBPT,
 		.ri_ntpc = NRD7959BTRK,
-		.ri_ncyl = 1572,
-		.ri_nblocks = 594216
+		.ri_ncyl = NRD7959BCYL,
+		.ri_nblocks = NRD7959BBLK
 	},
 
 	[RD2200A] = {
@@ -344,8 +345,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2200A",
 		.ri_nbpt = NRD2200ABPT,
 		.ri_ntpc = NRD2200ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 654948
+		.ri_ncyl = NRD2200ACYL,
+		.ri_nblocks = NRD2200ABLK
 	},
 
 	[RD2203A] = {
@@ -353,8 +354,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2203A",
 		.ri_nbpt = NRD2203ABPT,
 		.ri_ntpc = NRD2203ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 1309896
+		.ri_ncyl = NRD2203ACYL,
+		.ri_nblocks = NRD2203ABLK
 	},
 
 	[RD2202A] = {
@@ -362,8 +363,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "2202A",
 		.ri_nbpt = NRD2202ABPT,
 		.ri_ntpc = NRD2202ATRK,
-		.ri_ncyl = 1449,
-		.ri_nblocks = 1309896
+		.ri_ncyl = NRD2202ACYL,
+		.ri_nblocks = NRD2202ABLK
 	},
 
 	[RD7908A] = {
@@ -371,8 +372,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7908A",
 		.ri_nbpt = NRD7908ABPT,
 		.ri_ntpc = NRD7908ATRK,
-		.ri_ncyl = 185,
-		.ri_nblocks = 32375
+		.ri_ncyl = NRD7908ACYL,
+		.ri_nblocks = NRD7908ABLK
 	},
 
 	[RD7911A] = {
@@ -380,8 +381,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7911A",
 		.ri_nbpt = NRD7911ABPT,
 		.ri_ntpc = NRD7911ATRK,
-		.ri_ncyl = 572,
-		.ri_nblocks = 54912
+		.ri_ncyl = NRD7911ACYL,
+		.ri_nblocks = NRD7911ABLK
 	},
 
 	[RD7941A] = {
@@ -389,8 +390,8 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_desc = "7941A",
 		.ri_nbpt = NRD7941ABPT,
 		.ri_ntpc = NRD7941ATRK,
-		.ri_ncyl = 968,
-		.ri_nblocks = 46464
+		.ri_ncyl = NRD7941ACYL,
+		.ri_nblocks = NRD7941ABLK
 	}
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
@@ -427,10 +428,9 @@ static const int numrdname2id = __arraycount(rdname2id);
 static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
-static void	rdustart(struct rd_softc *);
+static void	rdreset_unit(int, int, int);
+static void	rd_set_geom(struct rd_softc *);
 static int	rdgetinfo(dev_t);
-static void	rdrestart(void *);
-static struct buf *rdfinish(struct rd_softc *, struct buf *);
 
 static void	rdgetdefaultlabel(struct rd_softc *, struct disklabel *);
 static void	rdrestart(void *);
@@ -490,36 +490,8 @@ static int
 rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
-	struct rd_clearcmd ccmd;
-	int ctlr, slave, punit;
-	int rv;
-	uint8_t stat;
 
-	rv = rdident(parent, NULL, ha);
-
-	if (rv == 0)
-		return 0;
-
-	/*
-	 * The supported device ID is probed.
-	 * Check if the specified physical unit is actually supported
-	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
-	 */
-	ctlr  = device_unit(parent);
-	slave = ha->ha_slave;
-	punit = ha->ha_punit;
-	if (punit == 0)
-		return 1;
-
-	ccmd.c_unit = C_SUNIT(punit);
-	ccmd.c_cmd  = C_CLEAR;
-	hpibsend(ctlr, slave, C_TCMD, &ccmd, sizeof(ccmd));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-	if (stat != 0)
-		return 0;
-
-	return 1;
+	return rdident(parent, NULL, ha);
 }
 
 static void
@@ -559,6 +531,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	memset(&sc->sc_dkdev, 0, sizeof(sc->sc_dkdev));
 	disk_init(&sc->sc_dkdev, device_xname(sc->sc_dev), NULL);
 	disk_attach(&sc->sc_dkdev);
+	rd_set_geom(sc);
 
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
@@ -575,7 +548,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = RDF_ALIVE;
 #ifdef DEBUG
 	/* always report errors */
-	if (rddebug & RDB_ERROR)
+	if ((rddebug & RDB_ERROR) != 0)
 		rderrthresh = 0;
 #endif
 	/*
@@ -589,7 +562,7 @@ static int
 rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
 	struct cs80_describe desc;
-	u_char stat, cmd[3];
+	uint8_t stat, cmd[3];
 	char name[7];
 	int i, id, n, ctlr, slave;
 
@@ -608,29 +581,45 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 		return 0;
 
 	/*
-	 * If we're just probing for the device, that's all the
-	 * work we need to do.
+	 * The supported dvice ID is probed.
+	 * Check if the specified physical unit is actually supported
+	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
 	 */
-	if (sc == NULL)
-		return 1;
-
 	/*
 	 * Reset device and collect description
 	 */
-	rdreset(sc);
+	memset(&desc, 0, sizeof(desc));
+	stat = 0;
+	rdreset_unit(ctlr, slave, ha->ha_punit);
 	cmd[0] = C_SUNIT(ha->ha_punit);
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
 	hpibrecv(ctlr, slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	if (stat != 0 || desc.d_name == 0) {
+		/*
+		 * No valid response from the specified punit.
+		 *
+		 * Note it looks HPDisk responds to commands against
+		 * supported but not-configured punits at 1 to 3.
+		 */
+		return 0;
+	}
+
+	/*
+	 * If we're just probing for the device, that's all the
+	 * work we need to do.
+	 */
+	if (sc == NULL)
+		return 1;
+
 	memset(name, 0, sizeof(name));
-	if (stat == 0) {
-		n = desc.d_name;
-		for (i = 5; i >= 0; i--) {
-			name[i] = (n & 0xf) + '0';
-			n >>= 4;
-		}
+	n = desc.d_name;
+	for (i = 5; i >= 0; i--) {
+		name[i] = (n & 0xf) + '0';
+		n >>= 4;
 	}
 
 #ifdef DEBUG
@@ -711,36 +700,65 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 static void
 rdreset(struct rd_softc *sc)
 {
-	int ctlr = device_unit(device_parent(sc->sc_dev));
-	int slave = sc->sc_slave;
-	u_char stat;
+	int ctlr, slave, punit;
 
-	sc->sc_clear.c_unit = C_SUNIT(sc->sc_punit);
-	sc->sc_clear.c_cmd = C_CLEAR;
-	hpibsend(ctlr, slave, C_TCMD, &sc->sc_clear, sizeof(sc->sc_clear));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-
-	sc->sc_src.c_unit = C_SUNIT(RDCTLR);
-	sc->sc_src.c_nop = C_NOP;
-	sc->sc_src.c_cmd = C_SREL;
-	sc->sc_src.c_param = C_REL;
-	hpibsend(ctlr, slave, C_CMD, &sc->sc_src, sizeof(sc->sc_src));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-
-	sc->sc_ssmc.c_unit = C_SUNIT(sc->sc_punit);
-	sc->sc_ssmc.c_cmd = C_SSM;
-	sc->sc_ssmc.c_refm = REF_MASK;
-	sc->sc_ssmc.c_fefm = FEF_MASK;
-	sc->sc_ssmc.c_aefm = AEF_MASK;
-	sc->sc_ssmc.c_iefm = IEF_MASK;
-	hpibsend(ctlr, slave, C_CMD, &sc->sc_ssmc, sizeof(sc->sc_ssmc));
-	hpibswait(ctlr, slave);
-	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+	ctlr = device_unit(device_parent(sc->sc_dev));
+	slave = sc->sc_slave;
+	punit = sc->sc_punit;
+	rdreset_unit(ctlr, slave, punit);
 #ifdef DEBUG
 	sc->sc_stats.rdresets++;
 #endif
+}
+
+static void
+rdreset_unit(int ctlr, int slave, int punit)
+{
+	struct rd_ssmcmd ssmc;
+	struct rd_srcmd src;
+	struct rd_clearcmd clear;
+	uint8_t stat;
+
+	clear.c_unit = C_SUNIT(punit);
+	clear.c_cmd = C_CLEAR;
+	hpibsend(ctlr, slave, C_TCMD, &clear, sizeof(clear));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	src.c_unit = C_SUNIT(RDCTLR);
+	src.c_nop = C_NOP;
+	src.c_cmd = C_SREL;
+	src.c_param = C_REL;
+	hpibsend(ctlr, slave, C_CMD, &src, sizeof(src));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
+	ssmc.c_unit = C_SUNIT(punit);
+	ssmc.c_cmd = C_SSM;
+	ssmc.c_refm = REF_MASK;
+	ssmc.c_fefm = FEF_MASK;
+	ssmc.c_aefm = AEF_MASK;
+	ssmc.c_iefm = IEF_MASK;
+	hpibsend(ctlr, slave, C_CMD, &ssmc, sizeof(ssmc));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+}
+
+static void
+rd_set_geom(struct rd_softc *sc)
+{
+	struct disk_geom *dg = &sc->sc_dkdev.dk_geom;
+	const struct rdidentinfo *ri = &rdidentinfo[sc->sc_type];
+
+	memset(dg, 0, sizeof(*dg));
+
+	dg->dg_secsize = DEV_BSIZE;
+	dg->dg_nsectors = ri->ri_nbpt;
+	dg->dg_ntracks = ri->ri_ntpc;
+	dg->dg_ncylinders = ri->ri_ncyl;
+	dg->dg_secperunit = ri->ri_nblocks;
+
+	disk_set_info(sc->sc_dev, &sc->sc_dkdev, ri->ri_desc);
 }
 
 /*
@@ -771,7 +789,7 @@ rdgetinfo(dev_t dev)
 	pi = lp->d_partitions;
 	printf("%s: WARNING: %s\n", device_xname(sc->sc_dev), msg);
 
-	pi[2].p_size = rdidentinfo[sc->sc_type].ri_nblocks;
+	pi[RAW_PART].p_size = rdidentinfo[sc->sc_type].ri_nblocks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
 	pi[0].p_size = 0;
@@ -795,8 +813,8 @@ rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Wait for any pending opens/closes to complete
 	 */
-	while (sc->sc_flags & (RDF_OPENING|RDF_CLOSING))
-		(void) tsleep(sc, PRIBIO, "rdopen", 0);
+	while ((sc->sc_flags & (RDF_OPENING | RDF_CLOSING)) != 0)
+		(void)tsleep(sc, PRIBIO, "rdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -861,10 +879,10 @@ rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 		s = splbio();
 		while (sc->sc_active) {
 			sc->sc_flags |= RDF_WANTED;
-			(void) tsleep(&sc->sc_tab, PRIBIO, "rdclose", 0);
+			(void)tsleep(&sc->sc_tab, PRIBIO, "rdclose", 0);
 		}
 		splx(s);
-		sc->sc_flags &= ~(RDF_CLOSING|RDF_WLABEL);
+		sc->sc_flags &= ~(RDF_CLOSING | RDF_WLABEL);
 		wakeup((void *)sc);
 	}
 	return 0;
@@ -876,51 +894,30 @@ rdstrategy(struct buf *bp)
 	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(bp->b_dev));
 	struct partition *pinfo;
 	daddr_t bn;
-	int sz, s;
+	int s;
 	int offset;
 
 #ifdef DEBUG
-	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%p): dev %"PRIx64", bn %llx, bcount %x, %c\n",
-		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
-		       (bp->b_flags & B_READ) ? 'R' : 'W');
+	if ((rddebug & RDB_FOLLOW) != 0)
+		printf("rdstrategy(%p): dev %" PRIx64
+		    ", bn %llx, bcount %x, %c\n",
+		    bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
+		    (bp->b_flags & B_READ) != 0 ? 'R' : 'W');
 #endif
 	bn = bp->b_blkno;
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	pinfo = &sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
 
 	/* Don't perform partition translation on RAW_PART. */
 	offset = (rdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
 
-	if (rdpart(bp->b_dev) != RAW_PART) {
-		/*
-		 * XXX This block of code belongs in
-		 * XXX bounds_check_with_label()
-		 */
-
-		if (bn < 0 || bn + sz > pinfo->p_size) {
-			sz = pinfo->p_size - bn;
-			if (sz == 0) {
-				bp->b_resid = bp->b_bcount;
-				goto done;
-			}
-			if (sz < 0) {
-				bp->b_error = EINVAL;
-				goto done;
-			}
-			bp->b_bcount = dbtob(sz);
-		}
-		/*
-		 * Check for write to write protected label
-		 */
-		if (bn + offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-		    bn + offset + sz > LABELSECTOR &&
-#endif
-		    !(bp->b_flags & B_READ) && !(sc->sc_flags & RDF_WLABEL)) {
-			bp->b_error = EROFS;
+	if (rdpart(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    rdidentinfo[sc->sc_type].ri_nblocks) <= 0)
 			goto done;
-		}
+	} else {
+		if (bounds_check_with_label(&sc->sc_dkdev, bp,
+		    (sc->sc_flags & RDF_WLABEL) != 0) <= 0)
+			goto done;
 	}
 	bp->b_rawblkno = bn + offset;
 	s = splbio();
@@ -931,7 +928,7 @@ rdstrategy(struct buf *bp)
 	}
 	splx(s);
 	return;
-done:
+ done:
 	biodone(bp);
 }
 
@@ -941,8 +938,11 @@ done:
 static void
 rdrestart(void *arg)
 {
-	int s = splbio();
-	rdustart((struct rd_softc *)arg);
+	struct rd_softc *sc = arg;
+	int s;
+
+	s = splbio();
+	rdustart(sc);
 	splx(s);
 }
 
@@ -970,7 +970,7 @@ rdfinish(struct rd_softc *sc, struct buf *bp)
 	if ((bp = bufq_peek(sc->sc_tab)) != NULL)
 		return bp;
 	sc->sc_active = 0;
-	if (sc->sc_flags & RDF_WANTED) {
+	if ((sc->sc_flags & RDF_WANTED) != 0) {
 		sc->sc_flags &= ~RDF_WANTED;
 		wakeup((void *)&sc->sc_tab);
 	}
@@ -987,7 +987,7 @@ rdstart(void *arg)
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
 
-again:
+ again:
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
 		printf("rdstart(%s): bp %p, %c\n", device_xname(sc->sc_dev), bp,
@@ -1002,22 +1002,22 @@ again:
 	sc->sc_ioc.c_nop2 = C_NOP;
 	sc->sc_ioc.c_slen = C_SLEN;
 	sc->sc_ioc.c_len = sc->sc_resid;
-	sc->sc_ioc.c_cmd = bp->b_flags & B_READ ? C_READ : C_WRITE;
+	sc->sc_ioc.c_cmd = (bp->b_flags & B_READ) != 0 ? C_READ : C_WRITE;
 #ifdef DEBUG
-	if (rddebug & RDB_IO)
+	if ((rddebug & RDB_IO) != 0)
 		printf("rdstart: hpibsend(%x, %x, %x, %p, %x)\n",
-		       ctlr, slave, C_CMD,
-		       &sc->sc_ioc.c_unit, sizeof(sc->sc_ioc) - 2);
+		    ctlr, slave, C_CMD,
+		    &sc->sc_ioc.c_unit, sizeof(sc->sc_ioc) - 2);
 #endif
 	if (hpibsend(ctlr, slave, C_CMD, &sc->sc_ioc.c_unit,
-		     sizeof(sc->sc_ioc) - 2) == sizeof(sc->sc_ioc) - 2) {
+	    sizeof(sc->sc_ioc) - 2) == sizeof(sc->sc_ioc) - 2) {
 
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dkdev);
 		iostat_seek(sc->sc_dkdev.dk_stats);
 
 #ifdef DEBUG
-		if (rddebug & RDB_IO)
+		if ((rddebug & RDB_IO) != 0)
 			printf("rdstart: hpibawait(%x)\n", ctlr);
 #endif
 		hpibawait(ctlr);
@@ -1030,8 +1030,8 @@ again:
 	 * integrate this with the backoff code in rderror.
 	 */
 #ifdef DEBUG
-	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %lx blk %lld len %d ecnt %d\n",
+	if ((rddebug & RDB_ERROR) != 0)
+		printf("%s: rdstart: cmd %x adr %x blk %lld len %d ecnt %d\n",
 		    device_xname(sc->sc_dev),
 		    sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 		    bp->b_blkno, sc->sc_resid, sc->sc_errcnt);
@@ -1041,12 +1041,12 @@ again:
 	rdreset(sc);
 	if (sc->sc_errcnt++ < RDRETRY)
 		goto again;
-	printf("%s: rdstart err: cmd 0x%x sect %ld blk %" PRId64 " len %d\n",
+	printf("%s: rdstart err: cmd 0x%x sect %u blk %" PRId64 " len %d\n",
 	    device_xname(sc->sc_dev), sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 	    bp->b_blkno, sc->sc_resid);
 	bp->b_error = EIO;
 	bp = rdfinish(sc, bp);
-	if (bp) {
+	if (bp != NULL) {
 		sc->sc_addr = bp->b_data;
 		sc->sc_resid = bp->b_bcount;
 		if (hpibreq(device_parent(sc->sc_dev), &sc->sc_hq))
@@ -1082,14 +1082,14 @@ rdintr(void *arg)
 	struct rd_softc *sc = arg;
 	int unit = device_unit(sc->sc_dev);
 	struct buf *bp = bufq_peek(sc->sc_tab);
-	u_char stat = 13;	/* in case hpibrecv fails */
+	uint8_t stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
 
 #ifdef DEBUG
-	if (rddebug & RDB_FOLLOW)
+	if ((rddebug & RDB_FOLLOW) != 0)
 		printf("rdintr(%d): bp %p, %c, flags %x\n", unit, bp,
 		    (bp->b_flags & B_READ) ? 'R' : 'W', sc->sc_flags);
 	if (bp == NULL) {
@@ -1100,7 +1100,7 @@ rdintr(void *arg)
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
 
-	if (sc->sc_flags & RDF_SEEK) {
+	if ((sc->sc_flags & RDF_SEEK) != 0) {
 		sc->sc_flags &= ~RDF_SEEK;
 		if (hpibustart(ctlr))
 			rdgo(sc);
@@ -1124,7 +1124,7 @@ rdintr(void *arg)
 	} else
 		sc->sc_flags &= ~RDF_SWAIT;
 	rv = hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
-	if (rv != 1 || stat) {
+	if (rv != 1 || stat != 0) {
 #ifdef DEBUG
 		if (rddebug & RDB_ERROR)
 			printf("rdintr: recv failed or bad stat %d\n", stat);
@@ -1149,7 +1149,7 @@ static int
 rdstatus(struct rd_softc *sc)
 {
 	int c, s;
-	u_char stat;
+	uint8_t stat;
 	int rv;
 
 	c = device_unit(device_parent(sc->sc_dev));
@@ -1162,7 +1162,7 @@ rdstatus(struct rd_softc *sc)
 	rv = hpibsend(c, s, C_CMD, &sc->sc_rsc, sizeof(sc->sc_rsc));
 	if (rv != sizeof(sc->sc_rsc)) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: send C_CMD failed %d != %d\n",
 			    rv, sizeof(sc->sc_rsc));
 #endif
@@ -1171,16 +1171,16 @@ rdstatus(struct rd_softc *sc)
 	rv = hpibrecv(c, s, C_EXEC, &sc->sc_stat, sizeof(sc->sc_stat));
 	if (rv != sizeof(sc->sc_stat)) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: send C_EXEC failed %d != %d\n",
 			    rv, sizeof(sc->sc_stat));
 #endif
 		return 1;
 	}
 	rv = hpibrecv(c, s, C_QSTAT, &stat, 1);
-	if (rv != 1 || stat) {
+	if (rv != 1 || stat != 0) {
 #ifdef DEBUG
-		if (rddebug & RDB_STATUS)
+		if ((rddebug & RDB_STATUS) != 0)
 			printf("rdstatus: recv failed %d or bad stat %d\n",
 			    rv, stat);
 #endif
@@ -1197,13 +1197,12 @@ rdstatus(struct rd_softc *sc)
 static int
 rderror(int unit)
 {
-	struct rd_softc *sc = device_lookup_private(&rd_cd,unit);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, unit);
 	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
-	char *hexstr(int, int); /* XXX */
 
-	if (rdstatus(sc)) {
+	if (rdstatus(sc) != 0) {
 #ifdef DEBUG
 		printf("%s: couldn't get status\n", device_xname(sc->sc_dev));
 #endif
@@ -1211,9 +1210,9 @@ rderror(int unit)
 		return 1;
 	}
 	sp = &sc->sc_stat;
-	if (sp->c_fef & FEF_REXMT)
+	if ((sp->c_fef & FEF_REXMT) != 0)
 		return 1;
-	if (sp->c_fef & FEF_PF) {
+	if ((sp->c_fef & FEF_PF) != 0) {
 		rdreset(sc);
 		return 1;
 	}
@@ -1224,8 +1223,7 @@ rderror(int unit)
 	 * know how long the maintenance will take.  With RDWAITC and
 	 * RDRETRY as defined, the range is 1 to 32 seconds.
 	 */
-	if (sp->c_fef & FEF_IMR) {
-		extern int hz;
+	if ((sp->c_fef & FEF_IMR) != 0) {
 		int rdtimo = RDWAITC << sc->sc_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
@@ -1251,8 +1249,8 @@ rderror(int unit)
 	 */
 	bp = bufq_peek(sc->sc_tab);
 	pbn = sc->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)].p_offset;
-	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
-	    (sp->c_ief & IEF_RRMASK)) {
+	if ((sp->c_fef & FEF_CU) != 0 || (sp->c_fef & FEF_DR) != 0 ||
+	    (sp->c_ief & IEF_RRMASK) != 0) {
 		hwbn = RDBTOS(pbn + bp->b_blkno);
 		pbn = bp->b_blkno;
 	} else {
@@ -1266,44 +1264,44 @@ rderror(int unit)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%" PRId64 "\n", device_xname(sc->sc_dev),
-	    'a'+rdpart(bp->b_dev), pbn);
+	    'a' + rdpart(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
 	 */
 	printf("%s %s error:", device_xname(sc->sc_dev),
-	    (bp->b_flags & B_READ) ? "read" : "write");
+	    (bp->b_flags & B_READ) != 0 ? "read" : "write");
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR) {
 		/* status info */
 		printf("\n    volume: %d, unit: %d\n",
-		    (sp->c_vu>>4)&0xF, sp->c_vu&0xF);
+		    (sp->c_vu >> 4) & 0xF, sp->c_vu & 0xF);
 		rdprinterr("reject", sp->c_ref, err_reject);
 		rdprinterr("fault", sp->c_fef, err_fault);
 		rdprinterr("access", sp->c_aef, err_access);
 		rdprinterr("info", sp->c_ief, err_info);
 		printf("    block: %lld, P1-P10: ", hwbn);
-		printf("0x%x", *(u_int *)&sp->c_raw[0]);
-		printf("0x%x", *(u_int *)&sp->c_raw[4]);
-		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+		printf("0x%x", *(uint32_t *)&sp->c_raw[0]);
+		printf("0x%x", *(uint32_t *)&sp->c_raw[4]);
+		printf("0x%x\n", *(uint16_t *)&sp->c_raw[8]);
 		/* command */
 		printf("    ioc: ");
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_pad);
-		printf("0x%x", *(u_short *)&sc->sc_ioc.c_hiaddr);
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_addr);
-		printf("0x%x", *(u_short *)&sc->sc_ioc.c_nop2);
-		printf("0x%x", *(u_int *)&sc->sc_ioc.c_len);
-		printf("0x%x\n", *(u_short *)&sc->sc_ioc.c_cmd);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_pad);
+		printf("0x%x", *(uint16_t *)&sc->sc_ioc.c_hiaddr);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_addr);
+		printf("0x%x", *(uint16_t *)&sc->sc_ioc.c_nop2);
+		printf("0x%x", *(uint32_t *)&sc->sc_ioc.c_len);
+		printf("0x%x\n", *(uint16_t *)&sc->sc_ioc.c_cmd);
 		return 1;
 	}
 #endif
 	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
-	    (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
+	    (sp->c_vu >> 4) & 0xF, sp->c_vu & 0xF,
 	    sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
 	printf("P1-P10: ");
-	printf("0x%x", *(u_int *)&sp->c_raw[0]);
-	printf("0x%x", *(u_int *)&sp->c_raw[4]);
-	printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+	printf("0x%x", *(uint32_t *)&sp->c_raw[0]);
+	printf("0x%x", *(uint32_t *)&sp->c_raw[4]);
+	printf("0x%x\n", *(uint16_t *)&sp->c_raw[8]);
 	return 1;
 }
 
@@ -1328,7 +1326,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
-	error = disk_ioctl(&sc->sc_dkdev, rdpart(dev), cmd, data, flag, l);
+	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -1355,7 +1353,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = setdisklabel(lp, (struct disklabel *)data,
 		    (sc->sc_flags & RDF_WLABEL) ? 0 : sc->sc_dkdev.dk_openmask,
 		    NULL);
-		if (error)
+		if (error != 0)
 			return error;
 		flags = sc->sc_flags;
 		sc->sc_flags = RDF_ALIVE | RDF_WLABEL;
@@ -1365,6 +1363,10 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case DIOCGDEFLABEL:
 		rdgetdefaultlabel(sc, (struct disklabel *)data);
+		return 0;
+
+	case DIOCCACHESYNC:
+		/* no cache to be flushed but required to appease raid(4) */
 		return 0;
 	}
 	return EINVAL;
@@ -1403,7 +1405,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 	lp->d_checksum = dkcksum(lp);
 }
 
-int
+static int
 rdsize(dev_t dev)
 {
 	struct rd_softc *sc;
@@ -1422,14 +1424,14 @@ rdsize(dev_t dev)
 	 * to handle it here.
 	 */
 	if (sc->sc_dkdev.dk_openmask == 0) {
-		if (rdopen(dev, FREAD|FWRITE, S_IFBLK, NULL))
+		if (rdopen(dev, FREAD | FWRITE, S_IFBLK, NULL))
 			return -1;
 		didopen = 1;
 	}
 	psize = sc->sc_dkdev.dk_label->d_partitions[rdpart(dev)].p_size *
 	    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
-		(void)rdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
+		(void)rdclose(dev, FREAD | FWRITE, S_IFBLK, NULL);
 	return psize;
 }
 
@@ -1445,7 +1447,7 @@ rdprinterr(const char *str, short err, const char **tab)
 	printf("    %s error %d field:", str, err);
 	printed = 0;
 	for (i = 0; i < 16; i++)
-		if (err & (0x8000 >> i))
+		if ((err & (0x8000 >> i)) != 0)
 			printf("%s%s", printed++ ? " + " : " ", tab[i]);
 	printf("\n");
 }
@@ -1533,7 +1535,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		 * Send the data.
 		 */
 		hpibsend(ctlr, slave, C_EXEC, va, nwrt * sectorsize);
-		(void) hpibswait(ctlr, slave);
+		(void)hpibswait(ctlr, slave);
 		hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
 		if (stat)
 			return EIO;
@@ -1547,7 +1549,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va = (char *)va + sectorsize * nwrt;
+		va = (uint8_t *)va + sectorsize * nwrt;
 	}
 	rddoingadump = 0;
 	return 0;
