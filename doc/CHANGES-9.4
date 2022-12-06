@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.29 2022/11/05 11:21:06 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.30 2022/12/06 19:27:34 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -438,4 +438,22 @@ sys/dev/usb/uhidev.c				1.94
 	PR 57031: back out rev 1.82 "Do not explicitly set the HID Report
 	Protocol upon attach", pulled up for 9.3 in ticket #1428.
 	[jmcneill, ticket #1550]
+
+sys/arch/hp300/dev/topcat.c			1.6
+
+	Fix silent bus error panic on 98543A topcat framebuffer on
+	HP320 and HP360.
+	[tsutsui, ticket #1551]
+
+sys/arch/hp300/dev/rd.c				1.111-1.124
+sys/arch/hp300/dev/rdreg.h			1.19,1.20
+sys/arch/hp300/dev/rdvar.h			1.27
+sys/arch/hp300/stand/common/rd.c		1.12-1.15
+
+	- Fix bootloader to allow booting from 2202A, 7908A, 7911A, and 7941A.
+	- Fix "rd(4) at punits not configured on HPDisk are misprobed" problem.
+	- Make dd(1) without a count value against a raw partition etc.
+	  is terminated properly at the end of media.
+	- Make MI raid(4) work on HP-IB rd(4) disks.
+	[tsutsui, ticket #1552]
 
