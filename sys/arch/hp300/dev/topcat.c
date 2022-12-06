@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.4.64.1 2021/04/21 17:59:47 martin Exp $	*/
+/*	$NetBSD: topcat.c,v 1.4.64.2 2022/12/06 19:19:26 martin Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -448,6 +448,8 @@ topcat_setcolor(struct diofb *fb, u_int index)
 		tc->gdata  = fb->cmap.g[index];
 		tc->bdata  = fb->cmap.b[index];
 		tc->strobe = 0xff;
+		/* XXX delay required on 68020/30 to avoid bus error */
+		DELAY(100);
 
 		tccm_waitbusy(tc);
 		tc->cindex = 0;
@@ -459,6 +461,8 @@ topcat_setcolor(struct diofb *fb, u_int index)
 		tc->bdata  = fb->cmap.b[index];
 		tc->cindex = ~index;
 		tc->strobe = 0xff;
+		/* XXX delay required on 68020/30 to avoid bus error */
+		DELAY(100);
 
 		tccm_waitbusy(tc);
 		tc->rdata  = 0;
