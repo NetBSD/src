@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.26 2022/11/24 00:07:49 macallan Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.27 2022/12/06 01:14:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.26 2022/11/24 00:07:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.27 2022/12/06 01:14:36 macallan Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -191,7 +191,7 @@ ofwoea_cnprobe_keyboard(void)
 	memset(name, 0, sizeof(name));
 	OF_getprop(node, "name", name, sizeof(name));
 	if (strcmp(name, "keyboard") != 0) {
-		printf("WARNING: stdin is not a keyboard: %s\n", name);
+		ofprint("WARNING: stdin is not a keyboard: %s\n", name);
 		return;
 	}
 
@@ -199,21 +199,21 @@ ofwoea_cnprobe_keyboard(void)
 	OF_getprop(OF_parent(node), "name", name, sizeof(name));
 #if NAKBD > 0
 	if (strcmp(name, "adb") == 0) {
-		printf("console keyboard type: ADB\n");
+		ofprint("console keyboard type: ADB\n");
 		selected_keyboard = akbd_cnattach;
 		goto kbd_found;
 	}
 #endif
 #if NADBKBD > 0
 	if (strcmp(name, "adb") == 0) {
-		printf("console keyboard type: ADB\n");
+		ofprint("console keyboard type: ADB\n");
 		selected_keyboard = adbkbd_cnattach;
 		goto kbd_found;
 	}
 #endif
 #if NPCKBC > 0
 	if (strcmp(name, "isa") == 0) {
-		printf("console keyboard type: PC Keyboard\n");
+		ofprint("console keyboard type: PC Keyboard\n");
 		selected_keyboard = ofwoea_pckbd_cnattach;
 		goto kbd_found;
 	}
@@ -271,7 +271,7 @@ ofwoea_cnprobe_keyboard(void)
 
 		adb_node = OF_finddevice("/pci/mac-io/via-pmu/adb");
 		if (adb_node > 0) {
-			printf("ADB support found\n");
+			ofprint("ADB support found\n");
 #if NAKBD > 0
 			selected_keyboard = akbd_cnattach;
 #endif
@@ -280,7 +280,7 @@ ofwoea_cnprobe_keyboard(void)
 #endif
 		} else {
 			/* must be USB */
-			printf("No ADB support present, assuming USB "
+			ofprint("No ADB support present, assuming USB "
 			       "keyboard\n");
 #if NUKBD > 0
 			selected_keyboard = ukbd_cnattach;
@@ -300,8 +300,8 @@ ofwoea_cnprobe_keyboard(void)
 	if (OF_call_method("`usb-kbd-ihandles", kstdin, 0, 1, &ukbds) >= 0 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
-		printf("usb-kbd-ihandles matches\n");
-		printf("console keyboard type: USB\n");
+		ofprint("usb-kbd-ihandles matches\n");
+		ofprint("console keyboard type: USB\n");
 		selected_keyboard = ukbd_cnattach;
 		goto kbd_found;
 	}
@@ -309,8 +309,8 @@ ofwoea_cnprobe_keyboard(void)
 	if (OF_call_method("`usb-kbd-ihandle", kstdin, 0, 1, &ukbd) >= 0 &&
 	    ukbd != 0 &&
 	    OF_instance_to_package(ukbd) != -1) {
-		printf("usb-kbd-ihandle matches\n");
-		printf("console keyboard type: USB\n");
+		ofprint("usb-kbd-ihandle matches\n");
+		ofprint("console keyboard type: USB\n");
 		kstdin = ukbd;
 		selected_keyboard = ukbd_cnattach;
 		goto kbd_found;
@@ -321,8 +321,8 @@ ofwoea_cnprobe_keyboard(void)
 	if (OF_call_method("`adb-kbd-ihandle", kstdin, 0, 1, &akbd) >= 0 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
-		printf("adb-kbd-ihandle matches\n");
-		printf("console keyboard type: ADB\n");
+		ofprint("adb-kbd-ihandle matches\n");
+		ofprint("console keyboard type: ADB\n");
 		kstdin = akbd;
 #if NAKBD > 0
 		selected_keyboard = akbd_cnattach;
@@ -339,8 +339,8 @@ ofwoea_cnprobe_keyboard(void)
 	 * XXX Old firmware does not have `usb-kbd-ihandles method.  Assume
 	 * XXX USB keyboard anyway.
 	 */
-	printf("defaulting to USB...");
-	printf("console keyboard type: USB\n");
+	ofprint("defaulting to USB...");
+	ofprint("console keyboard type: USB\n");
 	selected_keyboard = ukbd_cnattach;
 	goto kbd_found;
 #endif
@@ -348,7 +348,7 @@ ofwoea_cnprobe_keyboard(void)
 	/*
 	 * No keyboard is found.  Just return.
 	 */
-	printf("no console keyboard\n");
+	ofprint("no console keyboard\n");
 	return;
 
 kbd_found:
