@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.13.60.1 2021/07/14 18:04:04 martin Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.13.60.2 2022/12/06 19:26:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,42 +39,42 @@
  */
 
 struct	rd_iocmd {
-	char	c_pad;
-	char	c_unit;
-	char	c_volume;
-	char	c_saddr;
-	short	c_hiaddr;
-	long	c_addr;
-	char	c_nop2;
-	char	c_slen;
-	long	c_len;
-	char	c_cmd;
-	char	c_pad2;
+	uint8_t 	c_pad;
+	uint8_t 	c_unit;
+	uint8_t 	c_volume;
+	uint8_t 	c_saddr;
+	uint16_t	c_hiaddr;
+	uint32_t	c_addr;
+	uint8_t 	c_nop2;
+	uint8_t 	c_slen;
+	uint32_t	c_len;
+	uint8_t 	c_cmd;
+	uint8_t 	c_pad2;
 } __attribute__((__packed__));
 
 struct	rd_rscmd {
-	char	c_unit;
-	char	c_sram;
-	char	c_ram;
-	char	c_cmd;
+	uint8_t 	c_unit;
+	uint8_t 	c_sram;
+	uint8_t 	c_ram;
+	uint8_t 	c_cmd;
 } __attribute__((__packed__));
 
 struct	rd_stat {
-	char	c_vu;
-	char	c_pend;
-	short	c_ref;
-	short	c_fef;
-	short	c_aef;
-	short	c_ief;
+	uint8_t 	c_vu;
+	uint8_t 	c_pend;
+	uint16_t	c_ref;
+	uint16_t	c_fef;
+	uint16_t	c_aef;
+	uint16_t	c_ief;
 	union {
-		char cu_raw[10];
+		uint8_t cu_raw[10];
 		struct {
-			short	cu_msw;
-			long	cu_lsl;
+			uint16_t	cu_msw;
+			uint32_t	cu_lsl;
 		} cu_sva;
 		struct {
-			long	cu_cyhd;
-			short	cu_sect;
+			uint32_t	cu_cyhd;
+			uint16_t	cu_sect;
 		} cu_tva;
 	} c_pf;
 } __attribute__((__packed__));
@@ -83,24 +83,24 @@ struct	rd_stat {
 #define	c_tva	c_pf.cu_tva
 
 struct	rd_ssmcmd {
-	char	c_unit;
-	char	c_cmd;
-	short	c_refm;
-	short	c_fefm;
-	short	c_aefm;
-	short	c_iefm;
+	uint8_t 	c_unit;
+	uint8_t 	c_cmd;
+	uint16_t	c_refm;
+	uint16_t	c_fefm;
+	uint16_t	c_aefm;
+	uint16_t	c_iefm;
 } __attribute__((__packed__));
 
 struct	rd_srcmd {
-	char	c_unit;
-	char	c_nop;
-	char	c_cmd;
-	char	c_param;
+	uint8_t 	c_unit;
+	uint8_t 	c_nop;
+	uint8_t 	c_cmd;
+	uint8_t 	c_param;
 } __attribute__((__packed__));
 
 struct	rd_clearcmd {
-	char	c_unit;
-	char	c_cmd;
+	uint8_t 	c_unit;
+	uint8_t 	c_cmd;
 } __attribute__((__packed__));
 
 /* HW ids */
@@ -177,22 +177,48 @@ struct	rd_clearcmd {
 
 #define	NRD7945ABPT	16
 #define	NRD7945ATRK	7
+#define	NRD7945ACYL	968
+#define	NRD7945ABLK	108416
+
 #define	NRD9134DBPT	16
 #define	NRD9134DTRK	6
+#define	NRD9134DCYL	303
+#define	NRD9134DBLK	29088
+
 #define	NRD9122SBPT	8
 #define	NRD9122STRK	2
+#define	NRD9122SCYL	77
+#define	NRD9122SBLK	1232
+
 #define	NRD7912PBPT	32
 #define	NRD7912PTRK	7
+#define	NRD7912PCYL	572
+#define	NRD7912PBLK	128128
+
 #define	NRD7914PBPT	32
 #define	NRD7914PTRK	7
+#define	NRD7914PCYL	1152
+#define	NRD7914PBLK	258048
+
 #define	NRD7933HBPT	46
 #define	NRD7933HTRK	13
+#define	NRD7933HCYL	1321
+#define	NRD7933HBLK	789958
+
 #define	NRD9134LBPT	16
 #define	NRD9134LTRK	5
+#define	NRD9134LCYL	973
+#define	NRD9134LBLK	77840
+
 #define	NRD7911ABPT	32
 #define	NRD7911ATRK	3
+#define	NRD7911ACYL	572
+#define	NRD7911ABLK	54912
+
 #define	NRD7941ABPT	16
 #define	NRD7941ATRK	3
+#define	NRD7941ACYL	968
+#define	NRD7941ABLK	46464
 
 /*
  * Several HP drives have an odd number of 256 byte sectors per track.
@@ -223,26 +249,58 @@ struct	rd_clearcmd {
  */
 #define	NRD7936HBPT	123
 #define	NRD7936HTRK	7
+#define	NRD7936HCYL	698
+#define	NRD7936HBLK	600978
+
 #define	NRD7937HBPT	123
 #define	NRD7937HTRK	13
+#define	NRD7937HCYL	698
+#define	NRD7937HBLK	1116102
+
 #define	NRD7957ABPT	22
 #define	NRD7957ATRK	7
+#define	NRD7957ACYL	1036
+#define	NRD7957ABLK	159544
+
 #define	NRD7958ABPT	36
 #define	NRD7958ATRK	7
+#define	NRD7958ACYL	1013
+#define	NRD7958ABLK	255276
+
 #define	NRD7957BBPT	18
 #define	NRD7957BTRK	7
+#define	NRD7957BCYL	1269
+#define	NRD7957BBLK	159894
+
 #define	NRD7958BBPT	42
 #define	NRD7958BTRK	9
+#define	NRD7958BCYL	786
+#define	NRD7958BBLK	297108
+
 #define	NRD7959BBPT	42
 #define	NRD7959BTRK	9
+#define	NRD7959BCYL	1572
+#define	NRD7959BBLK	594216
+
 #define	NRD2200ABPT	113
 #define	NRD2200ATRK	4
+#define	NRD2200ACYL	1449
+#define	NRD2200ABLK	654948
+
 #define	NRD2203ABPT	113
 #define	NRD2203ATRK	8
+#define	NRD2203ACYL	1449
+#define	NRD2203ABLK	1309896
+
 #define	NRD2202ABPT	113
 #define	NRD2202ATRK	8
+#define	NRD2202ACYL	1449
+#define	NRD2202ABLK	1309896
+
 #define	NRD7908ABPT	35
 #define	NRD7908ATRK	5
+#define	NRD7908ACYL	185
+#define	NRD7908ABLK	32375
 
 /* controller "unit" number */
 #define	RDCTLR		15
@@ -255,7 +313,7 @@ struct	rd_clearcmd {
 #define	RDSTOB(x)	((x) >> (DEV_BSHIFT-8))
 
 /* extract cyl/head/sect info from three-vector address */
-#define	RDCYL(tva)	((u_long)(tva).cu_cyhd >> 8)
+#define	RDCYL(tva)	((uint32_t)(tva).cu_cyhd >> 8)
 #define	RDHEAD(tva)	((tva).cu_cyhd & 0xFF)
 #define	RDSECT(tva)	((tva).cu_sect)
 
