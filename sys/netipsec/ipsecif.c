@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.19 2020/01/31 06:54:19 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.20 2022/12/07 08:30:15 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.19 2020/01/31 06:54:19 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.20 2022/12/07 08:30:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -937,8 +937,10 @@ ipsecif4_attach(struct ipsec_variant *var)
 
 	if (var->iv_encap_cookie4 != NULL)
 		return EALREADY;
-	var->iv_encap_cookie4 = encap_attach_func(AF_INET, -1, if_ipsec_encap_func,
-	    &ipsecif4_encapsw, sc);
+
+	var->iv_encap_cookie4 = encap_attach_addr(AF_INET, -1,
+	    var->iv_psrc, var->iv_pdst, if_ipsec_encap_func, &ipsecif4_encapsw,
+	    sc);
 	if (var->iv_encap_cookie4 == NULL)
 		return EEXIST;
 
@@ -971,8 +973,9 @@ ipsecif6_attach(struct ipsec_variant *var)
 	KASSERT(if_ipsec_variant_is_configured(var));
 	KASSERT(var->iv_encap_cookie6 == NULL);
 
-	var->iv_encap_cookie6 = encap_attach_func(AF_INET6, -1, if_ipsec_encap_func,
-	    &ipsecif6_encapsw, sc);
+	var->iv_encap_cookie6 = encap_attach_addr(AF_INET6, -1,
+	    var->iv_psrc, var->iv_pdst, if_ipsec_encap_func, &ipsecif6_encapsw,
+	    sc);
 	if (var->iv_encap_cookie6 == NULL)
 		return EEXIST;
 
