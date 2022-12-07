@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.95 2019/10/30 03:45:59 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.96 2022/12/07 08:30:15 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.95 2019/10/30 03:45:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.96 2022/12/07 08:30:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -433,12 +433,12 @@ in6_gif_attach(struct gif_variant *var)
 
 	if (!var->gv_psrc || !var->gv_pdst)
 		return EINVAL;
-	var->gv_encap_cookie6 = encap_attach(AF_INET6, -1, var->gv_psrc,
-	    sin6tosa(&mask6), var->gv_pdst, sin6tosa(&mask6),
-	    (const void *)&in6_gif_encapsw, var->gv_softc);
+
+	var->gv_encap_cookie6 = encap_attach_addr(AF_INET6, -1, var->gv_psrc,
+	    var->gv_pdst, NULL, &in6_gif_encapsw, var->gv_softc);
 #else
-	var->gv_encap_cookie6 = encap_attach_func(AF_INET6, -1, gif_encapcheck,
-	    &in6_gif_encapsw, var->gv_softc);
+	var->gv_encap_cookie6 = encap_attach_addr(AF_INET6, -1, var->gv_psrc,
+	    var->gv_pdst, gif_encapcheck, &in6_gif_encapsw, var->gv_softc);
 #endif
 	if (var->gv_encap_cookie6 == NULL)
 		return EEXIST;

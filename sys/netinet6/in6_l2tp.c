@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.21 2021/02/19 14:52:00 christos Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.22 2022/12/07 08:30:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.21 2021/02/19 14:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.22 2022/12/07 08:30:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -399,8 +399,9 @@ in6_l2tp_attach(struct l2tp_variant *var)
 
 	if (sc == NULL)
 		return EINVAL;
-	var->lv_encap_cookie = encap_attach_func(AF_INET6, IPPROTO_L2TP,
-	    in6_l2tp_match, &in6_l2tp_encapsw, sc);
+
+	var->lv_encap_cookie = encap_attach_addr(AF_INET6, IPPROTO_L2TP,
+	    var->lv_psrc, var->lv_pdst, in6_l2tp_match, &in6_l2tp_encapsw, sc);
 	if (var->lv_encap_cookie == NULL)
 		return EEXIST;
 
