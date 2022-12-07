@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.27 2022/12/07 08:28:46 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.28 2022/12/07 08:33:02 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -34,10 +34,6 @@
 #define _NETINET_IP_ENCAP_H_
 
 #ifdef _KERNEL
-
-#ifndef RNF_NORMAL
-#include <net/radix.h>
-#endif
 
 #include <sys/pslist.h>
 #include <sys/psref.h>
@@ -87,16 +83,12 @@ struct encap_key {
 };
 
 struct encaptab {
-	struct radix_node nodes[2];
 	struct pslist_entry chain;
 	int af;
 	int proto;			/* -1: don't care, I'll check myself */
-	struct sockaddr *addrpack;	/* malloc'ed, for radix lookup */
-	struct sockaddr *maskpack;	/* ditto */
+	struct sockaddr *addrpack;	/* malloc'ed, for lookup */
 	struct sockaddr *src;		/* my addr */
-	struct sockaddr *srcmask;
 	struct sockaddr *dst;		/* remote addr */
-	struct sockaddr *dstmask;
 	encap_priofunc_t *func;
 	const struct encapsw *esw;
 	void *arg;
@@ -107,7 +99,7 @@ struct encaptab {
 
 #define IP_ENCAP_ADDR_ENABLE	__BIT(0)
 
-/* to lookup a pair of address using radix tree */
+/* to lookup a pair of address using map */
 struct sockaddr_pack {
 	u_int8_t sp_len;
 	u_int8_t sp_family;	/* not really used */
@@ -130,9 +122,6 @@ void	encapinit(void);
 void	encap_init(void);
 void	encap4_input(struct mbuf *, int, int);
 int	encap6_input(struct mbuf **, int *, int);
-const struct encaptab *encap_attach(int, int, const struct sockaddr *,
-	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const struct encapsw *, void *);
 const struct encaptab *encap_attach_func(int, int,
 	encap_priofunc_t *,
 	const struct encapsw *, void *);
