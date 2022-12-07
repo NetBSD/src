@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.242 2022/10/10 21:17:25 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.243 2022/12/07 10:28:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,15 +91,15 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.242 2022/10/10 21:17:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.243 2022/12/07 10:28:48 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
 static int compatSigno;
 
 /*
- * CompatDeleteTarget -- delete the file of a failed, interrupted, or
- * otherwise duffed target if not inhibited by .PRECIOUS.
+ * Delete the file of a failed, interrupted, or otherwise duffed target,
+ * unless inhibited by .PRECIOUS.
  */
 static void
 CompatDeleteTarget(GNode *gn)
