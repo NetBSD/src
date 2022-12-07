@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.211 2022/09/27 17:46:58 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.212 2022/12/07 10:28:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.211 2022/09/27 17:46:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.212 2022/12/07 10:28:48 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -305,11 +305,10 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		 */
 		/*
 		 * If member contains variables, try and substitute for them.
-		 * This will slow down archive specs with dynamic sources, of
-		 * course, since we'll be (non-)substituting them three
-		 * times, but them's the breaks -- we need to do this since
-		 * SuffExpandChildren calls us, otherwise we could assume the
-		 * thing would be taken care of later.
+		 * This slows down archive specs with dynamic sources, since
+		 * they are (non-)substituted three times, but we need to do
+		 * this since SuffExpandChildren calls us, otherwise we could
+		 * assume the substitutions would be taken care of later.
 		 */
 		if (doSubst) {
 			char *fullName;
