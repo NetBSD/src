@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.26 2022/12/07 08:27:03 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.27 2022/12/07 08:28:46 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -64,6 +64,28 @@ struct encapsw {
 
 typedef	int encap_priofunc_t(struct mbuf *, int, int, void *);
 
+struct encap_key {
+	union  {
+		struct sockaddr		local_u_sa;
+		struct sockaddr_in	local_u_sin;
+		struct sockaddr_in6	local_u_sin6;
+	}	local_u;
+#define local_sa	local_u.local_u_sa
+#define local_sin	local_u.local_u_sin
+#define local_sin6	local_u.local_u_sin6
+
+	union  {
+		struct sockaddr		remote_u_sa;
+		struct sockaddr_in	remote_u_sin;
+		struct sockaddr_in6	remote_u_sin6;
+	}	remote_u;
+#define remote_sa	remote_u.remote_u_sa
+#define remote_sin	remote_u.remote_u_sin
+#define remote_sin6	remote_u.remote_u_sin6
+
+	u_int seq;
+};
+
 struct encaptab {
 	struct radix_node nodes[2];
 	struct pslist_entry chain;
@@ -78,8 +100,12 @@ struct encaptab {
 	encap_priofunc_t *func;
 	const struct encapsw *esw;
 	void *arg;
+	struct encap_key key;
+	u_int flag;
 	struct psref_target	psref;
 };
+
+#define IP_ENCAP_ADDR_ENABLE	__BIT(0)
 
 /* to lookup a pair of address using radix tree */
 struct sockaddr_pack {
@@ -110,6 +136,9 @@ const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 const struct encaptab *encap_attach_func(int, int,
 	encap_priofunc_t *,
 	const struct encapsw *, void *);
+const struct encaptab *encap_attach_addr(int, int,
+	const struct sockaddr *, const struct sockaddr *,
+	encap_priofunc_t *, const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 
