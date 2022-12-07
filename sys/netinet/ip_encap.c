@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.74 2020/08/22 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.75 2022/12/07 08:27:03 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.74 2020/08/22 01:43:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.75 2022/12/07 08:27:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -750,7 +750,7 @@ fail:
 
 const struct encaptab *
 encap_attach_func(int af, int proto,
-    int (*func)(struct mbuf *, int, int, void *),
+    encap_priofunc_t *func,
     const struct encapsw *esw, void *arg)
 {
 	struct encaptab *ep;

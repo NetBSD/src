@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.25 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.26 2022/12/07 08:27:03 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -62,6 +62,8 @@ struct encapsw {
 #define encapsw4 encapsw46._encapsw4
 #define encapsw6 encapsw46._encapsw6
 
+typedef	int encap_priofunc_t(struct mbuf *, int, int, void *);
+
 struct encaptab {
 	struct radix_node nodes[2];
 	struct pslist_entry chain;
@@ -73,7 +75,7 @@ struct encaptab {
 	struct sockaddr *srcmask;
 	struct sockaddr *dst;		/* remote addr */
 	struct sockaddr *dstmask;
-	int (*func) (struct mbuf *, int, int, void *);
+	encap_priofunc_t *func;
 	const struct encapsw *esw;
 	void *arg;
 	struct psref_target	psref;
@@ -106,7 +108,7 @@ const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
 	const struct sockaddr *, const struct encapsw *, void *);
 const struct encaptab *encap_attach_func(int, int,
-	int (*)(struct mbuf *, int, int, void *),
+	encap_priofunc_t *,
 	const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
