@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.279 2022/12/08 08:05:03 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.280 2022/12/08 08:07:07 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.279 2022/12/08 08:05:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.280 2022/12/08 08:07:07 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -972,7 +972,7 @@ found:
 		KEY_CHKSPDIR(sp->spidx.dir, dir);
 
 		/* found a SPD entry */
-		sp->lastused = time_uptime;
+		key_sp_touch(sp);
 		key_sp_ref(sp, where, tag);
 	}
 	pserialize_read_exit(s);
@@ -1049,7 +1049,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	sp = NULL;
 found:
 	if (sp) {
-		sp->lastused = time_uptime;
+		key_sp_touch(sp);
 		key_sp_ref(sp, where, tag);
 	}
 	pserialize_read_exit(s);
