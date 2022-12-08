@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.37 2021/08/09 20:49:10 andvar Exp $	*/
+/*	$NetBSD: key.h,v 1.38 2022/12/08 08:05:03 knakahara Exp $	*/
 /*	$FreeBSD: key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -67,6 +67,7 @@ void key_free_sp(struct secpolicy *);
 u_int key_sp_refcnt(const struct secpolicy *);
 void key_sp_ref(struct secpolicy *, const char *, int);
 void key_sp_unref(struct secpolicy *, const char *, int);
+void key_sp_touch(struct secpolicy *);
 void key_sa_ref(struct secasvar *, const char *, int);
 void key_sa_unref(struct secasvar *, const char *, int);
 u_int key_sa_refcnt(const struct secasvar *);
