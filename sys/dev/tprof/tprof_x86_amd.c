@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.7 2022/12/08 05:29:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.6 2022/12/01 00:32:52 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.7 2022/12/08 05:29:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,7 @@ tprof_amd_ident(void)
 	case 0x10:
 	case 0x15:
 	case 0x17:
+	case 0x19:
 		return TPROF_IDENT_AMD_GENERIC;
 	}
 
