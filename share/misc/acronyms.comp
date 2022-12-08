@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.329 2022/12/06 15:51:16 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.330 2022/12/08 23:41:22 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -30,6 +30,7 @@ ADPCM	adaptive differential pulse code modulation
 ADS	alternate data stream
 ADSL	asymmetric digital subscriber line
 ADT	abstract data type
+AEAD	authenticated encryption with associated data
 AEDC	advanced error detection and correction
 AER	advanced error reporting
 AES	Advanced Encryption Standard
@@ -681,6 +682,7 @@ HF	high frequency
 HFM	highest frequency mode
 HFS	hierarchical file system
 HID	human interface device
+HKDF	HMAC-based key derivation function
 HKP	HTTP Keyserver Protocol
 HLL	high-level language
 HMA	high memory area
@@ -1074,6 +1076,7 @@ NIST	National Institute of Standards and Technology
 NLS	native language support
 NMI	non-maskable interrupt
 NNTP	Network News Transfer Protocol
+NMR	nonce-misuse resistance
 NOC	network operations center
 NOP	no operation
 NOS	network operating system
@@ -1492,6 +1495,7 @@ SIP	Session Initiation Protocol
 SIR	signal-to-interference ratio
 SIR	slow infrared
 SISD	single instruction, single data
+SIV	synthetic intialization vector
 SLAAC	stateless address auto-configuration
 SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory
