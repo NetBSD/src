@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1901 2022/11/17 23:54:44 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1902 2022/12/08 01:32:35 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -42,11 +42,11 @@
 
 Package:	acpica
 Version:	20220331
-Current Vers:	20220331
+Current Vers:	20221020
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2021-08-27
+Date:		2022-12-08
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho
@@ -2132,11 +2132,11 @@ Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	gmake
 Version:	3.81 (Last GPlv2+ version)
-Current Vers:	4.3
+Current Vers:	4.4
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/make/
 Home Page:	http://www.gnu.org/software/make/
-Date:		2020-06-13
+Date:		2022-12-08
 Mailing List:	bug-make@gnu.org
 Responsible:
 License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
