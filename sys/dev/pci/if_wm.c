@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.766 2022/10/26 06:36:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767 2022/12/08 08:14:28 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.766 2022/10/26 06:36:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767 2022/12/08 08:14:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -478,6 +478,7 @@ struct wm_queue {
 	char sysctlname[32];		/* Name for sysctl */
 
 	bool wmq_txrx_use_workqueue;
+	bool wmq_wq_enqueued;
 	struct work wmq_cookie;
 	void *wmq_si;
 };
@@ -10308,9 +10309,13 @@ static inline void
 wm_sched_handle_queue(struct wm_softc *sc, struct wm_queue *wmq)
 {
 
-	if (wmq->wmq_txrx_use_workqueue)
-		workqueue_enqueue(sc->sc_queue_wq, &wmq->wmq_cookie, curcpu());
-	else
+	if (wmq->wmq_txrx_use_workqueue) {
+		if (!wmq->wmq_wq_enqueued) {
+			wmq->wmq_wq_enqueued = true;
+			workqueue_enqueue(sc->sc_queue_wq, &wmq->wmq_cookie,
+			    curcpu());
+		}
+	} else
 		softint_schedule(wmq->wmq_si);
 }
 
@@ -10593,8 +10598,10 @@ wm_handle_queue_work(struct work *wk, void *context)
 	struct wm_queue *wmq = container_of(wk, struct wm_queue, wmq_cookie);
 
 	/*
-	 * "enqueued flag" is not required here.
+	 * Some qemu environment workaround.  They don't stop interrupt
+	 * immediately.
 	 */
+	wmq->wmq_wq_enqueued = false;
 	wm_handle_queue(wmq);
 }
 
