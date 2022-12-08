@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.176 2022/11/09 08:18:52 knakahara Exp $ */
+/* $NetBSD: ipsec.c,v 1.177 2022/12/08 08:07:07 knakahara Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.176 2022/11/09 08:18:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.177 2022/12/08 08:07:07 knakahara Exp $");
 
 /*
  * IPsec controller part.
@@ -248,7 +248,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 */
 	}
 
-	sp->lastused = time_second;
+	key_sp_touch(sp);
 	KEY_SP_REF(sp);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP cause refcnt++:%d SP:%p\n",
