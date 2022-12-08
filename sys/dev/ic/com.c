@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.380 2022/12/03 11:28:38 skrll Exp $ */
+/* $NetBSD: com.c,v 1.381 2022/12/08 09:08:49 knakahara Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.380 2022/12/03 11:28:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.381 2022/12/08 09:08:49 knakahara Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -206,6 +206,28 @@ static struct consdev comcons = {
 	.cn_pri = CN_NORMAL
 };
 
+#define	CSR_WRITE_1_SYNC(r, o, v)	do {			\
+		CSR_WRITE_1(r, o, v);				\
+		switch(o) {					\
+		case COM_REG_IER:				\
+			(void)CSR_READ_1(r, COM_REG_IIR);	\
+			break;					\
+		case COM_REG_TXDATA:				\
+			(void)CSR_READ_1(r, COM_REG_TLR);	\
+			break;					\
+		}						\
+	} while(0)
+#define	CSR_WRITE_MULTI_SYNC(r, o, p, n)	do {		\
+		CSR_WRITE_MULTI(r, o, p, n);			\
+		switch(o) {					\
+		case COM_REG_IER:				\
+			(void)CSR_READ_1(r, COM_REG_IIR);	\
+			break;					\
+		case COM_REG_TXDATA:				\
+			(void)CSR_READ_1(r, COM_REG_TLR);	\
+			break;					\
+		}						\
+	} while(0)
 
 const struct cdevsw com_cdevsw = {
 	.d_open = comopen,
@@ -1961,7 +1983,7 @@ comstart(struct tty *tp)
 	/* Enable transmit completion interrupts if necessary. */
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
 		SET(sc->sc_ier, IER_ETXRDY);
-		CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
+		CSR_WRITE_1_SYNC(regsp, COM_REG_IER, sc->sc_ier);
 	}
 
 	/* Output the first chunk of the contiguous buffer. */
@@ -1971,7 +1993,7 @@ comstart(struct tty *tp)
 		n = sc->sc_tbc;
 		if (n > sc->sc_fifolen)
 			n = sc->sc_fifolen;
-		CSR_WRITE_MULTI(regsp, COM_REG_TXDATA, sc->sc_tba, n);
+		CSR_WRITE_MULTI_SYNC(regsp, COM_REG_TXDATA, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
@@ -2359,7 +2381,7 @@ again:	do {
 					CLR(sc->sc_ier, IER_ERXRDY);
 					break;
 				}
-				CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
+				CSR_WRITE_1_SYNC(regsp, COM_REG_IER, sc->sc_ier);
 			}
 		} else {
 			if ((iir & (IIR_RXRDY|IIR_TXRDY)) == IIR_RXRDY) {
@@ -2443,14 +2465,14 @@ do_tx:
 			n = sc->sc_tbc;
 			if (n > sc->sc_fifolen)
 				n = sc->sc_fifolen;
-			CSR_WRITE_MULTI(regsp, COM_REG_TXDATA, sc->sc_tba, n);
+			CSR_WRITE_MULTI_SYNC(regsp, COM_REG_TXDATA, sc->sc_tba, n);
 			sc->sc_tbc -= n;
 			sc->sc_tba += n;
 		} else {
 			/* Disable transmit completion interrupts if necessary. */
 			if (ISSET(sc->sc_ier, IER_ETXRDY)) {
 				CLR(sc->sc_ier, IER_ETXRDY);
-				CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
+				CSR_WRITE_1_SYNC(regsp, COM_REG_IER, sc->sc_ier);
 			}
 			if (sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
