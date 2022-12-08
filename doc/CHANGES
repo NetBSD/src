@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2933 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2934 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -748,4 +748,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		machine-independent code, allowing dmidecode -d /dev/smbios
 		to be used on x86. [mrg 20221125]
 	ifconfig(8): Allow configuration of interfaces as
-		explicitly unnumbred. [knakahara 20221125]
+		explicitly unnumbered. [knakahara 20221125]
