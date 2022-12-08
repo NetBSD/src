@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.14 2022/12/08 02:12:18 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.15 2022/12/08 05:29:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -831,6 +831,186 @@ static struct event_table amd_f17h = {
 	.next = NULL
 };
 
+/*
+ * AMD Family 19h
+ * From PPR:
+ *	- f19h model 01h B1 (zen3)
+ *	- f19h model 11h B1 (zen4)
+ *	- f19h model 21h B1 (zen3)
+ *	- f19h model 51h A1 (zen3)
+ */
+static struct name_to_event amd_f19h_names[] = {
+	/* Model 1x only */
+	{ "FpRetx87FpOps",			0x02, __BITS(2,0), true },
+
+	/* Only model 1x has bit 4 */
+	{ "FpRetSseAvxOps",			0x03, __BITS(4,0), true },
+
+	{ "FpRetiredSerOps",			0x05, __BITS(3,0), true },
+
+	/* Model 1x only */
+	{ "FpOpsRetiredByWidth",		0x08, __BITS(5,0), true },
+	{ "FpOpsRetiredByType",			0x0a, __BITS(7,0), true },
+	{ "SseAvxOpsRetired",			0x0b, __BITS(7,0), true },
+	{ "FpPackOpsRetired",			0x0c, __BITS(7,0), true },
+	{ "PackedIntOpType",			0x0d, __BITS(7,0), true },
+
+	{ "FpDispFaults",			0x0e, __BITS(3,0), true },
+	{ "LsBadStatus2",			0x24, __BIT(1),	true },
+	{ "LsLocks",				0x25, __BIT(0), true },
+	{ "LsRetClClush",			0x26, 0x00, true },
+	{ "LsRetCpuid",				0x27, 0x00, true },
+	{ "LsDispatch",				0x29, __BITS(2,0), true },
+	{ "LsSmiRx",				0x2b, 0x00, true },
+	{ "LsIntTaken",				0x2c, 0x00, true },
+	{ "LsSTLF",				0x35, 0x00, true },
+	{ "LsStCommitCancel2",			0x37, __BIT(0), true },
+	{ "LsMabAlloc-ls",			0x41, 0x3f, true },
+	{ "LsMabAlloc-hp",			0x41, 0x40, true },
+	{ "LsMabAlloc-all",			0x41, 0x7f, true },
+	{ "LsDmndFillsFromSys",			0x43, 0x5f, true },
+
+	/* Only model 1x has bit 7 */
+	{ "LsAnyFillsFromSys",			0x44, 0xdf, true },
+
+	{ "LsL1DTlbMiss",			0x45, __BITS(7,0), true },
+	{ "LsMisalLoads-MA64",			0x47, __BIT(0), true },
+	{ "LsMisalLoads-MA4K",			0x47, __BIT(1), true },
+	{ "LsMisalLoads-all",			0x47, __BITS(1,0), true },
+	{ "LsPrefInstrDisp",			0x4b, __BITS(2,0), true },
+	{ "LsInefSwPref",			0x52, __BITS(1,0), true },
+
+	/* Only model 1x has bit 7 */
+	{ "LsSwPfDcFills",			0x59, 0xdf, true },
+	{ "LsHwPfDcFills",			0x5a, 0xdf, true },
+
+	{ "LsAllocMabCount",			0x5f, 0x00, true },
+	{ "LsNotHaltedCyc",			0x76, 0x00, true },
+
+	/* Model 0x, 1x and 2x only */
+	{ "LsTlbFlush",				0x78, 0xff, true },
+
+	/* Model 1x only */
+	{ "LsNotHaltedP0Cyc",			0x120, __BIT(0), true },
+
+	{ "IcCacheFillL2",			0x82, 0x00, true },
+	{ "IcCacheFillSys",			0x83, 0x00, true },
+	{ "BpL1TlbMissL2TlbHit",		0x84, 0x00, true },
+	{ "BpL1TlbMissL2TlbMiss-IF4K",		0x85, __BIT(0), true },
+	{ "BpL1TlbMissL2TlbMiss-IF2M",		0x85, __BIT(1), true },
+	{ "BpL1TlbMissL2TlbMiss-IF1G",		0x85, __BIT(2), true },
+	{ "BpL1TlbMissL2TlbMiss-Coalesced4K",	0x85, __BIT(3), true },
+	{ "BpL1TlbMissL2TlbMiss-all",		0x85, __BITS(3,0), true },
+
+	{ "BpL2BTBCorrect",			0x8b, 0x00, true },
+	{ "BpDynIndPred",			0x8e, 0x00, true },
+	{ "BpDeReDirect",			0x91, 0x00, true },
+	{ "BpL1TlbFetchHit-IF4K",		0x94, __BIT(0), true },
+	{ "BpL1TlbFetchHit-IF2M",		0x94, __BIT(1), true },
+	{ "BpL1TlbFetchHit-IF1G",		0x94, __BIT(2), true },
+	{ "BpL1TlbFetchHit-all",		0x94, __BITS(2,0), true },
+
+	/* Model 1x only */
+	{ "ResyncsOrNcRedirects",		0x96, 0x00, true },
+
+	{ "IcTagHitMiss-hit",			0x18e, 0x07, true },
+	{ "IcTagHitMiss-miss",			0x18e, 0x18, true },
+	{ "IcTagHitMiss-all",			0x18e, 0x1f, true },
+	{ "OpCacheHitMiss-hit",			0x28f, 0x03, true },
+	{ "OpCacheHitMiss-miss",		0x28f, 0x04, true },
+	{ "OpCacheHitMiss-all",			0x28f, 0x07, true },
+	{ "DeOpQueueEmpty",			0xa9, 0x00, true },
+
+	/*
+	 * Model 0x and 1x only.
+	 * Only model 1x has bit 2.
+	 */
+	{ "DeSrcOpDisp",			0xaa, __BITS(2,0), true },
+
+	{ "DeDisOpsFromDecoder-Fp-Ibs",		0xab, 0x04, true },
+	{ "DeDisOpsFromDecoder-Int-Ibs",	0xab, 0x08, true },
+
+	/* Model 0x, 2x and newer */
+	{ "DeDisOpsFromDecoder-Fp-Ret",		0xab, 0x84, true },
+	{ "DeDisOpsFromDecoder-Int-Ret",	0xab, 0x88, true },
+
+	{ "DeDisDispatchTokenStalls1",		0xae, 0xf7, true },
+	{ "DeDisDispatchTokenStalls2",		0xaf, 0x2f, true },
+
+	/* Model 1x only */
+	{ "DeNoDispatchPerSolt-empty",		0x1a0, 0x01, true },
+	{ "DeNoDispatchPerSolt-backend",	0x1a0, 0x1e, true },
+	{ "DeNoDispatchPerSolt-otherSMT",	0x1a0, 0x60, true },
+	{ "DeAdditionalResourceStalls",		0x1a2, 0x30, true },
+
+	{ "ExRetInstr",				0xc0, 0x00, true },
+	{ "ExRetCops",				0xc1, 0x00, true },
+	{ "ExRetBrn",				0xc2, 0x00, true },
+	{ "ExRetBrnMisp",			0xc3, 0x00, true },
+	{ "ExRetBrnTkn",			0xc4, 0x00, true },
+	{ "ExRetBrnTknMisp",			0xc5, 0x00, true },
+	{ "ExRetBrnFar",			0xc6, 0x00, true },
+	{ "ExRetBrnIndMisp",			0xca, 0x00, true },
+	{ "ExRetNearRet",			0xc8, 0x00, true },
+	{ "ExRetNearRetMispred",		0xc9, 0x00, true },
+	{ "ExRetMmxFpInstr@X87",		0xcb, __BIT(0), true },
+	{ "ExRetMmxFpInstr@Mmx",		0xcb, __BIT(1), true },
+	{ "ExRetMmxFpInstr@Sse",		0xcb, __BIT(2), true },
+	{ "ExRetIndBrchInstr",			0xcc, 0x00, true },
+	{ "ExRetCond",				0xd1, 0x00, true },
+	{ "ExDivBusy",				0xd3, 0x00, true },
+	{ "ExDivCount",				0xd4, 0x00, true },
+
+	/* Model 1x only */
+	{ "ExDivCount-LoadAndALU",		0xd6, 0x1f, true },
+	{ "ExDivCount-Load",			0xd6, 0xbf, true },
+	{ "ExRetUcodeInstr",			0x1c1, 0x00, true },
+	{ "ExRetUcodeOps",			0x1c2, 0x00, true },
+
+	{ "ExRetMsprdBrnchInstrDirMsmtch",	0x1c7, 0x00, true },
+
+	/* Model 1x only */
+	{ "ExRetUncondBrnchInstrMspred",	0x1c8, 0x00, true },
+	{ "ExRetUncondBrnchInstr",		0x1c8, 0x00, true },
+
+	{ "ExTaggedIbsOps",			0x1cf, __BITS(2,0), true },
+	{ "ExRetFusedInstr",			0x1d0, 0x00, true },
+
+	/* Only model 1x has bit 0 */
+	{ "L2RequestG1",			0x60, __BITS(7,1), true },
+
+	{ "L2CacheReqStart",			0x64, __BITS(7,0), true },
+	{ "L2PfHitL2-L2",			0x70, __BITS(4,0), true },
+	{ "L2PfHitL2-L1",			0x70, __BITS(7,5), true },
+	{ "L2PfHitL2-all",			0x70, __BITS(7,0), true },
+	{ "L2PfMissL2HitL3-L2",			0x71, __BITS(4,0), true },
+	{ "L2PfMissL2HitL3-L1",			0x71, __BITS(7,5), true },
+	{ "L2PfMIssL2HitL3-all",		0x71, __BITS(7,0), true },
+	{ "L2PfMissL2L3-L2",			0x72, __BITS(4,0), true },
+	{ "L2PfMissL2L3-L1",			0x72, __BITS(7,5), true },
+	{ "L2PfMIssL2L3-all",			0x72, __BITS(7,0), true },
+
+	{ "L3LookupState-L3Miss",		0x04, __BIT(0), true },
+	{ "L3LookupState-L3Hit",		0x04, __BITS(7,1), true },
+	{ "L3LookupState-all",			0x04, __BITS(7,0), true },
+
+	/* Model 0x, 2x and newer */
+	{ "XiSysFillLatency",			0x90, 0x00, true },
+	{ "XiCcxSdpReq1",			0x9a, 0x00, true },
+
+	/* Model 1x only */
+	{ "XiSampledLatency",			0xac, 0x00, true },
+	{ "XiSampledLatencyRequests",		0xad, 0x00, true },
+};
+
+static struct event_table amd_f19h = {
+	.tablename = "AMD Family 19h",
+	.names = amd_f19h_names,
+	.nevents = sizeof(amd_f19h_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
 static struct event_table *
 init_amd_generic(void)
 {
@@ -849,6 +1029,8 @@ init_amd_generic(void)
 		return &amd_f15h;
 	case 0x17:
 		return &amd_f17h;
+	case 0x19:
+		return &amd_f19h;
 	}
 
 	return NULL;
