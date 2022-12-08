@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.20 2022/12/07 08:30:15 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.21 2022/12/08 08:05:03 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.20 2022/12/07 08:30:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.21 2022/12/08 08:05:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -395,7 +395,10 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	/*
 	 * The SPs in ipsec_variant are prevented from freed by
 	 * ipsec_variant->iv_psref. So, KEY_SP_REF() is unnecessary here.
+	 *
+	 * However, lastused should be updated.
 	 */
+	key_sp_touch(sp);
 
 	KASSERT(sp->policy != IPSEC_POLICY_NONE);
 	KASSERT(sp->policy != IPSEC_POLICY_ENTRUST);
