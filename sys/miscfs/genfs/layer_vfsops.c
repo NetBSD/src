@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.55 2022/07/18 04:30:30 thorpej Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.56 2022/12/09 10:33:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.55 2022/07/18 04:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.56 2022/12/09 10:33:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -146,8 +146,15 @@ layerfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 int
 layerfs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
+	int error;
 
-	return VFS_QUOTACTL(mp->mnt_lower, args);
+	error = vfs_busy(mp);
+	if (error == 0) {
+		error = VFS_QUOTACTL(mp->mnt_lower, args);
+		vfs_unbusy(mp);
+	}
+
+	return error;
 }
 
 int
@@ -157,7 +164,11 @@ layerfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	int error;
 
 	sbuf = kmem_zalloc(sizeof(*sbuf), KM_SLEEP);
-	error = VFS_STATVFS(mp->mnt_lower, sbuf);
+	error = vfs_busy(mp);
+	if (error == 0) {
+		error = VFS_STATVFS(mp->mnt_lower, sbuf);
+		vfs_unbusy(mp);
+	}
 	if (error) {
 		goto done;
 	}
@@ -234,7 +245,11 @@ layerfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	error = VFS_VGET(mp->mnt_lower, ino, lktype, &vp);
+	error = vfs_busy(mp);
+	if (error == 0) {
+		error = VFS_VGET(mp->mnt_lower, ino, lktype, &vp);
+		vfs_unbusy(mp);
+	}
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -262,7 +277,11 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, int lktype,
 	struct vnode *vp;
 	int error;
 
-	error = VFS_FHTOVP(mp->mnt_lower, fidp, lktype, &vp);
+	error = vfs_busy(mp);
+	if (error == 0) {
+		error = VFS_FHTOVP(mp->mnt_lower, fidp, lktype, &vp);
+		vfs_unbusy(mp);
+	}
 	if (error) {
 		*vpp = NULL;
 		return error;
