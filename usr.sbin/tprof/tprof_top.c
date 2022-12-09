@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.4 2022/12/09 01:56:40 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.5 2022/12/09 02:19:07 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.4 2022/12/09 01:56:40 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.5 2022/12/09 02:19:07 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -671,15 +671,19 @@ show_count_per_event(int *lim)
 	for (i = 0; i < nevent; i++) {
 		l = snprintf(buf, sizeof(buf), "%"PRIu64,
 		    sample_n_per_event[opt_mode][i]);
-		if (sample_event_width < (u_int)l)
+		if (sample_event_width < (u_int)l) {
 			sample_event_width = l;
+			do_redraw = true;
+		}
 	}
 	for (i = 0; i < nevent; i++) {
 		for (n = 0; n < ncpu; n++) {
 			l = snprintf(buf, sizeof(buf), "%"PRIu64,
 			    sample_n_per_event_cpu[opt_mode][nevent * n + i]);
-			if (sample_cpu_width[n] < (u_int)l)
+			if (sample_cpu_width[n] < (u_int)l) {
 				sample_cpu_width[n] = l;
+				do_redraw = true;
+			}
 		}
 	}
 
