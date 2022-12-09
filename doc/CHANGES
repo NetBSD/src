@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2935 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2936 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -750,7 +750,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	ifconfig(8): Allow configuration of interfaces as
 		explicitly unnumbered. [knakahara 20221125]
 	tprof: Revamped tprof(4), and multiple event counters can be
-		referenced with tprof(8). Add some improvements to prof(8).
+		referenced with tprof(8). Add some improvements to tprof(8).
 		[ryo 20221201]
 	tprof: Add AMD family 19h (zen3 and zen4) support to tprof(4) and
 		tprof(8). [msaitoh 20221208]
