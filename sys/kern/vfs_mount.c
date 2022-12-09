@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.100 2022/11/10 10:55:00 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.101 2022/12/09 10:33:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.100 2022/11/10 10:55:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.101 2022/12/09 10:33:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.100 2022/11/10 10:55:00 hannken Exp 
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode_impl.h>
 
+#include <miscfs/deadfs/deadfs.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
@@ -418,6 +419,8 @@ vfs_set_lowermount(struct mount *mp, struct mount *lowermp)
 #endif
 
 	if (lowermp) {
+		if (lowermp == dead_rootmount)
+			return ENOENT;
 		error = vfs_busy(lowermp);
 		if (error)
 			return error;
