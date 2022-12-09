@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.20 2022/12/09 01:55:46 ryo Exp $
+.\"	$NetBSD: tprof.8,v 1.21 2022/12/09 01:56:40 ryo Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -165,6 +165,21 @@ second, but the values are accumulative.
 show the delta of the event counters.
 .It Fl u
 Userland processes are also included in the profiling.
+.El
+.Pp
+While
+.Nm
+.Ar top
+is running, it accepts commands from the terminal.
+These commands are currently recognized:
+.Bl -tag -width XXcommandsX -offset indent
+.It Ic a
+toggle accumurative mode.
+.It Ic q
+quit
+.Nm .
+.It Ic z
+clear accumulated data.
 .El
 .El
 .Sh EXAMPLES
