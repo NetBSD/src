@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.19 2022/12/01 00:43:27 ryo Exp $
+.\"	$NetBSD: tprof.8,v 1.20 2022/12/09 01:55:46 ryo Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 1, 2022
+.Dd December 9, 2022
 .Dt TPROF 8
 .Os
 .Sh NAME
@@ -137,8 +137,7 @@ Per symbol.
 .Op Fl e Ar ...
 .Oc
 .Op Fl i Ar interval
-.Op Fl c
-.Op Fl u
+.Op Fl acu
 .Xc
 Displays profiling results in real-time.
 .Ar name
@@ -158,6 +157,10 @@ is specified, profiling is performed every time the counter is increased by 200.
 .Bl -tag -width XXintervalX -offset indent
 .It Fl i Ar interval
 set the update interval in seconds. The default value is 1.
+.It Fl a
+Starts in accumulation mode. The display is updated every
+.Ar interval
+second, but the values are accumulative.
 .It Fl c
 show the delta of the event counters.
 .It Fl u
@@ -226,7 +229,9 @@ utility was written by
 .An YAMAMOTO Takashi .
 It was revamped by
 .An Maxime Villard
-in 2018.
+in 2018, and by
+.An Ryo Shimizu
+in 2022.
 .Sh CAVEATS
 The contents and representation of recorded samples are undocumented and
 will likely be changed for future releases of
