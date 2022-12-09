@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.4 2022/12/09 01:56:40 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,15 +28,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.4 2022/12/09 01:56:40 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/rbtree.h>
 #include <sys/ioctl.h>
+#include <sys/rbtree.h>
+#include <sys/select.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -46,6 +48,8 @@ __RCSID("$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
+#include <termios.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -56,6 +60,9 @@ __RCSID("$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $");
 #define SAMPLE_MODE_ACCUMULATIVE	0
 #define SAMPLE_MODE_INSTANTANEOUS	1
 #define SAMPLE_MODE_NUM			2
+
+#define LINESTR	"-------------------------------------------------------------"
+#define SYMBOL_LEN			32	/* symbol and event name */
 
 struct sample_elm {
 	struct rb_node node;
@@ -80,9 +87,14 @@ static int opt_userland = 0;
 static int opt_showcounter = 0;
 
 /* for display */
+static char *term;
 static struct winsize win;
 static int nontty;
+static struct termios termios_save;
+static bool termios_saved;
 static long top_interval = 1;
+static bool do_redraw;
+static u_int nshow;
 
 /* for profiling and counting samples */
 static sig_atomic_t sigalrm;
@@ -95,6 +107,8 @@ static rb_tree_t rb_tree_sample;
 struct ptrarray sample_list[SAMPLE_MODE_NUM];
 static u_int sample_n_kern[SAMPLE_MODE_NUM];
 static u_int sample_n_user[SAMPLE_MODE_NUM];
+static u_int sample_event_width = 7;
+static u_int *sample_cpu_width;					/* [ncpu] */
 static uint32_t *sample_n_kern_per_cpu[SAMPLE_MODE_NUM];	/* [ncpu] */
 static uint32_t *sample_n_user_per_cpu[SAMPLE_MODE_NUM];	/* [ncpu] */
 static uint64_t *sample_n_per_event[SAMPLE_MODE_NUM];		/* [nevent] */
@@ -127,49 +141,175 @@ cycle_event_name(void)
 	return cycleevent;
 }
 
-/* XXX: use terminfo or curses */
 static void
-cursor_address(u_int x, u_int y)
+reset_cursor_pos(void)
 {
-	if (nontty)
+	int i;
+	char *p;
+
+	if (nontty || term == NULL)
 		return;
-	printf("\e[%u;%uH", y - 1, x - 1);
+
+	printf("\r");
+
+	/* cursor_up * n */
+	if ((p = tigetstr("cuu")) != NULL) {
+		printf("%s", tparm(p, win.ws_row - 1, 0, 0, 0, 0, 0, 0, 0, 0));
+	} else if ((p = tigetstr("cuu1")) != NULL) {
+		for (i = win.ws_row - 1; i > 0; i--)
+			printf("%s", p);
+	}
 }
 
 static void
-cursor_home(void)
+clr_to_eol(void)
 {
-	if (nontty)
+	char *p;
+
+	if (nontty || term == NULL)
 		return;
-	printf("\e[H");
+
+	if ((p = tigetstr("el")) != NULL)
+		printf("%s", p);
 }
 
+/* newline, and clearing to end of line if needed */
 static void
-cls_eol(void)
+lim_newline(int *lim)
 {
-	if (nontty)
-		return;
-	printf("\e[K");
+	if (*lim >= 1)
+		clr_to_eol();
+
+	printf("\n");
+	*lim = win.ws_col;
 }
 
-static void
-cls_eos(void)
+static int
+lim_printf(int *lim, const char *fmt, ...)
 {
-	if (nontty)
-		return;
-	printf("\e[J");
+	va_list ap;
+	size_t written;
+	char *p;
+
+	if (*lim <= 0)
+		return 0;
+
+	p = alloca(*lim + 1);
+
+	va_start(ap, fmt);
+	vsnprintf(p, *lim + 1, fmt, ap);
+	va_end(ap);
+
+	written = strlen(p);
+	if (written == 0) {
+		*lim = 0;
+		return 0;
+	}
+
+	fwrite(p, written, 1, stdout);
+	*lim -= written;
+
+	return written;
 }
 
 static void
 sigwinch_handler(int signo)
 {
+	char *p;
+
+	win.ws_col = tigetnum("lines");
+	win.ws_row = tigetnum("cols");
+
 	nontty = ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
+	if (nontty != 0) {
+		nontty = !isatty(STDOUT_FILENO);
+		win.ws_col = 65535;
+		win.ws_row = 65535;
+	}
+
+	if ((p = getenv("LINES")) != NULL)
+		win.ws_row = strtoul(p, NULL, 0);
+	if ((p = getenv("COLUMNS")) != NULL)
+		win.ws_col = strtoul(p, NULL, 0);
+
+	do_redraw = true;
+}
+
+static void
+tty_setup(void)
+{
+	struct termios termios;
+
+	term = getenv("TERM");
+	if (term != NULL)
+		setupterm(term, 0, NULL);
+
+	sigwinch_handler(0);
+
+	if (tcgetattr(STDOUT_FILENO, &termios_save) == 0) {
+		termios_saved = true;
+
+		/* stty cbreak */
+		termios = termios_save;
+		termios.c_iflag |= BRKINT|IXON|IMAXBEL;
+		termios.c_oflag |= OPOST;
+		termios.c_lflag |= ISIG|IEXTEN;
+		termios.c_lflag &= ~(ICANON|ECHO);
+		tcsetattr(STDOUT_FILENO, TCSADRAIN, &termios);
+	}
+}
+
+static void
+tty_restore(void)
+{
+	if (termios_saved) {
+		tcsetattr(STDOUT_FILENO, TCSADRAIN, &termios_save);
+		termios_saved = false;
+	}
+}
+
+static void
+sigtstp_handler(int signo)
+{
+	tty_restore();
+
+	signal(SIGWINCH, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGTSTP, SIG_DFL);
+	kill(0, SIGTSTP);
+	nshow = 0;
 }
 
 static void
 sigalrm_handler(int signo)
 {
 	sigalrm = 1;
+}
+
+static void
+die(int signo)
+{
+	tty_restore();
+	printf("\n");
+
+	exit(EXIT_SUCCESS);
+}
+
+static void __dead
+die_errc(int status, int code, const char *fmt, ...)
+{
+	va_list ap;
+
+	tty_restore();
+
+	va_start(ap, fmt);
+	if (code == 0)
+		verrx(status, fmt, ap);
+	else
+		verrc(status, code, fmt, ap);
+	va_end(ap);
 }
 
 static void
@@ -183,7 +323,7 @@ ptrarray_push(struct ptrarray *ptrarray, void *ptr)
 		error = reallocarr(&ptrarray->pa_ptrs, ptrarray->pa_allocnum,
 		    sizeof(*ptrarray->pa_ptrs));
 		if (error != 0)
-			errc(EXIT_FAILURE, error, "rellocarr failed");
+			die_errc(EXIT_FAILURE, error, "rellocarr failed");
 	}
 	ptrarray->pa_ptrs[ptrarray->pa_inuse++] = ptr;
 }
@@ -234,11 +374,21 @@ static void
 sample_init(void)
 {
 	const struct sample_elm *e;
-	int mode;
+	int l, mode, n;
+	u_int size;
+	char buf[16];
 
-	u_int size = sizeof(struct sample_elm) +
+	size = sizeof(struct sample_elm) +
 	    sizeof(e->num_cpu[0]) * SAMPLE_MODE_NUM * ncpu;
 	sizeof_sample_elm = n_align(size, __alignof(struct sample_elm));
+
+	sample_cpu_width = ecalloc(1, sizeof(*sample_cpu_width) * ncpu);
+	for (n = 0; n < ncpu; n++) {
+		sample_cpu_width[n] = 5;
+		l = snprintf(buf, sizeof(buf), "CPU%d", n);
+		if (sample_cpu_width[n] < (u_int)l)
+			sample_cpu_width[n] = l;
+	}
 
 	for (mode = 0; mode < SAMPLE_MODE_NUM; mode++) {
 		sample_n_kern_per_cpu[mode] = ecalloc(1,
@@ -408,32 +558,41 @@ sample_collect(tprof_sample_t *s)
 }
 
 static void
-show_tprof_stat(void)
+show_tprof_stat(int *lim)
 {
 	static struct tprof_stat tsbuf[2], *ts0, *ts;
 	static u_int ts_i = 0;
-	int ret;
+	static int tprofstat_width[6];
+	int ret, l;
+	char tmpbuf[128];
 
 	ts0 = &tsbuf[ts_i++ & 1];
 	ts = &tsbuf[ts_i & 1];
 	ret = ioctl(devfd, TPROF_IOC_GETSTAT, ts);
 	if (ret == -1)
-		err(EXIT_FAILURE, "TPROF_IOC_GETSTAT");
+		die_errc(EXIT_FAILURE, errno, "TPROF_IOC_GETSTAT");
 
-#define TS_PRINT(label, _m)				\
-	do {						\
-		printf(label "%" PRIu64, ts->_m);	\
-		if (ts->_m != ts0->_m)			\
-			printf("(+%"PRIu64")",		\
-			    ts->_m - ts0->_m);		\
-		printf(" ");				\
+#define TS_PRINT(idx, label, _m)					\
+	do {								\
+		__CTASSERT(idx < __arraycount(tprofstat_width));	\
+		lim_printf(lim, "%s", label);			\
+		l = snprintf(tmpbuf, sizeof(tmpbuf), "%"PRIu64, ts->_m);\
+		if (ts->_m != ts0->_m)					\
+			l += snprintf(tmpbuf + l, sizeof(tmpbuf) - l,	\
+			    "(+%"PRIu64")", ts->_m - ts0->_m);		\
+		assert(l < (int)sizeof(tmpbuf));			\
+		if (tprofstat_width[idx] < l)				\
+			tprofstat_width[idx] = l;			\
+		lim_printf(lim, "%-*.*s  ", tprofstat_width[idx],	\
+		    tprofstat_width[idx], tmpbuf);			\
 	} while (0)
-	TS_PRINT("tprof sample:", ts_sample);
-	TS_PRINT(" overflow:", ts_overflow);
-	TS_PRINT(" buf:", ts_buf);
-	TS_PRINT(" emptybuf:", ts_emptybuf);
-	TS_PRINT(" dropbuf:", ts_dropbuf);
-	TS_PRINT(" dropbuf_sample:", ts_dropbuf_sample);
+	lim_printf(lim, "tprof ");
+	TS_PRINT(0, "sample:", ts_sample);
+	TS_PRINT(1, "overflow:", ts_overflow);
+	TS_PRINT(2, "buf:", ts_buf);
+	TS_PRINT(3, "emptybuf:", ts_emptybuf);
+	TS_PRINT(4, "dropbuf:", ts_dropbuf);
+	TS_PRINT(5, "dropbuf_sample:", ts_dropbuf_sample);
 }
 
 static void
@@ -441,7 +600,6 @@ show_timestamp(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	cursor_address(win.ws_col - 7, 0);
 	printf("%-8.8s", &(ctime((time_t *)&tv.tv_sec)[11]));
 }
 
@@ -453,7 +611,7 @@ show_counters_alloc(void)
 }
 
 static void
-show_counters(void)
+show_counters(int *lim)
 {
 	tprof_counts_t countsbuf;
 	uint64_t *cn[2], *c0, *c;
@@ -469,69 +627,127 @@ show_counters(void)
 		countsbuf.c_cpu = n;
 		ret = ioctl(devfd, TPROF_IOC_GETCOUNTS, &countsbuf);
 		if (ret == -1)
-			err(EXIT_FAILURE, "TPROF_IOC_GETCOUNTS");
+			die_errc(EXIT_FAILURE, errno, "TPROF_IOC_GETCOUNTS");
 
 		for (i = 0; i < nevent; i++)
 			c[n * nevent + i] = countsbuf.c_count[i];
 	}
 
-	printf("%-22s", "Event counter (delta)");
-	for (n = 0; n < ncpu; n++) {
-		char cpuname[16];
-		snprintf(cpuname, sizeof(cpuname), "CPU%u", n);
-		printf("%11s", cpuname);
-	}
-	printf("\n");
-
-	for (i = 0; i < nevent; i++) {
-		printf("%-22.22s", eventname[i]);
+	if (do_redraw) {
+		lim_printf(lim, "%-22s", "Event counter (delta)");
 		for (n = 0; n < ncpu; n++) {
-			printf("%11"PRIu64,
-			    c[n * nevent + i] - c0[n * nevent + i]);
+			char cpuname[16];
+			snprintf(cpuname, sizeof(cpuname), "CPU%u", n);
+			lim_printf(lim, "%11s", cpuname);
 		}
+		lim_newline(lim);
+	} else {
 		printf("\n");
 	}
-	printf("\n");
+
+	for (i = 0; i < nevent; i++) {
+		lim_printf(lim, "%-22.22s", eventname[i]);
+		for (n = 0; n < ncpu; n++) {
+			lim_printf(lim, "%11"PRIu64,
+			    c[n * nevent + i] - c0[n * nevent + i]);
+		}
+		lim_newline(lim);
+	}
+	lim_newline(lim);
 }
 
 static void
-show_count_per_event(void)
+show_count_per_event(int *lim)
 {
 	u_int i, nsample_total;
-	int n;
+	int n, l;
+	char buf[32];
 
 	nsample_total = sample_n_kern[opt_mode] + sample_n_user[opt_mode];
+	if (nsample_total == 0)
+		nsample_total = 1;
+
+	/* calc width in advance */
+	for (i = 0; i < nevent; i++) {
+		l = snprintf(buf, sizeof(buf), "%"PRIu64,
+		    sample_n_per_event[opt_mode][i]);
+		if (sample_event_width < (u_int)l)
+			sample_event_width = l;
+	}
+	for (i = 0; i < nevent; i++) {
+		for (n = 0; n < ncpu; n++) {
+			l = snprintf(buf, sizeof(buf), "%"PRIu64,
+			    sample_n_per_event_cpu[opt_mode][nevent * n + i]);
+			if (sample_cpu_width[n] < (u_int)l)
+				sample_cpu_width[n] = l;
+		}
+	}
+
+	if (do_redraw) {
+		lim_printf(lim, "  Rate %*s Eventname                       ",
+		    sample_event_width, "Sample#");
+		for (n = 0; n < ncpu; n++) {
+			snprintf(buf, sizeof(buf), "CPU%d", n);
+			lim_printf(lim, " %*s", sample_cpu_width[n], buf);
+		}
+		lim_newline(lim);
+
+		lim_printf(lim, "------ %*.*s %*.*s",
+		    sample_event_width, sample_event_width, LINESTR,
+		    SYMBOL_LEN, SYMBOL_LEN, LINESTR);
+		for (n = 0; n < ncpu; n++) {
+			lim_printf(lim, " %*.*s",
+			    sample_cpu_width[n], sample_cpu_width[n], LINESTR);
+		}
+		lim_newline(lim);
+	} else {
+		printf("\n\n");
+	}
 
 	for (i = 0; i < nevent; i++) {
 		if (sample_n_per_event[opt_mode][i] >= nsample_total) {
-			printf("%5.1f%%", sample_n_per_event[opt_mode][i] *
-			    100.00 / nsample_total);
+			lim_printf(lim, "%5.1f%%", 100.0 *
+			    sample_n_per_event[opt_mode][i] / nsample_total);
 		} else {
-			printf("%5.2f%%", sample_n_per_event[opt_mode][i] *
-			    100.00 / nsample_total);
+			lim_printf(lim, "%5.2f%%", 100.0 *
+			    sample_n_per_event[opt_mode][i] / nsample_total);
 		}
-		printf("%8"PRIu64" ", sample_n_per_event[opt_mode][i]);
+		lim_printf(lim, " %*"PRIu64" ", sample_event_width,
+		    sample_n_per_event[opt_mode][i]);
 
-		printf("%-32.32s", eventname[i]);
+		lim_printf(lim, "%-32.32s", eventname[i]);
 		for (n = 0; n < ncpu; n++) {
-			printf("%6"PRIu64,
+			lim_printf(lim, " %*"PRIu64, sample_cpu_width[n],
 			    sample_n_per_event_cpu[opt_mode][nevent * n + i]);
 		}
-		printf("\n");
+		lim_newline(lim);
 	}
 }
 
 static void
 sample_show(void)
 {
-	static u_int nshow;
-
 	struct sample_elm *e;
 	struct ptrarray *samples;
 	u_int nsample_total;
-	int i, n, ndisp;
+	int i, l, lim, n, ndisp;
 	char namebuf[32];
 	const char *name;
+
+	if (nshow++ == 0) {
+		printf("\n");
+		if (!nontty) {
+			signal(SIGWINCH, sigwinch_handler);
+			signal(SIGINT, die);
+			signal(SIGQUIT, die);
+			signal(SIGTERM, die);
+			signal(SIGTSTP, sigtstp_handler);
+
+			tty_setup();
+		}
+	} else {
+		reset_cursor_pos();
+	}
 
 	int margin_lines = 7;
 
@@ -552,62 +768,49 @@ sample_show(void)
 	if (!nontty && ndisp > (win.ws_row - margin_lines))
 		ndisp = win.ws_row - margin_lines;
 
-	cursor_home();
-	if (nshow++ == 0)
-		cls_eos();
-
-
+	lim = win.ws_col;
 	if (opt_mode == SAMPLE_MODE_ACCUMULATIVE)
-		printf("[Accumulative mode] ");
+		lim_printf(&lim, "[Accumulative mode] ");
+	show_tprof_stat(&lim);
 
-	show_tprof_stat();
-	cls_eol();
-
-	show_timestamp();
-	printf("\n");
-	printf("\n");
+	if (lim >= 16) {
+		l = win.ws_col - lim;
+		if (!nontty) {
+			clr_to_eol();
+			for (; l <= win.ws_col - 17; l = ((l + 8) & -8))
+				printf("\t");
+		}
+		show_timestamp();
+	}
+	lim_newline(&lim);
+	lim_newline(&lim);
 
 	if (opt_showcounter)
-		show_counters();
+		show_counters(&lim);
 
-	printf("  Rate Sample# Eventname                       ");
-	for (n = 0; n < ncpu; n++) {
-		if (n >= 1000) {
-			snprintf(namebuf, sizeof(namebuf), "%d", n);
-		} else if (n >= 100) {
-			snprintf(namebuf, sizeof(namebuf), "#%d", n);
-		} else {
+	show_count_per_event(&lim);
+	lim_newline(&lim);
+
+	if (do_redraw) {
+		lim_printf(&lim, "  Rate %*s Symbol                          ",
+		    sample_event_width, "Sample#");
+		for (n = 0; n < ncpu; n++) {
 			snprintf(namebuf, sizeof(namebuf), "CPU%d", n);
+			lim_printf(&lim, " %*s", sample_cpu_width[n], namebuf);
 		}
-		printf(" %5s", namebuf);
-	}
-	printf("\n");
-	printf("------ ------- --------------------------------");
-	for (n = 0; n < ncpu; n++) {
-		printf(" -----");
-	}
-	printf("\n");
+		lim_newline(&lim);
 
-	show_count_per_event();
-	printf("\n");
-
-	printf("  Rate Sample# Symbol                          ");
-	for (n = 0; n < ncpu; n++) {
-		if (n >= 1000) {
-			snprintf(namebuf, sizeof(namebuf), "%d", n);
-		} else if (n >= 100) {
-			snprintf(namebuf, sizeof(namebuf), "#%d", n);
-		} else {
-			snprintf(namebuf, sizeof(namebuf), "CPU%d", n);
+		lim_printf(&lim, "------ %*.*s %*.*s",
+		    sample_event_width, sample_event_width, LINESTR,
+		    SYMBOL_LEN, SYMBOL_LEN, LINESTR);
+		for (n = 0; n < ncpu; n++) {
+			lim_printf(&lim, " %*.*s", sample_cpu_width[n],
+			    sample_cpu_width[n], LINESTR);
 		}
-		printf(" %5s", namebuf);
+		lim_newline(&lim);
+	} else {
+		printf("\n\n");
 	}
-	printf("\n");
-	printf("------ ------- --------------------------------");
-	for (n = 0; n < ncpu; n++) {
-		printf(" -----");
-	}
-	printf("\n");
 
 	for (i = 0; i < ndisp; i++) {
 		e = (struct sample_elm *)samples->pa_ptrs[i];
@@ -634,58 +837,72 @@ sample_show(void)
 			nsample_total = 1;
 
 		if (e->num[opt_mode] >= nsample_total) {
-			printf("%5.1f%%",
-			    e->num[opt_mode] * 100.00 / nsample_total);
+			lim_printf(&lim, "%5.1f%%", 100.0 *
+			    e->num[opt_mode] / nsample_total);
 		} else {
-			printf("%5.2f%%",
-			    e->num[opt_mode] * 100.00 / nsample_total);
+			lim_printf(&lim, "%5.2f%%", 100.0 *
+			    e->num[opt_mode] / nsample_total);
 		}
-		printf("%8u %-32.32s", e->num[opt_mode], name);
+		lim_printf(&lim, " %*u %-32.32s", sample_event_width,
+		    e->num[opt_mode], name);
 
 		for (n = 0; n < ncpu; n++) {
 			if (SAMPLE_ELM_NUM_CPU(e, opt_mode)[n] == 0) {
-				printf("     .");
+				lim_printf(&lim, " %*s", sample_cpu_width[n],
+				    ".");
 			} else {
-				printf("%6u",
+				lim_printf(&lim, " %*u", sample_cpu_width[n],
 				    SAMPLE_ELM_NUM_CPU(e, opt_mode)[n]);
 			}
 		}
-		printf("\n");
+		lim_newline(&lim);
 	}
 
 	if ((u_int)ndisp != samples->pa_inuse) {
-		printf("     :       : (more %zu symbols omitted)\n",
-		    samples->pa_inuse - ndisp);
-	} else {
+		lim_printf(&lim, "     : %*s (more %zu symbols omitted)",
+		    sample_event_width, ":", samples->pa_inuse - ndisp);
+		lim_newline(&lim);
+	} else if (!nontty) {
 		for (i = ndisp; i <= win.ws_row - margin_lines; i++) {
 			printf("~");
-			cls_eol();
-			printf("\n");
+			lim_newline(&lim);
 		}
 	}
 
-
-	printf("------ ------- --------------------------------");
-	for (n = 0; n < ncpu; n++) {
-		printf(" -----");
+	if (do_redraw) {
+		lim_printf(&lim, "------ %*.*s %*.*s",
+		    sample_event_width, sample_event_width, LINESTR,
+		    SYMBOL_LEN, SYMBOL_LEN, LINESTR);
+		for (n = 0; n < ncpu; n++) {
+			lim_printf(&lim, " %*.*s",
+			    sample_cpu_width[n], sample_cpu_width[n], LINESTR);
+		}
+		lim_newline(&lim);
+	} else {
+		printf("\n");
 	}
-	printf("\n");
 
-	printf("Total %8u %-32.32s", sample_n_kern[opt_mode], "in-kernel");
+	lim_printf(&lim, "Total  %*u %-32.32s",
+	    sample_event_width, sample_n_kern[opt_mode], "in-kernel");
 	for (n = 0; n < ncpu; n++) {
-		printf("%6u", sample_n_kern_per_cpu[opt_mode][n]);
+		lim_printf(&lim, " %*u", sample_cpu_width[n],
+		    sample_n_kern_per_cpu[opt_mode][n]);
 	}
 
 	if (opt_userland) {
-		printf("\n");
-		printf("      %8u %-32.32s",
-		    sample_n_user[opt_mode], "userland");
+		lim_newline(&lim);
+		lim_printf(&lim, "       %*u %-32.32s",
+		    sample_event_width, sample_n_user[opt_mode], "userland");
 		for (n = 0; n < ncpu; n++) {
-			printf("%6u", sample_n_user_per_cpu[opt_mode][n]);
+			lim_printf(&lim, " %*u", sample_cpu_width[n],
+			    sample_n_user_per_cpu[opt_mode][n]);
 		}
 	}
 
-	cls_eos();
+	if (nontty)
+		printf("\n");
+	else
+		clr_to_eol();
 }
 
 __dead static void
@@ -727,17 +944,17 @@ void
 tprof_top(int argc, char **argv)
 {
 	tprof_param_t params[TPROF_MAXCOUNTERS];
-	struct sigaction sa;
 	struct itimerval it;
-	ssize_t tprof_bufsize;
+	ssize_t tprof_bufsize, len;
 	u_int i;
 	int ch, ret;
 	char *tprof_buf, *tokens[2], *p;
+	bool noinput = false;
 
 	memset(params, 0, sizeof(params));
 	nevent = 0;
 
-	while ((ch = getopt(argc, argv, "ace:i:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ace:i:L:u")) != -1) {
 		switch (ch) {
 		case 'a':
 			opt_mode = SAMPLE_MODE_ACCUMULATIVE;
@@ -753,23 +970,23 @@ tprof_top(int argc, char **argv)
 			if (tokens[1] != NULL) {
 				if (parse_event_scale(&params[nevent],
 				    tokens[1]) != 0) {
-					errx(EXIT_FAILURE, "invalid scale: %s",
-					    tokens[1]);
+					die_errc(EXIT_FAILURE, 0,
+					    "invalid scale: %s", tokens[1]);
 				}
 			}
 			eventname[nevent] = tokens[0];
 			nevent++;
 			if (nevent > __arraycount(params) ||
 			    nevent > ncounters)
-				errx(EXIT_FAILURE, "Too many events. Only a"
-				    " maximum of %d counters can be used.",
-				    ncounters);
+				die_errc(EXIT_FAILURE, 0,
+				    "Too many events. Only a maximum of %d "
+				    "counters can be used.", ncounters);
 			break;
 		case 'i':
 			top_interval = strtol(optarg, &p, 10);
 			if (*p != '\0' || top_interval <= 0)
-				errx(EXIT_FAILURE, "Bad/invalid interval: %s",
-				    optarg);
+				die_errc(EXIT_FAILURE, 0,
+				    "Bad/invalid interval: %s", optarg);
 			break;
 		case 'u':
 			opt_userland = 1;
@@ -787,7 +1004,7 @@ tprof_top(int argc, char **argv)
 	if (nevent == 0) {
 		const char *defaultevent = cycle_event_name();
 		if (defaultevent == NULL)
-			errx(EXIT_FAILURE, "cpu not supported");
+			die_errc(EXIT_FAILURE, 0, "cpu not supported");
 
 		tprof_event_lookup(defaultevent, &params[nevent]);
 		eventname[nevent] = defaultevent;
@@ -804,28 +1021,18 @@ tprof_top(int argc, char **argv)
 			params[i].p_flags |= TPROF_PARAM_USER;
 		ret = ioctl(devfd, TPROF_IOC_CONFIGURE_EVENT, &params[i]);
 		if (ret == -1)
-			err(EXIT_FAILURE, "TPROF_IOC_CONFIGURE_EVENT: %s",
-			    eventname[i]);
+			die_errc(EXIT_FAILURE, errno,
+			    "TPROF_IOC_CONFIGURE_EVENT: %s", eventname[i]);
 	}
 
 	tprof_countermask_t mask = TPROF_COUNTERMASK_ALL;
 	ret = ioctl(devfd, TPROF_IOC_START, &mask);
 	if (ret == -1)
-		err(EXIT_FAILURE, "TPROF_IOC_START");
+		die_errc(EXIT_FAILURE, errno, "TPROF_IOC_START");
 
-
-	sigwinch_handler(0);
 	ksyms = ksymload(&nksyms);
 
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = sigwinch_handler;
-	sigaction(SIGWINCH, &sa, NULL);
-
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sa.sa_handler = sigalrm_handler;
-	sigaction(SIGALRM, &sa, NULL);
+	signal(SIGALRM, sigalrm_handler);
 
 	it.it_interval.tv_sec = it.it_value.tv_sec = top_interval;
 	it.it_interval.tv_usec = it.it_value.tv_usec = 0;
@@ -838,15 +1045,65 @@ tprof_top(int argc, char **argv)
 	tprof_bufsize = sizeof(tprof_sample_t) * 8192;
 	tprof_buf = emalloc(tprof_bufsize);
 	do {
-		/* continue to accumulate tprof_sample until alarm arrives */
-		while (sigalrm == 0) {
-			ssize_t len = read(devfd, tprof_buf, tprof_bufsize);
-			if (len == -1 && errno != EINTR)
-				err(EXIT_FAILURE, "read");
-			if (len > 0) {
-				tprof_sample_t *s = (tprof_sample_t *)tprof_buf;
-				while (s < (tprof_sample_t *)(tprof_buf + len))
-					sample_collect(s++);
+		bool force_update = false;
+
+		for (;;) {
+			fd_set r;
+			int nfound;
+			char c;
+
+			FD_ZERO(&r);
+			if (!noinput)
+				FD_SET(STDIN_FILENO, &r);
+			FD_SET(devfd, &r);
+			nfound = select(devfd + 1, &r, NULL, NULL, NULL);
+			if (nfound == -1) {
+				if (errno == EINTR)
+					break;
+				die_errc(EXIT_FAILURE, errno, "select");
+			}
+
+			if (FD_ISSET(STDIN_FILENO, &r)) {
+				len = read(STDIN_FILENO, &c, 1);
+				if (len <= 0) {
+					noinput = true;
+					continue;
+				}
+				switch (c) {
+				case 0x0c:	/* ^L */
+					do_redraw = true;
+					break;
+				case 'a':
+					/* toggle mode */
+					opt_mode = (opt_mode + 1) %
+					    SAMPLE_MODE_NUM;
+					break;
+				case 'q':
+					goto done;
+				case 'z':
+					sample_reset(true);
+					break;
+				default:
+					printf("[%02x]", c);
+					fflush(stdout);
+				}
+				force_update = true;
+				continue;
+			}
+			if (sigalrm != 0 || force_update)
+				break;
+
+			if (FD_ISSET(devfd, &r)) {
+				len = read(devfd, tprof_buf, tprof_bufsize);
+				if (len == -1 && errno != EINTR)
+					die_errc(EXIT_FAILURE, errno, "read");
+				if (len > 0) {
+					tprof_sample_t *s =
+					    (tprof_sample_t *)tprof_buf;
+					while (s <
+					    (tprof_sample_t *)(tprof_buf + len))
+						sample_collect(s++);
+				}
 			}
 		}
 		sigalrm = 0;
@@ -854,9 +1111,14 @@ tprof_top(int argc, char **argv)
 		/* update screen */
 		sample_show();
 		fflush(stdout);
+		do_redraw = false;
+		if (force_update)
+			continue;
 
 		sample_reset(false);
+
 	} while (!nontty);
 
-	printf("\n");
+ done:
+	die(0);
 }

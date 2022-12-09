@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2022/12/01 00:43:27 ryo Exp $
+#	$NetBSD: Makefile,v 1.13 2022/12/09 01:56:40 ryo Exp $
 
 .PATH:	${.CURDIR}/arch
 
@@ -21,11 +21,15 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys/
 LDADD+= -lpthread
 LDADD+= -lm
 LDADD+= -lelf
+LDADD+= -lterminfo
 LDADD+= -lutil
 DPADD+= ${LIBPTHREAD}
 DPADD+= ${LIBM}
 DPADD+= ${LIBELF}
+DPADD+= ${LIBTERMINFO}
 DPADD+= ${LIBUTIL}
+
+COPTS.tprof_top.c = -Wno-format-nonliteral
 
 .include <bsd.own.mk>
 .include <bsd.prog.mk>
