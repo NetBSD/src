@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.3 2022/12/09 01:55:46 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -37,7 +37,6 @@ __RCSID("$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -54,14 +53,79 @@ __RCSID("$NetBSD: tprof_top.c,v 1.2 2022/12/01 03:32:24 ryo Exp $");
 #include "tprof.h"
 #include "ksyms.h"
 
+#define SAMPLE_MODE_ACCUMULATIVE	0
+#define SAMPLE_MODE_INSTANTANEOUS	1
+#define SAMPLE_MODE_NUM			2
+
+struct sample_elm {
+	struct rb_node node;
+	uint64_t addr;
+	const char *name;
+	uint32_t flags;
+#define SAMPLE_ELM_FLAGS_USER	0x00000001
+	uint32_t num[SAMPLE_MODE_NUM];
+	uint32_t num_cpu[];	/* [SAMPLE_MODE_NUM][ncpu] */
+#define SAMPLE_ELM_NUM_CPU(e, k)		\
+	((e)->num_cpu + (k) *  ncpu)
+};
+
+struct ptrarray {
+	void **pa_ptrs;
+	size_t pa_allocnum;
+	size_t pa_inuse;
+};
+
+static int opt_mode = SAMPLE_MODE_INSTANTANEOUS;
+static int opt_userland = 0;
+static int opt_showcounter = 0;
+
+/* for display */
+static struct winsize win;
+static int nontty;
+static long top_interval = 1;
+
+/* for profiling and counting samples */
+static sig_atomic_t sigalrm;
 static struct sym **ksyms;
 static size_t nksyms;
-static sig_atomic_t sigalrm;
-static struct winsize win;
-static long top_interval = 1;
 static u_int nevent;
 static const char *eventname[TPROF_MAXCOUNTERS];
-static int nontty;
+static size_t sizeof_sample_elm;
+static rb_tree_t rb_tree_sample;
+struct ptrarray sample_list[SAMPLE_MODE_NUM];
+static u_int sample_n_kern[SAMPLE_MODE_NUM];
+static u_int sample_n_user[SAMPLE_MODE_NUM];
+static uint32_t *sample_n_kern_per_cpu[SAMPLE_MODE_NUM];	/* [ncpu] */
+static uint32_t *sample_n_user_per_cpu[SAMPLE_MODE_NUM];	/* [ncpu] */
+static uint64_t *sample_n_per_event[SAMPLE_MODE_NUM];		/* [nevent] */
+static uint64_t *sample_n_per_event_cpu[SAMPLE_MODE_NUM];	/* [ncpu] */
+
+/* raw event counter */
+static uint64_t *counters;	/* counters[2][ncpu][nevent] */
+static u_int counters_i;
+
+static const char *
+cycle_event_name(void)
+{
+	const char *cycleevent;
+
+	switch (tprof_info.ti_ident) {
+	case TPROF_IDENT_INTEL_GENERIC:
+		cycleevent = "unhalted-core-cycles";
+		break;
+	case TPROF_IDENT_AMD_GENERIC:
+		cycleevent = "LsNotHaltedCyc";
+		break;
+	case TPROF_IDENT_ARMV8_GENERIC:
+	case TPROF_IDENT_ARMV7_GENERIC:
+		cycleevent = "CPU_CYCLES";
+		break;
+	default:
+		cycleevent = NULL;
+		break;
+	}
+	return cycleevent;
+}
 
 /* XXX: use terminfo or curses */
 static void
@@ -108,31 +172,37 @@ sigalrm_handler(int signo)
 	sigalrm = 1;
 }
 
-struct sample_elm {
-	struct rb_node node;
-	uint64_t addr;
-	const char *name;
-	uint32_t flags;
-#define SAMPLE_ELM_FLAGS_USER	0x00000001
-	uint32_t num;
-	uint32_t numcpu[];
-};
+static void
+ptrarray_push(struct ptrarray *ptrarray, void *ptr)
+{
+	int error;
 
-static size_t sizeof_sample_elm;
-static rb_tree_t rb_tree_sample;
-static char *samplebuf;
-static u_int sample_nused;
-static u_int sample_kern_nsample;
-static u_int sample_user_nsample;
-static u_int sample_max = 1024 * 512;	/* XXX */
-static uint32_t *sample_nsample_kern_per_cpu;
-static uint32_t *sample_nsample_user_per_cpu;
-static uint64_t *sample_nsample_per_event;
-static uint64_t *sample_nsample_per_event_cpu;
-static uint64_t collect_overflow;
+	if (ptrarray->pa_inuse >= ptrarray->pa_allocnum) {
+		/* increase buffer */
+		ptrarray->pa_allocnum += 1024;
+		error = reallocarr(&ptrarray->pa_ptrs, ptrarray->pa_allocnum,
+		    sizeof(*ptrarray->pa_ptrs));
+		if (error != 0)
+			errc(EXIT_FAILURE, error, "rellocarr failed");
+	}
+	ptrarray->pa_ptrs[ptrarray->pa_inuse++] = ptr;
+}
 
-static int opt_userland = 0;
-static int opt_showcounter = 0;
+static void
+ptrarray_iterate(struct ptrarray *ptrarray, void (*ifunc)(void *))
+{
+	size_t i;
+
+	for (i = 0; i < ptrarray->pa_inuse; i++) {
+		(*ifunc)(ptrarray->pa_ptrs[i]);
+	}
+}
+
+static void
+ptrarray_clear(struct ptrarray *ptrarray)
+{
+	ptrarray->pa_inuse = 0;
+}
 
 static int
 sample_compare_key(void *ctx, const void *n1, const void *keyp)
@@ -154,70 +224,111 @@ static const rb_tree_ops_t sample_ops = {
 	.rbto_compare_key = sample_compare_key
 };
 
+static u_int
+n_align(u_int n, u_int align)
+{
+	return (n + align - 1) / align * align;
+}
+
 static void
 sample_init(void)
 {
-	sizeof_sample_elm = sizeof(struct sample_elm) + sizeof(uint32_t) * ncpu;
+	const struct sample_elm *e;
+	int mode;
+
+	u_int size = sizeof(struct sample_elm) +
+	    sizeof(e->num_cpu[0]) * SAMPLE_MODE_NUM * ncpu;
+	sizeof_sample_elm = n_align(size, __alignof(struct sample_elm));
+
+	for (mode = 0; mode < SAMPLE_MODE_NUM; mode++) {
+		sample_n_kern_per_cpu[mode] = ecalloc(1,
+		    sizeof(typeof(*sample_n_kern_per_cpu[mode])) * ncpu);
+		sample_n_user_per_cpu[mode] = ecalloc(1,
+		    sizeof(typeof(*sample_n_user_per_cpu[mode])) * ncpu);
+		sample_n_per_event[mode] = ecalloc(1,
+		    sizeof(typeof(*sample_n_per_event[mode])) * nevent);
+		sample_n_per_event_cpu[mode] = ecalloc(1,
+		    sizeof(typeof(*sample_n_per_event_cpu[mode])) *
+		    nevent * ncpu);
+	}
 }
 
 static void
-sample_reset(void)
+sample_clear_instantaneous(void *arg)
 {
-	if (samplebuf == NULL) {
-		samplebuf = emalloc(sizeof_sample_elm * sample_max);
-		sample_nsample_kern_per_cpu = emalloc(sizeof(uint32_t) * ncpu);
-		sample_nsample_user_per_cpu = emalloc(sizeof(uint32_t) * ncpu);
-		sample_nsample_per_event = emalloc(sizeof(uint64_t) * nevent);
-		sample_nsample_per_event_cpu =
-		    emalloc(sizeof(uint64_t) * nevent * ncpu);
-	}
-	sample_nused = 0;
-	sample_kern_nsample = 0;
-	sample_user_nsample = 0;
-	memset(sample_nsample_kern_per_cpu, 0, sizeof(uint32_t) * ncpu);
-	memset(sample_nsample_user_per_cpu, 0, sizeof(uint32_t) * ncpu);
-	memset(sample_nsample_per_event, 0, sizeof(uint64_t) * nevent);
-	memset(sample_nsample_per_event_cpu, 0,
-	    sizeof(uint64_t) * nevent * ncpu);
+	struct sample_elm *e = (void *)arg;
 
-	rb_tree_init(&rb_tree_sample, &sample_ops);
-}
-
-static struct sample_elm *
-sample_alloc(void)
-{
-	struct sample_elm *e;
-
-	if (sample_nused >= sample_max) {
-		errx(EXIT_FAILURE, "sample buffer overflow");
-		return NULL;
-	}
-
-	e = (struct sample_elm *)(samplebuf + sizeof_sample_elm *
-	    sample_nused++);
-	memset(e, 0, sizeof_sample_elm);
-	return e;
+	e->num[SAMPLE_MODE_INSTANTANEOUS] = 0;
+	memset(SAMPLE_ELM_NUM_CPU(e, SAMPLE_MODE_INSTANTANEOUS),
+	    0, sizeof(e->num_cpu[0]) * ncpu);
 }
 
 static void
-sample_takeback(struct sample_elm *e)
+sample_reset(bool reset_accumulative)
 {
-	assert(sample_nused > 0);
-	sample_nused--;
+	int mode;
+
+	for (mode = 0; mode < SAMPLE_MODE_NUM; mode++) {
+		if (mode == SAMPLE_MODE_ACCUMULATIVE && !reset_accumulative)
+			continue;
+
+		sample_n_kern[mode] = 0;
+		sample_n_user[mode] = 0;
+		memset(sample_n_kern_per_cpu[mode], 0,
+		    sizeof(typeof(*sample_n_kern_per_cpu[mode])) * ncpu);
+		memset(sample_n_user_per_cpu[mode], 0,
+		    sizeof(typeof(*sample_n_user_per_cpu[mode])) * ncpu);
+		memset(sample_n_per_event[mode], 0,
+		    sizeof(typeof(*sample_n_per_event[mode])) * nevent);
+		memset(sample_n_per_event_cpu[mode], 0,
+		    sizeof(typeof(*sample_n_per_event_cpu[mode])) *
+		    nevent * ncpu);
+	}
+
+	if (reset_accumulative) {
+		rb_tree_init(&rb_tree_sample, &sample_ops);
+		ptrarray_iterate(&sample_list[SAMPLE_MODE_ACCUMULATIVE], free);
+		ptrarray_clear(&sample_list[SAMPLE_MODE_ACCUMULATIVE]);
+		ptrarray_clear(&sample_list[SAMPLE_MODE_INSTANTANEOUS]);
+	} else {
+		ptrarray_iterate(&sample_list[SAMPLE_MODE_INSTANTANEOUS],
+		    sample_clear_instantaneous);
+		ptrarray_clear(&sample_list[SAMPLE_MODE_INSTANTANEOUS]);
+	}
+}
+
+static int __unused
+sample_sortfunc_accumulative(const void *a, const void *b)
+{
+	struct sample_elm * const *ea = a;
+	struct sample_elm * const *eb = b;
+	return (*eb)->num[SAMPLE_MODE_ACCUMULATIVE] -
+	    (*ea)->num[SAMPLE_MODE_ACCUMULATIVE];
 }
 
 static int
-sample_sortfunc(const void *a, const void *b)
+sample_sortfunc_instantaneous(const void *a, const void *b)
 {
-	const struct sample_elm *ea = a;
-	const struct sample_elm *eb = b;
-	return eb->num - ea->num;
+	struct sample_elm * const *ea = a;
+	struct sample_elm * const *eb = b;
+	return (*eb)->num[SAMPLE_MODE_INSTANTANEOUS] -
+	    (*ea)->num[SAMPLE_MODE_INSTANTANEOUS];
 }
 
 static void
-sample_sort(void)
+sample_sort_accumulative(void)
 {
-	qsort(samplebuf, sample_nused, sizeof_sample_elm, sample_sortfunc);
+	qsort(sample_list[SAMPLE_MODE_ACCUMULATIVE].pa_ptrs,
+	    sample_list[SAMPLE_MODE_ACCUMULATIVE].pa_inuse,
+	    sizeof(struct sample_elm *), sample_sortfunc_accumulative);
+}
+
+static void
+sample_sort_instantaneous(void)
+{
+	qsort(sample_list[SAMPLE_MODE_INSTANTANEOUS].pa_ptrs,
+	    sample_list[SAMPLE_MODE_INSTANTANEOUS].pa_inuse,
+	    sizeof(struct sample_elm *), sample_sortfunc_instantaneous);
 }
 
 static void
@@ -229,16 +340,24 @@ sample_collect(tprof_sample_t *s)
 	uint64_t addr, offset;
 	uint32_t flags = 0;
 	uint32_t eventid, cpuid;
+	int mode;
 
 	eventid = __SHIFTOUT(s->s_flags, TPROF_SAMPLE_COUNTER_MASK);
 	cpuid = s->s_cpuid;
 
-	sample_nsample_per_event[eventid]++;
-	sample_nsample_per_event_cpu[nevent * cpuid + eventid]++;
+	if (eventid >= nevent)	/* unknown event from tprof? */
+		return;
+
+	for (mode = 0; mode < SAMPLE_MODE_NUM; mode++) {
+		sample_n_per_event[mode][eventid]++;
+		sample_n_per_event_cpu[mode][nevent * cpuid + eventid]++;
+	}
 
 	if ((s->s_flags & TPROF_SAMPLE_INKERNEL) == 0) {
-		sample_user_nsample++;
-		sample_nsample_user_per_cpu[cpuid]++;
+		sample_n_user[SAMPLE_MODE_ACCUMULATIVE]++;
+		sample_n_user[SAMPLE_MODE_INSTANTANEOUS]++;
+		sample_n_user_per_cpu[SAMPLE_MODE_ACCUMULATIVE][cpuid]++;
+		sample_n_user_per_cpu[SAMPLE_MODE_INSTANTANEOUS][cpuid]++;
 
 		name = NULL;
 		addr = s->s_pid;	/* XXX */
@@ -247,8 +366,10 @@ sample_collect(tprof_sample_t *s)
 		if (!opt_userland)
 			return;
 	} else {
-		sample_kern_nsample++;
-		sample_nsample_kern_per_cpu[cpuid]++;
+		sample_n_kern[SAMPLE_MODE_ACCUMULATIVE]++;
+		sample_n_kern[SAMPLE_MODE_INSTANTANEOUS]++;
+		sample_n_kern_per_cpu[SAMPLE_MODE_ACCUMULATIVE][cpuid]++;
+		sample_n_kern_per_cpu[SAMPLE_MODE_INSTANTANEOUS][cpuid]++;
 
 		name = ksymlookup(s->s_pc, &offset, &symid);
 		if (name != NULL) {
@@ -258,24 +379,31 @@ sample_collect(tprof_sample_t *s)
 		}
 	}
 
-	e = sample_alloc();
-	if (e == NULL) {
-		fprintf(stderr, "cannot allocate sample\n");
-		collect_overflow++;
-		return;
-	}
-
+	e = ecalloc(1, sizeof_sample_elm);
 	e->addr = addr;
 	e->name = name;
 	e->flags = flags;
-	e->num = 1;
-	e->numcpu[cpuid] = 1;
+	e->num[SAMPLE_MODE_ACCUMULATIVE] = 1;
+	e->num[SAMPLE_MODE_INSTANTANEOUS] = 1;
+	SAMPLE_ELM_NUM_CPU(e, SAMPLE_MODE_ACCUMULATIVE)[cpuid] = 1;
+	SAMPLE_ELM_NUM_CPU(e, SAMPLE_MODE_INSTANTANEOUS)[cpuid] = 1;
 	o = rb_tree_insert_node(&rb_tree_sample, e);
-	if (o != e) {
+	if (o == e) {
+		/* new symbol. add to list for sort */
+		ptrarray_push(&sample_list[SAMPLE_MODE_ACCUMULATIVE], o);
+		ptrarray_push(&sample_list[SAMPLE_MODE_INSTANTANEOUS], o);
+	} else {
 		/* already exists */
-		sample_takeback(e);
-		o->num++;
-		o->numcpu[cpuid]++;
+		free(e);
+
+		o->num[SAMPLE_MODE_ACCUMULATIVE]++;
+		if (o->num[SAMPLE_MODE_INSTANTANEOUS]++ == 0) {
+			/* new instantaneous symbols. add to list for sort */
+			ptrarray_push(&sample_list[SAMPLE_MODE_INSTANTANEOUS],
+			    o);
+		}
+		SAMPLE_ELM_NUM_CPU(o, SAMPLE_MODE_ACCUMULATIVE)[cpuid]++;
+		SAMPLE_ELM_NUM_CPU(o, SAMPLE_MODE_INSTANTANEOUS)[cpuid]++;
 	}
 }
 
@@ -317,16 +445,11 @@ show_timestamp(void)
 	printf("%-8.8s", &(ctime((time_t *)&tv.tv_sec)[11]));
 }
 
-
-static uint64_t *counters;	/* counters[2][ncpu][nevent] */
-static u_int counters_i;
-
 static void
 show_counters_alloc(void)
 {
-	size_t sz = 2 * ncpu * nevent * sizeof(uint64_t);
-	counters = emalloc(sz);
-	memset(counters, 0, sz);
+	size_t sz = 2 * ncpu * nevent * sizeof(*counters);
+	counters = ecalloc(1, sz);
 }
 
 static void
@@ -377,22 +500,22 @@ show_count_per_event(void)
 	u_int i, nsample_total;
 	int n;
 
-	nsample_total = sample_kern_nsample + sample_user_nsample;
+	nsample_total = sample_n_kern[opt_mode] + sample_n_user[opt_mode];
 
 	for (i = 0; i < nevent; i++) {
-		if (sample_nsample_per_event[i] >= nsample_total) {
-			printf("%5.1f%%", sample_nsample_per_event[i] *
+		if (sample_n_per_event[opt_mode][i] >= nsample_total) {
+			printf("%5.1f%%", sample_n_per_event[opt_mode][i] *
 			    100.00 / nsample_total);
 		} else {
-			printf("%5.2f%%", sample_nsample_per_event[i] *
+			printf("%5.2f%%", sample_n_per_event[opt_mode][i] *
 			    100.00 / nsample_total);
 		}
-		printf("%8"PRIu64" ", sample_nsample_per_event[i]);
+		printf("%8"PRIu64" ", sample_n_per_event[opt_mode][i]);
 
 		printf("%-32.32s", eventname[i]);
 		for (n = 0; n < ncpu; n++) {
 			printf("%6"PRIu64,
-			    sample_nsample_per_event_cpu[nevent * n + i]);
+			    sample_n_per_event_cpu[opt_mode][nevent * n + i]);
 		}
 		printf("\n");
 	}
@@ -404,6 +527,7 @@ sample_show(void)
 	static u_int nshow;
 
 	struct sample_elm *e;
+	struct ptrarray *samples;
 	u_int nsample_total;
 	int i, n, ndisp;
 	char namebuf[32];
@@ -413,12 +537,18 @@ sample_show(void)
 
 	margin_lines += 3 + nevent;	/* show_counter_per_event() */
 
+	if (opt_mode == SAMPLE_MODE_INSTANTANEOUS)
+		sample_sort_instantaneous();
+	else
+		sample_sort_accumulative();
+	samples = &sample_list[opt_mode];
+
 	if (opt_showcounter)
 		margin_lines += 2 + nevent;
 	if (opt_userland)
 		margin_lines += 1;
 
-	ndisp = sample_nused;
+	ndisp = samples->pa_inuse;
 	if (!nontty && ndisp > (win.ws_row - margin_lines))
 		ndisp = win.ws_row - margin_lines;
 
@@ -426,6 +556,9 @@ sample_show(void)
 	if (nshow++ == 0)
 		cls_eos();
 
+
+	if (opt_mode == SAMPLE_MODE_ACCUMULATIVE)
+		printf("[Accumulative mode] ");
 
 	show_tprof_stat();
 	cls_eol();
@@ -477,22 +610,22 @@ sample_show(void)
 	printf("\n");
 
 	for (i = 0; i < ndisp; i++) {
-		e = (struct sample_elm *)(samplebuf + sizeof_sample_elm * i);
+		e = (struct sample_elm *)samples->pa_ptrs[i];
 		name = e->name;
 		if (name == NULL) {
 			if (e->flags & SAMPLE_ELM_FLAGS_USER) {
-				snprintf(namebuf, sizeof(namebuf), "<PID:%"PRIu64">",
-				    e->addr);
+				snprintf(namebuf, sizeof(namebuf),
+				    "<PID:%"PRIu64">", e->addr);
 			} else {
-				snprintf(namebuf, sizeof(namebuf), "0x%016"PRIx64,
-				    e->addr);
+				snprintf(namebuf, sizeof(namebuf),
+				    "0x%016"PRIx64, e->addr);
 			}
 			name = namebuf;
 		}
 
-		nsample_total = sample_kern_nsample;
+		nsample_total = sample_n_kern[opt_mode];
 		if (opt_userland)
-			nsample_total += sample_user_nsample;
+			nsample_total += sample_n_user[opt_mode];
 		/*
 		 * even when only kernel mode events are configured,
 		 * interrupts may still occur in the user mode state.
@@ -500,25 +633,29 @@ sample_show(void)
 		if (nsample_total == 0)
 			nsample_total = 1;
 
-		if (e->num >= nsample_total) {
-			printf("%5.1f%%", e->num * 100.00 / nsample_total);
+		if (e->num[opt_mode] >= nsample_total) {
+			printf("%5.1f%%",
+			    e->num[opt_mode] * 100.00 / nsample_total);
 		} else {
-			printf("%5.2f%%", e->num * 100.00 / nsample_total);
+			printf("%5.2f%%",
+			    e->num[opt_mode] * 100.00 / nsample_total);
 		}
-		printf("%8u %-32.32s", e->num, name);
+		printf("%8u %-32.32s", e->num[opt_mode], name);
 
 		for (n = 0; n < ncpu; n++) {
-			if (e->numcpu[n] == 0)
+			if (SAMPLE_ELM_NUM_CPU(e, opt_mode)[n] == 0) {
 				printf("     .");
-			else
-				printf("%6u", e->numcpu[n]);
+			} else {
+				printf("%6u",
+				    SAMPLE_ELM_NUM_CPU(e, opt_mode)[n]);
+			}
 		}
 		printf("\n");
 	}
 
-	if ((u_int)ndisp != sample_nused) {
-		printf("     :       : (more %u symbols omitted)\n",
-		    sample_nused - ndisp);
+	if ((u_int)ndisp != samples->pa_inuse) {
+		printf("     :       : (more %zu symbols omitted)\n",
+		    samples->pa_inuse - ndisp);
 	} else {
 		for (i = ndisp; i <= win.ws_row - margin_lines; i++) {
 			printf("~");
@@ -534,16 +671,17 @@ sample_show(void)
 	}
 	printf("\n");
 
-	printf("Total %8u %-32.32s", sample_kern_nsample, "in-kernel");
+	printf("Total %8u %-32.32s", sample_n_kern[opt_mode], "in-kernel");
 	for (n = 0; n < ncpu; n++) {
-		printf("%6u", sample_nsample_kern_per_cpu[n]);
+		printf("%6u", sample_n_kern_per_cpu[opt_mode][n]);
 	}
 
 	if (opt_userland) {
 		printf("\n");
-		printf("      %8u %-32.32s", sample_user_nsample, "userland");
+		printf("      %8u %-32.32s",
+		    sample_n_user[opt_mode], "userland");
 		for (n = 0; n < ncpu; n++) {
-			printf("%6u", sample_nsample_user_per_cpu[n]);
+			printf("%6u", sample_n_user_per_cpu[opt_mode][n]);
 		}
 	}
 
@@ -553,8 +691,8 @@ sample_show(void)
 __dead static void
 tprof_top_usage(void)
 {
-	fprintf(stderr, "%s top [-e name[,scale] [-e ...]]"
-	    " [-i interval] [-c] [-u]\n", getprogname());
+	fprintf(stderr, "%s top [-acu] [-e name[,scale] [-e ...]]"
+	    " [-i interval]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -591,16 +729,19 @@ tprof_top(int argc, char **argv)
 	tprof_param_t params[TPROF_MAXCOUNTERS];
 	struct sigaction sa;
 	struct itimerval it;
-	ssize_t bufsize;
+	ssize_t tprof_bufsize;
 	u_int i;
 	int ch, ret;
-	char *buf, *tokens[2], *p;
+	char *tprof_buf, *tokens[2], *p;
 
 	memset(params, 0, sizeof(params));
 	nevent = 0;
 
-	while ((ch = getopt(argc, argv, "ce:i:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ace:i:u")) != -1) {
 		switch (ch) {
+		case 'a':
+			opt_mode = SAMPLE_MODE_ACCUMULATIVE;
+			break;
 		case 'c':
 			opt_showcounter = 1;
 			break;
@@ -610,8 +751,11 @@ tprof_top(int argc, char **argv)
 			tokens[1] = strtok(NULL, ",");
 			tprof_event_lookup(tokens[0], &params[nevent]);
 			if (tokens[1] != NULL) {
-				if (parse_event_scale(&params[nevent], tokens[1]) != 0)
-					errx(EXIT_FAILURE, "invalid scale: %s", tokens[1]);
+				if (parse_event_scale(&params[nevent],
+				    tokens[1]) != 0) {
+					errx(EXIT_FAILURE, "invalid scale: %s",
+					    tokens[1]);
+				}
 			}
 			eventname[nevent] = tokens[0];
 			nevent++;
@@ -640,29 +784,8 @@ tprof_top(int argc, char **argv)
 	if (argc != 0)
 		tprof_top_usage();
 
-	bufsize = sizeof(tprof_sample_t) * 8192;
-	buf = emalloc(bufsize);
-
-	sample_init();
-
 	if (nevent == 0) {
-		const char *defaultevent;
-
-		switch (tprof_info.ti_ident) {
-		case TPROF_IDENT_INTEL_GENERIC:
-			defaultevent = "unhalted-core-cycles";
-			break;
-		case TPROF_IDENT_AMD_GENERIC:
-			defaultevent = "LsNotHaltedCyc";
-			break;
-		case TPROF_IDENT_ARMV8_GENERIC:
-		case TPROF_IDENT_ARMV7_GENERIC:
-			defaultevent = "CPU_CYCLES";
-			break;
-		default:
-			defaultevent = NULL;
-			break;
-		}
+		const char *defaultevent = cycle_event_name();
 		if (defaultevent == NULL)
 			errx(EXIT_FAILURE, "cpu not supported");
 
@@ -671,6 +794,7 @@ tprof_top(int argc, char **argv)
 		nevent++;
 	}
 
+	sample_init();
 	show_counters_alloc();
 
 	for (i = 0; i < nevent; i++) {
@@ -707,32 +831,31 @@ tprof_top(int argc, char **argv)
 	it.it_interval.tv_usec = it.it_value.tv_usec = 0;
 	setitimer(ITIMER_REAL, &it, NULL);
 
-	sample_reset();
+	sample_reset(true);
 	printf("collecting samples...");
 	fflush(stdout);
 
+	tprof_bufsize = sizeof(tprof_sample_t) * 8192;
+	tprof_buf = emalloc(tprof_bufsize);
 	do {
 		/* continue to accumulate tprof_sample until alarm arrives */
 		while (sigalrm == 0) {
-			ssize_t len = read(devfd, buf, bufsize);
+			ssize_t len = read(devfd, tprof_buf, tprof_bufsize);
 			if (len == -1 && errno != EINTR)
 				err(EXIT_FAILURE, "read");
 			if (len > 0) {
-				tprof_sample_t *s = (tprof_sample_t *)buf;
-				while (s < (tprof_sample_t *)(buf + len)) {
-					sample_collect(s);
-					s++;
-				}
+				tprof_sample_t *s = (tprof_sample_t *)tprof_buf;
+				while (s < (tprof_sample_t *)(tprof_buf + len))
+					sample_collect(s++);
 			}
 		}
 		sigalrm = 0;
 
 		/* update screen */
-		sample_sort();
 		sample_show();
 		fflush(stdout);
 
-		sample_reset();
+		sample_reset(false);
 	} while (!nontty);
 
 	printf("\n");
