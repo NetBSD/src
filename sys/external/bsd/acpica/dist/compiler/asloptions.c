@@ -44,6 +44,7 @@
 #include "aslcompiler.h"
 #include "acapps.h"
 #include "acdisasm.h"
+#include "acglobal.h"
 
 #define _COMPONENT          ACPI_COMPILER
         ACPI_MODULE_NAME    ("asloption")
@@ -68,7 +69,7 @@ AslDoResponseFile (
 
 
 #define ASL_TOKEN_SEPARATORS    " \t\n"
-#define ASL_SUPPORTED_OPTIONS   "@:a:b|c|d^D:e:f^gh^i|I:l^m:no|p:P^q^r:s|t|T+G^v^w|x:z"
+#define ASL_SUPPORTED_OPTIONS   "@:a:b|c|d^D:e:f^gh^i|I:l^m:no|p:P^q^r:s|:t|T+G^v^w|x:z"
 
 
 /*******************************************************************************
@@ -162,7 +163,7 @@ AslDoOptions (
     BOOLEAN                 IsResponseFile)
 {
     ACPI_STATUS             Status;
-    UINT32                  j;
+    INT32                  j;
 
 
     /* Get the command line options */
@@ -258,7 +259,6 @@ AslDoOptions (
             {
                 return (-1);
             }
-
             AslGbl_PruneType = (UINT8) strtoul (AcpiGbl_Optarg, NULL, 0);
             break;
 
@@ -335,6 +335,28 @@ AslDoOptions (
 
             AslGbl_DoCompile = FALSE;
             AcpiGbl_CstyleDisassembly = FALSE;
+            break;
+
+        case 's':   /* Specify table signature (Only supported for CDAT table) */
+
+            /* Get the required argument */
+
+            if (AcpiGetoptArgument (argc, argv))
+            {
+                return (-1);
+            }
+
+            /* Check for exact string "CDAT" (upper or lower case) */
+
+            AcpiGbl_CDAT = ACPI_CAST_PTR (char, &AcpiGbl_Optarg);
+            if (AcpiUtStricmp (AcpiGbl_Optarg, ACPI_SIG_CDAT))
+            {
+                printf ("\nUnknown table signature: %s\n", AcpiGbl_Optarg);
+                return (-1);
+            }
+
+            AcpiGbl_CDAT = malloc (5);
+            AcpiUtSafeStrncpy ((char *) AcpiGbl_CDAT, ACPI_SIG_CDAT, 5);
             break;
 
         default:
@@ -729,7 +751,7 @@ AslDoOptions (
             AslGbl_HexOutputFlag = HEX_OUTPUT_C;
             break;
 
-    case 'p': /* data table flex/bison prototype */
+        case 'p': /* data table flex/bison prototype */
 
             AslGbl_DtLexBisonPrototype = TRUE;
             break;
