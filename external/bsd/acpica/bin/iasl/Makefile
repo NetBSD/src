@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2020/09/12 15:25:42 jmcneill Exp $
+# $NetBSD: Makefile,v 1.28 2022/12/10 17:41:05 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -234,6 +234,7 @@ SRCS+= \
 	utascii.c \
 	utbuffer.c \
 	utcache.c \
+	utcksum.c \
 	utcopy.c \
 	utdebug.c \
 	utdecode.c \
