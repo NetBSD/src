@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.33 2022/11/24 00:13:54 macallan Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.34 2022/12/10 13:06:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.33 2022/11/24 00:13:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.34 2022/12/10 13:06:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -87,6 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.33 2022/11/24 00:13:54 macallan Ex
 #else
 #define DPRINTF while(0) printf
 #endif
+
+#define	ofpanic(FORMAT, ...)	do {				\
+		ofprint(FORMAT __VA_OPT__(,) __VA_ARGS__);	\
+		panic(FORMAT __VA_OPT__(,) __VA_ARGS__);	\
+	} while (0)
 
 int	ofw_root;
 int	ofw_chosen;
@@ -185,7 +190,7 @@ ofw_bootstrap_console(void)
 
 	return;
  nocons:
-	panic("No /chosen could be found!\n");
+	ofpanic("No /chosen could be found!\n");
 	console_node = -1;
 }
 
@@ -356,7 +361,7 @@ error:
 	OFavail[0].size = 0x20000000 - 0x3000;
 
 #else
-	panic("no memory?");
+	ofpanic("no memory?");
 #endif
 	return;
 }
@@ -375,19 +380,19 @@ ofw_bootstrap_get_translations(void)
 
 	if (OF_getprop(ofw_chosen, "mmu", &mmu_ihandle,
 		       sizeof(mmu_ihandle)) <= 0) {
-		aprint_normal("No /chosen/mmu\n");
+		ofprint("No /chosen/mmu\n");
 		return;
 	}
 	mmu_phandle = OF_instance_to_package(mmu_ihandle);
 
 	proplen = OF_getproplen(mmu_phandle, "translations");
 	if (proplen <= 0) {
-		aprint_normal("No translations in /chosen/mmu\n");
+		ofprint("No translations in /chosen/mmu\n");
 		return;
 	}
 
 	if (proplen > sizeof(regs)) {
-		panic("/chosen/mmu translations too large");
+		ofpanic("/chosen/mmu translations too large");
 	}
 
 	proplen = OF_getprop(mmu_phandle, "translations", regs, sizeof(regs));
@@ -406,11 +411,11 @@ ofw_bootstrap_get_translations(void)
 			phys = (phys << 32) | *rp++;
 			break;
 		default:
-			panic("unexpected #address-cells");
+			ofpanic("unexpected #address-cells");
 		}
 		mode = *rp++;
 		if (rp > &regs[nregs]) {
-			panic("unexpected OFW translations format");
+			ofpanic("unexpected OFW translations format");
 		}
 
 		/* Wouldn't expect this, but... */
@@ -418,16 +423,16 @@ ofw_bootstrap_get_translations(void)
 			continue;
 		}
 
-		aprint_normal("translation %d virt=%#"PRIx32
+		ofprint("translation %d virt=%#"PRIx32
 		    " phys=%#"PRIx64" size=%#"PRIx32" mode=%#"PRIx32"\n",
 		    idx, virt, phys, size, mode);
 		
 		if (sizeof(paddr_t) < 8 && phys >= 0x100000000ULL) {
-			panic("translation phys out of range");
+			ofpanic("translation phys out of range");
 		}
 
 		if (idx == OFW_MAX_TRANSLATIONS) {
-			panic("too many OFW translations");
+			ofpanic("too many OFW translations");
 		}
 
 		ofw_translations[idx].virt = virt;
