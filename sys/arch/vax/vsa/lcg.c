@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.10 2022/07/06 12:33:41 andvar Exp $ */
+/*	$NetBSD: lcg.c,v 1.11 2022/12/10 19:50:43 jakllsch Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.10 2022/07/06 12:33:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.11 2022/12/10 19:50:43 jakllsch Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -433,7 +433,7 @@ lcg_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct vsbus_softc *sc = device_private(parent);
 	struct vsbus_attach_args *va = aux;
-	char *ch = (char *)va->va_addr;
+	volatile char * const ch = (char *)va->va_addr;
 
 	if ((vax_boardtype != VAX_BTYP_46) && (vax_boardtype != VAX_BTYP_48))
 		return 0;
