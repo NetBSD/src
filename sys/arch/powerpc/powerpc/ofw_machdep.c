@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.34 2022/12/10 13:06:41 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.35 2022/12/10 13:15:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.34 2022/12/10 13:06:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.35 2022/12/10 13:15:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -254,7 +254,7 @@ ofw_bootstrap_get_memory(void)
 #endif
 		OFmem[memcnt].start = addr;
 		OFmem[memcnt].size = size;
-		ofprint("mem region %d start=%"PRIx64" size=%"PRIx64"\n",
+		DPRINTF("mem region %d start=%"PRIx64" size=%"PRIx64"\n",
 		    memcnt, addr, size);
 		memcnt++;
 	}
@@ -317,7 +317,7 @@ ofw_bootstrap_get_memory(void)
 #endif
 		OFavail[cnt].start = addr;
 		OFavail[cnt].size = size;
-		ofprint("avail region %d start=%#"PRIx64" size=%#"PRIx64"\n",
+		DPRINTF("avail region %d start=%#"PRIx64" size=%#"PRIx64"\n",
 		    cnt, addr, size);
 		cnt++;
 	}
@@ -423,7 +423,7 @@ ofw_bootstrap_get_translations(void)
 			continue;
 		}
 
-		ofprint("translation %d virt=%#"PRIx32
+		DPRINTF("translation %d virt=%#"PRIx32
 		    " phys=%#"PRIx64" size=%#"PRIx32" mode=%#"PRIx32"\n",
 		    idx, virt, phys, size, mode);
 		
@@ -488,7 +488,7 @@ ofw_bootstrap(void)
 			ofw_real_mode = false;
 		}
 	}
-	ofprint("OpenFirmware running in %s-mode\n",
+	DPRINTF("OpenFirmware running in %s-mode\n",
 	    ofw_real_mode ? "real" : "virtual");
 
 	/* Get #address-cells and #size-cells to fetching memory info. */
