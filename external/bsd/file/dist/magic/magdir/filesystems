@@ -1652,6 +1652,46 @@
 >&-1248	lelong		0		TIME optimization
 >&-1248	lelong		1		SPACE optimization
 
+42332	lelong		0x19012038	Unix Fast File system [v2ea] (little-endian)
+>&-1164	string		x		last mounted on %s,
+>&-696	string		>\0		volume name %s,
+>&-304	leqldate	x		last written at %s,
+>&-1167	byte		x		clean flag %d,
+>&-1168	byte		x		readonly flag %d,
+>&-296	lequad		x		number of blocks %lld,
+>&-288	lequad		x		number of data blocks %lld,
+>&-1332	lelong		x		number of cylinder groups %d,
+>&-1328	lelong		x		block size %d,
+>&-1324	lelong		x		fragment size %d,
+>&-180	lelong		x		average file size %d,
+>&-176	lelong		x		average number of files in dir %d,
+>&-272	lequad		x		pending blocks to free %lld,
+>&-264	lelong		x		pending inodes to free %d,
+>&-664	lequad		x		system-wide uuid %0llx,
+>&-1316	lelong		x		minimum percentage of free blocks %d,
+>&-1248	lelong		0		TIME optimization
+>&-1248	lelong		1		SPACE optimization
+
+66908	lelong		0x19012038	Unix Fast File system [v2ea] (little-endian)
+>&-1164	string		x		last mounted on %s,
+>&-696	string		>\0		volume name %s,
+>&-304	leqldate	x		last written at %s,
+>&-1167	byte		x		clean flag %d,
+>&-1168	byte		x		readonly flag %d,
+>&-296	lequad		x		number of blocks %lld,
+>&-288	lequad		x		number of data blocks %lld,
+>&-1332	lelong		x		number of cylinder groups %d,
+>&-1328	lelong		x		block size %d,
+>&-1324	lelong		x		fragment size %d,
+>&-180	lelong		x		average file size %d,
+>&-176	lelong		x		average number of files in dir %d,
+>&-272	lequad		x		pending blocks to free %lld,
+>&-264	lelong		x		pending inodes to free %d,
+>&-664	lequad		x		system-wide uuid %0llx,
+>&-1316	lelong		x		minimum percentage of free blocks %d,
+>&-1248	lelong		0		TIME optimization
+>&-1248	lelong		1		SPACE optimization
+
 9564	belong		0x00011954	Unix Fast File system [v1] (big-endian),
 >7168   belong		0x4c41424c	Apple UFS Volume
 >>7186  string		x		named %s,
@@ -1693,6 +1733,46 @@
 >&-1248	belong		1		SPACE optimization
 
 66908	belong		0x19540119	Unix Fast File system [v2] (big-endian)
+>&-1164	string		x		last mounted on %s,
+>&-696	string		>\0		volume name %s,
+>&-304	beqldate	x		last written at %s,
+>&-1167	byte		x		clean flag %d,
+>&-1168	byte		x		readonly flag %d,
+>&-296	bequad		x		number of blocks %lld,
+>&-288	bequad		x		number of data blocks %lld,
+>&-1332	belong		x		number of cylinder groups %d,
+>&-1328	belong		x		block size %d,
+>&-1324	belong		x		fragment size %d,
+>&-180	belong		x		average file size %d,
+>&-176	belong		x		average number of files in dir %d,
+>&-272	bequad		x		pending blocks to free %lld,
+>&-264	belong		x		pending inodes to free %d,
+>&-664	bequad		x		system-wide uuid %0llx,
+>&-1316	belong		x		minimum percentage of free blocks %d,
+>&-1248	belong		0		TIME optimization
+>&-1248	belong		1		SPACE optimization
+
+42332	belong		0x19012038	Unix Fast File system [v2ea] (big-endian)
+>&-1164	string		x		last mounted on %s,
+>&-696	string		>\0		volume name %s,
+>&-304	beqldate	x		last written at %s,
+>&-1167	byte		x		clean flag %d,
+>&-1168	byte		x		readonly flag %d,
+>&-296	bequad		x		number of blocks %lld,
+>&-288	bequad		x		number of data blocks %lld,
+>&-1332	belong		x		number of cylinder groups %d,
+>&-1328	belong		x		block size %d,
+>&-1324	belong		x		fragment size %d,
+>&-180	belong		x		average file size %d,
+>&-176	belong		x		average number of files in dir %d,
+>&-272	bequad		x		pending blocks to free %lld,
+>&-264	belong		x		pending inodes to free %d,
+>&-664	bequad		x		system-wide uuid %0llx,
+>&-1316	belong		x		minimum percentage of free blocks %d,
+>&-1248	belong		0		TIME optimization
+>&-1248	belong		1		SPACE optimization
+
+66908	belong		0x19012038	Unix Fast File system [v2ea] (big-endian)
 >&-1164	string		x		last mounted on %s,
 >&-696	string		>\0		volume name %s,
 >&-304	beqldate	x		last written at %s,
