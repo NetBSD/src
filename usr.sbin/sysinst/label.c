@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.43 2022/11/30 15:53:35 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.44 2022/12/10 16:13:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.43 2022/11/30 15:53:35 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.44 2022/12/10 16:13:19 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -795,7 +795,7 @@ edit_fs_type(menudesc *menu, void *arg)
 	if (opts == NULL)
 		return 0;
 
-	/* special case entry 0 and 1: three FFS entries */
+	/* special case entry 0 - 2: three FFS entries */
 	for (i = 0; i < __arraycount(edit_fs_common_types); i++) {
 		opts[i+2].opt_name = getfslabelname(edit_fs_common_types[i], 0);
 		opts[i+2].opt_action = set_fstype;
@@ -1190,16 +1190,17 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 	if (opt < 4) {
 		switch (opt) {
 		case 0:
-			if (edit->info.fs_type == FS_BSDFFS)
+			if (edit->info.fs_type == FS_BSDFFS) {
 				if (edit->info.fs_sub_type == 3)
 					c = msg_string(MSG_fs_type_ffsv2ea);
 				else if (edit->info.fs_sub_type == 2)
 					c = msg_string(MSG_fs_type_ffsv2);
 				else
 					c = msg_string(MSG_fs_type_ffs);
-			else
+			} else {
 				c = getfslabelname(edit->info.fs_type,
 				    edit->info.fs_sub_type);
+			}
 			wprintw(m->mw, "%*s : %s", col_width, ptn_type, c);
 			return;
 		case 1:
