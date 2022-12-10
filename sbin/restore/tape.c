@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.72 2022/05/05 07:45:43 mrg Exp $	*/
+/*	$NetBSD: tape.c,v 1.73 2022/12/10 18:49:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.72 2022/05/05 07:45:43 mrg Exp $");
+__RCSID("$NetBSD: tape.c,v 1.73 2022/12/10 18:49:44 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,9 @@ extractfile(char *name)
 		ctimep[1].tv_nsec = curfile.birthtime_nsec;
 	}
 	extsize = curfile.extsize;
-	uid = curfile.uid;
+	uid = getuid();
+	if (uid == 0)
+		uid = curfile.uid;
 	gid = curfile.gid;
 	mode = curfile.mode;
 	flags = curfile.file_flags;
