@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.53 2021/06/23 14:22:08 riastradh Exp $	*/
+/*	$NetBSD: dirs.c,v 1.54 2022/12/10 18:49:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.53 2021/06/23 14:22:08 riastradh Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.54 2022/12/10 18:49:44 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -598,6 +598,7 @@ setdirmodes(int flags)
 	struct entry *ep;
 	char *cp, *buf;
 	int bufsize;
+	uid_t myuid;
 
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
@@ -618,6 +619,7 @@ setdirmodes(int flags)
 	clearerr(mf);
 	bufsize = 0;
 	buf = NULL;
+	myuid = getuid();
 	for (;;) {
 		(void) fread((char *)&node, 1, sizeof(struct modeinfo), mf);
 		if (ferror(mf)) {
@@ -683,10 +685,13 @@ setdirmodes(int flags)
 					    "extended attributes for ", cp);
 				}
 			}
+			if (myuid != 0)
+				(void) chown(cp, myuid, node.gid);
+			else
+				(void) chown(cp, node.uid, node.gid);
+			(void) chmod(cp, node.mode);
 			(void) utimens(cp, node.ctimep);
 			(void) utimens(cp, node.mtimep);
-			(void) chown(cp, node.uid, node.gid);
-			(void) chmod(cp, node.mode);
 			if (Mtreefile) {
 				writemtree(cp, "dir",
 				    node.uid, node.gid, node.mode,
