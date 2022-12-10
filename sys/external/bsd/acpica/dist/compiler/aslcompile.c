@@ -133,7 +133,7 @@ CmDoCompile (
 
     if (AslGbl_SyntaxError)
     {
-        fprintf (stderr,
+        AslError (ASL_ERROR, ASL_MSG_SYNTAX, NULL,
             "Compiler aborting due to parser-detected syntax error(s)\n");
 
         /* Flag this error in the FileNode for compilation summary */
@@ -142,6 +142,8 @@ CmDoCompile (
         FileNode->ParserErrorDetected = TRUE;
         AslGbl_ParserErrorDetected = TRUE;
         LsDumpParseTree ();
+        AePrintErrorLog(ASL_FILE_STDERR);
+
         goto ErrorExit;
     }
 
@@ -159,6 +161,8 @@ CmDoCompile (
         goto ErrorExit;
     }
 
+    AePrintErrorLog(ASL_FILE_STDERR);
+
     /* Flush out any remaining source after parse tree is complete */
 
     Event = UtBeginEvent ("Flush source input");
@@ -175,10 +179,13 @@ CmDoCompile (
 
     LsDumpParseTree ();
 
+    AslGbl_ParserErrorDetected = FALSE;
+    AslGbl_SyntaxError = FALSE;
     UtEndEvent (Event);
     UtEndEvent (FullCompile);
-    return (AE_OK);
 
+    AslGbl_ParserErrorDetected = FALSE;
+    AslGbl_SyntaxError = FALSE;
 ErrorExit:
     UtEndEvent (FullCompile);
     return (AE_ERROR);
@@ -811,7 +818,6 @@ CmCleanupAndExit (
             ASL_MAX_ERROR_COUNT);
     }
 
-    AslGbl_ExceptionCount[ASL_ERROR] = 0;
     UtDisplaySummary (ASL_FILE_STDOUT);
 
     /*
