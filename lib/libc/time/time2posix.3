@@ -1,4 +1,7 @@
-.\"	$NetBSD: time2posix.3,v 1.22 2017/10/29 06:07:48 abhinav Exp $
+.\"	$NetBSD: time2posix.3,v 1.23 2022/12/11 17:57:23 christos Exp $
+.\" @(#)time2posix.3	7.7
+.\" This file is in the public domain, so clarified as of
+.\" 1996-06-05 by Arthur David Olson.
 .Dd October 6, 2014
 .Dt TIME2POSIX 3
 .Os
@@ -63,8 +66,8 @@ However, POSIX gives an arithmetic expression for directly computing a
 value from a given date/time, and the same relationship is assumed by
 some (usually older) applications.
 Any programs creating/dissecting
-.Va time_t Ns 's
-using such a relationship will typically not handle intervals over
+.Va time_t
+values using such a relationship will typically not handle intervals over
 leap seconds correctly.
 .Pp
 The
@@ -132,10 +135,10 @@ A leap second deletion would look like...
 [Note: posix2time(B+1) => A+0 or A+1]
 .Pp
 If leap-second support is not enabled, local
-.Va time_t Ns 's
+.Va time_t
 and POSIX
-.Va time_t Ns 's
-are equivalent, and both
+.Va time_t
+values are equivalent, and both
 .Fn time2posix
 and
 .Fn posix2time
@@ -149,6 +152,3 @@ degenerate to the identity function.
 .Xr mktime_z 3 ,
 .Xr time 3 ,
 .Xr tzalloc 3
-.\" @(#)time2posix.3	7.7
-.\" This file is in the public domain, so clarified as of
-.\" 1996-06-05 by Arthur David Olson.
