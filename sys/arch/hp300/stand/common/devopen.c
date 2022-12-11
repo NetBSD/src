@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.12 2018/03/08 03:12:01 mrg Exp $	*/
+/*	$NetBSD: devopen.c,v 1.13 2022/12/11 07:39:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>
+#include <hp300/stand/common/conf.h>
 #include <hp300/stand/common/samachdep.h>
 
 u_int opendev;
@@ -96,18 +97,21 @@ devlookup(const char *d, int len)
 			switch (i) {
 			case 0:	/* ct */
 				memcpy(file_system, file_system_rawfs,
-				    sizeof(struct fs_ops));
+				    sizeof(file_system_rawfs));
+				nfsys = 1;
 				break;
 
 			case 2:	/* rd */
 			case 4:	/* sd */
 				memcpy(file_system, file_system_ufs,
-				    sizeof(struct fs_ops));
+				    sizeof(file_system_ufs));
+				nfsys = NFSYS_UFS;
 				break;
 
 			case 6:	/* le */
 				memcpy(file_system, file_system_nfs,
-				    sizeof(struct fs_ops));
+				    sizeof(file_system_nfs));
+				nfsys = 1;
 				break;
 
 			default:
@@ -250,16 +254,22 @@ devopen(struct open_file *f, const char *fname, char **file)
 	 */
 	switch (dev) {
 	case 0:		/* ct */
-		memcpy(file_system, file_system_rawfs, sizeof(struct fs_ops));
+		memcpy(file_system, file_system_rawfs,
+		    sizeof(file_system_rawfs));
+		nfsys = 1;
 		break;
 
 	case 2:		/* rd */
 	case 4:		/* sd */
-		memcpy(file_system, file_system_ufs, sizeof(struct fs_ops));
+		memcpy(file_system, file_system_ufs,
+		    sizeof(file_system_ufs));
+		nfsys = NFSYS_UFS;
 		break; 
 
 	case 6:		/* le */
-		memcpy(file_system, file_system_nfs, sizeof(struct fs_ops));
+		memcpy(file_system, file_system_nfs,
+		    sizeof(file_system_nfs));
+		nfsys = 1;
 		break;
 
 	default:
