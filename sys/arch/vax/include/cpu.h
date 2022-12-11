@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.105 2021/08/14 17:51:19 ryo Exp $      */
+/*      $NetBSD: cpu.h,v 1.106 2022/12/11 18:02:40 oster Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -157,9 +157,11 @@ extern int cpu_printfataltraps;
 #define	curlwp			((struct lwp *)mfpr(PR_SSP))
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, l, flags)		\
-	do {					\
-		__USE(flags);			\
-		mtpr(AST_OK,PR_ASTLVL);		\
+	do {							\
+		struct pcb *pcb = lwp_getpcb(curlwp);		\
+		__USE(flags);					\
+		pcb->P0LR = (pcb->P0LR & ~AST_MASK) | AST_ON;	\
+		mtpr(AST_OK,PR_ASTLVL);				\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
 
@@ -198,7 +200,12 @@ extern char vax_mp_tramp;
  * process as soon as possible.
  */
 
-#define cpu_signotify(l)     mtpr(AST_OK,PR_ASTLVL)
+#define cpu_signotify(l)					\
+	do {							\
+		struct pcb *pcb = lwp_getpcb(l);		\
+		pcb->P0LR = (pcb->P0LR & ~AST_MASK) | AST_ON;	\
+		mtpr(AST_OK,PR_ASTLVL);				\
+	} while (/*CONSTCOND*/ 0)
 
 
 /*
@@ -206,7 +213,13 @@ extern char vax_mp_tramp;
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define cpu_need_proftick(l) do { (l)->l_pflag |= LP_OWEUPC; mtpr(AST_OK,PR_ASTLVL); } while (/*CONSTCOND*/ 0)
+#define cpu_need_proftick(l) 					\
+	do {							\
+		struct pcb *pcb = lwp_getpcb(l);		\
+		(l)->l_pflag |= LP_OWEUPC;			\
+		pcb->P0LR = (pcb->P0LR & ~AST_MASK) | AST_ON;	\
+		mtpr(AST_OK,PR_ASTLVL);				\
+	} while (/*CONSTCOND*/ 0)
 
 /*
  * This defines the I/O device register space size in pages.
