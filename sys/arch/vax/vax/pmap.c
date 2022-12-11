@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.194 2022/02/11 17:26:55 riastradh Exp $	   */
+/*	$NetBSD: pmap.c,v 1.195 2022/12/11 18:02:40 oster Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2022/02/11 17:26:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2022/12/11 18:02:40 oster Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -552,7 +552,7 @@ update_pcbs(struct pmap *pm)
 	for (pcb = pm->pm_pcbs; pcb != NULL; pcb = pcb->pcb_pmnext) {
 		KASSERT(pcb->pcb_pm == pm);
 		pcb->P0BR = pm->pm_p0br;
-		pcb->P0LR = pm->pm_p0lr|AST_PCB;
+		pcb->P0LR = pm->pm_p0lr | (pcb->P0LR & AST_MASK);
 		pcb->P1BR = pm->pm_p1br;
 		pcb->P1LR = pm->pm_p1lr;
 		
@@ -561,7 +561,7 @@ update_pcbs(struct pmap *pm)
 	/* If curlwp uses this pmap update the regs too */ 
 	if (pm == curproc->p_vmspace->vm_map.pmap) {
 		mtpr((uintptr_t)pm->pm_p0br, PR_P0BR);
-		mtpr(pm->pm_p0lr|AST_PCB, PR_P0LR);
+		mtpr(pm->pm_p0lr, PR_P0LR);
 		mtpr((uintptr_t)pm->pm_p1br, PR_P1BR);
 		mtpr(pm->pm_p1lr, PR_P1LR);
 	}

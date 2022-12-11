@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 2017/05/22 17:12:11 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16 2022/12/11 18:02:40 oster Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@ struct pcb {
 	long	P0LR;		/*  Page 0 Length Register    */
 	struct	pte *P1BR;	/*  Page 1 Base Register      */
 	long	P1LR;		/*  Page 1 Length Register    */
+	long	ASN;		/*  Address space number      */
 
 	/* Software registers, only used by kernel software */
 	void   *pcb_onfault;	/* Tells whether fault copy */
@@ -58,7 +59,8 @@ struct pcb {
 };
 
 #define	AST_MASK 0x07000000
-#define	AST_PCB	 0x04000000
+#define	AST_PCB	 0x04000000	/* disable AST */
+#define	AST_ON	 0x03000000	/* request AST */
 
 /* machine-specific core dump; save trapframe */
 struct	md_coredump {
