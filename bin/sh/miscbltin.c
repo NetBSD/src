@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.52 2022/08/19 12:52:31 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.53 2022/12/11 08:23:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.52 2022/08/19 12:52:31 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.53 2022/12/11 08:23:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ readcmd(int argc, char **argv)
 {
 	char **ap;
 	char c;
+	char end;
 	int rflag;
 	char *prompt;
 	const char *ifs;
@@ -102,13 +103,21 @@ readcmd(int argc, char **argv)
 	int saveall = 0;
 	ptrdiff_t wordlen = 0;
 
+	end = '\n';				/* record delimiter */
 	rflag = 0;
 	prompt = NULL;
-	while ((i = nextopt("p:r")) != '\0') {
-		if (i == 'p')
+	while ((i = nextopt("d:p:r")) != '\0') {
+		switch (i) {
+		case 'd':
+			end = *optionarg;	/* even if '\0' */
+			break;
+		case 'p':
 			prompt = optionarg;
-		else
+			break;
+		case 'r':
 			rflag = 1;
+			break;
+		}
 	}
 
 	if (*(ap = argptr) == NULL)
@@ -131,19 +140,19 @@ readcmd(int argc, char **argv)
 			status = 1;
 			break;
 		}
-		if (c == '\0')
-			continue;
-		if (c == '\\' && !rflag) {
+		if (c == '\\' && c != end && !rflag) {
 			if (read(0, &c, 1) != 1) {
 				status = 1;
 				break;
 			}
-			if (c != '\n')
+			if (c != '\n')	/* \ \n is always just removed */
 				goto wdch;
 			continue;
 		}
-		if (c == '\n')
+		if (c == end)
 			break;
+		if (c == '\0')
+			continue;
 		if (strchr(ifs, c))
 			is_ifs = strchr(" \t\n", c) ? 1 : 2;
 		else
@@ -167,6 +176,8 @@ readcmd(int argc, char **argv)
 
 		if (is_ifs == 0) {
   wdch:;
+			if (c == '\0')	/* always ignore attempts to input \0 */
+				continue;
 			/* append this character to the current variable */
 			startword = 0;
 			if (saveall)
