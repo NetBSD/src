@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.251 2022/10/30 01:19:08 kre Exp $
+.\"	$NetBSD: sh.1,v 1.252 2022/12/11 08:23:10 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,8 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.\" RIP Noi, October 6, 1959 --
-.Dd August 26, 2022
+.Dd December 9, 2022
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpquVvXx
@@ -3583,15 +3582,21 @@ the program will use
 and the built-in uses a separately cached value.
 .\"
 .Pp
-.It Ic read Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
+.It Ic read Oo Fl d Ar delim Oc Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
 The
 .Ar prompt
 is printed on standard error if the
 .Fl p
 option is specified and the standard input is a terminal.
-Then a line is read from the standard input.
-The trailing newline is deleted from the
-line and the line is split as described in the field splitting section of the
+Then a record, terminated by the
+first character of
+.Ar delim
+if the
+.Fl d
+option was given, or a newline character otherwise,
+is read from the standard input.
+The ending delimiter is deleted from the
+record which is then split as described in the field splitting section of the
 .Sx Word Expansions
 section above.
 The pieces are assigned to the
@@ -3614,17 +3619,41 @@ which case failure is returned.
 By default, unless the
 .Fl r
 option is specified, the backslash
-.Dq \e
-acts as an escape character, causing the following character to be treated
-literally.
+.Pq Ql \e
+acts as an escape character,
+causing the following character,
+when that character is the escape character, or end delimiter character,
+to be treated literally when reading the record.
 This is the only form of quoting that applies.
 If an unescaped backslash is followed by a newline,
 the backslash and the newline will be deleted,
-and replaced by the contents of the following line,
+and replaced by the contents from the following line,
 which is processed as if it had been part of the original line.
 This includes reading yet more input if necessary,
-until a line is read that is not terminated by
-an unescaped backslash immediately before the newline.
+until a line is read that contains or ends with an unescaped
+copy of the delimiter character.
+If the end delimiter (when it is not a newline) is escaoed,
+it is treated as a normal character, and
+.Ic read
+continues looking for an unescaped end delimiter character.
+No other escape sequences are meaningful, the escape character
+is simply ignored.
+This happens as the record is read,
+before field splitting occurs.
+When
+.Fl r
+is used,
+no escaping occurs,
+no line joining happens,
+any input backslash is simply an input character.
+.Pp
+Note that if
+.Ar delim
+is given as an empty string, the nul character
+.Pq Ql \e0
+is used as the delimiter.
+Other than this use, any nul characters in the input
+stream are silently deleted.
 .\"
 .Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
