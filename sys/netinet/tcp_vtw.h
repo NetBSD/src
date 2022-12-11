@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.9 2018/04/19 21:21:44 christos Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.10 2022/12/11 08:09:20 mlelstv Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -151,7 +151,11 @@
  */
 struct fatp_mi;
 
+#if CACHE_LINE_SIZE == 128
+typedef uint64_t fatp_word_t;
+#else
 typedef uint32_t fatp_word_t;
+#endif
 
 typedef struct fatp_mi	fatp_t;
 
@@ -161,7 +165,7 @@ typedef struct fatp_mi	fatp_t;
 #define	FATP_NTAGS	(CACHE_LINE_SIZE / sizeof(fatp_word_t) - 1)
 #define	FATP_NXT_WIDTH	(sizeof(fatp_word_t) * NBBY - FATP_NTAGS)
 
-#define	FATP_MAX	(1 << FATP_NXT_WIDTH)
+#define	FATP_MAX	(1 << (FATP_NXT_WIDTH < 31 ? FATP_NXT_WIDTH : 31))
 
 /* Worked example: ULP32 with 64-byte cacheline (32-bit x86):
  * 15 tags per cacheline.  At most 2^17 fat pointers per fatp_ctl_t.
