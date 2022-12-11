@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2007/12/23 03:11:32 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2022/12/11 06:27:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -143,21 +143,3 @@ struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
 
 struct fs_ops file_system[1];
 int	nfsys = 1;		/* we always know which one we want */
-
-#if 0
-/*
- * Inititalize controllers
- *
- * XXX this should be a table
- */
-void ctlrinit(void)
-{
-#ifdef SUPPORT_ETHERNET
-	leinit();
-#endif
-#if defined(SUPPORT_DISK) || defined(SUPPORT_TAPE)
-	hpibinit();
-	scsiinit();
-#endif
-}
-#endif
