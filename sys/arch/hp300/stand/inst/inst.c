@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.23 2018/09/04 15:08:30 riastradh Exp $	*/
+/*	$NetBSD: inst.c,v 1.24 2022/12/11 06:20:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,11 +77,6 @@
 #include <hp300/stand/common/samachdep.h>
 
 char line[100];
-
-extern	u_int opendev;
-extern	char *lowram;
-extern	int noconsole;
-extern	int netio_ask;
 
 char	*kernel_name = "/netbsd";
 
