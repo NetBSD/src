@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.19 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.20 2022/12/11 01:36:49 chs Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.19 2022/12/01 00:32:52 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.20 2022/12/11 01:36:49 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,8 @@ tprof_start(tprof_countermask_t runmask)
 			workqueue_enqueue(tprof_wq, &c->c_work, ci);
 		}
 	}
+	error = 0;
+
 done:
 	return error;
 }
