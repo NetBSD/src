@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.20 2016/06/11 06:22:11 dholland Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.21 2022/12/11 06:20:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -68,6 +68,7 @@ int sctoaddr(int);
 
 /* cons.c */
 extern	int cons_scode;
+extern	int noconsole;
 void cninit(void);
 int cngetc(void);
 int cnputc(int);
@@ -85,6 +86,9 @@ void romputchar(int);
 void transfer(char *, int, int, int, char *, char *);
 int trap(struct trapframe *);
 
+/* netio.c */
+extern	int netio_ask;
+
 /* prf.c */
 int tgetchar(void);
 
@@ -92,6 +96,7 @@ int tgetchar(void);
 extern	u_int bootdev;
 extern	int machineid, mmuid;
 extern	int howto;
+extern	char *lowram;
 int badaddr(void *);
 void call_req_reboot(void);
 void romout(int, char *);
