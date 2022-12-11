@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.17 2016/06/11 06:22:11 dholland Exp $	*/
+/*	$NetBSD: uboot.c,v 1.18 2022/12/11 06:20:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -46,10 +46,6 @@
  */
 
 char line[100];
-
-extern	u_int opendev;
-extern	char *lowram;
-extern	int noconsole;
 
 /*
  * XXX UFS accepts a /, NFS doesn't.
