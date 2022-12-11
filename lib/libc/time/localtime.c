@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.135 2022/10/29 13:55:50 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.136 2022/12/11 17:57:23 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.135 2022/10/29 13:55:50 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.136 2022/12/11 17:57:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -485,8 +485,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 #endif
 	if (!doaccess) {
 		char const *dot;
-		size_t namelen = strlen(name);
-		if (sizeof lsp->fullname - sizeof tzdirslash <= namelen)
+		if (sizeof lsp->fullname - sizeof tzdirslash <= strlen(name))
 		  return ENAMETOOLONG;
 
 		/* Create a string "TZDIR/NAME".  Using sprintf here
@@ -895,7 +894,7 @@ is_digit(char c)
 ** Return a pointer to that character.
 */
 
-static ATTRIBUTE_PURE const char *
+static ATTRIBUTE_REPRODUCIBLE const char *
 getzname(register const char *strp)
 {
 	register char	c;
@@ -916,7 +915,7 @@ getzname(register const char *strp)
 ** We don't do any checking here; checking is done later in common-case code.
 */
 
-static ATTRIBUTE_PURE const char *
+static ATTRIBUTE_REPRODUCIBLE const char *
 getqzname(register const char *strp, const int delim)
 {
 	register int	c;
@@ -1182,13 +1181,11 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 {
 	const char *			stdname;
 	const char *			dstname;
-	size_t				stdlen;
-	size_t				dstlen;
-	size_t				charcnt;
 	int_fast32_t			stdoffset;
 	int_fast32_t			dstoffset;
 	register char *			cp;
 	register bool			load_ok;
+	ptrdiff_t stdlen, dstlen, charcnt;
 	time_t atlo = TIME_T_MIN, leaplo = TIME_T_MIN;
 
 	dstname = NULL; /* XXX gcc */
@@ -1211,7 +1208,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 	if (name == NULL)
 	  return false;
 	charcnt = stdlen + 1;
-	if (sizeof sp->chars < charcnt)
+	if ((ptrdiff_t)sizeof sp->chars < charcnt)
 	  return false;
 	if (basep) {
 	  if (0 < basep->timecnt)
@@ -1242,7 +1239,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 		if (!dstlen)
 		  return false;
 		charcnt += dstlen + 1;
-		if (sizeof sp->chars < charcnt)
+		if ((ptrdiff_t)sizeof sp->chars < charcnt)
 		  return false;
 		if (*name != '\0' && *name != ',' && *name != ';') {
 			name = getoffset(name, &dstoffset);
@@ -1647,6 +1644,14 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t setname,
 			}
 			result = localsub(sp, &newt, setname, tmp);
 			if (result) {
+#if defined ckd_add && defined ckd_sub
+				if (t < sp->ats[0]
+				    ? ckd_sub(&result->tm_year,
+					      result->tm_year, years)
+				    : ckd_add(&result->tm_year,
+					      result->tm_year, years))
+				  return NULL;
+#else
 				register int_fast64_t newy;
 
 				newy = result->tm_year;
@@ -1658,6 +1663,7 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t setname,
 					return NULL;
 				}
 				result->tm_year = (int)newy;
+#endif
 			}
 			return result;
 	}
@@ -1733,8 +1739,8 @@ localtime_r(const time_t * __restrict timep, struct tm *tmp)
 */
 
 static struct tm *
-gmtsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
-       struct tm *tmp)
+gmtsub(ATTRIBUTE_MAYBE_UNUSED struct state const *sp, time_t const *timep,
+       int_fast32_t offset, struct tm *tmp)
 {
 	register struct tm *	result;
 
@@ -1910,6 +1916,12 @@ timesub(const time_t *timep, int_fast32_t offset,
 		y = newy;
 	}
 
+#ifdef ckd_add
+	if (ckd_add(&tmp->tm_year, y, -TM_YEAR_BASE)) {
+	  errno = EOVERFLOW;
+	  return NULL;
+	}
+#else
 	if (!TYPE_SIGNED(time_t) && y < TM_YEAR_BASE) {
 	  int signed_y = (int)y;
 	  tmp->tm_year = signed_y - TM_YEAR_BASE;
@@ -1920,6 +1932,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	  errno = EOVERFLOW;
 	  return NULL;
 	}
+#endif
 	tmp->tm_yday = idays;
 	/*
 	** The "extra" mods below avoid overflow problems.
@@ -2005,6 +2018,9 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 static bool
 increment_overflow(int *ip, int j)
 {
+#ifdef ckd_add
+	return ckd_add(ip, *ip, j);
+#else
 	register int const	i = *ip;
 
 	/*
@@ -2017,22 +2033,30 @@ increment_overflow(int *ip, int j)
 		return true;
 	*ip += j;
 	return false;
+#endif
 }
 
 static bool
 increment_overflow32(int_fast32_t *const lp, int const m)
 {
+#ifdef ckd_add
+	return ckd_add(lp, *lp, m);
+#else
 	register int_fast32_t const	l = *lp;
 
 	if ((l >= 0) ? (m > INT_FAST32_MAX - l) : (m < INT_FAST32_MIN - l))
 		return true;
 	*lp += m;
 	return false;
+#endif
 }
 
 static bool
 increment_overflow_time(__time_t *tp, int_fast32_t j)
 {
+#ifdef ckd_add
+	return ckd_add(tp, *tp, j);
+#else
 	/*
 	** This is like
 	** 'if (! (TIME_T_MIN <= *tp + j && *tp + j <= TIME_T_MAX)) ...',
@@ -2044,6 +2068,7 @@ increment_overflow_time(__time_t *tp, int_fast32_t j)
 		return true;
 	*tp += j;
 	return false;
+#endif
 }
 
 static bool
@@ -2086,6 +2111,23 @@ tmcomp(register const struct tm *const atmp,
 	return result;
 }
 
+/* Copy to *DEST from *SRC.  Copy only the members needed for mktime,
+   as other members might not be initialized.  */
+static void
+mktmcpy(struct tm *dest, struct tm const *src)
+{
+  dest->tm_sec = src->tm_sec;
+  dest->tm_min = src->tm_min;
+  dest->tm_hour = src->tm_hour;
+  dest->tm_mday = src->tm_mday;
+  dest->tm_mon = src->tm_mon;
+  dest->tm_year = src->tm_year;
+  dest->tm_isdst = src->tm_isdst;
+#if defined TM_GMTOFF && ! UNINIT_TRAP
+  dest->TM_GMTOFF = src->TM_GMTOFF;
+#endif
+}
+
 static time_t
 time2sub(struct tm *const tmp,
 	 struct tm *(*funcp)(struct state const *, time_t const *,
@@ -2110,7 +2152,8 @@ time2sub(struct tm *const tmp,
 	struct tm			yourtm, mytm;
 
 	*okayp = false;
-	yourtm = *tmp;
+	mktmcpy(&yourtm, tmp);
+
 #ifdef NO_ERROR_IN_DST_GAP
 again:
 #endif
@@ -2155,14 +2198,19 @@ again:
 				goto out_of_range;
 		}
 	}
+#ifdef ckd_add
+	if (ckd_add(&yourtm.tm_year, y, -TM_YEAR_BASE))
+	  return WRONG;
+#else
 	if (increment_overflow32(&y, -TM_YEAR_BASE))
 		goto out_of_range;
 	if (! (INT_MIN <= y && y <= INT_MAX))
 		goto out_of_range;
 	yourtm.tm_year = (int)y;
+#endif
 	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
 		saved_seconds = 0;
-	else if (y + TM_YEAR_BASE < EPOCH_YEAR) {
+	else if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
 		/*
 		** We can't set tm_sec to 0, because that might push the
 		** time below the minimum representable time.
@@ -2455,7 +2503,6 @@ mktime(struct tm *tmp)
 }
 
 #ifdef STD_INSPIRED
-
 time_t
 timelocal_z(const timezone_t sp, struct tm *const tmp)
 {
@@ -2471,13 +2518,9 @@ timelocal(struct tm *tmp)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
 	return mktime(tmp);
 }
-
-time_t
-timegm(struct tm *tmp)
-{
-  return timeoff(tmp, 0);
-}
-
+#else
+static
+#endif
 time_t
 timeoff(struct tm *tmp, long offset)
 {
@@ -2487,7 +2530,18 @@ timeoff(struct tm *tmp, long offset)
   return time1(tmp, gmtsub, gmtptr, (int_fast32_t)offset);
 }
 
-#endif /* defined STD_INSPIRED */
+time_t
+timegm(struct tm *tmp)
+{
+  time_t t;
+  struct tm tmcpy;
+  mktmcpy(&tmcpy, tmp);
+  tmcpy.tm_wday = -1;
+  t = timeoff(&tmcpy, 0);
+  if (0 <= tmcpy.tm_wday)
+    *tmp = tmcpy;
+  return t;
+}
 
 static int_fast32_t
 leapcorr(struct state const *sp, time_t t)

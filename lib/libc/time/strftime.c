@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.50 2022/08/16 10:56:21 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.51 2022/12/11 17:57:23 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.50 2022/08/16 10:56:21 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.51 2022/12/11 17:57:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,7 @@ strftime_z(const timezone_t sp, char * __restrict s, size_t maxsize,
 #if HAVE_STRFTIME_L
 size_t
 strftime_l(char *s, size_t maxsize, char const *format, struct tm const *t,
-	   locale_t locale)
+	   ATTRIBUTE_MAYBE_UNUSED locale_t locale)
 {
   /* Just call strftime, as only the C locale is supported.  */
   return strftime(s, maxsize, format, t);
@@ -374,12 +374,21 @@ label:
 								time_t) + 1];
 					time_t		mkt;
 
-					tm = *t;
+					tm.tm_sec = t->tm_sec;
+					tm.tm_min = t->tm_min;
+					tm.tm_hour = t->tm_hour;
+					tm.tm_mday = t->tm_mday;
+					tm.tm_mon = t->tm_mon;
+					tm.tm_year = t->tm_year;
+					tm.tm_isdst = t->tm_isdst;
+#if defined TM_GMTOFF && ! UNINIT_TRAP
+					tm.TM_GMTOFF = t->TM_GMTOFF;
+#endif
 					mkt = mktime_z(sp, &tm);
-					/* There is no portable, definitive
-					   test for whether whether mktime
-					   succeeded, so treat (time_t) -1 as
-					   the success that it might be.  */
+					/* If mktime fails, %s expands to the
+					   value of (time_t) -1 as a failure
+					   marker; this is better in practice
+					   than strftime failing.  */
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t)) {
 						intmax_t n = mkt;
