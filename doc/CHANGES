@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2937 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2938 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -755,3 +755,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tprof: Add AMD family 19h (zen3 and zen4) support to tprof(4) and
 		tprof(8). [msaitoh 20221208]
 	acpi(4): Updated ACPICA to 20221020. [christos 20221210]
+	tzdata: updated to 2022g (using the 2022ggtz fork) [kre 20221211]
