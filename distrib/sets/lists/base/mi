@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1312 2022/08/27 21:53:38 dholland Exp $
+# $NetBSD: mi,v 1.1313 2022/12/11 06:50:31 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -348,9 +348,9 @@
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/bioctl					base-sysutil-root
-./sbin/blkdiscard				base-sysutil-root
 ./sbin/blacklistctl				base-obsolete		obsolete
 ./sbin/blacklistd				base-obsolete		obsolete
+./sbin/blkdiscard				base-sysutil-root
 ./sbin/blocklistctl				base-sysutil-root
 ./sbin/blocklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
@@ -792,8 +792,8 @@
 ./usr/bin/realpath				base-util-bin
 ./usr/bin/renice				base-util-bin
 ./usr/bin/reset					base-util-bin
-./usr/bin/rev					base-util-bin
 ./usr/bin/resize				base-util-bin
+./usr/bin/rev					base-util-bin
 ./usr/bin/revoke				base-util-bin
 ./usr/bin/rfcomm_sppd				base-util-bin
 ./usr/bin/rlog					base-rcs-bin
@@ -962,13 +962,14 @@
 ./usr/include/altq				base-c-usr
 ./usr/include/arpa				base-c-usr
 ./usr/include/c++				base-cxx-usr
-./usr/include/c++/experimental			base-cxx-usr
-./usr/include/c++/ext				base-cxx-usr
 ./usr/include/c++/__iterator			base-cxx-usr
 ./usr/include/c++/__memory			base-cxx-usr
 ./usr/include/c++/__ranges			base-cxx-usr
 ./usr/include/c++/__utility			base-cxx-usr
+./usr/include/c++/experimental			base-cxx-usr
+./usr/include/c++/ext				base-cxx-usr
 ./usr/include/cdk				base-obsolete		obsolete
+./usr/include/clang-13.0			base-c-usr
 ./usr/include/clang-3.4				base-obsolete		obsolete
 ./usr/include/clang-3.5				base-obsolete		obsolete
 ./usr/include/clang-3.6				base-obsolete		obsolete
@@ -977,7 +978,6 @@
 ./usr/include/clang-5.0				base-obsolete		obsolete
 ./usr/include/clang-7.0				base-obsolete		obsolete
 ./usr/include/clang-9.0				base-obsolete		obsolete
-./usr/include/clang-13.0			base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
@@ -1082,6 +1082,8 @@
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
 ./usr/include/g++/tr2				base-cxx-usr
+./usr/include/gcc-10				base-c-usr
+./usr/include/gcc-10/sanitizer			base-c-usr
 ./usr/include/gcc-4.1				base-obsolete		obsolete
 ./usr/include/gcc-4.5				base-obsolete		obsolete
 ./usr/include/gcc-4.8				base-obsolete		obsolete
@@ -1095,8 +1097,6 @@
 ./usr/include/gcc-8/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-9				base-c-usr
 ./usr/include/gcc-9/sanitizer			base-c-usr
-./usr/include/gcc-10				base-c-usr
-./usr/include/gcc-10/sanitizer			base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr
@@ -1173,6 +1173,13 @@
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr		compatdir
 ./usr/lib/clang					base-sys-usr
+./usr/lib/clang/13.0.0				base-sys-usr
+./usr/lib/clang/13.0.0/include			base-sys-usr
+./usr/lib/clang/13.0.0/include/sanitizer	base-sys-usr
+./usr/lib/clang/13.0.0/include/xray		base-sys-usr
+./usr/lib/clang/13.0.0/lib			base-sys-usr
+./usr/lib/clang/13.0.0/lib/netbsd		base-sys-usr
+./usr/lib/clang/13.0.0/share			base-sys-usr
 ./usr/lib/clang/7.0.0				base-obsolete	obsolete
 ./usr/lib/clang/7.0.0/include			base-obsolete	obsolete
 ./usr/lib/clang/7.0.0/include/sanitizer		base-obsolete	obsolete
@@ -1187,13 +1194,6 @@
 ./usr/lib/clang/9.0.0/lib			base-obsolete	obsolete
 ./usr/lib/clang/9.0.0/lib/netbsd		base-obsolete	obsolete
 ./usr/lib/clang/9.0.0/share			base-obsolete	obsolete
-./usr/lib/clang/13.0.0				base-sys-usr
-./usr/lib/clang/13.0.0/include			base-sys-usr
-./usr/lib/clang/13.0.0/include/sanitizer	base-sys-usr
-./usr/lib/clang/13.0.0/include/xray		base-sys-usr
-./usr/lib/clang/13.0.0/lib			base-sys-usr
-./usr/lib/clang/13.0.0/lib/netbsd		base-sys-usr
-./usr/lib/clang/13.0.0/share			base-sys-usr
 ./usr/lib/dtrace				base-sys-usr		dtrace
 ./usr/lib/dtrace/errno.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/psinfo.d			base-sys-usr		dtrace
@@ -5062,14 +5062,6 @@
 ./usr/share/wscons/fonts/spleen-5x8.fnt		base-util-share		share
 ./usr/share/wscons/fonts/spleen-6x12.fnt	base-util-share		share
 ./usr/share/wscons/fonts/spleen-8x16.fnt	base-util-share		share
-./usr/share/wscons/fonts/ter-i12n.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i16b.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i16n.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i16v.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i20n.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i24n.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i28n.wsf		base-util-share		share
-./usr/share/wscons/fonts/ter-i32n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-112n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-116b.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-116n.wsf		base-util-share		share
@@ -5078,6 +5070,14 @@
 ./usr/share/wscons/fonts/ter-124n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-128n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-132n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i12n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i16b.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i16n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i16v.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i20n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i24n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i28n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-i32n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.808		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.810		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.814		base-util-share		share
@@ -5877,8 +5877,8 @@
 ./var/games/larn				base-games-root
 ./var/games/phantasia				base-games-root
 ./var/games/sail				base-games-root
-./var/games/warp				base-games-root
 ./var/games/save				base-obsolete		obsolete
+./var/games/warp				base-games-root
 ./var/heimdal					base-krb5-root
 ./var/lock					base-obsolete		obsolete
 ./var/lock/lvm					base-obsolete		obsolete
