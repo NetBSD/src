@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2019/09/23 13:42:36 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2022/12/11 07:41:37 tsutsui Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
 NEWVERSWHAT=	"Primary Boot"
 
 CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
+CPPFLAGS+=	-DSUPPORT_UFS2
 
 .include "../Makefile.buildboot"
 
