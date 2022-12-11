@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.63 2022/11/17 17:35:25 jakllsch Exp $	*/
+/*	$NetBSD: private.h,v 1.64 2022/12/11 17:57:23 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -28,6 +28,10 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
+
+#ifndef __STDC_VERSION__
+# define __STDC_VERSION__ 0
+#endif
 
 /* Define true, false and bool if they don't work out of the box.  */
 #if __STDC_VERSION__ < 199901
@@ -68,25 +72,11 @@
 # endif
 #endif
 /* _Generic is buggy in pre-4.9 GCC.  */
-#if !defined HAVE_GENERIC && defined __GNUC__
+#if !defined HAVE_GENERIC && defined __GNUC__ && !defined __STRICT_ANSI__
 # define HAVE_GENERIC (4 < __GNUC__ + (9 <= __GNUC_MINOR__))
 #endif
 #ifndef HAVE_GENERIC
 # define HAVE_GENERIC (201112 <= __STDC_VERSION__)
-#endif
-
-#if defined __APPLE__
-# define HAVE_GETRANDOM false
-#endif
-#if !defined HAVE_GETRANDOM && defined __has_include
-# if __has_include(<sys/random.h>)
-#  define HAVE_GETRANDOM true
-# else
-#  define HAVE_GETRANDOM false
-# endif
-#endif
-#ifndef HAVE_GETRANDOM
-# define HAVE_GETRANDOM (2 < __GLIBC__ + (25 <= __GLIBC_MINOR__))
 #endif
 
 #if !defined HAVE_GETTEXT && defined __has_include
@@ -308,36 +298,36 @@
 #endif
 
 /* Pre-C99 GCC compilers define __LONG_LONG_MAX__ instead of LLONG_MAX.  */
-#ifdef __LONG_LONG_MAX__
+#if defined __LONG_LONG_MAX__ && !defined __STRICT_ANSI__
 # ifndef LLONG_MAX
 #  define LLONG_MAX __LONG_LONG_MAX__
 # endif
 # ifndef LLONG_MIN
 #  define LLONG_MIN (-1 - LLONG_MAX)
 # endif
+# ifndef ULLONG_MAX
+#  define ULLONG_MAX (LLONG_MAX * 2ull + 1)
+# endif
 #endif
 
 #ifndef INT_FAST64_MAX
-# ifdef LLONG_MAX
-typedef long long	int_fast64_t;
-#  define INT_FAST64_MIN LLONG_MIN
-#  define INT_FAST64_MAX LLONG_MAX
-# else
-#  if LONG_MAX >> 31 < 0xffffffff
-Please use a compiler that supports a 64-bit integer type (or wider);
-you may need to compile with "-DHAVE_STDINT_H".
-#  endif
-typedef long		int_fast64_t;
+# if 1 <= LONG_MAX >> 31 >> 31
+typedef long int_fast64_t;
 #  define INT_FAST64_MIN LONG_MIN
 #  define INT_FAST64_MAX LONG_MAX
+# else
+/* If this fails, compile with -DHAVE_STDINT_H or with a better compiler.  */
+typedef long long int_fast64_t;
+#  define INT_FAST64_MIN LLONG_MIN
+#  define INT_FAST64_MAX LLONG_MAX
 # endif
 #endif
 
 #ifndef PRIdFAST64
-# if INT_FAST64_MAX == LLONG_MAX
-#  define PRIdFAST64 "lld"
-# else
+# if INT_FAST64_MAX == LONG_MAX
 #  define PRIdFAST64 "ld"
+# else
+#  define PRIdFAST64 "lld"
 # endif
 #endif
 
@@ -383,24 +373,27 @@ typedef long intmax_t;
 # endif
 #endif
 
+#ifndef PTRDIFF_MAX
+# define PTRDIFF_MAX MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t))
+#endif
+
 #ifndef UINT_FAST32_MAX
 typedef unsigned long uint_fast32_t;
 #endif
 
 #ifndef UINT_FAST64_MAX
-# if defined ULLONG_MAX || defined __LONG_LONG_MAX__
-typedef unsigned long long uint_fast64_t;
+# if 3 <= ULONG_MAX >> 31 >> 31
+typedef unsigned long uint_fast64_t;
+#  define UINT_FAST64_MAX ULONG_MAX
 # else
-#  if ULONG_MAX >> 31 >> 1 < 0xffffffff
-Please use a compiler that supports a 64-bit integer type (or wider);
-you may need to compile with "-DHAVE_STDINT_H".
-#  endif
-typedef unsigned long	uint_fast64_t;
+/* If this fails, compile with -DHAVE_STDINT_H or with a better compiler.  */
+typedef unsigned long long uint_fast64_t;
+#  define UINT_FAST64_MAX ULLONG_MAX
 # endif
 #endif
 
 #ifndef UINTMAX_MAX
-# if defined ULLONG_MAX || defined __LONG_LONG_MAX__
+# ifdef ULLONG_MAX
 typedef unsigned long long uintmax_t;
 # else
 typedef unsigned long uintmax_t;
@@ -408,7 +401,7 @@ typedef unsigned long uintmax_t;
 #endif
 
 #ifndef PRIuMAX
-# if defined ULLONG_MAX || defined __LONG_LONG_MAX__
+# ifdef ULLONG_MAX
 #  define PRIuMAX "llu"
 # else
 #  define PRIuMAX "lu"
@@ -419,23 +412,114 @@ typedef unsigned long uintmax_t;
 # define SIZE_MAX ((size_t) -1)
 #endif
 
+/* Support ckd_add, ckd_sub, ckd_mul on C23 or recent-enough GCC-like
+   hosts, unless compiled with -DHAVE_STDCKDINT_H=0 or with pre-C23 EDG.  */
+#if !defined HAVE_STDCKDINT_H && defined __has_include
+# if __has_include(<stdckdint.h>)
+#  define HAVE_STDCKDINT_H true
+# endif
+#endif
+#ifdef HAVE_STDCKDINT_H
+# if HAVE_STDCKDINT_H
+#  include <stdckdint.h>
+# endif
+#elif defined __EDG__
+/* Do nothing, to work around EDG bug <https://bugs.gnu.org/53256>.  */
+#elif defined __has_builtin
+# if __has_builtin(__builtin_add_overflow)
+#  define ckd_add(r, a, b) __builtin_add_overflow(a, b, r)
+# endif
+# if __has_builtin(__builtin_sub_overflow)
+#  define ckd_sub(r, a, b) __builtin_sub_overflow(a, b, r)
+# endif
+# if __has_builtin(__builtin_mul_overflow)
+#  define ckd_mul(r, a, b) __builtin_mul_overflow(a, b, r)
+# endif
+#elif 7 <= __GNUC__
+# define ckd_add(r, a, b) __builtin_add_overflow(a, b, r)
+# define ckd_sub(r, a, b) __builtin_sub_overflow(a, b, r)
+# define ckd_mul(r, a, b) __builtin_mul_overflow(a, b, r)
+#endif
+
 #if 3 <= __GNUC__
-# define ATTRIBUTE_CONST __attribute__((__const__))
 # define ATTRIBUTE_MALLOC __attribute__((__malloc__))
-# define ATTRIBUTE_PURE __attribute__((__pure__))
 # define ATTRIBUTE_FORMAT(spec) __attribute__((__format__ spec))
 #else
-# define ATTRIBUTE_CONST /* empty */
 # define ATTRIBUTE_MALLOC /* empty */
-# define ATTRIBUTE_PURE /* empty */
 # define ATTRIBUTE_FORMAT(spec) /* empty */
 #endif
 
-#if !defined _Noreturn && __STDC_VERSION__ < 201112
-# if 2 < __GNUC__ + (8 <= __GNUC_MINOR__)
-#  define _Noreturn __attribute__((__noreturn__))
+#if (defined __has_c_attribute \
+     && (202311 <= __STDC_VERSION__ || !defined __STRICT_ANSI__))
+# define HAVE_HAS_C_ATTRIBUTE true
+#else
+# define HAVE_HAS_C_ATTRIBUTE false
+#endif
+
+#if HAVE_HAS_C_ATTRIBUTE
+# if __has_c_attribute(fallthrough)
+#  define ATTRIBUTE_FALLTHROUGH [[fallthrough]]
+# endif
+#endif
+#ifndef ATTRIBUTE_FALLTHROUGH
+# if 7 <= __GNUC__
+#  define ATTRIBUTE_FALLTHROUGH __attribute__((fallthrough))
 # else
-#  define _Noreturn
+#  define ATTRIBUTE_FALLTHROUGH ((void) 0)
+# endif
+#endif
+
+#if HAVE_HAS_C_ATTRIBUTE
+# if __has_c_attribute(maybe_unused)
+#  define ATTRIBUTE_MAYBE_UNUSED [[maybe_unused]]
+# endif
+#endif
+#ifndef ATTRIBUTE_MAYBE_UNUSED
+# if 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define ATTRIBUTE_MAYBE_UNUSED __attribute__((unused))
+# else
+#  define ATTRIBUTE_MAYBE_UNUSED /* empty */
+# endif
+#endif
+
+#if HAVE_HAS_C_ATTRIBUTE
+# if __has_c_attribute(noreturn)
+#  define ATTRIBUTE_NORETURN [[noreturn]]
+# endif
+#endif
+#ifndef ATTRIBUTE_NORETURN
+# if 201112 <= __STDC_VERSION__
+#  define ATTRIBUTE_NORETURN _Noreturn
+# elif 2 < __GNUC__ + (8 <= __GNUC_MINOR__)
+#  define ATTRIBUTE_NORETURN __attribute__((noreturn))
+# else
+#  define ATTRIBUTE_NORETURN /* empty */
+# endif
+#endif
+
+#if HAVE_HAS_C_ATTRIBUTE
+# if __has_c_attribute(reproducible)
+#  define ATTRIBUTE_REPRODUCIBLE [[reproducible]]
+# endif
+#endif
+#ifndef ATTRIBUTE_REPRODUCIBLE
+# if 3 <= __GNUC__
+#  define ATTRIBUTE_REPRODUCIBLE __attribute__((pure))
+# else
+#  define ATTRIBUTE_REPRODUCIBLE /* empty */
+# endif
+#endif
+
+#if HAVE_HAS_C_ATTRIBUTE
+# if __has_c_attribute(unsequenced)
+#  define ATTRIBUTE_UNSEQUENCED [[unsequenced]]
+# endif
+#endif
+#ifndef ATTRIBUTE_UNSEQUENCED
+# if 3 <= __GNUC__
+#  define ATTRIBUTE_UNSEQUENCED __attribute__((const))
+# else
+#  define ATTRIBUTE_UNSEQUENCED /* empty */
 # endif
 #endif
 
@@ -562,7 +646,7 @@ char *asctime(struct tm const *);
 char *asctime_r(struct tm const *restrict, char *restrict);
 char *ctime(time_t const *);
 char *ctime_r(time_t const *, char *);
-double difftime(time_t, time_t) ATTRIBUTE_CONST;
+double difftime(time_t, time_t) ATTRIBUTE_UNSEQUENCED;
 size_t strftime(char *restrict, size_t, char const *restrict,
 		struct tm const *restrict);
 # if HAVE_STRFTIME_L
@@ -575,7 +659,22 @@ struct tm *localtime(time_t const *);
 struct tm *localtime_r(time_t const *restrict, struct tm *restrict);
 time_t mktime(struct tm *);
 time_t time(time_t *);
+time_t timegm(struct tm *);
 void tzset(void);
+#endif
+
+#ifndef HAVE_DECL_TIMEGM
+# if (202311 <= __STDC_VERSION__ \
+      || defined __GLIBC__ || defined __tm_zone /* musl */ \
+      || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
+      || (defined __APPLE__ && defined __MACH__))
+#  define HAVE_DECL_TIMEGM true
+# else
+#  define HAVE_DECL_TIMEGM false
+# endif
+#endif
+#if !HAVE_DECL_TIMEGM && !defined timegm
+time_t timegm(struct tm *);
 #endif
 
 #if !HAVE_DECL_ASCTIME_R && !defined asctime_r
@@ -617,9 +716,6 @@ void tzsetwall(void);
 # if TZ_TIME_T || !defined offtime
 struct tm *offtime(time_t const *, long);
 # endif
-# if TZ_TIME_T || !defined timegm
-time_t timegm(struct tm *);
-# endif
 # if TZ_TIME_T || !defined timelocal
 time_t timelocal(struct tm *);
 # endif
@@ -637,6 +733,7 @@ time_t posix2time(time_t);
 /* Infer TM_ZONE on systems where this information is known, but suppress
    guessing if NO_TM_ZONE is defined.  Similarly for TM_GMTOFF.  */
 #if (defined __GLIBC__ \
+     || defined __tm_zone /* musl */ \
      || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
      || (defined __APPLE__ && defined __MACH__))
 # if !defined TM_GMTOFF && !defined NO_TM_GMTOFF
@@ -665,10 +762,10 @@ timezone_t tzalloc(char const *);
 void tzfree(timezone_t);
 # ifdef STD_INSPIRED
 #  if TZ_TIME_T || !defined posix2time_z
-time_t posix2time_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
+time_t posix2time_z(timezone_t __restrict, time_t) ATTRIBUTE_REPRODUCIBLE;
 #  endif
 #  if TZ_TIME_T || !defined time2posix_z
-time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
+time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_REPRODUCIBLE;
 #  endif
 # endif
 #endif
