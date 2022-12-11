@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.9 2022/04/16 18:15:22 andvar Exp $ */
+/* $NetBSD: t_condwait.c,v 1.10 2022/12/11 10:02:53 kre Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.9 2022/04/16 18:15:22 andvar Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.10 2022/12/11 10:02:53 kre Exp $");
 
 #include <sys/time.h>
 #include <errno.h>
@@ -50,7 +50,7 @@ static const int debug = 1;
 static void *
 run(void *param)
 {
-	struct timespec ts, to, te, twmin, twmax;
+	struct timespec ts, to, te;
 	clockid_t clck;
 	pthread_condattr_t attr;
 	pthread_cond_t cond;
@@ -78,30 +78,18 @@ run(void *param)
 	case ETIMEDOUT:
 		/* Timeout */
 		ATF_REQUIRE_EQ(clock_gettime(clck, &te), 0);
-		timespecsub(&te, &to, &to);
 		if (debug) {
 			printf("timeout: %lld.%09ld sec\n",
 			    (long long)te.tv_sec, te.tv_nsec);
+			timespecsub(&te, &to, &to);
 			printf("elapsed: %lld.%09ld sec\n",
 			    (long long)to.tv_sec, to.tv_nsec);
 		}
-		twmin.tv_sec = WAITTIME;
-		twmin.tv_nsec = 0;
-		if (isQEMU()) {
-			struct timespec td, t;
-			// td.tv_sec = 0;
-			// td.tv_nsec = 900000000;
-			t = twmin;
-			// timespecsub(&t, &td, &twmin);
-			td.tv_sec = 2;
-			td.tv_nsec = 500000000;
-			timespecadd(&t, &td, &twmax);
-		} else {
-			twmax = twmin;
-			twmax.tv_sec++;
-		}
-		ATF_REQUIRE(timespeccmp(&to, &twmin, >=));
-		ATF_REQUIRE(timespeccmp(&to, &twmax, <=));
+		if (clck == CLOCK_MONOTONIC)
+			ATF_REQUIRE(timespeccmp(&te, &ts, >=));
+		break;
+	case 0:
+		atf_tc_fail("pthread_cond_timedwait returned before timeout");
 		break;
 	default:
 		ATF_REQUIRE_MSG(0, "pthread_cond_timedwait: %s", strerror(ret));
