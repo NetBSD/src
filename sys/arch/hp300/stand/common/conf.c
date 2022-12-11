@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2022/12/11 06:27:35 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2022/12/11 07:39:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -137,9 +137,14 @@ int	npunit = __arraycount(punitsw);
 /*
  * Filesystem configuration
  */
-struct fs_ops file_system_rawfs[] = { FS_OPS(rawfs) };
-struct fs_ops file_system_ufs[] = { FS_OPS(ufs) };
-struct fs_ops file_system_nfs[] = { FS_OPS(nfs) };
+struct fs_ops file_system_rawfs[1] = { FS_OPS(rawfs) };
+struct fs_ops file_system_ufs[NFSYS_UFS] = {
+	FS_OPS(ffsv1),
+#ifdef SUPPORT_UFS2
+	FS_OPS(ffsv2),
+#endif
+};
+struct fs_ops file_system_nfs[1] = { FS_OPS(nfs) };
 
-struct fs_ops file_system[1];
-int	nfsys = 1;		/* we always know which one we want */
+struct fs_ops file_system[NFSYS_UFS];
+int	nfsys = 1;		/* default value; should be overrieded */
