@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2021/08/07 16:18:56 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2022/12/12 01:07:52 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/08/07 16:18:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2022/12/12 01:07:52 gutteridge Exp $");
 
 #include "acpica.h"
 
@@ -98,7 +98,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		if (strncmp(sig, ACPI_SIG_MADT, ACPI_NAMESEG_SIZE) != 0)
 			continue;
 		len = table->Header.Length;
-		if (ACPI_FAILURE(AcpiTbChecksum((void *)table, len)))
+		if (ACPI_FAILURE(AcpiUtChecksum((void *)table, len)))
 			continue;
 
 		end = (char *)table + table->Header.Length;
