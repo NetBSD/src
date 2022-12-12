@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.67 2021/08/07 16:19:07 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.68 2022/12/12 18:22:32 jakllsch Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.67 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.68 2022/12/12 18:22:32 jakllsch Exp $");
 
 #include "opt_cputype.h"
 
@@ -146,7 +146,7 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 		} else {
 			dbase = KA420_DMA_BASE;
 			dsize = KA420_DMA_SIZE;
-			*(char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
+			*(volatile char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
 		}
 		sc->sc_dmasize = dsize;
 		sc->sc_dmaaddr = uvm_km_alloc(kernel_map, dsize, 0,
