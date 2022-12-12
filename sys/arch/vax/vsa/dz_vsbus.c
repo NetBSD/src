@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.47 2022/12/12 18:22:32 jakllsch Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.47 2022/12/12 18:22:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ static int
 dz_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vsbus_attach_args * const va = aux;
-	struct ss_dz *dzP;
+	volatile struct ss_dz *dzP;
 	short i;
 
 #if VAX53 || VAX49 || VAXANY

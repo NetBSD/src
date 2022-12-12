@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.20 2017/05/22 17:12:11 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.21 2022/12/12 18:22:32 jakllsch Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -73,9 +73,9 @@ struct	vsbus_attach_args {
 
 struct	vsbus_softc {
 	device_t sc_dev;
-	u_char	*sc_intmsk;	/* Mask register */
-	u_char	*sc_intclr;	/* Clear interrupt register */
-	u_char	*sc_intreq;	/* Interrupt request register */
+	volatile u_char	*sc_intmsk;	/* Mask register */
+	volatile u_char	*sc_intclr;	/* Clear interrupt register */
+	volatile u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
 	vaddr_t	sc_vsregs;	/* Where the VS_REGS are mapped */
 	vaddr_t sc_dmaaddr;	/* Mass storage virtual DMA area */
