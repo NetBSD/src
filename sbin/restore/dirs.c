@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.54 2022/12/10 18:49:44 chs Exp $	*/
+/*	$NetBSD: dirs.c,v 1.55 2022/12/12 16:53:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.54 2022/12/10 18:49:44 chs Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.55 2022/12/12 16:53:30 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -675,8 +675,13 @@ setdirmodes(int flags)
 			    (uintmax_t)node.ino);
 			continue;
 		}
+		cp = myname(ep);
 		if (!Nflag) {
-			cp = myname(ep);
+			if (myuid != 0)
+				(void) chown(cp, myuid, node.gid);
+			else
+				(void) chown(cp, node.uid, node.gid);
+			(void) chmod(cp, node.mode);
 			if (node.extsize > 0) {
 				if (bufsize >= node.extsize) {
 					set_extattr(-1, cp, buf, node.extsize, SXA_FILE);
@@ -685,11 +690,6 @@ setdirmodes(int flags)
 					    "extended attributes for ", cp);
 				}
 			}
-			if (myuid != 0)
-				(void) chown(cp, myuid, node.gid);
-			else
-				(void) chown(cp, node.uid, node.gid);
-			(void) chmod(cp, node.mode);
 			(void) utimens(cp, node.ctimep);
 			(void) utimens(cp, node.mtimep);
 			if (Mtreefile) {
