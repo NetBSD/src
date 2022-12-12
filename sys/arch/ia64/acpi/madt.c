@@ -1,4 +1,4 @@
-/*	$NetBSD: madt.c,v 1.4 2019/04/29 16:39:58 scole Exp $	*/
+/*	$NetBSD: madt.c,v 1.5 2022/12/12 01:07:52 gutteridge Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -149,7 +149,7 @@ ia64_probe_sapics(void)
 
 		if (strncmp(table->Header.Signature, ACPI_SIG_MADT,
 		    ACPI_NAMESEG_SIZE) != 0 ||
-		    ACPI_FAILURE(AcpiTbChecksum((void *)table,
+		    ACPI_FAILURE(AcpiUtChecksum((void *)table,
 		    table->Header.Length)))
 			continue;
 
@@ -243,7 +243,7 @@ ia64_count_cpus(void)
 
 		if (strncmp(table->Header.Signature, ACPI_SIG_MADT,
 		    ACPI_NAMESEG_SIZE) != 0 ||
-		    ACPI_FAILURE(AcpiTbChecksum((void *)table,
+		    ACPI_FAILURE(AcpiUtChecksum((void *)table,
 			table->Header.Length)))
 			continue;
 
