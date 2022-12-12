@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.107 2022/11/19 14:42:35 taca Exp $	*/
+/*	$NetBSD: if.c,v 1.108 2022/12/12 05:09:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.107 2022/11/19 14:42:35 taca Exp $");
+__RCSID("$NetBSD: if.c,v 1.108 2022/12/12 05:09:33 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,9 +182,8 @@ if_data_ext_get(const char *ifname, struct if_data_ext *dext)
 	snprintf(namebuf, sizeof(namebuf),
 	    "net.interfaces.%s.sndq.drops", ifname);
 	len = sizeof(drops);
-	if (sysctlbyname(namebuf, &drops, &len, NULL, 0)
-	    == -1) {
-		warnx("'%s' not found", namebuf);
+	if (sysctlbyname(namebuf, &drops, &len, NULL, 0) == -1) {
+		warn("%s", namebuf);
 		dext->ifi_oqdrops = 0;
 		return -1;
 	} else
