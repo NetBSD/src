@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.35 2022/12/10 13:15:00 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.36 2022/12/12 13:26:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.35 2022/12/10 13:15:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.36 2022/12/12 13:26:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -352,7 +352,7 @@ ofw_bootstrap_get_memory(void)
 
 error:
 #if defined (MAMBO)
-	printf("no memory, assuming 512MB\n");
+	ofprint("no memory, assuming 512MB\n");
 
 	OFmem[0].start = 0x0;
 	OFmem[0].size = 0x20000000;
