@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.73 2022/12/10 18:49:44 chs Exp $	*/
+/*	$NetBSD: tape.c,v 1.74 2022/12/12 16:53:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.73 2022/12/10 18:49:44 chs Exp $");
+__RCSID("$NetBSD: tape.c,v 1.74 2022/12/12 16:53:30 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,13 +698,13 @@ extractfile(char *name)
 		if (uflag)
 			(void) unlink(name);
 		if (linkit(lnkbuf, name, SYMLINK) == GOOD) {
-			if (extsize > 0)
-				set_extattr(-1, name, buf, extsize, SXA_LINK);
 			if (setbirth)
 				(void) lutimens(name, ctimep);
 			(void) lutimens(name, mtimep);
 			(void) lchown(name, uid, gid);
 			(void) lchmod(name, mode);
+			if (extsize > 0)
+				set_extattr(-1, name, buf, extsize, SXA_LINK);
 			if (Mtreefile) {
 				writemtree(name, "link",
 				    uid, gid, mode, flags);
@@ -730,6 +730,8 @@ extractfile(char *name)
 			skipfile();
 			return (FAIL);
 		}
+		(void) chown(name, uid, gid);
+		(void) chmod(name, mode);
 		if (extsize == 0) {
 			skipfile();
 		} else {
@@ -740,8 +742,6 @@ extractfile(char *name)
 		if (setbirth)
 			(void) utimens(name, ctimep);
 		(void) utimens(name, mtimep);
-		(void) chown(name, uid, gid);
-		(void) chmod(name, mode);
 		if (Mtreefile) {
 			writemtree(name,
 			    ((mode & (S_IFBLK | IFCHR)) == IFBLK) ?
@@ -765,6 +765,8 @@ extractfile(char *name)
 			skipfile();
 			return (FAIL);
 		}
+		(void) chown(name, uid, gid);
+		(void) chmod(name, mode);
 		if (extsize == 0) {
 			skipfile();
 		} else {
@@ -775,8 +777,6 @@ extractfile(char *name)
 		if (setbirth)
 			(void) utimens(name, ctimep);
 		(void) utimens(name, mtimep);
-		(void) chown(name, uid, gid);
-		(void) chmod(name, mode);
 		if (Mtreefile) {
 			writemtree(name, "fifo",
 			    uid, gid, mode, flags);
@@ -797,6 +797,8 @@ extractfile(char *name)
 		}
 		if (Dflag)
 			(*ddesc->dd_init)(&dcontext);
+		(void) fchown(ofile, uid, gid);
+		(void) fchmod(ofile, mode);
 		buf = setupextattr(extsize);
 		getfile(xtrfile, xtrattr, xtrskip);
 		if (extsize > 0)
@@ -814,8 +816,6 @@ extractfile(char *name)
 		if (setbirth)
 			(void) futimens(ofile, ctimep);
 		(void) futimens(ofile, mtimep);
-		(void) fchown(ofile, uid, gid);
-		(void) fchmod(ofile, mode);
 		if (Mtreefile) {
 			writemtree(name, "file",
 			    uid, gid, mode, flags);
