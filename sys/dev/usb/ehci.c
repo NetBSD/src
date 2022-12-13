@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.313 2022/12/13 21:13:16 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.314 2022/12/13 21:25:10 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.313 2022/12/13 21:13:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.314 2022/12/13 21:25:10 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4259,7 +4259,6 @@ ehci_device_fs_isoc_init(struct usbd_xfer *xfer)
 	if (i > 16 || i == 0) {
 		/* Spec page 271 says intervals > 16 are invalid */
 		DPRINTF("bInterval %jd invalid", i, 0, 0, 0);
-
 		return EINVAL;
 	}
 
@@ -4620,7 +4619,7 @@ ehci_device_isoc_init(struct usbd_xfer *xfer)
 	if (i > 16 || i == 0) {
 		/* Spec page 271 says intervals > 16 are invalid */
 		DPRINTF("bInterval %jd invalid", i, 0, 0, 0);
-		return USBD_INVAL;
+		return EINVAL;
 	}
 
 	ufrperframe = uimax(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
