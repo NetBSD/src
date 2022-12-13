@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.17 2013/11/30 20:20:42 joerg Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.18 2022/12/13 12:43:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -136,7 +136,7 @@ ENTRY(__longjmp14)
 	mov	ip, r3
 	ldr	r3, [r0]
 	movs	r2, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
-	bics	r3, r2 
+	bics	r3, r2
 	/* r2 is not the magic but we don't need it since we can't do VFP */
 #endif
 	cmp	r3, ip
