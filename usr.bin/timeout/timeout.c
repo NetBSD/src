@@ -1,4 +1,4 @@
-/* $NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $ */
+/* $NetBSD: timeout.c,v 1.5 2022/12/13 13:25:36 kre Exp $ */
 
 /*-
  * Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/usr.bin/timeout/timeout.c 268763 2014-07-16 13:52:05Z bapt $");
 #else
-__RCSID("$NetBSD: timeout.c,v 1.4 2014/08/05 08:20:02 christos Exp $");
+__RCSID("$NetBSD: timeout.c,v 1.5 2022/12/13 13:25:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,19 +212,26 @@ main(int argc, char **argv)
 	pgid = -1;
 
 	const struct option longopts[] = {
-		{ "preserve-status", no_argument,       &preserve,    1 },
-		{ "foreground",      no_argument,       &foreground,  1 },
+		{ "preserve-status", no_argument,       NULL,        'p'},
+		{ "foreground",      no_argument,       NULL,        'f'},
 		{ "kill-after",      required_argument, NULL,        'k'},
 		{ "signal",          required_argument, NULL,        's'},
 		{ "help",            no_argument,       NULL,        'h'},
 		{ NULL,              0,                 NULL,         0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "+k:s:h", longopts, NULL)) != -1) {
+	while ((ch =
+	    getopt_long(argc, argv, "+fk:ps:h", longopts, NULL)) != -1) {
 		switch (ch) {
+			case 'f':
+				foreground = 1;
+				break;
 			case 'k':
 				do_second_kill = true;
 				second_kill = parse_duration(optarg);
+				break;
+			case 'p':
+				preserve = 1;
 				break;
 			case 's':
 				killsig = parse_signal(optarg);
