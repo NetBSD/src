@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.86 2022/12/11 17:57:23 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.87 2022/12/13 19:08:42 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.86 2022/12/11 17:57:23 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.87 2022/12/13 19:08:42 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -490,10 +490,10 @@ size_sum(size_t a, size_t b)
 {
 #ifdef ckd_add
   ptrdiff_t sum;
-  if (!ckd_add(&sum, a, b) && sum <= PTRDIFF_MAX)
+  if (!ckd_add(&sum, a, b) && sum <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
     return sum;
 #else
-  ptrdiff_t sum_max = min(PTRDIFF_MAX, SIZE_MAX);
+  ptrdiff_t sum_max = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
   if (a <= sum_max && b <= sum_max - a)
     return a + b;
 #endif
@@ -505,10 +505,10 @@ size_product(ptrdiff_t nitems, ptrdiff_t itemsize)
 {
 #ifdef ckd_mul
   ptrdiff_t product;
-  if (!ckd_mul(&product, nitems, itemsize) && product <= PTRDIFF_MAX)
+  if (!ckd_mul(&product, nitems, itemsize) && product <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
     return product;
 #else
-  ptrdiff_t nitems_max = min(PTRDIFF_MAX, SIZE_MAX) / itemsize;
+  ptrdiff_t nitems_max = (ptrdiff_t)(min(PTRDIFF_MAX, SIZE_MAX) / itemsize);
   if (nitems <= nitems_max)
     return nitems * itemsize;
 #endif
@@ -564,10 +564,11 @@ grow_nitems_alloc(ptrdiff_t *nitems_alloc, ptrdiff_t itemsize)
 #if defined ckd_add && defined ckd_mul
   ptrdiff_t product;
   if (!ckd_add(nitems_alloc, *nitems_alloc, addend)
-      && !ckd_mul(&product, *nitems_alloc, itemsize) && product <= PTRDIFF_MAX)
+      && !ckd_mul(&product, *nitems_alloc, itemsize)
+      && product <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
     return product;
 #else
-  ptrdiff_t amax = min(PTRDIFF_MAX, SIZE_MAX);
+  ptrdiff_t amax = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
   if (*nitems_alloc <= ((amax - 1) / 3 * 2) / itemsize) {
     *nitems_alloc += addend;
     return *nitems_alloc * itemsize;
@@ -1413,7 +1414,7 @@ static char *
 relname(char const *target, char const *linkname)
 {
   size_t i, taillen, dir_len = 0, dotdots = 0;
-  ptrdiff_t dotdotetcsize, linksize = min(PTRDIFF_MAX, SIZE_MAX);
+  ptrdiff_t dotdotetcsize, linksize = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
   char const *f = target;
   char *result = NULL;
   if (*linkname == '/') {
@@ -1688,7 +1689,7 @@ infile(int fnum, char const *name)
 	wantcont = false;
 	for (num = 1; ; ++num) {
 		enum { bufsize_bound
-		  = (min(INT_MAX, min(PTRDIFF_MAX, SIZE_MAX))
+		  = (min(INT_MAX, (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
 		     / FORMAT_LEN_GROWTH_BOUND) };
 		char buf[min(_POSIX2_LINE_MAX, bufsize_bound)];
 		int nfields;
