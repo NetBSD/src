@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.312 2022/12/13 21:11:00 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.313 2022/12/13 21:13:16 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.312 2022/12/13 21:11:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.313 2022/12/13 21:13:16 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4483,7 +4483,7 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	 * Part 2: Transfer descriptors have now been set up, now they must
 	 * be scheduled into the periodic frame list. Erk. Not wanting to
 	 * complicate matters, transfer is denied if the transfer spans
-	 * more than the period frame list.
+	 * more than the periodic frame list.
 	 */
 
 	/* Start inserting frames */
@@ -4858,9 +4858,9 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
-	 * be scheduled into the period frame list. Erk. Not wanting to
+	 * be scheduled into the periodic frame list. Erk. Not wanting to
 	 * complicate matters, transfer is denied if the transfer spans
-	 * more than the period frame list.
+	 * more than the periodic frame list.
 	 */
 
 	/* Start inserting frames */
