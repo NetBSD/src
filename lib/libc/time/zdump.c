@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.59 2022/12/11 17:57:23 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.60 2022/12/13 19:08:42 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.59 2022/12/11 17:57:23 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.60 2022/12/13 19:08:42 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -144,10 +144,10 @@ sumsize(size_t a, size_t b)
 {
 #ifdef ckd_add
   ptrdiff_t sum;
-  if (!ckd_add(&sum, a, b) && sum <= PTRDIFF_MAX)
+  if (!ckd_add(&sum, a, b) && sum <= (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX))
     return sum;
 #else
-  ptrdiff_t sum_max = min(PTRDIFF_MAX, SIZE_MAX);
+  ptrdiff_t sum_max = (ptrdiff_t)min(PTRDIFF_MAX, SIZE_MAX);
   if (a <= sum_max && b <= sum_max - a)
     return a + b;
 #endif
@@ -269,7 +269,7 @@ tzalloc(char const *val)
 	  || SIZE_MAX < initial_envptrs)
 	size_overflow();
 #  else
-      if (initial_nenvptrs == min(PTRDIFF_MAX, SIZE_MAX) / sizeof *environ)
+      if (initial_nenvptrs == (ptrdiff_t)(min(PTRDIFF_MAX, SIZE_MAX) / sizeof *environ))
 	size_overflow();
       initial_nenvptrs++;
 #  endif
