@@ -1,4 +1,4 @@
-.\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
+.\"	$NetBSD: timeout.1,v 1.5 2022/12/13 13:25:36 kre Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd July 19, 2014
+.Dd December 13, 2022
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -35,9 +35,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Fl signal Ar sig | Fl s Ar sig
-.Op Fl Fl preserve-status
+.Op Fl Fl preserve-status | Fl p
 .Op Fl Fl kill-after Ar time | Fl k Ar time
-.Op Fl Fl foreground
+.Op Fl Fl foreground | Fl f
 .Ao Ar duration Ac
 .Ao Ar command Ac
 .Ao Ar args ... Ac
@@ -56,11 +56,11 @@ By default,
 .Dv SIGTERM
 is sent.
 .Bl -tag -width "-k time, --kill-after time"
-.It Fl Fl preserve-status
+.It Fl p , Fl Fl preserve-status
 Always exits with the same status as
 .Ar command
 even if it times out.
-.It Fl Fl foreground
+.It Fl f , Fl Fl foreground
 Do not propagate timeout to the
 .Ar command
 children.
