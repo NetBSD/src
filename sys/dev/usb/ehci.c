@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.311 2022/04/06 22:01:45 mlelstv Exp $ */
+/*	$NetBSD: ehci.c,v 1.312 2022/12/13 21:11:00 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.311 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.312 2022/12/13 21:11:00 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4364,7 +4364,7 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	if (epipe->pipe.up_endpoint->ue_edesc->bInterval *
 			xfer->ux_nframes >= sc->sc_flsize - 4) {
 		printf("ehci: isoc descriptor requested that spans the entire"
-		    "frametable, too many frames\n");
+		    " frametable, too many frames\n");
 		return USBD_INVAL;
 	}
 
