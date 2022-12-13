@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.9 2022/10/12 07:50:56 simonb Exp $ */
+/* $NetBSD: reg.h,v 1.10 2022/12/13 22:25:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct reg32 {	// synced with register_t in <riscv/types.h>
 };
 #endif
 
-#define _XREG(n)	((n)-1)
+#define _XREG(n)	((n) - 1)
 #define _X_RA		_XREG(1)
 #define _X_SP		_XREG(2)
 #define _X_GP		_XREG(3)
