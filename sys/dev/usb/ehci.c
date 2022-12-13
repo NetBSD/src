@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.314 2022/12/13 21:25:10 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.315 2022/12/13 21:29:04 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.314 2022/12/13 21:25:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.315 2022/12/13 21:29:04 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4497,7 +4497,7 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	if (frindex >= sc->sc_flsize)
 		frindex &= (sc->sc_flsize - 1);
 
-	/* Whats the frame interval? */
+	/* What's the frame interval? */
 	i = epipe->pipe.up_endpoint->ue_edesc->bInterval;
 
 	for (sitd = exfer->ex_sitdstart, j = 0; j < frames;
