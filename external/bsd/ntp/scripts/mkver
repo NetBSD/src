@@ -32,8 +32,15 @@ else
    fi
 fi
 
-if [ ! -f .version ]; then
-  echo 0 > .version
+if [ -n "$MKREPRO_TIMESTAMP" ]; then
+    RUN=1
+else
+    if [ ! -f .version ]; then
+      echo 0 > .version
+    fi
+    RUN="`cat .version`"
+    RUN="`expr $RUN + 1`"
+    echo $RUN > .version
 fi
 
 if [ -f "$ifile" ]; then
