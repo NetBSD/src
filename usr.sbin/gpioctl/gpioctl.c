@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.27 2019/10/20 09:41:53 tnn Exp $ */
+/* $NetBSD: gpioctl.c,v 1.28 2022/12/13 21:47:36 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gpioctl.c,v 1.27 2019/10/20 09:41:53 tnn Exp $");
+__RCSID("$NetBSD: gpioctl.c,v 1.28 2022/12/13 21:47:36 jakllsch Exp $");
 
 /*
  * Program to control GPIO devices.
@@ -362,7 +362,7 @@ gpiolist()
 		memset(&req, 0, sizeof(req));
 		req.gp_pin = i;
 		if (ioctl(devfd, GPIOREAD, &req) == -1)
-			err(EXIT_FAILURE, "GPIOREAD");
+			continue;
 		if (!quiet)
 			printf("%d: %s\n", i, req.gp_name);
 	}
