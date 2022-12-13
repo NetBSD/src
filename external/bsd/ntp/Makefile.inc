@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2020/10/11 07:07:31 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2022/12/13 21:16:38 christos Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -46,7 +46,7 @@ LDADD+=-ldns_sd
 SRCS+=	version.c
 
 CLEANFILES+=version.c version.o
-version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver ${.CURDIR}/../../importdate
+version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${.CURDIR}/../../scripts/mkver ${PROG} > /dev/null
 
