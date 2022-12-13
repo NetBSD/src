@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.71 2022/04/27 23:15:30 brad Exp $ */
+/* $NetBSD: gpio.c,v 1.72 2022/12/13 21:50:43 jakllsch Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.71 2022/04/27 23:15:30 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.72 2022/12/13 21:50:43 jakllsch Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -728,7 +728,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	device_t dv;
 	cfdata_t cf;
 	int locs[GPIOCF_NLOCS];
-	int error, pin, value, flags, npins;
+	int error, pin, value, flags;
 
 	gc = sc->sc_gc;
 	ga.ga_flags = 0;
@@ -742,15 +742,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case GPIOINFO:
 		info = data;
-		if (!kauth_authorize_device(l->l_cred,
-		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
-			info->gpio_npins = sc->sc_npins;
-		else {
-			for (pin = npins = 0; pin < sc->sc_npins; pin++)
-				if (sc->sc_pins[pin].pin_flags & GPIO_PIN_SET)
-					++npins;
-			info->gpio_npins = npins;
-		}
+		info->gpio_npins = sc->sc_npins;
 		break;
 	case GPIOREAD:
 		req = data;
