@@ -35,11 +35,16 @@ fi
 if [ ! -f .version ]; then
   echo 0 > .version
 fi
-RUN="`cat .version`"
-RUN="`expr $RUN + 1`"
-echo $RUN > .version
 
-ConfStr="$ConfStr (${RUN})"
+if [ -f "$ifile" ]; then
+  # NetBSD MKREPRO: Don't embed current date/time/run number
+else
+  RUN="`cat .version`"
+  RUN="`expr $RUN + 1`"
+  echo $RUN > .version
+
+  ConfStr="$ConfStr (${RUN})"
+fi
 
 echo "Version <${ConfStr}>";
 
