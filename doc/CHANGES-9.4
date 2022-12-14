@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.30 2022/12/06 19:27:34 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.31 2022/12/14 15:41:43 snj Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -456,4 +456,20 @@ sys/arch/hp300/stand/common/rd.c		1.12-1.15
 	  is terminated properly at the end of media.
 	- Make MI raid(4) work on HP-IB rd(4) disks.
 	[tsutsui, ticket #1552]
+
+usr.sbin/sysinst/bsddisklabel.c			1.67
+
+	sysinst: avoid confusion when adding a /usr partition after
+	manually sizing the / partition.
+	[martin, ticket #1553]
+
+usr.sbin/sysinst/arch/amiga/md.c		1.10
+usr.sbin/sysinst/arch/atari/md.c		1.10
+usr.sbin/sysinst/arch/dummy/md.c		1.8
+usr.sbin/sysinst/arch/sparc/md.c		1.8
+usr.sbin/sysinst/arch/sparc64/md.c		1.8
+
+	sysinst: properly set default disk size unit on more
+	architectures.
+	[martin, ticket #1554]
 
