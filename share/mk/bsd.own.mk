@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1288 2022/08/21 07:10:03 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1289 2022/12/14 12:30:01 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -123,7 +123,7 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 
 #
 # What OpenSSL is used?
-# 
+#
 HAVE_OPENSSL?=  11
 
 .if ${HAVE_OPENSSL} == 11
@@ -873,7 +873,7 @@ NOPROFILE=	# defined
 GCC_NO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
 GCC_NO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
 GCC_NO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
-GCC_NO_IMPLICIT_FALLTHRU=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}         
+GCC_NO_IMPLICIT_FALLTHRU=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}
 GCC_NO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
 GCC_NO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
 GCC_NO_ADDR_OF_PACKED_MEMBER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
@@ -1320,7 +1320,7 @@ ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc" 
+    ${MACHINE_ARCH} == "sparc"
 MKSLJIT=	yes
 .endif
 
@@ -1432,7 +1432,7 @@ MKLIBCXX:=	yes
 #
 COPY?=		-c
 .if ${MKUPDATE} == "no"
-PRESERVE?=	
+PRESERVE?=
 .else
 PRESERVE?=	-p
 .endif
@@ -1450,7 +1450,7 @@ INSTPRIV.unpriv=
 .endif
 INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
-STRIPFLAG?=	
+STRIPFLAG?=
 
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
@@ -1523,7 +1523,7 @@ ${var}?= no
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
-.endif 
+.endif
 
 #
 # TOOL_GZIP and friends.  These might refer to TOOL_PIGZ or to the host gzip.
@@ -1646,7 +1646,7 @@ EXTRA_DRIVERS=
 .if ${HAVE_XORG_SERVER_VER} == "120"
 X11SRCDIR.xf86-video-modesetting=${X11SRCDIR.xorg-server}/hw/xfree86/drivers/modesetting
 .else
-EXTRA_DRIVERS=	modesetting 
+EXTRA_DRIVERS=	modesetting
 .endif
 
 .for _v in \
@@ -1697,7 +1697,7 @@ MAKEDIRTARGET=\
 #	2	Describe what is occurring and echo the actual command
 #	3	Ignore the effect of the "@" prefix in make commands
 #	4	Trace shell commands using the shell's -x flag
-#		
+#
 MAKEVERBOSE?=		2
 
 .if ${MAKEVERBOSE} == 0
