@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.23.2.11 2020/10/15 19:36:50 bouyer Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23.2.12 2022/12/14 15:36:52 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -653,18 +653,23 @@ set_ptn_size(menudesc *m, void *arg)
 				}
 			}
 			/* Remove space for /usr from / */
-			if (root < pset->num && pset->infos[i].cur_part_id ==
-			    NO_PART) {
-			    	pset->infos[root].size -= p->def_size;
+			if (root < pset->num &&
+			     pset->infos[root].cur_part_id == NO_PART &&
+			     pset->infos[root].size ==
+					pset->infos[root].def_size) {
+				/*
+				 * root partition does not yet exist and
+				 * has default size
+				 */
+				pset->infos[root].size -= p->def_size;
 				pset->cur_free_space += p->def_size;
 			}
-			/* hack to add free space to default sized /usr */
-			if (strcmp(answer, dflt) == 0) {
-				size = p->def_size;
-				pset->infos[root].flags &= ~PUIFLAG_EXTEND;
-				p->flags |= PUIFLAG_EXTEND;
-				goto adjust_free;
-			}
+			/*
+			 * hack to add free space to /usr if
+			 * previously / got it
+			 */
+			if (pset->infos[root].flags & PUIFLAG_EXTEND)
+				extend = true;
 		}
 		if (new_size_val < 0)
 			continue;
@@ -687,7 +692,6 @@ set_ptn_size(menudesc *m, void *arg)
 	}
 	if (p->limit != 0 && size > p->limit)
 		size = p->limit;
-    adjust_free:
 	if ((p->flags & (PUIFLG_IS_OUTER|PUIFLG_JUST_MOUNTPOINT)) == 0)
 		pset->cur_free_space += p->size - size;
 	p->size = is_percent ? -size : size;
@@ -1205,6 +1209,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			    wanted->infos[root].limit;
 		}
 	}
+	wanted->infos[root].def_size = wanted->infos[root].size;
 }
 
 /*
