@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.79 2021/02/26 02:18:56 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.80 2022/12/14 13:04:24 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,6 +91,9 @@ __start:
 	/* Save off arguments that we need preserved. */
 	mr	%r13,%r6
 	mr	%r14,%r7
+
+	li	%r0,0
+	mtsprg0	%r0
 
 	bl	_C_LABEL(ofwinit)		/* init OF */
 
