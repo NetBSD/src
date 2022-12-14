@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2020/12/07 08:24:09 rin Exp $
+#	$NetBSD: Makefile,v 1.13 2022/12/14 18:59:03 skrll Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -20,10 +20,12 @@ GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 SRCS=		${GSRCS:.lo=.c}
 
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c elf64-aarch64.c elf32-aarch64.c \
+		elf32-aarch64.c elf64-aarch64.c \
+		elf32-ia64.c elf64-ia64.c \
 		peigen.c pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c elf64-aarch64.c elf32-aarch64.c \
+		elf32-aarch64.c elf64-aarch64.c \
+		elf32-ia64.c elf64-ia64.c \
 		peigen.c pex64igen.c
 
 .PATH: ${DIST}/bfd
@@ -47,14 +49,6 @@ elf64-target.h: elfxx-target.h
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
-elf32-ia64.c: elfxx-ia64.c
-	${_MKTARGET_CREATE}
-	${TOOL_SED} -e s/NN/32/g < $> > $@
-
-elf64-ia64.c: elfxx-ia64.c
-	${_MKTARGET_CREATE}
-	${TOOL_SED} -e s/NN/64/g < $> > $@
-
 elf64-aarch64.c: elfnn-aarch64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
@@ -62,6 +56,14 @@ elf64-aarch64.c: elfnn-aarch64.c
 elf32-aarch64.c: elfnn-aarch64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
+
+elf32-ia64.c: elfxx-ia64.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/32/g < $> > $@
+
+elf64-ia64.c: elfxx-ia64.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/64/g < $> > $@
 
 peigen.c: peXXigen.c
 	${_MKTARGET_CREATE}
