@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.70 2022/12/15 15:32:04 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.71 2022/12/15 20:34:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2462,9 +2462,7 @@ bool
 empty_usage_set_from_parts(struct partition_usage_set *wanted,
     struct disk_partitions *parts)
 {
-	memset(wanted, 0, sizeof(*wanted));
-	wanted->parts = parts;
-
+	usage_set_from_parts(wanted, parts);
 	return true;
 }
 
