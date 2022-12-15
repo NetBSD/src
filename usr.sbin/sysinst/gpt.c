@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.29 2022/06/11 15:41:19 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.30 2022/12/15 14:54:27 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -622,7 +622,6 @@ gpt_set_part_info(struct disk_partitions *arg, part_id id,
 	struct gpt_part_entry *p = parts->partitions, *n;
 	part_id no;
 	daddr_t lendiff;
-	bool was_target;
 
 	for (no = 0; p != NULL && no < id; no++)
 		p = p->gp_next;
@@ -631,15 +630,14 @@ gpt_set_part_info(struct disk_partitions *arg, part_id id,
 		return false;
 
 	/* update target mark - we can only have one */
-	was_target = (p->gp_flags & GPEF_TARGET) != 0;
-	if (info->flags & PTI_INSTALL_TARGET)
+	if (info->flags & PTI_INSTALL_TARGET) {
 		p->gp_flags |= GPEF_TARGET;
-	else
-		p->gp_flags &= ~GPEF_TARGET;
-	if (was_target)
 		for (n = parts->partitions; n != NULL; n = n->gp_next)
 			if (n != p)
 				n->gp_flags &= ~GPEF_TARGET;
+	} else {
+		p->gp_flags &= ~GPEF_TARGET;
+	}
 
 	if ((p->gp_flags & GPEF_ON_DISK)) {
 		if (info->start != p->gp_start) {
@@ -1077,7 +1075,7 @@ gpt_add_part(struct disk_partitions *arg,
 	    (struct gpt_disk_partitions*)arg;
 	struct disk_part_free_space space;
 	struct disk_part_info data = *info;
-	struct gpt_part_entry *p;
+	struct gpt_part_entry *p, *n;
 	bool ok;
 
 	if (err_msg != NULL)
@@ -1111,6 +1109,14 @@ gpt_add_part(struct disk_partitions *arg,
 	p->gp_flags |= GPEF_MODIFIED;
 	ok = gpt_insert_part_into_list(parts, &parts->partitions, p, err_msg);
 	if (ok) {
+		if (info->flags & PTI_INSTALL_TARGET) {
+			/* update target mark - we can only have one */
+			p->gp_flags |= GPEF_TARGET;
+			for (n = parts->partitions; n != NULL; n = n->gp_next)
+				if (n != p)
+					n->gp_flags &= ~GPEF_TARGET;
+		}
+
 		parts->dp.num_part++;
 		parts->dp.free_space -= p->gp_size;
 		return parts->dp.num_part-1;
