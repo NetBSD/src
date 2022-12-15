@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.44 2022/12/10 16:13:19 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.45 2022/12/15 15:29:51 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.44 2022/12/10 16:13:19 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.45 2022/12/15 15:29:51 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1008,6 +1008,7 @@ edit_ptn(menudesc *menu, void *arg)
 				    edit.info.nat_type->generic_ptype;
 				edit.wanted->fs_type = edit.info.fs_type;
 				edit.wanted->fs_version = edit.info.fs_sub_type;
+				edit.wanted->cur_flags = edit.info.flags;
 				/* things have changed, re-sort */
 				renumber_partitions(pset);
 			}
