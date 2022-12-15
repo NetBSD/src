@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.45 2022/12/15 15:29:51 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.46 2022/12/15 20:21:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.45 2022/12/15 15:29:51 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.46 2022/12/15 20:21:16 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -992,7 +992,7 @@ edit_ptn(menudesc *menu, void *arg)
 		edit.info.last_mounted = edit.wanted->mount;
 		if (is_new_part) {
 			edit.wanted->parts = pset->parts;
-			if (!can_newfs_fstype(edit.wanted->fs_type))
+			if (!can_newfs_fstype(edit.info.fs_type))
 				edit.wanted->instflags &= ~PUIINST_NEWFS;
 			edit.wanted->cur_part_id = pset->parts->pscheme->
 			    add_partition(pset->parts, &edit.info, &err);
