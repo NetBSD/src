@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.68 2022/12/15 15:11:44 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.69 2022/12/15 15:32:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -779,6 +779,13 @@ set_use_default_sizes(menudesc *m, void *arg)
 	return 0;
 }
 
+static int
+set_use_empty_parts(menudesc *m, void *arg)
+{
+	((arg_rep_int*)arg)->rv = LY_USENONE;
+	return 0;
+}
+
 /*
  * Check if there is a reasonable pre-existing partition for
  * NetBSD.
@@ -813,7 +820,7 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 	const char *args[2];
 	int menu;
 	size_t num_opts;
-	menu_ent options[4], *opt;
+	menu_ent options[5], *opt;
 
 	args[0] = msg_string(parts->pscheme->name);
 	args[1] = msg_string(parts->pscheme->short_name);
@@ -841,6 +848,12 @@ ask_layout(struct disk_partitions *parts, bool have_existing)
 	opt->opt_name = MSG_Use_Default_Parts;
 	opt->opt_flags = OPT_EXIT;
 	opt->opt_action = set_use_default_sizes;
+	opt++;
+	num_opts++;
+
+	opt->opt_name = MSG_Use_Empty_Parts;
+	opt->opt_flags = OPT_EXIT;
+	opt->opt_action = set_use_empty_parts;
 	opt++;
 	num_opts++;
 
@@ -1833,6 +1846,19 @@ make_bsd_partitions(struct install_partition_desc *install)
 	if (layoutkind == LY_OTHERSCHEME) {
 		parts->pscheme->destroy_part_scheme(parts);
 		return -1;
+	} else if (layoutkind == LY_USENONE) {
+		struct disk_part_free_space space;
+		size_t cnt;
+
+		empty_usage_set_from_parts(&wanted, parts);
+		cnt = parts->pscheme->get_free_spaces(parts, &space, 1,
+		0, parts->pscheme->get_part_alignment(parts), 0, -1);
+		p_start = p_size = 0;
+		if (cnt == 1) {
+			p_start = space.start;
+			p_size = space.size;
+			wanted.cur_free_space = space.size;
+		}
 	} else if (layoutkind == LY_USEDEFAULT) {
 		replace_by_default(parts, p_start, p_size,
 		    &wanted);
