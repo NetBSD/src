@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.38 2022/11/30 15:53:35 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.39 2022/12/15 15:32:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1069,6 +1069,12 @@ message Set_Sizes {Establecer los tamaños de las particiones NetBSD}
  *  $1 = short version of $0		MBR
  */
 message Use_Default_Parts {Use default partition sizes}
+
+/* Called with:				Example
+ *  $0 = partitioning name		Master Boot Record (MBR)
+ *  $1 = short version of $0		MBR
+ */
+message Use_Empty_Parts {Manually define partitions}
 
 /* Called with:				Example
  *  $0 = current partitioning name	Master Boot Record (MBR)

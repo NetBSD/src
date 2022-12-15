@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.87 2022/07/11 15:12:24 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.88 2022/12/15 15:32:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,7 @@ enum layout_type {
 	LY_SETSIZES,		/* edit sizes */
 	LY_USEDEFAULT,		/* use default sizes */
 	LY_USEFULL,		/* use full disk for NetBSD */
+	LY_USENONE,		/* start with empty partitions, manual mode */
 	LY_ERROR		/* used for "abort" in menu */
 };
 
@@ -894,6 +895,8 @@ int set_menu_select(menudesc *, void *);
 const char *safectime(time_t *);
 bool	use_tgz_for_set(const char*);
 const char *set_postfix(const char*);
+bool	empty_usage_set_from_parts(struct partition_usage_set*,
+	    struct disk_partitions*);
 bool	usage_set_from_parts(struct partition_usage_set*,
 	    struct disk_partitions*);
 bool	usage_set_from_install_desc(struct partition_usage_set*,
