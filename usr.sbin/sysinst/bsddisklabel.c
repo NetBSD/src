@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.67 2022/12/09 16:54:31 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.68 2022/12/15 15:11:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,9 +144,9 @@ default_parts_init[] =
 	  .flags = PUIFLG_JUST_MOUNTPOINT },
 #endif
 	{ .def_size = DEFUSRSIZE*(MEG/512), .mount = "/usr", .type = PT_root,
-	  .fs_type = FS_BSDFFS, .fs_version = 3 },
+	  .fs_type = FS_BSDFFS, .fs_version = 2 },
 	{ .def_size = DEFVARSIZE*(MEG/512), .mount = "/var", .type = PT_root,
-	  .fs_type = FS_BSDFFS, .fs_version = 3 },
+	  .fs_type = FS_BSDFFS, .fs_version = 2 },
 };
 
 static const char size_separator[] =
@@ -366,7 +366,7 @@ add_other_ptn_size(menudesc *menu, void *arg)
 	p->cur_part_id = NO_PART;
 	p->type = PT_root;
 	p->fs_type = FS_BSDFFS;
-	p->fs_version = 3;
+	p->fs_version = 2;
 	strncpy(p->mount, new_mp, sizeof(p->mount));
 
 	menu->cursel = pset->num;
@@ -1039,7 +1039,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 #ifndef HAVE_UFS2_BOOT
 				if (boot < wanted->num || i != root)
 #endif
-					wanted->infos[i].fs_version = 3;
+					wanted->infos[i].fs_version = 2;
 #endif
 			}
 		}
