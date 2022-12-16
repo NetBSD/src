@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.20 2022/12/11 01:36:49 chs Exp $	*/
+/*	$NetBSD: tprof.c,v 1.21 2022/12/16 07:59:42 ryo Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.20 2022/12/11 01:36:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.21 2022/12/16 07:59:42 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.20 2022/12/11 01:36:49 chs Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/percpu.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/select.h>
 #include <sys/workqueue.h>
 #include <sys/xcall.h>
 
@@ -78,9 +80,7 @@ typedef struct tprof_buf {
 } tprof_buf_t;
 #define	TPROF_BUF_BYTESIZE(sz) \
 	(sizeof(tprof_buf_t) + (sz) * sizeof(tprof_sample_t))
-#define	TPROF_MAX_SAMPLES_PER_BUF	(TPROF_HZ * 2)
-
-#define	TPROF_MAX_BUF			100
+#define	TPROF_MAX_SAMPLES_PER_BUF	TPROF_HZ
 
 typedef struct {
 	tprof_buf_t *c_buf;
@@ -111,6 +111,7 @@ static u_int tprof_nbuf_on_list;	/* L: # of buffers on tprof_list */
 static struct workqueue *tprof_wq;
 static struct percpu *tprof_cpus __read_mostly;	/* tprof_cpu_t * */
 static u_int tprof_samples_per_buf;
+static u_int tprof_max_buf;
 
 tprof_backend_t *tprof_backend;	/* S: */
 static LIST_HEAD(, tprof_backend) tprof_backends =
@@ -122,6 +123,7 @@ static off_t tprof_reader_offset;	/* R: */
 
 static kmutex_t tprof_startstop_lock;
 static kcondvar_t tprof_cv;		/* L: */
+static struct selinfo tprof_selp;	/* L: */
 
 static struct tprof_stat tprof_stat;	/* L: */
 
@@ -229,13 +231,14 @@ tprof_worker(struct work *wk, void *dummy)
 	}
 	if (buf->b_used == 0) {
 		tprof_stat.ts_emptybuf++;
-	} else if (tprof_nbuf_on_list < TPROF_MAX_BUF) {
+	} else if (tprof_nbuf_on_list < tprof_max_buf) {
 		tprof_stat.ts_sample += buf->b_used;
 		tprof_stat.ts_overflow += buf->b_overflow;
 		tprof_stat.ts_buf++;
 		STAILQ_INSERT_TAIL(&tprof_list, buf, b_list);
 		tprof_nbuf_on_list++;
 		buf = NULL;
+		selnotify(&tprof_selp, 0, NOTE_SUBMIT);
 		cv_broadcast(&tprof_reader_cv);
 	} else {
 		tprof_stat.ts_dropbuf_sample += buf->b_used;
@@ -246,7 +249,7 @@ tprof_worker(struct work *wk, void *dummy)
 		tprof_buf_free(buf);
 	}
 	if (!shouldstop) {
-		callout_schedule(&c->c_callout, hz);
+		callout_schedule(&c->c_callout, hz / 8);
 	}
 }
 
@@ -364,6 +367,7 @@ tprof_start(tprof_countermask_t runmask)
 		}
 
 		tprof_samples_per_buf = TPROF_MAX_SAMPLES_PER_BUF;
+		tprof_max_buf = ncpu * 3;
 		error = workqueue_create(&tprof_wq, "tprofmv", tprof_worker,
 		    NULL, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE | WQ_PERCPU);
 		if (error != 0) {
@@ -860,12 +864,89 @@ tprof_close(dev_t dev, int flags, int type, struct lwp *l)
 }
 
 static int
+tprof_poll(dev_t dev, int events, struct lwp *l)
+{
+	int revents;
+
+	revents = events & (POLLIN | POLLRDNORM);
+	if (revents == 0)
+		return 0;
+
+	mutex_enter(&tprof_lock);
+	if (STAILQ_EMPTY(&tprof_list)) {
+		revents = 0;
+		selrecord(l, &tprof_selp);
+	}
+	mutex_exit(&tprof_lock);
+
+	return revents;
+}
+
+static void
+filt_tprof_read_detach(struct knote *kn)
+{
+	mutex_spin_enter(&tprof_lock);
+	selremove_knote(&tprof_selp, kn);
+	mutex_spin_exit(&tprof_lock);
+}
+
+static int
+filt_tprof_read_event(struct knote *kn, long hint)
+{
+	int rv = 0;
+
+	if ((hint & NOTE_SUBMIT) == 0)
+		mutex_spin_enter(&tprof_lock);
+
+	if (!STAILQ_EMPTY(&tprof_list)) {
+		tprof_buf_t *buf;
+		int64_t n = 0;
+
+		STAILQ_FOREACH(buf, &tprof_list, b_list) {
+			n += buf->b_used;
+		}
+		kn->kn_data = n * sizeof(tprof_sample_t);
+
+		rv = 1;
+	}
+
+	if ((hint & NOTE_SUBMIT) == 0)
+		mutex_spin_exit(&tprof_lock);
+
+	return rv;
+}
+
+static const struct filterops tprof_read_filtops = {
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
+	.f_attach = NULL,
+	.f_detach = filt_tprof_read_detach,
+	.f_event = filt_tprof_read_event,
+};
+
+static int
+tprof_kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &tprof_read_filtops;
+		mutex_spin_enter(&tprof_lock);
+		selrecord_knote(&tprof_selp, kn);
+		mutex_spin_exit(&tprof_lock);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+static int
 tprof_read(dev_t dev, struct uio *uio, int flags)
 {
 	tprof_buf_t *buf;
 	size_t bytes;
 	size_t resid;
-	size_t done;
+	size_t done = 0;
 	int error = 0;
 
 	KASSERT(minor(dev) == 0);
@@ -877,7 +958,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 		mutex_enter(&tprof_lock);
 		buf = STAILQ_FIRST(&tprof_list);
 		if (buf == NULL) {
-			if (tprof_nworker == 0) {
+			if (tprof_nworker == 0 || done != 0) {
 				mutex_exit(&tprof_lock);
 				error = 0;
 				break;
@@ -988,9 +1069,9 @@ const struct cdevsw tprof_cdevsw = {
 	.d_ioctl = tprof_ioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
-	.d_poll = nopoll,
+	.d_poll = tprof_poll,
 	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
+	.d_kqfilter = tprof_kqfilter,
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
@@ -1034,6 +1115,7 @@ tprof_driver_init(void)
 	mutex_init(&tprof_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_reader_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_startstop_lock, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&tprof_selp);
 	cv_init(&tprof_cv, "tprof");
 	cv_init(&tprof_reader_cv, "tprof_rd");
 	STAILQ_INIT(&tprof_list);
@@ -1049,6 +1131,7 @@ tprof_driver_fini(void)
 	mutex_destroy(&tprof_lock);
 	mutex_destroy(&tprof_reader_lock);
 	mutex_destroy(&tprof_startstop_lock);
+	seldestroy(&tprof_selp);
 	cv_destroy(&tprof_cv);
 	cv_destroy(&tprof_reader_cv);
 }
