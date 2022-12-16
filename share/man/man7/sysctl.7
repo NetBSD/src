@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.162 2022/10/24 01:54:19 knakahara Exp $
+.\"	$NetBSD: sysctl.7,v 1.163 2022/12/16 08:42:55 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 24, 2022
+.Dd December 16, 2022
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -787,7 +787,7 @@ structures in the networking code, see
 The third level names for the mbuf variables are detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
-.Bl -column "kern.mbuf.nmbclusters" "integer" "Changeable" -offset indent
+.Bl -column "kern.mbuf.nmbclusters_limit" "integer" "Changeable" -offset indent
 .It Sy Third level name Ta Sy Type Ta Sy Changeable
 .\" XXX Changeable? really?
 .It kern.mbuf.mblowat	integer	yes
@@ -795,6 +795,7 @@ privilege may change the value.
 .It kern.mbuf.mcllowat	integer	yes
 .It kern.mbuf.msize	integer	yes
 .It kern.mbuf.nmbclusters	integer	yes
+.It kern.mbuf.nmbclusters_limit	integer	no
 .El
 .Pp
 The variables are as follows:
@@ -811,6 +812,8 @@ The mbuf base size.
 The limit on the number of mbuf clusters.
 The variable can only be increased, and only increased on machines with
 direct-mapped pool pages.
+.It Li kern.mbuf.nmbclusters_limit ( Dv MBUF_NMBCLUSTERS_LIMIT )
+The limit of nmbclusters.
 .El
 .It Li kern.memlock ( Dv KERN_MEMLOCK )
 Returns 1 if the
