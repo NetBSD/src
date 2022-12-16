@@ -1,4 +1,4 @@
-/* $NetBSD: wbsioreg.h,v 1.10 2022/10/01 07:22:55 msaitoh Exp $ */
+/* $NetBSD: wbsioreg.h,v 1.11 2022/12/16 00:02:28 msaitoh Exp $ */
 
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
@@ -71,6 +71,7 @@
 #define WBSIO_ID_NCT6793D	0xd12
 #define WBSIO_ID_NCT6795D	0xd35
 #define WBSIO_ID_NCT6796D	0xd420	/* 13bits */
+#define WBSIO_ID_NCT6797D	0xd450
 #define WBSIO_ID_NCT6798D	0xd428
 #define WBSIO_ID_NCT6799D	0xd800
 
