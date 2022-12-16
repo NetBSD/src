@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.17 2022/12/05 05:02:45 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.18 2022/12/16 08:02:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.17 2022/12/05 05:02:45 ryo Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.18 2022/12/16 08:02:04 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -264,6 +264,97 @@ tprof_list(int argc, char **argv)
 	tprof_event_list();
 }
 
+int
+tprof_parse_event(tprof_param_t *param, const char *str, uint32_t flags,
+    const char **eventnamep, char **errmsgp)
+{
+	double d;
+	uint64_t n;
+	int error = 0;
+	char *p, *event = NULL, *opt = NULL, *scale = NULL;
+	bool allow_option, allow_scale;
+	static char errmsgbuf[128];
+
+	allow_option = flags & TPROF_PARSE_EVENT_F_ALLOWOPTION;
+	allow_scale = flags & TPROF_PARSE_EVENT_F_ALLOWSCALE;
+
+	p = estrdup(str);
+	event = p;
+	if (allow_option) {
+		opt = strchr(p, ':');
+		if (opt != NULL) {
+			*opt++ = '\0';
+			p = opt;
+		}
+	}
+	if (allow_scale) {
+		scale = strchr(p, ',');
+		if (scale != NULL)
+			*scale++ = '\0';
+	}
+
+	tprof_event_lookup(event, param);
+
+	if (opt != NULL) {
+		while (*opt != '\0') {
+			switch (*opt) {
+			case 'u':
+				param->p_flags |= TPROF_PARAM_USER;
+				break;
+			case 'k':
+				param->p_flags |= TPROF_PARAM_KERN;
+				break;
+			default:
+				error = -1;
+				snprintf(errmsgbuf, sizeof(errmsgbuf),
+				    "invalid option: '%c'", *opt);
+				goto done;
+			}
+		}
+	} else if (allow_option) {
+		param->p_flags |= TPROF_PARAM_USER;
+		param->p_flags |= TPROF_PARAM_KERN;
+	}
+
+	if (scale != NULL) {
+		if (*scale == '=') {
+			scale++;
+			n = strtoull(scale, &p, 0);
+			if (*p != '\0') {
+				error = -1;
+			} else {
+				param->p_value2 = n;
+				param->p_flags |=
+				    TPROF_PARAM_VALUE2_TRIGGERCOUNT;
+			}
+		} else {
+			if (strncasecmp("0x", scale, 2) == 0)
+				d = strtol(scale, &p, 0);
+			else
+				d = strtod(scale, &p);
+			if (*p != '\0' || d <= 0) {
+				error = -1;
+			} else {
+				param->p_value2 = 0x100000000ULL / d;
+				param->p_flags |= TPROF_PARAM_VALUE2_SCALE;
+			}
+		}
+
+		if (error != 0) {
+			snprintf(errmsgbuf, sizeof(errmsgbuf),
+			    "invalid scale: %s", scale);
+			goto done;
+		}
+	}
+
+ done:
+	if (eventnamep != NULL)
+		*eventnamep = event;
+	if (error != 0 && errmsgp != NULL)
+		*errmsgp = errmsgbuf;
+	return error;
+}
+
 static void
 tprof_monitor_common(bool do_profile, int argc, char **argv)
 {
@@ -273,7 +364,7 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 	pid_t pid;
 	pthread_t pt;
 	int ret, ch, i;
-	char *tokens[2], *p;
+	char *p, *errmsg;
 	tprof_countermask_t mask = TPROF_COUNTERMASK_ALL;
 
 	memset(params, 0, sizeof(params));
@@ -290,23 +381,12 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 				    optarg);
 			break;
 		case 'e':
-			p = estrdup(optarg);
-			tokens[0] = strtok(p, ":");
-			tokens[1] = strtok(NULL, ":");
-			tprof_event_lookup(tokens[0], &params[nevent]);
-
-			if (tokens[1] == NULL) {
-				params[nevent].p_flags |=
-				    (TPROF_PARAM_USER | TPROF_PARAM_KERN);
-			} else {
-				if (strchr(tokens[1], 'u'))
-					params[nevent].p_flags |=
-					    TPROF_PARAM_USER;
-				if (strchr(tokens[1], 'k'))
-					params[nevent].p_flags |=
-					    TPROF_PARAM_KERN;
+			if (tprof_parse_event(&params[nevent], optarg,
+			    TPROF_PARSE_EVENT_F_ALLOWOPTION |
+			    (do_profile ? TPROF_PARSE_EVENT_F_ALLOWSCALE : 0),
+			    &eventname[nevent], &errmsg) != 0) {
+				errx(EXIT_FAILURE, "%s", errmsg);
 			}
-			eventname[nevent] = tokens[0];
 			eventnamewidth[nevent] = strlen(eventname[nevent]);
 			if (eventnamewidth[nevent] < COUNTER_COLUMNS_WIDTH)
 				eventnamewidth[nevent] = COUNTER_COLUMNS_WIDTH;
