@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.22 2022/12/09 01:59:51 ryo Exp $
+.\"	$NetBSD: tprof.8,v 1.23 2022/12/16 08:00:47 ryo Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 9, 2022
+.Dd December 16, 2022
 .Dt TPROF 8
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ These commands are currently recognized:
 .Bl -tag -width XXcommandsX -offset indent
 .It Ic a
 toggle accumurative mode.
+.It Ic c
+shows/hides the event counters.
 .It Ic q
 quit
 .Nm .
