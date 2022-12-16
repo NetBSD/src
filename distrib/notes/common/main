@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.569 2022/04/01 21:53:35 andvar Exp $
+.\"	$NetBSD: main,v 1.570 2022/12/16 16:58:14 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -526,6 +526,32 @@ development, and no formal or informal testing may have been done for
 this snapshot (yet).
 .Pp
 .\} \" !\n[RELEASE_BRANCH] \{
+One important new feature in this release is the support for extended
+attributes and access controll lists on FFS file systems.
+.Pp
+For new installations the installer will default to disable this features,
+so the file system is compatible with older
+.Nx
+releases (before 10), and allow other operating systems to mount this
+file systems at least in read-only mode.
+.Pp
+If you want a new installed file system to support extended attributes,
+change the file system type from
+.Dq FFSv2
+to
+.Dq FFSv2ea
+in the partitioning menu.
+You can also convert file systems later, using the
+.Xr fsck_ffs 8
+utility.
+More details are available in
+.Lk https://wiki.netbsd.org/tutorials/acls_and_extended_attributes_on_ffs "this guide" .
+.Pp
+If you are upgrading from a version of
+.Nx -current
+please also check the
+.Sx "Compatibility Issues With Previous NetBSD Releases" .
+.PP
 It is impossible to completely summarize the massive development that
 went into the
 .Nx
@@ -784,6 +810,20 @@ postinstall fix
 and thus all issues that are fixed by
 .Ic postinstall
 by default will be handled.
+.Pp
+If you have ever run a version of
+.Nx -current
+between April 18, 2020 and September 23, 2022 (the version numbers
+used in the affected time range are between 9.99.56 and 9.99.106)
+your FFS file systems might have broken extended attributes stored.
+.Pp
+You should follow this
+.Lk https://wiki.netbsd.org/features/UFS2ea/ guide
+before booting the updated system multi-user for the first time.
+.Pp
+.Em Note that you do not need to do anything special if you never did run any affected kernel,
+especially if you have never run
+.Nx -current .
 .Pp
 A number of things have been removed from the
 .Nx
