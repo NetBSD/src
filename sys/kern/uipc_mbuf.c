@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.246 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.247 2022/12/16 08:42:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.246 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.247 2022/12/16 08:42:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -289,6 +289,9 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 	case MBUF_MCLLOWAT:
 		newval = *(int*)rnode->sysctl_data;
 		break;
+	case MBUF_NMBCLUSTERS_LIMIT:
+		newval = nmbclusters_limit();
+		break;
 	default:
 		return EOPNOTSUPP;
 	}
@@ -487,6 +490,12 @@ sysctl_kern_mbuf_setup(void)
 		       sysctl_kern_mbuf_mowners, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MOWNERS, CTL_EOL);
 #endif
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "nmbclusters_limit",
+		       SYSCTL_DESCR("Limit of nmbclusters"),
+		       sysctl_kern_mbuf, 0, NULL, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS_LIMIT, CTL_EOL);
 }
 
 static int
