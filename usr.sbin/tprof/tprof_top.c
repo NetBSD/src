@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.6 2022/12/16 08:00:47 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.7 2022/12/16 08:02:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.6 2022/12/16 08:00:47 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.7 2022/12/16 08:02:04 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -919,33 +919,6 @@ tprof_top_usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static int
-parse_event_scale(tprof_param_t *param, const char *str)
-{
-	double d;
-	uint64_t n;
-	char *p;
-
-	if (str[0] == '=') {
-		str++;
-		n = strtoull(str, &p, 0);
-		if (*p != '\0')
-			return -1;
-		param->p_value2 = n;
-		param->p_flags |= TPROF_PARAM_VALUE2_TRIGGERCOUNT;
-	} else {
-		if (strncasecmp("0x", str, 2) == 0)
-			d = strtol(str, &p, 0);
-		else
-			d = strtod(str, &p);
-		if (*p != '\0')
-			return -1;
-		param->p_value2 = 0x100000000ULL / d;
-		param->p_flags |= TPROF_PARAM_VALUE2_SCALE;
-	}
-	return 0;
-}
-
 __dead void
 tprof_top(int argc, char **argv)
 {
@@ -954,7 +927,7 @@ tprof_top(int argc, char **argv)
 	ssize_t tprof_bufsize, len;
 	u_int i;
 	int ch, ret;
-	char *tprof_buf, *tokens[2], *p;
+	char *tprof_buf, *p, *errmsg;
 	bool noinput = false;
 
 	memset(params, 0, sizeof(params));
@@ -969,18 +942,11 @@ tprof_top(int argc, char **argv)
 			opt_showcounter = 1;
 			break;
 		case 'e':
-			p = estrdup(optarg);
-			tokens[0] = strtok(p, ",");
-			tokens[1] = strtok(NULL, ",");
-			tprof_event_lookup(tokens[0], &params[nevent]);
-			if (tokens[1] != NULL) {
-				if (parse_event_scale(&params[nevent],
-				    tokens[1]) != 0) {
-					die_errc(EXIT_FAILURE, 0,
-					    "invalid scale: %s", tokens[1]);
-				}
+			if (tprof_parse_event(&params[nevent], optarg,
+			    TPROF_PARSE_EVENT_F_ALLOWSCALE,
+			    &eventname[nevent], &errmsg) != 0) {
+				die_errc(EXIT_FAILURE, 0, "%s", errmsg);
 			}
-			eventname[nevent] = tokens[0];
 			nevent++;
 			if (nevent > __arraycount(params) ||
 			    nevent > ncounters)

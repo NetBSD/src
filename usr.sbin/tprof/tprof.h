@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.h,v 1.3 2022/12/01 00:43:27 ryo Exp $	*/
+/*	$NetBSD: tprof.h,v 1.4 2022/12/16 08:02:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,11 @@ extern u_int ncounters;
 int tprof_event_init(uint32_t);
 void tprof_event_list(void);
 void tprof_event_lookup(const char *, struct tprof_param *);
+
+int tprof_parse_event(tprof_param_t *, const char *, uint32_t, const char **,
+    char **);
+#define TPROF_PARSE_EVENT_F_ALLOWOPTION	0x00000001
+#define TPROF_PARSE_EVENT_F_ALLOWSCALE	0x00000002
 
 void tprof_analyze(int, char **);
 void tprof_top(int, char **);
