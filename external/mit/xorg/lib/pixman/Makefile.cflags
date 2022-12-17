@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cflags,v 1.1 2022/11/13 09:36:37 mrg Exp $
+#	$NetBSD: Makefile.cflags,v 1.2 2022/12/17 09:46:21 mrg Exp $
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 . if ${MACHINE_ARCH} == "i386"
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DUSE_ARM_NEON
 .endif
 
 .if !empty(MACHINE_ARCH:Maarch64*)
-CPPFLAGS+=	-DUSE_ARM_A64_NEON
+#CPPFLAGS+=	-DUSE_ARM_A64_NEON
 .endif
 
 .if !empty(MACHINE_ARCH:Mmips*64el) && empty(COPTS:M-march=*)
