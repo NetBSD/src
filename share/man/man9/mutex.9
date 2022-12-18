@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.32 2022/08/20 14:17:36 riastradh Exp $
+.\"	$NetBSD: mutex.9,v 1.33 2022/12/18 23:38:42 gutteridge Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,7 +203,7 @@ All loads and stores before
 .Fn mutex_exit
 will not be reordered after it or delayed in a write buffer, and hence
 will
-.Fn happen before
+.Em happen before
 any subsequent
 .Fn mutex_enter
 to acquire the mutex even on another CPU or in an interrupt.
