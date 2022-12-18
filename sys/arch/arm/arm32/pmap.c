@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.437 2022/05/03 20:12:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.438 2022/12/18 12:02:47 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.437 2022/05/03 20:12:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.438 2022/12/18 12:02:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6379,7 +6379,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	kcpuset_create(&efipm->pm_active, true);
 	kcpuset_create(&efipm->pm_onproc, true);
 #endif
-	mutex_init(&efipm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&efipm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 #endif
 
 	VPRINTF("locks ");
