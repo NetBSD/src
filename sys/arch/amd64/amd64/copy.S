@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.34 2020/06/30 16:20:00 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.35 2022/12/18 07:53:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ END(do_pmap_load)
  * However the use of 'rep movsb' for the final bytes should be killed.
  *
  * Newer Intel cpus have a much lower setup time, and may (someday)
- * be ably to do cache-line size copies....
+ * be able to do cache-line size copies....
  */
 
 /*
