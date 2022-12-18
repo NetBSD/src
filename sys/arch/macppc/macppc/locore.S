@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.81 2022/12/18 01:10:57 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.82 2022/12/18 01:16:05 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,6 +92,11 @@ __start:
 	mr	%r13,%r6
 	mr	%r14,%r7
 
+/* 
+ * Zero SPRG0 so we can catch usage of curcpu(), which just returns SPRG0,
+ * before it is set up properly. Console output uses locks now, which need
+ * working curcpu(), and macppc sets up its console *very* early.
+ */
 #ifdef DEBUG
 	li	%r0,0
 	mtsprg0	%r0
