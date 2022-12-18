@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2941 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2942 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,3 +24,5 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 10.0 to NetBSD 11.0:
+	amdsmn(4): added trivial power management support
+	amdccp(4): added trivial power management support
