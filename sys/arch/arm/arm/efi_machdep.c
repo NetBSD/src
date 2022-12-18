@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.2 2022/05/03 20:12:27 skrll Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.3 2022/12/18 12:02:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2022/05/03 20:12:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3 2022/12/18 12:02:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -111,13 +111,15 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz,
 	case ARM_EFIRT_MEM_CODE:
 		/* need write permission because fw devs */
 		prot = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
+		flags = prot;
 		break;
 	case ARM_EFIRT_MEM_DATA:
 		prot = VM_PROT_READ | VM_PROT_WRITE;
+		flags = prot;
 		break;
 	case ARM_EFIRT_MEM_MMIO:
 		prot = VM_PROT_READ | VM_PROT_WRITE;
-		flags = PMAP_DEV;
+		flags = prot | PMAP_DEV;
 		break;
 	default:
 		panic("%s: unsupported type %d", __func__, type);
