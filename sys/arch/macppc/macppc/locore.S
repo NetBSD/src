@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.80 2022/12/14 13:04:24 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.81 2022/12/18 01:10:57 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,8 +92,10 @@ __start:
 	mr	%r13,%r6
 	mr	%r14,%r7
 
+#ifdef DEBUG
 	li	%r0,0
 	mtsprg0	%r0
+#endif
 
 	bl	_C_LABEL(ofwinit)		/* init OF */
 
