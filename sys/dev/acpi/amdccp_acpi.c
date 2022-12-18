@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: amdccp_acpi.c,v 1.6 2022/12/18 15:50:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.6 2022/12/18 15:50:32 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,6 +103,7 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	amdccp_common_attach(sc);
+	pmf_device_register(self, NULL, NULL);
 
 done:
 	acpi_resource_cleanup(&res);

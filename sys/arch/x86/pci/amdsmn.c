@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.14 2022/10/01 15:50:05 msaitoh Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.15 2022/12/18 15:50:32 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2019 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.14 2022/10/01 15:50:05 msaitoh Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.15 2022/12/18 15:50:32 reinoud Exp $ ");
 
 /*
  * Driver for the AMD Family 15h (model 60+) and 17h CPU
@@ -159,6 +159,8 @@ amdsmn_attach(device_t parent, device_t self, void *aux)
 
 	// aprint_normal(": AMD Family 17h System Management Network\n");
 	aprint_normal(": AMD System Management Network\n");
+
+	pmf_device_register(self, NULL, NULL);
 	amdsmn_rescan(self, NULL, NULL);
 }
 
@@ -177,6 +179,8 @@ static int
 amdsmn_detach(device_t self, int flags)
 {
 	struct amdsmn_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
 
 	mutex_destroy(&sc->smn_lock);
 	aprint_normal_dev(self,"detach!\n");

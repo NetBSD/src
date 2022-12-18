@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: amdccp_fdt.c,v 1.7 2022/12/18 15:50:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_fdt.c,v 1.7 2022/12/18 15:50:32 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,4 +89,5 @@ amdccp_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": AMD CCP\n");
 
 	amdccp_common_attach(sc);
+	pmf_device_register(self, NULL, NULL);
 }

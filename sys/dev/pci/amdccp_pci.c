@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_pci.c,v 1.3 2022/10/26 13:35:25 msaitoh Exp $ */
+/* $NetBSD: amdccp_pci.c,v 1.4 2022/12/18 15:50:32 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.3 2022/10/26 13:35:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_pci.c,v 1.4 2022/12/18 15:50:32 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,4 +122,5 @@ amdccp_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	amdccp_common_attach(sc);
+	pmf_device_register(self, NULL, NULL);
 }
