@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.1 2022/12/16 19:12:49 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.2 2022/12/19 14:00:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -10,3 +10,106 @@ external/gpl2/groff/tmac/mdoc.local             patched by hand
 sys/sys/param.h                                 patched by hand
 
 	Welcome to 10.0_BETA!
+
+sys/arch/x86/pci/amdsmn.c			1.15
+sys/dev/acpi/amdccp_acpi.c			1.6
+sys/dev/fdt/amdccp_fdt.c			1.7
+sys/dev/pci/amdccp_pci.c			1.4
+
+	amdsmn(4), amdccp(4): add power management stubs.
+	[reinoud, ticket #3]
+
+sys/arch/arm/arm/efi_machdep.c			1.3
+sys/arch/arm/arm32/pmap.c			1.438
+
+	arm: fix mapping flags and mutex type for efi runtime.
+	[skrll, ticket #4]
+
+xsrc/external/mit/pixman/dist/Makefile.am			apply patch
+xsrc/external/mit/pixman/dist/Makefile.in			apply patch
+xsrc/external/mit/pixman/dist/README				apply patch
+xsrc/external/mit/pixman/dist/a64-neon-test.S			apply patch
+xsrc/external/mit/pixman/dist/aclocal.m4			apply patch
+xsrc/external/mit/pixman/dist/compile				apply patch
+xsrc/external/mit/pixman/dist/config.guess			apply patch
+xsrc/external/mit/pixman/dist/config.h.in			apply patch
+xsrc/external/mit/pixman/dist/config.sub			apply patch
+xsrc/external/mit/pixman/dist/configure				apply patch
+xsrc/external/mit/pixman/dist/configure.ac			apply patch
+xsrc/external/mit/pixman/dist/depcomp				apply patch
+xsrc/external/mit/pixman/dist/install-sh			apply patch
+xsrc/external/mit/pixman/dist/ltmain.sh				apply patch
+xsrc/external/mit/pixman/dist/meson.build			apply patch
+xsrc/external/mit/pixman/dist/meson_options.txt			apply patch
+xsrc/external/mit/pixman/dist/missing				apply patch
+xsrc/external/mit/pixman/dist/test-driver			apply patch
+xsrc/external/mit/pixman/dist/demos/Makefile.am			apply patch
+xsrc/external/mit/pixman/dist/demos/Makefile.in			apply patch
+xsrc/external/mit/pixman/dist/demos/dither.c			apply patch
+xsrc/external/mit/pixman/dist/demos/dither.ui			apply patch
+xsrc/external/mit/pixman/dist/demos/gtk-utils.c			apply patch
+xsrc/external/mit/pixman/dist/demos/meson.build			apply patch
+xsrc/external/mit/pixman/dist/demos/scale.c			apply patch
+xsrc/external/mit/pixman/dist/pixman/Makefile.am		apply patch
+xsrc/external/mit/pixman/dist/pixman/Makefile.in		apply patch
+xsrc/external/mit/pixman/dist/pixman/Makefile.sources		apply patch
+xsrc/external/mit/pixman/dist/pixman/loongson-mmintrin.h	apply patch
+xsrc/external/mit/pixman/dist/pixman/meson.build		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-access.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-arm-neon.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-arm.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-arma64-neon-asm-bilinear.S	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-arma64-neon-asm.S	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-arma64-neon-asm.h	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-bits-image.c	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-combine32.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-combine32.h		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-compiler.h		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-general.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-gradient-walker.c	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-image.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-implementation.c	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-inlines.h		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-matrix.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-mmx.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-ppc.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-private.h		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-region.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-sse2.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-trap.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-utils.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-version.h		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-version.h.in	apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman-x86.c		apply patch
+xsrc/external/mit/pixman/dist/pixman/pixman.h			apply patch
+xsrc/external/mit/pixman/dist/test/Makefile.in			apply patch
+xsrc/external/mit/pixman/dist/test/affine-test.c		apply patch
+xsrc/external/mit/pixman/dist/test/lowlevel-blt-bench.c		apply patch
+xsrc/external/mit/pixman/dist/test/meson.build			apply patch
+xsrc/external/mit/pixman/dist/test/solid-test.c			apply patch
+xsrc/external/mit/pixman/dist/test/stress-test.c		apply patch
+xsrc/external/mit/pixman/dist/test/thread-test.c		apply patch
+xsrc/external/mit/pixman/dist/test/tolerance-test.c		apply patch
+xsrc/external/mit/pixman/dist/test/utils.c			apply patch
+xsrc/external/mit/pixman/dist/test/utils.h			apply patch
+xsrc/external/mit/pixman/include/config.h			apply patch
+external/mit/xorg/lib/pixman/Makefile				1.42
+external/mit/xorg/lib/pixman/Makefile.cflags			1.2
+
+	x11: revert pixman to 0.38.4.
+	[mrg, ticket #5]
+
+xsrc/external/mit/makedepend/dist/def.h				1.3
+xsrc/external/mit/makedepend/dist/ChangeLog			apply patch
+xsrc/external/mit/makedepend/dist/README			apply patch
+xsrc/external/mit/makedepend/dist/aclocal.m4			apply patch
+xsrc/external/mit/makedepend/dist/configure			apply patch
+xsrc/external/mit/makedepend/dist/configure.ac			apply patch
+xsrc/external/mit/makedepend/dist/include.c			apply patch
+xsrc/external/mit/makedepend/dist/makedepend.man		apply patch
+
+	makedepend(1): revert local change, update to 1.0.8 instead.
+	[mrg, ticket #6]
+
+
