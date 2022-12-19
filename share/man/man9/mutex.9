@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.33 2022/12/18 23:38:42 gutteridge Exp $
+.\"	$NetBSD: mutex.9,v 1.34 2022/12/19 00:41:45 uwe Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,8 @@
 .Cd "options LOCKDEBUG"
 .Sh DESCRIPTION
 Mutexes are used in the kernel to implement mutual exclusion among LWPs
-(lightweight processes) and interrupt handlers.
+.Pq lightweight processes
+and interrupt handlers.
 .Pp
 The
 .Vt kmutex_t
@@ -80,23 +81,21 @@ Mutexes replace the
 system traditionally used to provide synchronization between interrupt
 handlers and LWPs.
 .Sh OPTIONS
-.Bl -tag -width abcd
+The following kernel options have effect on mutex operations:
+.Bl -tag -width Cd
 .It Cd "options DIAGNOSTIC"
-.Pp
 Kernels compiled with the
 .Dv DIAGNOSTIC
 option perform basic sanity checks on mutex operations.
 .It Cd "options LOCKDEBUG"
-.Pp
 Kernels compiled with the
 .Dv LOCKDEBUG
 option perform potentially CPU intensive sanity checks
 on mutex operations.
 .El
 .Sh FUNCTIONS
-.Bl -tag -width abcd
+.Bl -tag -width Ds
 .It Fn mutex_init "mtx" "type" "ipl"
-.Pp
 Dynamically initialize a mutex for use.
 .Pp
 No other operations can be performed on a mutex until it has been initialized.
@@ -115,9 +114,8 @@ an endorsed, stable part of the interface.
 The type of mutex returned depends on the
 .Fa ipl
 argument:
-.Bl -tag -width abcd
-.It IPL_NONE, or one of the IPL_SOFT* constants
-.Pp
+.Bl -tag -width Dv
+.It Dv IPL_NONE , No or one of the Dv IPL_SOFT* No constants
 An adaptive mutex will be returned.
 Adaptive mutexes provide mutual exclusion between LWPs,
 and between LWPs and soft interrupt handlers.
@@ -125,8 +123,7 @@ and between LWPs and soft interrupt handlers.
 Adaptive mutexes cannot be acquired from a hardware interrupt handler.
 An LWP may either sleep or busy-wait when attempting to acquire
 an adaptive mutex that is already held.
-.It IPL_VM, IPL_SCHED, IPL_HIGH
-.Pp
+.It Dv IPL_VM , IPL_SCHED , IPL_HIGH
 A spin mutex will be returned.
 Spin mutexes provide mutual exclusion between LWPs, and between LWPs
 and interrupt handlers.
@@ -160,13 +157,11 @@ See
 .Xr spl 9
 for further information on interrupt priority levels (IPLs).
 .It Fn mutex_destroy "mtx"
-.Pp
 Release resources used by a mutex.
 The mutex may not be used after it has been destroyed.
 .Fn mutex_destroy
 may block in order to free memory.
 .It Fn mutex_enter "mtx"
-.Pp
 Acquire a mutex.
 If the mutex is already held, the caller will block and not return until the
 mutex is acquired.
@@ -194,7 +189,6 @@ the level set in
 .Fn mutex_init
 if it is not already equal or higher.
 .It Fn mutex_exit "mtx"
-.Pp
 Release a mutex.
 The mutex must have been previously acquired by the caller.
 Mutexes may be released out of order as needed.
@@ -210,17 +204,16 @@ to acquire the mutex even on another CPU or in an interrupt.
 Thus, there is a global total ordering on all loads and stores under
 the same mutex.
 .It Fn mutex_ownable "mtx"
-.Pp
 When compiled with
 .Dv LOCKDEBUG
-(see
-.Xr options 4 ) ,
 ensure that the current process can successfully acquire
 .Ar mtx .
 If
 .Ar mtx
 is already owned by the current process, the system will panic
-with a "locking against myself" error.
+with a
+.Dq locking against myself\^
+error.
 .Pp
 This function is needed because
 .Fn mutex_owned
@@ -230,7 +223,6 @@ vs owned by another process.
 is reasonably heavy-weight, and should only be used with
 .Xr KDASSERT 9 .
 .It Fn mutex_owned "mtx"
-.Pp
 For adaptive mutexes, return non-zero if the current LWP holds the mutex.
 For spin mutexes, return non-zero if the mutex is held, potentially by the
 current processor.
@@ -239,14 +231,11 @@ Otherwise, return zero.
 .Fn mutex_owned
 is provided for making diagnostic checks to verify that a lock is held.
 For example:
-.Bd -literal
-	KASSERT(mutex_owned(&driver_lock));
-.Ed
+.Dl KASSERT(mutex_owned(&driver_lock));
 .Pp
 It should not be used to make locking decisions at run time.
 For spin mutexes, it must not be used to verify that a lock is not held.
 .It Fn mutex_spin_enter "mtx"
-.Pp
 Equivalent to
 .Fn mutex_enter ,
 but may only be used when it is known that
@@ -257,7 +246,6 @@ Implies the same memory ordering as
 On some architectures, this can substantially reduce the cost of acquiring
 a spin mutex.
 .It Fn mutex_spin_exit "mtx"
-.Pp
 Equivalent to
 .Fn mutex_exit ,
 but may only be used when it is known that
@@ -268,7 +256,6 @@ Implies the same memory ordering as
 On some architectures, this can substantially reduce the cost of releasing
 a spin mutex.
 .It Fn mutex_tryenter "mtx"
-.Pp
 Try to acquire a mutex, but do not block if the mutex is already held.
 Returns non-zero if the mutex was acquired, or zero if the mutex was
 already held.
@@ -276,26 +263,26 @@ already held.
 .Fn mutex_tryenter
 can be used as an optimization when acquiring locks in the wrong order.
 For example, in a setting where the convention is that
-.Dv first_lock
+.Va first_lock
 must be acquired before
-.Dv second_lock ,
+.Va second_lock ,
 the following can be used to optimistically lock in reverse order:
-.Bd -literal
-	/* We hold second_lock, but not first_lock. */
-	KASSERT(mutex_owned(&second_lock));
+.Bd -literal -offset indent
+/* We hold second_lock, but not first_lock. */
+KASSERT(mutex_owned(&second_lock));
 
-	if (!mutex_tryenter(&first_lock)) {
-		/* Failed to get it - lock in the correct order. */
-		mutex_exit(&second_lock);
-		mutex_enter(&first_lock);
-		mutex_enter(&second_lock);
+if (!mutex_tryenter(&first_lock)) {
+        /* Failed to get it - lock in the correct order. */
+        mutex_exit(&second_lock);
+        mutex_enter(&first_lock);
+        mutex_enter(&second_lock);
 
-		/*
-		 * We may need to recheck any conditions the code
-		 * path depends on, as we released second_lock
-		 * briefly.
-		 */
-	}
+        /*
+         * We may need to recheck any conditions the code
+         * path depends on, as we released second_lock
+         * briefly.
+         */
+}
 .Ed
 .El
 .Sh CODE REFERENCES
@@ -309,6 +296,7 @@ code must provide to support mutexes.
 .Sh SEE ALSO
 .Xr atomic_ops 3 ,
 .Xr membar_ops 3 ,
+.Xr options 4 ,
 .Xr lockstat 8 ,
 .Xr condvar 9 ,
 .Xr kpreempt 9 ,
