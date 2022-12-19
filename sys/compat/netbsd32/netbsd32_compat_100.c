@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_90_mod.c,v 1.4 2022/12/19 23:19:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_100.c,v 1.1 2022/12/19 23:19:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software developed for The NetBSD Foundation
- * by Paul Goyette
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,53 +29,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Linkage for the compat module: spaghetti.
- */
-
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.4 2022/12/19 23:19:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.1 2022/12/19 23:19:51 pgoyette Exp $");
 
-#include <sys/systm.h>
 #include <sys/module.h>
 
-#include <compat/common/compat_util.h>
-#include <compat/common/compat_mod.h>
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_conv.h>
 
-int
-compat_90_init(void)
-{
-
-	return vfs_syscalls_90_init();
-}
-
-int
-compat_90_fini(void)
-{
-
-	return vfs_syscalls_90_fini();
-}
-
-MODULE(MODULE_CLASS_EXEC, compat_90, "compat_100");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_100, "compat_netbsd32,compat_100");
 
 static int
-compat_90_modcmd(modcmd_t cmd, void *arg)
+compat_netbsd32_100_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_90_init();
+		return 0;
 
 	case MODULE_CMD_FINI:
-		return compat_90_fini();
+		return 0;
 
 	default:
 		return ENOTTY;
 	}
 }
-
-struct timespec boottime;	/* For access by older vmstat */
