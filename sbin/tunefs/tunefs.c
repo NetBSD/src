@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.56 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.57 2022/12/19 21:13:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.56 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.57 2022/12/19 21:13:16 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,7 +360,7 @@ main(int argc, char *argv[])
 	 * be cleared by kernel or fsck.
 	 */
 	if (aflag) {
-		name = "ACLs";
+		name = "NFSv4 ACLs";
 		if (strcmp(avalue, "enable") == 0) {
 			if (is_ufs2 && !extattr) {
 				warnx("%s not supported by this fs", name);
