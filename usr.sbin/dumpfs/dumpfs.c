@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.66 2022/11/17 06:40:40 chs Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.67 2022/12/19 18:51:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.66 2022/11/17 06:40:40 chs Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.67 2022/12/19 18:51:42 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,7 +314,7 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	    fs->fs_magic, ctime(&t));
 
 	if (is_ufs2)
-		i = 5;
+		i = -1;
 	else {
 		i = 0;
 		if (fs->fs_old_postblformat != FS_42POSTBLFMT) {
@@ -338,10 +338,11 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	    fs->fs_id[0] || fs->fs_id[1])
 		printf("superblock location\t%jd\tid\t[ %x %x ]\n",
 		    (intmax_t)fs->fs_sblockloc, fs->fs_id[0], fs->fs_id[1]);
-	printf("cylgrp\t%s\tinodes\t%s\tsblock\t%s\tfslevel %d\n",
-	    i < 1 ? "static" : "dynamic",
-	    i < 2 ? "4.2/4.3BSD" : i < 5 ? "4.4BSD" : "FFSv2",
-	    i < 4 ? "FFSv1" : "FFSv2", i);
+	if (!is_ufs2)
+		printf("cylgrp\t%s\tinodes\t%s\tsblock\t%s\tfslevel %d\n",
+		    i < 1 ? "static" : "dynamic",
+		    i < 2 ? "4.2/4.3BSD" : i < 5 ? "4.4BSD" : "FFSv2",
+		    i < 4 ? "FFSv1" : "FFSv2", i);
 	printf("nbfree\t%lld\tndir\t%lld\tnifree\t%lld\tnffree\t%lld\n",
 	    (long long)fs->fs_cstotal.cs_nbfree,
 	    (long long)fs->fs_cstotal.cs_ndir,
