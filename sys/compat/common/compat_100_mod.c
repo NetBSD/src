@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_90_mod.c,v 1.4 2022/12/19 23:19:51 pgoyette Exp $	*/
+/*	$NetBSD: compat_100_mod.c,v 1.1 2022/12/19 23:19:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.4 2022/12/19 23:19:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_100_mod.c,v 1.1 2022/12/19 23:19:51 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -47,35 +47,33 @@ __KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.4 2022/12/19 23:19:51 pgoyette E
 #include <compat/common/compat_mod.h>
 
 int
-compat_90_init(void)
+compat_100_init(void)
 {
 
-	return vfs_syscalls_90_init();
+	return 0;
 }
 
 int
-compat_90_fini(void)
+compat_100_fini(void)
 {
 
-	return vfs_syscalls_90_fini();
+	return 0;
 }
 
-MODULE(MODULE_CLASS_EXEC, compat_90, "compat_100");
+MODULE(MODULE_CLASS_EXEC, compat_100, NULL);
 
 static int
-compat_90_modcmd(modcmd_t cmd, void *arg)
+compat_100_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_90_init();
+		return compat_100_init();
 
 	case MODULE_CMD_FINI:
-		return compat_90_fini();
+		return compat_100_fini();
 
 	default:
 		return ENOTTY;
 	}
 }
-
-struct timespec boottime;	/* For access by older vmstat */

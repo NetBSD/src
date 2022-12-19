@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1304 2022/12/03 01:04:42 brad Exp $
+#	$NetBSD: files,v 1.1305 2022/12/19 23:19:51 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -149,7 +149,8 @@ defflag opt_efi.h		EFI_RUNTIME
 # compatibility options
 #
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_90: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_100: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_90: COMPAT_100, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_80: COMPAT_90, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_70: COMPAT_80, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_60: COMPAT_70, COMPAT_NETBSD
