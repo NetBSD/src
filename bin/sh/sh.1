@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.252 2022/12/11 08:23:10 kre Exp $
+.\"	$NetBSD: sh.1,v 1.253 2022/12/20 01:18:42 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2767,7 +2767,7 @@ before the
 command is invoked.
 With the default value for
 .Dv IFS :
-.Bd -unfilled -compact -offset indent
+.Bd -unfilled -offset indent -compact
 X='a b c'
 export Y=$X
 .Ed
@@ -4752,7 +4752,7 @@ in the circumstances described.
 Any present will always appear in ASCII lexical
 order, as they appear below (to make testing the value easier to code).
 .Pp
-.Bl -compact -tag -width M__ -offset indent
+.Bl -tag -width M__ -offset indent -compact
 .It \&!
 Always present when set by
 .Nm ,
