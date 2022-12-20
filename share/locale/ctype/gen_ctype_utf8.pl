@@ -47,7 +47,7 @@ my @maps = qw(
 
 my ( $blocks_ranges_ref, $blocks_maps_ref ) = prop_invmap("Block");
 
-print "/*\t\$" . 'OpenBSD' . "\$\t*/\n";
+print "/*\t\$" . 'NetBSD' . "\$\t*/\n";
 print <<'EOL';
 
 /*
