@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.23 2022/12/03 01:04:43 brad Exp $
+# $NetBSD: module.mi,v 1.24 2022/12/20 00:31:55 jakllsch Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -88,6 +88,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_80/compat_80.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_90				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_90/compat_90.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_100				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_100/compat_100.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_crypto_50			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_crypto_50/compat_crypto_50.kmod.debug modules-base-kernel kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_ossaudio			modules-base-kernel	kmod,debug
