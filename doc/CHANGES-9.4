@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.31 2022/12/14 15:41:43 snj Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.32 2022/12/20 09:58:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -472,4 +472,9 @@ usr.sbin/sysinst/arch/sparc64/md.c		1.8
 	sysinst: properly set default disk size unit on more
 	architectures.
 	[martin, ticket #1554]
+
+sys/nfs/nfs_srvsocket.c				1.5
+
+	NFS: avoid mbuf leaks and corruption.
+	[hannken, ticket #1555]
 
