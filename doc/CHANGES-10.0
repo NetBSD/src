@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.2 2022/12/19 14:00:35 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.3 2022/12/20 09:55:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -112,4 +112,185 @@ xsrc/external/mit/makedepend/dist/makedepend.man		apply patch
 	makedepend(1): revert local change, update to 1.0.8 instead.
 	[mrg, ticket #6]
 
+external/mit/libX11/dist/ChangeLog              up to 1.3
+external/mit/libX11/dist/README.md              up to 1.3
+external/mit/libX11/dist/aclocal.m4             up to 1.3
+external/mit/libX11/dist/configure              up to 1.3
+external/mit/libX11/dist/configure.ac           up to 1.3
+external/mit/libX11/dist/include/X11/Xlib.h     up to 1.3
+external/mit/libX11/dist/include/X11/Xlibint.h  up to 1.3
+external/mit/libX11/dist/man/XInitThreads.man   up to 1.3
+external/mit/libX11/dist/modules/im/ximcp/imLcPrs.c up to 1.3
+external/mit/libX11/dist/nls/en_US.UTF-8/XLC_LOCALE.pre up to 1.3
+external/mit/libX11/dist/src/ChkIfEv.c          up to 1.3
+external/mit/libX11/dist/src/IfEvent.c          up to 1.3
+external/mit/libX11/dist/src/OpenDis.c          up to 1.3
+external/mit/libX11/dist/src/PeekIfEv.c         up to 1.3
+external/mit/libX11/dist/src/PutBEvent.c        up to 1.3
+external/mit/libX11/dist/src/globals.c          up to 1.3
+external/mit/libX11/dist/src/locking.c          up to 1.3
+external/mit/libX11/dist/src/xkb/XKBBind.c      up to 1.3
+
+	Update libX11 from 1.8.2 to 1.8.3.
+	[mrg, ticket #7]
+
+external/mit/xorg-server/dist/hw/xquartz/defaults.plist up to 1.1.1.1
+external/mit/xorg-server/dist/m4/libtool.m4     delete
+external/mit/xorg-server/dist/m4/ltversion.m4   delete
+external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.21
+external/mit/xorg-server/dist/Makefile.in       up to 1.1.1.15
+external/mit/xorg-server/dist/aclocal.m4        up to 1.1.1.18
+external/mit/xorg-server/dist/compile           up to 1.1.1.12
+external/mit/xorg-server/dist/config.guess      up to 1.1.1.14
+external/mit/xorg-server/dist/config.sub        up to 1.1.1.14
+external/mit/xorg-server/dist/configure         up to 1.14
+external/mit/xorg-server/dist/configure.ac      up to 1.16
+external/mit/xorg-server/dist/depcomp           up to 1.1.1.10
+external/mit/xorg-server/dist/ltmain.sh         up to 1.1.1.12
+external/mit/xorg-server/dist/meson.build       up to 1.1.1.11
+external/mit/xorg-server/dist/missing           up to 1.1.1.10
+external/mit/xorg-server/dist/test-driver       up to 1.1.1.8
+external/mit/xorg-server/dist/ylwrap            up to 1.1.1.10
+external/mit/xorg-server/dist/Xext/Makefile.in  up to 1.1.1.15
+external/mit/xorg-server/dist/Xext/saver.c      up to 1.5
+external/mit/xorg-server/dist/Xext/xtest.c      up to 1.8
+external/mit/xorg-server/dist/Xext/xvmain.c     up to 1.1.1.7
+external/mit/xorg-server/dist/Xi/Makefile.in    up to 1.1.1.15
+external/mit/xorg-server/dist/Xi/sendexev.c     up to 1.6
+external/mit/xorg-server/dist/Xi/xipassivegrab.c up to 1.7
+external/mit/xorg-server/dist/Xi/xiproperty.c   up to 1.6
+external/mit/xorg-server/dist/composite/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/config/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/damageext/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/dbe/Makefile.in   up to 1.1.1.15
+external/mit/xorg-server/dist/dix/Makefile.in   up to 1.1.1.16
+external/mit/xorg-server/dist/dix/property.c    up to 1.1.1.8
+external/mit/xorg-server/dist/doc/Makefile.in   up to 1.1.1.15
+external/mit/xorg-server/dist/doc/dtrace/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/dri3/Makefile.in  up to 1.1.1.9
+external/mit/xorg-server/dist/exa/Makefile.in   up to 1.1.1.15
+external/mit/xorg-server/dist/fb/Makefile.in    up to 1.1.1.15
+external/mit/xorg-server/dist/glamor/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/glx/Makefile.in   up to 1.1.1.14
+external/mit/xorg-server/dist/hw/Makefile.in    up to 1.1.1.15
+external/mit/xorg-server/dist/hw/kdrive/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/kdrive/ephyr/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/kdrive/ephyr/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/kdrive/src/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/vfb/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/vfb/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xfree86/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/common/Makefile.in up to 1.1.1.16
+external/mit/xorg-server/dist/hw/xfree86/ddc/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/dixmods/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/doc/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/dri/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/dri2/Makefile.in up to 1.1.1.14
+external/mit/xorg-server/dist/hw/xfree86/dri2/pci_ids/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xfree86/drivers/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xfree86/drivers/inputtest/Makefile.in up to 1.1.1.3
+external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/Makefile.in up to 1.1.1.10
+external/mit/xorg-server/dist/hw/xfree86/exa/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/exa/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xfree86/fbdevhw/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/fbdevhw/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xfree86/glamor_egl/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xfree86/i2c/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/int10/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/int10/generic.c up to 1.6
+external/mit/xorg-server/dist/hw/xfree86/loader/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/man/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xfree86/modes/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/bus/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/hurd/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/linux/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/misc/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/solaris/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/os-support/stub/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xfree86/parser/Makefile.in up to 1.1.1.17
+external/mit/xorg-server/dist/hw/xfree86/ramdac/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/shadowfb/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/utils/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/utils/gtf/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/utils/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xfree86/vgahw/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/x86emu/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xfree86/xkb/Makefile.in up to 1.1.1.8
+external/mit/xorg-server/dist/hw/xnest/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xnest/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xquartz/Makefile.am up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xquartz/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xquartz/NSUserDefaults+XQuartzDefaults.m up to 1.1.1.2
+external/mit/xorg-server/dist/hw/xquartz/meson.build up to 1.1.1.4
+external/mit/xorg-server/dist/hw/xquartz/GL/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xquartz/bundle/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xquartz/mach-startup/Makefile.in up to 1.1.1.14
+external/mit/xorg-server/dist/hw/xquartz/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xquartz/pbproxy/Makefile.am up to 1.1.1.7
+external/mit/xorg-server/dist/hw/xquartz/pbproxy/Makefile.in up to 1.1.1.14
+external/mit/xorg-server/dist/hw/xquartz/pbproxy/meson.build up to 1.1.1.3
+external/mit/xorg-server/dist/hw/xquartz/xpr/Makefile.in up to 1.1.1.14
+external/mit/xorg-server/dist/hw/xwin/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/hw/xwin/winprefslex.c up to 1.1.1.9
+external/mit/xorg-server/dist/hw/xwin/winprefsyacc.c up to 1.1.1.13
+external/mit/xorg-server/dist/hw/xwin/winprefsyacc.h up to 1.1.1.13
+external/mit/xorg-server/dist/hw/xwin/dri/Makefile.in up to 1.1.1.8
+external/mit/xorg-server/dist/hw/xwin/glx/Makefile.in up to 1.1.1.12
+external/mit/xorg-server/dist/hw/xwin/man/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/hw/xwin/winclipboard/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/include/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/include/dix-config.h.in up to 1.9
+external/mit/xorg-server/dist/include/do-not-use-config.h.in up to 1.1.1.14
+external/mit/xorg-server/dist/include/meson.build up to 1.1.1.5
+external/mit/xorg-server/dist/include/os.h      up to 1.12
+external/mit/xorg-server/dist/m4/ltoptions.m4   up to 1.1.1.3
+external/mit/xorg-server/dist/m4/ltsugar.m4     up to 1.1.1.3
+external/mit/xorg-server/dist/m4/lt~obsolete.m4 up to 1.1.1.3
+external/mit/xorg-server/dist/man/Makefile.in   up to 1.1.1.9
+external/mit/xorg-server/dist/mi/Makefile.in    up to 1.1.1.15
+external/mit/xorg-server/dist/miext/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/miext/damage/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/miext/rootless/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/miext/shadow/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/miext/sync/Makefile.in up to 1.1.1.11
+external/mit/xorg-server/dist/os/Makefile.in    up to 1.1.1.15
+external/mit/xorg-server/dist/present/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/pseudoramiX/Makefile.in up to 1.1.1.9
+external/mit/xorg-server/dist/randr/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/record/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/render/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/test/Makefile.in  up to 1.1.1.12
+external/mit/xorg-server/dist/xfixes/Makefile.in up to 1.1.1.15
+external/mit/xorg-server/dist/xkb/Makefile.in   up to 1.1.1.15
+external/mit/xorg-server/dist/xkb/xkbUtils.c    up to 1.1.1.7
+external/mit/xorg-server/include/dix-config.h   up to 1.47
+external/mit/xorg-server/include/version-config.h up to 1.17
+external/mit/xorg-server/include/xorg-config.h  up to 1.27
+external/mit/xorg-server/include/xorg-server.h  up to 1.27
+
+	Update xserver to 21.1.5.
+	[mrg, ticket #8]
+
+usr.sbin/dumpfs/dumpfs.8			1.21
+usr.sbin/dumpfs/dumpfs.c			1.67
+
+	dumpfs: remove confusing output for UFS2, see PR 57082.
+	[chs, ticket #9]
+
+sbin/tunefs/tunefs.c				1.57
+
+	tunefs: clarify that "-a" refers to NFSv4 ACLs
+	[chs, ticket #10]
+
+bin/sh/sh.1					1.253
+
+	sh(1): Fix markup.  -compact must be last.
+	[uwe, ticket #11]
+
+sys/nfs/nfs_srvsocket.c				1.5
+
+	NFS: avoid mbuf leaks and corruption.
+	[hannken, ticket #12]
 
