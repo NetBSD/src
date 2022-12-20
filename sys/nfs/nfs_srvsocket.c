@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.4 2009/09/03 20:59:12 tls Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.5 2022/12/20 09:40:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.4 2009/09/03 20:59:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.5 2022/12/20 09:40:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,8 +323,9 @@ nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 			}
 			m_claimm(recm, &nfs_mowner);
 			slp->ns_raw = m;
-			if (m->m_next == NULL)
-				slp->ns_rawend = m;
+			while (m->m_next)
+				m = m->m_next;
+			slp->ns_rawend = m;
 			slp->ns_cc -= slp->ns_reclen;
 			slp->ns_reclen = 0;
 		} else {
