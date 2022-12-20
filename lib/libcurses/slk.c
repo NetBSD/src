@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.20 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: slk.c,v 1.21 2022/12/20 04:57:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #include <limits.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.20 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: slk.c,v 1.21 2022/12/20 04:57:01 blymn Exp $");
 #endif				/* not lint */
 
 #include <limits.h>
@@ -819,6 +819,9 @@ __slk_draw(SCREEN *screen, int labnum)
 	wchar_t wc[2];
 #endif
 
+	__CTRACE(__CTRACE_INPUT, "__slk_draw: screen %p, label %d\n", screen,
+	    labnum);
+
 	if (screen->slk_hidden)
 		return OK;
 
@@ -834,7 +837,7 @@ __slk_draw(SCREEN *screen, int labnum)
 		    (screen->slk_window->flags & __SCROLLOK) ||
 		    ((l->x + screen->slk_label_len) < screen->slk_window->maxx)) {
 			retval = mvwaddnstr(screen->slk_window, 0, l->x,
-			    l->label, screen->slk_label_len);
+			    l->label, strlen(l->label));
 		} else {
 			lcnt = 0;
 			tx = 0;
