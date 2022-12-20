@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.254 2022/12/20 16:48:57 kre Exp $
+.\"	$NetBSD: sh.1,v 1.255 2022/12/20 17:51:54 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -122,7 +122,7 @@ When first starting,
 if neither the
 .Fl l
 nor
-.Cm \+l
+.Cm \&+l
 options were given on the command line,
 the shell inspects argument 0, and if it begins with a dash
 .Sq \- ,
@@ -1782,7 +1782,7 @@ field with the value of each parameter separated by the first character of
 the
 .Ev IFS
 variable (possibly nothing if
-.EV IFS
+.Ev IFS
 has a null value), or by a
 .Aq space
 if
