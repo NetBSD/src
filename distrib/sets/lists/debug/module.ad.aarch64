@@ -1,4 +1,4 @@
-# $NetBSD: module.ad.aarch64,v 1.4 2021/11/25 03:08:03 ryo Exp $
+# $NetBSD: module.ad.aarch64,v 1.5 2022/12/20 04:10:11 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/bpfjit/bpfjit.kmod.debug		modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_linux			modules-base-kernel	kmod,debug
@@ -31,6 +31,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod.debug modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod,debug
