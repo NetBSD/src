@@ -1,4 +1,4 @@
-# $NetBSD: module.ad.mips,v 1.2 2020/11/01 18:51:34 pgoyette Exp $
+# $NetBSD: module.ad.mips,v 1.3 2022/12/20 04:10:11 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod.debug modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,arch64,nocompatmodules,debug
@@ -25,6 +25,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod.debug modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod.debug modules-base-kernel	kmod,arch64,nocompatmodules,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,arch64,nocompatmodules,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump			modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod.debug	modules-base-kernel	kmod,arch64,nocompatmodules,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_mqueue			modules-base-kernel	kmod,arch64,nocompatmodules,debug

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.18 2021/05/10 14:27:47 simonb Exp $
+# $NetBSD: ad.mips,v 1.19 2022/12/20 04:10:11 pgoyette Exp $
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,arch64,nocompatmodules
@@ -29,6 +29,8 @@
 ./@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod modules-base-kernel	kmod,arch64,nocompatmodules
+./@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,arch64,nocompatmodules
+./@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod	modules-base-kernel	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod,arch64,nocompatmodules

@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.12 2022/07/28 22:00:23 riastradh Exp $
+# $NetBSD: module.md.amd64,v 1.13 2022/12/20 04:10:11 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -75,6 +75,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod.debug modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod,debug
