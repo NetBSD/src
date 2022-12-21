@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.1 2022/11/03 09:04:56 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.2 2022/12/21 11:39:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct pmap_md {
 #define	pm_l0_pa	pm_md.pmd_l0_pa
 
 void pmap_md_pdetab_init(struct pmap *);
-void pmap_md_pdetab_destroy(struct pmap *);
+void pmap_md_pdetab_fini(struct pmap *);
 
 vaddr_t pmap_md_map_poolpage(paddr_t, size_t);
 paddr_t pmap_md_unmap_poolpage(vaddr_t, size_t);
