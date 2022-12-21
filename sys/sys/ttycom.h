@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.21 2017/10/25 06:32:59 kre Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.22 2022/12/21 19:08:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -158,9 +158,6 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define		TIOCFLAG_CDTRCTS	0x10	/* set cdtrcts on open */
 #define	TIOCDCDTIMESTAMP _IOR('t', 88, struct timeval) /* get timestamp of last
 						 * Cd rise, stamp next rise */
-
-#define	TIOCRCVFRAME	_IOW('t', 69, struct mbuf *)/* data frame received */
-#define	TIOCXMTFRAME	_IOW('t', 68, struct mbuf *)/* data frame transmit */
 
 #define TIOCPTMGET 	 _IOR('t', 70, struct ptmget)	/* get ptys */
 #define TIOCGRANTPT 	 _IO('t', 71) 			/* grantpt(3) */
