@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.1 2022/11/03 09:04:56 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.2 2022/12/21 11:39:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.1 2022/11/03 09:04:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.2 2022/12/21 11:39:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -610,7 +610,7 @@ pmap_md_pdetab_init(struct pmap *pm)
 }
 
 void
-pmap_md_pdetab_destroy(struct pmap *pm)
+pmap_md_pdetab_fini(struct pmap *pm)
 {
 
 	KASSERT(pm != NULL);
