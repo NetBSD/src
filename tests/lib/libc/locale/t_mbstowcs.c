@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbstowcs.c,v 1.2 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_mbstowcs.c,v 1.3 2022/12/21 09:33:34 wiz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbstowcs.c,v 1.2 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_mbstowcs.c,v 1.3 2022/12/21 09:33:34 wiz Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -89,9 +89,10 @@ static struct test {
 		0xFFFF, 0x5D, 0x5B, 0x10000, 0x1FFFFF, 0x5D, 0x5B, 0x200000,
 		0x3FFFFFF, 0x5D, 0x5B, 0x4000000, 0x7FFFFFFF, 0x5D, 0x0A
 	},
-	{	 1, -1, -1,  1,  1, -1, -1,  1,  1, -1, -1,  1,  1, -1, -1,
-		 1,  1, -1, -1,  1,  1, -1, -1,  1, -1
-	}, 
+	{	 1, -1, -1, 1, 1, -1, 1, 1, 1, 1,
+		 -1, 1, 1, 1, -1, 1, 1, -1,
+		 -1, 1, 1, -1, -1, 1, -1
+	},
 	-1
 }, {
 	"ja_JP.ISO2022-JP",
