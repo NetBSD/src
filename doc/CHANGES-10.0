@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.4 2022/12/21 09:39:45 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.5 2022/12/21 20:00:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -310,4 +310,28 @@ lib/libcurses/slk.c				1.21
 
 	libcurses: fix handling of wide characters in slk labels.
 	[blymn, ticket #15]
+
+share/mk/bsd.x11.mk				1.146
+
+	bump xorg-server version.
+	[mrg, ticket #16]
+
+sys/ufs/ffs/ffs_vfsops.c			1.379
+
+	ffs: fail mounts requesting ACLs for non-ea UFS2 file systems.
+	[chs, ticket #17]
+
+sbin/mount_nfs/mount_nfs.c			1.75
+
+	mount_nfs: add missing "A" to getopt string
+	[chs, ticket #18]
+
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_interceptors_ioctl_netbsd.inc 1.5
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_platform_limits_netbsd.cc 1.9
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_platform_limits_netbsd.h 1.8
+sys/net/ppp_tty.c				1.72
+sys/sys/ttycom.h				1.22
+
+	ppp: remove PPP HDL ioctls that never worked and crash the kernel.
+	[chs, ticket #19]
 
