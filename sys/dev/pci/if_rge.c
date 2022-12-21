@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.24 2022/09/24 18:12:42 thorpej Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.25 2022/12/21 05:19:15 nonaka Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.24 2022/09/24 18:12:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.25 2022/12/21 05:19:15 nonaka Exp $");
 
 #include <sys/types.h>
 
@@ -1132,22 +1132,16 @@ rge_newbuf(struct rge_softc *sc, int idx)
 	/* Map the segments into RX descriptors. */
 	r = &sc->rge_ldata.rge_rx_list[idx];
 
-	if (RGE_OWN(r)) {
-		device_printf(sc->sc_dev, "tried to map busy RX descriptor\n");
-		goto out;
-	}
-
 	rxq->rxq_mbuf = m;
 
-	r->rge_extsts = 0;
-	r->rge_addrlo = htole32(RGE_ADDR_LO(rxmap->dm_segs[0].ds_addr));
-	r->rge_addrhi = htole32(RGE_ADDR_HI(rxmap->dm_segs[0].ds_addr));
+	r->hi_qword1.rx_qword4.rge_extsts = 0;
+	r->hi_qword0.rge_addr = htole64(rxmap->dm_segs[0].ds_addr);
 
-	r->rge_cmdsts = htole32(rxmap->dm_segs[0].ds_len);
+	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(rxmap->dm_segs[0].ds_len);
 	if (idx == RGE_RX_LIST_CNT - 1)
-		r->rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
+		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
 
-	r->rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
+	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map,
 	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
@@ -1167,11 +1161,11 @@ rge_discard_rxbuf(struct rge_softc *sc, int idx)
 
 	r = &sc->rge_ldata.rge_rx_list[idx];
 
-	r->rge_cmdsts = htole32(RGE_JUMBO_FRAMELEN);
-	r->rge_extsts = 0;
+	r->hi_qword1.rx_qword4.rge_cmdsts = htole32(RGE_JUMBO_FRAMELEN);
+	r->hi_qword1.rx_qword4.rge_extsts = 0;
 	if (idx == RGE_RX_LIST_CNT - 1)
-		r->rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
-	r->rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
+		r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_EOR);
+	r->hi_qword1.rx_qword4.rge_cmdsts |= htole32(RGE_RDCMDSTS_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map,
 	    idx * sizeof(struct rge_rx_desc), sizeof(struct rge_rx_desc),
@@ -1235,8 +1229,8 @@ rge_rxeof(struct rge_softc *sc)
 		if (RGE_OWN(cur_rx))
 			break;
 
-		rxstat = letoh32(cur_rx->rge_cmdsts);
-		extsts = letoh32(cur_rx->rge_extsts);
+		rxstat = letoh32(cur_rx->hi_qword1.rx_qword4.rge_cmdsts);
+		extsts = letoh32(cur_rx->hi_qword1.rx_qword4.rge_extsts);
 
 		total_len = RGE_RXBYTES(cur_rx);
 		rxq = &sc->rge_ldata.rge_rxq[i];
@@ -1317,16 +1311,16 @@ rge_rxeof(struct rge_softc *sc)
 
 #if notyet
 		/* Check IP header checksum. */
-		if (!(rxstat & RGE_RDCMDSTS_IPCSUMERR) &&
+		if (!(extsts & RGE_RDEXTSTS_IPCSUMERR) &&
 		    (extsts & RGE_RDEXTSTS_IPV4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 		/* Check TCP/UDP checksum. */
 		if ((extsts & (RGE_RDEXTSTS_IPV4 | RGE_RDEXTSTS_IPV6)) &&
-		    (((rxstat & RGE_RDCMDSTS_TCPPKT) &&
-		    !(rxstat & RGE_RDCMDSTS_TCPCSUMERR)) ||
-		    ((rxstat & RGE_RDCMDSTS_UDPPKT) &&
-		    !(rxstat & RGE_RDCMDSTS_UDPCSUMERR))))
+		    (((extsts & RGE_RDEXTSTS_TCPPKT) &&
+		    !(extsts & RGE_RDEXTSTS_TCPCSUMERR)) ||
+		    ((extsts & RGE_RDEXTSTS_UDPPKT) &&
+		    !(extsts & RGE_RDEXTSTS_UDPCSUMERR))))
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
 			    M_UDP_CSUM_IN_OK;
 #endif
