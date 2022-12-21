@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.20 2021/10/19 06:41:03 blymn Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.21 2022/12/21 06:18:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.20 2021/10/19 06:41:03 blymn Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.21 2022/12/21 06:18:01 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: addnstr.c,v 1.20 2021/10/19 06:41:03 blymn Exp $");
 int
 addstr(const char *s)
 {
+	__CTRACE(__CTRACE_INPUT, "addstr: %s\n", s);
+
 	return waddnstr(stdscr, s, -1);
 }
 
@@ -62,6 +64,8 @@ addstr(const char *s)
 int
 waddstr(WINDOW *win, const char *s)
 {
+	__CTRACE(__CTRACE_INPUT, "addstr: win %p, sttring: %s\n", win, s);
+
 	return waddnstr(win, s, -1);
 }
 
@@ -73,6 +77,8 @@ waddstr(WINDOW *win, const char *s)
 int
 addnstr(const char *str, int n)
 {
+	__CTRACE(__CTRACE_INPUT, "addnstr: n: %d, string: %s\n", n, str);
+
 	return waddnstr(stdscr, str, n);
 }
 
@@ -83,6 +89,9 @@ addnstr(const char *str, int n)
 int
 mvaddstr(int y, int x, const char *str)
 {
+	__CTRACE(__CTRACE_INPUT, "mvaddnstr: y: %d, x: %d, string: %s\n", y,
+	    x, str);
+
 	return mvwaddnstr(stdscr, y, x, str, -1);
 }
 
@@ -93,6 +102,9 @@ mvaddstr(int y, int x, const char *str)
 int
 mvwaddstr(WINDOW *win, int y, int x, const char *str)
 {
+	__CTRACE(__CTRACE_INPUT, "mvwaddnstr: win: %p, y: %d, x: %d, string: %s\n",
+	    win, y, x, str);
+
 	return mvwaddnstr(win, y, x, str, -1);
 }
 
@@ -104,6 +116,9 @@ mvwaddstr(WINDOW *win, int y, int x, const char *str)
 int
 mvaddnstr(int y, int x, const char *str, int count)
 {
+	__CTRACE(__CTRACE_INPUT, "mvaddnstr: n: %d, y: %d, x: %d, string: %s\n",
+	    count, y, x, str);
+
 	return mvwaddnstr(stdscr, y, x, str, count);
 }
 
@@ -115,6 +130,9 @@ mvaddnstr(int y, int x, const char *str, int count)
 int
 mvwaddnstr(WINDOW *win, int y, int x, const char *str, int count)
 {
+	__CTRACE(__CTRACE_INPUT, "mvwaddnstr: win: %p, n: %d, y: %d, x: %d, string: %s\n",
+	    win, count, y, x, str);
+
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
