@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.30 2022/10/27 06:49:51 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.31 2022/12/21 11:39:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.30 2022/10/27 06:49:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.31 2022/12/21 11:39:46 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -911,6 +911,7 @@ pmap_segtab_destroy(pmap_t pmap, pte_callback_t func, uintptr_t flags)
 
 #if defined(PMAP_HWPAGEWALKER)
 	if (pmap->pm_pdetab != NULL) {
+		pmap_md_pdetab_fini(pmap);
 		pmap_pdetab_release(pmap, &pmap->pm_pdetab,
 		    true, pmap->pm_minaddr, vinc);
 	}
