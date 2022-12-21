@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.3 2022/12/20 09:55:19 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.4 2022/12/21 09:39:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -293,4 +293,21 @@ sys/nfs/nfs_srvsocket.c				1.5
 
 	NFS: avoid mbuf leaks and corruption.
 	[hannken, ticket #12]
+
+sys/uvm/uvm_swap.c				1.207
+
+	swap: disallow user opens of swap block device.
+	[chs, ticket #13]
+
+sys/dev/pci/if_rge.c				1.25
+sys/dev/pci/if_rgereg.h				1.7
+
+	rge(4): fix a panic on RTL8125.
+	[nonaka, ticket #14]
+
+lib/libcurses/addbytes.c			1.68
+lib/libcurses/slk.c				1.21
+
+	libcurses: fix handling of wide characters in slk labels.
+	[blymn, ticket #15]
 
