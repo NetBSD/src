@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.378 2022/11/17 06:40:40 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.379 2022/12/21 18:58:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.378 2022/11/17 06:40:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.379 2022/12/21 18:58:25 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -395,28 +395,25 @@ ffs_mountroot(void)
 	return (0);
 }
 
-static void
+static int
 ffs_acls(struct mount *mp, int fs_flags)
 {
-	if ((fs_flags & FS_NFS4ACLS) != 0) {
-#ifdef UFS_ACL
-		if (mp->mnt_flag & MNT_POSIX1EACLS)
-			printf("WARNING: %s: ACLs flag on fs conflicts with "
-			    "\"posix1eacls\" mount option; option ignored\n",
-			    mp->mnt_stat.f_mntonname);
-		mp->mnt_flag &= ~MNT_POSIX1EACLS;
-		mp->mnt_flag |= MNT_NFS4ACLS;
+	struct ufsmount *ump;
 
-#else
-		printf("WARNING: %s: ACLs flag on fs but no ACLs support\n",
-		    mp->mnt_stat.f_mntonname);
-#endif
+	ump = VFSTOUFS(mp);
+	if (ump->um_fstype == UFS2 && (ump->um_flags & UFS_EA) == 0 &&
+	    ((mp->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) != 0 ||
+	     (fs_flags & (FS_POSIX1EACLS | FS_NFS4ACLS)) != 0)) {
+		printf("%s: ACLs requested but not supported by this fs\n",
+		       mp->mnt_stat.f_mntonname);
+		return EINVAL;
 	}
+
 	if ((fs_flags & FS_POSIX1EACLS) != 0) {
 #ifdef UFS_ACL
 		if (mp->mnt_flag & MNT_NFS4ACLS)
-			printf("WARNING: %s: NFSv4 ACLs flag on fs conflicts "
-			    "with \"acls\" mount option; option ignored\n",
+			printf("WARNING: %s: POSIX.1e ACLs flag on fs conflicts "
+			    "with \"nfsv4acls\" mount option; option ignored\n",
 			    mp->mnt_stat.f_mntonname);
 		mp->mnt_flag &= ~MNT_NFS4ACLS;
 		mp->mnt_flag |= MNT_POSIX1EACLS;
@@ -425,20 +422,34 @@ ffs_acls(struct mount *mp, int fs_flags)
 		    "ACLs support\n", mp->mnt_stat.f_mntonname);
 #endif
 	}
+	if ((fs_flags & FS_NFS4ACLS) != 0) {
+#ifdef UFS_ACL
+		if (mp->mnt_flag & MNT_POSIX1EACLS)
+			printf("WARNING: %s: NFSv4 ACLs flag on fs conflicts "
+			    "with \"posix1eacls\" mount option; option ignored\n",
+			    mp->mnt_stat.f_mntonname);
+		mp->mnt_flag &= ~MNT_POSIX1EACLS;
+		mp->mnt_flag |= MNT_NFS4ACLS;
 
+#else
+		printf("WARNING: %s: NFSv4 ACLs flag on fs but no "
+		    "ACLs support\n", mp->mnt_stat.f_mntonname);
+#endif
+	}
 	if ((mp->mnt_flag & (MNT_NFS4ACLS | MNT_POSIX1EACLS))
 	    == (MNT_NFS4ACLS | MNT_POSIX1EACLS))
 	{
-		printf("WARNING: %s: posix1eacl conflicts "
-		    "with \"acls\" mount option; option ignored\n",
+		printf("%s: \"posix1eacls\" and \"nfsv4acls\" options "
+		       "are mutually exclusive\n",
 		    mp->mnt_stat.f_mntonname);
-		mp->mnt_flag &= ~MNT_POSIX1EACLS;
+		return EINVAL;
 	}
 
 	if (mp->mnt_flag & (MNT_NFS4ACLS | MNT_POSIX1EACLS))
 		mp->mnt_iflag &= ~(IMNT_SHRLOOKUP|IMNT_NCLOOKUP);
 	else
 		mp->mnt_iflag |= IMNT_SHRLOOKUP|IMNT_NCLOOKUP;
+	return 0;
 }
 
 /*
@@ -568,6 +579,11 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_flag &= ~MNT_LOG;
 #endif /* !WAPBL */
 
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	if (error)
+		goto fail;
+
 	if (!update) {
 		int xflags;
 
@@ -658,7 +674,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->fs_fmod = 0;
 		}
 
-		ffs_acls(mp, fs->fs_flags);
+		error = ffs_acls(mp, fs->fs_flags);
+		if (error)
+			return error;
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, l->l_cred, l);
 			if (error) {
@@ -735,14 +753,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return 0;
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
-	if (error == 0)
-		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
-		    sizeof(fs->fs_fsmnt));
-	else {
-	    DPRINTF("set_statvfs_info returned %d", error);
-	}
+	(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
+	    sizeof(fs->fs_fsmnt));
+
 	fs->fs_flags &= ~FS_DOSOFTDEP;
 
 	if ((fs->fs_ronly && (fs->fs_clean & FS_ISCLEAN) == 0) ||
@@ -1535,7 +1548,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
 #endif
-	ffs_acls(mp, fs->fs_flags);
+	error = ffs_acls(mp, fs->fs_flags);
+	if (error)
+		goto out1;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
