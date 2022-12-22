@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.1 2022/12/22 11:05:55 nat Exp $ */
+/*	$NetBSD: if_dse.c,v 1.2 2022/12/22 22:39:20 nat Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -561,11 +561,11 @@ dse_send_worker(struct work *wk, void *cookie)
 			m = m0 = m_free(m);
 		}
 		if (len < DSE_MINSIZE) {
-#ifdef SEDEBUG
+#ifdef DSE_DEBUG
 			if (sc->sc_debug)
-				aprnt_error_dev(sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 				    "packet size %d (%zu) < %d\n", len,
-				    cp - (u_char *)sc->sc_tbuf, SEMINSIZE);
+				    cp - (u_char *)sc->sc_tbuf, DSE_MINSIZE);
 #endif
 			memset(cp, 0, DSE_MINSIZE - len);
 			len = DSE_MINSIZE;
@@ -854,8 +854,8 @@ dse_read(struct dse_softc *sc, uint8_t *data, int datalen)
 			break;
 
 #ifdef DSE_DEBUG
-		aprint_error_dev("dse_read: datalen = %d, packetlen = %d, "
-		    "proto = 0x%04x\n", datalen, len,
+		aprint_error_dev(sc->sc_dev, "dse_read: datalen = %d, packetlen"
+		    " = %d, proto = 0x%04x\n", datalen, len,
 		    ntohs(((struct ether_header *)data)->ether_type));
 #endif
 		if ((len < (DSE_MINSIZE + ETHER_CRC_LEN)) ||
@@ -865,7 +865,6 @@ dse_read(struct dse_softc *sc, uint8_t *data, int datalen)
 			    "%d; dropping\n", len);
 #endif
 			if_statinc(ifp, if_ierrors);
-printf("LEN %d\n",len);
 			break;
 		}
 
@@ -874,10 +873,9 @@ printf("LEN %d\n",len);
 		if (m == NULL) {
 #ifdef DSE_DEBUG
 			if (sc->sc_debug)
-				aprint_error_dev("dse_read: dse_get returned "
-				    "null\n");
+				aprint_error_dev(sc->sc_dev, "dse_read: "
+				    "dse_get returned null\n");
 #endif
-printf("M null\n");
 			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
@@ -1146,7 +1144,6 @@ dse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-	//		sc->protos |= (PROTO_IP | PROTO_ARP | PROTO_REVARP);
 			if ((error = dse_init(sc)) != 0)
 				break;
 			arp_ifinit(ifp, ifa);
@@ -1154,7 +1151,6 @@ dse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 #ifdef NETATALK
 		case AF_APPLETALK:
-	//		sc->protos |= (PROTO_AT | PROTO_AARP);
 			if ((error = dse_init(sc)) != 0)
 				break;
 			break;
@@ -1233,7 +1229,7 @@ dse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			mutex_exit(&sc->sc_iflock);
 			break;
 		}
-#ifdef SEDEBUG
+#ifdef DSE_DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			sc->sc_debug = 1;
 		else
