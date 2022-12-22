@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.70 2022/05/29 16:14:41 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.71 2022/12/22 06:58:07 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70 2022/05/29 16:14:41 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.71 2022/12/22 06:58:07 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -499,6 +499,7 @@ cpu_init_counter(struct cpu_info *ci)
 	}
 
 	reg_pmcr_el0_write(PMCR_E | PMCR_C);
+	reg_pmintenclr_el1_write(PMINTEN_C | PMINTEN_P);
 	reg_pmcntenset_el0_write(PMCNTEN_C);
 
 	const uint32_t prev = cpu_counter32();

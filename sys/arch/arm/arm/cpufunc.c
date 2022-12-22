@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.184 2022/05/16 07:07:17 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.185 2022/12/22 06:58:07 ryo Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.184 2022/05/16 07:07:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.185 2022/12/22 06:58:07 ryo Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -1964,6 +1964,7 @@ set_cpufuncs(void)
 		 * Start and reset the PMC Cycle Counter.
 		 */
 		armreg_pmcr_write(ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C);
+		armreg_pmintenclr_write(PMINTEN_C | PMINTEN_P);
 		armreg_pmcntenset_write(CORTEX_CNTENS_C);
 		return 0;
 	}
