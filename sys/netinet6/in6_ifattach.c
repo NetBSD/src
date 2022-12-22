@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.120 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.121 2022/12/22 02:52:35 msaitoh Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.120 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.121 2022/12/22 02:52:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 }
 
 /*
- * ifp - mut be IFT_LOOP
+ * ifp - must be IFT_LOOP
  */
 
 static int
