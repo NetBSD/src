@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.2 2022/12/22 22:39:20 nat Exp $ */
+/*	$NetBSD: if_dse.c,v 1.3 2022/12/22 23:06:11 nat Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -850,7 +850,7 @@ dse_read(struct dse_softc *sc, uint8_t *data, int datalen)
 			len = peek_packet(data);
 		}
 #endif
-		if (len <=0)
+		if (len == 0)
 			break;
 
 #ifdef DSE_DEBUG
