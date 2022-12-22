@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.122 2022/08/07 02:55:46 simonb Exp $
+# $NetBSD: FALCON,v 1.123 2022/12/22 11:05:55 nat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -94,4 +94,5 @@ cd* at atapibus? drive ? # ATAPI CD-ROM drives
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
+dse* at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se* at scsibus? target ? lun ? # SCSI ethernet
