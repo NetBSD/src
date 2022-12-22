@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.60 2021/01/21 06:51:55 nia Exp $
+# $NetBSD: SLAB,v 1.61 2022/12/22 11:05:55 nat Exp $
 #
 # deberg's development machine
 #
@@ -158,6 +158,7 @@ scsibus* at scsi?
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
 #cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
+#dse*	at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 #se*	at scsibus? target ? lun ?	# SCSI ethernet
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown

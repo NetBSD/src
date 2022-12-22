@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.120 2022/08/07 02:55:46 simonb Exp $
+# $NetBSD: HADES,v 1.121 2022/12/22 11:05:55 nat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -113,6 +113,7 @@ st* at scsibus? target ? lun ? # SCSI tape drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
 ch* at scsibus? target ? lun ? # SCSI autochangers
 ss* at scsibus? target ? lun ? # SCSI scanners
+dse* at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se* at scsibus? target ? lun ? # SCSI ethernet
 uk* at scsibus? target ? lun ? # SCSI unknown
 ne0 at isa0 port 0x300 irq 5 # NE2000 ethernet

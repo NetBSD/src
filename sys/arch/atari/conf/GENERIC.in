@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.124 2022/08/07 02:52:24 simonb Exp $
+#	$NetBSD: GENERIC.in,v 1.125 2022/12/22 11:05:55 nat Exp $
 #
 # Generic atari
 #
@@ -371,6 +371,7 @@ cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #st* 	at scsibus? target ? lun ?	# SCSI tape drives
 #ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 #ss* 	at scsibus? target ? lun ?	# SCSI scanners
+dse*	at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
 #uk* 	at scsibus? target ? lun ?	# SCSI unknown
 #endif /* ! SMALL030_KERNEL */

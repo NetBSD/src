@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.43 2022/04/14 16:50:26 pgoyette Exp $
+#	$NetBSD: files.scsipi,v 1.44 2022/12/22 11:05:55 nat Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -39,6 +39,10 @@ file	dev/scsipi/cd.c			cd			needs-flag
 device	ch
 attach	ch at scsibus
 file	dev/scsipi/ch.c			ch			needs-flag
+
+device	dse: ifnet, ether, arp
+attach	dse at scsibus
+file	dev/scsipi/if_dse.c		dse			needs-flag
 
 device	se: ifnet, ether, arp
 attach	se at scsibus

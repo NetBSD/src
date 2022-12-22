@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.16 2018/03/31 04:19:41 tsutsui Exp $
+#	$NetBSD: HADES.in,v 1.17 2022/12/22 11:05:55 nat Exp $
 #
 # Medusa-Hades
 #
@@ -57,6 +57,7 @@ cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #if !defined(SMALL030_KERNEL)
 ch* 	at scsibus? target ? lun ?	# SCSI autochangers
 ss* 	at scsibus? target ? lun ?	# SCSI scanners
+dse*	at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
 uk* 	at scsibus? target ? lun ?	# SCSI unknown
 #endif /* SMALL030_KERNEL */
