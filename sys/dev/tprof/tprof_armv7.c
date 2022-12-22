@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.11 2022/12/03 20:24:21 ryo Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.12 2022/12/22 06:59:32 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.11 2022/12/03 20:24:21 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.12 2022/12/22 06:59:32 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -225,7 +225,7 @@ armv7_pmu_intr(void *priv)
 	tprof_backend_softc_t *sc = pmu_intr_arg;
 	tprof_frame_info_t tfi;
 	int bit;
-	const uint32_t pmovs = armreg_pmovsr_read() & PMOVS_P;
+	const uint32_t pmovs = armreg_pmovsr_read();
 
 	uint64_t *counters_offset =
 	    percpu_getptr_remote(sc->sc_ctr_offset_percpu, curcpu());
@@ -248,7 +248,7 @@ armv7_pmu_intr(void *priv)
 			    tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS &&
 			    tfi.tfi_pc < VM_MAX_KERNEL_ADDRESS;
 			tprof_sample(NULL, &tfi);
-		} else {
+		} else if (ISSET(sc->sc_ctr_ovf_mask, __BIT(bit))) {
 			/* counter has overflowed */
 			counters_offset[bit] += __BIT(32);
 		}
