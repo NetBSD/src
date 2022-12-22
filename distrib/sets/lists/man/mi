@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757 2022/11/21 22:01:32 christos Exp $
+# $NetBSD: mi,v 1.1758 2022/12/22 11:05:54 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1060,6 +1060,7 @@
 ./usr/share/man/cat4/drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drum.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drvctl.0			man-sys-catman		.cat
+./usr/share/man/cat4/dse.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtviic.0			man-sys-catman		.cat
@@ -4331,6 +4332,7 @@
 ./usr/share/man/html4/drm.html			man-sys-htmlman		html
 ./usr/share/man/html4/drum.html			man-sys-htmlman		html
 ./usr/share/man/html4/drvctl.html		man-sys-htmlman		html
+./usr/share/man/html4/dse.html			man-sys-htmlman		html
 ./usr/share/man/html4/dtide.html		man-sys-htmlman		html
 ./usr/share/man/html4/dtv.html			man-sys-htmlman		html
 ./usr/share/man/html4/dtviic.html		man-sys-htmlman		html
@@ -7374,6 +7376,7 @@
 ./usr/share/man/man4/drm.4			man-sys-man		.man
 ./usr/share/man/man4/drum.4			man-sys-man		.man
 ./usr/share/man/man4/drvctl.4			man-sys-man		.man
+./usr/share/man/man4/dse.4			man-sys-man		.man
 ./usr/share/man/man4/dtide.4			man-sys-man		.man
 ./usr/share/man/man4/dtv.4			man-sys-man		.man
 ./usr/share/man/man4/dtviic.4			man-sys-man		.man

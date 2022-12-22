@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.125 2022/08/07 02:55:46 simonb Exp $
+# $NetBSD: ATARITT,v 1.126 2022/12/22 11:05:55 nat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -90,4 +90,5 @@ et4k0 at vme0 # Crazy Dots II
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
+dse* at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se* at scsibus? target ? lun ? # SCSI ethernet

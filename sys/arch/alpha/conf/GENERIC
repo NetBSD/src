@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.416 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.417 2022/12/22 11:05:54 nat Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.416 $"
+ident		"GENERIC-$Revision: 1.417 $"
 
 maxusers 32
 
@@ -491,6 +491,7 @@ scsibus* at	scsi?
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 ch*	at	scsibus? target ? lun ?		# SCSI autochangers
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+dse*	at	scsibus? target ? lun ?		# SCSI ethernet (Dayna)
 se*	at	scsibus? target ? lun ?		# Cabletron SCSI<->Ethernet
 ses*	at	scsibus? target ? lun ?		# SCSI SES/SAF-TE
 ss*	at	scsibus? target ? lun ?		# SCSI scanners
