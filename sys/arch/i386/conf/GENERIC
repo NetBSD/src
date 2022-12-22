@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1243 2022/12/11 04:20:52 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.1244 2022/12/22 19:07:16 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1243 $"
+#ident		"GENERIC-$Revision: 1.1244 $"
 
 maxusers	64		# estimated number of users
 
@@ -1406,6 +1406,7 @@ ld* at virtio?				# Virtio disk device
 vioif* at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
+#vio9p*	at virtio?			# Virtio 9P device
 
 # Hyper-V devices
 vmbus*		at acpi?		# Hyper-V VMBus
