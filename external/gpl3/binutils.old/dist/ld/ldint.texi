@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ldint.info
-@c Copyright (C) 1992-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 @ifnottex
 @dircategory Software development
@@ -12,7 +12,7 @@
 @copying
 This file documents the internals of the GNU linker ld.
 
-Copyright @copyright{} 1992-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2020 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -55,7 +55,7 @@ included in the section entitled ``GNU Free Documentation License''.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1992-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2020 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -113,7 +113,7 @@ The @file{genscripts.sh} script will invoke a shell script in the
 written in the linker command language.  The @file{scripttempl} script
 will be invoked 5 (or, in some cases, 6) times, with different
 assignments to shell variables, to create different default scripts.
-The choice of script is made based on the command line options.
+The choice of script is made based on the command-line options.
 
 After creating the scripts, @file{genscripts.sh} will invoke yet another
 shell script, this time in the @file{emultempl} directory.  That shell
@@ -480,7 +480,7 @@ We will also skip or gloss over parts of the link process that don't
 relate to emulations, like setting up internationalization.
 
 After initialization, @code{main} selects an emulation by pre-scanning
-the command line arguments.  It calls @code{ldemul_choose_target} to
+the command-line arguments.  It calls @code{ldemul_choose_target} to
 choose a target.  If you set @code{choose_target} to
 @code{ldemul_default_target}, it picks your @code{target_name} by
 default.

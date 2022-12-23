@@ -1,5 +1,5 @@
 /* TI PRU opcode list.
-   Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the GNU opcodes library.

@@ -2,6 +2,9 @@ cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}","${OUTPUT_FORMAT}","${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 
+EOF
+
+test -n "${RELOCATING}" && cat <<EOF
 MEMORY
 {
   imem   (x)   : ORIGIN = $TEXT_ORIGIN, LENGTH = $TEXT_LENGTH
@@ -11,10 +14,13 @@ MEMORY
 __HEAP_SIZE = DEFINED(__HEAP_SIZE) ? __HEAP_SIZE : 32;
 __STACK_SIZE = DEFINED(__STACK_SIZE) ? __STACK_SIZE : 512;
 
-${RELOCATING+ PROVIDE (_stack_top = ORIGIN(dmem) + LENGTH(dmem)) ; }
+PROVIDE (_stack_top = ORIGIN(dmem) + LENGTH(dmem));
 
-${RELOCATING+ENTRY (_start)}
+ENTRY (_start)
 
+EOF
+
+cat <<EOF
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
@@ -113,20 +119,20 @@ SECTIONS
 
     /* CRT is prepared for constructor/destructor table to have
        a "valid" NULL address.  */
-    ${CONSTRUCTING+ __init_array_begin = . ; }
+    ${CONSTRUCTING+ __init_array_start = . ; }
     ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*)))}
     ${CONSTRUCTING+ KEEP (*(.init_array))}
     ${CONSTRUCTING+ __init_array_end = . ; }
-    ${CONSTRUCTING+ __fini_array_begin = . ; }
+    ${CONSTRUCTING+ __fini_array_start = . ; }
     ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*)))}
     ${CONSTRUCTING+ KEEP (*(.fini_array))}
     ${CONSTRUCTING+ __fini_array_end = . ; }
 
-    /* DATA memory starts at address 0.  So to avoid placing a valid static
+    ${RELOCATING+/* DATA memory starts at address 0.  So to avoid placing a valid static
        variable at the invalid NULL address, we introduce the .data.atzero
        section.  If CRT can make some use of it - great.  Otherwise skip a
        word.  In all cases .data/.bss sections must start at non-zero.  */
-    . += (. == 0 ? 4 : 0);
+    . += (. == 0 ? 4 : 0);}
 
     ${RELOCATING+ PROVIDE (_data_start = .) ; }
     *(.data)
@@ -143,9 +149,8 @@ SECTIONS
 
   .resource_table ${RELOCATING-0} :
   {
-    *(.resource_table)
     KEEP (*(.resource_table))
-  }  > dmem
+  } ${RELOCATING+ > dmem}
 
   .bss ${RELOCATING-0} :
   {
@@ -154,21 +159,21 @@ SECTIONS
     ${RELOCATING+ *(.bss.*)}
     ${RELOCATING+ *(.bss:*)}
     ${RELOCATING+*(.gnu.linkonce.b*)}
-    *(COMMON)
+    ${RELOCATING+*(COMMON)}
     ${RELOCATING+ PROVIDE (_bss_end = .) ; }
   } ${RELOCATING+ > dmem}
 
   /* Global data not cleared after reset.  */
-  .noinit ${RELOCATING-0}:
+  .noinit ${RELOCATING-0} :
   {
     ${RELOCATING+ PROVIDE (_noinit_start = .) ; }
     *(.noinit)
     ${RELOCATING+ PROVIDE (_noinit_end = .) ; }
     ${RELOCATING+ PROVIDE (_heap_start = .) ; }
     ${RELOCATING+ . += __HEAP_SIZE ; }
-    /* Stack is not here really.  It will be put at the end of DMEM.
+    ${RELOCATING+/* Stack is not here really.  It will be put at the end of DMEM.
        But we take into account its size here, in order to allow
-       for MEMORY overflow checking during link time.  */
+       for MEMORY overflow checking during link time.  */}
     ${RELOCATING+ . += __STACK_SIZE ; }
   } ${RELOCATING+ > dmem}
 
@@ -180,7 +185,7 @@ SECTIONS
   .stab.index 0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
   .comment 0 : { *(.comment) }
-  .note.gnu.build-id : { *(.note.gnu.build-id) }
+  .note.gnu.build-id ${RELOCATING-0} : { *(.note.gnu.build-id) }
 EOF
 
 . $srcdir/scripttempl/DWARF.sc
