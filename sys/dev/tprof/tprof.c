@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.21 2022/12/16 07:59:42 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.21.2.1 2022/12/23 08:09:48 martin Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.21 2022/12/16 07:59:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.21.2.1 2022/12/23 08:09:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -885,9 +885,9 @@ tprof_poll(dev_t dev, int events, struct lwp *l)
 static void
 filt_tprof_read_detach(struct knote *kn)
 {
-	mutex_spin_enter(&tprof_lock);
+	mutex_enter(&tprof_lock);
 	selremove_knote(&tprof_selp, kn);
-	mutex_spin_exit(&tprof_lock);
+	mutex_exit(&tprof_lock);
 }
 
 static int
@@ -896,7 +896,7 @@ filt_tprof_read_event(struct knote *kn, long hint)
 	int rv = 0;
 
 	if ((hint & NOTE_SUBMIT) == 0)
-		mutex_spin_enter(&tprof_lock);
+		mutex_enter(&tprof_lock);
 
 	if (!STAILQ_EMPTY(&tprof_list)) {
 		tprof_buf_t *buf;
@@ -911,7 +911,7 @@ filt_tprof_read_event(struct knote *kn, long hint)
 	}
 
 	if ((hint & NOTE_SUBMIT) == 0)
-		mutex_spin_exit(&tprof_lock);
+		mutex_exit(&tprof_lock);
 
 	return rv;
 }
@@ -929,9 +929,9 @@ tprof_kqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &tprof_read_filtops;
-		mutex_spin_enter(&tprof_lock);
+		mutex_enter(&tprof_lock);
 		selrecord_knote(&tprof_selp, kn);
-		mutex_spin_exit(&tprof_lock);
+		mutex_exit(&tprof_lock);
 		break;
 	default:
 		return EINVAL;
