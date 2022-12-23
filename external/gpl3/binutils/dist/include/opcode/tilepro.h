@@ -1,6 +1,6 @@
 /* TILEPro opcode information.
  *
- *    Copyright (C) 2011-2020 Free Software Foundation, Inc.
+ *    Copyright (C) 2011-2022 Free Software Foundation, Inc.
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -1412,6 +1412,7 @@ typedef enum
   TILEPRO_PIPELINE_Y0,
   TILEPRO_PIPELINE_Y1,
   TILEPRO_PIPELINE_Y2,
+  TILEPRO_NUM_PIPELINE_ENCODINGS
 } tilepro_pipeline;
 
 #define tilepro_is_x_pipeline(p) ((int)(p) <= (int)TILEPRO_PIPELINE_X1)
@@ -1431,9 +1432,6 @@ enum
 {
   /* Maximum number of instructions in a bundle (2 for X, 3 for Y). */
   TILEPRO_MAX_INSTRUCTIONS_PER_BUNDLE = 3,
-
-  /* How many different pipeline encodings are there? X0, X1, Y0, Y1, Y2. */
-  TILEPRO_NUM_PIPELINE_ENCODINGS = 5,
 
   /* Log base 2 of TILEPRO_BUNDLE_SIZE_IN_BYTES. */
   TILEPRO_LOG2_BUNDLE_SIZE_IN_BYTES = 3,

@@ -1,5 +1,5 @@
 /* C-SKY disassembler.
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2022 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -22,7 +22,8 @@
 #include "sysdep.h"
 #include "config.h"
 #include <stdio.h>
-#include "bfd_stdint.h"
+#include <stdint.h>
+#include <elf/csky.h>
 #include "disassemble.h"
 #include "elf-bfd.h"
 #include "opcode/csky.h"
@@ -32,6 +33,7 @@
 
 #define CSKY_INST_TYPE unsigned long
 #define HAS_SUB_OPERAND (unsigned int)0xffffffff
+#define CSKY_DEFAULT_ISA 0xffffffff
 
 enum sym_type
 {
@@ -47,6 +49,7 @@ struct csky_dis_info
   disassemble_info *info;
   /* Opcode information.  */
   struct csky_opcode_info const *opinfo;
+  uint64_t isa;
   /* The value of operand to show.  */
   int value;
   /* Whether to look up/print a symbol name.  */
@@ -57,6 +60,7 @@ struct csky_dis_info
 enum sym_type last_type;
 int last_map_sym = 1;
 bfd_vma last_map_addr = 0;
+int using_abi = 0;
 
 /* Only for objdump tool.  */
 #define INIT_MACH_FLAG  0xffffffff
@@ -96,9 +100,9 @@ get_sym_code_type (struct disassemble_info *info,
       && (name[2] == 0 || name[2] == '.'))
     {
       *sym_type = ((name[1] == 't') ? CUR_TEXT : CUR_DATA);
-      return TRUE;
+      return true;
     }
-  return FALSE;
+  return false;
 }
 
 static int
@@ -159,6 +163,13 @@ csky_find_inst_info (struct csky_opcode_info const **pinfo,
   p = g_opcodeP;
   while (p->mnemonic)
     {
+	if (!(p->isa_flag16 & dis_info.isa)
+	      && !(p->isa_flag32 & dis_info.isa))
+	{
+	  p++;
+	  continue;
+	}
+
       /* Get the opcode mask.  */
       for (i = 0; i < OP_TABLE_NUM; i++)
 	if (length == 2)
@@ -189,7 +200,7 @@ csky_find_inst_info (struct csky_opcode_info const **pinfo,
   return NULL;
 }
 
-static bfd_boolean
+static bool
 is_extern_symbol (struct disassemble_info *info, int addr)
 {
   unsigned int rel_count = 0;
@@ -201,24 +212,24 @@ is_extern_symbol (struct disassemble_info *info, int addr)
       struct reloc_cache_entry *pt = info->section->relocation;
       for (; rel_count < info->section->reloc_count; rel_count++, pt++)
 	if ((long unsigned int)addr == pt->address)
-	  return TRUE;
-      return FALSE;
+	  return true;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 
 /* Suppress printing of mapping symbols emitted by the assembler to mark
    the beginning of code and data sequences.  */
 
-bfd_boolean
+bool
 csky_symbol_is_valid (asymbol *sym,
 		      struct disassemble_info *info ATTRIBUTE_UNUSED)
 {
   const char *name;
 
   if (sym == NULL)
-    return FALSE;
+    return false;
   name = bfd_asymbol_name (sym);
   return name && *name != '$';
 }
@@ -226,9 +237,64 @@ csky_symbol_is_valid (asymbol *sym,
 disassembler_ftype
 csky_get_disassembler (bfd *abfd)
 {
-  if (abfd != NULL)
-    mach_flag = elf_elfheader (abfd)->e_flags;
-  return print_insn_csky;
+  obj_attribute *attr;
+  const char *sec_name = NULL;
+  if (!abfd || bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+    dis_info.isa = CSKY_DEFAULT_ISA;
+  else
+    {
+      mach_flag = elf_elfheader (abfd)->e_flags;
+
+      sec_name = get_elf_backend_data (abfd)->obj_attrs_section;
+      /* Skip any input that hasn't attribute section.
+         This enables to link object files without attribute section with
+         any others.  */
+      if (bfd_get_section_by_name (abfd, sec_name) != NULL)
+        {
+          attr = elf_known_obj_attributes_proc (abfd);
+          dis_info.isa = attr[Tag_CSKY_ISA_EXT_FLAGS].i;
+          dis_info.isa <<= 32;
+          dis_info.isa |= attr[Tag_CSKY_ISA_FLAGS].i;
+        }
+      else
+        dis_info.isa = CSKY_DEFAULT_ISA;
+    }
+
+   return print_insn_csky;
+}
+
+/* Parse the string of disassembler options.  */
+static void
+parse_csky_dis_options (const char *opts_in)
+{
+  char *opts = xstrdup (opts_in);
+  char *opt = opts;
+  char *opt_end = opts;
+
+  for (; opt_end != NULL; opt = opt_end + 1)
+    {
+      if ((opt_end = strchr (opt, ',')) != NULL)
+	*opt_end = 0;
+      if (strcmp (opt, "abi-names") == 0)
+	using_abi = 1;
+      else
+	fprintf (stderr,
+		 "unrecognized disassembler option: %s", opt);
+    }
+}
+
+/* Get general register name.  */
+static const char *
+get_gr_name (int regno)
+{
+  return csky_get_general_reg_name (mach_flag, regno, using_abi);
+}
+
+/* Get control register name.  */
+static const char *
+get_cr_name (unsigned int regno, int bank)
+{
+  return csky_get_control_reg_name (mach_flag, bank, regno, using_abi);
 }
 
 static int
@@ -258,30 +324,10 @@ csky_output_operand (char *str, struct operand const *oprnd,
   switch (oprnd->type)
     {
     case OPRND_TYPE_CTRLREG:
-      if (IS_CSKY_V1 (mach_flag))
-	{
-	  /* In V1 only cr0-cr12 have alias names.  */
-	  if (value <= 12)
-	    strcat (str, csky_ctrl_regs[value].name);
-	  /* Others using crn(n > 12).  */
-	  else if (value <= 30)
-	    {
-	      sprintf (buf, "cr%d", (int)value);
-	      strcat (str, buf);
-	    }
-	  else
-	    return -1;
-	}
-      else
-	{
-	  int sel;
-	  int crx;
-	  sel = value >> 5;
-	  crx = value & 0x1f;
-	  sprintf (buf, "cr<%d, %d>", crx, sel);
-	  strcat (str, buf);
-	}
-      break;
+	if (IS_CSKY_V1(mach_flag) && ((value & 0x1f) == 0x1f))
+	  return -1;
+	strcat (str, get_cr_name((value & 0x1f), (value >> 5)));
+	break;
     case OPRND_TYPE_DUMMY_REG:
       mask = dis_info.opinfo->oprnd.oprnds[0].mask;
       value = inst & mask;
@@ -292,35 +338,35 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	    bit++;
 	  }
       value = result;
-      strcat (str, csky_general_reg[value]);
+      strcat (str, get_gr_name (value));
       break;
     case OPRND_TYPE_GREG0_7:
     case OPRND_TYPE_GREG0_15:
     case OPRND_TYPE_GREG16_31:
     case OPRND_TYPE_REGnsplr:
     case OPRND_TYPE_AREG:
-      if (IS_CSKY_V2 (mach_flag) && value == 14)
-	strcat (str, "sp");
-      else
-	strcat (str, csky_general_reg[value]);
-      dis_info.value = value;
+      strcat (str, get_gr_name (value));
       break;
     case OPRND_TYPE_CPREG:
-      strcat (str, csky_cp_reg[value]);
+      sprintf (buf, "cpr%d", (int)value);
+      strcat (str, buf);
       break;
     case OPRND_TYPE_FREG:
       sprintf (buf, "fr%d", (int)value);
       strcat (str, buf);
       break;
     case OPRND_TYPE_VREG:
+      dis_info.value = value;
       sprintf (buf, "vr%d", (int)value);
       strcat (str, buf);
       break;
     case OPRND_TYPE_CPCREG:
-      strcat (str, csky_cp_creg[value]);
+      sprintf (buf, "cpcr%d", (int)value);
+      strcat (str, buf);
       break;
     case OPRND_TYPE_CPIDX:
-      strcat (str, csky_cp_idx[value]);
+      sprintf (buf, "cp%d", (int)value);
+      strcat (str, buf);
       break;
     case OPRND_TYPE_IMM2b_JMPIX:
       value = (value + 2) << 3;
@@ -369,6 +415,15 @@ csky_output_operand (char *str, struct operand const *oprnd,
       strcat (str, buf);
       ret = 0;
       break;
+    case OPRND_TYPE_IMM5b_VSH:
+      {
+	char num[128];
+	value = ((value & 0x1) << 4) | (value >> 1);
+	sprintf (num, "%d", (int)value);
+	strcat (str, num);
+	ret = 0;
+	break;
+      }
     case OPRND_TYPE_MSB2SIZE:
     case OPRND_TYPE_LSB2SIZE:
       {
@@ -387,6 +442,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
     case OPRND_TYPE_IMM2b:
     case OPRND_TYPE_IMM4b:
     case OPRND_TYPE_IMM5b:
+    case OPRND_TYPE_IMM5b_LS:
     case OPRND_TYPE_IMM7b:
     case OPRND_TYPE_IMM8b:
     case OPRND_TYPE_IMM12b:
@@ -509,7 +565,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
 				      ? &floatformat_ieee_double_big
 				      : &floatformat_ieee_double_little),
 				     ibytes, &f);
-	    sprintf (buf, "%f", f);
+	    sprintf (buf, "%.7g", f);
 	  }
 	else
 	  {
@@ -589,8 +645,66 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	floatformat_to_double (&floatformat_ieee_double_little, valbytes,
 			       &fvalue);
 
-	sprintf (buf, "%f", fvalue);
+	sprintf (buf, "%.7g", fvalue);
 	strcat (str, buf);
+	break;
+      }
+    case OPRND_TYPE_HFLOAT_FMOVI:
+    case OPRND_TYPE_SFLOAT_FMOVI:
+      {
+	int imm4;
+	int imm8;
+	imm4 = ((inst >> 16) & 0xf);
+	imm4 = (138 - imm4) << 23;
+
+	imm8 = ((inst >> 8) & 0x3);
+	imm8 |= (((inst >> 20) & 0x3f) << 2);
+	imm8 <<= 15;
+
+	value = ((inst >> 5) & 1) << 31;
+	value |= imm4 | imm8;
+
+	imm4 = 138 - (imm4 >> 23);
+	imm8 >>= 15;
+	if ((inst >> 5) & 1)
+	  {
+	    imm8 = 0 - imm8;
+	  }
+
+	float f = 0;
+	memcpy (&f, &value, sizeof (float));
+	sprintf (buf, "%.7g\t// imm9:%4d, imm4:%2d", f, imm8, imm4);
+	strcat (str, buf);
+
+	break;
+      }
+
+    case OPRND_TYPE_DFLOAT_FMOVI:
+      {
+	uint64_t imm4;
+	uint64_t imm8;
+	uint64_t dvalue;
+	imm4 = ((inst >> 16) & 0xf);
+	imm4 = (1034 - imm4) << 52;
+
+	imm8 = ((inst >> 8) & 0x3);
+	imm8 |= (((inst >> 20) & 0x3f) << 2);
+	imm8 <<= 44;
+
+	dvalue = (((uint64_t)inst >> 5) & 1) << 63;
+	dvalue |= imm4 | imm8;
+
+	imm4 = 1034 - (imm4 >> 52);
+	imm8 >>= 44;
+	if (inst >> 5)
+	  {
+	    imm8 = 0 - imm8;
+	  }
+	double d = 0;
+	memcpy (&d, &dvalue, sizeof (double));
+	sprintf (buf, "%.7g\t// imm9:%4ld, imm4:%2ld", d, (long) imm8, (long) imm4);
+	strcat (str, buf);
+
 	break;
       }
     case OPRND_TYPE_LABEL_WITH_BRACKET:
@@ -623,8 +737,20 @@ csky_output_operand (char *str, struct operand const *oprnd,
     case OPRND_TYPE_FREGLIST_DASH:
       if (IS_CSKY_V2 (mach_flag))
 	{
-	  int vrx = value & 0xf;
-	  int vry = vrx + (value >> 4);
+	  int vrx = 0;
+	  int vry = 0;
+	  if (dis_info.isa & CSKY_ISA_FLOAT_7E60
+	      && (strstr (str, "fstm") != NULL
+		  || strstr (str, "fldm") != NULL))
+	    {
+	      vrx = value & 0x1f;
+	      vry = vrx + (value >> 5);
+	    }
+	  else
+	    {
+	      vrx = value & 0xf;
+	      vry = vrx + (value >> 4);
+	    }
 	  sprintf (buf, "fr%d-fr%d", vrx, vry);
 	  strcat (str, buf);
 	}
@@ -632,20 +758,25 @@ csky_output_operand (char *str, struct operand const *oprnd,
     case OPRND_TYPE_REGLIST_DASH:
       if (IS_CSKY_V1 (mach_flag))
 	{
-	  strcat (str, csky_general_reg[value]);
-	  strcat (str, "-r15");
+	  sprintf (buf, "%s-r15", get_gr_name (value));
+	  strcat (str, buf);
 	}
       else
 	{
-	  strcat (str, csky_general_reg[value >> 5]);
+	  if ((value & 0x1f) + (value >> 5) > 31)
+	    {
+	      ret = -1;
+	      break;
+	    }
+	  strcat (str, get_gr_name ((value >> 5)));
 	  strcat (str, "-");
-	  strcat (str, csky_general_reg[(value & 0x1f) + (value >> 5)]);
+	  strcat (str, get_gr_name ((value & 0x1f) + (value >> 5)));
 	}
       break;
     case OPRND_TYPE_PSR_BITS_LIST:
       {
 	struct psrbit const *bits;
-	int first_oprnd = TRUE;
+	int first_oprnd = true;
 	int i = 0;
 	if (IS_CSKY_V1 (mach_flag))
 	  {
@@ -666,7 +797,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
 		    strcat (str, ", ");
 		  strcat (str, bits[i].name);
 		  value &= ~bits[i].value;
-		  first_oprnd = FALSE;
+		  first_oprnd = false;
 		}
 	      i++;
 	    }
@@ -674,33 +805,25 @@ csky_output_operand (char *str, struct operand const *oprnd,
       }
     case OPRND_TYPE_REGbsp:
       if (IS_CSKY_V1 (mach_flag))
-	strcat (str, "(sp)");
+	sprintf(buf, "(%s)", get_gr_name (0));
       else
-	strcat (str, "(sp)");
+	sprintf(buf, "(%s)", get_gr_name (14));
+      strcat (str, buf);
       break;
     case OPRND_TYPE_REGsp:
       if (IS_CSKY_V1 (mach_flag))
-	strcat (str, "sp");
+	strcat (str, get_gr_name (0));
       else
-	strcat (str, "sp");
+	strcat (str, get_gr_name (14));
       break;
     case OPRND_TYPE_REGnr4_r7:
     case OPRND_TYPE_AREG_WITH_BRACKET:
-      if (IS_CSKY_V1 (mach_flag) && (value < 4 || value > 7))
-	{
-	  strcat (str, "(");
-	  strcat (str, csky_general_reg[value]);
-	  strcat (str, ")");
-	}
-      else
-	{
-	  strcat (str, "(");
-	  strcat (str, csky_general_reg[value]);
-	  strcat (str, ")");
-	}
+      strcat (str, "(");
+      strcat (str, get_gr_name (value));
+      strcat (str, ")");
       break;
     case OPRND_TYPE_AREG_WITH_LSHIFT:
-      strcat (str, csky_general_reg[value >> 5]);
+      strcat (str, get_gr_name (value >> 5));
       strcat (str, " << ");
       if ((value & 0x1f) == 0x1)
 	strcat (str, "0");
@@ -712,7 +835,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	strcat (str, "3");
       break;
     case OPRND_TYPE_AREG_WITH_LSHIFT_FPU:
-      strcat (str, csky_general_reg[value >> 2]);
+      strcat (str, get_gr_name (value >> 2));
       strcat (str, " << ");
       if ((value & 0x3) == 0x0)
 	strcat (str, "0");
@@ -723,7 +846,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
       else if ((value & 0x3) == 0x3)
 	strcat (str, "3");
       break;
-    case OPRND_TYPE_FREG_WITH_INDEX:
+    case OPRND_TYPE_VREG_WITH_INDEX:
       {
 	unsigned freg_val = value & 0xf;
 	unsigned index_val = (value >> 4) & 0xf;
@@ -731,29 +854,40 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	strcat(str, buf);
 	break;
       }
+    case OPRND_TYPE_FREG_WITH_INDEX:
+      {
+	unsigned freg_val = value & 0xf;
+	unsigned index_val = (value >> 4) & 0xf;
+	sprintf (buf, "fr%d[%d]", freg_val, index_val);
+	strcat(str, buf);
+	break;
+      }
     case OPRND_TYPE_REGr4_r7:
       if (IS_CSKY_V1 (mach_flag))
-	strcat (str, "r4-r7");
+	{
+	  sprintf (buf, "%s-%s", get_gr_name (4), get_gr_name (7));
+	  strcat (str, buf);
+	}
       break;
     case OPRND_TYPE_CONST1:
       strcat (str, "1");
       break;
     case OPRND_TYPE_REG_r1a:
     case OPRND_TYPE_REG_r1b:
-      strcat (str, "r1");
+      strcat (str, get_gr_name (1));
       break;
     case OPRND_TYPE_REG_r28:
-      strcat (str, "r28");
+      strcat (str, get_gr_name (28));
       break;
     case OPRND_TYPE_REGLIST_DASH_COMMA:
       /* 16-bit reglist.  */
       if (value & 0xf)
 	{
-	  strcat (str, "r4");
+	  strcat (str, get_gr_name (4));
 	  if ((value & 0xf) > 1)
 	    {
 	      strcat (str, "-");
-	      strcat (str, csky_general_reg[(value & 0xf) + 3]);
+	      strcat (str, get_gr_name ((value & 0xf) + 3));
 	    }
 	  if (value & ~0xf)
 	    strcat (str, ", ");
@@ -761,7 +895,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
       if (value & 0x10)
 	{
 	  /* r15.  */
-	  strcat (str, "r15");
+	  strcat (str, get_gr_name (15));
 	  if (value & ~0x1f)
 	    strcat (str, ", ");
 	}
@@ -771,18 +905,18 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	  value >>= 5;
 	  if (value & 0x3)
 	    {
-	      strcat (str, "r16");
+	      strcat (str, get_gr_name (16));
 	      if ((value & 0x7) > 1)
 		{
 		  strcat (str, "-");
-		  strcat (str, csky_general_reg[(value & 0xf) + 15]);
+		  strcat (str, get_gr_name ((value & 0x7) + 15));
 		}
 	      if (value & ~0x7)
 		strcat (str, ", ");
 	      }
 	  if (value & 0x8)
 	    /* r15.  */
-	    strcat (str, "r28");
+	    strcat (str, get_gr_name (28));
 	}
       break;
     case OPRND_TYPE_UNCOND10b:
@@ -914,8 +1048,8 @@ print_insn_csky (bfd_vma memaddr, struct disassemble_info *info)
   CSKY_INST_TYPE inst = 0;
   int status;
   char str[256];
-  long given;
-  int is_data = FALSE;
+  unsigned long given;
+  int is_data = false;
   void (*printer) (bfd_vma, struct disassemble_info *, long);
   unsigned int  size = 4;
 
@@ -925,13 +1059,26 @@ print_insn_csky (bfd_vma memaddr, struct disassemble_info *info)
   dis_info.mem = memaddr;
   dis_info.info = info;
   dis_info.need_output_symbol = 0;
+
+  if (info->disassembler_options)
+    {
+      parse_csky_dis_options (info->disassembler_options);
+      info->disassembler_options = NULL;
+    }
+
   if (mach_flag != INIT_MACH_FLAG && mach_flag != BINARY_MACH_FLAG)
     info->mach = mach_flag;
   else if (mach_flag == INIT_MACH_FLAG)
-    mach_flag = info->mach;
+    {
+      mach_flag = info->mach;
+      dis_info.isa = CSKY_DEFAULT_ISA;
+    }
 
   if (mach_flag == BINARY_MACH_FLAG && info->endian == BFD_ENDIAN_UNKNOWN)
-    info->endian = BFD_ENDIAN_LITTLE;
+    {
+      info->endian = BFD_ENDIAN_LITTLE;
+      dis_info.isa = CSKY_DEFAULT_ISA;
+    }
 
   /* First check the full symtab for a mapping symbol, even if there
      are no usable non-mapping symbols for this address.  */

@@ -1,5 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -77,8 +77,8 @@ struct cref_hash_table
 
 static void output_one_cref (FILE *, struct cref_hash_entry *);
 static void check_local_sym_xref (lang_input_statement_type *);
-static bfd_boolean check_nocrossref (struct cref_hash_entry *, void *);
-static void check_refs (const char *, bfd_boolean, asection *, bfd *,
+static bool check_nocrossref (struct cref_hash_entry *, void *);
+static void check_refs (const char *, bool, asection *, bfd *,
 			struct lang_nocrossrefs *);
 static void check_reloc_refs (bfd *, asection *, void *);
 
@@ -93,8 +93,7 @@ static void check_reloc_refs (bfd *, asection *, void *);
 #define cref_hash_traverse(table, func, info)				\
   (bfd_hash_traverse							\
    (&(table)->root,							\
-    (bfd_boolean (*) (struct bfd_hash_entry *, void *)) (func),		\
-    (info)))
+    (bool (*) (struct bfd_hash_entry *, void *)) (func), (info)))
 
 /* The cref hash table.  */
 
@@ -102,7 +101,7 @@ static struct cref_hash_table cref_table;
 
 /* Whether the cref hash table has been initialized.  */
 
-static bfd_boolean cref_initialized;
+static bool cref_initialized;
 
 /* The number of symbols seen so far.  */
 
@@ -169,10 +168,10 @@ add_cref (const char *name,
       if (!bfd_hash_table_init (&cref_table.root, cref_hash_newfunc,
 				sizeof (struct cref_hash_entry)))
 	einfo (_("%X%P: bfd_hash_table_init of cref table failed: %E\n"));
-      cref_initialized = TRUE;
+      cref_initialized = true;
     }
 
-  h = cref_hash_lookup (&cref_table, name, TRUE, FALSE);
+  h = cref_hash_lookup (&cref_table, name, true, false);
   if (h == NULL)
     einfo (_("%X%P: cref_hash_lookup failed: %E\n"));
 
@@ -188,31 +187,31 @@ add_cref (const char *name,
       r->next = h->refs;
       h->refs = r;
       r->abfd = abfd;
-      r->def = FALSE;
-      r->common = FALSE;
-      r->undef = FALSE;
+      r->def = false;
+      r->common = false;
+      r->undef = false;
     }
 
   if (bfd_is_und_section (section))
-    r->undef = TRUE;
+    r->undef = true;
   else if (bfd_is_com_section (section))
-    r->common = TRUE;
+    r->common = true;
   else
-    r->def = TRUE;
+    r->def = true;
 }
 
 /* Called before loading an as-needed library to take a snapshot of
    the cref hash table, and after we have loaded or found that the
    library was not needed.  */
 
-bfd_boolean
+bool
 handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 		      enum notice_asneeded_action act)
 {
   unsigned int i;
 
   if (!cref_initialized)
-    return TRUE;
+    return true;
 
   if (act == notice_as_needed)
     {
@@ -238,7 +237,7 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 
       alloc_mark = bfd_hash_allocate (&cref_table.root, 1);
       if (alloc_mark == NULL)
-	return FALSE;
+	return false;
 
       memcpy (old_tab, cref_table.root.table, tabsize);
       old_ent = (char *) old_tab + tabsize;
@@ -266,7 +265,7 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 		}
 	    }
 	}
-      return TRUE;
+      return true;
     }
 
   if (act == notice_not_needed)
@@ -278,8 +277,8 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 	  /* The only way old_tab can be NULL is if the cref hash table
 	     had not been initialised when notice_as_needed.  */
 	  bfd_hash_table_free (&cref_table.root);
-	  cref_initialized = FALSE;
-	  return TRUE;
+	  cref_initialized = false;
+	  return true;
 	}
 
       old_ent = (char *) old_tab + tabsize;
@@ -313,18 +312,18 @@ handle_asneeded_cref (bfd *abfd ATTRIBUTE_UNUSED,
 			   alloc_mark);
     }
   else if (act != notice_needed)
-    return FALSE;
+    return false;
 
   free (old_tab);
   old_tab = NULL;
-  return TRUE;
+  return true;
 }
 
 /* Copy the addresses of the hash table entries into an array.  This
    is called via cref_hash_traverse.  We also fill in the demangled
    name.  */
 
-static bfd_boolean
+static bool
 cref_fill_array (struct cref_hash_entry *h, void *data)
 {
   struct cref_hash_entry ***pph = (struct cref_hash_entry ***) data;
@@ -339,7 +338,7 @@ cref_fill_array (struct cref_hash_entry *h, void *data)
 
   ++*pph;
 
-  return TRUE;
+  return true;
 }
 
 /* Sort an array of cref hash table entries by name.  */
@@ -408,8 +407,8 @@ output_one_cref (FILE *fp, struct cref_hash_entry *h)
   struct bfd_link_hash_entry *hl;
   struct cref_ref *r;
 
-  hl = bfd_link_hash_lookup (link_info.hash, h->root.string, FALSE,
-			     FALSE, TRUE);
+  hl = bfd_link_hash_lookup (link_info.hash, h->root.string, false,
+			     false, true);
   if (hl == NULL)
     einfo (_("%P: symbol `%pT' missing from main hash table\n"),
 	   h->root.string);
@@ -537,7 +536,7 @@ check_local_sym_xref (lang_input_statement_type *statement)
 	    for (ncr = ncrs->list; ncr != NULL; ncr = ncr->next)
 	      {
 		if (strcmp (ncr->name, outsecname) == 0)
-		  check_refs (symname, FALSE, sym->section, abfd, ncrs);
+		  check_refs (symname, false, sym->section, abfd, ncrs);
 		/* The NOCROSSREFS_TO command only checks symbols defined in
 		   the first section in the list.  */
 		if (ncrs->onlyfirst)
@@ -549,7 +548,7 @@ check_local_sym_xref (lang_input_statement_type *statement)
 
 /* Check one symbol to see if it is a prohibited cross reference.  */
 
-static bfd_boolean
+static bool
 check_nocrossref (struct cref_hash_entry *h, void *ignore ATTRIBUTE_UNUSED)
 {
   struct bfd_link_hash_entry *hl;
@@ -559,22 +558,22 @@ check_nocrossref (struct cref_hash_entry *h, void *ignore ATTRIBUTE_UNUSED)
   struct lang_nocrossref *ncr;
   struct cref_ref *ref;
 
-  hl = bfd_link_hash_lookup (link_info.hash, h->root.string, FALSE,
-			     FALSE, TRUE);
+  hl = bfd_link_hash_lookup (link_info.hash, h->root.string, false,
+			     false, true);
   if (hl == NULL)
     {
       einfo (_("%P: symbol `%pT' missing from main hash table\n"),
 	     h->root.string);
-      return TRUE;
+      return true;
     }
 
   if (hl->type != bfd_link_hash_defined
       && hl->type != bfd_link_hash_defweak)
-    return TRUE;
+    return true;
 
   defsec = hl->u.def.section->output_section;
   if (defsec == NULL)
-    return TRUE;
+    return true;
   defsecname = bfd_section_name (defsec);
 
   for (ncrs = nocrossref_list; ncrs != NULL; ncrs = ncrs->next)
@@ -582,7 +581,7 @@ check_nocrossref (struct cref_hash_entry *h, void *ignore ATTRIBUTE_UNUSED)
       {
 	if (strcmp (ncr->name, defsecname) == 0)
 	  for (ref = h->refs; ref != NULL; ref = ref->next)
-	    check_refs (hl->root.string, TRUE, hl->u.def.section,
+	    check_refs (hl->root.string, true, hl->u.def.section,
 			ref->abfd, ncrs);
 	/* The NOCROSSREFS_TO command only checks symbols defined in the first
 	   section in the list.  */
@@ -590,7 +589,7 @@ check_nocrossref (struct cref_hash_entry *h, void *ignore ATTRIBUTE_UNUSED)
 	  break;
       }
 
-  return TRUE;
+  return true;
 }
 
 /* The struct is used to pass information from check_refs to
@@ -602,7 +601,7 @@ struct check_refs_info
   asection *defsec;
   struct lang_nocrossrefs *ncrs;
   asymbol **asymbols;
-  bfd_boolean global;
+  bool global;
 };
 
 /* This function is called for each symbol defined in a section which
@@ -612,7 +611,7 @@ struct check_refs_info
 
 static void
 check_refs (const char *name,
-	    bfd_boolean global,
+	    bool global,
 	    asection *sec,
 	    bfd *abfd,
 	    struct lang_nocrossrefs *ncrs)
@@ -652,7 +651,7 @@ check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
   const char *outdefsecname;
   struct lang_nocrossref *ncr;
   const char *symname;
-  bfd_boolean global;
+  bool global;
   long relsize;
   arelent **relpp;
   long relcount;

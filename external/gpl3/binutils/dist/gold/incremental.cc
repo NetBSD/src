@@ -1,6 +1,6 @@
 // inremental.cc -- incremental linking support for gold
 
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 // Written by Mikolaj Zalewski <mikolajz@google.com>.
 
 // This file is part of gold.
@@ -856,8 +856,8 @@ make_sized_incremental_binary(Output_file* file,
 {
   Target* target = select_target(NULL, 0, // XXX
 				 ehdr.get_e_machine(), size, big_endian,
-				 ehdr.get_e_ident()[elfcpp::EI_OSABI],
-				 ehdr.get_e_ident()[elfcpp::EI_ABIVERSION]);
+				 ehdr.get_ei_osabi(),
+				 ehdr.get_ei_abiversion());
   if (target == NULL)
     {
       explain_no_incremental(_("unsupported ELF machine number %d"),
@@ -1848,7 +1848,7 @@ class Local_got_offset_visitor : public Got_offset_list::Visitor
   { }
 
   void
-  visit(unsigned int got_type, unsigned int got_offset)
+  visit(unsigned int got_type, unsigned int got_offset, uint64_t)
   {
     unsigned int got_index = got_offset / this->info_.got_entry_size;
     gold_assert(got_index < this->info_.got_count);
@@ -1860,6 +1860,12 @@ class Local_got_offset_visitor : public Got_offset_list::Visitor
     unsigned char* pov = this->info_.got_desc_p + got_index * 8;
     elfcpp::Swap<32, big_endian>::writeval(pov, this->info_.sym_index);
     elfcpp::Swap<32, big_endian>::writeval(pov + 4, this->info_.input_index);
+    // FIXME: the uint64_t addend should be written here if powerpc64
+    // sym+addend got entries are to be supported, with similar changes
+    // to Global_got_offset_visitor and support to read them back in
+    // do_process_got_plt.
+    // FIXME: don't we need this for section symbol plus addend anyway?
+    // (See 2015-12-03 commit 7ef8ae7c5f35)
   }
 
  private:
@@ -1879,7 +1885,7 @@ class Global_got_offset_visitor : public Got_offset_list::Visitor
   { }
 
   void
-  visit(unsigned int got_type, unsigned int got_offset)
+  visit(unsigned int got_type, unsigned int got_offset, uint64_t)
   {
     unsigned int got_index = got_offset / this->info_.got_entry_size;
     gold_assert(got_index < this->info_.got_count);
@@ -2129,7 +2135,6 @@ Sized_relobj_incr<size, big_endian>::do_add_symbols(
 {
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   unsigned char symbuf[sym_size];
-  elfcpp::Sym<size, big_endian> sym(symbuf);
   elfcpp::Sym_write<size, big_endian> osym(symbuf);
 
   typedef typename elfcpp::Elf_types<size>::Elf_WXword Elf_size_type;
@@ -2196,6 +2201,7 @@ Sized_relobj_incr<size, big_endian>::do_add_symbols(
       osym.put_st_other(gsym.get_st_other());
       osym.put_st_shndx(shndx);
 
+      elfcpp::Sym<size, big_endian> sym(symbuf);
       Symbol* res = symtab->add_from_incrobj(this, name, NULL, &sym);
 
       if (shndx != elfcpp::SHN_UNDEF)
@@ -2280,7 +2286,7 @@ Sized_relobj_incr<size, big_endian>::do_section_name(unsigned int shndx) const
   const Output_sections& out_sections(this->output_sections());
   const Output_section* os = out_sections[shndx];
   if (os == NULL)
-    return NULL;
+    return std::string();
   return os->name();
 }
 
@@ -2730,7 +2736,6 @@ Sized_incr_dynobj<size, big_endian>::do_add_symbols(
 {
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   unsigned char symbuf[sym_size];
-  elfcpp::Sym<size, big_endian> sym(symbuf);
   elfcpp::Sym_write<size, big_endian> osym(symbuf);
 
   unsigned int nsyms = this->input_reader_.get_global_symbol_count();
@@ -2795,6 +2800,7 @@ Sized_incr_dynobj<size, big_endian>::do_add_symbols(
       osym.put_st_other(gsym.get_st_other());
       osym.put_st_shndx(shndx);
 
+      elfcpp::Sym<size, big_endian> sym(symbuf);
       Sized_symbol<size>* res =
 	  symtab->add_from_incrobj<size, big_endian>(this, name, NULL, &sym);
       this->symbols_[i] = res;

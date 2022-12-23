@@ -1,5 +1,5 @@
 %{ /* rcparse.y -- parser for Windows rc files
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Extended by Kai Tietz, Onevision.
 
@@ -124,7 +124,7 @@ static const rc_res_id res_null_text = { 1, {{0, &null_unichar}}};
 %token ICON
 %token ANICURSOR ANIICON DLGINCLUDE DLGINIT FONTDIR HTML MANIFEST PLUGPLAY VXD TOOLBAR BUTTON
 %token LANGUAGE CHARACTERISTICS VERSIONK
-%token MENU MENUEX MENUITEM SEPARATOR POPUP CHECKED GRAYED HELP INACTIVE
+%token MENU MENUEX MENUITEM SEPARATOR POPUP CHECKED GRAYED HELP INACTIVE OWNERDRAW
 %token MENUBARBREAK MENUBREAK
 %token MESSAGETABLE
 %token RCDATA
@@ -571,7 +571,7 @@ control:
 	| AUTOCHECKBOX optresidc
 	    {
 	      default_style = BS_AUTOCHECKBOX | WS_TABSTOP;
-	      base_style = BS_AUTOCHECKBOX;
+	      base_style = BS_AUTOCHECKBOX | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = $2;
@@ -1087,6 +1087,14 @@ menuitem_flag:
 	| MENUBREAK
 	  {
 	    $$ = MENUITEM_MENUBREAK;
+	  }
+	| BITMAP
+	  {
+	    $$ = MENUITEM_BITMAP;
+	  }
+	| OWNERDRAW
+	  {
+	    $$ = MENUITEM_OWNERDRAW;
 	  }
 	;
 

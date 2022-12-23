@@ -240,7 +240,7 @@
 ;   r1l      10'b    11'b
 ;   r1h      11'b    01'b
 (df  f-src32-rn-unprefixed-QI "source Rn QI for m32c" (MACH32 m32c-isa) 10 2 UINT
-     ((value pc) (or USI (and (sll (inv value) 1) 2) (and (srl value 1) 1))) ; insert
+     ((value pc) (or USI (and (inv (sll value 1)) 2) (and (srl value 1) 1))) ; insert
      ((value pc) (or USI (and (inv (srl value 1)) 1) (and (sll value 1) 2))) ; extract
 )
 ; QI mode gr encoding for m32c is different than for m16c. The hardware
@@ -252,7 +252,7 @@
 ;   r1l      10'b    11'b
 ;   r1h      11'b    01'b
 (df  f-src32-rn-prefixed-QI "source Rn QI for m32c" (MACH32 m32c-isa) 18 2 UINT
-     ((value pc) (or USI (and (sll (inv value) 1) 2) (and (srl value 1) 1))) ; insert
+     ((value pc) (or USI (and (inv (sll value 1)) 2) (and (srl value 1) 1))) ; insert
      ((value pc) (or USI (and (inv (srl value 1)) 1) (and (sll value 1) 2))) ; extract
 )
 ; HI mode gr encoding for m32c is different than for m16c. The hardware
@@ -316,11 +316,11 @@
 ;   r1l      10'b    11'b
 ;   r1h      11'b    01'b
 (df  f-dst32-rn-unprefixed-QI "destination Rn QI for m32c" (MACH32 m32c-isa) 8 2 UINT
-     ((value pc) (or USI (and (sll (inv value) 1) 2) (and (srl value 1) 1))) ; insert
+     ((value pc) (or USI (and (inv (sll value 1)) 2) (and (srl value 1) 1))) ; insert
      ((value pc) (or USI (and (inv (srl value 1)) 1) (and (sll value 1) 2))) ; extract
 )
 (df  f-dst32-rn-prefixed-QI "destination Rn QI for m32c" (MACH32 m32c-isa) 16 2 UINT
-     ((value pc) (or USI (and (sll (inv value) 1) 2) (and (srl value 1) 1))) ; insert
+     ((value pc) (or USI (and (inv (sll value 1)) 2) (and (srl value 1) 1))) ; insert
      ((value pc) (or USI (and (inv (srl value 1)) 1) (and (sll value 1) 2))) ; extract
 )
 ; HI mode gr encoding for m32c is different than for m16c. The hardware
@@ -720,22 +720,22 @@
       (ext INT
 	   (or SI
 	       (or SI
-		   (and (srl value 24) #x000000ff)
-		   (and (srl value 8)  #x0000ff00))
+		   (and (srl value 24) #x00ff)
+		   (and (srl value 8)  #xff00))
 	       (or SI
-		   (and (sll value 8)  #x00ff0000)
-		   (and (sll value 24) #xff000000)))))
+		   (sll (and value #xff00) 8)
+		   (sll (and value #x00ff) 24)))))
 
      ;; extract
      ((value pc)
       (ext INT
 	   (or SI
 	       (or SI
-		   (and (srl value 24) #x000000ff)
-		   (and (srl value 8)  #x0000ff00))
+		   (and (srl value 24) #x00ff)
+		   (and (srl value 8)  #xff00))
 	       (or SI
-		   (and (sll value 8)  #x00ff0000)
-		   (and (sll value 24) #xff000000)))))
+		   (sll (and value #xff00) 8)
+		   (sll (and value #x00ff) 24)))))
 )
 
 (dnmf f-dsp-48-u32 "32 bit unsigned" (all-isas) UINT
@@ -746,7 +746,7 @@
 		)
       (sequence () ; extract
 		(set (ifield f-dsp-48-u32) (or (and (ifield f-dsp-48-u16) #xffff)
-					       (and (sll (ifield f-dsp-64-u16) 16) #xffff0000)))
+					       (sll (and (ifield f-dsp-64-u16) #xffff) 16)))
 		)
 )
 
@@ -758,7 +758,7 @@
 		)
       (sequence () ; extract
 		(set (ifield f-dsp-48-s32) (or (and (ifield f-dsp-48-u16) #xffff)
-					       (and (sll (ifield f-dsp-64-u16) 16) #xffff0000)))
+					       (sll (and (ifield f-dsp-64-u16) #xffff) 16)))
 		)
 )
 
@@ -781,12 +781,12 @@
 (df f-dsp-64-s16 " 16 bit signed" (all-isas) 64 16 INT
      ((value pc) (ext INT 
 		      (trunc HI
-			     (or (and (srl value 8) #x00ff)
-				 (and (sll value 8) #xff00))))) ; insert
+			     (or (and (srl value 8) #xff)
+				 (sll (and value #xff) 8))))) ; insert
      ((value pc) (ext INT 
 		      (trunc HI
-			     (or (and (srl value 8) #x00ff)
-				 (and (sll value 8) #xff00))))) ; extract
+			     (or (and (srl value 8) #xff)
+				 (sll (and value #xff) 8))))) ; extract
 )
 
 ;-------------------------------------------------------------
@@ -827,7 +827,7 @@
 		(set (ifield f-dsp-16-s8) (sra INT (ifield f-bitbase32-16-s11-unprefixed) 3))
 		)
       (sequence () ; extract
-		(set (ifield f-bitbase32-16-s11-unprefixed) (or (sll (ifield f-dsp-16-s8) 3)
+		(set (ifield f-bitbase32-16-s11-unprefixed) (or (mul (ifield f-dsp-16-s8) 8)
 								(ifield f-bitno32-unprefixed)))
 		)
 )
@@ -885,7 +885,7 @@
 		(set (ifield f-dsp-24-s8) (sra INT (ifield f-bitbase32-24-s11-prefixed) 3))
 		)
       (sequence () ; extract
-		(set (ifield f-bitbase32-24-s11-prefixed) (or (sll (ifield f-dsp-24-s8) 3)
+		(set (ifield f-bitbase32-24-s11-prefixed) (or (mul (ifield f-dsp-24-s8) 8)
 							      (ifield f-bitno32-prefixed)))
 		)
 )
@@ -913,7 +913,7 @@
 		)
       (sequence () ; extract
 		(set (ifield f-bitbase32-24-s19-prefixed) (or (sll (ifield f-dsp-24-u8) 3)
-							      (or (sll (ifield f-dsp-32-s8) 11)
+							      (or (mul (ifield f-dsp-32-s8) 2048)
 								  (ifield f-bitno32-prefixed))))
 		)
 )
@@ -1075,7 +1075,7 @@
   (indices keyword "" (("r2r0" 0) ("r3r1" 1)))
   (get (index) (or SI
 		   (and (reg h-gr index) #xffff)
-		   (and (sll (reg h-gr (add index 2)) 16) #xffff0000)))
+		   (sll (and (reg h-gr (add index 2)) #xffff) 16)))
   (set (index newval) (sequence ()
 				(set (reg h-gr index) (and newval #xffff))
 				(set (reg h-gr (add index 2)) (srl newval 16)))))

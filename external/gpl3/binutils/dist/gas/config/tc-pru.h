@@ -1,5 +1,5 @@
 /* Definitions for TI PRU assembler.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of GAS, the GNU Assembler.
@@ -154,7 +154,6 @@ extern void pru_frame_initial_instructions (void);
 /* The difference between same-section symbols may be affected by linker
    relaxation, so do not resolve such expressions in the assembler.  */
 #define md_allow_local_subtract(l,r,s) pru_allow_local_subtract (l, r, s)
-extern bfd_boolean pru_allow_local_subtract (expressionS *, expressionS *,
-					     segT);
+extern bool pru_allow_local_subtract (expressionS *, expressionS *, segT);
 
 #endif /* __TC_PRU__ */

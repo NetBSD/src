@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -212,6 +212,10 @@ typedef struct {
 } Elf32_External_Rela;
 
 typedef struct {
+  unsigned char r_data[4];	/* RELR entry */
+} Elf32_External_Relr;
+
+typedef struct {
   unsigned char r_offset[8];	/* Location at which to apply the action */
   unsigned char	r_info[8];	/* index and type of relocation */
 } Elf64_External_Rel;
@@ -221,6 +225,10 @@ typedef struct {
   unsigned char	r_info[8];	/* index and type of relocation */
   unsigned char	r_addend[8];	/* Constant addend used to compute value */
 } Elf64_External_Rela;
+
+typedef struct {
+  unsigned char r_data[8];	/* RELR entry */
+} Elf64_External_Relr;
 
 /* dynamic section structure */
 

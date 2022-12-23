@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,7 +39,7 @@
 #define OPTION_EL (OPTION_MD_BASE + 1)
 
 void microblaze_generate_symbol (char *sym);
-static bfd_boolean check_spl_reg (unsigned *);
+static bool check_spl_reg (unsigned *);
 
 /* Several places in this file insert raw instructions into the
    object. They should generate the instruction
@@ -114,7 +114,7 @@ const relax_typeS md_relax_table[] =
   { 0x7fffffff, 0x80000000, INST_WORD_SIZE*2, 0 }   /* 18: TEXT_PC_OFFSET.  */
 };
 
-static struct hash_control * opcode_hash_control;	/* Opcode mnemonics.  */
+static htab_t  opcode_hash_control;	/* Opcode mnemonics.  */
 
 static segT sbss_segment = 0; 	/* Small bss section.  */
 static segT sbss2_segment = 0; 	/* Section not used.  */
@@ -149,7 +149,7 @@ static void
 microblaze_s_data (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  obj_elf_change_section (".data", SHT_PROGBITS, 0, SHF_ALLOC+SHF_WRITE,
+  obj_elf_change_section (".data", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
 			  0, 0, 0, 0);
 #else
   s_data (ignore);
@@ -162,7 +162,7 @@ static void
 microblaze_s_sdata (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  obj_elf_change_section (".sdata", SHT_PROGBITS, 0, SHF_ALLOC+SHF_WRITE,
+  obj_elf_change_section (".sdata", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
 			  0, 0, 0, 0);
 #else
   s_data (ignore);
@@ -281,7 +281,7 @@ microblaze_s_rdata (int localvar)
   if (localvar == 0)
     {
       /* rodata.  */
-      obj_elf_change_section (".rodata", SHT_PROGBITS, 0, SHF_ALLOC,
+      obj_elf_change_section (".rodata", SHT_PROGBITS, SHF_ALLOC,
 			      0, 0, 0, 0);
       if (rodata_segment == 0)
 	rodata_segment = subseg_new (".rodata", 0);
@@ -289,7 +289,7 @@ microblaze_s_rdata (int localvar)
   else
     {
       /* 1 .sdata2.  */
-      obj_elf_change_section (".sdata2", SHT_PROGBITS, 0, SHF_ALLOC,
+      obj_elf_change_section (".sdata2", SHT_PROGBITS, SHF_ALLOC,
 			      0, 0, 0, 0);
     }
 #else
@@ -302,12 +302,12 @@ microblaze_s_bss (int localvar)
 {
 #ifdef OBJ_ELF
   if (localvar == 0) /* bss.  */
-    obj_elf_change_section (".bss", SHT_NOBITS, 0, SHF_ALLOC+SHF_WRITE,
+    obj_elf_change_section (".bss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
 			    0, 0, 0, 0);
   else if (localvar == 1)
     {
       /* sbss.  */
-      obj_elf_change_section (".sbss", SHT_NOBITS, 0, SHF_ALLOC+SHF_WRITE,
+      obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
 			      0, 0, 0, 0);
       if (sbss_segment == 0)
 	sbss_segment = subseg_new (".sbss", 0);
@@ -411,13 +411,13 @@ const pseudo_typeS md_pseudo_table[] =
 void
 md_begin (void)
 {
-  struct op_code_struct * opcode;
+  const struct op_code_struct * opcode;
 
-  opcode_hash_control = hash_new ();
+  opcode_hash_control = str_htab_create ();
 
   /* Insert unique names into hash table.  */
-  for (opcode = opcodes; opcode->name; opcode ++)
-    hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
+  for (opcode = microblaze_opcodes; opcode->name; opcode ++)
+    str_hash_insert (opcode_hash_control, opcode->name, opcode, 0);
 }
 
 /* Try to parse a reg name.  */
@@ -740,7 +740,7 @@ parse_imm (char * s, expressionS * e, offsetT min, offsetT max)
 
   new_pointer = parse_exp (s, e);
 
-  if (!GOT_symbol && ! strncmp (s, GOT_SYMBOL_NAME, 20))
+  if (!GOT_symbol && startswith (s, GOT_SYMBOL_NAME))
     {
       GOT_symbol = symbol_find_or_make (GOT_SYMBOL_NAME);
     }
@@ -785,17 +785,17 @@ check_got (int * got_type, int * got_len)
     if (is_end_of_line[(unsigned char) *atp])
       return NULL;
 
-  if (strncmp (atp + 1, "GOTOFF", 5) == 0)
+  if (startswith (atp + 1, "GOTOFF"))
     {
       *got_len = 6;
       *got_type = IMM_GOTOFF;
     }
-  else if (strncmp (atp + 1, "GOT", 3) == 0)
+  else if (startswith (atp + 1, "GOT"))
     {
       *got_len = 3;
       *got_type = IMM_GOT;
     }
-  else if (strncmp (atp + 1, "PLT", 3) == 0)
+  else if (startswith (atp + 1, "PLT"))
     {
       *got_len = 3;
       *got_type = IMM_PLT;
@@ -858,7 +858,7 @@ parse_cons_expression_microblaze (expressionS *exp, int size)
 static const char * str_microblaze_ro_anchor = "RO";
 static const char * str_microblaze_rw_anchor = "RW";
 
-static bfd_boolean
+static bool
 check_spl_reg (unsigned * reg)
 {
   if ((*reg == REG_MSR)   || (*reg == REG_PC)
@@ -869,9 +869,9 @@ check_spl_reg (unsigned * reg)
       || (*reg == REG_TLBHI) || (*reg == REG_TLBSX)
       || (*reg == REG_SHR)   || (*reg == REG_SLR)
       || (*reg >= REG_PVR+MIN_PVR_REGNUM && *reg <= REG_PVR+MAX_PVR_REGNUM))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 /* Here we decide which fixups can be adjusted to make them relative to
@@ -915,7 +915,7 @@ md_assemble (char * str)
   unsigned reg2;
   unsigned reg3;
   unsigned isize;
-  unsigned int immed, temp;
+  unsigned int immed = 0, temp;
   expressionS exp;
   char name[20];
 
@@ -942,7 +942,7 @@ md_assemble (char * str)
       return;
     }
 
-  opcode = (struct op_code_struct *) hash_find (opcode_hash_control, name);
+  opcode = (struct op_code_struct *) str_hash_find (opcode_hash_control, name);
   if (opcode == NULL)
     {
       as_bad (_("unknown opcode \"%s\""), name);
@@ -1072,9 +1072,13 @@ md_assemble (char * str)
 
           count = 32 - reg1;
           if (streq (name, "lmi"))
-            opcode = (struct op_code_struct *) hash_find (opcode_hash_control, "lwi");
+	    opcode
+	      = (struct op_code_struct *) str_hash_find (opcode_hash_control,
+							 "lwi");
           else
-            opcode = (struct op_code_struct *) hash_find (opcode_hash_control, "swi");
+	    opcode
+	      = (struct op_code_struct *) str_hash_find (opcode_hash_control,
+							 "swi");
           if (opcode == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "lwi");
@@ -1106,7 +1110,9 @@ md_assemble (char * str)
           if ((temp != 0) && (temp != 0xFFFF8000))
 	    {
               /* Needs an immediate inst.  */
-              opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+	      opcode1
+		= (struct op_code_struct *) str_hash_find (opcode_hash_control,
+							   "imm");
               if (opcode1 == NULL)
                 {
                   as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1559,7 +1565,9 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-          opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+	  opcode1
+	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
+						       "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1625,7 +1633,9 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-          opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+          opcode1
+	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
+						       "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1698,7 +1708,9 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-          opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+          opcode1
+	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
+						       "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1882,65 +1894,65 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
     {
     case UNDEFINED_PC_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, TRUE, BFD_RELOC_64_PCREL);
+	       fragP->fr_offset, true, BFD_RELOC_64_PCREL);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case DEFINED_ABS_SEGMENT:
       if (fragP->fr_symbol == GOT_symbol)
         fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	         fragP->fr_offset, TRUE, BFD_RELOC_MICROBLAZE_64_GOTPC);
+	         fragP->fr_offset, true, BFD_RELOC_MICROBLAZE_64_GOTPC);
       else
         fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	         fragP->fr_offset, FALSE, BFD_RELOC_64);
+	         fragP->fr_offset, false, BFD_RELOC_64);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case DEFINED_RO_SEGMENT:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_32_ROSDA);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_32_ROSDA);
       fragP->fr_fix += INST_WORD_SIZE;
       fragP->fr_var = 0;
       break;
     case DEFINED_RW_SEGMENT:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_32_RWSDA);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_32_RWSDA);
       fragP->fr_fix += INST_WORD_SIZE;
       fragP->fr_var = 0;
       break;
     case DEFINED_PC_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE, fragP->fr_symbol,
-	       fragP->fr_offset, TRUE, BFD_RELOC_MICROBLAZE_32_LO_PCREL);
+	       fragP->fr_offset, true, BFD_RELOC_MICROBLAZE_32_LO_PCREL);
       fragP->fr_fix += INST_WORD_SIZE;
       fragP->fr_var = 0;
       break;
     case LARGE_DEFINED_PC_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, TRUE, BFD_RELOC_64_PCREL);
+	       fragP->fr_offset, true, BFD_RELOC_64_PCREL);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case GOT_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_GOT);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_GOT);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case TEXT_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_TEXTREL);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_TEXTREL);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case TEXT_PC_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_TEXTPCREL);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_TEXTPCREL);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case PLT_OFFSET:
       fixP = fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	              fragP->fr_offset, TRUE, BFD_RELOC_MICROBLAZE_64_PLT);
+	              fragP->fr_offset, true, BFD_RELOC_MICROBLAZE_64_PLT);
       /* fixP->fx_plt = 1; */
       (void) fixP;
       fragP->fr_fix += INST_WORD_SIZE * 2;
@@ -1948,25 +1960,25 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
       break;
     case GOTOFF_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_GOTOFF);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_GOTOFF);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case TLSGD_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_TLSGD);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_TLSGD);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case TLSLD_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_TLSLD);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_TLSLD);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
     case TLSDTPREL_OFFSET:
       fix_new (fragP, fragP->fr_fix, INST_WORD_SIZE * 2, fragP->fr_symbol,
-	       fragP->fr_offset, FALSE, BFD_RELOC_MICROBLAZE_64_TLSDTPREL);
+	       fragP->fr_offset, false, BFD_RELOC_MICROBLAZE_64_TLSDTPREL);
       fragP->fr_fix += INST_WORD_SIZE * 2;
       fragP->fr_var = 0;
       break;
@@ -1983,7 +1995,7 @@ md_apply_fix (fixS *   fixP,
 	      valueT * valp,
 	      segT     segment)
 {
-  char *       buf  = fixP->fx_where + fixP->fx_frag->fr_literal;
+  char *       buf  = fixP->fx_where + &fixP->fx_frag->fr_literal[0];
   const char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
   const char * symname;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
@@ -2013,9 +2025,8 @@ md_apply_fix (fixS *   fixP,
 	  || (symbol_used_in_reloc_p (fixP->fx_addsy)
 	      && (((bfd_section_flags (S_GET_SEGMENT (fixP->fx_addsy))
 		    & SEC_LINK_ONCE) != 0)
-		  || !strncmp (segment_name (S_GET_SEGMENT (fixP->fx_addsy)),
-			       ".gnu.linkonce",
-			       sizeof (".gnu.linkonce") - 1))))
+		  || startswith (segment_name (S_GET_SEGMENT (fixP->fx_addsy)),
+				 ".gnu.linkonce"))))
 	{
 	  val -= S_GET_VALUE (fixP->fx_addsy);
 	  if (val != 0 && ! fixP->fx_pcrel)
@@ -2119,7 +2130,8 @@ md_apply_fix (fixS *   fixP,
 	buf[i + INST_WORD_SIZE] = buf[i];
 
       /* Generate the imm instruction.  */
-      opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+      opcode1
+	= (struct op_code_struct *) str_hash_find (opcode_hash_control, "imm");
       if (opcode1 == NULL)
 	{
 	  as_bad (_("unknown opcode \"%s\""), "imm");
@@ -2167,7 +2179,8 @@ md_apply_fix (fixS *   fixP,
 	buf[i + INST_WORD_SIZE] = buf[i];
 
       /* Generate the imm instruction.  */
-      opcode1 = (struct op_code_struct *) hash_find (opcode_hash_control, "imm");
+      opcode1
+	= (struct op_code_struct *) str_hash_find (opcode_hash_control, "imm");
       if (opcode1 == NULL)
 	{
 	  as_bad (_("unknown opcode \"%s\""), "imm");

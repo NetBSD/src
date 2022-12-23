@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 
@@ -67,7 +67,7 @@ struct fix;
 
 /* We conditionally support labels without a colon.  */
 #define LABELS_WITHOUT_COLONS codecomposer_syntax
-extern bfd_boolean codecomposer_syntax;
+extern bool codecomposer_syntax;
 
 #define tc_symbol_chars arm_symbol_chars
 extern const char arm_symbol_chars[];
@@ -82,7 +82,7 @@ extern unsigned int arm_frag_max_var (struct frag *);
 extern int arm_relax_frag (asection *, struct frag *, long);
 
 #define md_optimize_expr(l,o,r)		arm_optimize_expr (l, o, r)
-extern int arm_optimize_expr (expressionS *, operatorT, expressionS *);
+extern bool arm_optimize_expr (expressionS *, operatorT, expressionS *);
 
 #define md_cleanup() arm_cleanup ()
 
@@ -90,7 +90,7 @@ extern int arm_optimize_expr (expressionS *, operatorT, expressionS *);
 
 #define TC_START_LABEL_WITHOUT_COLON(NUL_CHAR, NEXT_CHAR) \
   tc_start_label_without_colon ()
-extern bfd_boolean tc_start_label_without_colon (void);
+extern bool tc_start_label_without_colon (void);
 
 #define tc_frob_label(S) arm_frob_label (S)
 
@@ -100,7 +100,7 @@ extern bfd_boolean tc_start_label_without_colon (void);
 #ifdef OBJ_ELF
 #define md_end arm_md_end
 extern void arm_md_end (void);
-bfd_boolean arm_is_eabi (void);
+bool arm_is_eabi (void);
 
 #define md_post_relax_hook		arm_md_post_relax ()
 extern void arm_md_post_relax (void);
@@ -340,7 +340,6 @@ struct arm_segment_info_type
 
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
-extern long md_pcrel_from_section (struct fix *, segT);
 extern void arm_frag_align_code (int, int);
 extern void arm_validate_fix (struct fix *);
 extern const char * elf32_arm_target_format (void);
@@ -349,7 +348,7 @@ extern int arm_force_relocation (struct fix *);
 extern void arm_cleanup (void);
 extern void arm_start_line_hook (void);
 extern void arm_frob_label (symbolS *);
-extern int arm_data_in_code (void);
+extern bool arm_data_in_code (void);
 extern char * arm_canonicalize_symbol_name (char *);
 extern void arm_adjust_symtab (void);
 extern void armelf_frob_symbol (symbolS *, int *);
@@ -357,7 +356,7 @@ extern void cons_fix_new_arm (fragS *, int, int, expressionS *,
 			      bfd_reloc_code_real_type);
 extern void arm_init_frag (struct frag *, int);
 extern void arm_handle_align (struct frag *);
-extern bfd_boolean arm_fix_adjustable (struct fix *);
+extern bool arm_fix_adjustable (struct fix *);
 extern int arm_elf_section_type (const char *, size_t);
 extern int tc_arm_regname_to_dw2regnum (char *regname);
 extern void tc_arm_frame_initial_instructions (void);
@@ -384,7 +383,7 @@ extern char arm_comment_chars[];
 extern char arm_line_separator_chars[];
 
 #define TC_EQUAL_IN_INSN(c, s) arm_tc_equal_in_insn ((c), (s))
-extern bfd_boolean arm_tc_equal_in_insn (int, char *);
+extern bool arm_tc_equal_in_insn (int, char *);
 
 #define TC_LARGEST_EXPONENT_IS_NORMAL(PRECISION) \
 	arm_is_largest_exponent_ok ((PRECISION))

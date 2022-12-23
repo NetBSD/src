@@ -25,7 +25,7 @@
 #ifndef	_ELF_HINTS_H_
 #define	_ELF_HINTS_H_
 
-#include "bfd_stdint.h"
+#include <stdint.h>
 
 /* Hints file produced by ldconfig.  */
 struct elfhints_hdr

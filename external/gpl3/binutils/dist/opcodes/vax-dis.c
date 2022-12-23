@@ -1,5 +1,5 @@
 /* Print VAX instructions.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
    This file is part of the GNU opcodes library.
@@ -116,7 +116,7 @@ static bfd_vma *     entry_addr = NULL;
    entry addresses, which can be useful to disassemble ROM images, since
    there's no symbol table.  Returns TRUE upon success, FALSE otherwise.  */
 
-static bfd_boolean
+static bool
 parse_disassembler_options (const char *options)
 {
   const char * entry_switch = "entry:";
@@ -129,21 +129,21 @@ parse_disassembler_options (const char *options)
       if (entry_addr_occupied_slots >= entry_addr_total_slots)
 	{
 	  /* A guesstimate of the number of entries we will have to create.  */
-	  entry_addr_total_slots +=
-	    strlen (options) / (strlen (entry_switch) + 5);
+	  entry_addr_total_slots
+	    += 1 + strlen (options) / (strlen (entry_switch) + 5);
 
 	  entry_addr = realloc (entry_addr, sizeof (bfd_vma)
 				* entry_addr_total_slots);
 	}
 
       if (entry_addr == NULL)
-	return FALSE;
+	return false;
 
       entry_addr[entry_addr_occupied_slots] = bfd_scan_vma (options, NULL, 0);
       entry_addr_occupied_slots ++;
     }
 
-  return TRUE;
+  return true;
 }
 
 #if 0 /* FIXME:  Ideally the disassembler should have target specific
@@ -179,7 +179,7 @@ free_entry_array (void)
    table at all.  Forced entry points can be given by supplying several
    -M options to objdump: -M entry:0xffbb7730.  */
 
-static bfd_boolean
+static bool
 is_function_entry (struct disassemble_info *info, bfd_vma addr)
 {
   unsigned int i;
@@ -189,30 +189,30 @@ is_function_entry (struct disassemble_info *info, bfd_vma addr)
       && info->symbols[0]
       && (info->symbols[0]->flags & (BSF_FUNCTION | BSF_SYNTHETIC))
       && addr == bfd_asymbol_value (info->symbols[0]))
-    return TRUE;
+    return true;
 
   /* Check for forced function entry address.  */
   for (i = entry_addr_occupied_slots; i--;)
     if (entry_addr[i] == addr)
-      return TRUE;
+      return true;
 
-  return FALSE;
+  return false;
 }
 
 /* Check if the given address is the last longword of a PLT entry.
    This longword is data and depending on the value it may interfere
    with disassembly of further PLT entries.  We make use of the fact
    PLT symbols are marked BSF_SYNTHETIC.  */
-static bfd_boolean
+static bool
 is_plt_tail (struct disassemble_info *info, bfd_vma addr)
 {
   if (info->symbols
       && info->symbols[0]
       && (info->symbols[0]->flags & BSF_SYNTHETIC)
       && addr == bfd_asymbol_value (info->symbols[0]) + 8)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 static int
@@ -388,7 +388,7 @@ print_insn_arg (const char *d,
 int
 print_insn_vax (bfd_vma memaddr, disassemble_info *info)
 {
-  static bfd_boolean parsed_disassembler_options = FALSE;
+  static bool parsed_disassembler_options = false;
   const struct vot *votp;
   const char *argp;
   unsigned char *arg;
@@ -405,7 +405,7 @@ print_insn_vax (bfd_vma memaddr, disassemble_info *info)
       parse_disassembler_options (info->disassembler_options);
 
       /* To avoid repeated parsing of these options.  */
-      parsed_disassembler_options = TRUE;
+      parsed_disassembler_options = true;
     }
 
   if (OPCODES_SIGSETJMP (priv.bailout) != 0)
@@ -490,7 +490,7 @@ print_insn_vax (bfd_vma memaddr, disassemble_info *info)
 
   while (*argp)
     {
-      arg += print_insn_arg (argp, arg, memaddr + arg - buffer, info);
+      arg += print_insn_arg (argp, arg, memaddr + (arg - buffer), info);
       argp += 2;
       if (*argp)
 	(*info->fprintf_func) (info->stream, ",");

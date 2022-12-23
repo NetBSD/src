@@ -1,5 +1,5 @@
 /* as.h - global header file
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,29 +34,15 @@
   	COMMON as "".
    If TEST is #defined, then we are testing a module: #define COMMON as "".  */
 
-#include "alloca-conf.h"
+#include "config.h"
 
 /* Now, tend to the rest of the configuration.  */
 
 /* System include files first...  */
 #include <stdio.h>
-
-#ifdef STRING_WITH_STRINGS
 #include <string.h>
-#include <strings.h>
-#else
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -65,10 +51,7 @@
 #include <sys/types.h>
 #endif
 
-#ifdef HAVE_ERRNO_H
 #include <errno.h>
-#endif
-
 #include <stdarg.h>
 
 #include "getopt.h"
@@ -101,39 +84,12 @@
 #ifdef NEED_DECLARATION_ENVIRON
 extern char **environ;
 #endif
-#ifdef NEED_DECLARATION_ERRNO
-extern int errno;
-#endif
 #ifdef NEED_DECLARATION_FFS
 extern int ffs (int);
-#endif
-#ifdef NEED_DECLARATION_FREE
-extern void free ();
-#endif
-#ifdef NEED_DECLARATION_MALLOC
-extern void *malloc ();
-extern void *realloc ();
-#endif
-#ifdef NEED_DECLARATION_STRSTR
-extern char *strstr ();
 #endif
 
 #if !HAVE_DECL_MEMPCPY
 void *mempcpy(void *, const void *, size_t);
-#endif
-
-#if !HAVE_DECL_VSNPRINTF
-extern int vsnprintf(char *, size_t, const char *, va_list);
-#endif
-
-/* This is needed for VMS.  */
-#if ! defined (HAVE_UNLINK) && defined (HAVE_REMOVE)
-#define unlink remove
-#endif
-
-/* Hack to make "gcc -Wall" not complain about obstack macros.  */
-#if !defined (memcpy) && !defined (bcopy)
-#define bcopy(src,dest,size)	memcpy (dest, src, size)
 #endif
 
 #ifndef __LINE__
@@ -388,6 +344,14 @@ COMMON int linkrelax;
 
 COMMON int do_not_pad_sections_to_alignment;
 
+enum multibyte_input_handling
+{
+  multibyte_allow = 0,
+  multibyte_warn,
+  multibyte_warn_syms
+};
+COMMON enum multibyte_input_handling multibyte_handling;
+
 /* TRUE if we should produce a listing.  */
 extern int listing;
 
@@ -411,14 +375,17 @@ enum debug_info_type
 
 extern enum debug_info_type debug_type;
 extern int use_gnu_debug_info_extensions;
-COMMON bfd_boolean flag_dwarf_sections;
+COMMON bool flag_dwarf_sections;
 extern int flag_dwarf_cie_version;
+extern unsigned int dwarf_level;
 
 /* Maximum level of macro nesting.  */
 extern int max_macro_nest;
 
 /* Verbosity level.  */
 extern int verbose;
+
+struct obstack;
 
 /* Obstack chunk size.  Keep large for efficient space use, make small to
    increase malloc calls for monitoring memory allocation.  */
@@ -471,7 +438,6 @@ PRINTF_WHERE_LIKE (as_warn_where);
 
 void   as_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
 void   signal_init (void);
-void   sprint_value (char *, addressT);
 int    had_errors (void);
 int    had_warnings (void);
 void   as_warn_value_out_of_range (const char *, offsetT, offsetT, offsetT,
@@ -486,7 +452,7 @@ char * app_push (void);
 
 char * atof_ieee (char *, int, LITTLENUM_TYPE *);
 char * atof_ieee_detail (char *, int, int, LITTLENUM_TYPE *, FLONUM_TYPE *);
-const char * ieee_md_atof (int, char *, int *, bfd_boolean);
+const char * ieee_md_atof (int, char *, int *, bool);
 const char * vax_md_atof (int, char *, int *);
 char * input_scrub_include_file (const char *, char *);
 void   input_scrub_insert_line (const char *);
@@ -494,6 +460,7 @@ void   input_scrub_insert_file (char *);
 char * input_scrub_new_file (const char *);
 char * input_scrub_next_buffer (char **bufp);
 size_t do_scrub_chars (size_t (*get) (char *, size_t), char *, size_t);
+bool   scan_for_multibyte_characters (const unsigned char *, const unsigned char *, bool);
 int    gen_to_words (LITTLENUM_TYPE *, int, long);
 int    had_err (void);
 int    ignore_input (void);
@@ -508,9 +475,10 @@ void   do_scrub_begin (int);
 void   input_scrub_begin (void);
 void   input_scrub_close (void);
 void   input_scrub_end (void);
-int    new_logical_line (const char *, int);
-int    new_logical_line_flags (const char *, int, int);
+void   new_logical_line (const char *, int);
+void   new_logical_line_flags (const char *, int, int);
 void   subsegs_begin (void);
+void   subsegs_end (struct obstack **);
 void   subseg_change (segT, int);
 segT   subseg_new (const char *, subsegT);
 segT   subseg_force_new (const char *, subsegT);
@@ -522,15 +490,13 @@ void   register_dependency (const char *);
 void   print_dependencies (void);
 segT   subseg_get (const char *, int);
 
-const char *remap_debug_filename (const char *);
+char *remap_debug_filename (const char *);
 void add_debug_prefix_map (const char *);
 
 static inline char *
 xmemdup0 (const char *in, size_t len)
 {
-  char *out = (char *) xmalloc (len + 1);
-  out[len] = 0;
-  return (char *) memcpy (out, in, len);
+  return xmemdup (in, len, len + 1);
 }
 
 struct expressionS;
@@ -564,6 +530,7 @@ int generic_force_reloc (struct fix *);
 
 #include "write.h"
 #include "frags.h"
+#include "hashtab.h"
 #include "hash.h"
 #include "read.h"
 #include "symbols.h"
@@ -607,7 +574,7 @@ extern int flag_use_elf_stt_common;
 
 /* TRUE iff GNU Build attribute notes should
    be generated if none are in the input files.  */
-extern bfd_boolean flag_generate_build_notes;
+extern bool flag_generate_build_notes;
 
 /* If section name substitution sequences should be honored */
 COMMON int flag_sectname_subst;
@@ -659,5 +626,7 @@ COMMON int flag_sectname_subst;
 #else
 #define SEC_OCTETS 0
 #endif
+
+#define POISON_BFD_BOOLEAN 1
 
 #endif /* GAS */

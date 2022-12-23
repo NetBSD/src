@@ -1,6 +1,6 @@
 /* tc-microblaze.h -- Header file for tc-microblaze.c.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -51,6 +51,9 @@ extern bfd_reloc_code_real_type parse_cons_expression_microblaze
    || (FIX)->fx_r_type == BFD_RELOC_MICROBLAZE_64_GOTOFF	\
    || (FIX)->fx_r_type == BFD_RELOC_MICROBLAZE_32_GOTOFF)
 
+#define TC_VALIDATE_FIX_SUB(FIX, SEG) \
+  (md_register_arithmetic || (SEG) != reg_section)
+
 #define tc_fix_adjustable(X)  tc_microblaze_fix_adjustable(X)
 extern int tc_microblaze_fix_adjustable (struct fix *);
 
@@ -94,24 +97,9 @@ extern const struct relax_type md_relax_table[];
 # error No target format specified.
 #endif
 
-#include "write.h"        /* For definition of fixS */
-
-extern void      md_begin            (void);
-extern void      md_assemble         (char *);
-extern symbolS * md_undefined_symbol (char *);
-extern void      md_show_usage       (FILE *);
-extern void      md_convert_frag               (bfd *, segT, fragS *);
-extern void      md_operand                    (expressionS *);
-extern int       md_estimate_size_before_relax (fragS *, segT);
-extern void      md_number_to_chars            (char *, valueT, int);
-extern valueT    md_section_align              (segT, valueT);
-extern long      md_pcrel_from_section         (fixS *, segT);
-extern arelent * tc_gen_reloc                  (asection *, fixS *);
 extern void 	 cons_fix_new_microblaze       (fragS *, int, int,
 						expressionS *,
 						bfd_reloc_code_real_type);
-extern void 	 md_apply_fix3 		       (fixS *, valueT *, segT);
-
 #define EXTERN_FORCE_RELOC -1
 
 #endif /* TC_MICROBLAZE */

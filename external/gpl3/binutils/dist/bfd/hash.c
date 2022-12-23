@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -364,7 +364,7 @@ static unsigned long bfd_default_hash_table_size = DEFAULT_SIZE;
 
 /* Create a new hash table, given a number of entries.  */
 
-bfd_boolean
+bool
 bfd_hash_table_init_n (struct bfd_hash_table *table,
 		       struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 							  struct bfd_hash_table *,
@@ -379,14 +379,14 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
   if (alloc / sizeof (struct bfd_hash_entry *) != size)
     {
       bfd_set_error (bfd_error_no_memory);
-      return FALSE;
+      return false;
     }
 
   table->memory = (void *) objalloc_create ();
   if (table->memory == NULL)
     {
       bfd_set_error (bfd_error_no_memory);
-      return FALSE;
+      return false;
     }
   table->table = (struct bfd_hash_entry **)
       objalloc_alloc ((struct objalloc *) table->memory, alloc);
@@ -394,7 +394,7 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
     {
       bfd_hash_table_free (table);
       bfd_set_error (bfd_error_no_memory);
-      return FALSE;
+      return false;
     }
   memset ((void *) table->table, 0, alloc);
   table->size = size;
@@ -402,12 +402,12 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
   table->count = 0;
   table->frozen = 0;
   table->newfunc = newfunc;
-  return TRUE;
+  return true;
 }
 
 /* Create a new hash table with the default number of entries.  */
 
-bfd_boolean
+bool
 bfd_hash_table_init (struct bfd_hash_table *table,
 		     struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 							struct bfd_hash_table *,
@@ -457,8 +457,8 @@ bfd_hash_hash (const char *string, unsigned int *lenp)
 struct bfd_hash_entry *
 bfd_hash_lookup (struct bfd_hash_table *table,
 		 const char *string,
-		 bfd_boolean create,
-		 bfd_boolean copy)
+		 bool create,
+		 bool copy)
 {
   unsigned long hash;
   struct bfd_hash_entry *hashp;
@@ -643,7 +643,7 @@ bfd_hash_newfunc (struct bfd_hash_entry *entry,
 
 void
 bfd_hash_traverse (struct bfd_hash_table *table,
-		   bfd_boolean (*func) (struct bfd_hash_entry *, void *),
+		   bool (*func) (struct bfd_hash_entry *, void *),
 		   void * info)
 {
   unsigned int i;
@@ -664,19 +664,18 @@ bfd_hash_traverse (struct bfd_hash_table *table,
 unsigned long
 bfd_hash_set_default_size (unsigned long hash_size)
 {
-  /* Extend this prime list if you want more granularity of hash table size.  */
-  static const unsigned long hash_size_primes[] =
-    {
-      31, 61, 127, 251, 509, 1021, 2039, 4091, 8191, 16381, 32749, 65537
-    };
-  unsigned int _index;
-
-  /* Work out best prime number near the hash_size.  */
-  for (_index = 0; _index < ARRAY_SIZE (hash_size_primes) - 1; ++_index)
-    if (hash_size <= hash_size_primes[_index])
-      break;
-
-  bfd_default_hash_table_size = hash_size_primes[_index];
+  /* These silly_size values result in around 1G and 32M of memory
+     being allocated for the table of pointers.  Note that the number
+     of elements allocated will be almost twice the size of any power
+     of two chosen here.  */
+  unsigned long silly_size = sizeof (size_t) > 4 ? 0x4000000 : 0x400000;
+  if (hash_size > silly_size)
+    hash_size = silly_size;
+  else if (hash_size != 0)
+    hash_size--;
+  hash_size = higher_prime_number (hash_size);
+  BFD_ASSERT (hash_size != 0);
+  bfd_default_hash_table_size = hash_size;
   return bfd_default_hash_table_size;
 }
 
@@ -714,10 +713,11 @@ struct bfd_strtab_hash
   struct strtab_hash_entry *first;
   /* Last string in strtab.  */
   struct strtab_hash_entry *last;
-  /* Whether to precede strings with a two byte length, as in the
-     XCOFF .debug section.  */
-  bfd_boolean xcoff;
+  /* Whether to precede strings with a two or four byte length,
+     as in the XCOFF .debug section.  */
+  char length_field_size;
 };
+
 
 /* Routine to create an entry in a strtab.  */
 
@@ -762,7 +762,7 @@ struct bfd_strtab_hash *
 _bfd_stringtab_init (void)
 {
   struct bfd_strtab_hash *table;
-  bfd_size_type amt = sizeof (* table);
+  size_t amt = sizeof (* table);
 
   table = (struct bfd_strtab_hash *) bfd_malloc (amt);
   if (table == NULL)
@@ -778,7 +778,7 @@ _bfd_stringtab_init (void)
   table->size = 0;
   table->first = NULL;
   table->last = NULL;
-  table->xcoff = FALSE;
+  table->length_field_size = 0;
 
   return table;
 }
@@ -788,13 +788,13 @@ _bfd_stringtab_init (void)
    string.  */
 
 struct bfd_strtab_hash *
-_bfd_xcoff_stringtab_init (void)
+_bfd_xcoff_stringtab_init (bool isxcoff64)
 {
   struct bfd_strtab_hash *ret;
 
   ret = _bfd_stringtab_init ();
   if (ret != NULL)
-    ret->xcoff = TRUE;
+    ret->length_field_size = isxcoff64 ? 4 : 2;
   return ret;
 }
 
@@ -815,14 +815,14 @@ _bfd_stringtab_free (struct bfd_strtab_hash *table)
 bfd_size_type
 _bfd_stringtab_add (struct bfd_strtab_hash *tab,
 		    const char *str,
-		    bfd_boolean hash,
-		    bfd_boolean copy)
+		    bool hash,
+		    bool copy)
 {
   struct strtab_hash_entry *entry;
 
   if (hash)
     {
-      entry = strtab_hash_lookup (tab, str, TRUE, copy);
+      entry = strtab_hash_lookup (tab, str, true, copy);
       if (entry == NULL)
 	return (bfd_size_type) -1;
     }
@@ -853,11 +853,8 @@ _bfd_stringtab_add (struct bfd_strtab_hash *tab,
     {
       entry->index = tab->size;
       tab->size += strlen (str) + 1;
-      if (tab->xcoff)
-	{
-	  entry->index += 2;
-	  tab->size += 2;
-	}
+      entry->index += tab->length_field_size;
+      tab->size += tab->length_field_size;
       if (tab->first == NULL)
 	tab->first = entry;
       else
@@ -879,13 +876,10 @@ _bfd_stringtab_size (struct bfd_strtab_hash *tab)
 /* Write out a strtab.  ABFD must already be at the right location in
    the file.  */
 
-bfd_boolean
+bool
 _bfd_stringtab_emit (bfd *abfd, struct bfd_strtab_hash *tab)
 {
-  bfd_boolean xcoff;
   struct strtab_hash_entry *entry;
-
-  xcoff = tab->xcoff;
 
   for (entry = tab->first; entry != NULL; entry = entry->next)
     {
@@ -895,19 +889,28 @@ _bfd_stringtab_emit (bfd *abfd, struct bfd_strtab_hash *tab)
       str = entry->root.string;
       len = strlen (str) + 1;
 
-      if (xcoff)
+      if (tab->length_field_size == 4)
+	{
+	  bfd_byte buf[4];
+
+	  /* The output length includes the null byte.  */
+	  bfd_put_32 (abfd, (bfd_vma) len, buf);
+	  if (bfd_bwrite ((void *) buf, (bfd_size_type) 4, abfd) != 4)
+	    return false;
+	}
+      else if (tab->length_field_size == 2)
 	{
 	  bfd_byte buf[2];
 
 	  /* The output length includes the null byte.  */
 	  bfd_put_16 (abfd, (bfd_vma) len, buf);
 	  if (bfd_bwrite ((void *) buf, (bfd_size_type) 2, abfd) != 2)
-	    return FALSE;
+	    return false;
 	}
 
       if (bfd_bwrite ((void *) str, (bfd_size_type) len, abfd) != len)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }

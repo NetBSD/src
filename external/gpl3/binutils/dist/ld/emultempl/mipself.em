@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -20,10 +20,10 @@
 
 case ${target} in
   *-*-*gnu*)
-    gnu_target=TRUE
+    gnu_target=true
     ;;
   *)
-    gnu_target=FALSE
+    gnu_target=false
     ;;
 esac
 
@@ -42,9 +42,9 @@ fragment <<EOF
 static lang_input_statement_type *stub_file;
 static bfd *stub_bfd;
 
-static bfd_boolean insn32;
-static bfd_boolean ignore_branch_isa;
-static bfd_boolean compact_branches;
+static bool insn32;
+static bool ignore_branch_isa;
+static bool compact_branches;
 
 struct hook_stub_info
 {
@@ -54,11 +54,11 @@ struct hook_stub_info
 
 /* Traverse the linker tree to find the spot where the stub goes.  */
 
-static bfd_boolean
+static bool
 hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 {
   lang_statement_union_type *l;
-  bfd_boolean ret;
+  bool ret;
 
   for (; (l = *lp) != NULL; lp = &l->header.next)
     {
@@ -97,7 +97,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 		 before its associated input section.  */
 	      *lp = info->add.head;
 	      *(info->add.tail) = l;
-	      return TRUE;
+	      return true;
 	    }
 	  break;
 
@@ -118,7 +118,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 	  break;
 	}
     }
-  return FALSE;
+  return false;
 }
 
 /* Create a new stub section called STUB_SEC_NAME and arrange for it to
@@ -175,7 +175,7 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
 
   /* Initialize a statement list that contains only the new statement.  */
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, NULL, os);
+  lang_add_section (&info.add, stub_sec, NULL, NULL, os);
   if (info.add.head == NULL)
     goto err_ret;
 
@@ -197,7 +197,7 @@ mips_create_output_section_statements (void)
   struct elf_link_hash_table *htab;
 
   htab = elf_hash_table (&link_info);
-  if (is_elf_hash_table (htab) && is_mips_elf (link_info.output_bfd))
+  if (is_elf_hash_table (&htab->root) && is_mips_elf (link_info.output_bfd))
     _bfd_mips_elf_linker_flags (&link_info, insn32, ignore_branch_isa,
 				${gnu_target});
 
@@ -278,27 +278,27 @@ PARSE_AND_LIST_OPTIONS='
 
 PARSE_AND_LIST_ARGS_CASES='
     case OPTION_INSN32:
-      insn32 = TRUE;
+      insn32 = true;
       break;
 
     case OPTION_NO_INSN32:
-      insn32 = FALSE;
+      insn32 = false;
       break;
 
     case OPTION_IGNORE_BRANCH_ISA:
-      ignore_branch_isa = TRUE;
+      ignore_branch_isa = true;
       break;
 
     case OPTION_NO_IGNORE_BRANCH_ISA:
-      ignore_branch_isa = FALSE;
+      ignore_branch_isa = false;
       break;
 
     case OPTION_COMPACT_BRANCHES:
-      compact_branches = TRUE;
+      compact_branches = true;
       break;
 
     case OPTION_NO_COMPACT_BRANCHES:
-      compact_branches = FALSE;
+      compact_branches = false;
       break;
 '
 

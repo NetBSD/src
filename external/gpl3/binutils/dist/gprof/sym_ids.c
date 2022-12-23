@@ -1,6 +1,6 @@
 /* sym_ids.c
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -42,7 +42,7 @@ struct sym_id
     struct sym_id *next;
     char *spec;			/* Parsing modifies this.  */
     Table_Id which_table;
-    bfd_boolean has_right;
+    bool has_right;
 
     struct match left, right;
   };
@@ -53,10 +53,10 @@ static void parse_spec
   (char *, Sym *);
 static void parse_id
   (struct sym_id *);
-static bfd_boolean match
+static bool match
   (Sym *, Sym *);
 static void extend_match
-  (struct match *, Sym *, Sym_Table *, bfd_boolean);
+  (struct match *, Sym *, Sym_Table *, bool);
 
 
 Sym_Table syms[NUM_TABLES];
@@ -181,7 +181,7 @@ parse_id (struct sym_id *id)
     {
       parse_spec (slash + 1, &id->right.sym);
       *slash = '\0';
-      id->has_right = TRUE;
+      id->has_right = true;
     }
   parse_spec (id->spec, &id->left.sym);
 
@@ -218,27 +218,27 @@ parse_id (struct sym_id *id)
 
 /* Return TRUE iff PATTERN matches SYM.  */
 
-static bfd_boolean
+static bool
 match (Sym *pattern, Sym *sym)
 {
   if (pattern->file && pattern->file != sym->file)
-    return FALSE;
+    return false;
   if (pattern->line_num && pattern->line_num != sym->line_num)
-    return FALSE;
+    return false;
   if (pattern->name)
     {
       const char *sym_name = sym->name;
       if (*sym_name && bfd_get_symbol_leading_char (core_bfd) == *sym_name)
 	sym_name++;
       if (strcmp (pattern->name, sym_name) != 0)
-	return FALSE;
+	return false;
     }
-  return TRUE;
+  return true;
 }
 
 
 static void
-extend_match (struct match *m, Sym *sym, Sym_Table *tab, bfd_boolean second_pass)
+extend_match (struct match *m, Sym *sym, Sym_Table *tab, bool second_pass)
 {
   if (m->prev_match != sym - 1)
     {
@@ -289,10 +289,10 @@ sym_id_parse (void)
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    extend_match (&id->left, sym, &syms[id->which_table], FALSE);
+	    extend_match (&id->left, sym, &syms[id->which_table], false);
 
 	  if (id->has_right && match (&id->right.sym, sym))
-	    extend_match (&id->right, sym, &right_ids, FALSE);
+	    extend_match (&id->right, sym, &right_ids, false);
 	}
     }
 
@@ -320,10 +320,10 @@ sym_id_parse (void)
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    extend_match (&id->left, sym, &syms[id->which_table], TRUE);
+	    extend_match (&id->left, sym, &syms[id->which_table], true);
 
 	  if (id->has_right && match (&id->right.sym, sym))
-	    extend_match (&id->right, sym, &right_ids, TRUE);
+	    extend_match (&id->right, sym, &right_ids, true);
 	}
     }
 
@@ -371,7 +371,7 @@ sym_id_parse (void)
    time requesting -k a/b.  Fortunately, those symbol tables don't get
    very big (the user has to type them!), so a linear search is probably
    tolerable.  */
-bfd_boolean
+bool
 sym_id_arc_is_present (Sym_Table *sym_tab, Sym *from, Sym *to)
 {
   Sym *sym;
@@ -380,8 +380,8 @@ sym_id_arc_is_present (Sym_Table *sym_tab, Sym *from, Sym *to)
     {
       if (from->addr >= sym->addr && from->addr <= sym->end_addr
 	  && arc_lookup (sym, to))
-	return TRUE;
+	return true;
     }
 
-  return FALSE;
+  return false;
 }

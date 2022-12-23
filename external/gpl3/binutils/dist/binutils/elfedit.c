@@ -1,5 +1,5 @@
 /* elfedit.c -- Update the ELF header of an ELF format file
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "sysdep.h"
+#include "libiberty.h"
 #include <assert.h>
 
 #if __GNUC__ >= 2
@@ -55,6 +56,8 @@ static int input_elf_type = -1;
 static int output_elf_type = -1;
 static int input_elf_osabi = -1;
 static int output_elf_osabi = -1;
+static int input_elf_abiversion = -1;
+static int output_elf_abiversion = -1;
 enum elfclass
   {
     ELF_CLASS_UNKNOWN = -1,
@@ -238,7 +241,7 @@ update_gnu_property (const char *file_name, FILE *file)
 	  }
       }
 
-out:
+ out:
   if (ret != 0)
     error (_("%s: Invalid PT_NOTE segment\n"), file_name);
 
@@ -259,6 +262,10 @@ elf_x86_feature (const char *feature, int enable)
     x86_feature = GNU_PROPERTY_X86_FEATURE_1_IBT;
   else if (strcasecmp (feature, "shstk") == 0)
     x86_feature = GNU_PROPERTY_X86_FEATURE_1_SHSTK;
+  else if (strcasecmp (feature, "lam_u48") == 0)
+    x86_feature = GNU_PROPERTY_X86_FEATURE_1_LAM_U48;
+  else if (strcasecmp (feature, "lam_u57") == 0)
+    x86_feature = GNU_PROPERTY_X86_FEATURE_1_LAM_U57;
   else
     {
       error (_("Unknown x86 feature: %s\n"), feature);
@@ -304,7 +311,7 @@ elf_class (int mach)
 static int
 update_elf_header (const char *file_name, FILE *file)
 {
-  int class, machine, type, status, osabi;
+  int class, machine, type, status, osabi, abiversion;
 
   if (elf_header.e_ident[EI_VERSION] != EV_CURRENT)
     {
@@ -375,6 +382,18 @@ update_elf_header (const char *file_name, FILE *file)
       return 0;
     }
 
+  abiversion = elf_header.e_ident[EI_ABIVERSION];
+
+  /* Skip if ABIVERSION doesn't match. */
+  if (input_elf_abiversion != -1
+      && abiversion != input_elf_abiversion)
+    {
+      error
+	(_("%s: Unmatched EI_ABIVERSION: %d is not %d\n"),
+	 file_name, abiversion, input_elf_abiversion);
+      return 0;
+    }
+
   /* Update e_machine, e_type and EI_OSABI.  */
   switch (class)
     {
@@ -389,6 +408,8 @@ update_elf_header (const char *file_name, FILE *file)
 	BYTE_PUT (ehdr32.e_type, output_elf_type);
       if (output_elf_osabi != -1)
 	ehdr32.e_ident[EI_OSABI] = output_elf_osabi;
+      if (output_elf_abiversion != -1)
+	ehdr32.e_ident[EI_ABIVERSION] = output_elf_abiversion;
       status = fwrite (&ehdr32, sizeof (ehdr32), 1, file) == 1;
       break;
     case ELFCLASS64:
@@ -398,6 +419,8 @@ update_elf_header (const char *file_name, FILE *file)
 	BYTE_PUT (ehdr64.e_type, output_elf_type);
       if (output_elf_osabi != -1)
 	ehdr64.e_ident[EI_OSABI] = output_elf_osabi;
+      if (output_elf_abiversion != -1)
+	ehdr64.e_ident[EI_ABIVERSION] = output_elf_abiversion;
       status = fwrite (&ehdr64, sizeof (ehdr64), 1, file) == 1;
       break;
     }
@@ -535,12 +558,13 @@ process_object (const char *file_name, FILE *file)
 
 static int
 process_archive (const char * file_name, FILE * file,
-		 bfd_boolean is_thin_archive)
+		 bool is_thin_archive)
 {
   struct archive_info arch;
   struct archive_info nested_arch;
   size_t got;
   int ret;
+  struct stat statbuf;
 
   /* The ARCH structure is used to hold information about this archive.  */
   arch.file_name = NULL;
@@ -558,7 +582,9 @@ process_archive (const char * file_name, FILE * file,
   nested_arch.sym_table = NULL;
   nested_arch.longnames = NULL;
 
-  if (setup_archive (&arch, file_name, file, is_thin_archive, FALSE) != 0)
+  if (fstat (fileno (file), &statbuf) < 0
+      || setup_archive (&arch, file_name, file, statbuf.st_size,
+			is_thin_archive, false) != 0)
     {
       ret = 1;
       goto out;
@@ -616,6 +642,7 @@ process_archive (const char * file_name, FILE * file,
       if (qualified_name == NULL)
 	{
 	  error (_("%s: bad archive file name\n"), file_name);
+	  free (name);
 	  ret = 1;
 	  break;
 	}
@@ -626,8 +653,10 @@ process_archive (const char * file_name, FILE * file,
           FILE *member_file;
           char *member_file_name = adjust_relative_path (file_name,
 							 name, namelen);
+	  free (name);
           if (member_file_name == NULL)
             {
+	      free (qualified_name);
               ret = 1;
               break;
             }
@@ -638,6 +667,7 @@ process_archive (const char * file_name, FILE * file,
               error (_("Input file '%s' is not readable\n"),
 			 member_file_name);
               free (member_file_name);
+	      free (qualified_name);
               ret = 1;
               break;
             }
@@ -651,6 +681,8 @@ process_archive (const char * file_name, FILE * file,
         }
       else if (is_thin_archive)
         {
+	  free (name);
+
           /* This is a proxy for a member of a nested archive.  */
           archive_file_offset = arch.nested_member_origin + sizeof arch.arhdr;
 
@@ -661,6 +693,7 @@ process_archive (const char * file_name, FILE * file,
             {
               error (_("%s: failed to seek to archive member\n"),
 			 nested_arch.file_name);
+	      free (qualified_name);
               ret = 1;
               break;
             }
@@ -669,6 +702,7 @@ process_archive (const char * file_name, FILE * file,
         }
       else
         {
+	  free (name);
           archive_file_offset = arch.next_arhdr_offset;
           arch.next_arhdr_offset += archive_file_size;
 
@@ -705,6 +739,20 @@ check_file (const char *file_name, struct stat *statbuf_p)
       return 1;
     }
 
+#if defined (_WIN32) && !defined (__CYGWIN__)
+  else if (statbuf_p->st_size == 0)
+    {
+      /* MS-Windows 'stat' reports the null device as a regular file;
+	 fix that.  */
+      int fd = open (file_name, O_RDONLY | O_BINARY);
+      if (isatty (fd))
+	{
+	  statbuf_p->st_mode &= ~S_IFREG;
+	  statbuf_p->st_mode |= S_IFCHR;
+	}
+    }
+#endif
+
   if (! S_ISREG (statbuf_p->st_mode))
     {
       error (_("'%s' is not an ordinary file\n"), file_name);
@@ -740,9 +788,9 @@ process_file (const char *file_name)
     }
 
   if (memcmp (armag, ARMAG, SARMAG) == 0)
-    ret = process_archive (file_name, file, FALSE);
+    ret = process_archive (file_name, file, false);
   else if (memcmp (armag, ARMAGT, SARMAG) == 0)
-    ret = process_archive (file_name, file, TRUE);
+    ret = process_archive (file_name, file, true);
   else
     {
       rewind (file);
@@ -854,6 +902,8 @@ enum command_line_switch
     OPTION_OUTPUT_TYPE,
     OPTION_INPUT_OSABI,
     OPTION_OUTPUT_OSABI,
+    OPTION_INPUT_ABIVERSION,
+    OPTION_OUTPUT_ABIVERSION,
 #ifdef HAVE_MMAP
     OPTION_ENABLE_X86_FEATURE,
     OPTION_DISABLE_X86_FEATURE,
@@ -868,6 +918,8 @@ static struct option options[] =
   {"output-type",	required_argument, 0, OPTION_OUTPUT_TYPE},
   {"input-osabi",	required_argument, 0, OPTION_INPUT_OSABI},
   {"output-osabi",	required_argument, 0, OPTION_OUTPUT_OSABI},
+  {"input-abiversion",	required_argument, 0, OPTION_INPUT_ABIVERSION},
+  {"output-abiversion",	required_argument, 0, OPTION_OUTPUT_ABIVERSION},
 #ifdef HAVE_MMAP
   {"enable-x86-feature",
 			required_argument, 0, OPTION_ENABLE_X86_FEATURE},
@@ -882,23 +934,38 @@ static struct option options[] =
 ATTRIBUTE_NORETURN static void
 usage (FILE *stream, int exit_status)
 {
+  unsigned int i;
+  char *osabi = concat (osabis[0].name, NULL);
+
+  for (i = 1; i < ARRAY_SIZE (osabis); i++)
+    osabi = reconcat (osabi, osabi, "|", osabis[i].name, NULL);
+
   fprintf (stream, _("Usage: %s <option(s)> elffile(s)\n"),
 	   program_name);
   fprintf (stream, _(" Update the ELF header of ELF files\n"));
   fprintf (stream, _(" The options are:\n"));
   fprintf (stream, _("\
-  --input-mach <machine>      Set input machine type to <machine>\n\
-  --output-mach <machine>     Set output machine type to <machine>\n\
-  --input-type <type>         Set input file type to <type>\n\
-  --output-type <type>        Set output file type to <type>\n\
-  --input-osabi <osabi>       Set input OSABI to <osabi>\n\
-  --output-osabi <osabi>      Set output OSABI to <osabi>\n"));
+  --input-mach [none|i386|iamcu|l1om|k1om|x86_64]\n\
+                              Set input machine type\n\
+  --output-mach [none|i386|iamcu|l1om|k1om|x86_64]\n\
+                              Set output machine type\n\
+  --input-type [none|rel|exec|dyn]\n\
+                              Set input file type\n\
+  --output-type [none|rel|exec|dyn]\n\
+                              Set output file type\n\
+  --input-osabi [%s]\n\
+                              Set input OSABI\n\
+  --output-osabi [%s]\n\
+                              Set output OSABI\n\
+  --input-abiversion [0-255]  Set input ABIVERSION\n\
+  --output-abiversion [0-255] Set output ABIVERSION\n"),
+	   osabi, osabi);
 #ifdef HAVE_MMAP
   fprintf (stream, _("\
-  --enable-x86-feature <feature>\n\
-                              Enable x86 feature <feature>\n\
-  --disable-x86-feature <feature>\n\
-                              Disable x86 feature <feature>\n"));
+  --enable-x86-feature [ibt|shstk|lam_u48|lam_u57]\n\
+                              Enable x86 feature\n\
+  --disable-x86-feature [ibt|shstk|lam_u48|lam_u57]\n\
+                              Disable x86 feature\n"));
 #endif
   fprintf (stream, _("\
   -h --help                   Display this information\n\
@@ -907,6 +974,7 @@ usage (FILE *stream, int exit_status)
 	   program_name);
   if (REPORT_BUGS_TO[0] && exit_status == 0)
     fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
+  free (osabi);
   exit (exit_status);
 }
 
@@ -914,13 +982,12 @@ int
 main (int argc, char ** argv)
 {
   int c, status;
+  char *end;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -973,6 +1040,28 @@ main (int argc, char ** argv)
 	    return 1;
 	  break;
 
+	case OPTION_INPUT_ABIVERSION:
+	  input_elf_abiversion = strtoul (optarg, &end, 0);
+	  if (*end != '\0'
+	      || input_elf_abiversion < 0
+	      || input_elf_abiversion > 255)
+	    {
+	      error (_("Invalid ABIVERSION: %s\n"), optarg);
+	      return 1;
+	    }
+	  break;
+
+	case OPTION_OUTPUT_ABIVERSION:
+	  output_elf_abiversion = strtoul (optarg, &end, 0);
+	  if (*end != '\0'
+	      || output_elf_abiversion < 0
+	      || output_elf_abiversion > 255)
+	    {
+	      error (_("Invalid ABIVERSION: %s\n"), optarg);
+	      return 1;
+	    }
+	  break;
+
 #ifdef HAVE_MMAP
 	case OPTION_ENABLE_X86_FEATURE:
 	  if (elf_x86_feature (optarg, 1) < 0)
@@ -1004,7 +1093,8 @@ main (int argc, char ** argv)
 	 && ! disable_x86_features
 #endif
 	  && output_elf_type == -1
-	  && output_elf_osabi == -1))
+	  && output_elf_osabi == -1
+	  && output_elf_abiversion == -1))
     usage (stderr, 1);
 
   status = 0;

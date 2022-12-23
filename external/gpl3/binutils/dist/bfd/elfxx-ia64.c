@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -66,7 +66,7 @@
 static bfd_reloc_status_type
 ia64_elf_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc,
 		asymbol *sym ATTRIBUTE_UNUSED,
-		PTR data ATTRIBUTE_UNUSED, asection *input_section,
+		void *data ATTRIBUTE_UNUSED, asection *input_section,
 		bfd *output_bfd, char **error_message)
 {
   if (output_bfd)
@@ -84,108 +84,108 @@ ia64_elf_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc,
 
 #define IA64_HOWTO(TYPE, NAME, SIZE, PCREL, IN)			\
   HOWTO (TYPE, 0, SIZE, 0, PCREL, 0, complain_overflow_signed,	\
-	 ia64_elf_reloc, NAME, FALSE, 0, -1, IN)
+	 ia64_elf_reloc, NAME, false, 0, -1, IN)
 
 /* This table has to be sorted according to increasing number of the
    TYPE field.  */
 static reloc_howto_type ia64_howto_table[] =
   {
-    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   3, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   0, false, true),
 
-    IA64_HOWTO (R_IA64_IMM14,	    "IMM14",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_IMM22,	    "IMM22",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_IMM64,	    "IMM64",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_DIR32MSB,    "DIR32MSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_DIR32LSB,    "DIR32LSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_DIR64MSB,    "DIR64MSB",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_DIR64LSB,    "DIR64LSB",	   4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_IMM14,	    "IMM14",	   1, false, true),
+    IA64_HOWTO (R_IA64_IMM22,	    "IMM22",	   1, false, true),
+    IA64_HOWTO (R_IA64_IMM64,	    "IMM64",	   1, false, true),
+    IA64_HOWTO (R_IA64_DIR32MSB,    "DIR32MSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_DIR32LSB,    "DIR32LSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_DIR64MSB,    "DIR64MSB",	   8, false, true),
+    IA64_HOWTO (R_IA64_DIR64LSB,    "DIR64LSB",	   8, false, true),
 
-    IA64_HOWTO (R_IA64_GPREL22,	    "GPREL22",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_GPREL64I,    "GPREL64I",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_GPREL32MSB,  "GPREL32MSB",  2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_GPREL32LSB,  "GPREL32LSB",  2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_GPREL64MSB,  "GPREL64MSB",  4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_GPREL64LSB,  "GPREL64LSB",  4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_GPREL22,	    "GPREL22",	   1, false, true),
+    IA64_HOWTO (R_IA64_GPREL64I,    "GPREL64I",	   1, false, true),
+    IA64_HOWTO (R_IA64_GPREL32MSB,  "GPREL32MSB",  4, false, true),
+    IA64_HOWTO (R_IA64_GPREL32LSB,  "GPREL32LSB",  4, false, true),
+    IA64_HOWTO (R_IA64_GPREL64MSB,  "GPREL64MSB",  8, false, true),
+    IA64_HOWTO (R_IA64_GPREL64LSB,  "GPREL64LSB",  8, false, true),
 
-    IA64_HOWTO (R_IA64_LTOFF22,	    "LTOFF22",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF64I,    "LTOFF64I",	   0, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_LTOFF22,	    "LTOFF22",	   1, false, true),
+    IA64_HOWTO (R_IA64_LTOFF64I,    "LTOFF64I",	   1, false, true),
 
-    IA64_HOWTO (R_IA64_PLTOFF22,    "PLTOFF22",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_PLTOFF64I,   "PLTOFF64I",   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_PLTOFF64MSB, "PLTOFF64MSB", 4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_PLTOFF64LSB, "PLTOFF64LSB", 4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_PLTOFF22,    "PLTOFF22",	   1, false, true),
+    IA64_HOWTO (R_IA64_PLTOFF64I,   "PLTOFF64I",   1, false, true),
+    IA64_HOWTO (R_IA64_PLTOFF64MSB, "PLTOFF64MSB", 8, false, true),
+    IA64_HOWTO (R_IA64_PLTOFF64LSB, "PLTOFF64LSB", 8, false, true),
 
-    IA64_HOWTO (R_IA64_FPTR64I,	    "FPTR64I",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_FPTR32MSB,   "FPTR32MSB",   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_FPTR32LSB,   "FPTR32LSB",   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_FPTR64MSB,   "FPTR64MSB",   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_FPTR64LSB,   "FPTR64LSB",   4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_FPTR64I,	    "FPTR64I",	   1, false, true),
+    IA64_HOWTO (R_IA64_FPTR32MSB,   "FPTR32MSB",   4, false, true),
+    IA64_HOWTO (R_IA64_FPTR32LSB,   "FPTR32LSB",   4, false, true),
+    IA64_HOWTO (R_IA64_FPTR64MSB,   "FPTR64MSB",   8, false, true),
+    IA64_HOWTO (R_IA64_FPTR64LSB,   "FPTR64LSB",   8, false, true),
 
-    IA64_HOWTO (R_IA64_PCREL60B,    "PCREL60B",	   0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL21B,    "PCREL21B",	   0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL21M,    "PCREL21M",	   0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL21F,    "PCREL21F",	   0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL32MSB,  "PCREL32MSB",  2, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL32LSB,  "PCREL32LSB",  2, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL64MSB,  "PCREL64MSB",  4, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL64LSB,  "PCREL64LSB",  4, TRUE, TRUE),
+    IA64_HOWTO (R_IA64_PCREL60B,    "PCREL60B",	   1, true, true),
+    IA64_HOWTO (R_IA64_PCREL21B,    "PCREL21B",	   1, true, true),
+    IA64_HOWTO (R_IA64_PCREL21M,    "PCREL21M",	   1, true, true),
+    IA64_HOWTO (R_IA64_PCREL21F,    "PCREL21F",	   1, true, true),
+    IA64_HOWTO (R_IA64_PCREL32MSB,  "PCREL32MSB",  4, true, true),
+    IA64_HOWTO (R_IA64_PCREL32LSB,  "PCREL32LSB",  4, true, true),
+    IA64_HOWTO (R_IA64_PCREL64MSB,  "PCREL64MSB",  8, true, true),
+    IA64_HOWTO (R_IA64_PCREL64LSB,  "PCREL64LSB",  8, true, true),
 
-    IA64_HOWTO (R_IA64_LTOFF_FPTR22, "LTOFF_FPTR22", 0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF_FPTR64I, "LTOFF_FPTR64I", 0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF_FPTR32MSB, "LTOFF_FPTR32MSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF_FPTR32LSB, "LTOFF_FPTR32LSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF_FPTR64MSB, "LTOFF_FPTR64MSB", 4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF_FPTR64LSB, "LTOFF_FPTR64LSB", 4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR22, "LTOFF_FPTR22", 1, false, true),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR64I, "LTOFF_FPTR64I", 1, false, true),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR32MSB, "LTOFF_FPTR32MSB", 4, false, true),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR32LSB, "LTOFF_FPTR32LSB", 4, false, true),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR64MSB, "LTOFF_FPTR64MSB", 8, false, true),
+    IA64_HOWTO (R_IA64_LTOFF_FPTR64LSB, "LTOFF_FPTR64LSB", 8, false, true),
 
-    IA64_HOWTO (R_IA64_SEGREL32MSB, "SEGREL32MSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SEGREL32LSB, "SEGREL32LSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SEGREL64MSB, "SEGREL64MSB", 4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SEGREL64LSB, "SEGREL64LSB", 4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_SEGREL32MSB, "SEGREL32MSB", 4, false, true),
+    IA64_HOWTO (R_IA64_SEGREL32LSB, "SEGREL32LSB", 4, false, true),
+    IA64_HOWTO (R_IA64_SEGREL64MSB, "SEGREL64MSB", 8, false, true),
+    IA64_HOWTO (R_IA64_SEGREL64LSB, "SEGREL64LSB", 8, false, true),
 
-    IA64_HOWTO (R_IA64_SECREL32MSB, "SECREL32MSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SECREL32LSB, "SECREL32LSB", 2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SECREL64MSB, "SECREL64MSB", 4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_SECREL64LSB, "SECREL64LSB", 4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_SECREL32MSB, "SECREL32MSB", 4, false, true),
+    IA64_HOWTO (R_IA64_SECREL32LSB, "SECREL32LSB", 4, false, true),
+    IA64_HOWTO (R_IA64_SECREL64MSB, "SECREL64MSB", 8, false, true),
+    IA64_HOWTO (R_IA64_SECREL64LSB, "SECREL64LSB", 8, false, true),
 
-    IA64_HOWTO (R_IA64_REL32MSB,    "REL32MSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_REL32LSB,    "REL32LSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_REL64MSB,    "REL64MSB",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_REL64LSB,    "REL64LSB",	   4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_REL32MSB,    "REL32MSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_REL32LSB,    "REL32LSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_REL64MSB,    "REL64MSB",	   8, false, true),
+    IA64_HOWTO (R_IA64_REL64LSB,    "REL64LSB",	   8, false, true),
 
-    IA64_HOWTO (R_IA64_LTV32MSB,    "LTV32MSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTV32LSB,    "LTV32LSB",	   2, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTV64MSB,    "LTV64MSB",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTV64LSB,    "LTV64LSB",	   4, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_LTV32MSB,    "LTV32MSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_LTV32LSB,    "LTV32LSB",	   4, false, true),
+    IA64_HOWTO (R_IA64_LTV64MSB,    "LTV64MSB",	   8, false, true),
+    IA64_HOWTO (R_IA64_LTV64LSB,    "LTV64LSB",	   8, false, true),
 
-    IA64_HOWTO (R_IA64_PCREL21BI,   "PCREL21BI",   0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL22,     "PCREL22",     0, TRUE, TRUE),
-    IA64_HOWTO (R_IA64_PCREL64I,    "PCREL64I",    0, TRUE, TRUE),
+    IA64_HOWTO (R_IA64_PCREL21BI,   "PCREL21BI",   1, true, true),
+    IA64_HOWTO (R_IA64_PCREL22,     "PCREL22",     1, true, true),
+    IA64_HOWTO (R_IA64_PCREL64I,    "PCREL64I",    1, true, true),
 
-    IA64_HOWTO (R_IA64_IPLTMSB,	    "IPLTMSB",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_IPLTLSB,	    "IPLTLSB",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_COPY,	    "COPY",	   4, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LTOFF22X,    "LTOFF22X",	   0, FALSE, TRUE),
-    IA64_HOWTO (R_IA64_LDXMOV,	    "LDXMOV",	   0, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_IPLTMSB,	    "IPLTMSB",	   8, false, true),
+    IA64_HOWTO (R_IA64_IPLTLSB,	    "IPLTLSB",	   8, false, true),
+    IA64_HOWTO (R_IA64_COPY,	    "COPY",	   8, false, true),
+    IA64_HOWTO (R_IA64_LTOFF22X,    "LTOFF22X",	   1, false, true),
+    IA64_HOWTO (R_IA64_LDXMOV,	    "LDXMOV",	   1, false, true),
 
-    IA64_HOWTO (R_IA64_TPREL14,	    "TPREL14",	   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_TPREL22,	    "TPREL22",	   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_TPREL64I,    "TPREL64I",	   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_TPREL64MSB,  "TPREL64MSB",  4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_TPREL64LSB,  "TPREL64LSB",  4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_LTOFF_TPREL22, "LTOFF_TPREL22",  0, FALSE, FALSE),
+    IA64_HOWTO (R_IA64_TPREL14,	    "TPREL14",	   1, false, false),
+    IA64_HOWTO (R_IA64_TPREL22,	    "TPREL22",	   1, false, false),
+    IA64_HOWTO (R_IA64_TPREL64I,    "TPREL64I",	   1, false, false),
+    IA64_HOWTO (R_IA64_TPREL64MSB,  "TPREL64MSB",  8, false, false),
+    IA64_HOWTO (R_IA64_TPREL64LSB,  "TPREL64LSB",  8, false, false),
+    IA64_HOWTO (R_IA64_LTOFF_TPREL22, "LTOFF_TPREL22",  1, false, false),
 
-    IA64_HOWTO (R_IA64_DTPMOD64MSB, "DTPMOD64MSB",  4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPMOD64LSB, "DTPMOD64LSB",  4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_LTOFF_DTPMOD22, "LTOFF_DTPMOD22", 0, FALSE, FALSE),
+    IA64_HOWTO (R_IA64_DTPMOD64MSB, "DTPMOD64MSB",  8, false, false),
+    IA64_HOWTO (R_IA64_DTPMOD64LSB, "DTPMOD64LSB",  8, false, false),
+    IA64_HOWTO (R_IA64_LTOFF_DTPMOD22, "LTOFF_DTPMOD22", 1, false, false),
 
-    IA64_HOWTO (R_IA64_DTPREL14,    "DTPREL14",	   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL22,    "DTPREL22",	   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL64I,   "DTPREL64I",   0, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL32MSB, "DTPREL32MSB", 2, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL32LSB, "DTPREL32LSB", 2, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL64MSB, "DTPREL64MSB", 4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_DTPREL64LSB, "DTPREL64LSB", 4, FALSE, FALSE),
-    IA64_HOWTO (R_IA64_LTOFF_DTPREL22, "LTOFF_DTPREL22", 0, FALSE, FALSE),
+    IA64_HOWTO (R_IA64_DTPREL14,    "DTPREL14",	   1, false, false),
+    IA64_HOWTO (R_IA64_DTPREL22,    "DTPREL22",	   1, false, false),
+    IA64_HOWTO (R_IA64_DTPREL64I,   "DTPREL64I",   1, false, false),
+    IA64_HOWTO (R_IA64_DTPREL32MSB, "DTPREL32MSB", 4, false, false),
+    IA64_HOWTO (R_IA64_DTPREL32LSB, "DTPREL32LSB", 4, false, false),
+    IA64_HOWTO (R_IA64_DTPREL64MSB, "DTPREL64MSB", 8, false, false),
+    IA64_HOWTO (R_IA64_DTPREL64LSB, "DTPREL64LSB", 8, false, false),
+    IA64_HOWTO (R_IA64_LTOFF_DTPREL22, "LTOFF_DTPREL22", 1, false, false),
   };
 
 static unsigned char elf_code_to_howto_index[R_IA64_MAX_RELOC_CODE + 1];
@@ -195,12 +195,12 @@ static unsigned char elf_code_to_howto_index[R_IA64_MAX_RELOC_CODE + 1];
 reloc_howto_type *
 ia64_elf_lookup_howto (unsigned int rtype)
 {
-  static bfd_boolean inited = FALSE;
+  static bool inited = false;
   int i;
 
   if (!inited)
     {
-      inited = TRUE;
+      inited = true;
 
       memset (elf_code_to_howto_index, 0xff, sizeof (elf_code_to_howto_index));
       for (i = 0; i < NELEMS (ia64_howto_table); ++i)
@@ -380,7 +380,7 @@ ia64_elf_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 #define IS_BR_CALL(i) \
   (((i) & OPCODE_BITS) == (0x5LL << OPCODE_SHIFT))
 
-bfd_boolean
+bool
 ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
 {
   unsigned int template_val, mlx;
@@ -407,7 +407,7 @@ ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
       /* Check if slot 1 and slot 2 are NOPs. Possible template is
 	 BBB.  We only need to check nop.b.  */
       if (!(IS_NOP_B (s1) && IS_NOP_B (s2)))
-	return FALSE;
+	return false;
       br_code = s0;
       break;
     case 1:
@@ -418,7 +418,7 @@ ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
 	    || (template_val == 0x16			/* BBB */
 		&& IS_NOP_B (s0)
 		&& IS_NOP_B (s2))))
-	return FALSE;
+	return false;
       br_code = s1;
       break;
     case 2:
@@ -435,7 +435,7 @@ ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
 		&& IS_NOP_M (s1))
 	    || (template_val == 0x1c			/* MFB */
 		&& IS_NOP_F (s1))))
-	return FALSE;
+	return false;
       br_code = s2;
       break;
     default:
@@ -445,7 +445,7 @@ ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
 
   /* We can turn br.cond/br.call into brl.cond/brl.call.  */
   if (!(IS_BR_COND (br_code) || IS_BR_CALL (br_code)))
-    return FALSE;
+    return false;
 
   /* Turn br into brl by setting bit 40.  */
   br_code |= 0x1LL << 40;
@@ -480,7 +480,7 @@ ia64_elf_relax_br (bfd_byte *contents, bfd_vma off)
 
   bfd_putl64 (t0, hit_addr);
   bfd_putl64 (t1, hit_addr + 8);
-  return TRUE;
+  return true;
 }
 
 void
@@ -555,11 +555,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
   enum ia64_opnd opnd;
   const char *err;
   size_t size = 8;
-#ifdef BFD_HOST_U_64_BIT
-  BFD_HOST_U_64_BIT val = (BFD_HOST_U_64_BIT) v;
-#else
-  bfd_vma val = v;
-#endif
+  uint64_t val = v;
 
   opnd = IA64_OPND_NIL;
   switch (r_type)
@@ -685,7 +681,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
 	 slot 2: bits 23..63 in t1 */
 
       /* First, clear the bits that form the 64 bit constant.  */
-      t0 &= ~(0x3ffffLL << 46);
+      t0 &= ~(0x3ffffULL << 46);
       t1 &= ~(0x7fffffLL
 	      | ((  (0x07fLL << 13) | (0x1ffLL << 27)
 		    | (0x01fLL << 22) | (0x001LL << 21)
@@ -714,7 +710,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
 	 slot 2: bits 23..63 in t1 */
 
       /* First, clear the bits that form the 64 bit constant.  */
-      t0 &= ~(0x3ffffLL << 46);
+      t0 &= ~(0x3ffffULL << 46);
       t1 &= ~(0x7fffffLL
 	      | ((1LL << 36 | 0xfffffLL << 13) << 23));
 
@@ -744,7 +740,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
       if (err)
 	return bfd_reloc_overflow;
 
-      dword &= ~(0x1ffffffffffLL << shift);
+      dword &= ~(0x1ffffffffffULL << shift);
       dword |= (insn << shift);
       bfd_putl64 (dword, hit_addr);
       break;

@@ -1,5 +1,5 @@
 /* tc-bpf.h -- Header file for tc-ebpf.c.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by Oracle, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -41,7 +41,6 @@
 
 /* Call md_pcrel_from_section(), not md_pcrel_from().  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
-extern long md_pcrel_from_section (struct fix *, segT);
 
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
@@ -49,3 +48,6 @@ extern long md_pcrel_from_section (struct fix *, segT);
 /* Values passed to md_apply_fix don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
 
+/* The Linux kernel verifier expects NOPs to be encoded in this way;
+   a jump to offset 0 means jump to the next instruction.  */
+#define md_single_noop_insn "ja 0"

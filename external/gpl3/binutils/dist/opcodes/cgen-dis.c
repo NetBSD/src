@@ -1,5 +1,5 @@
 /* CGEN generic disassembler support code.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "symcat.h"
 #include "opcode/cgen.h"
+#include "disassemble.h"
 
 static CGEN_INSN_LIST *  hash_insn_array        (CGEN_CPU_DESC, const CGEN_INSN *, int, int, CGEN_INSN_LIST **, CGEN_INSN_LIST *);
 static CGEN_INSN_LIST *  hash_insn_list         (CGEN_CPU_DESC, const CGEN_INSN_LIST *, CGEN_INSN_LIST **, CGEN_INSN_LIST *);
@@ -39,6 +40,9 @@ static int
 count_decodable_bits (const CGEN_INSN *insn)
 {
   unsigned mask = CGEN_INSN_BASE_MASK (insn);
+#if GCC_VERSION >= 3004
+  return __builtin_popcount (mask);
+#else
   int bits = 0;
   unsigned m;
 
@@ -48,6 +52,7 @@ count_decodable_bits (const CGEN_INSN *insn)
 	++bits;
     }
   return bits;
+#endif
 }
 
 /* Add an instruction to the hash chain.  */
@@ -94,7 +99,7 @@ add_insn_to_hash_chain (CGEN_INSN_LIST *hentbuf,
    The result is a pointer to the next entry to use.
 
    The table is scanned backwards as additions are made to the front of the
-   list and we want earlier ones to be prefered.  */
+   list and we want earlier ones to be preferred.  */
 
 static CGEN_INSN_LIST *
 hash_insn_array (CGEN_CPU_DESC cd,
@@ -110,9 +115,10 @@ hash_insn_array (CGEN_CPU_DESC cd,
   for (i = count - 1; i >= 0; --i, ++hentbuf)
     {
       unsigned int hash;
-      char buf [4];
+      char buf [8];
       unsigned long value;
       const CGEN_INSN *insn = &insns[i];
+      size_t size;
 
       if (! (* cd->dis_hash_p) (insn))
 	continue;
@@ -121,10 +127,9 @@ hash_insn_array (CGEN_CPU_DESC cd,
 	 to hash on, so set both up.  */
 
       value = CGEN_INSN_BASE_VALUE (insn);
-      bfd_put_bits ((bfd_vma) value,
-		    buf,
-		    CGEN_INSN_MASK_BITSIZE (insn),
-		    big_p);
+      size = CGEN_INSN_MASK_BITSIZE (insn);
+      OPCODES_ASSERT (size <= sizeof (buf) * 8);
+      bfd_put_bits ((bfd_vma) value, buf, size, big_p);
       hash = (* cd->dis_hash) (buf, value);
       add_insn_to_hash_chain (hentbuf, insn, htable, hash);
     }
@@ -148,8 +153,9 @@ hash_insn_list (CGEN_CPU_DESC cd,
   for (ilist = insns; ilist != NULL; ilist = ilist->next, ++ hentbuf)
     {
       unsigned int hash;
-      char buf[4];
+      char buf[8];
       unsigned long value;
+      size_t size;
 
       if (! (* cd->dis_hash_p) (ilist->insn))
 	continue;
@@ -158,10 +164,9 @@ hash_insn_list (CGEN_CPU_DESC cd,
 	 to hash on, so set both up.  */
 
       value = CGEN_INSN_BASE_VALUE (ilist->insn);
-      bfd_put_bits((bfd_vma) value,
-		   buf,
-		   CGEN_INSN_MASK_BITSIZE (ilist->insn),
-		   big_p);
+      size = CGEN_INSN_MASK_BITSIZE (ilist->insn);
+      OPCODES_ASSERT (size <= sizeof (buf) * 8);
+      bfd_put_bits ((bfd_vma) value, buf, size, big_p);
       hash = (* cd->dis_hash) (buf, value);
       add_insn_to_hash_chain (hentbuf, ilist->insn, htable, hash);
     }
@@ -210,7 +215,7 @@ build_dis_hash_table (CGEN_CPU_DESC cd)
 				    dis_hash_table, hash_entry_buf);
 
   /* Add runtime added insns.
-     Later added insns will be prefered over earlier ones.  */
+     Later added insns will be preferred over earlier ones.  */
 
   hash_entry_buf = hash_insn_list (cd, insn_table->new_entries,
 				   dis_hash_table, hash_entry_buf);

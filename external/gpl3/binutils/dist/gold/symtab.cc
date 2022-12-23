@@ -1,6 +1,6 @@
 // symtab.cc -- the gold symbol table
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2472,12 +2472,6 @@ Symbol_table::do_add_undefined_symbols_from_command_line(Layout* layout)
   for (options::String_set::const_iterator p =
 	 parameters->options().undefined_begin();
        p != parameters->options().undefined_end();
-       ++p)
-    this->add_undefined_symbol_from_command_line<size>(p->c_str());
-
-  for (options::String_set::const_iterator p =
-	 parameters->options().export_dynamic_symbol_begin();
-       p != parameters->options().export_dynamic_symbol_end();
        ++p)
     this->add_undefined_symbol_from_command_line<size>(p->c_str());
 

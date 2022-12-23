@@ -1,7 +1,7 @@
 # Default linker script for c54x, TI COFF(1).
 # patterned after description in TI Assembler Tools PDF, SPRU102C, 7-53
 #
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -10,7 +10,7 @@
 test -z "$ENTRY" && ENTRY=_c_int00
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright

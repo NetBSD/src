@@ -1,5 +1,5 @@
 /* BFD library support routines for the Z800n architecture.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,13 +36,13 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  { 32, 16, 8, bfd_arch_z8k, bfd_mach_z8002, "z8k", "z8002", 1, FALSE,
+  { 32, 16, 8, bfd_arch_z8k, bfd_mach_z8002, "z8k", "z8002", 1, false,
     compatible, bfd_default_scan, bfd_arch_default_fill, NULL, 0 }
 };
 
 const bfd_arch_info_type bfd_z8k_arch =
 {
-  32, 32, 8, bfd_arch_z8k, bfd_mach_z8001, "z8k", "z8001", 1, TRUE,
+  32, 32, 8, bfd_arch_z8k, bfd_mach_z8001, "z8k", "z8001", 1, true,
   compatible, bfd_default_scan, bfd_arch_default_fill,
   &arch_info_struct[0], 0
 };

@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for ELF.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -72,372 +72,372 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_TILEGX_NONE,	/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 #ifdef BFD64
   /* A 64 bit absolute relocation.  */
   HOWTO (R_TILEGX_64,	/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_64",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffffffffffffULL,	/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 #endif
   /* A 32 bit absolute relocation.  */
   HOWTO (R_TILEGX_32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_TILEGX_16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 8 bit absolute relocation.  */
   HOWTO (R_TILEGX_8,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 #ifdef BFD64
   /* A 64 bit pc-relative relocation.  */
   HOWTO (R_TILEGX_64_PCREL,/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_32_PCREL", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffffffffffffULL,	/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 #endif
   /* A 32 bit pc-relative relocation.  */
   HOWTO (R_TILEGX_32_PCREL,/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_32_PCREL", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit pc-relative relocation.  */
   HOWTO (R_TILEGX_16_PCREL,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* An 8 bit pc-relative relocation.  */
   HOWTO (R_TILEGX_8_PCREL,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_8_PCREL",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit relocation without overflow.  */
   HOWTO (R_TILEGX_HW0,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW0",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation without overflow.  */
   HOWTO (R_TILEGX_HW1,	/* type */
 	 16,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW1",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation without overflow.  */
   HOWTO (R_TILEGX_HW2,	/* type */
 	 32,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW2",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation without overflow.  */
   HOWTO (R_TILEGX_HW3,	/* type */
 	 48,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW3",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation with overflow.  */
   HOWTO (R_TILEGX_HW0_LAST,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW0_LAST",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation with overflow.  */
   HOWTO (R_TILEGX_HW1_LAST,	/* type */
 	 16,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW1_LAST",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit relocation with overflow.  */
   HOWTO (R_TILEGX_HW2_LAST,	/* type */
 	 32,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_HW2_LAST",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_TILEGX_COPY,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_COPY",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_GLOB_DAT,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_GLOB_DAT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_JMP_SLOT,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_JMP_SLOT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_RELATIVE,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEGX_RELATIVE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_BROFF_X1, /* type */
 	 TILEGX_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 17,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEGX_BROFF_X1", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_JUMPOFF_X1, /* type */
 	 TILEGX_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEGX_JUMPOFF_X1", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEGX_JUMPOFF_X1_PLT, /* type */
 	 TILEGX_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEGX_JUMPOFF_X1_PLT", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
 #define TILEGX_IMM_HOWTO(name, size, bitsize) \
-  HOWTO (name, 0, size, bitsize, FALSE, 0, \
+  HOWTO (name, 0, size, bitsize, false, 0, \
 	 complain_overflow_signed, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, -1, FALSE)
+	 #name, false, 0, -1, false)
 
 #define TILEGX_UIMM_HOWTO(name, size, bitsize) \
-  HOWTO (name, 0, size, bitsize, FALSE, 0, \
+  HOWTO (name, 0, size, bitsize, false, 0, \
 	 complain_overflow_unsigned, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, -1, FALSE)
+	 #name, false, 0, -1, false)
 
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0, 0, 8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0, 0, 8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1, 0, 8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1, 0, 8),
-  TILEGX_IMM_HOWTO(R_TILEGX_DEST_IMM8_X1, 0, 8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0, 1, 8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0, 1, 8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1, 1, 8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1, 1, 8),
+  TILEGX_IMM_HOWTO(R_TILEGX_DEST_IMM8_X1, 1, 8),
 
-  TILEGX_UIMM_HOWTO(R_TILEGX_MT_IMM14_X1, 1, 14),
-  TILEGX_UIMM_HOWTO(R_TILEGX_MF_IMM14_X1, 1, 14),
+  TILEGX_UIMM_HOWTO(R_TILEGX_MT_IMM14_X1, 2, 14),
+  TILEGX_UIMM_HOWTO(R_TILEGX_MF_IMM14_X1, 2, 14),
 
-  TILEGX_UIMM_HOWTO(R_TILEGX_MMSTART_X0, 0, 6),
-  TILEGX_UIMM_HOWTO(R_TILEGX_MMEND_X0,   0, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_MMSTART_X0, 1, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_MMEND_X0,   1, 6),
 
-  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_X0, 0, 6),
-  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_X1, 0, 6),
-  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_Y0, 0, 6),
-  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_Y1, 0, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_X0, 1, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_X1, 1, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_Y0, 1, 6),
+  TILEGX_UIMM_HOWTO(R_TILEGX_SHAMT_Y1, 1, 6),
 
 #define TILEGX_IMM16_HOWTO(name, rshift) \
-  HOWTO (name, rshift, 1, 16, FALSE, 0, \
+  HOWTO (name, rshift, 2, 16, false, 0, \
 	 complain_overflow_dont, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, FALSE)
+	 #name, false, 0, 0xffff, false)
 
   TILEGX_IMM16_HOWTO (R_TILEGX_IMM16_X0_HW0, 0),
   TILEGX_IMM16_HOWTO (R_TILEGX_IMM16_X1_HW0, 0),
@@ -449,9 +449,9 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   TILEGX_IMM16_HOWTO (R_TILEGX_IMM16_X1_HW3, 48),
 
 #define TILEGX_IMM16_HOWTO_LAST(name, rshift) \
-  HOWTO (name, rshift, 1, 16, FALSE, 0, \
+  HOWTO (name, rshift, 2, 16, false, 0, \
 	 complain_overflow_signed, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, FALSE)
+	 #name, false, 0, 0xffff, false)
 
   TILEGX_IMM16_HOWTO_LAST (R_TILEGX_IMM16_X0_HW0_LAST, 0),
   TILEGX_IMM16_HOWTO_LAST (R_TILEGX_IMM16_X1_HW0_LAST, 0),
@@ -463,9 +463,9 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   /* PC-relative offsets. */
 
 #define TILEGX_IMM16_HOWTO_PCREL(name, rshift) \
-  HOWTO (name, rshift, 1, 16, TRUE, 0, \
+  HOWTO (name, rshift, 2, 16, true, 0, \
 	 complain_overflow_dont, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, TRUE)
+	 #name, false, 0, 0xffff, true)
 
   TILEGX_IMM16_HOWTO_PCREL (R_TILEGX_IMM16_X0_HW0_PCREL, 0),
   TILEGX_IMM16_HOWTO_PCREL (R_TILEGX_IMM16_X1_HW0_PCREL, 0),
@@ -477,9 +477,9 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   TILEGX_IMM16_HOWTO_PCREL (R_TILEGX_IMM16_X1_HW3_PCREL, 48),
 
 #define TILEGX_IMM16_HOWTO_LAST_PCREL(name, rshift) \
-  HOWTO (name, rshift, 1, 16, TRUE, 0, \
+  HOWTO (name, rshift, 2, 16, true, 0, \
 	 complain_overflow_signed, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, TRUE)
+	 #name, false, 0, 0xffff, true)
 
   TILEGX_IMM16_HOWTO_LAST_PCREL (R_TILEGX_IMM16_X0_HW0_LAST_PCREL,  0),
   TILEGX_IMM16_HOWTO_LAST_PCREL (R_TILEGX_IMM16_X1_HW0_LAST_PCREL,  0),
@@ -524,9 +524,9 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   EMPTY_HOWTO (91),
 
 #define TILEGX_IMM16_HOWTO_TLS_IE(name, rshift) \
-  HOWTO (name, rshift, 1, 16, FALSE, 0, \
+  HOWTO (name, rshift, 2, 16, false, 0, \
 	 complain_overflow_dont, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, TRUE)
+	 #name, false, 0, 0xffff, true)
 
   TILEGX_IMM16_HOWTO_TLS_IE (R_TILEGX_IMM16_X0_HW0_TLS_IE, 0),
   TILEGX_IMM16_HOWTO_TLS_IE (R_TILEGX_IMM16_X1_HW0_TLS_IE, 0),
@@ -539,9 +539,9 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   TILEGX_IMM16_HOWTO_LAST_PCREL (R_TILEGX_IMM16_X1_HW2_LAST_PLT_PCREL, 32),
 
 #define TILEGX_IMM16_HOWTO_LAST_TLS_IE(name, rshift) \
-  HOWTO (name, rshift, 1, 16, FALSE, 0, \
+  HOWTO (name, rshift, 2, 16, false, 0, \
 	 complain_overflow_signed, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, TRUE)
+	 #name, false, 0, 0xffff, true)
 
   TILEGX_IMM16_HOWTO_LAST_TLS_IE (R_TILEGX_IMM16_X0_HW0_LAST_TLS_IE, 0),
   TILEGX_IMM16_HOWTO_LAST_TLS_IE (R_TILEGX_IMM16_X1_HW0_LAST_TLS_IE, 0),
@@ -550,49 +550,49 @@ static reloc_howto_type tilegx_elf_howto_table [] =
   EMPTY_HOWTO (104),
   EMPTY_HOWTO (105),
 
-  HOWTO(R_TILEGX_TLS_DTPMOD64, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+  HOWTO(R_TILEGX_TLS_DTPMOD64, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_DTPMOD64",
-	FALSE, 0, 0, TRUE),
-  HOWTO(R_TILEGX_TLS_DTPOFF64, 0, 4, 64, FALSE, 0, complain_overflow_bitfield,
+	false, 0, 0, true),
+  HOWTO(R_TILEGX_TLS_DTPOFF64, 0, 8, 64, false, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_DTPOFF64",
-	FALSE, 0, -1, TRUE),
-  HOWTO(R_TILEGX_TLS_TPOFF64, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+	false, 0, -1, true),
+  HOWTO(R_TILEGX_TLS_TPOFF64, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_TPOFF64",
-	FALSE, 0, 0, TRUE),
+	false, 0, 0, true),
 
-  HOWTO(R_TILEGX_TLS_DTPMOD32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+  HOWTO(R_TILEGX_TLS_DTPMOD32, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_DTPMOD32",
-	FALSE, 0, 0, TRUE),
-  HOWTO(R_TILEGX_TLS_DTPOFF32, 0, 4, 32, FALSE, 0, complain_overflow_bitfield,
+	false, 0, 0, true),
+  HOWTO(R_TILEGX_TLS_DTPOFF32, 0, 8, 32, false, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_DTPOFF32",
-	FALSE, 0, -1, TRUE),
-  HOWTO(R_TILEGX_TLS_TPOFF32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+	false, 0, -1, true),
+  HOWTO(R_TILEGX_TLS_TPOFF32, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEGX_TLS_TPOFF32",
-	FALSE, 0, 0, TRUE),
+	false, 0, 0, true),
 
   HOWTO (R_TILEGX_TLS_GD_CALL, /* type */
 	 TILEGX_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEGX_TLS_GD_CALL", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0_TLS_GD_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1_TLS_GD_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0_TLS_GD_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1_TLS_GD_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_TLS_IE_LOAD, 0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0_TLS_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1_TLS_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0_TLS_ADD,  0,  8),
-  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1_TLS_ADD,  0,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0_TLS_GD_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1_TLS_GD_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0_TLS_GD_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1_TLS_GD_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_TLS_IE_LOAD, 1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X0_TLS_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_X1_TLS_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y0_TLS_ADD,  1,  8),
+  TILEGX_IMM_HOWTO(R_TILEGX_IMM8_Y1_TLS_ADD,  1,  8),
 };
 
 static reloc_howto_type tilegx_elf_howto_table2 [] =
@@ -600,32 +600,32 @@ static reloc_howto_type tilegx_elf_howto_table2 [] =
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_TILEGX_GNU_VTINHERIT, /* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 NULL,			/* special_function */
 	 "R_TILEGX_GNU_VTINHERIT", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage */
   HOWTO (R_TILEGX_GNU_VTENTRY,	   /* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
 	 "R_TILEGX_GNU_VTENTRY",   /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
 };
 
@@ -785,9 +785,6 @@ struct tilegx_elf_link_hash_entry
 {
   struct elf_link_hash_entry elf;
 
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-
 #define GOT_UNKNOWN     0
 #define GOT_NORMAL      1
 #define GOT_TLS_GD      2
@@ -837,17 +834,15 @@ struct tilegx_elf_link_hash_table
 
   /* Whether LE transition has been disabled for some of the
      sections.  */
-  bfd_boolean disable_le_transition;
-
-  /* Small local sym to section mapping cache.  */
-  struct sym_cache sym_cache;
+  bool disable_le_transition;
 };
 
 
 /* Get the Tile ELF linker hash table from a link_info structure.  */
 #define tilegx_elf_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == TILEGX_ELF_DATA ? ((struct tilegx_elf_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == TILEGX_ELF_DATA)	\
+   ? (struct tilegx_elf_link_hash_table *) (p)->hash : NULL)
 
 #ifdef BFD64
 static bfd_vma
@@ -932,7 +927,7 @@ tilegx_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-bfd_boolean
+bool
 tilegx_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 			   arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
@@ -952,9 +947,9 @@ tilegx_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 typedef tilegx_bundle_bits (*tilegx_create_func)(int);
@@ -1280,7 +1275,7 @@ tilegx_plt_entry_build (bfd *output_bfd,
   bfd_signed_vma dist_got0 = dist_got_entry - got_offset;
 
   /* Check whether we can use the short plt entry with 16-bit offset.  */
-  bfd_boolean short_plt_entry =
+  bool short_plt_entry =
     (dist_got_entry <= 0x7fff && dist_got0 >= -0x8000);
 
   const tilegx_bundle_bits *plt_entry = (tilegx_bundle_bits *)
@@ -1356,7 +1351,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
       struct tilegx_elf_link_hash_entry *eh;
 
       eh = (struct tilegx_elf_link_hash_entry *) entry;
-      eh->dyn_relocs = NULL;
       eh->tls_type = GOT_UNKNOWN;
     }
 
@@ -1369,7 +1363,7 @@ struct bfd_link_hash_table *
 tilegx_elf_link_hash_table_create (bfd *abfd)
 {
   struct tilegx_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct tilegx_elf_link_hash_table);
+  size_t amt = sizeof (struct tilegx_elf_link_hash_table);
 
   ret = (struct tilegx_elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1417,7 +1411,7 @@ tilegx_elf_link_hash_table_create (bfd *abfd)
 
 /* Create the .got section.  */
 
-static bfd_boolean
+static bool
 tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 {
   flagword flags;
@@ -1428,7 +1422,7 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 
   /* This function may be called more than once.  */
   if (htab->sgot != NULL)
-    return TRUE;
+    return true;
 
   flags = bed->dynamic_sec_flags;
 
@@ -1439,13 +1433,13 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 					   | SEC_READONLY));
   if (s == NULL
       || !bfd_set_section_alignment (s, bed->s->log_file_align))
-    return FALSE;
+    return false;
   htab->srelgot = s;
 
   s = s_got = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   if (s == NULL
       || !bfd_set_section_alignment (s, bed->s->log_file_align))
-    return FALSE;
+    return false;
   htab->sgot = s;
 
   /* The first bit of the global offset table is the header.  */
@@ -1456,7 +1450,7 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->sgotplt = s;
 
       /* Reserve room for the header.  */
@@ -1473,22 +1467,22 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 				       "_GLOBAL_OFFSET_TABLE_");
       elf_hash_table (info)->hgot = h;
       if (h == NULL)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Create .plt, .rela.plt, .got, .got.plt, .rela.got, .dynbss, and
    .rela.bss sections in DYNOBJ, and set up shortcuts to them in our
    hash table.  */
 
-bfd_boolean
+bool
 tilegx_elf_create_dynamic_sections (bfd *dynobj,
 				    struct bfd_link_info *info)
 {
   if (!tilegx_elf_create_got_section (dynobj, info))
-    return FALSE;
+    return false;
 
   return _bfd_elf_create_dynamic_sections (dynobj, info);
 }
@@ -1504,37 +1498,6 @@ tilegx_elf_copy_indirect_symbol (struct bfd_link_info *info,
 
   edir = (struct tilegx_elf_link_hash_entry *) dir;
   eind = (struct tilegx_elf_link_hash_entry *) ind;
-
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
 
   if (ind->root.type == bfd_link_hash_indirect
       && dir->got.refcount <= 0)
@@ -1611,7 +1574,7 @@ tilegx_tls_translate_to_ie (int r_type)
 
 static int
 tilegx_elf_tls_transition (struct bfd_link_info *info, int r_type,
-			   int is_local, bfd_boolean disable_le_transition)
+			   int is_local, bool disable_le_transition)
 {
   if (!bfd_link_executable (info))
     return r_type;
@@ -1626,7 +1589,7 @@ tilegx_elf_tls_transition (struct bfd_link_info *info, int r_type,
    allocate space in the global offset table or procedure linkage
    table.  */
 
-bfd_boolean
+bool
 tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			 asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -1637,10 +1600,10 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   const Elf_Internal_Rela *rel_end;
   asection *sreloc;
   int num_relocs;
-  bfd_boolean has_tls_gd_or_ie = FALSE, has_tls_add = FALSE;
+  bool has_tls_gd_or_ie = false, has_tls_add = false;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   htab = tilegx_elf_hash_table (info);
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -1669,13 +1632,13 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	{
 	case R_TILEGX_TLS_GD_CALL:
 	case R_TILEGX_TLS_IE_LOAD:
-	  has_tls_gd_or_ie = TRUE;
+	  has_tls_gd_or_ie = true;
 	  break;
 	case R_TILEGX_IMM8_X0_TLS_ADD:
 	case R_TILEGX_IMM8_Y0_TLS_ADD:
 	case R_TILEGX_IMM8_X1_TLS_ADD:
 	case R_TILEGX_IMM8_Y1_TLS_ADD:
-	  has_tls_add = TRUE;
+	  has_tls_add = true;
 	  break;
 	}
     }
@@ -1698,7 +1661,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
-	  return FALSE;
+	  return false;
 	}
 
       if (r_symndx < symtab_hdr->sh_info)
@@ -1780,7 +1743,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    local_got_refcounts = ((bfd_signed_vma *)
 					   bfd_zalloc (abfd, size));
 		    if (local_got_refcounts == NULL)
-		      return FALSE;
+		      return false;
 		    elf_local_got_refcounts (abfd) = local_got_refcounts;
 		    _bfd_tilegx_elf_local_got_tls_type (abfd)
 		      = (char *) (local_got_refcounts + symtab_hdr->sh_info);
@@ -1803,7 +1766,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		      /* xgettext:c-format */
 		      (_("%pB: `%s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
-		    return FALSE;
+		    return false;
 		  }
 	      }
 
@@ -1819,7 +1782,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  if (htab->elf.sgot == NULL)
 	    {
 	      if (!tilegx_elf_create_got_section (htab->elf.dynobj, info))
-		return FALSE;
+		return false;
 	    }
 	  break;
 
@@ -1832,9 +1795,9 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (! _bfd_generic_link_add_one_symbol (info, abfd,
 						      "__tls_get_addr", 0,
 						      bfd_und_section_ptr, 0,
-						      NULL, FALSE, FALSE,
+						      NULL, false, false,
 						      &bh))
-		return FALSE;
+		return false;
 	      h = (struct elf_link_hash_entry *) bh;
 	    }
 	  else
@@ -1994,17 +1957,16 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		{
 		  sreloc = _bfd_elf_make_dynamic_reloc_section
 		    (sec, htab->elf.dynobj, htab->word_align_power, abfd,
-		     /*rela?*/ TRUE);
+		     /*rela?*/ true);
 
 		  if (sreloc == NULL)
-		    return FALSE;
+		    return false;
 		}
 
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
-		head =
-		  &((struct tilegx_elf_link_hash_entry *) h)->dyn_relocs;
+		head = &h->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -2015,10 +1977,10 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  void *vpp;
 		  Elf_Internal_Sym *isym;
 
-		  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+		  isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
 						abfd, r_symndx);
 		  if (isym == NULL)
-		    return FALSE;
+		    return false;
 
 		  s = bfd_section_from_elf_index (abfd, isym->st_shndx);
 		  if (s == NULL)
@@ -2031,11 +1993,11 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->elf.dynobj, amt));
 		  if (p == NULL)
-		    return FALSE;
+		    return false;
 		  p->next = *head;
 		  *head = p;
 		  p->sec = sec;
@@ -2052,12 +2014,12 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	case R_TILEGX_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	case R_TILEGX_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 
 	default:
@@ -2065,7 +2027,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -2104,8 +2066,8 @@ tilegx_elf_gc_mark_hook (asection *sec,
 	  if (! _bfd_generic_link_add_one_symbol (info, sec->owner,
 						  "__tls_get_addr", 0,
 						  bfd_und_section_ptr,
-						  0, NULL, FALSE,
-						  FALSE, &bh))
+						  0, NULL, false,
+						  false, &bh))
 	    return NULL;
 	  h = (struct elf_link_hash_entry *) bh;
 	  BFD_ASSERT (h != NULL);
@@ -2119,30 +2081,13 @@ tilegx_elf_gc_mark_hook (asection *sec,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-/* Find dynamic relocs for H that apply to read-only sections.  */
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-
-  for (p = tilegx_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
-}
-
 /* Adjust a symbol defined by a dynamic object and referenced by a
    regular object.  The current definition is in some section of the
    dynamic object, but we're not including those sections.  We have to
    change the definition to something the rest of the link can
    understand.  */
 
-bfd_boolean
+bool
 tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 				  struct elf_link_hash_entry *h)
 {
@@ -2183,7 +2128,7 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	  h->needs_plt = 0;
 	}
 
-      return TRUE;
+      return true;
     }
   else
     h->plt.offset = (bfd_vma) -1;
@@ -2197,7 +2142,7 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       BFD_ASSERT (def->root.type == bfd_link_hash_defined);
       h->root.u.def.section = def->root.u.def.section;
       h->root.u.def.value = def->root.u.def.value;
-      return TRUE;
+      return true;
     }
 
   /* This is a reference to a symbol defined by a dynamic object which
@@ -2208,26 +2153,26 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_pic (info))
-    return TRUE;
+    return true;
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
   if (info->nocopyreloc)
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   /* If we don't find any dynamic relocs in read-only sections, then
      we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
-  if (!readonly_dynrelocs (h))
+  if (!_bfd_elf_readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -2266,16 +2211,15 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 
-static bfd_boolean
+static bool
 allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
   struct tilegx_elf_link_hash_table *htab;
-  struct tilegx_elf_link_hash_entry *eh;
   struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
   info = (struct bfd_link_info *) inf;
   htab = tilegx_elf_hash_table (info);
@@ -2290,7 +2234,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
@@ -2349,7 +2293,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else if (h->got.refcount > 0)
     {
       asection *s;
-      bfd_boolean dyn;
+      bool dyn;
       int tls_type = tilegx_elf_hash_entry(h)->tls_type;
 
       /* Make sure this symbol is output as a dynamic symbol.
@@ -2358,7 +2302,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       s = htab->elf.sgot;
@@ -2380,9 +2324,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  eh = (struct tilegx_elf_link_hash_entry *) h;
-  if (eh->dyn_relocs == NULL)
-    return TRUE;
+  if (h->dyn_relocs == NULL)
+    return true;
 
   /* In the shared -Bsymbolic case, discard space allocated for
      dynamic pc-relative relocs against symbols which turn out to be
@@ -2396,7 +2339,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -2409,12 +2352,12 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
 	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -2422,7 +2365,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 		   && !h->forced_local)
 	    {
 	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-		return FALSE;
+		return false;
 	    }
 	}
     }
@@ -2445,7 +2388,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	      && !h->forced_local)
 	    {
 	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-		return FALSE;
+		return false;
 	    }
 
 	  /* If that succeeded, we know we'll be keeping all the
@@ -2454,52 +2397,25 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc = elf_section_data (p->sec)->sreloc;
       sreloc->size += p->count * TILEGX_ELF_RELA_BYTES (htab);
     }
 
-  return TRUE;
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
-  return TRUE;
+  return true;
 }
 
 /* Return true if the dynamic symbol for a given section should be
    omitted when creating a shared library.  */
 
-bfd_boolean
+bool
 tilegx_elf_omit_section_dynsym (bfd *output_bfd,
 				struct bfd_link_info *info,
 				asection *p)
@@ -2508,12 +2424,12 @@ tilegx_elf_omit_section_dynsym (bfd *output_bfd,
      against the _GLOBAL_OFFSET_TABLE_ symbol emitted in PIC mode
      can be turned into relocations against the .got symbol.  */
   if (strcmp (p->name, ".got") == 0)
-    return FALSE;
+    return false;
 
   return _bfd_elf_omit_section_dynsym_default (output_bfd, info, p);
 }
 
-bfd_boolean
+bool
 tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 				  struct bfd_link_info *info)
 {
@@ -2629,7 +2545,7 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       struct elf_link_hash_entry *got;
       got = elf_link_hash_lookup (elf_hash_table (info),
 				  "_GLOBAL_OFFSET_TABLE_",
-				  FALSE, FALSE, FALSE);
+				  false, false, false);
 
       /* Don't allocate .got.plt section if there are no GOT nor PLT
 	 entries and there is no refeence to _GLOBAL_OFFSET_TABLE_.  */
@@ -2662,7 +2578,7 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (strncmp (s->name, ".rela", 5) == 0)
+      else if (startswith (s->name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
@@ -2700,53 +2616,10 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 at the beginning, and we don't want garbage.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
-  if (elf_hash_table (info)->dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in tilegx_elf_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (bfd_link_executable (info))
-	{
-	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (htab->elf.srelplt->size != 0)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (!add_dynamic_entry (DT_RELA, 0)
-	  || !add_dynamic_entry (DT_RELASZ, 0)
-	  || !add_dynamic_entry (DT_RELAENT, TILEGX_ELF_RELA_BYTES (htab)))
-	return FALSE;
-
-      /* If any dynamic relocs apply to a read-only section,
-	 then we need a DT_TEXTREL entry.  */
-      if ((info->flags & DF_TEXTREL) == 0)
-	elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
-
-      if (info->flags & DF_TEXTREL)
-	{
-	  if (!add_dynamic_entry (DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, true);
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
@@ -2923,7 +2796,7 @@ static const bfd_byte *insn_addx_Y0Y1 = insn_tls_ie_addx_Y0Y1;
    section, which means that the addend must be adjusted
    accordingly.  */
 
-bfd_boolean
+int
 tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			     bfd *input_bfd, asection *input_section,
 			     bfd_byte *contents, Elf_Internal_Rela *relocs,
@@ -2959,7 +2832,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   for (; rel < relend; rel++)
     {
       int r_type, tls_type;
-      bfd_boolean is_tls_iele, is_tls_le;
+      bool is_tls_iele, is_tls_le;
       reloc_howto_type *howto;
       unsigned long r_symndx;
       struct elf_link_hash_entry *h;
@@ -2970,9 +2843,9 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       bfd_reloc_status_type r;
       const char *name;
       bfd_vma off;
-      bfd_boolean is_plt = FALSE;
-      bfd_boolean resolved_to_zero;
-      bfd_boolean unresolved_reloc;
+      bool is_plt = false;
+      bool resolved_to_zero;
+      bool unresolved_reloc;
 
       r_type = TILEGX_ELF_R_TYPE (rel->r_info);
       if (r_type == R_TILEGX_GNU_VTINHERIT
@@ -2989,7 +2862,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       h = NULL;
       sym = NULL;
       sec = NULL;
-      unresolved_reloc = FALSE;
+      unresolved_reloc = false;
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
@@ -2998,8 +2871,8 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean warned ATTRIBUTE_UNUSED;
-	  bfd_boolean ignored ATTRIBUTE_UNUSED;
+	  bool warned ATTRIBUTE_UNUSED;
+	  bool ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -3080,8 +2953,8 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      /* GD -> GD */
 	      h = (struct elf_link_hash_entry *)
-		bfd_link_hash_lookup (info->hash, "__tls_get_addr", FALSE,
-				      FALSE, TRUE);
+		bfd_link_hash_lookup (info->hash, "__tls_get_addr", false,
+				      false, true);
 	      BFD_ASSERT (h != NULL);
 	      r_type = R_TILEGX_JUMPOFF_X1_PLT;
 	      howto = tilegx_elf_howto_table + r_type;
@@ -3091,10 +2964,10 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		   || r_type ==  R_TILEGX_IMM8_Y0_TLS_ADD
 		   || r_type ==  R_TILEGX_IMM8_Y1_TLS_ADD)
 	    {
-	      bfd_boolean is_pipe0 =
+	      bool is_pipe0 =
 		(r_type == R_TILEGX_IMM8_X0_TLS_ADD
 		 || r_type ==  R_TILEGX_IMM8_Y0_TLS_ADD);
-	      bfd_boolean is_X0X1 =
+	      bool is_X0X1 =
 		(r_type == R_TILEGX_IMM8_X0_TLS_ADD
 		 || r_type ==  R_TILEGX_IMM8_X1_TLS_ADD);
 	      int dest_begin = is_pipe0 ? 0 : 31;
@@ -3162,7 +3035,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      const bfd_byte *mask = NULL;
 	      const bfd_byte *add_insn = NULL;
-	      bfd_boolean is_64bit = ABI_64_P (output_bfd);
+	      bool is_64bit = ABI_64_P (output_bfd);
 
 	      switch (r_type)
 		{
@@ -3243,7 +3116,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	  if (h != NULL)
 	    {
-	      bfd_boolean dyn;
+	      bool dyn;
 
 	      off = h->got.offset;
 	      BFD_ASSERT (off != (bfd_vma) -1);
@@ -3277,7 +3150,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		    }
 		}
 	      else
-		unresolved_reloc = FALSE;
+		unresolved_reloc = false;
 	    }
 	  else
 	    {
@@ -3351,7 +3224,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  relocation = (htab->elf.splt->output_section->vma
 			+ htab->elf.splt->output_offset
 			+ h->plt.offset);
-	  unresolved_reloc = FALSE;
+	  unresolved_reloc = false;
 	  break;
 
 	case R_TILEGX_64_PCREL:
@@ -3440,7 +3313,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      || h->root.type == bfd_link_hash_undefined)))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_boolean skip, relocate = FALSE;
+	      bool skip, relocate = false;
 
 	      /* When generating a shared object, these relocations
 		 are copied into the output file to be resolved at run
@@ -3448,15 +3321,15 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      BFD_ASSERT (sreloc != NULL);
 
-	      skip = FALSE;
+	      skip = false;
 
 	      outrel.r_offset =
 		_bfd_elf_section_offset (output_bfd, info, input_section,
 					 rel->r_offset);
 	      if (outrel.r_offset == (bfd_vma) -1)
-		skip = TRUE;
+		skip = true;
 	      else if (outrel.r_offset == (bfd_vma) -2)
-		skip = TRUE, relocate = TRUE;
+		skip = true, relocate = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 
@@ -3472,7 +3345,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		     FIXME: Add code tracking needed dynamic relocs as
 		     e.g. i386 has.  */
 		  if (h->dynindx == -1)
-		    skip = TRUE, relocate = TRUE;
+		    skip = true, relocate = true;
 		  break;
 		}
 
@@ -3513,7 +3386,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      else if (sec == NULL || sec->owner == NULL)
 			{
 			  bfd_set_error (bfd_error_bad_value);
-			  return FALSE;
+			  return false;
 			}
 		      else
 			{
@@ -3542,7 +3415,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 				(_("%pB: probably compiled without -fPIC?"),
 				 input_bfd);
 			      bfd_set_error (bfd_error_bad_value);
-			      return FALSE;
+			      return false;
 			    }
 			}
 
@@ -3569,17 +3442,17 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  if (!bfd_link_executable (info))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_boolean skip;
+	      bool skip;
 
 	      BFD_ASSERT (sreloc != NULL);
-	      skip = FALSE;
+	      skip = false;
 	      outrel.r_offset =
 		_bfd_elf_section_offset (output_bfd, info, input_section,
 					 rel->r_offset);
 	      if (outrel.r_offset == (bfd_vma) -1)
-		skip = TRUE;
+		skip = true;
 	      else if (outrel.r_offset == (bfd_vma) -2)
-		skip = TRUE;
+		skip = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 	      if (skip)
@@ -3661,14 +3534,14 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      Elf_Internal_Rela outrel;
 	      int indx = 0;
-	      bfd_boolean need_relocs = FALSE;
+	      bool need_relocs = false;
 
 	      if (htab->elf.srelgot == NULL)
 		abort ();
 
 	      if (h != NULL)
 	      {
-		bfd_boolean dyn;
+		bool dyn;
 		dyn = htab->elf.dynamic_sections_created;
 
 		if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
@@ -3687,7 +3560,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  && (h == NULL
 		      || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
 		      || h->root.type != bfd_link_hash_undefweak))
-		    need_relocs = TRUE;
+		    need_relocs = true;
 
 	      switch (r_type)
 		{
@@ -3771,7 +3644,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    abort ();
 
 	  relocation = off - got_base;
-	  unresolved_reloc = FALSE;
+	  unresolved_reloc = false;
 	  howto = tilegx_elf_howto_table + r_type;
 	  break;
 
@@ -3862,7 +3735,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -3888,13 +3761,13 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
 
-bfd_boolean
+bool
 tilegx_elf_finish_dynamic_symbol (bfd *output_bfd,
 				  struct bfd_link_info *info,
 				  struct elf_link_hash_entry *h,
@@ -4034,12 +3907,12 @@ tilegx_elf_finish_dynamic_symbol (bfd *output_bfd,
       || (h == htab->elf.hgot || h == htab->elf.hplt))
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up the dynamic sections.  */
 
-static bfd_boolean
+static bool
 tilegx_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 		   bfd *dynobj, asection *sdyn,
 		   asection *splt ATTRIBUTE_UNUSED)
@@ -4082,10 +3955,10 @@ tilegx_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
       bed->s->swap_dyn_out (output_bfd, &dyn, dyncon);
     }
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 tilegx_elf_finish_dynamic_sections (bfd *output_bfd,
 				    struct bfd_link_info *info)
 {
@@ -4103,7 +3976,7 @@ tilegx_elf_finish_dynamic_sections (bfd *output_bfd,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       asection *splt;
-      bfd_boolean ret;
+      bool ret;
 
       splt = htab->elf.splt;
       BFD_ASSERT (splt != NULL && sdyn != NULL);
@@ -4142,7 +4015,7 @@ tilegx_elf_finish_dynamic_sections (bfd *output_bfd,
 	{
 	  _bfd_error_handler
 	    (_("discarded output section: `%pA'"), htab->elf.sgotplt);
-	  return FALSE;
+	  return false;
 	}
 
       if (htab->elf.sgotplt->size > 0)
@@ -4177,7 +4050,7 @@ tilegx_elf_finish_dynamic_sections (bfd *output_bfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -4239,7 +4112,7 @@ tilegx_additional_program_headers (bfd *abfd,
 }
 
 
-bfd_boolean
+bool
 _bfd_tilegx_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
@@ -4253,8 +4126,8 @@ _bfd_tilegx_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	(_("%pB: cannot link together %s and %s objects"),
 	 ibfd, targ1, targ2);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }

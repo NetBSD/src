@@ -348,7 +348,7 @@ file at the end of @code{NAME(aout,final_link)}.
 @subsubsection @code{bfd_link_split_section}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_link_split_section (bfd *abfd, asection *sec);
+bool bfd_link_split_section (bfd *abfd, asection *sec);
 @end example
 @strong{Description}@*
 Return nonzero if @var{sec} should be split during a
@@ -363,7 +363,7 @@ reloceatable or final link.
 @subsubsection @code{bfd_section_already_linked}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_section_already_linked (bfd *abfd,
+bool bfd_section_already_linked (bfd *abfd,
     asection *sec,
     struct bfd_link_info *info);
 @end example
@@ -380,7 +380,7 @@ or final link.  Return TRUE if it has.
 @subsubsection @code{bfd_generic_define_common_symbol}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_generic_define_common_symbol
+bool bfd_generic_define_common_symbol
    (bfd *output_bfd, struct bfd_link_info *info,
     struct bfd_link_hash_entry *h);
 @end example
@@ -434,7 +434,7 @@ Return the symbol or NULL if no such undefined symbol exists.
 @example
 struct bfd_elf_version_tree * bfd_find_version_for_sym
    (struct bfd_elf_version_tree *verdefs,
-    const char *sym_name, bfd_boolean *hide);
+    const char *sym_name, bool *hide);
 @end example
 @strong{Description}@*
 Search an elf version script tree for symbol versioning
@@ -446,7 +446,7 @@ the output @samp{hide} boolean parameter.
 @subsubsection @code{bfd_hide_sym_by_version}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_hide_sym_by_version
+bool bfd_hide_sym_by_version
    (struct bfd_elf_version_tree *verdefs, const char *sym_name);
 @end example
 @strong{Description}@*
@@ -457,7 +457,7 @@ info for a given symbol.  Return TRUE if the symbol is hidden.
 @subsubsection @code{bfd_link_check_relocs}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_link_check_relocs
+bool bfd_link_check_relocs
    (bfd *abfd, struct bfd_link_info *info);
 @end example
 @strong{Description}@*
@@ -470,7 +470,7 @@ This is the external entry point to this code.
 @subsubsection @code{_bfd_generic_link_check_relocs}
 @strong{Synopsis}
 @example
-bfd_boolean _bfd_generic_link_check_relocs
+bool _bfd_generic_link_check_relocs
    (bfd *abfd, struct bfd_link_info *info);
 @end example
 @strong{Description}@*
@@ -483,7 +483,7 @@ outside the BFD library.
 @subsubsection @code{bfd_merge_private_bfd_data}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_merge_private_bfd_data
+bool bfd_merge_private_bfd_data
    (bfd *ibfd, struct bfd_link_info *info);
 @end example
 @strong{Description}@*
@@ -507,7 +507,7 @@ Not enough memory exists to create private data for @var{obfd}.
 @subsubsection @code{_bfd_generic_verify_endian_match}
 @strong{Synopsis}
 @example
-bfd_boolean _bfd_generic_verify_endian_match
+bool _bfd_generic_verify_endian_match
    (bfd *ibfd, struct bfd_link_info *info);
 @end example
 @strong{Description}@*

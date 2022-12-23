@@ -1,5 +1,5 @@
 /* ia64-opc-m.c -- IA-64 `M' opcode table.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.

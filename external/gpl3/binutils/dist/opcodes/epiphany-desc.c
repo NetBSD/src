@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -26,6 +26,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "sysdep.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ansidecl.h"
 #include "bfd.h"
 #include "symcat.h"
@@ -320,8 +321,8 @@ const CGEN_HW_ENTRY epiphany_cgen_hw_table[] =
   { "h-uint", HW_H_UINT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-addr", HW_H_ADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-iaddr", HW_H_IADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-registers", HW_H_REGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_gr_names, { 0|A(CACHE_ADDR)|A(PROFILE), { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-fpregisters", HW_H_FPREGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_gr_names, { 0|A(VIRTUAL)|A(PROFILE), { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-registers", HW_H_REGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_gr_names, { 0|A(CACHE_ADDR)|A(PROFILE), { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-fpregisters", HW_H_FPREGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_gr_names, { 0|A(VIRTUAL)|A(PROFILE), { { { (1<<MACH_BASE), 0 } } } } },
   { "h-zbit", HW_H_ZBIT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-nbit", HW_H_NBIT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-cbit", HW_H_CBIT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
@@ -378,10 +379,10 @@ const CGEN_HW_ENTRY epiphany_cgen_hw_table[] =
   { "h-sflagbit", HW_H_SFLAGBIT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-pc", HW_H_PC, CGEN_ASM_NONE, 0, { 0|A(PROFILE)|A(PC), { { { (1<<MACH_BASE), 0 } } } } },
   { "h-memaddr", HW_H_MEMADDR, CGEN_ASM_NONE, 0, { 0|A(PROFILE), { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-core-registers", HW_H_CORE_REGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_cr_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-coredma-registers", HW_H_COREDMA_REGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_crdma_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-coremem-registers", HW_H_COREMEM_REGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_crmem_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-coremesh-registers", HW_H_COREMESH_REGISTERS, CGEN_ASM_KEYWORD, (PTR) & epiphany_cgen_opval_crmesh_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-core-registers", HW_H_CORE_REGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_cr_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-coredma-registers", HW_H_COREDMA_REGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_crdma_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-coremem-registers", HW_H_COREMEM_REGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_crmem_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-coremesh-registers", HW_H_COREMESH_REGISTERS, CGEN_ASM_KEYWORD, & epiphany_cgen_opval_crmesh_names, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { 0, 0, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
 
@@ -479,51 +480,51 @@ const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_SN6_MULTI_IFIELD [];
 
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_DISP11_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_DISP8] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_DISP8] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_SDISP11_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_DISP8] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_DISP8] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_IMM16_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_IMM8] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_IMM_27_8] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_IMM8] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_IMM_27_8] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_RD6_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RD_X] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RD_X] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_RN6_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RN_X] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RN_X] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_RM6_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RM_X] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RM_X] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_SD6_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SD_X] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SD] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SD_X] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SD] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD EPIPHANY_F_SN6_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SN_X] } },
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SN] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SN_X] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SN] } },
+    { 0, { 0 } }
 };
 
 /* The operand table.  */
@@ -535,371 +536,371 @@ const CGEN_OPERAND epiphany_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", EPIPHANY_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_NIL] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* zbit: integer zero bit */
   { "zbit", EPIPHANY_OPERAND_ZBIT, HW_H_ZBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* nbit: integer neg bit */
   { "nbit", EPIPHANY_OPERAND_NBIT, HW_H_NBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbit: integer carry bit */
   { "cbit", EPIPHANY_OPERAND_CBIT, HW_H_CBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* vbit: integer overflow bit */
   { "vbit", EPIPHANY_OPERAND_VBIT, HW_H_VBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bzbit: floating point zero bit */
   { "bzbit", EPIPHANY_OPERAND_BZBIT, HW_H_BZBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bnbit: floating point neg bit */
   { "bnbit", EPIPHANY_OPERAND_BNBIT, HW_H_BNBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bvbit: floating point ovfl bit */
   { "bvbit", EPIPHANY_OPERAND_BVBIT, HW_H_BVBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bcbit: floating point carry bit */
   { "bcbit", EPIPHANY_OPERAND_BCBIT, HW_H_BCBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bubit: floating point underfl bit */
   { "bubit", EPIPHANY_OPERAND_BUBIT, HW_H_BUBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bibit: floating point invalid bit */
   { "bibit", EPIPHANY_OPERAND_BIBIT, HW_H_BIBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* vsbit: integer overflow sticky */
   { "vsbit", EPIPHANY_OPERAND_VSBIT, HW_H_VSBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bvsbit: floating point overflow sticky */
   { "bvsbit", EPIPHANY_OPERAND_BVSBIT, HW_H_BVSBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* bisbit: floating point invalid sticky */
   { "bisbit", EPIPHANY_OPERAND_BISBIT, HW_H_BISBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* busbit: floating point underflow sticky */
   { "busbit", EPIPHANY_OPERAND_BUSBIT, HW_H_BUSBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* expcause0bit: exceprion cause bit0 */
   { "expcause0bit", EPIPHANY_OPERAND_EXPCAUSE0BIT, HW_H_EXPCAUSE0BIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* expcause1bit: exceprion cause bit1 */
   { "expcause1bit", EPIPHANY_OPERAND_EXPCAUSE1BIT, HW_H_EXPCAUSE1BIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* expcause2bit: external load stalled bit */
   { "expcause2bit", EPIPHANY_OPERAND_EXPCAUSE2BIT, HW_H_EXPCAUSE2BIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* extFstallbit: external fetch stalled bit */
   { "extFstallbit", EPIPHANY_OPERAND_EXTFSTALLBIT, HW_H_EXTFSTALLBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* trmbit: 0=round to nearest, 1=trunacte selct bit */
   { "trmbit", EPIPHANY_OPERAND_TRMBIT, HW_H_TRMBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* invExcEnbit: invalid exception enable bit */
   { "invExcEnbit", EPIPHANY_OPERAND_INVEXCENBIT, HW_H_INVEXCENBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* ovfExcEnbit: overflow exception enable bit */
   { "ovfExcEnbit", EPIPHANY_OPERAND_OVFEXCENBIT, HW_H_OVFEXCENBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* unExcEnbit: underflow exception enable bit */
   { "unExcEnbit", EPIPHANY_OPERAND_UNEXCENBIT, HW_H_UNEXCENBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer0bit0: timer 0 mode selection 0 */
   { "timer0bit0", EPIPHANY_OPERAND_TIMER0BIT0, HW_H_TIMER0BIT0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer0bit1: timer 0 mode selection 1 */
   { "timer0bit1", EPIPHANY_OPERAND_TIMER0BIT1, HW_H_TIMER0BIT1, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer0bit2: timer 0 mode selection 2 */
   { "timer0bit2", EPIPHANY_OPERAND_TIMER0BIT2, HW_H_TIMER0BIT2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer0bit3: timer 0 mode selection 3 */
   { "timer0bit3", EPIPHANY_OPERAND_TIMER0BIT3, HW_H_TIMER0BIT3, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer1bit0: timer 1 mode selection 0 */
   { "timer1bit0", EPIPHANY_OPERAND_TIMER1BIT0, HW_H_TIMER1BIT0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer1bit1: timer 1 mode selection 1 */
   { "timer1bit1", EPIPHANY_OPERAND_TIMER1BIT1, HW_H_TIMER1BIT1, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer1bit2: timer 1 mode selection 2 */
   { "timer1bit2", EPIPHANY_OPERAND_TIMER1BIT2, HW_H_TIMER1BIT2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* timer1bit3: timer 1 mode selection 3 */
   { "timer1bit3", EPIPHANY_OPERAND_TIMER1BIT3, HW_H_TIMER1BIT3, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* mbkptEnbit: multicore bkpt enable */
   { "mbkptEnbit", EPIPHANY_OPERAND_MBKPTENBIT, HW_H_MBKPTENBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* clockGateEnbit: clock gate enable enable */
   { "clockGateEnbit", EPIPHANY_OPERAND_CLOCKGATEENBIT, HW_H_CLOCKGATEENBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* arithmetic-modebit0: arithmetic mode bit0 */
   { "arithmetic-modebit0", EPIPHANY_OPERAND_ARITHMETIC_MODEBIT0, HW_H_ARITHMETIC_MODEBIT0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* arithmetic-modebit1: arithmetic mode bit1 */
   { "arithmetic-modebit1", EPIPHANY_OPERAND_ARITHMETIC_MODEBIT1, HW_H_ARITHMETIC_MODEBIT1, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* arithmetic-modebit2: arithmetic mode bit2 */
   { "arithmetic-modebit2", EPIPHANY_OPERAND_ARITHMETIC_MODEBIT2, HW_H_ARITHMETIC_MODEBIT2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit12: core config bit 12 */
   { "coreCfgResBit12", EPIPHANY_OPERAND_CORECFGRESBIT12, HW_H_CORECFGRESBIT12, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit13: core config bit 13 */
   { "coreCfgResBit13", EPIPHANY_OPERAND_CORECFGRESBIT13, HW_H_CORECFGRESBIT13, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit14: core config bit 14 */
   { "coreCfgResBit14", EPIPHANY_OPERAND_CORECFGRESBIT14, HW_H_CORECFGRESBIT14, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit15: core config bit 15 */
   { "coreCfgResBit15", EPIPHANY_OPERAND_CORECFGRESBIT15, HW_H_CORECFGRESBIT15, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit16: core config bit 16 */
   { "coreCfgResBit16", EPIPHANY_OPERAND_CORECFGRESBIT16, HW_H_CORECFGRESBIT16, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit20: core config bit 20 */
   { "coreCfgResBit20", EPIPHANY_OPERAND_CORECFGRESBIT20, HW_H_CORECFGRESBIT20, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit21: core config bit 21 */
   { "coreCfgResBit21", EPIPHANY_OPERAND_CORECFGRESBIT21, HW_H_CORECFGRESBIT21, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit24: core config bit 24 */
   { "coreCfgResBit24", EPIPHANY_OPERAND_CORECFGRESBIT24, HW_H_CORECFGRESBIT24, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit25: core config bit 25 */
   { "coreCfgResBit25", EPIPHANY_OPERAND_CORECFGRESBIT25, HW_H_CORECFGRESBIT25, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit26: core config bit 26 */
   { "coreCfgResBit26", EPIPHANY_OPERAND_CORECFGRESBIT26, HW_H_CORECFGRESBIT26, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit27: core config bit 27 */
   { "coreCfgResBit27", EPIPHANY_OPERAND_CORECFGRESBIT27, HW_H_CORECFGRESBIT27, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit28: core config bit 28 */
   { "coreCfgResBit28", EPIPHANY_OPERAND_CORECFGRESBIT28, HW_H_CORECFGRESBIT28, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit29: core config bit 29 */
   { "coreCfgResBit29", EPIPHANY_OPERAND_CORECFGRESBIT29, HW_H_CORECFGRESBIT29, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit30: core config bit 30 */
   { "coreCfgResBit30", EPIPHANY_OPERAND_CORECFGRESBIT30, HW_H_CORECFGRESBIT30, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* coreCfgResBit31: core config bit 31 */
   { "coreCfgResBit31", EPIPHANY_OPERAND_CORECFGRESBIT31, HW_H_CORECFGRESBIT31, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* gidisablebit: global interrupt disable bit */
   { "gidisablebit", EPIPHANY_OPERAND_GIDISABLEBIT, HW_H_GIDISABLEBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* kmbit: kernel mode bit */
   { "kmbit", EPIPHANY_OPERAND_KMBIT, HW_H_KMBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* caibit: core actibe indicator bit */
   { "caibit", EPIPHANY_OPERAND_CAIBIT, HW_H_CAIBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sflagbit: sflag bit */
   { "sflagbit", EPIPHANY_OPERAND_SFLAGBIT, HW_H_SFLAGBIT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* memaddr: memory effective address */
   { "memaddr", EPIPHANY_OPERAND_MEMADDR, HW_H_MEMADDR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* simm24: branch address pc-relative */
   { "simm24", EPIPHANY_OPERAND_SIMM24, HW_H_IADDR, 31, 24,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SIMM24] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SIMM24] } },
     { 0|A(RELAX)|A(RELOC)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* simm8: branch address pc-relative */
   { "simm8", EPIPHANY_OPERAND_SIMM8, HW_H_IADDR, 15, 8,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SIMM8] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SIMM8] } },
     { 0|A(RELAX)|A(RELOC)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rd: destination register */
   { "rd", EPIPHANY_OPERAND_RD, HW_H_REGISTERS, 15, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rn: source register */
   { "rn", EPIPHANY_OPERAND_RN, HW_H_REGISTERS, 12, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rm: source register */
   { "rm", EPIPHANY_OPERAND_RM, HW_H_REGISTERS, 9, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* frd: fp destination register */
   { "frd", EPIPHANY_OPERAND_FRD, HW_H_FPREGISTERS, 15, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RD] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* frn: fp source register */
   { "frn", EPIPHANY_OPERAND_FRN, HW_H_FPREGISTERS, 12, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* frm: fp source register */
   { "frm", EPIPHANY_OPERAND_FRM, HW_H_FPREGISTERS, 9, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_RM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rd6: destination register */
   { "rd6", EPIPHANY_OPERAND_RD6, HW_H_REGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rn6: source register */
   { "rn6", EPIPHANY_OPERAND_RN6, HW_H_REGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rm6: source register */
   { "rm6", EPIPHANY_OPERAND_RM6, HW_H_REGISTERS, 9, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RM6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RM6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frd6: fp destination register */
   { "frd6", EPIPHANY_OPERAND_FRD6, HW_H_FPREGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frn6: fp source register */
   { "frn6", EPIPHANY_OPERAND_FRN6, HW_H_FPREGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frm6: fp source register */
   { "frm6", EPIPHANY_OPERAND_FRM6, HW_H_FPREGISTERS, 9, 6,
-    { 2, { (const PTR) &EPIPHANY_F_RM6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_RM6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sd: special destination */
   { "sd", EPIPHANY_OPERAND_SD, HW_H_CORE_REGISTERS, 15, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SD] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SD] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sn: special source */
   { "sn", EPIPHANY_OPERAND_SN, HW_H_CORE_REGISTERS, 12, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SN] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SN] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sd6: special destination register */
   { "sd6", EPIPHANY_OPERAND_SD6, HW_H_CORE_REGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sn6: special source register */
   { "sn6", EPIPHANY_OPERAND_SN6, HW_H_CORE_REGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sddma: dma register */
   { "sddma", EPIPHANY_OPERAND_SDDMA, HW_H_COREDMA_REGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sndma: dma register */
   { "sndma", EPIPHANY_OPERAND_SNDMA, HW_H_COREDMA_REGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sdmem: mem register */
   { "sdmem", EPIPHANY_OPERAND_SDMEM, HW_H_COREMEM_REGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* snmem: mem register */
   { "snmem", EPIPHANY_OPERAND_SNMEM, HW_H_COREMEM_REGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sdmesh: mesh register */
   { "sdmesh", EPIPHANY_OPERAND_SDMESH, HW_H_COREMESH_REGISTERS, 15, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SD6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* snmesh: mesh register */
   { "snmesh", EPIPHANY_OPERAND_SNMESH, HW_H_COREMESH_REGISTERS, 12, 6,
-    { 2, { (const PTR) &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SN6_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* simm3: signed 3-bit literal */
   { "simm3", EPIPHANY_OPERAND_SIMM3, HW_H_SINT, 9, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SDISP3] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SDISP3] } },
     { 0|A(RELAX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* simm11: signed 11-bit literal */
   { "simm11", EPIPHANY_OPERAND_SIMM11, HW_H_SINT, 9, 11,
-    { 2, { (const PTR) &EPIPHANY_F_SDISP11_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_SDISP11_MULTI_IFIELD[0] } },
     { 0|A(RELAX)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* disp3: short data displacement */
   { "disp3", EPIPHANY_OPERAND_DISP3, HW_H_UINT, 9, 3,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_DISP3] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* trapnum6: parameter for swi or trap */
   { "trapnum6", EPIPHANY_OPERAND_TRAPNUM6, HW_H_UINT, 15, 6,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_TRAP_NUM] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_TRAP_NUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* swi_num: unsigned 6-bit swi# */
   { "swi_num", EPIPHANY_OPERAND_SWI_NUM, HW_H_UINT, 15, 6,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_TRAP_NUM] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_TRAP_NUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* disp11: sign-magnitude data displacement */
   { "disp11", EPIPHANY_OPERAND_DISP11, HW_H_UINT, 9, 11,
-    { 2, { (const PTR) &EPIPHANY_F_DISP11_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_DISP11_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* shift: immediate shift amount */
   { "shift", EPIPHANY_OPERAND_SHIFT, HW_H_UINT, 9, 5,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SHIFT] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SHIFT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm16: 16-bit unsigned literal */
   { "imm16", EPIPHANY_OPERAND_IMM16, HW_H_ADDR, 12, 16,
-    { 2, { (const PTR) &EPIPHANY_F_IMM16_MULTI_IFIELD[0] } },
+    { 2, { &EPIPHANY_F_IMM16_MULTI_IFIELD[0] } },
     { 0|A(RELAX)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm8: 8-bit unsigned literal */
   { "imm8", EPIPHANY_OPERAND_IMM8, HW_H_ADDR, 12, 8,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_IMM8] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_IMM8] } },
     { 0|A(RELAX), { { { (1<<MACH_BASE), 0 } } } }  },
 /* direction: +/- indexing */
   { "direction", EPIPHANY_OPERAND_DIRECTION, HW_H_UINT, 20, 1,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_ADDSUBX] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_ADDSUBX] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* dpmi: +/- magnitude immediate displacement */
   { "dpmi", EPIPHANY_OPERAND_DPMI, HW_H_UINT, 24, 1,
-    { 0, { (const PTR) &epiphany_cgen_ifld_table[EPIPHANY_F_SUBD] } },
+    { 0, { &epiphany_cgen_ifld_table[EPIPHANY_F_SUBD] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
 
@@ -2139,6 +2140,7 @@ epiphany_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_MACHS:   bitmap of values in enum mach_attr
    CGEN_CPU_OPEN_BFDMACH: specify 1 mach using bfd name
    CGEN_CPU_OPEN_ENDIAN:  specify endian choice
+   CGEN_CPU_OPEN_INSN_ENDIAN: specify instruction endian choice
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
@@ -2152,6 +2154,7 @@ epiphany_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   CGEN_BITSET *isas = 0;  /* 0 = "unspecified" */
   unsigned int machs = 0; /* 0 = "unspecified" */
   enum cgen_endian endian = CGEN_ENDIAN_UNKNOWN;
+  enum cgen_endian insn_endian = CGEN_ENDIAN_UNKNOWN;
   va_list ap;
 
   if (! init_p)
@@ -2186,6 +2189,9 @@ epiphany_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	case CGEN_CPU_OPEN_ENDIAN :
 	  endian = va_arg (ap, enum cgen_endian);
 	  break;
+	case CGEN_CPU_OPEN_INSN_ENDIAN :
+	  insn_endian = va_arg (ap, enum cgen_endian);
+	  break;
 	default :
 	  opcodes_error_handler
 	    (/* xgettext:c-format */
@@ -2215,11 +2221,8 @@ epiphany_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->isas = cgen_bitset_copy (isas);
   cd->machs = machs;
   cd->endian = endian;
-  /* FIXME: for the sparc case we can determine insn-endianness statically.
-     The worry here is where both data and insn endian can be independently
-     chosen, in which case this function will need another argument.
-     Actually, will want to allow for more arguments in the future anyway.  */
-  cd->insn_endian = endian;
+  cd->insn_endian
+    = (insn_endian == CGEN_ENDIAN_UNKNOWN ? endian : insn_endian);
 
   /* Table (re)builder.  */
   cd->rebuild_tables = epiphany_cgen_rebuild_tables;
@@ -2269,18 +2272,10 @@ epiphany_cgen_cpu_close (CGEN_CPU_DESC cd)
 	  regfree (CGEN_INSN_RX (insns));
     }
 
-  if (cd->macro_insn_table.init_entries)
-    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
-
-  if (cd->insn_table.init_entries)
-    free ((CGEN_INSN *) cd->insn_table.init_entries);
-
-  if (cd->hw_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
-
-  if (cd->operand_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
-
+  free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+  free ((CGEN_INSN *) cd->insn_table.init_entries);
+  free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+  free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
   free (cd);
 }
 

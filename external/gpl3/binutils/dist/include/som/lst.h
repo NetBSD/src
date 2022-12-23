@@ -1,5 +1,5 @@
 /* SOM lst definitions for BFD.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Contributed by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -69,7 +69,7 @@ struct som_external_lst_symbol_record
 };
 
 /* Fields of flags.  */
-#define LST_SYMBOL_HIDDEN		(1 << 31)
+#define LST_SYMBOL_HIDDEN		(1u << 31)
 #define LST_SYMBOL_SECONDARY_DEF	(1 << 30)
 #define LST_SYMBOL_SYMBOL_TYPE_SH	24
 #define LST_SYMBOL_SYMBOL_SCOPE_SH	20

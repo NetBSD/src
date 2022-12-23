@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2022 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,22 +28,22 @@
 
 static reloc_howto_type *elf_crx_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static bfd_boolean elf_crx_info_to_howto
+static bool elf_crx_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
-static bfd_boolean elf32_crx_relax_delete_bytes
+static bool elf32_crx_relax_delete_bytes
   (struct bfd_link_info *, bfd *, asection *, bfd_vma, int);
 static bfd_reloc_status_type crx_elf_final_link_relocate
   (reloc_howto_type *, bfd *, bfd *, asection *,
    bfd_byte *, bfd_vma, bfd_vma, bfd_vma,
    struct bfd_link_info *, asection *, int);
-static bfd_boolean elf32_crx_relocate_section
+static int elf32_crx_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
    Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
-static bfd_boolean elf32_crx_relax_section
-  (bfd *, asection *, struct bfd_link_info *, bfd_boolean *);
+static bool elf32_crx_relax_section
+  (bfd *, asection *, struct bfd_link_info *, bool *);
 static bfd_byte * elf32_crx_get_relocated_section_contents
   (bfd *, struct bfd_link_info *, struct bfd_link_order *,
-   bfd_byte *, bfd_boolean, asymbol **);
+   bfd_byte *, bool, asymbol **);
 
 /* crx_reloc_map array maps BFD relocation enum into a CRGAS relocation type.  */
 
@@ -82,306 +82,306 @@ static reloc_howto_type crx_elf_howto_table[] =
 {
   HOWTO (R_CRX_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL4,		/* type */
 	 1,			/* rightshift */
-	 0,			/* size */
+	 1,			/* size */
 	 4,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL4",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xf,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL8,		/* type */
 	 1,			/* rightshift */
-	 0,			/* size */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL8_CMP,	/* type */
 	 1,			/* rightshift */
-	 0,			/* size */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL8_CMP",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL16,		/* type */
 	 1,			/* rightshift */
-	 1,			/* size */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL24,		/* type */
 	 1,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 24,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL24",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REL32,		/* type */
 	 1,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REL32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REGREL12,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size */
+	 2,			/* size */
 	 12,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REGREL12",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xfff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REGREL22,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 22,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REGREL22",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0x3fffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REGREL28,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 28,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REGREL28",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xfffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_REGREL32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_REGREL32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_ABS16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_ABS16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_ABS32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_ABS32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_NUM8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_NUM16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_NUM32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_IMM16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_IMM16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_CRX_IMM32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_IMM32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 8 bit switch table entry.  This is generated for an expression
      such as ``.byte L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CRX_SWITCH8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_SWITCH8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit switch table entry.  This is generated for an expression
      such as ``.word L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CRX_SWITCH16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_SWITCH16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 32 bit switch table entry.  This is generated for an expression
      such as ``.long L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CRX_SWITCH32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_SWITCH32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE)			/* pcrel_offset */
+	 true)			/* pcrel_offset */
 };
 
 /* Retrieve a howto ptr using a BFD reloc_code.  */
@@ -418,7 +418,7 @@ elf_crx_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Retrieve a howto ptr using an internal relocation entry.  */
 
-static bfd_boolean
+static bool
 elf_crx_info_to_howto (bfd *abfd, arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
@@ -429,10 +429,10 @@ elf_crx_info_to_howto (bfd *abfd, arelent *cache_ptr,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = &crx_elf_howto_table[r_type];
-  return TRUE;
+  return true;
 }
 
 /* Perform a relocation as part of a final link.  */
@@ -506,25 +506,18 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
      as signed or unsigned.  */
   check = Rvalue >> howto->rightshift;
 
-  /* Assumes two's complement.  This expression avoids
-     overflow if howto->bitsize is the number of bits in
-     bfd_vma.  */
-  reloc_bits = (((1 << (howto->bitsize - 1)) - 1) << 1) | 1;
+  reloc_bits = ((bfd_vma) 1 << (howto->bitsize - 1) << 1) - 1;
 
-  if (((bfd_vma) check & ~reloc_bits) != 0
-      && (((bfd_vma) check & ~reloc_bits)
-	  != (-(bfd_vma) 1 & ~reloc_bits)))
+  if ((check & ~reloc_bits) != 0
+      && (check & ~reloc_bits) != ((bfd_vma) -1 & ~reloc_bits))
     {
       /* The above right shift is incorrect for a signed
 	 value.  See if turning on the upper bits fixes the
 	 overflow.  */
       if (howto->rightshift && (bfd_signed_vma) Rvalue < 0)
 	{
-	  check |= ((bfd_vma) - 1
-		    & ~((bfd_vma) - 1
-			>> howto->rightshift));
-	  if (((bfd_vma) check & ~reloc_bits)
-	      != (-(bfd_vma) 1 & ~reloc_bits))
+	  check |= (bfd_vma) -1 & ~((bfd_vma) -1 >> howto->rightshift);
+	  if ((check & ~reloc_bits) != ((bfd_vma) -1 & ~reloc_bits))
 	    return bfd_reloc_overflow;
 	}
       else
@@ -532,14 +525,14 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
     }
 
   /* Drop unwanted bits from the value we are relocating to.  */
-  Rvalue >>= (bfd_vma) howto->rightshift;
+  Rvalue >>= howto->rightshift;
 
   /* Apply dst_mask to select only relocatable part of the insn.  */
   Rvalue &= howto->dst_mask;
 
-  switch (howto->size)
+  switch (bfd_get_reloc_size (howto))
     {
-     case 0:
+     case 1:
        if (r_type == R_CRX_REL4)
 	 {
 	   Rvalue <<= 4;
@@ -549,14 +542,14 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
        bfd_put_8 (input_bfd, (unsigned char) Rvalue, hit_data);
        break;
 
-     case 1:
+     case 2:
        if (r_type == R_CRX_REGREL12)
 	 Rvalue |= (bfd_get_16 (input_bfd, hit_data) & 0xf000);
 
        bfd_put_16 (input_bfd, Rvalue, hit_data);
        break;
 
-     case 2:
+     case 4:
        if (r_type == R_CRX_REL24
 	   || r_type == R_CRX_REGREL22
 	   || r_type == R_CRX_REGREL28)
@@ -591,7 +584,7 @@ crx_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
 
 /* Delete some bytes from a section while relaxing.  */
 
-static bfd_boolean
+static bool
 elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 			      asection *sec, bfd_vma addr, int count)
 {
@@ -717,7 +710,7 @@ elf32_crx_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 	sym_hash->root.u.def.value -= count;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This is a version of bfd_generic_get_relocated_section_contents
@@ -728,7 +721,7 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
 					  struct bfd_link_info *link_info,
 					  struct bfd_link_order *link_order,
 					  bfd_byte *data,
-					  bfd_boolean relocatable,
+					  bool relocatable,
 					  asymbol **symbols)
 {
   Elf_Internal_Shdr *symtab_hdr;
@@ -762,7 +755,7 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
 
       internal_relocs = (_bfd_elf_link_read_relocs
 			 (input_bfd, input_section, NULL,
-			  (Elf_Internal_Rela *) NULL, FALSE));
+			  (Elf_Internal_Rela *) NULL, false));
       if (internal_relocs == NULL)
 	goto error_return;
 
@@ -805,10 +798,8 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
 				     isymbuf, sections))
 	goto error_return;
 
-      if (sections != NULL)
-	free (sections);
-      if (isymbuf != NULL
-	  && symtab_hdr->contents != (unsigned char *) isymbuf)
+      free (sections);
+      if (symtab_hdr->contents != (unsigned char *) isymbuf)
 	free (isymbuf);
       if (elf_section_data (input_section)->relocs != internal_relocs)
 	free (internal_relocs);
@@ -817,20 +808,17 @@ elf32_crx_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (sections != NULL)
-    free (sections);
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  free (sections);
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (input_section)->relocs != internal_relocs)
+  if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
   return NULL;
 }
 
 /* Relocate a CRX ELF section.  */
 
-static bfd_boolean
+static int
 elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			    bfd *input_bfd, asection *input_section,
 			    bfd_byte *contents, Elf_Internal_Rela *relocs,
@@ -872,7 +860,7 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bool unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -918,7 +906,7 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	     case bfd_reloc_undefined:
 	       (*info->callbacks->undefined_symbol)
-		 (info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		 (info, name, input_bfd, input_section, rel->r_offset, true);
 	       break;
 
 	     case bfd_reloc_outofrange:
@@ -945,7 +933,7 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This function handles relaxing for the CRX.
@@ -959,9 +947,9 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
    Symbol- and reloc-reading infrastructure copied from elf-m10200.c.  */
 
-static bfd_boolean
+static bool
 elf32_crx_relax_section (bfd *abfd, asection *sec,
-			 struct bfd_link_info *link_info, bfd_boolean *again)
+			 struct bfd_link_info *link_info, bool *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *internal_relocs;
@@ -970,7 +958,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
   Elf_Internal_Sym *isymbuf = NULL;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
@@ -979,7 +967,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -1122,7 +1110,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -1167,7 +1155,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -1219,7 +1207,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -1260,7 +1248,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
     }
@@ -1289,24 +1277,20 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return TRUE;
+  return true;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return FALSE;
+  return false;
 }
 
 /* Definitions for setting CRX target vector.  */

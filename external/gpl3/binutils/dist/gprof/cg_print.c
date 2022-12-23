@@ -1,6 +1,6 @@
 /* cg_print.c -  Print routines for displaying call graphs.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -47,9 +47,9 @@ static void print_parents (Sym *);
 static void sort_children (Sym *);
 static void print_children (Sym *);
 static void print_line (Sym *);
-static int cmp_name (const PTR, const PTR);
-static int cmp_arc_count (const PTR, const PTR);
-static int cmp_fun_nuses (const PTR, const PTR);
+static int cmp_name (const void *, const void *);
+static int cmp_arc_count (const void *, const void *);
+static int cmp_fun_nuses (const void *, const void *);
 static void order_and_dump_functions_by_arcs
   (Arc **, unsigned long, int, Arc **, unsigned long *);
 
@@ -64,7 +64,7 @@ static void
 print_header (void)
 {
   if (first_output)
-    first_output = FALSE;
+    first_output = false;
   else
     printf ("\f\n");
 
@@ -551,7 +551,7 @@ cg_print (Sym ** timesortsym)
 
 
 static int
-cmp_name (const PTR left, const PTR right)
+cmp_name (const void *left, const void *right)
 {
   const Sym **npp1 = (const Sym **) left;
   const Sym **npp2 = (const Sym **) right;
@@ -675,7 +675,7 @@ cg_print_index (void)
    We want to sort in descending order.  */
 
 static int
-cmp_arc_count (const PTR left, const PTR right)
+cmp_arc_count (const void *left, const void *right)
 {
   const Arc **npp1 = (const Arc **) left;
   const Arc **npp2 = (const Arc **) right;
@@ -692,7 +692,7 @@ cmp_arc_count (const PTR left, const PTR right)
    We want to sort in descending order.  */
 
 static int
-cmp_fun_nuses (const PTR left, const PTR right)
+cmp_fun_nuses (const void *left, const void *right)
 {
   const Sym **npp1 = (const Sym **) left;
   const Sym **npp2 = (const Sym **) right;

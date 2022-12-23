@@ -1,5 +1,5 @@
 /* Support for 64-bit archives.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -34,7 +34,7 @@
 
 /* Read an Irix 6 armap.  */
 
-bfd_boolean
+bool
 _bfd_archive_64_bit_slurp_armap (bfd *abfd)
 {
   struct artdata *ardata = bfd_ardata (abfd);
@@ -47,40 +47,48 @@ _bfd_archive_64_bit_slurp_armap (bfd *abfd)
   bfd_byte *raw_armap = NULL;
   carsym *carsyms;
   bfd_size_type amt;
+  ufile_ptr filesize;
 
   ardata->symdefs = NULL;
 
   /* Get the name of the first element.  */
   i = bfd_bread (nextname, 16, abfd);
   if (i == 0)
-    return TRUE;
+    return true;
   if (i != 16)
-    return FALSE;
+    return false;
 
   if (bfd_seek (abfd, (file_ptr) - 16, SEEK_CUR) != 0)
-    return FALSE;
+    return false;
 
   /* Archives with traditional armaps are still permitted.  */
-  if (CONST_STRNEQ (nextname, "/               "))
+  if (startswith (nextname, "/               "))
     return bfd_slurp_armap (abfd);
 
-  if (! CONST_STRNEQ (nextname, "/SYM64/         "))
+  if (! startswith (nextname, "/SYM64/         "))
     {
-      abfd->has_armap = FALSE;
-      return TRUE;
+      abfd->has_armap = false;
+      return true;
     }
 
   mapdata = (struct areltdata *) _bfd_read_ar_hdr (abfd);
   if (mapdata == NULL)
-    return FALSE;
+    return false;
   parsed_size = mapdata->parsed_size;
   free (mapdata);
+
+  filesize = bfd_get_file_size (abfd);
+  if (filesize != 0 && parsed_size > filesize)
+    {
+      bfd_set_error (bfd_error_malformed_archive);
+      return false;
+    }
 
   if (bfd_bread (int_buf, 8, abfd) != 8)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_malformed_archive);
-      return FALSE;
+      return false;
     }
 
   nsymz = bfd_getb64 (int_buf);
@@ -100,24 +108,21 @@ _bfd_archive_64_bit_slurp_armap (bfd *abfd)
       || amt <= stringsize)
     {
       bfd_set_error (bfd_error_malformed_archive);
-      return FALSE;
+      return false;
     }
-  ardata->symdefs = (struct carsym *) bfd_zalloc (abfd, amt);
+  ardata->symdefs = (struct carsym *) bfd_alloc (abfd, amt);
   if (ardata->symdefs == NULL)
-    return FALSE;
+    return false;
   carsyms = ardata->symdefs;
   stringbase = ((char *) ardata->symdefs) + carsym_size;
 
-  raw_armap = (bfd_byte *) bfd_alloc (abfd, ptrsize);
-  if (raw_armap == NULL)
-    goto release_symdefs;
-
-  if (bfd_bread (raw_armap, ptrsize, abfd) != ptrsize
+  raw_armap = (bfd_byte *) _bfd_alloc_and_read (abfd, ptrsize, ptrsize);
+  if (raw_armap == NULL
       || bfd_bread (stringbase, stringsize, abfd) != stringsize)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_malformed_archive);
-      goto release_raw_armap;
+      goto release_symdefs;
     }
 
   stringend = stringbase + stringsize;
@@ -137,23 +142,21 @@ _bfd_archive_64_bit_slurp_armap (bfd *abfd)
   /* Pad to an even boundary if you have to.  */
   ardata->first_file_filepos += (ardata->first_file_filepos) % 2;
 
-  abfd->has_armap = TRUE;
+  abfd->has_armap = true;
   bfd_release (abfd, raw_armap);
 
-  return TRUE;
+  return true;
 
-release_raw_armap:
-  bfd_release (abfd, raw_armap);
-release_symdefs:
+ release_symdefs:
   bfd_release (abfd, ardata->symdefs);
-  return FALSE;
+  return false;
 }
 
 /* Write out an Irix 6 armap.  The Irix 6 tools are supposed to be
    able to handle ordinary ELF armaps, but at least on Irix 6.2 the
    linker crashes.  */
 
-bfd_boolean
+bool
 _bfd_archive_64_bit_write_armap (bfd *arch,
 				 unsigned int elength,
 				 struct orl *map,
@@ -182,7 +185,7 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
   memset (&hdr, ' ', sizeof (struct ar_hdr));
   memcpy (hdr.ar_name, "/SYM64/", strlen ("/SYM64/"));
   if (!_bfd_ar_sizepad (hdr.ar_size, sizeof (hdr.ar_size), mapsize))
-    return FALSE;
+    return false;
   _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
 		    time (NULL));
   /* This, at least, is what Intel coff sets the values to.: */
@@ -195,11 +198,11 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
 
   if (bfd_bwrite (&hdr, sizeof (struct ar_hdr), arch)
       != sizeof (struct ar_hdr))
-    return FALSE;
+    return false;
 
   bfd_putb64 ((bfd_vma) symbol_count, buf);
   if (bfd_bwrite (buf, 8, arch) != 8)
-    return FALSE;
+    return false;
 
   /* Two passes, first write the file offsets for each symbol -
      remembering that each offset is on a two byte boundary.  */
@@ -220,7 +223,7 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
 	{
 	  bfd_putb64 ((bfd_vma) archive_member_file_ptr, buf);
 	  if (bfd_bwrite (buf, 8, arch) != 8)
-	    return FALSE;
+	    return false;
 	}
 
       /* Add size of this archive entry */
@@ -237,7 +240,7 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
       size_t len = strlen (*map[count].name) + 1;
 
       if (bfd_bwrite (*map[count].name, len, arch) != len)
-	return FALSE;
+	return false;
     }
 
   /* The spec says that this should be padded to an 8 byte boundary.
@@ -245,9 +248,9 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
   while (padding != 0)
     {
       if (bfd_bwrite ("", 1, arch) != 1)
-	return FALSE;
+	return false;
       --padding;
     }
 
-  return TRUE;
+  return true;
 }

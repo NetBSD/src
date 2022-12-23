@@ -1,6 +1,6 @@
 // object.h -- support for an object file for linking in gold  -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -214,11 +214,13 @@ class Got_offset_list
 {
  public:
   Got_offset_list()
-    : got_type_(-1U), got_offset_(0), got_next_(NULL)
+    : got_type_(-1U), got_offset_(0), addend_(0), got_next_(NULL)
   { }
 
-  Got_offset_list(unsigned int got_type, unsigned int got_offset)
-    : got_type_(got_type), got_offset_(got_offset), got_next_(NULL)
+  Got_offset_list(unsigned int got_type, unsigned int got_offset,
+		  uint64_t addend)
+    : got_type_(got_type), got_offset_(got_offset), addend_(addend),
+      got_next_(NULL)
   { }
 
   ~Got_offset_list()
@@ -236,29 +238,31 @@ class Got_offset_list
   {
     this->got_type_ = -1U;
     this->got_offset_ = 0;
+    this->addend_ = 0;
     this->got_next_ = NULL;
   }
 
   // Set the offset for the GOT entry of type GOT_TYPE.
   void
-  set_offset(unsigned int got_type, unsigned int got_offset)
+  set_offset(unsigned int got_type, unsigned int got_offset, uint64_t addend)
   {
     if (this->got_type_ == -1U)
       {
         this->got_type_ = got_type;
         this->got_offset_ = got_offset;
+        this->addend_ = addend;
       }
     else
       {
         for (Got_offset_list* g = this; g != NULL; g = g->got_next_)
           {
-            if (g->got_type_ == got_type)
+            if (g->got_type_ == got_type && g->addend_ == addend)
               {
                 g->got_offset_ = got_offset;
                 return;
               }
           }
-        Got_offset_list* g = new Got_offset_list(got_type, got_offset);
+        Got_offset_list* g = new Got_offset_list(got_type, got_offset, addend);
         g->got_next_ = this->got_next_;
         this->got_next_ = g;
       }
@@ -266,11 +270,11 @@ class Got_offset_list
 
   // Return the offset for a GOT entry of type GOT_TYPE.
   unsigned int
-  get_offset(unsigned int got_type) const
+  get_offset(unsigned int got_type, uint64_t addend) const
   {
     for (const Got_offset_list* g = this; g != NULL; g = g->got_next_)
       {
-        if (g->got_type_ == got_type)
+        if (g->got_type_ == got_type && g->addend_ == addend)
           return g->got_offset_;
       }
     return -1U;
@@ -297,7 +301,7 @@ class Got_offset_list
     { }
 
     virtual void
-    visit(unsigned int, unsigned int) = 0;
+    visit(unsigned int, unsigned int, uint64_t) = 0;
   };
 
   // Loop over all GOT offset entries, calling a visitor class V for each.
@@ -307,12 +311,13 @@ class Got_offset_list
     if (this->got_type_ == -1U)
       return;
     for (const Got_offset_list* g = this; g != NULL; g = g->got_next_)
-      v->visit(g->got_type_, g->got_offset_);
+      v->visit(g->got_type_, g->got_offset_, g->addend_);
   }
 
  private:
   unsigned int got_type_;
   unsigned int got_offset_;
+  uint64_t addend_;
   Got_offset_list* got_next_;
 };
 
@@ -322,15 +327,15 @@ class Got_offset_list
 class Local_got_entry_key
 {
  public:
-  Local_got_entry_key(unsigned int symndx, uint64_t addend)
-    : symndx_(symndx), addend_(addend)
+  Local_got_entry_key(unsigned int symndx)
+    : symndx_(symndx)
   {}
 
   // Whether this equals to another Local_got_entry_key.
   bool
   eq(const Local_got_entry_key& key) const
   {
-    return (this->symndx_ == key.symndx_ && this->addend_ == key.addend_);
+    return this->symndx_ == key.symndx_;
   }
 
   // Compute a hash value for this using 64-bit FNV-1a hash.
@@ -340,7 +345,6 @@ class Local_got_entry_key
     uint64_t h = 14695981039346656037ULL; // FNV offset basis.
     uint64_t prime = 1099511628211ULL;
     h = (h ^ static_cast<uint64_t>(this->symndx_)) * prime;
-    h = (h ^ static_cast<uint64_t>(this->addend_)) * prime;
     return h;
   }
 
@@ -363,8 +367,6 @@ class Local_got_entry_key
  private:
   // The local symbol index.
   unsigned int symndx_;
-  // The addend.
-  uint64_t addend_;
 };
 
 // Type for mapping section index to uncompressed size and contents.
@@ -383,6 +385,47 @@ Compressed_section_map*
 build_compressed_section_map(const unsigned char* pshdrs, unsigned int shnum,
 			     const char* names, section_size_type names_size,
 			     Object* obj, bool decompress_if_needed);
+
+// Osabi represents the EI_OSABI field from the ELF header.
+
+class Osabi
+{
+ public:
+  Osabi(unsigned char ei_osabi)
+    : ei_osabi_(static_cast<elfcpp::ELFOSABI>(ei_osabi))
+  { }
+
+  bool
+  has_shf_retain(elfcpp::Elf_Xword sh_flags) const
+  {
+    switch (this->ei_osabi_)
+      {
+      case elfcpp::ELFOSABI_GNU:
+      case elfcpp::ELFOSABI_FREEBSD:
+	return (sh_flags & elfcpp::SHF_GNU_RETAIN) != 0;
+      default:
+        break;
+      }
+    return false;
+  }
+
+  elfcpp::Elf_Xword
+  ignored_sh_flags() const
+  {
+    switch (this->ei_osabi_)
+      {
+      case elfcpp::ELFOSABI_GNU:
+      case elfcpp::ELFOSABI_FREEBSD:
+	return elfcpp::SHF_GNU_RETAIN;
+      default:
+        break;
+      }
+    return 0;
+  }
+
+ private:
+  elfcpp::ELFOSABI ei_osabi_;
+};
 
 // Object is an abstract base class which represents either a 32-bit
 // or a 64-bit input object.  This can be a regular object file
@@ -1173,46 +1216,27 @@ class Relobj : public Object
   local_plt_offset(unsigned int symndx) const
   { return this->do_local_plt_offset(symndx); }
 
-  // Return whether the local symbol SYMNDX has a GOT offset of type
-  // GOT_TYPE.
-  bool
-  local_has_got_offset(unsigned int symndx, unsigned int got_type) const
-  { return this->do_local_has_got_offset(symndx, got_type, 0); }
-
-  // Return whether the local symbol SYMNDX plus ADDEND has a GOT offset
-  // of type GOT_TYPE.
+  // Return whether there is a GOT entry of type GOT_TYPE for the
+  // local symbol SYMNDX with given ADDEND.
   bool
   local_has_got_offset(unsigned int symndx, unsigned int got_type,
-		       uint64_t addend) const
+		       uint64_t addend = 0) const
   { return this->do_local_has_got_offset(symndx, got_type, addend); }
 
-  // Return the GOT offset of type GOT_TYPE of the local symbol
-  // SYMNDX.  It is an error to call this if the symbol does not have
-  // a GOT offset of the specified type.
-  unsigned int
-  local_got_offset(unsigned int symndx, unsigned int got_type) const
-  { return this->do_local_got_offset(symndx, got_type, 0); }
-
-  // Return the GOT offset of type GOT_TYPE of the local symbol
-  // SYMNDX plus ADDEND.  It is an error to call this if the symbol
-  // does not have a GOT offset of the specified type.
+  // Return the GOT offset of the GOT entry with type GOT_TYPE for the
+  // local symbol SYMNDX with given ADDEND.  It is an error to call
+  // this function if the symbol does not have such a GOT entry.
   unsigned int
   local_got_offset(unsigned int symndx, unsigned int got_type,
-		       uint64_t addend) const
+		   uint64_t addend = 0) const
   { return this->do_local_got_offset(symndx, got_type, addend); }
 
-  // Set the GOT offset with type GOT_TYPE of the local symbol SYMNDX
-  // to GOT_OFFSET.
+  // Set the GOT offset for a GOT entry with type GOT_TYPE for the
+  // local symbol SYMNDX with ADDEND to GOT_OFFSET.  Create such an
+  // entry if none exists.
   void
   set_local_got_offset(unsigned int symndx, unsigned int got_type,
-		       unsigned int got_offset)
-  { this->do_set_local_got_offset(symndx, got_type, got_offset, 0); }
-
-  // Set the GOT offset with type GOT_TYPE of the local symbol SYMNDX
-  // plus ADDEND to GOT_OFFSET.
-  void
-  set_local_got_offset(unsigned int symndx, unsigned int got_type,
-		       unsigned int got_offset, uint64_t addend)
+		       unsigned int got_offset, uint64_t addend = 0)
   { this->do_set_local_got_offset(symndx, got_type, got_offset, addend); }
 
   // Return whether the local symbol SYMNDX is a TLS symbol.
@@ -2089,11 +2113,11 @@ class Sized_relobj : public Relobj
   do_local_has_got_offset(unsigned int symndx, unsigned int got_type,
 			  uint64_t addend) const
   {
-    Local_got_entry_key key(symndx, addend);
+    Local_got_entry_key key(symndx);
     Local_got_offsets::const_iterator p =
         this->local_got_offsets_.find(key);
     return (p != this->local_got_offsets_.end()
-            && p->second->get_offset(got_type) != -1U);
+            && p->second->get_offset(got_type, addend) != -1U);
   }
 
   // Return the GOT offset of type GOT_TYPE of the local symbol
@@ -2102,11 +2126,11 @@ class Sized_relobj : public Relobj
   do_local_got_offset(unsigned int symndx, unsigned int got_type,
 			  uint64_t addend) const
   {
-    Local_got_entry_key key(symndx, addend);
+    Local_got_entry_key key(symndx);
     Local_got_offsets::const_iterator p =
         this->local_got_offsets_.find(key);
     gold_assert(p != this->local_got_offsets_.end());
-    unsigned int off = p->second->get_offset(got_type);
+    unsigned int off = p->second->get_offset(got_type, addend);
     gold_assert(off != -1U);
     return off;
   }
@@ -2117,14 +2141,14 @@ class Sized_relobj : public Relobj
   do_set_local_got_offset(unsigned int symndx, unsigned int got_type,
 			  unsigned int got_offset, uint64_t addend)
   {
-    Local_got_entry_key key(symndx, addend);
+    Local_got_entry_key key(symndx);
     Local_got_offsets::const_iterator p =
         this->local_got_offsets_.find(key);
     if (p != this->local_got_offsets_.end())
-      p->second->set_offset(got_type, got_offset);
+      p->second->set_offset(got_type, got_offset, addend);
     else
       {
-        Got_offset_list* g = new Got_offset_list(got_type, got_offset);
+	Got_offset_list* g = new Got_offset_list(got_type, got_offset, addend);
         std::pair<Local_got_offsets::iterator, bool> ins =
             this->local_got_offsets_.insert(std::make_pair(key, g));
         gold_assert(ins.second);
@@ -2204,6 +2228,11 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   int
   e_type() const
   { return this->e_type_; }
+
+  // Return the EI_OSABI.
+  const Osabi&
+  osabi() const
+  { return this->osabi_; }
 
   // Return the number of symbols.  This is only valid after
   // Object::add_symbols has been called.
@@ -2845,6 +2874,8 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
 
   // General access to the ELF file.
   elfcpp::Elf_file<size, big_endian, Object> elf_file_;
+  // The EI_OSABI.
+  const Osabi osabi_;
   // Type of ELF file (ET_REL or ET_EXEC).  ET_EXEC files are allowed
   // as input files only for the --just-symbols option.
   int e_type_;

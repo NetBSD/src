@@ -1,6 +1,6 @@
 // target-reloc.h -- target specific relocation support  -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -136,6 +136,7 @@ class Default_comdat_behavior
     if (Layout::is_debug_info_section(name))
       return CB_PRETEND;
     if (strcmp(name, ".eh_frame") == 0
+	|| is_prefix_of (".gnu.build.attributes", name)
 	|| strcmp(name, ".gcc_except_table") == 0)
       return CB_IGNORE;
     return CB_ERROR;
@@ -258,7 +259,7 @@ issue_discarded_error(
 							     &is_ordinary);
   if (orig_shndx != elfcpp::SHN_UNDEF)
     {
-      unsigned int key_symndx;
+      unsigned int key_symndx = 0;
       Relobj* kept_obj = object->find_kept_section_object(orig_shndx,
 							  &key_symndx);
       if (key_symndx != 0)

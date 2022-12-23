@@ -2,7 +2,7 @@
 # -*- perl -*-
 #
 # Toshiba MeP Media Engine Relocation Generator
-# Copyright (C) 2001-2020 Free Software Foundation, Inc.
+# Copyright (C) 2001-2022 Free Software Foundation, Inc.
 # This file is part of BFD.
 # Originally written by DJ Delorie <dj@redhat.com>
 #
@@ -156,20 +156,23 @@ sub emit_apply {
 	    $e = '^e4' # endian swap for data
 	}
 	print NEW "    case R_MEP_$relocs[$i]: /* $pattern[$i] */\n";
+	if ($relocs[$i] =~ /HI16S/) {
+	    print NEW "      u += 0x8000;\n"
+	}
 	if ($attrs[$i] =~ /tp-rel/i) {
-	    print NEW "      $v -= mep_tpoff_base(rel->r_offset);\n";
+	    print NEW "      u -= mep_tpoff_base(rel->r_offset);\n";
 	}
 	if ($attrs[$i] =~ /gp-rel/i) {
-	    print NEW "      $v -= mep_sdaoff_base(rel->r_offset);\n";
+	    print NEW "      u -= mep_sdaoff_base(rel->r_offset);\n";
 	}
 	if ($attrs[$i] !~ /no-overflow/ && $bits[$i] < 32) {
 	    if ($v eq "u") {
 		$max = (1 << $bits[$i]) - 1;
 		print NEW "      if (u > $max) r = bfd_reloc_overflow;\n";
 	    } else {
-		$min = -(1 << ($bits[$i]-1));
-		$max = (1 << ($bits[$i]-1)) - 1;
-		print NEW "      if ($min > s || s > $max) r = bfd_reloc_overflow;\n";
+		$min = (1 << ($bits[$i]-1));
+		$max = (1 << ($bits[$i])) - 1;
+		print NEW "      if (u + $min > $max) r = bfd_reloc_overflow;\n";
 	    }
 	}
 	for ($b=0; $b<length($pattern[$i]); $b += 8) {
@@ -183,11 +186,11 @@ sub emit_apply {
 		print NEW "      byte[$bb$e] = ";
 		print NEW "(byte[$bb$e] & 0x$rmask) | " if $rmask ne "00";
 		if ($left) {
-		    print NEW "(($v << $left) & 0x$mask)";
+		    print NEW "((u << $left) & 0x$mask)";
 		} elsif ($right) {
-		    print NEW "(($v >> $right) & 0x$mask)";
+		    print NEW "((u >> $right) & 0x$mask)";
 		} else {
-		    print NEW "($v & 0x$mask)";
+		    print NEW "(u & 0x$mask)";
 		}
 		print NEW ";\n";
 	    }

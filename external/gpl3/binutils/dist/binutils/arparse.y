@@ -1,7 +1,7 @@
 %{
 /* arparse.y - Strange script language parser */
 
-/* Copyright (C) 1992-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -31,7 +31,7 @@
 #include "arsup.h"
 extern int verbose;
 extern int yylex (void);
-static int yyerror (const char *);
+static void yyerror (const char *);
 %}
 
 %union {
@@ -193,11 +193,10 @@ verbose_command:
 
 %%
 
-static int
+static void
 yyerror (const char *x ATTRIBUTE_UNUSED)
 {
   extern int linenumber;
 
   printf (_("Syntax error in archive script, line %d\n"), linenumber + 1);
-  return 0;
 }
