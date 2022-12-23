@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.14 2022/11/15 14:33:33 simonb Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.15 2022/12/23 10:44:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.14 2022/11/15 14:33:33 simonb Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.15 2022/12/23 10:44:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -187,6 +187,12 @@ pmap_md_pdetab_init(struct pmap *pmap)
 	const paddr_t pdetabpa = pmap_md_direct_mapped_vaddr_to_paddr(pdetabva);
 	pmap->pm_md.md_pdetab[NPDEPG-1] = pmap_kernel()->pm_md.md_pdetab[NPDEPG-1];
 	pmap->pm_md.md_ppn = pdetabpa >> PAGE_SHIFT;
+}
+
+void
+pmap_md_pdetab_fini(struct pmap *pmap)
+{
+        KASSERT(pmap != NULL);
 }
 
 void
