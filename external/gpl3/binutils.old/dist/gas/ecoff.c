@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -3700,8 +3700,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       && first_proc_ptr != (proc_t *) NULL
       && local_first_lineno != (lineno_list_t *) NULL
       && ((S_GET_VALUE (first_proc_ptr->sym->as_sym)
-	   + bfd_get_section_vma (stdoutput,
-				  S_GET_SEGMENT (first_proc_ptr->sym->as_sym)))
+	   + bfd_section_vma (S_GET_SEGMENT (first_proc_ptr->sym->as_sym)))
 	  != 0))
     {
       first.file = local_first_lineno->file;
@@ -3981,8 +3980,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		      else
 			sym_ptr->ecoff_sym.asym.value =
 			  (S_GET_VALUE (as_sym)
-			   + bfd_get_section_vma (stdoutput,
-						  S_GET_SEGMENT (as_sym))
+			   + bfd_section_vma (S_GET_SEGMENT (as_sym))
 			   + sym_ptr->addend);
 
 		      sym_ptr->ecoff_sym.weakext = S_IS_WEAK (as_sym);
@@ -4310,8 +4308,7 @@ ecoff_build_procs (const struct ecoff_debug_swap *backend,
 
 		  adr_sym = proc_ptr->sym->as_sym;
 		  adr = (S_GET_VALUE (adr_sym)
-			 + bfd_get_section_vma (stdoutput,
-						S_GET_SEGMENT (adr_sym)));
+			 + bfd_section_vma (S_GET_SEGMENT (adr_sym)));
 		  if (first)
 		    {
 		      /* This code used to force the adr of the very

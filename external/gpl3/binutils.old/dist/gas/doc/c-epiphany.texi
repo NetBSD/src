@@ -1,4 +1,4 @@
-@c Copyright (C) 1999-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1999-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -30,12 +30,12 @@ architecture.
 @c man begin OPTIONS
 @table @gcctabopt
 
-@cindex @code{-mepiphany} command line option, Epiphany
+@cindex @code{-mepiphany} command-line option, Epiphany
 @item -mepiphany
 Specifies that the both 32 and 16 bit instructions are allowed.  This is the
 default behavior.
 
-@cindex @code{-mepiphany16} command line option, Epiphany
+@cindex @code{-mepiphany16} command-line option, Epiphany
 @item -mepiphany16
 Restricts the permitted instructions to just the 16 bit set.
 @end table

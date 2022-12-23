@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,12 +19,13 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra bfin-elf
+# This file is sourced from elf.em, and defines extra bfin-elf
 # specific routines.
 #
 fragment <<EOF
 
 #include "elf-bfd.h"
+#include "elf32-bfin.h"
 
 /* Whether to put code in Blackfin L1 SRAM.  */
 extern bfd_boolean elf32_bfin_code_in_l1;

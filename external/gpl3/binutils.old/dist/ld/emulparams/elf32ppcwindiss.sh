@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/elf32ppc.sh
+source_sh ${srcdir}/emulparams/elf32ppc.sh
 
 EMBEDDED=yes
 

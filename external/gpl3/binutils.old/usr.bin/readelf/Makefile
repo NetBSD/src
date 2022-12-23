@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2020/04/03 17:51:47 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2022/12/23 17:09:55 christos Exp $
 
 PROG=		readelf
+
+PROGDPLIBS+=	gnuctf 	${TOP}/${BFDSUBDIR}/libgnuctf
+PROGDPLIBS+=	bfd 	${TOP}/${BFDSUBDIR}/libbfd
 
 .include "${.CURDIR}/../common/Makefile.prog"

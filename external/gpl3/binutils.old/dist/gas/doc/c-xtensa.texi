@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c
@@ -28,7 +28,7 @@ Reference Manual}.
 @end menu
 
 @node Xtensa Options
-@section Command Line Options
+@section Command-line Options
 
 @c man begin OPTIONS
 @table @gcctabopt
@@ -296,7 +296,7 @@ call.  This alignment has the potential to reduce branch penalties at
 some expense in code size.
 This optimization is enabled by default.  You can disable it with the
 @samp{--no-target-@-align} command-line option (@pxref{Xtensa Options,
-,Command Line Options}).
+,Command-line Options}).
 
 The target alignment optimization is done without adding instructions
 that could increase the execution time of the program.  If there are
@@ -383,7 +383,7 @@ unconditional jump to a target that is out of range.
 Branch relaxation is enabled by default.  It can be disabled by using
 underscore prefixes (@pxref{Xtensa Opcodes, ,Opcode Names}), the
 @samp{--no-transform} command-line option (@pxref{Xtensa Options,
-,Command Line Options}), or the @code{no-transform} directive
+,Command-line Options}), or the @code{no-transform} directive
 (@pxref{Transform Directive, ,transform}).
 
 @node Xtensa Call Relaxation
@@ -509,7 +509,7 @@ will reach their targets once resolved.
 Jump relaxation is enabled by default because it does not affect code size
 or performance while the code itself is small.  This relaxation may be
 disabled completely with @samp{--no-trampolines} or @samp{--no-transform}
-command-line options (@pxref{Xtensa Options, ,Command Line Options}).
+command-line options (@pxref{Xtensa Options, ,Command-line Options}).
 
 @node Xtensa Immediate Relaxation
 @subsection Other Immediate Field Relaxation
@@ -519,7 +519,7 @@ command-line options (@pxref{Xtensa Options, ,Command Line Options}).
 The assembler normally performs the following other relaxations.  They
 can be disabled by using underscore prefixes (@pxref{Xtensa Opcodes,
 ,Opcode Names}), the @samp{--no-transform} command-line option
-(@pxref{Xtensa Options, ,Command Line Options}), or the
+(@pxref{Xtensa Options, ,Command-line Options}), or the
 @code{no-transform} directive (@pxref{Transform Directive, ,transform}).
 
 @cindex @code{MOVI} instructions, relaxation
@@ -770,7 +770,7 @@ the data in a literal pool.
 
 Literal pools are placed by default in separate literal sections;
 however, when using the @samp{--text-@-section-@-literals}
-option (@pxref{Xtensa Options, ,Command Line Options}), the literal
+option (@pxref{Xtensa Options, ,Command-line Options}), the literal
 pools for PC-relative mode @code{L32R} instructions
 are placed in the current section.@footnote{Literals for the
 @code{.init} and @code{.fini} sections are always placed in separate
@@ -893,7 +893,7 @@ do not change.  @xref{Literal Directive, ,literal}.  If the @var{name}
 argument is omitted, the literal sections revert to the defaults.  This
 directive has no effect when using the
 @samp{--text-@-section-@-literals} option (@pxref{Xtensa Options,
-,Command Line Options}).
+,Command-line Options}).
 
 @node Absolute Literals Directive
 @subsection absolute-literals

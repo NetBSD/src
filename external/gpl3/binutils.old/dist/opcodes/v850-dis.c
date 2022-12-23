@@ -1,5 +1,5 @@
 /* Disassemble V850 instructions.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,62 +25,13 @@
 #include "opcode/v850.h"
 #include "disassemble.h"
 #include "opintl.h"
-
-static const char *const v850_reg_names[] =
-{
-  "r0", "r1", "r2", "sp", "gp", "r5", "r6", "r7",
-  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
-  "r24", "r25", "r26", "r27", "r28", "r29", "ep", "lp"
-};
-
-static const char *const v850_sreg_names[] =
-{
-  "eipc/vip/mpm", "eipsw/mpc", "fepc/tid", "fepsw/ppa", "ecr/vmecr", "psw/vmtid",
-  "sr6/fpsr/vmadr/dcc", "sr7/fpepc/dc0",
-  "sr8/fpst/vpecr/dcv1", "sr9/fpcc/vptid", "sr10/fpcfg/vpadr/spal", "sr11/spau",
-  "sr12/vdecr/ipa0l", "eiic/vdtid/ipa0u", "feic/ipa1l", "dbic/ipa1u",
-  "ctpc/ipa2l", "ctpsw/ipa2u", "dbpc/ipa3l", "dbpsw/ipa3u", "ctbp/dpa0l",
-  "dir/dpa0u", "bpc/dpa0u", "asid/dpa1l",
-  "bpav/dpa1u", "bpam/dpa2l", "bpdv/dpa2u", "bpdm/dpa3l", "eiwr/dpa3u",
-  "fewr", "dbwr", "bsel"
-};
-
-static const char *const v850_cc_names[] =
-{
-  "v", "c/l", "z", "nh", "s/n", "t", "lt", "le",
-  "nv", "nc/nl", "nz", "h", "ns/p", "sa", "ge", "gt"
-};
-
-static const char *const v850_float_cc_names[] =
-{
-  "f/t", "un/or", "eq/neq", "ueq/ogl", "olt/uge", "ult/oge", "ole/ugt", "ule/ogt",
-  "sf/st", "ngle/gle", "seq/sne", "ngl/gl", "lt/nlt", "nge/ge", "le/nle", "ngt/gt"
-};
-
-
-static const char *const v850_vreg_names[] =
-{
-  "vr0", "vr1", "vr2", "vr3", "vr4", "vr5", "vr6", "vr7", "vr8", "vr9",
-  "vr10", "vr11", "vr12", "vr13", "vr14", "vr15", "vr16", "vr17", "vr18",
-  "vr19", "vr20", "vr21", "vr22", "vr23", "vr24", "vr25", "vr26", "vr27",
-  "vr28", "vr29", "vr30", "vr31"
-};
-
-static const char *const v850_cacheop_names[] =
-{
-  "chbii", "cibii", "cfali", "cisti", "cildi", "chbid", "chbiwbd",
-  "chbwbd", "cibid", "cibiwbd", "cibwbd", "cfald", "cistd", "cildd"
-};
+#include "libiberty.h"
 
 static const int v850_cacheop_codes[] =
 {
   0x00, 0x20, 0x40, 0x60, 0x61, 0x04, 0x06,
   0x07, 0x24, 0x26, 0x27, 0x44, 0x64, 0x65, -1
 };
-
-static const char *const v850_prefop_names[] =
-{ "prefi", "prefd" };
 
 static const int v850_prefop_codes[] =
 { 0x00, 0x04, -1};
@@ -137,7 +88,7 @@ get_operand_value (const struct v850_operand *operand,
 		   bfd_boolean noerror,
 		   int *invalid)
 {
-  long value;
+  unsigned long value;
   bfd_byte buffer[4];
 
   if ((operand->flags & V850E_IMMEDIATE16)
@@ -207,16 +158,122 @@ get_operand_value (const struct v850_operand *operand,
       if (operand->bits == -1)
 	value = (insn & operand->shift);
       else
-	value = (insn >> operand->shift) & ((1 << operand->bits) - 1);
+	value = (insn >> operand->shift) & ((1ul << operand->bits) - 1);
 
       if (operand->flags & V850_OPERAND_SIGNED)
-	value = ((long)(value << (sizeof (long)*8 - operand->bits))
-		 >> (sizeof (long)*8 - operand->bits));
+	{
+	  unsigned long sign = 1ul << (operand->bits - 1);
+	  value = (value ^ sign) - sign;
+	}
     }
 
   return value;
 }
 
+static const char *
+get_v850_sreg_name (unsigned int reg)
+{
+  static const char *const v850_sreg_names[] =
+    {
+     "eipc/vip/mpm", "eipsw/mpc", "fepc/tid", "fepsw/ppa", "ecr/vmecr", "psw/vmtid",
+     "sr6/fpsr/vmadr/dcc", "sr7/fpepc/dc0",
+     "sr8/fpst/vpecr/dcv1", "sr9/fpcc/vptid", "sr10/fpcfg/vpadr/spal", "sr11/spau",
+     "sr12/vdecr/ipa0l", "eiic/vdtid/ipa0u", "feic/ipa1l", "dbic/ipa1u",
+     "ctpc/ipa2l", "ctpsw/ipa2u", "dbpc/ipa3l", "dbpsw/ipa3u", "ctbp/dpa0l",
+     "dir/dpa0u", "bpc/dpa0u", "asid/dpa1l",
+     "bpav/dpa1u", "bpam/dpa2l", "bpdv/dpa2u", "bpdm/dpa3l", "eiwr/dpa3u",
+     "fewr", "dbwr", "bsel"
+    };
+
+  if (reg < ARRAY_SIZE (v850_sreg_names))
+    return v850_sreg_names[reg];
+  return _("<invalid s-reg number>");
+}
+
+static const char *
+get_v850_reg_name (unsigned int reg)
+{
+  static const char *const v850_reg_names[] =
+    {
+     "r0", "r1", "r2", "sp", "gp", "r5", "r6", "r7",
+     "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+     "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+     "r24", "r25", "r26", "r27", "r28", "r29", "ep", "lp"
+    };
+
+  if (reg < ARRAY_SIZE (v850_reg_names))
+    return v850_reg_names[reg];
+  return _("<invalid reg number>");
+}
+
+static const char *
+get_v850_vreg_name (unsigned int reg)
+{
+  static const char *const v850_vreg_names[] =
+    {
+     "vr0", "vr1", "vr2", "vr3", "vr4", "vr5", "vr6", "vr7", "vr8", "vr9",
+     "vr10", "vr11", "vr12", "vr13", "vr14", "vr15", "vr16", "vr17", "vr18",
+     "vr19", "vr20", "vr21", "vr22", "vr23", "vr24", "vr25", "vr26", "vr27",
+     "vr28", "vr29", "vr30", "vr31"
+    };
+
+  if (reg < ARRAY_SIZE (v850_vreg_names))
+    return v850_vreg_names[reg];
+  return _("<invalid v-reg number>");
+}
+
+static const char *
+get_v850_cc_name (unsigned int reg)
+{
+  static const char *const v850_cc_names[] =
+    {
+     "v", "c/l", "z", "nh", "s/n", "t", "lt", "le",
+     "nv", "nc/nl", "nz", "h", "ns/p", "sa", "ge", "gt"
+    };
+
+  if (reg < ARRAY_SIZE (v850_cc_names))
+    return v850_cc_names[reg];
+  return _("<invalid CC-reg number>");
+}
+
+static const char *
+get_v850_float_cc_name (unsigned int reg)
+{
+  static const char *const v850_float_cc_names[] =
+    {
+     "f/t", "un/or", "eq/neq", "ueq/ogl", "olt/uge", "ult/oge", "ole/ugt", "ule/ogt",
+     "sf/st", "ngle/gle", "seq/sne", "ngl/gl", "lt/nlt", "nge/ge", "le/nle", "ngt/gt"
+    };
+
+  if (reg < ARRAY_SIZE (v850_float_cc_names))
+    return v850_float_cc_names[reg];
+  return _("<invalid float-CC-reg number>");
+}
+
+static const char *
+get_v850_cacheop_name (unsigned int reg)
+{
+  static const char *const v850_cacheop_names[] =
+    {
+     "chbii", "cibii", "cfali", "cisti", "cildi", "chbid", "chbiwbd",
+     "chbwbd", "cibid", "cibiwbd", "cibwbd", "cfald", "cistd", "cildd"
+    };
+
+  if (reg < ARRAY_SIZE (v850_cacheop_names))
+    return v850_cacheop_names[reg];
+  return _("<invalid cacheop number>");
+}
+
+static const char *
+get_v850_prefop_name (unsigned int reg)
+{
+  static const char *const v850_prefop_names[] =
+    { "prefi", "prefd" };
+
+  if (reg < ARRAY_SIZE (v850_prefop_names))
+    return v850_prefop_names[reg];
+  return _("<invalid prefop number>");
+}
 
 static int
 disassemble (bfd_vma memaddr,
@@ -425,16 +482,16 @@ disassemble (bfd_vma memaddr,
 	      switch (flag)
 		{
 		case V850_OPERAND_REG:
-		  info->fprintf_func (info->stream, "%s", v850_reg_names[value]);
+		  info->fprintf_func (info->stream, "%s", get_v850_reg_name (value));
 		  break;
 		case (V850_OPERAND_REG|V850_REG_EVEN):
-		  info->fprintf_func (info->stream, "%s", v850_reg_names[value * 2]);
+		  info->fprintf_func (info->stream, "%s", get_v850_reg_name (value * 2));
 		  break;
 		case V850_OPERAND_EP:
 		  info->fprintf_func (info->stream, "ep");
 		  break;
 		case V850_OPERAND_SRG:
-		  info->fprintf_func (info->stream, "%s", v850_sreg_names[value]);
+		  info->fprintf_func (info->stream, "%s", get_v850_sreg_name (value));
 		  break;
 		case V850E_OPERAND_REG_LIST:
 		  {
@@ -442,7 +499,7 @@ disassemble (bfd_vma memaddr,
 						     0,  0, 0, 0, 0, 31, 29, 28, 23, 22, 21, 20, 27, 26, 25, 24 };
 		    int *regs;
 		    int i;
-		    unsigned long int mask = 0;
+		    unsigned int mask = 0;
 		    int pc = 0;
 
 		    switch (operand->shift)
@@ -457,12 +514,12 @@ disassemble (bfd_vma memaddr,
 
 		    for (i = 0; i < 32; i++)
 		      {
-			if (value & (1 << i))
+			if (value & (1u << i))
 			  {
 			    switch (regs[ i ])
 			      {
 			      default:
-				mask |= (1 << regs[ i ]);
+				mask |= (1u << regs[ i ]);
 				break;
 			      case 0:
 				/* xgettext:c-format */
@@ -486,27 +543,27 @@ disassemble (bfd_vma memaddr,
 			    int shown_one = 0;
 
 			    for (bit = 0; bit < 32; bit++)
-			      if (mask & (1 << bit))
+			      if (mask & (1u << bit))
 				{
-				  unsigned long int first = bit;
-				  unsigned long int last;
+				  unsigned int first = bit;
+				  unsigned int last;
 
 				  if (shown_one)
 				    info->fprintf_func (info->stream, ", ");
 				  else
 				    shown_one = 1;
 
-				  info->fprintf_func (info->stream, "%s", v850_reg_names[first]);
+				  info->fprintf_func (info->stream, "%s", get_v850_reg_name (first));
 
 				  for (bit++; bit < 32; bit++)
-				    if ((mask & (1 << bit)) == 0)
+				    if ((mask & (1u << bit)) == 0)
 				      break;
 
 				  last = bit;
 
 				  if (last > first + 1)
 				    {
-				      info->fprintf_func (info->stream, " - %s", v850_reg_names[ last - 1 ]);
+				      info->fprintf_func (info->stream, " - %s", get_v850_reg_name (last - 1));
 				    }
 				}
 			  }
@@ -520,11 +577,11 @@ disassemble (bfd_vma memaddr,
 		  break;
 
 		case V850_OPERAND_CC:
-		  info->fprintf_func (info->stream, "%s", v850_cc_names[value]);
+		  info->fprintf_func (info->stream, "%s", get_v850_cc_name (value));
 		  break;
 
 		case V850_OPERAND_FLOAT_CC:
-		  info->fprintf_func (info->stream, "%s", v850_float_cc_names[value]);
+		  info->fprintf_func (info->stream, "%s", get_v850_float_cc_name (value));
 		  break;
 
 		case V850_OPERAND_CACHEOP:
@@ -536,7 +593,7 @@ disassemble (bfd_vma memaddr,
 			if (value == v850_cacheop_codes[idx])
 			  {
 			    info->fprintf_func (info->stream, "%s",
-						v850_cacheop_names[idx]);
+						get_v850_cacheop_name (idx));
 			    goto MATCH_CACHEOP_CODE;
 			  }
 		      }
@@ -554,7 +611,7 @@ disassemble (bfd_vma memaddr,
 			if (value == v850_prefop_codes[idx])
 			  {
 			    info->fprintf_func (info->stream, "%s",
-			      v850_prefop_names[idx]);
+						get_v850_prefop_name (idx));
 			    goto MATCH_PREFOP_CODE;
 			  }
 		      }
@@ -564,7 +621,7 @@ disassemble (bfd_vma memaddr,
 		  break;
 
 		case V850_OPERAND_VREG:
-		  info->fprintf_func (info->stream, "%s", v850_vreg_names[value]);
+		  info->fprintf_func (info->stream, "%s", get_v850_vreg_name (value));
 		  break;
 
 		default:

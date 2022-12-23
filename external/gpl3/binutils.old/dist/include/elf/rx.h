@@ -1,5 +1,5 @@
 /* RX ELF support for BFD.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -111,7 +111,7 @@ START_RELOC_NUMBERS (elf_rx_reloc_type)
 END_RELOC_NUMBERS (R_RX_max)
 
 #define EF_RX_CPU_RX	0x00000079      /* FIXME: this collides with the E_FLAG_RX_... values below.  */
-#define EF_RX_CPU_MASK	0x0000007F	/* specific cpu bits.  */
+#define EF_RX_CPU_MASK	0x000003FF	/* specific cpu bits.  */
 #define EF_RX_ALL_FLAGS	(EF_RX_CPU_MASK)
 
 /* Values for the e_flags field in the ELF header.  */
@@ -124,6 +124,7 @@ END_RELOC_NUMBERS (R_RX_max)
 #define E_FLAG_RX_SINSNS_NO		0        /* Bit-5 if this binary must not be linked with a string instruction using binary.  */
 #define E_FLAG_RX_SINSNS_MASK		(3 << 6) /* Mask of bits used to determine string instruction use.  */
 #define E_FLAG_RX_V2			(1 << 8) /* RX v2 instructions */
+#define E_FLAG_RX_V3			(1 << 9) /* RX v3 instructions */
 
 /* These define the addend field of R_RX_RH_RELAX relocations.  */
 #define	RX_RELAXA_IMM6	0x00000010	/* Imm8/16/24/32 at bit offset 6.  */

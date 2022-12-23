@@ -8,12 +8,15 @@ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH="s390:64-bit"
 MACHINE=
 NOP=0x07070707
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
+GENERATE_RELRO_SCRIPT=yes
 NO_SMALL_DATA=yes
 EXTRA_EM_FILE=s390
 IREL_IN_PLT=
+SEPARATE_GOTPLT=0
+test -z "$RELRO" && unset SEPARATE_GOTPLT
 
 # Treat a host that matches the target with the possible exception of "x"
 # in the name as if it were native.

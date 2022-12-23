@@ -1,6 +1,6 @@
 /* coff information for Intel 386/486.
    
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,26 @@
 
 #define LYNXCOFFMAGIC	0415
 
+/* .NET DLLs XOR the Machine number (above) with an override to
+    indicate that the DLL contains OS-specific machine code rather
+    than just IL or bytecode. See
+    https://github.com/dotnet/coreclr/blob/6f7aa7967c607b8c667518314ab937c0d7547025/src/inc/pedecoder.h#L94-L107. */
+#define IMAGE_FILE_MACHINE_NATIVE_APPLE_OVERRIDE   0x4644
+#define IMAGE_FILE_MACHINE_NATIVE_FREEBSD_OVERRIDE 0xadc4
+#define IMAGE_FILE_MACHINE_NATIVE_LINUX_OVERRIDE   0x7b79
+#define IMAGE_FILE_MACHINE_NATIVE_NETBSD_OVERRIDE  0x1993
+
+/* Used in some .NET DLLs that target a specific OS.  */
+#define I386_APPLE_MAGIC   (I386MAGIC ^ IMAGE_FILE_MACHINE_NATIVE_APPLE_OVERRIDE)
+#define I386_FREEBSD_MAGIC (I386MAGIC ^ IMAGE_FILE_MACHINE_NATIVE_FREEBSD_OVERRIDE)
+#define I386_LINUX_MAGIC   (I386MAGIC ^ IMAGE_FILE_MACHINE_NATIVE_LINUX_OVERRIDE)
+#define I386_NETBSD_MAGIC  (I386MAGIC ^ IMAGE_FILE_MACHINE_NATIVE_NETBSD_OVERRIDE)
+
 #define I386BADMAG(x) (  ((x).f_magic != I386MAGIC) \
+		       && (x).f_magic != I386_APPLE_MAGIC \
+		       && (x).f_magic != I386_FREEBSD_MAGIC \
+		       && (x).f_magic != I386_LINUX_MAGIC \
+		       && (x).f_magic != I386_NETBSD_MAGIC \
 		       && (x).f_magic != I386AIXMAGIC \
 		       && (x).f_magic != I386PTXMAGIC \
 		       && (x).f_magic != LYNXCOFFMAGIC)

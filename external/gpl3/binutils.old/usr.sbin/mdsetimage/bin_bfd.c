@@ -1,4 +1,4 @@
-/*	$NetBSD: bin_bfd.c,v 1.4 2020/04/03 17:51:47 christos Exp $	*/
+/*	$NetBSD: bin_bfd.c,v 1.5 2022/12/23 17:09:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bin_bfd.c,v 1.4 2020/04/03 17:51:47 christos Exp $");
+__RCSID("$NetBSD: bin_bfd.c,v 1.5 2022/12/23 17:09:56 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>

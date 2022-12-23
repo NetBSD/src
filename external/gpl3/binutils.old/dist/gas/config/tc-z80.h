@@ -1,5 +1,5 @@
 /* this is tc-z80.h
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
@@ -24,6 +24,9 @@
 #define TC_Z80
 
 #define TARGET_ARCH   bfd_arch_z80
+#ifndef OBJ_COFF
+#define TARGET_FORMAT "elf32-z80"
+#endif
 #define BFD_ARCH      TARGET_ARCH
 #define COFF_MAGIC    0x5A80
 #define TARGET_MACH   0
@@ -76,7 +79,7 @@ extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
 /* Values passed to md_apply_fix3 don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
 
-#define LISTING_WORD_SIZE 2
+#define LISTING_WORD_SIZE 1
 
 /* A single '=' is accepted as a comparison operator.  */
 #define O_SINGLE_EQ O_eq
@@ -84,14 +87,15 @@ extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
 /* A '$' is used to refer to the current location or as a hex. prefix.  */
 #define DOLLAR_DOT
 #define DOLLAR_AMBIGU                1
+#define LOCAL_LABEL_PREFIX           '.'
 #define LOCAL_LABELS_FB              1
+#define LOCAL_LABELS_DOLLAR          1
 #define LITERAL_PREFIXPERCENT_BIN
 #define NUMBERS_WITH_SUFFIX          1
 #define NO_PSEUDO_DOT                1
 /* We allow single quotes to delimit character constants as
    well, but it is cleaner to handle that in tc-z80.c.  */
 #define SINGLE_QUOTE_STRINGS
-#define NO_STRING_ESCAPES
 
 /* An `.lcomm' directive with no explicit alignment parameter will
    use this macro to set P2VAR to the alignment that a request for
@@ -105,5 +109,11 @@ extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
 /* It does not make any sense to perform arithmetic on the numbers
    we use to identify registers.  */
 #define md_register_arithmetic 0
+
+#define TC_LABEL_IS_LOCAL z80_tc_label_is_local
+extern int z80_tc_label_is_local (const char *name);
+
+#define elf_tc_final_processing	z80_elf_final_processing
+extern void z80_elf_final_processing (void);
 
 #endif

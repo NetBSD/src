@@ -2,7 +2,7 @@
    customized in a target-specific file, and then this file included (see
    tic54x.h for an example).
    
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -313,9 +313,9 @@ struct external_scnhdr {
 /* TI COFF stores section size as number of bytes (address units, not octets),
    so adjust to be number of octets, which is what BFD expects */ 
 #define GET_SCNHDR_SIZE(ABFD, SZP) \
-  (H_GET_32 (ABFD, SZP) * bfd_octets_per_byte (ABFD))
+  (H_GET_32 (ABFD, SZP) * bfd_octets_per_byte (ABFD, NULL))
 #define PUT_SCNHDR_SIZE(ABFD, SZ, SZP) \
-  H_PUT_32 (ABFD, (SZ) / bfd_octets_per_byte (ABFD), SZP)
+  H_PUT_32 (ABFD, (SZ) / bfd_octets_per_byte (ABFD, NULL), SZP)
 
 #define COFF_ADJUST_SCNHDR_IN_POST(ABFD, EXT, INT) \
   do									\
@@ -471,9 +471,9 @@ union external_auxent {
 
 /* section lengths are in target bytes (not host bytes) */
 #define GET_SCN_SCNLEN(ABFD, EXT) \
-  (H_GET_32 (ABFD, (EXT)->x_scn.x_scnlen) * bfd_octets_per_byte (ABFD))
+  (H_GET_32 (ABFD, (EXT)->x_scn.x_scnlen) * bfd_octets_per_byte (ABFD, NULL))
 #define PUT_SCN_SCNLEN(ABFD, INT, EXT) \
-  H_PUT_32 (ABFD, (INT) / bfd_octets_per_byte (ABFD), (EXT)->x_scn.x_scnlen)
+  H_PUT_32 (ABFD, (INT) / bfd_octets_per_byte (ABFD, NULL), (EXT)->x_scn.x_scnlen)
 
 /* lnsz size is in bits in COFF file, in bytes in BFD */
 #define GET_LNSZ_SIZE(abfd, ext) \

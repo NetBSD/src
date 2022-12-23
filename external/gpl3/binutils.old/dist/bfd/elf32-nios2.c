@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -3720,8 +3720,8 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       const char *name = NULL;
       int r_type;
       const char *format;
-      char msgbuf[256];
-      const char* msg = (const char*) NULL;
+      char *msgbuf = NULL;
+      char *msg = NULL;
       bfd_boolean unresolved_reloc;
       bfd_vma off;
       int use_plt;
@@ -3820,8 +3820,10 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		    reloc_address = 0;
 
 		  format = _("global pointer relative relocation at address "
-			     "0x%08x when _gp not defined\n");
-		  sprintf (msgbuf, format, reloc_address);
+			     "%#" PRIx64 " when _gp not defined\n");
+		  if (asprintf (&msgbuf, format,
+				(uint64_t) reloc_address) == -1)
+		    msgbuf = NULL;
 		  msg = msgbuf;
 		  r = bfd_reloc_dangerous;
 		}
@@ -3838,13 +3840,23 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		    {
 		      if (h)
 			name = h->root.root.string;
+		      else
+			{
+			  name = (bfd_elf_string_from_elf_section
+				  (input_bfd, symtab_hdr->sh_link,
+				   sym->st_name));
+			  if (name == NULL || *name == '\0')
+			    name = bfd_section_name (sec);
+			}
 		      /* xgettext:c-format */
-		      format = _("unable to reach %s (at 0x%08x) from the "
-				 "global pointer (at 0x%08x) because the "
-				 "offset (%d) is out of the allowed range, "
-				 "-32678 to 32767\n" );
-		      sprintf (msgbuf, format, name, symbol_address, gp,
-			       (signed)relocation);
+		      format = _("unable to reach %s (at %#" PRIx64 ") from "
+				 "the global pointer (at %#" PRIx64 ") "
+				 "because the offset (%" PRId64 ") is out of "
+				 "the allowed range, -32678 to 32767\n" );
+		      if (asprintf (&msgbuf, format, name,
+				    (uint64_t) symbol_address, (uint64_t) gp,
+				    (int64_t) relocation) == -1)
+			msgbuf = NULL;
 		      msg = msgbuf;
 		      r = bfd_reloc_outofrange;
 		    }
@@ -4472,7 +4484,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 						      symtab_hdr->sh_link,
 						      sym->st_name);
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -4515,6 +4527,8 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
+	      if (msgbuf)
+		free (msgbuf);
 	      return FALSE;
 	    }
 	}
@@ -4540,7 +4554,7 @@ static bfd_boolean
 nios2_elf32_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 			   Elf_Internal_Shdr *hdr, asection *sec)
 {
-  register const char *name = bfd_get_section_name (abfd, sec);
+  const char *name = bfd_section_name (sec);
 
   if ((sec->flags & SEC_SMALL_DATA)
       || strcmp (name, ".sdata") == 0
@@ -4566,7 +4580,7 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 
   /* In order for the two loads in .PLTresolve to share the same %hiadj,
      _GLOBAL_OFFSET_TABLE_ must be aligned to a 16-byte boundary.  */
-  if (!bfd_set_section_alignment (dynobj, htab->root.sgotplt, 4))
+  if (!bfd_set_section_alignment (htab->root.sgotplt, 4))
     return FALSE;
 
   /* The Nios II ABI specifies that GOT-relative relocations are relative
@@ -4602,7 +4616,7 @@ nios2_elf32_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
      same %hiadj, the start of the PLT (as well as the GOT) must be aligned
      to a 16-byte boundary.  This is because the addresses for these loads
      include the -(.plt+4) PIC correction.  */
-  return bfd_set_section_alignment (dynobj, htab->root.splt, 4);
+  return bfd_set_section_alignment (htab->root.splt, 4);
 }
 
 /* Implement elf_backend_copy_indirect_symbol:
@@ -5415,8 +5429,8 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* Align dynbss.  */
   s->size = BFD_ALIGN (s->size, (bfd_size_type)1 << align2);
-  if (align2 > bfd_get_section_alignment (dynobj, s)
-      && !bfd_set_section_alignment (dynobj, s, align2))
+  if (align2 > bfd_section_alignment (s)
+      && !bfd_set_section_alignment (s, align2))
     return FALSE;
 
   /* Define the symbol as being at this point in the section.  */
@@ -5839,7 +5853,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (CONST_STRNEQ (name, ".rela"))
 	{

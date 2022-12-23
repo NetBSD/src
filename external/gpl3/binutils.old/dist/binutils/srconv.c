@@ -1,5 +1,5 @@
 /* srconv.c -- Sysroff conversion program
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -419,14 +419,14 @@ wr_ob (struct coff_ofile *p ATTRIBUTE_UNUSED, struct coff_section *section)
   unsigned char stuff[200];
 
   i = 0;
-  while (i < bfd_get_section_size (section->bfd_section))
+  while (i < bfd_section_size (section->bfd_section))
     {
       struct IT_ob ob;
       int todo = 200;		/* Copy in 200 byte lumps.  */
 
       ob.spare = 0;
-      if (i + todo > bfd_get_section_size (section->bfd_section))
-	todo = bfd_get_section_size (section->bfd_section) - i;
+      if (i + todo > bfd_section_size (section->bfd_section))
+	todo = bfd_section_size (section->bfd_section) - i;
 
       if (first)
 	{

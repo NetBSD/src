@@ -1,5 +1,5 @@
 /* Core file generic interface routines for BFD.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -157,9 +157,9 @@ DESCRIPTION
 bfd_boolean
 generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 {
-  char *exec;
-  char *core;
-  char *last_slash;
+  const char *exec;
+  const char *core;
+  const char *last_slash;
 
   if (exec_bfd == NULL || core_bfd == NULL)
     return TRUE;
@@ -169,7 +169,7 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
      non-const char *.  In this case, the assignement does not lead to
      breaking the const, as we're only reading the string.  */
 
-  core = (char *) bfd_core_file_failing_command (core_bfd);
+  core = bfd_core_file_failing_command (core_bfd);
   if (core == NULL)
     return TRUE;
 

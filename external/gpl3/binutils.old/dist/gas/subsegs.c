@@ -1,5 +1,5 @@
 /* subsegs.c - subsegments -
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -65,7 +65,7 @@ subseg_change (segT seg, int subseg)
     {
       seginfo = XCNEW (segment_info_type);
       seginfo->bfd_section = seg;
-      bfd_set_section_userdata (stdoutput, seg, seginfo);
+      bfd_set_section_userdata (seg, seginfo);
     }
 }
 
@@ -146,9 +146,7 @@ subseg_get (const char *segname, int force_new)
 {
   segT secptr;
   segment_info_type *seginfo;
-  const char *now_seg_name = (now_seg
-			      ? bfd_get_section_name (stdoutput, now_seg)
-			      : 0);
+  const char *now_seg_name = now_seg ? bfd_section_name (now_seg) : 0;
 
   if (!force_new
       && now_seg_name
@@ -167,7 +165,7 @@ subseg_get (const char *segname, int force_new)
       secptr->output_section = secptr;
       seginfo = XCNEW (segment_info_type);
       seginfo->bfd_section = secptr;
-      bfd_set_section_userdata (stdoutput, secptr, seginfo);
+      bfd_set_section_userdata (secptr, seginfo);
     }
   return secptr;
 }
@@ -260,7 +258,7 @@ section_symbol (segT sec)
 int
 subseg_text_p (segT sec)
 {
-  return (bfd_get_section_flags (stdoutput, sec) & SEC_CODE) != 0;
+  return (bfd_section_flags (sec) & SEC_CODE) != 0;
 }
 
 /* Return non zero if SEC has at least one byte of data.  It is

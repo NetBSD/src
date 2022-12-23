@@ -1,5 +1,5 @@
 /* tc-ip2k.h -- Header file for tc-ip2k.c.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -38,7 +38,6 @@
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
 
-#define LITERAL_PREFIXDOLLAR_HEX
 #define LITERAL_PREFIXPERCENT_BIN
 #define DOUBLESLASH_LINE_COMMENTS
 
