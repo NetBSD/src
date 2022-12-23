@@ -1,5 +1,5 @@
 /* PowerPC-specific support for 64-bit ELF.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -60,10 +60,10 @@ struct ppc_elf_params
 
 void ppc_elf_link_params (struct bfd_link_info *, struct ppc_elf_params *);
 int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *);
-bfd_boolean ppc_elf_inline_plt (struct bfd_link_info *);
+bool ppc_elf_inline_plt (struct bfd_link_info *);
 asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *);
-bfd_boolean ppc_elf_tls_optimize (bfd *, struct bfd_link_info *);
+bool ppc_elf_tls_optimize (bfd *, struct bfd_link_info *);
 void ppc_elf_maybe_strip_sdata_syms (struct bfd_link_info *);
-extern bfd_boolean ppc_elf_modify_segment_map (bfd *, struct bfd_link_info *);
-extern bfd_boolean ppc_elf_section_processing (bfd *, Elf_Internal_Shdr *);
-extern bfd_boolean ppc_finish_symbols (struct bfd_link_info *);
+extern bool ppc_elf_modify_segment_map (bfd *, struct bfd_link_info *);
+extern bool ppc_elf_section_processing (bfd *, Elf_Internal_Shdr *);
+extern bool ppc_finish_symbols (struct bfd_link_info *);

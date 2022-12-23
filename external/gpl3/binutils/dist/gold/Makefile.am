@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#  Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#  Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -243,10 +243,6 @@ install-exec-local: ld-new$(EXEEXT)
 	  fi; \
 	fi
 
-# We want install to imply install-info as per GNU standards, despite
-# the cygnus option.
-install-data-local: install-info
-
 POTFILES= $(CCFILES) $(HFILES) $(TARGETSOURCES)
 
 po/POTFILES.in: @MAINT@ Makefile
@@ -284,10 +280,17 @@ editcc2 = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir2\/\2/'
 ld2_LINK = `echo $(CXXLD) | sed $(editcc2)`\
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_LDFLAGS) $(LDFLAGS) -o $@
 
+TEST_READELF = $(top_builddir)/../binutils/readelf
+
+# Skip this for LTO build due to different build IDs.
 bootstrap-test: ld2
 	rm -f $@
 	echo "#!/bin/sh" > $@
-	echo "cmp ld1 ld2" >> $@
+	if $(TEST_READELF) -SW main.$(OBJEXT) | grep "gnu.lto" > /dev/null; then \
+	  echo true >> $@; \
+	else \
+	  echo "cmp ld1 ld2" >> $@; \
+	fi
 	chmod +x $@
 
 libgold-1-r.o: gcctestdir1/ld libgold.a
@@ -314,10 +317,15 @@ editcc2r = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir2-r\/\2/'
 ld2_r_LINK = `echo $(CXXLD) | sed $(editcc2r)`\
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
 
+# Skip this for LTO build due to different build IDs.
 bootstrap-test-r: ld2-r
 	rm -f $@
 	echo "#!/bin/sh" > $@
-	echo "cmp ld1-r ld2-r" >> $@
+	if $(TEST_READELF) -SW main.$(OBJEXT) | grep "gnu.lto" > /dev/null; then \
+	  echo true >> $@; \
+	else \
+	  echo "cmp ld1-r ld2-r" >> $@; \
+	fi
 	chmod +x $@
 
 check_PROGRAMS = ld1 ld2 ld1-r ld2-r

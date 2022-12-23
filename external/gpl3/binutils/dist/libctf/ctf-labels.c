@@ -1,5 +1,5 @@
 /* Labelled ranges of type IDs.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -21,7 +21,7 @@
 #include <string.h>
 
 static int
-extract_label_info (ctf_file_t *fp, const ctf_lblent_t **ctl,
+extract_label_info (ctf_dict_t *fp, const ctf_lblent_t **ctl,
 		    uint32_t *num_labels)
 {
   const ctf_header_t *h;
@@ -37,7 +37,7 @@ extract_label_info (ctf_file_t *fp, const ctf_lblent_t **ctl,
 /* Returns the topmost label, or NULL if any errors are encountered.  */
 
 const char *
-ctf_label_topmost (ctf_file_t *fp)
+ctf_label_topmost (ctf_dict_t *fp)
 {
   const ctf_lblent_t *ctlp = NULL;
   const char *s;
@@ -61,7 +61,7 @@ ctf_label_topmost (ctf_file_t *fp)
 /* Iterate over all labels.  We pass the label string and the lblinfo_t struct
    to the specified callback function.  */
 int
-ctf_label_iter (ctf_file_t *fp, ctf_label_f *func, void *arg)
+ctf_label_iter (ctf_dict_t *fp, ctf_label_f *func, void *arg)
 {
   const ctf_lblent_t *ctlp = NULL;
   uint32_t i;
@@ -80,8 +80,10 @@ ctf_label_iter (ctf_file_t *fp, ctf_label_f *func, void *arg)
     {
       if ((lname = ctf_strraw (fp, ctlp->ctl_label)) == NULL)
 	{
-	  ctf_dprintf ("failed to decode label %u with "
-		       "type %u\n", ctlp->ctl_label, ctlp->ctl_type);
+	  /* Not marked for translation: label code not used yet.  */
+	  ctf_err_warn (fp, 0, ECTF_CORRUPT,
+			"failed to decode label %u with type %u",
+			ctlp->ctl_label, ctlp->ctl_type);
 	  return (ctf_set_errno (fp, ECTF_CORRUPT));
 	}
 
@@ -120,7 +122,7 @@ label_info_cb (const char *lname, const ctf_lblinfo_t *linfo, void *arg)
 
 /* Retrieve information about the label with name "lname". */
 int
-ctf_label_info (ctf_file_t *fp, const char *lname, ctf_lblinfo_t *linfo)
+ctf_label_info (ctf_dict_t *fp, const char *lname, ctf_lblinfo_t *linfo)
 {
   linfo_cb_arg_t cb_arg;
   int rc;

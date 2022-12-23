@@ -17,7 +17,7 @@ Copyright Notices
 =================
 
 Copyright years on binutils source files may be listed using range
-notation, e.g., 1991-2012, indicating that every year in the range,
+notation, e.g., 1991-2021, indicating that every year in the range,
 inclusive, is a copyrightable year that could otherwise be listed
 individually.
 
@@ -27,12 +27,13 @@ Unpacking and Installation -- quick overview
 
 When you unpack the binutils archive file, you will get a directory
 called something like `binutils-XXX', where XXX is the number of the
-release.  (Probably 2.13 or higher).  This directory contains
+release.  (Probably 2.36 or higher).  This directory contains
 various files and sub-directories.  Most of the files in the top
 directory are for information and for configuration.  The actual
 source code is in sub-directories.
 
-To build binutils, you can just do:
+To build binutils you will need a C99 compliant compiler and library.
+You can just do:
 
 	cd binutils-XXX
 	./configure [options]
@@ -57,13 +58,13 @@ By default, the binutils will be configured to support the system on
 which they are built.  When doing cross development, use the --target
 configure option to specify a different target, eg:
 
-	./configure --target=foo-elf
+	./configure --target=powerpc64le-linux
 
 The --enable-targets option adds support for more binary file formats
 besides the default.  List them as the argument to --enable-targets,
 separated by commas.  For example:
 
-	./configure --enable-targets=sun3,rs6000-aix,decstation
+	./configure --enable-targets=powerpc-linux,rs6000-aix
 
 The name 'all' compiles in support for all valid BFD targets:
 
@@ -142,7 +143,7 @@ the ranlib program in order to build the distribution.
 Porting
 =======
 
-Binutils-2.13 supports many different architectures, but there
+Binutils-2.36 supports many different architectures, but there
 are many more not supported, including some that were supported
 by earlier versions.  We are hoping for volunteers to improve this
 situation.
@@ -155,9 +156,9 @@ with gdb-5.x) may also be of help.
 Reporting bugs
 ==============
 
-Send bug reports and patches to:
+Please report bugs via
 
-   bug-binutils@gnu.org.
+   https://sourceware.org/bugzilla/enter_bug.cgi?product=binutils
 
 Please include the following in bug reports:
 
@@ -205,14 +206,14 @@ Note that your simple two line C program to trigger a problem typically
 expands into several megabytes of objects by the time you include
 libraries.
 
-It is antisocial to post megabyte sized attachments to mailing lists, so
-please put large testcases somewhere on an ftp or web site so that only
-interested developers need to download them, or offer to email them on
-request.  Better still, try to reduce the testcase, for example, try to
-develop a ld testcase that doesn't use system libraries.  However,
-please be sure it is a complete testcase and that it really does
-demonstrate the problem.  Also, don't bother paring it down if that will
-cause large delays in filing the bug report.
+There is a limit to the size of attachments accepted by bugzilla.  If
+compressing your testcase does not result in an acceptable size tar or
+zip file, please put large testcases somewhere on an ftp or web site.
+Better still, try to reduce the testcase, for example, try to develop
+a ld testcase that doesn't use system libraries.  However, please be
+sure it is a complete testcase and that it really does demonstrate the
+problem.  Also, don't bother paring it down if that will cause large
+delays in filing the bug report.
 
 If you expect to be contributing a large number of test cases, it would
 be helpful if you would look at the test suite included in the release
@@ -292,7 +293,7 @@ unneeded objects and libraries:
 If you have any problems or questions about the binutils on VMS, feel
 free to mail me at kkaempf@rmi.de.
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

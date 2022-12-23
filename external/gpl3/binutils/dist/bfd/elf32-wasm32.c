@@ -1,5 +1,5 @@
 /* 32-bit ELF for the WebAssembly target
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,32 +29,32 @@ static reloc_howto_type elf32_wasm32_howto_table[] =
 {
   HOWTO (R_WASM32_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_WASM32_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 32 bit absolute */
   HOWTO (R_WASM32_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_WASM32_32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 };
 
 /* Look up the relocation CODE.  */
@@ -116,7 +116,7 @@ elf32_wasm32_rtype_to_howto (bfd *abfd, unsigned r_type)
 
 /* Translate the ELF-internal relocation RELA into CACHE_PTR.  */
 
-static bfd_boolean
+static bool
 elf32_wasm32_info_to_howto_rela (bfd *abfd,
 				arelent *cache_ptr,
 				Elf_Internal_Rela *dst)

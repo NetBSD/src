@@ -1,6 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -34,9 +34,11 @@ extern "C" {
 
 #include "ansidecl.h"
 #include "symcat.h"
-#include "bfd_stdint.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "diagnostics.h"
 #include <stdarg.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
@@ -56,23 +58,6 @@ extern "C" {
    comma and then the length of the string.  Doing this by hand
    is error prone, so using this macro is safer.  */
 #define STRING_COMMA_LEN(STR) (STR), (sizeof (STR) - 1)
-/* Unfortunately it is not possible to use the STRING_COMMA_LEN macro
-   to create the arguments to another macro, since the preprocessor
-   will mis-count the number of arguments to the outer macro (by not
-   evaluating STRING_COMMA_LEN and so missing the comma).  This is a
-   problem for example when trying to use STRING_COMMA_LEN to build
-   the arguments to the strncmp() macro.  Hence this alternative
-   definition of strncmp is provided here.
-
-   Note - these macros do NOT work if STR2 is not a constant string.  */
-#define CONST_STRNEQ(STR1,STR2) (strncmp ((STR1), (STR2), sizeof (STR2) - 1) == 0)
-  /* strcpy() can have a similar problem, but since we know we are
-     copying a constant string, we can use memcpy which will be faster
-     since there is no need to check for a NUL byte inside STR.  We
-     can also save time if we do not need to copy the terminating NUL.  */
-#define LITMEMCPY(DEST,STR2) memcpy ((DEST), (STR2), sizeof (STR2) - 1)
-#define LITSTRCPY(DEST,STR2) memcpy ((DEST), (STR2), sizeof (STR2))
-
 
 #define BFD_SUPPORTS_PLUGINS @supports_plugins@
 
@@ -84,109 +69,64 @@ extern "C" {
 /* The word size of the default bfd target.  */
 #define BFD_DEFAULT_TARGET_SIZE @bfd_default_target_size@
 
-#define BFD_HOST_64BIT_LONG @BFD_HOST_64BIT_LONG@
-#define BFD_HOST_64BIT_LONG_LONG @BFD_HOST_64BIT_LONG_LONG@
-#if @BFD_HOST_64_BIT_DEFINED@
-#define BFD_HOST_64_BIT @BFD_HOST_64_BIT@
-#define BFD_HOST_U_64_BIT @BFD_HOST_U_64_BIT@
-typedef BFD_HOST_64_BIT bfd_int64_t;
-typedef BFD_HOST_U_64_BIT bfd_uint64_t;
-#endif
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#else
-# if BFD_HOST_64BIT_LONG
-#  define BFD_PRI64 "l"
-# elif defined (__MSVCRT__)
-#  define BFD_PRI64 "I64"
-# else
-#  define BFD_PRI64 "ll"
-# endif
-# undef PRId64
-# define PRId64 BFD_PRI64 "d"
-# undef PRIu64
-# define PRIu64 BFD_PRI64 "u"
-# undef PRIx64
-# define PRIx64 BFD_PRI64 "x"
-#endif
+#include <inttypes.h>
 
 #if BFD_ARCH_SIZE >= 64
 #define BFD64
 #endif
 
-#ifndef INLINE
-#if __GNUC__ >= 2
-#define INLINE __inline__
-#else
-#define INLINE
-#endif
-#endif
-
-/* Declaring a type wide enough to hold a host long and a host pointer.  */
-#define BFD_HOSTPTR_T @BFD_HOSTPTR_T@
-typedef BFD_HOSTPTR_T bfd_hostptr_t;
-
 /* Forward declaration.  */
 typedef struct bfd bfd;
 
-/* Boolean type used in bfd.  Too many systems define their own
-   versions of "boolean" for us to safely typedef a "boolean" of
-   our own.  Using an enum for "bfd_boolean" has its own set of
-   problems, with strange looking casts required to avoid warnings
-   on some older compilers.  Thus we just use an int.
-
+/* Boolean type used in bfd.
    General rule: Functions which are bfd_boolean return TRUE on
    success and FALSE on failure (unless they're a predicate).  */
 
-typedef int bfd_boolean;
-#undef FALSE
-#undef TRUE
-#define FALSE 0
-#define TRUE 1
+#ifdef POISON_BFD_BOOLEAN
+# pragma GCC poison bfd_boolean
+#else
+# define bfd_boolean bool
+# undef FALSE
+# undef TRUE
+# define FALSE 0
+# define TRUE 1
+#endif
+
+/* Silence "applying zero offset to null pointer" UBSAN warnings.  */
+#define PTR_ADD(P,A) ((A) != 0 ? (P) + (A) : (P))
+/* Also prevent non-zero offsets from being applied to a null pointer.  */
+#define NPTR_ADD(P,A) ((P) != NULL ? (P) + (A) : (P))
 
 #ifdef BFD64
-
-#ifndef BFD_HOST_64_BIT
- #error No 64 bit integer type available
-#endif /* ! defined (BFD_HOST_64_BIT) */
-
-typedef BFD_HOST_U_64_BIT bfd_vma;
-typedef BFD_HOST_64_BIT bfd_signed_vma;
-typedef BFD_HOST_U_64_BIT bfd_size_type;
-typedef BFD_HOST_U_64_BIT symvalue;
-
-#if BFD_HOST_64BIT_LONG
-#define BFD_VMA_FMT "l"
-#elif defined (__MSVCRT__)
-#define BFD_VMA_FMT "I64"
-#else
-#define BFD_VMA_FMT "ll"
-#endif
-
-#ifndef fprintf_vma
-#define sprintf_vma(s,x) sprintf (s, "%016" BFD_VMA_FMT "x", x)
-#define fprintf_vma(f,x) fprintf (f, "%016" BFD_VMA_FMT "x", x)
-#endif
-
-#else /* not BFD64  */
 
 /* Represent a target address.  Also used as a generic unsigned type
    which is guaranteed to be big enough to hold any arithmetic types
    we need to deal with.  */
-typedef unsigned long bfd_vma;
+typedef uint64_t bfd_vma;
 
 /* A generic signed type which is guaranteed to be big enough to hold any
    arithmetic types we need to deal with.  Can be assumed to be compatible
    with bfd_vma in the same way that signed and unsigned ints are compatible
    (as parameters, in assignment, etc).  */
-typedef long bfd_signed_vma;
+typedef int64_t bfd_signed_vma;
 
+typedef uint64_t bfd_size_type;
+typedef uint64_t symvalue;
+
+#define BFD_VMA_FMT @BFD_INT64_FMT@
+
+#define fprintf_vma(f,x) fprintf (f, "%016" BFD_VMA_FMT "x", x)
+#define sprintf_vma(s,x) sprintf (s, "%016" BFD_VMA_FMT "x", x)
+
+#else /* not BFD64  */
+
+typedef unsigned long bfd_vma;
+typedef long bfd_signed_vma;
 typedef unsigned long symvalue;
 typedef unsigned long bfd_size_type;
 
-/* Print a bfd_vma x on stream s.  */
 #define BFD_VMA_FMT "l"
+
 #define fprintf_vma(s,x) fprintf (s, "%08" BFD_VMA_FMT "x", x)
 #define sprintf_vma(s,x) sprintf (s, "%08" BFD_VMA_FMT "x", x)
 
@@ -195,19 +135,10 @@ typedef unsigned long bfd_size_type;
 #define HALF_BFD_SIZE_TYPE \
   (((bfd_size_type) 1) << (8 * sizeof (bfd_size_type) / 2))
 
-#ifndef BFD_HOST_64_BIT
-/* Fall back on a 32 bit type.  The idea is to make these types always
-   available for function return types, but in the case that
-   BFD_HOST_64_BIT is undefined such a function should abort or
-   otherwise signal an error.  */
-typedef bfd_signed_vma bfd_int64_t;
-typedef bfd_vma bfd_uint64_t;
-#endif
-
 /* An offset into a file.  BFD always uses the largest possible offset
    based on the build time availability of fseek, fseeko, or fseeko64.  */
 typedef @bfd_file_ptr@ file_ptr;
-typedef unsigned @bfd_file_ptr@ ufile_ptr;
+typedef @bfd_ufile_ptr@ ufile_ptr;
 
 extern void bfd_sprintf_vma (bfd *, char *, bfd_vma);
 extern void bfd_fprintf_vma (bfd *, void *, bfd_vma);
@@ -355,7 +286,7 @@ struct bfd_hash_table
 };
 
 /* Initialize a hash table.  */
-extern bfd_boolean bfd_hash_table_init
+extern bool bfd_hash_table_init
   (struct bfd_hash_table *,
    struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
 			       struct bfd_hash_table *,
@@ -363,7 +294,7 @@ extern bfd_boolean bfd_hash_table_init
    unsigned int);
 
 /* Initialize a hash table specifying a size.  */
-extern bfd_boolean bfd_hash_table_init_n
+extern bool bfd_hash_table_init_n
   (struct bfd_hash_table *,
    struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
 			       struct bfd_hash_table *,
@@ -379,8 +310,7 @@ extern void bfd_hash_table_free
    COPY argument must be TRUE if this routine should copy the string
    into newly allocated memory when adding an entry.  */
 extern struct bfd_hash_entry *bfd_hash_lookup
-  (struct bfd_hash_table *, const char *, bfd_boolean create,
-   bfd_boolean copy);
+  (struct bfd_hash_table *, const char *, bool create, bool copy);
 
 /* Insert an entry in a hash table.  */
 extern struct bfd_hash_entry *bfd_hash_insert
@@ -408,7 +338,7 @@ extern void *bfd_hash_allocate
    INFO argument is passed to the function.  */
 extern void bfd_hash_traverse
   (struct bfd_hash_table *,
-   bfd_boolean (*) (struct bfd_hash_entry *, void *),
+   bool (*) (struct bfd_hash_entry *, void *),
    void *info);
 
 /* Allows the default size of a hash table to be configured. New hash
@@ -471,22 +401,22 @@ extern int bfd_stat (bfd *, struct stat *);
 #endif
 extern void _bfd_warn_deprecated (const char *, const char *, int, const char *);
 
-extern bfd_boolean bfd_cache_close
+extern bool bfd_cache_close
   (bfd *abfd);
 /* NB: This declaration should match the autogenerated one in libbfd.h.  */
 
-extern bfd_boolean bfd_cache_close_all (void);
+extern bool bfd_cache_close_all (void);
 
-extern bfd_boolean bfd_record_phdr
-  (bfd *, unsigned long, bfd_boolean, flagword, bfd_boolean, bfd_vma,
-   bfd_boolean, bfd_boolean, unsigned int, struct bfd_section **);
+extern bool bfd_record_phdr
+  (bfd *, unsigned long, bool, flagword, bool, bfd_vma,
+   bool, bool, unsigned int, struct bfd_section **);
 
 /* Byte swapping routines.  */
 
-bfd_uint64_t bfd_getb64 (const void *);
-bfd_uint64_t bfd_getl64 (const void *);
-bfd_int64_t bfd_getb_signed_64 (const void *);
-bfd_int64_t bfd_getl_signed_64 (const void *);
+uint64_t bfd_getb64 (const void *);
+uint64_t bfd_getl64 (const void *);
+int64_t bfd_getb_signed_64 (const void *);
+int64_t bfd_getl_signed_64 (const void *);
 bfd_vma bfd_getb32 (const void *);
 bfd_vma bfd_getl32 (const void *);
 bfd_signed_vma bfd_getb_signed_32 (const void *);
@@ -495,8 +425,8 @@ bfd_vma bfd_getb16 (const void *);
 bfd_vma bfd_getl16 (const void *);
 bfd_signed_vma bfd_getb_signed_16 (const void *);
 bfd_signed_vma bfd_getl_signed_16 (const void *);
-void bfd_putb64 (bfd_uint64_t, void *);
-void bfd_putl64 (bfd_uint64_t, void *);
+void bfd_putb64 (uint64_t, void *);
+void bfd_putl64 (uint64_t, void *);
 void bfd_putb32 (bfd_vma, void *);
 void bfd_putl32 (bfd_vma, void *);
 void bfd_putb24 (bfd_vma, void *);
@@ -506,8 +436,8 @@ void bfd_putl16 (bfd_vma, void *);
 
 /* Byte swapping routines which take size and endiannes as arguments.  */
 
-bfd_uint64_t bfd_get_bits (const void *, int, bfd_boolean);
-void bfd_put_bits (bfd_uint64_t, void *, int, bfd_boolean);
+uint64_t bfd_get_bits (const void *, int, bool);
+void bfd_put_bits (uint64_t, void *, int, bool);
 
 
 /* mmap hacks */
@@ -534,8 +464,8 @@ extern void bfd_init_window
   (bfd_window *);
 extern void bfd_free_window
   (bfd_window *);
-extern bfd_boolean bfd_get_file_window
-  (bfd *, file_ptr, bfd_size_type, bfd_window *, bfd_boolean);
+extern bool bfd_get_file_window
+  (bfd *, file_ptr, bfd_size_type, bfd_window *, bool);
 
 /* Externally visible ELF routines.  */
 
@@ -564,3 +494,11 @@ struct ecoff_debug_swap;
 struct ecoff_extr;
 struct bfd_link_info;
 struct bfd_link_hash_entry;
+
+/* Return TRUE if the start of STR matches PREFIX, FALSE otherwise.  */
+
+static inline bool
+startswith (const char *str, const char *prefix)
+{
+  return strncmp (str, prefix, strlen (prefix)) == 0;
+}

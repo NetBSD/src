@@ -1,5 +1,5 @@
 /* tc-tilepro.c -- Assemble for a TILEPro chip.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -126,13 +126,13 @@ md_show_usage (FILE *stream)
 #define O_tls_gd_add  O_md22
 #define O_tls_ie_load O_md23
 
-static struct hash_control *special_operator_hash;
+static htab_t special_operator_hash;
 
 /* Hash tables for instruction mnemonic lookup.  */
-static struct hash_control *op_hash;
+static htab_t op_hash;
 
 /* Hash table for spr lookup.  */
-static struct hash_control *spr_hash;
+static htab_t spr_hash;
 
 /* True temporarily while parsing an SPR expression. This changes the
  * namespace to include SPR names.  */
@@ -181,7 +181,7 @@ static int allow_suspicious_bundles;
    for that register (e.g. r63 instead of zero), so we should generate
    a warning. The attempted register number can be found by clearing
    NONCANONICAL_REG_NAME_FLAG.  */
-static struct hash_control *main_reg_hash;
+static htab_t main_reg_hash;
 
 
 /* We cannot unambiguously store a 0 in a hash table and look it up,
@@ -216,9 +216,9 @@ md_begin (void)
   inside_bundle = 0;
 
   /* Initialize special operator hash table.  */
-  special_operator_hash = hash_new ();
+  special_operator_hash = str_htab_create ();
 #define INSERT_SPECIAL_OP(name)					\
-  hash_insert (special_operator_hash, #name, (void *)O_##name)
+  str_hash_insert (special_operator_hash, #name, (void *) O_##name, 0)
 
   INSERT_SPECIAL_OP(lo16);
   INSERT_SPECIAL_OP(hi16);
@@ -246,55 +246,48 @@ md_begin (void)
 #undef INSERT_SPECIAL_OP
 
   /* Initialize op_hash hash table.  */
-  op_hash = hash_new ();
+  op_hash = str_htab_create ();
   for (op = &tilepro_opcodes[0]; op->name != NULL; op++)
-    {
-      const char *hash_err = hash_insert (op_hash, op->name, (void *)op);
-      if (hash_err != NULL)
-	{
-	  as_fatal (_("Internal Error:  Can't hash %s: %s"),
-		    op->name, hash_err);
-	}
-    }
+    if (str_hash_insert (op_hash, op->name, op, 0) != NULL)
+      as_fatal (_("duplicate %s"), op->name);
 
   /* Initialize the spr hash table.  */
   parsing_spr = 0;
-  spr_hash = hash_new ();
+  spr_hash = str_htab_create ();
   for (i = 0; i < tilepro_num_sprs; i++)
-    hash_insert (spr_hash, tilepro_sprs[i].name,
-                 (void *) &tilepro_sprs[i]);
+    str_hash_insert (spr_hash, tilepro_sprs[i].name, &tilepro_sprs[i], 0);
 
   /* Set up the main_reg_hash table. We use this instead of
    * creating a symbol in the register section to avoid ambiguities
    * with labels that have the same names as registers.  */
-  main_reg_hash = hash_new ();
+  main_reg_hash = str_htab_create ();
   for (i = 0; i < TILEPRO_NUM_REGISTERS; i++)
     {
       char buf[64];
 
-      hash_insert (main_reg_hash, tilepro_register_names[i],
-		   (void *) (long)(i | CANONICAL_REG_NAME_FLAG));
+      str_hash_insert (main_reg_hash, tilepro_register_names[i],
+		       (void *) (long) (i | CANONICAL_REG_NAME_FLAG), 0);
 
       /* See if we should insert a noncanonical alias, like r63.  */
       sprintf (buf, "r%d", i);
       if (strcmp (buf, tilepro_register_names[i]) != 0)
-	hash_insert (main_reg_hash, xstrdup (buf),
-		     (void *) (long)(i | NONCANONICAL_REG_NAME_FLAG));
+	str_hash_insert (main_reg_hash, xstrdup (buf),
+			 (void *) (long) (i | NONCANONICAL_REG_NAME_FLAG), 0);
     }
 
   /* Insert obsolete backwards-compatibility register names.  */
-  hash_insert (main_reg_hash, "io0",
-               (void *) (long) (TREG_IDN0 | CANONICAL_REG_NAME_FLAG));
-  hash_insert (main_reg_hash, "io1",
-               (void *) (long) (TREG_IDN1 | CANONICAL_REG_NAME_FLAG));
-  hash_insert (main_reg_hash, "us0",
-               (void *) (long) (TREG_UDN0 | CANONICAL_REG_NAME_FLAG));
-  hash_insert (main_reg_hash, "us1",
-               (void *) (long) (TREG_UDN1 | CANONICAL_REG_NAME_FLAG));
-  hash_insert (main_reg_hash, "us2",
-               (void *) (long) (TREG_UDN2 | CANONICAL_REG_NAME_FLAG));
-  hash_insert (main_reg_hash, "us3",
-               (void *) (long) (TREG_UDN3 | CANONICAL_REG_NAME_FLAG));
+  str_hash_insert (main_reg_hash, "io0",
+		   (void *) (long) (TREG_IDN0 | CANONICAL_REG_NAME_FLAG), 0);
+  str_hash_insert (main_reg_hash, "io1",
+		   (void *) (long) (TREG_IDN1 | CANONICAL_REG_NAME_FLAG), 0);
+  str_hash_insert (main_reg_hash, "us0",
+		   (void *) (long) (TREG_UDN0 | CANONICAL_REG_NAME_FLAG), 0);
+  str_hash_insert (main_reg_hash, "us1",
+		   (void *) (long) (TREG_UDN1 | CANONICAL_REG_NAME_FLAG), 0);
+  str_hash_insert (main_reg_hash, "us2",
+		   (void *) (long) (TREG_UDN2 | CANONICAL_REG_NAME_FLAG), 0);
+  str_hash_insert (main_reg_hash, "us3",
+		   (void *) (long) (TREG_UDN3 | CANONICAL_REG_NAME_FLAG), 0);
 
 }
 
@@ -684,16 +677,16 @@ emit_tilepro_instruction (tilepro_bundle_bits bits,
 static void
 check_illegal_reg_writes (void)
 {
-  BFD_HOST_U_64_BIT all_regs_written = 0;
+  uint64_t all_regs_written = 0;
   int j;
 
   for (j = 0; j < current_bundle_index; j++)
     {
       const struct tilepro_instruction *instr = &current_bundle[j];
       int k;
-      BFD_HOST_U_64_BIT regs =
-	((BFD_HOST_U_64_BIT)1) << instr->opcode->implicitly_written_register;
-      BFD_HOST_U_64_BIT conflict;
+      uint64_t regs =
+	(uint64_t) 1 << instr->opcode->implicitly_written_register;
+      uint64_t conflict;
 
       for (k = 0; k < instr->opcode->num_operands; k++)
 	{
@@ -703,12 +696,12 @@ check_illegal_reg_writes (void)
 	  if (operand->is_dest_reg)
 	    {
 	      int regno = instr->operand_values[k].X_add_number;
-	      BFD_HOST_U_64_BIT mask = ((BFD_HOST_U_64_BIT)1) << regno;
+	      uint64_t mask = (uint64_t) 1 << regno;
 
-	      if ((mask & (  (((BFD_HOST_U_64_BIT)1) << TREG_IDN1)
-			     | (((BFD_HOST_U_64_BIT)1) << TREG_UDN1)
-			     | (((BFD_HOST_U_64_BIT)1) << TREG_UDN2)
-			     | (((BFD_HOST_U_64_BIT)1) << TREG_UDN3))) != 0
+	      if ((mask & (  ((uint64_t) 1 << TREG_IDN1)
+			   | ((uint64_t) 1 << TREG_UDN1)
+			   | ((uint64_t) 1 << TREG_UDN2)
+			   | ((uint64_t) 1 << TREG_UDN3))) != 0
 		  && !allow_suspicious_bundles)
 		{
 		  as_bad (_("Writes to register '%s' are not allowed."),
@@ -720,7 +713,7 @@ check_illegal_reg_writes (void)
 	}
 
       /* Writing to the zero register doesn't count.  */
-      regs &= ~(((BFD_HOST_U_64_BIT)1) << TREG_ZERO);
+      regs &= ~((uint64_t) 1 << TREG_ZERO);
 
       conflict = all_regs_written & regs;
       if (conflict != 0 && !allow_suspicious_bundles)
@@ -785,7 +778,7 @@ tilepro_flush_bundle (void)
 	  /* Make sure all instructions can be bundled with other
 	     instructions.  */
 	  const struct tilepro_opcode *cannot_bundle = NULL;
-	  bfd_boolean seen_non_nop = FALSE;
+	  bool seen_non_nop = false;
 
 	  for (j = 0; j < current_bundle_index; j++)
 	    {
@@ -796,7 +789,7 @@ tilepro_flush_bundle (void)
 	      else if (op->mnemonic != TILEPRO_OPC_NOP
 		       && op->mnemonic != TILEPRO_OPC_INFO
 		       && op->mnemonic != TILEPRO_OPC_INFOL)
-		seen_non_nop = TRUE;
+		seen_non_nop = true;
 	    }
 
 	  if (cannot_bundle != NULL && seen_non_nop)
@@ -903,7 +896,7 @@ tilepro_parse_name (char *name, expressionS *e, char *nextcharP)
 
   if (parsing_spr)
     {
-      void *val = hash_find (spr_hash, name);
+      void *val = str_hash_find (spr_hash, name);
       if (val == NULL)
 	return 0;
 
@@ -922,7 +915,7 @@ tilepro_parse_name (char *name, expressionS *e, char *nextcharP)
   else
     {
       /* Look up the operator in our table.  */
-      void *val = hash_find (special_operator_hash, name);
+      void *val = str_hash_find (special_operator_hash, name);
       if (val == 0)
 	return 0;
       op = (operatorT)(long)val;
@@ -984,7 +977,7 @@ parse_reg_expression (expressionS* expression)
   char *regname;
   char terminating_char = get_symbol_name (&regname);
 
-  void* pval = hash_find (main_reg_hash, regname);
+  void* pval = str_hash_find (main_reg_hash, regname);
 
   if (pval == NULL)
     as_bad (_("Expected register, got '%s'."), regname);
@@ -1128,7 +1121,7 @@ md_assemble (char *str)
   old_char = str[opname_len];
   str[opname_len] = '\0';
 
-  op = hash_find(op_hash, str);
+  op = str_hash_find (op_hash, str);
   str[opname_len] = old_char;
   if (op == NULL)
     {
@@ -1341,7 +1334,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
   if (fixP->fx_subsy != (symbolS *) NULL)
     {
       /* We can't actually support subtracting a symbol.  */
-      as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+      as_bad_subtract (fixP);
     }
 
   /* Correct relocation types for pc-relativeness.  */

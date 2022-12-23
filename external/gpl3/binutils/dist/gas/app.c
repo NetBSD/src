@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,9 +55,8 @@ static const char mri_pseudo[] = ".mri 0";
 static const char   symver_pseudo[] = ".symver";
 static const char * symver_state;
 #endif
-#ifdef TC_ARM
+
 static char last_char;
-#endif
 
 static char lex[256];
 static const char symbol_chars[] =
@@ -244,9 +243,7 @@ struct app_save
 #if defined TC_ARM && defined OBJ_ELF
   const char * symver_state;
 #endif
-#ifdef TC_ARM
-  char last_char;
-#endif
+  char         last_char;
 };
 
 char *
@@ -276,9 +273,7 @@ app_push (void)
 #if defined TC_ARM && defined OBJ_ELF
   saved->symver_state = symver_state;
 #endif
-#ifdef TC_ARM
   saved->last_char = last_char;
-#endif
 
   /* do_scrub_begin() is not useful, just wastes time.  */
 
@@ -318,9 +313,7 @@ app_pop (char *arg)
 #if defined TC_ARM && defined OBJ_ELF
   symver_state = saved->symver_state;
 #endif
-#ifdef TC_ARM
   last_char = saved->last_char;
-#endif
 
   free (arg);
 }
@@ -350,6 +343,55 @@ process_escape (int ch)
     default:
       return ch;
     }
+}
+
+#define MULTIBYTE_WARN_COUNT_LIMIT 10
+static unsigned int multibyte_warn_count = 0;
+
+bool
+scan_for_multibyte_characters (const unsigned char *  start,
+			       const unsigned char *  end,
+			       bool                   warn)
+{
+  if (end <= start)
+    return false;
+
+  if (warn && multibyte_warn_count > MULTIBYTE_WARN_COUNT_LIMIT)
+    return false;
+
+  bool found = false;
+
+  while (start < end)
+    {
+      unsigned char c;
+
+      if ((c = * start++) <= 0x7f)
+	continue;
+
+      if (!warn)
+	return true;
+
+      found = true;
+
+      const char * filename;
+      unsigned int lineno;
+
+      filename = as_where (& lineno);
+      if (filename == NULL)
+	as_warn (_("multibyte character (%#x) encountered in input"), c);
+      else if (lineno == 0)
+	as_warn (_("multibyte character (%#x) encountered in %s"), c, filename);
+      else
+	as_warn (_("multibyte character (%#x) encountered in %s at or near line %u"), c, filename, lineno);
+
+      if (++ multibyte_warn_count == MULTIBYTE_WARN_COUNT_LIMIT)
+	{
+	  as_warn (_("further multibyte character warnings suppressed"));
+	  break;
+	}
+    }
+
+  return found;
 }
 
 /* This function is called to process input characters.  The GET
@@ -470,6 +512,11 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	return 0;
       from = input_buffer;
       fromend = from + fromlen;
+
+      if (multibyte_handling == multibyte_warn)
+	(void) scan_for_multibyte_characters ((const unsigned char *) from,
+					      (const unsigned char* ) fromend,
+					      true /* Generate warnings.  */);
     }
 
   while (1)
@@ -701,6 +748,8 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    }
 	  else
 	    {
+	      if (ch != EOF)
+		UNGET (ch);
 	      state = 9;
 	      break;
 	    }
@@ -881,7 +930,6 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    }
 #endif
 	  if (IS_COMMENT (ch)
-	      || ch == '/'
 	      || IS_LINE_SEPARATOR (ch)
 	      || IS_PARALLEL_SEPARATOR (ch))
 	    {
@@ -1040,10 +1088,10 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      /* PUT didn't jump out.  We could just break, but we
 		 know what will happen, so optimize a bit.  */
 	      ch = GET ();
-	      old_state = 3;
+	      old_state = 9;
 	    }
-	  else if (state == 9)
-	    old_state = 3;
+	  else if (state == 3)
+	    old_state = 9;
 	  else
 	    old_state = state;
 	  state = 5;
@@ -1289,13 +1337,11 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    goto de_fault;
 #endif
 
-#ifdef TC_ARM
-	  /* For the ARM, care is needed not to damage occurrences of \@
-	     by stripping the @ onwards.  Yuck.  */
+	  /* Care is needed not to damage occurrences of \<comment-char>
+	     by stripping the <comment-char> onwards.  Yuck.  */
 	  if ((to > tostart ? to[-1] : last_char) == '\\')
-	    /* Do not treat the @ as a start-of-comment.  */
+	    /* Do not treat the <comment-char> as a start-of-comment.  */
 	    goto de_fault;
-#endif
 
 #ifdef WARN_COMMENTS
 	  if (!found_comment)
@@ -1472,10 +1518,8 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 
  fromeof:
   /* We have reached the end of the input.  */
-#ifdef TC_ARM
   if (to > tostart)
     last_char = to[-1];
-#endif
   return to - tostart;
 
  tofull:
@@ -1489,9 +1533,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
   else
     saved_input = NULL;
 
-#ifdef TC_ARM
   if (to > tostart)
     last_char = to[-1];
-#endif
   return to - tostart;
 }

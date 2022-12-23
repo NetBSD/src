@@ -1,5 +1,5 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -63,7 +63,7 @@ bfd_coff_reloc16_get_value (arelent *reloc,
 	 the generic symbols.  */
       h = bfd_wrapped_link_hash_lookup (input_section->owner, link_info,
 					bfd_asymbol_name (symbol),
-					FALSE, FALSE, TRUE);
+					false, false, true);
       if (h != (struct bfd_link_hash_entry *) NULL
 	  && (h->type == bfd_link_hash_defined
 	      || h->type == bfd_link_hash_defweak))
@@ -81,7 +81,7 @@ bfd_coff_reloc16_get_value (arelent *reloc,
 	{
 	  (*link_info->callbacks->undefined_symbol)
 	    (link_info, bfd_asymbol_name (symbol),
-	     input_section->owner, input_section, reloc->address, TRUE);
+	     input_section->owner, input_section, reloc->address, true);
 	  value = 0;
 	}
     }
@@ -136,11 +136,11 @@ bfd_perform_slip (bfd *abfd,
     }
 }
 
-bfd_boolean
+bool
 bfd_coff_reloc16_relax_section (bfd *abfd,
 				asection *input_section,
 				struct bfd_link_info *link_info,
-				bfd_boolean *again)
+				bool *again)
 {
   /* Get enough memory to hold the stuff.  */
   bfd *input_bfd = input_section->owner;
@@ -156,14 +156,14 @@ bfd_coff_reloc16_relax_section (bfd *abfd,
 
   /* We only do global relaxation once.  It is not safe to do it multiple
      times (see discussion of the "shrinks" array below).  */
-  *again = FALSE;
+  *again = false;
 
   if (reloc_size < 0)
-    return FALSE;
+    return false;
 
   reloc_vector = (arelent **) bfd_malloc ((bfd_size_type) reloc_size);
   if (!reloc_vector && reloc_size > 0)
-    return FALSE;
+    return false;
 
   /* Get the relocs and think about them.  */
   reloc_count =
@@ -172,7 +172,7 @@ bfd_coff_reloc16_relax_section (bfd *abfd,
   if (reloc_count < 0)
     {
       free (reloc_vector);
-      return FALSE;
+      return false;
     }
 
   /* The reloc16.c and related relaxing code is very simple, the price
@@ -236,7 +236,7 @@ bfd_coff_reloc16_relax_section (bfd *abfd,
   input_section->rawsize = input_section->size;
   input_section->size -= shrink;
   free ((char *) reloc_vector);
-  return TRUE;
+  return true;
 }
 
 bfd_byte *
@@ -245,7 +245,7 @@ bfd_coff_reloc16_get_relocated_section_contents
    struct bfd_link_info *link_info,
    struct bfd_link_order *link_order,
    bfd_byte *data,
-   bfd_boolean relocatable,
+   bool relocatable,
    asymbol **symbols)
 {
   /* Get enough memory to hold the stuff.  */

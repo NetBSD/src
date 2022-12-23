@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -46,7 +46,7 @@ typedef struct initializer
 static initializer cpu_flag_init[] =
 {
   { "CPU_UNKNOWN_FLAGS",
-    "~(CpuL1OM|CpuK1OM)" },
+    "~CpuIAMCU" },
   { "CPU_GENERIC32_FLAGS",
     "Cpu186|Cpu286|Cpu386" },
   { "CPU_GENERIC64_FLAGS",
@@ -90,9 +90,9 @@ static initializer cpu_flag_init[] =
   { "CPU_K8_FLAGS",
     "CPU_ATHLON_FLAGS|CpuRdtscp|CPU_SSE2_FLAGS|CpuLM" },
   { "CPU_AMDFAM10_FLAGS",
-    "CPU_K8_FLAGS|CpuFISTTP|CPU_SSE4A_FLAGS|CpuABM" },
+    "CPU_K8_FLAGS|CpuFISTTP|CPU_SSE4A_FLAGS|CpuLZCNT|CpuPOPCNT" },
   { "CPU_BDVER1_FLAGS",
-    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_XOP_FLAGS|CpuABM|CpuLWP|CpuSVME|CpuAES|CpuPCLMUL|CpuLZCNT|CpuPRFCHW" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_XOP_FLAGS|CpuLZCNT|CpuPOPCNT|CpuLWP|CpuSVME|CpuAES|CpuPCLMUL|CpuPRFCHW" },
   { "CPU_BDVER2_FLAGS",
     "CPU_BDVER1_FLAGS|CpuFMA|CpuBMI|CpuTBM|CpuF16C" },
   { "CPU_BDVER3_FLAGS",
@@ -100,11 +100,13 @@ static initializer cpu_flag_init[] =
   { "CPU_BDVER4_FLAGS",
     "CPU_BDVER3_FLAGS|CpuAVX2|CpuMovbe|CpuBMI2|CpuRdRnd|CpuMWAITX" },
   { "CPU_ZNVER1_FLAGS",
-    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_AVX2_FLAGS|CpuSSE4A|CpuABM|CpuSVME|CpuAES|CpuPCLMUL|CpuLZCNT|CpuPRFCHW|CpuFMA|CpuBMI|CpuF16C|CpuXsaveopt|CpuFSGSBase|CpuMovbe|CpuBMI2|CpuRdRnd|CpuADX|CpuRdSeed|CpuSMAP|CpuSHA|CpuXSAVEC|CpuXSAVES|CpuClflushOpt|CpuCLZERO|CpuMWAITX" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_AVX2_FLAGS|CpuSSE4A|CpuLZCNT|CpuPOPCNT|CpuSVME|CpuAES|CpuPCLMUL|CpuPRFCHW|CpuFMA|CpuBMI|CpuF16C|CpuXsaveopt|CpuFSGSBase|CpuMovbe|CpuBMI2|CpuRdRnd|CpuADX|CpuRdSeed|CpuSMAP|CpuSHA|CpuXSAVEC|CpuXSAVES|CpuClflushOpt|CpuCLZERO|CpuMWAITX" },
   { "CPU_ZNVER2_FLAGS",
     "CPU_ZNVER1_FLAGS|CpuCLWB|CpuRDPID|CpuRDPRU|CpuMCOMMIT|CpuWBNOINVD" },
+  { "CPU_ZNVER3_FLAGS",
+    "CPU_ZNVER2_FLAGS|CpuINVLPGB|CpuTLBSYNC|CpuVAES|CpuVPCLMULQDQ|CpuINVPCID|CpuSNP|CpuOSPKE" },
   { "CPU_BTVER1_FLAGS",
-    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuCX16|CpuRdtscp|CPU_SSSE3_FLAGS|CpuSSE4A|CpuABM|CpuPRFCHW|CpuCX16|CpuClflush|CpuFISTTP|CpuSVME|CpuLZCNT" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuCX16|CpuRdtscp|CPU_SSSE3_FLAGS|CpuSSE4A|CpuLZCNT|CpuPOPCNT|CpuPRFCHW|CpuCX16|CpuClflush|CpuFISTTP|CpuSVME" },
   { "CPU_BTVER2_FLAGS",
     "CPU_BTVER1_FLAGS|CPU_AVX_FLAGS|CpuBMI|CpuF16C|CpuAES|CpuPCLMUL|CpuMovbe|CpuXsaveopt|CpuPRFCHW" },
   { "CPU_8087_FLAGS",
@@ -138,7 +140,7 @@ static initializer cpu_flag_init[] =
   { "CPU_SSE4_1_FLAGS",
     "CPU_SSSE3_FLAGS|CpuSSE4_1" },
   { "CPU_SSE4_2_FLAGS",
-    "CPU_SSE4_1_FLAGS|CpuSSE4_2" },
+    "CPU_SSE4_1_FLAGS|CpuSSE4_2|CpuPOPCNT" },
   { "CPU_VMX_FLAGS",
     "CpuVMX" },
   { "CPU_SMX_FLAGS",
@@ -181,6 +183,8 @@ static initializer cpu_flag_init[] =
     "CpuBMI2" },
   { "CPU_LZCNT_FLAGS",
     "CpuLZCNT" },
+  { "CPU_POPCNT_FLAGS",
+    "CpuPOPCNT" },
   { "CPU_HLE_FLAGS",
     "CpuHLE" },
   { "CPU_RTM_FLAGS",
@@ -200,11 +204,13 @@ static initializer cpu_flag_init[] =
   { "CPU_SSE4A_FLAGS",
     "CPU_SSE3_FLAGS|CpuSSE4a" },
   { "CPU_ABM_FLAGS",
-    "CpuABM" },
+    "CpuLZCNT|CpuPOPCNT" },
   { "CPU_AVX_FLAGS",
     "CPU_SSE4_2_FLAGS|CPU_XSAVE_FLAGS|CpuAVX" },
   { "CPU_AVX2_FLAGS",
     "CPU_AVX_FLAGS|CpuAVX2" },
+  { "CPU_AVX_VNNI_FLAGS",
+    "CPU_AVX2_FLAGS|CpuAVX_VNNI" },
   { "CPU_AVX512F_FLAGS",
     "CPU_AVX2_FLAGS|CpuAVX512F" },
   { "CPU_AVX512CD_FLAGS",
@@ -237,12 +243,10 @@ static initializer cpu_flag_init[] =
     "CPU_AVX512F_FLAGS|CpuAVX512_BITALG" },
   { "CPU_AVX512_BF16_FLAGS",
     "CPU_AVX512F_FLAGS|CpuAVX512_BF16" },
-  { "CPU_L1OM_FLAGS",
-    "unknown" },
-  { "CPU_K1OM_FLAGS",
-    "unknown" },
+  { "CPU_AVX512_FP16_FLAGS",
+    "CPU_AVX512BW_FLAGS|CpuAVX512_FP16" },
   { "CPU_IAMCU_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586" },
+    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|CpuIAMCU" },
   { "CPU_ADX_FLAGS",
     "CpuADX" },
   { "CPU_RDSEED_FLAGS",
@@ -293,20 +297,48 @@ static initializer cpu_flag_init[] =
     "CpuPCONFIG" },
   { "CPU_WAITPKG_FLAGS",
     "CpuWAITPKG" },
+  { "CPU_UINTR_FLAGS",
+    "CpuUINTR" },
   { "CPU_CLDEMOTE_FLAGS",
     "CpuCLDEMOTE" },
+  { "CPU_AMX_INT8_FLAGS",
+    "CpuAMX_INT8" },
+  { "CPU_AMX_BF16_FLAGS",
+    "CpuAMX_BF16" },
+  { "CPU_AMX_TILE_FLAGS",
+    "CpuAMX_TILE" },
   { "CPU_MOVDIRI_FLAGS",
     "CpuMOVDIRI" },
   { "CPU_MOVDIR64B_FLAGS",
     "CpuMOVDIR64B" },
   { "CPU_ENQCMD_FLAGS",
     "CpuENQCMD" },
+  { "CPU_SERIALIZE_FLAGS",
+    "CpuSERIALIZE" },
   { "CPU_AVX512_VP2INTERSECT_FLAGS",
     "CpuAVX512_VP2INTERSECT" },
+  { "CPU_TDX_FLAGS",
+    "CpuTDX" },
   { "CPU_RDPRU_FLAGS",
     "CpuRDPRU" },
   { "CPU_MCOMMIT_FLAGS",
     "CpuMCOMMIT" },
+  { "CPU_SEV_ES_FLAGS",
+    "CpuSEV_ES" },
+  { "CPU_TSXLDTRK_FLAGS",
+    "CpuTSXLDTRK"},
+  { "CPU_KL_FLAGS",
+    "CpuKL" },
+  { "CPU_WIDEKL_FLAGS",
+    "CpuWideKL" },
+  { "CPU_HRESET_FLAGS",
+    "CpuHRESET"},
+  { "CPU_INVLPGB_FLAGS",
+    "CpuINVLPGB" },
+  { "CPU_TLBSYNC_FLAGS",
+    "CpuTLBSYNC" },
+  { "CPU_SNP_FLAGS",
+    "CpuSNP" },
   { "CPU_ANY_X87_FLAGS",
     "CPU_ANY_287_FLAGS|Cpu8087" },
   { "CPU_ANY_287_FLAGS",
@@ -322,23 +354,25 @@ static initializer cpu_flag_init[] =
   { "CPU_ANY_MMX_FLAGS",
     "CPU_3DNOWA_FLAGS" },
   { "CPU_ANY_SSE_FLAGS",
-    "CPU_ANY_SSE2_FLAGS|CpuSSE|CpuSSE4a" },
+    "CPU_ANY_SSE2_FLAGS|CpuSSE" },
   { "CPU_ANY_SSE2_FLAGS",
     "CPU_ANY_SSE3_FLAGS|CpuSSE2" },
   { "CPU_ANY_SSE3_FLAGS",
-    "CPU_ANY_SSSE3_FLAGS|CpuSSE3" },
+    "CPU_ANY_SSSE3_FLAGS|CpuSSE3|CpuSSE4a" },
   { "CPU_ANY_SSSE3_FLAGS",
     "CPU_ANY_SSE4_1_FLAGS|CpuSSSE3" },
   { "CPU_ANY_SSE4_1_FLAGS",
     "CPU_ANY_SSE4_2_FLAGS|CpuSSE4_1" },
   { "CPU_ANY_SSE4_2_FLAGS",
     "CpuSSE4_2" },
+  { "CPU_ANY_SSE4A_FLAGS",
+    "CpuSSE4a" },
   { "CPU_ANY_AVX_FLAGS",
     "CPU_ANY_AVX2_FLAGS|CpuF16C|CpuFMA|CpuFMA4|CpuXOP|CpuAVX" },
   { "CPU_ANY_AVX2_FLAGS",
     "CPU_ANY_AVX512F_FLAGS|CpuAVX2" },
   { "CPU_ANY_AVX512F_FLAGS",
-    "CpuAVX512F|CpuAVX512CD|CpuAVX512ER|CpuAVX512PF|CpuAVX512DQ|CpuAVX512BW|CpuAVX512VL|CpuAVX512IFMA|CpuAVX512VBMI|CpuAVX512_4FMAPS|CpuAVX512_4VNNIW|CpuAVX512_VPOPCNTDQ|CpuAVX512_VBMI2|CpuAVX512_VNNI|CpuAVX512_BITALG|CpuAVX512_BF16|CpuAVX512_VP2INTERSECT" },
+    "CpuAVX512F|CpuAVX512CD|CpuAVX512ER|CpuAVX512PF|CpuAVX512DQ|CPU_ANY_AVX512BW_FLAGS|CpuAVX512VL|CpuAVX512IFMA|CpuAVX512VBMI|CpuAVX512_4FMAPS|CpuAVX512_4VNNIW|CpuAVX512_VPOPCNTDQ|CpuAVX512_VBMI2|CpuAVX512_VNNI|CpuAVX512_BITALG|CpuAVX512_BF16|CpuAVX512_VP2INTERSECT" },
   { "CPU_ANY_AVX512CD_FLAGS",
     "CpuAVX512CD" },
   { "CPU_ANY_AVX512ER_FLAGS",
@@ -348,7 +382,7 @@ static initializer cpu_flag_init[] =
   { "CPU_ANY_AVX512DQ_FLAGS",
     "CpuAVX512DQ" },
   { "CPU_ANY_AVX512BW_FLAGS",
-    "CpuAVX512BW" },
+    "CpuAVX512BW|CPU_ANY_AVX512_FP16_FLAGS" },
   { "CPU_ANY_AVX512VL_FLAGS",
     "CpuAVX512VL" },
   { "CPU_ANY_AVX512IFMA_FLAGS",
@@ -373,14 +407,38 @@ static initializer cpu_flag_init[] =
     "CpuAVX512_BITALG" },
   { "CPU_ANY_AVX512_BF16_FLAGS",
     "CpuAVX512_BF16" },
+  { "CPU_ANY_AMX_INT8_FLAGS",
+    "CpuAMX_INT8" },
+  { "CPU_ANY_AMX_BF16_FLAGS",
+    "CpuAMX_BF16" },
+  { "CPU_ANY_AMX_TILE_FLAGS",
+    "CpuAMX_TILE|CpuAMX_INT8|CpuAMX_BF16" },
+  { "CPU_ANY_AVX_VNNI_FLAGS",
+    "CpuAVX_VNNI" },
   { "CPU_ANY_MOVDIRI_FLAGS",
     "CpuMOVDIRI" },
+  { "CPU_ANY_UINTR_FLAGS",
+    "CpuUINTR" },
   { "CPU_ANY_MOVDIR64B_FLAGS",
     "CpuMOVDIR64B" },
   { "CPU_ANY_ENQCMD_FLAGS",
     "CpuENQCMD" },
+  { "CPU_ANY_SERIALIZE_FLAGS",
+    "CpuSERIALIZE" },
   { "CPU_ANY_AVX512_VP2INTERSECT_FLAGS",
     "CpuAVX512_VP2INTERSECT" },
+  { "CPU_ANY_TDX_FLAGS",
+    "CpuTDX" },
+  { "CPU_ANY_TSXLDTRK_FLAGS",
+    "CpuTSXLDTRK" },
+  { "CPU_ANY_KL_FLAGS",
+    "CpuKL|CpuWideKL" },
+  { "CPU_ANY_WIDEKL_FLAGS",
+    "CpuWideKL" },
+  { "CPU_ANY_HRESET_FLAGS",
+    "CpuHRESET" },
+  { "CPU_ANY_AVX512_FP16_FLAGS",
+    "CpuAVX512_FP16" },
 };
 
 static initializer operand_type_init[] =
@@ -417,8 +475,6 @@ static initializer operand_type_init[] =
     "Disp16" },
   { "OPERAND_TYPE_DISP32",
     "Disp32" },
-  { "OPERAND_TYPE_DISP32S",
-    "Disp32S" },
   { "OPERAND_TYPE_DISP64",
     "Disp64" },
   { "OPERAND_TYPE_INOUTPORTREG",
@@ -445,6 +501,8 @@ static initializer operand_type_init[] =
     "Class=RegSIMD|Ymmword" },
   { "OPERAND_TYPE_REGZMM",
     "Class=RegSIMD|Zmmword" },
+  { "OPERAND_TYPE_REGTMM",
+    "Class=RegSIMD|Tmmword" },
   { "OPERAND_TYPE_REGMASK",
     "Class=RegMask" },
   { "OPERAND_TYPE_REGBND",
@@ -460,7 +518,7 @@ static initializer operand_type_init[] =
   { "OPERAND_TYPE_DISP16_32",
     "Disp16|Disp32" },
   { "OPERAND_TYPE_ANYDISP",
-    "Disp8|Disp16|Disp32|Disp32S|Disp64" },
+    "Disp8|Disp16|Disp32|Disp64" },
   { "OPERAND_TYPE_IMM16_32",
     "Imm16|Imm32" },
   { "OPERAND_TYPE_IMM16_32S",
@@ -524,8 +582,6 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuAVX512VL),
   BITFIELD (CpuAVX512DQ),
   BITFIELD (CpuAVX512BW),
-  BITFIELD (CpuL1OM),
-  BITFIELD (CpuK1OM),
   BITFIELD (CpuIAMCU),
   BITFIELD (CpuSSE4a),
   BITFIELD (Cpu3dnow),
@@ -534,7 +590,6 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuSVME),
   BITFIELD (CpuVMX),
   BITFIELD (CpuSMX),
-  BITFIELD (CpuABM),
   BITFIELD (CpuXsave),
   BITFIELD (CpuXsaveopt),
   BITFIELD (CpuAES),
@@ -555,6 +610,7 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuF16C),
   BITFIELD (CpuBMI2),
   BITFIELD (CpuLZCNT),
+  BITFIELD (CpuPOPCNT),
   BITFIELD (CpuHLE),
   BITFIELD (CpuRTM),
   BITFIELD (CpuINVPCID),
@@ -570,8 +626,6 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuPREFETCHWT1),
   BITFIELD (CpuSE1),
   BITFIELD (CpuCLWB),
-  BITFIELD (Cpu64),
-  BITFIELD (CpuNo64),
   BITFIELD (CpuMPX),
   BITFIELD (CpuAVX512IFMA),
   BITFIELD (CpuAVX512VBMI),
@@ -583,6 +637,9 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuAVX512_BITALG),
   BITFIELD (CpuAVX512_BF16),
   BITFIELD (CpuAVX512_VP2INTERSECT),
+  BITFIELD (CpuTDX),
+  BITFIELD (CpuAVX_VNNI),
+  BITFIELD (CpuAVX512_FP16),
   BITFIELD (CpuMWAITX),
   BITFIELD (CpuCLZERO),
   BITFIELD (CpuOSPKE),
@@ -596,12 +653,27 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuWBNOINVD),
   BITFIELD (CpuPCONFIG),
   BITFIELD (CpuWAITPKG),
+  BITFIELD (CpuUINTR),
   BITFIELD (CpuCLDEMOTE),
+  BITFIELD (CpuAMX_INT8),
+  BITFIELD (CpuAMX_BF16),
+  BITFIELD (CpuAMX_TILE),
   BITFIELD (CpuMOVDIRI),
   BITFIELD (CpuMOVDIR64B),
   BITFIELD (CpuENQCMD),
+  BITFIELD (CpuSERIALIZE),
   BITFIELD (CpuRDPRU),
   BITFIELD (CpuMCOMMIT),
+  BITFIELD (CpuSEV_ES),
+  BITFIELD (CpuTSXLDTRK),
+  BITFIELD (CpuKL),
+  BITFIELD (CpuWideKL),
+  BITFIELD (CpuHRESET),
+  BITFIELD (CpuINVLPGB),
+  BITFIELD (CpuTLBSYNC),
+  BITFIELD (CpuSNP),
+  BITFIELD (Cpu64),
+  BITFIELD (CpuNo64),
 #ifdef CpuUnused
   BITFIELD (CpuUnused),
 #endif
@@ -613,14 +685,13 @@ static bitfield opcode_modifiers[] =
   BITFIELD (W),
   BITFIELD (Load),
   BITFIELD (Modrm),
-  BITFIELD (ShortForm),
   BITFIELD (Jump),
   BITFIELD (FloatMF),
   BITFIELD (FloatR),
   BITFIELD (Size),
   BITFIELD (CheckRegSize),
-  BITFIELD (IgnoreSize),
-  BITFIELD (DefaultSize),
+  BITFIELD (DistinctDest),
+  BITFIELD (MnemonicSize),
   BITFIELD (Anysize),
   BITFIELD (No_bSuf),
   BITFIELD (No_wSuf),
@@ -632,28 +703,25 @@ static bitfield opcode_modifiers[] =
   BITFIELD (IsString),
   BITFIELD (RegMem),
   BITFIELD (BNDPrefixOk),
-  BITFIELD (NoTrackPrefixOk),
-  BITFIELD (IsLockable),
   BITFIELD (RegKludge),
   BITFIELD (Implicit1stXmm0),
-  BITFIELD (RepPrefixOk),
-  BITFIELD (HLEPrefixOk),
+  BITFIELD (PrefixOk),
   BITFIELD (ToDword),
   BITFIELD (ToQword),
   BITFIELD (AddrPrefixOpReg),
   BITFIELD (IsPrefix),
   BITFIELD (ImmExt),
   BITFIELD (NoRex64),
-  BITFIELD (Rex64),
   BITFIELD (Ugh),
+  BITFIELD (PseudoVexPrefix),
   BITFIELD (Vex),
   BITFIELD (VexVVVV),
   BITFIELD (VexW),
-  BITFIELD (VexOpcode),
+  BITFIELD (OpcodeSpace),
+  BITFIELD (OpcodePrefix),
   BITFIELD (VexSources),
-  BITFIELD (VecSIB),
+  BITFIELD (SIB),
   BITFIELD (SSE2AVX),
-  BITFIELD (NoAVX),
   BITFIELD (EVex),
   BITFIELD (Masking),
   BITFIELD (Broadcast),
@@ -662,12 +730,12 @@ static bitfield opcode_modifiers[] =
   BITFIELD (Disp8MemShift),
   BITFIELD (NoDefMask),
   BITFIELD (ImplicitQuadGroup),
+  BITFIELD (SwapSources),
   BITFIELD (Optimize),
   BITFIELD (ATTMnemonic),
   BITFIELD (ATTSyntax),
   BITFIELD (IntelSyntax),
-  BITFIELD (AMD64),
-  BITFIELD (Intel64),
+  BITFIELD (ISA64),
 };
 
 #define CLASS(n) #n, n
@@ -716,7 +784,6 @@ static bitfield operand_types[] =
   BITFIELD (Disp8),
   BITFIELD (Disp16),
   BITFIELD (Disp32),
-  BITFIELD (Disp32S),
   BITFIELD (Disp64),
   BITFIELD (Byte),
   BITFIELD (Word),
@@ -727,6 +794,7 @@ static bitfield operand_types[] =
   BITFIELD (Xmmword),
   BITFIELD (Ymmword),
   BITFIELD (Zmmword),
+  BITFIELD (Tmmword),
   BITFIELD (Unspecified),
 #ifdef OTUnused
   BITFIELD (OTUnused),
@@ -736,6 +804,31 @@ static bitfield operand_types[] =
 static const char *filename;
 static i386_cpu_flags active_cpu_flags;
 static int active_isstring;
+
+struct template_arg {
+  const struct template_arg *next;
+  const char *val;
+};
+
+struct template_instance {
+  const struct template_instance *next;
+  const char *name;
+  const struct template_arg *args;
+};
+
+struct template_param {
+  const struct template_param *next;
+  const char *name;
+};
+
+struct template {
+  const struct template *next;
+  const char *name;
+  const struct template_instance *instances;
+  const struct template_param *params;
+};
+
+static const struct template *templates;
 
 static int
 compare (const void *x, const void *y)
@@ -761,7 +854,7 @@ static void
 process_copyright (FILE *fp)
 {
   fprintf (fp, "/* This file is automatically generated by i386-gen.  Do not edit!  */\n\
-/* Copyright (C) 2007-2020 Free Software Foundation, Inc.\n\
+/* Copyright (C) 2007-2022 Free Software Foundation, Inc.\n\
 \n\
    This file is part of the GNU opcodes library.\n\
 \n\
@@ -868,16 +961,9 @@ set_bitfield (char *f, bitfield *array, int value,
 {
   unsigned int i;
 
-  if (strcmp (f, "CpuFP") == 0)
-    {
-      set_bitfield("Cpu387", array, value, size, lineno);
-      set_bitfield("Cpu287", array, value, size, lineno);
-      f = "Cpu8087";
-    }
-  else if (strcmp (f, "Mmword") == 0)
-    f= "Qword";
-  else if (strcmp (f, "Oword") == 0)
-    f= "Xmmword";
+  /* Ignore empty fields; they may result from template expansions.  */
+  if (*f == '\0')
+    return;
 
   for (i = 0; i < size; i++)
     if (strcasecmp (array[i].name, f) == 0)
@@ -955,22 +1041,15 @@ process_i386_cpu_flag (FILE *table, char *flag, int macro,
 		       const char *comma, const char *indent,
 		       int lineno)
 {
-  char *str, *next, *last;
+  char *str, *next = flag, *last;
   unsigned int i;
+  int value = 1;
   bitfield flags [ARRAY_SIZE (cpu_flags)];
 
   /* Copy the default cpu flags.  */
   memcpy (flags, cpu_flags, sizeof (cpu_flags));
 
-  if (strcasecmp (flag, "unknown") == 0)
-    {
-      /* We turn on everything except for cpu64 in case of
-	 CPU_UNKNOWN_FLAGS.  */
-      for (i = 0; i < ARRAY_SIZE (flags); i++)
-	if (flags[i].position != Cpu64)
-	  flags[i].value = 1;
-    }
-  else if (flag[0] == '~')
+  if (flag[0] == '~')
     {
       last = flag + strlen (flag);
 
@@ -986,28 +1065,25 @@ process_i386_cpu_flag (FILE *table, char *flag, int macro,
       else
 	next = flag + 1;
 
-      /* First we turn on everything except for cpu64.  */
+      /* First we turn on everything except for cpu64, cpuno64, and - if
+         present - the padding field.  */
       for (i = 0; i < ARRAY_SIZE (flags); i++)
-	if (flags[i].position != Cpu64)
+	if (flags[i].position < Cpu64)
 	  flags[i].value = 1;
 
       /* Turn off selective bits.  */
+      value = 0;
+    }
+
+  if (strcmp (flag, "0"))
+    {
+      /* Turn on/off selective bits.  */
+      last = flag + strlen (flag);
       for (; next && next < last; )
 	{
 	  str = next_field (next, '|', &next, last);
 	  if (str)
-	    set_bitfield (str, flags, 0, ARRAY_SIZE (flags), lineno);
-	}
-    }
-  else if (strcmp (flag, "0"))
-    {
-      /* Turn on selective bits.  */
-      last = flag + strlen (flag);
-      for (next = flag; next && next < last; )
-	{
-	  str = next_field (next, '|', &next, last);
-	  if (str)
-	    set_bitfield (str, flags, 1, ARRAY_SIZE (flags), lineno);
+	    set_bitfield (str, flags, value, ARRAY_SIZE (flags), lineno);
 	}
     }
 
@@ -1086,7 +1162,8 @@ adjust_broadcast_modifier (char **opnd)
 }
 
 static void
-process_i386_opcode_modifier (FILE *table, char *mod, char **opnd, int lineno)
+process_i386_opcode_modifier (FILE *table, char *mod, unsigned int space,
+			      unsigned int prefix, char **opnd, int lineno)
 {
   char *str, *next, *last;
   bitfield modifiers [ARRAY_SIZE (opcode_modifiers)];
@@ -1108,9 +1185,10 @@ process_i386_opcode_modifier (FILE *table, char *mod, char **opnd, int lineno)
 	    {
 	      int val = 1;
 	      if (strcasecmp(str, "Broadcast") == 0)
-		  val = adjust_broadcast_modifier (opnd);
+		val = adjust_broadcast_modifier (opnd);
+
 	      set_bitfield (str, modifiers, val, ARRAY_SIZE (modifiers),
-			  lineno);
+			    lineno);
 	      if (strcasecmp(str, "IsString") == 0)
 		active_isstring = 1;
 
@@ -1126,6 +1204,32 @@ process_i386_opcode_modifier (FILE *table, char *mod, char **opnd, int lineno)
 	      if (strcasecmp(str, "No_qSuf") == 0)
 		bwlq_suf &= ~8;
 	    }
+	}
+
+      if (space)
+	{
+	  if (!modifiers[OpcodeSpace].value)
+	    modifiers[OpcodeSpace].value = space;
+	  else if (modifiers[OpcodeSpace].value != space)
+	    fail (_("%s:%d: Conflicting opcode space specifications\n"),
+		  filename, lineno);
+	  else
+	    fprintf (stderr,
+		     _("%s:%d: Warning: redundant opcode space specification\n"),
+		     filename, lineno);
+	}
+
+      if (prefix)
+	{
+	  if (!modifiers[OpcodePrefix].value)
+	    modifiers[OpcodePrefix].value = prefix;
+	  else if (modifiers[OpcodePrefix].value != prefix)
+	    fail (_("%s:%d: Conflicting prefix specifications\n"),
+		  filename, lineno);
+	  else
+	    fprintf (stderr,
+		     _("%s:%d: Warning: redundant prefix specification\n"),
+		     filename, lineno);
 	}
 
       if (have_w && !bwlq_suf)
@@ -1236,10 +1340,7 @@ process_i386_operand_type (FILE *table, char *op, enum stage stage,
 	  if (!active_cpu_flags.bitfield.cpu64
 	      && !active_cpu_flags.bitfield.cpumpx)
 	    set_bitfield("Disp16", types, 1, ARRAY_SIZE (types), lineno);
-	  if (!active_cpu_flags.bitfield.cpu64)
-	    set_bitfield("Disp32", types, 1, ARRAY_SIZE (types), lineno);
-	  if (!active_cpu_flags.bitfield.cpuno64)
-	    set_bitfield("Disp32S", types, 1, ARRAY_SIZE (types), lineno);
+	  set_bitfield("Disp32", types, 1, ARRAY_SIZE (types), lineno);
 	}
     }
   output_operand_type (table, class, instance, types, ARRAY_SIZE (types),
@@ -1250,21 +1351,16 @@ static void
 output_i386_opcode (FILE *table, const char *name, char *str,
 		    char *last, int lineno)
 {
-  unsigned int i;
-  char *operands, *base_opcode, *extension_opcode, *opcode_length;
+  unsigned int i, length, prefix = 0, space = 0;
+  char *base_opcode, *extension_opcode, *end;
   char *cpu_flags, *opcode_modifier, *operand_types [MAX_OPERANDS];
-
-  /* Find number of operands.  */
-  operands = next_field (str, ',', &str, last);
+  unsigned long long opcode;
 
   /* Find base_opcode.  */
   base_opcode = next_field (str, ',', &str, last);
 
   /* Find extension_opcode.  */
   extension_opcode = next_field (str, ',', &str, last);
-
-  /* Find opcode_length.  */
-  opcode_length = next_field (str, ',', &str, last);
 
   /* Find cpu_flags.  */
   cpu_flags = next_field (str, ',', &str, last);
@@ -1277,56 +1373,90 @@ output_i386_opcode (FILE *table, const char *name, char *str,
   if (*str != '{')
     abort ();
   str = remove_leading_whitespaces (str + 1);
+  remove_trailing_whitespaces (str);
 
+  /* Remove } and trailing white space. */
   i = strlen (str);
-
-  /* There are at least "X}".  */
-  if (i < 2)
+  if (!i || str[i - 1] != '}')
     abort ();
+  str[--i] = '\0';
+  remove_trailing_whitespaces (str);
 
-  /* Remove trailing white spaces and }. */
-  do
+  if (!*str)
+    operand_types [i = 0] = NULL;
+  else
     {
-      i--;
-      if (ISSPACE (str[i]) || str[i] == '}')
-	str[i] = '\0';
-      else
-	break;
-    }
-  while (i != 0);
+      last = str + strlen (str);
 
-  last = str + i;
-
-  /* Find operand_types.  */
-  for (i = 0; i < ARRAY_SIZE (operand_types); i++)
-    {
-      if (str >= last)
+      /* Find operand_types.  */
+      for (i = 0; i < ARRAY_SIZE (operand_types); i++)
 	{
-	  operand_types [i] = NULL;
-	  break;
-	}
+	  if (str >= last)
+	    {
+	      operand_types [i] = NULL;
+	      break;
+	    }
 
-      operand_types [i] = next_field (str, ',', &str, last);
-      if (*operand_types[i] == '0')
-	{
-	  if (i != 0)
-	    operand_types[i] = NULL;
-	  break;
+	  operand_types [i] = next_field (str, ',', &str, last);
 	}
     }
 
-  fprintf (table, "  { \"%s\", %s, %s, %s, %s,\n",
-	   name, base_opcode, extension_opcode, opcode_length, operands);
+  opcode = strtoull (base_opcode, &end, 0);
+
+  /* Determine opcode length.  */
+  for (length = 1; length < 8; ++length)
+    if (!(opcode >> (8 * length)))
+       break;
+
+  /* Transform prefixes encoded in the opcode into opcode modifier
+     representation.  */
+  if (length > 1)
+    {
+      switch (opcode >> (8 * length - 8))
+	{
+	case 0x66: prefix = PREFIX_0X66; break;
+	case 0xF3: prefix = PREFIX_0XF3; break;
+	case 0xF2: prefix = PREFIX_0XF2; break;
+	}
+
+      if (prefix)
+	opcode &= (1ULL << (8 * --length)) - 1;
+    }
+
+  /* Transform opcode space encoded in the opcode into opcode modifier
+     representation.  */
+  if (length > 1 && (opcode >> (8 * length - 8)) == 0xf)
+    {
+      switch ((opcode >> (8 * length - 16)) & 0xff)
+	{
+	default:   space = SPACE_0F;   break;
+	case 0x38: space = SPACE_0F38; break;
+	case 0x3A: space = SPACE_0F3A; break;
+	}
+
+      if (space != SPACE_0F && --length == 1)
+	fail (_("%s:%d: %s: unrecognized opcode encoding space\n"),
+	      filename, lineno, name);
+      opcode &= (1ULL << (8 * --length)) - 1;
+    }
+
+  if (length > 2)
+    fail (_("%s:%d: %s: residual opcode (0x%0*llx) too large\n"),
+	  filename, lineno, name, 2 * length, opcode);
+
+  fprintf (table, "  { \"%s\", 0x%0*llx%s, %s, %lu,\n",
+	   name, 2 * (int)length, opcode, end, extension_opcode, i);
+
+  process_i386_opcode_modifier (table, opcode_modifier, space, prefix,
+				operand_types, lineno);
 
   process_i386_cpu_flag (table, cpu_flags, 0, ",", "    ", lineno);
-
-  process_i386_opcode_modifier (table, opcode_modifier, operand_types, lineno);
 
   fprintf (table, "    { ");
 
   for (i = 0; i < ARRAY_SIZE (operand_types); i++)
     {
-      if (operand_types[i] == NULL || *operand_types[i] == '0')
+      if (!operand_types[i])
 	{
 	  if (i == 0)
 	    process_i386_operand_type (table, "0", stage_opcodes, "\t  ",
@@ -1371,25 +1501,256 @@ opcode_hash_eq (const void *p, const void *q)
 }
 
 static void
+parse_template (char *buf, int lineno)
+{
+  char sep, *end, *name;
+  struct template *tmpl = xmalloc (sizeof (*tmpl));
+  struct template_instance *last_inst = NULL;
+
+  buf = remove_leading_whitespaces (buf + 1);
+  end = strchr (buf, ':');
+  if (end == NULL)
+    fail ("%s: %d: missing ':'\n", filename, lineno);
+  *end++ = '\0';
+  remove_trailing_whitespaces (buf);
+
+  if (*buf == '\0')
+    fail ("%s: %d: missing template identifier\n", filename, lineno);
+  tmpl->name = xstrdup (buf);
+
+  tmpl->params = NULL;
+  do {
+      struct template_param *param;
+
+      buf = remove_leading_whitespaces (end);
+      end = strpbrk (buf, ":,");
+      if (end == NULL)
+        fail ("%s: %d: missing ':' or ','\n", filename, lineno);
+
+      sep = *end;
+      *end++ = '\0';
+      remove_trailing_whitespaces (buf);
+
+      param = xmalloc (sizeof (*param));
+      param->name = xstrdup (buf);
+      param->next = tmpl->params;
+      tmpl->params = param;
+  } while (sep == ':');
+
+  tmpl->instances = NULL;
+  do {
+      struct template_instance *inst;
+      char *cur, *next;
+      const struct template_param *param;
+
+      buf = remove_leading_whitespaces (end);
+      end = strpbrk (buf, ",>");
+      if (end == NULL)
+        fail ("%s: %d: missing ',' or '>'\n", filename, lineno);
+
+      sep = *end;
+      *end++ = '\0';
+
+      inst = xmalloc (sizeof (*inst));
+      inst->next = NULL;
+      inst->args = NULL;
+
+      cur = next_field (buf, ':', &next, end);
+      inst->name = *cur != '$' ? xstrdup (cur) : "";
+
+      for (param = tmpl->params; param; param = param->next)
+	{
+	  struct template_arg *arg = xmalloc (sizeof (*arg));
+
+	  cur = next_field (next, ':', &next, end);
+	  if (next > end)
+	    fail ("%s: %d: missing argument for '%s'\n", filename, lineno, param->name);
+	  arg->val = xstrdup (cur);
+	  arg->next = inst->args;
+	  inst->args = arg;
+	}
+
+      if (tmpl->instances)
+	last_inst->next = inst;
+      else
+	tmpl->instances = inst;
+      last_inst = inst;
+  } while (sep == ',');
+
+  buf = remove_leading_whitespaces (end);
+  if (*buf)
+    fprintf(stderr, "%s: %d: excess characters '%s'\n",
+	    filename, lineno, buf);
+
+  tmpl->next = templates;
+  templates = tmpl;
+}
+
+static unsigned int
+expand_templates (char *name, const char *str, htab_t opcode_hash_table,
+		  struct opcode_hash_entry ***opcode_array_p, int lineno)
+{
+  static unsigned int idx, opcode_array_size;
+  struct opcode_hash_entry **opcode_array = *opcode_array_p;
+  struct opcode_hash_entry **hash_slot, **entry;
+  char *ptr1 = strchr(name, '<'), *ptr2;
+
+  if (ptr1 == NULL)
+    {
+      /* Get the slot in hash table.  */
+      hash_slot = (struct opcode_hash_entry **)
+	htab_find_slot_with_hash (opcode_hash_table, name,
+				  htab_hash_string (name),
+				  INSERT);
+
+      if (*hash_slot == NULL)
+	{
+	  /* It is the new one.  Put it on opcode array.  */
+	  if (idx >= opcode_array_size)
+	    {
+	      /* Grow the opcode array when needed.  */
+	      opcode_array_size += 1024;
+	      opcode_array = (struct opcode_hash_entry **)
+		xrealloc (opcode_array,
+			  sizeof (*opcode_array) * opcode_array_size);
+		*opcode_array_p = opcode_array;
+	    }
+
+	  opcode_array[idx] = (struct opcode_hash_entry *)
+	    xmalloc (sizeof (struct opcode_hash_entry));
+	  opcode_array[idx]->next = NULL;
+	  opcode_array[idx]->name = xstrdup (name);
+	  opcode_array[idx]->opcode = xstrdup (str);
+	  opcode_array[idx]->lineno = lineno;
+	  *hash_slot = opcode_array[idx];
+	  idx++;
+	}
+      else
+	{
+	  /* Append it to the existing one.  */
+	  entry = hash_slot;
+	  while ((*entry) != NULL)
+	    entry = &(*entry)->next;
+	  *entry = (struct opcode_hash_entry *)
+	    xmalloc (sizeof (struct opcode_hash_entry));
+	  (*entry)->next = NULL;
+	  (*entry)->name = (*hash_slot)->name;
+	  (*entry)->opcode = xstrdup (str);
+	  (*entry)->lineno = lineno;
+	}
+    }
+  else if ((ptr2 = strchr(ptr1 + 1, '>')) == NULL)
+    fail ("%s: %d: missing '>'\n", filename, lineno);
+  else
+    {
+      const struct template *tmpl;
+      const struct template_instance *inst;
+
+      *ptr1 = '\0';
+      ptr1 = remove_leading_whitespaces (ptr1 + 1);
+      remove_trailing_whitespaces (ptr1);
+
+      *ptr2++ = '\0';
+
+      for ( tmpl = templates; tmpl; tmpl = tmpl->next )
+	if (!strcmp(ptr1, tmpl->name))
+	  break;
+      if (!tmpl)
+	fail ("reference to unknown template '%s'\n", ptr1);
+
+      for (inst = tmpl->instances; inst; inst = inst->next)
+	{
+	  char *name2 = xmalloc(strlen(name) + strlen(inst->name) + strlen(ptr2) + 1);
+	  char *str2 = xmalloc(2 * strlen(str));
+	  const char *src;
+
+	  strcpy (name2, name);
+	  strcat (name2, inst->name);
+	  strcat (name2, ptr2);
+
+	  for (ptr1 = str2, src = str; *src; )
+	    {
+	      const char *ident = tmpl->name, *end;
+	      const struct template_param *param;
+	      const struct template_arg *arg;
+
+	      if ((*ptr1 = *src++) != '<')
+		{
+		  ++ptr1;
+		  continue;
+		}
+	      while (ISSPACE(*src))
+		++src;
+	      while (*ident && *src == *ident)
+		++src, ++ident;
+	      while (ISSPACE(*src))
+		++src;
+	      if (*src != ':' || *ident != '\0')
+		{
+		  memcpy (++ptr1, tmpl->name, ident - tmpl->name);
+		  ptr1 += ident - tmpl->name;
+		  continue;
+		}
+	      while (ISSPACE(*++src))
+		;
+
+	      end = src;
+	      while (*end != '\0' && !ISSPACE(*end) && *end != '>')
+		++end;
+
+	      for (param = tmpl->params, arg = inst->args; param;
+		   param = param->next, arg = arg->next)
+		{
+		  if (end - src == strlen (param->name)
+		      && !memcmp (src, param->name, end - src))
+		    {
+		      src = end;
+		      break;
+		    }
+		}
+
+	      if (param == NULL)
+		fail ("template '%s' has no parameter '%.*s'\n",
+		      tmpl->name, (int)(end - src), src);
+
+	      while (ISSPACE(*src))
+		++src;
+	      if (*src != '>')
+		fail ("%s: %d: missing '>'\n", filename, lineno);
+
+	      memcpy(ptr1, arg->val, strlen(arg->val));
+	      ptr1 += strlen(arg->val);
+	      ++src;
+	    }
+
+	  *ptr1 = '\0';
+
+	  expand_templates (name2, str2, opcode_hash_table, opcode_array_p,
+			    lineno);
+
+	  free (str2);
+	  free (name2);
+	}
+    }
+
+  return idx;
+}
+
+static void
 process_i386_opcodes (FILE *table)
 {
   FILE *fp;
   char buf[2048];
   unsigned int i, j;
   char *str, *p, *last, *name;
-  struct opcode_hash_entry **hash_slot, **entry, *next;
   htab_t opcode_hash_table;
-  struct opcode_hash_entry **opcode_array;
-  unsigned int opcode_array_size = 1024;
+  struct opcode_hash_entry **opcode_array = NULL;
   int lineno = 0, marker = 0;
 
   filename = "i386-opc.tbl";
   fp = stdin;
 
   i = 0;
-  opcode_array = (struct opcode_hash_entry **)
-    xmalloc (sizeof (*opcode_array) * opcode_array_size);
-
   opcode_hash_table = htab_create_alloc (16, opcode_hash_hash,
 					 opcode_hash_eq, NULL,
 					 xcalloc, free);
@@ -1441,6 +1802,9 @@ process_i386_opcodes (FILE *table)
 	case '\0':
 	  continue;
 	  break;
+	case '<':
+	  parse_template (p, lineno);
+	  continue;
 	default:
 	  if (!marker)
 	    continue;
@@ -1452,51 +1816,15 @@ process_i386_opcodes (FILE *table)
       /* Find name.  */
       name = next_field (p, ',', &str, last);
 
-      /* Get the slot in hash table.  */
-      hash_slot = (struct opcode_hash_entry **)
-	htab_find_slot_with_hash (opcode_hash_table, name,
-				  htab_hash_string (name),
-				  INSERT);
-
-      if (*hash_slot == NULL)
-	{
-	  /* It is the new one.  Put it on opcode array.  */
-	  if (i >= opcode_array_size)
-	    {
-	      /* Grow the opcode array when needed.  */
-	      opcode_array_size += 1024;
-	      opcode_array = (struct opcode_hash_entry **)
-		xrealloc (opcode_array,
-			  sizeof (*opcode_array) * opcode_array_size);
-	    }
-
-	  opcode_array[i] = (struct opcode_hash_entry *)
-	    xmalloc (sizeof (struct opcode_hash_entry));
-	  opcode_array[i]->next = NULL;
-	  opcode_array[i]->name = xstrdup (name);
-	  opcode_array[i]->opcode = xstrdup (str);
-	  opcode_array[i]->lineno = lineno;
-	  *hash_slot = opcode_array[i];
-	  i++;
-	}
-      else
-	{
-	  /* Append it to the existing one.  */
-	  entry = hash_slot;
-	  while ((*entry) != NULL)
-	    entry = &(*entry)->next;
-	  *entry = (struct opcode_hash_entry *)
-	    xmalloc (sizeof (struct opcode_hash_entry));
-	  (*entry)->next = NULL;
-	  (*entry)->name = (*hash_slot)->name;
-	  (*entry)->opcode = xstrdup (str);
-	  (*entry)->lineno = lineno;
-	}
+      i = expand_templates (name, str, opcode_hash_table, &opcode_array,
+			    lineno);
     }
 
   /* Process opcode array.  */
   for (j = 0; j < i; j++)
     {
+      struct opcode_hash_entry *next;
+
       for (next = opcode_array[j]; next; next = next->next)
 	{
 	  name = next->name;
@@ -1509,11 +1837,11 @@ process_i386_opcodes (FILE *table)
 
   fclose (fp);
 
-  fprintf (table, "  { NULL, 0, 0, 0, 0,\n");
+  fprintf (table, "  { NULL, 0, 0, 0,\n");
+
+  process_i386_opcode_modifier (table, "0", 0, 0, NULL, -1);
 
   process_i386_cpu_flag (table, "0", 0, ",", "    ", -1);
-
-  process_i386_opcode_modifier (table, "0", NULL, -1);
 
   fprintf (table, "    { ");
   process_i386_operand_type (table, "0", stage_opcodes, "\t  ", -1);

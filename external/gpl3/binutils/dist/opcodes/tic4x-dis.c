@@ -1,6 +1,6 @@
 /* Print instructions for the Texas TMS320C[34]X, for GDB and GNU Binutils.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -52,7 +52,7 @@ typedef enum
 indirect_t;
 
 static unsigned long tic4x_version = 0;
-static int tic4x_dp = 0;
+static unsigned int tic4x_dp = 0;
 static tic4x_inst_t **optab = NULL;
 static tic4x_inst_t **optab_special = NULL;
 static const char *registernames[REG_TABLE_SIZE];
@@ -695,16 +695,10 @@ tic4x_disassemble (unsigned long pc,
       tic4x_version = info->mach;
       /* Don't stash anything from a previous call using a different
 	 machine.  */
-      if (optab)
-	{
-	  free (optab);
-	  optab = NULL;
-	}
-      if (optab_special)
-	{
-	  free (optab_special);
-	  optab_special = NULL;
-	}
+      free (optab);
+      optab = NULL;
+      free (optab_special);
+      optab_special = NULL;
       registernames[REG_R0] = NULL;
     }
 

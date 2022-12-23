@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -163,19 +163,11 @@ static const CGEN_IFMT ifmt_lf_add_s ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_add_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xfc0007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
-};
-
 static const CGEN_IFMT ifmt_lf_add_d32 ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0000ff, { { F (F_OPCODE) }, { F (F_RDD32) }, { F (F_RAD32) }, { F (F_RBD32) }, { F (F_OP_7_8) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_lf_itof_s ATTRIBUTE_UNUSED = {
-  32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_lf_itof_d ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
@@ -187,10 +179,6 @@ static const CGEN_IFMT ifmt_lf_ftoi_s ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_ftoi_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xfc00ffff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
-};
-
 static const CGEN_IFMT ifmt_lf_ftoi_d32 ATTRIBUTE_UNUSED = {
   32, 32, 0xfc00f9ff, { { F (F_OPCODE) }, { F (F_R3) }, { F (F_RDD32) }, { F (F_RAD32) }, { F (F_RESV_8_1) }, { F (F_OP_7_8) }, { 0 } }
 };
@@ -199,19 +187,11 @@ static const CGEN_IFMT ifmt_lf_sfeq_s ATTRIBUTE_UNUSED = {
   32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
-static const CGEN_IFMT ifmt_lf_sfeq_d ATTRIBUTE_UNUSED = {
-  32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
-};
-
 static const CGEN_IFMT ifmt_lf_sfeq_d32 ATTRIBUTE_UNUSED = {
   32, 32, 0xffe004ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_RESV_10_1) }, { F (F_RAD32) }, { F (F_RBD32) }, { F (F_OP_7_8) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_lf_cust1_s ATTRIBUTE_UNUSED = {
-  32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_lf_cust1_d ATTRIBUTE_UNUSED = {
   32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_3) }, { F (F_OP_7_8) }, { 0 } }
 };
 
@@ -828,12 +808,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000000 }
   },
-/* lf.add.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000010 }
-  },
 /* lf.add.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -845,12 +819,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000001 }
-  },
-/* lf.sub.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000011 }
   },
 /* lf.sub.d $rDD32F,$rAD32F,$rBD32F */
   {
@@ -864,12 +832,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000002 }
   },
-/* lf.mul.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000012 }
-  },
 /* lf.mul.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -881,12 +843,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000003 }
-  },
-/* lf.div.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000013 }
   },
 /* lf.div.d $rDD32F,$rAD32F,$rBD32F */
   {
@@ -900,12 +856,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000006 }
   },
-/* lf.rem.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000016 }
-  },
 /* lf.rem.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -917,12 +867,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RDSF), ',', OP (RA), 0 } },
     & ifmt_lf_itof_s, { 0xc8000004 }
-  },
-/* lf.itof.d $rDDF,$rA */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RA), 0 } },
-    & ifmt_lf_itof_d, { 0xc8000014 }
   },
 /* lf.itof.d $rDD32F,$rADI */
   {
@@ -936,12 +880,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RASF), 0 } },
     & ifmt_lf_ftoi_s, { 0xc8000005 }
   },
-/* lf.ftoi.d $rD,$rADF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RD), ',', OP (RADF), 0 } },
-    & ifmt_lf_ftoi_d, { 0xc8000015 }
-  },
 /* lf.ftoi.d $rDDI,$rAD32F */
   {
     { 0, 0, 0, 0 },
@@ -953,12 +891,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc8000008 }
-  },
-/* lf.sfeq.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc8000018 }
   },
 /* lf.sfeq.d $rAD32F,$rBD32F */
   {
@@ -972,12 +904,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc8000009 }
   },
-/* lf.sfne.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc8000019 }
-  },
 /* lf.sfne.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -989,12 +915,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800000b }
-  },
-/* lf.sfge.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800001b }
   },
 /* lf.sfge.d $rAD32F,$rBD32F */
   {
@@ -1008,12 +928,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800000a }
   },
-/* lf.sfgt.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800001a }
-  },
 /* lf.sfgt.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1025,12 +939,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800000c }
-  },
-/* lf.sflt.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800001c }
   },
 /* lf.sflt.d $rAD32F,$rBD32F */
   {
@@ -1044,12 +952,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800000d }
   },
-/* lf.sfle.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800001d }
-  },
 /* lf.sfle.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1061,12 +963,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc8000028 }
-  },
-/* lf.sfueq.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc8000038 }
   },
 /* lf.sfueq.d $rAD32F,$rBD32F */
   {
@@ -1080,12 +976,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc8000029 }
   },
-/* lf.sfune.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc8000039 }
-  },
 /* lf.sfune.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1097,12 +987,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800002a }
-  },
-/* lf.sfugt.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800003a }
   },
 /* lf.sfugt.d $rAD32F,$rBD32F */
   {
@@ -1116,12 +1000,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800002b }
   },
-/* lf.sfuge.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800003b }
-  },
 /* lf.sfuge.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1133,12 +1011,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800002c }
-  },
-/* lf.sfult.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800003c }
   },
 /* lf.sfult.d $rAD32F,$rBD32F */
   {
@@ -1152,12 +1024,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800002d }
   },
-/* lf.sfule.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800003d }
-  },
 /* lf.sfule.d $rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1169,12 +1035,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_sfeq_s, { 0xc800002e }
-  },
-/* lf.sfun.d $rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_sfeq_d, { 0xc800003e }
   },
 /* lf.sfun.d $rAD32F,$rBD32F */
   {
@@ -1188,12 +1048,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RDSF), ',', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_add_s, { 0xc8000007 }
   },
-/* lf.madd.d $rDDF,$rADF,$rBDF */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RDDF), ',', OP (RADF), ',', OP (RBDF), 0 } },
-    & ifmt_lf_add_d, { 0xc8000017 }
-  },
 /* lf.madd.d $rDD32F,$rAD32F,$rBD32F */
   {
     { 0, 0, 0, 0 },
@@ -1205,12 +1059,6 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RASF), ',', OP (RBSF), 0 } },
     & ifmt_lf_cust1_s, { 0xc80000d0 }
-  },
-/* lf.cust1.d */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, 0 } },
-    & ifmt_lf_cust1_d, { 0xc80000e0 }
   },
 /* lf.cust1.d */
   {

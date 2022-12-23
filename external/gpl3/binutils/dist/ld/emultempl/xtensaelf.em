@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -30,8 +30,16 @@ fragment <<EOF
 #include "bfd.h"
 
 /* Provide default values for new configuration settings.  */
-#ifndef XSHAL_ABI
-#define XSHAL_ABI 0
+#ifndef XTHAL_ABI_UNDEFINED
+#define XTHAL_ABI_UNDEFINED -1
+#endif
+
+#ifndef XTHAL_ABI_WINDOWED
+#define XTHAL_ABI_WINDOWED 0
+#endif
+
+#ifndef XTHAL_ABI_CALL0
+#define XTHAL_ABI_CALL0 1
 #endif
 
 static void xtensa_wild_group_interleave (lang_statement_union_type *);
@@ -44,10 +52,14 @@ static void xtensa_strip_inconsistent_linkonce_sections
 static bfd_vma xtensa_page_power = 12; /* 4K pages.  */
 
 /* To force a page break between literals and text, change
-   xtensa_use_literal_pages to "TRUE".  */
-static bfd_boolean xtensa_use_literal_pages = FALSE;
+   xtensa_use_literal_pages to "true".  */
+static bool xtensa_use_literal_pages = false;
 
 #define EXTRA_VALIDATION 0
+
+/* Xtensa ABI.
+   This option is defined in BDF library.  */
+extern int elf32xtensa_abi;
 
 
 static char *
@@ -84,7 +96,7 @@ remove_section (bfd *abfd, asection *os)
 }
 
 
-static bfd_boolean
+static bool
 replace_insn_sec_with_prop_sec (bfd *abfd,
 				const char *insn_sec_name,
 				const char *prop_sec_name,
@@ -103,14 +115,14 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
   *error_message = "";
   insn_sec = bfd_get_section_by_name (abfd, insn_sec_name);
   if (insn_sec == NULL)
-    return TRUE;
+    return true;
   entry_count = insn_sec->size / 8;
 
   prop_sec = bfd_get_section_by_name (abfd, prop_sec_name);
   if (prop_sec != NULL && insn_sec != NULL)
     {
       *error_message = _("file already has property tables");
-      return FALSE;
+      return false;
     }
 
   if (insn_sec->size != 0)
@@ -161,7 +173,7 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
 
       elf_section_data (insn_sec)->relocs = NULL;
       internal_relocs =
-	_bfd_elf_link_read_relocs (abfd, insn_sec, NULL, NULL, FALSE);
+	_bfd_elf_link_read_relocs (abfd, insn_sec, NULL, NULL, false);
       elf_section_data (insn_sec)->relocs = saved_relocs;
 
       if (internal_relocs == NULL)
@@ -216,20 +228,17 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
 
   remove_section (abfd, insn_sec);
 
-  if (insn_contents)
-    free (insn_contents);
+  free (insn_contents);
 
-  return TRUE;
+  return true;
 
  cleanup:
   if (prop_sec && prop_sec->owner)
     remove_section (abfd, prop_sec);
-  if (insn_contents)
-    free (insn_contents);
-  if (internal_relocs)
-    free (internal_relocs);
+  free (insn_contents);
+  free (internal_relocs);
 
-  return FALSE;
+  return false;
 }
 
 
@@ -253,7 +262,7 @@ replace_instruction_table_sections (bfd *abfd, asection *sec)
       insn_sec_name = INSN_SEC_BASE_NAME;
       prop_sec_name = PROP_SEC_BASE_NAME;
     }
-  else if (CONST_STRNEQ (sec_name, LINKONCE_SEC_OLD_TEXT_BASE_NAME))
+  else if (startswith (sec_name, LINKONCE_SEC_OLD_TEXT_BASE_NAME))
     {
       insn_sec_name = sec_name;
       owned_prop_sec_name = (char *) xmalloc (strlen (sec_name) + 20);
@@ -271,8 +280,7 @@ replace_instruction_table_sections (bfd *abfd, asection *sec)
 		 insn_sec_name, abfd, message);
 	}
     }
-  if (owned_prop_sec_name)
-    free (owned_prop_sec_name);
+  free (owned_prop_sec_name);
 }
 
 
@@ -304,15 +312,15 @@ elf_xtensa_after_open (void)
 }
 
 
-static bfd_boolean
+static bool
 xt_config_info_unpack_and_check (char *data,
-				 bfd_boolean *pmismatch,
+				 bool *pmismatch,
 				 char **pmsg)
 {
   char *d, *key;
-  unsigned num;
+  int num;
 
-  *pmismatch = FALSE;
+  *pmismatch = false;
 
   d = data;
   while (*d)
@@ -345,9 +353,13 @@ xt_config_info_unpack_and_check (char *data,
 
 	  if (! strcmp (key, "ABI"))
 	    {
-	      if (num != XSHAL_ABI)
+	      if (elf32xtensa_abi == XTHAL_ABI_UNDEFINED)
 		{
-		  *pmismatch = TRUE;
+		  elf32xtensa_abi = num;
+		}
+	      else if (num != elf32xtensa_abi)
+		{
+		  *pmismatch = true;
 		  *pmsg = "ABI does not match";
 		}
 	    }
@@ -355,7 +367,7 @@ xt_config_info_unpack_and_check (char *data,
 	    {
 	      if (num != XSHAL_USE_ABSOLUTE_LITERALS)
 		{
-		  *pmismatch = TRUE;
+		  *pmismatch = true;
 		  *pmsg = "incompatible use of the Extended L32R option";
 		}
 	    }
@@ -365,10 +377,10 @@ xt_config_info_unpack_and_check (char *data,
 	goto error;
     }
 
-  return TRUE;
+  return true;
 
  error:
-  return FALSE;
+  return false;
 }
 
 
@@ -380,7 +392,7 @@ static void
 check_xtensa_info (bfd *abfd, asection *info_sec)
 {
   char *data, *errmsg = "";
-  bfd_boolean mismatch;
+  bool mismatch;
 
   data = xmalloc (info_sec->size);
   if (! bfd_get_section_contents (abfd, info_sec, data, 0, info_sec->size))
@@ -413,7 +425,7 @@ elf_xtensa_before_allocation (void)
 {
   asection *info_sec, *first_info_sec;
   bfd *first_bfd;
-  bfd_boolean is_big_endian = XCHAL_HAVE_BE;
+  bool is_big_endian = XCHAL_HAVE_BE;
 
   /* Check that the output endianness matches the Xtensa
      configuration.  The BFD library always includes both big and
@@ -493,7 +505,7 @@ elf_xtensa_before_allocation (void)
 
       data = xmalloc (100);
       sprintf (data, "USE_ABSOLUTE_LITERALS=%d\nABI=%d\n",
-	       XSHAL_USE_ABSOLUTE_LITERALS, XSHAL_ABI);
+	       XSHAL_USE_ABSOLUTE_LITERALS, xtensa_abi_choice ());
       xtensa_info_size = strlen (data) + 1;
 
       /* Add enough null terminators to pad to a word boundary.  */
@@ -553,7 +565,7 @@ struct reloc_deps_section_t
 {
   reloc_deps_e *preds;
   reloc_deps_e *succs;
-  bfd_boolean is_only_literal;
+  bool is_only_literal;
 };
 
 
@@ -573,16 +585,16 @@ typedef void (*deps_callback_t) (asection *, /* src_sec */
 				 bfd_vma,    /* target_offset */
 				 void *);    /* closure */
 
-extern bfd_boolean xtensa_callback_required_dependence
+extern bool xtensa_callback_required_dependence
   (bfd *, asection *, struct bfd_link_info *, deps_callback_t, void *);
 static void xtensa_ldlang_clear_addresses (lang_statement_union_type *);
-static bfd_boolean ld_local_file_relocations_fit
+static bool ld_local_file_relocations_fit
   (lang_statement_union_type *, const reloc_deps_graph *);
 static bfd_vma ld_assign_relative_paged_dot
   (bfd_vma, lang_statement_union_type *, const reloc_deps_graph *,
-   bfd_boolean);
+   bool);
 static bfd_vma ld_xtensa_insert_page_offsets
-  (bfd_vma, lang_statement_union_type *, reloc_deps_graph *, bfd_boolean);
+  (bfd_vma, lang_statement_union_type *, reloc_deps_graph *, bool);
 #if EXTRA_VALIDATION
 static size_t ld_count_children (lang_statement_union_type *);
 #endif
@@ -636,8 +648,7 @@ xtensa_append_section_deps (reloc_deps_graph *deps, asection *sec)
 	{
 	  new_sections[i] = deps->sections[i];
 	}
-      if (deps->sections != NULL)
-	free (deps->sections);
+      free (deps->sections);
       deps->sections = new_sections;
       deps->size = new_size;
     }
@@ -675,14 +686,12 @@ free_reloc_deps_graph (reloc_deps_graph *deps)
 	}
       xtensa_set_section_deps (deps, sec, NULL);
     }
-  if (deps->sections)
-    free (deps->sections);
-
+  free (deps->sections);
   free (deps);
 }
 
 
-static bfd_boolean
+static bool
 section_is_source (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
 		   lang_statement_union_type *s)
 {
@@ -690,7 +699,7 @@ section_is_source (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
   const reloc_deps_section *sec_deps;
 
   if (s->header.type != lang_input_section_enum)
-    return FALSE;
+    return false;
   sec = s->input_section.section;
 
   sec_deps = xtensa_get_section_deps (deps, sec);
@@ -698,7 +707,7 @@ section_is_source (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
 }
 
 
-static bfd_boolean
+static bool
 section_is_target (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
 		   lang_statement_union_type *s)
 {
@@ -706,7 +715,7 @@ section_is_target (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
   const reloc_deps_section *sec_deps;
 
   if (s->header.type != lang_input_section_enum)
-    return FALSE;
+    return false;
   sec = s->input_section.section;
 
   sec_deps = xtensa_get_section_deps (deps, sec);
@@ -714,7 +723,7 @@ section_is_target (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
 }
 
 
-static bfd_boolean
+static bool
 section_is_source_or_target (const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
 			     lang_statement_union_type *s)
 {
@@ -793,14 +802,14 @@ ld_xtensa_move_section_after (xtensa_ld_iter *to, xtensa_ld_iter *current)
 /* Can only be called with lang_statements that have lists.  Returns
    FALSE if the list is empty.  */
 
-static bfd_boolean
+static bool
 iter_stack_empty (xtensa_ld_iter_stack **stack_p)
 {
   return *stack_p == NULL;
 }
 
 
-static bfd_boolean
+static bool
 iter_stack_push (xtensa_ld_iter_stack **stack_p,
 		 lang_statement_union_type *parent)
 {
@@ -820,12 +829,12 @@ iter_stack_push (xtensa_ld_iter_stack **stack_p,
       break;
     default:
       ASSERT (0);
-      return FALSE;
+      return false;
     }
 
   /* Empty. do not push.  */
   if (l->tail == &l->head)
-    return FALSE;
+    return false;
 
   stack = xmalloc (sizeof (xtensa_ld_iter_stack));
   memset (stack, 0, sizeof (xtensa_ld_iter_stack));
@@ -838,7 +847,7 @@ iter_stack_push (xtensa_ld_iter_stack **stack_p,
   if (*stack_p != NULL)
     (*stack_p)->prev = stack;
   *stack_p = stack;
-  return TRUE;
+  return true;
 }
 
 
@@ -959,7 +968,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 
   xtensa_ld_iter current; /* Location we are checking.  */
   xtensa_ld_iter *current_p = NULL;
-  bfd_boolean in_literals = FALSE;
+  bool in_literals = false;
 
   if (deps->count == 0)
     return;
@@ -968,7 +977,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 
   while (!iter_stack_empty (stack_p))
     {
-      bfd_boolean skip_increment = FALSE;
+      bool skip_increment = false;
       lang_statement_union_type *l = iter_stack_current (stack_p);
 
       switch (l->header.type)
@@ -976,7 +985,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 	case lang_assignment_statement_enum:
 	  /* Any assignment statement should block reordering across it.  */
 	  front_p = NULL;
-	  in_literals = FALSE;
+	  in_literals = false;
 	  break;
 
 	case lang_input_section_enum:
@@ -992,7 +1001,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 	    }
 	  else
 	    {
-	      bfd_boolean is_target;
+	      bool is_target;
 	      current_p = &current;
 	      iter_stack_copy_current (stack_p, current_p);
 	      is_target = (section_is_target (deps, l)
@@ -1002,7 +1011,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 		{
 		  iter_stack_copy_current (stack_p, front_p);
 		  if (!is_target)
-		    in_literals = FALSE;
+		    in_literals = false;
 		}
 	      else
 		{
@@ -1029,7 +1038,7 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 			  front_p->loc = &(*front_p->loc)->header.next;
 
 			  /* Do not increment the current pointer.  */
-			  skip_increment = TRUE;
+			  skip_increment = true;
 			}
 		    }
 		}
@@ -1095,7 +1104,7 @@ xtensa_move_dependencies_to_front (reloc_deps_graph *deps,
 }
 
 
-static bfd_boolean
+static bool
 deps_has_sec_edge (const reloc_deps_graph *deps, asection *src, asection *tgt)
 {
   const reloc_deps_section *sec_deps;
@@ -1103,7 +1112,7 @@ deps_has_sec_edge (const reloc_deps_graph *deps, asection *src, asection *tgt)
 
   sec_deps = xtensa_get_section_deps (deps, src);
   if (sec_deps == NULL)
-    return FALSE;
+    return false;
 
   for (sec_deps_e = sec_deps->succs;
        sec_deps_e != NULL;
@@ -1111,26 +1120,26 @@ deps_has_sec_edge (const reloc_deps_graph *deps, asection *src, asection *tgt)
     {
       ASSERT (sec_deps_e->src == src);
       if (sec_deps_e->tgt == tgt)
-	return TRUE;
+	return true;
     }
-  return FALSE;
+  return false;
 }
 
 
-static bfd_boolean
+static bool
 deps_has_edge (const reloc_deps_graph *deps,
 	       lang_statement_union_type *src,
 	       lang_statement_union_type *tgt)
 {
   if (!section_is_source (deps, src))
-    return FALSE;
+    return false;
   if (!section_is_target (deps, tgt))
-    return FALSE;
+    return false;
 
   if (src->header.type != lang_input_section_enum)
-    return FALSE;
+    return false;
   if (tgt->header.type != lang_input_section_enum)
-    return FALSE;
+    return false;
 
   return deps_has_sec_edge (deps, src->input_section.section,
 			    tgt->input_section.section);
@@ -1224,6 +1233,10 @@ ld_build_required_section_dependence (lang_statement_union_type *s)
     {
       lang_statement_union_type *l = iter_stack_current (&stack);
 
+      if (l == NULL && link_info.non_contiguous_regions)
+	einfo (_("%F%P: Relaxation not supported with "
+		 "--enable-non-contiguous-regions.\n"));
+
       if (l->header.type == lang_input_section_enum)
 	{
 	  lang_input_section_type *input;
@@ -1262,7 +1275,7 @@ ld_count_children (lang_statement_union_type *s)
 /* Check if a particular section is included in the link.  This will only
    be true for one instance of a particular linkonce section.  */
 
-static bfd_boolean input_section_found = FALSE;
+static bool input_section_found = false;
 static asection *input_section_target = NULL;
 
 static void
@@ -1270,13 +1283,13 @@ input_section_linked_worker (lang_statement_union_type *statement)
 {
   if ((statement->header.type == lang_input_section_enum
        && (statement->input_section.section == input_section_target)))
-    input_section_found = TRUE;
+    input_section_found = true;
 }
 
-static bfd_boolean
+static bool
 input_section_linked (asection *sec)
 {
-  input_section_found = FALSE;
+  input_section_found = false;
   input_section_target = sec;
   lang_for_each_statement_worker (input_section_linked_worker, stat_ptr->head);
   return input_section_found;
@@ -1293,7 +1306,7 @@ input_section_linked (asection *sec)
 
 static int linkonce_len = sizeof (".gnu.linkonce.") - 1;
 
-static bfd_boolean
+static bool
 is_inconsistent_linkonce_section (asection *sec)
 {
   bfd *abfd = sec->owner;
@@ -1302,12 +1315,12 @@ is_inconsistent_linkonce_section (asection *sec)
 
   if ((bfd_section_flags (sec) & SEC_LINK_ONCE) == 0
       || strncmp (sec_name, ".gnu.linkonce.", linkonce_len) != 0)
-    return FALSE;
+    return false;
 
   /* Check if this is an Xtensa property section or an exception table
      for Tensilica's XCC compiler.  */
   name = sec_name + linkonce_len;
-  if (CONST_STRNEQ (name, "prop."))
+  if (startswith (name, "prop."))
     name = strchr (name + 5, '.') ? strchr (name + 5, '.') + 1 : name + 5;
   else if (name[1] == '.'
 	   && (name[0] == 'p' || name[0] == 'e' || name[0] == 'h'))
@@ -1329,12 +1342,12 @@ is_inconsistent_linkonce_section (asection *sec)
       if (dep_sec == NULL || ! input_section_linked (dep_sec))
 	{
 	  free (dep_sec_name);
-	  return TRUE;
+	  return true;
 	}
       free (dep_sec_name);
     }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -1415,20 +1428,20 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
       size_t old_child_count;
       size_t new_child_count;
 #endif
-      bfd_boolean no_reorder;
+      bool no_reorder;
 
       w = &statement->wild_statement;
 
-      no_reorder = FALSE;
+      no_reorder = false;
 
       /* If it has 0 or 1 section bound, then do not reorder.  */
       if (w->children.head == NULL
 	  || (w->children.head->header.type == lang_input_section_enum
 	      && w->children.head->header.next == NULL))
-	no_reorder = TRUE;
+	no_reorder = true;
 
       if (w->filenames_sorted)
-	no_reorder = TRUE;
+	no_reorder = true;
 
       /* Check for sorting in a section list wildcard spec as well.  */
       if (!no_reorder)
@@ -1438,7 +1451,7 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
 	    {
 	      if (l->spec.sorted == by_name)
 		{
-		  no_reorder = TRUE;
+		  no_reorder = true;
 		  break;
 		}
 	    }
@@ -1457,7 +1470,7 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
 		  && ((strcmp (".init", l->spec.name) == 0)
 		      || (strcmp (".fini", l->spec.name) == 0)))
 		{
-		  no_reorder = TRUE;
+		  no_reorder = true;
 		  break;
 		}
 	    }
@@ -1520,9 +1533,9 @@ xtensa_layout_wild (const reloc_deps_graph *deps, lang_wild_statement_type *w)
   literal_wild.header.next = NULL;
   literal_wild.header.type = lang_wild_statement_enum;
   literal_wild.filename = NULL;
-  literal_wild.filenames_sorted = FALSE;
+  literal_wild.filenames_sorted = false;
   literal_wild.section_list = NULL;
-  literal_wild.keep_sections = FALSE;
+  literal_wild.keep_sections = false;
   literal_wild.children.head = NULL;
   literal_wild.children.tail = &literal_wild.children.head;
 
@@ -1566,7 +1579,7 @@ xtensa_layout_wild (const reloc_deps_graph *deps, lang_wild_statement_type *w)
   while (literal_wild.children.head != NULL)
     {
       lang_statement_union_type *lit = literal_wild.children.head;
-      bfd_boolean placed = FALSE;
+      bool placed = false;
 
 #if EXTRA_VALIDATION
       ASSERT (ct2 > 0);
@@ -1588,7 +1601,7 @@ xtensa_layout_wild (const reloc_deps_graph *deps, lang_wild_statement_type *w)
 	      /* Place it here.  */
 	      lit->header.next = *s_p;
 	      *s_p = lit;
-	      placed = TRUE;
+	      placed = true;
 	      break;
 	    }
 	}
@@ -1630,7 +1643,7 @@ xtensa_colocate_output_literals_callback (lang_statement_union_type *statement)
       size_t old_child_count;
       size_t new_child_count;
 #endif
-      bfd_boolean no_reorder = FALSE;
+      bool no_reorder = false;
 
 #if EXTRA_VALIDATION
       old_child_count = ld_count_children (statement);
@@ -1696,7 +1709,7 @@ static bfd_vma
 ld_assign_relative_paged_dot (bfd_vma dot,
 			      lang_statement_union_type *s,
 			      const reloc_deps_graph *deps ATTRIBUTE_UNUSED,
-			      bfd_boolean lit_align)
+			      bool lit_align)
 {
   /* Walk through all of the input statements in this wild statement
      assign dot to all of them.  */
@@ -1704,8 +1717,8 @@ ld_assign_relative_paged_dot (bfd_vma dot,
   xtensa_ld_iter_stack *stack = NULL;
   xtensa_ld_iter_stack **stack_p = &stack;
 
-  bfd_boolean first_section = FALSE;
-  bfd_boolean in_literals = FALSE;
+  bool first_section = false;
+  bool in_literals = false;
 
   for (iter_stack_create (stack_p, s);
        !iter_stack_empty (stack_p);
@@ -1719,21 +1732,21 @@ ld_assign_relative_paged_dot (bfd_vma dot,
 	  {
 	    asection *section = l->input_section.section;
 	    size_t align_pow = section->alignment_power;
-	    bfd_boolean do_xtensa_alignment = FALSE;
+	    bool do_xtensa_alignment = false;
 
 	    if (lit_align)
 	      {
-		bfd_boolean sec_is_target = section_is_target (deps, l);
-		bfd_boolean sec_is_source = section_is_source (deps, l);
+		bool sec_is_target = section_is_target (deps, l);
+		bool sec_is_source = section_is_source (deps, l);
 
 		if (section->size != 0
 		    && (first_section
 			|| (in_literals && !sec_is_target)
 			|| (!in_literals && sec_is_target)))
 		  {
-		    do_xtensa_alignment = TRUE;
+		    do_xtensa_alignment = true;
 		  }
-		first_section = FALSE;
+		first_section = false;
 		if (section->size != 0)
 		  in_literals = (sec_is_target && !sec_is_source);
 	      }
@@ -1760,7 +1773,7 @@ ld_assign_relative_paged_dot (bfd_vma dot,
 }
 
 
-static bfd_boolean
+static bool
 ld_local_file_relocations_fit (lang_statement_union_type *statement,
 			       const reloc_deps_graph *deps ATTRIBUTE_UNUSED)
 {
@@ -1818,17 +1831,17 @@ ld_local_file_relocations_fit (lang_statement_union_type *statement,
 		      fprintf (stderr, "Warning: "
 			       "l32r target section before l32r\n");
 		      fflush (stderr);
-		      return FALSE;
+		      return false;
 		    }
 
 		  if (l32r_addr - target_addr > 256 * 1024 - align_penalty)
-		    return FALSE;
+		    return false;
 		}
 	    }
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1836,16 +1849,16 @@ static bfd_vma
 ld_xtensa_insert_page_offsets (bfd_vma dot,
 			       lang_statement_union_type *s,
 			       reloc_deps_graph *deps,
-			       bfd_boolean lit_align)
+			       bool lit_align)
 {
   xtensa_ld_iter_stack *stack = NULL;
   xtensa_ld_iter_stack **stack_p = &stack;
 
-  bfd_boolean first_section = FALSE;
-  bfd_boolean in_literals = FALSE;
+  bool first_section = false;
+  bool in_literals = false;
 
   if (!lit_align)
-    return FALSE;
+    return false;
 
   for (iter_stack_create (stack_p, s);
        !iter_stack_empty (stack_p);
@@ -1858,7 +1871,7 @@ ld_xtensa_insert_page_offsets (bfd_vma dot,
 	case lang_input_section_enum:
 	  {
 	    asection *section = l->input_section.section;
-	    bfd_boolean do_xtensa_alignment = FALSE;
+	    bool do_xtensa_alignment = false;
 
 	    if (lit_align)
 	      {
@@ -1867,9 +1880,9 @@ ld_xtensa_insert_page_offsets (bfd_vma dot,
 			|| (in_literals && !section_is_target (deps, l))
 			|| (!in_literals && section_is_target (deps, l))))
 		  {
-		    do_xtensa_alignment = TRUE;
+		    do_xtensa_alignment = true;
 		  }
-		first_section = FALSE;
+		first_section = false;
 		if (section->size != 0)
 		  {
 		    in_literals = (section_is_target (deps, l)
@@ -1884,7 +1897,7 @@ ld_xtensa_insert_page_offsets (bfd_vma dot,
 		etree_type *name_op = exp_nameop (NAME, ".");
 		etree_type *addend_op = exp_intop (1 << xtensa_page_power);
 		etree_type *add_op = exp_binop ('+', name_op, addend_op);
-		etree_type *assign_op = exp_assign (".", add_op, FALSE);
+		etree_type *assign_op = exp_assign (".", add_op, false);
 
 		lang_assignment_statement_type *assign_stmt;
 		lang_statement_union_type *assign_union;
@@ -1923,20 +1936,29 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_OPT_SIZEOPT              (300)
 #define OPTION_LITERAL_MOVEMENT		(OPTION_OPT_SIZEOPT + 1)
 #define OPTION_NO_LITERAL_MOVEMENT	(OPTION_LITERAL_MOVEMENT + 1)
+#define OPTION_ABI_WINDOWED		(OPTION_NO_LITERAL_MOVEMENT + 1)
+#define OPTION_ABI_CALL0		(OPTION_ABI_WINDOWED + 1)
 extern int elf32xtensa_size_opt;
 extern int elf32xtensa_no_literal_movement;
+extern int elf32xtensa_abi;
 '
 
 PARSE_AND_LIST_LONGOPTS='
   { "size-opt", no_argument, NULL, OPTION_OPT_SIZEOPT},
   { "literal-movement", no_argument, NULL, OPTION_LITERAL_MOVEMENT},
   { "no-literal-movement", no_argument, NULL, OPTION_NO_LITERAL_MOVEMENT},
+  { "abi-windowed", no_argument, NULL, OPTION_ABI_WINDOWED},
+  { "abi-call0", no_argument, NULL, OPTION_ABI_CALL0},
 '
 
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
   --size-opt                  When relaxing longcalls, prefer size\n\
                                 optimization over branch target alignment\n"));
+  fprintf (file, _("\
+  --abi-windowed              Choose windowed ABI for the output object\n"));
+  fprintf (file, _("\
+  --abi-call0                 Choose call0 ABI for the output object\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -1948,6 +1970,12 @@ PARSE_AND_LIST_ARGS_CASES='
       break;
     case OPTION_NO_LITERAL_MOVEMENT:
       elf32xtensa_no_literal_movement = 1;
+      break;
+    case OPTION_ABI_WINDOWED:
+      elf32xtensa_abi = XTHAL_ABI_WINDOWED;
+      break;
+    case OPTION_ABI_CALL0:
+      elf32xtensa_abi = XTHAL_ABI_CALL0;
       break;
 '
 

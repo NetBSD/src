@@ -1,5 +1,5 @@
 /* m68k.y -- bison grammar for m68k operand parsing
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
    Written by Ken Raeburn and Ian Lance Taylor, Cygnus Support
 
    This file is part of GAS, the GNU Assembler.
@@ -1008,12 +1008,12 @@ yylex (void)
     cp = s - tail;
     if (cp - 7 > str && cp[-7] == '@')
       {
-	if (strncmp (cp - 7, "@TLSLDM", 7) == 0)
+	if (startswith (cp - 7, "@TLSLDM"))
 	  {
 	    yylval.exp.pic_reloc = pic_tls_ldm;
 	    tail += 7;
 	  }
-	else if (strncmp (cp - 7, "@TLSLDO", 7) == 0)
+	else if (startswith (cp - 7, "@TLSLDO"))
 	  {
 	    yylval.exp.pic_reloc = pic_tls_ldo;
 	    tail += 7;
@@ -1021,27 +1021,27 @@ yylex (void)
       }
     else if (cp - 6 > str && cp[-6] == '@')
       {
-	if (strncmp (cp - 6, "@PLTPC", 6) == 0)
+	if (startswith (cp - 6, "@PLTPC"))
 	  {
 	    yylval.exp.pic_reloc = pic_plt_pcrel;
 	    tail += 6;
 	  }
-	else if (strncmp (cp - 6, "@GOTPC", 6) == 0)
+	else if (startswith (cp - 6, "@GOTPC"))
 	  {
 	    yylval.exp.pic_reloc = pic_got_pcrel;
 	    tail += 6;
 	  }
-	else if (strncmp (cp - 6, "@TLSGD", 6) == 0)
+	else if (startswith (cp - 6, "@TLSGD"))
 	  {
 	    yylval.exp.pic_reloc = pic_tls_gd;
 	    tail += 6;
 	  }
-	else if (strncmp (cp - 6, "@TLSIE", 6) == 0)
+	else if (startswith (cp - 6, "@TLSIE"))
 	  {
 	    yylval.exp.pic_reloc = pic_tls_ie;
 	    tail += 6;
 	  }
-	else if (strncmp (cp - 6, "@TLSLE", 6) == 0)
+	else if (startswith (cp - 6, "@TLSLE"))
 	  {
 	    yylval.exp.pic_reloc = pic_tls_le;
 	    tail += 6;
@@ -1049,12 +1049,12 @@ yylex (void)
       }
     else if (cp - 4 > str && cp[-4] == '@')
       {
-	if (strncmp (cp - 4, "@PLT", 4) == 0)
+	if (startswith (cp - 4, "@PLT"))
 	  {
 	    yylval.exp.pic_reloc = pic_plt_off;
 	    tail += 4;
 	  }
-	else if (strncmp (cp - 4, "@GOT", 4) == 0)
+	else if (startswith (cp - 4, "@GOT"))
 	  {
 	    yylval.exp.pic_reloc = pic_got_off;
 	    tail += 4;

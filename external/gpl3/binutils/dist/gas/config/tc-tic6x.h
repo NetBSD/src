@@ -1,5 +1,5 @@
 /* Definitions for TI C6X assembler.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -62,14 +62,14 @@ typedef struct tic6x_unwind_info {
     int data_bytes;
 
     offsetT reg_offset[TIC6X_NUM_UNWIND_REGS];
-    bfd_boolean reg_saved[TIC6X_NUM_UNWIND_REGS];
+    bool reg_saved[TIC6X_NUM_UNWIND_REGS];
     int cfa_reg;
     int return_reg;
     unsigned safe_mask;
     unsigned compact_mask;
     unsigned reg_saved_mask;
     offsetT cfa_offset;
-    bfd_boolean pop_rts;
+    bool pop_rts;
     /* Only valid for UNWIND_OP_POP_REG */
     int saved_reg_count;
 } tic6x_unwind_info;
@@ -82,7 +82,7 @@ typedef struct
   tic6x_label_list *label_list;
 
   /* Whether compact instructions are forbidden here.  */
-  bfd_boolean nocmp;
+  bool nocmp;
 
   /* If there is a current execute packet, the frag being used for
      that execute packet.  */
@@ -123,11 +123,11 @@ typedef struct
 {
   /* Whether this machine-dependent frag is used for instructions (as
      opposed to code alignment).  */
-  bfd_boolean is_insns;
+  bool is_insns;
 
   /* For a frag used for instructions, whether it is may cross a fetch
      packet boundary (subject to alignment requirements).  */
-  bfd_boolean can_cross_fp_boundary;
+  bool can_cross_fp_boundary;
 } tic6x_frag_info;
 #define TC_FRAG_TYPE tic6x_frag_info
 #define TC_FRAG_INIT(fragP, max_bytes) tic6x_frag_init (fragP)
@@ -140,7 +140,7 @@ typedef struct
      left (it represents a value to be encoded literally in the
      instruction, whereas a non-constant represents a DP-relative
      value counting in the appropriate units).  */
-  bfd_boolean fix_adda;
+  bool fix_adda;
   /* The symbol to be subtracted in case of a PCR_H16 or PCR_L16
      reloc.  */
   symbolS *fix_subsy;
@@ -164,7 +164,7 @@ extern void tic6x_cons_align (int n);
     if (tic6x_do_align (n, fill, len, max))	\
       goto label;				\
   } while (0)
-extern bfd_boolean tic6x_do_align (int n, char *fill, int len, int max);
+extern bool tic6x_do_align (int n, char *fill, int len, int max);
 
 #define CONVERT_SYMBOLIC_ATTRIBUTE(name)	\
   tic6x_convert_symbolic_attribute (name)
@@ -190,7 +190,7 @@ extern void tic6x_cons_fix_new (fragS *, int, int, expressionS *,
 				bfd_reloc_code_real_type);
 
 #define tc_fix_adjustable(FIX) tic6x_fix_adjustable (FIX)
-extern bfd_boolean tic6x_fix_adjustable (struct fix *);
+extern bool tic6x_fix_adjustable (struct fix *);
 
 #define tc_frob_label(sym) tic6x_frob_label (sym)
 extern void tic6x_frob_label (symbolS *sym);

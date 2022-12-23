@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -116,7 +116,7 @@ const pseudo_typeS md_pseudo_table[] = {
   {"segm"   , s_segm          , 1},
   {"unsegm" , s_segm          , 0},
   {"unseg"  , s_segm          , 0},
-  {"name"   , s_app_file      , 0},
+  {"name"   , s_file          , 0},
   {"global" , s_globl         , 0},
   {"wval"   , cons            , 2},
   {"lval"   , cons            , 4},
@@ -137,7 +137,7 @@ const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 /* Opcode mnemonics.  */
-static struct hash_control *opcode_hash_control;
+static htab_t opcode_hash_control;
 
 void
 md_begin (void)
@@ -145,13 +145,13 @@ md_begin (void)
   const opcode_entry_type *opcode;
   unsigned int idx = -1u;
 
-  opcode_hash_control = hash_new ();
+  opcode_hash_control = str_htab_create ();
 
   for (opcode = z8k_table; opcode->name; opcode++)
     {
       /* Only enter unique codes into the table.  */
       if (idx != opcode->idx)
-	hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
+	str_hash_insert (opcode_hash_control, opcode->name, opcode, 0);
       idx = opcode->idx;
     }
 
@@ -166,7 +166,7 @@ md_begin (void)
       fake_opcode->name = md_pseudo_table[idx].poc_name;
       fake_opcode->func = (void *) (md_pseudo_table + idx);
       fake_opcode->opcode = 250;
-      hash_insert (opcode_hash_control, fake_opcode->name, fake_opcode);
+      str_hash_insert (opcode_hash_control, fake_opcode->name, fake_opcode, 0);
     }
 }
 
@@ -953,7 +953,7 @@ get_specific (opcode_entry_type *opcode, op_type *operands)
     return 0;
 }
 
-static char buffer[20];
+static unsigned char buffer[20];
 
 static void
 newfix (int ptr, bfd_reloc_code_real_type type, int size, expressionS *operand)
@@ -984,33 +984,43 @@ newfix (int ptr, bfd_reloc_code_real_type type, int size, expressionS *operand)
     }
 }
 
-static char *
-apply_fix (char *ptr, bfd_reloc_code_real_type type, expressionS *operand,
-	   int size)
+static unsigned char *
+apply_fix (unsigned char *ptr, bfd_reloc_code_real_type type,
+	   expressionS *operand, int size)
 {
   long n = operand->X_add_number;
 
   /* size is in nibbles.  */
 
   newfix ((ptr - buffer) / 2, type, size + 1, operand);
-  switch (size)
+
+  if (type == BFD_RELOC_Z8K_DISP7)
     {
-    case 8:			/* 8 nibbles == 32 bits.  */
-      *ptr++ = n >> 28;
-      *ptr++ = n >> 24;
-      *ptr++ = n >> 20;
-      *ptr++ = n >> 16;
-      /* Fall through.  */
-    case 4:			/* 4 nibbles == 16 bits.  */
-      *ptr++ = n >> 12;
-      *ptr++ = n >> 8;
-      /* Fall through.  */
-    case 2:
-      *ptr++ = n >> 4;
-      /* Fall through.  */
-    case 1:
+      /* 2 nibbles, but most significant bit is part of the opcode == 7 bits.  */
+      *ptr++ = (n >> 4) & 7;
       *ptr++ = n >> 0;
-      break;
+    }
+  else
+    {
+      switch (size)
+        {
+        case 8:			/* 8 nibbles == 32 bits.  */
+          *ptr++ = n >> 28;
+          *ptr++ = n >> 24;
+          *ptr++ = n >> 20;
+          *ptr++ = n >> 16;
+          /* Fall through.  */
+        case 4:			/* 4 nibbles == 16 bits.  */
+          *ptr++ = n >> 12;
+          *ptr++ = n >> 8;
+          /* Fall through.  */
+        case 2:
+          *ptr++ = n >> 4;
+          /* Fall through.  */
+        case 1:
+          *ptr++ = n >> 0;
+          break;
+        }
     }
   return ptr;
 }
@@ -1020,7 +1030,7 @@ apply_fix (char *ptr, bfd_reloc_code_real_type type, expressionS *operand,
 static void
 build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSED)
 {
-  char *output_ptr = buffer;
+  unsigned char *output_ptr = buffer;
   int c;
   int nibble;
   unsigned int *class_ptr;
@@ -1183,12 +1193,12 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
   /* Copy from the nibble buffer into the frag.  */
   {
     int length = (output_ptr - buffer) / 2;
-    char *src = buffer;
-    char *fragp = frag_more (length);
+    unsigned char *src = buffer;
+    unsigned char *fragp = (unsigned char *) frag_more (length);
 
     while (src < output_ptr)
       {
-	*fragp = (src[0] << 4) | src[1];
+	*fragp = ((src[0] & 0xf) << 4) | (src[1] & 0xf);
 	src += 2;
 	fragp++;
       }
@@ -1224,9 +1234,9 @@ md_assemble (char *str)
     }
   c = *op_end;
 
-  *op_end = 0;  /* Zero-terminate op code string for hash_find() call.  */
+  *op_end = 0;  /* Zero-terminate op code string for str_hash_find() call.  */
 
-  opcode = (opcode_entry_type *) hash_find (opcode_hash_control, op_start);
+  opcode = (opcode_entry_type *) str_hash_find (opcode_hash_control, op_start);
 
   if (opcode == NULL)
     {
@@ -1296,7 +1306,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 const char *md_shortopts = "z:";

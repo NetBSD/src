@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YY_YYSCRIPT_H_INCLUDED
 # define YY_YY_YYSCRIPT_H_INCLUDED
 /* Debug traces.  */
@@ -40,118 +45,127 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    PLUSEQ = 258,
-    MINUSEQ = 259,
-    MULTEQ = 260,
-    DIVEQ = 261,
-    LSHIFTEQ = 262,
-    RSHIFTEQ = 263,
-    ANDEQ = 264,
-    OREQ = 265,
-    OROR = 266,
-    ANDAND = 267,
-    EQ = 268,
-    NE = 269,
-    LE = 270,
-    GE = 271,
-    LSHIFT = 272,
-    RSHIFT = 273,
-    UNARY = 274,
-    STRING = 275,
-    QUOTED_STRING = 276,
-    INTEGER = 277,
-    ABSOLUTE = 278,
-    ADDR = 279,
-    ALIGN_K = 280,
-    ALIGNOF = 281,
-    ASSERT_K = 282,
-    AS_NEEDED = 283,
-    AT = 284,
-    BIND = 285,
-    BLOCK = 286,
-    BYTE = 287,
-    CONSTANT = 288,
-    CONSTRUCTORS = 289,
-    COPY = 290,
-    CREATE_OBJECT_SYMBOLS = 291,
-    DATA_SEGMENT_ALIGN = 292,
-    DATA_SEGMENT_END = 293,
-    DATA_SEGMENT_RELRO_END = 294,
-    DEFINED = 295,
-    DSECT = 296,
-    ENTRY = 297,
-    EXCLUDE_FILE = 298,
-    EXTERN = 299,
-    FILL = 300,
-    FLOAT = 301,
-    FORCE_COMMON_ALLOCATION = 302,
-    GLOBAL = 303,
-    GROUP = 304,
-    HIDDEN = 305,
-    HLL = 306,
-    INCLUDE = 307,
-    INHIBIT_COMMON_ALLOCATION = 308,
-    INFO = 309,
-    INPUT = 310,
-    KEEP = 311,
-    LEN = 312,
-    LENGTH = 313,
-    LOADADDR = 314,
-    LOCAL = 315,
-    LONG = 316,
-    MAP = 317,
-    MAX_K = 318,
-    MEMORY = 319,
-    MIN_K = 320,
-    NEXT = 321,
-    NOCROSSREFS = 322,
-    NOFLOAT = 323,
-    NOLOAD = 324,
-    ONLY_IF_RO = 325,
-    ONLY_IF_RW = 326,
-    ORG = 327,
-    ORIGIN = 328,
-    OUTPUT = 329,
-    OUTPUT_ARCH = 330,
-    OUTPUT_FORMAT = 331,
-    OVERLAY = 332,
-    PHDRS = 333,
-    PROVIDE = 334,
-    PROVIDE_HIDDEN = 335,
-    QUAD = 336,
-    SEARCH_DIR = 337,
-    SECTIONS = 338,
-    SEGMENT_START = 339,
-    SHORT = 340,
-    SIZEOF = 341,
-    SIZEOF_HEADERS = 342,
-    SORT_BY_ALIGNMENT = 343,
-    SORT_BY_INIT_PRIORITY = 344,
-    SORT_BY_NAME = 345,
-    SPECIAL = 346,
-    SQUAD = 347,
-    STARTUP = 348,
-    SUBALIGN = 349,
-    SYSLIB = 350,
-    TARGET_K = 351,
-    TRUNCATE = 352,
-    VERSIONK = 353,
-    OPTION = 354,
-    PARSING_LINKER_SCRIPT = 355,
-    PARSING_VERSION_SCRIPT = 356,
-    PARSING_DEFSYM = 357,
-    PARSING_DYNAMIC_LIST = 358,
-    PARSING_SECTIONS_BLOCK = 359,
-    PARSING_SECTION_COMMANDS = 360,
-    PARSING_MEMORY_DEF = 361
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    PLUSEQ = 258,                  /* PLUSEQ  */
+    MINUSEQ = 259,                 /* MINUSEQ  */
+    MULTEQ = 260,                  /* MULTEQ  */
+    DIVEQ = 261,                   /* DIVEQ  */
+    LSHIFTEQ = 262,                /* LSHIFTEQ  */
+    RSHIFTEQ = 263,                /* RSHIFTEQ  */
+    ANDEQ = 264,                   /* ANDEQ  */
+    OREQ = 265,                    /* OREQ  */
+    OROR = 266,                    /* OROR  */
+    ANDAND = 267,                  /* ANDAND  */
+    EQ = 268,                      /* EQ  */
+    NE = 269,                      /* NE  */
+    LE = 270,                      /* LE  */
+    GE = 271,                      /* GE  */
+    LSHIFT = 272,                  /* LSHIFT  */
+    RSHIFT = 273,                  /* RSHIFT  */
+    UNARY = 274,                   /* UNARY  */
+    STRING = 275,                  /* STRING  */
+    QUOTED_STRING = 276,           /* QUOTED_STRING  */
+    INTEGER = 277,                 /* INTEGER  */
+    ABSOLUTE = 278,                /* ABSOLUTE  */
+    ADDR = 279,                    /* ADDR  */
+    ALIGN_K = 280,                 /* ALIGN_K  */
+    ALIGNOF = 281,                 /* ALIGNOF  */
+    ASSERT_K = 282,                /* ASSERT_K  */
+    AS_NEEDED = 283,               /* AS_NEEDED  */
+    AT = 284,                      /* AT  */
+    BIND = 285,                    /* BIND  */
+    BLOCK = 286,                   /* BLOCK  */
+    BYTE = 287,                    /* BYTE  */
+    CONSTANT = 288,                /* CONSTANT  */
+    CONSTRUCTORS = 289,            /* CONSTRUCTORS  */
+    COPY = 290,                    /* COPY  */
+    CREATE_OBJECT_SYMBOLS = 291,   /* CREATE_OBJECT_SYMBOLS  */
+    DATA_SEGMENT_ALIGN = 292,      /* DATA_SEGMENT_ALIGN  */
+    DATA_SEGMENT_END = 293,        /* DATA_SEGMENT_END  */
+    DATA_SEGMENT_RELRO_END = 294,  /* DATA_SEGMENT_RELRO_END  */
+    DEFINED = 295,                 /* DEFINED  */
+    DSECT = 296,                   /* DSECT  */
+    ENTRY = 297,                   /* ENTRY  */
+    EXCLUDE_FILE = 298,            /* EXCLUDE_FILE  */
+    EXTERN = 299,                  /* EXTERN  */
+    FILL = 300,                    /* FILL  */
+    FLOAT = 301,                   /* FLOAT  */
+    FORCE_COMMON_ALLOCATION = 302, /* FORCE_COMMON_ALLOCATION  */
+    GLOBAL = 303,                  /* GLOBAL  */
+    GROUP = 304,                   /* GROUP  */
+    HIDDEN = 305,                  /* HIDDEN  */
+    HLL = 306,                     /* HLL  */
+    INCLUDE = 307,                 /* INCLUDE  */
+    INHIBIT_COMMON_ALLOCATION = 308, /* INHIBIT_COMMON_ALLOCATION  */
+    INFO = 309,                    /* INFO  */
+    INPUT = 310,                   /* INPUT  */
+    KEEP = 311,                    /* KEEP  */
+    LEN = 312,                     /* LEN  */
+    LENGTH = 313,                  /* LENGTH  */
+    LOADADDR = 314,                /* LOADADDR  */
+    LOCAL = 315,                   /* LOCAL  */
+    LONG = 316,                    /* LONG  */
+    MAP = 317,                     /* MAP  */
+    MAX_K = 318,                   /* MAX_K  */
+    MEMORY = 319,                  /* MEMORY  */
+    MIN_K = 320,                   /* MIN_K  */
+    NEXT = 321,                    /* NEXT  */
+    NOCROSSREFS = 322,             /* NOCROSSREFS  */
+    NOFLOAT = 323,                 /* NOFLOAT  */
+    NOLOAD = 324,                  /* NOLOAD  */
+    ONLY_IF_RO = 325,              /* ONLY_IF_RO  */
+    ONLY_IF_RW = 326,              /* ONLY_IF_RW  */
+    ORG = 327,                     /* ORG  */
+    ORIGIN = 328,                  /* ORIGIN  */
+    OUTPUT = 329,                  /* OUTPUT  */
+    OUTPUT_ARCH = 330,             /* OUTPUT_ARCH  */
+    OUTPUT_FORMAT = 331,           /* OUTPUT_FORMAT  */
+    OVERLAY = 332,                 /* OVERLAY  */
+    PHDRS = 333,                   /* PHDRS  */
+    PROVIDE = 334,                 /* PROVIDE  */
+    PROVIDE_HIDDEN = 335,          /* PROVIDE_HIDDEN  */
+    QUAD = 336,                    /* QUAD  */
+    SEARCH_DIR = 337,              /* SEARCH_DIR  */
+    SECTIONS = 338,                /* SECTIONS  */
+    SEGMENT_START = 339,           /* SEGMENT_START  */
+    SHORT = 340,                   /* SHORT  */
+    SIZEOF = 341,                  /* SIZEOF  */
+    SIZEOF_HEADERS = 342,          /* SIZEOF_HEADERS  */
+    SORT_BY_ALIGNMENT = 343,       /* SORT_BY_ALIGNMENT  */
+    SORT_BY_INIT_PRIORITY = 344,   /* SORT_BY_INIT_PRIORITY  */
+    SORT_BY_NAME = 345,            /* SORT_BY_NAME  */
+    SPECIAL = 346,                 /* SPECIAL  */
+    SQUAD = 347,                   /* SQUAD  */
+    STARTUP = 348,                 /* STARTUP  */
+    SUBALIGN = 349,                /* SUBALIGN  */
+    SYSLIB = 350,                  /* SYSLIB  */
+    TARGET_K = 351,                /* TARGET_K  */
+    TRUNCATE = 352,                /* TRUNCATE  */
+    VERSIONK = 353,                /* VERSIONK  */
+    OPTION = 354,                  /* OPTION  */
+    PARSING_LINKER_SCRIPT = 355,   /* PARSING_LINKER_SCRIPT  */
+    PARSING_VERSION_SCRIPT = 356,  /* PARSING_VERSION_SCRIPT  */
+    PARSING_DEFSYM = 357,          /* PARSING_DEFSYM  */
+    PARSING_DYNAMIC_LIST = 358,    /* PARSING_DYNAMIC_LIST  */
+    PARSING_SECTIONS_BLOCK = 359,  /* PARSING_SECTIONS_BLOCK  */
+    PARSING_SECTION_COMMANDS = 360, /* PARSING_SECTION_COMMANDS  */
+    PARSING_MEMORY_DEF = 361       /* PARSING_MEMORY_DEF  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define PLUSEQ 258
 #define MINUSEQ 259
 #define MULTEQ 260
@@ -259,10 +273,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 53 "yyscript.y" /* yacc.c:1910  */
+#line 53 "yyscript.y"
 
   /* A string.  */
   struct Parser_string string;
@@ -292,9 +305,9 @@ union YYSTYPE
   struct Version_tree* versnode;
   enum Script_section_type section_type;
 
-#line 296 "yyscript.h" /* yacc.c:1910  */
-};
+#line 309 "yyscript.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -302,6 +315,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int yyparse (void* closure);
+
 
 #endif /* !YY_YY_YYSCRIPT_H_INCLUDED  */

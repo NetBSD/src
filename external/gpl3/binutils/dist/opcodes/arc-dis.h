@@ -1,5 +1,5 @@
 /* Disassembler structures definitions for the ARC.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -117,7 +117,7 @@ struct arc_instruction
   bfd_vma address;
 
   /* Whether this is a valid instruction.  */
-  bfd_boolean valid;
+  bool valid;
 
   insn_class_t insn_class;
 

@@ -1,5 +1,5 @@
 /* simple-object-elf.c -- routines to manipulate ELF object files.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 This program is free software; you can redistribute it and/or modify it
@@ -528,7 +528,7 @@ simple_object_elf_match (unsigned char header[SIMPLE_OBJECT_MATCH_HEADER_LEN],
 	     not handle objects with more than SHN_LORESERVE sections
 	     correctly.  All large section indexes were offset by
 	     0x100.  There is more information at
-	     http://sourceware.org/bugzilla/show_bug.cgi?id-5900 .
+	     https://sourceware.org/PR5900 .
 	     Fortunately these object files are easy to detect, as the
 	     GNU binutils always put the section header string table
 	     near the end of the list of sections.  Thus if the
@@ -1191,7 +1191,7 @@ simple_object_elf_copy_lto_debug_sections (simple_object_read *sobj,
 	  unsigned int sh_link;
 	  sh_link = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 				     shdr, sh_link, Elf_Word);
-	  symtab_indices_shndx[sh_link - 1] = i;
+	  symtab_indices_shndx[sh_link - 1] = i - 1;
 	  /* Always discard the extended index sections, after
 	     copying it will not be needed.  This way we don't need to
 	     update it and deal with the ordering constraints of
@@ -1372,19 +1372,22 @@ simple_object_elf_copy_lto_debug_sections (simple_object_read *sobj,
 	{
 	  unsigned entsize = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 					      shdr, sh_entsize, Elf_Addr);
-	  unsigned strtab = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
-					     shdr, sh_link, Elf_Word);
 	  size_t prevailing_name_idx = 0;
 	  unsigned char *ent;
 	  unsigned *shndx_table = NULL;
 	  /* Read the section index table if present.  */
 	  if (symtab_indices_shndx[i - 1] != 0)
 	    {
-	      unsigned char *sidxhdr = shdrs + (strtab - 1) * shdr_size;
+	      unsigned char *sidxhdr = shdrs + symtab_indices_shndx[i - 1] * shdr_size;
 	      off_t sidxoff = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 					       sidxhdr, sh_offset, Elf_Addr);
 	      size_t sidxsz = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 					       sidxhdr, sh_size, Elf_Addr);
+	      unsigned int shndx_type
+		= ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
+				   sidxhdr, sh_type, Elf_Word);
+	      if (shndx_type != SHT_SYMTAB_SHNDX)
+		return "Wrong section type of a SYMTAB SECTION INDICES section";
 	      shndx_table = (unsigned *)XNEWVEC (char, sidxsz);
 	      simple_object_internal_read (sobj->descriptor,
 					   sobj->offset + sidxoff,
@@ -1466,6 +1469,11 @@ simple_object_elf_copy_lto_debug_sections (simple_object_read *sobj,
 	      else if (st_shndx != SHN_UNDEF
 		       && st_shndx < shnum
 		       && pfnret[st_shndx - 1] == -1)
+		discard = 1;
+	      /* We also need to remove global UNDEFs which can
+		 cause link fails later.  */
+	      else if (st_shndx == SHN_UNDEF
+		       && ELF_ST_BIND (*st_info) == STB_GLOBAL)
 		discard = 1;
 
 	      if (discard)
@@ -1551,17 +1559,13 @@ simple_object_elf_copy_lto_debug_sections (simple_object_read *sobj,
 	  {
 	    sh_info = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 				       shdr, sh_info, Elf_Word);
-	    if (sh_info < SHN_LORESERVE
-		|| sh_info > SHN_HIRESERVE)
-	      sh_info = sh_map[sh_info];
+	    sh_info = sh_map[sh_info];
 	    ELF_SET_FIELD (type_functions, ei_class, Shdr,
 			   shdr, sh_info, Elf_Word, sh_info);
 	  }
 	sh_link = ELF_FETCH_FIELD (type_functions, ei_class, Shdr,
 				   shdr, sh_link, Elf_Word);
-	if (sh_link < SHN_LORESERVE
-	    || sh_link > SHN_HIRESERVE)
-	  sh_link = sh_map[sh_link];
+	sh_link = sh_map[sh_link];
 	ELF_SET_FIELD (type_functions, ei_class, Shdr,
 		       shdr, sh_link, Elf_Word, sh_link);
       }

@@ -3,5 +3,4 @@ SCRIPT_NAME=ia64vms
 OUTPUT_FORMAT="elf64-ia64-vms"
 ARCH=ia64
 
-COMPILE_IN=yes
 EXTRA_EM_FILE=vms

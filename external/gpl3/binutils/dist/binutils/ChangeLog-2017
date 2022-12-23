@@ -1126,7 +1126,7 @@
 
 	PR binutils/21437
 	* readelf.c (process_version_sections): Check for underflow when
-	computing the start address of the auxillary version data.
+	computing the start address of the auxiliary version data.
 
 2017-04-28  Nick Clifton  <nickc@redhat.com>
 
@@ -1762,7 +1762,7 @@
 2017-02-13  Nick Clifton  <nickc@redhat.com>
 
 	PR binutils/21148
-	* readelf.c (process_version_sections): Include size of auxillary
+	* readelf.c (process_version_sections): Include size of auxiliary
 	version information when checking for buffer overflow.
 
 2017-02-13  Nick Clifton  <nickc@redhat.com>

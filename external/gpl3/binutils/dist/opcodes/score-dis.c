@@ -1,5 +1,5 @@
 /* Instruction printing code for Score
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -36,7 +36,7 @@
 #ifdef BFD64
 /* s3_s7: opcodes and export prototypes.  */
 extern int
-s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little);
+s7_print_insn (bfd_vma pc, struct disassemble_info *info, bool little);
 
 struct score_opcode
 {
@@ -476,14 +476,6 @@ static struct score_opcode score_opcodes[] =
   {0,0,NULL}
 };
 
-
-#ifndef streq
-#define streq(a,b)    (strcmp ((a), (b)) == 0)
-#endif
-
-#ifndef strneq
-#define strneq(a,b,n)    (strncmp ((a), (b), (n)) == 0)
-#endif
 
 #ifndef NUM_ELEM
 #define NUM_ELEM(a)     (sizeof (a) / sizeof (a)[0])
@@ -1048,7 +1040,7 @@ print_insn_score16 (bfd_vma pc, struct disassemble_info *info, long given)
 /* NOTE: There are no checks in these routines that
    the relevant number of data bytes exist.  */
 static int
-s3_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
+s3_print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
 {
   unsigned char b[6];
   bfd_vma given, given_h, given_l, given_16, given_32, given_48;
@@ -1179,18 +1171,18 @@ int
 print_insn_big_score (bfd_vma pc, struct disassemble_info *info)
 {
   if (score_get_arch (info) == bfd_mach_score3)
-    return s3_print_insn (pc, info, FALSE);
+    return s3_print_insn (pc, info, false);
   else
-    return s7_print_insn (pc, info, FALSE);
+    return s7_print_insn (pc, info, false);
 }
 
 int
 print_insn_little_score (bfd_vma pc, struct disassemble_info *info)
 {
   if (score_get_arch (info) == bfd_mach_score3)
-    return s3_print_insn (pc, info, TRUE);
+    return s3_print_insn (pc, info, true);
   else
-    return s7_print_insn (pc, info, TRUE);
+    return s7_print_insn (pc, info, true);
 }
 #else /* not BFD64 */
 int

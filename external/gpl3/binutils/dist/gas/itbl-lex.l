@@ -1,7 +1,7 @@
 %option noyywrap
 
 /* itbl-lex.l
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +21,6 @@
    02110-1301, USA.  */
 
 %{
-#include "as.h"
 #include "itbl-lex.h"
 #include <itbl-parse.h>
 

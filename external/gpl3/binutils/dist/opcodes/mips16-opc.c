@@ -1,5 +1,5 @@
 /* mips16-opc.c.  Mips16 opcode table.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -45,7 +45,7 @@ static unsigned char reg32r_map[] = {
    The extended forms all have an lsb of 0.  */
 
 const struct mips_operand *
-decode_mips16_operand (char type, bfd_boolean extended_p)
+decode_mips16_operand (char type, bool extended_p)
 {
   switch (type)
     {
@@ -75,14 +75,14 @@ decode_mips16_operand (char type, bfd_boolean extended_p)
 
     case 'a': JUMP (26, 0, 2);
     case 'b': BIT (5, 22, 0);			/* (0 .. 31) */
-    case 'c': MSB (5, 16, 1, TRUE, 32);		/* (1 .. 32) */
-    case 'd': MSB (5, 16, 1, FALSE, 32);	/* (1 .. 32) */
+    case 'c': MSB (5, 16, 1, true, 32);		/* (1 .. 32) */
+    case 'd': MSB (5, 16, 1, false, 32);	/* (1 .. 32) */
     case 'e': HINT (11, 0);
     case 'i': JALX (26, 0, 2);
     case 'l': SPECIAL (6, 5, ENTRY_EXIT_LIST);
     case 'm': SPECIAL (7, 0, SAVE_RESTORE_LIST);
-    case 'n': INT_BIAS (2, 0, 3, 1, 0, FALSE);	/* (1 .. 4) */
-    case 'o': INT_ADJ (5, 16, 31, 4, FALSE);	/* (0 .. 31) << 4 */
+    case 'n': INT_BIAS (2, 0, 3, 1, 0, false);	/* (1 .. 4) */
+    case 'o': INT_ADJ (5, 16, 31, 4, false);	/* (0 .. 31) << 4 */
     case 'r': MAPPED_REG (3, 16, GP, reg_m16_map);
     case 's': HINT (3, 24);
     case 'u': HINT (16, 0);
@@ -103,11 +103,11 @@ decode_mips16_operand (char type, bfd_boolean extended_p)
       case '5': SINT (16, 0);
       case '8': SINT (16, 0);
 
-      case 'A': PCREL (16, 0, TRUE, 0, 2, FALSE, FALSE);
-      case 'B': PCREL (16, 0, TRUE, 0, 3, FALSE, FALSE);
+      case 'A': PCREL (16, 0, true, 0, 2, false, false);
+      case 'B': PCREL (16, 0, true, 0, 3, false, false);
       case 'C': SINT (16, 0);
       case 'D': SINT (16, 0);
-      case 'E': PCREL (16, 0, TRUE, 0, 2, FALSE, FALSE);
+      case 'E': PCREL (16, 0, true, 0, 2, false, false);
       case 'F': SINT (15, 0);
       case 'H': SINT (16, 0);
       case 'K': SINT (16, 0);
@@ -123,24 +123,24 @@ decode_mips16_operand (char type, bfd_boolean extended_p)
   else
     switch (type)
       {
-      case '<': INT_ADJ (3, 2, 8, 0, FALSE);
-      case '[': INT_ADJ (3, 2, 8, 0, FALSE);
-      case ']': INT_ADJ (3, 8, 8, 0, FALSE);
+      case '<': INT_ADJ (3, 2, 8, 0, false);
+      case '[': INT_ADJ (3, 2, 8, 0, false);
+      case ']': INT_ADJ (3, 8, 8, 0, false);
 
       case '5': UINT (5, 0);
       case '8': UINT (8, 0);
 
-      case 'A': PCREL (8, 0, FALSE, 2, 2, FALSE, FALSE);
-      case 'B': PCREL (5, 0, FALSE, 3, 3, FALSE, FALSE);
-      case 'C': INT_ADJ (8, 0, 255, 3, FALSE);	/* (0 .. 255) << 3 */
-      case 'D': INT_ADJ (5, 0, 31, 3, FALSE);	/* (0 .. 31) << 3 */
-      case 'E': PCREL (5, 0, FALSE, 2, 2, FALSE, FALSE);
+      case 'A': PCREL (8, 0, false, 2, 2, false, false);
+      case 'B': PCREL (5, 0, false, 3, 3, false, false);
+      case 'C': INT_ADJ (8, 0, 255, 3, false);	/* (0 .. 255) << 3 */
+      case 'D': INT_ADJ (5, 0, 31, 3, false);	/* (0 .. 31) << 3 */
+      case 'E': PCREL (5, 0, false, 2, 2, false, false);
       case 'F': SINT (4, 0);
-      case 'H': INT_ADJ (5, 0, 31, 1, FALSE);	/* (0 .. 31) << 1 */
-      case 'K': INT_ADJ (8, 0, 127, 3, FALSE);	/* (-128 .. 127) << 3 */
+      case 'H': INT_ADJ (5, 0, 31, 1, false);	/* (0 .. 31) << 1 */
+      case 'K': INT_ADJ (8, 0, 127, 3, false);	/* (-128 .. 127) << 3 */
       case 'U': UINT (8, 0);
-      case 'V': INT_ADJ (8, 0, 255, 2, FALSE);	/* (0 .. 255) << 2 */
-      case 'W': INT_ADJ (5, 0, 31, 2, FALSE);	/* (0 .. 31) << 2 */
+      case 'V': INT_ADJ (8, 0, 255, 2, false);	/* (0 .. 255) << 2 */
+      case 'W': INT_ADJ (5, 0, 31, 2, false);	/* (0 .. 31) << 2 */
 
       case 'j': SINT (5, 0);
       case 'k': SINT (8, 0);

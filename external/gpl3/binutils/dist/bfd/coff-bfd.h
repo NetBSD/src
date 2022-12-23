@@ -1,5 +1,5 @@
 /* BFD COFF interfaces used outside of BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -44,13 +44,13 @@ struct coff_section_tdata
   /* The relocs, swapped into COFF internal form.  This may be NULL.  */
   struct internal_reloc *relocs;
   /* If this is TRUE, the relocs entry may not be freed.  */
-  bfd_boolean keep_relocs;
+  bool keep_relocs;
   /* The section contents.  This may be NULL.  */
   bfd_byte *contents;
   /* If this is TRUE, the contents entry may not be freed.  */
-  bfd_boolean keep_contents;
+  bool keep_contents;
   /* Information cached by coff_find_nearest_line.  */
-  bfd_boolean saved_bias;
+  bool saved_bias;
   bfd_signed_vma bias;
   bfd_vma offset;
   unsigned int i;
@@ -81,11 +81,11 @@ struct coff_section_tdata
 struct internal_syment;
 union internal_auxent;
 
-extern bfd_boolean bfd_coff_get_syment
+extern bool bfd_coff_get_syment
   (bfd *, struct bfd_symbol *, struct internal_syment *);
 
-extern bfd_boolean bfd_coff_get_auxent
+extern bool bfd_coff_get_auxent
   (bfd *, struct bfd_symbol *, int, union internal_auxent *);
 
-extern bfd_boolean bfd_coff_set_symbol_class
+extern bool bfd_coff_set_symbol_class
   (bfd *, struct bfd_symbol *, unsigned int);

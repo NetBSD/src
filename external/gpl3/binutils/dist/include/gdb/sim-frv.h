@@ -1,6 +1,6 @@
 /* This file defines the interface between the FR-V simulator and GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

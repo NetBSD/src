@@ -1,5 +1,5 @@
 /* WebAssembly assembler/disassembler support.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU assembler.
 

@@ -1,5 +1,5 @@
 /* BFD support for the ia64 architecture.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -42,9 +42,9 @@
   }
 
 const bfd_arch_info_type bfd_ia64_elf32_arch =
-  N (32, bfd_mach_ia64_elf32, "ia64-elf32", FALSE, NULL);
+  N (32, bfd_mach_ia64_elf32, "ia64-elf32", false, NULL);
 
 const bfd_arch_info_type bfd_ia64_arch =
-  N (64, bfd_mach_ia64_elf64, "ia64-elf64", TRUE, &bfd_ia64_elf32_arch);
+  N (64, bfd_mach_ia64_elf64, "ia64-elf64", true, &bfd_ia64_elf32_arch);
 
 #include "cpu-ia64-opc.c"

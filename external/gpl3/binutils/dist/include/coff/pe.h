@@ -1,6 +1,6 @@
 /* pe.h  -  PE COFF header information
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -49,7 +49,9 @@
 #define IMAGE_DLLCHARACTERISTICS_NO_ISOLATION           0x0200
 #define IMAGE_DLLCHARACTERISTICS_NO_SEH                 0x0400
 #define IMAGE_DLLCHARACTERISTICS_NO_BIND                0x0800
+#define IMAGE_DLLCHARACTERISTICS_APPCONTAINER           0x1000
 #define IMAGE_DLLCHARACTERISTICS_WDM_DRIVER             0x2000
+#define IMAGE_DLLCHARACTERISTICS_GUARD_CF               0x4000
 #define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE  0x8000
 
 /* Additional flags to be set for section headers to allow the NT loader to
@@ -105,9 +107,12 @@
 #define IMAGE_SCN_ALIGN_8192BYTES	     IMAGE_SCN_ALIGN_POWER_CONST (13)
 
 /* Encode alignment power into IMAGE_SCN_ALIGN bits of s_flags.  */
-#define COFF_ENCODE_ALIGNMENT(SECTION, ALIGNMENT_POWER) \
-  ((SECTION).s_flags |= IMAGE_SCN_ALIGN_POWER_CONST ((ALIGNMENT_POWER) <= 13 \
-						     ? (ALIGNMENT_POWER) : 13))
+#define COFF_ENCODE_ALIGNMENT(ABFD, SECTION, ALIGNMENT_POWER) \
+  (((ABFD)->flags & (EXEC_P | DYNAMIC)) != 0 ? false			\
+   : ((SECTION).s_flags							\
+      |= IMAGE_SCN_ALIGN_POWER_CONST ((ALIGNMENT_POWER) < 13		\
+				      ? (ALIGNMENT_POWER) : 13),	\
+      true))
 #define COFF_DECODE_ALIGNMENT(X)             \
   IMAGE_SCN_ALIGN_POWER_NUM ((X) & IMAGE_SCN_ALIGN_POWER_BIT_MASK)
 
@@ -132,6 +137,7 @@
 #define IMAGE_FILE_MACHINE_AM33              0x01d3
 #define IMAGE_FILE_MACHINE_AMD64             0x8664
 #define IMAGE_FILE_MACHINE_ARM               0x01c0
+#define IMAGE_FILE_MACHINE_ARM64             0xaa64
 #define IMAGE_FILE_MACHINE_AXP64             IMAGE_FILE_MACHINE_ALPHA64
 #define IMAGE_FILE_MACHINE_CEE               0xc0ee
 #define IMAGE_FILE_MACHINE_CEF               0x0cef
@@ -578,10 +584,10 @@ struct external_IMAGE_DEBUG_DIRECTORY
 /* Extra structures used in codeview debug record.  */
 /* This is not part of the PE specification.  */
 
-#define CVINFO_PDB70_CVSIGNATURE 0x53445352 // "RSDS"
-#define CVINFO_PDB20_CVSIGNATURE 0x3031424e // "NB10"
-#define CVINFO_CV50_CVSIGNATURE  0x3131424e // "NB11"
-#define CVINFO_CV41_CVSIGNATURE  0x3930424e // "NB09"
+#define CVINFO_PDB70_CVSIGNATURE 0x53445352 /* "RSDS" */
+#define CVINFO_PDB20_CVSIGNATURE 0x3031424e /* "NB10" */
+#define CVINFO_CV50_CVSIGNATURE  0x3131424e /* "NB11" */
+#define CVINFO_CV41_CVSIGNATURE  0x3930424e /* "NB09" */
 
 typedef struct _CV_INFO_PDB70
 {

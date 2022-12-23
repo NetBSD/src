@@ -1,6 +1,6 @@
 // x86_64.cc -- x86_64 target support for gold.
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -706,8 +706,9 @@ class Target_x86_64 : public Sized_target<size, false>
       rela_irelative_(NULL), copy_relocs_(elfcpp::R_X86_64_COPY),
       got_mod_index_offset_(-1U), tlsdesc_reloc_info_(),
       tls_base_symbol_defined_(false), isa_1_used_(0), isa_1_needed_(0),
-      feature_1_(0), object_isa_1_used_(0), object_feature_1_(0),
-      seen_first_object_(false)
+      feature_1_(0), feature_2_used_(0), feature_2_needed_(0),
+      object_isa_1_used_(0), object_feature_1_(0),
+      object_feature_2_used_(0), seen_first_object_(false)
   { }
 
   // Hook for a new output section.
@@ -1382,6 +1383,8 @@ class Target_x86_64 : public Sized_target<size, false>
   uint32_t isa_1_used_;
   uint32_t isa_1_needed_;
   uint32_t feature_1_;
+  uint32_t feature_2_used_;
+  uint32_t feature_2_needed_;
   // Target-specific properties from the current object.
   // These bits get ORed into ISA_1_USED_ after all properties for the object
   // have been processed. But if either is all zeroes (as when the property
@@ -1391,6 +1394,7 @@ class Target_x86_64 : public Sized_target<size, false>
   // These bits get ANDed into FEATURE_1_ after all properties for the object
   // have been processed.
   uint32_t object_feature_1_;
+  uint32_t object_feature_2_used_;
   // Whether we have seen our first object, for use in initializing FEATURE_1_.
   bool seen_first_object_;
 };
@@ -1594,9 +1598,15 @@ Target_x86_64<size>::record_gnu_property(
 
   switch (pr_type)
     {
+    case elfcpp::GNU_PROPERTY_X86_COMPAT_ISA_1_USED:
+    case elfcpp::GNU_PROPERTY_X86_COMPAT_ISA_1_NEEDED:
+    case elfcpp::GNU_PROPERTY_X86_COMPAT_2_ISA_1_USED:
+    case elfcpp::GNU_PROPERTY_X86_COMPAT_2_ISA_1_NEEDED:
     case elfcpp::GNU_PROPERTY_X86_ISA_1_USED:
     case elfcpp::GNU_PROPERTY_X86_ISA_1_NEEDED:
     case elfcpp::GNU_PROPERTY_X86_FEATURE_1_AND:
+    case elfcpp::GNU_PROPERTY_X86_FEATURE_2_USED:
+    case elfcpp::GNU_PROPERTY_X86_FEATURE_2_NEEDED:
       if (pr_datasz != 4)
 	{
 	  gold_warning(_("%s: corrupt .note.gnu.property section "
@@ -1625,6 +1635,12 @@ Target_x86_64<size>::record_gnu_property(
       // If we see multiple feature props in one object, OR them together.
       this->object_feature_1_ |= val;
       break;
+    case elfcpp::GNU_PROPERTY_X86_FEATURE_2_USED:
+      this->object_feature_2_used_ |= val;
+      break;
+    case elfcpp::GNU_PROPERTY_X86_FEATURE_2_NEEDED:
+      this->feature_2_needed_ |= val;
+      break;
     }
 }
 
@@ -1642,15 +1658,23 @@ Target_x86_64<size>::merge_gnu_properties(const Object*)
       else if (this->isa_1_used_ != 0)
 	this->isa_1_used_ |= this->object_isa_1_used_;
       this->feature_1_ &= this->object_feature_1_;
+      // If any object is missing the FEATURE_2_USED property, we must
+      // omit it from the output file.
+      if (this->object_feature_2_used_ == 0)
+	this->feature_2_used_ = 0;
+      else if (this->feature_2_used_ != 0)
+	this->feature_2_used_ |= this->object_feature_2_used_;
     }
   else
     {
       this->isa_1_used_ = this->object_isa_1_used_;
       this->feature_1_ = this->object_feature_1_;
+      this->feature_2_used_ = this->object_feature_2_used_;
       this->seen_first_object_ = true;
     }
   this->object_isa_1_used_ = 0;
   this->object_feature_1_ = 0;
+  this->object_feature_2_used_ = 0;
 }
 
 static inline void
@@ -1676,6 +1700,12 @@ Target_x86_64<size>::do_finalize_gnu_properties(Layout* layout) const
   if (this->feature_1_ != 0)
     add_property(layout, elfcpp::GNU_PROPERTY_X86_FEATURE_1_AND,
 		 this->feature_1_);
+  if (this->feature_2_used_ != 0)
+    add_property(layout, elfcpp::GNU_PROPERTY_X86_FEATURE_2_USED,
+		 this->feature_2_used_);
+  if (this->feature_2_needed_ != 0)
+    add_property(layout, elfcpp::GNU_PROPERTY_X86_FEATURE_2_NEEDED,
+		 this->feature_2_needed_);
 }
 
 // Write the first three reserved words of the .got.plt section.
@@ -2086,7 +2116,12 @@ Output_data_plt_x86_64_bnd::do_address_for_local(const Relobj* object,
 						 unsigned int r_sym)
 {
   // Convert the PLT offset into an APLT offset.
-  unsigned int plt_offset = ((object->local_plt_offset(r_sym) - plt_entry_size)
+  const Sized_relobj_file<64, false>* sized_relobj =
+    static_cast<const Sized_relobj_file<64, false>*>(object);
+  const Symbol_value<64>* psymval = sized_relobj->local_symbol(r_sym);
+  unsigned int plt_offset = ((object->local_plt_offset(r_sym)
+			      - (psymval->is_ifunc_symbol()
+				 ? 0 : plt_entry_size))
 			     / (plt_entry_size / aplt_entry_size));
   return (this->address()
 	  + this->aplt_offset_
@@ -2260,7 +2295,12 @@ Output_data_plt_x86_64_ibt<size>::do_address_for_local(const Relobj* object,
 						 unsigned int r_sym)
 {
   // Convert the PLT offset into an APLT offset.
-  unsigned int plt_offset = ((object->local_plt_offset(r_sym) - plt_entry_size)
+  const Sized_relobj_file<size, false>* sized_relobj =
+    static_cast<const Sized_relobj_file<size, false>*>(object);
+  const Symbol_value<size>* psymval = sized_relobj->local_symbol(r_sym);
+  unsigned int plt_offset = ((object->local_plt_offset(r_sym)
+			      - (psymval->is_ifunc_symbol()
+				 ? 0 : plt_entry_size))
 			     / (plt_entry_size / aplt_entry_size));
   return (this->address()
 	  + this->aplt_offset_
@@ -2440,11 +2480,11 @@ Output_data_plt_x86_64_ibt<size>::tlsdesc_plt_entry[plt_entry_size] =
 {
   // From Alexandre Oliva, "Thread-Local Storage Descriptors for IA32
   // and AMD64/EM64T", Version 0.9.4 (2005-10-10).
+  0xf3, 0x0f, 0x1e, 0xfa, // endbr64
   0xff, 0x35,		// pushq x(%rip)
   0, 0, 0, 0,		// replaced with address of linkmap GOT entry (at PLTGOT + 8)
-  0xf2, 0xff, 0x25,	// jmpq *y(%rip)
+  0xff, 0x25,		// jmpq *y(%rip)
   0, 0, 0, 0,		// replaced with offset of reserved TLSDESC_GOT entry
-  0x0f,	0x1f, 0		// nop
 };
 
 template<int size>
@@ -2458,15 +2498,15 @@ Output_data_plt_x86_64_ibt<size>::do_fill_tlsdesc_entry(
     unsigned int plt_offset)
 {
   memcpy(pov, tlsdesc_plt_entry, plt_entry_size);
-  elfcpp::Swap_unaligned<32, false>::writeval(pov + 2,
+  elfcpp::Swap_unaligned<32, false>::writeval(pov + 6,
 					      (got_address + 8
 					       - (plt_address + plt_offset
-						  + 6)));
-  elfcpp::Swap_unaligned<32, false>::writeval(pov + 9,
+						  + 10)));
+  elfcpp::Swap_unaligned<32, false>::writeval(pov + 12,
 					      (got_base
 					       + tlsdesc_got_offset
 					       - (plt_address + plt_offset
-						  + 13)));
+						  + 16)));
 }
 
 // The .eh_frame unwind information for the PLT.
@@ -2726,6 +2766,7 @@ Output_data_plt_x86_64_bnd::do_write(Output_file* of)
       this->fill_tlsdesc_entry(pov, got_address, plt_address, got_base,
 			       tlsdesc_got_offset, plt_offset);
       pov += this->get_plt_entry_size();
+      plt_offset += plt_entry_size;
     }
 
   // Write the additional PLT.
@@ -2821,6 +2862,7 @@ Output_data_plt_x86_64_ibt<size>::do_write(Output_file* of)
       this->fill_tlsdesc_entry(pov, got_address, plt_address, got_base,
 			       tlsdesc_got_offset, plt_offset);
       pov += this->get_plt_entry_size();
+      plt_offset += plt_entry_size;
     }
 
   // Write the additional PLT.
@@ -3688,6 +3730,7 @@ Target_x86_64<size>::Scan::local(Symbol_table* symtab,
 	    && (r_type == elfcpp::R_X86_64_GOTPCREL
 		|| r_type == elfcpp::R_X86_64_GOTPCRELX
 		|| r_type == elfcpp::R_X86_64_REX_GOTPCRELX)
+	    && reloc.get_r_addend() == -4
 	    && reloc.get_r_offset() >= 2
 	    && !is_ifunc)
 	  {
@@ -3980,12 +4023,6 @@ Target_x86_64<size>::Scan::local_reloc_may_be_function_pointer(
   unsigned int r_type,
   const elfcpp::Sym<size, false>&)
 {
-  // When building a shared library, do not fold any local symbols as it is
-  // not possible to distinguish pointer taken versus a call by looking at
-  // the relocation types.
-  if (parameters->options().shared())
-    return true;
-
   return possible_function_pointer_reloc(src_obj, src_indx,
                                          reloc.get_r_offset(), r_type);
 }
@@ -4005,16 +4042,8 @@ Target_x86_64<size>::Scan::global_reloc_may_be_function_pointer(
   Output_section* ,
   const elfcpp::Rela<size, false>& reloc,
   unsigned int r_type,
-  Symbol* gsym)
+  Symbol*)
 {
-  // When building a shared library, do not fold symbols whose visibility
-  // is hidden, internal or protected.
-  if (parameters->options().shared()
-      && (gsym->visibility() == elfcpp::STV_INTERNAL
-	  || gsym->visibility() == elfcpp::STV_PROTECTED
-	  || gsym->visibility() == elfcpp::STV_HIDDEN))
-    return true;
-
   return possible_function_pointer_reloc(src_obj, src_indx,
                                          reloc.get_r_offset(), r_type);
 }
@@ -4172,6 +4201,7 @@ Target_x86_64<size>::Scan::global(Symbol_table* symtab,
         Lazy_view<size> view(object, data_shndx);
         size_t r_offset = reloc.get_r_offset();
         if (!parameters->incremental()
+	    && reloc.get_r_addend() == -4
 	    && r_offset >= 2
             && Target_x86_64<size>::can_convert_mov_to_lea(gsym, r_type,
                                                            r_offset, &view))
@@ -4862,63 +4892,78 @@ Target_x86_64<size>::Relocate::relocate(
     case elfcpp::R_X86_64_GOTPCRELX:
     case elfcpp::R_X86_64_REX_GOTPCRELX:
       {
-      // Convert
-      // mov foo@GOTPCREL(%rip), %reg
-      // to lea foo(%rip), %reg.
-      // if possible.
-      if (!parameters->incremental()
-	  && ((gsym == NULL
-	       && rela.get_r_offset() >= 2
-	       && view[-2] == 0x8b
-	       && !psymval->is_ifunc_symbol())
-	      || (gsym != NULL
-		  && rela.get_r_offset() >= 2
-		  && Target_x86_64<size>::can_convert_mov_to_lea(gsym, r_type,
-								 0, &view))))
+      bool converted_p = false;
+
+      if (rela.get_r_addend() == -4)
 	{
-	  view[-2] = 0x8d;
-	  Reloc_funcs::pcrela32(view, object, psymval, addend, address);
-	}
-      // Convert
-      // callq *foo@GOTPCRELX(%rip) to
-      // addr32 callq foo
-      // and jmpq *foo@GOTPCRELX(%rip) to
-      // jmpq foo
-      // nop
-      else if (!parameters->incremental()
-	       && gsym != NULL
-	       && rela.get_r_offset() >= 2
-	       && Target_x86_64<size>::can_convert_callq_to_direct(gsym,
-								   r_type,
-								   0, &view))
-	{
-	  if (view[-1] == 0x15)
+	  // Convert
+	  // mov foo@GOTPCREL(%rip), %reg
+	  // to lea foo(%rip), %reg.
+	  // if possible.
+	  if (!parameters->incremental()
+	      && ((gsym == NULL
+		   && rela.get_r_offset() >= 2
+		   && view[-2] == 0x8b
+		   && !psymval->is_ifunc_symbol())
+		  || (gsym != NULL
+		      && rela.get_r_offset() >= 2
+		      && Target_x86_64<size>::can_convert_mov_to_lea(gsym,
+								     r_type,
+								     0,
+								     &view))))
 	    {
-	      // Convert callq *foo@GOTPCRELX(%rip) to addr32 callq.
-	      // Opcode of addr32 is 0x67 and opcode of direct callq is 0xe8.
-	      view[-2] = 0x67;
-	      view[-1] = 0xe8;
-	      // Convert GOTPCRELX to 32-bit pc relative reloc.
+	      view[-2] = 0x8d;
 	      Reloc_funcs::pcrela32(view, object, psymval, addend, address);
+	      converted_p = true;
 	    }
-	  else
+	  // Convert
+	  // callq *foo@GOTPCRELX(%rip) to
+	  // addr32 callq foo
+	  // and jmpq *foo@GOTPCRELX(%rip) to
+	  // jmpq foo
+	  // nop
+	  else if (!parameters->incremental()
+		   && gsym != NULL
+		   && rela.get_r_offset() >= 2
+		   && Target_x86_64<size>::can_convert_callq_to_direct(gsym,
+								       r_type,
+								       0,
+								       &view))
 	    {
-	      // Convert jmpq *foo@GOTPCRELX(%rip) to
-	      // jmpq foo
-	      // nop
-	      // The opcode of direct jmpq is 0xe9.
-	      view[-2] = 0xe9;
-	      // The opcode of nop is 0x90.
-	      view[3] = 0x90;
-	      // Convert GOTPCRELX to 32-bit pc relative reloc.  jmpq is rip
-	      // relative and since the instruction following the jmpq is now
-	      // the nop, offset the address by 1 byte.  The start of the
-              // relocation also moves ahead by 1 byte.
-	      Reloc_funcs::pcrela32(&view[-1], object, psymval, addend,
-				    address - 1);
+	      if (view[-1] == 0x15)
+		{
+		  // Convert callq *foo@GOTPCRELX(%rip) to addr32 callq.
+		  // Opcode of addr32 is 0x67 and opcode of direct callq
+		  // is 0xe8.
+		  view[-2] = 0x67;
+		  view[-1] = 0xe8;
+		  // Convert GOTPCRELX to 32-bit pc relative reloc.
+		  Reloc_funcs::pcrela32(view, object, psymval, addend,
+					address);
+		  converted_p = true;
+		}
+	      else
+		{
+		  // Convert jmpq *foo@GOTPCRELX(%rip) to
+		  // jmpq foo
+		  // nop
+		  // The opcode of direct jmpq is 0xe9.
+		  view[-2] = 0xe9;
+		  // The opcode of nop is 0x90.
+		  view[3] = 0x90;
+		  // Convert GOTPCRELX to 32-bit pc relative reloc.  jmpq
+		  // is rip relative and since the instruction following
+		  // the jmpq is now the nop, offset the address by 1
+		  // byte.  The start of the relocation also moves ahead
+		  // by 1 byte.
+		  Reloc_funcs::pcrela32(&view[-1], object, psymval, addend,
+					address - 1);
+		  converted_p = true;
+		}
 	    }
 	}
-      else
+
+      if (!converted_p)
 	{
 	  if (gsym != NULL)
 	    {
@@ -5460,26 +5505,49 @@ Target_x86_64<size>::Relocate::tls_desc_gd_to_ie(
 {
   if (r_type == elfcpp::R_X86_64_GOTPC32_TLSDESC)
     {
-      // leaq foo@tlsdesc(%rip), %rax
-      // ==> movq foo@gottpoff(%rip), %rax
+      // LP64: leaq foo@tlsdesc(%rip), %rax
+      //       ==> movq foo@gottpoff(%rip), %rax
+      // X32:  rex leal foo@tlsdesc(%rip), %eax
+      //       ==> rex movl foo@gottpoff(%rip), %eax
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, -3);
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, 4);
       tls::check_tls(relinfo, relnum, rela.get_r_offset(),
-		     view[-3] == 0x48 && view[-2] == 0x8d && view[-1] == 0x05);
+		     (((view[-3] & 0xfb) == 0x48
+		       || (size == 32 && (view[-3] & 0xfb) == 0x40))
+		      && view[-2] == 0x8d
+		      && (view[-1] & 0xc7) == 0x05));
       view[-2] = 0x8b;
       const elfcpp::Elf_Xword addend = rela.get_r_addend();
       Relocate_functions<size, false>::pcrela32(view, value, addend, address);
     }
   else
     {
-      // call *foo@tlscall(%rax)
-      // ==> nop; nop
+      // LP64: call *foo@tlscall(%rax)
+      //       ==> xchg %ax, %ax
+      // X32:  call *foo@tlscall(%eax)
+      //       ==> nopl (%rax)
       gold_assert(r_type == elfcpp::R_X86_64_TLSDESC_CALL);
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, 2);
+      int prefix = 0;
+      if (size == 32 && view[0] == 0x67)
+	{
+	  tls::check_range(relinfo, relnum, rela.get_r_offset(),
+			   view_size, 3);
+	  prefix = 1;
+	}
       tls::check_tls(relinfo, relnum, rela.get_r_offset(),
-		     view[0] == 0xff && view[1] == 0x10);
-      view[0] = 0x66;
-      view[1] = 0x90;
+		     view[prefix] == 0xff && view[prefix + 1] == 0x10);
+      if (prefix)
+	{
+	  view[0] = 0x0f;
+	  view[1] = 0x1f;
+	  view[2] = 0x00;
+	}
+      else
+	{
+	  view[0] = 0x66;
+	  view[1] = 0x90;
+	}
     }
 }
 
@@ -5499,27 +5567,51 @@ Target_x86_64<size>::Relocate::tls_desc_gd_to_le(
 {
   if (r_type == elfcpp::R_X86_64_GOTPC32_TLSDESC)
     {
-      // leaq foo@tlsdesc(%rip), %rax
-      // ==> movq foo@tpoff, %rax
+      // LP64: leaq foo@tlsdesc(%rip), %rax
+      //       ==> movq foo@tpoff, %rax
+      // X32:  rex leal foo@tlsdesc(%rip), %eax
+      //       ==> rex movl foo@tpoff, %eax
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, -3);
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, 4);
       tls::check_tls(relinfo, relnum, rela.get_r_offset(),
-		     view[-3] == 0x48 && view[-2] == 0x8d && view[-1] == 0x05);
+		     (((view[-3] & 0xfb) == 0x48
+		       || (size == 32 && (view[-3] & 0xfb) == 0x40))
+		      && view[-2] == 0x8d
+		      && (view[-1] & 0xc7) == 0x05));
+      view[-3] = (view[-3] & 0x48) | ((view[-3] >> 2) & 1);
       view[-2] = 0xc7;
-      view[-1] = 0xc0;
+      view[-1] = 0xc0 | ((view[-1] >> 3) & 7);
       value -= tls_segment->memsz();
       Relocate_functions<size, false>::rela32(view, value, 0);
     }
   else
     {
-      // call *foo@tlscall(%rax)
-      // ==> nop; nop
+      // LP64: call *foo@tlscall(%rax)
+      //       ==> xchg %ax, %ax
+      // X32:  call *foo@tlscall(%eax)
+      //       ==> nopl (%rax)
       gold_assert(r_type == elfcpp::R_X86_64_TLSDESC_CALL);
       tls::check_range(relinfo, relnum, rela.get_r_offset(), view_size, 2);
+      int prefix = 0;
+      if (size == 32 && view[0] == 0x67)
+	{
+	  tls::check_range(relinfo, relnum, rela.get_r_offset(),
+			   view_size, 3);
+	  prefix = 1;
+	}
       tls::check_tls(relinfo, relnum, rela.get_r_offset(),
-		     view[0] == 0xff && view[1] == 0x10);
-      view[0] = 0x66;
-      view[1] = 0x90;
+		     view[prefix] == 0xff && view[prefix + 1] == 0x10);
+      if (prefix)
+	{
+	  view[0] = 0x0f;
+	  view[1] = 0x1f;
+	  view[2] = 0x00;
+	}
+      else
+	{
+	  view[0] = 0x66;
+	  view[1] = 0x90;
+	}
     }
 }
 

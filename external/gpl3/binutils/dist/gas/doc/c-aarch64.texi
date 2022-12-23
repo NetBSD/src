@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2022 Free Software Foundation, Inc.
 @c Contributed by ARM Ltd.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -68,18 +68,28 @@ on the target processor.  The following processor names are recognized:
 @code{cortex-a76},
 @code{cortex-a76ae},
 @code{cortex-a77},
+@code{cortex-a78},
+@code{cortex-a78ae},
+@code{cortex-a78c},
+@code{cortex-a510},
+@code{cortex-a710},
 @code{ares},
 @code{exynos-m1},
 @code{falkor},
 @code{neoverse-n1},
+@code{neoverse-n2},
 @code{neoverse-e1},
+@code{neoverse-v1},
 @code{qdf24xx},
 @code{saphira},
 @code{thunderx},
 @code{vulcan},
 @code{xgene1}
+@code{xgene2},
+@code{cortex-r82},
+@code{cortex-x1},
 and
-@code{xgene2}.
+@code{cortex-x2}.
 The special name @code{all} may be used to allow the assembler to accept
 instructions valid for any supported processor, including all optional
 extensions.
@@ -100,7 +110,9 @@ issue an error message if an attempt is made to assemble an
 instruction which will not execute on the target architecture.  The
 following architecture names are recognized: @code{armv8-a},
 @code{armv8.1-a}, @code{armv8.2-a}, @code{armv8.3-a}, @code{armv8.4-a}
-@code{armv8.5-a}, and @code{armv8.6-a}.
+@code{armv8.5-a}, @code{armv8.6-a}, @code{armv8.7-a}, @code{armv8.8-a},
+@code{armv8-r}, @code{armv9-a}, @code{armv9.1-a}, @code{armv9.2-a},
+and @code{armv9.3-a}.
 
 If both @option{-mcpu} and @option{-march} are specified, the
 assembler will use the setting for @option{-mcpu}.  If neither are
@@ -144,82 +156,102 @@ automatically cause those extensions to be disabled.
 @multitable @columnfractions .12 .17 .17 .54
 @headitem Extension @tab Minimum Architecture @tab Enabled by default
  @tab Description
-@item @code{i8mm} @tab ARMv8.2-A @tab ARMv8.6-A or later
- @tab Enable Int8 Matrix Multiply extension.
-@item @code{f32mm} @tab ARMv8.2-A @tab No
- @tab Enable F32 Matrix Multiply extension.
-@item @code{f64mm} @tab ARMv8.2-A @tab No
- @tab Enable F64 Matrix Multiply extension.
+@item @code{aes} @tab ARMv8-A @tab No
+ @tab Enable the AES cryptographic extensions. This implies @code{fp} and
+ @code{simd}.
 @item @code{bf16} @tab ARMv8.2-A @tab ARMv8.6-A or later
  @tab Enable BFloat16 extension.
 @item @code{compnum} @tab ARMv8.2-A @tab ARMv8.3-A or later
- @tab Enable the complex number SIMD extensions.  This implies
- @code{fp16} and @code{simd}.
+ @tab Enable the complex number SIMD extensions.  This implies @code{fp16} and
+ @code{simd}.
 @item @code{crc} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable CRC instructions.
 @item @code{crypto} @tab ARMv8-A @tab No
- @tab Enable cryptographic extensions.  This implies @code{fp}, @code{simd}, @code{aes} and @code{sha2}.
-@item @code{aes} @tab ARMv8-A @tab No
- @tab Enable the AES cryptographic extensions. This implies @code{fp} and @code{simd}.
-@item @code{sha2} @tab ARMv8-A @tab No
- @tab Enable the SHA2 cryptographic extensions. This implies @code{fp} and @code{simd}.
-@item @code{sha3} @tab ARMv8.2-A @tab No
- @tab Enable the ARMv8.2-A SHA2 and SHA3 cryptographic extensions. This implies @code{fp}, @code{simd} and @code{sha2}.
-@item @code{sm4} @tab ARMv8.2-A @tab No
- @tab Enable the ARMv8.2-A SM3 and SM4 cryptographic extensions. This implies @code{fp} and @code{simd}.
+ @tab Enable cryptographic extensions.  This implies @code{fp}, @code{simd},
+ @code{aes} and @code{sha2}.
+@item @code{dotprod} @tab ARMv8.2-A @tab ARMv8.4-A or later
+ @tab Enable the Dot Product extension.  This implies @code{simd}.
+@item @code{f32mm} @tab ARMv8.2-A @tab No
+ @tab Enable F32 Matrix Multiply extension.  This implies @code{sve}.
+@item @code{f64mm} @tab ARMv8.2-A @tab No
+ @tab Enable F64 Matrix Multiply extension.  This implies @code{sve}.
+@item @code{flagm} @tab ARMv8-A @tab ARMv8.4-A or later
+ @tab Enable Flag Manipulation instructions.
+@item @code{fp16fml} @tab ARMv8.2-A @tab ARMv8.4-A or later
+ @tab Enable ARMv8.2 16-bit floating-point multiplication variant support. This
+ implies @code{fp} and  @code{fp16}.
+@item @code{fp16} @tab ARMv8.2-A @tab ARMv8.2-A or later
+ @tab Enable ARMv8.2 16-bit floating-point support.  This implies @code{fp}.
 @item @code{fp} @tab ARMv8-A @tab ARMv8-A or later
  @tab Enable floating-point extensions.
-@item @code{fp16} @tab ARMv8.2-A @tab ARMv8.2-A or later
- @tab Enable ARMv8.2 16-bit floating-point support.  This implies
- @code{fp}.
+@item @code{hbc} @tab @tab Armv8.8-A or later
+ @tab Enable Armv8.8-A hinted conditional branch instructions
+@item @code{i8mm} @tab ARMv8.2-A @tab ARMv8.6-A or later
+ @tab Enable Int8 Matrix Multiply extension.
 @item @code{lor} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable Limited Ordering Regions extensions.
+@item @code{ls64} @tab ARMv8.6-A @tab ARMv8.7-A or later
+ @tab Enable 64 Byte Loads/Stores.
 @item @code{lse} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable Large System extensions.
+@item @code{memtag} @tab ARMv8.5-A @tab No
+ @tab Enable ARMv8.5-A Memory Tagging Extensions.
+@item @code{mops} @tab @tab Armv8.8-A or later
+ @tab Enable Armv8.8-A memcpy and memset acceleration instructions
 @item @code{pan} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable Privileged Access Never support.
+@item @code{pauth} @tab ARMv8-A @tab No
+ @tab Enable Pointer Authentication.
+@item @code{predres} @tab ARMv8-A @tab ARMv8.5-A or later
+ @tab Enable the Execution and Data and Prediction instructions.
 @item @code{profile} @tab ARMv8.2-A @tab No
  @tab Enable statistical profiling extensions.
 @item @code{ras} @tab ARMv8-A @tab ARMv8.2-A or later
- @tab Enable the Reliability, Availability and Serviceability
- extension.
+ @tab Enable the Reliability, Availability and Serviceability extension.
 @item @code{rcpc} @tab ARMv8.2-A @tab ARMv8.3-A or later
  @tab Enable the weak release consistency extension.
 @item @code{rdma} @tab ARMv8-A @tab ARMv8.1-A or later
  @tab Enable ARMv8.1 Advanced SIMD extensions.  This implies @code{simd}.
-@item @code{simd} @tab ARMv8-A @tab ARMv8-A or later
- @tab Enable Advanced SIMD extensions.  This implies @code{fp}.
-@item @code{sve} @tab ARMv8.2-A @tab No
- @tab Enable the Scalable Vector Extensions.  This implies @code{fp16},
- @code{simd} and @code{compnum}.
-@item @code{dotprod} @tab ARMv8.2-A @tab ARMv8.4-A or later
- @tab Enable the Dot Product extension.  This implies @code{simd}.
-@item @code{fp16fml} @tab ARMv8.2-A @tab ARMv8.4-A or later
- @tab Enable ARMv8.2 16-bit floating-point multiplication variant support.
- This implies @code{fp16}.
-@item @code{sb} @tab ARMv8-A @tab ARMv8.5-A or later
- @tab Enable the speculation barrier instruction sb.
-@item @code{predres} @tab ARMv8-A @tab ARMv8.5-A or later
- @tab Enable the Execution and Data and Prediction instructions.
 @item @code{rng} @tab ARMv8.5-A @tab No
  @tab Enable ARMv8.5-A random number instructions.
+@item @code{sb} @tab ARMv8-A @tab ARMv8.5-A or later
+ @tab Enable the speculation barrier instruction sb.
+@item @code{sha2} @tab ARMv8-A @tab No
+ @tab Enable the SHA2 cryptographic extensions. This implies @code{fp} and
+ @code{simd}.
+@item @code{sha3} @tab ARMv8.2-A @tab No
+ @tab Enable the ARMv8.2-A SHA2 and SHA3 cryptographic extensions. This implies
+ @code{fp}, @code{simd} and @code{sha2}.
+@item @code{simd} @tab ARMv8-A @tab ARMv8-A or later
+ @tab Enable Advanced SIMD extensions.  This implies @code{fp}.
+@item @code{sm4} @tab ARMv8.2-A @tab No
+ @tab Enable the ARMv8.2-A SM3 and SM4 cryptographic extensions. This implies
+ @code{fp} and @code{simd}.
+@item @code{sme} @tab Armv9-A @tab No
+ @tab Enable SME Extension.
+@item @code{sme-f64} @tab Armv9-A @tab No
+ @tab Enable SME F64 Extension.
+@item @code{sme-i64} @tab Armv9-A @tab No
+ @tab Enable SME I64 Extension.
 @item @code{ssbs} @tab ARMv8-A @tab ARMv8.5-A or later
  @tab Enable Speculative Store Bypassing Safe state read and write.
-@item @code{memtag} @tab ARMv8.5-A @tab No
- @tab Enable ARMv8.5-A Memory Tagging Extensions.
-@item @code{tme} @tab ARMv8-A @tab No
- @tab Enable Transactional Memory Extensions.
-@item @code{sve2} @tab ARMv8-A @tab No
- @tab Enable the SVE2 Extension.
-@item @code{sve2-bitperm} @tab ARMv8-A @tab No
- @tab Enable SVE2 BITPERM Extension.
-@item @code{sve2-sm4} @tab ARMv8-A @tab No
- @tab Enable SVE2 SM4 Extension.
+@item @code{sve} @tab ARMv8.2-A @tab Armv9-A or later
+ @tab Enable the Scalable Vector Extensions.  This implies @code{fp16},
+ @code{simd} and @code{compnum}.
+@item @code{sve2} @tab ARMv8-A @tab Armv9-A or later
+ @tab Enable the SVE2 Extension.  This implies @code{sve}.
 @item @code{sve2-aes} @tab ARMv8-A @tab No
  @tab Enable SVE2 AES Extension.  This also enables the .Q->.B form of the
- @code{pmullt} and @code{pmullb} instructions.
+ @code{pmullt} and @code{pmullb} instructions.  This implies @code{aes} and
+ @code{sve2}.
+@item @code{sve2-bitperm} @tab ARMv8-A @tab No
+ @tab Enable SVE2 BITPERM Extension.
 @item @code{sve2-sha3} @tab ARMv8-A @tab No
- @tab Enable SVE2 SHA3 Extension.
+ @tab Enable SVE2 SHA3 Extension.  This implies @code{sha3} and @code{sve2}.
+@item @code{sve2-sm4} @tab ARMv8-A @tab No
+ @tab Enable SVE2 SM4 Extension.  This implies @code{sm4} and @code{sve2}.
+@item @code{tme} @tab ARMv8-A @tab No
+ @tab Enable Transactional Memory Extensions.
 @end multitable
 
 @node AArch64 Syntax

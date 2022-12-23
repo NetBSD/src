@@ -1,7 +1,7 @@
 # Makefile for the libiberty library.
 # Originally written by K. Richard Pixley <rich@cygnus.com>.
 #
-# Copyright (C) 1990-2020 Free Software Foundation, Inc.
+# Copyright (C) 1990-2022 Free Software Foundation, Inc.
 #
 # This file is part of the libiberty library.
 # Libiberty is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ bindir = @bindir@
 libdir = @libdir@
 includedir = @includedir@
 target_header_dir = @target_header_dir@
+dvidir = @dvidir@
 objext = @OBJEXT@
 
 SHELL = @SHELL@
@@ -49,13 +50,13 @@ mkinstalldirs = $(SHELL) $(libiberty_topdir)/mkinstalldirs
 # Some compilers can't handle cc -c blah.c -o foo/blah.o.
 OUTPUT_OPTION = @OUTPUT_OPTION@
 
-AR = @AR@
+AR = @AR@ @AR_PLUGIN_OPTION@
 AR_FLAGS = rc
 
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
-RANLIB = @RANLIB@
+RANLIB = @RANLIB@ @RANLIB_PLUGIN_OPTION@
 MAKEINFO = @MAKEINFO@
 PERL = @PERL@
 
@@ -112,7 +113,8 @@ installcheck: installcheck-subdir
 INCDIR=$(srcdir)/$(MULTISRCTOP)../include
 
 COMPILE.c = $(CC) -c @DEFS@ $(CFLAGS) $(CPPFLAGS) -I. -I$(INCDIR) \
-               $(HDEFINES) @ac_libiberty_warn_cflags@ -D_GNU_SOURCE
+               $(HDEFINES) @ac_libiberty_warn_cflags@ -D_GNU_SOURCE \
+               @CET_HOST_FLAGS@
 
 # Just to make sure we don't use a built-in rule with VPATH
 .c.$(objext):
@@ -123,7 +125,7 @@ COMPILE.c = $(CC) -c @DEFS@ $(CFLAGS) $(CPPFLAGS) -I. -I$(INCDIR) \
 # CONFIGURED_OFILES and funcs in configure.ac.  Also run "make maint-deps"
 # to build the new rules.
 CFILES = alloca.c argv.c asprintf.c atexit.c				\
-	basename.c bcmp.c bcopy.c bsearch.c bzero.c			\
+	basename.c bcmp.c bcopy.c bsearch.c bsearch_r.c bzero.c		\
 	calloc.c choose-temp.c clock.c concat.c cp-demangle.c		\
 	 cp-demint.c cplus-dem.c crc32.c				\
 	d-demangle.c dwarfnames.c dyn-string.c				\
@@ -167,6 +169,7 @@ REQUIRED_OFILES =							\
 	./regex.$(objext) ./cplus-dem.$(objext) ./cp-demangle.$(objext) \
 	./md5.$(objext) ./sha1.$(objext) ./alloca.$(objext)		\
 	./argv.$(objext)						\
+	./bsearch_r.$(objext)						\
 	./choose-temp.$(objext) ./concat.$(objext)			\
 	./cp-demint.$(objext) ./crc32.$(objext) ./d-demangle.$(objext)	\
 	./dwarfnames.$(objext) ./dyn-string.$(objext)			\
@@ -274,7 +277,24 @@ $(TESTLIB): $(REQUIRED_OFILES) $(CONFIGURED_OFILES)
 info: libiberty.info info-subdir
 install-info: install-info-subdir
 clean-info: clean-info-subdir
-dvi: libiberty.dvi dvi-subdir
+
+LIBIBERTY_DVIFILES = libiberty.dvi
+
+dvi: $(LIBIBERTY_DVIFILES) dvi-subdir
+
+.PHONY: install-dvi
+
+dvi__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+
+install-dvi: $(LIBIBERTY_DVIFILES)
+	@$(NORMAL_INSTALL)
+	test -z "$(dvidir)" || $(mkinstalldirs) "$(DESTDIR)$(dvidir)"
+	@list='$(LIBIBERTY_DVIFILES)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(dvi__strip_dir) \
+	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(dvidir)/$$f'"; \
+	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(dvidir)/$$f"; \
+	done
 
 LIBIBERTY_PDFFILES = libiberty.pdf
 
@@ -409,8 +429,10 @@ stamp-noasandir:
 
 .PHONY: all etags tags TAGS ls clean stage1 stage2
 
+ETAGS = @ETAGS@
+
 etags tags TAGS: etags-subdir
-	cd $(srcdir) && etags $(CFILES)
+	cd $(srcdir) && $(ETAGS) $(CFILES)
 
 # The standalone demangler (c++filt) has been moved to binutils.
 # But make this target work anyway for demangler hacking.
@@ -479,15 +501,24 @@ config.status: $(srcdir)/configure
 	$(SHELL) ./config.status --recheck
 
 AUTOCONF = autoconf
-configure_deps = $(srcdir)/aclocal.m4 \
+ACLOCAL = aclocal
+ACLOCAL_AMFLAGS = -I ../config -I ..
+aclocal_deps = \
 	$(srcdir)/../config/acx.m4 \
+	$(srcdir)/../config/cet.m4 \
+	$(srcdir)/../config/enable.m4 \
+	$(srcdir)/../config/gcc-plugin.m4 \
 	$(srcdir)/../config/no-executables.m4 \
 	$(srcdir)/../config/override.m4 \
 	$(srcdir)/../config/picflag.m4 \
-	$(srcdir)/../config/warnings.m4
+	$(srcdir)/../config/warnings.m4 \
+	$(srcdir)/acinclude.m4
 
-$(srcdir)/configure: @MAINT@ $(srcdir)/configure.ac $(configure_deps)
+$(srcdir)/configure: @MAINT@ $(srcdir)/configure.ac $(srcdir)/aclocal.m4
 	cd $(srcdir) && $(AUTOCONF)
+
+$(srcdir)/aclocal.m4: @MAINT@ $(aclocal_deps)
+	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 # Depending on config.h makes sure that config.status has been re-run
 # if needed.  This prevents problems with parallel builds, in case
@@ -597,6 +628,15 @@ $(CONFIGURED_OFILES): stamp-picdir stamp-noasandir
 	  $(COMPILE.c) $(PICFLAG) $(NOASANFLAG) $(srcdir)/bsearch.c -o noasan/$@; \
 	else true; fi
 	$(COMPILE.c) $(srcdir)/bsearch.c $(OUTPUT_OPTION)
+
+./bsearch_r.$(objext): $(srcdir)/bsearch_r.c config.h $(INCDIR)/ansidecl.h
+	if [ x"$(PICFLAG)" != x ]; then \
+	  $(COMPILE.c) $(PICFLAG) $(srcdir)/bsearch_r.c -o pic/$@; \
+	else true; fi
+	if [ x"$(NOASANFLAG)" != x ]; then \
+	  $(COMPILE.c) $(PICFLAG) $(NOASANFLAG) $(srcdir)/bsearch_r.c -o noasan/$@; \
+	else true; fi
+	$(COMPILE.c) $(srcdir)/bsearch_r.c $(OUTPUT_OPTION)
 
 ./bzero.$(objext): $(srcdir)/bzero.c
 	if [ x"$(PICFLAG)" != x ]; then \

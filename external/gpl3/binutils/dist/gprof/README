@@ -358,7 +358,7 @@ Short Form:	Long Form:
 ** File Format Changes
 
 The old BSD-derived format used for profile data does not contain a
-magic cookie that allows to check whether a data file really is a
+magic cookie that allows one to check whether a data file really is a
 gprof file.  Furthermore, it does not provide a version number, thus
 rendering changes to the file format almost impossible.  GNU gprof
 uses a new file format that provides these features.  For backward
@@ -441,7 +441,7 @@ file in a suitable format.  This should be fixed for future releases
 of gcc.  In the meantime, contact davidm@cs.arizona.edu for a version
 of __bb_exit_func() to is appropriate.
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* rx-defs.h Renesas RX internal definitions
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

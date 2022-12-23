@@ -1,5 +1,5 @@
 /* od-xcoff.c -- dump information about an xcoff object file.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
    Written by Tristan Gingold, Adacore.
 
    This file is part of GNU Binutils.
@@ -300,7 +300,7 @@ static const struct xlat_table rtype_xlat[] =
     RTYPE_ENTRY (NEG),
     RTYPE_ENTRY (REL),
     RTYPE_ENTRY (TOC),
-    RTYPE_ENTRY (RTB),
+    RTYPE_ENTRY (TRL),
     RTYPE_ENTRY (GL),
     RTYPE_ENTRY (TCL),
     RTYPE_ENTRY (BA),
@@ -308,7 +308,6 @@ static const struct xlat_table rtype_xlat[] =
     RTYPE_ENTRY (RL),
     RTYPE_ENTRY (RLA),
     RTYPE_ENTRY (REF),
-    RTYPE_ENTRY (TRL),
     RTYPE_ENTRY (TRLA),
     RTYPE_ENTRY (RRTBI),
     RTYPE_ENTRY (RRTBA),
@@ -839,13 +838,13 @@ dump_xcoff32_symbols (bfd *abfd, struct xcoff_dump *data)
                 {
                   /* Function aux entry  (Do not translate).  */
                   printf ("  exptr: %08x fsize: %08x lnnoptr: %08x endndx: %u\n",
-                          (unsigned)bfd_h_get_32 (abfd, aux->x_sym.x_tagndx),
+                          (unsigned)bfd_h_get_32 (abfd, aux->x_fcn.x_exptr),
                           (unsigned)bfd_h_get_32
-                            (abfd, aux->x_sym.x_misc.x_fsize),
+                            (abfd, aux->x_fcn.x_fsize),
                           (unsigned)bfd_h_get_32
-                            (abfd, aux->x_sym.x_fcnary.x_fcn.x_lnnoptr),
+                            (abfd, aux->x_fcn.x_lnnoptr),
                           (unsigned)bfd_h_get_32
-                            (abfd, aux->x_sym.x_fcnary.x_fcn.x_endndx));
+                            (abfd, aux->x_fcn.x_endndx));
                 }
               else if (j == 1 || (j == 0 && s->sym.numaux == 1))
                 {
@@ -900,7 +899,7 @@ dump_xcoff32_symbols (bfd *abfd, struct xcoff_dump *data)
             case C_FCN:
               printf ("  lnno: %u\n",
                       (unsigned)bfd_h_get_16
-                      (abfd, aux->x_sym.x_misc.x_lnsz.x_lnno));
+                      (abfd, aux->x_sym.x_lnno));
               break;
             default:
               /* Do not translate - generic field name.  */

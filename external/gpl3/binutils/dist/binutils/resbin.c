@@ -1,5 +1,5 @@
 /* resbin.c -- manipulate the Windows binary resource format.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -54,7 +54,7 @@ static rc_res_resource *bin_to_res_group_cursor (windres_bfd *, const bfd_byte *
 static rc_res_resource *bin_to_res_group_icon (windres_bfd *, const bfd_byte *, rc_uint_type);
 static rc_res_resource *bin_to_res_version (windres_bfd *, const bfd_byte *, rc_uint_type);
 static rc_res_resource *bin_to_res_userdata (windres_bfd *, const bfd_byte *, rc_uint_type);
-static rc_res_resource *bin_to_res_toolbar (windres_bfd *, const bfd_byte *, rc_uint_type);
+static rc_res_resource *bin_to_res_toolbar (windres_bfd *, const bfd_byte *);
 static void get_version_header (windres_bfd *, const bfd_byte *, rc_uint_type, const char *,
 				unichar **, rc_uint_type *, rc_uint_type *, rc_uint_type *,
 				rc_uint_type *);
@@ -105,7 +105,7 @@ bin_to_res (windres_bfd *wrbfd, rc_res_id type, const bfd_byte *data,
 	case RT_VERSION:
 	  return bin_to_res_version (wrbfd, data, length);
 	case RT_TOOLBAR:
-	  return  bin_to_res_toolbar (wrbfd, data, length);
+	  return  bin_to_res_toolbar (wrbfd, data);
 
 	}
     }
@@ -967,6 +967,9 @@ bin_to_res_version (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type lengt
   if (type != 0)
     fatal (_("unexpected version type %d"), (int) type);
 
+  /* PR 27686: Ignore any padding bytes after the end of the version structure.  */
+  length = verlen;
+
   data += off;
   length -= off;
 
@@ -1213,7 +1216,7 @@ bin_to_res_userdata (windres_bfd *wrbfd ATTRIBUTE_UNUSED, const bfd_byte *data,
 }
 
 static rc_res_resource *
-bin_to_res_toolbar (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type length)
+bin_to_res_toolbar (windres_bfd *wrbfd, const bfd_byte *data)
 {
   rc_toolbar *ri;
   rc_res_resource *r;
@@ -1226,7 +1229,6 @@ bin_to_res_toolbar (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type lengt
   ri->items = NULL;
 
   data += 12;
-  length -= 12;
   for (i=0 ; i < ri->nitems; i++)
   {
     rc_toolbar_item *it;
@@ -1235,7 +1237,6 @@ bin_to_res_toolbar (windres_bfd *wrbfd, const bfd_byte *data, rc_uint_type lengt
     it->id.u.id = (int) windres_get_32 (wrbfd, data, 4);
     it->prev = it->next = NULL;
     data += 4;
-    length -= 4;
     if(ri->items) {
       rc_toolbar_item *ii = ri->items;
       while (ii->next != NULL)

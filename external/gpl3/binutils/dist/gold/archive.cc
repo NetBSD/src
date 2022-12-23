@@ -1,6 +1,6 @@
 // archive.cc -- archive support for gold
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -116,13 +116,6 @@ Library_base::should_include_member(Symbol_table* symtab, Layout* layout,
   if (parameters->options().is_undefined(sym_name))
     {
       *why = "-u ";
-      *why += sym_name;
-      return Library_base::SHOULD_INCLUDE_YES;
-    }
-
-  if (parameters->options().is_export_dynamic_symbol(sym_name))
-    {
-      *why = "--export-dynamic-symbol ";
       *why += sym_name;
       return Library_base::SHOULD_INCLUDE_YES;
     }

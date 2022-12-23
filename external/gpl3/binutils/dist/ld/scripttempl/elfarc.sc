@@ -69,7 +69,7 @@ test -z "$ENTRY" && ENTRY=start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 # If we request a big endian toolchain, give a big endian linker
-test "${ARC_ENDIAN}" == "big" && OUTPUT_FORMAT=${BIG_OUTPUT_FORMAT}
+test "${ARC_ENDIAN}" = "big" && OUTPUT_FORMAT=${BIG_OUTPUT_FORMAT}
 if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHINE}; fi
 test -z "${ELFSIZE}" && ELFSIZE=32
 test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
@@ -118,6 +118,20 @@ if test -z "${NO_SMALL_DATA}"; then
   REL_SBSS2=".rel.sbss2    ${RELOCATING-0} : { *(.rel.sbss2${RELOCATING+ .rel.sbss2.* .rel.gnu.linkonce.sb2.*}) }
   .rela.sbss2   ${RELOCATING-0} : { *(.rela.sbss2${RELOCATING+ .rela.sbss2.* .rela.gnu.linkonce.sb2.*}) }"
 fi
+INIT_ARRAY=".init_array   ${RELOCATING-0} :
+  {
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_start = .);}}
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array))
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_end = .);}}
+  }"
+FINI_ARRAY=".fini_array   ${RELOCATING-0} :
+  {
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_start = .);}}
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array))
+    ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
+  }"
 CTOR=".ctors        ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
@@ -157,6 +171,9 @@ STACK="  .stack        ${RELOCATING-0}${RELOCATING+${STACK_ADDR}} :
     ${RELOCATING+_stack = .;}
     *(.stack)
   }"
+
+TEXT_START_ADDR="SEGMENT_START(\"text-segment\", ${TEXT_START_ADDR})"
+SHLIB_TEXT_START_ADDR="SEGMENT_START(\"text-segment\", ${SHLIB_TEXT_START_ADDR:-0})"
 
 # if this is for an embedded system, don't add SIZEOF_HEADERS.
 if [ -z "$EMBEDDED" ]; then
@@ -314,14 +331,8 @@ cat <<EOF
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_start = .);}}
   .preinit_array   ${RELOCATING-0} : { *(.preinit_array) }
   ${RELOCATING+${CREATE_SHLIB-PROVIDE (__preinit_array_end = .);}}
-
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_start = .);}}
-  .init_array   ${RELOCATING-0} : { *(.init_array) }
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__init_array_end = .);}}
-
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_start = .);}}
-  .fini_array   ${RELOCATING-0} : { *(.fini_array) }
-  ${RELOCATING+${CREATE_SHLIB-PROVIDE (__fini_array_end = .);}}
+  ${RELOCATING+${INIT_ARRAY}}
+  ${RELOCATING+${FINI_ARRAY}}
 
   .data         ${RELOCATING-0} :
   {

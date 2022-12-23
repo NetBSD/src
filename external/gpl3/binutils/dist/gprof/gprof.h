@@ -40,6 +40,10 @@
 #undef PACKAGE_VERSION
 #include "gconfig.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #ifndef MIN
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 #endif
@@ -50,17 +54,11 @@
 /* AIX defines hz as a macro.  */
 #undef hz
 
-#ifndef PATH_MAX
-#define PATH_MAX	1024
-#endif
-
 #define	A_OUTNAME	"a.out"		/* default core filename */
 #define	GMONNAME	"gmon.out"	/* default profile filename */
 #define	GMONSUM		"gmon.sum"	/* profile summary filename */
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 /* Undefine BFD's `_' macro - it uses dgetext() and we want to use gettext().  */
@@ -117,20 +115,20 @@ extern long hz;			/* ticks per second */
 extern int debug_level;			/* debug level */
 extern int output_style;
 extern int output_width;		/* controls column width in index */
-extern bfd_boolean bsd_style_output;	/* as opposed to FSF style output */
-extern bfd_boolean demangle;		/* demangle symbol names? */
-extern bfd_boolean ignore_direct_calls;	/* don't count direct calls */
-extern bfd_boolean ignore_static_funcs;	/* suppress static functions */
-extern bfd_boolean ignore_zeros;	/* ignore unused symbols/files */
-extern bfd_boolean line_granularity;	/* function or line granularity? */
-extern bfd_boolean print_descriptions;	/* output profile description */
-extern bfd_boolean print_path;		/* print path or just filename? */
-extern bfd_boolean ignore_non_functions; /* Ignore non-function symbols.  */
-extern bfd_boolean inline_file_names;	/* print file names after symbols */
+extern bool bsd_style_output;		/* as opposed to FSF style output */
+extern bool demangle;			/* demangle symbol names? */
+extern bool ignore_direct_calls;	/* don't count direct calls */
+extern bool ignore_static_funcs;	/* suppress static functions */
+extern bool ignore_zeros;		/* ignore unused symbols/files */
+extern bool line_granularity;		/* function or line granularity? */
+extern bool print_descriptions;		/* output profile description */
+extern bool print_path;			/* print path or just filename? */
+extern bool ignore_non_functions;	/* Ignore non-function symbols.  */
+extern bool inline_file_names;		/* print file names after symbols */
 
 extern File_Format file_format;		/* requested file format */
 
-extern bfd_boolean first_output;	/* no output so far? */
+extern bool first_output;		/* no output so far? */
 
 extern void done (int status) ATTRIBUTE_NORETURN;
 

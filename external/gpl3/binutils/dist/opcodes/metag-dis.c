@@ -1,5 +1,5 @@
 /* Disassemble Imagination Technologies Meta instructions.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This library is free software; you can redistribute it and/or modify
@@ -641,7 +641,7 @@ cache_addr_str (char *buf, unsigned int buf_size, unsigned int insn_word,
 static void
 lookup_reg_list (char *reg_buf, size_t buf_len, unsigned int reg_unit,
 		 unsigned int reg_no, unsigned int rmask,
-		 bfd_boolean is_fpu_64bit)
+		 bool is_fpu_64bit)
 {
   const char *regs[MGET_MSET_MAX_REGS];
   size_t used_regs = 1, i, remaining;
@@ -727,7 +727,7 @@ print_get_set (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	       const insn_template *template,
 	       disassemble_info *outf)
 {
-  bfd_boolean is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
+  bool is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
   char buf[OPERAND_WIDTH];
   char addr_buf[ADDR_WIDTH];
   unsigned int reg_unit, reg_no;
@@ -776,8 +776,8 @@ print_get_set_ext (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		   const insn_template *template,
 		   disassemble_info *outf)
 {
-  bfd_boolean is_get = MINOR_OPCODE (template->meta_opcode) == GET_EXT_MINOR;
-  bfd_boolean is_mov = MINOR_OPCODE (template->meta_opcode) == MOV_EXT_MINOR;
+  bool is_get = MINOR_OPCODE (template->meta_opcode) == GET_EXT_MINOR;
+  bool is_mov = MINOR_OPCODE (template->meta_opcode) == MOV_EXT_MINOR;
   char buf[OPERAND_WIDTH];
   char addr_buf[ADDR_WIDTH];
   unsigned int reg_unit, reg_no;
@@ -815,9 +815,9 @@ print_mget_mset (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		 const insn_template *template,
 		 disassemble_info *outf)
 {
-  bfd_boolean is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
-  bfd_boolean is_fpu = (MINOR_OPCODE (template->meta_opcode) & 0x6) == 0x6;
-  bfd_boolean is_64bit = (MINOR_OPCODE (template->meta_opcode) & 0x1) == 0x1;
+  bool is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
+  bool is_fpu = (MINOR_OPCODE (template->meta_opcode) & 0x6) == 0x6;
+  bool is_64bit = (MINOR_OPCODE (template->meta_opcode) & 0x1) == 0x1;
   char buf[OPERAND_WIDTH];
   char addr_buf[ADDR_WIDTH];
   char reg_buf[REG_WIDTH];
@@ -1185,7 +1185,7 @@ print_alu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int unit_bit = (insn_word >> 24) & 0x1;
   unsigned int ca = (insn_word >> 5) & 0x1;
   unsigned int se = (insn_word >> 1) & 0x1;
-  bfd_boolean is_quickrot = template->arg_type & GP_ARGS_QR;
+  bool is_quickrot = template->arg_type & GP_ARGS_QR;
   enum metag_unit base_unit;
   enum metag_unit dest_unit;
   const char *dest_reg;
@@ -1719,7 +1719,7 @@ print_fmov (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int p = (insn_word >> 6) & 0x1;
   unsigned int d = (insn_word >> 5) & 0x1;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src_reg;
   const char *cc_flags;
@@ -1769,8 +1769,8 @@ print_fmmov (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   char buf[OPERAND_WIDTH * 2];
   char data_buf[REG_WIDTH];
   char fpu_buf[REG_WIDTH];
-  bfd_boolean to_fpu = MAJOR_OPCODE (insn_word) == OPC_GET;
-  bfd_boolean is_mmovl = MINOR_OPCODE (insn_word) & 0x1;
+  bool to_fpu = MAJOR_OPCODE (insn_word) == OPC_GET;
+  bool is_mmovl = MINOR_OPCODE (insn_word) & 0x1;
   unsigned int rmask = (insn_word >> 7) & RMASK_MASK;
   unsigned int fpu_no, data_no, data_unit;
 
@@ -1782,7 +1782,7 @@ print_fmmov (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   else
     data_unit = UNIT_D0;
 
-  lookup_reg_list (data_buf, REG_WIDTH, data_unit, data_no, rmask, FALSE);
+  lookup_reg_list (data_buf, REG_WIDTH, data_unit, data_no, rmask, false);
   lookup_reg_list (fpu_buf, REG_WIDTH, UNIT_FX, fpu_no,
 		   convert_fx_rmask (rmask), is_mmovl);
 
@@ -1921,7 +1921,7 @@ print_fcmp (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int d = (insn_word >> 5) & 0x1;
   unsigned int q = (insn_word >> 7) & 0x1;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src_reg;
   const char *cc_flags;
@@ -1958,7 +1958,7 @@ print_fminmax (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int d = (insn_word >> 5) & 0x1;
   unsigned int src1_no, src2_no, dest_no;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src1_reg;
   const char *src2_reg;
@@ -1994,7 +1994,7 @@ print_fconv (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int z = (insn_word >> 12) & 0x1;
   unsigned int src_no, dest_no;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src_reg;
   const char *cc_flags;
@@ -2027,7 +2027,7 @@ print_fconvx (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int xl = (insn_word >> 7) & 0x1;
   unsigned int src_no, dest_no, fraction_bits;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src_reg;
   const char *cc_flags;
@@ -2067,7 +2067,7 @@ print_fbarith (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   unsigned int d = (insn_word >> 5) & 0x1;
   unsigned int src1_no, src2_no, dest_no;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = cc != COND_A && cc != COND_NV;
+  bool show_cond = cc != COND_A && cc != COND_NV;
   const char *dest_reg;
   const char *src1_reg;
   const char *src2_reg;
@@ -2099,20 +2099,17 @@ print_fearith (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 {
   char buf[OPERAND_WIDTH];
   char prefix_buf[10];
-  bfd_boolean is_muz = (MINOR_OPCODE (insn_word) == 0x6 &&
-			((insn_word >> 4) & 0x1));
-  bfd_boolean is_mac = (MINOR_OPCODE (insn_word) == 0x6 &&
-			(insn_word & 0x1f) == 0);
-  bfd_boolean is_maw = (MINOR_OPCODE (insn_word) == 0x6 &&
-			((insn_word >> 3) & 0x1));
+  bool is_muz = MINOR_OPCODE (insn_word) == 0x6 && ((insn_word >> 4) & 0x1);
+  bool is_mac = MINOR_OPCODE (insn_word) == 0x6 && (insn_word & 0x1f) == 0;
+  bool is_maw = MINOR_OPCODE (insn_word) == 0x6 && ((insn_word >> 3) & 0x1);
   unsigned int o3o = insn_word & 0x1;
   unsigned int q = is_muz && ((insn_word >> 1) & 0x1);
   unsigned int n = (insn_word >> 7) & 0x1;
   unsigned int p = (insn_word >> 6) & 0x1;
   unsigned int d = (insn_word >> 5) & 0x1;
   unsigned int cc = (insn_word >> 1) & CC_MASK;
-  bfd_boolean show_cond = (MINOR_OPCODE (insn_word) == 0x5 && cc != COND_A &&
-			   cc != COND_NV);
+  bool show_cond = (MINOR_OPCODE (insn_word) == 0x5 && cc != COND_A
+		    && cc != COND_NV);
   unsigned int src1_no, src2_no, dest_no;
   const char *dest_reg;
   const char *src1_reg;
@@ -2208,7 +2205,7 @@ print_fget_set_acf (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		    const insn_template *template,
 		    disassemble_info *outf)
 {
-  bfd_boolean is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
+  bool is_get = MAJOR_OPCODE (template->meta_opcode) == OPC_GET;
   char buf[OPERAND_WIDTH];
   char addr_buf[ADDR_WIDTH];
   unsigned int part;
@@ -2273,7 +2270,7 @@ lookup_dsp_name (unsigned int num, unsigned int unit)
 
 /* Return the name of the DSP RAM register for NUM and UNIT.  */
 static const char *
-lookup_dspram_name (unsigned int num, unsigned int unit, bfd_boolean load)
+lookup_dspram_name (unsigned int num, unsigned int unit, bool load)
 {
   size_t i, nentries;
 
@@ -2293,7 +2290,7 @@ lookup_dspram_name (unsigned int num, unsigned int unit, bfd_boolean load)
    number in a DSP instruction. SOURCE indicates whether this
    register is a source or destination operand.  */
 static const char *
-lookup_any_reg_name (unsigned int unit, unsigned int num, bfd_boolean source)
+lookup_any_reg_name (unsigned int unit, unsigned int num, bool source)
 {
   /* A register with the top bit set (5th bit) indicates a DSPRAM
      register.  */
@@ -2322,15 +2319,15 @@ print_dget_set (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		const insn_template *template,
 		disassemble_info *outf)
 {
-  bfd_boolean is_get = (template->meta_opcode & 0x100);
+  bool is_get = (template->meta_opcode & 0x100);
   char buf[OPERAND_WIDTH];
   char addr_buf[ADDR_WIDTH];
   char prefix[DSP_PREFIX_WIDTH];
   unsigned int part;
   const char *reg_name[2];
-  bfd_boolean is_high = FALSE;
-  bfd_boolean is_dual = (insn_word & 0x4);
-  bfd_boolean is_template = (insn_word & 0x2);
+  bool is_high = false;
+  bool is_dual = (insn_word & 0x4);
+  bool is_template = (insn_word & 0x2);
   const char *base_reg = "?";
   unsigned int addr_unit, base_no, unit;
 
@@ -2438,8 +2435,8 @@ print_dtemplate (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
   char buf[OPERAND_WIDTH];
   char prefix[DSP_PREFIX_WIDTH];
   unsigned int offset[4];
-  bfd_boolean is_half = (MINOR_OPCODE (insn_word) == 0x5);
-  bfd_boolean daop_only = (MINOR_OPCODE (insn_word) == 0x3);
+  bool is_half = (MINOR_OPCODE (insn_word) == 0x5);
+  bool daop_only = (MINOR_OPCODE (insn_word) == 0x3);
 
   offset[0] = ((insn_word >> 19) & REG_MASK);
   offset[1] = ((insn_word >> 14) & REG_MASK);
@@ -2463,8 +2460,8 @@ print_dtemplate (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 static void
 decode_template_definition(unsigned int insn_word, char *buf, size_t len)
 {
-  bfd_boolean load = ((insn_word >> 13) & 0x1);
-  bfd_boolean dspram = (((insn_word >> 17) & 0x3) == 0x3);
+  bool load = ((insn_word >> 13) & 0x1);
+  bool dspram = (((insn_word >> 17) & 0x3) == 0x3);
   const char *template[1];
   unsigned int tidx = ((insn_word >> 9) & TEMPLATE_REGS_MASK);
   enum metag_unit au, ram_unit;
@@ -2487,7 +2484,7 @@ decode_template_definition(unsigned int insn_word, char *buf, size_t len)
     }
   else
     {
-      bfd_boolean im = (((insn_word >> 18) & 0x1) != 0);
+      bool im = (((insn_word >> 18) & 0x1) != 0);
 
       au = (((insn_word >> 23) & 0x1) == 0) ? UNIT_A0 : UNIT_A1;
       addr_reg_nums[0] = ((insn_word >> 19) & DSP_REG_MASK);
@@ -2535,36 +2532,36 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	    const insn_template *template,
 	    disassemble_info *outf)
 {
-  bfd_boolean is_dual = FALSE;
+  bool is_dual = false;
   unsigned int data_unit = (((insn_word >> 24) & 0x1) ? UNIT_D1 : UNIT_D0);
   const char *reg_names[3];
   unsigned int reg_nums[3];
-  bfd_boolean ac = ((insn_word >> 7) & 0x1);
+  bool ac = ((insn_word >> 7) & 0x1);
   char buf[OPERAND_WIDTH];
   char prefix[DSP_PREFIX_WIDTH];
   size_t len;
-  bfd_boolean is_mod = FALSE;
-  bfd_boolean is_overflow = FALSE;
+  bool is_mod = false;
+  bool is_overflow = false;
   unsigned int reg_brackets[3];
-  bfd_boolean is_w_mx = FALSE;
-  bfd_boolean is_b_mx = FALSE;
-  bfd_boolean imm = FALSE;
-  bfd_boolean is_quickrot64 = FALSE;
-  bfd_boolean conditional = FALSE;
+  bool is_w_mx = false;
+  bool is_b_mx = false;
+  bool imm = false;
+  bool is_quickrot64 = false;
+  bool conditional = false;
   const char *cc_flags = NULL;
-  bfd_boolean is_unsigned = FALSE;
+  bool is_unsigned = false;
 
   memset (reg_brackets, 0, sizeof (reg_brackets));
 
   if (template->arg_type & DSP_ARGS_1)
     {
-      bfd_boolean is_template = FALSE;
+      bool is_template = false;
       const char *addr_reg = NULL;
-      bfd_boolean qr = FALSE;
-      bfd_boolean is_acc_add = FALSE;
-      bfd_boolean is_acc_sub = FALSE;
-      bfd_boolean is_acc_zero = FALSE;
-      bfd_boolean is_split8 = (template->arg_type & DSP_ARGS_SPLIT8);
+      bool qr = false;
+      bool is_acc_add = false;
+      bool is_acc_sub = false;
+      bool is_acc_zero = false;
+      bool is_split8 = (template->arg_type & DSP_ARGS_SPLIT8);
 
       /* Read DU bit.  */
       data_unit = ((insn_word >> 24) & 0x1) ? UNIT_D1 : UNIT_D0;
@@ -2638,11 +2635,11 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		  is_acc_sub = ((insn_word & 0x84) == 0x84);
 		}
 	      else
-		reg_names[0] = lookup_any_reg_name (data_unit, 0, FALSE);
+		reg_names[0] = lookup_any_reg_name (data_unit, 0, false);
 
 	      /* These are dummy arguments anyway so the register
 		 number does not matter.  */
-	      reg_names[1] = lookup_any_reg_name (data_unit, 0, TRUE);
+	      reg_names[1] = lookup_any_reg_name (data_unit, 0, true);
 
 	      /* De.r,Dx.r,De.r|ACe.r */
 	      if ((template->arg_type & DSP_ARGS_ACC2) &&
@@ -2680,10 +2677,10 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		      aunit = (data_unit == UNIT_D0) ? UNIT_A0 : UNIT_A1;
 		      addr_reg = lookup_reg_name (aunit, reg_no + 2);
 
-		      qr = TRUE;
+		      qr = true;
 		    }
 
-		  reg_names[2] = lookup_any_reg_name (data_unit, 0, TRUE);
+		  reg_names[2] = lookup_any_reg_name (data_unit, 0, true);
 		}
 	    }
 
@@ -2751,7 +2748,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	    }
 	  else
 	    {
-	      bfd_boolean o2r = (insn_word & 0x1);
+	      bool o2r = (insn_word & 0x1);
 
 	      /* De.r|ACe.r,Dx.r,De.r */
 	      if ((template->arg_type & DSP_ARGS_DACC) &&
@@ -2773,14 +2770,14 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	      else
 		{
 		  reg_names[0] = lookup_any_reg_name (data_unit,
-						      reg_nums[0], FALSE);
+						      reg_nums[0], false);
 		  if (reg_nums[0] > 15)
 		    reg_brackets[0] = 1;
 		}
 
 	      if (imm)
 		{
-		  reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[0], TRUE);
+		  reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[0], true);
 
 		  if (reg_brackets[0])
 		    reg_brackets[1] = 1;
@@ -2793,7 +2790,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		    }
 		  else
 		  {
-		    reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[1], TRUE);
+		    reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[1], true);
 
 		    if (reg_nums[1] > 15)
 		      reg_brackets[1] = 1;
@@ -2826,7 +2823,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		      aunit = (data_unit == UNIT_D0) ? UNIT_A0 : UNIT_A1;
 		      addr_reg = lookup_reg_name (aunit, reg_no + 2);
 
-		      qr = TRUE;
+		      qr = true;
 		    }
 
 		  if (o2r)
@@ -2843,7 +2840,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		      else
 			{
 			  reg_names[2] = lookup_any_reg_name (data_unit,
-							      reg_nums[2], TRUE);
+							      reg_nums[2], true);
 			  if (reg_nums[2] > 15)
 			    reg_brackets[2] = 1;
 			}
@@ -2919,14 +2916,13 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
     }
   else if (template->arg_type & DSP_ARGS_2) /* Group 2.  */
     {
-      bfd_boolean is_template;
-      bfd_boolean o2r = FALSE;
+      bool is_template;
+      bool o2r = false;
       int major = MAJOR_OPCODE (template->meta_opcode);
-      bfd_boolean is_neg_or_mov = (major == OPC_ADD || major == OPC_SUB);
-      bfd_boolean is_cmp_tst = ((major == OPC_CMP) &&
-				((insn_word & 0x0000002c) == 0));
-      bfd_boolean is_fpu_mov = template->insn_type == INSN_DSP_FPU;
-      bfd_boolean to_fpu = (template->meta_opcode >> 7) & 0x1;
+      bool is_neg_or_mov = (major == OPC_ADD || major == OPC_SUB);
+      bool is_cmp_tst = major == OPC_CMP && (insn_word & 0x0000002c) == 0;
+      bool is_fpu_mov = template->insn_type == INSN_DSP_FPU;
+      bool to_fpu = (template->meta_opcode >> 7) & 0x1;
 
       if (major == OPC_9)
 	imm = (insn_word & 0x2);
@@ -3014,7 +3010,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		}
 	      else
 		{
-		  reg_names[0] = lookup_any_reg_name (data_unit, reg_nums[0], TRUE);
+		  reg_names[0] = lookup_any_reg_name (data_unit, reg_nums[0], true);
 		  if (reg_nums[0] > 15)
 		    reg_brackets[0] = 1;
 		}
@@ -3096,7 +3092,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		      else
 			{
 			  reg_names[1] = lookup_any_reg_name (data_unit,
-							      reg_nums[1], TRUE);
+							      reg_nums[1], true);
 			  if (reg_nums[1] > 15)
 			    reg_brackets[1] = 1;
 			}
@@ -3122,13 +3118,13 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
     {
       /* If both the C and CA bits are set, then the Rd register can
 	 be in any unit. Figure out which unit from the Ud field.  */
-      bfd_boolean all_units = (((insn_word) & 0x04000020) == 0x04000020);
+      bool all_units = (((insn_word) & 0x04000020) == 0x04000020);
       enum metag_unit ud_unit = ((insn_word >> 1) & UNIT_MASK);
       enum metag_unit ram_unit, acc_unit;
-      bfd_boolean round = FALSE;
-      bfd_boolean clamp9 = FALSE;
-      bfd_boolean clamp8 = FALSE;
-      bfd_boolean is_template = ((insn_word & 0x04000002) == 0x2);
+      bool round = false;
+      bool clamp9 = false;
+      bool clamp8 = false;
+      bool is_template = ((insn_word & 0x04000002) == 0x2);
 
       imm = ((insn_word >> 25) & 0x1);
       ac = (insn_word & 0x1);
@@ -3165,7 +3161,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	    reg_names[0] = lookup_reg_name (data_unit, reg_nums[0]);
 	  else
 	    {
-	      reg_names[0] = lookup_any_reg_name (data_unit, reg_nums[0], FALSE);
+	      reg_names[0] = lookup_any_reg_name (data_unit, reg_nums[0], false);
 	      if (reg_nums[0] > 15)
 		reg_brackets[0] = 1;
 	    }
@@ -3177,7 +3173,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[1], TRUE);
+	  reg_names[1] = lookup_any_reg_name (data_unit, reg_nums[1], true);
 	  if (reg_nums[1] > 15)
 	    reg_brackets[1] = 1;
 	}
@@ -3195,15 +3191,15 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	{
 	  reg_nums[2] = ((insn_word >> 9) & REG_MASK);
 
-	  reg_names[2] = lookup_any_reg_name (data_unit, reg_nums[2], TRUE);
+	  reg_names[2] = lookup_any_reg_name (data_unit, reg_nums[2], true);
 
 	  if (reg_nums[2] > 15)
 		  reg_brackets[2] = 1;
 
 	  if (is_template)
 	    {
-	      bfd_boolean load = ((insn_word >> 13) & 0x1);
-	      bfd_boolean dspram = (((insn_word >> 17) & 0x3) == 0x3);
+	      bool load = ((insn_word >> 13) & 0x1);
+	      bool dspram = (((insn_word >> 17) & 0x3) == 0x3);
 	      const char *tname[1];
 	      unsigned int tidx = ((insn_word >> 9) & TEMPLATE_REGS_MASK);
 	      enum metag_unit au;
@@ -3235,7 +3231,7 @@ print_dalu (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		}
 	      else
 		{
-		  bfd_boolean im = (((insn_word >> 18) & 0x1) != 0);
+		  bool im = (((insn_word >> 18) & 0x1) != 0);
 
 		  au = (((insn_word >> 23) & 0x1) == 0) ? UNIT_A0 : UNIT_A1;
 		  addr_reg_nums[0] = ((insn_word >> 19) & DSP_REG_MASK);
@@ -3364,9 +3360,15 @@ print_insn_metag (bfd_vma pc, disassemble_info *outf)
   bfd_byte buf[4];
   unsigned int insn_word;
   size_t i;
-  outf->bytes_per_chunk = 4;
+  int status;
 
-  (*outf->read_memory_func) (pc & ~0x03, buf, 4, outf);
+  outf->bytes_per_chunk = 4;
+  status = (*outf->read_memory_func) (pc & ~0x03, buf, 4, outf);
+  if (status)
+    {
+      (*outf->memory_error_func) (status, pc, outf);
+      return -1;
+    }
   insn_word = bfd_getl32 (buf);
 
   for (i = 0; i < sizeof(metag_optab)/sizeof(metag_optab[0]); i++)

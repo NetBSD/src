@@ -1,5 +1,5 @@
 /* BFD support for the TI PRU microprocessor.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -41,4 +41,4 @@
     0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
 
-const bfd_arch_info_type bfd_pru_arch = N (32, 32, 0, "pru", TRUE, NULL);
+const bfd_arch_info_type bfd_pru_arch = N (32, 32, 0, "pru", true, NULL);
