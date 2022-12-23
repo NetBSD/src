@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff.  Extension structure access functions
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -245,17 +245,11 @@ destroy_map (void)
 
   /* Free core registers.  */
   for (i = 0; i < NUM_EXT_CORE; i++)
-    {
-      if (arc_extension_map.coreRegisters[i].name)
-	free (arc_extension_map.coreRegisters[i].name);
-    }
+    free (arc_extension_map.coreRegisters[i].name);
 
   /* Free condition codes.  */
   for (i = 0; i < NUM_EXT_COND; i++)
-    {
-      if (arc_extension_map.condCodes[i])
-	free (arc_extension_map.condCodes[i]);
-    }
+    free (arc_extension_map.condCodes[i]);
 
   memset (&arc_extension_map, 0, sizeof (arc_extension_map));
 }

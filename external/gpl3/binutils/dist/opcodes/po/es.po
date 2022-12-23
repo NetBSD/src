@@ -741,14 +741,6 @@ msgstr "Irreconocido el campo %d mientras escribe insn.\n"
 msgid "operand out of range (%ld not between %ld and %lu)"
 msgstr "operando fuera de rango (%ld no está entre %ld y %lu)"
 
-#: epiphany-ibld.c:185 fr30-ibld.c:185 frv-ibld.c:185 ip2k-ibld.c:185
-#: iq2000-ibld.c:185 lm32-ibld.c:185 m32c-ibld.c:185 m32r-ibld.c:185
-#: mep-ibld.c:185 mt-ibld.c:185 or1k-ibld.c:185 xc16x-ibld.c:185
-#: xstormy16-ibld.c:185
-#, c-format
-msgid "operand out of range (0x%lx not between 0 and 0x%lx)"
-msgstr "operando fuera de rango (0x%lu no está entre 0 y %lx)"
-
 #: epiphany-ibld.c:879 fr30-ibld.c:734 frv-ibld.c:860 ip2k-ibld.c:611
 #: iq2000-ibld.c:717 lm32-ibld.c:638 m32c-ibld.c:1735 m32r-ibld.c:669
 #: mep-ibld.c:1212 mt-ibld.c:753 or1k-ibld.c:650 xc16x-ibld.c:756

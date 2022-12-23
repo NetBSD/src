@@ -1,5 +1,5 @@
 /* Generic COFF swapping routines, for BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -246,6 +246,33 @@ coff_swap_reloc_out (bfd * abfd, void * src, void * dst)
   return bfd_coff_relsz (abfd);
 }
 
+#ifdef TICOFF
+static void
+coff_swap_reloc_v0_in (bfd *abfd, void *src, void *dst)
+{
+  struct external_reloc_v0 *reloc_src = (struct external_reloc_v0 *) src;
+  struct internal_reloc *reloc_dst = (struct internal_reloc *) dst;
+
+  reloc_dst->r_vaddr  = GET_RELOC_VADDR (abfd, reloc_src->r_vaddr);
+  reloc_dst->r_symndx = H_GET_16 (abfd, reloc_src->r_symndx);
+  reloc_dst->r_type   = H_GET_16 (abfd, reloc_src->r_type);
+}
+
+static unsigned int
+coff_swap_reloc_v0_out (bfd *abfd, void *src, void *dst)
+{
+  struct internal_reloc *reloc_src = (struct internal_reloc *) src;
+  struct external_reloc_v0 *reloc_dst = (struct external_reloc_v0 *) dst;
+
+  PUT_RELOC_VADDR (abfd, reloc_src->r_vaddr, reloc_dst->r_vaddr);
+  H_PUT_16 (abfd, reloc_src->r_symndx, reloc_dst->r_symndx);
+  H_PUT_16 (abfd, reloc_src->r_type, reloc_dst->r_type);
+  SWAP_OUT_RELOC_EXTRA (abfd, reloc_src, reloc_dst);
+
+  return bfd_coff_relsz (abfd);
+}
+#endif
+
 #endif /* NO_COFF_RELOCS */
 
 static void
@@ -391,22 +418,22 @@ coff_swap_aux_in (bfd *abfd,
     case C_FILE:
       if (ext->x_file.x_fname[0] == 0)
 	{
-	  in->x_file.x_n.x_zeroes = 0;
-	  in->x_file.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
+	  in->x_file.x_n.x_n.x_zeroes = 0;
+	  in->x_file.x_n.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
 	}
       else
 	{
 #if FILNMLEN != E_FILNMLEN
 #error we need to cope with truncating or extending FILNMLEN
 #else
-	  if (numaux > 1)
+	  if (numaux > 1 && coff_data (abfd)->pe)
 	    {
 	      if (indx == 0)
-		memcpy (in->x_file.x_fname, ext->x_file.x_fname,
+		memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname,
 			numaux * sizeof (AUXENT));
 	    }
 	  else
-	    memcpy (in->x_file.x_fname, ext->x_file.x_fname, FILNMLEN);
+	    memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname, FILNMLEN);
 #endif
 	}
       goto end;
@@ -495,17 +522,17 @@ coff_swap_aux_out (bfd * abfd,
   switch (in_class)
     {
     case C_FILE:
-      if (in->x_file.x_fname[0] == 0)
+      if (in->x_file.x_n.x_fname[0] == 0)
 	{
 	  H_PUT_32 (abfd, 0, ext->x_file.x_n.x_zeroes);
-	  H_PUT_32 (abfd, in->x_file.x_n.x_offset, ext->x_file.x_n.x_offset);
+	  H_PUT_32 (abfd, in->x_file.x_n.x_n.x_offset, ext->x_file.x_n.x_offset);
 	}
       else
 	{
 #if FILNMLEN != E_FILNMLEN
 #error we need to cope with truncating or extending FILNMLEN
 #else
-	  memcpy (ext->x_file.x_fname, in->x_file.x_fname, FILNMLEN);
+	  memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, FILNMLEN);
 #endif
 	}
       goto end;
@@ -695,9 +722,16 @@ coff_swap_aouthdr_out (bfd * abfd, void * in, void * out)
   H_PUT_32 (abfd, aouthdr_in->o_maxstack, aouthdr_out->o_maxstack);
   H_PUT_32 (abfd, aouthdr_in->o_maxdata, aouthdr_out->o_maxdata);
 #endif
-  memset (aouthdr_out->o_resv2, 0, sizeof aouthdr_out->o_resv2);
+  /* TODO: set o_*psize dynamically */
+  H_PUT_8 (abfd, 0, aouthdr_out->o_textpsize);
+  H_PUT_8 (abfd, 0, aouthdr_out->o_datapsize);
+  H_PUT_8 (abfd, 0, aouthdr_out->o_stackpsize);
+  H_PUT_8 (abfd, aouthdr_in->o_flags, aouthdr_out->o_flags);
+  H_PUT_16 (abfd, aouthdr_in->o_sntdata, aouthdr_out->o_sntdata);
+  H_PUT_16 (abfd, aouthdr_in->o_sntbss, aouthdr_out->o_sntbss);
+  H_PUT_32 (abfd, 0, aouthdr_out->o_debugger);
 #ifdef XCOFF64
-  memset (aouthdr_out->o_debugger, 0, sizeof aouthdr_out->o_debugger);
+  H_PUT_16 (abfd, aouthdr_in->o_x64flags, aouthdr_out->o_x64flags);
   memset (aouthdr_out->o_resv3, 0, sizeof aouthdr_out->o_resv3);
 #endif
 #endif
@@ -725,6 +759,7 @@ coff_swap_aouthdr_out (bfd * abfd, void * in, void * out)
   return AOUTSZ;
 }
 
+ATTRIBUTE_UNUSED
 static void
 coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
 {
@@ -751,6 +786,7 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
 #endif
 }
 
+ATTRIBUTE_UNUSED
 static unsigned int
 coff_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 {

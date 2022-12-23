@@ -1,5 +1,5 @@
 /* seh pdata/xdata coff object file format
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -31,7 +31,7 @@ struct seh_seg_list {
 /* Local data.  */
 static seh_context *seh_ctx_cur = NULL;
 
-static struct hash_control *seh_hash;
+static htab_t seh_hash;
 
 static struct seh_seg_list *x_segcur = NULL;
 static struct seh_seg_list *p_segcur = NULL;
@@ -116,17 +116,13 @@ make_pxdata_seg (segT cseg, char *name)
 static void
 seh_hash_insert (const char *name, struct seh_seg_list *item)
 {
-  const char *error_string;
-
-  if ((error_string = hash_jam (seh_hash, name, (char *) item)))
-    as_fatal (_("Inserting \"%s\" into structure table failed: %s"),
-	      name, error_string);
+  str_hash_insert (seh_hash, name, item, 1);
 }
 
 static struct seh_seg_list *
 seh_hash_find (char *name)
 {
-  return (struct seh_seg_list *) hash_find (seh_hash, name);
+  return (struct seh_seg_list *) str_hash_find (seh_hash, name);
 }
 
 static struct seh_seg_list *
@@ -137,7 +133,7 @@ seh_hash_find_or_make (segT cseg, const char *base_name)
 
   /* Initialize seh_hash once.  */
   if (!seh_hash)
-    seh_hash = hash_new ();
+    seh_hash = str_htab_create ();
 
   name = get_pxdata_name (cseg, base_name);
 
@@ -586,12 +582,31 @@ obj_coff_seh_pushreg (int what ATTRIBUTE_UNUSED)
 static void
 obj_coff_seh_pushframe (int what ATTRIBUTE_UNUSED)
 {
+  int code = 0;
+  
   if (!verify_context_and_target (".seh_pushframe", seh_kind_x64)
       || !seh_validate_seg (".seh_pushframe"))
     return;
+  
+  SKIP_WHITESPACE();
+  
+  if (is_name_beginner (*input_line_pointer))
+    {
+      char* identifier;
+
+      get_symbol_name (&identifier);
+      if (strcmp (identifier, "code") != 0)
+	{
+	  as_bad(_("invalid argument \"%s\" for .seh_pushframe. Expected \"code\" or nothing"),
+		 identifier);
+	  return;
+	}
+      code = 1;
+    }
+  
   demand_empty_rest_of_line ();
 
-  seh_x64_make_prologue_element (UWOP_PUSH_MACHFRAME, 0, 0);
+  seh_x64_make_prologue_element (UWOP_PUSH_MACHFRAME, code, 0);
 }
 
 /* Add a register save-unwind token to current context.  */

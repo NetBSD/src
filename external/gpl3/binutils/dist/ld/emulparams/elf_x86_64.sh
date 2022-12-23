@@ -4,6 +4,11 @@ source_sh ${srcdir}/emulparams/dynamic_undefined_weak.sh
 source_sh ${srcdir}/emulparams/reloc_overflow.sh
 source_sh ${srcdir}/emulparams/call_nop.sh
 source_sh ${srcdir}/emulparams/cet.sh
+source_sh ${srcdir}/emulparams/x86-report-relative.sh
+source_sh ${srcdir}/emulparams/x86-64-level.sh
+source_sh ${srcdir}/emulparams/x86-64-lam.sh
+source_sh ${srcdir}/emulparams/static.sh
+source_sh ${srcdir}/emulparams/dt-relr.sh
 SCRIPT_NAME=elf
 ELFSIZE=64
 OUTPUT_FORMAT="elf64-x86-64"
@@ -48,7 +53,7 @@ case "$target" in
 '
 	PARSE_AND_LIST_ARGS_CASE_Z_BNDPLT='
       else if (strcmp (optarg, "bndplt") == 0)
-	params.bndplt = TRUE;
+	params.bndplt = true;
 '
 	PARSE_AND_LIST_OPTIONS="$PARSE_AND_LIST_OPTIONS $PARSE_AND_LIST_OPTIONS_BNDPLT"
 	PARSE_AND_LIST_ARGS_CASE_Z="$PARSE_AND_LIST_ARGS_CASE_Z $PARSE_AND_LIST_ARGS_CASE_Z_BNDPLT"

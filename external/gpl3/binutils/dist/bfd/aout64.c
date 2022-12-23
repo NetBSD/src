@@ -1,5 +1,5 @@
 /* BFD back-end for 64-bit a.out files.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,13 +20,5 @@
    MA 02110-1301, USA.  */
 
 #define ARCH_SIZE 64
-
-/* aoutx.h requires definitions for BMAGIC and QMAGIC.  */
-#ifndef BMAGIC
-#define BMAGIC 0
-#endif
-#ifndef QMAGIC
-#define QMAGIC 0
-#endif
 
 #include "aoutx.h"

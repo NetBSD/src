@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -67,10 +67,11 @@ typedef enum insn_op_code_alu {
   OP_CODE_ADD = 0, OP_CODE_SUB = 1, OP_CODE_MUL = 2, OP_CODE_DIV = 3
  , OP_CODE_OR = 4, OP_CODE_AND = 5, OP_CODE_LSH = 6, OP_CODE_RSH = 7
  , OP_CODE_NEG = 8, OP_CODE_MOD = 9, OP_CODE_XOR = 10, OP_CODE_MOV = 11
- , OP_CODE_ARSH = 12, OP_CODE_END = 13, OP_CODE_JA = 0, OP_CODE_JEQ = 1
- , OP_CODE_JGT = 2, OP_CODE_JGE = 3, OP_CODE_JSET = 4, OP_CODE_JNE = 5
- , OP_CODE_JSGT = 6, OP_CODE_JSGE = 7, OP_CODE_CALL = 8, OP_CODE_EXIT = 9
- , OP_CODE_JLT = 10, OP_CODE_JLE = 11, OP_CODE_JSLT = 12, OP_CODE_JSLE = 13
+ , OP_CODE_ARSH = 12, OP_CODE_END = 13, OP_CODE_SDIV = 14, OP_CODE_SMOD = 15
+ , OP_CODE_JA = 0, OP_CODE_JEQ = 1, OP_CODE_JGT = 2, OP_CODE_JGE = 3
+ , OP_CODE_JSET = 4, OP_CODE_JNE = 5, OP_CODE_JSGT = 6, OP_CODE_JSGE = 7
+ , OP_CODE_CALL = 8, OP_CODE_EXIT = 9, OP_CODE_JLT = 10, OP_CODE_JLE = 11
+ , OP_CODE_JSLT = 12, OP_CODE_JSLE = 13
 } INSN_OP_CODE_ALU;
 
 /* Enum declaration for eBPF instruction source.  */
@@ -80,8 +81,8 @@ typedef enum insn_op_src {
 
 /* Enum declaration for eBPF instruction class.  */
 typedef enum insn_op_class {
-  OP_CLASS_LD = 0, OP_CLASS_LDX = 1, OP_CLASS_ST = 2, OP_CLASS_STX = 3
- , OP_CLASS_ALU = 4, OP_CLASS_JMP = 5, OP_CLASS_ALU64 = 7
+  OP_CLASS_LD, OP_CLASS_LDX, OP_CLASS_ST, OP_CLASS_STX
+ , OP_CLASS_ALU, OP_CLASS_JMP, OP_CLASS_JMP32, OP_CLASS_ALU64
 } INSN_OP_CLASS;
 
 /* Enum declaration for eBPF load/store instruction modes.  */
@@ -99,12 +100,13 @@ typedef enum insn_op_size {
 
 /* Enum declaration for machine type selection.  */
 typedef enum mach_attr {
-  MACH_BASE, MACH_BPF, MACH_MAX
+  MACH_BASE, MACH_BPF, MACH_XBPF, MACH_MAX
 } MACH_ATTR;
 
 /* Enum declaration for instruction set selection.  */
 typedef enum isa_attr {
-  ISA_EBPFLE, ISA_EBPFBE, ISA_MAX
+  ISA_EBPFLE, ISA_EBPFBE, ISA_XBPFLE, ISA_XBPFBE
+ , ISA_MAX
 } ISA_ATTR;
 
 /* Number of architecture variants.  */

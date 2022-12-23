@@ -1,5 +1,5 @@
 /* te-vms.c -- Utilities for VMS.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    Written by Douglas B Rupp <rupp@gnat.com>
 
@@ -339,7 +339,7 @@ vms_file_stats_name (const char *dirname,
   return 0;
 }
 
-bfd_uint64_t
+uint64_t
 vms_dwarf2_file_time_name (const char *filename, const char *dirname)
 {
   long long cdt;

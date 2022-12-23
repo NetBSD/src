@@ -1,4 +1,4 @@
-@c Copyright (C) 1992-2020 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2022 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual
@@ -46,7 +46,6 @@
 @set LM32
 @set M32C
 @set M32R
-@set xc16x
 @set M68HC11
 @set S12Z
 @set M680X0

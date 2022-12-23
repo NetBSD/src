@@ -1,5 +1,5 @@
 /* Instruction printing code for Score
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -35,10 +35,6 @@
 
 #ifndef streq
 #define streq(a,b)    (strcmp ((a), (b)) == 0)
-#endif
-
-#ifndef strneq
-#define strneq(a,b,n)    (strncmp ((a), (b), (n)) == 0)
 #endif
 
 #ifndef NUM_ELEM
@@ -539,7 +535,7 @@ static unsigned int regname_selected = 0;
 
 /* s3_s7: opcodes and export prototypes.  */
 int
-s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little);
+s7_print_insn (bfd_vma pc, struct disassemble_info *info, bool little);
 
 /* Print one instruction from PC on INFO->STREAM.
    Return the size of the instruction.  */
@@ -867,14 +863,14 @@ print_insn_score16 (bfd_vma pc, struct disassemble_info *info, long given)
 /* NOTE: There are no checks in these routines that
    the relevant number of data bytes exist.  */
 int
-s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
+s7_print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
 {
   unsigned char b[4];
   unsigned long given;
   long ridparity;
   int status;
-  bfd_boolean insn_pce_p = FALSE;
-  bfd_boolean insn_16_p = FALSE;
+  bool insn_pce_p = false;
+  bool insn_16_p = false;
 
   info->display_endian = little ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
 
@@ -883,7 +879,7 @@ s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       info->bytes_per_chunk = 2;
       status = info->read_memory_func (pc, (bfd_byte *) b, 2, info);
       b[3] = b[2] = 0;
-      insn_16_p = TRUE;
+      insn_16_p = true;
     }
   else
     {
@@ -894,7 +890,7 @@ s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 	  info->bytes_per_chunk = 2;
 	  status = info->read_memory_func (pc, (bfd_byte *) b, 2, info);
 	  b[3] = b[2] = 0;
-	  insn_16_p = TRUE;
+	  insn_16_p = true;
 	}
     }
 
@@ -911,13 +907,13 @@ s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 
   if ((given & 0x80008000) == 0x80008000)
     {
-      insn_pce_p = FALSE;
-      insn_16_p = FALSE;
+      insn_pce_p = false;
+      insn_16_p = false;
     }
   else if ((given & 0x8000) == 0x8000)
-    insn_pce_p = TRUE;
+    insn_pce_p = true;
   else
-    insn_16_p = TRUE;
+    insn_16_p = true;
 
   /* 16 bit instruction.  */
   if (insn_16_p)

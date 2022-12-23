@@ -1,5 +1,5 @@
 /* This file is tc-m68k.h
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -17,6 +17,9 @@
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
+
+#ifndef TC_M68K_H
+#define TC_M68K_H
 
 #define TC_M68K 1
 
@@ -47,7 +50,7 @@ extern const char *m68k_comment_chars;
 extern void m68k_mri_mode_change (int);
 #define MRI_MODE_CHANGE(i) m68k_mri_mode_change (i)
 
-extern int m68k_conditional_pseudoop (pseudo_typeS *);
+extern int m68k_conditional_pseudoop (const pseudo_typeS *);
 #define tc_conditional_pseudoop(pop) m68k_conditional_pseudoop (pop)
 
 extern void m68k_frob_label (symbolS *);
@@ -139,3 +142,17 @@ struct broken_word;
   tc_m68k_check_adjusted_broken_word ((offsetT) (new_offset), (brokw))
 extern void tc_m68k_check_adjusted_broken_word (offsetT,
 						struct broken_word *);
+
+/* We want to warn if any text labels are misaligned.  In order to get
+   the right line number, we need to record the line number for each
+   label.  */
+struct m68k_tc_sy
+{
+  const char *file;
+  unsigned int line;
+  int text;
+};
+
+#define TC_SYMFIELD_TYPE struct m68k_tc_sy
+
+#endif /* TC_M68K_H */

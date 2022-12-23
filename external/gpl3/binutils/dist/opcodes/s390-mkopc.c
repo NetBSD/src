@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -240,7 +240,8 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
       ext_table = s390_crb_extensions;
       ext_table_length = NUM_CRB_EXTENSIONS;
       break;
-    default: fprintf (stderr, "Unknown tag char: %c\n", *tag);
+    default:
+      abort ();			/* Should be unreachable.  */
     }
 
   for (i = 0; i < ext_table_length; i++)
@@ -380,6 +381,9 @@ main (void)
       else if (strcmp (cpu_string, "z15") == 0
 	       || strcmp (cpu_string, "arch13") == 0)
 	min_cpu = S390_OPCODE_ARCH13;
+      else if (strcmp (cpu_string, "z16") == 0
+	       || strcmp (cpu_string, "arch14") == 0)
+	min_cpu = S390_OPCODE_ARCH14;
       else {
 	fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
 	exit (1);

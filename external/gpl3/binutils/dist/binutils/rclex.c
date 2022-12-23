@@ -1,6 +1,6 @@
 /* rclex.c -- lexer for Windows rc files parser  */
 
-/* Copyright (C) 1997-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    Written by Kai Tietz, Onevision.
 
@@ -94,7 +94,7 @@ static const struct rclex_keywords keywds[] =
   K(LANGUAGE), K(LISTBOX), K(LOADONCALL), K(LTEXT),
   K(MANIFEST), K(MENU), K(MENUBARBREAK), K(MENUBREAK),
   K(MENUEX), K(MENUITEM), K(MESSAGETABLE), K(MOVEABLE),
-  K(NOINVERT), K(NOT),
+  K(NOINVERT), K(NOT), K(OWNERDRAW),
   K(PLUGPLAY), K(POPUP), K(PRELOAD), K(PRODUCTVERSION),
   K(PURE), K(PUSHBOX), K(PUSHBUTTON),
   K(RADIOBUTTON), K(RCDATA), K(RTEXT),

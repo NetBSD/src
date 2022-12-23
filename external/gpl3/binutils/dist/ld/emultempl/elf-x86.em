@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2019-2020 Free Software Foundation, Inc.
+# Copyright (C) 2019-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -22,6 +22,7 @@
 #
 fragment <<EOF
 
+#include "ldlex.h"
 #include "elf-linker-x86.h"
 
 static struct elf_linker_x86_params params;

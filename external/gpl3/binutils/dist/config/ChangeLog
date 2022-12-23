@@ -1,3 +1,163 @@
+2022-07-08  Nick Clifton  <nickc@redhat.com>
+
+	* 2.39 branch created.
+
+2022-01-22  Nick Clifton  <nickc@redhat.com>
+
+	* 2.38 release branch created.
+
+2021-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* 2.37 release branch created.
+
+2021-06-14  Michael Forney  <mforney@mforney.org>
+
+	* gettext.m4 (AM_GNU_GETTEXT): Skip checks for the internal
+	symbols _nl_msg_cat_cntr, _nl_domain_bindings, and
+	_nl_expand_alias, if __GNU_GETTEXT_SUPPORTED_REVISION is defined.
+	Backport of gettext serial 68 patch.
+
+2021-05-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (CYG_AC_PATH_SIM, CYG_AC_PATH_DEVO): Delete.
+
+2021-03-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/27397
+	* cet.m4 (GCC_CET_HOST_FLAGS): Check if host supports multi-byte
+	NOPs.
+
+2021-02-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* debuginfod.m4: Delete m4_include(../config/pkg.m4).
+
+2021-01-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26792
+	* jobserver.m4: New file.
+
+2021-01-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/27173
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): Check if AR works with
+	--plugin and rc before enabling --plugin.
+
+2021-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): New.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* 2.36 release branch crated.
+
+2021-01-01  Nicolas Boulenguez  <nicolas@debian.org>
+
+	* override.m4: Correct comment grammar.
+
+2020-09-08  Alan Modra  <amodra@gmail.com>
+
+	Sync from gcc
+	2020-07-15  H.J. Lu  <hjl.tools@gmail.com>
+	PR bootstrap/96202
+	* cet.m4 (GCC_CET_HOST_FLAGS): Don't enable CET without CET
+	support in stage1 nor for build support.
+
+2020-07-30  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* largefile.m4 (ACX_LARGEFILE) <sparc-*-solaris*|i?86-*-solaris*>:
+	Check for <sys/procfs.h> incompatilibity with large-file support
+	on Solaris.
+	Only disable large-file support and perhaps plugins if needed.
+	Set, substitute LARGEFILE_CPPFLAGS if so.
+
+2020-07-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26301
+	* pkg.m4 (PKG_CHECK_MODULES): Use AC_TRY_LINK only if
+	$pkg_failed = no.
+
+2020-07-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26301
+	* pkg.m4 (PKG_CHECK_MODULES): Add AC_TRY_LINK to check if
+	$pkg_cv_[]$1[]_LIBS works.
+
+2020-07-24  Aaron Merey  <amerey@redhat.com>
+
+	* debuginfod.m4: use PKG_CHECK_MODULES.
+	* pkg.m4: New file.
+
+2020-07-04  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.35 branch created.
+
+2020-06-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2020-05-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/95413
+	* cet.m4: Replace save_CFLAGS and save_LDFLAGS with
+	cet_save_CFLAGS and cet_save_LDFLAGS.
+
+2020-05-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2020-05-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/95147
+	* cet.m4 (GCC_CET_FLAGS): Also check if -fcf-protection works
+	when defaulting to auto.
+
+	2020-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* cet.m4 (GCC_CET_FLAGS): Change default to auto.
+
+2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94998
+	* cet.m4 (GCC_CET_HOST_FLAGS): Enable CET in cross compiler if
+	possible.
+
+2020-04-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2020-04-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* cet.m4 (GCC_CET_HOST_FLAGS): Add -fcf-protection=none to
+	-Wl,-z,ibt,-z,shstk.  Check whether -fcf-protection=none
+	-Wl,-z,ibt,-z,shstk works first.
+
+	2020-04-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* cet.m4 (GCC_CET_HOST_FLAGS): New.
+
+	2020-04-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libfortran/94694
+	PR libfortran/94586
+	* math.m4 (GCC_CHECK_MATH_INLINE_BUILTIN_FALLBACK1,
+	GCC_CHECK_MATH_INLINE_BUILTIN_FALLBACK2): New.
+
+2020-02-19  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* ax_count_cpus.m4: New file, backported from GCC.
+	* bootstrap-Og.mk: New file, backported from GCC.
+	* bootstrap-lto-lean.mk: New file, backported from GCC.
+	* bootstrap-lto.mk: Changes backported from GCC.
+	* futex.m4: Changes backported from GCC.
+	* gthr.m4: Changes backported from GCC.
+	* lib-link.m4: Changes backported from GCC.
+	* mh-mingw: Changes backported from GCC.
+	* no-executables.m4: Changes backported from GCC.
+	* tls.m4: Changes backported from GCC.
+	* toolexeclibdir.m4: New file, backported from GCC.
+
 2020-01-18  Nick Clifton  <nickc@redhat.com>
 
 	Binutils 2.34 branch created.
@@ -2166,4 +2326,3 @@ Thu Jan 30 16:17:30 1992  Stu Grossman  (grossman at cygnus.com)
 Tue Dec 10 00:10:55 1991  K. Richard Pixley  (rich at rtl.cygnus.com)
 
 	* ChangeLog: fresh changelog.
-

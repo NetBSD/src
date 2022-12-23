@@ -1,5 +1,5 @@
 /* S/390-specific support for ELF.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,5 +25,5 @@ struct s390_elf_params
   int pgste;
 };
 
-bfd_boolean bfd_elf_s390_set_options (struct bfd_link_info *info,
-				      struct s390_elf_params *params);
+bool bfd_elf_s390_set_options (struct bfd_link_info *info,
+			       struct s390_elf_params *params);

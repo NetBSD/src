@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,10 +31,7 @@ const char *md_shortopts          = "OnNcC";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
-#if HAVE_LIMITS_H
 #include <limits.h>
-#endif
-
 #ifndef CHAR_BIT
 #define CHAR_BIT 8
 #endif
@@ -118,7 +115,7 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 /* Opcode hash table.  */
-static struct hash_control *d30v_hash;
+static htab_t d30v_hash;
 
 /* Do a binary search of the pre_defined_registers array to see if
    NAME is a valid register name.  Return the register number from the
@@ -288,7 +285,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 void
@@ -310,11 +307,11 @@ void
 md_begin (void)
 {
   struct d30v_opcode *opcode;
-  d30v_hash = hash_new ();
+  d30v_hash = str_htab_create ();
 
   /* Insert opcode names into a hash table.  */
   for (opcode = (struct d30v_opcode *) d30v_opcode_table; opcode->name; opcode++)
-      hash_insert (d30v_hash, opcode->name, (char *) opcode);
+      str_hash_insert (d30v_hash, opcode->name, opcode, 0);
 
   fixups = &FixUps[0];
   FixUps[0].next = &FixUps[1];
@@ -862,9 +859,9 @@ parallel_ok (struct d30v_insn *op1,
 		      for (r = regno; r <= regno + z; r++)
 			{
 			  if (r >= 32)
-			    used_reg[j][1] |= 1L << (r - 32);
+			    used_reg[j][1] |= 1UL << (r - 32);
 			  else
-			    used_reg[j][0] |= 1L << r;
+			    used_reg[j][0] |= 1UL << r;
 			}
 		    }
 		}
@@ -953,7 +950,7 @@ write_2_short (struct d30v_insn *opcode1,
 	 we are not optimizing, then we have been asked to produce
 	 an error about such constructs.  For the purposes of this
 	 test, subroutine calls are considered to be branches.  */
-      write_1_short (opcode1, insn1, fx->next, FALSE);
+      write_1_short (opcode1, insn1, fx->next, false);
       return 1;
     }
 
@@ -993,14 +990,14 @@ write_2_short (struct d30v_insn *opcode1,
 	  /* We must treat repeat instructions likewise, since the
 	     following instruction has to be separate from the repeat
 	     in order to be repeated.  */
-	  write_1_short (opcode1, insn1, fx->next, FALSE);
+	  write_1_short (opcode1, insn1, fx->next, false);
 	  return 1;
 	}
       else if (prev_left_kills_right_p)
 	{
 	  /* The left instruction kills the right slot, so we
 	     must leave it empty.  */
-	  write_1_short (opcode1, insn1, fx->next, FALSE);
+	  write_1_short (opcode1, insn1, fx->next, false);
 	  return 1;
 	}
       else if (opcode1->op->unit == IU)
@@ -1010,7 +1007,7 @@ write_2_short (struct d30v_insn *opcode1,
 	      /* Case 103810 is a request from Mitsubishi that opcodes
 		 with EITHER_BUT_PREFER_MU should not be executed in
 		 reverse sequential order.  */
-	      write_1_short (opcode1, insn1, fx->next, FALSE);
+	      write_1_short (opcode1, insn1, fx->next, false);
 	      return 1;
 	    }
 
@@ -1339,7 +1336,7 @@ do_assemble (char *str,
     opcode->ecc = ECC_AL;
 
   /* CMP and CMPU change their name based on condition codes.  */
-  if (!strncmp (name, "cmp", 3))
+  if (startswith (name, "cmp"))
     {
       int p, i;
       char **d30v_str = (char **) d30v_cc_names;
@@ -1390,7 +1387,7 @@ do_assemble (char *str,
     }
 
   /* Find the first opcode with the proper name.  */
-  opcode->op = (struct d30v_opcode *) hash_find (d30v_hash, name);
+  opcode->op = (struct d30v_opcode *) str_hash_find (d30v_hash, name);
   if (opcode->op == NULL)
     {
       as_bad (_("unknown opcode: %s"), name);
@@ -1485,7 +1482,7 @@ d30v_align (int n, char *pfill, symbolS *label)
      this alignment request.  The alignment of the current frag
      can be changed under our feet, for example by a .ascii
      directive in the source code.  cf testsuite/gas/d30v/reloc.s  */
-  d30v_cleanup (FALSE);
+  d30v_cleanup (false);
 
   if (pfill == NULL)
     {
@@ -1512,7 +1509,7 @@ d30v_align (int n, char *pfill, symbolS *label)
   if (label != NULL)
     {
       symbolS     *sym;
-      int          label_seen = FALSE;
+      int          label_seen = false;
       struct frag *old_frag;
       valueT       old_value;
       valueT       new_value;
@@ -1539,7 +1536,7 @@ d30v_align (int n, char *pfill, symbolS *label)
 	  if (symbol_get_frag (sym) == old_frag
 	      && S_GET_VALUE (sym) == old_value)
 	    {
-	      label_seen = TRUE;
+	      label_seen = true;
 	      symbol_set_frag (sym, frag_now);
 	      S_SET_VALUE (sym, new_value);
 	    }
@@ -1575,7 +1572,7 @@ md_assemble (char *str)
 
   if ((prev_insn != -1) && prev_seg
       && ((prev_seg != now_seg) || (prev_subseg != now_subseg)))
-    d30v_cleanup (FALSE);
+    d30v_cleanup (false);
 
   if (d30v_current_align < 3)
     d30v_align (3, NULL, d30v_last_label);
@@ -1614,7 +1611,7 @@ md_assemble (char *str)
 
 	  /* If two instructions are present and we already have one saved,
 	     then first write it out.  */
-	  d30v_cleanup (FALSE);
+	  d30v_cleanup (false);
 
 	  /* Assemble first instruction and save it.  */
 	  prev_insn = do_assemble (str, &prev_opcode, 1, 0);
@@ -1675,13 +1672,13 @@ md_assemble (char *str)
 	     of NOPs for us.  */
 
 	  if (prev_insn != -1 && (strcmp (prev_opcode.op->name, "nop") == 0))
-	    d30v_cleanup (FALSE);
+	    d30v_cleanup (false);
 	  else
 	    {
 	      char *f;
 
 	      if (prev_insn != -1)
-		d30v_cleanup (TRUE);
+		d30v_cleanup (true);
 	      else
 		{
 		  f = frag_more (8);
@@ -1707,7 +1704,7 @@ md_assemble (char *str)
     {
       /* Can't parallelize, flush current instruction and add a
          sequential NOP.  */
-      write_1_short (&opcode, (long) insn, fixups->next->next, TRUE);
+      write_1_short (&opcode, (long) insn, fixups->next->next, true);
 
       /* Make the previous instruction the current one.  */
       extype = EXEC_UNKNOWN;
@@ -1726,7 +1723,7 @@ md_assemble (char *str)
     {
       if (extype != EXEC_UNKNOWN)
 	as_bad (_("Instruction uses long version, so it cannot be mixed as specified"));
-      d30v_cleanup (FALSE);
+      d30v_cleanup (false);
       write_long (&opcode, insn, fixups);
       prev_insn = -1;
     }
@@ -1817,7 +1814,7 @@ d30v_cleanup (int use_sequential)
       subseg_set (seg, subseg);
       prev_insn = -1;
       if (use_sequential)
-	prev_mul32_p = FALSE;
+	prev_mul32_p = false;
     }
 
   return 1;
@@ -1836,7 +1833,7 @@ d30v_start_line (void)
     c++;
 
   if (*c == '.')
-    d30v_cleanup (FALSE);
+    d30v_cleanup (false);
 }
 
 static void
@@ -1861,7 +1858,7 @@ void
 d30v_frob_label (symbolS *lab)
 {
   /* Emit any pending instructions.  */
-  d30v_cleanup (FALSE);
+  d30v_cleanup (false);
 
   /* Update the label's address with the current output pointer.  */
   symbol_set_frag (lab, frag_now);
@@ -1909,7 +1906,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
   /* We don't support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+    as_bad_subtract (fixP);
 
   /* Fetch the instruction, insert the fully resolved operand
      value, and stuff the instruction back again.  */

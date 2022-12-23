@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2022 Free Software Foundation, Inc.
 #
 # Copyright 2008-2019 Synopsys Inc.
 #

@@ -86,6 +86,16 @@ On error, @var{fd} is closed.
 A copy of the @var{filename} argument is stored in the newly created
 BFD.  It can be accessed via the bfd_get_filename() macro.
 
+@findex bfd_fdopenw
+@subsubsection @code{bfd_fdopenw}
+@strong{Synopsis}
+@example
+bfd *bfd_fdopenw (const char *filename, const char *target, int fd);
+@end example
+@strong{Description}@*
+@code{bfd_fdopenw} is exactly like @code{bfd_fdopenr} with the exception that
+the resulting BFD is suitable for output.
+
 @findex bfd_openstreamr
 @subsubsection @code{bfd_openstreamr}
 @strong{Synopsis}
@@ -174,7 +184,7 @@ BFD.  It can be accessed via the bfd_get_filename() macro.
 @subsubsection @code{bfd_close}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_close (bfd *abfd);
+bool bfd_close (bfd *abfd);
 @end example
 @strong{Description}@*
 Close a BFD. If the BFD was open for writing, then pending
@@ -194,7 +204,7 @@ if it was passed in to BFD by @code{bfd_fdopenr}).
 @subsubsection @code{bfd_close_all_done}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_close_all_done (bfd *);
+bool bfd_close_all_done (bfd *);
 @end example
 @strong{Description}@*
 Close a BFD.  Differs from @code{bfd_close} since it does not
@@ -228,7 +238,7 @@ BFD.  It can be accessed via the bfd_get_filename() macro.
 @subsubsection @code{bfd_make_writable}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_make_writable (bfd *abfd);
+bool bfd_make_writable (bfd *abfd);
 @end example
 @strong{Description}@*
 Takes a BFD as created by @code{bfd_create} and converts it
@@ -243,7 +253,7 @@ you will call @code{bfd_make_readable} on this bfd later.
 @subsubsection @code{bfd_make_readable}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_make_readable (bfd *abfd);
+bool bfd_make_readable (bfd *abfd);
 @end example
 @strong{Description}@*
 Takes a BFD as created by @code{bfd_create} and
@@ -265,16 +275,6 @@ void *bfd_alloc (bfd *abfd, bfd_size_type wanted);
 Allocate a block of @var{wanted} bytes of memory attached to
 @code{abfd} and return a pointer to it.
 
-@findex bfd_alloc2
-@subsubsection @code{bfd_alloc2}
-@strong{Synopsis}
-@example
-void *bfd_alloc2 (bfd *abfd, bfd_size_type nmemb, bfd_size_type size);
-@end example
-@strong{Description}@*
-Allocate a block of @var{nmemb} elements of @var{size} bytes each
-of memory attached to @code{abfd} and return a pointer to it.
-
 @findex bfd_zalloc
 @subsubsection @code{bfd_zalloc}
 @strong{Synopsis}
@@ -284,16 +284,6 @@ void *bfd_zalloc (bfd *abfd, bfd_size_type wanted);
 @strong{Description}@*
 Allocate a block of @var{wanted} bytes of zeroed memory
 attached to @code{abfd} and return a pointer to it.
-
-@findex bfd_zalloc2
-@subsubsection @code{bfd_zalloc2}
-@strong{Synopsis}
-@example
-void *bfd_zalloc2 (bfd *abfd, bfd_size_type nmemb, bfd_size_type size);
-@end example
-@strong{Description}@*
-Allocate a block of @var{nmemb} elements of @var{size} bytes each
-of zeroed memory attached to @code{abfd} and return a pointer to it.
 
 @findex bfd_calc_gnu_debuglink_crc32
 @subsubsection @code{bfd_calc_gnu_debuglink_crc32}
@@ -372,7 +362,7 @@ of the caller.
 @subsubsection @code{separate_debug_file_exists}
 @strong{Synopsis}
 @example
-bfd_boolean separate_debug_file_exists
+bool separate_debug_file_exists
    (char *name, void *crc32_p);
 @end example
 @strong{Description}@*
@@ -387,7 +377,7 @@ this routine is used as a @code{check_func_type} function.
 @subsubsection @code{separate_alt_debug_file_exists}
 @strong{Synopsis}
 @example
-bfd_boolean separate_alt_debug_file_exists
+bool separate_alt_debug_file_exists
    (char *name, void *unused);
 @end example
 @strong{Description}@*
@@ -398,7 +388,7 @@ Checks to see if @var{name} is a file.
 @strong{Synopsis}
 @example
 char *find_separate_debug_file
-   (bfd *abfd, const char *dir, bfd_boolean include_dirs,
+   (bfd *abfd, const char *dir, bool include_dirs,
     get_func_type get, check_func_type check, void *data);
 @end example
 @strong{Description}@*
@@ -484,7 +474,7 @@ A pointer to the new section is returned if all is ok.  Otherwise
 @subsubsection @code{bfd_fill_in_gnu_debuglink_section}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_fill_in_gnu_debuglink_section
+bool bfd_fill_in_gnu_debuglink_section
    (bfd *abfd, struct bfd_section *sect, const char *filename);
 @end example
 @strong{Description}@*
@@ -537,7 +527,7 @@ pointer) is set to a pointer to the build_id structure.
 @subsubsection @code{check_build_id_file}
 @strong{Synopsis}
 @example
-bfd_boolean check_build_id_file (char *name, void *buildid_p);
+bool check_build_id_file (char *name, void *buildid_p);
 @end example
 @strong{Description}@*
 Checks to see if @var{name} is a readable file and if its build-id
@@ -578,10 +568,10 @@ filename.  The caller is responsible for freeing this string.
 @subsubsection @code{bfd_set_filename}
 @strong{Synopsis}
 @example
-void bfd_set_filename (bfd *abfd, char *filename);
+const char *bfd_set_filename (bfd *abfd, const char *filename);
 @end example
 @strong{Description}@*
-Set the filename of @var{abfd}.  The old filename, if any, is freed.
-@var{filename} must be allocated using @code{xmalloc}.  After
-this call, it is owned @var{abfd}.
+Set the filename of @var{abfd}, copying the FILENAME parameter to
+bfd_alloc'd memory owned by @var{abfd}.  Returns a pointer the
+newly allocated name, or NULL if the allocation failed.
 

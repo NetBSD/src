@@ -1,15 +1,15 @@
 # gprof Bahasa Melayu (Malay) (ms).
-# Copyright (C) 2006, 2008, 2015, 2018 Free Software Foundation, Inc.
-# Copyright (C) 2006, 2008, 2015, 2018 Sharuzzaman Ahmat Raslan
+# Copyright (C) 2006, 2008, 2015, 2018, 2020 Free Software Foundation, Inc.
+# Copyright (C) 2006, 2008, 2015, 2018, 2020 Sharuzzaman Ahmat Raslan
 # This file is distributed under the same license as the binutils package.
-# Sharuzzaman Ahmat Raslan <sharuzzaman@gmail.com>, 2006, 2008, 2015, 2018.
+# Sharuzzaman Ahmat Raslan <sharuzzaman@gmail.com>, 2006, 2008, 2015, 2018, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2018-05-26 03:24+1000\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-02-04 18:49+0800\n"
 "Last-Translator: Sharuzzaman Ahmat Raslan <sharuzzaman@gmail.com>\n"
 "Language-Team: Malay <translation-team-ms@lists.sourceforge.net>\n"
 "Language: ms\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #: alpha.c:102 mips.c:54
 msgid "<indirect child>"
@@ -236,22 +236,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<pusingan %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: tidak dapat menghurai fail pemetaan %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: tidak dapat membuka %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: bukan dalam format bolehlaksana\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: tidak dapat mencari seksyen .text dalam %s\n"
@@ -266,22 +266,22 @@ msgstr "%s: tidak cukup ruang untuk %lu byte bagi ruang teks\n"
 msgid "%s: can't do -c\n"
 msgstr "%s: tidak dapat melakukan -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c tidak disokong pada rekabentuk %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: fail `%s' tidak mempunyai simbol\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: fail `%s' mempunyai terlalu banyak simbol\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: seseorang salah mengira: ltab.len=%d berbanding %ld\n"
@@ -379,7 +379,7 @@ msgstr "\t%d rekod kiraan blok-asas\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -393,7 +393,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Penggunaan: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Penggunaan: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -417,48 +417,48 @@ msgstr "Lapor pepijat ke %s\n"
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: nyahpepijat tidak disokong; -d diabaikan\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: format fail %s tidak diketahui\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Diasaskan pada BSD gprof, hakcipta 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Program ini adalah perisian bebas. Program ini tidak mempunyai sebarang warranti.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: gaya nyahkusut `%s' tidak diketahui\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Hanya satu dari --function-ordering dan --file-ordering boleh dinyatakan.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: maaf, format format `prof' belum lagi disokong\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: fail gmon.out kehilangan histogram\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: fail gmon.out kehilangan data graf-panggilan\n"

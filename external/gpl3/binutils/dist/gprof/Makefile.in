@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,6 +114,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/warning.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
+	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/largefile.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/nls.m4 \
@@ -338,6 +339,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTOBJEXT = @INSTOBJEXT@
+LARGEFILE_CPPFLAGS = @LARGEFILE_CPPFLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBINTL = @LIBINTL@
@@ -446,7 +448,7 @@ BFDDIR = $(BASEDIR)/bfd
 INCDIR = $(BASEDIR)/include
 AM_CFLAGS = $(WARN_CFLAGS)
 AM_CPPFLAGS = -DDEBUG -I../bfd -I$(srcdir)/../include \
-	-I$(srcdir)/../bfd @INCINTL@ -I. \
+	-I$(srcdir)/../bfd @INCINTL@ @LARGEFILE_CPPFLAGS@ -I. \
 	-DLOCALEDIR="\"$(datadir)/locale\""
 
 sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c \
@@ -474,7 +476,9 @@ POD2MAN = pod2man --center="GNU" --release="binutils-$(VERSION)" --section=1
 info_TEXINFOS = gprof.texi
 gprof_TEXINFOS = config.texi
 man_MANS = gprof.1
-AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc
+AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc \
+		   --no-split
+
 TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc
 MAINTAINERCLEANFILES = gprof.info
 all: $(BUILT_SOURCES) gconfig.h
@@ -988,7 +992,7 @@ dvi-am: $(DVIS)
 
 html: html-recursive
 
-html-am: $(HTMLS)
+html-am: $(HTMLS) html-local
 
 info: info-recursive
 
@@ -1148,14 +1152,14 @@ uninstall-man: uninstall-man1
 	clean-binPROGRAMS clean-cscope clean-generic clean-libtool \
 	cscope cscopelist-am ctags ctags-am dist-info distclean \
 	distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-man1 install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-aminfo \
+	distclean-libtool distclean-tags dvi dvi-am html html-am \
+	html-local info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-man1 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-aminfo \
 	maintainer-clean-generic mostlyclean mostlyclean-aminfo \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
@@ -1172,7 +1176,7 @@ diststuff: $(BUILT_SOURCES) info $(man_MANS)
 %.o:%.m
 
 .m.c:
-	awk -f $(srcdir)/gen-c-prog.awk > $@ \
+	$(AM_V_GEN)awk -f $(srcdir)/gen-c-prog.awk > $@ \
 	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
 	    FILE=$*.m $<
 po/POTFILES.in: @MAINT@ Makefile
@@ -1180,19 +1184,25 @@ po/POTFILES.in: @MAINT@ Makefile
 	  && mv tmp $(srcdir)/po/POTFILES.in
 
 config.texi:
-	echo "@set top_srcdir $(top_srcdir)" >> ./config.texi
+	$(AM_V_GEN)echo "@set top_srcdir $(top_srcdir)" >> ./config.texi
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 gprof.1: $(srcdir)/gprof.texi config.texi
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgprof < $(srcdir)/gprof.texi > gprof.pod
-	-($(POD2MAN) gprof.pod | \
+	$(AM_V_GEN)touch $@
+	$(AM_V_at)-$(TEXI2POD) $(MANCONF) -Dgprof < $(srcdir)/gprof.texi > gprof.pod
+	$(AM_V_at)-($(POD2MAN) gprof.pod | \
 	       sed -e '/^.if n .na/d' > $@.T$$$$ && \
 	       mv -f $@.T$$$$ $@) || \
 	       (rm -f $@.T$$$$ && exit 1)
-	rm -f gprof.pod
+	$(AM_V_at)rm -f gprof.pod
+
+html-local: doc/gprof/index.html
+doc/gprof/index.html: gprof.texi $(gprof_TEXINFOS)
+	$(AM_V_at)$(MKDIR_P) doc
+	$(AM_V_GEN)$(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) \
+	  --split=node -I$(srcdir) $(srcdir)/gprof.texi -o doc/gprof
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

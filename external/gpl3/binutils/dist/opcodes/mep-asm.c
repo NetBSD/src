@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -582,7 +582,7 @@ typedef struct
   int len;
 } arg;
 
-macro macros[] =
+static macro const macros[] =
 {
   { "sizeof", "(`1.end + (- `1))"},
   { "startof", "(`1 | 0)" },
@@ -615,10 +615,10 @@ str_append (char *dest, const char *input, int len)
   return strncat (new_dest, input, len);
 }
 
-static macro *
+static const macro *
 lookup_macro (const char *name)
 {
-  macro *m;
+  const macro *m;
 
   for (m = macros; m->name; ++m)
     if (strncmp (m->name, name, strlen(m->name)) == 0)
@@ -628,7 +628,7 @@ lookup_macro (const char *name)
 }
 
 static char *
-expand_macro (arg *args, int narg, macro *mac)
+expand_macro (arg *args, int narg, const macro *mac)
 {
   char *result = 0, *rescanned_result = 0;
   char *e = mac->expansion;
@@ -678,7 +678,7 @@ expand_string (const char *in, int first_only)
   arg args[MAXARGS];
   int state = IN_TEXT;
   const char *mark = in;
-  macro *pmacro = NULL;
+  const macro *pmacro = NULL;
   char *expansion = 0;
   char *result = 0;
 
@@ -811,8 +811,7 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
 	*strp_in += (str - hold);
     }
 
-  if (hold)
-    free (hold);
+  free (hold);
 
   return errmsg;
 }

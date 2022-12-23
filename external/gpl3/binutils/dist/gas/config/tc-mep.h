@@ -1,5 +1,5 @@
 /* tc-mep.h -- Header file for tc-mep.c.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -53,13 +53,12 @@ extern void mep_apply_fix (struct fix *, valueT *, segT);
 
 /* Call md_pcrel_from_section(), not md_pcrel_from().  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
-extern long md_pcrel_from_section (struct fix *, segT);
 
 #define tc_frob_file() mep_frob_file ()
 extern void mep_frob_file (void);
 
 #define tc_fix_adjustable(fixP) mep_fix_adjustable (fixP)
-extern bfd_boolean mep_fix_adjustable (struct fix *);
+extern bool mep_fix_adjustable (struct fix *);
 
 /* After creating a fixup for an instruction operand, we need
    to check for HI16 relocs and queue them up for later sorting.  */

@@ -1,6 +1,6 @@
 // binary.cc -- binary input files for gold
 
-// Copyright (C) 2008-2020 Free Software Foundation, Inc.
+// Copyright (C) 2008-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.

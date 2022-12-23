@@ -1,6 +1,6 @@
 /* plugin-api.h -- External linker plugin API.  */
 
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>.
 
    This file is part of binutils.
@@ -35,6 +35,60 @@
 #if !defined(HAVE_STDINT_H) && !defined(HAVE_INTTYPES_H) && \
     !defined(UINT64_MAX) && !defined(uint64_t)
 #error cannot find uint64_t type
+#endif
+
+/* Detect endianess based on __BYTE_ORDER__ macro.  */
+#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
+    defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_PDP_ENDIAN__)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define PLUGIN_LITTLE_ENDIAN 1
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define PLUGIN_BIG_ENDIAN 1
+#elif __BYTE_ORDER__ == __ORDER_PDP_ENDIAN__
+#define PLUGIN_PDP_ENDIAN 1
+#endif
+#else
+/* Older GCC releases (<4.6.0) can make detection from glibc macros.  */
+#if defined(__GLIBC__) || defined(__GNU_LIBRARY__) || defined(__ANDROID__)
+#include <endian.h>
+#ifdef __BYTE_ORDER
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define PLUGIN_LITTLE_ENDIAN 1
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#define PLUGIN_BIG_ENDIAN 1
+#endif
+#endif
+#endif
+/* Include all necessary header files based on target.  */
+#if defined(__SVR4) && defined(__sun)
+#include <sys/byteorder.h>
+#endif
+#if defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__DragonFly__) || defined(__minix)
+#include <sys/endian.h>
+#endif
+#if defined(__OpenBSD__)
+#include <machine/endian.h>
+#endif
+/* Detect endianess based on _BYTE_ORDER.  */
+#ifdef _BYTE_ORDER
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define PLUGIN_LITTLE_ENDIAN 1
+#elif _BYTE_ORDER == _BIG_ENDIAN
+#define PLUGIN_BIG_ENDIAN 1
+#endif
+#endif
+/* Detect based on _WIN32.  */
+#if defined(_WIN32)
+#define PLUGIN_LITTLE_ENDIAN 1
+#endif
+/* Detect based on __BIG_ENDIAN__ and __LITTLE_ENDIAN__ */
+#ifdef __LITTLE_ENDIAN__
+#define PLUGIN_LITTLE_ENDIAN 1
+#endif
+#ifdef __BIG_ENDIAN__
+#define PLUGIN_BIG_ENDIAN 1
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -87,7 +141,26 @@ struct ld_plugin_symbol
 {
   char *name;
   char *version;
-  int def;
+  /* This is for compatibility with older ABIs.  The older ABI defined
+     only 'def' field.  */
+#if PLUGIN_BIG_ENDIAN == 1
+  char unused;
+  char section_kind;
+  char symbol_type;
+  char def;
+#elif PLUGIN_LITTLE_ENDIAN == 1
+  char def;
+  char symbol_type;
+  char section_kind;
+  char unused;
+#elif PLUGIN_PDP_ENDIAN == 1
+  char symbol_type;
+  char def;
+  char unused;
+  char section_kind;
+#else
+#error "Could not detect architecture endianess"
+#endif
   int visibility;
   uint64_t size;
   char *comdat_key;
@@ -121,6 +194,21 @@ enum ld_plugin_symbol_visibility
   LDPV_PROTECTED,
   LDPV_INTERNAL,
   LDPV_HIDDEN
+};
+
+/* The type of the symbol.  */
+
+enum ld_plugin_symbol_type
+{
+  LDST_UNKNOWN,
+  LDST_FUNCTION,
+  LDST_VARIABLE
+};
+
+enum ld_plugin_symbol_section_kind
+{
+  LDSSK_DEFAULT,
+  LDSSK_BSS
 };
 
 /* How a symbol is resolved.  */
@@ -399,39 +487,40 @@ enum ld_plugin_level
 
 enum ld_plugin_tag
 {
-  LDPT_NULL = 0,
-  LDPT_API_VERSION = 1,
-  LDPT_GOLD_VERSION = 2,
-  LDPT_LINKER_OUTPUT = 3,
-  LDPT_OPTION = 4,
-  LDPT_REGISTER_CLAIM_FILE_HOOK = 5,
-  LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK = 6,
-  LDPT_REGISTER_CLEANUP_HOOK = 7,
-  LDPT_ADD_SYMBOLS = 8,
-  LDPT_GET_SYMBOLS = 9,
-  LDPT_ADD_INPUT_FILE = 10,
-  LDPT_MESSAGE = 11,
-  LDPT_GET_INPUT_FILE = 12,
-  LDPT_RELEASE_INPUT_FILE = 13,
-  LDPT_ADD_INPUT_LIBRARY = 14,
-  LDPT_OUTPUT_NAME = 15,
-  LDPT_SET_EXTRA_LIBRARY_PATH = 16,
-  LDPT_GNU_LD_VERSION = 17,
-  LDPT_GET_VIEW = 18,
-  LDPT_GET_INPUT_SECTION_COUNT = 19,
-  LDPT_GET_INPUT_SECTION_TYPE = 20,
-  LDPT_GET_INPUT_SECTION_NAME = 21,
-  LDPT_GET_INPUT_SECTION_CONTENTS = 22,
-  LDPT_UPDATE_SECTION_ORDER = 23,
-  LDPT_ALLOW_SECTION_ORDERING = 24,
-  LDPT_GET_SYMBOLS_V2 = 25,
-  LDPT_ALLOW_UNIQUE_SEGMENT_FOR_SECTIONS = 26,
-  LDPT_UNIQUE_SEGMENT_FOR_SECTIONS = 27,
-  LDPT_GET_SYMBOLS_V3 = 28,
-  LDPT_GET_INPUT_SECTION_ALIGNMENT = 29,
-  LDPT_GET_INPUT_SECTION_SIZE = 30,
-  LDPT_REGISTER_NEW_INPUT_HOOK = 31,
-  LDPT_GET_WRAP_SYMBOLS = 32
+  LDPT_NULL,
+  LDPT_API_VERSION,
+  LDPT_GOLD_VERSION,
+  LDPT_LINKER_OUTPUT,
+  LDPT_OPTION,
+  LDPT_REGISTER_CLAIM_FILE_HOOK,
+  LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK,
+  LDPT_REGISTER_CLEANUP_HOOK,
+  LDPT_ADD_SYMBOLS,
+  LDPT_GET_SYMBOLS,
+  LDPT_ADD_INPUT_FILE,
+  LDPT_MESSAGE,
+  LDPT_GET_INPUT_FILE,
+  LDPT_RELEASE_INPUT_FILE,
+  LDPT_ADD_INPUT_LIBRARY,
+  LDPT_OUTPUT_NAME,
+  LDPT_SET_EXTRA_LIBRARY_PATH,
+  LDPT_GNU_LD_VERSION,
+  LDPT_GET_VIEW,
+  LDPT_GET_INPUT_SECTION_COUNT,
+  LDPT_GET_INPUT_SECTION_TYPE,
+  LDPT_GET_INPUT_SECTION_NAME,
+  LDPT_GET_INPUT_SECTION_CONTENTS,
+  LDPT_UPDATE_SECTION_ORDER,
+  LDPT_ALLOW_SECTION_ORDERING,
+  LDPT_GET_SYMBOLS_V2,
+  LDPT_ALLOW_UNIQUE_SEGMENT_FOR_SECTIONS,
+  LDPT_UNIQUE_SEGMENT_FOR_SECTIONS,
+  LDPT_GET_SYMBOLS_V3,
+  LDPT_GET_INPUT_SECTION_ALIGNMENT,
+  LDPT_GET_INPUT_SECTION_SIZE,
+  LDPT_REGISTER_NEW_INPUT_HOOK,
+  LDPT_GET_WRAP_SYMBOLS,
+  LDPT_ADD_SYMBOLS_V2,
 };
 
 /* The plugin transfer vector.  */

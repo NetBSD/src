@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -33,7 +33,6 @@
 #endif
 
 #define streq(a,b)     (strcmp ((a), (b)) == 0)
-#define strneq(a,b,n)  (strncmp ((a), (b), (n)) == 0)
 
 /* I think this is probably always correct.  */
 #ifndef KEEP_RELOC_INFO
@@ -117,28 +116,24 @@ stack_pop (stack *st)
 
 /* Maintain a list of the tagnames of the structures.  */
 
-static struct hash_control *tag_hash;
+static htab_t tag_hash;
 
 static void
 tag_init (void)
 {
-  tag_hash = hash_new ();
+  tag_hash = str_htab_create ();
 }
 
 static void
 tag_insert (const char *name, symbolS *symbolP)
 {
-  const char *error_string;
-
-  if ((error_string = hash_jam (tag_hash, name, (char *) symbolP)))
-    as_fatal (_("Inserting \"%s\" into structure table failed: %s"),
-	      name, error_string);
+  str_hash_insert (tag_hash, name, symbolP, 1);
 }
 
 static symbolS *
 tag_find (char *name)
 {
-  return (symbolS *) hash_find (tag_hash, name);
+  return (symbolS *) str_hash_find (tag_hash, name);
 }
 
 static symbolS *
@@ -148,8 +143,7 @@ tag_find_or_make (char *name)
 
   if ((symbolP = tag_find (name)) == NULL)
     {
-      symbolP = symbol_new (name, undefined_section,
-			    0, &zero_address_frag);
+      symbolP = symbol_new (name, undefined_section, &zero_address_frag, 0);
 
       tag_insert (S_GET_NAME (symbolP), symbolP);
       symbol_table_insert (symbolP);
@@ -322,13 +316,13 @@ c_symbol_merge (symbolS *debug, symbolS *normal)
 }
 
 void
-c_dot_file_symbol (const char *filename, int appfile ATTRIBUTE_UNUSED)
+c_dot_file_symbol (const char *filename)
 {
   symbolS *symbolP;
 
   /* BFD converts filename to a .file symbol with an aux entry.  It
      also handles chaining.  */
-  symbolP = symbol_new (filename, bfd_abs_section_ptr, 0, &zero_address_frag);
+  symbolP = symbol_new (filename, bfd_abs_section_ptr, &zero_address_frag, 0);
 
   S_SET_STORAGE_CLASS (symbolP, C_FILE);
   S_SET_NUMBER_AUXILIARY (symbolP, 1);
@@ -379,7 +373,7 @@ coff_obj_symbol_new_hook (symbolS *symbolP)
 
   memset (s, 0, sz);
   coffsymbol (symbol_get_bfdsym (symbolP))->native = (combined_entry_type *) s;
-  coffsymbol (symbol_get_bfdsym (symbolP))->native->is_sym = TRUE;
+  coffsymbol (symbol_get_bfdsym (symbolP))->native->is_sym = true;
 
   S_SET_DATA_TYPE (symbolP, T_NULL);
   S_SET_STORAGE_CLASS (symbolP, 0);
@@ -453,11 +447,11 @@ coff_add_linesym (symbolS *sym)
 }
 
 static void
-obj_coff_ln (int appline)
+obj_coff_ln (int ignore ATTRIBUTE_UNUSED)
 {
   int l;
 
-  if (! appline && def_symbol_in_progress != NULL)
+  if (def_symbol_in_progress != NULL)
     {
       as_warn (_(".ln pseudo-op inside .def/.endef: ignored."));
       demand_empty_rest_of_line ();
@@ -466,9 +460,9 @@ obj_coff_ln (int appline)
 
   l = get_absolute_expression ();
 
-  /* If there is no lineno symbol, treat a .ln
-     directive as if it were a .appline directive.  */
-  if (appline || current_lineno_sym == NULL)
+  /* If there is no lineno symbol, treat a .ln directive
+     as if it were a (no longer existing) .appline one.  */
+  if (current_lineno_sym == NULL)
     new_logical_line ((char *) NULL, l - 1);
   else
     add_lineno (frag_now, frag_now_fix (), l);
@@ -479,8 +473,7 @@ obj_coff_ln (int appline)
 
     if (listing)
       {
-	if (! appline)
-	  l += coff_line_base - 1;
+	l += coff_line_base - 1;
 	listing_source_line (l);
       }
   }
@@ -1063,7 +1056,7 @@ obj_coff_val (int ignore ATTRIBUTE_UNUSED)
 static int
 weak_is_altname (const char * name)
 {
-  return strneq (name, weak_altprefix, sizeof (weak_altprefix) - 1);
+  return startswith (name, weak_altprefix);
 }
 
 /* Return the name of the alternate symbol
@@ -1385,6 +1378,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
   /* This is pretty horrible, but we have to set *punt correctly in
      order to call SA_SET_SYM_ENDNDX correctly.  */
   if (! symbol_used_in_reloc_p (symp)
+      && S_GET_STORAGE_CLASS (symp) != C_DWARF
       && ((symbol_get_bfdsym (symp)->flags & BSF_SECTION_SYM) != 0
 	  || (! (S_IS_EXTERNAL (symp) || S_IS_WEAK (symp))
 	      && ! symbol_get_tc (symp)->output
@@ -1489,8 +1483,18 @@ coff_adjust_section_syms (bfd *abfd ATTRIBUTE_UNUSED,
   secsym = section_symbol (sec);
   /* This is an estimate; we'll plug in the real value using
      SET_SECTION_RELOCS later */
+#ifdef OBJ_XCOFF
+  if (S_GET_STORAGE_CLASS (secsym) == C_DWARF)
+    SA_SET_SECT_NRELOC (secsym, nrelocs);
+  else
+    {
+      SA_SET_SCN_NRELOC (secsym, nrelocs);
+      SA_SET_SCN_NLINNO (secsym, nlnno);
+    }
+#else
   SA_SET_SCN_NRELOC (secsym, nrelocs);
   SA_SET_SCN_NLINNO (secsym, nlnno);
+#endif
 }
 
 void
@@ -1532,6 +1536,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
   unsigned int exp;
   flagword flags, oldflags;
   asection *sec;
+  bool is_bss = false;
 
   if (flag_mri)
     {
@@ -1581,6 +1586,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		  /* Uninitialised data section.  */
 		  flags |= SEC_ALLOC;
 		  flags &=~ SEC_LOAD;
+		  is_bss = true;
 		  break;
 
 		case 'n':
@@ -1652,6 +1658,9 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 
   sec = subseg_new (name, (subsegT) exp);
 
+  if (is_bss)
+    seg_info (sec)->bss = 1;
+
   if (alignment >= 0)
     sec->alignment_power = alignment;
 
@@ -1667,7 +1676,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
       /* Add SEC_LINK_ONCE and SEC_LINK_DUPLICATES_DISCARD to .gnu.linkonce
          sections so adjust_reloc_syms in write.c will correctly handle
          relocs which refer to non-local symbols in these sections.  */
-      if (strneq (name, ".gnu.linkonce", sizeof (".gnu.linkonce") - 1))
+      if (startswith (name, ".gnu.linkonce"))
 	flags |= SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
 #endif
 
@@ -1695,7 +1704,7 @@ coff_adjust_symtab (void)
 {
   if (symbol_rootP == NULL
       || S_GET_STORAGE_CLASS (symbol_rootP) != C_FILE)
-    c_dot_file_symbol ("fake", 0);
+    c_dot_file_symbol ("fake");
 }
 
 void
@@ -1755,7 +1764,11 @@ coff_frob_section (segT sec)
       S_SET_STORAGE_CLASS (secsym, sclass);
       S_SET_NUMBER_AUXILIARY (secsym, 1);
       SF_SET_STATICS (secsym);
+#ifdef OBJ_XCOFF
+      SA_SET_SECT_SCNLEN (secsym, size);
+#else
       SA_SET_SCN_SCNLEN (secsym, size);
+#endif
     }
   /* FIXME: These should be in a "stabs.h" file, or maybe as.h.  */
 #ifndef STAB_SECTION_NAME
@@ -1800,7 +1813,7 @@ obj_coff_init_stab_section (segT seg)
   memset (p, 0, 12);
   file = as_where ((unsigned int *) NULL);
   stabstr_name = concat (seg->name, "str", (char *) NULL);
-  stroff = get_stab_string_offset (file, stabstr_name, TRUE);
+  stroff = get_stab_string_offset (file, stabstr_name, true);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
 }
@@ -1835,7 +1848,6 @@ symbol_dump (void)
 const pseudo_typeS coff_pseudo_table[] =
 {
   {"ABORT", s_abort, 0},
-  {"appline", obj_coff_ln, 1},
   /* We accept the .bss directive for backward compatibility with
      earlier versions of gas.  */
   {"bss", obj_coff_bss, 0},

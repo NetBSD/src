@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,220 +28,220 @@
 #include "libiberty.h"
 
 static bfd_reloc_status_type visium_elf_howto_parity_reloc
-  (bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 
 static reloc_howto_type visium_elf_howto_table[] = {
   /* This reloc does nothing.  */
   HOWTO (R_VISIUM_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit absolute relocation.  */
   HOWTO (R_VISIUM_8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_VISIUM_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_VISIUM_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
 
   /* A 8 bit PC relative relocation.  */
   HOWTO (R_VISIUM_8_PCREL,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_8_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit PC relative relocation.  */
   HOWTO (R_VISIUM_16_PCREL,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_16_PCREL",	/* name */
-	 FALSE,			/* partial inplace */
+	 false,			/* partial inplace */
 	 0x0000,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 32-bit PC relative relocation.  */
   HOWTO (R_VISIUM_32_PCREL,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_32_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16-bit PC word relative offset, relative to start of instruction
      and always in the second half of the instruction.  */
   HOWTO (R_VISIUM_PC16,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_PC16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* The high 16 bits of symbol value.  */
   HOWTO (R_VISIUM_HI16,		/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_HI16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The low 16 bits of symbol value.  */
   HOWTO (R_VISIUM_LO16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_LO16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit immediate value.  */
   HOWTO (R_VISIUM_IM16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_IM16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000000,		/* src_mask */
 	 0x000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The high 16 bits of symbol value, pc relative.  */
   HOWTO (R_VISIUM_HI16_PCREL,	/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_HI16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* The low 16 bits of symbol value, pc relative.  */
   HOWTO (R_VISIUM_LO16_PCREL,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_LO16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit immediate value, pc relative.  */
   HOWTO (R_VISIUM_IM16_PCREL,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned,	/* complain_on_overflow */
 	 visium_elf_howto_parity_reloc,	/* special_function */
 	 "R_VISIUM_IM16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x0000000,		/* src_mask */
 	 0x000ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
 };
 
@@ -249,33 +249,33 @@ static reloc_howto_type visium_elf_howto_table[] = {
 static reloc_howto_type visium_elf_vtinherit_howto =
   HOWTO (R_VISIUM_GNU_VTINHERIT,      /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 0,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_dont,   /* complain_on_overflow */
 	 NULL,			   /* special_function */
 	 "R_VISIUM_GNU_VTINHERIT", /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0,			   /* src_mask */
 	 0,			   /* dst_mask */
-	 FALSE);		   /* pcrel_offset */
+	 false);		   /* pcrel_offset */
 
 /* GNU extension to record C++ vtable member usage.  */
 static reloc_howto_type visium_elf_vtentry_howto =
   HOWTO (R_VISIUM_GNU_VTENTRY,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 0,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_dont,   /* complain_on_overflow */
 	 NULL,			   /* special_function */
 	 "R_VISIUM_GNU_VTENTRY",   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0,			   /* src_mask */
 	 0,			   /* dst_mask */
-	 FALSE);		   /* pcrel_offset */
+	 false);		   /* pcrel_offset */
 
 /* Return the parity bit for INSN shifted to its final position.  */
 
@@ -304,7 +304,7 @@ visium_parity_bit (bfd_vma insn)
 
 static bfd_reloc_status_type
 visium_elf_howto_parity_reloc (bfd * input_bfd, arelent *reloc_entry,
-			       asymbol *symbol, PTR data,
+			       asymbol *symbol, void *data,
 			       asection *input_section, bfd *output_bfd,
 			       char **error_message ATTRIBUTE_UNUSED)
 {
@@ -458,7 +458,7 @@ visium_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for a VISIUM ELF reloc.  */
 
-static bfd_boolean
+static bool
 visium_info_to_howto_rela (bfd *abfd, arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
 {
@@ -481,19 +481,19 @@ visium_info_to_howto_rela (bfd *abfd, arelent *cache_ptr,
 	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			      abfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
       cache_ptr->howto = &visium_elf_howto_table[r_type];
       break;
     }
-  return TRUE;
+  return true;
 }
 
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
 
-static bfd_boolean
+static bool
 visium_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			 asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -503,7 +503,7 @@ visium_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   const Elf_Internal_Rela *rel_end;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
@@ -531,24 +531,24 @@ visium_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	     Reconstruct it for later use during GC.  */
 	case R_VISIUM_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_VISIUM_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Relocate a VISIUM ELF section.  */
 
-static bfd_boolean
+static int
 visium_elf_relocate_section (bfd *output_bfd,
 			     struct bfd_link_info *info, bfd *input_bfd,
 			     asection *input_section, bfd_byte *contents,
@@ -603,8 +603,8 @@ visium_elf_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bool unresolved_reloc;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -673,7 +673,7 @@ visium_elf_relocate_section (bfd *output_bfd,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -699,7 +699,7 @@ visium_elf_relocate_section (bfd *output_bfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This function is called during section gc to discover the section a
@@ -722,55 +722,55 @@ visium_elf_gc_mark_hook (asection *sec, struct bfd_link_info *info,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-static bfd_boolean
+static bool
 visium_elf_init_file_header (bfd *abfd, struct bfd_link_info *info)
 {
   Elf_Internal_Ehdr *i_ehdrp;
 
   if (!_bfd_elf_init_file_header (abfd, info))
-    return FALSE;
+    return false;
 
   i_ehdrp = elf_elfheader (abfd);
   i_ehdrp->e_ident[EI_ABIVERSION] = 1;
-  return TRUE;
+  return true;
 }
 
 /* Function to set the ELF flag bits.  */
 
-static bfd_boolean
+static bool
 visium_elf_set_private_flags (bfd *abfd, flagword flags)
 {
   elf_elfheader (abfd)->e_flags = flags;
-  elf_flags_init (abfd) = TRUE;
-  return TRUE;
+  elf_flags_init (abfd) = true;
+  return true;
 }
 
 /* Copy backend specific data from one object module to another.  */
 
-static bfd_boolean
+static bool
 visium_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
   BFD_ASSERT (!elf_flags_init (obfd)
 	      || elf_elfheader (obfd)->e_flags ==
 	      elf_elfheader (ibfd)->e_flags);
 
   elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
+  elf_flags_init (obfd) = true;
 
   /* Copy object attributes.  */
   _bfd_elf_copy_obj_attributes (ibfd, obfd);
 
-  return TRUE;
+  return true;
 }
 
 /* Merge backend specific data from an object
    file to the output object file when linking.  */
 
-static bfd_boolean
+static bool
 visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
@@ -792,7 +792,7 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (!elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = new_flags;
     }
   else
@@ -826,10 +826,10 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	   ibfd, new_opt_with, opt_arch, old_opt_with, opt_arch);
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 visium_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -851,7 +851,7 @@ visium_elf_print_private_bfd_data (bfd *abfd, void *ptr)
     fprintf (file, " -mtune=mcm24");
 
   fputc ('\n', file);
-  return TRUE;
+  return true;
 }
 
 #define ELF_ARCH		bfd_arch_visium

@@ -1,5 +1,5 @@
 /* obj-evax.c - EVAX (openVMS/Alpha) object file format.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
    Extensively enhanced by Douglas Rupp of AdaCore.
@@ -87,7 +87,7 @@ evax_symbol_new_hook (symbolS *sym)
   udata->enbsym = NULL;
   udata->origname = xstrdup (S_GET_NAME (sym));
   udata->lkindex = 0;
-  symbol_get_bfdsym(sym)->udata.p = (PTR) udata;
+  symbol_get_bfdsym(sym)->udata.p = udata;
 }
 
 void
@@ -239,7 +239,7 @@ evax_shorten_name (char *id)
   prefix [0] = 0;
 
   /* Check for ..xx suffix and save it.  */
-  if (strncmp (&id[len-4], "..", 2) == 0)
+  if (startswith (&id[len-4], ".."))
     {
       suffix_dotdot = len - 4;
       strncpy (suffix, &id[len-4], 4);

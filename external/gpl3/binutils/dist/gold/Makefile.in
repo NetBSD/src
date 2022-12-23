@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#  Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#  Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -842,6 +842,7 @@ POTFILES = $(CCFILES) $(HFILES) $(TARGETSOURCES)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LINK = `echo $(CXXLD) | sed $(editcc2)`\
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_LDFLAGS) $(LDFLAGS) -o $@
 
+@GCC_TRUE@@NATIVE_LINKER_TRUE@TEST_READELF = $(top_builddir)/../binutils/readelf
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_SOURCES = $(sources_var)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_DEPENDENCIES = libgold-1-r.o $(deps_var) gcctestdir1/ld gcctestdir1/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_LDADD = libgold-1-r.o $(ldadd_var)
@@ -1498,7 +1499,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-data-local
+install-data-am:
 
 install-dvi: install-dvi-recursive
 
@@ -1556,15 +1557,15 @@ uninstall-am: uninstall-binPROGRAMS
 	cscopelist-am ctags ctags-am distclean distclean-compile \
 	distclean-generic distclean-hdr distclean-tags dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-data-local install-dvi \
-	install-dvi-am install-exec install-exec-am install-exec-local \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am recheck tags tags-am \
-	uninstall uninstall-am uninstall-binPROGRAMS
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-exec-local install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am recheck tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
@@ -1603,10 +1604,6 @@ install-exec-local: ld-new$(EXEEXT)
 	  fi; \
 	fi
 
-# We want install to imply install-info as per GNU standards, despite
-# the cygnus option.
-install-data-local: install-info
-
 po/POTFILES.in: @MAINT@ Makefile
 	for f in $(POTFILES); do echo $$f; done | LC_ALL=C sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
@@ -1625,10 +1622,15 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld1 $@
 
+# Skip this for LTO build due to different build IDs.
 @GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test: ld2
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "#!/bin/sh" > $@
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1 ld2" >> $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	if $(TEST_READELF) -SW main.$(OBJEXT) | grep "gnu.lto" > /dev/null; then \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	  echo true >> $@; \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	else \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	  echo "cmp ld1 ld2" >> $@; \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	fi
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libgold-1-r.o: gcctestdir1/ld libgold.a
@@ -1642,10 +1644,15 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libgold-2-r.o: gcctestdir2-r/ld libgold.a
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	gcctestdir2-r/ld -o $@ -r --whole-archive libgold.a
 
+# Skip this for LTO build due to different build IDs.
 @GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test-r: ld2-r
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "#!/bin/sh" > $@
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1-r ld2-r" >> $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	if $(TEST_READELF) -SW main.$(OBJEXT) | grep "gnu.lto" > /dev/null; then \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	  echo true >> $@; \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	else \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	  echo "cmp ld1-r ld2-r" >> $@; \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	fi
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir3/ld gcctestdir3/collect-ld: ld-new

@@ -30,8 +30,11 @@ cgen-dis.c
 cgen-opc.c
 cr16-dis.c
 cr16-opc.c
+cris-desc.c
+cris-desc.h
 cris-dis.c
 cris-opc.c
+cris-opc.h
 crx-dis.c
 crx-opc.c
 csky-dis.c
@@ -108,6 +111,9 @@ lm32-ibld.c
 lm32-opc.c
 lm32-opc.h
 lm32-opinst.c
+loongarch-coder.c
+loongarch-dis.c
+loongarch-opc.c
 m10200-dis.c
 m10200-opc.c
 m10300-dis.c
@@ -215,13 +221,6 @@ vax-dis.c
 visium-dis.c
 visium-opc.c
 wasm32-dis.c
-xc16x-asm.c
-xc16x-desc.c
-xc16x-desc.h
-xc16x-dis.c
-xc16x-ibld.c
-xc16x-opc.c
-xc16x-opc.h
 xgate-dis.c
 xgate-opc.c
 xstormy16-asm.c

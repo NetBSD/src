@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -11,7 +11,7 @@ test -z $RELOCATEABLE_OUTPUT_FORMAT && RELOCATEABLE_OUTPUT_FORMAT=$OUTPUT_FORMAT
 test -z ${RELOCATING+0} && OUTPUT_FORMAT=$RELOCATEABLE_OUTPUT_FORMAT
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -24,18 +24,18 @@ SECTIONS
 {
   .text ${RELOCATING+ ${TEXT_START_ADDR}}:
   {
+    /* FIXME: Move .init, .fini, .ctors and .dtors to their own sections.  */
+    ${RELOCATING+ PROVIDE (_init_start = .);}
+    ${RELOCATING+ PROVIDE (_init = .);}
+    ${RELOCATING+ KEEP (*(SORT_NONE(.init)))}
+    ${RELOCATING+ PROVIDE (_init_end = .);}
+
     *(.text)
     ${RELOCATING+*(.text.*)}
     ${RELOCATING+*(.gnu.linkonce.t*)}
     ${RELOCATING+*(.rodata)}
     ${RELOCATING+*(.rodata.*)}
     ${RELOCATING+*(.gnu.linkonce.r*)}
-
-    /* FIXME: Move .init, .fini, .ctors and .dtors to their own sections.  */
-    ${RELOCATING+ PROVIDE (_init_start = .);}
-    ${RELOCATING+ PROVIDE (_init = .);}
-    ${RELOCATING+ KEEP (*(SORT_NONE(.init)))}
-    ${RELOCATING+ PROVIDE (_init_end = .);}
 
     ${RELOCATING+ PROVIDE (_fini_start = .);}
     ${RELOCATING+ PROVIDE (_fini = .);}

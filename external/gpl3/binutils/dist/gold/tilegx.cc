@@ -1,6 +1,6 @@
 // tilegx.cc -- tilegx target support for gold.
 
-// Copyright (C) 2012-2020 Free Software Foundation, Inc.
+// Copyright (C) 2012-2022 Free Software Foundation, Inc.
 // Written by Jiong Wang (jiwang@tilera.com)
 
 // This file is part of gold.
@@ -4013,7 +4013,7 @@ Target_tilegx<size, big_endian>::Scan::global(Symbol_table* symtab,
               // only expand to plt against __tls_get_addr in GD model
               case elfcpp::R_TILEGX_TLS_GD_CALL:
                 if (opt_t == tls::TLSOPT_NONE) {
-                  // FIXME:  it's better '__tls_get_addr' referenced explictly
+                  // FIXME:  it's better '__tls_get_addr' referenced explicitly
                   if (!target->tls_get_addr_sym_defined_) {
                     Symbol* sym = NULL;
                     options::parse_set(NULL, "__tls_get_addr",

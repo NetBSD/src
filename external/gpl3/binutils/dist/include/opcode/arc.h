@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -260,8 +260,7 @@ struct arc_operand
      TRUE if this operand type can not actually be extracted from
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
-  long long int (*extract) (unsigned long long instruction,
-                            bfd_boolean *invalid);
+  long long int (*extract) (unsigned long long instruction, bool *invalid);
 };
 
 /* Elements in the table are retrieved by indexing with values from

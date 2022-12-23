@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF64" file definitions for BFD.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,32 +39,38 @@ struct external_filehdr
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
 
-typedef struct 
+typedef struct
 {
-  unsigned char	magic[2];		/* type of file			*/
-  unsigned char	vstamp[2];		/* version stamp		*/
-  unsigned char	o_debugger[4];		/* reserved 			*/
-  unsigned char	text_start[8];		/* base of text used for this file */
-  unsigned char	data_start[8];		/* base of data used for this file */
-  unsigned char	o_toc[8];		/* address of TOC */
-  unsigned char	o_snentry[2];		/* section number of entry point */
-  unsigned char	o_sntext[2];		/* section number of .text section */
-  unsigned char	o_sndata[2];		/* section number of .data section */
-  unsigned char	o_sntoc[2];		/* section number of TOC */
-  unsigned char	o_snloader[2];		/* section number of .loader section */
-  unsigned char	o_snbss[2];		/* section number of .bss section */
-  unsigned char	o_algntext[2];		/* .text alignment */
-  unsigned char	o_algndata[2];		/* .data alignment */
-  unsigned char	o_modtype[2];		/* module type (??) */
+  unsigned char magic[2];		/* type of file			*/
+  unsigned char vstamp[2];		/* version stamp		*/
+  unsigned char o_debugger[4];		/* reserved			*/
+  unsigned char text_start[8];		/* base of text used for this file */
+  unsigned char data_start[8];		/* base of data used for this file */
+  unsigned char o_toc[8];		/* address of TOC */
+  unsigned char o_snentry[2];		/* section number of entry point */
+  unsigned char o_sntext[2];		/* section number of .text section */
+  unsigned char o_sndata[2];		/* section number of .data section */
+  unsigned char o_sntoc[2];		/* section number of TOC */
+  unsigned char o_snloader[2];		/* section number of .loader section */
+  unsigned char o_snbss[2];		/* section number of .bss section */
+  unsigned char o_algntext[2];		/* .text alignment */
+  unsigned char o_algndata[2];		/* .data alignment */
+  unsigned char o_modtype[2];		/* module type (??) */
   unsigned char o_cputype[2];		/* cpu type */
-  unsigned char	o_resv2[4];		/* reserved 			*/
-  unsigned char	tsize[8];		/* text size bytes, padded to FW bdry */
-  unsigned char	dsize[8];		/* initialized data "  "	*/
-  unsigned char	bsize[8];		/* uninitialized data "   "	*/
-  unsigned char	entry[8];		/* entry pt.			*/
-  unsigned char	o_maxstack[8];		/* max stack size (??) 		*/
-  unsigned char o_maxdata[8];		/* max data size (??) 		*/
-  unsigned char	o_resv3[16];		/* reserved 			*/
+  unsigned char o_textpsize[1]; 	/* text page size */
+  unsigned char o_datapsize[1]; 	/* data page size */
+  unsigned char o_stackpsize[1];	/* stack page size */
+  unsigned char o_flags[1];		/* Flags and TLS alignment */
+  unsigned char tsize[8];		/* text size bytes, padded to FW bdry */
+  unsigned char dsize[8];		/* initialized data "  "	*/
+  unsigned char bsize[8];		/* uninitialized data "	  "	*/
+  unsigned char entry[8];		/* entry pt.			*/
+  unsigned char o_maxstack[8];		/* max stack size (??)		*/
+  unsigned char o_maxdata[8];		/* max data size (??)		*/
+  unsigned char o_sntdata[2];		/* section number of .tdata section */
+  unsigned char o_sntbss[2];		/* section number of .tbss section */
+  unsigned char o_x64flags[2];		/* XCOFF64 flags */
+  unsigned char o_resv3[10];		/* reserved			*/
 }
 AOUTHDR;
 
@@ -138,54 +144,59 @@ struct external_syment
 
 union external_auxent
 {
-    struct {
-    	union {
-	    struct {
-		char x_lnno[4]; 	/* declaration line number */
-		char x_size[2]; 	/* str/union/array size */
-	    } x_lnsz;
-	    struct {
-		char x_lnnoptr[8];/* ptr to fcn line */
-		char x_fsize[4];	 /* size of function */
-		char x_endndx[4];	 /* entry ndx past block end */
-	    } x_fcn;
- 	} x_fcnary;
-    } x_sym;
-         
-    struct {
-        union {
-            char x_fname[E_FILNMLEN];
-            struct {
-	        char x_zeroes[4];
-                char x_offset[4];
-	        char x_pad[6];
-            } x_n;
-        } x_n;
-        unsigned char x_ftype[1];
-        unsigned char x_resv[2];
-    } x_file;
+  struct {
+    char x_lnno[4]; 	/* declaration line number */
+    char x_pad[13];
+    char x_auxtype[1];
+  } x_sym;
 
-    struct {
-	char x_exptr[8];
-	char x_fsize[4];
-	char x_endndx[4];
-	char x_pad[1];
-    } x_except;
+  struct {
+    char x_lnnoptr[8];/* ptr to fcn line */
+    char x_fsize[4];	 /* size of function */
+    char x_endndx[4];	 /* entry ndx past block end */
+    char x_pad[1];
+    char x_auxtype[1];
+  } x_fcn;
 
-    struct {
-	    unsigned char x_scnlen_lo[4];
-	    unsigned char x_parmhash[4];
-	    unsigned char x_snhash[2];
-	    unsigned char x_smtyp[1];
-	    unsigned char x_smclas[1];
-	    unsigned char x_scnlen_hi[4];
-	    unsigned char x_pad[1];
-    } x_csect;	
+  struct {
+    union {
+      char x_fname[E_FILNMLEN];
+      struct {
+	char x_zeroes[4];
+	char x_offset[4];
+	char x_pad[6];
+      } x_n;
+    } x_n;
+    unsigned char x_ftype[1];
+    unsigned char x_resv[2];
+    char x_auxtype[1];
+  } x_file;
 
-    struct {
-	char x_pad[17];
-	char x_auxtype[1];
-    } x_auxtype;
+  struct {
+    char x_exptr[8];
+    char x_fsize[4];
+    char x_endndx[4];
+    char x_pad[1];
+    char x_auxtype[1];
+  } x_except;
+
+  struct {
+    char x_scnlen_lo[4];
+    char x_parmhash[4];
+    char x_snhash[2];
+    char x_smtyp[1];
+    char x_smclas[1];
+    char x_scnlen_hi[4];
+    char x_pad[1];
+    char x_auxtype[1];
+  } x_csect;
+
+  struct {
+    char x_scnlen[8];
+    char x_nreloc[8];
+    char x_pad[1];
+    char x_auxtype[1];
+  } x_sect;
 };
 
 #define	SYMENT	struct external_syment
@@ -201,6 +212,7 @@ union external_auxent
 #define _AUX_SYM        253
 #define _AUX_FILE       252
 #define _AUX_CSECT      251
+#define _AUX_SECT       250
 
 /********************** RELOCATION DIRECTIVES **********************/
 

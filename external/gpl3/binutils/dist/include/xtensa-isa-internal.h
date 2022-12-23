@@ -1,5 +1,5 @@
 /* Internal definitions for configurable Xtensa ISA support.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -53,29 +53,29 @@ typedef void (*xtensa_opcode_encode_fn) (xtensa_insnbuf);
 typedef int (*xtensa_format_decode_fn) (const xtensa_insnbuf);
 typedef int (*xtensa_length_decode_fn) (const unsigned char *);
 
-typedef struct xtensa_format_internal_struct
+typedef const struct xtensa_format_internal_struct
 {
   const char *name;			/* Instruction format name.  */
   int length;				/* Instruction length in bytes.  */
   xtensa_format_encode_fn encode_fn;
   int num_slots;
-  int *slot_id;				/* Array[num_slots] of slot IDs.  */
+  const int *slot_id;			/* Array[num_slots] of slot IDs.  */
 } xtensa_format_internal;
 
-typedef struct xtensa_slot_internal_struct
+typedef const struct xtensa_slot_internal_struct
 {
   const char *name;			/* Not necessarily unique.  */
   const char *format;
   int position;
   xtensa_get_slot_fn get_fn;
   xtensa_set_slot_fn set_fn;
-  xtensa_get_field_fn *get_field_fns;	/* Array[field_id].  */
-  xtensa_set_field_fn *set_field_fns;	/* Array[field_id].  */
+  const xtensa_get_field_fn *get_field_fns; /* Array[field_id].  */
+  const xtensa_set_field_fn *set_field_fns; /* Array[field_id].  */
   xtensa_opcode_decode_fn opcode_decode_fn;
   const char *nop_name;
 } xtensa_slot_internal;
 
-typedef struct xtensa_operand_internal_struct
+typedef const struct xtensa_operand_internal_struct
 {
   const char *name;
   int field_id;
@@ -88,7 +88,7 @@ typedef struct xtensa_operand_internal_struct
   xtensa_undo_reloc_fn undo_reloc;	/* Undo a PC-relative relocation.  */
 } xtensa_operand_internal;
 
-typedef struct xtensa_arg_internal_struct
+typedef const struct xtensa_arg_internal_struct
 {
   union {
     int operand_id;			/* For normal operands.  */
@@ -97,7 +97,7 @@ typedef struct xtensa_arg_internal_struct
   char inout;				/* Direction: 'i', 'o', or 'm'.  */
 } xtensa_arg_internal;
 
-typedef struct xtensa_iclass_internal_struct
+typedef const struct xtensa_iclass_internal_struct
 {
   int num_operands;			/* Size of "operands" array.  */
   xtensa_arg_internal *operands;	/* Array[num_operands].  */
@@ -109,17 +109,17 @@ typedef struct xtensa_iclass_internal_struct
   xtensa_interface *interfaceOperands;	/* Array[num_interfaceOperands].  */
 } xtensa_iclass_internal;
 
-typedef struct xtensa_opcode_internal_struct
+typedef const struct xtensa_opcode_internal_struct
 {
   const char *name;			/* Opcode mnemonic.  */
   int iclass_id;			/* Iclass for this opcode.  */
   uint32 flags;				/* See XTENSA_OPCODE_* flags.  */
-  xtensa_opcode_encode_fn *encode_fns;	/* Array[slot_id].  */
+  const xtensa_opcode_encode_fn *encode_fns; /* Array[slot_id].  */
   int num_funcUnit_uses;		/* Number of funcUnit_use entries.  */
   xtensa_funcUnit_use *funcUnit_uses;	/* Array[num_funcUnit_uses].  */
 } xtensa_opcode_internal;
 
-typedef struct xtensa_regfile_internal_struct
+typedef const struct xtensa_regfile_internal_struct
 {
   const char *name;			/* Full name of the regfile.  */
   const char *shortname;		/* Abbreviated name.  */
@@ -128,7 +128,7 @@ typedef struct xtensa_regfile_internal_struct
   int num_entries;			/* Number of registers.  */
 } xtensa_regfile_internal;
 
-typedef struct xtensa_interface_internal_struct
+typedef const struct xtensa_interface_internal_struct
 {
   const char *name;			/* Interface name.  */
   int num_bits;				/* Width of the interface.  */
@@ -137,20 +137,20 @@ typedef struct xtensa_interface_internal_struct
   char inout;				/* "i" or "o".  */
 } xtensa_interface_internal;
 
-typedef struct xtensa_funcUnit_internal_struct
+typedef const struct xtensa_funcUnit_internal_struct
 {
   const char *name;			/* Functional unit name.  */
   int num_copies;			/* Number of instances.  */
 } xtensa_funcUnit_internal;
 
-typedef struct xtensa_state_internal_struct
+typedef const struct xtensa_state_internal_struct
 {
   const char *name;			/* State name.  */
   int num_bits;				/* Number of state bits.  */
   uint32 flags;				/* See XTENSA_STATE_* flags.  */
 } xtensa_state_internal;
 
-typedef struct xtensa_sysreg_internal_struct
+typedef const struct xtensa_sysreg_internal_struct
 {
   const char *name;			/* Register name.  */
   int number;				/* Register number.  */
@@ -227,8 +227,5 @@ typedef struct xtensa_isa_internal_struct
 } xtensa_isa_internal;
 
 extern int xtensa_isa_name_compare (const void *, const void *);
-
-extern xtensa_isa_status xtisa_errno;
-extern char xtisa_error_msg[];
 
 #endif /* !XTENSA_ISA_INTERNAL_H */

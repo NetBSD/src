@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ldint.info
-@c Copyright (C) 1992-2020 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
 @ifnottex
 @dircategory Software development
@@ -12,7 +12,7 @@
 @copying
 This file documents the internals of the GNU linker ld.
 
-Copyright @copyright{} 1992-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2022 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -55,7 +55,7 @@ included in the section entitled ``GNU Free Documentation License''.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1992-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2022 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3

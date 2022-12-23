@@ -1,5 +1,5 @@
 /* nfp.h.  NFP opcode list.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of the GNU opcodes library.
@@ -23,7 +23,7 @@
 #define _NFP_H_
 
 #include "bfd.h"
-#include "bfd_stdint.h"
+#include <stdint.h>
 #include "elf/nfp.h"
 
 #ifdef __cplusplus

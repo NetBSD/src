@@ -1452,7 +1452,7 @@ msgstr "Раскрывать имена символов [использую С�
 #: lexsup.c:319
 msgid ""
 "Do not allow multiple definitions with symbols included\n"
-"           in filename invoked by -R or --just-symbols"
+"                                in filename invoked by -R or --just-symbols"
 msgstr ""
 "Не разрешать включение многократного определения символов\n"
 "           в файл, указанный параметром -R или --just-symbols"

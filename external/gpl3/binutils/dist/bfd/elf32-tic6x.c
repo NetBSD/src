@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
 		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -46,9 +46,6 @@ struct elf32_tic6x_link_hash_table
   /* C6X specific command line arguments.  */
   struct elf32_tic6x_params params;
 
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
-
   /* The output BFD, for convenience.  */
   bfd *obfd;
 
@@ -60,16 +57,6 @@ struct elf32_tic6x_link_hash_table
 
 #define elf32_tic6x_hash_table(p) \
   ((struct elf32_tic6x_link_hash_table *) ((p)->hash))
-
-/* TI C6X ELF linker hash entry.  */
-
-struct elf32_tic6x_link_hash_entry
-{
-  struct elf_link_hash_entry elf;
-
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-};
 
 typedef enum
 {
@@ -124,7 +111,7 @@ struct elf32_tic6x_obj_tdata
   /* Whether to use RELA relocations when generating relocations.
      This is a per-object flag to allow the assembler to generate REL
      relocations for use in linker testcases.  */
-  bfd_boolean use_rela_p;
+  bool use_rela_p;
 };
 
 #define elf32_tic6x_tdata(abfd) \
@@ -141,414 +128,417 @@ struct elf32_tic6x_obj_tdata
    faster assembler code.  This is what we use for the small common
    section.  This approach is copied from ecoff.c.  */
 static asection tic6x_elf_scom_section;
-static asymbol  tic6x_elf_scom_symbol;
-static asymbol  *tic6x_elf_scom_symbol_ptr;
+static const asymbol tic6x_elf_scom_symbol =
+  GLOBAL_SYM_INIT (".scommon", &tic6x_elf_scom_section);
+static asection tic6x_elf_scom_section =
+  BFD_FAKE_SECTION (tic6x_elf_scom_section, &tic6x_elf_scom_symbol,
+		    ".scommon", 0, SEC_IS_COMMON | SEC_SMALL_DATA);
 
 static reloc_howto_type elf32_tic6x_howto_table[] =
 {
   HOWTO (R_C6000_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x000000ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_PCR_S21,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 21,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S21",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x0fffff80,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S12,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 12,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S12",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x0fff0000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S10,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 10,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 13,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S10",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fe000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S7,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 7,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S7",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007f0000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_ABS_S16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS_S16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS_L16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS_L16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS_H16,	/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS_H16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_U15_B,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_B",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_U15_H,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_H",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_U15_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_W",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_S16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_S16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_B,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_B",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_H,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_H",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_W",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_H16_B,	/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_H16_B",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_H16_H,	/* type */
 	 17,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_H16_H",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_H16_W,	/* type */
 	 18,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_H16_W",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_GOT_U15_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_GOT_U15_W",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_GOT_L16_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_GOT_L16_W",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_GOT_H16_W,	/* type */
 	 18,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_GOT_H16_W",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_DSBT_INDEX,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_DSBT_INDEX",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_PREL31,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 31,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PREL31",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x7fffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_COPY,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_COPY",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_JUMP_SLOT,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_JUMP_SLOT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_EHTYPE,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_EHTYPE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_PCR_H16,	/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_H16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_L16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_L16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   EMPTY_HOWTO (31),
   EMPTY_HOWTO (32),
   EMPTY_HOWTO (33),
@@ -773,364 +763,364 @@ static reloc_howto_type elf32_tic6x_howto_table[] =
   EMPTY_HOWTO (252),
   HOWTO (R_C6000_ALIGN,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ALIGN",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_FPHEAD,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_FPHEAD",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_NOCMP,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_NOCMP",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE)			/* pcrel_offset */
+	 false)			/* pcrel_offset */
 };
 
 static reloc_howto_type elf32_tic6x_howto_table_rel[] =
 {
   HOWTO (R_C6000_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_NONE",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS32",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS16",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS8",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x000000ff,		/* src_mask */
 	 0x000000ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_PCR_S21,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 21,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S21",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x0fffff80,		/* src_mask */
 	 0x0fffff80,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S12,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 12,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S12",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x0fff0000,		/* src_mask */
 	 0x0fff0000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S10,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 10,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 13,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S10",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fe000,		/* src_mask */
 	 0x007fe000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_PCR_S7,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 7,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PCR_S7",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007f0000,		/* src_mask */
 	 0x007f0000,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_ABS_S16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS_S16",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_ABS_L16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ABS_L16",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   EMPTY_HOWTO (R_C6000_ABS_H16),
   HOWTO (R_C6000_SBR_U15_B,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_B",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff00,		/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_U15_H,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_H",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff00,		/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_U15_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_U15_W",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff00,		/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_S16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_S16",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_B,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_B",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_H,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_H",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_L16_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_L16_W",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   EMPTY_HOWTO (R_C6000_SBR_H16_B),
   EMPTY_HOWTO (R_C6000_SBR_H16_H),
   EMPTY_HOWTO (R_C6000_SBR_H16_W),
   HOWTO (R_C6000_SBR_GOT_U15_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_GOT_U15_W",/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff00,		/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_SBR_GOT_L16_W,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 7,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_SBR_GOT_L16_W",/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x007fff80,		/* src_mask */
 	 0x007fff80,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   EMPTY_HOWTO (R_C6000_SBR_GOT_H16_W),
   HOWTO (R_C6000_DSBT_INDEX,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 15,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_DSBT_INDEX",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x007fff00,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_PREL31,	/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 31,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_PREL31",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x7fffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   HOWTO (R_C6000_COPY,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_COPY",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_JUMP_SLOT,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_JUMP_SLOT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_EHTYPE,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_EHTYPE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   EMPTY_HOWTO (R_C6000_PCR_H16),
   EMPTY_HOWTO (R_C6000_PCR_L16),
   EMPTY_HOWTO (31),
@@ -1357,43 +1347,43 @@ static reloc_howto_type elf32_tic6x_howto_table_rel[] =
   EMPTY_HOWTO (252),
   HOWTO (R_C6000_ALIGN,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_ALIGN",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_FPHEAD,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_FPHEAD",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   HOWTO (R_C6000_NOCMP,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_C6000_NOCMP",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE)			/* pcrel_offset */
+	 false)			/* pcrel_offset */
 };
 
 /* Map BFD relocations to ELF relocations.  */
@@ -1495,7 +1485,7 @@ elf32_tic6x_reloc_name_lookup (bfd *abfd, const char *r_name)
   return NULL;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
 			   Elf_Internal_Rela *elf_reloc)
 {
@@ -1508,7 +1498,7 @@ elf32_tic6x_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   bfd_reloc->howto = &elf32_tic6x_howto_table[r_type];
@@ -1518,13 +1508,13 @@ elf32_tic6x_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
 			       Elf_Internal_Rela *elf_reloc)
 {
@@ -1537,7 +1527,7 @@ elf32_tic6x_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   bfd_reloc->howto = &elf32_tic6x_howto_table_rel[r_type];
@@ -1547,46 +1537,16 @@ elf32_tic6x_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 void
-elf32_tic6x_set_use_rela_p (bfd *abfd, bfd_boolean use_rela_p)
+elf32_tic6x_set_use_rela_p (bfd *abfd, bool use_rela_p)
 {
   elf32_tic6x_tdata (abfd)->use_rela_p = use_rela_p;
-}
-
-/* Create an entry in a C6X ELF linker hash table.  */
-
-static struct bfd_hash_entry *
-elf32_tic6x_link_hash_newfunc (struct bfd_hash_entry *entry,
-			    struct bfd_hash_table *table,
-			    const char *string)
-{
-  /* Allocate the structure if it has not already been allocated by a
-     subclass.  */
-  if (entry == NULL)
-    {
-      entry = bfd_hash_allocate (table,
-				 sizeof (struct elf32_tic6x_link_hash_entry));
-      if (entry == NULL)
-	return entry;
-    }
-
-  /* Call the allocation method of the superclass.  */
-  entry = _bfd_elf_link_hash_newfunc (entry, table, string);
-  if (entry != NULL)
-    {
-      struct elf32_tic6x_link_hash_entry *eh;
-
-      eh = (struct elf32_tic6x_link_hash_entry *) entry;
-      eh->dyn_relocs = NULL;
-    }
-
-  return entry;
 }
 
 /* Create a C6X ELF linker hash table.  */
@@ -1595,15 +1555,15 @@ static struct bfd_link_hash_table *
 elf32_tic6x_link_hash_table_create (bfd *abfd)
 {
   struct elf32_tic6x_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf32_tic6x_link_hash_table);
+  size_t amt = sizeof (struct elf32_tic6x_link_hash_table);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
-				      elf32_tic6x_link_hash_newfunc,
-				      sizeof (struct elf32_tic6x_link_hash_entry),
+				      _bfd_elf_link_hash_newfunc,
+				      sizeof (struct elf_link_hash_entry),
 				      TIC6X_ELF_DATA))
     {
       free (ret);
@@ -1616,7 +1576,7 @@ elf32_tic6x_link_hash_table_create (bfd *abfd)
   return &ret->elf.root;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_final_link (bfd *abfd, struct bfd_link_info *info)
 {
   if (bfd_link_pic (info))
@@ -1636,9 +1596,9 @@ elf32_tic6x_final_link (bfd *abfd, struct bfd_link_info *info)
     }
   /* Invoke the regular ELF backend linker to do all the work.  */
   if (!bfd_elf_final_link (abfd, info))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Called to pass PARAMS to the backend.  We store them in the hash table
@@ -1654,7 +1614,7 @@ elf32_tic6x_setup (struct bfd_link_info *info,
 
 /* Determine if we're dealing with a DSBT object.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_using_dsbt (bfd *abfd)
 {
   return bfd_elf_get_obj_attr_int (abfd, OBJ_ATTR_PROC,
@@ -1665,7 +1625,7 @@ elf32_tic6x_using_dsbt (bfd *abfd)
    sections in DYNOBJ, and set up shortcuts to them in our hash
    table.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
 {
   struct elf32_tic6x_link_hash_table *htab;
@@ -1673,10 +1633,10 @@ elf32_tic6x_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
 
   htab = elf32_tic6x_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
-    return FALSE;
+    return false;
 
   /* Create .dsbt  */
   flags = (SEC_ALLOC | SEC_LOAD
@@ -1686,20 +1646,20 @@ elf32_tic6x_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   if (htab->dsbt == NULL
       || !bfd_set_section_alignment (htab->dsbt, 2)
       || !bfd_set_section_alignment (htab->elf.splt, 5))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_mkobject (bfd *abfd)
 {
-  bfd_boolean ret;
+  bool ret;
 
   ret = bfd_elf_allocate_object (abfd, sizeof (struct elf32_tic6x_obj_tdata),
 				 TIC6X_ELF_DATA);
   if (ret)
-    elf32_tic6x_set_use_rela_p (abfd, TRUE);
+    elf32_tic6x_set_use_rela_p (abfd, true);
   return ret;
 }
 
@@ -1749,7 +1709,7 @@ elf32_tic6x_make_got_dynreloc (bfd *output_bfd,
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_finish_dynamic_symbol (bfd * output_bfd,
 				   struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h,
@@ -1921,28 +1881,28 @@ elf32_tic6x_finish_dynamic_symbol (bfd * output_bfd,
       || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 /* Unwinding tables are not referenced directly.  This pass marks them as
    required if the corresponding code section is marked.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_gc_mark_extra_sections (struct bfd_link_info *info,
 				    elf_gc_mark_hook_fn gc_mark_hook)
 {
   bfd *sub;
   Elf_Internal_Shdr **elf_shdrp;
-  bfd_boolean again;
+  bool again;
 
   _bfd_elf_gc_mark_extra_sections (info, gc_mark_hook);
 
   /* Marking EH data may cause additional code sections to be marked,
      requiring multiple passes.  */
-  again = TRUE;
+  again = true;
   while (again)
     {
-      again = FALSE;
+      again = false;
       for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
 	{
 	  asection *o;
@@ -1962,31 +1922,31 @@ elf32_tic6x_gc_mark_extra_sections (struct bfd_link_info *info,
 		  && !o->gc_mark
 		  && elf_shdrp[hdr->sh_link]->bfd_section->gc_mark)
 		{
-		  again = TRUE;
+		  again = true;
 		  if (!_bfd_elf_gc_mark (info, o, gc_mark_hook))
-		    return FALSE;
+		    return false;
 		}
 	    }
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Return TRUE if this is an unwinding table index.  */
 
-static bfd_boolean
+static bool
 is_tic6x_elf_unwind_section_name (const char *name)
 {
-  return (CONST_STRNEQ (name, ELF_STRING_C6000_unwind)
-	  || CONST_STRNEQ (name, ELF_STRING_C6000_unwind_once));
+  return (startswith (name, ELF_STRING_C6000_unwind)
+	  || startswith (name, ELF_STRING_C6000_unwind_once));
 }
 
 
 /* Set the type and flags for an unwinding index table.  We do this by
    the section name, which is a hack, but ought to work.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 			   Elf_Internal_Shdr *hdr, asection *sec)
 {
@@ -2000,26 +1960,7 @@ elf32_tic6x_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
       hdr->sh_flags |= SHF_LINK_ORDER;
     }
 
-  return TRUE;
-}
-
-/* Find dynamic relocs for H that apply to read-only sections.  */
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-  struct elf32_tic6x_link_hash_entry *eh
-    = (struct elf32_tic6x_link_hash_entry *) h;
-
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
+  return true;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2028,7 +1969,7 @@ readonly_dynrelocs (struct elf_link_hash_entry *h)
    change the definition to something the rest of the link can
    understand.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h)
 {
@@ -2064,7 +2005,7 @@ elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
 	  h->needs_plt = 0;
 	}
 
-      return TRUE;
+      return true;
     }
 
   /* If this is a weak symbol, and there is a real definition, the
@@ -2077,7 +2018,7 @@ elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->root.u.def.section = def->root.u.def.section;
       h->root.u.def.value = def->root.u.def.value;
       h->non_got_ref = def->non_got_ref;
-      return TRUE;
+      return true;
     }
 
   /* This is a reference to a symbol defined by a dynamic object which
@@ -2088,23 +2029,23 @@ elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_pic (info))
-    return TRUE;
+    return true;
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
   if (info->nocopyreloc)
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   htab = elf32_tic6x_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   /* We must allocate the symbol in our .dynbss section, which will
      become part of the .bss section of the executable.  There will be
@@ -2138,20 +2079,20 @@ elf32_tic6x_adjust_dynamic_symbol (struct bfd_link_info *info,
   return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_new_section_hook (bfd *abfd, asection *sec)
 {
-  bfd_boolean ret;
+  bool ret;
 
   /* Allocate target specific section data.  */
   if (!sec->used_by_bfd)
     {
       _tic6x_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+      size_t amt = sizeof (*sdata);
 
       sdata = (_tic6x_elf_section_data *) bfd_zalloc (abfd, amt);
       if (sdata == NULL)
-	return FALSE;
+	return false;
       sec->used_by_bfd = sdata;
     }
 
@@ -2165,7 +2106,7 @@ elf32_tic6x_new_section_hook (bfd *abfd, asection *sec)
    than RELA relocation.  RELOCS is the first relocation in the
    section and ABFD is the bfd that contains SEC.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_rel_relocation_p (bfd *abfd, asection *sec,
 			      const Elf_Internal_Rela *relocs,
 			      const Elf_Internal_Rela *rel)
@@ -2177,7 +2118,7 @@ elf32_tic6x_rel_relocation_p (bfd *abfd, asection *sec,
      fact that the INPUT_SECTION's REL_HDR is read before RELA_HDR.  */
   rel_hdr = elf_section_data (sec)->rel.hdr;
   if (rel_hdr == NULL)
-    return FALSE;
+    return false;
   bed = get_elf_backend_data (abfd);
   return ((size_t) (rel - relocs)
 	  < NUM_SHDR_ENTRIES (rel_hdr) * bed->s->int_rels_per_ext_rel);
@@ -2185,7 +2126,7 @@ elf32_tic6x_rel_relocation_p (bfd *abfd, asection *sec,
 
 /* We need dynamic symbols for every section, since segments can
    relocate independently.  */
-static bfd_boolean
+static bool
 elf32_tic6x_link_omit_section_dynsym (bfd *output_bfd ATTRIBUTE_UNUSED,
 				      struct bfd_link_info *info ATTRIBUTE_UNUSED,
 				      asection *p)
@@ -2197,16 +2138,16 @@ elf32_tic6x_link_omit_section_dynsym (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* If sh_type is yet undecided, assume it could be
 	 SHT_PROGBITS/SHT_NOBITS.  */
     case SHT_NULL:
-      return FALSE;
+      return false;
 
       /* There shouldn't be section relative relocations
 	 against any other section.  */
     default:
-      return TRUE;
+      return true;
     }
 }
 
-static bfd_boolean
+static int
 elf32_tic6x_relocate_section (bfd *output_bfd,
 			      struct bfd_link_info *info,
 			      bfd *input_bfd,
@@ -2222,7 +2163,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
   bfd_vma *local_got_offsets;
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
-  bfd_boolean ok = TRUE;
+  bool ok = true;
 
   htab = elf32_tic6x_hash_table (info);
   symtab_hdr = & elf_symtab_hdr (input_bfd);
@@ -2241,11 +2182,11 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
       asection *sec;
       struct elf_link_hash_entry *h;
       bfd_vma off, off2, relocation;
-      bfd_boolean unresolved_reloc;
+      bool unresolved_reloc;
       bfd_reloc_status_type r;
       struct bfd_link_hash_entry *sbh;
-      bfd_boolean is_rel;
-      bfd_boolean res;
+      bool is_rel;
+      bool res;
 
       r_type = ELF32_R_TYPE (rel->r_info);
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -2261,13 +2202,13 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
       if (!res || (howto = bfd_reloc.howto) == NULL)
 	{
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
 
       h = NULL;
       sym = NULL;
       sec = NULL;
-      unresolved_reloc = FALSE;
+      unresolved_reloc = false;
 
       if (r_symndx < symtab_hdr->sh_info)
 	{
@@ -2277,7 +2218,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -2353,7 +2294,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	  relocation += (input_section->output_section->vma
 			 + input_section->output_offset
 			 + rel->r_offset) & 0x1f;
-	  unresolved_reloc = FALSE;
+	  unresolved_reloc = false;
 	  break;
 
 	case R_C6000_PCR_H16:
@@ -2392,24 +2333,24 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 		  || h->root.type != bfd_link_hash_undefweak))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_boolean skip, relocate;
+	      bool skip, relocate;
 	      asection *sreloc;
 
-	      unresolved_reloc = FALSE;
+	      unresolved_reloc = false;
 
 	      sreloc = elf_section_data (input_section)->sreloc;
 	      BFD_ASSERT (sreloc != NULL && sreloc->contents != NULL);
 
-	      skip = FALSE;
-	      relocate = FALSE;
+	      skip = false;
+	      relocate = false;
 
 	      outrel.r_offset =
 		_bfd_elf_section_offset (output_bfd, info, input_section,
 					 rel->r_offset);
 	      if (outrel.r_offset == (bfd_vma) -1)
-		skip = TRUE;
+		skip = true;
 	      else if (outrel.r_offset == (bfd_vma) -2)
-		skip = TRUE, relocate = TRUE;
+		skip = true, relocate = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 
@@ -2435,7 +2376,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 		  else if (sec == NULL || sec->owner == NULL)
 		    {
 		      bfd_set_error (bfd_error_bad_value);
-		      return FALSE;
+		      return false;
 		    }
 		  else
 		    {
@@ -2473,7 +2414,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	case R_C6000_SBR_H16_H:
 	case R_C6000_SBR_H16_W:
 	  sbh = bfd_link_hash_lookup (info->hash, "__c6xabi_DSBT_BASE",
-				      FALSE, FALSE, TRUE);
+				      false, false, true);
 	  if (sbh != NULL
 	      && (sbh->type == bfd_link_hash_defined
 		  || sbh->type == bfd_link_hash_defweak))
@@ -2493,7 +2434,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	      _bfd_error_handler (_("%pB: SB-relative relocation but "
 				    "__c6xabi_DSBT_BASE not defined"),
 				  input_bfd);
-	      ok = FALSE;
+	      ok = false;
 	      continue;
 	    }
 	  break;
@@ -2509,7 +2450,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 
 	  if (h != NULL)
 	    {
-	      bfd_boolean dyn;
+	      bool dyn;
 
 	      off = h->got.offset;
 	      dyn = htab->elf.dynamic_sections_created;
@@ -2551,7 +2492,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 		    }
 		}
 	      else
-		unresolved_reloc = FALSE;
+		unresolved_reloc = false;
 	    }
 	  else
 	    {
@@ -2619,7 +2560,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 		   : _("[whose name is lost]"));
 
 	      bfd_set_error (bfd_error_bad_value);
-	      return FALSE;
+	      return false;
 	    }
 	  break;
 
@@ -2642,7 +2583,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			      input_bfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
-	  ok = FALSE;
+	  ok = false;
 	  continue;
 	}
 
@@ -2681,7 +2622,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 						      symtab_hdr->sh_link,
 						      sym->st_name);
 	      if (name == NULL)
-		return FALSE;
+		return false;
 	      if (*name == '\0')
 		name = bfd_section_name (sec);
 	    }
@@ -2701,7 +2642,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol) (info, name, input_bfd,
 						    input_section,
-						    rel->r_offset, TRUE);
+						    rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -2737,7 +2678,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
    calculate needed space in the global offset table, procedure linkage
    table, and dynamic reloc sections.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			  asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -2749,7 +2690,7 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
   asection *sreloc;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   htab = elf32_tic6x_hash_table (info);
   symtab_hdr = &elf_symtab_hdr (abfd);
@@ -2761,7 +2702,7 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
       && ! htab->elf.dynamic_sections_created)
     {
       if (! _bfd_elf_link_create_dynamic_sections (abfd, info))
-	return FALSE;
+	return false;
     }
 
   sreloc = NULL;
@@ -2782,16 +2723,16 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
-	  return FALSE;
+	  return false;
 	}
 
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  /* A local symbol.  */
-	  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+	  isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
 					abfd, r_symndx);
 	  if (isym == NULL)
-	    return FALSE;
+	    return false;
 	  h = NULL;
 	}
       else
@@ -2847,7 +2788,7 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			   + sizeof (bfd_vma) + sizeof(char));
 		  local_got_refcounts = bfd_zalloc (abfd, size);
 		  if (local_got_refcounts == NULL)
-		    return FALSE;
+		    return false;
 		  elf_local_got_refcounts (abfd) = local_got_refcounts;
 		}
 	      local_got_refcounts[r_symndx] += 1;
@@ -2858,7 +2799,7 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (htab->elf.dynobj == NULL)
 		htab->elf.dynobj = abfd;
 	      if (!_bfd_elf_create_got_section (htab->elf.dynobj, info))
-		return FALSE;
+		return false;
 	    }
 	  break;
 
@@ -2914,17 +2855,17 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    htab->elf.dynobj = abfd;
 
 		  sreloc = _bfd_elf_make_dynamic_reloc_section
-		    (sec, htab->elf.dynobj, 2, abfd, /*rela? */ TRUE);
+		    (sec, htab->elf.dynobj, 2, abfd, /*rela? */ true);
 
 		  if (sreloc == NULL)
-		    return FALSE;
+		    return false;
 		}
 
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
 		{
-		  head = &((struct elf32_tic6x_link_hash_entry *) h)->dyn_relocs;
+		  head = &h->dyn_relocs;
 		}
 	      else
 		{
@@ -2945,10 +2886,10 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = bfd_alloc (htab->elf.dynobj, amt);
 		  if (p == NULL)
-		    return FALSE;
+		    return false;
 		  p->next = *head;
 		  *head = p;
 		  p->sec = sec;
@@ -2981,8 +2922,8 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 						   "__c6xabi_DSBT_BASE",
 						   BSF_GLOBAL,
 						   bfd_und_section_ptr, 0,
-						   NULL, FALSE, FALSE, &bh))
-	      return FALSE;
+						   NULL, false, false, &bh))
+	      return false;
 	    ((struct elf_link_hash_entry *) bh)->non_elf = 0;
 	  }
 	  if (h != NULL && bfd_link_executable (info))
@@ -2998,10 +2939,10 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_add_symbol_hook (bfd *abfd,
 			     struct bfd_link_info *info ATTRIBUTE_UNUSED,
 			     Elf_Internal_Sym *sym,
@@ -3014,13 +2955,13 @@ elf32_tic6x_add_symbol_hook (bfd *abfd,
     {
     case SHN_TIC6X_SCOMMON:
       *secp = bfd_make_section_old_way (abfd, ".scommon");
-      (*secp)->flags |= SEC_IS_COMMON;
+      (*secp)->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
       *valp = sym->st_size;
       bfd_set_section_alignment (*secp, bfd_log2 (sym->st_value));
       break;
     }
 
-  return TRUE;
+  return true;
 }
 
 static void
@@ -3032,19 +2973,6 @@ elf32_tic6x_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
   switch (elfsym->internal_elf_sym.st_shndx)
     {
     case SHN_TIC6X_SCOMMON:
-      if (tic6x_elf_scom_section.name == NULL)
-	{
-	  /* Initialize the small common section.  */
-	  tic6x_elf_scom_section.name = ".scommon";
-	  tic6x_elf_scom_section.flags = SEC_IS_COMMON;
-	  tic6x_elf_scom_section.output_section = &tic6x_elf_scom_section;
-	  tic6x_elf_scom_section.symbol = &tic6x_elf_scom_symbol;
-	  tic6x_elf_scom_section.symbol_ptr_ptr = &tic6x_elf_scom_symbol_ptr;
-	  tic6x_elf_scom_symbol.name = ".scommon";
-	  tic6x_elf_scom_symbol.flags = BSF_SECTION_SYM;
-	  tic6x_elf_scom_symbol.section = &tic6x_elf_scom_section;
-	  tic6x_elf_scom_symbol_ptr = &tic6x_elf_scom_symbol;
-	}
       asym->section = &tic6x_elf_scom_section;
       asym->value = elfsym->internal_elf_sym.st_size;
       break;
@@ -3067,7 +2995,7 @@ elf32_tic6x_link_output_symbol_hook (struct bfd_link_info *info ATTRIBUTE_UNUSED
   return 1;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
 				      asection *sec,
 				      int *retval)
@@ -3075,27 +3003,25 @@ elf32_tic6x_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
   if (strcmp (bfd_section_name (sec), ".scommon") == 0)
     {
       *retval = SHN_TIC6X_SCOMMON;
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
   struct elf32_tic6x_link_hash_table *htab;
-  struct elf32_tic6x_link_hash_entry *eh;
   struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
-  eh = (struct elf32_tic6x_link_hash_entry *) h;
   info = (struct bfd_link_info *) inf;
   htab = elf32_tic6x_hash_table (info);
 
@@ -3106,7 +3032,7 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       if (h->dynindx == -1 && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       if (bfd_link_pic (info)
@@ -3162,7 +3088,7 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       s = htab->elf.sgot;
@@ -3176,8 +3102,8 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  if (eh->dyn_relocs == NULL)
-    return TRUE;
+  if (h->dyn_relocs == NULL)
+    return true;
 
   /* Discard relocs on undefined weak syms with non-default
      visibility.  */
@@ -3189,7 +3115,7 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -3200,11 +3126,11 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	    }
 	}
 
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -3212,13 +3138,13 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 		   && !h->forced_local)
 	    {
 	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-		return FALSE;
+		return false;
 	    }
 	}
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc;
 
@@ -3228,45 +3154,18 @@ elf32_tic6x_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       sreloc->size += p->count * sizeof (Elf32_External_Rela);
     }
 
-  return TRUE;
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
-  return TRUE;
+  return true;
 }
 
 /* Set the sizes of the dynamic sections.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   struct elf32_tic6x_link_hash_table *htab;
   bfd *dynobj;
   asection *s;
-  bfd_boolean relocs;
+  bool relocs;
   bfd *ibfd;
 
   htab = elf32_tic6x_hash_table (info);
@@ -3356,10 +3255,10 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 
   /* We now have determined the sizes of the various dynamic sections.
      Allocate memory for them.  */
-  relocs = FALSE;
+  relocs = false;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
-      bfd_boolean strip_section = TRUE;
+      bool strip_section = true;
 
       if ((s->flags & SEC_LINKER_CREATED) == 0)
 	continue;
@@ -3379,17 +3278,17 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	     It's too late to tell BFD to get rid of the symbols.  */
 
 	  if (htab->elf.hplt != NULL)
-	    strip_section = FALSE;
+	    strip_section = false;
 
 	  /* Round up the size of the PLT section to a multiple of 32.  */
 	  if (s == htab->elf.splt && s->size > 0)
 	    s->size = (s->size + 31) & ~(bfd_vma)31;
 	}
-      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
+      else if (startswith (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0
 	      && s != htab->elf.srelplt)
-	    relocs = TRUE;
+	    relocs = true;
 
 	  /* We use the reloc_count field as a counter if we need
 	     to copy relocs into the output file.  */
@@ -3427,7 +3326,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	 of garbage.  */
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
   if (htab->elf.dynamic_sections_created)
@@ -3440,66 +3339,36 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (bfd_link_executable (info))
-	{
-	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
-	}
+      if (!_bfd_elf_add_dynamic_tags (output_bfd, info, relocs))
+	return false;
 
       if (!add_dynamic_entry (DT_C6000_DSBT_BASE, 0)
 	  || !add_dynamic_entry (DT_C6000_DSBT_SIZE, htab->params.dsbt_size)
 	  || !add_dynamic_entry (DT_C6000_DSBT_INDEX,
 				 htab->params.dsbt_index))
-	return FALSE;
+	return false;
 
-      if (htab->elf.splt->size != 0)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (relocs)
-	{
-	  if (!add_dynamic_entry (DT_RELA, 0)
-	      || !add_dynamic_entry (DT_RELASZ, 0)
-	      || !add_dynamic_entry (DT_RELAENT, sizeof (Elf32_External_Rela)))
-	    return FALSE;
-
-	  /* If any dynamic relocs apply to a read-only section,
-	     then we need a DT_TEXTREL entry.  */
-	  if ((info->flags & DF_TEXTREL) == 0)
-	    elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
-
-	  if ((info->flags & DF_TEXTREL) != 0)
-	    {
-	      if (!add_dynamic_entry (DT_TEXTREL, 0))
-		return FALSE;
-	    }
-	}
     }
 #undef add_dynamic_entry
 
-  return TRUE;
+  return true;
 }
 
 /* This function is called after all the input files have been read,
    and the input sections have been assigned to output sections.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   if (elf32_tic6x_using_dsbt (output_bfd) && !bfd_link_relocatable (info)
       && !bfd_elf_stack_segment_size (output_bfd, info,
 				      "__stacksize", DEFAULT_STACK_SIZE))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 				     struct bfd_link_info *info)
 {
@@ -3585,7 +3454,7 @@ elf32_tic6x_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Return address for Ith PLT stub in section PLT, for relocation REL
@@ -3619,7 +3488,7 @@ elf32_tic6x_obj_attrs_order (int num)
   return num;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_obj_attrs_handle_unknown (bfd *abfd, int tag)
 {
   if ((tag & 127) < 64)
@@ -3629,7 +3498,7 @@ elf32_tic6x_obj_attrs_handle_unknown (bfd *abfd, int tag)
 	(_("%pB: error: unknown mandatory EABI object attribute %d"),
 	 abfd, tag);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   else
     {
@@ -3637,7 +3506,7 @@ elf32_tic6x_obj_attrs_handle_unknown (bfd *abfd, int tag)
 	/* xgettext:c-format */
 	(_("%pB: warning: unknown EABI object attribute %d"),
 	 abfd, tag);
-      return TRUE;
+      return true;
     }
 }
 
@@ -3714,15 +3583,19 @@ elf32_tic6x_array_alignment_to_tag (int align)
 /* Merge attributes from IBFD and OBFD, returning TRUE if the merge
    succeeded, FALSE otherwise.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
-  bfd_boolean result = TRUE;
+  bool result = true;
   obj_attribute *in_attr;
   obj_attribute *out_attr;
   int i;
   int array_align_in, array_align_out, array_expect_in, array_expect_out;
+
+  /* FIXME: What should be checked when linking shared libraries?  */
+  if ((ibfd->flags & DYNAMIC) != 0)
+    return true;
 
   if (!elf_known_obj_attributes_proc (obfd)[0].i)
     {
@@ -3735,7 +3608,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	 initialized.  */
       out_attr[0].i = 1;
 
-      return TRUE;
+      return true;
     }
 
   in_attr = elf_known_obj_attributes_proc (ibfd);
@@ -3751,7 +3624,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	/* xgettext:c-format */
 	(_("error: %pB requires more stack alignment than %pB preserves"),
 	 ibfd, obfd);
-      result = FALSE;
+      result = false;
     }
   if (in_attr[Tag_ABI_stack_align_preserved].i
       < out_attr[Tag_ABI_stack_align_needed].i)
@@ -3760,7 +3633,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	/* xgettext:c-format */
 	(_("error: %pB requires more stack alignment than %pB preserves"),
 	 obfd, ibfd);
-      result = FALSE;
+      result = false;
     }
 
   array_align_in = elf32_tic6x_tag_to_array_alignment
@@ -3770,7 +3643,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("error: unknown Tag_ABI_array_object_alignment value in %pB"),
 	 ibfd);
-      result = FALSE;
+      result = false;
     }
   array_align_out = elf32_tic6x_tag_to_array_alignment
     (out_attr[Tag_ABI_array_object_alignment].i);
@@ -3779,7 +3652,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("error: unknown Tag_ABI_array_object_alignment value in %pB"),
 	 obfd);
-      result = FALSE;
+      result = false;
     }
   array_expect_in = elf32_tic6x_tag_to_array_alignment
     (in_attr[Tag_ABI_array_object_align_expected].i);
@@ -3788,7 +3661,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("error: unknown Tag_ABI_array_object_align_expected value in %pB"),
 	 ibfd);
-      result = FALSE;
+      result = false;
     }
   array_expect_out = elf32_tic6x_tag_to_array_alignment
     (out_attr[Tag_ABI_array_object_align_expected].i);
@@ -3797,7 +3670,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("error: unknown Tag_ABI_array_object_align_expected value in %pB"),
 	 obfd);
-      result = FALSE;
+      result = false;
     }
 
   if (array_align_out < array_expect_in)
@@ -3806,7 +3679,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	/* xgettext:c-format */
 	(_("error: %pB requires more array alignment than %pB preserves"),
 	 ibfd, obfd);
-      result = FALSE;
+      result = false;
     }
   if (array_align_in < array_expect_out)
     {
@@ -3814,7 +3687,7 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	/* xgettext:c-format */
 	(_("error: %pB requires more array alignment than %pB preserves"),
 	 obfd, ibfd);
-      result = FALSE;
+      result = false;
     }
 
   for (i = LEAST_KNOWN_OBJ_ATTRIBUTE; i < NUM_KNOWN_OBJ_ATTRIBUTES; i++)
@@ -3862,6 +3735,9 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 
 	case Tag_ABI_PIC:
 	case Tag_ABI_PID:
+	  /* Don't transfer these tags from dynamic objects.  */
+	  if ((ibfd->flags & DYNAMIC) != 0)
+	    continue;
 	  if (out_attr[i].i > in_attr[i].i)
 	    out_attr[i].i = in_attr[i].i;
 	  break;
@@ -3909,26 +3785,26 @@ elf32_tic6x_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 
   /* Merge Tag_ABI_compatibility attributes and any common GNU ones.  */
   if (!_bfd_elf_merge_object_attributes (ibfd, info))
-    return FALSE;
+    return false;
 
   result &= _bfd_elf_merge_unknown_attribute_list (ibfd, obfd);
 
   return result;
 }
 
-static bfd_boolean
+static bool
 elf32_tic6x_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   if (!_bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
   if (! is_tic6x_elf (ibfd) || ! is_tic6x_elf (info->output_bfd))
-    return TRUE;
+    return true;
 
   if (!elf32_tic6x_merge_attributes (ibfd, info))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Add a new unwind edit to the list described by HEAD, TAIL.  If TINDEX is zero,
@@ -4026,11 +3902,11 @@ elf32_tic6x_insert_cantunwind_after (asection *text_sec, asection *exidx_sec)
    (in elf32_tic6x_write_section).
 */
 
-bfd_boolean
+bool
 elf32_tic6x_fix_exidx_coverage (asection **text_section_order,
 				unsigned int num_text_sections,
 				struct bfd_link_info *info,
-				bfd_boolean merge_exidx_entries)
+				bool merge_exidx_entries)
 {
   bfd *inp;
   unsigned int last_second_word = 0, i;
@@ -4185,7 +4061,7 @@ elf32_tic6x_fix_exidx_coverage (asection **text_section_order,
   if (last_exidx_sec && last_unwind_type != 0)
     elf32_tic6x_insert_cantunwind_after (last_text_sec, last_exidx_sec);
 
-  return TRUE;
+  return true;
 }
 
 /* Add ADDEND to lower 31 bits of VAL, leaving other bits unmodified.  */
@@ -4223,7 +4099,7 @@ elf32_tic6x_copy_exidx_entry (bfd *output_bfd, bfd_byte *to, bfd_byte *from,
 
 /* Do the actual mangling of exception index tables.  */
 
-static bfd_boolean
+static bool
 elf32_tic6x_write_section (bfd *output_bfd,
 			 struct bfd_link_info *link_info,
 			 asection *sec,
@@ -4235,16 +4111,16 @@ elf32_tic6x_write_section (bfd *output_bfd,
   bfd_vma offset = sec->output_section->vma + sec->output_offset;
 
   if (globals == NULL)
-    return FALSE;
+    return false;
 
   /* If this section has not been allocated an _tic6x_elf_section_data
      structure then we cannot record anything.  */
   tic6x_data = get_tic6x_elf_section_data (sec);
   if (tic6x_data == NULL)
-    return FALSE;
+    return false;
 
   if (tic6x_data->elf.this_hdr.sh_type != SHT_C6000_UNWIND)
-    return FALSE;
+    return false;
 
   tic6x_unwind_table_edit *edit_node
     = tic6x_data->u.exidx.unwind_edit_list;
@@ -4331,8 +4207,10 @@ elf32_tic6x_write_section (bfd *output_bfd,
 			      edited_contents,
 			      (file_ptr) sec->output_offset, sec->size);
 
-  return TRUE;
+  return true;
 }
+
+#define	elf32_bed		elf32_tic6x_bed
 
 #define TARGET_LITTLE_SYM	tic6x_elf32_le_vec
 #define TARGET_LITTLE_NAME	"elf32-tic6x-le"

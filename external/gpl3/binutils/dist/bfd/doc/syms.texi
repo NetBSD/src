@@ -266,6 +266,9 @@ typedef struct bfd_symbol
      with this name and type in use.  BSF_OBJECT must also be set.  */
 #define BSF_GNU_UNIQUE          (1 << 23)
 
+  /* This section symbol should be included in the symbol table.  */
+#define BSF_SECTION_SYM_USED    (1 << 24)
+
   flagword flags;
 
   /* A pointer to the section to which this symbol is
@@ -306,7 +309,7 @@ the BFD, then return 0.  If an error occurs, return -1.
 @subsubsection @code{bfd_is_local_label}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_is_local_label (bfd *abfd, asymbol *sym);
+bool bfd_is_local_label (bfd *abfd, asymbol *sym);
 @end example
 @strong{Description}@*
 Return TRUE if the given symbol @var{sym} in the BFD @var{abfd} is
@@ -316,7 +319,7 @@ a compiler generated local label, else return FALSE.
 @subsubsection @code{bfd_is_local_label_name}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_is_local_label_name (bfd *abfd, const char *name);
+bool bfd_is_local_label_name (bfd *abfd, const char *name);
 @end example
 @strong{Description}@*
 Return TRUE if a symbol with the name @var{name} in the BFD
@@ -333,7 +336,7 @@ local label.
 @subsubsection @code{bfd_is_target_special_symbol}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_is_target_special_symbol (bfd *abfd, asymbol *sym);
+bool bfd_is_target_special_symbol (bfd *abfd, asymbol *sym);
 @end example
 @strong{Description}@*
 Return TRUE iff a symbol @var{sym} in the BFD @var{abfd} is something
@@ -363,7 +366,7 @@ including the NULL.
 @subsubsection @code{bfd_set_symtab}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_set_symtab
+bool bfd_set_symtab
    (bfd *abfd, asymbol **location, unsigned int count);
 @end example
 @strong{Description}@*
@@ -440,7 +443,7 @@ Returns zero otherwise.
 
 @strong{Synopsis}
 @example
-bfd_boolean bfd_is_undefined_symclass (int symclass);
+bool bfd_is_undefined_symclass (int symclass);
 @end example
 @findex bfd_symbol_info
 @subsubsection @code{bfd_symbol_info}
@@ -457,7 +460,7 @@ void bfd_symbol_info (asymbol *symbol, symbol_info *ret);
 @subsubsection @code{bfd_copy_private_symbol_data}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_copy_private_symbol_data
+bool bfd_copy_private_symbol_data
    (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym);
 @end example
 @strong{Description}@*

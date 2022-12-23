@@ -1,5 +1,5 @@
 /* tc-xtensa.h -- Header file for tc-xtensa.c.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -333,12 +333,12 @@ extern void xtensa_end (void);
 extern void xtensa_post_relax_hook (void);
 extern void xtensa_file_arch_init (bfd *);
 extern void xtensa_flush_pending_output (void);
-extern bfd_boolean xtensa_fix_adjustable (struct fix *);
+extern bool xtensa_fix_adjustable (struct fix *);
 extern void xtensa_symbol_new_hook (symbolS *);
 extern long xtensa_relax_frag (fragS *, long, int *);
 extern void xtensa_elf_section_change_hook (void);
 extern int xtensa_unrecognized_line (int);
-extern bfd_boolean xtensa_check_inside_bundle (void);
+extern bool xtensa_check_inside_bundle (void);
 extern void xtensa_handle_align (fragS *);
 extern char *xtensa_section_rename (const char *);
 
@@ -474,7 +474,7 @@ resource_table *new_resource_table
    opcode_funcUnit_use_unit_func, opcode_funcUnit_use_stage_func);
 void resize_resource_table (resource_table *, int);
 void clear_resource_table (resource_table *);
-bfd_boolean resources_available (resource_table *, xtensa_opcode, int);
+bool resources_available (resource_table *, xtensa_opcode, int);
 void reserve_resources (resource_table *, xtensa_opcode, int);
 void release_resources (resource_table *, xtensa_opcode, int);
 

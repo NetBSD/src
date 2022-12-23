@@ -1,5 +1,5 @@
 /* literal.c - GAS literal pool management.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Written by Ken Raeburn (raeburn@cygnus.com).
 
    This file is part of GAS, the GNU Assembler.

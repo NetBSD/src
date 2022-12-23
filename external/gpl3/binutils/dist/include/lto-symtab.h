@@ -1,5 +1,5 @@
 /* Data types used in the IL symbol table.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by Rafael Espindola <espindola@google.com>
 
 This file is part of GCC.
@@ -37,5 +37,18 @@ enum gcc_plugin_symbol_visibility
     GCCPV_INTERNAL,
     GCCPV_HIDDEN
   };
+
+enum gcc_plugin_symbol_type
+{
+  GCCST_UNKNOWN,
+  GCCST_FUNCTION,
+  GCCST_VARIABLE
+};
+
+enum gcc_plugin_symbol_section_kind
+{
+  GCCSSK_DEFAULT,
+  GCCSSK_BSS
+};
 
 #endif /* GCC_LTO_SYMTAB_H  */

@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,7 +38,6 @@
    the tokens.  */
 #define MY(OP) CONCAT2 (i386_aout_,OP)
 #define TARGETNAME "a.out-i386"
-#define NO_WRITE_HEADER_KLUDGE 1
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -48,7 +47,7 @@
 
 /* Set the machine type correctly.  */
 
-static bfd_boolean
+static bool
 i386aout_write_object_contents (bfd *abfd)
 {
   struct external_exec exec_bytes;
@@ -60,7 +59,7 @@ i386aout_write_object_contents (bfd *abfd)
 
   WRITE_HEADERS (abfd, execp);
 
-  return TRUE;
+  return true;
 }
 
 #define MY_write_object_contents  i386aout_write_object_contents

@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -111,7 +111,7 @@ get_field_imm15 (struct string_buf *buf, long instr)
 
 static char *
 get_field_special (struct string_buf *buf, long instr,
-		   struct op_code_struct *op)
+		   const struct op_code_struct *op)
 {
   char *p = strbuf (buf);
   char *spr;
@@ -184,11 +184,11 @@ get_field_special (struct string_buf *buf, long instr,
 static unsigned long
 read_insn_microblaze (bfd_vma memaddr,
 		      struct disassemble_info *info,
-		      struct op_code_struct **opr)
+		      const struct op_code_struct **opr)
 {
   unsigned char       ibytes[4];
   int                 status;
-  struct op_code_struct * op;
+  const struct op_code_struct *op;
   unsigned long inst;
 
   status = info->read_memory_func (memaddr, ibytes, 4, info);
@@ -209,7 +209,7 @@ read_insn_microblaze (bfd_vma memaddr,
     abort ();
 
   /* Just a linear search of the table.  */
-  for (op = opcodes; op->name != 0; op ++)
+  for (op = microblaze_opcodes; op->name != 0; op ++)
     if (op->bit_sequence == (inst & op->opcode_mask))
       break;
 
@@ -221,16 +221,16 @@ read_insn_microblaze (bfd_vma memaddr,
 int
 print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 {
-  fprintf_ftype       print_func = info->fprintf_func;
-  void *              stream = info->stream;
-  unsigned long       inst, prev_inst;
-  struct op_code_struct * op, *pop;
-  int                 immval = 0;
-  bfd_boolean         immfound = FALSE;
-  static bfd_vma      prev_insn_addr = -1; /* Init the prev insn addr.  */
-  static int          prev_insn_vma = -1;  /* Init the prev insn vma.  */
-  int                 curr_insn_vma = info->buffer_vma;
-  struct string_buf   buf;
+  fprintf_ftype print_func = info->fprintf_func;
+  void *stream = info->stream;
+  unsigned long inst, prev_inst;
+  const struct op_code_struct *op, *pop;
+  int immval = 0;
+  bool immfound = false;
+  static bfd_vma prev_insn_addr = -1;	/* Init the prev insn addr.  */
+  static int prev_insn_vma = -1;	/* Init the prev insn vma.  */
+  int curr_insn_vma = info->buffer_vma;
+  struct string_buf buf;
 
   buf.which = 0;
   info->bytes_per_chunk = 4;
@@ -249,12 +249,12 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 	  if (pop->instr == imm)
 	    {
 	      immval = (get_int_field_imm (prev_inst) << 16) & 0xffff0000;
-	      immfound = TRUE;
+	      immfound = true;
 	    }
 	  else
 	    {
 	      immval = 0;
-	      immfound = FALSE;
+	      immfound = false;
 	    }
 	}
     }
@@ -448,15 +448,15 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 
 enum microblaze_instr
 get_insn_microblaze (long inst,
-  		     bfd_boolean *isunsignedimm,
+  		     bool *isunsignedimm,
   		     enum microblaze_instr_type *insn_type,
   		     short *delay_slots)
 {
-  struct op_code_struct * op;
-  *isunsignedimm = FALSE;
+  const struct op_code_struct *op;
+  *isunsignedimm = false;
 
   /* Just a linear search of the table.  */
-  for (op = opcodes; op->name != 0; op ++)
+  for (op = microblaze_opcodes; op->name != 0; op ++)
     if (op->bit_sequence == (inst & op->opcode_mask))
       break;
 
@@ -475,7 +475,7 @@ enum microblaze_instr
 microblaze_decode_insn (long insn, int *rd, int *ra, int *rb, int *immed)
 {
   enum microblaze_instr op;
-  bfd_boolean t1;
+  bool t1;
   enum microblaze_instr_type t2;
   short t3;
 
@@ -489,40 +489,40 @@ microblaze_decode_insn (long insn, int *rd, int *ra, int *rb, int *immed)
 }
 
 unsigned long
-microblaze_get_target_address (long inst, bfd_boolean immfound, int immval,
+microblaze_get_target_address (long inst, bool immfound, int immval,
 			       long pcval, long r1val, long r2val,
-			       bfd_boolean *targetvalid,
-			       bfd_boolean *unconditionalbranch)
+			       bool *targetvalid,
+			       bool *unconditionalbranch)
 {
-  struct op_code_struct * op;
+  const struct op_code_struct *op;
   long targetaddr = 0;
 
-  *unconditionalbranch = FALSE;
+  *unconditionalbranch = false;
   /* Just a linear search of the table.  */
-  for (op = opcodes; op->name != 0; op ++)
+  for (op = microblaze_opcodes; op->name != 0; op ++)
     if (op->bit_sequence == (inst & op->opcode_mask))
       break;
 
   if (op->name == 0)
     {
-      *targetvalid = FALSE;
+      *targetvalid = false;
     }
   else if (op->instr_type == branch_inst)
     {
       switch (op->inst_type)
 	{
         case INST_TYPE_R2:
-          *unconditionalbranch = TRUE;
+          *unconditionalbranch = true;
         /* Fall through.  */
         case INST_TYPE_RD_R2:
         case INST_TYPE_R1_R2:
           targetaddr = r2val;
-          *targetvalid = TRUE;
+          *targetvalid = true;
           if (op->inst_offset_type == INST_PC_OFFSET)
 	    targetaddr += pcval;
           break;
         case INST_TYPE_IMM:
-          *unconditionalbranch = TRUE;
+          *unconditionalbranch = true;
         /* Fall through.  */
         case INST_TYPE_RD_IMM:
         case INST_TYPE_R1_IMM:
@@ -539,10 +539,10 @@ microblaze_get_target_address (long inst, bfd_boolean immfound, int immval,
             }
           if (op->inst_offset_type == INST_PC_OFFSET)
 	    targetaddr += pcval;
-          *targetvalid = TRUE;
+          *targetvalid = true;
           break;
 	default:
-	  *targetvalid = FALSE;
+	  *targetvalid = false;
 	  break;
         }
     }
@@ -560,9 +560,9 @@ microblaze_get_target_address (long inst, bfd_boolean immfound, int immval,
 	    targetaddr |= 0xFFFF0000;
 	}
       targetaddr += r1val;
-      *targetvalid = TRUE;
+      *targetvalid = true;
     }
   else
-    *targetvalid = FALSE;
+    *targetvalid = false;
   return targetaddr;
 }

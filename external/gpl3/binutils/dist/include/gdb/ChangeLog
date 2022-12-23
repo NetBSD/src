@@ -1,3 +1,16 @@
+2021-05-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h: Moved to ../sim/callback.h.
+	* remote-sim.h: Moved to ../sim/sim.h.
+
+2021-02-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-riscv.h: New file.
+
+2021-01-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_memory_map): Define.
+
 2016-07-15  John Baldwin  <jhb@FreeBSD.org>
 
 	* signals.def: Add GDB_SIGNAL_LIBRT.
@@ -340,7 +353,7 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* signals.h: New file, from gdb/defs.h.
 
 
-Copyright (C) 2002-2020 Free Software Foundation, Inc.
+Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

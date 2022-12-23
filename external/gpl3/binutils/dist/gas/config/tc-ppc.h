@@ -1,5 +1,5 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -30,14 +30,9 @@ struct fix;
 #define TARGET_BYTES_BIG_ENDIAN 1
 #endif
 
-/* If OBJ_COFF is defined, and TE_PE is not defined, we are assembling
-   XCOFF for AIX or PowerMac.  If TE_PE is defined, we are assembling
-   COFF for Windows NT.  */
-
+/* If OBJ_COFF is defined we are assembling XCOFF for AIX or PowerMac.  */
 #ifdef OBJ_COFF
-#ifndef TE_PE
 #define OBJ_XCOFF
-#endif
 #endif
 
 /* The target BFD architecture.  */
@@ -107,17 +102,6 @@ extern ppc_cpu_t ppc_cpu;
 #define TC_INIT_FIX_DATA(FIXP) \
   do { (FIXP)->tc_fix_data.ppc_cpu = ppc_cpu; } while (0)
 
-#ifdef TE_PE
-
-/* Question marks are permitted in symbol names.  */
-#define LEX_QM 1
-
-/* Don't adjust TOC relocs.  */
-#define tc_fix_adjustable(FIX) ppc_pe_fix_adjustable (FIX)
-extern int ppc_pe_fix_adjustable (struct fix *);
-
-#endif
-
 #ifdef OBJ_XCOFF
 
 /* Declarations needed when generating XCOFF code.  XCOFF is an
@@ -146,6 +130,7 @@ struct ppc_tc_sy
   /* For a csect symbol, the last symbol which has been defined in
      this csect, or NULL if none have been defined so far.
      For a .bs symbol, the referenced csect symbol.
+     For a C_STSYM symbol, the containing block (.bs symbol).
      For a label, the enclosing csect.  */
   symbolS *within;
   union
@@ -161,7 +146,7 @@ struct ppc_tc_sy
 #define TC_SYMFIELD_TYPE struct ppc_tc_sy
 
 /* We need an additional auxent for function symbols.  */
-#define OBJ_COFF_MAX_AUXENTRIES 2
+#define OBJ_COFF_MAX_AUXENTRIES 4
 
 /* Square and curly brackets are permitted in symbol names.  */
 #define LEX_BR 3
@@ -204,6 +189,23 @@ do {								\
 
 extern void ppc_xcoff_end (void);
 #define md_end ppc_xcoff_end
+
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)	\
+  ppc_xcoff_parse_cons (EXP, NBYTES)
+extern bfd_reloc_code_real_type ppc_xcoff_parse_cons (expressionS *,
+						    unsigned int);
+/* XCOFF format allows only few predefined sections. Gather all
+   information in a common structure.  */
+struct ppc_xcoff_section {
+  /* Main segment of the section.  */
+  segT segment;
+
+  /* Next subsegment to allocate within the segment.  */
+  subsegT next_subsegment;
+
+  /* Linked list of csects in the section.  */
+  symbolS *csects;
+};
 
 #endif /* OBJ_XCOFF */
 
@@ -283,9 +285,28 @@ extern int ppc_force_relocation (struct fix *);
      || (FIX)->fx_r_type == BFD_RELOC_PPC_16DX_HA		\
      || (FIX)->fx_r_type == BFD_RELOC_PPC64_D34			\
      || (FIX)->fx_r_type == BFD_RELOC_PPC64_D28))
-#endif
 
-#define TC_VALIDATE_FIX_SUB(FIX, SEG) 0
+#endif /* OBJ_ELF */
+
+#define RELOC_EXPANSION_POSSIBLE
+#define MAX_RELOC_EXPANSION 2
+
+#if defined (OBJ_XCOFF)
+/* Force a relocation when the fix is negative. */
+#define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)				\
+  (GENERIC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)				\
+   || (((SEG)->flags & SEC_DEBUGGING) == 0				\
+	&& (FIX)->fx_addsy && (FIX)->fx_subsy				\
+	&& (S_GET_VALUE (fixP->fx_addsy) < S_GET_VALUE (fixP->fx_subsy))))
+
+/* XCOFF allows undefined differences which will be encoded with
+   R_NEG relocations.  */
+#define UNDEFINED_DIFFERENCE_OK
+
+#define TC_VALIDATE_FIX_SUB(FIX, SEG) \
+  (md_register_arithmetic || (SEG) != reg_section)
+
+#endif /* OBJ_XCOFF */
 
 /* Various frobbings of labels and their addresses.  */
 #define md_start_line_hook() ppc_start_line_hook ()
@@ -297,7 +318,6 @@ extern void ppc_frob_label (symbolS *);
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)
-extern long md_pcrel_from_section (struct fix *, segT);
 
 #define md_parse_name(name, exp, mode, c) ppc_parse_name (name, exp)
 extern int ppc_parse_name (const char *, struct expressionS *);

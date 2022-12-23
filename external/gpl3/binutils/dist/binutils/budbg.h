@@ -1,5 +1,5 @@
 /* budbg.c -- Interfaces to the generic debugging information routines.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -24,28 +24,28 @@
 
 /* Routine used to read generic debugging information.  */
 
-extern void *read_debugging_info (bfd *, asymbol **, long, bfd_boolean);
+extern void *read_debugging_info (bfd *, asymbol **, long, bool);
 
 /* Routine used to print generic debugging information.  */
 
-extern bfd_boolean print_debugging_info
+extern bool print_debugging_info
   (FILE *, void *, bfd *, asymbol **,
-   char * (*) (struct bfd *, const char *, int), bfd_boolean);
+   char * (*) (struct bfd *, const char *, int), bool);
 
 /* Routines used to read and write stabs information.  */
 
-extern void *start_stab (void *, bfd *, bfd_boolean, asymbol **, long);
+extern void *start_stab (void *, bfd *, bool, asymbol **, long);
 
-extern bfd_boolean finish_stab (void *, void *);
+extern bool finish_stab (void *, void *);
 
-extern bfd_boolean parse_stab
+extern bool parse_stab
   (void *, void *, int, int, bfd_vma, const char *);
 
-extern bfd_boolean write_stabs_in_sections_debugging_info
+extern bool write_stabs_in_sections_debugging_info
   (bfd *, void *, bfd_byte **, bfd_size_type *, bfd_byte **, bfd_size_type *);
 
 /* Routine used to read COFF debugging information.  */
 
-extern bfd_boolean parse_coff (bfd *, asymbol **, long, void *);
+extern bool parse_coff (bfd *, asymbol **, long, void *);
 
 #endif

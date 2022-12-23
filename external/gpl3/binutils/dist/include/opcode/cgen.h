@@ -1,6 +1,6 @@
 /* Header file for targets using CGEN: Cpu tools GENerator.
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger, and the GNU Binutils.
 
@@ -24,8 +24,7 @@
 #include "symcat.h"
 #include "cgen/bitset.h"
 
-/* ??? IWBN to replace bfd in the name.  */
-#include "bfd_stdint.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1392,7 +1391,9 @@ enum cgen_cpu_open_arg {
      Multiple machines can be specified by repeated use.  */
   CGEN_CPU_OPEN_BFDMACH,
   /* Select endian, arg is CGEN_ENDIAN_*.  */
-  CGEN_CPU_OPEN_ENDIAN
+  CGEN_CPU_OPEN_ENDIAN,
+  /* Select instruction endian, arg is CGEN_ENDIAN_*.  */
+  CGEN_CPU_OPEN_INSN_ENDIAN,
 };
 
 /* Open a cpu descriptor table for use.
@@ -1461,8 +1462,13 @@ extern const CGEN_INSN * cgen_lookup_get_insn_operands
 /* Cover fns to bfd_get/set.  */
 
 extern CGEN_INSN_INT cgen_get_insn_value
-  (CGEN_CPU_DESC, unsigned char *, int);
+  (CGEN_CPU_DESC, unsigned char *, int, int);
 extern void cgen_put_insn_value
+  (CGEN_CPU_DESC, unsigned char *, int, CGEN_INSN_INT, int);
+
+extern CGEN_INSN_INT cgen_get_base_insn_value
+  (CGEN_CPU_DESC, unsigned char *, int);
+extern void cgen_put_base_insn_value
   (CGEN_CPU_DESC, unsigned char *, int, CGEN_INSN_INT);
 
 /* Read in a cpu description file.

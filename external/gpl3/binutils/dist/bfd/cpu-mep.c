@@ -1,5 +1,5 @@
 /* BFD support for the Toshiba Media Engine Processor.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,6 +25,6 @@
 			   2, def, bfd_default_compatible, bfd_default_scan, \
 			   bfd_arch_default_fill, y, 0 }
 
-static const bfd_arch_info_type bfd_c5_arch = MA (bfd_mach_mep_c5, "c5", FALSE, NULL);
-static const bfd_arch_info_type bfd_h1_arch = MA (bfd_mach_mep_h1, "h1", FALSE, & bfd_c5_arch);
-const bfd_arch_info_type bfd_mep_arch = MA (bfd_mach_mep, "mep", TRUE, & bfd_h1_arch);
+static const bfd_arch_info_type bfd_c5_arch = MA (bfd_mach_mep_c5, "c5", false, NULL);
+static const bfd_arch_info_type bfd_h1_arch = MA (bfd_mach_mep_h1, "h1", false, & bfd_c5_arch);
+const bfd_arch_info_type bfd_mep_arch = MA (bfd_mach_mep, "mep", true, & bfd_h1_arch);

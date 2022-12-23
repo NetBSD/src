@@ -1,5 +1,5 @@
 /* SOM a.out definitions for BFD.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Contributed by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -86,7 +86,7 @@ struct som_external_aux_id
 #define COPYRIGHT_AUX_ID 9
 
 /* Aux id flags.  */
-#define SOM_AUX_ID_MANDATORY	(1 << 31)
+#define SOM_AUX_ID_MANDATORY	(1u << 31)
 #define SOM_AUX_ID_COPY		(1 << 30)
 #define SOM_AUX_ID_APPEND	(1 << 29)
 #define SOM_AUX_ID_IGNORE	(1 << 28)
@@ -134,7 +134,7 @@ struct som_external_space_dictionary_record
   unsigned char init_pointer_quantity[4];
 };
 
-#define SOM_SPACE_IS_LOADABLE		(1 << 31)
+#define SOM_SPACE_IS_LOADABLE		(1u << 31)
 #define SOM_SPACE_IS_DEFINED		(1 << 30)
 #define SOM_SPACE_IS_PRIVATE		(1 << 29)
 #define SOM_SPACE_HAS_INTERMEDIATE_CODE (1 << 28)
@@ -157,22 +157,22 @@ struct som_external_subspace_dictionary_record
 };
 
 #define SOM_SUBSPACE_ACCESS_CONTROL_BITS_SH	25
-#define SOM_SUBSPACE_ACCESS_CONTROL_BITS_MASK	0x7f
-#define SOM_SUBSPACE_MEMORY_RESIDENT		(1 << 24)
-#define SOM_SUBSPACE_DUP_COMMON			(1 << 23)
-#define SOM_SUBSPACE_IS_COMMON			(1 << 22)
-#define SOM_SUBSPACE_IS_LOADABLE		(1 << 21)
+#define SOM_SUBSPACE_ACCESS_CONTROL_BITS_MASK	0x7fU
+#define SOM_SUBSPACE_MEMORY_RESIDENT		(1U << 24)
+#define SOM_SUBSPACE_DUP_COMMON			(1U << 23)
+#define SOM_SUBSPACE_IS_COMMON			(1U << 22)
+#define SOM_SUBSPACE_IS_LOADABLE		(1U << 21)
 #define SOM_SUBSPACE_QUADRANT_SH		19
-#define SOM_SUBSPACE_QUADRANT_MASK		0x3
-#define SOM_SUBSPACE_INITIALLY_FROZEN		(1 << 18)
-#define SOM_SUBSPACE_IS_FIRST			(1 << 17)
-#define SOM_SUBSPACE_CODE_ONLY			(1 << 16)
+#define SOM_SUBSPACE_QUADRANT_MASK		0x3U
+#define SOM_SUBSPACE_INITIALLY_FROZEN		(1U << 18)
+#define SOM_SUBSPACE_IS_FIRST			(1U << 17)
+#define SOM_SUBSPACE_CODE_ONLY			(1U << 16)
 #define SOM_SUBSPACE_SORT_KEY_SH		8
-#define SOM_SUBSPACE_SORT_KEY_MASK		0xff
-#define SOM_SUBSPACE_REPLICATE_INIT		(1 << 7)
-#define SOM_SUBSPACE_CONTINUATION		(1 << 6)
-#define SOM_SUBSPACE_IS_TSPECIFIC		(1 << 5)
-#define SOM_SUBSPACE_IS_COMDAT			(1 << 4)
+#define SOM_SUBSPACE_SORT_KEY_MASK		0xffU
+#define SOM_SUBSPACE_REPLICATE_INIT		(1U << 7)
+#define SOM_SUBSPACE_CONTINUATION		(1U << 6)
+#define SOM_SUBSPACE_IS_TSPECIFIC		(1U << 5)
+#define SOM_SUBSPACE_IS_COMDAT			(1U << 4)
 
 struct som_external_compilation_unit
 {
@@ -195,7 +195,7 @@ struct som_external_symbol_dictionary_record
 };
 
 /* Flags fields.  */
-#define SOM_SYMBOL_HIDDEN (1 << 31)
+#define SOM_SYMBOL_HIDDEN (1u << 31)
 #define SOM_SYMBOL_SECONDARY_DEF (1 << 30)
 #define SOM_SYMBOL_TYPE_SH 24
 #define SOM_SYMBOL_TYPE_MASK 0x3f
@@ -214,7 +214,7 @@ struct som_external_symbol_dictionary_record
 #define SOM_SYMBOL_ARG_RELOC_MASK 0x3ff
 
 /* Info fields.  */
-#define SOM_SYMBOL_HAS_LONG_RETURN (1 << 31)
+#define SOM_SYMBOL_HAS_LONG_RETURN (1u << 31)
 #define SOM_SYMBOL_NO_RELOCATION (1 << 30)
 #define SOM_SYMBOL_IS_COMDAT (1 << 29)
 #define SOM_SYMBOL_SYMBOL_INFO_SH 0

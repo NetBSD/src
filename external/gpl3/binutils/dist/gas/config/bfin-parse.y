@@ -1,5 +1,5 @@
 /* bfin-parse.y  ADI Blackfin parser
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,6 +24,10 @@
 #include "bfin-aux.h"  /* Opcode generating auxiliaries.  */
 #include "elf/common.h"
 #include "elf/bfin.h"
+
+/* This file uses an old-style yyerror returning int.  Disable
+   generation of a modern prototype for yyerror.  */
+#define yyerror yyerror
 
 #define DSP32ALU(aopcde, HL, dst1, dst0, src0, src1, s, x, aop) \
 	bfin_gen_dsp32alu (HL, aopcde, aop, s, x, dst0, dst1, src0, src1)
@@ -160,7 +164,6 @@ static Expr_Node *unary  (Expr_Op_Type, Expr_Node *);
 static void notethat (const char *, ...);
 
 extern char *yytext;
-int yyerror (const char *);
 
 /* Used to set SRCx fields to all 1s as described in the PRM.  */
 static Register reg7 = {REG_R7, 0};
@@ -177,7 +180,7 @@ void error (const char *format, ...)
     as_bad ("%s", buffer);
 }
 
-int
+static int
 yyerror (const char *msg)
 {
   if (msg[0] == '\0')

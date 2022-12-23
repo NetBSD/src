@@ -1,5 +1,5 @@
 /* BFD back end for SCO5 core files (U-area and raw sections)
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Written by Jouke Numan <jnuman@hiscom.nl>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -71,7 +71,7 @@ static struct user *
 read_uarea (bfd *abfd, int filepos)
 {
   struct sco5_core_struct *rawptr;
-  bfd_size_type amt = sizeof (struct sco5_core_struct);
+  size_t amt = sizeof (struct sco5_core_struct);
 
   rawptr = (struct sco5_core_struct *) bfd_zmalloc (amt);
   if (rawptr == NULL)
@@ -101,7 +101,7 @@ read_uarea (bfd *abfd, int filepos)
   return &rawptr->u;
 }
 
-const bfd_target *
+bfd_cleanup
 sco5_core_file_p (bfd *abfd)
 {
   int coffset_siz, val, nsecs, cheadoffs;
@@ -172,7 +172,7 @@ sco5_core_file_p (bfd *abfd)
 			      (file_ptr) coffsets.u_stack))
 	goto fail;
 
-      return abfd->xvec;		/* Done for version 1 */
+      return _bfd_no_cleanup;		/* Done for version 1 */
     }
 
   /* Immediately before coreoffsets region is a long with offset in core
@@ -300,7 +300,7 @@ sco5_core_file_p (bfd *abfd)
 
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  fail:
   if (abfd->tdata.any)
@@ -340,9 +340,9 @@ swap_abort (void)
 #define	NO_GET ((bfd_vma (*) (const void *)) swap_abort)
 #define	NO_PUT ((void (*) (bfd_vma, void *)) swap_abort)
 #define	NO_GETS ((bfd_signed_vma (*) (const void *)) swap_abort)
-#define	NO_GET64 ((bfd_uint64_t (*) (const void *)) swap_abort)
-#define	NO_PUT64 ((void (*) (bfd_uint64_t, void *)) swap_abort)
-#define	NO_GETS64 ((bfd_int64_t (*) (const void *)) swap_abort)
+#define	NO_GET64 ((uint64_t (*) (const void *)) swap_abort)
+#define	NO_PUT64 ((void (*) (uint64_t, void *)) swap_abort)
+#define	NO_GETS64 ((int64_t (*) (const void *)) swap_abort)
 
 const bfd_target core_sco5_vec =
   {
@@ -358,6 +358,7 @@ const bfd_target core_sco5_vec =
     ' ',			/* ar_pad_char */
     16,				/* ar_max_namelen */
     0,				/* match priority.  */
+    TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data */
@@ -372,12 +373,16 @@ const bfd_target core_sco5_vec =
       sco5_core_file_p			/* a core file */
     },
     {				/* bfd_set_format */
-      _bfd_bool_bfd_false_error, bfd_false,
-      _bfd_bool_bfd_false_error, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {				/* bfd_write_contents */
-      _bfd_bool_bfd_false_error, bfd_false,
-      _bfd_bool_bfd_false_error, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

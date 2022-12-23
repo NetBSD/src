@@ -1,5 +1,5 @@
 /* Coff file dumper.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -26,7 +26,7 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#include "bfd_stdint.h"
+#include <stdint.h>
 #include "libiberty.h"
 #include "bucomm.h"
 
@@ -456,8 +456,6 @@ coff_dump (struct coff_ofile *ptr)
     dump_coff_section (ptr->sections + i);
 }
 
-char * program_name;
-
 static void
 show_usage (FILE *file, int status)
 {
@@ -490,12 +488,10 @@ main (int ac, char **av)
       { NULL, no_argument, 0, 0 }
     };
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -545,10 +541,7 @@ main (int ac, char **av)
       bfd_nonfatal (input_file);
 
       if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
-	{
-	  list_matching_formats (matching);
-	  free (matching);
-	}
+	list_matching_formats (matching);
       exit (1);
     }
 

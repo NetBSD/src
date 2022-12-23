@@ -1,6 +1,6 @@
 /* This file is tc-mcore.h
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -86,10 +86,9 @@ struct mcore_tc_sy
 
 #include "write.h"        /* For definition of fixS */
 
-extern void        md_mcore_end           (void);
-extern long        md_pcrel_from_section  (fixS *, segT);
-extern arelent *   tc_gen_reloc           (asection *, fixS *);
-extern int         mcore_force_relocation (fixS *);
-extern bfd_boolean mcore_fix_adjustable   (fixS *);
+extern void md_mcore_end (void);
+extern arelent *tc_gen_reloc (asection *, fixS *);
+extern int mcore_force_relocation (fixS *);
+extern bool mcore_fix_adjustable (fixS *);
 
 #endif /* TC_MCORE */

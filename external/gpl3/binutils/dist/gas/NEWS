@@ -1,6 +1,135 @@
 -*- text -*-
 
+Changes in 2.39:
+
+* Remove (rudimentary) support for the x86-64 sub-architectures Intel L1OM and
+  Intel K1OM.
+
+Changes in 2.38:
+
+* Add support for AArch64 system registers that were missing in previous
+  releases.
+
+* Add support for the LoongArch instruction set.
+
+* Add a command-line option, -muse-unaligned-vector-move, for x86 target
+  to encode aligned vector move as unaligned vector move.
+
+* Add support for Cortex-R52+ for Arm.
+
+* Add support for Cortex-A510, Cortex-A710, Cortex-X2 for AArch64.
+
+* Add support for Cortex-A710 for Arm.
+
+* Add support for Scalable Matrix Extension (SME) for AArch64.
+
+* The --multibyte-handling=[allow|warn|warn-sym-only] option tells the
+  assembler what to when it encoutners multibyte characters in the input.  The
+  default is to allow them.  Setting the option to "warn" will generate a
+  warning message whenever any multibyte character is encountered.  Using the
+  option to "warn-sym-only" will make the assembler generate a warning whenever a
+  symbol is defined containing multibyte characters.  (References to undefined
+  symbols will not generate warnings).
+
+* Outputs of .ds.x directive and .tfloat directive with hex input from
+  x86 assembler have been reduced from 12 bytes to 10 bytes to match the
+  output of .tfloat directive.
+
+* Add support for 'armv8.8-a', 'armv9-a', 'armv9.1-a', 'armv9.2-a' and
+  'armv9.3-a' for -march in AArch64 GAS.
+
+* Add support for 'armv8.7-a', 'armv8.8-a', 'armv9-a', 'armv9.1-a',
+  'armv9.2-a' and 'armv9.3-a' for -march in Arm GAS.
+
+* Add support for Intel AVX512_FP16 instructions.
+
+Changes in 2.37:
+
+* arm-symbianelf support removed.
+
+* Add support for Realm Management Extension (RME) for AArch64.
+
+Changes in 2.36:
+
+* Add support for Intel AVX VNNI instructions.
+
+* Add support for Intel HRESET instruction.
+
+* Add support for Intel UINTR instructions.
+
+* Support non-absolute segment values for i386 lcall and ljmp.
+
+* When setting the link order attribute of ELF sections, it is now possible to
+  use a numeric section index instead of symbol name.
+
+* Add support for Cortex-A78, Cortex-A78AE, Cortex-A78C and Cortex-X1 for
+  AArch64 and ARM.
+  Add support for Cortex-R82, Neoverse V1, and Neoverse N2 for ARM.
+
+* Add support for ETMv4 (Embedded Trace Macrocell), ETE (Embedded Trace
+  Extension), TRBE (Trace Buffer Extension)and BRBE (Branch Record Buffer
+  Extension) system registers for AArch64.
+
+* Add support for Armv8-R and Armv8.7-A AArch64.
+
+* Add support for DSB memory nXS barrier, WFET and WFIT instruction for Armv8.7
+  AArch64.
+
+* Add support for +flagm feature for -march in Armv8.4 AArch64.
+
+* Add support for +ls64 feature for -march in Armv8.7 AArch64. Add atomic
+  64-byte load/store instructions for this feature.
+
+* Add support for +pauth (Pointer Authentication) feature for -march in
+  AArch64.
+
+* Add support for Intel TDX instructions.
+
+* Add support for Intel Key Locker instructions.
+
+* Added a .nop directive to generate a single no-op instruction in a target
+  neutral manner.  This instruction does have an effect on DWARF line number
+  generation, if that is active.
+
+* Removed --reduce-memory-overheads and --hash-size as gas now
+  uses hash tables that can be expand and shrink automatically.
+
+* Add {disp16} pseudo prefix to x86 assembler.
+
+* Add support for Intel AMX instructions.
+
+* Configure with --enable-x86-used-note by default for Linux/x86.
+
+* Add support for the SHF_GNU_RETAIN flag, which can be applied to
+  sections using the 'R' flag in the .section directive.
+  SHF_GNU_RETAIN specifies that the section should not be garbage
+  collected by the linker.  It requires the GNU or FreeBSD ELF OSABIs.
+
+Changes in 2.35:
+
+* X86 NaCl target support is removed.
+
+* Extend .symver directive to update visibility of the original symbol
+  and assign one original symbol to different versioned symbols.
+
+* Add support for Intel SERIALIZE and TSXLDTRK instructions.
+
+* Add -mlfence-after-load=, -mlfence-before-indirect-branch= and
+  -mlfence-before-ret= options to x86 assembler to help mitigate
+  CVE-2020-0551.
+
+* Add --gdwarf-5 option to the assembler to generate DWARF 5 debug output
+  (if such output is being generated).  Added the ability to generate
+  version 5 .debug_line sections.
+
+* Add -mbig-obj support to i386 MingW targets.
+
 Changes in 2.34:
+
+* Add -malign-branch-boundary=NUM, -malign-branch=TYPE[+TYPE...],
+  -malign-branch-prefix-size=NUM and -mbranches-within-32B-boundaries
+  options to x86 assembler to align branches within a fixed boundary
+  with segment prefixes or NOPs.
 
 * Add support for Zilog eZ80 and Zilog Z180 CPUs.
 
@@ -809,7 +938,7 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

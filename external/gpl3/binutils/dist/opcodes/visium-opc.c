@@ -1,6 +1,6 @@
 /* Opcode table for the Visium.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

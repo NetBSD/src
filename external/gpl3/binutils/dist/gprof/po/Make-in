@@ -1,6 +1,6 @@
 # Makefile for program source directory in GNU NLS utilities package.
 # Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
-# Copyright (C) 2002-2020 Free Software Foundation, Inc.
+# Copyright (C) 2002-2022 Free Software Foundation, Inc.
 #
 # This file may be copied and used freely without restrictions.  It can
 # be used in projects which are not available under the GNU Public License
@@ -89,7 +89,7 @@ all-no:
 $(srcdir)/$(PACKAGE).pot: $(POTFILES)
 	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
 	  --add-comments --keyword=_ --keyword=N_ \
-	  --msgid-bugs-address=bug-binutils@gnu.org \
+	  --msgid-bugs-address=https://sourceware.org/bugzilla/ \
 	  --files-from=$(srcdir)/POTFILES.in
 	rm -f $(srcdir)/$(PACKAGE).pot
 	mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot

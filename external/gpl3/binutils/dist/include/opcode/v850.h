@@ -1,5 +1,5 @@
 /* v850.h -- Header file for NEC V850 opcode table
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Written by J.T. Conklin, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -133,7 +133,7 @@ struct v850_operand
      operand value is legal, *ERRMSG will be unchanged (most operands
      can accept any value).  */
   unsigned long (* insert)
-    (unsigned long instruction, long op, const char ** errmsg);
+    (unsigned long instruction, unsigned long op, const char ** errmsg);
 
   /* Extraction function.  This is used by the disassembler.  To
      extract this operand type from an instruction, check this field.

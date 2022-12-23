@@ -27,7 +27,7 @@ cgen/; cgen parts of opcodes/, sim/ & include/
 	May need separate opcodes/ or sim/ approval for
 		commits of regenerated files there.
 
-config.guess; config.sub; readline/support/config.{sub,guess}
+config.guess; config.sub; readline/readline/support/config.{sub,guess}
 	config: http://savannah.gnu.org/projects/config
 	Patches to config-patches@gnu.org.
 	Changes need to be done in tandem with the official CONFIG
@@ -41,7 +41,7 @@ config.guess; config.sub; readline/support/config.{sub,guess}
 depcomp; mkinstalldirs
         Send bug reports and patches to bug-automake@gnu.org.
 
-gdb/; gdbsupport/; gnulib/; readline/; sim/; GDB's part of include/
+gdb/; gdbserver/; gdbsupport/; gnulib/; readline/; sim/; GDB's part of include/
 	GDB: http://www.gnu.org/software/gdb/
 	Patches to gdb-patches@sourceware.org.
 	See also gdb/MAINTAINERS and sim/MAINTAINERS.

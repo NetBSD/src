@@ -1,5 +1,5 @@
 /* ecoff.h -- header file for ECOFF debugging support
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -37,7 +37,7 @@ extern void ecoff_read_begin_hook (void);
 
 /* This function should be called when the assembler switches to a new
    file.  */
-extern void ecoff_new_file (const char *, int);
+extern void ecoff_new_file (const char *);
 
 /* This function should be called when a new symbol is created, by
    obj_symbol_new_hook.  */

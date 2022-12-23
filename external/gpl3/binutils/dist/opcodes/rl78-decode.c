@@ -1,7 +1,7 @@
 /* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 #line 1 "rl78-decode.opc"
 /* -*- c -*- */
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 

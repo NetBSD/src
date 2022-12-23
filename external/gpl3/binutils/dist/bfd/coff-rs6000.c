@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -32,19 +32,19 @@
 #include "libcoff.h"
 #include "libxcoff.h"
 
-extern bfd_boolean _bfd_xcoff_mkobject (bfd *);
-extern bfd_boolean _bfd_xcoff_copy_private_bfd_data (bfd *, bfd *);
-extern bfd_boolean _bfd_xcoff_is_local_label_name (bfd *, const char *);
+extern bool _bfd_xcoff_mkobject (bfd *);
+extern bool _bfd_xcoff_copy_private_bfd_data (bfd *, bfd *);
+extern bool _bfd_xcoff_is_local_label_name (bfd *, const char *);
 extern reloc_howto_type *_bfd_xcoff_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-extern bfd_boolean _bfd_xcoff_slurp_armap (bfd *);
-extern const bfd_target *_bfd_xcoff_archive_p (bfd *);
+extern bool _bfd_xcoff_slurp_armap (bfd *);
+extern bfd_cleanup _bfd_xcoff_archive_p (bfd *);
 extern void * _bfd_xcoff_read_ar_hdr (bfd *);
 extern bfd *_bfd_xcoff_openr_next_archived_file (bfd *, bfd *);
 extern int _bfd_xcoff_stat_arch_elt (bfd *, struct stat *);
-extern bfd_boolean _bfd_xcoff_write_armap
+extern bool _bfd_xcoff_write_armap
   (bfd *, unsigned int, struct orl *, unsigned int, int);
-extern bfd_boolean _bfd_xcoff_write_archive_contents (bfd *);
+extern bool _bfd_xcoff_write_archive_contents (bfd *);
 extern int _bfd_xcoff_sizeof_headers (bfd *, struct bfd_link_info *);
 extern void _bfd_xcoff_swap_sym_in (bfd *, void *, void *);
 extern unsigned int _bfd_xcoff_swap_sym_out (bfd *, void *, void *);
@@ -77,8 +77,8 @@ void xcoff_rtype2howto (arelent *, struct internal_reloc *);
 #define coff_mkobject _bfd_xcoff_mkobject
 #define coff_bfd_is_local_label_name _bfd_xcoff_is_local_label_name
 #ifdef AIX_CORE
-extern const bfd_target * rs6000coff_core_p (bfd *abfd);
-extern bfd_boolean rs6000coff_core_file_matches_executable_p
+extern bfd_cleanup rs6000coff_core_p (bfd *abfd);
+extern bool rs6000coff_core_file_matches_executable_p
   (bfd *cbfd, bfd *ebfd);
 extern char *rs6000coff_core_file_failing_command (bfd *abfd);
 extern int rs6000coff_core_file_failing_signal (bfd *abfd);
@@ -119,81 +119,99 @@ extern int rs6000coff_core_file_failing_signal (bfd *abfd);
 /* The main body of code is in coffcode.h.  */
 
 static const char *normalize_filename (bfd *);
-static bfd_boolean xcoff_write_armap_old
+static bool xcoff_write_armap_old
   (bfd *, unsigned int, struct orl *, unsigned int, int);
-static bfd_boolean xcoff_write_armap_big
+static bool xcoff_write_armap_big
   (bfd *, unsigned int, struct orl *, unsigned int, int);
-static bfd_boolean xcoff_write_archive_contents_old (bfd *);
-static bfd_boolean xcoff_write_archive_contents_big (bfd *);
+static bool xcoff_write_archive_contents_old (bfd *);
+static bool xcoff_write_archive_contents_big (bfd *);
 static void xcoff_swap_ldhdr_in (bfd *, const void *, struct internal_ldhdr *);
 static void xcoff_swap_ldhdr_out (bfd *, const struct internal_ldhdr *, void *);
 static void xcoff_swap_ldsym_in (bfd *, const void *, struct internal_ldsym *);
 static void xcoff_swap_ldsym_out (bfd *, const struct internal_ldsym *, void *);
 static void xcoff_swap_ldrel_in (bfd *, const void *, struct internal_ldrel *);
 static void xcoff_swap_ldrel_out (bfd *, const struct internal_ldrel *, void *);
-static bfd_boolean xcoff_ppc_relocate_section
+static bool xcoff_ppc_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
    struct internal_reloc *, struct internal_syment *, asection **);
-static bfd_boolean _bfd_xcoff_put_ldsymbol_name
+static bool _bfd_xcoff_put_ldsymbol_name
   (bfd *, struct xcoff_loader_info *, struct internal_ldsym *, const char *);
 static asection *xcoff_create_csect_from_smclas
   (bfd *, union internal_auxent *, const char *);
-static bfd_boolean xcoff_is_lineno_count_overflow (bfd *, bfd_vma);
-static bfd_boolean xcoff_is_reloc_count_overflow (bfd *, bfd_vma);
+static bool xcoff_is_lineno_count_overflow (bfd *, bfd_vma);
+static bool xcoff_is_reloc_count_overflow (bfd *, bfd_vma);
 static bfd_vma xcoff_loader_symbol_offset (bfd *, struct internal_ldhdr *);
 static bfd_vma xcoff_loader_reloc_offset (bfd *, struct internal_ldhdr *);
-static bfd_boolean xcoff_generate_rtinit
-  (bfd *, const char *, const char *, bfd_boolean);
-static bfd_boolean do_pad (bfd *, unsigned int);
-static bfd_boolean do_copy (bfd *, bfd *);
+static bool xcoff_generate_rtinit
+  (bfd *, const char *, const char *, bool);
+static bool do_pad (bfd *, unsigned int);
+static bool do_copy (bfd *, bfd *);
 
 /* Relocation functions */
-static bfd_boolean xcoff_reloc_type_br (XCOFF_RELOC_FUNCTION_ARGS);
+static xcoff_reloc_function xcoff_reloc_type_br;
 
-static bfd_boolean xcoff_complain_overflow_dont_func
-  (XCOFF_COMPLAIN_FUNCTION_ARGS);
-static bfd_boolean xcoff_complain_overflow_bitfield_func
-  (XCOFF_COMPLAIN_FUNCTION_ARGS);
-static bfd_boolean xcoff_complain_overflow_signed_func
-  (XCOFF_COMPLAIN_FUNCTION_ARGS);
-static bfd_boolean xcoff_complain_overflow_unsigned_func
-  (XCOFF_COMPLAIN_FUNCTION_ARGS);
+static xcoff_complain_function xcoff_complain_overflow_dont_func;
+static xcoff_complain_function xcoff_complain_overflow_bitfield_func;
+static xcoff_complain_function xcoff_complain_overflow_signed_func;
+static xcoff_complain_function xcoff_complain_overflow_unsigned_func;
 
-bfd_boolean (*xcoff_calculate_relocation[XCOFF_MAX_CALCULATE_RELOCATION])
-  (XCOFF_RELOC_FUNCTION_ARGS) =
+xcoff_reloc_function *const
+xcoff_calculate_relocation[XCOFF_MAX_CALCULATE_RELOCATION] =
 {
-  xcoff_reloc_type_pos,	 /* R_POS   (0x00) */
-  xcoff_reloc_type_neg,	 /* R_NEG   (0x01) */
-  xcoff_reloc_type_rel,	 /* R_REL   (0x02) */
-  xcoff_reloc_type_toc,	 /* R_TOC   (0x03) */
-  xcoff_reloc_type_fail, /* R_RTB   (0x04) */
-  xcoff_reloc_type_toc,	 /* R_GL    (0x05) */
-  xcoff_reloc_type_toc,	 /* R_TCL   (0x06) */
-  xcoff_reloc_type_fail, /*	    (0x07) */
-  xcoff_reloc_type_ba,	 /* R_BA    (0x08) */
-  xcoff_reloc_type_fail, /*	    (0x09) */
-  xcoff_reloc_type_br,	 /* R_BR    (0x0a) */
-  xcoff_reloc_type_fail, /*	    (0x0b) */
-  xcoff_reloc_type_pos,	 /* R_RL    (0x0c) */
-  xcoff_reloc_type_pos,	 /* R_RLA   (0x0d) */
-  xcoff_reloc_type_fail, /*	    (0x0e) */
+  xcoff_reloc_type_pos,  /* R_POS   (0x00) */
+  xcoff_reloc_type_neg,  /* R_NEG   (0x01) */
+  xcoff_reloc_type_rel,  /* R_REL   (0x02) */
+  xcoff_reloc_type_toc,  /* R_TOC   (0x03) */
+  xcoff_reloc_type_toc,  /* R_TRL   (0x04) */
+  xcoff_reloc_type_toc,  /* R_GL    (0x05) */
+  xcoff_reloc_type_toc,  /* R_TCL   (0x06) */
+  xcoff_reloc_type_fail, /*         (0x07) */
+  xcoff_reloc_type_ba,   /* R_BA    (0x08) */
+  xcoff_reloc_type_fail, /*         (0x09) */
+  xcoff_reloc_type_br,   /* R_BR    (0x0a) */
+  xcoff_reloc_type_fail, /*         (0x0b) */
+  xcoff_reloc_type_pos,  /* R_RL    (0x0c) */
+  xcoff_reloc_type_pos,  /* R_RLA   (0x0d) */
+  xcoff_reloc_type_fail, /*         (0x0e) */
   xcoff_reloc_type_noop, /* R_REF   (0x0f) */
-  xcoff_reloc_type_fail, /*	    (0x10) */
-  xcoff_reloc_type_fail, /*	    (0x11) */
-  xcoff_reloc_type_toc,	 /* R_TRL   (0x12) */
-  xcoff_reloc_type_toc,	 /* R_TRLA  (0x13) */
+  xcoff_reloc_type_fail, /*         (0x10) */
+  xcoff_reloc_type_fail, /*         (0x11) */
+  xcoff_reloc_type_fail, /*         (0x12) */
+  xcoff_reloc_type_toc,  /* R_TRLA  (0x13) */
   xcoff_reloc_type_fail, /* R_RRTBI (0x14) */
   xcoff_reloc_type_fail, /* R_RRTBA (0x15) */
-  xcoff_reloc_type_ba,	 /* R_CAI   (0x16) */
+  xcoff_reloc_type_ba,   /* R_CAI   (0x16) */
   xcoff_reloc_type_crel, /* R_CREL  (0x17) */
-  xcoff_reloc_type_ba,	 /* R_RBA   (0x18) */
-  xcoff_reloc_type_ba,	 /* R_RBAC  (0x19) */
-  xcoff_reloc_type_br,	 /* R_RBR   (0x1a) */
-  xcoff_reloc_type_ba,	 /* R_RBRC  (0x1b) */
+  xcoff_reloc_type_ba,   /* R_RBA   (0x18) */
+  xcoff_reloc_type_ba,   /* R_RBAC  (0x19) */
+  xcoff_reloc_type_br,   /* R_RBR   (0x1a) */
+  xcoff_reloc_type_ba,   /* R_RBRC  (0x1b) */
+  xcoff_reloc_type_fail, /*           (0x1c) */
+  xcoff_reloc_type_fail, /*           (0x1d) */
+  xcoff_reloc_type_fail, /*           (0x1e) */
+  xcoff_reloc_type_fail, /*           (0x1f) */
+  xcoff_reloc_type_tls,  /* R_TLS     (0x20) */
+  xcoff_reloc_type_tls,  /* R_TLS_IE  (0x21) */
+  xcoff_reloc_type_tls,  /* R_TLS_LD  (0x22) */
+  xcoff_reloc_type_tls,  /* R_TLS_LE  (0x23) */
+  xcoff_reloc_type_tls,  /* R_TLSM    (0x24) */
+  xcoff_reloc_type_tls,  /* R_TLSML   (0x25) */
+  xcoff_reloc_type_fail, /*           (0x26) */
+  xcoff_reloc_type_fail, /*           (0x27) */
+  xcoff_reloc_type_fail, /*           (0x28) */
+  xcoff_reloc_type_fail, /*           (0x29) */
+  xcoff_reloc_type_fail, /*           (0x2a) */
+  xcoff_reloc_type_fail, /*           (0x2b) */
+  xcoff_reloc_type_fail, /*           (0x2c) */
+  xcoff_reloc_type_fail, /*           (0x2d) */
+  xcoff_reloc_type_fail, /*           (0x2e) */
+  xcoff_reloc_type_fail, /*           (0x2f) */
+  xcoff_reloc_type_toc,  /* R_TOCU    (0x30) */
+  xcoff_reloc_type_toc,  /* R_TOCL    (0x31) */
 };
 
-bfd_boolean (*xcoff_complain_overflow[XCOFF_MAX_COMPLAIN_OVERFLOW])
-  (XCOFF_COMPLAIN_FUNCTION_ARGS) =
+xcoff_complain_function *const
+xcoff_complain_overflow[XCOFF_MAX_COMPLAIN_OVERFLOW] =
 {
   xcoff_complain_overflow_dont_func,
   xcoff_complain_overflow_bitfield_func,
@@ -300,11 +318,11 @@ archive_iterator_begin (struct archive_iterator *iterator,
 /* Make ITERATOR visit the first unvisited archive member.  Return true
    on success; return false if all members have been visited.  */
 
-static bfd_boolean
+static bool
 archive_iterator_next (struct archive_iterator *iterator)
 {
   if (!iterator->next.member)
-    return FALSE;
+    return false;
 
   iterator->current = iterator->next;
   member_layout_init (&iterator->next, iterator->archive,
@@ -313,21 +331,21 @@ archive_iterator_next (struct archive_iterator *iterator)
 		      + iterator->current.header_size
 		      + iterator->current.contents_size
 		      + iterator->current.trailing_padding);
-  return TRUE;
+  return true;
 }
 
 /* We use our own tdata type.  Its first field is the COFF tdata type,
    so the COFF routines are compatible.  */
 
-bfd_boolean
+bool
 _bfd_xcoff_mkobject (bfd *abfd)
 {
   coff_data_type *coff;
-  bfd_size_type amt = sizeof (struct xcoff_tdata);
+  size_t amt = sizeof (struct xcoff_tdata);
 
   abfd->tdata.xcoff_obj_data = (struct xcoff_tdata *) bfd_zalloc (abfd, amt);
   if (abfd->tdata.xcoff_obj_data == NULL)
-    return FALSE;
+    return false;
   coff = coff_data (abfd);
   coff->symbols = (coff_symbol_type *) NULL;
   coff->conversion_table = (unsigned int *) NULL;
@@ -346,19 +364,19 @@ _bfd_xcoff_mkobject (bfd *abfd)
   /* text section alignment is different than the default */
   bfd_xcoff_text_align_power (abfd) = 2;
 
-  return TRUE;
+  return true;
 }
 
 /* Copy XCOFF data from one BFD to another.  */
 
-bfd_boolean
+bool
 _bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   struct xcoff_tdata *ix, *ox;
   asection *sec;
 
   if (ibfd->xvec != obfd->xvec)
-    return TRUE;
+    return true;
   ix = xcoff_data (ibfd);
   ox = xcoff_data (obfd);
   ox->full_aouthdr = ix->full_aouthdr;
@@ -368,7 +386,7 @@ _bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   else
     {
       sec = coff_section_from_bfd_index (ibfd, ix->sntoc);
-      if (sec == NULL)
+      if (sec == NULL || sec->output_section == NULL)
 	ox->sntoc = 0;
       else
 	ox->sntoc = sec->output_section->target_index;
@@ -378,7 +396,7 @@ _bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   else
     {
       sec = coff_section_from_bfd_index (ibfd, ix->snentry);
-      if (sec == NULL)
+      if (sec == NULL || sec->output_section == NULL)
 	ox->snentry = 0;
       else
 	ox->snentry = sec->output_section->target_index;
@@ -389,7 +407,7 @@ _bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   ox->cputype = ix->cputype;
   ox->maxdata = ix->maxdata;
   ox->maxstack = ix->maxstack;
-  return TRUE;
+  return true;
 }
 
 /* I don't think XCOFF really has a notion of local labels based on
@@ -397,11 +415,11 @@ _bfd_xcoff_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
    The AIX native linker does not have a -X option, and it ignores the
    -x option.  */
 
-bfd_boolean
+bool
 _bfd_xcoff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 				const char *name ATTRIBUTE_UNUSED)
 {
-  return FALSE;
+  return false;
 }
 
 void
@@ -452,37 +470,38 @@ _bfd_xcoff_swap_sym_out (bfd *abfd, void * inp, void * extp)
 }
 
 void
-_bfd_xcoff_swap_aux_in (bfd *abfd, void * ext1, int type, int in_class,
-			int indx, int numaux, void * in1)
+_bfd_xcoff_swap_aux_in (bfd *abfd, void * ext1, int type ATTRIBUTE_UNUSED,
+			int in_class, int indx, int numaux, void * in1)
 {
   AUXENT * ext = (AUXENT *)ext1;
   union internal_auxent *in = (union internal_auxent *)in1;
 
   switch (in_class)
     {
+    default:
+      _bfd_error_handler
+	/* xgettext: c-format */
+	(_("%pB: unsupported swap_aux_in for storage class %#x"),
+	 abfd, (unsigned int) in_class);
+      bfd_set_error (bfd_error_bad_value);
+      break;
+
     case C_FILE:
       if (ext->x_file.x_n.x_fname[0] == 0)
 	{
-	  in->x_file.x_n.x_zeroes = 0;
-	  in->x_file.x_n.x_offset =
+	  in->x_file.x_n.x_n.x_zeroes = 0;
+	  in->x_file.x_n.x_n.x_offset =
 	    H_GET_32 (abfd, ext->x_file.x_n.x_n.x_offset);
 	}
       else
-	{
-	  if (numaux > 1)
-	    {
-	      if (indx == 0)
-		memcpy (in->x_file.x_fname, ext->x_file.x_n.x_fname,
-			numaux * sizeof (AUXENT));
-	    }
-	  else
-	    {
-	      memcpy (in->x_file.x_fname, ext->x_file.x_n.x_fname, FILNMLEN);
-	    }
-	}
-      goto end;
+	memcpy (in->x_file.x_n.x_fname, ext->x_file.x_n.x_fname, FILNMLEN);
+      in->x_file.x_ftype = H_GET_8 (abfd, ext->x_file.x_ftype);
+      break;
 
-      /* RS/6000 "csect" auxents */
+      /* RS/6000 "csect" auxents.
+         There is always a CSECT auxiliary entry. But functions can
+         have FCN ones too. In this case, CSECT is always the last
+         one. */
     case C_EXT:
     case C_AIX_WEAKEXT:
     case C_HIDEXT:
@@ -498,74 +517,47 @@ _bfd_xcoff_swap_aux_in (bfd *abfd, void * ext1, int type, int in_class,
 	  in->x_csect.x_smclas   = H_GET_8 (abfd, ext->x_csect.x_smclas);
 	  in->x_csect.x_stab     = H_GET_32 (abfd, ext->x_csect.x_stab);
 	  in->x_csect.x_snstab   = H_GET_16 (abfd, ext->x_csect.x_snstab);
-	  goto end;
+	}
+      else
+	{
+	  /* x_exptr isn't supported.  */
+	  in->x_sym.x_misc.x_fsize
+	    = H_GET_32 (abfd, ext->x_fcn.x_fsize);
+	  in->x_sym.x_fcnary.x_fcn.x_lnnoptr
+	    = H_GET_32 (abfd, ext->x_fcn.x_lnnoptr);
+	  in->x_sym.x_fcnary.x_fcn.x_endndx.l
+	    = H_GET_32 (abfd, ext->x_fcn.x_endndx);
 	}
       break;
 
     case C_STAT:
-    case C_LEAFSTAT:
-    case C_HIDDEN:
-      if (type == T_NULL)
-	{
-	  in->x_scn.x_scnlen = H_GET_32 (abfd, ext->x_scn.x_scnlen);
-	  in->x_scn.x_nreloc = H_GET_16 (abfd, ext->x_scn.x_nreloc);
-	  in->x_scn.x_nlinno = H_GET_16 (abfd, ext->x_scn.x_nlinno);
-	  /* PE defines some extra fields; we zero them out for
-	     safety.  */
-	  in->x_scn.x_checksum = 0;
-	  in->x_scn.x_associated = 0;
-	  in->x_scn.x_comdat = 0;
-
-	  goto end;
-	}
+      in->x_scn.x_scnlen = H_GET_32 (abfd, ext->x_scn.x_scnlen);
+      in->x_scn.x_nreloc = H_GET_16 (abfd, ext->x_scn.x_nreloc);
+      in->x_scn.x_nlinno = H_GET_16 (abfd, ext->x_scn.x_nlinno);
+      /* PE defines some extra fields; we zero them out for
+	 safety.  */
+      in->x_scn.x_checksum = 0;
+      in->x_scn.x_associated = 0;
+      in->x_scn.x_comdat = 0;
       break;
-    }
 
-  in->x_sym.x_tagndx.l = H_GET_32 (abfd, ext->x_sym.x_tagndx);
-  in->x_sym.x_tvndx = H_GET_16 (abfd, ext->x_sym.x_tvndx);
+    case C_BLOCK:
+    case C_FCN:
+      in->x_sym.x_misc.x_lnsz.x_lnno
+	= H_GET_32 (abfd, ext->x_sym.x_lnno);
+      break;
 
-  if (in_class == C_BLOCK || in_class == C_FCN || ISFCN (type)
-      || ISTAG (in_class))
-    {
-      in->x_sym.x_fcnary.x_fcn.x_lnnoptr =
-	H_GET_32 (abfd, ext->x_sym.x_fcnary.x_fcn.x_lnnoptr);
-      in->x_sym.x_fcnary.x_fcn.x_endndx.l =
-	H_GET_32 (abfd, ext->x_sym.x_fcnary.x_fcn.x_endndx);
-    }
-  else
-    {
-      in->x_sym.x_fcnary.x_ary.x_dimen[0] =
-	H_GET_16 (abfd, ext->x_sym.x_fcnary.x_ary.x_dimen[0]);
-      in->x_sym.x_fcnary.x_ary.x_dimen[1] =
-	H_GET_16 (abfd, ext->x_sym.x_fcnary.x_ary.x_dimen[1]);
-      in->x_sym.x_fcnary.x_ary.x_dimen[2] =
-	H_GET_16 (abfd, ext->x_sym.x_fcnary.x_ary.x_dimen[2]);
-      in->x_sym.x_fcnary.x_ary.x_dimen[3] =
-	H_GET_16 (abfd, ext->x_sym.x_fcnary.x_ary.x_dimen[3]);
-    }
+    case C_DWARF:
+      in->x_sect.x_scnlen = H_GET_32 (abfd, ext->x_sect.x_scnlen);
+      in->x_sect.x_nreloc = H_GET_32 (abfd, ext->x_sect.x_nreloc);
+      break;
 
-  if (ISFCN (type))
-    {
-      in->x_sym.x_misc.x_fsize = H_GET_32 (abfd, ext->x_sym.x_misc.x_fsize);
     }
-  else
-    {
-      in->x_sym.x_misc.x_lnsz.x_lnno =
-	H_GET_16 (abfd, ext->x_sym.x_misc.x_lnsz.x_lnno);
-      in->x_sym.x_misc.x_lnsz.x_size =
-	H_GET_16 (abfd, ext->x_sym.x_misc.x_lnsz.x_size);
-    }
-
- end: ;
-  /* The semicolon is because MSVC doesn't like labels at
-     end of block.  */
 }
 
 unsigned int
-_bfd_xcoff_swap_aux_out (bfd *abfd, void * inp, int type, int in_class,
-			 int indx ATTRIBUTE_UNUSED,
-			 int numaux ATTRIBUTE_UNUSED,
-			 void * extp)
+_bfd_xcoff_swap_aux_out (bfd *abfd, void * inp, int type ATTRIBUTE_UNUSED,
+			 int in_class, int indx, int numaux, void * extp)
 {
   union internal_auxent *in = (union internal_auxent *)inp;
   AUXENT *ext = (AUXENT *)extp;
@@ -573,18 +565,25 @@ _bfd_xcoff_swap_aux_out (bfd *abfd, void * inp, int type, int in_class,
   memset (ext, 0, bfd_coff_auxesz (abfd));
   switch (in_class)
     {
+    default:
+      _bfd_error_handler
+	/* xgettext: c-format */
+	(_("%pB: unsupported swap_aux_out for storage class %#x"),
+	 abfd, (unsigned int) in_class);
+      bfd_set_error (bfd_error_bad_value);
+      break;
+
     case C_FILE:
-      if (in->x_file.x_fname[0] == 0)
+      if (in->x_file.x_n.x_fname[0] == 0)
 	{
 	  H_PUT_32 (abfd, 0, ext->x_file.x_n.x_n.x_zeroes);
-	  H_PUT_32 (abfd, in->x_file.x_n.x_offset,
+	  H_PUT_32 (abfd, in->x_file.x_n.x_n.x_offset,
 		    ext->x_file.x_n.x_n.x_offset);
 	}
       else
-	{
-	  memcpy (ext->x_file.x_n.x_fname, in->x_file.x_fname, FILNMLEN);
-	}
-      goto end;
+	memcpy (ext->x_file.x_n.x_fname, in->x_file.x_n.x_fname, FILNMLEN);
+      H_PUT_8 (abfd, in->x_file.x_ftype, ext->x_file.x_ftype);
+      break;
 
       /* RS/6000 "csect" auxents */
     case C_EXT:
@@ -602,459 +601,564 @@ _bfd_xcoff_swap_aux_out (bfd *abfd, void * inp, int type, int in_class,
 	  H_PUT_8 (abfd, in->x_csect.x_smclas, ext->x_csect.x_smclas);
 	  H_PUT_32 (abfd, in->x_csect.x_stab, ext->x_csect.x_stab);
 	  H_PUT_16 (abfd, in->x_csect.x_snstab, ext->x_csect.x_snstab);
-	  goto end;
+	}
+      else
+	{
+	  H_PUT_32 (abfd, in->x_sym.x_misc.x_fsize, ext->x_fcn.x_fsize);
+	  H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_lnnoptr,
+		    ext->x_fcn.x_lnnoptr);
+	  H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_endndx.l,
+		    ext->x_fcn.x_endndx);
 	}
       break;
 
     case C_STAT:
-    case C_LEAFSTAT:
-    case C_HIDDEN:
-      if (type == T_NULL)
-	{
-	  H_PUT_32 (abfd, in->x_scn.x_scnlen, ext->x_scn.x_scnlen);
-	  H_PUT_16 (abfd, in->x_scn.x_nreloc, ext->x_scn.x_nreloc);
-	  H_PUT_16 (abfd, in->x_scn.x_nlinno, ext->x_scn.x_nlinno);
-	  goto end;
-	}
+      H_PUT_32 (abfd, in->x_scn.x_scnlen, ext->x_scn.x_scnlen);
+      H_PUT_16 (abfd, in->x_scn.x_nreloc, ext->x_scn.x_nreloc);
+      H_PUT_16 (abfd, in->x_scn.x_nlinno, ext->x_scn.x_nlinno);
+      break;
+
+    case C_BLOCK:
+    case C_FCN:
+      H_PUT_32 (abfd, in->x_sym.x_misc.x_lnsz.x_lnno, ext->x_sym.x_lnno);
+      break;
+
+    case C_DWARF:
+      H_PUT_32 (abfd, in->x_sect.x_scnlen, ext->x_sect.x_scnlen);
+      H_PUT_32 (abfd, in->x_sect.x_nreloc, ext->x_sect.x_nreloc);
       break;
     }
 
-  H_PUT_32 (abfd, in->x_sym.x_tagndx.l, ext->x_sym.x_tagndx);
-  H_PUT_16 (abfd, in->x_sym.x_tvndx, ext->x_sym.x_tvndx);
-
-  if (in_class == C_BLOCK || in_class == C_FCN || ISFCN (type)
-      || ISTAG (in_class))
-    {
-      H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_lnnoptr,
-		ext->x_sym.x_fcnary.x_fcn.x_lnnoptr);
-      H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_endndx.l,
-		ext->x_sym.x_fcnary.x_fcn.x_endndx);
-    }
-  else
-    {
-      H_PUT_16 (abfd, in->x_sym.x_fcnary.x_ary.x_dimen[0],
-		ext->x_sym.x_fcnary.x_ary.x_dimen[0]);
-      H_PUT_16 (abfd, in->x_sym.x_fcnary.x_ary.x_dimen[1],
-		ext->x_sym.x_fcnary.x_ary.x_dimen[1]);
-      H_PUT_16 (abfd, in->x_sym.x_fcnary.x_ary.x_dimen[2],
-		ext->x_sym.x_fcnary.x_ary.x_dimen[2]);
-      H_PUT_16 (abfd, in->x_sym.x_fcnary.x_ary.x_dimen[3],
-		ext->x_sym.x_fcnary.x_ary.x_dimen[3]);
-    }
-
-  if (ISFCN (type))
-    H_PUT_32 (abfd, in->x_sym.x_misc.x_fsize, ext->x_sym.x_misc.x_fsize);
-  else
-    {
-      H_PUT_16 (abfd, in->x_sym.x_misc.x_lnsz.x_lnno,
-		ext->x_sym.x_misc.x_lnsz.x_lnno);
-      H_PUT_16 (abfd, in->x_sym.x_misc.x_lnsz.x_size,
-		ext->x_sym.x_misc.x_lnsz.x_size);
-    }
-
-end:
   return bfd_coff_auxesz (abfd);
 }
 
-/* The XCOFF reloc table.  Actually, XCOFF relocations specify the
-   bitsize and whether they are signed or not, along with a
-   conventional type.  This table is for the types, which are used for
-   different algorithms for putting in the reloc.  Many of these
-   relocs need special_function entries, which I have not written.  */
+/* The XCOFF reloc table.
+   XCOFF relocations aren't defined only by the type field r_type.
+   The bitsize and whether they are signed or not, are defined by
+   r_size field.  Thus, it's complicated to create a constant
+   table reference every possible relocation.
+   This table contains the "default" relocation and few modified
+   relocations what were already there.  It's enough when
+   xcoff_rtype2howto is called.
+   For relocations from an input bfd to an output bfd, the default
+   relocation is retrieved and when manually adapted.
+
+   For now, it seems to be enought.  */
 
 reloc_howto_type xcoff_howto_table[] =
 {
   /* 0x00: Standard 32 bit relocation.  */
   HOWTO (R_POS,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_POS",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x01: 32 bit relocation, but store negative value.  */
   HOWTO (R_NEG,			/* type */
 	 0,			/* rightshift */
-	 -2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 -4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_NEG",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x02: 32 bit PC relative relocation.  */
   HOWTO (R_REL,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_REL",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x03: 16 bit TOC relative relocation.  */
   HOWTO (R_TOC,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_TOC",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
-  /* 0x04: I don't really know what this is.  */
-  HOWTO (R_RTB,			/* type */
-	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+  /* 0x04: Same as R_TOC  */
+  HOWTO (R_TRL,			/* type */
+	 0,			/* rightshift */
+	 2,			/* size */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
-	 "R_RTB",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
-	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 "R_TRL",		/* name */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
 
   /* 0x05: External TOC relative symbol.  */
   HOWTO (R_GL,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_GL",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x06: Local TOC relative symbol.	 */
   HOWTO (R_TCL,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_TCL",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (7),
 
-  /* 0x08: Non modifiable absolute branch.  */
+  /* 0x08: Same as R_RBA.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_BA_26",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x03fffffc,		/* src_mask */
 	 0x03fffffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (9),
 
-  /* 0x0a: Non modifiable relative branch.  */
+  /* 0x0a: Same as R_RBR.  */
   HOWTO (R_BR,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_BR",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x03fffffc,		/* src_mask */
 	 0x03fffffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (0xb),
 
-  /* 0x0c: Indirect load.  */
+  /* 0x0c: Same as R_POS.  */
   HOWTO (R_RL,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RL",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
 
-  /* 0x0d: Load address.  */
+  /* 0x0d: Same as R_POS.  */
   HOWTO (R_RLA,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RLA",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (0xe),
 
   /* 0x0f: Non-relocating reference.  Bitsize is 1 so that r_rsize is 0.  */
   HOWTO (R_REF,			/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 1,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_REF",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (0x10),
   EMPTY_HOWTO (0x11),
+  EMPTY_HOWTO (0x12),
 
-  /* 0x12: TOC relative indirect load.  */
-  HOWTO (R_TRL,			/* type */
-	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 0,			/* special_function */
-	 "R_TRL",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
-
-  /* 0x13: TOC relative load address.  */
+  /* 0x13: Same as R_TOC.  */
   HOWTO (R_TRLA,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_TRLA",		/* name */
-	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x14: Modifiable relative branch.  */
-  HOWTO (R_RRTBI,		 /* type */
+  HOWTO (R_RRTBI,		/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RRTBI",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x15: Modifiable absolute branch.  */
-  HOWTO (R_RRTBA,		 /* type */
+  HOWTO (R_RRTBA,		/* type */
 	 1,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RRTBA",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x16: Modifiable call absolute indirect.  */
   HOWTO (R_CAI,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_CAI",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x17: Modifiable call relative.  */
   HOWTO (R_CREL,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_CREL",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x18: Modifiable branch absolute.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBA",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x03fffffc,		/* src_mask */
 	 0x03fffffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x19: Modifiable branch absolute.  */
   HOWTO (R_RBAC,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBAC",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x1a: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBR_26",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x03fffffc,		/* src_mask */
 	 0x03fffffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x1b: Modifiable branch absolute.  */
   HOWTO (R_RBRC,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBRC",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x1c: 16 bit Non modifiable absolute branch.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_BA_16",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xfffc,		/* src_mask */
 	 0xfffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x1d: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBR_16",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xfffc,		/* src_mask */
 	 0xfffc,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 0x1e: Modifiable branch relative.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBA_16",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
+
+  EMPTY_HOWTO (0x1f),
+
+  /* 0x20: General-dynamic TLS relocation.  */
+  HOWTO (R_TLS,			/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLS",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  /* 0x21: Initial-exec TLS relocation.  */
+  HOWTO (R_TLS_IE,		/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLS_IE",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  /* 0x22: Local-dynamic TLS relocation.  */
+  HOWTO (R_TLS_LD,		/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLS_LD",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  /* 0x23: Local-exec TLS relocation.  */
+  HOWTO (R_TLS_LE,		/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLS_LE",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  /* 0x24: TLS relocation.  */
+  HOWTO (R_TLSM,		/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLSM",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+
+  /* 0x25: TLS module relocation.  */
+  HOWTO (R_TLSML,		/* type */
+	 0,			/* rightshift */
+	 4,			/* size */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TLSML",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  EMPTY_HOWTO(0x26),
+  EMPTY_HOWTO(0x27),
+  EMPTY_HOWTO(0x28),
+  EMPTY_HOWTO(0x29),
+  EMPTY_HOWTO(0x2a),
+  EMPTY_HOWTO(0x2b),
+  EMPTY_HOWTO(0x2c),
+  EMPTY_HOWTO(0x2d),
+  EMPTY_HOWTO(0x2e),
+  EMPTY_HOWTO(0x2f),
+
+  /* 0x30: High-order 16 bit TOC relative relocation.  */
+  HOWTO (R_TOCU,		/* type */
+	 16,			/* rightshift */
+	 2,			/* size */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TOCU",		/* name */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  /* 0x31: Low-order 16 bit TOC relative relocation.  */
+  HOWTO (R_TOCL,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "R_TOCL",		/* name */
+	 true,			/* partial_inplace */
+	 0,			/* src_mask */
+	 0xffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
 };
 
 void
 xcoff_rtype2howto (arelent *relent, struct internal_reloc *internal)
 {
-  if (internal->r_type > R_RBRC)
+  if (internal->r_type > R_TOCL)
     abort ();
 
   /* Default howto layout works most of the time */
@@ -1096,9 +1200,10 @@ _bfd_xcoff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &xcoff_howto_table[8];
     case BFD_RELOC_PPC_TOC16:
       return &xcoff_howto_table[3];
-    case BFD_RELOC_16:
-      /* Note that this relocation is only internally used by gas.  */
-      return &xcoff_howto_table[0xc];
+    case BFD_RELOC_PPC_TOC16_HI:
+      return &xcoff_howto_table[0x30];
+    case BFD_RELOC_PPC_TOC16_LO:
+      return &xcoff_howto_table[0x31];
     case BFD_RELOC_PPC_B16:
       return &xcoff_howto_table[0x1d];
     case BFD_RELOC_32:
@@ -1106,6 +1211,20 @@ _bfd_xcoff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &xcoff_howto_table[0];
     case BFD_RELOC_NONE:
       return &xcoff_howto_table[0xf];
+    case BFD_RELOC_PPC_NEG:
+      return &xcoff_howto_table[0x1];
+    case BFD_RELOC_PPC_TLSGD:
+      return &xcoff_howto_table[0x20];
+    case BFD_RELOC_PPC_TLSIE:
+      return &xcoff_howto_table[0x21];
+    case BFD_RELOC_PPC_TLSLD:
+      return &xcoff_howto_table[0x22];
+    case BFD_RELOC_PPC_TLSLE:
+      return &xcoff_howto_table[0x23];
+    case BFD_RELOC_PPC_TLSM:
+      return &xcoff_howto_table[0x24];
+    case BFD_RELOC_PPC_TLSML:
+      return &xcoff_howto_table[0x25];
     default:
       return NULL;
     }
@@ -1216,7 +1335,7 @@ _bfd_strntoll (const char * nptr, int base, unsigned int maxlen)
 
 /* Read in the armap of an XCOFF archive.  */
 
-bfd_boolean
+bool
 _bfd_xcoff_slurp_armap (bfd *abfd)
 {
   file_ptr off;
@@ -1229,8 +1348,8 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
 
   if (xcoff_ardata (abfd) == NULL)
     {
-      abfd->has_armap = FALSE;
-      return TRUE;
+      abfd->has_armap = false;
+      return true;
     }
 
   if (! xcoff_big_format_p (abfd))
@@ -1241,37 +1360,35 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       GET_VALUE_IN_FIELD (off, xcoff_ardata (abfd)->symoff, 10);
       if (off == 0)
 	{
-	  abfd->has_armap = FALSE;
-	  return TRUE;
+	  abfd->has_armap = false;
+	  return true;
 	}
 
       if (bfd_seek (abfd, off, SEEK_SET) != 0)
-	return FALSE;
+	return false;
 
       /* The symbol table starts with a normal archive header.  */
       if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
 	  != SIZEOF_AR_HDR)
-	return FALSE;
+	return false;
 
       /* Skip the name (normally empty).  */
       GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       off = ((namlen + 1) & ~ (size_t) 1) + SXCOFFARFMAG;
       if (bfd_seek (abfd, off, SEEK_CUR) != 0)
-	return FALSE;
+	return false;
 
       GET_VALUE_IN_FIELD (sz, hdr.size, 10);
-      if (sz == (bfd_size_type) -1)
+      if (sz + 1 < 5)
 	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return FALSE;
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
 	}
 
       /* Read in the entire symbol table.  */
-      contents = (bfd_byte *) bfd_alloc (abfd, sz + 1);
+      contents = (bfd_byte *) _bfd_alloc_and_read (abfd, sz + 1, sz);
       if (contents == NULL)
-	return FALSE;
-      if (bfd_bread (contents, sz, abfd) != sz)
-	return FALSE;
+	return false;
 
       /* Ensure strings are NULL terminated so we don't wander off the
 	 end of the buffer.  */
@@ -1283,13 +1400,13 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       if (c >= sz / 4)
 	{
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
 
       bfd_ardata (abfd)->symdefs =
 	((carsym *) bfd_alloc (abfd, c * sizeof (carsym)));
       if (bfd_ardata (abfd)->symdefs == NULL)
-	return FALSE;
+	return false;
 
       /* After the count comes a list of four byte file offsets.  */
       for (i = 0, arsym = bfd_ardata (abfd)->symdefs, p = contents + 4;
@@ -1305,37 +1422,35 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       GET_VALUE_IN_FIELD (off, xcoff_ardata_big (abfd)->symoff, 10);
       if (off == 0)
 	{
-	  abfd->has_armap = FALSE;
-	  return TRUE;
+	  abfd->has_armap = false;
+	  return true;
 	}
 
       if (bfd_seek (abfd, off, SEEK_SET) != 0)
-	return FALSE;
+	return false;
 
       /* The symbol table starts with a normal archive header.  */
       if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
 	  != SIZEOF_AR_HDR_BIG)
-	return FALSE;
+	return false;
 
       /* Skip the name (normally empty).  */
       GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       off = ((namlen + 1) & ~ (size_t) 1) + SXCOFFARFMAG;
       if (bfd_seek (abfd, off, SEEK_CUR) != 0)
-	return FALSE;
+	return false;
 
       GET_VALUE_IN_FIELD (sz, hdr.size, 10);
-      if (sz == (bfd_size_type) -1)
+      if (sz + 1 < 9)
 	{
-	  bfd_set_error (bfd_error_no_memory);
-	  return FALSE;
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
 	}
 
       /* Read in the entire symbol table.  */
-      contents = (bfd_byte *) bfd_alloc (abfd, sz + 1);
+      contents = (bfd_byte *) _bfd_alloc_and_read (abfd, sz + 1, sz);
       if (contents == NULL)
-	return FALSE;
-      if (bfd_bread (contents, sz, abfd) != sz)
-	return FALSE;
+	return false;
 
       /* Ensure strings are NULL terminated so we don't wander off the
 	 end of the buffer.  */
@@ -1347,13 +1462,13 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       if (c >= sz / 8)
 	{
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
 
       bfd_ardata (abfd)->symdefs =
 	((carsym *) bfd_alloc (abfd, c * sizeof (carsym)));
       if (bfd_ardata (abfd)->symdefs == NULL)
-	return FALSE;
+	return false;
 
       /* After the count comes a list of eight byte file offsets.  */
       for (i = 0, arsym = bfd_ardata (abfd)->symdefs, p = contents + 8;
@@ -1371,25 +1486,25 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       if (p >= cend)
 	{
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
       arsym->name = (char *) p;
     }
 
   bfd_ardata (abfd)->symdef_count = c;
-  abfd->has_armap = TRUE;
+  abfd->has_armap = true;
 
-  return TRUE;
+  return true;
 }
 
 /* See if this is an XCOFF archive.  */
 
-const bfd_target *
+bfd_cleanup
 _bfd_xcoff_archive_p (bfd *abfd)
 {
   struct artdata *tdata_hold;
   char magic[SXCOFFARMAG];
-  bfd_size_type amt = SXCOFFARMAG;
+  size_t amt = SXCOFFARMAG;
 
   if (bfd_bread (magic, amt, abfd) != amt)
     {
@@ -1485,7 +1600,7 @@ _bfd_xcoff_archive_p (bfd *abfd)
       return NULL;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 /* Read the archive header in an XCOFF archive.  */
@@ -1495,32 +1610,25 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
 {
   bfd_size_type namlen;
   struct areltdata *ret;
-  bfd_size_type amt = sizeof (struct areltdata);
-
-  ret = (struct areltdata *) bfd_zmalloc (amt);
-  if (ret == NULL)
-    return NULL;
+  bfd_size_type amt;
 
   if (! xcoff_big_format_p (abfd))
     {
       struct xcoff_ar_hdr hdr;
       struct xcoff_ar_hdr *hdrp;
 
-      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR, abfd)
-	  != SIZEOF_AR_HDR)
-	{
-	  free (ret);
-	  return NULL;
-	}
+      if (bfd_bread (&hdr, SIZEOF_AR_HDR, abfd) != SIZEOF_AR_HDR)
+	return NULL;
 
       GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
-      amt = SIZEOF_AR_HDR + namlen + 1;
-      hdrp = (struct xcoff_ar_hdr *) bfd_alloc (abfd, amt);
-      if (hdrp == NULL)
-	{
-	  free (ret);
-	  return NULL;
-	}
+      if (namlen > bfd_get_file_size (abfd))
+	return NULL;
+      amt = sizeof (struct areltdata) + SIZEOF_AR_HDR + namlen + 1;
+      ret = (struct areltdata *) bfd_malloc (amt);
+      if (ret == NULL)
+	return ret;
+
+      hdrp = (struct xcoff_ar_hdr *) (ret + 1);
       memcpy (hdrp, &hdr, SIZEOF_AR_HDR);
       if (bfd_bread ((char *) hdrp + SIZEOF_AR_HDR, namlen, abfd) != namlen)
 	{
@@ -1538,21 +1646,18 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
       struct xcoff_ar_hdr_big hdr;
       struct xcoff_ar_hdr_big *hdrp;
 
-      if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
-	  != SIZEOF_AR_HDR_BIG)
-	{
-	  free (ret);
-	  return NULL;
-	}
+      if (bfd_bread (&hdr, SIZEOF_AR_HDR_BIG, abfd) != SIZEOF_AR_HDR_BIG)
+	return NULL;
 
       GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
-      amt = SIZEOF_AR_HDR_BIG + namlen + 1;
-      hdrp = (struct xcoff_ar_hdr_big *) bfd_alloc (abfd, amt);
-      if (hdrp == NULL)
-	{
-	  free (ret);
-	  return NULL;
-	}
+      if (namlen > bfd_get_file_size (abfd))
+	return NULL;
+      amt = sizeof (struct areltdata) + SIZEOF_AR_HDR_BIG + namlen + 1;
+      ret = (struct areltdata *) bfd_malloc (amt);
+      if (ret == NULL)
+	return ret;
+
+      hdrp = (struct xcoff_ar_hdr_big *) (ret + 1);
       memcpy (hdrp, &hdr, SIZEOF_AR_HDR_BIG);
       if (bfd_bread ((char *) hdrp + SIZEOF_AR_HDR_BIG, namlen, abfd) != namlen)
 	{
@@ -1565,6 +1670,10 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
       GET_VALUE_IN_FIELD (ret->parsed_size, hdr.size, 10);
       ret->filename = (char *) hdrp + SIZEOF_AR_HDR_BIG;
     }
+
+  /* Size occupied by the header above that covered in the fixed
+     SIZEOF_AR_HDR or SIZEOF_AR_HDR_BIG.  */
+  ret->extra_size = namlen + (namlen & 1) + SXCOFFARFMAG;
 
   /* Skip over the XCOFFARFMAG at the end of the file name.  */
   if (bfd_seek (abfd, (file_ptr) ((namlen & 1) + SXCOFFARFMAG), SEEK_CUR) != 0)
@@ -1579,6 +1688,7 @@ bfd *
 _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 {
   file_ptr filestart;
+  file_ptr laststart, lastend;
 
   if (xcoff_ardata (archive) == NULL)
     {
@@ -1589,9 +1699,27 @@ _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
   if (! xcoff_big_format_p (archive))
     {
       if (last_file == NULL)
-	filestart = bfd_ardata (archive)->first_file_filepos;
+	{
+	  filestart = bfd_ardata (archive)->first_file_filepos;
+	  laststart = 0;
+	  lastend = SIZEOF_AR_FILE_HDR;
+	}
       else
-	GET_VALUE_IN_FIELD (filestart, arch_xhdr (last_file)->nextoff, 10);
+	{
+	  struct areltdata *arel = arch_eltdata (last_file);
+
+	  GET_VALUE_IN_FIELD (filestart, arch_xhdr (last_file)->nextoff, 10);
+	  laststart = last_file->proxy_origin;
+	  lastend = laststart + arel->parsed_size;
+	  laststart -= SIZEOF_AR_HDR + arel->extra_size;
+	}
+
+      /* Sanity check that we aren't pointing into the previous element.  */
+      if (filestart != 0 && filestart >= laststart && filestart < lastend)
+	{
+	  bfd_set_error (bfd_error_malformed_archive);
+	  return NULL;
+	}
 
       if (filestart == 0
 	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata (archive)->memoff, 10)
@@ -1604,9 +1732,27 @@ _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
   else
     {
       if (last_file == NULL)
-	filestart = bfd_ardata (archive)->first_file_filepos;
+	{
+	  filestart = bfd_ardata (archive)->first_file_filepos;
+	  laststart = 0;
+	  lastend = SIZEOF_AR_FILE_HDR_BIG;
+	}
       else
-	GET_VALUE_IN_FIELD (filestart, arch_xhdr_big (last_file)->nextoff, 10);
+	{
+	  struct areltdata *arel = arch_eltdata (last_file);
+
+	  GET_VALUE_IN_FIELD (filestart, arch_xhdr_big (last_file)->nextoff, 10);
+	  laststart = last_file->proxy_origin;
+	  lastend = laststart + arel->parsed_size;
+	  laststart -= SIZEOF_AR_HDR_BIG + arel->extra_size;
+	}
+
+      /* Sanity check that we aren't pointing into the previous element.  */
+      if (filestart != 0 && filestart >= laststart && filestart < lastend)
+	{
+	  bfd_set_error (bfd_error_malformed_archive);
+	  return NULL;
+	}
 
       if (filestart == 0
 	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata_big (archive)->memoff, 10)
@@ -1617,7 +1763,7 @@ _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 	}
     }
 
-  return _bfd_get_elt_at_filepos (archive, filestart);
+  return _bfd_get_elt_at_filepos (archive, filestart, NULL);
 }
 
 /* Stat an element in an XCOFF archive.  */
@@ -1674,7 +1820,7 @@ normalize_filename (bfd *abfd)
 
 /* Write out an XCOFF armap.  */
 
-static bfd_boolean
+static bool
 xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 		       struct orl *map, unsigned int orl_count, int stridx)
 {
@@ -1703,11 +1849,11 @@ xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
       != SIZEOF_AR_HDR
       || (bfd_bwrite (XCOFFARFMAG, (bfd_size_type) SXCOFFARFMAG, abfd)
 	  != SXCOFFARFMAG))
-    return FALSE;
+    return false;
 
   H_PUT_32 (abfd, orl_count, buf);
   if (bfd_bwrite (buf, (bfd_size_type) 4, abfd) != 4)
-    return FALSE;
+    return false;
 
   i = 0;
   archive_iterator_begin (&iterator, abfd);
@@ -1716,7 +1862,7 @@ xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
       {
 	H_PUT_32 (abfd, iterator.current.offset, buf);
 	if (bfd_bwrite (buf, (bfd_size_type) 4, abfd) != 4)
-	  return FALSE;
+	  return false;
 	++i;
       }
 
@@ -1728,7 +1874,7 @@ xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
       name = *map[i].name;
       namlen = strlen (name);
       if (bfd_bwrite (name, (bfd_size_type) (namlen + 1), abfd) != namlen + 1)
-	return FALSE;
+	return false;
     }
 
   if ((stridx & 1) != 0)
@@ -1737,25 +1883,19 @@ xcoff_write_armap_old (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 
       b = '\0';
       if (bfd_bwrite (&b, (bfd_size_type) 1, abfd) != 1)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 static char buff20[XCOFFARMAGBIG_ELEMENT_SIZE + 1];
-#if BFD_HOST_64BIT_LONG
-#define FMT20  "%-20ld"
-#elif defined (__MSVCRT__)
-#define FMT20  "%-20I64d"
-#else
-#define FMT20  "%-20lld"
-#endif
+#define FMT20  "%-20" PRId64
 #define FMT12  "%-12d"
 #define FMT12_OCTAL  "%-12o"
 #define FMT4  "%-4d"
 #define PRINT20(d, v) \
-  sprintf (buff20, FMT20, (bfd_uint64_t)(v)), \
+  sprintf (buff20, FMT20, (uint64_t) (v)), \
   memcpy ((void *) (d), buff20, 20)
 
 #define PRINT12(d, v) \
@@ -1775,30 +1915,30 @@ static char buff20[XCOFFARMAGBIG_ELEMENT_SIZE + 1];
   memcpy (buff20, (d), 20), \
   (v) = bfd_scan_vma (buff20, (const char **) NULL, 10)
 
-static bfd_boolean
+static bool
 do_pad (bfd *abfd, unsigned int number)
 {
   bfd_byte b = 0;
 
   /* Limit pad to <= 4096.  */
   if (number > 4096)
-    return FALSE;
+    return false;
 
   while (number--)
     if (bfd_bwrite (&b, (bfd_size_type) 1, abfd) != 1)
-      return FALSE;
+      return false;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 do_copy (bfd *out_bfd, bfd *in_bfd)
 {
   bfd_size_type remaining;
   bfd_byte buffer[DEFAULT_BUFFERSIZE];
 
   if (bfd_seek (in_bfd, (file_ptr) 0, SEEK_SET) != 0)
-    return FALSE;
+    return false;
 
   remaining = arelt_size (in_bfd);
 
@@ -1806,7 +1946,7 @@ do_copy (bfd *out_bfd, bfd *in_bfd)
     {
       if (bfd_bread (buffer, DEFAULT_BUFFERSIZE, in_bfd) != DEFAULT_BUFFERSIZE
 	  || bfd_bwrite (buffer, DEFAULT_BUFFERSIZE, out_bfd) != DEFAULT_BUFFERSIZE)
-	return FALSE;
+	return false;
 
       remaining -= DEFAULT_BUFFERSIZE;
     }
@@ -1815,13 +1955,13 @@ do_copy (bfd *out_bfd, bfd *in_bfd)
     {
       if (bfd_bread (buffer, remaining, in_bfd) != remaining
 	  || bfd_bwrite (buffer, remaining, out_bfd) != remaining)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 xcoff_write_armap_big (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 		       struct orl *map, unsigned int orl_count, int stridx)
 {
@@ -1909,7 +2049,7 @@ xcoff_write_armap_big (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 
       symbol_table = bfd_zmalloc (symbol_table_size);
       if (symbol_table == NULL)
-	return FALSE;
+	return false;
 
       hdr = (struct xcoff_ar_hdr_big *) symbol_table;
 
@@ -1994,7 +2134,7 @@ xcoff_write_armap_big (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 
       symbol_table = bfd_zmalloc (symbol_table_size);
       if (symbol_table == NULL)
-	return FALSE;
+	return false;
 
       hdr = (struct xcoff_ar_hdr_big *) symbol_table;
 
@@ -2058,10 +2198,10 @@ xcoff_write_armap_big (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
   else
     PRINT20 (fhdr->symoff64, 0);
 
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 _bfd_xcoff_write_armap (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 			struct orl *map, unsigned int orl_count, int stridx)
 {
@@ -2074,7 +2214,7 @@ _bfd_xcoff_write_armap (bfd *abfd, unsigned int elength ATTRIBUTE_UNUSED,
 /* Write out an XCOFF archive.  We always write an entire archive,
    rather than fussing with the freelist and so forth.  */
 
-static bfd_boolean
+static bool
 xcoff_write_archive_contents_old (bfd *abfd)
 {
   struct archive_iterator iterator;
@@ -2082,8 +2222,8 @@ xcoff_write_archive_contents_old (bfd *abfd)
   bfd_size_type count;
   bfd_size_type total_namlen;
   file_ptr *offsets;
-  bfd_boolean makemap;
-  bfd_boolean hasobjects;
+  bool makemap;
+  bool hasobjects;
   file_ptr prevoff, nextoff;
   bfd *sub;
   size_t i;
@@ -2107,22 +2247,41 @@ xcoff_write_archive_contents_old (bfd *abfd)
 	{
 	  sub->arelt_data = bfd_zmalloc (sizeof (struct areltdata));
 	  if (sub->arelt_data == NULL)
-	    return FALSE;
+	    return false;
 	}
       if (arch_xhdr (sub) == NULL)
 	{
 	  struct xcoff_ar_hdr *ahdrp;
 	  struct stat s;
 
-	  if (stat (bfd_get_filename (sub), &s) != 0)
+	  if ((sub->flags & BFD_IN_MEMORY) != 0)
 	    {
-	      bfd_set_error (bfd_error_system_call);
-	      return FALSE;
+	      /* Assume we just "made" the member, and fake it.  */
+	      struct bfd_in_memory *bim
+		= (struct bfd_in_memory *) sub->iostream;
+	      time (&s.st_mtime);
+	      s.st_uid = getuid ();
+	      s.st_gid = getgid ();
+	      s.st_mode = 0644;
+	      s.st_size = bim->size;
+	    }
+	  else if (stat (bfd_get_filename (sub), &s) != 0)
+	    {
+	      bfd_set_input_error (sub, bfd_error_system_call);
+	      return false;
+	    }
+
+	  if ((abfd->flags & BFD_DETERMINISTIC_OUTPUT) != 0)
+	    {
+	      s.st_mtime = 0;
+	      s.st_uid = 0;
+	      s.st_gid = 0;
+	      s.st_mode = 0644;
 	    }
 
 	  ahdrp = bfd_zalloc (sub, sizeof (*ahdrp));
 	  if (ahdrp == NULL)
-	    return FALSE;
+	    return false;
 
 	  sprintf (ahdrp->size, "%ld", (long) s.st_size);
 	  sprintf (ahdrp->date, "%ld", (long) s.st_mtime);
@@ -2136,13 +2295,13 @@ xcoff_write_archive_contents_old (bfd *abfd)
     }
   offsets = (file_ptr *) bfd_alloc (abfd, count * sizeof (file_ptr));
   if (offsets == NULL)
-    return FALSE;
+    return false;
 
   if (bfd_seek (abfd, (file_ptr) SIZEOF_AR_FILE_HDR, SEEK_SET) != 0)
-    return FALSE;
+    return false;
 
   makemap = bfd_has_map (abfd);
-  hasobjects = FALSE;
+  hasobjects = false;
   prevoff = 0;
   for (archive_iterator_begin (&iterator, abfd), i = 0;
        archive_iterator_next (&iterator);
@@ -2154,7 +2313,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
       if (makemap && ! hasobjects)
 	{
 	  if (bfd_check_format (iterator.current.member, bfd_object))
-	    hasobjects = TRUE;
+	    hasobjects = true;
 	}
 
       ahdrp = arch_xhdr (iterator.current.member);
@@ -2168,7 +2327,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
 	  *p = ' ';
 
       if (!do_pad (abfd, iterator.current.leading_padding))
-	return FALSE;
+	return false;
 
       BFD_ASSERT (iterator.current.offset == bfd_tell (abfd));
       namlen = iterator.current.padded_namlen;
@@ -2178,7 +2337,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
 	  || bfd_seek (iterator.current.member, 0, SEEK_SET) != 0
 	  || !do_copy (abfd, iterator.current.member)
 	  || !do_pad (abfd, iterator.current.trailing_padding))
-	return FALSE;
+	return false;
 
       offsets[i] = iterator.current.offset;
       prevoff = iterator.current.offset;
@@ -2226,18 +2385,18 @@ xcoff_write_archive_contents_old (bfd *abfd)
        != SIZEOF_AR_HDR)
       || (bfd_bwrite (XCOFFARFMAG, (bfd_size_type) SXCOFFARFMAG, abfd)
 	  != SXCOFFARFMAG))
-    return FALSE;
+    return false;
 
   sprintf (decbuf, "%-12ld", (long) count);
   if (bfd_bwrite (decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE, abfd)
       != XCOFFARMAG_ELEMENT_SIZE)
-    return FALSE;
+    return false;
   for (i = 0; i < (size_t) count; i++)
     {
       sprintf (decbuf, "%-12ld", (long) offsets[i]);
       if (bfd_bwrite (decbuf, (bfd_size_type) XCOFFARMAG_ELEMENT_SIZE,
 		      abfd) != XCOFFARMAG_ELEMENT_SIZE)
-	return FALSE;
+	return false;
     }
   for (sub = abfd->archive_head; sub != NULL; sub = sub->archive_next)
     {
@@ -2247,11 +2406,11 @@ xcoff_write_archive_contents_old (bfd *abfd)
       name = normalize_filename (sub);
       namlen = strlen (name);
       if (bfd_bwrite (name, namlen + 1, abfd) != namlen + 1)
-	return FALSE;
+	return false;
     }
 
   if (! do_pad (abfd, size & 1))
-    return FALSE;
+    return false;
 
   /* Write out the armap, if appropriate.  */
   if (! makemap || ! hasobjects)
@@ -2262,7 +2421,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
       sprintf (fhdr.symoff, "%ld", (long) nextoff);
       bfd_ardata (abfd)->tdata = &fhdr;
       if (! _bfd_compute_and_write_armap (abfd, 0))
-	return FALSE;
+	return false;
     }
 
   /* Write out the archive file header.  */
@@ -2275,20 +2434,20 @@ xcoff_write_archive_contents_old (bfd *abfd)
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
       || (bfd_bwrite (&fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR, abfd)
 	  != SIZEOF_AR_FILE_HDR))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 xcoff_write_archive_contents_big (bfd *abfd)
 {
   struct xcoff_ar_file_hdr_big fhdr;
   bfd_size_type count;
   bfd_size_type total_namlen;
   file_ptr *offsets;
-  bfd_boolean makemap;
-  bfd_boolean hasobjects;
+  bool makemap;
+  bool hasobjects;
   file_ptr prevoff, nextoff;
   bfd *current_bfd;
   size_t i;
@@ -2302,11 +2461,11 @@ xcoff_write_archive_contents_big (bfd *abfd)
   memcpy (fhdr.magic, XCOFFARMAGBIG, SXCOFFARMAG);
 
   if (bfd_seek (abfd, (file_ptr) SIZEOF_AR_FILE_HDR_BIG, SEEK_SET) != 0)
-    return FALSE;
+    return false;
 
   /* Calculate count and total_namlen.  */
   makemap = bfd_has_map (abfd);
-  hasobjects = FALSE;
+  hasobjects = false;
   for (current_bfd = abfd->archive_head, count = 0, total_namlen = 0;
        current_bfd != NULL;
        current_bfd = current_bfd->archive_next, count++)
@@ -2316,14 +2475,14 @@ xcoff_write_archive_contents_big (bfd *abfd)
       if (makemap
 	  && ! hasobjects
 	  && bfd_check_format (current_bfd, bfd_object))
-	hasobjects = TRUE;
+	hasobjects = true;
 
       if (current_bfd->arelt_data == NULL)
 	{
 	  size = sizeof (struct areltdata);
 	  current_bfd->arelt_data = bfd_zmalloc (size);
 	  if (current_bfd->arelt_data == NULL)
-	    return FALSE;
+	    return false;
 	}
 
       if (arch_xhdr_big (current_bfd) == NULL)
@@ -2331,18 +2490,34 @@ xcoff_write_archive_contents_big (bfd *abfd)
 	  struct xcoff_ar_hdr_big *ahdrp;
 	  struct stat s;
 
-	  /* XXX This should actually be a call to stat64 (at least on
-	     32-bit machines).
-	     XXX This call will fail if the original object is not found.  */
-	  if (stat (bfd_get_filename (current_bfd), &s) != 0)
+	  if ((current_bfd->flags & BFD_IN_MEMORY) != 0)
 	    {
-	      bfd_set_error (bfd_error_system_call);
-	      return FALSE;
+	      /* Assume we just "made" the member, and fake it.  */
+	      struct bfd_in_memory *bim
+		= (struct bfd_in_memory *) current_bfd->iostream;
+	      time (&s.st_mtime);
+	      s.st_uid = getuid ();
+	      s.st_gid = getgid ();
+	      s.st_mode = 0644;
+	      s.st_size = bim->size;
+	    }
+	  else if (stat (bfd_get_filename (current_bfd), &s) != 0)
+	    {
+	      bfd_set_input_error (current_bfd, bfd_error_system_call);
+	      return false;
+	    }
+
+	  if ((abfd->flags & BFD_DETERMINISTIC_OUTPUT) != 0)
+	    {
+	      s.st_mtime = 0;
+	      s.st_uid = 0;
+	      s.st_gid = 0;
+	      s.st_mode = 0644;
 	    }
 
 	  ahdrp = bfd_zalloc (current_bfd, sizeof (*ahdrp));
 	  if (ahdrp == NULL)
-	    return FALSE;
+	    return false;
 
 	  PRINT20 (ahdrp->size, s.st_size);
 	  PRINT12 (ahdrp->date, s.st_mtime);
@@ -2360,7 +2535,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
     {
       offsets = (file_ptr *) bfd_malloc (count * sizeof (file_ptr));
       if (offsets == NULL)
-	return FALSE;
+	return false;
     }
 
   prevoff = 0;
@@ -2379,7 +2554,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
       if (!do_pad (abfd, iterator.current.leading_padding))
 	{
 	  free (offsets);
-	  return FALSE;
+	  return false;
 	}
 
       BFD_ASSERT (iterator.current.offset == bfd_tell (abfd));
@@ -2392,7 +2567,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
 	  || !do_pad (abfd, iterator.current.trailing_padding))
 	{
 	  free (offsets);
-	  return FALSE;
+	  return false;
 	}
 
       offsets[i] = iterator.current.offset;
@@ -2440,7 +2615,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
   if (member_table == NULL)
     {
       free (offsets);
-      return FALSE;
+      return false;
     }
 
   hdr = (struct xcoff_ar_hdr_big *) member_table;
@@ -2490,7 +2665,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
     }
 
   if (bfd_bwrite (member_table, member_table_size, abfd) != member_table_size)
-    return FALSE;
+    return false;
 
   free (member_table);
 
@@ -2512,7 +2687,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
 
       bfd_ardata (abfd)->tdata = &fhdr;
       if (! _bfd_compute_and_write_armap (abfd, 0))
-	return FALSE;
+	return false;
     }
 
   /* Write out the archive file header.  */
@@ -2520,12 +2695,12 @@ xcoff_write_archive_contents_big (bfd *abfd)
   if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
       || (bfd_bwrite (&fhdr, (bfd_size_type) SIZEOF_AR_FILE_HDR_BIG,
 		      abfd) != SIZEOF_AR_FILE_HDR_BIG))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 _bfd_xcoff_write_archive_contents (bfd *abfd)
 {
   if (! xcoff_big_format_p (abfd))
@@ -2584,11 +2759,13 @@ _bfd_xcoff_sizeof_headers (bfd *abfd,
       /* Sum.  */
       for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
 	for (s = sub->sections; s != NULL; s = s->next)
-	  {
-	    struct nbr_reloc_lineno *e = &n_rl[s->output_section->index];
-	    e->reloc_count += s->reloc_count;
-	    e->lineno_count += s->lineno_count;
-	  }
+	  if (s->output_section->owner == abfd
+	      && !bfd_section_removed_from_list (abfd, s->output_section))
+	    {
+	      struct nbr_reloc_lineno *e = &n_rl[s->output_section->index];
+	      e->reloc_count += s->reloc_count;
+	      e->lineno_count += s->lineno_count;
+	    }
 
       /* Add the size of a section for each section with an overflow.  */
       for (s = abfd->sections; s != NULL; s = s->next)
@@ -2744,7 +2921,7 @@ xcoff_swap_ldrel_out (bfd *abfd, const struct internal_ldrel *src, void * d)
 }
 
 
-bfd_boolean
+bool
 xcoff_reloc_type_noop (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       asection *input_section ATTRIBUTE_UNUSED,
 		       bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2754,12 +2931,13 @@ xcoff_reloc_type_noop (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       bfd_vma val ATTRIBUTE_UNUSED,
 		       bfd_vma addend ATTRIBUTE_UNUSED,
 		       bfd_vma *relocation ATTRIBUTE_UNUSED,
-		       bfd_byte *contents ATTRIBUTE_UNUSED)
+		       bfd_byte *contents ATTRIBUTE_UNUSED,
+		       struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_fail (bfd *input_bfd,
 		       asection *input_section ATTRIBUTE_UNUSED,
 		       bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2769,17 +2947,18 @@ xcoff_reloc_type_fail (bfd *input_bfd,
 		       bfd_vma val ATTRIBUTE_UNUSED,
 		       bfd_vma addend ATTRIBUTE_UNUSED,
 		       bfd_vma *relocation ATTRIBUTE_UNUSED,
-		       bfd_byte *contents ATTRIBUTE_UNUSED)
+		       bfd_byte *contents ATTRIBUTE_UNUSED,
+		       struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   _bfd_error_handler
     /* xgettext: c-format */
     (_("%pB: unsupported relocation type %#x"),
      input_bfd, (unsigned int) rel->r_type);
   bfd_set_error (bfd_error_bad_value);
-  return FALSE;
+  return false;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_pos (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      asection *input_section ATTRIBUTE_UNUSED,
 		      bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2789,13 +2968,14 @@ xcoff_reloc_type_pos (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      bfd_vma val,
 		      bfd_vma addend,
 		      bfd_vma *relocation,
-		      bfd_byte *contents ATTRIBUTE_UNUSED)
+		      bfd_byte *contents ATTRIBUTE_UNUSED,
+		      struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   *relocation = val + addend;
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_neg (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      asection *input_section ATTRIBUTE_UNUSED,
 		      bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2805,13 +2985,14 @@ xcoff_reloc_type_neg (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      bfd_vma val,
 		      bfd_vma addend,
 		      bfd_vma *relocation,
-		      bfd_byte *contents ATTRIBUTE_UNUSED)
+		      bfd_byte *contents ATTRIBUTE_UNUSED,
+		      struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  *relocation = addend - val;
-  return TRUE;
+  *relocation = - val - addend;
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_rel (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      asection *input_section,
 		      bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2821,9 +3002,10 @@ xcoff_reloc_type_rel (bfd *input_bfd ATTRIBUTE_UNUSED,
 		      bfd_vma val,
 		      bfd_vma addend,
 		      bfd_vma *relocation,
-		      bfd_byte *contents ATTRIBUTE_UNUSED)
+		      bfd_byte *contents ATTRIBUTE_UNUSED,
+		      struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  howto->pc_relative = TRUE;
+  howto->pc_relative = true;
 
   /* A PC relative reloc includes the section address.  */
   addend += input_section->vma;
@@ -2831,25 +3013,26 @@ xcoff_reloc_type_rel (bfd *input_bfd ATTRIBUTE_UNUSED,
   *relocation = val + addend;
   *relocation -= (input_section->output_section->vma
 		  + input_section->output_offset);
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_toc (bfd *input_bfd,
 		      asection *input_section ATTRIBUTE_UNUSED,
 		      bfd *output_bfd,
 		      struct internal_reloc *rel,
-		      struct internal_syment *sym,
+		      struct internal_syment *sym ATTRIBUTE_UNUSED,
 		      struct reloc_howto_struct *howto ATTRIBUTE_UNUSED,
 		      bfd_vma val,
 		      bfd_vma addend ATTRIBUTE_UNUSED,
 		      bfd_vma *relocation,
-		      bfd_byte *contents ATTRIBUTE_UNUSED)
+		      bfd_byte *contents ATTRIBUTE_UNUSED,
+		      struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   struct xcoff_link_hash_entry *h;
 
   if (0 > rel->r_symndx)
-    return FALSE;
+    return false;
 
   h = obj_xcoff_sym_hashes (input_bfd)[rel->r_symndx];
 
@@ -2862,7 +3045,7 @@ xcoff_reloc_type_toc (bfd *input_bfd,
 	    (_("%pB: TOC reloc at %#" PRIx64 " to symbol `%s' with no TOC entry"),
 	     input_bfd, (uint64_t) rel->r_vaddr, h->root.root.string);
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
 
       BFD_ASSERT ((h->flags & XCOFF_SET_TOC) == 0);
@@ -2870,12 +3053,20 @@ xcoff_reloc_type_toc (bfd *input_bfd,
 	      + h->toc_section->output_offset);
     }
 
-  *relocation = ((val - xcoff_data (output_bfd)->toc)
-		 - (sym->n_value - xcoff_data (input_bfd)->toc));
-  return TRUE;
+  /* We can't use the preexisting value written down by the
+     assembly, as R_TOCU needs to be adjusted when the final
+     R_TOCL value is signed.  */
+  *relocation = val - xcoff_data (output_bfd)->toc;
+
+  if (rel->r_type == R_TOCU)
+    *relocation = ((*relocation + 0x8000) >> 16) & 0xffff;
+  if (rel->r_type == R_TOCL)
+    *relocation = *relocation & 0x0000ffff;
+
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_ba (bfd *input_bfd ATTRIBUTE_UNUSED,
 		     asection *input_section ATTRIBUTE_UNUSED,
 		     bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2885,17 +3076,18 @@ xcoff_reloc_type_ba (bfd *input_bfd ATTRIBUTE_UNUSED,
 		     bfd_vma val,
 		     bfd_vma addend,
 		     bfd_vma *relocation,
-		     bfd_byte *contents ATTRIBUTE_UNUSED)
+		     bfd_byte *contents ATTRIBUTE_UNUSED,
+		     struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   howto->src_mask &= ~3;
   howto->dst_mask = howto->src_mask;
 
   *relocation = val + addend;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 xcoff_reloc_type_br (bfd *input_bfd,
 		     asection *input_section,
 		     bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -2905,13 +3097,16 @@ xcoff_reloc_type_br (bfd *input_bfd,
 		     bfd_vma val,
 		     bfd_vma addend,
 		     bfd_vma *relocation,
-		     bfd_byte *contents)
+		     bfd_byte *contents,
+		     struct bfd_link_info *info)
 {
   struct xcoff_link_hash_entry *h;
   bfd_vma section_offset;
+  struct xcoff_stub_hash_entry *stub_entry = NULL;
+  enum xcoff_stub_type stub_type;
 
   if (0 > rel->r_symndx)
-    return FALSE;
+    return false;
 
   h = obj_xcoff_sym_hashes (input_bfd)[rel->r_symndx];
   section_offset = rel->r_vaddr - input_section->vma;
@@ -2962,6 +3157,27 @@ xcoff_reloc_type_br (bfd *input_bfd,
       howto->complain_on_overflow = complain_overflow_dont;
     }
 
+  /* Check if a stub is needed.  */
+  stub_type = bfd_xcoff_type_of_stub (input_section, rel, val, h);
+  if (stub_type != xcoff_stub_none)
+    {
+      asection *stub_csect;
+
+      stub_entry = bfd_xcoff_get_stub_entry (input_section, h, info);
+      if (stub_entry == NULL)
+	{
+	  _bfd_error_handler (_("Unable to find the stub entry targeting %s"),
+			      h->root.root.string);
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
+
+      stub_csect = stub_entry->hcsect->root.u.def.section;
+      val = (stub_entry->stub_offset
+	     + stub_csect->output_section->vma
+	     + stub_csect->output_offset);
+    }
+
   /* The original PC-relative relocation is biased by -r_vaddr, so adding
      the value below will give the absolute target address.  */
   *relocation = val + addend + rel->r_vaddr;
@@ -2986,22 +3202,22 @@ xcoff_reloc_type_br (bfd *input_bfd,
       bfd_put_32 (input_bfd, insn, ptr);
 
       /* Make the howto absolute too.  */
-      howto->pc_relative = FALSE;
+      howto->pc_relative = false;
       howto->complain_on_overflow = complain_overflow_bitfield;
     }
   else
     {
       /* Use a PC-relative howto and subtract the instruction's address
 	 from the target address we calculated above.  */
-      howto->pc_relative = TRUE;
+      howto->pc_relative = true;
       *relocation -= (input_section->output_section->vma
 		      + input_section->output_offset
 		      + section_offset);
     }
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 xcoff_reloc_type_crel (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       asection *input_section,
 		       bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -3011,9 +3227,10 @@ xcoff_reloc_type_crel (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       bfd_vma val ATTRIBUTE_UNUSED,
 		       bfd_vma addend,
 		       bfd_vma *relocation,
-		       bfd_byte *contents ATTRIBUTE_UNUSED)
+		       bfd_byte *contents ATTRIBUTE_UNUSED,
+		       struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  howto->pc_relative = TRUE;
+  howto->pc_relative = true;
   howto->src_mask &= ~3;
   howto->dst_mask = howto->src_mask;
 
@@ -3023,20 +3240,100 @@ xcoff_reloc_type_crel (bfd *input_bfd ATTRIBUTE_UNUSED,
   *relocation = val + addend;
   *relocation -= (input_section->output_section->vma
 		  + input_section->output_offset);
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+bool
+xcoff_reloc_type_tls (bfd *input_bfd ATTRIBUTE_UNUSED,
+		      asection *input_section ATTRIBUTE_UNUSED,
+		      bfd *output_bfd ATTRIBUTE_UNUSED,
+		      struct internal_reloc *rel ATTRIBUTE_UNUSED,
+		      struct internal_syment *sym ATTRIBUTE_UNUSED,
+		      struct reloc_howto_struct *howto,
+		      bfd_vma val,
+		      bfd_vma addend,
+		      bfd_vma *relocation,
+		      bfd_byte *contents ATTRIBUTE_UNUSED,
+		      struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  struct xcoff_link_hash_entry *h;
+
+  if (0 > rel->r_symndx)
+    return false;
+
+  h = obj_xcoff_sym_hashes (input_bfd)[rel->r_symndx];
+
+  /* R_TLSML is handled by the loader but must be from a
+     TOC entry targeting itslef.  This is already verified in
+     xcoff_link_add_symbols.
+     The value must be 0.  */
+  if (howto->type == R_TLSML)
+    {
+      *relocation = 0;
+      return true;
+    }
+
+  /* The target symbol should always be available even if it's not
+     exported.  */
+  BFD_ASSERT (h != NULL);
+
+  /* TLS relocations must target a TLS symbol.  */
+  if (h->smclas != XMC_TL && h->smclas != XMC_UL)
+    {
+      char vaddr_buf[128];
+
+      sprintf_vma (vaddr_buf, rel->r_vaddr);
+      _bfd_error_handler
+	(_("%pB: TLS relocation at 0x%s over non-TLS symbol %s (0x%x)\n"),
+	 input_bfd, vaddr_buf, h->root.root.string, h->smclas);
+      return false;
+    }
+
+  /* Local TLS relocations must target a local symbol, ie
+     non-imported. */
+  if ((rel->r_type == R_TLS_LD || rel->r_type == R_TLS_LE)
+      && (((h->flags & XCOFF_DEF_REGULAR) == 0
+       && (h->flags & XCOFF_DEF_DYNAMIC) != 0)
+	  || (h->flags & XCOFF_IMPORT) != 0))
+    {
+      char vaddr_buf[128];
+
+      sprintf_vma (vaddr_buf, rel->r_vaddr);
+      _bfd_error_handler
+	(_("%pB: TLS local relocation at 0x%s over imported symbol %s\n"),
+	 input_bfd, vaddr_buf, h->root.root.string);
+      return false;
+    }
+
+  /* R_TLSM are relocations used by the loader.
+     The value must be 0.  */
+  if (howto->type == R_TLSM)
+    {
+      *relocation = 0;
+      return true;
+    }
+
+  /* Other TLS relocations aims to put offsets from TLS pointers
+     starting at -0x7c00 (or -0x7800 in XCOFF64).  It becomes a
+     simple R_POS relocation as long as .tdata and .tbss addresses
+     start at the same value. This is done in aix ld scripts.
+     TODO: implement optimization when tls size is < 62K.  */
+  *relocation = val + addend;
+
+  return true;
+}
+
+static bool
 xcoff_complain_overflow_dont_func (bfd *input_bfd ATTRIBUTE_UNUSED,
 				   bfd_vma val ATTRIBUTE_UNUSED,
 				   bfd_vma relocation ATTRIBUTE_UNUSED,
 				   struct reloc_howto_struct *
 				      howto ATTRIBUTE_UNUSED)
 {
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
 				       bfd_vma val,
 				       bfd_vma relocation,
@@ -3082,7 +3379,7 @@ xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
 	 ones, we are OK, assuming a signed bitfield.  */
       ss = (signmask << howto->rightshift) - 1;
       if ((ss | relocation) != ~ (bfd_vma) 0)
-	return TRUE;
+	return true;
       a &= fieldmask;
     }
 
@@ -3095,7 +3392,7 @@ xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
      away from the location at which it is linked.  */
   if ((unsigned) howto->bitsize + howto->rightshift
       == bfd_arch_bits_per_address (input_bfd))
-    return FALSE;
+    return false;
 
   sum = a + b;
   if (sum < a || (sum & ~ fieldmask) != 0)
@@ -3104,13 +3401,13 @@ xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
 	 for signed operands again.  Here is the overflow test
 	 is as for complain_overflow_signed.  */
       if (((~ (a ^ b)) & (a ^ sum)) & signmask)
-	return TRUE;
+	return true;
     }
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 xcoff_complain_overflow_signed_func (bfd *input_bfd,
 				     bfd_vma val,
 				     bfd_vma relocation,
@@ -3136,7 +3433,7 @@ xcoff_complain_overflow_signed_func (bfd *input_bfd,
   signmask = ~ (fieldmask >> 1);
   ss = a & signmask;
   if (ss != 0 && ss != ((addrmask >> howto->rightshift) & signmask))
-    return TRUE;
+    return true;
 
   /* We only need this next bit of code if the sign bit of B
      is below the sign bit of A.  This would only happen if
@@ -3166,12 +3463,12 @@ xcoff_complain_overflow_signed_func (bfd *input_bfd,
   */
   signmask = (fieldmask >> 1) + 1;
   if (((~ (a ^ b)) & (a ^ sum)) & signmask)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 xcoff_complain_overflow_unsigned_func (bfd *input_bfd,
 				       bfd_vma val,
 				       bfd_vma relocation,
@@ -3204,20 +3501,23 @@ xcoff_complain_overflow_unsigned_func (bfd *input_bfd,
   b = (b & addrmask) >> howto->bitpos;
   sum = (a + b) & addrmask;
   if ((a | b | sum) & ~ fieldmask)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 /* This is the relocation function for the RS/6000/POWER/PowerPC.
    This is currently the only processor which uses XCOFF; I hope that
    will never change.
 
-   I took the relocation type definitions from two documents:
+   The original version was based on two documents:
    the PowerPC AIX Version 4 Application Binary Interface, First
    Edition (April 1992), and the PowerOpen ABI, Big-Endian
    32-Bit Hardware Implementation (June 30, 1994).  Differences
    between the documents are noted below.
+   Now, IBM has released an official documentation about XCOFF
+   format:
+   https://www.ibm.com/support/knowledgecenter/ssw_aix_72/filesreference/XCOFF.html
 
    Unsupported r_type's
 
@@ -3252,38 +3552,68 @@ xcoff_complain_overflow_unsigned_func (bfd *input_bfd,
    osym = oTOC + on
    oinsn = on + o
    so we must change insn by on - in.
+   This relocation allows the linker to perform optimizations
+   by transforming a load instruction into a add-immediate
+   when possible. The relocation is, then, changed to R_TRLA
+   in the output file.
+   TODO: Currently, the optimisation isn't implemented.
+
+   R_TRL:
+   TOC relative relocation.  Same as R_TOC, except that
+   the optimization isn't allowed
+
+   R_TRLA:
+   TOC relative relocation.  This is a TOC relative load
+   address instruction which have been changed to an add-
+   immediate instruction.
 
    R_GL:
    GL linkage relocation.  The value of this relocation
-   is the address of the entry in the TOC section.
+   is the address of the external symbol in the TOC
+   section.
 
    R_TCL:
    Local object TOC address.  I can't figure out the
    difference between this and case R_GL.
 
-   R_TRL:
-   TOC relative relocation.  A TOC relative load instruction
-   which may be changed to a load address instruction.
-   FIXME: We don't currently implement this optimization.
+   R_RL:
+   The PowerPC AIX ABI describes this as a load which may be
+   changed to a load address.  The PowerOpen ABI says this
+   is the same as case R_POS.
 
-   R_TRLA:
-   TOC relative relocation.  This is a TOC relative load
-   address instruction which may be changed to a load
-   instruction.  FIXME: I don't know if this is the correct
-   implementation.
+   R_RLA:
+   The PowerPC AIX ABI describes this as a load address
+   which may be changed to a load.  The PowerOpen ABI says
+   this is the same as R_POS.
+
+   R_REF:
+   Not a relocation but a way to prevent the garbage
+   collector of AIX linker to remove symbols.
+   This is not needed in our case.
 
    R_BA:
-   Absolute branch.  We don't want to mess with the lower
-   two bits of the instruction.
+   The PowerOpen ABI says this is the same as R_RBA.
+
+   R_RBA:
+   Absolute branch which may be modified to become a
+   relative branch.
+
+   R_BR:
+   The PowerOpen ABI says this is the same as R_RBR.
+
+   R_RBR:
+   A relative branch which may be modified to become an
+   absolute branch.
 
    R_CAI:
    The PowerPC ABI defines this as an absolute call which
    may be modified to become a relative call.  The PowerOpen
    ABI does not define this relocation type.
 
-   R_RBA:
-   Absolute branch which may be modified to become a
-   relative branch.
+   R_CREL:
+   The PowerPC ABI defines this as a relative call which may
+   be modified to become an absolute call.  The PowerOpen
+   ABI does not define this relocation type.
 
    R_RBAC:
    The PowerPC ABI defines this as an absolute branch to a
@@ -3296,31 +3626,35 @@ xcoff_complain_overflow_unsigned_func (bfd *input_bfd,
    fixed address which may be modified to a relative branch.
    The PowerOpen ABI does not define this relocation type.
 
-   R_BR:
-   Relative branch.  We don't want to mess with the lower
-   two bits of the instruction.
+   R_TLS:
+   Thread-local storage relocation using general-dynamic
+   model.
 
-   R_CREL:
-   The PowerPC ABI defines this as a relative call which may
-   be modified to become an absolute call.  The PowerOpen
-   ABI does not define this relocation type.
+   R_TLS_IE:
+   Thread-local storage relocation using initial-exec model.
 
-   R_RBR:
-   A relative branch which may be modified to become an
-   absolute branch.
+   R_TLS_LD:
+   Thread-local storage relocation using local-dynamic model.
 
-   R_RL:
-   The PowerPC AIX ABI describes this as a load which may be
-   changed to a load address.  The PowerOpen ABI says this
-   is the same as case R_POS.
+   R_TLS_LE:
+   Thread-local storage relocation using local-exec model.
 
-   R_RLA:
-   The PowerPC AIX ABI describes this as a load address
-   which may be changed to a load.  The PowerOpen ABI says
-   this is the same as R_POS.
+   R_TLSM:
+   Tread-local storage relocation used by the loader.
+
+   R_TLSML:
+   Tread-local storage relocation used by the loader.
+
+   R_TOCU:
+   Upper TOC relative relocation. The value is the
+   high-order 16 bit of a TOC relative relocation.
+
+   R_TOCL:
+   Lower TOC relative relocation. The value is the
+   low-order 16 bit of a TOC relative relocation.
 */
 
-bfd_boolean
+bool
 xcoff_ppc_relocate_section (bfd *output_bfd,
 			    struct bfd_link_info *info,
 			    bfd *input_bfd,
@@ -3354,21 +3688,38 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
       if (rel->r_type == R_REF)
 	continue;
 
-      /* howto */
-      howto.type = rel->r_type;
-      howto.rightshift = 0;
-      howto.bitsize = (rel->r_size & 0x1f) + 1;
-      howto.size = howto.bitsize > 16 ? 2 : 1;
-      howto.pc_relative = FALSE;
-      howto.bitpos = 0;
+      /* Retrieve default value in HOWTO table and fix up according
+	 to r_size field, if it can be different.
+	 This should be made during relocation reading but the algorithms
+	 are expecting constant howtos.  */
+      memcpy (&howto, &xcoff_howto_table[rel->r_type], sizeof (howto));
+      if (howto.bitsize != (rel->r_size & 0x1f) + 1)
+	{
+	  switch (rel->r_type)
+	    {
+	    case R_POS:
+	    case R_NEG:
+	      howto.bitsize = (rel->r_size & 0x1f) + 1;
+	      howto.size = HOWTO_RSIZE (howto.bitsize > 16 ? 4 : 2);
+	      howto.src_mask = howto.dst_mask = N_ONES (howto.bitsize);
+	      break;
+
+	    default:
+	      {
+		char vaddr_buf[128];
+
+		sprintf_vma (vaddr_buf, rel->r_vaddr);
+		_bfd_error_handler
+		  (_("%pB: relocation (%d) at 0x%s has wrong r_rsize (0x%x)\n"),
+		   input_bfd, rel->r_type, vaddr_buf, rel->r_size);
+		return false;
+	      }
+	    }
+	}
+
       howto.complain_on_overflow = (rel->r_size & 0x80
 				    ? complain_overflow_signed
 				    : complain_overflow_bitfield);
-      howto.special_function = NULL;
-      howto.name = "internal";
-      howto.partial_inplace = TRUE;
-      howto.src_mask = howto.dst_mask = N_ONES (howto.bitsize);
-      howto.pcrel_offset = FALSE;
 
       /* symbol */
       val = 0;
@@ -3407,7 +3758,8 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 		  (info, h->root.root.string,
 		   input_bfd, input_section,
 		   rel->r_vaddr - input_section->vma,
-		   info->unresolved_syms_in_objects == RM_GENERATE_ERROR);
+		   info->unresolved_syms_in_objects == RM_DIAGNOSE &&
+		       !info->warn_unresolved_syms);
 
 	      if (h->root.type == bfd_link_hash_defined
 		  || h->root.type == bfd_link_hash_defweak)
@@ -3438,8 +3790,8 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
       if (rel->r_type >= XCOFF_MAX_CALCULATE_RELOCATION
 	  || !((*xcoff_calculate_relocation[rel->r_type])
 	       (input_bfd, input_section, output_bfd, rel, sym, &howto, val,
-		addend, &relocation, contents)))
-	return FALSE;
+		addend, &relocation, contents, info)))
+	return false;
 
       /* address */
       address = rel->r_vaddr - input_section->vma;
@@ -3449,7 +3801,7 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 	abort ();
 
       /* Get the value we are going to relocate.  */
-      if (1 == howto.size)
+      if (2 == bfd_get_reloc_size (&howto))
 	value_to_relocate = bfd_get_16 (input_bfd, location);
       else
 	value_to_relocate = bfd_get_32 (input_bfd, location);
@@ -3496,13 +3848,13 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 			       + relocation) & howto.dst_mask));
 
       /* Put the value back in the object file.  */
-      if (1 == howto.size)
+      if (2 == bfd_get_reloc_size (&howto))
 	bfd_put_16 (input_bfd, value_to_relocate, location);
       else
 	bfd_put_32 (input_bfd, value_to_relocate, location);
     }
 
-  return TRUE;
+  return true;
 }
 
 /* gcc-8 warns (*) on all the strncpy calls in this function about
@@ -3522,7 +3874,7 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wstringop-truncation"
 #endif
-static bfd_boolean
+static bool
 _bfd_xcoff_put_ldsymbol_name (bfd *abfd ATTRIBUTE_UNUSED,
 			      struct xcoff_loader_info *ldinfo,
 			      struct internal_ldsym *ldsym,
@@ -3549,25 +3901,25 @@ _bfd_xcoff_put_ldsymbol_name (bfd *abfd ATTRIBUTE_UNUSED,
 	  newstrings = bfd_realloc (ldinfo->strings, newalc);
 	  if (newstrings == NULL)
 	    {
-	      ldinfo->failed = TRUE;
-	      return FALSE;
+	      ldinfo->failed = true;
+	      return false;
 	    }
 	  ldinfo->string_alc = newalc;
 	  ldinfo->strings = newstrings;
 	}
 
-      bfd_put_16 (ldinfo->output_bfd, (bfd_vma) (len + 1),
-		  ldinfo->strings + ldinfo->string_size);
+      ldinfo->strings[ldinfo->string_size] = ((len + 1) >> 8) & 0xff;
+      ldinfo->strings[ldinfo->string_size + 1] = ((len + 1)) & 0xff;
       strcpy (ldinfo->strings + ldinfo->string_size + 2, name);
       ldsym->_l._l_l._l_zeroes = 0;
       ldsym->_l._l_l._l_offset = ldinfo->string_size + 2;
       ldinfo->string_size += len + 3;
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 _bfd_xcoff_put_symbol_name (struct bfd_link_info *info,
 			    struct bfd_strtab_hash *strtab,
 			    struct internal_syment *sym,
@@ -3579,17 +3931,17 @@ _bfd_xcoff_put_symbol_name (struct bfd_link_info *info,
     }
   else
     {
-      bfd_boolean hash;
+      bool hash;
       bfd_size_type indx;
 
       hash = !info->traditional_format;
-      indx = _bfd_stringtab_add (strtab, name, hash, FALSE);
+      indx = _bfd_stringtab_add (strtab, name, hash, false);
       if (indx == (bfd_size_type) -1)
-	return FALSE;
+	return false;
       sym->_n._n_n._n_zeroes = 0;
       sym->_n._n_n._n_offset = STRING_SIZE_SIZE + indx;
     }
-  return TRUE;
+  return true;
 }
 #if GCC_VERSION >= 8000
 # pragma GCC diagnostic pop
@@ -3629,22 +3981,22 @@ xcoff_create_csect_from_smclas (bfd *abfd,
   return return_value;
 }
 
-static bfd_boolean
+static bool
 xcoff_is_lineno_count_overflow (bfd *abfd ATTRIBUTE_UNUSED, bfd_vma value)
 {
   if (0xffff <= value)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 xcoff_is_reloc_count_overflow (bfd *abfd ATTRIBUTE_UNUSED, bfd_vma value)
 {
   if (0xffff <= value)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 static bfd_vma
@@ -3660,9 +4012,9 @@ xcoff_loader_reloc_offset (bfd *abfd, struct internal_ldhdr *ldhdr)
   return bfd_xcoff_ldhdrsz (abfd) + ldhdr->l_nsyms * bfd_xcoff_ldsymsz (abfd);
 }
 
-static bfd_boolean
+static bool
 xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
-			bfd_boolean rtld)
+			bool rtld)
 {
   bfd_byte filehdr_ext[FILHSZ];
   bfd_byte scnhdr_ext[SCNHSZ];
@@ -3685,7 +4037,7 @@ xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
   char *rtld_name = "__rtld";
 
   if (! bfd_xcoff_rtinit_size (abfd))
-    return FALSE;
+    return false;
 
   initsz = (init == NULL ? 0 : 1 + strlen (init));
   finisz = (fini == NULL ? 0 : 1 + strlen (fini));
@@ -3740,7 +4092,7 @@ xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
   data_buffer = NULL;
   data_buffer = (bfd_byte *) bfd_zmalloc (data_buffer_size);
   if (data_buffer == NULL)
-    return FALSE;
+    return false;
 
   if (initsz)
     {
@@ -3776,7 +4128,7 @@ xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
       string_table_size += 4;
       string_table = (bfd_byte *) bfd_zmalloc (string_table_size);
       if (string_table == NULL)
-	return FALSE;
+	return false;
 
       val = string_table_size;
       bfd_h_put_32 (abfd, val, &string_table[0]);
@@ -3937,31 +4289,59 @@ xcoff_generate_rtinit  (bfd *abfd, const char *init, const char *fini,
   free (data_buffer);
   data_buffer = NULL;
 
-  return TRUE;
+  return true;
 }
 
 
 static reloc_howto_type xcoff_dynamic_reloc =
 HOWTO (0,			/* type */
        0,			/* rightshift */
-       2,			/* size (0 = byte, 1 = short, 2 = long) */
+       4,			/* size */
        32,			/* bitsize */
-       FALSE,			/* pc_relative */
+       false,			/* pc_relative */
        0,			/* bitpos */
        complain_overflow_bitfield, /* complain_on_overflow */
        0,			/* special_function */
        "R_POS",			/* name */
-       TRUE,			/* partial_inplace */
+       true,			/* partial_inplace */
        0xffffffff,		/* src_mask */
        0xffffffff,		/* dst_mask */
-       FALSE);			/* pcrel_offset */
+       false);			/* pcrel_offset */
+
+/* Indirect call stub
+   The first word of the code must be modified by filling in
+   the correct TOC offset.  */
+
+static const unsigned long xcoff_stub_indirect_call_code[4] =
+  {
+    0x81820000,	/* lwz r12,0(r2) */
+    0x800c0000,	/* lwz r0,0(r12) */
+    0x7c0903a6,	/* mtctr r0 */
+    0x4e800420,	/* bctr */
+  };
+
+/*  Shared call stub
+    The first word of the code must be modified by filling in
+    the correct TOC offset.
+    This is exactly as the glink code but without the traceback,
+    as it won't be an independent function.  */
+
+static const unsigned long xcoff_stub_shared_call_code[6] =
+  {
+    0x81820000,	/* lwz r12,0(r2) */
+    0x90410014,	/* stw r2,20(r1) */
+    0x800c0000,	/* lwz r0,0(r12) */
+    0x804c0004,	/* lwz r2,4(r12) */
+    0x7c0903a6,	/* mtctr r0 */
+    0x4e800420,	/* bctr */
+  };
 
 /*  glink
 
    The first word of global linkage code must be modified by filling in
    the correct TOC offset.  */
 
-static unsigned long xcoff_glink_code[9] =
+static const unsigned long xcoff_glink_code[9] =
   {
     0x81820000,	/* lwz r12,0(r2) */
     0x90410014,	/* stw r2,20(r1) */
@@ -3974,17 +4354,22 @@ static unsigned long xcoff_glink_code[9] =
     0x00000000,	/* traceback table */
   };
 
-/* Table to convert DWARF flags to section names.  */
+/* Table to convert DWARF flags to section names.
+   Remember to update binutils/dwarf.c:debug_displays
+   if new DWARF sections are supported by XCOFF.  */
 
 const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
-  { SSUBTYP_DWINFO,  ".dwinfo",   TRUE },
-  { SSUBTYP_DWLINE,  ".dwline",   TRUE },
-  { SSUBTYP_DWPBNMS, ".dwpbnms",  TRUE },
-  { SSUBTYP_DWPBTYP, ".dwpbtyp",  TRUE },
-  { SSUBTYP_DWARNGE, ".dwarnge",  TRUE },
-  { SSUBTYP_DWABREV, ".dwabrev",  FALSE },
-  { SSUBTYP_DWSTR,   ".dwstr",    TRUE },
-  { SSUBTYP_DWRNGES, ".dwrnges",  TRUE }
+  { SSUBTYP_DWINFO,  ".dwinfo",  ".debug_info",     true },
+  { SSUBTYP_DWLINE,  ".dwline",  ".debug_line",     true },
+  { SSUBTYP_DWPBNMS, ".dwpbnms", ".debug_pubnames", true },
+  { SSUBTYP_DWPBTYP, ".dwpbtyp", ".debug_pubtypes", true },
+  { SSUBTYP_DWARNGE, ".dwarnge", ".debug_aranges",  true },
+  { SSUBTYP_DWABREV, ".dwabrev", ".debug_abbrev",   false },
+  { SSUBTYP_DWSTR,   ".dwstr",   ".debug_str",      true },
+  { SSUBTYP_DWRNGES, ".dwrnges", ".debug_ranges",   true },
+  { SSUBTYP_DWLOC,   ".dwloc",   ".debug_loc",      true },
+  { SSUBTYP_DWFRAME, ".dwframe", ".debug_frame",    true },
+  { SSUBTYP_DWMAC,   ".dwmac",   ".debug_macro",    true }
 };
 
 /* For generic entry points.  */
@@ -4093,10 +4478,10 @@ static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
       RELSZ,
       LINESZ,
       FILNMLEN,
-      TRUE,			/* _bfd_coff_long_filenames */
+      true,			/* _bfd_coff_long_filenames */
       XCOFF_NO_LONG_SECTION_NAMES,  /* _bfd_coff_long_section_names */
       3,			/* _bfd_coff_default_section_alignment_power */
-      FALSE,			/* _bfd_coff_force_symnames_in_strings */
+      false,			/* _bfd_coff_force_symnames_in_strings */
       2,			/* _bfd_coff_debug_string_prefix_length */
       32768,			/* _bfd_coff_max_nscns */
       coff_swap_filehdr_in,
@@ -4167,6 +4552,14 @@ static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
     /* rtinit */
     64,				/* _xcoff_rtinit_size */
     xcoff_generate_rtinit,
+
+    /* Stub indirect call.  */
+    &xcoff_stub_indirect_call_code[0],
+    16,				/* _xcoff_stub_indirect_call_size */
+
+    /* Stub shared call.  */
+    &xcoff_stub_shared_call_code[0],
+    24,				/* _xcoff_stub_shared_call_size */
   };
 
 /* The transfer vector that leads the outside world to all of the above.  */
@@ -4185,6 +4578,7 @@ const bfd_target rs6000_xcoff_vec =
     '/',			/* ar_pad_char */
     15,				/* ar_max_namelen */
     0,				/* match priority.  */
+    TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
 
     /* data */
     bfd_getb64,
@@ -4274,10 +4668,10 @@ static const struct xcoff_backend_data_rec bfd_pmac_xcoff_backend_data =
       RELSZ,
       LINESZ,
       FILNMLEN,
-      TRUE,			/* _bfd_coff_long_filenames */
+      true,			/* _bfd_coff_long_filenames */
       XCOFF_NO_LONG_SECTION_NAMES,  /* _bfd_coff_long_section_names */
       3,			/* _bfd_coff_default_section_alignment_power */
-      FALSE,			/* _bfd_coff_force_symnames_in_strings */
+      false,			/* _bfd_coff_force_symnames_in_strings */
       2,			/* _bfd_coff_debug_string_prefix_length */
       32768,			/* _bfd_coff_max_nscns */
       coff_swap_filehdr_in,
@@ -4348,6 +4742,14 @@ static const struct xcoff_backend_data_rec bfd_pmac_xcoff_backend_data =
     /* rtinit */
     0,				/* _xcoff_rtinit_size */
     xcoff_generate_rtinit,
+
+    /* Stub indirect call.  */
+    &xcoff_stub_indirect_call_code[0],
+    16,				/* _xcoff_stub_indirect_call_size */
+
+    /* Stub shared call.  */
+    &xcoff_stub_shared_call_code[0],
+    24,				/* _xcoff_stub_shared_call_size */
   };
 
 /* The transfer vector that leads the outside world to all of the above.  */
@@ -4366,6 +4768,7 @@ const bfd_target powerpc_xcoff_vec =
     '/',			/* ar_pad_char */
     15,				/* ar_max_namelen */
     0,				/* match priority.  */
+    TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
 
     /* data */
     bfd_getb64,

@@ -1,5 +1,5 @@
 /* tc-tic54x.h -- Header file for tc-tic54x.c
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@alum.mit.edu)
 
    This file is part of GAS, the GNU Assembler.
@@ -35,6 +35,8 @@
 #define MAX_OPERANDS 4
 #define PARALLEL_SEPARATOR '|'
 #define LABELS_WITHOUT_COLONS 1
+#undef LOCAL_LABELS_FB
+
 /* accept 0FFFFh, 1010b, etc.  */
 #define NUMBERS_WITH_SUFFIX 1
 /* $ is section program counter */

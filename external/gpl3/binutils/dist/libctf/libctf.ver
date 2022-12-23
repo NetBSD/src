@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -24,6 +24,7 @@ LIBCTF_1.0 {
 	ctf_simple_open;
 	ctf_create;
 	ctf_close;
+	ctf_ref;
 	ctf_file_close;
 
 	ctf_cuname;
@@ -57,11 +58,13 @@ LIBCTF_1.0 {
 	ctf_type_resolve;
 	ctf_type_lname;
 	ctf_type_name;
+	ctf_type_name_raw;
 	ctf_type_aname;
 	ctf_type_aname_raw;
 	ctf_type_size;
 	ctf_type_align;
 	ctf_type_kind;
+	ctf_type_kind_forwarded;
 	ctf_type_reference;
 	ctf_type_pointer;
 	ctf_type_encoding;
@@ -70,7 +73,9 @@ LIBCTF_1.0 {
 	ctf_type_compat;
 
 	ctf_member_info;
+	ctf_member_next;
 	ctf_array_info;
+	ctf_member_count;
 
 	ctf_enum_name;
 	ctf_enum_value;
@@ -83,10 +88,17 @@ LIBCTF_1.0 {
 
 	ctf_member_iter;
 	ctf_enum_iter;
+	ctf_enum_next;
 	ctf_type_iter;
+	ctf_type_next;
 	ctf_type_iter_all;
 	ctf_label_iter;
 	ctf_variable_iter;
+	ctf_variable_next;
+
+	ctf_next_create;
+	ctf_next_destroy;
+	ctf_next_copy;
 
 	ctf_add_array;
 	ctf_add_const;
@@ -128,10 +140,13 @@ LIBCTF_1.0 {
 	ctf_arc_write;
 	ctf_arc_write_fd;
 	ctf_arc_open;
+	ctf_arc_bufopen;
 	ctf_arc_close;
 	ctf_arc_open_by_name;
 	ctf_arc_open_by_name_sections;
+	ctf_archive_count;
 	ctf_archive_iter;
+	ctf_archive_next;
 	ctf_archive_raw_iter;
 	ctf_get_arc;
 
@@ -139,23 +154,50 @@ LIBCTF_1.0 {
 
 	ctf_setdebug;
 	ctf_getdebug;
-
-	/* Not yet part of the stable API.  */
+	ctf_errwarning_next;
 
 	ctf_link_add_ctf;
 	ctf_link_add_cu_mapping;
 	ctf_link_set_memb_name_changer;
+	ctf_link_set_variable_filter;
 	ctf_link;
 	ctf_link_add_strtab;
 	ctf_link_shuffle_syms;
 	ctf_link_write;
 
-	/* In libctf alone.  */
-
-	ctf_fdopen;
-	ctf_open;
-	ctf_bfdopen;
-	ctf_bfdopen_ctfsect;
+	ctf_fdopen;                             /* libctf only.  */
+	ctf_open;                               /* libctf only.  */
+	ctf_bfdopen;                            /* libctf only.  */
+	ctf_bfdopen_ctfsect;                    /* libctf only.  */
     local:
 	*;
 };
+
+LIBCTF_1.1 {
+    global:
+	ctf_dict_open;
+	ctf_dict_open_sections;
+	ctf_dict_close;
+	ctf_parent_dict;
+
+	ctf_symbol_next;
+	ctf_add_objt_sym;
+	ctf_add_func_sym;
+
+	ctf_link_add_linker_symbol;
+
+	ctf_arc_lookup_symbol;
+	ctf_arc_flush_caches;
+
+	ctf_getsymsect;
+	ctf_getstrsect;
+	ctf_symsect_endianness;
+	ctf_arc_symsect_endianness;
+} LIBCTF_1.0;
+
+LIBCTF_1.2 {
+    global:
+	ctf_lookup_by_symbol_name;
+	ctf_arc_lookup_symbol_name;
+	ctf_add_unknown;
+} LIBCTF_1.1;

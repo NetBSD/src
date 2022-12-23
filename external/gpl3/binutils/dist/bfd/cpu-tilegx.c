@@ -1,5 +1,5 @@
 /* BFD support for the TILE-Gx processor.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,8 +41,8 @@
   }
 
 const bfd_arch_info_type bfd_tilegx32_arch =
-  N (32, bfd_mach_tilegx32, "tilegx32", FALSE, NULL);
+  N (32, bfd_mach_tilegx32, "tilegx32", false, NULL);
 
 const bfd_arch_info_type bfd_tilegx_arch =
-  N (64, bfd_mach_tilegx, "tilegx", TRUE, &bfd_tilegx32_arch);
+  N (64, bfd_mach_tilegx, "tilegx", true, &bfd_tilegx32_arch);
 

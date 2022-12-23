@@ -1,5 +1,5 @@
 /* Simple subrs.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -25,6 +25,10 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef ENOTSUP
+#define ENOTSUP ENOSYS
+#endif
 
 int _libctf_version = CTF_VERSION;	      /* Library client version.  */
 int _libctf_debug = 0;			      /* Debugging messages enabled.  */
@@ -122,12 +126,6 @@ ctf_pread (int fd, void *buf, ssize_t count, off_t offset)
   return acc;
 }
 
-const char *
-ctf_strerror (int err)
-{
-  return (const char *) (strerror (err));
-}
-
 /* Set the CTF library client version to the specified version.  If version is
    zero, we just return the default library version number.  */
 int
@@ -183,7 +181,7 @@ int ctf_getdebug (void)
 _libctf_printflike_ (1, 2)
 void ctf_dprintf (const char *format, ...)
 {
-  if (_libctf_debug)
+  if (_libctf_unlikely_ (_libctf_debug))
     {
       va_list alist;
 
@@ -193,4 +191,156 @@ void ctf_dprintf (const char *format, ...)
       (void) vfprintf (stderr, format, alist);
       va_end (alist);
     }
+}
+
+/* This needs more attention to thread-safety later on.  */
+static ctf_list_t open_errors;
+
+/* Errors and warnings.  Report the warning or error to the list in FP (or the
+   open errors list if NULL): if ERR is nonzero it is the errno to report to the
+   debug stream instead of that recorded on fp.  */
+_libctf_printflike_ (4, 5)
+extern void
+ctf_err_warn (ctf_dict_t *fp, int is_warning, int err,
+	      const char *format, ...)
+{
+  va_list alist;
+  ctf_err_warning_t *cew;
+
+  /* Don't bother reporting errors here: we can't do much about them if they
+     happen.  If we're so short of memory that a tiny malloc doesn't work, a
+     vfprintf isn't going to work either and the caller will have to rely on the
+     ENOMEM return they'll be getting in short order anyway.  */
+
+  if ((cew = malloc (sizeof (ctf_err_warning_t))) == NULL)
+    return;
+
+  cew->cew_is_warning = is_warning;
+  va_start (alist, format);
+  if (vasprintf (&cew->cew_text, format, alist) < 0)
+    {
+      free (cew);
+      va_end (alist);
+      return;
+    }
+  va_end (alist);
+
+  /* Include the error code only if there is one; if this is not a warning,
+     only use the error code if it was explicitly passed and is nonzero.
+     (Warnings may not have a meaningful error code, since the warning may not
+     lead to unwinding up to the user.)  */
+  if ((!is_warning && (err != 0 || (fp && ctf_errno (fp) != 0)))
+      || (is_warning && err != 0))
+    ctf_dprintf ("%s: %s (%s)\n", is_warning ? _("error") : _("warning"),
+		 cew->cew_text, err != 0 ? ctf_errmsg (err)
+		 : ctf_errmsg (ctf_errno (fp)));
+  else
+    ctf_dprintf ("%s: %s\n", is_warning ? _("error") : _("warning"),
+		 cew->cew_text);
+
+  if (fp != NULL)
+    ctf_list_append (&fp->ctf_errs_warnings, cew);
+  else
+    ctf_list_append (&open_errors, cew);
+}
+
+/* Move all the errors/warnings from an fp into the open_errors.  */
+void
+ctf_err_warn_to_open (ctf_dict_t *fp)
+{
+  ctf_list_splice (&open_errors, &fp->ctf_errs_warnings);
+}
+
+/* Error-warning reporting: an 'iterator' that returns errors and warnings from
+   the error/warning list, in order of emission.  Errors and warnings are popped
+   after return: the caller must free the returned error-text pointer.
+
+   An fp of NULL returns CTF-open-time errors from the open_errors variable
+   above.
+
+   The treatment of errors from this function itself is somewhat unusual: it
+   will often be called on an error path, so we don't want to overwrite the
+   ctf_errno unless we have no choice.  So, like ctf_bufopen et al, this
+   function takes an errp pointer where errors are reported.  The pointer is
+   optional: if not set, errors are reported via the fp (if non-NULL).  Calls
+   with neither fp nor errp set are mildly problematic because there is no clear
+   way to report end-of-iteration: you just have to assume that a NULL return
+   means the end, and not an iterator error.  */
+
+char *
+ctf_errwarning_next (ctf_dict_t *fp, ctf_next_t **it, int *is_warning,
+		     int *errp)
+{
+  ctf_next_t *i = *it;
+  char *ret;
+  ctf_list_t *errlist;
+  ctf_err_warning_t *cew;
+
+  if (fp)
+    errlist = &fp->ctf_errs_warnings;
+  else
+    errlist = &open_errors;
+
+  if (!i)
+    {
+      if ((i = ctf_next_create ()) == NULL)
+	{
+	  if (errp)
+	    *errp = ENOMEM;
+	  else if (fp)
+	    ctf_set_errno (fp, ENOMEM);
+	  return NULL;
+	}
+
+      i->cu.ctn_fp = fp;
+      i->ctn_iter_fun = (void (*) (void)) ctf_errwarning_next;
+      *it = i;
+    }
+
+  if ((void (*) (void)) ctf_errwarning_next != i->ctn_iter_fun)
+    {
+      if (errp)
+	*errp = ECTF_NEXT_WRONGFUN;
+      else if (fp)
+	ctf_set_errno (fp, ECTF_NEXT_WRONGFUN);
+      return NULL;
+    }
+
+  if (fp != i->cu.ctn_fp)
+    {
+      if (errp)
+	*errp = ECTF_NEXT_WRONGFP;
+      else if (fp)
+	ctf_set_errno (fp, ECTF_NEXT_WRONGFP);
+      return NULL;
+    }
+
+  cew = ctf_list_next (errlist);
+
+  if (!cew)
+    {
+      ctf_next_destroy (i);
+      *it = NULL;
+      if (errp)
+	*errp = ECTF_NEXT_END;
+      else if (fp)
+	ctf_set_errno (fp, ECTF_NEXT_END);
+      return NULL;
+    }
+
+  if (is_warning)
+    *is_warning = cew->cew_is_warning;
+  ret = cew->cew_text;
+  ctf_list_delete (errlist, cew);
+  free (cew);
+  return ret;
+}
+
+void
+ctf_assert_fail_internal (ctf_dict_t *fp, const char *file, size_t line,
+			  const char *exprstr)
+{
+  ctf_err_warn (fp, 0, ECTF_INTERNAL, _("%s: %lu: libctf assertion failed: %s"),
+		file, (long unsigned int) line, exprstr);
+  ctf_set_errno (fp, ECTF_INTERNAL);
 }

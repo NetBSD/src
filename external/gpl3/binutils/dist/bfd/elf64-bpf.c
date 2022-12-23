@@ -1,5 +1,5 @@
 /* Linux bpf specific support for 64-bit ELF
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by Oracle Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -31,212 +31,215 @@
 
 #define BASEADDR(SEC)	((SEC)->output_section->vma + (SEC)->output_offset)
 
+static bfd_reloc_status_type bpf_elf_generic_reloc
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+
 /* Relocation tables.  */
 static reloc_howto_type bpf_elf_howto_table [] =
 {
   /* This reloc does nothing.  */
   HOWTO (R_BPF_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 64-immediate in LDDW instruction.  */
   HOWTO (R_BPF_INSN_64,		/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
+	 false,			/* pc_relative */
+	 32,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_INSN_64",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 MINUS_ONE,		/* src_mask */
 	 MINUS_ONE,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
-  /* 32-immediate in LDDW instruction.  */
+  /* 32-immediate in many instructions.  */
   HOWTO (R_BPF_INSN_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
+	 false,			/* pc_relative */
+	 32,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_INSN_32",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* 16-bit offsets in instructions.  */
   HOWTO (R_BPF_INSN_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
-	 0,			/* bitpos */
+	 false,			/* pc_relative */
+	 16,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_INSN_16",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* 16-bit PC-relative address in jump instructions.  */
   HOWTO (R_BPF_INSN_DISP16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
-	 32,			/* bitpos */
+	 true,			/* pc_relative */
+	 16,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_INSN_DISP16",   /* name */
-	 FALSE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_8_PCREL,
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_8_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 0xff,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_16_PCREL,
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 false,			/* partial_inplace */
+	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_32_PCREL,
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_32_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 false,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_8,
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_DATA_8",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 0xff,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_16,
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_DATA_16",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 false,			/* partial_inplace */
+	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 32-bit PC-relative address in call instructions.  */
   HOWTO (R_BPF_INSN_DISP32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
-	 0,			/* bitpos */
+	 true,			/* pc_relative */
+	 32,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_INSN_DISP32",   /* name */
-	 FALSE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* 32-bit data.  */
   HOWTO (R_BPF_DATA_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_DATA_32",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 false,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* 64-bit data.  */
   HOWTO (R_BPF_DATA_64,		/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_DATA_64",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 MINUS_ONE,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_BPF_DATA_64_PCREL,
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
+	 bpf_elf_generic_reloc, /* special_function */
 	 "R_BPF_64_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
-	 0,			/* src_mask */
+	 false,			/* partial_inplace */
+	 MINUS_ONE,		/* src_mask */
 	 MINUS_ONE,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 };
 #undef AHOW
 
@@ -309,7 +312,7 @@ bpf_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for a bpf reloc.  */
 
-static bfd_boolean
+static bool
 bpf_info_to_howto (bfd *abfd, arelent *bfd_reloc,
                     Elf_Internal_Rela *elf_reloc)
 {
@@ -322,11 +325,11 @@ bpf_info_to_howto (bfd *abfd, arelent *bfd_reloc,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
                           abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   bfd_reloc->howto = &bpf_elf_howto_table [r_type];
-  return TRUE;
+  return true;
 }
 
 /* Relocate an eBPF ELF section.
@@ -361,7 +364,7 @@ bpf_info_to_howto (bfd *abfd, arelent *bfd_reloc,
 
 #define sec_addr(sec) ((sec)->output_section->vma + (sec)->output_offset)
 
-static bfd_boolean
+static int
 bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
                           struct bfd_link_info *info,
                           bfd *input_bfd,
@@ -391,6 +394,8 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_reloc_status_type	   r;
       const char *		   name = NULL;
       int			   r_type ATTRIBUTE_UNUSED;
+      bfd_signed_vma               addend;
+      bfd_byte                   * where;
 
       r_type = ELF64_R_TYPE (rel->r_info);
       r_symndx = ELF64_R_SYM (rel->r_info);
@@ -398,6 +403,7 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       h      = NULL;
       sym    = NULL;
       sec    = NULL;
+      where  = contents + rel->r_offset;
 
       if (r_symndx < symtab_hdr->sh_info)
 	{
@@ -411,9 +417,9 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned ATTRIBUTE_UNUSED;
-	  bfd_boolean unresolved_reloc ATTRIBUTE_UNUSED;
-	  bfd_boolean ignored ATTRIBUTE_UNUSED;
+	  bool warned ATTRIBUTE_UNUSED;
+	  bool unresolved_reloc ATTRIBUTE_UNUSED;
+	  bool ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -435,13 +441,12 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
         case R_BPF_INSN_DISP16:
         case R_BPF_INSN_DISP32:
           {
-            bfd_signed_vma addend;
-            
             /* Make the relocation PC-relative, and change its unit to
-               64-bit words.  */
-            relocation -= sec_addr (input_section) + rel->r_offset;
-            /* Make it 64-bit words.  */
-            relocation = relocation / 8;
+               64-bit words.  Note we need *signed* arithmetic
+               here.  */
+            relocation = ((bfd_signed_vma) relocation
+			  - (sec_addr (input_section) + rel->r_offset));
+            relocation = (bfd_signed_vma) relocation / 8;
             
             /* Get the addend from the instruction and apply it.  */
             addend = bfd_get (howto->bitsize, input_bfd,
@@ -460,11 +465,71 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
             r = bfd_reloc_ok;
             break;
           }
+	case R_BPF_DATA_8:
+	case R_BPF_DATA_16:
+	case R_BPF_DATA_32:
+	case R_BPF_DATA_64:
+	  {
+	    addend = bfd_get (howto->bitsize, input_bfd, where);
+	    relocation += addend;
+	    bfd_put (howto->bitsize, input_bfd, relocation, where);
+
+	    r = bfd_reloc_ok;
+	    break;
+	  }
+	case R_BPF_INSN_16:
+	  {
+
+	    addend = bfd_get_16 (input_bfd, where + 2);
+	    relocation += addend;
+	    bfd_put_16 (input_bfd, relocation, where + 2);
+
+	    r = bfd_reloc_ok;
+	    break;
+	  }
+        case R_BPF_INSN_32:
+          {
+            /*  Write relocated value */
+
+	    addend = bfd_get_32 (input_bfd, where + 4);
+	    relocation += addend;
+            bfd_put_32 (input_bfd, relocation, where + 4);
+
+            r = bfd_reloc_ok;
+            break;
+          }
+        case R_BPF_INSN_64:
+          {
+            /*
+                LDDW instructions are 128 bits long, with a 64-bit immediate.
+                The lower 32 bits of the immediate are in the same position
+                as the imm32 field of other instructions.
+                The upper 32 bits of the immediate are stored at the end of
+                the instruction.
+             */
+
+
+            /* Get the addend. The upper and lower 32 bits are split.
+               'where' is the beginning of the 16-byte instruction. */
+            addend = bfd_get_32 (input_bfd, where + 4);
+            addend |= (bfd_get_32 (input_bfd, where + 12) << 32);
+
+            relocation += addend;
+
+            bfd_put_32 (input_bfd, (relocation & 0xFFFFFFFF), where + 4);
+            bfd_put_32 (input_bfd, (relocation >> 32), where + 12);
+            r = bfd_reloc_ok;
+            break;
+          }
         default:
-          r = _bfd_final_link_relocate (howto, input_bfd, input_section,
-                                        contents, rel->r_offset, relocation,
-                                        rel->r_addend);
+	  r = bfd_reloc_notsupported;
         }
+
+      if (r == bfd_reloc_ok)
+	  r = bfd_check_overflow (howto->complain_on_overflow,
+				  howto->bitsize,
+				  howto->rightshift,
+				  64, relocation);
 
       if (r != bfd_reloc_ok)
 	{
@@ -480,7 +545,7 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -507,21 +572,102 @@ bpf_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 elf64_bpf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   /* Check if we have the same endianness.  */
   if (! _bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
+
+/* A generic howto special function for installing BPF relocations.
+   This function will be called by the assembler (via bfd_install_relocation),
+   and by various get_relocated_section_contents functions.
+   At link time, bpf_elf_relocate_section will resolve the final relocations.
+
+   BPF instructions are always big endian, and this approach avoids problems in
+   bfd_install_relocation.  */
+
+static bfd_reloc_status_type
+bpf_elf_generic_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
+		       void *data, asection *input_section,
+		       bfd *output_bfd ATTRIBUTE_UNUSED,
+		       char **error_message ATTRIBUTE_UNUSED)
+{
+
+  bfd_signed_vma relocation;
+  bfd_reloc_status_type status;
+  bfd_byte *where;
+
+  /* Sanity check that the address is in range.  */
+  bfd_size_type end = bfd_get_section_limit_octets (abfd, input_section);
+  bfd_size_type reloc_size;
+  if (reloc_entry->howto->type == R_BPF_INSN_64)
+    reloc_size = 16;
+  else
+    reloc_size = (reloc_entry->howto->bitsize
+		  + reloc_entry->howto->bitpos) / 8;
+
+  if (reloc_entry->address > end
+      || end - reloc_entry->address < reloc_size)
+    return bfd_reloc_outofrange;
+
+  /*  Get the symbol value.  */
+  if (bfd_is_com_section (symbol->section))
+    relocation = 0;
+  else
+    relocation = symbol->value;
+
+  if (symbol->flags & BSF_SECTION_SYM)
+    /* Relocation against a section symbol: add in the section base address.  */
+    relocation += BASEADDR (symbol->section);
+
+  relocation += reloc_entry->addend;
+
+  where = (bfd_byte *) data + reloc_entry->address;
+
+  status = bfd_check_overflow (reloc_entry->howto->complain_on_overflow,
+			       reloc_entry->howto->bitsize,
+			       reloc_entry->howto->rightshift, 64, relocation);
+
+  if (status != bfd_reloc_ok)
+    return status;
+
+  /* Now finally install the relocation.  */
+  if (reloc_entry->howto->type == R_BPF_INSN_64)
+    {
+      /* lddw is a 128-bit (!) instruction that allows loading a 64-bit
+	 immediate into a register. the immediate is split in half, with the
+	 lower 32 bits in the same position as the imm32 field of other
+	 instructions, and the upper 32 bits placed at the very end of the
+	 instruction. that is, there are 32 unused bits between them. */
+
+      bfd_put_32 (abfd, (relocation & 0xFFFFFFFF), where + 4);
+      bfd_put_32 (abfd, (relocation >> 32), where + 12);
+    }
+  else
+    {
+      /* For other kinds of relocations, the relocated value simply goes
+	 BITPOS bits from the start of the entry. This is always a multiple
+	 of 8, i.e. whole bytes.  */
+      bfd_put (reloc_entry->howto->bitsize, abfd, relocation,
+	       where + reloc_entry->howto->bitpos / 8);
+    }
+
+  reloc_entry->addend = relocation;
+  reloc_entry->address += input_section->output_offset;
+
+  return bfd_reloc_ok;
+}
+
 
 /* The macros below configure the architecture.  */
 

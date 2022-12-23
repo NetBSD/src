@@ -1,5 +1,5 @@
 /* Intel 80386 opcode table
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -23,10 +23,12 @@
 #include "i386-opc.h"
 #include "i386-tbl.h"
 
-/* Segment stuff.  */
-const seg_entry cs = { "cs", 0x2e };
-const seg_entry ds = { "ds", 0x3e };
-const seg_entry ss = { "ss", 0x36 };
-const seg_entry es = { "es", 0x26 };
-const seg_entry fs = { "fs", 0x64 };
-const seg_entry gs = { "gs", 0x65 };
+/* To be indexed by segment register number.  */
+const unsigned char i386_seg_prefixes[] = {
+  ES_PREFIX_OPCODE,
+  CS_PREFIX_OPCODE,
+  SS_PREFIX_OPCODE,
+  DS_PREFIX_OPCODE,
+  FS_PREFIX_OPCODE,
+  GS_PREFIX_OPCODE
+};

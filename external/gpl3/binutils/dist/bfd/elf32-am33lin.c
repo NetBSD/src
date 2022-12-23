@@ -1,5 +1,5 @@
 /* Matsushita AM33/2.0 support for 32-bit GNU/Linux ELF
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,7 +38,7 @@
 #define _bfd_mn10300_elf_final_write_processing	 _bfd_am33_elf_final_write_processing
 
 /* Support for core dump NOTE sections.  */
-static bfd_boolean
+static bool
 elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 {
   int offset;
@@ -47,7 +47,7 @@ elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
   switch (note->descsz)
     {
       default:
-	return FALSE;
+	return false;
 
       case 184:
       case 188:		/* Linux/am33 */
@@ -69,13 +69,13 @@ elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 					  note->descpos + offset);
 }
 
-static bfd_boolean
+static bool
 elf32_am33lin_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   switch (note->descsz)
     {
       default:
-	return FALSE;
+	return false;
 
       case 124:		/* Linux/am33 elf_prpsinfo */
 	elf_tdata (abfd)->core->program
@@ -96,12 +96,12 @@ elf32_am33lin_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       command[n - 1] = '\0';
   }
 
-  return TRUE;
+  return true;
 }
 
 #define elf_backend_grok_prstatus	elf32_am33lin_grok_prstatus
 #define elf_backend_grok_psinfo		elf32_am33lin_grok_psinfo
 
-#define elf_backend_linux_prpsinfo32_ugid16	TRUE
+#define elf_backend_linux_prpsinfo32_ugid16	true
 
 #include "elf-m10300.c"

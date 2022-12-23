@@ -1,5 +1,5 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -73,11 +73,11 @@ static packing_type etype = PACK_UNSPEC; /* Used by d10v_cleanup.  */
 
 /* TRUE if instruction swapping warnings should be inhibited.
    --nowarnswap.  */
-static bfd_boolean flag_warn_suppress_instructionswap;
+static bool flag_warn_suppress_instructionswap;
 
 /* TRUE if instruction packing should be performed when --gstabs is specified.
    --gstabs-packing, --no-gstabs-packing.  */
-static bfd_boolean flag_allow_gstabs_packing = 1;
+static bool flag_allow_gstabs_packing = 1;
 
 /* Local functions.  */
 
@@ -101,7 +101,7 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 /* Opcode hash table.  */
-static struct hash_control *d10v_hash;
+static htab_t d10v_hash;
 
 /* Do a binary search of the d10v_predefined_registers array to see if
    NAME is a valid register name.  Return the register number from the
@@ -254,7 +254,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 void
@@ -277,7 +277,7 @@ md_begin (void)
 {
   const char *prev_name = "";
   struct d10v_opcode *opcode;
-  d10v_hash = hash_new ();
+  d10v_hash = str_htab_create ();
 
   /* Insert unique names into hash table.  The D10v instruction set
      has many identical opcode names that have different opcodes based
@@ -289,7 +289,7 @@ md_begin (void)
       if (strcmp (prev_name, opcode->name))
 	{
 	  prev_name = (char *) opcode->name;
-	  hash_insert (d10v_hash, opcode->name, (char *) opcode);
+	  str_hash_insert (d10v_hash, opcode->name, opcode, 0);
 	}
     }
 
@@ -581,8 +581,7 @@ build_insn (struct d10v_opcode *opcode,
 
 	  fixups->fix[fixups->fc].exp = opers[i];
 	  fixups->fix[fixups->fc].operand = opcode->operands[i];
-	  fixups->fix[fixups->fc].pcrel =
-	    (flags & OPERAND_ADDR) ? TRUE : FALSE;
+	  fixups->fix[fixups->fc].pcrel = (flags & OPERAND_ADDR) != 0;
 	  (fixups->fc)++;
 	}
 
@@ -1217,14 +1216,14 @@ find_opcode (struct d10v_opcode *opcode, expressionS myops[])
 		  unsigned long current_position;
 		  unsigned long symbol_position;
 		  unsigned long value;
-		  bfd_boolean found_symbol;
+		  bool found_symbol;
 
 		  /* Calculate the address of the current instruction
 		     and the address of the symbol.  Do this by summing
 		     the offsets of previous frags until we reach the
 		     frag containing the symbol, and the current frag.  */
 		  sym_frag = symbol_get_frag (myops[opnum].X_add_symbol);
-		  found_symbol = FALSE;
+		  found_symbol = false;
 
 		  current_position = frag_now_fix_octets ();
 		  symbol_position = S_GET_VALUE (myops[opnum].X_add_symbol);
@@ -1234,7 +1233,7 @@ find_opcode (struct d10v_opcode *opcode, expressionS myops[])
 		      current_position += f->fr_fix + f->fr_offset;
 
 		      if (f == sym_frag)
-			found_symbol = TRUE;
+			found_symbol = true;
 
 		      if (! found_symbol)
 			symbol_position += f->fr_fix + f->fr_offset;
@@ -1430,7 +1429,7 @@ do_assemble (char *str, struct d10v_opcode **opcode)
     return -1;
 
   /* Find the first opcode with the proper name.  */
-  *opcode = (struct d10v_opcode *) hash_find (d10v_hash, name);
+  *opcode = (struct d10v_opcode *) str_hash_find (d10v_hash, name);
   if (*opcode == NULL)
     return -1;
 
@@ -1504,7 +1503,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
   /* We don't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+    as_bad_subtract (fixP);
 
   op_type = fixP->fx_r_type;
   if (op_type & 2048)
@@ -1558,8 +1557,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	{
 	  struct d10v_opcode *rep, *repi;
 
-	  rep = (struct d10v_opcode *) hash_find (d10v_hash, "rep");
-	  repi = (struct d10v_opcode *) hash_find (d10v_hash, "repi");
+	  rep = (struct d10v_opcode *) str_hash_find (d10v_hash, "rep");
+	  repi = (struct d10v_opcode *) str_hash_find (d10v_hash, "repi");
 	  if ((insn & FM11) == FM11
 	      && ((repi != NULL
 		   && (insn & repi->mask) == (unsigned) repi->opcode)
@@ -1699,7 +1698,7 @@ md_operand (expressionS *expressionP)
     }
 }
 
-bfd_boolean
+bool
 d10v_fix_adjustable (fixS *fixP)
 {
   /* We need the symbol name for the VTABLE entries.  */

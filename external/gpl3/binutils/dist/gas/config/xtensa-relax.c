@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -545,7 +545,7 @@ string_pattern_pair simplify_spec_list[] =
 
 /* Externally visible functions.  */
 
-extern bfd_boolean xg_has_userdef_op_fn (OpType);
+extern bool xg_has_userdef_op_fn (OpType);
 extern long xg_apply_userdef_op_fn (OpType, long);
 
 
@@ -798,7 +798,7 @@ operand_function_HI16U (long a)
 }
 
 
-bfd_boolean
+bool
 xg_has_userdef_op_fn (OpType op)
 {
   switch (op)
@@ -808,11 +808,11 @@ xg_has_userdef_op_fn (OpType op)
     case OP_OPERAND_HI24S:
     case OP_OPERAND_LOW16U:
     case OP_OPERAND_HI16U:
-      return TRUE;
+      return true;
     default:
       break;
     }
-  return FALSE;
+  return false;
 }
 
 
@@ -834,7 +834,7 @@ xg_apply_userdef_op_fn (OpType op, long a)
     default:
       break;
     }
-  return FALSE;
+  return false;
 }
 
 
@@ -896,11 +896,11 @@ clear_opname_map (opname_map *m)
 }
 
 
-static bfd_boolean
+static bool
 same_operand_name (const opname_map_e *m1, const opname_map_e *m2)
 {
   if (m1->operand_name == NULL || m2->operand_name == NULL)
-    return FALSE;
+    return false;
   return (m1->operand_name == m2->operand_name);
 }
 
@@ -919,7 +919,7 @@ get_opmatch (opname_map *map, const char *operand_name)
 }
 
 
-static bfd_boolean
+static bool
 op_is_constant (const opname_map_e *m1)
 {
   return (m1->operand_name == NULL);
@@ -1026,14 +1026,14 @@ insn_templ_operand_count (const insn_templ *t)
 
 /* Convert a string to a number.  E.G.: parse_constant("10", &num) */
 
-static bfd_boolean
+static bool
 parse_constant (const char *in, unsigned *val_p)
 {
   unsigned val = 0;
   const char *p;
 
   if (in == NULL)
-    return FALSE;
+    return false;
   p = in;
 
   while (*p != '\0')
@@ -1041,15 +1041,15 @@ parse_constant (const char *in, unsigned *val_p)
       if (*p >= '0' && *p <= '9')
 	val = val * 10 + (*p - '0');
       else
-	return FALSE;
+	return false;
       ++p;
     }
   *val_p = val;
-  return TRUE;
+  return true;
 }
 
 
-static bfd_boolean
+static bool
 parse_special_fn (const char *name,
 		  const char **fn_name_p,
 		  const char **arg_name_p)
@@ -1059,19 +1059,19 @@ parse_special_fn (const char *name,
 
   p_start = strchr (name, '(');
   if (p_start == NULL)
-    return FALSE;
+    return false;
 
   p_end = strchr (p_start, ')');
 
   if (p_end == NULL)
-    return FALSE;
+    return false;
 
   if (p_end[1] != '\0')
-    return FALSE;
+    return false;
 
   *fn_name_p = enter_opname_n (name, p_start - name);
   *arg_name_p = enter_opname_n (p_start + 1, p_end - p_start - 1);
-  return TRUE;
+  return true;
 }
 
 
@@ -1118,7 +1118,7 @@ static void
 split_string (split_rec *rec,
 	      const char *in,
 	      char c,
-	      bfd_boolean elide_whitespace)
+	      bool elide_whitespace)
 {
   int cnt = 0;
   int i;
@@ -1193,7 +1193,7 @@ init_split_rec (split_rec *rec)
 
 /* Parse an instruction template like "insn op1, op2, op3".  */
 
-static bfd_boolean
+static bool
 parse_insn_templ (const char *s, insn_templ *t)
 {
   const char *p = s;
@@ -1208,7 +1208,7 @@ parse_insn_templ (const char *s, insn_templ *t)
   p = skip_white (p);
   insn_name_len = strcspn (s, " ");
   if (insn_name_len == 0)
-    return FALSE;
+    return false;
 
   init_insn_templ (t);
   t->opcode_name = enter_opname_n (p, insn_name_len);
@@ -1216,7 +1216,7 @@ parse_insn_templ (const char *s, insn_templ *t)
   p = p + insn_name_len;
 
   /* Split by ',' and skip beginning and trailing whitespace.  */
-  split_string (&oprec, p, ',', TRUE);
+  split_string (&oprec, p, ',', true);
 
   for (i = 0; i < oprec.count; i++)
     {
@@ -1239,7 +1239,7 @@ parse_insn_templ (const char *s, insn_templ *t)
 	      free (e);
 	      clear_split_rec (&oprec);
 	      clear_insn_templ (t);
-	      return FALSE;
+	      return false;
 	    }
 	}
       else
@@ -1249,11 +1249,11 @@ parse_insn_templ (const char *s, insn_templ *t)
       t->operand_map.tail = &e->next;
     }
   clear_split_rec (&oprec);
-  return TRUE;
+  return true;
 }
 
 
-static bfd_boolean
+static bool
 parse_precond (const char *s, precond_e *precond)
 {
   /* All preconditions are currently of the form:
@@ -1275,19 +1275,19 @@ parse_precond (const char *s, precond_e *precond)
   len = strcspn (p, " !=");
 
   if (len == 0)
-    return FALSE;
+    return false;
 
   precond->opname1 = enter_opname_n (p, len);
   p = p + len;
   p = skip_white (p);
 
   /* Check for "==" and "!=".  */
-  if (strncmp (p, "==", 2) == 0)
+  if (startswith (p, "=="))
     precond->cmpop = OP_EQUAL;
-  else if (strncmp (p, "!=", 2) == 0)
+  else if (startswith (p, "!="))
     precond->cmpop = OP_NOTEQUAL;
   else
-    return FALSE;
+    return false;
 
   p = p + 2;
   p = skip_white (p);
@@ -1299,11 +1299,11 @@ parse_precond (const char *s, precond_e *precond)
       if (parse_constant (p, &val))
 	precond->opval2 = val;
       else
-	return FALSE;
+	return false;
     }
   else
     precond->opname2 = enter_opname (p);
-  return TRUE;
+  return true;
 }
 
 
@@ -1366,7 +1366,7 @@ clone_req_option_list (ReqOption *req_option)
 }
 
 
-static bfd_boolean
+static bool
 parse_option_cond (const char *s, ReqOption *option)
 {
   int i;
@@ -1377,25 +1377,25 @@ parse_option_cond (const char *s, ReqOption *option)
      "Ands" are divided by "?".  */
 
   init_split_rec (&option_term_rec);
-  split_string (&option_term_rec, s, '+', TRUE);
+  split_string (&option_term_rec, s, '+', true);
 
   if (option_term_rec.count == 0)
     {
       clear_split_rec (&option_term_rec);
-      return FALSE;
+      return false;
     }
 
   for (i = 0; i < option_term_rec.count; i++)
     {
       char *option_name = option_term_rec.vec[i];
-      bfd_boolean is_true = TRUE;
+      bool is_true = true;
       ReqOrOption *req;
       ReqOrOption **r_p;
 
-      if (strncmp (option_name, "no-", 3) == 0)
+      if (startswith (option_name, "no-"))
 	{
 	  option_name = xstrdup (&option_name[3]);
-	  is_true = FALSE;
+	  is_true = false;
 	}
       else
 	option_name = xstrdup (option_name);
@@ -1411,7 +1411,7 @@ parse_option_cond (const char *s, ReqOption *option)
 	;
       (*r_p) = req;
     }
-  return TRUE;
+  return true;
 }
 
 
@@ -1431,7 +1431,7 @@ parse_option_cond (const char *s, ReqOption *option)
    split_string, it requires that '|' and '?' are only used as
    delimiters for predicates and required options.  */
 
-static bfd_boolean
+static bool
 parse_insn_pattern (const char *in, insn_pattern *insn)
 {
   split_rec rec;
@@ -1441,29 +1441,29 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
   init_insn_pattern (insn);
 
   init_split_rec (&optionrec);
-  split_string (&optionrec, in, '?', TRUE);
+  split_string (&optionrec, in, '?', true);
   if (optionrec.count == 0)
     {
       clear_split_rec (&optionrec);
-      return FALSE;
+      return false;
     }
 
   init_split_rec (&rec);
 
-  split_string (&rec, optionrec.vec[0], '|', TRUE);
+  split_string (&rec, optionrec.vec[0], '|', true);
 
   if (rec.count == 0)
     {
       clear_split_rec (&rec);
       clear_split_rec (&optionrec);
-      return FALSE;
+      return false;
     }
 
   if (!parse_insn_templ (rec.vec[0], &insn->t))
     {
       clear_split_rec (&rec);
       clear_split_rec (&optionrec);
-      return FALSE;
+      return false;
     }
 
   for (i = 1; i < rec.count; i++)
@@ -1475,7 +1475,7 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
 	  clear_split_rec (&rec);
 	  clear_split_rec (&optionrec);
 	  clear_insn_pattern (insn);
-	  return FALSE;
+	  return false;
 	}
 
       /* Append the condition.  */
@@ -1497,7 +1497,7 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
 	  clear_split_rec (&optionrec);
 	  clear_insn_pattern (insn);
 	  clear_req_option_list (&req_option);
-	  return FALSE;
+	  return false;
 	}
 
       /* Append the condition.  */
@@ -1509,18 +1509,18 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
 
   clear_split_rec (&rec);
   clear_split_rec (&optionrec);
-  return TRUE;
+  return true;
 }
 
 
-static bfd_boolean
+static bool
 parse_insn_repl (const char *in, insn_repl *r_p)
 {
   /* This is a list of instruction templates separated by ';'.  */
   split_rec rec;
   int i;
 
-  split_string (&rec, in, ';', TRUE);
+  split_string (&rec, in, ';', true);
 
   for (i = 0; i < rec.count; i++)
     {
@@ -1532,16 +1532,16 @@ parse_insn_repl (const char *in, insn_repl *r_p)
 	{
 	  free (e);
 	  clear_insn_repl (r_p);
-	  return FALSE;
+	  return false;
 	}
       *r_p->tail = e;
       r_p->tail = &e->next;
     }
-  return TRUE;
+  return true;
 }
 
 
-static bfd_boolean
+static bool
 transition_applies (insn_pattern *initial_insn,
 		    const char *from_string ATTRIBUTE_UNUSED,
 		    const char *to_string ATTRIBUTE_UNUSED)
@@ -1558,9 +1558,9 @@ transition_applies (insn_pattern *initial_insn,
 	  || req_or_option->next != NULL)
 	continue;
 
-      if (strncmp (req_or_option->option_name, "IsaUse", 6) == 0)
+      if (startswith (req_or_option->option_name, "IsaUse"))
 	{
-	  bfd_boolean option_available = FALSE;
+	  bool option_available = false;
 	  char *option_name = req_or_option->option_name + 6;
 	  if (!strcmp (option_name, "DensityInstruction"))
 	    option_available = (XCHAL_HAVE_DENSITY == 1);
@@ -1583,22 +1583,22 @@ transition_applies (insn_pattern *initial_insn,
 	    as_warn (_("invalid configuration option '%s' in transition rule '%s'"),
 		     req_or_option->option_name, from_string);
 	  if ((option_available ^ req_or_option->is_true) != 0)
-	    return FALSE;
+	    return false;
 	}
       else if (strcmp (req_or_option->option_name, "realnop") == 0)
 	{
-	  bfd_boolean nop_available =
+	  bool nop_available =
 	    (xtensa_opcode_lookup (xtensa_default_isa, "nop")
 	     != XTENSA_UNDEFINED);
 	  if ((nop_available ^ req_or_option->is_true) != 0)
-	    return FALSE;
+	    return false;
 	}
     }
-  return TRUE;
+  return true;
 }
 
 
-static bfd_boolean
+static bool
 wide_branch_opcode (const char *opcode_name,
 		    const char *suffix,
 		    xtensa_opcode *popcode)
@@ -1607,8 +1607,8 @@ wide_branch_opcode (const char *opcode_name,
   xtensa_opcode opcode;
   static char wbr_name_buf[20];
 
-  if (strncmp (opcode_name, "WIDE.", 5) != 0)
-    return FALSE;
+  if (!startswith (opcode_name, "WIDE."))
+    return false;
 
   strcpy (wbr_name_buf, opcode_name + 5);
   strcat (wbr_name_buf, suffix);
@@ -1616,10 +1616,10 @@ wide_branch_opcode (const char *opcode_name,
   if (opcode != XTENSA_UNDEFINED)
     {
       *popcode = opcode;
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 

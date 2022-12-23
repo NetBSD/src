@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -40,7 +40,7 @@ struct ip2k_opcode
   unsigned short mask;
 };
 
-static bfd_boolean ip2k_relaxed = FALSE;
+static bool ip2k_relaxed = false;
 
 static const struct ip2k_opcode ip2k_page_opcode[] =
 {
@@ -135,40 +135,40 @@ static reloc_howto_type ip2k_elf_howto_table [] =
 	  complain_overflow_dont,/* complain_on_overflow */ \
 	  bfd_elf_generic_reloc,/* special_function */ \
 	  name,			/* name */ \
-	  FALSE,		/* partial_inplace */ \
+	  false,		/* partial_inplace */ \
 	  sm,			/* src_mask */ \
 	  dm,			/* dst_mask */ \
 	  pr)			/* pcrel_offset */
 
   /* This reloc does nothing.  */
-  IP2K_HOWTO (R_IP2K_NONE, 0,3,0, FALSE, 0, "R_IP2K_NONE", 0, 0),
+  IP2K_HOWTO (R_IP2K_NONE, 0,0,0, false, 0, "R_IP2K_NONE", 0, 0),
   /* A 16 bit absolute relocation.  */
-  IP2K_HOWTO (R_IP2K_16, 0,1,16, FALSE, 0, "R_IP2K_16", 0, 0xffff),
+  IP2K_HOWTO (R_IP2K_16, 0,2,16, false, 0, "R_IP2K_16", 0, 0xffff),
   /* A 32 bit absolute relocation.  */
-  IP2K_HOWTO (R_IP2K_32, 0,2,32, FALSE, 0, "R_IP2K_32", 0, 0xffffffff),
+  IP2K_HOWTO (R_IP2K_32, 0,4,32, false, 0, "R_IP2K_32", 0, 0xffffffff),
   /* A 8-bit data relocation for the FR9 field.  Ninth bit is computed specially.  */
-  IP2K_HOWTO (R_IP2K_FR9, 0,1,9, FALSE, 0, "R_IP2K_FR9", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_FR9, 0,2,9, false, 0, "R_IP2K_FR9", 0, 0x00ff),
   /* A 4-bit data relocation.  */
-  IP2K_HOWTO (R_IP2K_BANK, 8,1,4, FALSE, 0, "R_IP2K_BANK", 0, 0x000f),
+  IP2K_HOWTO (R_IP2K_BANK, 8,2,4, false, 0, "R_IP2K_BANK", 0, 0x000f),
   /* A 13-bit insn relocation - word address => right-shift 1 bit extra.  */
-  IP2K_HOWTO (R_IP2K_ADDR16CJP, 1,1,13, FALSE, 0, "R_IP2K_ADDR16CJP", 0, 0x1fff),
+  IP2K_HOWTO (R_IP2K_ADDR16CJP, 1,2,13, false, 0, "R_IP2K_ADDR16CJP", 0, 0x1fff),
   /* A 3-bit insn relocation - word address => right-shift 1 bit extra.  */
-  IP2K_HOWTO (R_IP2K_PAGE3, 14,1,3, FALSE, 0, "R_IP2K_PAGE3", 0, 0x0007),
+  IP2K_HOWTO (R_IP2K_PAGE3, 14,2,3, false, 0, "R_IP2K_PAGE3", 0, 0x0007),
   /* Two 8-bit data relocations.  */
-  IP2K_HOWTO (R_IP2K_LO8DATA, 0,1,8, FALSE, 0, "R_IP2K_LO8DATA", 0, 0x00ff),
-  IP2K_HOWTO (R_IP2K_HI8DATA, 8,1,8, FALSE, 0, "R_IP2K_HI8DATA", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_LO8DATA, 0,2,8, false, 0, "R_IP2K_LO8DATA", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_HI8DATA, 8,2,8, false, 0, "R_IP2K_HI8DATA", 0, 0x00ff),
   /* Two 8-bit insn relocations.  word address => right-shift 1 bit extra.  */
-  IP2K_HOWTO (R_IP2K_LO8INSN, 1,1,8, FALSE, 0, "R_IP2K_LO8INSN", 0, 0x00ff),
-  IP2K_HOWTO (R_IP2K_HI8INSN, 9,1,8, FALSE, 0, "R_IP2K_HI8INSN", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_LO8INSN, 1,2,8, false, 0, "R_IP2K_LO8INSN", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_HI8INSN, 9,2,8, false, 0, "R_IP2K_HI8INSN", 0, 0x00ff),
 
   /* Special 1 bit relocation for SKIP instructions.  */
-  IP2K_HOWTO (R_IP2K_PC_SKIP, 1,1,1, FALSE, 12, "R_IP2K_PC_SKIP", 0xfffe, 0x1000),
+  IP2K_HOWTO (R_IP2K_PC_SKIP, 1,2,1, false, 12, "R_IP2K_PC_SKIP", 0xfffe, 0x1000),
   /* 16 bit word address.  */
-  IP2K_HOWTO (R_IP2K_TEXT, 1,1,16, FALSE, 0, "R_IP2K_TEXT", 0, 0xffff),
+  IP2K_HOWTO (R_IP2K_TEXT, 1,2,16, false, 0, "R_IP2K_TEXT", 0, 0xffff),
   /* A 7-bit offset relocation for the FR9 field.  Eigth and ninth bit comes from insn.  */
-  IP2K_HOWTO (R_IP2K_FR_OFFSET, 0,1,9, FALSE, 0, "R_IP2K_FR_OFFSET", 0x180, 0x007f),
+  IP2K_HOWTO (R_IP2K_FR_OFFSET, 0,2,9, false, 0, "R_IP2K_FR_OFFSET", 0x180, 0x007f),
   /* Bits 23:16 of an address.  */
-  IP2K_HOWTO (R_IP2K_EX8DATA, 16,1,8, FALSE, 0, "R_IP2K_EX8DATA", 0, 0x00ff),
+  IP2K_HOWTO (R_IP2K_EX8DATA, 16,2,8, false, 0, "R_IP2K_EX8DATA", 0, 0x00ff),
 };
 
 
@@ -247,7 +247,7 @@ ip2k_get_mem (bfd *abfd ATTRIBUTE_UNUSED,
     * ptr ++ = bfd_get_8 (abfd, addr ++);
 }
 
-static bfd_boolean
+static bool
 ip2k_is_opcode (bfd_byte *code, const struct ip2k_opcode *opcodes)
 {
   unsigned short insn = (code[0] << 8) | code[1];
@@ -255,12 +255,12 @@ ip2k_is_opcode (bfd_byte *code, const struct ip2k_opcode *opcodes)
   while (opcodes->mask != 0)
     {
       if ((insn & opcodes->mask) == opcodes->opcode)
-	return TRUE;
+	return true;
 
       opcodes ++;
     }
 
-  return FALSE;
+  return false;
 }
 
 #define PAGENO(ABSADDR) ((ABSADDR) & 0xFFFFC000)
@@ -530,7 +530,7 @@ ip2k_nominal_page_bits (bfd *abfd ATTRIBUTE_UNUSED,
   return 0;
 }
 
-static bfd_boolean
+static bool
 ip2k_test_page_insn (bfd *abfd ATTRIBUTE_UNUSED,
 		     asection *sec,
 		     Elf_Internal_Rela *irel,
@@ -544,14 +544,14 @@ ip2k_test_page_insn (bfd *abfd ATTRIBUTE_UNUSED,
     /* This appears to be a reference to an undefined
        symbol.  Just ignore it--it will be caught by the
        regular reloc processing.  */
-    return FALSE;
+    return false;
 
   /* Test if we can delete this page instruction.  */
   if (PAGENO (symval + irel->r_addend) !=
       ip2k_nominal_page_bits (abfd, sec, irel->r_offset, misc->contents))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Parts of a Stabs entry.  */
@@ -638,8 +638,7 @@ adjust_all_relocations (bfd *abfd,
 	{
 	  if (!bfd_malloc_and_get_section (abfd, stab, &stabcontents))
 	    {
-	      if (stabcontents != NULL)
-		free (stabcontents);
+	      free (stabcontents);
 	      return;
 	    }
 
@@ -781,7 +780,7 @@ adjust_all_relocations (bfd *abfd,
 
 /* Delete some bytes from a section while relaxing.  */
 
-static bfd_boolean
+static bool
 ip2k_elf_relax_delete_bytes (bfd *abfd,
 			     asection *sec,
 			     bfd_vma addr,
@@ -797,14 +796,14 @@ ip2k_elf_relax_delete_bytes (bfd *abfd,
   sec->size -= count;
 
   adjust_all_relocations (abfd, sec, addr + count, endaddr, -count, 0);
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 ip2k_delete_page_insn (bfd *abfd ATTRIBUTE_UNUSED,
 		       asection *sec,
 		       Elf_Internal_Rela *irel,
-		       bfd_boolean *again,
+		       bool *again,
 		       struct misc *misc)
 {
   /* Note that we've changed the relocs, section contents, etc.  */
@@ -817,19 +816,19 @@ ip2k_delete_page_insn (bfd *abfd ATTRIBUTE_UNUSED,
 
   /* Delete the PAGE insn.  */
   if (!ip2k_elf_relax_delete_bytes (abfd, sec, irel->r_offset, 2))
-    return FALSE;
+    return false;
 
   /* Modified => will need to iterate relaxation again.  */
-  *again = TRUE;
+  *again = true;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 ip2k_relax_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
 			     asection *sec,
 			     Elf_Internal_Rela *irel,
-			     bfd_boolean *again,
+			     bool *again,
 			     struct misc *misc)
 {
   Elf_Internal_Rela *irelend = misc->irelbase + sec->reloc_count;
@@ -854,18 +853,18 @@ ip2k_relax_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
       if (ireltest >= irelend)
 	{
 	  _bfd_error_handler (_("ip2k relaxer: switch table without complete matching relocation information."));
-	  return FALSE;
+	  return false;
 	}
 
       if (ireltest->r_offset != addr)
 	{
 	  _bfd_error_handler (_("ip2k relaxer: switch table without complete matching relocation information."));
-	  return FALSE;
+	  return false;
 	}
 
       if (! ip2k_test_page_insn (abfd, sec, ireltest, misc))
 	/* Un-removable page insn => nothing can be done.  */
-	return TRUE;
+	return true;
 
       addr += 4;
       ireltest += 2;
@@ -877,30 +876,30 @@ ip2k_relax_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
       || (! IS_ADD_PCL_W_OPCODE (code + 2)))
     {
       _bfd_error_handler (_("ip2k relaxer: switch table header corrupt."));
-      return FALSE;
+      return false;
     }
 
   if (!ip2k_elf_relax_delete_bytes (abfd, sec, irel->r_offset - 4, 2))
-    return FALSE;
+    return false;
 
-  *again = TRUE;
+  *again = true;
 
   /* Delete all page instructions in table.  */
   while (irel < ireltest)
     {
       if (!ip2k_delete_page_insn (abfd, sec, irel, again, misc))
-	return FALSE;
+	return false;
       irel += 2;
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 ip2k_relax_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 			     asection *sec,
 			     Elf_Internal_Rela *irel,
-			     bfd_boolean *again,
+			     bool *again,
 			     struct misc *misc)
 {
   Elf_Internal_Rela *irelend = misc->irelbase + sec->reloc_count;
@@ -927,18 +926,18 @@ ip2k_relax_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
       if (ireltest >= irelend)
 	{
 	  _bfd_error_handler (_("ip2k relaxer: switch table without complete matching relocation information."));
-	  return FALSE;
+	  return false;
 	}
 
       if (ireltest->r_offset != addr)
 	{
 	  _bfd_error_handler (_("ip2k relaxer: switch table without complete matching relocation information."));
-	  return FALSE;
+	  return false;
 	}
 
       if (!ip2k_test_page_insn (abfd, sec, ireltest, misc))
 	/* Un-removable page insn => nothing can be done.  */
-	return TRUE;
+	return true;
 
       addr += 4;
       ireltest += 2;
@@ -960,32 +959,32 @@ ip2k_relax_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
       || (!IS_INC_1SP_OPCODE (code + 10)))
     {
       _bfd_error_handler (_("ip2k relaxer: switch table header corrupt."));
-      return FALSE;
+      return false;
     }
 
   /* Delete first 3 opcodes.  */
   if (!ip2k_elf_relax_delete_bytes (abfd, sec, addr + 0, 6))
-    return FALSE;
+    return false;
 
-  *again = TRUE;
+  *again = true;
 
   /* Delete all page instructions in table.  */
   while (irel < ireltest)
     {
       if (!ip2k_delete_page_insn (abfd, sec, irel, again, misc))
-	return FALSE;
+	return false;
       irel += 2;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This function handles relaxation of a section in a specific page.  */
 
-static bfd_boolean
+static bool
 ip2k_elf_relax_section_page (bfd *abfd,
 			     asection *sec,
-			     bfd_boolean *again,
+			     bool *again,
 			     struct misc *misc,
 			     unsigned long page_start,
 			     unsigned long page_end)
@@ -1010,7 +1009,7 @@ ip2k_elf_relax_section_page (bfd *abfd,
 
       if (BASEADDR (sec) + irel->r_offset > page_end)
 	/* Flow beyond end of page => nothing more to do for this page.  */
-	return TRUE;
+	return true;
 
       /* Detect switch tables.  */
       switch_table_128 = ip2k_is_switch_table_128 (abfd, sec, irel->r_offset, misc->contents);
@@ -1023,7 +1022,7 @@ ip2k_elf_relax_section_page (bfd *abfd,
       if (switch_table_128 == 0)
 	{
 	  if (!ip2k_relax_switch_table_128 (abfd, sec, irel, again, misc))
-	    return FALSE;
+	    return false;
 
 	  continue;
 	}
@@ -1031,7 +1030,7 @@ ip2k_elf_relax_section_page (bfd *abfd,
       if (switch_table_256 == 0)
 	{
 	  if (!ip2k_relax_switch_table_256 (abfd, sec, irel, again, misc))
-	    return FALSE;
+	    return false;
 
 	  continue;
 	}
@@ -1040,13 +1039,13 @@ ip2k_elf_relax_section_page (bfd *abfd,
       if (ip2k_test_page_insn (abfd, sec, irel, misc))
 	{
 	  if (!ip2k_delete_page_insn (abfd, sec, irel, again, misc))
-	    return FALSE;
+	    return false;
 
 	  continue;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This function handles relaxing for the ip2k.
@@ -1059,11 +1058,11 @@ ip2k_elf_relax_section_page (bfd *abfd,
    Processing the pages one at a time from the lowest page allows a removal
    only policy to be used - pages can be removed but are never reinserted.  */
 
-static bfd_boolean
+static bool
 ip2k_elf_relax_section (bfd *abfd,
 			asection *sec,
 			struct bfd_link_info *link_info,
-			bfd_boolean *again)
+			bool *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *internal_relocs;
@@ -1074,23 +1073,23 @@ ip2k_elf_relax_section (bfd *abfd,
   static unsigned long page_start = 0;
   static unsigned long page_end = 0;
   static unsigned int pass = 0;
-  static bfd_boolean new_pass = FALSE;
-  static bfd_boolean changed = FALSE;
+  static bool new_pass = false;
+  static bool changed = false;
   struct misc misc;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   if (first_section == NULL)
     {
-      ip2k_relaxed = TRUE;
+      ip2k_relaxed = true;
       first_section = sec;
     }
 
   if (first_section == sec)
     {
       pass++;
-      new_pass = TRUE;
+      new_pass = true;
     }
 
   /* We don't have to do anything for a relocatable link,
@@ -1100,7 +1099,7 @@ ip2k_elf_relax_section (bfd *abfd,
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -1150,8 +1149,8 @@ ip2k_elf_relax_section (bfd *abfd,
       if (new_pass)
 	{
 	  pass = 1;
-	  new_pass = FALSE;
-	  changed = TRUE; /* Pre-initialize to break out of pass 1.  */
+	  new_pass = false;
+	  changed = true; /* Pre-initialize to break out of pass 1.  */
 	  search_addr = 0xFFFFFFFF;
 	}
 
@@ -1164,15 +1163,15 @@ ip2k_elf_relax_section (bfd *abfd,
 	    search_addr = BASEADDR (sec);
 
 	  /* Found a page => more work to do.  */
-	  *again = TRUE;
+	  *again = true;
 	}
     }
   else
     {
       if (new_pass)
 	{
-	  new_pass = FALSE;
-	  changed = FALSE;
+	  new_pass = false;
+	  changed = false;
 	  page_start = PAGENO (search_addr);
 	  page_end = page_start | 0x00003FFF;
 	}
@@ -1182,9 +1181,9 @@ ip2k_elf_relax_section (bfd *abfd,
 	  && (BASEADDR (sec) <= page_end))
 	{
 	  if (!ip2k_elf_relax_section_page (abfd, sec, &changed, &misc, page_start, page_end))
-	    return FALSE;
+	    return false;
 	}
-      *again = TRUE;
+      *again = true;
     }
 
   /* Perform some house keeping after relaxing the section.  */
@@ -1210,28 +1209,24 @@ ip2k_elf_relax_section (bfd *abfd,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return TRUE;
+  return true;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
-  return FALSE;
+  return false;
 }
 
 /* Set the howto pointer for a IP2K ELF reloc.  */
 
-static bfd_boolean
+static bool
 ip2k_info_to_howto_rela (bfd * abfd,
 			 arelent * cache_ptr,
 			 Elf_Internal_Rela * dst)
@@ -1245,10 +1240,10 @@ ip2k_info_to_howto_rela (bfd * abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = & ip2k_elf_howto_table [r_type];
-  return TRUE;
+  return true;
 }
 
 /* Perform a single relocation.
@@ -1389,7 +1384,7 @@ ip2k_final_link_relocate (reloc_howto_type *  howto,
    section, which means that the addend must be adjusted
    accordingly.  */
 
-static bfd_boolean
+static int
 ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 			   struct bfd_link_info *info,
 			   bfd *input_bfd,
@@ -1439,8 +1434,8 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
-	  bfd_boolean unresolved_reloc;
+	  bool warned, ignored;
+	  bool unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -1475,7 +1470,7 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -1504,7 +1499,7 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 #define TARGET_BIG_SYM	 ip2k_elf32_vec

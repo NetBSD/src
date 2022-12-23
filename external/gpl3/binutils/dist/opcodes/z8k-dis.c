@@ -1,5 +1,5 @@
 /* Disassemble z8000 code.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -147,7 +147,7 @@ print_insn_z8k (bfd_vma addr, disassemble_info *info, int is_segmented)
 {
   instr_data_s instr_data;
 
-  info->private_data = (PTR) &instr_data;
+  info->private_data = &instr_data;
   instr_data.max_fetched = 0;
   instr_data.insn_start = addr;
   if (OPCODES_SIGSETJMP (instr_data.bailout) != 0)

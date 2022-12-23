@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -118,7 +118,7 @@ get_cie_info (struct cie_info *info)
 
   /* First make sure that the CIE Identifier Tag is 0/-1.  */
 
-  if (strncmp (segment_name (now_seg), ".debug_frame", 12) == 0)
+  if (startswith (segment_name (now_seg), ".debug_frame"))
     CIE_id = (char)0xff;
   else
     CIE_id = 0;
@@ -283,10 +283,10 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 #endif
 
   /* Select the proper section data.  */
-  if (strncmp (segment_name (now_seg), ".eh_frame", 9) == 0
+  if (startswith (segment_name (now_seg), ".eh_frame")
       && segment_name (now_seg)[9] != '_')
     d = &eh_frame_data;
-  else if (strncmp (segment_name (now_seg), ".debug_frame", 12) == 0)
+  else if (startswith (segment_name (now_seg), ".debug_frame"))
     d = &debug_frame_data;
   else
     return 0;

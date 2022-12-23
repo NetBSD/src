@@ -1,5 +1,5 @@
 /* a.out object file format
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -113,31 +113,39 @@ obj_aout_frob_symbol (symbolS *sym, int *punt ATTRIBUTE_UNUSED)
 	    S_GET_NAME (sym));
 }
 
+/* Relocation processing may require knowing the VMAs of the sections.
+   Writing to a section will cause the BFD back end to compute the
+   VMAs.  This function also ensures that file size is large enough
+   to cover a_text and a_data should text or data be the last section
+   in the file.  */
+
 void
 obj_aout_frob_file_before_fix (void)
 {
-  /* Relocation processing may require knowing the VMAs of the sections.
-     Since writing to a section will cause the BFD back end to compute the
-     VMAs, fake it out here....
-     Writing to the end of the section ensures the file contents
-     extend to cover the entire aligned size.  We possibly won't know
-     the aligned size until after VMAs and sizes are set on the first
-     bfd_set_section_contents call, so it might be necessary to repeat.  */
-  asection *sec = NULL;
-  if (data_section->size != 0)
-    sec = data_section;
-  else if (text_section->size != 0)
-    sec = text_section;
-  if (sec)
+  asection *sec;
+  bfd_vma *sizep = NULL;
+  if ((sec = data_section)->size != 0)
+    sizep = &exec_hdr (stdoutput)->a_data;
+  else if ((sec = text_section)->size != 0)
+    sizep = &exec_hdr (stdoutput)->a_text;
+  if (sizep)
     {
-      bfd_size_type size;
-      do
+      bfd_size_type size = sec->size;
+      bfd_byte b = 0;
+
+      gas_assert (bfd_set_section_contents (stdoutput, sec, &b, size - 1, 1));
+
+      /* We don't know the aligned size until after VMAs and sizes are
+	 set on the bfd_set_section_contents call.  If that size is
+	 larger than the section then write again to ensure the file
+	 contents extend to cover the aligned size.  */
+      if (*sizep > size)
 	{
-	  bfd_byte b = 0;
-	  size = sec->size;
-	  gas_assert (bfd_set_section_contents (stdoutput, sec, &b,
-						size - 1, (bfd_size_type) 1));
-	} while (size != sec->size);
+	  file_ptr pos = sec->filepos + *sizep;
+
+	  gas_assert (bfd_seek (stdoutput, pos - 1, SEEK_SET) == 0
+		      && bfd_bwrite (&b, 1, stdoutput) == 1);
+	}
     }
 }
 
@@ -202,9 +210,9 @@ obj_aout_type (int ignore ATTRIBUTE_UNUSED)
       if (*input_line_pointer == '@')
 	{
 	  ++input_line_pointer;
-	  if (strncmp (input_line_pointer, "object", 6) == 0)
+	  if (startswith (input_line_pointer, "object"))
 	    S_SET_OTHER (sym, 1);
-	  else if (strncmp (input_line_pointer, "function", 8) == 0)
+	  else if (startswith (input_line_pointer, "function"))
 	    S_SET_OTHER (sym, 2);
 	}
     }

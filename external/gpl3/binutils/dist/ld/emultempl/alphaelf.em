@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -28,9 +28,9 @@ fragment <<EOF
 #include "elf/alpha.h"
 #include "elf-bfd.h"
 
-static bfd_boolean limit_32bit;
+static bool limit_32bit;
 
-extern bfd_boolean elf64_alpha_use_secureplt;
+extern bool elf64_alpha_use_secureplt;
 
 
 /* Set the start address as in the Tru64 ld.  */
@@ -138,10 +138,10 @@ PARSE_AND_LIST_ARGS_CASES='
       limit_32bit = 1;
       break;
     case OPTION_SECUREPLT:
-      elf64_alpha_use_secureplt = TRUE;
+      elf64_alpha_use_secureplt = true;
       break;
     case OPTION_NO_SECUREPLT:
-      elf64_alpha_use_secureplt = FALSE;
+      elf64_alpha_use_secureplt = false;
       break;
 '
 

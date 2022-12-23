@@ -1,5 +1,5 @@
 /* windint.h -- internal header file for windres program.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Kai Tietz, Onevision.
 
    This file is part of GNU Binutils.
@@ -1063,7 +1063,7 @@ struct __attribute__ ((__packed__)) bin_toolbar
 };
 #define BIN_TOOLBAR_SIZE 12
 
-extern int target_is_bigendian;
+extern bool target_is_bigendian;
 
 typedef struct windres_bfd
 {

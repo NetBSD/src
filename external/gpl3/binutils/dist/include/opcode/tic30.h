@@ -1,5 +1,5 @@
 /* tic30.h -- Header file for TI TMS320C30 opcode table
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of GDB, GAS, and the GNU binutils.

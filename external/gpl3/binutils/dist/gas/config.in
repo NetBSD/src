@@ -16,16 +16,8 @@
 /* assert broken? */
 #undef BROKEN_ASSERT
 
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-#undef CRAY_STACKSEG_END
-
 /* Compiling cross-assembler? */
 #undef CROSS_COMPILE
-
-/* Define to 1 if using `alloca.c'. */
-#undef C_ALLOCA
 
 /* Default architecture. */
 #undef DEFAULT_ARCH
@@ -53,8 +45,17 @@
 /* Define to 1 if you want to fix Loongson3 LLSC Errata by default. */
 #undef DEFAULT_MIPS_FIX_LOONGSON3_LLSC
 
+/* Define default value for RISC-V -march. */
+#undef DEFAULT_RISCV_ARCH_WITH_EXT
+
 /* Define to 1 if you want to generate RISC-V arch attribute by default. */
 #undef DEFAULT_RISCV_ATTR
+
+/* Define default value for RISC-V -misa-spec. */
+#undef DEFAULT_RISCV_ISA_SPEC
+
+/* Define default value for RISC-V -mpriv-spec */
+#undef DEFAULT_RISCV_PRIV_SPEC
 
 /* Define to 1 if you want to generate GNU x86 used ISA and feature properties
    by default. */
@@ -70,57 +71,23 @@
    language is requested. */
 #undef ENABLE_NLS
 
-/* Define to 1 if you have `alloca', as a function or macro. */
-#undef HAVE_ALLOCA
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-#undef HAVE_ALLOCA_H
-
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_ASPRINTF
 
-/* Define to 1 if you have the declaration of `free', and to 0 if you don't.
-   */
-#undef HAVE_DECL_FREE
-
-/* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
-   */
-#undef HAVE_DECL_GETENV
-
 /* Is the prototype for getopt in <unistd.h> in the expected format? */
 #undef HAVE_DECL_GETOPT
-
-/* Define to 1 if you have the declaration of `malloc', and to 0 if you don't.
-   */
-#undef HAVE_DECL_MALLOC
 
 /* Define to 1 if you have the declaration of `mempcpy', and to 0 if you
    don't. */
 #undef HAVE_DECL_MEMPCPY
 
-/* Define to 1 if you have the declaration of `realloc', and to 0 if you
-   don't. */
-#undef HAVE_DECL_REALLOC
-
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
 #undef HAVE_DECL_STPCPY
 
-/* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
-   */
-#undef HAVE_DECL_STRSTR
-
-/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_VSNPRINTF
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the <errno.h> header file. */
-#undef HAVE_ERRNO_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -128,23 +95,8 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
-
-/* Define to 1 if you have the <locale.h> header file. */
-#undef HAVE_LOCALE_H
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `remove' function. */
-#undef HAVE_REMOVE
-
-/* Define to 1 if you have the `sbrk' function. */
-#undef HAVE_SBRK
-
-/* Define to 1 if you have the `setlocale' function. */
-#undef HAVE_SETLOCALE
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -173,17 +125,11 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <time.h> header file. */
-#undef HAVE_TIME_H
-
 /* Define if <time.h> has struct tm.tm_gmtoff. */
 #undef HAVE_TM_GMTOFF
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the `unlink' function. */
-#undef HAVE_UNLINK
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
@@ -234,23 +180,8 @@
 /* Define if environ is not declared in system header files. */
 #undef NEED_DECLARATION_ENVIRON
 
-/* Define if errno is not declared in system header files. */
-#undef NEED_DECLARATION_ERRNO
-
 /* Define if ffs is not declared in system header files. */
 #undef NEED_DECLARATION_FFS
-
-/* Define if free is not declared in system header files. */
-#undef NEED_DECLARATION_FREE
-
-/* Define if malloc is not declared in system header files. */
-#undef NEED_DECLARATION_MALLOC
-
-/* Define if sbrk is not declared in system header files. */
-#undef NEED_DECLARATION_SBRK
-
-/* Define if strstr is not declared in system header files. */
-#undef NEED_DECLARATION_STRSTR
 
 /* a.out support? */
 #undef OBJ_MAYBE_AOUT
@@ -291,22 +222,11 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at runtime.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
-#undef STACK_DIRECTION
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Using strict COFF? */
 #undef STRICTCOFF
-
-/* Define if you can safely include both <string.h> and <strings.h>. */
-#undef STRING_WITH_STRINGS
 
 /* Target alias. */
 #undef TARGET_ALIAS
@@ -405,12 +325,3 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
-
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
-#endif
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t

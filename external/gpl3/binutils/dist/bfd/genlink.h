@@ -1,5 +1,5 @@
 /* genlink.h -- interface to the BFD generic linker
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -43,7 +43,7 @@ struct generic_link_hash_entry
 {
   struct bfd_link_hash_entry root;
   /* Whether this symbol has been written out.  */
-  bfd_boolean written;
+  bool written;
   /* Symbol from input BFD.  */
   asymbol *sym;
 };
@@ -66,7 +66,7 @@ struct generic_link_hash_table
 #define _bfd_generic_link_hash_traverse(table, func, info)		\
   (bfd_link_hash_traverse						\
    (&(table)->root,							\
-    (bfd_boolean (*) (struct bfd_link_hash_entry *, void *)) (func),	\
+    (bool (*) (struct bfd_link_hash_entry *, void *)) (func),		\
     (info)))
 
 /* Get the generic link hash table from the info structure.  This is
@@ -83,7 +83,7 @@ struct generic_link_hash_table
 
 /* Add the symbols of input_bfd to the symbols being built for
    output_bfd.  */
-extern bfd_boolean _bfd_generic_link_output_symbols
+extern bool _bfd_generic_link_output_symbols
   (bfd *, bfd *, struct bfd_link_info *, size_t *);
 
 /* This structure is used to pass information to
@@ -100,7 +100,7 @@ struct generic_write_global_symbol_info
 /* Write out a single global symbol.  This is expected to be called
    via _bfd_generic_link_hash_traverse.  The second argument must
    actually be a struct generic_write_global_symbol_info *.  */
-extern bfd_boolean _bfd_generic_link_write_global_symbol
+extern bool _bfd_generic_link_write_global_symbol
   (struct generic_link_hash_entry *, void *);
 
 /* Generic link hash table entry creation routine.  */

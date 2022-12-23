@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2022 Free Software Foundation, Inc.
 # Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 #
 # This file is part of the GNU Binutils.
@@ -112,12 +112,12 @@ cr16elf_after_parse (void)
      option.
      This is to emulate the CRTools' method of keeping variables
      of different alignment in separate sections.  */
-  config.sort_common = TRUE;
+  config.sort_common = true;
 
   /* Don't create a demand-paged executable, since this feature isn't
      meaninful in CR16 embedded systems. Moreover, when magic_demand_paged
      is true the link sometimes fails.  */
-  config.magic_demand_paged = FALSE;
+  config.magic_demand_paged = false;
 
   ldelf_after_parse ();
 }

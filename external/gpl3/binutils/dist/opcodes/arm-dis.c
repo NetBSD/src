@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -38,11 +38,6 @@
 #include "elf/internal.h"
 #include "elf/arm.h"
 #include "mach-o.h"
-
-/* FIXME: Belongs in global header.  */
-#ifndef strneq
-#define strneq(a,b,n)	(strncmp ((a), (b), (n)) == 0)
-#endif
 
 /* Cached mapping symbol state.  */
 enum map_type
@@ -355,6 +350,16 @@ struct opcode32
   const char *  assembler;	/* How to disassemble this insn.  */
 };
 
+struct cdeopcode32
+{
+  arm_feature_set arch;		/* Architecture defining this insn.  */
+  uint8_t coproc_shift;		/* coproc is this far into op.  */
+  uint16_t coproc_mask;		/* Length of coproc field in op.  */
+  unsigned long value;		/* If arch is 0 then value is a sentinel.  */
+  unsigned long mask;		/* Recognise insn if (op & mask) == value.  */
+  const char *  assembler;	/* How to disassemble this insn.  */
+};
+
 /* MVE opcodes.  */
 
 struct mopcode32
@@ -459,6 +464,75 @@ enum opcode_sentinel_enum
 #define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
 
 /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
+
+/* print_insn_cde recognizes the following format control codes:
+
+   %%			%
+
+   %a			print 'a' iff bit 28 is 1
+   %p			print bits 8-10 as coprocessor
+   %<bitfield>d		print as decimal
+   %<bitfield>r		print as an ARM register
+   %<bitfield>n		print as an ARM register but r15 is APSR_nzcv
+   %<bitfield>T		print as an ARM register + 1
+   %<bitfield>R		as %r but r13 is UNPREDICTABLE
+   %<bitfield>S		as %r but rX where X > 10 is UNPREDICTABLE
+   %j			print immediate taken from bits (16..21,7,0..5)
+   %k			print immediate taken from bits (20..21,7,0..5).
+   %l			print immediate taken from bits (20..22,7,4..5).  */
+
+/* At the moment there is only one valid position for the coprocessor number,
+   and hence that's encoded in the macro below.  */
+#define CDE_OPCODE(ARCH, VALUE, MASK, ASM) \
+  { ARCH, 8, 7, VALUE, MASK, ASM }
+static const struct cdeopcode32 cde_opcodes[] =
+{
+  /* Custom Datapath Extension instructions.  */
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee000000, 0xefc00840,
+	      "cx1%a\t%p, %12-15n, #%0-5,7,16-21d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee000040, 0xefc00840,
+	      "cx1d%a\t%p, %12-15S, %12-15T, #%0-5,7,16-21d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee400000, 0xefc00840,
+	      "cx2%a\t%p, %12-15n, %16-19n, #%0-5,7,20-21d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee400040, 0xefc00840,
+	      "cx2d%a\t%p, %12-15S, %12-15T, %16-19n, #%0-5,7,20-21d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee800000, 0xef800840,
+	      "cx3%a\t%p, %0-3n, %16-19n, %12-15n, #%4-5,7,20-22d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xee800040, 0xef800840,
+	     "cx3d%a\t%p, %0-3S, %0-3T, %16-19n, %12-15n, #%4-5,7,20-22d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec200000, 0xeeb00840,
+	      "vcx1%a\t%p, %12-15,22V, #%0-5,7,16-19d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec200040, 0xeeb00840,
+	      "vcx1%a\t%p, %12-15,22V, #%0-5,7,16-19,24d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec300000, 0xeeb00840,
+	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, #%4,7,16-19d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec300040, 0xeeb00840,
+	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, #%4,7,16-19,24d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec800000, 0xee800840,
+	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, #%4,20-21d"),
+  CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
+	      0xec800040, 0xee800840,
+	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, #%4,20-21,24d"),
+
+  CDE_OPCODE (ARM_FEATURE_CORE_LOW (0), 0, 0, 0)
+
+};
 
 static const struct sopcode32 coprocessor_opcodes[] =
 {
@@ -1415,17 +1489,17 @@ static const struct opcode32 neon_opcodes[] =
 
   /* Data transfer between ARM and NEON registers.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e800b10, 0x1ff00f70, "vdup%c.32\t%16-19,7D, %12-15r"},
+    0x0e800b10, 0x0ff00f70, "vdup%c.32\t%16-19,7D, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e800b30, 0x1ff00f70, "vdup%c.16\t%16-19,7D, %12-15r"},
+    0x0e800b30, 0x0ff00f70, "vdup%c.16\t%16-19,7D, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ea00b10, 0x1ff00f70, "vdup%c.32\t%16-19,7Q, %12-15r"},
+    0x0ea00b10, 0x0ff00f70, "vdup%c.32\t%16-19,7Q, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ea00b30, 0x1ff00f70, "vdup%c.16\t%16-19,7Q, %12-15r"},
+    0x0ea00b30, 0x0ff00f70, "vdup%c.16\t%16-19,7Q, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ec00b10, 0x1ff00f70, "vdup%c.8\t%16-19,7D, %12-15r"},
+    0x0ec00b10, 0x0ff00f70, "vdup%c.8\t%16-19,7D, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ee00b10, 0x1ff00f70, "vdup%c.8\t%16-19,7Q, %12-15r"},
+    0x0ee00b10, 0x0ff00f70, "vdup%c.8\t%16-19,7Q, %12-15r"},
 
   /* Move data element to all lanes.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
@@ -2880,7 +2954,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMOV2_GP_TO_VEC_LANE,
    0xec100f10, 0xffb01ff0,
-   "vmov%c\t%13-15,22Q[2], %13-15,22Q[0], %0-3r, %16-19r"},
+   "vmov%c\t%13-15,22Q[3], %13-15,22Q[1], %0-3r, %16-19r"},
 
   /* Vector VMOV Vector lane to gpr.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
@@ -3605,6 +3679,10 @@ static const struct opcode32 arm_opcodes[] =
   /* V8.2 RAS extension instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_RAS),
     0xe320f010, 0xffffffff, "esb"},
+
+  /* V8-R instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8R),
+    0xf57ff04c, 0xffffffff, "dfb"},
 
   /* V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
@@ -4574,6 +4652,23 @@ static const struct opcode16 thumb_opcodes[] =
    makes heavy use of special-case bit patterns.  */
 static const struct opcode32 thumb32_opcodes[] =
 {
+  /* Arm v8.1-M Mainline Pointer Authentication and Branch Target
+     Identification Extension.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   0xf3af802d, 0xffffffff, "aut\tr12, lr, sp"},
+  {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
+   0xfb500f00, 0xfff00ff0, "autg%c\t%12-15r, %16-19r, %0-3r"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   0xf3af800f, 0xffffffff, "bti"},
+  {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
+   0xfb500f10, 0xfff00ff0, "bxaut%c\t%12-15r, %16-19r, %0-3r"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   0xf3af801d, 0xffffffff, "pac\tr12, lr, sp"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   0xf3af800d, 0xffffffff, "pacbti\tr12, lr, sp"},
+  {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
+   0xfb60f000, 0xfff0f0f0, "pacg%c\t%8-11r, %16-19r, %0-3r"},
+
   /* Armv8.1-M Mainline and Armv8.1-M Mainline Security Extensions
      instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
@@ -4655,6 +4750,10 @@ static const struct opcode32 thumb32_opcodes[] =
     0xe8d00fef, 0xfff00fff, "ldaex%c\t%12-15r, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
     0xe8d000ff, 0xfff000ff, "ldaexd%c\t%12-15r, %8-11r, [%16-19R]"},
+
+  /* V8-R instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8R),
+    0xf3bf8f4c, 0xffffffff, "dfb%c"},
 
   /* CRC32 instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
@@ -5115,7 +5214,8 @@ static const arm_regname regnames[] =
   { "reg-names-atpcs", N_("Select register names used in the ATPCS"),
     { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "v4", "v5", "v6", "v7",  "v8",  "IP",  "SP",  "LR",  "PC" }},
   { "reg-names-special-atpcs", N_("Select special register names used in the ATPCS"),
-    { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "WR", "v5", "SB", "SL",  "FP",  "IP",  "SP",  "LR",  "PC" }}
+    { "a1", "a2", "a3", "a4", "v1", "v2", "v3", "WR", "v5", "SB", "SL",  "FP",  "IP",  "SP",  "LR",  "PC" }},
+  { "coproc<N>=(cde|generic)", N_("Enable CDE extensions for coprocessor N space"), { NULL } }
 };
 
 static const char *const iwmmxt_wwnames[] =
@@ -5164,7 +5264,7 @@ enum vpt_pred_state
 struct vpt_block
 {
   /* Are we in a vpt block.  */
-  bfd_boolean in_vpt_block;
+  bool in_vpt_block;
 
   /* Next predicate state if in vpt block.  */
   enum vpt_pred_state next_pred_state;
@@ -5181,7 +5281,7 @@ struct vpt_block
 
 static struct vpt_block vpt_block_state =
 {
-  FALSE,
+  false,
   PRED_NONE,
   0,
   0,
@@ -5194,7 +5294,8 @@ static unsigned int regname_selected = 1;
 #define NUM_ARM_OPTIONS   ARRAY_SIZE (regnames)
 #define arm_regnames      regnames[regname_selected].reg_names
 
-static bfd_boolean force_thumb = FALSE;
+static bool force_thumb = false;
+static uint16_t cde_coprocs = 0;
 
 /* Current IT instruction state.  This contains the same state as the IT
    bits in the CPSR.  */
@@ -5245,7 +5346,7 @@ num_instructions_vpt_block (long given)
 static void
 mark_outside_vpt_block (void)
 {
-  vpt_block_state.in_vpt_block = FALSE;
+  vpt_block_state.in_vpt_block = false;
   vpt_block_state.next_pred_state = PRED_NONE;
   vpt_block_state.predicate_mask = 0;
   vpt_block_state.current_insn_num = 0;
@@ -5255,7 +5356,7 @@ mark_outside_vpt_block (void)
 static void
 mark_inside_vpt_block (long given)
 {
-  vpt_block_state.in_vpt_block = TRUE;
+  vpt_block_state.in_vpt_block = true;
   vpt_block_state.next_pred_state = PRED_THEN;
   vpt_block_state.predicate_mask = mve_extract_pred_mask (given);
   vpt_block_state.current_insn_num = 0;
@@ -5359,7 +5460,7 @@ arm_decode_bitfield (const char *ptr,
 
 static void
 arm_decode_shift (long given, fprintf_ftype func, void *stream,
-		  bfd_boolean print_shift)
+		  bool print_shift)
 {
   func (stream, "%s", arm_regnames[given & 0xf]);
 
@@ -5398,7 +5499,7 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
 
 /* Return TRUE if the MATCHED_INSN can be inside an IT block.  */
 
-static bfd_boolean
+static bool
 is_mve_okay_in_it (enum mve_instructions matched_insn)
 {
   switch (matched_insn)
@@ -5424,13 +5525,13 @@ is_mve_okay_in_it (enum mve_instructions matched_insn)
     case MVE_SRSHR:
     case MVE_SQSHLL:
     case MVE_SQSHL:
-      return TRUE;
+      return true;
     default:
-      return FALSE;
+      return false;
     }
 }
 
-static bfd_boolean
+static bool
 is_mve_architecture (struct disassemble_info *info)
 {
   struct arm_private_data *private_data = info->private_data;
@@ -5441,18 +5542,18 @@ is_mve_architecture (struct disassemble_info *info)
 
   if (ARM_CPU_HAS_FEATURE (arm_ext_v8_1m_main, allowed_arches)
       && !ARM_CPU_IS_ANY (allowed_arches))
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
-static bfd_boolean
+static bool
 is_vpt_instruction (long given)
 {
 
   /* If mkh:mkl is '0000' then its not a vpt/vpst instruction.  */
   if ((given & 0x0040e000) == 0)
-    return FALSE;
+    return false;
 
   /* VPT floating point T1 variant.  */
   if (((given & 0xefb10f50) == 0xee310f00 && ((given & 0x1001) != 0x1))
@@ -5473,9 +5574,9 @@ is_vpt_instruction (long given)
       || ((given & 0xff811f50) == 0xfe011f40)
   /* VPST vector T variant.  */
       || ((given & 0xffbf1fff) == 0xfe310f4d))
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 /* Decode a bitfield from opcode GIVEN, with starting bitfield = START
@@ -5520,7 +5621,7 @@ arm_decode_field_multiple (unsigned long given, unsigned int start,
    This helps us decode instructions that change mnemonic depending on specific
    operand values/encodings.  */
 
-static bfd_boolean
+static bool
 is_mve_encoding_conflict (unsigned long given,
 			  enum mve_instructions matched_insn)
 {
@@ -5528,24 +5629,24 @@ is_mve_encoding_conflict (unsigned long given,
     {
     case MVE_VPST:
       if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VPT_FP_T1:
       if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
-	return TRUE;
+	return true;
       if ((arm_decode_field (given, 12, 12) == 0)
 	  && (arm_decode_field (given, 0, 0) == 1))
-	return TRUE;
-      return FALSE;
+	return true;
+      return false;
 
     case MVE_VPT_FP_T2:
       if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
-	return TRUE;
+	return true;
       if (arm_decode_field (given, 0, 3) == 0xd)
-	return TRUE;
-      return FALSE;
+	return true;
+      return false;
 
     case MVE_VPT_VEC_T1:
     case MVE_VPT_VEC_T2:
@@ -5554,23 +5655,23 @@ is_mve_encoding_conflict (unsigned long given,
     case MVE_VPT_VEC_T5:
     case MVE_VPT_VEC_T6:
       if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
-	return TRUE;
+	return true;
       if (arm_decode_field (given, 20, 21) == 3)
-	return TRUE;
-      return FALSE;
+	return true;
+      return false;
 
     case MVE_VCMP_FP_T1:
       if ((arm_decode_field (given, 12, 12) == 0)
 	  && (arm_decode_field (given, 0, 0) == 1))
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VCMP_FP_T2:
       if (arm_decode_field (given, 0, 3) == 0xd)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VQADD_T2:
     case MVE_VQSUB_T2:
@@ -5613,41 +5714,44 @@ is_mve_encoding_conflict (unsigned long given,
     case MVE_VCMP_VEC_T5:
     case MVE_VCMP_VEC_T6:
       if (arm_decode_field (given, 20, 21) == 3)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VLD2:
     case MVE_VLD4:
     case MVE_VST2:
     case MVE_VST4:
       if (arm_decode_field (given, 7, 8) == 3)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRB_T1:
     case MVE_VSTRH_T2:
       if ((arm_decode_field (given, 24, 24) == 0)
 	  && (arm_decode_field (given, 21, 21) == 0))
 	{
-	    return TRUE;
+	    return true;
 	}
       else if ((arm_decode_field (given, 7, 8) == 3))
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
+    case MVE_VLDRB_T1:
+    case MVE_VLDRH_T2:
+    case MVE_VLDRW_T7:
     case MVE_VSTRB_T5:
     case MVE_VSTRH_T6:
     case MVE_VSTRW_T7:
       if ((arm_decode_field (given, 24, 24) == 0)
 	  && (arm_decode_field (given, 21, 21) == 0))
 	{
-	    return TRUE;
+	    return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VCVT_FP_FIX_VEC:
       return (arm_decode_field (given, 16, 21) & 0x38) == 0;
@@ -5658,11 +5762,11 @@ is_mve_encoding_conflict (unsigned long given,
 	unsigned long cmode = arm_decode_field (given, 8, 11);
 
 	if ((cmode & 1) == 0)
-	  return TRUE;
+	  return true;
 	else if ((cmode & 0xc) == 0xc)
-	  return TRUE;
+	  return true;
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VMVN_IMM:
@@ -5670,29 +5774,29 @@ is_mve_encoding_conflict (unsigned long given,
 	unsigned long cmode = arm_decode_field (given, 8, 11);
 
 	if (cmode == 0xe)
-	  return TRUE;
+	  return true;
 	else if ((cmode & 0x9) == 1)
-	  return TRUE;
+	  return true;
 	else if ((cmode & 0xd) == 9)
-	  return TRUE;
+	  return true;
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VMOV_IMM_TO_VEC:
       if ((arm_decode_field (given, 5, 5) == 1)
 	  && (arm_decode_field (given, 8, 11) != 0xe))
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VMOVL:
       {
 	unsigned long size = arm_decode_field (given, 19, 20);
 	if ((size == 0) || (size == 3))
-	  return TRUE;
+	  return true;
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VMAXA:
@@ -5711,32 +5815,32 @@ is_mve_encoding_conflict (unsigned long given,
     case MVE_VQMOVUN:
     case MVE_VQMOVN:
       if (arm_decode_field (given, 18, 19) == 3)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VMLSLDAV:
     case MVE_VRMLSLDAVH:
     case MVE_VMLALDAV:
     case MVE_VADDLV:
       if (arm_decode_field (given, 20, 22) == 7)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VRMLALDAVH:
       if ((arm_decode_field (given, 20, 22) & 6) == 6)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VDWDUP:
     case MVE_VIWDUP:
       if ((arm_decode_field (given, 20, 21) == 3)
 	  || (arm_decode_field (given, 1, 3) == 7))
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
 
     case MVE_VSHLL_T1:
@@ -5745,12 +5849,12 @@ is_mve_encoding_conflict (unsigned long given,
 	  unsigned long sz = arm_decode_field (given, 19, 20);
 
 	  if ((sz == 1) || (sz == 2))
-	    return TRUE;
+	    return true;
 	  else
-	    return FALSE;
+	    return false;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VQSHL_T2:
     case MVE_VQSHLU_T3:
@@ -5760,15 +5864,15 @@ is_mve_encoding_conflict (unsigned long given,
     case MVE_VSLI:
     case MVE_VSRI:
       if (arm_decode_field (given, 19, 21) == 0)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_VCTP:
     if (arm_decode_field (given, 16, 19) == 0xf)
-      return TRUE;
+      return true;
     else
-      return FALSE;
+      return false;
 
     case MVE_ASRLI:
     case MVE_ASRL:
@@ -5782,9 +5886,9 @@ is_mve_encoding_conflict (unsigned long given,
     case MVE_UQSHLL:
     case MVE_URSHRL:
       if (arm_decode_field (given, 9, 11) == 0x7)
-	return TRUE;
+	return true;
       else
-	return FALSE;
+	return false;
 
     case MVE_CSINC:
     case MVE_CSINV:
@@ -5794,27 +5898,27 @@ is_mve_encoding_conflict (unsigned long given,
 	rn = arm_decode_field (given, 16, 19);
 	/* CSET/CSETM.  */
 	if (rm == 0xf && rn == 0xf)
-	  return TRUE;
+	  return true;
 	/* CINC/CINV.  */
 	else if (rn == rm && rn != 0xf)
-	  return TRUE;
+	  return true;
       }
     /* Fall through.  */
     case MVE_CSEL:
     case MVE_CSNEG:
       if (arm_decode_field (given, 0, 3) == 0xd)
-	return TRUE;
+	return true;
       /* CNEG.  */
       else if (matched_insn == MVE_CSNEG)
 	if (arm_decode_field (given, 0, 3) == arm_decode_field (given, 16, 19))
-	  return TRUE;
-      return FALSE;
+	  return true;
+      return false;
 
     default:
     case MVE_VADD_FP_T1:
     case MVE_VADD_FP_T2:
     case MVE_VADD_VEC_T1:
-      return FALSE;
+      return false;
 
     }
 }
@@ -5897,7 +6001,7 @@ print_mve_vld_str_addr (struct disassemble_info *info,
    Otherwise, return TRUE and set UNDEFINED_CODE to give a reason as to why
    this encoding is undefined.  */
 
-static bfd_boolean
+static bool
 is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 		  enum mve_undefined *undefined_code)
 {
@@ -5909,10 +6013,10 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field_multiple (given, 5, 5, 22, 22) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VQADD_T1:
     case MVE_VQSUB_T1:
@@ -5928,118 +6032,118 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 20, 21) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRB_T1:
       if (arm_decode_field (given, 7, 8) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRH_T2:
       if (arm_decode_field (given, 7, 8) <= 1)
 	{
 	  *undefined_code = UNDEF_SIZE_LE_1;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRB_T1:
       if ((arm_decode_field (given, 7, 8) == 0))
 	{
 	  *undefined_code = UNDEF_SIZE_0;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRH_T2:
       if ((arm_decode_field (given, 7, 8) <= 1))
 	{
 	  *undefined_code = UNDEF_SIZE_LE_1;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRB_GATHER_T1:
       if (arm_decode_field (given, 7, 8) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else if ((arm_decode_field (given, 28, 28) == 0)
 	       && (arm_decode_field (given, 7, 8) == 0))
 	{
 	  *undefined_code = UNDEF_NOT_UNS_SIZE_0;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRH_GATHER_T2:
       if (arm_decode_field (given, 7, 8) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else if ((arm_decode_field (given, 28, 28) == 0)
 	       && (arm_decode_field (given, 7, 8) == 1))
 	{
 	  *undefined_code = UNDEF_NOT_UNS_SIZE_1;
-	  return TRUE;
+	  return true;
 	}
       else if (arm_decode_field (given, 7, 8) == 0)
 	{
 	  *undefined_code = UNDEF_SIZE_0;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRW_GATHER_T3:
       if (arm_decode_field (given, 7, 8) != 2)
 	{
 	  *undefined_code = UNDEF_SIZE_NOT_2;
-	  return TRUE;
+	  return true;
 	}
       else if (arm_decode_field (given, 28, 28) == 0)
 	{
 	  *undefined_code = UNDEF_NOT_UNSIGNED;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VLDRD_GATHER_T4:
       if (arm_decode_field (given, 7, 8) != 3)
 	{
 	  *undefined_code = UNDEF_SIZE_NOT_3;
-	  return TRUE;
+	  return true;
 	}
       else if (arm_decode_field (given, 28, 28) == 0)
 	{
 	  *undefined_code = UNDEF_NOT_UNSIGNED;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRB_SCATTER_T1:
       if (arm_decode_field (given, 7, 8) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRH_SCATTER_T2:
       {
@@ -6047,34 +6151,34 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	if (size == 3)
 	  {
 	    *undefined_code = UNDEF_SIZE_3;
-	    return TRUE;
+	    return true;
 	  }
 	else if (size == 0)
 	  {
 	    *undefined_code = UNDEF_SIZE_0;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VSTRW_SCATTER_T3:
       if (arm_decode_field (given, 7, 8) != 2)
 	{
 	  *undefined_code = UNDEF_SIZE_NOT_2;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRD_SCATTER_T4:
       if (arm_decode_field (given, 7, 8) != 3)
 	{
 	  *undefined_code = UNDEF_SIZE_NOT_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VCVT_FP_FIX_VEC:
       {
@@ -6082,17 +6186,17 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	if ((imm6 & 0x20) == 0)
 	  {
 	    *undefined_code = UNDEF_VCVT_IMM6;
-	    return TRUE;
+	    return true;
 	  }
 
 	if ((arm_decode_field (given, 9, 9) == 0)
 	    && ((imm6 & 0x30) == 0x20))
 	  {
 	    *undefined_code = UNDEF_VCVT_FSI_IMM6;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VNEG_FP:
@@ -6104,15 +6208,15 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	if (size == 0)
 	  {
 	    *undefined_code = UNDEF_SIZE_0;
-	    return TRUE;
+	    return true;
 	  }
 	else if (size == 3)
 	  {
 	    *undefined_code = UNDEF_SIZE_3;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VMOV_VEC_LANE_TO_GP:
@@ -6126,23 +6230,23 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	    if ((op1 == 0) || (op1 == 1))
 	      {
 		*undefined_code = UNDEF_BAD_U_OP1_OP2;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 	else if (op2 == 2)
 	  {
 	    if ((op1 == 0) || (op1 == 1))
 	      {
 		*undefined_code = UNDEF_BAD_OP1_OP2;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VMOV_GP_TO_VEC_LANE:
@@ -6152,19 +6256,19 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	  if ((op1 == 0) || (op1 == 1))
 	    {
 	      *undefined_code = UNDEF_BAD_OP1_OP2;
-	      return TRUE;
+	      return true;
 	    }
 	  else
-	    return FALSE;
+	    return false;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VMOV_VEC_TO_VEC:
       if ((arm_decode_field (given, 5, 5) == 1)
 	  || (arm_decode_field (given, 22, 22) == 1))
-	  return TRUE;
-      return FALSE;
+	  return true;
+      return false;
 
     case MVE_VMOV_IMM_TO_VEC:
       if (arm_decode_field (given, 5, 5) == 0)
@@ -6174,23 +6278,23 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	if (((cmode & 9) == 1) || ((cmode & 5) == 1))
 	  {
 	    *undefined_code = UNDEF_OP_0_BAD_CMODE;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
       else
-	return FALSE;
+	return false;
 
     case MVE_VSHLL_T2:
     case MVE_VMOVN:
       if (arm_decode_field (given, 18, 19) == 2)
 	{
 	  *undefined_code = UNDEF_SIZE_2;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VRMLALDAVH:
     case MVE_VMLADAV_T1:
@@ -6200,10 +6304,10 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	  && (arm_decode_field (given, 12, 12) == 1))
 	{
 	  *undefined_code = UNDEF_XCHG_UNS;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VQSHRN:
     case MVE_VQSHRUN:
@@ -6212,13 +6316,13 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       {
 	unsigned long sz = arm_decode_field (given, 19, 20);
 	if (sz == 1)
-	  return FALSE;
+	  return false;
 	else if ((sz & 2) == 2)
-	  return FALSE;
+	  return false;
 	else
 	  {
 	    *undefined_code = UNDEF_SIZE;
-	    return TRUE;
+	    return true;
 	  }
       }
       break;
@@ -6233,15 +6337,15 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       {
 	unsigned long sz = arm_decode_field (given, 19, 21);
 	if ((sz & 7) == 1)
-	  return FALSE;
+	  return false;
 	else if ((sz & 6) == 2)
-	  return FALSE;
+	  return false;
 	else if ((sz & 4) == 4)
-	  return FALSE;
+	  return false;
 	else
 	  {
 	    *undefined_code = UNDEF_SIZE;
-	    return TRUE;
+	    return true;
 	  }
       }
 
@@ -6250,19 +6354,19 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 19, 20) == 0)
 	{
 	  *undefined_code = UNDEF_SIZE_0;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VABS_VEC:
 	if (arm_decode_field (given, 18, 19) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
 	else
-	  return FALSE;
+	  return false;
 
     case MVE_VQNEG:
     case MVE_VQABS:
@@ -6272,18 +6376,18 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 18, 19) == 3)
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VREV16:
       if (arm_decode_field (given, 18, 19) == 0)
-	return FALSE;
+	return false;
       else
 	{
 	  *undefined_code = UNDEF_SIZE_NOT_0;
-	  return TRUE;
+	  return true;
 	}
 
     case MVE_VREV32:
@@ -6292,23 +6396,23 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
 	if ((size & 2) == 2)
 	  {
 	    *undefined_code = UNDEF_SIZE_2;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VREV64:
       if (arm_decode_field (given, 18, 19) != 3)
-	return FALSE;
+	return false;
       else
 	{
 	  *undefined_code = UNDEF_SIZE_3;
-	  return TRUE;
+	  return true;
 	}
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -6316,7 +6420,7 @@ is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
    Otherwise, return TRUE and set UNPREDICTABLE_CODE to give a reason as to
    why this encoding is unpredictable.  */
 
-static bfd_boolean
+static bool
 is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 		      enum mve_unpredictable *unpredictable_code)
 {
@@ -6330,10 +6434,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	  && (arm_decode_field (given, 5, 5) == 1))
 	{
 	  *unpredictable_code = UNPRED_FCA_0_FCB_1;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VPT_VEC_T4:
     case MVE_VPT_VEC_T5:
@@ -6344,10 +6448,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 0, 3) == 0xd)
 	{
 	  *unpredictable_code = UNPRED_R13;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VDUP:
       {
@@ -6355,15 +6459,15 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (gpr == 0xd)
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if (gpr == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VQADD_T2:
@@ -6397,15 +6501,15 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (gpr == 0xd)
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if (gpr == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VLD2:
@@ -6416,22 +6520,22 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
 	  {
 	    *unpredictable_code = UNPRED_R13_AND_WB;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (rn == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (arm_decode_field_multiple (given, 13, 15, 22, 22) > 6)
 	  {
 	    *unpredictable_code = UNPRED_Q_GT_6;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VLD4:
@@ -6442,22 +6546,22 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
 	  {
 	    *unpredictable_code = UNPRED_R13_AND_WB;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (rn == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (arm_decode_field_multiple (given, 13, 15, 22, 22) > 4)
 	  {
 	    *unpredictable_code = UNPRED_Q_GT_4;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VLDRB_T5:
@@ -6472,22 +6576,22 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
 	  {
 	    *unpredictable_code = UNPRED_R13_AND_WB;
-	    return TRUE;
+	    return true;
 	  }
 	else if (rn == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VLDRB_GATHER_T1:
       if (arm_decode_field (given, 0, 0) == 1)
 	{
 	  *unpredictable_code = UNPRED_OS;
-	  return TRUE;
+	  return true;
 	}
 
       /*  fall through.  */
@@ -6502,16 +6606,16 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (qd == qm)
 	  {
 	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (arm_decode_field (given, 16, 19) == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VLDRW_GATHER_T5:
@@ -6523,25 +6627,25 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (qd == qm)
 	  {
 	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VSTRB_SCATTER_T1:
       if (arm_decode_field (given, 16, 19) == 0xf)
 	{
 	  *unpredictable_code = UNPRED_R15;
-	  return TRUE;
+	  return true;
 	}
       else if (arm_decode_field (given, 0, 0) == 1)
 	{
 	  *unpredictable_code = UNPRED_OS;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VSTRH_SCATTER_T2:
     case MVE_VSTRW_SCATTER_T3:
@@ -6549,10 +6653,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 16, 19) == 0xf)
 	{
 	  *unpredictable_code = UNPRED_R15;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VMOV2_VEC_LANE_TO_GP:
     case MVE_VMOV2_GP_TO_VEC_LANE:
@@ -6565,20 +6669,20 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((rt == 0xd) || (rt2 == 0xd))
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if ((rt == 0xf) || (rt2 == 0xf))
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
-	else if (rt == rt2)
+	else if (rt == rt2 && matched_insn != MVE_VMOV2_GP_TO_VEC_LANE)
 	  {
 	    *unpredictable_code = UNPRED_GP_REGS_EQUAL;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VMAXV:
@@ -6598,15 +6702,15 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (rda == 0xd)
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if (rda == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VMULL_INT:
@@ -6624,13 +6728,13 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	    if ((Qd == Qn) || (Qd == Qm))
 	      {
 		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_2;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VCMUL_FP:
@@ -6649,13 +6753,13 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	    if ((Qd == Qn) || (Qd == Qm))
 	      {
 		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VQDMULL_T2:
@@ -6664,12 +6768,12 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (gpr == 0xd)
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if (gpr == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
 	if (arm_decode_field (given, 28, 28) == 1)
@@ -6681,13 +6785,13 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	    if (Qd == Qn)
 	      {
 		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     case MVE_VMLSLDAV:
@@ -6697,20 +6801,20 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 20, 22) == 6)
 	{
 	  *unpredictable_code = UNPRED_R13;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VDWDUP:
     case MVE_VIWDUP:
       if (arm_decode_field (given, 1, 3) == 6)
 	{
 	  *unpredictable_code = UNPRED_R13;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VCADD_VEC:
     case MVE_VHCADD:
@@ -6720,10 +6824,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((Qd == Qm) && arm_decode_field (given, 20, 21) == 2)
 	  {
 	    *unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_2;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VCADD_FP:
@@ -6733,10 +6837,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if ((Qd == Qm) && arm_decode_field (given, 20, 20) == 1)
 	  {
 	    *unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_VCMLA_FP:
@@ -6754,13 +6858,13 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	    if ((Qda == Qn) || (Qda == Qm))
 	      {
 		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
-		return TRUE;
+		return true;
 	      }
 	    else
-	      return FALSE;
+	      return false;
 	  }
 	else
-	  return FALSE;
+	  return false;
 
       }
 
@@ -6768,10 +6872,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
       if (arm_decode_field (given, 16, 19) == 0xd)
 	{
 	  *unpredictable_code = UNPRED_R13;
-	  return TRUE;
+	  return true;
 	}
       else
-	return FALSE;
+	return false;
 
     case MVE_VREV64:
       {
@@ -6781,10 +6885,10 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (qd == qm)
 	  {
 	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
-	    return TRUE;
+	    return true;
 	  }
 	else
-	  return FALSE;
+	  return false;
       }
 
     case MVE_LSLL:
@@ -6804,19 +6908,19 @@ is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
 	if (gpr == 0xd)
 	  {
 	    *unpredictable_code = UNPRED_R13;
-	    return TRUE;
+	    return true;
 	  }
 	else if (gpr == 0xf)
 	  {
 	    *unpredictable_code = UNPRED_R15;
-	    return TRUE;
+	    return true;
 	  }
 
-	return FALSE;
+	return false;
       }
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -6945,14 +7049,14 @@ print_simd_imm8 (struct disassemble_info *info, unsigned long given,
       return;
     }
 
-  // printU determines whether the immediate value should be printed as
-  // unsigned.
+  /* printU determines whether the immediate value should be printed as
+     unsigned.  */
   unsigned printU = 0;
   switch (insn->mve_op)
     {
     default:
       break;
-    // We want this for instructions that don't have a 'signed' type
+    /* We want this for instructions that don't have a 'signed' type.  */
     case MVE_VBIC_IMM:
     case MVE_VORR_IMM:
     case MVE_VMVN_IMM:
@@ -7932,12 +8036,12 @@ print_vec_condition (struct disassemble_info *info, long given,
    Return TRUE if the instuction matched, FALSE if this is not a
    recognised coprocessor instruction.  */
 
-static bfd_boolean
+static bool
 print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			  bfd_vma pc,
 			  struct disassemble_info *info,
 			  long given,
-			  bfd_boolean thumb)
+			  bool thumb)
 {
   const struct sopcode32 *insn;
   void *stream = info->stream;
@@ -7956,7 +8060,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
   for (insn = opcodes; insn->assembler; insn++)
     {
       unsigned long u_reg = 16;
-      bfd_boolean is_unpredictable = FALSE;
+      bool is_unpredictable = false;
       signed long value_in_comment = 0;
       const char *c;
 
@@ -8033,7 +8137,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 	  || insn->value == 0xfc000000) /* stc2  */
 	{
 	  if (cp_num == 9 || cp_num == 10 || cp_num == 11)
-	    is_unpredictable = TRUE;
+	    is_unpredictable = true;
 
 	  /* Armv8.1-M Mainline FP & MVE instructions.  */
 	  if (ARM_CPU_HAS_FEATURE (arm_ext_v8_1m_main, allowed_arches)
@@ -8165,7 +8269,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 
 		case 'C':
 		  {
-		    bfd_boolean single = ((given >> 8) & 1) == 0;
+		    bool single = ((given >> 8) & 1) == 0;
 		    char reg_prefix = single ? 's' : 'd';
 		    int Dreg = (given >> 22) & 0x1;
 		    int Vdreg = (given >> 12) & 0xf;
@@ -8190,12 +8294,12 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 
 		case 'u':
 		  if (cond != COND_UNCOND)
-		    is_unpredictable = TRUE;
+		    is_unpredictable = true;
 
 		  /* Fall through.  */
 		case 'c':
 		  if (cond != COND_UNCOND && cp_num == 9)
-		    is_unpredictable = TRUE;
+		    is_unpredictable = true;
 
 		  /* Fall through.  */
 		case 'b':
@@ -8334,7 +8438,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		      {
 		      case 'R':
 			if (value == 15)
-			  is_unpredictable = TRUE;
+			  is_unpredictable = true;
 			/* Fall through.  */
 		      case 'r':
 			if (c[1] == 'u')
@@ -8343,7 +8447,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			    ++ c;
 
 			    if (u_reg == value)
-			      is_unpredictable = TRUE;
+			      is_unpredictable = true;
 			    u_reg = value;
 			  }
 			func (stream, "%s", arm_regnames[value]);
@@ -8666,26 +8770,26 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
       if (is_unpredictable)
 	func (stream, UNPREDICTABLE_INSTRUCTION);
 
-      return TRUE;
+      return true;
     }
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 print_insn_coprocessor (bfd_vma pc,
 			struct disassemble_info *info,
 			long given,
-			bfd_boolean thumb)
+			bool thumb)
 {
   return print_insn_coprocessor_1 (coprocessor_opcodes,
 				   pc, info, given, thumb);
 }
 
-static bfd_boolean
+static bool
 print_insn_generic_coprocessor (bfd_vma pc,
 				struct disassemble_info *info,
 				long given,
-				bfd_boolean thumb)
+				bool thumb)
 {
   return print_insn_coprocessor_1 (generic_coprocessor_opcodes,
 				   pc, info, given, thumb);
@@ -8757,7 +8861,7 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	  else
 	    {
 	      func (stream, ", %s", NEGATIVE_BIT_SET ? "-" : "");
-	      arm_decode_shift (given, func, stream, TRUE);
+	      arm_decode_shift (given, func, stream, true);
 	    }
 
 	  func (stream, "]%s",
@@ -8776,7 +8880,7 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	    {
 	      func (stream, "], %s",
 		    NEGATIVE_BIT_SET ? "-" : "");
-	      arm_decode_shift (given, func, stream, TRUE);
+	      arm_decode_shift (given, func, stream, true);
 	    }
 	}
       if (NEGATIVE_BIT_SET)
@@ -8786,12 +8890,146 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
   return (signed long) offset;
 }
 
+
+/* Print one cde instruction on INFO->STREAM.
+   Return TRUE if the instuction matched, FALSE if this is not a
+   recognised cde instruction.  */
+static bool
+print_insn_cde (struct disassemble_info *info, long given, bool thumb)
+{
+  const struct cdeopcode32 *insn;
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  if (thumb)
+  {
+    /* Manually extract the coprocessor code from a known point.
+       This position is the same across all CDE instructions.  */
+    for (insn = cde_opcodes; insn->assembler; insn++)
+    {
+      uint16_t coproc = (given >> insn->coproc_shift) & insn->coproc_mask;
+      uint16_t coproc_mask = 1 << coproc;
+      if (! (coproc_mask & cde_coprocs))
+	continue;
+
+      if ((given & insn->mask) == insn->value)
+      {
+	bool is_unpredictable = false;
+	const char *c;
+
+	for (c = insn->assembler; *c; c++)
+	{
+	  if (*c == '%')
+	  {
+	    switch (*++c)
+	    {
+	      case '%':
+		func (stream, "%%");
+		break;
+
+	      case '0': case '1': case '2': case '3': case '4':
+	      case '5': case '6': case '7': case '8': case '9':
+	      {
+		int width;
+		unsigned long value;
+
+		c = arm_decode_bitfield (c, given, &value, &width);
+
+		switch (*c)
+		{
+		  case 'S':
+		    if (value > 10)
+		      is_unpredictable = true;
+		    /* Fall through.  */
+		  case 'R':
+		    if (value == 13)
+		      is_unpredictable = true;
+		    /* Fall through.  */
+		  case 'r':
+		    func (stream, "%s", arm_regnames[value]);
+		    break;
+
+		  case 'n':
+		    if (value == 15)
+		      func (stream, "%s", "APSR_nzcv");
+		    else
+		      func (stream, "%s", arm_regnames[value]);
+		    break;
+
+		  case 'T':
+		    func (stream, "%s", arm_regnames[value + 1]);
+		    break;
+
+		  case 'd':
+		    func (stream, "%ld", value);
+		    break;
+
+		  case 'V':
+		    if (given & (1 << 6))
+		      func (stream, "q%ld", value >> 1);
+		    else if (given & (1 << 24))
+		      func (stream, "d%ld", value);
+		    else
+		      {
+			/* Encoding for S register is different than for D and
+			   Q registers.  S registers are encoded using the top
+			   single bit in position 22 as the lowest bit of the
+			   register number, while for Q and D it represents the
+			   highest bit of the register number.  */
+			uint8_t top_bit = (value >> 4) & 1;
+			uint8_t tmp = (value << 1) & 0x1e;
+			uint8_t res = tmp | top_bit;
+			func (stream, "s%u", res);
+		      }
+		    break;
+
+		default:
+		  abort ();
+		}
+	      }
+	    break;
+
+	    case 'p':
+	      {
+		uint8_t proc_number = (given >> 8) & 0x7;
+		func (stream, "p%u", proc_number);
+		break;
+	      }
+
+	    case 'a':
+	      {
+		uint8_t a_offset = 28;
+		if (given & (1 << a_offset))
+		  func (stream, "a");
+		break;
+	      }
+	  default:
+	    abort ();
+	  }
+	}
+	else
+	  func (stream, "%c", *c);
+      }
+
+      if (is_unpredictable)
+	func (stream, UNPREDICTABLE_INSTRUCTION);
+
+      return true;
+      }
+    }
+    return false;
+  }
+  else
+    return false;
+}
+
+
 /* Print one neon instruction on INFO->STREAM.
    Return TRUE if the instuction matched, FALSE if this is not a
    recognised neon instruction.  */
 
-static bfd_boolean
-print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
+static bool
+print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 {
   const struct opcode32 *insn;
   void *stream = info->stream;
@@ -8817,16 +9055,54 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 	       || (given & 0xff000000) == 0xfc000000)
 	;
       /* vdup is also a valid neon instruction.  */
-      else if ((given & 0xff910f5f) != 0xee800b10)
-	return FALSE;
+      else if ((given & 0xff900f5f) != 0xee800b10)
+	return false;
     }
 
   for (insn = neon_opcodes; insn->assembler; insn++)
     {
-      if ((given & insn->mask) == insn->value)
+      unsigned long cond_mask = insn->mask;
+      unsigned long cond_value = insn->value;
+      int cond;
+
+      if (thumb)
+        {
+          if ((cond_mask & 0xf0000000) == 0) {
+              /* For the entries in neon_opcodes, an opcode mask/value with
+                 the high 4 bits equal to 0 indicates a conditional
+                 instruction. For thumb however, we need to include those
+                 bits in the instruction matching.  */
+              cond_mask |= 0xf0000000;
+              /* Furthermore, the thumb encoding of a conditional instruction
+                 will have the high 4 bits equal to 0xe.  */
+              cond_value |= 0xe0000000;
+          }
+          if (ifthen_state)
+            cond = IFTHEN_COND;
+          else
+            cond = COND_UNCOND;
+        }
+      else
+        {
+          if ((given & 0xf0000000) == 0xf0000000)
+            {
+              /* If the instruction is unconditional, update the mask to only
+                 match against unconditional opcode values.  */
+              cond_mask |= 0xf0000000;
+              cond = COND_UNCOND;
+            }
+          else
+            {
+              cond = (given >> 28) & 0xf;
+              if (cond == 0xe)
+                cond = COND_UNCOND;
+            }
+        }
+
+      if ((given & cond_mask) == cond_value)
 	{
 	  signed long value_in_comment = 0;
-	  bfd_boolean is_unpredictable = FALSE;
+	  bool is_unpredictable = false;
 	  const char *c;
 
 	  for (c = insn->assembler; *c; c++)
@@ -8841,12 +9117,11 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 
 		    case 'u':
 		      if (thumb && ifthen_state)
-			is_unpredictable = TRUE;
+			is_unpredictable = true;
 
 		      /* Fall through.  */
 		    case 'c':
-		      if (thumb && ifthen_state)
-			func (stream, "%s", arm_conditional[IFTHEN_COND]);
+		      func (stream, "%s", arm_conditional[cond]);
 		      break;
 
 		    case 'A':
@@ -8915,34 +9190,34 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
                             {
                               int amask = (1 << size) - 1;
                               if ((idx_align & (1 << size)) != 0)
-                                return FALSE;
+                                return false;
                               if (size > 0)
                                 {
                                   if ((idx_align & amask) == amask)
                                     align = 8 << size;
                                   else if ((idx_align & amask) != 0)
-                                    return FALSE;
+                                    return false;
                                 }
                               }
                             break;
 
                           case 2:
                             if (size == 2 && (idx_align & 2) != 0)
-                              return FALSE;
+                              return false;
                             align = (idx_align & 1) ? 16 << size : 0;
                             break;
 
                           case 3:
                             if ((size == 2 && (idx_align & 3) != 0)
                                 || (idx_align & 1) != 0)
-                              return FALSE;
+                              return false;
                             break;
 
                           case 4:
                             if (size == 2)
                               {
                                 if ((idx_align & 3) == 3)
-                                  return FALSE;
+                                  return false;
                                 align = (idx_align & 3) * 64;
                               }
                             else
@@ -9260,17 +9535,17 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 	  if (is_unpredictable)
 	    func (stream, UNPREDICTABLE_INSTRUCTION);
 
-	  return TRUE;
+	  return true;
 	}
     }
-  return FALSE;
+  return false;
 }
 
 /* Print one mve instruction on INFO->STREAM.
    Return TRUE if the instuction matched, FALSE if this is not a
    recognised mve instruction.  */
 
-static bfd_boolean
+static bool
 print_insn_mve (struct disassemble_info *info, long given)
 {
   const struct mopcode32 *insn;
@@ -9283,8 +9558,8 @@ print_insn_mve (struct disassemble_info *info, long given)
 	  && !is_mve_encoding_conflict (given, insn->mve_op))
 	{
 	  signed long value_in_comment = 0;
-	  bfd_boolean is_unpredictable = FALSE;
-	  bfd_boolean is_undefined = FALSE;
+	  bool is_unpredictable = false;
+	  bool is_undefined = false;
 	  const char *c;
 	  enum mve_unpredictable unpredictable_cond = UNPRED_NONE;
 	  enum mve_undefined undefined_cond = UNDEF_NONE;
@@ -9293,15 +9568,15 @@ print_insn_mve (struct disassemble_info *info, long given)
 	     There are a few exceptions; check for them.  */
 	  if (ifthen_state && !is_mve_okay_in_it (insn->mve_op))
 	    {
-	      is_unpredictable = TRUE;
+	      is_unpredictable = true;
 	      unpredictable_cond = UNPRED_IT_BLOCK;
 	    }
 	  else if (is_mve_unpredictable (given, insn->mve_op,
 					 &unpredictable_cond))
-	    is_unpredictable = TRUE;
+	    is_unpredictable = true;
 
 	  if (is_mve_undefined (given, insn->mve_op, &undefined_cond))
-	    is_undefined = TRUE;
+	    is_undefined = true;
 
 	  /* In "VORR Qd, Qm, Qn", if Qm==Qn, VORR is nothing but VMOV,
 	     i.e "VMOV Qd, Qm".  */
@@ -9455,7 +9730,7 @@ print_insn_mve (struct disassemble_info *info, long given)
 			  {
 			  case 'Z':
 			    if (value == 13)
-			      is_unpredictable = TRUE;
+			      is_unpredictable = true;
 			    else if (value == 15)
 			      func (stream, "zr");
 			    else
@@ -9473,7 +9748,7 @@ print_insn_mve (struct disassemble_info *info, long given)
 
 			  case 'S':
 			    if (value == 13 || value == 15)
-			      is_unpredictable = TRUE;
+			      is_unpredictable = true;
 			    else
 			      func (stream, "%s", arm_regnames[value]);
 			    break;
@@ -9627,17 +9902,17 @@ print_insn_mve (struct disassemble_info *info, long given)
 	  if (is_undefined)
 	    print_mve_undefined (info, undefined_cond);
 
-	  if ((vpt_block_state.in_vpt_block == FALSE)
+	  if (!vpt_block_state.in_vpt_block
 	      && !ifthen_state
-	      && (is_vpt_instruction (given) == TRUE))
+	      && is_vpt_instruction (given))
 	    mark_inside_vpt_block (given);
-	  else if (vpt_block_state.in_vpt_block == TRUE)
+	  else if (vpt_block_state.in_vpt_block)
 	    update_vpt_block_state ();
 
-	  return TRUE;
+	  return true;
 	}
     }
-  return FALSE;
+  return false;
 }
 
 
@@ -9719,13 +9994,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
   fprintf_ftype func = info->fprintf_func;
   struct arm_private_data *private_data = info->private_data;
 
-  if (print_insn_coprocessor (pc, info, given, FALSE))
+  if (print_insn_coprocessor (pc, info, given, false))
     return;
 
-  if (print_insn_neon (info, given, FALSE))
+  if (print_insn_neon (info, given, false))
     return;
 
-  if (print_insn_generic_coprocessor (pc, info, given, FALSE))
+  if (print_insn_generic_coprocessor (pc, info, given, false))
     return;
 
   for (insn = arm_opcodes; insn->assembler; insn++)
@@ -9745,7 +10020,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 	{
 	  unsigned long u_reg = 16;
 	  unsigned long U_reg = 16;
-	  bfd_boolean is_unpredictable = FALSE;
+	  bool is_unpredictable = false;
 	  signed long value_in_comment = 0;
 	  const char *c;
 
@@ -9753,7 +10028,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 	    {
 	      if (*c == '%')
 		{
-		  bfd_boolean allow_unpredictable = FALSE;
+		  bool allow_unpredictable = false;
 
 		  switch (*++c)
 		    {
@@ -9772,7 +10047,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    case 'S':
-		      allow_unpredictable = TRUE;
+		      allow_unpredictable = true;
 		      /* Fall through.  */
 		    case 's':
                       if ((given & 0x004f0000) == 0x004f0000)
@@ -9798,7 +10073,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      func (stream, "[pc], #%s%d",
 				    NEGATIVE_BIT_SET ? "-" : "", (int) offset);
 			      if (! allow_unpredictable)
-				is_unpredictable = TRUE;
+				is_unpredictable = true;
 			    }
 			}
 		      else
@@ -9836,7 +10111,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				  if (! allow_unpredictable
 				      && WRITEBACK_BIT_SET
 				      && ((given & 0xf) == ((given >> 12) & 0xf)))
-				    is_unpredictable = TRUE;
+				    is_unpredictable = true;
 				}
 
 			      func (stream, "]%s",
@@ -9865,7 +10140,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				     destination of the load/store is unpredictable.  */
 				  if (! allow_unpredictable
 				      && (given & 0xf) == ((given >> 12) & 0xf))
-				    is_unpredictable = TRUE;
+				    is_unpredictable = true;
 				}
 
 			      if (! allow_unpredictable)
@@ -9877,7 +10152,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				      /* Specifying the PC register as the post-indexed
 					 registers is also unpredictable.  */
 				      || (! IMMEDIATE_BIT_SET && ((given & 0xf) == 0xf)))
-				    is_unpredictable = TRUE;
+				    is_unpredictable = true;
 				}
 			    }
 			}
@@ -9918,12 +10193,12 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			    }
 			func (stream, "}");
 			if (! started)
-			  is_unpredictable = TRUE;
+			  is_unpredictable = true;
 		      }
 		      break;
 
 		    case 'q':
-		      arm_decode_shift (given, func, stream, FALSE);
+		      arm_decode_shift (given, func, stream, false);
 		      break;
 
 		    case 'o':
@@ -9948,7 +10223,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  value_in_comment = a;
 			}
 		      else
-			arm_decode_shift (given, func, stream, TRUE);
+			arm_decode_shift (given, func, stream, true);
 		      break;
 
 		    case 'p':
@@ -9964,7 +10239,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 						     arm_ext_v6))
 			    func (stream, "p");
 			  else
-			    is_unpredictable = TRUE;
+			    is_unpredictable = true;
 			}
 		      break;
 
@@ -10100,13 +10375,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  {
 			  case 'R':
 			    if (value == 15)
-			      is_unpredictable = TRUE;
+			      is_unpredictable = true;
 			    /* Fall through.  */
 			  case 'r':
 			  case 'T':
 			    /* We want register + 1 when decoding T.  */
 			    if (*c == 'T')
-			      ++value;
+			      value = (value + 1) & 0xf;
 
 			    if (c[1] == 'u')
 			      {
@@ -10114,7 +10389,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				++ c;
 
 				if (u_reg == value)
-				  is_unpredictable = TRUE;
+				  is_unpredictable = true;
 				u_reg = value;
 			      }
 			    if (c[1] == 'U')
@@ -10123,7 +10398,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				++ c;
 
 				if (U_reg == value)
-				  is_unpredictable = TRUE;
+				  is_unpredictable = true;
 				U_reg = value;
 			      }
 			    func (stream, "%s", arm_regnames[value]);
@@ -10439,7 +10714,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			if (!bitend)
 			  abort ();
 			reg = given >> bitstart;
-			reg &= (2 << (bitend - bitstart)) - 1;
+			reg &= ((bfd_vma) 2 << (bitend - bitstart)) - 1;
 
 			switch (*c)
 			  {
@@ -10576,25 +10851,28 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
-  bfd_boolean is_mve = is_mve_architecture (info);
+  bool is_mve = is_mve_architecture (info);
 
-  if (print_insn_coprocessor (pc, info, given, TRUE))
+  if (print_insn_coprocessor (pc, info, given, true))
     return;
 
-  if ((is_mve == FALSE) && print_insn_neon (info, given, TRUE))
+  if (!is_mve && print_insn_neon (info, given, true))
     return;
 
   if (is_mve && print_insn_mve (info, given))
     return;
 
-  if (print_insn_generic_coprocessor (pc, info, given, TRUE))
+  if (print_insn_cde (info, given, true))
+    return;
+
+  if (print_insn_generic_coprocessor (pc, info, given, true))
     return;
 
   for (insn = thumb32_opcodes; insn->assembler; insn++)
     if ((given & insn->mask) == insn->value)
       {
-	bfd_boolean is_clrm = FALSE;
-	bfd_boolean is_unpredictable = FALSE;
+	bool is_clrm = false;
+	bool is_unpredictable = false;
 	signed long value_in_comment = 0;
 	const char *c = insn->assembler;
 
@@ -10756,7 +11034,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  unsigned int op  = (given & 0x00000f00) >> 8;
 		  unsigned int i12 = (given & 0x00000fff);
 		  unsigned int i8  = (given & 0x000000ff);
-		  bfd_boolean writeback = FALSE, postind = FALSE;
+		  bool writeback = false, postind = false;
 		  bfd_vma offset = 0;
 
 		  func (stream, "[%s", arm_regnames[Rn]);
@@ -10791,22 +11069,22 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 0xF:  /* 8-bit + preindex with wb.  */
 		      offset = i8;
-		      writeback = TRUE;
+		      writeback = true;
 		      break;
 
 		    case 0xD:  /* 8-bit - preindex with wb.  */
 		      offset = -i8;
-		      writeback = TRUE;
+		      writeback = true;
 		      break;
 
 		    case 0xB:  /* 8-bit + postindex.  */
 		      offset = i8;
-		      postind = TRUE;
+		      postind = true;
 		      break;
 
 		    case 0x9:  /* 8-bit - postindex.  */
 		      offset = -i8;
-		      postind = TRUE;
+		      postind = true;
 		      break;
 
 		    default:
@@ -10890,7 +11168,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		break;
 
 	      case 'n':
-		is_clrm = TRUE;
+		is_clrm = true;
 		/* Fall through.  */
 	      case 'm':
 		{
@@ -11210,11 +11488,11 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'S':
 		      if (val == 13)
-			is_unpredictable = TRUE;
+			is_unpredictable = true;
 		      /* Fall through.  */
 		    case 'R':
 		      if (val == 15)
-			is_unpredictable = TRUE;
+			is_unpredictable = true;
 		      /* Fall through.  */
 		    case 'r':
 		      func (stream, "%s", arm_regnames[val]);
@@ -11314,14 +11592,14 @@ print_insn_data (bfd_vma pc ATTRIBUTE_UNUSED,
    Also disallow private symbol, with __tagsym$$ prefix,
    from ARM RVCT toolchain being displayed.  */
 
-bfd_boolean
+bool
 arm_symbol_is_valid (asymbol * sym,
 		     struct disassemble_info * info ATTRIBUTE_UNUSED)
 {
   const char * name;
 
   if (sym == NULL)
-    return FALSE;
+    return false;
 
   name = bfd_asymbol_name (sym);
 
@@ -11335,9 +11613,10 @@ parse_arm_disassembler_options (const char *options)
 {
   const char *opt;
 
+  force_thumb = false;
   FOR_EACH_DISASSEMBLER_OPTION (opt, options)
     {
-      if (CONST_STRNEQ (opt, "reg-names-"))
+      if (startswith (opt, "reg-names-"))
 	{
 	  unsigned int i;
 	  for (i = 0; i < NUM_ARM_OPTIONS; i++)
@@ -11352,10 +11631,40 @@ parse_arm_disassembler_options (const char *options)
 	    opcodes_error_handler (_("unrecognised register name set: %s"),
 				   opt);
 	}
-      else if (CONST_STRNEQ (opt, "force-thumb"))
+      else if (startswith (opt, "force-thumb"))
 	force_thumb = 1;
-      else if (CONST_STRNEQ (opt, "no-force-thumb"))
+      else if (startswith (opt, "no-force-thumb"))
 	force_thumb = 0;
+      else if (startswith (opt, "coproc"))
+	{
+	  const char *procptr = opt + sizeof ("coproc") - 1;
+	  char *endptr;
+	  uint8_t coproc_number = strtol (procptr, &endptr, 10);
+	  if (endptr != procptr + 1 || coproc_number > 7)
+	    {
+	      opcodes_error_handler (_("cde coprocessor not between 0-7: %s"),
+				     opt);
+	      continue;
+	    }
+	  if (*endptr != '=')
+	    {
+	      opcodes_error_handler (_("coproc must have an argument: %s"),
+				     opt);
+	      continue;
+	    }
+	  endptr += 1;
+	  if (startswith (endptr, "generic"))
+	    cde_coprocs &= ~(1 << coproc_number);
+	  else if (startswith (endptr, "cde")
+		   || startswith (endptr, "CDE"))
+	    cde_coprocs |= (1 << coproc_number);
+	  else
+	    {
+	      opcodes_error_handler (
+		  _("coprocN argument takes options \"generic\","
+		    " \"cde\", or \"CDE\": %s"), opt);
+	    }
+	}
       else
 	/* xgettext: c-format */
 	opcodes_error_handler (_("unrecognised disassembler option: %s"), opt);
@@ -11364,7 +11673,7 @@ parse_arm_disassembler_options (const char *options)
   return;
 }
 
-static bfd_boolean
+static bool
 mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 			 enum map_type *map_symbol);
 
@@ -11374,7 +11683,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 static void
 find_ifthen_state (bfd_vma pc,
 		   struct disassemble_info *info,
-		   bfd_boolean little)
+		   bool little)
 {
   unsigned char b[2];
   unsigned int insn;
@@ -11431,7 +11740,7 @@ find_ifthen_state (bfd_vma pc,
       if ((insn & 0xff00) == 0xbf00 && (insn & 0xf) != 0)
 	{
 	  enum map_type type = MAP_ARM;
-	  bfd_boolean found = mapping_symbol_for_insn (addr, info, &type);
+	  bool found = mapping_symbol_for_insn (addr, info, &type);
 
 	  if (!found || (found && type == MAP_THUMB))
 	    {
@@ -11470,10 +11779,10 @@ is_mapping_symbol (struct disassemble_info *info, int n,
       *map_type = ((name[1] == 'a') ? MAP_ARM
 		   : (name[1] == 't') ? MAP_THUMB
 		   : MAP_DATA);
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Try to infer the code type (ARM or Thumb) from a mapping symbol.
@@ -11486,7 +11795,7 @@ get_map_sym_type (struct disassemble_info *info,
 {
   /* If the symbol is in a different section, ignore it.  */
   if (info->section != NULL && info->section != info->symtab[n]->section)
-    return FALSE;
+    return false;
 
   return is_mapping_symbol (info, n, map_type);
 }
@@ -11504,7 +11813,7 @@ get_sym_code_type (struct disassemble_info *info,
 
   /* If the symbol is in a different section, ignore it.  */
   if (info->section != NULL && info->section != info->symtab[n]->section)
-    return FALSE;
+    return false;
 
   es = *(elf_symbol_type **)(info->symtab + n);
   type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
@@ -11517,10 +11826,10 @@ get_sym_code_type (struct disassemble_info *info,
 	*map_type = MAP_THUMB;
       else
 	*map_type = MAP_ARM;
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 /* Search the mapping symbol state for instruction at pc.  This is only
@@ -11533,14 +11842,14 @@ get_sym_code_type (struct disassemble_info *info,
    Return TRUE if the mapping state can be determined, and map_symbol
    will be updated accordingly.  Otherwise, return FALSE.  */
 
-static bfd_boolean
+static bool
 mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 			 enum map_type *map_symbol)
 {
   bfd_vma addr, section_vma = 0;
   int n, last_sym = -1;
-  bfd_boolean found = FALSE;
-  bfd_boolean can_use_search_opt_p = FALSE;
+  bool found = false;
+  bool can_use_search_opt_p = false;
 
   /* Default to DATA.  A text section is required by the ABI to contain an
      INSN mapping symbol at the start.  A data section has no such
@@ -11557,7 +11866,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 
   if (info->private_data == NULL
       || bfd_asymbol_flavour (*info->symtab) != bfd_target_elf_flavour)
-    return FALSE;
+    return false;
 
   private_data = info->private_data;
 
@@ -11593,7 +11902,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 	if (get_map_sym_type (info, n, &type))
 	  {
 	    last_sym = n;
-	    found = TRUE;
+	    found = true;
 	  }
       }
 
@@ -11621,7 +11930,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 	    if (get_map_sym_type (info, n, &type))
 	      {
 		last_sym = n;
-		found = TRUE;
+		found = true;
 		break;
 	      }
 	  }
@@ -11638,7 +11947,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
       if (n >= 0 && get_sym_code_type (info, n, &type))
 	{
 	  last_sym = n;
-	  found = TRUE;
+	  found = true;
 	}
     }
 
@@ -11719,12 +12028,11 @@ select_arm_features (unsigned long mach,
       ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, mve_all);
       force_thumb = 1;
       break;
+    case bfd_mach_arm_9:         ARM_SET_FEATURES (ARM_ARCH_V9A); break;
       /* If the machine type is unknown allow all architecture types and all
 	 extensions, with the exception of MVE as that clashes with NEON.  */
     case bfd_mach_arm_unknown:
-      ARM_SET_FEATURES (ARM_FEATURE (-1,
-				     -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP),
-				     -1));
+      ARM_SET_FEATURES (ARM_ARCH_UNKNOWN);
       break;
     default:
       abort ();
@@ -11742,17 +12050,17 @@ select_arm_features (unsigned long mach,
    the relevant number of data bytes exist.  */
 
 static int
-print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
+print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
 {
   unsigned char b[4];
   unsigned long given;
-  int           status;
-  int           is_thumb = FALSE;
-  int           is_data = FALSE;
-  int           little_code;
+  int status;
+  int is_thumb = false;
+  int is_data = false;
+  int little_code;
   unsigned int	size = 4;
-  void	 	(*printer) (bfd_vma, struct disassemble_info *, long);
-  bfd_boolean   found = FALSE;
+  void (*printer) (bfd_vma, struct disassemble_info *, long);
+  bool found = false;
   struct arm_private_data *private_data;
 
   /* Clear instruction information field.  */
@@ -11896,7 +12204,7 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
     }
 
   if (force_thumb)
-    is_thumb = TRUE;
+    is_thumb = true;
 
   if (is_data)
     info->display_endian = little ? BFD_ENDIAN_LITTLE : BFD_ENDIAN_BIG;
@@ -12017,13 +12325,13 @@ print_insn_big_arm (bfd_vma pc, struct disassemble_info *info)
       && (elf_elfheader (info->section->owner)->e_flags & EF_ARM_BE8))
     info->endian_code = BFD_ENDIAN_LITTLE;
 
-  return print_insn (pc, info, FALSE);
+  return print_insn (pc, info, false);
 }
 
 int
 print_insn_little_arm (bfd_vma pc, struct disassemble_info *info)
 {
-  return print_insn (pc, info, TRUE);
+  return print_insn (pc, info, true);
 }
 
 const disasm_options_and_args_t *

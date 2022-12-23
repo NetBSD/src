@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,7 +21,6 @@
 /* xSYM is the debugging format used by CodeWarrior on Mac OS classic.  */
 
 #include "sysdep.h"
-#include "alloca-conf.h"
 #include "xsym.h"
 #include "bfd.h"
 #include "libbfd.h"
@@ -100,7 +99,7 @@ compute_offset (unsigned long first_page,
   return (page_number * page_size) + page_offset;
 }
 
-bfd_boolean
+bool
 bfd_sym_mkobject (bfd *abfd ATTRIBUTE_UNUSED)
 {
   return 1;
@@ -115,7 +114,7 @@ bfd_sym_print_symbol (bfd *abfd ATTRIBUTE_UNUSED,
   return;
 }
 
-bfd_boolean
+bool
 bfd_sym_valid (bfd *abfd)
 {
   if (abfd == NULL || abfd->xvec == NULL)
@@ -127,24 +126,12 @@ bfd_sym_valid (bfd *abfd)
 unsigned char *
 bfd_sym_read_name_table (bfd *abfd, bfd_sym_header_block *dshb)
 {
-  unsigned char *rstr;
-  long ret;
   size_t table_size = dshb->dshb_nte.dti_page_count * dshb->dshb_page_size;
   size_t table_offset = dshb->dshb_nte.dti_first_page * dshb->dshb_page_size;
 
-  rstr = bfd_alloc (abfd, table_size);
-  if (rstr == NULL)
-    return rstr;
-
-  bfd_seek (abfd, table_offset, SEEK_SET);
-  ret = bfd_bread (rstr, table_size, abfd);
-  if (ret < 0 || (unsigned long) ret != table_size)
-    {
-      bfd_release (abfd, rstr);
-      return NULL;
-    }
-
-  return rstr;
+  if (bfd_seek (abfd, table_offset, SEEK_SET) != 0)
+    return false;
+  return _bfd_alloc_and_read (abfd, table_size, table_size);
 }
 
 void
@@ -1808,22 +1795,11 @@ bfd_sym_print_type_information_table_entry (bfd *abfd,
 
   fprintf (f, "\n            ");
 
-  buf = malloc (entry->physical_size);
-  if (buf == NULL)
+  if (bfd_seek (abfd, entry->offset, SEEK_SET) != 0
+      || (buf = _bfd_malloc_and_read (abfd, entry->physical_size,
+				      entry->physical_size)) == NULL)
     {
       fprintf (f, "[ERROR]\n");
-      return;
-    }
-  if (bfd_seek (abfd, entry->offset, SEEK_SET) < 0)
-    {
-      fprintf (f, "[ERROR]\n");
-      free (buf);
-      return;
-    }
-  if (bfd_bread (buf, entry->physical_size, abfd) != entry->physical_size)
-    {
-      fprintf (f, "[ERROR]\n");
-      free (buf);
       return;
     }
 
@@ -2253,7 +2229,7 @@ bfd_sym_scan (bfd *abfd, bfd_sym_version version, bfd_sym_data_struct *mdata)
   return 0;
 }
 
-const bfd_target *
+bfd_cleanup
 bfd_sym_object_p (bfd *abfd)
 {
   bfd_sym_version version = -1;
@@ -2270,7 +2246,7 @@ bfd_sym_object_p (bfd *abfd)
   if (bfd_sym_scan (abfd, version, mdata) != 0)
     goto wrong;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
@@ -2321,6 +2297,7 @@ const bfd_target sym_vec =
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

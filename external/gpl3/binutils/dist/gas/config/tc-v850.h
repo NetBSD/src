@@ -1,5 +1,5 @@
 /* tc-v850.h -- Header file for tc-v850.c.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -35,7 +35,7 @@ extern const char * v850_target_format;
 #define md_operand(x)
 
 #define tc_fix_adjustable(FIX) v850_fix_adjustable (FIX)
-extern bfd_boolean v850_fix_adjustable (struct fix *);
+extern bool v850_fix_adjustable (struct fix *);
 
 #define TC_FORCE_RELOCATION(FIX) v850_force_relocation(FIX)
 extern int v850_force_relocation (struct fix *);

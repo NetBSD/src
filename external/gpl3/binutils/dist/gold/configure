@@ -665,6 +665,10 @@ STATIC_TLS_TRUE
 TLS_FALSE
 TLS_TRUE
 MERGE_CONSTANTS_FLAG
+CFLAGS_CF_PROTECTION_FALSE
+CFLAGS_CF_PROTECTION_TRUE
+GCC9_FALSE
+GCC9_TRUE
 MCMODEL_MEDIUM_FALSE
 MCMODEL_MEDIUM_TRUE
 FN_PTRS_IN_SO_WITHOUT_PIC_FALSE
@@ -2167,6 +2171,52 @@ fi
 
 } # ac_fn_cxx_check_header_mongrel
 
+# ac_fn_cxx_check_decl LINENO SYMBOL VAR INCLUDES
+# -----------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_cxx_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_decl
+
 # ac_fn_cxx_try_link LINENO
 # -------------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded.
@@ -2279,52 +2329,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_cxx_check_func
-
-# ac_fn_cxx_check_decl LINENO SYMBOL VAR INCLUDES
-# -----------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_cxx_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_cxx_check_decl
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -3400,6 +3404,45 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+
+# Check whether --enable-silent-rules was given.
+if test "${enable_silent_rules+set}" = set; then :
+  enableval=$enable_silent_rules;
+fi
+
+case $enable_silent_rules in # (((
+  yes) AM_DEFAULT_VERBOSITY=0;;
+   no) AM_DEFAULT_VERBOSITY=1;;
+    *) AM_DEFAULT_VERBOSITY=0;;
+esac
+am_make=${MAKE-make}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $am_make supports nested variables" >&5
+$as_echo_n "checking whether $am_make supports nested variables... " >&6; }
+if ${am_cv_make_support_nested_variables+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if $as_echo 'TRUE=$(BAR$(V))
+BAR0=false
+BAR1=true
+V=1
+am__doit:
+	@$(TRUE)
+.PHONY: am__doit' | $am_make -f - >/dev/null 2>&1; then
+  am_cv_make_support_nested_variables=yes
+else
+  am_cv_make_support_nested_variables=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_make_support_nested_variables" >&5
+$as_echo "$am_cv_make_support_nested_variables" >&6; }
+if test $am_cv_make_support_nested_variables = yes; then
+    AM_V='$(V)'
+  AM_DEFAULT_V='$(AM_DEFAULT_VERBOSITY)'
+else
+  AM_V=$AM_DEFAULT_VERBOSITY
+  AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
+fi
+AM_BACKSLASH='\'
 
 
 ac_config_headers="$ac_config_headers config.h:config.in"
@@ -7491,6 +7534,68 @@ else
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc >= 9" >&5
+$as_echo_n "checking for gcc >= 9... " >&6; }
+if ${gold_cv_prog_gcc9+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if !defined __GNUC__ || __GNUC__ < 9
+error
+#endif
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gold_cv_prog_gcc9=yes
+else
+  gold_cv_prog_gcc9=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_prog_gcc9" >&5
+$as_echo "$gold_cv_prog_gcc9" >&6; }
+ if test "$gold_cv_prog_gcc9" = "yes"; then
+  GCC9_TRUE=
+  GCC9_FALSE='#'
+else
+  GCC9_TRUE='#'
+  GCC9_FALSE=
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -fcf-protection" >&5
+$as_echo_n "checking for -fcf-protection... " >&6; }
+if ${gold_cv_cflags_cf_protection+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if !defined __x86_64__ || !defined __CET__
+error
+#endif
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gold_cv_cflags_cf_protection=yes
+else
+  gold_cv_cflags_cf_protection=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_cflags_cf_protection" >&5
+$as_echo "$gold_cv_cflags_cf_protection" >&6; }
+ if test "$gold_cv_cflags_cf_protection" = "yes"; then
+  CFLAGS_CF_PROTECTION_TRUE=
+  CFLAGS_CF_PROTECTION_FALSE='#'
+else
+  CFLAGS_CF_PROTECTION_TRUE='#'
+  CFLAGS_CF_PROTECTION_FALSE=
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fmerge-constants" >&5
 $as_echo_n "checking whether $CC supports -fmerge-constants... " >&6; }
 if ${gold_cv_merge_constants+:} false; then :
@@ -9780,6 +9885,41 @@ fi
 done
 
 
+ac_fn_cxx_check_decl "$LINENO" "bswap_16" "ac_cv_have_decl_bswap_16" "#include <byteswap.h>
+"
+if test "x$ac_cv_have_decl_bswap_16" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BSWAP_16 $ac_have_decl
+_ACEOF
+ac_fn_cxx_check_decl "$LINENO" "bswap_32" "ac_cv_have_decl_bswap_32" "#include <byteswap.h>
+"
+if test "x$ac_cv_have_decl_bswap_32" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BSWAP_32 $ac_have_decl
+_ACEOF
+ac_fn_cxx_check_decl "$LINENO" "bswap_64" "ac_cv_have_decl_bswap_64" "#include <byteswap.h>
+"
+if test "x$ac_cv_have_decl_bswap_64" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BSWAP_64 $ac_have_decl
+_ACEOF
+
+
 for ac_header in windows.h
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "windows.h" "ac_cv_header_windows_h" "$ac_includes_default"
@@ -9866,7 +10006,7 @@ case "$ac_cv_search_dlopen" in
 esac
 
 
-for ac_func in mallinfo posix_fallocate fallocate readv sysconf times mkdtemp
+for ac_func in mallinfo mallinfo2 posix_fallocate fallocate readv sysconf times mkdtemp
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -10407,6 +10547,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MCMODEL_MEDIUM_TRUE}" && test -z "${MCMODEL_MEDIUM_FALSE}"; then
   as_fn_error $? "conditional \"MCMODEL_MEDIUM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${GCC9_TRUE}" && test -z "${GCC9_FALSE}"; then
+  as_fn_error $? "conditional \"GCC9\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CFLAGS_CF_PROTECTION_TRUE}" && test -z "${CFLAGS_CF_PROTECTION_FALSE}"; then
+  as_fn_error $? "conditional \"CFLAGS_CF_PROTECTION\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TLS_TRUE}" && test -z "${TLS_FALSE}"; then

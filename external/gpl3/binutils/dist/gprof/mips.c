@@ -45,11 +45,11 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   unsigned int op;
   int offset;
   Sym *child;
-  static bfd_boolean inited = FALSE;
+  static bool inited = false;
 
   if (!inited)
     {
-      inited = TRUE;
+      inited = true;
       sym_init (&indirect_child);
       indirect_child.name = _("<indirect child>");
       indirect_child.cg.prop.fract = 1.0;

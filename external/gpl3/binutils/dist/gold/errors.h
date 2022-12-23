@@ -1,6 +1,6 @@
 // errors.h -- handle errors for gold  -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -67,6 +67,10 @@ class Errors
   // Print an informational message and continue.
   void
   info(const char* format, va_list);
+
+  // Print a trace message and continue.
+  void
+  trace(const char* format, va_list);
 
   // Report an error at a reloc location.
   template<int size, bool big_endian>

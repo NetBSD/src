@@ -1,5 +1,5 @@
 /* coffgrok.c
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -424,7 +424,7 @@ do_type (unsigned int i)
       if (sym->n_numaux)
 	{
 	  if (aux == NULL)
-	    fatal (_("Aggregate definition needs auxillary information"));
+	    fatal (_("Aggregate definition needs auxiliary information"));
 
 	  if (aux->x_sym.x_tagndx.p)
 	    {
@@ -474,7 +474,7 @@ do_type (unsigned int i)
       break;
     case T_ENUM:
       if (aux == NULL)
-	fatal (_("Enum definition needs auxillary information"));
+	fatal (_("Enum definition needs auxiliary information"));
       if (aux->x_sym.x_tagndx.p)
 	{
 	  unsigned int idx = INDEXOF (aux->x_sym.x_tagndx.p);
@@ -517,7 +517,7 @@ do_type (unsigned int i)
 	    int els;
 
 	    if (aux == NULL)
-	      fatal (_("Array definition needs auxillary information"));
+	      fatal (_("Array definition needs auxiliary information"));
 	    els = (dimind < DIMNUM
 		   ? aux->x_sym.x_fcnary.x_ary.x_dimen[dimind]
 		   : 0);
@@ -720,7 +720,7 @@ static struct coff_ofile *
 doit (void)
 {
   unsigned int i;
-  bfd_boolean infile = FALSE;
+  bool infile = false;
   struct coff_ofile *head =
     (struct coff_ofile *) xmalloc (sizeof (struct coff_ofile));
 
@@ -753,7 +753,7 @@ doit (void)
 	    if (infile)
 	      pop_scope ();
 	    else
-	      infile = TRUE;
+	      infile = true;
 
 	    push_scope (1);
 	    file_scope = n->scope = top_scope;
@@ -890,12 +890,12 @@ coff_grok (bfd *inabfd)
   storage = bfd_get_symtab_upper_bound (abfd);
 
   if (storage < 0)
-    bfd_fatal (abfd->filename);
+    bfd_fatal (bfd_get_filename (abfd));
 
   syms = (asymbol **) xmalloc (storage);
   symcount = bfd_canonicalize_symtab (abfd, syms);
   if (symcount < 0)
-    bfd_fatal (abfd->filename);
+    bfd_fatal (bfd_get_filename (abfd));
   rawsyms = obj_raw_syments (abfd);
   rawcount = obj_raw_syment_count (abfd);
   tindex = (struct coff_symbol **) (xcalloc (sizeof (struct coff_symbol *), rawcount));

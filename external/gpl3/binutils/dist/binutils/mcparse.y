@@ -1,5 +1,5 @@
 %{ /* mcparse.y -- parser for Windows mc files
-  Copyright (C) 2007-2020 Free Software Foundation, Inc.
+  Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
   Parser for Windows mc files
   Written by Kai Tietz, Onevision.
@@ -181,6 +181,7 @@ message:
 	    cur_node->severity = mc_cur_severity;
 	    cur_node->id = ($1 & 0xffffUL);
 	    cur_node->vid = ($1 & 0xffffUL) | mc_sefa_val;
+	    cur_node->id_typecast = mcset_msg_id_typedef;
 	    mc_last_id = $1;
 	  }
 	  lang_entities

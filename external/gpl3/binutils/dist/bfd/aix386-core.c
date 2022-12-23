@@ -1,7 +1,7 @@
 /* BFD back-end for AIX on PS/2 core files.
    This was based on trad-core.c, which was written by John Gilmore of
 	Cygnus Support.
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2022 Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -65,13 +65,13 @@ struct trad_core_struct
   asection *sections[MAX_CORE_SEGS];
 };
 
-static const bfd_target *
+static bfd_cleanup
 aix386_core_file_p (bfd *abfd)
 {
   int i, n;
   unsigned char longbuf[4];	/* Raw bytes of various header fields */
   bfd_size_type core_size = sizeof (struct corehdr);
-  bfd_size_type amt;
+  size_t amt;
   struct corehdr *core;
   struct mergem
   {
@@ -189,7 +189,7 @@ aix386_core_file_p (bfd *abfd)
       n++;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 static char *
@@ -220,9 +220,9 @@ swap_abort (void)
 #define	NO_GET ((bfd_vma (*) (const void *)) swap_abort)
 #define	NO_PUT ((void (*) (bfd_vma, void *)) swap_abort)
 #define	NO_GETS ((bfd_signed_vma (*) (const void *)) swap_abort)
-#define	NO_GET64 ((bfd_uint64_t (*) (const void *)) swap_abort)
-#define	NO_PUT64 ((void (*) (bfd_uint64_t, void *)) swap_abort)
-#define	NO_GETS64 ((bfd_int64_t (*) (const void *)) swap_abort)
+#define	NO_GET64 ((uint64_t (*) (const void *)) swap_abort)
+#define	NO_PUT64 ((void (*) (uint64_t, void *)) swap_abort)
+#define	NO_GETS64 ((int64_t (*) (const void *)) swap_abort)
 
 const bfd_target core_aix386_vec =
 {
@@ -239,6 +239,7 @@ const bfd_target core_aix386_vec =
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   NO_GET64, NO_GETS64, NO_PUT64,
   NO_GET, NO_GETS, NO_PUT,
   NO_GET, NO_GETS, NO_PUT,	/* data */

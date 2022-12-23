@@ -1,5 +1,5 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -231,13 +231,20 @@ struct som_section_data_struct
 #define R_HPPA_END_TRY			R_END_TRY
 
 /* Exported functions, mostly for use by GAS.  */
-bfd_boolean  bfd_som_set_section_attributes    (asection *, int, int, unsigned int, int);
-bfd_boolean  bfd_som_set_subsection_attributes (asection *, asection *, int, unsigned int, int, int, int, int);
-void	     bfd_som_set_symbol_type	       (asymbol *, unsigned int);
-bfd_boolean  bfd_som_attach_aux_hdr	       (bfd *, int, char *);
-int **	     hppa_som_gen_reloc_type	       (bfd *, int, int, enum hppa_reloc_field_selector_type_alt, int, asymbol *);
-bfd_boolean  bfd_som_attach_compilation_unit   (bfd *, const char *, const char *, const char *, const char *);
-asection *   bfd_section_from_som_symbol       (bfd *abfd, struct som_external_symbol_dictionary_record *symbol);
+bool bfd_som_set_section_attributes
+  (asection *, int, int, unsigned int, int);
+bool bfd_som_set_subsection_attributes
+  (asection *, asection *, int, unsigned int, int, int, int, int);
+void bfd_som_set_symbol_type
+  (asymbol *, unsigned int);
+bool bfd_som_attach_aux_hdr
+  (bfd *, int, char *);
+int **hppa_som_gen_reloc_type
+  (bfd *, int, int, enum hppa_reloc_field_selector_type_alt, int, asymbol *);
+bool bfd_som_attach_compilation_unit
+  (bfd *, const char *, const char *, const char *, const char *);
+asection *bfd_section_from_som_symbol
+  (bfd *abfd, struct som_external_symbol_dictionary_record *symbol);
 
 #ifdef __cplusplus
 }

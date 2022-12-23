@@ -1,5 +1,5 @@
 /* V850 Note manipulation routines.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,8 +18,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-extern bfd_boolean v850_elf_create_sections
+extern bool v850_elf_create_sections
   (struct bfd_link_info *);
 
-extern bfd_boolean v850_elf_set_note
+extern bool v850_elf_set_note
   (bfd *, unsigned int, unsigned int);

@@ -1,5 +1,5 @@
 /* This file is tc-wasm32.h.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -78,7 +78,7 @@ extern int wasm32_force_relocation (struct fix *);
 #define HANDLE_ALIGN(fragP)
 
 
-extern bfd_boolean wasm32_fix_adjustable (struct fix *);
+extern bool wasm32_fix_adjustable (struct fix *);
 #define tc_fix_adjustable(FIX) wasm32_fix_adjustable (FIX)
 
 /* Type names for blocks and signatures.  */

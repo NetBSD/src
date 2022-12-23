@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -85,7 +85,7 @@ make_bfd_asection (bfd *abfd,
   return asect;
 }
 
-const bfd_target *
+bfd_cleanup
 lynx_core_file_p (bfd *abfd)
 {
   int secnum;
@@ -94,7 +94,7 @@ lynx_core_file_p (bfd *abfd)
   core_st_t *threadp;
   int pagesize;
   asection *newsect;
-  bfd_size_type amt;
+  size_t amt;
 
   pagesize = getpagesize ();	/* Serious cross-target issue here...  This
 				   really needs to come from a system-specific
@@ -126,24 +126,13 @@ lynx_core_file_p (bfd *abfd)
 
   tcontext_size = pss.threadcnt * sizeof (core_st_t);
 
-  /* Allocate space for the thread contexts */
-
-  threadp = (core_st_t *) bfd_alloc (abfd, tcontext_size);
+  /* Save thread contexts */
+  if (bfd_seek (abfd, pagesize, SEEK_SET) != 0)
+    goto fail;
+  threadp = (core_st_t *) _bfd_alloc_and_read (abfd, tcontext_size,
+					       tcontext_size);
   if (!threadp)
     goto fail;
-
-  /* Save thread contexts */
-
-  if (bfd_seek (abfd, (file_ptr) pagesize, SEEK_SET) != 0)
-    goto fail;
-
-  if (bfd_bread ((void *) threadp, tcontext_size, abfd) != tcontext_size)
-    {
-      /* Probably too small to be a core file */
-      if (bfd_get_error () != bfd_error_system_call)
-	bfd_set_error (bfd_error_wrong_format);
-      goto fail;
-    }
 
   core_signal (abfd) = threadp->currsig;
 
@@ -202,7 +191,7 @@ lynx_core_file_p (bfd *abfd)
 	goto fail;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  fail:
   bfd_release (abfd, core_hdr (abfd));

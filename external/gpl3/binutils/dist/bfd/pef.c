@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -219,7 +219,7 @@ bfd_pef_print_symbol (bfd *abfd,
     default:
       bfd_print_symbol_vandf (abfd, (void *) file, symbol);
       fprintf (file, " %-5s %s", symbol->section->name, symbol->name);
-      if (CONST_STRNEQ (symbol->name, "__traceback_"))
+      if (startswith (symbol->name, "__traceback_"))
 	{
 	  unsigned char *buf;
 	  size_t offset = symbol->value + 4;
@@ -254,10 +254,10 @@ bfd_pef_convert_architecture (unsigned long architecture,
     *type = bfd_arch_m68k;
 }
 
-static bfd_boolean
+static bool
 bfd_pef_mkobject (bfd *abfd ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 static const char *bfd_pef_section_name (bfd_pef_section *section)
@@ -446,14 +446,15 @@ bfd_pef_print_loader_section (bfd *abfd, FILE *file)
     return -1;
 
   loaderlen = loadersec->size;
-  loaderbuf = bfd_malloc (loaderlen);
+  if (loaderlen < 56)
+    return -1;
+  if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) != 0)
+    return -1;
+  loaderbuf = _bfd_malloc_and_read (abfd, loaderlen, loaderlen);
   if (loaderbuf == NULL)
     return -1;
 
-  if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0
-      || bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen
-      || loaderlen < 56
-      || bfd_pef_parse_loader_header (abfd, loaderbuf, 56, &header) < 0)
+  if (bfd_pef_parse_loader_header (abfd, loaderbuf, 56, &header) < 0)
     {
       free (loaderbuf);
       return -1;
@@ -479,17 +480,14 @@ bfd_pef_scan_start_address (bfd *abfd)
     goto end;
 
   loaderlen = loadersec->size;
-  loaderbuf = bfd_malloc (loaderlen);
-  if (loaderbuf == NULL)
-    goto end;
-
-  if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
-    goto error;
-  if (bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen)
-    goto error;
-
   if (loaderlen < 56)
     goto error;
+  if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) != 0)
+    goto error;
+  loaderbuf = _bfd_malloc_and_read (abfd, loaderlen, loaderlen);
+  if (loaderbuf == NULL)
+    goto error;
+
   ret = bfd_pef_parse_loader_header (abfd, loaderbuf, 56, &header);
   if (ret < 0)
     goto error;
@@ -507,13 +505,11 @@ bfd_pef_scan_start_address (bfd *abfd)
   abfd->start_address = section->vma + header.main_offset;
 
  end:
-  if (loaderbuf != NULL)
-    free (loaderbuf);
+  free (loaderbuf);
   return 0;
 
  error:
-  if (loaderbuf != NULL)
-    free (loaderbuf);
+  free (loaderbuf);
   return -1;
 }
 
@@ -591,7 +587,7 @@ bfd_pef_read_header (bfd *abfd, bfd_pef_header *header)
   return 0;
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_pef_object_p (bfd *abfd)
 {
   bfd_pef_header header;
@@ -610,7 +606,7 @@ bfd_pef_object_p (bfd *abfd)
   if (bfd_pef_scan (abfd, &header, mdata))
     goto wrong;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
@@ -870,18 +866,14 @@ bfd_pef_parse_function_stubs (bfd *abfd,
   goto end;
 
  end:
-  if (libraries != NULL)
-    free (libraries);
-  if (imports != NULL)
-    free (imports);
+  free (libraries);
+  free (imports);
   *nsym = count;
   return 0;
 
  error:
-  if (libraries != NULL)
-    free (libraries);
-  if (imports != NULL)
-    free (imports);
+  free (libraries);
+  free (imports);
   *nsym = count;
   return -1;
 }
@@ -903,12 +895,10 @@ bfd_pef_parse_symbols (bfd *abfd, asymbol **csym)
   if (codesec != NULL)
     {
       codelen = codesec->size;
-      codebuf = bfd_malloc (codelen);
+      if (bfd_seek (abfd, codesec->filepos, SEEK_SET) != 0)
+	goto end;
+      codebuf = _bfd_malloc_and_read (abfd, codelen, codelen);
       if (codebuf == NULL)
-	goto end;
-      if (bfd_seek (abfd, codesec->filepos, SEEK_SET) < 0)
-	goto end;
-      if (bfd_bread ((void *) codebuf, codelen, abfd) != codelen)
 	goto end;
     }
 
@@ -916,12 +906,10 @@ bfd_pef_parse_symbols (bfd *abfd, asymbol **csym)
   if (loadersec != NULL)
     {
       loaderlen = loadersec->size;
-      loaderbuf = bfd_malloc (loaderlen);
+      if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) != 0)
+	goto end;
+      loaderbuf = _bfd_malloc_and_read (abfd, loaderlen, loaderlen);
       if (loaderbuf == NULL)
-	goto end;
-      if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
-	goto end;
-      if (bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen)
 	goto end;
     }
 
@@ -947,12 +935,8 @@ bfd_pef_parse_symbols (bfd *abfd, asymbol **csym)
     csym[count] = NULL;
 
  end:
-  if (codebuf != NULL)
-    free (codebuf);
-
-  if (loaderbuf != NULL)
-    free (loaderbuf);
-
+  free (codebuf);
+  free (loaderbuf);
   return count;
 }
 
@@ -1031,6 +1015,7 @@ const bfd_target pef_vec =
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */
@@ -1132,7 +1117,7 @@ bfd_pef_xlib_scan (bfd *abfd, bfd_pef_xlib_header *header)
   return 0;
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_pef_xlib_object_p (bfd *abfd)
 {
   bfd_pef_xlib_header header;
@@ -1157,7 +1142,7 @@ bfd_pef_xlib_object_p (bfd *abfd)
       return NULL;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 const bfd_target pef_xlib_vec =
@@ -1175,6 +1160,7 @@ const bfd_target pef_xlib_vec =
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

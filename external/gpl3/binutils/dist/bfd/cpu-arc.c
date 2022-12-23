@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,17 +46,17 @@ arc_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b);
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  ARC (bfd_mach_arc_arc600, "A6"    , FALSE, &arch_info_struct[1]),
-  ARC (bfd_mach_arc_arc601, "ARC601", FALSE, &arch_info_struct[2]),
-  ARC (bfd_mach_arc_arc700, "ARC700", FALSE, &arch_info_struct[3]),
-  ARC (bfd_mach_arc_arc700, "A7",     FALSE, &arch_info_struct[4]),
-  ARC (bfd_mach_arc_arcv2,  "ARCv2",  FALSE, &arch_info_struct[5]),
-  ARC (bfd_mach_arc_arcv2,  "EM",     FALSE, &arch_info_struct[6]),
-  ARC (bfd_mach_arc_arcv2,  "HS",     FALSE, NULL),
+  ARC (bfd_mach_arc_arc600, "A6"    , false, &arch_info_struct[1]),
+  ARC (bfd_mach_arc_arc601, "ARC601", false, &arch_info_struct[2]),
+  ARC (bfd_mach_arc_arc700, "ARC700", false, &arch_info_struct[3]),
+  ARC (bfd_mach_arc_arc700, "A7",     false, &arch_info_struct[4]),
+  ARC (bfd_mach_arc_arcv2,  "ARCv2",  false, &arch_info_struct[5]),
+  ARC (bfd_mach_arc_arcv2,  "EM",     false, &arch_info_struct[6]),
+  ARC (bfd_mach_arc_arcv2,  "HS",     false, NULL),
 };
 
 const bfd_arch_info_type bfd_arc_arch =
-  ARC (bfd_mach_arc_arc600, "ARC600", TRUE, &arch_info_struct[0]);
+  ARC (bfd_mach_arc_arc600, "ARC600", true, &arch_info_struct[0]);
 
 /* ARC-specific "compatible" function.  The general rule is that if A and B are
    compatible, then this function should return architecture that is more

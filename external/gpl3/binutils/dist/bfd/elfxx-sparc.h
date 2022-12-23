@@ -1,5 +1,5 @@
 /* SPARC ELF specific backend routines.
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,15 +55,9 @@ struct _bfd_sparc_elf_link_hash_table
     bfd_vma offset;
   } tls_ldm_got;
 
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
-
   /* Used by local STT_GNU_IFUNC symbols.  */
   htab_t loc_hash_table;
   void *loc_hash_memory;
-
-  /* True if the target system is VxWorks.  */
-  int is_vxworks;
 
   /* The (unloaded but important) .rela.plt.unloaded section, for VxWorks.  */
   asection *srelplt2;
@@ -90,57 +84,58 @@ struct _bfd_sparc_elf_link_hash_table
 /* Get the SPARC ELF linker hash table from a link_info structure.  */
 
 #define _bfd_sparc_elf_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == SPARC_ELF_DATA ? ((struct _bfd_sparc_elf_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == SPARC_ELF_DATA)	\
+   ? (struct _bfd_sparc_elf_link_hash_table *) (p)->hash : NULL)
 
 extern reloc_howto_type *_bfd_sparc_elf_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
 extern reloc_howto_type *_bfd_sparc_elf_reloc_name_lookup
   (bfd *, const char *);
-extern bfd_boolean _bfd_sparc_elf_info_to_howto
+extern bool _bfd_sparc_elf_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
 extern reloc_howto_type *_bfd_sparc_elf_info_to_howto_ptr
   (bfd*, unsigned int);
-extern bfd_boolean _bfd_sparc_elf_mkobject
+extern bool _bfd_sparc_elf_mkobject
   (bfd *);
 extern struct bfd_link_hash_table *_bfd_sparc_elf_link_hash_table_create
   (bfd *);
-extern bfd_boolean _bfd_sparc_elf_create_dynamic_sections
+extern bool _bfd_sparc_elf_create_dynamic_sections
   (bfd *, struct bfd_link_info *);
 extern void _bfd_sparc_elf_copy_indirect_symbol
   (struct bfd_link_info *,
    struct elf_link_hash_entry *,
    struct elf_link_hash_entry *);
-extern bfd_boolean _bfd_sparc_elf_check_relocs
+extern bool _bfd_sparc_elf_check_relocs
   (bfd *, struct bfd_link_info *,
    asection *, const Elf_Internal_Rela *);
 extern asection *_bfd_sparc_elf_gc_mark_hook
   (asection *, struct bfd_link_info *,
    Elf_Internal_Rela *, struct elf_link_hash_entry *,
    Elf_Internal_Sym *);
-extern bfd_boolean _bfd_sparc_elf_adjust_dynamic_symbol
+extern bool _bfd_sparc_elf_adjust_dynamic_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
-extern bfd_boolean _bfd_sparc_elf_omit_section_dynsym
+extern bool _bfd_sparc_elf_omit_section_dynsym
   (bfd *, struct bfd_link_info *, asection *);
-extern bfd_boolean _bfd_sparc_elf_size_dynamic_sections
+extern bool _bfd_sparc_elf_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
-extern bfd_boolean _bfd_sparc_elf_new_section_hook
+extern bool _bfd_sparc_elf_new_section_hook
   (bfd *, asection *);
-extern bfd_boolean _bfd_sparc_elf_relax_section
-  (bfd *, struct bfd_section *, struct bfd_link_info *, bfd_boolean *);
-extern bfd_boolean _bfd_sparc_elf_relocate_section
+extern bool _bfd_sparc_elf_relax_section
+  (bfd *, struct bfd_section *, struct bfd_link_info *, bool *);
+extern int _bfd_sparc_elf_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
    Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
-extern bfd_boolean _bfd_sparc_elf_finish_dynamic_symbol
+extern bool _bfd_sparc_elf_finish_dynamic_symbol
   (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *,
    Elf_Internal_Sym *sym);
-extern bfd_boolean _bfd_sparc_elf_finish_dynamic_sections
+extern bool _bfd_sparc_elf_finish_dynamic_sections
   (bfd *, struct bfd_link_info *);
-extern bfd_boolean _bfd_sparc_elf_fixup_symbol
+extern bool _bfd_sparc_elf_fixup_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
-extern bfd_boolean _bfd_sparc_elf_object_p
+extern bool _bfd_sparc_elf_object_p
   (bfd *);
 extern bfd_vma _bfd_sparc_elf_plt_sym_val
   (bfd_vma, const asection *, const arelent *);
-extern bfd_boolean _bfd_sparc_elf_merge_private_bfd_data
+extern bool _bfd_sparc_elf_merge_private_bfd_data
   (bfd *, struct bfd_link_info *);

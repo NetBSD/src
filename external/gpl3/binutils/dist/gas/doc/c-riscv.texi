@@ -1,4 +1,4 @@
-@c Copyright (C) 2016-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2016-2022 Free Software Foundation, Inc.
 @c This is part of the GAS anual.
 @c For copying conditions, see the file as.texinfo
 @c man end
@@ -17,6 +17,7 @@
 @menu
 * RISC-V-Options::        RISC-V Options
 * RISC-V-Directives::     RISC-V Directives
+* RISC-V-Modifiers::      RISC-V Assembler Modifiers
 * RISC-V-Formats::        RISC-V Instruction Formats
 * RISC-V-ATTRIBUTE::      RISC-V Object Attribute
 @end menu
@@ -41,6 +42,22 @@ Don't generate position-independent code (default)
 @cindex @samp{-march=ISA} option, RISC-V
 @item -march=ISA
 Select the base isa, as specified by ISA.  For example -march=rv32ima.
+If this option and the architecture attributes aren't set, then assembler
+will check the default configure setting --with-arch=ISA.
+
+@cindex @samp{-misa-spec=ISAspec} option, RISC-V
+@item -misa-spec=ISAspec
+Select the default isa spec version.  If the version of ISA isn't set
+by -march, then assembler helps to set the version according to
+the default chosen spec.  If this option isn't set, then assembler will
+check the default configure setting --with-isa-spec=ISAspec.
+
+@cindex @samp{-mpriv-spec=PRIVspec} option, RISC-V
+@item -mpriv-spec=PRIVspec
+Select the privileged spec version.  We can decide whether the CSR is valid or
+not according to the chosen spec.  If this option and the privilege attributes
+aren't set, then assembler will check the default configure setting
+--with-priv-spec=PRIVspec.
 
 @cindex @samp{-mabi=ABI} option, RISC-V
 @item -mabi=ABI
@@ -59,6 +76,37 @@ required to materialize symbol addresses. (default)
 @item -mno-relax
 Don't do linker relaxations.
 
+@cindex @samp{-march-attr} option, RISC-V
+@item -march-attr
+Generate the default contents for the riscv elf attribute section if the
+.attribute directives are not set.  This section is used to record the
+information that a linker or runtime loader needs to check compatibility.
+This information includes ISA string, stack alignment requirement, unaligned
+memory accesses, and the major, minor and revision version of privileged
+specification.
+
+@cindex @samp{-mno-arch-attr} option, RISC-V
+@item -mno-arch-attr
+Don't generate the default riscv elf attribute section if the .attribute
+directives are not set.
+
+@cindex @samp{-mcsr-check} option, RISC-V
+@item -mcsr-check
+Enable the CSR checking for the ISA-dependent CRS and the read-only CSR.
+The ISA-dependent CSR are only valid when the specific ISA is set.  The
+read-only CSR can not be written by the CSR instructions.
+
+@cindex @samp{-mno-csr-check} option, RISC-V
+@item -mno-csr-check
+Don't do CSR checking.
+
+@cindex @samp{-mlittle-endian} option, RISC-V
+@item -mlittle-endian
+Generate code for a little endian machine.
+
+@cindex @samp{-mbig-endian} option, RISC-V
+@item -mbig-endian
+Generate code for a big endian machine.
 @end table
 @c man end
 
@@ -146,7 +194,7 @@ command-line options are respected for the bulk of the file being assembled.
 @itemx norvc
 Enables or disables the generation of compressed instructions.  Instructions
 are opportunistically compressed by the RISC-V assembler when possible, but
-sometimes this behavior is not desirable.
+sometimes this behavior is not desirable, especially when handling alignments.
 
 @item pic
 @itemx nopic
@@ -158,16 +206,43 @@ know what you're doing, this should only be at the top of a file.
 Enables or disables relaxation.  The RISC-V assembler and linker
 opportunistically relax some code sequences, but sometimes this behavior is not
 desirable.
+
+@item csr-check
+@itemx no-csr-check
+Enables or disables the CSR checking.
+
+@item arch, @var{+extension[version]} [,...,@var{+extension_n[version_n]}]
+@itemx arch, @var{-extension} [,...,@var{-extension_n}]
+@itemx arch, @var{=ISA}
+Enables or disables the extensions for specific code region.  For example,
+@samp{.option arch, +m2p0} means add m extension with version 2.0, and
+@samp{.option arch, -f, -d} means remove extensions, f and d, from the
+architecture string.  Note that, @samp{.option arch, +c, -c} have the same
+behavior as @samp{.option rvc, norvc}.  However, they are also undesirable
+sometimes.  Besides, @samp{.option arch, -i} is illegal, since we cannot
+remove the base i extension anytime.  If you want to reset the whole ISA
+string, you can also use @samp{.option arch, =rv32imac} to overwrite the
+previous settings.
 @end table
 
 @cindex INSN directives
-@item .insn @var{value}
+@item .insn @var{type}, @var{operand} [,...,@var{operand_n}]
+@itemx .insn @var{insn_length}, @var{value}
 @itemx .insn @var{value}
 This directive permits the numeric representation of an instructions
 and makes the assembler insert the operands according to one of the
 instruction formats for @samp{.insn} (@ref{RISC-V-Formats}).
 For example, the instruction @samp{add a0, a1, a2} could be written as
-@samp{.insn r 0x33, 0, 0, a0, a1, a2}.
+@samp{.insn r 0x33, 0, 0, a0, a1, a2}.  But in fact, the instruction
+formats are difficult to use for some users, so most of them are using
+@samp{.word} to encode the instruction directly, rather than using
+@samp{.insn}.  It is fine for now, but will be wrong when the mapping
+symbols are supported, since @samp{.word} will not be shown as an
+instruction, it should be shown as data.  Therefore, we also support
+two more formats of the @samp{.insn}, the instruction @samp{add a0, a1, a2}
+could also be written as @samp{.insn 0x4, 0xc58533} or @samp{.insn 0xc58533}.
+When the @var{insn_length} is set, then assembler will check if the
+@var{value} is a valid @var{insn_length} bytes instruction.
 
 @cindex @code{.attribute} directive, RISC-V
 @item .attribute @var{tag}, @var{value}
@@ -180,12 +255,138 @@ The @var{tag} is either an attribute number, or one of the following:
 
 @end table
 
+@node RISC-V-Modifiers
+@section RISC-V Assembler Modifiers
+
+The RISC-V assembler supports following modifiers for relocatable addresses
+used in RISC-V instruction operands.  However, we also support some pseudo
+instructions that are easier to use than these modifiers.
+
+@table @code
+@item %lo(@var{symbol})
+The low 12 bits of absolute address for @var{symbol}.
+
+@item %hi(@var{symbol})
+The high 20 bits of absolute address for @var{symbol}.  This is usually
+used with the %lo modifier to represent a 32-bit absolute address.
+
+@smallexample
+	lui        a0, %hi(@var{symbol})     // R_RISCV_HI20
+	addi       a0, a0, %lo(@var{symbol}) // R_RISCV_LO12_I
+
+	lui        a0, %hi(@var{symbol})     // R_RISCV_HI20
+	load/store a0, %lo(@var{symbol})(a0) // R_RISCV_LO12_I/S
+@end smallexample
+
+@item %pcrel_lo(@var{label})
+The low 12 bits of relative address between pc and @var{symbol}.
+The @var{symbol} is related to the high part instruction which is marked
+by @var{label}.
+
+@item %pcrel_hi(@var{symbol})
+The high 20 bits of relative address between pc and @var{symbol}.
+This is usually used with the %pcrel_lo modifier to represent a +/-2GB
+pc-relative range.
+
+@smallexample
+@var{label}:
+	auipc      a0, %pcrel_hi(@var{symbol})    // R_RISCV_PCREL_HI20
+	addi       a0, a0, %pcrel_lo(@var{label}) // R_RISCV_PCREL_LO12_I
+
+@var{label}:
+	auipc      a0, %pcrel_hi(@var{symbol})    // R_RISCV_PCREL_HI20
+	load/store a0, %pcrel_lo(@var{label})(a0) // R_RISCV_PCREL_LO12_I/S
+@end smallexample
+
+Or you can use the pseudo lla/lw/sw/... instruction to do this.
+
+@smallexample
+	lla  a0, @var{symbol}
+@end smallexample
+
+@item %got_pcrel_hi(@var{symbol})
+The high 20 bits of relative address between pc and the GOT entry of
+@var{symbol}.  This is usually used with the %pcrel_lo modifier to access
+the GOT entry.
+
+@smallexample
+@var{label}:
+	auipc      a0, %got_pcrel_hi(@var{symbol}) // R_RISCV_GOT_HI20
+	addi       a0, a0, %pcrel_lo(@var{label})  // R_RISCV_PCREL_LO12_I
+
+@var{label}:
+	auipc      a0, %got_pcrel_hi(@var{symbol}) // R_RISCV_GOT_HI20
+	load/store a0, %pcrel_lo(@var{label})(a0)  // R_RISCV_PCREL_LO12_I/S
+@end smallexample
+
+Also, the pseudo la instruction with PIC has similar behavior.
+
+@item %tprel_add(@var{symbol})
+This is used purely to associate the R_RISCV_TPREL_ADD relocation for
+TLS relaxation.  This one is only valid as the fourth operand to the normally
+3 operand add instruction.
+
+@item %tprel_lo(@var{symbol})
+The low 12 bits of relative address between tp and @var{symbol}.
+
+@item %tprel_hi(@var{symbol})
+The high 20 bits of relative address between tp and @var{symbol}.  This is
+usually used with the %tprel_lo and %tprel_add modifiers to access the thread
+local variable @var{symbol} in TLS Local Exec.
+
+@smallexample
+	lui        a5, %tprel_hi(@var{symbol})          // R_RISCV_TPREL_HI20
+	add        a5, a5, tp, %tprel_add(@var{symbol}) // R_RISCV_TPREL_ADD
+	load/store t0, %tprel_lo(@var{symbol})(a5)      // R_RISCV_TPREL_LO12_I/S
+@end smallexample
+
+@item %tls_ie_pcrel_hi(@var{symbol})
+The high 20 bits of relative address between pc and GOT entry.  It is
+usually used with the %pcrel_lo modifier to access the thread local
+variable @var{symbol} in TLS Initial Exec.
+
+@smallexample
+	la.tls.ie  a5, @var{symbol}
+	add        a5, a5, tp
+	load/store t0, 0(a5)
+@end smallexample
+
+The pseudo la.tls.ie instruction can be expended to
+
+@smallexample
+@var{label}:
+	auipc a5, %tls_ie_pcrel_hi(@var{symbol}) // R_RISCV_TLS_GOT_HI20
+	load  a5, %pcrel_lo(@var{label})(a5)     // R_RISCV_PCREL_LO12_I
+@end smallexample
+
+@item %tls_gd_pcrel_hi(@var{symbol})
+The high 20 bits of relative address between pc and GOT entry.  It is
+usually used with the %pcrel_lo modifier to access the thread local variable
+@var{symbol} in TLS Global Dynamic.
+
+@smallexample
+	la.tls.gd  a0, @var{symbol}
+	call       __tls_get_addr@@plt
+	mv         a5, a0
+	load/store t0, 0(a5)
+@end smallexample
+
+The pseudo la.tls.gd instruction can be expended to
+
+@smallexample
+@var{label}:
+	auipc a0, %tls_gd_pcrel_hi(@var{symbol}) // R_RISCV_TLS_GD_HI20
+	addi  a0, a0, %pcrel_lo(@var{label})     // R_RISCV_PCREL_LO12_I
+@end smallexample
+
+@end table
+
 @node RISC-V-Formats
-@section Instruction Formats
+@section RISC-V Instruction Formats
 @cindex instruction formats, risc-v
 @cindex RISC-V instruction formats
 
-The RISC-V Instruction Set Manual Volume I: User-Level ISA lists 12
+The RISC-V Instruction Set Manual Volume I: User-Level ISA lists 15
 instruction formats where some of the formats have multiple variants.
 For the @samp{.insn} pseudo directive the assembler recognizes some
 of the formats.
@@ -216,6 +417,8 @@ only accept s0-s1, a0-a5, fs0-fs1 and fa0-fa5.
 @item simm12 @tab Sign-extended 12-bit immediate for operand x.
 @item simm20 @tab Sign-extended 20-bit immediate for operand x.
 @item simm6 @tab Sign-extended 6-bit immediate for operand x.
+@item uimm5 @tab Unsigned 5-bit immediate for operand x.
+@item uimm6 @tab Unsigned 6-bit immediate for operand x.
 @item uimm8 @tab Unsigned 8-bit immediate for operand x.
 @item symbol @tab Symbol or lable reference for operand x.
 @end multitable
@@ -309,113 +512,136 @@ The following table lists the RISC-V instruction formats that are available
 with the @samp{.insn} pseudo directive:
 
 @table @code
-@item R type: .insn r opcode, func3, func7, rd, rs1, rs2
+@item R type: .insn r opcode6, func3, func7, rd, rs1, rs2
 @verbatim
-+-------+-----+-----+-------+----+-------------+
-| func7 | rs2 | rs1 | func3 | rd |      opcode |
-+-------+-----+-----+-------+----+-------------+
-31      25    20    15      12   7             0
++-------+-----+-----+-------+----+---------+
+| func7 | rs2 | rs1 | func3 | rd | opcode6 |
++-------+-----+-----+-------+----+---------+
+31      25    20    15      12   7        0
 @end verbatim
 
-@item R type with 4 register operands: .insn r opcode, func3, func2, rd, rs1, rs2, rs3
-@itemx R4 type: .insn r4 opcode, func3, func2, rd, rs1, rs2, rs3
+@item R type with 4 register operands: .insn r opcode6, func3, func2, rd, rs1, rs2, rs3
+@itemx R4 type: .insn r4 opcode6, func3, func2, rd, rs1, rs2, rs3
 @verbatim
-+-----+-------+-----+-----+-------+----+-------------+
-| rs3 | func2 | rs2 | rs1 | func3 | rd |      opcode |
-+-----+-------+-----+-----+-------+----+-------------+
-31    27      25    20    15      12   7             0
++-----+-------+-----+-----+-------+----+---------+
+| rs3 | func2 | rs2 | rs1 | func3 | rd | opcode6 |
++-----+-------+-----+-----+-------+----+---------+
+31    27      25    20    15      12   7         0
 @end verbatim
 
-@item I type: .insn i opcode, func3, rd, rs1, simm12
+@item I type: .insn i opcode6, func3, rd, rs1, simm12
+@itemx I type: .insn i opcode6, func3, rd, simm12(rs1)
 @verbatim
-+-------------+-----+-------+----+-------------+
-|      simm12 | rs1 | func3 | rd |      opcode |
-+-------------+-----+-------+----+-------------+
-31            20    15      12   7             0
++--------------+-----+-------+----+---------+
+| simm12[11:0] | rs1 | func3 | rd | opcode6 |
++--------------+-----+-------+----+---------+
+31             20    15      12   7         0
 @end verbatim
 
-@item S type: .insn s opcode, func3, rd, rs1, simm12
+@item S type: .insn s opcode6, func3, rs2, simm12(rs1)
 @verbatim
-+--------------+-----+-----+-------+-------------+-------------+
-| simm12[11:5] | rs2 | rs1 | func3 | simm12[4:0] |      opcode |
-+--------------+-----+-----+-------+-------------+-------------+
-31             25    20    15      12            7             0
++--------------+-----+-----+-------+-------------+---------+
+| simm12[11:5] | rs2 | rs1 | func3 | simm12[4:0] | opcode6 |
++--------------+-----+-----+-------+-------------+---------+
+31             25    20    15      12            7         0
 @end verbatim
 
-@item SB type: .insn sb opcode, func3, rd, rs1, symbol
-@itemx SB type: .insn sb opcode, func3, rd, simm12(rs1)
-@itemx B type: .insn s opcode, func3, rd, rs1, symbol
-@itemx B type: .insn s opcode, func3, rd, simm12(rs1)
+@item B type: .insn s opcode6, func3, rs1, rs2, symbol
+@itemx SB type: .insn sb opcode6, func3, rs1, rs2, symbol
 @verbatim
-+------------+--------------+-----+-----+-------+-------------+-------------+--------+
-| simm12[12] | simm12[10:5] | rs2 | rs1 | func3 | simm12[4:1] | simm12[11]] | opcode |
-+------------+--------------+-----+-----+-------+-------------+-------------+--------+
-31          30            25    20    15      12           7            0
++-----------------+-----+-----+-------+----------------+---------+
+| simm12[12|10:5] | rs2 | rs1 | func3 | simm12[4:1|11] | opcode6 |
++-----------------+-----+-----+-------+----------------+---------+
+31                25    20    15      12               7         0
 @end verbatim
 
-@item U type: .insn u opcode, rd, simm20
+@item U type: .insn u opcode6, rd, simm20
 @verbatim
-+---------------------------+----+-------------+
-|                    simm20 | rd |      opcode |
-+---------------------------+----+-------------+
-31                          12   7             0
++--------------------------+----+---------+
+| simm20[20|10:1|11|19:12] | rd | opcode6 |
++--------------------------+----+---------+
+31                         12   7         0
 @end verbatim
 
-@item UJ type: .insn uj opcode, rd, symbol
-@itemx J type: .insn j opcode, rd, symbol
+@item J type: .insn j opcode6, rd, symbol
+@itemx UJ type: .insn uj opcode6, rd, symbol
 @verbatim
-+------------+--------------+------------+---------------+----+-------------+
-| simm20[20] | simm20[10:1] | simm20[11] | simm20[19:12] | rd |      opcode |
-+------------+--------------+------------+---------------+----+-------------+
-31           30             21           20              12   7             0
++------------+--------------+------------+---------------+----+---------+
+| simm20[20] | simm20[10:1] | simm20[11] | simm20[19:12] | rd | opcode6 |
++------------+--------------+------------+---------------+----+---------+
+31           30             21           20              12   7         0
 @end verbatim
 
 @item CR type: .insn cr opcode2, func4, rd, rs2
 @verbatim
-+---------+--------+-----+---------+
-|   func4 | rd/rs1 | rs2 | opcode2 |
-+---------+--------+-----+---------+
-15        12       7     2        0
++-------+--------+-----+---------+
+| func4 | rd/rs1 | rs2 | opcode2 |
++-------+--------+-----+---------+
+15      12       7     2        0
 @end verbatim
 
 @item CI type: .insn ci opcode2, func3, rd, simm6
 @verbatim
-+---------+-----+--------+-----+---------+
-|   func3 | imm | rd/rs1 | imm | opcode2 |
-+---------+-----+--------+-----+---------+
-15        13    12       7     2         0
++-------+----------+--------+------------+---------+
+| func3 | simm6[5] | rd/rs1 | simm6[4:0] | opcode2 |
++-------+----------+--------+------------+---------+
+15      13         12       7            2         0
 @end verbatim
 
-@item CIW type: .insn ciw opcode2, func3, rd, uimm8
+@item CIW type: .insn ciw opcode2, func3, rd', uimm8
 @verbatim
-+---------+--------------+-----+---------+
-|   func3 |          imm | rd' | opcode2 |
-+---------+--------------+-----+---------+
-15        13             7     2         0
++-------+------------+-----+---------+
+| func3 | uimm8[7:0] | rd' | opcode2 |
++-------+-------- ---+-----+---------+
+15      13           5     2         0
 @end verbatim
 
-@item CA type: .insn ca opcode2, func6, func2, rd, rs2
+@item CSS type: .insn css opcode2, func3, rd, uimm6
 @verbatim
-+---------+----------+-------+------+--------+
-|   func6 | rd'/rs1' | func2 | rs2' | opcode |
-+---------+----------+-------+------+--------+
-15        10         7       5      2        0
++-------+------------+----+---------+
+| func3 | uimm6[5:0] | rd | opcode2 |
++-------+------------+----+---------+
+15      13           7    2         0
 @end verbatim
 
-@item CB type: .insn cb opcode2, func3, rs1, symbol
+@item CL type: .insn cl opcode2, func3, rd', uimm5(rs1')
 @verbatim
-+---------+--------+------+--------+---------+
-|   func3 | offset | rs1' | offset | opcode2 |
-+---------+--------+------+--------+---------+
-15        13       10     7        2         0
++-------+------------+------+------------+------+---------+
+| func3 | uimm5[4:2] | rs1' | uimm5[1:0] |  rd' | opcode2 |
++-------+------------+------+------------+------+---------+
+15      13           10     7            5      2         0
+@end verbatim
+
+@item CS type: .insn cs opcode2, func3, rs2', uimm5(rs1')
+@verbatim
++-------+------------+------+------------+------+---------+
+| func3 | uimm5[4:2] | rs1' | uimm5[1:0] | rs2' | opcode2 |
++-------+------------+------+------------+------+---------+
+15      13           10     7            5      2         0
+@end verbatim
+
+@item CA type: .insn ca opcode2, func6, func2, rd', rs2'
+@verbatim
++-- ----+----------+-------+------+---------+
+| func6 | rd'/rs1' | func2 | rs2' | opcode2 |
++-------+----------+-------+------+---------+
+15      10         7       5      2         0
+@end verbatim
+
+@item CB type: .insn cb opcode2, func3, rs1', symbol
+@verbatim
++-------+--------------+------+------------------+---------+
+| func3 | simm8[8|4:3] | rs1' | simm8[7:6|2:1|5] | opcode2 |
++-------+--------------+------+------------------+---------+
+15      13             10     7                  2         0
 @end verbatim
 
 @item CJ type: .insn cj opcode2, symbol
 @verbatim
-+---------+--------------------+---------+
-|   func3 |        jump target | opcode2 |
-+---------+--------------------+---------+
-15        13             7     2         0
++-------+-------------------------------+---------+
+| func3 | simm11[11|4|9:8|10|6|7|3:1|5] | opcode2 |
++-------+-------------------------------+---------+
+15      13                              2         0
 @end verbatim
 
 

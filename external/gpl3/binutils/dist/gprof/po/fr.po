@@ -6,13 +6,13 @@
 # Mohammed Adnène Trojette, 2006.
 # François-Xavier Coudert <fxcoudert@gmail.com>, 2008.
 # David Prévot <david@tilapin.org>, 2011.
-# Stéphane Aulery <lkppo@free.fr>, 2015, 2017
+# Stéphane Aulery <lkppo@free.fr>, 2015, 2017, 2020
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-08-21 22:51+0200\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-05-06 20:30+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -240,22 +240,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<cycle %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s : impossible d'analyser le fichier de projection %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s : impossible d'ouvrir %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s : %s : n'est pas dans un format exécutable\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s : impossible de repérer la section .text dans %s\n"
@@ -270,22 +270,22 @@ msgstr "%s : espace insuffisant pour %lu octets dans l'espace de texte\n"
 msgid "%s: can't do -c\n"
 msgstr "%s : impossible d'appliquer l'option -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s : l'option -c n'est pas prise en charge par l'architecture %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s : fichier « %s » sans symbole\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s : le fichier « %s » a trop de symboles\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: mauvais décompte : ltab.len=%d au lieu de %ld\n"
@@ -383,7 +383,7 @@ msgstr "\t%d enregistrements de décomptes de blocs de base\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -397,7 +397,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Usage : %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][nom]] [-I répertoires]\n"
+"Usage : %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][nom]] [-I répertoires]\n"
 "\t[-d[nombre]] [-k de/à] [-m minimum] [-t longueur-de-la-table]\n"
 "\t[--[no-]annotated-source[=nom]] [--[no-]exec-counts[=nom]]\n"
 "\t[--[no-]flat-profile[=nom]] [--[no-]graph[=nom]]\n"
@@ -421,48 +421,48 @@ msgstr "Signaler toutes anomalies à %s\n"
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s : débogage non pris en charge ; -d ignorée\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s : format de fichier %s inconnu\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Basé sur BSD gprof, copyright 1983 Regents de l'Université de Californie.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Ce logiciel est libre. AUCUNE garantie ne lui est apportée.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s : style d'encodage par mutilation inconnu « %s »\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s : seule l'une des options --function-ordering et --file-ordering peut être indiquée.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s : le format de fichier « prof » n'est pas encore pris en charge\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s : le fichier gmon.out n'a pas d'histogramme\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s : le fichier gmon.out n'a pas de données de type call-graph\n"
@@ -603,9 +603,3 @@ msgstr "*** Fichier %s :\n"
 #, c-format
 msgid " <cycle %d>"
 msgstr " <cycle %d>"
-
-#~ msgid "%s: `%s' is incompatible with first gmon file\n"
-#~ msgstr "%s : « %s » est incompatible avec le premier fichier gmon\n"
-
-#~ msgid "%s: bfd_vma has unexpected size of %ld bytes\n"
-#~ msgstr "%s: bfd_vma a une taille inattendue de %ld octetst\n"

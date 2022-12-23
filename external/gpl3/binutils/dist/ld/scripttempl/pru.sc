@@ -5,10 +5,14 @@ OUTPUT_ARCH(${ARCH})
 EOF
 
 test -n "${RELOCATING}" && cat <<EOF
+/* Allow memory sizes to be overridden from command line.  */
+__IMEM_SIZE = DEFINED(__IMEM_SIZE) ? __IMEM_SIZE : $TEXT_LENGTH;
+__DMEM_SIZE = DEFINED(__DMEM_SIZE) ? __DMEM_SIZE : $DATA_LENGTH;
+
 MEMORY
 {
-  imem   (x)   : ORIGIN = $TEXT_ORIGIN, LENGTH = $TEXT_LENGTH
-  dmem   (rw!x) : ORIGIN = $DATA_ORIGIN, LENGTH = $DATA_LENGTH
+  imem   (x)   : ORIGIN = $TEXT_ORIGIN, LENGTH = __IMEM_SIZE
+  dmem   (rw!x) : ORIGIN = $DATA_ORIGIN, LENGTH = __DMEM_SIZE
 }
 
 __HEAP_SIZE = DEFINED(__HEAP_SIZE) ? __HEAP_SIZE : 32;
@@ -147,7 +151,9 @@ SECTIONS
     ${RELOCATING+ PROVIDE (_data_end = .) ; }
   } ${RELOCATING+ > dmem }
 
-  .resource_table ${RELOCATING-0} :
+  /* Linux remoteproc loader requires the resource_table section
+     start address to be aligned to 8 bytes.  */
+  .resource_table ${RELOCATING-0} ${RELOCATING+ ALIGN(8)} :
   {
     KEEP (*(.resource_table))
   } ${RELOCATING+ > dmem}
@@ -167,7 +173,7 @@ SECTIONS
   .noinit ${RELOCATING-0} :
   {
     ${RELOCATING+ PROVIDE (_noinit_start = .) ; }
-    *(.noinit)
+    *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
     ${RELOCATING+ PROVIDE (_noinit_end = .) ; }
     ${RELOCATING+ PROVIDE (_heap_start = .) ; }
     ${RELOCATING+ . += __HEAP_SIZE ; }
@@ -176,6 +182,12 @@ SECTIONS
        for MEMORY overflow checking during link time.  */}
     ${RELOCATING+ . += __STACK_SIZE ; }
   } ${RELOCATING+ > dmem}
+
+  /* Remoteproc loader in Linux kernel 5.10 and later reads this section
+     to setup the PRUSS interrupt controller.  The interrupt map section
+     is never referenced from PRU firmware, so there is no need to
+     place it in the target dmem memory.  */
+  .pru_irq_map 0 : { *(.pru_irq_map) }
 
   /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) }

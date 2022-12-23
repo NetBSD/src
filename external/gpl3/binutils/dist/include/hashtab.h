@@ -1,5 +1,5 @@
 /* An expandable hash tables datatype.  
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov (vmakarov@cygnus.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -79,12 +79,12 @@ typedef void (*htab_free_with_arg) (void *, void *);
 
 /* This macro defines reserved value for empty table entry.  */
 
-#define HTAB_EMPTY_ENTRY    ((PTR) 0)
+#define HTAB_EMPTY_ENTRY    ((void *) 0)
 
 /* This macro defines reserved value for table entry which contained
    a deleted element. */
 
-#define HTAB_DELETED_ENTRY  ((PTR) 1)
+#define HTAB_DELETED_ENTRY  ((void *) 1)
 
 /* Hash tables are of the following type.  The structure
    (implementation) of this type is not needed for using the hash
@@ -173,8 +173,8 @@ extern void *	htab_find_with_hash (htab_t, const void *, hashval_t);
 extern void **	htab_find_slot_with_hash (htab_t, const void *,
 					  hashval_t, enum insert_option);
 extern void	htab_clear_slot	(htab_t, void **);
-extern void	htab_remove_elt	(htab_t, void *);
-extern void	htab_remove_elt_with_hash (htab_t, void *, hashval_t);
+extern void	htab_remove_elt	(htab_t, const void *);
+extern void	htab_remove_elt_with_hash (htab_t, const void *, hashval_t);
 
 extern void	htab_traverse (htab_t, htab_trav, void *);
 extern void	htab_traverse_noresize (htab_t, htab_trav, void *);
@@ -191,6 +191,9 @@ extern htab_eq htab_eq_pointer;
 
 /* A hash function for null-terminated strings.  */
 extern hashval_t htab_hash_string (const void *);
+
+/* An equality function for null-terminated strings.  */
+extern int htab_eq_string (const void *, const void *);
 
 /* An iterative hash function for arbitrary data.  */
 extern hashval_t iterative_hash (const void *, size_t, hashval_t);

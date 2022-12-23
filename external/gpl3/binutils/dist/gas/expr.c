@@ -1,5 +1,5 @@
 /* expr.c -operands, expressions-
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,25 +28,14 @@
 #include "as.h"
 #include "safe-ctype.h"
 
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 #ifndef CHAR_BIT
 #define CHAR_BIT 8
 #endif
 
-bfd_boolean literal_prefix_dollar_hex = FALSE;
+bool literal_prefix_dollar_hex = false;
 
-static void floating_constant (expressionS * expressionP);
-static valueT generic_bignum_to_int32 (void);
-#ifdef BFD64
-static valueT generic_bignum_to_int64 (void);
-#endif
-static void integer_constant (int radix, expressionS * expressionP);
-static void mri_char_constant (expressionS *);
 static void clean_up_expression (expressionS * expressionP);
-static segT operand (expressionS *, enum expr_mode);
-static operatorT operatorf (int *);
 
 /* We keep a mapping of expression symbols to file positions, so that
    we can provide better error messages.  */
@@ -102,7 +91,7 @@ make_expr_symbol (expressionS *expressionP)
 			    : expressionP->X_op == O_register
 			      ? reg_section
 			      : expr_section),
-			   0, &zero_address_frag);
+			   &zero_address_frag, 0);
   symbol_set_value_expression (symbolP, expressionP);
 
   if (expressionP->X_op == O_constant)
@@ -137,6 +126,52 @@ expr_symbol_where (symbolS *sym, const char **pfile, unsigned int *pline)
     }
 
   return 0;
+}
+
+/* Look up a previously used .startof. / .sizeof. symbol, or make a fresh
+   one.  */
+
+static symbolS *
+symbol_lookup_or_make (const char *name, bool start)
+{
+  static symbolS **seen[2];
+  static unsigned int nr_seen[2];
+  char *buf = concat (start ? ".startof." : ".sizeof.", name, NULL);
+  symbolS *symbolP;
+  unsigned int i;
+
+  for (i = 0; i < nr_seen[start]; ++i)
+    {
+    symbolP = seen[start][i];
+
+    if (! symbolP)
+      break;
+
+    name = S_GET_NAME (symbolP);
+    if ((symbols_case_sensitive
+	 ? strcasecmp (buf, name)
+	 : strcmp (buf, name)) == 0)
+      {
+	free (buf);
+	return symbolP;
+      }
+    }
+
+  symbolP = symbol_make (buf);
+  free (buf);
+
+  if (i >= nr_seen[start])
+    {
+      unsigned int nr = (i + 1) * 2;
+
+      seen[start] = XRESIZEVEC (symbolS *, seen[start], nr);
+      nr_seen[start] = nr;
+      memset (&seen[start][i + 1], 0, (nr - i - 1) * sizeof(seen[0][0]));
+    }
+
+  seen[start][i] = symbolP;
+
+  return symbolP;
 }
 
 /* Utilities for building expressions.
@@ -220,31 +255,25 @@ floating_constant (expressionS *expressionP)
   expressionP->X_add_number = -1;
 }
 
-static valueT
+uint32_t
 generic_bignum_to_int32 (void)
 {
-  valueT number =
-	   ((generic_bignum[1] & LITTLENUM_MASK) << LITTLENUM_NUMBER_OF_BITS)
-	   | (generic_bignum[0] & LITTLENUM_MASK);
-  number &= 0xffffffff;
-  return number;
+  return ((((uint32_t) generic_bignum[1] & LITTLENUM_MASK)
+	   << LITTLENUM_NUMBER_OF_BITS)
+	  | ((uint32_t) generic_bignum[0] & LITTLENUM_MASK));
 }
 
-#ifdef BFD64
-static valueT
+uint64_t
 generic_bignum_to_int64 (void)
 {
-  valueT number =
-    ((((((((valueT) generic_bignum[3] & LITTLENUM_MASK)
-	  << LITTLENUM_NUMBER_OF_BITS)
-	 | ((valueT) generic_bignum[2] & LITTLENUM_MASK))
-	<< LITTLENUM_NUMBER_OF_BITS)
-       | ((valueT) generic_bignum[1] & LITTLENUM_MASK))
-      << LITTLENUM_NUMBER_OF_BITS)
-     | ((valueT) generic_bignum[0] & LITTLENUM_MASK));
-  return number;
+  return ((((((((uint64_t) generic_bignum[3] & LITTLENUM_MASK)
+	       << LITTLENUM_NUMBER_OF_BITS)
+	      | ((uint64_t) generic_bignum[2] & LITTLENUM_MASK))
+	     << LITTLENUM_NUMBER_OF_BITS)
+	    | ((uint64_t) generic_bignum[1] & LITTLENUM_MASK))
+	   << LITTLENUM_NUMBER_OF_BITS)
+	  | ((uint64_t) generic_bignum[0] & LITTLENUM_MASK));
 }
-#endif
 
 static void
 integer_constant (int radix, expressionS *expressionP)
@@ -538,7 +567,7 @@ integer_constant (int radix, expressionS *expressionP)
 	  /* Backward ref to local label.
 	     Because it is backward, expect it to be defined.  */
 	  /* Construct a local label.  */
-	  name = fb_label_name ((int) number, 0);
+	  name = fb_label_name (number, 0);
 
 	  /* Seen before, or symbol is defined: OK.  */
 	  symbolP = symbol_find (name);
@@ -572,7 +601,7 @@ integer_constant (int radix, expressionS *expressionP)
 	     Construct a local label name, then an undefined symbol.
 	     Don't create a xseg frag for it: caller may do that.
 	     Just return it as never seen before.  */
-	  name = fb_label_name ((int) number, 1);
+	  name = fb_label_name (number, 1);
 	  symbolP = symbol_find_or_make (name);
 	  /* We have no need to check symbol properties.  */
 #ifndef many_segments
@@ -591,15 +620,15 @@ integer_constant (int radix, expressionS *expressionP)
 	     then this is a fresh instantiation of that number, so create
 	     it.  */
 
-	  if (dollar_label_defined ((long) number))
+	  if (dollar_label_defined (number))
 	    {
-	      name = dollar_label_name ((long) number, 0);
+	      name = dollar_label_name (number, 0);
 	      symbolP = symbol_find (name);
 	      know (symbolP != NULL);
 	    }
 	  else
 	    {
-	      name = dollar_label_name ((long) number, 1);
+	      name = dollar_label_name (number, 1);
 	      symbolP = symbol_find_or_make (name);
 	    }
 
@@ -1033,9 +1062,16 @@ operand (expressionS *expressionP, enum expr_mode mode)
 		  expressionP->X_extrabit ^= 1;
 	      }
 	    else if (c == '~' || c == '"')
-	      expressionP->X_add_number = ~ expressionP->X_add_number;
+	      {
+		expressionP->X_add_number = ~ expressionP->X_add_number;
+		expressionP->X_extrabit ^= 1;
+	      }
 	    else if (c == '!')
-	      expressionP->X_add_number = ! expressionP->X_add_number;
+	      {
+		expressionP->X_add_number = ! expressionP->X_add_number;
+		expressionP->X_unsigned = 1;
+		expressionP->X_extrabit = 0;
+	      }
 	  }
 	else if (expressionP->X_op == O_big
 		 && expressionP->X_add_number <= 0
@@ -1169,8 +1205,6 @@ operand (expressionS *expressionP, enum expr_mode mode)
 	    as_bad (_("syntax error in .startof. or .sizeof."));
 	  else
 	    {
-	      char *buf;
-
 	      ++input_line_pointer;
 	      SKIP_WHITESPACE ();
 	      c = get_symbol_name (& name);
@@ -1178,20 +1212,13 @@ operand (expressionS *expressionP, enum expr_mode mode)
 		{
 		  as_bad (_("expected symbol name"));
 		  (void) restore_line_pointer (c);
-		  if (c != ')')
-		    ignore_rest_of_line ();
-		  else
+		  if (c == ')')
 		    ++input_line_pointer;
 		  break;
 		}
 
-	      buf = concat (start ? ".startof." : ".sizeof.", name,
-			    (char *) NULL);
-	      symbolP = symbol_make (buf);
-	      free (buf);
-
 	      expressionP->X_op = O_symbol;
-	      expressionP->X_add_symbol = symbolP;
+	      expressionP->X_add_symbol = symbol_lookup_or_make (name, start);
 	      expressionP->X_add_number = 0;
 
 	      *input_line_pointer = c;
@@ -1495,6 +1522,7 @@ static operator_rankT op_rank[O_max] = {
   0,	/* O_constant */
   0,	/* O_symbol */
   0,	/* O_symbol_rva */
+  0,	/* O_secidx */
   0,	/* O_register */
   0,	/* O_big */
   9,	/* O_uminus */
@@ -1722,7 +1750,7 @@ add_to_result (expressionS *resultP, offsetT amount, int rhs_highbit)
   valueT ures = resultP->X_add_number;
   valueT uamount = amount;
 
-  resultP->X_add_number += amount;
+  resultP->X_add_number += uamount;
 
   resultP->X_extrabit ^= rhs_highbit;
 
@@ -1738,7 +1766,7 @@ subtract_from_result (expressionS *resultP, offsetT amount, int rhs_highbit)
   valueT ures = resultP->X_add_number;
   valueT uamount = amount;
 
-  resultP->X_add_number -= amount;
+  resultP->X_add_number -= uamount;
 
   resultP->X_extrabit ^= rhs_highbit;
 
@@ -1930,15 +1958,29 @@ expr (int rankarg,		/* Larger # is higher rank.  */
 	  switch (op_left)
 	    {
 	    default:			goto general;
-	    case O_multiply:		resultP->X_add_number *= v; break;
+	    case O_multiply:
+	      /* Do the multiply as unsigned to silence ubsan.  The
+		 result is of course the same when we throw away high
+		 bits of the result.  */
+	      resultP->X_add_number *= (valueT) v;
+	      break;
 	    case O_divide:		resultP->X_add_number /= v; break;
 	    case O_modulus:		resultP->X_add_number %= v; break;
-	    case O_left_shift:		resultP->X_add_number <<= v; break;
+	    case O_left_shift:
+	      /* We always use unsigned shifts.  According to the ISO
+		 C standard, left shift of a signed type having a
+		 negative value is undefined behaviour, and right
+		 shift of a signed type having negative value is
+		 implementation defined.  Left shift of a signed type
+		 when the result overflows is also undefined
+		 behaviour.  So don't trigger ubsan warnings or rely
+		 on characteristics of the compiler.  */
+	      resultP->X_add_number
+		= (valueT) resultP->X_add_number << (valueT) v;
+	      break;
 	    case O_right_shift:
-	      /* We always use unsigned shifts, to avoid relying on
-		 characteristics of the compiler used to compile gas.  */
-	      resultP->X_add_number =
-		(offsetT) ((valueT) resultP->X_add_number >> (valueT) v);
+	      resultP->X_add_number
+		= (valueT) resultP->X_add_number >> (valueT) v;
 	      break;
 	    case O_bit_inclusive_or:	resultP->X_add_number |= v; break;
 	    case O_bit_or_not:		resultP->X_add_number |= ~v; break;
@@ -2357,18 +2399,52 @@ get_symbol_name (char ** ilp_return)
     }
   else if (c == '"')
     {
-      bfd_boolean backslash_seen;
+      char *dst = input_line_pointer;
 
       * ilp_return = input_line_pointer;
-      do
+      for (;;)
 	{
-	  backslash_seen = c == '\\';
-	  c = * input_line_pointer ++;
-	}
-      while (c != 0 && (c != '"' || backslash_seen));
+	  c = *input_line_pointer++;
 
-      if (c == 0)
-	as_warn (_("missing closing '\"'"));
+	  if (c == 0)
+	    {
+	      as_warn (_("missing closing '\"'"));
+	      break;
+	    }
+
+	  if (c == '"')
+	    {
+	      char *ilp_save = input_line_pointer;
+
+	      SKIP_WHITESPACE ();
+	      if (*input_line_pointer == '"')
+		{
+		  ++input_line_pointer;
+		  continue;
+		}
+	      input_line_pointer = ilp_save;
+	      break;
+	    }
+
+	  if (c == '\\')
+	    switch (*input_line_pointer)
+	      {
+	      case '"':
+	      case '\\':
+		c = *input_line_pointer++;
+		break;
+
+	      default:
+		if (c != 0)
+		  as_warn (_("'\\%c' in quoted symbol name; "
+			     "behavior may change in the future"),
+			   *input_line_pointer);
+		break;
+	      }
+
+	  *dst++ = c;
+	}
+      *dst = 0;
     }
   *--input_line_pointer = 0;
   return c;

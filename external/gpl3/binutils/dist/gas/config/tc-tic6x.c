@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -98,30 +98,30 @@ static int tic6x_arch_attribute = C6XABI_Tag_ISA_none;
 /* Whether any instructions at all have been seen.  Once any
    instructions have been seen, architecture attributes merge into the
    previous attribute value rather than replacing it.  */
-static bfd_boolean tic6x_seen_insns = FALSE;
+static bool tic6x_seen_insns = false;
 
 /* The number of registers in each register file supported by the
    current architecture.  */
 static unsigned int tic6x_num_registers;
 
 /* Whether predication on A0 is possible.  */
-static bfd_boolean tic6x_predicate_a0;
+static bool tic6x_predicate_a0;
 
 /* Whether execute packets can cross fetch packet boundaries.  */
-static bfd_boolean tic6x_can_cross_fp_boundary;
+static bool tic6x_can_cross_fp_boundary;
 
 /* Whether there are constraints on simultaneous reads and writes of
    40-bit data.  */
-static bfd_boolean tic6x_long_data_constraints;
+static bool tic6x_long_data_constraints;
 
 /* Whether compact instructions are available.  */
-static bfd_boolean tic6x_compact_insns;
+static bool tic6x_compact_insns;
 
 /* Whether to generate RELA relocations.  */
-static bfd_boolean tic6x_generate_rela = TRUE;
+static bool tic6x_generate_rela = true;
 
 /* Whether the code uses DSBT addressing.  */
-static bfd_boolean tic6x_dsbt;
+static bool tic6x_dsbt;
 
 /* Types of position-independent data (attribute values for
    Tag_ABI_PID).  */
@@ -136,7 +136,7 @@ typedef enum
 static tic6x_pid_type tic6x_pid;
 
 /* Whether the code uses position-independent code.  */
-static bfd_boolean tic6x_pic;
+static bool tic6x_pic;
 
 /* Table of supported architecture variants.  */
 typedef struct
@@ -184,7 +184,7 @@ enum
   UNWIND_A10
 };
 
-static void tic6x_output_unwinding (bfd_boolean need_extab);
+static void tic6x_output_unwinding (bool need_extab);
 
 /* Return the frame unwind state for the current function, allocating
    as necessary.  */
@@ -302,7 +302,7 @@ md_parse_option (int c, const char *arg)
       break;
 
     case OPTION_MGENERATE_REL:
-      tic6x_generate_rela = FALSE;
+      tic6x_generate_rela = false;
       break;
 
     default:
@@ -350,16 +350,14 @@ tic6x_update_features (void)
   tic6x_num_registers
     = (tic6x_arch_enable & (TIC6X_INSN_C64X | TIC6X_INSN_C67XP)) ? 32 : 16;
 
-  tic6x_predicate_a0 = (tic6x_arch_enable & TIC6X_INSN_C64X) ? TRUE : FALSE;
+  tic6x_predicate_a0 = (tic6x_arch_enable & TIC6X_INSN_C64X) != 0;
 
   tic6x_can_cross_fp_boundary
-    = (tic6x_arch_enable
-       & (TIC6X_INSN_C64X | TIC6X_INSN_C67XP)) ? TRUE : FALSE;
+    = (tic6x_arch_enable & (TIC6X_INSN_C64X | TIC6X_INSN_C67XP)) != 0;
 
-  tic6x_long_data_constraints
-    = (tic6x_arch_enable & TIC6X_INSN_C64X) ? FALSE : TRUE;
+  tic6x_long_data_constraints = (tic6x_arch_enable & TIC6X_INSN_C64X) == 0;
 
-  tic6x_compact_insns = (tic6x_arch_enable & TIC6X_INSN_C64XP) ? TRUE : FALSE;
+  tic6x_compact_insns = (tic6x_arch_enable & TIC6X_INSN_C64XP) != 0;
 }
 
 /* Do configuration after all options have been parsed.  */
@@ -419,7 +417,7 @@ s_tic6x_handlerdata (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  tic6x_output_unwinding (TRUE);
+  tic6x_output_unwinding (true);
 }
 
 /* Parse a .endp directive.  */
@@ -433,7 +431,7 @@ s_tic6x_endp (int ignored ATTRIBUTE_UNUSED)
       /* Output a .exidx entry if we have not already done so.
 	 Then switch back to the text section.  */
       if (!unwind->table_entry)
-	tic6x_output_unwinding (FALSE);
+	tic6x_output_unwinding (false);
 
       subseg_set (unwind->saved_seg, unwind->saved_subseg);
     }
@@ -546,7 +544,7 @@ s_tic6x_ehtype (int ignored ATTRIBUTE_UNUSED)
 static void
 s_tic6x_nocmp (int ignored ATTRIBUTE_UNUSED)
 {
-  seg_info (now_seg)->tc_segment_info_data.nocmp = TRUE;
+  seg_info (now_seg)->tc_segment_info_data.nocmp = true;
   demand_empty_rest_of_line ();
 }
 
@@ -683,7 +681,7 @@ s_tic6x_scomm (int ignore ATTRIBUTE_UNUSED)
 
 /* Track for each attribute whether it has been set explicitly (and so
    should not have a default value set by the assembler).  */
-static bfd_boolean tic6x_attributes_set_explicitly[NUM_KNOWN_OBJ_ATTRIBUTES];
+static bool tic6x_attributes_set_explicitly[NUM_KNOWN_OBJ_ATTRIBUTES];
 
 /* Parse a .c6xabi_attribute directive.  */
 
@@ -693,7 +691,7 @@ s_tic6x_c6xabi_attribute (int ignored ATTRIBUTE_UNUSED)
   int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
 
   if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
-    tic6x_attributes_set_explicitly[tag] = TRUE;
+    tic6x_attributes_set_explicitly[tag] = true;
 }
 
 typedef struct
@@ -742,7 +740,7 @@ const pseudo_typeS md_pseudo_table[] =
 /* Hash table of opcodes.  For each opcode name, this stores a pointer
    to a tic6x_opcode_list listing (in an arbitrary order) all opcode
    table entries with that name.  */
-static struct hash_control *opcode_hash;
+static htab_t opcode_hash;
 
 /* Initialize the assembler (called once at assembler startup).  */
 
@@ -757,17 +755,14 @@ md_begin (void)
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, 0);
 
   /* Insert opcodes into the hash table.  */
-  opcode_hash = hash_new ();
+  opcode_hash = str_htab_create ();
   for (id = 0; id < tic6x_opcode_max; id++)
     {
-      const char *errmsg;
       tic6x_opcode_list *opc = XNEW (tic6x_opcode_list);
 
       opc->id = id;
-      opc->next = hash_find (opcode_hash, tic6x_opcode_table[id].name);
-      if ((errmsg = hash_jam (opcode_hash, tic6x_opcode_table[id].name, opc))
-	  != NULL)
-	as_fatal ("%s", _(errmsg));
+      opc->next = str_hash_find (opcode_hash, tic6x_opcode_table[id].name);
+      str_hash_insert (opcode_hash, tic6x_opcode_table[id].name, opc, 1);
     }
 
   /* Save the current subseg so we can restore it [it's the default one and
@@ -798,11 +793,11 @@ md_begin (void)
 }
 
 /* Whether the current line being parsed had the "||" parallel bars.  */
-static bfd_boolean tic6x_line_parallel;
+static bool tic6x_line_parallel;
 
 /* Whether the current line being parsed started "||^" to indicate an
    SPMASKed parallel instruction.  */
-static bfd_boolean tic6x_line_spmask;
+static bool tic6x_line_spmask;
 
 /* If the current line being parsed had an instruction predicate, the
    creg value for that predicate (which must be nonzero); otherwise
@@ -822,8 +817,8 @@ tic6x_unrecognized_line (int c)
 {
   char *p, *endp;
   unsigned int z;
-  bfd_boolean areg;
-  bfd_boolean bad_predicate;
+  bool areg;
+  bool bad_predicate;
 
   switch (c)
     {
@@ -832,14 +827,14 @@ tic6x_unrecognized_line (int c)
 	{
 	  if (input_line_pointer[1] == '^')
 	    {
-	      tic6x_line_spmask = TRUE;
+	      tic6x_line_spmask = true;
 	      input_line_pointer += 2;
 	    }
 	  else
 	    input_line_pointer += 1;
 	  if (tic6x_line_parallel)
 	    as_bad (_("multiple '||' on same line"));
-	  tic6x_line_parallel = TRUE;
+	  tic6x_line_parallel = true;
 	  if (tic6x_line_creg)
 	    as_bad (_("'||' after predicate"));
 	  return 1;
@@ -858,28 +853,28 @@ tic6x_unrecognized_line (int c)
       endp = p + 1;
       p = input_line_pointer;
       z = 0;
-      bad_predicate = FALSE;
+      bad_predicate = false;
       if (*p == '!')
 	{
 	  z = 1;
 	  p++;
 	}
       if (*p == 'A' || *p == 'a')
-	areg = TRUE;
+	areg = true;
       else if (*p == 'B' || *p == 'b')
-	areg = FALSE;
+	areg = false;
       else
 	{
-	  areg = TRUE; /* Avoid uninitialized warning.  */
-	  bad_predicate = TRUE;
+	  areg = true; /* Avoid uninitialized warning.  */
+	  bad_predicate = true;
 	}
       if (!bad_predicate)
 	{
 	  p++;
 	  if (*p != '0' && *p != '1' && *p != '2')
-	    bad_predicate = TRUE;
+	    bad_predicate = true;
 	  else if (p[1] != ']')
-	    bad_predicate = TRUE;
+	    bad_predicate = true;
 	  else
 	    input_line_pointer = p + 2;
 	}
@@ -936,8 +931,8 @@ tic6x_frob_label (symbolS *sym)
   if (tic6x_line_parallel)
     {
       as_bad (_("label after '||'"));
-      tic6x_line_parallel = FALSE;
-      tic6x_line_spmask = FALSE;
+      tic6x_line_parallel = false;
+      tic6x_line_spmask = false;
     }
   if (tic6x_line_creg)
     {
@@ -966,8 +961,8 @@ tic6x_end_of_line (void)
   if (tic6x_line_parallel)
     {
       as_bad (_("'||' not followed by instruction"));
-      tic6x_line_parallel = FALSE;
-      tic6x_line_spmask = FALSE;
+      tic6x_line_parallel = false;
+      tic6x_line_spmask = false;
     }
   if (tic6x_line_creg)
     {
@@ -1038,7 +1033,7 @@ tic6x_cons_align (int n ATTRIBUTE_UNUSED)
 /* Handle an alignment directive.  Return TRUE if the
    machine-independent frag generation should be skipped.  */
 
-bfd_boolean
+bool
 tic6x_do_align (int n, char *fill, int len ATTRIBUTE_UNUSED, int max)
 {
   /* Given code alignments of 4, 8, 16 or 32 bytes, we try to handle
@@ -1060,7 +1055,7 @@ tic6x_do_align (int n, char *fill, int len ATTRIBUTE_UNUSED, int max)
       char *p;
 
       if (n > 5)
-	return FALSE;
+	return false;
 
       /* Machine-independent code would generate a frag here, but we
 	 wish to handle it in a machine-dependent way.  */
@@ -1078,11 +1073,11 @@ tic6x_do_align (int n, char *fill, int len ATTRIBUTE_UNUSED, int max)
 	 saved.  */
       if (p != align_frag->fr_literal)
 	abort ();
-      align_frag->tc_frag_data.is_insns = FALSE;
-      return TRUE;
+      align_frag->tc_frag_data.is_insns = false;
+      return true;
     }
   else
-    return FALSE;
+    return false;
 }
 
 /* Types of operand for parsing purposes.  These are used as bit-masks
@@ -1145,7 +1140,7 @@ typedef struct
   tic6x_mem_scaling scaled;
   /* Whether the offset is a register (TRUE) or an expression
      (FALSE).  */
-  bfd_boolean offset_is_reg;
+  bool offset_is_reg;
   /* The offset.  */
   union
   {
@@ -1196,7 +1191,7 @@ typedef struct
    without changing *P (but possibly changing *REG).  Do not print any
    diagnostics.  */
 
-static bfd_boolean
+static bool
 tic6x_parse_register (char **p, tic6x_register *reg)
 {
   char *r = *p;
@@ -1214,7 +1209,7 @@ tic6x_parse_register (char **p, tic6x_register *reg)
       break;
 
     default:
-      return FALSE;
+      return false;
     }
   r++;
 
@@ -1224,7 +1219,7 @@ tic6x_parse_register (char **p, tic6x_register *reg)
       r++;
     }
   else
-    return FALSE;
+    return false;
 
   if (reg->num > 0 && *r >= '0' && *r <= '9')
     {
@@ -1233,23 +1228,23 @@ tic6x_parse_register (char **p, tic6x_register *reg)
     }
 
   if (*r >= '0' && *r <= '9')
-    return FALSE;
+    return false;
 
   if (reg->num >= 32)
-    return FALSE;
+    return false;
   *p = r;
-  return TRUE;
+  return true;
 }
 
 /* Parse the initial two characters of a functional unit name starting
-   at *P.  If OK, set *BASE and *SIDE and return TRUE; otherwise,
+   at *P.  If OK, set *BASE and *SIDE and return true; otherwise,
    return FALSE.  */
 
-static bfd_boolean
+static bool
 tic6x_parse_func_unit_base (char *p, tic6x_func_unit_base *base,
 			    unsigned int *side)
 {
-  bfd_boolean good_func_unit = TRUE;
+  bool good_func_unit = true;
   tic6x_func_unit_base maybe_base = tic6x_func_unit_nfu;
   unsigned int maybe_side = 0;
 
@@ -1276,7 +1271,7 @@ tic6x_parse_func_unit_base (char *p, tic6x_func_unit_base *base,
       break;
 
     default:
-      good_func_unit = FALSE;
+      good_func_unit = false;
       break;
     }
 
@@ -1292,7 +1287,7 @@ tic6x_parse_func_unit_base (char *p, tic6x_func_unit_base *base,
 	break;
 
       default:
-	good_func_unit = FALSE;
+	good_func_unit = false;
 	break;
       }
 
@@ -1312,11 +1307,11 @@ tic6x_parse_func_unit_base (char *p, tic6x_func_unit_base *base,
    OP_FORMS.  For diagnostics, this is operand OPNO of an opcode
    starting at STR, length OPC_LEN.  */
 
-static bfd_boolean
+static bool
 tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 		     char *str, int opc_len, unsigned int opno)
 {
-  bfd_boolean operand_parsed = FALSE;
+  bool operand_parsed = false;
   char *q = *p;
 
   if ((op_forms & (TIC6X_OP_MEM_NOUNREG | TIC6X_OP_MEM_UNREG))
@@ -1339,7 +1334,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	      op->form = TIC6X_OP_FUNC_UNIT;
 	      op->value.func_unit.base = base;
 	      op->value.func_unit.side = side;
-	      operand_parsed = TRUE;
+	      operand_parsed = true;
 	      q = rq;
 	    }
 	}
@@ -1358,7 +1353,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
 	    {
 	      op->form = TIC6X_OP_IRP;
-	      operand_parsed = TRUE;
+	      operand_parsed = true;
 	      q = rq;
 	    }
 	}
@@ -1377,7 +1372,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
 	    {
 	      op->form = TIC6X_OP_NRP;
-	      operand_parsed = TRUE;
+	      operand_parsed = true;
 	      q = rq;
 	    }
 	}
@@ -1401,7 +1396,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 		{
 		  op->form = TIC6X_OP_CTRL;
 		  op->value.ctrl = crid;
-		  operand_parsed = TRUE;
+		  operand_parsed = true;
 		  q = rq;
 		  if (!(tic6x_ctrl_table[crid].isa_variants & tic6x_features))
 		    as_bad (_("control register '%s' not supported "
@@ -1416,20 +1411,20 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
   if (!operand_parsed
       && (op_forms & (TIC6X_OP_MEM_NOUNREG | TIC6X_OP_MEM_UNREG)))
     {
-      bfd_boolean mem_ok = TRUE;
+      bool mem_ok = true;
       char *mq = q;
       tic6x_mem_mod mem_mod = tic6x_mem_mod_none;
       tic6x_register base_reg;
-      bfd_boolean require_offset, permit_offset;
+      bool require_offset, permit_offset;
       tic6x_mem_scaling scaled;
-      bfd_boolean offset_is_reg;
+      bool offset_is_reg;
       expressionS offset_exp;
       tic6x_register offset_reg;
 
       if (*mq == '*')
 	mq++;
       else
-	mem_ok = FALSE;
+	mem_ok = false;
 
       if (mem_ok)
 	{
@@ -1489,15 +1484,15 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	}
 
       if (mem_mod == tic6x_mem_mod_none)
-	permit_offset = FALSE;
+	permit_offset = false;
       else
-	permit_offset = TRUE;
+	permit_offset = true;
       if (mem_mod == tic6x_mem_mod_plus || mem_mod == tic6x_mem_mod_minus)
-	require_offset = TRUE;
+	require_offset = true;
       else
-	require_offset = FALSE;
+	require_offset = false;
       scaled = tic6x_offset_none;
-      offset_is_reg = FALSE;
+      offset_is_reg = false;
 
       if (mem_ok && permit_offset)
 	{
@@ -1527,7 +1522,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	      if (scaled == tic6x_offset_scaled
 		  || (op_forms & TIC6X_OP_MEM_UNREG))
 		{
-		  bfd_boolean reg_ok;
+		  bool reg_ok;
 		  char *rq = mq;
 
 		  reg_ok = tic6x_parse_register (&rq, &offset_reg);
@@ -1537,7 +1532,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 		      if (*rq == endc)
 			{
 			  mq = rq;
-			  offset_is_reg = TRUE;
+			  offset_is_reg = true;
 			}
 		    }
 		}
@@ -1555,18 +1550,18 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	      if (*mq == endc)
 		mq++;
 	      else
-		mem_ok = FALSE;
+		mem_ok = false;
 	    }
 	}
 
       if (mem_ok && require_offset && scaled == tic6x_offset_none)
-	mem_ok = FALSE;
+	mem_ok = false;
 
       if (mem_ok)
 	{
 	  skip_whitespace (mq);
 	  if (!is_end_of_line[(unsigned char) *mq] && *mq != ',')
-	    mem_ok = FALSE;
+	    mem_ok = false;
 	}
 
       if (mem_ok)
@@ -1580,7 +1575,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	    op->value.mem.offset.reg = offset_reg;
 	  else
 	    op->value.mem.offset.exp = offset_exp;
-	  operand_parsed = TRUE;
+	  operand_parsed = true;
 	  q = mq;
 	  if (base_reg.num >= tic6x_num_registers)
 	    as_bad (_("register number %u not supported on this architecture"),
@@ -1595,7 +1590,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
   if (!operand_parsed && (op_forms & (TIC6X_OP_REG | TIC6X_OP_REGPAIR)))
     {
       tic6x_register first_reg, second_reg;
-      bfd_boolean reg_ok;
+      bool reg_ok;
       char *rq = q;
 
       reg_ok = tic6x_parse_register (&rq, &first_reg);
@@ -1619,7 +1614,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 				opc_len, str);
 		      op->form = TIC6X_OP_REGPAIR;
 		      op->value.reg = second_reg;
-		      operand_parsed = TRUE;
+		      operand_parsed = true;
 		      q = rq;
 		    }
 		}
@@ -1631,7 +1626,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 		{
 		  op->form = TIC6X_OP_REG;
 		  op->value.reg = first_reg;
-		  operand_parsed = TRUE;
+		  operand_parsed = true;
 		  q = rq;
 		}
 	    }
@@ -1659,7 +1654,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
       expression (&op->value.exp);
       q = input_line_pointer;
       input_line_pointer = save_input_line_pointer;
-      operand_parsed = TRUE;
+      operand_parsed = true;
     }
 
   if (operand_parsed)
@@ -1669,7 +1664,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
       skip_whitespace (q);
       if (!is_end_of_line[(unsigned char) *q] && *q != ',')
 	{
-	  operand_parsed = FALSE;
+	  operand_parsed = false;
 	  as_bad (_("junk after operand %u of '%.*s'"), opno,
 		  opc_len, str);
 	  while (!is_end_of_line[(unsigned char) *q] && *q != ',')
@@ -1860,7 +1855,7 @@ tic6x_parse_name (const char *name, expressionS *exprP,
 static void
 tic6x_fix_new_exp (fragS *frag, int where, int size, expressionS *exp,
 		   int pcrel, bfd_reloc_code_real_type r_type,
-		   bfd_boolean fix_adda)
+		   bool fix_adda)
 {
   bfd_reloc_code_real_type new_reloc = BFD_RELOC_UNUSED;
   symbolS *subsy = NULL;
@@ -2032,7 +2027,7 @@ tic6x_cons_fix_new (fragS *frag, int where, int size, expressionS *exp,
       return;
     }
 
-  tic6x_fix_new_exp (frag, where, size, exp, 0, r_type, FALSE);
+  tic6x_fix_new_exp (frag, where, size, exp, 0, r_type, false);
 }
 
 /* Initialize target-specific fix data.  */
@@ -2040,14 +2035,14 @@ tic6x_cons_fix_new (fragS *frag, int where, int size, expressionS *exp,
 void
 tic6x_init_fix_data (fixS *fixP)
 {
-  fixP->tc_fix_data.fix_adda = FALSE;
+  fixP->tc_fix_data.fix_adda = false;
   fixP->tc_fix_data.fix_subsy = NULL;
 }
 
 /* Return true if the fix can be handled by GAS, false if it must
    be passed through to the linker.  */
 
-bfd_boolean
+bool
 tic6x_fix_adjustable (fixS *fixP)
 {
   switch (fixP->fx_r_type)
@@ -2382,7 +2377,7 @@ tic6x_default_mem_ref (tic6x_mem_ref *mem_ref)
 	abort ();
       mem_ref->mod = tic6x_mem_mod_plus;
       mem_ref->scaled = tic6x_offset_unscaled;
-      mem_ref->offset_is_reg = FALSE;
+      mem_ref->offset_is_reg = false;
       memset (&mem_ref->offset.exp, 0, sizeof mem_ref->offset.exp);
       mem_ref->offset.exp.X_op = O_constant;
       mem_ref->offset.exp.X_add_number = 0;
@@ -2402,7 +2397,7 @@ tic6x_default_mem_ref (tic6x_mem_ref *mem_ref)
       if (mem_ref->scaled != tic6x_offset_none)
 	break;
       mem_ref->scaled = tic6x_offset_scaled;
-      mem_ref->offset_is_reg = FALSE;
+      mem_ref->offset_is_reg = false;
       memset (&mem_ref->offset.exp, 0, sizeof mem_ref->offset.exp);
       mem_ref->offset.exp.X_op = O_constant;
       mem_ref->offset.exp.X_add_number = 1;
@@ -2447,10 +2442,10 @@ tic6x_encode_spmask (tic6x_func_unit_base unit, unsigned int side)
    instruction, or 0 if not in such a loop; the only possible problems
    are operands being out of range (they already match the
    fine-grained form), and inappropriate predication.  If this
-   succeeds, return the encoding and set *OK to TRUE; otherwise return
+   succeeds, return the encoding and set *OK to true; otherwise return
    0 and set *OK to FALSE.  If a fix is needed, set *FIX_NEEDED to
    true and fill in *FIX_EXP, *FIX_PCREL, *FX_R_TYPE and *FIX_ADDA.
-   Print error messages for failure if PRINT_ERRORS is TRUE; the
+   Print error messages for failure if PRINT_ERRORS is true; the
    opcode starts at STR and has length OPC_LEN.  */
 
 static unsigned int
@@ -2460,9 +2455,9 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  unsigned int func_unit_cross,
 		  unsigned int func_unit_data_side, int sploop_ii,
 		  expressionS **fix_exp, int *fix_pcrel,
-		  bfd_reloc_code_real_type *fx_r_type, bfd_boolean *fix_adda,
-		  bfd_boolean *fix_needed, bfd_boolean *ok,
-		  bfd_boolean print_errors, char *str, int opc_len)
+		  bfd_reloc_code_real_type *fx_r_type, bool *fix_adda,
+		  bool *fix_needed, bool *ok,
+		  bool print_errors, char *str, int opc_len)
 {
   const tic6x_opcode *opct;
   const tic6x_insn_format *fmt;
@@ -2517,7 +2512,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 			opc_len, str);
-	      *ok = FALSE;
+	      *ok = false;
 	      return 0;
 	    }
 	  value = ucexp.X_add_number;
@@ -2533,11 +2528,11 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		 a known relocation for them.  */
 	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
-	      *fix_needed = TRUE;
+	      *fix_needed = true;
 	      *fix_exp = &operands[opno].value.exp;
 	      *fix_pcrel = 0;
 	      *fx_r_type = BFD_RELOC_C6000_ABS_S16;
-	      *fix_adda = FALSE;
+	      *fix_adda = false;
 	      break;
 	    }
 	  sign_value = SEXT (operands[opno].value.exp.X_add_number);
@@ -2548,7 +2543,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 			opc_len, str);
-	      *ok = FALSE;
+	      *ok = false;
 	      return 0;
 	    }
 	  value = sign_value + (1 << (fldd->bitfields[0].width - 1));
@@ -2566,7 +2561,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	      if (print_errors)
 		as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 			opc_len, str);
-	      *ok = FALSE;
+	      *ok = false;
 	      return 0;
 	    }
 	  value = operands[opno].value.exp.X_add_number - 1;
@@ -2611,7 +2606,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 			    as_bad (_("offset in operand %u of '%.*s' not "
 				      "divisible by %u"), opno + 1, opc_len,
 				    str, 1u << bits);
-			  *ok = FALSE;
+			  *ok = false;
 			  return 0;
 			}
 		      ucexp.X_add_number >>= bits;
@@ -2639,15 +2634,15 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	     check is not needed at this point to encode the value,
 	     and if there is eventually a problem it will be detected
 	     either in md_apply_fix or at link time.  */
-	  *fix_needed = TRUE;
+	  *fix_needed = true;
 	  *fix_exp = expp;
 	  *fix_pcrel = 0;
 	  *fx_r_type
 	    = tic6x_dpr_reloc (opct->variable_fields[fld].coding_method);
 	  if (operands[opno].form == TIC6X_OP_EXP)
-	    *fix_adda = TRUE;
+	    *fix_adda = true;
 	  else
-	    *fix_adda = FALSE;
+	    *fix_adda = false;
 	  break;
 
 	case tic6x_coding_lcst_low16:
@@ -2662,11 +2657,11 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		 known relocation.  */
 	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
-	      *fix_needed = TRUE;
+	      *fix_needed = true;
 	      *fix_exp = &operands[opno].value.exp;
 	      *fix_pcrel = 0;
 	      *fx_r_type = BFD_RELOC_C6000_ABS_L16;
-	      *fix_adda = FALSE;
+	      *fix_adda = false;
 	    }
 	  break;
 
@@ -2682,11 +2677,11 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		 known relocation.  */
 	      if (fldd->bitfields[0].low_pos != 7 || fldd->bitfields[0].width != 16)
 		abort ();
-	      *fix_needed = TRUE;
+	      *fix_needed = true;
 	      *fix_exp = &operands[opno].value.exp;
 	      *fix_pcrel = 0;
 	      *fx_r_type = BFD_RELOC_C6000_ABS_H16;
-	      *fix_adda = FALSE;
+	      *fix_adda = false;
 	    }
 	  break;
 
@@ -2695,7 +2690,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  if (operands[opno].form != TIC6X_OP_EXP)
 	    abort ();
 	  value = 0;
-	  *fix_needed = TRUE;
+	  *fix_needed = true;
 	  *fix_exp = &operands[opno].value.exp;
 	  *fix_pcrel = 1;
 	  if (fldd->bitfields[0].low_pos == 7 && fldd->bitfields[0].width == 21)
@@ -2710,7 +2705,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	    /* Opcode table should not use this encoding without a
 	       known relocation.  */
 	    abort ();
-	  *fix_adda = FALSE;
+	  *fix_adda = false;
 	  break;
 
 	case tic6x_coding_regpair_lsb:
@@ -2827,7 +2822,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  if (print_errors)
 		    as_bad (_("offset in operand %u of '%.*s' out of range"),
 			    opno + 1, opc_len, str);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      if (mem.offset.exp.X_add_number % scale)
@@ -2836,7 +2831,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		    as_bad (_("offset in operand %u of '%.*s' not "
 			      "divisible by %u"),
 			    opno + 1, opc_len, str, scale);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      value = mem.offset.exp.X_add_number / scale;
@@ -2860,7 +2855,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  if (print_errors)
 		    as_bad (_("offset in operand %u of '%.*s' out of range"),
 			    opno + 1, opc_len, str);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      value = mem.offset.exp.X_add_number;
@@ -2942,7 +2937,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  if (print_errors)
 		    as_bad (_("functional unit already masked for operand "
 			      "%u of '%.*s'"), opno + 1, opc_len, str);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      value |= v;
@@ -2967,7 +2962,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		as_bad (_("'%.*s' instruction not in a software "
 			  "pipelined loop"),
 			opc_len, str);
-	      *ok = FALSE;
+	      *ok = false;
 	      return 0;
 	    }
 
@@ -2996,7 +2991,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  if (print_errors)
 		    as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 			    opc_len, str);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      value = operands[opno].value.exp.X_add_number;
@@ -3015,7 +3010,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 		  if (print_errors)
 		    as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 			    opc_len, str);
-		  *ok = FALSE;
+		  *ok = false;
 		  return 0;
 		}
 	      value = operands[opno].value.exp.X_add_number;
@@ -3047,7 +3042,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	    if (print_errors)
 	      as_bad (_("operand %u of '%.*s' out of range"), opno + 1,
 		      opc_len, str);
-	    *ok = FALSE;
+	    *ok = false;
 	    return 0;
 	  }
 
@@ -3065,7 +3060,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
 	  if (print_errors)
 	    as_bad (_("instruction '%.*s' cannot be predicated"),
 		    opc_len, str);
-	  *ok = FALSE;
+	  *ok = false;
 	  return 0;
 	}
       z = tic6x_field_from_fmt (fmt, tic6x_field_z);
@@ -3078,7 +3073,7 @@ tic6x_try_encode (tic6x_opcode_id id, tic6x_operand *operands,
       opcode_value |= this_line_z << z->bitfields[0].low_pos;
     }
 
-  *ok = TRUE;
+  *ok = true;
   return opcode_value;
 }
 
@@ -3119,8 +3114,8 @@ md_assemble (char *str)
 {
   char *p;
   int opc_len;
-  bfd_boolean this_line_parallel;
-  bfd_boolean this_line_spmask;
+  bool this_line_parallel;
+  bool this_line_spmask;
   unsigned int this_line_creg;
   unsigned int this_line_z;
   tic6x_label_list *this_insn_label_list;
@@ -3136,21 +3131,20 @@ md_assemble (char *str)
   unsigned int opc_rank[TIC6X_NUM_PREFER];
   const tic6x_opcode *opct = NULL;
   int min_rank, try_rank, max_rank;
-  bfd_boolean num_operands_permitted[TIC6X_MAX_SOURCE_OPERANDS + 1]
-    = { FALSE };
+  bool num_operands_permitted[TIC6X_MAX_SOURCE_OPERANDS + 1] = { false };
   unsigned int operand_forms[TIC6X_MAX_SOURCE_OPERANDS] = { 0 };
   tic6x_operand operands[TIC6X_MAX_SOURCE_OPERANDS];
   unsigned int max_num_operands;
   unsigned int num_operands_read;
-  bfd_boolean ok_this_arch, ok_this_fu, ok_this_arch_fu;
-  bfd_boolean bad_operands = FALSE;
+  bool ok_this_arch, ok_this_fu, ok_this_arch_fu;
+  bool bad_operands = false;
   unsigned int opcode_value;
-  bfd_boolean encoded_ok;
-  bfd_boolean fix_needed = FALSE;
+  bool encoded_ok;
+  bool fix_needed = false;
   expressionS *fix_exp = NULL;
   int fix_pcrel = 0;
   bfd_reloc_code_real_type fx_r_type = BFD_RELOC_UNUSED;
-  bfd_boolean fix_adda = FALSE;
+  bool fix_adda = false;
   fragS *insn_frag;
   char *output;
 
@@ -3166,7 +3160,7 @@ md_assemble (char *str)
   /* Now an instruction has been seen, architecture attributes from
      .arch directives merge with rather than overriding the previous
      value.  */
-  tic6x_seen_insns = TRUE;
+  tic6x_seen_insns = true;
   /* If no .arch directives or -march options have been seen, we are
      assessing instruction validity based on the C674X default, so set
      the attribute accordingly.  */
@@ -3179,15 +3173,15 @@ md_assemble (char *str)
   this_line_spmask = tic6x_line_spmask;
   this_line_creg = tic6x_line_creg;
   this_line_z = tic6x_line_z;
-  tic6x_line_parallel = FALSE;
-  tic6x_line_spmask = FALSE;
+  tic6x_line_parallel = false;
+  tic6x_line_spmask = false;
   tic6x_line_creg = 0;
   tic6x_line_z = 0;
   seginfo = seg_info (now_seg);
   this_insn_label_list = seginfo->tc_segment_info_data.label_list;
   seginfo->tc_segment_info_data.label_list = NULL;
 
-  opc_list = hash_find_n (opcode_hash, str, p - str);
+  opc_list = str_hash_find_n (opcode_hash, str, p - str);
   if (opc_list == NULL)
     {
       char c = *p;
@@ -3204,7 +3198,7 @@ md_assemble (char *str)
      specifier.  */
   if (*p == '.')
     {
-      bfd_boolean good_func_unit;
+      bool good_func_unit;
       tic6x_func_unit_base maybe_base = tic6x_func_unit_nfu;
       unsigned int maybe_side = 0;
       unsigned int maybe_cross = 0;
@@ -3232,7 +3226,7 @@ md_assemble (char *str)
 	      p += 5;
 	    }
 	  else
-	    good_func_unit = FALSE;
+	    good_func_unit = false;
 	}
 
       if (good_func_unit)
@@ -3255,47 +3249,47 @@ md_assemble (char *str)
   num_matching_opcodes = 0;
   opcm = XNEWVEC (tic6x_opcode_id, max_matching_opcodes);
   max_num_operands = 0;
-  ok_this_arch = FALSE;
-  ok_this_fu = FALSE;
-  ok_this_arch_fu = FALSE;
+  ok_this_arch = false;
+  ok_this_fu = false;
+  ok_this_arch_fu = false;
   for (opc = opc_list; opc; opc = opc->next)
     {
       unsigned int num_operands;
       unsigned int i;
-      bfd_boolean this_opc_arch_ok = TRUE;
-      bfd_boolean this_opc_fu_ok = TRUE;
+      bool this_opc_arch_ok = true;
+      bool this_opc_fu_ok = true;
 
       if (tic6x_insn_format_table[tic6x_opcode_table[opc->id].format].num_bits
 	  != 32)
 	continue;
       if (!(tic6x_opcode_table[opc->id].isa_variants & tic6x_features))
-	this_opc_arch_ok = FALSE;
+	this_opc_arch_ok = false;
       if (tic6x_opcode_table[opc->id].func_unit != func_unit_base)
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (func_unit_side == 1
 	  && (tic6x_opcode_table[opc->id].flags & TIC6X_FLAG_SIDE_B_ONLY))
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (func_unit_cross
 	  && (tic6x_opcode_table[opc->id].flags & TIC6X_FLAG_NO_CROSS))
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (!func_unit_data_side
 	  && (tic6x_opcode_table[opc->id].flags
 	      & (TIC6X_FLAG_LOAD | TIC6X_FLAG_STORE)))
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (func_unit_data_side
 	  && !(tic6x_opcode_table[opc->id].flags
 	       & (TIC6X_FLAG_LOAD | TIC6X_FLAG_STORE)))
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (func_unit_data_side == 1
 	  && (tic6x_opcode_table[opc->id].flags & TIC6X_FLAG_SIDE_T2_ONLY))
-	this_opc_fu_ok = FALSE;
+	this_opc_fu_ok = false;
       if (this_opc_arch_ok)
-	ok_this_arch = TRUE;
+	ok_this_arch = true;
       if (this_opc_fu_ok)
-	ok_this_fu = TRUE;
+	ok_this_fu = true;
       if (!this_opc_arch_ok || !this_opc_fu_ok)
 	continue;
-      ok_this_arch_fu = TRUE;
+      ok_this_arch_fu = true;
       opcm[num_matching_opcodes] = opc->id;
       num_matching_opcodes++;
       num_operands = tic6x_opcode_table[opc->id].num_operands;
@@ -3311,7 +3305,7 @@ md_assemble (char *str)
 	    {
 	      operand_forms[i]
 		|= tic6x_coarse_operand_form (tic6x_operand_func_unit);
-	      num_operands_permitted[i] = TRUE;
+	      num_operands_permitted[i] = true;
 	    }
 	}
       else
@@ -3324,7 +3318,7 @@ md_assemble (char *str)
 	      operand_forms[i] |= tic6x_coarse_operand_form (f);
 	    }
 	}
-      num_operands_permitted[num_operands] = TRUE;
+      num_operands_permitted[num_operands] = true;
       if (num_operands > max_num_operands)
 	max_num_operands = num_operands;
     }
@@ -3360,7 +3354,7 @@ md_assemble (char *str)
     abort ();
 
   num_operands_read = 0;
-  while (TRUE)
+  while (true)
     {
       skip_whitespace (p);
       if (is_end_of_line[(unsigned char) *p])
@@ -3368,7 +3362,7 @@ md_assemble (char *str)
 	  if (num_operands_read > 0)
 	    {
 	      as_bad (_("missing operand after comma"));
-	      bad_operands = TRUE;
+	      bad_operands = true;
 	    }
 	  break;
 	}
@@ -3376,14 +3370,14 @@ md_assemble (char *str)
       if (max_num_operands == 0)
 	{
 	  as_bad (_("too many operands to '%.*s'"), opc_len, str);
-	  bad_operands = TRUE;
+	  bad_operands = true;
 	  break;
 	}
 
       if (!tic6x_parse_operand (&p, &operands[num_operands_read],
 				operand_forms[num_operands_read], str, opc_len,
 				num_operands_read + 1))
-	bad_operands = TRUE;
+	bad_operands = true;
       num_operands_read++;
 
       if (is_end_of_line[(unsigned char) *p])
@@ -3394,7 +3388,7 @@ md_assemble (char *str)
 	  if (num_operands_read == max_num_operands)
 	    {
 	      as_bad (_("too many operands to '%.*s'"), opc_len, str);
-	      bad_operands = TRUE;
+	      bad_operands = true;
 	      break;
 	    }
 	  continue;
@@ -3407,7 +3401,7 @@ md_assemble (char *str)
   if (!bad_operands && !num_operands_permitted[num_operands_read])
     {
       as_bad (_("bad number of operands to '%.*s'"), opc_len, str);
-      bad_operands = TRUE;
+      bad_operands = true;
     }
 
   if (!bad_operands)
@@ -3420,8 +3414,8 @@ md_assemble (char *str)
 
       for (i = 0; i < num_operands_read; i++)
 	{
-	  bfd_boolean coarse_ok = FALSE;
-	  bfd_boolean fine_ok = FALSE;
+	  bool coarse_ok = false;
+	  bool fine_ok = false;
 	  tic6x_operand_match fine_failure = tic6x_match_matches;
 	  unsigned int j;
 
@@ -3451,7 +3445,7 @@ md_assemble (char *str)
 	      if (operands[i].form != cf)
 		continue;
 
-	      coarse_ok = TRUE;
+	      coarse_ok = true;
 	      this_fine_failure
 		= tic6x_operand_matches_form (&operands[i], f, rw,
 					      func_unit_side,
@@ -3459,7 +3453,7 @@ md_assemble (char *str)
 					      func_unit_data_side);
 	      if (this_fine_failure == tic6x_match_matches)
 		{
-		  fine_ok = TRUE;
+		  fine_ok = true;
 		  break;
 		}
 	      if (fine_failure == tic6x_match_matches
@@ -3518,7 +3512,7 @@ md_assemble (char *str)
 		default:
 		  abort ();
 		}
-	      bad_operands = TRUE;
+	      bad_operands = true;
 	      break;
 	    }
 	}
@@ -3530,7 +3524,7 @@ md_assemble (char *str)
 	 operands is valid.  Check whether there is an opcode choice
 	 for which all operands are simultaneously valid.  */
       unsigned int i;
-      bfd_boolean found_match = FALSE;
+      bool found_match = false;
 
       for (i = 0; i < TIC6X_NUM_PREFER; i++)
 	opc_rank[i] = (unsigned int) -1;
@@ -3541,7 +3535,7 @@ md_assemble (char *str)
       for (i = 0; i < num_matching_opcodes; i++)
 	{
 	  unsigned int j;
-	  bfd_boolean this_matches = TRUE;
+	  bool this_matches = true;
 
 	  if (!(tic6x_opcode_table[opcm[i]].flags & TIC6X_FLAG_SPMASK)
 	      && tic6x_opcode_table[opcm[i]].num_operands != num_operands_read)
@@ -3568,7 +3562,7 @@ md_assemble (char *str)
 					      func_unit_data_side)
 		  != tic6x_match_matches)
 		{
-		  this_matches = FALSE;
+		  this_matches = false;
 		  break;
 		}
 	    }
@@ -3590,14 +3584,14 @@ md_assemble (char *str)
 		   here.  */
 		abort ();
 
-	      found_match = TRUE;
+	      found_match = true;
 	    }
 	}
 
       if (!found_match)
 	{
 	  as_bad (_("bad operand combination for '%.*s'"), opc_len, str);
-	  bad_operands = TRUE;
+	  bad_operands = true;
 	}
     }
 
@@ -3608,10 +3602,10 @@ md_assemble (char *str)
     }
 
   opcode_value = 0;
-  encoded_ok = FALSE;
+  encoded_ok = false;
   for (try_rank = max_rank; try_rank >= min_rank; try_rank--)
     {
-      fix_needed = FALSE;
+      fix_needed = false;
 
       if (opc_rank[try_rank] == (unsigned int) -1)
 	continue;
@@ -3623,7 +3617,7 @@ md_assemble (char *str)
 				       seginfo->tc_segment_info_data.sploop_ii,
 				       &fix_exp, &fix_pcrel, &fx_r_type,
 				       &fix_adda, &fix_needed, &encoded_ok,
-				       (try_rank == min_rank ? TRUE : FALSE),
+				       try_rank == min_rank,
 				       str, opc_len);
       if (encoded_ok)
 	{
@@ -3692,7 +3686,7 @@ md_assemble (char *str)
 	 saved.  */
       if (output != insn_frag->fr_literal)
 	abort ();
-      insn_frag->tc_frag_data.is_insns = TRUE;
+      insn_frag->tc_frag_data.is_insns = true;
       insn_frag->tc_frag_data.can_cross_fp_boundary
 	= tic6x_can_cross_fp_boundary;
     }
@@ -3778,7 +3772,7 @@ md_assemble (char *str)
 void
 md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 {
-  offsetT value = *valP;
+  valueT value = *valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   value = SEXT (value);
@@ -3808,7 +3802,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_16:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  if (value < -0x8000 || value > 0xffff)
+	  if (value + 0x8000 > 0xffff + 0x8000)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("value too large for 2-byte field"));
 	  md_number_to_chars (buf, value, 2);
@@ -3818,7 +3812,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_8:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  if (value < -0x80 || value > 0xff)
+	  if (value + 0x80 > 0xff + 0x80)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("value too large for 1-byte field"));
 	  *buf = value;
@@ -3834,7 +3828,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_SBR_GOT_L16_W:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 	  int shift;
 
 	  switch (fixP->fx_r_type)
@@ -3854,7 +3848,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	    }
 
 	  MODIFY_VALUE (newval, value, shift, 7, 16);
-	  if ((value < -0x8000 || value > 0x7fff)
+	  if ((value + 0x8000 > 0x7fff + 0x8000)
 	      && (fixP->fx_r_type == BFD_RELOC_C6000_ABS_S16
 		  || fixP->fx_r_type == BFD_RELOC_C6000_SBR_S16))
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
@@ -3875,7 +3869,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_SBR_GOT_H16_W:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 	  int shift;
 
 	  switch (fixP->fx_r_type)
@@ -3906,7 +3900,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_PCR_L16:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 	  int shift = fixP->fx_r_type == BFD_RELOC_C6000_PCR_H16 ? 16 : 0;
 
 	  MODIFY_VALUE (newval, value, shift, 7, 16);
@@ -3918,10 +3912,10 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_SBR_U15_B:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  MODIFY_VALUE (newval, value, 0, 8, 15);
-	  if (value < 0 || value > 0x7fff)
+	  if (value > 0x7fff)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("immediate offset out of range"));
 
@@ -3932,7 +3926,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_SBR_U15_H:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  /* Constant ADDA operands, processed as constant when the
 	     instruction is parsed, are encoded as-is rather than
@@ -3948,7 +3942,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if (value & 1)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("immediate offset not 2-byte-aligned"));
-	  if (value < 0 || value > 0xfffe)
+	  if (value > 0xfffe)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("immediate offset out of range"));
 
@@ -3960,7 +3954,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_SBR_GOT_U15_W:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  /* Constant ADDA operands, processed as constant when the
 	     instruction is parsed, are encoded as-is rather than
@@ -3976,7 +3970,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if (value & 3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("immediate offset not 4-byte-aligned"));
-	  if (value < 0 || value > 0x1fffc)
+	  if (value > 0x1fffc)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("immediate offset out of range"));
 
@@ -3997,14 +3991,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_PCR_S21:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  MODIFY_VALUE (newval, value, 2, 7, 21);
 
 	  if (value & 3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset not 4-byte-aligned"));
-	  if (value < -0x400000 || value > 0x3ffffc)
+	  if (value + 0x400000 > 0x3ffffc + 0x400000)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset out of range"));
 
@@ -4015,14 +4009,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_PCR_S12:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  MODIFY_VALUE (newval, value, 2, 16, 12);
 
 	  if (value & 3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset not 4-byte-aligned"));
-	  if (value < -0x2000 || value > 0x1ffc)
+	  if (value + 0x2000 > 0x1ffc + 0x2000)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset out of range"));
 
@@ -4033,14 +4027,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_PCR_S10:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  MODIFY_VALUE (newval, value, 2, 13, 10);
 
 	  if (value & 3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset not 4-byte-aligned"));
-	  if (value < -0x800 || value > 0x7fc)
+	  if (value + 0x800 > 0x7fc + 0x800)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset out of range"));
 
@@ -4051,14 +4045,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_C6000_PCR_S7:
       if (fixP->fx_done || !seg->use_rela_p)
 	{
-	  offsetT newval = md_chars_to_number (buf, 4);
+	  valueT newval = md_chars_to_number (buf, 4);
 
 	  MODIFY_VALUE (newval, value, 2, 16, 7);
 
 	  if (value & 3)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset not 4-byte-aligned"));
-	  if (value < -0x100 || value > 0xfc)
+	  if (value + 0x100 > 0xfc + 0x100)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("PC-relative offset out of range"));
 
@@ -4093,8 +4087,8 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
   segment_info_type *info;
   frchainS *frchp;
   fragS *fragp;
-  bfd_boolean have_code = FALSE;
-  bfd_boolean have_non_code = FALSE;
+  bool have_code = false;
+  bool have_non_code = false;
 
   info = seg_info (section);
   if (info == NULL)
@@ -4106,17 +4100,17 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 	{
 	case rs_machine_dependent:
 	  if (fragp->tc_frag_data.is_insns)
-	    have_code = TRUE;
+	    have_code = true;
 	  break;
 
 	case rs_dummy:
 	case rs_fill:
 	  if (fragp->fr_fix > 0)
-	    have_non_code = TRUE;
+	    have_non_code = true;
 	  break;
 
 	default:
-	  have_non_code = TRUE;
+	  have_non_code = true;
 	  break;
 	}
 
@@ -4180,7 +4174,7 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 	for (fragp = frchp->frch_root; fragp; fragp = fragp->fr_next)
 	look_at_frag:
 	  {
-	    bfd_boolean go_back = FALSE;
+	    bool go_back = false;
 	    frchainS *frchp_next;
 	    fragS *fragp_next;
 
@@ -4203,7 +4197,7 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 		if (want_insert > 7)
 		  abort ();
 		want_insert_done_so_far = 0;
-		go_back = TRUE;
+		go_back = true;
 	      }
 
 	    if (!fragp->tc_frag_data.is_insns)
@@ -4245,7 +4239,7 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 		if (want_insert > 7)
 		  abort ();
 		want_insert_done_so_far = 0;
-		go_back = TRUE;
+		go_back = true;
 	      }
 	    else if (want_insert && !go_back)
 	      {
@@ -4287,7 +4281,7 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 			want_insert -= want_insert_done_so_far;
 			want_insert_done_so_far = 0;
 			if (want_insert)
-			  go_back = TRUE;
+			  go_back = true;
 		      }
 		  }
 	      }
@@ -4374,8 +4368,8 @@ tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
 void
 tic6x_frag_init (fragS *fragp)
 {
-  fragp->tc_frag_data.is_insns = FALSE;
-  fragp->tc_frag_data.can_cross_fp_boundary = FALSE;
+  fragp->tc_frag_data.is_insns = false;
+  fragp->tc_frag_data.can_cross_fp_boundary = false;
 }
 
 /* Set an attribute if it has not already been set by the user.  */
@@ -4555,7 +4549,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 int
 tic6x_regname_to_dw2regnum (char *regname)
 {
-  bfd_boolean reg_ok;
+  bool reg_ok;
   tic6x_register reg;
   char *rq = regname;
 
@@ -4606,7 +4600,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
   const char * text_name;
   const char * prefix;
   const char * prefix_once;
-  const char * group_name;
+  struct elf_section_match match;
   size_t prefix_len;
   size_t text_len;
   char * sec_name;
@@ -4632,8 +4626,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
   if (streq (text_name, ".text"))
     text_name = "";
 
-  if (strncmp (text_name, ".gnu.linkonce.t.",
-	       strlen (".gnu.linkonce.t.")) == 0)
+  if (startswith (text_name, ".gnu.linkonce.t."))
     {
       prefix = prefix_once;
       text_name += strlen (".gnu.linkonce.t.");
@@ -4649,13 +4642,13 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
 
   flags = SHF_ALLOC;
   linkonce = 0;
-  group_name = 0;
+  memset (&match, 0, sizeof (match));
 
   /* Handle COMDAT group.  */
   if (prefix != prefix_once && (text_seg->flags & SEC_LINK_ONCE) != 0)
     {
-      group_name = elf_group_name (text_seg);
-      if (group_name == NULL)
+      match.group_name = elf_group_name (text_seg);
+      if (match.group_name == NULL)
 	{
 	  as_bad (_("group section `%s' has no group signature"),
 		  segment_name (text_seg));
@@ -4666,7 +4659,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
       linkonce = 1;
     }
 
-  obj_elf_change_section (sec_name, type, 0, flags, 0, group_name,
+  obj_elf_change_section (sec_name, type, flags, 0, &match,
 			  linkonce, 0);
 
   /* Set the section link for index tables.  */
@@ -4879,7 +4872,7 @@ tic6x_output_exidx_entry (void)
 }
 
 static void
-tic6x_output_unwinding (bfd_boolean need_extab)
+tic6x_output_unwinding (bool need_extab)
 {
   tic6x_unwind_info *unwind = tic6x_get_unwind ();
   unsigned safe_mask = unwind->safe_mask;
@@ -5090,13 +5083,13 @@ tic6x_cfi_endproc (struct fde_entry *fde)
   unwind->cfa_reg = 31;
   unwind->return_reg = UNWIND_B3;
   unwind->saved_reg_count = 0;
-  unwind->pop_rts = FALSE;
+  unwind->pop_rts = false;
 
   unwind->saved_seg = now_seg;
   unwind->saved_subseg = now_subseg;
 
   for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
-    unwind->reg_saved[reg] = FALSE;
+    unwind->reg_saved[reg] = false;
 
   /* Scan FDE instructions to build up stack frame layout.  */
   for (insn = fde->data; insn; insn = insn->next)
@@ -5123,7 +5116,7 @@ tic6x_cfi_endproc (struct fde_entry *fde)
 	case DW_CFA_same_value:
 	  reg = tic6x_unwind_reg_from_dwarf (insn->u.r);
 	  if (reg >= 0)
-	    unwind->reg_saved[reg] = FALSE;
+	    unwind->reg_saved[reg] = false;
 	  break;
 
 	case DW_CFA_offset:
@@ -5134,7 +5127,7 @@ tic6x_cfi_endproc (struct fde_entry *fde)
 		      insn->u.ri.reg);
 	      return;
 	    }
-	  unwind->reg_saved[reg] = TRUE;
+	  unwind->reg_saved[reg] = true;
 	  unwind->reg_offset[reg] = insn->u.ri.offset;
 	  if (insn->u.ri.reg == UNWIND_B3)
 	    unwind->return_reg = UNWIND_B3;
@@ -5157,7 +5150,7 @@ tic6x_cfi_endproc (struct fde_entry *fde)
 	    }
 
 	  unwind->return_reg = reg;
-	  unwind->reg_saved[UNWIND_B3] = FALSE;
+	  unwind->reg_saved[UNWIND_B3] = false;
 	  if (unwind->reg_saved[reg])
 	    {
 	      as_bad (_("unable to restore return address from "
@@ -5323,7 +5316,7 @@ tic6x_cfi_endproc (struct fde_entry *fde)
 
       if (reg == TIC6X_NUM_UNWIND_REGS)
 	{
-	  unwind->pop_rts = TRUE;
+	  unwind->pop_rts = true;
 	  reg_saved_mask = 0;
 	}
     }

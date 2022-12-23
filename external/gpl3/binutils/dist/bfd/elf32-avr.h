@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    Written by Bjoern Haase <bjoern.m.haase@web.de>
 
@@ -25,16 +25,15 @@
 
 extern void
 elf32_avr_setup_params (struct bfd_link_info *, bfd *, asection *,
-			bfd_boolean, bfd_boolean, bfd_boolean,
-			bfd_vma, bfd_boolean);
+			bool, bool, bool, bfd_vma, bool);
 
 extern int
 elf32_avr_setup_section_lists (bfd *, struct bfd_link_info *);
 
-extern bfd_boolean
-elf32_avr_size_stubs (bfd *, struct bfd_link_info *, bfd_boolean);
+extern bool
+elf32_avr_size_stubs (bfd *, struct bfd_link_info *, bool);
 
-extern bfd_boolean
+extern bool
 elf32_avr_build_stubs (struct bfd_link_info *);
 
 /* The name of the section into which the property records are stored.  */

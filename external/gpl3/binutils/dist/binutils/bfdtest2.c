@@ -1,5 +1,5 @@
 /* A program to test BFD.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -53,13 +53,13 @@ iovec_stat (struct bfd *abfd ATTRIBUTE_UNUSED,
   return fstat (fileno ((FILE*) stream), sb);
 }
 
-static bfd_boolean
+static bool
 check_format_any (struct bfd *abfd, bfd_format format)
 {
   char** targets = NULL;
 
   if (bfd_check_format_matches (abfd, format, &targets))
-    return TRUE;
+    return true;
 
   if (targets)
     {
@@ -68,7 +68,7 @@ check_format_any (struct bfd *abfd, bfd_format format)
       return bfd_check_format (abfd, format);
     }
 
-  return FALSE;
+  return false;
 }
 
 int

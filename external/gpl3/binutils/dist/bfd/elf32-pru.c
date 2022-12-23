@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI PRU.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
    Based on elf32-nios2.c
 
@@ -43,7 +43,7 @@
   } while (0)
 
 /* Enable debugging printout at stdout with this variable.  */
-static bfd_boolean debug_relax = FALSE;
+static bool debug_relax = false;
 
 /* Forward declarations.  */
 static bfd_reloc_status_type pru_elf32_pmem_relocate
@@ -65,229 +65,229 @@ static reloc_howto_type elf_pru_howto_table_rel[] = {
   /* No relocation.  */
   HOWTO (R_PRU_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
-	 3,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 0,			/* size */
+	 0,			/* bitsize */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_PRU_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_16_PMEM,
 	 2,
-	 1,			/* short */
+	 2,			/* short */
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_PRU_16_PMEM",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0xffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_PRU_U16_PMEMIMM,
 	 2,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 8,
 	 complain_overflow_unsigned,
 	 pru_elf32_pmem_relocate,
 	 "R_PRU_U16_PMEMIMM",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0x00ffff00,
-	 FALSE),
+	 false),
 
   HOWTO (R_PRU_BFD_RELOC_16,
 	 0,
-	 1,			/* short */
+	 2,			/* short */
 	 16,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_PRU_BFD_RELOC16",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0x0000ffff,
-	 FALSE),
+	 false),
 
   /* 16-bit unsigned immediate relocation.  */
   HOWTO (R_PRU_U16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 8,			/* bitpos */
 	 complain_overflow_unsigned,	/* complain on overflow */
 	 bfd_elf_generic_reloc,	/* special function */
 	 "R_PRU_U16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0x00ffff00,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_32_PMEM,
 	 2,
-	 2,			/* long */
+	 4,			/* long */
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 pru_elf32_pmem_relocate,
 	 "R_PRU_32_PMEM",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_PRU_BFD_RELOC_32,
 	 0,
-	 2,			/* long */
+	 4,			/* long */
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_PRU_BFD_RELOC32",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_PRU_S10_PCREL,
 	 2,
-	 2,
+	 4,
 	 10,
-	 TRUE,
+	 true,
 	 0,
 	 complain_overflow_bitfield,
 	 pru_elf32_s10_pcrel_relocate,
 	 "R_PRU_S10_PCREL",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0x060000ff,
-	 TRUE),
+	 true),
 
   HOWTO (R_PRU_U8_PCREL,
 	 2,
-	 2,
+	 4,
 	 8,
-	 TRUE,
+	 true,
 	 0,
 	 complain_overflow_unsigned,
 	 pru_elf32_u8_pcrel_relocate,
 	 "R_PRU_U8_PCREL",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0x000000ff,
-	 TRUE),
+	 true),
 
   HOWTO (R_PRU_LDI32,
 	 0,			/* rightshift */
-	 4,			/* size (4 = 8bytes) */
+	 8,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain on overflow */
 	 pru_elf32_ldi32_relocate, /* special function */
 	 "R_PRU_LDI32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* GNU-specific relocations.  */
   HOWTO (R_PRU_GNU_BFD_RELOC_8,
 	 0,
-	 0,			/* byte */
+	 1,			/* byte */
 	 8,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_PRU_BFD_RELOC8",
-	 FALSE,
+	 false,
 	 0,			/* src_mask */
 	 0x000000ff,
-	 FALSE),
+	 false),
 
   HOWTO (R_PRU_GNU_DIFF8,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_pru_diff_relocate, /* special_function */
 	 "R_PRU_DIFF8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_GNU_DIFF16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_pru_diff_relocate,/* special_function */
 	 "R_PRU_DIFF16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_GNU_DIFF32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_pru_diff_relocate,/* special_function */
 	 "R_PRU_DIFF32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_GNU_DIFF16_PMEM,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_pru_diff_relocate,/* special_function */
 	 "R_PRU_DIFF16_PMEM",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_PRU_GNU_DIFF32_PMEM, /* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_pru_diff_relocate,/* special_function */
 	 "R_PRU_DIFF32_PMEM",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
 /* Add other relocations here.  */
 };
@@ -299,14 +299,14 @@ static unsigned char elf_code_to_howto_index[R_PRU_ILLEGAL + 1];
 static reloc_howto_type *
 lookup_howto (unsigned int rtype)
 {
-  static bfd_boolean initialized = FALSE;
+  static bool initialized = false;
   int i;
   int howto_tbl_size = (int) (sizeof (elf_pru_howto_table_rel)
 			      / sizeof (elf_pru_howto_table_rel[0]));
 
   if (! initialized)
     {
-      initialized = TRUE;
+      initialized = true;
       memset (elf_code_to_howto_index, 0xff,
 	      sizeof (elf_code_to_howto_index));
       for (i = 0; i < howto_tbl_size; i++)
@@ -410,7 +410,7 @@ pru_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* Implement elf_info_to_howto:
    Given a ELF32 relocation, fill in a arelent structure.  */
 
-static bfd_boolean
+static bool
 pru_elf32_info_to_howto (bfd *abfd, arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
 {
@@ -422,7 +422,7 @@ pru_elf32_info_to_howto (bfd *abfd, arelent *cache_ptr,
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   cache_ptr->howto = lookup_howto (r_type);
@@ -539,7 +539,7 @@ pru_elf32_do_ldi32_relocate (bfd *abfd, reloc_howto_type *howto,
 			     bfd_byte *data, bfd_vma offset,
 			     bfd_vma symbol_value, bfd_vma addend)
 {
-  bfd_signed_vma relocation;
+  bfd_vma relocation;
   bfd_size_type octets = offset * OCTETS_PER_BYTE (abfd, input_section);
   bfd_byte *location;
   unsigned long in1, in2;
@@ -680,7 +680,7 @@ pru_elf32_ldi32_relocate (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 
 
 /* Implement elf_backend_relocate_section.  */
-static bfd_boolean
+static int
 pru_elf32_relocate_section (bfd *output_bfd,
 			    struct bfd_link_info *info,
 			    bfd *input_bfd,
@@ -695,7 +695,7 @@ pru_elf32_relocate_section (bfd *output_bfd,
   struct elf_link_hash_entry **sym_hashes;
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
-  bfd_boolean is_rel_reloc;
+  bool is_rel_reloc;
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -719,7 +719,7 @@ pru_elf32_relocate_section (bfd *output_bfd,
       bfd_reloc_status_type r = bfd_reloc_ok;
       const char *name = NULL;
       const char* msg = (const char*) NULL;
-      bfd_boolean unresolved_reloc;
+      bool unresolved_reloc;
       bfd_vma addend;
 
       /* If we are using a REL relocation then the addend should be empty.  */
@@ -740,7 +740,7 @@ pru_elf32_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -923,7 +923,7 @@ pru_elf32_relocate_section (bfd *output_bfd,
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol) (info, name, input_bfd,
 						    input_section,
-						    rel->r_offset, TRUE);
+						    rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -951,11 +951,11 @@ pru_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
-	      return FALSE;
+	      return false;
 	    }
 	}
     }
-  return TRUE;
+  return true;
 }
 
 
@@ -977,7 +977,7 @@ bfd_elf_pru_diff_relocate (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Returns whether the relocation type passed is a diff reloc.  */
 
-static bfd_boolean
+static bool
 elf32_pru_is_diff_reloc (Elf_Internal_Rela *irel)
 {
   return (ELF32_R_TYPE (irel->r_info) == R_PRU_GNU_DIFF8
@@ -1116,7 +1116,7 @@ elf32_pru_adjust_diff_reloc_value (bfd *abfd,
 
    Idea copied from the AVR port.  */
 
-static bfd_boolean
+static bool
 pru_elf_relax_delete_bytes (bfd *abfd,
 			    asection *sec,
 			    bfd_vma addr,
@@ -1200,7 +1200,7 @@ pru_elf_relax_delete_bytes (bfd *abfd,
        irel = elf_section_data (isec)->relocs;
        /* PR 12161: Read in the relocs for this section if necessary.  */
        if (irel == NULL)
-	 irel = _bfd_elf_link_read_relocs (abfd, isec, NULL, NULL, TRUE);
+	 irel = _bfd_elf_link_read_relocs (abfd, isec, NULL, NULL, true);
 
        for (irelend = irel + isec->reloc_count;
 	    irel < irelend;
@@ -1216,7 +1216,7 @@ pru_elf_relax_delete_bytes (bfd *abfd,
 						 symtab_hdr->sh_info, 0,
 						 NULL, NULL, NULL);
 	       if (isymbuf == NULL)
-		 return FALSE;
+		 return false;
 	     }
 
 	   /* Get the value of the symbol referred to by the reloc.  */
@@ -1332,13 +1332,13 @@ pru_elf_relax_delete_bytes (bfd *abfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
-pru_elf32_relax_section (bfd * abfd, asection * sec,
-			  struct bfd_link_info * link_info,
-			  bfd_boolean * again)
+static bool
+pru_elf32_relax_section (bfd *abfd, asection *sec,
+			 struct bfd_link_info *link_info,
+			 bool *again)
 {
   Elf_Internal_Shdr * symtab_hdr;
   Elf_Internal_Rela * internal_relocs;
@@ -1348,7 +1348,7 @@ pru_elf32_relax_section (bfd * abfd, asection * sec,
   Elf_Internal_Sym *  isymbuf = NULL;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
@@ -1356,7 +1356,7 @@ pru_elf32_relax_section (bfd * abfd, asection * sec,
   if (bfd_link_relocatable (link_info)
     || (sec->flags & SEC_RELOC) == 0
     || sec->reloc_count == 0 || (sec->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
 
@@ -1495,7 +1495,7 @@ pru_elf32_relax_section (bfd * abfd, asection * sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
     }
@@ -1523,23 +1523,20 @@ pru_elf32_relax_section (bfd * abfd, asection * sec,
 	}
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return TRUE;
+  return true;
 
-error_return:
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+ error_return:
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return FALSE;
+  return false;
 }
 
 /* Free the derived linker hash table.  */
@@ -1554,7 +1551,7 @@ static struct bfd_link_hash_table *
 pru_elf32_link_hash_table_create (bfd *abfd)
 {
   struct elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf_link_hash_table);
+  size_t amt = sizeof (struct elf_link_hash_table);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1604,6 +1601,7 @@ pru_elf32_link_hash_table_create (bfd *abfd)
 
 #define elf_backend_relocate_section	pru_elf32_relocate_section
 #define bfd_elf32_bfd_relax_section	pru_elf32_relax_section
+#define elf_backend_can_gc_sections	1
 
 #define TARGET_LITTLE_SYM		pru_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-pru"
