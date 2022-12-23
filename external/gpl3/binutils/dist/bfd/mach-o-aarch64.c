@@ -1,5 +1,5 @@
 /* AArch-64 Mach-O support for BFD.
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -40,26 +40,26 @@
 #define bfd_mach_o_tgt_seg_table NULL
 #define bfd_mach_o_section_type_valid_for_tgt NULL
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_arm64_object_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0, 0, BFD_MACH_O_CPU_TYPE_ARM64);
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_arm64_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,
 			      BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_ARM64);
 }
 
-static bfd_boolean
+static bool
 bfd_mach_o_arm64_mkobject (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata;
 
   if (!bfd_mach_o_mkobject_init (abfd))
-    return FALSE;
+    return false;
 
   mdata = bfd_mach_o_get_data (abfd);
   mdata->header.magic = BFD_MACH_O_MH_MAGIC;
@@ -68,7 +68,7 @@ bfd_mach_o_arm64_mkobject (bfd *abfd)
   mdata->header.byteorder = BFD_ENDIAN_LITTLE;
   mdata->header.version = 1;
 
-  return TRUE;
+  return true;
 }
 
 /* In case we're on a 32-bit machine, construct a 64-bit "-1" value.  */
@@ -77,76 +77,76 @@ bfd_mach_o_arm64_mkobject (bfd *abfd)
 static reloc_howto_type arm64_howto_table[]=
 {
   /* 0 */
-  HOWTO (BFD_RELOC_64, 0, 4, 64, FALSE, 0,
+  HOWTO (BFD_RELOC_64, 0, 8, 64, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "64",
-	 FALSE, MINUS_ONE, MINUS_ONE, FALSE),
-  HOWTO (BFD_RELOC_32, 0, 2, 32, FALSE, 0,
+	 false, MINUS_ONE, MINUS_ONE, false),
+  HOWTO (BFD_RELOC_32, 0, 4, 32, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "32",
-	 FALSE, 0xffffffff, 0xffffffff, FALSE),
-  HOWTO (BFD_RELOC_16, 0, 1, 16, FALSE, 0,
+	 false, 0xffffffff, 0xffffffff, false),
+  HOWTO (BFD_RELOC_16, 0, 2, 16, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "16",
-	 FALSE, 0xffff, 0xffff, FALSE),
-  HOWTO (BFD_RELOC_8, 0, 0, 8, FALSE, 0,
+	 false, 0xffff, 0xffff, false),
+  HOWTO (BFD_RELOC_8, 0, 1, 8, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "8",
-	 FALSE, 0xff, 0xff, FALSE),
+	 false, 0xff, 0xff, false),
   /* 4 */
-  HOWTO (BFD_RELOC_64_PCREL, 0, 4, 64, TRUE, 0,
+  HOWTO (BFD_RELOC_64_PCREL, 0, 8, 64, true, 0,
 	 complain_overflow_bitfield,
 	 NULL, "DISP64",
-	 FALSE, MINUS_ONE, MINUS_ONE, TRUE),
-  HOWTO (BFD_RELOC_32_PCREL, 0, 2, 32, TRUE, 0,
+	 false, MINUS_ONE, MINUS_ONE, true),
+  HOWTO (BFD_RELOC_32_PCREL, 0, 4, 32, true, 0,
 	 complain_overflow_bitfield,
 	 NULL, "DISP32",
-	 FALSE, 0xffffffff, 0xffffffff, TRUE),
-  HOWTO (BFD_RELOC_16_PCREL, 0, 1, 16, TRUE, 0,
+	 false, 0xffffffff, 0xffffffff, true),
+  HOWTO (BFD_RELOC_16_PCREL, 0, 2, 16, true, 0,
 	 complain_overflow_bitfield,
 	 NULL, "DISP16",
-	 FALSE, 0xffff, 0xffff, TRUE),
-  HOWTO (BFD_RELOC_AARCH64_CALL26, 0, 2, 26, TRUE, 0,
+	 false, 0xffff, 0xffff, true),
+  HOWTO (BFD_RELOC_AARCH64_CALL26, 0, 4, 26, true, 0,
 	 complain_overflow_bitfield,
 	 NULL, "BRANCH26",
-	 FALSE, 0x03ffffff, 0x03ffffff, TRUE),
+	 false, 0x03ffffff, 0x03ffffff, true),
   /* 8 */
-  HOWTO (BFD_RELOC_AARCH64_ADR_HI21_PCREL, 12, 2, 21, TRUE, 0,
+  HOWTO (BFD_RELOC_AARCH64_ADR_HI21_PCREL, 12, 4, 21, true, 0,
 	 complain_overflow_signed,
 	 NULL, "PAGE21",
-	 FALSE, 0x1fffff, 0x1fffff, TRUE),
-  HOWTO (BFD_RELOC_AARCH64_LDST16_LO12, 1, 2, 12, TRUE, 0,
+	 false, 0x1fffff, 0x1fffff, true),
+  HOWTO (BFD_RELOC_AARCH64_LDST16_LO12, 1, 4, 12, true, 0,
 	 complain_overflow_signed,
 	 NULL, "PGOFF12",
-	 FALSE, 0xffe, 0xffe, TRUE),
-  HOWTO (BFD_RELOC_MACH_O_ARM64_ADDEND, 0, 2, 32, FALSE, 0,
+	 false, 0xffe, 0xffe, true),
+  HOWTO (BFD_RELOC_MACH_O_ARM64_ADDEND, 0, 4, 32, false, 0,
 	 complain_overflow_signed,
 	 NULL, "ADDEND",
-	 FALSE, 0xffffffff, 0xffffffff, FALSE),
-  HOWTO (BFD_RELOC_MACH_O_SUBTRACTOR32, 0, 2, 32, FALSE, 0,
+	 false, 0xffffffff, 0xffffffff, false),
+  HOWTO (BFD_RELOC_MACH_O_SUBTRACTOR32, 0, 4, 32, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "SUBTRACTOR32",
-	 FALSE, 0xffffffff, 0xffffffff, FALSE),
+	 false, 0xffffffff, 0xffffffff, false),
   /* 12 */
-  HOWTO (BFD_RELOC_MACH_O_SUBTRACTOR64, 0, 4, 64, FALSE, 0,
+  HOWTO (BFD_RELOC_MACH_O_SUBTRACTOR64, 0, 8, 64, false, 0,
 	 complain_overflow_bitfield,
 	 NULL, "SUBTRACTOR64",
-	 FALSE, MINUS_ONE, MINUS_ONE, FALSE),
-  HOWTO (BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGE21, 12, 2, 21, TRUE, 0,
+	 false, MINUS_ONE, MINUS_ONE, false),
+  HOWTO (BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGE21, 12, 4, 21, true, 0,
 	 complain_overflow_signed,
 	 NULL, "GOT_LD_PG21",
-	 FALSE, 0x1fffff, 0x1fffff, TRUE),
-  HOWTO (BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGEOFF12, 1, 2, 12, TRUE, 0,
+	 false, 0x1fffff, 0x1fffff, true),
+  HOWTO (BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGEOFF12, 1, 4, 12, true, 0,
 	 complain_overflow_signed,
 	 NULL, "GOT_LD_PGOFF12",
-	 FALSE, 0xffe, 0xffe, TRUE),
-  HOWTO (BFD_RELOC_MACH_O_ARM64_POINTER_TO_GOT, 0, 2, 32, TRUE, 0,
+	 false, 0xffe, 0xffe, true),
+  HOWTO (BFD_RELOC_MACH_O_ARM64_POINTER_TO_GOT, 0, 4, 32, true, 0,
 	 complain_overflow_bitfield,
 	 NULL, "PTR_TO_GOT",
-	 FALSE, 0xffffffff, 0xffffffff, TRUE),
+	 false, 0xffffffff, 0xffffffff, true),
 };
 
-static bfd_boolean
+static bool
 bfd_mach_o_arm64_canonicalize_one_reloc (bfd *       abfd,
 					 struct mach_o_reloc_info_external * raw,
 					 arelent *   res,
@@ -159,7 +159,7 @@ bfd_mach_o_arm64_canonicalize_one_reloc (bfd *       abfd,
   if (res->address & BFD_MACH_O_SR_SCATTERED)
     {
       /* Only non-scattered relocations.  */
-      return FALSE;
+      return false;
     }
 
   /* The value and info fields have to be extracted dependent on target
@@ -173,13 +173,13 @@ bfd_mach_o_arm64_canonicalize_one_reloc (bfd *       abfd,
 	  res->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 	  res->addend = reloc.r_value;
 	  res->howto = &arm64_howto_table[10];
-	  return TRUE;
+	  return true;
 	}
-      return FALSE;
+      return false;
     }
 
   if (!bfd_mach_o_canonicalize_non_scattered_reloc (abfd, &reloc, res, syms))
-    return FALSE;
+    return false;
 
   switch (reloc.r_type)
     {
@@ -188,90 +188,90 @@ bfd_mach_o_arm64_canonicalize_one_reloc (bfd *       abfd,
 	{
 	case 0: /* len = 0, pcrel = 0  */
 	  res->howto = &arm64_howto_table[3];
-	  return TRUE;
+	  return true;
 	case 2: /* len = 1, pcrel = 0  */
 	  res->howto = &arm64_howto_table[2];
-	  return TRUE;
+	  return true;
 	case 3: /* len = 1, pcrel = 1  */
 	  res->howto = &arm64_howto_table[6];
-	  return TRUE;
+	  return true;
 	case 4: /* len = 2, pcrel = 0  */
 	  res->howto = &arm64_howto_table[1];
-	  return TRUE;
+	  return true;
 	case 5: /* len = 2, pcrel = 1  */
 	  res->howto = &arm64_howto_table[5];
-	  return TRUE;
+	  return true;
 	case 6: /* len = 3, pcrel = 0  */
 	  res->howto = &arm64_howto_table[0];
-	  return TRUE;
+	  return true;
 	case 7: /* len = 3, pcrel = 1  */
 	  res->howto = &arm64_howto_table[4];
-	  return TRUE;
+	  return true;
 	default:
-	  return FALSE;
+	  return false;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_SUBTRACTOR:
       if (reloc.r_pcrel)
-	return FALSE;
+	return false;
       switch (reloc.r_length)
 	{
 	case 2:
 	  res->howto = &arm64_howto_table[11];
-	  return TRUE;
+	  return true;
 	case 3:
 	  res->howto = &arm64_howto_table[12];
-	  return TRUE;
+	  return true;
 	default:
-	  return FALSE;
+	  return false;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_BRANCH26:
       if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	{
 	  res->howto = &arm64_howto_table[7];
-	  return TRUE;
+	  return true;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_PAGE21:
       if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	{
 	  res->howto = &arm64_howto_table[8];
-	  return TRUE;
+	  return true;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_PAGEOFF12:
       if (reloc.r_length == 2 && reloc.r_pcrel == 0)
 	{
 	  res->howto = &arm64_howto_table[9];
-	  return TRUE;
+	  return true;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_GOT_LOAD_PAGE21:
       if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	{
 	  res->howto = &arm64_howto_table[13];
-	  return TRUE;
+	  return true;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_GOT_LOAD_PAGEOFF12:
       if (reloc.r_length == 2 && reloc.r_pcrel == 0)
 	{
 	  res->howto = &arm64_howto_table[14];
-	  return TRUE;
+	  return true;
 	}
       break;
     case BFD_MACH_O_ARM64_RELOC_POINTER_TO_GOT:
       if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	{
 	  res->howto = &arm64_howto_table[15];
-	  return TRUE;
+	  return true;
 	}
       break;
     default:
       break;
     }
-  return FALSE;
+  return false;
 }
 
 static reloc_howto_type *

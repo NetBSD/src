@@ -1,5 +1,5 @@
 /* 32-bit ELF support for ARM
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -37,7 +37,7 @@ extern void bfd_elf32_arm_set_vfp11_fix
 extern void bfd_elf32_arm_set_cortex_a8_fix
   (bfd *, struct bfd_link_info *);
 
-extern bfd_boolean bfd_elf32_arm_vfp11_erratum_scan
+extern bool bfd_elf32_arm_vfp11_erratum_scan
   (bfd *, struct bfd_link_info *);
 
 extern void bfd_elf32_arm_vfp11_fix_veneer_locations
@@ -54,17 +54,17 @@ typedef enum
 extern void bfd_elf32_arm_set_stm32l4xx_fix
   (bfd *, struct bfd_link_info *);
 
-extern bfd_boolean bfd_elf32_arm_stm32l4xx_erratum_scan
+extern bool bfd_elf32_arm_stm32l4xx_erratum_scan
   (bfd *, struct bfd_link_info *);
 
 extern void bfd_elf32_arm_stm32l4xx_fix_veneer_locations
   (bfd *, struct bfd_link_info *);
 
 /* ELF ARM Interworking support.  Called from linker.  */
-extern bfd_boolean bfd_elf32_arm_allocate_interworking_sections
+extern bool bfd_elf32_arm_allocate_interworking_sections
   (struct bfd_link_info *);
 
-extern bfd_boolean bfd_elf32_arm_process_before_allocation
+extern bool bfd_elf32_arm_process_before_allocation
   (bfd *, struct bfd_link_info *);
 
 struct elf32_arm_params {
@@ -89,10 +89,10 @@ struct elf32_arm_params {
 void bfd_elf32_arm_set_target_params
   (bfd *, struct bfd_link_info *, struct elf32_arm_params *);
 
-extern bfd_boolean bfd_elf32_arm_get_bfd_for_interworking
+extern bool bfd_elf32_arm_get_bfd_for_interworking
   (bfd *, struct bfd_link_info *);
 
-extern bfd_boolean bfd_elf32_arm_add_glue_sections_to_bfd
+extern bool bfd_elf32_arm_add_glue_sections_to_bfd
   (bfd *, struct bfd_link_info *);
 
 extern void bfd_elf32_arm_keep_private_stub_output_sections
@@ -108,14 +108,14 @@ extern int elf32_arm_setup_section_lists
   (bfd *, struct bfd_link_info *);
 extern void elf32_arm_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf32_arm_size_stubs
+extern bool elf32_arm_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *,
 			     struct bfd_section *, unsigned int),
    void (*) (void));
-extern bfd_boolean elf32_arm_build_stubs
+extern bool elf32_arm_build_stubs
   (struct bfd_link_info *);
 
 /* ARM unwind section editing support.  */
-extern bfd_boolean elf32_arm_fix_exidx_coverage
-(struct bfd_section **, unsigned int, struct bfd_link_info *, bfd_boolean);
+extern bool elf32_arm_fix_exidx_coverage
+(struct bfd_section **, unsigned int, struct bfd_link_info *, bool);

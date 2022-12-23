@@ -1,5 +1,5 @@
 /* TI PRU opcode list for GAS, the GNU assembler.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the GNU opcodes library.
@@ -44,25 +44,27 @@ enum overflow_type
   no_overflow
 };
 
-enum opcode_format_type {
-    opcode_format1,
-    opcode_format2ab,
-    opcode_format2abl,
-    opcode_format2c,
-    opcode_format2de,
-    opcode_format45,
-    opcode_format6
+enum opcode_format_type
+{
+  opcode_format1,
+  opcode_format2ab,
+  opcode_format2abl,
+  opcode_format2c,
+  opcode_format2de,
+  opcode_format45,
+  opcode_format6
 };
 
 /* Opcode ID listing. Used for indexing by the simulator.  */
-enum pru_instr_type {
-    prui_add, prui_adc, prui_sub, prui_suc, prui_lsl, prui_lsr, prui_rsb,
-    prui_rsc, prui_and, prui_or,  prui_xor, prui_min, prui_max, prui_clr,
-    prui_set, prui_not, prui_jmp, prui_jal, prui_ldi, prui_halt, prui_slp,
-    prui_xin, prui_xout, prui_xchg, prui_sxin, prui_sxout, prui_sxchg,
-    prui_loop, prui_iloop, prui_qbgt, prui_qbge, prui_qblt, prui_qble,
-    prui_qbeq, prui_qbne, prui_qba, prui_qbbs, prui_qbbc, prui_lbbo,
-    prui_sbbo, prui_lbco, prui_sbco
+enum pru_instr_type
+{
+  prui_add, prui_adc, prui_sub, prui_suc, prui_lsl, prui_lsr, prui_rsb,
+  prui_rsc, prui_and, prui_or,  prui_xor, prui_min, prui_max, prui_clr,
+  prui_set, prui_not, prui_jmp, prui_jal, prui_ldi, prui_lmbd,
+  prui_halt, prui_slp, prui_xin, prui_xout, prui_xchg, prui_sxin,
+  prui_sxout, prui_sxchg, prui_loop, prui_iloop, prui_qbgt, prui_qbge,
+  prui_qblt, prui_qble, prui_qbeq, prui_qbne, prui_qba, prui_qbbs,
+  prui_qbbc, prui_lbbo, prui_sbbo, prui_lbco, prui_sbco
 };
 
 /* This structure holds information for a particular instruction.

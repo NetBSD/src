@@ -14,10 +14,10 @@ PARSE_AND_LIST_LONGOPTS='
 
 PARSE_AND_LIST_ARGS_CASES='
     case OPTION_LD_GENERATED_UNWIND_INFO:
-      link_info.no_ld_generated_unwind_info = FALSE;
+      link_info.no_ld_generated_unwind_info = false;
       break;
 
     case OPTION_NO_LD_GENERATED_UNWIND_INFO:
-      link_info.no_ld_generated_unwind_info = TRUE;
+      link_info.no_ld_generated_unwind_info = true;
       break;
 '

@@ -1,5 +1,5 @@
 /* tc-ft32.c -- Assemble code for ft32
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,7 +34,7 @@ const char line_separator_chars[] = ";";
 const char line_comment_chars[]   = "#";
 
 static int pending_reloc;
-static struct hash_control *opcode_hash_control;
+static htab_t opcode_hash_control;
 
 static valueT md_chars_to_number (char * buf, int n);
 
@@ -54,11 +54,11 @@ void
 md_begin (void)
 {
   const ft32_opc_info_t *opcode;
-  opcode_hash_control = hash_new ();
+  opcode_hash_control = str_htab_create ();
 
   /* Insert names into hash table.  */
   for (opcode = ft32_opc_info; opcode->name; opcode++)
-    hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
+    str_hash_insert (opcode_hash_control, opcode->name, opcode, 0);
 
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, 0);
   if (!norelax)
@@ -207,9 +207,9 @@ md_assemble (char *str)
   unsigned int b;
   int f;
   expressionS arg;
-  bfd_boolean fixed = FALSE;
+  bool fixed = false;
   unsigned int sc;
-  bfd_boolean can_sc;
+  bool can_sc;
 
   /* Drop leading whitespace.  */
   while (*str == ' ')
@@ -231,7 +231,7 @@ md_assemble (char *str)
   if (nlen == 0)
     as_bad (_("can't find opcode "));
 
-  opcode = (ft32_opc_info_t *) hash_find (opcode_hash_control, op_start);
+  opcode = (ft32_opc_info_t *) str_hash_find (opcode_hash_control, op_start);
   *op_end = pend;
 
   if (opcode == NULL)
@@ -313,7 +313,7 @@ md_assemble (char *str)
 		{
 		  b |= 0x400 << FT32_FLD_RIMM_BIT;
 		  op_end = parse_exp_save_ilp (op_end, &arg);
-		  fixed = TRUE;
+		  fixed = true;
 		  fix_new_exp (frag_now,
 			       (output - frag_now->fr_literal),
 			       2,
@@ -327,7 +327,7 @@ md_assemble (char *str)
 	      break;
 	    case  FT32_FLD_K20:
 	      op_end = parse_exp_save_ilp (op_end, &arg);
-	      fixed = TRUE;
+	      fixed = true;
 	      fix_new_exp (frag_now,
 			   (output - frag_now->fr_literal),
 			   3,
@@ -337,7 +337,7 @@ md_assemble (char *str)
 	      break;
 	    case  FT32_FLD_PA:
 	      op_end = parse_exp_save_ilp (op_end, &arg);
-	      fixed = TRUE;
+	      fixed = true;
 	      fix_new_exp (frag_now,
 			   (output - frag_now->fr_literal),
 			   3,
@@ -347,7 +347,7 @@ md_assemble (char *str)
 	      break;
 	    case  FT32_FLD_AA:
 	      op_end = parse_exp_save_ilp (op_end, &arg);
-	      fixed = TRUE;
+	      fixed = true;
 	      fix_new_exp (frag_now,
 			   (output - frag_now->fr_literal),
 			   3,
@@ -357,7 +357,7 @@ md_assemble (char *str)
 	      break;
 	    case  FT32_FLD_K16:
 	      op_end = parse_exp_save_ilp (op_end, &arg);
-	      fixed = TRUE;
+	      fixed = true;
 	      fix_new_exp (frag_now,
 			   (output - frag_now->fr_literal),
 			   2,
@@ -369,7 +369,7 @@ md_assemble (char *str)
 	      op_end = parse_exp_save_ilp (op_end, &arg);
 	      if (arg.X_add_number & 0x80)
 		arg.X_add_number ^= 0x7f00;
-	      fixed = TRUE;
+	      fixed = true;
 	      fix_new_exp (frag_now,
 			   (output - frag_now->fr_literal),
 			   2,
@@ -570,8 +570,7 @@ md_apply_fix (fixS *fixP ATTRIBUTE_UNUSED,
              fixP->fx_r_type = BFD_RELOC_FT32_DIFF32;
              break;
            default:
-             as_bad_where (fixP->fx_file, fixP->fx_line,
-                           _("expression too complex"));
+             as_bad_subtract (fixP);
              break;
          }
 
@@ -584,7 +583,7 @@ md_apply_fix (fixS *fixP ATTRIBUTE_UNUSED,
 
   /* We don't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+    as_bad_subtract (fixP);
 
   switch (fixP->fx_r_type)
     {
@@ -716,7 +715,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
 
 /* TC_FORCE_RELOCATION hook */
 
-static bfd_boolean
+static bool
 relaxable_section (asection *sec)
 {
   return ((sec->flags & SEC_DEBUGGING) == 0
@@ -769,24 +768,24 @@ ft32_force_relocation (fixS *fix)
   return generic_force_reloc (fix);
 }
 
-bfd_boolean
+bool
 ft32_allow_local_subtract (expressionS * left,
 			   expressionS * right,
 			   segT section)
 {
   /* If we are not in relaxation mode, subtraction is OK.  */
   if (!linkrelax)
-    return TRUE;
+    return true;
 
   /* If the symbols are not in a code section then they are OK.  */
   if ((section->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   if (left->X_add_symbol == right->X_add_symbol)
-    return TRUE;
+    return true;
 
   /* We have to assume that there may be instructions between the
      two symbols and that relaxation may increase the distance between
      them.  */
-  return FALSE;
+  return false;
 }

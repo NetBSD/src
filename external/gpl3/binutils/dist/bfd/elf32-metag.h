@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,11 +28,11 @@ extern int elf_metag_setup_section_lists
 extern void elf_metag_next_input_section
   (struct bfd_link_info *, asection *);
 
-extern bfd_boolean elf_metag_size_stubs
+extern bool elf_metag_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    asection * (*) (const char *, asection *), void (*) (void));
 
-extern bfd_boolean elf_metag_build_stubs
+extern bool elf_metag_build_stubs
   (struct bfd_link_info *);
 
 #endif  /* _ELF32_METAG_H */

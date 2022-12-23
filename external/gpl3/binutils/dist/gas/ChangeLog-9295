@@ -1931,7 +1931,7 @@ Tue Aug  1 17:35:26 1995  Ian Lance Taylor  <ian@cygnus.com>
 Tue Aug  1 11:35:18 1995  steve chamberlain  <sac@slash.cygnus.com>
 
 	* config/tc-sh.c (md_convert_frag): Make some error messages
-	more explict.
+	more explicit.
 
 Mon Jul 31 21:40:47 1995  Ken Raeburn  <raeburn@cygnus.com>
 

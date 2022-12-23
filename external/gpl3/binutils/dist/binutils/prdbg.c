@@ -1,5 +1,5 @@
 /* prdbg.c -- Print out generic debugging information.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
    Tags style generation written by Salvador E. Tropea <set@computer.org>.
 
@@ -76,120 +76,113 @@ struct pr_stack
 };
 
 static void indent (struct pr_handle *);
-static bfd_boolean push_type (struct pr_handle *, const char *);
-static bfd_boolean prepend_type (struct pr_handle *, const char *);
-static bfd_boolean append_type (struct pr_handle *, const char *);
-static bfd_boolean substitute_type (struct pr_handle *, const char *);
-static bfd_boolean indent_type (struct pr_handle *);
+static bool push_type (struct pr_handle *, const char *);
+static bool prepend_type (struct pr_handle *, const char *);
+static bool append_type (struct pr_handle *, const char *);
+static bool substitute_type (struct pr_handle *, const char *);
+static bool indent_type (struct pr_handle *);
 static char *pop_type (struct pr_handle *);
-static void print_vma (bfd_vma, char *, bfd_boolean, bfd_boolean);
-static bfd_boolean pr_fix_visibility
-  (struct pr_handle *, enum debug_visibility);
-static bfd_boolean pr_start_compilation_unit (void *, const char *);
-static bfd_boolean pr_start_source (void *, const char *);
-static bfd_boolean pr_empty_type (void *);
-static bfd_boolean pr_void_type (void *);
-static bfd_boolean pr_int_type (void *, unsigned int, bfd_boolean);
-static bfd_boolean pr_float_type (void *, unsigned int);
-static bfd_boolean pr_complex_type (void *, unsigned int);
-static bfd_boolean pr_bool_type (void *, unsigned int);
-static bfd_boolean pr_enum_type
+static void print_vma (bfd_vma, char *, bool, bool);
+static bool pr_fix_visibility (struct pr_handle *, enum debug_visibility);
+static bool pr_start_compilation_unit (void *, const char *);
+static bool pr_start_source (void *, const char *);
+static bool pr_empty_type (void *);
+static bool pr_void_type (void *);
+static bool pr_int_type (void *, unsigned int, bool);
+static bool pr_float_type (void *, unsigned int);
+static bool pr_complex_type (void *, unsigned int);
+static bool pr_bool_type (void *, unsigned int);
+static bool pr_enum_type
   (void *, const char *, const char **, bfd_signed_vma *);
-static bfd_boolean pr_pointer_type (void *);
-static bfd_boolean pr_function_type (void *, int, bfd_boolean);
-static bfd_boolean pr_reference_type (void *);
-static bfd_boolean pr_range_type (void *, bfd_signed_vma, bfd_signed_vma);
-static bfd_boolean pr_array_type
-  (void *, bfd_signed_vma, bfd_signed_vma, bfd_boolean);
-static bfd_boolean pr_set_type (void *, bfd_boolean);
-static bfd_boolean pr_offset_type (void *);
-static bfd_boolean pr_method_type (void *, bfd_boolean, int, bfd_boolean);
-static bfd_boolean pr_const_type (void *);
-static bfd_boolean pr_volatile_type (void *);
-static bfd_boolean pr_start_struct_type
-  (void *, const char *, unsigned int, bfd_boolean, unsigned int);
-static bfd_boolean pr_struct_field
+static bool pr_pointer_type (void *);
+static bool pr_function_type (void *, int, bool);
+static bool pr_reference_type (void *);
+static bool pr_range_type (void *, bfd_signed_vma, bfd_signed_vma);
+static bool pr_array_type (void *, bfd_signed_vma, bfd_signed_vma, bool);
+static bool pr_set_type (void *, bool);
+static bool pr_offset_type (void *);
+static bool pr_method_type (void *, bool, int, bool);
+static bool pr_const_type (void *);
+static bool pr_volatile_type (void *);
+static bool pr_start_struct_type
+  (void *, const char *, unsigned int, bool, unsigned int);
+static bool pr_struct_field
   (void *, const char *, bfd_vma, bfd_vma, enum debug_visibility);
-static bfd_boolean pr_end_struct_type (void *);
-static bfd_boolean pr_start_class_type
-  (void *, const char *, unsigned int, bfd_boolean, unsigned int,
-   bfd_boolean, bfd_boolean);
-static bfd_boolean pr_class_static_member
+static bool pr_end_struct_type (void *);
+static bool pr_start_class_type
+  (void *, const char *, unsigned int, bool, unsigned int, bool, bool);
+static bool pr_class_static_member
   (void *, const char *, const char *, enum debug_visibility);
-static bfd_boolean pr_class_baseclass
-  (void *, bfd_vma, bfd_boolean, enum debug_visibility);
-static bfd_boolean pr_class_start_method (void *, const char *);
-static bfd_boolean pr_class_method_variant
-  (void *, const char *, enum debug_visibility, bfd_boolean, bfd_boolean,
-   bfd_vma, bfd_boolean);
-static bfd_boolean pr_class_static_method_variant
-  (void *, const char *, enum debug_visibility, bfd_boolean, bfd_boolean);
-static bfd_boolean pr_class_end_method (void *);
-static bfd_boolean pr_end_class_type (void *);
-static bfd_boolean pr_typedef_type (void *, const char *);
-static bfd_boolean pr_tag_type
+static bool pr_class_baseclass
+  (void *, bfd_vma, bool, enum debug_visibility);
+static bool pr_class_start_method (void *, const char *);
+static bool pr_class_method_variant
+  (void *, const char *, enum debug_visibility, bool, bool, bfd_vma, bool);
+static bool pr_class_static_method_variant
+  (void *, const char *, enum debug_visibility, bool, bool);
+static bool pr_class_end_method (void *);
+static bool pr_end_class_type (void *);
+static bool pr_typedef_type (void *, const char *);
+static bool pr_tag_type
   (void *, const char *, unsigned int, enum debug_type_kind);
-static bfd_boolean pr_typdef (void *, const char *);
-static bfd_boolean pr_tag (void *, const char *);
-static bfd_boolean pr_int_constant (void *, const char *, bfd_vma);
-static bfd_boolean pr_float_constant (void *, const char *, double);
-static bfd_boolean pr_typed_constant (void *, const char *, bfd_vma);
-static bfd_boolean pr_variable
-  (void *, const char *, enum debug_var_kind, bfd_vma);
-static bfd_boolean pr_start_function (void *, const char *, bfd_boolean);
-static bfd_boolean pr_function_parameter
+static bool pr_typdef (void *, const char *);
+static bool pr_tag (void *, const char *);
+static bool pr_int_constant (void *, const char *, bfd_vma);
+static bool pr_float_constant (void *, const char *, double);
+static bool pr_typed_constant (void *, const char *, bfd_vma);
+static bool pr_variable (void *, const char *, enum debug_var_kind, bfd_vma);
+static bool pr_start_function (void *, const char *, bool);
+static bool pr_function_parameter
   (void *, const char *, enum debug_parm_kind, bfd_vma);
-static bfd_boolean pr_start_block (void *, bfd_vma);
-static bfd_boolean pr_end_block (void *, bfd_vma);
-static bfd_boolean pr_end_function (void *);
-static bfd_boolean pr_lineno (void *, const char *, unsigned long, bfd_vma);
-static bfd_boolean append_parent (struct pr_handle *, const char *);
+static bool pr_start_block (void *, bfd_vma);
+static bool pr_end_block (void *, bfd_vma);
+static bool pr_end_function (void *);
+static bool pr_lineno (void *, const char *, unsigned long, bfd_vma);
+static bool append_parent (struct pr_handle *, const char *);
 /* Only used by tg_ code.  */
-static bfd_boolean tg_fix_visibility
+static bool tg_fix_visibility
   (struct pr_handle *, enum debug_visibility);
 static void find_address_in_section (bfd *, asection *, void *);
 static void translate_addresses (bfd *, char *, FILE *, asymbol **);
 static const char *visibility_name (enum debug_visibility);
 /* Tags style replacements.  */
-static bfd_boolean tg_start_compilation_unit (void *, const char *);
-static bfd_boolean tg_start_source (void *, const char *);
-static bfd_boolean tg_enum_type
+static bool tg_start_compilation_unit (void *, const char *);
+static bool tg_start_source (void *, const char *);
+static bool tg_enum_type
   (void *, const char *, const char **, bfd_signed_vma *);
-static bfd_boolean tg_start_struct_type
-  (void *, const char *, unsigned int, bfd_boolean, unsigned int);
-static bfd_boolean pr_struct_field
+static bool tg_start_struct_type
+  (void *, const char *, unsigned int, bool, unsigned int);
+static bool pr_struct_field
   (void *, const char *, bfd_vma, bfd_vma, enum debug_visibility);
-static bfd_boolean tg_struct_field
+static bool tg_struct_field
   (void *, const char *, bfd_vma, bfd_vma, enum debug_visibility);
-static bfd_boolean tg_struct_field
+static bool tg_struct_field
   (void *, const char *, bfd_vma, bfd_vma, enum debug_visibility);
-static bfd_boolean tg_end_struct_type (void *);
-static bfd_boolean tg_start_class_type
-  (void *, const char *, unsigned int, bfd_boolean, unsigned int, bfd_boolean, bfd_boolean);
-static bfd_boolean tg_class_static_member
+static bool tg_end_struct_type (void *);
+static bool tg_start_class_type
+  (void *, const char *, unsigned int, bool, unsigned int, bool, bool);
+static bool tg_class_static_member
   (void *, const char *, const char *, enum debug_visibility);
-static bfd_boolean tg_class_baseclass
-  (void *, bfd_vma, bfd_boolean, enum debug_visibility);
-static bfd_boolean tg_class_method_variant
-  (void *, const char *, enum debug_visibility, bfd_boolean, bfd_boolean, bfd_vma, bfd_boolean);
-static bfd_boolean tg_class_static_method_variant
-  (void *, const char *, enum debug_visibility, bfd_boolean, bfd_boolean);
-static bfd_boolean tg_end_class_type (void *);
-static bfd_boolean tg_tag_type
+static bool tg_class_baseclass (void *, bfd_vma, bool, enum debug_visibility);
+static bool tg_class_method_variant
+  (void *, const char *, enum debug_visibility, bool, bool, bfd_vma, bool);
+static bool tg_class_static_method_variant
+  (void *, const char *, enum debug_visibility, bool, bool);
+static bool tg_end_class_type (void *);
+static bool tg_tag_type
   (void *, const char *, unsigned int, enum debug_type_kind);
-static bfd_boolean tg_typdef (void *, const char *);
-static bfd_boolean tg_tag (void *, const char *);
-static bfd_boolean tg_int_constant (void *, const char *, bfd_vma);
-static bfd_boolean tg_float_constant (void *, const char *, double);
-static bfd_boolean tg_typed_constant (void *, const char *, bfd_vma);
-static bfd_boolean tg_variable
-  (void *, const char *, enum debug_var_kind, bfd_vma);
-static bfd_boolean tg_start_function (void *, const char *, bfd_boolean);
-static bfd_boolean tg_function_parameter
+static bool tg_typdef (void *, const char *);
+static bool tg_tag (void *, const char *);
+static bool tg_int_constant (void *, const char *, bfd_vma);
+static bool tg_float_constant (void *, const char *, double);
+static bool tg_typed_constant (void *, const char *, bfd_vma);
+static bool tg_variable (void *, const char *, enum debug_var_kind, bfd_vma);
+static bool tg_start_function (void *, const char *, bool);
+static bool tg_function_parameter
   (void *, const char *, enum debug_parm_kind, bfd_vma);
-static bfd_boolean tg_start_block (void *, bfd_vma);
-static bfd_boolean tg_end_block (void *, bfd_vma);
-static bfd_boolean tg_lineno (void *, const char *, unsigned long, bfd_vma);
+static bool tg_start_block (void *, bfd_vma);
+static bool tg_end_block (void *, bfd_vma);
+static bool tg_lineno (void *, const char *, unsigned long, bfd_vma);
 
 static const struct debug_write_fns pr_fns =
 {
@@ -291,10 +284,10 @@ static int demangle_flags = DMGL_ANSI | DMGL_PARAMS;
 
 /* Print out the generic debugging information recorded in dhandle.  */
 
-bfd_boolean
+bool
 print_debugging_info (FILE *f, void *dhandle, bfd *abfd, asymbol **syms,
 		      char * (*demangler) (struct bfd *, const char *, int),
-		      bfd_boolean as_tags)
+		      bool as_tags)
 {
   struct pr_handle info;
 
@@ -332,13 +325,13 @@ indent (struct pr_handle *info)
 
 /* Push a type on the type stack.  */
 
-static bfd_boolean
+static bool
 push_type (struct pr_handle *info, const char *type)
 {
   struct pr_stack *n;
 
   if (type == NULL)
-    return FALSE;
+    return false;
 
   n = (struct pr_stack *) xmalloc (sizeof *n);
   memset (n, 0, sizeof *n);
@@ -349,12 +342,12 @@ push_type (struct pr_handle *info, const char *type)
   n->next = info->stack;
   info->stack = n;
 
-  return TRUE;
+  return true;
 }
 
 /* Prepend a string onto the type on the top of the type stack.  */
 
-static bfd_boolean
+static bool
 prepend_type (struct pr_handle *info, const char *s)
 {
   char *n;
@@ -366,18 +359,18 @@ prepend_type (struct pr_handle *info, const char *s)
   free (info->stack->type);
   info->stack->type = n;
 
-  return TRUE;
+  return true;
 }
 
 /* Append a string to the type on the top of the type stack.  */
 
-static bfd_boolean
+static bool
 append_type (struct pr_handle *info, const char *s)
 {
   unsigned int len;
 
   if (s == NULL)
-    return FALSE;
+    return false;
 
   assert (info->stack != NULL);
 
@@ -386,18 +379,18 @@ append_type (struct pr_handle *info, const char *s)
 					 len + strlen (s) + 1);
   strcpy (info->stack->type + len, s);
 
-  return TRUE;
+  return true;
 }
 
 /* Append a string to the parents on the top of the type stack.  */
 
-static bfd_boolean
+static bool
 append_parent (struct pr_handle *info, const char *s)
 {
   unsigned int len;
 
   if (s == NULL)
-    return FALSE;
+    return false;
 
   assert (info->stack != NULL);
 
@@ -406,14 +399,14 @@ append_parent (struct pr_handle *info, const char *s)
 					    len + strlen (s) + 1);
   strcpy (info->stack->parents + len, s);
 
-  return TRUE;
+  return true;
 }
 
 /* We use an underscore to indicate where the name should go in a type
    string.  This function substitutes a string for the underscore.  If
    there is no underscore, the name follows the type.  */
 
-static bfd_boolean
+static bool
 substitute_type (struct pr_handle *info, const char *s)
 {
   char *u;
@@ -434,7 +427,7 @@ substitute_type (struct pr_handle *info, const char *s)
       free (info->stack->type);
       info->stack->type = n;
 
-      return TRUE;
+      return true;
     }
 
   if (strchr (s, '|') != NULL
@@ -443,11 +436,11 @@ substitute_type (struct pr_handle *info, const char *s)
     {
       if (! prepend_type (info, "(")
 	  || ! append_type (info, ")"))
-	return FALSE;
+	return false;
     }
 
   if (*s == '\0')
-    return TRUE;
+    return true;
 
   return (append_type (info, " ")
 	  && append_type (info, s));
@@ -455,7 +448,7 @@ substitute_type (struct pr_handle *info, const char *s)
 
 /* Indent the type at the top of the stack by appending spaces.  */
 
-static bfd_boolean
+static bool
 indent_type (struct pr_handle *info)
 {
   unsigned int i;
@@ -463,10 +456,10 @@ indent_type (struct pr_handle *info)
   for (i = 0; i < info->indent; i++)
     {
       if (! append_type (info, " "))
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Pop a type from the type stack.  */
@@ -490,48 +483,19 @@ pop_type (struct pr_handle *info)
 /* Print a VMA value into a string.  */
 
 static void
-print_vma (bfd_vma vma, char *buf, bfd_boolean unsignedp, bfd_boolean hexp)
+print_vma (bfd_vma vma, char *buf, bool unsignedp, bool hexp)
 {
-  if (sizeof (vma) <= sizeof (unsigned long))
-    {
-      if (hexp)
-	sprintf (buf, "0x%lx", (unsigned long) vma);
-      else if (unsignedp)
-	sprintf (buf, "%lu", (unsigned long) vma);
-      else
-	sprintf (buf, "%ld", (long) vma);
-    }
-#if BFD_HOST_64BIT_LONG_LONG
-  else if (sizeof (vma) <= sizeof (unsigned long long))
-    {
-#ifndef __MSVCRT__
-      if (hexp)
-	sprintf (buf, "0x%llx", (unsigned long long) vma);
-      else if (unsignedp)
-	sprintf (buf, "%llu", (unsigned long long) vma);
-      else
-	sprintf (buf, "%lld", (long long) vma);
-#else
-      if (hexp)
-	sprintf (buf, "0x%I64x", (unsigned long long) vma);
-      else if (unsignedp)
-	sprintf (buf, "%I64u", (unsigned long long) vma);
-      else
-	sprintf (buf, "%I64d", (long long) vma);
-#endif
-    }
-#endif
+  if (hexp)
+    sprintf (buf, "%#" PRIx64, (uint64_t) vma);
+  else if (unsignedp)
+    sprintf (buf, "%" PRIu64, (uint64_t) vma);
   else
-    {
-      buf[0] = '0';
-      buf[1] = 'x';
-      sprintf_vma (buf + 2, vma);
-    }
+    sprintf (buf, "%" PRId64, (int64_t) vma);
 }
 
 /* Start a new compilation unit.  */
 
-static bfd_boolean
+static bool
 pr_start_compilation_unit (void *p, const char *filename)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -540,12 +504,12 @@ pr_start_compilation_unit (void *p, const char *filename)
 
   fprintf (info->f, "%s:\n", filename);
 
-  return TRUE;
+  return true;
 }
 
 /* Start a source file within a compilation unit.  */
 
-static bfd_boolean
+static bool
 pr_start_source (void *p, const char *filename)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -554,12 +518,12 @@ pr_start_source (void *p, const char *filename)
 
   fprintf (info->f, " %s:\n", filename);
 
-  return TRUE;
+  return true;
 }
 
 /* Push an empty type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_empty_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -569,7 +533,7 @@ pr_empty_type (void *p)
 
 /* Push a void type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_void_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -579,8 +543,8 @@ pr_void_type (void *p)
 
 /* Push an integer type onto the type stack.  */
 
-static bfd_boolean
-pr_int_type (void *p, unsigned int size, bfd_boolean unsignedp)
+static bool
+pr_int_type (void *p, unsigned int size, bool unsignedp)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char ab[40];
@@ -591,7 +555,7 @@ pr_int_type (void *p, unsigned int size, bfd_boolean unsignedp)
 
 /* Push a floating type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_float_type (void *p, unsigned int size)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -608,20 +572,20 @@ pr_float_type (void *p, unsigned int size)
 
 /* Push a complex type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_complex_type (void *p, unsigned int size)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   if (! pr_float_type (p, size))
-    return FALSE;
+    return false;
 
   return prepend_type (info, "complex ");
 }
 
-/* Push a bfd_boolean type onto the type stack.  */
+/* Push a bool type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_bool_type (void *p, unsigned int size)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -634,7 +598,7 @@ pr_bool_type (void *p, unsigned int size)
 
 /* Push an enum type onto the type stack.  */
 
-static bfd_boolean
+static bool
 pr_enum_type (void *p, const char *tag, const char **names,
 	      bfd_signed_vma *values)
 {
@@ -643,20 +607,20 @@ pr_enum_type (void *p, const char *tag, const char **names,
   bfd_signed_vma val;
 
   if (! push_type (info, "enum "))
-    return FALSE;
+    return false;
   if (tag != NULL)
     {
       if (! append_type (info, tag)
 	  || ! append_type (info, " "))
-	return FALSE;
+	return false;
     }
   if (! append_type (info, "{ "))
-    return FALSE;
+    return false;
 
   if (names == NULL)
     {
       if (! append_type (info, "/* undefined */"))
-	return FALSE;
+	return false;
     }
   else
     {
@@ -666,20 +630,20 @@ pr_enum_type (void *p, const char *tag, const char **names,
 	  if (i > 0)
 	    {
 	      if (! append_type (info, ", "))
-		return FALSE;
+		return false;
 	    }
 
 	  if (! append_type (info, names[i]))
-	    return FALSE;
+	    return false;
 
 	  if (values[i] != val)
 	    {
 	      char ab[22];
 
-	      print_vma (values[i], ab, FALSE, FALSE);
+	      print_vma (values[i], ab, false, false);
 	      if (! append_type (info, " = ")
 		  || ! append_type (info, ab))
-		return FALSE;
+		return false;
 	      val = values[i];
 	    }
 
@@ -692,7 +656,7 @@ pr_enum_type (void *p, const char *tag, const char **names,
 
 /* Turn the top type on the stack into a pointer.  */
 
-static bfd_boolean
+static bool
 pr_pointer_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -708,8 +672,8 @@ pr_pointer_type (void *p)
 
 /* Turn the top type on the stack into a function returning that type.  */
 
-static bfd_boolean
-pr_function_type (void *p, int argcount, bfd_boolean varargs)
+static bool
+pr_function_type (void *p, int argcount, bool varargs)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char **arg_types;
@@ -735,13 +699,13 @@ pr_function_type (void *p, int argcount, bfd_boolean varargs)
 	  if (! substitute_type (info, ""))
 	    {
 	      free (arg_types);
-	      return FALSE;
+	      return false;
 	    }
 	  arg_types[i] = pop_type (info);
 	  if (arg_types[i] == NULL)
 	    {
 	      free (arg_types);
-	      return FALSE;
+	      return false;
 	    }
 	  len += strlen (arg_types[i]) + 2;
 	}
@@ -752,7 +716,7 @@ pr_function_type (void *p, int argcount, bfd_boolean varargs)
   /* Now the return type is on the top of the stack.  */
 
   s = (char *) xmalloc (len);
-  LITSTRCPY (s, "(|) (");
+  strcpy (s, "(|) (");
 
   if (argcount < 0)
     strcat (s, "/* unknown */");
@@ -778,17 +742,14 @@ pr_function_type (void *p, int argcount, bfd_boolean varargs)
 
   strcat (s, ")");
 
-  if (! substitute_type (info, s))
-    return FALSE;
-
+  bool ret = substitute_type (info, s);
   free (s);
-
-  return TRUE;
+  return ret;
 }
 
 /* Turn the top type on the stack into a reference to that type.  */
 
-static bfd_boolean
+static bool
 pr_reference_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -800,7 +761,7 @@ pr_reference_type (void *p)
 
 /* Make a range type.  */
 
-static bfd_boolean
+static bool
 pr_range_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -809,10 +770,10 @@ pr_range_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper)
   assert (info->stack != NULL);
 
   if (! substitute_type (info, ""))
-    return FALSE;
+    return false;
 
-  print_vma (lower, abl, FALSE, FALSE);
-  print_vma (upper, abu, FALSE, FALSE);
+  print_vma (lower, abl, false, false);
+  print_vma (upper, abu, false, false);
 
   return (prepend_type (info, "range (")
 	  && append_type (info, "):")
@@ -823,9 +784,9 @@ pr_range_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper)
 
 /* Make an array type.  */
 
-static bfd_boolean
+static bool
 pr_array_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper,
-	       bfd_boolean stringp)
+	       bool stringp)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *range_type;
@@ -833,7 +794,7 @@ pr_array_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper,
 
   range_type = pop_type (info);
   if (range_type == NULL)
-    return FALSE;
+    return false;
 
   if (lower == 0)
     {
@@ -841,73 +802,73 @@ pr_array_type (void *p, bfd_signed_vma lower, bfd_signed_vma upper,
 	sprintf (ab, "|[]");
       else
 	{
-	  print_vma (upper + 1, abu, FALSE, FALSE);
+	  print_vma (upper + 1, abu, false, false);
 	  sprintf (ab, "|[%s]", abu);
 	}
     }
   else
     {
-      print_vma (lower, abl, FALSE, FALSE);
-      print_vma (upper, abu, FALSE, FALSE);
+      print_vma (lower, abl, false, false);
+      print_vma (upper, abu, false, false);
       sprintf (ab, "|[%s:%s]", abl, abu);
     }
 
   if (! substitute_type (info, ab))
-    return FALSE;
+    return false;
 
   if (strcmp (range_type, "int") != 0)
     {
       if (! append_type (info, ":")
 	  || ! append_type (info, range_type))
-	return FALSE;
+	return false;
     }
 
   if (stringp)
     {
       if (! append_type (info, " /* string */"))
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Make a set type.  */
 
-static bfd_boolean
-pr_set_type (void *p, bfd_boolean bitstringp)
+static bool
+pr_set_type (void *p, bool bitstringp)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   if (! substitute_type (info, ""))
-    return FALSE;
+    return false;
 
   if (! prepend_type (info, "set { ")
       || ! append_type (info, " }"))
-    return FALSE;
+    return false;
 
   if (bitstringp)
     {
       if (! append_type (info, "/* bitstring */"))
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Make an offset type.  */
 
-static bfd_boolean
+static bool
 pr_offset_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *t;
 
   if (! substitute_type (info, ""))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   return (substitute_type (info, "")
 	  && prepend_type (info, " ")
@@ -917,8 +878,8 @@ pr_offset_type (void *p)
 
 /* Make a method type.  */
 
-static bfd_boolean
-pr_method_type (void *p, bfd_boolean domain, int argcount, bfd_boolean varargs)
+static bool
+pr_method_type (void *p, bool domain, int argcount, bool varargs)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   unsigned int len;
@@ -933,14 +894,14 @@ pr_method_type (void *p, bfd_boolean domain, int argcount, bfd_boolean varargs)
   else
     {
       if (! substitute_type (info, ""))
-	return FALSE;
+	return false;
       domain_type = pop_type (info);
       if (domain_type == NULL)
-	return FALSE;
-      if (CONST_STRNEQ (domain_type, "class ")
+	return false;
+      if (startswith (domain_type, "class ")
 	  && strchr (domain_type + sizeof "class " - 1, ' ') == NULL)
 	domain_type += sizeof "class " - 1;
-      else if (CONST_STRNEQ (domain_type, "union class ")
+      else if (startswith (domain_type, "union class ")
 	       && (strchr (domain_type + sizeof "union class " - 1, ' ')
 		   == NULL))
 	domain_type += sizeof "union class " - 1;
@@ -962,13 +923,13 @@ pr_method_type (void *p, bfd_boolean domain, int argcount, bfd_boolean varargs)
 	  if (! substitute_type (info, ""))
 	    {
 	      free (arg_types);
-	      return FALSE;
+	      return false;
 	    }
 	  arg_types[i] = pop_type (info);
 	  if (arg_types[i] == NULL)
 	    {
 	      free (arg_types);
-	      return FALSE;
+	      return false;
 	    }
 	  len += strlen (arg_types[i]) + 2;
 	}
@@ -1010,16 +971,16 @@ pr_method_type (void *p, bfd_boolean domain, int argcount, bfd_boolean varargs)
   strcat (s, ")");
 
   if (! substitute_type (info, s))
-    return FALSE;
+    return false;
 
   free (s);
 
-  return TRUE;
+  return true;
 }
 
 /* Make a const qualified type.  */
 
-static bfd_boolean
+static bool
 pr_const_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1029,7 +990,7 @@ pr_const_type (void *p)
 
 /* Make a volatile qualified type.  */
 
-static bfd_boolean
+static bool
 pr_volatile_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1039,20 +1000,20 @@ pr_volatile_type (void *p)
 
 /* Start accumulating a struct type.  */
 
-static bfd_boolean
+static bool
 pr_start_struct_type (void *p, const char *tag, unsigned int id,
-		      bfd_boolean structp, unsigned int size)
+		      bool structp, unsigned int size)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   info->indent += 2;
 
   if (! push_type (info, structp ? "struct " : "union "))
-    return FALSE;
+    return false;
   if (tag != NULL)
     {
       if (! append_type (info, tag))
-	return FALSE;
+	return false;
     }
   else
     {
@@ -1060,35 +1021,35 @@ pr_start_struct_type (void *p, const char *tag, unsigned int id,
 
       sprintf (idbuf, "%%anon%u", id);
       if (! append_type (info, idbuf))
-	return FALSE;
+	return false;
     }
 
   if (! append_type (info, " {"))
-    return FALSE;
+    return false;
   if (size != 0 || tag != NULL)
     {
       char ab[30];
 
       if (! append_type (info, " /*"))
-	return FALSE;
+	return false;
 
       if (size != 0)
 	{
 	  sprintf (ab, " size %u", size);
 	  if (! append_type (info, ab))
-	    return FALSE;
+	    return false;
 	}
       if (tag != NULL)
 	{
 	  sprintf (ab, " id %u", id);
 	  if (! append_type (info, ab))
-	    return FALSE;
+	    return false;
 	}
       if (! append_type (info, " */"))
-	return FALSE;
+	return false;
     }
   if (! append_type (info, "\n"))
-    return FALSE;
+    return false;
 
   info->stack->visibility = DEBUG_VISIBILITY_PUBLIC;
 
@@ -1097,7 +1058,7 @@ pr_start_struct_type (void *p, const char *tag, unsigned int id,
 
 /* Output the visibility of a field in a struct.  */
 
-static bfd_boolean
+static bool
 pr_fix_visibility (struct pr_handle *info, enum debug_visibility visibility)
 {
   const char *s = NULL;
@@ -1107,7 +1068,7 @@ pr_fix_visibility (struct pr_handle *info, enum debug_visibility visibility)
   assert (info->stack != NULL);
 
   if (info->stack->visibility == visibility)
-    return TRUE;
+    return true;
 
   switch (visibility)
     {
@@ -1125,7 +1086,7 @@ pr_fix_visibility (struct pr_handle *info, enum debug_visibility visibility)
       break;
     default:
       abort ();
-      return FALSE;
+      return false;
     }
 
   /* Trim off a trailing space in the struct string, to make the
@@ -1139,16 +1100,16 @@ pr_fix_visibility (struct pr_handle *info, enum debug_visibility visibility)
   if (! append_type (info, s)
       || ! append_type (info, ":\n")
       || ! indent_type (info))
-    return FALSE;
+    return false;
 
   info->stack->visibility = visibility;
 
-  return TRUE;
+  return true;
 }
 
 /* Add a field to a struct type.  */
 
-static bfd_boolean
+static bool
 pr_struct_field (void *p, const char *name, bfd_vma bitpos, bfd_vma bitsize,
 		 enum debug_visibility visibility)
 {
@@ -1157,40 +1118,40 @@ pr_struct_field (void *p, const char *name, bfd_vma bitpos, bfd_vma bitsize,
   char *t;
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   if (! append_type (info, "; /* "))
-    return FALSE;
+    return false;
 
   if (bitsize != 0)
     {
-      print_vma (bitsize, ab, TRUE, FALSE);
+      print_vma (bitsize, ab, true, false);
       if (! append_type (info, "bitsize ")
 	  || ! append_type (info, ab)
 	  || ! append_type (info, ", "))
-	return FALSE;
+	return false;
     }
 
-  print_vma (bitpos, ab, TRUE, FALSE);
+  print_vma (bitpos, ab, true, false);
   if (! append_type (info, "bitpos ")
       || ! append_type (info, ab)
       || ! append_type (info, " */\n")
       || ! indent_type (info))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (! pr_fix_visibility (info, visibility))
-    return FALSE;
+    return false;
 
   return append_type (info, t);
 }
 
 /* Finish a struct type.  */
 
-static bfd_boolean
+static bool
 pr_end_struct_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1208,15 +1169,15 @@ pr_end_struct_type (void *p)
   *s++ = '}';
   *s = '\0';
 
-  return TRUE;
+  return true;
 }
 
 /* Start a class type.  */
 
-static bfd_boolean
+static bool
 pr_start_class_type (void *p, const char *tag, unsigned int id,
-		     bfd_boolean structp, unsigned int size,
-		     bfd_boolean vptr, bfd_boolean ownvptr)
+		     bool structp, unsigned int size,
+		     bool vptr, bool ownvptr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *tv = NULL;
@@ -1227,15 +1188,15 @@ pr_start_class_type (void *p, const char *tag, unsigned int id,
     {
       tv = pop_type (info);
       if (tv == NULL)
-	return FALSE;
+	return false;
     }
 
   if (! push_type (info, structp ? "class " : "union class "))
-    return FALSE;
+    return false;
   if (tag != NULL)
     {
       if (! append_type (info, tag))
-	return FALSE;
+	return false;
     }
   else
     {
@@ -1243,15 +1204,15 @@ pr_start_class_type (void *p, const char *tag, unsigned int id,
 
       sprintf (idbuf, "%%anon%u", id);
       if (! append_type (info, idbuf))
-	return FALSE;
+	return false;
     }
 
   if (! append_type (info, " {"))
-    return FALSE;
+    return false;
   if (size != 0 || vptr || ownvptr || tag != NULL)
     {
       if (! append_type (info, " /*"))
-	return FALSE;
+	return false;
 
       if (size != 0)
 	{
@@ -1260,23 +1221,23 @@ pr_start_class_type (void *p, const char *tag, unsigned int id,
 	  sprintf (ab, "%u", size);
 	  if (! append_type (info, " size ")
 	      || ! append_type (info, ab))
-	    return FALSE;
+	    return false;
 	}
 
       if (vptr)
 	{
 	  if (! append_type (info, " vtable "))
-	    return FALSE;
+	    return false;
 	  if (ownvptr)
 	    {
 	      if (! append_type (info, "self "))
-		return FALSE;
+		return false;
 	    }
 	  else
 	    {
 	      if (! append_type (info, tv)
 		  || ! append_type (info, " "))
-		return FALSE;
+		return false;
 	    }
 	}
 
@@ -1286,11 +1247,11 @@ pr_start_class_type (void *p, const char *tag, unsigned int id,
 
 	  sprintf (ab, " id %u", id);
 	  if (! append_type (info, ab))
-	    return FALSE;
+	    return false;
 	}
 
       if (! append_type (info, " */"))
-	return FALSE;
+	return false;
     }
 
   info->stack->visibility = DEBUG_VISIBILITY_PRIVATE;
@@ -1301,7 +1262,7 @@ pr_start_class_type (void *p, const char *tag, unsigned int id,
 
 /* Add a static member to a class.  */
 
-static bfd_boolean
+static bool
 pr_class_static_member (void *p, const char *name, const char *physname,
 			enum debug_visibility visibility)
 {
@@ -1309,29 +1270,29 @@ pr_class_static_member (void *p, const char *name, const char *physname,
   char *t;
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   if (! prepend_type (info, "static ")
       || ! append_type (info, "; /* ")
       || ! append_type (info, physname)
       || ! append_type (info, " */\n")
       || ! indent_type (info))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (! pr_fix_visibility (info, visibility))
-    return FALSE;
+    return false;
 
   return append_type (info, t);
 }
 
 /* Add a base class to a class.  */
 
-static bfd_boolean
-pr_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
+static bool
+pr_class_baseclass (void *p, bfd_vma bitpos, bool is_virtual,
 		    enum debug_visibility visibility)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1343,24 +1304,24 @@ pr_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
   assert (info->stack != NULL && info->stack->next != NULL);
 
   if (! substitute_type (info, ""))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
-  if (CONST_STRNEQ (t, "class "))
+  if (startswith (t, "class "))
     t += sizeof "class " - 1;
 
   /* Push it back on to take advantage of the prepend_type and
      append_type routines.  */
   if (! push_type (info, t))
-    return FALSE;
+    return false;
 
   if (is_virtual)
     {
       if (! prepend_type (info, "virtual "))
-	return FALSE;
+	return false;
     }
 
   switch (visibility)
@@ -1380,15 +1341,15 @@ pr_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
     }
 
   if (! prepend_type (info, prefix))
-    return FALSE;
+    return false;
 
   if (bitpos != 0)
     {
-      print_vma (bitpos, ab, TRUE, FALSE);
+      print_vma (bitpos, ab, true, false);
       if (! append_type (info, " /* bitpos ")
 	  || ! append_type (info, ab)
 	  || ! append_type (info, " */"))
-	return FALSE;
+	return false;
     }
 
   /* Now the top of the stack is something like "public A / * bitpos
@@ -1405,11 +1366,11 @@ pr_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
     if (*l == ':')
       break;
   if (! prepend_type (info, l == s ? " : " : ", "))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   n = (char *) xmalloc (strlen (info->stack->type) + strlen (t) + 1);
   memcpy (n, info->stack->type, s - info->stack->type);
@@ -1421,28 +1382,28 @@ pr_class_baseclass (void *p, bfd_vma bitpos, bfd_boolean is_virtual,
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Start adding a method to a class.  */
 
-static bfd_boolean
+static bool
 pr_class_start_method (void *p, const char *name)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   assert (info->stack != NULL);
   info->stack->method = name;
-  return TRUE;
+  return true;
 }
 
 /* Add a variant to a method.  */
 
-static bfd_boolean
+static bool
 pr_class_method_variant (void *p, const char *physname,
 			 enum debug_visibility visibility,
-			 bfd_boolean constp, bfd_boolean volatilep,
-			 bfd_vma voffset, bfd_boolean context)
+			 bool constp, bool volatilep,
+			 bfd_vma voffset, bool context)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *method_type;
@@ -1455,12 +1416,12 @@ pr_class_method_variant (void *p, const char *physname,
   if (volatilep)
     {
       if (! append_type (info, " volatile"))
-	return FALSE;
+	return false;
     }
   if (constp)
     {
       if (! append_type (info, " const"))
-	return FALSE;
+	return false;
     }
 
   /* Stick the name of the method into its type.  */
@@ -1468,12 +1429,12 @@ pr_class_method_variant (void *p, const char *physname,
 			 (context
 			  ? info->stack->next->next->method
 			  : info->stack->next->method)))
-    return FALSE;
+    return false;
 
   /* Get the type.  */
   method_type = pop_type (info);
   if (method_type == NULL)
-    return FALSE;
+    return false;
 
   /* Pull off the context type if there is one.  */
   if (! context)
@@ -1482,19 +1443,19 @@ pr_class_method_variant (void *p, const char *physname,
     {
       context_type = pop_type (info);
       if (context_type == NULL)
-	return FALSE;
+	return false;
     }
 
   /* Now the top of the stack is the class.  */
 
   if (! pr_fix_visibility (info, visibility))
-    return FALSE;
+    return false;
 
   if (! append_type (info, method_type)
       || ! append_type (info, " /* ")
       || ! append_type (info, physname)
       || ! append_type (info, " "))
-    return FALSE;
+    return false;
   if (context || voffset != 0)
     {
       char ab[22];
@@ -1504,12 +1465,12 @@ pr_class_method_variant (void *p, const char *physname,
 	  if (! append_type (info, "context ")
 	      || ! append_type (info, context_type)
 	      || ! append_type (info, " "))
-	    return FALSE;
+	    return false;
 	}
-      print_vma (voffset, ab, TRUE, FALSE);
+      print_vma (voffset, ab, true, false);
       if (! append_type (info, "voffset ")
 	  || ! append_type (info, ab))
-	return FALSE;
+	return false;
     }
 
   return (append_type (info, " */;\n")
@@ -1518,10 +1479,10 @@ pr_class_method_variant (void *p, const char *physname,
 
 /* Add a static variant to a method.  */
 
-static bfd_boolean
+static bool
 pr_class_static_method_variant (void *p, const char *physname,
 				enum debug_visibility visibility,
-				bfd_boolean constp, bfd_boolean volatilep)
+				bool constp, bool volatilep)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *method_type;
@@ -1534,31 +1495,31 @@ pr_class_static_method_variant (void *p, const char *physname,
   if (volatilep)
     {
       if (! append_type (info, " volatile"))
-	return FALSE;
+	return false;
     }
   if (constp)
     {
       if (! append_type (info, " const"))
-	return FALSE;
+	return false;
     }
 
   /* Mark it as static.  */
   if (! prepend_type (info, "static "))
-    return FALSE;
+    return false;
 
   /* Stick the name of the method into its type.  */
   if (! substitute_type (info, info->stack->next->method))
-    return FALSE;
+    return false;
 
   /* Get the type.  */
   method_type = pop_type (info);
   if (method_type == NULL)
-    return FALSE;
+    return false;
 
   /* Now the top of the stack is the class.  */
 
   if (! pr_fix_visibility (info, visibility))
-    return FALSE;
+    return false;
 
   return (append_type (info, method_type)
 	  && append_type (info, " /* ")
@@ -1569,18 +1530,18 @@ pr_class_static_method_variant (void *p, const char *physname,
 
 /* Finish up a method.  */
 
-static bfd_boolean
+static bool
 pr_class_end_method (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   info->stack->method = NULL;
-  return TRUE;
+  return true;
 }
 
 /* Finish up a class.  */
 
-static bfd_boolean
+static bool
 pr_end_class_type (void *p)
 {
   return pr_end_struct_type (p);
@@ -1588,7 +1549,7 @@ pr_end_class_type (void *p)
 
 /* Push a type on the stack using a typedef name.  */
 
-static bfd_boolean
+static bool
 pr_typedef_type (void *p, const char *name)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1598,7 +1559,7 @@ pr_typedef_type (void *p, const char *name)
 
 /* Push a type on the stack using a tag name.  */
 
-static bfd_boolean
+static bool
 pr_tag_type (void *p, const char *name, unsigned int id,
 	     enum debug_type_kind kind)
 {
@@ -1624,12 +1585,12 @@ pr_tag_type (void *p, const char *name, unsigned int id,
       t = "union class ";
       break;
     default:
-      abort ();
-      return FALSE;
+      /* PR 25625: Corrupt input can trigger this case.  */
+      return false;
     }
 
   if (! push_type (info, t))
-    return FALSE;
+    return false;
   if (name != NULL)
     tag = name;
   else
@@ -1639,44 +1600,44 @@ pr_tag_type (void *p, const char *name, unsigned int id,
     }
 
   if (! append_type (info, tag))
-    return FALSE;
+    return false;
   if (name != NULL && kind != DEBUG_KIND_ENUM)
     {
       sprintf (idbuf, " /* id %u */", id);
       if (! append_type (info, idbuf))
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Output a typedef.  */
 
-static bfd_boolean
+static bool
 pr_typdef (void *p, const char *name)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *s;
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   s = pop_type (info);
   if (s == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
   fprintf (info->f, "typedef %s;\n", s);
 
   free (s);
 
-  return TRUE;
+  return true;
 }
 
 /* Output a tag.  The tag should already be in the string on the
    stack, so all we have to do here is print it out.  */
 
-static bfd_boolean
+static bool
 pr_tag (void *p, const char *name ATTRIBUTE_UNUSED)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1684,45 +1645,45 @@ pr_tag (void *p, const char *name ATTRIBUTE_UNUSED)
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
   fprintf (info->f, "%s;\n", t);
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Output an integer constant.  */
 
-static bfd_boolean
+static bool
 pr_int_constant (void *p, const char *name, bfd_vma val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char ab[22];
 
   indent (info);
-  print_vma (val, ab, FALSE, FALSE);
+  print_vma (val, ab, false, false);
   fprintf (info->f, "const int %s = %s;\n", name, ab);
-  return TRUE;
+  return true;
 }
 
 /* Output a floating point constant.  */
 
-static bfd_boolean
+static bool
 pr_float_constant (void *p, const char *name, double val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
 
   indent (info);
   fprintf (info->f, "const double %s = %g;\n", name, val);
-  return TRUE;
+  return true;
 }
 
 /* Output a typed constant.  */
 
-static bfd_boolean
+static bool
 pr_typed_constant (void *p, const char *name, bfd_vma val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1731,20 +1692,20 @@ pr_typed_constant (void *p, const char *name, bfd_vma val)
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
-  print_vma (val, ab, FALSE, FALSE);
+  print_vma (val, ab, false, false);
   fprintf (info->f, "const %s %s = %s;\n", t, name, ab);
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Output a variable.  */
 
-static bfd_boolean
+static bool
 pr_variable (void *p, const char *name, enum debug_var_kind kind,
 	     bfd_vma val)
 {
@@ -1753,11 +1714,11 @@ pr_variable (void *p, const char *name, enum debug_var_kind kind,
   char ab[22];
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
   switch (kind)
@@ -1772,28 +1733,28 @@ pr_variable (void *p, const char *name, enum debug_var_kind kind,
     default:
       break;
     }
-  print_vma (val, ab, TRUE, TRUE);
+  print_vma (val, ab, true, true);
   fprintf (info->f, "%s /* %s */;\n", t, ab);
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Start outputting a function.  */
 
-static bfd_boolean
-pr_start_function (void *p, const char *name, bfd_boolean global)
+static bool
+pr_start_function (void *p, const char *name, bool global)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *t;
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
   if (! global)
@@ -1802,12 +1763,12 @@ pr_start_function (void *p, const char *name, bfd_boolean global)
 
   info->parameter = 1;
 
-  return TRUE;
+  return true;
 }
 
 /* Output a function parameter.  */
 
-static bfd_boolean
+static bool
 pr_function_parameter (void *p, const char *name,
 		       enum debug_parm_kind kind, bfd_vma val)
 {
@@ -1819,15 +1780,15 @@ pr_function_parameter (void *p, const char *name,
       || kind == DEBUG_PARM_REF_REG)
     {
       if (! pr_reference_type (p))
-	return FALSE;
+	return false;
     }
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (info->parameter != 1)
     fprintf (info->f, ", ");
@@ -1835,19 +1796,19 @@ pr_function_parameter (void *p, const char *name,
   if (kind == DEBUG_PARM_REG || kind == DEBUG_PARM_REF_REG)
     fprintf (info->f, "register ");
 
-  print_vma (val, ab, TRUE, TRUE);
+  print_vma (val, ab, true, true);
   fprintf (info->f, "%s /* %s */", t, ab);
 
   free (t);
 
   ++info->parameter;
 
-  return TRUE;
+  return true;
 }
 
 /* Start writing out a block.  */
 
-static bfd_boolean
+static bool
 pr_start_block (void *p, bfd_vma addr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1860,32 +1821,32 @@ pr_start_block (void *p, bfd_vma addr)
     }
 
   indent (info);
-  print_vma (addr, ab, TRUE, TRUE);
+  print_vma (addr, ab, true, true);
   fprintf (info->f, "{ /* %s */\n", ab);
 
   info->indent += 2;
 
-  return TRUE;
+  return true;
 }
 
 /* Write out line number information.  */
 
-static bfd_boolean
+static bool
 pr_lineno (void *p, const char *filename, unsigned long lineno, bfd_vma addr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char ab[22];
 
   indent (info);
-  print_vma (addr, ab, TRUE, TRUE);
+  print_vma (addr, ab, true, true);
   fprintf (info->f, "/* file %s line %lu addr %s */\n", filename, lineno, ab);
 
-  return TRUE;
+  return true;
 }
 
 /* Finish writing out a block.  */
 
-static bfd_boolean
+static bool
 pr_end_block (void *p, bfd_vma addr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1894,18 +1855,18 @@ pr_end_block (void *p, bfd_vma addr)
   info->indent -= 2;
 
   indent (info);
-  print_vma (addr, ab, TRUE, TRUE);
+  print_vma (addr, ab, true, true);
   fprintf (info->f, "} /* %s */\n", ab);
 
-  return TRUE;
+  return true;
 }
 
 /* Finish writing out a function.  */
 
-static bfd_boolean
+static bool
 pr_end_function (void *p ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 /* Tags style generation functions start here.  */
@@ -1915,7 +1876,7 @@ static bfd_vma pc;
 static const char *filename;
 static const char *functionname;
 static unsigned int line;
-static bfd_boolean found;
+static bool found;
 
 /* Look for an address in a section.  This is called via
    bfd_map_over_sections.  */
@@ -1949,7 +1910,7 @@ static void
 translate_addresses (bfd *abfd, char *addr_hex, FILE *f, asymbol **syms)
 {
   pc = bfd_scan_vma (addr_hex, NULL, 16);
-  found = FALSE;
+  found = false;
   bfd_map_over_sections (abfd, find_address_in_section, syms);
 
   if (! found)
@@ -1960,7 +1921,7 @@ translate_addresses (bfd *abfd, char *addr_hex, FILE *f, asymbol **syms)
 
 /* Start a new compilation unit.  */
 
-static bfd_boolean
+static bool
 tg_start_compilation_unit (void * p, const char *fname ATTRIBUTE_UNUSED)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1969,12 +1930,12 @@ tg_start_compilation_unit (void * p, const char *fname ATTRIBUTE_UNUSED)
   /* Should it be relative? best way to do it here?.  */
   info->filename = strdup (fname);
 
-  return TRUE;
+  return true;
 }
 
 /* Start a source file within a compilation unit.  */
 
-static bfd_boolean
+static bool
 tg_start_source (void *p, const char *fname)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -1983,12 +1944,12 @@ tg_start_source (void *p, const char *fname)
   /* Should it be relative? best way to do it here?.  */
   info->filename = strdup (fname);
 
-  return TRUE;
+  return true;
 }
 
 /* Push an enum type onto the type stack.  */
 
-static bfd_boolean
+static bool
 tg_enum_type (void *p, const char *tag, const char **names,
 	      bfd_signed_vma *values)
 {
@@ -1998,7 +1959,7 @@ tg_enum_type (void *p, const char *tag, const char **names,
   char ab[22];
 
   if (! pr_enum_type (p, tag, names, values))
-    return FALSE;
+    return false;
 
   name = tag ? tag : "unknown";
   /* Generate an entry for the enum.  */
@@ -2011,20 +1972,20 @@ tg_enum_type (void *p, const char *tag, const char **names,
     {
       for (i = 0; names[i] != NULL; i++)
 	{
-	  print_vma (values[i], ab, FALSE, FALSE);
+	  print_vma (values[i], ab, false, false);
 	  fprintf (info->f, "%s\t%s\t0;\"\tkind:g\tenum:%s\tvalue:%s\n",
 		   names[i], info->filename, name, ab);
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Start accumulating a struct type.  */
 
-static bfd_boolean
+static bool
 tg_start_struct_type (void *p, const char *tag, unsigned int id,
-		      bfd_boolean structp,
+		      bool structp,
 		      unsigned int size ATTRIBUTE_UNUSED)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2040,7 +2001,7 @@ tg_start_struct_type (void *p, const char *tag, unsigned int id,
     }
 
   if (! push_type (info, name))
-    return FALSE;
+    return false;
 
   info->stack->flavor = structp ? "struct" : "union";
 
@@ -2054,24 +2015,24 @@ tg_start_struct_type (void *p, const char *tag, unsigned int id,
 
 /* Output the visibility of a field in a struct.  */
 
-static bfd_boolean
+static bool
 tg_fix_visibility (struct pr_handle *info, enum debug_visibility visibility)
 {
   assert (info->stack != NULL);
 
   if (info->stack->visibility == visibility)
-    return TRUE;
+    return true;
 
   assert (info->stack->visibility != DEBUG_VISIBILITY_IGNORE);
 
   info->stack->visibility = visibility;
 
-  return TRUE;
+  return true;
 }
 
 /* Add a field to a struct type.  */
 
-static bfd_boolean
+static bool
 tg_struct_field (void *p, const char *name, bfd_vma bitpos ATTRIBUTE_UNUSED,
 		 bfd_vma bitsize ATTRIBUTE_UNUSED,
 		 enum debug_visibility visibility)
@@ -2081,38 +2042,38 @@ tg_struct_field (void *p, const char *name, bfd_vma bitpos ATTRIBUTE_UNUSED,
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (! tg_fix_visibility (info, visibility))
-    return FALSE;
+    return false;
 
   /* It happens, a bug? */
   if (! name[0])
-    return TRUE;
+    return true;
 
   fprintf (info->f, "%s\t%s\t0;\"\tkind:m\ttype:%s\t%s:%s\taccess:%s\n",
 	   name, info->filename, t, info->stack->flavor, info->stack->type,
 	   visibility_name (visibility));
 
-  return TRUE;
+  return true;
 }
 
 /* Finish a struct type.  */
 
-static bfd_boolean
+static bool
 tg_end_struct_type (void *p ATTRIBUTE_UNUSED)
 {
   assert (((struct pr_handle *) p)->stack != NULL);
 
-  return TRUE;
+  return true;
 }
 
 /* Start a class type.  */
 
-static bfd_boolean
+static bool
 tg_start_class_type (void *p, const char *tag, unsigned int id,
-		     bfd_boolean structp, unsigned int size,
-		     bfd_boolean vptr, bfd_boolean ownvptr)
+		     bool structp, unsigned int size,
+		     bool vptr, bool ownvptr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *tv = NULL;
@@ -2125,7 +2086,7 @@ tg_start_class_type (void *p, const char *tag, unsigned int id,
     {
       tv = pop_type (info);
       if (tv == NULL)
-	return FALSE;
+	return false;
     }
 
   if (tag != NULL)
@@ -2137,7 +2098,7 @@ tg_start_class_type (void *p, const char *tag, unsigned int id,
     }
 
   if (! push_type (info, name))
-    return FALSE;
+    return false;
 
   info->stack->flavor = structp ? "class" : "union class";
   info->stack->parents = NULL;
@@ -2148,29 +2109,29 @@ tg_start_class_type (void *p, const char *tag, unsigned int id,
       if (vptr)
 	{
 	  if (! append_type (info, " vtable "))
-	    return FALSE;
+	    return false;
 	  if (ownvptr)
 	    {
 	      if (! append_type (info, "self "))
-		return FALSE;
+		return false;
 	    }
 	  else
 	    {
 	      if (! append_type (info, tv)
 		  || ! append_type (info, " "))
-		return FALSE;
+		return false;
 	    }
 	}
     }
 
   info->stack->visibility = DEBUG_VISIBILITY_PRIVATE;
 
-  return TRUE;
+  return true;
 }
 
 /* Add a static member to a class.  */
 
-static bfd_boolean
+static bool
 tg_class_static_member (void *p, const char *name,
 			const char *physname ATTRIBUTE_UNUSED,
 			enum debug_visibility visibility)
@@ -2184,33 +2145,33 @@ tg_class_static_member (void *p, const char *name,
   len_class = strlen (info->stack->next->type);
   full_name = (char *) xmalloc (len_var + len_class + 3);
   if (! full_name)
-    return FALSE;
+    return false;
   sprintf (full_name, "%s::%s", info->stack->next->type, name);
 
   if (! substitute_type (info, full_name))
     {
       free (full_name);
-      return FALSE;
+      return false;
     }
 
   if (! prepend_type (info, "static "))
     {
       free (full_name);
-      return FALSE;
+      return false;
     }
 
   t = pop_type (info);
   if (t == NULL)
     {
       free (full_name);
-      return FALSE;
+      return false;
     }
 
   if (! tg_fix_visibility (info, visibility))
     {
       free (t);
       free (full_name);
-      return FALSE;
+      return false;
     }
 
   fprintf (info->f, "%s\t%s\t0;\"\tkind:x\ttype:%s\tclass:%s\taccess:%s\n",
@@ -2219,14 +2180,14 @@ tg_class_static_member (void *p, const char *name,
   free (t);
   free (full_name);
 
-  return TRUE;
+  return true;
 }
 
 /* Add a base class to a class.  */
 
-static bfd_boolean
+static bool
 tg_class_baseclass (void *p, bfd_vma bitpos ATTRIBUTE_UNUSED,
-		    bfd_boolean is_virtual, enum debug_visibility visibility)
+		    bool is_virtual, enum debug_visibility visibility)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *t;
@@ -2236,20 +2197,20 @@ tg_class_baseclass (void *p, bfd_vma bitpos ATTRIBUTE_UNUSED,
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
-  if (CONST_STRNEQ (t, "class "))
+  if (startswith (t, "class "))
     t += sizeof "class " - 1;
 
   /* Push it back on to take advantage of the prepend_type and
      append_type routines.  */
   if (! push_type (info, t))
-    return FALSE;
+    return false;
 
   if (is_virtual)
     {
       if (! prepend_type (info, "virtual "))
-	return FALSE;
+	return false;
     }
 
   switch (visibility)
@@ -2269,32 +2230,32 @@ tg_class_baseclass (void *p, bfd_vma bitpos ATTRIBUTE_UNUSED,
     }
 
   if (! prepend_type (info, prefix))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (info->stack->num_parents && ! append_parent (info, ", "))
-    return FALSE;
+    return false;
 
   if (! append_parent (info, t))
-    return FALSE;
+    return false;
   info->stack->num_parents++;
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Add a variant to a method.  */
 
-static bfd_boolean
+static bool
 tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
 			 enum debug_visibility visibility,
-			 bfd_boolean constp, bfd_boolean volatilep,
+			 bool constp, bool volatilep,
 			 bfd_vma voffset ATTRIBUTE_UNUSED,
-			 bfd_boolean context)
+			 bool context)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *method_type;
@@ -2308,12 +2269,12 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
   if (volatilep)
     {
       if (! append_type (info, " volatile"))
-	return FALSE;
+	return false;
     }
   if (constp)
     {
       if (! append_type (info, " const"))
-	return FALSE;
+	return false;
     }
 
   method_name = strdup (context ? info->stack->next->next->method
@@ -2323,7 +2284,7 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
   if (! substitute_type (info, method_name))
     {
       free (method_name);
-      return FALSE;
+      return false;
     }
 
   /* Get the type.  */
@@ -2331,7 +2292,7 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
   if (method_type == NULL)
     {
       free (method_name);
-      return FALSE;
+      return false;
     }
 
   /* Pull off the context type if there is one.  */
@@ -2344,7 +2305,7 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
 	{
 	  free (method_type);
 	  free (method_name);
-	  return FALSE;
+	  return false;
 	}
     }
 
@@ -2354,7 +2315,7 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
       free (method_type);
       free (method_name);
       free (context_type);
-      return FALSE;
+      return false;
     }
 
   fprintf (info->f, "%s\t%s\t0;\"\tkind:p\ttype:%s\tclass:%s\n",
@@ -2363,16 +2324,16 @@ tg_class_method_variant (void *p, const char *physname ATTRIBUTE_UNUSED,
   free (method_name);
   free (context_type);
 
-  return TRUE;
+  return true;
 }
 
 /* Add a static variant to a method.  */
 
-static bfd_boolean
+static bool
 tg_class_static_method_variant (void *p,
 				const char *physname ATTRIBUTE_UNUSED,
 				enum debug_visibility visibility,
-				bfd_boolean constp, bfd_boolean volatilep)
+				bool constp, bool volatilep)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *method_type;
@@ -2386,24 +2347,24 @@ tg_class_static_method_variant (void *p,
   if (volatilep)
     {
       if (! append_type (info, " volatile"))
-	return FALSE;
+	return false;
     }
   if (constp)
     {
       if (! append_type (info, " const"))
-	return FALSE;
+	return false;
     }
 
   /* Mark it as static.  */
   if (! prepend_type (info, "static "))
-    return FALSE;
+    return false;
 
   method_name = strdup (info->stack->next->method);
   /* Stick the name of the method into its type.  */
   if (! substitute_type (info, info->stack->next->method))
     {
       free (method_name);
-      return FALSE;
+      return false;
     }
 
   /* Get the type.  */
@@ -2411,7 +2372,7 @@ tg_class_static_method_variant (void *p,
   if (method_type == NULL)
     {
       free (method_name);
-      return FALSE;
+      return false;
     }
 
   /* Now the top of the stack is the class.  */
@@ -2419,7 +2380,7 @@ tg_class_static_method_variant (void *p,
     {
       free (method_type);
       free (method_name);
-      return FALSE;
+      return false;
     }
 
   fprintf (info->f, "%s\t%s\t0;\"\tkind:p\ttype:%s\tclass:%s\taccess:%s\n",
@@ -2428,12 +2389,12 @@ tg_class_static_method_variant (void *p,
   free (method_type);
   free (method_name);
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up a class.  */
 
-static bfd_boolean
+static bool
 tg_end_class_type (void *p)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2452,7 +2413,7 @@ tg_end_class_type (void *p)
 
 /* Push a type on the stack using a tag name.  */
 
-static bfd_boolean
+static bool
 tg_tag_type (void *p, const char *name, unsigned int id,
 	     enum debug_type_kind kind)
 {
@@ -2479,11 +2440,11 @@ tg_tag_type (void *p, const char *name, unsigned int id,
       break;
     default:
       abort ();
-      return FALSE;
+      return false;
     }
 
   if (! push_type (info, t))
-    return FALSE;
+    return false;
   if (name != NULL)
     tag = name;
   else
@@ -2493,14 +2454,14 @@ tg_tag_type (void *p, const char *name, unsigned int id,
     }
 
   if (! append_type (info, tag))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Output a typedef.  */
 
-static bfd_boolean
+static bool
 tg_typdef (void *p, const char *name)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2508,20 +2469,20 @@ tg_typdef (void *p, const char *name)
 
   s = pop_type (info);
   if (s == NULL)
-    return FALSE;
+    return false;
 
   fprintf (info->f, "%s\t%s\t0;\"\tkind:t\ttype:%s\n", name,
 	   info->filename, s);
 
   free (s);
 
-  return TRUE;
+  return true;
 }
 
 /* Output a tag.  The tag should already be in the string on the
    stack, so all we have to do here is print it out.  */
 
-static bfd_boolean
+static bool
 tg_tag (void *p ATTRIBUTE_UNUSED, const char *name ATTRIBUTE_UNUSED)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2529,30 +2490,30 @@ tg_tag (void *p ATTRIBUTE_UNUSED, const char *name ATTRIBUTE_UNUSED)
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Output an integer constant.  */
 
-static bfd_boolean
+static bool
 tg_int_constant (void *p, const char *name, bfd_vma val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char ab[22];
 
   indent (info);
-  print_vma (val, ab, FALSE, FALSE);
+  print_vma (val, ab, false, false);
   fprintf (info->f, "%s\t%s\t0;\"\tkind:v\ttype:const int\tvalue:%s\n",
 	   name, info->filename, ab);
-  return TRUE;
+  return true;
 }
 
 /* Output a floating point constant.  */
 
-static bfd_boolean
+static bool
 tg_float_constant (void *p, const char *name, double val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2560,12 +2521,12 @@ tg_float_constant (void *p, const char *name, double val)
   indent (info);
   fprintf (info->f, "%s\t%s\t0;\"\tkind:v\ttype:const double\tvalue:%g\n",
 	   name, info->filename, val);
-  return TRUE;
+  return true;
 }
 
 /* Output a typed constant.  */
 
-static bfd_boolean
+static bool
 tg_typed_constant (void *p, const char *name, bfd_vma val)
 {
   struct pr_handle *info = (struct pr_handle *) p;
@@ -2574,21 +2535,21 @@ tg_typed_constant (void *p, const char *name, bfd_vma val)
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   indent (info);
-  print_vma (val, ab, FALSE, FALSE);
+  print_vma (val, ab, false, false);
   fprintf (info->f, "%s\t%s\t0;\"\tkind:v\ttype:const %s\tvalue:%s\n",
 	   name, info->filename, t, ab);
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Output a variable.  */
 
-static bfd_boolean
+static bool
 tg_variable (void *p, const char *name, enum debug_var_kind kind,
 	     bfd_vma val ATTRIBUTE_UNUSED)
 {
@@ -2597,7 +2558,7 @@ tg_variable (void *p, const char *name, enum debug_var_kind kind,
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   dname = NULL;
   if (info->demangler)
@@ -2644,13 +2605,13 @@ tg_variable (void *p, const char *name, enum debug_var_kind kind,
 
   free (t);
 
-  return TRUE;
+  return true;
 }
 
 /* Start outputting a function.  */
 
-static bfd_boolean
-tg_start_function (void *p, const char *name, bfd_boolean global)
+static bool
+tg_start_function (void *p, const char *name, bool global)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char *dname;
@@ -2665,7 +2626,7 @@ tg_start_function (void *p, const char *name, bfd_boolean global)
     dname = info->demangler (info->abfd, name, demangle_flags);
 
   if (! substitute_type (info, dname ? dname : name))
-    return FALSE;
+    return false;
 
   info->stack->method = NULL;
   if (dname != NULL)
@@ -2692,16 +2653,16 @@ tg_start_function (void *p, const char *name, bfd_boolean global)
   info->stack->parents = strdup (name);
 
   if (! info->stack->method && ! append_type (info, "("))
-    return FALSE;
+    return false;
 
   info->parameter = 1;
 
-  return TRUE;
+  return true;
 }
 
 /* Output a function parameter.  */
 
-static bfd_boolean
+static bool
 tg_function_parameter (void *p, const char *name, enum debug_parm_kind kind,
 		       bfd_vma val ATTRIBUTE_UNUSED)
 {
@@ -2712,45 +2673,45 @@ tg_function_parameter (void *p, const char *name, enum debug_parm_kind kind,
       || kind == DEBUG_PARM_REF_REG)
     {
       if (! pr_reference_type (p))
-	return FALSE;
+	return false;
     }
 
   if (! substitute_type (info, name))
-    return FALSE;
+    return false;
 
   t = pop_type (info);
   if (t == NULL)
-    return FALSE;
+    return false;
 
   if (! info->stack->method)
     {
       if (info->parameter != 1 && ! append_type (info, ", "))
-	return FALSE;
+	return false;
 
       if (kind == DEBUG_PARM_REG || kind == DEBUG_PARM_REF_REG)
 	if (! append_type (info, "register "))
-	  return FALSE;
+	  return false;
 
       if (! append_type (info, t))
-	return FALSE;
+	return false;
     }
 
   free (t);
 
   ++info->parameter;
 
-  return TRUE;
+  return true;
 }
 
 /* Start writing out a block.  */
 
-static bfd_boolean
+static bool
 tg_start_block (void *p, bfd_vma addr)
 {
   struct pr_handle *info = (struct pr_handle *) p;
   char ab[22], kind, *partof;
   char *t;
-  bfd_boolean local;
+  bool local;
 
   if (info->parameter > 0)
     {
@@ -2760,7 +2721,7 @@ tg_start_block (void *p, bfd_vma addr)
       fprintf (info->f, "%s\t%s\t", info->stack->parents, info->filename);
       free (info->stack->parents);
 
-      print_vma (addr, ab, TRUE, TRUE);
+      print_vma (addr, ab, true, true);
       translate_addresses (info->abfd, ab, info->f, info->syms);
       local = info->stack->flavor != NULL;
       if (info->stack->method && *info->stack->method)
@@ -2773,11 +2734,11 @@ tg_start_block (void *p, bfd_vma addr)
 	  kind = 'f';
 	  partof = NULL;
 	  if (! info->stack->method && ! append_type (info, ")"))
-	    return FALSE;
+	    return false;
 	}
       t = pop_type (info);
       if (t == NULL)
-	return FALSE;
+	return false;
       fprintf (info->f, ";\"\tkind:%c\ttype:%s", kind, t);
       if (local)
 	fputs ("\tfile:", info->f);
@@ -2789,25 +2750,25 @@ tg_start_block (void *p, bfd_vma addr)
       fputc ('\n', info->f);
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Write out line number information.  */
 
-static bfd_boolean
+static bool
 tg_lineno (void *p ATTRIBUTE_UNUSED, const char *fname ATTRIBUTE_UNUSED,
 	   unsigned long lineno ATTRIBUTE_UNUSED,
 	   bfd_vma addr ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 /* Finish writing out a block.  */
 
-static bfd_boolean
+static bool
 tg_end_block (void *p ATTRIBUTE_UNUSED, bfd_vma addr ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }
 
 /* Convert the visibility value into a human readable name.  */
@@ -2833,7 +2794,7 @@ visibility_name (enum debug_visibility visibility)
       break;
     default:
       abort ();
-      return FALSE;
+      return false;
     }
   return s;
 }

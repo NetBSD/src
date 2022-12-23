@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -84,54 +84,54 @@ static reloc_howto_type mips_howto_table[] =
      bfd_perform_relocation to do nothing.  */
   HOWTO (MIPS_R_IGNORE,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "IGNORE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit reference to a symbol, normally from a data section.  */
   HOWTO (MIPS_R_REFHALF,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mips_generic_reloc,	/* special_function */
 	 "REFHALF",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit reference to a symbol, normally from a data section.  */
   HOWTO (MIPS_R_REFWORD,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mips_generic_reloc,	/* special_function */
 	 "REFWORD",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 26 bit absolute jump address.  */
   HOWTO (MIPS_R_JMPADDR,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 				/* This needs complex overflow
@@ -139,73 +139,73 @@ static reloc_howto_type mips_howto_table[] =
 				   bits must match the PC.  */
 	 mips_generic_reloc,	/* special_function */
 	 "JMPADDR",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x3ffffff,		/* src_mask */
 	 0x3ffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The high 16 bits of a symbol value.  Handled by the function
      mips_refhi_reloc.  */
   HOWTO (MIPS_R_REFHI,		/* type */
 	 16,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mips_refhi_reloc,	/* special_function */
 	 "REFHI",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The low 16 bits of a symbol value.  */
   HOWTO (MIPS_R_REFLO,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 mips_reflo_reloc,	/* special_function */
 	 "REFLO",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A reference to an offset from the gp register.  Handled by the
      function mips_gprel_reloc.  */
   HOWTO (MIPS_R_GPREL,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mips_gprel_reloc,	/* special_function */
 	 "GPREL",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A reference to a literal using an offset from the gp register.
      Handled by the function mips_gprel_reloc.  */
   HOWTO (MIPS_R_LITERAL,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mips_gprel_reloc,	/* special_function */
 	 "LITERAL",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (8),
   EMPTY_HOWTO (9),
@@ -217,17 +217,17 @@ static reloc_howto_type mips_howto_table[] =
      be removed.  (It used to be used for embedded-PIC support.)  */
   HOWTO (MIPS_R_PCREL16,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mips_generic_reloc,	/* special_function */
 	 "PCREL16",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 };
 
 #define MIPS_HOWTO_COUNT \
@@ -235,7 +235,7 @@ static reloc_howto_type mips_howto_table[] =
 
 /* See whether the magic number matches.  */
 
-static bfd_boolean
+static bool
 mips_ecoff_bad_format_hook (bfd * abfd, void * filehdr)
 {
   struct internal_filehdr *internal_f = (struct internal_filehdr *) filehdr;
@@ -244,7 +244,7 @@ mips_ecoff_bad_format_hook (bfd * abfd, void * filehdr)
     {
     case MIPS_MAGIC_1:
       /* I don't know what endianness this implies.  */
-      return TRUE;
+      return true;
 
     case MIPS_MAGIC_BIG:
     case MIPS_MAGIC_BIG2:
@@ -257,7 +257,7 @@ mips_ecoff_bad_format_hook (bfd * abfd, void * filehdr)
       return bfd_little_endian (abfd);
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -351,7 +351,14 @@ mips_adjust_reloc_in (bfd *abfd,
 		      arelent *rptr)
 {
   if (intern->r_type > MIPS_R_PCREL16)
-    abort ();
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, intern->r_type);
+      bfd_set_error (bfd_error_bad_value);
+      rptr->howto  = NULL;
+      return;
+    }
 
   if (! intern->r_extern
       && (intern->r_type == MIPS_R_GPREL
@@ -562,7 +569,7 @@ mips_gprel_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 		  bfd *output_bfd,
 		  char **error_message ATTRIBUTE_UNUSED)
 {
-  bfd_boolean relocatable;
+  bool relocatable;
   bfd_vma gp;
   bfd_vma relocation;
   unsigned long val;
@@ -581,15 +588,14 @@ mips_gprel_reloc (bfd *abfd ATTRIBUTE_UNUSED,
     }
 
   if (output_bfd != (bfd *) NULL)
-    relocatable = TRUE;
+    relocatable = true;
   else
     {
-      relocatable = FALSE;
+      relocatable = false;
       output_bfd = symbol->section->output_section->owner;
+      if (output_bfd == NULL)
+	return bfd_reloc_undefined;
     }
-
-  if (bfd_is_und_section (symbol->section) && ! relocatable)
-    return bfd_reloc_undefined;
 
   /* We have to figure out the gp value, so that we can adjust the
      symbol value correctly.  We look up the symbol _gp in the output
@@ -792,7 +798,7 @@ mips_relocate_hi (struct internal_reloc *refhi,
 
 /* Relocate a section while linking a MIPS ECOFF file.  */
 
-static bfd_boolean
+static bool
 mips_relocate_section (bfd *output_bfd,
 		       struct bfd_link_info *info,
 		       bfd *input_bfd,
@@ -803,11 +809,11 @@ mips_relocate_section (bfd *output_bfd,
   asection **symndx_to_section;
   struct ecoff_link_hash_entry **sym_hashes;
   bfd_vma gp;
-  bfd_boolean gp_undefined;
+  bool gp_undefined;
   struct external_reloc *ext_rel;
   struct external_reloc *ext_rel_end;
   unsigned int i;
-  bfd_boolean got_lo;
+  bool got_lo;
   struct internal_reloc lo_int_rel;
   bfd_size_type amt;
 
@@ -823,7 +829,7 @@ mips_relocate_section (bfd *output_bfd,
       amt = NUM_RELOC_SECTIONS * sizeof (asection *);
       symndx_to_section = (asection **) bfd_alloc (input_bfd, amt);
       if (!symndx_to_section)
-	return FALSE;
+	return false;
 
       symndx_to_section[RELOC_SECTION_NONE] = NULL;
       symndx_to_section[RELOC_SECTION_TEXT] =
@@ -858,18 +864,18 @@ mips_relocate_section (bfd *output_bfd,
 
   gp = _bfd_get_gp_value (output_bfd);
   if (gp == 0)
-    gp_undefined = TRUE;
+    gp_undefined = true;
   else
-    gp_undefined = FALSE;
+    gp_undefined = false;
 
-  got_lo = FALSE;
+  got_lo = false;
 
   ext_rel = (struct external_reloc *) external_relocs;
   ext_rel_end = ext_rel + input_section->reloc_count;
   for (i = 0; ext_rel < ext_rel_end; ext_rel++, i++)
     {
       struct internal_reloc int_rel;
-      bfd_boolean use_lo = FALSE;
+      bool use_lo = false;
       bfd_vma addend;
       reloc_howto_type *howto;
       struct ecoff_link_hash_entry *h = NULL;
@@ -882,7 +888,7 @@ mips_relocate_section (bfd *output_bfd,
       else
 	{
 	  int_rel = lo_int_rel;
-	  got_lo = FALSE;
+	  got_lo = false;
 	}
 
       BFD_ASSERT (int_rel.r_type
@@ -912,9 +918,9 @@ mips_relocate_section (bfd *output_bfd,
 	      && int_rel.r_extern == lo_int_rel.r_extern
 	      && int_rel.r_symndx == lo_int_rel.r_symndx)
 	    {
-	      use_lo = TRUE;
+	      use_lo = true;
 	      if (lo_ext_rel == ext_rel + 1)
-		got_lo = TRUE;
+		got_lo = true;
 	    }
 	}
 
@@ -956,7 +962,7 @@ mips_relocate_section (bfd *output_bfd,
 	      /* Only give the error once per link.  */
 	      gp = 4;
 	      _bfd_set_gp_value (output_bfd, gp);
-	      gp_undefined = FALSE;
+	      gp_undefined = false;
 	    }
 	  if (! int_rel.r_extern)
 	    {
@@ -1158,7 +1164,7 @@ mips_relocate_section (bfd *output_bfd,
 		{
 		  (*info->callbacks->undefined_symbol)
 		    (info, h->root.root.string, input_bfd, input_section,
-		     int_rel.r_vaddr - input_section->vma, TRUE);
+		     int_rel.r_vaddr - input_section->vma, true);
 		  relocation = 0;
 		}
 	    }
@@ -1236,7 +1242,7 @@ mips_relocate_section (bfd *output_bfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 static void
@@ -1313,8 +1319,8 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
     mips_ecoff_swap_coff_reloc_out,
     mips_ecoff_swap_filehdr_out, mips_ecoff_swap_aouthdr_out,
     mips_ecoff_swap_scnhdr_out,
-    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, TRUE,
-    ECOFF_NO_LONG_SECTION_NAMES, 4, FALSE, 2, 32768,
+    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, true,
+    ECOFF_NO_LONG_SECTION_NAMES, 4, false, 2, 32768,
     mips_ecoff_swap_filehdr_in, mips_ecoff_swap_aouthdr_in,
     mips_ecoff_swap_scnhdr_in, NULL,
     mips_ecoff_bad_format_hook, _bfd_ecoff_set_arch_mach_hook,
@@ -1333,7 +1339,7 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
   /* TRUE if the .rdata section is part of the text segment, as on the
      Alpha.  FALSE if .rdata is part of the data segment, as on the
      MIPS.  */
-  FALSE,
+  false,
   /* Bitsize of constructor entries.  */
   32,
   /* Reloc to use for constructor entries.  */
@@ -1440,11 +1446,13 @@ const bfd_target mips_ecoff_le_vec =
    | HAS_LINENO | HAS_DEBUG
    | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE
+   | SEC_DATA | SEC_SMALL_DATA),
   0,				/* leading underscore */
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
@@ -1497,11 +1505,13 @@ const bfd_target mips_ecoff_be_vec =
    | HAS_LINENO | HAS_DEBUG
    | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE
+   | SEC_DATA | SEC_SMALL_DATA),
   0,				/* leading underscore */
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
      bfd_getb32, bfd_getb_signed_32, bfd_putb32,
      bfd_getb16, bfd_getb_signed_16, bfd_putb16,
@@ -1554,11 +1564,13 @@ const bfd_target mips_ecoff_bele_vec =
    | HAS_LINENO | HAS_DEBUG
    | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE
+   | SEC_DATA | SEC_SMALL_DATA),
   0,				/* leading underscore */
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */

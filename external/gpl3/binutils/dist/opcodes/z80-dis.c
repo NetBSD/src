@@ -1,5 +1,5 @@
 /* Print Z80, Z180, EZ80 and R800 instructions
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of the GNU opcodes library.
@@ -52,6 +52,7 @@ struct tab_elt
 #define INSS_EZ80_Z80 (1 << bfd_mach_ez80_z80)
 #define INSS_EZ80_ADL (1 << bfd_mach_ez80_adl)
 #define INSS_EZ80 (INSS_EZ80_ADL | INSS_EZ80_Z80)
+#define INSS_Z80N (1 << bfd_mach_z80n)
 
 #define TXTSIZ 24
 /* Names of 16-bit registers.  */
@@ -65,6 +66,10 @@ static const char * arit_str[] =
 {
   "add a,", "adc a,", "sub ", "sbc a,", "and ", "xor ", "or ", "cp "
 } ;
+static const char * arit_str_gbz80[] =
+{
+  "add a,", "adc a,", "sub a,", "sbc a,", "and ", "xor ", "or ", "cp "
+} ;
 static const char * arit_str_ez80[] =
 {
   "add a,", "adc a,", "sub a,", "sbc a,", "and a,", "xor a,", "or a,", "cp a,"
@@ -72,7 +77,7 @@ static const char * arit_str_ez80[] =
 
 
 static int
-mach_inst (struct buffer *buf, struct tab_elt *p)
+mach_inst (struct buffer *buf, const struct tab_elt *p)
 {
   return !p->inss || (p->inss & buf->inss);
 }
@@ -90,6 +95,8 @@ fetch_data (struct buffer *buf, disassemble_info * info, int n)
 			      n, info);
   if (r == 0)
     buf->n_fetch += n;
+  else
+    info->memory_error_func (r, buf->base + buf->n_fetch, info);
   return !r;
 }
 
@@ -192,6 +199,27 @@ prt_n (struct buffer *buf, disassemble_info * info, const char *txt)
 }
 
 static int
+prt_n_n (struct buffer *buf, disassemble_info * info, const char *txt)
+{
+  char mytxt[TXTSIZ];
+  int n;
+  unsigned char *p;
+
+  p = (unsigned char*) buf->data + buf->n_fetch;
+
+  if (fetch_data (buf, info, 1))
+    {
+      n = p[0];
+      snprintf (mytxt, TXTSIZ, txt, n);
+      buf->n_used = buf->n_fetch;
+    }
+  else
+    buf->n_used = -1;
+
+  return prt_n (buf, info, mytxt);
+}
+
+static int
 prt_r_n (struct buffer *buf, disassemble_info * info, const char *txt)
 {
   char mytxt[TXTSIZ];
@@ -268,7 +296,14 @@ static int
 arit_r (struct buffer *buf, disassemble_info * info, const char *txt)
 {
   const char * const *arit;
-  arit = (buf->inss & INSS_EZ80) ? arit_str_ez80 : arit_str;
+
+  if (buf->inss & INSS_EZ80)
+    arit = arit_str_ez80;
+  else if (buf->inss & INSS_GBZ80)
+    arit = arit_str_gbz80;
+  else
+    arit = arit_str;
+
   info->fprintf_func (info->stream, txt,
                       arit[(buf->data[buf->n_fetch - 1] >> 3) & 7],
                       r_str[buf->data[buf->n_fetch - 1] & 7]);
@@ -313,7 +348,13 @@ arit_n (struct buffer *buf, disassemble_info * info, const char *txt)
   char mytxt[TXTSIZ];
   const char * const *arit;
 
-  arit = (buf->inss & INSS_EZ80) ? arit_str_ez80 : arit_str;
+  if (buf->inss & INSS_EZ80)
+    arit = arit_str_ez80;
+  else if (buf->inss & INSS_GBZ80)
+    arit = arit_str_gbz80;
+  else
+    arit = arit_str;
+
   snprintf (mytxt,TXTSIZ, txt, arit[(buf->data[0] >> 3) & 7]);
   return prt_n (buf, info, mytxt);
 }
@@ -326,7 +367,7 @@ rst (struct buffer *buf, disassemble_info * info, const char *txt)
   return buf->n_used;
 }
 
-
+
 static int
 cis (struct buffer *buf, disassemble_info * info, const char *txt ATTRIBUTE_UNUSED)
 {
@@ -362,24 +403,6 @@ cism (struct buffer *buf, disassemble_info * info, const char *txt ATTRIBUTE_UNU
 }
 
 static int
-cis2 (struct buffer *buf, disassemble_info * info, const char *txt ATTRIBUTE_UNUSED)
-{
-  static char * opar[] = { "in", "out" };
-  char * op;
-  char c;
-
-  c = buf->data[1];
-  op = ((0x14 & c) == 0x14) ? "ot" : (opar[c & 1]);
-  info->fprintf_func (info->stream,
-                      "%s%c2%s",
-                      op,
-                      (c & 0x08) ? 'd' : 'i',
-                      (c & 0x10) ? "r" : "");
-  buf->n_used = 2;
-  return buf->n_used;
-}
-
-static int
 dump (struct buffer *buf, disassemble_info * info, const char *txt)
 {
   int i;
@@ -391,11 +414,14 @@ dump (struct buffer *buf, disassemble_info * info, const char *txt)
   buf->n_used = i;
   return buf->n_used;
 }
-
+
 /* Table to disassemble machine codes with prefix 0xED.  */
-struct tab_elt opc_ed[] =
+static const struct tab_elt opc_ed[] =
 {
-  { 0x30, 0xFE, dump, "xx", INSS_ALL },
+  { 0x30, 0xFF, prt, "mul d,e", INSS_Z80N },
+  { 0x31, 0xFF, prt, "add hl,a", INSS_Z80N },
+  { 0x31, 0xFF, prt, "ld iy,(hl)", INSS_EZ80 },
+  { 0x30, 0xFE, dump, "xx", INSS_ALL }, /* do not move this line */
   { 0x00, 0xC7, prt_r_n, "in0 %s,(0x%%02x)", INSS_Z180|INSS_EZ80 },
   { 0x01, 0xC7, prt_r_n, "out0 (0x%%02x),%s", INSS_Z180|INSS_EZ80 },
   { 0x32, 0xFF, prt_d, "lea ix,ix%+d", INSS_EZ80 },
@@ -405,19 +431,31 @@ struct tab_elt opc_ed[] =
   { 0x04, 0xC7, prt_r, "tst %s", INSS_Z180},
   { 0x04, 0xC7, prt_r, "tst a,%s", INSS_EZ80 },
   { 0x07, 0xFF, prt, "ld bc,(hl)", INSS_EZ80 },
+  { 0x3F, 0xFF, prt, "ld (hl),ix", INSS_EZ80 },
   { 0x0F, 0xCF, prt_rr, "ld (hl),", INSS_EZ80 },
   { 0x17, 0xFF, prt, "ld de,(hl)", INSS_EZ80 },
+  { 0x23, 0xFF, prt, "swapnib", INSS_Z80N },
+  { 0x24, 0xFF, prt, "mirror", INSS_Z80N },
   { 0x27, 0xFF, prt, "ld hl,(hl)", INSS_EZ80 },
-  { 0x36, 0xFF, prt, "ld iy,(hl)", INSS_EZ80 },
+  { 0x27, 0xFF, prt_n, "test 0x%02x", INSS_Z80N },
+  { 0x28, 0xFF, prt, "bsla de,b", INSS_Z80N },
+  { 0x29, 0xFF, prt, "bsra de,b", INSS_Z80N },
+  { 0x2A, 0xFF, prt, "bsrl de,b", INSS_Z80N },
+  { 0x2B, 0xFF, prt, "bsrf de,b", INSS_Z80N },
+  { 0x2C, 0xFF, prt, "bslc de,b", INSS_Z80N },
+  { 0x32, 0xFF, prt, "add de,a", INSS_Z80N },
+  { 0x33, 0xFF, prt, "add bc,a", INSS_Z80N },
+  { 0x34, 0xFF, prt_nn, "add hl,0x%04x", INSS_Z80N },
+  { 0x35, 0xFF, prt_nn, "add de,0x%04x", INSS_Z80N },
+  { 0x36, 0xFF, prt_nn, "add bc,0x%04x", INSS_Z80N },
   { 0x37, 0xFF, prt, "ld ix,(hl)", INSS_EZ80 },
   { 0x3E, 0xFF, prt, "ld (hl),iy", INSS_EZ80 },
-  { 0x3F, 0xFF, prt, "ld (hl),ix", INSS_EZ80 },
-  { 0x70, 0xFF, prt, "in f,(c)", INSS_Z80 | INSS_R800 },
+  { 0x70, 0xFF, prt, "in f,(c)", INSS_Z80 | INSS_R800 | INSS_Z80N },
   { 0x70, 0xFF, dump, "xx", INSS_ALL },
   { 0x40, 0xC7, prt_r, "in %s,(bc)", INSS_EZ80 },
   { 0x40, 0xC7, prt_r, "in %s,(c)", INSS_ALL },
-  { 0x71, 0xFF, prt, "out (c),0", INSS_Z80 },
-  { 0x70, 0xFF, dump, "xx", INSS_ALL },
+  { 0x71, 0xFF, prt, "out (c),0", INSS_Z80 | INSS_Z80N },
+  { 0x71, 0xFF, dump, "xx", INSS_ALL },
   { 0x41, 0xC7, prt_r, "out (bc),%s", INSS_EZ80 },
   { 0x41, 0xC7, prt_r, "out (c),%s", INSS_ALL },
   { 0x42, 0xCF, prt_rr, "sbc hl,", INSS_ALL },
@@ -442,24 +480,45 @@ struct tab_elt opc_ed[] =
   { 0x65, 0xFF, prt_d, "pea ix%+d", INSS_EZ80 },
   { 0x66, 0xFF, prt_d, "pea iy%+d", INSS_EZ80 },
   { 0x67, 0xFF, prt, "rrd", INSS_ALL },
+  { 0x6D, 0xFF, prt, "ld mb,a", INSS_EZ80 },
+  { 0x6E, 0xFF, prt, "ld a,mb", INSS_EZ80 },
   { 0x6F, 0xFF, prt, "rld", INSS_ALL },
   { 0x74, 0xFF, prt_n, "tstio 0x%02x", INSS_Z180|INSS_EZ80 },
   { 0x76, 0xFF, prt, "slp", INSS_Z180|INSS_EZ80 },
-  { 0x82, 0xE6, cism, "", INSS_Z180|INSS_EZ80 },
-  { 0x84, 0xC7, cis2, "", INSS_EZ80 },
-  { 0xA0, 0xE4, cis, "", INSS_ALL },
   { 0x7D, 0xFF, prt, "stmix", INSS_EZ80 },
   { 0x7E, 0xFF, prt, "rsmix", INSS_EZ80 },
-  { 0x6D, 0xFF, prt, "ld mb,a", INSS_EZ80 },
-  { 0x6E, 0xFF, prt, "ld a,mb", INSS_EZ80 },
-  { 0xC7, 0xFF, prt, "ld i,hl", INSS_EZ80 },
-  { 0xD7, 0xFF, prt, "ld hl,i", INSS_EZ80 },
+  { 0x82, 0xE6, cism, "", INSS_Z180|INSS_EZ80 },
+  { 0x84, 0xFF, prt, "ini2", INSS_EZ80 },
+  { 0x8A, 0xFF, prt_n_n, "push 0x%02x%%02x", INSS_Z80N },
+  { 0x8C, 0xFF, prt, "ind2", INSS_EZ80 },
+  { 0x90, 0xFF, prt, "outinb", INSS_Z80N },
+  { 0x91, 0xFF, prt_n_n, "nextreg 0x%02x,0x%%02x", INSS_Z80N },
+  { 0x92, 0xFF, prt_n, "nextreg 0x%02x,a", INSS_Z80N },
+  { 0x93, 0xFF, prt, "pixeldn", INSS_Z80N },
+  { 0x94, 0xFF, prt, "ini2r", INSS_EZ80 },
+  { 0x94, 0xFF, prt, "pixelad", INSS_Z80N },
+  { 0x95, 0xFF, prt, "setae", INSS_Z80N },
+  { 0x98, 0xFF, prt, "jp (c)", INSS_Z80N },
+  { 0x9c, 0xFF, prt, "ind2r", INSS_EZ80 },
+  { 0xA0, 0xE4, cis, "", INSS_ALL },
+  { 0xA4, 0xFF, prt, "outi2", INSS_EZ80 },
+  { 0xA4, 0xFF, prt, "ldix", INSS_Z80N },
+  { 0xAC, 0xFF, prt, "outd2", INSS_EZ80 },
+  { 0xAC, 0xFF, prt, "lddx", INSS_Z80N },
+  { 0xA5, 0xFF, prt, "ldws", INSS_Z80N },
+  { 0xB4, 0xFF, prt, "oti2r", INSS_EZ80 },
+  { 0xB4, 0xFF, prt, "ldirx", INSS_Z80N },
+  { 0xB7, 0xFF, prt, "ldpirx", INSS_Z80N },
+  { 0xBC, 0xFF, prt, "otd2r", INSS_EZ80 },
+  { 0xBC, 0xFF, prt, "lddrx", INSS_Z80N },
   { 0xC2, 0xFF, prt, "inirx", INSS_EZ80 },
   { 0xC3, 0xFF, prt, "otirx", INSS_EZ80 },
+  { 0xC7, 0xFF, prt, "ld i,hl", INSS_EZ80 },
   { 0xCA, 0xFF, prt, "indrx", INSS_EZ80 },
   { 0xCB, 0xFF, prt, "otdrx", INSS_EZ80 },
   { 0xC3, 0xFF, prt, "muluw hl,bc", INSS_R800 },
   { 0xC5, 0xE7, prt_r, "mulub a,%s", INSS_R800 },
+  { 0xD7, 0xFF, prt, "ld hl,i", INSS_EZ80 },
   { 0xF3, 0xFF, prt, "muluw hl,sp", INSS_R800 },
   { 0x00, 0x00, dump, "xx", INSS_ALL }
 };
@@ -468,7 +527,7 @@ static int
 pref_ed (struct buffer *buf, disassemble_info *info,
          const char *txt ATTRIBUTE_UNUSED)
 {
-  struct tab_elt *p;
+  const struct tab_elt *p;
 
   if (fetch_data (buf, info, 1))
     {
@@ -521,7 +580,7 @@ pref_cb (struct buffer *buf, disassemble_info *info,
 
   return buf->n_used;
 }
-
+
 static int
 addvv (struct buffer * buf, disassemble_info * info, const char *txt)
 {
@@ -747,6 +806,7 @@ suffix (struct buffer *buf, disassemble_info *info, const char *txt)
   old_stream = info->stream;
   info->fprintf_func = (fprintf_ftype) &sprintf;
   info->stream = mybuf;
+  mybuf[0] = 0;
   buf->base++;
   if (print_insn_z80_buf (buf, info) >= 0)
     buf->n_used++;
@@ -767,7 +827,8 @@ suffix (struct buffer *buf, disassemble_info *info, const char *txt)
 }
 
 /* Table to disassemble machine codes without prefix.  */
-static struct tab_elt opc_main[] =
+static const struct tab_elt
+opc_main[] =
 {
   { 0x00, 0xFF, prt, "nop", INSS_ALL },
   { 0x01, 0xCF, prt_rr_nn, "ld %s,0x%%04x", INSS_ALL },
@@ -829,10 +890,72 @@ static struct tab_elt opc_main[] =
   { 0xEB, 0xFF, prt, "ex de,hl", ~INSS_GBZ80 },
   { 0xED, 0xFF, pref_ed, "", ~INSS_GBZ80 },
   { 0xF3, 0xFF, prt, "di", INSS_ALL },
-  { 0xF9, 0xFF, prt, "ld sp,hl", ~INSS_GBZ80 },
+  { 0xF9, 0xFF, prt, "ld sp,hl", INSS_ALL },
   { 0xFB, 0xFF, prt, "ei", INSS_ALL },
   { 0xFD, 0xFF, pref_ind, "iy", ~INSS_GBZ80 },
   { 0x00, 0x00, prt, "????", INSS_ALL },
+} ;
+
+/* Separate GBZ80 main opcode table due to many differences */
+static const struct tab_elt
+opc_main_gbz80[] =
+{
+  { 0x00, 0xFF, prt,"nop", INSS_ALL },
+  { 0x01, 0xCF, prt_rr_nn, "ld %s,0x%%04x", INSS_ALL },
+  { 0x02, 0xFF, prt, "ld (bc),a", INSS_ALL },
+  { 0x03, 0xCF, prt_rr, "inc ", INSS_ALL },
+  { 0x04, 0xC7, prt_r, "inc %s", INSS_ALL },
+  { 0x05, 0xC7, prt_r, "dec %s", INSS_ALL },
+  { 0x06, 0xC7, ld_r_n, "ld %s,0x%%02x", INSS_ALL },
+  { 0x07, 0xFF, prt, "rlca", INSS_ALL },
+  { 0x08, 0xFF, prt_nn, "ld (0x%04x),sp", INSS_GBZ80 },
+  { 0x09, 0xCF, prt_rr, "add hl,", INSS_ALL },
+  { 0x0A, 0xFF, prt, "ld a,(bc)", INSS_ALL },
+  { 0x0B, 0xCF, prt_rr, "dec ", INSS_ALL },
+  { 0x0F, 0xFF, prt, "rrca", INSS_ALL },
+  { 0x10, 0xFF, prt, "stop", INSS_GBZ80 },
+  { 0x12, 0xFF, prt, "ld (de),a", INSS_ALL },
+  { 0x17, 0xFF, prt, "rla", INSS_ALL },
+  { 0x18, 0xFF, prt_e, "jr ", INSS_ALL },
+  { 0x1A, 0xFF, prt, "ld a,(de)", INSS_ALL },
+  { 0x1F, 0xFF, prt, "rra", INSS_ALL },
+  { 0x20, 0xE7, jr_cc, "jr %s,", INSS_ALL },
+  { 0x22, 0xFF, prt, "ld (hl+),a", INSS_GBZ80 },
+  { 0x27, 0xFF, prt, "daa", INSS_ALL },
+  { 0x2A, 0xFF, prt, "ld a,(hl+)", INSS_GBZ80 },
+  { 0x2F, 0xFF, prt, "cpl", INSS_ALL },
+  { 0x32, 0xFF, prt, "ld (hl-),a", INSS_GBZ80 },
+  { 0x37, 0xFF, prt, "scf", INSS_ALL },
+  { 0x3A, 0xFF, prt, "ld a,(hl-)", INSS_GBZ80 },
+  { 0x3F, 0xFF, prt, "ccf", INSS_ALL },
+  { 0x76, 0xFF, prt, "halt", INSS_ALL },
+  { 0x40, 0xC0, ld_r_r, "ld %s,%s", INSS_ALL},
+  { 0x80, 0xC0, arit_r, "%s%s", INSS_ALL },
+  { 0xC0, 0xE7, prt_cc, "ret ", INSS_ALL },
+  { 0xC1, 0xCF, pop_rr, "pop", INSS_ALL },
+  { 0xC2, 0xE7, jp_cc_nn, "jp ", INSS_ALL },
+  { 0xC3, 0xFF, prt_nn, "jp 0x%04x", INSS_ALL },
+  { 0xC4, 0xE7, jp_cc_nn, "call ", INSS_ALL },
+  { 0xC5, 0xCF, pop_rr, "push", INSS_ALL },
+  { 0xC6, 0xC7, arit_n, "%s0x%%02x", INSS_ALL },
+  { 0xC7, 0xC7, rst, "rst 0x%02x", INSS_ALL },
+  { 0xC9, 0xFF, prt, "ret", INSS_ALL },
+  { 0xCB, 0xFF, pref_cb, "", INSS_ALL },
+  { 0xCD, 0xFF, prt_nn, "call 0x%04x", INSS_ALL },
+  { 0xD9, 0xFF, prt, "reti", INSS_GBZ80 },
+  { 0xE0, 0xFF, prt_n, "ldh (0x%02x),a", INSS_GBZ80 },
+  { 0xE2, 0xFF, prt, "ldh (c),a", INSS_GBZ80 },
+  { 0xE8, 0xFF, prt_d, "add sp,%d", INSS_GBZ80 },
+  { 0xE9, 0xFF, prt, "jp (hl)", INSS_ALL },
+  { 0xEA, 0xFF, prt_nn, "ld (0x%04x),a", INSS_GBZ80 },
+  { 0xF0, 0xFF, prt_n, "ldh a,(0x%02x)", INSS_GBZ80 },
+  { 0xF2, 0xFF, prt, "ldh a,(c)", INSS_GBZ80 },
+  { 0xF3, 0xFF, prt, "di", INSS_ALL },
+  { 0xF8, 0xFF, prt_d, "ldhl sp,%d", INSS_GBZ80 },
+  { 0xF9, 0xFF, prt, "ld sp,hl", INSS_ALL },
+  { 0xFA, 0xFF, prt_nn, "ld a,(0x%04x)", INSS_GBZ80 },
+  { 0xFB, 0xFF, prt, "ei", INSS_ALL },
+  { 0x00, 0x00, dump, "?", INSS_ALL },
 } ;
 
 int
@@ -851,14 +974,16 @@ print_insn_z80 (bfd_vma addr, disassemble_info * info)
 static int
 print_insn_z80_buf (struct buffer *buf, disassemble_info *info)
 {
-  struct tab_elt *p;
+  const struct tab_elt *p;
 
   buf->n_fetch = 0;
   buf->n_used = 0;
   if (! fetch_data (buf, info, 1))
     return -1;
 
-  for (p = opc_main; p->val != (buf->data[0] & p->mask) || !mach_inst (buf, p); ++p)
+  p = (buf->inss & INSS_GBZ80) ? opc_main_gbz80 : opc_main;
+
+  for (; p->val != (buf->data[0] & p->mask) || !mach_inst (buf, p); ++p)
     ;
   p->fp (buf, info, p->text);
 

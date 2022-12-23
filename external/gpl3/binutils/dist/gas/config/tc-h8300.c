@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -167,8 +167,7 @@ h8300_elf_section (int push)
 
       if (i < 0)
 	for (i = ARRAY_SIZE (known_data_prefixes); i--;)
-	  if (strncmp (name, known_data_prefixes[i],
-		       strlen (known_data_prefixes[i])) == 0)
+	  if (startswith (name, known_data_prefixes[i]))
 	    break;
 
       if (i < 0)
@@ -224,7 +223,7 @@ const char EXP_CHARS[] = "eE";
    or    0d1.2345e12.  */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
-static struct hash_control *opcode_hash_control;	/* Opcode mnemonics.  */
+static htab_t opcode_hash_control;	/* Opcode mnemonics.  */
 
 /* This function is called once, at assembler startup time.  This
    should set up all the tables, etc. that the MD part of the assembler
@@ -242,7 +241,7 @@ md_begin (void)
   if (!bfd_set_arch_mach (stdoutput, bfd_arch_h8300, default_mach))
     as_warn (_("could not set architecture and machine"));
 
-  opcode_hash_control = hash_new ();
+  opcode_hash_control = str_htab_create ();
   prev_buffer[0] = 0;
 
   nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
@@ -283,7 +282,7 @@ md_begin (void)
       len = dst - buffer;
       if (cmplen == 0)
 	cmplen = len;
-      hash_insert (opcode_hash_control, buffer, (char *) pi);
+      str_hash_insert (opcode_hash_control, buffer, pi, 0);
       strcpy (prev_buffer, buffer);
       idx++;
 
@@ -872,10 +871,10 @@ get_operand (char **ptr, struct h8_op *op, int direction)
       *ptr = parse_exp (src + 1, op);
       return;
     }
-  else if (strncmp (src, "mach", 4) == 0 ||
-	   strncmp (src, "macl", 4) == 0 ||
-	   strncmp (src, "MACH", 4) == 0 ||
-	   strncmp (src, "MACL", 4) == 0)
+  else if (startswith (src, "mach") ||
+	   startswith (src, "macl") ||
+	   startswith (src, "MACH") ||
+	   startswith (src, "MACL"))
     {
       op->reg = TOLOWER (src[3]) == 'l';
       op->mode = MACREG;
@@ -1940,7 +1939,7 @@ md_assemble (char *str)
       *slash = TOLOWER (*slash);
 
   instruction = (const struct h8_instruction *)
-    hash_find (opcode_hash_control, op_start);
+    str_hash_find (opcode_hash_control, op_start);
 
   if (instruction == NULL)
     {
@@ -2074,7 +2073,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 #define OPTION_H_TICK_HEX      (OPTION_MD_BASE)
@@ -2299,8 +2298,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
       if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
 	  || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
 	{
-	  as_bad_where (fixp->fx_file, fixp->fx_line,
-			_("Difference of symbols in different sections is not supported"));
+	  as_bad_subtract (fixp);
 	  return NULL;
 	}
     }

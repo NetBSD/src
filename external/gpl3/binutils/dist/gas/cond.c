@@ -1,5 +1,5 @@
 /* cond.c - conditional assembly pseudo-ops, and .include
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -513,17 +513,23 @@ ignore_input (void)
     }
 
   /* We cannot ignore certain pseudo ops.  */
-  if (((s[0] == 'i'
-	|| s[0] == 'I')
-       && (!strncasecmp (s, "if", 2)
-	   || !strncasecmp (s, "ifdef", 5)
-	   || !strncasecmp (s, "ifndef", 6)))
-      || ((s[0] == 'e'
-	   || s[0] == 'E')
-	  && (!strncasecmp (s, "else", 4)
-	      || !strncasecmp (s, "endif", 5)
-	      || !strncasecmp (s, "endc", 4))))
-    return 0;
+  switch (s[0])
+    {
+    case 'i': case  'I':
+      if (s[1] == 'f' || s[1] == 'F')
+	return 0;
+      break;
+    case 'e': case 'E':
+      if (!strncasecmp (s, "else", 4)
+	  || !strncasecmp (s, "endif", 5)
+	  || !strncasecmp (s, "endc", 4))
+	return 0;
+      break;
+    case 'l': case 'L':
+      if (!strncasecmp (s, "linefile", 8))
+	return 0;
+      break;
+    }
 
   return (current_cframe != NULL) && (current_cframe->ignoring);
 }
@@ -561,6 +567,7 @@ cond_finish_check (int nest)
 	as_bad_where (current_cframe->else_file_line.file,
 		      current_cframe->else_file_line.line,
 		      _("here is the \"else\" of the unterminated conditional"));
+      cond_exit_macro (nest);
     }
 }
 

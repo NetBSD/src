@@ -455,7 +455,7 @@
 	in the file.
 	(arm_process_unwind): Likewise.
 	(ia64_process_unwind): Likewise.
-	Set the size of the unwind auxillary information to 0 if the data
+	Set the size of the unwind auxiliary information to 0 if the data
 	could not be read.
 	(load_specific_debug_section): Handle a failure to read in the
 	section.

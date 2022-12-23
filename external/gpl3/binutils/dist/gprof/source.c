@@ -1,6 +1,6 @@
 /* source.c - Keep track of source files.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -28,7 +28,7 @@
 #define EXT_ANNO "-ann"		/* Postfix of annotated files.  */
 
 /* Default option values.  */
-bfd_boolean create_annotation_files = FALSE;
+bool create_annotation_files = false;
 
 Search_List src_search_list = {0, 0};
 Source_File *first_src_file = 0;
@@ -93,29 +93,31 @@ annotate_source (Source_File *sf, unsigned int max_width,
      void (*annote) (char *, unsigned int, int, void *),
      void *arg)
 {
-  static bfd_boolean first_file = TRUE;
+  static bool first_file = true;
   int i, line_num, nread;
-  bfd_boolean new_line;
+  bool new_line;
   char buf[8192];
-  char fname[PATH_MAX];
+  char *fname;
   char *annotation, *name_only;
   FILE *ifp, *ofp;
   Search_List_Elem *sle = src_search_list.head;
 
   /* Open input file.  If open fails, walk along search-list until
      open succeeds or reaching end of list.  */
-  strcpy (fname, sf->name);
+  fname = (char *) sf->name;
 
   if (IS_ABSOLUTE_PATH (sf->name))
     sle = 0;			/* Don't use search list for absolute paths.  */
 
   name_only = 0;
-  while (TRUE)
+  while (true)
     {
       DBG (SRCDEBUG, printf ("[annotate_source]: looking for %s, trying %s\n",
 			     sf->name, fname));
 
       ifp = fopen (fname, FOPEN_RB);
+      if (fname != sf->name)
+	free (fname);
       if (ifp)
 	break;
 
@@ -141,6 +143,8 @@ annotate_source (Source_File *sf, unsigned int max_width,
 
       if (sle)
 	{
+	  fname = xmalloc (strlen (sle->path) + 3
+			   + strlen (name_only ? name_only : sf->name));
 	  strcpy (fname, sle->path);
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
 	  /* d:foo is not the same thing as d:/foo!  */
@@ -191,6 +195,7 @@ annotate_source (Source_File *sf, unsigned int max_width,
       else
 	filename = sf->name;
 
+      fname = xmalloc (strlen (filename) + strlen (EXT_ANNO) + 1);
       strcpy (fname, filename);
       strcat (fname, EXT_ANNO);
 #ifdef __MSDOS__
@@ -205,9 +210,9 @@ annotate_source (Source_File *sf, unsigned int max_width,
 	  {
 	    char *dot = strrchr (fname, '.');
 
-	    if (dot)
-	      *dot = '\0';
-	    strcat (fname, ".ann");
+	    if (!dot)
+	      dot = fname + strlen (filename);
+	    strcpy (dot, ".ann");
 	  }
       }
 #endif
@@ -216,8 +221,10 @@ annotate_source (Source_File *sf, unsigned int max_width,
       if (!ofp)
 	{
 	  perror (fname);
+	  free (fname);
 	  return 0;
 	}
+      free (fname);
     }
 
   /* Print file names if output goes to stdout
@@ -225,12 +232,12 @@ annotate_source (Source_File *sf, unsigned int max_width,
   if (ofp == stdout)
     {
       if (first_file)
-	first_file = FALSE;
+	first_file = false;
       else
 	fputc ('\n', ofp);
 
       if (first_output)
-	first_output = FALSE;
+	first_output = false;
       else
 	fprintf (ofp, "\f\n");
 
@@ -239,7 +246,7 @@ annotate_source (Source_File *sf, unsigned int max_width,
 
   annotation = (char *) xmalloc (max_width + 1);
   line_num = 1;
-  new_line = TRUE;
+  new_line = true;
 
   while ((nread = fread (buf, 1, sizeof (buf), ifp)) > 0)
     {

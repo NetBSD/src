@@ -1,5 +1,5 @@
 /* BFD support for the RX processor.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,13 +27,12 @@
     bfd_default_compatible, bfd_default_scan,			\
     bfd_arch_default_fill, next, 0 }
 
-static const bfd_arch_info_type arch_info_struct[3] =
+static const bfd_arch_info_type arch_info_struct[2] =
 {
-  N (bfd_mach_rx,    "rx",    3, FALSE, arch_info_struct + 1),
-  N (bfd_mach_rx_v2, "rx:v2", 3, FALSE, arch_info_struct + 2),
-  N (bfd_mach_rx_v3, "rx:v3", 3, FALSE, NULL)
+  N (bfd_mach_rx_v2, "rx:v2", 3, false, arch_info_struct + 1),
+  N (bfd_mach_rx_v3, "rx:v3", 3, false, NULL)
 };
 
 const bfd_arch_info_type bfd_rx_arch =
-  N (bfd_mach_rx,    "rx",    4, TRUE, arch_info_struct + 0);
+  N (bfd_mach_rx,    "rx",    4, true, arch_info_struct + 0);
 

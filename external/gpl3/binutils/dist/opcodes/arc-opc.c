@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -67,13 +67,13 @@ insert_rb_chk (unsigned long long  insn,
 }
 
 static long long
-extract_rb (unsigned long long  insn,
-	    bfd_boolean *       invalid)
+extract_rb (unsigned long long insn,
+	    bool *invalid)
 {
   int value = (((insn >> 12) & 0x07) << 3) | ((insn >> 24) & 0x07);
 
   if (value == 0x3e && invalid)
-    *invalid = TRUE; /* A limm operand, it should be extracted in a
+    *invalid = true; /* A limm operand, it should be extracted in a
 			different way.  */
 
   return value;
@@ -101,6 +101,19 @@ insert_rcd (unsigned long long  insn,
     *errmsg = _("cannot use odd number source register");
 
   return insn | ((value & 0x3F) << 6);
+}
+
+static unsigned long long
+insert_rbd (unsigned long long  insn,
+	    long long           value,
+	    const char **       errmsg)
+{
+  if (value & 0x01)
+    *errmsg = _("cannot use odd number source register");
+  if (value == 60)
+    *errmsg = _("LP_COUNT register cannot be used as destination register");
+
+  return insn | ((value & 0x07) << 24) | (((value >> 3) & 0x07) << 12);
 }
 
 /* Dummy insert ZERO operand function.  */
@@ -154,8 +167,8 @@ insert_rhv1 (unsigned long long  insn,
 }
 
 static long long
-extract_rhv1 (unsigned long long  insn,
-	      bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_rhv1 (unsigned long long insn,
+	      bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = ((insn & 0x7) << 3) | ((insn >> 5) & 0x7);
 
@@ -177,8 +190,8 @@ insert_rhv2 (unsigned long long  insn,
 }
 
 static long long
-extract_rhv2 (unsigned long long  insn,
-	      bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_rhv2 (unsigned long long insn,
+	      bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = ((insn >> 5) & 0x07) | ((insn & 0x03) << 3);
 
@@ -197,7 +210,7 @@ insert_r0 (unsigned long long  insn,
 
 static long long
 extract_r0 (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -215,7 +228,7 @@ insert_r1 (unsigned long long  insn,
 
 static long long
 extract_r1 (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool* invalid ATTRIBUTE_UNUSED)
 {
   return 1;
 }
@@ -232,7 +245,7 @@ insert_r2 (unsigned long long  insn,
 
 static long long
 extract_r2 (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   return 2;
 }
@@ -249,7 +262,7 @@ insert_r3 (unsigned long long  insn,
 
 static long long
 extract_r3 (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   return 3;
 }
@@ -266,7 +279,7 @@ insert_sp (unsigned long long  insn,
 
 static long long
 extract_sp (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   return 28;
 }
@@ -283,7 +296,7 @@ insert_gp (unsigned long long  insn,
 
 static long long
 extract_gp (unsigned long long insn ATTRIBUTE_UNUSED,
-	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   return 26;
 }
@@ -300,7 +313,7 @@ insert_pcl (unsigned long long  insn,
 
 static long long
 extract_pcl (unsigned long long insn ATTRIBUTE_UNUSED,
-	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	     bool *invalid ATTRIBUTE_UNUSED)
 {
   return 63;
 }
@@ -317,7 +330,7 @@ insert_blink (unsigned long long  insn,
 
 static long long
 extract_blink (unsigned long long insn ATTRIBUTE_UNUSED,
-	       bfd_boolean * invalid ATTRIBUTE_UNUSED)
+	       bool *invalid ATTRIBUTE_UNUSED)
 {
   return 31;
 }
@@ -334,7 +347,7 @@ insert_ilink1 (unsigned long long  insn,
 
 static long long
 extract_ilink1 (unsigned long long insn ATTRIBUTE_UNUSED,
-		bfd_boolean * invalid ATTRIBUTE_UNUSED)
+		bool *invalid ATTRIBUTE_UNUSED)
 {
   return 29;
 }
@@ -351,7 +364,7 @@ insert_ilink2 (unsigned long long  insn,
 
 static long long
 extract_ilink2 (unsigned long long insn ATTRIBUTE_UNUSED,
-		bfd_boolean * invalid ATTRIBUTE_UNUSED)
+		bool *invalid ATTRIBUTE_UNUSED)
 {
   return 30;
 }
@@ -383,8 +396,8 @@ insert_ras (unsigned long long  insn,
 }
 
 static long long
-extract_ras (unsigned long long  insn,
-	     bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_ras (unsigned long long insn,
+	     bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = insn & 0x07;
 
@@ -421,8 +434,8 @@ insert_rbs (unsigned long long  insn,
 }
 
 static long long
-extract_rbs (unsigned long long  insn,
-	     bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_rbs (unsigned long long insn,
+	     bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = (insn >> 8) & 0x07;
 
@@ -459,8 +472,8 @@ insert_rcs (unsigned long long  insn,
 }
 
 static long long
-extract_rcs (unsigned long long  insn,
-	     bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_rcs (unsigned long long insn,
+	     bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = (insn >> 5) & 0x07;
 
@@ -512,8 +525,8 @@ insert_simm3s (unsigned long long  insn,
 }
 
 static long long
-extract_simm3s (unsigned long long  insn,
-		bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_simm3s (unsigned long long insn,
+		bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = (insn >> 8) & 0x07;
 
@@ -541,8 +554,8 @@ insert_rrange (unsigned long long  insn,
 }
 
 static long long
-extract_rrange (unsigned long long  insn,
-		bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_rrange (unsigned long long insn,
+		bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn >> 1) & 0x0F;
 }
@@ -578,8 +591,8 @@ insert_fpel (unsigned long long  insn,
 }
 
 static long long
-extract_fpel (unsigned long long  insn,
-	      bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_fpel (unsigned long long insn,
+	      bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn & 0x0100) ? 27 : -1;
 }
@@ -600,8 +613,8 @@ insert_blinkel (unsigned long long  insn,
 }
 
 static long long
-extract_blinkel (unsigned long long  insn,
-		 bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_blinkel (unsigned long long insn,
+		 bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn & 0x0200) ? 31 : -1;
 }
@@ -622,8 +635,8 @@ insert_pclel (unsigned long long  insn,
 }
 
 static long long
-extract_pclel (unsigned long long  insn,
-	       bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_pclel (unsigned long long insn,
+	       bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn & 0x0400) ? 63 : -1;
 }
@@ -648,8 +661,8 @@ insert_w6 (unsigned long long  insn,
 /* mask = 00000000000000000000111111000000.  */
 
 static long long
-extract_w6 (unsigned long long  insn,
-	    bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_w6 (unsigned long long insn,
+	    bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
 
@@ -683,8 +696,8 @@ insert_g_s (unsigned long long  insn,
 /* mask = 0000011100022000.  */
 
 static long long
-extract_g_s (unsigned long long  insn,
-	     bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_g_s (unsigned long long insn,
+	     bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
   int signbit = 1 << (6 - 1);
@@ -728,9 +741,9 @@ insert_nps_3bit_reg_at_##OFFSET##_##NAME		         \
 }                                                                \
                                                                  \
 static long long						 \
-extract_nps_3bit_reg_at_##OFFSET##_##NAME                        \
-                    (unsigned long long  insn,                   \
-                     bfd_boolean *       invalid ATTRIBUTE_UNUSED)     \
+extract_nps_3bit_reg_at_##OFFSET##_##NAME			 \
+  (unsigned long long insn,					 \
+   bool *invalid ATTRIBUTE_UNUSED)				 \
 {                                                                \
   int value = (insn >> (OFFSET)) & 0x07;			 \
   if (value > 3)                                                 \
@@ -778,8 +791,8 @@ insert_nps_bitop_size_2b (unsigned long long  insn,
 }
 
 static long long
-extract_nps_bitop_size_2b (unsigned long long  insn,
-                           bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_bitop_size_2b (unsigned long long insn,
+                           bool *invalid ATTRIBUTE_UNUSED)
 {
   return  1 << ((insn >> 10) & 0x3);
 }
@@ -795,8 +808,8 @@ insert_nps_bitop_uimm8 (unsigned long long  insn,
 }
 
 static long long
-extract_nps_bitop_uimm8 (unsigned long long  insn,
-                         bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_bitop_uimm8 (unsigned long long insn,
+                         bool *invalid ATTRIBUTE_UNUSED)
 {
   return (((insn >> 12) & 0x7) << 5) | (insn & 0x1f);
 }
@@ -823,8 +836,8 @@ insert_nps_rflt_uimm6 (unsigned long long  insn,
 }
 
 static long long
-extract_nps_rflt_uimm6 (unsigned long long  insn,
-			bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_rflt_uimm6 (unsigned long long insn,
+			bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn >> 6) & 0x3f;
 }
@@ -839,8 +852,8 @@ insert_nps_dst_pos_and_size (unsigned long long  insn,
 }
 
 static long long
-extract_nps_dst_pos_and_size (unsigned long long  insn,
-                              bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_dst_pos_and_size (unsigned long long insn,
+                              bool *invalid ATTRIBUTE_UNUSED)
 {
   return (insn & 0x1f);
 }
@@ -859,8 +872,8 @@ insert_nps_cmem_uimm16 (unsigned long long  insn,
 }
 
 static long long
-extract_nps_cmem_uimm16 (unsigned long long  insn,
-                         bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_cmem_uimm16 (unsigned long long insn,
+                         bool *invalid ATTRIBUTE_UNUSED)
 {
   return (NPS_CMEM_HIGH_VALUE << 16) | (insn & 0xffff);
 }
@@ -888,8 +901,8 @@ insert_nps_imm_offset (unsigned long long  insn,
 }
 
 static long long
-extract_nps_imm_offset (unsigned long long  insn,
-			bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_imm_offset (unsigned long long insn,
+			bool *invalid ATTRIBUTE_UNUSED)
 {
   return ((insn >> 10) & 0x7) * 16;
 }
@@ -922,8 +935,8 @@ insert_nps_imm_entry (unsigned long long  insn,
 }
 
 static long long
-extract_nps_imm_entry (unsigned long long  insn,
-		       bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_imm_entry (unsigned long long insn,
+		       bool *invalid ATTRIBUTE_UNUSED)
 {
   int imm_entry = ((insn >> 2) & 0x7);
   return (1 << (imm_entry + 4));
@@ -945,8 +958,8 @@ insert_nps_size_16bit (unsigned long long  insn,
 }
 
 static long long
-extract_nps_size_16bit (unsigned long long  insn,
-			bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_size_16bit (unsigned long long insn,
+			bool *invalid ATTRIBUTE_UNUSED)
 {
   return ((insn & 0xfc0) >> 6) ? ((insn & 0xfc0) >> 6) : 64;
 }
@@ -975,8 +988,8 @@ insert_nps_##NAME##_pos (unsigned long long  insn,	      \
 }                                                             \
                                                               \
 static long long                                              \
-extract_nps_##NAME##_pos (unsigned long long  insn,	      \
-                          bfd_boolean *       invalid ATTRIBUTE_UNUSED)     \
+extract_nps_##NAME##_pos (unsigned long long insn,	      \
+                          bool *invalid ATTRIBUTE_UNUSED)     \
 {                                                             \
   return ((insn >> SHIFT) & 0x3) * 8;                         \
 }
@@ -1002,8 +1015,8 @@ insert_nps_##NAME (unsigned long long  insn,				\
   }                                                                     \
                                                                         \
 static long long                                                        \
-extract_nps_##NAME (unsigned long long  insn,                           \
-                    bfd_boolean *       invalid ATTRIBUTE_UNUSED)       \
+extract_nps_##NAME (unsigned long long insn,				\
+                    bool *invalid ATTRIBUTE_UNUSED)			\
 {                                                                       \
   return ((insn >> SHIFT) & ((1 << BITS) - 1)) + BIAS;                  \
 }
@@ -1021,39 +1034,39 @@ MAKE_BIAS_INSERT_EXTRACT_FUNCS (hash_len,1,8,3,1,2)
 MAKE_BIAS_INSERT_EXTRACT_FUNCS (index3,4,7,2,4,0)
 
 static long long
-extract_nps_qcmp_m3 (unsigned long long  insn,
-                     bfd_boolean *       invalid)
+extract_nps_qcmp_m3 (unsigned long long insn,
+                     bool *invalid)
 {
   int m3 = (insn >> 5) & 0xf;
   if (m3 == 0xf)
-    *invalid = TRUE;
+    *invalid = true;
   return m3;
 }
 
 static long long
-extract_nps_qcmp_m2 (unsigned long long  insn,
-                     bfd_boolean *       invalid)
+extract_nps_qcmp_m2 (unsigned long long insn,
+                     bool *invalid)
 {
-  bfd_boolean tmp_invalid = FALSE;
+  bool tmp_invalid = false;
   int m2 = (insn >> 15) & 0x1;
   int m3 = extract_nps_qcmp_m3 (insn, &tmp_invalid);
 
   if (m2 == 0 && m3 == 0xf)
-    *invalid = TRUE;
+    *invalid = true;
   return m2;
 }
 
 static long long
-extract_nps_qcmp_m1 (unsigned long long  insn,
-                     bfd_boolean *       invalid)
+extract_nps_qcmp_m1 (unsigned long long insn,
+                     bool *invalid)
 {
-  bfd_boolean tmp_invalid = FALSE;
+  bool tmp_invalid = false;
   int m1 = (insn >> 14) & 0x1;
   int m2 = extract_nps_qcmp_m2 (insn, &tmp_invalid);
   int m3 = extract_nps_qcmp_m3 (insn, &tmp_invalid);
 
   if (m1 == 0 && m2 == 0 && m3 == 0xf)
-    *invalid = TRUE;
+    *invalid = true;
   return m1;
 }
 
@@ -1083,8 +1096,8 @@ insert_nps_calc_entry_size (unsigned long long  insn,
 }
 
 static long long
-extract_nps_calc_entry_size (unsigned long long  insn,
-                             bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_calc_entry_size (unsigned long long insn,
+                             bool *invalid ATTRIBUTE_UNUSED)
 {
   unsigned entry_size = (insn >> 8) & 0xf;
   return 1 << entry_size;
@@ -1099,8 +1112,8 @@ insert_nps_bitop_mod4 (unsigned long long  insn,
 }
 
 static long long
-extract_nps_bitop_mod4 (unsigned long long  insn,
-                            bfd_boolean *   invalid ATTRIBUTE_UNUSED)
+extract_nps_bitop_mod4 (unsigned long long insn,
+                            bool *invalid ATTRIBUTE_UNUSED)
 {
   return ((insn >> 30) & 0x2) | ((insn >> 47) & 0x1);
 }
@@ -1114,11 +1127,11 @@ insert_nps_bitop_dst_pos3_pos4 (unsigned long long  insn,
 }
 
 static long long
-extract_nps_bitop_dst_pos3_pos4 (unsigned long long  insn,
-                                 bfd_boolean *       invalid)
+extract_nps_bitop_dst_pos3_pos4 (unsigned long long insn,
+                                 bool *invalid)
 {
   if (((insn >> 42) & 0x1f) != ((insn >> 37) & 0x1f))
-    *invalid = TRUE;
+    *invalid = true;
   return ((insn >> 37) & 0x1f);
 }
 
@@ -1133,13 +1146,13 @@ insert_nps_bitop_ins_ext (unsigned long long  insn,
 }
 
 static long long
-extract_nps_bitop_ins_ext (unsigned long long  insn,
-                           bfd_boolean *       invalid)
+extract_nps_bitop_ins_ext (unsigned long long insn,
+                           bool *invalid)
 {
   int value = (insn >> 20) & 0x1f;
 
   if (value > 28)
-    *invalid = TRUE;
+    *invalid = true;
   return value;
 }
 
@@ -1157,8 +1170,8 @@ insert_nps_##NAME (unsigned long long  insn,				\
 }                                                                       \
                                                                         \
 static long long							\
-extract_nps_##NAME (unsigned long long  insn,				\
-                    bfd_boolean *       invalid ATTRIBUTE_UNUSED)       \
+extract_nps_##NAME (unsigned long long insn,				\
+                    bool *invalid ATTRIBUTE_UNUSED)			\
 {                                                                       \
   int value = (insn >> SHIFT) & ((1 << BITS) - 1);                      \
   if (value == 0)                                                       \
@@ -1188,8 +1201,8 @@ insert_nps_min_hofs (unsigned long long  insn,
 }
 
 static long long
-extract_nps_min_hofs (unsigned long long  insn,
-                      bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_min_hofs (unsigned long long insn,
+                      bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = (insn >> 6) & 0xF;
   return value * 16;
@@ -1207,8 +1220,8 @@ insert_nps_##NAME (unsigned long long  insn,			       \
 }                                                                      \
                                                                        \
 static long long						       \
-extract_nps_##NAME (unsigned long long  insn ATTRIBUTE_UNUSED,         \
-                    bfd_boolean *       invalid ATTRIBUTE_UNUSED)      \
+extract_nps_##NAME (unsigned long long insn ATTRIBUTE_UNUSED,	       \
+		    bool *invalid ATTRIBUTE_UNUSED)		       \
 {                                                                      \
   return ARC_NPS400_ADDRTYPE_##VALUE;                                  \
 }
@@ -1242,14 +1255,14 @@ insert_nps_rbdouble_64 (unsigned long long  insn,
 
 
 static long long
-extract_nps_rbdouble_64 (unsigned long long  insn,
-                         bfd_boolean *       invalid)
+extract_nps_rbdouble_64 (unsigned long long insn,
+                         bool *invalid)
 {
   int value1 = (insn >> 43) & 0x1F;
   int value2 = (insn >> 48) & 0x1F;
 
   if (value1 != value2)
-    *invalid = TRUE;
+    *invalid = true;
 
   return value1;
 }
@@ -1269,15 +1282,15 @@ insert_nps_misc_imm_offset (unsigned long long  insn,
 }
 
 static long long int
-extract_nps_misc_imm_offset (unsigned long long  insn,
-			     bfd_boolean *       invalid ATTRIBUTE_UNUSED)
+extract_nps_misc_imm_offset (unsigned long long insn,
+			     bool *invalid ATTRIBUTE_UNUSED)
 {
   return ((insn >> 8) & 0x1f) * 4;
 }
 
 static long long int
 extract_uimm12_20 (unsigned long long insn ATTRIBUTE_UNUSED,
-		   bfd_boolean * invalid ATTRIBUTE_UNUSED)
+		   bool *invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
 
@@ -1826,11 +1839,16 @@ const struct arc_operand arc_operands[] =
   { 6, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rad, 0 },
 #define RCD		(RAD_CHK + 1)
   { 6, 6, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rcd, 0 },
+#define RBD		(RCD + 1)
+  { 6, 6, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rbd, extract_rb },
+#define RBDdup		(RBD + 1)
+  { 6, 12, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE | ARC_OPERAND_TRUNCATE,
+    insert_rbd, extract_rb },
 
   /* The plain integer register fields.  Used by short
      instructions.  */
-#define RA16		(RCD + 1)
-#define RA_S		(RCD + 1)
+#define RA16		(RBDdup + 1)
+#define RA_S		(RBDdup + 1)
   { 4, 0, 0, ARC_OPERAND_IR, insert_ras, extract_ras },
 #define RB16		(RA16 + 1)
 #define RB_S		(RA16 + 1)

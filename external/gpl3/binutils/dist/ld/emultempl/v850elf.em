@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,7 +26,7 @@ fragment <<EOF
 #include "ldctor.h"
 #include "elf32-v850.h"
 
-static bfd_boolean
+static bool
 is_v850_target (void)
 {
   extern const bfd_target v850_elf32_vec;

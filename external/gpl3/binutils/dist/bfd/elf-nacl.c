@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,7 @@
 #include "elf/common.h"
 #include "elf/internal.h"
 
-static bfd_boolean
+static bool
 segment_executable (struct elf_segment_map *seg)
 {
   if (seg->p_flags_valid)
@@ -36,35 +36,35 @@ segment_executable (struct elf_segment_map *seg)
       unsigned int i;
       for (i = 0; i < seg->count; ++i)
 	if (seg->sections[i]->flags & SEC_CODE)
-	  return TRUE;
+	  return true;
     }
-  return FALSE;
+  return false;
 }
 
 /* Determine if this segment is eligible to receive the file and program
    headers.  It must be read-only and non-executable.
    Its first section must start far enough past the page boundary to
    allow space for the headers.  */
-static bfd_boolean
+static bool
 segment_eligible_for_headers (struct elf_segment_map *seg,
 			      bfd_vma minpagesize, bfd_vma sizeof_headers)
 {
   unsigned int i;
   if (seg->count == 0 || seg->sections[0]->lma % minpagesize < sizeof_headers)
-    return FALSE;
+    return false;
   for (i = 0; i < seg->count; ++i)
     {
       if ((seg->sections[i]->flags & (SEC_CODE|SEC_READONLY)) != SEC_READONLY)
-	return FALSE;
+	return false;
     }
-  return TRUE;
+  return true;
 }
 
 
 /* We permute the segment_map to get BFD to do the file layout we want:
    The first non-executable PT_LOAD segment appears first in the file
    and contains the ELF file header and phdrs.  */
-bfd_boolean
+bool
 nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 {
   const struct elf_backend_data *const bed = get_elf_backend_data (abfd);
@@ -76,7 +76,7 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
   if (info != NULL && info->user_phdrs)
     /* The linker script used PHDRS explicitly, so don't change what the
        user asked for.  */
-    return TRUE;
+    return true;
 
   if (info != NULL)
     /* We're doing linking, so evalute SIZEOF_HEADERS as in a linker script.  */
@@ -97,7 +97,7 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 
       if (seg->p_type == PT_LOAD)
 	{
-	  bfd_boolean executable = segment_executable (seg);
+	  bool executable = segment_executable (seg);
 
 	  if (executable
 	      && seg->count > 0
@@ -136,11 +136,11 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 
 		  secdata = bfd_zalloc (abfd, sizeof *secdata);
 		  if (secdata == NULL)
-		    return FALSE;
+		    return false;
 
 		  sec = bfd_zalloc (abfd, sizeof *sec);
 		  if (sec == NULL)
-		    return FALSE;
+		    return false;
 
 		  /* Fill in only the fields that actually affect the logic
 		     in assign_file_positions_for_load_sections.  */
@@ -156,13 +156,13 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 		  secdata->this_hdr.sh_addr = sec->vma;
 		  secdata->this_hdr.sh_size = sec->size;
 
-		  newseg = bfd_alloc (abfd,
-				      sizeof *newseg + ((seg->count + 1)
-							* sizeof (asection *)));
+		  newseg
+		    = bfd_alloc (abfd, (sizeof (*newseg)
+					+ seg->count * sizeof (asection *)));
 		  if (newseg == NULL)
-		    return FALSE;
-		  memcpy (newseg, seg,
-			  sizeof *newseg + (seg->count * sizeof (asection *)));
+		    return false;
+		  memcpy (newseg, seg, (sizeof (*newseg) - sizeof (asection *)
+					+ seg->count * sizeof (asection *)));
 		  newseg->sections[newseg->count++] = sec;
 		  *m = seg = newseg;
 		}
@@ -227,14 +227,14 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* After nacl_modify_segment_map has done its work, the file layout has
    been done as we wanted.  But the PT_LOAD phdrs are no longer in the
    proper order for the ELF rule that they must appear in ascending address
    order.  So find the two segments we swapped before, and swap them back.  */
-bfd_boolean
+bool
 nacl_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
   if (info != NULL && info->user_phdrs)
@@ -324,7 +324,7 @@ nacl_modify_headers (bfd *abfd, struct bfd_link_info *info)
   return _bfd_elf_modify_headers (abfd, info);
 }
 
-bfd_boolean
+bool
 nacl_final_write_processing (bfd *abfd)
 {
   struct elf_segment_map *seg;
@@ -344,7 +344,7 @@ nacl_final_write_processing (bfd *abfd)
 	BFD_ASSERT (sec->flags & SEC_CODE);
 	BFD_ASSERT (sec->size > 0);
 
-	fill = abfd->arch_info->fill (sec->size, bfd_big_endian (abfd), TRUE);
+	fill = abfd->arch_info->fill (sec->size, bfd_big_endian (abfd), true);
 
 	if (fill == NULL
 	    || bfd_seek (abfd, sec->filepos, SEEK_SET) != 0

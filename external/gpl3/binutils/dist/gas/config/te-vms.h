@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,7 +20,7 @@
 #define TE_VMS
 #include "obj-format.h"
 
-extern bfd_uint64_t vms_dwarf2_file_time_name (const char *, const char *);
+extern uint64_t vms_dwarf2_file_time_name (const char *, const char *);
 extern long vms_dwarf2_file_size_name (const char *, const char *);
 extern char *vms_dwarf2_file_name (const char *, const char *);
 

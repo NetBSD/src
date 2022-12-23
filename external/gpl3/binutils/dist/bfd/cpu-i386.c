@@ -1,5 +1,5 @@
 /* BFD support for the Intel 386 architecture.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,8 +23,8 @@
 #include "libbfd.h"
 #include "libiberty.h"
 
-extern void * bfd_arch_i386_short_nop_fill (bfd_size_type, bfd_boolean,
-					    bfd_boolean);
+extern void * bfd_arch_i386_short_nop_fill (bfd_size_type, bool,
+					    bool);
 
 static const bfd_arch_info_type *
 bfd_i386_compatible (const bfd_arch_info_type *a,
@@ -44,8 +44,8 @@ bfd_i386_compatible (const bfd_arch_info_type *a,
    multi byte nop instructions if LONG_NOP is TRUE.  */
 
 static void *
-bfd_arch_i386_fill (bfd_size_type count, bfd_boolean code,
-		    bfd_boolean long_nop)
+bfd_arch_i386_fill (bfd_size_type count, bool code,
+		    bool long_nop)
 {
   /* nop */
   static const char nop_1[] = { 0x90 };
@@ -97,37 +97,24 @@ bfd_arch_i386_fill (bfd_size_type count, bfd_boolean code,
   return fill;
 }
 
-/* Fill the buffer with zero or short nop instruction if CODE is TRUE.  */
+/* Fill the buffer with zero or short nop instruction if CODE is true.  */
 
 void *
 bfd_arch_i386_short_nop_fill (bfd_size_type count,
-			      bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
-			      bfd_boolean code)
+			      bool is_bigendian ATTRIBUTE_UNUSED,
+			      bool code)
 {
-  return bfd_arch_i386_fill (count, code, FALSE);
+  return bfd_arch_i386_fill (count, code, false);
 }
 
 /* Fill the buffer with zero or long nop instruction if CODE is TRUE.  */
 
 static void *
 bfd_arch_i386_long_nop_fill (bfd_size_type count,
-			     bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
-			     bfd_boolean code)
+			     bool is_bigendian ATTRIBUTE_UNUSED,
+			     bool code)
 {
-  return bfd_arch_i386_fill (count, code, TRUE);
-}
-
-/* Fill the buffer with zero, or one-byte nop instructions if CODE is TRUE.  */
-
-static void *
-bfd_arch_i386_onebyte_nop_fill (bfd_size_type count,
-				bfd_boolean is_bigendian ATTRIBUTE_UNUSED,
-				bfd_boolean code)
-{
-  void *fill = bfd_malloc (count);
-  if (fill != NULL)
-    memset (fill, code ? 0x90 : 0, count);
-  return fill;
+  return bfd_arch_i386_fill (count, code, true);
 }
 
 #define N(BITS, MACH, NAME, PRINT, DEF, FILL, NEXT)	\
@@ -148,44 +135,31 @@ bfd_arch_i386_onebyte_nop_fill (bfd_size_type count,
   }
 
 
-static const bfd_arch_info_type bfd_x64_32_nacl_arch =
-  N (64, bfd_mach_x64_32_nacl, "i386", "i386:x64-32:nacl",
-     FALSE, bfd_arch_i386_onebyte_nop_fill, NULL);
-
-static const bfd_arch_info_type bfd_x86_64_nacl_arch =
-  N (64, bfd_mach_x86_64_nacl, "i386", "i386:x86-64:nacl",
-     FALSE, bfd_arch_i386_onebyte_nop_fill, &bfd_x64_32_nacl_arch);
-
-const bfd_arch_info_type bfd_i386_nacl_arch =
-  N (32, bfd_mach_i386_i386_nacl, "i386", "i386:nacl",
-     TRUE, bfd_arch_i386_onebyte_nop_fill, &bfd_x86_64_nacl_arch);
-
-
 static const bfd_arch_info_type bfd_x64_32_arch_intel_syntax =
   N (64, bfd_mach_x64_32_intel_syntax, "i386:intel", "i386:x64-32:intel",
-     FALSE, bfd_arch_i386_long_nop_fill, &bfd_i386_nacl_arch);
+     false, bfd_arch_i386_long_nop_fill, NULL);
 
 static const bfd_arch_info_type bfd_x86_64_arch_intel_syntax =
   N (64, bfd_mach_x86_64_intel_syntax, "i386:intel", "i386:x86-64:intel",
-     FALSE, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch_intel_syntax);
+     false, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch_intel_syntax);
 
 static const bfd_arch_info_type bfd_i386_arch_intel_syntax =
   N (32, bfd_mach_i386_i386_intel_syntax, "i386:intel", "i386:intel",
-     TRUE, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch_intel_syntax);
+     true, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch_intel_syntax);
 
 
 static const bfd_arch_info_type i8086_arch =
   N (32, bfd_mach_i386_i8086, "i8086", "i8086",
-     FALSE, bfd_arch_i386_short_nop_fill, &bfd_i386_arch_intel_syntax);
+     false, bfd_arch_i386_short_nop_fill, &bfd_i386_arch_intel_syntax);
 
 static const bfd_arch_info_type bfd_x64_32_arch =
   N (64, bfd_mach_x64_32, "i386", "i386:x64-32",
-     FALSE, bfd_arch_i386_long_nop_fill, &i8086_arch);
+     false, bfd_arch_i386_long_nop_fill, &i8086_arch);
 
 static const bfd_arch_info_type bfd_x86_64_arch =
   N (64, bfd_mach_x86_64, "i386", "i386:x86-64",
-     FALSE, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch);
+     false, bfd_arch_i386_long_nop_fill, &bfd_x64_32_arch);
 
 const bfd_arch_info_type bfd_i386_arch =
   N (32, bfd_mach_i386_i386, "i386", "i386",
-     TRUE, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch);
+     true, bfd_arch_i386_short_nop_fill, &bfd_x86_64_arch);

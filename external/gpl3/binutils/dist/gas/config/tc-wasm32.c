@@ -1,6 +1,6 @@
 /* tc-wasm32.c -- Assembler code for the wasm32 target.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -92,7 +92,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 /* Opcode hash table.  */
 
-static struct hash_control *wasm32_hash;
+static htab_t wasm32_hash;
 
 struct option md_longopts[] =
 {
@@ -138,7 +138,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, FALSE);
+  return ieee_md_atof (type, litP, sizeP, false);
 }
 
 /* No machine-dependent frags.  */
@@ -158,13 +158,13 @@ md_begin (void)
 {
   struct wasm32_opcode_s *opcode;
 
-  wasm32_hash = hash_new ();
+  wasm32_hash = str_htab_create ();
 
   /* Insert unique names into hash table.  This hash table then
      provides a quick index to the first opcode with a particular name
      in the opcode table.  */
   for (opcode = wasm32_opcodes; opcode->name; opcode++)
-    hash_insert (wasm32_hash, opcode->name, (char *) opcode);
+    str_hash_insert (wasm32_hash, opcode->name, opcode, 0);
 
   linkrelax = 0;
   flag_sectname_subst = 1;
@@ -184,17 +184,17 @@ md_section_align (asection * seg, valueT addr)
 /* Apply a fixup, return TRUE if done (and no relocation is
    needed).  */
 
-static bfd_boolean
+static bool
 apply_full_field_fix (fixS * fixP, char *buf, bfd_vma val, int size)
 {
   if (fixP->fx_addsy != NULL || fixP->fx_pcrel)
     {
       fixP->fx_addnumber = val;
-      return FALSE;
+      return false;
     }
 
   number_to_chars_littleendian (buf, val, size);
-  return TRUE;
+  return true;
 }
 
 /* Apply a fixup (potentially PC-relative), set the fx_done flag if
@@ -236,7 +236,7 @@ skip_space (char *s)
 
 /* Allow '/' in opcodes.  */
 
-static inline bfd_boolean
+static inline bool
 is_part_of_opcode (char c)
 {
   return is_part_of_name (c) || (c == '/');
@@ -333,7 +333,7 @@ wasm32_put_uleb128 (unsigned long value)
    symbol, or a special relocation for <expr>@got, <expr>@gotcode, and
    <expr>@plt{__sigchar_<signature>}.  */
 
-static bfd_boolean
+static bool
 wasm32_leb128 (char **line, int bits, int sign)
 {
   char *t = input_line_pointer;
@@ -381,20 +381,20 @@ wasm32_leb128 (char **line, int bits, int sign)
       reloc->u.a.addend = 0;
     }
   /* i32.const fpointer@gotcode */
-  if (strncmp (input_line_pointer, "@gotcode", 8) == 0)
+  if (startswith (input_line_pointer, "@gotcode"))
     {
       gotrel = 1;
       code = 1;
       input_line_pointer += 8;
     }
   /* i32.const data@got */
-  else if (strncmp (input_line_pointer, "@got", 4) == 0)
+  else if (startswith (input_line_pointer, "@got"))
     {
       gotrel = 1;
       input_line_pointer += 4;
     }
   /* call f@plt{__sigchar_FiiiiE} */
-  else if (strncmp (input_line_pointer, "@plt", 4) == 0)
+  else if (startswith (input_line_pointer, "@plt"))
     {
       char *end_of_sig;
 
@@ -402,7 +402,7 @@ wasm32_leb128 (char **line, int bits, int sign)
       code = 1;
       input_line_pointer += 4;
 
-      if (strncmp (input_line_pointer, "{", 1) == 0
+      if (startswith (input_line_pointer, "{")
           && (end_of_sig = strchr (input_line_pointer, '}')))
 	{
 	  char *signature;
@@ -455,7 +455,7 @@ wasm32_leb128 (char **line, int bits, int sign)
 /* Read an integer expression and produce an unsigned LEB128 integer,
    or a relocation for it.  */
 
-static bfd_boolean
+static bool
 wasm32_uleb128 (char **line, int bits)
 {
   return wasm32_leb128 (line, bits, 0);
@@ -464,7 +464,7 @@ wasm32_uleb128 (char **line, int bits)
 /* Read an integer expression and produce a signed LEB128 integer, or
    a relocation for it.  */
 
-static bfd_boolean
+static bool
 wasm32_sleb128 (char **line, int bits)
 {
   return wasm32_leb128 (line, bits, 1);
@@ -746,7 +746,7 @@ md_assemble (char *str)
   if (!op[0])
     as_bad (_("can't find opcode "));
 
-  opcode = (struct wasm32_opcode_s *) hash_find (wasm32_hash, op);
+  opcode = (struct wasm32_opcode_s *) str_hash_find (wasm32_hash, op);
 
   if (opcode == NULL)
     {
@@ -777,17 +777,17 @@ wasm32_force_relocation (fixS * f)
 /* Don't replace PLT/GOT relocations with section symbols, so they
    don't get an addend.  */
 
-bfd_boolean
+bool
 wasm32_fix_adjustable (fixS * fixP)
 {
   if (fixP->fx_addsy == NULL)
-    return TRUE;
+    return true;
 
   if (fixP->fx_r_type == BFD_RELOC_WASM32_LEB128_PLT
       || fixP->fx_r_type == BFD_RELOC_WASM32_LEB128_GOT)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Generate a reloc for FIXP.  */

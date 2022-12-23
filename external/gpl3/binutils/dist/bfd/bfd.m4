@@ -1,6 +1,6 @@
 dnl This file was derived from acinclude.m4.
 dnl
-dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -17,15 +17,20 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
+dnl Check for sys/procfs.h, enforcing structured /proc on Solaris.
+
+AC_DEFUN([BFD_SYS_PROCFS_H],
+[AC_DEFINE(_STRUCTURED_PROC, 1, [Use structured /proc on Solaris.])
+ AC_CHECK_HEADERS(sys/procfs.h)])
+
 dnl Check for existence of a type $1 in sys/procfs.h
 
 AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE],
-[AC_MSG_CHECKING([for $1 in sys/procfs.h])
+[AC_REQUIRE([BFD_SYS_PROCFS_H])
+ AC_MSG_CHECKING([for $1 in sys/procfs.h])
  AC_CACHE_VAL(bfd_cv_have_sys_procfs_type_$1,
    [AC_TRY_COMPILE([
 #define _SYSCALL32
-/* Needed for new procfs interface on sparc-solaris.  */
-#define _STRUCTURED_PROC 1
 #include <sys/procfs.h>],
       [$1 avar],
       bfd_cv_have_sys_procfs_type_$1=yes,
@@ -41,12 +46,11 @@ AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE],
 dnl Check for existence of member $2 in type $1 in sys/procfs.h
 
 AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE_MEMBER],
-[AC_MSG_CHECKING([for $1.$2 in sys/procfs.h])
+[AC_REQUIRE([BFD_SYS_PROCFS_H])
+ AC_MSG_CHECKING([for $1.$2 in sys/procfs.h])
  AC_CACHE_VAL(bfd_cv_have_sys_procfs_type_member_$1_$2,
    [AC_TRY_COMPILE([
 #define _SYSCALL32
-/* Needed for new procfs interface on sparc-solaris.  */
-#define _STRUCTURED_PROC 1
 #include <sys/procfs.h>],
       [$1 avar; void* aref = (void*) &avar.$2],
       bfd_cv_have_sys_procfs_type_member_$1_$2=yes,

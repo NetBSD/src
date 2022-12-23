@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -42,303 +42,303 @@ static reloc_howto_type elf_xgate_howto_table[] =
   /* This reloc does nothing.  */
   HOWTO (R_XGATE_NONE, /* type */
 	 0, /* rightshift */
-	 3, /* size (0 = byte, 1 = short, 2 = long) */
+	 0, /* size */
 	 0, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_NONE", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0, /* src_mask */
 	 0, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 8 bit absolute relocation.  */
   HOWTO (R_XGATE_8, /* type */
 	 0, /* rightshift */
-	 0, /* size (0 = byte, 1 = short, 2 = long) */
+	 1, /* size */
 	 8, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_8", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 8 bit PC-rel relocation.  */
   HOWTO (R_XGATE_PCREL_8, /* type */
 	 0, /* rightshift */
-	 0, /* size (0 = byte, 1 = short, 2 = long) */
+	 1, /* size */
 	 8, /* bitsize */
-	 TRUE, /* pc_relative */
+	 true, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_PCREL_8", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_XGATE_16, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont /*bitfield */, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_16", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0xffff, /* src_mask */
 	 0xffff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 32 bit absolute relocation.  This one is never used for the
      code relocation.  It's used by gas for -gstabs generation.  */
   HOWTO (R_XGATE_32, /* type */
 	 0, /* rightshift */
-	 2, /* size (0 = byte, 1 = short, 2 = long) */
+	 4, /* size */
 	 32, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_32", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0xffffffff, /* src_mask */
 	 0xffffffff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 16 bit PC-rel relocation.  */
   HOWTO (R_XGATE_PCREL_16, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 TRUE, /* pc_relative */
+	 true, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_PCREL_16", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0xffff, /* src_mask */
 	 0xffff, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 
   /* GNU extension to record C++ vtable hierarchy.  */
   HOWTO (R_XGATE_GNU_VTINHERIT, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 0, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 NULL, /* special_function */
 	 "R_XGATE_GNU_VTINHERIT", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0, /* src_mask */
 	 0, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage.  */
   HOWTO (R_XGATE_GNU_VTENTRY, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 0, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 _bfd_elf_rel_vtable_reloc_fn, /* special_function */
 	 "R_XGATE_GNU_VTENTRY", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0, /* src_mask */
 	 0, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 24 bit relocation.  */
   HOWTO (R_XGATE_24, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM8_LO", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 16-bit low relocation.  */
   HOWTO (R_XGATE_LO16, /* type */
 	 8, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM8_HI", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A page relocation.  */
   HOWTO (R_XGATE_GPAGE, /* type */
 	 0, /* rightshift */
-	 0, /* size (0 = byte, 1 = short, 2 = long) */
+	 1, /* size */
 	 8, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 xgate_elf_special_reloc,/* special_function */
 	 "R_XGATE_GPAGE", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 9 bit absolute relocation.   */
   HOWTO (R_XGATE_PCREL_9, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 9, /* bitsize */
-	 TRUE, /* pc_relative */
+	 true, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_PCREL_9", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0xffff, /* src_mask */
 	 0xffff, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 
   /* A 8 bit absolute relocation (upper address).  */
   HOWTO (R_XGATE_PCREL_10, /* type */
 	 8, /* rightshift */
-	 0, /* size (0 = byte, 1 = short, 2 = long) */
+	 1, /* size */
 	 10, /* bitsize */
-	 TRUE, /* pc_relative */
+	 true, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_PCREL_10", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 
   /* A 8 bit absolute relocation.  */
   HOWTO (R_XGATE_IMM8_LO, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM8_LO", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0xffff, /* src_mask */
 	 0xffff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 16 bit absolute relocation (upper address).  */
   HOWTO (R_XGATE_IMM8_HI, /* type */
 	 8, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM8_HI", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 3 bit absolute relocation.  */
   HOWTO (R_XGATE_IMM3, /* type */
 	 8, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM3", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 4 bit absolute relocation.  */
   HOWTO (R_XGATE_IMM4, /* type */
 	 8, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM4", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* A 5 bit absolute relocation.  */
   HOWTO (R_XGATE_IMM5, /* type */
 	 8, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 16, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_XGATE_IMM5", /* name */
-	 FALSE, /* partial_inplace */
+	 false, /* partial_inplace */
 	 0x00ff, /* src_mask */
 	 0x00ff, /* dst_mask */
-	 FALSE), /* pcrel_offset */
+	 false), /* pcrel_offset */
 
   /* Mark beginning of a jump instruction (any form).  */
   HOWTO (R_XGATE_RL_JUMP, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 0, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 xgate_elf_ignore_reloc, /* special_function */
 	 "R_XGATE_RL_JUMP", /* name */
-	 TRUE, /* partial_inplace */
+	 true, /* partial_inplace */
 	 0, /* src_mask */
 	 0, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 
   /* Mark beginning of Gcc relaxation group instruction.  */
   HOWTO (R_XGATE_RL_GROUP, /* type */
 	 0, /* rightshift */
-	 1, /* size (0 = byte, 1 = short, 2 = long) */
+	 2, /* size */
 	 0, /* bitsize */
-	 FALSE, /* pc_relative */
+	 false, /* pc_relative */
 	 0, /* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 xgate_elf_ignore_reloc, /* special_function */
 	 "R_XGATE_RL_GROUP", /* name */
-	 TRUE, /* partial_inplace */
+	 true, /* partial_inplace */
 	 0, /* src_mask */
 	 0, /* dst_mask */
-	 TRUE), /* pcrel_offset */
+	 true), /* pcrel_offset */
 };
 
 /* Map BFD reloc types to XGATE ELF reloc types.  */
@@ -404,7 +404,7 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for an XGATE ELF reloc.  */
 
-static bfd_boolean
+static bool
 xgate_info_to_howto_rel (bfd *abfd,
 			 arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
@@ -418,10 +418,10 @@ xgate_info_to_howto_rel (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = &elf_xgate_howto_table[r_type];
-  return TRUE;
+  return true;
 }
 
 /* Specific sections:
@@ -480,7 +480,7 @@ xgate_elf_special_reloc (bfd *abfd ATTRIBUTE_UNUSED,
   abort ();
 }
 
-static bfd_boolean
+static bool
 _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -508,7 +508,7 @@ _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
     fprintf (file, _("error reading cpu type from elf private data"));
   fputc ('\n', file);
 
-  return TRUE;
+  return true;
 }
 
 #define ELF_ARCH			     bfd_arch_xgate

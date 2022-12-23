@@ -1,14 +1,14 @@
 # Translation of binutils gprof to Bulgarian
 # Copyright (C) 2009, 2011 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
-# Roumen Petrov <transl@roumenpetrov.info>, 2009-2017.
+# Roumen Petrov <transl@roumenpetrov.info>, 2009-2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.34.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-07-06 23:01+0300\n"
+"POT-Creation-Date: 2020-07-04 10:32+0100\n"
+"PO-Revision-Date: 2020-07-05 17:55+0300\n"
 "Last-Translator: Roumen Petrov <transl@roumenpetrov.info>\n"
 "Language-Team: Bulgarian <dict@ludost.net>\n"
 "Language: bg\n"
@@ -178,7 +178,7 @@ msgstr "родители"
 
 #: cg_print.c:98 cg_print.c:102
 msgid "index"
-msgstr "индекс"
+msgstr "азбучник"
 
 #
 #: cg_print.c:100
@@ -205,7 +205,7 @@ msgstr "наследници"
 #: cg_print.c:109
 #, c-format
 msgid "index %% time    self  children    called     name\n"
-msgstr "индекс%% време   собс. наследници   извик.     име \n"
+msgstr "азбуч.%% време   собс. наследници   извик.     име \n"
 
 #: cg_print.c:132
 #, c-format
@@ -236,22 +236,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<цикъл %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: не може да се обработи файла със съответствията %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: не може да се отвори %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: не е изпълним формат\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: не може да се намери изпълним(.text) раздел в %s\n"
@@ -266,22 +266,22 @@ msgstr "%s: недостиг на %lu байта за изпълним разд�
 msgid "%s: can't do -c\n"
 msgstr "%s: не може с команда -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c не се поддържа за архитектура %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: файлът '%s' не съдържа имена\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: файлът '%s' съдържа твърде много имена\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: нещо не е преброено: ltab.len=%d вместо %ld\n"
@@ -379,7 +379,7 @@ msgstr "\t%d записа(-и) за базов-блок\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -393,7 +393,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Употреба: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][име]] [-I директории]\n"
+"Употреба: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][име]] [-I директории]\n"
 "\t[-d[число]] [-k от/до] [-m мин-брой] [-t таблица-размер]\n"
 "\t[--[no-]annotated-source[=име]] [--[no-]exec-counts[=име]]\n"
 "\t[--[no-]flat-profile[=име]] [--[no-]graph[=име]]\n"
@@ -417,48 +417,48 @@ msgstr "Подавайте доклади за грешки на %s\n"
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: проследяването не се поддържа; -d е пренебрегнат\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: неизвестен файлов формат %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "ГНУ gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "На базата на BSD gprof, авторско право 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Тази програма е свободен софтуер.  Тази програма е без гаранции.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: непознато разкориране на имена '%s'\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Само една между --function-ordering и --file-ordering може да се зададе.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: за съжаление, файловият формат 'prof', все още не се поддържа\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: gmon.out файл без хистограма\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: gmon.out файл без граф за извикванията\n"
@@ -595,7 +595,7 @@ msgstr "%s: не може да се намери '%s'\n"
 msgid "*** File %s:\n"
 msgstr "*** Файл %s:\n"
 
-#: utils.c:106
+#: utils.c:103
 #, c-format
 msgid " <cycle %d>"
 msgstr " <цикъл %d>"

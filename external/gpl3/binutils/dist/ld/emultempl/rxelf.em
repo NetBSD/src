@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -27,15 +27,15 @@ fragment <<EOF
 
 #include "elf32-rx.h"
 
-static bfd_boolean no_flag_mismatch_warnings = TRUE;
-static bfd_boolean ignore_lma = TRUE;
+static bool no_flag_mismatch_warnings = true;
+static bool ignore_lma = true;
 
 /* This is a convenient point to tell BFD about target specific flags.
    After the output has been created, but before inputs are read.  */
 static void
 rx_elf_create_output_section_statements (void)
 {
-  extern void bfd_elf32_rx_set_target_flags (bfd_boolean, bfd_boolean);
+  extern void bfd_elf32_rx_set_target_flags (bool, bool);
 
   bfd_elf32_rx_set_target_flags (no_flag_mismatch_warnings, ignore_lma);
 }
@@ -71,19 +71,19 @@ PARSE_AND_LIST_OPTIONS='
 
 PARSE_AND_LIST_ARGS_CASES='
     case OPTION_NO_FLAG_MISMATCH_WARNINGS:
-      no_flag_mismatch_warnings = TRUE;
+      no_flag_mismatch_warnings = true;
       break;
 
     case OPTION_FLAG_MISMATCH_WARNINGS:
-      no_flag_mismatch_warnings = FALSE;
+      no_flag_mismatch_warnings = false;
       break;
 
     case OPTION_IGNORE_LMA:
-      ignore_lma = TRUE;
+      ignore_lma = true;
       break;
 
     case OPTION_NO_IGNORE_LMA:
-      ignore_lma = FALSE;
+      ignore_lma = false;
       break;
 '
 

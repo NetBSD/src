@@ -1,6 +1,6 @@
 /* This is the machine dependent code of the Visium Assembler.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -484,7 +484,7 @@ void
 md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 		 fragS * fragP)
 {
-  char *buf = fragP->fr_literal + fragP->fr_fix;
+  char *buf = &fragP->fr_literal[0] + fragP->fr_fix;
   expressionS exp;
   fixS *fixP;
 
@@ -532,7 +532,7 @@ visium_pcrel_from_section (fixS *fixP, segT sec)
 /* Indicate whether a fixup against a locally defined
    symbol should be adjusted to be against the section
    symbol.  */
-bfd_boolean
+bool
 visium_fix_adjustable (fixS *fix)
 {
   /* We need the symbol name for the VTABLE entries.  */

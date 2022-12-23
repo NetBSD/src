@@ -1,6 +1,6 @@
 /* coff information for Zilog Z800N
    
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,3 +47,14 @@ struct external_reloc
 #define RELOC struct external_reloc
 #define RELSZ 16
 
+/* Z8k relocations.  */
+#define R_IMM16   0x01		/* 16 bit abs */
+#define R_JR      0x02		/* jr  8 bit disp */
+#define R_IMM32   0x11		/* 32 bit abs */
+#define R_IMM8    0x22		/* 8 bit abs */
+#define R_IMM4L   0x23		/* low nibble */
+#define R_REL16   0x04		/* 16 bit PC rel */
+#define R_CALLR   0x05		/* callr 12 bit disp */
+#define R_SEG     0x10		/* set if in segmented mode */
+#define R_IMM4H   0x24		/* high nibble */
+#define R_DISP7   0x25		/* djnz displacement */

@@ -1,5 +1,5 @@
 /* itbl-ops.c
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -272,7 +272,7 @@ itbl_init (void)
 	for (e = *es; e; e = e->next)
 	  {
 	    symbol_table_insert (symbol_create (e->name, reg_section,
-						e->value, &zero_address_frag));
+						&zero_address_frag, e->value));
 	  }
       }
   append_insns_as_macros ();

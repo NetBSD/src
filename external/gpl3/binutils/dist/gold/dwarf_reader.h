@@ -1,6 +1,6 @@
 // dwarf_reader.h -- parse dwarf2/3 debug information for gold  -*- C++ -*-
 
-// Copyright (C) 2007-2020 Free Software Foundation, Inc.
+// Copyright (C) 2007-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -173,11 +173,12 @@ class Dwarf_abbrev_table
   // An attribute list entry.
   struct Attribute
   {
-    Attribute(unsigned int a, unsigned int f)
-      : attr(a), form(f)
+    Attribute(unsigned int a, unsigned int f, int c)
+      : attr(a), form(f), implicit_const(c)
     { }
     unsigned int attr;
     unsigned int form;
+    int implicit_const;
   };
 
   // An abbrev code entry.
@@ -190,9 +191,9 @@ class Dwarf_abbrev_table
     }
 
     void
-    add_attribute(unsigned int attr, unsigned int form)
+    add_attribute(unsigned int attr, unsigned int form, int implicit_const)
     {
-      this->attributes.push_back(Attribute(attr, form));
+      this->attributes.push_back(Attribute(attr, form, implicit_const));
     }
 
     // The DWARF tag.
@@ -349,14 +350,15 @@ class Dwarf_ranges_table
       delete this->ranges_reloc_mapper_;
   }
 
-  // Read the ranges table from an object file.
+  // Fetch the contents of the ranges table from an object file.
   bool
   read_ranges_table(Relobj* object,
 		    const unsigned char* symtab,
 		    off_t symtab_size,
-		    unsigned int ranges_shndx);
+		    unsigned int ranges_shndx,
+		    unsigned int version);
 
-  // Read the range table from an object file.
+  // Read the DWARF 2/3/4 range table.
   Dwarf_range_list*
   read_range_list(Relobj* object,
 		  const unsigned char* symtab,
@@ -364,6 +366,15 @@ class Dwarf_ranges_table
 		  unsigned int address_size,
 		  unsigned int ranges_shndx,
 		  off_t ranges_offset);
+
+  // Read the DWARF 5 rnglists table.
+  Dwarf_range_list*
+  read_range_list_v5(Relobj* object,
+		     const unsigned char* symtab,
+		     off_t symtab_size,
+		     unsigned int address_size,
+		     unsigned int ranges_shndx,
+		     off_t ranges_offset);
 
   // Look for a relocation at offset OFF in the range table,
   // and return the section index and offset of the target.
@@ -490,8 +501,6 @@ class Dwarf_die
       unsigned int shndx;
       // Block length for block forms.
       unsigned int blocklen;
-      // Attribute offset for DW_FORM_strp.
-      unsigned int attr_off;
     } aux;
   };
 
@@ -684,6 +693,10 @@ class Dwarf_die
 // calls the various visit_xxx() methods for each header.  Clients
 // should derive a new class from this one and implement the
 // visit_compilation_unit() and visit_type_unit() functions.
+// IS_TYPE_UNIT is true if we are reading from a .debug_types section,
+// which is used only in DWARF 4. For DWARF 5, it will be false,
+// and we will determine whether it's a type init when we parse the
+// header.
 
 class Dwarf_info_reader
 {
@@ -695,7 +708,7 @@ class Dwarf_info_reader
 		    unsigned int shndx,
 		    unsigned int reloc_shndx,
 		    unsigned int reloc_type)
-    : is_type_unit_(is_type_unit), object_(object), symtab_(symtab),
+    : object_(object), symtab_(symtab),
       symtab_size_(symtab_size), shndx_(shndx), reloc_shndx_(reloc_shndx),
       reloc_type_(reloc_type), abbrev_shndx_(0), string_shndx_(0),
       buffer_(NULL), buffer_end_(NULL), cu_offset_(0), cu_length_(0),
@@ -703,7 +716,12 @@ class Dwarf_info_reader
       abbrev_table_(), ranges_table_(this),
       reloc_mapper_(NULL), string_buffer_(NULL), string_buffer_end_(NULL),
       owns_string_buffer_(false), string_output_section_offset_(0)
-  { }
+  {
+    // For DWARF 4, we infer the unit type from the section name.
+    // For DWARF 5, we will read this from the unit header.
+    this->unit_type_ =
+	(is_type_unit ? elfcpp::DW_UT_type : elfcpp::DW_UT_compile);
+  }
 
   virtual
   ~Dwarf_info_reader()
@@ -712,6 +730,13 @@ class Dwarf_info_reader
       delete this->reloc_mapper_;
     if (this->owns_string_buffer_ && this->string_buffer_ != NULL)
       delete[] this->string_buffer_;
+  }
+
+  bool
+  is_type_unit() const
+  {
+    return (this->unit_type_ == elfcpp::DW_UT_type
+	    || this->unit_type_ == elfcpp::DW_UT_split_type);
   }
 
   // Begin parsing the debug info.  This calls visit_compilation_unit()
@@ -744,6 +769,9 @@ class Dwarf_info_reader
   template <int valsize>
   inline typename elfcpp::Valtype_base<valsize>::Valtype
   read_from_pointer(const unsigned char** source);
+
+  inline typename elfcpp::Valtype_base<32>::Valtype
+  read_3bytes_from_pointer(const unsigned char** source);
 
   // Look for a relocation at offset ATTR_OFF in the dwarf info,
   // and return the section index and offset of the target.
@@ -818,12 +846,20 @@ class Dwarf_info_reader
   Dwarf_range_list*
   read_range_list(unsigned int ranges_shndx, off_t ranges_offset)
   {
-    return this->ranges_table_.read_range_list(this->object_,
-					       this->symtab_,
-					       this->symtab_size_,
-					       this->address_size_,
-					       ranges_shndx,
-					       ranges_offset);
+    if (this->cu_version_ < 5)
+      return this->ranges_table_.read_range_list(this->object_,
+						 this->symtab_,
+						 this->symtab_size_,
+						 this->address_size_,
+						 ranges_shndx,
+						 ranges_offset);
+    else
+      return this->ranges_table_.read_range_list_v5(this->object_,
+						    this->symtab_,
+						    this->symtab_size_,
+						    this->address_size_,
+						    ranges_shndx,
+						    ranges_offset);
   }
 
   // Return the object.
@@ -873,8 +909,8 @@ class Dwarf_info_reader
   bool
   do_read_string_table(unsigned int string_shndx);
 
-  // True if this is a type unit; false for a compilation unit.
-  bool is_type_unit_;
+  // The unit type (DW_UT_xxx).
+  unsigned int unit_type_;
   // The object containing the .debug_info or .debug_types input section.
   Relobj* object_;
   // The ELF symbol table.
@@ -1008,6 +1044,8 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   {
     if (this->buffer_start_ != NULL)
       delete[] this->buffer_start_;
+    if (this->str_buffer_start_ != NULL)
+      delete[] this->str_buffer_start_;
   }
 
  private:
@@ -1030,19 +1068,23 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   void
   read_relocs();
 
-  // Reads the DWARF2/3 header for this line info.  Each takes as input
+  // Reads the DWARF header for this line info.  Each takes as input
   // a starting buffer position, and returns the ending position.
   const unsigned char*
   read_header_prolog(const unsigned char* lineptr);
 
   const unsigned char*
-  read_header_tables(const unsigned char* lineptr);
+  read_header_tables_v2(const unsigned char* lineptr);
 
-  // Reads the DWARF2/3 line information.  If shndx is non-negative,
+  const unsigned char*
+  read_header_tables_v5(const unsigned char* lineptr);
+
+  // Reads the DWARF line information.  If shndx is non-negative,
   // discard all line information that doesn't pertain to the given
   // section.
   const unsigned char*
-  read_lines(const unsigned char* lineptr, unsigned int shndx);
+  read_lines(const unsigned char* lineptr, const unsigned char* endptr,
+	     unsigned int shndx);
 
   // Process a single line info opcode at START using the state
   // machine at LSM.  Return true if we should define a line using the
@@ -1069,6 +1111,7 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   {
     off_t total_length;
     int version;
+    int address_size;
     off_t prologue_length;
     int min_insn_length; // insn stands for instruction
     int max_ops_per_insn; // Added in DWARF-4.
@@ -1088,6 +1131,20 @@ class Sized_dwarf_line_info : public Dwarf_line_info
   // deallocated in the dtor, this contains a pointer to the start
   // of the buffer.
   const unsigned char* buffer_start_;
+
+  // str_buffer is the buffer for the line table strings.
+  const unsigned char* str_buffer_;
+  const unsigned char* str_buffer_end_;
+  // If the buffer was allocated temporarily, and therefore must be
+  // deallocated in the dtor, this contains a pointer to the start
+  // of the buffer.
+  const unsigned char* str_buffer_start_;
+
+  // Pointer to the end of the header_length field (aka prologue_length).
+  const unsigned char* end_of_header_length_;
+
+  // Pointer to the end of the current compilation unit.
+  const unsigned char* end_of_unit_;
 
   // This has relocations that point into buffer.
   Sized_elf_reloc_mapper<size, big_endian>* reloc_mapper_;

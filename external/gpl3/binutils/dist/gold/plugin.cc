@@ -1,6 +1,6 @@
 // plugin.cc -- plugin manager for gold      -*- C++ -*-
 
-// Copyright (C) 2008-2020 Free Software Foundation, Inc.
+// Copyright (C) 2008-2022 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -525,7 +525,7 @@ Plugin_recorder::init()
 
   size_t len = strlen(dir_template) + 1;
   char* tempdir = new char[len];
-  strncpy(tempdir, dir_template, len);
+  memcpy(tempdir, dir_template, len);
 
   // Create the log file.
   std::string logname(tempdir);
@@ -755,17 +755,17 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
     this->objects_.push_back(elf_object);
   this->in_claim_file_handler_ = true;
 
-  for (this->current_ = this->plugins_.begin();
-       this->current_ != this->plugins_.end();
-       ++this->current_)
+  for (Plugin_list::iterator p = this->plugins_.begin();
+       p != this->plugins_.end();
+       ++p)
     {
       // If we aren't yet in replacement phase, allow plugins to claim input
       // files, otherwise notify the plugin of the new input file, if needed.
       if (!this->in_replacement_phase_)
-        {
-          if ((*this->current_)->claim_file(&this->plugin_input_file_))
-            {
-              this->any_claimed_ = true;
+	{
+	  if ((*p)->claim_file(&this->plugin_input_file_))
+	    {
+	      this->any_claimed_ = true;
               this->in_claim_file_handler_ = false;
 
 	      if (this->recorder_ != NULL)
@@ -775,7 +775,7 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
 						: elf_object->name());
 		  this->recorder_->claimed_file(objname,
 						offset, filesize,
-						(*this->current_)->filename());
+						(*p)->filename());
 		}
 
               if (this->objects_.size() > handle
@@ -790,7 +790,7 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
         }
       else
         {
-          (*this->current_)->new_input(&this->plugin_input_file_);
+	  (*p)->new_input(&this->plugin_input_file_);
         }
     }
 
@@ -850,10 +850,10 @@ Plugin_manager::all_symbols_read(Workqueue* workqueue, Task* task,
   layout->script_options()->set_defsym_uses_in_real_elf(symtab);
   layout->script_options()->find_defsym_defs(this->defsym_defines_set_);
 
-  for (this->current_ = this->plugins_.begin();
-       this->current_ != this->plugins_.end();
-       ++this->current_)
-    (*this->current_)->all_symbols_read();
+  for (Plugin_list::iterator p = this->plugins_.begin();
+       p != this->plugins_.end();
+       ++p)
+    (*p)->all_symbols_read();
 
   if (this->any_added_)
     {
@@ -1028,10 +1028,10 @@ Plugin_manager::cleanup()
       close_all_descriptors();
     }
 
-  for (this->current_ = this->plugins_.begin();
-       this->current_ != this->plugins_.end();
-       ++this->current_)
-    (*this->current_)->cleanup();
+  for (Plugin_list::iterator p = this->plugins_.begin();
+       p != this->plugins_.end();
+       ++p)
+    (*p)->cleanup();
 }
 
 // Make a new Pluginobj object.  This is called when the plugin calls
@@ -1397,7 +1397,6 @@ Sized_pluginobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
 {
   const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
   unsigned char symbuf[sym_size];
-  elfcpp::Sym<size, big_endian> sym(symbuf);
   elfcpp::Sym_write<size, big_endian> osym(symbuf);
 
   Plugin_recorder* recorder = parameters->options().plugins()->recorder();
@@ -1480,6 +1479,7 @@ Sized_pluginobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
       osym.put_st_other(vis, 0);
       osym.put_st_shndx(shndx);
 
+      elfcpp::Sym<size, big_endian> sym(symbuf);
       this->symbols_[i] =
         symtab->add_from_pluginobj<size, big_endian>(this, name, ver, &sym);
     }

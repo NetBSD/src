@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright (C) 2007-2020 Free Software Foundation, Inc.
+// Copyright (C) 2007-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+#include "debug.h"
 #include "elfcpp_swap.h"
 #include "dwarf.h"
 #include "object.h"
@@ -275,6 +276,14 @@ Dwarf_abbrev_table::do_get_abbrev(unsigned int code)
 	  uint64_t form = read_unsigned_LEB_128(this->buffer_pos_, &len);
 	  this->buffer_pos_ += len;
 
+	  // For DW_FORM_implicit_const, read the constant.
+	  int64_t implicit_const = 0;
+	  if (form == elfcpp::DW_FORM_implicit_const)
+	    {
+	      implicit_const = read_signed_LEB_128(this->buffer_pos_, &len);
+	      this->buffer_pos_ += len;
+	    }
+
 	  // A (0,0) pair terminates the list.
 	  if (attr == 0 && form == 0)
 	    break;
@@ -282,7 +291,7 @@ Dwarf_abbrev_table::do_get_abbrev(unsigned int code)
 	  if (attr == elfcpp::DW_AT_sibling)
 	    entry->has_sibling_attribute = true;
 
-	  entry->add_attribute(attr, form);
+	  entry->add_attribute(attr, form, implicit_const);
 	}
 
       this->store_abbrev(nextcode, entry);
@@ -302,8 +311,16 @@ Dwarf_ranges_table::read_ranges_table(
     Relobj* object,
     const unsigned char* symtab,
     off_t symtab_size,
-    unsigned int ranges_shndx)
+    unsigned int ranges_shndx,
+    unsigned int version)
 {
+  const std::string section_name(version < 5
+				 ? ".debug_ranges"
+				 : ".debug_rnglists");
+  const std::string compressed_section_name(version < 5
+					    ? ".zdebug_ranges"
+					    : ".zdebug_rnglists");
+
   // If we've already read this abbrev table, return immediately.
   if (this->ranges_shndx_ > 0
       && this->ranges_shndx_ == ranges_shndx)
@@ -318,7 +335,7 @@ Dwarf_ranges_table::read_ranges_table(
       for (unsigned int i = 1; i < object->shnum(); ++i)
 	{
 	  std::string name = object->section_name(i);
-	  if (name == ".debug_ranges" || name == ".zdebug_ranges")
+	  if (name == section_name || name == compressed_section_name)
 	    {
 	      ranges_shndx = i;
 	      this->output_section_offset_ = object->output_section_offset(i);
@@ -393,7 +410,7 @@ Dwarf_ranges_table::read_range_list(
 {
   Dwarf_range_list* ranges;
 
-  if (!this->read_ranges_table(object, symtab, symtab_size, ranges_shndx))
+  if (!this->read_ranges_table(object, symtab, symtab_size, ranges_shndx, 4))
     return NULL;
 
   // Correct the offset.  For incremental update links, we have a
@@ -454,6 +471,125 @@ Dwarf_ranges_table::read_range_list(
 	gold_warning(_("%s: DWARF info may be corrupt; offsets in a "
 		       "range list entry are in different sections"),
 		     object->name().c_str());
+    }
+
+  return ranges;
+}
+
+// Read a DWARF 5 range list from section RANGES_SHNDX at offset RANGES_OFFSET.
+
+Dwarf_range_list*
+Dwarf_ranges_table::read_range_list_v5(
+    Relobj* object,
+    const unsigned char* symtab,
+    off_t symtab_size,
+    unsigned int addr_size,
+    unsigned int ranges_shndx,
+    off_t offset)
+{
+  Dwarf_range_list* ranges;
+
+  if (!this->read_ranges_table(object, symtab, symtab_size, ranges_shndx, 5))
+    return NULL;
+
+  ranges = new Dwarf_range_list();
+  off_t base = 0;
+  unsigned int shndx0 = 0;
+
+  // Correct the offset.  For incremental update links, we have a
+  // relocated offset that is relative to the output section, but
+  // here we need an offset relative to the input section.
+  offset -= this->output_section_offset_;
+
+  // Read the range list at OFFSET.
+  const unsigned char* prle = this->ranges_buffer_ + offset;
+  while (prle < this->ranges_buffer_end_)
+    {
+      off_t start;
+      off_t end;
+      unsigned int shndx1 = 0;
+      unsigned int shndx2 = 0;
+      size_t len;
+
+      // Read the entry type.
+      unsigned int rle_type = *prle++;
+      offset += 1;
+
+      if (rle_type == elfcpp::DW_RLE_end_of_list)
+	break;
+
+      switch (rle_type)
+	{
+	  case elfcpp::DW_RLE_base_address:
+	    if (addr_size == 4)
+	      base = this->dwinfo_->read_from_pointer<32>(prle);
+	    else
+	      base = this->dwinfo_->read_from_pointer<64>(prle);
+	    if (this->ranges_reloc_mapper_ != NULL)
+		shndx0 = this->lookup_reloc(offset, &base);
+	    prle += addr_size;
+	    offset += addr_size;
+	    break;
+
+	  case elfcpp::DW_RLE_offset_pair:
+	    start = read_unsigned_LEB_128(prle, &len);
+	    prle += len;
+	    offset += len;
+	    end = read_unsigned_LEB_128(prle, &len);
+	    prle += len;
+	    offset += len;
+	    if (shndx0 == 0 || object->is_section_included(shndx0))
+	      ranges->add(shndx0, base + start, base + end);
+	    break;
+
+	  case elfcpp::DW_RLE_start_end:
+	    if (addr_size == 4)
+	      {
+		start = this->dwinfo_->read_from_pointer<32>(prle);
+		end = this->dwinfo_->read_from_pointer<32>(prle + 4);
+	      }
+	    else
+	      {
+		start = this->dwinfo_->read_from_pointer<64>(prle);
+		end = this->dwinfo_->read_from_pointer<64>(prle + 8);
+	      }
+	    if (this->ranges_reloc_mapper_ != NULL)
+	      {
+		shndx1 = this->lookup_reloc(offset, &start);
+		shndx2 = this->lookup_reloc(offset + addr_size, &end);
+		if (shndx1 != shndx2)
+		  gold_warning(_("%s: DWARF info may be corrupt; offsets in a "
+				 "range list entry are in different sections"),
+			       object->name().c_str());
+	      }
+	    prle += addr_size * 2;
+	    offset += addr_size * 2;
+	    if (shndx1 == 0 || object->is_section_included(shndx1))
+	      ranges->add(shndx1, start, end);
+	    break;
+
+	  case elfcpp::DW_RLE_start_length:
+	    if (addr_size == 4)
+	      start = this->dwinfo_->read_from_pointer<32>(prle);
+	    else
+	      start = this->dwinfo_->read_from_pointer<64>(prle);
+	    if (this->ranges_reloc_mapper_ != NULL)
+	      shndx1 = this->lookup_reloc(offset, &start);
+	    prle += addr_size;
+	    offset += addr_size;
+	    end = start + read_unsigned_LEB_128(prle, &len);
+	    prle += len;
+	    offset += len;
+	    if (shndx1 == 0 || object->is_section_included(shndx1))
+	      ranges->add(shndx1, start, end);
+	    break;
+
+	  default:
+	    gold_warning(_("%s: DWARF range list contains "
+			   "unsupported entry type (%d)"),
+			 object->name().c_str(), rle_type);
+	    break;
+	}
     }
 
   return ranges;
@@ -709,7 +845,13 @@ Dwarf_die::read_attributes()
 	  case elfcpp::DW_FORM_flag_present:
 	    attr_value.val.intval = 1;
 	    break;
+	  case elfcpp::DW_FORM_implicit_const:
+	    attr_value.val.intval =
+		this->abbrev_code_->attributes[i].implicit_const;
+	    break;
 	  case elfcpp::DW_FORM_strp:
+	  case elfcpp::DW_FORM_strp_sup:
+	  case elfcpp::DW_FORM_line_strp:
 	    {
 	      off_t str_off;
 	      if (this->dwinfo_->offset_size() == 4)
@@ -722,6 +864,26 @@ Dwarf_die::read_attributes()
 	      attr_value.val.refval = str_off;
 	      break;
 	    }
+	  case elfcpp::DW_FORM_strx:
+	  case elfcpp::DW_FORM_GNU_str_index:
+	    attr_value.val.uintval = read_unsigned_LEB_128(pattr, &len);
+	    pattr += len;
+	    break;
+	  case elfcpp::DW_FORM_strx1:
+	    attr_value.val.uintval = *pattr++;
+	    break;
+	  case elfcpp::DW_FORM_strx2:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_from_pointer<16>(&pattr);
+	    break;
+	  case elfcpp::DW_FORM_strx3:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_3bytes_from_pointer(&pattr);
+	    break;
+	  case elfcpp::DW_FORM_strx4:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_from_pointer<32>(&pattr);
+	    break;
 	  case elfcpp::DW_FORM_sec_offset:
 	    {
 	      off_t sec_off;
@@ -747,7 +909,6 @@ Dwarf_die::read_attributes()
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
 	      attr_value.val.refval = sec_off;
-	      ref_form = true;
 	      break;
 	    }
 	  case elfcpp::DW_FORM_ref_addr:
@@ -815,6 +976,7 @@ Dwarf_die::read_attributes()
 	      break;
 	    }
 	  case elfcpp::DW_FORM_ref4:
+	  case elfcpp::DW_FORM_ref_sup4:
 	    {
 	      off_t sec_off;
 	      sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
@@ -835,11 +997,20 @@ Dwarf_die::read_attributes()
 	      attr_value.val.intval = sec_off;
 	      break;
 	    }
+	  case elfcpp::DW_FORM_data16:
+	    {
+	      // For now, treat this as a 16-byte block.
+	      attr_value.val.blockval = pattr;
+	      attr_value.aux.blocklen = 16;
+	      pattr += 16;
+	      break;
+	    }
 	  case elfcpp::DW_FORM_ref_sig8:
 	    attr_value.val.uintval =
 		this->dwinfo_->read_from_pointer<64>(&pattr);
 	    break;
 	  case elfcpp::DW_FORM_ref8:
+	  case elfcpp::DW_FORM_ref_sup8:
 	    {
 	      off_t sec_off;
 	      sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
@@ -856,10 +1027,28 @@ Dwarf_die::read_attributes()
 	    pattr += len;
 	    break;
 	  case elfcpp::DW_FORM_udata:
-	  case elfcpp::DW_FORM_GNU_addr_index:
-	  case elfcpp::DW_FORM_GNU_str_index:
 	    attr_value.val.uintval = read_unsigned_LEB_128(pattr, &len);
 	    pattr += len;
+	    break;
+	  case elfcpp::DW_FORM_addrx:
+	  case elfcpp::DW_FORM_GNU_addr_index:
+	    attr_value.val.uintval = read_unsigned_LEB_128(pattr, &len);
+	    pattr += len;
+	    break;
+	  case elfcpp::DW_FORM_addrx1:
+	    attr_value.val.uintval = *pattr++;
+	    break;
+	  case elfcpp::DW_FORM_addrx2:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_from_pointer<16>(&pattr);
+	    break;
+	  case elfcpp::DW_FORM_addrx3:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_3bytes_from_pointer(&pattr);
+	    break;
+	  case elfcpp::DW_FORM_addrx4:
+	    attr_value.val.uintval =
+		this->dwinfo_->read_from_pointer<32>(&pattr);
 	    break;
 	  case elfcpp::DW_FORM_sdata:
 	    attr_value.val.intval = read_signed_LEB_128(pattr, &len);
@@ -869,6 +1058,11 @@ Dwarf_die::read_attributes()
 	    attr_value.val.stringval = reinterpret_cast<const char*>(pattr);
 	    len = strlen(attr_value.val.stringval);
 	    pattr += len + 1;
+	    break;
+	  case elfcpp::DW_FORM_loclistx:
+	  case elfcpp::DW_FORM_rnglistx:
+	    attr_value.val.uintval = read_unsigned_LEB_128(pattr, &len);
+	    pattr += len;
 	    break;
 	  default:
 	    return false;
@@ -954,9 +1148,12 @@ Dwarf_die::skip_attributes()
       switch(form)
 	{
 	  case elfcpp::DW_FORM_flag_present:
+	  case elfcpp::DW_FORM_implicit_const:
 	    break;
 	  case elfcpp::DW_FORM_strp:
 	  case elfcpp::DW_FORM_sec_offset:
+	  case elfcpp::DW_FORM_strp_sup:
+	  case elfcpp::DW_FORM_line_strp:
 	    pattr += this->dwinfo_->offset_size();
 	    break;
 	  case elfcpp::DW_FORM_addr:
@@ -993,23 +1190,42 @@ Dwarf_die::skip_attributes()
 	  case elfcpp::DW_FORM_data1:
 	  case elfcpp::DW_FORM_ref1:
 	  case elfcpp::DW_FORM_flag:
+	  case elfcpp::DW_FORM_strx1:
+	  case elfcpp::DW_FORM_addrx1:
 	    pattr += 1;
 	    break;
 	  case elfcpp::DW_FORM_data2:
 	  case elfcpp::DW_FORM_ref2:
+	  case elfcpp::DW_FORM_strx2:
+	  case elfcpp::DW_FORM_addrx2:
 	    pattr += 2;
+	    break;
+	  case elfcpp::DW_FORM_strx3:
+	  case elfcpp::DW_FORM_addrx3:
+	    pattr += 3;
 	    break;
 	  case elfcpp::DW_FORM_data4:
 	  case elfcpp::DW_FORM_ref4:
+	  case elfcpp::DW_FORM_ref_sup4:
+	  case elfcpp::DW_FORM_strx4:
+	  case elfcpp::DW_FORM_addrx4:
 	    pattr += 4;
 	    break;
 	  case elfcpp::DW_FORM_data8:
 	  case elfcpp::DW_FORM_ref8:
 	  case elfcpp::DW_FORM_ref_sig8:
+	  case elfcpp::DW_FORM_ref_sup8:
 	    pattr += 8;
+	    break;
+	  case elfcpp::DW_FORM_data16:
+	    pattr += 16;
 	    break;
 	  case elfcpp::DW_FORM_ref_udata:
 	  case elfcpp::DW_FORM_udata:
+	  case elfcpp::DW_FORM_addrx:
+	  case elfcpp::DW_FORM_strx:
+	  case elfcpp::DW_FORM_loclistx:
+	  case elfcpp::DW_FORM_rnglistx:
 	  case elfcpp::DW_FORM_GNU_addr_index:
 	  case elfcpp::DW_FORM_GNU_str_index:
 	    read_unsigned_LEB_128(pattr, &len);
@@ -1313,6 +1529,13 @@ Dwarf_info_reader::do_parse()
 	  elfcpp::Swap_unaligned<16, big_endian>::readval(pinfo);
       pinfo += 2;
 
+      // DWARF 5: Read the unit type (1 byte) and address size (1 byte).
+      if (this->cu_version_ >= 5)
+	{
+	  this->unit_type_ = *pinfo++;
+	  this->address_size_ = *pinfo++;
+	}
+
       // Read debug_abbrev_offset (4 or 8 bytes).
       if (this->offset_size_ == 4)
 	abbrev_offset = elfcpp::Swap_unaligned<32, big_endian>::readval(pinfo);
@@ -1333,13 +1556,14 @@ Dwarf_info_reader::do_parse()
 	}
       pinfo += this->offset_size_;
 
-      // Read address_size (1 byte).
-      this->address_size_ = *pinfo++;
+      // DWARF 2-4: Read address_size (1 byte).
+      if (this->cu_version_ < 5)
+	this->address_size_ = *pinfo++;
 
       // For type units, read the two extra fields.
       uint64_t signature = 0;
       off_t type_offset = 0;
-      if (this->is_type_unit_)
+      if (this->is_type_unit())
         {
 	  if (!this->check_buffer(pinfo + 8 + this->offset_size_))
 	    break;
@@ -1369,7 +1593,7 @@ Dwarf_info_reader::do_parse()
       if (root_die.tag() != 0)
 	{
 	  // Visit the CU or TU.
-	  if (this->is_type_unit_)
+	  if (this->is_type_unit())
 	    this->visit_type_unit(section_offset + this->cu_offset_,
 				  cu_end - cu_start, type_offset, signature,
 				  &root_die);
@@ -1457,6 +1681,19 @@ Dwarf_info_reader::read_from_pointer(const unsigned char** source)
   else
     return_value = elfcpp::Swap_unaligned<valsize, false>::readval(*source);
   *source += valsize / 8;
+  return return_value;
+}
+
+// Read a 3-byte integer.  Update SOURCE after read.
+inline typename elfcpp::Valtype_base<32>::Valtype
+Dwarf_info_reader::read_3bytes_from_pointer(const unsigned char** source)
+{
+  typename elfcpp::Valtype_base<32>::Valtype return_value;
+  if (this->object_->is_big_endian())
+    return_value = ((*source)[0] << 16) | ((*source)[1] << 8) | (*source)[2];
+  else
+    return_value = ((*source)[2] << 16) | ((*source)[1] << 8) | (*source)[0];
+  *source += 3;
   return return_value;
 }
 
@@ -1561,27 +1798,40 @@ Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(
     Object* object,
     unsigned int read_shndx)
   : data_valid_(false), buffer_(NULL), buffer_start_(NULL),
+    str_buffer_(NULL), str_buffer_start_(NULL),
     reloc_mapper_(NULL), symtab_buffer_(NULL), directories_(), files_(),
-    current_header_index_(-1)
+    current_header_index_(-1), reloc_map_(), line_number_map_()
 {
-  unsigned int debug_shndx;
+  unsigned int debug_line_shndx = 0;
+  unsigned int debug_line_str_shndx = 0;
 
-  for (debug_shndx = 1; debug_shndx < object->shnum(); ++debug_shndx)
+  for (unsigned int i = 1; i < object->shnum(); ++i)
     {
+      section_size_type buffer_size;
+      bool is_new = false;
+
       // FIXME: do this more efficiently: section_name() isn't super-fast
-      std::string name = object->section_name(debug_shndx);
+      std::string name = object->section_name(i);
       if (name == ".debug_line" || name == ".zdebug_line")
 	{
-	  section_size_type buffer_size;
-	  bool is_new = false;
-	  this->buffer_ = object->decompressed_section_contents(debug_shndx,
-								&buffer_size,
-								&is_new);
+	  this->buffer_ =
+	      object->decompressed_section_contents(i, &buffer_size, &is_new);
 	  if (is_new)
 	    this->buffer_start_ = this->buffer_;
 	  this->buffer_end_ = this->buffer_ + buffer_size;
-	  break;
+	  debug_line_shndx = i;
 	}
+      else if (name == ".debug_line_str" || name == ".zdebug_line_str")
+	{
+	  this->str_buffer_ =
+	      object->decompressed_section_contents(i, &buffer_size, &is_new);
+	  if (is_new)
+	    this->str_buffer_start_ = this->str_buffer_;
+	  this->str_buffer_end_ = this->str_buffer_ + buffer_size;
+	  debug_line_str_shndx = i;
+	}
+      if (debug_line_shndx > 0 && debug_line_str_shndx > 0)
+        break;
     }
   if (this->buffer_ == NULL)
     return;
@@ -1594,7 +1844,7 @@ Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(
       unsigned int reloc_sh_type = object->section_type(i);
       if ((reloc_sh_type == elfcpp::SHT_REL
 	   || reloc_sh_type == elfcpp::SHT_RELA)
-	  && object->section_info(i) == debug_shndx)
+	  && object->section_info(i) == debug_line_shndx)
 	{
 	  reloc_shndx = i;
 	  this->track_relocs_type_ = reloc_sh_type;
@@ -1640,61 +1890,80 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
   uint32_t initial_length = elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
   lineptr += 4;
 
-  // In DWARF2/3, if the initial length is all 1 bits, then the offset
+  // In DWARF, if the initial length is all 1 bits, then the offset
   // size is 8 and we need to read the next 8 bytes for the real length.
   if (initial_length == 0xffffffff)
     {
-      header_.offset_size = 8;
+      this->header_.offset_size = 8;
       initial_length = elfcpp::Swap_unaligned<64, big_endian>::readval(lineptr);
       lineptr += 8;
     }
   else
-    header_.offset_size = 4;
+    this->header_.offset_size = 4;
 
-  header_.total_length = initial_length;
+  this->header_.total_length = initial_length;
 
-  gold_assert(lineptr + header_.total_length <= buffer_end_);
+  this->end_of_unit_ = lineptr + initial_length;
+  gold_assert(this->end_of_unit_ <= buffer_end_);
 
-  header_.version = elfcpp::Swap_unaligned<16, big_endian>::readval(lineptr);
+  this->header_.version =
+      elfcpp::Swap_unaligned<16, big_endian>::readval(lineptr);
   lineptr += 2;
 
-  if (header_.offset_size == 4)
-    header_.prologue_length = elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
-  else
-    header_.prologue_length = elfcpp::Swap_unaligned<64, big_endian>::readval(lineptr);
-  lineptr += header_.offset_size;
+  // We can only read versions 2-5 of the DWARF line number table.
+  // For other versions, just skip the entire line number table.
+  if (this->header_.version < 2 || this->header_.version > 5)
+    return this->end_of_unit_;
 
-  header_.min_insn_length = *lineptr;
+  // DWARF 5 only: address size and segment selector.
+  if (this->header_.version >= 5)
+    {
+      this->header_.address_size = *lineptr;
+      // We ignore the segment selector.
+      lineptr += 2;
+    }
+
+  if (this->header_.offset_size == 4)
+    this->header_.prologue_length =
+	elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
+  else
+    this->header_.prologue_length =
+	elfcpp::Swap_unaligned<64, big_endian>::readval(lineptr);
+  lineptr += this->header_.offset_size;
+
+  this->end_of_header_length_ = lineptr;
+
+  this->header_.min_insn_length = *lineptr;
   lineptr += 1;
 
-  if (header_.version < 4)
-    header_.max_ops_per_insn = 1;
+  if (this->header_.version < 4)
+    this->header_.max_ops_per_insn = 1;
   else
     {
       // DWARF 4 added the maximum_operations_per_instruction field.
-      header_.max_ops_per_insn = *lineptr;
+      this->header_.max_ops_per_insn = *lineptr;
       lineptr += 1;
       // TODO: Add support for values other than 1.
-      gold_assert(header_.max_ops_per_insn == 1);
+      gold_assert(this->header_.max_ops_per_insn == 1);
     }
 
-  header_.default_is_stmt = *lineptr;
+  this->header_.default_is_stmt = *lineptr;
   lineptr += 1;
 
-  header_.line_base = *reinterpret_cast<const signed char*>(lineptr);
+  this->header_.line_base = *reinterpret_cast<const signed char*>(lineptr);
   lineptr += 1;
 
-  header_.line_range = *lineptr;
+  this->header_.line_range = *lineptr;
   lineptr += 1;
 
-  header_.opcode_base = *lineptr;
+  this->header_.opcode_base = *lineptr;
   lineptr += 1;
 
-  header_.std_opcode_lengths.resize(header_.opcode_base + 1);
-  header_.std_opcode_lengths[0] = 0;
-  for (int i = 1; i < header_.opcode_base; i++)
+  this->header_.std_opcode_lengths.resize(this->header_.opcode_base + 1);
+  this->header_.std_opcode_lengths[0] = 0;
+  for (int i = 1; i < this->header_.opcode_base; i++)
     {
-      header_.std_opcode_lengths[i] = *lineptr;
+      this->header_.std_opcode_lengths[i] = *lineptr;
       lineptr += 1;
     }
 
@@ -1703,10 +1972,11 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
 
 // The header for a debug_line section is mildly complicated, because
 // the line info is very tightly encoded.
+// This routine is for DWARF versions 2, 3, and 4.
 
 template<int size, bool big_endian>
 const unsigned char*
-Sized_dwarf_line_info<size, big_endian>::read_header_tables(
+Sized_dwarf_line_info<size, big_endian>::read_header_tables_v2(
     const unsigned char* lineptr)
 {
   ++this->current_header_index_;
@@ -1771,6 +2041,169 @@ Sized_dwarf_line_info<size, big_endian>::read_header_tables(
   return lineptr;
 }
 
+// This routine is for DWARF version 5.
+
+template<int size, bool big_endian>
+const unsigned char*
+Sized_dwarf_line_info<size, big_endian>::read_header_tables_v5(
+    const unsigned char* lineptr)
+{
+  size_t len;
+
+  ++this->current_header_index_;
+
+  gold_assert(static_cast<int>(this->directories_.size())
+	      == this->current_header_index_);
+  gold_assert(static_cast<int>(this->files_.size())
+	      == this->current_header_index_);
+
+  // Read the directory list.
+  unsigned int format_count = *lineptr;
+  lineptr += 1;
+
+  unsigned int *types = new unsigned int[format_count];
+  unsigned int *forms = new unsigned int[format_count];
+
+  for (unsigned int i = 0; i < format_count; i++)
+    {
+      types[i] = read_unsigned_LEB_128(lineptr, &len);
+      lineptr += len;
+      forms[i] = read_unsigned_LEB_128(lineptr, &len);
+      lineptr += len;
+    }
+
+  uint64_t entry_count = read_unsigned_LEB_128(lineptr, &len);
+  lineptr += len;
+  this->directories_.push_back(std::vector<std::string>(0));
+  std::vector<std::string>& dir_list = this->directories_.back();
+
+  for (unsigned int j = 0; j < entry_count; j++)
+    {
+      std::string dirname;
+
+      for (unsigned int i = 0; i < format_count; i++)
+       {
+	 if (types[i] == elfcpp::DW_LNCT_path)
+	   {
+	     if (forms[i] == elfcpp::DW_FORM_string)
+	       {
+		 dirname = reinterpret_cast<const char*>(lineptr);
+		 lineptr += dirname.size() + 1;
+	       }
+	     else if (forms[i] == elfcpp::DW_FORM_line_strp)
+	       {
+		 uint64_t offset;
+		 if (this->header_.offset_size == 4)
+		   offset =
+		       elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
+		 else
+		   offset =
+		       elfcpp::Swap_unaligned<64, big_endian>::readval(lineptr);
+		 typename Reloc_map::const_iterator it
+		     = this->reloc_map_.find(lineptr - this->buffer_);
+		 if (it != reloc_map_.end())
+		   {
+		     if (this->track_relocs_type_ == elfcpp::SHT_RELA)
+		       offset = 0;
+		     offset += it->second.second;
+		   }
+		 lineptr += this->header_.offset_size;
+		 dirname = reinterpret_cast<const char*>(this->str_buffer_
+							 + offset);
+	       }
+	     else
+	       return lineptr;
+	   }
+	 else
+	   return lineptr;
+       }
+      dir_list.push_back(dirname);
+    }
+
+  delete[] types;
+  delete[] forms;
+
+  // Read the filenames list.
+  format_count = *lineptr;
+  lineptr += 1;
+
+  types = new unsigned int[format_count];
+  forms = new unsigned int[format_count];
+
+  for (unsigned int i = 0; i < format_count; i++)
+    {
+      types[i] = read_unsigned_LEB_128(lineptr, &len);
+      lineptr += len;
+      forms[i] = read_unsigned_LEB_128(lineptr, &len);
+      lineptr += len;
+    }
+
+  entry_count = read_unsigned_LEB_128(lineptr, &len);
+  lineptr += len;
+  this->files_.push_back(
+      std::vector<std::pair<int, std::string> >(0));
+  std::vector<std::pair<int, std::string> >& file_list = this->files_.back();
+
+  for (unsigned int j = 0; j < entry_count; j++)
+    {
+      const char* path = NULL;
+      int dirindex = 0;
+
+      for (unsigned int i = 0; i < format_count; i++)
+       {
+	 if (types[i] == elfcpp::DW_LNCT_path)
+	   {
+	     if (forms[i] == elfcpp::DW_FORM_string)
+	       {
+		 path = reinterpret_cast<const char*>(lineptr);
+		 lineptr += strlen(path) + 1;
+	       }
+	     else if (forms[i] == elfcpp::DW_FORM_line_strp)
+	       {
+		 uint64_t offset;
+		 if (this->header_.offset_size == 4)
+		   offset = elfcpp::Swap_unaligned<32, big_endian>::readval(lineptr);
+		 else
+		   offset = elfcpp::Swap_unaligned<64, big_endian>::readval(lineptr);
+		 typename Reloc_map::const_iterator it
+		     = this->reloc_map_.find(lineptr - this->buffer_);
+		 if (it != reloc_map_.end())
+		   {
+		     if (this->track_relocs_type_ == elfcpp::SHT_RELA)
+		       offset = 0;
+		     offset += it->second.second;
+		   }
+		 lineptr += this->header_.offset_size;
+		 path = reinterpret_cast<const char*>(this->str_buffer_
+						      + offset);
+	       }
+	     else
+	       return lineptr;
+	   }
+	 else if (types[i] == elfcpp::DW_LNCT_directory_index)
+	   {
+	     if (forms[i] == elfcpp::DW_FORM_udata)
+	       {
+		 dirindex = read_unsigned_LEB_128(lineptr, &len);
+		 lineptr += len;
+	       }
+	     else
+	       return lineptr;
+	   }
+	 else
+	   return lineptr;
+       }
+      gold_debug(DEBUG_LOCATION, "File %3d: %s",
+		 static_cast<int>(file_list.size()), path);
+      file_list.push_back(std::make_pair(dirindex, path));
+    }
+
+  delete[] types;
+  delete[] forms;
+
+  return lineptr;
+}
+
 // Process a single opcode in the .debug.line structure.
 
 template<int size, bool big_endian>
@@ -1786,15 +2219,15 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
 
   // If the opcode is great than the opcode_base, it is a special
   // opcode. Most line programs consist mainly of special opcodes.
-  if (opcode >= header_.opcode_base)
+  if (opcode >= this->header_.opcode_base)
     {
-      opcode -= header_.opcode_base;
-      const int advance_address = ((opcode / header_.line_range)
-                                   * header_.min_insn_length);
+      opcode -= this->header_.opcode_base;
+      const int advance_address = ((opcode / this->header_.line_range)
+                                   * this->header_.min_insn_length);
       lsm->address += advance_address;
 
-      const int advance_line = ((opcode % header_.line_range)
-                                + header_.line_base);
+      const int advance_line = ((opcode % this->header_.line_range)
+                                + this->header_.line_base);
       lsm->line_num += advance_line;
       lsm->basic_block = true;
       *len = oplen;
@@ -1814,13 +2247,13 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
         const uint64_t advance_address
             = read_unsigned_LEB_128(start, &templen);
         oplen += templen;
-        lsm->address += header_.min_insn_length * advance_address;
+        lsm->address += this->header_.min_insn_length * advance_address;
       }
       break;
 
     case elfcpp::DW_LNS_advance_line:
       {
-        const uint64_t advance_line = read_signed_LEB_128(start, &templen);
+        const int64_t advance_line = read_signed_LEB_128(start, &templen);
         oplen += templen;
         lsm->line_num += advance_line;
       }
@@ -1861,9 +2294,9 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
 
     case elfcpp::DW_LNS_const_add_pc:
       {
-        const int advance_address = (header_.min_insn_length
-                                     * ((255 - header_.opcode_base)
-                                        / header_.line_range));
+        const int advance_address = (this->header_.min_insn_length
+                                     * ((255 - this->header_.opcode_base)
+                                        / this->header_.line_range));
         lsm->address += advance_address;
       }
       break;
@@ -1946,7 +2379,7 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
     default:
       {
         // Ignore unknown opcode  silently
-        for (int i = 0; i < header_.std_opcode_lengths[opcode]; i++)
+        for (int i = 0; i < this->header_.std_opcode_lengths[opcode]; i++)
           {
             size_t templen;
             read_unsigned_LEB_128(start, &templen);
@@ -1966,28 +2399,24 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
 template<int size, bool big_endian>
 unsigned const char*
 Sized_dwarf_line_info<size, big_endian>::read_lines(unsigned const char* lineptr,
+                                                    unsigned const char* endptr,
                                                     unsigned int shndx)
 {
   struct LineStateMachine lsm;
 
-  // LENGTHSTART is the place the length field is based on.  It is the
-  // point in the header after the initial length field.
-  const unsigned char* lengthstart = buffer_;
-
-  // In 64 bit dwarf, the initial length is 12 bytes, because of the
-  // 0xffffffff at the start.
-  if (header_.offset_size == 8)
-    lengthstart += 12;
-  else
-    lengthstart += 4;
-
-  while (lineptr < lengthstart + header_.total_length)
+  while (lineptr < endptr)
     {
-      ResetLineStateMachine(&lsm, header_.default_is_stmt);
+      ResetLineStateMachine(&lsm, this->header_.default_is_stmt);
       while (!lsm.end_sequence)
         {
           size_t oplength;
+
+	  if (lineptr >= endptr)
+	    break;
+
           bool add_line = this->process_one_opcode(lineptr, &lsm, &oplength);
+          lineptr += oplength;
+
           if (add_line
               && (shndx == -1U || lsm.shndx == -1U || shndx == lsm.shndx))
             {
@@ -2008,11 +2437,10 @@ Sized_dwarf_line_info<size, big_endian>::read_lines(unsigned const char* lineptr
 		map.back().last_line_for_offset = false;
 	      map.push_back(entry);
             }
-          lineptr += oplength;
         }
     }
 
-  return lengthstart + header_.total_length;
+  return endptr;
 }
 
 // Read the relocations into a Reloc_map.
@@ -2053,9 +2481,17 @@ Sized_dwarf_line_info<size, big_endian>::read_line_mappings(unsigned int shndx)
     {
       const unsigned char* lineptr = this->buffer_;
       lineptr = this->read_header_prolog(lineptr);
-      lineptr = this->read_header_tables(lineptr);
-      lineptr = this->read_lines(lineptr, shndx);
-      this->buffer_ = lineptr;
+      if (this->header_.version >= 2 && this->header_.version <= 4)
+	{
+	  lineptr = this->read_header_tables_v2(lineptr);
+	  lineptr = this->read_lines(lineptr, this->end_of_unit_, shndx);
+	}
+      else if (this->header_.version == 5)
+	{
+	  lineptr = this->read_header_tables_v5(lineptr);
+	  lineptr = this->read_lines(lineptr, this->end_of_unit_, shndx);
+	}
+      this->buffer_ = this->end_of_unit_;
     }
 
   // Sort the lines numbers, so addr2line can use binary search.
@@ -2211,6 +2647,9 @@ Sized_dwarf_line_info<size, big_endian>::do_addr2line(
     off_t offset,
     std::vector<std::string>* other_lines)
 {
+  gold_debug(DEBUG_LOCATION, "do_addr2line: shndx %u offset %08x",
+	     shndx, static_cast<int>(offset));
+
   if (this->data_valid_ == false)
     return "";
 

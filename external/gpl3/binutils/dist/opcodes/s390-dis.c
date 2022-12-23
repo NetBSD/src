@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -65,11 +65,11 @@ disassemble_init_s390 (struct disassemble_info *info)
 
   for (p = info->disassembler_options; p != NULL; )
     {
-      if (CONST_STRNEQ (p, "esa"))
+      if (startswith (p, "esa"))
 	current_arch_mask = 1 << S390_OPCODE_ESA;
-      else if (CONST_STRNEQ (p, "zarch"))
+      else if (startswith (p, "zarch"))
 	current_arch_mask = 1 << S390_OPCODE_ZARCH;
-      else if (CONST_STRNEQ (p, "insnlength"))
+      else if (startswith (p, "insnlength"))
 	option_use_insn_len_bits_p = 1;
       else
 	/* xgettext:c-format */
@@ -186,7 +186,8 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
   char separator;
 
   /* Mnemonic.  */
-  info->fprintf_func (info->stream, "%s", opcode->name);
+  info->fprintf_styled_func (info->stream, dis_style_mnemonic,
+			     "%s", opcode->name);
 
   /* Operands.  */
   separator = '\t';
@@ -222,24 +223,60 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	}
 
       if (flags & S390_OPERAND_GPR)
-	info->fprintf_func (info->stream, "%c%%r%u", separator, val.u);
+	{
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%r%u", val.u);
+	}
       else if (flags & S390_OPERAND_FPR)
-	info->fprintf_func (info->stream, "%c%%f%u", separator, val.u);
+	{
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%f%u", val.u);
+	}
       else if (flags & S390_OPERAND_VR)
-	info->fprintf_func (info->stream, "%c%%v%i", separator, val.u);
+	{
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%v%i", val.u);
+	}
       else if (flags & S390_OPERAND_AR)
-	info->fprintf_func (info->stream, "%c%%a%u", separator, val.u);
+	{
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%a%u", val.u);
+	}
       else if (flags & S390_OPERAND_CR)
-	info->fprintf_func (info->stream, "%c%%c%u", separator, val.u);
+	{
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%c%u", val.u);
+	}
       else if (flags & S390_OPERAND_PCREL)
 	{
-	  info->fprintf_func (info->stream, "%c", separator);
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
 	  info->print_address_func (memaddr + val.i + val.i, info);
 	}
       else if (flags & S390_OPERAND_SIGNED)
-	info->fprintf_func (info->stream, "%c%i", separator, val.i);
+	{
+	  enum disassembler_style style;
+
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  style = ((flags & S390_OPERAND_DISP)
+		   ? dis_style_address_offset : dis_style_immediate);
+	  info->fprintf_styled_func (info->stream, style, "%i", val.i);
+	}
       else
 	{
+	  enum disassembler_style style;
+
 	  if (flags & S390_OPERAND_OR1)
 	    val.u &= ~1;
 	  if (flags & S390_OPERAND_OR2)
@@ -251,14 +288,18 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	      && val.u == 0
 	      && opindex[1] == 0)
 	    break;
-	  info->fprintf_func (info->stream, "%c%u", separator, val.u);
+	  info->fprintf_styled_func (info->stream, dis_style_text,
+				     "%c", separator);
+	  style = ((flags & S390_OPERAND_DISP)
+		   ? dis_style_address_offset : dis_style_immediate);
+	  info->fprintf_styled_func (info->stream, style, "%u", val.u);
 	}
 
       if (flags & S390_OPERAND_DISP)
 	separator = '(';
       else if (flags & S390_OPERAND_BASE)
 	{
-	  info->fprintf_func (info->stream, ")");
+	  info->fprintf_styled_func (info->stream, dis_style_text, ")");
 	  separator = ',';
 	}
       else
@@ -361,19 +402,33 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
       value = (value << 8) + (unsigned int) buffer[1];
       value = (value << 8) + (unsigned int) buffer[2];
       value = (value << 8) + (unsigned int) buffer[3];
-      info->fprintf_func (info->stream, ".long\t0x%08x", value);
+      info->fprintf_styled_func (info->stream, dis_style_assembler_directive,
+				 ".long");
+      info->fprintf_styled_func (info->stream, dis_style_text,
+				 "\t");
+      info->fprintf_styled_func (info->stream, dis_style_immediate,
+				 "0x%08x", value);
       return 4;
     case 2:
       value = (unsigned int) buffer[0];
       value = (value << 8) + (unsigned int) buffer[1];
-      info->fprintf_func (info->stream, ".short\t0x%04x", value);
+      info->fprintf_styled_func (info->stream, dis_style_assembler_directive,
+				 ".short");
+      info->fprintf_styled_func (info->stream, dis_style_text,
+				 "\t");
+      info->fprintf_styled_func (info->stream, dis_style_immediate,
+				 "0x%04x", value);
       return 2;
     default:
-      info->fprintf_func (info->stream, ".byte\t0x%02x",
-			  (unsigned int) buffer[0]);
+      info->fprintf_styled_func (info->stream, dis_style_assembler_directive,
+				 ".byte");
+      info->fprintf_styled_func (info->stream, dis_style_text,
+				 "\t");
+      info->fprintf_styled_func (info->stream, dis_style_immediate,
+				 "0x%02x", (unsigned int) buffer[0]);
       for (i = 1; i < bytes_to_dump; i++)
-	info->fprintf_func (info->stream, ",0x%02x",
-			  (unsigned int) buffer[i]);
+	info->fprintf_styled_func (info->stream, dis_style_immediate,
+				   "0x%02x", (unsigned int) buffer[i]);
       return bytes_to_dump;
     }
   return 0;
