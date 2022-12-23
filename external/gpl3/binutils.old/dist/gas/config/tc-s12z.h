@@ -1,5 +1,5 @@
 /* tc-s12z.h -- Header file for tc-s12z.c.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,9 +19,6 @@
    02110-1301, USA.  */
 
 struct fix;
-
-/* Define TC_M68K so that we can use the MRI mode.  */
-#define TC_M68K
 
 #define TARGET_BYTES_BIG_ENDIAN 1
 

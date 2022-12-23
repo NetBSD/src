@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,6 +23,9 @@
 #define ARC_GOT_H
 
 #define TCB_SIZE (8)
+
+#define	align_power(addr, align)	\
+  (((addr) + ((bfd_vma) 1 << (align)) - 1) & (-((bfd_vma) 1 << (align))))
 
 enum tls_type_e
 {
@@ -51,27 +54,26 @@ struct got_entry
   enum tls_got_entries existing_entries;
 };
 
+/* Return the local got list, if not defined, create an empty one.  */
+
 static struct got_entry **
 arc_get_local_got_ents (bfd * abfd)
 {
-  static struct got_entry **local_got_ents = NULL;
-
-  if (local_got_ents == NULL)
+  if (elf_local_got_ents (abfd) == NULL)
     {
-      size_t	   size;
-      Elf_Internal_Shdr *symtab_hdr = &((elf_tdata (abfd))->symtab_hdr);
-
-      size = symtab_hdr->sh_info * sizeof (bfd_vma);
-      local_got_ents = (struct got_entry **)
-	bfd_alloc (abfd, sizeof (struct got_entry *) * size);
-      if (local_got_ents == NULL)
-	return FALSE;
-
-      memset (local_got_ents, 0, sizeof (struct got_entry *) * size);
-      elf_local_got_ents (abfd) = local_got_ents;
+      bfd_size_type amt = (elf_tdata (abfd)->symtab_hdr.sh_info
+			   * sizeof (*elf_local_got_ents (abfd)));
+      elf_local_got_ents (abfd) = bfd_zmalloc (amt);
+      if (elf_local_got_ents (abfd) == NULL)
+	{
+	  _bfd_error_handler (_("%pB: cannot allocate memory for local "
+				"GOT entries"), abfd);
+	  bfd_set_error (bfd_error_bad_value);
+	  return NULL;
+	}
     }
 
-  return local_got_ents;
+  return elf_local_got_ents (abfd);
 }
 
 static struct got_entry *
@@ -156,15 +158,15 @@ get_got_entry_list_for_symbol (bfd *abfd,
 			       unsigned long r_symndx,
 			       struct elf_link_hash_entry *h)
 {
-  if (h != NULL)
+  struct elf_arc_link_hash_entry *h1 =
+    ((struct elf_arc_link_hash_entry *) h);
+  if (h1 != NULL)
     {
-      return &h->got.glist;
+      return &h1->got_ents;
     }
   else
     {
-      struct got_entry **local_got_ents
-	= arc_get_local_got_ents (abfd);
-      return &local_got_ents[r_symndx];
+      return arc_get_local_got_ents (abfd) + r_symndx;
     }
 }
 
@@ -206,7 +208,7 @@ arc_got_entry_type_for_reloc (reloc_howto_type *howto)
 		     __LINE__, name_for_global_symbol (H));		\
       }									\
     if (H)								\
-      if (h->dynindx == -1 && !h->forced_local)				\
+      if (H->dynindx == -1 && !H->forced_local)				\
 	if (! bfd_elf_link_record_dynamic_symbol (info, H))		\
 	  return FALSE;							\
      htab->s##SECNAME->size += 4;					\
@@ -282,6 +284,7 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
   BFD_ASSERT (entry);
 
   if (h == NULL
+      || h->forced_local == TRUE
       || (! elf_hash_table (info)->dynamic_sections_created
 	  || (bfd_link_pic (info)
 	      && SYMBOL_REFERENCES_LOCAL (info, h))))
@@ -329,23 +332,31 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
 		BFD_ASSERT (tls_sec && tls_sec->output_section);
 		bfd_vma sec_vma = tls_sec->output_section->vma;
 
-		bfd_put_32 (output_bfd,
-			    sym_value - sec_vma,
+		if (h == NULL || h->forced_local
+		   || !elf_hash_table (info)->dynamic_sections_created)
+		  {
+		    bfd_put_32 (output_bfd,
+			    sym_value - sec_vma
+			    + (elf_hash_table (info)->dynamic_sections_created
+			       ? 0
+			       : (align_power (0,
+					       tls_sec->alignment_power))),
 			    htab->sgot->contents + entry->offset
 			    + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
 			       ? 4 : 0));
 
-		ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
-			   "@ %lx, for symbol %s\n",
-			   (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
-			    "GOT_TLS_IE"),
-			   (long) (sym_value - sec_vma),
-			   (long) (htab->sgot->output_section->vma
-			      + htab->sgot->output_offset->vma
-			      + entry->offset
-			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
-				 ? 4 : 0)),
-			   symbol_name);
+		    ARC_DEBUG ("arc_info: FIXED -> %s value = %#lx "
+			  "@ %lx, for symbol %s\n",
+			  (entry->type == GOT_TLS_GD ? "GOT_TLS_GD" :
+			   "GOT_TLS_IE"),
+			  (long) (sym_value - sec_vma),
+			  (long) (htab->sgot->output_section->vma
+			     + htab->sgot->output_offset
+			     + entry->offset
+			     + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
+				? 4 : 0)),
+			  symbol_name);
+		  }
 	      }
 	      break;
 
@@ -357,7 +368,10 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
 
 		bfd_put_32 (output_bfd,
 			    sym_value - sec_vma
-			    + (elf_hash_table (info)->dynamic_sections_created ? 0 : TCB_SIZE),
+			    + (elf_hash_table (info)->dynamic_sections_created
+			       ? 0
+			       : (align_power (TCB_SIZE,
+					       tls_sec->alignment_power))),
 			    htab->sgot->contents + entry->offset
 			    + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
 			       ? 4 : 0));
@@ -368,7 +382,7 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
 			    "GOT_TLS_IE"),
 			   (long) (sym_value - sec_vma),
 			   (long) (htab->sgot->output_section->vma
-			      + htab->sgot->output_offset->vma
+			      + htab->sgot->output_offset
 			      + entry->offset
 			      + (entry->existing_entries == TLS_GOT_MOD_AND_OFF
 				 ? 4 : 0)),
