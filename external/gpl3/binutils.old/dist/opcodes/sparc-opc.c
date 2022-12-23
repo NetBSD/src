@@ -1,5 +1,5 @@
 /* Table of opcodes for the sparc.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -71,6 +71,7 @@
                          | MASK_V9C | MASK_V9D | MASK_V9E | MASK_V9V | MASK_V9M \
                          | MASK_M8)
 #define sparclet	(MASK_SPARCLET)
+#define leon		(MASK_LEON)
 /* sparclet insns supported by leon.  */
 #define letandleon	(MASK_SPARCLET | MASK_LEON)
 #define sparclite	(MASK_SPARCLITE)
@@ -1022,6 +1023,13 @@ wrasr (25, HWCAP_VIS2, 0, v9b), /* wr ...,%sys_tick_cmpr  */
 wrasr (26, HWCAP_CBCOND, 0, v9e), /* wr ...,%cfr  */
 wrasr (27, HWCAP_PAUSE, 0, v9e),  /* wr ...,%pause  */
 wrasr (28, 0, HWCAP2_MWAIT, v9m), /* wr ...,%mwait  */
+
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|ASI(~0),		"1,2,p", 0, 0, 0, leon }, /* pwr r,r,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1),			"1,i,p", 0, 0, 0, leon }, /* pwr r,i,%psr */
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|RS1_G0|ASI(~0),	"2,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr %g0,rs2,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1)|RS1_G0,		"i,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr %g0,i,%psr */
+{ "pwr",	F3(2, 0x31, 1)|RD(1),	F3(~2, ~0x31, ~1)|RD(~1)|SIMM13(~0),		"1,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr rs1,0,%psr */
+{ "pwr",	F3(2, 0x31, 0)|RD(1),	F3(~2, ~0x31, ~0)|RD(~1)|ASI_RS2(~0),		"1,p", F_PREF_ALIAS, 0, 0, leon }, /* pwr rs1,%g0,%psr */
 
 { "pause", F3(2, 0x30, 1)|RD(27)|RS1(0), F3(~2, ~0x30, ~1)|RD(~27)|RS1(~0), "i", 0, HWCAP_PAUSE, 0, v9e }, /* wr %g0,i,%pause */
 

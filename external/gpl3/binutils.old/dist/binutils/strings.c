@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -287,7 +287,8 @@ main (int argc, char **argv)
       usage (stderr, 1);
     }
 
-  bfd_init ();
+  if (bfd_init () != BFD_INIT_MAGIC)
+    fatal (_("fatal error: libbfd ABI mismatch"));
   set_default_bfd_target ();
 
   if (optind >= argc)
@@ -331,7 +332,7 @@ strings_a_section (bfd *abfd, asection *sect, const char *filename,
   if ((sect->flags & DATA_FLAGS) != DATA_FLAGS)
     return;
 
-  sectsize = bfd_get_section_size (sect);
+  sectsize = bfd_section_size (sect);
   if (sectsize == 0)
     return;
 
@@ -501,6 +502,57 @@ get_char (FILE *stream, file_ptr *address, int *magiccount, char **magic)
 
   return r;
 }
+
+/* Throw away one byte of a (possibly) multi-byte char C, updating
+   address and buffer to suit.  */
+
+static void
+unget_part_char (long c, file_ptr *address, int *magiccount, char **magic)
+{
+  static char tmp[4];
+
+  if (encoding_bytes > 1)
+    {
+      *address -= encoding_bytes - 1;
+
+      if (*magiccount == 0)
+	{
+	  /* If no magic buffer exists, use temp buffer.  */
+	  switch (encoding)
+	    {
+	    default:
+	      break;
+	    case 'b':
+	      tmp[0] = c & 0xff;
+	      *magiccount = 1;
+	      break;
+	    case 'l':
+	      tmp[0] = (c >> 8) & 0xff;
+	      *magiccount = 1;
+	      break;
+	    case 'B':
+	      tmp[0] = (c >> 16) & 0xff;
+	      tmp[1] = (c >> 8) & 0xff;
+	      tmp[2] = c & 0xff;
+	      *magiccount = 3;
+	      break;
+	    case 'L':
+	      tmp[0] = (c >> 8) & 0xff;
+	      tmp[1] = (c >> 16) & 0xff;
+	      tmp[2] = (c >> 24) & 0xff;
+	      *magiccount = 3;
+	      break;
+	    }
+	  *magic = tmp;
+	}
+      else
+	{
+	  /* If magic buffer exists, rewind.  */
+	  *magic -= encoding_bytes - 1;
+	  *magiccount += encoding_bytes - 1;
+	}
+    }
+}
 
 /* Find the strings in file FILENAME, read from STREAM.
    Assume that STREAM is positioned so that the next byte read
@@ -539,9 +591,13 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	      free (buf);
 	      return;
 	    }
+
 	  if (! STRING_ISGRAPHIC (c))
-	    /* Found a non-graphic.  Try again starting with next char.  */
-	    goto tryline;
+	    {
+	      /* Found a non-graphic.  Try again starting with next byte.  */
+	      unget_part_char (c, &address, &magiccount, &magic);
+	      goto tryline;
+	    }
 	  buf[i] = c;
 	}
 
@@ -558,18 +614,18 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    if (sizeof (start) > sizeof (long))
 	      {
 # ifndef __MSVCRT__
-	        printf ("%7llo ", (unsigned long long) start);
+		printf ("%7llo ", (unsigned long long) start);
 # else
-	        printf ("%7I64o ", (unsigned long long) start);
+		printf ("%7I64o ", (unsigned long long) start);
 # endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
-	    if (start != (unsigned long) start)
-	      printf ("++%7lo ", (unsigned long) start);
-	    else
+	      if (start != (unsigned long) start)
+		printf ("++%7lo ", (unsigned long) start);
+	      else
 #endif
-	      printf ("%7lo ", (unsigned long) start);
+		printf ("%7lo ", (unsigned long) start);
 	    break;
 
 	  case 10:
@@ -577,18 +633,18 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    if (sizeof (start) > sizeof (long))
 	      {
 # ifndef __MSVCRT__
-	        printf ("%7lld ", (unsigned long long) start);
+		printf ("%7llu ", (unsigned long long) start);
 # else
-	        printf ("%7I64d ", (unsigned long long) start);
+		printf ("%7I64d ", (unsigned long long) start);
 # endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
-	    if (start != (unsigned long) start)
-	      printf ("++%7lu ", (unsigned long) start);
-	    else
+	      if (start != (unsigned long) start)
+		printf ("++%7lu ", (unsigned long) start);
+	      else
 #endif
-	      printf ("%7ld ", (long) start);
+		printf ("%7ld ", (long) start);
 	    break;
 
 	  case 16:
@@ -596,19 +652,19 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    if (sizeof (start) > sizeof (long))
 	      {
 # ifndef __MSVCRT__
-	        printf ("%7llx ", (unsigned long long) start);
+		printf ("%7llx ", (unsigned long long) start);
 # else
-	        printf ("%7I64x ", (unsigned long long) start);
+		printf ("%7I64x ", (unsigned long long) start);
 # endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
-	    if (start != (unsigned long) start)
-	      printf ("%lx%8.8lx ", (unsigned long) (start >> 32),
-		      (unsigned long) (start & 0xffffffff));
-	    else
+	      if (start != (unsigned long) start)
+		printf ("%lx%8.8lx ", (unsigned long) (start >> 32),
+			(unsigned long) (start & 0xffffffff));
+	      else
 #endif
-	      printf ("%7lx ", (unsigned long) start);
+		printf ("%7lx ", (unsigned long) start);
 	    break;
 	  }
 
@@ -621,14 +677,17 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	  if (c == EOF)
 	    break;
 	  if (! STRING_ISGRAPHIC (c))
-	    break;
+	    {
+	      unget_part_char (c, &address, &magiccount, &magic);
+	      break;
+	    }
 	  putchar (c);
 	}
 
       if (output_separator)
-        fputs (output_separator, stdout);
+	fputs (output_separator, stdout);
       else
-        putchar ('\n');
+	putchar ('\n');
     }
   free (buf);
 }

@@ -1,5 +1,5 @@
 /* POWER/PowerPC XCOFF linker support.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,6 +28,7 @@
 #include "libcoff.h"
 #include "libxcoff.h"
 #include "libiberty.h"
+#include "xcofflink.h"
 
 /* This file holds the XCOFF linker code.  */
 
@@ -1882,7 +1883,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 
       if (EXTERN_SYM_P (sym.n_sclass))
 	{
-	  bfd_boolean copy;
+	  bfd_boolean copy, ok;
 	  flagword flags;
 
 	  BFD_ASSERT (section != NULL);
@@ -2022,12 +2023,12 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  BFD_ASSERT (last_real->next == first_csect);
 	  last_real->next = NULL;
 	  flags = (sym.n_sclass == C_EXT ? BSF_GLOBAL : BSF_WEAK);
-	  if (! (_bfd_generic_link_add_one_symbol
-		 (info, abfd, name, flags, section, value,
-		  NULL, copy, TRUE,
-		  (struct bfd_link_hash_entry **) sym_hash)))
-	    goto error_return;
+	  ok = (_bfd_generic_link_add_one_symbol
+		(info, abfd, name, flags, section, value, NULL, copy, TRUE,
+		 (struct bfd_link_hash_entry **) sym_hash));
 	  last_real->next = first_csect;
+	  if (!ok)
+	    goto error_return;
 
 	  if (smtyp == XTY_CM)
 	    {
@@ -2080,14 +2081,14 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   for (o = abfd->sections; o != first_csect; o = o->next)
     {
       /* Debugging sections have no csects.  */
-      if (bfd_get_section_flags (abfd, o) & SEC_DEBUGGING)
+      if (bfd_section_flags (o) & SEC_DEBUGGING)
 	continue;
 
       /* Reset the section size and the line number count, since the
 	 data is now attached to the csects.  Don't reset the size of
 	 the .debug section, since we need to read it below in
 	 bfd_xcoff_size_dynamic_sections.  */
-      if (strcmp (bfd_get_section_name (abfd, o), ".debug") != 0)
+      if (strcmp (bfd_section_name (o), ".debug") != 0)
 	o->size = 0;
       o->lineno_count = 0;
 
@@ -2687,10 +2688,7 @@ xcoff_need_ldrel_p (struct bfd_link_info *info, struct internal_reloc *rel,
     case R_RLA:
       /* Absolute relocations against absolute symbols can be
 	 resolved statically.  */
-      if (h != NULL
-	  && (h->root.type == bfd_link_hash_defined
-	      || h->root.type == bfd_link_hash_defweak)
-	  && bfd_is_abs_section (h->root.u.def.section))
+      if (h != NULL && bfd_is_abs_symbol (&h->root))
 	return FALSE;
 
       return TRUE;
@@ -3022,7 +3020,7 @@ xcoff_sweep (struct bfd_link_info *info)
 		  || o == xcoff_hash_table (info)->loader_section
 		  || o == xcoff_hash_table (info)->linkage_section
 		  || o == xcoff_hash_table (info)->descriptor_section
-		  || (bfd_get_section_flags (sub, o) & SEC_DEBUGGING)
+		  || (bfd_section_flags (o) & SEC_DEBUGGING)
 		  || strcmp (o->name, ".debug") == 0)
 		o->flags |= SEC_MARK;
 	      else
@@ -3125,7 +3123,7 @@ bfd_xcoff_import_symbol (bfd *output_bfd,
   if (val != (bfd_vma) -1)
     {
       if (h->root.type == bfd_link_hash_defined
-	  && (! bfd_is_abs_section (h->root.u.def.section)
+	  && (!bfd_is_abs_symbol (&h->root)
 	      || h->root.u.def.value != val))
 	(*info->callbacks->multiple_definition) (info, &h->root, output_bfd,
 						 bfd_abs_section_ptr, val);
@@ -5589,10 +5587,10 @@ xcoff_write_global_symbol (struct bfd_hash_entry *bh, void * inf)
 	    || h->root.type == bfd_link_hash_defweak)
 	   && h->smclas == XMC_XO)
     {
-      BFD_ASSERT (bfd_is_abs_section (h->root.u.def.section));
+      BFD_ASSERT (bfd_is_abs_symbol (&h->root));
       isym.n_value = h->root.u.def.value;
       isym.n_scnum = N_UNDEF;
-      if (h->root.type == bfd_link_hash_undefweak
+      if (h->root.type == bfd_link_hash_defweak
 	  && C_WEAKEXT == C_AIX_WEAKEXT)
 	isym.n_sclass = C_WEAKEXT;
       else
@@ -5658,7 +5656,7 @@ xcoff_write_global_symbol (struct bfd_hash_entry *bh, void * inf)
       /* We just output an SD symbol.  Now output an LD symbol.  */
       h->indx += 2;
 
-      if (h->root.type == bfd_link_hash_undefweak
+      if (h->root.type == bfd_link_hash_defweak
 	  && C_WEAKEXT == C_AIX_WEAKEXT)
 	isym.n_sclass = C_WEAKEXT;
       else
@@ -6415,9 +6413,9 @@ _bfd_xcoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	goto error_return;
     }
 
-  /* Setting bfd_get_symcount to 0 will cause write_object_contents to
+  /* Setting symcount to 0 will cause write_object_contents to
      not try to write out the symbols.  */
-  bfd_get_symcount (abfd) = 0;
+  abfd->symcount = 0;
 
   return TRUE;
 

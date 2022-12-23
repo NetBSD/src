@@ -1,5 +1,5 @@
 /* tc-tic4x.h -- Assemble for the Texas TMS320C[34]X.
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 

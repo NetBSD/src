@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,6 +34,13 @@
    Another reference:
    "Peering Inside the PE: A Tour of the Win32 Portable Executable
    File Format", MSJ 1994, Volume 9.
+
+   The PE/PEI format is also used by .NET. ECMA-335 describes this:
+
+   "Standard ECMA-335 Common Language Infrastructure (CLI)", 6th Edition, June 2012.
+
+   This is also available at
+   https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-335.pdf.
 
    The *sole* difference between the pe format and the pei format is that the
    latter has an MSDOS 2.0 .exe header on the front that prints the message
@@ -522,15 +529,15 @@ _bfd_XXi_swap_aouthdr_in (bfd * abfd,
   a->NumberOfRvaAndSizes = H_GET_32 (abfd, src->NumberOfRvaAndSizes);
 
   {
-    int idx;
+    unsigned idx;
 
     /* PR 17512: Corrupt PE binaries can cause seg-faults.  */
     if (a->NumberOfRvaAndSizes > IMAGE_NUMBEROF_DIRECTORY_ENTRIES)
       {
 	/* xgettext:c-format */
 	_bfd_error_handler
-	  (_("%pB: aout header specifies an invalid number of data-directory entries: %ld"),
-	   abfd, a->NumberOfRvaAndSizes);
+	  (_("%pB: aout header specifies an invalid number of"
+	     " data-directory entries: %u"), abfd, a->NumberOfRvaAndSizes);
 	bfd_set_error (bfd_error_bad_value);
 
 	/* Paranoia: If the number is corrupt, then assume that the
@@ -716,6 +723,9 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
       {
 	int rounded = FA (sec->size);
 
+	if (rounded == 0)
+	  continue;
+
 	/* The first non-zero section filepos is the header size.
 	   Sections without contents will have a filepos of 0.  */
 	if (hsize == 0)
@@ -856,28 +866,16 @@ _bfd_XXi_only_swap_filehdr_out (bfd * abfd, void * in, void * out)
 
   /* This next collection of data are mostly just characters.  It
      appears to be constant within the headers put on NT exes.  */
-  filehdr_in->pe.dos_message[0]  = 0x0eba1f0e;
-  filehdr_in->pe.dos_message[1]  = 0xcd09b400;
-  filehdr_in->pe.dos_message[2]  = 0x4c01b821;
-  filehdr_in->pe.dos_message[3]  = 0x685421cd;
-  filehdr_in->pe.dos_message[4]  = 0x70207369;
-  filehdr_in->pe.dos_message[5]  = 0x72676f72;
-  filehdr_in->pe.dos_message[6]  = 0x63206d61;
-  filehdr_in->pe.dos_message[7]  = 0x6f6e6e61;
-  filehdr_in->pe.dos_message[8]  = 0x65622074;
-  filehdr_in->pe.dos_message[9]  = 0x6e757220;
-  filehdr_in->pe.dos_message[10] = 0x206e6920;
-  filehdr_in->pe.dos_message[11] = 0x20534f44;
-  filehdr_in->pe.dos_message[12] = 0x65646f6d;
-  filehdr_in->pe.dos_message[13] = 0x0a0d0d2e;
-  filehdr_in->pe.dos_message[14] = 0x24;
-  filehdr_in->pe.dos_message[15] = 0x0;
+  memcpy (filehdr_in->pe.dos_message, pe_data (abfd)->dos_message,
+	  sizeof (filehdr_in->pe.dos_message));
+
   filehdr_in->pe.nt_signature = IMAGE_NT_SIGNATURE;
 
   H_PUT_16 (abfd, filehdr_in->f_magic, filehdr_out->f_magic);
   H_PUT_16 (abfd, filehdr_in->f_nscns, filehdr_out->f_nscns);
 
-  /* Only use a real timestamp if the option was chosen.  */
+  /* Use a real timestamp by default, unless the no-insert-timestamp
+     option was chosen.  */
   if ((pe_data (abfd)->insert_timestamp))
     H_PUT_32 (abfd, time (0), filehdr_out->f_timdat);
   else
@@ -1208,7 +1206,10 @@ _bfd_XXi_write_codeview_record (bfd * abfd, file_ptr where, CODEVIEW_INFO *cvinf
   if (bfd_seek (abfd, where, SEEK_SET) != 0)
     return 0;
 
-  buffer = xmalloc (size);
+  buffer = bfd_malloc (size);
+  if (buffer == NULL)
+    return 0;
+
   cvinfo70 = (CV_INFO_PDB70 *) buffer;
   H_PUT_32 (abfd, CVINFO_PDB70_CVSIGNATURE, cvinfo70->CvSignature);
 
@@ -1661,7 +1662,8 @@ pe_print_edata (bfd * abfd, void * vfile)
 
       dataoff = addr - section->vma;
       datasize = extra->DataDirectory[PE_EXPORT_TABLE].Size;
-      if (datasize > section->size - dataoff)
+      if (dataoff > section->size
+	  || datasize > section->size - dataoff)
 	{
 	  fprintf (file,
 		   _("\nThere is an export table in %s, but it does not fit into that section\n"),
@@ -1778,11 +1780,11 @@ pe_print_edata (bfd * abfd, void * vfile)
 	  edt.base);
 
   /* PR 17512: Handle corrupt PE binaries.  */
-  if (edt.eat_addr + (edt.num_functions * 4) - adj >= datasize
+  /* PR 17512 file: 140-165018-0.004.  */
+  if (edt.eat_addr - adj >= datasize
       /* PR 17512: file: 092b1829 */
-      || (edt.num_functions * 4) < edt.num_functions
-      /* PR 17512 file: 140-165018-0.004.  */
-      || data + edt.eat_addr - adj < data)
+      || (edt.num_functions + 1) * 4 < edt.num_functions
+      || edt.eat_addr - adj + (edt.num_functions + 1) * 4 > datasize)
     fprintf (file, _("\tInvalid Export Address Table rva (0x%lx) or entry count (0x%lx)\n"),
 	     (long) edt.eat_addr,
 	     (long) edt.num_functions);
@@ -2804,12 +2806,13 @@ _bfd_XX_print_private_bfd_data_common (bfd * abfd, void * vfile)
     fprintf (file, "\t(%s)",name);
   fprintf (file, "\nMajorLinkerVersion\t%d\n", i->MajorLinkerVersion);
   fprintf (file, "MinorLinkerVersion\t%d\n", i->MinorLinkerVersion);
-  fprintf (file, "SizeOfCode\t\t%08lx\n", (unsigned long) i->SizeOfCode);
-  fprintf (file, "SizeOfInitializedData\t%08lx\n",
-	   (unsigned long) i->SizeOfInitializedData);
-  fprintf (file, "SizeOfUninitializedData\t%08lx\n",
-	   (unsigned long) i->SizeOfUninitializedData);
-  fprintf (file, "AddressOfEntryPoint\t");
+  fprintf (file, "SizeOfCode\t\t");
+  bfd_fprintf_vma (abfd, file, i->SizeOfCode);
+  fprintf (file, "\nSizeOfInitializedData\t");
+  bfd_fprintf_vma (abfd, file, i->SizeOfInitializedData);
+  fprintf (file, "\nSizeOfUninitializedData\t");
+  bfd_fprintf_vma (abfd, file, i->SizeOfUninitializedData);
+  fprintf (file, "\nAddressOfEntryPoint\t");
   bfd_fprintf_vma (abfd, file, i->AddressOfEntryPoint);
   fprintf (file, "\nBaseOfCode\t\t");
   bfd_fprintf_vma (abfd, file, i->BaseOfCode);
@@ -2821,20 +2824,18 @@ _bfd_XX_print_private_bfd_data_common (bfd * abfd, void * vfile)
 
   fprintf (file, "\nImageBase\t\t");
   bfd_fprintf_vma (abfd, file, i->ImageBase);
-  fprintf (file, "\nSectionAlignment\t");
-  bfd_fprintf_vma (abfd, file, i->SectionAlignment);
-  fprintf (file, "\nFileAlignment\t\t");
-  bfd_fprintf_vma (abfd, file, i->FileAlignment);
-  fprintf (file, "\nMajorOSystemVersion\t%d\n", i->MajorOperatingSystemVersion);
+  fprintf (file, "\nSectionAlignment\t%08x\n", i->SectionAlignment);
+  fprintf (file, "FileAlignment\t\t%08x\n", i->FileAlignment);
+  fprintf (file, "MajorOSystemVersion\t%d\n", i->MajorOperatingSystemVersion);
   fprintf (file, "MinorOSystemVersion\t%d\n", i->MinorOperatingSystemVersion);
   fprintf (file, "MajorImageVersion\t%d\n", i->MajorImageVersion);
   fprintf (file, "MinorImageVersion\t%d\n", i->MinorImageVersion);
   fprintf (file, "MajorSubsystemVersion\t%d\n", i->MajorSubsystemVersion);
   fprintf (file, "MinorSubsystemVersion\t%d\n", i->MinorSubsystemVersion);
-  fprintf (file, "Win32Version\t\t%08lx\n", (unsigned long) i->Reserved1);
-  fprintf (file, "SizeOfImage\t\t%08lx\n", (unsigned long) i->SizeOfImage);
-  fprintf (file, "SizeOfHeaders\t\t%08lx\n", (unsigned long) i->SizeOfHeaders);
-  fprintf (file, "CheckSum\t\t%08lx\n", (unsigned long) i->CheckSum);
+  fprintf (file, "Win32Version\t\t%08x\n", i->Reserved1);
+  fprintf (file, "SizeOfImage\t\t%08x\n", i->SizeOfImage);
+  fprintf (file, "SizeOfHeaders\t\t%08x\n", i->SizeOfHeaders);
+  fprintf (file, "CheckSum\t\t%08x\n", i->CheckSum);
 
   switch (i->Subsystem)
     {
@@ -2968,6 +2969,8 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
       && ! (pe_data (ibfd)->real_flags & IMAGE_FILE_RELOCS_STRIPPED))
     pe_data (obfd)->dont_strip_reloc = 1;
 
+  memcpy (ope->dos_message, ipe->dos_message, sizeof (ope->dos_message));
+
   /* The file offsets contained in the debug directory need rewriting.  */
   if (ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size != 0)
     {
@@ -2983,8 +2986,8 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
 	    (struct external_IMAGE_DEBUG_DIRECTORY *)(data + (addr - section->vma));
 
 	  /* PR 17512: file: 0f15796a.  */
-	  if (ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size + (addr - section->vma)
-	      > bfd_get_section_size (section))
+	  if ((unsigned long) ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size
+	      > section->size - (addr - section->vma))
 	    {
 	      /* xgettext:c-format */
 	      _bfd_error_handler
@@ -2992,15 +2995,7 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
 		   "exceeds space left in section (%" PRIx64 ")"),
 		 obfd, ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size,
 		 (uint64_t) (section->size - (addr - section->vma)));
-	      return FALSE;
-	    }
-	  /* PR 23110.  */
-	  else if (ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size < 0)
-	    {
-	      /* xgettext:c-format */
-	      _bfd_error_handler
-		(_("%pB: Data Directory size (%#lx) is negative"),
-		 obfd, ope->pe_opthdr.DataDirectory[PE_DEBUG_DATA].Size);
+	      free (data);
 	      return FALSE;
 	    }
 
@@ -3029,8 +3024,10 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
 	  if (!bfd_set_section_contents (obfd, section, data, 0, section->size))
 	    {
 	      _bfd_error_handler (_("failed to update file offsets in debug directory"));
+	      free (data);
 	      return FALSE;
 	    }
+	  free (data);
 	}
       else if (section)
 	{

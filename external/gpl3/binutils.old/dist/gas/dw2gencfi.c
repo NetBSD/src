@@ -1,5 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -197,7 +197,7 @@ emit_expr_encoded (expressionS *exp, int encoding, bfd_boolean emit_encoding)
     {
       reloc_howto_type *howto = bfd_reloc_type_lookup (stdoutput, code);
       char *p = frag_more (size);
-      gas_assert (size == howto->bitsize / 8);
+      gas_assert (size == (unsigned) howto->bitsize / 8);
       md_number_to_chars (p, 0, size);
       fix_new (frag_now, p - frag_now->fr_literal, size, exp->X_add_symbol,
 	       exp->X_add_number, howto->pc_relative, code);
@@ -225,37 +225,37 @@ emit_expr_encoded (expressionS *exp, int encoding, bfd_boolean emit_encoding)
 static char *
 get_debugseg_name (segT seg, const char *base_name)
 {
-  const char *name;
+  const char * name;
+  const char * dollar;
+  const char * dot;
 
   if (!seg)
-    name = "";
-  else
+    return concat (base_name, NULL);
+
+  name = bfd_section_name (seg);
+
+  if (name == NULL || *name == 0)
+    return concat (base_name, NULL);
+	
+  dollar = strchr (name, '$');
+  dot = strchr (name + 1, '.');
+
+  if (!dollar && !dot)
     {
-      const char * dollar;
-      const char * dot;
+      if (!strcmp (base_name, ".eh_frame_entry")
+	  && strcmp (name, ".text") != 0)
+	return concat (base_name, ".", name, NULL);
 
-      name = bfd_get_section_name (stdoutput, seg);
-
-      dollar = strchr (name, '$');
-      dot = strchr (name + 1, '.');
-
-      if (!dollar && !dot)
-	{
-	  if (!strcmp (base_name, ".eh_frame_entry")
-	      && strcmp (name, ".text") != 0)
-	    return concat (base_name, ".", name, NULL);
-
-	  name = "";
-	}
-      else if (!dollar)
-	name = dot;
-      else if (!dot)
-	name = dollar;
-      else if (dot < dollar)
-	name = dot;
-      else
-	name = dollar;
+      name = "";
     }
+  else if (!dollar)
+    name = dot;
+  else if (!dot)
+    name = dollar;
+  else if (dot < dollar)
+    name = dot;
+  else
+    name = dollar;
 
   return concat (base_name, name, NULL);
 }
@@ -281,7 +281,7 @@ is_now_linkonce_segment (void)
   if (compact_eh)
     return now_seg;
 
-  if ((bfd_get_section_flags (stdoutput, now_seg)
+  if ((bfd_section_flags (now_seg)
        & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
 	  | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
 	  | SEC_LINK_DUPLICATES_SAME_CONTENTS)) != 0)
@@ -306,16 +306,16 @@ make_debug_seg (segT cseg, char *name, int sflags)
   if (!cseg)
     flags = 0;
   else
-    flags = bfd_get_section_flags (stdoutput, cseg)
-      & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
-	 | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
-	 | SEC_LINK_DUPLICATES_SAME_CONTENTS);
+    flags = (bfd_section_flags (cseg)
+	     & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
+		| SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
+		| SEC_LINK_DUPLICATES_SAME_CONTENTS));
 
   /* Add standard section flags.  */
   flags |= sflags;
 
   /* Apply possibly linked once flags to new generated segment, too.  */
-  if (!bfd_set_section_flags (stdoutput, r, flags))
+  if (!bfd_set_section_flags (r, flags))
     as_bad (_("bfd_set_section_flags: %s"),
 	    bfd_errmsg (bfd_get_error ()));
 
@@ -403,6 +403,9 @@ struct cie_entry
   unsigned char per_encoding;
   unsigned char lsda_encoding;
   expressionS personality;
+#ifdef tc_cie_entry_extras
+  tc_cie_entry_extras
+#endif
   struct cfi_insn_data *first, *last;
 };
 
@@ -414,22 +417,6 @@ static struct fde_entry **last_fde_data = &all_fde_data;
 /* List of CIEs so that they could be reused.  */
 static struct cie_entry *cie_root;
 
-/* Stack of old CFI data, for save/restore.  */
-struct cfa_save_data
-{
-  struct cfa_save_data *next;
-  offsetT cfa_offset;
-};
-
-/* Current open FDE entry.  */
-struct frch_cfi_data
-{
-  struct fde_entry *cur_fde_data;
-  symbolS *last_address;
-  offsetT cur_cfa_offset;
-  struct cfa_save_data *cfa_save_stack;
-};
-
 /* Construct a new FDE structure and add it to the end of the fde list.  */
 
 static struct fde_entry *
@@ -448,6 +435,9 @@ alloc_fde_entry (void)
   fde->per_encoding = DW_EH_PE_omit;
   fde->lsda_encoding = DW_EH_PE_omit;
   fde->eh_header_type = EH_COMPACT_UNKNOWN;
+#ifdef tc_fde_entry_init_extra
+  tc_fde_entry_init_extra (fde)
+#endif
 
   return fde;
 }
@@ -736,6 +726,7 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_remember_state", dot_cfi, DW_CFA_remember_state },
     { "cfi_restore_state", dot_cfi, DW_CFA_restore_state },
     { "cfi_window_save", dot_cfi, DW_CFA_GNU_window_save },
+    { "cfi_negate_ra_state", dot_cfi, DW_CFA_AARCH64_negate_ra_state },
     { "cfi_escape", dot_cfi_escape, 0 },
     { "cfi_signal_frame", dot_cfi, CFI_signal_frame },
     { "cfi_personality", dot_cfi_personality, 0 },
@@ -1198,8 +1189,16 @@ dot_cfi_val_encoded_addr (int ignored ATTRIBUTE_UNUSED)
 static void
 dot_cfi_label (int ignored ATTRIBUTE_UNUSED)
 {
-  char *name = read_symbol_name ();
+  char *name;
 
+  if (frchain_now->frch_cfi_data == NULL)
+    {
+      as_bad (_("CFI instruction used without previous .cfi_startproc"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  name = read_symbol_name ();
   if (name == NULL)
     return;
 
@@ -1361,7 +1360,7 @@ get_cfi_seg (segT cseg, const char *base, flagword flags, int align)
   else
     {
       cseg = subseg_new (base, 0);
-      bfd_set_section_flags (stdoutput, cseg, flags);
+      bfd_set_section_flags (cseg, flags);
     }
   record_alignment (cseg, align);
   return cseg;
@@ -1600,7 +1599,9 @@ output_cfi_insn (struct cfi_insn_data *insn)
 	    addressT delta = S_GET_VALUE (to) - S_GET_VALUE (from);
 	    addressT scaled = delta / DWARF2_LINE_MIN_INSN_LENGTH;
 
-	    if (scaled <= 0x3F)
+	    if (scaled == 0)
+	      ;
+	    else if (scaled <= 0x3F)
 	      out_one (DW_CFA_advance_loc + scaled);
 	    else if (scaled <= 0xFF)
 	      {
@@ -1630,7 +1631,12 @@ output_cfi_insn (struct cfi_insn_data *insn)
 	    /* The code in ehopt.c expects that one byte of the encoding
 	       is already allocated to the frag.  This comes from the way
 	       that it scans the .eh_frame section looking first for the
-	       .byte DW_CFA_advance_loc4.  */
+	       .byte DW_CFA_advance_loc4.  Call frag_grow with the sum of
+	       room needed by frag_more and frag_var to preallocate space
+	       ensuring that the DW_CFA_advance_loc4 is in the fixed part
+	       of the rs_cfa frag, so that the relax machinery can remove
+	       the advance_loc should it advance by zero.  */
+	    frag_grow (5);
 	    *frag_more (1) = DW_CFA_advance_loc4;
 
 	    frag_var (rs_cfa, 4, 0, DWARF2_LINE_MIN_INSN_LENGTH << 3,
@@ -1855,7 +1861,7 @@ output_cie (struct cie_entry *cie, bfd_boolean eh_frame, int align)
       if (fmt != dwarf2_format_32bit)
 	out_four (-1);
     }
-  out_one (DW_CIE_VERSION);			/* Version.  */
+  out_one (flag_dwarf_cie_version);		/* Version.  */
   if (eh_frame)
     {
       out_one ('z');				/* Augmentation.  */
@@ -1864,14 +1870,30 @@ output_cie (struct cie_entry *cie, bfd_boolean eh_frame, int align)
       if (cie->lsda_encoding != DW_EH_PE_omit)
 	out_one ('L');
       out_one ('R');
+#ifdef tc_output_cie_extra
+      tc_output_cie_extra (cie);
+#endif
     }
   if (cie->signal_frame)
     out_one ('S');
   out_one (0);
+  if (flag_dwarf_cie_version >= 4)
+    {
+      /* For now we are assuming a flat address space with 4 or 8 byte
+         addresses.  */
+      int address_size = dwarf2_format_32bit ? 4 : 8;
+      out_one (address_size);			/* Address size.  */
+      out_one (0);				/* Segment size.  */
+    }
   out_uleb128 (DWARF2_LINE_MIN_INSN_LENGTH);	/* Code alignment.  */
   out_sleb128 (DWARF2_CIE_DATA_ALIGNMENT);	/* Data alignment.  */
-  if (DW_CIE_VERSION == 1)			/* Return column.  */
-    out_one (cie->return_column);
+  if (flag_dwarf_cie_version == 1)		/* Return column.  */
+    {
+      if ((cie->return_column & 0xff) != cie->return_column)
+	as_bad (_("return column number %d overflows in CIE version 1"),
+		cie->return_column);
+      out_one (cie->return_column);
+    }
   else
     out_uleb128 (cie->return_column);
   if (eh_frame)
@@ -1979,7 +2001,7 @@ output_fde (struct fde_entry *fde, struct cie_entry *cie,
 	{
 	  reloc_howto_type *howto = bfd_reloc_type_lookup (stdoutput, code);
 	  char *p = frag_more (addr_size);
-	  gas_assert (addr_size == howto->bitsize / 8);
+	  gas_assert (addr_size == (unsigned) howto->bitsize / 8);
 	  md_number_to_chars (p, 0, addr_size);
 	  fix_new (frag_now, p - frag_now->fr_literal, addr_size,
 		   fde->start_address, 0, howto->pc_relative, code);
@@ -2043,6 +2065,10 @@ select_cie_for_fde (struct fde_entry *fde, bfd_boolean eh_frame,
     {
       if (CUR_SEG (cie) != CUR_SEG (fde))
 	continue;
+#ifdef tc_cie_fde_equivalent_extra
+      if (!tc_cie_fde_equivalent_extra (cie, fde))
+	continue;
+#endif
       if (cie->return_column != fde->return_column
 	  || cie->signal_frame != fde->signal_frame
 	  || cie->per_encoding != fde->per_encoding
@@ -2150,6 +2176,9 @@ select_cie_for_fde (struct fde_entry *fde, bfd_boolean eh_frame,
   cie->lsda_encoding = fde->lsda_encoding;
   cie->personality = fde->personality;
   cie->first = fde->data;
+#ifdef tc_cie_entry_init_extra
+  tc_cie_entry_init_extra (cie, fde)
+#endif
 
   for (i = cie->first; i ; i = i->next)
     if (i->insn == DW_CFA_advance_loc

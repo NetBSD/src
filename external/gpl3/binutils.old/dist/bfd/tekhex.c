@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -978,6 +978,7 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_lookup_section_flags		    bfd_generic_lookup_section_flags
 #define tekhex_bfd_merge_sections		    bfd_generic_merge_sections
 #define tekhex_bfd_is_group_section		    bfd_generic_is_group_section
+#define tekhex_bfd_group_name			    bfd_generic_group_name
 #define tekhex_bfd_discard_group		    bfd_generic_discard_group
 #define tekhex_section_already_linked		    _bfd_generic_section_already_linked
 #define tekhex_bfd_define_common_symbol		    bfd_generic_define_common_symbol

@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -31,3 +31,10 @@ void ia64_elf_relax_ldxmov (bfd_byte *contents, bfd_vma off);
 
 bfd_reloc_status_type ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v,
 					      unsigned int r_type);
+
+/* IA64 Itanium code generation.  Called from linker.  */
+extern void bfd_elf32_ia64_after_parse
+  (int);
+
+extern void bfd_elf64_ia64_after_parse
+  (int);

@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
 		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -1684,8 +1684,8 @@ elf32_tic6x_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   htab->dsbt = bfd_make_section_anyway_with_flags (dynobj, ".dsbt",
 						   flags);
   if (htab->dsbt == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->dsbt, 2)
-      || ! bfd_set_section_alignment (dynobj, htab->elf.splt, 5))
+      || !bfd_set_section_alignment (htab->dsbt, 2)
+      || !bfd_set_section_alignment (htab->elf.splt, 5))
     return FALSE;
 
   return TRUE;
@@ -1992,7 +1992,7 @@ elf32_tic6x_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 {
   const char * name;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
 
   if (is_tic6x_elf_unwind_section_name (name))
     {
@@ -2683,7 +2683,7 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	      if (name == NULL)
 		return FALSE;
 	      if (*name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -3016,7 +3016,7 @@ elf32_tic6x_add_symbol_hook (bfd *abfd,
       *secp = bfd_make_section_old_way (abfd, ".scommon");
       (*secp)->flags |= SEC_IS_COMMON;
       *valp = sym->st_size;
-      (void) bfd_set_section_alignment (abfd, *secp, bfd_log2 (sym->st_value));
+      bfd_set_section_alignment (*secp, bfd_log2 (sym->st_value));
       break;
     }
 
@@ -3072,7 +3072,7 @@ elf32_tic6x_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
 				      asection *sec,
 				      int *retval)
 {
-  if (strcmp (bfd_get_section_name (abfd, sec), ".scommon") == 0)
+  if (strcmp (bfd_section_name (sec), ".scommon") == 0)
     {
       *retval = SHN_TIC6X_SCOMMON;
       return TRUE;
@@ -3385,7 +3385,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	  if (s == htab->elf.splt && s->size > 0)
 	    s->size = (s->size + 31) & ~(bfd_vma)31;
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0
 	      && s != htab->elf.srelplt)
@@ -3992,10 +3992,10 @@ elf32_tic6x_adjust_exidx_size (asection *exidx_sec, int adjust)
   if (!exidx_sec->rawsize)
     exidx_sec->rawsize = exidx_sec->size;
 
-  bfd_set_section_size (exidx_sec->owner, exidx_sec, exidx_sec->size + adjust);
+  bfd_set_section_size (exidx_sec, exidx_sec->size + adjust);
   out_sec = exidx_sec->output_section;
   /* Adjust size of output section.  */
-  bfd_set_section_size (out_sec->owner, out_sec, out_sec->size +adjust);
+  bfd_set_section_size (out_sec, out_sec->size +adjust);
 }
 
 /* Insert an EXIDX_CANTUNWIND marker at the end of a section.  */

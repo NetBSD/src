@@ -1,3 +1,12 @@
+2018-10-31  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
+	Merge from GCC.
+	PR bootstrap/82856
+	* Makefile.am: Include multilib.am.
+	* Makefile.in: Regenerate.
+
 2018-06-21  Alan Modra  <amodra@gmail.com>
 
 	* Makefile.in: Regenerate.

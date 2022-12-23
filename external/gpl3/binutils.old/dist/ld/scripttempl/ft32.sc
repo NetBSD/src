@@ -7,13 +7,15 @@ TORS=".tors :
     *(.dtors)
     ___dtors_end = . ;
     . = ALIGN(4);
-  } > ram"
+  } ${RELOCATING+ > ram}"
 
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 ${LIB_SEARCH_DIRS}
+EOF
 
+test -n "${RELOCATING}" && cat <<EOF
 /* Allow the command line to override the memory region sizes.  */
 __PMSIZE = DEFINED(__PMSIZE)  ? __PMSIZE : 256K;
 __RAMSIZE = DEFINED(__RAMSIZE) ? __RAMSIZE : 64K;
@@ -23,35 +25,37 @@ MEMORY
   flash     (rx)   : ORIGIN = 0,        LENGTH = __PMSIZE
   ram       (rw!x) : ORIGIN = 0x800000, LENGTH = __RAMSIZE
 }
+EOF
 
+cat <<EOF
 SECTIONS
 {
   .text :
   {
-    *(.text*)
-    *(.strings)
+    *(.text${RELOCATING+*})
+    ${RELOCATING+*(.strings)
     *(._pm*)
-    *(.init)
-    *(.fini)
-    ${RELOCATING+ _etext = . ; }
-    . = ALIGN(4);
+    KEEP (*(SORT_NONE(.init)))
+    KEEP (*(SORT_NONE(.fini)))
+    _etext = .;
+    . = ALIGN(4);}
   } ${RELOCATING+ > flash}
   ${CONSTRUCTING+${TORS}}
   .data	: ${RELOCATING+ AT (ADDR (.text) + SIZEOF (.text))}
   {
     *(.data)
-    *(.rodata)
+    ${RELOCATING+*(.rodata)
     *(.rodata*)
-    ${RELOCATING+ _edata = . ; }
-    . = ALIGN(4);
+    _edata = .;
+    . = ALIGN(4);}
   } ${RELOCATING+ > ram}
   .bss  ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   {
     ${RELOCATING+ _bss_start = . ; }
     *(.bss)
-    *(COMMON)
-    ${RELOCATING+ _end = . ;  }
-    . = ALIGN(4);
+    ${RELOCATING+*(COMMON)
+    _end = .;
+    . = ALIGN(4);}
   } ${RELOCATING+ > ram}
 
   ${RELOCATING+ __data_load_start = LOADADDR(.data); }

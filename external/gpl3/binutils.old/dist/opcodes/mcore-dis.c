@@ -1,5 +1,5 @@
 /* Disassemble Motorola M*Core instructions.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -196,18 +196,14 @@ print_insn_mcore (bfd_vma memaddr,
 
 	case BR:
 	  {
-	    long val = inst & 0x3FF;
+	    uint32_t val = ((inst & 0x3FF) ^ 0x400) - 0x400;
 
-	    if (inst & 0x400)
-	      val |= 0xFFFFFC00;
-
-	    (*print_func) (stream, "\t0x%lx", (long)(memaddr + 2 + (val << 1)));
+	    val = memaddr + 2 + (val << 1);
+	    (*print_func) (stream, "\t0x%x", val);
 
 	    if (strcmp (mcore_table[i].name, "bsr") == 0)
 	      {
 		/* For bsr, we'll try to get a symbol for the target.  */
-		val = memaddr + 2 + (val << 1);
-
 		if (info->print_address_func && val != 0)
 		  {
 		    (*print_func) (stream, "\t// ");
@@ -219,19 +215,18 @@ print_insn_mcore (bfd_vma memaddr,
 
 	case BL:
 	  {
-	    long val;
-	    val = (inst & 0x000F);
-	    (*print_func) (stream, "\t%s, 0x%lx",
+	    uint32_t val = inst & 0x000F;
+	    (*print_func) (stream, "\t%s, 0x%x",
 			   grname[(inst >> 4) & 0xF],
-			   (long) (memaddr - (val << 1)));
+			   (uint32_t) (memaddr - (val << 1)));
 	  }
 	  break;
 
 	case LR:
 	  {
-	    unsigned long val;
+	    uint32_t val;
 
-	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & 0xFFFFFFFC;
+	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & ~3;
 
 	    /* We are not reading an instruction, so allow
 	       reads to extend beyond the next symbol.  */
@@ -244,27 +239,27 @@ print_insn_mcore (bfd_vma memaddr,
 	      }
 
 	    if (info->endian == BFD_ENDIAN_LITTLE)
-	      val = (ibytes[3] << 24) | (ibytes[2] << 16)
-		| (ibytes[1] << 8) | (ibytes[0]);
+	      val = (((unsigned) ibytes[3] << 24) | (ibytes[2] << 16)
+		     | (ibytes[1] << 8) | (ibytes[0]));
 	    else
-	      val = (ibytes[0] << 24) | (ibytes[1] << 16)
-		| (ibytes[2] << 8) | (ibytes[3]);
+	      val = (((unsigned) ibytes[0] << 24) | (ibytes[1] << 16)
+		     | (ibytes[2] << 8) | (ibytes[3]));
 
 	    /* Removed [] around literal value to match ABI syntax 12/95.  */
-	    (*print_func) (stream, "\t%s, 0x%lX", grname[(inst >> 8) & 0xF], val);
+	    (*print_func) (stream, "\t%s, 0x%X", grname[(inst >> 8) & 0xF], val);
 
 	    if (val == 0)
-	      (*print_func) (stream, "\t// from address pool at 0x%lx",
-			     (long) (memaddr + 2
-				     + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
+	      (*print_func) (stream, "\t// from address pool at 0x%x",
+			     (uint32_t) (memaddr + 2
+					 + ((inst & 0xFF) << 2)) & ~3);
 	  }
 	  break;
 
 	case LJ:
 	  {
-	    unsigned long val;
+	    uint32_t val;
 
-	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & 0xFFFFFFFC;
+	    val = (memaddr + 2 + ((inst & 0xFF) << 2)) & ~3;
 
 	    /* We are not reading an instruction, so allow
 	       reads to extend beyond the next symbol.  */
@@ -277,14 +272,14 @@ print_insn_mcore (bfd_vma memaddr,
 	      }
 
 	    if (info->endian == BFD_ENDIAN_LITTLE)
-	      val = (ibytes[3] << 24) | (ibytes[2] << 16)
-		| (ibytes[1] << 8) | (ibytes[0]);
+	      val = (((unsigned) ibytes[3] << 24) | (ibytes[2] << 16)
+		     | (ibytes[1] << 8) | (ibytes[0]));
 	    else
-	      val = (ibytes[0] << 24) | (ibytes[1] << 16)
-		| (ibytes[2] << 8) | (ibytes[3]);
+	      val = (((unsigned) ibytes[0] << 24) | (ibytes[1] << 16)
+		     | (ibytes[2] << 8) | (ibytes[3]));
 
 	    /* Removed [] around literal value to match ABI syntax 12/95.  */
-	    (*print_func) (stream, "\t0x%lX", val);
+	    (*print_func) (stream, "\t0x%X", val);
 	    /* For jmpi/jsri, we'll try to get a symbol for the target.  */
 	    if (info->print_address_func && val != 0)
 	      {
@@ -293,9 +288,9 @@ print_insn_mcore (bfd_vma memaddr,
 	      }
 	    else
 	      {
-		(*print_func) (stream, "\t// from address pool at 0x%lx",
-			       (long) (memaddr + 2
-				       + ((inst & 0xFF) << 2)) & 0xFFFFFFFC);
+		(*print_func) (stream, "\t// from address pool at 0x%x",
+			       (uint32_t) (memaddr + 2
+					   + ((inst & 0xFF) << 2)) & ~3);
 	      }
 	  }
 	  break;

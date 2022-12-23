@@ -61,6 +61,7 @@
 (dnf f-resv-10-7   "resv-10-7"                 ((MACH ORBIS-MACHS) RESERVED) 10 7)
 (dnf f-resv-10-3   "resv-10-3"                 ((MACH ORBIS-MACHS) RESERVED) 10 3)
 (dnf f-resv-10-1   "resv-10-1"                 ((MACH ORBIS-MACHS) RESERVED) 10 1)
+(dnf f-resv-8-1    "resv-8-1"                  ((MACH ORBIS-MACHS) RESERVED) 8 1)
 (dnf f-resv-7-4    "resv-7-4"                  ((MACH ORBIS-MACHS) RESERVED) 7 4)
 (dnf f-resv-5-2    "resv-5-2"                  ((MACH ORBIS-MACHS) RESERVED) 5 2)
 
@@ -74,8 +75,23 @@
     25
     26
     INT
-    ((value pc) (sra SI (sub IAI value pc) (const 2)))
-    ((value pc) (add IAI (sll IAI value (const 2)) pc))
+    ((value pc) (sra IAI (sub IAI value pc) (const 2)))
+    ((value pc) (add IAI (mul IAI value (const 4)) pc))
+    )
+
+; PC relative, 21-bit, 13 shifted to right, aligned.
+; Note that the alignment means that we can't simplify relocations in the
+; same way as we do for pc-relative, so we use ABS-ADDR instead of PCREL-ADDR.
+(df f-disp21
+    "disp21"
+    ((MACH ORBIS-MACHS) ABS-ADDR)
+    20
+    21
+    INT
+    ((value pc)
+     (sub IAI (sra IAI value (const 13)) (sra IAI pc (const 13))))
+    ((value pc)
+     (mul IAI (add IAI value (sra IAI pc (const 13))) (const 8192)))
     )
 
 ; Immediates.
@@ -134,6 +150,7 @@
   insn-opcode "insn main opcode enums" ((MACH ORBIS-MACHS)) OPC_ f-opcode
   (("J"            #x00)
    ("JAL"          #x01)
+   ("ADRP"	   #x02)
    ("BNF"          #x03)
    ("BF"           #x04)
    ("NOP"          #x05)
@@ -204,8 +221,10 @@
 (define-normal-insn-enum insn-opcode-mac
   "multiply/accumulate insn opcode enums" ((MACH ORBIS-MACHS))
   OPC_MAC_ f-op-3-4
-  (("MAC" #x1)
-   ("MSB" #x2)
+  (("MAC"   #x1)
+   ("MSB"   #x2)
+   ("MACU"  #x3)
+   ("MSBU"  #x4)
    )
   )
 
@@ -247,12 +266,14 @@
    ("OR"    #x4)
    ("XOR"   #x5)
    ("MUL"   #x6)
+   ("MULD"  #x7)
    ("SHROT" #x8)
    ("DIV"   #x9)
    ("DIVU"  #xA)
    ("MULU"  #xB)
    ("EXTBH" #xC)
    ("EXTW"  #xD)
+   ("MULDU" #xD)
    ("CMOV"  #xE)
    ("FFL1"  #xF)
    )
@@ -312,6 +333,15 @@
   )
 
 (define-operand
+  (name disp21)
+  (comment "pc-rel 21 bit")
+  (attrs (MACH ORBIS-MACHS))
+  (type h-iaddr)
+  (index f-disp21)
+  (handlers (parse "disp21"))
+  )
+
+(define-operand
   (name simm16)
   (comment "16-bit signed immediate")
   (attrs (MACH ORBIS-MACHS) SIGN-OPT)
@@ -335,7 +365,7 @@
   (attrs (MACH ORBIS-MACHS) SIGN-OPT)
   (type h-simm16)
   (index f-simm16-split)
-  (handlers (parse "simm16"))
+  (handlers (parse "simm16_split"))
 )
 
 (define-operand
@@ -344,7 +374,7 @@
   (attrs (MACH ORBIS-MACHS))
   (type h-uimm16)
   (index f-uimm16-split)
-  (handlers (parse "uimm16"))
+  (handlers (parse "uimm16_split"))
 )
 
 ; Instructions.
@@ -401,6 +431,14 @@
   (.pmacro ()
            (cti-transfer-control 1 disp26)
            )
+  )
+
+(dni l-adrp "load pc-relative page address"
+    ((MACH ORBIS-MACHS))
+    "l.adrp $rD,${disp21}"
+    (+ OPC_ADRP rD disp21)
+    (set UWI rD disp21)
+    ()
   )
 
 (define-cti
@@ -562,7 +600,7 @@
                (set UWI mac-machi 0)
                )
      ()
-     )
+)
 
 
 ; System releated instructions
@@ -783,77 +821,93 @@
 )
 
 (dni (l-mul) "l.mul reg/reg/reg"
-          ((MACH ORBIS-MACHS))
-          ("l.mul $rD,$rA,$rB")
-          (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MUL)
-          (sequence ()
-                    (sequence ()
-                              ; 2's complement overflow
-                              (set BI sys-sr-ov (mul-o2flag WI rA rB))
-                              ; 1's complement overflow
-                              (set BI sys-sr-cy (mul-o1flag WI rA rB))
-                              (set rD (mul WI rA rB))
-                              )
-                    (if (andif sys-sr-ov sys-sr-ove)
-                        (raise-exception EXCEPT-RANGE))
-                    )
-          ()
+     ((MACH ORBIS-MACHS))
+     ("l.mul $rD,$rA,$rB")
+     (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MUL)
+     (sequence ()
+	(sequence ()
+	   (set BI sys-sr-ov (mul-o2flag WI rA rB))
+	   (set rD (mul WI rA rB))
+	)
+	(if (andif sys-sr-ov sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
+     )
+     ()
+)
+
+(dni (l-muld) "l.muld reg/reg"
+     ((MACH ORBIS-MACHS))
+     ("l.muld $rA,$rB")
+     (+ OPC_ALU (f-resv-25-5 0) rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MULD)
+     (sequence ((DI result))
+	(set DI result (mul DI (ext DI rA) (ext DI rB)))
+	(set SI mac-machi (subword SI result 0))
+	(set SI mac-maclo (subword SI result 1))
+     )
+     ()
 )
 
 (dni (l-mulu) "l.mulu reg/reg/reg"
-          ((MACH ORBIS-MACHS))
-          ("l.mulu $rD,$rA,$rB")
-          (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MULU)
-          (sequence ()
-                    (sequence ()
-                              ; 2's complement overflow
-                              (set BI sys-sr-ov 0)
-                              ; 1's complement overflow
-                              (set BI sys-sr-cy (mul-o1flag UWI rA rB))
-                              (set rD (mul UWI rA rB))
-                              )
-                    (if (andif sys-sr-ov sys-sr-ove)
-                        (raise-exception EXCEPT-RANGE))
-                    )
-          ()
+     ((MACH ORBIS-MACHS))
+     ("l.mulu $rD,$rA,$rB")
+     (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MULU)
+     (sequence ()
+	(sequence ()
+	   (set BI sys-sr-cy (mul-o1flag UWI rA rB))
+	   (set rD (mul UWI rA rB))
+	)
+	(if (andif sys-sr-cy sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
+     )
+     ()
+)
+
+(dni (l-muldu) "l.muld reg/reg"
+     ((MACH ORBIS-MACHS))
+     ("l.muldu $rA,$rB")
+     (+ OPC_ALU (f-resv-25-5 0) rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_MULDU)
+     (sequence ((DI result))
+	(set DI result (mul DI (zext DI rA) (zext DI rB)))
+	(set SI mac-machi (subword SI result 0))
+	(set SI mac-maclo (subword SI result 1))
+     )
+     ()
 )
 
 (dni l-div "divide (signed)"
-          ((MACH ORBIS-MACHS))
-          "l.div $rD,$rA,$rB"
-          (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_DIV)
-          (sequence ()
-                    (if (ne rB 0)
-                        (sequence ()
-                                  (set BI sys-sr-cy 0)
-                                  (set WI rD (div WI rA rB))
-                                  )
-                        (set BI sys-sr-cy 1)
-                        )
-                    (set BI sys-sr-ov 0)
-                    (if (andif sys-sr-cy sys-sr-ove)
-                        (raise-exception EXCEPT-RANGE))
-                    )
-          ()
+     ((MACH ORBIS-MACHS))
+     "l.div $rD,$rA,$rB"
+     (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_DIV)
+     (if (ne rB 0)
+	(sequence ()
+	   (set BI sys-sr-ov 0)
+	   (set WI rD (div WI rA rB))
+	)
+	(sequence ()
+	   (set BI sys-sr-ov 1)
+	   (if sys-sr-ove
+	      (raise-exception EXCEPT-RANGE))
+	)
+     )
+     ()
 )
 
 (dni l-divu "divide (unsigned)"
-          ((MACH ORBIS-MACHS))
-          "l.divu $rD,$rA,$rB"
-          (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_DIVU)
-          (sequence ()
-                    (if (ne rB 0)
-                        (sequence ()
-                                  (set BI sys-sr-cy 0)
-                                  (set rD (udiv UWI rA rB))
-                                  )
-                        (set BI sys-sr-cy 1)
-                        )
-                    (set BI sys-sr-ov 0)
-                    (if (andif sys-sr-cy sys-sr-ove)
-                        (raise-exception EXCEPT-RANGE))
-                    )
-          ()
+     ((MACH ORBIS-MACHS))
+     "l.divu $rD,$rA,$rB"
+     (+ OPC_ALU rD rA rB (f-resv-10-7 #x30) OPC_ALU_REGREG_DIVU)
+     (if (ne rB 0)
+	(sequence ()
+	   (set BI sys-sr-cy 0)
+	   (set rD (udiv UWI rA rB))
+	)
+	(sequence ()
+	   (set BI sys-sr-cy 1)
+	   (if sys-sr-ove
+	       (raise-exception EXCEPT-RANGE))
+	)
+     )
+     ()
 )
 
 (dni l-ff1 "find first '1'"
@@ -951,17 +1005,14 @@
      (+ OPC_MULI rD rA simm16)
      (sequence ()
                (sequence ()
-                         ; 2's complement overflow
                          (set sys-sr-ov (mul-o2flag WI rA (ext WI simm16)))
-                         ; 1's complement overflow
-                         (set sys-sr-cy (mul-o1flag UWI rA (ext UWI simm16)))
                          (set rD (mul WI rA (ext WI simm16)))
                          )
                (if (andif sys-sr-ov sys-sr-ove)
                    (raise-exception EXCEPT-RANGE))
                )
      ()
-     )
+)
 
 (define-pmacro (extbh-insn mnemonic extop extmode truncmode)
   (begin
@@ -1085,42 +1136,100 @@
      ((MACH ORBIS-MACHS))
      "l.mac $rA,$rB"
      (+  OPC_MAC (f-op-25-5 0) rA rB (f-resv-10-7 0) OPC_MAC_MAC)
-     (sequence ((WI prod) (DI result))
-               (set WI prod (mul WI rA rB))
-               (set DI result (add (join DI SI mac-machi mac-maclo) (ext DI prod)))
-               (set SI mac-machi (subword SI result 0))
-               (set SI mac-maclo (subword SI result 1))
-               )
-     ()
+     (sequence ()
+	(sequence ((DI prod) (DI mac) (DI result))
+	   (set DI prod (mul DI (ext DI rA) (ext DI rB)))
+	   (set DI mac (join DI SI mac-machi mac-maclo))
+	   (set DI result (add prod mac))
+	   (set SI mac-machi (subword SI result 0))
+	   (set SI mac-maclo (subword SI result 1))
+	   (set BI sys-sr-ov (addc-oflag prod mac 0))
+	)
+	(if (andif sys-sr-ov sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
      )
-
-(dni l-msb
-     "l.msb reg/reg"
-     ((MACH ORBIS-MACHS))
-     "l.msb $rA,$rB"
-     (+  OPC_MAC (f-op-25-5 0) rA rB (f-resv-10-7 0) OPC_MAC_MSB)
-     (sequence ((WI prod) (DI result))
-               (set WI prod (mul WI rA rB))
-               (set DI result (sub (join DI SI mac-machi mac-maclo) (ext DI prod)))
-               (set SI mac-machi (subword SI result 0))
-               (set SI mac-maclo (subword SI result 1))
-               )
      ()
-     )
+)
 
 (dni l-maci
      "l.maci reg/simm16"
      ((MACH ORBIS-MACHS))
      "l.maci $rA,${simm16}"
      (+ OPC_MACI (f-resv-25-5 0) rA simm16)
-     (sequence ((WI prod) (DI result))
-               (set WI prod (mul WI (ext WI simm16) rA))
-               (set DI result (add (join DI SI mac-machi mac-maclo) (ext DI prod)))
-               (set SI mac-machi (subword SI result 0))
-               (set SI mac-maclo (subword SI result 1))
-               )
-     ()
+     (sequence ()
+	(sequence ((DI prod) (DI mac) (DI result))
+	   (set DI prod (mul DI (ext DI rA) (ext DI simm16)))
+	   (set DI mac (join DI SI mac-machi mac-maclo))
+	   (set DI result (add mac prod))
+	   (set SI mac-machi (subword SI result 0))
+	   (set SI mac-maclo (subword SI result 1))
+	   (set BI sys-sr-ov (addc-oflag prod mac 0))
+	)
+	(if (andif sys-sr-ov sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
      )
+     ()
+)
+
+(dni l-macu
+     "l.macu reg/reg"
+     ((MACH ORBIS-MACHS))
+     "l.macu $rA,$rB"
+     (+  OPC_MAC (f-op-25-5 0) rA rB (f-resv-10-7 0) OPC_MAC_MACU)
+     (sequence ()
+	(sequence ((DI prod) (DI mac) (DI result))
+	   (set DI prod (mul DI (zext DI rA) (zext DI rB)))
+	   (set DI mac (join DI SI mac-machi mac-maclo))
+	   (set DI result (add prod mac))
+	   (set SI mac-machi (subword SI result 0))
+	   (set SI mac-maclo (subword SI result 1))
+	   (set BI sys-sr-cy (addc-cflag prod mac 0))
+	)
+	(if (andif sys-sr-cy sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
+     )
+     ()
+)
+
+(dni l-msb
+     "l.msb reg/reg"
+     ((MACH ORBIS-MACHS))
+     "l.msb $rA,$rB"
+     (+  OPC_MAC (f-op-25-5 0) rA rB (f-resv-10-7 0) OPC_MAC_MSB)
+     (sequence ()
+	(sequence ((DI prod) (DI mac) (DI result))
+	   (set DI prod (mul DI (ext DI rA) (ext DI rB)))
+	   (set DI mac (join DI SI mac-machi mac-maclo))
+	   (set DI result (sub mac prod))
+	   (set SI mac-machi (subword SI result 0))
+	   (set SI mac-maclo (subword SI result 1))
+	   (set BI sys-sr-ov (subc-oflag mac result 0))
+	)
+	(if (andif sys-sr-ov sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
+     )
+     ()
+)
+
+(dni l-msbu
+     "l.msbu reg/reg"
+     ((MACH ORBIS-MACHS))
+     "l.msbu $rA,$rB"
+     (+  OPC_MAC (f-op-25-5 0) rA rB (f-resv-10-7 0) OPC_MAC_MSBU)
+     (sequence ()
+	(sequence ((DI prod) (DI mac) (DI result))
+	   (set DI prod (mul DI (zext DI rA) (zext DI rB)))
+	   (set DI mac (join DI SI mac-machi mac-maclo))
+	   (set DI result (sub mac prod))
+	   (set SI mac-machi (subword SI result 0))
+	   (set SI mac-maclo (subword SI result 1))
+	   (set BI sys-sr-cy (subc-cflag mac result 0))
+	)
+	(if (andif sys-sr-cy sys-sr-ove)
+	    (raise-exception EXCEPT-RANGE))
+     )
+     ()
+)
 
 (define-pmacro (cust-insn cust-num)
   (begin

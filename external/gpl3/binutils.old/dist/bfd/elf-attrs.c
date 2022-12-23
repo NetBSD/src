@@ -1,5 +1,5 @@
 /* ELF attributes support (based on ARM EABI attributes).
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -106,7 +106,7 @@ vendor_obj_attr_size (bfd *abfd, int vendor)
     size += obj_attr_size (list->tag, &list->attr);
 
   /* <size> <vendor_name> NUL 0x1 <size> */
-  return ((size || vendor == OBJ_ATTR_PROC)
+  return (size
 	  ? size + 10 + strlen (vendor_name)
 	  : 0);
 }

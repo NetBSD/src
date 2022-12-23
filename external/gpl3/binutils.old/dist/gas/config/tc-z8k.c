@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -143,7 +143,7 @@ void
 md_begin (void)
 {
   const opcode_entry_type *opcode;
-  int idx = -1;
+  unsigned int idx = -1u;
 
   opcode_hash_control = hash_new ();
 
@@ -861,7 +861,7 @@ get_specific (opcode_entry_type *opcode, op_type *operands)
   int found = 0;
   unsigned int noperands = opcode->noperands;
 
-  int this_index = opcode->idx;
+  unsigned int this_index = opcode->idx;
 
   while (this_index == opcode->idx && !found)
     {
@@ -1385,7 +1385,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
 valueT
 md_section_align (segT seg, valueT size)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
   valueT mask = ((valueT) 1 << align) - 1;
 
   return (size + mask) & ~mask;

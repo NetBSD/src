@@ -19,6 +19,7 @@ fi
 INITIAL_READONLY_SECTIONS="${INITIAL_READONLY_SECTIONS}
   .MIPS.abiflags ${RELOCATING-0} : { *(.MIPS.abiflags) }
   .reginfo       ${RELOCATING-0} : { *(.reginfo) }
+  .MIPS.xhash    ${RELOCATING-0} : { *(.MIPS.xhash) }
 "
 OTHER_TEXT_SECTIONS='*(.mips16.fn.*) *(.mips16.call.*)'
 # Unlike most targets, the MIPS backend puts all dynamic relocations
@@ -55,12 +56,12 @@ OTHER_SDATA_SECTIONS="
   .lit8         ${RELOCATING-0} : { *(.lit8) }
   .lit4         ${RELOCATING-0} : { *(.lit4) }
 "
-TEXT_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_ftext = .${CREATE_SHLIB+)};"
+TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .); ${CREATE_SHLIB+PROVIDE (}_ftext = .${CREATE_SHLIB+)};"
 DATA_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fdata = .${CREATE_SHLIB+)};"
 OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fbss = .${CREATE_SHLIB+)};"
-OTHER_SECTIONS='
-  .gptab.sdata : { *(.gptab.data) *(.gptab.sdata) }
-  .gptab.sbss : { *(.gptab.bss) *(.gptab.sbss) }
+OTHER_SECTIONS="
+  .gptab.sdata : {${RELOCATING+ *(.gptab.data)} *(.gptab.sdata) }
+  .gptab.sbss : {${RELOCATING+ *(.gptab.bss)} *(.gptab.sbss) }
   .mdebug.abi32 0 : { KEEP(*(.mdebug.abi32)) }
   .mdebug.abiN32 0 : { KEEP(*(.mdebug.abiN32)) }
   .mdebug.abi64 0 : { KEEP(*(.mdebug.abi64)) }
@@ -69,10 +70,10 @@ OTHER_SECTIONS='
   .mdebug.eabi64 0 : { KEEP(*(.mdebug.eabi64)) }
   .gcc_compiled_long32 0 : { KEEP(*(.gcc_compiled_long32)) }
   .gcc_compiled_long64 0 : { KEEP(*(.gcc_compiled_long64)) }
-'
+"
 ARCH=mips
 MACHINE=
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 EXTRA_EM_FILE=mipself
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes

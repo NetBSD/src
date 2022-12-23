@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,6 +23,7 @@
 #
 fragment <<EOF
 #include "elf-bfd.h"
+#include "ldelfgen.h"
 
 EOF
 source_em ${srcdir}/emultempl/elf-generic.em
@@ -45,7 +46,9 @@ gld${EMULATION_NAME}_after_open (void)
 	  if ((sec->flags & (SEC_GROUP | SEC_LINKER_CREATED)) == SEC_GROUP)
 	    {
 	      struct bfd_elf_section_data *sec_data = elf_section_data (sec);
-	      elf_group_id (sec) = syms[sec_data->this_hdr.sh_info - 1];
+	      struct bfd_symbol *sym = syms[sec_data->this_hdr.sh_info - 1];
+	      elf_group_id (sec) = sym;
+	      sym->flags |= BSF_KEEP;
 	    }
 }
 
@@ -61,7 +64,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 static void
 gld${EMULATION_NAME}_after_allocation (void)
 {
-  gld${EMULATION_NAME}_map_segments (FALSE);
+  ldelf_map_segments (FALSE);
 }
 EOF
 # Put these extra routines in ld_${EMULATION_NAME}_emulation

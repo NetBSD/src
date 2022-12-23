@@ -1,5 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -35,6 +35,7 @@
 #include "binemul.h"
 #include "plugin-api.h"
 #include "plugin.h"
+#include "ansidecl.h"
 
 #ifdef __GO32___
 #define EXT_NAME_LEN 3		/* Bufflen of addition to name if it's MS-DOS.  */
@@ -149,8 +150,14 @@ static const char *plugin_target = NULL;
 
 static const char *target = NULL;
 
-#define OPTION_PLUGIN 201
-#define OPTION_TARGET 202
+enum long_option_numbers
+{
+  OPTION_PLUGIN = 201,
+  OPTION_TARGET,
+  OPTION_OUTPUT
+};
+
+static const char * output_dir = NULL;
 
 static struct option long_options[] =
 {
@@ -158,6 +165,7 @@ static struct option long_options[] =
   {"plugin", required_argument, NULL, OPTION_PLUGIN},
   {"target", required_argument, NULL, OPTION_TARGET},
   {"version", no_argument, &show_version, 1},
+  {"output", required_argument, NULL, OPTION_OUTPUT},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -327,6 +335,7 @@ usage (int help)
   fprintf (s, _("  [V]          - display the version number\n"));
   fprintf (s, _("  @<file>      - read options from <file>\n"));
   fprintf (s, _("  --target=BFDNAME - specify the target object format as BFDNAME\n"));
+  fprintf (s, _("  --output=DIRNAME - specify the output directory for extraction operations\n"));
 #if BFD_SUPPORTS_PLUGINS
   fprintf (s, _(" optional:\n"));
   fprintf (s, _("  --plugin <p> - load the specified plugin\n"));
@@ -432,9 +441,10 @@ decode_options (int argc, char **argv)
 {
   int c;
 
-  /* Convert old-style tar call by exploding option element and rearranging
+  /* Convert old-style ar call by exploding option element and rearranging
      options accordingly.  */
 
+ restart:
   if (argc > 1 && argv[1][0] != '-')
     {
       int new_argc;		/* argc value for rearranged arguments */
@@ -591,11 +601,26 @@ decode_options (int argc, char **argv)
 	case OPTION_TARGET:
 	  target = optarg;
 	  break;
+	case OPTION_OUTPUT:
+	  output_dir = optarg;
+	  break;
 	case 0:		/* A long option that just sets a flag.  */
 	  break;
         default:
           usage (0);
         }
+    }
+
+  /* PR 13256: Allow for the possibility that the first command line option
+     started with a dash (eg --plugin) but then the following option(s) are
+     old style, non-dash-prefixed versions.  */
+  if (operation == none && write_armap != 1 && !mri_mode
+      && optind > 0 && optind < argc)
+    {
+      argv += (optind - 1);
+      argc -= (optind - 1);
+      optind = 0;
+      goto restart;
     }
 
   return &argv[optind];
@@ -718,7 +743,8 @@ main (int argc, char **argv)
 
   START_PROGRESS (program_name, 0);
 
-  bfd_init ();
+  if (bfd_init () != BFD_INIT_MAGIC)
+    fatal (_("fatal error: libbfd ABI mismatch"));
   set_default_bfd_target ();
 
   xatexit (remove_output);
@@ -1036,6 +1062,53 @@ print_contents (bfd *abfd)
   free (cbuf);
 }
 
+
+static FILE * open_output_file (bfd *) ATTRIBUTE_RETURNS_NONNULL;
+
+static FILE *
+open_output_file (bfd * abfd)
+{
+  output_filename = bfd_get_filename (abfd);
+
+  /* PR binutils/17533: Do not allow directory traversal
+     outside of the current directory tree - unless the
+     user has explicitly specified an output directory.  */
+  if (! is_valid_archive_path (output_filename))
+    {
+      char * base = (char *) lbasename (output_filename);
+
+      non_fatal (_("illegal output pathname for archive member: %s, using '%s' instead"),
+		 output_filename, base);
+      output_filename = base;
+    }
+  
+  if (output_dir)
+    {
+      size_t len = strlen (output_dir);
+
+      if (len > 0)
+	{
+	  /* FIXME: There is a memory leak here, but it is not serious.  */
+	  if (IS_DIR_SEPARATOR (output_dir [len - 1]))
+	    output_filename = concat (output_dir, output_filename, NULL);
+	  else
+	    output_filename = concat (output_dir, "/", output_filename, NULL);
+	}
+    }
+
+  if (verbose)
+    printf ("x - %s\n", output_filename);
+  
+  FILE * ostream = fopen (output_filename, FOPEN_WB);
+  if (ostream == NULL)
+    {
+      perror (output_filename);
+      xexit (1);
+    }
+
+  return ostream;
+}
+
 /* Extract a member of the archive into its own file.
 
    We defer opening the new file until after we have read a BUFSIZ chunk of the
@@ -1049,102 +1122,71 @@ print_contents (bfd *abfd)
 void
 extract_file (bfd *abfd)
 {
-  FILE *ostream;
-  char *cbuf = (char *) xmalloc (BUFSIZE);
-  bfd_size_type nread, tocopy;
-  bfd_size_type ncopied = 0;
   bfd_size_type size;
   struct stat buf;
-
-  /* PR binutils/17533: Do not allow directory traversal
-     outside of the current directory tree.  */
-  if (! is_valid_archive_path (bfd_get_filename (abfd)))
-    {
-      non_fatal (_("illegal pathname found in archive member: %s"),
-		 bfd_get_filename (abfd));
-      free (cbuf);
-      return;
-    }
 
   if (bfd_stat_arch_elt (abfd, &buf) != 0)
     /* xgettext:c-format */
     fatal (_("internal stat error on %s"), bfd_get_filename (abfd));
   size = buf.st_size;
 
-  if (verbose)
-    printf ("x - %s\n", bfd_get_filename (abfd));
-
   bfd_seek (abfd, (file_ptr) 0, SEEK_SET);
 
-  ostream = NULL;
+  output_file = NULL;
   if (size == 0)
     {
-      /* Seems like an abstraction violation, eh?  Well it's OK! */
-      output_filename = bfd_get_filename (abfd);
-
-      ostream = fopen (bfd_get_filename (abfd), FOPEN_WB);
-      if (ostream == NULL)
-	{
-	  perror (bfd_get_filename (abfd));
-	  xexit (1);
-	}
-
-      output_file = ostream;
+      output_file = open_output_file (abfd);
     }
   else
-    while (ncopied < size)
-      {
-	tocopy = size - ncopied;
-	if (tocopy > BUFSIZE)
-	  tocopy = BUFSIZE;
+    {
+      bfd_size_type ncopied = 0;
+      char *cbuf = (char *) xmalloc (BUFSIZE);
 
-	nread = bfd_bread (cbuf, tocopy, abfd);
-	if (nread != tocopy)
-	  /* xgettext:c-format */
-	  fatal (_("%s is not a valid archive"),
-		 bfd_get_filename (abfd->my_archive));
+      while (ncopied < size)
+	{
+	  bfd_size_type nread, tocopy;
 
-	/* See comment above; this saves disk arm motion */
-	if (ostream == NULL)
-	  {
-	    /* Seems like an abstraction violation, eh?  Well it's OK! */
-	    output_filename = bfd_get_filename (abfd);
+	  tocopy = size - ncopied;
+	  if (tocopy > BUFSIZE)
+	    tocopy = BUFSIZE;
 
-	    ostream = fopen (bfd_get_filename (abfd), FOPEN_WB);
-	    if (ostream == NULL)
-	      {
-		perror (bfd_get_filename (abfd));
-		xexit (1);
-	      }
+	  nread = bfd_bread (cbuf, tocopy, abfd);
+	  if (nread != tocopy)
+	    /* xgettext:c-format */
+	    fatal (_("%s is not a valid archive"),
+		   bfd_get_filename (abfd->my_archive));
 
-	    output_file = ostream;
-	  }
+	  /* See comment above; this saves disk arm motion.  */
+	  if (output_file == NULL)
+	    output_file = open_output_file (abfd);
 
-	/* fwrite in mingw32 may return int instead of bfd_size_type. Cast
-	   the return value to bfd_size_type to avoid comparison between
-	   signed and unsigned values.  */
-	if ((bfd_size_type) fwrite (cbuf, 1, nread, ostream) != nread)
-	  fatal ("%s: %s", output_filename, strerror (errno));
-	ncopied += tocopy;
-      }
+	  /* fwrite in mingw32 may return int instead of bfd_size_type. Cast
+	     the return value to bfd_size_type to avoid comparison between
+	     signed and unsigned values.  */
+	  if ((bfd_size_type) fwrite (cbuf, 1, nread, output_file) != nread)
+	    fatal ("%s: %s", output_filename, strerror (errno));
 
-  if (ostream != NULL)
-    fclose (ostream);
+	  ncopied += tocopy;
+	}
+
+      free (cbuf);
+    }
+
+  fclose (output_file);
 
   output_file = NULL;
-  output_filename = NULL;
 
-  chmod (bfd_get_filename (abfd), buf.st_mode);
+  chmod (output_filename, buf.st_mode);
 
   if (preserve_dates)
     {
       /* Set access time to modification time.  Only st_mtime is
 	 initialized by bfd_stat_arch_elt.  */
       buf.st_atime = buf.st_mtime;
-      set_times (bfd_get_filename (abfd), &buf);
+      set_times (output_filename, &buf);
     }
 
-  free (cbuf);
+  output_filename = NULL;
 }
 
 static void
@@ -1186,8 +1228,11 @@ write_archive (bfd *iarch)
   if (deterministic)
     obfd->flags |= BFD_DETERMINISTIC_OUTPUT;
 
+  if (full_pathname)
+    obfd->flags |= BFD_ARCHIVE_FULL_PATH;
+
   if (make_thin_archive || bfd_is_thin_archive (iarch))
-    bfd_is_thin_archive (obfd) = 1;
+    bfd_set_thin_archive (obfd, TRUE);
 
   if (!bfd_set_archive_head (obfd, contents_head))
     bfd_fatal (old_name);

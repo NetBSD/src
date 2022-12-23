@@ -1,5 +1,5 @@
 /* ia64-opc.c -- Functions to access the compacted opcode table
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Written by Bob Manson of Cygnus Solutions, <manson@cygnus.com>
 
    This file is part of the GNU opcodes library.
@@ -123,7 +123,7 @@ static short
 find_main_ent (short nameindex)
 {
   short start = 0;
-  short end = sizeof (main_table) / sizeof (struct ia64_main_table);
+  short end = ARRAY_SIZE (main_table);
   short i = (start + end) / 2;
 
   if (nameindex < main_table[0].name_index
@@ -372,13 +372,16 @@ locate_opcode_ent (ia64_insn opcode, enum ia64_insn_type type)
 
       bitpos[currstatenum] = currbitnum;
 
-      /* Skip opval[0] bits in the instruction. */
+      /* Skip opval[0] bits in the instruction.  */
       if (op & 0x40)
 	{
 	  currbitnum -= opval[0];
 	}
 
-      /* The value of the current bit being tested. */
+      if (currbitnum < 0)
+	currbitnum = 0;
+
+      /* The value of the current bit being tested.  */
       currbit = opcode & (((ia64_insn) 1) << currbitnum) ? 1 : 0;
       next_op = -1;
 
@@ -463,7 +466,7 @@ locate_opcode_ent (ia64_insn opcode, enum ia64_insn_type type)
 
 	  if (next_op > 65535)
 	    {
-	      abort ();
+	      return -1;
 	    }
 
 	  /* Run through the list of opcodes to check, trying to find
@@ -611,6 +614,9 @@ ia64_find_matching_opcode (const char *name, short place)
   char op[129];
   const char *suffix;
   short name_index;
+
+  if ((unsigned) place >= ARRAY_SIZE (main_table))
+    return NULL;
 
   if (strlen (name) > 128)
     {

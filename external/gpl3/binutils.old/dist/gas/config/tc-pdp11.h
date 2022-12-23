@@ -1,5 +1,5 @@
 /* tc-pdp11.h -- Header file for tc-pdp11.c.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

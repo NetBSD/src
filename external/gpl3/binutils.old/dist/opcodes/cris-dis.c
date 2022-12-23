@@ -1,5 +1,5 @@
 /* Disassembler code for CRIS.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Axis Communications AB, Lund, Sweden.
    Written by Hans-Peter Nilsson.
 
@@ -850,9 +850,8 @@ print_with_operands (const struct cris_opcode *opcodep,
       case 'n':
 	{
 	  /* Like N but pc-relative to the start of the insn.  */
-	  unsigned long number
-	    = (buffer[2] + buffer[3] * 256 + buffer[4] * 65536
-	       + buffer[5] * 0x1000000 + addr);
+	  int32_t number = (buffer[2] + buffer[3] * 256 + buffer[4] * 65536
+			    + buffer[5] * 0x1000000u);
 
 	  /* Finish off and output previous formatted bytes.  */
 	  *tp = 0;
@@ -860,14 +859,14 @@ print_with_operands (const struct cris_opcode *opcodep,
 	    (*info->fprintf_func) (info->stream, "%s", temp);
 	  tp = temp;
 
-	  (*info->print_address_func) ((bfd_vma) number, info);
+	  (*info->print_address_func) (addr + number, info);
 	}
 	break;
 
       case 'u':
 	{
 	  /* Like n but the offset is bits <3:0> in the instruction.  */
-	  unsigned long number = (buffer[0] & 0xf) * 2 + addr;
+	  unsigned int number = (buffer[0] & 0xf) * 2;
 
 	  /* Finish off and output previous formatted bytes.  */
 	  *tp = 0;
@@ -875,7 +874,7 @@ print_with_operands (const struct cris_opcode *opcodep,
 	    (*info->fprintf_func) (info->stream, "%s", temp);
 	  tp = temp;
 
-	  (*info->print_address_func) ((bfd_vma) number, info);
+	  (*info->print_address_func) (addr + number, info);
 	}
 	break;
 
@@ -889,7 +888,7 @@ print_with_operands (const struct cris_opcode *opcodep,
 	  {
 	    /* We're looking at [pc+], i.e. we need to output an immediate
 	       number, where the size can depend on different things.  */
-	    long number;
+	    int32_t number;
 	    int signedp
 	      = ((*cs == 'z' && (insn & 0x20))
 		 || opcodep->match == BDAP_QUICK_OPCODE);
@@ -940,9 +939,8 @@ print_with_operands (const struct cris_opcode *opcodep,
 		break;
 
 	      case 4:
-		number
-		  = buffer[2] + buffer[3] * 256 + buffer[4] * 65536
-		  + buffer[5] * 0x1000000;
+		number = (buffer[2] + buffer[3] * 256 + buffer[4] * 65536
+			  + buffer[5] * 0x1000000u);
 		break;
 
 	      default:
@@ -1042,10 +1040,10 @@ print_with_operands (const struct cris_opcode *opcodep,
 		      {
 			/* It's [pc+].  This cannot possibly be anything
 			   but an address.  */
-			unsigned long number
-			  = prefix_buffer[2] + prefix_buffer[3] * 256
-			  + prefix_buffer[4] * 65536
-			  + prefix_buffer[5] * 0x1000000;
+			int32_t number = (prefix_buffer[2]
+					  + prefix_buffer[3] * 256
+					  + prefix_buffer[4] * 65536
+					  + prefix_buffer[5] * 0x1000000u);
 
 			info->target = (bfd_vma) number;
 
@@ -1131,7 +1129,7 @@ print_with_operands (const struct cris_opcode *opcodep,
 
 		    if ((prefix_insn & 0x400) && (prefix_insn & 15) == 15)
 		      {
-			long number;
+			int32_t number;
 			unsigned int nbytes;
 
 			/* It's a value.  Get its size.  */
@@ -1157,10 +1155,9 @@ print_with_operands (const struct cris_opcode *opcodep,
 			    break;
 
 			  case 4:
-			    number
-			      = prefix_buffer[2] + prefix_buffer[3] * 256
-			      + prefix_buffer[4] * 65536
-			      + prefix_buffer[5] * 0x1000000;
+			    number = (prefix_buffer[2] + prefix_buffer[3] * 256
+				      + prefix_buffer[4] * 65536
+				      + prefix_buffer[5] * 0x1000000u);
 			    break;
 
 			  default:

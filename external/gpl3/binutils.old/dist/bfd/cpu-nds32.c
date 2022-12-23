@@ -1,5 +1,5 @@
 /* BFD support for the NDS32 processor
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -26,7 +26,7 @@
 
 #define N(number, print, default, next)  \
     {32, 32, 8, bfd_arch_nds32, number, "nds32", print, 4, default, \
-     bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
+     bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next, 0 }
 
 #define NEXT		&arch_info_struct[0]
 #define NDS32V2_NEXT	&arch_info_struct[1]

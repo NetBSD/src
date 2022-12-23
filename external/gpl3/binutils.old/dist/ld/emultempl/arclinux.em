@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2007-2018 Free Software Foundation, Inc.
+# Copyright (C) 2007-2020 Free Software Foundation, Inc.
 #
-# Copyright 2008-2012 Synopsys Inc.
+# Copyright 2008-2019 Synopsys Inc.
 #
 # This file is part of GLD, the Gnu Linker.
 #
@@ -20,33 +20,6 @@
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-# This file is sourced from elf32.em, and defines extra arc-linux
+# This file is sourced from elf.em, and defines extra arc-linux
 # specific routines.
 #
-cat >>e${EMULATION_NAME}.c <<EOF
-extern char * init_str;
-extern char * fini_str;
-EOF
-
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_INIT 300+1
-#define OPTION_FINI (OPTION_INIT+1)
-'
-PARSE_AND_LIST_LONGOPTS='
-  /* PE options */
-  { "init", required_argument, NULL, OPTION_INIT },
-  { "fini", required_argument, NULL, OPTION_FINI },
-'
-
-# FIXME: Should set PARSE_AND_LIST_OPTIONS to provide a short description
-# of the options.
-
-PARSE_AND_LIST_ARGS_CASES='
-    case OPTION_FINI:
-      fini_str = optarg;
-      break;
-
-    case OPTION_INIT:
-      init_str = optarg;
-      break;
-'

@@ -1,5 +1,5 @@
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -127,6 +127,7 @@ typedef struct pe_tdata
   int dll;
   int has_reloc_section;
   int dont_strip_reloc;
+  int dos_message[16];
   bfd_boolean insert_timestamp;
   bfd_boolean (*in_reloc_p) (bfd *, reloc_howto_type *);
   flagword real_flags;
@@ -366,6 +367,8 @@ extern bfd_vma bfd_coff_reloc16_get_value
   (arelent *, struct bfd_link_info *, asection *);
 extern void bfd_perform_slip
   (bfd *, unsigned int, asection *, bfd_vma);
+extern bfd_boolean _bfd_coff_close_and_cleanup
+  (bfd *);
 
 /* Functions and types in cofflink.c.  */
 
@@ -577,7 +580,8 @@ extern bfd_boolean _bfd_coff_reloc_link_order
    struct bfd_link_order *);
 extern bfd_boolean bfd_coff_gc_sections
   (bfd *, struct bfd_link_info *);
-
+extern const char *bfd_coff_group_name
+  (bfd *, const asection *);
 
 #define coff_get_section_contents_in_window \
   _bfd_generic_get_section_contents_in_window

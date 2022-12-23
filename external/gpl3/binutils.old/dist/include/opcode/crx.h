@@ -1,5 +1,5 @@
 /* crx.h -- Header file for CRX opcode and register tables.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi, NSC, Israel.
    Updates, BFDizing, GNUifying and ELF support by Tomer Levi.
@@ -260,7 +260,7 @@ typedef struct
     /* Size (in words).  */
     unsigned int size;
     /* Constant prefix (matched by the disassembler).  */
-    unsigned long match;
+    unsigned int match;
     /* Match size (in bits).  */
     int match_bits;
     /* Attributes.  */

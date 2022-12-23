@@ -61,6 +61,7 @@ responsibility among the other maintainers.
   ALPHA            Richard Henderson <rth@twiddle.net>
   AARCH64	   Richard Earnshaw <rearnsha@arm.com>
   AARCH64	   Marcus Shawcroft <marcus.shawcroft@arm.com>
+  ARC		   Claudiu Zissulescu <claziss@synopsys.com>
   ARM		   Nick Clifton <nickc@redhat.com>
   ARM		   Richard Earnshaw <rearnsha@arm.com>
   ARM		   Ramana Radhakrishnan <ramana.radhakrishnan@arm.com>
@@ -68,17 +69,21 @@ responsibility among the other maintainers.
   AVR		   Marek Michalkiewicz <marekm@amelek.gda.pl>
   BFIN		   Jie Zhang <jzhang918@gmail.com>
   BFIN		   Mike Frysinger <vapier@gentoo.org>
+  BPF		   Jose E. Marchesi <jose.marchesi@oracle.com>
   BUILD SYSTEM	   Daniel Jacobowitz <drow@false.org>
   CR16		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
   CRIS		   Hans-Peter Nilsson <hp@axis.com>
   CRX		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
+  CTF		   Nick Alcock <nick.alcock@oracle.com>
+  C-SKY		   Lifang Xia <lifang_xia@c-sky.com>
+  C-SKY		   Yunhai Shang <yunhai_shang@c-sky.com>
   DLX              Nikolaos Kavvadias <nkavv@physics.auth.gr>
   DWARF2	   Jason Merrill <jason@redhat.com>
   DWARF2	   Jakub Jelinek <jakub@redhat.com>
   dwarf-mode.el    Tom Tromey <tom@tromey.com>
   EPIPHANY	   Joern Rennecke <joern.rennecke@embecosm.com>
-  FR30		   Dave Brolley <brolley@redhat.com>
-  FRV		   Dave Brolley <brolley@redhat.com>
+  FR30		   Nick Clifton <nickc@redhat.com>
+  FRV		   Nick Clifton <nickc@redhat.com>
   FRV		   Alexandre Oliva <aoliva@redhat.com>
   GOLD		   Ian Lance Taylor <iant@google.com>
   GOLD		   Cary Coutant <ccoutant@gmail.com>
@@ -99,10 +104,11 @@ responsibility among the other maintainers.
   M68HC11 M68HC12  Sean Keys <skeys@ipdatasys.com>
   MACH-O           Tristan Gingold <tgingold@free.fr>
   MAXQ		   Inderpreet Singh <inderpreetb@noida.hcltech.com>
-  MEP		   Dave Brolley <brolley@redhat.com>
+  MEP		   Nick Clifton <nickc@redhat.com>
   METAG            Markos Chandras <markos.chandras@imgtec.com>
   MICROBLAZE	   Michael Eager <eager@eagercon.com>
-  MIPS		   Maciej W. Rozycki <macro@mips.com>
+  MIPS		   Chenghua Xu <paul.hua.gm@gmail.com>
+  MIPS I-IV	   Maciej W. Rozycki <macro@linux-mips.org>
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
   MN10300	   Alexandre Oliva <aoliva@redhat.com>
   Moxie		   Anthony Green <green@moxielogic.com>
@@ -118,12 +124,11 @@ responsibility among the other maintainers.
   PPC		   Alan Modra <amodra@gmail.com>
   PPC		   Peter Bergner <bergner@vnet.ibm.com>
   PPC vector ext   Aldy Hernandez <aldyh@redhat.com>
-  RISC-V	   Palmer Dabbelt <palmer@sifive.com>
+  RISC-V	   Palmer Dabbelt <palmer@dabbelt.com>
   RISC-V	   Andrew Waterman <andrew@sifive.com>
   RISC-V	   Jim Wilson <jimw@sifive.com>
-  RL78             DJ Delorie <dj@redhat.com>
-  RX               DJ Delorie <dj@redhat.com>
   RX               Nick Clifton <nickc@redhat.com>
+  S12Z		   John Darrington <john@darrington.wattle.id.au>
   s390, s390x	   Martin Schwidefsky <schwidefsky@de.ibm.com>
   s390, s390x	   Andreas Krebbel <krebbel@linux.vnet.ibm.com>
   SH		   Alexandre Oliva <aoliva@redhat.com>
@@ -144,7 +149,6 @@ responsibility among the other maintainers.
   XCOFF 	   Richard Sandiford <r.sandiford@uk.ibm.com>
   XGATE            Sean Keys <skeys@ipdatasys.com>
   Xtensa	   Sterling Augustine <augustine.sterling@gmail.com>
-  z80		   Arnold Metselaar <arnold.metselaar@planet.nl>
   z8k		   Christian Groessler <chris@groessler.org>
 
       --------- Past Maintainers -------------
@@ -158,6 +162,7 @@ goes with them.
   Jason Eckhardt
   Mark Kettenis
   Mei Ligang
+  Arnold Metselaar
   Mark Mitchell
   Bernd Schmidt
   Svein Seldal
@@ -297,7 +302,7 @@ Having selected the branch name, create the branch as follows:
 Please do not commit any patches to a branch you did not create
 without the explicit permission of the person who created the branch.
 
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

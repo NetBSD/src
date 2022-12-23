@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.0.5"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -64,7 +64,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "mcparse.y" /* yacc.c:339  */
  /* mcparse.y -- parser for Windows mc files
-  Copyright (C) 2007-2018 Free Software Foundation, Inc.
+  Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
   Parser for Windows mc files
   Written by Kai Tietz, Onevision.
@@ -1054,6 +1054,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -1370,222 +1371,222 @@ yyreduce:
   switch (yyn)
     {
         case 7:
-#line 76 "mcparse.y" /* yacc.c:1646  */
+#line 76 "mcparse.y" /* yacc.c:1648  */
     {
 	    cur_node = mc_add_node ();
 	    cur_node->user_text = (yyvsp[0].ustr);
 	  }
-#line 1379 "mcparse.c" /* yacc.c:1646  */
+#line 1380 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 8:
-#line 80 "mcparse.y" /* yacc.c:1646  */
+#line 80 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("syntax error"); }
-#line 1385 "mcparse.c" /* yacc.c:1646  */
+#line 1386 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 10:
-#line 85 "mcparse.y" /* yacc.c:1646  */
+#line 85 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ')' in SeverityNames"); }
-#line 1391 "mcparse.c" /* yacc.c:1646  */
+#line 1392 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 11:
-#line 86 "mcparse.y" /* yacc.c:1646  */
+#line 86 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '(' in SeverityNames"); }
-#line 1397 "mcparse.c" /* yacc.c:1646  */
+#line 1398 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 12:
-#line 87 "mcparse.y" /* yacc.c:1646  */
+#line 87 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '=' for SeverityNames"); }
-#line 1403 "mcparse.c" /* yacc.c:1646  */
+#line 1404 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 14:
-#line 89 "mcparse.y" /* yacc.c:1646  */
+#line 89 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ')' in LanguageNames"); }
-#line 1409 "mcparse.c" /* yacc.c:1646  */
+#line 1410 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 90 "mcparse.y" /* yacc.c:1646  */
+#line 90 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '(' in LanguageNames"); }
-#line 1415 "mcparse.c" /* yacc.c:1646  */
+#line 1416 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 16:
-#line 91 "mcparse.y" /* yacc.c:1646  */
+#line 91 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '=' for LanguageNames"); }
-#line 1421 "mcparse.c" /* yacc.c:1646  */
+#line 1422 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 18:
-#line 93 "mcparse.y" /* yacc.c:1646  */
+#line 93 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ')' in FacilityNames"); }
-#line 1427 "mcparse.c" /* yacc.c:1646  */
+#line 1428 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 19:
-#line 94 "mcparse.y" /* yacc.c:1646  */
+#line 94 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '(' in FacilityNames"); }
-#line 1433 "mcparse.c" /* yacc.c:1646  */
+#line 1434 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 20:
-#line 95 "mcparse.y" /* yacc.c:1646  */
+#line 95 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '=' for FacilityNames"); }
-#line 1439 "mcparse.c" /* yacc.c:1646  */
+#line 1440 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 21:
-#line 97 "mcparse.y" /* yacc.c:1646  */
+#line 97 "mcparse.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[0].ival) != 10 && (yyvsp[0].ival) != 16)
 	      mc_fatal ("OutputBase allows 10 or 16 as value");
 	    mcset_out_values_are_decimal = ((yyvsp[0].ival) == 10 ? 1 : 0);
 	  }
-#line 1449 "mcparse.c" /* yacc.c:1646  */
+#line 1450 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 22:
-#line 103 "mcparse.y" /* yacc.c:1646  */
+#line 103 "mcparse.y" /* yacc.c:1648  */
     {
 	    mcset_msg_id_typedef = (yyvsp[0].ustr);
 	  }
-#line 1457 "mcparse.c" /* yacc.c:1646  */
+#line 1458 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 23:
-#line 107 "mcparse.y" /* yacc.c:1646  */
+#line 107 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_fatal ("MessageIdTypedef expects an identifier");
 	  }
-#line 1465 "mcparse.c" /* yacc.c:1646  */
+#line 1466 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 24:
-#line 111 "mcparse.y" /* yacc.c:1646  */
+#line 111 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_fatal ("missing '=' for MessageIdTypedef");
 	  }
-#line 1473 "mcparse.c" /* yacc.c:1646  */
+#line 1474 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 27:
-#line 119 "mcparse.y" /* yacc.c:1646  */
+#line 119 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("severity ident missing"); }
-#line 1479 "mcparse.c" /* yacc.c:1646  */
+#line 1480 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 28:
-#line 124 "mcparse.y" /* yacc.c:1646  */
+#line 124 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_add_keyword ((yyvsp[-3].ustr), MCTOKEN, "severity", (yyvsp[-1].ival), (yyvsp[0].ustr));
 	  }
-#line 1487 "mcparse.c" /* yacc.c:1646  */
+#line 1488 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 29:
-#line 127 "mcparse.y" /* yacc.c:1646  */
+#line 127 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("severity number missing"); }
-#line 1493 "mcparse.c" /* yacc.c:1646  */
+#line 1494 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 30:
-#line 128 "mcparse.y" /* yacc.c:1646  */
+#line 128 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("severity missing '='"); }
-#line 1499 "mcparse.c" /* yacc.c:1646  */
+#line 1500 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 33:
-#line 134 "mcparse.y" /* yacc.c:1646  */
+#line 134 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ident in FacilityNames"); }
-#line 1505 "mcparse.c" /* yacc.c:1646  */
+#line 1506 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 34:
-#line 139 "mcparse.y" /* yacc.c:1646  */
+#line 139 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_add_keyword ((yyvsp[-3].ustr), MCTOKEN, "facility", (yyvsp[-1].ival), (yyvsp[0].ustr));
 	  }
-#line 1513 "mcparse.c" /* yacc.c:1646  */
+#line 1514 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 35:
-#line 142 "mcparse.y" /* yacc.c:1646  */
+#line 142 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("facility number missing"); }
-#line 1519 "mcparse.c" /* yacc.c:1646  */
+#line 1520 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 36:
-#line 143 "mcparse.y" /* yacc.c:1646  */
+#line 143 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("facility missing '='"); }
-#line 1525 "mcparse.c" /* yacc.c:1646  */
+#line 1526 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 39:
-#line 149 "mcparse.y" /* yacc.c:1646  */
+#line 149 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ident in LanguageNames"); }
-#line 1531 "mcparse.c" /* yacc.c:1646  */
+#line 1532 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 40:
-#line 154 "mcparse.y" /* yacc.c:1646  */
+#line 154 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_add_keyword ((yyvsp[-5].ustr), MCTOKEN, "language", (yyvsp[-3].ival), (yyvsp[0].ustr));
 	  }
-#line 1539 "mcparse.c" /* yacc.c:1646  */
+#line 1540 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 41:
-#line 157 "mcparse.y" /* yacc.c:1646  */
+#line 157 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing filename in LanguageNames"); }
-#line 1545 "mcparse.c" /* yacc.c:1646  */
+#line 1546 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 42:
-#line 158 "mcparse.y" /* yacc.c:1646  */
+#line 158 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing ':' in LanguageNames"); }
-#line 1551 "mcparse.c" /* yacc.c:1646  */
+#line 1552 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 43:
-#line 159 "mcparse.y" /* yacc.c:1646  */
+#line 159 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing language code in LanguageNames"); }
-#line 1557 "mcparse.c" /* yacc.c:1646  */
+#line 1558 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 44:
-#line 160 "mcparse.y" /* yacc.c:1646  */
+#line 160 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '=' for LanguageNames"); }
-#line 1563 "mcparse.c" /* yacc.c:1646  */
+#line 1564 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 45:
-#line 165 "mcparse.y" /* yacc.c:1646  */
+#line 165 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ustr) = NULL;
 	  }
-#line 1571 "mcparse.c" /* yacc.c:1646  */
+#line 1572 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 46:
-#line 169 "mcparse.y" /* yacc.c:1646  */
+#line 169 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ustr) = (yyvsp[0].ustr);
 	  }
-#line 1579 "mcparse.c" /* yacc.c:1646  */
+#line 1580 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 47:
-#line 172 "mcparse.y" /* yacc.c:1646  */
+#line 172 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("illegal token in identifier"); (yyval.ustr) = NULL; }
-#line 1585 "mcparse.c" /* yacc.c:1646  */
+#line 1586 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 48:
-#line 177 "mcparse.y" /* yacc.c:1646  */
+#line 177 "mcparse.y" /* yacc.c:1648  */
     {
 	    cur_node = mc_add_node ();
 	    cur_node->symbol = mc_last_symbol;
@@ -1595,59 +1596,59 @@ yyreduce:
 	    cur_node->vid = ((yyvsp[-1].ival) & 0xffffUL) | mc_sefa_val;
 	    mc_last_id = (yyvsp[-1].ival);
 	  }
-#line 1599 "mcparse.c" /* yacc.c:1646  */
+#line 1600 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 50:
-#line 189 "mcparse.y" /* yacc.c:1646  */
+#line 189 "mcparse.y" /* yacc.c:1648  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 1605 "mcparse.c" /* yacc.c:1646  */
+#line 1606 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 51:
-#line 190 "mcparse.y" /* yacc.c:1646  */
+#line 190 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing number in MessageId"); (yyval.ival) = 0; }
-#line 1611 "mcparse.c" /* yacc.c:1646  */
+#line 1612 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 52:
-#line 191 "mcparse.y" /* yacc.c:1646  */
+#line 191 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing '=' for MessageId"); (yyval.ival) = 0; }
-#line 1617 "mcparse.c" /* yacc.c:1646  */
+#line 1618 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 53:
-#line 195 "mcparse.y" /* yacc.c:1646  */
+#line 195 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ival) = ++mc_last_id;
 	  }
-#line 1625 "mcparse.c" /* yacc.c:1646  */
+#line 1626 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 54:
-#line 199 "mcparse.y" /* yacc.c:1646  */
+#line 199 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ival) = (yyvsp[0].ival);
 	  }
-#line 1633 "mcparse.c" /* yacc.c:1646  */
+#line 1634 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 55:
-#line 203 "mcparse.y" /* yacc.c:1646  */
+#line 203 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ival) = mc_last_id + (yyvsp[0].ival);
 	  }
-#line 1641 "mcparse.c" /* yacc.c:1646  */
+#line 1642 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 56:
-#line 206 "mcparse.y" /* yacc.c:1646  */
+#line 206 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing number after MessageId '+'"); }
-#line 1647 "mcparse.c" /* yacc.c:1646  */
+#line 1648 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 57:
-#line 211 "mcparse.y" /* yacc.c:1646  */
+#line 211 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ival) = 0;
 	    mc_sefa_val = (mcset_custom_bit ? 1 : 0) << 29;
@@ -1655,69 +1656,69 @@ yyreduce:
 	    mc_cur_severity = NULL;
 	    mc_cur_facility = NULL;
 	  }
-#line 1659 "mcparse.c" /* yacc.c:1646  */
+#line 1660 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 58:
-#line 219 "mcparse.y" /* yacc.c:1646  */
+#line 219 "mcparse.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[-1].ival) & 1)
 	      mc_warn (_("duplicate definition of Severity"));
 	    (yyval.ival) = (yyvsp[-1].ival) | 1;
 	  }
-#line 1669 "mcparse.c" /* yacc.c:1646  */
+#line 1670 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 59:
-#line 225 "mcparse.y" /* yacc.c:1646  */
+#line 225 "mcparse.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[-1].ival) & 2)
 	      mc_warn (_("duplicate definition of Facility"));
 	    (yyval.ival) = (yyvsp[-1].ival) | 2;
 	  }
-#line 1679 "mcparse.c" /* yacc.c:1646  */
+#line 1680 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 60:
-#line 231 "mcparse.y" /* yacc.c:1646  */
+#line 231 "mcparse.y" /* yacc.c:1648  */
     {
 	    if ((yyvsp[-1].ival) & 4)
 	      mc_warn (_("duplicate definition of SymbolicName"));
 	    (yyval.ival) = (yyvsp[-1].ival) | 4;
 	  }
-#line 1689 "mcparse.c" /* yacc.c:1646  */
+#line 1690 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 61:
-#line 239 "mcparse.y" /* yacc.c:1646  */
+#line 239 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_sefa_val &= ~ (0x3UL << 30);
 	    mc_sefa_val |= (((yyvsp[0].tok)->nval & 0x3UL) << 30);
 	    mc_cur_severity = (yyvsp[0].tok);
 	  }
-#line 1699 "mcparse.c" /* yacc.c:1646  */
+#line 1700 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 62:
-#line 247 "mcparse.y" /* yacc.c:1646  */
+#line 247 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_sefa_val &= ~ (0xfffUL << 16);
 	    mc_sefa_val |= (((yyvsp[0].tok)->nval & 0xfffUL) << 16);
 	    mc_cur_facility = (yyvsp[0].tok);
 	  }
-#line 1709 "mcparse.c" /* yacc.c:1646  */
+#line 1710 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 63:
-#line 255 "mcparse.y" /* yacc.c:1646  */
+#line 255 "mcparse.y" /* yacc.c:1648  */
     {
 	  mc_last_symbol = (yyvsp[0].ustr);
 	}
-#line 1717 "mcparse.c" /* yacc.c:1646  */
+#line 1718 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 66:
-#line 267 "mcparse.y" /* yacc.c:1646  */
+#line 267 "mcparse.y" /* yacc.c:1648  */
     {
 	    mc_node_lang *h;
 	    h = mc_add_node_lang (cur_node, (yyvsp[-3].tok), cur_node->vid);
@@ -1725,19 +1726,19 @@ yyreduce:
 	    if (mcset_max_message_length != 0 && unichar_len (h->message) > mcset_max_message_length)
 	      mc_warn ("message length to long");
 	  }
-#line 1729 "mcparse.c" /* yacc.c:1646  */
+#line 1730 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 67:
-#line 277 "mcparse.y" /* yacc.c:1646  */
+#line 277 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.ustr) = (yyvsp[0].ustr);
 	  }
-#line 1737 "mcparse.c" /* yacc.c:1646  */
+#line 1738 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 68:
-#line 281 "mcparse.y" /* yacc.c:1646  */
+#line 281 "mcparse.y" /* yacc.c:1648  */
     {
 	    unichar *h;
 	    rc_uint_type l1,l2;
@@ -1749,29 +1750,29 @@ yyreduce:
 	    h[l1 + l2] = 0;
 	    (yyval.ustr) = h;
 	  }
-#line 1753 "mcparse.c" /* yacc.c:1646  */
+#line 1754 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 69:
-#line 292 "mcparse.y" /* yacc.c:1646  */
+#line 292 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing end of message text"); (yyval.ustr) = NULL; }
-#line 1759 "mcparse.c" /* yacc.c:1646  */
+#line 1760 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 70:
-#line 293 "mcparse.y" /* yacc.c:1646  */
+#line 293 "mcparse.y" /* yacc.c:1648  */
     { mc_fatal ("missing end of message text"); (yyval.ustr) = (yyvsp[-1].ustr); }
-#line 1765 "mcparse.c" /* yacc.c:1646  */
+#line 1766 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 71:
-#line 296 "mcparse.y" /* yacc.c:1646  */
+#line 296 "mcparse.y" /* yacc.c:1648  */
     { (yyval.ustr) = (yyvsp[0].ustr); }
-#line 1771 "mcparse.c" /* yacc.c:1646  */
+#line 1772 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 72:
-#line 298 "mcparse.y" /* yacc.c:1646  */
+#line 298 "mcparse.y" /* yacc.c:1648  */
     {
 	    unichar *h;
 	    rc_uint_type l1,l2;
@@ -1783,85 +1784,85 @@ yyreduce:
 	    h[l1 + l2] = 0;
 	    (yyval.ustr) = h;
 	  }
-#line 1787 "mcparse.c" /* yacc.c:1646  */
+#line 1788 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 73:
-#line 312 "mcparse.y" /* yacc.c:1646  */
+#line 312 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.tok) = (yyvsp[-1].tok);
 	  }
-#line 1795 "mcparse.c" /* yacc.c:1646  */
+#line 1796 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 74:
-#line 316 "mcparse.y" /* yacc.c:1646  */
+#line 316 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.tok) = NULL;
 	    mc_fatal (_("undeclared language identifier"));
 	  }
-#line 1804 "mcparse.c" /* yacc.c:1646  */
+#line 1805 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 75:
-#line 321 "mcparse.y" /* yacc.c:1646  */
+#line 321 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.tok) = NULL;
 	    mc_fatal ("missing newline after Language");
 	  }
-#line 1813 "mcparse.c" /* yacc.c:1646  */
+#line 1814 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 76:
-#line 326 "mcparse.y" /* yacc.c:1646  */
+#line 326 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.tok) = NULL;
 	    mc_fatal ("missing ident for Language");
 	  }
-#line 1822 "mcparse.c" /* yacc.c:1646  */
+#line 1823 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 77:
-#line 331 "mcparse.y" /* yacc.c:1646  */
+#line 331 "mcparse.y" /* yacc.c:1648  */
     {
 	    (yyval.tok) = NULL;
 	    mc_fatal ("missing '=' for Language");
 	  }
-#line 1831 "mcparse.c" /* yacc.c:1646  */
+#line 1832 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 78:
-#line 337 "mcparse.y" /* yacc.c:1646  */
+#line 337 "mcparse.y" /* yacc.c:1648  */
     { (yyval.ustr) = (yyvsp[0].ustr); }
-#line 1837 "mcparse.c" /* yacc.c:1646  */
+#line 1838 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 79:
-#line 338 "mcparse.y" /* yacc.c:1646  */
+#line 338 "mcparse.y" /* yacc.c:1648  */
     { (yyval.ustr) = (yyvsp[0].tok)->usz; }
-#line 1843 "mcparse.c" /* yacc.c:1646  */
+#line 1844 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 80:
-#line 342 "mcparse.y" /* yacc.c:1646  */
+#line 342 "mcparse.y" /* yacc.c:1648  */
     { mclex_want_nl = 1; }
-#line 1849 "mcparse.c" /* yacc.c:1646  */
+#line 1850 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 81:
-#line 346 "mcparse.y" /* yacc.c:1646  */
+#line 346 "mcparse.y" /* yacc.c:1648  */
     { mclex_want_line = 1; }
-#line 1855 "mcparse.c" /* yacc.c:1646  */
+#line 1856 "mcparse.c" /* yacc.c:1648  */
     break;
 
   case 82:
-#line 350 "mcparse.y" /* yacc.c:1646  */
+#line 350 "mcparse.y" /* yacc.c:1648  */
     { mclex_want_filename = 1; }
-#line 1861 "mcparse.c" /* yacc.c:1646  */
+#line 1862 "mcparse.c" /* yacc.c:1648  */
     break;
 
 
-#line 1865 "mcparse.c" /* yacc.c:1646  */
+#line 1866 "mcparse.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2089,7 +2090,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 353 "mcparse.y" /* yacc.c:1906  */
+#line 353 "mcparse.y" /* yacc.c:1907  */
 
 
 /* Something else.  */

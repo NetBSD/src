@@ -1,5 +1,5 @@
 @c This summary of BFD is shared by the BFD and LD docs.
-@c Copyright (C) 2012-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 When an object file is opened, BFD subroutines automatically determine
 the format of the input object file.  They then build a descriptor in
@@ -115,7 +115,7 @@ output file (no matter its format) will retain symbols pointing to
 functions and to global, static, and common variables.  Some symbol
 information is not worth retaining; in @code{a.out}, type information is
 stored in the symbol table as long symbol names.  This information would
-be useless to most COFF debuggers; the linker has command line switches
+be useless to most COFF debuggers; the linker has command-line switches
 to allow users to throw it away.
 
 There is one word of type information within the symbol, so if the

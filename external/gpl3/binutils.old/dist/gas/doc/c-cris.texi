@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c CRIS description contributed by Axis Communications.
@@ -28,10 +28,10 @@
 The CRIS version of @code{@value{AS}} has these
 machine-dependent command-line options.
 
-@cindex @option{--emulation=criself} command line option, CRIS
-@cindex @option{--emulation=crisaout} command line option, CRIS
-@cindex CRIS @option{--emulation=criself} command line option
-@cindex CRIS @option{--emulation=crisaout} command line option
+@cindex @option{--emulation=criself} command-line option, CRIS
+@cindex @option{--emulation=crisaout} command-line option, CRIS
+@cindex CRIS @option{--emulation=criself} command-line option
+@cindex CRIS @option{--emulation=crisaout} command-line option
 
 The format of the generated object files can be either ELF or
 a.out, specified by the command-line options
@@ -40,10 +40,10 @@ The default is ELF (criself), unless @code{@value{AS}} has been
 configured specifically for a.out by using the configuration
 name @code{cris-axis-aout}.
 
-@cindex @option{--underscore} command line option, CRIS
-@cindex @option{--no-underscore} command line option, CRIS
-@cindex CRIS @option{--underscore} command line option
-@cindex CRIS @option{--no-underscore} command line option
+@cindex @option{--underscore} command-line option, CRIS
+@cindex @option{--no-underscore} command-line option, CRIS
+@cindex CRIS @option{--underscore} command-line option
+@cindex CRIS @option{--no-underscore} command-line option
 There are two different link-incompatible ELF object file
 variants for CRIS, for use in environments where symbols are
 expected to be prefixed by a leading @samp{_} character and for
@@ -58,8 +58,8 @@ difference, the effect of this option is to parse register names
 differently (@pxref{crisnous}).  The @option{--no-underscore}
 option makes a @samp{$} register prefix mandatory.
 
-@cindex @option{--pic} command line option, CRIS
-@cindex CRIS @option{--pic} command line option
+@cindex @option{--pic} command-line option, CRIS
+@cindex CRIS @option{--pic} command-line option
 @cindex Position-independent code, CRIS
 @cindex CRIS position-independent code
 The option @option{--pic} must be passed to @code{@value{AS}} in
@@ -70,8 +70,8 @@ affect expansion of instructions.  The expansion with
 faster) absolute addresses in those expansions.  This option is only
 valid when generating ELF format object files.
 
-@cindex @option{--march=@var{architecture}} command line option, CRIS
-@cindex CRIS @option{--march=@var{architecture}} command line option
+@cindex @option{--march=@var{architecture}} command-line option, CRIS
+@cindex CRIS @option{--march=@var{architecture}} command-line option
 @cindex Architecture variant option, CRIS
 @cindex CRIS architecture variant option
 The option @option{--march=@var{architecture}}
@@ -103,29 +103,29 @@ Only instructions with register names and addressing modes with
 opcodes common to the v10 and v32 are recognized.
 @end table
 
-@cindex @option{-N} command line option, CRIS
-@cindex CRIS @option{-N} command line option
+@cindex @option{-N} command-line option, CRIS
+@cindex CRIS @option{-N} command-line option
 When @option{-N} is specified, @code{@value{AS}} will emit a
 warning when a 16-bit branch instruction is expanded into a
 32-bit multiple-instruction construct (@pxref{CRIS-Expand}).
 
-@cindex @option{--no-mul-bug-abort} command line option, CRIS
-@cindex @option{--mul-bug-abort} command line option, CRIS
-@cindex CRIS @option{--no-mul-bug-abort} command line option
-@cindex CRIS @option{--mul-bug-abort} command line option
+@cindex @option{--no-mul-bug-abort} command-line option, CRIS
+@cindex @option{--mul-bug-abort} command-line option, CRIS
+@cindex CRIS @option{--no-mul-bug-abort} command-line option
+@cindex CRIS @option{--mul-bug-abort} command-line option
 
 Some versions of the CRIS v10, for example in the Etrax 100 LX,
 contain a bug that causes destabilizing memory accesses when a
 multiply instruction is executed with certain values in the
 first operand just before a cache-miss.  When the
-@option{--mul-bug-abort} command line option is active (the
+@option{--mul-bug-abort} command-line option is active (the
 default value), @code{@value{AS}} will refuse to assemble a file
 containing a multiply instruction at a dangerous offset, one
 that could be the last on a cache-line, or is in a section with
 insufficient alignment.  This placement checking does not catch
 any case where the multiply instruction is dangerously placed
 because it is located in a delay-slot.  The
-@option{--mul-bug-abort} command line option turns off the
+@option{--mul-bug-abort} command-line option turns off the
 checking.
 
 @node CRIS-Expand

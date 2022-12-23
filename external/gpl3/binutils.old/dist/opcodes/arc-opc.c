@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -651,9 +651,13 @@ static long long
 extract_w6 (unsigned long long  insn,
 	    bfd_boolean *       invalid ATTRIBUTE_UNUSED)
 {
-  unsigned value = 0;
+  int value = 0;
 
   value |= ((insn >> 6) & 0x003f) << 0;
+
+  /* Extend the sign.  */
+  int signbit = 1 << 5;
+  value = (value ^ signbit) - signbit;
 
   return value;
 }
@@ -1687,7 +1691,7 @@ const struct arc_flag_class arc_flag_classes[] =
   { F_CLASS_OPTIONAL, { F_ASFAKE, F_NULL}},
 
 #define C_NE	    (C_AS + 1)
-  { F_CLASS_OPTIONAL, { F_NE, F_NULL}},
+  { F_CLASS_REQUIRED, { F_NE, F_NULL}},
 
   /* ARC NPS400 Support: See comment near head of file.  */
 #define C_NPS_CL     (C_NE + 1)
@@ -1818,7 +1822,9 @@ const struct arc_operand arc_operands[] =
 
 #define RAD		(RBdup + 1)
   { 6, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rad, 0 },
-#define RCD		(RAD + 1)
+#define RAD_CHK		(RAD + 1)
+  { 6, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rad, 0 },
+#define RCD		(RAD_CHK + 1)
   { 6, 6, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rcd, 0 },
 
   /* The plain integer register fields.  Used by short

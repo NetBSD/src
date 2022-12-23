@@ -1,5 +1,5 @@
 /* BFD back-end for ARM PECOFF files.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -17,18 +17,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
-
-
-/* Do this before including bfd.h, so we prototype the right functions.  */
-
-#ifndef bfd_arm_allocate_interworking_sections
-#define bfd_arm_allocate_interworking_sections \
-  bfd_armpe_allocate_interworking_sections
-#define bfd_arm_get_bfd_for_interworking \
-  bfd_armpe_get_bfd_for_interworking
-#define bfd_arm_process_before_allocation \
-  bfd_armpe_process_before_allocation
-#endif
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -63,5 +51,14 @@
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }, \
 { COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.wi."), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }
+
+#ifndef bfd_arm_allocate_interworking_sections
+#define bfd_arm_allocate_interworking_sections \
+  bfd_armpe_allocate_interworking_sections
+#define bfd_arm_get_bfd_for_interworking \
+  bfd_armpe_get_bfd_for_interworking
+#define bfd_arm_process_before_allocation \
+  bfd_armpe_process_before_allocation
+#endif
 
 #include "coff-arm.c"

@@ -1,5 +1,5 @@
 /* NFP ELF support for BFD.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.

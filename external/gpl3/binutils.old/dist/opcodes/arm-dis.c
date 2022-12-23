@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -21,6 +21,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
+#include <assert.h>
 
 #include "disassemble.h"
 #include "opcode/arm.h"
@@ -32,6 +33,7 @@
 /* FIXME: This shouldn't be done here.  */
 #include "coff/internal.h"
 #include "libcoff.h"
+#include "bfd.h"
 #include "elf-bfd.h"
 #include "elf/internal.h"
 #include "elf/arm.h"
@@ -55,20 +57,327 @@ struct arm_private_data
   /* The features to use when disassembling optional instructions.  */
   arm_feature_set features;
 
-  /* Whether any mapping symbols are present in the provided symbol
-     table.  -1 if we do not know yet, otherwise 0 or 1.  */
-  int has_mapping_symbols;
-
   /* Track the last type (although this doesn't seem to be useful) */
   enum map_type last_type;
 
   /* Tracking symbol table information */
   int last_mapping_sym;
+
+  /* The end range of the current range being disassembled.  */
+  bfd_vma last_stop_offset;
   bfd_vma last_mapping_addr;
+};
+
+enum mve_instructions
+{
+  MVE_VPST,
+  MVE_VPT_FP_T1,
+  MVE_VPT_FP_T2,
+  MVE_VPT_VEC_T1,
+  MVE_VPT_VEC_T2,
+  MVE_VPT_VEC_T3,
+  MVE_VPT_VEC_T4,
+  MVE_VPT_VEC_T5,
+  MVE_VPT_VEC_T6,
+  MVE_VCMP_FP_T1,
+  MVE_VCMP_FP_T2,
+  MVE_VCMP_VEC_T1,
+  MVE_VCMP_VEC_T2,
+  MVE_VCMP_VEC_T3,
+  MVE_VCMP_VEC_T4,
+  MVE_VCMP_VEC_T5,
+  MVE_VCMP_VEC_T6,
+  MVE_VDUP,
+  MVE_VEOR,
+  MVE_VFMAS_FP_SCALAR,
+  MVE_VFMA_FP_SCALAR,
+  MVE_VFMA_FP,
+  MVE_VFMS_FP,
+  MVE_VHADD_T1,
+  MVE_VHADD_T2,
+  MVE_VHSUB_T1,
+  MVE_VHSUB_T2,
+  MVE_VRHADD,
+  MVE_VLD2,
+  MVE_VLD4,
+  MVE_VST2,
+  MVE_VST4,
+  MVE_VLDRB_T1,
+  MVE_VLDRH_T2,
+  MVE_VLDRB_T5,
+  MVE_VLDRH_T6,
+  MVE_VLDRW_T7,
+  MVE_VSTRB_T1,
+  MVE_VSTRH_T2,
+  MVE_VSTRB_T5,
+  MVE_VSTRH_T6,
+  MVE_VSTRW_T7,
+  MVE_VLDRB_GATHER_T1,
+  MVE_VLDRH_GATHER_T2,
+  MVE_VLDRW_GATHER_T3,
+  MVE_VLDRD_GATHER_T4,
+  MVE_VLDRW_GATHER_T5,
+  MVE_VLDRD_GATHER_T6,
+  MVE_VSTRB_SCATTER_T1,
+  MVE_VSTRH_SCATTER_T2,
+  MVE_VSTRW_SCATTER_T3,
+  MVE_VSTRD_SCATTER_T4,
+  MVE_VSTRW_SCATTER_T5,
+  MVE_VSTRD_SCATTER_T6,
+  MVE_VCVT_FP_FIX_VEC,
+  MVE_VCVT_BETWEEN_FP_INT,
+  MVE_VCVT_FP_HALF_FP,
+  MVE_VCVT_FROM_FP_TO_INT,
+  MVE_VRINT_FP,
+  MVE_VMOV_HFP_TO_GP,
+  MVE_VMOV_GP_TO_VEC_LANE,
+  MVE_VMOV_IMM_TO_VEC,
+  MVE_VMOV_VEC_TO_VEC,
+  MVE_VMOV2_VEC_LANE_TO_GP,
+  MVE_VMOV2_GP_TO_VEC_LANE,
+  MVE_VMOV_VEC_LANE_TO_GP,
+  MVE_VMVN_IMM,
+  MVE_VMVN_REG,
+  MVE_VORR_IMM,
+  MVE_VORR_REG,
+  MVE_VORN,
+  MVE_VBIC_IMM,
+  MVE_VBIC_REG,
+  MVE_VMOVX,
+  MVE_VMOVL,
+  MVE_VMOVN,
+  MVE_VMULL_INT,
+  MVE_VMULL_POLY,
+  MVE_VQDMULL_T1,
+  MVE_VQDMULL_T2,
+  MVE_VQMOVN,
+  MVE_VQMOVUN,
+  MVE_VADDV,
+  MVE_VMLADAV_T1,
+  MVE_VMLADAV_T2,
+  MVE_VMLALDAV,
+  MVE_VMLAS,
+  MVE_VADDLV,
+  MVE_VMLSDAV_T1,
+  MVE_VMLSDAV_T2,
+  MVE_VMLSLDAV,
+  MVE_VRMLALDAVH,
+  MVE_VRMLSLDAVH,
+  MVE_VQDMLADH,
+  MVE_VQRDMLADH,
+  MVE_VQDMLAH,
+  MVE_VQRDMLAH,
+  MVE_VQDMLASH,
+  MVE_VQRDMLASH,
+  MVE_VQDMLSDH,
+  MVE_VQRDMLSDH,
+  MVE_VQDMULH_T1,
+  MVE_VQRDMULH_T2,
+  MVE_VQDMULH_T3,
+  MVE_VQRDMULH_T4,
+  MVE_VDDUP,
+  MVE_VDWDUP,
+  MVE_VIWDUP,
+  MVE_VIDUP,
+  MVE_VCADD_FP,
+  MVE_VCADD_VEC,
+  MVE_VHCADD,
+  MVE_VCMLA_FP,
+  MVE_VCMUL_FP,
+  MVE_VQRSHL_T1,
+  MVE_VQRSHL_T2,
+  MVE_VQRSHRN,
+  MVE_VQRSHRUN,
+  MVE_VQSHL_T1,
+  MVE_VQSHL_T2,
+  MVE_VQSHLU_T3,
+  MVE_VQSHL_T4,
+  MVE_VQSHRN,
+  MVE_VQSHRUN,
+  MVE_VRSHL_T1,
+  MVE_VRSHL_T2,
+  MVE_VRSHR,
+  MVE_VRSHRN,
+  MVE_VSHL_T1,
+  MVE_VSHL_T2,
+  MVE_VSHL_T3,
+  MVE_VSHLC,
+  MVE_VSHLL_T1,
+  MVE_VSHLL_T2,
+  MVE_VSHR,
+  MVE_VSHRN,
+  MVE_VSLI,
+  MVE_VSRI,
+  MVE_VADC,
+  MVE_VABAV,
+  MVE_VABD_FP,
+  MVE_VABD_VEC,
+  MVE_VABS_FP,
+  MVE_VABS_VEC,
+  MVE_VADD_FP_T1,
+  MVE_VADD_FP_T2,
+  MVE_VADD_VEC_T1,
+  MVE_VADD_VEC_T2,
+  MVE_VSBC,
+  MVE_VSUB_FP_T1,
+  MVE_VSUB_FP_T2,
+  MVE_VSUB_VEC_T1,
+  MVE_VSUB_VEC_T2,
+  MVE_VAND,
+  MVE_VBRSR,
+  MVE_VCLS,
+  MVE_VCLZ,
+  MVE_VCTP,
+  MVE_VMAX,
+  MVE_VMAXA,
+  MVE_VMAXNM_FP,
+  MVE_VMAXNMA_FP,
+  MVE_VMAXNMV_FP,
+  MVE_VMAXNMAV_FP,
+  MVE_VMAXV,
+  MVE_VMAXAV,
+  MVE_VMIN,
+  MVE_VMINA,
+  MVE_VMINNM_FP,
+  MVE_VMINNMA_FP,
+  MVE_VMINNMV_FP,
+  MVE_VMINNMAV_FP,
+  MVE_VMINV,
+  MVE_VMINAV,
+  MVE_VMLA,
+  MVE_VMUL_FP_T1,
+  MVE_VMUL_FP_T2,
+  MVE_VMUL_VEC_T1,
+  MVE_VMUL_VEC_T2,
+  MVE_VMULH,
+  MVE_VRMULH,
+  MVE_VNEG_FP,
+  MVE_VNEG_VEC,
+  MVE_VPNOT,
+  MVE_VPSEL,
+  MVE_VQABS,
+  MVE_VQADD_T1,
+  MVE_VQADD_T2,
+  MVE_VQSUB_T1,
+  MVE_VQSUB_T2,
+  MVE_VQNEG,
+  MVE_VREV16,
+  MVE_VREV32,
+  MVE_VREV64,
+  MVE_LSLL,
+  MVE_LSLLI,
+  MVE_LSRL,
+  MVE_ASRL,
+  MVE_ASRLI,
+  MVE_SQRSHRL,
+  MVE_SQRSHR,
+  MVE_UQRSHL,
+  MVE_UQRSHLL,
+  MVE_UQSHL,
+  MVE_UQSHLL,
+  MVE_URSHRL,
+  MVE_URSHR,
+  MVE_SRSHRL,
+  MVE_SRSHR,
+  MVE_SQSHLL,
+  MVE_SQSHL,
+  MVE_CINC,
+  MVE_CINV,
+  MVE_CNEG,
+  MVE_CSINC,
+  MVE_CSINV,
+  MVE_CSET,
+  MVE_CSETM,
+  MVE_CSNEG,
+  MVE_CSEL,
+  MVE_NONE
+};
+
+enum mve_unpredictable
+{
+  UNPRED_IT_BLOCK,		/* Unpredictable because mve insn in it block.
+				 */
+  UNPRED_FCA_0_FCB_1,		/* Unpredictable because fcA = 0 and
+				   fcB = 1 (vpt).  */
+  UNPRED_R13,			/* Unpredictable because r13 (sp) or
+				   r15 (sp) used.  */
+  UNPRED_R15,			/* Unpredictable because r15 (pc) is used.  */
+  UNPRED_Q_GT_4,		/* Unpredictable because
+				   vec reg start > 4 (vld4/st4).  */
+  UNPRED_Q_GT_6,		/* Unpredictable because
+				   vec reg start > 6 (vld2/st2).  */
+  UNPRED_R13_AND_WB,		/* Unpredictable becase gp reg = r13
+				   and WB bit = 1.  */
+  UNPRED_Q_REGS_EQUAL,		/* Unpredictable because vector registers are
+				   equal.  */
+  UNPRED_OS,			/* Unpredictable because offset scaled == 1.  */
+  UNPRED_GP_REGS_EQUAL,		/* Unpredictable because gp registers are the
+				   same.  */
+  UNPRED_Q_REGS_EQ_AND_SIZE_1,	/* Unpredictable because q regs equal and
+				   size = 1.  */
+  UNPRED_Q_REGS_EQ_AND_SIZE_2,	/* Unpredictable because q regs equal and
+				   size = 2.  */
+  UNPRED_NONE			/* No unpredictable behavior.  */
+};
+
+enum mve_undefined
+{
+  UNDEF_SIZE,			/* undefined size.  */
+  UNDEF_SIZE_0,			/* undefined because size == 0.  */
+  UNDEF_SIZE_2,			/* undefined because size == 2.  */
+  UNDEF_SIZE_3,			/* undefined because size == 3.  */
+  UNDEF_SIZE_LE_1,		/* undefined because size <= 1.  */
+  UNDEF_SIZE_NOT_0,		/* undefined because size != 0.  */
+  UNDEF_SIZE_NOT_2,		/* undefined because size != 2.  */
+  UNDEF_SIZE_NOT_3,		/* undefined because size != 3.  */
+  UNDEF_NOT_UNS_SIZE_0,		/* undefined because U == 0 and
+				   size == 0.  */
+  UNDEF_NOT_UNS_SIZE_1,		/* undefined because U == 0 and
+				   size == 1.  */
+  UNDEF_NOT_UNSIGNED,		/* undefined because U == 0.  */
+  UNDEF_VCVT_IMM6,		/* imm6 < 32.  */
+  UNDEF_VCVT_FSI_IMM6,		/* fsi = 0 and 32 >= imm6 <= 47.  */
+  UNDEF_BAD_OP1_OP2,		/* undefined with op2 = 2 and
+				   op1 == (0 or 1).  */
+  UNDEF_BAD_U_OP1_OP2,		/* undefined with U = 1 and
+				   op2 == 0 and op1 == (0 or 1).  */
+  UNDEF_OP_0_BAD_CMODE,		/* undefined because op == 0 and cmode
+				   in {0xx1, x0x1}.  */
+  UNDEF_XCHG_UNS,		/* undefined because X == 1 and U == 1.  */
+  UNDEF_NONE			/* no undefined behavior.  */
 };
 
 struct opcode32
 {
+  arm_feature_set arch;		/* Architecture defining this insn.  */
+  unsigned long value;		/* If arch is 0 then value is a sentinel.  */
+  unsigned long mask;		/* Recognise insn if (op & mask) == value.  */
+  const char *  assembler;	/* How to disassemble this insn.  */
+};
+
+/* MVE opcodes.  */
+
+struct mopcode32
+{
+  arm_feature_set arch;		/* Architecture defining this insn.  */
+  enum mve_instructions mve_op;  /* Specific mve instruction for faster
+				    decoding.  */
+  unsigned long value;		/* If arch is 0 then value is a sentinel.  */
+  unsigned long mask;		/* Recognise insn if (op & mask) == value.  */
+  const char *  assembler;	/* How to disassemble this insn.  */
+};
+
+enum isa {
+  ANY,
+  T32,
+  ARM
+};
+
+
+/* Shared (between Arm and Thumb mode) opcode.  */
+struct sopcode32
+{
+  enum isa isa;			/* Execution mode instruction availability.  */
   arm_feature_set arch;		/* Architecture defining this insn.  */
   unsigned long value;		/* If arch is 0 then value is a sentinel.  */
   unsigned long mask;		/* Recognise insn if (op & mask) == value.  */
@@ -87,12 +396,16 @@ struct opcode16
    %%			%
 
    %c			print condition code (always bits 28-31 in ARM mode)
+   %b			print condition code allowing cp_num == 9
    %q			print shifter argument
    %u			print condition code (unconditional in ARM mode,
                           UNPREDICTABLE if not AL in Thumb)
    %A			print address for ldc/stc/ldf/stf instruction
    %B			print vstm/vldm register list
+   %C			print vscclrm register list
    %I                   print cirrus signed shift immediate: bits 0..3|4..6
+   %J			print register for VLDR instruction
+   %K			print address for VLDR instruction
    %F			print the COUNT field of a LFM/SFM instruction.
    %P			print floating point precision in arithmetic insn
    %Q			print floating point precision in ldf/stf insn
@@ -141,889 +454,921 @@ enum opcode_sentinel_enum
 } opcode_sentinels;
 
 #define UNDEFINED_INSTRUCTION      "\t\t; <UNDEFINED> instruction: %0-31x"
+#define UNKNOWN_INSTRUCTION_32BIT  "\t\t; <UNDEFINED> instruction: %08x"
+#define UNKNOWN_INSTRUCTION_16BIT  "\t\t; <UNDEFINED> instruction: %04x"
 #define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
 
 /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
 
-static const struct opcode32 coprocessor_opcodes[] =
+static const struct sopcode32 coprocessor_opcodes[] =
 {
   /* XScale instructions.  */
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200010, 0x0fff0ff0,
     "mia%c\tacc0, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e280010, 0x0fff0ff0,
     "miaph%c\tacc0, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e2c0010, 0x0ffc0ff0, "mia%17'T%17`B%16'T%16`B%c\tacc0, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c400000, 0x0ff00fff, "mar%c\tacc0, %12-15r, %16-19r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c500000, 0x0ff00fff, "mra%c\t%12-15r, %16-19r, acc0"},
 
   /* Intel Wireless MMX technology instructions.  */
-  {ARM_FEATURE_CORE_LOW (0), SENTINEL_IWMMXT_START, 0, "" },
-  {ARM_FEATURE_COPROC (ARM_CEXT_IWMMXT),
+  {ANY, ARM_FEATURE_CORE_LOW (0), SENTINEL_IWMMXT_START, 0, "" },
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_IWMMXT),
     0x0e130130, 0x0f3f0fff, "tandc%22-23w%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e400010, 0x0ff00f3f, "tbcst%6-7w%c\t%16-19g, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e130170, 0x0f3f0ff8, "textrc%22-23w%c\t%12-15r, #%0-2d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100070, 0x0f300ff0, "textrm%3?su%22-23w%c\t%12-15r, %16-19g, #%0-2d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e600010, 0x0ff00f38, "tinsr%6-7w%c\t%16-19g, %12-15r, #%0-2d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000110, 0x0ff00fff, "tmcr%c\t%16-19G, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c400000, 0x0ff00ff0, "tmcrr%c\t%0-3g, %12-15r, %16-19r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e2c0010, 0x0ffc0e10, "tmia%17?tb%16?tb%c\t%5-8g, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200010, 0x0fff0e10, "tmia%c\t%5-8g, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e280010, 0x0fff0e10, "tmiaph%c\t%5-8g, %0-3r, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100030, 0x0f300fff, "tmovmsk%22-23w%c\t%12-15r, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100110, 0x0ff00ff0, "tmrc%c\t%12-15r, %16-19G"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c500000, 0x0ff00ff0, "tmrrc%c\t%12-15r, %16-19r, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e130150, 0x0f3f0fff, "torc%22-23w%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e120190, 0x0f3f0fff, "torvsc%22-23w%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e2001c0, 0x0f300fff, "wabs%22-23w%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0001c0, 0x0f300fff, "wacc%22-23w%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000180, 0x0f000ff0, "wadd%20-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e2001a0, 0x0fb00ff0, "waddbhus%22?ml%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ea001a0, 0x0ff00ff0, "waddsubhx%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000020, 0x0f800ff0, "waligni%c\t%12-15g, %16-19g, %0-3g, #%20-22d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e800020, 0x0fc00ff0, "walignr%20-21d%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200000, 0x0fe00ff0, "wand%20'n%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e800000, 0x0fa00ff0, "wavg2%22?hb%20'r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e400000, 0x0fe00ff0, "wavg4%20'r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000060, 0x0f300ff0, "wcmpeq%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100060, 0x0f100ff0, "wcmpgt%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfc500100, 0xfe500f00, "wldrd\t%12-15g, %r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfc100100, 0xfe500f00, "wldrw\t%12-15G, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c100000, 0x0e100e00, "wldr%L%c\t%12-15g, %l"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e400100, 0x0fc00ff0, "wmac%21?su%20'z%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e800100, 0x0fc00ff0, "wmadd%21?su%20'x%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ec00100, 0x0fd00ff0, "wmadd%21?sun%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000160, 0x0f100ff0, "wmax%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000080, 0x0f100fe0, "wmerge%c\t%12-15g, %16-19g, %0-3g, #%21-23d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0000a0, 0x0f800ff0, "wmia%21?tb%20?tb%22'n%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e800120, 0x0f800ff0,
     "wmiaw%21?tb%20?tb%22'n%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100160, 0x0f100ff0, "wmin%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000100, 0x0fc00ff0, "wmul%21?su%20?ml%23'r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ed00100, 0x0fd00ff0, "wmul%21?sumr%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ee000c0, 0x0fe00ff0, "wmulwsm%20`r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ec000c0, 0x0fe00ff0, "wmulwum%20`r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0eb000c0, 0x0ff00ff0, "wmulwl%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e8000a0, 0x0f800ff0,
     "wqmia%21?tb%20?tb%22'n%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100080, 0x0fd00ff0, "wqmulm%21'r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ec000e0, 0x0fd00ff0, "wqmulwm%21'r%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000000, 0x0ff00ff0, "wor%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000080, 0x0f000ff0, "wpack%20-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfe300040, 0xff300ef0, "wror%22-23w\t%12-15g, %16-19g, #%i"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e300040, 0x0f300ff0, "wror%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e300140, 0x0f300ff0, "wror%22-23wg%c\t%12-15g, %16-19g, %0-3G"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000120, 0x0fa00ff0, "wsad%22?hb%20'z%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0001e0, 0x0f000ff0, "wshufh%c\t%12-15g, %16-19g, #%Z"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfe100040, 0xff300ef0, "wsll%22-23w\t%12-15g, %16-19g, #%i"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100040, 0x0f300ff0, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100148, 0x0f300ffc, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfe000040, 0xff300ef0, "wsra%22-23w\t%12-15g, %16-19g, #%i"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000040, 0x0f300ff0, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000148, 0x0f300ffc, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfe200040, 0xff300ef0, "wsrl%22-23w\t%12-15g, %16-19g, #%i"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200040, 0x0f300ff0, "wsrl%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200148, 0x0f300ffc, "wsrl%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfc400100, 0xfe500f00, "wstrd\t%12-15g, %r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0xfc000100, 0xfe500f00, "wstrw\t%12-15G, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0c000000, 0x0e100e00, "wstr%L%c\t%12-15g, %l"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0001a0, 0x0f000ff0, "wsub%20-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ed001c0, 0x0ff00ff0, "wsubaddhx%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e1001c0, 0x0f300ff0, "wabsdiff%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0000c0, 0x0fd00fff, "wunpckeh%21?sub%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e4000c0, 0x0fd00fff, "wunpckeh%21?suh%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e8000c0, 0x0fd00fff, "wunpckeh%21?suw%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0000e0, 0x0f100fff, "wunpckel%21?su%22-23w%c\t%12-15g, %16-19g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e1000c0, 0x0f300ff0, "wunpckih%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e1000e0, 0x0f300ff0, "wunpckil%22-23w%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100000, 0x0ff00ff0, "wxor%c\t%12-15g, %16-19g, %0-3g"},
-  {ARM_FEATURE_CORE_LOW (0),
+  {ANY, ARM_FEATURE_CORE_LOW (0),
     SENTINEL_IWMMXT_END, 0, "" },
 
   /* Floating point coprocessor (FPA) instructions.  */
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e300100, 0x0ff08f10, "rsf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e400100, 0x0ff08f10, "dvf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e500100, 0x0ff08f10, "rdf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e600100, 0x0ff08f10, "pow%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e700100, 0x0ff08f10, "rpw%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e800100, 0x0ff08f10, "rmf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e900100, 0x0ff08f10, "fml%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ea00100, 0x0ff08f10, "fdv%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0eb00100, 0x0ff08f10, "frd%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ec00100, 0x0ff08f10, "pol%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e008100, 0x0ff08f10, "mvf%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e108100, 0x0ff08f10, "mnf%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e208100, 0x0ff08f10, "abs%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e308100, 0x0ff08f10, "rnd%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e408100, 0x0ff08f10, "sqt%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e508100, 0x0ff08f10, "log%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e608100, 0x0ff08f10, "lgn%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e708100, 0x0ff08f10, "exp%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e808100, 0x0ff08f10, "sin%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e908100, 0x0ff08f10, "cos%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ea08100, 0x0ff08f10, "tan%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0eb08100, 0x0ff08f10, "asn%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ec08100, 0x0ff08f10, "acs%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ed08100, 0x0ff08f10, "atn%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ee08100, 0x0ff08f10, "urd%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ef08100, 0x0ff08f10, "nrm%c%P%R\t%12-14f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e000110, 0x0ff00f1f, "flt%c%P%R\t%16-18f, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e100110, 0x0fff0f98, "fix%c%R\t%12-15r, %0-2f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e200110, 0x0fff0fff, "wfs%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e300110, 0x0fff0fff, "rfs%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e400110, 0x0fff0fff, "wfc%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e500110, 0x0fff0fff, "rfc%c\t%12-15r"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0e90f110, 0x0ff8fff0, "cmf%c\t%16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0eb0f110, 0x0ff8fff0, "cnf%c\t%16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ed0f110, 0x0ff8fff0, "cmfe%c\t%16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0ef0f110, 0x0ff8fff0, "cnfe%c\t%16-18f, %0-3f"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0c000100, 0x0e100f00, "stf%c%Q\t%12-14f, %A"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
     0x0c100100, 0x0e100f00, "ldf%c%Q\t%12-14f, %A"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
     0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
-  {ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
+  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
     0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
 
+  /* Armv8.1-M Mainline instructions.  */
+  {T32, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xec9f0b00, 0xffbf0f01, "vscclrm%c\t%C"},
+  {T32, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xec9f0a00, 0xffbf0f00, "vscclrm%c\t%C"},
+
   /* ARMv8-M Mainline Security Extensions instructions.  */
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M_MAIN),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M_MAIN),
     0xec300a00, 0xfff0ffff, "vlldm\t%16-19r"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M_MAIN),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M_MAIN),
     0xec200a00, 0xfff0ffff, "vlstm\t%16-19r"},
 
   /* Register load/store.  */
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0d2d0b00, 0x0fbf0f01, "vpush%c\t%B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0d200b00, 0x0fb00f01, "vstmdb%c\t%16-19r!, %B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0d300b00, 0x0fb00f01, "vldmdb%c\t%16-19r!, %B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0c800b00, 0x0f900f01, "vstmia%c\t%16-19r%21'!, %B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0cbd0b00, 0x0fbf0f01, "vpop%c\t%B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0c900b00, 0x0f900f01, "vldmia%c\t%16-19r%21'!, %B"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0d000b00, 0x0f300f00, "vstr%c\t%12-15,22D, %A"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD | FPU_NEON_EXT_V1),
     0x0d100b00, 0x0f300f00, "vldr%c\t%12-15,22D, %A"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d2d0a00, 0x0fbf0f00, "vpush%c\t%y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d200a00, 0x0fb00f00, "vstmdb%c\t%16-19r!, %y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d300a00, 0x0fb00f00, "vldmdb%c\t%16-19r!, %y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0c800a00, 0x0f900f00, "vstmia%c\t%16-19r%21'!, %y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0cbd0a00, 0x0fbf0f00, "vpop%c\t%y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0c900a00, 0x0f900f00, "vldmia%c\t%16-19r%21'!, %y3"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d000a00, 0x0f300f00, "vstr%c\t%y1, %A"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d100a00, 0x0f300f00, "vldr%c\t%y1, %A"},
+  {ANY, ARM_FEATURE_COPROC (ARM_EXT2_V8_1M_MAIN),
+    0xec100f80, 0xfe101f80, "vldr%c\t%J, %K"},
+  {ANY, ARM_FEATURE_COPROC (ARM_EXT2_V8_1M_MAIN),
+    0xec000f80, 0xfe101f80, "vstr%c\t%J, %K"},
 
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d200b01, 0x0fb00f01, "fstmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0d300b01, 0x0fb00f01, "fldmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0c800b01, 0x0f900f01, "fstmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0c900b01, 0x0f900f01, "fldmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
 
   /* Data transfer between ARM and NEON registers.  */
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e800b10, 0x0ff00f70, "vdup%c.32\t%16-19,7D, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e800b30, 0x0ff00f70, "vdup%c.16\t%16-19,7D, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ea00b10, 0x0ff00f70, "vdup%c.32\t%16-19,7Q, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ea00b30, 0x0ff00f70, "vdup%c.16\t%16-19,7Q, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ec00b10, 0x0ff00f70, "vdup%c.8\t%16-19,7D, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0ee00b10, 0x0ff00f70, "vdup%c.8\t%16-19,7Q, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0c400b10, 0x0ff00fd0, "vmov%c\t%0-3,5D, %12-15r, %16-19r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0c500b10, 0x0ff00fd0, "vmov%c\t%12-15r, %16-19r, %0-3,5D"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e000b10, 0x0fd00f70, "vmov%c.32\t%16-19,7D[%21d], %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e100b10, 0x0f500f70, "vmov%c.32\t%12-15r, %16-19,7D[%21d]"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e000b30, 0x0fd00f30, "vmov%c.16\t%16-19,7D[%6,21d], %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e100b30, 0x0f500f30, "vmov%c.%23?us16\t%12-15r, %16-19,7D[%6,21d]"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e400b10, 0x0fd00f10, "vmov%c.8\t%16-19,7D[%5,6,21d], %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0e500b10, 0x0f500f10, "vmov%c.%23?us8\t%12-15r, %16-19,7D[%5,6,21d]"},
   /* Half-precision conversion instructions.  */
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0eb20b40, 0x0fbf0f50, "vcvt%7?tb%c.f64.f16\t%z1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0eb30b40, 0x0fbf0f50, "vcvt%7?tb%c.f16.f64\t%y1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FP16),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FP16),
     0x0eb20a40, 0x0fbf0f50, "vcvt%7?tb%c.f32.f16\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FP16),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FP16),
     0x0eb30a40, 0x0fbf0f50, "vcvt%7?tb%c.f16.f32\t%y1, %y0"},
 
   /* Floating point coprocessor (VFP) instructions.  */
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee00a10, 0x0fff0fff, "vmsr%c\tfpsid, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE (0, ARM_EXT2_V8_1M_MAIN, FPU_VFP_EXT_V1xD),
     0x0ee10a10, 0x0fff0fff, "vmsr%c\tfpscr, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0ee20a10, 0x0fff0fff, "vmsr%c\tfpscr_nzcvqc, %12-15r"},
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee60a10, 0x0fff0fff, "vmsr%c\tmvfr1, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee70a10, 0x0fff0fff, "vmsr%c\tmvfr0, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0ee50a10, 0x0fff0fff, "vmsr%c\tmvfr2, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee80a10, 0x0fff0fff, "vmsr%c\tfpexc, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee90a10, 0x0fff0fff, "vmsr%c\tfpinst, %12-15r\t@ Impl def"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eea0a10, 0x0fff0fff, "vmsr%c\tfpinst2, %12-15r\t@ Impl def"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+    0x0eec0a10, 0x0fff0fff, "vmsr%c\tvpr, %12-15r"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+    0x0eed0a10, 0x0fff0fff, "vmsr%c\tp0, %12-15r"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0eee0a10, 0x0fff0fff, "vmsr%c\tfpcxt_ns, %12-15r"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0eef0a10, 0x0fff0fff, "vmsr%c\tfpcxt_s, %12-15r"},
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef00a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpsid"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef1fa10, 0x0fffffff, "vmrs%c\tAPSR_nzcv, fpscr"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE (0, ARM_EXT2_V8_1M_MAIN, FPU_VFP_EXT_V1xD),
     0x0ef10a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0ef20a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr_nzcvqc"},
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0ef50a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr2"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef60a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr1"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef70a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef80a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpexc"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef90a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst\t@ Impl def"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0efa0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst2\t@ Impl def"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+    0x0efc0a10, 0x0fff0fff, "vmrs%c\t%12-15r, vpr"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+    0x0efd0a10, 0x0fff0fff, "vmrs%c\t%12-15r, p0"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0efe0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpcxt_ns"},
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0x0eff0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpcxt_s"},
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e000b10, 0x0fd00fff, "vmov%c.32\t%z2[%21d], %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e100b10, 0x0fd00fff, "vmov%c.32\t%12-15r, %z2[%21d]"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee00a10, 0x0ff00fff, "vmsr%c\t<impl def %16-19x>, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef00a10, 0x0ff00fff, "vmrs%c\t%12-15r, <impl def %16-19x>"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e000a10, 0x0ff00f7f, "vmov%c\t%y2, %12-15r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e100a10, 0x0ff00f7f, "vmov%c\t%12-15r, %y2"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb50a40, 0x0fbf0f70, "vcmp%7'e%c.f32\t%y1, #0.0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb50b40, 0x0fbf0f70, "vcmp%7'e%c.f64\t%z1, #0.0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb00a40, 0x0fbf0fd0, "vmov%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb00ac0, 0x0fbf0fd0, "vabs%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb00b40, 0x0fbf0fd0, "vmov%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb00bc0, 0x0fbf0fd0, "vabs%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb10a40, 0x0fbf0fd0, "vneg%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb10ac0, 0x0fbf0fd0, "vsqrt%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb10b40, 0x0fbf0fd0, "vneg%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb10bc0, 0x0fbf0fd0, "vsqrt%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb70ac0, 0x0fbf0fd0, "vcvt%c.f64.f32\t%z1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb70bc0, 0x0fbf0fd0, "vcvt%c.f32.f64\t%y1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb80a40, 0x0fbf0f50, "vcvt%c.f32.%7?su32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb80b40, 0x0fbf0f50, "vcvt%c.f64.%7?su32\t%z1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb40a40, 0x0fbf0f50, "vcmp%7'e%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb40b40, 0x0fbf0f50, "vcmp%7'e%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
     0x0eba0a40, 0x0fbe0f50, "vcvt%c.f32.%16?us%7?31%7?26\t%y1, %y1, #%5,0-3k"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
     0x0eba0b40, 0x0fbe0f50, "vcvt%c.f64.%16?us%7?31%7?26\t%z1, %z1, #%5,0-3k"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ebc0a40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0ebc0b40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f64\t%y1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
     0x0ebe0a40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f32\t%y1, %y1, #%5,0-3k"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
     0x0ebe0b40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f64\t%z1, %z1, #%5,0-3k"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0c500b10, 0x0fb00ff0, "vmov%c\t%12-15r, %16-19r, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
     0x0eb00a00, 0x0fb00ff0, "vmov%c.f32\t%y1, #%0-3,16-19E"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
     0x0eb00b00, 0x0fb00ff0, "vmov%c.f64\t%z1, #%0-3,16-19E"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
     0x0c400a10, 0x0ff00fd0, "vmov%c\t%y4, %12-15r, %16-19r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
     0x0c400b10, 0x0ff00fd0, "vmov%c\t%z0, %12-15r, %16-19r"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
     0x0c500a10, 0x0ff00fd0, "vmov%c\t%12-15r, %16-19r, %y4"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e000a00, 0x0fb00f50, "vmla%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e000a40, 0x0fb00f50, "vmls%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e000b00, 0x0fb00f50, "vmla%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e000b40, 0x0fb00f50, "vmls%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e100a00, 0x0fb00f50, "vnmls%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e100a40, 0x0fb00f50, "vnmla%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e100b00, 0x0fb00f50, "vnmls%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e100b40, 0x0fb00f50, "vnmla%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e200a00, 0x0fb00f50, "vmul%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e200a40, 0x0fb00f50, "vnmul%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e200b00, 0x0fb00f50, "vmul%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e200b40, 0x0fb00f50, "vnmul%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e300a00, 0x0fb00f50, "vadd%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e300a40, 0x0fb00f50, "vsub%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e300b00, 0x0fb00f50, "vadd%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e300b40, 0x0fb00f50, "vsub%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e800a00, 0x0fb00f50, "vdiv%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e800b00, 0x0fb00f50, "vdiv%c.f64\t%z1, %z2, %z0"},
 
   /* Cirrus coprocessor instructions.  */
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0d400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0c400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000450, 0x0ff00ff0, "cfmvsr%c\tmvf%16-19d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100450, 0x0ff00ff0, "cfmvrs%c\t%12-15r, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000410, 0x0ff00ff0, "cfmvdlr%c\tmvd%16-19d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100410, 0x0ff00ff0, "cfmvrdl%c\t%12-15r, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000430, 0x0ff00ff0, "cfmvdhr%c\tmvd%16-19d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100430, 0x0ff00fff, "cfmvrdh%c\t%12-15r, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000510, 0x0ff00fff, "cfmv64lr%c\tmvdx%16-19d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100510, 0x0ff00fff, "cfmvr64l%c\t%12-15r, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000530, 0x0ff00fff, "cfmv64hr%c\tmvdx%16-19d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100530, 0x0ff00fff, "cfmvr64h%c\t%12-15r, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e200440, 0x0ff00fff, "cfmval32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100440, 0x0ff00fff, "cfmv32al%c\tmvfx%12-15d, mvax%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e200460, 0x0ff00fff, "cfmvam32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100460, 0x0ff00fff, "cfmv32am%c\tmvfx%12-15d, mvax%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e200480, 0x0ff00fff, "cfmvah32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100480, 0x0ff00fff, "cfmv32ah%c\tmvfx%12-15d, mvax%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e2004a0, 0x0ff00fff, "cfmva32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1004a0, 0x0ff00fff, "cfmv32a%c\tmvfx%12-15d, mvax%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e2004c0, 0x0ff00fff, "cfmva64%c\tmvax%12-15d, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1004c0, 0x0ff00fff, "cfmv64a%c\tmvdx%12-15d, mvax%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e2004e0, 0x0fff0fff, "cfmvsc32%c\tdspsc, mvdx%12-15d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1004e0, 0x0fff0fff, "cfmv32sc%c\tmvdx%12-15d, dspsc"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000400, 0x0ff00fff, "cfcpys%c\tmvf%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000420, 0x0ff00fff, "cfcpyd%c\tmvd%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000460, 0x0ff00fff, "cfcvtsd%c\tmvd%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000440, 0x0ff00fff, "cfcvtds%c\tmvf%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000480, 0x0ff00fff, "cfcvt32s%c\tmvf%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e0004a0, 0x0ff00fff, "cfcvt32d%c\tmvd%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e0004c0, 0x0ff00fff, "cfcvt64s%c\tmvf%12-15d, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e0004e0, 0x0ff00fff, "cfcvt64d%c\tmvd%12-15d, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100580, 0x0ff00fff, "cfcvts32%c\tmvfx%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1005a0, 0x0ff00fff, "cfcvtd32%c\tmvfx%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1005c0, 0x0ff00fff, "cftruncs32%c\tmvfx%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1005e0, 0x0ff00fff, "cftruncd32%c\tmvfx%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000550, 0x0ff00ff0, "cfrshl32%c\tmvfx%16-19d, mvfx%0-3d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000570, 0x0ff00ff0, "cfrshl64%c\tmvdx%16-19d, mvdx%0-3d, %12-15r"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000500, 0x0ff00f10, "cfsh32%c\tmvfx%12-15d, mvfx%16-19d, #%I"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e200500, 0x0ff00f10, "cfsh64%c\tmvdx%12-15d, mvdx%16-19d, #%I"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100490, 0x0ff00ff0, "cfcmps%c\t%12-15r, mvf%16-19d, mvf%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1004b0, 0x0ff00ff0, "cfcmpd%c\t%12-15r, mvd%16-19d, mvd%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100590, 0x0ff00ff0, "cfcmp32%c\t%12-15r, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e1005b0, 0x0ff00ff0, "cfcmp64%c\t%12-15r, mvdx%16-19d, mvdx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300400, 0x0ff00fff, "cfabss%c\tmvf%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300420, 0x0ff00fff, "cfabsd%c\tmvd%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300440, 0x0ff00fff, "cfnegs%c\tmvf%12-15d, mvf%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300460, 0x0ff00fff, "cfnegd%c\tmvd%12-15d, mvd%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300480, 0x0ff00ff0, "cfadds%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3004a0, 0x0ff00ff0, "cfaddd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3004c0, 0x0ff00ff0, "cfsubs%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3004e0, 0x0ff00ff0, "cfsubd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100400, 0x0ff00ff0, "cfmuls%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100420, 0x0ff00ff0, "cfmuld%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300500, 0x0ff00fff, "cfabs32%c\tmvfx%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300520, 0x0ff00fff, "cfabs64%c\tmvdx%12-15d, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300540, 0x0ff00fff, "cfneg32%c\tmvfx%12-15d, mvfx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300560, 0x0ff00fff, "cfneg64%c\tmvdx%12-15d, mvdx%16-19d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300580, 0x0ff00ff0, "cfadd32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3005a0, 0x0ff00ff0, "cfadd64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3005c0, 0x0ff00ff0, "cfsub32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e3005e0, 0x0ff00ff0, "cfsub64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100500, 0x0ff00ff0, "cfmul32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100520, 0x0ff00ff0, "cfmul64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100540, 0x0ff00ff0, "cfmac32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100560, 0x0ff00ff0, "cfmsc32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e000600, 0x0ff00f10,
     "cfmadd32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e100600, 0x0ff00f10,
     "cfmsub32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e200600, 0x0ff00f10,
     "cfmadda32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
+  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
     0x0e300600, 0x0ff00f10,
     "cfmsuba32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
 
   /* VFP Fused multiply add instructions.  */
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0ea00a00, 0x0fb00f50, "vfma%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0ea00b00, 0x0fb00f50, "vfma%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0ea00a40, 0x0fb00f50, "vfms%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0ea00b40, 0x0fb00f50, "vfms%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0e900a40, 0x0fb00f50, "vfnma%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0e900b40, 0x0fb00f50, "vfnma%c.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0e900a00, 0x0fb00f50, "vfnms%c.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
     0x0e900b00, 0x0fb00f50, "vfnms%c.f64\t%z1, %z2, %z0"},
 
   /* FP v5.  */
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe000a00, 0xff800f50, "vsel%20-21c%u.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe000b00, 0xff800f50, "vsel%20-21c%u.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe800a00, 0xffb00f50, "vmaxnm%u.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe800b00, 0xffb00f50, "vmaxnm%u.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe800a40, 0xffb00f50, "vminnm%u.f32\t%y1, %y2, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfe800b40, 0xffb00f50, "vminnm%u.f64\t%z1, %z2, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfebc0a40, 0xffbc0f50, "vcvt%16-17?mpna%u.%7?su32.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfebc0b40, 0xffbc0f50, "vcvt%16-17?mpna%u.%7?su32.f64\t%y1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0eb60a40, 0x0fbe0f50, "vrint%7,16??xzr%c.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0eb60b40, 0x0fbe0f50, "vrint%7,16??xzr%c.f64\t%z1, %z0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfeb80a40, 0xffbc0fd0, "vrint%16-17?mpna%u.f32\t%y1, %y0"},
-  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+  {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0xfeb80b40, 0xffbc0fd0, "vrint%16-17?mpna%u.f64\t%z1, %z0"},
 
-  /* Generic coprocessor instructions.  */
-  {ARM_FEATURE_CORE_LOW (0), SENTINEL_GENERIC_START, 0, "" },
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
-    0x0c400000, 0x0ff00000, "mcrr%c\t%8-11d, %4-7d, %12-15R, %16-19r, cr%0-3d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
-    0x0c500000, 0x0ff00000,
-    "mrrc%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0e000000, 0x0f000010,
-    "cdp%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0e10f010, 0x0f10f010,
-    "mrc%c\t%8-11d, %21-23d, APSR_nzcv, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0e100010, 0x0f100010,
-    "mrc%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0e000010, 0x0f100010,
-    "mcr%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0c000000, 0x0e100000, "stc%22'l%c\t%8-11d, cr%12-15d, %A"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0c100000, 0x0e100000, "ldc%22'l%c\t%8-11d, cr%12-15d, %A"},
-
-  /* V6 coprocessor instructions.  */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xfc500000, 0xfff00000,
-    "mrrc2%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xfc400000, 0xfff00000,
-    "mcrr2%c\t%8-11d, %4-7d, %12-15R, %16-19R, cr%0-3d"},
-
+  {ANY, ARM_FEATURE_CORE_LOW (0), SENTINEL_GENERIC_START, 0, "" },
   /* ARMv8.3 AdvSIMD instructions in the space of coprocessor 8.  */
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfc800800, 0xfeb00f10, "vcadd%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfc900800, 0xfeb00f10, "vcadd%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfc200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfd200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfc300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfd300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfe000800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20'90"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfe200800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20?21%20?780"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfe800800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20'90"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfea00800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20?21%20?780"},
 
+  /* BFloat16 instructions.  */
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0x0eb30940, 0x0fbf0f50, "vcvt%7?tb%b.bf16.f32\t%y1, %y0"},
+
   /* Dot Product instructions in the space of coprocessor 13.  */
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
     0xfc200d00, 0xffb00f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3,5V"},
-  {ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
-    0xfe000d00, 0xff000f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3D[%5?10]"},
+  {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
+    0xfe200d00, 0xff200f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3D[%5?10]"},
 
   /* ARMv8.2 FMAC Long instructions in the space of coprocessor 8.  */
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfc200810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfca00810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfc200850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfca00850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfe000810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfe100810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfe000850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
     0xfe100850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
-
-  /* V5 coprocessor instructions.  */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfc100000, 0xfe100000, "ldc2%22'l%c\t%8-11d, cr%12-15d, %A"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfc000000, 0xfe100000, "stc2%22'l%c\t%8-11d, cr%12-15d, %A"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfe000000, 0xff000010,
-    "cdp2%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfe000010, 0xff100010,
-    "mcr2%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfe100010, 0xff100010,
-    "mrc2%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
 
   /* ARMv8.2 half-precision Floating point coprocessor 9 (VFP) instructions.
      cp_num: bit <11:8> == 0b1001.
      cond: bit <31:28> == 0b1110, otherwise, it's UNPREDICTABLE.  */
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb009c0, 0x0fbf0fd0, "vabs%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e300900, 0x0fb00f50, "vadd%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb40940, 0x0fbf0f50, "vcmp%7'e%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb50940, 0x0fbf0f70, "vcmp%7'e%c.f16\t%y1, #0.0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eba09c0, 0x0fbe0fd0, "vcvt%c.f16.%16?us%7?31%7?26\t%y1, %y1, #%5,0-3k"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0ebe09c0, 0x0fbe0fd0, "vcvt%c.%16?us%7?31%7?26.f16\t%y1, %y1, #%5,0-3k"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0ebc0940, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb80940, 0x0fbf0f50, "vcvt%c.f16.%7?su32\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfebc0940, 0xffbc0f50, "vcvt%16-17?mpna%u.%7?su32.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e800900, 0x0fb00f50, "vdiv%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0ea00900, 0x0fb00f50, "vfma%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0ea00940, 0x0fb00f50, "vfms%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e900940, 0x0fb00f50, "vfnma%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e900900, 0x0fb00f50, "vfnms%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfeb00ac0, 0xffbf0fd0, "vins.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfeb00a40, 0xffbf0fd0, "vmovx%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0d100900, 0x0f300f00, "vldr%c.16\t%y1, %A"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0d000900, 0x0f300f00, "vstr%c.16\t%y1, %A"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfe800900, 0xffb00f50, "vmaxnm%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfe800940, 0xffb00f50, "vminnm%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e000900, 0x0fb00f50, "vmla%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e000940, 0x0fb00f50, "vmls%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e100910, 0x0ff00f7f, "vmov%c.f16\t%12-15r, %y2"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e000910, 0x0ff00f7f, "vmov%c.f16\t%y2, %12-15r"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xeb00900, 0x0fb00ff0, "vmov%c.f16\t%y1, #%0-3,16-19E"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e200900, 0x0fb00f50, "vmul%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb10940, 0x0fbf0fd0, "vneg%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e100940, 0x0fb00f50, "vnmla%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e100900, 0x0fb00f50, "vnmls%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e200940, 0x0fb00f50, "vnmul%c.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb60940, 0x0fbe0f50, "vrint%7,16??xzr%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfeb80940, 0xffbc0fd0, "vrint%16-17?mpna%u.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xfe000900, 0xff800f50, "vsel%20-21c%u.f16\t%y1, %y2, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb109c0, 0x0fbf0fd0, "vsqrt%c.f16\t%y1, %y0"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e300940, 0x0fb00f50, "vsub%c.f16\t%y1, %y2, %y0"},
 
   /* ARMv8.3 javascript conversion instruction.  */
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
+  {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0x0eb90bc0, 0x0fbf0fd0, "vjcvt%c.s32.f64\t%y1, %z0"},
 
-  {ARM_FEATURE_CORE_LOW (0), 0, 0, 0}
+  {ANY, ARM_FEATURE_CORE_LOW (0), 0, 0, 0}
+};
+
+/* Generic coprocessor instructions.  These are only matched if a more specific
+   SIMD or co-processor instruction does not match first.  */
+
+static const struct sopcode32 generic_coprocessor_opcodes[] =
+{
+  /* Generic coprocessor instructions.  */
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
+    0x0c400000, 0x0ff00000, "mcrr%c\t%8-11d, %4-7d, %12-15R, %16-19r, cr%0-3d"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
+    0x0c500000, 0x0ff00000,
+    "mrrc%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0e000000, 0x0f000010,
+    "cdp%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0e10f010, 0x0f10f010,
+    "mrc%c\t%8-11d, %21-23d, APSR_nzcv, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0e100010, 0x0f100010,
+    "mrc%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0e000010, 0x0f100010,
+    "mcr%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0c000000, 0x0e100000, "stc%22'l%c\t%8-11d, cr%12-15d, %A"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
+    0x0c100000, 0x0e100000, "ldc%22'l%c\t%8-11d, cr%12-15d, %A"},
+
+  /* V6 coprocessor instructions.  */
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
+    0xfc500000, 0xfff00000,
+    "mrrc2%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
+    0xfc400000, 0xfff00000,
+    "mcrr2%c\t%8-11d, %4-7d, %12-15R, %16-19R, cr%0-3d"},
+
+  /* V5 coprocessor instructions.  */
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
+    0xfc100000, 0xfe100000, "ldc2%22'l%c\t%8-11d, cr%12-15d, %A"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
+    0xfc000000, 0xfe100000, "stc2%22'l%c\t%8-11d, cr%12-15d, %A"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
+    0xfe000000, 0xff000010,
+    "cdp2%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
+    0xfe000010, 0xff100010,
+    "mcr2%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
+  {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
+    0xfe100010, 0xff100010,
+    "mrc2%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+
+  {ANY, ARM_FEATURE_CORE_LOW (0), 0, 0, 0}
 };
 
 /* Neon opcode table:  This does not encode the top byte -- that is
@@ -1068,6 +1413,20 @@ static const struct opcode32 neon_opcodes[] =
     0xf2b00000, 0xffb00810,
     "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, #%8-11d"},
 
+  /* Data transfer between ARM and NEON registers.  */
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0e800b10, 0x1ff00f70, "vdup%c.32\t%16-19,7D, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0e800b30, 0x1ff00f70, "vdup%c.16\t%16-19,7D, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0ea00b10, 0x1ff00f70, "vdup%c.32\t%16-19,7Q, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0ea00b30, 0x1ff00f70, "vdup%c.16\t%16-19,7Q, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0ec00b10, 0x1ff00f70, "vdup%c.8\t%16-19,7D, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
+    0x0ee00b10, 0x1ff00f70, "vdup%c.8\t%16-19,7Q, %12-15r"},
+
   /* Move data element to all lanes.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf3b40c00, 0xffb70f90, "vdup%c.32\t%12-15,22R, %0-3,5D[%19d]"},
@@ -1097,6 +1456,34 @@ static const struct opcode32 neon_opcodes[] =
     0xf2200c10, 0xffb00f10, "vfms%c.f32\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xf2300c10, 0xffb00f10, "vfms%c.f16\t%12-15,22R, %16-19,7R, %0-3,5R"},
+
+  /* BFloat16 instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xfc000d00, 0xffb00f10, "vdot.bf16\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xfe000d00, 0xffb00f10, "vdot.bf16\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xfc000c40, 0xffb00f50, "vmmla.bf16\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xf3b60640, 0xffbf0fd0, "vcvt%c.bf16.f32\t%12-15,22D, %0-3,5Q"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xfc300810, 0xffb00f10, "vfma%6?tb.bf16\t%12-15,22Q, %16-19,7Q, %0-3,5Q"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
+    0xfe300810, 0xffb00f10, "vfma%6?tb.bf16\t%12-15,22Q, %16-19,7Q, %0-2D[%3,5d]"},
+
+  /* Matrix Multiply instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfc200c40, 0xffb00f50, "vsmmla.s8\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfc200c50, 0xffb00f50, "vummla.u8\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfca00c40, 0xffb00f50, "vusmmla.s8\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfca00d00, 0xffb00f10, "vusdot.s8\t%12-15,22R, %16-19,7R, %0-3,5R"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfe800d00, 0xffb00f10, "vusdot.s8\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
+    0xfe800d10, 0xffb00f10, "vsudot.u8\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
 
   /* Two registers, miscellaneous.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_ARMV8),
@@ -1714,6 +2101,1443 @@ static const struct opcode32 neon_opcodes[] =
   {ARM_FEATURE_CORE_LOW (0), 0 ,0, 0}
 };
 
+/* mve opcode table.  */
+
+/* print_insn_mve recognizes the following format control codes:
+
+   %%			%
+
+   %a			print '+' or '-' or imm offset in vldr[bhwd] and
+			vstr[bhwd]
+   %c			print condition code
+   %d			print addr mode of MVE vldr[bhw] and vstr[bhw]
+   %u			print 'U' (unsigned) or 'S' for various mve instructions
+   %i			print MVE predicate(s) for vpt and vpst
+   %j			print a 5-bit immediate from hw2[14:12,7:6]
+   %k			print 48 if the 7th position bit is set else print 64.
+   %m			print rounding mode for vcvt and vrint
+   %n			print vector comparison code for predicated instruction
+   %s			print size for various vcvt instructions
+   %v			print vector predicate for instruction in predicated
+			block
+   %o			print offset scaled for vldr[hwd] and vstr[hwd]
+   %w			print writeback mode for MVE v{st,ld}[24]
+   %B			print v{st,ld}[24] any one operands
+   %E			print vmov, vmvn, vorr, vbic encoded constant
+   %N			print generic index for vmov
+   %T			print bottom ('b') or top ('t') of source register
+   %X			print exchange field in vmla* instructions
+
+   %<bitfield>r		print as an ARM register
+   %<bitfield>d		print the bitfield in decimal
+   %<bitfield>A		print accumulate or not
+   %<bitfield>c		print bitfield as a condition code
+   %<bitfield>C		print bitfield as an inverted condition code
+   %<bitfield>Q		print as a MVE Q register
+   %<bitfield>F		print as a MVE S register
+   %<bitfield>Z		as %<>r but r15 is ZR instead of PC and r13 is
+			UNPREDICTABLE
+
+   %<bitfield>S		as %<>r but r15 or r13 is UNPREDICTABLE
+   %<bitfield>s		print size for vector predicate & non VMOV instructions
+   %<bitfield>I		print carry flag or not
+   %<bitfield>i		print immediate for vstr/vldr reg +/- imm
+   %<bitfield>h		print high half of 64-bit destination reg
+   %<bitfield>k		print immediate for vector conversion instruction
+   %<bitfield>l		print low half of 64-bit destination reg
+   %<bitfield>o		print rotate value for vcmul
+   %<bitfield>u		print immediate value for vddup/vdwdup
+   %<bitfield>x		print the bitfield in hex.
+  */
+
+static const struct mopcode32 mve_opcodes[] =
+{
+  /* MVE.  */
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPST,
+   0xfe310f4d, 0xffbf1fff,
+   "vpst%i"
+  },
+
+  /* Floating point VPT T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VPT_FP_T1,
+   0xee310f00, 0xefb10f50,
+   "vpt%i.f%28s\t%n, %17-19Q, %1-3,5Q"},
+  /* Floating point VPT T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VPT_FP_T2,
+   0xee310f40, 0xefb10f50,
+   "vpt%i.f%28s\t%n, %17-19Q, %0-3Z"},
+
+  /* Vector VPT T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T1,
+   0xfe010f00, 0xff811f51,
+   "vpt%i.i%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VPT T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T2,
+   0xfe010f01, 0xff811f51,
+   "vpt%i.u%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VPT T3.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T3,
+   0xfe011f00, 0xff811f50,
+   "vpt%i.s%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VPT T4.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T4,
+   0xfe010f40, 0xff811f70,
+   "vpt%i.i%20-21s\t%n, %17-19Q, %0-3Z"},
+  /* Vector VPT T5.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T5,
+   0xfe010f60, 0xff811f70,
+   "vpt%i.u%20-21s\t%n, %17-19Q, %0-3Z"},
+  /* Vector VPT T6.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPT_VEC_T6,
+   0xfe011f40, 0xff811f50,
+   "vpt%i.s%20-21s\t%n, %17-19Q, %0-3Z"},
+
+  /* Vector VBIC immediate.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VBIC_IMM,
+   0xef800070, 0xefb81070,
+   "vbic%v.i%8-11s\t%13-15,22Q, %E"},
+
+  /* Vector VBIC register.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VBIC_REG,
+   0xef100150, 0xffb11f51,
+   "vbic%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VABAV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VABAV,
+   0xee800f01, 0xefc10f51,
+   "vabav%v.%u%20-21s\t%12-15r, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VABD floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VABD_FP,
+   0xff200d40, 0xffa11f51,
+   "vabd%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VABD.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VABD_VEC,
+   0xef000740, 0xef811f51,
+   "vabd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VABS floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VABS_FP,
+   0xFFB10740, 0xFFB31FD1,
+   "vabs%v.f%18-19s\t%13-15,22Q, %1-3,5Q"},
+  /* Vector VABS.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VABS_VEC,
+   0xffb10340, 0xffb31fd1,
+   "vabs%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VADD floating point T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VADD_FP_T1,
+   0xef000d40, 0xffa11f51,
+   "vadd%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+  /* Vector VADD floating point T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VADD_FP_T2,
+   0xee300f40, 0xefb11f70,
+   "vadd%v.f%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+  /* Vector VADD T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VADD_VEC_T1,
+   0xef000840, 0xff811f51,
+   "vadd%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+  /* Vector VADD T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VADD_VEC_T2,
+   0xee010f40, 0xff811f70,
+   "vadd%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VADDLV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VADDLV,
+   0xee890f00, 0xef8f1fd1,
+   "vaddlv%5A%v.%u32\t%13-15l, %20-22h, %1-3Q"},
+
+  /* Vector VADDV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VADDV,
+   0xeef10f00, 0xeff31fd1,
+   "vaddv%5A%v.%u%18-19s\t%13-15l, %1-3Q"},
+
+  /* Vector VADC.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VADC,
+   0xee300f00, 0xffb10f51,
+   "vadc%12I%v.i32\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VAND.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VAND,
+   0xef000150, 0xffb11f51,
+   "vand%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VBRSR register.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VBRSR,
+   0xfe011e60, 0xff811f70,
+   "vbrsr%v.%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VCADD floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCADD_FP,
+   0xfc800840, 0xfea11f51,
+   "vcadd%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%24o"},
+
+  /* Vector VCADD.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCADD_VEC,
+   0xfe000f00, 0xff810f51,
+   "vcadd%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%12o"},
+
+  /* Vector VCLS.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCLS,
+   0xffb00440, 0xffb31fd1,
+   "vcls%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VCLZ.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCLZ,
+   0xffb004c0, 0xffb31fd1,
+   "vclz%v.i%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VCMLA.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCMLA_FP,
+   0xfc200840, 0xfe211f51,
+   "vcmla%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%23-24o"},
+
+  /* Vector VCMP floating point T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCMP_FP_T1,
+   0xee310f00, 0xeff1ef50,
+   "vcmp%v.f%28s\t%n, %17-19Q, %1-3,5Q"},
+
+  /* Vector VCMP floating point T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCMP_FP_T2,
+   0xee310f40, 0xeff1ef50,
+   "vcmp%v.f%28s\t%n, %17-19Q, %0-3Z"},
+
+  /* Vector VCMP T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T1,
+   0xfe010f00, 0xffc1ff51,
+   "vcmp%v.i%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VCMP T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T2,
+   0xfe010f01, 0xffc1ff51,
+   "vcmp%v.u%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VCMP T3.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T3,
+   0xfe011f00, 0xffc1ff50,
+   "vcmp%v.s%20-21s\t%n, %17-19Q, %1-3,5Q"},
+  /* Vector VCMP T4.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T4,
+   0xfe010f40, 0xffc1ff70,
+   "vcmp%v.i%20-21s\t%n, %17-19Q, %0-3Z"},
+  /* Vector VCMP T5.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T5,
+   0xfe010f60, 0xffc1ff70,
+   "vcmp%v.u%20-21s\t%n, %17-19Q, %0-3Z"},
+  /* Vector VCMP T6.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCMP_VEC_T6,
+   0xfe011f40, 0xffc1ff50,
+   "vcmp%v.s%20-21s\t%n, %17-19Q, %0-3Z"},
+
+  /* Vector VDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VDUP,
+   0xeea00b10, 0xffb10f5f,
+   "vdup%v.%5,22s\t%17-19,7Q, %12-15r"},
+
+  /* Vector VEOR.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VEOR,
+   0xff000150, 0xffd11f51,
+   "veor%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VFMA, vector * scalar.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VFMA_FP_SCALAR,
+   0xee310e40, 0xefb11f70,
+   "vfma%v.f%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VFMA floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VFMA_FP,
+   0xef000c50, 0xffa11f51,
+   "vfma%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VFMS floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VFMS_FP,
+   0xef200c50, 0xffa11f51,
+   "vfms%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VFMAS, vector * scalar.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VFMAS_FP_SCALAR,
+   0xee311e40, 0xefb11f70,
+   "vfmas%v.f%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VHADD T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VHADD_T1,
+   0xef000040, 0xef811f51,
+   "vhadd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VHADD T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VHADD_T2,
+   0xee000f40, 0xef811f70,
+   "vhadd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VHSUB T1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VHSUB_T1,
+   0xef000240, 0xef811f51,
+   "vhsub%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VHSUB T2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VHSUB_T2,
+   0xee001f40, 0xef811f70,
+   "vhsub%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VCMUL.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCMUL_FP,
+   0xee300e00, 0xefb10f50,
+   "vcmul%v.f%28s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%0,12o"},
+
+   /* Vector VCTP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VCTP,
+   0xf000e801, 0xffc0ffff,
+   "vctp%v.%20-21s\t%16-19r"},
+
+  /* Vector VDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VDUP,
+   0xeea00b10, 0xffb10f5f,
+   "vdup%v.%5,22s\t%17-19,7Q, %12-15r"},
+
+  /* Vector VRHADD.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRHADD,
+   0xef000140, 0xef811f51,
+   "vrhadd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VCVT.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCVT_FP_FIX_VEC,
+   0xef800c50, 0xef801cd1,
+   "vcvt%v.%s\t%13-15,22Q, %1-3,5Q, #%16-21k"},
+
+  /* Vector VCVT.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCVT_BETWEEN_FP_INT,
+   0xffb30640, 0xffb31e51,
+   "vcvt%v.%s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VCVT between single and half-precision float, bottom half.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCVT_FP_HALF_FP,
+   0xee3f0e01, 0xefbf1fd1,
+   "vcvtb%v.%s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VCVT between single and half-precision float, top half.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCVT_FP_HALF_FP,
+   0xee3f1e01, 0xefbf1fd1,
+   "vcvtt%v.%s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VCVT.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VCVT_FROM_FP_TO_INT,
+   0xffb30040, 0xffb31c51,
+   "vcvt%m%v.%s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VDDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VDDUP,
+   0xee011f6e, 0xff811f7e,
+   "vddup%v.u%20-21s\t%13-15,22Q, %17-19l, #%0,7u"},
+
+  /* Vector VDWDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VDWDUP,
+   0xee011f60, 0xff811f70,
+   "vdwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, #%0,7u"},
+
+  /* Vector VHCADD.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VHCADD,
+   0xee000f00, 0xff810f51,
+   "vhcadd%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%12o"},
+
+  /* Vector VIWDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VIWDUP,
+   0xee010f60, 0xff811f70,
+   "viwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, #%0,7u"},
+
+  /* Vector VIDUP.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VIDUP,
+   0xee010f6e, 0xff811f7e,
+   "vidup%v.u%20-21s\t%13-15,22Q, %17-19l, #%0,7u"},
+
+  /* Vector VLD2.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLD2,
+   0xfc901e00, 0xff901e5f,
+   "vld2%5d.%7-8s\t%B, [%16-19r]%w"},
+
+  /* Vector VLD4.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLD4,
+   0xfc901e01, 0xff901e1f,
+   "vld4%5-6d.%7-8s\t%B, [%16-19r]%w"},
+
+  /* Vector VLDRB gather load.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRB_GATHER_T1,
+   0xec900e00, 0xefb01e50,
+   "vldrb%v.%u%7-8s\t%13-15,22Q, [%16-19r, %1-3,5Q]"},
+
+  /* Vector VLDRH gather load.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRH_GATHER_T2,
+   0xec900e10, 0xefb01e50,
+   "vldrh%v.%u%7-8s\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VLDRW gather load.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRW_GATHER_T3,
+   0xfc900f40, 0xffb01fd0,
+   "vldrw%v.u32\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VLDRD gather load.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRD_GATHER_T4,
+   0xec900fd0, 0xefb01fd0,
+   "vldrd%v.u64\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VLDRW gather load.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRW_GATHER_T5,
+   0xfd101e00, 0xff111f00,
+   "vldrw%v.u32\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+
+  /* Vector VLDRD gather load, variant T6.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRD_GATHER_T6,
+   0xfd101f00, 0xff111f00,
+   "vldrd%v.u64\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+
+  /* Vector VLDRB.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRB_T1,
+   0xec100e00, 0xee581e00,
+   "vldrb%v.%u%7-8s\t%13-15Q, %d"},
+
+  /* Vector VLDRH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRH_T2,
+   0xec180e00, 0xee581e00,
+   "vldrh%v.%u%7-8s\t%13-15Q, %d"},
+
+  /* Vector VLDRB unsigned, variant T5.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRB_T5,
+   0xec101e00, 0xfe101f80,
+   "vldrb%v.u8\t%13-15,22Q, %d"},
+
+  /* Vector VLDRH unsigned, variant T6.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRH_T6,
+   0xec101e80, 0xfe101f80,
+   "vldrh%v.u16\t%13-15,22Q, %d"},
+
+  /* Vector VLDRW unsigned, variant T7.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VLDRW_T7,
+   0xec101f00, 0xfe101f80,
+   "vldrw%v.u32\t%13-15,22Q, %d"},
+
+  /* Vector VMAX.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMAX,
+   0xef000640, 0xef811f51,
+   "vmax%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMAXA.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMAXA,
+   0xee330e81, 0xffb31fd1,
+   "vmaxa%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VMAXNM floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMAXNM_FP,
+   0xff000f50, 0xffa11f51,
+   "vmaxnm%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMAXNMA floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMAXNMA_FP,
+   0xee3f0e81, 0xefbf1fd1,
+   "vmaxnma%v.f%28s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VMAXNMV floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMAXNMV_FP,
+   0xeeee0f00, 0xefff0fd1,
+   "vmaxnmv%v.f%28s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMAXNMAV floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMAXNMAV_FP,
+   0xeeec0f00, 0xefff0fd1,
+   "vmaxnmav%v.f%28s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMAXV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMAXV,
+   0xeee20f00, 0xeff30fd1,
+   "vmaxv%v.%u%18-19s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMAXAV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMAXAV,
+   0xeee00f00, 0xfff30fd1,
+   "vmaxav%v.s%18-19s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMIN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMIN,
+   0xef000650, 0xef811f51,
+   "vmin%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMINA.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMINA,
+   0xee331e81, 0xffb31fd1,
+   "vmina%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VMINNM floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMINNM_FP,
+   0xff200f50, 0xffa11f51,
+   "vminnm%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMINNMA floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMINNMA_FP,
+   0xee3f1e81, 0xefbf1fd1,
+   "vminnma%v.f%28s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VMINNMV floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMINNMV_FP,
+   0xeeee0f80, 0xefff0fd1,
+   "vminnmv%v.f%28s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMINNMAV floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMINNMAV_FP,
+   0xeeec0f80, 0xefff0fd1,
+   "vminnmav%v.f%28s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMINV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMINV,
+   0xeee20f80, 0xeff30fd1,
+   "vminv%v.%u%18-19s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMINAV.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMINAV,
+   0xeee00f80, 0xfff30fd1,
+   "vminav%v.s%18-19s\t%12-15r, %1-3,5Q"},
+
+  /* Vector VMLA.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLA,
+   0xee010e40, 0xef811f70,
+   "vmla%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VMLALDAV.  Note must appear before VMLADAV due to instruction
+     opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLALDAV,
+   0xee801e00, 0xef801f51,
+   "vmlaldav%5Ax%v.%u%16s\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLALDAV,
+   0xee800e00, 0xef801f51,
+   "vmlalv%5A%v.%u%16s\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLAV T1 variant, same as VMLADAV but with X == 0.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLADAV_T1,
+   0xeef00e00, 0xeff01f51,
+   "vmlav%5A%v.%u%16s\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLAV T2 variant, same as VMLADAV but with X == 0.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLADAV_T2,
+   0xeef00f00, 0xeff11f51,
+   "vmlav%5A%v.%u8\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLADAV T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLADAV_T1,
+   0xeef01e00, 0xeff01f51,
+   "vmladav%5Ax%v.%u%16s\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLADAV T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLADAV_T2,
+   0xeef01f00, 0xeff11f51,
+   "vmladav%5Ax%v.%u8\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLAS.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLAS,
+   0xee011e40, 0xef811f70,
+   "vmlas%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VRMLSLDAVH.  Note must appear before VMLSDAV due to instruction
+     opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRMLSLDAVH,
+   0xfe800e01, 0xff810f51,
+   "vrmlsldavh%5A%X%v.s32\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLSLDAV.  Note must appear before VMLSDAV due to instruction
+     opcdoe aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLSLDAV,
+   0xee800e01, 0xff800f51,
+   "vmlsldav%5A%X%v.%u%16s\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLSDAV T1 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLSDAV_T1,
+   0xeef00e01, 0xfff00f51,
+   "vmlsdav%5A%X%v.s%16s\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMLSDAV T2 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMLSDAV_T2,
+   0xfef00e01, 0xfff10f51,
+   "vmlsdav%5A%X%v.s8\t%13-15l, %17-19,7Q, %1-3Q"},
+
+  /* Vector VMOV between gpr and half precision register, op == 0.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMOV_HFP_TO_GP,
+   0xee000910, 0xfff00f7f,
+   "vmov.f16\t%7,16-19F, %12-15r"},
+
+  /* Vector VMOV between gpr and half precision register, op == 1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMOV_HFP_TO_GP,
+   0xee100910, 0xfff00f7f,
+   "vmov.f16\t%12-15r, %7,16-19F"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMOV_GP_TO_VEC_LANE,
+   0xee000b10, 0xff900f1f,
+   "vmov%c.%5-6,21-22s\t%17-19,7Q[%N], %12-15r"},
+
+  /* Vector VORR immediate to vector.
+     NOTE: MVE_VORR_IMM must appear in the table
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VORR_IMM,
+   0xef800050, 0xefb810f0,
+   "vorr%v.i%8-11s\t%13-15,22Q, %E"},
+
+  /* Vector VQSHL T2 Variant.
+     NOTE: MVE_VQSHL_T2 must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHL_T2,
+   0xef800750, 0xef801fd1,
+   "vqshl%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VQSHLU T3 Variant
+     NOTE: MVE_VQSHL_T2 must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHLU_T3,
+   0xff800650, 0xff801fd1,
+   "vqshlu%v.s%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VRSHR
+     NOTE: MVE_VRSHR must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRSHR,
+   0xef800250, 0xef801fd1,
+   "vrshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VSHL.
+     NOTE: MVE_VSHL must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHL_T1,
+   0xef800550, 0xff801fd1,
+   "vshl%v.i%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VSHR
+     NOTE: MVE_VSHR must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHR,
+   0xef800050, 0xef801fd1,
+   "vshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VSLI
+     NOTE: MVE_VSLI must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSLI,
+   0xff800550, 0xff801fd1,
+   "vsli%v.%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VSRI
+     NOTE: MVE_VSRI must appear in the table before
+     before MVE_VMOV_IMM_TO_VEC due to opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSRI,
+   0xff800450, 0xff801fd1,
+   "vsri%v.%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VMOV immediate to vector,
+     undefinded for cmode == 1111 */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMVN_IMM, 0xef800f70, 0xefb81ff0, UNDEFINED_INSTRUCTION},
+
+  /* Vector VMOV immediate to vector,
+     cmode == 1101 */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV_IMM_TO_VEC, 0xef800d50, 0xefb81fd0,
+   "vmov%v.%5,8-11s\t%13-15,22Q, %E"},
+
+  /* Vector VMOV immediate to vector.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV_IMM_TO_VEC,
+   0xef800050, 0xefb810d0,
+   "vmov%v.%5,8-11s\t%13-15,22Q, %E"},
+
+  /* Vector VMOV two 32-bit lanes to two gprs, idx = 0.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV2_VEC_LANE_TO_GP,
+   0xec000f00, 0xffb01ff0,
+   "vmov%c\t%0-3r, %16-19r, %13-15,22Q[2], %13-15,22Q[0]"},
+
+  /* Vector VMOV two 32-bit lanes to two gprs, idx = 1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV2_VEC_LANE_TO_GP,
+   0xec000f10, 0xffb01ff0,
+   "vmov%c\t%0-3r, %16-19r, %13-15,22Q[3], %13-15,22Q[1]"},
+
+  /* Vector VMOV Two gprs to two 32-bit lanes, idx = 0.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV2_GP_TO_VEC_LANE,
+   0xec100f00, 0xffb01ff0,
+   "vmov%c\t%13-15,22Q[2], %13-15,22Q[0], %0-3r, %16-19r"},
+
+  /* Vector VMOV Two gprs to two 32-bit lanes, idx = 1.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV2_GP_TO_VEC_LANE,
+   0xec100f10, 0xffb01ff0,
+   "vmov%c\t%13-15,22Q[2], %13-15,22Q[0], %0-3r, %16-19r"},
+
+  /* Vector VMOV Vector lane to gpr.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMOV_VEC_LANE_TO_GP,
+   0xee100b10, 0xff100f1f,
+   "vmov%c.%u%5-6,21-22s\t%12-15r, %17-19,7Q[%N]"},
+
+  /* Vector VSHLL T1 Variant.  Note: VSHLL T1 must appear before MVE_VMOVL due
+     to instruction opcode aliasing.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHLL_T1,
+   0xeea00f40, 0xefa00fd1,
+   "vshll%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VMOVL long.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOVL,
+   0xeea00f40, 0xefa70fd1,
+   "vmovl%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VMOV and narrow.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOVN,
+   0xfe310e81, 0xffb30fd1,
+   "vmovn%T%v.i%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Floating point move extract.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMOVX,
+   0xfeb00a40, 0xffbf0fd0,
+   "vmovx.f16\t%22,12-15F, %5,0-3F"},
+
+  /* Vector VMUL floating-point T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMUL_FP_T1,
+   0xff000d50, 0xffa11f51,
+   "vmul%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMUL floating-point T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VMUL_FP_T2,
+   0xee310e60, 0xefb11f70,
+   "vmul%v.f%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VMUL T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMUL_VEC_T1,
+   0xef000950, 0xff811f51,
+   "vmul%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMUL T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMUL_VEC_T2,
+   0xee011e60, 0xff811f70,
+   "vmul%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VMULH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMULH,
+   0xee010e01, 0xef811f51,
+   "vmulh%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VRMULH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRMULH,
+   0xee011e01, 0xef811f51,
+   "vrmulh%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMULL integer.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMULL_INT,
+   0xee010e00, 0xef810f51,
+   "vmull%T%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMULL polynomial.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMULL_POLY,
+   0xee310e00, 0xefb10f51,
+   "vmull%T%v.%28s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMVN immediate to vector.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMVN_IMM,
+   0xef800070, 0xefb810f0,
+   "vmvn%v.i%8-11s\t%13-15,22Q, %E"},
+
+  /* Vector VMVN register.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMVN_REG,
+   0xffb005c0, 0xffbf1fd1,
+   "vmvn%v\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VNEG floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VNEG_FP,
+   0xffb107c0, 0xffb31fd1,
+   "vneg%v.f%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VNEG.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VNEG_VEC,
+   0xffb103c0, 0xffb31fd1,
+   "vneg%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VORN, vector bitwise or not.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VORN,
+   0xef300150, 0xffb11f51,
+   "vorn%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VORR register.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VORR_REG,
+   0xef200150, 0xffb11f51,
+   "vorr%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VMOV, vector to vector move. While decoding MVE_VORR_REG if
+     "Qm==Qn", VORR should replaced by its alias VMOV. For that to happen
+     MVE_VMOV_VEC_TO_VEC need to placed after MVE_VORR_REG in this mve_opcodes
+     array.  */
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VMOV_VEC_TO_VEC,
+   0xef200150, 0xffb11f51,
+   "vmov%v\t%13-15,22Q, %17-19,7Q"},
+
+  /* Vector VQDMULL T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMULL_T1,
+   0xee300f01, 0xefb10f51,
+   "vqdmull%T%v.s%28s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VPNOT.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPNOT,
+   0xfe310f4d, 0xffffffff,
+   "vpnot%v"},
+
+  /* Vector VPSEL.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VPSEL,
+   0xfe310f01, 0xffb11f51,
+   "vpsel%v\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQABS.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQABS,
+   0xffb00740, 0xffb31fd1,
+   "vqabs%v.s%18-19s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQADD T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQADD_T1,
+   0xef000050, 0xef811f51,
+   "vqadd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQADD T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQADD_T2,
+   0xee000f60, 0xef811f70,
+   "vqadd%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQDMULL T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMULL_T2,
+   0xee300f60, 0xefb10f70,
+   "vqdmull%T%v.s%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQMOVN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQMOVN,
+   0xee330e01, 0xefb30fd1,
+   "vqmovn%T%v.%u%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VQMOVUN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQMOVUN,
+   0xee310e81, 0xffb30fd1,
+   "vqmovun%T%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VQDMLADH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMLADH,
+   0xee000e00, 0xff810f51,
+   "vqdmladh%X%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQRDMLADH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMLADH,
+   0xee000e01, 0xff810f51,
+   "vqrdmladh%X%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQDMLAH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMLAH,
+   0xee000e60, 0xff811f70,
+   "vqdmlah%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQRDMLAH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMLAH,
+   0xee000e40, 0xff811f70,
+   "vqrdmlah%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQDMLASH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMLASH,
+   0xee001e60, 0xff811f70,
+   "vqdmlash%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQRDMLASH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMLASH,
+   0xee001e40, 0xff811f70,
+   "vqrdmlash%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQDMLSDH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMLSDH,
+   0xfe000e00, 0xff810f51,
+   "vqdmlsdh%X%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQRDMLSDH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMLSDH,
+   0xfe000e01, 0xff810f51,
+   "vqrdmlsdh%X%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQDMULH T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMULH_T1,
+   0xef000b40, 0xff811f51,
+   "vqdmulh%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQRDMULH T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMULH_T2,
+   0xff000b40, 0xff811f51,
+   "vqrdmulh%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQDMULH T3 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQDMULH_T3,
+   0xee010e60, 0xff811f70,
+   "vqdmulh%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQRDMULH T4 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRDMULH_T4,
+   0xfe010e60, 0xff811f70,
+   "vqrdmulh%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VQNEG.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQNEG,
+   0xffb007c0, 0xffb31fd1,
+   "vqneg%v.s%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VQRSHL T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRSHL_T1,
+   0xef000550, 0xef811f51,
+   "vqrshl%v.%u%20-21s\t%13-15,22Q, %1-3,5Q, %17-19,7Q"},
+
+  /* Vector VQRSHL T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRSHL_T2,
+   0xee331ee0, 0xefb31ff0,
+   "vqrshl%v.%u%18-19s\t%13-15,22Q, %0-3r"},
+
+  /* Vector VQRSHRN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRSHRN,
+   0xee800f41, 0xefa00fd1,
+   "vqrshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VQRSHRUN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQRSHRUN,
+   0xfe800fc0, 0xffa00fd1,
+   "vqrshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VQSHL T1 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHL_T1,
+   0xee311ee0, 0xefb31ff0,
+   "vqshl%v.%u%18-19s\t%13-15,22Q, %0-3r"},
+
+  /* Vector VQSHL T4 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHL_T4,
+   0xef000450, 0xef811f51,
+   "vqshl%v.%u%20-21s\t%13-15,22Q, %1-3,5Q, %17-19,7Q"},
+
+  /* Vector VQSHRN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHRN,
+   0xee800f40, 0xefa00fd1,
+   "vqshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VQSHRUN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSHRUN,
+   0xee800fc0, 0xffa00fd1,
+   "vqshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VQSUB T1 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSUB_T1,
+   0xef000250, 0xef811f51,
+   "vqsub%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VQSUB T2 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VQSUB_T2,
+   0xee001f60, 0xef811f70,
+   "vqsub%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VREV16.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VREV16,
+   0xffb00140, 0xffb31fd1,
+   "vrev16%v.8\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VREV32.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VREV32,
+   0xffb000c0, 0xffb31fd1,
+   "vrev32%v.%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VREV64.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VREV64,
+   0xffb00040, 0xffb31fd1,
+   "vrev64%v.%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VRINT floating point.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VRINT_FP,
+   0xffb20440, 0xffb31c51,
+   "vrint%m%v.f%18-19s\t%13-15,22Q, %1-3,5Q"},
+
+  /* Vector VRMLALDAVH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRMLALDAVH,
+   0xee800f00, 0xef811f51,
+   "vrmlalvh%5A%v.%u32\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  /* Vector VRMLALDAVH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRMLALDAVH,
+   0xee801f00, 0xef811f51,
+   "vrmlaldavh%5Ax%v.%u32\t%13-15l, %20-22h, %17-19,7Q, %1-3Q"},
+
+  /* Vector VRSHL T1 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRSHL_T1,
+   0xef000540, 0xef811f51,
+   "vrshl%v.%u%20-21s\t%13-15,22Q, %1-3,5Q, %17-19,7Q"},
+
+  /* Vector VRSHL T2 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRSHL_T2,
+   0xee331e60, 0xefb31ff0,
+   "vrshl%v.%u%18-19s\t%13-15,22Q, %0-3r"},
+
+  /* Vector VRSHRN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VRSHRN,
+   0xfe800fc1, 0xffa00fd1,
+   "vrshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VSBC.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSBC,
+   0xfe300f00, 0xffb10f51,
+   "vsbc%12I%v.i32\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VSHL T2 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHL_T2,
+   0xee311e60, 0xefb31ff0,
+   "vshl%v.%u%18-19s\t%13-15,22Q, %0-3r"},
+
+  /* Vector VSHL T3 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHL_T3,
+   0xef000440, 0xef811f51,
+   "vshl%v.%u%20-21s\t%13-15,22Q, %1-3,5Q, %17-19,7Q"},
+
+  /* Vector VSHLC.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHLC,
+   0xeea00fc0, 0xffa01ff0,
+   "vshlc%v\t%13-15,22Q, %0-3r, #%16-20d"},
+
+  /* Vector VSHLL T2 Variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHLL_T2,
+   0xee310e01, 0xefb30fd1,
+   "vshll%T%v.%u%18-19s\t%13-15,22Q, %1-3,5Q, #%18-19d"},
+
+  /* Vector VSHRN.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSHRN,
+   0xee800fc1, 0xffa00fd1,
+   "vshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+
+  /* Vector VST2 no writeback.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VST2,
+   0xfc801e00, 0xffb01e5f,
+   "vst2%5d.%7-8s\t%B, [%16-19r]"},
+
+  /* Vector VST2 writeback.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VST2,
+   0xfca01e00, 0xffb01e5f,
+   "vst2%5d.%7-8s\t%B, [%16-19r]!"},
+
+  /* Vector VST4 no writeback.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VST4,
+   0xfc801e01, 0xffb01e1f,
+   "vst4%5-6d.%7-8s\t%B, [%16-19r]"},
+
+  /* Vector VST4 writeback.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VST4,
+   0xfca01e01, 0xffb01e1f,
+   "vst4%5-6d.%7-8s\t%B, [%16-19r]!"},
+
+  /* Vector VSTRB scatter store, T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRB_SCATTER_T1,
+   0xec800e00, 0xffb01e50,
+   "vstrb%v.%7-8s\t%13-15,22Q, [%16-19r, %1-3,5Q]"},
+
+  /* Vector VSTRH scatter store, T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRH_SCATTER_T2,
+   0xec800e10, 0xffb01e50,
+   "vstrh%v.%7-8s\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VSTRW scatter store, T3 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRW_SCATTER_T3,
+   0xec800e40, 0xffb01e50,
+   "vstrw%v.%7-8s\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VSTRD scatter store, T4 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRD_SCATTER_T4,
+   0xec800fd0, 0xffb01fd0,
+   "vstrd%v.64\t%13-15,22Q, [%16-19r, %1-3,5Q%o]"},
+
+  /* Vector VSTRW scatter store, T5 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRW_SCATTER_T5,
+   0xfd001e00, 0xff111f00,
+   "vstrw%v.32\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+
+  /* Vector VSTRD scatter store, T6 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRD_SCATTER_T6,
+   0xfd001f00, 0xff111f00,
+   "vstrd%v.64\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+
+  /* Vector VSTRB.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRB_T1,
+   0xec000e00, 0xfe581e00,
+   "vstrb%v.%7-8s\t%13-15Q, %d"},
+
+  /* Vector VSTRH.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRH_T2,
+   0xec080e00, 0xfe581e00,
+   "vstrh%v.%7-8s\t%13-15Q, %d"},
+
+  /* Vector VSTRB variant T5.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRB_T5,
+   0xec001e00, 0xfe101f80,
+   "vstrb%v.8\t%13-15,22Q, %d"},
+
+  /* Vector VSTRH variant T6.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRH_T6,
+   0xec001e80, 0xfe101f80,
+   "vstrh%v.16\t%13-15,22Q, %d"},
+
+  /* Vector VSTRW variant T7.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSTRW_T7,
+   0xec001f00, 0xfe101f80,
+   "vstrw%v.32\t%13-15,22Q, %d"},
+
+  /* Vector VSUB floating point T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VSUB_FP_T1,
+   0xef200d40, 0xffa11f51,
+   "vsub%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VSUB floating point T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
+   MVE_VSUB_FP_T2,
+   0xee301f40, 0xefb11f70,
+   "vsub%v.f%28s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  /* Vector VSUB T1 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSUB_VEC_T1,
+   0xff000840, 0xff811f51,
+   "vsub%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q"},
+
+  /* Vector VSUB T2 variant.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_VSUB_VEC_T2,
+   0xee011f40, 0xff811f70,
+   "vsub%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_ASRLI,
+   0xea50012f, 0xfff1813f,
+   "asrl%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_ASRL,
+   0xea50012d, 0xfff101ff,
+   "asrl%c\t%17-19l, %9-11h, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_LSLLI,
+   0xea50010f, 0xfff1813f,
+   "lsll%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_LSLL,
+   0xea50010d, 0xfff101ff,
+   "lsll%c\t%17-19l, %9-11h, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_LSRL,
+   0xea50011f, 0xfff1813f,
+   "lsrl%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SQRSHRL,
+   0xea51012d, 0xfff1017f,
+   "sqrshrl%c\t%17-19l, %9-11h, %k, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SQRSHR,
+   0xea500f2d, 0xfff00fff,
+   "sqrshr%c\t%16-19S, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SQSHLL,
+   0xea51013f, 0xfff1813f,
+   "sqshll%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SQSHL,
+   0xea500f3f, 0xfff08f3f,
+   "sqshl%c\t%16-19S, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SRSHRL,
+   0xea51012f, 0xfff1813f,
+   "srshrl%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_SRSHR,
+   0xea500f2f, 0xfff08f3f,
+   "srshr%c\t%16-19S, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_UQRSHLL,
+   0xea51010d, 0xfff1017f,
+   "uqrshll%c\t%17-19l, %9-11h, %k, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_UQRSHL,
+   0xea500f0d, 0xfff00fff,
+   "uqrshl%c\t%16-19S, %12-15S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_UQSHLL,
+    0xea51010f, 0xfff1813f,
+   "uqshll%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_UQSHL,
+   0xea500f0f, 0xfff08f3f,
+   "uqshl%c\t%16-19S, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_URSHRL,
+    0xea51011f, 0xfff1813f,
+   "urshrl%c\t%17-19l, %9-11h, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
+   MVE_URSHR,
+   0xea500f1f, 0xfff08f3f,
+   "urshr%c\t%16-19S, %j"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSINC,
+   0xea509000, 0xfff0f000,
+   "csinc\t%8-11S, %16-19Z, %0-3Z, %4-7c"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSINV,
+   0xea50a000, 0xfff0f000,
+   "csinv\t%8-11S, %16-19Z, %0-3Z, %4-7c"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSET,
+   0xea5f900f, 0xfffff00f,
+   "cset\t%8-11S, %4-7C"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSETM,
+   0xea5fa00f, 0xfffff00f,
+   "csetm\t%8-11S, %4-7C"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSEL,
+   0xea508000, 0xfff0f000,
+   "csel\t%8-11S, %16-19Z, %0-3Z, %4-7c"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CSNEG,
+   0xea50b000, 0xfff0f000,
+   "csneg\t%8-11S, %16-19Z, %0-3Z, %4-7c"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CINC,
+   0xea509000, 0xfff0f000,
+   "cinc\t%8-11S, %16-19Z, %4-7C"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CINV,
+   0xea50a000, 0xfff0f000,
+   "cinv\t%8-11S, %16-19Z, %4-7C"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+   MVE_CNEG,
+   0xea50b000, 0xfff0f000,
+   "cneg\t%8-11S, %16-19Z, %4-7C"},
+
+  {ARM_FEATURE_CORE_LOW (0),
+   MVE_NONE,
+   0x00000000, 0x00000000, 0}
+};
+
 /* Opcode tables: ARM, 16-bit Thumb, 32-bit Thumb.  All three are partially
    ordered: they must be searched linearly from the top to obtain a correct
    match.  */
@@ -1785,7 +3609,8 @@ static const struct opcode32 arm_opcodes[] =
   /* V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
     0x0320f005, 0x0fffffff, "sevl"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
+  /* Defined in V8 but is in NOP space so available to all arch.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0xe1000070, 0xfff000f0, "hlt\t0x%16-19X%12-15X%8-11X%0-3X"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_ATOMICS),
     0x01800e90, 0x0ff00ff0, "stlex%c\t%12-15r, %0-3r, [%16-19R]"},
@@ -1816,17 +3641,17 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT2_ATOMICS),
     0x01f00c9f, 0x0ff00fff, "ldah%c\t%12-15r, [%16-19R]"},
   /* CRC32 instructions.  */
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1000040, 0xfff00ff0, "crc32b\t%12-15R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1200040, 0xfff00ff0, "crc32h\t%12-15R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1400040, 0xfff00ff0, "crc32w\t%12-15R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1000240, 0xfff00ff0, "crc32cb\t%12-15R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1200240, 0xfff00ff0, "crc32ch\t%12-15R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xe1400240, 0xfff00ff0, "crc32cw\t%12-15R, %16-19R, %0-3R"},
 
   /* Privileged Access Never extension instructions.  */
@@ -1905,6 +3730,9 @@ static const struct opcode32 arm_opcodes[] =
     0x01a00f90, 0x0ff00ff0, "strexd%c\t%12-15R, %0-3r, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
     0x01e00f90, 0x0ff00ff0, "strexh%c\t%12-15R, %0-3R, [%16-19R]"},
+
+  /* ARMv8.5-A instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_SB), 0xf57ff070, 0xffffffff, "sb"},
 
   /* ARM V6K NOP hints.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
@@ -2704,9 +4532,16 @@ static const struct opcode16 thumb_opcodes[] =
        %a		print the address of a plain load/store
        %w		print the width and signedness of a core load/store
        %m		print register mask for ldm/stm
+       %n		print register mask for clrm
 
        %E		print the lsb and width fields of a bfc/bfi instruction
        %F		print the lsb and width fields of a sbfx/ubfx instruction
+       %G		print a fallback offset for Branch Future instructions
+       %W		print an offset for BF instruction
+       %Y		print an offset for BFL instruction
+       %Z		print an offset for BFCSEL instruction
+       %Q		print an offset for Low Overhead Loop instructions
+       %P		print an offset for Low Overhead Loop end instructions
        %b		print a conditional branch offset
        %B		print an unconditional branch offset
        %s		print the shift field of an SSAT instruction
@@ -2722,6 +4557,7 @@ static const struct opcode16 thumb_opcodes[] =
        %<bitfield>W	print bitfield*4 in decimal
        %<bitfield>r	print bitfield as an ARM register
        %<bitfield>R	as %<>r but r15 is UNPREDICTABLE
+       %<bitfield>S	as %<>r but r13 and r15 is UNPREDICTABLE
        %<bitfield>c	print bitfield as a condition code
 
        %<bitfield>'c	print specified char iff bitfield is all ones
@@ -2738,6 +4574,39 @@ static const struct opcode16 thumb_opcodes[] =
    makes heavy use of special-case bit patterns.  */
 static const struct opcode32 thumb32_opcodes[] =
 {
+  /* Armv8.1-M Mainline and Armv8.1-M Mainline Security Extensions
+     instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf00fe001, 0xffffffff, "lctp%c"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf02fc001, 0xfffff001, "le\t%P"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf00fc001, 0xfffff001, "le\tlr, %P"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf01fc001, 0xfffff001, "letp\tlr, %P"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf040c001, 0xfff0f001, "wls\tlr, %16-19S, %Q"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf000c001, 0xffc0f001, "wlstp.%20-21s\tlr, %16-19S, %Q"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf040e001, 0xfff0ffff, "dls\tlr, %16-19S"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf000e001, 0xffc0ffff, "dlstp.%20-21s\tlr, %16-19S"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf040e001, 0xf860f001, "bf%c\t%G, %W"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf060e001, 0xf8f0f001, "bfx%c\t%G, %16-19S"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf000c001, 0xf800f001, "bfl%c\t%G, %Y"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf070e001, 0xf8f0f001, "bflx%c\t%G, %16-19S"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xf000e001, 0xf840f001, "bfcsel\t%G, %Z, %18-21c"},
+
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
+    0xe89f0000, 0xffff2000, "clrm%c\t%n"},
+
   /* ARMv8-M and ARMv8-M Security Extensions instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0xe97fe97f, 0xffffffff, "sg"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M),
@@ -2788,17 +4657,17 @@ static const struct opcode32 thumb32_opcodes[] =
     0xe8d000ff, 0xfff000ff, "ldaexd%c\t%12-15r, %8-11r, [%16-19R]"},
 
   /* CRC32 instructions.  */
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfac0f080, 0xfff0f0f0, "crc32b\t%8-11R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfac0f090, 0xfff0f0f0, "crc32h\t%9-11R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfac0f0a0, 0xfff0f0f0, "crc32w\t%8-11R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfad0f080, 0xfff0f0f0, "crc32cb\t%8-11R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfad0f090, 0xfff0f0f0, "crc32ch\t%8-11R, %16-19R, %0-3R"},
-  {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_CRC),
     0xfad0f0a0, 0xfff0f0f0, "crc32cw\t%8-11R, %16-19R, %0-3R"},
 
   /* Speculation Barriers.  */
@@ -2828,6 +4697,9 @@ static const struct opcode32 thumb32_opcodes[] =
 
   /* Security extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_SEC),  0xf7f08000, 0xfff0f000, "smc%c\t%K"},
+
+  /* ARMv8.5-A instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_SB), 0xf3bf8f70, 0xffffffff, "sb"},
 
   /* Instructions defined in the basic V6T2 set.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8000, 0xffffffff, "nop%c.w"},
@@ -3266,6 +5138,56 @@ static const char *const iwmmxt_cregnames[] =
   "wcgr0", "wcgr1", "wcgr2", "wcgr3", "reserved", "reserved", "reserved", "reserved"
 };
 
+static const char *const vec_condnames[] =
+{ "eq", "ne", "cs", "hi", "ge", "lt", "gt", "le"
+};
+
+static const char *const mve_predicatenames[] =
+{ "", "ttt", "tt", "tte", "t", "tee", "te", "tet", "",
+  "eee", "ee", "eet", "e", "ett", "et", "ete"
+};
+
+/* Names for 2-bit size field for mve vector isntructions.  */
+static const char *const mve_vec_sizename[] =
+  { "8", "16", "32", "64"};
+
+/* Indicates whether we are processing a then predicate,
+   else predicate or none at all.  */
+enum vpt_pred_state
+{
+  PRED_NONE,
+  PRED_THEN,
+  PRED_ELSE
+};
+
+/* Information used to process a vpt block and subsequent instructions.  */
+struct vpt_block
+{
+  /* Are we in a vpt block.  */
+  bfd_boolean in_vpt_block;
+
+  /* Next predicate state if in vpt block.  */
+  enum vpt_pred_state next_pred_state;
+
+  /* Mask from vpt/vpst instruction.  */
+  long predicate_mask;
+
+  /* Instruction number in vpt block.  */
+  long current_insn_num;
+
+  /* Number of instructions in vpt block..   */
+  long num_pred_insn;
+};
+
+static struct vpt_block vpt_block_state =
+{
+  FALSE,
+  PRED_NONE,
+  0,
+  0,
+  0
+};
+
 /* Default to GCC register name set.  */
 static unsigned int regname_selected = 1;
 
@@ -3288,6 +5210,113 @@ static bfd_vma ifthen_address;
 
 
 /* Functions.  */
+/* Extract the predicate mask for a VPT or VPST instruction.
+   The mask is composed of bits 13-15 (Mkl) and bit 22 (Mkh).  */
+
+static long
+mve_extract_pred_mask (long given)
+{
+  return ((given & 0x00400000) >> 19) | ((given & 0xe000) >> 13);
+}
+
+/* Return the number of instructions in a MVE predicate block.  */
+static long
+num_instructions_vpt_block (long given)
+{
+  long mask = mve_extract_pred_mask (given);
+  if (mask == 0)
+    return 0;
+
+  if (mask == 8)
+    return 1;
+
+  if ((mask & 7) == 4)
+    return 2;
+
+  if ((mask & 3) == 2)
+    return 3;
+
+  if ((mask & 1) == 1)
+    return 4;
+
+  return 0;
+}
+
+static void
+mark_outside_vpt_block (void)
+{
+  vpt_block_state.in_vpt_block = FALSE;
+  vpt_block_state.next_pred_state = PRED_NONE;
+  vpt_block_state.predicate_mask = 0;
+  vpt_block_state.current_insn_num = 0;
+  vpt_block_state.num_pred_insn = 0;
+}
+
+static void
+mark_inside_vpt_block (long given)
+{
+  vpt_block_state.in_vpt_block = TRUE;
+  vpt_block_state.next_pred_state = PRED_THEN;
+  vpt_block_state.predicate_mask = mve_extract_pred_mask (given);
+  vpt_block_state.current_insn_num = 0;
+  vpt_block_state.num_pred_insn = num_instructions_vpt_block (given);
+  assert (vpt_block_state.num_pred_insn >= 1);
+}
+
+static enum vpt_pred_state
+invert_next_predicate_state (enum vpt_pred_state astate)
+{
+  if (astate == PRED_THEN)
+    return PRED_ELSE;
+  else if (astate == PRED_ELSE)
+    return PRED_THEN;
+  else
+    return PRED_NONE;
+}
+
+static enum vpt_pred_state
+update_next_predicate_state (void)
+{
+  long pred_mask = vpt_block_state.predicate_mask;
+  long mask_for_insn = 0;
+
+  switch (vpt_block_state.current_insn_num)
+    {
+    case 1:
+      mask_for_insn = 8;
+      break;
+
+    case 2:
+      mask_for_insn = 4;
+      break;
+
+    case 3:
+      mask_for_insn = 2;
+      break;
+
+    case 4:
+      return PRED_NONE;
+    }
+
+  if (pred_mask & mask_for_insn)
+    return invert_next_predicate_state (vpt_block_state.next_pred_state);
+  else
+    return vpt_block_state.next_pred_state;
+}
+
+static void
+update_vpt_block_state (void)
+{
+  vpt_block_state.current_insn_num++;
+  if (vpt_block_state.current_insn_num == vpt_block_state.num_pred_insn)
+    {
+      /* No more instructions to process in vpt block.  */
+      mark_outside_vpt_block ();
+      return;
+    }
+
+  vpt_block_state.next_pred_state = update_next_predicate_state ();
+}
 
 /* Decode a bitfield of the form matching regexp (N(-N)?,)*N(-N)?.
    Returns pointer to following character of the format string and
@@ -3367,27 +5396,2550 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
     }
 }
 
+/* Return TRUE if the MATCHED_INSN can be inside an IT block.  */
+
+static bfd_boolean
+is_mve_okay_in_it (enum mve_instructions matched_insn)
+{
+  switch (matched_insn)
+    {
+    case MVE_VMOV_GP_TO_VEC_LANE:
+    case MVE_VMOV2_VEC_LANE_TO_GP:
+    case MVE_VMOV2_GP_TO_VEC_LANE:
+    case MVE_VMOV_VEC_LANE_TO_GP:
+    case MVE_LSLL:
+    case MVE_LSLLI:
+    case MVE_LSRL:
+    case MVE_ASRL:
+    case MVE_ASRLI:
+    case MVE_SQRSHRL:
+    case MVE_SQRSHR:
+    case MVE_UQRSHL:
+    case MVE_UQRSHLL:
+    case MVE_UQSHL:
+    case MVE_UQSHLL:
+    case MVE_URSHRL:
+    case MVE_URSHR:
+    case MVE_SRSHRL:
+    case MVE_SRSHR:
+    case MVE_SQSHLL:
+    case MVE_SQSHL:
+      return TRUE;
+    default:
+      return FALSE;
+    }
+}
+
+static bfd_boolean
+is_mve_architecture (struct disassemble_info *info)
+{
+  struct arm_private_data *private_data = info->private_data;
+  arm_feature_set allowed_arches = private_data->features;
+
+  arm_feature_set arm_ext_v8_1m_main
+    = ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN);
+
+  if (ARM_CPU_HAS_FEATURE (arm_ext_v8_1m_main, allowed_arches)
+      && !ARM_CPU_IS_ANY (allowed_arches))
+    return TRUE;
+  else
+    return FALSE;
+}
+
+static bfd_boolean
+is_vpt_instruction (long given)
+{
+
+  /* If mkh:mkl is '0000' then its not a vpt/vpst instruction.  */
+  if ((given & 0x0040e000) == 0)
+    return FALSE;
+
+  /* VPT floating point T1 variant.  */
+  if (((given & 0xefb10f50) == 0xee310f00 && ((given & 0x1001) != 0x1))
+  /* VPT floating point T2 variant.  */
+      || ((given & 0xefb10f50) == 0xee310f40)
+  /* VPT vector T1 variant.  */
+      || ((given & 0xff811f51) == 0xfe010f00)
+  /* VPT vector T2 variant.  */
+      || ((given & 0xff811f51) == 0xfe010f01
+	  && ((given & 0x300000) != 0x300000))
+  /* VPT vector T3 variant.  */
+      || ((given & 0xff811f50) == 0xfe011f00)
+  /* VPT vector T4 variant.  */
+      || ((given & 0xff811f70) == 0xfe010f40)
+  /* VPT vector T5 variant.  */
+      || ((given & 0xff811f70) == 0xfe010f60)
+  /* VPT vector T6 variant.  */
+      || ((given & 0xff811f50) == 0xfe011f40)
+  /* VPST vector T variant.  */
+      || ((given & 0xffbf1fff) == 0xfe310f4d))
+    return TRUE;
+  else
+    return FALSE;
+}
+
+/* Decode a bitfield from opcode GIVEN, with starting bitfield = START
+   and ending bitfield = END.  END must be greater than START.  */
+
+static unsigned long
+arm_decode_field (unsigned long given, unsigned int start, unsigned int end)
+{
+  int bits = end - start;
+
+  if (bits < 0)
+    abort ();
+
+  return ((given >> start) & ((2ul << bits) - 1));
+}
+
+/* Decode a bitfield from opcode GIVEN, with multiple bitfields:
+   START:END and START2:END2.  END/END2 must be greater than
+   START/START2.  */
+
+static unsigned long
+arm_decode_field_multiple (unsigned long given, unsigned int start,
+			   unsigned int end, unsigned int start2,
+			   unsigned int end2)
+{
+  int bits = end - start;
+  int bits2 = end2 - start2;
+  unsigned long value = 0;
+  int width = 0;
+
+  if (bits2 < 0)
+    abort ();
+
+  value = arm_decode_field (given, start, end);
+  width += bits + 1;
+
+  value |= ((given >> start2) & ((2ul << bits2) - 1)) << width;
+  return value;
+}
+
+/* Return TRUE if the GIVEN encoding should not be decoded as MATCHED_INSN.
+   This helps us decode instructions that change mnemonic depending on specific
+   operand values/encodings.  */
+
+static bfd_boolean
+is_mve_encoding_conflict (unsigned long given,
+			  enum mve_instructions matched_insn)
+{
+  switch (matched_insn)
+    {
+    case MVE_VPST:
+      if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VPT_FP_T1:
+      if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
+	return TRUE;
+      if ((arm_decode_field (given, 12, 12) == 0)
+	  && (arm_decode_field (given, 0, 0) == 1))
+	return TRUE;
+      return FALSE;
+
+    case MVE_VPT_FP_T2:
+      if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
+	return TRUE;
+      if (arm_decode_field (given, 0, 3) == 0xd)
+	return TRUE;
+      return FALSE;
+
+    case MVE_VPT_VEC_T1:
+    case MVE_VPT_VEC_T2:
+    case MVE_VPT_VEC_T3:
+    case MVE_VPT_VEC_T4:
+    case MVE_VPT_VEC_T5:
+    case MVE_VPT_VEC_T6:
+      if (arm_decode_field_multiple (given, 13, 15, 22, 22) == 0)
+	return TRUE;
+      if (arm_decode_field (given, 20, 21) == 3)
+	return TRUE;
+      return FALSE;
+
+    case MVE_VCMP_FP_T1:
+      if ((arm_decode_field (given, 12, 12) == 0)
+	  && (arm_decode_field (given, 0, 0) == 1))
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VCMP_FP_T2:
+      if (arm_decode_field (given, 0, 3) == 0xd)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VQADD_T2:
+    case MVE_VQSUB_T2:
+    case MVE_VMUL_VEC_T2:
+    case MVE_VMULH:
+    case MVE_VRMULH:
+    case MVE_VMLA:
+    case MVE_VMAX:
+    case MVE_VMIN:
+    case MVE_VBRSR:
+    case MVE_VADD_VEC_T2:
+    case MVE_VSUB_VEC_T2:
+    case MVE_VABAV:
+    case MVE_VQRSHL_T1:
+    case MVE_VQSHL_T4:
+    case MVE_VRSHL_T1:
+    case MVE_VSHL_T3:
+    case MVE_VCADD_VEC:
+    case MVE_VHCADD:
+    case MVE_VDDUP:
+    case MVE_VIDUP:
+    case MVE_VQRDMLADH:
+    case MVE_VQDMLAH:
+    case MVE_VQRDMLAH:
+    case MVE_VQDMLASH:
+    case MVE_VQRDMLASH:
+    case MVE_VQDMLSDH:
+    case MVE_VQRDMLSDH:
+    case MVE_VQDMULH_T3:
+    case MVE_VQRDMULH_T4:
+    case MVE_VQDMLADH:
+    case MVE_VMLAS:
+    case MVE_VMULL_INT:
+    case MVE_VHADD_T2:
+    case MVE_VHSUB_T2:
+    case MVE_VCMP_VEC_T1:
+    case MVE_VCMP_VEC_T2:
+    case MVE_VCMP_VEC_T3:
+    case MVE_VCMP_VEC_T4:
+    case MVE_VCMP_VEC_T5:
+    case MVE_VCMP_VEC_T6:
+      if (arm_decode_field (given, 20, 21) == 3)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VLD2:
+    case MVE_VLD4:
+    case MVE_VST2:
+    case MVE_VST4:
+      if (arm_decode_field (given, 7, 8) == 3)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VSTRB_T1:
+    case MVE_VSTRH_T2:
+      if ((arm_decode_field (given, 24, 24) == 0)
+	  && (arm_decode_field (given, 21, 21) == 0))
+	{
+	    return TRUE;
+	}
+      else if ((arm_decode_field (given, 7, 8) == 3))
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VSTRB_T5:
+    case MVE_VSTRH_T6:
+    case MVE_VSTRW_T7:
+      if ((arm_decode_field (given, 24, 24) == 0)
+	  && (arm_decode_field (given, 21, 21) == 0))
+	{
+	    return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VCVT_FP_FIX_VEC:
+      return (arm_decode_field (given, 16, 21) & 0x38) == 0;
+
+    case MVE_VBIC_IMM:
+    case MVE_VORR_IMM:
+      {
+	unsigned long cmode = arm_decode_field (given, 8, 11);
+
+	if ((cmode & 1) == 0)
+	  return TRUE;
+	else if ((cmode & 0xc) == 0xc)
+	  return TRUE;
+	else
+	  return FALSE;
+      }
+
+    case MVE_VMVN_IMM:
+      {
+	unsigned long cmode = arm_decode_field (given, 8, 11);
+
+	if (cmode == 0xe)
+	  return TRUE;
+	else if ((cmode & 0x9) == 1)
+	  return TRUE;
+	else if ((cmode & 0xd) == 9)
+	  return TRUE;
+	else
+	  return FALSE;
+      }
+
+    case MVE_VMOV_IMM_TO_VEC:
+      if ((arm_decode_field (given, 5, 5) == 1)
+	  && (arm_decode_field (given, 8, 11) != 0xe))
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VMOVL:
+      {
+	unsigned long size = arm_decode_field (given, 19, 20);
+	if ((size == 0) || (size == 3))
+	  return TRUE;
+	else
+	  return FALSE;
+      }
+
+    case MVE_VMAXA:
+    case MVE_VMINA:
+    case MVE_VMAXV:
+    case MVE_VMAXAV:
+    case MVE_VMINV:
+    case MVE_VMINAV:
+    case MVE_VQRSHL_T2:
+    case MVE_VQSHL_T1:
+    case MVE_VRSHL_T2:
+    case MVE_VSHL_T2:
+    case MVE_VSHLL_T2:
+    case MVE_VADDV:
+    case MVE_VMOVN:
+    case MVE_VQMOVUN:
+    case MVE_VQMOVN:
+      if (arm_decode_field (given, 18, 19) == 3)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VMLSLDAV:
+    case MVE_VRMLSLDAVH:
+    case MVE_VMLALDAV:
+    case MVE_VADDLV:
+      if (arm_decode_field (given, 20, 22) == 7)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VRMLALDAVH:
+      if ((arm_decode_field (given, 20, 22) & 6) == 6)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VDWDUP:
+    case MVE_VIWDUP:
+      if ((arm_decode_field (given, 20, 21) == 3)
+	  || (arm_decode_field (given, 1, 3) == 7))
+	return TRUE;
+      else
+	return FALSE;
+
+
+    case MVE_VSHLL_T1:
+      if (arm_decode_field (given, 16, 18) == 0)
+	{
+	  unsigned long sz = arm_decode_field (given, 19, 20);
+
+	  if ((sz == 1) || (sz == 2))
+	    return TRUE;
+	  else
+	    return FALSE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VRSHR:
+    case MVE_VSHL_T1:
+    case MVE_VSHR:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      if (arm_decode_field (given, 19, 21) == 0)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_VCTP:
+    if (arm_decode_field (given, 16, 19) == 0xf)
+      return TRUE;
+    else
+      return FALSE;
+
+    case MVE_ASRLI:
+    case MVE_ASRL:
+    case MVE_LSLLI:
+    case MVE_LSLL:
+    case MVE_LSRL:
+    case MVE_SQRSHRL:
+    case MVE_SQSHLL:
+    case MVE_SRSHRL:
+    case MVE_UQRSHLL:
+    case MVE_UQSHLL:
+    case MVE_URSHRL:
+      if (arm_decode_field (given, 9, 11) == 0x7)
+	return TRUE;
+      else
+	return FALSE;
+
+    case MVE_CSINC:
+    case MVE_CSINV:
+      {
+	unsigned long rm, rn;
+	rm = arm_decode_field (given, 0, 3);
+	rn = arm_decode_field (given, 16, 19);
+	/* CSET/CSETM.  */
+	if (rm == 0xf && rn == 0xf)
+	  return TRUE;
+	/* CINC/CINV.  */
+	else if (rn == rm && rn != 0xf)
+	  return TRUE;
+      }
+    /* Fall through.  */
+    case MVE_CSEL:
+    case MVE_CSNEG:
+      if (arm_decode_field (given, 0, 3) == 0xd)
+	return TRUE;
+      /* CNEG.  */
+      else if (matched_insn == MVE_CSNEG)
+	if (arm_decode_field (given, 0, 3) == arm_decode_field (given, 16, 19))
+	  return TRUE;
+      return FALSE;
+
+    default:
+    case MVE_VADD_FP_T1:
+    case MVE_VADD_FP_T2:
+    case MVE_VADD_VEC_T1:
+      return FALSE;
+
+    }
+}
+
+static void
+print_mve_vld_str_addr (struct disassemble_info *info,
+			unsigned long given,
+			enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  unsigned long p, w, gpr, imm, add, mod_imm;
+
+  imm = arm_decode_field (given, 0, 6);
+  mod_imm = imm;
+
+  switch (matched_insn)
+    {
+    case MVE_VLDRB_T1:
+    case MVE_VSTRB_T1:
+      gpr = arm_decode_field (given, 16, 18);
+      break;
+
+    case MVE_VLDRH_T2:
+    case MVE_VSTRH_T2:
+      gpr = arm_decode_field (given, 16, 18);
+      mod_imm = imm << 1;
+      break;
+
+    case MVE_VLDRH_T6:
+    case MVE_VSTRH_T6:
+      gpr = arm_decode_field (given, 16, 19);
+      mod_imm = imm << 1;
+      break;
+
+    case MVE_VLDRW_T7:
+    case MVE_VSTRW_T7:
+      gpr = arm_decode_field (given, 16, 19);
+      mod_imm = imm << 2;
+      break;
+
+    case MVE_VLDRB_T5:
+    case MVE_VSTRB_T5:
+      gpr = arm_decode_field (given, 16, 19);
+      break;
+
+    default:
+      return;
+    }
+
+  p = arm_decode_field (given, 24, 24);
+  w = arm_decode_field (given, 21, 21);
+
+  add = arm_decode_field (given, 23, 23);
+
+  char * add_sub;
+
+  /* Don't print anything for '+' as it is implied.  */
+  if (add == 1)
+    add_sub = "";
+  else
+    add_sub = "-";
+
+  if (p == 1)
+    {
+      /* Offset mode.  */
+      if (w == 0)
+	func (stream, "[%s, #%s%lu]", arm_regnames[gpr], add_sub, mod_imm);
+      /* Pre-indexed mode.  */
+      else
+	func (stream, "[%s, #%s%lu]!", arm_regnames[gpr], add_sub, mod_imm);
+    }
+  else if ((p == 0) && (w == 1))
+    /* Post-index mode.  */
+    func (stream, "[%s], #%s%lu", arm_regnames[gpr], add_sub, mod_imm);
+}
+
+/* Return FALSE if GIVEN is not an undefined encoding for MATCHED_INSN.
+   Otherwise, return TRUE and set UNDEFINED_CODE to give a reason as to why
+   this encoding is undefined.  */
+
+static bfd_boolean
+is_mve_undefined (unsigned long given, enum mve_instructions matched_insn,
+		  enum mve_undefined *undefined_code)
+{
+  *undefined_code = UNDEF_NONE;
+
+  switch (matched_insn)
+    {
+    case MVE_VDUP:
+      if (arm_decode_field_multiple (given, 5, 5, 22, 22) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VQADD_T1:
+    case MVE_VQSUB_T1:
+    case MVE_VMUL_VEC_T1:
+    case MVE_VABD_VEC:
+    case MVE_VADD_VEC_T1:
+    case MVE_VSUB_VEC_T1:
+    case MVE_VQDMULH_T1:
+    case MVE_VQRDMULH_T2:
+    case MVE_VRHADD:
+    case MVE_VHADD_T1:
+    case MVE_VHSUB_T1:
+      if (arm_decode_field (given, 20, 21) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRB_T1:
+      if (arm_decode_field (given, 7, 8) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRH_T2:
+      if (arm_decode_field (given, 7, 8) <= 1)
+	{
+	  *undefined_code = UNDEF_SIZE_LE_1;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRB_T1:
+      if ((arm_decode_field (given, 7, 8) == 0))
+	{
+	  *undefined_code = UNDEF_SIZE_0;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRH_T2:
+      if ((arm_decode_field (given, 7, 8) <= 1))
+	{
+	  *undefined_code = UNDEF_SIZE_LE_1;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRB_GATHER_T1:
+      if (arm_decode_field (given, 7, 8) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else if ((arm_decode_field (given, 28, 28) == 0)
+	       && (arm_decode_field (given, 7, 8) == 0))
+	{
+	  *undefined_code = UNDEF_NOT_UNS_SIZE_0;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRH_GATHER_T2:
+      if (arm_decode_field (given, 7, 8) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else if ((arm_decode_field (given, 28, 28) == 0)
+	       && (arm_decode_field (given, 7, 8) == 1))
+	{
+	  *undefined_code = UNDEF_NOT_UNS_SIZE_1;
+	  return TRUE;
+	}
+      else if (arm_decode_field (given, 7, 8) == 0)
+	{
+	  *undefined_code = UNDEF_SIZE_0;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRW_GATHER_T3:
+      if (arm_decode_field (given, 7, 8) != 2)
+	{
+	  *undefined_code = UNDEF_SIZE_NOT_2;
+	  return TRUE;
+	}
+      else if (arm_decode_field (given, 28, 28) == 0)
+	{
+	  *undefined_code = UNDEF_NOT_UNSIGNED;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VLDRD_GATHER_T4:
+      if (arm_decode_field (given, 7, 8) != 3)
+	{
+	  *undefined_code = UNDEF_SIZE_NOT_3;
+	  return TRUE;
+	}
+      else if (arm_decode_field (given, 28, 28) == 0)
+	{
+	  *undefined_code = UNDEF_NOT_UNSIGNED;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRB_SCATTER_T1:
+      if (arm_decode_field (given, 7, 8) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRH_SCATTER_T2:
+      {
+	unsigned long size = arm_decode_field (given, 7, 8);
+	if (size == 3)
+	  {
+	    *undefined_code = UNDEF_SIZE_3;
+	    return TRUE;
+	  }
+	else if (size == 0)
+	  {
+	    *undefined_code = UNDEF_SIZE_0;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VSTRW_SCATTER_T3:
+      if (arm_decode_field (given, 7, 8) != 2)
+	{
+	  *undefined_code = UNDEF_SIZE_NOT_2;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRD_SCATTER_T4:
+      if (arm_decode_field (given, 7, 8) != 3)
+	{
+	  *undefined_code = UNDEF_SIZE_NOT_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VCVT_FP_FIX_VEC:
+      {
+	unsigned long imm6 = arm_decode_field (given, 16, 21);
+	if ((imm6 & 0x20) == 0)
+	  {
+	    *undefined_code = UNDEF_VCVT_IMM6;
+	    return TRUE;
+	  }
+
+	if ((arm_decode_field (given, 9, 9) == 0)
+	    && ((imm6 & 0x30) == 0x20))
+	  {
+	    *undefined_code = UNDEF_VCVT_FSI_IMM6;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VNEG_FP:
+    case MVE_VABS_FP:
+    case MVE_VCVT_BETWEEN_FP_INT:
+    case MVE_VCVT_FROM_FP_TO_INT:
+      {
+	unsigned long size = arm_decode_field (given, 18, 19);
+	if (size == 0)
+	  {
+	    *undefined_code = UNDEF_SIZE_0;
+	    return TRUE;
+	  }
+	else if (size == 3)
+	  {
+	    *undefined_code = UNDEF_SIZE_3;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VMOV_VEC_LANE_TO_GP:
+      {
+	unsigned long op1 = arm_decode_field (given, 21, 22);
+	unsigned long op2 = arm_decode_field (given, 5, 6);
+	unsigned long u = arm_decode_field (given, 23, 23);
+
+	if ((op2 == 0) && (u == 1))
+	  {
+	    if ((op1 == 0) || (op1 == 1))
+	      {
+		*undefined_code = UNDEF_BAD_U_OP1_OP2;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+	else if (op2 == 2)
+	  {
+	    if ((op1 == 0) || (op1 == 1))
+	      {
+		*undefined_code = UNDEF_BAD_OP1_OP2;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VMOV_GP_TO_VEC_LANE:
+      if (arm_decode_field (given, 5, 6) == 2)
+	{
+	  unsigned long op1 = arm_decode_field (given, 21, 22);
+	  if ((op1 == 0) || (op1 == 1))
+	    {
+	      *undefined_code = UNDEF_BAD_OP1_OP2;
+	      return TRUE;
+	    }
+	  else
+	    return FALSE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VMOV_VEC_TO_VEC:
+      if ((arm_decode_field (given, 5, 5) == 1)
+	  || (arm_decode_field (given, 22, 22) == 1))
+	  return TRUE;
+      return FALSE;
+
+    case MVE_VMOV_IMM_TO_VEC:
+      if (arm_decode_field (given, 5, 5) == 0)
+      {
+	unsigned long cmode = arm_decode_field (given, 8, 11);
+
+	if (((cmode & 9) == 1) || ((cmode & 5) == 1))
+	  {
+	    *undefined_code = UNDEF_OP_0_BAD_CMODE;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+      else
+	return FALSE;
+
+    case MVE_VSHLL_T2:
+    case MVE_VMOVN:
+      if (arm_decode_field (given, 18, 19) == 2)
+	{
+	  *undefined_code = UNDEF_SIZE_2;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VRMLALDAVH:
+    case MVE_VMLADAV_T1:
+    case MVE_VMLADAV_T2:
+    case MVE_VMLALDAV:
+      if ((arm_decode_field (given, 28, 28) == 1)
+	  && (arm_decode_field (given, 12, 12) == 1))
+	{
+	  *undefined_code = UNDEF_XCHG_UNS;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VQSHRN:
+    case MVE_VQSHRUN:
+    case MVE_VSHLL_T1:
+    case MVE_VSHRN:
+      {
+	unsigned long sz = arm_decode_field (given, 19, 20);
+	if (sz == 1)
+	  return FALSE;
+	else if ((sz & 2) == 2)
+	  return FALSE;
+	else
+	  {
+	    *undefined_code = UNDEF_SIZE;
+	    return TRUE;
+	  }
+      }
+      break;
+
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VRSHR:
+    case MVE_VSHL_T1:
+    case MVE_VSHR:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      {
+	unsigned long sz = arm_decode_field (given, 19, 21);
+	if ((sz & 7) == 1)
+	  return FALSE;
+	else if ((sz & 6) == 2)
+	  return FALSE;
+	else if ((sz & 4) == 4)
+	  return FALSE;
+	else
+	  {
+	    *undefined_code = UNDEF_SIZE;
+	    return TRUE;
+	  }
+      }
+
+    case MVE_VQRSHRN:
+    case MVE_VQRSHRUN:
+      if (arm_decode_field (given, 19, 20) == 0)
+	{
+	  *undefined_code = UNDEF_SIZE_0;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VABS_VEC:
+	if (arm_decode_field (given, 18, 19) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+	else
+	  return FALSE;
+
+    case MVE_VQNEG:
+    case MVE_VQABS:
+    case MVE_VNEG_VEC:
+    case MVE_VCLS:
+    case MVE_VCLZ:
+      if (arm_decode_field (given, 18, 19) == 3)
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VREV16:
+      if (arm_decode_field (given, 18, 19) == 0)
+	return FALSE;
+      else
+	{
+	  *undefined_code = UNDEF_SIZE_NOT_0;
+	  return TRUE;
+	}
+
+    case MVE_VREV32:
+      {
+	unsigned long size = arm_decode_field (given, 18, 19);
+	if ((size & 2) == 2)
+	  {
+	    *undefined_code = UNDEF_SIZE_2;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VREV64:
+      if (arm_decode_field (given, 18, 19) != 3)
+	return FALSE;
+      else
+	{
+	  *undefined_code = UNDEF_SIZE_3;
+	  return TRUE;
+	}
+
+    default:
+      return FALSE;
+    }
+}
+
+/* Return FALSE if GIVEN is not an unpredictable encoding for MATCHED_INSN.
+   Otherwise, return TRUE and set UNPREDICTABLE_CODE to give a reason as to
+   why this encoding is unpredictable.  */
+
+static bfd_boolean
+is_mve_unpredictable (unsigned long given, enum mve_instructions matched_insn,
+		      enum mve_unpredictable *unpredictable_code)
+{
+  *unpredictable_code = UNPRED_NONE;
+
+  switch (matched_insn)
+    {
+    case MVE_VCMP_FP_T2:
+    case MVE_VPT_FP_T2:
+      if ((arm_decode_field (given, 12, 12) == 0)
+	  && (arm_decode_field (given, 5, 5) == 1))
+	{
+	  *unpredictable_code = UNPRED_FCA_0_FCB_1;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VPT_VEC_T4:
+    case MVE_VPT_VEC_T5:
+    case MVE_VPT_VEC_T6:
+    case MVE_VCMP_VEC_T4:
+    case MVE_VCMP_VEC_T5:
+    case MVE_VCMP_VEC_T6:
+      if (arm_decode_field (given, 0, 3) == 0xd)
+	{
+	  *unpredictable_code = UNPRED_R13;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VDUP:
+      {
+	unsigned long gpr = arm_decode_field (given, 12, 15);
+	if (gpr == 0xd)
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if (gpr == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VQADD_T2:
+    case MVE_VQSUB_T2:
+    case MVE_VMUL_FP_T2:
+    case MVE_VMUL_VEC_T2:
+    case MVE_VMLA:
+    case MVE_VBRSR:
+    case MVE_VADD_FP_T2:
+    case MVE_VSUB_FP_T2:
+    case MVE_VADD_VEC_T2:
+    case MVE_VSUB_VEC_T2:
+    case MVE_VQRSHL_T2:
+    case MVE_VQSHL_T1:
+    case MVE_VRSHL_T2:
+    case MVE_VSHL_T2:
+    case MVE_VSHLC:
+    case MVE_VQDMLAH:
+    case MVE_VQRDMLAH:
+    case MVE_VQDMLASH:
+    case MVE_VQRDMLASH:
+    case MVE_VQDMULH_T3:
+    case MVE_VQRDMULH_T4:
+    case MVE_VMLAS:
+    case MVE_VFMA_FP_SCALAR:
+    case MVE_VFMAS_FP_SCALAR:
+    case MVE_VHADD_T2:
+    case MVE_VHSUB_T2:
+      {
+	unsigned long gpr = arm_decode_field (given, 0, 3);
+	if (gpr == 0xd)
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if (gpr == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VLD2:
+    case MVE_VST2:
+      {
+	unsigned long rn = arm_decode_field (given, 16, 19);
+
+	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
+	  {
+	    *unpredictable_code = UNPRED_R13_AND_WB;
+	    return TRUE;
+	  }
+
+	if (rn == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	if (arm_decode_field_multiple (given, 13, 15, 22, 22) > 6)
+	  {
+	    *unpredictable_code = UNPRED_Q_GT_6;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VLD4:
+    case MVE_VST4:
+      {
+	unsigned long rn = arm_decode_field (given, 16, 19);
+
+	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
+	  {
+	    *unpredictable_code = UNPRED_R13_AND_WB;
+	    return TRUE;
+	  }
+
+	if (rn == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	if (arm_decode_field_multiple (given, 13, 15, 22, 22) > 4)
+	  {
+	    *unpredictable_code = UNPRED_Q_GT_4;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VLDRB_T5:
+    case MVE_VLDRH_T6:
+    case MVE_VLDRW_T7:
+    case MVE_VSTRB_T5:
+    case MVE_VSTRH_T6:
+    case MVE_VSTRW_T7:
+      {
+	unsigned long rn = arm_decode_field (given, 16, 19);
+
+	if ((rn == 0xd) && (arm_decode_field (given, 21, 21) == 1))
+	  {
+	    *unpredictable_code = UNPRED_R13_AND_WB;
+	    return TRUE;
+	  }
+	else if (rn == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VLDRB_GATHER_T1:
+      if (arm_decode_field (given, 0, 0) == 1)
+	{
+	  *unpredictable_code = UNPRED_OS;
+	  return TRUE;
+	}
+
+      /*  fall through.  */
+      /* To handle common code with T2-T4 variants.  */
+    case MVE_VLDRH_GATHER_T2:
+    case MVE_VLDRW_GATHER_T3:
+    case MVE_VLDRD_GATHER_T4:
+      {
+	unsigned long qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	unsigned long qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+
+	if (qd == qm)
+	  {
+	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
+	    return TRUE;
+	  }
+
+	if (arm_decode_field (given, 16, 19) == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VLDRW_GATHER_T5:
+    case MVE_VLDRD_GATHER_T6:
+      {
+	unsigned long qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	unsigned long qm = arm_decode_field_multiple (given, 17, 19, 7, 7);
+
+	if (qd == qm)
+	  {
+	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VSTRB_SCATTER_T1:
+      if (arm_decode_field (given, 16, 19) == 0xf)
+	{
+	  *unpredictable_code = UNPRED_R15;
+	  return TRUE;
+	}
+      else if (arm_decode_field (given, 0, 0) == 1)
+	{
+	  *unpredictable_code = UNPRED_OS;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VSTRH_SCATTER_T2:
+    case MVE_VSTRW_SCATTER_T3:
+    case MVE_VSTRD_SCATTER_T4:
+      if (arm_decode_field (given, 16, 19) == 0xf)
+	{
+	  *unpredictable_code = UNPRED_R15;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VMOV2_VEC_LANE_TO_GP:
+    case MVE_VMOV2_GP_TO_VEC_LANE:
+    case MVE_VCVT_BETWEEN_FP_INT:
+    case MVE_VCVT_FROM_FP_TO_INT:
+      {
+	unsigned long rt = arm_decode_field (given, 0, 3);
+	unsigned long rt2 = arm_decode_field (given, 16, 19);
+
+	if ((rt == 0xd) || (rt2 == 0xd))
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if ((rt == 0xf) || (rt2 == 0xf))
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+	else if (rt == rt2)
+	  {
+	    *unpredictable_code = UNPRED_GP_REGS_EQUAL;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VMAXV:
+    case MVE_VMAXAV:
+    case MVE_VMAXNMV_FP:
+    case MVE_VMAXNMAV_FP:
+    case MVE_VMINNMV_FP:
+    case MVE_VMINNMAV_FP:
+    case MVE_VMINV:
+    case MVE_VMINAV:
+    case MVE_VABAV:
+    case MVE_VMOV_HFP_TO_GP:
+    case MVE_VMOV_GP_TO_VEC_LANE:
+    case MVE_VMOV_VEC_LANE_TO_GP:
+      {
+	unsigned long rda = arm_decode_field (given, 12, 15);
+	if (rda == 0xd)
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if (rda == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VMULL_INT:
+      {
+	unsigned long Qd;
+	unsigned long Qm;
+	unsigned long Qn;
+
+	if (arm_decode_field (given, 20, 21) == 2)
+	  {
+	    Qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	    Qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+	    Qn = arm_decode_field_multiple (given, 17, 19, 7, 7);
+
+	    if ((Qd == Qn) || (Qd == Qm))
+	      {
+		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_2;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VCMUL_FP:
+    case MVE_VQDMULL_T1:
+      {
+	unsigned long Qd;
+	unsigned long Qm;
+	unsigned long Qn;
+
+	if (arm_decode_field (given, 28, 28) == 1)
+	  {
+	    Qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	    Qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+	    Qn = arm_decode_field_multiple (given, 17, 19, 7, 7);
+
+	    if ((Qd == Qn) || (Qd == Qm))
+	      {
+		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VQDMULL_T2:
+      {
+	unsigned long gpr = arm_decode_field (given, 0, 3);
+	if (gpr == 0xd)
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if (gpr == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	if (arm_decode_field (given, 28, 28) == 1)
+	  {
+	    unsigned long Qd
+	      = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	    unsigned long Qn = arm_decode_field_multiple (given, 17, 19, 7, 7);
+
+	    if (Qd == Qn)
+	      {
+		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+
+	return FALSE;
+      }
+
+    case MVE_VMLSLDAV:
+    case MVE_VRMLSLDAVH:
+    case MVE_VMLALDAV:
+    case MVE_VADDLV:
+      if (arm_decode_field (given, 20, 22) == 6)
+	{
+	  *unpredictable_code = UNPRED_R13;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VDWDUP:
+    case MVE_VIWDUP:
+      if (arm_decode_field (given, 1, 3) == 6)
+	{
+	  *unpredictable_code = UNPRED_R13;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VCADD_VEC:
+    case MVE_VHCADD:
+      {
+	unsigned long Qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	unsigned long Qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+	if ((Qd == Qm) && arm_decode_field (given, 20, 21) == 2)
+	  {
+	    *unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_2;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VCADD_FP:
+      {
+	unsigned long Qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	unsigned long Qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+	if ((Qd == Qm) && arm_decode_field (given, 20, 20) == 1)
+	  {
+	    *unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_VCMLA_FP:
+      {
+	unsigned long Qda;
+	unsigned long Qm;
+	unsigned long Qn;
+
+	if (arm_decode_field (given, 20, 20) == 1)
+	  {
+	    Qda = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	    Qm = arm_decode_field_multiple (given, 1, 3, 5, 5);
+	    Qn = arm_decode_field_multiple (given, 17, 19, 7, 7);
+
+	    if ((Qda == Qn) || (Qda == Qm))
+	      {
+		*unpredictable_code = UNPRED_Q_REGS_EQ_AND_SIZE_1;
+		return TRUE;
+	      }
+	    else
+	      return FALSE;
+	  }
+	else
+	  return FALSE;
+
+      }
+
+    case MVE_VCTP:
+      if (arm_decode_field (given, 16, 19) == 0xd)
+	{
+	  *unpredictable_code = UNPRED_R13;
+	  return TRUE;
+	}
+      else
+	return FALSE;
+
+    case MVE_VREV64:
+      {
+	unsigned long qd = arm_decode_field_multiple (given, 13, 15, 22, 22);
+	unsigned long qm = arm_decode_field_multiple (given, 1, 3, 6, 6);
+
+	if (qd == qm)
+	  {
+	    *unpredictable_code = UNPRED_Q_REGS_EQUAL;
+	    return TRUE;
+	  }
+	else
+	  return FALSE;
+      }
+
+    case MVE_LSLL:
+    case MVE_LSLLI:
+    case MVE_LSRL:
+    case MVE_ASRL:
+    case MVE_ASRLI:
+    case MVE_UQSHLL:
+    case MVE_UQRSHLL:
+    case MVE_URSHRL:
+    case MVE_SRSHRL:
+    case MVE_SQSHLL:
+    case MVE_SQRSHRL:
+      {
+	unsigned long gpr = arm_decode_field (given, 9, 11);
+	gpr = ((gpr << 1) | 1);
+	if (gpr == 0xd)
+	  {
+	    *unpredictable_code = UNPRED_R13;
+	    return TRUE;
+	  }
+	else if (gpr == 0xf)
+	  {
+	    *unpredictable_code = UNPRED_R15;
+	    return TRUE;
+	  }
+
+	return FALSE;
+      }
+
+    default:
+      return FALSE;
+    }
+}
+
+static void
+print_mve_vmov_index (struct disassemble_info *info, unsigned long given)
+{
+  unsigned long op1 = arm_decode_field (given, 21, 22);
+  unsigned long op2 = arm_decode_field (given, 5, 6);
+  unsigned long h = arm_decode_field (given, 16, 16);
+  unsigned long index_operand, esize, targetBeat, idx;
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  if ((op1 & 0x2) == 0x2)
+    {
+      index_operand = op2;
+      esize = 8;
+    }
+  else if (((op1 & 0x2) == 0x0) && ((op2 & 0x1) == 0x1))
+    {
+      index_operand = op2  >> 1;
+      esize = 16;
+    }
+  else if (((op1 & 0x2) == 0) && ((op2 & 0x3) == 0))
+    {
+      index_operand = 0;
+      esize = 32;
+    }
+  else
+    {
+      func (stream, "<undefined index>");
+      return;
+    }
+
+  targetBeat =  (op1 & 0x1) | (h << 1);
+  idx = index_operand + targetBeat * (32/esize);
+
+  func (stream, "%lu", idx);
+}
+
+/* Print neon and mve 8-bit immediate that can be a 8, 16, 32, or 64-bits
+   in length and integer of floating-point type.  */
+static void
+print_simd_imm8 (struct disassemble_info *info, unsigned long given,
+		 unsigned int ibit_loc, const struct mopcode32 *insn)
+{
+  int bits = 0;
+  int cmode = (given >> 8) & 0xf;
+  int op = (given >> 5) & 0x1;
+  unsigned long value = 0, hival = 0;
+  unsigned shift;
+  int size = 0;
+  int isfloat = 0;
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  /* On Neon the 'i' bit is at bit 24, on mve it is
+     at bit 28.  */
+  bits |= ((given >> ibit_loc) & 1) << 7;
+  bits |= ((given >> 16) & 7) << 4;
+  bits |= ((given >> 0) & 15) << 0;
+
+  if (cmode < 8)
+    {
+      shift = (cmode >> 1) & 3;
+      value = (unsigned long) bits << (8 * shift);
+      size = 32;
+    }
+  else if (cmode < 12)
+    {
+      shift = (cmode >> 1) & 1;
+      value = (unsigned long) bits << (8 * shift);
+      size = 16;
+    }
+  else if (cmode < 14)
+    {
+      shift = (cmode & 1) + 1;
+      value = (unsigned long) bits << (8 * shift);
+      value |= (1ul << (8 * shift)) - 1;
+      size = 32;
+    }
+  else if (cmode == 14)
+    {
+      if (op)
+	{
+	  /* Bit replication into bytes.  */
+	  int ix;
+	  unsigned long mask;
+
+	  value = 0;
+	  hival = 0;
+	  for (ix = 7; ix >= 0; ix--)
+	    {
+	      mask = ((bits >> ix) & 1) ? 0xff : 0;
+	      if (ix <= 3)
+		value = (value << 8) | mask;
+	      else
+		hival = (hival << 8) | mask;
+	    }
+	  size = 64;
+	}
+      else
+	{
+	  /* Byte replication.  */
+	  value = (unsigned long) bits;
+	  size = 8;
+	}
+    }
+  else if (!op)
+    {
+      /* Floating point encoding.  */
+      int tmp;
+
+      value = (unsigned long)  (bits & 0x7f) << 19;
+      value |= (unsigned long) (bits & 0x80) << 24;
+      tmp = bits & 0x40 ? 0x3c : 0x40;
+      value |= (unsigned long) tmp << 24;
+      size = 32;
+      isfloat = 1;
+    }
+  else
+    {
+      func (stream, "<illegal constant %.8x:%x:%x>",
+	    bits, cmode, op);
+      size = 32;
+      return;
+    }
+
+  // printU determines whether the immediate value should be printed as
+  // unsigned.
+  unsigned printU = 0;
+  switch (insn->mve_op)
+    {
+    default:
+      break;
+    // We want this for instructions that don't have a 'signed' type
+    case MVE_VBIC_IMM:
+    case MVE_VORR_IMM:
+    case MVE_VMVN_IMM:
+    case MVE_VMOV_IMM_TO_VEC:
+      printU = 1;
+      break;
+    }
+  switch (size)
+    {
+    case 8:
+      func (stream, "#%ld\t; 0x%.2lx", value, value);
+      break;
+
+    case 16:
+      func (stream,
+	    printU
+	    ? "#%lu\t; 0x%.4lx"
+	    : "#%ld\t; 0x%.4lx", value, value);
+      break;
+
+    case 32:
+      if (isfloat)
+	{
+	  unsigned char valbytes[4];
+	  double fvalue;
+
+	  /* Do this a byte at a time so we don't have to
+	     worry about the host's endianness.  */
+	  valbytes[0] = value & 0xff;
+	  valbytes[1] = (value >> 8) & 0xff;
+	  valbytes[2] = (value >> 16) & 0xff;
+	  valbytes[3] = (value >> 24) & 0xff;
+
+	  floatformat_to_double
+	    (& floatformat_ieee_single_little, valbytes,
+	     & fvalue);
+
+	  func (stream, "#%.7g\t; 0x%.8lx", fvalue,
+		value);
+	}
+      else
+	func (stream,
+	      printU
+	      ? "#%lu\t; 0x%.8lx"
+	      : "#%ld\t; 0x%.8lx",
+	      (long) (((value & 0x80000000L) != 0)
+		      && !printU
+		      ? value | ~0xffffffffL : value),
+	      value);
+      break;
+
+    case 64:
+      func (stream, "#0x%.8lx%.8lx", hival, value);
+      break;
+
+    default:
+      abort ();
+    }
+
+}
+
+static void
+print_mve_undefined (struct disassemble_info *info,
+		     enum mve_undefined undefined_code)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  func (stream, "\t\tundefined instruction: ");
+
+  switch (undefined_code)
+    {
+    case UNDEF_SIZE:
+      func (stream, "illegal size");
+      break;
+
+    case UNDEF_SIZE_0:
+      func (stream, "size equals zero");
+      break;
+
+    case UNDEF_SIZE_2:
+      func (stream, "size equals two");
+      break;
+
+    case UNDEF_SIZE_3:
+      func (stream, "size equals three");
+      break;
+
+    case UNDEF_SIZE_LE_1:
+      func (stream, "size <= 1");
+      break;
+
+    case UNDEF_SIZE_NOT_0:
+      func (stream, "size not equal to 0");
+      break;
+
+    case UNDEF_SIZE_NOT_2:
+      func (stream, "size not equal to 2");
+      break;
+
+    case UNDEF_SIZE_NOT_3:
+      func (stream, "size not equal to 3");
+      break;
+
+    case UNDEF_NOT_UNS_SIZE_0:
+      func (stream, "not unsigned and size = zero");
+      break;
+
+    case UNDEF_NOT_UNS_SIZE_1:
+      func (stream, "not unsigned and size = one");
+      break;
+
+    case UNDEF_NOT_UNSIGNED:
+      func (stream, "not unsigned");
+      break;
+
+    case UNDEF_VCVT_IMM6:
+      func (stream, "invalid imm6");
+      break;
+
+    case UNDEF_VCVT_FSI_IMM6:
+      func (stream, "fsi = 0 and invalid imm6");
+      break;
+
+    case UNDEF_BAD_OP1_OP2:
+      func (stream, "bad size with op2 = 2 and op1 = 0 or 1");
+      break;
+
+    case UNDEF_BAD_U_OP1_OP2:
+      func (stream, "unsigned with op2 = 0 and op1 = 0 or 1");
+      break;
+
+    case UNDEF_OP_0_BAD_CMODE:
+      func (stream, "op field equal 0 and bad cmode");
+      break;
+
+    case UNDEF_XCHG_UNS:
+      func (stream, "exchange and unsigned together");
+      break;
+
+    case UNDEF_NONE:
+      break;
+    }
+
+}
+
+static void
+print_mve_unpredictable (struct disassemble_info *info,
+			 enum mve_unpredictable unpredict_code)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  func (stream, "%s: ", UNPREDICTABLE_INSTRUCTION);
+
+  switch (unpredict_code)
+    {
+    case UNPRED_IT_BLOCK:
+      func (stream, "mve instruction in it block");
+      break;
+
+    case UNPRED_FCA_0_FCB_1:
+      func (stream, "condition bits, fca = 0 and fcb = 1");
+      break;
+
+    case UNPRED_R13:
+      func (stream, "use of r13 (sp)");
+      break;
+
+    case UNPRED_R15:
+      func (stream, "use of r15 (pc)");
+      break;
+
+    case UNPRED_Q_GT_4:
+      func (stream, "start register block > r4");
+      break;
+
+    case UNPRED_Q_GT_6:
+      func (stream, "start register block > r6");
+      break;
+
+    case UNPRED_R13_AND_WB:
+      func (stream, "use of r13 and write back");
+      break;
+
+    case UNPRED_Q_REGS_EQUAL:
+      func (stream,
+	    "same vector register used for destination and other operand");
+      break;
+
+    case UNPRED_OS:
+      func (stream, "use of offset scaled");
+      break;
+
+    case UNPRED_GP_REGS_EQUAL:
+      func (stream, "same general-purpose register used for both operands");
+      break;
+
+    case UNPRED_Q_REGS_EQ_AND_SIZE_1:
+      func (stream, "use of identical q registers and size = 1");
+      break;
+
+    case UNPRED_Q_REGS_EQ_AND_SIZE_2:
+      func (stream, "use of identical q registers and size = 1");
+      break;
+
+    case UNPRED_NONE:
+      break;
+    }
+}
+
+/* Print register block operand for mve vld2/vld4/vst2/vld4.  */
+
+static void
+print_mve_register_blocks (struct disassemble_info *info,
+			   unsigned long given,
+			   enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  unsigned long q_reg_start = arm_decode_field_multiple (given,
+							 13, 15,
+							 22, 22);
+  switch (matched_insn)
+    {
+    case MVE_VLD2:
+    case MVE_VST2:
+      if (q_reg_start <= 6)
+	func (stream, "{q%ld, q%ld}", q_reg_start, q_reg_start + 1);
+      else
+	func (stream, "<illegal reg q%ld>", q_reg_start);
+      break;
+
+    case MVE_VLD4:
+    case MVE_VST4:
+      if (q_reg_start <= 4)
+	func (stream, "{q%ld, q%ld, q%ld, q%ld}", q_reg_start,
+	      q_reg_start + 1, q_reg_start + 2,
+	      q_reg_start + 3);
+      else
+	func (stream, "<illegal reg q%ld>", q_reg_start);
+      break;
+
+    default:
+      break;
+    }
+}
+
+static void
+print_mve_rounding_mode (struct disassemble_info *info,
+			 unsigned long given,
+			 enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  switch (matched_insn)
+    {
+    case MVE_VCVT_FROM_FP_TO_INT:
+      {
+	switch (arm_decode_field (given, 8, 9))
+	  {
+	  case 0:
+	    func (stream, "a");
+	    break;
+
+	  case 1:
+	    func (stream, "n");
+	    break;
+
+	  case 2:
+	    func (stream, "p");
+	    break;
+
+	  case 3:
+	    func (stream, "m");
+	    break;
+
+	  default:
+	    break;
+	  }
+      }
+      break;
+
+    case MVE_VRINT_FP:
+      {
+	switch (arm_decode_field (given, 7, 9))
+	  {
+	  case 0:
+	    func (stream, "n");
+	    break;
+
+	  case 1:
+	    func (stream, "x");
+	    break;
+
+	  case 2:
+	    func (stream, "a");
+	    break;
+
+	  case 3:
+	    func (stream, "z");
+	    break;
+
+	  case 5:
+	    func (stream, "m");
+	    break;
+
+	  case 7:
+	    func (stream, "p");
+
+	  case 4:
+	  case 6:
+	  default:
+	    break;
+	  }
+      }
+      break;
+
+    default:
+      break;
+    }
+}
+
+static void
+print_mve_vcvt_size (struct disassemble_info *info,
+		     unsigned long given,
+		     enum mve_instructions matched_insn)
+{
+  unsigned long mode = 0;
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  switch (matched_insn)
+    {
+    case MVE_VCVT_FP_FIX_VEC:
+      {
+	mode = (((given & 0x200) >> 7)
+		| ((given & 0x10000000) >> 27)
+		| ((given & 0x100) >> 8));
+
+	switch (mode)
+	  {
+	  case 0:
+	    func (stream, "f16.s16");
+	    break;
+
+	  case 1:
+	    func (stream, "s16.f16");
+	    break;
+
+	  case 2:
+	    func (stream, "f16.u16");
+	    break;
+
+	  case 3:
+	    func (stream, "u16.f16");
+	    break;
+
+	  case 4:
+	    func (stream, "f32.s32");
+	    break;
+
+	  case 5:
+	    func (stream, "s32.f32");
+	    break;
+
+	  case 6:
+	    func (stream, "f32.u32");
+	    break;
+
+	  case 7:
+	    func (stream, "u32.f32");
+	    break;
+
+	  default:
+	    break;
+	  }
+	break;
+      }
+    case MVE_VCVT_BETWEEN_FP_INT:
+      {
+	unsigned long size = arm_decode_field (given, 18, 19);
+	unsigned long op = arm_decode_field (given, 7, 8);
+
+	if (size == 1)
+	  {
+	    switch (op)
+	      {
+	      case 0:
+		func (stream, "f16.s16");
+		break;
+
+	      case 1:
+		func (stream, "f16.u16");
+		break;
+
+	      case 2:
+		func (stream, "s16.f16");
+		break;
+
+	      case 3:
+		func (stream, "u16.f16");
+		break;
+
+	      default:
+		break;
+	      }
+	  }
+	else if (size == 2)
+	  {
+	    switch (op)
+	      {
+	      case 0:
+		func (stream, "f32.s32");
+		break;
+
+	      case 1:
+		func (stream, "f32.u32");
+		break;
+
+	      case 2:
+		func (stream, "s32.f32");
+		break;
+
+	      case 3:
+		func (stream, "u32.f32");
+		break;
+	      }
+	  }
+      }
+      break;
+
+    case MVE_VCVT_FP_HALF_FP:
+      {
+	unsigned long op = arm_decode_field (given, 28, 28);
+	if (op == 0)
+	  func (stream, "f16.f32");
+	else if (op == 1)
+	  func (stream, "f32.f16");
+      }
+      break;
+
+    case MVE_VCVT_FROM_FP_TO_INT:
+      {
+	unsigned long size = arm_decode_field_multiple (given, 7, 7, 18, 19);
+
+	switch (size)
+	  {
+	  case 2:
+	    func (stream, "s16.f16");
+	    break;
+
+	  case 3:
+	    func (stream, "u16.f16");
+	    break;
+
+	  case 4:
+	    func (stream, "s32.f32");
+	    break;
+
+	  case 5:
+	    func (stream, "u32.f32");
+	    break;
+
+	  default:
+	    break;
+	  }
+      }
+      break;
+
+    default:
+      break;
+    }
+}
+
+static void
+print_mve_rotate (struct disassemble_info *info, unsigned long rot,
+		  unsigned long rot_width)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  if (rot_width == 1)
+    {
+      switch (rot)
+	{
+	case 0:
+	  func (stream, "90");
+	  break;
+	case 1:
+	  func (stream, "270");
+	  break;
+	default:
+	  break;
+	}
+    }
+  else if (rot_width == 2)
+    {
+      switch (rot)
+	{
+	case 0:
+	  func (stream, "0");
+	  break;
+	case 1:
+	  func (stream, "90");
+	  break;
+	case 2:
+	  func (stream, "180");
+	  break;
+	case 3:
+	  func (stream, "270");
+	  break;
+	default:
+	  break;
+	}
+    }
+}
+
+static void
+print_instruction_predicate (struct disassemble_info *info)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  if (vpt_block_state.next_pred_state == PRED_THEN)
+    func (stream, "t");
+  else if (vpt_block_state.next_pred_state == PRED_ELSE)
+    func (stream, "e");
+}
+
+static void
+print_mve_size (struct disassemble_info *info,
+		unsigned long size,
+		enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  switch (matched_insn)
+    {
+    case MVE_VABAV:
+    case MVE_VABD_VEC:
+    case MVE_VABS_FP:
+    case MVE_VABS_VEC:
+    case MVE_VADD_VEC_T1:
+    case MVE_VADD_VEC_T2:
+    case MVE_VADDV:
+    case MVE_VBRSR:
+    case MVE_VCADD_VEC:
+    case MVE_VCLS:
+    case MVE_VCLZ:
+    case MVE_VCMP_VEC_T1:
+    case MVE_VCMP_VEC_T2:
+    case MVE_VCMP_VEC_T3:
+    case MVE_VCMP_VEC_T4:
+    case MVE_VCMP_VEC_T5:
+    case MVE_VCMP_VEC_T6:
+    case MVE_VCTP:
+    case MVE_VDDUP:
+    case MVE_VDWDUP:
+    case MVE_VHADD_T1:
+    case MVE_VHADD_T2:
+    case MVE_VHCADD:
+    case MVE_VHSUB_T1:
+    case MVE_VHSUB_T2:
+    case MVE_VIDUP:
+    case MVE_VIWDUP:
+    case MVE_VLD2:
+    case MVE_VLD4:
+    case MVE_VLDRB_GATHER_T1:
+    case MVE_VLDRH_GATHER_T2:
+    case MVE_VLDRW_GATHER_T3:
+    case MVE_VLDRD_GATHER_T4:
+    case MVE_VLDRB_T1:
+    case MVE_VLDRH_T2:
+    case MVE_VMAX:
+    case MVE_VMAXA:
+    case MVE_VMAXV:
+    case MVE_VMAXAV:
+    case MVE_VMIN:
+    case MVE_VMINA:
+    case MVE_VMINV:
+    case MVE_VMINAV:
+    case MVE_VMLA:
+    case MVE_VMLAS:
+    case MVE_VMUL_VEC_T1:
+    case MVE_VMUL_VEC_T2:
+    case MVE_VMULH:
+    case MVE_VRMULH:
+    case MVE_VMULL_INT:
+    case MVE_VNEG_FP:
+    case MVE_VNEG_VEC:
+    case MVE_VPT_VEC_T1:
+    case MVE_VPT_VEC_T2:
+    case MVE_VPT_VEC_T3:
+    case MVE_VPT_VEC_T4:
+    case MVE_VPT_VEC_T5:
+    case MVE_VPT_VEC_T6:
+    case MVE_VQABS:
+    case MVE_VQADD_T1:
+    case MVE_VQADD_T2:
+    case MVE_VQDMLADH:
+    case MVE_VQRDMLADH:
+    case MVE_VQDMLAH:
+    case MVE_VQRDMLAH:
+    case MVE_VQDMLASH:
+    case MVE_VQRDMLASH:
+    case MVE_VQDMLSDH:
+    case MVE_VQRDMLSDH:
+    case MVE_VQDMULH_T1:
+    case MVE_VQRDMULH_T2:
+    case MVE_VQDMULH_T3:
+    case MVE_VQRDMULH_T4:
+    case MVE_VQNEG:
+    case MVE_VQRSHL_T1:
+    case MVE_VQRSHL_T2:
+    case MVE_VQSHL_T1:
+    case MVE_VQSHL_T4:
+    case MVE_VQSUB_T1:
+    case MVE_VQSUB_T2:
+    case MVE_VREV32:
+    case MVE_VREV64:
+    case MVE_VRHADD:
+    case MVE_VRINT_FP:
+    case MVE_VRSHL_T1:
+    case MVE_VRSHL_T2:
+    case MVE_VSHL_T2:
+    case MVE_VSHL_T3:
+    case MVE_VSHLL_T2:
+    case MVE_VST2:
+    case MVE_VST4:
+    case MVE_VSTRB_SCATTER_T1:
+    case MVE_VSTRH_SCATTER_T2:
+    case MVE_VSTRW_SCATTER_T3:
+    case MVE_VSTRB_T1:
+    case MVE_VSTRH_T2:
+    case MVE_VSUB_VEC_T1:
+    case MVE_VSUB_VEC_T2:
+      if (size <= 3)
+	func (stream, "%s", mve_vec_sizename[size]);
+      else
+	func (stream, "<undef size>");
+      break;
+
+    case MVE_VABD_FP:
+    case MVE_VADD_FP_T1:
+    case MVE_VADD_FP_T2:
+    case MVE_VSUB_FP_T1:
+    case MVE_VSUB_FP_T2:
+    case MVE_VCMP_FP_T1:
+    case MVE_VCMP_FP_T2:
+    case MVE_VFMA_FP_SCALAR:
+    case MVE_VFMA_FP:
+    case MVE_VFMS_FP:
+    case MVE_VFMAS_FP_SCALAR:
+    case MVE_VMAXNM_FP:
+    case MVE_VMAXNMA_FP:
+    case MVE_VMAXNMV_FP:
+    case MVE_VMAXNMAV_FP:
+    case MVE_VMINNM_FP:
+    case MVE_VMINNMA_FP:
+    case MVE_VMINNMV_FP:
+    case MVE_VMINNMAV_FP:
+    case MVE_VMUL_FP_T1:
+    case MVE_VMUL_FP_T2:
+    case MVE_VPT_FP_T1:
+    case MVE_VPT_FP_T2:
+      if (size == 0)
+	func (stream, "32");
+      else if (size == 1)
+	func (stream, "16");
+      break;
+
+    case MVE_VCADD_FP:
+    case MVE_VCMLA_FP:
+    case MVE_VCMUL_FP:
+    case MVE_VMLADAV_T1:
+    case MVE_VMLALDAV:
+    case MVE_VMLSDAV_T1:
+    case MVE_VMLSLDAV:
+    case MVE_VMOVN:
+    case MVE_VQDMULL_T1:
+    case MVE_VQDMULL_T2:
+    case MVE_VQMOVN:
+    case MVE_VQMOVUN:
+      if (size == 0)
+	func (stream, "16");
+      else if (size == 1)
+	func (stream, "32");
+      break;
+
+    case MVE_VMOVL:
+      if (size == 1)
+	func (stream, "8");
+      else if (size == 2)
+	func (stream, "16");
+      break;
+
+    case MVE_VDUP:
+      switch (size)
+	{
+	case 0:
+	  func (stream, "32");
+	  break;
+	case 1:
+	  func (stream, "16");
+	  break;
+	case 2:
+	  func (stream, "8");
+	  break;
+	default:
+	  break;
+	}
+      break;
+
+    case MVE_VMOV_GP_TO_VEC_LANE:
+    case MVE_VMOV_VEC_LANE_TO_GP:
+      switch (size)
+	{
+	case 0: case 4:
+	  func (stream, "32");
+	  break;
+
+	case 1: case 3:
+	case 5: case 7:
+	  func (stream, "16");
+	  break;
+
+	case 8: case 9: case 10: case 11:
+	case 12: case 13: case 14: case 15:
+	  func (stream, "8");
+	  break;
+
+	default:
+	  break;
+	}
+      break;
+
+    case MVE_VMOV_IMM_TO_VEC:
+      switch (size)
+	{
+	case 0: case 4: case 8:
+	case 12: case 24: case 26:
+	  func (stream, "i32");
+	  break;
+	case 16: case 20:
+	  func (stream, "i16");
+	  break;
+	case 28:
+	  func (stream, "i8");
+	  break;
+	case 29:
+	  func (stream, "i64");
+	  break;
+	case 30:
+	  func (stream, "f32");
+	  break;
+	default:
+	  break;
+	}
+      break;
+
+    case MVE_VMULL_POLY:
+      if (size == 0)
+	func (stream, "p8");
+      else if (size == 1)
+	func (stream, "p16");
+      break;
+
+    case MVE_VMVN_IMM:
+      switch (size)
+	{
+	case 0: case 2: case 4:
+	case 6: case 12: case 13:
+	  func (stream, "32");
+	  break;
+
+	case 8: case 10:
+	  func (stream, "16");
+	  break;
+
+	default:
+	  break;
+	}
+      break;
+
+    case MVE_VBIC_IMM:
+    case MVE_VORR_IMM:
+      switch (size)
+	{
+	case 1: case 3:
+	case 5: case 7:
+	  func (stream, "32");
+	  break;
+
+	case 9: case 11:
+	  func (stream, "16");
+	  break;
+
+	default:
+	  break;
+	}
+      break;
+
+    case MVE_VQSHRN:
+    case MVE_VQSHRUN:
+    case MVE_VQRSHRN:
+    case MVE_VQRSHRUN:
+    case MVE_VRSHRN:
+    case MVE_VSHRN:
+      {
+	switch (size)
+	{
+	case 1:
+	  func (stream, "16");
+	  break;
+
+	case 2: case 3:
+	  func (stream, "32");
+	  break;
+
+	default:
+	  break;
+	}
+      }
+      break;
+
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VRSHR:
+    case MVE_VSHL_T1:
+    case MVE_VSHLL_T1:
+    case MVE_VSHR:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      {
+	switch (size)
+	{
+	case 1:
+	  func (stream, "8");
+	  break;
+
+	case 2: case 3:
+	  func (stream, "16");
+	  break;
+
+	case 4: case 5: case 6: case 7:
+	  func (stream, "32");
+	  break;
+
+	default:
+	  break;
+	}
+      }
+      break;
+
+    default:
+      break;
+    }
+}
+
+static void
+print_mve_shift_n (struct disassemble_info *info, long given,
+		   enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  int startAt0
+    = matched_insn == MVE_VQSHL_T2
+      || matched_insn == MVE_VQSHLU_T3
+      || matched_insn == MVE_VSHL_T1
+      || matched_insn == MVE_VSHLL_T1
+      || matched_insn == MVE_VSLI;
+
+  unsigned imm6 = (given & 0x3f0000) >> 16;
+
+  if (matched_insn == MVE_VSHLL_T1)
+    imm6 &= 0x1f;
+
+  unsigned shiftAmount = 0;
+  if ((imm6 & 0x20) != 0)
+    shiftAmount = startAt0 ? imm6 - 32 : 64 - imm6;
+  else if ((imm6 & 0x10) != 0)
+    shiftAmount = startAt0 ? imm6 - 16 : 32 - imm6;
+  else if ((imm6 & 0x08) != 0)
+    shiftAmount = startAt0 ? imm6 - 8 : 16 - imm6;
+  else
+    print_mve_undefined (info, UNDEF_SIZE_0);
+
+  func (stream, "%u", shiftAmount);
+}
+
+static void
+print_vec_condition (struct disassemble_info *info, long given,
+		     enum mve_instructions matched_insn)
+{
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+  long vec_cond = 0;
+
+  switch (matched_insn)
+    {
+    case MVE_VPT_FP_T1:
+    case MVE_VCMP_FP_T1:
+      vec_cond = (((given & 0x1000) >> 10)
+		  | ((given & 1) << 1)
+		  | ((given & 0x0080) >> 7));
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_FP_T2:
+    case MVE_VCMP_FP_T2:
+      vec_cond = (((given & 0x1000) >> 10)
+		  | ((given & 0x0020) >> 4)
+		  | ((given & 0x0080) >> 7));
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T1:
+    case MVE_VCMP_VEC_T1:
+      vec_cond = (given & 0x0080) >> 7;
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T2:
+    case MVE_VCMP_VEC_T2:
+      vec_cond = 2 | ((given & 0x0080) >> 7);
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T3:
+    case MVE_VCMP_VEC_T3:
+      vec_cond = 4 | ((given & 1) << 1) | ((given & 0x0080) >> 7);
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T4:
+    case MVE_VCMP_VEC_T4:
+      vec_cond = (given & 0x0080) >> 7;
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T5:
+    case MVE_VCMP_VEC_T5:
+      vec_cond = 2 | ((given & 0x0080) >> 7);
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_VPT_VEC_T6:
+    case MVE_VCMP_VEC_T6:
+      vec_cond = 4 | ((given & 0x0020) >> 4) | ((given & 0x0080) >> 7);
+      func (stream, "%s",vec_condnames[vec_cond]);
+      break;
+
+    case MVE_NONE:
+    case MVE_VPST:
+    default:
+      break;
+    }
+}
+
 #define W_BIT 21
 #define I_BIT 22
 #define U_BIT 23
 #define P_BIT 24
 
-#define WRITEBACK_BIT_SET   (given & (1 << W_BIT))
-#define IMMEDIATE_BIT_SET   (given & (1 << I_BIT))
-#define NEGATIVE_BIT_SET   ((given & (1 << U_BIT)) == 0)
-#define PRE_BIT_SET         (given & (1 << P_BIT))
+#define WRITEBACK_BIT_SET (given & (1 << W_BIT))
+#define IMMEDIATE_BIT_SET (given & (1 << I_BIT))
+#define NEGATIVE_BIT_SET  ((given & (1 << U_BIT)) == 0)
+#define PRE_BIT_SET	  (given & (1 << P_BIT))
+
 
 /* Print one coprocessor instruction on INFO->STREAM.
    Return TRUE if the instuction matched, FALSE if this is not a
    recognised coprocessor instruction.  */
 
 static bfd_boolean
-print_insn_coprocessor (bfd_vma pc,
-			struct disassemble_info *info,
-			long given,
-			bfd_boolean thumb)
+print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
+			  bfd_vma pc,
+			  struct disassemble_info *info,
+			  long given,
+			  bfd_boolean thumb)
 {
-  const struct opcode32 *insn;
+  const struct sopcode32 *insn;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
   unsigned long mask;
@@ -3396,10 +7948,12 @@ print_insn_coprocessor (bfd_vma pc,
   int cp_num;
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = ARM_ARCH_NONE;
+  arm_feature_set arm_ext_v8_1m_main =
+    ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN);
 
   allowed_arches = private_data->features;
 
-  for (insn = coprocessor_opcodes; insn->assembler; insn++)
+  for (insn = opcodes; insn->assembler; insn++)
     {
       unsigned long u_reg = 16;
       bfd_boolean is_unpredictable = FALSE;
@@ -3463,6 +8017,10 @@ print_insn_coprocessor (bfd_vma pc,
 	    }
 	}
 
+      if ((insn->isa == T32 && !thumb)
+	  || (insn->isa == ARM && thumb))
+	continue;
+
       if ((given & mask) != value)
 	continue;
 
@@ -3476,6 +8034,13 @@ print_insn_coprocessor (bfd_vma pc,
 	{
 	  if (cp_num == 9 || cp_num == 10 || cp_num == 11)
 	    is_unpredictable = TRUE;
+
+	  /* Armv8.1-M Mainline FP & MVE instructions.  */
+	  if (ARM_CPU_HAS_FEATURE (arm_ext_v8_1m_main, allowed_arches)
+	      && !ARM_CPU_IS_ANY (allowed_arches)
+	      && (cp_num == 8 || cp_num == 14 || cp_num == 15))
+	    continue;
+
 	}
       else if (insn->value == 0x0e000000     /* cdp  */
 	       || insn->value == 0xfe000000  /* cdp2  */
@@ -3487,22 +8052,41 @@ print_insn_coprocessor (bfd_vma pc,
 	  /* Floating-point instructions.  */
 	  if (cp_num == 9 || cp_num == 10 || cp_num == 11)
 	    continue;
+
+	  /* Armv8.1-M Mainline FP & MVE instructions.  */
+	  if (ARM_CPU_HAS_FEATURE (arm_ext_v8_1m_main, allowed_arches)
+	      && !ARM_CPU_IS_ANY (allowed_arches)
+	      && (cp_num == 8 || cp_num == 14 || cp_num == 15))
+	    continue;
 	}
+      else if ((insn->value == 0xec100f80      /* vldr (system register) */
+		|| insn->value == 0xec000f80)  /* vstr (system register) */
+	       && arm_decode_field (given, 24, 24) == 0
+	       && arm_decode_field (given, 21, 21) == 0)
+	/* If the P and W bits are both 0 then these encodings match the MVE
+	   VLDR and VSTR instructions, these are in a different table, so we
+	   don't let it match here.  */
+	continue;
 
       for (c = insn->assembler; *c; c++)
 	{
 	  if (*c == '%')
 	    {
-	      switch (*++c)
+	      const char mod = *++c;
+	      switch (mod)
 		{
 		case '%':
 		  func (stream, "%%");
 		  break;
 
 		case 'A':
+		case 'K':
 		  {
 		    int rn = (given >> 16) & 0xf;
 		    bfd_vma offset = given & 0xff;
+
+		    if (mod == 'K')
+		      offset = given & 0x7f;
 
 		    func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
 
@@ -3560,7 +8144,7 @@ print_insn_coprocessor (bfd_vma pc,
 			info->print_address_func (offset + pc
 						  + info->bytes_per_chunk * 2
 						  - (pc & 3),
-				 		  info);
+						  info);
 		      }
 		  }
 		  break;
@@ -3579,6 +8163,31 @@ print_insn_coprocessor (bfd_vma pc,
 		  }
 		  break;
 
+		case 'C':
+		  {
+		    bfd_boolean single = ((given >> 8) & 1) == 0;
+		    char reg_prefix = single ? 's' : 'd';
+		    int Dreg = (given >> 22) & 0x1;
+		    int Vdreg = (given >> 12) & 0xf;
+		    int reg = single ? ((Vdreg << 1) | Dreg)
+				     : ((Dreg << 4) | Vdreg);
+		    int num = (given >> (single ? 0 : 1)) & 0x7f;
+		    int maxreg = single ? 31 : 15;
+		    int topreg = reg + num - 1;
+
+		    if (!num)
+		      func (stream, "{VPR}");
+		    else if (num == 1)
+		      func (stream, "{%c%d, VPR}", reg_prefix, reg);
+		    else if (topreg > maxreg)
+		      func (stream, "{%c%d-<overflow reg d%d, VPR}",
+			    reg_prefix, reg, single ? topreg >> 1 : topreg);
+		    else
+		      func (stream, "{%c%d-%c%d, VPR}", reg_prefix, reg,
+			    reg_prefix, topreg);
+		  }
+		  break;
+
 		case 'u':
 		  if (cond != COND_UNCOND)
 		    is_unpredictable = TRUE;
@@ -3588,6 +8197,8 @@ print_insn_coprocessor (bfd_vma pc,
 		  if (cond != COND_UNCOND && cp_num == 9)
 		    is_unpredictable = TRUE;
 
+		  /* Fall through.  */
+		case 'b':
 		  func (stream, "%s", arm_conditional[cond]);
 		  break;
 
@@ -3608,6 +8219,38 @@ print_insn_coprocessor (bfd_vma pc,
 		    func (stream, "%d", imm);
 		  }
 
+		  break;
+
+		case 'J':
+		  {
+		    unsigned long regno
+		      = arm_decode_field_multiple (given, 13, 15, 22, 22);
+
+		    switch (regno)
+		      {
+		      case 0x1:
+			func (stream, "FPSCR");
+			break;
+		      case 0x2:
+			func (stream, "FPSCR_nzcvqc");
+			break;
+		      case 0xc:
+			func (stream, "VPR");
+			break;
+		      case 0xd:
+			func (stream, "P0");
+			break;
+		      case 0xe:
+			func (stream, "FPCXTNS");
+			break;
+		      case 0xf:
+			func (stream, "FPCXTS");
+			break;
+		      default:
+			func (stream, "<invalid reg %lu>", regno);
+			break;
+		      }
+		  }
 		  break;
 
 		case 'F':
@@ -3827,190 +8470,190 @@ print_insn_coprocessor (bfd_vma pc,
 		      default:
 			abort ();
 		      }
-		    break;
-
-		  case 'y':
-		  case 'z':
-		    {
-		      int single = *c++ == 'y';
-		      int regno;
-
-		      switch (*c)
-			{
-			case '4': /* Sm pair */
-			case '0': /* Sm, Dm */
-			  regno = given & 0x0000000f;
-			  if (single)
-			    {
-			      regno <<= 1;
-			      regno += (given >> 5) & 1;
-			    }
-			  else
-			    regno += ((given >> 5) & 1) << 4;
-			  break;
-
-			case '1': /* Sd, Dd */
-			  regno = (given >> 12) & 0x0000000f;
-			  if (single)
-			    {
-			      regno <<= 1;
-			      regno += (given >> 22) & 1;
-			    }
-			  else
-			    regno += ((given >> 22) & 1) << 4;
-			  break;
-
-			case '2': /* Sn, Dn */
-			  regno = (given >> 16) & 0x0000000f;
-			  if (single)
-			    {
-			      regno <<= 1;
-			      regno += (given >> 7) & 1;
-			    }
-			  else
-			    regno += ((given >> 7) & 1) << 4;
-			  break;
-
-			case '3': /* List */
-			  func (stream, "{");
-			  regno = (given >> 12) & 0x0000000f;
-			  if (single)
-			    {
-			      regno <<= 1;
-			      regno += (given >> 22) & 1;
-			    }
-			  else
-			    regno += ((given >> 22) & 1) << 4;
-			  break;
-
-			default:
-			  abort ();
-			}
-
-		      func (stream, "%c%d", single ? 's' : 'd', regno);
-
-		      if (*c == '3')
-			{
-			  int count = given & 0xff;
-
-			  if (single == 0)
-			    count >>= 1;
-
-			  if (--count)
-			    {
-			      func (stream, "-%c%d",
-				    single ? 's' : 'd',
-				    regno + count);
-			    }
-
-			  func (stream, "}");
-			}
-		      else if (*c == '4')
-			func (stream, ", %c%d", single ? 's' : 'd',
-			      regno + 1);
-		    }
-		    break;
-
-		  case 'L':
-		    switch (given & 0x00400100)
-		      {
-		      case 0x00000000: func (stream, "b"); break;
-		      case 0x00400000: func (stream, "h"); break;
-		      case 0x00000100: func (stream, "w"); break;
-		      case 0x00400100: func (stream, "d"); break;
-		      default:
-			break;
-		      }
-		    break;
-
-		  case 'Z':
-		    {
-		      /* given (20, 23) | given (0, 3) */
-		      value = ((given >> 16) & 0xf0) | (given & 0xf);
-		      func (stream, "%d", (int) value);
-		    }
-		    break;
-
-		  case 'l':
-		    /* This is like the 'A' operator, except that if
-		       the width field "M" is zero, then the offset is
-		       *not* multiplied by four.  */
-		    {
-		      int offset = given & 0xff;
-		      int multiplier = (given & 0x00000100) ? 4 : 1;
-
-		      func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
-
-		      if (multiplier > 1)
-			{
-			  value_in_comment = offset * multiplier;
-			  if (NEGATIVE_BIT_SET)
-			    value_in_comment = - value_in_comment;
-			}
-
-		      if (offset)
-			{
-			  if (PRE_BIT_SET)
-			    func (stream, ", #%s%d]%s",
-				  NEGATIVE_BIT_SET ? "-" : "",
-				  offset * multiplier,
-				  WRITEBACK_BIT_SET ? "!" : "");
-			  else
-			    func (stream, "], #%s%d",
-				  NEGATIVE_BIT_SET ? "-" : "",
-				  offset * multiplier);
-			}
-		      else
-			func (stream, "]");
-		    }
-		    break;
-
-		  case 'r':
-		    {
-		      int imm4 = (given >> 4) & 0xf;
-		      int puw_bits = ((given >> 22) & 6) | ((given >> W_BIT) & 1);
-		      int ubit = ! NEGATIVE_BIT_SET;
-		      const char *rm = arm_regnames [given & 0xf];
-		      const char *rn = arm_regnames [(given >> 16) & 0xf];
-
-		      switch (puw_bits)
-			{
-			case 1:
-			case 3:
-			  func (stream, "[%s], %c%s", rn, ubit ? '+' : '-', rm);
-			  if (imm4)
-			    func (stream, ", lsl #%d", imm4);
-			  break;
-
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-			  func (stream, "[%s, %c%s", rn, ubit ? '+' : '-', rm);
-			  if (imm4 > 0)
-			    func (stream, ", lsl #%d", imm4);
-			  func (stream, "]");
-			  if (puw_bits == 5 || puw_bits == 7)
-			    func (stream, "!");
-			  break;
-
-			default:
-			  func (stream, "INVALID");
-			}
-		    }
-		    break;
-
-		  case 'i':
-		    {
-		      long imm5;
-		      imm5 = ((given & 0x100) >> 4) | (given & 0xf);
-		      func (stream, "%ld", (imm5 == 0) ? 32 : imm5);
-		    }
-		    break;
-
-		  default:
-		    abort ();
 		  }
+		  break;
+
+		case 'y':
+		case 'z':
+		  {
+		    int single = *c++ == 'y';
+		    int regno;
+
+		    switch (*c)
+		      {
+		      case '4': /* Sm pair */
+		      case '0': /* Sm, Dm */
+			regno = given & 0x0000000f;
+			if (single)
+			  {
+			    regno <<= 1;
+			    regno += (given >> 5) & 1;
+			  }
+			else
+			  regno += ((given >> 5) & 1) << 4;
+			break;
+
+		      case '1': /* Sd, Dd */
+			regno = (given >> 12) & 0x0000000f;
+			if (single)
+			  {
+			    regno <<= 1;
+			    regno += (given >> 22) & 1;
+			  }
+			else
+			  regno += ((given >> 22) & 1) << 4;
+			break;
+
+		      case '2': /* Sn, Dn */
+			regno = (given >> 16) & 0x0000000f;
+			if (single)
+			  {
+			    regno <<= 1;
+			    regno += (given >> 7) & 1;
+			  }
+			else
+			  regno += ((given >> 7) & 1) << 4;
+			break;
+
+		      case '3': /* List */
+			func (stream, "{");
+			regno = (given >> 12) & 0x0000000f;
+			if (single)
+			  {
+			    regno <<= 1;
+			    regno += (given >> 22) & 1;
+			  }
+			else
+			  regno += ((given >> 22) & 1) << 4;
+			break;
+
+		      default:
+			abort ();
+		      }
+
+		    func (stream, "%c%d", single ? 's' : 'd', regno);
+
+		    if (*c == '3')
+		      {
+			int count = given & 0xff;
+
+			if (single == 0)
+			  count >>= 1;
+
+			if (--count)
+			  {
+			    func (stream, "-%c%d",
+				  single ? 's' : 'd',
+				  regno + count);
+			  }
+
+			func (stream, "}");
+		      }
+		    else if (*c == '4')
+		      func (stream, ", %c%d", single ? 's' : 'd',
+			    regno + 1);
+		  }
+		  break;
+
+		case 'L':
+		  switch (given & 0x00400100)
+		    {
+		    case 0x00000000: func (stream, "b"); break;
+		    case 0x00400000: func (stream, "h"); break;
+		    case 0x00000100: func (stream, "w"); break;
+		    case 0x00400100: func (stream, "d"); break;
+		    default:
+		      break;
+		    }
+		  break;
+
+		case 'Z':
+		  {
+		    /* given (20, 23) | given (0, 3) */
+		    value = ((given >> 16) & 0xf0) | (given & 0xf);
+		    func (stream, "%d", (int) value);
+		  }
+		  break;
+
+		case 'l':
+		  /* This is like the 'A' operator, except that if
+		     the width field "M" is zero, then the offset is
+		     *not* multiplied by four.  */
+		  {
+		    int offset = given & 0xff;
+		    int multiplier = (given & 0x00000100) ? 4 : 1;
+
+		    func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+
+		    if (multiplier > 1)
+		      {
+			value_in_comment = offset * multiplier;
+			if (NEGATIVE_BIT_SET)
+			  value_in_comment = - value_in_comment;
+		      }
+
+		    if (offset)
+		      {
+			if (PRE_BIT_SET)
+			  func (stream, ", #%s%d]%s",
+				NEGATIVE_BIT_SET ? "-" : "",
+				offset * multiplier,
+				WRITEBACK_BIT_SET ? "!" : "");
+			else
+			  func (stream, "], #%s%d",
+				NEGATIVE_BIT_SET ? "-" : "",
+				offset * multiplier);
+		      }
+		    else
+		      func (stream, "]");
+		  }
+		  break;
+
+		case 'r':
+		  {
+		    int imm4 = (given >> 4) & 0xf;
+		    int puw_bits = ((given >> 22) & 6) | ((given >> W_BIT) & 1);
+		    int ubit = ! NEGATIVE_BIT_SET;
+		    const char *rm = arm_regnames [given & 0xf];
+		    const char *rn = arm_regnames [(given >> 16) & 0xf];
+
+		    switch (puw_bits)
+		      {
+		      case 1:
+		      case 3:
+			func (stream, "[%s], %c%s", rn, ubit ? '+' : '-', rm);
+			if (imm4)
+			  func (stream, ", lsl #%d", imm4);
+			break;
+
+		      case 4:
+		      case 5:
+		      case 6:
+		      case 7:
+			func (stream, "[%s, %c%s", rn, ubit ? '+' : '-', rm);
+			if (imm4 > 0)
+			  func (stream, ", lsl #%d", imm4);
+			func (stream, "]");
+			if (puw_bits == 5 || puw_bits == 7)
+			  func (stream, "!");
+			break;
+
+		      default:
+			func (stream, "INVALID");
+		      }
+		  }
+		  break;
+
+		case 'i':
+		  {
+		    long imm5;
+		    imm5 = ((given & 0x100) >> 4) | (given & 0xf);
+		    func (stream, "%ld", (imm5 == 0) ? 32 : imm5);
+		  }
+		  break;
+
+		default:
+		  abort ();
 		}
 	    }
 	  else
@@ -4026,6 +8669,26 @@ print_insn_coprocessor (bfd_vma pc,
       return TRUE;
     }
   return FALSE;
+}
+
+static bfd_boolean
+print_insn_coprocessor (bfd_vma pc,
+			struct disassemble_info *info,
+			long given,
+			bfd_boolean thumb)
+{
+  return print_insn_coprocessor_1 (coprocessor_opcodes,
+				   pc, info, given, thumb);
+}
+
+static bfd_boolean
+print_insn_generic_coprocessor (bfd_vma pc,
+				struct disassemble_info *info,
+				long given,
+				bfd_boolean thumb)
+{
+  return print_insn_coprocessor_1 (generic_coprocessor_opcodes,
+				   pc, info, given, thumb);
 }
 
 /* Decodes and prints ARM addressing modes.  Returns the offset
@@ -4149,7 +8812,12 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 	}
       else if ((given & 0xff000000) == 0xf9000000)
 	given ^= 0xf9000000 ^ 0xf4000000;
-      else
+      /* BFloat16 neon instructions without special top byte handling.  */
+      else if ((given & 0xff000000) == 0xfe000000
+	       || (given & 0xff000000) == 0xfc000000)
+	;
+      /* vdup is also a valid neon instruction.  */
+      else if ((given & 0xff910f5f) != 0xee800b10)
 	return FALSE;
     }
 
@@ -4575,11 +9243,11 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
 			  default:
 			    abort ();
 			  }
-			break;
-
-		      default:
-			abort ();
 		      }
+		      break;
+
+		    default:
+		      abort ();
 		    }
 		}
 	      else
@@ -4597,6 +9265,381 @@ print_insn_neon (struct disassemble_info *info, long given, bfd_boolean thumb)
     }
   return FALSE;
 }
+
+/* Print one mve instruction on INFO->STREAM.
+   Return TRUE if the instuction matched, FALSE if this is not a
+   recognised mve instruction.  */
+
+static bfd_boolean
+print_insn_mve (struct disassemble_info *info, long given)
+{
+  const struct mopcode32 *insn;
+  void *stream = info->stream;
+  fprintf_ftype func = info->fprintf_func;
+
+  for (insn = mve_opcodes; insn->assembler; insn++)
+    {
+      if (((given & insn->mask) == insn->value)
+	  && !is_mve_encoding_conflict (given, insn->mve_op))
+	{
+	  signed long value_in_comment = 0;
+	  bfd_boolean is_unpredictable = FALSE;
+	  bfd_boolean is_undefined = FALSE;
+	  const char *c;
+	  enum mve_unpredictable unpredictable_cond = UNPRED_NONE;
+	  enum mve_undefined undefined_cond = UNDEF_NONE;
+
+	  /* Most vector mve instruction are illegal in a it block.
+	     There are a few exceptions; check for them.  */
+	  if (ifthen_state && !is_mve_okay_in_it (insn->mve_op))
+	    {
+	      is_unpredictable = TRUE;
+	      unpredictable_cond = UNPRED_IT_BLOCK;
+	    }
+	  else if (is_mve_unpredictable (given, insn->mve_op,
+					 &unpredictable_cond))
+	    is_unpredictable = TRUE;
+
+	  if (is_mve_undefined (given, insn->mve_op, &undefined_cond))
+	    is_undefined = TRUE;
+
+	  /* In "VORR Qd, Qm, Qn", if Qm==Qn, VORR is nothing but VMOV,
+	     i.e "VMOV Qd, Qm".  */
+	  if ((insn->mve_op == MVE_VORR_REG)
+	      && (arm_decode_field (given, 1, 3)
+		  == arm_decode_field (given, 17, 19)))
+	    continue;
+
+	  for (c = insn->assembler; *c; c++)
+	    {
+	      if (*c == '%')
+		{
+		  switch (*++c)
+		    {
+		    case '%':
+		      func (stream, "%%");
+		      break;
+
+		    case 'a':
+		      /* Don't print anything for '+' as it is implied.  */
+		      if (arm_decode_field (given, 23, 23) == 0)
+			func (stream, "-");
+		      break;
+
+		    case 'c':
+		      if (ifthen_state)
+			func (stream, "%s", arm_conditional[IFTHEN_COND]);
+		      break;
+
+		    case 'd':
+		      print_mve_vld_str_addr (info, given, insn->mve_op);
+		      break;
+
+		    case 'i':
+		      {
+			long mve_mask = mve_extract_pred_mask (given);
+			func (stream, "%s", mve_predicatenames[mve_mask]);
+		      }
+		      break;
+
+		    case 'j':
+		      {
+			unsigned int imm5 = 0;
+			imm5 |= arm_decode_field (given, 6, 7);
+			imm5 |= (arm_decode_field (given, 12, 14) << 2);
+			func (stream, "#%u", (imm5 == 0) ? 32 : imm5);
+		      }
+		      break;
+
+		    case 'k':
+		      func (stream, "#%u",
+			    (arm_decode_field (given, 7, 7) == 0) ? 64 : 48);
+		      break;
+
+		    case 'n':
+		      print_vec_condition (info, given, insn->mve_op);
+		      break;
+
+		    case 'o':
+		      if (arm_decode_field (given, 0, 0) == 1)
+			{
+			  unsigned long size
+			    = arm_decode_field (given, 4, 4)
+			      | (arm_decode_field (given, 6, 6) << 1);
+
+			  func (stream, ", uxtw #%lu", size);
+			}
+		      break;
+
+		    case 'm':
+		      print_mve_rounding_mode (info, given, insn->mve_op);
+		      break;
+
+		    case 's':
+		      print_mve_vcvt_size (info, given, insn->mve_op);
+		      break;
+
+		    case 'u':
+		      {
+			unsigned long op1 = arm_decode_field (given, 21, 22);
+
+			if ((insn->mve_op == MVE_VMOV_VEC_LANE_TO_GP))
+			  {
+			    /* Check for signed.  */
+			    if (arm_decode_field (given, 23, 23) == 0)
+			      {
+				/* We don't print 's' for S32.  */
+				if ((arm_decode_field (given, 5, 6) == 0)
+				    && ((op1 == 0) || (op1 == 1)))
+				  ;
+				else
+				  func (stream, "s");
+			      }
+			    else
+			      func (stream, "u");
+			  }
+			else
+			  {
+			    if (arm_decode_field (given, 28, 28) == 0)
+			      func (stream, "s");
+			    else
+			      func (stream, "u");
+			  }
+		      }
+		      break;
+
+		    case 'v':
+		      print_instruction_predicate (info);
+		      break;
+
+		    case 'w':
+		      if (arm_decode_field (given, 21, 21) == 1)
+			func (stream, "!");
+		      break;
+
+		    case 'B':
+		      print_mve_register_blocks (info, given, insn->mve_op);
+		      break;
+
+		    case 'E':
+		      /* SIMD encoded constant for mov, mvn, vorr, vbic.  */
+
+		      print_simd_imm8 (info, given, 28, insn);
+		      break;
+
+		    case 'N':
+		      print_mve_vmov_index (info, given);
+		      break;
+
+		    case 'T':
+		      if (arm_decode_field (given, 12, 12) == 0)
+			func (stream, "b");
+		      else
+			func (stream, "t");
+		      break;
+
+		    case 'X':
+		      if (arm_decode_field (given, 12, 12) == 1)
+			func (stream, "x");
+		      break;
+
+		    case '0': case '1': case '2': case '3': case '4':
+		    case '5': case '6': case '7': case '8': case '9':
+		      {
+			int width;
+			unsigned long value;
+
+			c = arm_decode_bitfield (c, given, &value, &width);
+
+			switch (*c)
+			  {
+			  case 'Z':
+			    if (value == 13)
+			      is_unpredictable = TRUE;
+			    else if (value == 15)
+			      func (stream, "zr");
+			    else
+			      func (stream, "%s", arm_regnames[value]);
+			    break;
+
+			  case 'c':
+			    func (stream, "%s", arm_conditional[value]);
+			    break;
+
+			  case 'C':
+			    value ^= 1;
+			    func (stream, "%s", arm_conditional[value]);
+			    break;
+
+			  case 'S':
+			    if (value == 13 || value == 15)
+			      is_unpredictable = TRUE;
+			    else
+			      func (stream, "%s", arm_regnames[value]);
+			    break;
+
+			  case 's':
+			    print_mve_size (info,
+					    value,
+					    insn->mve_op);
+			    break;
+			  case 'I':
+			    if (value == 1)
+			      func (stream, "i");
+			    break;
+			  case 'A':
+			    if (value == 1)
+			      func (stream, "a");
+			    break;
+			  case 'h':
+			    {
+			      unsigned int odd_reg = (value << 1) | 1;
+			      func (stream, "%s", arm_regnames[odd_reg]);
+			    }
+			    break;
+			  case 'i':
+			    {
+			      unsigned long imm
+				= arm_decode_field (given, 0, 6);
+			      unsigned long mod_imm = imm;
+
+			      switch (insn->mve_op)
+				{
+				case MVE_VLDRW_GATHER_T5:
+				case MVE_VSTRW_SCATTER_T5:
+				  mod_imm = mod_imm << 2;
+				  break;
+				case MVE_VSTRD_SCATTER_T6:
+				case MVE_VLDRD_GATHER_T6:
+				  mod_imm = mod_imm << 3;
+				  break;
+
+				default:
+				  break;
+				}
+
+			      func (stream, "%lu", mod_imm);
+			    }
+			    break;
+			  case 'k':
+			    func (stream, "%lu", 64 - value);
+			    break;
+			  case 'l':
+			    {
+			      unsigned int even_reg = value << 1;
+			      func (stream, "%s", arm_regnames[even_reg]);
+			    }
+			    break;
+			  case 'u':
+			    switch (value)
+			      {
+			      case 0:
+				func (stream, "1");
+				break;
+			      case 1:
+				func (stream, "2");
+				break;
+			      case 2:
+				func (stream, "4");
+				break;
+			      case 3:
+				func (stream, "8");
+				break;
+			      default:
+				break;
+			      }
+			    break;
+			  case 'o':
+			    print_mve_rotate (info, value, width);
+			    break;
+			  case 'r':
+			    func (stream, "%s", arm_regnames[value]);
+			    break;
+			  case 'd':
+			    if (insn->mve_op == MVE_VQSHL_T2
+				|| insn->mve_op == MVE_VQSHLU_T3
+				|| insn->mve_op == MVE_VRSHR
+				|| insn->mve_op == MVE_VRSHRN
+				|| insn->mve_op == MVE_VSHL_T1
+				|| insn->mve_op == MVE_VSHLL_T1
+				|| insn->mve_op == MVE_VSHR
+				|| insn->mve_op == MVE_VSHRN
+				|| insn->mve_op == MVE_VSLI
+				|| insn->mve_op == MVE_VSRI)
+			      print_mve_shift_n (info, given, insn->mve_op);
+			    else if (insn->mve_op == MVE_VSHLL_T2)
+			      {
+				switch (value)
+				  {
+				  case 0x00:
+				    func (stream, "8");
+				    break;
+				  case 0x01:
+				    func (stream, "16");
+				    break;
+				  case 0x10:
+				    print_mve_undefined (info, UNDEF_SIZE_0);
+				    break;
+				  default:
+				    assert (0);
+				    break;
+				  }
+			      }
+			    else
+			      {
+				if (insn->mve_op == MVE_VSHLC && value == 0)
+				  value = 32;
+				func (stream, "%ld", value);
+				value_in_comment = value;
+			      }
+			    break;
+			  case 'F':
+			    func (stream, "s%ld", value);
+			    break;
+			  case 'Q':
+			    if (value & 0x8)
+			      func (stream, "<illegal reg q%ld.5>", value);
+			    else
+			      func (stream, "q%ld", value);
+			    break;
+			  case 'x':
+			    func (stream, "0x%08lx", value);
+			    break;
+			  default:
+			    abort ();
+			  }
+			break;
+		      default:
+			abort ();
+		      }
+		    }
+		}
+	      else
+		func (stream, "%c", *c);
+	    }
+
+	  if (value_in_comment > 32 || value_in_comment < -16)
+	    func (stream, "\t; 0x%lx", value_in_comment);
+
+	  if (is_unpredictable)
+	    print_mve_unpredictable (info, unpredictable_cond);
+
+	  if (is_undefined)
+	    print_mve_undefined (info, undefined_cond);
+
+	  if ((vpt_block_state.in_vpt_block == FALSE)
+	      && !ifthen_state
+	      && (is_vpt_instruction (given) == TRUE))
+	    mark_inside_vpt_block (given);
+	  else if (vpt_block_state.in_vpt_block == TRUE)
+	    update_vpt_block_state ();
+
+	  return TRUE;
+	}
+    }
+  return FALSE;
+}
+
 
 /* Return the name of a v7A special register.  */
 
@@ -4680,6 +9723,9 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
     return;
 
   if (print_insn_neon (info, given, FALSE))
+    return;
+
+  if (print_insn_generic_coprocessor (pc, info, given, FALSE))
     return;
 
   for (insn = arm_opcodes; insn->assembler; insn++)
@@ -4840,7 +9886,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		    case 'b':
 		      {
 			bfd_vma disp = (((given & 0xffffff) ^ 0x800000) - 0x800000);
-			info->print_address_func (disp * 4 + pc + 8, info);
+			bfd_vma target = disp * 4 + pc + 8;
+			info->print_address_func (target, info);
+
+			/* Fill in instruction information.  */
+			info->insn_info_valid = 1;
+			info->insn_type = dis_branch;
+			info->target = target;
 		      }
 		      break;
 
@@ -4881,12 +9933,12 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  unsigned int immed = (given & 0xff);
 			  unsigned int a, i;
 
-			  a = (((immed << (32 - rotate))
-				| (immed >> rotate)) & 0xffffffff);
+			  a = (immed << ((32 - rotate) & 31)
+			       | immed >> rotate) & 0xffffffff;
 			  /* If there is another encoding with smaller rotate,
 			     the rotate should be specified directly.  */
 			  for (i = 0; i < 32; i += 2)
-			    if ((a << i | a >> (32 - i)) <= 0xff)
+			    if ((a << i | a >> ((32 - i) & 31)) <= 0xff)
 			      break;
 
 			  if (i != rotate)
@@ -4978,6 +10030,11 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  address += 2;
 
 		        info->print_address_func (address, info);
+
+			/* Fill in instruction information.  */
+			info->insn_info_valid = 1;
+			info->insn_type = dis_branch;
+			info->target = address;
 		      }
 		      break;
 
@@ -5114,65 +10171,65 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  default:
 			    abort ();
 			  }
-			break;
-
-		      case 'e':
-			{
-			  int imm;
-
-			  imm = (given & 0xf) | ((given & 0xfff00) >> 4);
-			  func (stream, "%d", imm);
-			  value_in_comment = imm;
-			}
-			break;
-
-		      case 'E':
-			/* LSB and WIDTH fields of BFI or BFC.  The machine-
-			   language instruction encodes LSB and MSB.  */
-			{
-			  long msb = (given & 0x001f0000) >> 16;
-			  long lsb = (given & 0x00000f80) >> 7;
-			  long w = msb - lsb + 1;
-
-			  if (w > 0)
-			    func (stream, "#%lu, #%lu", lsb, w);
-			  else
-			    func (stream, "(invalid: %lu:%lu)", lsb, msb);
-			}
-			break;
-
-		      case 'R':
-			/* Get the PSR/banked register name.  */
-			{
-			  const char * name;
-			  unsigned sysm = (given & 0x004f0000) >> 16;
-
-			  sysm |= (given & 0x300) >> 4;
-			  name = banked_regname (sysm);
-
-			  if (name != NULL)
-			    func (stream, "%s", name);
-			  else
-			    func (stream, "(UNDEF: %lu)", (unsigned long) sysm);
-			}
-			break;
-
-		      case 'V':
-			/* 16-bit unsigned immediate from a MOVT or MOVW
-			   instruction, encoded in bits 0:11 and 15:19.  */
-			{
-			  long hi = (given & 0x000f0000) >> 4;
-			  long lo = (given & 0x00000fff);
-			  long imm16 = hi | lo;
-
-			  func (stream, "#%lu", imm16);
-			  value_in_comment = imm16;
-			}
-			break;
-
-		      default:
-			abort ();
 		      }
+		      break;
+
+		    case 'e':
+		      {
+			int imm;
+
+			imm = (given & 0xf) | ((given & 0xfff00) >> 4);
+			func (stream, "%d", imm);
+			value_in_comment = imm;
+		      }
+		      break;
+
+		    case 'E':
+		      /* LSB and WIDTH fields of BFI or BFC.  The machine-
+			 language instruction encodes LSB and MSB.  */
+		      {
+			long msb = (given & 0x001f0000) >> 16;
+			long lsb = (given & 0x00000f80) >> 7;
+			long w = msb - lsb + 1;
+
+			if (w > 0)
+			  func (stream, "#%lu, #%lu", lsb, w);
+			else
+			  func (stream, "(invalid: %lu:%lu)", lsb, msb);
+		      }
+		      break;
+
+		    case 'R':
+		      /* Get the PSR/banked register name.  */
+		      {
+			const char * name;
+			unsigned sysm = (given & 0x004f0000) >> 16;
+
+			sysm |= (given & 0x300) >> 4;
+			name = banked_regname (sysm);
+
+			if (name != NULL)
+			  func (stream, "%s", name);
+			else
+			  func (stream, "(UNDEF: %lu)", (unsigned long) sysm);
+		      }
+		      break;
+
+		    case 'V':
+		      /* 16-bit unsigned immediate from a MOVT or MOVW
+			 instruction, encoded in bits 0:11 and 15:19.  */
+		      {
+			long hi = (given & 0x000f0000) >> 4;
+			long lo = (given & 0x00000fff);
+			long imm16 = hi | lo;
+
+			func (stream, "#%lu", imm16);
+			value_in_comment = imm16;
+		      }
+		      break;
+
+		    default:
+		      abort ();
 		    }
 		}
 	      else
@@ -5188,7 +10245,8 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 	  return;
 	}
     }
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  return;
 }
 
 /* Print one 16-bit Thumb instruction from PC on INFO->STREAM.  */
@@ -5332,7 +10390,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		   mask.  */
 		if ((given & (1 << ((given & 0x0700) >> 8))) == 0)
 		  func (stream, "!");
-	      	break;
+		break;
 
 	      case 'b':
 		/* Print ARM V6T2 CZB address: pc+4+6 bits.  */
@@ -5341,6 +10399,11 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 				     + ((given & 0x00f8) >> 2)
 				     + ((given & 0x0200) >> 3));
 		  info->print_address_func (address, info);
+
+		  /* Fill in instruction information.  */
+		  info->insn_info_valid = 1;
+		  info->insn_type = dis_branch;
+		  info->target = address;
 		}
 		break;
 
@@ -5414,8 +10477,14 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 
 			  case 'B':
 			    reg = ((reg ^ (1 << bitend)) - (1 << bitend));
-			    info->print_address_func (reg * 2 + pc + 4, info);
+			    bfd_vma target = reg * 2 + pc + 4;
+			    info->print_address_func (target, info);
 			    value_in_comment = 0;
+
+			    /* Fill in instruction information.  */
+			    info->insn_info_valid = 1;
+			    info->insn_type = dis_branch;
+			    info->target = target;
 			    break;
 
 			  case 'c':
@@ -5459,7 +10528,8 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
       }
 
   /* No match.  */
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_16BIT, (unsigned)given);
+  return;
 }
 
 /* Return the name of an V7M special register.  */
@@ -5506,16 +10576,24 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
+  bfd_boolean is_mve = is_mve_architecture (info);
 
   if (print_insn_coprocessor (pc, info, given, TRUE))
     return;
 
-  if (print_insn_neon (info, given, TRUE))
+  if ((is_mve == FALSE) && print_insn_neon (info, given, TRUE))
+    return;
+
+  if (is_mve && print_insn_mve (info, given))
+    return;
+
+  if (print_insn_generic_coprocessor (pc, info, given, TRUE))
     return;
 
   for (insn = thumb32_opcodes; insn->assembler; insn++)
     if ((given & insn->mask) == insn->value)
       {
+	bfd_boolean is_clrm = FALSE;
 	bfd_boolean is_unpredictable = FALSE;
 	signed long value_in_comment = 0;
 	const char *c = insn->assembler;
@@ -5811,6 +10889,9 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		}
 		break;
 
+	      case 'n':
+		is_clrm = TRUE;
+		/* Fall through.  */
 	      case 'm':
 		{
 		  int started = 0;
@@ -5823,7 +10904,12 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 			if (started)
 			  func (stream, ", ");
 			started = 1;
-			func (stream, "%s", arm_regnames[reg]);
+			if (is_clrm && reg == 13)
+			  func (stream, "(invalid: %s)", arm_regnames[reg]);
+			else if (is_clrm && reg == 15)
+			  func (stream, "%s", "APSR");
+			else
+			  func (stream, "%s", arm_regnames[reg]);
 		      }
 		  func (stream, "}");
 		}
@@ -5851,6 +10937,96 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		}
 		break;
 
+	      case 'G':
+		{
+		  unsigned int boff = (((given & 0x07800000) >> 23) << 1);
+		  func (stream, "%x", boff);
+		}
+		break;
+
+	      case 'W':
+		{
+		  unsigned int immA = (given & 0x001f0000u) >> 16;
+		  unsigned int immB = (given & 0x000007feu) >> 1;
+		  unsigned int immC = (given & 0x00000800u) >> 11;
+		  bfd_vma offset = 0;
+
+		  offset |= immA << 12;
+		  offset |= immB << 2;
+		  offset |= immC << 1;
+		  /* Sign extend.  */
+		  offset = (offset & 0x10000) ? offset - (1 << 17) : offset;
+
+		  info->print_address_func (pc + 4 + offset, info);
+		}
+		break;
+
+	      case 'Y':
+		{
+		  unsigned int immA = (given & 0x007f0000u) >> 16;
+		  unsigned int immB = (given & 0x000007feu) >> 1;
+		  unsigned int immC = (given & 0x00000800u) >> 11;
+		  bfd_vma offset = 0;
+
+		  offset |= immA << 12;
+		  offset |= immB << 2;
+		  offset |= immC << 1;
+		  /* Sign extend.  */
+		  offset = (offset & 0x40000) ? offset - (1 << 19) : offset;
+
+		  info->print_address_func (pc + 4 + offset, info);
+		}
+		break;
+
+	      case 'Z':
+		{
+		  unsigned int immA = (given & 0x00010000u) >> 16;
+		  unsigned int immB = (given & 0x000007feu) >> 1;
+		  unsigned int immC = (given & 0x00000800u) >> 11;
+		  bfd_vma offset = 0;
+
+		  offset |= immA << 12;
+		  offset |= immB << 2;
+		  offset |= immC << 1;
+		  /* Sign extend.  */
+		  offset = (offset & 0x1000) ? offset - (1 << 13) : offset;
+
+		  info->print_address_func (pc + 4 + offset, info);
+
+		  unsigned int T    = (given & 0x00020000u) >> 17;
+		  unsigned int endoffset = (((given & 0x07800000) >> 23) << 1);
+		  unsigned int boffset   = (T == 1) ? 4 : 2;
+		  func (stream, ", ");
+		  func (stream, "%x", endoffset + boffset);
+		}
+		break;
+
+	      case 'Q':
+		{
+		  unsigned int immh = (given & 0x000007feu) >> 1;
+		  unsigned int imml = (given & 0x00000800u) >> 11;
+		  bfd_vma imm32 = 0;
+
+		  imm32 |= immh << 2;
+		  imm32 |= imml << 1;
+
+		  info->print_address_func (pc + 4 + imm32, info);
+		}
+		break;
+
+	      case 'P':
+		{
+		  unsigned int immh = (given & 0x000007feu) >> 1;
+		  unsigned int imml = (given & 0x00000800u) >> 11;
+		  bfd_vma imm32 = 0;
+
+		  imm32 |= immh << 2;
+		  imm32 |= imml << 1;
+
+		  info->print_address_func (pc + 4 - imm32, info);
+		}
+		break;
+
 	      case 'b':
 		{
 		  unsigned int S = (given & 0x04000000u) >> 26;
@@ -5865,7 +11041,13 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  offset |= (given & 0x000007ff) << 1;
 		  offset -= (1 << 20);
 
-		  info->print_address_func (pc + 4 + offset, info);
+		  bfd_vma target = pc + 4 + offset;
+		  info->print_address_func (target, info);
+
+		  /* Fill in instruction information.  */
+		  info->insn_info_valid = 1;
+		  info->insn_type = dis_branch;
+		  info->target = target;
 		}
 		break;
 
@@ -5889,6 +11071,11 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      offset &= ~2u;
 
 		  info->print_address_func (offset, info);
+
+		  /* Fill in instruction information.  */
+		  info->insn_info_valid = 1;
+		  info->insn_type = dis_branch;
+		  info->target = offset;
 		}
 		break;
 
@@ -5999,6 +11186,13 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  switch (*c)
 		    {
+		    case 's':
+		      if (val <= 3)
+			func (stream, "%s", mve_vec_sizename[val]);
+		      else
+			func (stream, "<undef size>");
+		      break;
+
 		    case 'd':
 		      func (stream, "%lu", val);
 		      value_in_comment = val;
@@ -6014,6 +11208,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      value_in_comment = val * 4;
 		      break;
 
+		    case 'S':
+		      if (val == 13)
+			is_unpredictable = TRUE;
+		      /* Fall through.  */
 		    case 'R':
 		      if (val == 15)
 			is_unpredictable = TRUE;
@@ -6083,7 +11281,8 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
       }
 
   /* No match.  */
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  return;
 }
 
 /* Print data bytes on INFO->STREAM.  */
@@ -6338,52 +11537,114 @@ static bfd_boolean
 mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 			 enum map_type *map_symbol)
 {
-  bfd_vma addr;
-  int n, start = 0;
+  bfd_vma addr, section_vma = 0;
+  int n, last_sym = -1;
   bfd_boolean found = FALSE;
-  enum map_type type = MAP_ARM;
+  bfd_boolean can_use_search_opt_p = FALSE;
+
+  /* Default to DATA.  A text section is required by the ABI to contain an
+     INSN mapping symbol at the start.  A data section has no such
+     requirement, hence if no mapping symbol is found the section must
+     contain only data.  This however isn't very useful if the user has
+     fully stripped the binaries.  If this is the case use the section
+     attributes to determine the default.  If we have no section default to
+     INSN as well, as we may be disassembling some raw bytes on a baremetal
+     HEX file or similar.  */
+  enum map_type type = MAP_DATA;
+  if ((info->section && info->section->flags & SEC_CODE) || !info->section)
+    type = MAP_ARM;
   struct arm_private_data *private_data;
 
-  if (info->private_data == NULL || info->symtab_size == 0
+  if (info->private_data == NULL
       || bfd_asymbol_flavour (*info->symtab) != bfd_target_elf_flavour)
     return FALSE;
 
   private_data = info->private_data;
-  if (pc == 0)
-    start = 0;
-  else
-    start = private_data->last_mapping_sym;
 
-  start = (start == -1)? 0 : start;
-  addr = bfd_asymbol_value (info->symtab[start]);
+  /* First, look for mapping symbols.  */
+  if (info->symtab_size != 0)
+  {
+    if (pc <= private_data->last_mapping_addr)
+      private_data->last_mapping_sym = -1;
 
-  if (pc >= addr)
-    {
-      if (get_map_sym_type (info, start, &type))
-      found = TRUE;
-    }
-  else
-    {
-      for (n = start - 1; n >= 0; n--)
-	{
-	  if (get_map_sym_type (info, n, &type))
-	    {
-	      found = TRUE;
+    /* Start scanning at the start of the function, or wherever
+       we finished last time.  */
+    n = info->symtab_pos + 1;
+
+    /* If the last stop offset is different from the current one it means we
+       are disassembling a different glob of bytes.  As such the optimization
+       would not be safe and we should start over.  */
+    can_use_search_opt_p
+      = private_data->last_mapping_sym >= 0
+	&& info->stop_offset == private_data->last_stop_offset;
+
+    if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
+      n = private_data->last_mapping_sym;
+
+    /* Look down while we haven't passed the location being disassembled.
+       The reason for this is that there's no defined order between a symbol
+       and an mapping symbol that may be at the same address.  We may have to
+       look at least one position ahead.  */
+    for (; n < info->symtab_size; n++)
+      {
+	addr = bfd_asymbol_value (info->symtab[n]);
+	if (addr > pc)
+	  break;
+	if (get_map_sym_type (info, n, &type))
+	  {
+	    last_sym = n;
+	    found = TRUE;
+	  }
+      }
+
+    if (!found)
+      {
+	n = info->symtab_pos;
+	if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
+	  n = private_data->last_mapping_sym;
+
+	/* No mapping symbol found at this address.  Look backwards
+	   for a preceeding one, but don't go pass the section start
+	   otherwise a data section with no mapping symbol can pick up
+	   a text mapping symbol of a preceeding section.  The documentation
+	   says section can be NULL, in which case we will seek up all the
+	   way to the top.  */
+	if (info->section)
+	  section_vma = info->section->vma;
+
+	for (; n >= 0; n--)
+	  {
+	    addr = bfd_asymbol_value (info->symtab[n]);
+	    if (addr < section_vma)
 	      break;
-	    }
+
+	    if (get_map_sym_type (info, n, &type))
+	      {
+		last_sym = n;
+		found = TRUE;
+		break;
+	      }
+	  }
+      }
+  }
+
+  /* If no mapping symbol was found, try looking up without a mapping
+     symbol.  This is done by walking up from the current PC to the nearest
+     symbol.  We don't actually have to loop here since symtab_pos will
+     contain the nearest symbol already.  */
+  if (!found)
+    {
+      n = info->symtab_pos;
+      if (n >= 0 && get_sym_code_type (info, n, &type))
+	{
+	  last_sym = n;
+	  found = TRUE;
 	}
     }
 
-  /* No mapping symbols were found.  A leading $d may be
-     omitted for sections which start with data; but for
-     compatibility with legacy and stripped binaries, only
-     assume the leading $d if there is at least one mapping
-     symbol in the file.  */
-  if (!found && private_data->has_mapping_symbols == 1)
-    {
-      type = MAP_DATA;
-      found = TRUE;
-    }
+  private_data->last_mapping_sym = last_sym;
+  private_data->last_type = type;
+  private_data->last_stop_offset = info->stop_offset;
 
   *map_symbol = type;
   return found;
@@ -6391,7 +11652,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 
 /* Given a bfd_mach_arm_XXX value, this function fills in the fields
    of the supplied arm_feature_set structure with bitmasks indicating
-   the support base architectures and coprocessor extensions.
+   the supported base architectures and coprocessor extensions.
 
    FIXME: This could more efficiently implemented as a constant array,
    although it would also be less robust.  */
@@ -6400,40 +11661,80 @@ static void
 select_arm_features (unsigned long mach,
 		     arm_feature_set * features)
 {
+  arm_feature_set arch_fset;
+  const arm_feature_set fpu_any = FPU_ANY;
+
 #undef ARM_SET_FEATURES
 #define ARM_SET_FEATURES(FSET) \
   {							\
     const arm_feature_set fset = FSET;			\
-    arm_feature_set tmp = ARM_FEATURE (0, 0, FPU_FPA) ;	\
-    ARM_MERGE_FEATURE_SETS (*features, tmp, fset);	\
+    arch_fset = fset;					\
   }
 
+  /* When several architecture versions share the same bfd_mach_arm_XXX value
+     the most featureful is chosen.  */
   switch (mach)
     {
-    case bfd_mach_arm_2:       ARM_SET_FEATURES (ARM_ARCH_V2); break;
-    case bfd_mach_arm_2a:      ARM_SET_FEATURES (ARM_ARCH_V2S); break;
-    case bfd_mach_arm_3:       ARM_SET_FEATURES (ARM_ARCH_V3); break;
-    case bfd_mach_arm_3M:      ARM_SET_FEATURES (ARM_ARCH_V3M); break;
-    case bfd_mach_arm_4:       ARM_SET_FEATURES (ARM_ARCH_V4); break;
-    case bfd_mach_arm_4T:      ARM_SET_FEATURES (ARM_ARCH_V4T); break;
-    case bfd_mach_arm_5:       ARM_SET_FEATURES (ARM_ARCH_V5); break;
-    case bfd_mach_arm_5T:      ARM_SET_FEATURES (ARM_ARCH_V5T); break;
-    case bfd_mach_arm_5TE:     ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
-    case bfd_mach_arm_XScale:  ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
+    case bfd_mach_arm_2:	 ARM_SET_FEATURES (ARM_ARCH_V2); break;
+    case bfd_mach_arm_2a:	 ARM_SET_FEATURES (ARM_ARCH_V2S); break;
+    case bfd_mach_arm_3:	 ARM_SET_FEATURES (ARM_ARCH_V3); break;
+    case bfd_mach_arm_3M:	 ARM_SET_FEATURES (ARM_ARCH_V3M); break;
+    case bfd_mach_arm_4:	 ARM_SET_FEATURES (ARM_ARCH_V4); break;
+    case bfd_mach_arm_4T:	 ARM_SET_FEATURES (ARM_ARCH_V4T); break;
+    case bfd_mach_arm_5:	 ARM_SET_FEATURES (ARM_ARCH_V5); break;
+    case bfd_mach_arm_5T:	 ARM_SET_FEATURES (ARM_ARCH_V5T); break;
+    case bfd_mach_arm_5TE:	 ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
+    case bfd_mach_arm_XScale:	 ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
     case bfd_mach_arm_ep9312:
-      ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
-					 ARM_CEXT_MAVERICK | FPU_MAVERICK));
+	ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
+					   ARM_CEXT_MAVERICK | FPU_MAVERICK));
        break;
-    case bfd_mach_arm_iWMMXt:  ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
-    case bfd_mach_arm_iWMMXt2: ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
-      /* If the machine type is unknown allow all
-	 architecture types and all extensions.  */
-    case bfd_mach_arm_unknown: ARM_SET_FEATURES (ARM_FEATURE_ALL); break;
+    case bfd_mach_arm_iWMMXt:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
+    case bfd_mach_arm_iWMMXt2:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
+    case bfd_mach_arm_5TEJ:	 ARM_SET_FEATURES (ARM_ARCH_V5TEJ); break;
+    case bfd_mach_arm_6:	 ARM_SET_FEATURES (ARM_ARCH_V6); break;
+    case bfd_mach_arm_6KZ:	 ARM_SET_FEATURES (ARM_ARCH_V6KZ); break;
+    case bfd_mach_arm_6T2:	 ARM_SET_FEATURES (ARM_ARCH_V6KZT2); break;
+    case bfd_mach_arm_6K:	 ARM_SET_FEATURES (ARM_ARCH_V6K); break;
+    case bfd_mach_arm_7:	 ARM_SET_FEATURES (ARM_ARCH_V7VE); break;
+    case bfd_mach_arm_6M:	 ARM_SET_FEATURES (ARM_ARCH_V6M); break;
+    case bfd_mach_arm_6SM:	 ARM_SET_FEATURES (ARM_ARCH_V6SM); break;
+    case bfd_mach_arm_7EM:	 ARM_SET_FEATURES (ARM_ARCH_V7EM); break;
+    case bfd_mach_arm_8:
+	{
+	  /* Add bits for extensions that Armv8.6-A recognizes.  */
+	  arm_feature_set armv8_6_ext_fset
+	    = ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST);
+	  ARM_SET_FEATURES (ARM_ARCH_V8_6A);
+	  ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, armv8_6_ext_fset);
+	  break;
+	}
+    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R); break;
+    case bfd_mach_arm_8M_BASE:	 ARM_SET_FEATURES (ARM_ARCH_V8M_BASE); break;
+    case bfd_mach_arm_8M_MAIN:	 ARM_SET_FEATURES (ARM_ARCH_V8M_MAIN); break;
+    case bfd_mach_arm_8_1M_MAIN:
+      ARM_SET_FEATURES (ARM_ARCH_V8_1M_MAIN);
+      arm_feature_set mve_all
+	= ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE | ARM_EXT2_MVE_FP);
+      ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, mve_all);
+      force_thumb = 1;
+      break;
+      /* If the machine type is unknown allow all architecture types and all
+	 extensions, with the exception of MVE as that clashes with NEON.  */
+    case bfd_mach_arm_unknown:
+      ARM_SET_FEATURES (ARM_FEATURE (-1,
+				     -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP),
+				     -1));
+      break;
     default:
       abort ();
     }
-
 #undef ARM_SET_FEATURES
+
+  /* None of the feature bits related to -mfpu have an impact on Tag_CPU_arch
+     and thus on bfd_mach_arm_XXX value.  Therefore for a given
+     bfd_mach_arm_XXX value all coprocessor feature bits should be allowed.  */
+  ARM_MERGE_FEATURE_SETS (*features, arch_fset, fpu_any);
 }
 
 
@@ -6444,7 +11745,7 @@ static int
 print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 {
   unsigned char b[4];
-  long		given;
+  unsigned long given;
   int           status;
   int           is_thumb = FALSE;
   int           is_data = FALSE;
@@ -6453,6 +11754,14 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
   void	 	(*printer) (bfd_vma, struct disassemble_info *, long);
   bfd_boolean   found = FALSE;
   struct arm_private_data *private_data;
+
+  /* Clear instruction information field.  */
+  info->insn_info_valid = 0;
+  info->branch_delay_insns = 0;
+  info->data_size = 0;
+  info->insn_type = dis_noninsn;
+  info->target = 0;
+  info->target2 = 0;
 
   if (info->disassembler_options)
     {
@@ -6493,9 +11802,9 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 	 during disassembly....  */
       select_arm_features (info->mach, & private.features);
 
-      private.has_mapping_symbols = -1;
       private.last_mapping_sym = -1;
       private.last_mapping_addr = 0;
+      private.last_stop_offset = 0;
 
       info->private_data = & private;
     }
@@ -6512,121 +11821,13 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       && bfd_asymbol_flavour (*info->symtab) == bfd_target_elf_flavour)
     {
       bfd_vma addr;
-      int n, start;
+      int n;
       int last_sym = -1;
       enum map_type type = MAP_ARM;
 
-      /* Start scanning at the start of the function, or wherever
-	 we finished last time.  */
-      /* PR 14006.  When the address is 0 we are either at the start of the
-	 very first function, or else the first function in a new, unlinked
-	 executable section (eg because of -ffunction-sections).  Either way
-	 start scanning from the beginning of the symbol table, not where we
-	 left off last time.  */
-      if (pc == 0)
-	start = 0;
-      else
-	{
-	  start = info->symtab_pos + 1;
-	  if (start < private_data->last_mapping_sym)
-	    start = private_data->last_mapping_sym;
-	}
-      found = FALSE;
+      found = mapping_symbol_for_insn (pc, info, &type);
+      last_sym = private_data->last_mapping_sym;
 
-      /* First, look for mapping symbols.  */
-      if (private_data->has_mapping_symbols != 0)
-	{
-	  /* Scan up to the location being disassembled.  */
-	  for (n = start; n < info->symtab_size; n++)
-	    {
-	      addr = bfd_asymbol_value (info->symtab[n]);
-	      if (addr > pc)
-		break;
-	      if (get_map_sym_type (info, n, &type))
-		{
-		  last_sym = n;
-		  found = TRUE;
-		}
-	    }
-
-	  if (!found)
-	    {
-	      /* No mapping symbol found at this address.  Look backwards
-		 for a preceding one.  */
-	      for (n = start - 1; n >= 0; n--)
-		{
-		  if (get_map_sym_type (info, n, &type))
-		    {
-		      last_sym = n;
-		      found = TRUE;
-		      break;
-		    }
-		}
-	    }
-
-	  if (found)
-	    private_data->has_mapping_symbols = 1;
-
-	  /* No mapping symbols were found.  A leading $d may be
-	     omitted for sections which start with data; but for
-	     compatibility with legacy and stripped binaries, only
-	     assume the leading $d if there is at least one mapping
-	     symbol in the file.  */
-	  if (!found && private_data->has_mapping_symbols == -1)
-	    {
-	      /* Look for mapping symbols, in any section.  */
-	      for (n = 0; n < info->symtab_size; n++)
-		if (is_mapping_symbol (info, n, &type))
-		  {
-		    private_data->has_mapping_symbols = 1;
-		    break;
-		  }
-	      if (private_data->has_mapping_symbols == -1)
-		private_data->has_mapping_symbols = 0;
-	    }
-
-	  if (!found && private_data->has_mapping_symbols == 1)
-	    {
-	      type = MAP_DATA;
-	      found = TRUE;
-	    }
-	}
-
-      /* Next search for function symbols to separate ARM from Thumb
-	 in binaries without mapping symbols.  */
-      if (!found)
-	{
-	  /* Scan up to the location being disassembled.  */
-	  for (n = start; n < info->symtab_size; n++)
-	    {
-	      addr = bfd_asymbol_value (info->symtab[n]);
-	      if (addr > pc)
-		break;
-	      if (get_sym_code_type (info, n, &type))
-		{
-		  last_sym = n;
-		  found = TRUE;
-		}
-	    }
-
-	  if (!found)
-	    {
-	      /* No mapping symbol found at this address.  Look backwards
-		 for a preceding one.  */
-	      for (n = start - 1; n >= 0; n--)
-		{
-		  if (get_sym_code_type (info, n, &type))
-		    {
-		      last_sym = n;
-		      found = TRUE;
-		      break;
-		    }
-		}
-	    }
-	}
-
-      private_data->last_mapping_sym = last_sym;
-      private_data->last_type = type;
       is_thumb = (private_data->last_type == MAP_THUMB);
       is_data = (private_data->last_type == MAP_DATA);
 
@@ -6732,9 +11933,9 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
 
       status = info->read_memory_func (pc, (bfd_byte *) b, 4, info);
       if (little_code)
-	given = (b[0]) | (b[1] << 8) | (b[2] << 16) | (b[3] << 24);
+	given = (b[0]) | (b[1] << 8) | (b[2] << 16) | ((unsigned) b[3] << 24);
       else
-	given = (b[3]) | (b[2] << 8) | (b[1] << 16) | (b[0] << 24);
+	given = (b[3]) | (b[2] << 8) | (b[1] << 16) | ((unsigned) b[0] << 24);
     }
   else
     {
@@ -6825,17 +12026,23 @@ print_insn_little_arm (bfd_vma pc, struct disassemble_info *info)
   return print_insn (pc, info, TRUE);
 }
 
-const disasm_options_t *
+const disasm_options_and_args_t *
 disassembler_options_arm (void)
 {
-  static disasm_options_t *opts = NULL;
+  static disasm_options_and_args_t *opts_and_args;
 
-  if (opts == NULL)
+  if (opts_and_args == NULL)
     {
+      disasm_options_t *opts;
       unsigned int i;
-      opts = XNEW (disasm_options_t);
+
+      opts_and_args = XNEW (disasm_options_and_args_t);
+      opts_and_args->args = NULL;
+
+      opts = &opts_and_args->options;
       opts->name = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
       opts->description = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
+      opts->arg = NULL;
       for (i = 0; i < NUM_ARM_OPTIONS; i++)
 	{
 	  opts->name[i] = regnames[i].name;
@@ -6849,7 +12056,7 @@ disassembler_options_arm (void)
       opts->description[i] = NULL;
     }
 
-  return opts;
+  return opts_and_args;
 }
 
 void

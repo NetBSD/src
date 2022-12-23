@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -8,7 +8,7 @@ DATA_ADDR=0x40000000
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -22,30 +22,30 @@ SECTIONS
 {
   .text 0x1000 ${RELOCATING++${TEXT_START_ADDR}}:
   {
-    ${RELOCATING+__text_start = .};
-    CREATE_OBJECT_SYMBOLS
+    ${RELOCATING+__text_start = .;
+    CREATE_OBJECT_SYMBOLS}
     *(.PARISC.stubs)
     *(.text)
-    ${RELOCATING+etext = .};
-    ${RELOCATING+_etext = .};
+    ${RELOCATING+etext = .;
+    _etext = .;}
   }
   ${RELOCATING+. = ${DATA_ADDR};}
   .data :
   {
-    ${RELOCATING+ . = . + 0x1000 };
-    ${RELOCATING+__data_start = .};
+    ${RELOCATING+. = . + 0x1000;
+    __data_start = .;}
     *(.data)
     ${CONSTRUCTING+CONSTRUCTORS}
-    ${RELOCATING+edata = .};
-    ${RELOCATING+_edata = .};
+    ${RELOCATING+edata = .;
+    _edata = .;}
   }
   ${RELOCATING+. = ${DATA_ADDR} + SIZEOF(.data);}
   .bss :
   {
    *(.bss)
-   *(COMMON)
-   ${RELOCATING+end = . };
-   ${RELOCATING+_end = . };
+   ${RELOCATING+*(COMMON)
+   end = .;
+   _end = .;}
   }
 }
 EOF
