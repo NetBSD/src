@@ -1,5 +1,5 @@
 /* te-vms.c -- Utilities for VMS.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    Written by Douglas B Rupp <rupp@gnat.com>
 

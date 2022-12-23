@@ -1,5 +1,5 @@
 /* tc-aarch64.h -- Header file for tc-aarch64.c.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -78,6 +78,45 @@ struct aarch64_fix
 /* We also need to mark assembler created symbols:  */
 #define tc_frob_fake_label(S) aarch64_frob_label (S)
 
+#define tc_frob_section(S) aarch64_frob_section (S)
+
+/* The key used to sign a function's return address.  */
+enum pointer_auth_key {
+  AARCH64_PAUTH_KEY_A,
+  AARCH64_PAUTH_KEY_B
+};
+
+/* The extra fields required by AArch64 in fde_entry and cie_entry.  Currently
+   only used to store the key used to sign the frame's return address.  */
+#define tc_fde_entry_extras enum pointer_auth_key pauth_key;
+#define tc_cie_entry_extras enum pointer_auth_key pauth_key;
+
+/* The extra initialisation steps needed by AArch64 in alloc_fde_entry.
+   Currently only used to initialise the key used to sign the return
+   address.  */
+#define tc_fde_entry_init_extra(fde) fde->pauth_key = AARCH64_PAUTH_KEY_A;
+
+/* Extra checks required by AArch64 when outputting the current cie_entry.
+   Currently only used to output a 'B' if the return address is signed with the
+   B key.  */
+#define tc_output_cie_extra(cie) \
+    do \
+      { \
+	if (cie->pauth_key == AARCH64_PAUTH_KEY_B) \
+	  out_one ('B'); \
+      } \
+    while (0)
+
+/* Extra equivalence checks required by AArch64 when selecting the correct cie
+   for some fde.  Currently only used to check for quivalence between keys used
+   to sign ther return address.  */
+#define tc_cie_fde_equivalent_extra(cie, fde) (cie->pauth_key == fde->pauth_key)
+
+/* The extra initialisation steps needed by AArch64 in select_cie_for_fde.
+   Currently only used to initialise the key used to sign the return
+   address.  */
+#define tc_cie_entry_init_extra(cie, fde) cie->pauth_key = fde->pauth_key;
+
 #define TC_FIX_TYPE struct aarch64_fix
 #define TC_INIT_FIX_DATA(FIX) { (FIX)->tc_fix_data.inst = NULL;	\
     (FIX)->tc_fix_data.opnd = AARCH64_OPND_NIL; }
@@ -89,6 +128,12 @@ void aarch64_copy_symbol_attributes (symbolS *, symbolS *);
 #ifndef TC_COPY_SYMBOL_ATTRIBUTES
 #define TC_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
   (aarch64_copy_symbol_attributes (DEST, SRC))
+#endif
+
+#ifdef OBJ_ELF
+void aarch64_elf_copy_symbol_attributes (symbolS *, symbolS *);
+#define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
+  aarch64_elf_copy_symbol_attributes (DEST, SRC)
 #endif
 
 #define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR)			\
@@ -134,8 +179,7 @@ struct aarch64_frag_type
 };
 
 #define TC_FRAG_TYPE		struct aarch64_frag_type
-/* NOTE: max_chars is a local variable from frag_var / frag_variant.  */
-#define TC_FRAG_INIT(fragp)	aarch64_init_frag (fragp, max_chars)
+#define TC_FRAG_INIT(fragp, max_bytes) aarch64_init_frag (fragp, max_bytes)
 #define HANDLE_ALIGN(fragp)	aarch64_handle_align (fragp)
 
 #define md_do_align(N, FILL, LEN, MAX, LABEL)					\
@@ -183,6 +227,7 @@ struct aarch64_segment_info_type
 {
   enum mstate mapstate;
   unsigned int marked_pr_dependency;
+  aarch64_instr_sequence insn_sequence;
 };
 
 /* We want .cfi_* pseudo-ops for generating unwind info.  */
@@ -217,6 +262,7 @@ extern int aarch64_force_relocation (struct fix *);
 extern void aarch64_cleanup (void);
 extern void aarch64_start_line_hook (void);
 extern void aarch64_frob_label (symbolS *);
+extern void aarch64_frob_section (asection *sec);
 extern int aarch64_data_in_code (void);
 extern char * aarch64_canonicalize_symbol_name (char *);
 extern void aarch64_adjust_symtab (void);

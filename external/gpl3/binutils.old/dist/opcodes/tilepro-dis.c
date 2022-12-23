@@ -1,5 +1,5 @@
 /* tilepro-dis.c.  Disassembly routines for the TILEPro architecture.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

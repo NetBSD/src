@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra C6X DSBT specific
+# This file is sourced from elf.em, and defines extra C6X DSBT specific
 # features.
 #
 fragment <<EOF
@@ -159,7 +159,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   else if (ret > 0)
     layout_changed = 1;
 
-  gld${EMULATION_NAME}_map_segments (layout_changed);
+  ldelf_map_segments (layout_changed);
 }
 EOF
 

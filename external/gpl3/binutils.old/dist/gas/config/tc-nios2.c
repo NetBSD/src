@@ -1,5 +1,5 @@
 /* Altera Nios II assembler.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -1384,7 +1384,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	    nios2_diagnose_overflow (fixup, howto, fixP, value);
 
 	  /* Apply the right shift.  */
-	  fixup = ((signed)fixup) >> howto->rightshift;
+	  fixup = (offsetT) fixup >> howto->rightshift;
 
 	  /* Truncate the fixup to right size.  */
 	  switch (fixP->fx_r_type)
@@ -1396,13 +1396,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	      fixup = fixup & 0xFFFF;
 	      break;
 	    case BFD_RELOC_NIOS2_HIADJ16:
-	      fixup = ((((fixup >> 16) & 0xFFFF) + ((fixup >> 15) & 0x01))
-		       & 0xFFFF);
+	      fixup = ((fixup + 0x8000) >> 16) & 0xFFFF;
 	      break;
 	    default:
 	      {
-		int n = sizeof (fixup) * 8 - howto->bitsize;
-		fixup = (fixup << n) >> n;
+		fixup &= ((valueT) 1 << howto->bitsize) - 1;
 		break;
 	      }
 	    }

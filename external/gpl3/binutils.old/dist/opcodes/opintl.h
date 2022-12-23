@@ -1,5 +1,5 @@
 /* opintl.h - opcodes specific header for gettext code.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Written by Tom Tromey <tromey@cygnus.com>
 
@@ -26,7 +26,7 @@
 
    This is because the code in this directory is used to build a
    library which will be linked with code in other directories to form
-   programs.  We want to maintain a seperate translation file for this
+   programs.  We want to maintain a separate translation file for this
    directory however, rather than being forced to merge it with that
    of any program linked to libopcodes.  This is a library, so it
    cannot depend on the catalog currently loaded.

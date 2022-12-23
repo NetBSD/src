@@ -1,5 +1,5 @@
 /* tc-sparc.c -- Assemble for the SPARC
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -1557,24 +1557,21 @@ md_assemble (char *str)
         as_warn (_("FP branch in delay slot"));
     }
 
-  /* SPARC before v8 requires a nop instruction between a floating
-     point instruction and a floating point branch.  SPARCv8 requires
-     a nop only immediately after FPop2 (fcmp*) instructions.
-     We insert one automatically, with a warning.
-   */
-  if (last_insn != NULL
+  /* SPARC before v9 does not allow a floating point compare
+     directly before a floating point branch.  Insert a nop
+     instruction if needed, with a warning.  */
+  if (max_architecture < SPARC_OPCODE_ARCH_V9
+      && last_insn != NULL
       && (insn->flags & F_FBR) != 0
       && (last_insn->flags & F_FLOAT) != 0
-      && (max_architecture < SPARC_OPCODE_ARCH_V8 ||
-          (max_architecture < SPARC_OPCODE_ARCH_V9 &&
-           strncmp(last_insn->name, "fcmp", 4) == 0)))
+      && (last_insn->match & OP3 (0x35)) == OP3 (0x35))
     {
       struct sparc_it nop_insn;
 
       nop_insn.opcode = NOP_INSN;
       nop_insn.reloc = BFD_RELOC_NONE;
       output_insn (insn, &nop_insn);
-      as_warn (_("FP branch preceded by FP instruction; NOP inserted"));
+      as_warn (_("FP branch preceded by FP compare; NOP inserted"));
     }
 
   switch (special_case)
@@ -4004,7 +4001,7 @@ tc_gen_reloc (asection *section, fixS *fixp)
     }
 
   /* Nothing is aligned in DWARF debugging sections.  */
-  if (bfd_get_section_flags (stdoutput, section) & SEC_DEBUGGING)
+  if (bfd_section_flags (section) & SEC_DEBUGGING)
     switch (code)
       {
       case BFD_RELOC_16: code = BFD_RELOC_SPARC_UA16; break;

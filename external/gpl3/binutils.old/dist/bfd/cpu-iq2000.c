@@ -1,5 +1,5 @@
 /* BFD support for the Vitesse IQ2000 processor.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,38 +22,27 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-static const bfd_arch_info_type arch_info_struct[] =
-{
-  {
-    32,				/* bits per word */
-    32,				/* bits per address */
-    8,				/* bits per byte */
-    bfd_arch_iq2000,		/* architecture */
-    bfd_mach_iq10,		/* machine */
-    "iq2000",			/* architecture name */
-    "iq10",			/* printable name */
-    3,				/* section align power */
-    FALSE,			/* the default ? */
-    bfd_default_compatible,	/* architecture comparison fn */
-    bfd_default_scan,		/* string to architecture convert fn */
-    bfd_arch_default_fill,	/* Default fill.  */
-    NULL			/* next in list */
+#define N(NUMBER, PRINT, DEFAULT, NEXT)			\
+  {							\
+    32,         /* Bits in a word.  */			\
+    32,         /* Bits in an address.  */		\
+    8,	        /* Bits in a byte.  */			\
+    bfd_arch_iq2000,					\
+    NUMBER,						\
+    "iq2000",						\
+    PRINT,						\
+    3,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
-};
+
+static const bfd_arch_info_type arch_info_struct =
+  N (bfd_mach_iq10, "iq10", FALSE, NULL);
 
 const bfd_arch_info_type bfd_iq2000_arch =
-{
-  32,				/* bits per word */
-  32,				/* bits per address */
-  8,				/* bits per byte */
-  bfd_arch_iq2000,		/* architecture */
-  bfd_mach_iq2000,		/* machine */
-  "iq2000",			/* architecture name */
-  "iq2000",			/* printable name */
-  3,				/* section align power */
-  TRUE,				/* the default ? */
-  bfd_default_compatible,	/* architecture comparison fn */
-  bfd_default_scan,		/* string to architecture convert fn */
-  bfd_arch_default_fill,	/* Default fill.  */
-  &arch_info_struct[0],		/* next in list */
-};
+  N (bfd_mach_iq2000, "iq2000", TRUE, &arch_info_struct);
+

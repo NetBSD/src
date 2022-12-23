@@ -1,4 +1,4 @@
-@c Copyright (C) 2010-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2010-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -28,7 +28,7 @@
 @c man begin OPTIONS
 @table @gcctabopt
 
-@cindex @code{-march=} command line option, TIC6X
+@cindex @code{-march=} command-line option, TIC6X
 @item -march=@var{arch}
 Enable (only) instructions from architecture @var{arch}.  By default,
 all instructions are permitted.
@@ -36,8 +36,8 @@ all instructions are permitted.
 The following values of @var{arch} are accepted: @code{c62x},
 @code{c64x}, @code{c64x+}, @code{c67x}, @code{c67x+}, @code{c674x}.
 
-@cindex @code{-mdsbt} command line option, TIC6X
-@cindex @code{-mno-dsbt} command line option, TIC6X
+@cindex @code{-mdsbt} command-line option, TIC6X
+@cindex @code{-mno-dsbt} command-line option, TIC6X
 @item -mdsbt
 @itemx -mno-dsbt
 The @option{-mdsbt} option causes the assembler to generate the
@@ -47,7 +47,7 @@ default, causes the tag to have a value of 0, indicating that the code
 does not use DSBT addressing.  The linker will emit a warning if
 objects of different type (DSBT and non-DSBT) are linked together.
 
-@cindex @code{-mpid=} command line option, TIC6X
+@cindex @code{-mpid=} command-line option, TIC6X
 @item -mpid=no
 @itemx -mpid=near
 @itemx -mpid=far
@@ -61,8 +61,8 @@ addressing with GOT accesses using far DP addressing.  The linker will
 emit a warning if objects built with different settings of this option
 are linked together.
 
-@cindex @code{-mpic} command line option, TIC6X
-@cindex @code{-mno-pic} command line option, TIC6X
+@cindex @code{-mpic} command-line option, TIC6X
+@cindex @code{-mno-pic} command-line option, TIC6X
 @item -mpic
 @itemx -mno-pic
 The @option{-mpic} option causes the assembler to generate the
