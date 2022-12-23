@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.7 2022/12/16 08:02:04 ryo Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.8 2022/12/23 19:37:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.7 2022/12/16 08:02:04 ryo Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.8 2022/12/23 19:37:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,9 @@ lim_printf(int *lim, const char *fmt, ...)
 	if (*lim <= 0)
 		return 0;
 
-	p = alloca(*lim + 1);
+	p = malloc(*lim + 1);
+	if (p == NULL)
+		return -1;
 
 	va_start(ap, fmt);
 	vsnprintf(p, *lim + 1, fmt, ap);
@@ -202,6 +204,7 @@ lim_printf(int *lim, const char *fmt, ...)
 
 	written = strlen(p);
 	if (written == 0) {
+		free(p);
 		*lim = 0;
 		return 0;
 	}
@@ -209,6 +212,7 @@ lim_printf(int *lim, const char *fmt, ...)
 	fwrite(p, written, 1, stdout);
 	*lim -= written;
 
+	free(p);
 	return written;
 }
 
