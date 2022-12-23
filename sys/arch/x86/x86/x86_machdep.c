@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.152 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.153 2022/12/23 16:05:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.152 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.153 2022/12/23 16:05:44 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -870,11 +870,13 @@ x86_add_xen_clusters(void)
 			switch (map_entry[i].type) {
 			case XEN_HVM_MEMMAP_TYPE_RAM:
 				x86_add_cluster(map_entry[i].addr,
-				    map_entry[i].size, BIM_Memory);
+				    map_entry[i].addr + map_entry[i].size,
+				    BIM_Memory);
 				break;
 			case XEN_HVM_MEMMAP_TYPE_ACPI:
 				x86_add_cluster(map_entry[i].addr,
-				    map_entry[i].size, BIM_ACPI);
+				    map_entry[i].addr + map_entry[i].size,
+				    BIM_ACPI);
 				break;
 			}
 		}
