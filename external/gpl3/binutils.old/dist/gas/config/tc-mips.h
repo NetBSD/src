@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -124,6 +124,11 @@ extern void mips_frob_file (void);
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
 #define tc_frob_file_after_relocs mips_frob_file_after_relocs
 extern void mips_frob_file_after_relocs (void);
+#endif
+
+#ifdef TE_IRIX
+#define tc_frob_symbol(sym, punt) mips_frob_symbol (sym)
+extern void mips_frob_symbol (symbolS *);
 #endif
 
 #define tc_fix_adjustable(fixp) mips_fix_adjustable (fixp)

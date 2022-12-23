@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,7 +34,6 @@
 
 int outputting_stabs_line_debug = 0;
 
-static void s_stab_generic (int, const char *, const char *);
 static void generate_asm_file (int, const char *);
 
 /* Allow backends to override the names used for the stab sections.  */
@@ -80,7 +79,8 @@ static const char *current_function_label;
 #endif
 
 unsigned int
-get_stab_string_offset (const char *string, const char *stabstr_secname)
+get_stab_string_offset (const char *string, const char *stabstr_secname,
+			bfd_boolean free_stabstr_secname)
 {
   unsigned int length;
   unsigned int retval;
@@ -97,8 +97,10 @@ get_stab_string_offset (const char *string, const char *stabstr_secname)
   save_seg = now_seg;
   save_subseg = now_subseg;
 
-  /* Create the stab string section.  */
+  /* Create the stab string section, if it doesn't already exist.  */
   seg = subseg_new (stabstr_secname, 0);
+  if (free_stabstr_secname && seg->name != stabstr_secname)
+    free ((char *) stabstr_secname);
 
   retval = seg_info (seg)->stabu.stab_string_size;
   if (retval <= 0)
@@ -107,9 +109,7 @@ get_stab_string_offset (const char *string, const char *stabstr_secname)
       p = frag_more (1);
       *p = 0;
       retval = seg_info (seg)->stabu.stab_string_size = 1;
-      bfd_set_section_flags (stdoutput, seg, SEC_READONLY | SEC_DEBUGGING);
-      if (seg->name == stabstr_secname)
-	seg->name = xstrdup (stabstr_secname);
+      bfd_set_section_flags (seg, SEC_READONLY | SEC_DEBUGGING);
     }
 
   if (length > 0)
@@ -170,12 +170,15 @@ aout_process_stab (int what, const char *string, int type, int other, int desc)
 #endif
 
 /* This can handle different kinds of stabs (s,n,d) and different
-   kinds of stab sections.  */
+   kinds of stab sections.  If STAB_SECNAME_OBSTACK_END is non-NULL,
+   then STAB_SECNAME and STABSTR_SECNAME will be freed if possible
+   before this function returns (the former by obstack_free).  */
 
 static void
-s_stab_generic (int          what,
-		const char * stab_secname,
-	       	const char * stabstr_secname)
+s_stab_generic (int what,
+		const char *stab_secname,
+		const char *stabstr_secname,
+		const char *stab_secname_obstack_end)
 {
   long longint;
   const char *string;
@@ -211,7 +214,7 @@ s_stab_generic (int          what,
       /* FIXME: We should probably find some other temporary storage
 	 for string, rather than leaking memory if someone else
 	 happens to use the notes obstack.  */
-      saved_string_obstack_end = notes.next_free;
+      saved_string_obstack_end = obstack_next_free (&notes);
       SKIP_WHITESPACE ();
       if (*input_line_pointer == ',')
 	input_line_pointer++;
@@ -313,7 +316,6 @@ s_stab_generic (int          what,
       char *p;
 
       static segT cached_sec;
-      static char *cached_secname;
 
       dot = frag_now_fix ();
 
@@ -321,7 +323,7 @@ s_stab_generic (int          what,
       md_flush_pending_output ();
 #endif
 
-      if (cached_secname && !strcmp (cached_secname, stab_secname))
+      if (cached_sec && strcmp (cached_sec->name, stab_secname) == 0)
 	{
 	  seg = cached_sec;
 	  subseg_set (seg, 0);
@@ -329,15 +331,12 @@ s_stab_generic (int          what,
       else
 	{
 	  seg = subseg_new (stab_secname, 0);
-	  if (cached_secname)
-	    free (cached_secname);
-	  cached_secname = xstrdup (stab_secname);
 	  cached_sec = seg;
 	}
 
       if (! seg_info (seg)->hadone)
 	{
-	  bfd_set_section_flags (stdoutput, seg,
+	  bfd_set_section_flags (seg,
 				 SEC_READONLY | SEC_RELOC | SEC_DEBUGGING);
 #ifdef INIT_STAB_SECTION
 	  INIT_STAB_SECTION (seg);
@@ -345,13 +344,19 @@ s_stab_generic (int          what,
 	  seg_info (seg)->hadone = 1;
 	}
 
-      stroff = get_stab_string_offset (string, stabstr_secname);
-      if (what == 's')
-	{
-	  /* Release the string, if nobody else has used the obstack.  */
-	  if (saved_string_obstack_end == notes.next_free)
-	    obstack_free (&notes, string);
-	}
+      stroff = get_stab_string_offset (string, stabstr_secname,
+				       stab_secname_obstack_end != NULL);
+
+      /* Release the string, if nobody else has used the obstack.  */
+      if (saved_string_obstack_end != NULL
+	  && saved_string_obstack_end == obstack_next_free (&notes))
+	obstack_free (&notes, string);
+      /* Similarly for the section name.  This must be done before
+	 creating symbols below, which uses the notes obstack.  */
+      if (seg->name != stab_secname
+	  && stab_secname_obstack_end != NULL
+	  && stab_secname_obstack_end == obstack_next_free (&notes))
+	obstack_free (&notes, stab_secname);
 
       /* At least for now, stabs in a special stab section are always
 	 output as 12 byte blocks of information.  */
@@ -390,6 +395,12 @@ s_stab_generic (int          what,
     }
   else
     {
+      if (stab_secname_obstack_end != NULL)
+	{
+	  free ((char *) stabstr_secname);
+	  if (stab_secname_obstack_end == obstack_next_free (&notes))
+	    obstack_free (&notes, stab_secname);
+	}
 #ifdef OBJ_PROCESS_STAB
       OBJ_PROCESS_STAB (0, what, string, type, other, desc);
 #else
@@ -405,7 +416,7 @@ s_stab_generic (int          what,
 void
 s_stab (int what)
 {
-  s_stab_generic (what, STAB_SECTION_NAME, STAB_STRING_SECTION_NAME);
+  s_stab_generic (what, STAB_SECTION_NAME, STAB_STRING_SECTION_NAME, NULL);
 }
 
 /* "Extended stabs", used in Solaris only now.  */
@@ -414,13 +425,10 @@ void
 s_xstab (int what)
 {
   int length;
-  char *stab_secname, *stabstr_secname;
-  static char *saved_secname, *saved_strsecname;
+  char *stab_secname, *stabstr_secname, *stab_secname_obstack_end;
 
-  /* @@ MEMORY LEAK: This allocates a copy of the string, but in most
-     cases it will be the same string, so we could release the storage
-     back to the obstack it came from.  */
   stab_secname = demand_copy_C_string (&length);
+  stab_secname_obstack_end = obstack_next_free (&notes);
   SKIP_WHITESPACE ();
   if (*input_line_pointer == ',')
     input_line_pointer++;
@@ -433,18 +441,9 @@ s_xstab (int what)
 
   /* To get the name of the stab string section, simply add "str" to
      the stab section name.  */
-  if (saved_secname == 0 || strcmp (saved_secname, stab_secname))
-    {
-      stabstr_secname = concat (stab_secname, "str", (char *) NULL);
-      if (saved_secname)
-	{
-	  free (saved_secname);
-	  free (saved_strsecname);
-	}
-      saved_secname = stab_secname;
-      saved_strsecname = stabstr_secname;
-    }
-  s_stab_generic (what, saved_secname, saved_strsecname);
+  stabstr_secname = concat (stab_secname, "str", (char *) NULL);
+  s_stab_generic (what, stab_secname, stabstr_secname,
+		  stab_secname_obstack_end);
 }
 
 #ifdef S_SET_DESC

@@ -1,5 +1,5 @@
 /* Routines to help build PEI-format DLLs (Win32 etc)
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -25,6 +25,7 @@
 #include "libiberty.h"
 #include "filenames.h"
 #include "safe-ctype.h"
+#include "ctf-api.h"
 
 #include <time.h>
 
@@ -159,6 +160,7 @@ int pe_dll_extra_pe_debug = 0;
 int pe_use_nul_prefixed_import_tables = 0;
 int pe_use_coff_long_section_names = -1;
 int pe_leading_underscore = -1;
+int pe_dll_enable_reloc_section = 0;
 
 /* Static variables and types.  */
 
@@ -444,16 +446,25 @@ typedef struct
     bfd_vma vma;
     char type;
     short extra;
+    int idx;
   }
 reloc_data_type;
 
 static int
 reloc_sort (const void *va, const void *vb)
 {
-  bfd_vma a = ((const reloc_data_type *) va)->vma;
-  bfd_vma b = ((const reloc_data_type *) vb)->vma;
+  const reloc_data_type *a = (const reloc_data_type *) va;
+  const reloc_data_type *b = (const reloc_data_type *) vb;
 
-  return (a > b) ? 1 : ((a < b) ? -1 : 0);
+  if (a->vma > b->vma)
+    return 1;
+  if (a->vma < b->vma)
+    return -1;
+  if (a->idx > b->idx)
+    return 1;
+  if (a->idx < b->idx)
+    return -1;
+  return 0;
 }
 
 static int
@@ -1014,33 +1025,31 @@ build_filler_bfd (int include_edata)
     {
       edata_s = bfd_make_section_old_way (filler_bfd, ".edata");
       if (edata_s == NULL
-	  || !bfd_set_section_flags (filler_bfd, edata_s,
-				     (SEC_HAS_CONTENTS
-				      | SEC_ALLOC
-				      | SEC_LOAD
-				      | SEC_KEEP
-				      | SEC_IN_MEMORY)))
+	  || !bfd_set_section_flags (edata_s, (SEC_HAS_CONTENTS
+					       | SEC_ALLOC
+					       | SEC_LOAD
+					       | SEC_KEEP
+					       | SEC_IN_MEMORY)))
 	{
 	  einfo (_("%X%P: can not create .edata section: %E\n"));
 	  return;
 	}
-      bfd_set_section_size (filler_bfd, edata_s, edata_sz);
+      bfd_set_section_size (edata_s, edata_sz);
     }
 
   reloc_s = bfd_make_section_old_way (filler_bfd, ".reloc");
   if (reloc_s == NULL
-      || !bfd_set_section_flags (filler_bfd, reloc_s,
-				 (SEC_HAS_CONTENTS
-				  | SEC_ALLOC
-				  | SEC_LOAD
-				  | SEC_KEEP
-				  | SEC_IN_MEMORY)))
+      || !bfd_set_section_flags (reloc_s, (SEC_HAS_CONTENTS
+					   | SEC_ALLOC
+					   | SEC_LOAD
+					   | SEC_KEEP
+					   | SEC_IN_MEMORY)))
     {
       einfo (_("%X%P: can not create .reloc section: %E\n"));
       return;
     }
 
-  bfd_set_section_size (filler_bfd, reloc_s, 0);
+  bfd_set_section_size (reloc_s, 0);
 
   ldlang_add_file (filler_file);
 }
@@ -1303,7 +1312,7 @@ pe_walk_relocs (struct bfd_link_info *info,
 	{
 	  arelent **relocs;
 	  int relsize, nrelocs, i;
-	  int flags = bfd_get_section_flags (b, s);
+	  int flags = bfd_section_flags (s);
 
 	  /* Skip discarded linkonce sections.  */
 	  if (flags & SEC_LINK_ONCE
@@ -1444,6 +1453,11 @@ pe_find_data_imports (const char *symhead,
 	    undef->type = bfd_link_hash_defweak;
 	    undef->u.def.value = sym->u.def.value;
 	    undef->u.def.section = sym->u.def.section;
+
+	    /* We replace the original name with the __imp_ prefixed one, this
+	       1) may trash memory 2) leads to duplicate symbols.  But this is
+	       better than having a misleading name that can confuse GDB.  */
+	    undef->root.string = sym->root.string;
 
 	    if (link_info.pei386_auto_import == -1)
 	      {
@@ -1592,6 +1606,7 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 		    }
 
 		  reloc_data[total_relocs].vma = sec_vma + relocs[i]->address;
+		  reloc_data[total_relocs].idx = total_relocs;
 
 #define BITS_AND_SHIFT(bits, shift) (bits * 1000 | shift)
 
@@ -1942,8 +1957,8 @@ quick_section (bfd *abfd, const char *name, int flags, int align)
   asymbol *sym;
 
   sec = bfd_make_section_old_way (abfd, name);
-  bfd_set_section_flags (abfd, sec, flags | SEC_ALLOC | SEC_LOAD | SEC_KEEP);
-  bfd_set_section_alignment (abfd, sec, align);
+  bfd_set_section_flags (sec, flags | SEC_ALLOC | SEC_LOAD | SEC_KEEP);
+  bfd_set_section_alignment (sec, align);
   /* Remember to undo this before trying to link internally!  */
   sec->output_section = sec;
 
@@ -2067,7 +2082,7 @@ make_head (bfd *parent)
      pointer to the list points to the *end* of this section, which is
      the start of the list of sections from other objects.  */
 
-  bfd_set_section_size (abfd, id2, 20);
+  bfd_set_section_size (id2, 20);
   d2 = xmalloc (20);
   id2->contents = d2;
   memset (d2, 0, 20);
@@ -2079,16 +2094,16 @@ make_head (bfd *parent)
   save_relocs (id2);
 
   if (pe_use_nul_prefixed_import_tables)
-    bfd_set_section_size (abfd, id5, PE_IDATA5_SIZE);
+    bfd_set_section_size (id5, PE_IDATA5_SIZE);
   else
-    bfd_set_section_size (abfd, id5, 0);
+    bfd_set_section_size (id5, 0);
   d5 = xmalloc (PE_IDATA5_SIZE);
   id5->contents = d5;
   memset (d5, 0, PE_IDATA5_SIZE);
   if (pe_use_nul_prefixed_import_tables)
-    bfd_set_section_size (abfd, id4, PE_IDATA4_SIZE);
+    bfd_set_section_size (id4, PE_IDATA4_SIZE);
   else
-    bfd_set_section_size (abfd, id4, 0);
+    bfd_set_section_size (id4, 0);
   d4 = xmalloc (PE_IDATA4_SIZE);
   id4->contents = d4;
   memset (d4, 0, PE_IDATA4_SIZE);
@@ -2149,12 +2164,12 @@ make_tail (bfd *parent)
   id7 = quick_section (abfd, ".idata$7", SEC_HAS_CONTENTS, 2);
   quick_symbol (abfd, U (""), dll_symname, "_iname", id7, BSF_GLOBAL, 0);
 
-  bfd_set_section_size (abfd, id4, PE_IDATA4_SIZE);
+  bfd_set_section_size (id4, PE_IDATA4_SIZE);
   d4 = xmalloc (PE_IDATA4_SIZE);
   id4->contents = d4;
   memset (d4, 0, PE_IDATA4_SIZE);
 
-  bfd_set_section_size (abfd, id5, PE_IDATA5_SIZE);
+  bfd_set_section_size (id5, PE_IDATA5_SIZE);
   d5 = xmalloc (PE_IDATA5_SIZE);
   id5->contents = d5;
   memset (d5, 0, PE_IDATA5_SIZE);
@@ -2162,7 +2177,7 @@ make_tail (bfd *parent)
   len = strlen (dll_filename) + 1;
   if (len & 1)
     len++;
-  bfd_set_section_size (abfd, id7, len);
+  bfd_set_section_size (id7, len);
   d7 = xmalloc (len);
   id7->contents = d7;
   strcpy ((char *) d7, dll_filename);
@@ -2334,7 +2349,7 @@ make_one (def_file_export *exp, bfd *parent, bfd_boolean include_jmp_stub)
 
   if (include_jmp_stub)
     {
-      bfd_set_section_size (abfd, tx, jmp_byte_count);
+      bfd_set_section_size (tx, jmp_byte_count);
       td = xmalloc (jmp_byte_count);
       tx->contents = td;
       memcpy (td, jmp_bytes, jmp_byte_count);
@@ -2369,16 +2384,16 @@ make_one (def_file_export *exp, bfd *parent, bfd_boolean include_jmp_stub)
       save_relocs (tx);
     }
   else
-    bfd_set_section_size (abfd, tx, 0);
+    bfd_set_section_size (tx, 0);
 
-  bfd_set_section_size (abfd, id7, 4);
+  bfd_set_section_size (id7, 4);
   d7 = xmalloc (4);
   id7->contents = d7;
   memset (d7, 0, 4);
   quick_reloc (abfd, 0, BFD_RELOC_RVA, 5);
   save_relocs (id7);
 
-  bfd_set_section_size (abfd, id5, PE_IDATA5_SIZE);
+  bfd_set_section_size (id5, PE_IDATA5_SIZE);
   d5 = xmalloc (PE_IDATA5_SIZE);
   id5->contents = d5;
   memset (d5, 0, PE_IDATA5_SIZE);
@@ -2395,7 +2410,7 @@ make_one (def_file_export *exp, bfd *parent, bfd_boolean include_jmp_stub)
       save_relocs (id5);
     }
 
-  bfd_set_section_size (abfd, id4, PE_IDATA4_SIZE);
+  bfd_set_section_size (id4, PE_IDATA4_SIZE);
   d4 = xmalloc (PE_IDATA4_SIZE);
   id4->contents = d4;
   memset (d4, 0, PE_IDATA4_SIZE);
@@ -2415,7 +2430,7 @@ make_one (def_file_export *exp, bfd *parent, bfd_boolean include_jmp_stub)
   if (exp->flag_noname)
     {
       len = 0;
-      bfd_set_section_size (abfd, id6, 0);
+      bfd_set_section_size (id6, 0);
     }
   else
     {
@@ -2428,7 +2443,7 @@ make_one (def_file_export *exp, bfd *parent, bfd_boolean include_jmp_stub)
 	len = 2 + strlen (exp->name) + 1;
       if (len & 1)
 	len++;
-      bfd_set_section_size (abfd, id6, len);
+      bfd_set_section_size (id6, len);
       d6 = xmalloc (len);
       id6->contents = d6;
       memset (d6, 0, len);
@@ -2486,7 +2501,7 @@ make_singleton_name_thunk (const char *import, bfd *parent)
   quick_symbol (abfd, "__nm_", import, "", UNDSEC, BSF_GLOBAL, 0);
 
   /* We need space for the real thunk and for the null terminator.  */
-  bfd_set_section_size (abfd, id4, PE_IDATA4_SIZE * 2);
+  bfd_set_section_size (id4, PE_IDATA4_SIZE * 2);
   d4 = xmalloc (PE_IDATA4_SIZE * 2);
   id4->contents = d4;
   memset (d4, 0, PE_IDATA4_SIZE * 2);
@@ -2563,7 +2578,7 @@ make_import_fixup_entry (const char *name,
   quick_symbol (abfd, U (""), symname, "_iname", UNDSEC, BSF_GLOBAL, 0);
   quick_symbol (abfd, "", fixup_name, "", UNDSEC, BSF_GLOBAL, 0);
 
-  bfd_set_section_size (abfd, id2, 20);
+  bfd_set_section_size (id2, 20);
   d2 = xmalloc (20);
   id2->contents = d2;
   memset (d2, 0, 20);
@@ -2638,7 +2653,7 @@ make_runtime_pseudo_reloc (const char *name ATTRIBUTE_UNUSED,
 
       quick_symbol (abfd, "__imp_", name, "", UNDSEC, BSF_GLOBAL, 0);
 
-      bfd_set_section_size (abfd, rt_rel, size);
+      bfd_set_section_size (rt_rel, size);
       rt_rel_d = xmalloc (size);
       rt_rel->contents = rt_rel_d;
       memset (rt_rel_d, 0, size);
@@ -2655,7 +2670,7 @@ make_runtime_pseudo_reloc (const char *name ATTRIBUTE_UNUSED,
     }
   else
     {
-      bfd_set_section_size (abfd, rt_rel, 8);
+      bfd_set_section_size (rt_rel, 8);
       rt_rel_d = xmalloc (8);
       rt_rel->contents = rt_rel_d;
       memset (rt_rel_d, 0, 8);
@@ -2703,7 +2718,7 @@ pe_create_runtime_relocator_reference (bfd *parent)
   quick_symbol (abfd, "", U ("_pei386_runtime_relocator"), "", UNDSEC,
 		BSF_NO_FLAGS, 0);
 
-  bfd_set_section_size (abfd, extern_rt_rel, PE_IDATA5_SIZE);
+  bfd_set_section_size (extern_rt_rel, PE_IDATA5_SIZE);
   extern_rt_rel_d = xcalloc (1, PE_IDATA5_SIZE);
   extern_rt_rel->contents = extern_rt_rel_d;
 
@@ -3275,7 +3290,7 @@ pe_get32 (bfd *abfd, int where)
 
   bfd_seek (abfd, (file_ptr) where, SEEK_SET);
   bfd_bread (b, (bfd_size_type) 4, abfd);
-  return b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24);
+  return b[0] + (b[1] << 8) + (b[2] << 16) + ((unsigned) b[3] << 24);
 }
 
 static unsigned int
@@ -3283,7 +3298,7 @@ pe_as32 (void *ptr)
 {
   unsigned char *b = ptr;
 
-  return b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24);
+  return b[0] + (b[1] << 8) + (b[2] << 16) + ((unsigned) b[3] << 24);
 }
 
 bfd_boolean
@@ -3540,7 +3555,14 @@ pe_dll_build_sections (bfd *abfd, struct bfd_link_info *info)
   process_def_file_and_drectve (abfd, info);
 
   if (pe_def_file->num_exports == 0 && !bfd_link_pic (info))
-    return;
+    {
+      if (pe_dll_enable_reloc_section)
+	{
+	  build_filler_bfd (0);
+	  pe_output_file_set_long_section_names (filler_bfd);
+	}
+      return;
+    }
 
   generate_edata (abfd, info);
   build_filler_bfd (1);
@@ -3559,33 +3581,16 @@ pe_exe_build_sections (bfd *abfd, struct bfd_link_info *info ATTRIBUTE_UNUSED)
 void
 pe_dll_fill_sections (bfd *abfd, struct bfd_link_info *info)
 {
-  pe_dll_id_target (bfd_get_target (abfd));
-  pe_output_file_set_long_section_names (abfd);
-  image_base = pe_data (abfd)->pe_opthdr.ImageBase;
+  pe_exe_fill_sections (abfd, info);
 
-  generate_reloc (abfd, info);
-  if (reloc_sz > 0)
+  if (edata_s)
     {
-      bfd_set_section_size (filler_bfd, reloc_s, reloc_sz);
-
-      /* Resize the sections.  */
-      lang_reset_memory_regions ();
-      lang_size_sections (NULL, TRUE);
-
-      /* Redo special stuff.  */
-      ldemul_after_allocation ();
-
-      /* Do the assignments again.  */
-      lang_do_assignments (lang_final_phase_enum);
+      fill_edata (abfd, info);
+      edata_s->contents = edata_d;
     }
-
-  fill_edata (abfd, info);
 
   if (bfd_link_dll (info))
     pe_data (abfd)->dll = 1;
-
-  edata_s->contents = edata_d;
-  reloc_s->contents = reloc_d;
 }
 
 void
@@ -3598,7 +3603,7 @@ pe_exe_fill_sections (bfd *abfd, struct bfd_link_info *info)
   generate_reloc (abfd, info);
   if (reloc_sz > 0)
     {
-      bfd_set_section_size (filler_bfd, reloc_s, reloc_sz);
+      bfd_set_section_size (reloc_s, reloc_sz);
 
       /* Resize the sections.  */
       lang_reset_memory_regions ();

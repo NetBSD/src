@@ -1,5 +1,5 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -397,13 +397,12 @@ as_internal_value_out_of_range (const char *prefix,
 	abort ();
 
       /* xgettext:c-format  */
-      err = _("%s out of domain (%d is not a multiple of %d)");
+      err = _("%s out of domain (%" BFD_VMA_FMT "d is not a multiple of %" \
+	      BFD_VMA_FMT "d)");
       if (bad)
-	as_bad_where (file, line, err,
-		      prefix, (int) val, (int) right);
+	as_bad_where (file, line, err, prefix, val, right);
       else
-	as_warn_where (file, line, err,
-		       prefix, (int) val, (int) right);
+	as_warn_where (file, line, err, prefix, val, right);
       return;
     }
 
@@ -415,14 +414,13 @@ as_internal_value_out_of_range (const char *prefix,
       && max > HEX_MIN_THRESHOLD)
     {
       /* xgettext:c-format  */
-      err = _("%s out of range (%d is not between %d and %d)");
+      err = _("%s out of range (%" BFD_VMA_FMT "d is not between %" \
+	      BFD_VMA_FMT "d and %" BFD_VMA_FMT "d)");
 
       if (bad)
-	as_bad_where (file, line, err,
-		      prefix, (int) val, (int) min, (int) max);
+	as_bad_where (file, line, err, prefix, val, min, max);
       else
-	as_warn_where (file, line, err,
-		       prefix, (int) val, (int) min, (int) max);
+	as_warn_where (file, line, err, prefix, val, min, max);
     }
   else
     {

@@ -1,6 +1,6 @@
 MACHINE=
 SCRIPT_NAME=elf
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 OUTPUT_FORMAT="elf32-metag"
@@ -12,7 +12,7 @@ ENTRY=__start
 NOP=0xa0fffffe
 EXTRA_EM_FILE=metagelf
 USER_LABEL_PREFIX=_
-OTHER_SECTIONS="
+test -n "${RELOCATING}" && OTHER_SECTIONS="
   .core_text 0x80000000	:
   {
     *(.core_text)

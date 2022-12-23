@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -934,7 +934,8 @@ uninstall-am: uninstall-dvi-am uninstall-html-am uninstall-info-am \
 $(MKDOC): chew.stamp ; @true
 chew.stamp: $(srcdir)/chew.c
 	$(CC_FOR_BUILD) -o chw$$$$$(EXEEXT_FOR_BUILD) $(CFLAGS_FOR_BUILD) \
-	  $(LDFLAGS_FOR_BUILD) $(H_CFLAGS) $(AM_CPPFLAGS) $(srcdir)/chew.c; \
+	  $(LDFLAGS_FOR_BUILD) $(H_CFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+		$(srcdir)/chew.c; \
 	$(SHELL) $(srcdir)/../../move-if-change \
 	  chw$$$$$(EXEEXT_FOR_BUILD) $(MKDOC); \
 	touch $@

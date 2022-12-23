@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 		    -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
 
 # Man page generation from texinfo
-addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+addr2line.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_addr2line.1:
 	touch $@
@@ -66,7 +66,7 @@ NetBSD_DISABLED_addr2line.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f addr2line.pod
 
-ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ar.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_ar.1:
 	touch $@
@@ -75,7 +75,7 @@ NetBSD_DISABLED_ar.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f ar.pod
 
-dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+dlltool.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_dlltool.1:
 	touch $@
@@ -84,7 +84,7 @@ NetBSD_DISABLED_dlltool.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f dlltool.pod
 
-nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+nm.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_nm.1:
 	touch $@
@@ -93,7 +93,7 @@ NetBSD_DISABLED_nm.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f nm.pod
 
-objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+objcopy.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_objcopy.1:
 	touch $@
@@ -102,7 +102,7 @@ NetBSD_DISABLED_objcopy.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f objcopy.pod
 
-objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+objdump.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_objdump.1:
 	touch $@
@@ -111,7 +111,7 @@ NetBSD_DISABLED_objdump.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f objdump.pod
 
-ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ranlib.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_ranlib.1:
 	touch $@
@@ -120,7 +120,7 @@ NetBSD_DISABLED_ranlib.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f ranlib.pod
 
-readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+readelf.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_readelf.1:
 	touch $@
@@ -129,7 +129,7 @@ NetBSD_DISABLED_readelf.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f readelf.pod
 
-size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+size.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_size.1:
 	touch $@
@@ -138,7 +138,7 @@ NetBSD_DISABLED_size.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f size.pod
 
-strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+strings.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_strings.1:
 	touch $@
@@ -147,7 +147,7 @@ NetBSD_DISABLED_strings.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f strings.pod
 
-strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+strip.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_strip.1:
 	touch $@
@@ -156,14 +156,14 @@ NetBSD_DISABLED_strip.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f strip.pod
 
-elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+elfedit.1:	$(binutils_TEXI)
 	touch $@
 	-$(TEXI2POD) $(MANCONF) -Delfedit < $(binutils_TEXI) > elfedit.pod
 	-($(POD2MAN) elfedit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f elfedit.pod
 
-windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+windres.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_windres.1:
 	touch $@
@@ -172,7 +172,7 @@ NetBSD_DISABLED_windres.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f windres.pod
 
-windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+windmc.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_windmc.1:
 	touch $@
@@ -181,7 +181,7 @@ NetBSD_DISABLED_windmc.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f windmc.pod
 
-cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
+cxxfilt.man:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_cxxfilt.man:
 	touch $@
@@ -190,7 +190,7 @@ NetBSD_DISABLED_cxxfilt.man:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f $(DEMANGLER_NAME).pod
 
-MOSTLYCLEANFILES     = $(DEMANGLER_NAME).1
+MOSTLYCLEANFILES     = $(man_MANS) binutils.info cxxfilt.man
 
 $(DEMANGLER_NAME).1: cxxfilt.man Makefile
 	if test -f cxxfilt.man; then \
@@ -201,19 +201,6 @@ $(DEMANGLER_NAME).1: cxxfilt.man Makefile
 	sed -e 's/@PROGRAM@/$(DEMANGLER_NAME)/' \
 	    -e 's/cxxfilt/$(DEMANGLER_NAME)/' < $$man \
 		> $(DEMANGLER_NAME).1
-
-# We want install to imply install-info as per GNU standards, despite the
-# cygnus option.
-install-data-local: install-info
-
-MAINTAINERCLEANFILES = binutils.info
-
-# Automake 1.9 will only build info files in the objdir if they are
-# mentioned in DISTCLEANFILES.  It doesn't have to be unconditional,
-# though, so we use a bogus condition.
-if GENINSRC_NEVER
-DISTCLEANFILES = binutils.info
-endif
 
 # Maintenance
 

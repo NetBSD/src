@@ -1,6 +1,6 @@
 // object.cc -- support for an object file for linking in gold
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -751,11 +751,13 @@ build_compressed_section_map(
 	      const unsigned char* contents =
 		  obj->section_contents(i, &len, false);
 	      uint64_t uncompressed_size;
+	      Compressed_section_info info;
 	      if (is_zcompressed)
 		{
 		  // Skip over the ".zdebug" prefix.
 		  name += 7;
 		  uncompressed_size = get_uncompressed_size(contents, len);
+		  info.addralign = shdr.get_sh_addralign();
 		}
 	      else
 		{
@@ -763,8 +765,8 @@ build_compressed_section_map(
 		  name += 6;
 		  elfcpp::Chdr<size, big_endian> chdr(contents);
 		  uncompressed_size = chdr.get_ch_size();
+		  info.addralign = chdr.get_ch_addralign();
 		}
-	      Compressed_section_info info;
 	      info.size = convert_to_section_size_type(uncompressed_size);
 	      info.flag = shdr.get_sh_flags();
 	      info.contents = NULL;
@@ -1378,6 +1380,18 @@ Sized_relobj_file<size, big_endian>::layout_gnu_property_section(
     }
 }
 
+// This a copy of lto_section defined in GCC (lto-streamer.h)
+
+struct lto_section
+{
+  int16_t major_version;
+  int16_t minor_version;
+  unsigned char slim_object;
+
+  /* Flags is a private field that is not defined publicly.  */
+  uint16_t flags;
+};
+
 // Lay out the input sections.  We walk through the sections and check
 // whether they should be included in the link.  If they should, we
 // pass them to the Layout object, which will return an output section
@@ -1742,9 +1756,13 @@ Sized_relobj_file<size, big_endian>::do_layout(Symbol_table* symtab,
 		  out_section_offsets[i] = invalid_address;
 		}
 	      else if (this->is_deferred_layout())
-		this->deferred_layout_.push_back(
-		    Deferred_layout(i, name, sh_type, pshdrs,
-				    reloc_shndx[i], reloc_type[i]));
+		{
+		  out_sections[i] = reinterpret_cast<Output_section*>(2);
+		  out_section_offsets[i] = invalid_address;
+		  this->deferred_layout_.push_back(
+		      Deferred_layout(i, name, sh_type, pshdrs,
+				      reloc_shndx[i], reloc_type[i]));
+		}
 	      else
 		eh_frame_sections.push_back(i);
 	      continue;
@@ -1857,6 +1875,23 @@ Sized_relobj_file<size, big_endian>::do_layout(Symbol_table* symtab,
 	      else if (strcmp(name, ".debug_types") == 0
 		       || strcmp(name, ".zdebug_types") == 0)
 		debug_types_sections.push_back(i);
+	    }
+	}
+
+      /* GCC uses .gnu.lto_.lto.<some_hash> as a LTO bytecode information
+	 section.  */
+      const char *lto_section_name = ".gnu.lto_.lto.";
+      if (strncmp (name, lto_section_name, strlen (lto_section_name)) == 0)
+	{
+	  section_size_type contents_len;
+	  const unsigned char* pcontents
+	    = this->section_contents(i, &contents_len, false);
+	  if (contents_len >= sizeof(lto_section))
+	    {
+	      const lto_section* lsection
+		= reinterpret_cast<const lto_section*>(pcontents);
+	      if (lsection->slim_object)
+		layout->set_lto_slim_object();
 	    }
 	}
     }
@@ -2077,7 +2112,7 @@ template<int size, bool big_endian>
 void
 Sized_relobj_file<size, big_endian>::do_add_symbols(Symbol_table* symtab,
 						    Read_symbols_data* sd,
-						    Layout*)
+						    Layout* layout)
 {
   if (sd->symbols == NULL)
     {
@@ -2095,6 +2130,11 @@ Sized_relobj_file<size, big_endian>::do_add_symbols(Symbol_table* symtab,
     }
 
   this->symbols_.resize(symcount);
+
+  if (!parameters->options().relocatable()
+      && layout->is_lto_slim_object ())
+    gold_info(_("%s: plugin needed to handle lto object"),
+	      this->name().c_str());
 
   const char* sym_names =
     reinterpret_cast<const char*>(sd->symbol_names->data());
@@ -2606,6 +2646,10 @@ Sized_relobj_file<size, big_endian>::do_finalize_local_symbols(
 	      lv->set_output_symtab_index(index);
 	      ++index;
 	    }
+	  if (lv->is_ifunc_symbol()
+	      && (lv->has_output_symtab_entry()
+		  || lv->needs_output_dynsym_entry()))
+	    symtab->set_has_gnu_output();
 	  break;
 	case CFLV_DISCARDED:
 	case CFLV_ERROR:
@@ -2947,7 +2991,7 @@ Sized_relobj_file<size, big_endian>::map_to_kept_section(
 	      // Since we're using this mapping for relocation processing,
 	      // we don't want to match sections unless they have the same
 	      // size.
-	      uint64_t kept_size;
+	      uint64_t kept_size = 0;
 	      if (kept_section->find_comdat_section(section_name, &kept_shndx,
 						    &kept_size))
 		{
@@ -2957,7 +3001,7 @@ Sized_relobj_file<size, big_endian>::map_to_kept_section(
 	    }
 	  else
 	    {
-	      uint64_t kept_size;
+	      uint64_t kept_size = 0;
 	      if (kept_section->find_single_comdat_section(&kept_shndx,
 							   &kept_size)
 		  && sh_size == kept_size)
@@ -3060,7 +3104,8 @@ const unsigned char*
 Object::decompressed_section_contents(
     unsigned int shndx,
     section_size_type* plen,
-    bool* is_new)
+    bool* is_new,
+    uint64_t* palign)
 {
   section_size_type buffer_size;
   const unsigned char* buffer = this->do_section_contents(shndx, &buffer_size,
@@ -3087,6 +3132,8 @@ Object::decompressed_section_contents(
     {
       *plen = uncompressed_size;
       *is_new = false;
+      if (palign != NULL)
+	*palign = p->second.addralign;
       return p->second.contents;
     }
 
@@ -3108,6 +3155,8 @@ Object::decompressed_section_contents(
   // once in this pass.
   *plen = uncompressed_size;
   *is_new = true;
+  if (palign != NULL)
+    *palign = p->second.addralign;
   return uncompressed_data;
 }
 

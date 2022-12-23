@@ -1,5 +1,5 @@
 /* tc-s12z.c -- Assembler code for the Freescale S12Z
-   Copyright (C) 2018 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,7 +22,7 @@
 #include "safe-ctype.h"
 #include "subsegs.h"
 #include "dwarf2dbg.h"
-#include "opcodes/s12z.h"
+#include "opcode/s12z.h"
 #include <stdint.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -32,18 +32,69 @@ const char comment_chars[] = ";";
 const char line_comment_chars[] = "#*";
 const char line_separator_chars[] = "";
 
+static char * register_prefix = NULL;
+
 const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dD";
 
 static char *fail_line_pointer;
 
+/* A wrapper around the standard library's strtol.
+   It converts STR into an integral value.
+   This wrapper deals with literal_prefix_dollar_hex.  */
+static long
+s12z_strtol (const char *str, char ** endptr)
+{
+  int base = 0;
+  bool negative = false;
+
+  long result = 0;
+
+  char *start = (char *) str;
+
+  /* In the case where literal_prefix_dollar_hex is TRUE the sign has
+  to be handled explicitly.  Otherwise the string will not be
+  recognised as an integer.  */
+  if (str[0] == '-')
+    {
+      negative = true;
+      ++str;
+    }
+  else if (str[0] == '+')
+    {
+      ++str;
+    }
+
+  if (literal_prefix_dollar_hex && (str[0] == '$'))
+    {
+      base = 16;
+      str++;
+    }
+
+  result = strtol (str, endptr, base);
+  if (*endptr == str)
+    {
+      *endptr = start;
+    }
+  if (negative)
+    result = -result;
+
+  return result;
+}
+
+
 
 /* Options and initialization.  */
 
-const char *md_shortopts = "Sm:";
+const char *md_shortopts = "";
 
 struct option md_longopts[] =
   {
+#define OPTION_REG_PREFIX (OPTION_MD_BASE)
+   {"mreg-prefix", required_argument, NULL, OPTION_REG_PREFIX},
+#define OPTION_DOLLAR_HEX (OPTION_MD_BASE + 1)
+   {"mdollar-hex", no_argument, NULL, OPTION_DOLLAR_HEX},
+   {NULL, no_argument, NULL, 0}
   };
 
 size_t md_longopts_size = sizeof (md_longopts);
@@ -92,8 +143,11 @@ s12z_listing_header (void)
 }
 
 void
-md_show_usage (FILE *stream ATTRIBUTE_UNUSED)
+md_show_usage (FILE *stream)
 {
+  fputs (_("\ns12z options:\n"), stream);
+  fputs (_("  -mreg-prefix=PREFIX     set a prefix used to indicate register names (default none)\n"), stream);
+  fputs (_("  -mdollar-hex            the prefix '$' instead of '0x' is used to indicate literal hexadecimal constants\n"), stream);
 }
 
 void
@@ -102,9 +156,20 @@ s12z_print_statistics (FILE *file ATTRIBUTE_UNUSED)
 }
 
 int
-md_parse_option (int c ATTRIBUTE_UNUSED, const char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg)
 {
-  return 0;
+  switch (c)
+    {
+    case OPTION_REG_PREFIX:
+      register_prefix = xstrdup (arg);
+      break;
+    case OPTION_DOLLAR_HEX:
+      literal_prefix_dollar_hex = TRUE;
+      break;
+    default:
+      return 0;
+    }
+  return 1;
 }
 
 symbolS *
@@ -122,7 +187,7 @@ md_atof (int type, char *litP, int *sizeP)
 valueT
 md_section_align (asection *seg, valueT addr)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
   return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
@@ -134,6 +199,8 @@ md_begin (void)
 void
 s12z_init_after_args (void)
 {
+  if (flag_traditional_format)
+    literal_prefix_dollar_hex = TRUE;
 }
 
 /* Builtin help.  */
@@ -164,9 +231,9 @@ s12z_new_insn (int size)
 
 
 
-static int lex_reg_name (uint16_t which, int *reg);
+static bfd_boolean lex_reg_name (uint16_t which, int *reg);
 
-static int
+static bfd_boolean
 lex_constant (long *v)
 {
   char *end = NULL;
@@ -178,33 +245,33 @@ lex_constant (long *v)
   if (lex_reg_name (~0, &dummy))
     {
       input_line_pointer = p;
-      return 0;
+      return false;
     }
 
   errno = 0;
-  *v = strtol (p, &end, 0);
+  *v = s12z_strtol (p, &end);
   if (errno == 0 && end != p)
     {
       input_line_pointer = end;
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 lex_match (char x)
 {
   char *p = input_line_pointer;
   if (*p != x)
-    return 0;
+    return false;
 
   input_line_pointer++;
-  return 1;
+  return true;
 }
 
 
-static int
+static bfd_boolean
 lex_expression (expressionS *exp)
 {
   char *ilp = input_line_pointer;
@@ -219,17 +286,20 @@ lex_expression (expressionS *exp)
 
   expression (exp);
   if (exp->X_op != O_absent)
-    return 1;
+    return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-/* immediate operand */
-static int
-lex_imm (long *v)
+/* Immediate operand.
+   If EXP_O is non-null, then a symbolic expression is permitted,
+   in which case, EXP_O will be populated with the parsed expression.
+ */
+static bfd_boolean
+lex_imm (long *v, expressionS *exp_o)
 {
   char *ilp = input_line_pointer;
 
@@ -242,35 +312,40 @@ lex_imm (long *v)
     goto fail;
 
   if (exp.X_op != O_constant)
-    goto fail;
+    {
+      if (!exp_o)
+        as_bad (_("A non-constant expression is not permitted here"));
+      else
+        *exp_o = exp;
+    }
 
   *v = exp.X_add_number;
-  return 1;
+  return true;
 
 fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 /* Short mmediate operand */
-static int
+static bfd_boolean
 lex_imm_e4 (long *val)
 {
   char *ilp = input_line_pointer;
-  if ((lex_imm (val)))
+  if ((lex_imm (val, NULL)))
     {
       if ((*val == -1) || (*val > 0 && *val <= 15))
 	{
-	  return 1;
+	  return true;
 	}
     }
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 lex_match_string (const char *s)
 {
   char *p = input_line_pointer;
@@ -281,15 +356,15 @@ lex_match_string (const char *s)
 
   size_t len = p - input_line_pointer;
   if (len != strlen (s))
-    return 0;
+    return false;
 
   if (0 == strncasecmp (s, input_line_pointer, len))
     {
       input_line_pointer = p;
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
 /* Parse a register name.
@@ -298,38 +373,56 @@ lex_match_string (const char *s)
    On success, REG will be filled with the index of the register which
    was successfully scanned.
 */
-static int
+static bfd_boolean
 lex_reg_name (uint16_t which, int *reg)
 {
   char *p = input_line_pointer;
-  while (p != 0 &&
-	 ((*p >= 'a' && *p <='z') || (*p >= '0' && *p <= '9') || (*p >= 'A' && *p <='Z')))
+
+  if (p == 0)
+    return false;
+
+  /* Scan (and ignore) the register prefix.  */
+  if (register_prefix)
+    {
+      int len = strlen (register_prefix);
+      if (0 == strncmp (register_prefix, p, len))
+        p += len;
+      else
+        return false;
+    }
+
+  char *start_of_reg_name = p;
+
+  while ((*p >= 'a' && *p <='z')
+         || (*p >= '0' && *p <= '9')
+         || (*p >= 'A' && *p <='Z'))
     {
       p++;
     }
 
-  int len = p - input_line_pointer;
+  size_t len = p - start_of_reg_name;
 
   if (len <= 0)
-    return 0;
+    return false;
 
   int i;
   for (i = 0; i < S12Z_N_REGISTERS; ++i)
     {
       gas_assert (registers[i].name);
 
-      if (0 == strncasecmp (registers[i].name, input_line_pointer, len))
+      if (len == strlen (registers[i].name)
+	  && 0 == strncasecmp (registers[i].name, start_of_reg_name, len))
 	{
 	  if ((0x1U << i) & which)
 	    {
 	      input_line_pointer = p;
 	      *reg = i;
-	      return 1;
+	      return true;
 	    }
 	}
     }
 
-  return 0;
+  return false;
 }
 
 static int
@@ -339,15 +432,16 @@ lex_force_match (char x)
   if (*p != x)
     {
       as_bad (_("Expecting '%c'"), x);
-      return 0;
+      return false;
     }
 
   input_line_pointer++;
-  return 1;
+  return true;
 }
 
-static int
-lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp)
+static bfd_boolean
+lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp,
+	 bool immediate_ok)
 {
   char *ilp = input_line_pointer;
   uint8_t *xb = buffer;
@@ -358,20 +452,25 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp)
   *xb = 0;
   if (lex_imm_e4 (&imm))
     {
+      if (!immediate_ok)
+	{
+	  as_bad (_("An immediate value in a source operand is inappropriate"));
+	  return false;
+	}
       if (imm > 0)
 	*xb = imm;
       else
 	*xb = 0;
       *xb |= 0x70;
       *n_bytes = 1;
-      return 1;
+      return true;
     }
   else if (lex_reg_name (REG_BIT_Dn, &reg))
     {
       *xb = reg;
       *xb |= 0xb8;
       *n_bytes = 1;
-      return 1;
+      return true;
     }
   else if (lex_match ('['))
     {
@@ -442,7 +541,7 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp)
 	}
       if (!lex_force_match (']'))
 	goto fail;
-      return 1;
+      return true;
     }
   else if (lex_match ('('))
     {
@@ -603,7 +702,7 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp)
 
       if (! lex_match (')'))
 	goto fail;
-      return 1;
+      return true;
     }
   else if (lex_expression (exp))
     {
@@ -614,68 +713,70 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp)
       buffer[3] = 0;
       if (exp->X_op == O_constant)
 	{
-	  if (exp->X_add_number < (0x1U << 14))
+	  valueT value = exp->X_add_number;
+
+	  if (value < (0x1U << 14))
 	    {
 	      *xb = 0x00;
 	      *n_bytes = 2;
-	      *xb |= exp->X_add_number >> 8;
-	      buffer[1] = exp->X_add_number;
+	      *xb |= value >> 8;
+	      buffer[1] = value;
 	    }
-	  else if (exp->X_add_number < (0x1U << 19))
+	  else if (value < (0x1U << 19))
 	    {
 	      *xb = 0xf8;
-	      if (exp->X_add_number & (0x1U << 17))
+	      if (value & (0x1U << 17))
 		*xb |= 0x04;
-	      if (exp->X_add_number & (0x1U << 16))
+	      if (value & (0x1U << 16))
 		*xb |= 0x01;
 	      *n_bytes = 3;
-	      buffer[1] = exp->X_add_number >> 8;
-	      buffer[2] = exp->X_add_number;
+	      buffer[1] = value >> 8;
+	      buffer[2] = value;
 	    }
 	  else
 	    {
 	      *xb = 0xfa;
 	      *n_bytes = 4;
-	      buffer[1] = exp->X_add_number >> 16;
-	      buffer[2] = exp->X_add_number >> 8;
-	      buffer[3] = exp->X_add_number;
+	      buffer[1] = value >> 16;
+	      buffer[2] = value >> 8;
+	      buffer[3] = value;
 	    }
 	}
-      return 1;
+      return true;
     }
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 lex_offset (long *val)
 {
   char *end = NULL;
   char *p = input_line_pointer;
 
   if (*p++ != '*')
-    return 0;
+    return false;
 
   if (*p != '+' && *p != '-')
-    return 0;
+    return false;
 
   bool negative =  (*p == '-');
   p++;
 
   errno = 0;
-  *val = strtol (p, &end, 0);
+  *val = s12z_strtol (p, &end);
   if (errno == 0)
     {
       if (negative)
 	*val *= -1;
       input_line_pointer = end;
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
 
@@ -710,7 +811,7 @@ no_operands (const struct instruction *insn)
   if (*input_line_pointer != '\0')
     {
       as_bad (_("Garbage at end of instruction"));
-      return 0;
+      return false;
     }
 
   char *f = s12z_new_insn (insn->page);
@@ -719,7 +820,27 @@ no_operands (const struct instruction *insn)
 
   number_to_chars_bigendian (f++, insn->opc, 1);
 
-  return 1;
+  return true;
+}
+
+
+static void
+emit_reloc (expressionS *exp, char *f, int size, enum bfd_reloc_code_real reloc)
+{
+  if (exp->X_op != O_absent && exp->X_op != O_constant)
+    {
+      fixS *fix = fix_new_exp (frag_now,
+			       f - frag_now->fr_literal,
+			       size,
+			       exp,
+			       FALSE,
+                               reloc);
+      /* Some third party tools seem to use the lower bits
+         of this addend for flags.   They don't get added
+         to the final location.   The purpose of these flags
+         is not known.  We simply set it to zero.  */
+      fix->fx_addnumber = 0x00;
+    }
 }
 
 /* Emit the code for an OPR address mode operand */
@@ -728,15 +849,9 @@ emit_opr (char *f, const uint8_t *buffer, int n_bytes, expressionS *exp)
 {
   int i;
   number_to_chars_bigendian (f++, buffer[0], 1);
-  if (exp->X_op != O_absent && exp->X_op != O_constant)
-    {
-      fix_new_exp (frag_now,
-		   f - frag_now->fr_literal,
-		   3,
-		   exp,
-		   FALSE,
-		   BFD_RELOC_24);
-    }
+
+  emit_reloc (exp, f, 3, BFD_RELOC_S12Z_OPR);
+
   for (i = 1; i < n_bytes; ++i)
     number_to_chars_bigendian (f++,  buffer[i], 1);
 
@@ -752,13 +867,13 @@ emit_ext24 (char *f, long v)
   return f + 3;
 }
 
-static int
+static bfd_boolean 
 opr (const struct instruction *insn)
 {
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (lex_opr (buffer, &n_bytes, &exp))
+  if (lex_opr (buffer, &n_bytes, &exp, false))
     {
       /* Large constant direct values are more efficiently encoded as ext24 mode.
 	 Otherwise a decision has to be deferred to a relax. */
@@ -782,16 +897,16 @@ opr (const struct instruction *insn)
 
 	  emit_opr (f, buffer, n_bytes, &exp);
 	}
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
 /* Parse a 15 bit offset, as an expression.
    LONG_DISPLACEMENT will be set to true if the offset is wider than 7 bits.
    */
-static int
+static bfd_boolean
 lex_15_bit_offset (bool *long_displacement, expressionS *exp)
 {
   char *ilp = input_line_pointer;
@@ -813,7 +928,7 @@ lex_15_bit_offset (bool *long_displacement, expressionS *exp)
 	  /* If a symbol was parsed we don't know the displacement.
 	     We have to assume it is long, and relax it later if possible. */
 	  *long_displacement = true;
-	  return 1;
+	  return true;
 	}
     }
   else
@@ -825,17 +940,17 @@ lex_15_bit_offset (bool *long_displacement, expressionS *exp)
   if (val > 0x3FFF || val < -0x4000)
     {
       as_fatal (_("Offset is outside of 15 bit range"));
-      return 0;
+      return false;
     }
 
   *long_displacement = (val > 63 || val < -64);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 static void
@@ -866,22 +981,22 @@ emit_15_bit_offset (char *f, int where, expressionS *exp)
     }
 }
 
-static int
+static bfd_boolean
 rel (const struct instruction *insn)
 {
   bool long_displacement;
 
   expressionS exp;
   if (! lex_15_bit_offset (&long_displacement, &exp))
-    return 0;
+    return false;
 
   char *f = s12z_new_insn (long_displacement ? 3 : 2);
   number_to_chars_bigendian (f++, insn->opc, 1);
   emit_15_bit_offset (f, 3, &exp);
-  return 1;
+  return true;
 }
 
-static int
+static bfd_boolean
 reg_inh (const struct instruction *insn)
 {
   int reg;
@@ -892,15 +1007,15 @@ reg_inh (const struct instruction *insn)
 	number_to_chars_bigendian (f++, PAGE2_PREBYTE, 1);
 
       number_to_chars_bigendian (f++, insn->opc + reg, 1);
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
 
 /* Special case for CLR X and CLR Y */
-static int
+static bfd_boolean
 clr_xy (const struct instruction *insn ATTRIBUTE_UNUSED)
 {
   int reg;
@@ -908,15 +1023,15 @@ clr_xy (const struct instruction *insn ATTRIBUTE_UNUSED)
     {
       char *f = s12z_new_insn (1);
       number_to_chars_bigendian (f, 0x9a + reg - REG_X, 1);
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
 /* Some instructions have a suffix like ".l", ".b", ".w" etc
    which indicates the size of the operands. */
-static int
+static bfd_boolean
 size_from_suffix  (const struct instruction *insn, int idx)
 {
   const char *dot = strchr (insn->name, '.');
@@ -946,7 +1061,7 @@ size_from_suffix  (const struct instruction *insn, int idx)
   return size;
 }
 
-static int
+static bfd_boolean
 mul_reg_reg_reg (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -994,16 +1109,16 @@ mul_reg_reg_reg (const struct instruction *insn)
 
   number_to_chars_bigendian (f++, mb, 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 mul_reg_reg_imm (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1023,7 +1138,7 @@ mul_reg_reg_imm (const struct instruction *insn)
     goto fail;
 
   long imm;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
 
@@ -1055,16 +1170,16 @@ mul_reg_reg_imm (const struct instruction *insn)
   number_to_chars_bigendian (f++, mb, 1);
   number_to_chars_bigendian (f++, imm, size);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 mul_reg_reg_opr (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1086,7 +1201,7 @@ mul_reg_reg_opr (const struct instruction *insn)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, true))
     goto fail;
 
   int size = size_from_suffix (insn, 0);
@@ -1118,15 +1233,15 @@ mul_reg_reg_opr (const struct instruction *insn)
 
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 mul_reg_opr_opr (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1141,7 +1256,7 @@ mul_reg_opr_opr (const struct instruction *insn)
   uint8_t buffer1[4];
   int n_bytes1;
   expressionS exp1;
-  if (!lex_opr (buffer1, &n_bytes1, &exp1))
+  if (!lex_opr (buffer1, &n_bytes1, &exp1, false))
     goto fail;
 
   if (!lex_match (','))
@@ -1150,7 +1265,7 @@ mul_reg_opr_opr (const struct instruction *insn)
   uint8_t buffer2[4];
   int n_bytes2;
   expressionS exp2;
-  if (!lex_opr (buffer2, &n_bytes2, &exp2))
+  if (!lex_opr (buffer2, &n_bytes2, &exp2, false))
     goto fail;
 
   int size1 = size_from_suffix (insn, 0);
@@ -1183,12 +1298,12 @@ mul_reg_opr_opr (const struct instruction *insn)
   f = emit_opr (f, buffer1, n_bytes1, &exp1);
   f = emit_opr (f, buffer2, n_bytes2, &exp2);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
@@ -1234,16 +1349,16 @@ lex_reg_list (uint16_t grp, uint16_t *reg_bits)
     {
       int reg;
       if (!lex_reg_name (grp, &reg))
-	return 0;
+	return false;
       *reg_bits |= 0x1u << reg;
       lex_reg_list (grp, reg_bits);
     }
 
   /* Empty list */
-  return 1;
+  return true;
 }
 
-static int
+static bfd_boolean
 psh_pull (const struct instruction *insn)
 {
   uint8_t pb =
@@ -1287,15 +1402,15 @@ psh_pull (const struct instruction *insn)
   char *f = s12z_new_insn (2);
   number_to_chars_bigendian (f++, insn->opc, 1);
   number_to_chars_bigendian (f++, pb, 1);
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 tfr (const struct instruction *insn)
 {
   int reg1;
@@ -1309,16 +1424,13 @@ tfr (const struct instruction *insn)
   if (!lex_reg_name (~0, &reg2))
     goto fail;
 
-  if ((0 == strcasecmp ("sex", insn->name))
-      || (0 == strcasecmp ("zex", insn->name)))
-    {
-      if (registers[reg1].bytes >= registers[reg2].bytes)
-	{
-	  as_bad (_("Source register for %s must be smaller that the destination register"),
-		  insn->name);
-	  goto fail;
-	}
-    }
+  if ( ((0 == strcasecmp ("sex", insn->name))
+        || (0 == strcasecmp ("zex", insn->name)))
+       && (registers[reg2].bytes <= registers[reg1].bytes))
+      as_warn (_("Source register for %s is no larger than the destination register"),
+               insn->name);
+  else if (reg1 == reg2)
+    as_warn (_("The destination and source registers are identical"));
 
   char *f = s12z_new_insn (1 + insn->page);
   if (insn->page == 2)
@@ -1327,19 +1439,19 @@ tfr (const struct instruction *insn)
   number_to_chars_bigendian (f++, insn->opc, 1);
   number_to_chars_bigendian (f++, reg1 << 4 | reg2, 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 imm8 (const struct instruction *insn)
 {
   long imm;
-  if (! lex_imm (&imm))
-    return 0;
+  if (! lex_imm (&imm, NULL))
+    return false;
   if (imm > 127 || imm < -128)
     {
       as_bad (_("Immediate value %ld is out of range for instruction %s"),
@@ -1350,10 +1462,10 @@ imm8 (const struct instruction *insn)
   number_to_chars_bigendian (f++, insn->opc, 1);
   number_to_chars_bigendian (f++, imm, 1);
 
-  return 1;
+  return true;
 }
 
-static int
+static bfd_boolean
 reg_imm (const struct instruction *insn, int allowed_reg)
 {
   char *ilp = input_line_pointer;
@@ -1363,7 +1475,7 @@ reg_imm (const struct instruction *insn, int allowed_reg)
       if (!lex_force_match (','))
 	goto fail;
       long imm;
-      if (! lex_imm (&imm))
+      if (! lex_imm (&imm, NULL))
 	goto fail;
 
       short size = registers[reg].bytes;
@@ -1373,40 +1485,40 @@ reg_imm (const struct instruction *insn, int allowed_reg)
 
       number_to_chars_bigendian (f++, insn->opc + reg, 1);
       number_to_chars_bigendian (f++, imm, size);
-      return 1;
+      return true;
     }
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 regd_imm (const struct instruction *insn)
 {
   return reg_imm (insn, REG_BIT_Dn);
 }
 
-static int
+static bfd_boolean
 regdxy_imm (const struct instruction *insn)
 {
   return reg_imm (insn, REG_BIT_Dn | REG_BIT_XY);
 }
 
 
-static int
+static bfd_boolean
 regs_imm (const struct instruction *insn)
 {
   return reg_imm (insn, 0x1U << REG_S);
 }
 
-static int
+static bfd_boolean
 trap_imm (const struct instruction *insn ATTRIBUTE_UNUSED)
 {
   long imm = -1;
-  if (! lex_imm (&imm))
+  if (! lex_imm (&imm, NULL))
     goto fail;
 
   if (imm < 0x92 || imm > 0xFF ||
@@ -1414,27 +1526,27 @@ trap_imm (const struct instruction *insn ATTRIBUTE_UNUSED)
       (imm >= 0xB0 && imm <= 0xB7))
     {
       as_bad (_("trap value %ld is not valid"), imm);
-      return 0;
+      return false;
     }
   else
     {
       char *f = s12z_new_insn (2);
       number_to_chars_bigendian (f++, PAGE2_PREBYTE, 1);
       number_to_chars_bigendian (f++, imm & 0xFF, 1);
-      return 1;
+      return true;
     }
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
-  return 0;
+  return false;
 }
 
 
 
 /* Special one byte instruction CMP X, Y */
-static int
+static bfd_boolean
 regx_regy (const struct instruction *insn)
 {
   int reg;
@@ -1446,15 +1558,15 @@ regx_regy (const struct instruction *insn)
 	    {
 	      char *f = s12z_new_insn (1);
 	      number_to_chars_bigendian (f, insn->opc, 1);
-	      return 1;
+	      return true;
 	    }
 	}
     }
-  return 0;
+  return false;
 }
 
 /* Special one byte instruction SUB D6, X, Y */
-static int
+static bfd_boolean
 regd6_regx_regy (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1476,16 +1588,16 @@ regd6_regx_regy (const struct instruction *insn)
 
   char *f = s12z_new_insn (1);
   number_to_chars_bigendian (f, insn->opc, 1);
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 /* Special one byte instruction SUB D6, Y, X */
-static int
+static bfd_boolean
 regd6_regy_regx (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1507,16 +1619,17 @@ regd6_regy_regx (const struct instruction *insn)
 
   char *f = s12z_new_insn (1);
   number_to_chars_bigendian (f, insn->opc, 1);
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
-reg_opr (const struct instruction *insn, int allowed_regs)
+static bfd_boolean
+reg_opr (const struct instruction *insn, int allowed_regs,
+	 bool immediate_ok)
 {
   char *ilp = input_line_pointer;
   int reg;
@@ -1528,7 +1641,7 @@ reg_opr (const struct instruction *insn, int allowed_regs)
       uint8_t buffer[4];
       int n_bytes;
       expressionS exp;
-      if (lex_opr (buffer, &n_bytes, &exp))
+      if (lex_opr (buffer, &n_bytes, &exp, immediate_ok))
 	{
 	  /* Large constant direct values are more efficiently encoded as ext24 mode.
 	     Otherwise a decision has to be deferred to a relax. */
@@ -1557,42 +1670,69 @@ reg_opr (const struct instruction *insn, int allowed_regs)
 	      emit_opr (f, buffer, n_bytes, &exp);
 	    }
 
-	  return 1;
+	  return true;
 	}
     }
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
-regdxy_opr (const struct instruction *insn)
+static bfd_boolean
+regdxy_opr_dest (const struct instruction *insn)
 {
-  return reg_opr (insn, REG_BIT_Dn | REG_BIT_XY);
+  return reg_opr (insn, REG_BIT_Dn | REG_BIT_XY, false);
 }
 
-static int
+static bfd_boolean
+regdxy_opr_src (const struct instruction *insn)
+{
+  return reg_opr (insn, REG_BIT_Dn | REG_BIT_XY, true);
+}
+
+
+static bfd_boolean
 regd_opr (const struct instruction *insn)
 {
-  return reg_opr (insn, REG_BIT_Dn);
+  return reg_opr (insn, REG_BIT_Dn, true);
 }
 
 
-static int
-regs_opr (const struct instruction *insn)
+/* OP0: S; OP1: destination OPR */
+static bfd_boolean
+regs_opr_dest (const struct instruction *insn)
 {
-  return reg_opr (insn, 0x1U << REG_S);
+  return reg_opr (insn, 0x1U << REG_S, false);
 }
 
-static int
+/* OP0: S; OP1: source OPR */
+static bfd_boolean
+regs_opr_src (const struct instruction *insn)
+{
+  return reg_opr (insn, 0x1U << REG_S, true);
+}
+
+static bfd_boolean
 imm_opr  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
   long imm;
-  if (!lex_imm (&imm))
+  expressionS exp0;
+  int size = size_from_suffix (insn, 0);
+  exp0.X_op = O_absent;
+
+  /* Note:  The ternary expression below means that "MOV.x #symbol,
+     mem-expr"  is accepted when x is a member of {'w', 'p', 'l'} but
+     not when it is 'b'.
+     The Freescale assembler accepts "MOV.b #symbol, mem-expr" but
+     produces obviously incorrect code.    Since such an instruction
+     would require an 8-bit reloc (which we don't have) and some
+     non-optimal kludges in the OPR encoding, it seems sensible that
+     such instructions should be rejected.  */
+  if (!lex_imm (&imm, size > 1 ? &exp0 : NULL))
     goto fail;
 
   if (!lex_match (','))
@@ -1600,29 +1740,30 @@ imm_opr  (const struct instruction *insn)
 
   uint8_t buffer[4];
   int n_bytes;
-  expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  expressionS exp1;
+  if (!lex_opr (buffer, &n_bytes, &exp1, false))
     goto fail;
 
-  int size = size_from_suffix (insn, 0);
   char *f = s12z_new_insn (1 + n_bytes + size);
   number_to_chars_bigendian (f++, insn->opc, 1);
+
+  emit_reloc (&exp0, f, size, size == 4 ? BFD_RELOC_32 : BFD_RELOC_S12Z_OPR);
 
   int i;
   for (i = 0; i < size; ++i)
     number_to_chars_bigendian (f++, imm >> (CHAR_BIT * (size - i - 1)), 1);
 
-  emit_opr (f, buffer, n_bytes, &exp);
+  emit_opr (f, buffer, n_bytes, &exp1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 opr_opr  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1630,7 +1771,7 @@ opr_opr  (const struct instruction *insn)
   uint8_t buffer1[4];
   int n_bytes1;
   expressionS exp1;
-  if (!lex_opr (buffer1, &n_bytes1, &exp1))
+  if (!lex_opr (buffer1, &n_bytes1, &exp1, false))
     goto fail;
 
 
@@ -1640,7 +1781,7 @@ opr_opr  (const struct instruction *insn)
   uint8_t buffer2[4];
   int n_bytes2;
   expressionS exp2;
-  if (!lex_opr (buffer2, &n_bytes2, &exp2))
+  if (!lex_opr (buffer2, &n_bytes2, &exp2, false))
     goto fail;
 
   char *f = s12z_new_insn (1 + n_bytes1 + n_bytes2);
@@ -1649,44 +1790,44 @@ opr_opr  (const struct instruction *insn)
   f = emit_opr (f, buffer1, n_bytes1, &exp1);
   f = emit_opr (f, buffer2, n_bytes2, &exp2);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 reg67sxy_opr  (const struct instruction *insn)
 {
   int reg;
   if (!lex_reg_name (REG_BIT_XYS | (0x1U << REG_D6) | (0x1U << REG_D7), &reg))
-    return 0;
+    return false;
 
   if (!lex_match (','))
-    return 0;
+    return false;
 
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
-    return 0;
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
+    return false;
 
   char *f = s12z_new_insn (1 + n_bytes);
   number_to_chars_bigendian (f++, insn->opc + reg - REG_D6, 1);
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 }
 
-static int
+static bfd_boolean
 rotate  (const struct instruction *insn, short dir)
 {
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (lex_opr (buffer, &n_bytes, &exp))
+  if (lex_opr (buffer, &n_bytes, &exp, false))
     {
       char *f = s12z_new_insn (n_bytes + 2);
       number_to_chars_bigendian (f++, insn->opc, 1);
@@ -1700,19 +1841,19 @@ rotate  (const struct instruction *insn, short dir)
       number_to_chars_bigendian (f++, sb, 1);
       emit_opr (f, buffer, n_bytes, &exp);
 
-      return 1;
+      return true;
     }
 
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 rol  (const struct instruction *insn)
 {
   return rotate (insn, 1);
 }
 
-static int
+static bfd_boolean
 ror  (const struct instruction *insn)
 {
   return rotate (insn, 0);
@@ -1723,7 +1864,7 @@ ror  (const struct instruction *insn)
    left = 1; right = 0;
    logical = 0; arithmetic = 1;
 */
-static int
+static bfd_boolean
 lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
 {
   /*
@@ -1744,7 +1885,7 @@ lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
     goto fail;
 
   long imm = -1;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
   if (imm != 1 && imm != 2)
@@ -1757,7 +1898,7 @@ lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
   int n_bytes;
 
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   gas_assert (n_bytes == 1);
@@ -1773,18 +1914,18 @@ lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
   number_to_chars_bigendian (f++, sb, 1);
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 /* Shift instruction with a register operand.
    left = 1; right = 0;
    logical = 0; arithmetic = 1; */
-static int
+static bfd_boolean
 lex_shift_reg  (const struct instruction *insn, short type, short dir)
 {
   int Dd, Ds, Dn;
@@ -1818,9 +1959,9 @@ lex_shift_reg  (const struct instruction *insn, short type, short dir)
       xb |= Dn;
       number_to_chars_bigendian (f++, xb, 1);
 
-      return 1;
+      return true;
     }
-  else if (lex_imm (&imm))
+  else if (lex_imm (&imm, NULL))
     {
       if (imm < 0 || imm > 31)
 	{
@@ -1849,12 +1990,12 @@ lex_shift_reg  (const struct instruction *insn, short type, short dir)
 	  number_to_chars_bigendian (f++, xb, 1);
 	}
 
-      return 1;
+      return true;
     }
 
  fail:
   fail_line_pointer = input_line_pointer;
-  return 0;
+  return false;
 }
 
 static void
@@ -1890,7 +2031,7 @@ impute_shift_dir_and_type (const struct instruction *insn, short *type, short *d
 }
 
 /* Shift instruction with a OPR operand */
-static int
+static bfd_boolean
 shift_two_operand  (const struct instruction *insn)
 {
   uint8_t sb = 0x34;
@@ -1908,14 +2049,14 @@ shift_two_operand  (const struct instruction *insn)
   uint8_t buffer[4];
   int n_opr_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_opr_bytes, &exp))
+  if (!lex_opr (buffer, &n_opr_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
     goto fail;
 
   long imm = -1;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
   if (imm != 1 && imm != 2)
@@ -1929,16 +2070,16 @@ shift_two_operand  (const struct instruction *insn)
   number_to_chars_bigendian (f++, sb, 1);
   emit_opr (f, buffer, n_opr_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 /* Shift instruction with a OPR operand */
-static int
+static bfd_boolean
 shift_opr_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1960,7 +2101,7 @@ shift_opr_imm  (const struct instruction *insn)
   int n_opr_bytes1;
 
   expressionS exp1;
-  if (!lex_opr (buffer1, &n_opr_bytes1, &exp1))
+  if (!lex_opr (buffer1, &n_opr_bytes1, &exp1, false))
     goto fail;
 
   n_bytes += n_opr_bytes1;
@@ -1972,11 +2113,11 @@ shift_opr_imm  (const struct instruction *insn)
   expressionS exp2;
   long imm;
   bool immediate = false;
-  if (lex_imm (&imm))
+  if (lex_imm (&imm, NULL))
     {
       immediate = true;
     }
-  else if (!lex_opr (buffer2, &n_opr_bytes2, &exp2))
+  else if (!lex_opr (buffer2, &n_opr_bytes2, &exp2, false))
     goto fail;
 
   uint8_t sb = 0x20;
@@ -2026,16 +2167,16 @@ shift_opr_imm  (const struct instruction *insn)
       f = emit_opr (f, buffer2, n_opr_bytes2, &exp2);
     }
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 /* Shift instruction with a register operand */
-static int
+static bfd_boolean
 shift_reg  (const struct instruction *insn)
 {
   short dir = -1;
@@ -2043,12 +2184,12 @@ shift_reg  (const struct instruction *insn)
   impute_shift_dir_and_type (insn, &type, &dir);
 
   if (lex_shift_reg_imm1 (insn, type, dir))
-    return 1;
+    return true;
 
   return lex_shift_reg (insn, type, dir);
 }
 
-static int
+static bfd_boolean
 bm_regd_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2060,7 +2201,7 @@ bm_regd_imm  (const struct instruction *insn)
     goto fail;
 
   long imm;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
 
@@ -2071,15 +2212,15 @@ bm_regd_imm  (const struct instruction *insn)
   number_to_chars_bigendian (f++, insn->opc, 1);
   number_to_chars_bigendian (f++, bm, 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 bm_opr_reg  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2088,7 +2229,7 @@ bm_opr_reg  (const struct instruction *insn)
   int n_opr_bytes;
 
   expressionS exp;
-  if (!lex_opr (buffer, &n_opr_bytes,  &exp))
+  if (!lex_opr (buffer, &n_opr_bytes,  &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2109,16 +2250,16 @@ bm_opr_reg  (const struct instruction *insn)
 
   emit_opr (f, buffer, n_opr_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 bm_opr_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2127,7 +2268,7 @@ bm_opr_imm  (const struct instruction *insn)
   int n_opr_bytes;
 
   expressionS exp;
-  if (!lex_opr (buffer, &n_opr_bytes, &exp))
+  if (!lex_opr (buffer, &n_opr_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2135,7 +2276,7 @@ bm_opr_imm  (const struct instruction *insn)
 
 
   long imm;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
   int size = size_from_suffix (insn, 0);
@@ -2160,16 +2301,16 @@ bm_opr_imm  (const struct instruction *insn)
   number_to_chars_bigendian (f++, bm, 1);
   emit_opr (f, buffer, n_opr_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 bm_regd_reg  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2194,19 +2335,19 @@ bm_regd_reg  (const struct instruction *insn)
   number_to_chars_bigendian (f++, bm, 1);
   number_to_chars_bigendian (f++, xb, 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
 
 
 
-static int
+static bfd_boolean
 bf_reg_opr_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2221,14 +2362,14 @@ bf_reg_opr_imm  (const struct instruction *insn, short ie)
   int n_bytes;
 
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
     goto fail;
 
   long width;
-  if (!lex_imm (&width))
+  if (!lex_imm (&width, NULL))
     goto fail;
 
   if (width < 0 || width > 31)
@@ -2267,23 +2408,23 @@ bf_reg_opr_imm  (const struct instruction *insn, short ie)
 
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 bf_opr_reg_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2297,7 +2438,7 @@ bf_opr_reg_imm  (const struct instruction *insn, short ie)
     goto fail;
 
   long width;
-  if (!lex_imm (&width))
+  if (!lex_imm (&width, NULL))
     goto fail;
 
   if (width < 0 || width > 31)
@@ -2336,17 +2477,17 @@ bf_opr_reg_imm  (const struct instruction *insn, short ie)
 
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
 
-static int
+static bfd_boolean
 bf_reg_reg_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2365,7 +2506,7 @@ bf_reg_reg_imm  (const struct instruction *insn, short ie)
     goto fail;
 
   long width;
-  if (!lex_imm (&width))
+  if (!lex_imm (&width, NULL))
     goto fail;
 
   if (width < 0 || width > 31)
@@ -2401,15 +2542,15 @@ bf_reg_reg_imm  (const struct instruction *insn, short ie)
   number_to_chars_bigendian (f++, bb, 1);
   number_to_chars_bigendian (f++, i1, 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 bf_reg_reg_reg  (const struct instruction *insn ATTRIBUTE_UNUSED, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2444,15 +2585,15 @@ bf_reg_reg_reg  (const struct instruction *insn ATTRIBUTE_UNUSED, short ie)
   number_to_chars_bigendian (f++, 0x08 | Dd, 1);
   number_to_chars_bigendian (f++, bb , 1);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 bf_opr_reg_reg  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2460,7 +2601,7 @@ bf_opr_reg_reg  (const struct instruction *insn, short ie)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2496,16 +2637,16 @@ bf_opr_reg_reg  (const struct instruction *insn, short ie)
 
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 bf_reg_opr_reg  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2520,7 +2661,7 @@ bf_reg_opr_reg  (const struct instruction *insn, short ie)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2547,85 +2688,85 @@ bf_reg_opr_reg  (const struct instruction *insn, short ie)
 
   emit_opr (f, buffer, n_bytes, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
 
-static int
+static bfd_boolean
 bfe_reg_reg_reg  (const struct instruction *insn)
 {
   return bf_reg_reg_reg (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_reg_reg_reg  (const struct instruction *insn)
 {
   return bf_reg_reg_reg (insn, 1);
 }
 
-static int
+static bfd_boolean
 bfe_reg_reg_imm  (const struct instruction *insn)
 {
   return bf_reg_reg_imm (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_reg_reg_imm  (const struct instruction *insn)
 {
   return bf_reg_reg_imm (insn, 1);
 }
 
 
-static int
+static bfd_boolean
 bfe_reg_opr_reg  (const struct instruction *insn)
 {
   return bf_reg_opr_reg (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_reg_opr_reg  (const struct instruction *insn)
 {
   return bf_reg_opr_reg (insn, 1);
 }
 
 
-static int
+static bfd_boolean
 bfe_opr_reg_reg  (const struct instruction *insn)
 {
   return bf_opr_reg_reg (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_opr_reg_reg  (const struct instruction *insn)
 {
   return bf_opr_reg_reg (insn, 1);
 }
 
-static int
+static bfd_boolean
 bfe_reg_opr_imm  (const struct instruction *insn)
 {
   return bf_reg_opr_imm (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_reg_opr_imm  (const struct instruction *insn)
 {
   return bf_reg_opr_imm (insn, 1);
 }
 
-static int
+static bfd_boolean
 bfe_opr_reg_imm  (const struct instruction *insn)
 {
   return bf_opr_reg_imm (insn, 0);
 }
 
-static int
+static bfd_boolean
 bfi_opr_reg_imm  (const struct instruction *insn)
 {
   return bf_opr_reg_imm (insn, 1);
@@ -2634,7 +2775,7 @@ bfi_opr_reg_imm  (const struct instruction *insn)
 
 
 
-static int
+static bfd_boolean
 tb_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2694,16 +2835,16 @@ tb_reg_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, 4, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 tb_opr_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2711,7 +2852,7 @@ tb_opr_rel  (const struct instruction *insn)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2760,18 +2901,18 @@ tb_opr_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, n_bytes + 4, &exp2);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
 
 
-static int
+static bfd_boolean
 test_br_reg_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2810,15 +2951,15 @@ test_br_reg_reg_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, 5, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
-static int
+static bfd_boolean
 test_br_opr_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2826,7 +2967,7 @@ test_br_opr_reg_rel  (const struct instruction *insn)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes,  &exp))
+  if (!lex_opr (buffer, &n_bytes,  &exp, false))
     goto fail;
 
   if (!lex_match (','))
@@ -2858,16 +2999,16 @@ test_br_opr_reg_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, n, &exp2);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 test_br_opr_imm_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2875,14 +3016,14 @@ test_br_opr_imm_rel  (const struct instruction *insn)
   uint8_t buffer[4];
   int n_bytes;
   expressionS exp;
-  if (!lex_opr (buffer, &n_bytes, &exp))
+  if (!lex_opr (buffer, &n_bytes, &exp, false))
     goto fail;
 
   if (!lex_match (','))
     goto fail;
 
   long imm;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
   if (imm < 0 || imm > 31)
@@ -2913,16 +3054,16 @@ test_br_opr_imm_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, n_bytes + 4,  &exp2);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
-static int
+static bfd_boolean
 test_br_reg_imm_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2935,7 +3076,7 @@ test_br_reg_imm_rel  (const struct instruction *insn)
     goto fail;
 
   long imm;
-  if (!lex_imm (&imm))
+  if (!lex_imm (&imm, NULL))
     goto fail;
 
   if (imm < 0 || imm > 31)
@@ -2959,12 +3100,12 @@ test_br_reg_imm_rel  (const struct instruction *insn)
 
   emit_15_bit_offset (f, 4, &exp);
 
-  return 1;
+  return true;
 
  fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
-  return 0;
+  return false;
 }
 
 
@@ -3140,7 +3281,9 @@ static const struct instruction opcodes[] = {
   {"bhi", 1,   0x22,  rel, 0},
   {"bls", 1,   0x23,  rel, 0},
   {"bcc", 1,   0x24,  rel, 0},
+  {"bhs", 1,   0x24,  rel, 0}, /* Alias for bcc */
   {"bcs", 1,   0x25,  rel, 0},
+  {"blo", 1,   0x25,  rel, 0}, /* Alias for bcs */
   {"bne", 1,   0x26,  rel, 0},
   {"beq", 1,   0x27,  rel, 0},
   {"bvc", 1,   0x28,  rel, 0},
@@ -3233,7 +3376,7 @@ static const struct instruction opcodes[] = {
   {"tfr", 1,   0x9e,  tfr, 0},
   {"zex", 1,   0x9e,  tfr, 0},
 
-  {"ld",  1,   0xa0,  regdxy_opr, 0xb0},
+  {"ld",  1,   0xa0,  regdxy_opr_src, 0xb0},
 
   {"jmp", 1,   0xaa,  opr, 0xba},
   {"jsr", 1,   0xab,  opr, 0xbb},
@@ -3241,7 +3384,7 @@ static const struct instruction opcodes[] = {
   {"exg", 1,   0xae,  tfr, 0},
   {"sex", 1,   0xae,  tfr, 0},
 
-  {"st", 1,    0xc0,  regdxy_opr, 0xd0},
+  {"st", 1,    0xc0,  regdxy_opr_dest, 0xd0},
 
   {"andcc", 1, 0xce,  imm8, 0},
   {"orcc", 1,  0xde,  imm8, 0},
@@ -3300,7 +3443,7 @@ static const struct instruction opcodes[] = {
   {"btgl.l",  1, 0xee, bm_opr_reg, 0},
 
   {"cmp", 1,   0xe0,  regdxy_imm, 0},
-  {"cmp", 1,   0xf0,  regdxy_opr, 0},
+  {"cmp", 1,   0xf0,  regdxy_opr_src, 0},
 
   {"cmp", 1,   0xfc,  regx_regy, 0},
   {"sub", 1,   0xfd,  regd6_regx_regy, 0},
@@ -3311,13 +3454,13 @@ static const struct instruction opcodes[] = {
   /* Page 2 */
 
   /* The -10 below is a kludge.  The opcode is in fact 0x00 */
-  {"ld",    2,  -10,  regs_opr, 0},
+  {"ld",    2,  -10,  regs_opr_src, 0},
 
   /* The -9 below is a kludge.  The opcode is in fact 0x01 */
-  {"st",    2,  -9,  regs_opr, 0},
+  {"st",    2,  -9,  regs_opr_dest, 0},
 
   /* The -8 below is a kludge.  The opcode is in fact 0x02 */
-  {"cmp",    2,  -8,  regs_opr, 0},
+  {"cmp",    2,  -8,  regs_opr_src, 0},
 
   /* The -7 below is a kludge.  The opcode is in fact 0x03 */
   {"ld",    2,  -7,  regs_imm, 0},
@@ -3723,7 +3866,7 @@ long
 s12z_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP ATTRIBUTE_UNUSED,
 		   long stretch ATTRIBUTE_UNUSED)
 {
-  return 0;
+  return false;
 }
 
 void
@@ -3742,7 +3885,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec ATTRIBUTE_UNUSED,
 int
 md_estimate_size_before_relax (fragS *fragP ATTRIBUTE_UNUSED, asection *segment ATTRIBUTE_UNUSED)
 {
-  return 0;
+  return false;
 }
 
 
@@ -3784,10 +3927,10 @@ tc_s12z_force_relocation (fixS *fixP)
    we need to make sure that the linker relaxation is done
    correctly, so in some cases we force the original symbol to be
    used.  */
-int
+bfd_boolean
 tc_s12z_fix_adjustable (fixS *fixP ATTRIBUTE_UNUSED)
 {
-  return 1;
+  return true;
 }
 
 void
@@ -3813,14 +3956,32 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_8:
       ((bfd_byte *) where)[0] = (bfd_byte) value;
       break;
+    case BFD_RELOC_16:
+      bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+      break;
     case BFD_RELOC_24:
       bfd_putb24 ((bfd_vma) value, (unsigned char *) where);
+      break;
+    case BFD_RELOC_S12Z_OPR:
+      {
+        switch (fixP->fx_size)
+          {
+          case 3:
+            bfd_putb24 ((bfd_vma) value, (unsigned char *) where);
+            break;
+          case 2:
+            bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+            break;
+          default:
+            abort ();
+          }
+      }
       break;
     case BFD_RELOC_32:
       bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
       break;
     case BFD_RELOC_16_PCREL:
-      if (value < -0x8000 || value > 0x7FFF)
+      if (value < -0x4000 || value > 0x3FFF)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Value out of 16-bit range."));
 

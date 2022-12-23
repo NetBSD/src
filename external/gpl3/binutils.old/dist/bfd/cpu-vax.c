@@ -1,5 +1,5 @@
 /* bfd back-end for vax support
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,18 +24,19 @@
 #include "libbfd.h"
 
 const bfd_arch_info_type bfd_vax_arch =
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_vax,
-    0,	/* only 1 machine */
-    "vax",
-    "vax",
-    3,
-    TRUE, /* the one and only */
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-  };
+{
+  32,	/* Bits in a word.  */
+  32,	/* Bits in an address.  */
+  8,	/* Bits in a byte.  */
+  bfd_arch_vax,
+  0,	/* Only 1 machine.  */
+  "vax",
+  "vax",
+  3,
+  TRUE, /* The one and only.  */
+  bfd_default_compatible,
+  bfd_default_scan,
+  bfd_arch_default_fill,
+  NULL,
+  0 /* Maximum offset of a reloc from the start of an insn.  */
+};

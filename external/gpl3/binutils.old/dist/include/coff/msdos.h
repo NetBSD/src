@@ -1,6 +1,6 @@
 /* msdos.h  -  MS-DOS and derived executable header information
 
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

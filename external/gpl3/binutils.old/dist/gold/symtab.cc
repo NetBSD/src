@@ -1,6 +1,6 @@
 // symtab.cc -- the gold symbol table
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -565,8 +565,8 @@ Symbol::set_undefined()
 
 Symbol_table::Symbol_table(unsigned int count,
                            const Version_script_info& version_script)
-  : saw_undefined_(0), offset_(0), table_(count), namepool_(),
-    forwarders_(), commons_(), tls_commons_(), small_commons_(),
+  : saw_undefined_(0), offset_(0), has_gnu_output_(false), table_(count),
+    namepool_(), forwarders_(), commons_(), tls_commons_(), small_commons_(),
     large_commons_(), forced_locals_(), warnings_(),
     version_script_(version_script), gc_(NULL), icf_(NULL),
     target_symbols_()
@@ -2565,6 +2565,8 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
           ++index;
           ++forced_local_count;
 	  dynpool->add(sym->name(), false, NULL);
+	  if (sym->type() == elfcpp::STT_GNU_IFUNC)
+	    this->set_has_gnu_output();
         }
     }
   *pforced_local_count = forced_local_count;
@@ -2583,7 +2585,13 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
           if (!sym->should_add_dynsym_entry(this))
             sym->set_dynsym_index(-1U);
           else
-            dyn_symbols.push_back(sym);
+	    {
+	      dyn_symbols.push_back(sym);
+	      if (sym->type() == elfcpp::STT_GNU_IFUNC
+		  || (sym->binding() == elfcpp::STB_GNU_UNIQUE
+		      && parameters->options().gnu_unique()))
+		this->set_has_gnu_output();
+	    }
         }
 
       return parameters->target().set_dynsym_indexes(&dyn_symbols, index, syms,
@@ -2611,6 +2619,10 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
 	  ++index;
 	  syms->push_back(sym);
 	  dynpool->add(sym->name(), false, NULL);
+	  if (sym->type() == elfcpp::STT_GNU_IFUNC
+	      || (sym->binding() == elfcpp::STB_GNU_UNIQUE
+		  && parameters->options().gnu_unique()))
+	    this->set_has_gnu_output();
 
 	  // Record any version information, except those from
 	  // as-needed libraries not seen to be needed.  Note that the
@@ -2623,11 +2635,12 @@ Symbol_table::set_dynsym_indexes(unsigned int index,
 		versions->record_version(this, dynpool, sym);
 	      else
 		{
-		  gold_warning(_("discarding version information for "
-				 "%s@%s, defined in unused shared library %s "
-				 "(linked with --as-needed)"),
-			       sym->name(), sym->version(),
-			       sym->object()->name().c_str());
+		  if (parameters->options().warn_drop_version())
+		    gold_warning(_("discarding version information for "
+				   "%s@%s, defined in unused shared library %s "
+				   "(linked with --as-needed)"),
+				 sym->name(), sym->version(),
+				 sym->object()->name().c_str());
 		  sym->clear_version();
 		}
 	    }
@@ -2695,6 +2708,13 @@ Symbol_table::finalize(off_t off, off_t dynoff, size_t dyn_global_index,
   else
     gold_unreachable();
 
+  if (this->has_gnu_output_)
+    {
+      Target* target = const_cast<Target*>(&parameters->target());
+      if (target->osabi() == elfcpp::ELFOSABI_NONE)
+	target->set_osabi(elfcpp::ELFOSABI_GNU);
+    }
+
   // Now that we have the final symbol table, we can reliably note
   // which symbols should get warnings.
   this->warnings_.note_warnings(this);
@@ -2746,6 +2766,8 @@ Symbol_table::sized_finalize(off_t off, Stringpool* pool,
 	{
 	  this->add_to_final_symtab<size>(sym, pool, &index, &off);
 	  ++*plocal_symcount;
+	  if (sym->type() == elfcpp::STT_GNU_IFUNC)
+	    this->set_has_gnu_output();
 	}
     }
 
@@ -2756,7 +2778,13 @@ Symbol_table::sized_finalize(off_t off, Stringpool* pool,
     {
       Symbol* sym = p->second;
       if (this->sized_finalize_symbol<size>(sym))
-	this->add_to_final_symtab<size>(sym, pool, &index, &off);
+	{
+	  this->add_to_final_symtab<size>(sym, pool, &index, &off);
+	  if (sym->type() == elfcpp::STT_GNU_IFUNC
+	      || (sym->binding() == elfcpp::STB_GNU_UNIQUE
+		  && parameters->options().gnu_unique()))
+	    this->set_has_gnu_output();
+	}
     }
 
   // Now do target-specific symbols.

@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c VAX/VMS description enhanced and corrected by Klaus K"aempf, kkaempf@progis.de
@@ -50,7 +50,7 @@ These are obsolete options used to debug old assemblers.
 @item @code{-d} (Displacement size for JUMPs)
 This option expects a number following the @samp{-d}.  Like options
 that expect filenames, the number may immediately follow the
-@samp{-d} (old standard) or constitute the whole of the command line
+@samp{-d} (old standard) or constitute the whole of the command-line
 argument that follows @samp{-d} (@sc{gnu} standard).
 
 @cindex @code{-V}, redundant on VAX

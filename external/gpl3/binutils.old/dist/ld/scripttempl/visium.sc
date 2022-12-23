@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -35,14 +35,15 @@ cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 
 ENTRY(${ENTRY})
+EOF
 
+test -n "${RELOCATING}" && cat <<EOF
 /* Start and end of main stack. Assumes 256K of RAM.  */
-${RELOCATING+ _estack = 0xe0040000 - 4;}
-${RELOCATING+ _sstack = 0xe0040000 - 64K;}
+_estack = 0xe0040000 - 4;
+_sstack = 0xe0040000 - 64K;
 
 /* End of heap.  */
-${RELOCATING+ _eheap = _sstack - 4;}
-
+_eheap = _sstack - 4;
 
 MEMORY
 {
@@ -53,12 +54,14 @@ MEMORY
   saferam : ORIGIN = 0xf0000000, LENGTH = 0x10000000
 }
 
+EOF
 
+cat <<EOF
 SECTIONS
 {
   .init ${RELOCATING-0} : {
-    KEEP (*(.init))
-    KEEP (*(.fini))
+    KEEP (*(SORT_NONE(.init)))
+    ${RELOCATING+KEEP (*(SORT_NONE(.fini)))}
     ${RELOCATING+ _einit  =  .;}
   } ${RELOCATING+ > init}
 
@@ -91,7 +94,7 @@ SECTIONS
        end of ctors marker and it must be last.  */
 
     KEEP (*(EXCLUDE_FILE (*crtend*.o) .ctors))
-    KEEP (*(SORT(.ctors.*)))
+    ${RELOCATING+KEEP (*(SORT(.ctors.*)))}
     KEEP (*(.ctors))
     ${CONSTRUCTING+ __CTOR_END__ = .;}
   } ${RELOCATING+ > rom}
@@ -100,14 +103,14 @@ SECTIONS
     ${CONSTRUCTING+ __DTOR_LIST__ = .;}
     KEEP (*crtbegin*.o(.dtors))
     KEEP (*(EXCLUDE_FILE (*crtend*.o) .dtors))
-    KEEP (*(SORT(.dtors.*)))
+    ${RELOCATING+KEEP (*(SORT(.dtors.*)))}
     KEEP (*(.dtors))
     ${CONSTRUCTING+ __DTOR_END__ = .;}
   } ${RELOCATING+ > rom}
   .rodata ${RELOCATING-0} : {
     ${RELOCATING+ . = ALIGN(4);}
     ${RELOCATING+ _srdata  =  .;}
-    *(.rdata)
+    ${RELOCATING+*(.rdata)}
     *(.rodata)
     ${RELOCATING+*(.rodata.*)}
     ${RELOCATING+*(.gnu.linkonce.r.*)}
@@ -140,7 +143,7 @@ SECTIONS
     *(.bss)
     ${RELOCATING+*(.bss.*)}
     ${RELOCATING+*(.gnu.linkonce.b.*)}
-    *(COMMON)
+    ${RELOCATING+*(COMMON)}
     ${RELOCATING+ . = ALIGN(4);}
     ${RELOCATING+ __bss_end = .;}
     ${RELOCATING+ _sheap = .;}
@@ -168,7 +171,7 @@ EOF
 
 cat <<EOF
 }
-
+${RELOCATING+
 /* Provide a default address for the simulated file-I/O device.  */
 PROVIDE (_sim_fileio_register = 0x2fff0000);
 
@@ -176,6 +179,6 @@ PROVIDE (_sim_fileio_register = 0x2fff0000);
 PROVIDE (_sim_cmdline_header = 0x2ffe0000);
 
 /* Provide a default address for the simulated 1 MHz clock.  */
-PROVIDE (_sim_clock = 0x20002100);
+PROVIDE (_sim_clock = 0x20002100);}
 
 EOF

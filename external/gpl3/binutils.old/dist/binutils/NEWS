@@ -1,5 +1,109 @@
 -*- text -*-
 
+Changes in 2.34:
+
+* Binutils now supports debuginfod, an HTTP server for distributing
+  ELF/DWARF debugging information as well as source code. When built with
+  debuginfod, readelf and objdump can automatically query debuginfod
+  servers for separate debug files when they otherwise cannot be found.
+  To build binutils with debuginfod, pass --with-debuginfod to configure.
+  This requires libdebuginfod, the debuginfod client library. debuginfod
+  is distributed with elfutils, starting with version 0.178. For more
+  information see https://sourceware.org/elfutils.
+
+* Add --output option to the "ar" program.  This option can be used to specify
+  the output directory when extracting members from an archive.
+
+* Add --keep-section option to objcopy and strip.  This option keeps the
+  specified section from being removed.
+
+ * Add visualization of jumps inside a function by drawing an ascii character
+   graph between the address and the disassembler column.  Enabled via the
+   --visualize-jumps command line option for objdump.  Currently supported by
+   the x86, x86_64, and ARM targets.  The output looks something like this:
+
+  c6:	|  |     \----------> be 00 00 00 00       	mov    $0x0,%esi
+  cb:	|  |           /----> 48 8b 3d 00 00 00 00 	mov    0x0(%rip),%rdi        # d2 <main+0xd2>
+  d2:	|  |           |      31 c0                	xor    %eax,%eax
+  d4:	|  |           |  /-- e8 00 00 00 00       	callq  d9 <main+0xd9>
+  d9:	|  |           |  \-> bf 02 00 00 00       	mov    $0x2,%edi
+  de:	|  +-----------|----- e8 00 00 00 00       	callq  e3 <main+0xe3>
+  e3:	|  \-----------|----> 48 89 da             	mov    %rbx,%rdx
+  e6:	|              |      be 00 00 00 00       	mov    $0x0,%esi
+  eb:	|              \----- eb de                	jmp    cb <main+0xcb>
+  ed:	\-------------------> 48 8b 16             	mov    (%rsi),%rdx
+
+  Additional arguments to the --visualize-jumps option add colors to the
+  output.
+
+Changes in 2.33:
+
+* Add --source-comment[=<txt>] option to objdump which if present,
+  provides a prefix to source code lines displayed in a disassembly.
+
+* Add --set-section-alignment <section-name>=<align> option to objcopy to allow
+  the changing of section alignments.
+
+* Add --verilog-data-width option to objcopy for verilog targets to control
+  width of data elements in verilog hex format.
+
+* Add support for the Armv8.1-M Mainline and M-profile Vector Extension (MVE)
+  instructions.
+
+* The separate debug info file options of readelf (--debug-dump=links
+  and --debug-dump=follow) and objdump (--dwarf=links and
+  --dwarf=follow-links) will now display and/or follow multiple links if
+  more than one are present in a file.  (This usually happens when gcc's
+  -gsplit-dwarf option is used).
+
+  In addition objdump's --dwarf=follow-links now also affects its other
+  display options, so that for example, when combined with --syms it will
+  cause the symbol tables in any linked debug info files to also be
+  displayed.  In addition when combined with --disassemble the --dwarf=
+  follow-links option will ensure that any symbol tables in the linked
+  files are read and used when disassembling code in the main file.
+
+ * Add support for dumping types encoded in the Compact Type Format
+   to objdump and readelf.
+
+Changes in 2.32:
+
+* The addr2line, c++filt, nm and objdump tools now have a limit on the
+  maximum amount of recursion that is allowed whilst demangling strings.
+  The value for this limit is defined by the DEMANGLE_RECRUSE_LIMIT
+  constant declared in the include/demangle.h header file.  At the time
+  of writing this constant has the value of 2048.
+
+  The --no-recurse-limit option can be used to remove the limit, restoring
+  the behaviour of earlier versions of these tools.  This may be needed in
+  order to dmangle truly complicated names, but it also leaves the tools
+  vulnerable to stack exhaustion from maliciously constructed mangled names.
+
+* Objdump's --disassemble option can now take a parameter, specifying the
+  starting symbol for disassembly.  Disassembly will continue from this
+  symbol up to the next symbol or the end of the function.
+
+* The MIPS port now supports the Loongson 2K1000 processor which implements
+  the MIPS64r2 ISA, the Loongson-mmi ASE, Loongson-cam ASE, Loongson-ext ASE,
+  Loongson-ext2 ASE and MSA ASE instructions. Add -march=gs264e option for
+  Loongson 2K1000 processor.
+
+* The MIPS port now supports the Loongson 3A2000/3A3000 processor which
+  implements the MIPS64r2 ISA, the Loongson-mmi ASE, Loongson-cam ASE,
+  Loongson-ext ASE and Loongson-ext2 ASE instructions. Add -march=gs464e
+  option for Loongson 3A2000/3A3000 processor.
+
+* The MIPS port now supports the Loongson 3A1000 processor, aka Loongson3a,
+  which implements the MIPS64r2 ISA, the Loongson-mmi ASE, Loongson-cam ASE
+  and Loongson-ext ASE instructions. Add -march=gs464 option for Loongson
+  3A1000 processor, The -march=loongson3a is an alias of -march=gs464 for
+  compatibility.
+
+* The size tool now has a new output format '--format=GNU' or '-G'.  The
+  results are displayed in a similar manor to the default berkeley layout,
+  except read-only data is counted in the data column, not the text column.
+  Additionally the total is only included once.
+
 Changes in 2.31:
 
 * Add support for disassembling netronome Flow Processor (NFP) firmware files.
@@ -66,11 +170,11 @@ Changes in 2.28:
   require an ABI update, affecting other assemblers and linkers that
   create and process the relocations correctly.  It is recommended that
   all VLE object files be recompiled, but ld can modify the relocations
-  if --vle-reloc-fixup is passed to ld.  If the new ld command line
+  if --vle-reloc-fixup is passed to ld.  If the new ld command-line
   option is not used, ld will ld warn on finding relocations inconsistent
   with the instructions being relocated.
 
-* The nm program has a new command line option (--with-version-strings)
+* The nm program has a new command-line option (--with-version-strings)
   which will display a symbol's version information, if any, after the
   symbol's name.
 
@@ -130,7 +234,7 @@ Changes in 2.25:
 
 Changes in 2.24:
 
-* Objcopy now supports wildcard characters in command line options that take
+* Objcopy now supports wildcard characters in command-line options that take
   section names.
 
 * Add support for Altera Nios II.
@@ -173,10 +277,10 @@ changes in 2.21:
 * Add to dlltool .def file feature of aliasing PE internal symbol name by
   '== <ID>' option.
 
-* Add a new command line option -a / --addresses to addr2line to display the
+* Add a new command-line option -a / --addresses to addr2line to display the
   address before function name or source filename.
 
-* Add a new command line option -p / --pretty-print to addr2line to have
+* Add a new command-line option -p / --pretty-print to addr2line to have
   a more human readable output.
 
 * The hppa/som targets can now be compiled on any host.
@@ -189,14 +293,14 @@ Changes in 2.20:
   from the static delayimp library, which will import LoadLibraryA and
   GetProcAddress from kernel32.
 
-* Add a new command line option, --insn-width=WIDTH, to objdump to specify
+* Add a new command-line option, --insn-width=WIDTH, to objdump to specify
   number of bytes to be displayed on a single line when disassembling
   instructions.
 
 * Readelf can now display the relocated contents of a section as a sequence
-  of bytes via the --relocated-dump=<name|number> command line option.
+  of bytes via the --relocated-dump=<name|number> command-line option.
 
-* The gprof program has been given a new command line option:
+* The gprof program has been given a new command-line option:
   --external-symbols-table=<filename> which reads in symbols from a specified
   file.
 
@@ -207,7 +311,7 @@ Changes in 2.20:
   for objcopy.
 
 * Add --file-alignment, --heap, --image-base, --section-alignment,
-  --stack and --subsystem command line options to objcopy, which will
+  --stack and --subsystem command-line options to objcopy, which will
   set PE optional header.
 
 * Option --dwarf/-W of objdump is now as flexible as readelf --debug-dump/-w.
@@ -270,7 +374,7 @@ Changes in 2.18:
   re-compiled by windres without lossing resources or compilation errors.
   Some problems on dialog resource translations are corrected.
 
-* Add --extract-symbol command line option to objcopy, which will
+* Add --extract-symbol command-line option to objcopy, which will
   strip everything out of an ordinary object file or executable except
   for its symbol table.  Files containing just symbols can be useful
   to some OSes.
@@ -322,7 +426,7 @@ Changes in 2.16:
 
 * readelf can now display address ranges from .debug_range sections.  This
   happens automatically when a DW_AT_range attribute is encountered.  The
-  command line switch --debug-dump=Ranges (or -wR) can also be used to display
+  command-line switch --debug-dump=Ranges (or -wR) can also be used to display
   the contents of the .debug_range section.
 
 * nm and objdump now have a switch "--special-syms" to enable the displaying of
@@ -404,17 +508,17 @@ Changes in version 2.12:
 * readelf: Support added for DWARF 2.1 extensions.  Support added for
   displaying the contents of .debug.macinfo sections.
 
-* New command line switches added to objcopy to allow symbols to be kept as
+* New command-line switches added to objcopy to allow symbols to be kept as
   global symbols, and also to specify files containing lists of such symbols.
   by Honda Hiroki.
 
 * Support for OpenRISC by Johan Rydberg.
 
-* New command line switch to objcopy --alt-machine-code which creates a binary
+* New command-line switch to objcopy --alt-machine-code which creates a binary
   with an alternate machine code if one is defined in the architecture
   description.  Only supported for ELF targets.  By Alexandre Oliva.
 
-* New command line switch to objcopy -B (or --binary-architecture) which sets
+* New command-line switch to objcopy -B (or --binary-architecture) which sets
   the architecture of the output file to the given argument.  This option only
   makes sense, if the input target is binary.  Otherwise it is ignored.
   By Stefan Geuken.
@@ -426,7 +530,7 @@ Changes in binutils 2.11:
 * Add support for ARM v5t and v5te architectures and Intel's XScale ARM
   extenstions.
 
-* Add --srec-len and --srec-forceS3 command line switch to objcopy.
+* Add --srec-len and --srec-forceS3 command-line switch to objcopy.
   By Luciano Gemme.
 
 * Support for the MIPS32, by Anders Norlander.
@@ -439,11 +543,11 @@ Changes in binutils 2.10:
 
 * Support for 64-bit ELF on HPPA.
 
-* New command line switch to objdump --file-start-context which shows the
+* New command-line switch to objdump --file-start-context which shows the
   entire file contents up to the source line first encountered for a given
   file.
 
-* New command line switch to objdump -M (or --disassembler-options) which takes
+* New command-line switch to objdump -M (or --disassembler-options) which takes
   a parameter which can then be interpreted on a per-target basis by the
   disassembler.  Used by ARM targets to select register name sets, ISA, APCS or
   raw verions.
@@ -609,7 +713,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

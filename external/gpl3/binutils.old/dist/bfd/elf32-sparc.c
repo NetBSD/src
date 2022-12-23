@@ -1,5 +1,5 @@
 /* SPARC-specific support for 32-bit ELF
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -117,8 +117,7 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
    We need to set the e_machine field appropriately.  */
 
 static void
-elf32_sparc_final_write_processing (bfd *abfd,
-				    bfd_boolean linker ATTRIBUTE_UNUSED)
+sparc_final_write_processing (bfd *abfd)
 {
   switch (bfd_get_mach (abfd))
     {
@@ -157,13 +156,51 @@ elf32_sparc_final_write_processing (bfd *abfd,
     }
 }
 
+static bfd_boolean
+elf32_sparc_final_write_processing (bfd *abfd)
+{
+  sparc_final_write_processing (abfd);
+  return _bfd_elf_final_write_processing (abfd);
+}
+
+/* Used to decide how to sort relocs in an optimal manner for the
+   dynamic linker, before writing them out.  */
+
 static enum elf_reloc_type_class
-elf32_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+elf32_sparc_reloc_type_class (const struct bfd_link_info *info,
 			      const asection *rel_sec ATTRIBUTE_UNUSED,
 			      const Elf_Internal_Rela *rela)
 {
+  bfd *abfd = info->output_bfd;
+  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  struct _bfd_sparc_elf_link_hash_table *htab
+    = _bfd_sparc_elf_hash_table (info);
+  BFD_ASSERT (htab != NULL);
+
+  if (htab->elf.dynsym != NULL
+      && htab->elf.dynsym->contents != NULL)
+    {
+      /* Check relocation against STT_GNU_IFUNC symbol if there are
+	 dynamic symbols.  */
+      unsigned long r_symndx = htab->r_symndx (rela->r_info);
+      if (r_symndx != STN_UNDEF)
+	{
+	  Elf_Internal_Sym sym;
+	  if (!bed->s->swap_symbol_in (abfd,
+				       (htab->elf.dynsym->contents
+					+ r_symndx * bed->s->sizeof_sym),
+				       0, &sym))
+	    abort ();
+
+	  if (ELF_ST_TYPE (sym.st_info) == STT_GNU_IFUNC)
+	    return reloc_class_ifunc;
+	}
+    }
+
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
+    case R_SPARC_IRELATIVE:
+      return reloc_class_ifunc;
     case R_SPARC_RELATIVE:
       return reloc_class_relative;
     case R_SPARC_JMP_SLOT:
@@ -290,11 +327,11 @@ elf32_sparc_vxworks_link_hash_table_create (bfd *abfd)
 /* A final_write_processing hook that does both the SPARC- and VxWorks-
    specific handling.  */
 
-static void
-elf32_sparc_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
+static bfd_boolean
+elf32_sparc_vxworks_final_write_processing (bfd *abfd)
 {
-  elf32_sparc_final_write_processing (abfd, linker);
-  elf_vxworks_final_write_processing (abfd, linker);
+  sparc_final_write_processing (abfd);
+  return elf_vxworks_final_write_processing (abfd);
 }
 
 #undef  TARGET_BIG_SYM

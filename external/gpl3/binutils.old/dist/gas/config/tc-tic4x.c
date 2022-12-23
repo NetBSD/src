@@ -1,5 +1,5 @@
 /* tc-tic4x.c -- Assemble for the Texas Instruments TMS320C[34]x.
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -51,9 +51,6 @@
    not requiring `@' in front of direct addresses.  */
 
 #define TIC4X_ALT_SYNTAX
-
-/* Equal to MAX_PRECISION in atof-ieee.c.  */
-#define MAX_LITTLENUMS 6	/* (12 bytes) */
 
 /* Handle of the inst mnemonic hash table.  */
 static struct hash_control *tic4x_op_hash = NULL;
@@ -1004,9 +1001,9 @@ tic4x_sect (int x ATTRIBUTE_UNUSED)
       symbol_set_frag (line_label, frag_now);
     }
 
-  if (bfd_get_section_flags (stdoutput, seg) == SEC_NO_FLAGS)
+  if (bfd_section_flags (seg) == SEC_NO_FLAGS)
     {
-      if (!bfd_set_section_flags (stdoutput, seg, SEC_DATA))
+      if (!bfd_set_section_flags (seg, SEC_DATA))
 	as_warn (_("Error setting flags for \"%s\": %s"), name,
 		 bfd_errmsg (bfd_get_error ()));
     }
@@ -1107,7 +1104,7 @@ tic4x_usect (int x ATTRIBUTE_UNUSED)
       S_SET_VALUE (line_label, frag_now_fix ());
     }
   seg_info (seg)->bss = 1;	/* Uninitialised data.  */
-  if (!bfd_set_section_flags (stdoutput, seg, SEC_ALLOC))
+  if (!bfd_set_section_flags (seg, SEC_ALLOC))
     as_warn (_("Error setting flags for \"%s\": %s"), name,
 	     bfd_errmsg (bfd_get_error ()));
   tic4x_seg_alloc (name, seg, size, line_label);
@@ -2196,7 +2193,7 @@ tic4x_operands_match (tic4x_inst_t *inst, tic4x_insn_t *tinsn, int check)
 		}
 	      else if (exp->X_add_number < 32 && IS_CPU_TIC3X (tic4x_cpu))
 		{
-		  INSERTU (opcode, exp->X_add_number | 0x20, 4, 0);
+		  INSERTU (opcode, exp->X_add_number | 0x20, 5, 0);
 		  continue;
 		}
 	      else
@@ -2487,7 +2484,8 @@ md_assemble (char *str)
                 first_inst = inst;
               ok = 0;
             }
-      } while (!ok && !strcmp (inst->name, inst[1].name) && inst++);
+	}
+      while (!ok && !strcmp (inst->name, inst[1].name) && inst++);
 
       if (ok > 0)
         {
@@ -2939,7 +2937,7 @@ md_pcrel_from (fixS *fixP)
   unsigned int op;
 
   buf = (unsigned char *) fixP->fx_frag->fr_literal + fixP->fx_where;
-  op = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
+  op = ((unsigned) buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
 
   return ((fixP->fx_where + fixP->fx_frag->fr_address) >> 2) +
     tic4x_pc_offset (op);

@@ -1,4 +1,4 @@
-@c Copyright (C) 2015-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2015-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -25,19 +25,19 @@
 @c man begin OPTIONS
 @table @gcctabopt
 
-@cindex @code{mlink-relax} command line option, PRU
+@cindex @code{mlink-relax} command-line option, PRU
 @item -mlink-relax
 Assume that LD would optimize LDI32 instructions by checking the upper
 16 bits of the @var{expression}. If they are all zeros, then LD would
 shorten the LDI32 instruction to a single LDI. In such case @code{@value{AS}}
 will output DIFF relocations for diff expressions.
 
-@cindex @code{mno-link-relax} command line option, PRU
+@cindex @code{mno-link-relax} command-line option, PRU
 @item -mno-link-relax
 Assume that LD would not optimize LDI32 instructions. As a consequence,
 DIFF relocations will not be emitted.
 
-@cindex @code{mno-warn-regname-label} command line option, PRU
+@cindex @code{mno-warn-regname-label} command-line option, PRU
 @item -mno-warn-regname-label
 Do not warn if a label name matches a register name. Usually assembler
 programmers will want this warning to be emitted. C compilers may want
@@ -129,7 +129,7 @@ Create an unaligned constant 16 bytes in size.
 @cindex @code{set no_warn_regname_label} directive, PRU
 @item .set no_warn_regname_label
 Do not output warnings when a label name matches a register name. Equivalent
-to passing the @code{-mno-warn-regname-label} command line option.
+to passing the @code{-mno-warn-regname-label} command-line option.
 
 @end table
 

@@ -1,5 +1,5 @@
 /* ARC ELF support for BFD.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Contributed by Doug Evans, (dje@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -83,7 +83,8 @@ enum {
   Tag_ARC_ABI_double_size,
   Tag_ARC_ISA_config,
   Tag_ARC_ISA_apex,
-  Tag_ARC_ISA_mpy_option
+  Tag_ARC_ISA_mpy_option,
+  Tag_ARC_ATR_version = 20
 };
 
 /* Values for the Tag_ARC_cpu_base attribute.  */

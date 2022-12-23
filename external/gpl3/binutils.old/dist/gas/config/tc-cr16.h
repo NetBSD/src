@@ -1,5 +1,5 @@
 /* tc-cr16.h -- Header file for tc-cr16.c, the CR16 GAS port.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
