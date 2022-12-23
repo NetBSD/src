@@ -6,6 +6,10 @@ ldbuildid.h
 ldcref.c
 ldctor.c
 ldctor.h
+ldelf.c
+ldelf.h
+ldelfgen.c
+ldelfgen.h
 ldemul.c
 ldemul.h
 ldexp.c

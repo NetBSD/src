@@ -1,5 +1,5 @@
 # RV64 code using LP64F ABI.
-. ${srcdir}/emulparams/elf64lriscv-defs.sh
+source_sh ${srcdir}/emulparams/elf64lriscv-defs.sh
 OUTPUT_FORMAT="elf64-littleriscv"
 
 # On Linux, first look for 64 bit LP64F target libraries in /lib64/lp64f as per

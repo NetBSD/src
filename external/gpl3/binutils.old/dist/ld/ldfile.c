@@ -1,5 +1,5 @@
 /* Linker file opening and searching.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,6 +21,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "bfdlink.h"
+#include "ctf-api.h"
 #include "safe-ctype.h"
 #include "ld.h"
 #include "ldmisc.h"
@@ -585,16 +586,56 @@ ldfile_find_command_file (const char *name,
   return result;
 }
 
+enum script_open_style {
+  script_nonT,
+  script_T,
+  script_defaultT
+};
+
+struct script_name_list
+{
+  struct script_name_list *next;
+  enum script_open_style open_how;
+  char name[1];
+};
+
 /* Open command file NAME.  */
 
 static void
-ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
+ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
 {
   FILE *ldlex_input_stack;
   bfd_boolean sysrooted;
+  static struct script_name_list *processed_scripts = NULL;
+  struct script_name_list *script;
+  size_t len;
 
-  ldlex_input_stack = ldfile_find_command_file (name, default_only, &sysrooted);
+  /* PR 24576: Catch the case where the user has accidentally included
+     the same linker script twice.  */
+  for (script = processed_scripts; script != NULL; script = script->next)
+    {
+      if ((open_how != script_nonT || script->open_how != script_nonT)
+	  && strcmp (name, script->name) == 0)
+	{
+	  einfo (_("%F%P: error: linker script file '%s'"
+		   " appears multiple times\n"), name);
+	  return;
+	}
+    }
 
+  /* FIXME: This memory is never freed, but that should not really matter.
+     It will be released when the linker exits, and it is unlikely to ever
+     be more than a few tens of bytes.  */
+  len = strlen (name);
+  script = xmalloc (sizeof (*script) + len);
+  script->next = processed_scripts;
+  script->open_how = open_how;
+  memcpy (script->name, name, len + 1);
+  processed_scripts = script;
+
+  ldlex_input_stack = ldfile_find_command_file (name,
+						open_how == script_defaultT,
+						&sysrooted);
   if (ldlex_input_stack == NULL)
     {
       bfd_set_error (bfd_error_system_call);
@@ -615,7 +656,13 @@ ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
 void
 ldfile_open_command_file (const char *name)
 {
-  ldfile_open_command_file_1 (name, FALSE);
+  ldfile_open_command_file_1 (name, script_nonT);
+}
+
+void
+ldfile_open_script_file (const char *name)
+{
+  ldfile_open_command_file_1 (name, script_T);
 }
 
 /* Open command file NAME at the default script location.  */
@@ -623,7 +670,7 @@ ldfile_open_command_file (const char *name)
 void
 ldfile_open_default_command_file (const char *name)
 {
-  ldfile_open_command_file_1 (name, TRUE);
+  ldfile_open_command_file_1 (name, script_defaultT);
 }
 
 void

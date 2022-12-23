@@ -1,5 +1,5 @@
 /* BFD support for the TILE-Gx processor.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,36 +22,27 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(BITS, NUMBER, PRINT, DEFAULT, NEXT)		\
+  {							\
+    BITS,      /* Bits in a word.  */			\
+    BITS,      /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
+    bfd_arch_tilegx,					\
+    NUMBER,						\
+    "tilegx",						\
+    PRINT,						\
+    3,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_tilegx32_arch =
-  {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_tilegx,
-    bfd_mach_tilegx32,
-    "tilegx32",
-    "tilegx32",
-    3,
-    FALSE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-  };
+  N (32, bfd_mach_tilegx32, "tilegx32", FALSE, NULL);
 
 const bfd_arch_info_type bfd_tilegx_arch =
-  {
-    64, /* 64 bits in a word */
-    64, /* 64 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_tilegx,
-    bfd_mach_tilegx,
-    "tilegx",
-    "tilegx",
-    3,
-    TRUE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_tilegx32_arch,
-  };
+  N (64, bfd_mach_tilegx, "tilegx", TRUE, &bfd_tilegx32_arch);
+

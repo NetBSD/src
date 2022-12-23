@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,25 +24,15 @@
 #include "bfdlink.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include "elf32-xgate.h"
 #include "elf/xgate.h"
 #include "opcode/xgate.h"
 #include "libiberty.h"
 
-/* Relocation functions.  */
-static reloc_howto_type *
-bfd_elf32_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
-static reloc_howto_type *
-bfd_elf32_bfd_reloc_name_lookup (bfd *, const char *);
-static bfd_boolean
-xgate_info_to_howto_rel (bfd *, arelent *, Elf_Internal_Rela *);
-static bfd_boolean
-xgate_elf_set_mach_from_flags (bfd *);
-static struct bfd_hash_entry *
-stub_hash_newfunc (struct bfd_hash_entry *, struct bfd_hash_table *,
-    const char *);
-static struct bfd_link_hash_table*
-xgate_elf_bfd_link_hash_table_create (bfd *);
+/* Forward declarations.  */
+static bfd_reloc_status_type xgate_elf_ignore_reloc
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+static bfd_reloc_status_type xgate_elf_special_reloc
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 
 /* Use REL instead of RELA to save space */
 #define USE_REL	1
@@ -395,7 +385,7 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   for (i = 0; i < ARRAY_SIZE (xgate_reloc_map); i++)
     if (xgate_reloc_map[i].bfd_reloc_val == code)
       return &elf_xgate_howto_table[xgate_reloc_map[i].elf_reloc_val];
-  
+
   return NULL;
 }
 
@@ -434,66 +424,6 @@ xgate_info_to_howto_rel (bfd *abfd,
   return TRUE;
 }
 
-/* Destroy an XGATE ELF linker hash table.  */
-
-static void
-xgate_elf_bfd_link_hash_table_free (bfd *obfd)
-{
-  struct xgate_elf_link_hash_table *ret =
-      (struct xgate_elf_link_hash_table *) obfd->link.hash;
-
-  bfd_hash_table_free (ret->stub_hash_table);
-  free (ret->stub_hash_table);
-  _bfd_elf_link_hash_table_free (obfd);
-}
-
-/* Create an XGATE ELF linker hash table.  */
-
-static struct bfd_link_hash_table*
-xgate_elf_bfd_link_hash_table_create (bfd *abfd)
-{
-  struct xgate_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof(struct xgate_elf_link_hash_table);
-
-  ret = (struct xgate_elf_link_hash_table *) bfd_zmalloc (amt);
-  if (ret == (struct xgate_elf_link_hash_table *) NULL)
-    return NULL;
-
-  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
-      _bfd_elf_link_hash_newfunc, sizeof(struct elf_link_hash_entry),
-      XGATE_ELF_DATA))
-    {
-      free (ret);
-      return NULL;
-    }
-
-  /* Init the stub hash table too.  */
-  amt = sizeof(struct bfd_hash_table);
-  ret->stub_hash_table = (struct bfd_hash_table*) bfd_zmalloc (amt);
-  if (ret->stub_hash_table == NULL)
-    {
-      _bfd_elf_link_hash_table_free (abfd);
-      return NULL;
-    }
-
-  if (!bfd_hash_table_init (ret->stub_hash_table, stub_hash_newfunc,
-      sizeof(struct elf32_xgate_stub_hash_entry)))
-    {
-      free (ret->stub_hash_table);
-      _bfd_elf_link_hash_table_free (abfd);
-      return NULL;
-    }
-  ret->root.root.hash_table_free = xgate_elf_bfd_link_hash_table_free;
-
-  return &ret->root.root;
-}
-
-static bfd_boolean
-xgate_elf_set_mach_from_flags (bfd *abfd ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
 /* Specific sections:
  - The .page0 is a data section that is mapped in [0x0000..0x00FF].
    Page0 accesses are faster on the M68HC12.
@@ -511,91 +441,20 @@ static const struct bfd_elf_special_section elf32_xgate_special_sections[] =
   { NULL, 0, 0, 0, 0 }
 };
 
-struct xgate_scan_param
+/* Hook called when reading symbols. */
+
+static void
+elf32_xgate_backend_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED,
+				       asymbol *sym)
 {
-  struct xgate_page_info* pinfo;
-  bfd_boolean use_memory_banks;
-};
-
-/* Assorted hash table functions.  */
-
-/* Initialize an entry in the stub hash table.  */
-
-static struct bfd_hash_entry *
-stub_hash_newfunc (struct bfd_hash_entry *entry,
-		   struct bfd_hash_table *table ATTRIBUTE_UNUSED,
-		   const char *string ATTRIBUTE_UNUSED)
-{
-  return entry;
-}
-
-/* Hook called by the linker routine which adds symbols from an object
-   file. */
-
-bfd_boolean
-elf32_xgate_add_symbol_hook (bfd *abfd ATTRIBUTE_UNUSED,
-			     struct bfd_link_info *info ATTRIBUTE_UNUSED,
-			     Elf_Internal_Sym *sym,
-			     const char **namep ATTRIBUTE_UNUSED,
-			     flagword *flagsp ATTRIBUTE_UNUSED,
-			     asection **secp ATTRIBUTE_UNUSED,
-			     bfd_vma *valp ATTRIBUTE_UNUSED)
-{
-  /* For some reason the st_target_internal value is not retained
-     after xgate_frob_symbol is called, hence this temp hack.  */
-  sym->st_target_internal = 1;
-  return TRUE;
-}
-
-/* External entry points for sizing and building linker stubs.  */
-
-/* Set up various things so that we can make a list of input sections
-   for each output section included in the link.  Returns -1 on error,
-   0 when no stubs will be needed, and 1 on success.  */
-
-int
-elf32_xgate_setup_section_lists (bfd *output_bfd ATTRIBUTE_UNUSED,
-				 struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return 1;
-}
-
-/* Determine and set the size of the stub section for a final link.
-   The basic idea here is to examine all the relocations looking for
-   PC-relative calls to a target that is unreachable with any "9-bit PC-REL"
-   instruction.  */
-
-bfd_boolean
-elf32_xgate_size_stubs (bfd *output_bfd ATTRIBUTE_UNUSED,
-			bfd *stub_bfd ATTRIBUTE_UNUSED,
-			struct bfd_link_info *info ATTRIBUTE_UNUSED,
-			asection * (*add_stub_section) (const char*, asection*) ATTRIBUTE_UNUSED)
-{
-  return FALSE;
-}
-
-/* Build all the stubs associated with the current output file.  The
-   stubs are kept in a hash table attached to the main linker hash
-   table.  This function is called via xgateelf_finish in the
-   linker.  */
-
-bfd_boolean
-elf32_xgate_build_stubs (bfd *abfd ATTRIBUTE_UNUSED,
-			 struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
-void
-xgate_elf_get_bank_parameters (struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return;
+  /* Mark xgate symbols.  */
+  ((elf_symbol_type *) sym)->internal_elf_sym.st_target_internal = 1;
 }
 
 /* This function is used for relocs which are only used for relaxing,
    which the linker should otherwise ignore.  */
 
-bfd_reloc_status_type
+static bfd_reloc_status_type
 xgate_elf_ignore_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 			arelent *reloc_entry,
 			asymbol *symbol ATTRIBUTE_UNUSED,
@@ -609,7 +468,7 @@ xgate_elf_ignore_reloc (bfd *abfd ATTRIBUTE_UNUSED,
   return bfd_reloc_ok;
 }
 
-bfd_reloc_status_type
+static bfd_reloc_status_type
 xgate_elf_special_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 			 arelent *reloc_entry ATTRIBUTE_UNUSED,
 			 asymbol *symbol ATTRIBUTE_UNUSED,
@@ -621,44 +480,7 @@ xgate_elf_special_reloc (bfd *abfd ATTRIBUTE_UNUSED,
   abort ();
 }
 
-/* Look through the relocs for a section during the first phase.
-   Since we don't do .gots or .plts, we just need to consider the
-   virtual table relocs for gc.  */
-
-bfd_boolean
-elf32_xgate_check_relocs (bfd *abfd ATTRIBUTE_UNUSED,
-			  struct bfd_link_info *info ATTRIBUTE_UNUSED,
-			  asection *sec ATTRIBUTE_UNUSED,
-			  const Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
-/* Relocate a XGATE/S12x ELF section.  */
-
-bfd_boolean
-elf32_xgate_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
-			      struct bfd_link_info *info ATTRIBUTE_UNUSED,
-			      bfd *input_bfd ATTRIBUTE_UNUSED,
-			      asection *input_section ATTRIBUTE_UNUSED,
-			      bfd_byte *contents ATTRIBUTE_UNUSED,
-			      Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED,
-			      Elf_Internal_Sym *local_syms ATTRIBUTE_UNUSED,
-			      asection **local_sections ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
-/* Set and control ELF flags in ELF header.  */
-
-bfd_boolean
-_bfd_xgate_elf_set_private_flags (bfd *abfd ATTRIBUTE_UNUSED,
-				  flagword flags ATTRIBUTE_UNUSED)
-{
-  return TRUE;
-}
-
-bfd_boolean
+static bfd_boolean
 _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -689,38 +511,17 @@ _bfd_xgate_elf_print_private_bfd_data (bfd *abfd, void *ptr)
   return TRUE;
 }
 
-void
-elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
-{
-
-}
-
 #define ELF_ARCH			     bfd_arch_xgate
 #define ELF_MACHINE_CODE		     EM_XGATE
-#define ELF_TARGET_ID			     XGATE_ELF_DATA
 
 #define ELF_MAXPAGESIZE			     0x1000
 
 #define TARGET_BIG_SYM			     xgate_elf32_vec
 #define TARGET_BIG_NAME			     "elf32-xgate"
 
-#define elf_info_to_howto		     NULL
 #define elf_info_to_howto_rel		     xgate_info_to_howto_rel
-#define elf_backend_check_relocs	     elf32_xgate_check_relocs
-#define elf_backend_relocate_section	     elf32_xgate_relocate_section
-#define elf_backend_object_p		     xgate_elf_set_mach_from_flags
-#define elf_backend_final_write_processing   NULL
-#define elf_backend_can_gc_sections	     1
 #define elf_backend_special_sections	     elf32_xgate_special_sections
-#define elf_backend_post_process_headers     elf32_xgate_post_process_headers
-#define elf_backend_add_symbol_hook	     elf32_xgate_add_symbol_hook
-
-#define bfd_elf32_bfd_link_hash_table_create xgate_elf_bfd_link_hash_table_create
-#define bfd_elf32_bfd_set_private_flags	     _bfd_xgate_elf_set_private_flags
+#define elf_backend_symbol_processing	     elf32_xgate_backend_symbol_processing
 #define bfd_elf32_bfd_print_private_bfd_data _bfd_xgate_elf_print_private_bfd_data
-
-#define xgate_stub_hash_lookup(table, string, create, copy)	\
-    ((struct elf32_xgate_stub_hash_entry *) \
-	bfd_hash_lookup ((table), (string), (create), (copy)))
 
 #include "elf32-target.h"

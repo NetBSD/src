@@ -1,5 +1,5 @@
 /* symbols.h -
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -57,6 +57,7 @@ symbolS *symbol_clone_if_forward_ref (symbolS *, int);
 #define symbol_clone_if_forward_ref(s) symbol_clone_if_forward_ref (s, 0)
 symbolS *symbol_temp_new (segT, valueT, fragS *);
 symbolS *symbol_temp_new_now (void);
+symbolS *symbol_temp_new_now_octets (void);
 symbolS *symbol_temp_make (void);
 
 symbolS *colon (const char *sym_name);
@@ -168,6 +169,8 @@ void symbol_remove (symbolS * symbolP, symbolS ** rootP,
 
 extern symbolS *symbol_previous (symbolS *);
 
+extern int symbol_on_chain (symbolS *s, symbolS *rootPP, symbolS *lastPP);
+
 void verify_symbol_chain (symbolS * rootP, symbolS * lastP);
 
 void symbol_append (symbolS * addme, symbolS * target,
@@ -200,6 +203,7 @@ extern int symbol_equated_p (symbolS *);
 extern int symbol_equated_reloc_p (symbolS *);
 extern int symbol_constant_p (symbolS *);
 extern int symbol_shadow_p (symbolS *);
+extern symbolS *symbol_symbolS (symbolS *);
 extern asymbol *symbol_get_bfdsym (symbolS *);
 extern void symbol_set_bfdsym (symbolS *, asymbol *);
 extern int symbol_same_p (symbolS *, symbolS *);

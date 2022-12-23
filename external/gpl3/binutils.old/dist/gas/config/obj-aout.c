@@ -1,5 +1,5 @@
 /* a.out object file format
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -118,17 +118,27 @@ obj_aout_frob_file_before_fix (void)
 {
   /* Relocation processing may require knowing the VMAs of the sections.
      Since writing to a section will cause the BFD back end to compute the
-     VMAs, fake it out here....  */
-  bfd_byte b = 0;
-  bfd_boolean x = TRUE;
-  if (bfd_section_size (stdoutput, text_section) != 0)
-    x = bfd_set_section_contents (stdoutput, text_section, &b, (file_ptr) 0,
-				  (bfd_size_type) 1);
-  else if (bfd_section_size (stdoutput, data_section) != 0)
-    x = bfd_set_section_contents (stdoutput, data_section, &b, (file_ptr) 0,
-				  (bfd_size_type) 1);
-
-  gas_assert (x);
+     VMAs, fake it out here....
+     Writing to the end of the section ensures the file contents
+     extend to cover the entire aligned size.  We possibly won't know
+     the aligned size until after VMAs and sizes are set on the first
+     bfd_set_section_contents call, so it might be necessary to repeat.  */
+  asection *sec = NULL;
+  if (data_section->size != 0)
+    sec = data_section;
+  else if (text_section->size != 0)
+    sec = text_section;
+  if (sec)
+    {
+      bfd_size_type size;
+      do
+	{
+	  bfd_byte b = 0;
+	  size = sec->size;
+	  gas_assert (bfd_set_section_contents (stdoutput, sec, &b,
+						size - 1, (bfd_size_type) 1));
+	} while (size != sec->size);
+    }
 }
 
 static void

@@ -1,32 +1,38 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
-if [ x${LD_FLAG} = x ]
-then
+if test "${OUTPUT_FORMAT}" = "elf32-z80"; then
+  NO_REL_RELOCS=1
+  NO_RELA_RELOCS=1
+  NO_SMALL_DATA=1
+  EMBEDDED=1
+  ALIGNMENT=1
+  . $srcdir/scripttempl/elf.sc
+  return 0
+fi
+
 cat << EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
    notice and this notice are preserved.  */
 
-/* Create a cp/m executable; load and execute at 0x100.  */
-OUTPUT_FORMAT("binary")
-. = 0x100;
-__Ltext = .;
-ENTRY (__Ltext)
-EOF
-else
-    echo "OUTPUT_FORMAT(\"${OUTPUT_FORMAT}\")"
-fi
-cat <<EOF
-OUTPUT_ARCH("${OUTPUT_ARCH}")
+OUTPUT_FORMAT("${OUTPUT_FORMAT}")
+OUTPUT_ARCH("${ARCH}")
 SECTIONS
 {
+.isr :	{
+	${RELOCATING+ __Labs = .;}
+	*(.isr)
+	*(isr)
+	${RELOCATING+ __Habs = .;}
+	}
 .text :	{
+	${RELOCATING+ __Ltext = .;}
 	*(.text)
 	*(text)
 	${RELOCATING+ __Htext = .;}

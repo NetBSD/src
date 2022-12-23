@@ -1,5 +1,5 @@
 /* ARC processor types
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,6 +24,7 @@ ARC_CPU_TYPE_A7xx (nps400, NPS400),
 
 ARC_CPU_TYPE_AV2EM (arcem,	0x00),
 ARC_CPU_TYPE_AV2EM (em,		0x00),
+ARC_CPU_TYPE_AV2EM (em_mini,	0x00),
 ARC_CPU_TYPE_AV2EM (em4,	CD),
 ARC_CPU_TYPE_AV2EM (em4_dmips,  CD),
 ARC_CPU_TYPE_AV2EM (em4_fpus,	CD),
@@ -35,6 +36,9 @@ ARC_CPU_TYPE_AV2HS (hs,		CD),
 ARC_CPU_TYPE_AV2HS (hs34,	CD),
 ARC_CPU_TYPE_AV2HS (hs38,	CD),
 ARC_CPU_TYPE_AV2HS (hs38_linux, CD),
+ARC_CPU_TYPE_AV2HS (hs4x,	CD),
+ARC_CPU_TYPE_AV2HS (hs4xd,	CD),
+ARC_CPU_TYPE_AV2HS (hs4x_rel31, CD),
 
 ARC_CPU_TYPE_A6xx (arc600, 0x00),
 ARC_CPU_TYPE_A6xx (arc600_norm,     0x00),

@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -31,7 +31,7 @@ dependent options:
 
 @table @samp
 
-@cindex @samp{-march=} command line option, M680x0
+@cindex @samp{-march=} command-line option, M680x0
 @item -march=@var{architecture}
 This option specifies a target architecture.  The following
 architectures are recognized:
@@ -49,20 +49,20 @@ architectures are recognized:
 @code{cfv4e}.
 
 
-@cindex @samp{-mcpu=} command line option, M680x0
+@cindex @samp{-mcpu=} command-line option, M680x0
 @item -mcpu=@var{cpu}
 This option specifies a target cpu.  When used in conjunction with the
 @option{-march} option, the cpu must be within the specified
 architecture.  Also, the generic features of the architecture are used
 for instruction generation, rather than those of the specific chip.
 
-@cindex @samp{-m[no-]68851} command line option, M680x0
-@cindex @samp{-m[no-]68881} command line option, M680x0
-@cindex @samp{-m[no-]div} command line option, M680x0
-@cindex @samp{-m[no-]usp} command line option, M680x0
-@cindex @samp{-m[no-]float} command line option, M680x0
-@cindex @samp{-m[no-]mac} command line option, M680x0
-@cindex @samp{-m[no-]emac} command line option, M680x0
+@cindex @samp{-m[no-]68851} command-line option, M680x0
+@cindex @samp{-m[no-]68881} command-line option, M680x0
+@cindex @samp{-m[no-]div} command-line option, M680x0
+@cindex @samp{-m[no-]usp} command-line option, M680x0
+@cindex @samp{-m[no-]float} command-line option, M680x0
+@cindex @samp{-m[no-]mac} command-line option, M680x0
+@cindex @samp{-m[no-]emac} command-line option, M680x0
 @item -m[no-]68851
 @itemx -m[no-]68881
 @itemx -m[no-]div
@@ -446,7 +446,7 @@ This directive is identical to a @code{.space} directive.
 @cindex @code{arch} directive, M680x0
 @item .arch @var{name}
 Select the target architecture and extension features.  Valid values
-for @var{name} are the same as for the @option{-march} command line
+for @var{name} are the same as for the @option{-march} command-line
 option.  This directive cannot be specified after
 any instructions have been assembled.  If it is given multiple times,
 or in conjunction with the @option{-march} option, all uses must be for
@@ -455,7 +455,7 @@ the same architecture and extension set.
 @cindex @code{cpu} directive, M680x0
 @item .cpu @var{name}
 Select the target cpu.  Valid values
-for @var{name} are the same as for the @option{-mcpu} command line
+for @var{name} are the same as for the @option{-mcpu} command-line
 option.  This directive cannot be specified after
 any instructions have been assembled.  If it is given multiple times,
 or in conjunction with the @option{-mopt} option, all uses must be for
@@ -613,7 +613,7 @@ branch instructions allow both word and long displacements.
 @cindex line comment character, M680x0
 @cindex comments, M680x0
 Line comments are introduced by the @samp{|} character appearing
-anywhere on a line, unless the @option{--bitwise-or} command line option
+anywhere on a line, unless the @option{--bitwise-or} command-line option
 has been specified.
 
 An asterisk (@samp{*}) as the first character on a line marks the

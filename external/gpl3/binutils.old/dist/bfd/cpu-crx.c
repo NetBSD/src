@@ -1,5 +1,5 @@
 /* BFD support for the CRX processor.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,18 +24,19 @@
 
 
 const bfd_arch_info_type bfd_crx_arch =
-  {
-    16,		/* 16 bits in a word.  */
-    32,		/* 32 bits in an address.  */
-    8,		/*  8 bits in a byte.  */
-    bfd_arch_crx, /* enum bfd_architecture arch.  */
-    bfd_mach_crx,
-    "crx",	/* Arch name.  */
-    "crx",	/* Printable name.  */
-    1,		/* Unsigned int section alignment power.  */
-    TRUE,	/* The one and only.  */
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-  };
+{
+  16,		/* Bits in a word.  */
+  32,		/* Bits in an address.  */
+  8,		/* Bits in a byte.  */
+  bfd_arch_crx, /* Architecture number.  */
+  bfd_mach_crx,
+  "crx",	/* Arch name.  */
+  "crx",	/* Printable name.  */
+  1,		/* Section alignment power.  */
+  TRUE,		/* The one and only.  */
+  bfd_default_compatible,
+  bfd_default_scan,
+  bfd_arch_default_fill,
+  NULL,
+  0 /* Maximum offset of a reloc from the start of an insn.  */
+};

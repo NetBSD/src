@@ -1,6 +1,6 @@
 // archive.cc -- archive support for gold
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -690,6 +690,7 @@ Archive::get_elf_object_for_member(off_t off, bool* punconfigured)
   int read_size;
   Object *obj = NULL;
   bool is_elf_obj = false;
+  bool unclaimed = false;
 
   if (is_elf_object(input_file, memoff, &ehdr, &read_size))
     {
@@ -716,12 +717,20 @@ Archive::get_elf_object_for_member(off_t off, bool* punconfigured)
 	    delete obj;
           return plugin_obj;
         }
+
+      unclaimed = true;
     }
 
   if (!is_elf_obj)
     {
-      gold_error(_("%s: member at %zu is not an ELF object"),
-		 this->name().c_str(), static_cast<size_t>(off));
+      if (unclaimed)
+	gold_error(_("%s: plugin failed to claim member %s at %zu"),
+		   this->name().c_str(), member_name.c_str(),
+		   static_cast<size_t>(off));
+      else
+	gold_error(_("%s: member %s at %zu is not an ELF object"),
+		   this->name().c_str(), member_name.c_str(),
+		   static_cast<size_t>(off));
       return NULL;
     }
 

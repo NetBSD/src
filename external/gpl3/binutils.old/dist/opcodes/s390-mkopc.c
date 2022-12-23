@@ -1,5 +1,5 @@
 /* s390-mkopc.c -- Generates opcode table out of s390-opc.txt
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -377,6 +377,9 @@ main (void)
       else if (strcmp (cpu_string, "z14") == 0
 	       || strcmp (cpu_string, "arch12") == 0)
 	min_cpu = S390_OPCODE_ARCH12;
+      else if (strcmp (cpu_string, "z15") == 0
+	       || strcmp (cpu_string, "arch13") == 0)
+	min_cpu = S390_OPCODE_ARCH13;
       else {
 	fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
 	exit (1);

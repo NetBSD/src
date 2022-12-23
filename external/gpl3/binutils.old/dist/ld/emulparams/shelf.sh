@@ -8,7 +8,7 @@ TEXT_START_ADDR=0x1000
 MAXPAGESIZE=128
 ARCH=sh
 MACHINE=
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 GENERATE_SHLIB_SCRIPT=yes
 EMBEDDED=yes
 # These are for compatibility with the COFF toolchain.

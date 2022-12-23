@@ -1,5 +1,5 @@
 /* frags.c - manage frags -
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -165,7 +165,9 @@ frag_new (size_t old_frags_var_max_size
   gas_assert (frchain_now->frch_last == frag_now);
 
   /* Fix up old frag's fr_fix.  */
-  frag_now->fr_fix = frag_now_fix_octets () - old_frags_var_max_size;
+  frag_now->fr_fix = frag_now_fix_octets ();
+  gas_assert (frag_now->fr_fix >= old_frags_var_max_size);
+  frag_now->fr_fix -= old_frags_var_max_size;
   /* Make sure its type is valid.  */
   gas_assert (frag_now->fr_type != 0);
 
@@ -238,7 +240,7 @@ frag_var_init (relax_stateT type, size_t max_chars, size_t var,
   frag_now->fr_cgen.opinfo = 0;
 #endif
 #ifdef TC_FRAG_INIT
-  TC_FRAG_INIT (frag_now);
+  TC_FRAG_INIT (frag_now, max_chars);
 #endif
   frag_now->fr_file = as_where (&frag_now->fr_line);
 
@@ -393,7 +395,12 @@ frag_now_fix_octets (void)
 addressT
 frag_now_fix (void)
 {
-  return frag_now_fix_octets () / OCTETS_PER_BYTE;
+  /* Symbols whose section has SEC_ELF_OCTETS set,
+     resolve to octets instead of target bytes.  */
+  if (now_seg->flags & SEC_OCTETS)
+    return frag_now_fix_octets ();
+  else
+    return frag_now_fix_octets () / OCTETS_PER_BYTE;
 }
 
 void
@@ -459,4 +466,59 @@ frag_offset_fixed_p (const fragS *frag1, const fragS *frag2, offsetT *offset)
     }
 
   return FALSE;
+}
+
+/* Return TRUE if we can determine whether FRAG2 OFF2 appears after
+   (strict >, not >=) FRAG1 OFF1, assuming it is not before.  Set
+   *OFFSET so that resolve_expression will resolve an O_gt operation
+   between them to false (0) if they are guaranteed to be at the same
+   location, or to true (-1) if they are guaranteed to be at different
+   locations.  Return FALSE conservatively, e.g. if neither result can
+   be guaranteed (yet).
+
+   They are known to be in the same segment, and not the same frag
+   (this is a fallback for frag_offset_fixed_p, that always takes care
+   of this case), and it is expected (from the uses this is designed
+   to simplify, namely location view increments) that frag2 is
+   reachable from frag1 following the fr_next links, rather than the
+   other way round.  */
+
+bfd_boolean
+frag_gtoffset_p (valueT off2, const fragS *frag2,
+		 valueT off1, const fragS *frag1, offsetT *offset)
+{
+  /* Insanity check.  */
+  if (frag2 == frag1 || off1 > frag1->fr_fix)
+    return FALSE;
+
+  /* If the first symbol offset is at the end of the first frag and
+     the second symbol offset at the beginning of the second frag then
+     it is possible they are at the same address.  Go looking for a
+     non-zero fr_fix in any frag between these frags.  If found then
+     we can say the O_gt result will be true.  If no such frag is
+     found we assume that frag1 or any of the following frags might
+     have a variable tail and thus the answer is unknown.  This isn't
+     strictly true; some frags don't have a variable tail, but it
+     doesn't seem worth optimizing for those cases.  */
+  const fragS *frag = frag1;
+  offsetT delta = off2 - off1;
+  for (;;)
+    {
+      delta += frag->fr_fix;
+      frag = frag->fr_next;
+      if (frag == frag2)
+	{
+	  if (delta == 0)
+	    return FALSE;
+	  break;
+	}
+      /* If we run off the end of the frag chain then we have a case
+	 where frag2 is not after frag1, ie. an O_gt expression not
+	 created for .loc view.  */
+      if (frag == NULL)
+	return FALSE;
+    }
+
+  *offset = (off2 - off1 - delta) * OCTETS_PER_BYTE;
+  return TRUE;
 }

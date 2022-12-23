@@ -690,6 +690,7 @@ extra_mpc_gmp_configure_flags
 extra_mpfr_configure_flags
 gmpinc
 gmplibs
+LIBDEBUGINFOD
 do_compare
 GNATMAKE
 GNATBIND
@@ -790,6 +791,7 @@ enable_libssp
 enable_libstdcxx
 enable_liboffloadmic
 enable_bootstrap
+with_debuginfod
 with_mpc
 with_mpc_include
 with_mpc_lib
@@ -802,6 +804,7 @@ with_gmp
 with_gmp_include
 with_gmp_lib
 with_stage1_libs
+with_static_standard_libraries
 with_stage1_ldflags
 with_boot_libs
 with_boot_ldflags
@@ -1552,6 +1555,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
   --with-system-zlib      use installed libz
+  --with-debuginfod       Enable debuginfo lookups with debuginfod
+                          (auto/yes/no)
   --with-mpc=PATH         specify prefix directory for installed MPC package.
                           Equivalent to --with-mpc-include=PATH/include plus
                           --with-mpc-lib=PATH/lib
@@ -1572,6 +1577,9 @@ Optional Packages:
   --with-gmp-include=PATH specify directory for installed GMP include files
   --with-gmp-lib=PATH     specify directory for the installed GMP library
   --with-stage1-libs=LIBS libraries for stage1
+  --with-static-standard-libraries
+                          use -static-libstdc++ and -static-libgcc
+                          (default=auto)
   --with-stage1-ldflags=FLAGS
                           linker flags for stage1
   --with-boot-libs=LIBS   libraries for stage2 and later
@@ -1917,6 +1925,52 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_link
+
+# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
+# ---------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_c_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_decl
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2769,7 +2823,7 @@ build_tools="build-texinfo build-flex build-bison build-m4 build-fixincludes"
 
 # these libraries are used by various programs built for the host environment
 #f
-host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libdecnumber gmp mpfr mpc isl libelf libiconv"
+host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libdecnumber gmp mpfr mpc isl libelf libiconv libctf"
 
 # these tools are built for the host environment
 # Note, the powerpc-eabi build depends on sim occurring before gdb in order to
@@ -2905,6 +2959,12 @@ fi
 if test x$with_system_zlib = xyes ; then
   use_included_zlib=no
   noconfigdirs="$noconfigdirs zlib"
+fi
+
+# Don't compile the bundled readline/libreadline.a if --with-system-readline
+# is provided.
+if test x$with_system_readline = xyes ; then
+  noconfigdirs="$noconfigdirs readline"
 fi
 
 # some tools are so dependent upon X11 that if we're not building with X,
@@ -5423,6 +5483,92 @@ gmplibs="-lmpc -lmpfr -lgmp"
 gmpinc=
 have_gmp=no
 
+# Check for debuginfod
+
+
+# Enable debuginfod
+
+# Check whether --with-debuginfod was given.
+if test "${with_debuginfod+set}" = set; then :
+  withval=$with_debuginfod;
+else
+  with_debuginfod=auto
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use debuginfod" >&5
+$as_echo_n "checking whether to use debuginfod... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_debuginfod" >&5
+$as_echo "$with_debuginfod" >&6; }
+
+if test "${with_debuginfod}" = no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: debuginfod support disabled; some features may be unavailable." >&5
+$as_echo "$as_me: WARNING: debuginfod support disabled; some features may be unavailable." >&2;}
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for debuginfod_begin in -ldebuginfod" >&5
+$as_echo_n "checking for debuginfod_begin in -ldebuginfod... " >&6; }
+if ${ac_cv_lib_debuginfod_debuginfod_begin+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldebuginfod  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char debuginfod_begin ();
+int
+main ()
+{
+return debuginfod_begin ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_debuginfod_debuginfod_begin=yes
+else
+  ac_cv_lib_debuginfod_debuginfod_begin=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_debuginfod_debuginfod_begin" >&5
+$as_echo "$ac_cv_lib_debuginfod_debuginfod_begin" >&6; }
+if test "x$ac_cv_lib_debuginfod_debuginfod_begin" = xyes; then :
+  have_debuginfod_lib=yes
+fi
+
+  ac_fn_c_check_decl "$LINENO" "debuginfod_begin" "ac_cv_have_decl_debuginfod_begin" "#include <elfutils/debuginfod.h>
+"
+if test "x$ac_cv_have_decl_debuginfod_begin" = xyes; then :
+  have_debuginfod_h=yes
+fi
+
+  if test "x$have_debuginfod_lib" = "xyes" -a \
+          "x$have_debuginfod_h" = "xyes"; then
+
+$as_echo "#define HAVE_LIBDEBUGINFOD 1" >>confdefs.h
+
+    LIBDEBUGINFOD="-ldebuginfod"
+
+  else
+
+    if test "$with_debuginfod" = yes; then
+      as_fn_error $? "debuginfod is missing or unusable" "$LINENO" 5
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: debuginfod is missing or unusable; some features may be unavailable." >&5
+$as_echo "$as_me: WARNING: debuginfod is missing or unusable; some features may be unavailable." >&2;}
+    fi
+  fi
+fi
+
+
 # Specify a location for mpc
 # check for this first so it ends up on the link line before mpfr.
 
@@ -5577,8 +5723,7 @@ if test -d ${srcdir}/gcc && test "x$have_gmp" = xno; then
   # Check for the recommended and required versions of GMP.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the correct version of gmp.h" >&5
 $as_echo_n "checking for the correct version of gmp.h... " >&6; }
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include "gmp.h"
 int
@@ -5818,6 +5963,23 @@ fi
 
 
 
+# Whether or not to use -static-libstdc++ and -static-libgcc.  The
+# default is yes if gcc is being built; no otherwise.  The reason for
+# this default is that gdb is sometimes linked against GNU Source
+# Highlight, which is a shared library that uses C++ exceptions.  In
+# this case, -static-libstdc++ will cause crashes.
+
+# Check whether --with-static-standard-libraries was given.
+if test "${with_static_standard_libraries+set}" = set; then :
+  withval=$with_static_standard_libraries;
+else
+  with_static_standard_libraries=auto
+fi
+
+if test "$with_static_standard_libraries" = auto; then
+  with_static_standard_libraries=$have_compiler
+fi
+
 # Linker flags to use for stage1 or when not bootstrapping.
 
 # Check whether --with-stage1-ldflags was given.
@@ -5832,7 +5994,8 @@ else
  # In stage 1, default to linking libstdc++ and libgcc statically with GCC
  # if supported.  But if the user explicitly specified the libraries to use,
  # trust that they are doing what they want.
- if test "$stage1_libs" = "" -a "$have_static_libs" = yes; then
+ if test "$with_static_standard_libraries" = yes -a "$stage1_libs" = "" \
+     -a "$have_static_libs" = yes; then
    stage1_ldflags="-static-libstdc++ -static-libgcc"
  fi
 fi
@@ -7178,6 +7341,14 @@ esac
 CONFIGURE_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-configure-/g`
 INSTALL_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-install-/g`
 
+# gdb depends on gnulib and gdbsupport, but as nothing else does, only
+# include them if gdb is built.
+if echo " ${configdirs} " | grep " gdb " > /dev/null 2>&1 ; then
+  # The Makefile provides the ordering, so it's enough here to add to
+  # the list.
+  configdirs="${configdirs} gnulib gdbsupport"
+fi
+
 # Strip out unwanted targets.
 
 # While at that, we remove Makefiles if we were started for recursive
@@ -7190,7 +7361,9 @@ INSTALL_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-install-/g`
 # extrasub-{build,host,target} not because there is any reason to split
 # the substitutions up that way, but only to remain below the limit of
 # 99 commands in a script, for HP-UX sed.
-# Do not nest @if/@endif pairs, because configure will not warn you at all.
+
+# Do not nest @if/@endif or @unless/@endunless pairs, because
+# configure will not warn you at all.
 
 case "$enable_bootstrap:$ENABLE_GOLD: $configdirs :,$stage1_languages," in
   yes:yes:*\ gold\ *:*,c++,*) ;;
@@ -7209,8 +7382,10 @@ for module in ${build_configdirs} ; do
   extrasub_build="$extrasub_build
 /^@if build-$module\$/d
 /^@endif build-$module\$/d
+/^@unless build-$module\$/,/^@endunless build-$module\$/d
 /^@if build-$module-$bootstrap_suffix\$/d
-/^@endif build-$module-$bootstrap_suffix\$/d"
+/^@endif build-$module-$bootstrap_suffix\$/d
+/^@unless build-$module-$bootstrap_suffix\$/,/^@endunless build-$module-$bootstrap_suffix\$/d"
 done
 extrasub_host=
 for module in ${configdirs} ; do
@@ -7229,8 +7404,10 @@ for module in ${configdirs} ; do
   extrasub_host="$extrasub_host
 /^@if $module\$/d
 /^@endif $module\$/d
+/^@unless $module\$/,/^@endunless $module\$/d
 /^@if $module-$host_bootstrap_suffix\$/d
-/^@endif $module-$host_bootstrap_suffix\$/d"
+/^@endif $module-$host_bootstrap_suffix\$/d
+/^@unless $module-$host_bootstrap_suffix\$/,/^@endunless $module-$host_bootstrap_suffix\$/d"
 done
 extrasub_target=
 for module in ${target_configdirs} ; do
@@ -7249,13 +7426,17 @@ for module in ${target_configdirs} ; do
   extrasub_target="$extrasub_target
 /^@if target-$module\$/d
 /^@endif target-$module\$/d
+/^@unless target-$module\$/,/^@endunless target-$module\$/d
 /^@if target-$module-$target_bootstrap_suffix\$/d
-/^@endif target-$module-$target_bootstrap_suffix\$/d"
+/^@endif target-$module-$target_bootstrap_suffix\$/d
+/^@unless target-$module-$target_bootstrap_suffix\$/,/^@endunless target-$module-$target_bootstrap_suffix\$/d"
 done
 
 # Do the final fixup along with target modules.
 extrasub_target="$extrasub_target
-/^@if /,/^@endif /d"
+/^@if /,/^@endif /d
+/^@unless /d
+/^@endunless /d"
 
 # Create the serialization dependencies.  This uses a temporary file.
 

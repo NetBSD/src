@@ -1,5 +1,5 @@
 /* BFD back-end for rs6000 support
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Mimi Phuong-Thao Vo of IBM
    and John Gilmore of Cygnus Support.
 
@@ -46,68 +46,30 @@ rs6000_compatible (const bfd_arch_info_type *a,
   /*NOTREACHED*/
 }
 
-static const bfd_arch_info_type arch_info_struct[] =
-{
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_rs6000,
-    bfd_mach_rs6k_rs1,
-    "rs6000",
-    "rs6000:rs1",
-    3,
-    FALSE, /* not the default */
-    rs6000_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &arch_info_struct[1]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_rs6000,
-    bfd_mach_rs6k_rsc,
-    "rs6000",
-    "rs6000:rsc",
-    3,
-    FALSE, /* not the default */
-    rs6000_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &arch_info_struct[2]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_rs6000,
-    bfd_mach_rs6k_rs2,
-    "rs6000",
-    "rs6000:rs2",
-    3,
-    FALSE, /* not the default */
-    rs6000_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0
+#define N(NUMBER, PRINT, DEFAULT, NEXT)			\
+  {							\
+    32,        /* Bits in a word.  */			\
+    32,        /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
+    bfd_arch_rs6000,					\
+    NUMBER,						\
+    "rs6000",						\
+    PRINT,						\
+    3,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    rs6000_compatible,					\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
+
+static const bfd_arch_info_type arch_info_struct[3] =
+{
+  N (bfd_mach_rs6k_rs1, "rs6000:rs1", FALSE, arch_info_struct + 1),
+  N (bfd_mach_rs6k_rsc, "rs6000:rsc", FALSE, arch_info_struct + 2),
+  N (bfd_mach_rs6k_rs2, "rs6000:rs2", FALSE, NULL)
 };
 
 const bfd_arch_info_type bfd_rs6000_arch =
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_rs6000,
-    bfd_mach_rs6k,	/* POWER common architecture */
-    "rs6000",
-    "rs6000:6000",
-    3,
-    TRUE, /* the default */
-    rs6000_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &arch_info_struct[0]
-  };
+  N (bfd_mach_rs6k, "rs6000:6000", TRUE, arch_info_struct + 0);

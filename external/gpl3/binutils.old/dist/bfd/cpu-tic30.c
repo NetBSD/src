@@ -1,5 +1,5 @@
 /* BFD support for the Texas Instruments TMS320C30 architecture.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,17 +24,18 @@
 
 const bfd_arch_info_type bfd_tic30_arch =
 {
-  32,				/* 32 bits in a word */
-  32,				/* 32 bits in an address */
-  8,				/* 8 bits in a byte */
+  32,				/* Bits in a word.  */
+  32,				/* Bits in an address.  */
+  8,				/* Bits in a byte.  */
   bfd_arch_tic30,
-  0,				/* only 1 machine */
+  0,				/* Only 1 machine.  */
   "tic30",
   "tms320c30",
   2,
-  TRUE,				/* the one and only */
+  TRUE,				/* The one and only.  */
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,
-  0,
+  NULL,
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

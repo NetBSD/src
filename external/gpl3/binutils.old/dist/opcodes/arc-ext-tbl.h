@@ -1,5 +1,5 @@
 /* ARC instruction defintions.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -122,10 +122,3 @@ EXTINSN2OP ("dsp_fp_sqrt",   ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE2, 7, 45)
 
 EXTINSN3OP ("dsp_fp_div", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE2, 7, 42)
 EXTINSN3OP ("dsp_fp_cmp", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE1, 7, 43)
-
-/* Bitstream extensions.  */
-EXTINSN2OP ("bspeek", ARC_OPCODE_ARCv2EM, BITSTREAM, NONE, 0x05, 0x2E)
-EXTINSN2OP ("bspop", ARC_OPCODE_ARCv2EM, BITSTREAM, NONE, 0x05, 0x2F)
-
-/* Special XY.  */
-EXTINSN2OPF ("modapp", ARC_OPCODE_ARCv2EM, XY, NONE, 0x05, 0x3E, FLAGS_NONE)

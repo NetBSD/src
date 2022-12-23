@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1396,7 +1396,7 @@ metag_final_link_relocate (reloc_howto_type *howto,
 					      rel, relend, howto, contents) \
   {									\
     _bfd_clear_contents (howto, input_bfd, input_section,		\
-			 contents + rel->r_offset);			\
+			 contents, rel->r_offset);			\
 									\
     if (bfd_link_relocatable (info)					\
 	&& (input_section->flags & SEC_DEBUGGING))			\
@@ -1519,7 +1519,7 @@ elf_metag_relocate_section (bfd *output_bfd,
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -2374,9 +2374,7 @@ elf_metag_check_relocs (bfd *abfd,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_METAG_GNU_VTENTRY:
-	  BFD_ASSERT (hh != NULL);
-	  if (hh != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, &hh->eh, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, &hh->eh, rel->r_addend))
 	    return FALSE;
 	  break;
 	}
@@ -2936,7 +2934,7 @@ elf_metag_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0 && s != htab->etab.srelplt)
 	    relocs = TRUE;
@@ -3239,14 +3237,17 @@ elf_metag_finish_dynamic_symbol (bfd *output_bfd,
 
 /* Set the Meta ELF ABI version.  */
 
-static void
-elf_metag_post_process_headers (bfd * abfd, struct bfd_link_info * link_info)
+static bfd_boolean
+elf_metag_init_file_header (bfd *abfd, struct bfd_link_info *link_info)
 {
   Elf_Internal_Ehdr * i_ehdrp;	/* ELF file header, internal form.  */
 
-  _bfd_elf_post_process_headers (abfd, link_info);
+  if (!_bfd_elf_init_file_header (abfd, link_info))
+    return FALSE;
+
   i_ehdrp = elf_elfheader (abfd);
   i_ehdrp->e_ident[EI_ABIVERSION] = METAG_ELF_ABI_VERSION;
+  return TRUE;
 }
 
 /* Used to decide how to sort relocs in an optimal manner for the
@@ -4147,7 +4148,7 @@ elf_metag_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_size_dynamic_sections	elf_metag_size_dynamic_sections
 #define elf_backend_omit_section_dynsym \
 	_bfd_elf_omit_section_dynsym_all
-#define elf_backend_post_process_headers	elf_metag_post_process_headers
+#define elf_backend_init_file_header		elf_metag_init_file_header
 #define elf_backend_reloc_type_class		elf_metag_reloc_type_class
 #define elf_backend_copy_indirect_symbol	elf_metag_copy_indirect_symbol
 #define elf_backend_plt_sym_val		elf_metag_plt_sym_val

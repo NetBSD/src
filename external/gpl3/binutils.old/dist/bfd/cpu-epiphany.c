@@ -1,5 +1,5 @@
 /* BFD support for the Adapteva EPIPHANY processor.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,36 +23,27 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(NUMBER, PRINT, ALIGN, DEFAULT, NEXT)		\
+  {							\
+    32,         /* Bits in a word.  */			\
+    32,         /* Bits in an address.  */		\
+    8,	        /* Bits in a byte.  */			\
+    bfd_arch_epiphany,					\
+    NUMBER,						\
+    "epiphany",						\
+    PRINT,						\
+    ALIGN,	/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_epiphany16_arch =
-{
-  32,				/* Bits per word */
-  32,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_epiphany,		/* Architecture.  */
-  bfd_mach_epiphany16,		/* Machine.  */
-  "epiphany",			/* Architecture name.  */
-  "epiphany16",			/* Machine name.  */
-  1,				/* Section align power.  */
-  FALSE,			/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* Next in list.  */
-};
+  N (bfd_mach_epiphany16, "epiphany16", 1, FALSE, NULL);
 
 const bfd_arch_info_type bfd_epiphany_arch =
-{
-  32,				/* Bits per word - not really true.  */
-  32,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_epiphany,		/* Architecture.  */
-  bfd_mach_epiphany32,		/* Machine.  */
-  "epiphany",			/* Architecture name.  */
-  "epiphany32",			/* Machine name.  */
-  2,				/* Section align power.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  & bfd_epiphany16_arch	/* Next in list.  */
-};
+  N (bfd_mach_epiphany32, "epiphany32", 2, TRUE, & bfd_epiphany16_arch);
+

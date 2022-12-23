@@ -1,6 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -34,6 +34,7 @@ extern "C" {
 
 #include "ansidecl.h"
 #include "symcat.h"
+#include "bfd_stdint.h"
 #include "diagnostics.h"
 #include <stdarg.h>
 #include <sys/stat.h>
@@ -234,32 +235,13 @@ bfd_format;
 /* A count of carsyms (canonical archive symbols).  */
 typedef unsigned long symindex;
 
-/* How to perform a relocation.  */
-typedef const struct reloc_howto_struct reloc_howto_type;
-
 #define BFD_NO_MORE_SYMBOLS ((symindex) ~0)
-
-/* General purpose part of a symbol X;
-   target specific parts are in libcoff.h, libaout.h, etc.  */
-
-#define bfd_get_section(x) ((x)->section)
-#define bfd_get_output_section(x) ((x)->section->output_section)
-#define bfd_set_section(x,y) ((x)->section) = (y)
-#define bfd_asymbol_base(x) ((x)->section->vma)
-#define bfd_asymbol_value(x) (bfd_asymbol_base(x) + (x)->value)
-#define bfd_asymbol_name(x) ((x)->name)
-/*Perhaps future: #define bfd_asymbol_bfd(x) ((x)->section->owner)*/
-#define bfd_asymbol_bfd(x) ((x)->the_bfd)
-#define bfd_asymbol_flavour(x)			\
-  (((x)->flags & BSF_SYNTHETIC) != 0		\
-   ? bfd_target_unknown_flavour			\
-   : bfd_asymbol_bfd (x)->xvec->flavour)
 
 /* A canonical archive symbol.  */
 /* This is a type pun with struct ranlib on purpose!  */
 typedef struct carsym
 {
-  char *name;
+  const char *name;
   file_ptr file_offset;	/* Look here to find the file.  */
 }
 carsym;			/* To make these you call a carsymogen.  */
@@ -303,37 +285,6 @@ typedef struct bfd_section *sec_ptr;
   ((((bfd_vma) (this) + (boundary) - 1) >= (bfd_vma) (this))		  \
    ? (((bfd_vma) (this) + ((boundary) - 1)) & ~ (bfd_vma) ((boundary)-1)) \
    : ~ (bfd_vma) 0)
-
-#define bfd_get_section_name(bfd, ptr) ((void) bfd, (ptr)->name)
-#define bfd_get_section_vma(bfd, ptr) ((void) bfd, (ptr)->vma)
-#define bfd_get_section_lma(bfd, ptr) ((void) bfd, (ptr)->lma)
-#define bfd_get_section_alignment(bfd, ptr) ((void) bfd, \
-					     (ptr)->alignment_power)
-#define bfd_section_name(bfd, ptr) ((ptr)->name)
-#define bfd_section_size(bfd, ptr) ((ptr)->size)
-#define bfd_get_section_size(ptr) ((ptr)->size)
-#define bfd_section_vma(bfd, ptr) ((ptr)->vma)
-#define bfd_section_lma(bfd, ptr) ((ptr)->lma)
-#define bfd_section_alignment(bfd, ptr) ((ptr)->alignment_power)
-#define bfd_get_section_flags(bfd, ptr) ((void) bfd, (ptr)->flags)
-#define bfd_get_section_userdata(bfd, ptr) ((void) bfd, (ptr)->userdata)
-
-#define bfd_is_com_section(ptr) (((ptr)->flags & SEC_IS_COMMON) != 0)
-
-#define bfd_get_section_limit_octets(bfd, sec)			\
-  ((bfd)->direction != write_direction && (sec)->rawsize != 0	\
-   ? (sec)->rawsize : (sec)->size)
-
-/* Find the address one past the end of SEC.  */
-#define bfd_get_section_limit(bfd, sec) \
-  (bfd_get_section_limit_octets(bfd, sec) / bfd_octets_per_byte (bfd))
-
-/* Return TRUE if input section SEC has been discarded.  */
-#define discarded_section(sec)				\
-  (!bfd_is_abs_section (sec)					\
-   && bfd_is_abs_section ((sec)->output_section)		\
-   && (sec)->sec_info_type != SEC_INFO_TYPE_MERGE		\
-   && (sec)->sec_info_type != SEC_INFO_TYPE_JUST_SYMS)
 
 typedef enum bfd_print_symbol
 {
@@ -520,40 +471,6 @@ extern int bfd_stat (bfd *, struct stat *);
 #endif
 extern void _bfd_warn_deprecated (const char *, const char *, int, const char *);
 
-/* Cast from const char * to char * so that caller can assign to
-   a char * without a warning.  */
-#define bfd_get_filename(abfd) ((char *) (abfd)->filename)
-#define bfd_get_cacheable(abfd) ((abfd)->cacheable)
-#define bfd_get_format(abfd) ((abfd)->format)
-#define bfd_get_target(abfd) ((abfd)->xvec->name)
-#define bfd_get_flavour(abfd) ((abfd)->xvec->flavour)
-#define bfd_family_coff(abfd) \
-  (bfd_get_flavour (abfd) == bfd_target_coff_flavour || \
-   bfd_get_flavour (abfd) == bfd_target_xcoff_flavour)
-#define bfd_big_endian(abfd) ((abfd)->xvec->byteorder == BFD_ENDIAN_BIG)
-#define bfd_little_endian(abfd) ((abfd)->xvec->byteorder == BFD_ENDIAN_LITTLE)
-#define bfd_header_big_endian(abfd) \
-  ((abfd)->xvec->header_byteorder == BFD_ENDIAN_BIG)
-#define bfd_header_little_endian(abfd) \
-  ((abfd)->xvec->header_byteorder == BFD_ENDIAN_LITTLE)
-#define bfd_get_file_flags(abfd) ((abfd)->flags)
-#define bfd_applicable_file_flags(abfd) ((abfd)->xvec->object_flags)
-#define bfd_applicable_section_flags(abfd) ((abfd)->xvec->section_flags)
-#define bfd_has_map(abfd) ((abfd)->has_armap)
-#define bfd_is_thin_archive(abfd) ((abfd)->is_thin_archive)
-
-#define bfd_valid_reloc_types(abfd) ((abfd)->xvec->valid_reloc_types)
-#define bfd_usrdata(abfd) ((abfd)->usrdata)
-
-#define bfd_get_start_address(abfd) ((abfd)->start_address)
-#define bfd_get_symcount(abfd) ((abfd)->symcount)
-#define bfd_get_outsymbols(abfd) ((abfd)->outsymbols)
-#define bfd_count_sections(abfd) ((abfd)->section_count)
-
-#define bfd_get_dynamic_symcount(abfd) ((abfd)->dynsymcount)
-
-#define bfd_get_symbol_leading_char(abfd) ((abfd)->xvec->symbol_leading_char)
-
 extern bfd_boolean bfd_cache_close
   (bfd *abfd);
 /* NB: This declaration should match the autogenerated one in libbfd.h.  */
@@ -592,195 +509,6 @@ void bfd_putl16 (bfd_vma, void *);
 bfd_uint64_t bfd_get_bits (const void *, int, bfd_boolean);
 void bfd_put_bits (bfd_uint64_t, void *, int, bfd_boolean);
 
-#if defined(__STDC__) || defined(ALMOST_STDC)
-struct ecoff_debug_info;
-struct ecoff_debug_swap;
-struct ecoff_extr;
-struct bfd_symbol;
-struct bfd_link_info;
-struct bfd_link_hash_entry;
-struct bfd_section_already_linked;
-struct bfd_elf_version_tree;
-#endif
-
-extern bfd_boolean bfd_section_already_linked_table_init (void);
-extern void bfd_section_already_linked_table_free (void);
-extern bfd_boolean _bfd_handle_already_linked
-  (struct bfd_section *, struct bfd_section_already_linked *,
-   struct bfd_link_info *);
-
-/* Externally visible ECOFF routines.  */
-
-extern bfd_boolean bfd_ecoff_set_gp_value
-  (bfd *abfd, bfd_vma gp_value);
-extern bfd_boolean bfd_ecoff_set_regmasks
-  (bfd *abfd, unsigned long gprmask, unsigned long fprmask,
-   unsigned long *cprmask);
-extern void *bfd_ecoff_debug_init
-  (bfd *output_bfd, struct ecoff_debug_info *output_debug,
-   const struct ecoff_debug_swap *output_swap, struct bfd_link_info *);
-extern void bfd_ecoff_debug_free
-  (void *handle, bfd *output_bfd, struct ecoff_debug_info *output_debug,
-   const struct ecoff_debug_swap *output_swap, struct bfd_link_info *);
-extern bfd_boolean bfd_ecoff_debug_accumulate
-  (void *handle, bfd *output_bfd, struct ecoff_debug_info *output_debug,
-   const struct ecoff_debug_swap *output_swap, bfd *input_bfd,
-   struct ecoff_debug_info *input_debug,
-   const struct ecoff_debug_swap *input_swap, struct bfd_link_info *);
-extern bfd_boolean bfd_ecoff_debug_accumulate_other
-  (void *handle, bfd *output_bfd, struct ecoff_debug_info *output_debug,
-   const struct ecoff_debug_swap *output_swap, bfd *input_bfd,
-   struct bfd_link_info *);
-extern bfd_boolean bfd_ecoff_debug_externals
-  (bfd *abfd, struct ecoff_debug_info *debug,
-   const struct ecoff_debug_swap *swap, bfd_boolean relocatable,
-   bfd_boolean (*get_extr) (struct bfd_symbol *, struct ecoff_extr *),
-   void (*set_index) (struct bfd_symbol *, bfd_size_type));
-extern bfd_boolean bfd_ecoff_debug_one_external
-  (bfd *abfd, struct ecoff_debug_info *debug,
-   const struct ecoff_debug_swap *swap, const char *name,
-   struct ecoff_extr *esym);
-extern bfd_size_type bfd_ecoff_debug_size
-  (bfd *abfd, struct ecoff_debug_info *debug,
-   const struct ecoff_debug_swap *swap);
-extern bfd_boolean bfd_ecoff_write_debug
-  (bfd *abfd, struct ecoff_debug_info *debug,
-   const struct ecoff_debug_swap *swap, file_ptr where);
-extern bfd_boolean bfd_ecoff_write_accumulated_debug
-  (void *handle, bfd *abfd, struct ecoff_debug_info *debug,
-   const struct ecoff_debug_swap *swap,
-   struct bfd_link_info *info, file_ptr where);
-
-/* Externally visible ELF routines.  */
-
-struct bfd_link_needed_list
-{
-  struct bfd_link_needed_list *next;
-  bfd *by;
-  const char *name;
-};
-
-enum dynamic_lib_link_class {
-  DYN_NORMAL = 0,
-  DYN_AS_NEEDED = 1,
-  DYN_DT_NEEDED = 2,
-  DYN_NO_ADD_NEEDED = 4,
-  DYN_NO_NEEDED = 8
-};
-
-enum notice_asneeded_action {
-  notice_as_needed,
-  notice_not_needed,
-  notice_needed
-};
-
-extern bfd_boolean bfd_elf_record_link_assignment
-  (bfd *, struct bfd_link_info *, const char *, bfd_boolean,
-   bfd_boolean);
-extern struct bfd_link_needed_list *bfd_elf_get_needed_list
-  (bfd *, struct bfd_link_info *);
-extern bfd_boolean bfd_elf_get_bfd_needed_list
-  (bfd *, struct bfd_link_needed_list **);
-extern bfd_boolean bfd_elf_stack_segment_size (bfd *, struct bfd_link_info *,
-					       const char *, bfd_vma);
-extern bfd_boolean bfd_elf_size_dynamic_sections
-  (bfd *, const char *, const char *, const char *, const char *, const char *,
-   const char * const *, struct bfd_link_info *, struct bfd_section **);
-extern bfd_boolean bfd_elf_size_dynsym_hash_dynstr
-  (bfd *, struct bfd_link_info *);
-extern void bfd_elf_set_dt_needed_name
-  (bfd *, const char *);
-extern const char *bfd_elf_get_dt_soname
-  (bfd *);
-extern void bfd_elf_set_dyn_lib_class
-  (bfd *, enum dynamic_lib_link_class);
-extern int bfd_elf_get_dyn_lib_class
-  (bfd *);
-extern struct bfd_link_needed_list *bfd_elf_get_runpath_list
-  (bfd *, struct bfd_link_info *);
-extern int bfd_elf_discard_info
-  (bfd *, struct bfd_link_info *);
-extern unsigned int _bfd_elf_default_action_discarded
-  (struct bfd_section *);
-
-/* Return an upper bound on the number of bytes required to store a
-   copy of ABFD's program header table entries.  Return -1 if an error
-   occurs; bfd_get_error will return an appropriate code.  */
-extern long bfd_get_elf_phdr_upper_bound
-  (bfd *abfd);
-
-/* Copy ABFD's program header table entries to *PHDRS.  The entries
-   will be stored as an array of Elf_Internal_Phdr structures, as
-   defined in include/elf/internal.h.  To find out how large the
-   buffer needs to be, call bfd_get_elf_phdr_upper_bound.
-
-   Return the number of program header table entries read, or -1 if an
-   error occurs; bfd_get_error will return an appropriate code.  */
-extern int bfd_get_elf_phdrs
-  (bfd *abfd, void *phdrs);
-
-/* Create a new BFD as if by bfd_openr.  Rather than opening a file,
-   reconstruct an ELF file by reading the segments out of remote
-   memory based on the ELF file header at EHDR_VMA and the ELF program
-   headers it points to.  If non-zero, SIZE is the known extent of the
-   object.  If not null, *LOADBASEP is filled in with the difference
-   between the VMAs from which the segments were read, and the VMAs
-   the file headers (and hence BFD's idea of each section's VMA) put
-   them at.
-
-   The function TARGET_READ_MEMORY is called to copy LEN bytes from
-   the remote memory at target address VMA into the local buffer at
-   MYADDR; it should return zero on success or an `errno' code on
-   failure.  TEMPL must be a BFD for a target with the word size and
-   byte order found in the remote memory.  */
-extern bfd *bfd_elf_bfd_from_remote_memory
-  (bfd *templ, bfd_vma ehdr_vma, bfd_size_type size, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr,
-			      bfd_size_type len));
-
-extern struct bfd_section *_bfd_elf_tls_setup
-  (bfd *, struct bfd_link_info *);
-
-extern struct bfd_section *
-_bfd_nearby_section (bfd *, struct bfd_section *, bfd_vma);
-
-extern void _bfd_fix_excluded_sec_syms
-  (bfd *, struct bfd_link_info *);
-
-extern unsigned bfd_m68k_mach_to_features (int);
-
-extern int bfd_m68k_features_to_mach (unsigned);
-
-extern bfd_boolean bfd_m68k_elf32_create_embedded_relocs
-  (bfd *, struct bfd_link_info *, struct bfd_section *, struct bfd_section *,
-   char **);
-
-extern void bfd_elf_m68k_set_target_options (struct bfd_link_info *, int);
-
-extern bfd_boolean bfd_bfin_elf32_create_embedded_relocs
-  (bfd *, struct bfd_link_info *, struct bfd_section *, struct bfd_section *,
-   char **);
-
-extern bfd_boolean bfd_cr16_elf32_create_embedded_relocs
-  (bfd *, struct bfd_link_info *, struct bfd_section *, struct bfd_section *,
-   char **);
-
-/* SunOS shared library support routines for the linker.  */
-
-extern struct bfd_link_needed_list *bfd_sunos_get_needed_list
-  (bfd *, struct bfd_link_info *);
-extern bfd_boolean bfd_sunos_record_link_assignment
-  (bfd *, struct bfd_link_info *, const char *);
-extern bfd_boolean bfd_sunos_size_dynamic_sections
-  (bfd *, struct bfd_link_info *, struct bfd_section **,
-   struct bfd_section **, struct bfd_section **);
-
-/* Linux shared library support routines for the linker.  */
-
-extern bfd_boolean bfd_i386linux_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
-extern bfd_boolean bfd_sparclinux_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
 
 /* mmap hacks */
 
@@ -808,258 +536,31 @@ extern void bfd_free_window
   (bfd_window *);
 extern bfd_boolean bfd_get_file_window
   (bfd *, file_ptr, bfd_size_type, bfd_window *, bfd_boolean);
+
+/* Externally visible ELF routines.  */
 
-/* XCOFF support routines for the linker.  */
+/* Create a new BFD as if by bfd_openr.  Rather than opening a file,
+   reconstruct an ELF file by reading the segments out of remote
+   memory based on the ELF file header at EHDR_VMA and the ELF program
+   headers it points to.  If non-zero, SIZE is the known extent of the
+   object.  If not null, *LOADBASEP is filled in with the difference
+   between the VMAs from which the segments were read, and the VMAs
+   the file headers (and hence BFD's idea of each section's VMA) put
+   them at.
 
-extern bfd_boolean bfd_xcoff_split_import_path
-  (bfd *, const char *, const char **, const char **);
-extern bfd_boolean bfd_xcoff_set_archive_import_path
-  (struct bfd_link_info *, bfd *, const char *);
-extern bfd_boolean bfd_xcoff_link_record_set
-  (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, bfd_size_type);
-extern bfd_boolean bfd_xcoff_import_symbol
-  (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *, bfd_vma,
-   const char *, const char *, const char *, unsigned int);
-extern bfd_boolean bfd_xcoff_export_symbol
-  (bfd *, struct bfd_link_info *, struct bfd_link_hash_entry *);
-extern bfd_boolean bfd_xcoff_link_count_reloc
-  (bfd *, struct bfd_link_info *, const char *);
-extern bfd_boolean bfd_xcoff_record_link_assignment
-  (bfd *, struct bfd_link_info *, const char *);
-extern bfd_boolean bfd_xcoff_size_dynamic_sections
-  (bfd *, struct bfd_link_info *, const char *, const char *,
-   unsigned long, unsigned long, unsigned long, bfd_boolean,
-   int, bfd_boolean, unsigned int, struct bfd_section **, bfd_boolean);
-extern bfd_boolean bfd_xcoff_link_generate_rtinit
-  (bfd *, const char *, const char *, bfd_boolean);
+   The function TARGET_READ_MEMORY is called to copy LEN bytes from
+   the remote memory at target address VMA into the local buffer at
+   MYADDR; it should return zero on success or an `errno' code on
+   failure.  TEMPL must be a BFD for a target with the word size and
+   byte order found in the remote memory.  */
+extern bfd *bfd_elf_bfd_from_remote_memory
+  (bfd *templ, bfd_vma ehdr_vma, bfd_size_type size, bfd_vma *loadbasep,
+   int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr,
+			      bfd_size_type len));
 
-/* XCOFF support routines for ar.  */
-extern bfd_boolean bfd_xcoff_ar_archive_set_magic
-  (bfd *, char *);
-
-/* Externally visible COFF routines.  */
-
-#if defined(__STDC__) || defined(ALMOST_STDC)
-struct internal_syment;
-union internal_auxent;
-#endif
-
-extern bfd_boolean bfd_coff_set_symbol_class
-  (bfd *, struct bfd_symbol *, unsigned int);
-
-/* ARM VFP11 erratum workaround support.  */
-typedef enum
-{
-  BFD_ARM_VFP11_FIX_DEFAULT,
-  BFD_ARM_VFP11_FIX_NONE,
-  BFD_ARM_VFP11_FIX_SCALAR,
-  BFD_ARM_VFP11_FIX_VECTOR
-} bfd_arm_vfp11_fix;
-
-extern void bfd_elf32_arm_init_maps
-  (bfd *);
-
-extern void bfd_elf32_arm_set_vfp11_fix
-  (bfd *, struct bfd_link_info *);
-
-extern void bfd_elf32_arm_set_cortex_a8_fix
-  (bfd *, struct bfd_link_info *);
-
-extern bfd_boolean bfd_elf32_arm_vfp11_erratum_scan
-  (bfd *, struct bfd_link_info *);
-
-extern void bfd_elf32_arm_vfp11_fix_veneer_locations
-  (bfd *, struct bfd_link_info *);
-
-/* ARM STM STM32L4XX erratum workaround support.  */
-typedef enum
-{
-  BFD_ARM_STM32L4XX_FIX_NONE,
-  BFD_ARM_STM32L4XX_FIX_DEFAULT,
-  BFD_ARM_STM32L4XX_FIX_ALL
-} bfd_arm_stm32l4xx_fix;
-
-extern void bfd_elf32_arm_set_stm32l4xx_fix
-  (bfd *, struct bfd_link_info *);
-
-extern bfd_boolean bfd_elf32_arm_stm32l4xx_erratum_scan
-  (bfd *, struct bfd_link_info *);
-
-extern void bfd_elf32_arm_stm32l4xx_fix_veneer_locations
-  (bfd *, struct bfd_link_info *);
-
-/* ARM Interworking support.  Called from linker.  */
-extern bfd_boolean bfd_arm_allocate_interworking_sections
-  (struct bfd_link_info *);
-
-extern bfd_boolean bfd_arm_process_before_allocation
-  (bfd *, struct bfd_link_info *, int);
-
-extern bfd_boolean bfd_arm_get_bfd_for_interworking
-  (bfd *, struct bfd_link_info *);
-
-/* PE ARM Interworking support.  Called from linker.  */
-extern bfd_boolean bfd_arm_pe_allocate_interworking_sections
-  (struct bfd_link_info *);
-
-extern bfd_boolean bfd_arm_pe_process_before_allocation
-  (bfd *, struct bfd_link_info *, int);
-
-extern bfd_boolean bfd_arm_pe_get_bfd_for_interworking
-  (bfd *, struct bfd_link_info *);
-
-/* ELF ARM Interworking support.  Called from linker.  */
-extern bfd_boolean bfd_elf32_arm_allocate_interworking_sections
-  (struct bfd_link_info *);
-
-extern bfd_boolean bfd_elf32_arm_process_before_allocation
-  (bfd *, struct bfd_link_info *);
-
-struct elf32_arm_params {
-  char *thumb_entry_symbol;
-  int byteswap_code;
-  int target1_is_rel;
-  char * target2_type;
-  int fix_v4bx;
-  int use_blx;
-  bfd_arm_vfp11_fix vfp11_denorm_fix;
-  bfd_arm_stm32l4xx_fix stm32l4xx_fix;
-  int no_enum_size_warning;
-  int no_wchar_size_warning;
-  int pic_veneer;
-  int fix_cortex_a8;
-  int fix_arm1176;
-  int merge_exidx_entries;
-  int cmse_implib;
-  bfd *in_implib_bfd;
-};
-
-void bfd_elf32_arm_set_target_params
-  (bfd *, struct bfd_link_info *, struct elf32_arm_params *);
-
-extern bfd_boolean bfd_elf32_arm_get_bfd_for_interworking
-  (bfd *, struct bfd_link_info *);
-
-extern bfd_boolean bfd_elf32_arm_add_glue_sections_to_bfd
-  (bfd *, struct bfd_link_info *);
-
-extern void bfd_elf32_arm_keep_private_stub_output_sections
-  (struct bfd_link_info *);
-
-/* ELF ARM mapping symbol support.  */
-#define BFD_ARM_SPECIAL_SYM_TYPE_MAP	(1 << 0)
-#define BFD_ARM_SPECIAL_SYM_TYPE_TAG	(1 << 1)
-#define BFD_ARM_SPECIAL_SYM_TYPE_OTHER	(1 << 2)
-#define BFD_ARM_SPECIAL_SYM_TYPE_ANY	(~0)
-
-extern bfd_boolean bfd_is_arm_special_symbol_name
-  (const char *, int);
-
-extern void bfd_elf32_arm_set_byteswap_code
-  (struct bfd_link_info *, int);
-
-extern void bfd_elf32_arm_use_long_plt (void);
-
-/* ARM Note section processing.  */
-extern bfd_boolean bfd_arm_merge_machines
-  (bfd *, bfd *);
-
-extern bfd_boolean bfd_arm_update_notes
-  (bfd *, const char *);
-
-extern unsigned int bfd_arm_get_mach_from_notes
-  (bfd *, const char *);
-
-/* ARM stub generation support.  Called from the linker.  */
-extern int elf32_arm_setup_section_lists
-  (bfd *, struct bfd_link_info *);
-extern void elf32_arm_next_input_section
-  (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf32_arm_size_stubs
-  (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
-   struct bfd_section * (*) (const char *, struct bfd_section *,
-			     struct bfd_section *, unsigned int),
-   void (*) (void));
-extern bfd_boolean elf32_arm_build_stubs
-  (struct bfd_link_info *);
-
-/* ARM unwind section editing support.  */
-extern bfd_boolean elf32_arm_fix_exidx_coverage
-(struct bfd_section **, unsigned int, struct bfd_link_info *, bfd_boolean);
-
-/* C6x unwind section editing support.  */
-extern bfd_boolean elf32_tic6x_fix_exidx_coverage
-(struct bfd_section **, unsigned int, struct bfd_link_info *, bfd_boolean);
-
-extern void bfd_elf64_aarch64_init_maps
-  (bfd *);
-
-extern void bfd_elf32_aarch64_init_maps
-  (bfd *);
-
-extern void bfd_elf64_aarch64_set_options
-  (bfd *, struct bfd_link_info *, int, int, int, int, int, int);
-
-extern void bfd_elf32_aarch64_set_options
-  (bfd *, struct bfd_link_info *, int, int, int, int, int, int);
-
-/* ELF AArch64 mapping symbol support.  */
-#define BFD_AARCH64_SPECIAL_SYM_TYPE_MAP	(1 << 0)
-#define BFD_AARCH64_SPECIAL_SYM_TYPE_TAG	(1 << 1)
-#define BFD_AARCH64_SPECIAL_SYM_TYPE_OTHER	(1 << 2)
-#define BFD_AARCH64_SPECIAL_SYM_TYPE_ANY	(~0)
-extern bfd_boolean bfd_is_aarch64_special_symbol_name
-  (const char * name, int type);
-
-/* AArch64 stub generation support for ELF64.  Called from the linker.  */
-extern int elf64_aarch64_setup_section_lists
-  (bfd *, struct bfd_link_info *);
-extern void elf64_aarch64_next_input_section
-  (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf64_aarch64_size_stubs
-  (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
-   struct bfd_section * (*) (const char *, struct bfd_section *),
-   void (*) (void));
-extern bfd_boolean elf64_aarch64_build_stubs
-  (struct bfd_link_info *);
-/* AArch64 stub generation support for ELF32.  Called from the linker.  */
-extern int elf32_aarch64_setup_section_lists
-  (bfd *, struct bfd_link_info *);
-extern void elf32_aarch64_next_input_section
-  (struct bfd_link_info *, struct bfd_section *);
-extern bfd_boolean elf32_aarch64_size_stubs
-  (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
-   struct bfd_section * (*) (const char *, struct bfd_section *),
-   void (*) (void));
-extern bfd_boolean elf32_aarch64_build_stubs
-  (struct bfd_link_info *);
-
-
-/* TI COFF load page support.  */
-extern void bfd_ticoff_set_section_load_page
-  (struct bfd_section *, int);
-
-extern int bfd_ticoff_get_section_load_page
-  (struct bfd_section *);
-
-/* H8/300 functions.  */
-extern bfd_vma bfd_h8300_pad_address
-  (bfd *, bfd_vma);
-
-/* IA64 Itanium code generation.  Called from linker.  */
-extern void bfd_elf32_ia64_after_parse
-  (int);
-
-extern void bfd_elf64_ia64_after_parse
-  (int);
-
-/* V850 Note manipulation routines.  */
-extern bfd_boolean v850_elf_create_sections
-  (struct bfd_link_info *);
-
-extern bfd_boolean v850_elf_set_note
-  (bfd *, unsigned int, unsigned int);
-
-/* MIPS ABI flags data access.  For the disassembler.  */
-struct elf_internal_abiflags_v0;
-extern struct elf_internal_abiflags_v0 *bfd_mips_elf_get_abiflags (bfd *);
+/* Forward declarations.  */
+struct ecoff_debug_info;
+struct ecoff_debug_swap;
+struct ecoff_extr;
+struct bfd_link_info;
+struct bfd_link_hash_entry;

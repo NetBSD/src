@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -179,7 +179,7 @@ DESCRIPTION
 .typedef struct bfd_target
 .{
 .  {* Identifies the kind of target, e.g., SunOS4, Ultrix, etc.  *}
-.  char *name;
+.  const char *name;
 .
 . {* The "flavour" of a back end is a general indication about
 .    the contents of a file.  *}
@@ -462,6 +462,7 @@ BFD_JUMP_TABLE macros.
 .  NAME##_bfd_lookup_section_flags, \
 .  NAME##_bfd_merge_sections, \
 .  NAME##_bfd_is_group_section, \
+.  NAME##_bfd_group_name, \
 .  NAME##_bfd_discard_group, \
 .  NAME##_section_already_linked, \
 .  NAME##_bfd_define_common_symbol, \
@@ -519,6 +520,9 @@ BFD_JUMP_TABLE macros.
 .
 .  {* Is this section a member of a group?  *}
 .  bfd_boolean (*_bfd_is_group_section) (bfd *, const struct bfd_section *);
+.
+.  {* The group name, if section is a member of a group.  *}
+.  const char *(*_bfd_group_name) (bfd *, const struct bfd_section *);
 .
 .  {* Discard members of a group.  *}
 .  bfd_boolean (*_bfd_discard_group) (bfd *, struct bfd_section *);
@@ -580,6 +584,74 @@ to find an alternative output format that is suitable.
 .
 .} bfd_target;
 .
+.static inline const char *
+.bfd_get_target (const bfd *abfd)
+.{
+.  return abfd->xvec->name;
+.}
+.
+.static inline enum bfd_flavour
+.bfd_get_flavour (const bfd *abfd)
+.{
+.  return abfd->xvec->flavour;
+.}
+.
+.static inline flagword
+.bfd_applicable_file_flags (const bfd *abfd)
+.{
+.  return abfd->xvec->object_flags;
+.}
+.
+.static inline bfd_boolean
+.bfd_family_coff (const bfd *abfd)
+.{
+.  return (bfd_get_flavour (abfd) == bfd_target_coff_flavour
+.          || bfd_get_flavour (abfd) == bfd_target_xcoff_flavour);
+.}
+.
+.static inline bfd_boolean
+.bfd_big_endian (const bfd *abfd)
+.{
+.  return abfd->xvec->byteorder == BFD_ENDIAN_BIG;
+.}
+.static inline bfd_boolean
+.bfd_little_endian (const bfd *abfd)
+.{
+.  return abfd->xvec->byteorder == BFD_ENDIAN_LITTLE;
+.}
+.
+.static inline bfd_boolean
+.bfd_header_big_endian (const bfd *abfd)
+.{
+.  return abfd->xvec->header_byteorder == BFD_ENDIAN_BIG;
+.}
+.
+.static inline bfd_boolean
+.bfd_header_little_endian (const bfd *abfd)
+.{
+.  return abfd->xvec->header_byteorder == BFD_ENDIAN_LITTLE;
+.}
+.
+.static inline flagword
+.bfd_applicable_section_flags (const bfd *abfd)
+.{
+.  return abfd->xvec->section_flags;
+.}
+.
+.static inline char
+.bfd_get_symbol_leading_char (const bfd *abfd)
+.{
+.  return abfd->xvec->symbol_leading_char;
+.}
+.
+.static inline enum bfd_flavour
+.bfd_asymbol_flavour (const asymbol *sy)
+.{
+.  if ((sy->flags & BSF_SYNTHETIC) != 0)
+.    return bfd_target_unknown_flavour;
+.  return sy->the_bfd->xvec->flavour;
+.}
+.
 */
 
 /* All known xvecs (even those that don't compile on all systems).
@@ -625,11 +697,12 @@ extern const bfd_target avr_elf32_vec;
 extern const bfd_target bfin_elf32_vec;
 extern const bfd_target bfin_elf32_fdpic_vec;
 extern const bfd_target cr16_elf32_vec;
-extern const bfd_target cr16c_elf32_vec;
 extern const bfd_target cris_aout_vec;
 extern const bfd_target cris_elf32_vec;
 extern const bfd_target cris_elf32_us_vec;
 extern const bfd_target crx_elf32_vec;
+extern const bfd_target csky_elf32_be_vec;
+extern const bfd_target csky_elf32_le_vec;
 extern const bfd_target d10v_elf32_vec;
 extern const bfd_target d30v_elf32_vec;
 extern const bfd_target dlx_elf32_be_vec;
@@ -637,6 +710,8 @@ extern const bfd_target elf32_be_vec;
 extern const bfd_target elf32_le_vec;
 extern const bfd_target elf64_be_vec;
 extern const bfd_target elf64_le_vec;
+extern const bfd_target bpf_elf64_le_vec;
+extern const bfd_target bpf_elf64_be_vec;
 extern const bfd_target epiphany_elf32_vec;
 extern const bfd_target fr30_elf32_vec;
 extern const bfd_target frv_elf32_vec;
@@ -652,6 +727,7 @@ extern const bfd_target hppa_som_vec;
 extern const bfd_target i386_aout_vec;
 extern const bfd_target i386_aout_bsd_vec;
 extern const bfd_target i386_aout_lynx_vec;
+extern const bfd_target i386_aout_nbsd_vec;
 extern const bfd_target i386_coff_vec;
 extern const bfd_target i386_coff_go32_vec;
 extern const bfd_target i386_coff_go32stubbed_vec;
@@ -775,6 +851,7 @@ extern const bfd_target rs6000_xcoff_vec;
 extern const bfd_target rx_elf32_be_vec;
 extern const bfd_target rx_elf32_be_ns_vec;
 extern const bfd_target rx_elf32_le_vec;
+extern const bfd_target rx_elf32_linux_le_vec;
 extern const bfd_target s390_elf32_vec;
 extern const bfd_target s390_elf64_vec;
 extern const bfd_target score_elf32_be_vec;
@@ -823,7 +900,6 @@ extern const bfd_target tic6x_elf32_c6000_be_vec;
 extern const bfd_target tic6x_elf32_c6000_le_vec;
 extern const bfd_target tic6x_elf32_linux_be_vec;
 extern const bfd_target tic6x_elf32_linux_le_vec;
-extern const bfd_target tic80_coff_vec;
 extern const bfd_target tilegx_elf32_be_vec;
 extern const bfd_target tilegx_elf32_le_vec;
 extern const bfd_target tilegx_elf64_be_vec;
@@ -856,6 +932,7 @@ extern const bfd_target xstormy16_elf32_vec;
 extern const bfd_target xtensa_elf32_be_vec;
 extern const bfd_target xtensa_elf32_le_vec;
 extern const bfd_target z80_coff_vec;
+extern const bfd_target z80_elf32_vec;
 extern const bfd_target z8k_coff_vec;
 
 /* These are always included.  */
@@ -952,13 +1029,15 @@ static const bfd_target * const _bfd_target_vector[] =
 	&bfin_elf32_fdpic_vec,
 
 	&cr16_elf32_vec,
-	&cr16c_elf32_vec,
 
 	&cris_aout_vec,
 	&cris_elf32_vec,
 	&cris_elf32_us_vec,
 
 	&crx_elf32_vec,
+
+	&csky_elf32_be_vec,
+	&csky_elf32_le_vec,
 
 	&d10v_elf32_vec,
 	&d30v_elf32_vec,
@@ -1013,6 +1092,11 @@ static const bfd_target * const _bfd_target_vector[] =
 	&i386_pei_vec,
 
 	&iamcu_elf32_vec,
+
+#ifdef BFD64
+	&bpf_elf64_be_vec,
+	&bpf_elf64_le_vec,
+#endif
 
 #ifdef BFD64
 #if 0
@@ -1136,10 +1220,6 @@ static const bfd_target * const _bfd_target_vector[] =
 	&pj_elf32_vec,
 	&pj_elf32_le_vec,
 
-#if BFD_SUPPORTS_PLUGINS
-	&plugin_vec,
-#endif
-
 	&powerpc_boot_vec,
 	&powerpc_elf32_vec,
 	&powerpc_elf32_le_vec,
@@ -1227,7 +1307,6 @@ static const bfd_target * const _bfd_target_vector[] =
 	&tic54x_coff2_vec,
 	&tic6x_elf32_be_vec,
 	&tic6x_elf32_le_vec,
-	&tic80_coff_vec,
 
 	&tilegx_elf32_be_vec,
 	&tilegx_elf32_le_vec,
@@ -1276,6 +1355,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&xtensa_elf32_le_vec,
 
 	&z80_coff_vec,
+	&z80_elf32_vec,
 
 	&z8k_coff_vec,
 #endif /* not SELECT_VECS */
@@ -1291,6 +1371,10 @@ static const bfd_target * const _bfd_target_vector[] =
 	&binary_vec,
 /* Likewise for ihex.  */
 	&ihex_vec,
+
+#if BFD_SUPPORTS_PLUGINS
+	&plugin_vec,
+#endif
 
 /* Add any required traditional-core-file-handler.  */
 

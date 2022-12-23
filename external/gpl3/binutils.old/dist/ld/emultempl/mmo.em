@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,16 +24,15 @@
 fragment <<EOF
 /* Need to have this macro defined before mmix-elfnmmo, which uses the
    name for the before_allocation function, defined in ldemul.c (for
-   the mmo "emulation") or in elf32.em (for the elf64mmix
+   the mmo "emulation") or in elf.em (for the elf64mmix
    "emulation").  */
 #define gldmmo_before_allocation before_allocation_default
 
 /* We include this header *not* because we expect to handle ELF here
-   but because we re-use the map_segments function in elf-generic.em,
-   a file which is rightly somewhat ELF-centric.  But this is only to
+   but because we use the map_segments function.  But this is only to
    get a weird testcase right; ld-mmix/bpo-22, forcing ELF to be
    output from the mmo emulation: -m mmo --oformat elf64-mmix!  */
-#include "elf-bfd.h"
+#include "ldelfgen.h"
 
 static void gld${EMULATION_NAME}_after_allocation (void);
 EOF
@@ -45,7 +44,7 @@ fragment <<EOF
 
 /* Place an orphan section.  We use this to put random SEC_CODE or
    SEC_READONLY sections right after MMO_TEXT_SECTION_NAME.  Much borrowed
-   from elf32.em.  */
+   from elf.em.  */
 
 static lang_output_section_statement_type *
 mmo_place_orphan (asection *s,
@@ -117,9 +116,7 @@ mmo_place_orphan (asection *s,
 	    && (nexts->flags & SEC_EXCLUDE) == 0
 	    && ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
 	    && (nexts->owner->flags & DYNAMIC) == 0
-	    && nexts->owner->usrdata != NULL
-	    && !(((lang_input_statement_type *) nexts->owner->usrdata)
-		 ->flags.just_syms))
+	    && !bfd_input_just_syms (nexts->owner))
 	  flags = (((flags ^ SEC_READONLY) | (nexts->flags ^ SEC_READONLY))
 		   ^ SEC_READONLY);
     }
@@ -166,7 +163,7 @@ mmo_place_orphan (asection *s,
 
 	  /* We have to find the oss before this one, so we can use that as
 	     "after".  */
-	  for (lookup = &lang_output_section_statement.head->output_section_statement;
+	  for (lookup = (void *) lang_os_list.head;
 	       lookup != NULL && lookup->next != before;
 	       lookup = lookup->next)
 	    ;
@@ -182,7 +179,7 @@ mmo_place_orphan (asection *s,
     return NULL;
 
   /* If there's an output section by *this* name, we'll use it, regardless
-     of actual section flags, in contrast to what's done in elf32.em.  */
+     of actual section flags, in contrast to what's done in elf.em.  */
   os = lang_insert_orphan (s, secname, 0, after, place, NULL, NULL);
 
   return os;
@@ -193,10 +190,10 @@ mmo_place_orphan (asection *s,
    paper over the bug similarly.  */
 
 static void
-mmo_wipe_sec_reloc_flag (bfd *abfd, asection *sec, void *ptr ATTRIBUTE_UNUSED)
+mmo_wipe_sec_reloc_flag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
+			 void *ptr ATTRIBUTE_UNUSED)
 {
-  bfd_set_section_flags (abfd, sec,
-			 bfd_get_section_flags (abfd, sec) & ~SEC_RELOC);
+  bfd_set_section_flags (sec, bfd_section_flags (sec) & ~SEC_RELOC);
 }
 
 /* Iterate with bfd_map_over_sections over mmo_wipe_sec_reloc_flag... */
@@ -205,7 +202,7 @@ static void
 gld${EMULATION_NAME}_after_allocation (void)
 {
   bfd_map_over_sections (link_info.output_bfd, mmo_wipe_sec_reloc_flag, NULL);
-  gld${EMULATION_NAME}_map_segments (FALSE);
+  ldelf_map_segments (FALSE);
 }
 
 /* To get on-demand global register allocation right, we need to parse the

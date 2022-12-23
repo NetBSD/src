@@ -1,5 +1,5 @@
 /* v850.h -- Header file for NEC V850 opcode table
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Written by J.T. Conklin, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.

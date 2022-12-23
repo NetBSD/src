@@ -1,5 +1,5 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -267,7 +267,7 @@ elf32_m68hc11_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
 	   section != NULL;
 	   section = section->next)
 	{
-	  const char* name = bfd_get_section_name (input_bfd, section);
+	  const char *name = bfd_section_name (section);
 
 	  if (!strcmp (name, ".tramp"))
 	    htab->tramp_section = section;
@@ -890,14 +890,35 @@ elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	/* This relocation describes which C++ vtable entries are actually
 	   used.  Record for later use during GC.  */
 	case R_M68HC11_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 	}
     }
 
+  return TRUE;
+}
+
+static bfd_boolean ATTRIBUTE_PRINTF (6, 7)
+reloc_warning (struct bfd_link_info *info, const char *name, bfd *input_bfd,
+	       asection *input_section, const Elf_Internal_Rela *rel,
+	       const char *fmt, ...)
+{
+  va_list ap;
+  char *buf;
+  int ret;
+
+  va_start (ap, fmt);
+  ret = vasprintf (&buf, fmt, ap);
+  va_end (ap);
+  if (ret < 0)
+    {
+      bfd_set_error (bfd_error_no_memory);
+      return FALSE;
+    }
+  info->callbacks->warning (info, buf, name, input_bfd, input_section,
+			    rel->r_offset);
+  free (buf);
   return TRUE;
 }
 
@@ -953,8 +974,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_boolean is_section_symbol = FALSE;
       struct elf_link_hash_entry *h;
       bfd_vma val;
-      const char * msg;
-      char * buf;
+      const char *msg;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -1016,7 +1036,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  name = (bfd_elf_string_from_elf_section
 		  (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	  if (name == NULL || *name == '\0')
-	    name = bfd_section_name (input_bfd, sec);
+	    name = bfd_section_name (sec);
 	}
 
       if (is_far && ELF32_R_TYPE (rel->r_info) == R_M68HC11_16)
@@ -1110,17 +1130,13 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  break;
 
 	case R_M68HC11_16:
-	  /* Get virtual address of instruction having the relocation.  */
 	  if (is_far)
 	    {
-	      msg = _("reference to the far symbol `%s' using a wrong "
-		      "relocation may result in incorrect execution");
-	      buf = xmalloc (strlen (msg) + strlen (name) + 10);
-	      sprintf (buf, msg, name);
-
-	      (*info->callbacks->warning)
-		(info, buf, name, input_bfd, NULL, rel->r_offset);
-	      free (buf);
+	      if (!reloc_warning (info, name, input_bfd, input_section, rel,
+				  _("reference to the far symbol `%s' using a "
+				    "wrong relocation may result in incorrect "
+				    "execution"), name))
+		return FALSE;
 	    }
 
 	  /* Get virtual address of instruction having the relocation.  */
@@ -1147,47 +1163,43 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		}
 	      else
 		{
-		  msg = _("XGATE address (%lx) is not within shared RAM"
-			  "(0xE000-0xFFFF), therefore you must manually offset "
-			  "the address, and possibly manage the page, in your "
-			  "code.");
-		  buf = xmalloc (strlen (msg) + 128);
-		  sprintf (buf, msg, phys_addr);
-		  (*info->callbacks->warning) (info, buf, name, input_bfd,
-					       input_section, insn_addr);
-		  free (buf);
+		  if (!reloc_warning (info, name, input_bfd, input_section, rel,
+				      _("XGATE address (%lx) is not within "
+					"shared RAM(0xE000-0xFFFF), therefore "
+					"you must manually offset the address, "
+					"and possibly manage the page, in your "
+					"code."), (long) phys_addr))
+		    return FALSE;
 		  break;
 		}
 	    }
 
 	  if (m68hc11_addr_is_banked (pinfo, relocation + rel->r_addend)
 	      && m68hc11_addr_is_banked (pinfo, insn_addr)
-	      && phys_page != insn_page && !(e_flags & E_M68HC11_NO_BANK_WARNING))
+	      && phys_page != insn_page
+	      && !(e_flags & E_M68HC11_NO_BANK_WARNING))
 	    {
-	      /* xgettext:c-format */
-	      msg = _("banked address [%lx:%04lx] (%lx) is not in the same bank "
-		      "as current banked address [%lx:%04lx] (%lx)");
-	      buf = xmalloc (strlen (msg) + 128);
-	      sprintf (buf, msg, phys_page, phys_addr,
-		       (long) (relocation + rel->r_addend),
-		       insn_page, m68hc11_phys_addr (pinfo, insn_addr),
-		       (long) (insn_addr));
-	      (*info->callbacks->warning) (info, buf, name, input_bfd,
-					   input_section, rel->r_offset);
-	      free (buf);
+	      if (!reloc_warning (info, name, input_bfd, input_section, rel,
+				  _("banked address [%lx:%04lx] (%lx) is not "
+				    "in the same bank as current banked "
+				    "address [%lx:%04lx] (%lx)"),
+				  (long) phys_page, (long) phys_addr,
+				  (long) (relocation + rel->r_addend),
+				  (long) insn_page,
+				  (long) m68hc11_phys_addr (pinfo, insn_addr),
+				  (long) insn_addr))
+		return FALSE;
 	      break;
 	    }
 
 	  if (phys_page != 0 && insn_page == 0)
 	    {
-	      /* xgettext:c-format */
-	      msg = _("reference to a banked address [%lx:%04lx] in the "
-		      "normal address space at %04lx");
-	      buf = xmalloc (strlen (msg) + 128);
-	      sprintf (buf, msg, phys_page, phys_addr, insn_addr);
-	      (*info->callbacks->warning) (info, buf, name, input_bfd,
-					   input_section, insn_addr);
-	      free (buf);
+	      if (!reloc_warning (info, name, input_bfd, input_section, rel,
+				  _("reference to a banked address [%lx:%04lx] "
+				    "in the normal address space at %04lx"),
+				  (long) phys_page, (long) phys_addr,
+				  (long) insn_addr))
+		return FALSE;
 	      relocation = phys_addr;
 	      break;
 	    }
@@ -1218,18 +1230,12 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		relocation += 0xC000;
 	      else
 		{
-		  /* Get virtual address of instruction having the relocation.  */
-		  insn_addr = input_section->output_section->vma
-		      + input_section->output_offset + rel->r_offset;
-
-		  msg = _("S12 address (%lx) is not within shared RAM"
-		      "(0x2000-0x4000), therefore you must manually "
-		      "offset the address in your code");
-		  buf = xmalloc (strlen (msg) + 128);
-		  sprintf (buf, msg, phys_addr);
-		  (*info->callbacks->warning) (info, buf, name, input_bfd,
-					       input_section, insn_addr);
-		  free (buf);
+		  if (!reloc_warning (info, name, input_bfd, input_section, rel,
+				      _("S12 address (%lx) is not within "
+					"shared RAM(0x2000-0x4000), therefore "
+					"you must manually offset the address "
+					"in your code"), (long) phys_addr))
+		    return FALSE;
 		  break;
 		}
 	    }
@@ -1450,18 +1456,21 @@ static void scan_sections_for_abi (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Tweak the OSABI field of the elf header.  */
 
-void
-elf32_m68hc11_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
+bfd_boolean
+elf32_m68hc11_init_file_header (bfd *abfd, struct bfd_link_info *link_info)
 {
   struct m68hc11_scan_param param;
   struct m68hc11_elf_link_hash_table *htab;
 
+  if (!_bfd_elf_init_file_header (abfd, link_info))
+    return FALSE;
+
   if (link_info == NULL)
-    return;
+    return TRUE;
 
   htab = m68hc11_elf_hash_table (link_info);
   if (htab == NULL)
-    return;
+    return TRUE;
 
   m68hc11_elf_get_bank_parameters (link_info);
 
@@ -1477,4 +1486,5 @@ elf32_m68hc11_post_process_headers (bfd *abfd, struct bfd_link_info *link_info)
       i_ehdrp = elf_elfheader (abfd);
       i_ehdrp->e_flags |= E_M68HC12_BANKS;
     }
+  return TRUE;
 }

@@ -1,5 +1,5 @@
 /* TI C6X disassembler.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -163,9 +163,9 @@ static unsigned int
 tic6x_extract_32 (unsigned char *p, struct disassemble_info *info)
 {
   if (info->endian == BFD_ENDIAN_LITTLE)
-    return (p[0]) | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+    return p[0] | (p[1] << 8) | (p[2] << 16) | ((unsigned) p[3] << 24);
   else
-    return (p[3]) | (p[2] << 8) | (p[1] << 16) | (p[0] << 24);
+    return p[3] | (p[2] << 8) | (p[1] << 16) | ((unsigned) p[0] << 24);
 }
 
 /* Extract a 16-bit value read from the instruction stream.  */

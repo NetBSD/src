@@ -1,5 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -39,6 +39,9 @@
 @end ifset
 @ifset Blackfin
 @set Blackfin
+@end ifset
+@ifset BPF
+@set BPF
 @end ifset
 @ifset H8/300
 @set H8
@@ -97,7 +100,7 @@
 This file documents the GNU Assembler "@value{AS}".
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -146,7 +149,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -228,6 +231,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--debug-prefix-map} @var{old}=@var{new}]
  [@b{--defsym} @var{sym}=@var{val}] [@b{-f}] [@b{-g}] [@b{--gstabs}]
  [@b{--gstabs+}] [@b{--gdwarf-2}] [@b{--gdwarf-sections}]
+ [@b{--gdwarf-cie-version}=@var{VERSION}]
  [@b{--help}] [@b{-I} @var{dir}] [@b{-J}]
  [@b{-K}] [@b{-L}] [@b{--listing-lhs-width}=@var{NUM}]
  [@b{--listing-lhs-width2}=@var{NUM}] [@b{--listing-rhs-width}=@var{NUM}]
@@ -296,6 +300,11 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mno-fdpic}]
    [@b{-mnopic}]
 @end ifset
+@ifset BPF
+
+@emph{Target BPF options:}
+   [@b{-EL}] [@b{-EB}]
+@end ifset
 @ifset CRIS
 
 @emph{Target CRIS options:}
@@ -305,6 +314,26 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{--march=v0_v10} | @b{--march=v10} | @b{--march=v32} | @b{--march=common_v10_v32}]
 @c Deprecated -- deliberately not documented.
 @c [@b{-h}] [@b{-H}]
+@end ifset
+@ifset CSKY
+
+@emph{Target C-SKY options:}
+   [@b{-march=@var{arch}}] [@b{-mcpu=@var{cpu}}]
+   [@b{-EL}] [@b{-mlittle-endian}] [@b{-EB}] [@b{-mbig-endian}]
+   [@b{-fpic}] [@b{-pic}]
+   [@b{-mljump}] [@b{-mno-ljump}]
+   [@b{-force2bsr}] [@b{-mforce2bsr}] [@b{-no-force2bsr}] [@b{-mno-force2bsr}]
+   [@b{-jsri2bsr}] [@b{-mjsri2bsr}] [@b{-no-jsri2bsr }] [@b{-mno-jsri2bsr}]
+   [@b{-mnolrw }] [@b{-mno-lrw}]
+   [@b{-melrw}] [@b{-mno-elrw}]
+   [@b{-mlaf }] [@b{-mliterals-after-func}]
+   [@b{-mno-laf}] [@b{-mno-literals-after-func}]
+   [@b{-mlabr}] [@b{-mliterals-after-br}]
+   [@b{-mno-labr}] [@b{-mnoliterals-after-br}]
+   [@b{-mistack}] [@b{-mno-istack}]
+   [@b{-mhard-float}] [@b{-mmp}] [@b{-mcp}] [@b{-mcache}]
+   [@b{-msecurity}] [@b{-mtrust}]
+   [@b{-mdsp}] [@b{-medsp}] [@b{-mvdsp}]
 @end ifset
 @ifset D10V
 
@@ -424,11 +453,16 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mmcu}] [@b{-mno-mcu}]
    [@b{-mcrc}] [@b{-mno-crc}]
    [@b{-mginv}] [@b{-mno-ginv}]
+   [@b{-mloongson-mmi}] [@b{-mno-loongson-mmi}]
+   [@b{-mloongson-cam}] [@b{-mno-loongson-cam}]
+   [@b{-mloongson-ext}] [@b{-mno-loongson-ext}]
+   [@b{-mloongson-ext2}] [@b{-mno-loongson-ext2}]
    [@b{-minsn32}] [@b{-mno-insn32}]
    [@b{-mfix7000}] [@b{-mno-fix7000}]
    [@b{-mfix-rm7000}] [@b{-mno-fix-rm7000}]
    [@b{-mfix-vr4120}] [@b{-mno-fix-vr4120}]
    [@b{-mfix-vr4130}] [@b{-mno-fix-vr4130}]
+   [@b{-mfix-r5900}] [@b{-mno-fix-r5900}]
    [@b{-mdebug}] [@b{-no-mdebug}]
    [@b{-mpdr}] [@b{-mno-pdr}]
 @end ifset
@@ -458,6 +492,9 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
     [@b{-mfull-regs}] [@b{-m[no-]dx-regs}] [@b{-mpic}] [@b{-mno-relax}]
     [@b{-mb2bb}]
 @end ifset
+@ifset OPENRISC
+@c OpenRISC has no machine-dependent assembler options.
+@end ifset
 @ifset PDP11
 
 @emph{Target PDP11 options:}
@@ -475,10 +512,10 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @emph{Target PowerPC options:}
    [@b{-a32}|@b{-a64}]
    [@b{-mpwrx}|@b{-mpwr2}|@b{-mpwr}|@b{-m601}|@b{-mppc}|@b{-mppc32}|@b{-m603}|@b{-m604}|@b{-m403}|@b{-m405}|
-    @b{-m440}|@b{-m464}|@b{-m476}|@b{-m7400}|@b{-m7410}|@b{-m7450}|@b{-m7455}|@b{-m750cl}|@b{-mppc64}|
-    @b{-m620}|@b{-me500}|@b{-e500x2}|@b{-me500mc}|@b{-me500mc64}|@b{-me5500}|@b{-me6500}|@b{-mppc64bridge}|
-    @b{-mbooke}|@b{-mpower4}|@b{-mpwr4}|@b{-mpower5}|@b{-mpwr5}|@b{-mpwr5x}|@b{-mpower6}|@b{-mpwr6}|
-    @b{-mpower7}|@b{-mpwr7}|@b{-mpower8}|@b{-mpwr8}|@b{-mpower9}|@b{-mpwr9}@b{-ma2}|
+    @b{-m440}|@b{-m464}|@b{-m476}|@b{-m7400}|@b{-m7410}|@b{-m7450}|@b{-m7455}|@b{-m750cl}|@b{-mgekko}|
+    @b{-mbroadway}|@b{-mppc64}|@b{-m620}|@b{-me500}|@b{-e500x2}|@b{-me500mc}|@b{-me500mc64}|@b{-me5500}|
+    @b{-me6500}|@b{-mppc64bridge}|@b{-mbooke}|@b{-mpower4}|@b{-mpwr4}|@b{-mpower5}|@b{-mpwr5}|@b{-mpwr5x}|
+    @b{-mpower6}|@b{-mpwr6}|@b{-mpower7}|@b{-mpwr7}|@b{-mpower8}|@b{-mpwr8}|@b{-mpower9}|@b{-mpwr9}@b{-ma2}|
     @b{-mcell}|@b{-mspe}|@b{-mspe2}|@b{-mtitan}|@b{-me300}|@b{-mcom}]
    [@b{-many}] [@b{-maltivec}|@b{-mvsx}|@b{-mhtm}|@b{-mvle}]
    [@b{-mregnames}|@b{-mno-regnames}]
@@ -593,7 +630,15 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset Z80
 
 @emph{Target Z80 options:}
-  [@b{-z80}] [@b{-r800}]
+  [@b{-z80}]|[@b{-z180}]|[@b{-r800}]|[@b{-ez80}]|[@b{-ez80-adl}]
+  [@b{-local-prefix=}@var{PREFIX}]
+  [@b{-colonless}]
+  [@b{-sdcc}]
+  [@b{-fp-s=}@var{FORMAT}]
+  [@b{-fp-d=}@var{FORMAT}]
+  [@b{-strict}]|[@b{-full}]
+  [@b{-with-inst=@var{INST}[,...]}] [@b{-Wnins @var{INST}[,...]}]
+  [@b{-without-inst=@var{INST}[,...]}] [@b{-Fins @var{INST}[,...]}]
   [@b{ -ignore-undocumented-instructions}] [@b{-Wnud}]
   [@b{ -ignore-unportable-instructions}] [@b{-Wnup}]
   [@b{ -warn-undocumented-instructions}] [@b{-Wud}]
@@ -736,6 +781,11 @@ will have its dwarf line number information placed into a section called
 then debug line section will still be called just @var{.debug_line} without any
 suffix.
 
+@item --gdwarf-cie-version=@var{version}
+Control which version of DWARF Common Information Entries (CIEs) are produced.
+When this flag is not specificed the default is version 1, though some targets
+can modify this default.  Other possible values for @var{version} are 3 or 4.
+
 @ifset ELF
 @item --size-check=error
 @itemx --size-check=warning
@@ -757,7 +807,7 @@ configure option.
 @end ifset
 
 @item --help
-Print a summary of the command line options and exit.
+Print a summary of the command-line options and exit.
 
 @item --target-help
 Print a summary of all target specific options and exit.
@@ -973,9 +1023,47 @@ the Blackfin processor family.
 
 @end ifset
 
+@ifset BPF
+
+@ifclear man
+@xref{BPF Options}, for the options available when @value{AS} is
+configured for the Linux kernel BPF processor family.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for
+the Linux kernel BPF processor family.
+@c man end
+@c man begin INCLUDE
+@include c-bpf.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
 @c man begin OPTIONS
 @ifset CRIS
 See the info pages for documentation of the CRIS-specific options.
+@end ifset
+
+@ifset CSKY
+
+@ifclear man
+@xref{C-SKY Options}, for the options available when @value{AS} is
+configured for the C-SKY processor family.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for
+the C-SKY processor family.
+@c man end
+@c man begin INCLUDE
+@include c-csky.texi
+@c ended inside the included file
+@end ifset
+
 @end ifset
 
 @ifset D10V
@@ -1398,6 +1486,14 @@ of an mfhi or mflo instruction occurs in the following two instructions.
 Cause nops to be inserted if a dmult or dmultu instruction is
 followed by a load instruction.
 
+@item -mfix-r5900
+@itemx -mno-fix-r5900
+Do not attempt to schedule the preceding instruction into the delay slot
+of a branch instruction placed at the end of a short loop of six
+instructions or fewer and always schedule a @code{nop} instruction there
+instead.  The short loop bug under certain conditions causes loops to
+execute only once or twice, due to a hardware bug in the R5900 chip.
+
 @item -mdebug
 @itemx -no-mdebug
 Cause stabs-style debugging output to go into an ECOFF-style .mdebug
@@ -1526,6 +1622,32 @@ Generate code for the Global INValidate (GINV) Application Specific
 Extension.  This tells the assembler to accept GINV instructions.
 @samp{-mno-ginv} turns off this option.
 
+@item -mloongson-mmi
+@itemx -mno-loongson-mmi
+Generate code for the Loongson MultiMedia extensions Instructions (MMI)
+Application Specific Extension.  This tells the assembler to accept MMI
+instructions.
+@samp{-mno-loongson-mmi} turns off this option.
+
+@item -mloongson-cam
+@itemx -mno-loongson-cam
+Generate code for the Loongson Content Address Memory (CAM) instructions.
+This tells the assembler to accept Loongson CAM instructions.
+@samp{-mno-loongson-cam} turns off this option.
+
+@item -mloongson-ext
+@itemx -mno-loongson-ext
+Generate code for the Loongson EXTensions (EXT) instructions.
+This tells the assembler to accept Loongson EXT instructions.
+@samp{-mno-loongson-ext} turns off this option.
+
+@item -mloongson-ext2
+@itemx -mno-loongson-ext2
+Generate code for the Loongson EXTensions R2 (EXT2) instructions.
+This option implies @samp{-mloongson-ext}.
+This tells the assembler to accept Loongson EXT2 instructions.
+@samp{-mno-loongson-ext2} turns off this option.
+
 @item -minsn32
 @itemx -mno-insn32
 Only use 32-bit instruction encodings when generating code for the
@@ -1607,12 +1729,12 @@ an MCore processor.
 @item -jsri2bsr
 @itemx -nojsri2bsr
 Enable or disable the JSRI to BSR transformation.  By default this is enabled.
-The command line option @samp{-nojsri2bsr} can be used to disable it.
+The command-line option @samp{-nojsri2bsr} can be used to disable it.
 
 @item -sifilter
 @itemx -nosifilter
 Enable or disable the silicon filter behaviour.  By default this is disabled.
-The default can be overridden by the @samp{-sifilter} command line option.
+The default can be overridden by the @samp{-sifilter} command-line option.
 
 @item -relax
 Alter jump instructions for long displacements.
@@ -1735,7 +1857,8 @@ Specify which s390 processor variant is the target, @samp{g5} (or
 @samp{arch3}), @samp{g6}, @samp{z900} (or @samp{arch5}), @samp{z990} (or
 @samp{arch6}), @samp{z9-109}, @samp{z9-ec} (or @samp{arch7}), @samp{z10} (or
 @samp{arch8}), @samp{z196} (or @samp{arch9}), @samp{zEC12} (or @samp{arch10}),
-@samp{z13} (or @samp{arch11}), or @samp{z14} (or @samp{arch12}).
+@samp{z13} (or @samp{arch11}), @samp{z14} (or @samp{arch12}), or @samp{z15}
+(or @samp{arch13}).
 @item -mregnames
 @itemx -mno-regnames
 Allow or disallow symbolic names for registers.
@@ -1822,38 +1945,24 @@ Xtensa processor.
 
 @end ifset
 
-@c man begin OPTIONS
-
 @ifset Z80
-The following options are available when @value{AS} is configured for
-a Z80 family processor.
-@table @gcctabopt
-@item -z80
-Assemble for Z80 processor.
-@item -r800
-Assemble for R800 processor.
-@item  -ignore-undocumented-instructions
-@itemx -Wnud
-Assemble undocumented Z80 instructions that also work on R800 without warning.
-@item  -ignore-unportable-instructions
-@itemx -Wnup
-Assemble all undocumented Z80 instructions without warning.
-@item  -warn-undocumented-instructions
-@itemx -Wud
-Issue a warning for undocumented Z80 instructions that also work on R800.
-@item  -warn-unportable-instructions
-@itemx -Wup
-Issue a warning for undocumented Z80 instructions that do not work on R800.
-@item  -forbid-undocumented-instructions
-@itemx -Fud
-Treat all undocumented instructions as errors.
-@item  -forbid-unportable-instructions
-@itemx -Fup
-Treat undocumented Z80 instructions that do not work on R800 as errors.
-@end table
+
+@ifclear man
+@xref{Z80 Options}, for the options available when @value{AS} is configured
+for an Z80 processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for an
+Z80 processor.
+@c man end
+@c man begin INCLUDE
+@include c-z80.texi
+@c ended inside the included file
 @end ifset
 
-@c man end
+@end ifset
 
 @menu
 * Manual::                      Structure of this Manual
@@ -2011,7 +2120,7 @@ significant.
 explicitly, as one of the files for @command{@value{AS}} to assemble.
 
 @cindex options, command line
-Except for @samp{--} any command line argument that begins with a
+Except for @samp{--} any command-line argument that begins with a
 hyphen (@samp{-}) is an option.  Each option changes the behavior of
 @command{@value{AS}}.  No option changes the way another option works.  An
 option is a @samp{-} followed by one or more letters; the case of
@@ -2050,7 +2159,7 @@ program.  The source program is made up of one or more files.
 
 You give @command{@value{AS}} a command line that has zero or more input file
 names.  The input files are read (from left file name to right).  A
-command line argument (in any position) that has no special meaning
+command-line argument (in any position) that has no special meaning
 is taken to be an input file name.
 
 If you give @command{@value{AS}} no file names it attempts to read one input file
@@ -2288,7 +2397,7 @@ The letters after @samp{-a} may be combined into one option,
 
 Note if the assembler source is coming from the standard input (e.g.,
 because it
-is being created by @code{@value{GCC}} and the @samp{-pipe} command line switch
+is being created by @code{@value{GCC}} and the @samp{-pipe} command-line switch
 is being used) then the listing will not contain any comments or preprocessor
 directives.  This is because the listing code buffers input source lines from
 stdin only after they have been preprocessed by the assembler.  This reduces
@@ -2383,7 +2492,7 @@ in the object file.  Usually if you do this you also tell the linker
 @node listing
 @section Configuring listing output: @option{--listing}
 
-The listing feature of the assembler can be enabled via the command line switch
+The listing feature of the assembler can be enabled via the command-line switch
 @samp{-a} (@pxref{a}).  This feature combines the input source file(s) with a
 hex dump of the corresponding locations in the output object file, and displays
 them as a listing file.  The format of this listing can be controlled by
@@ -2777,7 +2886,7 @@ specific, and some targets multiple comment characters.  Some targets also have
 line comment characters that only work if they are the first character on a
 line.  Some targets use a sequence of two characters to introduce a line
 comment.  Some targets can also change their line comment characters depending
-upon command line options that have been used.  For more details see the
+upon command-line options that have been used.  For more details see the
 @emph{Syntax} section in the documentation for individual targets.
 
 If the line comment character is the hash sign (@samp{#}) then it still has the
@@ -4246,11 +4355,11 @@ Some machine configurations provide additional directives.
 * ABORT (COFF)::                @code{.ABORT}
 @end ifset
 
-* Align::                       @code{.align @var{abs-expr} , @var{abs-expr}}
+* Align::                       @code{.align [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
 * Altmacro::                    @code{.altmacro}
 * Ascii::                       @code{.ascii "@var{string}"}@dots{}
 * Asciz::                       @code{.asciz "@var{string}"}@dots{}
-* Balign::                      @code{.balign @var{abs-expr} , @var{abs-expr}}
+* Balign::                      @code{.balign [@var{abs-expr}[, @var{abs-expr}]]}
 * Bundle directives::           @code{.bundle_align_mode @var{abs-expr}}, etc
 * Byte::                        @code{.byte @var{expressions}}
 * CFI directives::		@code{.cfi_startproc [simple]}, @code{.cfi_endproc}, etc.
@@ -4338,7 +4447,7 @@ Some machine configurations provide additional directives.
 * Octa::                        @code{.octa @var{bignums}}
 * Offset::			@code{.offset @var{loc}}
 * Org::                         @code{.org @var{new-lc}, @var{fill}}
-* P2align::                     @code{.p2align @var{abs-expr}, @var{abs-expr}, @var{abs-expr}}
+* P2align::                     @code{.p2align [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
 @ifset ELF
 * PopSection::                  @code{.popsection}
 * Previous::                    @code{.previous}
@@ -4449,13 +4558,14 @@ synonym for @samp{.abort}.
 @end ifset
 
 @node Align
-@section @code{.align @var{abs-expr}, @var{abs-expr}, @var{abs-expr}}
+@section @code{.align [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
 
 @cindex padding the location counter
 @cindex @code{align} directive
 Pad the location counter (in the current subsection) to a particular storage
 boundary.  The first expression (which must be absolute) is the alignment
-required, as described below.
+required, as described below.  If this expression is omitted then a default
+value of 0 is used, effectively disabling alignment requirements.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
@@ -4473,7 +4583,7 @@ with no-op instructions when appropriate.
 
 The way the required alignment is specified varies from system to system.
 For the arc, hppa, i386 using ELF, iq2000, m68k, or1k,
-s390, sparc, tic4x, tic80 and xtensa, the first expression is the
+s390, sparc, tic4x and xtensa, the first expression is the
 alignment request in bytes.  For example @samp{.align 8} advances
 the location counter until it is a multiple of 8.  If the location counter
 is already a multiple of 8, no change is needed.  For the tic54x, the
@@ -4483,7 +4593,7 @@ For other systems, including ppc, i386 using a.out format, arm and
 strongarm, it is the
 number of low-order zero bits the location counter must have after
 advancement.  For example @samp{.align 3} advances the location
-counter until it a multiple of 8.  If the location counter is already a
+counter until it is a multiple of 8.  If the location counter is already a
 multiple of 8, no change is needed.
 
 This inconsistency is due to the different behaviors of the various
@@ -4547,7 +4657,7 @@ trailing zero byte) into consecutive addresses.
 a zero byte.  The ``z'' in @samp{.asciz} stands for ``zero''.
 
 @node Balign
-@section @code{.balign[wl] @var{abs-expr}, @var{abs-expr}, @var{abs-expr}}
+@section @code{.balign[wl] [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
 
 @cindex padding the location counter given number of bytes
 @cindex @code{balign} directive
@@ -4555,7 +4665,8 @@ Pad the location counter (in the current subsection) to a particular
 storage boundary.  The first expression (which must be absolute) is the
 alignment request in bytes.  For example @samp{.balign 8} advances
 the location counter until it is a multiple of 8.  If the location counter
-is already a multiple of 8, no change is needed.
+is already a multiple of 8, no change is needed.  If the expression is omitted
+then a default value of 0 is used, effectively disabling alignment requirements.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
@@ -5700,7 +5811,7 @@ counter, and @code{.nolist} decrements it.  Assembly listings are
 generated whenever the counter is greater than zero.
 
 By default, listings are disabled.  When you enable them (with the
-@samp{-a} command line option; @pxref{Invoking,,Command-Line Options}),
+@samp{-a} command-line option; @pxref{Invoking,,Command-Line Options}),
 the initial value of the listing counter is one.
 
 @node Ln
@@ -6100,7 +6211,7 @@ absolute expression.  If the comma and @var{fill} are omitted,
 @var{fill} defaults to zero.
 
 @node P2align
-@section @code{.p2align[wl] @var{abs-expr}, @var{abs-expr}, @var{abs-expr}}
+@section @code{.p2align[wl] [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
 
 @cindex padding the location counter given a power of two
 @cindex @code{p2align} directive
@@ -6108,8 +6219,9 @@ Pad the location counter (in the current subsection) to a particular
 storage boundary.  The first expression (which must be absolute) is the
 number of low-order zero bits the location counter must have after
 advancement.  For example @samp{.p2align 3} advances the location
-counter until it a multiple of 8.  If the location counter is already a
-multiple of 8, no change is needed.
+counter until it is a multiple of 8.  If the location counter is already a
+multiple of 8, no change is needed.  If the expression is omitted then a
+default value of 0 is used, effectively disabling alignment requirements.
 
 The second expression (also absolute) gives the fill value to be stored in the
 padding bytes.  It (and the comma) may be omitted.  If it is omitted, the
@@ -6655,7 +6767,7 @@ If you @code{.set} a global symbol, the value stored in the object
 file is the last value stored into it.
 
 @ifset Z80
-On Z80 @code{set} is a real instruction, use
+On Z80 @code{set} is a real instruction, use @code{.set} or
 @samp{@var{symbol} defl @var{expression}} instead.
 @end ifset
 
@@ -7107,6 +7219,10 @@ systems).
 
 @end table
 
+Changing between incompatible types other than from/to STT_NOTYPE will
+result in a diagnostic.  An intermediate change to STT_NOTYPE will silence
+this.
+
 Note: Some targets support extra types in addition to those listed above.
 
 @end ifset
@@ -7273,7 +7389,7 @@ assembly language programmers.
 @cindex filling memory with zero bytes
 This directive emits @var{size} 0-valued bytes.  @var{size} must be an absolute
 expression.  This directive is actually an alias for the @samp{.skip} directive
-so in can take an optional second argument of the value to store in the bytes
+so it can take an optional second argument of the value to store in the bytes
 instead of zero.  Using @samp{.zero} in this way would be confusing however.
 @end ifclear
 
@@ -7473,6 +7589,23 @@ The vector ABI used by this object file.  The value will be:
 @end itemize
 @end table
 
+@subsection MSP430 Attributes
+
+@table @r
+@item Tag_GNU_MSP430_Data_Region (4)
+The data region used by this object file.  The value will be:
+
+@itemize @bullet
+@item
+0 for files not using the large memory model.
+@item
+1 for files which have been compiled with the condition that all
+data is in the lower memory region, i.e. below address 0x10000.
+@item
+2 for files which allow data to be placed in the full 20-bit memory range.
+@end itemize
+@end table
+
 @node Defining New Object Attributes
 @section Defining New Object Attributes
 
@@ -7534,11 +7667,17 @@ subject, see the hardware manufacturer's manual.
 @ifset Blackfin
 * Blackfin-Dependent::		Blackfin Dependent Features
 @end ifset
+@ifset BPF
+* BPF-Dependent::		BPF Dependent Features
+@end ifset
 @ifset CR16
 * CR16-Dependent::              CR16 Dependent Features
 @end ifset
 @ifset CRIS
 * CRIS-Dependent::              CRIS Dependent Features
+@end ifset
+@ifset CSKY
+* C-SKY-Dependent::             C-SKY Dependent Features
 @end ifset
 @ifset D10V
 * D10V-Dependent::              D10V Dependent Features
@@ -7580,7 +7719,7 @@ subject, see the hardware manufacturer's manual.
 * M68HC11-Dependent::           M68HC11 and 68HC12 Dependent Features
 @end ifset
 @ifset S12Z
-* S12Z-Dependent::            S12Z Dependent Features
+* S12Z-Dependent::              S12Z Dependent Features
 @end ifset
 @ifset METAG
 * Meta-Dependent ::             Meta Dependent Features
@@ -7605,6 +7744,9 @@ subject, see the hardware manufacturer's manual.
 @end ifset
 @ifset NS32K
 * NS32K-Dependent::		NS32K Dependent Features
+@end ifset
+@ifset OPENRISC
+* OpenRISC-Dependent::		OpenRISC 1000 Features
 @end ifset
 @ifset PDP11
 * PDP-11-Dependent::            PDP-11 Dependent Features
@@ -7715,12 +7857,20 @@ subject, see the hardware manufacturer's manual.
 @include c-bfin.texi
 @end ifset
 
+@ifset BPF
+@include c-bpf.texi
+@end ifset
+
 @ifset CR16
 @include c-cr16.texi
 @end ifset
 
 @ifset CRIS
 @include c-cris.texi
+@end ifset
+
+@ifset CSKY
+@include c-csky.texi
 @end ifset
 
 @ifset Renesas-all
@@ -7827,6 +7977,10 @@ family.
 
 @ifset NS32K
 @include c-ns32k.texi
+@end ifset
+
+@ifset OPENRISC
+@include c-or1k.texi
 @end ifset
 
 @ifset PDP11
