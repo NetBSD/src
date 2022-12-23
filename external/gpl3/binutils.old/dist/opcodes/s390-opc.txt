@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2018 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2020 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -1126,7 +1126,7 @@ e561 tbeginc SIL_RDU "constrained transaction begin" zEC12 zarch htm
 b2f8 tend S_00 "transaction end" zEC12 zarch htm
 c7 bpp SMI_U0RDP "branch prediction preload" zEC12 zarch
 c5 bprp MII_UPP "branch prediction relative preload" zEC12 zarch
-b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch
+b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch htm
 b2fa niai IE_UU "next instruction access intent" zEC12 zarch
 b98f crdte RRF_RURR2 "compare and replace DAT table entry" zEC12 zarch optparm
 e3000000009f lat RXY_RRRD "load and trap 32 bit" zEC12 zarch
@@ -1880,3 +1880,128 @@ b929 kma RRF_R0RR "cipher message with galois counter mode" arch12 zarch
 b93c prno RRE_RR "perform pseudorandom number operation" arch12 zarch
 b9a1 tpei RRE_RR "test pending external interruption" arch12 zarch
 b9ac irbm RRE_RR "insert reference bits multiple" arch12 zarch
+
+# Aligned vector store hints
+
+e70000000006 vl VRX_VRRDU "vector memory load" arch12 zarch optparm
+e70000000036 vlm VRS_VVRDU "vector load multiple" arch12 zarch optparm
+e7000000000e vst VRX_VRRDU "vector store" arch12 zarch optparm
+e7000000003e vstm VRS_VVRDU "vector store multiple" arch12 zarch optparm
+
+
+# arch13 instructions
+
+
+# Miscellaneous Instruction Extensions Facility 2
+
+b9f5 ncrk RRF_R0RR2 "and with complement 32 bit" arch13 zarch
+b9e5 ncgrk RRF_R0RR2 "and with complement 64 bit" arch13 zarch
+e50a mvcrl SSE_RDRD "move right to left" arch13 zarch
+b974 nnrk RRF_R0RR2 "nand 32 bit" arch13 zarch
+b964 nngrk RRF_R0RR2 "nand 64 bit" arch13 zarch
+b976 nork RRF_R0RR2 "nor 32 bit" arch13 zarch
+b966 nogrk RRF_R0RR2 "nor 64 bit" arch13 zarch
+b977 nxrk RRF_R0RR2 "not exclusive or 32 bit" arch13 zarch
+b967 nxgrk RRF_R0RR2 "not exclusive or 64 bit" arch13 zarch
+b975 ocrk RRF_R0RR2 "or with complement 32 bit" arch13 zarch
+b965 ocgrk RRF_R0RR2 "or with complement 64 bit" arch13 zarch
+b9e1 popcnt RRF_U0RR "population count arch13" arch13 zarch optparm
+b9f0 selr RRF_RURR "select 32 bit" arch13 zarch
+b9f00000 selr*20 RRF_R0RR3 "select 32 bit" arch13 zarch
+b9e3 selgr RRF_RURR "select 64 bit" arch13 zarch
+b9e30000 selgr*20 RRF_R0RR3 "select 64 bit" arch13 zarch
+b9c0 selfhr RRF_RURR "select high" arch13 zarch
+b9c00000 selfhr*20 RRF_R0RR3 "select high" arch13 zarch
+
+# Vector Enhancements Facility 2
+
+e60000000006 vlbr VRX_VRRDU "vector load byte reversed elements" arch13 zarch
+e60000001006 vlbrh VRX_VRRD "vector load byte reversed halfword elements" arch13 zarch
+e60000002006 vlbrf VRX_VRRD "vector load byte reversed word elements" arch13 zarch
+e60000003006 vlbrg VRX_VRRD "vector load byte reversed doubleword elements" arch13 zarch
+e60000004006 vlbrq VRX_VRRD "vector load byte reversed quadword elements" arch13 zarch
+
+e60000000007 vler VRX_VRRDU "vector load elements reversed" arch13 zarch
+e60000001007 vlerh VRX_VRRD "vector load halfword elements reversed" arch13 zarch
+e60000002007 vlerf VRX_VRRD "vector load word elements reversed" arch13 zarch
+e60000003007 vlerg VRX_VRRD "vector load doubleword elements reversed" arch13 zarch
+
+e60000000004 vllebrz VRX_VRRDU "vector load byte reversed element and zero" arch13 zarch
+e60000001004 vllebrzh VRX_VRRD "vector load byte reversed halfword element and zero" arch13 zarch
+e60000002004 vllebrzf VRX_VRRD "vector load byte reversed word element and zero" arch13 zarch
+e60000003004 ldrv VRX_VRRD "load byte reversed doubleword" arch13 zarch
+e60000003004 vllebrzg VRX_VRRD "vector load byte reversed doubleword element and zero" arch13 zarch
+e60000006004 lerv VRX_VRRD "load byte reversed word" arch13 zarch
+e60000006004 vllebrze VRX_VRRD "vector load byte reversed word element left-aligned and zero" arch13 zarch
+
+e60000000001 vlebrh VRX_VRRDU "vector load byte reversed halfword element" arch13 zarch
+e60000000003 vlebrf VRX_VRRDU "vector load byte reversed word element" arch13 zarch
+e60000000002 vlebrg VRX_VRRDU "vector load byte reversed doubleword element" arch13 zarch
+
+e60000000005 vlbrrep VRX_VRRDU "vector load byte reversed element and replicate" arch13 zarch
+e60000001005 vlbrreph VRX_VRRD "vector load byte reversed halfword element and replicate" arch13 zarch
+e60000002005 vlbrrepf VRX_VRRD "vector load byte reversed word element and replicate" arch13 zarch
+e60000003005 vlbrrepg VRX_VRRD "vector load byte reversed doubleword element and replicate" arch13 zarch
+
+e6000000000e vstbr VRX_VRRDU "vector store byte reversed elements" arch13 zarch
+e6000000100e vstbrh VRX_VRRD "vector store byte reversed halfword elements" arch13 zarch
+e6000000200e vstbrf VRX_VRRD "vector store byte reversed word elements" arch13 zarch
+e6000000300e vstbrg VRX_VRRD "vector store byte reversed doubleword elements" arch13 zarch
+e6000000400e vstbrq VRX_VRRD "vector store byte reversed quadword elements" arch13 zarch
+
+e6000000000f vster VRX_VRRDU "vector store elements reversed" arch13 zarch
+e6000000100f vsterh VRX_VRRD "vector store halfword elements reversed" arch13 zarch
+e6000000200f vsterf VRX_VRRD "vector store word elements reversed" arch13 zarch
+e6000000300f vsterg VRX_VRRD "vector store doubleword elements reversed" arch13 zarch
+
+e60000000009 vstebrh VRX_VRRDU "vector store byte reversed halfword element" arch13 zarch
+e6000000000b vstebrf VRX_VRRDU "vector store byte reversed word element" arch13 zarch
+e6000000000b sterv VRX_VRRD "store byte reversed word" arch13 zarch
+e6000000000a vstebrg VRX_VRRDU "vector store byte reversed doubleword element" arch13 zarch
+e6000000000a stdrv VRX_VRRD "store byte reversed doubleword" arch13 zarch
+
+e70000000086 vsld VRI_VVV0U "vector shift left double by bit" arch13 zarch
+e70000000087 vsrd VRI_VVV0U "vector shift right double by bit" arch13 zarch
+
+e7000000008b vstrs VRR_VVVUU0V "vector string search" arch13 zarch optparm
+
+e7000000008b vstrsb VRR_VVVU0VB "vector string search byte" arch13 zarch optparm
+e7000100008b vstrsh VRR_VVVU0VB "vector string search halfword" arch13 zarch optparm
+e7000200008b vstrsf VRR_VVVU0VB "vector string search word" arch13 zarch optparm
+
+e7000020008b vstrszb VRR_VVV0V "vector string search byte zero" arch13 zarch
+e7000120008b vstrszh VRR_VVV0V "vector string search halfword zero" arch13 zarch
+e7000220008b vstrszf VRR_VVV0V "vector string search word zero" arch13 zarch
+
+e700000000c3 vcfps VRR_VV0UUU "vector fp convert from fixed" arch13 zarch
+e700000020c3 vcefb VRR_VV0UU "vector fp convert from fixed 32 bit" arch13 zarch
+e700000820c3 wcefb VRR_VV0UU8 "vector fp convert from fixed 32 bit" arch13 zarch
+
+e700000000c1 vcfpl VRR_VV0UUU "vector fp convert from logical" arch13 zarch
+e700000020c1 vcelfb VRR_VV0UU "vector fp convert from logical 32 bit" arch13 zarch
+e700000820c1 wcelfb VRR_VV0UU8 "vector fp convert from logical 32 bit" arch13 zarch
+
+e700000000c2 vcsfp VRR_VV0UUU "vector fp convert to fixed" arch13 zarch
+e700000020c2 vcfeb VRR_VV0UU "vector fp convert to fixed 32 bit" arch13 zarch
+e700000820c2 wcfeb VRR_VV0UU8 "vector fp convert to fixed 32 bit" arch13 zarch
+
+e700000000c0 vclfp VRR_VV0UUU "vector fp convert to logical" arch13 zarch
+e700000020c0 vclfeb VRR_VV0UU "vector fp convert to logical 32 bit" arch13 zarch
+e700000820c0 wclfeb VRR_VV0UU8 "vector fp convert to logical 32 bit" arch13 zarch
+
+# Deflate conversion facility
+
+b939 dfltcc RRF_R0RR2 "deflate conversion call" arch13 zarch
+
+# Enhanced-Sort Facility
+
+b938 sortl RRE_RR "sort lists" arch13 zarch
+
+# Vector packed decimal enhancement facility
+
+e60000000050 vcvb VRR_RV0UU "vector convert to binary 32 bit" arch13 zarch optparm
+e60000000052 vcvbg VRR_RV0UU "vector convert to binary 64 bit" arch13 zarch optparm
+
+# Message Security Assist Extension 9
+
+b93a kdsa RRE_RR "compute digital signature authentication" arch13 zarch

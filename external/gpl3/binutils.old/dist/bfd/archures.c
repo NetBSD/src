@@ -1,5 +1,5 @@
 /* BFD library support routines for architectures.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Hacked by John Gilmore and Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -175,7 +175,9 @@ DESCRIPTION
 .#define bfd_mach_mips5			5
 .#define bfd_mach_mips_loongson_2e	3001
 .#define bfd_mach_mips_loongson_2f	3002
-.#define bfd_mach_mips_loongson_3a	3003
+.#define bfd_mach_mips_gs464		3003
+.#define bfd_mach_mips_gs464e		3004
+.#define bfd_mach_mips_gs264e		3005
 .#define bfd_mach_mips_sb1		12310201 {* octal 'SB', 01.  *}
 .#define bfd_mach_mips_octeon		6501
 .#define bfd_mach_mips_octeonp		6601
@@ -326,6 +328,20 @@ DESCRIPTION
 .#define bfd_mach_arm_ep9312	11
 .#define bfd_mach_arm_iWMMXt	12
 .#define bfd_mach_arm_iWMMXt2	13
+.#define bfd_mach_arm_5TEJ      14
+.#define bfd_mach_arm_6         15
+.#define bfd_mach_arm_6KZ       16
+.#define bfd_mach_arm_6T2       17
+.#define bfd_mach_arm_6K        18
+.#define bfd_mach_arm_7         19
+.#define bfd_mach_arm_6M        20
+.#define bfd_mach_arm_6SM       21
+.#define bfd_mach_arm_7EM       22
+.#define bfd_mach_arm_8         23
+.#define bfd_mach_arm_8R        24
+.#define bfd_mach_arm_8M_BASE   25
+.#define bfd_mach_arm_8M_MAIN   26
+.#define bfd_mach_arm_8_1M_MAIN 27
 .  bfd_arch_nds32,     {* Andes NDS32.  *}
 .#define bfd_mach_n1		1
 .#define bfd_mach_n1h		2
@@ -339,7 +355,6 @@ DESCRIPTION
 .#define bfd_mach_tic4x		40
 .  bfd_arch_tic54x,    {* Texas Instruments TMS320C54X.  *}
 .  bfd_arch_tic6x,     {* Texas Instruments TMS320C6X.  *}
-.  bfd_arch_tic80,     {* TI TMS320c80 (MVP).  *}
 .  bfd_arch_v850,      {* NEC V850.  *}
 .  bfd_arch_v850_rh850,{* NEC V850 (using RH850 ABI).  *}
 .#define bfd_mach_v850		1
@@ -399,6 +414,8 @@ DESCRIPTION
 . bfd_arch_iq2000,     {* Vitesse IQ2000.  *}
 .#define bfd_mach_iq2000	1
 .#define bfd_mach_iq10		2
+.  bfd_arch_bpf,       {* Linux eBPF.  *}
+.#define bfd_mach_bpf		1
 .  bfd_arch_epiphany,  {* Adapteva EPIPHANY.  *}
 .#define bfd_mach_epiphany16	1
 .#define bfd_mach_epiphany32	2
@@ -430,8 +447,6 @@ DESCRIPTION
 .#define bfd_mach_bfin		1
 .  bfd_arch_cr16,      {* National Semiconductor CompactRISC (ie CR16).  *}
 .#define bfd_mach_cr16		1
-.  bfd_arch_cr16c,     {* National Semiconductor CompactRISC.  *}
-.#define bfd_mach_cr16c		1
 .  bfd_arch_crx,       {*  National Semiconductor CRX.  *}
 .#define bfd_mach_crx		1
 .  bfd_arch_cris,      {* Axis CRIS.  *}
@@ -445,6 +460,8 @@ DESCRIPTION
 .#define bfd_mach_rl78		0x75
 .  bfd_arch_rx,	       {* Renesas RX.  *}
 .#define bfd_mach_rx		0x75
+.#define bfd_mach_rx_v2		0x76
+.#define bfd_mach_rx_v3		0x77
 .  bfd_arch_s390,      {* IBM s390.  *}
 .#define bfd_mach_s390_31	31
 .#define bfd_mach_s390_64	64
@@ -488,9 +505,13 @@ DESCRIPTION
 .  bfd_arch_xtensa,    {* Tensilica's Xtensa cores.  *}
 .#define bfd_mach_xtensa	1
 .  bfd_arch_z80,
-.#define bfd_mach_z80strict	1 {* No undocumented opcodes.  *}
-.#define bfd_mach_z80		3 {* With ixl, ixh, iyl, and iyh.  *}
-.#define bfd_mach_z80full	7 {* All undocumented instructions.  *}
+.#define bfd_mach_gbz80         0 {* GameBoy Z80 (reduced instruction set) *}
+.#define bfd_mach_z80strict	1 {* Z80 without undocumented opcodes.  *}
+.#define bfd_mach_z180          2 {* Z180: successor with additional instructions, but without halves of ix and iy *}
+.#define bfd_mach_z80		3 {* Z80 with ixl, ixh, iyl, and iyh.  *}
+.#define bfd_mach_ez80_z80      4 {* eZ80 (successor of Z80 & Z180) in Z80 (16-bit address) mode *}
+.#define bfd_mach_ez80_adl      5 {* eZ80 (successor of Z80 & Z180) in ADL (24-bit address) mode *}
+.#define bfd_mach_z80full	7 {* Z80 with all undocumented instructions.  *}
 .#define bfd_mach_r800		11 {* R800: successor with multiplication.  *}
 .  bfd_arch_lm32,      {* Lattice Mico32.  *}
 .#define bfd_mach_lm32		1
@@ -516,6 +537,15 @@ DESCRIPTION
 .  bfd_arch_nfp,       {* Netronome Flow Processor *}
 .#define bfd_mach_nfp3200	0x3200
 .#define bfd_mach_nfp6000	0x6000
+.  bfd_arch_csky,      {* C-SKY.  *}
+.#define bfd_mach_ck_unknown    0
+.#define bfd_mach_ck510		1
+.#define bfd_mach_ck610		2
+.#define bfd_mach_ck801		3
+.#define bfd_mach_ck802		4
+.#define bfd_mach_ck803		5
+.#define bfd_mach_ck807		6
+.#define bfd_mach_ck810		7
 .  bfd_arch_last
 .  };
 */
@@ -555,6 +585,16 @@ DESCRIPTION
 .		  bfd_boolean code);
 .
 .  const struct bfd_arch_info *next;
+.
+.  {* On some architectures the offset for a relocation can point into
+.     the middle of an instruction.  This field specifies the maximum
+.     offset such a relocation can have (in octets).  This affects the
+.     behaviour of the disassembler, since a value greater than zero
+.     means that it may need to disassemble an instruction twice, once
+.     to get its length and then a second time to display it.  If the
+.     value is negative then this has to be done for every single
+.     instruction, regardless of the offset of the reloc.  *}
+.  signed int max_reloc_offset_into_insn;
 .}
 .bfd_arch_info_type;
 .
@@ -567,12 +607,13 @@ extern const bfd_arch_info_type bfd_arm_arch;
 extern const bfd_arch_info_type bfd_avr_arch;
 extern const bfd_arch_info_type bfd_bfin_arch;
 extern const bfd_arch_info_type bfd_cr16_arch;
-extern const bfd_arch_info_type bfd_cr16c_arch;
 extern const bfd_arch_info_type bfd_cris_arch;
 extern const bfd_arch_info_type bfd_crx_arch;
+extern const bfd_arch_info_type bfd_csky_arch;
 extern const bfd_arch_info_type bfd_d10v_arch;
 extern const bfd_arch_info_type bfd_d30v_arch;
 extern const bfd_arch_info_type bfd_dlx_arch;
+extern const bfd_arch_info_type bfd_bpf_arch;
 extern const bfd_arch_info_type bfd_epiphany_arch;
 extern const bfd_arch_info_type bfd_fr30_arch;
 extern const bfd_arch_info_type bfd_frv_arch;
@@ -631,7 +672,6 @@ extern const bfd_arch_info_type bfd_tic30_arch;
 extern const bfd_arch_info_type bfd_tic4x_arch;
 extern const bfd_arch_info_type bfd_tic54x_arch;
 extern const bfd_arch_info_type bfd_tic6x_arch;
-extern const bfd_arch_info_type bfd_tic80_arch;
 extern const bfd_arch_info_type bfd_tilegx_arch;
 extern const bfd_arch_info_type bfd_tilepro_arch;
 extern const bfd_arch_info_type bfd_v850_arch;
@@ -658,12 +698,13 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_avr_arch,
     &bfd_bfin_arch,
     &bfd_cr16_arch,
-    &bfd_cr16c_arch,
     &bfd_cris_arch,
     &bfd_crx_arch,
+    &bfd_csky_arch,
     &bfd_d10v_arch,
     &bfd_d30v_arch,
     &bfd_dlx_arch,
+    &bfd_bpf_arch,
     &bfd_epiphany_arch,
     &bfd_fr30_arch,
     &bfd_frv_arch,
@@ -719,7 +760,6 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_tic4x_arch,
     &bfd_tic54x_arch,
     &bfd_tic6x_arch,
-    &bfd_tic80_arch,
     &bfd_tilegx_arch,
     &bfd_tilepro_arch,
     &bfd_v850_arch,
@@ -872,12 +912,13 @@ bfd_arch_get_compatible (const bfd *abfd,
     /* Otherwise architecture-specific code has to decide.  */
     return abfd->arch_info->compatible (abfd->arch_info, bbfd->arch_info);
 
-  /* We can allow an unknown architecture if accept_unknowns
-     is true, or if the target is the "binary" format, which
-     has an unknown architecture.  Since the binary format can
+  /* We can allow an unknown architecture if accept_unknowns is true,
+     if UBFD is an IR object, or if the target is the "binary" format,
+     which has an unknown architecture.  Since the binary format can
      only be set by explicit request from the user, it is safe
      to assume that they know what they are doing.  */
   if (accept_unknowns
+      || ubfd->plugin_format == bfd_plugin_yes
       || strcmp (bfd_get_target (ubfd), "binary") == 0)
     return kbfd->arch_info;
   return NULL;
@@ -897,12 +938,13 @@ DESCRIPTION
 .extern const bfd_arch_info_type bfd_default_arch_struct;
 */
 
-const bfd_arch_info_type bfd_default_arch_struct = {
+const bfd_arch_info_type bfd_default_arch_struct =
+{
   32, 32, 8, bfd_arch_unknown, 0, "unknown", "unknown", 2, TRUE,
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,
-  0,
+  0, 0
 };
 
 /*
@@ -956,7 +998,7 @@ FUNCTION
 	bfd_get_arch
 
 SYNOPSIS
-	enum bfd_architecture bfd_get_arch (bfd *abfd);
+	enum bfd_architecture bfd_get_arch (const bfd *abfd);
 
 DESCRIPTION
 	Return the enumerated type which describes the BFD @var{abfd}'s
@@ -964,7 +1006,7 @@ DESCRIPTION
 */
 
 enum bfd_architecture
-bfd_get_arch (bfd *abfd)
+bfd_get_arch (const bfd *abfd)
 {
   return abfd->arch_info->arch;
 }
@@ -974,7 +1016,7 @@ FUNCTION
 	bfd_get_mach
 
 SYNOPSIS
-	unsigned long bfd_get_mach (bfd *abfd);
+	unsigned long bfd_get_mach (const bfd *abfd);
 
 DESCRIPTION
 	Return the long type which describes the BFD @var{abfd}'s
@@ -982,7 +1024,7 @@ DESCRIPTION
 */
 
 unsigned long
-bfd_get_mach (bfd *abfd)
+bfd_get_mach (const bfd *abfd)
 {
   return abfd->arch_info->mach;
 }
@@ -992,7 +1034,7 @@ FUNCTION
 	bfd_arch_bits_per_byte
 
 SYNOPSIS
-	unsigned int bfd_arch_bits_per_byte (bfd *abfd);
+	unsigned int bfd_arch_bits_per_byte (const bfd *abfd);
 
 DESCRIPTION
 	Return the number of bits in one of the BFD @var{abfd}'s
@@ -1000,7 +1042,7 @@ DESCRIPTION
 */
 
 unsigned int
-bfd_arch_bits_per_byte (bfd *abfd)
+bfd_arch_bits_per_byte (const bfd *abfd)
 {
   return abfd->arch_info->bits_per_byte;
 }
@@ -1010,7 +1052,7 @@ FUNCTION
 	bfd_arch_bits_per_address
 
 SYNOPSIS
-	unsigned int bfd_arch_bits_per_address (bfd *abfd);
+	unsigned int bfd_arch_bits_per_address (const bfd *abfd);
 
 DESCRIPTION
 	Return the number of bits in one of the BFD @var{abfd}'s
@@ -1018,7 +1060,7 @@ DESCRIPTION
 */
 
 unsigned int
-bfd_arch_bits_per_address (bfd *abfd)
+bfd_arch_bits_per_address (const bfd *abfd)
 {
   return abfd->arch_info->bits_per_address;
 }
@@ -1340,7 +1382,8 @@ FUNCTION
 	bfd_octets_per_byte
 
 SYNOPSIS
-	unsigned int bfd_octets_per_byte (bfd *abfd);
+	unsigned int bfd_octets_per_byte (const bfd *abfd,
+					  const asection *sec);
 
 DESCRIPTION
 	Return the number of octets (8-bit quantities) per target byte
@@ -1349,8 +1392,13 @@ DESCRIPTION
 */
 
 unsigned int
-bfd_octets_per_byte (bfd *abfd)
+bfd_octets_per_byte (const bfd *abfd, const asection *sec)
 {
+  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
+      && sec != NULL
+      && (sec->flags & SEC_ELF_OCTETS) != 0)
+    return 1;
+
   return bfd_arch_mach_octets_per_byte (bfd_get_arch (abfd),
 					bfd_get_mach (abfd));
 }

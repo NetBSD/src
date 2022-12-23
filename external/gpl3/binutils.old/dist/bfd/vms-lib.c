@@ -1,6 +1,6 @@
 /* BFD back-end for VMS archive files.
 
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Written by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1297,7 +1297,9 @@ _bfd_vms_lib_get_module (bfd *abfd, unsigned int modidx)
   struct lib_tdata *tdata = bfd_libdata (abfd);
   bfd *res;
   file_ptr file_off;
-  char *name;
+  const char *name;
+  char *newname;
+  size_t namelen;
 
   /* Sanity check.  */
   if (modidx >= tdata->nbr_modules)
@@ -1335,18 +1337,22 @@ _bfd_vms_lib_get_module (bfd *abfd, unsigned int modidx)
       if (bfd_bread (buf, tdata->mhd_size, abfd) != tdata->mhd_size)
 	return NULL;
 
+      mhd = (struct vms_mhd *) buf;
+      if (mhd->id != MHD__C_MHDID)
+	return NULL;
+
       res = _bfd_create_empty_archive_element_shell (abfd);
       if (res == NULL)
 	return NULL;
       arelt = bfd_zmalloc (sizeof (*arelt));
       if (arelt == NULL)
-	return NULL;
+	{
+	  bfd_close (res);
+	  return NULL;
+	}
       res->arelt_data = arelt;
 
       /* Get info from mhd.  */
-      mhd = (struct vms_mhd *)buf;
-      if (mhd->id != MHD__C_MHDID)
-	return NULL;
       if (tdata->mhd_size >= offsetof (struct vms_mhd, objstat) + 1)
 	res->selective_search = (mhd->objstat & MHD__M_SELSRC) ? 1 : 0;
       res->mtime = vms_rawtime_to_time_t (mhd->datim);
@@ -1361,23 +1367,25 @@ _bfd_vms_lib_get_module (bfd *abfd, unsigned int modidx)
 
   /* Set filename.  */
   name = tdata->modules[modidx].name;
+  namelen = strlen (name);
+  newname = bfd_malloc (namelen + 4 + 1);
+  if (newname == NULL)
+    {
+      bfd_close (res);
+      return NULL;
+    }
+  strcpy (newname, name);
   switch (tdata->type)
     {
     case LBR__C_TYP_IOBJ:
     case LBR__C_TYP_EOBJ:
       /* For object archives, append .obj to mimic standard behaviour.  */
-      {
-	size_t namelen = strlen (name);
-	char *name1 = bfd_alloc (res, namelen + 4 + 1);
-	memcpy (name1, name, namelen);
-	strcpy (name1 + namelen, ".obj");
-	name = name1;
-      }
+      strcpy (newname + namelen, ".obj");
       break;
     default:
       break;
     }
-  res->filename = xstrdup (name);
+  bfd_set_filename (res, newname);
 
   tdata->cache[modidx] = res;
 

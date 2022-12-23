@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ AUTOMAKE_OPTIONS = foreign no-dist no-texinfo.tex info-in-builddir
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 TEXINFO_TEX = ../texinfo/texinfo.tex
 
-SUFFIXES = .m
+SUFFIXES = .c .m
 
 SUBDIRS = po
 

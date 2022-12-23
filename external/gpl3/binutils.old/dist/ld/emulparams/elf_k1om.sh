@@ -1,7 +1,7 @@
-. ${srcdir}/emulparams/plt_unwind.sh
-. ${srcdir}/emulparams/extern_protected_data.sh
-. ${srcdir}/emulparams/dynamic_undefined_weak.sh
-. ${srcdir}/emulparams/call_nop.sh
+source_sh ${srcdir}/emulparams/plt_unwind.sh
+source_sh ${srcdir}/emulparams/extern_protected_data.sh
+source_sh ${srcdir}/emulparams/dynamic_undefined_weak.sh
+source_sh ${srcdir}/emulparams/call_nop.sh
 SCRIPT_NAME=elf
 ELFSIZE=64
 OUTPUT_FORMAT="elf64-k1om"
@@ -12,7 +12,8 @@ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH="k1om"
 MACHINE=
 COMPILE_IN=yes
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
+EXTRA_EM_FILE="elf-x86"
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes

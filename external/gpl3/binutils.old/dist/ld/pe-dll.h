@@ -1,5 +1,5 @@
 /* pe-dll.h: Header file for routines used to build Windows DLLs.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -38,6 +38,7 @@ extern int pe_dll_extra_pe_debug;
 extern int pe_use_nul_prefixed_import_tables;
 extern int pe_use_coff_long_section_names;
 extern int pe_leading_underscore;
+extern int pe_dll_enable_reloc_section;
 
 typedef enum { EXCLUDESYMS, EXCLUDELIBS, EXCLUDEFORIMPLIB } exclude_type;
 

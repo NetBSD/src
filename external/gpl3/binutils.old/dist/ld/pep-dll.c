@@ -1,5 +1,5 @@
 /* Routines to help build PEPI-format DLLs (Win64 etc)
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -39,6 +39,7 @@
 #define pe_use_coff_long_section_names \
 				    pep_use_coff_long_section_names
 #define pe_leading_underscore	    pep_leading_underscore
+#define pe_dll_enable_reloc_section pep_dll_enable_reloc_section
 
 /* Unique global name for functions to avoid double defined symbols.  */
 #define pe_find_data_imports        pep_find_data_imports

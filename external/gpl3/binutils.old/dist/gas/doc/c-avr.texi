@@ -1,4 +1,4 @@
-@c Copyright (C) 2006-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2006-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -28,7 +28,7 @@
 
 @table @code
 
-@cindex @code{-mmcu=} command line option, AVR
+@cindex @code{-mmcu=} command-line option, AVR
 @item -mmcu=@var{mcu}
 Specify ATMEL AVR instruction set or MCU type.
 
@@ -128,34 +128,34 @@ atxmega128a1, atxmega128a1u, atxmega128a4u).
 Instruction set avrtiny is for the ATtiny4/5/9/10/20/40
 microcontrollers.
 
-@cindex @code{-mall-opcodes} command line option, AVR
+@cindex @code{-mall-opcodes} command-line option, AVR
 @item -mall-opcodes
 Accept all AVR opcodes, even if not supported by @code{-mmcu}.
 
-@cindex @code{-mno-skip-bug} command line option, AVR
+@cindex @code{-mno-skip-bug} command-line option, AVR
 @item -mno-skip-bug
 This option disable warnings for skipping two-word instructions.
 
-@cindex @code{-mno-wrap} command line option, AVR
+@cindex @code{-mno-wrap} command-line option, AVR
 @item -mno-wrap
 This option reject @code{rjmp/rcall} instructions with 8K wrap-around.
 
-@cindex @code{-mrmw} command line option, AVR
+@cindex @code{-mrmw} command-line option, AVR
 @item -mrmw
 Accept Read-Modify-Write (@code{XCH,LAC,LAS,LAT}) instructions.
 
-@cindex @code{-mlink-relax} command line option, AVR
+@cindex @code{-mlink-relax} command-line option, AVR
 @item -mlink-relax
 Enable support for link-time relaxation.  This is now on by default
 and this flag no longer has any effect.
 
-@cindex @code{-mno-link-relax} command line option, AVR
+@cindex @code{-mno-link-relax} command-line option, AVR
 @item -mno-link-relax
 Disable support for link-time relaxation.  The assembler will resolve
 relocations when it can, and may be able to better compress some debug
 information.
 
-@cindex @code{-mgcc-isr} command line option, AVR
+@cindex @code{-mgcc-isr} command-line option, AVR
 @item -mgcc-isr
 Enable the @code{__gcc_isr} pseudo instruction.
 

@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -23,7 +23,6 @@
 #include "as.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
-#include "struc-symbol.h"
 
 #ifdef TE_PE
 #include "coff/pe.h"
@@ -206,13 +205,12 @@ obj_coff_common_parse (int ignore ATTRIBUTE_UNUSED, symbolS *symbolP, addressT s
       char numbuff[20];
 
       sec = subseg_new (".drectve", 0);
-      oldflags = bfd_get_section_flags (stdoutput, sec);
+      oldflags = bfd_section_flags (sec);
       if (oldflags == SEC_NO_FLAGS)
 	{
-	  if (!bfd_set_section_flags (stdoutput, sec,
-		TC_COFF_SECTION_DEFAULT_ATTRIBUTES))
+	  if (!bfd_set_section_flags (sec, TC_COFF_SECTION_DEFAULT_ATTRIBUTES))
 	    as_warn (_("error setting flags for \"%s\": %s"),
-		bfd_section_name (stdoutput, sec),
+		bfd_section_name (sec),
 		bfd_errmsg (bfd_get_error ()));
 	}
 
@@ -235,9 +233,6 @@ obj_coff_comm (int ignore ATTRIBUTE_UNUSED)
   s_comm_internal (ignore, obj_coff_common_parse);
 }
 #endif /* TE_PE */
-
-#define GET_FILENAME_STRING(X) \
-  ((char *) (&((X)->sy_symbol.ost_auxent->x_file.x_n.x_offset))[1])
 
 /* @@ Ick.  */
 static segT
@@ -558,7 +553,7 @@ obj_coff_ident (int ignore ATTRIBUTE_UNUSED)
        that shouldn't be loaded into memory, which requires linker
        changes...  For now, until proven otherwise, use .rdata.  */
     sec = subseg_new (".rdata$zzz", 0);
-    bfd_set_section_flags (stdoutput, sec,
+    bfd_set_section_flags (sec,
 			   ((SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA)
 			    & bfd_applicable_section_flags (stdoutput)));
   }
@@ -778,8 +773,7 @@ obj_coff_endef (int ignore ATTRIBUTE_UNUSED)
 
   if (S_GET_STORAGE_CLASS (def_symbol_in_progress) == C_EFCN
       || S_GET_STORAGE_CLASS (def_symbol_in_progress) == C_LABEL
-      || (streq (bfd_get_section_name (stdoutput,
-				       S_GET_SEGMENT (def_symbol_in_progress)),
+      || (streq (bfd_section_name (S_GET_SEGMENT (def_symbol_in_progress)),
 		 "*DEBUG*")
 	  && !SF_GET_TAG (def_symbol_in_progress))
       || S_GET_SEGMENT (def_symbol_in_progress) == absolute_section
@@ -1484,7 +1478,7 @@ coff_adjust_section_syms (bfd *abfd ATTRIBUTE_UNUSED,
 	fixp = fixp->fx_next;
       }
   }
-  if (bfd_get_section_size (sec) == 0
+  if (bfd_section_size (sec) == 0
       && nrelocs == 0
       && nlnno == 0
       && sec != text_section
@@ -1661,7 +1655,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
   if (alignment >= 0)
     sec->alignment_power = alignment;
 
-  oldflags = bfd_get_section_flags (stdoutput, sec);
+  oldflags = bfd_section_flags (sec);
   if (oldflags == SEC_NO_FLAGS)
     {
       /* Set section flags for a new section just created by subseg_new.
@@ -1677,9 +1671,9 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 	flags |= SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
 #endif
 
-      if (! bfd_set_section_flags (stdoutput, sec, flags))
+      if (!bfd_set_section_flags (sec, flags))
 	as_warn (_("error setting flags for \"%s\": %s"),
-		 bfd_section_name (stdoutput, sec),
+		 bfd_section_name (sec),
 		 bfd_errmsg (bfd_get_error ()));
     }
   else if (flags != SEC_NO_FLAGS)
@@ -1717,7 +1711,7 @@ coff_frob_section (segT sec)
      supposedly because standard COFF has no other way of encoding alignment
      for sections.  If your COFF flavor has a different way of encoding
      section alignment, then skip this step, as TICOFF does.  */
-  bfd_vma size = bfd_get_section_size (sec);
+  bfd_vma size = bfd_section_size (sec);
 #if !defined(TICOFF)
   bfd_vma align_power = (bfd_vma) sec->alignment_power + OCTETS_PER_BYTE_POWER;
   bfd_vma mask = ((bfd_vma) 1 << align_power) - 1;
@@ -1728,7 +1722,7 @@ coff_frob_section (segT sec)
       fragS *last;
 
       new_size = (size + mask) & ~mask;
-      bfd_set_section_size (stdoutput, sec, new_size);
+      bfd_set_section_size (sec, new_size);
 
       /* If the size had to be rounded up, add some padding in
          the last non-empty frag.  */
@@ -1755,7 +1749,7 @@ coff_frob_section (segT sec)
       unsigned char sclass = C_STAT;
 
 #ifdef OBJ_XCOFF
-      if (bfd_get_section_flags (stdoutput, sec) & SEC_DEBUGGING)
+      if (bfd_section_flags (sec) & SEC_DEBUGGING)
         sclass = C_DWARF;
 #endif
       S_SET_STORAGE_CLASS (secsym, sclass);
@@ -1776,9 +1770,9 @@ coff_frob_section (segT sec)
   strsec = sec;
   sec = subseg_get (STAB_SECTION_NAME, 0);
   /* size is already rounded up, since other section will be listed first */
-  size = bfd_get_section_size (strsec);
+  size = bfd_section_size (strsec);
 
-  n_entries = bfd_get_section_size (sec) / 12 - 1;
+  n_entries = bfd_section_size (sec) / 12 - 1;
 
   /* Find first non-empty frag.  It should be large enough.  */
   fragp = seg_info (sec)->frchainP->frch_root;
@@ -1806,7 +1800,7 @@ obj_coff_init_stab_section (segT seg)
   memset (p, 0, 12);
   file = as_where ((unsigned int *) NULL);
   stabstr_name = concat (seg->name, "str", (char *) NULL);
-  stroff = get_stab_string_offset (file, stabstr_name);
+  stroff = get_stab_string_offset (file, stabstr_name, TRUE);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
 }

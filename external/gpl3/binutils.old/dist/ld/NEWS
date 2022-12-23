@@ -1,5 +1,52 @@
 -*- text -*-
 
+Changes in 2.34:
+
+* cr16c support removed.
+
+* Add support for z80-elf.
+
+* Add support for relocation of each byte or word of multibyte value to Z80
+  targets.
+
+* Add support for Zilog eZ80 (both ADL and Z80 mode) and Zilog Z180 CPUs.
+
+Changes in 2.33:
+
+* Add command-line option --no-print-map-discarded.
+
+* The Cortex-A53 Erratum 843419 workaround now supports a choice of which
+  workaround to use.  The option --fix-cortex-a53-843419 now takes an
+  optional argument --fix-cortex-a53-843419[=full|adr|adrp] which can be
+  used to force a particular workaround to be used.  See --help for AArch64
+  for more details.
+
+* Add target handlers for AArch64 for ELF GNU program properties.
+
+* Add support for GNU_PROPERTY_AARCH64_FEATURE_1_BTI in ELF GNU program
+  properties in the AArch64 ELF linker.
+
+* Add support for GNU_PROPERTY_AARCH64_FEATURE_1_PAC in ELF GNU program
+  properties in the AArch64 ELF linker.
+
+* Add -z force-bti for AArch64 to enable GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+  on output while warning about missing GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+  on inputs and use PLTs protected with BTI.
+
+* Add -z pac-plt for AArch64 to pick PAC enabled PLTs.
+
+Changes in 2.32:
+
+* Report property change in linker map file when merging GNU properties.
+
+* Add support for the C-SKY processor series.
+
+* -t now doesn't report members within archives, unless -t is given twice.
+  A single -t is now more useful when generating a list of files that should be
+  packaged for a linker bug report.  For example:
+    gcc hello.c -save-temps -Wl,-t | xargs realpath | sort | uniq > files
+    tar cJf test.tar.xz `cat files`
+
 Changes in 2.31:
 
 * Speed up direct linking with DLLs for Cygwin and Mingw targets.
@@ -13,9 +60,9 @@ Changes in 2.30:
 
 * Add -z separate-code to generate separate code PT_LOAD segment.
 
-* Add "-z undefs" command line option as the inverse of the "-z defs" option.
+* Add "-z undefs" command-line option as the inverse of the "-z defs" option.
 
-* Add -z globalaudit command line option to force audit libraries to be run
+* Add -z globalaudit command-line option to force audit libraries to be run
   for every dynamic object loaded by an executable - provided that the loader
   supports this functionality.
 
@@ -72,7 +119,7 @@ Changes in 2.28:
 
 * Add support for the RISC-V architecture.
 
-* The command line option --no-eh-frame-hdr can now be used in ELF based
+* The command-line option --no-eh-frame-hdr can now be used in ELF based
   linkers to disable the automatic generation of .eh_frame_hdr sections.
 
 * Add --in-implib=<infile> to the ARM linker to enable specifying a set of
@@ -120,10 +167,10 @@ Changes in 2.26:
 * Experimental support for linker garbage collection (--gc-sections)
   has been enabled for COFF and PE based targets.
 
-* New command line option for ELF targets to compress DWARF debug
+* New command-line option for ELF targets to compress DWARF debug
   sections, --compress-debug-sections=[none|zlib|zlib-gnu|zlib-gabi].
 
-* New command line option, --orphan-handling=[place|warn|error|discard], to
+* New command-line option, --orphan-handling=[place|warn|error|discard], to
   adjust how orphan sections are handled.  The default is 'place' which gives
   the current behaviour, 'warn' and 'error' issue a warning or error
   respectively when orphan sections are found, and 'discard' will discard all
@@ -140,11 +187,11 @@ Changes in 2.25:
 
 * PE binaries now once again contain real timestamps by default.  To disable
   the inclusion of a timestamp in a PE binary, use the --no-insert-timestamp
-  command line option.
+  command-line option.
 
 * Replace support for openrisc and or32 with support for or1k.
 
-* Add support for the --build-id command line option to COFF based targets.
+* Add support for the --build-id command-line option to COFF based targets.
 
 * x86/x86_64 pe-coff now supports the --build-id option.
 
@@ -270,7 +317,7 @@ Changes in 2.20:
   latter case the library is not linked if it is found in a DT_NEEDED
   entry of one of the libraries already linked.
 
-* Add a new command line option, -Ttext-segment ADDR, for ELF targets
+* Add a new command-line option, -Ttext-segment ADDR, for ELF targets
   to set the address of the first byte of the text segment.
 
 * Add support for Sunplus score architecture.
@@ -305,11 +352,11 @@ Changes in 2.19:
   direction of sorting.
 
 * The M68K linker now supports multiple GOT generation schemes controlled via
-  the --got=<type> command line option.
+  the --got=<type> command-line option.
 
 * The ARM EABI linker will now generate stubs for function calls to symbols
   that are too far away.  The placement of the stubs is controlled by a new
-  linker command line option: --stub-group-size=N.
+  linker command-line option: --stub-group-size=N.
 
 Changes in 2.18:
 
@@ -324,7 +371,7 @@ Changes in 2.18:
 * -l:foo now searches the library path for a filename called foo,
   without converting it to libfoo.a or libfoo.so.
 
-* Add a new command line option '--default-script=FILE' or '-dT FILE'
+* Add a new command-line option '--default-script=FILE' or '-dT FILE'
   which specifies a replacement for the built in, default linker
   script.
 
@@ -398,7 +445,7 @@ Changes in 2.16:
   language to permit sorting sections by section name or section
   maximum alignment.
 
-* Added a new linker command line switch, --sort-section name|alignment,
+* Added a new linker command-line switch, --sort-section name|alignment,
   to sort sections by section name or maximum alignment.
 
 * ELF: --add-needed/--no-add-needed options to control if a DT_NEEDED tag
@@ -408,7 +455,7 @@ Changes in 2.16:
 
 * Support for the sh-symbianelf target added.
 
-* A new linker command line switch has been added which allows the hash table
+* A new linker command-line switch has been added which allows the hash table
   size to be set to a suitable prime value near to its argument.  This switch
   is --hash-size=<NUMBER>.  Also if the switch --reduce-memory-overheads is
   used, and --hash-size has not been used, then the default value will be set
@@ -508,7 +555,7 @@ Changes in version 2.11:
 
 * TI C54x support, by Timothy Wall.
 
-* Added command line switch --section-start to set the start address of any
+* Added command-line switch --section-start to set the start address of any
   specified section.
 
 * Added ability to emit full relocation information in linked executables,
@@ -728,7 +775,7 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

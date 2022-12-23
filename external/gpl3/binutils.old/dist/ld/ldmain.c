@@ -1,5 +1,5 @@
 /* Main program of GNU linker.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -25,6 +25,7 @@
 #include "libiberty.h"
 #include "progress.h"
 #include "bfdlink.h"
+#include "ctf-api.h"
 #include "filenames.h"
 
 #include "ld.h"
@@ -77,7 +78,7 @@ int ld_canon_sysroot_len;
 int g_switch_value = 8;
 
 /* Nonzero means print names of input files as processed.  */
-bfd_boolean trace_files;
+unsigned int trace_files;
 
 /* Nonzero means report actions taken by the linker, and describe the linker script in use.  */
 bfd_boolean verbose;
@@ -148,7 +149,9 @@ static struct bfd_link_callbacks link_callbacks =
   einfo,
   info_msg,
   minfo,
-  ldlang_override_segment_assignment
+  ldlang_override_segment_assignment,
+  ldlang_ctf_apply_strsym,
+  ldlang_write_ctf_late
 };
 
 static bfd_assert_handler_type default_bfd_assert_handler;
@@ -209,7 +212,8 @@ main (int argc, char **argv)
 
   expandargv (&argc, &argv);
 
-  bfd_init ();
+  if (bfd_init () != BFD_INIT_MAGIC)
+    einfo (_("%F%P: fatal error: libbfd ABI mismatch\n"));
 
   bfd_set_error_program_name (program_name);
 
@@ -263,6 +267,7 @@ main (int argc, char **argv)
   config.make_executable = TRUE;
   config.magic_demand_paged = TRUE;
   config.text_read_only = TRUE;
+  config.print_map_discarded = TRUE;
   link_info.disable_target_specific_optimizations = -1;
 
   command_line.warn_mismatch = TRUE;
@@ -327,7 +332,7 @@ main (int argc, char **argv)
   if (saved_script_handle == NULL
       && command_line.default_script != NULL)
     {
-      ldfile_open_command_file (command_line.default_script);
+      ldfile_open_script_file (command_line.default_script);
       parser_input = input_script;
       yyparse ();
     }
@@ -412,7 +417,7 @@ main (int argc, char **argv)
       einfo (_("%F%P: no input files\n"));
     }
 
-  if (trace_files)
+  if (verbose)
     info_msg (_("%P: mode %s\n"), emulation);
 
   ldemul_after_parse ();
@@ -433,6 +438,7 @@ main (int argc, char **argv)
 		     config.map_filename);
 	    }
 	}
+      link_info.has_map_file = TRUE;
     }
 
   lang_process ();
@@ -477,7 +483,7 @@ main (int argc, char **argv)
      want to ignore for relocatable output?)  */
   if (!config.make_executable && !force_make_executable)
     {
-      if (trace_files)
+      if (verbose)
 	einfo (_("%P: link errors found, deleting executable `%s'\n"),
 	       output_filename);
 
@@ -583,21 +589,25 @@ static const char *
 get_sysroot (int argc, char **argv)
 {
   int i;
-  const char *path;
+  const char *path = NULL;
 
   for (i = 1; i < argc; i++)
     if (CONST_STRNEQ (argv[i], "--sysroot="))
-      return argv[i] + strlen ("--sysroot=");
+      path = argv[i] + strlen ("--sysroot=");
 
-  path = get_relative_sysroot (BINDIR);
-  if (path)
-    return path;
+  if (!path)
+    path = get_relative_sysroot (BINDIR);
 
-  path = get_relative_sysroot (TOOLBINDIR);
-  if (path)
-    return path;
+  if (!path)
+    path = get_relative_sysroot (TOOLBINDIR);
 
-  return TARGET_SYSTEM_ROOT;
+  if (!path)
+    path = TARGET_SYSTEM_ROOT;
+
+  if (IS_DIR_SEPARATOR (*path) && path[1] == 0)
+    path = "";
+
+  return path;
 }
 
 /* We need to find any explicitly given emulation in order to initialize the
@@ -809,9 +819,9 @@ add_archive_element (struct bfd_link_info *info,
   input->local_sym_name = abfd->filename;
   input->the_bfd = abfd;
 
-  parent = abfd->my_archive->usrdata;
+  parent = bfd_usrdata (abfd->my_archive);
   if (parent != NULL && !parent->flags.reload)
-    parent->next = (lang_statement_union_type *) input;
+    parent->next = input;
 
   /* Save the original data for trace files/tries below, as plugins
      (if enabled) may possibly alter it to point to a replacement
@@ -828,7 +838,7 @@ add_archive_element (struct bfd_link_info *info,
 	    {
 	      /* Don't claim new IR symbols after all IR symbols have
 		 been claimed.  */
-	      if (trace_files || verbose)
+	      if (verbose)
 		info_msg ("%pI: no new IR symbols to claimi\n",
 			  &orig_input);
 	      input->flags.claimed = 0;
@@ -850,6 +860,10 @@ add_archive_element (struct bfd_link_info *info,
       int len;
 
       h = bfd_link_hash_lookup (info->hash, name, FALSE, FALSE, TRUE);
+      if (h == NULL
+	  && info->pei386_auto_import
+	  && CONST_STRNEQ (name, "__imp_"))
+	h = bfd_link_hash_lookup (info->hash, name + 6, FALSE, FALSE, TRUE);
 
       if (h == NULL)
 	from = NULL;
@@ -917,7 +931,9 @@ add_archive_element (struct bfd_link_info *info,
 	minfo ("(%s)\n", name);
     }
 
-  if (trace_files || verbose)
+  if (verbose
+      || trace_files > 1
+      || (trace_files && bfd_is_thin_archive (orig_input.the_bfd->my_archive)))
     info_msg ("%pI\n", &orig_input);
   return TRUE;
 }
@@ -1410,7 +1426,7 @@ reloc_overflow (struct bfd_link_info *info,
   if (overflow_cutoff_limit == -1)
     return;
 
-  einfo ("%X%P: %H:", abfd, section, address);
+  einfo ("%X%H:", abfd, section, address);
 
   if (overflow_cutoff_limit >= 0
       && overflow_cutoff_limit-- == 0)
@@ -1463,7 +1479,7 @@ reloc_dangerous (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		 asection *section,
 		 bfd_vma address)
 {
-  einfo (_("%X%P: %H: dangerous relocation: %s\n"),
+  einfo (_("%X%H: dangerous relocation: %s\n"),
 	 abfd, section, address, message);
 }
 
@@ -1477,7 +1493,7 @@ unattached_reloc (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		  asection *section,
 		  bfd_vma address)
 {
-  einfo (_("%X%P: %H: reloc refers to symbol `%pT' which is not being output\n"),
+  einfo (_("%X%H: reloc refers to symbol `%pT' which is not being output\n"),
 	 abfd, section, address, name);
 }
 

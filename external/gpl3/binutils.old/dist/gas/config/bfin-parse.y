@@ -1,5 +1,5 @@
 /* bfin-parse.y  ADI Blackfin parser
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
