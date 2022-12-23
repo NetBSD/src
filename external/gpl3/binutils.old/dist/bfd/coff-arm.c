@@ -1,5 +1,5 @@
 /* BFD back-end for ARM COFF files.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,12 +24,17 @@
 #include "libbfd.h"
 #include "coff/arm.h"
 #include "coff/internal.h"
+#include "cpu-arm.h"
+#include "coff-arm.h"
 
 #ifdef COFF_WITH_PE
 #include "coff/pe.h"
 #endif
 
 #include "libcoff.h"
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 /* Macros for manipulation the bits in the flags field of the coff data
    structure.  */
@@ -94,7 +99,7 @@ coff_arm_reloc (bfd *abfd,
 		arelent *reloc_entry,
 		asymbol *symbol ATTRIBUTE_UNUSED,
 		void * data,
-		asection *input_section ATTRIBUTE_UNUSED,
+		asection *input_section,
 		bfd *output_bfd,
 		char **error_message ATTRIBUTE_UNUSED)
 {
@@ -112,11 +117,11 @@ coff_arm_reloc (bfd *abfd,
   if (diff != 0)
     {
       reloc_howto_type *howto = reloc_entry->howto;
-      unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+      bfd_size_type octets = (reloc_entry->address
+			      * OCTETS_PER_BYTE (abfd, input_section));
+      unsigned char *addr = (unsigned char *) data + octets;
 
-      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
-				       reloc_entry->address
-				       * bfd_octets_per_byte (abfd)))
+      if (!bfd_reloc_offset_in_range (howto, abfd, input_section, octets))
 	return bfd_reloc_outofrange;
 
       switch (howto->size)
@@ -814,7 +819,7 @@ coff_thumb_pcrel_12 (bfd *abfd,
 				  b12);
 }
 
-static const struct reloc_howto_struct *
+static reloc_howto_type *
 coff_arm_reloc_type_lookup (bfd * abfd, bfd_reloc_code_real_type code)
 {
 #define ASTD(i,j)       case i: return aoutarm_std_reloc_howto + j
@@ -1149,7 +1154,7 @@ static const insn32 t2a6_bx_insn    = 0xe12fff1e;
 
 /* The standard COFF backend linker does not cope with the special
    Thumb BRANCH23 relocation.  The alternative would be to split the
-   BRANCH23 into seperate HI23 and LO23 relocations. However, it is a
+   BRANCH23 into separate HI23 and LO23 relocations. However, it is a
    bit simpler simply providing our own relocation driver.  */
 
 /* The reloc processing routine for the ARM/Thumb COFF linker.  NOTE:
@@ -1989,7 +1994,7 @@ bfd_arm_get_bfd_for_interworking (bfd *			 abfd,
       sec = bfd_make_section_with_flags (abfd, ARM2THUMB_GLUE_SECTION_NAME,
 					 flags);
       if (sec == NULL
-	  || ! bfd_set_section_alignment (abfd, sec, 2))
+	  || !bfd_set_section_alignment (sec, 2))
 	return FALSE;
     }
 
@@ -2003,7 +2008,7 @@ bfd_arm_get_bfd_for_interworking (bfd *			 abfd,
 					 flags);
 
       if (sec == NULL
-	  || ! bfd_set_section_alignment (abfd, sec, 2))
+	  || !bfd_set_section_alignment (sec, 2))
 	return FALSE;
     }
 

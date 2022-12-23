@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/elf64alpha.sh
+source_sh ${srcdir}/emulparams/elf64alpha.sh
 ENTRY=__start
 
 NOP=0x47ff041f

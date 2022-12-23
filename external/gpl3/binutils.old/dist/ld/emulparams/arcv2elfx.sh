@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/arc-endianness.sh
+source_sh ${srcdir}/emulparams/arc-endianness.sh
 MACHINE=
 SCRIPT_NAME=elfarcv2
 if [ "x${ARC_ENDIAN}" = "xbig" ]; then
@@ -13,7 +13,7 @@ SDATA_MEMORY=sdata
 ARCH=arc
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 GENERIC_BOARD=yes
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 LITTLE_OUTPUT_FORMAT="elf32-littlearc"
 BIG_OUTPUT_FORMAT="elf32-bigarc"
 TEXT_START_ADDR=0x100

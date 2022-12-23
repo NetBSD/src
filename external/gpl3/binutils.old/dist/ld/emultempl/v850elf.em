@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,11 +19,12 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra cpu specific
+# This file is sourced from elf.em, and defines extra cpu specific
 # features.
 #
 fragment <<EOF
 #include "ldctor.h"
+#include "elf32-v850.h"
 
 static bfd_boolean
 is_v850_target (void)

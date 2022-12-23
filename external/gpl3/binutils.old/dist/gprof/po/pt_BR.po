@@ -1,14 +1,14 @@
 # Brazilian Portuguese translation for gprof
-# Copyright (C) 2017 Free Software Foundation, Inc.
+# Copyright (C) 2020 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 # Alexandre Folle de Menezes <afmenez@terra.com.br>, 2002.
-# Rafael Ferreira <rafaelff@gnome.org>, 2013, 2014, 2017.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2013-2020.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-07-10 22:51-0200\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-01-19 22:46-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge.net>\n"
 "Language: pt_BR\n"
@@ -236,22 +236,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<ciclo %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: não foi possível analisar o arquivo de mapeamento %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: não foi possível abrir %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: não está no formato executável\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: impossível encontrar a seção .text em %s\n"
@@ -266,22 +266,22 @@ msgstr "%s: terminou o espaço para %lu bytes de espaço de texto\n"
 msgid "%s: can't do -c\n"
 msgstr "%s: impossível fazer -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c não tem suporte na arquitetura %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: o arquivo \"%s\" não tem sí­mbolos\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: o arquivo \"%s\" símbolos demais\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: alguém contou mal: ltab.len=%d em lugar de %ld\n"
@@ -379,7 +379,7 @@ msgstr "\t%d registros de contagens de blocos básicos\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -393,7 +393,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Uso: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][nome]] [-I dirs]\n"
+"Uso: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][nome]] [-I dirs]\n"
 "\t[-d[num]] [-k de/a] [-m contagem-mín] [-t tamanho-tabela]\n"
 "\t[--[no-]annotated-source[=nome]] [--[no-]exec-counts[=nome]]\n"
 "\t[--[no-]flat-profile[=nome]] [--[no-]graph[=nome]]\n"
@@ -410,55 +410,57 @@ msgstr ""
 #: gprof.c:178
 #, c-format
 msgid "Report bugs to %s\n"
-msgstr "Relate erros para %s\n"
+msgstr ""
+"Relate erros para %s\n"
+"Relate erros de tradução para <https://translationproject.org/team/pt_BR.html>\n"
 
 #: gprof.c:254
 #, c-format
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: não há suporte para depuração; -d ignorado\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: formato de arquivo %s desconhecido\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Baseado no BSD gprof, copyright 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
-msgstr "Este programa é software livre. Este programa não tem absolutamente nenhuma garantia.\n"
+msgstr "Este programa é software livre. Este programa tem absolutamente nenhuma garantia.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: estilo de desembaralhamento desconhecido \"%s\"\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Apenas um de --function-ordering e --file-ordering pode ser especificado.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: sinto muito, mas não há suporte ao formato de arquivo \"prof\"\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: falta o histograma do arquivo gmon.out\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: faltam os dados do gráfico de chamadas do arquivo gmon.out\n"

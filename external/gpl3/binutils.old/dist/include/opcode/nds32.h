@@ -1,5 +1,5 @@
 /* nds32.h -- Header file for nds32 opcode table
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This program is free software; you can redistribute it and/or modify
@@ -21,19 +21,20 @@
 #define OPCODE_NDS32_H
 
 /* Registers.  */
-#define REG_R5		5
-#define REG_R8		8
-#define REG_R10		10
-#define REG_R12		12
-#define REG_R15		15
-#define REG_R16		16
-#define REG_R20		20
-#define REG_TA		15
-#define REG_TP          27
-#define REG_FP		28
-#define REG_GP		29
-#define REG_LP		30
-#define REG_SP		31
+#define REG_R0		(0)
+#define REG_R5		(5)
+#define REG_R8		(8)
+#define REG_R10		(10)
+#define REG_R12		(12)
+#define REG_R15		(15)
+#define REG_R16		(16)
+#define REG_R20		(20)
+#define REG_TA		(15)
+#define REG_TP		(25)
+#define REG_FP		(28)
+#define REG_GP		(29)
+#define REG_LP		(30)
+#define REG_SP		(31)
 
 /* Macros for extracting fields or making an instruction.  */
 static const int nds32_r45map[] ATTRIBUTE_UNUSED =
@@ -50,11 +51,12 @@ static const int nds32_r54map[] ATTRIBUTE_UNUSED =
   -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-#define N32_BIT(n)		(1 << (n))
+#define N32_BIT(n)		(1u << (n))
 #define __MASK(n)		(N32_BIT (n) - 1)
 #define __MF(v, off, bs)	(((v) & __MASK (bs)) << (off))
 #define __GF(v, off, bs)	(((v) >> off) & __MASK (bs))
-#define __SEXT(v, bs)		((((v) & ((1 << (bs)) - 1)) ^ (1 << ((bs) - 1))) - (1 << ((bs) - 1)))
+#define __SEXT(v, bs)		\
+  ((((v) & __MASK ((bs))) ^ N32_BIT ((bs) - 1)) - N32_BIT ((bs) - 1))
 
 /* Make nds32 instructions.  */
 
@@ -146,9 +148,10 @@ static const int nds32_r54map[] ATTRIBUTE_UNUSED =
 #define N32_RD5(insn)		(((insn) >> 5) & 0x1f)
 #define N32_SH5(insn)		(((insn) >> 5) & 0x1f)
 #define N32_SUB5(insn)		(((insn) >> 0) & 0x1f)
+#define N32_SUB6(insn)		(((insn) >> 0) & 0x3f)
 #define N32_SWID(insn)		(((insn) >> 5) & 0x3ff)
 #define N32_IMMU(insn, bs)	((insn) & __MASK (bs))
-#define N32_IMMS(insn, bs)	((signed) __SEXT (((insn) & __MASK (bs)), bs))
+#define N32_IMMS(insn, bs)	((signed) __SEXT ((insn), (bs)))
 #define N32_IMM5U(insn)		N32_IMMU (insn, 5)
 #define N32_IMM12S(insn)	N32_IMMS (insn, 12)
 #define N32_IMM14S(insn)	N32_IMMS (insn, 14)
@@ -275,7 +278,7 @@ enum n32_opcodes
   N32_BR1_BNE = 1,
 
   /* bit[16:19] */
-  N32_BR2_IFCALL = 0,
+  N32_BR2_SOP0 = 0,
   N32_BR2_BEQZ = 2,
   N32_BR2_BNEZ = 3,
   N32_BR2_BGEZ = 4,
@@ -365,7 +368,8 @@ enum n32_opcodes
   N32_ALU2_FFZMISM,
   N32_ALU2_KADD = 0x18,
   N32_ALU2_KSUB,
-  N32_ALU2_KSLRA,
+  N32_ALU2_KSLRAW,
+  N32_ALU2_KSLRAWu,
   N32_ALU2_MFUSR = 0x20,
   N32_ALU2_MTUSR,
   N32_ALU2_0x22,
@@ -381,20 +385,173 @@ enum n32_opcodes
   N32_ALU2_MSUB64,
   N32_ALU2_DIVS,
   N32_ALU2_DIV,
-  N32_ALU2_0x30 = 0x30,
+  N32_ALU2_ADD64 = 0x30,
   N32_ALU2_MULT32,
-  N32_ALU2_0x32,
+  N32_ALU2_SMAL,
   N32_ALU2_MADD32,
-  N32_ALU2_0x34,
+  N32_ALU2_SUB64,
   N32_ALU2_MSUB32,
+  N32_ALU2_0x36,
+  N32_ALU2_0x37,
+  N32_ALU2_RADD64 = 0x38,
+  N32_ALU2_URADD64,
+  N32_ALU2_KADD64,
+  N32_ALU2_UKADD64,
+  N32_ALU2_RSUB64,
+  N32_ALU2_URSUB64,
+  N32_ALU2_KSUB64,
+  N32_ALU2_UKSUB64,
 
-  /* bit[0:5], where bit[6:9] != 0  */
+  /* bit[0:5], where bit[6:9] = 0001  */
+  N32_ALU2_SMAR64 = 0x0,
+  N32_ALU2_UMAR64,
+  N32_ALU2_SMSR64,
+  N32_ALU2_UMSR64,
+  N32_ALU2_KMAR64,
+  N32_ALU2_UKMAR64,
+  N32_ALU2_KMSR64,
+  N32_ALU2_UKMSR64,
+  N32_ALU2_SMALDA = 0x8,
+  N32_ALU2_SMSLDA,
+  N32_ALU2_SMALDS,
+  N32_ALU2_SMALBB,
   N32_ALU2_FFBI = 0xe,
   N32_ALU2_FLMISM = 0xf,
+  N32_ALU2_SMALXDA = 0x10,
+  N32_ALU2_SMSLXDA,
+  N32_ALU2_SMALXDS,
+  N32_ALU2_SMALBT,
+  N32_ALU2_SMALDRS = 0x1a,
+  N32_ALU2_SMALTT,
+  N32_ALU2_RDOV = 0x20,
+  N32_ALU2_CLROV,
   N32_ALU2_MULSR64 = 0x28,
   N32_ALU2_MULR64 = 0x29,
-  N32_ALU2_MADDR32 = 0x33,
-  N32_ALU2_MSUBR32 = 0x35,
+  N32_ALU2_SMDS = 0x30,
+  N32_ALU2_SMXDS,
+  N32_ALU2_SMDRS,
+  N32_ALU2_MADDR32,
+  N32_ALU2_KMADRS,
+  N32_ALU2_MSUBR32,
+  N32_ALU2_KMADS,
+  N32_ALU2_KMAXDS,
+
+  /* bit[0:5], where bit[6:9] = 0010  */
+  N32_ALU2_KADD16 = 0x0,
+  N32_ALU2_KSUB16,
+  N32_ALU2_KCRAS16,
+  N32_ALU2_KCRSA16,
+  N32_ALU2_KADD8,
+  N32_ALU2_KSUB8,
+  N32_ALU2_WEXT,
+  N32_ALU2_WEXTI,
+  N32_ALU2_UKADD16 = 0x8,
+  N32_ALU2_UKSUB16,
+  N32_ALU2_UKCRAS16,
+  N32_ALU2_UKCRSA16,
+  N32_ALU2_UKADD8,
+  N32_ALU2_UKSUB8,
+  N32_ALU2_ONEOP = 0xf,
+  N32_ALU2_SMBB = 0x10,
+  N32_ALU2_SMBT,
+  N32_ALU2_SMTT,
+  N32_ALU2_KMABB = 0x15,
+  N32_ALU2_KMABT,
+  N32_ALU2_KMATT,
+  N32_ALU2_KMDA = 0x18,
+  N32_ALU2_KMXDA,
+  N32_ALU2_KMADA,
+  N32_ALU2_KMAXDA,
+  N32_ALU2_KMSDA,
+  N32_ALU2_KMSXDA,
+  N32_ALU2_RADD16 = 0x20,
+  N32_ALU2_RSUB16,
+  N32_ALU2_RCRAS16,
+  N32_ALU2_RCRSA16,
+  N32_ALU2_RADD8,
+  N32_ALU2_RSUB8,
+  N32_ALU2_RADDW,
+  N32_ALU2_RSUBW,
+  N32_ALU2_URADD16 = 0x28,
+  N32_ALU2_URSUB16,
+  N32_ALU2_URCRAS16,
+  N32_ALU2_URCRSA16,
+  N32_ALU2_URADD8,
+  N32_ALU2_URSUB8,
+  N32_ALU2_URADDW,
+  N32_ALU2_URSUBW,
+  N32_ALU2_ADD16 = 0x30,
+  N32_ALU2_SUB16,
+  N32_ALU2_CRAS16,
+  N32_ALU2_CRSA16,
+  N32_ALU2_ADD8,
+  N32_ALU2_SUB8,
+  N32_ALU2_BITREV,
+  N32_ALU2_BITREVI,
+  N32_ALU2_SMMUL = 0x38,
+  N32_ALU2_SMMULu,
+  N32_ALU2_KMMAC,
+  N32_ALU2_KMMACu,
+  N32_ALU2_KMMSB,
+  N32_ALU2_KMMSBu,
+  N32_ALU2_KWMMUL,
+  N32_ALU2_KWMMULu,
+
+  /* bit[0:5], where bit[6:9] = 0011  */
+  N32_ALU2_SMMWB = 0x0,
+  N32_ALU2_SMMWBu,
+  N32_ALU2_SMMWT,
+  N32_ALU2_SMMWTu,
+  N32_ALU2_KMMAWB,
+  N32_ALU2_KMMAWBu,
+  N32_ALU2_KMMAWT,
+  N32_ALU2_KMMAWTu,
+  N32_ALU2_PKTT16 = 0x8,
+  N32_ALU2_PKTB16,
+  N32_ALU2_PKBT16,
+  N32_ALU2_PKBB16,
+  N32_ALU2_0x10 = 0x10,
+  N32_ALU2_SCLIP16,
+  N32_ALU2_0x12,
+  N32_ALU2_SMAX16,
+  N32_ALU2_SMAX8 = 0x17,
+  N32_ALU2_0x18 = 0x18,
+  N32_ALU2_UCLIP16,
+  N32_ALU2_0x1a,
+  N32_ALU2_UMAX16,
+  N32_ALU2_UMAX8 = 0x1f,
+  N32_ALU2_SRA16 = 0x20,
+  N32_ALU2_SRA16u,
+  N32_ALU2_SRL16,
+  N32_ALU2_SRL16u,
+  N32_ALU2_SLL16,
+  N32_ALU2_KSLRA16,
+  N32_ALU2_KSLRA16u,
+  N32_ALU2_SRAu,
+  N32_ALU2_SRAI16 = 0x28,
+  N32_ALU2_SRAI16u,
+  N32_ALU2_SRLI16,
+  N32_ALU2_SRLI16u,
+  N32_ALU2_SLLI16,
+  N32_ALU2_KSLLI16,
+  N32_ALU2_KSLLI,
+  N32_ALU2_SRAIu,
+  N32_ALU2_CMPEQ16 = 0x30,
+  N32_ALU2_SCMPLT16,
+  N32_ALU2_SCMPLE16,
+  N32_ALU2_SMIN16,
+  N32_ALU2_CMPEQ8,
+  N32_ALU2_SCMPLT8,
+  N32_ALU2_SCMPLE8,
+  N32_ALU2_SMIN8,
+  N32_ALU2_0x38,
+  N32_ALU2_UCMPLT16 = 0x39,
+  N32_ALU2_UCMPLE16,
+  N32_ALU2_UMIN16,
+  N32_ALU2_0x3c,
+  N32_ALU2_UCMPLT8,
+  N32_ALU2_UCMPLE8,
+  N32_ALU2_UMIN8,
 
   /* bit[0:5] */
   N32_MEM_LB = 0,
@@ -459,7 +616,8 @@ enum n32_opcodes
   N32_MISC_MSYNC,
   N32_MISC_ISYNC,
   N32_MISC_TLBOP,
-  N32_MISC_0xf,
+  N32_MISC_SPECL,
+  N32_MISC_BPICK = 0x10,
 
   /* bit[0:4] */
   N32_SIMD_PBSAD = 0,
@@ -704,6 +862,7 @@ enum n16_opcodes
 #define INSN_ANDI   0x54000000
 #define INSN_LDI    0x06000000
 #define INSN_SDI    0x16000000
+#define INSN_LW     0x38000002
 #define INSN_LWI    0x04000000
 #define INSN_LWSI   0x24000000
 #define INSN_LWIP   0x0c000000

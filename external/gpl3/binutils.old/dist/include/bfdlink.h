@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,6 +40,12 @@ enum bfd_link_discard
   discard_none,		/* Don't discard any locals.  */
   discard_l,		/* Discard local temporary symbols.  */
   discard_all		/* Discard all locals.  */
+};
+
+enum notice_asneeded_action {
+  notice_as_needed,
+  notice_not_needed,
+  notice_needed
 };
 
 /* Whether to generate ELF common symbols with the STT_COMMON type
@@ -114,6 +120,11 @@ struct bfd_link_hash_entry
 
   /* Symbol defined in a linker script.  */
   unsigned int ldscript_def : 1;
+
+  /* Symbol will be converted from absolute to section-relative.  Set for
+     symbols defined by a script from "dot" (also SEGMENT_START or ORIGIN)
+     outside of an output section statement.  */
+  unsigned int rel_from_abs : 1;
 
   /* A union of information depending upon the type.  */
   union
@@ -348,6 +359,10 @@ struct bfd_link_info
   /* TRUE if section groups should be resolved.  */
   unsigned int resolve_section_groups: 1;
 
+  /* Set if output file is big-endian, or if that is unknown, from
+     the command line or first input file endianness.  */
+  unsigned int big_endian : 1;
+
   /* Which symbols to strip.  */
   ENUM_BITFIELD (bfd_link_strip) strip : 2;
 
@@ -470,36 +485,21 @@ struct bfd_link_info
   /* TRUE if the linker script contained an explicit PHDRS command.  */
   unsigned int user_phdrs: 1;
 
+  /* TRUE if program headers ought to be loaded.  */
+  unsigned int load_phdrs: 1;
+
   /* TRUE if we should check relocations after all input files have
      been opened.  */
   unsigned int check_relocs_after_open_input: 1;
 
-  /* TRUE if BND prefix in PLT entries is always generated.  */
-  unsigned int bndplt: 1;
-
-  /* TRUE if IBT-enabled PLT entries should be generated.  */
-  unsigned int ibtplt: 1;
-
-  /* TRUE if GNU_PROPERTY_X86_FEATURE_1_IBT should be generated.  */
-  unsigned int ibt: 1;
-
-  /* TRUE if GNU_PROPERTY_X86_FEATURE_1_SHSTK should be generated.  */
-  unsigned int shstk: 1;
-
   /* TRUE if generation of .interp/PT_INTERP should be suppressed.  */
   unsigned int nointerp: 1;
-
-  /* TRUE if we shouldn't check relocation overflow.  */
-  unsigned int no_reloc_overflow_check: 1;
-
-  /* TRUE if generate a 1-byte NOP as suffix for x86 call instruction.  */
-  unsigned int call_nop_as_suffix : 1;
 
   /* TRUE if common symbols should be treated as undefined.  */
   unsigned int inhibit_common_definition : 1;
 
-  /* The 1-byte NOP for x86 call instruction.  */
-  char call_nop_byte;
+  /* TRUE if "-Map map" is passed to linker.  */
+  unsigned int has_map_file : 1;
 
   /* Char that may appear as the first char of a symbol, but should be
      skipped (like symbol_leading_char) when looking up symbols in
@@ -640,6 +640,11 @@ struct bfd_link_info
   struct bfd_elf_version_tree *version_info;
 };
 
+/* Some forward-definitions used by some callbacks.  */
+
+struct elf_strtab_hash;
+struct elf_sym_strtab;
+
 /* This structures holds a set of callback functions.  These are called
    by the BFD linker routines.  */
 
@@ -761,6 +766,16 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, bfd * abfd,
      asection * current_section, asection * previous_section,
      bfd_boolean new_segment);
+  /* This callback provides a chance for callers of the BFD to examine the
+     ELF string table and symbol table once they are complete and indexes and
+     offsets assigned.  */
+  void (*examine_strtab)
+    (struct elf_sym_strtab *syms, bfd_size_type symcount,
+     struct elf_strtab_hash *symstrtab);
+  /* This callback should emit the CTF section into a non-loadable section in
+     the output BFD named .ctf or a name beginning with ".ctf.".  */
+  void (*emit_ctf)
+    (void);
 };
 
 /* The linker builds link_order structures which tell the code how to
@@ -861,6 +876,20 @@ struct bfd_link_order_reloc
 
 /* Allocate a new link_order for a section.  */
 extern struct bfd_link_order *bfd_new_link_order (bfd *, asection *);
+
+struct bfd_section_already_linked;
+
+extern bfd_boolean bfd_section_already_linked_table_init (void);
+extern void bfd_section_already_linked_table_free (void);
+extern bfd_boolean _bfd_handle_already_linked
+  (struct bfd_section *, struct bfd_section_already_linked *,
+   struct bfd_link_info *);
+
+extern struct bfd_section *_bfd_nearby_section
+  (bfd *, struct bfd_section *, bfd_vma);
+
+extern void _bfd_fix_excluded_sec_syms
+  (bfd *, struct bfd_link_info *);
 
 /* These structures are used to describe version information for the
    ELF linker.  These structures could be manipulated entirely inside

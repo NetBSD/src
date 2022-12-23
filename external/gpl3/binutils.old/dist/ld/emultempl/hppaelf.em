@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra hppa-elf
+# This file is sourced from elf.em, and defines extra hppa-elf
 # specific routines.
 #
 fragment <<EOF
@@ -59,7 +59,7 @@ hppaelf_after_parse (void)
 			  NULL);
   */
 
-  gld${EMULATION_NAME}_after_parse ();
+  ldelf_after_parse ();
 }
 
 /* This is called before the input files are opened.  We create a new
@@ -215,7 +215,7 @@ hppaelf_layout_sections_again (void)
   /* If we have changed sizes of the stub sections, then we need
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
-  gld${EMULATION_NAME}_map_segments (TRUE);
+  ldelf_map_segments (TRUE);
   need_laying_out = -1;
 }
 
@@ -289,7 +289,7 @@ gld${EMULATION_NAME}_after_allocation (void)
     }
 
   if (need_laying_out != -1)
-    gld${EMULATION_NAME}_map_segments (need_laying_out);
+    ldelf_map_segments (need_laying_out);
 
   if (!bfd_link_relocatable (&link_info))
     {
@@ -308,27 +308,6 @@ gld${EMULATION_NAME}_after_allocation (void)
 	}
     }
 }
-
-
-/* Avoid processing the fake stub_file in vercheck, stat_needed and
-   check_needed routines.  */
-
-static void (*real_func) (lang_input_statement_type *);
-
-static void hppa_for_each_input_file_wrapper (lang_input_statement_type *l)
-{
-  if (l != stub_file)
-    (*real_func) (l);
-}
-
-static void
-hppa_lang_for_each_input_file (void (*func) (lang_input_statement_type *))
-{
-  real_func = func;
-  lang_for_each_input_file (&hppa_for_each_input_file_wrapper);
-}
-
-#define lang_for_each_input_file hppa_lang_for_each_input_file
 
 EOF
 

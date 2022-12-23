@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.0.5"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -1194,6 +1194,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -1510,185 +1511,185 @@ yyreduce:
   switch (yyn)
     {
         case 5:
-#line 309 "./itbl-parse.y" /* yacc.c:1646  */
+#line 309 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n",
 	    	    insntbl_line, (yyvsp[-4].num), (yyvsp[-3].num), (yyvsp[-2].str), (yyvsp[-1].val)));
 	    itbl_add_reg ((yyvsp[-4].num), (yyvsp[-3].num), (yyvsp[-2].str), (yyvsp[-1].val));
 	  }
-#line 1520 "itbl-parse.c" /* yacc.c:1646  */
+#line 1521 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 6:
-#line 315 "./itbl-parse.y" /* yacc.c:1646  */
+#line 315 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBG (("line %d: entry pnum=%d type=INSN name=%s value=x%x",
 	    	    insntbl_line, (yyvsp[-5].num), (yyvsp[-3].str), (yyvsp[-2].val)));
 	    DBG ((" sbit=%d ebit=%d flags=0x%x\n", sbit, ebit, (yyvsp[0].val)));
 	    insn=itbl_add_insn ((yyvsp[-5].num), (yyvsp[-3].str), (yyvsp[-2].val), sbit, ebit, (yyvsp[0].val));
 	  }
-#line 1531 "itbl-parse.c" /* yacc.c:1646  */
+#line 1532 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 7:
-#line 322 "./itbl-parse.y" /* yacc.c:1646  */
+#line 322 "./itbl-parse.y" /* yacc.c:1648  */
     {}
-#line 1537 "itbl-parse.c" /* yacc.c:1646  */
+#line 1538 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 13:
-#line 335 "./itbl-parse.y" /* yacc.c:1646  */
+#line 335 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("ftype\n"));
 	    (yyval.num) = (yyvsp[0].num);
 	  }
-#line 1546 "itbl-parse.c" /* yacc.c:1646  */
+#line 1547 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 14:
-#line 340 "./itbl-parse.y" /* yacc.c:1646  */
+#line 340 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("addr\n"));
 	    (yyval.num) = ADDR;
 	  }
-#line 1555 "itbl-parse.c" /* yacc.c:1646  */
+#line 1556 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 345 "./itbl-parse.y" /* yacc.c:1646  */
+#line 345 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("immed\n"));
 	    (yyval.num) = IMMED;
 	  }
-#line 1564 "itbl-parse.c" /* yacc.c:1646  */
+#line 1565 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 16:
-#line 353 "./itbl-parse.y" /* yacc.c:1646  */
+#line 353 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n",
 	    	    insntbl_line, (yyvsp[-2].num), sbit, ebit, (yyvsp[0].val)));
 	    itbl_add_operand (insn, (yyvsp[-2].num), sbit, ebit, (yyvsp[0].val));
 	  }
-#line 1574 "itbl-parse.c" /* yacc.c:1646  */
+#line 1575 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 17:
-#line 362 "./itbl-parse.y" /* yacc.c:1646  */
+#line 362 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    (yyval.val) = (yyvsp[-2].num) | (yyvsp[0].val);
 	  }
-#line 1582 "itbl-parse.c" /* yacc.c:1646  */
+#line 1583 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 18:
-#line 366 "./itbl-parse.y" /* yacc.c:1646  */
+#line 366 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    (yyval.val) = (yyvsp[-1].val);
 	  }
-#line 1590 "itbl-parse.c" /* yacc.c:1646  */
+#line 1591 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 19:
-#line 370 "./itbl-parse.y" /* yacc.c:1646  */
+#line 370 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    (yyval.val) = (yyvsp[0].num);
 	  }
-#line 1598 "itbl-parse.c" /* yacc.c:1646  */
+#line 1599 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 20:
-#line 377 "./itbl-parse.y" /* yacc.c:1646  */
+#line 377 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("flags=%d\n", (yyvsp[0].val)));
 	    (yyval.val) = (yyvsp[0].val);
 	  }
-#line 1607 "itbl-parse.c" /* yacc.c:1646  */
+#line 1608 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 21:
-#line 382 "./itbl-parse.y" /* yacc.c:1646  */
+#line 382 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    (yyval.val) = 0;
 	  }
-#line 1615 "itbl-parse.c" /* yacc.c:1646  */
+#line 1616 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 22:
-#line 389 "./itbl-parse.y" /* yacc.c:1646  */
+#line 389 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("range %d %d\n", (yyvsp[-2].num), (yyvsp[0].num)));
 	    sbit = (yyvsp[-2].num);
 	    ebit = (yyvsp[0].num);
 	  }
-#line 1625 "itbl-parse.c" /* yacc.c:1646  */
+#line 1626 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 23:
-#line 395 "./itbl-parse.y" /* yacc.c:1646  */
+#line 395 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    sbit = 31;
 	    ebit = 0;
 	  }
-#line 1634 "itbl-parse.c" /* yacc.c:1646  */
+#line 1635 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 24:
-#line 403 "./itbl-parse.y" /* yacc.c:1646  */
+#line 403 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("pnum=%d\n",(yyvsp[0].num)));
 	    (yyval.num) = (yyvsp[0].num);
 	  }
-#line 1643 "itbl-parse.c" /* yacc.c:1646  */
+#line 1644 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 25:
-#line 411 "./itbl-parse.y" /* yacc.c:1646  */
+#line 411 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("dreg\n"));
 	    (yyval.num) = DREG;
 	  }
-#line 1652 "itbl-parse.c" /* yacc.c:1646  */
+#line 1653 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 26:
-#line 416 "./itbl-parse.y" /* yacc.c:1646  */
+#line 416 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("creg\n"));
 	    (yyval.num) = CREG;
 	  }
-#line 1661 "itbl-parse.c" /* yacc.c:1646  */
+#line 1662 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 27:
-#line 421 "./itbl-parse.y" /* yacc.c:1646  */
+#line 421 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("greg\n"));
 	    (yyval.num) = GREG;
 	  }
-#line 1670 "itbl-parse.c" /* yacc.c:1646  */
+#line 1671 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 28:
-#line 429 "./itbl-parse.y" /* yacc.c:1646  */
+#line 429 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("name=%s\n",(yyvsp[0].str)));
 	    (yyval.str) = (yyvsp[0].str);
 	  }
-#line 1679 "itbl-parse.c" /* yacc.c:1646  */
+#line 1680 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
   case 29:
-#line 445 "./itbl-parse.y" /* yacc.c:1646  */
+#line 445 "./itbl-parse.y" /* yacc.c:1648  */
     {
 	    DBGL2 (("val=x%x\n",(yyvsp[0].num)));
 	    (yyval.val) = (yyvsp[0].num);
 	  }
-#line 1688 "itbl-parse.c" /* yacc.c:1646  */
+#line 1689 "itbl-parse.c" /* yacc.c:1648  */
     break;
 
 
-#line 1692 "itbl-parse.c" /* yacc.c:1646  */
+#line 1693 "itbl-parse.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1916,7 +1917,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 450 "./itbl-parse.y" /* yacc.c:1906  */
+#line 450 "./itbl-parse.y" /* yacc.c:1907  */
 
 
 static int

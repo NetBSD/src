@@ -1,5 +1,5 @@
 /* riscv.h.  RISC-V opcode list for GDB, the GNU debugger.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Andrew Waterman
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -247,10 +247,14 @@ static const char * const riscv_pred_succ[16] =
 #define OP_MASK_CRS2S 0x7
 #define OP_SH_CRS2S 2
 
+#define OP_MASK_CFUNCT6                0x3f
+#define OP_SH_CFUNCT6          10
 #define OP_MASK_CFUNCT4                0xf
 #define OP_SH_CFUNCT4          12
 #define OP_MASK_CFUNCT3                0x7
 #define OP_SH_CFUNCT3          13
+#define OP_MASK_CFUNCT2                0x3
+#define OP_SH_CFUNCT2          5
 
 /* ABI names for selected x-registers.  */
 
@@ -265,6 +269,12 @@ static const char * const riscv_pred_succ[16] =
 
 #define NGPR 32
 #define NFPR 32
+
+/* These fake label defines are use by both the assembler, and
+   libopcodes.  The assembler uses this when it needs to generate a fake
+   label, and libopcodes uses it to hide the fake labels in its output.  */
+#define RISCV_FAKE_LABEL_NAME ".L0 "
+#define RISCV_FAKE_LABEL_CHAR ' '
 
 /* Replace bits MASK << SHIFT of STRUCT with the equivalent bits in
    VALUE << SHIFT.  VALUE is evaluated exactly once.  */
@@ -281,14 +291,37 @@ static const char * const riscv_pred_succ[16] =
 #define EXTRACT_OPERAND(FIELD, INSN) \
   EXTRACT_BITS ((INSN), OP_MASK_##FIELD, OP_SH_##FIELD)
 
+/* The maximal number of subset can be required. */
+#define MAX_SUBSET_NUM 4
+
+/* All RISC-V instructions belong to at least one of these classes.  */
+
+enum riscv_insn_class
+  {
+   INSN_CLASS_NONE,
+
+   INSN_CLASS_I,
+   INSN_CLASS_C,
+   INSN_CLASS_A,
+   INSN_CLASS_M,
+   INSN_CLASS_F,
+   INSN_CLASS_D,
+   INSN_CLASS_D_AND_C,
+   INSN_CLASS_F_AND_C,
+   INSN_CLASS_Q,
+  };
+
 /* This structure holds information for a particular instruction.  */
 
 struct riscv_opcode
 {
   /* The name of the instruction.  */
   const char *name;
-  /* The ISA subset name (I, M, A, F, D, Xextension).  */
-  const char *subset;
+  /* The requirement of xlen for the instruction, 0 if no requirement.  */
+  unsigned xlen_requirement;
+  /* Class to which this instruction belongs.  Used to decide whether or
+     not this instruction is legal in the current -march context.  */
+  enum riscv_insn_class insn_class;
   /* A string describing the arguments for this instruction.  */
   const char *args;
   /* The basic opcode for the instruction.  When assembling, this
@@ -312,6 +345,32 @@ struct riscv_opcode
 
 /* Instruction is a simple alias (e.g. "mv" for "addi").  */
 #define	INSN_ALIAS		0x00000001
+
+/* These are for setting insn_info fields.
+
+   Nonbranch is the default.  Noninsn is used only if there is no match.
+   There are no condjsr or dref2 instructions.  So that leaves condbranch,
+   branch, jsr, and dref that we need to handle here, encoded in 3 bits.  */
+#define INSN_TYPE		0x0000000e
+
+/* Instruction is an unconditional branch.  */
+#define INSN_BRANCH		0x00000002
+/* Instruction is a conditional branch.  */
+#define INSN_CONDBRANCH		0x00000004
+/* Instruction is a jump to subroutine.  */
+#define INSN_JSR		0x00000006
+/* Instruction is a data reference.  */
+#define INSN_DREF		0x00000008
+
+/* We have 5 data reference sizes, which we can encode in 3 bits.  */
+#define INSN_DATA_SIZE		0x00000070
+#define INSN_DATA_SIZE_SHIFT	4
+#define INSN_1_BYTE		0x00000010
+#define INSN_2_BYTE		0x00000020
+#define INSN_4_BYTE		0x00000030
+#define INSN_8_BYTE		0x00000040
+#define INSN_16_BYTE		0x00000050
+
 /* Instruction is actually a macro.  It should be ignored by the
    disassembler, and requires special treatment by the assembler.  */
 #define INSN_MACRO		0xffffffff

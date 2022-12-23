@@ -1,5 +1,5 @@
 /* wrstabs.c -- Output stabs debugging information
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -1440,18 +1440,15 @@ stab_end_struct_type (void *p)
 /* Start outputting a class.  */
 
 static bfd_boolean
-stab_start_class_type (void *p, const char *tag, unsigned int id, bfd_boolean structp, unsigned int size, bfd_boolean vptr, bfd_boolean ownvptr)
+stab_start_class_type (void *p, const char *tag, unsigned int id,
+		       bfd_boolean structp, unsigned int size,
+		       bfd_boolean vptr, bfd_boolean ownvptr)
 {
   struct stab_write_handle *info = (struct stab_write_handle *) p;
-  bfd_boolean definition;
-  char *vstring;
+  bfd_boolean definition = FALSE;
+  char *vstring = NULL;
 
-  if (! vptr || ownvptr)
-    {
-      definition = FALSE;
-      vstring = NULL;
-    }
-  else
+  if (vptr && !ownvptr)
     {
       definition = info->type_stack->definition;
       vstring = stab_pop_type (info);
@@ -1472,16 +1469,15 @@ stab_start_class_type (void *p, const char *tag, unsigned int id, bfd_boolean st
 	}
       else
 	{
+	  assert (vstring);
 	  vtable = (char *) xmalloc (strlen (vstring) + 3);
 	  sprintf (vtable, "~%%%s", vstring);
 	  free (vstring);
+	  if (definition)
+	    info->type_stack->definition = TRUE;
 	}
-
       info->type_stack->vtable = vtable;
     }
-
-  if (definition)
-    info->type_stack->definition = TRUE;
 
   return TRUE;
 }

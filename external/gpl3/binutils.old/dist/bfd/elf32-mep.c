@@ -1,5 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 /* Private relocation functions.  */
 
 #define MEPREL(type, size, bits, right, left, pcrel, overflow, mask) \
-  {(unsigned)type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, FALSE, 0, mask, 0 }
+  HOWTO (type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, FALSE, 0, mask, 0)
 
 #define N complain_overflow_dont
 #define S complain_overflow_signed
@@ -477,7 +477,7 @@ mep_elf_relocate_section
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{
