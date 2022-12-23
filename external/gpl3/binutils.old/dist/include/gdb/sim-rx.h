@@ -1,6 +1,6 @@
 /* sim-rx.h --- interface between RX simulator and GDB.
 
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -58,6 +58,27 @@ static int read_insn
 
 /* -- disassembler routines inserted here.  */
 
+/* -- dis.c */
+
+static void
+print_regpair (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+	       void * dis_info,
+	       long value,
+	       unsigned int attrs ATTRIBUTE_UNUSED,
+	       bfd_vma pc ATTRIBUTE_UNUSED,
+	       int length ATTRIBUTE_UNUSED)
+{
+  disassemble_info *info = dis_info;
+  char reg1_index;
+  char reg2_index;
+
+  reg1_index = value & 0x1f;
+  reg2_index = reg1_index + ((value & (1 << 5)) ? 2 : 1);
+
+  (*info->fprintf_func) (info->stream, "r%d,r%d", reg1_index, reg2_index);
+}
+
+/* -- */
 
 void or1k_cgen_print_operand
   (CGEN_CPU_DESC, int, PTR, CGEN_FIELDS *, void const *, bfd_vma, int);
@@ -90,14 +111,23 @@ or1k_cgen_print_operand (CGEN_CPU_DESC cd,
 
   switch (opindex)
     {
+    case OR1K_OPERAND_DISP21 :
+      print_address (cd, info, fields->f_disp21, 0|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
+      break;
     case OR1K_OPERAND_DISP26 :
       print_address (cd, info, fields->f_disp26, 0|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
       break;
     case OR1K_OPERAND_RA :
       print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r2, 0);
       break;
+    case OR1K_OPERAND_RAD32F :
+      print_regpair (cd, info, fields->f_rad32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
     case OR1K_OPERAND_RADF :
-      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r2, 0);
+      break;
+    case OR1K_OPERAND_RADI :
+      print_regpair (cd, info, fields->f_rad32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
       break;
     case OR1K_OPERAND_RASF :
       print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r2, 0);
@@ -105,8 +135,14 @@ or1k_cgen_print_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RB :
       print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r3, 0);
       break;
+    case OR1K_OPERAND_RBD32F :
+      print_regpair (cd, info, fields->f_rbd32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
     case OR1K_OPERAND_RBDF :
-      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r3, 0);
+      break;
+    case OR1K_OPERAND_RBDI :
+      print_regpair (cd, info, fields->f_rbd32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
       break;
     case OR1K_OPERAND_RBSF :
       print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r3, 0);
@@ -114,8 +150,14 @@ or1k_cgen_print_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RD :
       print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r1, 0);
       break;
+    case OR1K_OPERAND_RDD32F :
+      print_regpair (cd, info, fields->f_rdd32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
     case OR1K_OPERAND_RDDF :
       print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_RDDI :
+      print_regpair (cd, info, fields->f_rdd32, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
       break;
     case OR1K_OPERAND_RDSF :
       print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r1, 0);
@@ -492,7 +534,7 @@ print_insn_or1k (bfd_vma pc, disassemble_info *info)
     cgen_bitset_add (isa, CGEN_COMPUTE_ISA (info));
   }
 #else
-  isa = info->insn_sets;
+  isa = info->private_data;
 #endif
 
   /* If we've switched cpu's, try to find a handle we've used before */

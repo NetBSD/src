@@ -50,6 +50,16 @@
 /* Define to 1 if you want to generate x86 relax relocations by default. */
 #undef DEFAULT_GENERATE_X86_RELAX_RELOCATIONS
 
+/* Define to 1 if you want to fix Loongson3 LLSC Errata by default. */
+#undef DEFAULT_MIPS_FIX_LOONGSON3_LLSC
+
+/* Define to 1 if you want to generate RISC-V arch attribute by default. */
+#undef DEFAULT_RISCV_ATTR
+
+/* Define to 1 if you want to generate GNU x86 used ISA and feature properties
+   by default. */
+#undef DEFAULT_X86_USED_NOTE
+
 /* Supported emulations. */
 #undef EMULATIONS
 
@@ -200,6 +210,9 @@
 /* Define default value for nds32_audio_ext */
 #undef NDS32_DEFAULT_AUDIO_EXT
 
+/* Define default value for nds32_dsp_ext */
+#undef NDS32_DEFAULT_DSP_EXT
+
 /* Define default value for nds32_dx_regs */
 #undef NDS32_DEFAULT_DX_REGS
 
@@ -211,6 +224,12 @@
 
 /* Define default value for nds32_string_ext */
 #undef NDS32_DEFAULT_STRING_EXT
+
+/* Define default value for nds32_zol_ext */
+#undef NDS32_DEFAULT_ZOL_EXT
+
+/* Define default value for nds32_linux_toolchain */
+#undef NDS32_LINUX_TOOLCHAIN
 
 /* Define if environ is not declared in system header files. */
 #undef NEED_DECLARATION_ENVIRON

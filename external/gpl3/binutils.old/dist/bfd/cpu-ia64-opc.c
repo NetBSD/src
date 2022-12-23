@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -186,7 +186,7 @@ ext_imms_scaled (const struct ia64_operand *self, ia64_insn code,
 		 ia64_insn *valuep, int scale)
 {
   int i, bits = 0, total = 0;
-  BFD_HOST_64_BIT val = 0, sign;
+  BFD_HOST_U_64_BIT val = 0, sign;
 
   for (i = 0; i < NELEMS (self->field) && self->field[i].bits; ++i)
     {
@@ -196,10 +196,10 @@ ext_imms_scaled (const struct ia64_operand *self, ia64_insn code,
       total += bits;
     }
   /* sign extend: */
-  sign = (BFD_HOST_64_BIT) 1 << (total - 1);
+  sign = (BFD_HOST_U_64_BIT) 1 << (total - 1);
   val = (val ^ sign) - sign;
 
-  *valuep = (val << scale);
+  *valuep = val << scale;
   return 0;
 }
 

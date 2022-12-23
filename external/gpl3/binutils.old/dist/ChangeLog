@@ -1,11 +1,329 @@
-2018-07-18  Nick Clifton  <nickc@redhat.com>
+2020-01-18  Nick Clifton  <nickc@redhat.com>
 
-	2.31.1 Release point.
+	Binutils 2.34 branch created.
 
-2018-07-18  Nick Clifton  <nickc@redhat.com>
+2020-01-18  Nick Clifton  <nickc@redhat.com>
 
-	* (DEVO_SUPPORT): Fix typo in previous delta.
-	(do_proto_toplev): Add --quiet option to configure command line.
+	Synchronize top level configure files with master version:
+
+	2020-01-01  Ben Elliston  <bje@gnu.org>
+
+	* config.guess: Update copyright years.
+	* config.sub: Likewise.
+
+	2019-12-21  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (set_cc_for_build): Prevent multiple calls by
+	checking if $tmp is already set. We can't check CC_FOR_BUILD as
+	the user may set it externally. Thanks to Torbjörn Granlund for
+	the bug report.
+
+	2019-12-21  Torbjörn Granlund  <tg@gmplib.org>
+
+	* config.guess (alpha:Linux:*:*): Guard against missing
+	/proc/cpuinfo by redirecting standard error to /dev/null.
+
+	2019-09-12  Daniel Bittman  <danielbittman1@gmail.com>
+
+	* config.guess (*:Twizzler:*:*): New.
+	* config.sub (-twizzler*): New.
+
+	2019-07-24  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (mips:OSF1:*.*): Whitespace cleanup.
+
+	2019-06-30  Ben Elliston  <bje@gnu.org>
+
+	* config.sub (case $os): Match nsk* and powerunix. Don't later
+	match nsk* and set os=nsk which removes the OS version number.
+
+	2019-06-30  Ben Elliston  <bje@gnu.org>
+
+	* config.sub: Recognise os108*.
+
+	2019-06-26  Ben Elliston  <bje@gnu.org>
+
+	* config.sub (hp300): Set $os to hpux.
+
+	2019-06-26  Ben Elliston  <bje@gnu.org>
+
+	* config.sub (vsta): Move into alphabetical order.
+
+	2019-06-10  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (*:OS108:*:*): Recognise new OS.
+
+	2019-05-28  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (*:Darwin:*:*): Run xcode-select to determine if a
+	system compiler is installed. If not, do not run set_cc_for_build,
+	as the default cc will open a dialog box asking to install
+	Xcode. If no C compiler is available, guess based on uname -p and
+	uname -m.
+
+	2019-05-28  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (*:Darwin:*:*): Simplify UNAME_PROCESSOR.
+
+2020-01-17  Simon Marchi  <simon.marchi@efficios.com>
+
+	* Makefile.def: Add dependencies of all-gdbsupport on all-bfd.
+	* Makefile.in: Re-generate.
+
+2020-01-14  Tom Tromey  <tom@tromey.com>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add gdbsupport.
+	* MAINTAINERS: Add gdbsupport.
+	* configure: Rebuild.
+	* configure.ac (configdirs): Add gdbsupport.
+	* gdbsupport: New directory, move from gdb/gdbsupport.
+	* Makefile.def (host_modules, dependencies): Add gnulib.
+	* Makefile.in: Rebuild.
+
+2020-01-09  Aaron Merey  <amerey@redhat.com>
+
+        * config/debuginfod.m4: New file. Add macro AC_DEBUGINFOD. Adds
+        new configure option --with-debuginfod.
+        * configure: Regenerate.
+        * configure.ac: Call AC_DEBUGINFOD.
+
+2019-12-26  Christian Biesinger  <cbiesinger@google.com>
+
+	* .gitignore: Add perf.data and perf.data.old.
+
+2019-10-17  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add libctf.
+
+2019-10-17  Alan Modra  <amodra@gmail.com>
+
+	PR 29
+	* src-release.sh (getver): Replace "head -1" with "head -n 1".
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def (host_modules): libctf is no longer no_install.
+	* Makefile.in: Regenerated.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def (dependencies): all-ld depends on all-libctf.
+	* Makefile.in: Regenerated.
+
+2019-09-09  Phil Blundell  <pb@pbcl.net>
+
+	binutils 2.33 branch created
+
+2019-08-19  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+	* configure.ac: Add --with-static-standard-libraries.
+
+2019-08-09  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2019-08-08  Martin Liska  <mliska@suse.cz>
+
+	PR bootstrap/91352
+	* lrealpath.c (is_valid_fd): New function.
+
+	2019-07-24  Martin Liska  <mliska@suse.cz>
+
+	PR lto/91228
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Find first '\0' starting from gnu_lto + 1.
+
+	2019-07-12  Ren Kimura  <rkx1209dev@gmail.com>
+
+	* simple-object-elf.c (simple_object_elf_match): Check zero value shstrndx.
+	This fixes a Bug 90924.
+
+	2019-07-22  Martin Liska  <mliska@suse.cz>
+
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Do not search for gnu_lto_v1, but search for first '\0'.
+
+	2019-07-18  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* cplus-dem.c: Include rust-demangle.h.
+	* rust-demangle.c: Include rust-demangle.h.
+	* rust-demangle.h: New file.
+
+	2019-05-31  Michael Forney  <mforney@mforney.org>
+
+	* cp-demangle.c: Don't define CP_DYNAMIC_ARRAYS if __STDC_NO_VLA__
+	is non-zero.
+
+	2019-04-30  Ben L  <bobsayshilol@live.co.uk>
+
+	* d-demangle.c (dlang_parse_assocarray): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_tuple): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_structlit): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_arrayliteral): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_integer): Fix stack underflow.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* cp-demangle (d_print_comp_inner): Guard against a NULL 'typed_name'.
+	* testsuite/demangle-expected: Add testcase.
+
+	* cp-demangle.c (d_encoding): Guard against NULL return values from
+	d_right (dc).
+	* testsuite/demangle-expected: Add testcase.
+
+	2019-04-29  Ben L  <bobsayshilol@live.co.uk>
+
+	* cp-demangle.c (d_expression_1): Don't peek ahead unless the current
+	char is valid.
+	* testsuite/demangle-expected: Add testcase.
+
+	2019-04-10  Nick Clifton  <nickc@redhat.com>
+
+	PR 89394
+	* cp-demangle.c (cplus_demangle_fill_name): Reject negative
+	lengths.
+	(d_count_templates_scopes): Replace num_templates and num_scopes
+	parameters with a struct d_print_info pointer parameter.  Adjust
+	body of the function accordingly.  Add recursion counter and check
+	that the recursion limit is not reached.
+	(d_print_init): Pass dpi parameter to d_count_templates_scopes.
+	Reset recursion counter afterwards, unless the recursion limit was
+	reached.
+
+2019-07-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* src-release (getver): If $tool/gdbsupport/create-version.sh
+	exists, use that to determine the version number.
+
+2019-06-21  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add gnulib.
+
+2019-06-14  Tom Tromey  <tom@tromey.com>
+
+	* MAINTAINERS: Add gnulib.
+	* gnulib: New directory, move from gdb/gnulib.
+	* configure.ac (host_libs): Add gnulib.
+	* configure: Rebuild.
+	* Makefile.def (host_modules, dependencies): Add gnulib.
+	* Makefile.in: Rebuild.
+
+2019-06-03  Nick Clifton  <nickc@redhat.com>
+
+	Revert:
+	2019-05-29  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac (noconfigdirs): Add libctf if the target does not use
+	the ELF file format.
+	* configure: Regenerate.
+
+2019-05-29  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (do_proto_toplev): Add libctf to list of
+	directories that can be disabled.
+
+2019-05-29  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac (noconfigdirs): Add libctf if the target does not use
+	the ELF file format.
+	* configure: Regenerate.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def (dependencies): configure-libctf depends on all-bfd
+	and all its deps.
+	* Makefile.in: Regenerated.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* MAINTAINERS: Add libctf.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def (host_modules): Add libctf.
+	* Makefile.def (dependencies): Likewise.
+	libctf depends on zlib, libiberty, and bfd.
+	* Makefile.in: Regenerated.
+	* configure.ac (host_libs): Add libctf.
+	* configure: Regenerated.
+
+2019-05-23  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* config.guess: Synchronize with config project master sources.
+	* config.sub: Likewise.
+	* readline/support/config.guess: Likewise.
+	* readline/support/config.sub: Likewise.
+
+2019-04-10  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2019-04-10  Nick Clifton  <nickc@redhat.com>
+
+	PR 89394
+	* cp-demangle.c (cplus_demangle_fill_name): Reject negative
+	lengths.
+	(d_count_templates_scopes): Replace num_templates and num_scopes
+	parameters with a struct d_print_info pointer parameter.  Adjust
+	body of the function accordingly.  Add recursion counter and check
+	that the recursion limit is not reached.
+	(d_print_init): Pass dpi parameter to d_count_templates_scopes.
+	Reset recursion counter afterwards, unless the recursion limit was
+	reached.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	2.32 branch created.
+
+2019-01-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Merge from GCC:
+	PR target/88535
+	* config.guess: Import upstream version 2019-01-03.
+	* config.sub: Import upstream version 2019-01-01.
+
+2019-01-10  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR other/16615
+
+	* cp-demangle.c: Mechanically replace "can not" with "cannot".
+	* floatformat.c: Likewise.
+	* strerror.c: Likewise.
+
+	2018-12-22  Jason Merrill  <jason@redhat.com>
+
+	Remove support for demangling GCC 2.x era mangling schemes.
+	* cplus-dem.c: Remove cplus_mangle_opname, cplus_demangle_opname,
+	internal_cplus_demangle, and all subroutines.
+	(libiberty_demanglers): Remove entries for ancient GNU (pre-3.0),
+	Lucid, ARM, HP, and EDG demangling styles.
+	(cplus_demangle): Remove 'work' variable.  Don't call
+	internal_cplus_demangle.
+
+2019-01-03  Дилян Палаузов  <dilyan.palauzov@aegee.org>
+
+	* configure.ac: Don't configure readline if --with-system-readline is
+	used.
+	* configure: Re-generate.
+
+2018-10-31  Joseph Myers  <joseph@codesourcery.com>
+
+	Merge from GCC:
+	PR bootstrap/82856
+	* multilib.am: New file.  From automake.
+
+2018-09-12  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add "contrib".
 
 2018-07-16  Nick Clifton  <nickc@redhat.com>
 
@@ -19,6 +337,18 @@
 
 	* config.guess: Sync with upstream version 2018-06-26.
 	* config.sub: Sync with upstream version 2018-07-02.
+
+2018-06-29  Alexandre Oliva <oliva@adacore.com>
+
+	* configure.ac: Introduce support for @unless/@endunless.
+	* Makefile.tpl (dep-kind): Rewrite with cond; return
+	postbootstrap in some cases.
+	(make-postboot-dep, postboot-targets): New.
+	(dependencies): Do not output postbootstrap dependencies at
+	first.  Output non-target ones changed for configure to depend
+	on stage_last @if gcc-bootstrap, and the original deps @unless
+	gcc-bootstrap.
+	* configure.in, Makefile.in: Rebuilt.
 
 2018-06-24  Nick Clifton  <nickc@redhat.com>
 

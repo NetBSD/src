@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -35,91 +35,54 @@
 /* Get fields macro define.  */
 #define MASK_OP(insn, mask)	((insn) & (0x3f << 25 | (mask)))
 
+/* For mapping symbol.  */
+enum map_type
+{
+  MAP_DATA0,
+  MAP_DATA1,
+  MAP_DATA2,
+  MAP_DATA3,
+  MAP_DATA4,
+  MAP_CODE,
+};
+
+struct nds32_private_data
+{
+  /* Whether any mapping symbols are present in the provided symbol
+     table.  -1 if we do not know yet, otherwise 0 or 1.  */
+  int has_mapping_symbols;
+
+  /* Track the last type (although this doesn't seem to be useful).  */
+  enum map_type last_mapping_type;
+
+  /* Tracking symbol table information.  */
+  int last_symbol_index;
+  bfd_vma last_addr;
+};
+
 /* Default text to print if an instruction isn't recognized.  */
 #define UNKNOWN_INSN_MSG _("*unknown*")
 #define NDS32_PARSE_INSN16      0x01
 #define NDS32_PARSE_INSN32      0x02
-#define NDS32_PARSE_EX9IT       0x04
-#define NDS32_PARSE_EX9TAB      0x08
 
+extern const field_t *nds32_field_table[NDS32_CORE_COUNT];
+extern opcode_t *nds32_opcode_table[NDS32_CORE_COUNT];
+extern keyword_t **nds32_keyword_table[NDS32_CORE_COUNT];
 extern struct nds32_opcode nds32_opcodes[];
 extern const field_t operand_fields[];
-extern const keyword_t *keywords[];
+extern keyword_t *keywords[];
 extern const keyword_t keyword_gpr[];
-static void print_insn16 (bfd_vma pc, disassemble_info *info,
-			  uint32_t insn, uint32_t parse_mode);
-static void print_insn32 (bfd_vma pc, disassemble_info *info, uint32_t insn,
-			  uint32_t parse_mode);
+
 static uint32_t nds32_mask_opcode (uint32_t);
 static void nds32_special_opcode (uint32_t, struct nds32_opcode **);
-
-/* define in objdump.c.  */
-struct objdump_disasm_info
-{
-  bfd *              abfd;
-  asection *         sec;
-  bfd_boolean        require_sec;
-  arelent **         dynrelbuf;
-  long               dynrelcount;
-  disassembler_ftype disassemble_fn;
-  arelent *          reloc;
-};
-
-/* file_ptr    ex9_filepos=NULL;.  */
-bfd_byte *ex9_data = NULL;
-int ex9_ready = 0, ex9_base_offset = 0;
+static int get_mapping_symbol_type (struct disassemble_info *, int,
+				    enum map_type *);
+static int is_mapping_symbol (struct disassemble_info *, int,
+			      enum map_type *);
 
 /* Hash function for disassemble.  */
 
 static htab_t opcode_htab;
-
-static void
-nds32_ex9_info (bfd_vma pc ATTRIBUTE_UNUSED,
-		disassemble_info *info, uint32_t ex9_index)
-{
-  uint32_t insn;
-  static asymbol *itb = NULL;
-  bfd_byte buffer[4];
-  long unsigned int isec_vma;
-
-  /* Lookup itb symbol.  */
-  if (!itb)
-    {
-      int i;
-
-      for (i = 0; i < info->symtab_size; i++)
-	if (bfd_asymbol_name (info->symtab[i])
-	    && (strcmp (bfd_asymbol_name (info->symtab[i]), "$_ITB_BASE_") == 0
-		|| strcmp (bfd_asymbol_name (info->symtab[i]),
-			   "_ITB_BASE_") == 0))
-	  {
-	    itb = info->symtab[i];
-	    break;
-	  }
-
-      /* Lookup it only once, in case _ITB_BASE_ doesn't exist at all.  */
-      if (itb == NULL)
-	itb = (void *) -1;
-    }
-
-  if (itb == (void *) -1)
-    return;
-
-  isec_vma = itb->section->vma;
-  isec_vma = itb->section->vma - bfd_asymbol_value (itb);
-  if (!itb->section || !itb->section->owner)
-    return;
-  bfd_get_section_contents (itb->section->owner, itb->section, buffer,
-			    ex9_index * 4 - isec_vma, 4);
-  insn = bfd_getb32 (buffer);
-  /* 16-bit instructions in ex9 table.  */
-  if (insn & 0x80000000)
-    print_insn16 (pc, info, (insn & 0x0000FFFF),
-		  NDS32_PARSE_INSN16 | NDS32_PARSE_EX9IT);
-  /* 32-bit instructions in ex9 table.  */
-  else
-    print_insn32 (pc, info, insn, NDS32_PARSE_INSN32 | NDS32_PARSE_EX9IT);
-}
 
 /* Find the value map register name.  */
 
@@ -150,8 +113,8 @@ nds32_parse_audio_ext (const field_t *pfd,
   if (pfd->hw_res == HW_INT || pfd->hw_res == HW_UINT)
     {
       if (pfd->hw_res == HW_INT)
-	int_value =
-	  N32_IMMS ((insn >> pfd->bitpos), pfd->bitsize) << pfd->shift;
+	int_value = (unsigned) N32_IMMS (insn >> pfd->bitpos,
+					 pfd->bitsize) << pfd->shift;
       else
 	int_value = __GF (insn, pfd->bitpos, pfd->bitsize) << pfd->shift;
 
@@ -221,6 +184,30 @@ nds32_parse_audio_ext (const field_t *pfd,
     func (stream, "$%s", psys_reg->name);
 }
 
+/* Match instruction opcode with keyword table.  */
+
+static field_t *
+match_field (char *name)
+{
+  field_t *pfd;
+  int k;
+
+  for (k = 0; k < NDS32_CORE_COUNT; k++)
+    {
+      pfd = (field_t *) nds32_field_table[k];
+      while (1)
+	{
+	  if (pfd->name == NULL)
+	    break;
+	  if (strcmp (name, pfd->name) == 0)
+	    return pfd;
+	  pfd++;
+	}
+    }
+
+  return NULL;
+}
+
 /* Dump instruction.  If the opcode is unknown, return FALSE.  */
 
 static void
@@ -244,9 +231,6 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
       func (stream, UNKNOWN_INSN_MSG);
       return;
     }
-
-  if (parse_mode & NDS32_PARSE_EX9IT)
-    func (stream, "		!");
 
   pstr_src = opc->instruction;
   if (*pstr_src == 0)
@@ -294,15 +278,8 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	    }
 	  *pstr_tmp = 0;
 
-	  pfd = (const field_t *) &operand_fields[0];
-	  while (1)
-	    {
-	      if (pfd->name == NULL)
-		return;
-	      else if (strcmp (&tmp_string[0], pfd->name) == 0)
-		break;
-	      pfd++;
-	    }
+	  if ((pfd = match_field (&tmp_string[0])) == NULL)
+	    return;
 
 	  /* For insn-16.  */
 	  if (parse_mode & NDS32_PARSE_INSN16)
@@ -329,9 +306,9 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	      else if ((pfd->hw_res == HW_INT) || (pfd->hw_res == HW_UINT))
 		{
 		  if (pfd->hw_res == HW_INT)
-		    int_value =
-		      N32_IMMS ((insn >> pfd->bitpos),
-			    pfd->bitsize) << pfd->shift;
+		    int_value
+		      = (unsigned) N32_IMMS (insn >> pfd->bitpos,
+					     pfd->bitsize) << pfd->shift;
 		  else
 		    int_value =
 		      __GF (insn, pfd->bitpos, pfd->bitsize) << pfd->shift;
@@ -348,12 +325,11 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 		      int_value = 0 - (128 - int_value);
 		      func (stream, "#%d", int_value);
 		    }
-		  /* beqz38/bnez38/beqs38/bnes38/j8/beqzs8/bnezs8/ifcall9.  */
+		  /* beqz38/bnez38/beqs38/bnes38/j8/beqzs8/bnezs8.  */
 		  else if ((opc->value == 0xc000) || (opc->value == 0xc800)
 			   || (opc->value == 0xd000) || (opc->value == 0xd800)
 			   || (opc->value == 0xd500) || (opc->value == 0xe800)
-			   || (opc->value == 0xe900)
-			   || (opc->value == 0xf800))
+			   || (opc->value == 0xe900))
 		    {
 		      info->print_address_func (int_value + pc, info);
 		    }
@@ -364,12 +340,6 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 		      if (push25gpr != 6)
 			func (stream, "~$%s", keyword_gpr[push25gpr].name);
 		      func (stream, ", $fp, $gp, $lp}");
-		    }
-		  /* ex9.it.  */
-		  else if ((opc->value == 0xdd40) || (opc->value == 0xea00))
-		    {
-		      func (stream, "#%d", int_value);
-		      nds32_ex9_info (pc, info, int_value);
 		    }
 		  else if (pfd->hw_res == HW_INT)
 		    {
@@ -394,12 +364,13 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	      nds32_parse_audio_ext (pfd, info, insn);
 	    }
 	  /* for insn-32.  */
-	  else if (pfd->hw_res < _HW_LAST)
+	  else if (pfd->hw_res < HW_INT)
 	    {
 	      int_value =
 		__GF (insn, pfd->bitpos, pfd->bitsize) << pfd->shift;
 
-	      psys_reg = (keyword_t*) keywords[pfd->hw_res];
+	      psys_reg = *(nds32_keyword_table[pfd->hw_res >> 8]
+			   + (pfd->hw_res & 0xff));
 
 	      psys_reg = nds32_find_reg_keyword (psys_reg, int_value);
 	      /* For HW_SR, dump the index when it can't
@@ -425,8 +396,8 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	  else if ((pfd->hw_res == HW_INT) || (pfd->hw_res == HW_UINT))
 	    {
 	      if (pfd->hw_res == HW_INT)
-		int_value =
-		  N32_IMMS ((insn >> pfd->bitpos), pfd->bitsize) << pfd->shift;
+		int_value = (unsigned) N32_IMMS (insn >> pfd->bitpos,
+						 pfd->bitsize) << pfd->shift;
 	      else
 		int_value =
 		  __GF (insn, pfd->bitpos, pfd->bitsize) << pfd->shift;
@@ -444,15 +415,7 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 		  /* FIXME: Handle relocation.  */
 		  if (info->flags & INSN_HAS_RELOC)
 		    pc = 0;
-		  /* Check if insn32 in ex9 table.  */
-		  if (parse_mode & NDS32_PARSE_EX9IT)
-		    info->print_address_func ((pc & 0xFE000000) | int_value,
-					      info);
-		  /* Check if decode ex9 table,  PC(31,25)|Inst(23,0)<<1.  */
-		  else if (parse_mode & NDS32_PARSE_EX9TAB)
-		    func (stream, "PC(31,25)|#0x%x", int_value);
-		  else
-		    info->print_address_func (int_value + pc, info);
+		  info->print_address_func (int_value + pc, info);
 		}
 	      else if (op == N32_OP6_LSMW)
 		{
@@ -571,7 +534,7 @@ nds32_filter_unknown_insn (uint32_t insn, struct nds32_opcode **opc)
       if (__GF (insn, 5, 5) != 0)
         *opc = NULL;
       break;
-    case BR2 (IFCALL):
+    case BR2 (SOP0):
       if (__GF (insn, 20, 5) != 0)
         *opc = NULL;
       break;
@@ -765,7 +728,14 @@ nds32_mask_opcode (uint32_t insn)
 	       || __GF (insn, 0, 7) == (N32_ALU2_MTUSR | N32_BIT (6)))
 	/* RDOV CLROV */
 	return MASK_OP (insn, 0xf81ff);
-      return MASK_OP (insn, 0x1ff);
+      else if (__GF (insn, 0, 10) == (N32_ALU2_ONEOP | N32_BIT (7)))
+	{
+	  /* INSB */
+	  if (__GF (insn, 12, 3) == 4)
+	    return MASK_OP (insn, 0x73ff);
+	  return MASK_OP (insn, 0x7fff);
+	}
+      return MASK_OP (insn, 0x3ff);
     case N32_OP6_ALU1:
     case N32_OP6_SIMD:
       return MASK_OP (insn, 0x1f);
@@ -794,7 +764,10 @@ nds32_mask_opcode (uint32_t insn)
     case N32_OP6_BR1:
       return MASK_OP (insn, 0x1 << 14);
     case N32_OP6_BR2:
-      return MASK_OP (insn, 0xf << 16);
+      if (__GF (insn, 16, 4) == 0)
+	return MASK_OP (insn, 0x1ff << 16);
+      else
+	return MASK_OP (insn, 0xf << 16);
     case N32_OP6_BR3:
       return MASK_OP (insn, 0x1 << 19);
     case N32_OP6_MISC:
@@ -887,7 +860,8 @@ nds32_mask_opcode (uint32_t insn)
 	    /* AMAWzSSA AMWzSSA */
 	    return MASK_OP (insn, (0x1f << 20) | (0x3 << 7));
 	  else
-	    /* AMAWzSL.L AMAWzSL2.S AMAWzSL2.L AMWzSL.L AMWzSL.L AMWzSL2.S */
+	    /* AMAWzSL.L AMAWzSL2.S AMAWzSL2.L
+	       AMWzSL.L AMWzSL.L AMWzSL2.S */
 	    return MASK_OP (insn, (0x1f << 20) | (0x7 << 6));
 	case 0x2:
 	  if (__GF (insn, 6, 3) == 2)
@@ -897,12 +871,13 @@ nds32_mask_opcode (uint32_t insn)
 	    /* AMAWyySSA AMWyySSA */
 	    return MASK_OP (insn, (0x1f << 20) | (0x3 << 7));
 	  else
-	    /* AMAWyySL.L AMAWyySL2.S AMAWyySL2.L AMWyySL.L AMWyySL.L AMWyySL2.S */
+	    /* AMAWyySL.L AMAWyySL2.S AMAWyySL2.L
+	       AMWyySL.L AMWyySL.L AMWyySL2.S */
 	    return MASK_OP (insn, (0x1f << 20) | (0x7 << 6));
 	}
       return MASK_OP (insn, 0x1f << 20);
     default:
-      return (1 << 31);
+      return 1u << 31;
     }
 }
 
@@ -968,13 +943,8 @@ nds32_special_opcode (uint32_t insn, struct nds32_opcode **opc)
     case JREG (JR) | JREG_RET:
       if (__GF (insn, 8, 2) != 0)
 	string = "tit";
-    break;
+      break;
     case N32_OP6_COP:
-    break;
-    case 0xea00:
-      /* break16 ex9 */
-      if (__GF (insn, 5, 4) != 0)
-	string = "ex9";
       break;
     case 0x9200:
       /* nop16 */
@@ -1005,46 +975,188 @@ print_insn_nds32 (bfd_vma pc, disassemble_info *info)
 {
   int status;
   bfd_byte buf[4];
+  bfd_byte buf_data[16];
+  uint64_t given;
+  uint64_t given1;
   uint32_t insn;
-  static int init = 1;
-  int i = 0;
-  struct nds32_opcode *opc;
-  struct nds32_opcode **slot;
+  int n;
+  int last_symbol_index = -1;
+  bfd_vma addr;
+  int is_data = FALSE;
+  bfd_boolean found = FALSE;
+  struct nds32_private_data *private_data;
+  unsigned int size = 16;
+  enum map_type mapping_type = MAP_CODE;
 
-  if (init)
+  if (info->private_data == NULL)
     {
-      /* Build opcode table.  */
-      opcode_htab = htab_create_alloc (1024, htab_hash_hash, htab_hash_eq,
-				       NULL, xcalloc, free);
+      /* Note: remain lifecycle throughout whole execution.  */
+      static struct nds32_private_data private;
+      private.has_mapping_symbols = -1;	/* unknown yet.  */
+      private.last_symbol_index = -1;
+      private.last_addr = 0;
+      info->private_data = &private;
+    }
+  private_data = info->private_data;
 
-      while (nds32_opcodes[i].opcode != NULL)
+  if (info->symtab_size != 0)
+    {
+      int start;
+      if (pc == 0)
+	start = 0;
+      else
 	{
-	  opc = &nds32_opcodes[i];
-	  slot =
-	    (struct nds32_opcode **) htab_find_slot (opcode_htab, &opc->value,
-						     INSERT);
-	  if (*slot == NULL)
-	    {
-	      /* This is the new one.  */
-	      *slot = opc;
-	    }
-	  else
-	    {
-	      /* Already exists.  Append to the list.  */
-	      opc = *slot;
-	      while (opc->next)
-		opc = opc->next;
-	      opc->next = &nds32_opcodes[i];
-	    }
-	  i++;
+	  start = info->symtab_pos;
+	  if (start < private_data->last_symbol_index)
+	    start = private_data->last_symbol_index;
 	}
-      init = 0;
+
+      if (0 > start)
+	start = 0;
+
+      if (private_data->has_mapping_symbols != 0
+	  && ((strncmp (".text", info->section->name, 5) == 0)))
+	{
+	  for (n = start; n < info->symtab_size; n++)
+	    {
+	      addr = bfd_asymbol_value (info->symtab[n]);
+	      if (addr > pc)
+		break;
+	      if (get_mapping_symbol_type (info, n, &mapping_type))
+		{
+		  last_symbol_index = n;
+		  found = TRUE;
+		}
+	    }
+
+	  if (found)
+	    private_data->has_mapping_symbols = 1;
+	  else if (!found && private_data->has_mapping_symbols == -1)
+	    {
+	      /* Make sure there are no any mapping symbol.  */
+	      for (n = 0; n < info->symtab_size; n++)
+		{
+		  if (is_mapping_symbol (info, n, &mapping_type))
+		    {
+		      private_data->has_mapping_symbols = -1;
+		      break;
+		    }
+		}
+	      if (private_data->has_mapping_symbols == -1)
+		private_data->has_mapping_symbols = 0;
+	    }
+
+	  private_data->last_symbol_index = last_symbol_index;
+	  private_data->last_mapping_type = mapping_type;
+	  is_data = (private_data->last_mapping_type == MAP_DATA0
+		     || private_data->last_mapping_type == MAP_DATA1
+		     || private_data->last_mapping_type == MAP_DATA2
+		     || private_data->last_mapping_type == MAP_DATA3
+		     || private_data->last_mapping_type == MAP_DATA4);
+	}
+    }
+
+  /* Wonder data or instruction.  */
+  if (is_data)
+    {
+      unsigned int i1;
+
+      /* Fix corner case: there is no next mapping symbol,
+	 let mapping type decides size */
+      if (last_symbol_index + 1 >= info->symtab_size)
+	{
+	  if (mapping_type == MAP_DATA0)
+	    size = 1;
+	  if (mapping_type == MAP_DATA1)
+	    size = 2;
+	  if (mapping_type == MAP_DATA2)
+	    size = 4;
+	  if (mapping_type == MAP_DATA3)
+	    size = 8;
+	  if (mapping_type == MAP_DATA4)
+	    size = 16;
+	}
+      for (n = last_symbol_index + 1; n < info->symtab_size; n++)
+	{
+	  addr = bfd_asymbol_value (info->symtab[n]);
+
+	  enum map_type fake_mapping_type;
+	  if (get_mapping_symbol_type (info, n, &fake_mapping_type)
+	      && (addr > pc
+		  && ((info->section == NULL)
+		      || (info->section == info->symtab[n]->section)))
+	      && (addr - pc < size))
+	    {
+	      size = addr - pc;
+	      break;
+	    }
+	}
+
+      if (size == 3)
+	size = (pc & 1) ? 1 : 2;
+
+      /* Read bytes from BFD.  */
+      info->read_memory_func (pc, (bfd_byte *) buf_data, size, info);
+      given = 0;
+      given1 = 0;
+      /* Start assembling data.  */
+      /* Little endian of data.  */
+      if (info->endian == BFD_ENDIAN_LITTLE)
+	{
+	  for (i1 = size - 1;; i1--)
+	    {
+	      if (i1 >= 8)
+		given1 = buf_data[i1] | (given1 << 8);
+	      else
+		given = buf_data[i1] | (given << 8);
+
+	      if (i1 == 0)
+		break;
+	    }
+	}
+      else
+	{
+	  /* Big endian of data.  */
+	  for (i1 = 0; i1 < size; i1++)
+	    {
+	      if (i1 <= 7)
+		given = buf_data[i1] | (given << 8);
+	      else
+		given1 = buf_data[i1] | (given1 << 8);
+	    }
+	}
+
+      info->bytes_per_line = 4;
+
+      if (size == 16)
+	info->fprintf_func (info->stream, ".qword\t0x%016" PRIx64 "%016" PRIx64,
+			    given, given1);
+      else if (size == 8)
+	info->fprintf_func (info->stream, ".dword\t0x%016" PRIx64, given);
+      else if (size == 4)
+	info->fprintf_func (info->stream, ".word\t0x%08" PRIx64, given);
+      else if (size == 2)
+	{
+	  /* short */
+	  if (mapping_type == MAP_DATA0)
+	    info->fprintf_func (info->stream, ".byte\t0x%02" PRIx64,
+				given & 0xFF);
+	  else
+	    info->fprintf_func (info->stream, ".short\t0x%04" PRIx64, given);
+	}
+      else
+	{
+	  /* byte */
+	  info->fprintf_func (info->stream, ".byte\t0x%02" PRIx64, given);
+	}
+
+      return size;
     }
 
   status = info->read_memory_func (pc, (bfd_byte *) buf, 4, info);
   if (status)
     {
-      /* for the last 16-bit instruction.  */
+      /* For the last 16-bit instruction.  */
       status = info->read_memory_func (pc, (bfd_byte *) buf, 2, info);
       if (status)
 	{
@@ -1057,12 +1169,6 @@ print_insn_nds32 (bfd_vma pc, disassemble_info *info)
   /* 16-bit instruction.  */
   if (insn & 0x80000000)
     {
-      if (info->section && strstr (info->section->name, ".ex9.itable") != NULL)
-	{
-	  print_insn16 (pc, info, (insn & 0x0000FFFF),
-			NDS32_PARSE_INSN16 | NDS32_PARSE_EX9TAB);
-	  return 4;
-	}
       print_insn16 (pc, info, (insn >> 16), NDS32_PARSE_INSN16);
       return 2;
     }
@@ -1070,11 +1176,149 @@ print_insn_nds32 (bfd_vma pc, disassemble_info *info)
   /* 32-bit instructions.  */
   else
     {
-      if (info->section
-	  && strstr (info->section->name, ".ex9.itable") != NULL)
-	print_insn32 (pc, info, insn, NDS32_PARSE_INSN32 | NDS32_PARSE_EX9TAB);
-      else
-	print_insn32 (pc, info, insn, NDS32_PARSE_INSN32);
+      print_insn32 (pc, info, insn, NDS32_PARSE_INSN32);
       return 4;
     }
+}
+
+/* Ignore disassembling unnecessary name.  */
+
+static bfd_boolean
+nds32_symbol_is_valid (asymbol *sym,
+		       struct disassemble_info *info ATTRIBUTE_UNUSED)
+{
+  const char *name;
+
+  if (sym == NULL)
+    return FALSE;
+
+  name = bfd_asymbol_name (sym);
+
+  /* Mapping symbol is invalid.  */
+  if (name[0] == '$')
+    return FALSE;
+  return TRUE;
+}
+
+static void
+nds32_add_opcode_hash_table (unsigned indx)
+{
+  opcode_t *opc;
+
+  opc = nds32_opcode_table[indx];
+  if (opc == NULL)
+    return;
+
+  while (opc->opcode != NULL)
+    {
+      opcode_t **slot;
+
+      slot = (opcode_t **) htab_find_slot
+	(opcode_htab, &opc->value, INSERT);
+      if (*slot == NULL)
+	{
+	  /* This is the new one.  */
+	  *slot = opc;
+	}
+      else
+	{
+	  opcode_t *tmp;
+
+	  /* Already exists.  Append to the list.  */
+	  tmp = *slot;
+	  while (tmp->next)
+	    tmp = tmp->next;
+	  tmp->next = opc;
+	  opc->next = NULL;
+	}
+      opc++;
+    }
+}
+
+void
+disassemble_init_nds32 (struct disassemble_info *info)
+{
+  static unsigned init_done = 0;
+  unsigned k;
+
+  /* Set up symbol checking function.  */
+  info->symbol_is_valid = nds32_symbol_is_valid;
+
+  /* Only need to initialize once:
+     High level will call this function for every object file.
+     For example, when disassemble all members of a library.  */
+  if (init_done)
+    return;
+
+  /* Setup main core.  */
+  nds32_keyword_table[NDS32_MAIN_CORE] = &keywords[0];
+  nds32_opcode_table[NDS32_MAIN_CORE] = &nds32_opcodes[0];
+  nds32_field_table[NDS32_MAIN_CORE] = &operand_fields[0];
+
+  /* Build opcode table.  */
+  opcode_htab = htab_create_alloc (1024, htab_hash_hash, htab_hash_eq,
+				   NULL, xcalloc, free);
+
+  for (k = 0; k < NDS32_CORE_COUNT; k++)
+    {
+      /* Add op-codes.  */
+      nds32_add_opcode_hash_table (k);
+    }
+
+  init_done = 1;
+}
+
+static int
+is_mapping_symbol (struct disassemble_info *info, int n,
+		   enum map_type *map_type)
+{
+  const char *name = NULL;
+
+  /* Get symbol name.  */
+  name = bfd_asymbol_name (info->symtab[n]);
+
+  if (name[1] == 'c')
+    {
+      *map_type = MAP_CODE;
+      return TRUE;
+    }
+  else if (name[1] == 'd' && name[2] == '0')
+    {
+      *map_type = MAP_DATA0;
+      return TRUE;
+    }
+  else if (name[1] == 'd' && name[2] == '1')
+    {
+      *map_type = MAP_DATA1;
+      return TRUE;
+    }
+  else if (name[1] == 'd' && name[2] == '2')
+    {
+      *map_type = MAP_DATA2;
+      return TRUE;
+    }
+  else if (name[1] == 'd' && name[2] == '3')
+    {
+      *map_type = MAP_DATA3;
+      return TRUE;
+    }
+  else if (name[1] == 'd' && name[2] == '4')
+    {
+      *map_type = MAP_DATA4;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+static int
+get_mapping_symbol_type (struct disassemble_info *info, int n,
+			 enum map_type *map_type)
+{
+  /* If the symbol is in a different section, ignore it.  */
+  if (info->section != NULL
+      && info->section != info->symtab[n]->section)
+    return FALSE;
+
+  return is_mapping_symbol (info, n, map_type);
 }

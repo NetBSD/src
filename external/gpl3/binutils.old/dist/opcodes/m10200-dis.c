@@ -1,5 +1,5 @@
 /* Disassemble MN10200 instructions.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -83,16 +83,18 @@ disassemble (bfd_vma memaddr,
 
 	      operand = &mn10200_operands[*opindex_ptr];
 
-	      if ((operand->flags & MN10200_OPERAND_EXTENDED) != 0)
+	      if ((operand->flags & MN10200_OPERAND_DREG) != 0
+		  || (operand->flags & MN10200_OPERAND_AREG) != 0)
+		value = ((insn >> (operand->shift + extra_shift))
+			 & ((1 << operand->bits) - 1));
+	      else if ((operand->flags & MN10200_OPERAND_EXTENDED) != 0)
 		{
 		  value = (insn & 0xffff) << 8;
 		  value |= extension;
 		}
 	      else
-		{
-		  value = ((insn >> (operand->shift))
-			   & ((1L << operand->bits) - 1L));
-		}
+		value = ((insn >> (operand->shift))
+			 & ((1L << operand->bits) - 1L));
 
 	      if ((operand->flags & MN10200_OPERAND_SIGNED) != 0)
 		value = ((long)(value << (32 - operand->bits))
@@ -106,18 +108,10 @@ disassemble (bfd_vma memaddr,
 	      nocomma = 0;
 
 	      if ((operand->flags & MN10200_OPERAND_DREG) != 0)
-		{
-		  value = ((insn >> (operand->shift + extra_shift))
-			   & ((1 << operand->bits) - 1));
-		  (*info->fprintf_func) (info->stream, "d%ld", value);
-		}
+		(*info->fprintf_func) (info->stream, "d%ld", value);
 
 	      else if ((operand->flags & MN10200_OPERAND_AREG) != 0)
-		{
-		  value = ((insn >> (operand->shift + extra_shift))
-			   & ((1 << operand->bits) - 1));
-		  (*info->fprintf_func) (info->stream, "a%ld", value);
-		}
+		(*info->fprintf_func) (info->stream, "a%ld", value);
 
 	      else if ((operand->flags & MN10200_OPERAND_PSW) != 0)
 		(*info->fprintf_func) (info->stream, "psw");

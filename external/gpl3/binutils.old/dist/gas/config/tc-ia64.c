@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -1152,14 +1152,14 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
 
   record_alignment (now_seg, log_align);
 
-  cur_size = bfd_section_size (stdoutput, now_seg);
+  cur_size = bfd_section_size (now_seg);
   if ((int) size > cur_size)
     {
       char *pfrag
         = frag_var (rs_fill, 1, 1, (relax_substateT)0, NULL,
                     (valueT)size - (valueT)cur_size, NULL);
       *pfrag = 0;
-      bfd_section_size (stdoutput, now_seg) = size;
+      bfd_set_section_size (now_seg, size);
     }
 
   /* Switch back to current segment.  */
@@ -3606,8 +3606,7 @@ start_unwind_section (const segT text_seg, int sec_index)
   else
     {
       set_section (sec_name);
-      bfd_set_section_flags (stdoutput, now_seg,
-			     SEC_LOAD | SEC_ALLOC | SEC_READONLY);
+      bfd_set_section_flags (now_seg, SEC_LOAD | SEC_ALLOC | SEC_READONLY);
     }
 
   elf_linked_to_section (now_seg) = text_seg;
@@ -5840,9 +5839,8 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
 	  /* Sign-extend 32-bit unsigned numbers, so that the following range
 	     checks will work.  */
 	  val = e->X_add_number;
-	  if (((val & (~(bfd_vma) 0 << 32)) == 0)
-	      && ((val & ((bfd_vma) 1 << 31)) != 0))
-	    val = ((val << 32) >> 32);
+	  if ((val & (~(bfd_vma) 0 << 32)) == 0)
+	    val = (val ^ ((bfd_vma) 1 << 31)) - ((bfd_vma) 1 << 31);
 
 	  /* Check for 0x100000000.  This is valid because
 	     0x100000000-1 is the same as ((uint32_t) -1).  */
@@ -5880,9 +5878,8 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
 	  /* Sign-extend 32-bit unsigned numbers, so that the following range
 	     checks will work.  */
 	  val = e->X_add_number;
-	  if (((val & (~(bfd_vma) 0 << 32)) == 0)
-	      && ((val & ((bfd_vma) 1 << 31)) != 0))
-	    val = ((val << 32) >> 32);
+	  if ((val & (~(bfd_vma) 0 << 32)) == 0)
+	    val = (val ^ ((bfd_vma) 1 << 31)) - ((bfd_vma) 1 << 31);
 	}
       else
 	val = e->X_add_number;
@@ -7250,7 +7247,7 @@ md_begin (void)
   md.auto_align = 1;
   md.explicit_mode = md.default_explicit_mode;
 
-  bfd_set_section_alignment (stdoutput, text_section, 4);
+  bfd_set_section_alignment (text_section, 4);
 
   /* Make sure function pointers get initialized.  */
   target_big_endian = -1;
@@ -7778,7 +7775,7 @@ ia64_frob_label (struct symbol *sym)
       return;
     }
 
-  if (bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE)
+  if (bfd_section_flags (now_seg) & SEC_CODE)
     {
       md.last_text_seg = now_seg;
       fix = XOBNEW (&notes, struct label_fix);
@@ -7818,7 +7815,7 @@ void
 ia64_flush_pending_output (void)
 {
   if (!md.keep_pending_output
-      && bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE)
+      && bfd_section_flags (now_seg) & SEC_CODE)
     {
       /* ??? This causes many unnecessary stop bits to be emitted.
 	 Unfortunately, it isn't clear if it is safe to remove this.  */
@@ -10989,7 +10986,7 @@ ia64_pcrel_from_section (fixS *fix, segT sec)
 {
   unsigned long off = fix->fx_frag->fr_address + fix->fx_where;
 
-  if (bfd_get_section_flags (stdoutput, sec) & SEC_CODE)
+  if (bfd_section_flags (sec) & SEC_CODE)
     off &= ~0xfUL;
 
   return off;
@@ -11570,8 +11567,6 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixp)
    of LITTLENUMS emitted is stored in *SIZE.  An error message is
    returned, or NULL on OK.  */
 
-#define MAX_LITTLENUMS 5
-
 const char *
 md_atof (int type, char *lit, int *size)
 {
@@ -11948,9 +11943,7 @@ ia64_vms_note (void)
   /* Create the .note section.  */
 
   secp = subseg_new (".note", 0);
-  bfd_set_section_flags (stdoutput,
-			 secp,
-			 SEC_HAS_CONTENTS | SEC_READONLY);
+  bfd_set_section_flags (secp, SEC_HAS_CONTENTS | SEC_READONLY);
 
   /* Module header note (MHD).  */
   bname = xstrdup (lbasename (out_file_name));
@@ -11995,9 +11988,7 @@ ia64_vms_note (void)
   frag_align (3, 0, 0);
 
   secp = subseg_new (".vms_display_name_info", 0);
-  bfd_set_section_flags (stdoutput,
-			 secp,
-			 SEC_HAS_CONTENTS | SEC_READONLY);
+  bfd_set_section_flags (secp, SEC_HAS_CONTENTS | SEC_READONLY);
 
   /* This symbol should be passed on the command line and be variable
      according to language.  */

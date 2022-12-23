@@ -2,7 +2,7 @@
 # elf32l4300.sh
 
 EMBEDDED=yes
-. ${srcdir}/emulparams/elf32bmip.sh
+source_sh ${srcdir}/emulparams/elf32bmip.sh
 TEXT_START_ADDR=0xa0020000
 unset SHLIB_TEXT_START_ADDR
 EXECUTABLE_SYMBOLS='_DYNAMIC_LINK = 0;'

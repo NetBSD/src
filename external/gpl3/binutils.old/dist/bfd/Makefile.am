@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ bfdlibdir = @bfdlibdir@
 bfdincludedir = @bfdincludedir@
 bfdlib_LTLIBRARIES = libbfd.la
 bfdinclude_HEADERS = $(BFD_H) $(INCDIR)/ansidecl.h $(INCDIR)/symcat.h \
-		     $(INCDIR)/bfdlink.h $(INCDIR)/diagnostics.h
+		     bfd_stdint.h $(INCDIR)/diagnostics.h $(INCDIR)/bfdlink.h
 else !INSTALL_LIBBFD
 # Empty these so that the respective installation directories will not be created.
 bfdlibdir =
@@ -53,7 +53,7 @@ ZLIBINC = @zlibinc@
 WARN_CFLAGS = @WARN_CFLAGS@
 NO_WERROR = @NO_WERROR@
 AM_CFLAGS = $(WARN_CFLAGS) $(ZLIBINC)
-AM_CPPFLAGS = -DBINDIR='"$(bindir)"'
+AM_CPPFLAGS = -DBINDIR='"$(bindir)"' -DLIBDIR='"$(libdir)"'
 if PLUGINS
 bfdinclude_HEADERS += $(INCDIR)/plugin-api.h
 LIBDL = @lt_cv_dlopen_libs@
@@ -70,17 +70,17 @@ BFD_H = bfd.h
 # need two copies of the executable, one to download and one for the
 # debugger).
 BFD32_LIBS = \
-	archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo \
-	cache.lo coff-bfd.lo compress.lo corefile.lo format.lo hash.lo \
-	init.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo \
+	archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo cache.lo \
+	coff-bfd.lo compress.lo corefile.lo elf-properties.lo format.lo \
+	hash.lo init.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo \
 	section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo \
 	binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
 
 BFD64_LIBS = archive64.lo
 
 BFD32_LIBS_CFILES = \
-	archive.c archures.c bfd.c bfdio.c bfdwin.c \
-	cache.c coff-bfd.c compress.c corefile.c format.c hash.c \
+	archive.c archures.c bfd.c bfdio.c bfdwin.c cache.c coff-bfd.c \
+	compress.c corefile.c elf-properties.c format.c hash.c \
 	init.c libbfd.c linker.c merge.c opncls.c reloc.c \
 	section.c simple.c stab-syms.c stabs.c syms.c targets.c \
 	binary.c ihex.c srec.c tekhex.c verilog.c
@@ -96,10 +96,11 @@ ALL_MACHINES = \
 	cpu-arm.lo \
 	cpu-avr.lo \
 	cpu-bfin.lo \
+	cpu-bpf.lo \
 	cpu-cr16.lo \
-	cpu-cr16c.lo \
 	cpu-cris.lo \
 	cpu-crx.lo \
+	cpu-csky.lo \
 	cpu-d10v.lo \
 	cpu-d30v.lo \
 	cpu-dlx.lo \
@@ -159,7 +160,6 @@ ALL_MACHINES = \
 	cpu-tic4x.lo \
 	cpu-tic54x.lo \
 	cpu-tic6x.lo \
-	cpu-tic80.lo \
 	cpu-tilegx.lo \
 	cpu-tilepro.lo \
 	cpu-v850.lo \
@@ -181,10 +181,11 @@ ALL_MACHINES_CFILES = \
 	cpu-arm.c \
 	cpu-avr.c \
 	cpu-bfin.c \
+	cpu-bpf.c \
 	cpu-cr16.c \
-	cpu-cr16c.c \
 	cpu-cris.c \
 	cpu-crx.c \
+	cpu-csky.c \
 	cpu-d10v.c \
 	cpu-d30v.c \
 	cpu-dlx.c \
@@ -244,7 +245,6 @@ ALL_MACHINES_CFILES = \
 	cpu-tic4x.c \
 	cpu-tic54x.c \
 	cpu-tic6x.c \
-	cpu-tic80.c \
 	cpu-tilegx.c \
 	cpu-tilepro.c \
 	cpu-v850.c \
@@ -276,7 +276,6 @@ BFD32_BACKENDS = \
 	coff-tic30.lo \
 	coff-tic4x.lo \
 	coff-tic54x.lo \
-	coff-tic80.lo \
 	coff-z80.lo \
 	coff-z8k.lo \
 	coffgen.lo \
@@ -291,7 +290,6 @@ BFD32_BACKENDS = \
 	elf-m10200.lo \
 	elf-m10300.lo \
 	elf-nacl.lo \
-	elf-properties.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
 	elf.lo \
@@ -301,9 +299,9 @@ BFD32_BACKENDS = \
 	elf32-avr.lo \
 	elf32-bfin.lo \
 	elf32-cr16.lo \
-	elf32-cr16c.lo \
 	elf32-cris.lo \
 	elf32-crx.lo \
+	elf32-csky.lo \
 	elf32-d10v.lo \
 	elf32-d30v.lo \
 	elf32-dlx.lo \
@@ -356,6 +354,7 @@ BFD32_BACKENDS = \
 	elf32-xgate.lo \
 	elf32-xstormy16.lo \
 	elf32-xtensa.lo \
+	elf32-z80.lo \
 	elf32.lo \
 	elflink.lo \
 	elfxx-sparc.lo \
@@ -364,6 +363,7 @@ BFD32_BACKENDS = \
 	i386bsd.lo \
 	i386lynx.lo \
 	i386msdos.lo \
+	i386netbsd.lo \
 	mach-o.lo \
 	mach-o-i386.lo \
 	mach-o-arm.lo \
@@ -413,7 +413,6 @@ BFD32_BACKENDS_CFILES = \
 	coff-tic30.c \
 	coff-tic4x.c \
 	coff-tic54x.c \
-	coff-tic80.c \
 	coff-z80.c \
 	coff-z8k.c \
 	coffgen.c \
@@ -428,7 +427,6 @@ BFD32_BACKENDS_CFILES = \
 	elf-m10200.c \
 	elf-m10300.c \
 	elf-nacl.c \
-	elf-properties.c \
 	elf-strtab.c \
 	elf-vxworks.c \
 	elf.c \
@@ -438,9 +436,9 @@ BFD32_BACKENDS_CFILES = \
 	elf32-avr.c \
 	elf32-bfin.c \
 	elf32-cr16.c \
-	elf32-cr16c.c \
 	elf32-cris.c \
 	elf32-crx.c \
+	elf32-csky.c \
 	elf32-d10v.c \
 	elf32-d30v.c \
 	elf32-dlx.c \
@@ -493,6 +491,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-xgate.c \
 	elf32-xstormy16.c \
 	elf32-xtensa.c \
+	elf32-z80.c \
 	elf32.c \
 	elflink.c \
 	elfxx-sparc.c \
@@ -501,6 +500,7 @@ BFD32_BACKENDS_CFILES = \
 	i386bsd.c \
 	i386lynx.c \
 	i386msdos.c \
+	i386netbsd.c \
 	mach-o.c \
 	mach-o-i386.c \
 	mach-o-arm.c \
@@ -572,6 +572,7 @@ BFD64_BACKENDS = \
 	elf64-tilegx.lo \
 	elf64-x86-64.lo \
 	elfxx-x86.lo \
+	elf64-bpf.lo \
 	elf64.lo \
 	mach-o-aarch64.lo \
 	mach-o-x86-64.lo \
@@ -605,6 +606,7 @@ BFD64_BACKENDS_CFILES = \
 	elf64-tilegx.c \
 	elf64-x86-64.c \
 	elfxx-x86.c \
+	elf64-bpf.c \
 	elf64.c \
 	elfn32-mips.c \
 	elfxx-aarch64.c \
@@ -678,19 +680,35 @@ BUILD_CFILES = \
 
 CFILES = $(SOURCE_CFILES) $(BUILD_CFILES)
 
-## This is a list of all .h files which are in the source tree.
+## This is a list of all .h files in the source tree minus those that
+## are processed to produce other .h files
 SOURCE_HFILES = \
-	aout-target.h aoutx.h coffcode.h coffswap.h ecoffswap.h \
-	elf-bfd.h elf-hppa.h elf-linux-core.h elf32-hppa.h \
-	elf64-hppa.h elfcode.h elfcore.h \
+	aout-target.h aoutx.h arc-got.h arc-plt.h \
+	coff-arm.h coff-bfd.h coffcode.h coffswap.h \
+	cpu-aarch64.h cpu-arm.h cpu-h8300.h cpu-m68k.h \
+	ecoff-bfd.h ecoffswap.h \
+	elf32-arm.h elf32-avr.h elf32-bfin.h elf32-cr16.h elf32-csky.h \
+	elf32-dlx.h elf32-hppa.h elf32-m68hc1x.h elf32-m68k.h \
+	elf32-metag.h elf32-nds32.h elf32-nios2.h elf32-ppc.h \
+	elf32-rx.h elf32-score.h elf32-sh-relocs.h elf32-spu.h \
+	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
+	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
+	elf-bfd.h elfcode.h elfcore.h elf-hppa.h elf-linker-x86.h \
+	elf-linux-core.h elf-nacl.h elf-s390.h elf-vxworks.h \
+	elfxx-aarch64.h elfxx-ia64.h elfxx-mips.h elfxx-riscv.h \
+	elfxx-sparc.h elfxx-tilegx.h elfxx-x86.h \
 	genlink.h go32stub.h \
 	libaout.h libbfd.h libcoff.h libecoff.h libhppa.h \
-	libpei.h libxcoff.h mach-o.h \
+	libpei.h libxcoff.h \
+	mach-o.h \
 	netbsd.h ns32k.h \
-	pef.h pef-traceback.h peicode.h som.h version.h \
-	vms.h xsym.h
+	pef.h pef-traceback.h peicode.h plugin.h \
+	som.h sysdep.h \
+	version.h vms.h \
+	wasm-module.h \
+	xcofflink.h xsym.h
 
-## ... and all .h files which are in the build tree.
+## ... and .h files which are in the build tree, minus config.h and bfd.h
 BUILD_HFILES = \
 	bfdver.h elf32-target.h elf64-target.h targmatch.h bfd_stdint.h
 
@@ -871,8 +889,8 @@ pex64igen.c: peXXigen.c
 	$(SED) -e s/XX/pex64/g < $(srcdir)/peXXigen.c > pex64igen.new
 	mv -f pex64igen.new pex64igen.c
 
-BFD_H_DEPS= $(INCDIR)/ansidecl.h $(INCDIR)/symcat.h
-LOCAL_H_DEPS= libbfd.h sysdep.h config.h
+BFD_H_DEPS= $(INCDIR)/ansidecl.h $(INCDIR)/symcat.h $(INCDIR)/diagnostics.h
+LOCAL_H_DEPS= libbfd.h sysdep.h config.h bfd_stdint.h
 $(BFD32_LIBS) \
  $(BFD64_LIBS) \
  $(ALL_MACHINES) \

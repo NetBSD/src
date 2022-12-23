@@ -1,5 +1,5 @@
 /* This file is tc-avr.h
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -243,5 +243,5 @@ struct avr_frag_data
   unsigned int prev_opcode;
 };
 #define TC_FRAG_TYPE			struct avr_frag_data
-#define TC_FRAG_INIT(frag)		avr_frag_init (frag)
+#define TC_FRAG_INIT(frag, max_bytes)	avr_frag_init (frag)
 extern void avr_frag_init (fragS *);

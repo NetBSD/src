@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -27,20 +27,21 @@ static const bfd_arch_info_type *
 arc_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b);
 
 #define ARC(mach, print_name, default_p, next) \
-{					\
-    32,	/* 32 bits in a word  */	\
-    32,	/* 32 bits in an address  */	\
-    8,	/* 8 bits in a byte  */		\
+  {					       \
+    32,	/* Bits in a word.  */		\
+    32,	/* Bits in an address.  */	\
+    8,	/* Bits in a byte.  */		\
     bfd_arch_arc,			\
     mach,				\
     "arc",				\
     print_name,				\
-    4, /* section alignment power  */	\
+    4, /* Section alignment power.  */	\
     default_p,				\
     arc_compatible,			\
     bfd_default_scan,			\
     bfd_arch_default_fill,		\
     next,				\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
 
 static const bfd_arch_info_type arch_info_struct[] =

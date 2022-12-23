@@ -1,5 +1,5 @@
 /* Disassembler for the PA-RISC. Somewhat derived from sparc-pinsn.c.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -289,7 +289,7 @@ extract_14 (unsigned word)
 static int
 extract_16 (unsigned word)
 {
-  int m15, m0, m1;
+  unsigned m15, m0, m1;
 
   m0 = GET_BIT (word, 16);
   m1 = GET_BIT (word, 17);
@@ -304,7 +304,7 @@ extract_16 (unsigned word)
 static int
 extract_21 (unsigned word)
 {
-  int val;
+  unsigned val;
 
   word &= MASK_21;
   word <<= 11;
@@ -1098,9 +1098,9 @@ print_insn_hppa (bfd_vma memaddr, disassemble_info *info)
 
 		case '#':
 		  {
-		    int sign = GET_FIELD (insn, 31, 31);
-		    int imm10 = GET_FIELD (insn, 18, 27);
-		    int disp;
+		    unsigned sign = GET_FIELD (insn, 31, 31);
+		    unsigned imm10 = GET_FIELD (insn, 18, 27);
+		    unsigned disp;
 
 		    if (sign)
 		      disp = (-1U << 10) | imm10;
@@ -1114,9 +1114,9 @@ print_insn_hppa (bfd_vma memaddr, disassemble_info *info)
 		case 'K':
 		case 'd':
 		  {
-		    int sign = GET_FIELD (insn, 31, 31);
-		    int imm11 = GET_FIELD (insn, 18, 28);
-		    int disp;
+		    unsigned sign = GET_FIELD (insn, 31, 31);
+		    unsigned imm11 = GET_FIELD (insn, 18, 28);
+		    unsigned disp;
 
 		    if (sign)
 		      disp = (-1U << 11) | imm11;

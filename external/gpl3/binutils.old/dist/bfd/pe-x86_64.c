@@ -1,5 +1,5 @@
 /* BFD back-end for Intel/AMD x86_64 PECOFF files.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -101,19 +101,19 @@ x86_64_pe_be_vec =
     _bfd_dummy_target,
     amd64coff_object_p,
     bfd_generic_archive_p,
-    amd64coff_object_p 
+    amd64coff_object_p
   },
   {				/* bfd_set_format.  */
     _bfd_bool_bfd_false_error,
     coff_mkobject,
     _bfd_generic_mkarchive,
-    _bfd_bool_bfd_false_error 
+    _bfd_bool_bfd_false_error
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     coff_write_object_contents,
     _bfd_write_archive_contents,
-    _bfd_bool_bfd_false_error 
+    _bfd_bool_bfd_false_error
   },
 
   BFD_JUMP_TABLE_GENERIC (coff),

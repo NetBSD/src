@@ -1,5 +1,5 @@
 /* Demangler for GNU C++ - main program
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
    Written by James Clark (jjc@jclark.uucp)
    Rewritten by Fred Fish (fnf@cygnus.com) for ARM and Lucid demangling
    Modified by Satish Pai (pai@apollo.hp.com) for HP demangling
@@ -42,6 +42,10 @@ static const struct option long_options[] =
   {"no-verbose", no_argument, NULL, 'i'},
   {"types", no_argument, NULL, 't'},
   {"version", no_argument, NULL, 'v'},
+  {"recurse-limit", no_argument, NULL, 'R'},
+  {"recursion-limit", no_argument, NULL, 'R'},
+  {"no-recurse-limit", no_argument, NULL, 'r'},
+  {"no-recursion-limit", no_argument, NULL, 'r'},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -102,6 +106,8 @@ Options are:\n\
   fprintf (stream, "\
   [-p|--no-params]            Do not display function arguments\n\
   [-i|--no-verbose]           Do not show implementation details (if any)\n\
+  [-R|--recurse-limit]        Enable a limit on recursion whilst demangling.  [Default]\n\
+  ]-r|--no-recurse-limit]     Disable a limit on recursion whilst demangling\n\
   [-t|--types]                Also attempt to demangle type encodings\n\
   [-s|--format ");
   print_demangler_list (stream);
@@ -129,42 +135,6 @@ standard_symbol_characters (void)
   return "_$.";
 }
 
-/* Return the string of non-alnum characters that may occur
-   as a valid symbol name component in an HP object file.
-
-   Note that, since HP's compiler generates object code straight from
-   C++ source, without going through an assembler, its mangled
-   identifiers can use all sorts of characters that no assembler would
-   tolerate, so the alphabet this function creates is a little odd.
-   Here are some sample mangled identifiers offered by HP:
-
-	typeid*__XT24AddressIndExpClassMember_
-	[Vftptr]key:__dt__32OrdinaryCompareIndExpClassMemberFv
-	__ct__Q2_9Elf64_Dyn18{unnamed.union.#1}Fv
-
-   This still seems really weird to me, since nowhere else in this
-   file is there anything to recognize curly brackets, parens, etc.
-   I've talked with Srikanth <srikanth@cup.hp.com>, and he assures me
-   this is right, but I still strongly suspect that there's a
-   misunderstanding here.
-
-   If we decide it's better for c++filt to use HP's assembler syntax
-   to scrape identifiers out of its input, here's the definition of
-   the symbol name syntax from the HP assembler manual:
-
-       Symbols are composed of uppercase and lowercase letters, decimal
-       digits, dollar symbol, period (.), ampersand (&), pound sign(#) and
-       underscore (_). A symbol can begin with a letter, digit underscore or
-       dollar sign. If a symbol begins with a digit, it must contain a
-       non-digit character.
-
-   So have fun.  */
-static const char *
-hp_symbol_characters (void)
-{
-  return "_$.<>#,*&[]:(){}";
-}
-
 extern int main (int, char **);
 
 int
@@ -180,7 +150,7 @@ main (int argc, char **argv)
 
   expandargv (&argc, &argv);
 
-  while ((c = getopt_long (argc, argv, "_hinps:tv", long_options, (int *) 0)) != EOF)
+  while ((c = getopt_long (argc, argv, "_hinprRs:tv", long_options, (int *) 0)) != EOF)
     {
       switch (c)
 	{
@@ -194,6 +164,12 @@ main (int argc, char **argv)
 	  break;
 	case 'p':
 	  flags &= ~ DMGL_PARAMS;
+	  break;
+	case 'r':
+	  flags |= DMGL_NO_RECURSE_LIMIT;
+	  break;
+	case 'R':
+	  flags &= ~ DMGL_NO_RECURSE_LIMIT;
 	  break;
 	case 't':
 	  flags |= DMGL_TYPES;
@@ -233,20 +209,13 @@ main (int argc, char **argv)
 
   switch (current_demangling_style)
     {
-    case gnu_demangling:
-    case lucid_demangling:
-    case arm_demangling:
-    case java_demangling:
-    case edg_demangling:
-    case gnat_demangling:
+    case auto_demangling:
     case gnu_v3_demangling:
+    case java_demangling:
+    case gnat_demangling:
     case dlang_demangling:
     case rust_demangling:
-    case auto_demangling:
-      valid_symbols = standard_symbol_characters ();
-      break;
-    case hp_demangling:
-      valid_symbols = hp_symbol_characters ();
+       valid_symbols = standard_symbol_characters ();
       break;
     default:
       /* Folks should explicitly indicate the appropriate alphabet for

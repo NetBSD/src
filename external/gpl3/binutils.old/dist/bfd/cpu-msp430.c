@@ -1,5 +1,5 @@
 /* BFD library support routines for the MSP architecture.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -43,9 +43,9 @@ compatible (const bfd_arch_info_type * a,
 
 #define N(addr_bits, machine, print, default, next)		\
 {								\
-  16,				/* 16 bits in a word.  */	\
+  16,				/* Bits in a word.  */		\
   addr_bits,			/* Bits in an address.  */	\
-  8,				/* 8 bits in a byte.  */	\
+  8,				/* Bits in a byte.  */		\
   bfd_arch_msp430,						\
   machine,			/* Machine number.  */		\
   "msp430",			/* Architecture name.   */	\
@@ -55,7 +55,8 @@ compatible (const bfd_arch_info_type * a,
   compatible,							\
   bfd_default_scan,						\
   bfd_arch_default_fill,					\
-  next								\
+  next,								\
+  0 /* Maximum offset of a reloc from the start of an insn.  */ \
 }
 
 static const bfd_arch_info_type arch_info_struct[] =

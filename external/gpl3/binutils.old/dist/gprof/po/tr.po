@@ -2,13 +2,13 @@
 # translation of gprof-2.28.90.tr.po to Turkish
 # Copyright (C) 2003, 2005 Free Software Foundation, Inc.
 # Deniz Akkus Kanca <deniz@arayan.com>, 2001,2003.
-# Mehmet Kececi <mkececi@mehmetkececi.com>, 2017.
+# Mehmet Kececi <mkececi@mehmetkececi.com>, 2017, 2019, 2020.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-07-05 14:21+0300\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-01-19 16:06+0300\n"
 "Last-Translator: Mehmet Kececi <mkececi@mehmetkececi.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
 "Language: tr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Virtaal 0.7.1\n"
+"X-Generator: Poedit 2.2.4\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 
 #: alpha.c:102 mips.c:54
@@ -153,7 +153,7 @@ msgid ""
 " for %.2f%% of %.2f seconds\n"
 "\n"
 msgstr ""
-"Toplam %2$.2f saniyenin %1$.2f%%'si için\n"
+" %.2f saniyenin %.2f%%'si için\n"
 "\n"
 
 #: cg_print.c:87
@@ -205,7 +205,7 @@ msgstr "astlar"
 #: cg_print.c:109
 #, c-format
 msgid "index %% time    self  children    called     name\n"
-msgstr "indeks %% zaman  kendi astlar      çağrıldı   isim\n"
+msgstr "indeks %% zaman    kendi  astlar    çağrıldı     isim\n"
 
 #: cg_print.c:132
 #, c-format
@@ -236,22 +236,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<çevrim %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: eşlem dosyası %s ayrıştırılamadı.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: %s açılamadı.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: çalıştırılabilir biçimde değil\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: %s içerisinde .text (metin) bölümü bulunamadı\n"
@@ -266,22 +266,22 @@ msgstr "%s: %lu bayt metin yeri için yer bulunamadı\n"
 msgid "%s: can't do -c\n"
 msgstr "%s: -c yapılamıyor\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c %s platformu üzerinde desteklenmiyor\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: `%s' dosyası sembol içermiyor\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: dosyası `%s' çok fazla sembol içeriyor\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%1$s: hatalı sayım: %3$ld yerine ltab.len=%2$d\n"
@@ -379,7 +379,7 @@ msgstr "\t%d temel blok sayım kayıtları\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -393,7 +393,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Kullanım: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Kullanım: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -417,50 +417,48 @@ msgstr "Hataları %s adresine bildirin\n"
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: hata ayıklama desteklenmiyor; -d yoksayıldı\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: bilinmeyen dosya biçemi %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
-msgstr "BSD gprof baz alınmıştır. BSD gprof Telif Hakkı 1983 Regents of the University of California.\n"
+msgstr "BSD gprof baz alınmıştır, Telif Hakkı 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
-msgstr "Bu yazılım bir serbest yazılımdır. Bu yazılımın herhangi bir garantisi yoktur.\n"
+msgstr "Bu yazılım bir serbest yazılımdır.  Bu yazılımın herhangi bir garantisi yoktur.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: bilinmeyen düzeltme tarzı `%s'\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
-msgstr ""
-"%s: --function-ordering (işleve göre sırala) ve\n"
-"    --file-ordering (dosyaya göre sırala) seçeneklerinin biri seçilebilir.\n"
+msgstr "%s: İşleve göre sırala --function-ordering ve --file-ordering dosyaya göre sırala seçeneklerinin biri seçilebilir.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: `prof' dosya biçemi henüz desteklenmiyor\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: gmon.out dosyasında geçmiş grafiği yok\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: gmon.out dosyasında çağrı grafik verisi yok\n"
@@ -513,7 +511,7 @@ msgid ""
 " for %.2f%% of %.2f %s\n"
 "\n"
 msgstr ""
-" Toplam %2$.2f %3$s'nin %1$.2f%%'si okundu\n"
+" for %.2f%% of %.2f %s\n"
 "\n"
 
 #: hist.c:480

@@ -1,5 +1,5 @@
 /* Plugin support for BFD.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -102,6 +102,7 @@ dlerror (void)
 #define bfd_plugin_bfd_lookup_section_flags	      bfd_generic_lookup_section_flags
 #define bfd_plugin_bfd_merge_sections		      bfd_generic_merge_sections
 #define bfd_plugin_bfd_is_group_section		      bfd_generic_is_group_section
+#define bfd_plugin_bfd_group_name		      bfd_generic_group_name
 #define bfd_plugin_bfd_discard_group		      bfd_generic_discard_group
 #define bfd_plugin_section_already_linked	      _bfd_generic_section_already_linked
 #define bfd_plugin_bfd_define_common_symbol	      bfd_generic_define_common_symbol
@@ -124,7 +125,7 @@ message (int level ATTRIBUTE_UNUSED,
 }
 
 /* Register a claim-file handler. */
-static ld_plugin_claim_file_handler claim_file;
+static ld_plugin_claim_file_handler claim_file = NULL;
 
 static enum ld_plugin_status
 register_claim_file (ld_plugin_claim_file_handler handler)
@@ -186,8 +187,13 @@ bfd_plugin_open_input (bfd *ibfd, struct ld_plugin_input_file *file)
   if (iobfd == ibfd)
     {
       struct stat stat_buf;
+
       if (fstat (file->fd, &stat_buf))
-	return 0;
+	{
+	  close(file->fd);
+	  return 0;
+	}
+
       file->offset = 0;
       file->filesize = stat_buf.st_size;
     }
@@ -208,20 +214,30 @@ try_claim (bfd *abfd)
   file.handle = abfd;
   if (!bfd_plugin_open_input (abfd, &file))
     return 0;
-  claim_file (&file, &claimed);
-  if (!claimed)
-    close (file.fd);
+  if (claim_file)
+    claim_file (&file, &claimed);
+  close (file.fd);
   return claimed;
 }
+
+struct plugin_list_entry
+{
+  void *                        handle;
+  ld_plugin_claim_file_handler  claim_file;
+  struct plugin_list_entry *    next;
+};
+
+static struct plugin_list_entry * plugin_list = NULL;
 
 static int
 try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
 {
-  void *plugin_handle;
+  void *plugin_handle = NULL;
   struct ld_plugin_tv tv[4];
   int i;
   ld_plugin_onload onload;
   enum ld_plugin_status status;
+  struct plugin_list_entry *plugin_list_iter;
 
   *has_plugin_p = 0;
 
@@ -232,9 +248,32 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
       return 0;
     }
 
+  for (plugin_list_iter = plugin_list;
+       plugin_list_iter;
+       plugin_list_iter = plugin_list_iter->next)
+    {
+      if (plugin_handle == plugin_list_iter->handle)
+	{
+	  dlclose (plugin_handle);
+	  if (!plugin_list_iter->claim_file)
+	    return 0;
+
+	  register_claim_file (plugin_list_iter->claim_file);
+	  goto have_claim_file;
+	}
+    }
+
+  plugin_list_iter = bfd_malloc (sizeof *plugin_list_iter);
+  if (plugin_list_iter == NULL)
+    return 0;
+  plugin_list_iter->handle = plugin_handle;
+  plugin_list_iter->claim_file = NULL;
+  plugin_list_iter->next = plugin_list;
+  plugin_list = plugin_list_iter;
+
   onload = dlsym (plugin_handle, "onload");
   if (!onload)
-    goto err;
+    return 0;
 
   i = 0;
   tv[i].tv_tag = LDPT_MESSAGE;
@@ -255,24 +294,23 @@ try_load_plugin (const char *pname, bfd *abfd, int *has_plugin_p)
   status = (*onload)(tv);
 
   if (status != LDPS_OK)
-    goto err;
+    return 0;
 
+  plugin_list_iter->claim_file = claim_file;
+
+have_claim_file:
   *has_plugin_p = 1;
 
   abfd->plugin_format = bfd_plugin_no;
 
   if (!claim_file)
-    goto err;
+    return 0;
 
   if (!try_claim (abfd))
-    goto err;
+    return 0;
 
   abfd->plugin_format = bfd_plugin_yes;
-
   return 1;
-
- err:
-  return 0;
 }
 
 /* There may be plugin libraries in lib/bfd-plugins.  */
@@ -329,11 +367,15 @@ register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *))
 static int
 load_plugin (bfd *abfd)
 {
-  char *plugin_dir;
-  char *p;
-  DIR *d;
-  struct dirent *ent;
+  /* The intent was to search ${libdir}/bfd-plugins for plugins, but
+     unfortunately the original implementation wasn't precisely that
+     when configuring binutils using --libdir.  Search in the proper
+     path first, then the old one for backwards compatibility.  */
+  static const char *path[]
+    = { LIBDIR "/bfd-plugins", BINDIR "/../lib/bfd-plugins" };
+  struct stat last_st;
   int found = 0;
+  unsigned int i;
 
   if (!has_plugin)
     return found;
@@ -344,37 +386,57 @@ load_plugin (bfd *abfd)
   if (plugin_program_name == NULL)
     return found;
 
-  plugin_dir = concat (BINDIR, "/../lib/bfd-plugins", NULL);
-  p = make_relative_prefix (plugin_program_name,
-			    BINDIR,
-			    plugin_dir);
-  free (plugin_dir);
-  plugin_dir = NULL;
-
-  d = opendir (p);
-  if (!d)
-    goto out;
-
-  while ((ent = readdir (d)))
+  /* Try not to search the same dir twice, by looking at st_dev and
+     st_ino for the dir.  If we are on a file system that always sets
+     st_ino to zero or the actual st_ino is zero we might waste some
+     time, but that doesn't matter too much.  */
+  last_st.st_dev = 0;
+  last_st.st_ino = 0;
+  for (i = 0; i < sizeof (path) / sizeof (path[0]); i++)
     {
-      char *full_name;
-      struct stat s;
-      int valid_plugin;
+      char *plugin_dir = make_relative_prefix (plugin_program_name,
+					       BINDIR,
+					       path[i]);
+      if (plugin_dir)
+	{
+	  struct stat st;
+	  DIR *d;
 
-      full_name = concat (p, "/", ent->d_name, NULL);
-      if (stat(full_name, &s) == 0 && S_ISREG (s.st_mode))
-	found = try_load_plugin (full_name, abfd, &valid_plugin);
-      if (has_plugin <= 0)
-	has_plugin = valid_plugin;
-      free (full_name);
+	  if (stat (plugin_dir, &st) == 0
+	      && S_ISDIR (st.st_mode)
+	      && !(last_st.st_dev == st.st_dev
+		   && last_st.st_ino == st.st_ino
+		   && st.st_ino != 0)
+	      && (d = opendir (plugin_dir)) != NULL)
+	    {
+	      struct dirent *ent;
+
+	      last_st.st_dev = st.st_dev;
+	      last_st.st_ino = st.st_ino;
+	      while ((ent = readdir (d)) != NULL)
+		{
+		  char *full_name;
+
+		  full_name = concat (plugin_dir, "/", ent->d_name, NULL);
+		  if (stat (full_name, &st) == 0 && S_ISREG (st.st_mode))
+		    {
+		      int valid_plugin;
+
+		      found = try_load_plugin (full_name, abfd, &valid_plugin);
+		      if (has_plugin <= 0)
+			has_plugin = valid_plugin;
+		    }
+		  free (full_name);
+		  if (found)
+		    break;
+		}
+	      closedir (d);
+	    }
+	  free (plugin_dir);
+	}
       if (found)
 	break;
     }
-
- out:
-  free (p);
-  if (d)
-    closedir (d);
 
   return found;
 }
@@ -495,12 +557,12 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
   struct plugin_data_struct *plugin_data = abfd->tdata.plugin_data;
   long nsyms = plugin_data->nsyms;
   const struct ld_plugin_symbol *syms = plugin_data->syms;
-  static asection fake_section;
-  static asection fake_common_section;
+  static asection fake_section
+    = BFD_FAKE_SECTION (fake_section, NULL, "plug", 0,
+			SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_HAS_CONTENTS);
+  static asection fake_common_section
+    = BFD_FAKE_SECTION (fake_common_section, NULL, "plug", 0, SEC_IS_COMMON);
   int i;
-
-  fake_section.name = ".text";
-  fake_common_section.flags = SEC_IS_COMMON;
 
   for (i = 0; i < nsyms; i++)
     {

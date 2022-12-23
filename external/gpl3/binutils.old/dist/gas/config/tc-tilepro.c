@@ -1,5 +1,5 @@
 /* tc-tilepro.c -- Assemble for a TILEPro chip.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,7 +19,6 @@
    MA 02110-1301, USA.  */
 
 #include "as.h"
-#include "struc-symbol.h"
 #include "subsegs.h"
 
 #include "elf/tilepro.h"
@@ -208,7 +207,7 @@ md_begin (void)
   int i;
 
   /* Guarantee text section is aligned.  */
-  bfd_set_section_alignment (stdoutput, text_section,
+  bfd_set_section_alignment (text_section,
                              TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES);
 
   require_canonical_reg_names = 1;
@@ -628,16 +627,18 @@ emit_tilepro_instruction (tilepro_bundle_bits bits,
 	    }
 	  else if (use_subexp)
 	    {
+	      expressionS *sval = NULL;
 	      /* Now that we've changed the reloc, change ha16(x) into x,
 		 etc.  */
 
-	      if (!operand_exp->X_add_symbol->sy_flags.sy_local_symbol
-                  && operand_exp->X_add_symbol->sy_value.X_md)
+	      if (symbol_symbolS (operand_exp->X_add_symbol))
+		sval = symbol_get_value_expression (operand_exp->X_add_symbol);
+	      if (sval && sval->X_md)
 		{
 		  /* HACK: We used X_md to mark this symbol as a fake wrapper
 		     around a real expression. To unwrap it, we just grab its
 		     value here.  */
-		  operand_exp = &operand_exp->X_add_symbol->sy_value;
+		  operand_exp = sval;
 
 		  if (require_symbol)
 		    {
@@ -837,8 +838,8 @@ tilepro_flush_bundle (void)
 
   /* If the section seems to have no alignment set yet, go ahead and
      make it large enough to hold code.  */
-  if (bfd_get_section_alignment (stdoutput, now_seg) == 0)
-    bfd_set_section_alignment (stdoutput, now_seg,
+  if (bfd_section_alignment (now_seg) == 0)
+    bfd_set_section_alignment (now_seg,
                                TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES);
 
   for (j = 0; j < current_bundle_index; j++)
@@ -958,7 +959,7 @@ tilepro_parse_name (char *name, expressionS *e, char *nextcharP)
 	  /* HACK: mark this symbol as a temporary wrapper around a proper
 	     expression, so we can unwrap it later once we have communicated
 	     the relocation type.  */
-	  sym->sy_value.X_md = 1;
+	  symbol_get_value_expression (sym)->X_md = 1;
 	}
 
       memset (e, 0, sizeof *e);
@@ -1196,9 +1197,6 @@ const pseudo_typeS md_pseudo_table[] =
   {"no_allow_suspicious_bundles", s_allow_suspicious_bundles, 0 },
   { NULL, 0, 0 }
 };
-
-/* Equal to MAX_PRECISION in atof-ieee.c  */
-#define MAX_LITTLENUMS 6
 
 /* Turn the string pointed to by litP into a floating point constant
    of type TYPE, and emit the appropriate bytes.  The number of

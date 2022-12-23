@@ -1,5 +1,5 @@
 /* aarch64-dis.h -- Header file for aarch64-dis.c and aarch64-dis-2.c.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.

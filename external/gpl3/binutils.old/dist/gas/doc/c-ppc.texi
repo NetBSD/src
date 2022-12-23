@@ -1,4 +1,4 @@
-@c Copyright (C) 2001-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -72,8 +72,8 @@ Generate code for PowerPC 476.
 @item -m7400, -m7410, -m7450, -m7455
 Generate code for PowerPC 7400/7410/7450/7455.
 
-@item -m750cl
-Generate code for PowerPC 750CL.
+@item -m750cl, -mgekko, -mbroadway
+Generate code for PowerPC 750CL/Gekko/Broadway.
 
 @item -m821, -m850, -m860
 Generate code for PowerPC 821/850/860.
@@ -229,7 +229,7 @@ control command (@pxref{Preprocessing}).
 
 If the assembler has been configured for the ppc-*-solaris* target
 then the @samp{!} character also acts as a line comment character.
-This can be disabled via the @option{-mno-solaris} command line
+This can be disabled via the @option{-mno-solaris} command-line
 option.
 
 @cindex line separator, PowerPC

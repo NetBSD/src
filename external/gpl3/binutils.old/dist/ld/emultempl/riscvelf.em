@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -62,7 +62,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 	}
     }
 
-  gld${EMULATION_NAME}_map_segments (need_layout);
+  ldelf_map_segments (need_layout);
 }
 
 /* This is a convenient point to tell BFD about target specific flags.

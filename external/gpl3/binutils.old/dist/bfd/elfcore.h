@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -48,6 +48,14 @@ elf_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
       bfd_set_error (bfd_error_system_call);
       return FALSE;
     }
+
+  /* If both BFDs have identical build-ids, then they match.  */
+  if (core_bfd->build_id != NULL
+      && exec_bfd->build_id != NULL
+      && core_bfd->build_id->size == exec_bfd->build_id->size
+      && memcmp (core_bfd->build_id->data, exec_bfd->build_id->data,
+		 core_bfd->build_id->size) == 0)
+    return TRUE;
 
   /* See if the name in the corefile matches the executable name.  */
   corename = elf_tdata (core_bfd)->core->program;
@@ -305,11 +313,109 @@ elf_core_file_p (bfd *abfd)
   }
 
   /* Save the entry point from the ELF header.  */
-  bfd_get_start_address (abfd) = i_ehdrp->e_entry;
+  abfd->start_address = i_ehdrp->e_entry;
   return abfd->xvec;
 
 wrong:
   bfd_set_error (bfd_error_wrong_format);
 fail:
   return NULL;
+}
+
+/* Attempt to find a build-id in a core file from the core file BFD.
+   OFFSET is the file offset to a PT_LOAD segment that may contain
+   the build-id note.  Returns TRUE upon success, FALSE otherwise.  */
+
+bfd_boolean
+NAME(_bfd_elf, core_find_build_id)
+  (bfd *abfd,
+   bfd_vma offset)
+{
+  Elf_External_Ehdr x_ehdr;	/* Elf file header, external form.   */
+  Elf_Internal_Ehdr i_ehdr;	/* Elf file header, internal form.   */
+  Elf_Internal_Phdr *i_phdr;
+  unsigned int i;
+
+  /* Seek to the position of the segment at OFFSET.  */
+  if (bfd_seek (abfd, offset, SEEK_SET) != 0)
+    goto fail;
+
+  /* Read in the ELF header in external format.  */
+  if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	goto wrong;
+      else
+	goto fail;
+    }
+
+  /* Now check to see if we have a valid ELF file, and one that BFD can
+     make use of.  The magic number must match, the address size ('class')
+     and byte-swapping must match our XVEC entry, and it must have a
+     section header table (FIXME: See comments re sections at top of this
+     file).  */
+  if (! elf_file_p (&x_ehdr)
+      || x_ehdr.e_ident[EI_VERSION] != EV_CURRENT
+      || x_ehdr.e_ident[EI_CLASS] != ELFCLASS)
+    goto wrong;
+
+  /* Check that file's byte order matches xvec's.  */
+  switch (x_ehdr.e_ident[EI_DATA])
+    {
+    case ELFDATA2MSB:		/* Big-endian.  */
+      if (! bfd_header_big_endian (abfd))
+	goto wrong;
+      break;
+    case ELFDATA2LSB:		/* Little-endian.  */
+      if (! bfd_header_little_endian (abfd))
+	goto wrong;
+      break;
+    case ELFDATANONE:		/* No data encoding specified.  */
+    default:			/* Unknown data encoding specified . */
+      goto wrong;
+    }
+
+  elf_swap_ehdr_in (abfd, &x_ehdr, &i_ehdr);
+#if DEBUG
+  elf_debug_file (&i_ehdr);
+#endif
+
+  if (i_ehdr.e_phentsize != sizeof (Elf_External_Phdr) || i_ehdr.e_phnum == 0)
+    goto fail;
+
+  /* Read in program headers.  */
+  i_phdr = (Elf_Internal_Phdr *) bfd_alloc2 (abfd, i_ehdr.e_phnum,
+					     sizeof (*i_phdr));
+  if (i_phdr == NULL)
+    goto fail;
+
+  if (bfd_seek (abfd, (file_ptr) (offset + i_ehdr.e_phoff), SEEK_SET) != 0)
+    goto fail;
+
+  /* Read in program headers and parse notes.  */
+  for (i = 0; i < i_ehdr.e_phnum; ++i, ++i_phdr)
+    {
+      Elf_External_Phdr x_phdr;
+
+      if (bfd_bread (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
+	goto fail;
+      elf_swap_phdr_in (abfd, &x_phdr, i_phdr);
+
+      if (i_phdr->p_type == PT_NOTE && i_phdr->p_filesz > 0)
+	{
+	  elf_read_notes (abfd, offset + i_phdr->p_offset,
+			  i_phdr->p_filesz, i_phdr->p_align);
+	  if (abfd->build_id != NULL)
+	    return TRUE;
+	}
+    }
+
+  /* Having gotten this far, we have a valid ELF section, but no
+     build-id was found.  */
+  goto fail;
+
+wrong:
+  bfd_set_error (bfd_error_wrong_format);
+fail:
+  return FALSE;
 }

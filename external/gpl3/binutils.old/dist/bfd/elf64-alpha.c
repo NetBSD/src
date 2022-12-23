@@ -1,5 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -27,6 +27,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
+#include "ecoff-bfd.h"
 
 #include "elf/alpha.h"
 
@@ -1173,9 +1174,8 @@ elf64_alpha_section_from_shdr (bfd *abfd,
 
   if (hdr->sh_type == SHT_ALPHA_DEBUG)
     {
-      if (! bfd_set_section_flags (abfd, newsect,
-				   (bfd_get_section_flags (abfd, newsect)
-				    | SEC_DEBUGGING)))
+      if (!bfd_set_section_flags (newsect,
+				  bfd_section_flags (newsect) | SEC_DEBUGGING))
 	return FALSE;
     }
 
@@ -1201,7 +1201,7 @@ elf64_alpha_fake_sections (bfd *abfd, Elf_Internal_Shdr *hdr, asection *sec)
 {
   register const char *name;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
 
   if (strcmp (name, ".mdebug") == 0)
     {
@@ -1275,7 +1275,7 @@ elf64_alpha_create_got_section (bfd *abfd,
 	   | SEC_LINKER_CREATED);
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 3))
+      || !bfd_set_section_alignment (s, 3))
     return FALSE;
 
   alpha_elf_tdata (abfd)->got = s;
@@ -1307,7 +1307,7 @@ elf64_alpha_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	   | (elf64_alpha_use_secureplt ? SEC_READONLY : 0));
   s = bfd_make_section_anyway_with_flags (abfd, ".plt", flags);
   elf_hash_table (info)->splt = s;
-  if (s == NULL || ! bfd_set_section_alignment (abfd, s, 4))
+  if (s == NULL || ! bfd_set_section_alignment (s, 4))
     return FALSE;
 
   /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
@@ -1322,7 +1322,7 @@ elf64_alpha_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	   | SEC_LINKER_CREATED | SEC_READONLY);
   s = bfd_make_section_anyway_with_flags (abfd, ".rela.plt", flags);
   elf_hash_table (info)->srelplt = s;
-  if (s == NULL || ! bfd_set_section_alignment (abfd, s, 3))
+  if (s == NULL || ! bfd_set_section_alignment (s, 3))
     return FALSE;
 
   if (elf64_alpha_use_secureplt)
@@ -1330,7 +1330,7 @@ elf64_alpha_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       flags = SEC_ALLOC | SEC_LINKER_CREATED;
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       elf_hash_table (info)->sgotplt = s;
-      if (s == NULL || ! bfd_set_section_alignment (abfd, s, 3))
+      if (s == NULL || ! bfd_set_section_alignment (s, 3))
 	return FALSE;
     }
 
@@ -1348,7 +1348,7 @@ elf64_alpha_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   s = bfd_make_section_anyway_with_flags (abfd, ".rela.got", flags);
   elf_hash_table (info)->srelgot = s;
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 3))
+      || !bfd_set_section_alignment (s, 3))
     return FALSE;
 
   /* Define the symbol _GLOBAL_OFFSET_TABLE_ at the start of the
@@ -1472,8 +1472,9 @@ elf64_alpha_find_nearest_line (bfd *abfd, asymbol **symbols,
   if (_bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section, offset,
 				     filename_ptr, functionname_ptr,
 				     line_ptr, discriminator_ptr,
-				     dwarf_debug_sections, 0,
-				     &elf_tdata (abfd)->dwarf2_find_line_info))
+				     dwarf_debug_sections,
+				     &elf_tdata (abfd)->dwarf2_find_line_info)
+      == 1)
     return TRUE;
 
   msec = bfd_get_section_by_name (abfd, ".mdebug");
@@ -1621,7 +1622,7 @@ elf64_alpha_output_extsym (struct alpha_elf_link_hash_entry *h, void * data)
 	    h->esym.asym.sc = scUndefined;
 	  else
 	    {
-	      name = bfd_section_name (output_section->owner, output_section);
+	      name = bfd_section_name (output_section);
 
 	      if (strcmp (name, ".text") == 0)
 		h->esym.asym.sc = scText;
@@ -2865,7 +2866,7 @@ elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (CONST_STRNEQ (name, ".rela"))
 	{
@@ -4513,7 +4514,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		    if (name == NULL)
 		      name = _("<unknown>");
 		    else if (name[0] == 0)
-		      name = bfd_section_name (input_bfd, sec);
+		      name = bfd_section_name (sec);
 		  }
 		_bfd_error_handler
 		  /* xgettext:c-format */
@@ -4729,7 +4730,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 		  if (r_type == R_ALPHA_GOTDTPREL)
 		    value -= dtp_base;
-		  else if (!bfd_link_pic (info))
+		  else if (bfd_link_executable (info))
 		    value -= tp_base;
 		  else
 		    {
@@ -4784,7 +4785,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		if (name == NULL)
 		  return FALSE;
 		if (*name == '\0')
-		  name = bfd_section_name (input_bfd, sec);
+		  name = bfd_section_name (sec);
 	      }
 	    (*info->callbacks->reloc_overflow)
 	      (info, (h ? &h->root.root : NULL), name, howto->name,
@@ -5575,11 +5576,13 @@ static const struct elf_size_info alpha_elf_size_info =
    "FreeBSD" label in the ELF header.  So we put this label on all
    executables and (for simplicity) also all other object files.  */
 
-static void
-elf64_alpha_fbsd_post_process_headers (bfd * abfd,
-	struct bfd_link_info * link_info ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf64_alpha_fbsd_init_file_header (bfd *abfd, struct bfd_link_info *info)
 {
   Elf_Internal_Ehdr * i_ehdrp;	/* ELF file header, internal form.  */
+
+  if (!_bfd_elf_init_file_header (abfd, info))
+    return FALSE;
 
   i_ehdrp = elf_elfheader (abfd);
 
@@ -5589,11 +5592,12 @@ elf64_alpha_fbsd_post_process_headers (bfd * abfd,
   /* The ABI label supported by FreeBSD <= 4.0 is quite nonstandard.  */
   memcpy (&i_ehdrp->e_ident[EI_ABIVERSION], "FreeBSD", 8);
 #endif
+  return TRUE;
 }
 
-#undef elf_backend_post_process_headers
-#define elf_backend_post_process_headers \
-  elf64_alpha_fbsd_post_process_headers
+#undef elf_backend_init_file_header
+#define elf_backend_init_file_header \
+  elf64_alpha_fbsd_init_file_header
 
 #undef  elf64_bed
 #define elf64_bed elf64_alpha_fbsd_bed

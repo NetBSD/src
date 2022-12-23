@@ -1,5 +1,5 @@
 /* BFD support for the FR30 processor.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,17 +24,18 @@
 
 const bfd_arch_info_type bfd_fr30_arch =
 {
-  32,				/* bits per word */
-  32,				/* bits per address */
-  8,				/* bits per byte */
-  bfd_arch_fr30,		/* architecture */
-  bfd_mach_fr30,		/* machine */
-  "fr30",			/* architecture name */
-  "fr30",			/* printable name */
-  4,				/* section align power */
-  TRUE,				/* the default ? */
-  bfd_default_compatible,	/* architecture comparison fn */
-  bfd_default_scan,		/* string to architecture convert fn */
+  32,				/* Bits per word.  */
+  32,				/* Bits per address.  */
+  8,				/* Bits per byte.  */
+  bfd_arch_fr30,		/* Architecture.  */
+  bfd_mach_fr30,		/* Machine.  */
+  "fr30",			/* Architecture name.  */
+  "fr30",			/* Printable name.  */
+  4,				/* Section align power.  */
+  TRUE,				/* The default ?  */
+  bfd_default_compatible,	/* Architecture comparison fn.  */
+  bfd_default_scan,		/* String to architecture convert fn.  */
   bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* next in list */
+  NULL,				/* Next in list.  */
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

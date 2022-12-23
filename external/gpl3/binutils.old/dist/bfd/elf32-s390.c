@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 32-bit ELF
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Carl B. Pedersen and Martin Schwidefsky.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1366,9 +1366,7 @@ elf_s390_check_relocs (bfd *abfd,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_390_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -2005,7 +2003,7 @@ elf_s390_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0)
 	    relocs = TRUE;
@@ -2165,7 +2163,11 @@ elf_s390_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  BFD_ASSERT (is_s390_elf (input_bfd));
+  if (!is_s390_elf (input_bfd))
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return FALSE;
+    }
 
   htab = elf_s390_hash_table (info);
   symtab_hdr = &elf_symtab_hdr (input_bfd);
@@ -3252,7 +3254,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      if (name == NULL)
 		return FALSE;
 	      if (*name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  if (r == bfd_reloc_overflow)
@@ -3951,16 +3953,16 @@ elf_s390_write_core_note (bfd *abfd, char *buf, int *bufsiz,
 	va_end (ap);
 
 	strncpy (data + 28, fname, 16);
-#if GCC_VERSION == 8001
+#if GCC_VERSION == 8000 || GCC_VERSION == 8001
 	DIAGNOSTIC_PUSH;
-	/* GCC 8.1 warns about 80 equals destination size with
+	/* GCC 8.0 and 8.1 warn about 80 equals destination size with
 	   -Wstringop-truncation:
 	   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85643
 	 */
 	DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION;
 #endif
 	strncpy (data + 44, psargs, 80);
-#if GCC_VERSION == 8001
+#if GCC_VERSION == 8000 || GCC_VERSION == 8001
 	DIAGNOSTIC_POP;
 #endif
 	return elfcore_write_note (abfd, buf, bufsiz, "CORE", note_type,

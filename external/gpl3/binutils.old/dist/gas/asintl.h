@@ -1,5 +1,5 @@
 /* asintl.h - gas-specific header for gettext code.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Written by Tom Tromey <tromey@cygnus.com>
 

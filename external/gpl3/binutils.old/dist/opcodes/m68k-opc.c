@@ -1,5 +1,5 @@
 /* Opcode table for m680[012346]0/m6888[12]/m68851/mcf5200.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -2325,7 +2325,7 @@ const struct m68k_opcode_alias m68k_opcode_aliases[] =
   { "dbhsw",	"dbcc", },
   { "dbra",	"dbf", },
   { "dbraw",	"dbf", },
-  { "tdivsl",	"divsl", },
+  { "tdivsl",	"divsll", },
   { "divs",	"divsw", },
   { "divu",	"divuw", },
   { "ext",	"extw", },
@@ -2435,7 +2435,7 @@ const struct m68k_opcode_alias m68k_opcode_aliases[] =
   { "movsw",	"movesw", },
   { "mov3q",	"mov3ql", },
 
-  { "tdivul",	"divul", },	/* For m68k-svr4.  */
+  { "tdivul",	"divull", },	/* For m68k-svr4.  */
   { "fmovb",	"fmoveb", },
   { "fsmovb",	"fsmoveb", },
   { "fdmovb",	"fdmoveb", },

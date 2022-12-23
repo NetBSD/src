@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -70,8 +70,7 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
   const struct elf_backend_data *const bed = get_elf_backend_data (abfd);
   struct elf_segment_map **m = &elf_seg_map (abfd);
   struct elf_segment_map **first_load = NULL;
-  struct elf_segment_map **last_load = NULL;
-  bfd_boolean moved_headers = FALSE;
+  struct elf_segment_map **headers = NULL;
   int sizeof_headers;
 
   if (info != NULL && info->user_phdrs)
@@ -170,56 +169,62 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 	    }
 
 	  /* First, we're just finding the earliest PT_LOAD.
-	     By the normal rules, this will be the lowest-addressed one.
-	     We only have anything interesting to do if it's executable.  */
-	  last_load = m;
+	     By the normal rules, this will be the lowest-addressed one.  */
 	  if (first_load == NULL)
-	    {
-	      if (!executable)
-		goto next;
-	      first_load = m;
-	    }
+	    first_load = m;
+
 	  /* Now that we've noted the first PT_LOAD, we're looking for
 	     the first non-executable PT_LOAD with a nonempty p_filesz.  */
-	  else if (!moved_headers
+	  else if (headers == NULL
 		   && segment_eligible_for_headers (seg, bed->minpagesize,
 						    sizeof_headers))
-	    {
-	      /* This is the one we were looking for!
-
-		 First, clear the flags on previous segments that
-		 say they include the file header and phdrs.  */
-	      struct elf_segment_map *prevseg;
-	      for (prevseg = *first_load;
-		   prevseg != seg;
-		   prevseg = prevseg->next)
-		if (prevseg->p_type == PT_LOAD)
-		  {
-		    prevseg->includes_filehdr = 0;
-		    prevseg->includes_phdrs = 0;
-		  }
-
-	      /* This segment will include those headers instead.  */
-	      seg->includes_filehdr = 1;
-	      seg->includes_phdrs = 1;
-
-	      moved_headers = TRUE;
-	    }
+	    headers = m;
 	}
-
-    next:
       m = &seg->next;
     }
 
-  if (first_load != last_load && moved_headers)
+  if (headers != NULL)
     {
-      /* Now swap the first and last PT_LOAD segments'
-	 positions in segment_map.  */
-      struct elf_segment_map *first = *first_load;
-      struct elf_segment_map *last = *last_load;
-      *first_load = first->next;
-      first->next = last->next;
-      last->next = first;
+      struct elf_segment_map **last_load = NULL;
+      struct elf_segment_map *seg;
+
+      m = first_load;
+      while ((seg = *m) != NULL)
+	{
+	  if (seg->p_type == PT_LOAD)
+	    {
+	      /* Clear the flags on any previous segment that
+		 included the file header and phdrs.  */
+	      seg->includes_filehdr = 0;
+	      seg->includes_phdrs = 0;
+	      seg->no_sort_lma = 1;
+	      /* Also strip out empty segments.  */
+	      if (seg->count == 0)
+		{
+		  if (headers == &seg->next)
+		    headers = m;
+		  *m = seg->next;
+		  continue;
+		}
+	      last_load = m;
+	    }
+	  m = &seg->next;
+	}
+
+      /* This segment will include those headers instead.  */
+      seg = *headers;
+      seg->includes_filehdr = 1;
+      seg->includes_phdrs = 1;
+
+      if (last_load != NULL && first_load != last_load && first_load != headers)
+	{
+	  /* Put the first PT_LOAD header last.  */
+	  struct elf_segment_map *first = *first_load;
+	  struct elf_segment_map *last = *last_load;
+	  *first_load = first->next;
+	  first->next = last->next;
+	  last->next = first;
+	}
     }
 
   return TRUE;
@@ -230,94 +235,97 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
    proper order for the ELF rule that they must appear in ascending address
    order.  So find the two segments we swapped before, and swap them back.  */
 bfd_boolean
-nacl_modify_program_headers (bfd *abfd, struct bfd_link_info *info)
+nacl_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
-  struct elf_segment_map **m = &elf_seg_map (abfd);
-  Elf_Internal_Phdr *phdr = elf_tdata (abfd)->phdr;
-  Elf_Internal_Phdr *p = phdr;
-
   if (info != NULL && info->user_phdrs)
     /* The linker script used PHDRS explicitly, so don't change what the
        user asked for.  */
-    return TRUE;
-
-  /* Find the PT_LOAD that contains the headers (should be the first).  */
-  while (*m != NULL)
+    ;
+  else
     {
-      if ((*m)->p_type == PT_LOAD && (*m)->includes_filehdr)
-	break;
+      struct elf_segment_map **m = &elf_seg_map (abfd);
+      Elf_Internal_Phdr *phdr = elf_tdata (abfd)->phdr;
+      Elf_Internal_Phdr *p = phdr;
 
-      m = &(*m)->next;
-      ++p;
-    }
-
-  if (*m != NULL)
-    {
-      struct elf_segment_map **first_load_seg = m;
-      Elf_Internal_Phdr *first_load_phdr = p;
-      struct elf_segment_map **next_load_seg = NULL;
-      Elf_Internal_Phdr *next_load_phdr = NULL;
-
-      /* Now move past that first one and find the PT_LOAD that should be
-	 before it by address order.  */
-
-      m = &(*m)->next;
-      ++p;
-
+      /* Find the PT_LOAD that contains the headers (should be the first).  */
       while (*m != NULL)
 	{
-	  if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
-	    {
-	      next_load_seg = m;
-	      next_load_phdr = p;
-	      break;
-	    }
+	  if ((*m)->p_type == PT_LOAD && (*m)->includes_filehdr)
+	    break;
 
 	  m = &(*m)->next;
 	  ++p;
 	}
 
-      /* Swap their positions in the segment_map back to how they used to be.
-	 The phdrs have already been set up by now, so we have to slide up
-	 the earlier ones to insert the one that should be first.  */
-      if (next_load_seg != NULL)
+      if (*m != NULL)
 	{
-	  Elf_Internal_Phdr move_phdr;
-	  struct elf_segment_map *first_seg = *first_load_seg;
-	  struct elf_segment_map *next_seg = *next_load_seg;
-	  struct elf_segment_map *first_next = first_seg->next;
-	  struct elf_segment_map *next_next = next_seg->next;
+	  struct elf_segment_map **first_load_seg = m;
+	  Elf_Internal_Phdr *first_load_phdr = p;
+	  struct elf_segment_map **next_load_seg = NULL;
+	  Elf_Internal_Phdr *next_load_phdr = NULL;
 
-	  if (next_load_seg == &first_seg->next)
+	  /* Now move past that first one and find the PT_LOAD that should be
+	     before it by address order.  */
+
+	  m = &(*m)->next;
+	  ++p;
+
+	  while (*m != NULL)
 	    {
-	      *first_load_seg = next_seg;
-	      next_seg->next = first_seg;
-	      first_seg->next = next_next;
+	      if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
+		{
+		  next_load_seg = m;
+		  next_load_phdr = p;
+		  break;
+		}
+
+	      m = &(*m)->next;
+	      ++p;
 	    }
-	  else
+
+	  /* Swap their positions in the segment_map back to how they
+	     used to be.  The phdrs have already been set up by now,
+	     so we have to slide up the earlier ones to insert the one
+	     that should be first.  */
+	  if (next_load_seg != NULL)
 	    {
-	      *first_load_seg = first_next;
-	      *next_load_seg = next_next;
+	      Elf_Internal_Phdr move_phdr;
+	      struct elf_segment_map *first_seg = *first_load_seg;
+	      struct elf_segment_map *next_seg = *next_load_seg;
+	      struct elf_segment_map *first_next = first_seg->next;
+	      struct elf_segment_map *next_next = next_seg->next;
 
-	      first_seg->next = *next_load_seg;
-	      *next_load_seg = first_seg;
+	      if (next_load_seg == &first_seg->next)
+		{
+		  *first_load_seg = next_seg;
+		  next_seg->next = first_seg;
+		  first_seg->next = next_next;
+		}
+	      else
+		{
+		  *first_load_seg = first_next;
+		  *next_load_seg = next_next;
 
-	      next_seg->next = *first_load_seg;
-	      *first_load_seg = next_seg;
+		  first_seg->next = *next_load_seg;
+		  *next_load_seg = first_seg;
+
+		  next_seg->next = *first_load_seg;
+		  *first_load_seg = next_seg;
+		}
+
+	      move_phdr = *next_load_phdr;
+	      memmove (first_load_phdr + 1, first_load_phdr,
+		       (next_load_phdr - first_load_phdr) * sizeof move_phdr);
+	      *first_load_phdr = move_phdr;
 	    }
-
-	  move_phdr = *next_load_phdr;
-	  memmove (first_load_phdr + 1, first_load_phdr,
-		   (next_load_phdr - first_load_phdr) * sizeof move_phdr);
-	  *first_load_phdr = move_phdr;
 	}
     }
 
-  return TRUE;
+  return _bfd_elf_modify_headers (abfd, info);
 }
 
-void
-nacl_final_write_processing (bfd *abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
+bfd_boolean
+nacl_final_write_processing (bfd *abfd)
 {
   struct elf_segment_map *seg;
   for (seg = elf_seg_map (abfd); seg != NULL; seg = seg->next)
@@ -350,4 +358,5 @@ nacl_final_write_processing (bfd *abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
 
 	free (fill);
       }
+  return _bfd_elf_final_write_processing (abfd);
 }

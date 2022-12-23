@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/04/03 17:51:02 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2022/12/23 17:09:17 christos Exp $
 
 SUBDIR+= lib .WAIT usr.bin usr.sbin
 

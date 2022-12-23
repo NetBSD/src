@@ -1,6 +1,6 @@
 # gas target specific configuration file.  This is a -*- sh -*- file.
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,8 +89,8 @@ case ${cpu} in
   pj*)			cpu_type=pj endian=big ;;
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
-  riscv32*)		cpu_type=riscv endian=little arch=riscv32 ;;
   riscv64*)		cpu_type=riscv endian=little arch=riscv64 ;;
+  riscv32* | riscv*)	cpu_type=riscv endian=little arch=riscv32 ;;
   rs6000*)		cpu_type=ppc ;;
   rl78*)		cpu_type=rl78 ;;
   rx)			cpu_type=rx ;;
@@ -176,10 +176,16 @@ case ${generic_target} in
 
   crx-*-elf*)				fmt=elf ;;
 
+  csky-*-elf*abiv1)			fmt=elf em=csky_abiv1 ;;
+  csky-*-elf*)				fmt=elf em=csky_abiv2 ;;
+  csky-*-linux*abiv1)			fmt=elf em=csky_abiv1_linux ;;
+  csky-*-linux*)			fmt=elf em=csky_abiv2_linux ;;
+
   d10v-*-*)				fmt=elf ;;
   d30v-*-*)				fmt=elf ;;
   dlx-*-*)				fmt=elf ;;
 
+  bpf-*-*)				fmt=elf ;;
   epiphany-*-*)				fmt=elf ;;
 
   fr30-*-*)				fmt=elf ;;
@@ -216,7 +222,6 @@ case ${generic_target} in
   i386-*-elfiamcu)			fmt=elf arch=iamcu ;;
   i386-*-elf*)				fmt=elf ;;
   i386-*-fuchsia*)			fmt=elf ;;
-  i386-*-kaos*)				fmt=elf ;;
   i386-*-bsd*)				fmt=aout em=386bsd ;;
   i386-*-nacl*)				fmt=elf em=nacl
     case ${cpu} in
@@ -255,7 +260,6 @@ case ${generic_target} in
     esac ;;
   i386-*-nto-qnx*)			fmt=elf ;;
   i386-*-*nt*)				fmt=coff em=pe ;;
-  i386-*-chaos)				fmt=elf ;;
   i386-*-rdos*)				fmt=elf ;;
   i386-*-darwin*)			fmt=macho ;;
 
@@ -365,6 +369,8 @@ case ${generic_target} in
 
   riscv*-*-*)				fmt=elf endian=little ;;
 
+  rx-*-linux*)				fmt=elf em=linux ;;
+
   s390-*-linux-*)			fmt=elf em=linux ;;
   s390-*-tpf*)				fmt=elf ;;
 
@@ -390,6 +396,7 @@ case ${generic_target} in
 
   sparc-*-linux-*)			fmt=elf em=linux ;;
   sparc-*-solaris*)			fmt=elf em=solaris ;;
+  sparc-*-freebsd*)			fmt=elf em=freebsd ;;
   sparc-*-*bsd*)			fmt=elf em=nbsd ;;
 
   spu-*-elf)				fmt=elf ;;
@@ -422,7 +429,7 @@ case ${generic_target} in
   z8k-*-coff | z8k-*-sim)		fmt=coff ;;
 
   *-*-aout | *-*-scout)			fmt=aout ;;
-  *-*-cloudabi*)			fmt=elf ;;
+  *-*-cloudabi*)			fmt=elf em=cloudabi ;;
   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
   *-*-generic)				fmt=generic ;;
@@ -435,7 +442,7 @@ case ${generic_target} in
 esac
 
 case ${cpu_type} in
-  aarch64 | alpha | arm | i386 | ia64 | microblaze | mips | ns32k | or1k | or1knd | pdp11 | ppc | riscv | sparc | z80 | z8k)
+  aarch64 | alpha | arm | csky | i386 | ia64 | microblaze | mips | ns32k | or1k | or1knd | pdp11 | ppc | riscv | sparc | z80 | z8k)
     bfd_gas=yes
     ;;
 esac

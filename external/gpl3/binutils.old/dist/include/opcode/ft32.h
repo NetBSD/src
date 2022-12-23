@@ -1,5 +1,5 @@
 /* Definitions for decoding the ft32 opcode table.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
 This program is free software; you can redistribute it and/or modify

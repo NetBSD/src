@@ -3,7 +3,7 @@ dnl
 dnl And be careful when changing it!  If you must add tests with square
 dnl brackets, be sure changequote invocations surround it.
 dnl
-dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -50,10 +50,9 @@ AC_ARG_ENABLE(targets,
   *)	    enable_targets=$enableval ;;
 esac])dnl
 
-ac_checking=yes
-if grep '^RELEASE=y' ${srcdir}/../bfd/Makefile.am >/dev/null 2>/dev/null ; then
-  ac_checking=
-fi
+ac_checking=
+. ${srcdir}/../bfd/development.sh
+test "$development" = true && ac_checking=yes
 AC_ARG_ENABLE(checking,
 [  --enable-checking       enable run-time checks],
 [case "${enableval}" in
@@ -112,6 +111,40 @@ AC_ARG_ENABLE(generate_build_notes,
   no)   ac_default_generate_build_notes=0 ;;
 esac])dnl
 
+# Decide if the MIPS assembler should default to enable MIPS fix Loongson3
+# LLSC errata.
+ac_default_mips_fix_loongson3_llsc=unset
+# Provide a configuration option to override the default.
+AC_ARG_ENABLE(mips-fix-loongson3-llsc,
+             AS_HELP_STRING([--enable-mips-fix-loongson3-llsc],
+             [enable MIPS fix Loongson3 LLSC errata]),
+[case "${enableval}" in
+  yes)  ac_default_mips_fix_loongson3_llsc=1 ;;
+  no)   ac_default_mips_fix_loongson3_llsc=0 ;;
+esac])dnl
+
+# Decide if the x86 ELF assembler should default to generating GNU x86
+# used ISA and feature properties.
+ac_default_generate_x86_used_note=unset
+# Provide a configuration option to override the default.
+AC_ARG_ENABLE(x86-used-note,
+	      AS_HELP_STRING([--enable-x86-used-note],
+	      [generate GNU x86 used ISA and feature properties]),
+[case "${enableval}" in
+  yes)  ac_default_generate_x86_used_note=1 ;;
+  no)   ac_default_generate_x86_used_note=0 ;;
+esac])dnl
+
+# Decide if the RISC-V ELF assembler should default to generating attribute.
+ac_default_generate_riscv_attr=unset
+# Provide a configuration option to override the default.
+AC_ARG_ENABLE(default-riscv-attribute,
+	      AS_HELP_STRING([--enable-default-riscv-attribute],
+	      [generate RISC-V arch attribute by default]),
+[case "${enableval}" in
+  yes)  ac_default_generate_riscv_attr=1 ;;
+  no)   ac_default_generate_riscv_attr=0 ;;
+esac])dnl
 
 using_cgen=no
 
@@ -259,7 +292,7 @@ changequote([,])dnl
       mips)
 	# Set mips_cpu to the name of the default CPU.
 	case ${target_cpu} in
-	  mips | mipsbe | mipseb | mipsle | mipsel | mips64 | mips64el)
+	  mips | mipsbe | mipseb | mipsle | mipsel | mips64 | mips64el | mips64eb | mipsn64el | mipsn64eb )
 	    mips_cpu=from-abi
 	    ;;
 	  mipsisa32 | mipsisa32el)
@@ -397,6 +430,12 @@ changequote([,])dnl
 	done
 	;;
 
+      bpf)
+      	if test $this_target = $target ; then
+	  AC_DEFINE_UNQUOTED(DEFAULT_ARCH, "${arch}", [Default architecture.])
+	fi
+        using_cgen=yes
+        ;;
       epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | or1k)
 	using_cgen=yes
 	;;
@@ -433,6 +472,15 @@ changequote([,])dnl
 	;;
 
       nds32)
+	# setup NDS32_LINUX_TOOLCHAIN definition
+	if test "linux" = $em; then
+	  AC_DEFINE(NDS32_LINUX_TOOLCHAIN, 1,
+	    [Define value for nds32_linux_toolchain])
+	else
+	  AC_DEFINE(NDS32_LINUX_TOOLCHAIN, 0,
+	    [Define default value for nds32_linux_toolchain])
+	fi
+
 	# Decide BASELINE, REDUCED_REGS, FPU_DP_EXT, FPU_SP_EXT features
 	# based on arch_name.
 	AC_MSG_CHECKING(for default configuration of --with-arch)
@@ -499,6 +547,26 @@ changequote([,])dnl
 		    [Define default value for nds32_audio_ext])
 	fi
 	AC_MSG_RESULT($enable_audio_ext)
+
+	AC_MSG_CHECKING(for default configuration of --enable-dsp-ext)
+	if test "x${enable_dsp_ext}" = xno; then
+	  AC_DEFINE(NDS32_DEFAULT_DSP_EXT, 0,
+		    [Define value for nds32_dsp_ext])
+	else
+	  AC_DEFINE(NDS32_DEFAULT_DSP_EXT, 1,
+		    [Define default value for nds32_dsp_ext])
+	fi
+	AC_MSG_RESULT($enable_dsp_ext)
+
+	AC_MSG_CHECKING(for default configuration of --enable-zol-ext)
+	if test "x${enable_zol_ext}" = xno; then
+	  AC_DEFINE(NDS32_DEFAULT_ZOL_EXT, 0,
+		    [Define value for nds32_zol_ext])
+	else
+	  AC_DEFINE(NDS32_DEFAULT_ZOL_EXT, 1,
+		    [Define default value for nds32_zol_ext])
+	fi
+	AC_MSG_RESULT($enable_zol_ext)
 	;;
 
       aarch64 | i386 | riscv | s390 | sparc)
@@ -612,6 +680,36 @@ AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_BUILD_NOTES,
   $ac_default_generate_build_notes,
   [Define to 1 if you want to generate GNU Build attribute notes
    by default, if none are contained in the input.])
+
+if test ${ac_default_generate_x86_used_note} = unset; then
+  ac_default_generate_x86_used_note=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_X86_USED_NOTE,
+  $ac_default_generate_x86_used_note,
+  [Define to 1 if you want to generate GNU x86 used ISA and feature
+   properties by default.])
+
+if test ${ac_default_generate_riscv_attr} = unset; then
+    case ${target_os} in
+      elf)
+	ac_default_generate_riscv_attr=1
+	;;
+      *)
+	ac_default_generate_riscv_attr=0
+	;;
+  esac
+fi
+
+AC_DEFINE_UNQUOTED(DEFAULT_RISCV_ATTR,
+  $ac_default_generate_riscv_attr,
+  [Define to 1 if you want to generate RISC-V arch attribute by default.])
+
+if test ${ac_default_mips_fix_loongson3_llsc} = unset; then
+  ac_default_mips_fix_loongson3_llsc=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_MIPS_FIX_LOONGSON3_LLSC,
+  $ac_default_mips_fix_loongson3_llsc,
+  [Define to 1 if you want to fix Loongson3 LLSC Errata by default.])
 
 if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])

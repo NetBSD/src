@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.6 2020/04/03 17:51:47 christos Exp $ */
+/* $NetBSD: dbsym.c,v 1.7 2022/12/23 17:09:56 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.6 2020/04/03 17:51:47 christos Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.7 2022/12/23 17:09:56 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

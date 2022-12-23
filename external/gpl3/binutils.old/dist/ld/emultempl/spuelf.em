@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra spu specific
+# This file is sourced from elf.em, and defines extra spu specific
 # features.
 #
 fragment <<EOF
@@ -142,7 +142,7 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
     os = lang_output_section_find (output_name);
   if (os == NULL)
     {
-      os = gld${EMULATION_NAME}_place_orphan (s, output_name, 0);
+      os = ldelf_place_orphan (s, output_name, 0);
       os->addr_tree = NULL;
     }
   else if (params.ovly_flavour != ovly_soft_icache
@@ -290,7 +290,7 @@ spu_before_allocation (void)
 	    }
 
 	  /* Ensure alignment of overlay sections is sufficient.  */
-	  for (os = &lang_output_section_statement.head->output_section_statement;
+	  for (os = (void *) lang_os_list.head;
 	       os != NULL;
 	       os = os->next)
 	    if (os->bfd_section != NULL
@@ -512,9 +512,9 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
     return FALSE;
   close (fd);
 
-  for (search = (lang_input_statement_type *) input_file_chain.head;
+  for (search = (void *) input_file_chain.head;
        search != NULL;
-       search = (lang_input_statement_type *) search->next_real_file)
+       search = search->next_real_file)
     if (search->filename != NULL)
       {
 	const char *infile = base_name (search->filename);
@@ -575,7 +575,7 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
   new_ent->header.next = entry->header.next;
   entry->header.next = new_ent;
   new_ent->input_statement.next_real_file = entry->next_real_file;
-  entry->next_real_file = new_ent;
+  entry->next_real_file = &new_ent->input_statement;
 
   /* Ensure bfd sections are excluded from the output.  */
   bfd_section_list_clear (entry->the_bfd);

@@ -1,6 +1,6 @@
 /* Table of opcodes for the Texas Instruments TMS320C[34]X family.
 
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
   
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
    
@@ -23,11 +23,13 @@
 #define IS_CPU_TIC4X(v) ((v) ==  0 || (v) == 40 || (v) == 44)
 
 /* Define some bitfield extraction/insertion macros.  */
-#define EXTR(inst, m, l)          ((inst) << (31 - (m)) >> (31 - ((m) - (l)))) 
-#define EXTRU(inst, m, l)         EXTR ((unsigned long)(inst), (m), (l))
-#define EXTRS(inst, m, l)         EXTR ((long)(inst), (m), (l))
-#define INSERTU(inst, val, m, l)  (inst |= ((val) << (l))) 
-#define INSERTS(inst, val, m, l)  INSERTU (inst, ((val) & ((1 << ((m) - (l) + 1)) - 1)), m, l)
+#define EXTRU(inst, m, l) \
+  (((inst) >> (l)) & ((2u << ((m) - (l))) - 1))
+#define EXTRS(inst, m, l) \
+  ((int) ((EXTRU (inst, m, l) ^ (1u << ((m) - (l)))) - (1u << ((m) - (l)))))
+#define INSERTU(inst, val, m, l) \
+  ((inst) |= ((val) & ((2u << ((m) - (l))) - 1)) << (l))
+#define INSERTS INSERTU
 
 /* Define register numbers.  */
 typedef enum

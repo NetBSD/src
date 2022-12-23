@@ -11,7 +11,7 @@ OUTPUT_FORMAT="elf32-bigmips"
 BIG_OUTPUT_FORMAT="elf32-bigmips"
 LITTLE_OUTPUT_FORMAT="elf32-littlemips"
 
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 EXTRA_EM_FILE=mipself
 
 # Note: use "x$var" not x"$var" in case directive in order to work around bug in bash 4.2
@@ -78,7 +78,7 @@ OTHER_SDATA_SECTIONS="
 "
 
 # Magic symbols.
-TEXT_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_ftext = .${CREATE_SHLIB+)};"
+TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .); ${CREATE_SHLIB+PROVIDE (}_ftext = .${CREATE_SHLIB+)};"
 DATA_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fdata = .${CREATE_SHLIB+)};"
 OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fbss = .${CREATE_SHLIB+)};"
 
@@ -88,6 +88,7 @@ if test -z "${CREATE_SHLIB}"; then
 fi
 INITIAL_READONLY_SECTIONS="${INITIAL_READONLY_SECTIONS}
   .MIPS.abiflags      ${RELOCATING-0} : { *(.MIPS.abiflags) }
+  .MIPS.xhash      ${RELOCATING-0} : { *(.MIPS.xhash) }
   .reginfo      ${RELOCATING-0} : { *(.reginfo) }"
 # Discard any .MIPS.content* or .MIPS.events* sections.  The linker
 # doesn't know how to adjust them.

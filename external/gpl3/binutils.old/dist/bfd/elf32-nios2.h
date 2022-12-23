@@ -1,5 +1,5 @@
 /* Nios II support for 32-bit ELF
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Mentor Graphics
 
    This file is part of BFD, the Binary File Descriptor library.

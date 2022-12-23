@@ -1,5 +1,5 @@
 SCRIPT_NAME=elf
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 OUTPUT_FORMAT="elf32-tic6x-le"
 BIG_OUTPUT_FORMAT="elf32-tic6x-be"
 EXTRA_EM_FILE=tic6xdsbt
@@ -15,8 +15,8 @@ case ${target} in
 	TEXT_START_ADDR=0x0
 	GOT="
 .got ${RELOCATING-0} : {
-  *(.dsbt)
-  *(.got.plt) *(.igot.plt) *(.got) *(.igot)
+  ${RELOCATING+*(.dsbt)
+  *(.got.plt) *(.igot.plt) }*(.got)${RELOCATING+ *(.igot)}
 }"
 	;;
 esac
@@ -32,9 +32,12 @@ SBSS_NAME="bss"
 BSS_NAME="far"
 OTHER_READONLY_SECTIONS="
   .c6xabi.extab ${RELOCATING-0} : { *(.c6xabi.extab${RELOCATING+* .gnu.linkonce.c6xabiextab.*}) }
-  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_start = .); }
-  .c6xabi.exidx ${RELOCATING-0} : { *(.c6xabi.exidx${RELOCATING+* .gnu.linkonce.c6xabiexidx.*}) }
-  ${RELOCATING+ PROVIDE_HIDDEN (__exidx_end = .); }"
+  .c6xabi.exidx ${RELOCATING-0} :
+    {
+      ${RELOCATING+PROVIDE_HIDDEN (__exidx_start = .);}
+      *(.c6xabi.exidx${RELOCATING+* .gnu.linkonce.c6xabiexidx.*})
+      ${RELOCATING+PROVIDE_HIDDEN (__exidx_end = .);}
+    }"
 OTHER_SDATA_SECTIONS=".rodata ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.*}) }"
 OTHER_READONLY_RELOC_SECTIONS="
   .rel.rodata   ${RELOCATING-0} : { *(.rel.rodata${RELOCATING+ .rel.rodata.*}) }

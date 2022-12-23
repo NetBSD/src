@@ -1,6 +1,6 @@
 // aarch64.cc -- aarch64 target support for gold.
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 // Written by Jing Yu <jingyu@google.com> and Han Shen <shenhan@google.com>.
 
 // This file is part of gold.
@@ -6495,6 +6495,17 @@ Target_aarch64<size, big_endian>::Scan::global(
 	{
 	  gold_error(_("%s: unsupported reloc %u in pos independent link."),
 		     object->name().c_str(), r_type);
+	}
+      // Make a PLT entry if necessary.
+      if (gsym->needs_plt_entry())
+	{
+	  target->make_plt_entry(symtab, layout, gsym);
+	  // Since this is not a PC-relative relocation, we may be
+	  // taking the address of a function. In that case we need to
+	  // set the entry in the dynamic symbol table to the address of
+	  // the PLT entry.
+	  if (gsym->is_from_dynobj() && !parameters->options().shared())
+	    gsym->set_needs_dynsym_value();
 	}
       break;
 

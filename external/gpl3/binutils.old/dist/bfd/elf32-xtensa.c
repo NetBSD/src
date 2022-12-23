@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,6 +32,9 @@
 #include "xtensa-isa.h"
 #include "xtensa-config.h"
 
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
+
 #define XTENSA_NO_NOP_REMOVAL 0
 
 /* Local helper functions.  */
@@ -62,6 +65,8 @@ static bfd_boolean is_l32r_relocation
 static bfd_boolean is_alt_relocation (int);
 static bfd_boolean is_operand_relocation (int);
 static bfd_size_type insn_decode_len
+  (bfd_byte *, bfd_size_type, bfd_size_type);
+static int insn_num_slots
   (bfd_byte *, bfd_size_type, bfd_size_type);
 static xtensa_opcode insn_decode_opcode
   (bfd_byte *, bfd_size_type, bfd_size_type, int);
@@ -1102,9 +1107,7 @@ elf_xtensa_check_relocs (bfd *abfd,
 	case R_XTENSA_GNU_VTENTRY:
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  continue;
 
@@ -1320,21 +1323,21 @@ elf_xtensa_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
 
   /* Mark the ".got.plt" section READONLY.  */
   if (htab->elf.sgotplt == NULL
-      || ! bfd_set_section_flags (dynobj, htab->elf.sgotplt, flags))
+      || !bfd_set_section_flags (htab->elf.sgotplt, flags))
     return FALSE;
 
   /* Create ".got.loc" (literal tables for use by dynamic linker).  */
   htab->sgotloc = bfd_make_section_anyway_with_flags (dynobj, ".got.loc",
 						      flags);
   if (htab->sgotloc == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->sgotloc, 2))
+      || !bfd_set_section_alignment (htab->sgotloc, 2))
     return FALSE;
 
   /* Create ".xt.lit.plt" (literal table for ".got.plt*").  */
   htab->spltlittbl = bfd_make_section_anyway_with_flags (dynobj, ".xt.lit.plt",
 							 noalloc_flags);
   if (htab->spltlittbl == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->spltlittbl, 2))
+      || !bfd_set_section_alignment (htab->spltlittbl, 2))
     return FALSE;
 
   return TRUE;
@@ -1366,14 +1369,14 @@ add_extra_plt_sections (struct bfd_link_info *info, int count)
       sprintf (sname, ".plt.%u", chunk);
       s = bfd_make_section_anyway_with_flags (dynobj, sname, flags | SEC_CODE);
       if (s == NULL
-	  || ! bfd_set_section_alignment (dynobj, s, 2))
+	  || !bfd_set_section_alignment (s, 2))
 	return FALSE;
 
       sname = (char *) bfd_malloc (14);
       sprintf (sname, ".got.plt.%u", chunk);
       s = bfd_make_section_anyway_with_flags (dynobj, sname, flags);
       if (s == NULL
-	  || ! bfd_set_section_alignment (dynobj, s, 2))
+	  || !bfd_set_section_alignment (s, 2))
 	return FALSE;
     }
 
@@ -1626,7 +1629,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (CONST_STRNEQ (name, ".rela"))
 	{
@@ -1957,8 +1960,9 @@ elf_xtensa_do_reloc (reloc_howto_type *howto,
 	}
       else if (opcode == get_const16_opcode ())
 	{
-	  /* ALT used for high 16 bits.  */
-	  newval = relocation >> 16;
+	  /* ALT used for high 16 bits.
+	     Ignore 32-bit overflow.  */
+	  newval = (relocation >> 16) & 0xffff;
 	  opnd = 1;
 	}
       else
@@ -2102,7 +2106,8 @@ bfd_elf_xtensa_reloc (bfd *abfd,
 {
   bfd_vma relocation;
   bfd_reloc_status_type flag;
-  bfd_size_type octets = reloc_entry->address * bfd_octets_per_byte (abfd);
+  bfd_size_type octets = (reloc_entry->address
+			  * OCTETS_PER_BYTE (abfd, input_section));
   bfd_vma output_base = 0;
   reloc_howto_type *howto = reloc_entry->howto;
   asection *reloc_target_output_section;
@@ -2458,7 +2463,11 @@ elf_xtensa_relocate_section (bfd *output_bfd,
   if (!xtensa_default_isa)
     xtensa_default_isa = xtensa_isa_init (0, 0);
 
-  BFD_ASSERT (is_xtensa_elf (input_bfd));
+  if (!is_xtensa_elf (input_bfd))
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return FALSE;
+    }
 
   htab = elf_xtensa_hash_table (info);
   if (htab == NULL)
@@ -2682,7 +2691,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  name = (bfd_elf_string_from_elf_section
 		  (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	  if (name == NULL || *name == '\0')
-	    name = bfd_section_name (input_bfd, sec);
+	    name = bfd_section_name (sec);
 	}
 
       if (r_symndx != STN_UNDEF
@@ -3156,7 +3165,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 {
   struct elf_xtensa_link_hash_table *htab;
   bfd *dynobj;
-  asection *sdyn, *srelplt, *sgot, *sxtlit, *sgotloc;
+  asection *sdyn, *srelplt, *srelgot, *sgot, *sxtlit, *sgotloc;
   Elf32_External_Dyn *dyncon, *dynconend;
   int num_xtlit_entries = 0;
 
@@ -3186,15 +3195,15 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
     }
 
   srelplt = htab->elf.srelplt;
+  srelgot = htab->elf.srelgot;
   if (srelplt && srelplt->size != 0)
     {
-      asection *sgotplt, *srelgot, *spltlittbl;
+      asection *sgotplt, *spltlittbl;
       int chunk, plt_chunks, plt_entries;
       Elf_Internal_Rela irela;
       bfd_byte *loc;
       unsigned rtld_reloc;
 
-      srelgot = htab->elf.srelgot;
       spltlittbl = htab->spltlittbl;
       BFD_ASSERT (srelgot != NULL && spltlittbl != NULL);
 
@@ -3260,14 +3269,6 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 		      spltlittbl->contents + (chunk * 8) + 4);
 	}
 
-      /* All the dynamic relocations have been emitted at this point.
-	 Make sure the relocation sections are the correct size.  */
-      if (srelgot->size != (sizeof (Elf32_External_Rela)
-			    * srelgot->reloc_count)
-	  || srelplt->size != (sizeof (Elf32_External_Rela)
-			       * srelplt->reloc_count))
-	abort ();
-
      /* The .xt.lit.plt section has just been modified.  This must
 	happen before the code below which combines adjacent literal
 	table entries, and the .xt.lit.plt contents have to be forced to
@@ -3281,6 +3282,14 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
       /* Clear SEC_HAS_CONTENTS so the contents won't be output again.  */
       spltlittbl->flags &= ~SEC_HAS_CONTENTS;
     }
+
+  /* All the dynamic relocations have been emitted at this point.
+     Make sure the relocation sections are the correct size.  */
+  if ((srelgot && srelgot->size != (sizeof (Elf32_External_Rela)
+				    * srelgot->reloc_count))
+      || (srelplt && srelplt->size != (sizeof (Elf32_External_Rela)
+				       * srelplt->reloc_count)))
+    abort ();
 
   /* Combine adjacent literal table entries.  */
   BFD_ASSERT (! bfd_link_relocatable (info));
@@ -3459,12 +3468,11 @@ elf_xtensa_object_p (bfd *abfd)
    file.  This gets the Xtensa architecture right based on the machine
    number.  */
 
-static void
-elf_xtensa_final_write_processing (bfd *abfd,
-				   bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf_xtensa_final_write_processing (bfd *abfd)
 {
   int mach;
-  unsigned long val;
+  unsigned long val = elf_elfheader (abfd)->e_flags & EF_XTENSA_MACH;
 
   switch (mach = bfd_get_mach (abfd))
     {
@@ -3472,11 +3480,12 @@ elf_xtensa_final_write_processing (bfd *abfd,
       val = E_XTENSA_MACH;
       break;
     default:
-      return;
+      break;
     }
 
-  elf_elfheader (abfd)->e_flags &=  (~ EF_XTENSA_MACH);
+  elf_elfheader (abfd)->e_flags &= ~EF_XTENSA_MACH;
   elf_elfheader (abfd)->e_flags |= val;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 
@@ -3854,6 +3863,33 @@ l32r_offset (bfd_vma addr, bfd_vma pc)
 }
 
 
+static xtensa_opcode
+get_rsr_lend_opcode (void)
+{
+  static xtensa_opcode rsr_lend_opcode = XTENSA_UNDEFINED;
+  static bfd_boolean done_lookup = FALSE;
+  if (!done_lookup)
+    {
+      rsr_lend_opcode = xtensa_opcode_lookup (xtensa_default_isa, "rsr.lend");
+      done_lookup = TRUE;
+    }
+  return rsr_lend_opcode;
+}
+
+static xtensa_opcode
+get_wsr_lbeg_opcode (void)
+{
+  static xtensa_opcode wsr_lbeg_opcode = XTENSA_UNDEFINED;
+  static bfd_boolean done_lookup = FALSE;
+  if (!done_lookup)
+    {
+      wsr_lbeg_opcode = xtensa_opcode_lookup (xtensa_default_isa, "wsr.lbeg");
+      done_lookup = TRUE;
+    }
+  return wsr_lbeg_opcode;
+}
+
+
 static int
 get_relocation_opnd (xtensa_opcode opcode, int r_type)
 {
@@ -4054,6 +4090,28 @@ insn_decode_len (bfd_byte *contents,
   return insn_len;
 }
 
+int
+insn_num_slots (bfd_byte *contents,
+		bfd_size_type content_len,
+		bfd_size_type offset)
+{
+  xtensa_isa isa = xtensa_default_isa;
+  xtensa_format fmt;
+  static xtensa_insnbuf ibuff = NULL;
+
+  if (offset + MIN_INSN_LENGTH > content_len)
+    return XTENSA_UNDEFINED;
+
+  if (ibuff == NULL)
+    ibuff = xtensa_insnbuf_alloc (isa);
+  xtensa_insnbuf_from_chars (isa, ibuff, &contents[offset],
+			     content_len - offset);
+  fmt = xtensa_format_decode (isa, ibuff);
+  if (fmt == XTENSA_UNDEFINED)
+    return XTENSA_UNDEFINED;
+  return xtensa_format_num_slots (isa, fmt);
+}
+
 
 /* Decode the opcode for a single slot instruction.
    Return 0 if it fails to decode or the instruction is multi-slot.  */
@@ -4133,6 +4191,20 @@ check_loop_aligned (bfd_byte *contents,
       return FALSE;
     }
 
+  /* If this is relaxed loop, analyze first instruction of the actual loop
+     body.  It must be at offset 27 from the loop instruction address.  */
+  if (insn_len == 3
+      && insn_num_slots (contents, content_length, offset + loop_len) == 1
+      && insn_decode_opcode (contents, content_length,
+			     offset + loop_len, 0) == get_rsr_lend_opcode()
+      && insn_decode_len (contents, content_length, offset + loop_len + 3) == 3
+      && insn_num_slots (contents, content_length, offset + loop_len + 3) == 1
+      && insn_decode_opcode (contents, content_length,
+			     offset + loop_len + 3, 0) == get_wsr_lbeg_opcode())
+    {
+      loop_len = 27;
+      insn_len = insn_decode_len (contents, content_length, offset + loop_len);
+    }
   return check_branch_target_aligned_address (address + loop_len, insn_len);
 }
 
@@ -7190,6 +7262,11 @@ is_resolvable_asm_expansion (bfd *abfd,
 			     bfd_boolean *is_reachable_p)
 {
   asection *target_sec;
+  asection *s;
+  bfd_vma first_vma;
+  bfd_vma last_vma;
+  unsigned int first_align;
+  unsigned int adjust;
   bfd_vma target_offset;
   r_reloc r_rel;
   xtensa_opcode opcode, direct_call_opcode;
@@ -7276,6 +7353,56 @@ is_resolvable_asm_expansion (bfd *abfd,
 		      + sec->output_offset + irel->r_offset + 3);
       dest_address = (target_sec->output_section->vma
 		      + target_sec->output_offset + target_offset);
+    }
+
+  /* Adjust addresses with alignments for the worst case to see if call insn
+     can fit.  Don't relax l32r + callx to call if the target can be out of
+     range due to alignment.
+     Caller and target addresses are highest and lowest address.
+     Search all sections between caller and target, looking for max alignment.
+     The adjustment is max alignment bytes.  If the alignment at the lowest
+     address is less than the adjustment, apply the adjustment to highest
+     address.  */
+
+  /* Start from lowest address.
+     Lowest address aligmnet is from input section.
+     Initial alignment (adjust) is from input section.  */
+  if (dest_address > self_address)
+    {
+      s = sec->output_section;
+      last_vma = dest_address;
+      first_align = sec->alignment_power;
+      adjust = target_sec->alignment_power;
+    }
+  else
+    {
+      s = target_sec->output_section;
+      last_vma = self_address;
+      first_align = target_sec->alignment_power;
+      adjust = sec->alignment_power;
+    }
+
+  first_vma = s->vma;
+
+  /* Find the largest alignment in output section list.  */
+  for (; s && s->vma >= first_vma && s->vma <= last_vma ; s = s->next)
+    {
+      if (s->alignment_power > adjust)
+	adjust = s->alignment_power;
+    }
+
+  if (adjust > first_align)
+    {
+      /* Alignment may enlarge the range, adjust highest address.  */
+      adjust = 1 << adjust;
+      if (dest_address > self_address)
+	{
+	  dest_address += adjust;
+	}
+      else
+	{
+	  self_address += adjust;
+	}
     }
 
   *is_reachable_p = pcrel_reloc_fits (direct_call_opcode, 0,
@@ -10022,7 +10149,9 @@ shrink_dynamic_reloc_sections (struct bfd_link_info *info,
   if ((r_type == R_XTENSA_32 || r_type == R_XTENSA_PLT)
       && (input_section->flags & SEC_ALLOC) != 0
       && (dynamic_symbol || bfd_link_pic (info))
-      && (!h || h->root.type != bfd_link_hash_undefweak))
+      && (!h || h->root.type != bfd_link_hash_undefweak
+	  || (dynamic_symbol
+	      && (bfd_link_dll (info) || info->export_dynamic))))
     {
       asection *srel;
       bfd_boolean is_plt = FALSE;
@@ -11119,7 +11248,7 @@ xtensa_make_property_section (asection *sec, const char *base_name)
   if (! prop_sec)
     {
       flagword flags = (SEC_RELOC | SEC_HAS_CONTENTS | SEC_READONLY);
-      flags |= (bfd_get_section_flags (sec->owner, sec)
+      flags |= (bfd_section_flags (sec)
 		& (SEC_LINK_ONCE | SEC_LINK_DUPLICATES));
 
       prop_sec = bfd_make_section_anyway_with_flags

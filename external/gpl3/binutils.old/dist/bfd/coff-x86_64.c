@@ -1,5 +1,5 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -51,6 +51,9 @@
 /* The page size is a guess based on ELF.  */
 
 #define COFF_PAGE_SIZE 0x1000
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 /* For some reason when using AMD COFF the value stored in the .text
    section for a reference to a common symbol is the value itself plus
@@ -141,11 +144,11 @@ coff_amd64_reloc (bfd *abfd,
   if (diff != 0)
     {
       reloc_howto_type *howto = reloc_entry->howto;
-      unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+      bfd_size_type octets = (reloc_entry->address
+			      * OCTETS_PER_BYTE (abfd, input_section));
+      unsigned char *addr = (unsigned char *) data + octets;
 
-      if (! bfd_reloc_offset_in_range (howto, abfd, input_section,
-				       reloc_entry->address
-				       * bfd_octets_per_byte (abfd)))
+      if (!bfd_reloc_offset_in_range (howto, abfd, input_section, octets))
 	return bfd_reloc_outofrange;
 
       switch (howto->size)
@@ -792,19 +795,19 @@ const bfd_target
     _bfd_dummy_target,
     amd64coff_object_p,
     bfd_generic_archive_p,
-    amd64coff_object_p 
+    amd64coff_object_p
   },
   {				/* bfd_set_format.  */
     _bfd_bool_bfd_false_error,
     coff_mkobject,
     _bfd_generic_mkarchive,
-    _bfd_bool_bfd_false_error 
+    _bfd_bool_bfd_false_error
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     coff_write_object_contents,
     _bfd_write_archive_contents,
-    _bfd_bool_bfd_false_error 
+    _bfd_bool_bfd_false_error
   },
 
   BFD_JUMP_TABLE_GENERIC (coff),

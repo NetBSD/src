@@ -1,7 +1,7 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.
 
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ struct internal_extra_pe_filehdr
   unsigned short e_oeminfo;	/* OEM information; e_oemid specific, 0x0 */
   unsigned short e_res2[10];	/* Reserved words, all 0x0 */
   bfd_vma  e_lfanew;		/* File address of new exe header, 0x80 */
-  unsigned long dos_message[16]; /* text which always follows dos header */
+  unsigned int dos_message[16]; /* Text which always follows DOS header.  */
   bfd_vma  nt_signature;   	/* required NT signature, 0x4550 */
 };
 
@@ -197,11 +197,11 @@ struct internal_extra_pe_aouthdr
   /* Linker minor version number.  */
   char MinorLinkerVersion;	
   /* Total size of all code sections.  */
-  long SizeOfCode;
+  bfd_vma SizeOfCode;
   /* Total size of all initialized data sections.  */
-  long SizeOfInitializedData;
+  bfd_vma SizeOfInitializedData;
   /* Total size of all uninitialized data sections.  */
-  long SizeOfUninitializedData;
+  bfd_vma SizeOfUninitializedData;
   /* Address of entry point relative to image base.  */
   bfd_vma AddressOfEntryPoint;
   /* Address of the first code section relative to image base.  */
@@ -211,21 +211,21 @@ struct internal_extra_pe_aouthdr
 
   /* PE stuff  */
   bfd_vma ImageBase;		/* Address of specific location in memory that
-				    file is located, NT default 0x10000.  */
+				   file is located, NT default 0x10000.  */
 
-  bfd_vma SectionAlignment;	/* Section alignment default 0x1000.  */
-  bfd_vma FileAlignment;	/* File alignment default 0x200.  */
-  short   MajorOperatingSystemVersion; /* Minimum version of the operating.  */
-  short   MinorOperatingSystemVersion; /* System req'd for exe, default to 1.  */
-  short   MajorImageVersion;	/* User defineable field to store version of */
-  short   MinorImageVersion;	/*  exe or dll being created, default to 0.  */ 
-  short   MajorSubsystemVersion; /* Minimum subsystem version required to */
-  short   MinorSubsystemVersion; /*  run exe; default to 3.1.  */
-  long    Reserved1;		/* Seems to be 0.  */
-  long    SizeOfImage;		/* Size of memory to allocate for prog.  */
-  long    SizeOfHeaders;	/* Size of PE header and section table.  */
-  long    CheckSum;		/* Set to 0.  */
-  short   Subsystem;	
+  uint32_t SectionAlignment;	/* Section alignment default 0x1000.  */
+  uint32_t FileAlignment;	/* File alignment default 0x200.  */
+  short MajorOperatingSystemVersion; /* Minimum version of the operating.  */
+  short MinorOperatingSystemVersion; /* System req'd for exe, default 1.  */
+  short MajorImageVersion;	/* User defineable field to store version of */
+  short MinorImageVersion;	/*  exe or dll being created, default to 0.  */
+  short MajorSubsystemVersion;	/* Minimum subsystem version required to */
+  short MinorSubsystemVersion;	/*  run exe; default to 3.1.  */
+  uint32_t Reserved1;		/* Seems to be 0.  */
+  uint32_t SizeOfImage;		/* Size of memory to allocate for prog.  */
+  uint32_t SizeOfHeaders;	/* Size of PE header and section table.  */
+  uint32_t CheckSum;		/* Set to 0.  */
+  short Subsystem;
 
   /* Type of subsystem exe uses for user interface,
      possible values:
@@ -237,11 +237,11 @@ struct internal_extra_pe_aouthdr
   unsigned short DllCharacteristics; /* flags for DLL init.  */
   bfd_vma SizeOfStackReserve;	/* Amount of memory to reserve.  */
   bfd_vma SizeOfStackCommit;	/* Amount of memory initially committed for
-				    initial thread's stack, default is 0x1000.  */
+				   initial thread's stack, default 0x1000.  */
   bfd_vma SizeOfHeapReserve;	/* Amount of virtual memory to reserve and */
   bfd_vma SizeOfHeapCommit;	/*  commit, don't know what to defaut it to.  */
-  long    LoaderFlags;		/* Can probably set to 0.  */
-  long    NumberOfRvaAndSizes;	/* Number of entries in next entry, 16.  */
+  uint32_t LoaderFlags;		/* Can probably set to 0.  */
+  uint32_t NumberOfRvaAndSizes;	/* Number of entries in next entry, 16.  */
   IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 };
 
@@ -808,5 +808,11 @@ struct internal_reloc
 #define R_OFF8    0x32		/* 8 bit signed abs, for (i[xy]+d) */
 #define R_IMM24   0x33          /* 24 bit abs */
 /* R_JR, R_IMM8, R_IMM16, R_IMM32 - as for Z8k */
+#define R_BYTE0  0x34		/* first (lowest) 8 bits of multibyte value */
+#define R_BYTE1  0x35		/* second 8 bits of multibyte value */
+#define R_BYTE2  0x36		/* third 8 bits of multibyte value */
+#define R_BYTE3  0x37		/* fourth (highest) 8 bits of multibyte value */
+#define R_WORD0  0x38		/* lowest 16 bits of 32 or 24 bit value */
+#define R_WORD1  0x39		/* highest 16 bits of 32 or 24 bit value */
 
 #endif /* GNU_COFF_INTERNAL_H */

@@ -1,6 +1,6 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -39,7 +39,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -59,7 +59,7 @@ SECTIONS
   .text ${RELOCATING+ __image_base__ + __section_alignment__ } :
   {
     ${RELOCATING+ __text_start__ = . ;}
-    ${RELOCATING+ *(.init)}
+    ${RELOCATING+ KEEP (*(SORT_NONE(.init)))}
     *(.text)
     ${R_TEXT}
     *(.glue_7t)
@@ -68,8 +68,8 @@ SECTIONS
 			LONG (-1); *(.ctors); *(.ctor); LONG (0); }
     ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
 			LONG (-1); *(.dtors); *(.dtor);  LONG (0); }
-    ${RELOCATING+ *(.fini)}
-    /* ??? Why is .gcc_exc here?  */
+    ${RELOCATING+ KEEP (*(SORT_NONE(.fini)))}
+    ${RELOCATING+/* ??? Why is .gcc_exc here?  */}
     ${RELOCATING+ *(.gcc_exc)}
     ${RELOCATING+ etext = .;}
     ${RELOCATING+ __text_end__ = .;}

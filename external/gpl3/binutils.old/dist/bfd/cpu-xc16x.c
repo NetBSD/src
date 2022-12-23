@@ -1,5 +1,5 @@
 /* BFD support for the Infineon XC16X Microcontroller.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,53 +24,30 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(BITS_ADDR, NUMBER, PRINT, DEFAULT, NEXT)	\
+  {							\
+    16,        /* Bits in a word.  */			\
+    BITS_ADDR, /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
+    bfd_arch_xc16x,					\
+    NUMBER,						\
+    "xc16x",						\
+    PRINT,						\
+    1,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type xc16xs_info_struct =
-{
-  16,				/* Bits per word.  */
-  16,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_xc16x,		/* Architecture.  */
-  bfd_mach_xc16xs,		/* Machine.  */
-  "xc16x",			/* Architecture name.  */
-  "xc16xs",			/* Printable name.  */
-  1,				/* Section alignment - 16 bit.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* Next in list.  */
-};
+  N (16, bfd_mach_xc16xs, "xc16xs", FALSE, NULL);
 
 const bfd_arch_info_type xc16xl_info_struct =
-{
-  16,				/* Bits per word.  */
-  32,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_xc16x,		/* Architecture.  */
-  bfd_mach_xc16xl,		/* Machine.  */
-  "xc16x",			/* Architecture name.  */
-  "xc16xl",			/* Printable name.  */
-  1,				/* Section alignment - 16 bit.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  & xc16xs_info_struct		/* Next in list.  */
-};
+  N (32, bfd_mach_xc16xl, "xc16xl", FALSE, & xc16xs_info_struct);
 
 const bfd_arch_info_type bfd_xc16x_arch =
-{
-  16,				/* Bits per word.  */
-  16,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_xc16x,		/* Architecture.  */
-  bfd_mach_xc16x,		/* Machine.  */
-  "xc16x",			/* Architecture name.  */
-  "xc16x",			/* Printable name.  */
-  1,				/* Section alignment - 16 bit.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  & xc16xl_info_struct		/* Next in list.  */
-};
+  N (16, bfd_mach_xc16x, "xc16x", TRUE, & xc16xl_info_struct);
+

@@ -574,3 +574,14 @@ the current directory.
 otherwise a pointer to a heap-allocated string containing the
 filename.  The caller is responsible for freeing this string.
 
+@findex bfd_set_filename
+@subsubsection @code{bfd_set_filename}
+@strong{Synopsis}
+@example
+void bfd_set_filename (bfd *abfd, char *filename);
+@end example
+@strong{Description}@*
+Set the filename of @var{abfd}.  The old filename, if any, is freed.
+@var{filename} must be allocated using @code{xmalloc}.  After
+this call, it is owned @var{abfd}.
+

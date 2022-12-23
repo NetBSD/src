@@ -1,5 +1,5 @@
 /* Opcode decoder for the Renesas RX
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -38,6 +38,7 @@ typedef enum
   RX_SWord,
   RX_3Byte,
   RX_Long,
+  RX_Double,
   RX_Bad_Size,
   RX_MAX_SIZE
 } RX_Size;
@@ -54,6 +55,11 @@ typedef enum
   RX_Operand_Condition,	/* eq, gtu, etc */
   RX_Operand_Flag,	/* [UIOSZC] */
   RX_Operand_TwoReg,	/* [Rn + scale*R2] */
+  RX_Operand_DoubleReg,	/* DRn */
+  RX_Operand_DoubleRegH,/* DRHn */
+  RX_Operand_DoubleRegL,/* DRLn */
+  RX_Operand_DoubleCReg,/* DCRxx */
+  RX_Operand_DoubleCond,/* UN/EQ/LE/LT */
 } RX_Operand_Type;
 
 typedef enum
@@ -180,6 +186,32 @@ typedef enum
   RXO_racl,
   RXO_rdacl,
   RXO_rdacw,
+
+  RXO_bfmov,
+  RXO_bfmovz,
+  RXO_rstr,
+  RXO_save,
+  RXO_dmov,
+  RXO_dpopm,
+  RXO_dpushm,
+  RXO_mvfdc,
+  RXO_mvfdr,
+  RXO_mvtdc,
+  RXO_dabs,
+  RXO_dadd,
+  RXO_dcmp,
+  RXO_ddiv,
+  RXO_dmul,
+  RXO_dneg,
+  RXO_dround,
+  RXO_dsqrt,
+  RXO_dsub,
+  RXO_dtoi,
+  RXO_dtof,
+  RXO_dtou,
+  RXO_ftod,
+  RXO_itod,
+  RXO_utod
 } RX_Opcode_ID;
 
 /* Condition bitpatterns, as registers.  */
