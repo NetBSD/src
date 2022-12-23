@@ -1,5 +1,5 @@
 /* addr2line.c -- convert addresses to line number and function name
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Ulrich Lauther <Ulrich.Lauther@mchp.siemens.de>
 
    This file is part of GNU Binutils.
@@ -45,6 +45,9 @@ static bfd_boolean do_demangle;		/* -C, demangle names.  */
 static bfd_boolean pretty_print;	/* -p, print on one line.  */
 static bfd_boolean base_names;		/* -s, strip directory names.  */
 
+/* Flags passed to the name demangler.  */
+static int demangle_flags = DMGL_PARAMS | DMGL_ANSI;
+
 static int naddr;		/* Number of addresses to process.  */
 static char **addr;		/* Hex addresses to process.  */
 
@@ -59,6 +62,10 @@ static struct option long_options[] =
   {"functions", no_argument, NULL, 'f'},
   {"inlines", no_argument, NULL, 'i'},
   {"pretty-print", no_argument, NULL, 'p'},
+  {"recurse-limit", no_argument, NULL, 'R'},
+  {"recursion-limit", no_argument, NULL, 'R'},  
+  {"no-recurse-limit", no_argument, NULL, 'r'},
+  {"no-recursion-limit", no_argument, NULL, 'r'},  
   {"section", required_argument, NULL, 'j'},
   {"target", required_argument, NULL, 'b'},
   {"help", no_argument, NULL, 'H'},
@@ -91,6 +98,8 @@ usage (FILE *stream, int status)
   -s --basenames         Strip directory names\n\
   -f --functions         Show function names\n\
   -C --demangle[=style]  Demangle function names\n\
+  -R --recurse-limit     Enable a limit on recursion whilst demangling.  [Default]\n\
+  -r --no-recurse-limit  Disable a limit on recursion whilst demangling\n\
   -h --help              Display this information\n\
   -v --version           Display the program's version\n\
 \n"));
@@ -173,14 +182,14 @@ find_address_in_section (bfd *abfd, asection *section,
   if (found)
     return;
 
-  if ((bfd_get_section_flags (abfd, section) & SEC_ALLOC) == 0)
+  if ((bfd_section_flags (section) & SEC_ALLOC) == 0)
     return;
 
-  vma = bfd_get_section_vma (abfd, section);
+  vma = bfd_section_vma (section);
   if (pc < vma)
     return;
 
-  size = bfd_get_section_size (section);
+  size = bfd_section_size (section);
   if (pc >= vma + size)
     return;
 
@@ -199,10 +208,10 @@ find_offset_in_section (bfd *abfd, asection *section)
   if (found)
     return;
 
-  if ((bfd_get_section_flags (abfd, section) & SEC_ALLOC) == 0)
+  if ((bfd_section_flags (section) & SEC_ALLOC) == 0)
     return;
 
-  size = bfd_get_section_size (section);
+  size = bfd_section_size (section);
   if (pc >= size)
     return;
 
@@ -289,7 +298,7 @@ translate_addresses (bfd *abfd, asection *section)
                     name = "??";
                   else if (do_demangle)
                     {
-                      alloc = bfd_demangle (abfd, name, DMGL_ANSI | DMGL_PARAMS);
+                      alloc = bfd_demangle (abfd, name, demangle_flags);
                       if (alloc != NULL)
                         name = alloc;
                     }
@@ -435,13 +444,14 @@ main (int argc, char **argv)
 
   expandargv (&argc, &argv);
 
-  bfd_init ();
+  if (bfd_init () != BFD_INIT_MAGIC)
+    fatal (_("fatal error: libbfd ABI mismatch"));
   set_default_bfd_target ();
 
   file_name = NULL;
   section_name = NULL;
   target = NULL;
-  while ((c = getopt_long (argc, argv, "ab:Ce:sfHhij:pVv", long_options, (int *) 0))
+  while ((c = getopt_long (argc, argv, "ab:Ce:rRsfHhij:pVv", long_options, (int *) 0))
 	 != EOF)
     {
       switch (c)
@@ -467,6 +477,12 @@ main (int argc, char **argv)
 
 	      cplus_demangle_set_style (style);
 	    }
+	  break;
+	case 'r':
+	  demangle_flags |= DMGL_NO_RECURSE_LIMIT;
+	  break;
+	case 'R':
+	  demangle_flags &= ~ DMGL_NO_RECURSE_LIMIT;
 	  break;
 	case 'e':
 	  file_name = optarg;

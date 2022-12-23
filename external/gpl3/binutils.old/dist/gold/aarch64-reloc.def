@@ -1,6 +1,6 @@
 // aarch64-reloc.def -- AArch64 relocation definitions.
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 // Written by Han Shen <shenhan@google.com> and Jing Yu <jingyu@google.com>.
 
 // This file is part of gold.

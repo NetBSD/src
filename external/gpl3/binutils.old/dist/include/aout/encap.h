@@ -1,5 +1,5 @@
 /* Yet Another Try at encapsulating bfd object files in coff.
-   Copyright (C) 1988-2018 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
    Written by Pace Willisson 12/9/88
 
    This file is obsolete.  It needs to be converted to just define a bunch

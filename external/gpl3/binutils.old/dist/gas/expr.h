@@ -1,5 +1,5 @@
 /* expr.h -> header file for expr.c
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -187,3 +187,5 @@ extern symbolS *expr_build_uconstant (offsetT);
 extern symbolS *expr_build_dot (void);
 
 int resolve_expression (expressionS *);
+
+extern bfd_boolean literal_prefix_dollar_hex;

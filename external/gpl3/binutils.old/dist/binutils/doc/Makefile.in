@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,7 +127,9 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/zlib.m4 $(top_srcdir)/../libtool.m4 \
 	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
 	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
-	$(top_srcdir)/../bfd/version.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/../bfd/version.m4 \
+	$(top_srcdir)/../config/debuginfod.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -284,6 +286,7 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+LIBDEBUGINFOD = @LIBDEBUGINFOD@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
 LIBINTL_DEP = @LIBINTL_DEP@
@@ -427,13 +430,7 @@ AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 		    -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
 
-MOSTLYCLEANFILES = $(DEMANGLER_NAME).1
-MAINTAINERCLEANFILES = binutils.info
-
-# Automake 1.9 will only build info files in the objdir if they are
-# mentioned in DISTCLEANFILES.  It doesn't have to be unconditional,
-# though, so we use a bogus condition.
-@GENINSRC_NEVER_TRUE@DISTCLEANFILES = binutils.info
+MOSTLYCLEANFILES = $(man_MANS) binutils.info cxxfilt.man
 all: all-am
 
 .SUFFIXES:
@@ -725,12 +722,10 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
 clean-am: clean-aminfo clean-generic clean-libtool mostlyclean-am
@@ -751,7 +746,7 @@ info: info-am
 
 info-am: $(INFO_DEPS) info-local
 
-install-data-am: install-data-local install-info-am install-man
+install-data-am: install-info-am install-man
 
 install-dvi: install-dvi-am
 
@@ -899,12 +894,12 @@ uninstall-man: uninstall-man1
 	clean-libtool cscopelist-am ctags-am dist-info distclean \
 	distclean-generic distclean-libtool distdir dvi dvi-am html \
 	html-am info info-am info-local install install-am \
-	install-data install-data-am install-data-local install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-man1 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-aminfo \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-man1 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-aminfo \
 	maintainer-clean-generic mostlyclean mostlyclean-aminfo \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags-am uninstall uninstall-am uninstall-dvi-am \
@@ -915,7 +910,7 @@ uninstall-man: uninstall-man1
 
 
 # Man page generation from texinfo
-addr2line.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+addr2line.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_addr2line.1:
 	touch $@
@@ -924,7 +919,7 @@ NetBSD_DISABLED_addr2line.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f addr2line.pod
 
-ar.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ar.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_ar.1:
 	touch $@
@@ -933,7 +928,7 @@ NetBSD_DISABLED_ar.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f ar.pod
 
-dlltool.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+dlltool.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_dlltool.1:
 	touch $@
@@ -942,7 +937,7 @@ NetBSD_DISABLED_dlltool.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f dlltool.pod
 
-nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+nm.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_nm.1:
 	touch $@
@@ -951,7 +946,7 @@ NetBSD_DISABLED_nm.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f nm.pod
 
-objcopy.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+objcopy.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_objcopy.1:
 	touch $@
@@ -960,7 +955,7 @@ NetBSD_DISABLED_objcopy.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f objcopy.pod
 
-objdump.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+objdump.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_objdump.1:
 	touch $@
@@ -969,7 +964,7 @@ NetBSD_DISABLED_objdump.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f objdump.pod
 
-ranlib.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+ranlib.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_ranlib.1:
 	touch $@
@@ -978,7 +973,7 @@ NetBSD_DISABLED_ranlib.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f ranlib.pod
 
-readelf.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+readelf.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_readelf.1:
 	touch $@
@@ -987,7 +982,7 @@ NetBSD_DISABLED_readelf.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f readelf.pod
 
-size.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+size.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_size.1:
 	touch $@
@@ -996,7 +991,7 @@ NetBSD_DISABLED_size.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f size.pod
 
-strings.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+strings.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_strings.1:
 	touch $@
@@ -1005,7 +1000,7 @@ NetBSD_DISABLED_strings.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f strings.pod
 
-strip.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+strip.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_strip.1:
 	touch $@
@@ -1014,7 +1009,7 @@ NetBSD_DISABLED_strip.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f strip.pod
 
-elfedit.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+elfedit.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_elfedit.1:
 	touch $@
@@ -1023,7 +1018,7 @@ NetBSD_DISABLED_elfedit.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f elfedit.pod
 
-windres.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+windres.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_windres.1:
 	touch $@
@@ -1032,7 +1027,7 @@ NetBSD_DISABLED_windres.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f windres.pod
 
-windmc.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
+windmc.1:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_windmc.1:
 	touch $@
@@ -1041,7 +1036,7 @@ NetBSD_DISABLED_windmc.1:
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f windmc.pod
 
-cxxfilt.man:	$(binutils_TEXI) $(binutils_TEXINFOS)
+cxxfilt.man:	$(binutils_TEXI)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_cxxfilt.man:
 	touch $@
@@ -1059,10 +1054,6 @@ $(DEMANGLER_NAME).1: cxxfilt.man Makefile
 	sed -e 's/@PROGRAM@/$(DEMANGLER_NAME)/' \
 	    -e 's/cxxfilt/$(DEMANGLER_NAME)/' < $$man \
 		> $(DEMANGLER_NAME).1
-
-# We want install to imply install-info as per GNU standards, despite the
-# cygnus option.
-install-data-local: install-info
 
 # Maintenance
 

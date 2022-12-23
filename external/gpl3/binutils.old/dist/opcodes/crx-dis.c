@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 
@@ -31,11 +31,10 @@
 
 /* Extract 'n_bits' from 'a' starting from offset 'offs'.  */
 #define EXTRACT(a, offs, n_bits)	    \
-  (n_bits == 32 ? (((a) >> (offs)) & 0xffffffffL)   \
-  : (((a) >> (offs)) & ((1 << (n_bits)) -1)))
+  (((a) >> (offs)) & ((2ull << (n_bits - 1)) - 1))
 
 /* Set Bit Mask - a mask to set all bits starting from offset 'offs'.  */
-#define SBM(offs)  ((((1 << (32 - offs)) -1) << (offs)))
+#define SBM(offs)  ((-1u << (offs)) & 0xffffffff)
 
 typedef unsigned long dwordU;
 typedef unsigned short wordU;
@@ -98,23 +97,6 @@ static int cst4flag;
    incremented (escape sequence is used).  */
 static int size_changed;
 
-static int get_number_of_operands (void);
-static argtype getargtype     (operand_type);
-static int getbits	      (operand_type);
-static char *getregname	      (reg);
-static char *getcopregname    (copreg, reg_type);
-static char * getprocregname  (int);
-static char *gettrapstring    (unsigned);
-static char *getcinvstring    (unsigned);
-static void getregliststring  (int, char *, enum REG_ARG_TYPE);
-static wordU get_word_at_PC   (bfd_vma, struct disassemble_info *);
-static void get_words_at_PC   (bfd_vma, struct disassemble_info *);
-static unsigned long build_mask (void);
-static int powerof2	      (int);
-static int match_opcode	      (void);
-static void make_instruction  (void);
-static void print_arguments   (ins *, bfd_vma, struct disassemble_info *);
-static void print_arg	      (argument *, bfd_vma, struct disassemble_info *);
 
 /* Retrieve the number of operands for the current assembled instruction.  */
 
@@ -123,7 +105,7 @@ get_number_of_operands (void)
 {
   int i;
 
-  for (i = 0; instruction->operands[i].op_type && i < MAX_OPERANDS; i++)
+  for (i = 0; i < MAX_OPERANDS && instruction->operands[i].op_type; i++)
     ;
 
   return i;
@@ -183,7 +165,7 @@ getcinvstring (unsigned int num)
 
 /* Given a register enum value, retrieve its name.  */
 
-char *
+static char *
 getregname (reg r)
 {
   const reg_entry * regentry = &crx_regtab[r];
@@ -196,7 +178,7 @@ getregname (reg r)
 
 /* Given a coprocessor register enum value, retrieve its name.  */
 
-char *
+static char *
 getcopregname (copreg r, reg_type type)
 {
   const reg_entry * regentry;
@@ -241,7 +223,7 @@ powerof2 (int x)
 
 /* Transform a register bit mask to a register list.  */
 
-void
+static void
 getregliststring (int mask, char *string, enum REG_ARG_TYPE core_cop)
 {
   char temp_string[16];
@@ -315,11 +297,11 @@ makelongparameter (ULONGLONG val, int start, int end)
 /* Build a mask of the instruction's 'constant' opcode,
    based on the instruction's printing flags.  */
 
-static unsigned long
+static unsigned int
 build_mask (void)
 {
   unsigned int print_flags;
-  unsigned long mask;
+  unsigned int mask;
 
   print_flags = instruction->flags & FMT_CRX;
   switch (print_flags)
@@ -352,10 +334,10 @@ build_mask (void)
 static int
 match_opcode (void)
 {
-  unsigned long mask;
+  unsigned int mask;
 
   /* The instruction 'constant' opcode doewsn't exceed 32 bits.  */
-  unsigned long doubleWord = (words[1] + (words[0] << 16)) & 0xffffffff;
+  unsigned int doubleWord = words[1] + ((unsigned) words[0] << 16);
 
   /* Start searching from end of instruction table.  */
   instruction = &crx_instruction[NUMOPCODES - 2];

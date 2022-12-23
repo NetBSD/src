@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra alpha
+# This file is sourced from elf.em, and defines extra alpha
 # specific routines.
 #
 fragment <<EOF
@@ -47,7 +47,7 @@ alpha_after_open (void)
       lang_output_section_statement_type *plt_os[2];
 
       num_plt = 0;
-      for (os = &lang_output_section_statement.head->output_section_statement;
+      for (os = (void *) lang_os_list.head;
 	   os != NULL;
 	   os = os->next)
 	{
@@ -82,7 +82,7 @@ alpha_after_parse (void)
 				   exp_nameop (SIZEOF_HEADERS, NULL)),
 			NULL);
 
-  gld${EMULATION_NAME}_after_parse ();
+  ldelf_after_parse ();
 }
 
 static void

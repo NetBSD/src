@@ -1,13 +1,13 @@
 # translation to Russian
 # Copyright (C) 2003, 2005, 2006, 2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
-# Yuri Kozlov <yuray@komyakino.ru>, 2010, 2017.
+# Yuri Kozlov <yuray@komyakino.ru>, 2010, 2017, 2020.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-07-06 19:09+0300\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-01-19 17:30+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
@@ -235,22 +235,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<цикл %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: не удалось разобрать отображённый файл %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: не удалось открыть %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: не в исполняемым формате\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: не удалось найти раздел .text в %s\n"
@@ -265,22 +265,22 @@ msgstr "%s: не хватает место для %lu байт в простра
 msgid "%s: can't do -c\n"
 msgstr "%s: не удалось выполнить -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c не поддерживается на архитектуре %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: файл «%s» не содержит символов\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: в файле «%s» содержится слишком много символов\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: кто-то обсчитался: ltab.len=%d вместо %ld\n"
@@ -378,7 +378,7 @@ msgstr "\t%d записей счётчика простых блоков\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -392,7 +392,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Использование: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][имя]] [-I каталоги]\n"
+"Использование: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][имя]] [-I каталоги]\n"
 "\t[-d[кол-во]] [-k с/на] [-m мин-счётчик] [-t длина-таблицы]\n"
 "\t[--[no-]annotated-source[=имя]] [--[no-]exec-counts[=имя]]\n"
 "\t[--[no-]flat-profile[=имя]] [--[no-]graph[=имя]]\n"
@@ -404,7 +404,7 @@ msgstr ""
 "\t[--static-call-graph] [--sum] [--table-length=длина] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
 "\t[--demangle[=СТИЛЬ]] [--no-demangle] [--external-symbol-table=имя] [@ФАЙЛ]\n"
-"\t[файл-образа] [файл-профиля...]\n"
+"\t[файл-образа] [файл-профиля…]\n"
 
 #: gprof.c:178
 #, c-format
@@ -416,48 +416,48 @@ msgstr "Об ошибках сообщайте по адресу <%s>\n"
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: отладка не поддерживается; -d игнорируется\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: неизвестный формат файла %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "На основе BSD gprof, copyright 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Эта программа является открытым программным обеспечением. Эта программа не имеет абсолютно никаких гарантий.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: неизвестный стиль декодирования «%s»\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: можно указать что-то одно: --function-ordering или --file-ordering.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: файл в формате «prof» пока не поддерживается\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: в файле gmon.out нет гистограммы\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: в файле gmon.out нет данных по графу вызовов\n"

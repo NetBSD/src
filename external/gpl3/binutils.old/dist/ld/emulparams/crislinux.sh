@@ -4,7 +4,7 @@ SCRIPT_NAME=elf
 OUTPUT_FORMAT="elf32-cris"
 NO_REL_RELOCS=yes
 ARCH=cris
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 
 ENTRY=_start
 

@@ -1,5 +1,5 @@
 /* tc-rl78.c -- Assembler for the Renesas RL78
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,7 +19,6 @@
    02110-1301, USA.  */
 
 #include "as.h"
-#include "struc-symbol.h"
 #include "safe-ctype.h"
 #include "dwarf2dbg.h"
 #include "elf/common.h"
@@ -1234,8 +1233,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	   fragP->fr_next);
 
   if (fragP->fr_next != NULL
-	  && ((offsetT) (fragP->fr_next->fr_address - fragP->fr_address)
-	      != fragP->fr_fix))
+      && fragP->fr_next->fr_address - fragP->fr_address != fragP->fr_fix)
     as_bad (_("bad frag at %p : fix %ld addr %ld %ld \n"), fragP,
 	    (long) fragP->fr_fix,
 	    (long) fragP->fr_address, (long) fragP->fr_next->fr_address);
@@ -1522,6 +1520,6 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
 valueT
 md_section_align (segT segment, valueT size)
 {
-  int align = bfd_get_section_alignment (stdoutput, segment);
+  int align = bfd_section_alignment (segment);
   return ((size + (1 << align) - 1) & -(1 << align));
 }

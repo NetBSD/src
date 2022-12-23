@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/ns32k a.out-ish binaries.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -48,6 +48,6 @@
 #include "sysdep.h"
 #include "bfd.h"		/* To ensure following declaration is OK.  */
 
-const struct reloc_howto_struct * MY_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+reloc_howto_type * MY_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 
 #include "netbsd.h"

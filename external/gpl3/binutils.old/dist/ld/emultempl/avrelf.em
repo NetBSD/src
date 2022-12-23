@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 
 
-# This file is sourced from elf32.em, and defines extra avr-elf specific
+# This file is sourced from elf.em, and defines extra avr-elf specific
 # routines.  It is used to generate the trampolines for the avr6 family
 # of devices where one needs to address the issue that it is not possible
 # to reach the whole program memory by using 16 bit pointers.
@@ -77,10 +77,10 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
       return;
     }
 
-  /* We only need stubs for avr6, avrxmega6, and avrxmega7. */
-  if (strcmp ("${EMULATION_NAME}","avr6")
-      && strcmp ("${EMULATION_NAME}","avrxmega6")
-      && strcmp ("${EMULATION_NAME}","avrxmega7") )
+  /* We only need stubs for avr6, avrxmega6, and avrxmega7.  */
+  if (strcmp ("${EMULATION_NAME}", "avr6") != 0
+      && strcmp ("${EMULATION_NAME}", "avrxmega6") != 0
+      && strcmp ("${EMULATION_NAME}", "avrxmega7") != 0)
     avr_no_stubs = TRUE;
 
   avr_elf_set_global_bfd_parameters ();

@@ -3,7 +3,7 @@ $! This file configures binutils for use with openVMS/Alpha
 $! We do not use the configure script, since we do not have /bin/sh
 $! to execute it.
 $!
-$!   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+$!   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 $!
 $! This file is free software; you can redistribute it and/or modify
 $! it under the terms of the GNU General Public License as published by

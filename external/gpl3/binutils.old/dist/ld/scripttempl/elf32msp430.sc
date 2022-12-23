@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -23,7 +23,7 @@ fi
 
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -32,6 +32,9 @@ cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}","${OUTPUT_FORMAT}","${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 
+EOF
+
+test -n "${RELOCATING}" && cat <<EOF
 MEMORY
 {
   text   (rx)		: ORIGIN = $ROM_START,  LENGTH = $ROM_SIZE
@@ -43,6 +46,9 @@ MEMORY
   ${HEAP_MEMORY_MSP430}
 }
 
+EOF
+
+cat <<EOF
 SECTIONS
 {
   /* Bootloader.  */
@@ -51,7 +57,7 @@ SECTIONS
     ${RELOCATING+ PROVIDE (__boot_start = .) ; }
     *(.bootloader)
     ${RELOCATING+. = ALIGN(2);}
-    *(.bootloader.*)
+    ${RELOCATING+*(.bootloader.*)}
   } ${RELOCATING+ > bootloader}
 
   /* Information memory.  */
@@ -59,7 +65,7 @@ SECTIONS
   {
     *(.infomem)
     ${RELOCATING+. = ALIGN(2);}
-    *(.infomem.*)
+    ${RELOCATING+*(.infomem.*)}
   } ${RELOCATING+ > infomem}
 
   /* Information memory (not loaded into MPU).  */
@@ -67,7 +73,7 @@ SECTIONS
   {
     *(.infomemnobits)
     ${RELOCATING+. = ALIGN(2);}
-    *(.infomemnobits.*)
+    ${RELOCATING+*(.infomemnobits.*)}
   } ${RELOCATING+ > infomemnobits}
 
   /* Read-only sections, merged into text segment.  */
@@ -131,9 +137,9 @@ SECTIONS
   .rela.plt    ${RELOCATING-0} : { *(.rela.plt)         }
 
   /* Internal text space.  */
-  .text :
+  .text ${RELOCATING-0} :
   {
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
     *(SORT_NONE(.init))
     *(SORT_NONE(.init0))  /* Start here after reset.  */
     *(SORT_NONE(.init1))
@@ -144,7 +150,7 @@ SECTIONS
     *(SORT_NONE(.init6))  /* C++ constructors.  */
     *(SORT_NONE(.init7))
     *(SORT_NONE(.init8))
-    *(SORT_NONE(.init9))  /* Call main().  */
+    *(SORT_NONE(.init9))  /* Call main().  */}
 
     ${CONSTRUCTING+ __ctors_start = . ; }
     ${CONSTRUCTING+ *(.ctors) }
@@ -153,19 +159,21 @@ SECTIONS
     ${CONSTRUCTING+ *(.dtors) }
     ${CONSTRUCTING+ __dtors_end = . ; }
 
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
     *(.lower.text.* .lower.text)
 
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);}
     *(.text)
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
     *(.text.*)
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);
     *(.text:*)
 
     *(.either.text.* .either.text)
 
-    ${RELOCATING+. = ALIGN(2);}
+    *(.upper.text.* .upper.text)
+
+    . = ALIGN(2);
     *(SORT_NONE(.fini9))
     *(SORT_NONE(.fini8))
     *(SORT_NONE(.fini7))
@@ -178,20 +186,23 @@ SECTIONS
     *(SORT_NONE(.fini0))  /* Infinite loop after program termination.  */
     *(SORT_NONE(.fini))
 
-    _etext = .;
+    _etext = .;}
   } ${RELOCATING+ > text}
 
-  .rodata :
+  .rodata ${RELOCATING-0} :
   {
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
     *(.lower.rodata.* .lower.rodata)
 
     . = ALIGN(2);
-    *(.plt)
-    *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
-    *(.rodata1)
+    *(.plt)}
+    *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.* .const .const:*})
+    ${RELOCATING+*(.rodata1)
 
     *(.either.rodata.*) *(.either.rodata)
+
+    *(.upper.rodata.* .upper.rodata)
+
     *(.eh_frame_hdr)
     KEEP (*(.eh_frame))
 
@@ -230,13 +241,13 @@ SECTIONS
     KEEP (*crtbegin*.o(.dtors))
     KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors))
+    KEEP (*(.dtors))}
   } ${RELOCATING+ > text}
 
-  .vectors ${RELOCATING-0}:
+  .vectors ${RELOCATING-0} :
   {
     ${RELOCATING+ PROVIDE (__vectors_start = .) ; }
-    *(.vectors*)
+    *(.vectors${RELOCATING+*})
     ${RELOCATING+ _vectors_end = . ; }
   } ${RELOCATING+ > vectors}
 
@@ -244,55 +255,58 @@ SECTIONS
   {
     ${RELOCATING+ PROVIDE (__data_start = .) ; }
     ${RELOCATING+ PROVIDE (__datastart = .) ; }
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
 
     KEEP (*(.jcr))
     *(.data.rel.ro.local) *(.data.rel.ro*)
     *(.dynamic)
 
-    ${RELOCATING+. = ALIGN(2);}
-    *(.lower.data.* .lower.data)
+    . = ALIGN(2);
+    *(.lower.data.* .lower.data)}
 
     *(.data)
-    *(.data.*)
+    ${RELOCATING+*(.data.*)
     *(.gnu.linkonce.d*)
     KEEP (*(.gnu.linkonce.d.*personality*))
     *(.data1)
 
     *(.either.data.* .either.data)
 
+    *(.upper.data.* .upper.data)
+
     *(.got.plt) *(.got)
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);
     *(.sdata .sdata.* .gnu.linkonce.s.*)
-    ${RELOCATING+. = ALIGN(2);}
-    ${RELOCATING+ _edata = . ; }
-  } ${RELOCATING+ > data ${RELOCATING+AT> text}}
+    . = ALIGN(2);
+    _edata = .;}
+  } ${RELOCATING+ > data AT> text}
 
-  __romdatastart = LOADADDR(.data);
-  __romdatacopysize = SIZEOF(.data);
+  ${RELOCATING+__romdatastart = LOADADDR(.data);
+  __romdatacopysize = SIZEOF(.data);}
 
-  .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
+  .bss ${RELOCATING-0}${RELOCATING+SIZEOF(.data) + ADDR(.data)} :
   {
     ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__bss_start = .); }
-    ${RELOCATING+ PROVIDE (__bssstart = .); }
+    ${RELOCATING+ PROVIDE (__bssstart = .);
     *(.lower.bss.* .lower.bss)
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);}
     *(.bss)
-    *(.either.bss.* .either.bss)
+    ${RELOCATING+*(.either.bss.* .either.bss)
+    *(.upper.bss.* .upper.bss)
     *(COMMON)
-    ${RELOCATING+ PROVIDE (__bss_end = .) ; }
+    PROVIDE (__bss_end = .);}
   } ${RELOCATING+ > data}
   ${RELOCATING+ PROVIDE (__bsssize = SIZEOF(.bss)); }
 
-  .noinit ${RELOCATING+ SIZEOF(.bss) + ADDR(.bss)} :
+  .noinit ${RELOCATING-0}${RELOCATING+SIZEOF(.bss) + ADDR(.bss)} :
   {
     ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
     *(.noinit)
     ${RELOCATING+ PROVIDE (__noinit_end = .) ; }
   } ${RELOCATING+ > data}
 
-  .persistent ${RELOCATING+ SIZEOF(.noinit) + ADDR(.noinit)} :
+  .persistent ${RELOCATING-0}${RELOCATING+SIZEOF(.noinit) + ADDR(.noinit)} :
   {
     ${RELOCATING+ PROVIDE (__persistent_start = .) ; }
     *(.persistent)
@@ -317,7 +331,7 @@ EOF
 
 . $srcdir/scripttempl/DWARF.sc
 
-cat <<EOF
+test -n "${RELOCATING}" && cat <<EOF
   .MSP430.attributes 0 :
   {
     KEEP (*(.MSP430.attributes))
@@ -331,5 +345,8 @@ cat <<EOF
   PROVIDE (__noinit_start_rom = _etext + SIZEOF (.data)) ;
   PROVIDE (__noinit_end_rom = _etext + SIZEOF (.data) + SIZEOF (.noinit)) ;
   PROVIDE (__subdevice_has_heap = ${GOT_HEAP_MSP-0}) ;
+EOF
+
+cat <<EOF
 }
 EOF

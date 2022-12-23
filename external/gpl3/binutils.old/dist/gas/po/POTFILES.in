@@ -48,12 +48,16 @@ config/tc-avr.c
 config/tc-avr.h
 config/tc-bfin.c
 config/tc-bfin.h
+config/tc-bpf.c
+config/tc-bpf.h
 config/tc-cr16.c
 config/tc-cr16.h
 config/tc-cris.c
 config/tc-cris.h
 config/tc-crx.c
 config/tc-crx.h
+config/tc-csky.c
+config/tc-csky.h
 config/tc-d10v.c
 config/tc-d10v.h
 config/tc-d30v.c
@@ -183,6 +187,10 @@ config/te-armeabi.h
 config/te-armfbsdeabi.h
 config/te-armfbsdvfp.h
 config/te-armlinuxeabi.h
+config/te-csky_abiv1.h
+config/te-csky_abiv1_linux.h
+config/te-csky_abiv2.h
+config/te-csky_abiv2_linux.h
 config/te-freebsd.h
 config/te-generic.h
 config/te-gnu.h
@@ -248,7 +256,6 @@ remap.c
 sb.c
 sb.h
 stabs.c
-struc-symbol.h
 subsegs.c
 subsegs.h
 symbols.c

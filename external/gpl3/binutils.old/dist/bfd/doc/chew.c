@@ -1,5 +1,5 @@
 /* chew
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1167,7 +1167,10 @@ nextword (string, word)
 	}
     }
   if (!*string)
-    return 0;
+    {
+      *word = NULL;
+      return NULL;
+    }
 
   word_start = string;
   if (*string == '"')
@@ -1225,7 +1228,7 @@ nextword (string, word)
   if (*string)
     return string + 1;
   else
-    return 0;
+    return NULL;
 }
 
 dict_type *root;
@@ -1243,7 +1246,7 @@ lookup_word (word)
     }
   if (warning)
     fprintf (stderr, "Can't find %s\n", word);
-  return 0;
+  return NULL;
 }
 
 static void
@@ -1260,11 +1263,11 @@ free_words (void)
       if (ptr->code)
 	{
 	  int i;
-	  for (i = 0; i < ptr->code_length; i ++)
+	  for (i = 0; i < ptr->code_end - 1; i ++)
 	    if (ptr->code[i] == push_text
 		&& ptr->code[i + 1])
 	      {
-		free (ptr->code[i + 1] - 1);
+		free ((char *) ptr->code[i + 1] - 1);
 		++ i;
 	      }
 	  free (ptr->code);
@@ -1276,7 +1279,7 @@ free_words (void)
 }
 
 static void
-perform ()
+perform (void)
 {
   tos = stack;
 
@@ -1333,7 +1336,7 @@ add_to_definition (entry, word)
       entry->code_length += 2;
       entry->code =
 	(stinst_type *) realloc ((char *) (entry->code),
-				 entry->code_length * sizeof (word_type));
+				 entry->code_length * sizeof (stinst_type));
     }
   entry->code[entry->code_end] = word;
 
@@ -1374,6 +1377,8 @@ compile (string)
 	{
 	  free (word);
 	  string = nextword (string, &word);
+	  if (!string)
+	    continue;
 	  add_var (word);
 	  string = nextword (string, &word);
 	}
@@ -1384,8 +1389,16 @@ compile (string)
 	  /* Compile a word and add to dictionary.  */
 	  free (word);
 	  string = nextword (string, &word);
+	  if (!string)
+	    continue;
 	  ptr = newentry (word);
 	  string = nextword (string, &word);
+	  if (!string)
+	    {
+	      free (ptr->code);
+	      free (ptr);
+	      continue;
+	    }
 	  
 	  while (word[0] != ';')
 	    {
@@ -1423,7 +1436,6 @@ compile (string)
 	    }
 	  add_to_definition (ptr, 0);
 	  free (word);
-	  word = NULL;
 	  string = nextword (string, &word);
 	}
       else

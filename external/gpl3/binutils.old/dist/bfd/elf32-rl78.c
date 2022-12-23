@@ -1,5 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,7 +20,6 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#include "bfd_stdint.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/rl78.h"
@@ -727,7 +726,7 @@ rl78_elf_relocate_section
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (sym->st_name == 0) ? bfd_section_name (input_bfd, sec) : name;
+	  name = sym->st_name == 0 ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -1350,7 +1349,7 @@ rl78_elf_check_relocs
 							 flags);
 	      elf_hash_table (info)->splt = splt;
 	      if (splt == NULL
-		  || ! bfd_set_section_alignment (dynobj, splt, 1))
+		  || !bfd_set_section_alignment (splt, 1))
 		return FALSE;
 	    }
 

@@ -1,5 +1,5 @@
 /* Motorola 68HC11-specific support for 32-bit ELF
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
@@ -1306,7 +1306,6 @@ static const struct bfd_elf_special_section elf32_m68hc11_special_sections[] =
 #define elf_backend_relocate_section elf32_m68hc11_relocate_section
 #define elf_backend_add_symbol_hook  elf32_m68hc11_add_symbol_hook
 #define elf_backend_object_p	0
-#define elf_backend_final_write_processing	0
 #define elf_backend_can_gc_sections		1
 #define elf_backend_special_sections  elf32_m68hc11_special_sections
 #define elf_backend_merge_symbol_attribute elf32_m68hc11_merge_symbol_attribute

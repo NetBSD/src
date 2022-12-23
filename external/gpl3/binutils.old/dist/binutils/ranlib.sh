@@ -1,6 +1,6 @@
 #!/bin/sh
 # A simple ranlib script, to use less disk space than a ranlib program.
-# Copyright (C) 2004-2018 Free Software Foundation, Inc.
+# Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 # This program is part of GNU Binutils.
 

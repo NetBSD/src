@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -97,7 +97,7 @@ elf_vxworks_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info,
 					      | SEC_READONLY
 					      | SEC_LINKER_CREATED);
       if (s == NULL
-	  || !bfd_set_section_alignment (dynobj, s, bed->s->log_file_align))
+	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
 	return FALSE;
 
       *srelplt2_out = s;
@@ -212,9 +212,8 @@ elf_vxworks_emit_relocs (bfd *output_bfd,
 
 /* Set the sh_link and sh_info fields on the static plt relocation secton.  */
 
-void
-elf_vxworks_final_write_processing (bfd *abfd,
-				    bfd_boolean linker ATTRIBUTE_UNUSED)
+bfd_boolean
+elf_vxworks_final_write_processing (bfd *abfd)
 {
   asection * sec;
   struct bfd_elf_section_data *d;
@@ -222,13 +221,15 @@ elf_vxworks_final_write_processing (bfd *abfd,
   sec = bfd_get_section_by_name (abfd, ".rel.plt.unloaded");
   if (!sec)
     sec = bfd_get_section_by_name (abfd, ".rela.plt.unloaded");
-  if (!sec)
-    return;
-  d = elf_section_data (sec);
-  d->this_hdr.sh_link = elf_onesymtab (abfd);
-  sec = bfd_get_section_by_name (abfd, ".plt");
   if (sec)
-    d->this_hdr.sh_info = elf_section_data (sec)->this_idx;
+    {
+      d = elf_section_data (sec);
+      d->this_hdr.sh_link = elf_onesymtab (abfd);
+      sec = bfd_get_section_by_name (abfd, ".plt");
+      if (sec)
+	d->this_hdr.sh_info = elf_section_data (sec)->this_idx;
+    }
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 /* Add the dynamic entries required by VxWorks.  These point to the
@@ -278,9 +279,7 @@ elf_vxworks_finish_dynamic_entry (bfd *output_bfd, Elf_Internal_Dyn *dyn)
 
     case DT_VX_WRS_TLS_DATA_ALIGN:
       sec = bfd_get_section_by_name (output_bfd, ".tls_data");
-      dyn->d_un.d_val
-	= (bfd_size_type)1 << bfd_get_section_alignment (output_bfd,
-							 sec);
+      dyn->d_un.d_val = (bfd_size_type) 1 << bfd_section_alignment (sec);
       break;
 
     case DT_VX_WRS_TLS_VARS_START:
