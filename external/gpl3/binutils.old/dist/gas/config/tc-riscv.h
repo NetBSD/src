@@ -1,5 +1,5 @@
 /* tc-riscv.h -- header file for tc-riscv.c.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -38,10 +38,10 @@ struct expressionS;
 /* Symbols named FAKE_LABEL_NAME are emitted when generating DWARF, so make
    sure FAKE_LABEL_NAME is printable.  It still must be distinct from any
    real label name.  So, append a space, which other labels can't contain.  */
-#define FAKE_LABEL_NAME ".L0 "
+#define FAKE_LABEL_NAME RISCV_FAKE_LABEL_NAME
 /* Changing the special character in FAKE_LABEL_NAME requires changing
    FAKE_LABEL_CHAR too.  */
-#define FAKE_LABEL_CHAR ' '
+#define FAKE_LABEL_CHAR RISCV_FAKE_LABEL_CHAR
 
 #define md_relax_frag(segment, fragp, stretch) \
   riscv_relax_frag (segment, fragp, stretch)
@@ -119,5 +119,11 @@ extern void riscv_elf_final_processing (void);
 
 /* Adjust debug_line after relaxation.  */
 #define DWARF2_USE_FIXED_ADVANCE_PC 1
+
+#define md_end riscv_md_end
+#define CONVERT_SYMBOLIC_ATTRIBUTE riscv_convert_symbolic_attribute
+
+extern void riscv_md_end (void);
+extern int riscv_convert_symbolic_attribute (const char *);
 
 #endif /* TC_RISCV */

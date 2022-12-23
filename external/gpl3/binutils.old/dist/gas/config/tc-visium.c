@@ -1,6 +1,6 @@
 /* This is the machine dependent code of the Visium Assembler.
 
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -222,7 +222,7 @@ visium_rdata (int xxx)
 valueT
 md_section_align (asection *seg, valueT addr)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
 
   return ((addr + (1 << align) - 1) & -(1 << align));
 }
@@ -821,9 +821,6 @@ md_begin (void)
    emitted is stored in *sizeP .  An error message is returned,
    or NULL on OK.  */
 
-/* Equal to MAX_PRECISION in atof-ieee.c.  */
-#define MAX_LITTLENUMS 6
-
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
@@ -1367,6 +1364,10 @@ md_assemble (char *str0)
 
       if (previous_mode == mode_cad || previous_mode == mode_ci)
 	as_bad ("branch instruction in delay slot");
+
+      /* For the GR6, BRA insns must be aligned on 64-bit boundaries.  */
+      if (visium_arch == VISIUM_ARCH_GR6)
+	do_align (3, NULL, 0, 0);
 
       this_dest = r3;
       condition_code = cc;

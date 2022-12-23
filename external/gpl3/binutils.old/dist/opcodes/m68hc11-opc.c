@@ -1,5 +1,5 @@
 /* m68hc11-opc.c -- Motorola 68HC11, 68HC12, 9S12X and XGATE opcode list
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
    Note: min/max cycles not updated for S12X opcodes.

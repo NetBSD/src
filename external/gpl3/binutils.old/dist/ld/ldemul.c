@@ -1,5 +1,5 @@
 /* ldemul.c -- clearing house for ld emulation states
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -22,6 +22,7 @@
 #include "bfd.h"
 #include "getopt.h"
 #include "bfdlink.h"
+#include "ctf-api.h"
 
 #include "ld.h"
 #include "ldmisc.h"
@@ -235,6 +236,29 @@ after_parse_default (void)
 void
 after_open_default (void)
 {
+  link_info.big_endian = TRUE;
+
+  if (bfd_big_endian (link_info.output_bfd))
+    ;
+  else if (bfd_little_endian (link_info.output_bfd))
+    link_info.big_endian = FALSE;
+  else
+    {
+      if (command_line.endian == ENDIAN_BIG)
+	;
+      else if (command_line.endian == ENDIAN_LITTLE)
+	link_info.big_endian = FALSE;
+      else if (command_line.endian == ENDIAN_UNSET)
+	{
+	  LANG_FOR_EACH_INPUT_STATEMENT (s)
+	    if (s->the_bfd != NULL)
+	      {
+		if (bfd_little_endian (s->the_bfd))
+		  link_info.big_endian = FALSE;
+		break;
+	      }
+	}
+    }
 }
 
 void
@@ -370,4 +394,26 @@ ldemul_extra_map_file_text (bfd *abfd, struct bfd_link_info *info, FILE *mapf)
 {
   if (ld_emulation->extra_map_file_text)
     ld_emulation->extra_map_file_text (abfd, info, mapf);
+}
+
+int
+ldemul_emit_ctf_early (void)
+{
+  if (ld_emulation->emit_ctf_early)
+    return ld_emulation->emit_ctf_early ();
+  /* If the emulation doesn't know if it wants to emit CTF early, it is going
+     to do so.  */
+  return 1;
+}
+
+void
+ldemul_examine_strtab_for_ctf (struct ctf_file *ctf_output,
+			       struct elf_sym_strtab *syms,
+			       bfd_size_type symcount,
+			       struct elf_strtab_hash *symstrtab)
+
+{
+  if (ld_emulation->examine_strtab_for_ctf)
+    ld_emulation->examine_strtab_for_ctf (ctf_output, syms,
+					  symcount, symstrtab);
 }

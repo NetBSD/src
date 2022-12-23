@@ -9,7 +9,7 @@ BIG_OUTPUT_FORMAT="elf32-bigaarch64"
 LITTLE_OUTPUT_FORMAT="elf32-littleaarch64"
 NO_REL_RELOCS=yes
 
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 EXTRA_EM_FILE=aarch64elf
 
 GENERATE_SHLIB_SCRIPT=yes
@@ -34,7 +34,7 @@ OTHER_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__end__ = .${CREATE_SHLIB+)};"
 OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
 ATTRS_SECTIONS='.ARM.attributes 0 : { KEEP (*(.ARM.attributes)) KEEP (*(.gnu.attributes)) }'
 # Ensure each PLT entry is aligned to a cache line.
-PLT=".plt          ${RELOCATING-0} : ALIGN(16) { *(.plt)${IREL_IN_PLT+ *(.iplt)} }"
+PLT=".plt          ${RELOCATING-0} : ALIGN(16) { *(.plt)${RELOCATING+${IREL_IN_PLT+ *(.iplt)}} }"
 
 # Linux modifies the default library search path to first include
 # a 32-bit specific directory.

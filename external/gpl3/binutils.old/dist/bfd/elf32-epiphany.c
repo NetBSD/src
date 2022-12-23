@@ -1,5 +1,5 @@
 /* Adapteva epiphany specific support for 32-bit ELF
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -518,7 +518,7 @@ epiphany_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{

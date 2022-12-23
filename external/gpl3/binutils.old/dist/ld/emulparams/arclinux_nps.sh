@@ -1,3 +1,3 @@
-. ${srcdir}/emulparams/arclinux.sh
+source_sh ${srcdir}/emulparams/arclinux.sh
 # Extend the OTHER_SECTIONS for nps.
-. ${srcdir}/emulparams/arc-nps.sh
+source_sh ${srcdir}/emulparams/arc-nps.sh

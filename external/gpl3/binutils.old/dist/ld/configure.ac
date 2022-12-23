@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script
 dnl
-dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -293,6 +293,10 @@ BFD_BINARY_FOPEN
 
 AC_CHECK_DECLS([strstr, free, sbrk, getenv, environ])
 
+# Link in zlib if we can.  This allows us to read and write
+# compressed CTF sections.
+AM_ZLIB
+
 # When converting linker scripts into strings for use in emulation
 # files, use astring.sed if the compiler supports ANSI string
 # concatenation, or ostring.sed otherwise.  This is to support the
@@ -319,12 +323,7 @@ EMUL=
 all_emuls=
 all_emul_extras=
 all_libpath=
-
-dnl We need to get an arbitrary number of tdir definitions into
-dnl Makefile.  We can't do it using AC_SUBST, because autoconf does
-dnl not permit literal newlines in an AC_SUBST variables.  So we use a
-dnl file.
-rm -f tdirs
+TDIRS=
 
 # If the host is 64-bit, then we enable 64-bit targets by default.
 # This is consistent with what ../bfd/configure.ac does.
@@ -376,19 +375,24 @@ do
 	  all_emuls="$all_emuls e${i}.o"
 	  eval result=\$tdir_$i
 	  test -z "$result" && result=$targ_alias
-	  echo tdir_$i=$result >> tdirs
+	  TDIRS="$TDIRS
+tdir_$i=$result"
 	  case "${i}" in
 	  *elf*)
 	    elf_list_options=TRUE
 	    ;;
 	  *)
-	    if $GREP "TEMPLATE_NAME=elf32" ${srcdir}/emulparams/${i}.sh >/dev/null 2>/dev/null; then
+	    if $GREP "TEMPLATE_NAME=elf" ${srcdir}/emulparams/${i}.sh >/dev/null 2>/dev/null; then
 	      elf_list_options=TRUE
 	    fi
 	    ;;
 	  esac
 	  if test "$elf_list_options" = "TRUE"; then
-	    . ${srcdir}/emulparams/${i}.sh
+	    source_sh()
+	    {
+	      . $1
+	    }
+	    source_sh ${srcdir}/emulparams/${i}.sh
 	    if test x${GENERATE_SHLIB_SCRIPT} = xyes; then
 	      elf_shlib_list_options=TRUE
 	    fi
@@ -463,8 +467,8 @@ AC_SUBST(elf_shlib_list_options)
 AC_SUBST(elf_plt_unwind_list_options)
 AC_SUBST(EMUL)
 
-TDIRS=tdirs
-AC_SUBST_FILE(TDIRS)
+AC_SUBST(TDIRS)
+AM_SUBST_NOTMAKE(TDIRS)
 
 if test x${all_targets} = xtrue; then
   if test x${want64} = xtrue; then
@@ -487,10 +491,13 @@ AC_SUBST(EMULATION_LIBPATH)
 
 if test x${enable_static} = xno; then
   TESTBFDLIB="-Wl,--rpath,../bfd/.libs ../bfd/.libs/libbfd.so"
+  TESTCTFLIB="-Wl,--rpath,../libctf/.libs ../libctf/.libs/libctf.so"
 else
   TESTBFDLIB="../bfd/.libs/libbfd.a"
+  TESTCTFLIB="../libctf/.libs/libctf.a"
 fi
 AC_SUBST(TESTBFDLIB)
+AC_SUBST(TESTCTFLIB)
 
 target_vendor=${target_vendor=$host_vendor}
 case "$target_vendor" in

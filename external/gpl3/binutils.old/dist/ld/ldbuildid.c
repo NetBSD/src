@@ -1,5 +1,5 @@
 /* ldbuildid.c - Build Id support routines
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -139,7 +139,7 @@ generate_build_id (bfd *abfd,
 
       if (!rpc_library)
 	return FALSE;
-      uuid_create = (UuidCreateFn) GetProcAddress (rpc_library, "UuidCreate");
+      uuid_create = (UuidCreateFn) (void (WINAPI *)(void)) GetProcAddress (rpc_library, "UuidCreate");
       if (!uuid_create)
 	{
 	  FreeLibrary (rpc_library);

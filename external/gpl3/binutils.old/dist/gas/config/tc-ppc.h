@@ -1,5 +1,5 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -61,7 +61,7 @@ extern const char *ppc_target_format (void);
 
 /* Strings do not use backslash escapes under COFF.  */
 #ifdef OBJ_COFF
-#define NO_STRING_ESCAPES
+#define TC_STRING_ESCAPES 0
 #endif
 
 #ifdef OBJ_ELF
@@ -81,6 +81,9 @@ extern const char *ppc_target_format (void);
 #define HANDLE_ALIGN(FRAGP)						\
   if ((FRAGP)->fr_type == rs_align_code)				\
     ppc_handle_align (FRAGP);
+
+extern unsigned int ppc_nop_select (void);
+#define NOP_OPCODE ppc_nop_select ()
 
 extern void ppc_handle_align (struct frag *);
 extern void ppc_frag_check (struct frag *);
@@ -171,10 +174,6 @@ extern char *ppc_canonicalize_symbol_name (char *);
 #define tc_symbol_new_hook(sym) ppc_symbol_new_hook (sym)
 extern void ppc_symbol_new_hook (symbolS *);
 
-/* Set the symbol class of a label based on the csect.  */
-#define tc_frob_label(sym) ppc_frob_label (sym)
-extern void ppc_frob_label (symbolS *);
-
 /* TOC relocs requires special handling.  */
 #define tc_fix_adjustable(FIX) ppc_fix_adjustable (FIX)
 extern int ppc_fix_adjustable (struct fix *);
@@ -206,10 +205,10 @@ do {								\
 extern void ppc_xcoff_end (void);
 #define md_end ppc_xcoff_end
 
+#endif /* OBJ_XCOFF */
+
 #define tc_new_dot_label(sym) ppc_new_dot_label (sym)
 extern void ppc_new_dot_label (symbolS *);
-
-#endif /* OBJ_XCOFF */
 
 extern const char       ppc_symbol_chars[];
 #define tc_symbol_chars ppc_symbol_chars
@@ -264,17 +263,37 @@ extern int ppc_force_relocation (struct fix *);
 /* Don't allow the generic code to convert fixups involving the
    subtraction of a label in the current section to pc-relative if we
    don't have the necessary pc-relative relocation.  */
-#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG)		\
-  (!((FIX)->fx_r_type == BFD_RELOC_LO16			\
-     || (FIX)->fx_r_type == BFD_RELOC_HI16		\
-     || (FIX)->fx_r_type == BFD_RELOC_HI16_S		\
-     || (FIX)->fx_r_type == BFD_RELOC_64		\
-     || (FIX)->fx_r_type == BFD_RELOC_32		\
-     || (FIX)->fx_r_type == BFD_RELOC_16		\
-     || (FIX)->fx_r_type == BFD_RELOC_PPC_16DX_HA))
+#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG) \
+  (!((FIX)->fx_r_type == BFD_RELOC_64				\
+     || (FIX)->fx_r_type == BFD_RELOC_32			\
+     || (FIX)->fx_r_type == BFD_RELOC_16			\
+     || (FIX)->fx_r_type == BFD_RELOC_LO16			\
+     || (FIX)->fx_r_type == BFD_RELOC_HI16			\
+     || (FIX)->fx_r_type == BFD_RELOC_HI16_S			\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGH		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGHA	\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_HIGHER		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_HIGHER_S		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_HIGHEST		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_HIGHEST_S		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGHER34	\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGHERA34	\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGHEST34	\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_ADDR16_HIGHESTA34	\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC_16DX_HA		\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_D34			\
+     || (FIX)->fx_r_type == BFD_RELOC_PPC64_D28))
 #endif
 
 #define TC_VALIDATE_FIX_SUB(FIX, SEG) 0
+
+/* Various frobbings of labels and their addresses.  */
+#define md_start_line_hook() ppc_start_line_hook ()
+extern void ppc_start_line_hook (void);
+
+/* Set the symbol class of a label based on the csect.  */
+#define tc_frob_label(sym) ppc_frob_label (sym)
+extern void ppc_frob_label (symbolS *);
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)

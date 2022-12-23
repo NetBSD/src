@@ -1,5 +1,5 @@
 /* RISC-V disassembler
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -28,7 +28,7 @@
 #include "elf-bfd.h"
 #include "elf/riscv.h"
 
-#include <stdint.h>
+#include "bfd_stdint.h"
 #include <ctype.h>
 
 struct riscv_private_data
@@ -395,9 +395,13 @@ riscv_disassemble_insn (bfd_vma memaddr, insn_t word, disassemble_info *info)
 
   insnlen = riscv_insn_length (word);
 
+  /* RISC-V instructions are always little-endian.  */
+  info->endian_code = BFD_ENDIAN_LITTLE;
+
   info->bytes_per_chunk = insnlen % 4 == 0 ? 4 : 2;
   info->bytes_per_line = 8;
-  info->display_endian = info->endian;
+  /* We don't support constant pools, so this must be code.  */
+  info->display_endian = info->endian_code;
   info->insn_info_valid = 1;
   info->branch_delay_insns = 0;
   info->data_size = 0;
@@ -408,7 +412,7 @@ riscv_disassemble_insn (bfd_vma memaddr, insn_t word, disassemble_info *info)
   op = riscv_hash[OP_HASH_IDX (word)];
   if (op != NULL)
     {
-      int xlen = 0;
+      unsigned xlen = 0;
 
       /* If XLEN is not known, get its value from the ELF class.  */
       if (info->mach == bfd_mach_riscv64)
@@ -430,7 +434,7 @@ riscv_disassemble_insn (bfd_vma memaddr, insn_t word, disassemble_info *info)
 	  if (no_aliases && (op->pinfo & INSN_ALIAS))
 	    continue;
 	  /* Is this instruction restricted to a certain value of XLEN?  */
-	  if (isdigit (op->subset[0]) && atoi (op->subset) != xlen)
+	  if ((op->xlen_requirement != 0) && (op->xlen_requirement != xlen))
 	    continue;
 
 	  /* It's a match.  */
@@ -444,6 +448,32 @@ riscv_disassemble_insn (bfd_vma memaddr, insn_t word, disassemble_info *info)
 	      (*info->fprintf_func) (info->stream, " # ");
 	      (*info->print_address_func) (info->target, info);
 	      pd->print_addr = -1;
+	    }
+
+	  /* Finish filling out insn_info fields.  */
+	  switch (op->pinfo & INSN_TYPE)
+	    {
+	    case INSN_BRANCH:
+	      info->insn_type = dis_branch;
+	      break;
+	    case INSN_CONDBRANCH:
+	      info->insn_type = dis_condbranch;
+	      break;
+	    case INSN_JSR:
+	      info->insn_type = dis_jsr;
+	      break;
+	    case INSN_DREF:
+	      info->insn_type = dis_dref;
+	      break;
+	    default:
+	      break;
+	    }
+
+	  if (op->pinfo & INSN_DATA_SIZE)
+	    {
+	      int size = ((op->pinfo & INSN_DATA_SIZE)
+			  >> INSN_DATA_SIZE_SHIFT);
+	      info->data_size = 1 << (size - 1);
 	    }
 
 	  return insnlen;
@@ -490,6 +520,23 @@ print_insn_riscv (bfd_vma memaddr, struct disassemble_info *info)
     }
 
   return riscv_disassemble_insn (memaddr, insn, info);
+}
+
+/* Prevent use of the fake labels that are generated as part of the DWARF
+   and for relaxable relocations in the assembler.  */
+
+bfd_boolean
+riscv_symbol_is_valid (asymbol * sym,
+                       struct disassemble_info * info ATTRIBUTE_UNUSED)
+{
+  const char * name;
+
+  if (sym == NULL)
+    return FALSE;
+
+  name = bfd_asymbol_name (sym);
+
+  return (strcmp (name, RISCV_FAKE_LABEL_NAME) != 0);
 }
 
 void

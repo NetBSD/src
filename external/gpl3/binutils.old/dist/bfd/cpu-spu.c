@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,7 +20,6 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-
 static const bfd_arch_info_type *
 spu_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 {
@@ -35,21 +34,20 @@ spu_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   /*NOTREACHED*/
 }
 
-const bfd_arch_info_type bfd_spu_arch[] =
+const bfd_arch_info_type bfd_spu_arch =
 {
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_spu,	/* architecture */
-    bfd_mach_spu,	/* machine */
-    "spu",		/* architecture name */
-    "spu:256K",		/* printable name */
-    3,			/* aligned power */
-    TRUE,		/* the default machine for the architecture */
-    spu_compatible,	/* the spu is only compatible with itself, see above */
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,			/* next -- there are none! */
-  }
+  32,			/* Bits in a word.  */
+  32,			/* Bits in an address.  */
+  8,			/* Bits in a byte.  */
+  bfd_arch_spu,		/* Architecture number.  */
+  bfd_mach_spu,		/* Machine number.  */
+  "spu",		/* Architecture name.  */
+  "spu:256K",		/* Printable name.  */
+  3,			/* Section alignment power.  */
+  TRUE,			/* Default machine.  */
+  spu_compatible,	/* The spu is only compatible with itself, see above.  */
+  bfd_default_scan,
+  bfd_arch_default_fill,
+  NULL,			/* Next -- there are none!  */
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

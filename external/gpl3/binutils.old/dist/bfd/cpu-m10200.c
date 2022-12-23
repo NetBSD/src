@@ -1,5 +1,5 @@
 /* BFD support for the Matsushita 10200 processor
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,18 +23,19 @@
 #include "libbfd.h"
 
 const bfd_arch_info_type bfd_mn10200_arch =
-  {
-    16, /* 16 bits in a word */
-    24, /* 16 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_mn10200,
-    200,
-    "mn10200",
-    "mn10200",
-    2,
-    TRUE, /* the one and only */
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-  };
+{
+  16, /* Bits in a word.  */
+  24, /* Bits in an address.  */
+  8,  /* Bits in a byte.  */
+  bfd_arch_mn10200,
+  200,
+  "mn10200",
+  "mn10200",
+  2,
+  TRUE,   /* The one and only.  */
+  bfd_default_compatible,
+  bfd_default_scan,
+  bfd_arch_default_fill,
+  NULL,
+  0 /* Maximum offset of a reloc from the start of an insn.  */
+};

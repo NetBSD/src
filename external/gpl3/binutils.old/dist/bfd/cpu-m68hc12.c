@@ -1,5 +1,5 @@
 /* BFD support for the Motorola 68HC12 processor
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,36 +22,27 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(NUMBER, PRINT, DEFAULT, NEXT)			\
+  {							\
+    16,        /* Bits in a word.  */			\
+    32,        /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
+    bfd_arch_m68hc12,					\
+    NUMBER,						\
+    "m68hc12",						\
+    PRINT,						\
+    4,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_m68hc12s_arch =
-{
-    16,	/* 16 bits in a word */
-    32,	/* 16 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_m68hc12,
-    bfd_mach_m6812s,
-    "m68hc12:HCS12",
-    "m68hc12",
-    4, /* section alignment power */
-    TRUE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-};
+  N (bfd_mach_m6812s, "m68hc12:HCS12", FALSE, NULL);
 
 const bfd_arch_info_type bfd_m68hc12_arch =
-{
-    16,	/* 16 bits in a word */
-    32,	/* 16 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_m68hc12,
-    0,
-    "m68hc12",
-    "m68hc12",
-    4, /* section alignment power */
-    TRUE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_m68hc12s_arch,
-};
+  N (bfd_mach_m6812_default, "m68hc12", TRUE, &bfd_m68hc12s_arch);
+

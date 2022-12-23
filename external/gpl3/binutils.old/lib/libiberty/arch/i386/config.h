@@ -200,6 +200,9 @@
 /* Define to 1 if you have the `on_exit' function. */
 /* #undef HAVE_ON_EXIT */
 
+/* Define to 1 if you have the `pipe2' function. */
+#define HAVE_PIPE2 1
+
 /* Define to 1 if you have the <process.h> header file. */
 /* #undef HAVE_PROCESS_H */
 

@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/hppalinux.sh
+source_sh ${srcdir}/emulparams/hppanbsd.sh
 
 OUTPUT_FORMAT="elf32-hppa"
 TEXT_START_ADDR=0x1000

@@ -1,5 +1,5 @@
 /* BFD support for the Scenix IP2xxx processor.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,36 +22,27 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(NUMBER, PRINT, DEFAULT, NEXT)			\
+  {							\
+    32,         /* Bits in a word.  */			\
+    16,         /* Bits in an address.  */		\
+    8,	        /* Bits in a byte.  */			\
+    bfd_arch_ip2k,					\
+    NUMBER,						\
+    "ip2k",						\
+    PRINT,						\
+    1,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_ip2k_nonext_arch =
-{
-  32,				/* Bits per word - not really true.  */
-  16,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_ip2k,		/* Architecture.  */
-  bfd_mach_ip2022,		/* Machine.  */
-  "ip2k",			/* Architecture name.  */
-  "ip2022",			/* Machine name.  */
-  1,				/* Section align power.  */
-  FALSE,			/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* Next in list.  */
-};
+  N (bfd_mach_ip2022, "ip2022", FALSE, NULL);
 
 const bfd_arch_info_type bfd_ip2k_arch =
-{
-  32,				/* Bits per word - not really true.  */
-  16,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_ip2k,		/* Architecture.  */
-  bfd_mach_ip2022ext,		/* Machine.  */
-  "ip2k",			/* Architecture name.  */
-  "ip2022ext",			/* Machine name.  */
-  1,				/* Section align power.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  & bfd_ip2k_nonext_arch	/* Next in list.  */
-};
+  N (bfd_mach_ip2022ext, "ip2022ext", TRUE, & bfd_ip2k_nonext_arch);
+
