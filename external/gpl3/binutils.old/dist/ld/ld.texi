@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ld.info
-@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @syncodeindex ky cp
 @c man begin INCLUDE
 @include configdoc.texi
@@ -21,6 +21,7 @@
 @set GENERIC
 @set ARM
 @set C6X
+@set CSKY
 @set H8300
 @set HPPA
 @set M68HC11
@@ -55,7 +56,7 @@ This file documents the @sc{gnu} linker LD
 @end ifset
 version @value{VERSION}.
 
-Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -92,7 +93,7 @@ section entitled ``GNU Free Documentation License''.
 
 @vskip 0pt plus 1filll
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -247,12 +248,12 @@ you have many choices to control its behavior.
 
 @ifset UsesEnvVars
 @menu
-* Options::                     Command Line Options
+* Options::                     Command-line Options
 * Environment::                 Environment Variables
 @end menu
 
 @node Options
-@section Command Line Options
+@section Command-line Options
 @end ifset
 
 @cindex command line
@@ -332,7 +333,7 @@ Unique abbreviations of the names of multiple-letter options are
 accepted.
 
 Note---if the linker is being invoked indirectly, via a compiler driver
-(e.g. @samp{gcc}) then all the linker command line options should be
+(e.g. @samp{gcc}) then all the linker command-line options should be
 prefixed by @samp{-Wl,} (or whatever is appropriate for the particular
 compiler driver) like this:
 
@@ -352,7 +353,7 @@ the joined forms of both single- and multiple-letter options, such as:
   gcc foo.o bar.o -Wl,-eENTRY -Wl,-Map=a.map
 @end smallexample
 
-Here is a table of the generic command line switches accepted by the GNU
+Here is a table of the generic command-line switches accepted by the GNU
 linker:
 
 @table @gcctabopt
@@ -555,7 +556,7 @@ first check whether there is a definition in the shared object
 in the filter object.  The shared object @var{name} need not exist.
 Thus the shared object @var{name} may be used to provide an alternative
 implementation of certain functions, perhaps for debugging or for
-machine specific performance.
+machine-specific performance.
 
 This option may be specified more than once.  The DT_AUXILIARY entries
 will be created in the order in which they appear on the command line.
@@ -758,7 +759,38 @@ option is used:
 
 See @ref{Expressions} for more information about expressions in linker
 scripts.
+
+@item
+How GNU properties are merged.
+
+When the linker merges input .note.gnu.property sections into one output
+.note.gnu.property section, some properties are removed or updated.
+These actions are reported in the link map.  For example:
+
+@smallexample
+Removed property 0xc0000002 to merge foo.o (0x1) and bar.o (not found)
+@end smallexample
+
+This indicates that property 0xc0000002 is removed from output when
+merging properties in  @file{foo.o}, whose property 0xc0000002 value
+is 0x1, and @file{bar.o}, which doesn't have property 0xc0000002.
+
+@smallexample
+Updated property 0xc0010001 (0x1) to merge foo.o (0x1) and bar.o (0x1)
+@end smallexample
+
+This indicates that property 0xc0010001 value is updated to 0x1 in output
+when merging properties in  @file{foo.o}, whose 0xc0010001 property value
+is 0x1, and @file{bar.o}, whose 0xc0010001 property value is 0x1.
 @end itemize
+
+@cindex link map discarded
+@kindex --print-map-discarded
+@kindex --no-print-map-discarded
+@item --print-map-discarded
+@itemx --no-print-map-discarded
+Print (or do not print) the list of discarded and garbage collected sections
+in the link map.  Enabled by default.
 
 @kindex -n
 @cindex read-only text
@@ -938,7 +970,11 @@ Enabled by default.
 @cindex input files, displaying
 @item -t
 @itemx --trace
-Print the names of the input files as @command{ld} processes them.
+Print the names of the input files as @command{ld} processes them.  If
+@samp{-t} is given twice then members within archives are also printed.
+@samp{-t} output is useful to generate a list of all the object files
+and scripts involved in linking, for example, when packaging files for
+a linker bug report.
 
 @kindex -T @var{script}
 @kindex --script=@var{script}
@@ -1110,6 +1146,21 @@ to a locally defined function, foo, via its GOT slot.
 @option{call-nop=suffix-@var{byte}} generates @code{call foo @var{byte}}.
 Supported for i386 and x86_64.
 
+@item cet-report=none
+@itemx cet-report=warning
+@itemx cet-report=error
+Specify how to report the missing GNU_PROPERTY_X86_FEATURE_1_IBT and
+GNU_PROPERTY_X86_FEATURE_1_SHSTK properties in input .note.gnu.property
+section.  @option{cet-report=none}, which is the default, will make the
+linker not report missing properties in input files.
+@option{cet-report=warning} will make the linker issue a warning for
+missing properties in input files.  @option{cet-report=error} will make
+the linker issue an error for missing properties in input files.
+Note that @option{ibt} will turn off the missing
+GNU_PROPERTY_X86_FEATURE_1_IBT property report and @option{shstk} will
+turn off the missing GNU_PROPERTY_X86_FEATURE_1_SHSTK property report.
+Supported for Linux/i386 and Linux/x86_64.
+
 @item combreloc
 @itemx nocombreloc
 Combine multiple dynamic relocation sections and sort to improve
@@ -1153,7 +1204,7 @@ This option is only meaningful when building a dynamic executable.
 This option marks the executable as requiring global auditing by
 setting the @code{DF_1_GLOBAUDIT} bit in the @code{DT_FLAGS_1} dynamic
 tag.  Global auditing requires that any auditing library defined via
-the @option{--depaudit} or @option{-P} command line options be run for
+the @option{--depaudit} or @option{-P} command-line options be run for
 all dynamic objects loaded by the application.
 
 @item ibtplt
@@ -1290,7 +1341,7 @@ the order that it is specified on the command line.  If a symbol in that
 archive is needed to resolve an undefined symbol referred to by an
 object in an archive that appears later on the command line, the linker
 would not be able to resolve that reference.  By grouping the archives,
-they all be searched repeatedly until all possible references are
+they will all be searched repeatedly until all possible references are
 resolved.
 
 Using this option has a significant performance cost.  It is best to use
@@ -1385,21 +1436,15 @@ libraries.
 When creating a shared library, bind references to global symbols to the
 definition within the shared library, if any.  Normally, it is possible
 for a program linked against a shared library to override the definition
-within the shared library.  This option can also be used with the
-@option{--export-dynamic} option, when creating a position independent
-executable, to bind references to global symbols to the definition within
-the executable.  This option is only meaningful on ELF platforms which
-support shared libraries and position independent executables.
+within the shared library.  This option is only meaningful on ELF
+platforms which support shared libraries.
 
 @kindex -Bsymbolic-functions
 @item -Bsymbolic-functions
 When creating a shared library, bind references to global function
 symbols to the definition within the shared library, if any.
-This option can also be used with the @option{--export-dynamic} option,
-when creating a position independent executable, to bind references
-to global function symbols to the definition within the executable.
 This option is only meaningful on ELF platforms which support shared
-libraries and position independent executables.
+libraries.
 
 @kindex --dynamic-list=@var{dynamic-list-file}
 @item --dynamic-list=@var{dynamic-list-file}
@@ -1436,7 +1481,7 @@ been assigned to see if there are any overlaps.  Normally the linker will
 perform this check, and if it finds any overlaps it will produce
 suitable error messages.  The linker does know about, and does make
 allowances for sections in overlays.  The default behaviour can be
-restored by using the command line switch @option{--check-sections}.
+restored by using the command-line switch @option{--check-sections}.
 Section overlap is not usually checked for relocatable links.  You can
 force checking in that case by using the @option{--check-sections}
 option.
@@ -1557,7 +1602,7 @@ entry point code that is capable of processing these relocations.
 @kindex --embedded-relocs
 @item --embedded-relocs
 This option is similar to the @option{--emit-relocs} option except
-that the relocs are stored in a target specific section.  This option
+that the relocs are stored in a target-specific section.  This option
 is only supported by the @samp{BFIN}, @samp{CR16} and @emph{M68K}
 targets.
 
@@ -1604,12 +1649,14 @@ referenced by dynamic objects.  Note that when building shared
 libraries, the linker must assume that any visible symbol is
 referenced.  Once this initial set of sections has been determined,
 the linker recursively marks as used any section referenced by their
-relocations.  See @samp{--entry} and @samp{--undefined}.
+relocations.  See @samp{--entry}, @samp{--undefined}, and
+@samp{--gc-keep-exported}.
 
 This option can be set when doing a partial link (enabled with option
 @samp{-r}).  In this case the root of symbols kept must be explicitly
-specified either by an @samp{--entry} or @samp{--undefined} option or by
-a @code{ENTRY} command in the linker script.
+specified either by one of the options @samp{--entry},
+@samp{--undefined}, or @samp{--gc-keep-exported} or by a @code{ENTRY}
+command in the linker script.
 
 @kindex --print-gc-sections
 @kindex --no-print-gc-sections
@@ -1665,7 +1712,7 @@ Print a summary of the command-line options on the standard output and exit.
 
 @kindex --target-help
 @item --target-help
-Print a summary of all target specific options on the standard output and exit.
+Print a summary of all target-specific options on the standard output and exit.
 
 @kindex -Map=@var{mapfile}
 @item -Map=@var{mapfile}
@@ -1857,7 +1904,7 @@ This option is only supported on a few targets.
 @xref{PowerPC ELF32,,@command{ld} and PowerPC 32-bit ELF Support}.
 @end ifset
 
-On some platforms the @samp{--relax} option performs target specific,
+On some platforms the @samp{--relax} option performs target-specific,
 global optimizations that become possible when the linker resolves
 addressing in the program, such as relaxing address modes,
 synthesizing new instructions, selecting shorter version of current
@@ -1905,12 +1952,17 @@ line.  It overrides @samp{-s} and @samp{-S}.
 Add a directory to the runtime library search path.  This is used when
 linking an ELF executable with shared objects.  All @option{-rpath}
 arguments are concatenated and passed to the runtime linker, which uses
-them to locate shared objects at runtime.  The @option{-rpath} option is
-also used when locating shared objects which are needed by shared
-objects explicitly included in the link; see the description of the
-@option{-rpath-link} option.  If @option{-rpath} is not used when linking an
-ELF executable, the contents of the environment variable
-@code{LD_RUN_PATH} will be used if it is defined.
+them to locate shared objects at runtime.
+
+The @option{-rpath} option is also used when locating shared objects which
+are needed by shared objects explicitly included in the link; see the
+description of the @option{-rpath-link} option.  Searching @option{-rpath}
+in this way is only supported by native linkers and cross linkers which
+have been configured with the @option{--with-sysroot} option.
+
+If @option{-rpath} is not used when linking an ELF executable, the
+contents of the environment variable @code{LD_RUN_PATH} will be used if it
+is defined.
 
 The @option{-rpath} option may also be used on SunOS.  By default, on
 SunOS, the linker will form a runtime search path out of all the
@@ -2367,6 +2419,25 @@ you should not put the definition of @code{__real_malloc} in the same
 file as @code{__wrap_malloc}; if you do, the assembler may resolve the
 call before the linker has a chance to wrap it to @code{malloc}.
 
+Only undefined references are replaced by the linker.  So, translation unit
+internal references to @var{symbol} are not resolved to
+@code{__wrap_@var{symbol}}.  In the next example, the call to @code{f} in
+@code{g} is not resolved to @code{__wrap_f}.
+
+@smallexample
+int
+f (void)
+@{
+  return 123;
+@}
+
+int
+g (void)
+@{
+  return f();
+@}
+@end smallexample
+
 @kindex --eh-frame-hdr
 @kindex --no-eh-frame-hdr
 @item --eh-frame-hdr
@@ -2407,7 +2478,8 @@ Set the type of linker's hash table(s).  @var{style} can be either
 @code{sysv} for classic ELF @code{.hash} section, @code{gnu} for
 new style GNU @code{.gnu.hash} section or @code{both} for both
 the classic ELF @code{.hash} and new style GNU @code{.gnu.hash}
-hash tables.  The default is @code{sysv}.
+hash tables.  The default depends upon how the linker was configured,
+but for most Linux based systems it will be @code{both}.
 
 @kindex --compress-debug-sections=none
 @kindex --compress-debug-sections=zlib
@@ -2497,7 +2569,7 @@ symbols from, to ensure that they get linked in, just like a normal
 object file).
 
 In addition to the options common to all targets, the i386 PE linker
-support additional command line options that are specific to the i386
+support additional command-line options that are specific to the i386
 PE target.  Options that take values may be separated from their
 values by either a space or an equals sign.
 
@@ -2923,12 +2995,15 @@ of the PE file header:
 @item --high-entropy-va
 Image is compatible with 64-bit address space layout randomization
 (ASLR).
+This option also implies @option{--dynamicbase} and
+@option{--enable-reloc-section}.
 
 @kindex --dynamicbase
 @item --dynamicbase
 The image base address may be relocated using address space layout
 randomization (ASLR).  This feature was introduced with MS Windows
 Vista for i386 PE targets.
+This option also implies @option{--enable-reloc-section}.
 
 @kindex --forceinteg
 @item --forceinteg
@@ -2971,6 +3046,11 @@ same sources are linked.  The option @option{--no-insert-timestamp}
 can be used to insert a zero value for the timestamp, this ensuring
 that binaries produced from identical sources will compare
 identically.
+
+@kindex --enable-reloc-section
+@item --enable-reloc-section
+Create the base relocation table, which is necessary if the image
+is loaded at a different image base than specified in the PE header.
 @end table
 
 @c man end
@@ -3002,6 +3082,36 @@ executables.  If a shared library is generated with a DSBT index of 0, the
 @kindex --no-merge-exidx-entries
 The @samp{--no-merge-exidx-entries} switch disables the merging of adjacent
 exidx entries in frame unwind info.
+
+@end table
+
+@c man end
+@end ifset
+
+@ifset CSKY
+@subsection Options specific to C-SKY targets
+
+@c man begin OPTIONS
+
+@table @gcctabopt
+
+@kindex --branch-stub on C-SKY
+@item --branch-stub
+This option enables linker branch relaxation by inserting branch stub
+sections when needed to extend the range of branches.  This option is
+usually not required since C-SKY supports branch and call instructions that
+can access the full memory range and branch relaxation is normally handled by
+the compiler or assembler.
+
+@kindex --stub-group-size on C-SKY
+@item --stub-group-size=@var{N}
+This option allows finer control of linker branch stub creation.
+It sets the maximum size of a group of input sections that can
+be handled by one stub section.  A negative value of @var{N} locates
+stub sections after their branches, while a positive value allows stub
+sections to appear either before or after the branches.  Values of
+@samp{1} or @samp{-1} indicate that the
+linker should choose suitable defaults.
 
 @end table
 
@@ -3094,6 +3204,13 @@ calculated.  By default or if @samp{--no-ignore-branch-isa} is used
 a check is made causing the loss of an ISA mode transition to produce
 an error.
 
+@kindex --compact-branches
+@item --compact-branches
+@kindex --no-compact-branches
+@item --compact-branches
+These options control the generation of compact instructions by the linker
+in the PLT entries for MIPS R6.
+
 @end table
 
 @c man end
@@ -3168,8 +3285,8 @@ described below.
 
 The linker always uses a linker script.  If you do not supply one
 yourself, the linker will use a default script that is compiled into the
-linker executable.  You can use the @samp{--verbose} command line option
-to display the default linker script.  Certain command line options,
+linker executable.  You can use the @samp{--verbose} command-line option
+to display the default linker script.  Certain command-line options,
 such as @samp{-r} or @samp{-N}, will affect the default linker script.
 
 You may supply your own linker script by using the @samp{-T} command
@@ -3374,8 +3491,8 @@ the @samp{-e} @var{entry} command-line option;
 @item
 the @code{ENTRY(@var{symbol})} command in a linker script;
 @item
-the value of a target specific symbol, if it is defined;  For many
-targets this is @code{start}, but PE and BeOS based systems for example
+the value of a target-specific symbol, if it is defined;  For many
+targets this is @code{start}, but PE- and BeOS-based systems for example
 check a list of possible entry symbols, matching the first one found.
 @item
 the address of the first byte of the @samp{.text} section, if present;
@@ -3425,10 +3542,10 @@ linker will search through the archive library search path.
 The @dfn{sysroot prefix} can also be forced by specifying @code{=}
 as the first character in the filename path, or prefixing the filename
 path with @code{$SYSROOT}.  See also the description of @samp{-L} in
-@ref{Options,,Command Line Options}.
+@ref{Options,,Command-line Options}.
 
 If you use @samp{INPUT (-l@var{file})}, @command{ld} will transform the
-name to @code{lib@var{file}.a}, as with the command line argument
+name to @code{lib@var{file}.a}, as with the command-line argument
 @samp{-l}.
 
 When you use the @code{INPUT} command in an implicit linker script, the
@@ -3442,7 +3559,7 @@ script file is included.  This can affect archive searching.
 The @code{GROUP} command is like @code{INPUT}, except that the named
 files should all be archives, and they are searched repeatedly until no
 new undefined references are created.  See the description of @samp{-(}
-in @ref{Options,,Command Line Options}.
+in @ref{Options,,Command-line Options}.
 
 @item AS_NEEDED(@var{file}, @var{file}, @dots{})
 @itemx AS_NEEDED(@var{file} @var{file} @dots{})
@@ -3462,7 +3579,7 @@ setting afterwards.
 The @code{OUTPUT} command names the output file.  Using
 @code{OUTPUT(@var{filename})} in the linker script is exactly like using
 @samp{-o @var{filename}} on the command line (@pxref{Options,,Command
-Line Options}).  If both are used, the command line option takes
+Line Options}).  If both are used, the command-line option takes
 precedence.
 
 You can use the @code{OUTPUT} command to define a default name for the
@@ -3476,9 +3593,9 @@ output file other than the usual default of @file{a.out}.
 The @code{SEARCH_DIR} command adds @var{path} to the list of paths where
 @command{ld} looks for archive libraries.  Using
 @code{SEARCH_DIR(@var{path})} is exactly like using @samp{-L @var{path}}
-on the command line (@pxref{Options,,Command Line Options}).  If both
+on the command line (@pxref{Options,,Command-line Options}).  If both
 are used, then the linker will search both paths.  Paths specified using
-the command line option are searched first.
+the command-line option are searched first.
 
 @item STARTUP(@var{filename})
 @kindex STARTUP(@var{filename})
@@ -3503,11 +3620,11 @@ A couple of linker script commands deal with object file formats.
 The @code{OUTPUT_FORMAT} command names the BFD format to use for the
 output file (@pxref{BFD}).  Using @code{OUTPUT_FORMAT(@var{bfdname})} is
 exactly like using @samp{--oformat @var{bfdname}} on the command line
-(@pxref{Options,,Command Line Options}).  If both are used, the command
+(@pxref{Options,,Command-line Options}).  If both are used, the command
 line option takes precedence.
 
 You can use @code{OUTPUT_FORMAT} with three arguments to use different
-formats based on the @samp{-EB} and @samp{-EL} command line options.
+formats based on the @samp{-EB} and @samp{-EL} command-line options.
 This permits the linker script to set the output format based on the
 desired endianness.
 
@@ -3522,7 +3639,7 @@ command:
 OUTPUT_FORMAT(elf32-bigmips, elf32-bigmips, elf32-littlemips)
 @end smallexample
 This says that the default format for the output file is
-@samp{elf32-bigmips}, but if the user uses the @samp{-EL} command line
+@samp{elf32-bigmips}, but if the user uses the @samp{-EL} command-line
 option, the output file will be created in the @samp{elf32-littlemips}
 format.
 
@@ -3532,7 +3649,7 @@ format.
 The @code{TARGET} command names the BFD format to use when reading input
 files.  It affects subsequent @code{INPUT} and @code{GROUP} commands.
 This command is like using @samp{-b @var{bfdname}} on the command line
-(@pxref{Options,,Command Line Options}).  If the @code{TARGET} command
+(@pxref{Options,,Command-line Options}).  If the @code{TARGET} command
 is used but @code{OUTPUT_FORMAT} is not, then the last @code{TARGET}
 command is also used to set the format for the output file.  @xref{BFD}.
 @end table
@@ -4515,17 +4632,20 @@ pattern in parentheses (e.g., @code{SORT_BY_NAME(.text*)}).  When the
 into ascending order by name before placing them in the output file.
 
 @cindex SORT_BY_ALIGNMENT
-@code{SORT_BY_ALIGNMENT} is very similar to @code{SORT_BY_NAME}. The
-difference is @code{SORT_BY_ALIGNMENT} will sort sections into
-descending order by alignment before placing them in the output file.
-Larger alignments are placed before smaller alignments in order to
-reduce the amount of padding necessary.
+@code{SORT_BY_ALIGNMENT} is similar to @code{SORT_BY_NAME}.
+@code{SORT_BY_ALIGNMENT} will sort sections into descending order of
+alignment before placing them in the output file.  Placing larger
+alignments before smaller alignments can reduce the amount of padding
+needed.
 
 @cindex SORT_BY_INIT_PRIORITY
-@code{SORT_BY_INIT_PRIORITY} is very similar to @code{SORT_BY_NAME}. The
-difference is @code{SORT_BY_INIT_PRIORITY} will sort sections into
-ascending order by numerical value of the GCC init_priority attribute
-encoded in the section name before placing them in the output file.
+@code{SORT_BY_INIT_PRIORITY} is also similar to @code{SORT_BY_NAME}.
+@code{SORT_BY_INIT_PRIORITY} will sort sections into ascending
+numerical order of the GCC init_priority attribute encoded in the
+section name before placing them in the output file.  In
+@code{.init_array.NNNNN} and @code{.fini_array.NNNNN}, @code{NNNNN} is
+the init_priority.  In @code{.ctors.NNNNN} and @code{.dtors.NNNNN},
+@code{NNNNN} is 65535 minus the init_priority.
 
 @cindex SORT
 @code{SORT} is an alias for @code{SORT_BY_NAME}.
@@ -4552,12 +4672,12 @@ is treated the same as @code{SORT_BY_ALIGNMENT} (wildcard section pattern).
 All other nested section sorting commands are invalid.
 @end enumerate
 
-When both command line section sorting option and linker script
+When both command-line section sorting option and linker script
 section sorting command are used, section sorting command always
-takes precedence over the command line option.
+takes precedence over the command-line option.
 
 If the section sorting command in linker script isn't nested, the
-command line option will make the section sorting command to be
+command-line option will make the section sorting command to be
 treated as nested sorting command.
 
 @enumerate
@@ -4572,10 +4692,10 @@ treated as nested sorting command.
 @end enumerate
 
 If the section sorting command in linker script is nested, the
-command line option will be ignored.
+command-line option will be ignored.
 
 @cindex SORT_NONE
-@code{SORT_NONE} disables section sorting by ignoring the command line
+@code{SORT_NONE} disables section sorting by ignoring the command-line
 section sorting option.
 
 If you ever get confused about where input sections are going, use the
@@ -4882,6 +5002,11 @@ The special output section name @samp{/DISCARD/} may be used to discard
 input sections.  Any input sections which are assigned to an output
 section named @samp{/DISCARD/} are not included in the output file.
 
+Note, sections that match the @samp{/DISCARD/} output section will be
+discarded even if they are in an ELF section group which has other
+members which are not being discarded.  This is deliberate.
+Discarding takes precedence over grouping.
+
 @node Output Section Attributes
 @subsection Output Section Attributes
 @cindex output section attributes
@@ -4892,7 +5017,7 @@ like this:
 @group
 @var{section} [@var{address}] [(@var{type})] :
   [AT(@var{lma})]
-  [ALIGN(@var{section_align})]
+  [ALIGN(@var{section_align}) | ALIGN_WITH_INPUT]
   [SUBALIGN(@var{subsection_align})]
   [@var{constraint}]
   @{
@@ -5323,11 +5448,14 @@ Same as @samp{I}
 Invert the sense of any of the attributes that follow
 @end table
 
-If a unmapped section matches any of the listed attributes other than
+If an unmapped section matches any of the listed attributes other than
 @samp{!}, it will be placed in the memory region.  The @samp{!}
-attribute reverses this test, so that an unmapped section will be placed
-in the memory region only if it does not match any of the listed
-attributes.
+attribute reverses the test for the characters that follow, so that an
+unmapped section will be placed in the memory region only if it does
+not match any of the attributes listed afterwards.  Thus an attribute
+string of @samp{RW!X} will match any unmapped section that has either
+or both of the @samp{R} and @samp{W} attributes, but only as long as
+the section does not also have the @samp{X} attribute.
 
 @kindex ORIGIN =
 @kindex o =
@@ -5802,7 +5930,7 @@ conjunction with the base suffixes mentioned above.
 @subsection Symbolic Constants
 @cindex symbolic constants
 @kindex CONSTANT
-It is possible to refer to target specific constants via the use of
+It is possible to refer to target-specific constants via the use of
 the @code{CONSTANT(@var{name})} operator, where @var{name} is one of:
 
 @table @code
@@ -5871,8 +5999,8 @@ attribute, such as code vs data, loadable vs non-loadable, etc.  If no
 sections with matching attributes are found, or your target lacks this
 support, the orphan section is placed at the end of the file.
 
-The command line options @samp{--orphan-handling} and @samp{--unique}
-(@pxref{Options,,Command Line Options}) can be used to control which
+The command-line options @samp{--orphan-handling} and @samp{--unique}
+(@pxref{Options,,Command-line Options}) can be used to control which
 output sections an orphan is placed in.
 
 @node Location Counter
@@ -6734,7 +6862,7 @@ between ARM and Thumb code.  These stubs only work with code that has
 been compiled and assembled with the @samp{-mthumb-interwork} command
 line option.  If it is necessary to link with old ARM object files or
 libraries, which have not been compiled with the -mthumb-interwork
-option then the @samp{--support-old-code} command line switch should be
+option then the @samp{--support-old-code} command-line switch should be
 given to the linker.  This will make it generate larger stub functions
 which will work with non-interworking aware ARM code.  Note, however,
 the linker does not support generating stubs for function calls to
@@ -6940,7 +7068,7 @@ The linker will automatically generate and insert small sequences of
 code into a linked ARM ELF executable whenever an attempt is made to
 perform a function call to a symbol that is too far away.  The
 placement of these sequences of instructions - called stubs - is
-controlled by the command line option @option{--stub-group-size=N}.
+controlled by the command-line option @option{--stub-group-size=N}.
 The placement is important because a poor choice can create a need for
 duplicate stubs, increasing the code size.  The linker will try to
 group stubs together in order to reduce interruptions to the flow of
@@ -6997,7 +7125,7 @@ link-time values for dynamic relocations.
 
 @cindex Placement of SG veneers
 All SG veneers are placed in the special output section @code{.gnu.sgstubs}.
-Its start address must be set, either with the command line option
+Its start address must be set, either with the command-line option
 @samp{--section-start} or in a linker script, to indicate where to place these
 veneers in memory.
 
@@ -7734,8 +7862,8 @@ header format depends on the default specified by the specific target.
 @section @command{ld} and WIN32 (cygwin/mingw)
 
 This section describes some of the win32 specific @command{ld} issues.
-See @ref{Options,,Command Line Options} for detailed description of the
-command line options mentioned here.
+See @ref{Options,,Command-line Options} for detailed description of the
+command-line options mentioned here.
 
 @table @emph
 @cindex import libraries
@@ -7745,7 +7873,7 @@ libraries, which contains information for linking to dll's.  They are
 regular static archives and are handled as any other static
 archive.  The cygwin and mingw ports of @command{ld} have specific
 support for creating such libraries provided with the
-@samp{--out-implib} command line option.
+@samp{--out-implib} command-line option.
 
 @item   exporting DLL symbols
 @cindex exporting DLL symbols
@@ -7755,7 +7883,7 @@ The cygwin/mingw @command{ld} has several ways to export symbols for dll's.
 @item   using auto-export functionality
 @cindex using auto-export functionality
 By default @command{ld} exports symbols with the auto-export functionality,
-which is controlled by the following command line options:
+which is controlled by the following command-line options:
 
 @itemize
 @item --export-all-symbols   [This is the default]
@@ -7889,7 +8017,7 @@ other DEF file statements
 
 @cindex creating a DEF file
 While linking a shared dll, @command{ld} is able to create a DEF file
-with the @samp{--output-def <file>} command line option.
+with the @samp{--output-def <file>} command-line option.
 
 @item   Using decorations
 @cindex Using decorations
@@ -8150,7 +8278,7 @@ The line @samp{_foo = foo} maps the exported symbol @samp{foo} to
 @end table
 
 Note: using a DEF file disables the default auto-export behavior,
-unless the @samp{--export-all-symbols} command line option is used.
+unless the @samp{--export-all-symbols} command-line option is used.
 If, however, you are trying to rename symbols, then you should list
 @emph{all} desired exports in the DEF file, including the symbols
 that are not being renamed, and do @emph{not} use the
