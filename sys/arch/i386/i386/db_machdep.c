@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.9 2022/12/24 14:32:42 uwe Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.10 2022/12/24 14:47:47 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2022/12/24 14:32:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2022/12/24 14:47:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	static struct trapframe tf;
 	static struct i386tss tss;
 	struct i386_frame *fp;
-	int traptype;
 	uintptr_t ptr;
 
 	switch (is_trap) {
@@ -207,9 +206,10 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	 * a frame can be recognized by always having
 	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
 	 */
-	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
-	    NULL) != DB_SYM_NULL
-	    && traptype == INTERRUPT) {
+	int traptype = NONE;
+	db_sym_t sym = db_frame_info(*nextframe, (db_addr_t)*ip,
+				     NULL, NULL, &traptype, NULL);
+	if (sym != DB_SYM_NULL && traptype == INTERRUPT) {
 		struct intrframe *ifp;
 		int trapno;
 		int err;

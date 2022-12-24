@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14 2022/12/24 14:32:42 uwe Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.15 2022/12/24 14:47:47 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2022/12/24 14:32:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.15 2022/12/24 14:47:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	struct trapframe *tf;
 	struct x86_64_frame *fp;
 	struct intrframe *ifp;
-	int traptype, trapno, err, i;
+	int trapno, err, i;
 	db_expr_t syscallno;
 
 	switch (is_trap) {
@@ -175,9 +175,10 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	 * a frame can be recognized by always having
 	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
 	 */
-	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
-	    NULL) != DB_SYM_NULL
-	    && traptype == INTERRUPT) {
+	int traptype = NONE;
+	db_sym_t sym = db_frame_info(*nextframe, (db_addr_t)*ip,
+				     NULL, NULL, &traptype, NULL);
+	if (sym != DB_SYM_NULL && traptype == INTERRUPT) {
 		for (i = 0; i < 4; i++) {
 			ifp = (struct intrframe *)(argp + i);
 			err = db_get_value((long)&ifp->if_tf.tf_err,
