@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.89 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: ess.c,v 1.90 2022/12/24 15:23:02 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.89 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.90 2022/12/24 15:23:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2451,7 +2451,7 @@ ess_srtotc(struct ess_softc *sc, u_int rate)
 
 
 /*
- * Calculate the filter constant for the reuqested sampling rate.
+ * Calculate the filter constant for the requested sampling rate.
  */
 u_int
 ess_srtofc(u_int rate)
