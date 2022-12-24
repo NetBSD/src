@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "NM 1"
-.TH NM 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH NM 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,21 +142,39 @@
 nm \- list symbols from object files
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-nm [\fB\-A\fR|\fB\-o\fR|\fB\-\-print\-file\-name\fR] [\fB\-a\fR|\fB\-\-debug\-syms\fR]
-   [\fB\-B\fR|\fB\-\-format=bsd\fR] [\fB\-C\fR|\fB\-\-demangle\fR[=\fIstyle\fR]]
-   [\fB\-D\fR|\fB\-\-dynamic\fR] [\fB\-f\fR\fIformat\fR|\fB\-\-format=\fR\fIformat\fR]
-   [\fB\-g\fR|\fB\-\-extern\-only\fR] [\fB\-h\fR|\fB\-\-help\fR]
+nm [\fB\-A\fR|\fB\-o\fR|\fB\-\-print\-file\-name\fR]
+   [\fB\-a\fR|\fB\-\-debug\-syms\fR]
+   [\fB\-B\fR|\fB\-\-format=bsd\fR]
+   [\fB\-C\fR|\fB\-\-demangle\fR[=\fIstyle\fR]]
+   [\fB\-D\fR|\fB\-\-dynamic\fR]
+   [\fB\-f\fR\fIformat\fR|\fB\-\-format=\fR\fIformat\fR]
+   [\fB\-g\fR|\fB\-\-extern\-only\fR]
+   [\fB\-h\fR|\fB\-\-help\fR]
+   [\fB\-\-ifunc\-chars=\fR\fI\s-1CHARS\s0\fR]
+   [\fB\-j\fR|\fB\-\-format=just\-symbols\fR]
    [\fB\-l\fR|\fB\-\-line\-numbers\fR] [\fB\-\-inlines\fR]
    [\fB\-n\fR|\fB\-v\fR|\fB\-\-numeric\-sort\fR]
-   [\fB\-P\fR|\fB\-\-portability\fR] [\fB\-p\fR|\fB\-\-no\-sort\fR]
-   [\fB\-r\fR|\fB\-\-reverse\-sort\fR] [\fB\-S\fR|\fB\-\-print\-size\fR]
-   [\fB\-s\fR|\fB\-\-print\-armap\fR] [\fB\-t\fR \fIradix\fR|\fB\-\-radix=\fR\fIradix\fR]
-   [\fB\-u\fR|\fB\-\-undefined\-only\fR] [\fB\-V\fR|\fB\-\-version\fR]
-   [\fB\-X 32_64\fR] [\fB\-\-defined\-only\fR] [\fB\-\-no\-demangle\fR]
-   [\fB\-\-plugin\fR \fIname\fR]
+   [\fB\-P\fR|\fB\-\-portability\fR]
+   [\fB\-p\fR|\fB\-\-no\-sort\fR]
+   [\fB\-r\fR|\fB\-\-reverse\-sort\fR]
+   [\fB\-S\fR|\fB\-\-print\-size\fR]
+   [\fB\-s\fR|\fB\-\-print\-armap\fR]
+   [\fB\-t\fR \fIradix\fR|\fB\-\-radix=\fR\fIradix\fR]
+   [\fB\-u\fR|\fB\-\-undefined\-only\fR]
+   [\fB\-U\fR|\fB\-\-defined\-only\fR]
+   [\fB\-V\fR|\fB\-\-version\fR]
+   [\fB\-W\fR|\fB\-\-no\-weak\fR]
+   [\fB\-X 32_64\fR]
+   [\fB\-\-no\-demangle\fR]
    [\fB\-\-no\-recurse\-limit\fR|\fB\-\-recurse\-limit\fR]]
-   [\fB\-\-size\-sort\fR] [\fB\-\-special\-syms\fR]
-   [\fB\-\-synthetic\fR] [\fB\-\-with\-symbol\-versions\fR] [\fB\-\-target=\fR\fIbfdname\fR]
+   [\fB\-\-plugin\fR \fIname\fR]
+   [\fB\-\-size\-sort\fR]
+   [\fB\-\-special\-syms\fR]
+   [\fB\-\-synthetic\fR]
+   [\fB\-\-target=\fR\fIbfdname\fR]
+   [\fB\-\-unicode=\fR\fImethod\fR]
+   [\fB\-\-with\-symbol\-versions\fR]
+   [\fB\-\-without\-symbol\-versions\fR]
    [\fIobjfile\fR...]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -194,10 +212,17 @@ behavior is system dependent.
 .ie n .IP """C""" 4
 .el .IP "\f(CWC\fR" 4
 .IX Item "C"
+.PD 0
+.ie n .IP """c""" 4
+.el .IP "\f(CWc\fR" 4
+.IX Item "c"
+.PD
 The symbol is common.  Common symbols are uninitialized data.  When
 linking, multiple common symbols may appear with the same name.  If the
 symbol is defined anywhere, the common symbols are treated as undefined
 references.
+The lower case \fIc\fR character is used when the symbol is in a
+special section for small commons.
 .ie n .IP """D""" 4
 .el .IP "\f(CWD\fR" 4
 .IX Item "D"
@@ -222,12 +247,21 @@ such as a global int variable as opposed to a large global array.
 .el .IP "\f(CWi\fR" 4
 .IX Item "i"
 For \s-1PE\s0 format files this indicates that the symbol is in a section
-specific to the implementation of DLLs.  For \s-1ELF\s0 format files this
-indicates that the symbol is an indirect function.  This is a \s-1GNU\s0
-extension to the standard set of \s-1ELF\s0 symbol types.  It indicates a
-symbol which if referenced by a relocation does not evaluate to its
-address, but instead must be invoked at runtime.  The runtime
-execution will then return the value to be used in the relocation.
+specific to the implementation of DLLs.
+.Sp
+For \s-1ELF\s0 format files this indicates that the symbol is an indirect
+function.  This is a \s-1GNU\s0 extension to the standard set of \s-1ELF\s0 symbol
+types.  It indicates a symbol which if referenced by a relocation does
+not evaluate to its address, but instead must be invoked at runtime.
+The runtime execution will then return the value to be used in the
+relocation.
+.Sp
+Note \- the actual symbols display for \s-1GNU\s0 indirect symbols is
+controlled by the \fB\-\-ifunc\-chars\fR command line option.  If this
+option has been provided then the first character in the string will
+be used for global indirect function symbols.  If the string contains
+a second character then that will be used for local indirect function
+symbols.
 .ie n .IP """I""" 4
 .el .IP "\f(CWI\fR" 4
 .IX Item "I"
@@ -325,7 +359,13 @@ The symbol type is unknown, or object file format specific.
 .RS 4
 .RE
 .IP "\(bu" 4
-The symbol name.
+The symbol name.  If a symbol has version information associated with it,
+then the version information is displayed as well.  If the versioned
+symbol is undefined or hidden from linker, the version string is displayed
+as a suffix to the symbol name, preceded by an @ character.  For example
+\&\fBfoo@VER_1\fR.  If the version is the default version to be used when
+resolving unversioned references to the symbol, then it is displayed as a
+suffix preceded by two @ characters.  For example \fBfoo@@VER_2\fR.
 .SH "OPTIONS"
 .IX Header "OPTIONS"
 The long and short forms of options, shown here as alternatives, are
@@ -378,7 +418,7 @@ Do not demangle low-level symbol names.  This is the default.
 .PD
 Enables or disables a limit on the amount of recursion performed
 whilst demangling strings.  Since the name mangling formats allow for
-an inifinite level of recursion it is possible to create strings whose
+an infinite level of recursion it is possible to create strings whose
 decoding will exhaust the amount of stack space available on the host
 machine, triggering a memory fault.  The limit tries to prevent this
 from happening by restricting recursion to 2048 levels of nesting.
@@ -403,7 +443,7 @@ libraries.
 .IX Item "--format=format"
 .PD
 Use the output format \fIformat\fR, which can be \f(CW\*(C`bsd\*(C'\fR,
-\&\f(CW\*(C`sysv\*(C'\fR, or \f(CW\*(C`posix\*(C'\fR.  The default is \f(CW\*(C`bsd\*(C'\fR.
+\&\f(CW\*(C`sysv\*(C'\fR, \f(CW\*(C`posix\*(C'\fR or \f(CW\*(C`just\-symbols\*(C'\fR.  The default is \f(CW\*(C`bsd\*(C'\fR.
 Only the first character of \fIformat\fR is significant; it can be
 either upper or lower case.
 .IP "\fB\-g\fR" 4
@@ -420,6 +460,18 @@ Display only external symbols.
 .IX Item "--help"
 .PD
 Show a summary of the options to \fBnm\fR and exit.
+.IP "\fB\-\-ifunc\-chars=\fR\fI\s-1CHARS\s0\fR" 4
+.IX Item "--ifunc-chars=CHARS"
+When display \s-1GNU\s0 indirect function symbols \fBnm\fR will default
+to using the \f(CW\*(C`i\*(C'\fR character for both local indirect functions and
+global indirect functions.  The \fB\-\-ifunc\-chars\fR option allows
+the user to specify a string containing one or two characters. The
+first character will be used for global indirect function symbols and
+the second character, if present, will be used for local indirect
+function symbols.
+.IP "\fBj\fR" 4
+.IX Item "j"
+The same as \fB\-\-format=just\-symbols\fR.
 .IP "\fB\-l\fR" 4
 .IX Item "-l"
 .PD 0
@@ -508,6 +560,15 @@ Use \fIradix\fR as the radix for printing the symbol values.  It must be
 .IX Item "--undefined-only"
 .PD
 Display only undefined symbols (those external to each object file).
+By default both defined and undefined symbols are displayed.
+.IP "\fB\-U\fR" 4
+.IX Item "-U"
+.PD 0
+.IP "\fB\-\-defined\-only\fR" 4
+.IX Item "--defined-only"
+.PD
+Display only defined symbols for each object file.
+By default both defined and undefined symbols are displayed.
 .IP "\fB\-V\fR" 4
 .IX Item "-V"
 .PD 0
@@ -521,9 +582,6 @@ This option is ignored for compatibility with the \s-1AIX\s0 version of
 \&\fBnm\fR.  It takes one parameter which must be the string
 \&\fB32_64\fR.  The default mode of \s-1AIX\s0 \fBnm\fR corresponds
 to \fB\-X 32\fR, which is not supported by \s-1GNU\s0 \fBnm\fR.
-.IP "\fB\-\-defined\-only\fR" 4
-.IX Item "--defined-only"
-Display only defined symbols for each object file.
 .IP "\fB\-\-plugin\fR \fIname\fR" 4
 .IX Item "--plugin name"
 Load the plugin called \fIname\fR to add support for extra target
@@ -551,6 +609,9 @@ difference between the value of the symbol and the value of the symbol
 with the next higher value.  If the \f(CW\*(C`bsd\*(C'\fR output format is used
 the size of the symbol is printed, rather than the value, and
 \&\fB\-S\fR must be used in order both size and value to be printed.
+.Sp
+Note \- this option does not work if \fB\-\-undefined\-only\fR has been
+enabled as undefined symbols have no size.
 .IP "\fB\-\-special\-syms\fR" 4
 .IX Item "--special-syms"
 Display symbols which have a target-specific special meaning.  These
@@ -563,14 +624,40 @@ used to mark transitions between \s-1ARM\s0 code, \s-1THUMB\s0 code and data.
 Include synthetic symbols in the output.  These are special symbols
 created by the linker for various purposes.  They are not shown by
 default since they are not part of the binary's original source code.
+.IP "\fB\-\-unicode=\fR\fI[default|invalid|locale|escape|hex|highlight]\fR" 4
+.IX Item "--unicode=[default|invalid|locale|escape|hex|highlight]"
+Controls the display of \s-1UTF\-8\s0 encoded multibyte characters in strings.
+The default (\fB\-\-unicode=default\fR) is to give them no special
+treatment.  The \fB\-\-unicode=locale\fR option displays the sequence
+in the current locale, which may or may not support them.  The options
+\&\fB\-\-unicode=hex\fR and \fB\-\-unicode=invalid\fR display them as
+hex byte sequences enclosed by either angle brackets or curly braces.
+.Sp
+The \fB\-\-unicode=escape\fR option displays them as escape sequences
+(\fI\euxxxx\fR) and the \fB\-\-unicode=highlight\fR option displays
+them as escape sequences highlighted in red (if supported by the
+output device).  The colouring is intended to draw attention to the
+presence of unicode sequences where they might not be expected.
+.IP "\fB\-W\fR" 4
+.IX Item "-W"
+.PD 0
+.IP "\fB\-\-no\-weak\fR" 4
+.IX Item "--no-weak"
+.PD
+Do not display weak symbols.
 .IP "\fB\-\-with\-symbol\-versions\fR" 4
 .IX Item "--with-symbol-versions"
-Enables the display of symbol version information if any exists.  The
-version string is displayed as a suffix to the symbol name, preceeded by
-an @ character.  For example \fBfoo@VER_1\fR.  If the version is
+.PD 0
+.IP "\fB\-\-without\-symbol\-versions\fR" 4
+.IX Item "--without-symbol-versions"
+.PD
+Enables or disables the display of symbol version information.  The
+version string is displayed as a suffix to the symbol name, preceded
+by an @ character.  For example \fBfoo@VER_1\fR.  If the version is
 the default version to be used when resolving unversioned references
-to the symbol then it is displayed as a suffix preceeded by two @
-characters.  For example \fBfoo@@VER_2\fR.
+to the symbol then it is displayed as a suffix preceded by two @
+characters.  For example \fBfoo@@VER_2\fR.  By default, symbol
+version information is displayed.
 .IP "\fB\-\-target=\fR\fIbfdname\fR" 4
 .IX Item "--target=bfdname"
 Specify an object code format other than your system's default format.
@@ -592,7 +679,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 \&\fBar\fR\|(1), \fBobjdump\fR\|(1), \fBranlib\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

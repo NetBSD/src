@@ -264,10 +264,8 @@ struct reloc_howto_struct
      an external reloc number is stored in this field.  */
   unsigned int type;
 
-  /* The encoded size of the item to be relocated.  This is *not* a
-     power-of-two measure.  Use bfd_get_reloc_size to find the size
-     of the item in bytes.  */
-  unsigned int size:3;
+  /* The size of the item to be relocated in bytes.  */
+  unsigned int size:4;
 
   /* The number of bits in the field to be relocated.  This is used
      when doing overflow checking.  */
@@ -348,9 +346,10 @@ struct reloc_howto_struct
 The HOWTO macro fills in a reloc_howto_type (a typedef for
 const struct reloc_howto_struct).
 @example
+#define HOWTO_RSIZE(sz) ((sz) < 0 ? -(sz) : (sz))
 #define HOWTO(type, right, size, bits, pcrel, left, ovf, func, name,   \
               inplace, src_mask, dst_mask, pcrel_off)                  \
-  @{ (unsigned) type, size < 0 ? -size : size, bits, right, left, ovf,  \
+  @{ (unsigned) type, HOWTO_RSIZE (size), bits, right, left, ovf,       \
     size < 0, pcrel, inplace, pcrel_off, src_mask, dst_mask, func, name @}
 @end example
 
@@ -358,20 +357,16 @@ const struct reloc_howto_struct).
 This is used to fill in an empty howto entry in an array.
 @example
 #define EMPTY_HOWTO(C) \
-  HOWTO ((C), 0, 0, 0, FALSE, 0, complain_overflow_dont, NULL, \
-         NULL, FALSE, 0, 0, FALSE)
+  HOWTO ((C), 0, 1, 0, false, 0, complain_overflow_dont, NULL, \
+         NULL, false, 0, 0, false)
+
+static inline unsigned int
+bfd_get_reloc_size (reloc_howto_type *howto)
+@{
+  return howto->size;
+@}
 
 @end example
-
-@findex bfd_get_reloc_size
-@subsubsection @code{bfd_get_reloc_size}
-@strong{Synopsis}
-@example
-unsigned int bfd_get_reloc_size (reloc_howto_type *);
-@end example
-@strong{Description}@*
-For a reloc_howto_type that operates on a fixed number of bytes,
-this returns the number of bytes operated on.
 
 @findex arelent_chain
 @subsubsection @code{arelent_chain}
@@ -409,7 +404,7 @@ Perform overflow checking on @var{relocation} which has
 @subsubsection @code{bfd_reloc_offset_in_range}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_reloc_offset_in_range
+bool bfd_reloc_offset_in_range
    (reloc_howto_type *howto,
     bfd *abfd,
     asection *section,
@@ -508,6 +503,7 @@ of the relocation itself; sometimes they are relative to the start of
 the section containing the relocation.  It depends on the specific target.
 @end deffn
 @deffn {} BFD_RELOC_32_SECREL
+@deffnx {} BFD_RELOC_16_SECIDX
 Section relative relocations.  Some targets need this for DWARF2.
 @end deffn
 @deffn {} BFD_RELOC_32_GOT_PCREL
@@ -916,7 +912,7 @@ microMIPS versions of generic BFD relocs.
 @deffnx {} BFD_RELOC_MICROMIPS_HIGHER
 @deffnx {} BFD_RELOC_MIPS_SCN_DISP
 @deffnx {} BFD_RELOC_MICROMIPS_SCN_DISP
-@deffnx {} BFD_RELOC_MIPS_REL16
+@deffnx {} BFD_RELOC_MIPS_16
 @deffnx {} BFD_RELOC_MIPS_RELGOT
 @deffnx {} BFD_RELOC_MIPS_JALR
 @deffnx {} BFD_RELOC_MICROMIPS_JALR
@@ -1147,6 +1143,8 @@ Picojava relocs.  Not all of these appear in object files.
 @deffn {} BFD_RELOC_PPC_B26
 @deffnx {} BFD_RELOC_PPC_BA26
 @deffnx {} BFD_RELOC_PPC_TOC16
+@deffnx {} BFD_RELOC_PPC_TOC16_LO
+@deffnx {} BFD_RELOC_PPC_TOC16_HI
 @deffnx {} BFD_RELOC_PPC_B16
 @deffnx {} BFD_RELOC_PPC_B16_BRTAKEN
 @deffnx {} BFD_RELOC_PPC_B16_BRNTAKEN
@@ -1193,6 +1191,7 @@ Picojava relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_PPC_VLE_SDAREL_HA16D
 @deffnx {} BFD_RELOC_PPC_16DX_HA
 @deffnx {} BFD_RELOC_PPC_REL16DX_HA
+@deffnx {} BFD_RELOC_PPC_NEG
 @deffnx {} BFD_RELOC_PPC64_HIGHER
 @deffnx {} BFD_RELOC_PPC64_HIGHER_S
 @deffnx {} BFD_RELOC_PPC64_HIGHEST
@@ -1227,6 +1226,7 @@ Picojava relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_PPC64_ADDR64_LOCAL
 @deffnx {} BFD_RELOC_PPC64_ENTRY
 @deffnx {} BFD_RELOC_PPC64_REL24_NOTOC
+@deffnx {} BFD_RELOC_PPC64_REL24_P9NOTOC
 @deffnx {} BFD_RELOC_PPC64_D34
 @deffnx {} BFD_RELOC_PPC64_D34_LO
 @deffnx {} BFD_RELOC_PPC64_D34_HI30
@@ -1249,6 +1249,10 @@ Power(rs6000) and PowerPC relocations.
 @deffn {} BFD_RELOC_PPC_TLS
 @deffnx {} BFD_RELOC_PPC_TLSGD
 @deffnx {} BFD_RELOC_PPC_TLSLD
+@deffnx {} BFD_RELOC_PPC_TLSLE
+@deffnx {} BFD_RELOC_PPC_TLSIE
+@deffnx {} BFD_RELOC_PPC_TLSM
+@deffnx {} BFD_RELOC_PPC_TLSML
 @deffnx {} BFD_RELOC_PPC_DTPMOD
 @deffnx {} BFD_RELOC_PPC_TPREL16
 @deffnx {} BFD_RELOC_PPC_TPREL16_LO
@@ -1276,6 +1280,12 @@ Power(rs6000) and PowerPC relocations.
 @deffnx {} BFD_RELOC_PPC_GOT_DTPREL16_LO
 @deffnx {} BFD_RELOC_PPC_GOT_DTPREL16_HI
 @deffnx {} BFD_RELOC_PPC_GOT_DTPREL16_HA
+@deffnx {} BFD_RELOC_PPC64_TLSGD
+@deffnx {} BFD_RELOC_PPC64_TLSLD
+@deffnx {} BFD_RELOC_PPC64_TLSLE
+@deffnx {} BFD_RELOC_PPC64_TLSIE
+@deffnx {} BFD_RELOC_PPC64_TLSM
+@deffnx {} BFD_RELOC_PPC64_TLSML
 @deffnx {} BFD_RELOC_PPC64_TPREL16_DS
 @deffnx {} BFD_RELOC_PPC64_TPREL16_LO_DS
 @deffnx {} BFD_RELOC_PPC64_TPREL16_HIGH
@@ -1294,10 +1304,10 @@ Power(rs6000) and PowerPC relocations.
 @deffnx {} BFD_RELOC_PPC64_DTPREL16_HIGHESTA
 @deffnx {} BFD_RELOC_PPC64_TPREL34
 @deffnx {} BFD_RELOC_PPC64_DTPREL34
-@deffnx {} BFD_RELOC_PPC64_GOT_TLSGD34
-@deffnx {} BFD_RELOC_PPC64_GOT_TLSLD34
-@deffnx {} BFD_RELOC_PPC64_GOT_TPREL34
-@deffnx {} BFD_RELOC_PPC64_GOT_DTPREL34
+@deffnx {} BFD_RELOC_PPC64_GOT_TLSGD_PCREL34
+@deffnx {} BFD_RELOC_PPC64_GOT_TLSLD_PCREL34
+@deffnx {} BFD_RELOC_PPC64_GOT_TPREL_PCREL34
+@deffnx {} BFD_RELOC_PPC64_GOT_DTPREL_PCREL34
 @deffnx {} BFD_RELOC_PPC64_TLS_PCREL
 PowerPC and PowerPC64 thread-local storage relocations.
 @end deffn
@@ -3260,6 +3270,7 @@ Relocs used in TLS code for CRIS.
 @deffnx {} BFD_RELOC_OR1K_SLO13
 @deffnx {} BFD_RELOC_OR1K_GOTPC_HI16
 @deffnx {} BFD_RELOC_OR1K_GOTPC_LO16
+@deffnx {} BFD_RELOC_OR1K_GOT_AHI16
 @deffnx {} BFD_RELOC_OR1K_GOT16
 @deffnx {} BFD_RELOC_OR1K_GOT_PG21
 @deffnx {} BFD_RELOC_OR1K_GOT_LO13
@@ -3311,12 +3322,6 @@ Sony Xstormy16 Relocations.
 @deffn {} BFD_RELOC_RELC
 Self-describing complex relocations.
 @end deffn
-@deffn {} BFD_RELOC_XC16X_PAG
-@deffnx {} BFD_RELOC_XC16X_POF
-@deffnx {} BFD_RELOC_XC16X_SEG
-@deffnx {} BFD_RELOC_XC16X_SOF
-Infineon Relocations.
-@end deffn
 @deffn {} BFD_RELOC_VAX_GLOB_DAT
 @deffnx {} BFD_RELOC_VAX_JMP_SLOT
 @deffnx {} BFD_RELOC_VAX_RELATIVE
@@ -3362,6 +3367,8 @@ Morpho MT - 8 bit immediate relocation.
 @deffnx {} BFD_RELOC_MSP430_ABS_HI16
 @deffnx {} BFD_RELOC_MSP430_PREL31
 @deffnx {} BFD_RELOC_MSP430_SYM_DIFF
+@deffnx {} BFD_RELOC_MSP430_SET_ULEB128
+@deffnx {} BFD_RELOC_MSP430_SUB_ULEB128
 msp430 specific relocation codes
 @end deffn
 @deffn {} BFD_RELOC_NIOS2_S16
@@ -3475,6 +3482,8 @@ PLT entries.  Otherwise, this is just a generic 32-bit relocation.
 @deffn {} BFD_RELOC_XTENSA_DIFF8
 @deffnx {} BFD_RELOC_XTENSA_DIFF16
 @deffnx {} BFD_RELOC_XTENSA_DIFF32
+Xtensa relocations for backward compatibility.  These have been replaced
+by BFD_RELOC_XTENSA_PDIFF and BFD_RELOC_XTENSA_NDIFF.
 Xtensa relocations to mark the difference of two local symbols.
 These are only needed to support linker relaxation and can be ignored
 when not relaxing.  The field is set to the value of the difference
@@ -3546,6 +3555,22 @@ BFD_RELOC_XTENSA_ASM_EXPAND.
 @deffnx {} BFD_RELOC_XTENSA_TLS_CALL
 Xtensa TLS relocations.
 @end deffn
+@deffn {} BFD_RELOC_XTENSA_PDIFF8
+@deffnx {} BFD_RELOC_XTENSA_PDIFF16
+@deffnx {} BFD_RELOC_XTENSA_PDIFF32
+@deffnx {} BFD_RELOC_XTENSA_NDIFF8
+@deffnx {} BFD_RELOC_XTENSA_NDIFF16
+@deffnx {} BFD_RELOC_XTENSA_NDIFF32
+Xtensa relocations to mark the difference of two local symbols.
+These are only needed to support linker relaxation and can be ignored
+when not relaxing.  The field is set to the value of the difference
+assuming no relaxation.  The relocation encodes the position of the
+subtracted symbol so the linker can determine whether to adjust the field
+value.  PDIFF relocations are used for positive differences, NDIFF
+relocations are used for negative differences.  The difference value
+is treated as unsigned with these relocation types, giving full
+8/16 value ranges.
+@end deffn
 @deffn {} BFD_RELOC_Z80_DISP8
 8 bit signed offset in (ix+d) or (iy+d).
 @end deffn
@@ -3566,6 +3591,9 @@ Lowest 16 bits of multibyte (32 or 24 bit) value.
 @end deffn
 @deffn {} BFD_RELOC_Z80_WORD1
 Highest 16 bits of multibyte (32 or 24 bit) value.
+@end deffn
+@deffn {} BFD_RELOC_Z80_16_BE
+Like BFD_RELOC_16 but big-endian.
 @end deffn
 @deffn {} BFD_RELOC_Z8K_DISP7
 DJNZ offset.
@@ -4500,6 +4528,51 @@ C-SKY relocations.
 @deffn {} BFD_RELOC_S12Z_OPR
 S12Z relocations.
 @end deffn
+@deffn {} BFD_RELOC_LARCH_TLS_DTPMOD32
+@deffnx {} BFD_RELOC_LARCH_TLS_DTPREL32
+@deffnx {} BFD_RELOC_LARCH_TLS_DTPMOD64
+@deffnx {} BFD_RELOC_LARCH_TLS_DTPREL64
+@deffnx {} BFD_RELOC_LARCH_TLS_TPREL32
+@deffnx {} BFD_RELOC_LARCH_TLS_TPREL64
+@deffnx {} BFD_RELOC_LARCH_MARK_LA
+@deffnx {} BFD_RELOC_LARCH_MARK_PCREL
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_PCREL
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_DUP
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_GPREL
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_TLS_TPREL
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_TLS_GOT
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_TLS_GD
+@deffnx {} BFD_RELOC_LARCH_SOP_PUSH_PLT_PCREL
+@deffnx {} BFD_RELOC_LARCH_SOP_ASSERT
+@deffnx {} BFD_RELOC_LARCH_SOP_NOT
+@deffnx {} BFD_RELOC_LARCH_SOP_SUB
+@deffnx {} BFD_RELOC_LARCH_SOP_SL
+@deffnx {} BFD_RELOC_LARCH_SOP_SR
+@deffnx {} BFD_RELOC_LARCH_SOP_ADD
+@deffnx {} BFD_RELOC_LARCH_SOP_AND
+@deffnx {} BFD_RELOC_LARCH_SOP_IF_ELSE
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_10_5
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_U_10_12
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_10_12
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_10_16
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_10_16_S2
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_5_20
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_0_5_10_16_S2
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_S_0_10_10_16_S2
+@deffnx {} BFD_RELOC_LARCH_SOP_POP_32_U
+@deffnx {} BFD_RELOC_LARCH_ADD8
+@deffnx {} BFD_RELOC_LARCH_ADD16
+@deffnx {} BFD_RELOC_LARCH_ADD24
+@deffnx {} BFD_RELOC_LARCH_ADD32
+@deffnx {} BFD_RELOC_LARCH_ADD64
+@deffnx {} BFD_RELOC_LARCH_SUB8
+@deffnx {} BFD_RELOC_LARCH_SUB16
+@deffnx {} BFD_RELOC_LARCH_SUB24
+@deffnx {} BFD_RELOC_LARCH_SUB32
+@deffnx {} BFD_RELOC_LARCH_SUB64
+LARCH relocations.
+@end deffn
 
 @example
 
@@ -4543,11 +4616,11 @@ Useful mainly for printing error messages.
 @subsubsection @code{bfd_generic_relax_section}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_generic_relax_section
+bool bfd_generic_relax_section
    (bfd *abfd,
     asection *section,
     struct bfd_link_info *,
-    bfd_boolean *);
+    bool *);
 @end example
 @strong{Description}@*
 Provides default handling for relaxing for back ends which
@@ -4557,7 +4630,7 @@ don't do relaxing.
 @subsubsection @code{bfd_generic_gc_sections}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_generic_gc_sections
+bool bfd_generic_gc_sections
    (bfd *, struct bfd_link_info *);
 @end example
 @strong{Description}@*
@@ -4568,7 +4641,7 @@ don't do section gc -- i.e., does nothing.
 @subsubsection @code{bfd_generic_lookup_section_flags}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_generic_lookup_section_flags
+bool bfd_generic_lookup_section_flags
    (struct bfd_link_info *, struct flag_info *, asection *);
 @end example
 @strong{Description}@*
@@ -4580,7 +4653,7 @@ Returns FALSE if the section should be omitted, otherwise TRUE.
 @subsubsection @code{bfd_generic_merge_sections}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_generic_merge_sections
+bool bfd_generic_merge_sections
    (bfd *, struct bfd_link_info *);
 @end example
 @strong{Description}@*
@@ -4596,7 +4669,7 @@ bfd_byte *bfd_generic_get_relocated_section_contents
     struct bfd_link_info *link_info,
     struct bfd_link_order *link_order,
     bfd_byte *data,
-    bfd_boolean relocatable,
+    bool relocatable,
     asymbol **symbols);
 @end example
 @strong{Description}@*
@@ -4620,7 +4693,7 @@ Installs a new set of internal relocations in SECTION.
 @subsubsection @code{_bfd_unrecognized_reloc}
 @strong{Synopsis}
 @example
-bfd_boolean _bfd_unrecognized_reloc
+bool _bfd_unrecognized_reloc
    (bfd * abfd,
     sec_ptr section,
     unsigned int r_type);

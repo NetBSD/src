@@ -15,7 +15,25 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
+#
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,6 +134,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../bfd/warning.m4 $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
+	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/largefile.m4 \
 	$(top_srcdir)/../config/lcmessage.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
@@ -219,6 +238,46 @@ am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
 SOURCES = $(as_new_SOURCES) $(EXTRA_as_new_SOURCES) \
 	$(itbl_test_SOURCES)
+AM_V_DVIPS = $(am__v_DVIPS_@AM_V@)
+am__v_DVIPS_ = $(am__v_DVIPS_@AM_DEFAULT_V@)
+am__v_DVIPS_0 = @echo "  DVIPS   " $@;
+am__v_DVIPS_1 = 
+AM_V_MAKEINFO = $(am__v_MAKEINFO_@AM_V@)
+am__v_MAKEINFO_ = $(am__v_MAKEINFO_@AM_DEFAULT_V@)
+am__v_MAKEINFO_0 = @echo "  MAKEINFO" $@;
+am__v_MAKEINFO_1 = 
+AM_V_INFOHTML = $(am__v_INFOHTML_@AM_V@)
+am__v_INFOHTML_ = $(am__v_INFOHTML_@AM_DEFAULT_V@)
+am__v_INFOHTML_0 = @echo "  INFOHTML" $@;
+am__v_INFOHTML_1 = 
+AM_V_TEXI2DVI = $(am__v_TEXI2DVI_@AM_V@)
+am__v_TEXI2DVI_ = $(am__v_TEXI2DVI_@AM_DEFAULT_V@)
+am__v_TEXI2DVI_0 = @echo "  TEXI2DVI" $@;
+am__v_TEXI2DVI_1 = 
+AM_V_TEXI2PDF = $(am__v_TEXI2PDF_@AM_V@)
+am__v_TEXI2PDF_ = $(am__v_TEXI2PDF_@AM_DEFAULT_V@)
+am__v_TEXI2PDF_0 = @echo "  TEXI2PDF" $@;
+am__v_TEXI2PDF_1 = 
+AM_V_texinfo = $(am__v_texinfo_@AM_V@)
+am__v_texinfo_ = $(am__v_texinfo_@AM_DEFAULT_V@)
+am__v_texinfo_0 = -q
+am__v_texinfo_1 = 
+AM_V_texidevnull = $(am__v_texidevnull_@AM_V@)
+am__v_texidevnull_ = $(am__v_texidevnull_@AM_DEFAULT_V@)
+am__v_texidevnull_0 = > /dev/null
+am__v_texidevnull_1 = 
+INFO_DEPS = doc/as.info
+TEXINFO_TEX = $(top_srcdir)/../texinfo.tex
+am__TEXINFO_TEX_DIR = $(top_srcdir)/..
+DVIS = doc/as.dvi
+PDFS = doc/as.pdf
+PSS = doc/as.ps
+HTMLS = doc/as.html
+TEXINFOS = doc/as.texi
+TEXI2PDF = $(TEXI2DVI) --pdf --batch
+MAKEINFOHTML = $(MAKEINFO) --html
+AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
+DVIPS = dvips
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -232,6 +291,37 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__installdirs = "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)"
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+man1dir = $(mandir)/man1
+NROFF = nroff
+MANS = $(man_MANS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -265,7 +355,6 @@ DEJATOOL = $(PACKAGE)
 RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
 DIST_SUBDIRS = $(SUBDIRS)
 ACLOCAL = @ACLOCAL@
-ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
@@ -303,6 +392,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTOBJEXT = @INSTOBJEXT@
+LARGEFILE_CPPFLAGS = @LARGEFILE_CPPFLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = `if [ -f ../flex/flex ] ; then echo ../flex/flex ; else echo @LEX@ ; fi`
@@ -418,14 +508,16 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 zlibdir = @zlibdir@
 zlibinc = @zlibinc@
-AUTOMAKE_OPTIONS = dejagnu foreign no-dist subdir-objects
+AUTOMAKE_OPTIONS = dejagnu foreign no-dist subdir-objects info-in-builddir no-texinfo.tex
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
-SUBDIRS = doc po
+MAINTAINERCLEANFILES = doc/asconfig.texi doc/as.info
+SUBDIRS = po
 tooldir = $(exec_prefix)/$(target_alias)
 
 # This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
 # -I../zlib, unless we were configured with --with-system-zlib, in which
 # case both are empty.
+ZLIB = @zlibdir@ -lz
 ZLIBINC = @zlibinc@
 
 # Automake 1.10+ disables lex and yacc output file regeneration if
@@ -542,6 +634,7 @@ TARGET_CPU_CFILES = \
 	config/tc-ip2k.c \
 	config/tc-iq2000.c \
 	config/tc-lm32.c \
+	config/tc-loongarch.c \
 	config/tc-m32c.c \
 	config/tc-m32r.c \
 	config/tc-m68hc11.c \
@@ -585,12 +678,10 @@ TARGET_CPU_CFILES = \
 	config/tc-visium.c \
 	config/tc-wasm32.c \
 	config/tc-xstormy16.c \
-	config/tc-xc16x.c \
 	config/tc-xgate.c \
 	config/tc-xtensa.c \
 	config/tc-z80.c \
-	config/tc-z8k.c \
-	config/xtensa-relax.c
+	config/tc-z8k.c
 
 TARGET_CPU_HFILES = \
 	config/tc-aarch64.h \
@@ -660,11 +751,14 @@ TARGET_CPU_HFILES = \
 	config/tc-visium.h \
 	config/tc-wasm32.h \
 	config/tc-xstormy16.h \
-	config/tc-xc16x.h \
 	config/tc-xgate.h \
 	config/tc-xtensa.h \
 	config/tc-z80.h \
-	config/tc-z8k.h \
+	config/tc-z8k.h
+
+TARGET_EXTRA_FILES = \
+	config/bfin-lex-wrapper.c \
+	config/xtensa-relax.c \
 	config/xtensa-relax.h
 
 
@@ -721,7 +815,6 @@ TARG_ENV_HFILES = \
 	config/te-pe.h \
 	config/te-solaris.h \
 	config/te-svr4.h \
-	config/te-symbian.h \
 	config/te-tmips.h \
 	config/te-vxworks.h \
 	config/te-wince-pe.h
@@ -746,14 +839,15 @@ CONFIG_ATOF_CFILES = \
 POTFILES = $(MULTI_CFILES) $(CONFIG_ATOF_CFILES) \
 	$(TARG_ENV_HFILES) $(TARG_ENV_CFILES) $(OBJ_FORMAT_HFILES) \
 	$(OBJ_FORMAT_CFILES) $(TARGET_CPU_HFILES) $(TARGET_CPU_CFILES) \
-	$(HFILES) $(CFILES)
+	$(TARGET_EXTRA_FILES) $(HFILES) $(CFILES)
 
 noinst_SCRIPTS = $(GDBINIT)
 EXTRA_SCRIPTS = .gdbinit
-EXTRA_DIST = m68k-parse.c itbl-parse.c itbl-parse.h itbl-lex.c \
-	bfin-parse.c bfin-parse.h bfin-lex.c \
-	rl78-parse.c rl78-parse.h \
-	rx-parse.c rx-parse.h
+EXTRA_DIST = config/m68k-parse.c itbl-parse.c itbl-parse.h itbl-lex.c \
+	config/bfin-parse.c config/bfin-parse.h config/bfin-lex.c \
+	config/rl78-parse.c config/rl78-parse.h \
+	config/rx-parse.c config/rx-parse.h \
+	config/loongarch-parse.c config/loongarch-parse.h config/loongarch-lex.c
 
 DISTCLEANFILES = targ-cpu.h obj-format.h targ-env.h itbl-cpu.h cgen-desc.h
 
@@ -768,7 +862,7 @@ INCDIR = $(BASEDIR)/include
 # so that tm.h and config.h will be found in the compilation
 # subdirectory rather than in the source directory.
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(srcdir)/config \
-	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ \
+	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ @LARGEFILE_CPPFLAGS@ \
 	-DLOCALEDIR="\"$(datadir)/locale\""
 
 
@@ -780,18 +874,20 @@ GASLIBS = @OPCODES_LIB@ ../bfd/libbfd.la ../libiberty/libiberty.a
 STAGESTUFF = *.@OBJEXT@ $(noinst_PROGRAMS)
 as_new_SOURCES = $(GAS_CFILES)
 as_new_LDADD = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
-	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM)
+	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM) $(ZLIB)
 
 as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 	$(extra_objects) $(GASLIBS) $(LIBINTL_DEP)
 
 
-# The m68k operand parser.
+# The LoongArch lexical analyzer and parser.
 EXTRA_as_new_SOURCES = $(CFILES) $(HFILES) $(TARGET_CPU_CFILES) \
-	$(TARGET_CPU_HFILES) $(OBJ_FORMAT_CFILES) $(OBJ_FORMAT_HFILES) \
-	$(TARG_ENV_CFILES) $(CONFIG_ATOF_CFILES) $(MULTI_CFILES) \
-	config/m68k-parse.y config/bfin-parse.y config/rl78-parse.y \
-	config/rx-parse.y
+	$(TARGET_CPU_HFILES) $(TARGET_EXTRA_FILES) $(TARG_ENV_CFILES) \
+	$(OBJ_FORMAT_CFILES) $(OBJ_FORMAT_HFILES) \
+	$(CONFIG_ATOF_CFILES) $(MULTI_CFILES) config/m68k-parse.y \
+	config/bfin-parse.y config/bfin-lex.l config/rl78-parse.y \
+	config/rx-parse.y config/loongarch-parse.y \
+	config/loongarch-lex.l
 EXPECT = expect
 RUNTEST = runtest
 RUNTESTFLAGS = 
@@ -812,14 +908,94 @@ against = stage2
 # development.sh is used to determine -Werror default.
 CONFIG_STATUS_DEPENDENCIES = $(srcdir)/configure.tgt $(BFDDIR)/development.sh
 EXTRA_DEJAGNU_SITE_CONFIG = development.exp
+
+# What version of the manual you want; "all" includes everything
+CONFIG = all
+
+# Options to extract the man page from as.texi
+MANCONF = -Dman
+TEXI2POD = perl $(BASEDIR)/etc/texi2pod.pl $(AM_MAKEINFOFLAGS)
+POD2MAN = pod2man --center="GNU Development Tools" \
+	--release="binutils-$(VERSION)" --section=1
+
+man_MANS = doc/as.1
+info_TEXINFOS = doc/as.texi
+doc_as_TEXINFOS = doc/asconfig.texi $(CPU_DOCS)
+AM_MAKEINFOFLAGS = -I "$(srcdir)/doc" -I doc -I "$(srcdir)/../libiberty" \
+		   -I "$(srcdir)/../bfd/doc" -I ../bfd/doc \
+		   --no-split
+
+TEXI2DVI = texi2dvi -I "$(srcdir)/doc" -I doc -I "$(srcdir)/../libiberty" \
+		   -I "$(srcdir)/../bfd/doc" -I ../bfd/doc
+
+CPU_DOCS = \
+	doc/c-aarch64.texi \
+	doc/c-alpha.texi \
+	doc/c-arc.texi \
+	doc/c-arm.texi \
+	doc/c-avr.texi \
+	doc/c-bfin.texi \
+	doc/c-bpf.texi \
+	doc/c-cr16.texi \
+	doc/c-cris.texi \
+	doc/c-csky.texi \
+	doc/c-d10v.texi \
+	doc/c-epiphany.texi \
+	doc/c-h8300.texi \
+	doc/c-hppa.texi \
+	doc/c-i386.texi \
+	doc/c-ip2k.texi \
+	doc/c-lm32.texi \
+	doc/c-m32c.texi \
+	doc/c-m32r.texi \
+	doc/c-m68hc11.texi \
+	doc/c-m68k.texi \
+	doc/c-s12z.texi \
+	doc/c-metag.texi \
+	doc/c-microblaze.texi \
+	doc/c-mips.texi \
+	doc/c-mmix.texi \
+	doc/c-mt.texi \
+	doc/c-msp430.texi \
+	doc/c-nios2.texi \
+	doc/c-nds32.texi \
+	doc/c-ns32k.texi \
+	doc/c-or1k.texi \
+	doc/c-pdp11.texi \
+	doc/c-pj.texi \
+	doc/c-ppc.texi \
+	doc/c-pru.texi \
+	doc/c-rl78.texi \
+	doc/c-riscv.texi \
+	doc/c-rx.texi \
+	doc/c-s390.texi \
+	doc/c-score.texi \
+	doc/c-sh.texi \
+	doc/c-sparc.texi \
+	doc/c-tic54x.texi \
+	doc/c-tic6x.texi \
+	doc/c-tilegx.texi \
+	doc/c-tilepro.texi \
+	doc/c-v850.texi \
+	doc/c-vax.texi \
+	doc/c-visium.texi \
+	doc/c-xgate.texi \
+	doc/c-xstormy16.texi \
+	doc/c-xtensa.texi \
+	doc/c-z80.texi \
+	doc/c-z8k.texi
+
+
+# This one isn't ready for prime time yet.  Not even a little bit.
+noinst_TEXINFOS = doc/internals.texi
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .l .lo .o .obj .y
+.SUFFIXES: .c .dvi .l .lo .o .obj .ps .y
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/doc/local.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -841,6 +1017,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/doc/local.mk $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -936,6 +1113,8 @@ config/tc-iq2000.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-lm32.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
+config/tc-loongarch.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-m32c.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-m32r.$(OBJEXT): config/$(am__dirstamp) \
@@ -1022,8 +1201,6 @@ config/tc-wasm32.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-xstormy16.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
-config/tc-xc16x.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-xgate.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-xtensa.$(OBJEXT): config/$(am__dirstamp) \
@@ -1032,7 +1209,11 @@ config/tc-z80.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-z8k.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
+config/bfin-lex-wrapper.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
 config/xtensa-relax.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
+config/te-vms.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/obj-aout.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
@@ -1051,8 +1232,6 @@ config/obj-macho.$(OBJEXT): config/$(am__dirstamp) \
 config/obj-multi.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/obj-som.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
-config/te-vms.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/atof-ieee.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
@@ -1074,9 +1253,15 @@ config/m68k-parse.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/bfin-parse.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
+config/bfin-lex.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
 config/rl78-parse.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/rx-parse.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
+config/loongarch-parse.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
+config/loongarch-lex.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 
 as-new$(EXEEXT): $(as_new_OBJECTS) $(as_new_DEPENDENCIES) $(EXTRA_as_new_DEPENDENCIES) 
@@ -1130,6 +1315,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/atof-ieee.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/atof-vax.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/bfin-lex-wrapper.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/bfin-lex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/bfin-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-crisaout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-criself.Po@am__quote@
@@ -1137,6 +1324,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386coff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386elf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-mipself.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/loongarch-lex.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/loongarch-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/m68k-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/obj-aout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/obj-coff.Po@am__quote@
@@ -1174,6 +1363,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-ip2k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-iq2000.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-lm32.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-loongarch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-m32c.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-m32r.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-m68hc11.Po@am__quote@
@@ -1216,7 +1406,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-vax.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-visium.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-wasm32.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-xc16x.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-xgate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-xstormy16.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-xtensa.Po@am__quote@
@@ -1263,6 +1452,186 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+doc/$(am__dirstamp):
+	@$(MKDIR_P) doc
+	@: > doc/$(am__dirstamp)
+
+doc/as.info: doc/as.texi $(doc_as_TEXINFOS)
+	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
+	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+	rm -rf $$backupdir && mkdir $$backupdir && \
+	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
+	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
+	  done; \
+	else :; fi && \
+	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
+	 -o $@ `test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi; \
+	then \
+	  rc=0; \
+	else \
+	  rc=$$?; \
+	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
+	fi; \
+	rm -rf $$backupdir; exit $$rc
+
+doc/as.dvi: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
+	$(AM_V_TEXI2DVI)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc' \
+	$(TEXI2DVI) $(AM_V_texinfo) --build-dir=$(@:.dvi=.t2d) -o $@ $(AM_V_texidevnull) \
+	`test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi
+
+doc/as.pdf: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
+	$(AM_V_TEXI2PDF)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc' \
+	$(TEXI2PDF) $(AM_V_texinfo) --build-dir=$(@:.pdf=.t2p) -o $@ $(AM_V_texidevnull) \
+	`test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi
+
+doc/as.html: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
+	$(AM_V_MAKEINFO)rm -rf $(@:.html=.htp)
+	$(AM_V_at)if $(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
+	 -o $(@:.html=.htp) `test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi; \
+	then \
+	  rm -rf $@ && mv $(@:.html=.htp) $@; \
+	else \
+	  rm -rf $(@:.html=.htp); exit 1; \
+	fi
+.dvi.ps:
+	$(AM_V_DVIPS)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	$(DVIPS) $(AM_V_texinfo) -o $@ $<
+
+uninstall-dvi-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(dvidir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(dvidir)/$$f"; \
+	done
+
+uninstall-html-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(HTMLS)'; test -n "$(htmldir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -rf '$(DESTDIR)$(htmldir)/$$f'"; \
+	  rm -rf "$(DESTDIR)$(htmldir)/$$f"; \
+	done
+
+uninstall-info-am:
+	@$(PRE_UNINSTALL)
+	@if test -d '$(DESTDIR)$(infodir)' && $(am__can_run_installinfo); then \
+	  list='$(INFO_DEPS)'; \
+	  for file in $$list; do \
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' --remove '$(DESTDIR)$(infodir)/$$relfile'"; \
+	    if install-info --info-dir="$(DESTDIR)$(infodir)" --remove "$(DESTDIR)$(infodir)/$$relfile"; \
+	    then :; else test ! -f "$(DESTDIR)$(infodir)/$$relfile" || exit 1; fi; \
+	  done; \
+	else :; fi
+	@$(NORMAL_UNINSTALL)
+	@list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	  relfile_i=`echo "$$relfile" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  (if test -d "$(DESTDIR)$(infodir)" && cd "$(DESTDIR)$(infodir)"; then \
+	     echo " cd '$(DESTDIR)$(infodir)' && rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]"; \
+	     rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]; \
+	   else :; fi); \
+	done
+
+uninstall-pdf-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pdfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pdfdir)/$$f"; \
+	done
+
+uninstall-ps-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(psdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(psdir)/$$f"; \
+	done
+
+dist-info: $(INFO_DEPS)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; \
+	for base in $$list; do \
+	  case $$base in \
+	    $(srcdir)/*) base=`echo "$$base" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$base; then d=.; else d=$(srcdir); fi; \
+	  base_i=`echo "$$base" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for file in $$d/$$base $$d/$$base-[0-9] $$d/$$base-[0-9][0-9] $$d/$$base_i[0-9] $$d/$$base_i[0-9][0-9]; do \
+	    if test -f $$file; then \
+	      relfile=`expr "$$file" : "$$d/\(.*\)"`; \
+	      test -f "$(distdir)/$$relfile" || \
+		cp -p $$file "$(distdir)/$$relfile"; \
+	    else :; fi; \
+	  done; \
+	done
+
+mostlyclean-aminfo:
+	-rm -rf doc/as.t2d doc/as.t2p
+
+clean-aminfo:
+	-test -z "doc/as.dvi doc/as.pdf doc/as.ps doc/as.html" \
+	|| rm -rf doc/as.dvi doc/as.pdf doc/as.ps doc/as.html
+
+maintainer-clean-aminfo:
+	@list='$(INFO_DEPS)'; for i in $$list; do \
+	  i_i=`echo "$$i" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  echo " rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]"; \
+	  rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]; \
+	done
+install-man1: $(man_MANS)
+	@$(NORMAL_INSTALL)
+	@list1=''; \
+	list2='$(man_MANS)'; \
+	test -n "$(man1dir)" \
+	  && test -n "`echo $$list1$$list2`" \
+	  || exit 0; \
+	echo " $(MKDIR_P) '$(DESTDIR)$(man1dir)'"; \
+	$(MKDIR_P) "$(DESTDIR)$(man1dir)" || exit 1; \
+	{ for i in $$list1; do echo "$$i"; done;  \
+	if test -n "$$list2"; then \
+	  for i in $$list2; do echo "$$i"; done \
+	    | sed -n '/\.1[a-z]*$$/p'; \
+	fi; \
+	} | while read p; do \
+	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; echo "$$p"; \
+	done | \
+	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
+	sed 'N;N;s,\n, ,g' | { \
+	list=; while read file base inst; do \
+	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
+	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst" || exit $$?; \
+	  fi; \
+	done; \
+	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
+	while read files; do \
+	  test -z "$$files" || { \
+	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man1dir)'"; \
+	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man1dir)" || exit $$?; }; \
+	done; }
+
+uninstall-man1:
+	@$(NORMAL_UNINSTALL)
+	@list=''; test -n "$(man1dir)" || exit 0; \
+	files=`{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.1[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -1404,9 +1773,12 @@ distclean-DEJAGNU:
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-DEJAGNU
 check: check-recursive
-all-am: Makefile $(PROGRAMS) $(SCRIPTS) config.h
+all-am: Makefile $(INFO_DEPS) $(PROGRAMS) $(SCRIPTS) $(MANS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
+	for dir in "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -1436,21 +1808,26 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f config/$(DEPDIR)/$(am__dirstamp)
 	-rm -f config/$(am__dirstamp)
+	-rm -f doc/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f config/bfin-lex.c
 	-rm -f config/bfin-parse.c
+	-rm -f config/loongarch-lex.c
+	-rm -f config/loongarch-parse.c
 	-rm -f config/m68k-parse.c
 	-rm -f config/rl78-parse.c
 	-rm -f config/rx-parse.c
 	-rm -f itbl-lex.c
 	-rm -f itbl-parse.c
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
-	mostlyclean-am
+clean-am: clean-aminfo clean-generic clean-libtool \
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1462,42 +1839,133 @@ distclean-am: clean-am distclean-DEJAGNU distclean-compile \
 
 dvi: dvi-recursive
 
-dvi-am:
+dvi-am: $(DVIS)
 
 html: html-recursive
 
-html-am:
+html-am: $(HTMLS) html-local
 
 info: info-recursive
 
-info-am:
+info-am: $(INFO_DEPS) info-local
 
-install-data-am:
+install-data-am: install-info-am install-man
 
 install-dvi: install-dvi-recursive
 
-install-dvi-am:
-
+install-dvi-am: $(DVIS)
+	@$(NORMAL_INSTALL)
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(dvidir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(dvidir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(dvidir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(dvidir)" || exit $$?; \
+	done
 install-exec-am: install-exec-local
 
 install-html: install-html-recursive
 
-install-html-am:
-
+install-html-am: $(HTMLS)
+	@$(NORMAL_INSTALL)
+	@list='$(HTMLS)'; list2=; test -n "$(htmldir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(htmldir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(htmldir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p" || test -d "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  $(am__strip_dir) \
+	  d2=$$d$$p; \
+	  if test -d "$$d2"; then \
+	    echo " $(MKDIR_P) '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(MKDIR_P) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
+	    echo " $(INSTALL_DATA) '$$d2'/* '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(INSTALL_DATA) "$$d2"/* "$(DESTDIR)$(htmldir)/$$f" || exit $$?; \
+	  else \
+	    list2="$$list2 $$d2"; \
+	  fi; \
+	done; \
+	test -z "$$list2" || { echo "$$list2" | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(htmldir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(htmldir)" || exit $$?; \
+	done; }
 install-info: install-info-recursive
 
-install-info-am:
-
-install-man:
+install-info-am: $(INFO_DEPS)
+	@$(NORMAL_INSTALL)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(infodir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(infodir)" || exit 1; \
+	fi; \
+	for file in $$list; do \
+	  case $$file in \
+	    $(srcdir)/*) file=`echo "$$file" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+	  file_i=`echo "$$file" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for ifile in $$d/$$file $$d/$$file-[0-9] $$d/$$file-[0-9][0-9] \
+	               $$d/$$file_i[0-9] $$d/$$file_i[0-9][0-9] ; do \
+	    if test -f $$ifile; then \
+	      echo "$$ifile"; \
+	    else : ; fi; \
+	  done; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(infodir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(infodir)" || exit $$?; done
+	@$(POST_INSTALL)
+	@if $(am__can_run_installinfo); then \
+	  list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	  for file in $$list; do \
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' '$(DESTDIR)$(infodir)/$$relfile'";\
+	    install-info --info-dir="$(DESTDIR)$(infodir)" "$(DESTDIR)$(infodir)/$$relfile" || :;\
+	  done; \
+	else : ; fi
+install-man: install-man1
 
 install-pdf: install-pdf-recursive
 
-install-pdf-am:
-
+install-pdf-am: $(PDFS)
+	@$(NORMAL_INSTALL)
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pdfdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pdfdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pdfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pdfdir)" || exit $$?; done
 install-ps: install-ps-recursive
 
-install-ps-am:
-
+install-ps-am: $(PSS)
+	@$(NORMAL_INSTALL)
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(psdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(psdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(psdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(psdir)" || exit $$?; done
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
@@ -1505,40 +1973,48 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -rf $(top_srcdir)/autom4te.cache
 	-rm -rf ./$(DEPDIR) config/$(DEPDIR)
 	-rm -f Makefile
-maintainer-clean-am: distclean-am maintainer-clean-generic
+maintainer-clean-am: distclean-am maintainer-clean-aminfo \
+	maintainer-clean-generic
 
 mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool
+mostlyclean-am: mostlyclean-aminfo mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-recursive
 
-pdf-am:
+pdf-am: $(PDFS)
 
 ps: ps-recursive
 
-ps-am:
+ps-am: $(PSS)
 
-uninstall-am:
+uninstall-am: uninstall-dvi-am uninstall-html-am uninstall-info-am \
+	uninstall-man uninstall-pdf-am uninstall-ps-am
+
+uninstall-man: uninstall-man1
 
 .MAKE: $(am__recursive_targets) all check-am install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-DEJAGNU check-am clean clean-cscope \
-	clean-generic clean-libtool clean-noinstPROGRAMS cscope \
-	cscopelist-am ctags ctags-am distclean distclean-DEJAGNU \
-	distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags dvi dvi-am html html-am info \
-	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-exec-local install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am
+	am--refresh check check-DEJAGNU check-am clean clean-aminfo \
+	clean-cscope clean-generic clean-libtool clean-noinstPROGRAMS \
+	cscope cscopelist-am ctags ctags-am dist-info distclean \
+	distclean-DEJAGNU distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags dvi dvi-am html \
+	html-am html-local info info-am info-local install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-exec-local install-html \
+	install-html-am install-info install-info-am install-man \
+	install-man1 install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs installdirs-am maintainer-clean \
+	maintainer-clean-aminfo maintainer-clean-generic mostlyclean \
+	mostlyclean-aminfo mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-dvi-am uninstall-html-am \
+	uninstall-info-am uninstall-man uninstall-man1 \
+	uninstall-pdf-am uninstall-ps-am
 
 .PRECIOUS: Makefile
 
@@ -1569,92 +2045,46 @@ check-DEJAGNU: site.exp
 	fi
 
 development.exp: $(BFDDIR)/development.sh
-	$(EGREP) "[development|experimental]=" $(BFDDIR)/development.sh  \
+	$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
 	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+config/m68k-parse.c: $(srcdir)/config/m68k-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/m68k-parse.y y.tab.c $@ -- $(YACCCOMPILE)
+config/m68k-parse.h: config/m68k-parse.c
+	@true
+config/bfin-parse.c: $(srcdir)/config/bfin-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c $@ y.tab.h config/bfin-parse.h -- $(YACCCOMPILE) -d ;
+config/bfin-parse.h: config/bfin-parse.c
+	@true
+config/bfin-lex.c: $(srcdir)/config/bfin-lex.l
+	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-lex.l lex.yy.c $@ -- $(LEXCOMPILE)
 
-# If m68k-parse.y is in a different directory, then ylwrap will use an
-# absolute path when it invokes yacc, which will cause yacc to put the
-# absolute path into the generated file.  That's a pain when it comes
-# to generating snapshots, because it introduces spurious diffs.
-# Since when we make the snapshots $(srcdir) = ".", we check for that
-# case and handle it differently.  This means that anybody who
-# configures with $(srcdir) = "." will have to set their path in the
-# debugger if they want to debug m68k-parse.y.  This is bad, but on
-# the other hand it's good that people who use the prebuilt
-# m68k-parse.c don't get a spurious absolute path.
-m68k-parse.c: $(srcdir)/config/m68k-parse.y
-	f=$(srcdir)/config/m68k-parse.y; \
-	if [ $$f = "./config/m68k-parse.y" ]; then \
-	  ln -s config/m68k-parse.y . > /dev/null 2>/dev/null || \
-	   ln config/m68k-parse.y . > /dev/null 2>/dev/null || \
-	   cp config/m68k-parse.y . >/dev/null 2>/dev/null; \
-	  f=m68k-parse.y; \
-	else true; fi; \
-	$(SHELL) $(YLWRAP) $$f y.tab.c m68k-parse.c -- $(YACCCOMPILE); \
-	if [ $$f = "m68k-parse.y" ]; then \
-	  rm -f m68k-parse.y; \
-	else true; fi
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-m68k-parse.@OBJEXT@: m68k-parse.c
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `test -f m68k-parse.c || echo $(srcdir)/`m68k-parse.c $(NO_WERROR)
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='m68k-parse.c' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `test -f m68k-parse.c || echo $(srcdir)/`m68k-parse.c $(NO_WERROR)
+config/bfin-lex-wrapper.@OBJEXT@: config/bfin-lex.c config/bfin-parse.h
+config/rl78-parse.c: $(srcdir)/config/rl78-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c $@ y.tab.h config/rl78-parse.h -- $(YACCCOMPILE) -d ;
+config/rl78-parse.h: config/rl78-parse.c
+	@true
+config/rx-parse.c: $(srcdir)/config/rx-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c $@ y.tab.h config/rx-parse.h -- $(YACCCOMPILE) -d ;
+config/rx-parse.h: config/rx-parse.c
+	@true
+config/loongarch-parse.c: $(srcdir)/config/loongarch-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/loongarch-parse.y y.tab.c $@ y.tab.h config/loongarch-parse.h -- $(YACCCOMPILE) -d ;
+config/loongarch-parse.h: config/loongarch-parse.c
+	@true
+config/loongarch-lex.c: $(srcdir)/config/loongarch-lex.l
+	$(SHELL) $(YLWRAP) $(srcdir)/config/loongarch-lex.l lex.yy.c $@ -- $(LEXCOMPILE)
 
-# Don't let the .y.h rule clobber m68k-parse.h.
-m68k-parse.h: ; @true
-$(srcdir)/config/m68k-parse.h: ; @true
-bfin-parse.c: $(srcdir)/config/bfin-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c bfin-parse.c y.tab.h bfin-parse.h -- $(YACCCOMPILE) -d ;
-bfin-parse.h: bfin-parse.c
-bfin-parse.h: ; @true
-$(srcdir)/config/bfin-parse.h: ; @true
+config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-parse.h
 
-bfin-lex.c: $(srcdir)/config/bfin-lex.l
-	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-lex.l lex.yy.c bfin-lex.c -- $(LEXCOMPILE)
-bfin-lex-wrapper.@OBJEXT@: $(srcdir)/config/bfin-lex-wrapper.c bfin-lex.c bfin-parse.h $(srcdir)/config/bfin-defs.h
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bfin-lex-wrapper.c' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
-rl78-parse.c: $(srcdir)/config/rl78-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c rl78-parse.c y.tab.h rl78-parse.h -- $(YACCCOMPILE) -d ;
-rl78-parse.h: rl78-parse.c
-rl78-defs.h: ; @true
-$(srcdir)/config/rl78-defs.h: ; @true
-rx-parse.c: $(srcdir)/config/rx-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c rx-parse.c y.tab.h rx-parse.h -- $(YACCCOMPILE) -d ;
-rx-parse.h: rx-parse.c
-rx-defs.h: ; @true
-$(srcdir)/config/rx-defs.h: ; @true
+# The mips instruction table specification lexical analyzer and parser.
 
-# The instruction table specification lexical analyzer and parser.
-
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-itbl-lex-wrapper.@OBJEXT@: itbl-lex-wrapper.c itbl-lex.c itbl-parse.h
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $(srcdir)/itbl-lex-wrapper.c $(NO_WERROR)
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='itbl-lex-wrapper.c' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $(srcdir)/itbl-lex-wrapper.c $(NO_WERROR)
-
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-itbl-parse.@OBJEXT@: itbl-parse.c
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `test -f itbl-parse.c || echo $(srcdir)/`itbl-parse.c $(NO_WERROR)
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='itbl-parse.c' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `test -f itbl-parse.c || echo $(srcdir)/`itbl-parse.c $(NO_WERROR)
+itbl-lex-wrapper.@OBJEXT@: itbl-lex.c itbl-parse.h
 
 itbl-parse.c: $(srcdir)/itbl-parse.y
-	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c itbl-parse.c y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
+	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c $@ y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
 
-itbl-parse.h: itbl-parse.c ; @true
+itbl-parse.h: itbl-parse.c
+	@true
 
 itbl-ops.@OBJEXT@: itbl-parse.h
 
@@ -1770,6 +2200,33 @@ de-stage2:
 de-stage3:
 	- (cd stage3 ; rm -f as$(EXEEXT) ; mv -f * ..)
 	- rmdir stage3
+
+doc/asconfig.texi: doc/$(CONFIG).texi doc/$(am__dirstamp)
+	$(AM_V_at)rm -f doc/asconfig.texi
+	$(AM_V_GEN)cp $(srcdir)/doc/$(CONFIG).texi doc/asconfig.texi
+	$(AM_V_at)chmod u+w doc/asconfig.texi
+
+# Maintenance
+
+# We need it for the taz target in ../Makefile.in.
+info-local: $(MANS)
+
+# Build the man page from the texinfo file
+# The sed command removes the no-adjust Nroff command so that
+# the man output looks standard.
+doc/as.1: $(srcdir)/doc/as.texi doc/asconfig.texi $(CPU_DOCS) doc/$(am__dirstamp)
+	$(AM_V_GEN)touch $@
+	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/doc/as.texi > doc/as.pod
+	$(AM_V_at)-($(POD2MAN) doc/as.pod | \
+	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+	        mv -f $@.T$$$$ $@) || \
+	        (rm -f $@.T$$$$ && exit 1)
+	$(AM_V_at)rm -f doc/as.pod
+
+html-local: doc/as/index.html
+doc/as/index.html: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
+	$(AM_V_GEN)$(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) \
+	  --split=node -I$(srcdir)/doc -o doc/as $(srcdir)/doc/as.texi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

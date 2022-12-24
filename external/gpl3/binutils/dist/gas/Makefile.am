@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,16 +17,19 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = dejagnu foreign no-dist subdir-objects
+AUTOMAKE_OPTIONS = dejagnu foreign no-dist subdir-objects info-in-builddir no-texinfo.tex
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
-SUBDIRS = doc po
+MAINTAINERCLEANFILES =
+
+SUBDIRS = po
 
 tooldir = $(exec_prefix)/$(target_alias)
 
 # This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
 # -I../zlib, unless we were configured with --with-system-zlib, in which
 # case both are empty.
+ZLIB = @zlibdir@ -lz
 ZLIBINC = @zlibinc@
 
 YACC = `if [ -f ../bison/bison ] ; then echo ../bison/bison -y -L../bison/bison ; else echo @YACC@ ; fi`
@@ -153,6 +156,7 @@ TARGET_CPU_CFILES = \
 	config/tc-ip2k.c \
 	config/tc-iq2000.c \
 	config/tc-lm32.c \
+	config/tc-loongarch.c \
 	config/tc-m32c.c \
 	config/tc-m32r.c \
 	config/tc-m68hc11.c \
@@ -196,12 +200,10 @@ TARGET_CPU_CFILES = \
 	config/tc-visium.c \
 	config/tc-wasm32.c \
 	config/tc-xstormy16.c \
-	config/tc-xc16x.c \
 	config/tc-xgate.c \
 	config/tc-xtensa.c \
 	config/tc-z80.c \
-	config/tc-z8k.c \
-	config/xtensa-relax.c
+	config/tc-z8k.c
 
 TARGET_CPU_HFILES = \
 	config/tc-aarch64.h \
@@ -271,11 +273,14 @@ TARGET_CPU_HFILES = \
 	config/tc-visium.h \
 	config/tc-wasm32.h \
 	config/tc-xstormy16.h \
-	config/tc-xc16x.h \
 	config/tc-xgate.h \
 	config/tc-xtensa.h \
 	config/tc-z80.h \
-	config/tc-z8k.h \
+	config/tc-z8k.h
+
+TARGET_EXTRA_FILES = \
+	config/bfin-lex-wrapper.c \
+	config/xtensa-relax.c \
 	config/xtensa-relax.h
 
 # OBJ files in config
@@ -332,7 +337,6 @@ TARG_ENV_HFILES = \
 	config/te-pe.h \
 	config/te-solaris.h \
 	config/te-svr4.h \
-	config/te-symbian.h \
 	config/te-tmips.h \
 	config/te-vxworks.h \
 	config/te-wince-pe.h
@@ -357,7 +361,7 @@ CONFIG_ATOF_CFILES = \
 POTFILES = $(MULTI_CFILES) $(CONFIG_ATOF_CFILES) \
 	$(TARG_ENV_HFILES) $(TARG_ENV_CFILES) $(OBJ_FORMAT_HFILES) \
 	$(OBJ_FORMAT_CFILES) $(TARGET_CPU_HFILES) $(TARGET_CPU_CFILES) \
-	$(HFILES) $(CFILES)
+	$(TARGET_EXTRA_FILES) $(HFILES) $(CFILES)
 po/POTFILES.in: @MAINT@ Makefile
 	for f in $(POTFILES); do echo $$f; done | LC_ALL=C sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
@@ -368,10 +372,11 @@ noinst_PROGRAMS = as-new
 noinst_SCRIPTS = $(GDBINIT)
 EXTRA_SCRIPTS = .gdbinit
 
-EXTRA_DIST = m68k-parse.c itbl-parse.c itbl-parse.h itbl-lex.c \
-	bfin-parse.c bfin-parse.h bfin-lex.c \
-	rl78-parse.c rl78-parse.h \
-	rx-parse.c rx-parse.h
+EXTRA_DIST = config/m68k-parse.c itbl-parse.c itbl-parse.h itbl-lex.c \
+	config/bfin-parse.c config/bfin-parse.h config/bfin-lex.c \
+	config/rl78-parse.c config/rl78-parse.h \
+	config/rx-parse.c config/rx-parse.h \
+	config/loongarch-parse.c config/loongarch-parse.h config/loongarch-lex.c
 
 diststuff: $(EXTRA_DIST) info
 
@@ -389,7 +394,7 @@ INCDIR = $(BASEDIR)/include
 # so that tm.h and config.h will be found in the compilation
 # subdirectory rather than in the source directory.
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(srcdir)/config \
-	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ \
+	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ @LARGEFILE_CPPFLAGS@ \
 	-DLOCALEDIR="\"$(datadir)/locale\""
 
 # How to link with both our special library facilities
@@ -402,12 +407,13 @@ STAGESTUFF = *.@OBJEXT@ $(noinst_PROGRAMS)
 
 as_new_SOURCES = $(GAS_CFILES)
 as_new_LDADD = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
-	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM)
+	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM) $(ZLIB)
 as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 	$(extra_objects) $(GASLIBS) $(LIBINTL_DEP)
 EXTRA_as_new_SOURCES = $(CFILES) $(HFILES) $(TARGET_CPU_CFILES) \
-	$(TARGET_CPU_HFILES) $(OBJ_FORMAT_CFILES) $(OBJ_FORMAT_HFILES) \
-	$(TARG_ENV_CFILES) $(CONFIG_ATOF_CFILES) $(MULTI_CFILES)
+	$(TARGET_CPU_HFILES) $(TARGET_EXTRA_FILES) $(TARG_ENV_CFILES) \
+	$(OBJ_FORMAT_CFILES) $(OBJ_FORMAT_HFILES) \
+	$(CONFIG_ATOF_CFILES) $(MULTI_CFILES)
 
 EXPECT = expect
 RUNTEST = runtest
@@ -434,122 +440,61 @@ check-DEJAGNU: site.exp
 	fi
 
 development.exp: $(BFDDIR)/development.sh
-	$(EGREP) "[development|experimental]=" $(BFDDIR)/development.sh  \
+	$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
 	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
 
-# The m68k operand parser.
-
 EXTRA_as_new_SOURCES += config/m68k-parse.y
-
-# If m68k-parse.y is in a different directory, then ylwrap will use an
-# absolute path when it invokes yacc, which will cause yacc to put the
-# absolute path into the generated file.  That's a pain when it comes
-# to generating snapshots, because it introduces spurious diffs.
-# Since when we make the snapshots $(srcdir) = ".", we check for that
-# case and handle it differently.  This means that anybody who
-# configures with $(srcdir) = "." will have to set their path in the
-# debugger if they want to debug m68k-parse.y.  This is bad, but on
-# the other hand it's good that people who use the prebuilt
-# m68k-parse.c don't get a spurious absolute path.
-m68k-parse.c: $(srcdir)/config/m68k-parse.y
-	f=$(srcdir)/config/m68k-parse.y; \
-	if [ $$f = "./config/m68k-parse.y" ]; then \
-	  ln -s config/m68k-parse.y . > /dev/null 2>/dev/null || \
-	   ln config/m68k-parse.y . > /dev/null 2>/dev/null || \
-	   cp config/m68k-parse.y . >/dev/null 2>/dev/null; \
-	  f=m68k-parse.y; \
-	else true; fi; \
-	$(SHELL) $(YLWRAP) $$f y.tab.c m68k-parse.c -- $(YACCCOMPILE); \
-	if [ $$f = "m68k-parse.y" ]; then \
-	  rm -f m68k-parse.y; \
-	else true; fi
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-m68k-parse.@OBJEXT@: m68k-parse.c
-if am__fastdepCC
-	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `test -f m68k-parse.c || echo $(srcdir)/`m68k-parse.c $(NO_WERROR)
-	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-else
-if AMDEP
-	source='m68k-parse.c' object='$@' libtool=no @AMDEPBACKSLASH@
-	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-endif
-	$(COMPILE) -c `test -f m68k-parse.c || echo $(srcdir)/`m68k-parse.c $(NO_WERROR)
-endif
-
-# Don't let the .y.h rule clobber m68k-parse.h.
-m68k-parse.h: ; @true
-$(srcdir)/config/m68k-parse.h: ; @true
+config/m68k-parse.c: $(srcdir)/config/m68k-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/m68k-parse.y y.tab.c $@ -- $(YACCCOMPILE)
+config/m68k-parse.h: config/m68k-parse.c
+	@true
 
 EXTRA_as_new_SOURCES += config/bfin-parse.y
-bfin-parse.c: $(srcdir)/config/bfin-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c bfin-parse.c y.tab.h bfin-parse.h -- $(YACCCOMPILE) -d ;
-bfin-parse.h: bfin-parse.c
-bfin-parse.h: ; @true
-$(srcdir)/config/bfin-parse.h: ; @true
+config/bfin-parse.c: $(srcdir)/config/bfin-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-parse.y y.tab.c $@ y.tab.h config/bfin-parse.h -- $(YACCCOMPILE) -d ;
+config/bfin-parse.h: config/bfin-parse.c
+	@true
 
-bfin-lex.c: $(srcdir)/config/bfin-lex.l
-	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-lex.l lex.yy.c bfin-lex.c -- $(LEXCOMPILE)
-bfin-lex-wrapper.@OBJEXT@: $(srcdir)/config/bfin-lex-wrapper.c bfin-lex.c bfin-parse.h $(srcdir)/config/bfin-defs.h
-if am__fastdepCC
-	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
-	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-else
-if AMDEP
-	source='bfin-lex-wrapper.c' object='$@' libtool=no @AMDEPBACKSLASH@
-	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-endif
-	$(COMPILE) -c $(srcdir)/config/bfin-lex-wrapper.c $(NO_WERROR)
-endif
+EXTRA_as_new_SOURCES += config/bfin-lex.l
+config/bfin-lex.c: $(srcdir)/config/bfin-lex.l
+	$(SHELL) $(YLWRAP) $(srcdir)/config/bfin-lex.l lex.yy.c $@ -- $(LEXCOMPILE)
+
+config/bfin-lex-wrapper.@OBJEXT@: config/bfin-lex.c config/bfin-parse.h
 
 EXTRA_as_new_SOURCES += config/rl78-parse.y
-rl78-parse.c: $(srcdir)/config/rl78-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c rl78-parse.c y.tab.h rl78-parse.h -- $(YACCCOMPILE) -d ;
-rl78-parse.h: rl78-parse.c
-rl78-defs.h: ; @true
-$(srcdir)/config/rl78-defs.h: ; @true
+config/rl78-parse.c: $(srcdir)/config/rl78-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/rl78-parse.y y.tab.c $@ y.tab.h config/rl78-parse.h -- $(YACCCOMPILE) -d ;
+config/rl78-parse.h: config/rl78-parse.c
+	@true
 
 EXTRA_as_new_SOURCES += config/rx-parse.y
-rx-parse.c: $(srcdir)/config/rx-parse.y $(srcdir)/../bfd/reloc.c
-	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c rx-parse.c y.tab.h rx-parse.h -- $(YACCCOMPILE) -d ;
-rx-parse.h: rx-parse.c
-rx-defs.h: ; @true
-$(srcdir)/config/rx-defs.h: ; @true
+config/rx-parse.c: $(srcdir)/config/rx-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/rx-parse.y y.tab.c $@ y.tab.h config/rx-parse.h -- $(YACCCOMPILE) -d ;
+config/rx-parse.h: config/rx-parse.c
+	@true
 
-# The instruction table specification lexical analyzer and parser.
+# The LoongArch lexical analyzer and parser.
+EXTRA_as_new_SOURCES += config/loongarch-parse.y
+config/loongarch-parse.c: $(srcdir)/config/loongarch-parse.y
+	$(SHELL) $(YLWRAP) $(srcdir)/config/loongarch-parse.y y.tab.c $@ y.tab.h config/loongarch-parse.h -- $(YACCCOMPILE) -d ;
+config/loongarch-parse.h: config/loongarch-parse.c
+	@true
 
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-itbl-lex-wrapper.@OBJEXT@: itbl-lex-wrapper.c itbl-lex.c itbl-parse.h
-if am__fastdepCC
-	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $(srcdir)/itbl-lex-wrapper.c $(NO_WERROR)
-	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-else
-if AMDEP
-	source='itbl-lex-wrapper.c' object='$@' libtool=no @AMDEPBACKSLASH@
-	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-endif
-	$(COMPILE) -c $(srcdir)/itbl-lex-wrapper.c $(NO_WERROR)
-endif
+EXTRA_as_new_SOURCES += config/loongarch-lex.l
+config/loongarch-lex.c: $(srcdir)/config/loongarch-lex.l
+	$(SHELL) $(YLWRAP) $(srcdir)/config/loongarch-lex.l lex.yy.c $@ -- $(LEXCOMPILE)
 
-# Disable -Werror, if it has been enabled, since old versions of bison/
-# yacc will produce working code which contain compile time warnings.
-itbl-parse.@OBJEXT@: itbl-parse.c
-if am__fastdepCC
-	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `test -f itbl-parse.c || echo $(srcdir)/`itbl-parse.c $(NO_WERROR)
-	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-else
-if AMDEP
-	source='itbl-parse.c' object='$@' libtool=no @AMDEPBACKSLASH@
-	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-endif
-	$(COMPILE) -c `test -f itbl-parse.c || echo $(srcdir)/`itbl-parse.c $(NO_WERROR)
-endif
+config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-parse.h
+
+# The mips instruction table specification lexical analyzer and parser.
+
+itbl-lex-wrapper.@OBJEXT@: itbl-lex.c itbl-parse.h
 
 itbl-parse.c: $(srcdir)/itbl-parse.y
-	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c itbl-parse.c y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
+	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c $@ y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
 
-itbl-parse.h: itbl-parse.c ; @true
+itbl-parse.h: itbl-parse.c
+	@true
 
 itbl-ops.@OBJEXT@: itbl-parse.h
 
@@ -699,3 +644,5 @@ de-stage3:
 CONFIG_STATUS_DEPENDENCIES = $(srcdir)/configure.tgt $(BFDDIR)/development.sh
 
 EXTRA_DEJAGNU_SITE_CONFIG = development.exp
+
+include doc/local.mk
