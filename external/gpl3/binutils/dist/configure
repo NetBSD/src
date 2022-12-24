@@ -616,6 +616,9 @@ GFORTRAN_FOR_TARGET
 GCC_FOR_TARGET
 CXX_FOR_TARGET
 CC_FOR_TARGET
+RANLIB_PLUGIN_OPTION
+AR_PLUGIN_OPTION
+PKG_CONFIG_PATH
 READELF
 OBJDUMP
 OBJCOPY
@@ -690,7 +693,9 @@ extra_mpc_gmp_configure_flags
 extra_mpfr_configure_flags
 gmpinc
 gmplibs
-LIBDEBUGINFOD
+PGO_BUILD_LTO_CFLAGS
+PGO_BUILD_USE_CFLAGS
+PGO_BUILD_GEN_CFLAGS
 do_compare
 GNATMAKE
 GNATBIND
@@ -783,6 +788,7 @@ enable_as_accelerator_for
 enable_offload_targets
 enable_gold
 enable_ld
+enable_gprofng
 enable_compressed_debug_sections
 enable_libquadmath
 enable_libquadmath_support
@@ -791,7 +797,7 @@ enable_libssp
 enable_libstdcxx
 enable_liboffloadmic
 enable_bootstrap
-with_debuginfod
+enable_pgo_build
 with_mpc
 with_mpc_include
 with_mpc_lib
@@ -1510,6 +1516,7 @@ Optional Features:
                           offload target compiler during the build
   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
   --enable-ld[=ARG]       build ld [ARG={default,yes,no}]
+  --enable-gprofng[=ARG]  build gprofng [ARG={yes,no}]
   --enable-compressed-debug-sections={all,gas,gold,ld,none}
                           Enable compressed debug sections for gas, gold or ld
                           by default
@@ -1522,6 +1529,8 @@ Optional Features:
   --enable-liboffloadmic=ARG
                           build liboffloadmic [ARG={no,host,target}]
   --enable-bootstrap      enable bootstrapping [yes if native build]
+  --enable-pgo-build[=lto]
+                          enable the PGO build
   --disable-isl-version-check
                           disable check for isl version
   --enable-lto            enable link time optimization support
@@ -1555,8 +1564,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
   --with-system-zlib      use installed libz
-  --with-debuginfod       Enable debuginfo lookups with debuginfod
-                          (auto/yes/no)
   --with-mpc=PATH         specify prefix directory for installed MPC package.
                           Equivalent to --with-mpc-include=PATH/include plus
                           --with-mpc-lib=PATH/lib
@@ -1925,52 +1932,6 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_link
-
-# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
-# ---------------------------------------------
-# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
-# accordingly.
-ac_fn_c_check_decl ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  as_decl_name=`echo $2|sed 's/ *(.*//'`
-  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
-$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main ()
-{
-#ifndef $as_decl_name
-#ifdef __cplusplus
-  (void) $as_decl_use;
-#else
-  (void) $as_decl_name;
-#endif
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_decl
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2831,7 +2792,7 @@ host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktr
 # binutils, gas and ld appear in that order because it makes sense to run
 # "make check" in that particular order.
 # If --enable-gold is used, "gold" may replace "ld".
-host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools"
+host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gdbserver gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools"
 
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
@@ -3055,7 +3016,7 @@ case "${ENABLE_GOLD}" in
       *-*-elf* | *-*-sysv4* | *-*-unixware* | *-*-eabi* | hppa*64*-*-hpux* \
       | *-*-linux* | *-*-gnu* | frv-*-uclinux* | *-*-irix5* | *-*-irix6* \
       | *-*-netbsd* | *-*-openbsd* | *-*-freebsd* | *-*-dragonfly* \
-      | *-*-solaris2* | *-*-nto* | *-*-nacl*)
+      | *-*-solaris2* | *-*-nto* | *-*-nacl* | *-*-haiku*)
         case "${target}" in
           *-*-linux*aout* | *-*-linux*oldld*)
             ;;
@@ -3113,6 +3074,22 @@ $as_echo "$as_me: WARNING: neither ld nor gold are enabled" >&2;}
     as_fn_error $? "invalid --enable-ld argument" "$LINENO" 5
     ;;
 esac
+
+# Check whether --enable-gprofng was given.
+if test "${enable_gprofng+set}" = set; then :
+  enableval=$enable_gprofng; enable_gprofng=$enableval
+else
+  enable_gprofng=yes
+fi
+
+if test "$enable_gprofng" = "yes"; then
+  case "${target}" in
+    x86_64-*-linux* | i?86-*-linux* | aarch64-*-linux*)
+    configdirs="$configdirs gprofng"
+    ;;
+  esac
+fi
+
 
 # PR gas/19109
 # Decide the default method for compressing debug sections.
@@ -3484,9 +3461,6 @@ case "${target}" in
   arm-wince-pe)
     noconfigdirs="$noconfigdirs target-libffi"
     ;;
-  arm*-*-symbianelf*)
-    noconfigdirs="$noconfigdirs target-libffi"
-    ;;
   cris-*-* | crisv32-*-*)
     case "${target}" in
       *-*-linux*)
@@ -3537,6 +3511,25 @@ case "${target}" in
     unsupported_languages="$unsupported_languages go"
     ;;
 esac
+
+# Only allow gdbserver on some systems.
+if test -d ${srcdir}/gdbserver; then
+    if test x$enable_gdbserver = x; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdbserver support" >&5
+$as_echo_n "checking for gdbserver support... " >&6; }
+	if (srcdir=${srcdir}/gdbserver; \
+		. ${srcdir}/configure.srv; \
+		test -n "$UNSUPPORTED")
+	then
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    noconfigdirs="$noconfigdirs gdbserver"
+	else
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	fi
+    fi
+fi
 
 # Disable libgo for some systems where it is known to not work.
 # For testing, you can easily override this with --enable-libgo.
@@ -3856,6 +3849,9 @@ case "${target}" in
   nfp-*-*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof sim"
     noconfigdirs="$noconfigdirs $target_libraries"
+    ;;
+  pdp11-*-*)
+    noconfigdirs="$noconfigdirs gdb gprof"
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
@@ -4826,6 +4822,183 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CC option to accept ISO C99" >&5
+$as_echo_n "checking for $CC option to accept ISO C99... " >&6; }
+if ${ac_cv_prog_cc_c99+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_prog_cc_c99=no
+ac_save_CC=$CC
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <stdio.h>
+
+// Check varargs macros.  These examples are taken from C99 6.10.3.5.
+#define debug(...) fprintf (stderr, __VA_ARGS__)
+#define showlist(...) puts (#__VA_ARGS__)
+#define report(test,...) ((test) ? puts (#test) : printf (__VA_ARGS__))
+static void
+test_varargs_macros (void)
+{
+  int x = 1234;
+  int y = 5678;
+  debug ("Flag");
+  debug ("X = %d\n", x);
+  showlist (The first, second, and third items.);
+  report (x>y, "x is %d but y is %d", x, y);
+}
+
+// Check long long types.
+#define BIG64 18446744073709551615ull
+#define BIG32 4294967295ul
+#define BIG_OK (BIG64 / BIG32 == 4294967297ull && BIG64 % BIG32 == 0)
+#if !BIG_OK
+  your preprocessor is broken;
+#endif
+#if BIG_OK
+#else
+  your preprocessor is broken;
+#endif
+static long long int bignum = -9223372036854775807LL;
+static unsigned long long int ubignum = BIG64;
+
+struct incomplete_array
+{
+  int datasize;
+  double data[];
+};
+
+struct named_init {
+  int number;
+  const wchar_t *name;
+  double average;
+};
+
+typedef const char *ccp;
+
+static inline int
+test_restrict (ccp restrict text)
+{
+  // See if C++-style comments work.
+  // Iterate through items via the restricted pointer.
+  // Also check for declarations in for loops.
+  for (unsigned int i = 0; *(text+i) != '\0'; ++i)
+    continue;
+  return 0;
+}
+
+// Check varargs and va_copy.
+static void
+test_varargs (const char *format, ...)
+{
+  va_list args;
+  va_start (args, format);
+  va_list args_copy;
+  va_copy (args_copy, args);
+
+  const char *str;
+  int number;
+  float fnumber;
+
+  while (*format)
+    {
+      switch (*format++)
+	{
+	case 's': // string
+	  str = va_arg (args_copy, const char *);
+	  break;
+	case 'd': // int
+	  number = va_arg (args_copy, int);
+	  break;
+	case 'f': // float
+	  fnumber = va_arg (args_copy, double);
+	  break;
+	default:
+	  break;
+	}
+    }
+  va_end (args_copy);
+  va_end (args);
+}
+
+int
+main ()
+{
+
+  // Check bool.
+  _Bool success = false;
+
+  // Check restrict.
+  if (test_restrict ("String literal") == 0)
+    success = true;
+  char *restrict newvar = "Another string";
+
+  // Check varargs.
+  test_varargs ("s, d' f .", "string", 65, 34.234);
+  test_varargs_macros ();
+
+  // Check flexible array members.
+  struct incomplete_array *ia =
+    malloc (sizeof (struct incomplete_array) + (sizeof (double) * 10));
+  ia->datasize = 10;
+  for (int i = 0; i < ia->datasize; ++i)
+    ia->data[i] = i * 1.234;
+
+  // Check named initializers.
+  struct named_init ni = {
+    .number = 34,
+    .name = L"Test wide string",
+    .average = 543.34343,
+  };
+
+  ni.number = 58;
+
+  int dynamic_array[ni.number];
+  dynamic_array[ni.number - 1] = 543;
+
+  // work around unused variable warnings
+  return (!success || bignum == 0LL || ubignum == 0uLL || newvar[0] == 'x'
+	  || dynamic_array[ni.number - 1] != 543);
+
+  ;
+  return 0;
+}
+_ACEOF
+for ac_arg in '' -std=gnu99 -std=c99 -c99 -AC99 -D_STDC_C99= -qlanglvl=extc99
+do
+  CC="$ac_save_CC $ac_arg"
+  if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_prog_cc_c99=$ac_arg
+fi
+rm -f core conftest.err conftest.$ac_objext
+  test "x$ac_cv_prog_cc_c99" != "xno" && break
+done
+rm -f conftest.$ac_ext
+CC=$ac_save_CC
+
+fi
+# AC_CACHE_VAL
+case "x$ac_cv_prog_cc_c99" in
+  x)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
+$as_echo "none needed" >&6; } ;;
+  xno)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
+$as_echo "unsupported" >&6; } ;;
+  *)
+    CC="$CC $ac_cv_prog_cc_c99"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_c99" >&5
+$as_echo "$ac_cv_prog_cc_c99" >&6; } ;;
+esac
+if test "x$ac_cv_prog_cc_c99" != xno; then :
+
+fi
+
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5448,6 +5621,91 @@ if test "$enable_bootstrap:$GXX" = "yes:yes"; then
   CXX="$CXX -std=gnu++98"
 fi
 
+# Check whether --enable-pgo-build was given.
+if test "${enable_pgo_build+set}" = set; then :
+  enableval=$enable_pgo_build; enable_pgo_build=$enableval
+else
+  enable_pgo_build=no
+fi
+
+
+# Issue errors and warnings for invalid/strange PGO build combinations.
+case "$have_compiler:$host:$target:$enable_pgo_build" in
+  *:*:*:no) ;;
+
+  # Allow the PGO build only if we aren't building a compiler and
+  # we are in a native configuration.
+  no:$build:$build:yes | no:$build:$build:lto) ;;
+
+  # Disallow the PGO bootstrap if we are building a compiler.
+  yes:*:*:yes | yes:*:*:lto)
+    as_fn_error $? "cannot perform the PGO bootstrap when building a compiler" "$LINENO" 5 ;;
+
+  *)
+    as_fn_error $? "invalid option for --enable-pgo-build" "$LINENO" 5
+    ;;
+esac
+
+if test "$enable_pgo_build" != "no"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fprofile-generate" >&5
+$as_echo_n "checking whether the compiler supports -fprofile-generate... " >&6; }
+  old_CFLAGS="$CFLAGS"
+  PGO_BUILD_GEN_CFLAGS="-fprofile-generate"
+  CFLAGS="$CFLAGS $PGO_BUILD_CFLAGS"
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int foo;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  PGO_BUILD_GEN_CFLAGS=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$old_CFLAGS"
+  if test -n "$PGO_BUILD_GEN_CFLAGS"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    PGO_BUILD_USE_CFLAGS="-fprofile-use"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "cannot perform the PGO build without -fprofile-generate" "$LINENO" 5
+  fi
+
+  if test "$enable_pgo_build" = "lto"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -flto=jobserver -ffat-lto-objects" >&5
+$as_echo_n "checking whether the compiler supports -flto=jobserver -ffat-lto-objects... " >&6; }
+    old_CFLAGS="$CFLAGS"
+    PGO_BUILD_LTO_CFLAGS="-flto=jobserver -ffat-lto-objects"
+    CFLAGS="$CFLAGS $PGO_BUILD_LTO_CFLAGS"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int foo;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  PGO_BUILD_LTO_CFLAGS=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    CFLAGS="$old_CFLAGS"
+    if test -n "$PGO_BUILD_LTO_CFLAGS"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: LTO is disabled for the PGO build" >&5
+$as_echo "$as_me: WARNING: LTO is disabled for the PGO build" >&2;}
+    fi
+  fi
+fi
+
+
+
+
 # Used for setting $lt_cv_objdir
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for objdir" >&5
 $as_echo_n "checking for objdir... " >&6; }
@@ -5482,92 +5740,6 @@ _ACEOF
 gmplibs="-lmpc -lmpfr -lgmp"
 gmpinc=
 have_gmp=no
-
-# Check for debuginfod
-
-
-# Enable debuginfod
-
-# Check whether --with-debuginfod was given.
-if test "${with_debuginfod+set}" = set; then :
-  withval=$with_debuginfod;
-else
-  with_debuginfod=auto
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use debuginfod" >&5
-$as_echo_n "checking whether to use debuginfod... " >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_debuginfod" >&5
-$as_echo "$with_debuginfod" >&6; }
-
-if test "${with_debuginfod}" = no; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: debuginfod support disabled; some features may be unavailable." >&5
-$as_echo "$as_me: WARNING: debuginfod support disabled; some features may be unavailable." >&2;}
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for debuginfod_begin in -ldebuginfod" >&5
-$as_echo_n "checking for debuginfod_begin in -ldebuginfod... " >&6; }
-if ${ac_cv_lib_debuginfod_debuginfod_begin+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldebuginfod  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char debuginfod_begin ();
-int
-main ()
-{
-return debuginfod_begin ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_debuginfod_debuginfod_begin=yes
-else
-  ac_cv_lib_debuginfod_debuginfod_begin=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_debuginfod_debuginfod_begin" >&5
-$as_echo "$ac_cv_lib_debuginfod_debuginfod_begin" >&6; }
-if test "x$ac_cv_lib_debuginfod_debuginfod_begin" = xyes; then :
-  have_debuginfod_lib=yes
-fi
-
-  ac_fn_c_check_decl "$LINENO" "debuginfod_begin" "ac_cv_have_decl_debuginfod_begin" "#include <elfutils/debuginfod.h>
-"
-if test "x$ac_cv_have_decl_debuginfod_begin" = xyes; then :
-  have_debuginfod_h=yes
-fi
-
-  if test "x$have_debuginfod_lib" = "xyes" -a \
-          "x$have_debuginfod_h" = "xyes"; then
-
-$as_echo "#define HAVE_LIBDEBUGINFOD 1" >>confdefs.h
-
-    LIBDEBUGINFOD="-ldebuginfod"
-
-  else
-
-    if test "$with_debuginfod" = yes; then
-      as_fn_error $? "debuginfod is missing or unusable" "$LINENO" 5
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: debuginfod is missing or unusable; some features may be unavailable." >&5
-$as_echo "$as_me: WARNING: debuginfod is missing or unusable; some features may be unavailable." >&2;}
-    fi
-  fi
-fi
-
 
 # Specify a location for mpc
 # check for this first so it ends up on the link line before mpfr.
@@ -6695,6 +6867,16 @@ case ,${enable_languages}, in
     ;;
 esac
 
+# If gcc/ is not in the source tree then we'll not be building a
+# target compiler, assume in that case we don't want to build any
+# target libraries or tools.
+#
+# This was added primarily for the benefit for binutils-gdb who reuse
+# this configure script, but don't always have target tools available.
+if test ! -d ${srcdir}/gcc; then
+   skipdirs="${skipdirs} ${target_configdirs}"
+fi
+
 # Remove the entries in $skipdirs and $noconfigdirs from $configdirs,
 # $build_configdirs and $target_configdirs.
 # If we have the source for $noconfigdirs entries, add them to $notsupp.
@@ -6780,13 +6962,18 @@ fi
 
 # Sometimes we have special requirements for the host libiberty.
 extra_host_libiberty_configure_flags=
-extra_host_zlib_configure_flags=
 case " $configdirs " in
-  *" lto-plugin "* | *" libcc1 "*)
+  *" lto-plugin "* | *" libcc1 "* | *" gdbserver "*)
     # When these are to be built as shared libraries, the same applies to
     # libiberty.
     extra_host_libiberty_configure_flags=--enable-shared
     ;;
+esac
+
+
+# Sometimes we have special requirements for the host zlib.
+extra_host_zlib_configure_flags=
+case " $configdirs " in
   *" bfd "*)
     # When bfd is to be built as a shared library, the same applies to
     # zlib.
@@ -6795,7 +6982,6 @@ case " $configdirs " in
     fi
     ;;
 esac
-
 
 
 # Produce a warning message for the subdirs we can't configure.
@@ -7341,13 +7527,20 @@ esac
 CONFIGURE_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-configure-/g`
 INSTALL_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-install-/g`
 
-# gdb depends on gnulib and gdbsupport, but as nothing else does, only
-# include them if gdb is built.
-if echo " ${configdirs} " | grep " gdb " > /dev/null 2>&1 ; then
-  # The Makefile provides the ordering, so it's enough here to add to
-  # the list.
-  configdirs="${configdirs} gnulib gdbsupport"
-fi
+# gdb and gdbserver depend on gnulib and gdbsupport, but as nothing
+# else does, only include them if one of these is built.  The Makefile
+# provides the ordering, so it's enough here to add to the list.
+case " ${configdirs} " in
+  *\ gdb\ *)
+    configdirs="${configdirs} gnulib gdbsupport"
+    ;;
+  *\ gdbserver\ *)
+    configdirs="${configdirs} gnulib gdbsupport"
+    ;;
+  *\ sim\ *)
+    configdirs="${configdirs} gnulib"
+    ;;
+esac
 
 # Strip out unwanted targets.
 
@@ -7437,6 +7630,12 @@ extrasub_target="$extrasub_target
 /^@if /,/^@endif /d
 /^@unless /d
 /^@endunless /d"
+
+if test "$enable_pgo_build" != "no"; then
+  extrasub_build="$extrasub_build
+/^@if pgo-build\$/d
+/^@endif pgo-build\$/d"
+fi
 
 # Create the serialization dependencies.  This uses a temporary file.
 
@@ -10113,6 +10312,151 @@ fi
 
 
 
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -plugin option" >&5
+$as_echo_n "checking for -plugin option... " >&6; }
+
+plugin_names="liblto_plugin.so liblto_plugin-0.dll cyglto_plugin-0.dll"
+plugin_option=
+for plugin in $plugin_names; do
+  plugin_so=`${CC} ${CFLAGS} --print-prog-name $plugin`
+  if test x$plugin_so = x$plugin; then
+    plugin_so=`${CC} ${CFLAGS} --print-file-name $plugin`
+  fi
+  if test x$plugin_so != x$plugin; then
+    plugin_option="--plugin $plugin_so"
+    break
+  fi
+done
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
+$as_echo "$ac_ct_AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_AR" = x; then
+    AR=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    AR=$ac_ct_AR
+  fi
+else
+  AR="$ac_cv_prog_AR"
+fi
+
+if test "${AR}" = "" ; then
+  as_fn_error $? "Required archive tool 'ar' not found on PATH." "$LINENO" 5
+fi
+touch conftest.c
+${AR} $plugin_option rc conftest.a conftest.c
+if test "$?" != 0; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Failed: $AR $plugin_option rc" >&5
+$as_echo "$as_me: WARNING: Failed: $AR $plugin_option rc" >&2;}
+  plugin_option=
+fi
+rm -f conftest.*
+if test -n "$plugin_option"; then
+  PLUGIN_OPTION="$plugin_option"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $plugin_option" >&5
+$as_echo "$plugin_option" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+AR_PLUGIN_OPTION=
+RANLIB_PLUGIN_OPTION=
+if test -n "$PLUGIN_OPTION"; then
+  if $AR --help 2>&1 | grep -q "\--plugin"; then
+    AR_PLUGIN_OPTION="$PLUGIN_OPTION"
+  fi
+  if $RANLIB --help 2>&1 | grep -q "\--plugin"; then
+    RANLIB_PLUGIN_OPTION="$PLUGIN_OPTION"
+  fi
+else
+  if test "$enable_pgo_build" != "no"; then
+    as_fn_error $? "AR with --plugin and rc is required for LTO build" "$LINENO" 5
+  fi
+fi
 
 
 

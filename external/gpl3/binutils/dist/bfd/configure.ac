@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@ AC_INIT([bfd], BFD_VERSION)
 AC_CONFIG_SRCDIR([libbfd.c])
 
 AC_CANONICAL_TARGET
-AC_ISC_POSIX
 
 AM_INIT_AUTOMAKE
+AM_SILENT_RULES([yes])
 
 dnl These must be called before LT_INIT, because it may want
 dnl to call AC_CHECK_PROG.
@@ -44,15 +44,50 @@ LT_INIT([dlopen])
 # AC_PLUGINS setting $plugins is called by ACX_LARGEFILE.
 ACX_LARGEFILE
 
+changequote(,)dnl
+case "${target}" in
+    hppa*64*-*-*) ;;
+    *-*-*aout*| i[3-7]86-*-msdos* | ns32k-*-* | pdp11-*-*)
+changequote([,])dnl
+	if test "$plugins" = "yes"; then
+	    if test "${enable_plugins+set}" = set; then
+		AC_MSG_WARN(Enabling plugins for AOUT is experimental)
+	    else
+		plugins=no
+	    fi
+	fi ;;
+    hppa*-*-hpux* | *-*-*vms* | \
+    powerpc*-*-aix* | powerpc-*-beos* | powerpc-*-macos* | rs6000-*-*)
+	if test "$plugins" = "yes"; then
+	    if test "${enable_plugins+set}" = set; then
+		AC_MSG_WARN(Enabling plugins may result in ar creating non-standard archives for ${target})
+	    else
+		plugins=no
+	    fi
+	fi ;;
+esac
+
 AM_CONDITIONAL(PLUGINS, test "$plugins" = "yes")
 
-AC_ARG_ENABLE(64-bit-bfd,
-[  --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)],
+ac_checking=
+. ${srcdir}/development.sh
+test "$development" = true && ac_checking=yes
+AC_ARG_ENABLE(checking,
+[  --enable-checking       enable run-time checks],
 [case "${enableval}" in
-  yes)  want64=true  ;;
-  no)   want64=false ;;
-  *)    AC_MSG_ERROR(bad value ${enableval} for 64-bit-bfd option) ;;
-esac],[want64=false])dnl
+  no|none)  ac_checking= ;;
+  *)	    ac_checking=yes ;;
+esac])dnl
+if test x$ac_checking != x ; then
+  AC_DEFINE(ENABLE_CHECKING, 1, [Define if you want run-time sanity checks.])
+fi
+
+BFD_64_BIT
+if test $enable_64_bit_bfd = yes ; then
+  want64=true
+else
+  want64=false
+fi
 
 AC_ARG_ENABLE(targets,
 [  --enable-targets        alternative target configurations],
@@ -134,7 +169,7 @@ AC_ARG_WITH(separate-debug-dir,
 AC_SUBST(DEBUGDIR)
 
 ACX_PKGVERSION([GNU Binutils])
-ACX_BUGURL([http://www.sourceware.org/bugzilla/])
+ACX_BUGURL([https://sourceware.org/bugzilla/])
 
 AM_BINUTILS_WARNINGS
 
@@ -174,15 +209,7 @@ AM_PO_SUBDIRS
 AC_SUBST(HDEFINES)
 AC_PROG_INSTALL
 
-BFD_HOST_64BIT_LONG=0
-BFD_HOST_64BIT_LONG_LONG=0
-BFD_HOST_64_BIT_DEFINED=0
-BFD_HOST_64_BIT=
-BFD_HOST_U_64_BIT=
-BFD_HOSTPTR_T="unsigned long"
-
-AC_TYPE_LONG_DOUBLE
-AC_CHECK_TYPES([long long], [AC_CHECK_SIZEOF(long long)])
+AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int)
@@ -191,64 +218,17 @@ if test "x${ac_cv_sizeof_void_p}" = "x8"; then
   host64=true
 fi
 
-if test "x${ac_cv_sizeof_long}" = "x8"; then
-  BFD_HOST_64BIT_LONG=1
-  test -n "${HOST_64BIT_TYPE}" || HOST_64BIT_TYPE="long"
-  test -n "${HOST_U_64BIT_TYPE}" || HOST_U_64BIT_TYPE="unsigned long"
-elif test "x${ac_cv_sizeof_long_long}" = "x8"; then
-  BFD_HOST_64BIT_LONG_LONG=1
-  test -n "${HOST_64BIT_TYPE}" || HOST_64BIT_TYPE="long long"
-  test -n "${HOST_U_64BIT_TYPE}" || HOST_U_64BIT_TYPE="unsigned long long"
-  if test "x${ac_cv_sizeof_void_p}" = "x8"; then
-    BFD_HOSTPTR_T="unsigned long long"
-  fi
-fi
-
-if test -n "${HOST_64BIT_TYPE}" -a -n "${HOST_U_64BIT_TYPE}"; then
-  BFD_HOST_64_BIT_DEFINED=1
-  BFD_HOST_64_BIT="${HOST_64BIT_TYPE}"
-  BFD_HOST_U_64_BIT="${HOST_U_64BIT_TYPE}"
-fi
-
-AC_SUBST(BFD_HOST_64BIT_LONG)
-AC_SUBST(BFD_HOST_64BIT_LONG_LONG)
-AC_SUBST(BFD_HOST_64_BIT_DEFINED)
-AC_SUBST(BFD_HOST_64_BIT)
-AC_SUBST(BFD_HOST_U_64_BIT)
-AC_SUBST(BFD_HOSTPTR_T)
-
 BFD_CC_FOR_BUILD
 
-AC_CHECK_HEADERS(alloca.h stddef.h string.h strings.h stdlib.h time.h unistd.h wchar.h wctype.h)
-AC_CHECK_HEADERS(fcntl.h sys/file.h sys/time.h sys/stat.h sys/resource.h)
-GCC_HEADER_STDINT(bfd_stdint.h)
-AC_HEADER_TIME
-AC_HEADER_DIRENT
+AC_CHECK_HEADERS(fcntl.h sys/file.h sys/resource.h sys/stat.h sys/types.h \
+		 unistd.h)
 
-ACX_HEADER_STRING
-AC_CHECK_FUNCS(fcntl getpagesize setitimer sysconf fdopen getuid getgid fileno fls)
-AC_CHECK_FUNCS(strtoull getrlimit)
+AC_CHECK_FUNCS(fcntl fdopen fileno fls getgid getpagesize getrlimit getuid \
+	       sysconf)
 
-AC_CHECK_DECLS(basename)
-AC_CHECK_DECLS(ftello)
-AC_CHECK_DECLS(ftello64)
-AC_CHECK_DECLS(fseeko)
-AC_CHECK_DECLS(fseeko64)
+AC_CHECK_DECLS([basename, ffs, stpcpy, asprintf, vasprintf, strnlen])
 
 BFD_BINARY_FOPEN
-
-AC_CHECK_DECLS(ffs)
-AC_CHECK_DECLS(free)
-AC_CHECK_DECLS(getenv)
-AC_CHECK_DECLS(malloc)
-AC_CHECK_DECLS(realloc)
-AC_CHECK_DECLS(stpcpy)
-AC_CHECK_DECLS(strstr)
-AC_CHECK_DECLS(asprintf)
-AC_CHECK_DECLS(vasprintf)
-AC_CHECK_DECLS(snprintf)
-AC_CHECK_DECLS(vsnprintf)
-AC_CHECK_DECLS(strnlen)
 
 # Link in zlib if we can.  This allows us to read compressed debug sections.
 # This is used only by compress.c.
@@ -267,6 +247,18 @@ if test $bfd_cv_hidden = yes; then
   AC_DEFINE(HAVE_HIDDEN, 1,
 	    [Define if your compiler supports hidden visibility.])
 fi
+
+AC_CACHE_CHECK([printf int64_t format], [bfd_cv_int64_fmt],
+  for style in I64 ll l; do
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+       #define __STDC_FORMAT_MACROS 1
+       #include <stdio.h>
+       #include <inttypes.h>
+       extern char PRId64_probe[sizeof PRId64 == sizeof "${style}d" ? 1 : -1];
+      ]])], [bfd_cv_int64_fmt=${style}], [])]
+  done)
+BFD_INT64_FMT=\"$bfd_cv_int64_fmt\"
+AC_SUBST(BFD_INT64_FMT)
 
 # Check if linker supports --as-needed and --no-as-needed options
 AC_CACHE_CHECK(linker --as-needed support, bfd_cv_ld_as_needed,
@@ -292,17 +284,16 @@ changequote([,])dnl
   if test -n "$x"; then
     SHARED_LIBADD="-L`pwd`/../libiberty/pic -liberty"
   fi
+fi
 
+SHARED_LIBADD="$SHARED_LIBADD $LIBINTL"
+
+if test "$enable_shared" = "yes"; then
   case "${host}" in
   # More hacks to build DLLs on Windows.
   *-*-cygwin*)
     SHARED_LDFLAGS="-no-undefined"
-    SHARED_LIBADD="-L`pwd`/../libiberty -liberty -L`pwd`/../intl -lintl -lcygwin -lkernel32"
-  ;;
-
-  # Use built-in libintl on macOS, since it is not provided by libc.
-  *-*-darwin*)
-    SHARED_LIBADD="-L`pwd`/../libiberty/pic -L`pwd`/../intl -liberty -lintl"
+    SHARED_LIBADD="-L`pwd`/../libiberty -liberty $SHARED_LIBADD -lcygwin -lkernel32"
   ;;
   esac
 
@@ -409,7 +400,7 @@ coff="cofflink.lo $coffgen"
 ecoff="ecofflink.lo $coffgen"
 xcoff="xcofflink.lo $coffgen"
 
-elfxx_x86="elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo"
+elfxx_x86="elfxx-x86.lo elf-ifunc.lo elf-vxworks.lo"
 for vec in $selvecs
 do
     target_size=32
@@ -424,12 +415,14 @@ do
     aarch64_elf64_le_vec)	   tb="$tb elf64-aarch64.lo elfxx-aarch64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     aarch64_elf64_le_cloudabi_vec) tb="$tb elf64-aarch64.lo elfxx-aarch64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     aarch64_mach_o_vec)		 tb="$tb mach-o-aarch64.lo"; target_size=64 ;;
+    aarch64_pei_vec)		 tb="$tb pei-aarch64.lo pe-aarch64igen.lo $coff"; target_size=64 ;;
     alpha_ecoff_le_vec)		 tb="$tb coff-alpha.lo ecoff.lo $ecoff"; target_size=64 ;;
     alpha_elf64_vec)		 tb="$tb elf64-alpha.lo elf64.lo $elf"; target_size=64 ;;
     alpha_elf64_fbsd_vec)	 tb="$tb elf64-alpha.lo elf64.lo $elf"; target_size=64 ;;
     alpha_vms_vec)		 tb="$tb vms-alpha.lo vms-misc.lo vms-lib.lo"; target_size=64 ;;
     alpha_vms_lib_txt_vec)	 tb="$tb vms-lib.lo vms-misc.lo" ;;
     am33_elf32_linux_vec)	 tb="$tb elf32-am33lin.lo elf32.lo $elf" ;;
+    amdgcn_elf64_le_vec)	 tb="$tb elf64-amdgcn.lo elf64.lo $elf"; target_size=64 ;;
     aout0_be_vec)		 tb="$tb aout0.lo aout32.lo" ;;
     aout64_vec)			 tb="$tb demo64.lo aout64.lo"; target_size=64 ;;
     aout_vec)			 tb="$tb host-aout.lo aout32.lo" ;;
@@ -441,8 +434,6 @@ do
     arm_elf32_fdpic_le_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     arm_elf32_nacl_be_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     arm_elf32_nacl_le_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
-    arm_elf32_symbian_be_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
-    arm_elf32_symbian_le_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     arm_elf32_vxworks_be_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     arm_elf32_vxworks_le_vec)	 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     arm_pe_be_vec)		 tb="$tb pe-arm.lo peigen.lo $coff" ;;
@@ -495,12 +486,12 @@ do
     i386_coff_lynx_vec)		 tb="$tb cf-i386lynx.lo lynx-core.lo $coff" ;;
     i386_elf32_vec)		 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
     i386_elf32_fbsd_vec)	 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
-    i386_elf32_nacl_vec)	 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
     i386_elf32_sol2_vec)	 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
     i386_elf32_vxworks_vec)	 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
     i386_mach_o_vec)		 tb="$tb mach-o-i386.lo" ;;
     i386_msdos_vec)		 tb="$tb i386msdos.lo" ;;
     i386_pe_vec)		 tb="$tb pe-i386.lo peigen.lo $coff" ;;
+    i386_pe_big_vec)		 tb="$tb pe-i386.lo peigen.lo $coff" ;;
     i386_pei_vec)		 tb="$tb pei-i386.lo peigen.lo $coff" ;;
     iamcu_elf32_vec)		 tb="$tb elf32-i386.lo $elfxx_x86 elf32.lo $elf" ;;
     ia64_elf32_be_vec)		 tb="$tb elf32-ia64.lo elfxx-ia64.lo elf32.lo $elf" ;;
@@ -512,12 +503,10 @@ do
     ia64_pei_vec)		 tb="$tb pei-ia64.lo pepigen.lo $coff"; target_size=64 ;;
     ip2k_elf32_vec)		 tb="$tb elf32-ip2k.lo elf32.lo $elf" ;;
     iq2000_elf32_vec)		 tb="$tb elf32-iq2000.lo elf32.lo $elf" ;;
-    k1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    k1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    l1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
-    l1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elfxx-x86.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     lm32_elf32_vec)		 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     lm32_elf32_fdpic_vec)	 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
+    loongarch_elf32_vec)	 tb="$tb elf32-loongarch.lo elfxx-loongarch.lo elf32.lo elf-ifunc.lo $elf" ;;
+    loongarch_elf64_vec)	 tb="$tb elf64-loongarch.lo elf64.lo elfxx-loongarch.lo elf32.lo elf-ifunc.lo $elf"; target_size=64 ;;
     m32c_elf32_vec)		 tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     m32r_elf32_vec)		 tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
     m32r_elf32_le_vec)		 tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
@@ -596,14 +585,13 @@ do
     powerpc_elf64_vec)		 tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf"; target_size=64 ;;
     powerpc_elf64_le_vec)	 tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf" target_size=64 ;;
     powerpc_elf64_fbsd_vec)	 tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf" target_size=64 ;;
-    powerpc_pe_vec)		 tb="$tb pe-ppc.lo peigen.lo $coff" ;;
-    powerpc_pe_le_vec)		 tb="$tb pe-ppc.lo peigen.lo $coff" ;;
-    powerpc_pei_vec)		 tb="$tb pei-ppc.lo peigen.lo $coff" ;;
-    powerpc_pei_le_vec)		 tb="$tb pei-ppc.lo peigen.lo $coff" ;;
+    powerpc_elf64_fbsd_le_vec)	 tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf" target_size=64 ;;
     powerpc_xcoff_vec)		 tb="$tb coff-rs6000.lo $xcoff" ;;
     pru_elf32_vec)		 tb="$tb elf32-pru.lo elf32.lo $elf" ;;
-    riscv_elf32_vec)		 tb="$tb elf32-riscv.lo elfxx-riscv.lo elf32.lo $elf" ;;
-    riscv_elf64_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf32.lo $elf"; target_size=64 ;;
+    riscv_elf32_vec)		 tb="$tb elf32-riscv.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf" ;;
+    riscv_elf64_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf"; target_size=64 ;;
+    riscv_elf32_be_vec)		 tb="$tb elf32-riscv.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf" ;;
+    riscv_elf64_be_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf"; target_size=64 ;;
     rl78_elf32_vec)		 tb="$tb elf32-rl78.lo elf32.lo $elf" ;;
     rs6000_xcoff64_vec)		 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
     rs6000_xcoff64_aix_vec)	 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
@@ -614,8 +602,8 @@ do
     rx_elf32_linux_le_vec)	 tb="$tb elf32-rx.lo elf32.lo $elf" ;;
     s390_elf32_vec)		 tb="$tb elf32-s390.lo elf32.lo $elf" ;;
     s390_elf64_vec)		 tb="$tb elf64-s390.lo elf64.lo $elf"; target_size=64 ;;
-    score_elf32_be_vec)		 tb="$tb elf32-score.lo elf32-score7.lo elf32.lo $elf"; want64=true; target_size=64 ;;
-    score_elf32_le_vec)		 tb="$tb elf32-score.lo elf32-score7.lo elf32.lo $elf"; want64=true; target_size=64 ;;
+    score_elf32_be_vec)		 tb="$tb elf32-score.lo elf32-score7.lo elf32.lo elf64.lo $elf"; want64=true; target_size=64 ;;
+    score_elf32_le_vec)		 tb="$tb elf32-score.lo elf32-score7.lo elf32.lo elf64.lo $elf"; want64=true; target_size=64 ;;
     sh_coff_vec)		 tb="$tb coff-sh.lo $coff" ;;
     sh_coff_le_vec)		 tb="$tb coff-sh.lo $coff" ;;
     sh_coff_small_vec)		 tb="$tb coff-sh.lo $coff" ;;
@@ -640,7 +628,6 @@ do
     sparc_elf64_sol2_vec)	 tb="$tb elf64-sparc.lo elfxx-sparc.lo elf-vxworks.lo elf64.lo $elf"; target_size=64 ;;
     spu_elf32_vec)		 tb="$tb elf32-spu.lo elf32.lo $elf" ;;
     sym_vec)			 tb="$tb xsym.lo" ;;
-    tic30_aout_vec)		 tb="$tb aout-tic30.lo" ;;
     tic30_coff_vec)		 tb="$tb coff-tic30.lo $coffgen" ;;
     tic4x_coff0_vec)		 tb="$tb coff-tic4x.lo $coffgen" ;;
     tic4x_coff0_beh_vec)	 tb="$tb coff-tic4x.lo $coffgen" ;;
@@ -676,17 +663,14 @@ do
     wasm32_elf32_vec)            tb="$tb elf32-wasm32.lo elf32.lo $elf" ;;
     x86_64_coff_vec)		 tb="$tb coff-x86_64.lo $coff"; target_size=64 ;;
     x86_64_elf32_vec)		 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo elf32.lo $elf"; target_size=64 ;;
-    x86_64_elf32_nacl_vec)	 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo elf32.lo $elf"; target_size=64 ;;
     x86_64_elf64_vec)		 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_cloudabi_vec)	 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo $elf"; target_size=64 ;;
-    x86_64_elf64_nacl_vec)	 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_sol2_vec)	 tb="$tb elf64-x86-64.lo $elfxx_x86 elf64.lo $elf"; target_size=64 ;;
     x86_64_mach_o_vec)		 tb="$tb mach-o-x86-64.lo" ;;
     x86_64_pe_vec)		 tb="$tb pe-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
-    x86_64_pe_be_vec)		 tb="$tb pe-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
+    x86_64_pe_big_vec)		 tb="$tb pe-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
     x86_64_pei_vec)		 tb="$tb pei-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
-    xc16x_elf32_vec)		 tb="$tb elf32-xc16x.lo elf32.lo $elf" ;;
     xgate_elf32_vec)		 tb="$tb elf32-xgate.lo elf32.lo $elf" ;;
     xstormy16_elf32_vec)	 tb="$tb elf32-xstormy16.lo elf32.lo $elf" ;;
     xtensa_elf32_be_vec)	 tb="$tb xtensa-isa.lo xtensa-modules.lo elf32-xtensa.lo elf32.lo $elf" ;;
@@ -777,10 +761,6 @@ case ${host64}-${target64}-${want64} in
     wordsize=64
     bfd64_libs='$(BFD64_LIBS)'
     all_backends='$(BFD64_BACKENDS) $(BFD32_BACKENDS)'
-    if test $BFD_HOST_64_BIT_DEFINED = 0; then
-      AC_MSG_WARN([You have requested a 64 bit BFD configuration, but])
-      AC_MSG_WARN([your compiler may not have a 64 bit integral type])
-    fi
     if test -n "$GCC" ; then
        bad_64bit_gcc=no;
        AC_MSG_CHECKING([for gcc version with buggy 64-bit support])
@@ -837,7 +817,7 @@ if test "${target}" = "${host}"; then
 	;;
   arm-*-freebsd* | arm-*-kfreebsd*-gnu)
 	COREFILE='' ;;
-  arm-*-netbsd* | arm-*-openbsd*)
+  arm*-*-netbsd* | arm-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
@@ -922,7 +902,7 @@ changequote(,)dnl
   i[3-7]86-*-isc*)	COREFILE=trad-core.lo ;;
   i[3-7]86-*-aix*)	COREFILE=aix386-core.lo ;;
 changequote([,])dnl
-  mips-*-netbsd* | mips*-*-openbsd*)
+  mips*-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   mips-sgi-irix4*)	COREFILE=irix-core.lo ;;
@@ -1023,7 +1003,7 @@ changequote([,])dnl
 
   # ELF corefile support has several flavors, but all of
   # them use something called <sys/procfs.h>
-  AC_CHECK_HEADERS(sys/procfs.h)
+  BFD_SYS_PROCFS_H
   if test "$ac_cv_header_sys_procfs_h" = yes; then
     BFD_HAVE_SYS_PROCFS_TYPE(prstatus_t)
     BFD_HAVE_SYS_PROCFS_TYPE(prstatus32_t)
@@ -1073,6 +1053,7 @@ AC_SUBST(lt_cv_dlopen_libs)
 # Hopefully a reasonable assumption since fseeko et.al. should be
 # upward compatible.
 AC_CHECK_FUNCS(ftello ftello64 fseeko fseeko64 fopen64)
+AC_CHECK_DECLS([ftello, ftello64, fseeko, fseeko64, fopen64])
 if test x"$ac_cv_func_ftello" = xyes -a x"$ac_cv_func_fseeko" = xyes; then
     AC_CHECK_SIZEOF(off_t)
 fi
@@ -1081,22 +1062,20 @@ bfd_file_ptr="long"
 bfd_ufile_ptr="unsigned long"
 if test x"$ac_cv_func_ftello64" = xyes -a x"$ac_cv_func_fseeko64" = xyes \
 	-o x"${ac_cv_sizeof_off_t}" = x8; then
-    bfd_file_ptr=BFD_HOST_64_BIT
-    bfd_ufile_ptr=BFD_HOST_U_64_BIT
+    bfd_file_ptr=int64_t
+    bfd_ufile_ptr=uint64_t
 fi
 AC_MSG_RESULT($bfd_file_ptr)
 AC_SUBST(bfd_file_ptr)
 AC_SUBST(bfd_ufile_ptr)
 
-dnl AC_CHECK_HEADERS(sys/mman.h)
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(madvise mprotect)
 case ${want_mmap}+${ac_cv_func_mmap_fixed_mapped} in
   true+yes )  AC_DEFINE(USE_MMAP, 1, [Use mmap if it's available?]) ;;
 esac
 
-rm -f doc/config.status
-AC_CONFIG_FILES([Makefile doc/Makefile bfd-in3.h:bfd-in2.h po/Makefile.in:po/Make-in])
+AC_CONFIG_FILES([Makefile bfd-in3.h:bfd-in2.h po/Makefile.in:po/Make-in])
 
 dnl We need this duplication, even though we use AM_PO_SUBDIRS, because of
 dnl our two separate POTFILES.  Yuck.
@@ -1127,3 +1106,5 @@ AC_SUBST(htmldir)
 AC_SUBST(pdfdir)
 
 AC_OUTPUT
+
+GNU_MAKE_JOBSERVER

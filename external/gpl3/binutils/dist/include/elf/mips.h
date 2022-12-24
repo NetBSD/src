@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -560,11 +560,11 @@ typedef union
 typedef struct
 {
   /* Mask of general purpose registers used.  */
-  unsigned long ri_gprmask;
+  uint32_t ri_gprmask;
   /* Mask of co-processor registers used.  */
-  unsigned long ri_cprmask[4];
+  uint32_t ri_cprmask[4];
   /* GP register value for this object file.  */
-  long ri_gp_value;
+  uint32_t ri_gp_value;
 } Elf32_RegInfo;
 
 /* The external version of the Elf_RegInfo structure.  */
@@ -1008,9 +1008,9 @@ typedef struct
   /* Size of option descriptor, including header.  */
   unsigned char size;
   /* Section index of affected section, or 0 for global option.  */
-  unsigned short section;
+  uint16_t section;
   /* Information specific to this kind of option.  */
-  unsigned long info;
+  uint32_t info;
 } Elf_Internal_Options;
 
 /* MIPS ELF option header swapping routines.  */
@@ -1074,13 +1074,13 @@ typedef struct
 typedef struct
 {
   /* Mask of general purpose registers used.  */
-  unsigned long ri_gprmask;
+  uint32_t ri_gprmask;
   /* Padding.  */
-  unsigned long ri_pad;
+  uint32_t ri_pad;
   /* Mask of co-processor registers used.  */
-  unsigned long ri_cprmask[4];
+  uint32_t ri_cprmask[4];
   /* GP register value for this object file.  */
-  bfd_vma ri_gp_value;
+  uint64_t ri_gp_value;
 } Elf64_Internal_RegInfo;
 
 /* ABI Flags structure version 0.  */

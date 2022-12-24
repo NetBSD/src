@@ -1,7 +1,7 @@
 #! /bin/sh
 # CGEN generic assembler support code.
 #
-#   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 #
 #   This file is part of the GNU opcodes library.
 #
@@ -174,6 +174,40 @@ opcodes)
 	rm -f ${tmp}-opinst.c1
 	rm -f ${tmp}-ibld.h1 ${tmp}-ibld.in1
 	rm -f ${tmp}-asm.in1 ${tmp}-dis.in1
+	;;
+
+desc)
+	# For ports that only generate the desc module & opc header.
+	rm -f ${tmp}-desc.h1 ${tmp}-desc.h
+	rm -f ${tmp}-desc.c1 ${tmp}-desc.c
+	rm -f ${tmp}-opc.h1 ${tmp}-opc.h
+
+	${cgen} ${cgendir}/cgen-opc.scm \
+		-s ${cgendir} \
+		${cgenflags} \
+		-OPC ${opcfile} \
+		-f "${archflags}" \
+		-m all \
+		-a ${archfile} \
+		-i all \
+		-H ${tmp}-desc.h1 \
+		-C ${tmp}-desc.c1 \
+		-O ${tmp}-opc.h1
+
+	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
+		-e "s/@prefix@/${prefix}/g" \
+		< ${tmp}-desc.h1 > ${tmp}-desc.h
+	${rootdir}/move-if-change ${tmp}-desc.h ${srcdir}/${arch}-desc.h
+	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
+		-e "s/@prefix@/${prefix}/g" \
+		< ${tmp}-desc.c1 > ${tmp}-desc.c
+	${rootdir}/move-if-change ${tmp}-desc.c ${srcdir}/${arch}-desc.c
+	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
+		-e "s/@prefix@/${prefix}/g" \
+		< ${tmp}-opc.h1 > ${tmp}-opc.h
+	${rootdir}/move-if-change ${tmp}-opc.h ${srcdir}/${arch}-opc.h
+
+	rm -f ${tmp}-desc.h1 ${tmp}-desc.c1 ${tmp}-opc.h1
 	;;
 
 *)

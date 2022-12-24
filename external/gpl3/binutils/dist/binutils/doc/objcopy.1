@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJCOPY 1"
-.TH OBJCOPY 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH OBJCOPY 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -150,6 +150,8 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-g\fR|\fB\-\-strip\-debug\fR]
         [\fB\-\-strip\-unneeded\fR]
         [\fB\-K\fR \fIsymbolname\fR|\fB\-\-keep\-symbol=\fR\fIsymbolname\fR]
+        [\fB\-\-keep\-file\-symbols\fR]
+        [\fB\-\-keep\-section\-symbols\fR]
         [\fB\-N\fR \fIsymbolname\fR|\fB\-\-strip\-symbol=\fR\fIsymbolname\fR]
         [\fB\-\-strip\-unneeded\-symbol=\fR\fIsymbolname\fR]
         [\fB\-G\fR \fIsymbolname\fR|\fB\-\-keep\-global\-symbol=\fR\fIsymbolname\fR]
@@ -206,7 +208,6 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-\-prefix\-sections=\fR\fIstring\fR]
         [\fB\-\-prefix\-alloc\-sections=\fR\fIstring\fR]
         [\fB\-\-add\-gnu\-debuglink=\fR\fIpath-to-file\fR]
-        [\fB\-\-keep\-file\-symbols\fR]
         [\fB\-\-only\-keep\-debug\fR]
         [\fB\-\-strip\-dwo\fR]
         [\fB\-\-extract\-dwo\fR]
@@ -338,7 +339,7 @@ otherwise copy it.  For example:
 \&          \-\-only\-section=.text.* \-\-only\-section=!.text.foo
 .Ve
 .Sp
-will copy all sectinos maching '.text.*' but not the section
+will copy all sectinos matching '.text.*' but not the section
 \&'.text.foo'.
 .IP "\fB\-R\fR \fIsectionpattern\fR" 4
 .IX Item "-R sectionpattern"
@@ -406,6 +407,7 @@ will remove all relocations for sections matching the pattern
 .IX Item "--strip-all"
 .PD
 Do not copy relocation and symbol information from the source file.
+Also deletes debug sections.
 .IP "\fB\-g\fR" 4
 .IX Item "-g"
 .PD 0
@@ -415,7 +417,9 @@ Do not copy relocation and symbol information from the source file.
 Do not copy debugging symbols or sections from the source file.
 .IP "\fB\-\-strip\-unneeded\fR" 4
 .IX Item "--strip-unneeded"
-Strip all symbols that are not needed for relocation processing.
+Remove all symbols that are not needed for relocation processing in
+addition to debugging symbols and sections stripped by
+\&\fB\-\-strip\-debug\fR.
 .IP "\fB\-K\fR \fIsymbolname\fR" 4
 .IX Item "-K symbolname"
 .PD 0
@@ -605,16 +609,18 @@ done by increasing the size of the last section.  The extra space is
 filled in with the value specified by \fB\-\-gap\-fill\fR (default zero).
 .IP "\fB\-\-set\-start\fR \fIval\fR" 4
 .IX Item "--set-start val"
-Set the start address of the new file to \fIval\fR.  Not all object file
-formats support setting the start address.
+Set the start address (also known as the entry address) of the new
+file to \fIval\fR.  Not all object file formats support setting the
+start address.
 .IP "\fB\-\-change\-start\fR \fIincr\fR" 4
 .IX Item "--change-start incr"
 .PD 0
 .IP "\fB\-\-adjust\-start\fR \fIincr\fR" 4
 .IX Item "--adjust-start incr"
 .PD
-Change the start address by adding \fIincr\fR.  Not all object file
-formats support setting the start address.
+Change the start address (also known as the entry address) by adding
+\&\fIincr\fR.  Not all object file formats support setting the start
+address.
 .IP "\fB\-\-change\-addresses\fR \fIincr\fR" 4
 .IX Item "--change-addresses incr"
 .PD 0
@@ -691,11 +697,13 @@ Set the flags for any sections matching \fIsectionpattern\fR.  The
 \&\fIflags\fR argument is a comma separated string of flag names.  The
 recognized names are \fBalloc\fR, \fBcontents\fR, \fBload\fR,
 \&\fBnoload\fR, \fBreadonly\fR, \fBcode\fR, \fBdata\fR, \fBrom\fR,
-\&\fBshare\fR, and \fBdebug\fR.  You can set the \fBcontents\fR flag
-for a section which does not have contents, but it is not meaningful
-to clear the \fBcontents\fR flag of a section which does have
-contents\*(--just remove the section instead.  Not all flags are
-meaningful for all object file formats.
+\&\fBexclude\fR, \fBshare\fR, and \fBdebug\fR.  You can set the
+\&\fBcontents\fR flag for a section which does not have contents, but it
+is not meaningful to clear the \fBcontents\fR flag of a section which
+does have contents\*(--just remove the section instead.  Not all flags are
+meaningful for all object file formats.  In particular the
+\&\fBshare\fR flag is only meaningful for \s-1COFF\s0 format files and not for
+\&\s-1ELF\s0 format files.
 .IP "\fB\-\-set\-section\-alignment\fR \fIsectionpattern\fR\fB=\fR\fIalign\fR" 4
 .IX Item "--set-section-alignment sectionpattern=align"
 Set the alignment for any sections matching \fIsectionpattern\fR.
@@ -751,7 +759,8 @@ Rename a section from \fIoldname\fR to \fInewname\fR, optionally
 changing the section's flags to \fIflags\fR in the process.  This has
 the advantage over using a linker script to perform the rename in that
 the output stays as an object file and does not become a linked
-executable.
+executable.  This option accepts the same set of flags as the
+\&\fB\-\-sect\-section\-flags\fR option.
 .Sp
 This option is particularly helpful when the input format is binary,
 since this will always create a section called .data.  If for example,
@@ -969,6 +978,11 @@ As long as the debug info file has been installed into one of these
 locations before the debugger is run everything should work
 correctly.
 .RE
+.IP "\fB\-\-keep\-section\-symbils\fR" 4
+.IX Item "--keep-section-symbils"
+When stripping a file, perhaps with \fB\-\-strip\-debug\fR or
+\&\fB\-\-strip\-unneeded\fR, retain any symbols specifying section names,
+which would otherwise get stripped.
 .IP "\fB\-\-keep\-file\-symbols\fR" 4
 .IX Item "--keep-file-symbols"
 When stripping a file, perhaps with \fB\-\-strip\-debug\fR or
@@ -1223,7 +1237,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 \&\fBld\fR\|(1), \fBobjdump\fR\|(1), and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

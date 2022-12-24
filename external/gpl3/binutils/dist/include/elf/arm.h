@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -111,8 +111,12 @@
 #define TAG_CPU_ARCH_V8R	15
 #define TAG_CPU_ARCH_V8M_BASE	16
 #define TAG_CPU_ARCH_V8M_MAIN	17
+#define TAG_CPU_ARCH_8_1A       18
+#define TAG_CPU_ARCH_8_2A       19
+#define TAG_CPU_ARCH_8_3A       20
 #define TAG_CPU_ARCH_V8_1M_MAIN 21
-#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8_1M_MAIN
+#define TAG_CPU_ARCH_V9         22
+#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V9
 /* Pseudo-architecture to allow objects to be compatible with the subset of
    armv4t and armv6-m.  This value should never be stored in object files.  */
 #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
@@ -327,6 +331,10 @@ enum
   Tag_DIV_use,
   Tag_DSP_extension = 46,
   Tag_MVE_arch = 48,
+  Tag_PAC_extension = 50,
+  Tag_BTI_extension = 52,
+  Tag_BTI_use = 74,
+  Tag_PACRET_use = 76,
   Tag_nodefaults = 64,
   Tag_also_compatible_with,
   Tag_T2EE_use,

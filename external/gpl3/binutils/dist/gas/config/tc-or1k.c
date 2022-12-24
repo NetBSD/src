@@ -1,5 +1,5 @@
 /* tc-or1k.c -- Assembler for the OpenRISC family.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
@@ -83,11 +83,11 @@ ignore_pseudo (int val ATTRIBUTE_UNUSED)
   discard_rest_of_line ();
 }
 
-static bfd_boolean nodelay = FALSE;
+static bool nodelay = false;
 static void
 s_nodelay (int val ATTRIBUTE_UNUSED)
 {
-  nodelay = TRUE;
+  nodelay = true;
 }
 
 const char or1k_comment_chars [] = ";#";
@@ -278,18 +278,18 @@ md_number_to_chars (char * buf, valueT val, int n)
 const char *
 md_atof (int type, char * litP, int *  sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
-bfd_boolean
+bool
 or1k_fix_adjustable (fixS * fixP)
 {
   /* We need the symbol name for the VTABLE entries.  */
   if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 #define GOT_NAME "_GLOBAL_OFFSET_TABLE_"

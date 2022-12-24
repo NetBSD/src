@@ -1,5 +1,142 @@
 -*- text -*-
 
+Changes in 2.39:
+
+* Add --no-weak/-W option to nm to make it ignore weak symbols.
+
+* Add an option to objdump and readelf to prevent attempts to access debuginfod
+  servers when following links.
+
+* objcopy --weaken, --weaken-symbol, and --weaken-symbols now make ELF
+  STB_GNU_UNIQUE symbols weak.
+
+* objdump now supports syntax highlighting of disassembler output for some
+  architectures.  Use the --disassembler-color=MODE command line flag, with
+  mode being either off, color, or extended-color.
+
+Changes in 2.38:
+
+* elfedit: Add --output-abiversion option to update ABIVERSION.
+
+* Add support for the LoongArch instruction set.
+
+* Tools which display symbols or strings (readelf, strings, nm, objdump)
+  have a new command line option which controls how unicode characters are
+  handled.  By default they are treated as normal for the tool.  Using
+  --unicode=locale will display them according to the current locale.
+  Using --unicode=hex will display them as hex byte values, whilst
+  --unicode=escape will display them as escape sequences.  In addition
+  using --unicode=highlight will display them as unicode escape sequences
+  highlighted in red (if supported by the output device).
+
+* readelf -r dumps RELR relative relocations now.
+
+* Support for efi-app-aarch64, efi-rtdrv-aarch64 and efi-bsdrv-aarch64 has been
+  added to objcopy in order to enable UEFI development using binutils.
+
+* ar: Add --thin for creating thin archives. -T is a deprecated alias without
+  diagnostics. In many ar implementations -T has a different meaning, as
+  specified by X/Open System Interface.
+
+Changes in 2.37:
+
+* The readelf tool has a new command line option which can be used to specify
+  how the numeric values of symbols are reported.  --sym-base=0|8|10|16 tells
+  readelf to display the values in base 8, base 10 or base 16.  A sym base of 0
+  represents the default action of displaying values under 10000 in base 10 and
+  values above that in base 16.
+
+* Binutils now requires a C99 compiler and library to build.
+
+* A new format has been added to the nm program.  Specifying
+  --format=just-symbols (or just using -j) will tell the program to only
+  display symbol names and nothing else.
+
+* A new command line --keep-section-symbols has been added to objcopy and
+  strip.  This stops the removal of unused section symbols when the file is
+  copied.  Removing these symbols saves space, but sometimes they are needed by
+  other tools.
+
+* objcopy --weaken, --weaken-symbol and --weaken-symbols now make undefined
+  symbols weak on targets that support weak symbols.
+
+* Readelf and objdump can now display and use the contents of .debug_sup
+  sections.
+
+* Readelf and objdump will now follow links to separate debug info files by
+  default.  This behaviour can be stopped via the use of the new -wN or
+  --debug-dump=no-follow-links options for readelf and the -WN or
+  --dwarf=no-follow-links options for objdump.  Also the old behaviour can be
+  restored by the use of the --enable-follow-debug-links=no configure time
+  option.
+
+  The semantics of the =follow-links option have also been slightly changed.
+  When enabled, the option allows for the loading of symbol tables and string
+  tables from the separate files which can be used to enhance the information
+  displayed when dumping other sections, but it does not automatically imply
+  that information from the separate files should be displayed.
+
+  If other debug section display options are also enabled (eg
+  --debug-dump=info) then the contents of matching sections in both the main
+  file and the separate debuginfo file *will* be displayed.  This is because in
+  most cases the debug section will only be present in one of the files.
+
+  If however non-debug section display options are enabled (eg --sections) then
+  the contents of matching parts of the separate debuginfo file will *not* be
+  displayed.  This is because in most cases the user probably only wanted to
+  load the symbol information from the separate debuginfo file.  In order to
+  change this behaviour a new command line option --process-links can be used.
+  This will allow di0pslay options to applied to both the main file and any
+  separate debuginfo files.
+
+* Nm has a new command line option: --quiet.  This suppresses "no symbols"
+  diagnostic.
+
+Changes in 2.36:
+
+* Update elfedit and readelf with LAM_U48 and LAM_U57 support.
+
+* Nm has a new command line option: --ifunc-chars=CHARS.  This specifies a
+  string of one or two characters.  The first character is used as the type
+  character when displaying global ifunc symbols.  The second character, if
+  present is used when displaying local ifunc symbols.
+
+  In addition a new configure time option --enable-f-for-ifunc-symbols has been
+  created, which if used will change nm's default characters for ifunc symbols
+  from i (both local and global) to F (global) and f (local).
+
+* The ar tool's previously unused l modifier is now used for specifying
+  dependencies of a static library. The arguments of this option
+  (or --record-libdeps long form option) will be stored verbatim in the
+  __.LIBDEP member of the archive, which the linker may read at link time.
+
+* Readelf can now display the contents of LTO symbol table sections when asked
+  to do so via the --lto-syms command line option.
+
+* Readelf now accepts the -C command line option to enable the demangling of
+  symbol names.  In addition the --demangle=<style>, --no-demangle,
+  --recurse-limit and --no-recurse-limit options are also now availale.
+
+* Add support for the SHF_GNU_RETAIN ELF section flag.
+  This flag specifies that the section should not be garbage collected by the
+  linker.
+
+Changes in 2.35:
+
+* Changed readelf's display of symbol names when wide mode is not enabled.
+  If the name is too long it will be truncated and the last five characters
+  replaced with "[...]".  The old behaviour of displaying 5 more characters but
+  not indicating that truncation has happened can be restored by the use of the
+  -T or --silent-truncation options.
+
+* X86 NaCl target support is removed.
+
+* The readelf tool now has a -L or --lint or --enable-checks option which turns
+  on warning messages about possible problems with the file(s) being examined.
+  These checks include things like zero-sized sections, which are allowed by
+  the ELF standard but which nevertheless might be of concern if the user
+  was expecting them to actually contain something.
+
 Changes in 2.34:
 
 * Binutils now supports debuginfod, an HTTP server for distributing
@@ -713,7 +850,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

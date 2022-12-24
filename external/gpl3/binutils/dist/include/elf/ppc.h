@@ -1,5 +1,5 @@
 /* PPC ELF support for BFD.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    By Michael Meissner, Cygnus Support, <meissner@cygnus.com>,
    from information in the System V Application Binary Interface,

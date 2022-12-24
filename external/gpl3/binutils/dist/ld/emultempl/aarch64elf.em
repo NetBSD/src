@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 #   Contributed by ARM Ltd.
 #
 # This file is part of the GNU Binutils.
@@ -43,12 +43,21 @@ gld${EMULATION_NAME}_before_parse (void)
 #ifndef TARGET_			/* I.e., if not generic.  */
   ldfile_set_output_arch ("`echo ${ARCH}`", bfd_arch_unknown);
 #endif /* not TARGET_ */
-  input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
-  input_flags.add_DT_NEEDED_for_dynamic = TRUE;
-  config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
-  config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
-  link_info.check_relocs_after_open_input = TRUE;
+  input_flags.dynamic = ${DYNAMIC_LINK-true};
+  config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo true ; else echo false ; fi`;
+  config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo true ; else echo false ; fi`;
+  link_info.check_relocs_after_open_input = true;
+EOF
+if test -n "$COMMONPAGESIZE"; then
+fragment <<EOF
   link_info.relro = DEFAULT_LD_Z_RELRO;
+EOF
+fi
+fragment <<EOF
+  link_info.separate_code = DEFAULT_LD_Z_SEPARATE_CODE;
+  link_info.warn_execstack = DEFAULT_LD_WARN_EXECSTACK;
+  link_info.no_warn_rwx_segments = ! DEFAULT_LD_WARN_RWX_SEGMENTS;
+  link_info.default_execstack = DEFAULT_LD_EXECSTACK;
 }
 
 static void
@@ -89,11 +98,11 @@ struct hook_stub_info
 
 /* Traverse the linker tree to find the spot where the stub goes.  */
 
-static bfd_boolean
+static bool
 hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 {
   lang_statement_union_type *l;
-  bfd_boolean ret;
+  bool ret;
 
   for (; (l = *lp) != NULL; lp = &l->header.next)
     {
@@ -131,7 +140,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 		 after its associated input section.  */
 	      *(info->add.tail) = l->header.next;
 	      l->header.next = info->add.head;
-	      return TRUE;
+	      return true;
 	    }
 	  break;
 
@@ -152,7 +161,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 	  break;
 	}
     }
-  return FALSE;
+  return false;
 }
 
 
@@ -187,7 +196,7 @@ elf${ELFSIZE}_aarch64_add_stub_section (const char *stub_sec_name,
 
   info.input_section = input_section;
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, NULL, os);
+  lang_add_section (&info.add, stub_sec, NULL, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;
@@ -208,7 +217,7 @@ gldaarch64_layout_sections_again (void)
   /* If we have changed sizes of the stub sections, then we need
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
-  ldelf_map_segments (TRUE);
+  ldelf_map_segments (true);
   need_laying_out = -1;
 }
 

@@ -4,9 +4,9 @@
 #
 G_DEFS=-DHAVE_CONFIG_H
 G_EMUL=elf_x86_64
-G_EMULATION_OFILES=eelf_x86_64.o eelf_i386.o eelf_iamcu.o eelf_l1om.o eelf_k1om.o
+G_EMULATION_OFILES=eelf_x86_64.o eelf_i386.o eelf_iamcu.o
 G_INCLUDES=
-G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf_x86_64.o eelf_i386.o eelf_iamcu.o eelf_l1om.o eelf_k1om.o ldelf.o ldelfgen.o  ldbuildid.o
+G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf_x86_64.o eelf_i386.o eelf_iamcu.o ldelf.o ldelfgen.o  ldbuildid.o
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texi
 G_target_alias=x86_64--netbsd

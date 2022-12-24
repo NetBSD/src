@@ -1,5 +1,5 @@
 /* Remap file names for debug info for GNU assembler.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -69,7 +69,7 @@ add_debug_prefix_map (const char *arg)
    a newly allocated buffer containing the name corresponding to FILENAME.
    It is the caller's responsibility to free the buffer.  */
 
-const char *
+char *
 remap_debug_filename (const char *filename)
 {
   debug_prefix_map *map;

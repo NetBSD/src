@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "WINDRES 1"
-.TH WINDRES 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH WINDRES 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -245,8 +245,7 @@ format, which is the first one listed by the \fB\-\-help\fR option.
 .IX Item "--preprocessor program"
 When \fBwindres\fR reads an \f(CW\*(C`rc\*(C'\fR file, it runs it through the C
 preprocessor first.  This option may be used to specify the preprocessor
-to use, including any leading arguments.  The default preprocessor
-argument is \f(CW\*(C`gcc \-E \-xc\-header \-DRC_INVOKED\*(C'\fR.
+to use.  The default preprocessor is \f(CW\*(C`gcc\*(C'\fR.
 .IP "\fB\-\-preprocessor\-arg\fR \fIoption\fR" 4
 .IX Item "--preprocessor-arg option"
 When \fBwindres\fR reads an \f(CW\*(C`rc\*(C'\fR file, it runs it through
@@ -254,6 +253,11 @@ the C preprocessor first.  This option may be used to specify additional
 text to be passed to preprocessor on its command line.
 This option can be used multiple times to add multiple options to the
 preprocessor command line.
+If the \fB\-\-preprocessor\fR option has not been specified then a
+default set of preprocessor arguments will be used, with any
+\&\fB\-\-preprocessor\-arg\fR options being placed after them on the
+command line.  These default arguments are \f(CW\*(C`\-E\*(C'\fR,
+\&\f(CW\*(C`\-xc\-header\*(C'\fR and \f(CW\*(C`\-DRC_INVOKED\*(C'\fR.
 .IP "\fB\-I\fR \fIdirectory\fR" 4
 .IX Item "-I directory"
 .PD 0
@@ -358,7 +362,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -151,7 +151,7 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
       lang_statement_list_type add;
 
       lang_list_init (&add);
-      lang_add_section (&add, s, NULL, os);
+      lang_add_section (&add, s, NULL, NULL, os);
       *add.tail = os->children.head;
       os->children.head = add.head;
     }
@@ -165,10 +165,10 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
 
 	  push_stat_ptr (&os->children);
 	  e_size = exp_intop (params.line_size - s->size);
-	  lang_add_assignment (exp_assign (".", e_size, FALSE));
+	  lang_add_assignment (exp_assign (".", e_size, false));
 	  pop_stat_ptr ();
 	}
-      lang_add_section (&os->children, s, NULL, os);
+      lang_add_section (&os->children, s, NULL, NULL, os);
     }
 
   s->output_section->size += s->size;
@@ -192,7 +192,7 @@ spu_elf_load_ovl_mgr (void)
       mgr_stream = &icache_mgr_stream;
     }
   h = elf_link_hash_lookup (elf_hash_table (&link_info),
-			    ovly_mgr_entry, FALSE, FALSE, FALSE);
+			    ovly_mgr_entry, false, false, false);
 
   if (h != NULL
       && (h->root.type == bfd_link_hash_defined
@@ -273,7 +273,7 @@ spu_before_allocation (void)
 	 rough layout so that overlays can be found.  */
       expld.phase = lang_mark_phase_enum;
       expld.dataseg.phase = exp_seg_none;
-      one_lang_size_sections_pass (NULL, TRUE);
+      one_lang_size_sections_pass (NULL, true);
 
       /* Find overlays by inspecting section vmas.  */
       ret = spu_elf_find_overlays (&link_info);
@@ -395,7 +395,7 @@ spu_elf_relink (void)
 
   memcpy (argv, my_argv, my_argc * sizeof (*argv));
   argv[my_argc++] = "--no-auto-overlay";
-  if (tmp_file_list->name == auto_overlay_file)
+  if (tmp_file_list != NULL && tmp_file_list->name == auto_overlay_file)
     argv[my_argc - 1] = concat (argv[my_argc - 1], "=",
 				auto_overlay_file, (const char *) NULL);
   argv[my_argc++] = "-T";
@@ -476,9 +476,9 @@ base_name (const char *path)
 
 /* This function is called when building a ppc32 or ppc64 executable
    to handle embedded spu images.  */
-extern bfd_boolean embedded_spu_file (lang_input_statement_type *, const char *);
+extern bool embedded_spu_file (lang_input_statement_type *, const char *);
 
-bfd_boolean
+bool
 embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 {
   const char *cmd[6];
@@ -497,10 +497,10 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
       || strcmp (entry->the_bfd->xvec->name, "elf32-spu") != 0
       || (entry->the_bfd->tdata.elf_obj_data->elf_header->e_type != ET_EXEC
 	  && entry->the_bfd->tdata.elf_obj_data->elf_header->e_type != ET_DYN))
-    return FALSE;
+    return false;
 
   /* Use the filename as the symbol marking the program handle struct.  */
-  sym = base_name (entry->the_bfd->filename);
+  sym = base_name (bfd_get_filename (entry->the_bfd));
 
   handle = xstrdup (sym);
   for (p = handle; *p; ++p)
@@ -509,7 +509,7 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 
   fd = new_tmp_file (&oname);
   if (fd == -1)
-    return FALSE;
+    return false;
   close (fd);
 
   for (search = (void *) input_file_chain.head;
@@ -532,7 +532,7 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
   cmd[0] = EMBEDSPU;
   cmd[1] = flags;
   cmd[2] = handle;
-  cmd[3] = entry->the_bfd->filename;
+  cmd[3] = bfd_get_filename (entry->the_bfd);
   cmd[4] = oname;
   cmd[5] = NULL;
   if (verbose)
@@ -557,13 +557,13 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
       }
   }
   if (status)
-    return FALSE;
+    return false;
 
 
   old_stat_tail = stat_ptr->tail;
   old_file_tail = input_file_chain.tail;
   if (lang_add_input_file (oname, lang_input_file_is_file_enum, NULL) == NULL)
-    return FALSE;
+    return false;
 
   /* lang_add_input_file puts the new list entry at the end of the statement
      and input file lists.  Move it to just after the current entry.  */
@@ -579,8 +579,8 @@ embedded_spu_file (lang_input_statement_type *entry, const char *flags)
 
   /* Ensure bfd sections are excluded from the output.  */
   bfd_section_list_clear (entry->the_bfd);
-  entry->flags.loaded = TRUE;
-  return TRUE;
+  entry->flags.loaded = true;
+  return true;
 }
 
 EOF

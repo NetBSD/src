@@ -2,7 +2,7 @@
 
 %{
 
-/* Copyright (C) 1991-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -71,12 +71,12 @@ static void comment (void);
 static void lex_warn_invalid (char *where, char *what);
 
 /* STATES
-	EXPRESSION	definitely in an expression
-	SCRIPT		definitely in a script
-	INPUTLIST	definitely in a script, a filename-list
-	BOTH		either EXPRESSION or SCRIPT
-	DEFSYMEXP	in an argument to -defsym
+	EXPRESSION	in an expression
+	SCRIPT		in a script
+	INPUTLIST	in a script, a filename-list
 	MRI		in an MRI script
+	WILD		inside the braces of an output section or overlay,
+			for input section wildcards
 	VERS_START	starting a Sun style mapfile
 	VERS_SCRIPT	a Sun style mapfile
 	VERS_NODE	a node within a Sun style mapfile
@@ -104,9 +104,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 %s SCRIPT
 %s INPUTLIST
 %s EXPRESSION
-%s BOTH
-%s DEFSYMEXP
 %s MRI
+%s WILD
 %s VERS_START
 %s VERS_SCRIPT
 %s VERS_NODE
@@ -128,14 +127,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 	}
     }
 
-<BOTH,SCRIPT,EXPRESSION,VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>"/*"	{ comment (); }
-
-
-<DEFSYMEXP>"-"			{ RTOKEN('-');}
-<DEFSYMEXP>"+"			{ RTOKEN('+');}
-<DEFSYMEXP>{SYMBOLNAMECHAR1}{SYMBOLNAMECHAR}* { yylval.name = xstrdup (yytext);
-						return NAME; }
-<DEFSYMEXP>"="			{ RTOKEN('='); }
+<SCRIPT,EXPRESSION,VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>"/*" {
+				comment (); }
 
 <MRI,EXPRESSION>"$"([0-9A-Fa-f])+ {
 				yylval.integer = bfd_scan_vma (yytext + 1, 0, 16);
@@ -168,7 +161,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				   yylval.bigint.str = NULL;
 				   return INT;
 				 }
-<SCRIPT,DEFSYMEXP,MRI,BOTH,EXPRESSION>((("$"|0[xX])([0-9A-Fa-f])+)|(([0-9])+))(M|K|m|k)? {
+<SCRIPT,MRI,EXPRESSION>((("$"|0[xX])([0-9A-Fa-f])+)|(([0-9])+))(M|K|m|k)? {
 				  char *s = yytext;
 				  int ibase = 0;
 
@@ -197,137 +190,164 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				    }
 				  return INT;
 				}
-<BOTH,SCRIPT,EXPRESSION,MRI>"]"		{ RTOKEN(']');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"["		{ RTOKEN('[');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"<<="	{ RTOKEN(LSHIFTEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>">>="	{ RTOKEN(RSHIFTEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"||"	{ RTOKEN(OROR);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"=="	{ RTOKEN(EQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"!="	{ RTOKEN(NE);}
-<BOTH,SCRIPT,EXPRESSION,MRI>">="	{ RTOKEN(GE);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"<="	{ RTOKEN(LE);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"<<"	{ RTOKEN(LSHIFT);}
-<BOTH,SCRIPT,EXPRESSION,MRI>">>"	{ RTOKEN(RSHIFT);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"+="	{ RTOKEN(PLUSEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"-="	{ RTOKEN(MINUSEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"*="	{ RTOKEN(MULTEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"/="	{ RTOKEN(DIVEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"&="	{ RTOKEN(ANDEQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"|="	{ RTOKEN(OREQ);}
-<BOTH,SCRIPT,EXPRESSION,MRI>"&&"	{ RTOKEN(ANDAND);}
-<BOTH,SCRIPT,EXPRESSION,MRI>">"		{ RTOKEN('>');}
-<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>","		{ RTOKEN(',');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"&"		{ RTOKEN('&');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"|"		{ RTOKEN('|');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"~"		{ RTOKEN('~');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"!"		{ RTOKEN('!');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"?"		{ RTOKEN('?');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"*"		{ RTOKEN('*');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"+"		{ RTOKEN('+');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"-"		{ RTOKEN('-');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"/"		{ RTOKEN('/');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"%"		{ RTOKEN('%');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"<"		{ RTOKEN('<');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"="		{ RTOKEN('=');}
-<BOTH,SCRIPT,EXPRESSION,MRI>"}"		{ RTOKEN('}') ; }
-<BOTH,SCRIPT,EXPRESSION,MRI>"{"		{ RTOKEN('{'); }
-<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>")"		{ RTOKEN(')');}
-<BOTH,SCRIPT,EXPRESSION,MRI,INPUTLIST>"("		{ RTOKEN('(');}
-<BOTH,SCRIPT,EXPRESSION,MRI>":"		{ RTOKEN(':'); }
-<BOTH,SCRIPT,EXPRESSION,MRI>";"		{ RTOKEN(';');}
-<BOTH,SCRIPT>"MEMORY"			{ RTOKEN(MEMORY);}
-<BOTH,SCRIPT>"REGION_ALIAS"		{ RTOKEN(REGION_ALIAS);}
-<BOTH,SCRIPT>"LD_FEATURE"		{ RTOKEN(LD_FEATURE);}
-<BOTH,SCRIPT,EXPRESSION>"ORIGIN"	{ RTOKEN(ORIGIN);}
-<BOTH,SCRIPT>"VERSION"			{ RTOKEN(VERSIONK);}
-<EXPRESSION,BOTH,SCRIPT>"BLOCK"		{ RTOKEN(BLOCK);}
-<EXPRESSION,BOTH,SCRIPT>"BIND"		{ RTOKEN(BIND);}
-<BOTH,SCRIPT,EXPRESSION>"LENGTH"	{ RTOKEN(LENGTH);}
-<EXPRESSION,BOTH,SCRIPT>"ALIGN"		{ RTOKEN(ALIGN_K);}
-<EXPRESSION,BOTH,SCRIPT>"DATA_SEGMENT_ALIGN"	{ RTOKEN(DATA_SEGMENT_ALIGN);}
-<EXPRESSION,BOTH,SCRIPT>"DATA_SEGMENT_RELRO_END"	{ RTOKEN(DATA_SEGMENT_RELRO_END);}
-<EXPRESSION,BOTH,SCRIPT>"DATA_SEGMENT_END"	{ RTOKEN(DATA_SEGMENT_END);}
-<EXPRESSION,BOTH,SCRIPT>"ADDR"		{ RTOKEN(ADDR);}
-<EXPRESSION,BOTH,SCRIPT>"LOADADDR"	{ RTOKEN(LOADADDR);}
-<EXPRESSION,BOTH,SCRIPT>"ALIGNOF"	{ RTOKEN(ALIGNOF); }
-<EXPRESSION,BOTH>"MAX"			{ RTOKEN(MAX_K); }
-<EXPRESSION,BOTH>"MIN"			{ RTOKEN(MIN_K); }
-<EXPRESSION,BOTH>"LOG2CEIL"		{ RTOKEN(LOG2CEIL); }
-<EXPRESSION,BOTH,SCRIPT>"ASSERT"	{ RTOKEN(ASSERT_K); }
-<BOTH,SCRIPT>"ENTRY"			{ RTOKEN(ENTRY);}
-<BOTH,SCRIPT,MRI>"EXTERN"		{ RTOKEN(EXTERN);}
-<EXPRESSION,BOTH,SCRIPT>"NEXT"		{ RTOKEN(NEXT);}
-<EXPRESSION,BOTH,SCRIPT>"sizeof_headers"	{ RTOKEN(SIZEOF_HEADERS);}
-<EXPRESSION,BOTH,SCRIPT>"SIZEOF_HEADERS"	{ RTOKEN(SIZEOF_HEADERS);}
-<EXPRESSION,BOTH,SCRIPT>"SEGMENT_START" { RTOKEN(SEGMENT_START);}
-<BOTH,SCRIPT>"MAP"			{ RTOKEN(MAP);}
-<EXPRESSION,BOTH,SCRIPT>"SIZEOF"	{ RTOKEN(SIZEOF);}
-<BOTH,SCRIPT>"TARGET"			{ RTOKEN(TARGET_K);}
-<BOTH,SCRIPT>"SEARCH_DIR"		{ RTOKEN(SEARCH_DIR);}
-<BOTH,SCRIPT>"OUTPUT"			{ RTOKEN(OUTPUT);}
-<BOTH,SCRIPT>"INPUT"			{ RTOKEN(INPUT);}
-<EXPRESSION,BOTH,SCRIPT>"GROUP"		{ RTOKEN(GROUP);}
-<EXPRESSION,BOTH,SCRIPT,INPUTLIST>"AS_NEEDED"	{ RTOKEN(AS_NEEDED);}
-<EXPRESSION,BOTH,SCRIPT>"DEFINED"	{ RTOKEN(DEFINED);}
-<BOTH,SCRIPT>"CREATE_OBJECT_SYMBOLS"	{ RTOKEN(CREATE_OBJECT_SYMBOLS);}
-<BOTH,SCRIPT>"CONSTRUCTORS"		{ RTOKEN( CONSTRUCTORS);}
-<BOTH,SCRIPT>"FORCE_COMMON_ALLOCATION"	{ RTOKEN(FORCE_COMMON_ALLOCATION);}
-<BOTH,SCRIPT>"FORCE_GROUP_ALLOCATION"	{ RTOKEN(FORCE_GROUP_ALLOCATION);}
-<BOTH,SCRIPT>"INHIBIT_COMMON_ALLOCATION" { RTOKEN(INHIBIT_COMMON_ALLOCATION);}
-<BOTH,SCRIPT>"SECTIONS"			{ RTOKEN(SECTIONS);}
-<BOTH,SCRIPT>"INSERT"			{ RTOKEN(INSERT_K);}
-<BOTH,SCRIPT>"AFTER"			{ RTOKEN(AFTER);}
-<BOTH,SCRIPT>"BEFORE"			{ RTOKEN(BEFORE);}
-<BOTH,SCRIPT>"FILL"			{ RTOKEN(FILL);}
-<BOTH,SCRIPT>"STARTUP"			{ RTOKEN(STARTUP);}
-<BOTH,SCRIPT>"OUTPUT_FORMAT"		{ RTOKEN(OUTPUT_FORMAT);}
-<BOTH,SCRIPT>"OUTPUT_ARCH"		{ RTOKEN( OUTPUT_ARCH);}
-<BOTH,SCRIPT>"HLL"			{ RTOKEN(HLL);}
-<BOTH,SCRIPT>"SYSLIB"			{ RTOKEN(SYSLIB);}
-<BOTH,SCRIPT>"FLOAT"			{ RTOKEN(FLOAT);}
-<BOTH,SCRIPT>"QUAD"			{ RTOKEN( QUAD);}
-<BOTH,SCRIPT>"SQUAD"			{ RTOKEN( SQUAD);}
-<BOTH,SCRIPT>"LONG"			{ RTOKEN( LONG);}
-<BOTH,SCRIPT>"SHORT"			{ RTOKEN( SHORT);}
-<BOTH,SCRIPT>"BYTE"			{ RTOKEN( BYTE);}
-<BOTH,SCRIPT>"NOFLOAT"			{ RTOKEN(NOFLOAT);}
-<EXPRESSION,BOTH,SCRIPT>"NOCROSSREFS"	{ RTOKEN(NOCROSSREFS);}
-<EXPRESSION,BOTH,SCRIPT>"NOCROSSREFS_TO" { RTOKEN(NOCROSSREFS_TO);}
-<BOTH,SCRIPT>"OVERLAY"			{ RTOKEN(OVERLAY); }
-<BOTH,SCRIPT>"SORT_BY_NAME"		{ RTOKEN(SORT_BY_NAME); }
-<BOTH,SCRIPT>"SORT_BY_ALIGNMENT"	{ RTOKEN(SORT_BY_ALIGNMENT); }
-<BOTH,SCRIPT>"SORT"			{ RTOKEN(SORT_BY_NAME); }
-<BOTH,SCRIPT>"SORT_BY_INIT_PRIORITY"	{ RTOKEN(SORT_BY_INIT_PRIORITY); }
-<BOTH,SCRIPT>"SORT_NONE"		{ RTOKEN(SORT_NONE); }
-<EXPRESSION,BOTH,SCRIPT>"NOLOAD"	{ RTOKEN(NOLOAD);}
-<EXPRESSION,BOTH,SCRIPT>"DSECT"		{ RTOKEN(DSECT);}
-<EXPRESSION,BOTH,SCRIPT>"COPY"		{ RTOKEN(COPY);}
-<EXPRESSION,BOTH,SCRIPT>"INFO"		{ RTOKEN(INFO);}
-<EXPRESSION,BOTH,SCRIPT>"OVERLAY"	{ RTOKEN(OVERLAY);}
-<EXPRESSION,BOTH,SCRIPT>"ONLY_IF_RO"	{ RTOKEN(ONLY_IF_RO); }
-<EXPRESSION,BOTH,SCRIPT>"ONLY_IF_RW"	{ RTOKEN(ONLY_IF_RW); }
-<EXPRESSION,BOTH,SCRIPT>"SPECIAL"	{ RTOKEN(SPECIAL); }
-<BOTH,SCRIPT>"o"			{ RTOKEN(ORIGIN);}
-<BOTH,SCRIPT>"org"			{ RTOKEN(ORIGIN);}
-<BOTH,SCRIPT>"l"			{ RTOKEN( LENGTH);}
-<BOTH,SCRIPT>"len"			{ RTOKEN( LENGTH);}
-<EXPRESSION,BOTH,SCRIPT>"INPUT_SECTION_FLAGS"	{ RTOKEN(INPUT_SECTION_FLAGS); }
-<EXPRESSION,BOTH,SCRIPT>"INCLUDE"	{ RTOKEN(INCLUDE);}
-<BOTH,SCRIPT>"PHDRS"			{ RTOKEN (PHDRS); }
-<EXPRESSION,BOTH,SCRIPT>"AT"		{ RTOKEN(AT);}
-<EXPRESSION,BOTH,SCRIPT>"ALIGN_WITH_INPUT"	{ RTOKEN(ALIGN_WITH_INPUT);}
-<EXPRESSION,BOTH,SCRIPT>"SUBALIGN"	{ RTOKEN(SUBALIGN);}
-<EXPRESSION,BOTH,SCRIPT>"HIDDEN"	{ RTOKEN(HIDDEN); }
-<EXPRESSION,BOTH,SCRIPT>"PROVIDE"	{ RTOKEN(PROVIDE); }
-<EXPRESSION,BOTH,SCRIPT>"PROVIDE_HIDDEN" { RTOKEN(PROVIDE_HIDDEN); }
-<EXPRESSION,BOTH,SCRIPT>"KEEP"		{ RTOKEN(KEEP); }
-<EXPRESSION,BOTH,SCRIPT>"EXCLUDE_FILE"  { RTOKEN(EXCLUDE_FILE); }
-<EXPRESSION,BOTH,SCRIPT>"CONSTANT"	{ RTOKEN(CONSTANT);}
+
+  /* Some tokens that only appear in expressions must be enabled for
+     states other than EXPRESSION, since parser lookahead means they
+     must be recognised before the parser switches the lexer out of
+     SCRIPT or WILD state into EXPRESSION state.
+
+     This sort of thing happens for example with NAME in ldgram.y
+     "section" rule, which is immediately followed by ldlex_expression.
+     However, if you follow the grammar from "sec_or_group_p1" you see
+     "assignment" appearing in "statement_anywhere".  Now,
+     "assignment" also has NAME as its first token, just like
+     "section".  So the parser can't know whether it is in the
+     "section" or the "assignment" rule until it has scanned the next
+     token to find an assignment operator.  Thus the next token after
+     NAME in the "section" rule may be lexed before the lexer is
+     switched to EXPRESSION state, and there are quite a number of
+     optional components.  The first token in all those components
+     must be able to be lexed in SCRIPT state, as well as the
+     assignment operators.  In fact, due to "opt_exp_with_type",
+     anything that can appear on the left hand side of "exp" might
+     need to be lexed in SCRIPT state.
+
+     MRI mode tends to cover everything in MRI scripts.
+  */
+<MRI,WILD>"]"				{ RTOKEN(']'); }
+<MRI,WILD>"["				{ RTOKEN('['); }
+<SCRIPT,EXPRESSION,MRI,WILD>"<<="	{ RTOKEN(LSHIFTEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>">>="	{ RTOKEN(RSHIFTEQ); }
+<EXPRESSION,MRI>"||"			{ RTOKEN(OROR); }
+<EXPRESSION,MRI>"=="			{ RTOKEN(EQ); }
+<EXPRESSION,MRI>"!="			{ RTOKEN(NE); }
+<EXPRESSION,MRI>">="			{ RTOKEN(GE); }
+<EXPRESSION,MRI>"<="			{ RTOKEN(LE); }
+<EXPRESSION,MRI>"<<"			{ RTOKEN(LSHIFT); }
+<EXPRESSION,MRI>">>"			{ RTOKEN(RSHIFT); }
+<SCRIPT,EXPRESSION,MRI,WILD>"+="	{ RTOKEN(PLUSEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"-="	{ RTOKEN(MINUSEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"*="	{ RTOKEN(MULTEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"/="	{ RTOKEN(DIVEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"&="	{ RTOKEN(ANDEQ); }
+<SCRIPT,EXPRESSION,MRI,WILD>"|="	{ RTOKEN(OREQ); }
+<EXPRESSION,MRI>"&&"			{ RTOKEN(ANDAND); }
+<SCRIPT,EXPRESSION,MRI>">"		{ RTOKEN('>'); }
+<SCRIPT,EXPRESSION,MRI,INPUTLIST>","	{ RTOKEN(','); }
+<EXPRESSION,MRI,WILD>"&"		{ RTOKEN('&'); }
+<EXPRESSION,MRI>"|"			{ RTOKEN('|'); }
+<SCRIPT,EXPRESSION,MRI>"~"		{ RTOKEN('~'); }
+<SCRIPT,EXPRESSION,MRI>"!"		{ RTOKEN('!'); }
+<EXPRESSION,MRI>"?"			{ RTOKEN('?'); }
+<EXPRESSION,MRI>"*"			{ RTOKEN('*'); }
+<SCRIPT,EXPRESSION,MRI>"+"		{ RTOKEN('+'); }
+<SCRIPT,EXPRESSION,MRI>"-"		{ RTOKEN('-'); }
+<EXPRESSION,MRI>"/"			{ RTOKEN('/'); }
+<EXPRESSION,MRI>"%"			{ RTOKEN('%'); }
+<EXPRESSION,MRI>"<"			{ RTOKEN('<'); }
+<SCRIPT,EXPRESSION,MRI,WILD>"="		{ RTOKEN('='); }
+<SCRIPT,EXPRESSION,MRI,WILD>"}"		{ RTOKEN('}'); }
+<SCRIPT,EXPRESSION,MRI,WILD>"{"		{ RTOKEN('{'); }
+<SCRIPT,EXPRESSION,MRI,WILD,INPUTLIST>")" { RTOKEN(')'); }
+<SCRIPT,EXPRESSION,MRI,WILD,INPUTLIST>"(" { RTOKEN('('); }
+<SCRIPT,EXPRESSION,MRI>":"		{ RTOKEN(':'); }
+<SCRIPT,EXPRESSION,MRI,WILD>";"		{ RTOKEN(';'); }
+<SCRIPT>"MEMORY"			{ RTOKEN(MEMORY); }
+<SCRIPT>"REGION_ALIAS"			{ RTOKEN(REGION_ALIAS); }
+<SCRIPT>"LD_FEATURE"			{ RTOKEN(LD_FEATURE); }
+<SCRIPT,EXPRESSION>"ORIGIN"		{ RTOKEN(ORIGIN); }
+<SCRIPT>"VERSION"			{ RTOKEN(VERSIONK); }
+<SCRIPT,EXPRESSION>"BLOCK"		{ RTOKEN(BLOCK); }
+<SCRIPT,EXPRESSION>"BIND"		{ RTOKEN(BIND); }
+<SCRIPT,EXPRESSION>"LENGTH"		{ RTOKEN(LENGTH); }
+<SCRIPT,EXPRESSION>"ALIGN"		{ RTOKEN(ALIGN_K); }
+<SCRIPT,EXPRESSION>"DATA_SEGMENT_ALIGN"	{ RTOKEN(DATA_SEGMENT_ALIGN); }
+<SCRIPT,EXPRESSION>"DATA_SEGMENT_RELRO_END" { RTOKEN(DATA_SEGMENT_RELRO_END); }
+<SCRIPT,EXPRESSION>"DATA_SEGMENT_END"	{ RTOKEN(DATA_SEGMENT_END); }
+<SCRIPT,EXPRESSION>"ADDR"		{ RTOKEN(ADDR); }
+<SCRIPT,EXPRESSION>"LOADADDR"		{ RTOKEN(LOADADDR); }
+<SCRIPT,EXPRESSION>"ALIGNOF"		{ RTOKEN(ALIGNOF); }
+<SCRIPT,EXPRESSION>"ABSOLUTE"		{ RTOKEN(ABSOLUTE); }
+<SCRIPT,EXPRESSION>"MAX"		{ RTOKEN(MAX_K); }
+<SCRIPT,EXPRESSION>"MIN"		{ RTOKEN(MIN_K); }
+<SCRIPT,EXPRESSION>"LOG2CEIL"		{ RTOKEN(LOG2CEIL); }
+<SCRIPT,EXPRESSION,WILD>"ASSERT"	{ RTOKEN(ASSERT_K); }
+<SCRIPT>"ENTRY"				{ RTOKEN(ENTRY); }
+<SCRIPT,MRI>"EXTERN"			{ RTOKEN(EXTERN); }
+<SCRIPT,EXPRESSION>"NEXT"		{ RTOKEN(NEXT); }
+<SCRIPT,EXPRESSION>"SIZEOF_HEADERS"	{ RTOKEN(SIZEOF_HEADERS); }
+<SCRIPT,EXPRESSION>"SEGMENT_START"	{ RTOKEN(SEGMENT_START); }
+<SCRIPT>"MAP"				{ RTOKEN(MAP); }
+<SCRIPT,EXPRESSION>"SIZEOF"		{ RTOKEN(SIZEOF); }
+<SCRIPT>"TARGET"			{ RTOKEN(TARGET_K); }
+<SCRIPT>"SEARCH_DIR"			{ RTOKEN(SEARCH_DIR); }
+<SCRIPT>"OUTPUT"			{ RTOKEN(OUTPUT); }
+<SCRIPT>"INPUT"				{ RTOKEN(INPUT); }
+<SCRIPT>"GROUP"				{ RTOKEN(GROUP); }
+<INPUTLIST>"AS_NEEDED"			{ RTOKEN(AS_NEEDED); }
+<SCRIPT,EXPRESSION>"DEFINED"		{ RTOKEN(DEFINED); }
+<WILD>"CREATE_OBJECT_SYMBOLS"		{ RTOKEN(CREATE_OBJECT_SYMBOLS); }
+<WILD>"CONSTRUCTORS"			{ RTOKEN(CONSTRUCTORS); }
+<SCRIPT>"FORCE_COMMON_ALLOCATION"	{ RTOKEN(FORCE_COMMON_ALLOCATION); }
+<SCRIPT>"FORCE_GROUP_ALLOCATION"	{ RTOKEN(FORCE_GROUP_ALLOCATION); }
+<SCRIPT>"INHIBIT_COMMON_ALLOCATION"	{ RTOKEN(INHIBIT_COMMON_ALLOCATION); }
+<SCRIPT>"SECTIONS"			{ RTOKEN(SECTIONS); }
+<SCRIPT>"INSERT"			{ RTOKEN(INSERT_K); }
+<SCRIPT>"AFTER"				{ RTOKEN(AFTER); }
+<SCRIPT>"BEFORE"			{ RTOKEN(BEFORE); }
+<WILD>"FILL"				{ RTOKEN(FILL); }
+<SCRIPT>"STARTUP"			{ RTOKEN(STARTUP); }
+<SCRIPT>"OUTPUT_FORMAT"			{ RTOKEN(OUTPUT_FORMAT); }
+<SCRIPT>"OUTPUT_ARCH"			{ RTOKEN(OUTPUT_ARCH); }
+<SCRIPT>"HLL"				{ RTOKEN(HLL); }
+<SCRIPT>"SYSLIB"			{ RTOKEN(SYSLIB); }
+<SCRIPT>"FLOAT"				{ RTOKEN(FLOAT); }
+<WILD>"QUAD"				{ RTOKEN(QUAD); }
+<WILD>"SQUAD"				{ RTOKEN(SQUAD); }
+<WILD>"LONG"				{ RTOKEN(LONG); }
+<WILD>"SHORT"				{ RTOKEN(SHORT); }
+<WILD>"BYTE"				{ RTOKEN(BYTE); }
+<SCRIPT>"NOFLOAT"			{ RTOKEN(NOFLOAT); }
+<SCRIPT,EXPRESSION>"NOCROSSREFS"	{ RTOKEN(NOCROSSREFS); }
+<SCRIPT,EXPRESSION>"NOCROSSREFS_TO"	{ RTOKEN(NOCROSSREFS_TO); }
+<SCRIPT,EXPRESSION>"OVERLAY"		{ RTOKEN(OVERLAY); }
+<WILD>"SORT_BY_NAME"			{ RTOKEN(SORT_BY_NAME); }
+<WILD>"SORT_BY_ALIGNMENT"		{ RTOKEN(SORT_BY_ALIGNMENT); }
+<WILD>"SORT"				{ RTOKEN(SORT_BY_NAME); }
+<WILD>"SORT_BY_INIT_PRIORITY"		{ RTOKEN(SORT_BY_INIT_PRIORITY); }
+<WILD>"SORT_NONE"			{ RTOKEN(SORT_NONE); }
+<EXPRESSION>"NOLOAD"			{ RTOKEN(NOLOAD); }
+<EXPRESSION>"READONLY"			{ RTOKEN(READONLY); }
+<EXPRESSION>"DSECT"			{ RTOKEN(DSECT); }
+<EXPRESSION>"COPY"			{ RTOKEN(COPY); }
+<EXPRESSION>"INFO"			{ RTOKEN(INFO); }
+<EXPRESSION>"TYPE"			{ RTOKEN(TYPE); }
+<SCRIPT,EXPRESSION>"ONLY_IF_RO"		{ RTOKEN(ONLY_IF_RO); }
+<SCRIPT,EXPRESSION>"ONLY_IF_RW"		{ RTOKEN(ONLY_IF_RW); }
+<SCRIPT,EXPRESSION>"SPECIAL"		{ RTOKEN(SPECIAL); }
+<SCRIPT>"o"				{ RTOKEN(ORIGIN); }
+<SCRIPT>"org"				{ RTOKEN(ORIGIN); }
+<SCRIPT>"l"				{ RTOKEN(LENGTH); }
+<SCRIPT>"len"				{ RTOKEN(LENGTH); }
+<WILD>"INPUT_SECTION_FLAGS"		{ RTOKEN(INPUT_SECTION_FLAGS); }
+<SCRIPT,EXPRESSION,WILD,MRI>"INCLUDE"	{ RTOKEN(INCLUDE);}
+<SCRIPT>"PHDRS"				{ RTOKEN(PHDRS); }
+<SCRIPT,EXPRESSION,WILD>"AT"		{ RTOKEN(AT);}
+<SCRIPT,EXPRESSION>"ALIGN_WITH_INPUT"	{ RTOKEN(ALIGN_WITH_INPUT);}
+<SCRIPT,EXPRESSION>"SUBALIGN"		{ RTOKEN(SUBALIGN);}
+<SCRIPT,EXPRESSION,WILD>"HIDDEN"	{ RTOKEN(HIDDEN); }
+<SCRIPT,EXPRESSION,WILD>"PROVIDE"	{ RTOKEN(PROVIDE); }
+<SCRIPT,EXPRESSION,WILD>"PROVIDE_HIDDEN" { RTOKEN(PROVIDE_HIDDEN); }
+<WILD>"KEEP"				{ RTOKEN(KEEP); }
+<WILD>"EXCLUDE_FILE"			{ RTOKEN(EXCLUDE_FILE); }
+<SCRIPT,EXPRESSION>"CONSTANT"		{ RTOKEN(CONSTANT);}
+
 <MRI>"#".*\n?			{ ++ lineno; }
 <MRI>"\n"			{ ++ lineno;  RTOKEN(NEWLINE); }
 <MRI>"*".*			{ /* Mri comment line */ }
 <MRI>";".*			{ /* Mri comment line */ }
 <MRI>"END"			{ RTOKEN(ENDWORD); }
+<MRI>"ABSOLUTE"			{ RTOKEN(ABSOLUTE); }
 <MRI>"ALIGNMOD"			{ RTOKEN(ALIGNMOD);}
 <MRI>"ALIGN"			{ RTOKEN(ALIGN_K);}
 <MRI>"CHIP"			{ RTOKEN(CHIP); }
@@ -343,8 +363,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <MRI>"START"			{ RTOKEN(START); }
 <MRI>"LIST".*			{ RTOKEN(LIST); /* LIST and ignore to end of line */ }
 <MRI>"SECT"			{ RTOKEN(SECT); }
-<EXPRESSION,BOTH,SCRIPT,MRI>"ABSOLUTE"			{ RTOKEN(ABSOLUTE); }
 <MRI>"end"			{ RTOKEN(ENDWORD); }
+<MRI>"absolute"			{ RTOKEN(ABSOLUTE); }
 <MRI>"alignmod"			{ RTOKEN(ALIGNMOD);}
 <MRI>"align"			{ RTOKEN(ALIGN_K);}
 <MRI>"chip"			{ RTOKEN(CHIP); }
@@ -361,7 +381,6 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <MRI>"start"			{ RTOKEN(START); }
 <MRI>"list".*			{ RTOKEN(LIST); /* LIST and ignore to end of line */ }
 <MRI>"sect"			{ RTOKEN(SECT); }
-<EXPRESSION,BOTH,SCRIPT,MRI>"absolute"			{ RTOKEN(ABSOLUTE); }
 
 <MRI>{FILENAMECHAR1}{NOCFILENAMECHAR}*	{
 /* Filename without commas, needed to parse mri stuff */
@@ -370,7 +389,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				}
 
 
-<BOTH,INPUTLIST>{FILENAMECHAR1}{FILENAMECHAR}*	{
+<SCRIPT,INPUTLIST>{FILENAMECHAR1}{FILENAMECHAR}*	{
 				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
@@ -379,23 +398,21 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
-<BOTH,INPUTLIST>"-l"{FILENAMECHAR}+ {
+<INPUTLIST>"-l"{FILENAMECHAR}+ {
 				  yylval.name = xstrdup (yytext + 2);
 				  return LNAME;
 				}
-<EXPRESSION>{SYMBOLNAMECHAR1}{NOCFILENAMECHAR}* {
+<EXPRESSION>{SYMBOLNAMECHAR1}{SYMBOLNAMECHAR}* {
 				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
+  /* The following rule is to prevent a fill expression on the output
+     section before /DISCARD/ interpreting the '/' as a divide.  */
 <EXPRESSION>"/DISCARD/"		{
 				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
-<EXPRESSION>"-l"{NOCFILENAMECHAR}+ {
-				  yylval.name = xstrdup (yytext + 2);
-				  return LNAME;
-				}
-<SCRIPT>{WILDCHAR}* {
+<WILD>{WILDCHAR}* {
 		/* Annoyingly, this pattern can match comments, and we have
 		   longest match issues to consider.  So if the first two
 		   characters are a comment opening, put the input back and
@@ -412,21 +429,18 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 		  }
 	}
 
-<EXPRESSION,BOTH,SCRIPT,VERS_NODE,INPUTLIST>"\""[^\"]*"\"" {
-					/* No matter the state, quotes
-					   give what's inside.  */
-					bfd_size_type len;
-					yylval.name = xstrdup (yytext + 1);
-					/* PR ld/20906.  A corrupt input file
-					   can contain bogus strings.  */
-					len = strlen (yylval.name);
-					if (len > (bfd_size_type) yyleng - 2)
-					  len = yyleng - 2;
-					yylval.name[len] = 0;
-					return NAME;
-				}
-<BOTH,SCRIPT,EXPRESSION>"\n"		{ lineno++;}
-<MRI,BOTH,SCRIPT,EXPRESSION>[ \t\r]+	{ }
+<SCRIPT,EXPRESSION,WILD,VERS_NODE,INPUTLIST>"\""[^\"]*"\"" {
+		/* No matter the state, quotes give what's inside.  */
+		yylval.name = xmemdup (yytext + 1, yyleng - 2, yyleng - 1);
+		return NAME;
+	}
+
+<SCRIPT,EXPRESSION,WILD,VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>"\n" {
+				lineno++; }
+<MRI,SCRIPT,EXPRESSION,WILD,VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>[ \t\r]+ {
+				/* Eat up whitespace */ }
+<SCRIPT,EXPRESSION,WILD,VERS_START,VERS_NODE,VERS_SCRIPT>#.* {
+				/* Eat up comments */ }
 
 <VERS_NODE,VERS_SCRIPT>[:,;]	{ return *yytext; }
 
@@ -455,12 +469,6 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 				  return *yytext;
 				}
 
-<VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>[\n]	{ lineno++; }
-
-<VERS_START,VERS_NODE,VERS_SCRIPT>#.*		{ /* Eat up comments */ }
-
-<VERS_START,VERS_NODE,VERS_SCRIPT,INPUTLIST>[ \t\r]+	{ /* Eat up whitespace */ }
-
 <<EOF>> {
   include_stack_ptr--;
   if (include_stack_ptr == 0)
@@ -477,8 +485,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
   return END;
 }
 
-<SCRIPT,MRI,VERS_START,VERS_SCRIPT,VERS_NODE>.	lex_warn_invalid (" in script", yytext);
-<EXPRESSION,DEFSYMEXP,BOTH>.	lex_warn_invalid (" in expression", yytext);
+<SCRIPT,WILD,MRI,VERS_START,VERS_SCRIPT,VERS_NODE>.	lex_warn_invalid (" in script", yytext);
+<EXPRESSION>.	lex_warn_invalid (" in expression", yytext);
 
 %%
 
@@ -513,14 +521,13 @@ yy_create_string_buffer (const char *string, size_t size)
 {
   YY_BUFFER_STATE b;
 
-  /* Calls to m-alloc get turned by sed into xm-alloc.  */
-  b = malloc (sizeof (struct yy_buffer_state));
+  b = xmalloc (sizeof (struct yy_buffer_state));
   b->yy_input_file = 0;
   b->yy_buf_size = size;
 
   /* yy_ch_buf has to be 2 characters longer than the size given because
      we need to put in 2 end-of-buffer characters.  */
-  b->yy_ch_buf = malloc ((unsigned) (b->yy_buf_size + 3));
+  b->yy_ch_buf = xmalloc ((size_t) b->yy_buf_size + 3);
 
   b->yy_ch_buf[0] = '\n';
   strcpy (b->yy_ch_buf+1, string);
@@ -609,13 +616,6 @@ ldlex_version_file (void)
 }
 
 void
-ldlex_defsym (void)
-{
-  *(state_stack_p)++ = yy_start;
-  BEGIN (DEFSYMEXP);
-}
-
-void
 ldlex_expression (void)
 {
   *(state_stack_p)++ = yy_start;
@@ -623,16 +623,26 @@ ldlex_expression (void)
 }
 
 void
-ldlex_both (void)
+ldlex_wild (void)
 {
   *(state_stack_p)++ = yy_start;
-  BEGIN (BOTH);
+  BEGIN (WILD);
 }
 
 void
 ldlex_popstate (void)
 {
   yy_start = *(--state_stack_p);
+}
+
+/* In cases where the parser needs to look ahead and the context
+   changes from expression to script or vice-versa, throw away a
+   NAME.  What constitutes a NAME depends on context.  */
+
+void
+ldlex_backup (void)
+{
+  yyless (0);
 }
 
 /* Return the current file name, or the previous file if no file is
