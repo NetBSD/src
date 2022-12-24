@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.74 2021/08/09 21:38:04 andvar Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.75 2022/12/24 15:23:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.74 2021/08/09 21:38:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.75 2022/12/24 15:23:02 andvar Exp $");
 
 #include "midi.h"
 
@@ -1192,7 +1192,7 @@ cs4280_reset(void *sc_)
 	delay(100);
 	/* Clear RSTSP bit in SPCR */
 	BA1WRITE4(sc, CS4280_SPCR, 0);
-	/* enable DMA reqest */
+	/* enable DMA request */
 	BA1WRITE4(sc, CS4280_SPCR, SPCR_DRQEN);
 }
 

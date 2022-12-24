@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.3 2022/09/24 15:01:54 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.4 2022/12/24 15:23:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3 2022/09/24 15:01:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.4 2022/12/24 15:23:02 andvar Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -716,7 +716,7 @@ efi_runtime_init(void)
 		 * Get the physical address, and the virtual address
 		 * that the EFI runtime services want mapped to it.
 		 *
-		 * If the requsted virtual address is zero, assume
+		 * If the requested virtual address is zero, assume
 		 * we're using physical addressing, i.e., VA is the
 		 * same as PA.
 		 *
