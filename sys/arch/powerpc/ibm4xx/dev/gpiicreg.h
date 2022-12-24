@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiicreg.h,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: gpiicreg.h,v 1.3 2022/12/24 22:33:12 andvar Exp $	*/
 /*	Original Tag: iicreg.h,v 1.3 2003/09/23 14:56:08 shige Exp 	*/
 
 /*
@@ -118,7 +118,7 @@
 /*
  * Bit definitions for IIC_XFRCNT
  */
-#define	IIC_INTRMSK_EIMTC	(1u << 0)	/* Enable IRQ on Reqested MT */
+#define	IIC_INTRMSK_EIMTC	(1u << 0)	/* Enable IRQ on Requested MT */
 #define	IIC_INTRMSK_EITA	(1u << 1)	/* Enable IRQ on Trans Abort */
 #define	IIC_INTRMSK_EIIC	(1u << 2)	/* Enable IRQ on Incomp*/
 #define	IIC_INTRMSK_EIHE	(1u << 3)	/* */
