@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.6 2022/12/23 08:10:43 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.7 2022/12/24 09:27:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -342,11 +342,16 @@ sys/dev/tprof/tprof.c				1.22
 sys/dev/tprof/tprof_armv7.c			1.12
 sys/dev/tprof/tprof_armv8.c			1.19
 
-
 	tprof(8): various fixes:
 	 - fix global lock handling
 	 - explicitly disable overflow interrupts before enabling the cycle
 	   counter.
 	 - PMCR_EL0.LC should be set. ARM deprecates use of PMCR_EL0.LC=0
 	[ryo, ticket #20]
+
+sys/arch/x86/x86/x86_machdep.c			1.153
+
+	xen: fix PR 57121: PVH guests are not able to use more than
+	4GB of memory.
+	[bouyer, ticket #21]
 
