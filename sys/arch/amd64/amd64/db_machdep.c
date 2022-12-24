@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13 2022/06/27 23:36:48 riastradh Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14 2022/12/24 14:32:42 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2022/06/27 23:36:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2022/12/24 14:32:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
 	 */
 	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
-	    NULL) != (db_sym_t)0
+	    NULL) != DB_SYM_NULL
 	    && traptype == INTERRUPT) {
 		for (i = 0; i < 4; i++) {
 			ifp = (struct intrframe *)(argp + i);
@@ -210,13 +210,13 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep,
 	const char *name;
 
 	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-	if (sym != 0 && offset == 0) {
+	if (sym != DB_SYM_NULL && offset == 0) {
 		sym = db_search_symbol(callpc - 1, DB_STGY_ANY, &offset);
 		offset++;
 	}
 	db_symbol_values(sym, &name, NULL);
-	if (sym == (db_sym_t)0)
-		return (db_sym_t)0;
+	if (sym == DB_SYM_NULL)
+		return DB_SYM_NULL;
 
 	*is_trap = NONE;
 	narg = 0;
