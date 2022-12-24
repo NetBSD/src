@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.154 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.155 2022/12/24 15:23:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.154 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.155 2022/12/24 15:23:02 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1352,7 +1352,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			    sadl->sdl_type != IFT_ETHER)
 				continue;
 			if (ifnum--)
-				/* not the reqested iface */
+				/* not the requested iface */
 				continue;
 			memcpy(&lreq.ifr_hwaddr.sa_data,
 			       CLLADDR(sadl),

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.31 2020/07/16 15:02:08 msaitoh Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.32 2022/12/24 15:23:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.31 2020/07/16 15:02:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.32 2022/12/24 15:23:02 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -597,7 +597,7 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
 				if (ifnum--)
-					/* not the reqested iface */
+					/* not the requested iface */
 					continue;
 				memcpy(&lreq.ifr_hwaddr.sa_data,
 				       CLLADDR(sadl),

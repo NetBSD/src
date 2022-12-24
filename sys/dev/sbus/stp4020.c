@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.72 2022/05/04 07:48:35 andvar Exp $ */
+/*	$NetBSD: stp4020.c,v 1.73 2022/12/24 15:23:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.72 2022/05/04 07:48:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.73 2022/12/24 15:23:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ stp4020attach(device_t parent, device_t self, void *aux)
 	/*
 	 * On sparc64 the hardware interrupt priority does not restrict
 	 * the IPL we run our interrupt handler on, so we can always just
-	 * use the first interrupt and reqest the handler to run at
+	 * use the first interrupt and request the handler to run at
 	 * IPL_VM.
 	 */
 	sbus_intno = 0;

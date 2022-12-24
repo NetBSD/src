@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.21 2017/05/04 16:26:09 sevan Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.22 2022/12/24 15:23:03 andvar Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.21 2017/05/04 16:26:09 sevan Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.22 2022/12/24 15:23:03 andvar Exp $");
 #endif
 
 static const char usage[] =
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 			break;
 		switch (argv[0][1]) {
 
-		case 'f':				/* File name to reqest. */
+		case 'f':				/* File name to request. */
 			if (argc < 2)
 				goto error;
 			argc--; argv++;
