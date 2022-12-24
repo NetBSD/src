@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.21 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.22 2022/12/24 22:33:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.21 2022/03/13 17:50:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.22 2022/12/24 22:33:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -164,7 +164,7 @@ finish:
 }
 
 /*
- * Process Received Command Reject. For now we dont try to recover gracefully
+ * Process Received Command Reject. For now we don't try to recover gracefully
  * from this, it probably means that the link is garbled or the other end is
  * insufficiently capable of handling normal traffic. (not *my* fault, no way!)
  */
@@ -198,14 +198,14 @@ l2cap_recv_command_rej(struct mbuf *m, struct hci_link *link)
 	switch (le16toh(cp.reason)) {
 	case L2CAP_REJ_NOT_UNDERSTOOD:	/* data length = 0 octets */
 		/*
-		 * I dont know what to do, just move up the timeout
+		 * I don't know what to do, just move up the timeout
 		 */
 		callout_schedule(&req->lr_rtx, 0);
 		break;
 
 	case L2CAP_REJ_MTU_EXCEEDED:	/* data length = 2 octets */
 		/*
-		 * I didnt send any commands over L2CAP_MTU_MINIMUM size, but..
+		 * I didn't send any commands over L2CAP_MTU_MINIMUM size, but..
 		 *
 		 * XXX maybe we should resend this, instead?
 		 */
@@ -218,7 +218,7 @@ l2cap_recv_command_rej(struct mbuf *m, struct hci_link *link)
 
 	case L2CAP_REJ_INVALID_CID:	/* data length = 4 octets */
 		/*
-		 * Well, if they dont have such a channel then our channel is
+		 * Well, if they don't have such a channel then our channel is
 		 * most likely closed. Make it so.
 		 */
 		chan = req->lr_chan;
@@ -396,7 +396,7 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 		break;
 
 	case L2CAP_PENDING:
-		/* XXX dont release request, should start eRTX timeout? */
+		/* XXX don't release request, should start eRTX timeout? */
 		(*chan->lc_proto->connecting)(chan->lc_upper);
 		break;
 
@@ -411,7 +411,7 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 }
 
 /*
- * Process Received Config Reqest.
+ * Process Received Config Request.
  */
 static void
 l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
@@ -522,7 +522,7 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			/*
 			 * I think that this is informational only - he is
 			 * informing us of the flush timeout he will be using.
-			 * I dont think this affects us in any significant way,
+			 * I don't think this affects us in any significant way,
 			 * so just ignore this value for now.
 			 */
 			break;
@@ -1121,7 +1121,7 @@ l2cap_send_connect_req(struct l2cap_channel *chan)
  * Send Config Request
  *
  * For outgoing config request, we only put options in the packet if they
- * differ from the default and would have to be actioned. We dont support
+ * differ from the default and would have to be actioned. We don't support
  * enough option types to make overflowing SigMTU an issue so it can all
  * go in one packet.
  */
