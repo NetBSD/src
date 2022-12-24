@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.13 2020/04/04 01:34:53 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.14 2022/12/24 20:17:46 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -27,7 +27,6 @@ get_libbfd () {
 
 	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
 	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
-	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd_stdint.h <$_TMPDIR/bfd/bfd_stdint.h
 
 	{
 		cat $_TMPDIR/bfd/config.h
@@ -84,11 +83,11 @@ get_binutils () {
 	{
 		getvars binutils/Makefile \
 			VERSION DEFS INCLUDES PROGRAMS
-		getvars binutils/doc/Makefile \
+		getvars binutils/Makefile \
 			man_MANS TEXINFOS
-		getvars bfd/doc/Makefile \
+		getvars bfd/Makefile \
 			PKGVERSION | sed 's,\\\(.\),\1,'
-		getvars bfd/doc/Makefile \
+		getvars bfd/Makefile \
 			REPORT_BUGS_TEXI
 
 		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
