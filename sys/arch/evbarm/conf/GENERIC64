@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.206 2022/10/29 13:59:57 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.207 2022/12/24 15:46:50 nia Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -431,8 +431,9 @@ m25p*		at spi?
 spiflash*	at spiflashbus?
 
 # Broadcom VCHIQ, etc
-vchiq0		at fdt?
-vcaudio0 	at vchiq0
+vchiq*		at fdt?
+vchiq*		at acpi?
+vcaudio0 	at vchiq?
 
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
