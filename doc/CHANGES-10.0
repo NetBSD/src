@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.7 2022/12/24 09:27:51 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.8 2022/12/24 17:18:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -354,4 +354,9 @@ sys/arch/x86/x86/x86_machdep.c			1.153
 	xen: fix PR 57121: PVH guests are not able to use more than
 	4GB of memory.
 	[bouyer, ticket #21]
+
+usr.sbin/tprof/tprof_top.c			1.8
+
+	tprof(8): use malloc instead of alloca so that SSP works.
+	[christos, ticket #22]
 
