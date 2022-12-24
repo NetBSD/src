@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "STRIP 1"
-.TH STRIP 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH STRIP 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -159,6 +159,7 @@ strip [\fB\-F\fR \fIbfdname\fR |\fB\-\-target=\fR\fIbfdname\fR]
       [\fB\-o\fR \fIfile\fR] [\fB\-p\fR|\fB\-\-preserve\-dates\fR]
       [\fB\-D\fR|\fB\-\-enable\-deterministic\-archives\fR]
       [\fB\-U\fR|\fB\-\-disable\-deterministic\-archives\fR]
+      [\fB\-\-keep\-section\-symbols\fR]
       [\fB\-\-keep\-file\-symbols\fR]
       [\fB\-\-only\-keep\-debug\fR]
       [\fB\-v\fR |\fB\-\-verbose\fR] [\fB\-V\fR|\fB\-\-version\fR]
@@ -285,7 +286,9 @@ See the description of this option in the \fBobjcopy\fR section
 for more information.
 .IP "\fB\-\-strip\-unneeded\fR" 4
 .IX Item "--strip-unneeded"
-Remove all symbols that are not needed for relocation processing.
+Remove all symbols that are not needed for relocation processing in
+addition to debugging symbols and sections stripped by
+\&\fB\-\-strip\-debug\fR.
 .IP "\fB\-K\fR \fIsymbolname\fR" 4
 .IX Item "-K symbolname"
 .PD 0
@@ -386,6 +389,11 @@ Remove non-global symbols.
 .PD
 Remove compiler-generated local symbols.
 (These usually start with \fBL\fR or \fB.\fR.)
+.IP "\fB\-\-keep\-section\-symbols\fR" 4
+.IX Item "--keep-section-symbols"
+When stripping a file, perhaps with \fB\-\-strip\-debug\fR or
+\&\fB\-\-strip\-unneeded\fR, retain any symbols specifying section names,
+which would otherwise get stripped.
 .IP "\fB\-\-keep\-file\-symbols\fR" 4
 .IX Item "--keep-file-symbols"
 When stripping a file, perhaps with \fB\-\-strip\-debug\fR or
@@ -492,7 +500,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

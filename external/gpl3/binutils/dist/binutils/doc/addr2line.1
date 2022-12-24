@@ -133,13 +133,13 @@
 .\" ========================================================================
 .\"
 .IX Title "ADDR2LINE 1"
-.TH ADDR2LINE 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH ADDR2LINE 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-addr2line \- convert addresses into file names and line numbers
+addr2line \- convert addresses or symbol+offset into file names and line numbers
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 addr2line [\fB\-a\fR|\fB\-\-addresses\fR]
@@ -156,8 +156,8 @@ addr2line [\fB\-a\fR|\fB\-\-addresses\fR]
           [addr addr ...]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-\&\fBaddr2line\fR translates addresses into file names and line numbers.
-Given an address in an executable or an offset in a section of a relocatable
+\&\fBaddr2line\fR translates addresses or symbol+offset into file names and line numbers.
+Given an address or symbol+offset in an executable or an offset in a section of a relocatable
 object, it uses the debugging information to figure out which file name and
 line number are associated with it.
 .PP
@@ -167,11 +167,11 @@ object to use is specified with the \fB\-j\fR option.
 .PP
 \&\fBaddr2line\fR has two modes of operation.
 .PP
-In the first, hexadecimal addresses are specified on the command line,
+In the first, hexadecimal addresses or symbol+offset are specified on the command line,
 and \fBaddr2line\fR displays the file name and line number for each
 address.
 .PP
-In the second, \fBaddr2line\fR reads hexadecimal addresses from
+In the second, \fBaddr2line\fR reads hexadecimal addresses or symbol+offset from
 standard input, and prints the file name and line number for each
 address on standard output.  In this mode, \fBaddr2line\fR may be used
 in a pipe to convert dynamically chosen addresses.
@@ -207,6 +207,10 @@ by the text \fB(inlined by)\fR.
 If the file name or function name can not be determined,
 \&\fBaddr2line\fR will print two question marks in their place.  If the
 line number can not be determined, \fBaddr2line\fR will print 0.
+.PP
+When symbol+offset is used, +offset is optional, except when the symbol
+is ambigious with a hex number. The resolved symbols can be mangled
+or unmangled, except unmangled symbols with + are not allowed.
 .SH "OPTIONS"
 .IX Header "OPTIONS"
 The long and short forms of options, shown here as alternatives, are
@@ -305,7 +309,7 @@ prefixed with \fB(inlined by)\fR.
 .PD
 Enables or disables a limit on the amount of recursion performed
 whilst demangling strings.  Since the name mangling formats allow for
-an inifinite level of recursion it is possible to create strings whose
+an infinite level of recursion it is possible to create strings whose
 decoding will exhaust the amount of stack space available on the host
 machine, triggering a memory fault.  The limit tries to prevent this
 from happening by restricting recursion to 2048 levels of nesting.
@@ -339,7 +343,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

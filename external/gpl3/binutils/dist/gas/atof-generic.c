@@ -1,5 +1,5 @@
 /* atof_generic.c - turn a string of digits into a Flonum
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,13 +20,7 @@
 
 #include "as.h"
 #include "safe-ctype.h"
-
-#ifndef FALSE
-#define FALSE (0)
-#endif
-#ifndef TRUE
-#define TRUE  (1)
-#endif
+#include <limits.h>
 
 #ifdef TRACE
 static void flonum_print (const FLONUM_TYPE *);
@@ -79,11 +73,11 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	      const char *string_of_decimal_exponent_marks,
 	      FLONUM_TYPE *address_of_generic_floating_point_number)
 {
-  int return_value;		/* 0 means OK.  */
+  int return_value = 0;		/* 0 means OK.  */
   char *first_digit;
   unsigned int number_of_digits_before_decimal;
   unsigned int number_of_digits_after_decimal;
-  long decimal_exponent;
+  unsigned long decimal_exponent;
   unsigned int number_of_digits_available;
   char digits_sign_char;
 
@@ -122,22 +116,13 @@ atof_generic (/* return pointer to just AFTER number we read.  */
     {
     case 's':
     case 'S':
-      if (!strncasecmp ("snan", first_digit, 4))
-	{
-	  address_of_generic_floating_point_number->sign = 0;
-	  address_of_generic_floating_point_number->exponent = 0;
-	  address_of_generic_floating_point_number->leader =
-	    address_of_generic_floating_point_number->low;
-	  *address_of_string_pointer = first_digit + 4;
-	  return 0;
-	}
-      break;
-
     case 'q':
     case 'Q':
-      if (!strncasecmp ("qnan", first_digit, 4))
+      if (!strncasecmp ("nan", first_digit + 1, 3))
 	{
-	  address_of_generic_floating_point_number->sign = 0;
+	  address_of_generic_floating_point_number->sign =
+	    digits_sign_char == '+' ? TOUPPER (first_digit[0])
+				    : TOLOWER (first_digit[0]);
 	  address_of_generic_floating_point_number->exponent = 0;
 	  address_of_generic_floating_point_number->leader =
 	    address_of_generic_floating_point_number->low;
@@ -150,7 +135,8 @@ atof_generic (/* return pointer to just AFTER number we read.  */
     case 'N':
       if (!strncasecmp ("nan", first_digit, 3))
 	{
-	  address_of_generic_floating_point_number->sign = 0;
+	  address_of_generic_floating_point_number->sign =
+	    digits_sign_char == '+' ? 0 : 'q';
 	  address_of_generic_floating_point_number->exponent = 0;
 	  address_of_generic_floating_point_number->leader =
 	    address_of_generic_floating_point_number->low;
@@ -219,7 +205,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
      deleting zeros after decimal.  In this case the decimal mark and
      the first zero digits after decimal mark are skipped.  */
   seen_significant_digit = 0;
-  signed long subtract_decimal_exponent = 0;
+  unsigned long subtract_decimal_exponent = 0;
 
   if (c && IS_DECIMAL_MARK (c))
     {
@@ -266,7 +252,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 
 	      if ( /* seen_significant_digit || */ c > '0')
 		{
-		  seen_significant_digit = TRUE;
+		  seen_significant_digit = true;
 		}
 	    }
 	  else
@@ -315,10 +301,11 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	{
 	  if (ISDIGIT (c))
 	    {
+	      if (decimal_exponent > LONG_MAX / 10
+		  || (decimal_exponent == LONG_MAX / 10
+		      && c > '0' + (char) (LONG_MAX - LONG_MAX / 10 * 10)))
+		return_value = ERROR_EXPONENT_OVERFLOW;
 	      decimal_exponent = decimal_exponent * 10 + c - '0';
-	      /*
-	       * BUG! If we overflow here, we lose!
-	       */
 	    }
 	  else
 	    {
@@ -342,7 +329,6 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 
   number_of_digits_available =
     number_of_digits_before_decimal + number_of_digits_after_decimal;
-  return_value = 0;
   if (number_of_digits_available == 0)
     {
       address_of_generic_floating_point_number->exponent = 0;	/* Not strictly necessary */
@@ -520,7 +506,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	size_of_power_in_littlenums = precision;
 	/* Precision has a built-in fudge factor so we get a few guard bits.  */
 
-	decimal_exponent_is_negative = decimal_exponent < 0;
+	decimal_exponent_is_negative = (long) decimal_exponent < 0;
 	if (decimal_exponent_is_negative)
 	  {
 	    decimal_exponent = -decimal_exponent;
@@ -637,10 +623,8 @@ atof_generic (/* return pointer to just AFTER number we read.  */
       /* Assert sign of the number we made is '+'.  */
       address_of_generic_floating_point_number->sign = digits_sign_char;
 
-      if (temporary_binary_low)
-	free (temporary_binary_low);
-      if (power_binary_low)
-	free (power_binary_low);
+      free (temporary_binary_low);
+      free (power_binary_low);
       free (digits_binary_low);
     }
   return return_value;

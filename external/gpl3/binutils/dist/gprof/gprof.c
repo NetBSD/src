@@ -61,19 +61,19 @@ long hz = HZ_WRONG;
 int debug_level = 0;
 int output_style = 0;
 int output_width = 80;
-bfd_boolean bsd_style_output = FALSE;
-bfd_boolean demangle = TRUE;
-bfd_boolean ignore_direct_calls = FALSE;
-bfd_boolean ignore_static_funcs = FALSE;
-bfd_boolean ignore_zeros = TRUE;
-bfd_boolean line_granularity = FALSE;
-bfd_boolean print_descriptions = TRUE;
-bfd_boolean print_path = FALSE;
-bfd_boolean ignore_non_functions = FALSE;
-bfd_boolean inline_file_names = FALSE;
+bool bsd_style_output = false;
+bool demangle = true;
+bool ignore_direct_calls = false;
+bool ignore_static_funcs = false;
+bool ignore_zeros = true;
+bool line_granularity = false;
+bool print_descriptions = true;
+bool print_path = false;
+bool ignore_non_functions = false;
+bool inline_file_names = false;
 File_Format file_format = FF_AUTO;
 
-bfd_boolean first_output = TRUE;
+bool first_output = true;
 
 char copyright[] =
  "@(#) Copyright (c) 1983 Regents of the University of California.\n\
@@ -189,12 +189,10 @@ main (int argc, char **argv)
   Sym **cg = 0;
   int ch, user_specified = 0;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
 #ifdef ENABLE_NLS
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -213,7 +211,7 @@ main (int argc, char **argv)
       switch (ch)
 	{
 	case 'a':
-	  ignore_static_funcs = TRUE;
+	  ignore_static_funcs = true;
 	  break;
 	case 'A':
 	  if (optarg)
@@ -224,14 +222,14 @@ main (int argc, char **argv)
 	  user_specified |= STYLE_ANNOTATED_SOURCE;
 	  break;
 	case 'b':
-	  print_descriptions = FALSE;
+	  print_descriptions = false;
 	  break;
 	case 'B':
 	  output_style |= STYLE_CALL_GRAPH;
 	  user_specified |= STYLE_CALL_GRAPH;
 	  break;
 	case 'c':
-	  ignore_direct_calls = TRUE;
+	  ignore_direct_calls = true;
 	  break;
 	case 'C':
 	  if (optarg)
@@ -257,7 +255,7 @@ main (int argc, char **argv)
 #endif	/* DEBUG */
 	  break;
 	case 'D':
-	  ignore_non_functions = TRUE;
+	  ignore_non_functions = true;
 	  break;
 	case 'E':
 	  sym_id_add (optarg, EXCL_TIME);
@@ -306,10 +304,10 @@ main (int argc, char **argv)
 	  sym_id_add (optarg, EXCL_ARCS);
 	  break;
 	case 'l':
-	  line_granularity = TRUE;
+	  line_granularity = true;
 	  break;
 	case 'L':
-	  print_path = TRUE;
+	  print_path = true;
 	  break;
 	case 'm':
 	  bb_min_calls = (unsigned long) strtoul (optarg, (char **) NULL, 10);
@@ -423,7 +421,7 @@ main (int argc, char **argv)
 	    }
 	  break;
 	case 'T':
-	  bsd_style_output = TRUE;
+	  bsd_style_output = true;
 	  break;
 	case 'v':
 	  /* This output is intended to follow the GNU standards document.  */
@@ -440,13 +438,13 @@ This program is free software.  This program has absolutely no warranty.\n"));
 	    }
 	  break;
 	case 'x':
-	  bb_annotate_all_lines = TRUE;
+	  bb_annotate_all_lines = true;
 	  break;
 	case 'y':
-	  create_annotation_files = TRUE;
+	  create_annotation_files = true;
 	  break;
 	case 'z':
-	  ignore_zeros = FALSE;
+	  ignore_zeros = false;
 	  break;
 	case 'Z':
 	  if (optarg)
@@ -461,7 +459,7 @@ This program is free software.  This program has absolutely no warranty.\n"));
 	  user_specified |= STYLE_EXEC_COUNTS;
 	  break;
 	case OPTION_DEMANGLE:
-	  demangle = TRUE;
+	  demangle = true;
 	  if (optarg != NULL)
 	    {
 	      enum demangling_styles style;
@@ -479,10 +477,10 @@ This program is free software.  This program has absolutely no warranty.\n"));
 	   }
 	  break;
 	case OPTION_NO_DEMANGLE:
-	  demangle = FALSE;
+	  demangle = false;
 	  break;
 	case OPTION_INLINE_FILE_NAMES:
-	  inline_file_names = TRUE;
+	  inline_file_names = true;
 	  break;
 	default:
 	  usage (stderr, 1);

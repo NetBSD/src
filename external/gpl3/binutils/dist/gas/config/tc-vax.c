@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -280,7 +280,7 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
   valueT value = * valueP;
 
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+    as_bad_subtract (fixP);
 
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
@@ -382,7 +382,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 	  int old_fr_fix;
 
 	  old_fr_fix = fragP->fr_fix;
-	  p = fragP->fr_literal + old_fr_fix;
+	  p = &fragP->fr_literal[0] + old_fr_fix;
 #ifdef OBJ_ELF
 	  /* If this is to an undefined symbol, then if it's an indirect
 	     reference indicate that is can mutated into a GLOB_DAT or
@@ -529,7 +529,7 @@ md_convert_frag (bfd *headers ATTRIBUTE_UNUSED,
 
   know (fragP->fr_type == rs_machine_dependent);
   where = fragP->fr_fix;
-  addressP = fragP->fr_literal + where;
+  addressP = &fragP->fr_literal[0] + where;
   opcodeP = fragP->fr_opcode;
   symbolP = fragP->fr_symbol;
   know (symbolP);
@@ -740,7 +740,7 @@ md_ri_to_chars (char *the_bytes, struct reloc_info_generic ri)
   	source file, and changed the makefile.  */
 
 /* Handle of the OPCODE hash table.  */
-static struct hash_control *op_hash;
+static htab_t op_hash;
 
 /* In:	1 character, from "bdfghloqpw" being the data-type of an operand
   	of a vax instruction.
@@ -954,29 +954,28 @@ vip_op_defaults (const char *immediate, const char *indirect, const char *disple
    instruction table.
    You must nominate metacharacters for eg DEC's "#", "@", "^".  */
 
-static const char *
+static void
 vip_begin (int synthetic_too,		/* 1 means include jXXX op-codes.  */
 	   const char *immediate,
 	   const char *indirect,
 	   const char *displen)
 {
   const struct vot *vP;		/* scan votstrs */
-  const char *retval = 0;	/* error text */
 
-  op_hash = hash_new ();
+  op_hash = str_htab_create ();
 
-  for (vP = votstrs; *vP->vot_name && !retval; vP++)
-    retval = hash_insert (op_hash, vP->vot_name, (void *) &vP->vot_detail);
+  for (vP = votstrs; *vP->vot_name; vP++)
+    if (str_hash_insert (op_hash, vP->vot_name, &vP->vot_detail, 0) != NULL)
+      as_fatal (_("duplicate %s"), vP->vot_name);
 
   if (synthetic_too)
-    for (vP = synthetic_votstrs; *vP->vot_name && !retval; vP++)
-      retval = hash_insert (op_hash, vP->vot_name, (void *) &vP->vot_detail);
+    for (vP = synthetic_votstrs; *vP->vot_name; vP++)
+      if (str_hash_insert (op_hash, vP->vot_name, &vP->vot_detail, 0) != NULL)
+	as_fatal (_("duplicate %s"), vP->vot_name);
 
 #ifndef CONST_TABLE
   vip_op_defaults (immediate, indirect, displen);
 #endif
-
-  return retval;
 }
 
 /* Take 3 char.s, the last of which may be `\0` (non-existent)
@@ -2039,7 +2038,7 @@ vip (struct vit *vitP,		/* We build an exploded instruction here.  */
       /* Here with instring pointing to what better be an op-name, and p
          pointing to character just past that.
          We trust instring points to an op-name, with no whitespace.  */
-      vwP = (struct vot_wot *) hash_find (op_hash, instring);
+      vwP = (struct vot_wot *) str_hash_find (op_hash, instring);
       /* Restore char after op-code.  */
       *p = c;
       if (vwP == 0)
@@ -2138,8 +2137,7 @@ main (void)
   printf ("enter displen symbols   eg enter ^   ");
   gets (my_displen);
 
-  if (p = vip_begin (mysynth, my_immediate, my_indirect, my_displen))
-    error ("vip_begin=%s", p);
+  vip_begin (mysynth, my_immediate, my_indirect, my_displen)
 
   printf ("An empty input line will quit you from the vax instruction parser\n");
   for (;;)
@@ -3416,12 +3414,10 @@ md_assemble (char *instruction_string)
 void
 md_begin (void)
 {
-  const char *errtxt;
   FLONUM_TYPE *fP;
   int i;
 
-  if ((errtxt = vip_begin (1, "$", "*", "`")) != 0)
-    as_fatal (_("VIP_BEGIN error:%s"), errtxt);
+  vip_begin (1, "$", "*", "`");
 
   for (i = 0, fP = float_operand;
        fP < float_operand + VIT_MAX_OPERANDS;
@@ -3443,7 +3439,7 @@ vax_cons (expressionS *exp, int size)
   save = input_line_pointer;
   if (input_line_pointer[0] == '%')
     {
-      if (strncmp (input_line_pointer + 1, "pcrel", 5) == 0)
+      if (startswith (input_line_pointer + 1, "pcrel"))
 	{
 	  input_line_pointer += 6;
 	  vax_cons_special_reloc = "pcrel";
