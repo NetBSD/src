@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.56 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.57 2022/12/24 15:37:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.56 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.57 2022/12/24 15:37:50 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -600,7 +600,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	m_reset_rcvif(m);
 
 	/*
-	 * Build the BOOTP reqest message.
+	 * Build the BOOTP request message.
 	 * Note: xid is host order! (opaque to server)
 	 */
 	memset((void *)bootp, 0, BOOTP_SIZE_MAX);
