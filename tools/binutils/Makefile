@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2022/12/24 20:17:46 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2022/12/25 17:25:22 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -16,10 +16,18 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--disable-werror --enable-initfini-array=yes \
 		${BRANDING}
 
-build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/config/m68k-parse.c
+.if exists(${GNUHOSTDIST}/gas/config/m68k-parse.c)
+M68K_PARSE=${GNUHOSTDIST}/gas/config/m68k-parse.c
+.elif exists(${GNUHOSTDIST}/gas/m68k-parse.c) 
+M68K_PARSE=${GNUHOSTDIST}/gas/m68k-parse.c
+.else
+.error "Can't find m68k-parse.c
+.endif
+
+build/gas/m68k-parse.c: ${M68K_PARSE}
 	@mkdir build 2>/dev/null || true
 	@mkdir build/gas 2>/dev/null || true
-	cat ${GNUHOSTDIST}/gas/config/m68k-parse.c > ${.TARGET}
+	cat ${M68K_PARSE} > ${.TARGET}
 
 .configure_done: build/gas/m68k-parse.c
 
