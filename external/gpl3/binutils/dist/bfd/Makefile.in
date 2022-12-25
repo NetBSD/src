@@ -2361,6 +2361,8 @@ dwarf2.lo: dwarf2.c Makefile
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC)$(LTCOMPILE) -c -o $@ -DDEBUGDIR=\"$(DEBUGDIR)\" $(srcdir)/dwarf2.c
 
+# change IMPSRC ($<) to ALLSRC ($>) in the following rules so they work with
+# bmake
 elf32-target.h : elfxx-target.h
 	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> > $@
 
@@ -2499,6 +2501,8 @@ doc/chew.stamp: $(srcdir)/doc/chew.c doc/$(am__dirstamp)
 	  doc/chw$$$$$(EXEEXT_FOR_BUILD) $(MKDOC) && \
 	touch $@
 
+# Comment out the doc snippet because it has pattern rules our make does not
+# understand
 #.PRECIOUS: doc/%.stamp
 #doc/%.texi: doc/%.stamp ; @true
 #doc/%.stamp: $(srcdir)/%.h $(srcdir)/doc/doc.str $(MKDOC) doc/$(am__dirstamp)

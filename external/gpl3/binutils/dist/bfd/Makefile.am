@@ -842,6 +842,8 @@ endif
 	$(AM_V_CC)$(LTCOMPILE) -c -o $@ -DDEBUGDIR=\"$(DEBUGDIR)\" $(srcdir)/dwarf2.c
 endif
 
+# change IMPSRC ($<) to ALLSRC ($>) in the following rules so they work with
+# bmake
 elf32-target.h : elfxx-target.h
 	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> > $@
 
@@ -1008,4 +1010,6 @@ coff-tic54x.lo: coff-tic54x.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $< $(NO_WERROR)
 
+# Comment out the doc snippet because it has pattern rules our make does not
+# understand
 #include doc/local.mk
