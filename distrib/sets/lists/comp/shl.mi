@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.350 2022/12/24 23:01:34 christos Exp $
+# $NetBSD: shl.mi,v 1.351 2022/12/25 15:02:29 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -127,7 +127,7 @@
 ./usr/lib/libopcodes.so.10			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopcodes.so.10.0			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopcodes.so.11			comp-c-shlib		compatfile,binutils=239
-./usr/lib/libopcodes.so.11.0			comp-c-shlib		compatfile,binutils=234
+./usr/lib/libopcodes.so.11.0			comp-c-shlib		compatfile,binutils=239
 ./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
