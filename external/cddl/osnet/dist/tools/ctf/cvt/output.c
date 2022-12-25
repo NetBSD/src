@@ -353,15 +353,17 @@ sort_iidescs(Elf *elf, const char *file, tdata_t *td, int fuzzymatch,
 	match.iim_file = NULL;
 
 	if ((stidx = findelfsecidx(elf, file,
-	    dynsym ? ".dynsym" : ".symtab")) < 0)
-		terminate("%s: Can't open symbol table\n", file);
-	scn = elf_getscn(elf, stidx);
-	data = elf_getdata(scn, NULL);
-	gelf_getshdr(scn, &shdr);
-	nent = shdr.sh_size / shdr.sh_entsize;
+	    dynsym ? ".dynsym" : ".symtab")) < 0) {
+		nent = 0;
+	} else {
+		scn = elf_getscn(elf, stidx);
+		data = elf_getdata(scn, NULL);
+		gelf_getshdr(scn, &shdr);
+		nent = shdr.sh_size / shdr.sh_entsize;
 
-	scn = elf_getscn(elf, shdr.sh_link);
-	strdata = elf_getdata(scn, NULL);
+		scn = elf_getscn(elf, shdr.sh_link);
+		strdata = elf_getdata(scn, NULL);
+	}
 
 	iiburst = iiburst_new(td, nent);
 
@@ -665,8 +667,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	}
 
 	if (symtab_idx == -1) {
-		terminate("%s: Cannot find %s section\n", srcname,
-		    dynsym ? "SHT_DYNSYM" : "SHT_SYMTAB");
+		goto out;
 	}
 
 	/* Add the ctf section */
@@ -709,6 +710,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	/* commit to disk */
 	dehdr.e_shstrndx = secxlate[sehdr.e_shstrndx];
 	gelf_update_ehdr(dst, &dehdr);
+out:
 	if (elf_update(dst, ELF_C_WRITE) < 0)
 		elfterminate(dstname, "Cannot finalize temp file");
 
