@@ -1,9 +1,10 @@
-#	$NetBSD: dot.profile,v 1.34 2022/07/21 07:51:12 kre Exp $
+#	$NetBSD: dot.profile,v 1.35 2022/12/25 23:58:50 nia Exp $
 
 case "${PATH}" in
 /rescue:*)	;; # leave it alone, user can change manually (if required)
 *)	export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
-	export PATH=${PATH}:/usr/X11R7/bin:/usr/local/sbin:/usr/local/bin
+	export PATH=${PATH}:/usr/games:/usr/X11R7/bin
+	export PATH=${PATH}:/usr/local/sbin:/usr/local/bin
 	;;
 esac
 
