@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.363 2021/10/09 20:00:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.364 2022/12/26 01:05:35 nat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2021/10/09 20:00:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2022/12/26 01:05:35 nat Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -2616,6 +2616,10 @@ get_mapping(void)
 			    mac68k_video.mv_len, mac68k_video.mv_len);
 		}
 	}
+	/* mv_len sanity check */
+	int reqsize = mac68k_video.mv_height * mac68k_video.mv_stride;
+	if (mac68k_video.mv_len != 0 && mac68k_video.mv_len < reqsize)
+		mac68k_video.mv_len = reqsize;
 
 	return load_addr;	/* Return physical address of logical 0 */
 }
