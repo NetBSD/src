@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.214 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: locore.S,v 1.215 2022/12/26 17:46:00 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1527,7 +1527,7 @@ SYSCALL_ENTRY	syscall_svs,is_svs=1
 #endif
 
 IDTVEC(syscall32)
-	sysret		/* go away please */
+	sysretl		/* go away please */
 IDTVEC_END(syscall32)
 
 	TEXT_USER_END
