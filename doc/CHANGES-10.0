@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.8 2022/12/24 17:18:51 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.9 2022/12/26 11:25:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -359,4 +359,16 @@ usr.sbin/tprof/tprof_top.c			1.8
 
 	tprof(8): use malloc instead of alloca so that SSP works.
 	[christos, ticket #22]
+
+sys/arch/evbarm/conf/GENERIC64			1.207
+
+	evbarm: PR 57044: allow vcaudio on RPI 4 to attach when booting
+	via EFI.
+	[nia, ticket #23]
+
+usr.sbin/tprof/tprof.c				1.19,1.20
+
+	tprof(8): reflect recent new options for top operation, add a and c.
+	Fix parsing of event options.
+	[ryo, ticket #24]
 
