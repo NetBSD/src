@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394 2022/11/30 06:07:51 ozaki-r Exp $
+# $NetBSD: mi,v 1.395 2022/12/26 16:42:50 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -72,7 +72,7 @@
 ./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
 ./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcc
-./usr/lib/libgnuctf_g.a				comp-c-debuglib		debuglib,compatfile,binutils=234
+./usr/lib/libgnuctf_g.a				comp-c-debuglib		debuglib,compatfile,binutils
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgssapi_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
