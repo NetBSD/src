@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.91 2022/12/26 09:39:30 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.92 2022/12/26 15:52:37 msaitoh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,6 +69,11 @@ include "opt_compat_linux32.h"
 include "opt_xen.h"
 endif
 
+if defined(_KERNEL) && defined(_KERNEL_OPT)
+include "isa.h"
+include "ioapic.h"
+endif
+
 quote #define __MUTEX_PRIVATE
 quote #define __RWLOCK_PRIVATE
 
@@ -107,10 +112,6 @@ if defined(COMPAT_LINUX32)
 include <machine/linux32_machdep.h>
 endif
 
-if defined(_KERNEL) && defined(_KERNEL_OPT)
-include "isa.h"
-include "ioapic.h"
-endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif
@@ -123,7 +124,7 @@ endif
 ifdef XEN
 include <xen/include/public/xen.h>
 include <xen/include/public/arch-x86/hvm/start_info.h>
-endif  
+endif
 
 include <sys/bus.h>
 
