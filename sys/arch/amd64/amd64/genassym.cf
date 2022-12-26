@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.90 2022/12/26 09:12:42 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.91 2022/12/26 09:39:30 msaitoh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -127,12 +127,12 @@ endif
 
 include <sys/bus.h>
 
+# general constants
 define	PAGE_SIZE		PAGE_SIZE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
-
 
 define	KERNBASE_LO		KERNBASE_LO
 define	KERNBASE_HI		KERNBASE_HI
@@ -151,6 +151,7 @@ define	PDE_SIZE		sizeof(pd_entry_t)
 
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 
+# lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_FLAG			offsetof(struct lwp, l_flag)
@@ -173,13 +174,7 @@ define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	LW_SYSTEM		LW_SYSTEM
 
-define	M_DATA			offsetof(struct mbuf, m_data)
-define	M_LEN			offsetof(struct mbuf, m_len)
-define	M_NEXT			offsetof(struct mbuf, m_next)
-
-define	IP_SRC			offsetof(struct ip, ip_src)
-define	IP_DST			offsetof(struct ip, ip_dst)
-
+# pcb fields
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -236,6 +231,7 @@ endif
 
 define	TSS_RSP0		offsetof(struct cpu_tss, tss.tss_rsp0)
 
+# CPU info structure
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
@@ -302,6 +298,7 @@ define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
 define		PIC_LOCK		offsetof(struct pic, pic_lock)
 endif
 
+# interrupt handler fields
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
@@ -343,6 +340,13 @@ define	SIR_SERIAL		SIR_SERIAL
 define	IREENT_MAGIC		IREENT_MAGIC
 
 define	PSL_MBO			PSL_MBO
+
+# Constants required for in_cksum() and friends.
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
 
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, u.s.mtxs_lock)
