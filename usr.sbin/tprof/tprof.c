@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.18 2022/12/16 08:02:04 ryo Exp $	*/
+/*	$NetBSD: tprof.c,v 1.19 2022/12/26 03:25:55 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.18 2022/12/16 08:02:04 ryo Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.19 2022/12/26 03:25:55 ryoon Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -133,7 +133,7 @@ usage(void)
 	    " only outputs a counter.\n");
 	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
 	fprintf(stderr, "\t\tAnalyze the samples of the file 'file'.\n");
-	fprintf(stderr, "\ttop [-e name [-e ...]] [-i interval] [-u]\n");
+	fprintf(stderr, "\ttop [-e name [-e ...]] [-i interval] [-acu]\n");
 	fprintf(stderr, "\t\tDisplay profiling results in real-time.\n");
 	exit(EXIT_FAILURE);
 }
