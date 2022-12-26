@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.126 2022/09/07 00:40:18 knakahara Exp $
+#	$NetBSD: genassym.cf,v 1.127 2022/12/26 08:59:01 msaitoh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -321,7 +321,6 @@ define	IS_MASK_COUNT		offsetof(struct intrsource, is_mask_count)
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_NET			IPL_NET
-define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_VM			IPL_VM
 define	IPL_SCHED		IPL_SCHED
