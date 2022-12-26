@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.19 2022/12/26 03:25:55 ryoon Exp $	*/
+/*	$NetBSD: tprof.c,v 1.20 2022/12/26 08:00:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.19 2022/12/26 03:25:55 ryoon Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.20 2022/12/26 08:00:13 ryo Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -310,6 +310,7 @@ tprof_parse_event(tprof_param_t *param, const char *str, uint32_t flags,
 				    "invalid option: '%c'", *opt);
 				goto done;
 			}
+			opt++;
 		}
 	} else if (allow_option) {
 		param->p_flags |= TPROF_PARAM_USER;
