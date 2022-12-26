@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.129 2022/12/26 09:39:29 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.130 2022/12/26 15:52:37 msaitoh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,6 +70,11 @@ include "opt_compat_netbsd.h"
 include "opt_xen.h"
 endif
 
+if defined(_KERNEL) && defined(_KERNEL_OPT)
+include "isa.h"
+include "ioapic.h"
+endif
+
 quote #define __MUTEX_PRIVATE
 quote #define __RWLOCK_PRIVATE
 
@@ -98,15 +103,6 @@ include <machine/intr.h>
 include <machine/types.h>
 include <machine/segments.h>
 
-ifdef XEN
-include <xen/include/public/sched.h>
-include <xen/include/public/arch-x86/hvm/start_info.h>
-endif
-
-if defined(_KERNEL) && defined(_KERNEL_OPT)
-include "ioapic.h"
-endif
-
 include <compat/sys/signal.h>
 
 ifdef COMPAT_LINUX
@@ -118,16 +114,18 @@ ifdef COMPAT_FREEBSD
 include <compat/freebsd/freebsd_machdep.h>
 endif
 
+if NISA > 0
+include <machine/isa_machdep.h>
+endif
+
 if NIOAPIC > 0
 include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
-if defined(_KERNEL) && defined(_KERNEL_OPT)
-include "isa.h"
-endif
-if NISA > 0
-include <machine/isa_machdep.h>
+ifdef XEN
+include <xen/include/public/sched.h>
+include <xen/include/public/arch-x86/hvm/start_info.h>
 endif
 
 include <sys/bus.h>
