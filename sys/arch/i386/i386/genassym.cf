@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.128 2022/12/26 09:12:42 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.129 2022/12/26 09:39:29 msaitoh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ endif
 
 include <sys/bus.h>
 
+# general constants
 define	PAGE_SIZE		PAGE_SIZE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
@@ -159,6 +160,7 @@ define	IOMAPSIZE		IOMAPSIZE
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
+# lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_FLAG			offsetof(struct lwp, l_flag)
@@ -182,16 +184,10 @@ define	LW_SYSTEM		LW_SYSTEM
 define	GUFS_SEL		GUFS_SEL
 define	GUGS_SEL		GUGS_SEL
 
-define	M_DATA			offsetof(struct mbuf, m_data)
-define	M_LEN			offsetof(struct mbuf, m_len)
-define	M_NEXT			offsetof(struct mbuf, m_next)
-
-define	IP_SRC			offsetof(struct ip, ip_src)
-define	IP_DST			offsetof(struct ip, ip_dst)
-
 define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
 define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
 
+# pcb fields
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -242,6 +238,7 @@ define	TSS_ESP0		offsetof(struct cpu_tss, tss.tss_esp0)
 define	TSS_IOBASE		offsetof(struct cpu_tss, tss.tss_iobase)
 define	TSS_IOMAP		offsetof(struct cpu_tss, iomap)
 
+# CPU info structure
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
@@ -298,6 +295,7 @@ define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
 define		PIC_LOCK		offsetof(struct pic, pic_lock)
 endif
 
+# interrupt handler fields
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
@@ -346,6 +344,13 @@ define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO
 define	PSL_ID			PSL_ID
 define	PSL_I			PSL_I
+
+# Constants required for in_cksum() and friends.
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
 
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
