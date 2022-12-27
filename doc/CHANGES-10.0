@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.9 2022/12/26 11:25:01 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.10 2022/12/27 09:59:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -371,4 +371,14 @@ usr.sbin/tprof/tprof.c				1.19,1.20
 	tprof(8): reflect recent new options for top operation, add a and c.
 	Fix parsing of event options.
 	[ryo, ticket #24]
+
+external/gpl3/gcc.old/dist/libsanitizer/sanitizer_common/sanitizer_interceptors_ioctl_netbsd.inc 1.2
+external/gpl3/gcc.old/dist/libsanitizer/sanitizer_common/sanitizer_platform_limits_netbsd.cc 1.2
+external/gpl3/gcc.old/dist/libsanitizer/sanitizer_common/sanitizer_platform_limits_netbsd.h 1.2
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_interceptors_ioctl_netbsd.inc 1.5
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_platform_limits_netbsd.cc 1.8
+sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_platform_limits_netbsd.h 1.6
+
+	ppp(4): Rremove the HDLC ioctls from more copies of sanitizers.
+	[chs, ticket #25]
 
