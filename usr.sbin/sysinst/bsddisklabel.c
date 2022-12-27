@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.70 2022/12/16 19:49:13 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.71 2022/12/27 13:12:10 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1434,7 +1434,8 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 	 * but check size limits.
 	 */
 	if (exp_ndx < wanted->num) {
-		daddr_t free_space = parts->free_space - planned_space;
+		daddr_t free_space = parts->free_space - planned_space -
+		    wanted->reserved_space;
 		daddr_t new_size = wanted->infos[exp_ndx].size;
 		if (free_space > 0)
 			new_size += roundup(free_space,align);
