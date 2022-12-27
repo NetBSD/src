@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.198 2022/11/21 12:21:17 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.199 2022/12/27 09:36:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -124,21 +124,21 @@
 /*
  * Extended Control Register XCR0
  */
-#define XCR0_X87	0x00000001	/* x87 FPU/MMX state */
-#define XCR0_SSE	0x00000002	/* SSE state */
-#define XCR0_YMM_Hi128	0x00000004	/* AVX-256 (ymmn registers) */
-#define XCR0_BNDREGS	0x00000008	/* Memory protection ext bounds */
-#define XCR0_BNDCSR	0x00000010	/* Memory protection ext state */
-#define XCR0_Opmask	0x00000020	/* AVX-512 Opmask */
-#define XCR0_ZMM_Hi256	0x00000040	/* AVX-512 upper 256 bits low regs */
-#define XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
-#define XCR0_PT		0x00000100	/* Processor Trace state */
-#define XCR0_PKRU	0x00000200	/* Protection Key state */
-#define XCR0_CET_U	0x00000800	/* User CET state */
-#define XCR0_CET_S	0x00001000	/* Kern CET state */
-#define XCR0_HDC	0x00002000	/* Hardware Duty Cycle state */
-#define XCR0_LBR	0x00008000	/* Last Branch Record */
-#define XCR0_HWP	0x00010000	/* Hardware P-states */
+#define XCR0_X87	__BIT(0)	/* x87 FPU/MMX state */
+#define XCR0_SSE	__BIT(1)	/* SSE state */
+#define XCR0_YMM_Hi128	__BIT(2)	/* AVX-256 (ymmn registers) */
+#define XCR0_BNDREGS	__BIT(3)	/* Memory protection ext bounds */
+#define XCR0_BNDCSR	__BIT(4)	/* Memory protection ext state */
+#define XCR0_Opmask	__BIT(5)	/* AVX-512 Opmask */
+#define XCR0_ZMM_Hi256	__BIT(6)	/* AVX-512 upper 256 bits low regs */
+#define XCR0_Hi16_ZMM	__BIT(7)	/* AVX-512 512 bits upper registers */
+#define XCR0_PT		__BIT(8)	/* Processor Trace state */
+#define XCR0_PKRU	__BIT(9)	/* Protection Key state */
+#define XCR0_CET_U	__BIT(11)	/* User CET state */
+#define XCR0_CET_S	__BIT(12)	/* Kern CET state */
+#define XCR0_HDC	__BIT(13)	/* Hardware Duty Cycle state */
+#define XCR0_LBR	__BIT(15)	/* Last Branch Record */
+#define XCR0_HWP	__BIT(16)	/* Hardware P-states */
 
 #define XCR0_FLAGS1	"\20"						  \
 	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "BNDREGS"	  \
@@ -224,38 +224,38 @@
 #endif
 
 /* %ecx */
-#define CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
-#define CPUID2_PCLMULQDQ 0x00000002	/* PCLMULQDQ instructions */
-#define CPUID2_DTES64	0x00000004	/* 64-bit Debug Trace */
-#define CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
-#define CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
-#define CPUID2_VMX	0x00000020	/* Virtual Machine eXtensions */
-#define CPUID2_SMX	0x00000040	/* Safer Mode eXtensions */
-#define CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
-#define CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
-#define CPUID2_SSSE3	0x00000200	/* Supplemental SSE3 */
-#define CPUID2_CNXTID	0x00000400	/* Context ID */
-#define CPUID2_SDBG	0x00000800	/* Silicon Debug */
-#define CPUID2_FMA	0x00001000	/* Fused Multiply Add */
-#define CPUID2_CX16	0x00002000	/* CMPXCHG16B instruction */
-#define CPUID2_XTPR	0x00004000	/* Task Priority Messages disabled? */
-#define CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
-/* bit 16 unused	0x00010000 */
-#define CPUID2_PCID	0x00020000	/* Process Context ID */
-#define CPUID2_DCA	0x00040000	/* Direct Cache Access */
-#define CPUID2_SSE41	0x00080000	/* Streaming SIMD Extensions 4.1 */
-#define CPUID2_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
-#define CPUID2_X2APIC	0x00200000	/* xAPIC Extensions */
-#define CPUID2_MOVBE	0x00400000	/* MOVBE (move after byteswap) */
-#define CPUID2_POPCNT	0x00800000	/* POPCNT instruction available */
-#define CPUID2_DEADLINE	0x01000000	/* APIC Timer supports TSC Deadline */
-#define CPUID2_AESNI	0x02000000	/* AES instructions */
-#define CPUID2_XSAVE	0x04000000	/* XSAVE instructions */
-#define CPUID2_OSXSAVE	0x08000000	/* XGETBV/XSETBV instructions */
-#define CPUID2_AVX	0x10000000	/* AVX instructions */
-#define CPUID2_F16C	0x20000000	/* half precision conversion */
-#define CPUID2_RDRAND	0x40000000	/* RDRAND (hardware random number) */
-#define CPUID2_RAZ	0x80000000	/* RAZ. Indicates guest state. */
+#define CPUID2_SSE3	__BIT(0)	/* Streaming SIMD Extensions 3 */
+#define CPUID2_PCLMULQDQ __BIT(1)	/* PCLMULQDQ instructions */
+#define CPUID2_DTES64	__BIT(2)	/* 64-bit Debug Trace */
+#define CPUID2_MONITOR	__BIT(3)	/* MONITOR/MWAIT instructions */
+#define CPUID2_DS_CPL	__BIT(4)	/* CPL Qualified Debug Store */
+#define CPUID2_VMX	__BIT(5)	/* Virtual Machine eXtensions */
+#define CPUID2_SMX	__BIT(6)	/* Safer Mode eXtensions */
+#define CPUID2_EST	__BIT(7)	/* Enhanced SpeedStep Technology */
+#define CPUID2_TM2	__BIT(8)	/* Thermal Monitor 2 */
+#define CPUID2_SSSE3	__BIT(9)	/* Supplemental SSE3 */
+#define CPUID2_CNXTID	__BIT(10)	/* Context ID */
+#define CPUID2_SDBG	__BIT(11)	/* Silicon Debug */
+#define CPUID2_FMA	__BIT(12)	/* Fused Multiply Add */
+#define CPUID2_CX16	__BIT(13)	/* CMPXCHG16B instruction */
+#define CPUID2_XTPR	__BIT(14)	/* Task Priority Messages disabled? */
+#define CPUID2_PDCM	__BIT(15)	/* Perf/Debug Capability MSR */
+/* bit 16 unused	__BIT(16) */
+#define CPUID2_PCID	__BIT(17)	/* Process Context ID */
+#define CPUID2_DCA	__BIT(18)	/* Direct Cache Access */
+#define CPUID2_SSE41	__BIT(19)	/* Streaming SIMD Extensions 4.1 */
+#define CPUID2_SSE42	__BIT(20)	/* Streaming SIMD Extensions 4.2 */
+#define CPUID2_X2APIC	__BIT(21)	/* xAPIC Extensions */
+#define CPUID2_MOVBE	__BIT(22)	/* MOVBE (move after byteswap) */
+#define CPUID2_POPCNT	__BIT(23)	/* POPCNT instruction available */
+#define CPUID2_DEADLINE	__BIT(24)	/* APIC Timer supports TSC Deadline */
+#define CPUID2_AESNI	__BIT(25)	/* AES instructions */
+#define CPUID2_XSAVE	__BIT(26)	/* XSAVE instructions */
+#define CPUID2_OSXSAVE	__BIT(27)	/* XGETBV/XSETBV instructions */
+#define CPUID2_AVX	__BIT(28)	/* AVX instructions */
+#define CPUID2_F16C	__BIT(29)	/* half precision conversion */
+#define CPUID2_RDRAND	__BIT(30)	/* RDRAND (hardware random number) */
+#define CPUID2_RAZ	__BIT(31)	/* RAZ. Indicates guest state. */
 
 #define CPUID2_FLAGS1	"\20"						\
 	"\1" "SSE3"	"\2" "PCLMULQDQ" "\3" "DTES64"	"\4" "MONITOR"	\
@@ -368,7 +368,7 @@
 #define CPUID_DSPM_HWP_FAST   __BIT(18)	/* Fast access for IA32_HWP_REQUEST */
 #define CPUID_DSPM_HW_FEEDBACK __BIT(19) /* HW_FEEDBACK*, IA32_PACKAGE_TERM* */
 #define CPUID_DSPM_HWP_IGNIDL __BIT(20)	/* Ignore Idle Logical Processor HWP */
-#define CPUID_DSPM_TD	__BIT(23)	/* Thread Director */
+#define CPUID_DSPM_TD	      __BIT(23)	/* Thread Director */
 
 #define CPUID_DSPM_FLAGS	"\20"					      \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			      \
@@ -671,11 +671,11 @@
  * CPUID Fn80000001
  */
 /* %edx */
-#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
-#define CPUID_PAGE1GB	0x04000000	/* 1GB Large Page Support */
-#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
-#define CPUID_EM64T	0x20000000	/* Intel EM64T */
+#define CPUID_SYSCALL	__BIT(11)	/* SYSCALL/SYSRET */
+#define CPUID_XD	__BIT(20)	/* Execute Disable (like CPUID_NOX) */
+#define CPUID_PAGE1GB	__BIT(26)	/* 1GB Large Page Support */
+#define CPUID_RDTSCP	__BIT(27)	/* Read TSC Pair Instruction */
+#define CPUID_EM64T	__BIT(29)	/* Intel EM64T */
 
 #define CPUID_INTEL_EXT_FLAGS	"\20"			     \
 	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
@@ -1031,17 +1031,18 @@
 
 /*
  * Centaur Extended Feature flags.
+ * CPUID FnC000_0001
  */
-#define CPUID_VIA_HAS_RNG	0x00000004	/* Random number generator */
-#define CPUID_VIA_DO_RNG	0x00000008
-#define CPUID_VIA_HAS_ACE	0x00000040	/* AES Encryption */
-#define CPUID_VIA_DO_ACE	0x00000080
-#define CPUID_VIA_HAS_ACE2	0x00000100	/* AES+CTR instructions */
-#define CPUID_VIA_DO_ACE2	0x00000200
-#define CPUID_VIA_HAS_PHE	0x00000400	/* SHA1+SHA256 HMAC */
-#define CPUID_VIA_DO_PHE	0x00000800
-#define CPUID_VIA_HAS_PMM	0x00001000	/* RSA Instructions */
-#define CPUID_VIA_DO_PMM	0x00002000
+#define CPUID_VIA_HAS_RNG	__BIT(2)	/* Random number generator */
+#define CPUID_VIA_DO_RNG	__BIT(3)
+#define CPUID_VIA_HAS_ACE	__BIT(6)	/* AES Encryption */
+#define CPUID_VIA_DO_ACE	__BIT(7)
+#define CPUID_VIA_HAS_ACE2	__BIT(8)	/* AES+CTR instructions */
+#define CPUID_VIA_DO_ACE2	__BIT(9)
+#define CPUID_VIA_HAS_PHE	__BIT(10)	/* SHA1+SHA256 HMAC */
+#define CPUID_VIA_DO_PHE	__BIT(11)
+#define CPUID_VIA_HAS_PMM	__BIT(12)	/* RSA Instructions */
+#define CPUID_VIA_DO_PMM	__BIT(13)
 
 #define CPUID_FLAGS_PADLOCK	"\20"					    \
 	"\3" "RNG"	"\7" "AES"	"\11" "AES/CTR"	"\13" "SHA1/SHA256" \
