@@ -1,4 +1,4 @@
-/* $NetBSD: mipssimreg.h,v 1.3 2021/02/16 15:06:30 simonb Exp $ */
+/* $NetBSD: mipssimreg.h,v 1.4 2022/12/28 11:50:25 he Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -37,6 +37,11 @@
  *	1fd0.0000	 64kB	ISA IO space
  *	1fd1.0000	 64kB	'ISA' VirtIO IO space (non standard)
  *
+ *	Additionally, mips64 probes for memory up to 16G:
+ *
+ *	  2000.0000	memory, probed, up to
+ *	4.0000.0000	16GB somewhat arbitrarily, could probably be higher
+ *
  *	CPU interrupts
  *
  *	 0	mipsnet
@@ -55,6 +60,9 @@
 #define MIPSSIM_DMA_BASE	0x00000000
 #define MIPSSIM_DMA_PHYSBASE	0x00000000
 #define MIPSSIM_DMA_SIZE	(MIPSSIM_ISA_IO_BASE - MIPSSIM_DMA_BASE)
+
+#define MIPSSIM_MORE_MEM_BASE	0x20000000
+#define MIPSSIM_MORE_MEM_END	(16ULL * 1024 * 1024 * 1024) /* 16GB */
 
 #define VIRTIO_NUM_TRANSPORTS	32
 #define VIRTIO_STRIDE		512
