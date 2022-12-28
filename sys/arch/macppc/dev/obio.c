@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.51 2022/01/22 11:49:16 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.52 2022/12/28 07:12:36 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.51 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.52 2022/12/28 07:12:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,6 +279,8 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 static const char * const skiplist[] = {
 	"interrupt-controller",
+	"chrp,open-pic",
+	"open-pic",
 	"gpio",
 	"escc-legacy",
 	"timer",
