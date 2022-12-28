@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1290 2022/12/23 17:25:22 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1291 2022/12/28 22:04:46 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -98,7 +98,11 @@ MKGCCCMDS?=	no
 #
 # What binutils is used?
 #
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+HAVE_BINUTILS?=	239
+.else
 HAVE_BINUTILS?=	234
+.endif
 
 .if ${HAVE_BINUTILS} == 239
 EXTERNAL_BINUTILS_SUBDIR=	binutils
