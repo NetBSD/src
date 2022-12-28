@@ -1,4 +1,4 @@
-/*	$NetBSD: mipssim_dma.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $	*/
+/*	$NetBSD: mipssim_dma.c,v 1.2 2022/12/28 11:40:35 he Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mipssim_dma.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mipssim_dma.c,v 1.2 2022/12/28 11:40:35 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,6 +57,7 @@ mipssim_dma_init(struct mipssim_config *mcp)
 	t->_wbase = MIPSSIM_DMA_BASE;
 	t->_bounce_alloc_lo = MIPSSIM_DMA_PHYSBASE;
 	t->_bounce_alloc_hi = MIPSSIM_DMA_PHYSBASE + MIPSSIM_DMA_SIZE;
+	t->_bounce_thresh = t->_bounce_alloc_hi; /* as an approximation */
 	t->_dmamap_ops = mips_bus_dmamap_ops;
 	t->_dmamem_ops = mips_bus_dmamem_ops;
 	t->_dmatag_ops = mips_bus_dmatag_ops;
