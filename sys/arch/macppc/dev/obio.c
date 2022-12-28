@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.52 2022/12/28 07:12:36 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.53 2022/12/28 07:34:42 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.52 2022/12/28 07:12:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.53 2022/12/28 07:34:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,7 @@ static const char * const skiplist[] = {
 	"interrupt-controller",
 	"chrp,open-pic",
 	"open-pic",
+	"mpic",
 	"gpio",
 	"escc-legacy",
 	"timer",
