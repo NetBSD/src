@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.12 2022/01/22 11:49:16 thorpej Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.13 2022/12/28 07:18:29 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.12 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.13 2022/12/28 07:18:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,17 @@ CFATTACH_DECL_NEW(uni_n, sizeof(struct uni_n_softc),
 /* storage for CPUID SEEPROM contents found on some G5 */
 static uint8_t eeprom[2][160];
 #endif
+
+static const char *skiplist[] = {
+	"openpic",
+	"chrp,open-pic",
+	"open-pic",
+	"mpic",
+	"dart",
+	"u3-dart",
+	"u4-dart",
+	NULL
+};
 
 int
 uni_n_match(device_t parent, cfdata_t cf, void *aux)
@@ -108,7 +119,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 #if NFCU > 0
 	/*
 	 * zero out eeprom blocks, then see if we have valid data
-	 * doing this here because the EEPROMs are dangling from out i2c bus
+	 * doing this here because the EEPROMs are dangling from our i2c bus
 	 * but we can get all the data just from looking at the properties
 	 */
 	memset(eeprom, 0, sizeof(eeprom));
@@ -116,6 +127,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 	OF_getprop(cpuid, "cpuid", eeprom[0], sizeof(eeprom[0]));
 	if (eeprom[0][1] != 0)
 		aprint_normal_dev(self, "found EEPROM data for CPU 0\n");
+
 	cpuid = OF_finddevice("/u3/i2c/cpuid@a2");
 	OF_getprop(cpuid, "cpuid", eeprom[1], sizeof(eeprom[1]));
 	if (eeprom[1][1] != 0)
@@ -131,6 +143,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 
 	devhandle_t selfh = device_handle(self);
 	for (child = OF_child(node); child; child = OF_peer(child)) {
+		if (of_compatible(child, skiplist)) continue;
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
 			continue;
