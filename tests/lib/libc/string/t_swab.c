@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swab.c,v 1.2 2011/07/07 08:27:36 jruoho Exp $ */
+/*	$NetBSD: t_swab.c,v 1.3 2022/12/28 15:34:19 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,15 +39,17 @@
 #define MAXCHK	100
 
 static void
-build(char *a, char *b, size_t n) {
+build(char *a, char *b, size_t n)
+{
 	size_t i;
 
-	n >>= 1;
 	for (i = 0; i < n; i += 2) {
-		b[i+1] = a[i] = (char)i;
-		b[i] = a[i+1] = (char)(i+1);
+		b[i + 1] = a[i] = (char)i;
+		b[i] = a[i + 1] = (char)(i + 1);
 	}
-	for (n <<= 1; n < MAXCHK; n++)
+	if (n & 1)
+		a[n - 1] = b[n - 1] = (char)~1;
+	for (; n < MAXCHK; n++)
 		a[n] = b[n] = (char)~0;
 }
 
@@ -72,19 +74,23 @@ ATF_TC_BODY(swab_basic, tc)
 {
 	char a[MAXCHK], b[MAXCHK], r[MAXCHK];
 	size_t i;
+	bool failed = false;
 
-	for (i = 0; i < MAXCHK; i += 2) {
+	for (i = 0; i < MAXCHK; i++) {
 		build(a, b, i);
 		(void)memset(r, ~0, MAXCHK);
 		swab(a, r, i);
+		if (i & 1)	/* last byte unspecified if odd length */
+			r[i - 1] = (char )~1;
 		if (memcmp(b, r, MAXCHK) != 0) {
-			fprintf(stderr, "pattern mismatch at %lu bytes",
-			    (unsigned long)i);
+			printf("pattern mismatch at %zu bytes\n", i);
 			dump("expect:", b, MAXCHK);
 			dump("result:", r, MAXCHK);
-			atf_tc_fail("Check stderr for details");
+			failed = true;
 		}
 	}
+	if (failed)
+		atf_tc_fail_nonfatal("Check stdout for details");
 }
 
 ATF_TP_ADD_TCS(tp)
