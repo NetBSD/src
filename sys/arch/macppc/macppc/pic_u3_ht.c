@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_u3_ht.c,v 1.12 2021/03/06 07:29:05 rin Exp $	*/
+/*	$NetBSD: pic_u3_ht.c,v 1.13 2022/12/28 06:50:23 macallan Exp $	*/
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_u3_ht.c,v 1.12 2021/03/06 07:29:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_u3_ht.c,v 1.13 2022/12/28 06:50:23 macallan Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -79,7 +79,7 @@ struct u3_ht_ops {
 #define u3_ht_read(ptr,reg)		(ptr)->ht_read(ptr, reg)
 #define u3_ht_write(ptr,reg,val)	(ptr)->ht_write(ptr, reg, val)
 
-static struct u3_ht_ops *setup_u3_ht(uint32_t, uint32_t, int);
+static struct u3_ht_ops *setup_u3_ht(uint32_t, uint32_t, int, int);
 static int setup_u3_ht_workarounds(struct u3_ht_ops *);
 
 static void u3_ht_enable_irq(struct pic_ops *, int, int);
@@ -130,15 +130,18 @@ static void u3_ht_establish_ipi(int, int, void *);
 
 int init_u3_ht(void)
 {
-	int u4, pic;
+	int u4, pic, irq = -1;
 	uint32_t reg[2];
 	uint32_t base, len, tmp;
 	int bigendian;
 	volatile uint8_t *unin_reg;
 
 	u4 = OF_finddevice("/u4");
-	if (u4 == -1)
-		return FALSE;
+	if (u4 == -1) {
+		u4 = OF_finddevice("/u3");
+		if (u4 == -1)
+			return FALSE;
+	}
 
 	if (! of_compatible(u4, u3_compat))
 		return FALSE;
@@ -173,15 +176,21 @@ int init_u3_ht(void)
 	base = reg[0];
 	len = reg[1];
 
-	aprint_normal("found U3/U4 HT PIC at %08x\n", base);
+	if (OF_getprop(pic, "interrupts", reg, 8) > 4) {
+		/* this is a cascaded PIC */
+		irq = reg[0];
+		aprint_normal("found cascaded U3/U4 HT PIC at %08x, IRQ %d\n",
+		    base, irq);
+	} else
+		aprint_normal("found U3/U4 HT PIC at %08x\n", base);
 
-	setup_u3_ht(base, len, bigendian);
+	setup_u3_ht(base, len, bigendian, irq);
 
 	return TRUE;
 }
 
 static struct u3_ht_ops *
-setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
+setup_u3_ht(uint32_t addr, uint32_t len, int bigendian, int cirq)
 {
 	struct u3_ht_ops *u3_ht;
 	struct pic_ops *pic;
@@ -264,16 +273,24 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 		u3_ht_eoi(u3_ht, 0);
 	}
 
+	if (cirq > -1) {
+		/* we're subordinate to a normal openpic */
+		intr_establish_xname(cirq, IST_EDGE, IPL_HIGH,
+		    pic_handle_intr, pic, "u3_ht");
+	}
 #ifdef MULTIPROCESSOR
-	ipiops.ppc_send_ipi = u3_ht_send_ipi;
-	ipiops.ppc_establish_ipi = u3_ht_establish_ipi;
-	ipiops.ppc_ipi_vector = IPI_VECTOR;
+	else {
+		/* only handle IPIs if we're the only openpic */
+		ipiops.ppc_send_ipi = u3_ht_send_ipi;
+		ipiops.ppc_establish_ipi = u3_ht_establish_ipi;
+		ipiops.ppc_ipi_vector = IPI_VECTOR;
 
-	x = u3_ht_read(u3_ht, OPENPIC_IPI_VECTOR(1));
-	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
-	x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
-	u3_ht_write(u3_ht, OPENPIC_IPI_VECTOR(1), x);
-	u3ht0 = u3_ht;
+		x = u3_ht_read(u3_ht, OPENPIC_IPI_VECTOR(1));
+		x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
+		x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
+		u3_ht_write(u3_ht, OPENPIC_IPI_VECTOR(1), x);
+		u3ht0 = u3_ht;
+	}
 #endif /* MULTIPROCESSOR */
 
 	return u3_ht;
