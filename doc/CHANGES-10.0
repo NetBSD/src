@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.11 2022/12/28 14:38:51 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.12 2022/12/28 18:01:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -388,4 +388,15 @@ sys/arch/evbmips/mipssim/mipssimreg.h		1.4
 
 	mipssim: add support for more than 508MB RAM.
 	[he, ticket #26]
+
+usr.bin/calendar/calendars/calendar.christian	1.11
+
+	calendar(8): update calendar.christian for 2023.
+	[nia, ticket #27]
+
+include/dirent.h				1.38
+
+	scandir(3) and alphasort(3) are part of POSIX-2008, so don't require
+	_NETBSD_SOURCE to use them.
+	[nia, ticket #28]
 
