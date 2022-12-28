@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.10 2022/12/27 09:59:29 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.11 2022/12/28 14:38:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -381,4 +381,11 @@ sys/external/bsd/compiler_rt/dist/lib/sanitizer_common/sanitizer_platform_limits
 
 	ppp(4): Rremove the HDLC ioctls from more copies of sanitizers.
 	[chs, ticket #25]
+
+sys/arch/evbmips/mipssim/machdep.c		1.4
+sys/arch/evbmips/mipssim/mipssim_dma.c		1.2
+sys/arch/evbmips/mipssim/mipssimreg.h		1.4
+
+	mipssim: add support for more than 508MB RAM.
+	[he, ticket #26]
 
