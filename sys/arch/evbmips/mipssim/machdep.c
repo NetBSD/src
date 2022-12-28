@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2021/11/16 06:44:40 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2022/12/28 11:50:25 he Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2021/11/16 06:44:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2022/12/28 11:50:25 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -229,6 +229,9 @@ mach_init_memory(void)
 	size_t addr;
 	uint32_t *memptr;
 	extern char end[];	/* XXX */
+#ifdef MIPS64
+	size_t highaddr;
+#endif
 
 	l->l_addr = &dummypcb;
 	memsize = roundup2(MIPS_KSEG0_TO_PHYS((uintptr_t)(end)), 1024 * 1024);
@@ -246,13 +249,43 @@ mach_init_memory(void)
 	}
 	l->l_addr = NULL;
 
-	printf("Memory size: 0x%" PRIxPSIZE " (%" PRIdPSIZE " MB)\n",
-	    memsize, memsize / 1024 / 1024);
 	physmem = btoc(memsize);
 
 	mem_clusters[0].start = PAGE_SIZE;
 	mem_clusters[0].size = memsize - PAGE_SIZE;
 	mem_cluster_cnt = 1;
+
+#ifdef _LP64
+	/* probe for more memory above ISA I/O "hole" */
+	l->l_addr = &dummypcb;
+
+	for (highaddr = addr = MIPSSIM_MORE_MEM_BASE;
+	    addr < MIPSSIM_MORE_MEM_END;
+	    addr += 1024 * 1024) {
+		memptr = (void *)MIPS_PHYS_TO_XKPHYS(CCA_CACHEABLE,
+						addr - sizeof(*memptr));
+		if (badaddr(memptr, sizeof(uint32_t)) < 0)
+			break;
+
+		highaddr = addr;
+#ifdef MEM_DEBUG
+		printf("probed %zd MB\n", (addr - MIPSSIM_MORE_MEM_BASE)
+					/ 1024 * 1024);
+#endif
+	}
+	l->l_addr = NULL;
+
+	if (highaddr != MIPSSIM_MORE_MEM_BASE) {
+		mem_clusters[1].start = MIPSSIM_MORE_MEM_BASE;
+		mem_clusters[1].size = highaddr - MIPSSIM_MORE_MEM_BASE;
+		mem_cluster_cnt++;
+		physmem += btoc(mem_clusters[1].size);
+		memsize += mem_clusters[1].size;
+	}
+#endif /* _LP64 */
+
+	printf("Memory size: 0x%" PRIxPSIZE " (%" PRIdPSIZE " MB)\n",
+	    memsize, memsize / 1024 / 1024);
 }
 
 void
