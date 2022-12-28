@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.105 2020/09/27 13:48:54 roy Exp $
+#	$NetBSD: INSTALL,v 1.106 2022/12/28 18:19:44 jakllsch Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -77,7 +77,6 @@ no audioamd0
 
 no pseudo-device	sl		
 no pseudo-device	ppp		
-no pseudo-device	strip		
 no pseudo-device	tun		
 no pseudo-device	bpfilter
 no pseudo-device	npf			# NPF packet filter

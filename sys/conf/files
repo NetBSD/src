@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1305 2022/12/19 23:19:51 pgoyette Exp $
+#	$NetBSD: files,v 1.1306 2022/12/28 18:19:44 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1464,7 +1464,6 @@ defpseudo vlan:		ifnet, ether
 defpseudo bridge:	ifnet, ether
 defpseudo vether:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
-defpseudo strip:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
