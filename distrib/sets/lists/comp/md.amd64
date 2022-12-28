@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.290 2022/09/10 16:03:43 rillig Exp $
+# $NetBSD: md.amd64,v 1.291 2022/12/28 22:04:05 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1460,32 +1460,32 @@
 ./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xd		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xdc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xdw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xs		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xsc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xsw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xu		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_k1om.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xd		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xdc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xdw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xs		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xsc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xsw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xu		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_l1om.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.x		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xbn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xd		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xdc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xdw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xr		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xs		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xsc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xsw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xu		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xd		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xdc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xdw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xr		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xs		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xsc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xsw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xu		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xw		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_x86_64.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xc		comp-util-bin		binutils
