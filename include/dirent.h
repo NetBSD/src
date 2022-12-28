@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.37 2021/12/30 16:20:19 nros Exp $	*/
+/*	$NetBSD: dirent.h,v 1.38 2022/12/28 11:51:21 nia Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -108,18 +108,18 @@ long telldir(DIR *);
     defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 DIR *fdopendir(int);
+int scandir(const char *, struct dirent ***,
+    int (*)(const struct dirent *), int (*)(const struct dirent **,
+    const struct dirent **))
+    __RENAME(__scandir30);
+int alphasort(const struct dirent **, const struct dirent **)
+    __RENAME(__alphasort30);
 #endif
 #endif
 #if defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 DIR *__opendir2(const char *, int) __RENAME(__opendir230);
-int scandir(const char *, struct dirent ***,
-    int (*)(const struct dirent *), int (*)(const struct dirent **,
-    const struct dirent **))
-    __RENAME(__scandir30);
 int getdents(int, char *, size_t) __RENAME(__getdents30);
-int alphasort(const struct dirent **, const struct dirent **)
-    __RENAME(__alphasort30);
 #endif
 #endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
