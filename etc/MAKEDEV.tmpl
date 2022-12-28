@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.232 2022/09/21 18:55:21 wiz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.233 2022/12/28 19:23:02 jakllsch Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -362,7 +362,7 @@ hexprint()
 	hex=
 	set -- 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	while [ "$val" -gt 0 ]; do
-		eval hex=\$$(($val % 16 + 1))\$hex
+		eval hex=\${$(($val % 16 + 1))}\$hex
 		val="$(($val / 16))"
 	done
 	echo "${hex:-0}"
