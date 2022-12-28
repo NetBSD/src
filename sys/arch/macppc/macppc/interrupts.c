@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.8 2021/01/26 14:49:41 thorpej Exp $ */
+/*	$NetBSD: interrupts.c,v 1.9 2022/12/28 06:00:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.8 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.9 2022/12/28 06:00:26 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -108,9 +108,25 @@ init_openpic(int pass_through)
 
 #endif /* NPIC_OPENPIC > 0 */
 
+/*
+ * look for supported interrupt controllers
+ * there are several possible cases:
+ * - Ohare and Grand Central models have the same interrupt controller, Ohare
+ *   can have a 2nd cascaded one ( Powerbook 3400c with ethernet for example )
+ * - Heathrow is more or less Ohare with all the registers doubled to allow 64
+ *   IRQs
+ * - openpic covers all OpenPICs built into various mac-io found in some G3,
+ *   all G4 and most G5 models
+ * - u3_ht is an OpenPIC built into the CPC 9x5 bridges / memory controllers
+ *   found in G5s, it's got enough quirks to require its own driver. Some
+ *   models have both openpic and u3_ht, on those openpic handles IPIs and
+ *   normal IRQs while the u3_ht is cascaded and can be used for MSI. On G5s
+ *   that have no openpic the u3_ht handles all interrupts, IPIs and MSI
+ */
 void
 init_interrupt(void)
 {
+	int ok = 0;
 
 	pic_init();
 #if NPIC_OHARE > 0
@@ -121,20 +137,23 @@ init_interrupt(void)
 	if (init_heathrow())
 		goto done;
 #endif
-#if NPIC_U3_HT > 0
-	if (init_u3_ht())
-		goto done;
-#endif
 #if NPIC_OPENPIC > 0
 	if (init_openpic(0)) {
 #ifdef MULTIPROCESSOR
 		setup_openpic_ipi();
 #endif
-		goto done;
+		ok = 1;
 	}
 #endif
-	panic("%s: no supported interrupt controller found", __func__);
+#if NPIC_U3_HT > 0
+	if (init_u3_ht())
+		ok = 1;
+#endif
+	if (ok == 0)
+	    panic("%s: no supported interrupt controller found", __func__);
+#if NPIC_OHARE + NPIC_HEATHROW > 0
 done:
+#endif
 	oea_install_extint(pic_ext_intr);
 
 #ifdef MULTIPROCESSOR
