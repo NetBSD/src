@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1471 2022/11/22 14:55:28 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1472 2022/12/28 13:26:44 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5782,25 +5782,33 @@ product INTEL 5HS_H_GSPI_2	0x43fb	500 Series PCH-H GSPI 2
 product INTEL 5HS_H_ISH		0x43fc	500 Series PCH-H Integrated Sensor Hub
 product INTEL 5HS_H_GSPI_3	0x43fd	500 Series PCH-H GSPI 3
 product INTEL EHL_DPTF		0x4503	Elkhart Lake DPTF
+product INTEL EHL_TROUTER_2C_S	0x4510	Elkhart Lake Transaction Router (2C, Super SKU)
 product INTEL EHL_GNA		0x4511	Elkhart Lake GNA
 product INTEL EHL_TROUTER_3	0x4512	Elkhart Lake Transaction Router (SKU 3)
 product INTEL EHL_TROUTER_5	0x4514	Elkhart Lake Transaction Router (SKU 5)
 product INTEL EHL_TROUTER_8	0x4516	Elkhart Lake Transaction Router (SKU 8)
 product INTEL EHL_TROUTER_12	0x4518	Elkhart Lake Transaction Router (SKU 12)
 product INTEL EHL_TROUTER_3A	0x451e	Elkhart Lake Transaction Router (SKU 3A)
+product INTEL EHL_TROUTER_4C_S	0x4520	Elkhart Lake Transaction Router (4C, Super SKU)
 product INTEL EHL_TROUTER_1	0x4522	Elkhart Lake Transaction Router (SKU 1)
+product INTEL EHL_TROUTER_2_PREQS 0x4524 Elkhart Lake Transaction Router (SKU 2, pre-QS)
 product INTEL EHL_TROUTER_4	0x4526	Elkhart Lake Transaction Router (SKU 4)
 product INTEL EHL_TROUTER_6	0x4528	Elkhart Lake Transaction Router (SKU 6)
 product INTEL EHL_TRACE_2	0x4529	Elkhart Lake Trace Hub (Compute Die)
 product INTEL EHL_TROUTER_7	0x452a	Elkhart Lake Transaction Router (SKU 7)
 product INTEL EHL_TROUTER_9	0x452c	Elkhart Lake Transaction Router (SKU 9)
 product INTEL EHL_TROUTER_10	0x452e	Elkhart Lake Transaction Router (SKU 10)
+product INTEL EHL_TROUTER_4C_S_2 0x4530	Elkhart Lake Transaction Router (4C, Super SKU)
 product INTEL EHL_TROUTER_11	0x4532	Elkhart Lake Transaction Router (SKU 11)
 product INTEL EHL_TROUTER_1A	0x4538	Elkhart Lake Transaction Router (SKU 1A)
 product INTEL EHL_TROUTER_2	0x453a	Elkhart Lake Transaction Router (SKU 2)
-product INTEL EHL_GPU_16	0x4551	Elkhart Lake GPU (16EU)
-product INTEL EHL_GPU_32_SUPER	0x4551	Elkhart Lake GPU (32EU Super)
-product INTEL EHL_GPU_32	0x4551	Elkhart Lake GPU (32EU)
+product INTEL EHL_GPU_8EU_S	0x4540	Elkhart Lake GPU (8EU Super)
+product INTEL EHL_GPU_8EU	0x4541	Elkhart Lake GPU (8EU Super)
+product INTEL EHL_GPU_16EU_S	0x4550	Elkhart Lake GPU (16EU Super)
+product INTEL EHL_GPU_16EU_OLD	0x4551	Elkhart Lake GPU (16EU)
+product INTEL EHL_GPU_16EU	0x4555	Elkhart Lake GPU (16EU)
+product INTEL EHL_GPU_32_S	0x4570	Elkhart Lake GPU (32EU Super)
+product INTEL EHL_GPU_32	0x4571	Elkhart Lake GPU (32EU)
 product INTEL ADL_U15_2_8_HOST	0x4601	Alder Lake (U15,2+8) Host
 product INTEL ADL_U9_2_8_HOST	0x4602	Alder Lake (U9,2+8) Host
 product INTEL ADL_U15_2_4_HOST	0x4609	Alder Lake (U15,2+4) Host
@@ -5889,6 +5897,7 @@ product INTEL EHL_CAVS_6	0x4b5a	Elkhart Lake cAVS
 product INTEL EHL_CAVS_7	0x4b5b	Elkhart Lake cAVS
 product INTEL EHL_CAVS_8	0x4b5c	Elkhart Lake cAVS
 product INTEL EHL_AHCI		0x4b60	Elkhart Lake AHCI
+product INTEL EHL_AHCI_2	0x4b63	Elkhart Lake AHCI
 product INTEL EHL_HPET		0x4b68	Elkhart Lake HPET
 product INTEL EHL_IOAPIC	0x4b69	Elkhart Lake IOAPIC
 product INTEL EHL_CSE_PTTDMA	0x4b6b	Elkhart Lake CSE PTT DMA
@@ -5925,7 +5934,7 @@ product INTEL EHL_PSE_ETH_0_SGMII_1G 0x4ba1 Elkhart Lake PSE Ethernet 0 (SGMII 1
 product INTEL EHL_PSE_ETH_0_SGMII_2_5G 0x4ba2 Elkhart Lake PSE Ethernet 0 (SGMII 2.5G)
 product INTEL EHL_PSE_ETH_1_RGMII 0x4bb0 Elkhart Lake PSE Ethernet 1 (RGMII 1G)
 product INTEL EHL_PSE_ETH_1_SGMII_1G 0x4bb1 Elkhart Lake PSE Ethernet 1 (SGMII 1G)
-product INTEL EHL_PSE_ETH_1_SGMII_2_5G 0x4bb2 Elkhart Lake PSE Ethernet 1 (SGMII 1G)
+product INTEL EHL_PSE_ETH_1_SGMII_2_5G 0x4bb2 Elkhart Lake PSE Ethernet 1 (SGMII 2.5G)
 product INTEL EHL_PSE_LH2OSE	0x4bb3	Elkhart Lake PSE LH2OSE
 product INTEL EHL_PSE_DMA_0	0x4bb4	Elkhart Lake PSE DMA 0
 product INTEL EHL_PSE_DMA_1	0x4bb5	Elkhart Lake PSE DMA 1
