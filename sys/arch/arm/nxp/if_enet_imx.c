@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.6.18.1 2022/12/29 09:39:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.6.18.1 2022/12/29 09:39:43 martin Exp $");
 
 #include "opt_fdt.h"
 
@@ -175,7 +175,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	return;
 
 failure:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
+	bus_space_unmap(bst, bsh, size);
 	return;
 }
 
