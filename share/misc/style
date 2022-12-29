@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.64 2022/03/10 23:39:12 rillig Exp $ */
+/* $NetBSD: style,v 1.65 2022/12/29 18:23:37 jkoshy Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.64 2022/03/10 23:39:12 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.65 2022/12/29 18:23:37 jkoshy Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -432,7 +432,7 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 
 	/*
 	 * To printf quantities that might be larger than "long",
-	 * cast quantities to intmax_t or uintmax_t and use %j
+	 * cast quantities to intmax_t or uintmax_t and use %j.
 	 */
 	(void)printf("The size of %s is %jd (%#ju)\n", p,
 	    (intmax_t)sb->st_size, (uintmax_t)sb->st_size);
