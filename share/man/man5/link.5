@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.24 2017/07/03 21:30:59 wiz Exp $
+.\"	$NetBSD: link.5,v 1.25 2022/12/29 22:41:36 gutteridge Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ by convention accessible by the reserved name
 .Em _GLOBAL_OFFSET_TABLE_ .
 The exact mechanism used for this is machine dependent, usually a machine
 register is reserved for the purpose.
-The rational behind this construct is to generate code that is
+The rationale behind this construct is to generate code that is
 independent of the actual load address.
 Only the values contained in the Global Offset Table may need
 updating at run-time depending on the load addresses of the various
@@ -99,7 +99,7 @@ Whenever
 .Em _DYNAMIC
 is relocated to 0, there is no need to invoke the run-time link-editor.
 If this symbol is non-zero, it points at a data structure from
-which the location of the necessary relocation- and symbol information
+which the location of the necessary relocation and symbol information
 can be derived.
 This is most notably used by the start-up module,
 .Em crt0 .
@@ -380,7 +380,7 @@ The
 .Fa rt_symbol
 structure is used to keep track of run-time allocated commons
 and data items copied from shared objects.
-These items are kept on linked list and is exported through the
+These items are kept in a linked list which is exported through the
 .Fa dd_cc
 field in the
 .Fa so_debug
