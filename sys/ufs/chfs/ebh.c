@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.9 2021/12/07 21:37:37 andvar Exp $	*/
+/*	$NetBSD: ebh.c,v 1.10 2022/12/30 09:08:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -924,7 +924,7 @@ erase_callback(struct flash_erase_instruction *ei)
  *
  * This function erases the first physical eraseblock from one of the erase
  * lists and adds to the RB-tree of free PEBs.
- * Returns zero in case of succes, error code in case of fail.
+ * Returns zero in case of success, error code in case of fail.
  */
 int
 free_peb(struct chfs_ebh *ebh)
