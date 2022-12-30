@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1472 2022/12/28 13:26:44 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1473 2022/12/30 15:24:38 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5912,6 +5912,7 @@ product INTEL EHL_SIO_I2C_2	0x4b7a	Elkhart Lake SIO I2C 2
 product INTEL EHL_SIO_I2C_3	0x4b7b	Elkhart Lake SIO I2C 3
 product INTEL EHL_XHCI		0x4b7d	Elkhart Lake xHCI
 product INTEL EHL_XDCI		0x4b7e	Elkhart Lake xDCI
+product INTEL EHL_SSRAM		0x4b7f	Elkhart Lake Shared SRAM
 product INTEL EHL_PSE_QEP_1	0x4b81	Elkhart Lake PSE QEP 1
 product INTEL EHL_PSE_QEP_2	0x4b82	Elkhart Lake PSE QEP 2
 product INTEL EHL_PSE_QEP_3	0x4b83	Elkhart Lake PSE QEP 3
