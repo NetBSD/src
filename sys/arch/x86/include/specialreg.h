@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.200 2022/12/30 12:12:54 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.201 2022/12/30 14:50:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -550,10 +550,10 @@
 
 /* %ecx = 2, %edx */
 #define CPUID_SEF_PSFD		__BIT(0)  /* Fast Forwarding Predictor Dis. */
-#define CPUID_SEF_IPRED_CTRL	__BIT(1)  /* bit 3&4 */
-#define CPUID_SEF_RRSBA_CTRL	__BIT(2)  /* bit 5 */
-#define CPUID_SEF_DDPD_U	__BIT(3)  /* bit 8 Data Dependent Prefetcher */
-#define CPUID_SEF_BHI_CTRL	__BIT(4)  /* bit 10  */
+#define CPUID_SEF_IPRED_CTRL	__BIT(1)  /* IPRED_DIS */
+#define CPUID_SEF_RRSBA_CTRL	__BIT(2)  /* RRSBA for CPL3 */
+#define CPUID_SEF_DDPD_U	__BIT(3)  /* Data Dependent Prefetcher */
+#define CPUID_SEF_BHI_CTRL	__BIT(4)  /* BHI_DIS_S */
 #define CPUID_SEF_MCDT_NO	__BIT(5)  /* !MXCSR Config Dependent Timing */
 
 #define CPUID_SEF2_FLAGS_D	"\20"				\
