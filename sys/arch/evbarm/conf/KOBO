@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.12 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: KOBO,v 1.13 2022/12/30 20:37:01 andvar Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -55,7 +55,7 @@ cpu*		at mainbus?
 # On-chip bus
 axi0		at mainbus?
 
-# Interrupt Cotroller
+# Interrupt Controller
 tzic0		at axi? addr 0x0fffc000 size 0x4000 irqbase 0
 
 # Serial
