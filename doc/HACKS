@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.232 2022/12/04 22:35:15 jakllsch Exp $
+# $NetBSD: HACKS,v 1.233 2022/12/30 02:05:38 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1071,4 +1071,18 @@ file	sys/arch/powerpc/ibm4xx/trap.c: 1.99
 descr
 	clang 13.0.0 miscompiles copy{in,out}() with -O[12]. As a result,
 	kernel cannot execute /sbin/init.
+kcah
+
+hack	Clamp max-page-size in ld to 4K when using relro to avoid 2M binary
+	bloat
+cdate	Thu Dec 29 21:02:43 EST 2022
+who	christos
+port	x86, aarch64
+file	share/mk/bsd.sys.mk: 1.309
+pr	57147
+descr
+	binutils 2.38+ fix for
+	https://sourceware.org/bugzilla/show_bug.cgi?id=28824
+	results in a 2M binary bloat when using relro because of the relro
+	segment alignment. There is no upstream fix yet.
 kcah
