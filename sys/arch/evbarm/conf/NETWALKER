@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.41 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: NETWALKER,v 1.42 2022/12/30 20:37:01 andvar Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -48,7 +48,7 @@ cpu0		at mainbus?
 # On-chip bus
 axi0		at mainbus?
 
-# Interrupt Cotroller
+# Interrupt Controller
 tzic0		at axi? addr 0xe0000000 size 0x4000 irqbase 0
 
 # Serial
