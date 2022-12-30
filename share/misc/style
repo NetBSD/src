@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.65 2022/12/29 18:23:37 jkoshy Exp $ */
+/* $NetBSD: style,v 1.66 2022/12/30 17:02:31 jkoshy Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.65 2022/12/29 18:23:37 jkoshy Exp $");
+__RCSID("$NetBSD: style,v 1.66 2022/12/30 17:02:31 jkoshy Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -259,9 +259,11 @@ main(int argc, char *argv[])
 	 *
 	 * Braces around single-line bodies are optional; use discretion.
 	 *
+	 * Use narrow scopes for loop variables where possible.
+	 *
 	 * Forever loops are done with for's, not while's.
 	 */
-	for (p = buf; *p != '\0'; ++p)
+	for (char *p = buf; *p != '\0'; ++p)
 		continue;		/* Explicit no-op */
 	for (;;)
 		stmt;
