@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.42.4.1 2022/12/30 14:39:10 martin Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.42.4.1 2022/12/30 14:39:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -115,11 +115,11 @@ int	uisdatadebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int  uisdata_bio(struct ata_drive_datas *, struct ata_xfer *);
-int  uisdata_bio1(struct ata_drive_datas *, struct ata_xfer *);
+void uisdata_bio(struct ata_drive_datas *, struct ata_xfer *);
+void uisdata_bio1(struct ata_drive_datas *, struct ata_xfer *);
 void uisdata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void uisdata_reset_channel(struct ata_channel *, int);
-int  uisdata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
+void uisdata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 int  uisdata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
 void uisdata_delref(struct ata_drive_datas *);
@@ -274,7 +274,7 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		ata_bio->bcount += residue;
 	} else if (ata_bio->bcount > 0) {
 		DPRINTF(("%s: continue\n", __func__));
-		(void)uisdata_bio1(&scbus->sc_drv_data, xfer); /*XXX save drv*/
+		uisdata_bio1(&scbus->sc_drv_data, xfer); /*XXX save drv*/
 		splx(s);
 		return;
 	}
@@ -289,17 +289,17 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	splx(s);
 }
 
-int
+void
 uisdata_bio(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 {
 	struct umass_softc *sc = CH2SELF(drv->chnl_softc);
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	scbus->sc_skip = 0;
-	return uisdata_bio1(drv, xfer);
+	uisdata_bio1(drv, xfer);
 }
 
-int
+void
 uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 {
 	struct umass_softc *sc = CH2SELF(drv->chnl_softc);
@@ -320,7 +320,6 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 		printf("%s: ATA_POLL not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
-		return ATACMD_COMPLETE;
 	}
 
 	if (ata_bio->flags & ATA_LBA) {
@@ -390,11 +389,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 		if (tsleep(ata_bio, PZERO, "uisdatabl", 0)) {
 			ata_bio->error = TIMEOUT;
 			ata_bio->flags |= ATA_ITSDONE;
-			return ATACMD_COMPLETE;
 		}
 	}
-
-	return ata_bio->flags & ATA_ITSDONE ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 void
@@ -430,7 +426,7 @@ uisdata_exec_cb(struct umass_softc *sc, void *priv,
 	}
 }
 
-int
+void
 uisdata_exec_command(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 {
 	struct umass_softc *sc = CH2SELF(drv->chnl_softc);
@@ -455,7 +451,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 	if (cmd->bcount > UMASS_MAX_TRANSFER_SIZE) {
 		printf("uisdata_exec_command: large datalen %d\n", cmd->bcount);
 		cmd->flags |= AT_ERROR;
-		goto done;
+		return;
 	}
 
 	memset(&ata, 0, sizeof(ata));
@@ -472,7 +468,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 		printf("uisdata_exec_command: bad command 0x%02x\n",
 		       cmd->r_command);
 		cmd->flags |= AT_ERROR;
-		goto done;
+		return;
 	}
 
 	DPRINTF(("%s: execute ATA command 0x%02x, drive=%d\n", __func__,
@@ -488,12 +484,9 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 		DPRINTF(("%s: tsleep %p\n", __func__, cmd));
 		if (tsleep(cmd, PZERO, "uisdataex", 0)) {
 			cmd->flags |= AT_ERROR;
-			goto done;
+			return;
 		}
 	}
-
-done:
-	return ATACMD_COMPLETE;
 }
 
 int
@@ -560,11 +553,8 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.flags = AT_READ | flags;
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = DEV_BSIZE;
-	if (uisdata_exec_command(drvp, xfer) != ATACMD_COMPLETE) {
-		DPRINTF(("uisdata_get_parms: uisdata_exec_command failed\n"));
-		rv = CMD_AGAIN;
-		goto out;
-	}
+	uisdata_exec_command(drvp, xfer);
+	ata_wait_cmd(drvp->chnl_softc, xfer);
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
 			 xfer->c_ata_c.flags));

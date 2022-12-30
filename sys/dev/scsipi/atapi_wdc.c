@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.133.4.1 2022/12/30 14:39:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.133.4.1 2022/12/30 14:39:10 martin Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -90,7 +90,7 @@ static int	wdc_atapi_intr(struct ata_channel *, struct ata_xfer *, int);
 static void	wdc_atapi_kill_xfer(struct ata_channel *,
 				    struct ata_xfer *, int);
 static void	wdc_atapi_phase_complete(struct ata_xfer *, int);
-static void	wdc_atapi_poll(struct ata_channel *, struct ata_xfer *);
+static int	wdc_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void	wdc_atapi_done(struct ata_channel *, struct ata_xfer *);
 static void	wdc_atapi_reset(struct ata_channel *, struct ata_xfer *);
 static void	wdc_atapi_scsipi_request(struct scsipi_channel *,
@@ -222,12 +222,10 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	xfer->c_ata_c.r_st_pmask = 0;
 	xfer->c_ata_c.flags = AT_WAIT | AT_POLL;
 	xfer->c_ata_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], xfer) != ATACMD_COMPLETE) {
-		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
-		    " drive %s:%d:%d: driver failed\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, drive);
-		panic("wdc_atapi_get_params");
-	}
+
+	wdc_exec_command(&chp->ch_drive[drive], xfer);
+	ata_wait_cmd(chp, xfer);
+
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
@@ -705,7 +703,7 @@ error:
 	return ATASTART_ABORT;
 }
 
-static void
+static int
 wdc_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	/*
@@ -720,7 +718,7 @@ wdc_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	wdc_atapi_intr(chp, xfer, 0);
 
 	if (!poll)
-		return;
+		return ATAPOLL_DONE;
 
 #if NATA_DMA
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
@@ -733,6 +731,8 @@ wdc_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		DELAY(1);
 		wdc_atapi_intr(chp, xfer, 0);
 	}
+
+	return ATAPOLL_DONE;
 }
 
 static int
