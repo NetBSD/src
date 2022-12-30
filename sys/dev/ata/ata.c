@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.149.2.2 2022/08/30 18:28:42 martin Exp $	*/
+/*	$NetBSD: ata.c,v 1.149.2.3 2022/12/30 14:39:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149.2.2 2022/08/30 18:28:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149.2.3 2022/12/30 14:39:10 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -842,13 +842,8 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.flags = AT_READ | flags;
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = ATA_BSIZE;
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
-		    DEBUG_FUNCS|DEBUG_PROBE);
-		rv = CMD_AGAIN;
-		goto out;
-	}
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    xfer->c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
@@ -932,11 +927,8 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 	xfer->c_ata_c.r_count = mode;
 	xfer->c_ata_c.flags = flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		rv = CMD_AGAIN;
-		goto out;
-	}
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		rv = CMD_ERR;
 		goto out;
@@ -1218,10 +1210,11 @@ int
 ata_xfer_start(struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = xfer->c_chp;
-	int rv;
+	int rv, status;
 
 	KASSERT(mutex_owned(&chp->ch_lock));
 
+again:
 	rv = xfer->ops->c_start(chp, xfer);
 	switch (rv) {
 	case ATASTART_STARTED:
@@ -1235,8 +1228,10 @@ ata_xfer_start(struct ata_xfer *xfer)
 		/* can happen even in thread context for some ATAPI devices */
 		ata_channel_unlock(chp);
 		KASSERT(xfer->ops != NULL && xfer->ops->c_poll != NULL);
-		xfer->ops->c_poll(chp, xfer);
+		status = xfer->ops->c_poll(chp, xfer);
 		ata_channel_lock(chp);
+		if (status == ATAPOLL_AGAIN)
+			goto again;
 		break;
 	case ATASTART_ABORT:
 		ata_channel_unlock(chp);

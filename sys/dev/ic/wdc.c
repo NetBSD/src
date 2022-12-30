@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.291.4.1 2019/09/23 07:09:47 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.291.4.2 2022/12/30 14:39:09 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.291.4.1 2019/09/23 07:09:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.291.4.2 2022/12/30 14:39:09 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -148,7 +148,7 @@ static int	wdcreset(struct ata_channel *, int);
 static void	__wdcerror(struct ata_channel *, const char *);
 static int	__wdcwait_reset(struct ata_channel *, int, int);
 static void	__wdccommand_done(struct ata_channel *, struct ata_xfer *);
-static void	__wdccommand_poll(struct ata_channel *, struct ata_xfer *);
+static int	__wdccommand_poll(struct ata_channel *, struct ata_xfer *);
 static void	__wdccommand_done_end(struct ata_channel *, struct ata_xfer *);
 static void	__wdccommand_kill_xfer(struct ata_channel *,
 			               struct ata_xfer *, int);
@@ -1390,12 +1390,11 @@ static const struct ata_xfer_ops wdc_cmd_xfer_ops = {
 	.c_kill_xfer = __wdccommand_kill_xfer,
 };
 
-int
+void
 wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	int s, ret;
 
 	ATADEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
@@ -1413,25 +1412,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_c->bcount;
 	xfer->ops = &wdc_cmd_xfer_ops;
 
-	s = splbio();
 	ata_exec_xfer(chp, xfer);
-#ifdef DIAGNOSTIC
-	if ((ata_c->flags & AT_POLL) != 0 &&
-	    (ata_c->flags & AT_DONE) == 0)
-		panic("wdc_exec_command: polled command not done");
-#endif
-	if (ata_c->flags & AT_DONE) {
-		ret = ATACMD_COMPLETE;
-	} else {
-		if (ata_c->flags & AT_WAIT) {
-			ata_wait_cmd(chp, xfer);
-			ret = ATACMD_COMPLETE;
-		} else {
-			ret = ATACMD_QUEUED;
-		}
-	}
-	splx(s);
-	return ret;
 }
 
 static int
@@ -1498,10 +1479,11 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	return ATASTART_POLL;
 }
 
-static void
+static int
 __wdccommand_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	__wdccommand_intr(chp, xfer, 0);
+	return ATAPOLL_DONE;
 }
 
 static int

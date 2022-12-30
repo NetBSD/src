@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.103 2019/04/05 21:31:44 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.103.4.1 2022/12/30 14:39:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -178,7 +178,9 @@ struct ata_xfer_ops {
 #define ATASTART_TH		1	/* xfer needs to be run in thread */
 #define ATASTART_POLL		2	/* xfer needs to be polled */
 #define ATASTART_ABORT		3	/* error occurred, abort xfer */
-	void	(*c_poll)(struct ata_channel *, struct ata_xfer *);
+	int	(*c_poll)(struct ata_channel *, struct ata_xfer *);
+#define	ATAPOLL_DONE		0
+#define	ATAPOLL_AGAIN		1
 	void	(*c_abort)(struct ata_channel *, struct ata_xfer *);
 	int	(*c_intr)(struct ata_channel *, struct ata_xfer *, int);
 	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);
@@ -358,10 +360,10 @@ struct ata_drive_datas {
  */
 struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
-	int	(*ata_bio)(struct ata_drive_datas *, struct ata_xfer *);
+	void	(*ata_bio)(struct ata_drive_datas *, struct ata_xfer *);
 	void	(*ata_reset_drive)(struct ata_drive_datas *, int, uint32_t *);
 	void	(*ata_reset_channel)(struct ata_channel *, int);
-	int	(*ata_exec_command)(struct ata_drive_datas *,
+	void	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct ata_xfer *);
 
 #define	ATACMD_COMPLETE		0x01
