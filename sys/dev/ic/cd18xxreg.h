@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxreg.h,v 1.4 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: cd18xxreg.h,v 1.5 2022/12/30 20:25:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -99,7 +99,7 @@
 #define	CD18xx_MCOR2		0x11	/* modem change option (2) */
 #define	CD18xx_MSVR		0x28	/* modem signal value */
 #define	CD18xx_MSVRTS		0x29	/* modem signal value RTS */
-#define	CD18xx_MSVDTR		0x2a	/* mdoem signal value DTR */
+#define	CD18xx_MSVDTR		0x2a	/* modem signal value DTR */
 
 
 /*
