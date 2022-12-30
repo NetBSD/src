@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.309 2021/12/14 16:22:07 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.310 2022/12/30 02:01:42 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -138,7 +138,10 @@ CFLAGS+=	-Wno-maybe-uninitialized
 .endif
 
 .if ${MKRELRO:Uno} != "no"
-LDFLAGS+=	-Wl,-z,relro
+# XXX Workaround for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1014301
+# Set manually the maxpagesize to 4096 which is ok for now since we only
+# support relro by default on x86 and aarch64
+LDFLAGS+=	-Wl,-z,relro -Wl,-z,max-page-size=4096
 .endif
 
 .if ${MKRELRO:Uno} == "full" && ${NOFULLRELRO:Uno} == "no"
