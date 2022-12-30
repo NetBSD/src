@@ -115,14 +115,14 @@ info-local: $(MANS)
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-%D%/as.1: $(srcdir)/%D%/as.texi %D%/asconfig.texi $(CPU_DOCS) %D%/$(am__dirstamp)
-	$(AM_V_GEN)touch $@
-	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/%D%/as.texi > %D%/as.pod
-	$(AM_V_at)-($(POD2MAN) %D%/as.pod | \
-	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-	        mv -f $@.T$$$$ $@) || \
-	        (rm -f $@.T$$$$ && exit 1)
-	$(AM_V_at)rm -f %D%/as.pod
+#%D%/as.1: $(srcdir)/%D%/as.texi %D%/asconfig.texi $(CPU_DOCS) %D%/$(am__dirstamp)
+#	$(AM_V_GEN)touch $@
+#	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/%D%/as.texi > %D%/as.pod
+#	$(AM_V_at)-($(POD2MAN) %D%/as.pod | \
+#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#	        mv -f $@.T$$$$ $@) || \
+#	        (rm -f $@.T$$$$ && exit 1)
+#	$(AM_V_at)rm -f %D%/as.pod
 
 html-local: %D%/as/index.html
 %D%/as/index.html: %D%/as.texi $(%C%_as_TEXINFOS) %D%/$(am__dirstamp)
