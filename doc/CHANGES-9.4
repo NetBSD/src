@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.33 2022/12/28 17:59:01 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.34 2022/12/30 14:40:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -482,4 +482,23 @@ usr.bin/calendar/calendars/calendar.christian	1.11
 
 	calendar(8): update calendar.christian for 2023.
 	[nia, ticket #1556]
+
+sys/dev/ata/ata.c				1.155,1.164
+sys/dev/ata/ata_recovery.c			1.4
+sys/dev/ata/ata_wdc.c				1.115,1.120
+sys/dev/ata/atavar.h				1.105,1.109
+sys/dev/ata/satapmp_subr.c			1.16
+sys/dev/ata/wd.c				1.460,1.462
+sys/dev/ic/ahcisata_core.c			1.83,1.93,1.102
+sys/dev/ic/mvsata.c				1.56,1.61
+sys/dev/ic/siisata.c				1.42,1.49
+sys/dev/ic/wdc.c				1.299,1.308
+sys/dev/ic/wdcvar.h				1.100
+sys/dev/scsipi/atapi_wdc.c			1.138
+sys/dev/scsipi/atapi_wdc.c			1.141
+sys/dev/usb/umass_isdata.c			(apply patch)
+
+	PR 56403, 56973, 56982: fix locking issues in ATA layer,
+	fix a use-after-free, fix silent stall on NOIRQ ports.
+	[tsutsui, ticket #1557]
 
