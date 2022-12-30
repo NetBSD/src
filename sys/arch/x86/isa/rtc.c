@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1 2009/06/16 21:05:34 bouyer Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2 2022/12/30 21:40:20 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2009/06/16 21:05:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2 2022/12/30 21:40:20 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,11 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2009/06/16 21:05:34 bouyer Exp $");
 #endif
 #if NMCA > 0
 #include <machine/mca_machdep.h>	/* for MCA_system */
+#endif
+
+#include "acpica.h"
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
 #endif
 
 static void	rtcinit(void);
@@ -269,6 +274,12 @@ clock_expandyear(int clockyear)
 		return (clockyear);
 
 	s = splclock();
+#if NACPICA > 0
+	if (acpi_active)
+		cmoscentury = mc146818_read(NULL,
+		    (centb = AcpiGbl_FADT.Century));
+	else
+#endif
 	if (cmoscheck())
 		cmoscentury = mc146818_read(NULL, NVRAM_CENTURY);
 #if NMCA > 0
