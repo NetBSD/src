@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.133 2022/11/17 15:21:31 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.134 2022/12/30 12:21:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.133 2022/11/17 15:21:31 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.134 2022/12/30 12:21:07 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2210,13 +2210,25 @@ identifycpu(int fd, const char *cpuname)
 	if ((ci->ci_max_cpuid >= 7)
 	    && ((cpu_vendor == CPUVENDOR_INTEL)
 		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		unsigned int maxsubleaf;
+
 		x86_cpuid(7, descs);
+		maxsubleaf = descs[0];
 		aprint_verbose("%s: SEF highest subleaf %08x\n",
-		    cpuname, descs[0]);
-		if (descs[0] >= 1) {
+		    cpuname, maxsubleaf);
+		if (maxsubleaf >= 1) {
 			x86_cpuid2(7, 1, descs);
 			print_bits(cpuname, "SEF-subleaf1-eax",
 			    CPUID_SEF1_FLAGS_A, descs[0]);
+			print_bits(cpuname, "SEF-subleaf1-ebx",
+			    CPUID_SEF1_FLAGS_B, descs[1]);
+			print_bits(cpuname, "SEF-subleaf1-edx",
+			    CPUID_SEF1_FLAGS_D, descs[3]);
+		}
+		if (maxsubleaf >= 2) {
+			x86_cpuid2(7, 2, descs);
+			print_bits(cpuname, "SEF-subleaf2-edx",
+			    CPUID_SEF2_FLAGS_D, descs[3]);
 		}
 	}
 
