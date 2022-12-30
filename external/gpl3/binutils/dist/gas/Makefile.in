@@ -1456,24 +1456,24 @@ doc/$(am__dirstamp):
 	@$(MKDIR_P) doc
 	@: > doc/$(am__dirstamp)
 
-doc/as.info: doc/as.texi $(doc_as_TEXINFOS)
-	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
-	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
-	rm -rf $$backupdir && mkdir $$backupdir && \
-	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
-	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
-	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
-	  done; \
-	else :; fi && \
-	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
-	 -o $@ `test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi; \
-	then \
-	  rc=0; \
-	else \
-	  rc=$$?; \
-	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
-	fi; \
-	rm -rf $$backupdir; exit $$rc
+#doc/as.info: doc/as.texi $(doc_as_TEXINFOS)
+#	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
+#	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+#	rm -rf $$backupdir && mkdir $$backupdir && \
+#	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+#	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
+#	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
+#	  done; \
+#	else :; fi && \
+#	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
+#	 -o $@ `test -f 'doc/as.texi' || echo '$(srcdir)/'`doc/as.texi; \
+#	then \
+#	  rc=0; \
+#	else \
+#	  rc=$$?; \
+#	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
+#	fi; \
+#	rm -rf $$backupdir; exit $$rc
 
 doc/as.dvi: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
 	$(AM_V_TEXI2DVI)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
@@ -2214,14 +2214,14 @@ info-local: $(MANS)
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-doc/as.1: $(srcdir)/doc/as.texi doc/asconfig.texi $(CPU_DOCS) doc/$(am__dirstamp)
-	$(AM_V_GEN)touch $@
-	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/doc/as.texi > doc/as.pod
-	$(AM_V_at)-($(POD2MAN) doc/as.pod | \
-	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-	        mv -f $@.T$$$$ $@) || \
-	        (rm -f $@.T$$$$ && exit 1)
-	$(AM_V_at)rm -f doc/as.pod
+#doc/as.1: $(srcdir)/doc/as.texi doc/asconfig.texi $(CPU_DOCS) doc/$(am__dirstamp)
+#	$(AM_V_GEN)touch $@
+#	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/doc/as.texi > doc/as.pod
+#	$(AM_V_at)-($(POD2MAN) doc/as.pod | \
+#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#	        mv -f $@.T$$$$ $@) || \
+#	        (rm -f $@.T$$$$ && exit 1)
+#	$(AM_V_at)rm -f doc/as.pod
 
 html-local: doc/as/index.html
 doc/as/index.html: doc/as.texi $(doc_as_TEXINFOS) doc/$(am__dirstamp)
