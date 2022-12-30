@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.63 2022/10/31 13:00:34 simonb Exp $	*/
+/*	$NetBSD: virtio.c,v 1.64 2022/12/30 21:38:13 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.63 2022/10/31 13:00:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.64 2022/12/30 21:38:13 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ static inline void
 vq_sync_aring_all(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_avail, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+	size_t payloadlen = vq->vq_num * sizeof(uint16_t);
 	size_t usedlen = 0;
 
 	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
@@ -472,7 +472,7 @@ static inline void
 vq_sync_aring_payload(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_avail, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+	size_t payloadlen = vq->vq_num * sizeof(uint16_t);
 
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
 	    vq->vq_availoffset + hdrlen, payloadlen, ops);
@@ -482,7 +482,7 @@ static inline void
 vq_sync_aring_used(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_avail, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(uint16_t);
+	size_t payloadlen = vq->vq_num * sizeof(uint16_t);
 	size_t usedlen = sizeof(uint16_t);
 
 	if ((sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) == 0)
@@ -495,7 +495,7 @@ static inline void
 vq_sync_uring_all(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_used, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+	size_t payloadlen = vq->vq_num * sizeof(struct vring_used_elem);
 	size_t availlen = 0;
 
 	if (sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX)
@@ -517,7 +517,7 @@ static inline void
 vq_sync_uring_payload(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_used, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+	size_t payloadlen = vq->vq_num * sizeof(struct vring_used_elem);
 
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
 	    vq->vq_usedoffset + hdrlen, payloadlen, ops);
@@ -527,7 +527,7 @@ static inline void
 vq_sync_uring_avail(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	uint16_t hdrlen = offsetof(struct vring_used, ring);
-	size_t payloadlen = sc->sc_nvqs * sizeof(struct vring_used_elem);
+	size_t payloadlen = vq->vq_num * sizeof(struct vring_used_elem);
 	size_t availlen = sizeof(uint16_t);
 
 	if ((sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX) == 0)
