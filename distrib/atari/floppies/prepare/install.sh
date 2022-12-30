@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.4 2022/05/03 20:52:30 andvar Exp $
+#	$NetBSD: install.sh,v 1.5 2022/12/30 09:08:47 andvar Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ getresp() {
 }
 
 isin() {
-# test the first argument against the remaining ones, return succes on a match
+# test the first argument against the remaining ones, return success on a match
 	local a=$1
 	shift
 	while [ $# != 0 ]; do

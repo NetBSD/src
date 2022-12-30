@@ -1,4 +1,4 @@
-/*	$NetBSD: seeq8003reg.h,v 1.3 2001/06/07 05:19:26 thorpej Exp $	*/
+/*	$NetBSD: seeq8003reg.h,v 1.4 2022/12/30 09:08:48 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -76,7 +76,7 @@
 #define TXCMD_IE_UFLOW	0x01		/* Interrupt on Transmit Underflow */
 #define TXCMD_IE_COLL	0x02		/* Interrupt on Transmit Collision */
 #define TXCMD_IE_16COLL	0x04		/* Interrupt on 16 Collisions */
-#define TXCMD_IE_GOOD	0x08		/* Interrupt on Transmit Succes */
+#define TXCMD_IE_GOOD	0x08		/* Interrupt on Transmit Success */
 #define TXCMD_ENABLE_C	0xf0		/* (80C03) Enable 80C03 Mode */
 #define TXCMD_BANK_MASK	0x60		/* (80C03) Register Bank Mask */
 #define TXCMD_BANK0	0x00		/* (80C03) Register Bank 0 (8003) */
