@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.13 2022/12/29 09:40:26 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.14 2022/12/31 04:55:53 snj Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -405,4 +405,12 @@ sys/arch/arm/nxp/if_enet_imx.c			1.7
 	PR 57135: avoid crash when booting some evbarm boards with
 	invalid DTB.
 	[mrg, ticket #29]
+
+usr.sbin/sysinst/bsddisklabel.c			1.71
+
+	PR 57132: when calculation additional space available for the
+	"expanded" partition (typically /) do not forget the reserved
+	space (that might be required for the system/bootloader/other
+	MD stuff).
+	[martin, ticket #30]
 
