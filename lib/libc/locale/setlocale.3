@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.22 2021/10/24 17:30:19 gutteridge Exp $
+.\"	$NetBSD: setlocale.3,v 1.23 2022/12/31 14:35:56 nia Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 24, 2021
+.Dd December 31, 2022
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -314,6 +314,14 @@ which may be altered by later calls to
 .Fn setlocale
 or
 .Fn localeconv .
+.Pp
+Currently,
+.Fn setlocale
+returns
+.Dv NULL
+and fails to change the locale when
+.Dv LC_COLLATE
+is modified independently of other values.
 .Sh EXAMPLES
 The following code illustrates how a program can initialize the
 international environment for one language, while selectively
@@ -322,7 +330,7 @@ string operations can be applied to text recorded in a different
 language:
 .Bd -literal
 	setlocale(LC_ALL, "de");
-	setlocale(LC_COLLATE, "fr");
+	setlocale(LC_NUMERIC, "C");
 .Ed
 .Pp
 When a process is started, its current locale is set to the C or POSIX
@@ -379,21 +387,13 @@ and
 functions first appeared in
 .Bx 4.4 .
 .Sh BUGS
-The current implementation supports only the
-.Li "\&""C""
-and
-.Li "\&""POSIX""
-locales for all but the
-.Dv LC_CTYPE
-locale.
-.Pp
 In spite of the gnarly currency support in
 .Fn localeconv ,
 the standards don't include any functions
 for generalized currency formatting.
 .Pp
 .Dv LC_COLLATE
-does not make sense for many languages.
+is unimplemented (but does not make sense for many languages).
 Use of
 .Dv LC_MONETARY
 could lead to misleading results until we have a real time currency
