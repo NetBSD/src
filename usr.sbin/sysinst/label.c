@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.8 2022/06/22 23:48:54 msaitoh Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.9 2022/12/31 05:03:14 snj Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.8 2022/06/22 23:48:54 msaitoh Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.9 2022/12/31 05:03:14 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -505,7 +505,7 @@ renumber_partitions(struct partition_usage_set *pset)
 		if (!pset->parts->pscheme->get_part_info(pset->parts, pno,
 		    &info))
 			continue;
-		for (i = 0; i < pset->parts->num_part; i++) {
+		for (i = 0; i < pset->num; i++) {
 			if (pset->infos[i].cur_start != info.start)
 				continue;
 			if (pset->infos[i].cur_flags != info.flags)
@@ -522,8 +522,9 @@ renumber_partitions(struct partition_usage_set *pset)
 		}
 	}
 
-	memcpy(pset->infos, ninfos, sizeof(*pset->infos)*pset->parts->num_part);
-	free(ninfos);
+	free(pset->infos);
+	pset->infos = ninfos;
+	pset->num = pset->parts->num_part;
 }
 
 /*
@@ -980,6 +981,9 @@ edit_ptn(menudesc *menu, void *arg)
 			if (!pset->parts->pscheme->set_part_info(pset->parts,
 			    edit.id, &edit.info, &err))
 				err_msg_win(err);
+			else
+				pset->cur_free_space += edit.old_info.size -
+				    edit.info.size;
 		}
 
 		/*
@@ -1009,7 +1013,7 @@ edit_ptn(menudesc *menu, void *arg)
 		}
 		remember_deleted(pset,
 		    pset->infos[edit.index].parts);
-		pset->cur_free_space += pset->infos[edit.index].size;
+		pset->cur_free_space += edit.info.size;
 		memmove(pset->infos+edit.index,
 		    pset->infos+edit.index+1,
 		    sizeof(*pset->infos)*(pset->num-edit.index));
