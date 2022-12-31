@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.17 2022/07/08 07:02:47 skrll Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.18 2022/12/31 21:15:20 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -442,7 +442,7 @@ mvxpsec_attach(device_t parent, device_t self, void *aux)
 	pool_cache_setlowat(sc->sc_session_pool, MVXPSEC_MAX_SESSIONS / 2);
 	sc->sc_last_session = NULL;
 
-	/* Pakcet */
+	/* Packet */
 	sc->sc_packet_pool =
 	    pool_cache_init(sizeof(struct mvxpsec_session), 0, 0, 0,
 	    "mvxpsec_pktpl", NULL, IPL_NET,
@@ -1025,7 +1025,7 @@ mvxpsec_dma_sync_packet(struct mvxpsec_softc *sc, struct mvxpsec_packet *mv_p)
 /*
  * Initialize MVXPSEC Internal SRAM
  *
- * - must be called after DMA initizlization.
+ * - must be called after DMA initialization.
  * - make VM mapping for SRAM area on MBus.
  */
 STATIC int
@@ -1312,7 +1312,7 @@ mvxpsec_intr_cnt(struct mvxpsec_softc *sc, int cause)
  * Setup MVXPSEC header structure.
  *
  * the header contains descriptor of security accelerator,
- * key material of chiphers, iv of ciphers and macs, ...
+ * key material of ciphers, iv of ciphers and macs, ...
  *
  * the header is transferred to MVXPSEC Internal SRAM by TDMA,
  * and parsed by MVXPSEC H/W.
