@@ -1583,6 +1583,8 @@ development.exp: $(BFDDIR)/development.sh
 # the other hand it's good that people who use the prebuilt
 # m68k-parse.c don't get a spurious absolute path.
 m68k-parse.c: $(srcdir)/config/m68k-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_m68k-parse.c:
 	f=$(srcdir)/config/m68k-parse.y; \
 	if [ $$f = "./config/m68k-parse.y" ]; then \
 	  ln -s config/m68k-parse.y . > /dev/null 2>/dev/null || \
