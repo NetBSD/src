@@ -445,6 +445,8 @@ development.exp: $(BFDDIR)/development.sh
 
 EXTRA_as_new_SOURCES += config/m68k-parse.y
 config/m68k-parse.c: $(srcdir)/config/m68k-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_m68k-parse.c:
 	$(SHELL) $(YLWRAP) $(srcdir)/config/m68k-parse.y y.tab.c $@ -- $(YACCCOMPILE)
 config/m68k-parse.h: config/m68k-parse.c
 	@true
