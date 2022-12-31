@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: shar.sh,v 1.4 2022/12/31 03:33:53 ginsbach Exp $
+#	$NetBSD: shar.sh,v 1.5 2022/12/31 03:38:59 ginsbach Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -56,13 +56,13 @@ echo "#"
 
 for i
 do
-	if [ -d $i ]; then
-		echo "echo c - $i"
-		echo "mkdir -p $i > /dev/null 2>&1"
+	if [ -d "$i" ]; then
+		echo "echo c - '$i'"
+		echo "mkdir -p '$i' > /dev/null 2>&1"
 	else
-		echo "echo x - $i"
-		echo "sed 's/^X//' >$i << 'END-of-$i'"
-		sed 's/^/X/' $i || exit 1
+		echo "echo x - '$i'"
+		echo "sed 's/^X//' >'$i' << 'END-of-$i'"
+		sed 's/^/X/' "$i" || exit 1
 		echo "END-of-$i"
 	fi
 done
