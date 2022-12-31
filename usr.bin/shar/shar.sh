@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: shar.sh,v 1.5 2022/12/31 03:38:59 ginsbach Exp $
+#	$NetBSD: shar.sh,v 1.6 2022/12/31 03:44:18 ginsbach Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 #
 
 if [ $# -eq 0 ]; then
-	echo 'usage: shar file ...'
+	echo 'usage: shar file ...' 1>&2
 	exit 1
 fi
 
