@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.351 2023/01/01 16:49:27 rillig Exp $
+.\"	$NetBSD: make.1,v 1.352 2023/01/01 17:15:07 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -951,6 +951,55 @@ The list of makefiles read by
 .Nm ,
 which is useful for tracking dependencies.
 Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.META.BAILIWICK
+In
+.Dq meta
+mode, provides a list of prefixes which
+match the directories controlled by
+.Nm .
+If a file that was generated outside of
+.Va .OBJDIR
+but within said bailiwick is missing,
+the current target is considered out-of-date.
+.It Va .MAKE.META.CMP_FILTER
+In
+.Dq meta
+mode, it can (very rarely!) be useful to filter command
+lines before comparison.
+This variable can be set to a set of modifiers that are applied to
+each line of the old and new command that differ, if the filtered
+commands still differ, the target is considered out-of-date.
+.It Va .MAKE.META.CREATED
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
+updated.
+If not empty, it can be used to trigger processing of
+.Va .MAKE.META.FILES .
+.It Va .MAKE.META.FILES
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
+used (updated or not).
+This list can be used to process the meta files to extract dependency
+information.
+.It Va .MAKE.META.IGNORE_PATHS
+Provides a list of path prefixes that should be ignored;
+because the contents are expected to change over time.
+The default list includes:
+.Sq Pa /dev /etc /proc /tmp /var/run /var/tmp
+.It Va .MAKE.META.IGNORE_PATTERNS
+Provides a list of patterns to match against pathnames.
+Ignore any that match.
+.It Va .MAKE.META.IGNORE_FILTER
+Provides a list of variable modifiers to apply to each pathname.
+Ignore if the expansion is an empty string.
+.It Va .MAKE.META.PREFIX
+Defines the message printed for each meta file updated in
+.Dq meta verbose
+mode.
+The default value is:
+.Dl Building ${.TARGET:H:tA}/${.TARGET:T}
 .It Va .MAKE.MODE
 Processed after reading all makefiles.
 Affects the mode that
@@ -1030,55 +1079,6 @@ In both compat and parallel mode, do not make the targets in the usual order,
 but instead randomize their order.
 This mode can be used to detect undeclared dependencies between files.
 .El
-.It Va .MAKE.META.BAILIWICK
-In
-.Dq meta
-mode, provides a list of prefixes which
-match the directories controlled by
-.Nm .
-If a file that was generated outside of
-.Va .OBJDIR
-but within said bailiwick is missing,
-the current target is considered out-of-date.
-.It Va .MAKE.META.CMP_FILTER
-In
-.Dq meta
-mode, it can (very rarely!) be useful to filter command
-lines before comparison.
-This variable can be set to a set of modifiers that are applied to
-each line of the old and new command that differ, if the filtered
-commands still differ, the target is considered out-of-date.
-.It Va .MAKE.META.CREATED
-In
-.Dq meta
-mode, this variable contains a list of all the meta files
-updated.
-If not empty, it can be used to trigger processing of
-.Va .MAKE.META.FILES .
-.It Va .MAKE.META.FILES
-In
-.Dq meta
-mode, this variable contains a list of all the meta files
-used (updated or not).
-This list can be used to process the meta files to extract dependency
-information.
-.It Va .MAKE.META.IGNORE_PATHS
-Provides a list of path prefixes that should be ignored;
-because the contents are expected to change over time.
-The default list includes:
-.Sq Pa /dev /etc /proc /tmp /var/run /var/tmp
-.It Va .MAKE.META.IGNORE_PATTERNS
-Provides a list of patterns to match against pathnames.
-Ignore any that match.
-.It Va .MAKE.META.IGNORE_FILTER
-Provides a list of variable modifiers to apply to each pathname.
-Ignore if the expansion is an empty string.
-.It Va .MAKE.META.PREFIX
-Defines the message printed for each meta file updated in
-.Dq meta verbose
-mode.
-The default value is:
-.Dl Building ${.TARGET:H:tA}/${.TARGET:T}
 .It Va .MAKEOVERRIDES
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
