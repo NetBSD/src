@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.66 2022/10/30 01:49:30 gutteridge Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.67 2023/01/01 21:27:14 gutteridge Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.66 2022/10/30 01:49:30 gutteridge Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.67 2023/01/01 21:27:14 gutteridge Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -686,7 +686,7 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
 		}
 	} else {
 		if (mflags.verbosity == 2)
-			warnx("Could not update the meta data for %s", file);
+			warnx("Could not update the metadata for %s", file);
 		(*err_count)++;
 	}
 	sqlite3_finalize(inner_stmt);
