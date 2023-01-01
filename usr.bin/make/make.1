@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.353 2023/01/01 17:17:09 rillig Exp $
+.\"	$NetBSD: make.1,v 1.354 2023/01/01 17:27:40 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -842,6 +842,7 @@ In addition,
 .Nm
 sets or knows about the following variables:
 .Bl -tag
+.\" NB: This list is sorted case-insensitive, ignoring punctuation.
 .It Va .ALLTARGETS
 The list of all targets encountered in the makefiles.
 If evaluated during makefile parsing,
@@ -886,10 +887,23 @@ include additional unexpanded variable references) are shown.
 .It Va .MAKE.EXPORTED
 The list of variables exported by
 .Nm .
-.It Va .MAKE.JOBS
-The argument to the
-.Fl j
-option.
+.It Va MAKEFLAGS
+The environment variable
+.Sq Ev MAKEFLAGS
+may contain anything that
+may be specified on
+.Nm Ns 's
+command line.
+Anything specified on
+.Nm Ns 's
+command line is appended to the
+.Va MAKEFLAGS
+variable, which is then added to the environment for all programs that
+.Nm
+executes.
+.It Va .MAKE.GID
+The numeric group ID of the user running
+.Nm .
 .It Va .MAKE.JOB.PREFIX
 If
 .Nm
@@ -909,25 +923,10 @@ to
 would produce tokens like
 .Dl ---make[1234] Ar target Li ---
 making it easier to track the degree of parallelism being achieved.
-.It Va .MAKE.TARGET_LOCAL_VARIABLES
-If set to
-.Ql false ,
-apparent variable assignments in dependency lines are
-treated as normal sources.
-.It Va MAKEFLAGS
-The environment variable
-.Sq Ev MAKEFLAGS
-may contain anything that
-may be specified on
-.Nm Ns 's
-command line.
-Anything specified on
-.Nm Ns 's
-command line is appended to the
-.Va MAKEFLAGS
-variable, which is then added to the environment for all programs that
-.Nm
-executes.
+.It Va .MAKE.JOBS
+The argument to the
+.Fl j
+option.
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
@@ -983,6 +982,9 @@ mode, this variable contains a list of all the meta files
 used (updated or not).
 This list can be used to process the meta files to extract dependency
 information.
+.It Va .MAKE.META.IGNORE_FILTER
+Provides a list of variable modifiers to apply to each pathname.
+Ignore if the expansion is an empty string.
 .It Va .MAKE.META.IGNORE_PATHS
 Provides a list of path prefixes that should be ignored;
 because the contents are expected to change over time.
@@ -991,9 +993,6 @@ The default list includes:
 .It Va .MAKE.META.IGNORE_PATTERNS
 Provides a list of patterns to match against pathnames.
 Ignore any that match.
-.It Va .MAKE.META.IGNORE_FILTER
-Provides a list of variable modifiers to apply to each pathname.
-Ignore if the expansion is an empty string.
 .It Va .MAKE.META.PREFIX
 Defines the message printed for each meta file updated in
 .Dq meta verbose
@@ -1106,24 +1105,6 @@ The process ID of
 .It Va .MAKE.PPID
 The parent process ID of
 .Nm .
-.It Va .MAKE.SAVE_DOLLARS
-If true,
-.Ql $$
-are preserved when doing
-.Ql :=
-assignments.
-The default is true, for compatibility with other makes.
-If set to false,
-.Ql $$
-becomes
-.Ql $
-per normal evaluation rules.
-.It Va .MAKE.UID
-The numeric ID of the user running
-.Nm .
-.It Va .MAKE.GID
-The numeric group ID of the user running
-.Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm
@@ -1145,6 +1126,26 @@ It then prints its name and the value of
 .Sq Va .CURDIR
 as well as the value of any variables named in
 .Sq Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .MAKE.SAVE_DOLLARS
+If true,
+.Ql $$
+are preserved when doing
+.Ql :=
+assignments.
+The default is true, for compatibility with other makes.
+If set to false,
+.Ql $$
+becomes
+.Ql $
+per normal evaluation rules.
+.It Va .MAKE.TARGET_LOCAL_VARIABLES
+If set to
+.Ql false ,
+apparent variable assignments in dependency lines are
+treated as normal sources.
+.It Va .MAKE.UID
+The numeric ID of the user running
+.Nm .
 .It Va .newline
 This variable is simply assigned a newline character as its value.
 This allows expansions using the
