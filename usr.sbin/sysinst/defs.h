@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.11 2022/02/14 06:45:34 msaitoh Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.12 2023/01/02 10:13:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -643,6 +643,7 @@ bool	md_gpt_post_write(struct disk_partitions*, part_id root_id,
  */
 bool	md_pre_disklabel(struct install_partition_desc*, struct disk_partitions*);
 bool	md_post_disklabel(struct install_partition_desc*, struct disk_partitions*);
+bool	md_disklabel_is_default(const struct disklabel *);
 int	md_pre_mount(struct install_partition_desc*, size_t);
 int	md_post_newfs(struct install_partition_desc*);
 int	md_post_extract(struct install_partition_desc*, bool upgrade);

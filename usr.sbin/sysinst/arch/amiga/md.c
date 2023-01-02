@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5.2.3 2022/12/14 15:39:45 snj Exp $ */
+/*	$NetBSD: md.c,v 1.5.2.4 2023/01/02 10:13:30 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,6 +100,25 @@ md_post_disklabel(struct install_partition_desc *install,
 {
 	return true;
 }
+
+#ifdef DISKLABEL_NO_ONDISK_VERIFY
+/*
+ * hook to check if disklabel returned by readdisklabel(9) via DIOCGDINFO
+ * seems the default one, on ports that have no BSD disklabel on disks.
+ */
+bool
+md_disklabel_is_default(const struct disklabel *lp)
+{
+	bool maybe_default =
+	    lp->d_npartitions == RAW_PART + 1 &&
+	    lp->d_partitions[RAW_PART].p_size == 0x1fffffff &&
+	    lp->d_partitions[0].p_size == lp->d_partitions[RAW_PART].p_size &&
+	    lp->d_partitions[0].p_offset == 0 &&
+	    lp->d_partitions[0].p_fstype == FS_BSDFFS;
+
+	return maybe_default;
+}
+#endif
 
 /*
  * hook called after upgrade() or install() has finished setting
