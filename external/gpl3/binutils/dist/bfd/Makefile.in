@@ -1781,6 +1781,8 @@ doc/$(am__dirstamp):
 	@: > doc/$(am__dirstamp)
 
 doc/bfd.info: doc/bfd.texi $(doc_bfd_TEXINFOS)
+	@zecho "NOT REBUILDING $@"
+NetBSD_DISABLED_doc/bfd.info:
 	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
 	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
@@ -2520,6 +2522,8 @@ doc/bfdt.stamp: $(srcdir)/bfd.c $(srcdir)/doc/doc.str $(MKDOC) doc/$(am__dirstam
 	$(AM_V_GEN)$(REGEN_TEXI)
 
 doc/bfdver.texi: $(srcdir)/Makefile.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfdver.texi:
 	$(AM_V_GEN)\
 	$(MKDIR_P) $(@D); \
 	echo "@set VERSION $(VERSION)" > $@; \
