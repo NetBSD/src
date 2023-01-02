@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.35 2022/12/31 05:03:52 snj Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.36 2023/01/02 10:14:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -507,4 +507,14 @@ usr.sbin/sysinst/label.c			1.40-1.41
 
 	PR 56886: fix space accounting in sysinst after deleting partitions.
 	[martin, ticket #1558]
+
+usr.sbin/sysinst/arch/amiga/md.c		1.8
+usr.sbin/sysinst/arch/amiga/md.c		1.9
+usr.sbin/sysinst/arch/x68k/md.c			1.13
+usr.sbin/sysinst/defs.h				1.85
+usr.sbin/sysinst/disklabel.c			1.49
+
+	PR 56890: check on-disk disklabel properly even on ports without
+	raw BSD disklabel.
+	[tsutsui, ticket #1559]
 
