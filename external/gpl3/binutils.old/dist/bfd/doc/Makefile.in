@@ -539,7 +539,7 @@ clean-libtool:
 
 bfd.info: bfd.texi $(bfd_TEXINFOS)
 	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_bfd.info: bfd.texinfo $(bfd_TEXINFOS)
+NetBSD_DISABLED_bfd.info:
 	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
@@ -1155,6 +1155,8 @@ bfd.h: $(BFD_H_DEP)
 	echo "#endif" >> $@
 
 bfdver.texi: $(srcdir)/Makefile.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfdver.texi:
 	@echo "creating $@"; \
 	echo "@set VERSION $(VERSION)" > bfdver.texi; \
 	if test -n "$(PKGVERSION)"; then \

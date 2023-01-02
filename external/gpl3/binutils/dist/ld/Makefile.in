@@ -1664,7 +1664,7 @@ distclean-libtool:
 
 ld.info: ld.texi $(ld_TEXINFOS)
 	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_ld.info: ld.texinfo $(ld_TEXINFOS)
+NetBSD_DISABLED_ld.info:
 	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \

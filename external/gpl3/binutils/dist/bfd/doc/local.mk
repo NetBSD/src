@@ -125,9 +125,13 @@ REGEN_TEXI = \
 # We use bfdt.texi, rather than bfd.texi, to avoid conflicting with
 # bfd.texi on an 8.3 filesystem.
 %D%/bfdt.stamp: $(srcdir)/bfd.c $(srcdir)/%D%/doc.str $(MKDOC) %D%/$(am__dirstamp)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfdt.stamp:
 	$(AM_V_GEN)$(REGEN_TEXI)
 
 %D%/bfdver.texi: $(srcdir)/Makefile.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfdver.texi:
 	$(AM_V_GEN)\
 	$(MKDIR_P) $(@D); \
 	echo "@set VERSION $(VERSION)" > $@; \

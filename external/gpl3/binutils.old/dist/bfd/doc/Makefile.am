@@ -343,6 +343,8 @@ bfd.h: $(BFD_H_DEP)
 	echo "#endif" >> $@
 
 bfdver.texi: $(srcdir)/Makefile.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfdver.texi:
 	@echo "creating $@"; \
 	echo "@set VERSION $(VERSION)" > bfdver.texi; \
 	if test -n "$(PKGVERSION)"; then \
