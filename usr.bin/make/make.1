@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.350 2022/11/29 23:56:05 rillig Exp $
+.\"	$NetBSD: make.1,v 1.350.2.1 2023/01/02 10:11:24 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -841,7 +841,12 @@ and
 In addition,
 .Nm
 sets or knows about the following variables:
-.Bl -tag -width .MAKEOVERRIDES
+.Bl -tag
+.\" NB: This list is sorted case-insensitive, ignoring punctuation.
+.\" NB: To find all built-in variables in make's source code,
+.\" NB: search for Var_*, Global_*, SetVarObjdir, GetBooleanExpr,
+.\" NB: and the implementation of Var_SetWithFlags.
+.\" NB: Last synced on 2023-01-01.
 .It Va .ALLTARGETS
 The list of all targets encountered in the makefiles.
 If evaluated during makefile parsing,
@@ -853,28 +858,55 @@ was executed.
 Refer to the description of
 .Sq Va PWD
 for more details.
+.It Va .ERROR_CMD
+Is used in error handling, see
+.Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .ERROR_CWD
+Is used in error handling, see
+.Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .ERROR_META_FILE
+Is used in error handling in
+.Dq meta
+mode, see
+.Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .ERROR_TARGET
+Is used in error handling, see
+.Va MAKE_PRINT_VAR_ON_ERROR .
 .It Va .INCLUDEDFROMDIR
 The directory of the file this makefile was included from.
 .It Va .INCLUDEDFROMFILE
 The filename of the file this makefile was included from.
+.\" .INCLUDES is intentionally undocumented, as it is obsolete.
+.\" .LIBS is intentionally undocumented, as it is obsolete.
+.It Va MACHINE
+The machine hardware name, see
+.Xr uname 1 .
+.It Va MACHINE_ARCH
+The machine processor architecture name, see
+.Xr uname 1 .
 .It Va MAKE
 The name that
 .Nm
 was executed with
 .Pq Va argv[0] .
-For compatibility,
-.Nm
-also sets
-.Va .MAKE
-to the same value.
+.It Va .MAKE
+The same as
+.Va MAKE ,
+for compatibility.
 The preferred variable to use is the environment variable
 .Ev MAKE
 because it is more compatible with other make variants
 and cannot be confused with the special target with the same name.
+.\" '.MAKE.cmd_filtered' is intentionally undocumented,
+.\" as it is an internal implementation detail.
 .It Va .MAKE.DEPENDFILE
 Names the makefile (default
 .Sq Pa .depend )
 from which generated dependencies are read.
+.It Va .MAKE.DIE_QUIETLY
+If set to
+.Ql true ,
+do not print error information at the end.
 .It Va .MAKE.EXPAND_VARIABLES
 A boolean that controls the default behavior of the
 .Fl V
@@ -886,10 +918,26 @@ include additional unexpanded variable references) are shown.
 .It Va .MAKE.EXPORTED
 The list of variables exported by
 .Nm .
-.It Va .MAKE.JOBS
-The argument to the
-.Fl j
-option.
+.It Va MAKEFILE
+The top-level makefile that is currently read,
+as given in the command line.
+.It Va .MAKEFLAGS
+The environment variable
+.Sq Ev MAKEFLAGS
+may contain anything that
+may be specified on
+.Nm Ns 's
+command line.
+Anything specified on
+.Nm Ns 's
+command line is appended to the
+.Va .MAKEFLAGS
+variable, which is then added to the environment for all programs that
+.Nm
+executes.
+.It Va .MAKE.GID
+The numeric group ID of the user running
+.Nm .
 .It Va .MAKE.JOB.PREFIX
 If
 .Nm
@@ -909,25 +957,10 @@ to
 would produce tokens like
 .Dl ---make[1234] Ar target Li ---
 making it easier to track the degree of parallelism being achieved.
-.It Va .MAKE.TARGET_LOCAL_VARIABLES
-If set to
-.Ql false ,
-apparent variable assignments in dependency lines are
-treated as normal sources.
-.It Va MAKEFLAGS
-The environment variable
-.Sq Ev MAKEFLAGS
-may contain anything that
-may be specified on
-.Nm Ns 's
-command line.
-Anything specified on
-.Nm Ns 's
-command line is appended to the
-.Va MAKEFLAGS
-variable, which is then added to the environment for all programs that
-.Nm
-executes.
+.It Va .MAKE.JOBS
+The argument to the
+.Fl j
+option.
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
@@ -937,6 +970,9 @@ has level 0, and each child make has its parent level plus 1.
 This allows tests like:
 .Li .if ${.MAKE.LEVEL} == 0
 to protect things which should only be evaluated in the top-level instance of
+.Nm .
+.It Va .MAKE.LEVEL.ENV
+The name of the environment variable that stores the level of nested calls to
 .Nm .
 .It Va .MAKE.MAKEFILE_PREFERENCE
 The ordered list of makefile names
@@ -951,6 +987,55 @@ The list of makefiles read by
 .Nm ,
 which is useful for tracking dependencies.
 Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.META.BAILIWICK
+In
+.Dq meta
+mode, provides a list of prefixes which
+match the directories controlled by
+.Nm .
+If a file that was generated outside of
+.Va .OBJDIR
+but within said bailiwick is missing,
+the current target is considered out-of-date.
+.It Va .MAKE.META.CMP_FILTER
+In
+.Dq meta
+mode, it can (very rarely!) be useful to filter command
+lines before comparison.
+This variable can be set to a set of modifiers that are applied to
+each line of the old and new command that differ, if the filtered
+commands still differ, the target is considered out-of-date.
+.It Va .MAKE.META.CREATED
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
+updated.
+If not empty, it can be used to trigger processing of
+.Va .MAKE.META.FILES .
+.It Va .MAKE.META.FILES
+In
+.Dq meta
+mode, this variable contains a list of all the meta files
+used (updated or not).
+This list can be used to process the meta files to extract dependency
+information.
+.It Va .MAKE.META.IGNORE_FILTER
+Provides a list of variable modifiers to apply to each pathname.
+Ignore if the expansion is an empty string.
+.It Va .MAKE.META.IGNORE_PATHS
+Provides a list of path prefixes that should be ignored;
+because the contents are expected to change over time.
+The default list includes:
+.Sq Pa /dev /etc /proc /tmp /var/run /var/tmp
+.It Va .MAKE.META.IGNORE_PATTERNS
+Provides a list of patterns to match against pathnames.
+Ignore any that match.
+.It Va .MAKE.META.PREFIX
+Defines the message printed for each meta file updated in
+.Dq meta verbose
+mode.
+The default value is:
+.Dl Building ${.TARGET:H:tA}/${.TARGET:T}
 .It Va .MAKE.MODE
 Processed after reading all makefiles.
 Affects the mode that
@@ -985,17 +1070,17 @@ does not create
 files in
 .Sq Va .CURDIR .
 This can be overridden by setting
-.Va bf
+.Ar bf
 to a value which represents true.
 .It Cm missing-meta= Ns Ar bf
 If
-.Va bf
+.Ar bf
 is true, a missing
 .Pa .meta
 file makes the target out-of-date.
 .It Cm missing-filemon= Ns Ar bf
 If
-.Va bf
+.Ar bf
 is true, missing filemon data makes the target out-of-date.
 .It Cm nofilemon
 Do not use
@@ -1022,7 +1107,7 @@ See also
 .Ic .NOMETA_CMP .
 .It Cm silent= Ns Ar bf
 If
-.Va bf
+.Ar bf
 is true, when a .meta file is created, mark the target
 .Ic .SILENT .
 .It Cm randomize-targets
@@ -1030,55 +1115,19 @@ In both compat and parallel mode, do not make the targets in the usual order,
 but instead randomize their order.
 This mode can be used to detect undeclared dependencies between files.
 .El
-.It Va .MAKE.META.BAILIWICK
-In
-.Dq meta
-mode, provides a list of prefixes which
-match the directories controlled by
-.Nm .
-If a file that was generated outside of
-.Va .OBJDIR
-but within said bailiwick is missing,
-the current target is considered out-of-date.
-.It Va .MAKE.META.CMP_FILTER
-In
-.Dq meta
-mode, it can (very rarely!) be useful to filter command
-lines before comparison.
-This variable can be set to a set of modifiers that are applied to
-each line of the old and new command that differ, if the filtered
-commands still differ, the target is considered out-of-date.
-.It Va .MAKE.META.CREATED
-In
-.Dq meta
-mode, this variable contains a list of all the meta files
-updated.
-If not empty, it can be used to trigger processing of
-.Va .MAKE.META.FILES .
-.It Va .MAKE.META.FILES
-In
-.Dq meta
-mode, this variable contains a list of all the meta files
-used (updated or not).
-This list can be used to process the meta files to extract dependency
-information.
-.It Va .MAKE.META.IGNORE_PATHS
-Provides a list of path prefixes that should be ignored;
-because the contents are expected to change over time.
-The default list includes:
-.Sq Pa /dev /etc /proc /tmp /var/run /var/tmp
-.It Va .MAKE.META.IGNORE_PATTERNS
-Provides a list of patterns to match against pathnames.
-Ignore any that match.
-.It Va .MAKE.META.IGNORE_FILTER
-Provides a list of variable modifiers to apply to each pathname.
-Ignore if the expansion is an empty string.
-.It Va .MAKE.META.PREFIX
-Defines the message printed for each meta file updated in
-.Dq meta verbose
-mode.
-The default value is:
-.Dl Building ${.TARGET:H:tA}/${.TARGET:T}
+.It Va MAKEOBJDIR
+Used to create files in a separate directory, see
+.Va .OBJDIR .
+.It Va MAKE_OBJDIR_CHECK_WRITABLE
+Used to force a separate directory for the created files,
+even if that directory is not writable, see
+.Va .OBJDIR .
+.It Va MAKEOBJDIRPREFIX
+Used to create files in a separate directory, see
+.Va .OBJDIR .
+.It Va .MAKE.OS
+The name of the operating system, see
+.Xr uname 1 .
 .It Va .MAKEOVERRIDES
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
@@ -1106,24 +1155,6 @@ The process ID of
 .It Va .MAKE.PPID
 The parent process ID of
 .Nm .
-.It Va .MAKE.SAVE_DOLLARS
-If true,
-.Ql $$
-are preserved when doing
-.Ql :=
-assignments.
-The default is true, for compatibility with other makes.
-If set to false,
-.Ql $$
-becomes
-.Ql $
-per normal evaluation rules.
-.It Va .MAKE.UID
-The numeric ID of the user running
-.Nm .
-.It Va .MAKE.GID
-The numeric group ID of the user running
-.Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm
@@ -1145,6 +1176,35 @@ It then prints its name and the value of
 .Sq Va .CURDIR
 as well as the value of any variables named in
 .Sq Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .MAKE.SAVE_DOLLARS
+If true,
+.Ql $$
+are preserved when doing
+.Ql :=
+assignments.
+The default is true, for compatibility with other makes.
+If set to false,
+.Ql $$
+becomes
+.Ql $
+per normal evaluation rules.
+.It Va .MAKE.TARGET_LOCAL_VARIABLES
+If set to
+.Ql false ,
+apparent variable assignments in dependency lines are
+treated as normal sources.
+.It Va .MAKE.UID
+The numeric ID of the user running
+.Nm .
+.\" 'MAKE_VERSION' is intentionally undocumented
+.\" since it is only defined in the bmake distribution,
+.\" but not in NetBSD's native make.
+.\" '.meta.%d.lcwd' is intentionally undocumented
+.\" since it is an internal implementation detail.
+.\" '.meta.%d.ldir' is intentionally undocumented
+.\" since it is an internal implementation detail.
+.\" 'MFLAGS' is intentionally undocumented
+.\" since it is obsolete.
 .It Va .newline
 This variable is simply assigned a newline character as its value.
 This allows expansions using the
@@ -1227,6 +1287,12 @@ searches for files.
 To update this search list, use the special target
 .Sq Ic .PATH
 rather than modifying the variable directly.
+.It Va %POSIX
+Is set in POSIX mode, see the special
+.Ql Va .POSIX
+target.
+.\" XXX: There is no make variable named 'PWD',
+.\" XXX: make only reads and writes the environment variable 'PWD'.
 .It Va PWD
 Alternate path to the current directory.
 .Nm
