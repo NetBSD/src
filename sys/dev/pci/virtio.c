@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.64 2022/12/30 21:38:13 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.65 2023/01/03 19:33:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.64 2022/12/30 21:38:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.65 2023/01/03 19:33:31 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1148,7 +1148,7 @@ notify:
 		uint16_t o, n, t;
 		uint16_t flags;
 
-		o = virtio_rw16(sc, vq->vq_avail->idx);
+		o = virtio_rw16(sc, vq->vq_avail->idx) - 1;
 		n = vq->vq_avail_idx;
 
 		/*
