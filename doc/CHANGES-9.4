@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.36 2023/01/02 10:14:20 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.37 2023/01/03 18:29:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -517,4 +517,21 @@ usr.sbin/sysinst/disklabel.c			1.49
 	PR 56890: check on-disk disklabel properly even on ports without
 	raw BSD disklabel.
 	[tsutsui, ticket #1559]
+
+sys/conf/copyright				1.21
+
+	Welcome to 2023.
+	[gutteridge, ticket #1562]
+
+sbin/fsck/partutil.c				1.18
+
+	PR 57134: fix newfs(8) when used for devices without
+	partition suffix (e.g. vnd0 instead of vnd0d or vnd0c).
+	[hannken, ticket #1560]
+
+lib/libc/locale/setlocale.3			1.22,1.23
+
+	setlocale.3: Reflect state of NetBSD locale support in the 21st
+	century.
+	[nia, ticket #1561]
 
