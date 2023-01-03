@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.689 2022/10/01 09:25:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.690 2023/01/03 00:00:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.689 2022/10/01 09:25:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.690 2023/01/03 00:00:45 rillig Exp $");
 
 /*
  * A file being read.
@@ -1072,8 +1072,12 @@ SkipExtraTargets(char **pp, const char *lstart)
 			warning = true;
 		p++;
 	}
-	if (warning)
-		Parse_Error(PARSE_WARNING, "Extra target ignored");
+	if (warning) {
+		const char *start = *pp;
+		cpp_skip_whitespace(&start);
+		Parse_Error(PARSE_WARNING, "Extra target '%.*s' ignored",
+		    (int)(p - start), start);
+	}
 
 	*pp += p - *pp;
 }
